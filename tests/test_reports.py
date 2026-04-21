@@ -2,6 +2,7 @@
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio
@@ -111,3 +112,41 @@ async def test_reply_empty_content(client: AsyncClient) -> None:
         },
     )
     assert response.status_code in (401, 422)
+
+
+@pytest.mark.asyncio
+async def test_status_valid_credentials(client: AsyncClient, db_session: AsyncSession) -> None:
+    """Status page shows report details with correct case_number and PIN."""
+    from app.services.report import create_report
+
+    report, pin = await create_report(
+        db_session, "financial_fraud", "Valid test report for status check."
+    )
+    response = await client.post(
+        "/status",
+        data={
+            "case_number": report.case_number,
+            "pin": pin,
+            "session_token": "e" * 32,
+        },
+    )
+    assert response.status_code == 200
+    assert report.case_number in response.text
+
+
+@pytest.mark.asyncio
+async def test_reply_valid_credentials(client: AsyncClient, db_session: AsyncSession) -> None:
+    """Reply with valid credentials succeeds and shows confirmation."""
+    from app.services.report import create_report
+
+    report, pin = await create_report(db_session, "corruption", "Valid report for reply endpoint.")
+    response = await client.post(
+        "/reply",
+        data={
+            "case_number": report.case_number,
+            "pin": pin,
+            "session_token": "f" * 32,
+            "content": "This is my reply to the investigation team.",
+        },
+    )
+    assert response.status_code == 200
