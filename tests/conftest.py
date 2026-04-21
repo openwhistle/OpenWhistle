@@ -1,11 +1,9 @@
 """Shared test fixtures for OpenWhistle tests."""
 
-import asyncio
 import os
 import subprocess
 from collections.abc import AsyncGenerator
 
-import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
@@ -29,11 +27,6 @@ from app.database import Base  # noqa: E402
 from app.main import app  # noqa: E402
 
 _ENUM_TYPES = ["reportcategory", "reportstatus", "reportsender"]
-
-
-@pytest.fixture(scope="session")
-def event_loop_policy() -> asyncio.DefaultEventLoopPolicy:
-    return asyncio.DefaultEventLoopPolicy()
 
 
 @pytest_asyncio.fixture(scope="session", loop_scope="session")
