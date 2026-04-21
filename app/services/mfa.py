@@ -1,7 +1,7 @@
 """TOTP-based MFA service (RFC 6238 / Google Authenticator compatible)."""
 
-import io
 import base64
+import io
 
 import pyotp
 import qrcode

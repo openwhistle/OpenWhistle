@@ -3,7 +3,7 @@
 import secrets
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, Form, Request, status
+from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,10 +11,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.database import get_db
 from app.redis_client import get_redis
-from app.templating import templates
 from app.services import auth as auth_service
 from app.services import rate_limit as rl
 from app.services.mfa import verify_demo_totp, verify_totp
+from app.templating import templates
 
 router = APIRouter(prefix="/admin")
 
@@ -108,6 +108,7 @@ async def login_mfa_post(
 
     # Update last login
     from sqlalchemy import select
+
     from app.models.user import AdminUser
     result = await db.execute(select(AdminUser).where(AdminUser.id == user.id))
     db_user = result.scalar_one_or_none()
