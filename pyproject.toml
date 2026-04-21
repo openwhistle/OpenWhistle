@@ -111,8 +111,8 @@ testpaths = ["tests"]
 addopts = "--cov=app --cov-report=term-missing --cov-fail-under=75"
 
 [tool.coverage.run]
-# Force C-tracer (sys.settrace) instead of sys.monitoring — more reliable on Python 3.14
-core = "ctrace"
+# sys.monitoring (sysmon) is Python 3.12+'s native tracing API — correctly traces async coroutines
+core = "sysmon"
 
 [tool.coverage.report]
 exclude_lines = [

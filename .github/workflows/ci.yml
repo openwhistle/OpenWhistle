@@ -78,6 +78,7 @@ jobs:
           REDIS_URL: "redis://localhost:6379/0"
           SECRET_KEY: "ci-test-secret-key-not-for-production"
           DEMO_MODE: "true"
+          COVERAGE_CORE: "sysmon"
         run: pytest --cov=app --cov-report=xml
 
       - name: Upload coverage report
