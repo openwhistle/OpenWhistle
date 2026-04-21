@@ -63,7 +63,7 @@ async def db_engine() -> AsyncGenerator[AsyncEngine]:
     await engine.dispose()
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(loop_scope="function")
 async def db_session(db_engine: AsyncEngine) -> AsyncGenerator[AsyncSession]:
     """Function-scoped session using NullPool — avoids cross-loop connection reuse."""
     from app.config import settings
@@ -76,7 +76,7 @@ async def db_session(db_engine: AsyncEngine) -> AsyncGenerator[AsyncSession]:
     await engine.dispose()
 
 
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(loop_scope="function")
 async def client(db_engine: AsyncEngine) -> AsyncGenerator[AsyncClient]:
     """HTTP test client — fresh DB + Redis connections per test to avoid cross-loop errors."""
     from app.config import settings
