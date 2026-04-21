@@ -70,7 +70,7 @@ jobs:
         run: pip install uv==0.6.0
 
       - name: Install dependencies
-        run: uv pip install --system ".[dev]"
+        run: uv pip install --system -e ".[dev]"
 
       - name: Run tests
         env:

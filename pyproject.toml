@@ -113,6 +113,7 @@ addopts = "--cov=app --cov-report=term-missing --cov-fail-under=75"
 [tool.coverage.run]
 # sys.monitoring (sysmon) is Python 3.12+'s native tracing API — correctly traces async coroutines
 core = "sysmon"
+source_pkgs = ["app"]
 
 [tool.coverage.report]
 exclude_lines = [
