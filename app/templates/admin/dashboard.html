@@ -9,10 +9,13 @@
 
 {% block content %}
 <div class="container">
-    <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+    <div class="page-header" style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
         <div>
+            <div class="page-eyebrow">Reporting Office</div>
             <h1>Reports Dashboard</h1>
-            <p>Logged in as <span class="mono">{{ user.username }}</span></p>
+            <p style="margin-top:0.25rem;font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);letter-spacing:0.06em;">
+                Logged in as <span style="color:var(--accent);">{{ user.username }}</span>
+            </p>
         </div>
         <a href="/submit" class="btn btn-secondary btn-sm">Submit Test Report</a>
     </div>
@@ -27,7 +30,7 @@
             (<code>X-Forwarded-For</code>, <code>X-Real-IP</code>, or similar) to the application.
             This means the network layer is leaking IP data that could compromise whistleblower anonymity.
             <br><br>
-            <strong>Action required:</strong> Configure your upstream proxy (Cloudflare, Traefik, nginx)
+            Configure your upstream proxy (Cloudflare, Traefik, nginx)
             to strip these headers before passing requests to OpenWhistle.
             See <code>nginx/nginx.conf</code> for example configurations.
         </div>
@@ -38,7 +41,7 @@
     {% endif %}
 
     {# Summary stats #}
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:2rem;">
         {% set ns = namespace(received=0, acknowledged=0, in_progress=0, closed=0) %}
         {% for r in reports %}
             {% if r.status.value == 'received' %}{% set ns.received = ns.received + 1 %}{% endif %}
@@ -53,15 +56,15 @@
             ('In Progress', ns.in_progress, 'badge-in_progress'),
             ('Closed', ns.closed, 'badge-closed')
         ] %}
-        <div class="card" style="text-align:center;padding:1.25rem;">
-            <div style="font-size:2rem;font-family:var(--font-mono);font-weight:700;">{{ count }}</div>
-            <div class="badge {{ cls }}" style="margin-top:0.35rem;">{{ label }}</div>
+        <div class="stat-card" style="animation-delay: {{ loop.index0 * 0.05 }}s;">
+            <div class="stat-number">{{ count }}</div>
+            <span class="badge {{ cls }}">{{ label }}</span>
         </div>
         {% endfor %}
     </div>
 
-    <div class="card">
-        <div class="card-title">All Reports</div>
+    <div class="panel">
+        <div class="panel-header">All Reports</div>
 
         {% if reports %}
         <div class="table-wrapper">
@@ -88,17 +91,17 @@
                     {% endif %}
                     <tr>
                         <td><span class="mono">{{ report.case_number }}</span></td>
-                        <td>{{ report.category.value | replace('_', ' ') | title }}</td>
+                        <td style="font-size:0.85rem;color:var(--text-secondary);">{{ report.category.value | replace('_', ' ') | title }}</td>
                         <td><span class="badge badge-{{ report.status.value }}">{{ report.status.value | replace('_', ' ') | title }}</span></td>
-                        <td class="mono" style="font-size:0.8rem;">{{ report.submitted_at.strftime('%Y-%m-%d') }}</td>
-                        <td class="{{ ack_sla_class }}" style="font-size:0.82rem;">
+                        <td class="mono" style="font-size:0.78rem;color:var(--text-muted);">{{ report.submitted_at.strftime('%Y-%m-%d') }}</td>
+                        <td class="{{ ack_sla_class }}" style="font-size:0.8rem;font-family:var(--font-mono);">
                             {% if report.acknowledged_at %}
                                 &#10003; Done
                             {% else %}
                                 Day {{ days_since_submit }}/7
                             {% endif %}
                         </td>
-                        <td class="{{ fb_sla_class }}" style="font-size:0.82rem;">
+                        <td class="{{ fb_sla_class }}" style="font-size:0.8rem;font-family:var(--font-mono);">
                             {% if report.feedback_due_at %}
                                 {% set days_to_fb = (report.feedback_due_at - now).days %}
                                 {% if days_to_fb > 0 %}{{ days_to_fb }}d left{% else %}Overdue{% endif %}
@@ -115,7 +118,7 @@
             </table>
         </div>
         {% else %}
-        <p style="color:var(--text-muted);text-align:center;padding:2rem 0;">
+        <p style="color:var(--text-muted);text-align:center;padding:3rem 0;font-family:var(--font-mono);font-size:0.82rem;letter-spacing:0.06em;">
             No reports yet.
         </p>
         {% endif %}

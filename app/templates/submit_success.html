@@ -3,56 +3,47 @@
 {% block title %}Report Submitted — OpenWhistle{% endblock %}
 
 {% block content %}
-<div class="container-sm">
-    <div class="page-header" style="text-align:center;">
+<div class="container-sm success-wrapper">
+
+    <div class="success-header" style="animation: fadeSlideIn 0.5s ease both;">
+        <span class="success-check">&#10003;</span>
         <h1>Report Submitted</h1>
-        <p>Save the credentials below. They cannot be recovered if lost.</p>
+        <p>Save the credentials below immediately. This page will not be shown again.</p>
     </div>
 
-    <div class="alert alert-warning" role="alert">
-        <strong>Important:</strong> Write down or save your case number and PIN now.
-        This page will not be shown again.
+    <div class="alert alert-warning" role="alert" style="animation: fadeSlideIn 0.5s 0.05s ease both; opacity: 0; animation-fill-mode: forwards;">
+        <div class="alert-title">Action Required</div>
+        Write down or save your case number and PIN now. They cannot be recovered if lost.
     </div>
 
-    <div class="card">
-        <div class="card-title">Your Access Credentials</div>
+    <div class="panel" style="animation: fadeSlideIn 0.5s 0.1s ease both; opacity: 0; animation-fill-mode: forwards;">
+        <div class="panel-header">Access Credentials — Store Securely</div>
 
-        <p style="color:var(--text-secondary);font-size:0.9rem;">
-            Use these two values together to check the status of your report and communicate
-            with the reporting office.
-        </p>
-
-        <div class="credential-box">
+        <div class="credential-group">
             <div class="credential-label">Case Number</div>
-            <div class="credential-value" id="case-number">{{ case_number }}</div>
+            <div class="credential-display" id="case-number">
+                <span>{{ case_number }}</span>
+                <button class="copy-btn" onclick="copyToClipboard('{{ case_number }}', this)" title="Copy to clipboard" aria-label="Copy case number">&#10697;</button>
+            </div>
         </div>
-        <button
-            class="btn btn-secondary btn-sm"
-            onclick="copyToClipboard('{{ case_number }}', this)"
-            style="margin-bottom:1rem;">
-            Copy Case Number
-        </button>
 
-        <div class="credential-box">
+        <div class="credential-group">
             <div class="credential-label">Secret PIN</div>
-            <div class="credential-value" id="pin-value">{{ pin }}</div>
-        </div>
-        <button
-            class="btn btn-secondary btn-sm"
-            onclick="copyToClipboard('{{ pin }}', this)"
-            style="margin-bottom:1.5rem;">
-            Copy PIN
-        </button>
-
-        <div class="alert alert-info">
-            <strong>What happens next?</strong>
-            You will receive an acknowledgement within <strong>7 days</strong> (as required by §17 HinSchG).
-            A full response will follow within <strong>3 months</strong> of acknowledgement.
-            Use your case number and PIN at any time to check the status.
+            <div class="credential-display" id="pin-value">
+                <span>{{ pin }}</span>
+                <button class="copy-btn" onclick="copyToClipboard('{{ pin }}', this)" title="Copy to clipboard" aria-label="Copy secret PIN">&#10697;</button>
+            </div>
         </div>
 
-        <a href="/status" class="btn btn-primary" style="width:100%;margin-top:0.5rem;">
-            Check Report Status
+        <div class="alert alert-info" style="margin-top: 1.5rem;">
+            <div class="alert-title">What happens next</div>
+            Acknowledgement within <strong>7 days</strong> (§17 Abs. 1 HinSchG).
+            Full response within <strong>3 months</strong> of acknowledgement.
+            Use your case number and PIN at any time to check status and communicate with the reporting office.
+        </div>
+
+        <a href="/status" class="btn btn-primary btn-block" style="margin-top: 1.25rem;">
+            Check Report Status &rarr;
         </a>
     </div>
 </div>

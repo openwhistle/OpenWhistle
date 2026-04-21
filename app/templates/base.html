@@ -26,8 +26,13 @@
 <body>
     <nav class="nav" role="navigation" aria-label="Main navigation">
         <a href="/" class="nav-brand" aria-label="OpenWhistle home">
-            <span class="nav-brand-icon" aria-hidden="true">&#9679;</span>
-            OpenWhistle
+            <svg width="28" height="33" viewBox="0 0 28 33" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M14 2L25 6.5L25 16.5C25 22.5 20.5 27.5 14 30C7.5 27.5 3 22.5 3 16.5L3 6.5Z"
+                      stroke="#3fb950" stroke-width="1.4" fill="rgba(63,185,80,0.08)" stroke-linejoin="round"/>
+                <polyline points="5.5,11 8.5,20 14,14 19.5,20 22.5,11"
+                          stroke="#3fb950" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>OPEN<strong>WHISTLE</strong></span>
         </a>
 
         <ul class="nav-links" role="list">
@@ -40,8 +45,9 @@
                     class="theme-toggle"
                     id="theme-toggle"
                     onclick="toggleTheme()"
-                    aria-label="Switch theme">
-                    ◑ Dark
+                    aria-label="Switch theme"
+                    title="Toggle dark / light">
+                    ◑
                 </button>
             </li>
         </ul>

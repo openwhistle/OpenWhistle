@@ -6,8 +6,9 @@
 <div class="container-sm">
     {% if not report %}
     <div class="page-header">
+        <div class="page-eyebrow">Secure Access</div>
         <h1>Check Report Status</h1>
-        <p>Enter your case number and secret PIN to view your report and any responses.</p>
+        <p>Enter your case number and secret PIN to view your report and any responses from the reporting office.</p>
     </div>
 
     {% if error %}
@@ -16,10 +17,12 @@
 
     {% if locked %}
     <div class="alert alert-warning" role="alert">
+        <div class="alert-title">Access Locked</div>
         Too many failed attempts. Please wait before trying again.
     </div>
     {% else %}
-    <div class="card">
+    <div class="panel">
+        <div class="panel-header">Report Lookup</div>
         <form method="post" action="/status" novalidate>
             <input type="hidden" name="session_token" value="{{ session_token }}">
 
@@ -50,8 +53,8 @@
                 <div class="form-hint">Enter the PIN exactly as shown when you submitted your report.</div>
             </div>
 
-            <button type="submit" class="btn btn-primary" style="width:100%;">
-                View Report Status
+            <button type="submit" class="btn btn-primary btn-block">
+                View Report Status &rarr;
             </button>
         </form>
     </div>
@@ -61,6 +64,7 @@
 
     {# Report found — show status and thread #}
     <div class="page-header">
+        <div class="page-eyebrow">Report Found</div>
         <h1>Report Status</h1>
     </div>
 
@@ -68,35 +72,35 @@
     <div class="alert alert-success" role="alert">{{ success }}</div>
     {% endif %}
 
-    <div class="card">
-        <div class="card-title">
+    <div class="panel">
+        <div class="panel-header">
             <span class="mono">{{ report.case_number }}</span>
-            &nbsp;
+            &nbsp;&nbsp;
             <span class="badge badge-{{ report.status.value }}">{{ report.status.value | replace('_', ' ') | title }}</span>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;font-size:0.85rem;color:var(--text-muted);">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;font-size:0.85rem;color:var(--text-muted);">
             <div>
-                <div style="font-family:var(--font-mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.2rem;">Submitted</div>
-                {{ report.submitted_at.strftime('%Y-%m-%d %H:%M UTC') }}
+                <div style="font-family:var(--font-mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.3rem;color:var(--text-muted);">Submitted</div>
+                <span class="mono" style="color:var(--text-primary);">{{ report.submitted_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
             </div>
             {% if report.acknowledged_at %}
             <div>
-                <div style="font-family:var(--font-mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.2rem;">Acknowledged</div>
-                {{ report.acknowledged_at.strftime('%Y-%m-%d %H:%M UTC') }}
+                <div style="font-family:var(--font-mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.3rem;color:var(--text-muted);">Acknowledged</div>
+                <span class="mono" style="color:var(--text-primary);">{{ report.acknowledged_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
             </div>
             {% endif %}
             {% if report.feedback_due_at %}
             <div>
-                <div style="font-family:var(--font-mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.2rem;">Feedback Due</div>
-                {{ report.feedback_due_at.strftime('%Y-%m-%d') }}
+                <div style="font-family:var(--font-mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.3rem;color:var(--text-muted);">Feedback Due</div>
+                <span class="mono" style="color:var(--text-primary);">{{ report.feedback_due_at.strftime('%Y-%m-%d') }}</span>
             </div>
             {% endif %}
         </div>
     </div>
 
-    <div class="card" style="animation-delay:0.05s;">
-        <div class="card-title">Communication Thread</div>
+    <div class="panel" style="animation-delay:0.05s;">
+        <div class="panel-header">Communication Thread</div>
 
         {% if report.messages %}
         <div class="thread">
@@ -111,21 +115,23 @@
             {% endfor %}
         </div>
         {% else %}
-        <p style="color:var(--text-muted);">No messages yet.</p>
+        <p style="color:var(--text-muted);">No messages yet. The reporting office will respond within 7 days of submission.</p>
         {% endif %}
     </div>
 
     {% if report.status.value != 'closed' %}
-    <div class="card" style="animation-delay:0.1s;">
-        <div class="card-title">Send a Reply</div>
+    <div class="panel" style="animation-delay:0.1s;">
+        <div class="panel-header">Send a Reply</div>
         <form method="post" action="/reply">
             <input type="hidden" name="case_number" value="{{ case_number }}">
             <input type="hidden" name="pin" value="{{ pin }}">
             <input type="hidden" name="session_token" value="{{ session_token }}">
 
             <div class="form-group">
+                <label class="form-label" for="reply-content">Your Message</label>
                 <textarea
                     class="form-control"
+                    id="reply-content"
                     name="content"
                     rows="4"
                     maxlength="5000"
@@ -133,12 +139,12 @@
                     required></textarea>
             </div>
 
-            <button type="submit" class="btn btn-primary">Send Reply</button>
+            <button type="submit" class="btn btn-primary">Send Reply &rarr;</button>
         </form>
     </div>
     {% endif %}
 
-    <div style="margin-top:1rem;text-align:center;">
+    <div style="margin-top:1.25rem;text-align:center;">
         <a href="/status" class="btn btn-secondary btn-sm">Look up a different report</a>
     </div>
 

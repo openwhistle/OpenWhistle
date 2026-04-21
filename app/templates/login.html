@@ -8,45 +8,52 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-sm">
-    <div class="page-header" style="text-align:center;">
-        <h1>Reporting Office Login</h1>
-        <p>For authorised reporting office staff only.</p>
-    </div>
+<div style="min-height: calc(100vh - 56px - 56px); display: flex; align-items: center; justify-content: center; padding: 2rem 1rem;">
+    <div style="width: 100%; max-width: 400px;">
 
-    {% if error %}
-    <div class="alert alert-error" role="alert">{{ error }}</div>
-    {% endif %}
+        <div style="margin-bottom: 2rem; animation: fadeSlideIn 0.5s ease both;">
+            <div class="page-eyebrow">Restricted Access</div>
+            <h1 style="font-size: clamp(1.5rem, 4vw, 2.25rem);">Reporting Office</h1>
+            <p style="font-size: 0.88rem; margin-top: 0.5rem;">For authorised reporting office staff only.</p>
+        </div>
 
-    <div class="card">
-        <form method="post" action="/admin/login" novalidate>
-            <div class="form-group">
-                <label class="form-label" for="username">Username</label>
-                <input
-                    type="text"
-                    class="form-control mono"
-                    id="username"
-                    name="username"
-                    autocomplete="username"
-                    required
-                    autofocus>
-            </div>
+        {% if error %}
+        <div class="alert alert-error" role="alert">{{ error }}</div>
+        {% endif %}
 
-            <div class="form-group">
-                <label class="form-label" for="password">Password</label>
-                <input
-                    type="password"
-                    class="form-control"
-                    id="password"
-                    name="password"
-                    autocomplete="current-password"
-                    required>
-            </div>
+        <div class="panel" style="animation: fadeSlideIn 0.5s 0.08s ease both; opacity: 0; animation-fill-mode: forwards;">
+            <div class="panel-header">Credential Verification</div>
 
-            <button type="submit" class="btn btn-primary" style="width:100%;">
-                Continue
-            </button>
-        </form>
+            <form method="post" action="/admin/login" novalidate>
+                <div class="form-group">
+                    <label class="form-label" for="username">Username</label>
+                    <input
+                        type="text"
+                        class="form-control mono"
+                        id="username"
+                        name="username"
+                        autocomplete="username"
+                        required
+                        autofocus>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input
+                        type="password"
+                        class="form-control"
+                        id="password"
+                        name="password"
+                        autocomplete="current-password"
+                        required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" style="margin-top: 0.5rem;">
+                    Continue &rarr;
+                </button>
+            </form>
+        </div>
+
     </div>
 </div>
 {% endblock %}

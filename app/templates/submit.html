@@ -3,23 +3,55 @@
 {% block title %}Submit a Report — OpenWhistle{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="page-header">
+<div class="split-layout">
+    <aside class="split-sidebar" aria-label="Privacy guarantees">
+        <div class="sidebar-eyebrow">Protected Reporting</div>
+        <h2 class="sidebar-title">Your identity is <em>guaranteed</em> by design.</h2>
+
+        <div class="guarantee-list">
+            <div class="guarantee-item">
+                <span class="guarantee-num">§ 01</span>
+                <div>
+                    <div class="guarantee-title">Zero IP Logging</div>
+                    <div class="guarantee-desc">Not by the application, not by nginx. Four separate technical layers prevent any IP address from being stored.</div>
+                </div>
+            </div>
+            <div class="guarantee-item">
+                <span class="guarantee-num">§ 02</span>
+                <div>
+                    <div class="guarantee-title">Two-Factor Access</div>
+                    <div class="guarantee-desc">Your report is protected by a case number and a UUID4 secret PIN. Both are required to retrieve it.</div>
+                </div>
+            </div>
+            <div class="guarantee-item">
+                <span class="guarantee-num">§ 03</span>
+                <div>
+                    <div class="guarantee-title">No Fingerprinting</div>
+                    <div class="guarantee-desc">No cookies, no tracking pixels, no browser fingerprinting of any kind.</div>
+                </div>
+            </div>
+            <div class="guarantee-item">
+                <span class="guarantee-num">§ 17</span>
+                <div>
+                    <div class="guarantee-title">HinSchG Compliant</div>
+                    <div class="guarantee-desc">Acknowledgement within 7 days. Response within 3 months. Bidirectional communication as required by law.</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="split-main">
+        <div class="page-eyebrow">Confidential Report</div>
         <h1>Submit a Report</h1>
-        <p>Your identity is fully protected. No IP addresses or identifying information are stored.</p>
-    </div>
 
-    {% if error %}
-    <div class="alert alert-error" role="alert">{{ error }}</div>
-    {% endif %}
+        {% if error %}
+        <div class="alert alert-error" role="alert">{{ error }}</div>
+        {% endif %}
 
-    <div class="card">
-        <div class="card-title">Confidential Report</div>
-
-        <div class="alert alert-info" style="margin-bottom:1.5rem;">
-            <strong>Before you submit:</strong> Save your case number and PIN in a secure location.
-            They are the only way to check your report's status or communicate with the reporting office.
-            They cannot be recovered if lost.
+        <div class="alert alert-info" style="margin: 1.5rem 0;">
+            <div class="alert-title">Before you submit</div>
+            Save your case number and PIN in a secure location after submission.
+            They are the only way to access your report and cannot be recovered if lost.
         </div>
 
         <form method="post" action="/submit" novalidate>
@@ -48,7 +80,7 @@
                     class="form-control"
                     id="description"
                     name="description"
-                    rows="8"
+                    rows="10"
                     required
                     minlength="10"
                     maxlength="10000"
@@ -57,23 +89,10 @@
                 <div class="form-hint">Minimum 10 characters. Maximum 10,000 characters. Plain text only.</div>
             </div>
 
-            <button type="submit" class="btn btn-primary">
-                Submit Report Securely
+            <button type="submit" class="btn btn-primary btn-block">
+                Submit Report Securely &rarr;
             </button>
         </form>
-    </div>
-
-    <div class="card" style="animation-delay:0.1s;">
-        <div class="card-title">Your Anonymity</div>
-        <p>
-            OpenWhistle is designed from the ground up to protect your identity:
-        </p>
-        <ul style="padding-left:1.5rem;color:var(--text-secondary);line-height:2;">
-            <li>No IP addresses are logged — not by this application, not by the web server</li>
-            <li>No browser fingerprinting or tracking</li>
-            <li>Reports are identified only by a random case number and secret PIN</li>
-            <li>Even the system administrator cannot link your report to your identity</li>
-        </ul>
     </div>
 </div>
 {% endblock %}

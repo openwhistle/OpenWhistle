@@ -6,13 +6,15 @@
 
 {% block content %}
 <div class="container-sm">
-    <div class="page-header" style="text-align:center;">
-        <h1>Welcome to OpenWhistle</h1>
-        <p>Create your administrator account to get started.</p>
+    <div class="page-header">
+        <div class="page-eyebrow">First-Run Wizard</div>
+        <h1>Initial Setup</h1>
+        <p>Create your administrator account to get started. This wizard runs once and cannot be re-accessed after completion.</p>
     </div>
 
     <div class="alert alert-info">
-        This setup wizard runs once. After creating the admin account, it will no longer be accessible.
+        <div class="alert-title">One-Time Setup</div>
+        After creating the admin account, this wizard will no longer be accessible.
     </div>
 
     {% if errors %}
@@ -25,23 +27,24 @@
     </div>
     {% endif %}
 
-    <div class="card">
-        <div class="card-title">Step 1 &mdash; Set Up Authenticator App</div>
-        <p>Scan the QR code with Google Authenticator, Aegis, or any compatible TOTP app.</p>
+    <div class="panel">
+        <div class="panel-header">Step 1 &mdash; Set Up Authenticator App</div>
+        <p>Scan the QR code with Google Authenticator, Aegis, or any compatible TOTP app. Multi-factor authentication is mandatory.</p>
 
         <div class="qr-wrapper">
             <img src="data:image/png;base64,{{ qr_code }}" alt="TOTP QR Code" width="200" height="200">
         </div>
 
-        <p style="font-size:0.875rem;text-align:center;">
+        <p style="font-size:0.875rem;text-align:center;color:var(--text-secondary);">
             Or enter this key manually:
-            <br>
-            <span class="mono" style="font-size:1rem;user-select:all;">{{ totp_secret }}</span>
         </p>
+        <div style="text-align:center;margin-top:0.5rem;">
+            <span class="mono" style="font-size:0.9rem;user-select:all;word-break:break-all;">{{ totp_secret }}</span>
+        </div>
     </div>
 
-    <div class="card" style="animation-delay:0.05s;">
-        <div class="card-title">Step 2 &mdash; Create Admin Account</div>
+    <div class="panel" style="animation-delay:0.05s;">
+        <div class="panel-header">Step 2 &mdash; Create Admin Account</div>
 
         <form method="post" action="/setup" novalidate>
             <input type="hidden" name="totp_secret" value="{{ totp_secret }}">
@@ -99,12 +102,12 @@
                     placeholder="000000"
                     required
                     autocomplete="one-time-code"
-                    style="font-size:1.4rem;letter-spacing:0.3em;text-align:center;">
+                    style="font-size:1.4rem;letter-spacing:0.3em;text-align:center;padding-bottom:0.6rem;">
                 <div class="form-hint">Enter the current 6-digit code from your authenticator app to confirm setup.</div>
             </div>
 
-            <button type="submit" class="btn btn-primary" style="width:100%;">
-                Create Admin Account
+            <button type="submit" class="btn btn-primary btn-block">
+                Create Admin Account &rarr;
             </button>
         </form>
     </div>

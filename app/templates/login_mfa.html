@@ -3,54 +3,60 @@
 {% block title %}Two-Factor Authentication — OpenWhistle{% endblock %}
 
 {% block content %}
-<div class="container-sm">
-    <div class="page-header" style="text-align:center;">
-        <h1>Two-Factor Authentication</h1>
-        <p>Enter the 6-digit code from your authenticator app.</p>
-    </div>
+<div style="min-height: calc(100vh - 56px - 56px); display: flex; align-items: center; justify-content: center; padding: 2rem 1rem;">
+    <div style="width: 100%; max-width: 400px;">
 
-    {% if error %}
-    <div class="alert alert-error" role="alert">{{ error }}</div>
-    {% endif %}
-
-    {% if is_demo %}
-    <div class="alert alert-warning" role="alert">
-        <strong>Demo mode:</strong> Enter <code class="mono">000000</code> to log in.
-    </div>
-    {% endif %}
-
-    <div class="card">
-        <form method="post" action="/admin/login/mfa" novalidate>
-            <input type="hidden" name="temp_token" value="{{ temp_token }}">
-
-            <div class="form-group">
-                <label class="form-label" for="totp_code">Authentication Code</label>
-                <input
-                    type="text"
-                    class="form-control mono"
-                    id="totp_code"
-                    name="totp_code"
-                    inputmode="numeric"
-                    pattern="[0-9]{6}"
-                    maxlength="6"
-                    autocomplete="one-time-code"
-                    placeholder="000000"
-                    required
-                    autofocus
-                    style="font-size:1.5rem;letter-spacing:0.3em;text-align:center;">
-                <div class="form-hint">
-                    Open your authenticator app and enter the current 6-digit code.
-                </div>
-            </div>
-
-            <button type="submit" class="btn btn-primary" style="width:100%;">
-                Verify
-            </button>
-        </form>
-
-        <div style="margin-top:1rem;text-align:center;">
-            <a href="/admin/login" class="btn btn-secondary btn-sm">Back to login</a>
+        <div style="margin-bottom: 2rem; animation: fadeSlideIn 0.5s ease both;">
+            <div class="page-eyebrow">Identity Verification</div>
+            <h1 style="font-size: clamp(1.5rem, 4vw, 2.25rem);">Two-Factor Auth</h1>
+            <p style="font-size: 0.88rem; margin-top: 0.5rem;">Enter the 6-digit code from your authenticator app.</p>
         </div>
+
+        {% if error %}
+        <div class="alert alert-error" role="alert">{{ error }}</div>
+        {% endif %}
+
+        {% if is_demo %}
+        <div class="alert alert-warning" role="alert">
+            <div class="alert-title">Demo Mode</div>
+            Enter <code class="mono">000000</code> to log in.
+        </div>
+        {% endif %}
+
+        <div class="panel" style="animation: fadeSlideIn 0.5s 0.08s ease both; opacity: 0; animation-fill-mode: forwards;">
+            <div class="panel-header">TOTP Authentication</div>
+
+            <form method="post" action="/admin/login/mfa" novalidate>
+                <input type="hidden" name="temp_token" value="{{ temp_token }}">
+
+                <div class="form-group">
+                    <label class="form-label" for="totp_code">Authentication Code</label>
+                    <input
+                        type="text"
+                        class="form-control mono"
+                        id="totp_code"
+                        name="totp_code"
+                        inputmode="numeric"
+                        pattern="[0-9]{6}"
+                        maxlength="6"
+                        autocomplete="one-time-code"
+                        placeholder="0 0 0 0 0 0"
+                        required
+                        autofocus
+                        style="font-size:1.75rem;letter-spacing:0.4em;text-align:center;padding-bottom:0.75rem;">
+                    <div class="form-hint">Open your authenticator app and enter the current 6-digit code.</div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" style="margin-top: 0.5rem;">
+                    Verify Identity &rarr;
+                </button>
+            </form>
+
+            <div style="margin-top:1.25rem;text-align:center;">
+                <a href="/admin/login" class="btn btn-secondary btn-sm">&larr; Back to login</a>
+            </div>
+        </div>
+
     </div>
 </div>
 {% endblock %}

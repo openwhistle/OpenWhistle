@@ -10,29 +10,31 @@
 {% block content %}
 <div class="container">
     <div class="page-header">
-        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:0.75rem;">
             <a href="/admin/dashboard" class="btn btn-secondary btn-sm">&larr; Dashboard</a>
-            <h1 style="margin:0;">
-                <span class="mono">{{ report.case_number }}</span>
-            </h1>
             <span class="badge badge-{{ report.status.value }}">{{ report.status.value | replace('_', ' ') | title }}</span>
         </div>
+        <div class="page-eyebrow">Case File</div>
+        <h1 style="font-family:var(--font-mono);font-size:clamp(1.1rem,3vw,1.75rem);letter-spacing:0.04em;font-weight:400;">
+            {{ report.case_number }}
+        </h1>
     </div>
 
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:1.25rem;align-items:start;">
 
-        {# Left column: thread + reply #}
+        {# Left column: report + thread + reply #}
         <div>
-            <div class="card">
-                <div class="card-title">Initial Report</div>
-                <div style="margin-bottom:0.5rem;">
+            <div class="panel">
+                <div class="panel-header">
+                    Initial Report
+                    &nbsp;&nbsp;
                     <span class="badge badge-received">{{ report.category.value | replace('_', ' ') | title }}</span>
                 </div>
-                <p style="white-space:pre-wrap;font-size:0.95rem;">{{ report.description }}</p>
+                <p style="white-space:pre-wrap;font-size:0.95rem;color:var(--text-secondary);line-height:1.7;">{{ report.description }}</p>
             </div>
 
-            <div class="card" style="animation-delay:0.05s;">
-                <div class="card-title">Communication Thread</div>
+            <div class="panel" style="animation-delay:0.05s;">
+                <div class="panel-header">Communication Thread</div>
 
                 {% if report.messages %}
                 <div class="thread" style="margin-bottom:1.5rem;">
@@ -47,7 +49,7 @@
                     {% endfor %}
                 </div>
                 {% else %}
-                <p style="color:var(--text-muted);margin-bottom:1.5rem;">No messages yet.</p>
+                <p style="color:var(--text-muted);margin-bottom:1.5rem;font-size:0.88rem;">No messages yet.</p>
                 {% endif %}
 
                 {% if report.status.value != 'closed' %}
@@ -64,7 +66,7 @@
                             required></textarea>
                         <div class="form-hint">This reply will be visible to the whistleblower when they check their report status.</div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Send Reply</button>
+                    <button type="submit" class="btn btn-primary">Send Reply &rarr;</button>
                 </form>
                 {% endif %}
             </div>
@@ -72,22 +74,22 @@
 
         {# Right column: metadata + actions #}
         <div>
-            <div class="card">
-                <div class="card-title">Report Details</div>
+            <div class="panel">
+                <div class="panel-header">Report Details</div>
 
-                <div style="display:flex;flex-direction:column;gap:0.75rem;font-size:0.875rem;">
+                <div style="display:flex;flex-direction:column;gap:1rem;font-size:0.875rem;">
                     <div>
-                        <div style="font-family:var(--font-mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:0.2rem;">Submitted</div>
-                        <span class="mono">{{ report.submitted_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+                        <div style="font-family:var(--font-mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:0.3rem;">Submitted</div>
+                        <span class="mono" style="font-size:0.82rem;">{{ report.submitted_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
                     </div>
 
                     <div>
-                        <div style="font-family:var(--font-mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:0.2rem;">7-Day Acknowledgement (§17 I HinSchG)</div>
+                        <div style="font-family:var(--font-mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:0.3rem;">7-Day Acknowledgement (§17 I HinSchG)</div>
                         {% if report.acknowledged_at %}
-                            <span class="sla-ok mono">&#10003; {{ report.acknowledged_at.strftime('%Y-%m-%d') }}</span>
+                            <span class="sla-ok mono" style="font-size:0.82rem;">&#10003; {{ report.acknowledged_at.strftime('%Y-%m-%d') }}</span>
                         {% else %}
                             {% set days = (now - report.submitted_at).days %}
-                            <span class="{{ 'sla-overdue' if days >= 7 else ('sla-warning' if days >= 5 else 'sla-ok') }} mono">
+                            <span class="{{ 'sla-overdue' if days >= 7 else ('sla-warning' if days >= 5 else 'sla-ok') }} mono" style="font-size:0.82rem;">
                                 Day {{ days }}/7 — not yet acknowledged
                             </span>
                         {% endif %}
@@ -95,9 +97,9 @@
 
                     {% if report.feedback_due_at %}
                     <div>
-                        <div style="font-family:var(--font-mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:0.2rem;">3-Month Feedback Deadline (§17 II HinSchG)</div>
+                        <div style="font-family:var(--font-mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:0.3rem;">3-Month Feedback Deadline (§17 II HinSchG)</div>
                         {% set days_left = (report.feedback_due_at - now).days %}
-                        <span class="{{ 'sla-overdue' if days_left < 0 else ('sla-warning' if days_left < 14 else 'sla-ok') }} mono">
+                        <span class="{{ 'sla-overdue' if days_left < 0 else ('sla-warning' if days_left < 14 else 'sla-ok') }} mono" style="font-size:0.82rem;">
                             {{ report.feedback_due_at.strftime('%Y-%m-%d') }}
                             {% if days_left >= 0 %}({{ days_left }}d remaining){% else %}(overdue){% endif %}
                         </span>
@@ -108,11 +110,11 @@
 
             {# Acknowledge action #}
             {% if not report.acknowledged_at %}
-            <div class="card" style="animation-delay:0.05s;">
-                <div class="card-title">Acknowledge Receipt</div>
-                <p style="font-size:0.875rem;">Send acknowledgement to the whistleblower and start the 3-month feedback clock (§17 HinSchG).</p>
+            <div class="panel" style="animation-delay:0.05s;">
+                <div class="panel-header">Acknowledge Receipt</div>
+                <p style="font-size:0.85rem;margin-bottom:1rem;">Send acknowledgement to the whistleblower and start the 3-month feedback clock (§17 HinSchG).</p>
                 <form method="post" action="/admin/reports/{{ report.id }}/acknowledge">
-                    <button type="submit" class="btn btn-primary" style="width:100%;">
+                    <button type="submit" class="btn btn-primary btn-block">
                         Acknowledge Report
                     </button>
                 </form>
@@ -120,11 +122,12 @@
             {% endif %}
 
             {# Status update #}
-            <div class="card" style="animation-delay:0.08s;">
-                <div class="card-title">Update Status</div>
+            <div class="panel" style="animation-delay:0.08s;">
+                <div class="panel-header">Update Status</div>
                 <form method="post" action="/admin/reports/{{ report.id }}/status">
                     <div class="form-group">
-                        <select class="form-control" name="new_status">
+                        <label class="form-label" for="new-status">New Status</label>
+                        <select class="form-control" id="new-status" name="new_status">
                             {% for s in statuses %}
                             <option value="{{ s.value }}" {{ 'selected' if s.value == report.status.value else '' }}>
                                 {{ s.value | replace('_', ' ') | title }}
@@ -132,17 +135,17 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-secondary" style="width:100%;">Update Status</button>
+                    <button type="submit" class="btn btn-secondary btn-block">Update Status</button>
                 </form>
             </div>
 
             {# Delete (DSGVO Art. 17) #}
-            <div class="card" style="animation-delay:0.1s;border-color:var(--danger);">
-                <div class="card-title" style="color:var(--danger);">Delete Report</div>
-                <p style="font-size:0.875rem;">Permanently delete this report and all messages (DSGVO Art. 17 right to erasure). This action cannot be undone.</p>
+            <div class="panel" style="animation-delay:0.1s;border-top-color:var(--danger);">
+                <div class="panel-header" style="color:var(--danger);">Delete Report</div>
+                <p style="font-size:0.85rem;margin-bottom:1rem;">Permanently delete this report and all messages (DSGVO Art. 17 right to erasure). This action cannot be undone.</p>
                 <form method="post" action="/admin/reports/{{ report.id }}/delete"
                     onsubmit="return confirm('Permanently delete this report and all messages? This cannot be undone.');">
-                    <button type="submit" class="btn btn-danger" style="width:100%;">
+                    <button type="submit" class="btn btn-danger btn-block">
                         Delete Permanently
                     </button>
                 </form>
