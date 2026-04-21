@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security Architecture — OpenWhistle Documentation</title>
+  <meta name="description" content="OpenWhistle security architecture: four-layer IP anonymisation, UUID4 whistleblower PIN, mandatory TOTP MFA, Redis rate limiting without IP tracking, DSGVO-compliant resource hosting, and security headers.">
+  <meta name="theme-color" content="#0a0e13">
+  <link rel="preconnect" href="https://fonts.bunny.net">
+  <link href="https://fonts.bunny.net/css?family=spectral:400,400i,600,700|source-serif-4:300,400,600,700|jetbrains-mono:400,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .layer-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-4);
+      margin: var(--space-6) 0;
+    }
+
+    .layer-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: 8px;
+      display: grid;
+      grid-template-columns: 3.5rem 1fr;
+      overflow: hidden;
+    }
+
+    .layer-number {
+      background: var(--bg-overlay);
+      border-right: 1px solid var(--border-default);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-serif);
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--emerald);
+      opacity: 0.5;
+    }
+
+    .layer-body {
+      padding: var(--space-4) var(--space-5);
+    }
+
+    .layer-title {
+      font-family: var(--font-serif);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+    }
+
+    .layer-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .security-matrix {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: var(--space-6) 0;
+    }
+
+    .matrix-header {
+      background: var(--bg-raised);
+      border-bottom: 1px solid var(--border-default);
+      padding: var(--space-3) var(--space-5);
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+    }
+
+    .header-item {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-primary);
+      font-family: var(--font-serif);
+      font-weight: 600;
+      margin-top: var(--space-1);
+    }
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <nav class="site-nav" role="navigation" aria-label="Primary navigation">
+    <div class="nav-inner">
+      <a href="../index.html" class="nav-logo" aria-label="OpenWhistle home">
+        <span class="nav-logo-mark" aria-hidden="true">OW</span>
+        OpenWhistle
+      </a>
+      <button class="nav-toggle" aria-controls="nav-links" aria-expanded="false" aria-label="Toggle navigation">
+        &#9776;
+      </button>
+      <ul class="nav-links" id="nav-links" role="list">
+        <li><a href="index.html">Docs</a></li>
+        <li><a href="getting-started.html">Get Started</a></li>
+        <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
+        <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank" class="nav-cta">Live Demo</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <aside class="docs-sidebar slide-in" aria-label="Documentation navigation">
+      <span class="sidebar-section-label">Documentation</span>
+      <nav aria-label="Docs pages">
+        <ul class="sidebar-nav" role="list">
+          <li><a href="index.html">Overview</a></li>
+          <li><a href="getting-started.html">Getting Started</a></li>
+          <li><a href="index.html#configuration">Configuration</a></li>
+          <li><a href="security.html" class="active" aria-current="page">Security Architecture</a></li>
+          <li><a href="legal.html">Legal Compliance (HinSchG)</a></li>
+          <li><a href="index.html#deployment">Deployment (Docker)</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="docs-content">
+      <nav class="docs-breadcrumb reveal reveal-d1" aria-label="Breadcrumb">
+        <a href="../index.html">OpenWhistle</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <a href="index.html">Docs</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <span aria-current="page">Security Architecture</span>
+      </nav>
+
+      <div class="prose">
+        <h1 class="reveal reveal-d2">Security Architecture</h1>
+        <p class="reveal reveal-d3" style="font-size: 1.05rem; color: var(--text-secondary); max-width: 60ch;">
+          OpenWhistle is designed on a privacy-by-design principle (DSGVO Art. 25).
+          Every layer of the stack is engineered to protect the whistleblower's identity —
+          even from the system operator.
+        </p>
+
+        <hr class="reveal reveal-d3">
+
+        <!-- Four-layer IP anonymisation -->
+        <h2 class="reveal reveal-d3" id="ip-anonymisation">Four-Layer IP Anonymisation</h2>
+        <p class="reveal reveal-d4">
+          A single misconfiguration should not be able to expose a whistleblower's IP address.
+          OpenWhistle removes this risk through four independent, redundant layers of IP removal:
+        </p>
+
+        <div class="layer-grid reveal reveal-d4" role="list">
+          <div class="layer-card" role="listitem">
+            <div class="layer-number" aria-hidden="true">1</div>
+            <div class="layer-body">
+              <p class="layer-title">nginx — strip X-Forwarded-For</p>
+              <p class="layer-desc">
+                The nginx reverse proxy is configured to not forward any
+                <code>X-Forwarded-For</code> or <code>X-Real-IP</code> headers to the upstream
+                application. Even if a real IP header arrives from a CDN or upstream proxy,
+                nginx removes it before passing the request to the app.
+              </p>
+            </div>
+          </div>
+
+          <div class="layer-card" role="listitem">
+            <div class="layer-number" aria-hidden="true">2</div>
+            <div class="layer-body">
+              <p class="layer-title">Application middleware — drop remote address</p>
+              <p class="layer-desc">
+                A custom ASGI/WSGI middleware intercepts every incoming request and replaces
+                <code>request.client.host</code> (the TCP remote address) with a fixed placeholder
+                value of <code>0.0.0.0</code> before the request reaches any route handler.
+                No route handler ever sees a real IP address.
+              </p>
+            </div>
+          </div>
+
+          <div class="layer-card" role="listitem">
+            <div class="layer-number" aria-hidden="true">3</div>
+            <div class="layer-body">
+              <p class="layer-title">Database schema — no IP column</p>
+              <p class="layer-desc">
+                No table in the PostgreSQL schema has an IP address column. Not for reports,
+                not for sessions, not for audit logs. There is no possibility of accidentally
+                logging an IP because the column simply does not exist.
+              </p>
+            </div>
+          </div>
+
+          <div class="layer-card" role="listitem">
+            <div class="layer-number" aria-hidden="true">4</div>
+            <div class="layer-body">
+              <p class="layer-title">Redis sessions — no identifying metadata</p>
+              <p class="layer-desc">
+                Session records stored in Redis contain only the session ID (a random UUID),
+                a user role, and an expiry timestamp. No IP address, no User-Agent string,
+                no geolocation data. Rate-limiting buckets use hashed action tokens, not IPs.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout-emerald">
+          <span class="callout-label">Defence in depth</span>
+          <p style="margin: 0; font-size: 0.875rem; color: var(--text-secondary);">
+            These four layers are independent. Even if nginx were misconfigured to forward
+            the IP, the middleware would discard it. Even if the middleware had a bug,
+            the schema has no column to store the value. Defence in depth means no single
+            failure point can compromise anonymity.
+          </p>
+        </div>
+
+        <hr>
+
+        <!-- Two-factor whistleblower access -->
+        <h2 id="whistleblower-access">Two-Factor Whistleblower Access</h2>
+        <p>
+          Whistleblowers do not create accounts. Instead, each submitted report generates
+          two credentials that together act as a two-factor authentication for the message thread:
+        </p>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Credential</th>
+              <th>Format</th>
+              <th>Purpose</th>
+              <th>Storage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong style="color: var(--text-primary);">Case Reference</strong></td>
+              <td><code>RPT-YYYYMMDD-NNNNN</code></td>
+              <td>Identifies the report; readable but not guessable without brute-force over a very large space</td>
+              <td>Stored in plain text (not secret on its own)</td>
+            </tr>
+            <tr>
+              <td><strong style="color: var(--text-primary);">PIN</strong></td>
+              <td>UUID4 (36 chars, 122 bits of entropy)</td>
+              <td>Acts as the authentication secret. Shown to the whistleblower once, never again</td>
+              <td>Only a bcrypt hash is persisted in the database</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>
+          Both values must be supplied together to access the <code>/status</code> page.
+          The case reference alone is meaningless without the PIN.
+          A UUID4 has 2<sup>122</sup> possible values — brute-force is computationally infeasible,
+          particularly combined with Redis-backed rate limiting on the <code>/status</code> endpoint.
+        </p>
+
+        <div class="callout callout-gold">
+          <span class="callout-label">Why not a 4-digit PIN?</span>
+          <p style="margin: 0; font-size: 0.875rem; color: var(--text-secondary);">
+            A 4-digit PIN has only 10,000 possible values. An attacker who knows a case reference
+            could enumerate all PINs in seconds. UUID4 eliminates this attack surface entirely
+            while remaining copyable and storable by the whistleblower.
+          </p>
+        </div>
+
+        <hr>
+
+        <!-- Admin MFA -->
+        <h2 id="admin-mfa">Admin Multi-Factor Authentication</h2>
+        <p>
+          All admin accounts require TOTP-based MFA. This is enforced at the framework level —
+          there is no configuration option to disable it. The enforcement happens in two places:
+        </p>
+
+        <ul>
+          <li>
+            <strong>Setup wizard:</strong> TOTP enrollment is a mandatory step before the first
+            admin account becomes active. The account row is flagged as incomplete until the
+            TOTP secret is confirmed with a valid 6-digit code.
+          </li>
+          <li>
+            <strong>Login flow:</strong> After password verification, every login session requires
+            a TOTP code. Sessions are stored in Redis with a configurable expiry (default: 8 hours).
+          </li>
+        </ul>
+
+        <p>
+          OIDC login is supported for organisations that use an identity provider (Keycloak,
+          Azure AD, Okta, etc.). When OIDC is configured, the identity provider is responsible
+          for MFA enforcement — OpenWhistle verifies that the OIDC provider's MFA claim is present
+          in the token before granting access.
+        </p>
+
+        <div class="callout callout-emerald">
+          <span class="callout-label">Compatible authenticators</span>
+          <p style="margin: 0; font-size: 0.875rem; color: var(--text-secondary);">
+            Any RFC 6238-compliant TOTP application works: Aegis Authenticator (Android),
+            Bitwarden Authenticator, Google Authenticator, Authy, or hardware tokens (YubiKey
+            with TOTP support). Prefer open-source authenticators for the most trustworthy setup.
+          </p>
+        </div>
+
+        <hr>
+
+        <!-- Rate limiting -->
+        <h2 id="rate-limiting">Redis Rate Limiting Without IP Tracking</h2>
+        <p>
+          Traditional rate limiting ties request counts to the client's IP address.
+          OpenWhistle cannot do this without violating the IP anonymisation guarantee.
+          Instead, rate limiting uses a combination of:
+        </p>
+
+        <ul>
+          <li>
+            <strong>Action-scoped buckets:</strong> Each rate-limited endpoint has a sliding
+            window counter in Redis keyed by a hash of the endpoint path plus a randomly rotated
+            salt. This limits total submission velocity without identifying any individual requester.
+          </li>
+          <li>
+            <strong>Session-scoped limits for authenticated endpoints:</strong> Admin login
+            attempts are rate-limited per username (not per IP). After 10 failed attempts,
+            the account is temporarily locked for 15 minutes, enforced via Redis TTL.
+          </li>
+          <li>
+            <strong>CAPTCHA for public submission (optional):</strong> An optional
+            hCaptcha integration can be enabled for the <code>/submit</code> endpoint.
+            When enabled, hCaptcha's self-hosted mode is used to avoid external data transfer.
+          </li>
+        </ul>
+
+        <hr>
+
+        <!-- DSGVO compliance -->
+        <h2 id="dsgvo">DSGVO-Compliant Resource Hosting</h2>
+        <p>
+          Loading resources from external CDNs (fonts, JavaScript libraries, analytics)
+          causes the end user's IP address to be transmitted to a third party.
+          A German court (LG München I, case 3 O 17493/20, January 2022) ruled that
+          loading Google Fonts without explicit consent violates DSGVO Art. 6(1)(a).
+        </p>
+
+        <p>OpenWhistle's approach:</p>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Resource type</th>
+              <th>Approach</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Web fonts</td>
+              <td>Fetched at build time from Bunny Fonts (EU-hosted, DSGVO-compliant CDN), then self-hosted within the Docker image. No runtime external font requests.</td>
+            </tr>
+            <tr>
+              <td>CSS &amp; JavaScript</td>
+              <td>All UI assets are bundled and served by nginx. No external library CDNs.</td>
+            </tr>
+            <tr>
+              <td>Analytics</td>
+              <td>None. OpenWhistle contains zero tracking code.</td>
+            </tr>
+            <tr>
+              <td>Error monitoring</td>
+              <td>Server-side only (structured logging to stdout), never client-side SDKs that phone home.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <hr>
+
+        <!-- Security headers -->
+        <h2 id="security-headers">HTTP Security Headers</h2>
+        <p>
+          nginx is configured to send the following security headers with every response:
+        </p>
+
+        <pre data-lang="nginx config"><code>Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+Content-Security-Policy:   default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'
+X-Frame-Options:           DENY
+X-Content-Type-Options:    nosniff
+Referrer-Policy:           no-referrer
+Permissions-Policy:        camera=(), microphone=(), geolocation=(), payment=()
+Cross-Origin-Opener-Policy: same-origin</code></pre>
+
+        <p>
+          The <code>Content-Security-Policy</code> blocks all external resources at the browser level,
+          providing a client-side safety net that complements the server-side resource self-hosting.
+        </p>
+
+        <div class="callout callout-emerald">
+          <span class="callout-label">HSTS preloading</span>
+          <p style="margin: 0; font-size: 0.875rem; color: var(--text-secondary);">
+            In production, submit your domain to the
+            <a href="https://hstspreload.org" rel="noopener noreferrer" target="_blank">HSTS preload list</a>
+            so browsers refuse any non-HTTPS connection before the first request is even made.
+            This prevents SSL-stripping attacks.
+          </p>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <nav class="docs-pagination" aria-label="Page navigation">
+        <a href="getting-started.html" class="docs-page-link prev">
+          <span class="docs-page-link-label">&larr; Previous</span>
+          <span class="docs-page-link-title">Getting Started</span>
+        </a>
+        <a href="legal.html" class="docs-page-link next">
+          <span class="docs-page-link-label">Next &rarr;</span>
+          <span class="docs-page-link-title">Legal Compliance (HinSchG)</span>
+        </a>
+      </nav>
+    </main>
+  </div>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-inner">
+      <div>
+        <p class="footer-brand">OpenWhistle</p>
+        <p class="footer-desc">
+          Open-source HinSchG-compliant whistleblower platform. Self-hosted. Privacy-first.
+        </p>
+      </div>
+      <nav aria-label="Footer navigation">
+        <ul class="footer-links" role="list">
+          <li><a href="../index.html">Home</a></li>
+          <li><a href="index.html">Docs</a></li>
+          <li><a href="legal.html">Legal</a></li>
+          <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
+        </ul>
+      </nav>
+      <div class="footer-legal">
+        GNU General Public License v3.0 &mdash; &copy; OpenWhistle Contributors &mdash; <a href="https://openwhistle.com" style="color: var(--text-muted); text-decoration: none;">openwhistle.com</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const toggle = document.querySelector('.nav-toggle');
+    const navLinks = document.getElementById('nav-links');
+    if (toggle && navLinks) {
+      toggle.addEventListener('click', () => {
+        const open = toggle.getAttribute('aria-expanded') === 'true';
+        toggle.setAttribute('aria-expanded', String(!open));
+        navLinks.classList.toggle('open', !open);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Getting Started — OpenWhistle Documentation</title>
+  <meta name="description" content="Step-by-step installation guide for OpenWhistle: prerequisites, Docker Compose setup, first-run wizard, admin login, and receiving your first report.">
+  <meta name="theme-color" content="#0a0e13">
+  <link rel="preconnect" href="https://fonts.bunny.net">
+  <link href="https://fonts.bunny.net/css?family=spectral:400,400i,600,700|source-serif-4:300,400,600,700|jetbrains-mono:400,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .step {
+      display: grid;
+      grid-template-columns: 2.5rem 1fr;
+      gap: var(--space-4);
+      margin-bottom: var(--space-10);
+      align-items: start;
+    }
+
+    .step-number {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      background: var(--bg-overlay);
+      border: 1px solid var(--border-default);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--emerald);
+      font-weight: 500;
+      flex-shrink: 0;
+      margin-top: 0.2rem;
+    }
+
+    .step-body h3 {
+      margin-top: 0;
+    }
+
+    .prereq-list {
+      list-style: none;
+      margin: var(--space-4) 0;
+    }
+
+    .prereq-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-3);
+      padding: var(--space-3) 0;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .prereq-list li:last-child {
+      border-bottom: none;
+    }
+
+    .prereq-icon {
+      color: var(--emerald);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .prereq-name {
+      color: var(--text-primary);
+      font-weight: 600;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .version-badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.06em;
+      color: var(--emerald);
+      background: var(--emerald-glow);
+      border: 1px solid var(--emerald-dim);
+      border-radius: 3px;
+      padding: 1px 5px;
+      margin-left: var(--space-2);
+      vertical-align: middle;
+    }
+
+    .wizard-steps {
+      list-style: none;
+      counter-reset: wizard-step;
+      margin: var(--space-4) 0;
+    }
+
+    .wizard-steps li {
+      counter-increment: wizard-step;
+      padding: var(--space-3) var(--space-3) var(--space-3) 3rem;
+      position: relative;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .wizard-steps li:last-child {
+      border-bottom: none;
+    }
+
+    .wizard-steps li::before {
+      content: counter(wizard-step);
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1.8rem;
+      height: 1.8rem;
+      background: var(--bg-overlay);
+      border: 1px solid var(--border-default);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--gold);
+    }
+
+    .inline-note {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      display: block;
+      margin-top: var(--space-2);
+      letter-spacing: 0.04em;
+    }
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <nav class="site-nav" role="navigation" aria-label="Primary navigation">
+    <div class="nav-inner">
+      <a href="../index.html" class="nav-logo" aria-label="OpenWhistle home">
+        <span class="nav-logo-mark" aria-hidden="true">OW</span>
+        OpenWhistle
+      </a>
+      <button class="nav-toggle" aria-controls="nav-links" aria-expanded="false" aria-label="Toggle navigation">
+        &#9776;
+      </button>
+      <ul class="nav-links" id="nav-links" role="list">
+        <li><a href="index.html">Docs</a></li>
+        <li><a href="getting-started.html" aria-current="page">Get Started</a></li>
+        <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
+        <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank" class="nav-cta">Live Demo</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+    <aside class="docs-sidebar slide-in" aria-label="Documentation navigation">
+      <span class="sidebar-section-label">Documentation</span>
+      <nav aria-label="Docs pages">
+        <ul class="sidebar-nav" role="list">
+          <li><a href="index.html">Overview</a></li>
+          <li><a href="getting-started.html" class="active" aria-current="page">Getting Started</a></li>
+          <li><a href="index.html#configuration">Configuration</a></li>
+          <li><a href="security.html">Security Architecture</a></li>
+          <li><a href="legal.html">Legal Compliance (HinSchG)</a></li>
+          <li><a href="index.html#deployment">Deployment (Docker)</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="docs-content">
+      <nav class="docs-breadcrumb reveal reveal-d1" aria-label="Breadcrumb">
+        <a href="../index.html">OpenWhistle</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <a href="index.html">Docs</a>
+        <span class="sep" aria-hidden="true">/</span>
+        <span aria-current="page">Getting Started</span>
+      </nav>
+
+      <div class="prose">
+        <h1 class="reveal reveal-d2">Getting Started</h1>
+        <p class="reveal reveal-d3" style="font-size: 1.05rem; color: var(--text-secondary); max-width: 60ch;">
+          This guide walks you through installing OpenWhistle from scratch on any
+          Linux host with Docker. Estimated time: 10&ndash;15 minutes.
+        </p>
+
+        <hr class="reveal reveal-d3">
+
+        <!-- Step 1: Prerequisites -->
+        <div class="step reveal reveal-d4">
+          <div class="step-number" aria-hidden="true">01</div>
+          <div class="step-body">
+            <h3 id="prerequisites">Prerequisites</h3>
+            <p>
+              OpenWhistle ships as a complete Docker Compose stack. You do not need to install
+              PostgreSQL or Redis manually — they run as containers. You only need the following
+              on the host:
+            </p>
+
+            <ul class="prereq-list" role="list">
+              <li>
+                <span class="prereq-icon" aria-hidden="true">&#10003;</span>
+                <div>
+                  <span class="prereq-name">Docker Engine <span class="version-badge">&ge; 24.0</span></span>
+                  <span>The Docker daemon must be running. On Linux, ensure your user is in the <code>docker</code> group or use <code>sudo</code>.</span>
+                </div>
+              </li>
+              <li>
+                <span class="prereq-icon" aria-hidden="true">&#10003;</span>
+                <div>
+                  <span class="prereq-name">Docker Compose Plugin <span class="version-badge">&ge; 2.20</span></span>
+                  <span>The <code>docker compose</code> (V2) command, not the legacy standalone <code>docker-compose</code> binary.</span>
+                </div>
+              </li>
+              <li>
+                <span class="prereq-icon" aria-hidden="true">&#10003;</span>
+                <div>
+                  <span class="prereq-name">Git</span>
+                  <span>To clone the repository. Alternatively, download a release archive from GitHub.</span>
+                </div>
+              </li>
+              <li>
+                <span class="prereq-icon" aria-hidden="true">&#10003;</span>
+                <div>
+                  <span class="prereq-name">Outbound internet access (build time only)</span>
+                  <span>Required to pull the base Docker images. After the initial pull, the system is fully self-contained.</span>
+                </div>
+              </li>
+              <li>
+                <span class="prereq-icon" aria-hidden="true">&#10003;</span>
+                <div>
+                  <span class="prereq-name">Open port 4009 (development) or 443 (production)</span>
+                  <span>The nginx container listens on port 4009 by default. In production, configure TLS and use port 443.</span>
+                </div>
+              </li>
+            </ul>
+
+            <div class="callout callout-emerald">
+              <span class="callout-label">Included in the Docker stack</span>
+              <p style="margin: 0; font-size: 0.875rem; color: var(--text-secondary);">
+                The Compose file starts PostgreSQL 18, Redis 8, the OpenWhistle application,
+                and an nginx reverse proxy. You do not need to install these separately.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Installation -->
+        <div class="step reveal reveal-d4">
+          <div class="step-number" aria-hidden="true">02</div>
+          <div class="step-body">
+            <h3 id="installation">Installation</h3>
+            <p>Clone the repository and copy the environment template:</p>
+
+            <pre data-lang="bash"><code><span style="color:var(--text-muted)"># Clone from GitHub</span>
+git clone https://github.com/openwhistle/OpenWhistle
+cd OpenWhistle
+
+<span style="color:var(--text-muted)"># Copy the environment variable template</span>
+cp .env.example .env</code></pre>
+
+            <p>
+              Open <code>.env</code> in your editor. The most important variables to set
+              for a working deployment:
+            </p>
+
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Variable</th>
+                  <th>Description</th>
+                  <th>Required</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>SECRET_KEY</code></td>
+                  <td>Application secret key. Generate with <code>openssl rand -hex 32</code>.</td>
+                  <td><strong style="color: var(--danger);">Yes</strong></td>
+                </tr>
+                <tr>
+                  <td><code>DATABASE_URL</code></td>
+                  <td>PostgreSQL connection string. Default matches the Compose service.</td>
+                  <td><strong style="color: var(--danger);">Yes</strong></td>
+                </tr>
+                <tr>
+                  <td><code>REDIS_URL</code></td>
+                  <td>Redis connection string. Default matches the Compose service.</td>
+                  <td><strong style="color: var(--danger);">Yes</strong></td>
+                </tr>
+                <tr>
+                  <td><code>ALLOWED_HOSTS</code></td>
+                  <td>Comma-separated list of valid hostnames (e.g. <code>mycompany.example.com</code>).</td>
+                  <td>Production</td>
+                </tr>
+                <tr>
+                  <td><code>OIDC_*</code></td>
+                  <td>OIDC provider settings for SSO login. Optional; database auth is always available.</td>
+                  <td>Optional</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <p>Then start the stack:</p>
+
+            <pre data-lang="bash"><code><span style="color:var(--text-muted)"># Start all services in detached mode</span>
+docker compose up -d
+
+<span style="color:var(--text-muted)"># Verify all containers are healthy</span>
+docker compose ps</code></pre>
+
+            <p>
+              Expected output shows four services — <code>db</code>, <code>redis</code>,
+              <code>app</code>, and <code>nginx</code> — all with status <code>running</code>.
+            </p>
+
+            <div class="callout callout-gold">
+              <span class="callout-label">Database migrations</span>
+              <p style="margin: 0; font-size: 0.875rem; color: var(--text-secondary);">
+                The application container runs database migrations automatically on startup via Alembic.
+                If migrations fail (e.g., the database is unreachable), the container exits with a
+                non-zero code. Check <code>docker compose logs app</code> if a container fails to start.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Setup Wizard -->
+        <div class="step reveal reveal-d5">
+          <div class="step-number" aria-hidden="true">03</div>
+          <div class="step-body">
+            <h3 id="setup-wizard">First-Run Setup Wizard</h3>
+            <p>
+              On a fresh installation with no admin accounts, every route except
+              <code>/setup</code> redirects to the setup wizard. Open your browser and navigate to:
+            </p>
+
+            <pre data-lang="url"><code>http://localhost:4009/setup</code></pre>
+
+            <p>The wizard walks you through the following steps in order:</p>
+
+            <ol class="wizard-steps" role="list">
+              <li>
+                <strong>Welcome &amp; system check</strong> — verifies that the database is connected,
+                migrations are complete, and Redis is reachable.
+              </li>
+              <li>
+                <strong>Organisation details</strong> — the name of your organisation, displayed in the
+                whistleblower submission form and email notifications.
+              </li>
+              <li>
+                <strong>Admin account creation</strong> — enter a username and a strong password
+                (minimum 12 characters, enforced). The password is hashed with bcrypt before storage.
+              </li>
+              <li>
+                <strong>TOTP enrollment</strong> — scan the QR code with an authenticator app
+                (e.g., Aegis, Bitwarden Authenticator, Google Authenticator). Enter the 6-digit code
+                to confirm enrollment. MFA cannot be skipped.
+              </li>
+              <li>
+                <strong>Finish</strong> — the <code>/setup</code> route is disabled permanently.
+                You are redirected to the admin login page.
+              </li>
+            </ol>
+
+            <div class="callout callout-danger">
+              <span class="callout-label">Security notice</span>
+              <p style="margin: 0; font-size: 0.875rem; color: var(--text-secondary);">
+                The <code>/setup</code> route is only accessible when no admin account exists in the
+                database. After wizard completion it becomes a 404. If you need to reset the
+                administrator, you must connect to PostgreSQL directly and delete the admin record,
+                which re-enables the wizard.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4: Logging in -->
+        <div class="step reveal reveal-d5">
+          <div class="step-number" aria-hidden="true">04</div>
+          <div class="step-body">
+            <h3 id="admin-login">Logging in as Admin</h3>
+            <p>Navigate to the admin login page:</p>
+
+            <pre data-lang="url"><code>http://localhost:4009/admin/login</code></pre>
+
+            <p>
+              Enter the username and password you set during the wizard. After successful
+              password verification, you will be prompted for your TOTP code. Enter the
+              6-digit code from your authenticator app.
+            </p>
+
+            <p>The admin portal gives you access to:</p>
+
+            <ul>
+              <li>Incoming reports and their current status</li>
+              <li>§17 SLA deadline tracker (7-day acknowledgement, 3-month feedback)</li>
+              <li>Bidirectional message thread per report</li>
+              <li>Report status management (open, in progress, closed)</li>
+              <li>Hard deletion of closed reports (DSGVO §26)</li>
+              <li>Additional admin account management</li>
+            </ul>
+
+            <span class="inline-note">
+              Session duration defaults to 8 hours and is stored in Redis.
+              Sessions are invalidated on logout or server-side expiry.
+            </span>
+          </div>
+        </div>
+
+        <!-- Step 5: First report -->
+        <div class="step reveal reveal-d6">
+          <div class="step-number" aria-hidden="true">05</div>
+          <div class="step-body">
+            <h3 id="first-report">Receiving Your First Report</h3>
+            <p>
+              To test the full whistleblower flow, open a private / incognito browser window
+              (to avoid any session bleed) and navigate to the submission page:
+            </p>
+
+            <pre data-lang="url"><code>http://localhost:4009/submit</code></pre>
+
+            <p>
+              Fill in the report form. No login or personal information is required.
+              After submission, the system shows a screen with:
+            </p>
+
+            <ul>
+              <li>A short numeric <strong>case reference</strong> (e.g., <code>RPT-20240714-00001</code>)</li>
+              <li>A UUID4 <strong>PIN</strong> — shown only once, must be saved by the whistleblower</li>
+            </ul>
+
+            <div class="callout callout-emerald">
+              <span class="callout-label">What happens next</span>
+              <p style="margin: 0; font-size: 0.875rem; color: var(--text-secondary);">
+                The report appears in the admin dashboard immediately. The §17 7-day
+                acknowledgement timer starts. The admin can acknowledge, respond, and
+                update the status. The whistleblower can return any time using their
+                case reference + PIN to read admin replies and send follow-up messages.
+              </p>
+            </div>
+
+            <pre data-lang="url"><code><span style="color:var(--text-muted)"># Whistleblower return URL</span>
+http://localhost:4009/status</code></pre>
+
+            <p>
+              At <code>/status</code>, the whistleblower enters their case reference and UUID4 PIN
+              to access the message thread. No cookies, no account, no tracking.
+            </p>
+          </div>
+        </div>
+
+        <hr>
+
+        <h2 id="next-steps">Next Steps</h2>
+        <p>
+          Now that OpenWhistle is running locally, consider reading the following pages
+          before deploying to production:
+        </p>
+        <ul>
+          <li><a href="security.html">Security Architecture</a> — understand all anonymisation layers and configure security headers</li>
+          <li><a href="legal.html">Legal Compliance (HinSchG)</a> — verify your deployment meets all statutory obligations</li>
+        </ul>
+      </div>
+
+      <!-- Pagination -->
+      <nav class="docs-pagination" aria-label="Page navigation">
+        <a href="index.html" class="docs-page-link prev">
+          <span class="docs-page-link-label">&larr; Previous</span>
+          <span class="docs-page-link-title">Overview</span>
+        </a>
+        <a href="security.html" class="docs-page-link next">
+          <span class="docs-page-link-label">Next &rarr;</span>
+          <span class="docs-page-link-title">Security Architecture</span>
+        </a>
+      </nav>
+    </main>
+  </div>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-inner">
+      <div>
+        <p class="footer-brand">OpenWhistle</p>
+        <p class="footer-desc">
+          Open-source HinSchG-compliant whistleblower platform. Self-hosted. Privacy-first.
+        </p>
+      </div>
+      <nav aria-label="Footer navigation">
+        <ul class="footer-links" role="list">
+          <li><a href="../index.html">Home</a></li>
+          <li><a href="index.html">Docs</a></li>
+          <li><a href="security.html">Security</a></li>
+          <li><a href="legal.html">Legal</a></li>
+          <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
+        </ul>
+      </nav>
+      <div class="footer-legal">
+        GNU General Public License v3.0 &mdash; &copy; OpenWhistle Contributors &mdash; <a href="https://openwhistle.com" style="color: var(--text-muted); text-decoration: none;">openwhistle.com</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const toggle = document.querySelector('.nav-toggle');
+    const navLinks = document.getElementById('nav-links');
+    if (toggle && navLinks) {
+      toggle.addEventListener('click', () => {
+        const open = toggle.getAttribute('aria-expanded') === 'true';
+        toggle.setAttribute('aria-expanded', String(!open));
+        navLinks.classList.toggle('open', !open);
+      });
+    }
+  </script>
+</body>
+</html>
