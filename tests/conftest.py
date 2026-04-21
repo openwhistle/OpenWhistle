@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+from sqlalchemy.pool import NullPool
 
 # Set test environment before importing app modules
 os.environ.setdefault("SECRET_KEY", "test-secret-key-not-for-production")
@@ -23,7 +24,7 @@ os.environ.setdefault(
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/1")  # DB 1 for tests
 os.environ.setdefault("DEMO_MODE", "false")
 
-from app.database import Base  # noqa: E402
+from app.database import Base, get_db  # noqa: E402
 from app.main import app  # noqa: E402
 
 _ENUM_TYPES = ["reportcategory", "reportstatus", "reportsender"]
@@ -31,6 +32,7 @@ _ENUM_TYPES = ["reportcategory", "reportstatus", "reportsender"]
 
 @pytest_asyncio.fixture(scope="session", loop_scope="session")
 async def db_engine() -> AsyncGenerator[AsyncEngine]:
+    """Session-scoped: runs alembic migrations once for the entire test session."""
     from app.config import settings
 
     engine = create_async_engine(settings.database_url, echo=False)
@@ -63,18 +65,37 @@ async def db_engine() -> AsyncGenerator[AsyncEngine]:
 
 @pytest_asyncio.fixture
 async def db_session(db_engine: AsyncEngine) -> AsyncGenerator[AsyncSession]:
-    session_factory = async_sessionmaker(db_engine, expire_on_commit=False)
+    """Function-scoped session using NullPool — avoids cross-loop connection reuse."""
+    from app.config import settings
+
+    engine = create_async_engine(settings.database_url, poolclass=NullPool)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
     async with session_factory() as session:
         yield session
         await session.rollback()
+    await engine.dispose()
 
 
 @pytest_asyncio.fixture
 async def client(db_engine: AsyncEngine) -> AsyncGenerator[AsyncClient]:
-    """HTTP test client — depends on db_engine to ensure schema exists first."""
+    """HTTP test client — overrides get_db with NullPool to avoid cross-loop errors."""
+    from app.config import settings
+
+    test_engine = create_async_engine(settings.database_url, poolclass=NullPool)
+    test_session_factory = async_sessionmaker(test_engine, expire_on_commit=False)
+
+    async def override_get_db() -> AsyncGenerator[AsyncSession]:
+        async with test_session_factory() as session:
+            yield session
+
+    app.dependency_overrides[get_db] = override_get_db
+
     async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://test",
         follow_redirects=True,
     ) as ac:
         yield ac
+
+    app.dependency_overrides.pop(get_db, None)
+    await test_engine.dispose()

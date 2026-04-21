@@ -67,7 +67,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         if "x-powered-by" in response.headers:
             del response.headers["x-powered-by"]
 
-        return response  # type: ignore[return-value]
+        return response
 
 
 async def check_ip_warning() -> bool:
