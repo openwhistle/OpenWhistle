@@ -1,10 +1,9 @@
 """Security middleware: IP detection warning, security headers, no IP logging."""
 
-from fastapi import Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.datastructures import MutableHeaders
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 # Headers that indicate an upstream proxy is forwarding IP information.
-# Their presence means IP data is flowing into our stack — we must warn the admin.
 _IP_REVEAL_HEADERS = frozenset(
     [
         "x-forwarded-for",
@@ -19,15 +18,43 @@ _IP_REVEAL_HEADERS = frozenset(
 
 _REDIS_IP_WARNING_KEY = "openwhistle:ip_headers_detected"
 
+_SECURITY_HEADERS: dict[str, str] = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "X-XSS-Protection": "0",
+    "Referrer-Policy": "no-referrer",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+    "Content-Security-Policy": (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "font-src 'self'; "
+        "img-src 'self' data:; "
+        "connect-src 'self'; "
+        "frame-ancestors 'none';"
+    ),
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+}
 
-class SecurityMiddleware(BaseHTTPMiddleware):
-    """Applies security headers and detects upstream IP leakage."""
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        # Detect IP-leaking headers from upstream proxies.
-        # We do NOT read the values — we only note their presence.
+class SecurityMiddleware:
+    """Pure ASGI middleware: security headers + upstream IP-leakage detection.
+
+    Implemented as a raw ASGI callable (not BaseHTTPMiddleware) to avoid anyio
+    task-group issues when tests run with different event loops per test function.
+    """
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        headers: dict[str, str] = dict(scope.get("headers", []))  # type: ignore[arg-type]
         ip_headers_present = any(
-            h in _IP_REVEAL_HEADERS for h in (k.lower() for k in request.headers.keys())
+            k.decode().lower() in _IP_REVEAL_HEADERS for k in headers
         )
 
         if ip_headers_present:
@@ -37,37 +64,21 @@ class SecurityMiddleware(BaseHTTPMiddleware):
                 redis = await get_redis()
                 await redis.set(_REDIS_IP_WARNING_KEY, "1")
             except Exception:  # noqa: BLE001, S110
-                pass  # Non-fatal — warning storage is best-effort
+                pass
 
-        response = await call_next(request)
+        async def send_with_security(message: Message) -> None:
+            if message["type"] == "http.response.start":
+                mutable = MutableHeaders(scope=message)
+                for name, value in _SECURITY_HEADERS.items():
+                    mutable[name] = value
+                mutable.update(_SECURITY_HEADERS)
+                # Remove server identification headers
+                for h in ("server", "x-powered-by"):
+                    if h in mutable:
+                        del mutable[h]
+            await send(message)
 
-        # Security headers
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
-        response.headers["X-XSS-Protection"] = "0"
-        response.headers["Referrer-Policy"] = "no-referrer"
-        response.headers["Permissions-Policy"] = (
-            "camera=(), microphone=(), geolocation=(), payment=()"
-        )
-        response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline'; "
-            "style-src 'self' 'unsafe-inline'; "
-            "font-src 'self'; "
-            "img-src 'self' data:; "
-            "connect-src 'self'; "
-            "frame-ancestors 'none';"
-        )
-        response.headers["Strict-Transport-Security"] = (
-            "max-age=31536000; includeSubDomains; preload"
-        )
-        # Explicitly remove any server identification
-        if "server" in response.headers:
-            del response.headers["server"]
-        if "x-powered-by" in response.headers:
-            del response.headers["x-powered-by"]
-
-        return response
+        await self.app(scope, receive, send_with_security)
 
 
 async def check_ip_warning() -> bool:
