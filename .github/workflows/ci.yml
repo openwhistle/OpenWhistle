@@ -87,7 +87,7 @@ jobs:
         continue-on-error: true
 
   docker:
-    name: Docker Build
+    name: Docker Build & Smoke Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -101,5 +101,70 @@ jobs:
           context: .
           push: false
           tags: openwhistle:ci
+          load: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Smoke test — start full stack and verify /health
+        run: |
+          # Write a minimal compose override for CI
+          cat > docker-compose.ci.yml <<'EOF'
+          services:
+            app:
+              image: openwhistle:ci
+              environment:
+                DATABASE_URL: "postgresql+asyncpg://openwhistle:openwhistle@db:5432/openwhistle"
+                REDIS_URL: "redis://redis:6379/0"
+                SECRET_KEY: "ci-smoke-test-secret-not-for-production"
+                DEMO_MODE: "false"
+              ports:
+                - "4009:4009"
+              depends_on:
+                db:
+                  condition: service_healthy
+                redis:
+                  condition: service_healthy
+            db:
+              image: postgres:18-alpine
+              environment:
+                POSTGRES_USER: openwhistle
+                POSTGRES_PASSWORD: openwhistle
+                POSTGRES_DB: openwhistle
+              healthcheck:
+                test: ["CMD-SHELL", "pg_isready -U openwhistle -d openwhistle"]
+                interval: 5s
+                timeout: 5s
+                retries: 10
+            redis:
+              image: redis:8-alpine
+              healthcheck:
+                test: ["CMD", "redis-cli", "ping"]
+                interval: 5s
+                timeout: 5s
+                retries: 10
+          EOF
+
+          docker compose -f docker-compose.ci.yml up -d
+
+          # Wait up to 60s for /health to return 200
+          for i in $(seq 1 30); do
+            status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4009/health || true)
+            if [ "$status" = "200" ]; then
+              echo "✓ Health check passed (attempt $i)"
+              break
+            fi
+            echo "Attempt $i: status=$status — waiting..."
+            sleep 2
+          done
+
+          # Assert health endpoint returns ok
+          response=$(curl -s http://localhost:4009/health)
+          echo "Response: $response"
+          echo "$response" | grep -q '"status":"ok"'
+
+          # Assert /setup is reachable (wizard available on fresh DB)
+          setup_status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4009/setup)
+          echo "Setup page status: $setup_status"
+          [ "$setup_status" = "200" ]
+
+          docker compose -f docker-compose.ci.yml down -v
