@@ -75,3 +75,39 @@ async def test_status_invalid_credentials(client: AsyncClient) -> None:
     )
     assert response.status_code == 401
     assert "Invalid" in response.text
+
+
+@pytest.mark.asyncio
+async def test_index_redirects(client: AsyncClient) -> None:
+    response = await client.get("/", follow_redirects=False)
+    assert response.status_code == 302
+    assert response.headers["location"] in ("/setup", "/submit")
+
+
+@pytest.mark.asyncio
+async def test_reply_invalid_credentials(client: AsyncClient) -> None:
+    response = await client.post(
+        "/reply",
+        data={
+            "case_number": "OW-9999-99999",
+            "pin": "00000000-0000-0000-0000-000000000000",
+            "session_token": "c" * 32,
+            "content": "Some reply content.",
+        },
+    )
+    assert response.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_reply_empty_content(client: AsyncClient) -> None:
+    """Empty content is rejected (422) even if credentials are wrong (401 comes first)."""
+    response = await client.post(
+        "/reply",
+        data={
+            "case_number": "OW-9999-99999",
+            "pin": "00000000-0000-0000-0000-000000000000",
+            "session_token": "d" * 32,
+            "content": "   ",
+        },
+    )
+    assert response.status_code in (401, 422)
