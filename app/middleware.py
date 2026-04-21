@@ -52,9 +52,11 @@ class SecurityMiddleware:
             await self.app(scope, receive, send)
             return
 
-        headers: dict[str, str] = dict(scope.get("headers", []))  # type: ignore[arg-type]
+        # scope["headers"] is list[tuple[bytes, bytes]] in the ASGI spec
+        raw_headers: list[tuple[bytes, bytes]] = list(scope.get("headers", []))
         ip_headers_present = any(
-            k.decode().lower() in _IP_REVEAL_HEADERS for k in headers
+            name.decode("latin-1").lower() in _IP_REVEAL_HEADERS
+            for name, _ in raw_headers
         )
 
         if ip_headers_present:

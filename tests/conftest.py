@@ -78,8 +78,12 @@ async def db_session(db_engine: AsyncEngine) -> AsyncGenerator[AsyncSession]:
 
 @pytest_asyncio.fixture
 async def client(db_engine: AsyncEngine) -> AsyncGenerator[AsyncClient]:
-    """HTTP test client — overrides get_db with NullPool to avoid cross-loop errors."""
+    """HTTP test client — fresh DB + Redis connections per test to avoid cross-loop errors."""
     from app.config import settings
+    from app.redis_client import close_redis
+
+    # Reset Redis so the next request creates a fresh connection on this loop
+    await close_redis()
 
     test_engine = create_async_engine(settings.database_url, poolclass=NullPool)
     test_session_factory = async_sessionmaker(test_engine, expire_on_commit=False)
@@ -99,3 +103,4 @@ async def client(db_engine: AsyncEngine) -> AsyncGenerator[AsyncClient]:
 
     app.dependency_overrides.pop(get_db, None)
     await test_engine.dispose()
+    await close_redis()  # Clean up so next test starts fresh
