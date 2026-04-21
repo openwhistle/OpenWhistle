@@ -23,8 +23,8 @@ def _run_alembic_upgrade() -> None:
     Alembic upgrade head is idempotent: it only runs missing migrations.
     """
     logger.info("Running database migrations (alembic upgrade head)…")
-    result = subprocess.run(
-        ["alembic", "upgrade", "head"],
+    result = subprocess.run(  # noqa: S603
+        ["alembic", "upgrade", "head"],  # noqa: S607
         capture_output=True,
         text=True,
         check=False,
@@ -40,7 +40,7 @@ def _run_alembic_upgrade() -> None:
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     _run_alembic_upgrade()
 
     if settings.demo_mode:
@@ -72,8 +72,8 @@ def create_app() -> FastAPI:
         name="static",
     )
 
-    from app.api.auth import router as auth_router
     from app.api.admin import router as admin_router
+    from app.api.auth import router as auth_router
     from app.api.reports import router as reports_router
     from app.api.wizard import router as wizard_router
 

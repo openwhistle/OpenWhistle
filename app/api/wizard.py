@@ -3,17 +3,17 @@
 import uuid
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.templating import templates
 from app.models.setup import SetupStatus
 from app.models.user import AdminUser
 from app.services.auth import hash_password
 from app.services.mfa import generate_qr_code_base64, generate_totp_secret, verify_totp
+from app.templating import templates
 
 router = APIRouter()
 
@@ -25,7 +25,9 @@ async def _is_setup_complete(db: AsyncSession) -> bool:
 
 
 @router.get("/setup", response_class=HTMLResponse, response_model=None)
-async def setup_get(request: Request, db: AsyncSession = Depends(get_db)) -> HTMLResponse | RedirectResponse:
+async def setup_get(
+    request: Request, db: AsyncSession = Depends(get_db)
+) -> HTMLResponse | RedirectResponse:
     if await _is_setup_complete(db):
         return RedirectResponse("/admin/login", status_code=302)
 

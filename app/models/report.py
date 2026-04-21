@@ -12,7 +12,7 @@ from sqlalchemy.sql import func
 from app.database import Base
 
 
-class ReportCategory(str, enum.Enum):
+class ReportCategory(enum.StrEnum):
     financial_fraud = "financial_fraud"
     workplace_safety = "workplace_safety"
     environmental = "environmental"
@@ -22,14 +22,14 @@ class ReportCategory(str, enum.Enum):
     other = "other"
 
 
-class ReportStatus(str, enum.Enum):
+class ReportStatus(enum.StrEnum):
     received = "received"
     acknowledged = "acknowledged"
     in_progress = "in_progress"
     closed = "closed"
 
 
-class ReportSender(str, enum.Enum):
+class ReportSender(enum.StrEnum):
     whistleblower = "whistleblower"
     admin = "admin"
 
@@ -67,7 +67,7 @@ class Report(Base):
     )
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    messages: Mapped[list["ReportMessage"]] = relationship(
+    messages: Mapped[list[ReportMessage]] = relationship(
         "ReportMessage", back_populates="report", cascade="all, delete-orphan"
     )
 
@@ -95,4 +95,4 @@ class ReportMessage(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    report: Mapped["Report"] = relationship("Report", back_populates="messages")
+    report: Mapped[Report] = relationship("Report", back_populates="messages")

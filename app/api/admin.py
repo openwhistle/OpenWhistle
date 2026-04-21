@@ -9,11 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_current_admin
 from app.config import settings
 from app.database import get_db
-from app.templating import templates
 from app.middleware import check_ip_warning, clear_ip_warning
 from app.models.report import ReportStatus
 from app.models.user import AdminUser
 from app.services import report as report_service
+from app.templating import templates
 
 router = APIRouter(prefix="/admin")
 
@@ -24,7 +24,7 @@ async def dashboard(
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(get_current_admin),
 ) -> HTMLResponse:
-    from datetime import UTC, datetime, timedelta
+    from datetime import UTC, datetime
 
     reports = await report_service.get_all_reports(db)
     now = datetime.now(UTC)
@@ -64,7 +64,7 @@ async def report_detail(
             "user": current_user,
             "report": report,
             "now": datetime.now(UTC),
-            "statuses": [s for s in ReportStatus],
+            "statuses": list(ReportStatus),
         },
     )
 
@@ -98,8 +98,8 @@ async def update_status(
 
     try:
         s = ReportStatus(new_status)
-    except ValueError:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST) from exc
 
     await report_service.update_report_status(db, report, s)
     return RedirectResponse(f"/admin/reports/{report_id}", status_code=302)

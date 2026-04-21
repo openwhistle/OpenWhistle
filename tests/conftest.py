@@ -27,8 +27,8 @@ def event_loop_policy() -> asyncio.DefaultEventLoopPolicy:
     return asyncio.DefaultEventLoopPolicy()
 
 
-@pytest_asyncio.fixture(scope="session")
-async def db_engine() -> AsyncGenerator[None, None]:
+@pytest_asyncio.fixture(scope="session", loop_scope="session")
+async def db_engine() -> AsyncGenerator[None]:
     from app.config import settings
 
     engine = create_async_engine(settings.database_url, echo=False)
@@ -42,7 +42,7 @@ async def db_engine() -> AsyncGenerator[None, None]:
 
 
 @pytest_asyncio.fixture
-async def db_session(db_engine: None) -> AsyncGenerator[AsyncSession, None]:
+async def db_session(db_engine: None) -> AsyncGenerator[AsyncSession]:
     session_factory = async_sessionmaker(db_engine, expire_on_commit=False)
     async with session_factory() as session:
         yield session
@@ -50,7 +50,7 @@ async def db_session(db_engine: None) -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest_asyncio.fixture
-async def client() -> AsyncGenerator[AsyncClient, None]:
+async def client() -> AsyncGenerator[AsyncClient]:
     async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://test",

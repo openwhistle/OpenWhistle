@@ -8,11 +8,11 @@ from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.templating import templates
 from app.models.report import ReportCategory
 from app.redis_client import get_redis
 from app.services import rate_limit as rl
 from app.services import report as report_service
+from app.templating import templates
 
 router = APIRouter()
 
@@ -24,8 +24,9 @@ async def health() -> dict[str, str]:
 
 @router.get("/", response_class=HTMLResponse)
 async def index(request: Request, db: AsyncSession = Depends(get_db)) -> HTMLResponse:
-    from app.models.setup import SetupStatus
     from sqlalchemy import select
+
+    from app.models.setup import SetupStatus
 
     result = await db.execute(select(SetupStatus).where(SetupStatus.id == 1))
     setup = result.scalar_one_or_none()
@@ -39,7 +40,7 @@ async def submit_get(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(
         request,
         "submit.html",
-        {"categories": [c for c in ReportCategory]},
+        {"categories": list(ReportCategory)},
     )
 
 
@@ -52,15 +53,17 @@ async def submit_post(
 ) -> HTMLResponse:
     try:
         cat = ReportCategory(category)
-    except ValueError:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid category")
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid category"
+        ) from exc
 
     if len(description.strip()) < 10:
         return templates.TemplateResponse(
             request,
             "submit.html",
             {
-                "categories": [c for c in ReportCategory],
+                "categories": list(ReportCategory),
                 "error": "Description must be at least 10 characters.",
             },
             status_code=422,

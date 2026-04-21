@@ -1,15 +1,16 @@
 """Tests for rate limiting logic."""
 
-import pytest
 from unittest.mock import AsyncMock
 
+import pytest
+
 from app.services.rate_limit import (
+    check_admin_login_attempts,
     check_whistleblower_attempts,
+    record_admin_login_failure,
     record_whistleblower_failure,
     remaining_whistleblower_attempts,
     reset_whistleblower_attempts,
-    check_admin_login_attempts,
-    record_admin_login_failure,
 )
 
 
@@ -54,7 +55,7 @@ async def test_token_blocked_after_max_attempts() -> None:
     stored: dict[str, str | None] = {}
     redis = make_redis_mock(stored)
 
-    token = "test-token-xyz"
+    token = "test-token-xyz"  # noqa: S105
     for _ in range(5):
         await record_whistleblower_failure(redis, token)
 
@@ -67,7 +68,7 @@ async def test_token_reset_after_success() -> None:
     stored: dict[str, str | None] = {}
     redis = make_redis_mock(stored)
 
-    token = "test-reset-token"
+    token = "test-reset-token"  # noqa: S105
     await record_whistleblower_failure(redis, token)
     await record_whistleblower_failure(redis, token)
     await reset_whistleblower_attempts(redis, token)
@@ -81,7 +82,7 @@ async def test_remaining_attempts_decrements() -> None:
     stored: dict[str, str | None] = {}
     redis = make_redis_mock(stored)
 
-    token = "token-remaining"
+    token = "token-remaining"  # noqa: S105
     await record_whistleblower_failure(redis, token)
     await record_whistleblower_failure(redis, token)
 

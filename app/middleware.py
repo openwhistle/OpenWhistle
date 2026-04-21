@@ -38,7 +38,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
 
                 redis = await get_redis()
                 await redis.set(_REDIS_IP_WARNING_KEY, "1")
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass  # Non-fatal — warning storage is best-effort
 
         response = await call_next(request)
@@ -90,5 +90,5 @@ async def clear_ip_warning() -> None:
 
         redis = await get_redis()
         await redis.delete(_REDIS_IP_WARNING_KEY)
-    except Exception:
+    except Exception:  # noqa: BLE001, S110
         pass

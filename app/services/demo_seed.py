@@ -18,12 +18,11 @@ from app.models.report import Report, ReportMessage, ReportSender, ReportStatus
 from app.models.setup import SetupStatus
 from app.models.user import AdminUser
 from app.services.auth import hash_password, hash_pin
-from app.services.mfa import generate_totp_secret
 
 # Stable demo credentials — published intentionally for the demo instance
 DEMO_ADMIN_USERNAME = "demo"
-DEMO_ADMIN_PASSWORD = "demo"
-DEMO_TOTP_SECRET = "JBSWY3DPEHPK3PXP"  # encodes to static codes for demo
+DEMO_ADMIN_PASSWORD = "demo"  # noqa: S105
+DEMO_TOTP_SECRET = "JBSWY3DPEHPK3PXP"  # noqa: S105  # encodes to static codes for demo
 
 # Known demo report access credentials (published in docs/demo)
 DEMO_REPORTS = [
@@ -150,7 +149,9 @@ async def seed_demo_data() -> None:
                         id=uuid.uuid4(),
                         report_id=report.id,
                         sender=ReportSender.whistleblower,
-                        content="Thank you. I have additional documentation I can provide if needed.",
+                        content=(
+                            "Thank you. I have additional documentation I can provide if needed."
+                        ),
                     )
                 )
 
