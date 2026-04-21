@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Initial Setup — OpenWhistle{% endblock %}
+
+{% block nav_links %}{% endblock %}
+
+{% block content %}
+<div class="container-sm">
+    <div class="page-header" style="text-align:center;">
+        <h1>Welcome to OpenWhistle</h1>
+        <p>Create your administrator account to get started.</p>
+    </div>
+
+    <div class="alert alert-info">
+        This setup wizard runs once. After creating the admin account, it will no longer be accessible.
+    </div>
+
+    {% if errors %}
+    <div class="alert alert-error" role="alert">
+        <ul style="margin:0;padding-left:1.25rem;">
+            {% for e in errors %}
+            <li>{{ e }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-title">Step 1 &mdash; Set Up Authenticator App</div>
+        <p>Scan the QR code with Google Authenticator, Aegis, or any compatible TOTP app.</p>
+
+        <div class="qr-wrapper">
+            <img src="data:image/png;base64,{{ qr_code }}" alt="TOTP QR Code" width="200" height="200">
+        </div>
+
+        <p style="font-size:0.875rem;text-align:center;">
+            Or enter this key manually:
+            <br>
+            <span class="mono" style="font-size:1rem;user-select:all;">{{ totp_secret }}</span>
+        </p>
+    </div>
+
+    <div class="card" style="animation-delay:0.05s;">
+        <div class="card-title">Step 2 &mdash; Create Admin Account</div>
+
+        <form method="post" action="/setup" novalidate>
+            <input type="hidden" name="totp_secret" value="{{ totp_secret }}">
+
+            <div class="form-group">
+                <label class="form-label" for="username">Username</label>
+                <input
+                    type="text"
+                    class="form-control mono"
+                    id="username"
+                    name="username"
+                    value="{{ username or '' }}"
+                    minlength="3"
+                    maxlength="64"
+                    pattern="[a-zA-Z0-9_-]+"
+                    required
+                    autocomplete="username">
+                <div class="form-hint">3–64 characters. Letters, numbers, hyphens and underscores only.</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <input
+                    type="password"
+                    class="form-control"
+                    id="password"
+                    name="password"
+                    minlength="12"
+                    required
+                    autocomplete="new-password">
+                <div class="form-hint">Minimum 12 characters. Use a strong, unique password.</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password_confirm">Confirm Password</label>
+                <input
+                    type="password"
+                    class="form-control"
+                    id="password_confirm"
+                    name="password_confirm"
+                    required
+                    autocomplete="new-password">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="totp_code">Verification Code</label>
+                <input
+                    type="text"
+                    class="form-control mono"
+                    id="totp_code"
+                    name="totp_code"
+                    inputmode="numeric"
+                    pattern="[0-9]{6}"
+                    maxlength="6"
+                    placeholder="000000"
+                    required
+                    autocomplete="one-time-code"
+                    style="font-size:1.4rem;letter-spacing:0.3em;text-align:center;">
+                <div class="form-hint">Enter the current 6-digit code from your authenticator app to confirm setup.</div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%;">
+                Create Admin Account
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

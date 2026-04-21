@@ -1,88 +1,225 @@
-<div align="center">
+# OpenWhistle
 
-# OpenWhistle <br> :bulb: :arrow_right: :ear:
+> Open source whistleblower reporting platform — compliant with HinSchG and EU Directive 2019/1937
 
-> Open source tool for whistleblowers
+[![CI](https://img.shields.io/github/actions/workflow/status/openwhistle/OpenWhistle/ci.yml?label=CI)](https://github.com/openwhistle/OpenWhistle/actions/workflows/ci.yml)
+[![Docker](https://img.shields.io/github/actions/workflow/status/openwhistle/OpenWhistle/docker-publish.yml?label=Docker)](https://github.com/openwhistle/OpenWhistle/actions/workflows/docker-publish.yml)
+[![License](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.14-blue)](https://python.org)
+[![PostgreSQL](https://img.shields.io/badge/postgresql-18-blue)](https://postgresql.org)
 
-[![Development Status](https://img.shields.io/badge/lifecycle-alpha-red)](https://github.com/jpylypiw/OpenWhistle/releases/)
-[![GitHub tag](https://img.shields.io/github/tag/jpylypiw/OpenWhistle)](https://github.com/jpylypiw/OpenWhistle/releases/?include_prereleases&sort=semver)
-[![GitHub License](https://img.shields.io/github/license/jpylypiw/OpenWhistle)](https://github.com/jpylypiw/OpenWhistle/blob/main/LICENSE)
-
-[![.NET](https://img.shields.io/github/actions/workflow/status/jpylypiw/OpenWhistle/dotnet.yml?label=.NET)](https://github.com/jpylypiw/OpenWhistle/actions/workflows/dotnet.yml)
-[![Docker](https://img.shields.io/github/actions/workflow/status/jpylypiw/OpenWhistle/docker-publish.yml?label=Docker)](https://github.com/jpylypiw/OpenWhistle/actions/workflows/docker-publish.yml)
-[![CodeQL](https://img.shields.io/github/actions/workflow/status/jpylypiw/OpenWhistle/github-code-scanning/codeql?label=CodeQL)](https://github.com/jpylypiw/OpenWhistle/actions/workflows/github-code-scanning/codeql)
-
-![.NET Version](https://img.shields.io/badge/dotnet-net8.0-blue)
-
-[Installation](#how-to-install) � [Docker Environment](#environment-variables) � [Preview](#preview)
-
-</div>
+> [!WARNING]
+> OpenWhistle is currently in early development (alpha). Do not use in production.
 
 ## Overview
 
-> [!WARNING]  
-> This project is currently under development and should not be used productively under any circumstances. 
+OpenWhistle provides a secure internal reporting channel as required by:
 
-This project is to become an open source software for the German Whistleblower Protection Act / Hinweisgeberschutzgesetz.
+- **German law:** Hinweisgeberschutzgesetz (HinSchG), in force since 2 July 2023
+- **EU directive:** Directive (EU) 2019/1937 of the European Parliament
 
-This law is based on the [directive of the European Parliament](https://eur-lex.europa.eu/legal-content/en/TXT/?uri=CELEX%3A32019L1937).
+Any company with 50 or more employees and all public authorities are legally required to
+provide an internal reporting channel. OpenWhistle provides a self-hosted, open source
+solution — free of charge.
 
-The aim of the software is initially to give an external whistleblower the opportunity to write a message to the reporting office.
+## Key Features
 
-The subsequent feedback to the whistleblower will be implemented at a later date.
+- **Full anonymity:** No IP addresses logged — not by the application, not by nginx
+- **Two-factor whistleblower access:** Case number + secret UUID4 PIN (bruteforce-protected)
+- **Bidirectional communication:** Required by HinSchG §17 — whistleblower can reply
+- **HinSchG SLA tracking:** 7-day acknowledgement and 3-month feedback deadlines
+- **Mandatory MFA:** TOTP (Google Authenticator) for all admin accounts
+- **OIDC support:** Optional SSO via any OpenID Connect provider
+- **DSGVO compliant:** All resources self-hosted, no external CDN calls, hard deletion support
+- **Setup wizard:** First-run admin account creation with TOTP setup
+- **IP leakage detection:** Warning when upstream proxies forward IP headers
+- **Multi-registry Docker:** Published to ghcr.io, Docker Hub, and quay.io
 
-A system must be created to ensure that the whistleblower remains anonymous at all times.
+## Technical Stack
 
-## Preview
-
-<div align="center">
-    <img src="screenshot.jpg" alt="screenshot" width="600"/>
-</div>
+| Component | Technology |
+|---|---|
+| Language | Python 3.14 |
+| Framework | FastAPI 0.136 |
+| Database | PostgreSQL 18 (via SQLAlchemy 2.0 async) |
+| Cache / Sessions | Redis 8 |
+| Auth | pyotp (TOTP), authlib 1.7+ (OIDC) |
+| Templates | Jinja2 (server-side rendering) |
+| Reverse Proxy | nginx (IP logging disabled) |
 
 ## Live Demo
 
-To get a better insight into the software, we provide an online demo.
+A live demo is available at **<https://demo.openwhistle.net>**
 
-<https://demo.openwhistle.net> (Certificate is provided by Let's Encrypt)
+| Role | Username | Password | TOTP Code |
+|---|---|---|---|
+| Admin | `demo` | `demo` | `000000` |
 
-- **Username**: demo
-- **Password**: demo
+Demo reports with known case numbers and PINs are available in [`docs/demo_credentials.md`](docs/demo_credentials.md).
 
-The server runs in Baden-W�rttemberg, Germany.
-
-The demo is currently reset manually and automatically receives the latest version of the software.
+The demo resets automatically every hour.
 
 ## How to Install
 
-### Docker
+### Prerequisites
 
-We recommend using the Docker image for installation.
+- Docker and Docker Compose
+- A PostgreSQL 18 database
+- A Redis 8 instance
 
-The image is provided by GitHub and can be started with the following command:
+### Docker Compose (recommended)
 
 ```bash
-docker run -d --restart=always -e ASPNETCORE_HTTP_PORTS='4009' -p 4009:4009 --name openwhistle ghcr.io/jpylypiw/openwhistle:main
+# 1. Clone the repository
+git clone https://github.com/openwhistle/OpenWhistle.git
+cd OpenWhistle
+
+# 2. Create your environment file
+cp .env.example .env
+# Edit .env and set a strong SECRET_KEY
+
+# 3. Start the stack
+docker compose up -d
+
+# 4. Open http://localhost:4009/setup in your browser
+#    to create the first admin account
 ```
 
-OpenWhistle is now running on <http://0.0.0.0:4009>.
+### Behind a Reverse Proxy
 
-### Behind Reverse Proxy
+**Critical for anonymity:** Disable access logging and strip IP headers.
 
-For privacy reasons, it is essential to configure the reverse proxy correctly.
-Please note that the access log must be switched off so that the whistleblower remains anonymous.
-
-#### NGINX
+#### nginx
 
 ```nginx
-location / {
-    proxy_pass         http://localhost:4009/;
-    access_log    off;
+server {
+    # Disable access logging — required for anonymity
+    access_log off;
     log_not_found off;
+
+    # Strip ALL IP-forwarding headers
+    proxy_set_header X-Forwarded-For     "";
+    proxy_set_header X-Real-IP           "";
+    proxy_set_header Forwarded           "";
+    proxy_set_header CF-Connecting-IP    "";
+
+    location / {
+        proxy_pass http://localhost:4009/;
+    }
 }
+```
+
+#### Cloudflare
+
+1. Enable "Remove visitor IPs from logs" in the Cloudflare dashboard
+2. Do **not** use "Restore visitor IP" — it adds `CF-Connecting-IP`
+3. OpenWhistle will warn you in the admin dashboard if IP headers are detected
+
+#### Traefik
+
+```yaml
+middlewares:
+  strip-ip-headers:
+    headers:
+      customRequestHeaders:
+        X-Forwarded-For: ""
+        X-Real-IP: ""
+        True-Client-IP: ""
 ```
 
 ## Environment Variables
 
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `SECRET_KEY` | Yes | — | Long random string for JWT signing |
+| `DATABASE_URL` | Yes | — | `postgresql+asyncpg://user:pass@host:5432/db` |
+| `REDIS_URL` | Yes | — | `redis://host:6379/0` |
+| `DEMO_MODE` | No | `false` | Enable demo mode (seeds test data) |
+| `OIDC_ENABLED` | No | `false` | Enable OIDC login |
+| `OIDC_CLIENT_ID` | No | — | OIDC client ID |
+| `OIDC_CLIENT_SECRET` | No | — | OIDC client secret |
+| `OIDC_SERVER_METADATA_URL` | No | — | OIDC discovery URL |
+
+## Development
+
+### Setup
+
+```bash
+# Install uv (fast Python package manager)
+pip install uv
+
+# Install dependencies
+uv pip install -e ".[dev]"
+
+# Copy env file
+cp .env.example .env
+# Set SECRET_KEY in .env
+
+# Start PostgreSQL and Redis
+docker compose up db redis -d
+
+# Run migrations
+alembic upgrade head
+
+# Start development server
+uvicorn app.main:app --reload
+```
+
+### Running Tests
+
+```bash
+# Type checking
+mypy app/ --strict
+
+# Linting
+ruff check app/ tests/
+
+# Tests with coverage
+pytest --cov=app --cov-report=term-missing
+```
+
+### Project Structure
+
+```
+app/
+├── main.py          # App factory, startup migration check
+├── config.py        # pydantic-settings configuration
+├── database.py      # Async SQLAlchemy setup
+├── middleware.py     # Security headers, IP detection warning
+├── api/             # FastAPI routers (reports, auth, admin, wizard)
+├── models/          # SQLAlchemy ORM models
+├── schemas/         # Pydantic I/O schemas
+├── services/        # Business logic (pin, mfa, rate_limit, auth, report)
+├── templates/       # Jinja2 HTML templates
+└── static/          # Self-hosted CSS, JS, fonts
+migrations/          # Alembic database migrations
+nginx/               # nginx config with IP logging disabled
+docs/                # HinSchG reference and documentation
+```
+
+## Legal Reference
+
+OpenWhistle is designed to comply with:
+
+- [Hinweisgeberschutzgesetz (HinSchG)](https://www.gesetze-im-internet.de/hinschg/) — German implementation
+- [EU Directive 2019/1937](https://eur-lex.europa.eu/legal-content/en/TXT/?uri=CELEX%3A32019L1937)
+- [DSGVO / GDPR](https://gdpr-info.eu/)
+
+See [`docs/hinschg_reference.md`](docs/hinschg_reference.md) for a summary of relevant paragraphs.
+
+> **Disclaimer:** OpenWhistle is a technical tool. Operators are responsible for ensuring
+> their deployment meets all applicable legal requirements in their jurisdiction.
+
 ## License
 
-OpenWhistle is under [GNU General Public License v3.0](/LICENSE).
+OpenWhistle is released under the [GNU General Public License v3.0](LICENSE).
+
+## Contributing
+
+Contributions are welcome. Please open an issue before submitting a pull request.
+
+## Donate
+
+OpenWhistle is developed in free time. If you find it useful, consider supporting the project.
+
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/jpylypiw?label=Sponsor)](https://github.com/sponsors/jpylypiw)

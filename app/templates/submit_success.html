@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Report Submitted — OpenWhistle{% endblock %}
+
+{% block content %}
+<div class="container-sm">
+    <div class="page-header" style="text-align:center;">
+        <h1>Report Submitted</h1>
+        <p>Save the credentials below. They cannot be recovered if lost.</p>
+    </div>
+
+    <div class="alert alert-warning" role="alert">
+        <strong>Important:</strong> Write down or save your case number and PIN now.
+        This page will not be shown again.
+    </div>
+
+    <div class="card">
+        <div class="card-title">Your Access Credentials</div>
+
+        <p style="color:var(--text-secondary);font-size:0.9rem;">
+            Use these two values together to check the status of your report and communicate
+            with the reporting office.
+        </p>
+
+        <div class="credential-box">
+            <div class="credential-label">Case Number</div>
+            <div class="credential-value" id="case-number">{{ case_number }}</div>
+        </div>
+        <button
+            class="btn btn-secondary btn-sm"
+            onclick="copyToClipboard('{{ case_number }}', this)"
+            style="margin-bottom:1rem;">
+            Copy Case Number
+        </button>
+
+        <div class="credential-box">
+            <div class="credential-label">Secret PIN</div>
+            <div class="credential-value" id="pin-value">{{ pin }}</div>
+        </div>
+        <button
+            class="btn btn-secondary btn-sm"
+            onclick="copyToClipboard('{{ pin }}', this)"
+            style="margin-bottom:1.5rem;">
+            Copy PIN
+        </button>
+
+        <div class="alert alert-info">
+            <strong>What happens next?</strong>
+            You will receive an acknowledgement within <strong>7 days</strong> (as required by §17 HinSchG).
+            A full response will follow within <strong>3 months</strong> of acknowledgement.
+            Use your case number and PIN at any time to check the status.
+        </div>
+
+        <a href="/status" class="btn btn-primary" style="width:100%;margin-top:0.5rem;">
+            Check Report Status
+        </a>
+    </div>
+</div>
+{% endblock %}

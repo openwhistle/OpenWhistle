@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="no-referrer">
+    <title>{% block title %}OpenWhistle{% endblock %}</title>
+
+    {# No external resources — DSGVO compliance #}
+    <link rel="stylesheet" href="/static/css/fonts.css">
+    <link rel="stylesheet" href="/static/css/site.css">
+
+    {# Apply theme before page renders to prevent flash #}
+    <script>
+        (function(){
+            var t = null;
+            try { t = localStorage.getItem('ow-theme'); } catch(e){}
+            if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', t);
+        })();
+    </script>
+
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <nav class="nav" role="navigation" aria-label="Main navigation">
+        <a href="/" class="nav-brand" aria-label="OpenWhistle home">
+            <span class="nav-brand-icon" aria-hidden="true">&#9679;</span>
+            OpenWhistle
+        </a>
+
+        <ul class="nav-links" role="list">
+            {% block nav_links %}
+            <li><a href="/submit">Submit Report</a></li>
+            <li><a href="/status">Check Status</a></li>
+            {% endblock %}
+            <li>
+                <button
+                    class="theme-toggle"
+                    id="theme-toggle"
+                    onclick="toggleTheme()"
+                    aria-label="Switch theme">
+                    ◑ Dark
+                </button>
+            </li>
+        </ul>
+    </nav>
+
+    <main id="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer" role="contentinfo">
+        <p>
+            OpenWhistle &mdash; Secure whistleblower reporting &middot;
+            <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener">Open Source (GPLv3)</a>
+            &middot; <a href="https://www.gesetze-im-internet.de/hinschg/" rel="noopener">HinSchG</a>
+        </p>
+    </footer>
+
+    <script src="/static/js/site.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

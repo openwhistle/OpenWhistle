@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — OpenWhistle{% endblock %}
+
+{% block nav_links %}
+<li><a href="/admin/dashboard" class="active">Dashboard</a></li>
+<li><a href="/admin/logout">Logout</a></li>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+        <div>
+            <h1>Reports Dashboard</h1>
+            <p>Logged in as <span class="mono">{{ user.username }}</span></p>
+        </div>
+        <a href="/submit" class="btn btn-secondary btn-sm">Submit Test Report</a>
+    </div>
+
+    {# IP leakage warning banner #}
+    {% if ip_warning %}
+    <div class="ip-warning-banner" id="ip-warning-banner" role="alert">
+        <div class="ip-warning-icon">&#9888;</div>
+        <div class="ip-warning-text">
+            <strong>IP Address Detected in Request Headers</strong>
+            OpenWhistle has detected that an upstream proxy is forwarding IP address headers
+            (<code>X-Forwarded-For</code>, <code>X-Real-IP</code>, or similar) to the application.
+            This means the network layer is leaking IP data that could compromise whistleblower anonymity.
+            <br><br>
+            <strong>Action required:</strong> Configure your upstream proxy (Cloudflare, Traefik, nginx)
+            to strip these headers before passing requests to OpenWhistle.
+            See <code>nginx/nginx.conf</code> for example configurations.
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="dismissIpWarning(this)" style="flex-shrink:0;">
+            Dismiss
+        </button>
+    </div>
+    {% endif %}
+
+    {# Summary stats #}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem;">
+        {% set ns = namespace(received=0, acknowledged=0, in_progress=0, closed=0) %}
+        {% for r in reports %}
+            {% if r.status.value == 'received' %}{% set ns.received = ns.received + 1 %}{% endif %}
+            {% if r.status.value == 'acknowledged' %}{% set ns.acknowledged = ns.acknowledged + 1 %}{% endif %}
+            {% if r.status.value == 'in_progress' %}{% set ns.in_progress = ns.in_progress + 1 %}{% endif %}
+            {% if r.status.value == 'closed' %}{% set ns.closed = ns.closed + 1 %}{% endif %}
+        {% endfor %}
+
+        {% for label, count, cls in [
+            ('Received', ns.received, 'badge-received'),
+            ('Acknowledged', ns.acknowledged, 'badge-acknowledged'),
+            ('In Progress', ns.in_progress, 'badge-in_progress'),
+            ('Closed', ns.closed, 'badge-closed')
+        ] %}
+        <div class="card" style="text-align:center;padding:1.25rem;">
+            <div style="font-size:2rem;font-family:var(--font-mono);font-weight:700;">{{ count }}</div>
+            <div class="badge {{ cls }}" style="margin-top:0.35rem;">{{ label }}</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="card">
+        <div class="card-title">All Reports</div>
+
+        {% if reports %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Case Number</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                        <th>Submitted</th>
+                        <th>7-day SLA</th>
+                        <th>3-month SLA</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in reports %}
+                    {% set days_since_submit = (now - report.submitted_at).days %}
+                    {% set ack_sla_class = 'sla-ok' if report.acknowledged_at else ('sla-ok' if days_since_submit < 5 else ('sla-warning' if days_since_submit < 7 else 'sla-overdue')) %}
+                    {% set fb_sla_class = '' %}
+                    {% if report.feedback_due_at %}
+                        {% set days_to_fb = (report.feedback_due_at - now).days %}
+                        {% set fb_sla_class = 'sla-ok' if days_to_fb > 14 else ('sla-warning' if days_to_fb > 0 else 'sla-overdue') %}
+                    {% endif %}
+                    <tr>
+                        <td><span class="mono">{{ report.case_number }}</span></td>
+                        <td>{{ report.category.value | replace('_', ' ') | title }}</td>
+                        <td><span class="badge badge-{{ report.status.value }}">{{ report.status.value | replace('_', ' ') | title }}</span></td>
+                        <td class="mono" style="font-size:0.8rem;">{{ report.submitted_at.strftime('%Y-%m-%d') }}</td>
+                        <td class="{{ ack_sla_class }}" style="font-size:0.82rem;">
+                            {% if report.acknowledged_at %}
+                                &#10003; Done
+                            {% else %}
+                                Day {{ days_since_submit }}/7
+                            {% endif %}
+                        </td>
+                        <td class="{{ fb_sla_class }}" style="font-size:0.82rem;">
+                            {% if report.feedback_due_at %}
+                                {% set days_to_fb = (report.feedback_due_at - now).days %}
+                                {% if days_to_fb > 0 %}{{ days_to_fb }}d left{% else %}Overdue{% endif %}
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="/admin/reports/{{ report.id }}" class="btn btn-secondary btn-sm">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="color:var(--text-muted);text-align:center;padding:2rem 0;">
+            No reports yet.
+        </p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

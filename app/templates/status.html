@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Check Report Status — OpenWhistle{% endblock %}
+
+{% block content %}
+<div class="container-sm">
+    {% if not report %}
+    <div class="page-header">
+        <h1>Check Report Status</h1>
+        <p>Enter your case number and secret PIN to view your report and any responses.</p>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-error" role="alert">{{ error }}</div>
+    {% endif %}
+
+    {% if locked %}
+    <div class="alert alert-warning" role="alert">
+        Too many failed attempts. Please wait before trying again.
+    </div>
+    {% else %}
+    <div class="card">
+        <form method="post" action="/status" novalidate>
+            <input type="hidden" name="session_token" value="{{ session_token }}">
+
+            <div class="form-group">
+                <label class="form-label" for="case_number">Case Number</label>
+                <input
+                    type="text"
+                    class="form-control mono"
+                    id="case_number"
+                    name="case_number"
+                    placeholder="OW-2026-00001"
+                    required
+                    autocomplete="off"
+                    spellcheck="false">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="pin">Secret PIN</label>
+                <input
+                    type="text"
+                    class="form-control mono"
+                    id="pin"
+                    name="pin"
+                    placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                    required
+                    autocomplete="off"
+                    spellcheck="false">
+                <div class="form-hint">Enter the PIN exactly as shown when you submitted your report.</div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%;">
+                View Report Status
+            </button>
+        </form>
+    </div>
+    {% endif %}
+
+    {% else %}
+
+    {# Report found — show status and thread #}
+    <div class="page-header">
+        <h1>Report Status</h1>
+    </div>
+
+    {% if success %}
+    <div class="alert alert-success" role="alert">{{ success }}</div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-title">
+            <span class="mono">{{ report.case_number }}</span>
+            &nbsp;
+            <span class="badge badge-{{ report.status.value }}">{{ report.status.value | replace('_', ' ') | title }}</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;font-size:0.85rem;color:var(--text-muted);">
+            <div>
+                <div style="font-family:var(--font-mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.2rem;">Submitted</div>
+                {{ report.submitted_at.strftime('%Y-%m-%d %H:%M UTC') }}
+            </div>
+            {% if report.acknowledged_at %}
+            <div>
+                <div style="font-family:var(--font-mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.2rem;">Acknowledged</div>
+                {{ report.acknowledged_at.strftime('%Y-%m-%d %H:%M UTC') }}
+            </div>
+            {% endif %}
+            {% if report.feedback_due_at %}
+            <div>
+                <div style="font-family:var(--font-mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.2rem;">Feedback Due</div>
+                {{ report.feedback_due_at.strftime('%Y-%m-%d') }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card" style="animation-delay:0.05s;">
+        <div class="card-title">Communication Thread</div>
+
+        {% if report.messages %}
+        <div class="thread">
+            {% for msg in report.messages %}
+            <div class="message message-{{ msg.sender.value }}">
+                <div class="message-meta">
+                    {{ 'Reporting Office' if msg.sender.value == 'admin' else 'You (Whistleblower)' }}
+                    &middot; {{ msg.sent_at.strftime('%Y-%m-%d %H:%M UTC') }}
+                </div>
+                <div class="message-content">{{ msg.content }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="color:var(--text-muted);">No messages yet.</p>
+        {% endif %}
+    </div>
+
+    {% if report.status.value != 'closed' %}
+    <div class="card" style="animation-delay:0.1s;">
+        <div class="card-title">Send a Reply</div>
+        <form method="post" action="/reply">
+            <input type="hidden" name="case_number" value="{{ case_number }}">
+            <input type="hidden" name="pin" value="{{ pin }}">
+            <input type="hidden" name="session_token" value="{{ session_token }}">
+
+            <div class="form-group">
+                <textarea
+                    class="form-control"
+                    name="content"
+                    rows="4"
+                    maxlength="5000"
+                    placeholder="Your message to the reporting office…"
+                    required></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Send Reply</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div style="margin-top:1rem;text-align:center;">
+        <a href="/status" class="btn btn-secondary btn-sm">Look up a different report</a>
+    </div>
+
+    {% endif %}
+</div>
+{% endblock %}

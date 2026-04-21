@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Two-Factor Authentication — OpenWhistle{% endblock %}
+
+{% block content %}
+<div class="container-sm">
+    <div class="page-header" style="text-align:center;">
+        <h1>Two-Factor Authentication</h1>
+        <p>Enter the 6-digit code from your authenticator app.</p>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-error" role="alert">{{ error }}</div>
+    {% endif %}
+
+    {% if is_demo %}
+    <div class="alert alert-warning" role="alert">
+        <strong>Demo mode:</strong> Enter <code class="mono">000000</code> to log in.
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <form method="post" action="/admin/login/mfa" novalidate>
+            <input type="hidden" name="temp_token" value="{{ temp_token }}">
+
+            <div class="form-group">
+                <label class="form-label" for="totp_code">Authentication Code</label>
+                <input
+                    type="text"
+                    class="form-control mono"
+                    id="totp_code"
+                    name="totp_code"
+                    inputmode="numeric"
+                    pattern="[0-9]{6}"
+                    maxlength="6"
+                    autocomplete="one-time-code"
+                    placeholder="000000"
+                    required
+                    autofocus
+                    style="font-size:1.5rem;letter-spacing:0.3em;text-align:center;">
+                <div class="form-hint">
+                    Open your authenticator app and enter the current 6-digit code.
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%;">
+                Verify
+            </button>
+        </form>
+
+        <div style="margin-top:1rem;text-align:center;">
+            <a href="/admin/login" class="btn btn-secondary btn-sm">Back to login</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

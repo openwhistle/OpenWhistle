@@ -1,0 +1,118 @@
+[project]
+name = "openwhistle"
+version = "0.1.0"
+description = "Open source whistleblower reporting platform (HinSchG / EU 2019/1937)"
+license = { text = "GPL-3.0-only" }
+readme = "README.md"
+requires-python = ">=3.14"
+authors = [{ name = "OpenWhistle Contributors" }]
+
+dependencies = [
+    # Web framework
+    "fastapi>=0.136.0",
+    "uvicorn[standard]>=0.34.0",
+    "python-multipart>=0.0.20",
+
+    # Database
+    "sqlalchemy[asyncio]>=2.0.49",
+    "asyncpg>=0.30.0",
+    "alembic>=1.14.0",
+
+    # Cache / Sessions
+    "redis[hiredis]>=5.2.0",
+
+    # Auth
+    "authlib>=1.7.0",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "pyotp>=2.9.0",
+    "qrcode[pil]>=8.0.0",
+
+    # Configuration
+    "pydantic-settings>=2.7.0",
+
+    # Templates
+    "jinja2>=3.1.0",
+    "aiofiles>=24.1.0",
+
+    # Utilities
+    "httpx>=0.28.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.25.0",
+    "pytest-cov>=6.0.0",
+    "mypy>=1.14.0",
+    "ruff>=0.9.0",
+    "types-passlib>=1.7.7",
+    "types-aiofiles>=24.1.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+# ─── mypy ────────────────────────────────────────────────────────────────────
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = false
+plugins = ["sqlalchemy.ext.mypy.plugin"]
+
+[[tool.mypy.overrides]]
+module = [
+    "pyotp.*",
+    "qrcode.*",
+    "passlib.*",
+    "jose.*",
+    "authlib.*",
+]
+ignore_missing_imports = true
+
+# ─── ruff ────────────────────────────────────────────────────────────────────
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "S",   # bandit security
+    "N",   # pep8-naming
+]
+ignore = [
+    "S101",  # assert allowed in tests
+    "B008",  # function calls in default args (FastAPI Depends)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S106"]
+
+# ─── pytest ──────────────────────────────────────────────────────────────────
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "--cov=app --cov-report=term-missing --cov-fail-under=75"
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]
