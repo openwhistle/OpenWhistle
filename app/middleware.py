@@ -1,9 +1,7 @@
 """Security middleware: IP detection warning, security headers, no IP logging."""
 
-from collections.abc import Callable
-
 from fastapi import Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 # Headers that indicate an upstream proxy is forwarding IP information.
 # Their presence means IP data is flowing into our stack — we must warn the admin.
@@ -25,7 +23,7 @@ _REDIS_IP_WARNING_KEY = "openwhistle:ip_headers_detected"
 class SecurityMiddleware(BaseHTTPMiddleware):
     """Applies security headers and detects upstream IP leakage."""
 
-    async def dispatch(self, request: Request, call_next: Callable[..., Response]) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         # Detect IP-leaking headers from upstream proxies.
         # We do NOT read the values — we only note their presence.
         ip_headers_present = any(
@@ -69,7 +67,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         if "x-powered-by" in response.headers:
             del response.headers["x-powered-by"]
 
-        return response
+        return response  # type: ignore[return-value]
 
 
 async def check_ip_warning() -> bool:
@@ -78,7 +76,7 @@ async def check_ip_warning() -> bool:
         from app.redis_client import get_redis
 
         redis = await get_redis()
-        return await redis.exists(_REDIS_IP_WARNING_KEY) == 1
+        return bool(await redis.exists(_REDIS_IP_WARNING_KEY) == 1)
     except Exception:
         return False
 

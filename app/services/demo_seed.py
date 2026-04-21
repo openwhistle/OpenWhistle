@@ -10,6 +10,7 @@ demo-mode only and the data has no real confidentiality.
 
 import uuid
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from sqlalchemy import select
 
@@ -25,7 +26,7 @@ DEMO_ADMIN_PASSWORD = "demo"  # noqa: S105
 DEMO_TOTP_SECRET = "JBSWY3DPEHPK3PXP"  # noqa: S105  # encodes to static codes for demo
 
 # Known demo report access credentials (published in docs/demo)
-DEMO_REPORTS = [
+DEMO_REPORTS: list[dict[str, Any]] = [
     {
         "case_number": "OW-DEMO-00001",
         "pin": "demo-pin-received-00001",

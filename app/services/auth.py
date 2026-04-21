@@ -40,7 +40,7 @@ def create_access_token(user_id: str) -> str:
         "iat": datetime.now(UTC),
         "jti": str(uuid.uuid4()),
     }
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
+    return str(jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm))
 
 
 def decode_access_token(token: str) -> str | None:
@@ -62,7 +62,7 @@ async def store_session(redis: Redis, user_id: str, token: str) -> None:
 async def validate_session(redis: Redis, token: str) -> bool:
     """Return True if the session token is still active in Redis."""
     key = f"{_SESSION_PREFIX}{token}"
-    return await redis.exists(key) == 1
+    return bool(await redis.exists(key) == 1)
 
 
 async def revoke_session(redis: Redis, token: str) -> None:

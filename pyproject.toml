@@ -111,6 +111,11 @@ asyncio_default_test_loop_scope = "session"
 testpaths = ["tests"]
 addopts = "--cov=app --cov-report=term-missing --cov-fail-under=75"
 
+[tool.coverage.run]
+source = ["app"]
+# Force C-tracer (sys.settrace) instead of sys.monitoring — more reliable on Python 3.14
+core = "ctrace"
+
 [tool.coverage.report]
 exclude_lines = [
     "pragma: no cover",

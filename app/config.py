@@ -43,4 +43,4 @@ class Settings(BaseSettings):
     oidc_redirect_uri: str = ""
 
 
-settings = Settings()
+settings = Settings()  # type: ignore[call-arg]

@@ -22,8 +22,8 @@ async def health() -> dict[str, str]:
     return {"status": "ok", "version": "0.1.0"}
 
 
-@router.get("/", response_class=HTMLResponse)
-async def index(request: Request, db: AsyncSession = Depends(get_db)) -> HTMLResponse:
+@router.get("/", response_class=HTMLResponse, response_model=None)
+async def index(request: Request, db: AsyncSession = Depends(get_db)) -> RedirectResponse:
     from sqlalchemy import select
 
     from app.models.setup import SetupStatus
