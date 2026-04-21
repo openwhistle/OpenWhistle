@@ -24,7 +24,7 @@ async def _is_setup_complete(db: AsyncSession) -> bool:
     return setup is not None and setup.completed
 
 
-@router.get("/setup", response_class=HTMLResponse)
+@router.get("/setup", response_class=HTMLResponse, response_model=None)
 async def setup_get(request: Request, db: AsyncSession = Depends(get_db)) -> HTMLResponse | RedirectResponse:
     if await _is_setup_complete(db):
         return RedirectResponse("/admin/login", status_code=302)
@@ -42,7 +42,7 @@ async def setup_get(request: Request, db: AsyncSession = Depends(get_db)) -> HTM
     )
 
 
-@router.post("/setup", response_class=HTMLResponse)
+@router.post("/setup", response_class=HTMLResponse, response_model=None)
 async def setup_post(
     request: Request,
     username: str = Form(...),

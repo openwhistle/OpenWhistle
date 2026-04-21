@@ -24,7 +24,7 @@ async def login_get(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(request, "login.html", {})
 
 
-@router.post("/login", response_class=HTMLResponse)
+@router.post("/login", response_class=HTMLResponse, response_model=None)
 async def login_post(
     request: Request,
     username: str = Form(...),
@@ -66,7 +66,7 @@ async def login_post(
     )
 
 
-@router.post("/login/mfa", response_class=HTMLResponse)
+@router.post("/login/mfa", response_class=HTMLResponse, response_model=None)
 async def login_mfa_post(
     request: Request,
     totp_code: str = Form(...),

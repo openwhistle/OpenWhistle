@@ -3,8 +3,8 @@
 import uuid
 from datetime import UTC, datetime, timedelta
 
+import bcrypt
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,28 +12,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.models.user import AdminUser
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 _SESSION_PREFIX = "openwhistle:session:"
 _TOTP_PENDING_PREFIX = "openwhistle:totp_pending:"
 
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=12)).decode()
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    return bcrypt.checkpw(plain.encode(), hashed.encode())
 
 
 def hash_pin(pin: str) -> str:
-    """Hash a whistleblower PIN using bcrypt."""
-    return pwd_context.hash(pin)
+    return bcrypt.hashpw(pin.encode(), bcrypt.gensalt(rounds=12)).decode()
 
 
 def verify_pin(plain: str, hashed: str) -> bool:
-    """Verify a whistleblower PIN."""
-    return pwd_context.verify(plain, hashed)
+    return bcrypt.checkpw(plain.encode(), hashed.encode())
 
 
 def create_access_token(user_id: str) -> str:

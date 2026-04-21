@@ -10,16 +10,17 @@ RUN apk add --no-cache \
     musl-dev \
     libffi-dev \
     postgresql-dev \
-    curl
+    curl \
+    unzip
 
 # Install uv for fast dependency resolution
 RUN pip install --no-cache-dir uv==0.6.0
 
-COPY pyproject.toml .
+COPY pyproject.toml README.md ./
 
-# Install production dependencies into /build/venv
-RUN uv venv /build/venv && \
-    . /build/venv/bin/activate && \
+# Build venv at /venv so shebangs are correct in the final image
+RUN uv venv /venv && \
+    . /venv/bin/activate && \
     uv pip install --no-cache ".[dev]"
 
 # Download and bundle self-hosted fonts
@@ -28,7 +29,7 @@ RUN mkdir -p /build/fonts && \
     curl -L "https://github.com/JetBrains/JetBrainsMono/releases/download/v2.304/JetBrainsMono-2.304.zip" \
          -o /tmp/jbmono.zip && \
     unzip -j /tmp/jbmono.zip "fonts/webfonts/*.woff2" -d /build/fonts/ && \
-    # Spectral (OFL License) - from fontsource package releases
+    # Spectral (OFL License)
     curl -L "https://cdn.jsdelivr.net/npm/@fontsource/spectral@5.1.1/files/spectral-latin-400-normal.woff2" \
          -o /build/fonts/spectral-latin-400-normal.woff2 && \
     curl -L "https://cdn.jsdelivr.net/npm/@fontsource/spectral@5.1.1/files/spectral-latin-600-normal.woff2" \
@@ -56,8 +57,8 @@ RUN apk add --no-cache \
 # Non-root user for security
 RUN addgroup -S openwhistle && adduser -S openwhistle -G openwhistle
 
-# Copy virtualenv from builder
-COPY --from=builder /build/venv /venv
+# Copy virtualenv from builder — shebangs point to /venv (same path)
+COPY --from=builder /venv /venv
 
 # Copy fonts from builder
 COPY --from=builder /build/fonts /app/app/static/fonts/
@@ -65,7 +66,6 @@ COPY --from=builder /build/fonts /app/app/static/fonts/
 # Copy application code
 COPY --chown=openwhistle:openwhistle . .
 
-# Make font directory owned by app user
 RUN chown -R openwhistle:openwhistle /app/app/static/fonts/
 
 USER openwhistle

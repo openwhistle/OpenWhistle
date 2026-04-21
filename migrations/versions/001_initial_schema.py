@@ -7,9 +7,6 @@ Create Date: 2026-04-21
 
 from collections.abc import Sequence
 
-import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
-
 from alembic import op
 
 revision: str = "001"
@@ -19,144 +16,86 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.execute("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"")
+    op.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
 
-    op.execute(
-        """
-        DO $$ BEGIN
-            CREATE TYPE reportcategory AS ENUM (
-                'financial_fraud', 'workplace_safety', 'environmental',
-                'corruption', 'data_protection', 'discrimination', 'other'
-            );
-        EXCEPTION WHEN duplicate_object THEN null;
-        END $$;
-        """
-    )
-    op.execute(
-        """
-        DO $$ BEGIN
-            CREATE TYPE reportstatus AS ENUM (
-                'received', 'acknowledged', 'in_progress', 'closed'
-            );
-        EXCEPTION WHEN duplicate_object THEN null;
-        END $$;
-        """
-    )
-    op.execute(
-        """
-        DO $$ BEGIN
-            CREATE TYPE reportsender AS ENUM ('whistleblower', 'admin');
-        EXCEPTION WHEN duplicate_object THEN null;
-        END $$;
-        """
-    )
+    op.execute("""
+        CREATE TYPE reportcategory AS ENUM (
+            'financial_fraud', 'workplace_safety', 'environmental',
+            'corruption', 'data_protection', 'discrimination', 'other'
+        )
+    """)
 
-    op.create_table(
-        "reports",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column("case_number", sa.String(20), unique=True, nullable=False),
-        sa.Column("pin_hash", sa.String(72), nullable=False),
-        sa.Column(
-            "category",
-            sa.Enum(
-                "financial_fraud",
-                "workplace_safety",
-                "environmental",
-                "corruption",
-                "data_protection",
-                "discrimination",
-                "other",
-                name="reportcategory",
-                create_type=False,
-            ),
-            nullable=False,
-        ),
-        sa.Column("description", sa.Text, nullable=False),
-        sa.Column(
-            "status",
-            sa.Enum(
-                "received",
-                "acknowledged",
-                "in_progress",
-                "closed",
-                name="reportstatus",
-                create_type=False,
-            ),
-            nullable=False,
-            server_default="received",
-        ),
-        sa.Column(
-            "submitted_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("NOW()"),
-            nullable=False,
-        ),
-        sa.Column("acknowledged_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("feedback_due_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("closed_at", sa.DateTime(timezone=True), nullable=True),
-    )
-    op.create_index("ix_reports_case_number", "reports", ["case_number"])
+    op.execute("""
+        CREATE TYPE reportstatus AS ENUM (
+            'received', 'acknowledged', 'in_progress', 'closed'
+        )
+    """)
 
-    op.create_table(
-        "report_messages",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column(
-            "report_id",
-            postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("reports.id", ondelete="CASCADE"),
-            nullable=False,
-        ),
-        sa.Column(
-            "sender",
-            sa.Enum("whistleblower", "admin", name="reportsender", create_type=False),
-            nullable=False,
-        ),
-        sa.Column("content", sa.Text, nullable=False),
-        sa.Column(
-            "sent_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("NOW()"),
-            nullable=False,
-        ),
-    )
-    op.create_index("ix_report_messages_report_id", "report_messages", ["report_id"])
+    op.execute("""
+        CREATE TYPE reportsender AS ENUM ('whistleblower', 'admin')
+    """)
 
-    op.create_table(
-        "admin_users",
-        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column("username", sa.String(64), unique=True, nullable=False),
-        sa.Column("password_hash", sa.String(72), nullable=False),
-        sa.Column("totp_secret", sa.String(32), nullable=False),
-        sa.Column("totp_enabled", sa.Boolean, nullable=False, server_default="false"),
-        sa.Column("oidc_sub", sa.String(255), unique=True, nullable=True),
-        sa.Column("oidc_issuer", sa.String(255), nullable=True),
-        sa.Column(
-            "created_at",
-            sa.DateTime(timezone=True),
-            server_default=sa.text("NOW()"),
-            nullable=False,
-        ),
-        sa.Column("last_login_at", sa.DateTime(timezone=True), nullable=True),
-    )
-    op.create_index("ix_admin_users_username", "admin_users", ["username"])
+    op.execute("""
+        CREATE TABLE reports (
+            id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            case_number VARCHAR(20) NOT NULL UNIQUE,
+            pin_hash    VARCHAR(72) NOT NULL,
+            category    reportcategory NOT NULL,
+            description TEXT NOT NULL,
+            status      reportstatus NOT NULL DEFAULT 'received',
+            submitted_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            acknowledged_at   TIMESTAMPTZ,
+            feedback_due_at   TIMESTAMPTZ,
+            closed_at         TIMESTAMPTZ
+        )
+    """)
 
-    op.create_table(
-        "setup_status",
-        sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("completed", sa.Boolean, nullable=False, server_default="false"),
-        sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
-    )
-    op.execute("INSERT INTO setup_status (id, completed) VALUES (1, false) ON CONFLICT DO NOTHING")
+    op.execute("CREATE INDEX ix_reports_case_number ON reports (case_number)")
+
+    op.execute("""
+        CREATE TABLE report_messages (
+            id        UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            report_id UUID NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
+            sender    reportsender NOT NULL,
+            content   TEXT NOT NULL,
+            sent_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+    """)
+
+    op.execute("CREATE INDEX ix_report_messages_report_id ON report_messages (report_id)")
+
+    op.execute("""
+        CREATE TABLE admin_users (
+            id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            username      VARCHAR(64) NOT NULL UNIQUE,
+            password_hash VARCHAR(72) NOT NULL,
+            totp_secret   VARCHAR(32) NOT NULL,
+            totp_enabled  BOOLEAN NOT NULL DEFAULT false,
+            oidc_sub      VARCHAR(255) UNIQUE,
+            oidc_issuer   VARCHAR(255),
+            created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            last_login_at TIMESTAMPTZ
+        )
+    """)
+
+    op.execute("CREATE INDEX ix_admin_users_username ON admin_users (username)")
+
+    op.execute("""
+        CREATE TABLE setup_status (
+            id           INTEGER PRIMARY KEY,
+            completed    BOOLEAN NOT NULL DEFAULT false,
+            completed_at TIMESTAMPTZ
+        )
+    """)
+
+    op.execute("INSERT INTO setup_status (id, completed) VALUES (1, false)")
 
 
 def downgrade() -> None:
-    op.drop_table("setup_status")
-    op.drop_index("ix_admin_users_username", table_name="admin_users")
-    op.drop_table("admin_users")
-    op.drop_index("ix_report_messages_report_id", table_name="report_messages")
-    op.drop_table("report_messages")
-    op.drop_index("ix_reports_case_number", table_name="reports")
-    op.drop_table("reports")
+    op.execute("DROP TABLE IF EXISTS setup_status")
+    op.execute("DROP TABLE IF EXISTS admin_users")
+    op.execute("DROP TABLE IF EXISTS report_messages")
+    op.execute("DROP TABLE IF EXISTS reports")
     op.execute("DROP TYPE IF EXISTS reportsender")
     op.execute("DROP TYPE IF EXISTS reportstatus")
     op.execute("DROP TYPE IF EXISTS reportcategory")
