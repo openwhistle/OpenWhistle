@@ -24,13 +24,15 @@ async def test_csrf_cookie_stable_across_requests(client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_admin_login_post_without_csrf_token_is_rejected(client: AsyncClient) -> None:
-    """POST to /admin/login without csrf_token field returns 403."""
+    """POST to /admin/login without csrf_token field is rejected (422 from form validation)."""
     await client.get("/admin/login")  # ensure cookie is set
     response = await client.post(
         "/admin/login",
         data={"username": "admin", "password": "password"},
     )
-    assert response.status_code == 403
+    # FastAPI validates required Form fields before running dependencies, so
+    # a missing csrf_token yields 422 (Unprocessable Entity), not 403.
+    assert response.status_code in (403, 422)
 
 
 @pytest.mark.asyncio
@@ -59,7 +61,7 @@ async def test_admin_login_post_with_valid_csrf_token_proceeds(client: AsyncClie
 
 @pytest.mark.asyncio
 async def test_setup_post_without_csrf_rejected(client: AsyncClient) -> None:
-    """POST to /setup without csrf_token returns 403 (or 302 if setup already done)."""
+    """POST to /setup without csrf_token is rejected."""
     get_resp = await client.get("/setup", follow_redirects=False)
     if get_resp.status_code == 302:
         pytest.skip("Setup already completed")
@@ -73,5 +75,17 @@ async def test_setup_post_without_csrf_rejected(client: AsyncClient) -> None:
             "totp_secret": "JBSWY3DPEHPK3PXP",
             "totp_code": "000000",
         },
+    )
+    # Missing required Form field → 422; wrong token → 403. Both mean rejected.
+    assert response.status_code in (403, 422)
+
+
+@pytest.mark.asyncio
+async def test_csrf_missing_cookie_returns_403(client: AsyncClient) -> None:
+    """POST with csrf_token in form but no ow_csrf cookie returns 403."""
+    # Fresh client has no cookies — send token in form without prior GET
+    response = await client.post(
+        "/admin/login",
+        data={"username": "admin", "password": "password", "csrf_token": "some-token"},
     )
     assert response.status_code == 403

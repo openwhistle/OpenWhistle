@@ -7,6 +7,17 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- CSRF protection using Double-Submit Cookie pattern (`app/csrf.py`):
+  all admin forms and the setup wizard now require a matching `ow_csrf` cookie + hidden field
+- OIDC Authorization Code Flow (`app/services/oidc.py`):
+  admins can log in via any OpenID Connect provider when `OIDC_ENABLED=true`
+- OIDC state stored in Redis with 5-minute TTL to prevent replay attacks
+- SSO button on admin login page (shown only when `OIDC_ENABLED=true`)
+- GitHub Pages website deployed from `docs/` directory
+- HinSchG reference document at `docs/hinschg_reference.md`
+
 ## [0.1.0] — 2026-04-21
 
 ### Added
