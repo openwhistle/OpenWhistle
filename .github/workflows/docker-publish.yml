@@ -171,7 +171,10 @@ jobs:
         if: steps.check.outputs.enabled == 'true'
         uses: docker/metadata-action@v5
         with:
-          images: quay.io/${{ secrets.QUAY_USERNAME }}/${{ env.IMAGE_NAME }}
+          # QUAY_NAMESPACE is the account/org name (e.g. jp1337).
+          # QUAY_USERNAME may be a robot account (jp1337+robot) and contains a +,
+          # which is invalid in image references — so namespace is kept separate.
+          images: quay.io/${{ secrets.QUAY_NAMESPACE }}/${{ env.IMAGE_NAME }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
