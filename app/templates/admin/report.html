@@ -54,6 +54,7 @@
 
                 {% if report.status.value != 'closed' %}
                 <form method="post" action="/admin/reports/{{ report.id }}/reply">
+                    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                     <div class="form-group">
                         <label class="form-label" for="content">Send Reply to Whistleblower</label>
                         <textarea
@@ -114,6 +115,7 @@
                 <div class="panel-header">Acknowledge Receipt</div>
                 <p style="font-size:0.85rem;margin-bottom:1rem;">Send acknowledgement to the whistleblower and start the 3-month feedback clock (§17 HinSchG).</p>
                 <form method="post" action="/admin/reports/{{ report.id }}/acknowledge">
+                    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                     <button type="submit" class="btn btn-primary btn-block">
                         Acknowledge Report
                     </button>
@@ -125,6 +127,7 @@
             <div class="panel" style="animation-delay:0.08s;">
                 <div class="panel-header">Update Status</div>
                 <form method="post" action="/admin/reports/{{ report.id }}/status">
+                    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                     <div class="form-group">
                         <label class="form-label" for="new-status">New Status</label>
                         <select class="form-control" id="new-status" name="new_status">
@@ -145,6 +148,7 @@
                 <p style="font-size:0.85rem;margin-bottom:1rem;">Permanently delete this report and all messages (DSGVO Art. 17 right to erasure). This action cannot be undone.</p>
                 <form method="post" action="/admin/reports/{{ report.id }}/delete"
                     onsubmit="return confirm('Permanently delete this report and all messages? This cannot be undone.');">
+                    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                     <button type="submit" class="btn btn-danger btn-block">
                         Delete Permanently
                     </button>

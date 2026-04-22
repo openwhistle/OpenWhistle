@@ -32,6 +32,7 @@ async def test_setup_post_creates_admin(client: AsyncClient) -> None:
     totp_secret = generate_totp_secret()
     totp = get_totp(totp_secret)
     current_code = totp.now()
+    csrf_token = get_response.cookies.get("ow_csrf")
 
     response = await client.post(
         "/setup",
@@ -41,6 +42,7 @@ async def test_setup_post_creates_admin(client: AsyncClient) -> None:
             "password_confirm": "SecureTestPassword123!",
             "totp_secret": totp_secret,
             "totp_code": current_code,
+            "csrf_token": csrf_token,
         },
         follow_redirects=False,
     )
@@ -57,6 +59,7 @@ async def test_setup_post_rejects_short_password(client: AsyncClient) -> None:
 
     totp_secret = generate_totp_secret()
     totp = get_totp(totp_secret)
+    csrf_token = get_response.cookies.get("ow_csrf")
 
     response = await client.post(
         "/setup",
@@ -66,6 +69,7 @@ async def test_setup_post_rejects_short_password(client: AsyncClient) -> None:
             "password_confirm": "short",
             "totp_secret": totp_secret,
             "totp_code": totp.now(),
+            "csrf_token": csrf_token,
         },
     )
     assert response.status_code == 422
@@ -80,6 +84,7 @@ async def test_setup_post_rejects_mismatched_passwords(client: AsyncClient) -> N
 
     totp_secret = generate_totp_secret()
     totp = get_totp(totp_secret)
+    csrf_token = get_response.cookies.get("ow_csrf")
 
     response = await client.post(
         "/setup",
@@ -89,6 +94,7 @@ async def test_setup_post_rejects_mismatched_passwords(client: AsyncClient) -> N
             "password_confirm": "DifferentPassword123!",
             "totp_secret": totp_secret,
             "totp_code": totp.now(),
+            "csrf_token": csrf_token,
         },
     )
     assert response.status_code == 422
@@ -102,6 +108,7 @@ async def test_setup_post_rejects_invalid_totp(client: AsyncClient) -> None:
         pytest.skip("Setup already completed")
 
     totp_secret = generate_totp_secret()
+    csrf_token = get_response.cookies.get("ow_csrf")
 
     response = await client.post(
         "/setup",
@@ -111,6 +118,7 @@ async def test_setup_post_rejects_invalid_totp(client: AsyncClient) -> None:
             "password_confirm": "SecureTestPassword123!",
             "totp_secret": totp_secret,
             "totp_code": "000000",  # wrong code (unless astronomically unlucky)
+            "csrf_token": csrf_token,
         },
     )
     assert response.status_code == 422

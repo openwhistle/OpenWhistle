@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_admin
 from app.config import settings
+from app.csrf import validate_csrf
 from app.database import get_db
 from app.middleware import check_ip_warning, clear_ip_warning
 from app.models.report import ReportStatus
@@ -75,6 +76,7 @@ async def acknowledge_report(
     report_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(get_current_admin),
+    _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
     report = await report_service.get_report_by_id(db, report_id)
     if not report:
@@ -91,6 +93,7 @@ async def update_status(
     new_status: str = Form(...),
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(get_current_admin),
+    _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
     report = await report_service.get_report_by_id(db, report_id)
     if not report:
@@ -112,6 +115,7 @@ async def admin_reply(
     content: str = Form(...),
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(get_current_admin),
+    _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
     report = await report_service.get_report_by_id(db, report_id)
     if not report:
@@ -130,6 +134,7 @@ async def delete_report(
     report_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(get_current_admin),
+    _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
     """Hard delete a report (DSGVO Art. 17 right to erasure)."""
     report = await report_service.get_report_by_id(db, report_id)

@@ -25,6 +25,8 @@
             <div class="panel-header">Credential Verification</div>
 
             <form method="post" action="/admin/login" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+
                 <div class="form-group">
                     <label class="form-label" for="username">Username</label>
                     <input
@@ -52,6 +54,15 @@
                     Continue &rarr;
                 </button>
             </form>
+
+            {% if oidc_enabled %}
+            <div style="margin-top:1.5rem;text-align:center;">
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.08em;">or</div>
+                <a href="/admin/oidc/authorize" class="btn btn-secondary btn-block">
+                    Single Sign-On (SSO) &rarr;
+                </a>
+            </div>
+            {% endif %}
         </div>
 
     </div>

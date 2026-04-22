@@ -27,6 +27,7 @@
             <div class="panel-header">TOTP Authentication</div>
 
             <form method="post" action="/admin/login/mfa" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                 <input type="hidden" name="temp_token" value="{{ temp_token }}">
 
                 <div class="form-group">

@@ -96,3 +96,13 @@ async def get_user_by_id(db: AsyncSession, user_id: str) -> AdminUser | None:
         return None
     result = await db.execute(select(AdminUser).where(AdminUser.id == uid))
     return result.scalar_one_or_none()
+
+
+async def get_user_by_oidc_sub(db: AsyncSession, sub: str, issuer: str) -> AdminUser | None:
+    result = await db.execute(
+        select(AdminUser).where(
+            AdminUser.oidc_sub == sub,
+            AdminUser.oidc_issuer == issuer,
+        )
+    )
+    return result.scalar_one_or_none()

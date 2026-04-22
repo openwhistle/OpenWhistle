@@ -8,6 +8,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.csrf import validate_csrf
 from app.database import get_db
 from app.models.setup import SetupStatus
 from app.models.user import AdminUser
@@ -53,6 +54,7 @@ async def setup_post(
     totp_secret: str = Form(...),
     totp_code: str = Form(...),
     db: AsyncSession = Depends(get_db),
+    _csrf: None = Depends(validate_csrf),
 ) -> HTMLResponse | RedirectResponse:
     if await _is_setup_complete(db):
         return RedirectResponse("/admin/login", status_code=302)

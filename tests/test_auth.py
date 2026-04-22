@@ -13,9 +13,11 @@ async def test_login_page_loads(client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_login_invalid_credentials(client: AsyncClient) -> None:
+    get_resp = await client.get("/admin/login")
+    csrf_token = get_resp.cookies.get("ow_csrf")
     response = await client.post(
         "/admin/login",
-        data={"username": "nonexistent", "password": "wrongpassword"},
+        data={"username": "nonexistent", "password": "wrongpassword", "csrf_token": csrf_token},
     )
     assert response.status_code == 401
     assert "Invalid" in response.text

@@ -47,6 +47,7 @@
         <div class="panel-header">Step 2 &mdash; Create Admin Account</div>
 
         <form method="post" action="/setup" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <input type="hidden" name="totp_secret" value="{{ totp_secret }}">
 
             <div class="form-group">

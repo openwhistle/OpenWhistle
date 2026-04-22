@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
+from app.csrf import CSRFMiddleware
 from app.middleware import SecurityMiddleware
 from app.redis_client import close_redis
 
@@ -65,6 +66,7 @@ def create_app() -> FastAPI:
     )
 
     application.add_middleware(SecurityMiddleware)
+    application.add_middleware(CSRFMiddleware)
 
     application.mount(
         "/static",
