@@ -15,7 +15,7 @@ env:
   IMAGE_NAME: openwhistle
 
 jobs:
-  # ── Always: push to GitHub Container Registry ──────────────────────────────
+  # ── Always: push to GitHub Container Registry ─────────────────────────────
   push-ghcr:
     name: Push to GHCR
     runs-on: ubuntu-latest
@@ -77,22 +77,37 @@ jobs:
           done
           cosign sign --yes ${images}
 
-  # ── Optional: push to Docker Hub (requires DOCKERHUB_USERNAME + DOCKERHUB_TOKEN secrets) ──
+  # ── Optional: push to Docker Hub ──────────────────────────────────────────
+  # Activate by adding DOCKERHUB_USERNAME + DOCKERHUB_TOKEN repository secrets.
   push-dockerhub:
     name: Push to Docker Hub
     runs-on: ubuntu-latest
-    if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
     permissions:
       contents: read
 
     steps:
+      - name: Check Docker Hub credentials
+        id: check
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          if [ -n "${DOCKERHUB_USERNAME}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "DOCKERHUB_USERNAME secret not set — skipping Docker Hub push."
+          fi
+
       - uses: actions/checkout@v6
+        if: steps.check.outputs.enabled == 'true'
 
       - name: Set up Docker Buildx
+        if: steps.check.outputs.enabled == 'true'
         uses: docker/setup-buildx-action@v3
 
       - name: Extract metadata
         id: meta
+        if: steps.check.outputs.enabled == 'true'
         uses: docker/metadata-action@v5
         with:
           images: docker.io/openwhistle/${{ env.IMAGE_NAME }}
@@ -104,6 +119,7 @@ jobs:
             type=sha
 
       - name: Log in to Docker Hub
+        if: steps.check.outputs.enabled == 'true'
         uses: docker/login-action@v3
         with:
           registry: docker.io
@@ -111,6 +127,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push
+        if: steps.check.outputs.enabled == 'true'
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -121,22 +138,37 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ── Optional: push to Quay.io (requires QUAY_USERNAME + QUAY_TOKEN secrets) ──
+  # ── Optional: push to Quay.io ─────────────────────────────────────────────
+  # Activate by adding QUAY_USERNAME + QUAY_TOKEN repository secrets.
   push-quay:
     name: Push to Quay.io
     runs-on: ubuntu-latest
-    if: ${{ secrets.QUAY_USERNAME != '' }}
     permissions:
       contents: read
 
     steps:
+      - name: Check Quay.io credentials
+        id: check
+        env:
+          QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
+        run: |
+          if [ -n "${QUAY_USERNAME}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "QUAY_USERNAME secret not set — skipping Quay.io push."
+          fi
+
       - uses: actions/checkout@v6
+        if: steps.check.outputs.enabled == 'true'
 
       - name: Set up Docker Buildx
+        if: steps.check.outputs.enabled == 'true'
         uses: docker/setup-buildx-action@v3
 
       - name: Extract metadata
         id: meta
+        if: steps.check.outputs.enabled == 'true'
         uses: docker/metadata-action@v5
         with:
           images: quay.io/openwhistle/${{ env.IMAGE_NAME }}
@@ -148,6 +180,7 @@ jobs:
             type=sha
 
       - name: Log in to Quay.io
+        if: steps.check.outputs.enabled == 'true'
         uses: docker/login-action@v3
         with:
           registry: quay.io
@@ -155,6 +188,7 @@ jobs:
           password: ${{ secrets.QUAY_TOKEN }}
 
       - name: Build and push
+        if: steps.check.outputs.enabled == 'true'
         uses: docker/build-push-action@v6
         with:
           context: .
