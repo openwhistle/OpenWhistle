@@ -1000,8 +1000,7 @@
           <li>
             <div>
               <strong>Create admin account</strong><br>
-              Enter a username and a strong password. Password requirements are enforced
-              (minimum 12 characters, mixed case, digits, symbols).
+              Enter a username (3–64 characters) and a strong password (minimum 12 characters).
             </div>
           </li>
           <li>
@@ -1012,29 +1011,14 @@
               correctly registered. TOTP is mandatory and cannot be skipped.
             </div>
           </li>
-          <li>
-            <div>
-              <strong>Set organisation name</strong><br>
-              Configure the display name shown to whistleblowers on the submission form.
-              This can be changed later from the admin settings panel.
-            </div>
-          </li>
-          <li>
-            <div>
-              <strong>Verify setup</strong><br>
-              The wizard performs a health check: database connectivity, Redis connectivity,
-              and email configuration (if configured). Any issues are displayed before the
-              wizard is locked.
-            </div>
-          </li>
         </ol>
 
         <div class="callout callout-warn">
           <div class="callout-title">Save your TOTP secret</div>
           <p>
-            The TOTP backup codes displayed after setup are the only recovery mechanism
-            if you lose access to your authenticator app. Store them securely offline.
-            If lost, database-level recovery is required.
+            Write down the TOTP secret key displayed during setup and store it securely offline.
+            There are no backup codes. If you lose access to your authenticator app, you will
+            need to reset the TOTP secret directly in the database.
           </p>
         </div>
       </section>
@@ -1052,7 +1036,7 @@
           The dashboard shows all open reports sorted by urgency. Each report card displays:
         </p>
         <ul>
-          <li>Unique case number (non-sequential, randomly generated)</li>
+          <li>Unique case number in <code>OW-YYYY-NNNNN</code> format (sequential per year)</li>
           <li>Submission date and time</li>
           <li>Report category (if provided by the whistleblower)</li>
           <li>§17 acknowledgement deadline countdown (red when under 24 hours)</li>
@@ -1069,7 +1053,6 @@
           <li>Change the case status (Open, In Progress, Closed)</li>
           <li>Send a message to the whistleblower via the anonymous channel</li>
           <li>View the full message thread</li>
-          <li>Record internal notes (visible only to admins, never to the whistleblower)</li>
           <li>Close and hard-delete the case (triggers §26 HinSchG data erasure)</li>
         </ul>
 
@@ -1079,7 +1062,7 @@
         </p>
         <ul>
           <li><strong>7-day acknowledgement:</strong> The countdown starts from report submission. The dashboard shows a yellow warning at 3 days, red at 24 hours.</li>
-          <li><strong>3-month feedback:</strong> The countdown starts from report submission. A feedback response must be sent via the message channel before the deadline.</li>
+          <li><strong>3-month feedback:</strong> The countdown starts from the date of acknowledgement (§17 Abs. 2). A feedback response must be sent via the message channel before the deadline.</li>
         </ul>
       </section>
 
@@ -1199,9 +1182,9 @@
         <p>
           Brute-force protection on the report access endpoint uses Redis-based rate limiting
           keyed on the session token, not the IP address. A fixed-window counter increments
-          on each failed PIN attempt. After 10 failed attempts, the session token is invalidated
-          and a new one must be obtained. The whistleblower's IP address is never used as a
-          rate-limiting key.
+          on each failed PIN attempt. After 5 failed attempts within 15 minutes, the session
+          token is invalidated and a new one must be obtained. The whistleblower's IP address
+          is never used as a rate-limiting key.
         </p>
 
         <h3>Security headers</h3>
@@ -1219,10 +1202,11 @@
 
         <h3>OIDC integration</h3>
         <p>
-          When OIDC is configured, admin login is delegated to the external provider.
-          The application validates the ID token, extracts the <code>sub</code> claim,
-          and maps it to a local admin account. TOTP is still enforced as a second factor
-          in addition to OIDC — the OIDC flow alone is not sufficient for login.
+          When OIDC is configured, admin login can be completed entirely via the external
+          provider. The application validates the authorization code, fetches the userinfo
+          endpoint, extracts the <code>sub</code> claim, and maps it to a local admin account.
+          A session is created directly — no separate TOTP step is required for OIDC logins.
+          The admin account must be pre-linked to an OIDC identity by a system administrator.
         </p>
       </section>
 
@@ -1245,8 +1229,8 @@
 
         <h3>Demo mode behaviour</h3>
         <ul>
-          <li>Prefilled admin credentials: username <code>demo</code>, password <code>demo</code></li>
-          <li>TOTP is bypassed — the demo admin account has no MFA requirement</li>
+          <li>Prefilled admin credentials: username <code>demo</code>, password <code>demo</code>, TOTP code <code>000000</code></li>
+          <li>The static TOTP code <code>000000</code> is always accepted — no authenticator app needed</li>
           <li>All reports and messages are visible to the demo admin</li>
           <li>A banner is displayed on all pages indicating this is a demo instance</li>
           <li>The demo instance at <code>demo.openwhistle.net</code> is automatically wiped and restarted every hour via a cron job</li>
