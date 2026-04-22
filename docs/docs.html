@@ -876,7 +876,7 @@
 
 <span class="t-comment"># Minimum required values:</span>
 <span class="t-str">SECRET_KEY</span>=your-long-random-secret-key-here
-<span class="t-str">DATABASE_URL</span>=postgresql://openwhistle:password@db:5432/openwhistle
+<span class="t-str">DATABASE_URL</span>=postgresql+asyncpg://openwhistle:password@db:5432/openwhistle
 <span class="t-str">REDIS_URL</span>=redis://redis:6379/0</code></pre>
         </div>
 
@@ -938,7 +938,7 @@
             <tr>
               <td><code class="env-key">DATABASE_URL</code></td>
               <td><span class="env-required env-req-yes">Required</span></td>
-              <td>PostgreSQL connection string. Format: <code>postgresql://user:password@host:port/dbname</code></td>
+              <td>PostgreSQL connection string. Must use the async driver. Format: <code>postgresql+asyncpg://user:password@host:port/dbname</code></td>
               <td>—</td>
             </tr>
             <tr>
@@ -978,16 +978,10 @@
               <td>—</td>
             </tr>
             <tr>
-              <td><code class="env-key">LOG_LEVEL</code></td>
+              <td><code class="env-key">OIDC_REDIRECT_URI</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
-              <td>Application log level. One of: <code>DEBUG</code>, <code>INFO</code>, <code>WARNING</code>, <code>ERROR</code></td>
-              <td><code>INFO</code></td>
-            </tr>
-            <tr>
-              <td><code class="env-key">ALLOWED_HOSTS</code></td>
-              <td><span class="env-required env-req-no">Optional</span></td>
-              <td>Comma-separated list of allowed hostnames for the application.</td>
-              <td><code>*</code></td>
+              <td>OAuth 2.0 callback URL. Must match the redirect URI registered with your OIDC provider. Example: <code>https://yourdomain.com/admin/oidc/callback</code>. Required when <code>OIDC_ENABLED=true</code>.</td>
+              <td>—</td>
             </tr>
           </tbody>
         </table>

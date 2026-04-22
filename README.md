@@ -138,7 +138,8 @@ middlewares:
 | `OIDC_ENABLED` | No | `false` | Enable OIDC login |
 | `OIDC_CLIENT_ID` | No | — | OIDC client ID |
 | `OIDC_CLIENT_SECRET` | No | — | OIDC client secret |
-| `OIDC_SERVER_METADATA_URL` | No | — | OIDC discovery URL |
+| `OIDC_SERVER_METADATA_URL` | No | — | OIDC provider discovery URL |
+| `OIDC_REDIRECT_URI` | No | — | OAuth 2.0 callback URL (e.g. `https://yourdomain.com/admin/oidc/callback`) |
 
 ## Development
 

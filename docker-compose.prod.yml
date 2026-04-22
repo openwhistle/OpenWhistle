@@ -10,6 +10,7 @@ services:
       OIDC_CLIENT_ID: "${OIDC_CLIENT_ID:-}"
       OIDC_CLIENT_SECRET: "${OIDC_CLIENT_SECRET:-}"
       OIDC_SERVER_METADATA_URL: "${OIDC_SERVER_METADATA_URL:-}"
+      OIDC_REDIRECT_URI: "${OIDC_REDIRECT_URI:-}"
     depends_on:
       db:
         condition: service_healthy
