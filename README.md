@@ -55,7 +55,7 @@ A live demo is available at **<https://demo.openwhistle.net>**
 |---|---|---|---|
 | Admin | `demo` | `demo` | `000000` |
 
-Demo reports with known case numbers and PINs are available in [`docs/demo_credentials.md`](docs/demo_credentials.md).
+Demo case numbers and PINs are shown after logging in to the demo admin account.
 
 The demo resets automatically every hour.
 

@@ -36,6 +36,9 @@ Folgende Fakten sind festgelegt:
 - Beim erstellen von Commit Messages erwähnst du bitte nicht Claude Code
 - Du hast Zugriff auf GitHub über die GitHub CLI
 - Markdown Dokumente müssen nach markdownlint Vorgaben erstellt werden
+- Documentation in `docs/docs.html`, `README.md`, and `docker-compose.prod.yml` must always be kept in sync. When adding or renaming environment variables, update ALL locations in the same commit.
+- The demo at https://demo.openwhistle.net is live and hosted on Hetzner (root01xvp.wdkro.de) via Ansible. It resets hourly.
+- All HTML files in `docs/` must use self-hosted fonts from `docs/fonts/` — never Google Fonts CDN or any other external font CDN.
 
 Der Code wird auf GitHub in einem öffentlichen Repository von der Organisation openwhistle gehostet.
 Der Code liegt hier: <https://github.com/openwhistle/OpenWhistle>

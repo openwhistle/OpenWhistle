@@ -6,8 +6,19 @@
   <title>Security Architecture — OpenWhistle Documentation</title>
   <meta name="description" content="OpenWhistle security architecture: four-layer IP anonymisation, UUID4 whistleblower PIN, mandatory TOTP MFA, Redis rate limiting without IP tracking, DSGVO-compliant resource hosting, and security headers.">
   <meta name="theme-color" content="#0a0e13">
-  <link rel="preconnect" href="https://fonts.bunny.net">
-  <link href="https://fonts.bunny.net/css?family=spectral:400,400i,600,700|source-serif-4:300,400,600,700|jetbrains-mono:400,500&display=swap" rel="stylesheet">
+  <style>
+    /* Self-hosted fonts — no external CDN calls */
+    @font-face { font-family: 'Spectral'; src: url('../../docs/fonts/spectral-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Spectral'; src: url('../../docs/fonts/spectral-latin-400-italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+    @font-face { font-family: 'Spectral'; src: url('../../docs/fonts/spectral-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Spectral'; src: url('../../docs/fonts/spectral-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('../../docs/fonts/source-serif-4-latin-300-normal.woff2') format('woff2'); font-weight: 300; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('../../docs/fonts/source-serif-4-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('../../docs/fonts/source-serif-4-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('../../docs/fonts/source-serif-4-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'JetBrains Mono'; src: url('../../docs/fonts/JetBrainsMono-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'JetBrains Mono'; src: url('../../docs/fonts/JetBrainsMono-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+  </style>
   <link rel="stylesheet" href="../css/style.css">
   <style>
     .layer-grid {
@@ -320,9 +331,9 @@
             the account is temporarily locked for 15 minutes, enforced via Redis TTL.
           </li>
           <li>
-            <strong>CAPTCHA for public submission (optional):</strong> An optional
-            hCaptcha integration can be enabled for the <code>/submit</code> endpoint.
-            When enabled, hCaptcha's self-hosted mode is used to avoid external data transfer.
+            <strong>Global submission velocity limit:</strong> The total submission rate across
+            all requesters is capped via a sliding window counter in Redis. This limits abuse
+            without identifying any individual user.
           </li>
         </ul>
 
@@ -349,7 +360,7 @@
           <tbody>
             <tr>
               <td>Web fonts</td>
-              <td>Fetched at build time from Bunny Fonts (EU-hosted, DSGVO-compliant CDN), then self-hosted within the Docker image. No runtime external font requests.</td>
+              <td>Downloaded via npm <code>@fontsource</code> packages and committed directly to the repository. Served from within the Docker image. No runtime external font requests of any kind.</td>
             </tr>
             <tr>
               <td>CSS &amp; JavaScript</td>

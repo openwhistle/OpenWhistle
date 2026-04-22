@@ -16,7 +16,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - OIDC state stored in Redis with 5-minute TTL to prevent replay attacks
 - SSO button on admin login page (shown only when `OIDC_ENABLED=true`)
 - GitHub Pages website deployed from `docs/` directory
-- HinSchG reference document at `docs/hinschg_reference.md`
+- Image cleanup workflow for GHCR, Docker Hub, and Quay.io (runs weekly; retains the 10 most recent `sha-` tagged images per registry)
 
 ## [0.1.0] — 2026-04-21
 
