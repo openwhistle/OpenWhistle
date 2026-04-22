@@ -13,6 +13,9 @@ on:
 
 env:
   IMAGE_NAME: openwhistle
+  # Opt into Node.js 24 for all JS-based actions to suppress the Node 20
+  # deprecation warning that fires on 2026-06-02.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   # ── Always: push to GitHub Container Registry ─────────────────────────────
@@ -43,7 +46,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
             type=raw,value=latest,enable={{is_default_branch}}
-            type=sha
+            type=sha,prefix=sha-
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -79,35 +82,27 @@ jobs:
 
   # ── Optional: push to Docker Hub ──────────────────────────────────────────
   # Activate by adding DOCKERHUB_USERNAME + DOCKERHUB_TOKEN repository secrets.
+  # Secrets are mapped to env vars so they can be checked in step `if` conditions
+  # (the secrets context is not available at step level, but env context is).
   push-dockerhub:
     name: Push to Docker Hub
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
     steps:
-      - name: Check Docker Hub credentials
-        id: check
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-        run: |
-          if [ -n "${DOCKERHUB_USERNAME}" ]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "DOCKERHUB_USERNAME secret not set — skipping Docker Hub push."
-          fi
-
       - uses: actions/checkout@v6
-        if: steps.check.outputs.enabled == 'true'
+        if: env.DOCKERHUB_TOKEN != ''
 
       - name: Set up Docker Buildx
-        if: steps.check.outputs.enabled == 'true'
+        if: env.DOCKERHUB_TOKEN != ''
         uses: docker/setup-buildx-action@v3
 
       - name: Extract metadata
         id: meta
-        if: steps.check.outputs.enabled == 'true'
+        if: env.DOCKERHUB_TOKEN != ''
         uses: docker/metadata-action@v5
         with:
           images: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
@@ -116,10 +111,10 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
             type=raw,value=latest,enable={{is_default_branch}}
-            type=sha
+            type=sha,prefix=sha-
 
       - name: Log in to Docker Hub
-        if: steps.check.outputs.enabled == 'true'
+        if: env.DOCKERHUB_TOKEN != ''
         uses: docker/login-action@v3
         with:
           registry: docker.io
@@ -127,7 +122,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push
-        if: steps.check.outputs.enabled == 'true'
+        if: env.DOCKERHUB_TOKEN != ''
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -139,51 +134,41 @@ jobs:
           cache-to: type=gha,mode=max
 
   # ── Optional: push to Quay.io ─────────────────────────────────────────────
-  # Activate by adding QUAY_USERNAME + QUAY_TOKEN repository secrets.
+  # Activate by adding QUAY_USERNAME + QUAY_TOKEN + QUAY_NAMESPACE secrets.
+  # QUAY_NAMESPACE is the plain account/org name (e.g. jp1337) — separate from
+  # QUAY_USERNAME which may be a robot account containing a + character that is
+  # invalid in image references.
   push-quay:
     name: Push to Quay.io
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      QUAY_TOKEN: ${{ secrets.QUAY_TOKEN }}
 
     steps:
-      - name: Check Quay.io credentials
-        id: check
-        env:
-          QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
-        run: |
-          if [ -n "${QUAY_USERNAME}" ]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "QUAY_USERNAME secret not set — skipping Quay.io push."
-          fi
-
       - uses: actions/checkout@v6
-        if: steps.check.outputs.enabled == 'true'
+        if: env.QUAY_TOKEN != ''
 
       - name: Set up Docker Buildx
-        if: steps.check.outputs.enabled == 'true'
+        if: env.QUAY_TOKEN != ''
         uses: docker/setup-buildx-action@v3
 
       - name: Extract metadata
         id: meta
-        if: steps.check.outputs.enabled == 'true'
+        if: env.QUAY_TOKEN != ''
         uses: docker/metadata-action@v5
         with:
-          # QUAY_NAMESPACE is the account/org name (e.g. jp1337).
-          # QUAY_USERNAME may be a robot account (jp1337+robot) and contains a +,
-          # which is invalid in image references — so namespace is kept separate.
           images: quay.io/${{ secrets.QUAY_NAMESPACE }}/${{ env.IMAGE_NAME }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
             type=raw,value=latest,enable={{is_default_branch}}
-            type=sha
+            type=sha,prefix=sha-
 
       - name: Log in to Quay.io
-        if: steps.check.outputs.enabled == 'true'
+        if: env.QUAY_TOKEN != ''
         uses: docker/login-action@v3
         with:
           registry: quay.io
@@ -191,7 +176,7 @@ jobs:
           password: ${{ secrets.QUAY_TOKEN }}
 
       - name: Build and push
-        if: steps.check.outputs.enabled == 'true'
+        if: env.QUAY_TOKEN != ''
         uses: docker/build-push-action@v6
         with:
           context: .

@@ -1,0 +1,128 @@
+name: Cleanup Old Images
+
+# Runs weekly to prevent unbounded growth of sha- tagged images across all
+# three container registries. Keeps the 10 most recent sha- tags everywhere;
+# semver tags and `latest` are never deleted.
+on:
+  schedule:
+    - cron: '0 3 * * 0'  # Weekly, Sunday 03:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # ── GHCR ──────────────────────────────────────────────────────────────────
+  # Step 1: delete untagged versions (intermediate per-platform digests).
+  # Step 2: keep only the 10 most recent sha- tagged versions;
+  #         semver tags and `latest` are protected by ignore-versions.
+  cleanup-ghcr:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Delete untagged GHCR versions
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: openwhistle
+          package-type: container
+          delete-only-untagged-versions: true
+          min-versions-to-keep: 0
+
+      - name: Keep only 10 most recent sha- versions in GHCR
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: openwhistle
+          package-type: container
+          # Covers: latest, 0.1, 0.1.0  (semver tags have no 'v' prefix after metadata-action strips it)
+          ignore-versions: '^(latest|\d+\.\d+)'
+          min-versions-to-keep: 10
+
+  # ── Docker Hub + Quay.io ──────────────────────────────────────────────────
+  # List all sha- tags sorted newest-first, skip the first 10, delete the rest.
+  cleanup-registries:
+    runs-on: ubuntu-latest
+    permissions: {}
+    env:
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      QUAY_TOKEN: ${{ secrets.QUAY_TOKEN }}
+      QUAY_USERNAME: ${{ secrets.QUAY_USERNAME }}
+      QUAY_NAMESPACE: ${{ secrets.QUAY_NAMESPACE }}
+
+    steps:
+      - name: Delete old sha- tags from Docker Hub
+        if: env.DOCKERHUB_TOKEN != ''
+        run: |
+          set -euo pipefail
+          KEEP=10
+
+          API_TOKEN=$(curl -sf -X POST \
+            "https://hub.docker.com/v2/users/login" \
+            -H "Content-Type: application/json" \
+            -d '{"username":"'"${DOCKERHUB_USERNAME}"'","password":"'"${DOCKERHUB_TOKEN}"'"}' \
+            | jq -r '.token')
+
+          SHA_TAGS=()
+          PAGE=1
+          while true; do
+            RESP=$(curl -sf \
+              "https://hub.docker.com/v2/repositories/${DOCKERHUB_USERNAME}/openwhistle/tags?page_size=100&page=${PAGE}&ordering=last_updated" \
+              -H "Authorization: Bearer ${API_TOKEN}")
+            mapfile -t PAGE_TAGS < <(echo "${RESP}" | jq -r '.results[].name | select(startswith("sha-"))')
+            SHA_TAGS+=("${PAGE_TAGS[@]}")
+            [[ $(echo "${RESP}" | jq -r '.next') == "null" ]] && break
+            PAGE=$((PAGE + 1))
+          done
+
+          DELETED=0
+          for i in "${!SHA_TAGS[@]}"; do
+            [[ $i -lt $KEEP ]] && continue
+            tag="${SHA_TAGS[$i]}"
+            if curl -sf -X DELETE \
+              "https://hub.docker.com/v2/repositories/${DOCKERHUB_USERNAME}/openwhistle/tags/${tag}/" \
+              -H "Authorization: Bearer ${API_TOKEN}"; then
+              echo "Deleted Docker Hub: ${tag}"
+              DELETED=$((DELETED + 1))
+            else
+              echo "Failed to delete Docker Hub: ${tag}" >&2
+            fi
+          done
+          echo "Docker Hub: kept ${KEEP}, deleted ${DELETED} sha- tag(s)."
+
+      - name: Delete old sha- tags from Quay.io
+        if: env.QUAY_TOKEN != ''
+        run: |
+          set -euo pipefail
+          KEEP=10
+
+          # Quay.io REST API blocks CSRF-free DELETE for robot accounts.
+          # Use skopeo (registry protocol) for deletion — works with robot credentials.
+          QUAY_BASIC=$(echo -n "${QUAY_USERNAME}:${QUAY_TOKEN}" | base64 -w 0)
+
+          SHA_TAGS=()
+          PAGE=1
+          while true; do
+            RESP=$(curl -sf \
+              "https://quay.io/api/v1/repository/${QUAY_NAMESPACE}/openwhistle/tag/?limit=100&page=${PAGE}&onlyActiveTags=true" \
+              -H "Authorization: Basic ${QUAY_BASIC}")
+            mapfile -t PAGE_TAGS < <(echo "${RESP}" | jq -r '.tags[].name | select(startswith("sha-"))')
+            SHA_TAGS+=("${PAGE_TAGS[@]}")
+            [[ $(echo "${RESP}" | jq -r '.has_additional') != "true" ]] && break
+            PAGE=$((PAGE + 1))
+          done
+
+          DELETED=0
+          for i in "${!SHA_TAGS[@]}"; do
+            [[ $i -lt $KEEP ]] && continue
+            tag="${SHA_TAGS[$i]}"
+            if skopeo delete \
+              --creds "${QUAY_USERNAME}:${QUAY_TOKEN}" \
+              "docker://quay.io/${QUAY_NAMESPACE}/openwhistle:${tag}"; then
+              echo "Deleted Quay.io: ${tag}"
+              DELETED=$((DELETED + 1))
+            else
+              echo "Failed to delete Quay.io: ${tag}" >&2
+            fi
+          done
+          echo "Quay.io: kept ${KEEP}, deleted ${DELETED} sha- tag(s)."
