@@ -131,6 +131,7 @@ middlewares:
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
+| `APP_NAME` | No | `OpenWhistle` | Display name used in the application UI |
 | `SECRET_KEY` | Yes | — | Long random string for JWT signing |
 | `DATABASE_URL` | Yes | — | `postgresql+asyncpg://user:pass@host:5432/db` |
 | `REDIS_URL` | Yes | — | `redis://host:6379/0` |
@@ -181,7 +182,7 @@ pytest --cov=app --cov-report=term-missing
 
 ### Project Structure
 
-```
+```text
 app/
 ├── main.py          # App factory, startup migration check
 ├── config.py        # pydantic-settings configuration

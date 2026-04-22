@@ -16,7 +16,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - OIDC state stored in Redis with 5-minute TTL to prevent replay attacks
 - SSO button on admin login page (shown only when `OIDC_ENABLED=true`)
 - GitHub Pages website deployed from `docs/` directory
-- Image cleanup workflow for GHCR, Docker Hub, and Quay.io (runs weekly; retains the 10 most recent `sha-` tagged images per registry)
+- Image cleanup workflow for GHCR, Docker Hub, and Quay.io (runs weekly; retains the 10 most recent
+  `sha-` tagged images per registry)
 
 ## [0.1.0] — 2026-04-21
 
@@ -47,7 +48,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Technical Decisions
 
-- **Python 3.14** over Go/Rust: team familiarity with Python; mypy --strict provides compile-like type safety guarantees in CI
+- **Python 3.14** over Go/Rust: team familiarity with Python; mypy --strict provides compile-like
+  type safety guarantees in CI
 - **FastAPI** for async performance and Pydantic validation
 - **SQLAlchemy 2.0 async** for type-safe database access
 - **Authlib 1.7.0+** required due to CVE-2026-28498 in earlier versions
