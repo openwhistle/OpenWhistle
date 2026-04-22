@@ -939,27 +939,27 @@
               <td><code>false</code></td>
             </tr>
             <tr>
-              <td><code class="env-key">OIDC_ISSUER</code></td>
+              <td><code class="env-key">OIDC_ENABLED</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
-              <td>OIDC provider discovery URL (e.g. <code>https://accounts.google.com</code>). Required for OIDC login.</td>
+              <td>Set to <code>true</code> to enable OIDC login for administrators.</td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">OIDC_SERVER_METADATA_URL</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>OIDC provider discovery URL (e.g. <code>https://accounts.google.com/.well-known/openid-configuration</code>). Required when <code>OIDC_ENABLED=true</code>.</td>
               <td>—</td>
             </tr>
             <tr>
               <td><code class="env-key">OIDC_CLIENT_ID</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
-              <td>OAuth 2.0 client ID from your OIDC provider.</td>
+              <td>OAuth 2.0 client ID from your OIDC provider. Required when <code>OIDC_ENABLED=true</code>.</td>
               <td>—</td>
             </tr>
             <tr>
               <td><code class="env-key">OIDC_CLIENT_SECRET</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
-              <td>OAuth 2.0 client secret from your OIDC provider.</td>
-              <td>—</td>
-            </tr>
-            <tr>
-              <td><code class="env-key">OIDC_REDIRECT_URI</code></td>
-              <td><span class="env-required env-req-no">Optional</span></td>
-              <td>OAuth 2.0 redirect URI. Must match the URI registered with your provider.</td>
+              <td>OAuth 2.0 client secret from your OIDC provider. Required when <code>OIDC_ENABLED=true</code>.</td>
               <td>—</td>
             </tr>
             <tr>
