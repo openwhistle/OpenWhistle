@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentation — OpenWhistle | Self-Hosted Whistleblower Platform</title>
+  <meta name="description" content="Complete documentation for OpenWhistle: installation, configuration, environment variables, admin guide, whistleblower guide, security architecture, and HinSchG compliance details.">
+  <meta name="keywords" content="OpenWhistle documentation, whistleblower platform setup, HinSchG software installation, Docker whistleblower system, Hinweisgebersystem Dokumentation, interne Meldestelle einrichten">
+  <meta name="author" content="OpenWhistle Contributors">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://openwhistle.net/docs.html">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://openwhistle.net/docs.html">
+  <meta property="og:title" content="Documentation — OpenWhistle">
+  <meta property="og:description" content="Complete installation, configuration, and security documentation for OpenWhistle — the free, self-hosted HinSchG-compliant whistleblower platform.">
+  <meta property="og:image" content="https://openwhistle.net/og-image.png">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Documentation — OpenWhistle">
+  <meta name="twitter:description" content="Installation, configuration, and security documentation for OpenWhistle.">
+
+  <!-- JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "OpenWhistle Documentation",
+    "description": "Complete technical documentation for OpenWhistle, the free self-hosted whistleblower reporting platform compliant with HinSchG and EU Directive 2019/1937.",
+    "url": "https://openwhistle.net/docs.html",
+    "author": {
+      "@type": "Organization",
+      "name": "OpenWhistle Contributors",
+      "url": "https://github.com/openwhistle"
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://openwhistle.net/docs.html"
+    }
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    /* ================================================================
+       OpenWhistle Documentation — Shared + Docs-specific styles
+       ================================================================ */
+
+    :root {
+      --bg-base:       #fafaf7;
+      --bg-surface:    #f4f2ed;
+      --bg-raised:     #eeeae0;
+      --bg-overlay:    #e8e3d8;
+      --nav-bg:        #1a2744;
+      --footer-bg:     #1a2744;
+      --sidebar-bg:    #f4f2ed;
+      --text-primary:  #1e293b;
+      --text-secondary:#3d4f6b;
+      --text-muted:    #6b7a96;
+      --border-subtle: #e2d9c8;
+      --border-default:#c9bfaa;
+      --border-strong: #a89880;
+      --seal-green:    #2d7d46;
+      --seal-green-mid:#245f37;
+      --seal-green-dim:rgba(45, 125, 70, 0.15);
+      --seal-green-fog:rgba(45, 125, 70, 0.08);
+      --gold:          #c8972e;
+      --gold-mid:      #a87920;
+      --gold-dim:      rgba(200, 151, 46, 0.20);
+      --gold-fog:      rgba(200, 151, 46, 0.08);
+      --code-bg:       #1a2744;
+      --code-text:     #e2dcd2;
+
+      --font-serif:    'Spectral', 'Georgia', serif;
+      --font-body:     'Source Serif 4', 'Georgia', serif;
+      --font-mono:     'JetBrains Mono', 'Courier New', monospace;
+
+      --space-1: 0.25rem; --space-2: 0.5rem;  --space-3: 0.75rem;
+      --space-4: 1rem;    --space-5: 1.25rem; --space-6: 1.5rem;
+      --space-8: 2rem;    --space-10: 2.5rem; --space-12: 3rem;
+      --space-16: 4rem;
+
+      --max-width: 1200px;
+      --sidebar-width: 260px;
+      --ease-stiff: cubic-bezier(0.16, 1, 0.3, 1);
+      --duration-fast: 140ms;
+      --duration-mid:  280ms;
+    }
+
+    [data-theme="dark"] {
+      --bg-base:       #0a0f1e;
+      --bg-surface:    #111827;
+      --bg-raised:     #1a2234;
+      --bg-overlay:    #1e293b;
+      --nav-bg:        #060c18;
+      --footer-bg:     #060c18;
+      --sidebar-bg:    #0d1422;
+      --text-primary:  #e8e6e0;
+      --text-secondary:#9aa5bc;
+      --text-muted:    #5a6580;
+      --border-subtle: #1e2d40;
+      --border-default:#263548;
+      --border-strong: #334466;
+      --seal-green:    #3aaa5c;
+      --seal-green-mid:#2d8a4a;
+      --seal-green-dim:rgba(58, 170, 92, 0.15);
+      --seal-green-fog:rgba(58, 170, 92, 0.08);
+      --gold:          #e8a020;
+      --gold-mid:      #c8881a;
+      --gold-dim:      rgba(232, 160, 32, 0.20);
+      --gold-fog:      rgba(232, 160, 32, 0.08);
+      --code-bg:       #060c18;
+      --code-text:     #e2dcd2;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; -webkit-text-size-adjust: 100%; }
+    img, svg { display: block; max-width: 100%; }
+    a { color: inherit; text-decoration: none; }
+    button { cursor: pointer; border: none; background: none; font: inherit; }
+    ul, ol { list-style: none; }
+
+    body {
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      transition: background var(--duration-mid) ease, color var(--duration-mid) ease;
+    }
+
+    .skip-link {
+      position: absolute;
+      top: -100%;
+      left: var(--space-4);
+      background: var(--seal-green);
+      color: #fff;
+      padding: var(--space-2) var(--space-4);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      z-index: 9999;
+    }
+    .skip-link:focus { top: var(--space-4); }
+
+    /* ── Navigation ──────────────────────────────────────────────── */
+    .site-nav {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      background: var(--nav-bg);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .nav-inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 var(--space-8);
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-6);
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #e2dcd2;
+      flex-shrink: 0;
+      transition: color var(--duration-fast) ease;
+    }
+    .nav-logo:hover { color: #fff; }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: var(--space-6);
+    }
+    .nav-links a {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(226, 220, 210, 0.65);
+      transition: color var(--duration-fast) ease;
+      white-space: nowrap;
+    }
+    .nav-links a:hover { color: #e2dcd2; }
+    .nav-links a.active { color: #5ecb7a; }
+    .nav-cta {
+      padding: var(--space-2) var(--space-4) !important;
+      border: 1px solid rgba(45, 125, 70, 0.5) !important;
+      color: #5ecb7a !important;
+      border-radius: 2px;
+    }
+    .nav-cta:hover { background: rgba(45, 125, 70, 0.15) !important; }
+    .nav-actions { display: flex; align-items: center; gap: var(--space-4); flex-shrink: 0; }
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 2px;
+      color: rgba(226, 220, 210, 0.65);
+      transition: color var(--duration-fast) ease;
+    }
+    .theme-toggle:hover { color: #e2dcd2; }
+    .theme-toggle svg { width: 16px; height: 16px; }
+    .icon-sun { display: none; }
+    [data-theme="dark"] .icon-moon { display: none; }
+    [data-theme="dark"] .icon-sun { display: block; }
+    .nav-toggle {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      padding: var(--space-2);
+      color: rgba(226, 220, 210, 0.65);
+    }
+    .nav-toggle span { display: block; width: 20px; height: 1.5px; background: currentColor; }
+
+    /* ── Docs layout ─────────────────────────────────────────────── */
+    .docs-layout {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr;
+      min-height: calc(100vh - 60px);
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
+
+    /* ── Sidebar ─────────────────────────────────────────────────── */
+    .docs-sidebar {
+      position: sticky;
+      top: 60px;
+      height: calc(100vh - 60px);
+      overflow-y: auto;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border-subtle);
+      padding: var(--space-8) var(--space-5);
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-default) transparent;
+    }
+    .docs-sidebar::-webkit-scrollbar { width: 4px; }
+    .docs-sidebar::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 2px; }
+
+    .sidebar-section {
+      margin-bottom: var(--space-8);
+    }
+    .sidebar-section-title {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: var(--space-3);
+      padding-left: var(--space-3);
+    }
+    .sidebar-links {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .sidebar-links a {
+      display: block;
+      padding: var(--space-2) var(--space-3);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      border-left: 2px solid transparent;
+      border-radius: 0 2px 2px 0;
+      transition: color var(--duration-fast) ease, background var(--duration-fast) ease, border-left-color var(--duration-fast) ease;
+    }
+    .sidebar-links a:hover {
+      color: var(--text-primary);
+      background: var(--bg-raised);
+    }
+    .sidebar-links a.active {
+      color: var(--seal-green);
+      background: var(--seal-green-fog);
+      border-left-color: var(--seal-green);
+    }
+
+    /* ── Content ─────────────────────────────────────────────────── */
+    .docs-content {
+      padding: var(--space-12) var(--space-12) var(--space-16);
+      min-width: 0;
+    }
+
+    .docs-breadcrumb {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: var(--space-8);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+    .docs-breadcrumb a { color: var(--seal-green); transition: color var(--duration-fast) ease; }
+    .docs-breadcrumb a:hover { color: var(--seal-green-mid); }
+    .docs-breadcrumb span { color: var(--text-muted); }
+
+    /* Content typography */
+    .docs-content h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(2rem, 3.5vw, 2.8rem);
+      font-weight: 700;
+      letter-spacing: -0.035em;
+      line-height: 1.12;
+      color: var(--text-primary);
+      margin-bottom: var(--space-5);
+      animation: rise 0.5s var(--ease-stiff) both;
+    }
+
+    .docs-lead {
+      font-size: 1.05rem;
+      font-weight: 300;
+      color: var(--text-secondary);
+      line-height: 1.75;
+      max-width: 60ch;
+      margin-bottom: var(--space-10);
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: var(--space-8);
+      animation: rise 0.5s var(--ease-stiff) 0.1s both;
+    }
+
+    .docs-section {
+      margin-bottom: var(--space-12);
+      padding-bottom: var(--space-12);
+      border-bottom: 1px solid var(--border-subtle);
+      scroll-margin-top: 80px;
+    }
+    .docs-section:last-child {
+      border-bottom: none;
+    }
+
+    .docs-section h2 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.4rem, 2.5vw, 1.9rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      color: var(--text-primary);
+      margin-bottom: var(--space-5);
+      line-height: 1.2;
+    }
+
+    .docs-section h3 {
+      font-family: var(--font-serif);
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: var(--space-8) 0 var(--space-3);
+    }
+
+    .docs-section p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.8;
+      margin-bottom: var(--space-4);
+      max-width: 70ch;
+    }
+
+    .docs-section a {
+      color: var(--seal-green);
+      border-bottom: 1px solid var(--seal-green-dim);
+      transition: all var(--duration-fast) ease;
+    }
+    .docs-section a:hover { border-bottom-color: var(--seal-green); }
+
+    .docs-section ul, .docs-section ol {
+      padding-left: var(--space-6);
+      margin-bottom: var(--space-5);
+    }
+    .docs-section ul { list-style: disc; }
+    .docs-section ol { list-style: decimal; }
+    .docs-section li {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.75;
+      margin-bottom: var(--space-2);
+      max-width: 68ch;
+    }
+
+    .docs-section code {
+      font-family: var(--font-mono);
+      font-size: 0.82em;
+      background: var(--bg-raised);
+      border: 1px solid var(--border-subtle);
+      padding: 1px 5px;
+      border-radius: 2px;
+      color: var(--text-primary);
+    }
+    [data-theme="dark"] .docs-section code {
+      background: var(--bg-overlay);
+    }
+
+    /* Code block */
+    .code-block {
+      background: var(--code-bg);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: var(--space-5) 0;
+    }
+    .code-block-header {
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: var(--space-2) var(--space-5);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .code-block-lang {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(226, 220, 210, 0.3);
+    }
+    .code-block pre {
+      padding: var(--space-5) var(--space-6);
+      overflow-x: auto;
+      margin: 0;
+    }
+    .code-block pre code {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      line-height: 1.85;
+      color: var(--code-text);
+      background: none;
+      border: none;
+      padding: 0;
+    }
+    .t-prompt { color: #5ecb7a; user-select: none; }
+    .t-cmd    { color: #e2dcd2; }
+    .t-comment{ color: #4a6a4a; font-style: italic; }
+    .t-str    { color: #c8b46a; }
+    .t-out    { color: #4a7a6a; font-size: 0.78rem; }
+
+    /* Callout boxes */
+    .callout {
+      padding: var(--space-4) var(--space-6);
+      margin: var(--space-6) 0;
+      border-left: 3px solid;
+      border-radius: 0 2px 2px 0;
+    }
+    .callout-note {
+      background: var(--seal-green-fog);
+      border-color: var(--seal-green);
+    }
+    .callout-warn {
+      background: var(--gold-fog);
+      border-color: var(--gold);
+    }
+    .callout-title {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: var(--space-2);
+    }
+    .callout-note .callout-title { color: var(--seal-green); }
+    .callout-warn .callout-title { color: var(--gold); }
+    .callout p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      max-width: none;
+      margin-bottom: 0;
+    }
+
+    /* Env var table */
+    .env-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+      margin: var(--space-5) 0;
+    }
+    .env-table thead th {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: var(--space-3) var(--space-4);
+      text-align: left;
+      border-bottom: 2px solid var(--border-subtle);
+      white-space: nowrap;
+    }
+    .env-table tbody td {
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      vertical-align: top;
+      line-height: 1.6;
+    }
+    .env-table tbody tr:last-child td { border-bottom: none; }
+    .env-table tbody tr:hover td { background: var(--bg-raised); }
+    [data-theme="dark"] .env-table tbody tr:hover td { background: var(--bg-overlay); }
+    .env-key {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+    .env-required {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      padding: 2px 6px;
+      border-radius: 2px;
+    }
+    .env-req-yes { background: rgba(185,28,28,0.1); color: #b91c1c; border: 1px solid rgba(185,28,28,0.2); }
+    .env-req-no  { background: var(--bg-raised); color: var(--text-muted); border: 1px solid var(--border-subtle); }
+
+    /* Security layers */
+    .security-layers {
+      counter-reset: layer;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .security-layer {
+      display: grid;
+      grid-template-columns: 3rem 1fr;
+      gap: var(--space-5);
+      padding: var(--space-5) 0;
+      border-bottom: 1px solid var(--border-subtle);
+      align-items: start;
+    }
+    .security-layer:last-child { border-bottom: none; }
+    .security-layer-num {
+      font-family: var(--font-serif);
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--seal-green);
+      opacity: 0.4;
+      letter-spacing: -0.05em;
+      line-height: 1;
+      padding-top: 4px;
+    }
+    .security-layer-title {
+      font-family: var(--font-serif);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+    }
+    .security-layer-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    /* Step list */
+    .step-list {
+      counter-reset: step;
+      list-style: none !important;
+      padding-left: 0 !important;
+    }
+    .step-list li {
+      counter-increment: step;
+      display: grid;
+      grid-template-columns: 2rem 1fr;
+      gap: var(--space-4);
+      padding: var(--space-4) 0;
+      border-bottom: 1px solid var(--border-subtle);
+      max-width: 100% !important;
+    }
+    .step-list li:last-child { border-bottom: none; }
+    .step-list li::before {
+      content: counter(step);
+      font-family: var(--font-serif);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--seal-green);
+      opacity: 0.5;
+      line-height: 1.5;
+    }
+
+    /* ── Footer ──────────────────────────────────────────────────── */
+    .site-footer {
+      background: var(--footer-bg);
+      color: rgba(226, 220, 210, 0.7);
+      padding: var(--space-10) var(--space-8) var(--space-6);
+      border-top: 1px solid rgba(255,255,255,0.04);
+    }
+    .footer-inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
+    .footer-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.06em;
+      color: rgba(226, 220, 210, 0.3);
+      gap: var(--space-4);
+      flex-wrap: wrap;
+    }
+    .footer-bottom a { color: rgba(226, 220, 210, 0.4); transition: color var(--duration-fast) ease; }
+    .footer-bottom a:hover { color: rgba(226, 220, 210, 0.7); }
+
+    /* ── Animations ─────────────────────────────────────────────── */
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Responsive ─────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .nav-links.open {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: var(--nav-bg);
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        padding: var(--space-5) var(--space-6);
+        gap: var(--space-4);
+        z-index: 201;
+      }
+      .nav-toggle { display: flex; }
+      .docs-layout { grid-template-columns: 1fr; }
+      .docs-sidebar {
+        position: static;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border-subtle);
+      }
+      .docs-content { padding: var(--space-8) var(--space-5) var(--space-12); }
+      .env-table { font-size: 0.8rem; }
+      .footer-bottom { flex-direction: column; align-items: flex-start; }
+    }
+
+    @media (max-width: 540px) {
+      .security-layer { grid-template-columns: 2.5rem 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Navigation -->
+  <nav class="site-nav" role="navigation" aria-label="Primary navigation">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo" aria-label="OpenWhistle home">
+        <svg width="22" height="26" viewBox="0 0 22 26" fill="none" aria-hidden="true">
+          <path d="M11 1L2 5.5v7c0 5.25 3.85 10.15 9 11.35C16.15 22.65 20 17.75 20 12.5v-7L11 1z" stroke="#5ecb7a" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+          <path d="M7.5 13l2.5 2.5L14.5 10" stroke="#5ecb7a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        OpenWhistle
+      </a>
+
+      <button class="nav-toggle" aria-controls="nav-links" aria-expanded="false" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+      </button>
+
+      <ul class="nav-links" id="nav-links" role="list">
+        <li><a href="index.html#features">Features</a></li>
+        <li><a href="index.html#how-it-works">How it Works</a></li>
+        <li><a href="docs.html" class="active">Documentation</a></li>
+        <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
+        <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank" class="nav-cta">Try Demo</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+          <svg class="icon-moon" viewBox="0 0 16 16" fill="none">
+            <path d="M13.5 9.5A6 6 0 016 2a6 6 0 100 12 6 6 0 007.5-4.5z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+          <svg class="icon-sun" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.3"/>
+            <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M11.54 4.46l-1.41 1.41M4.95 11.54l-1.41 1.41" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+
+    <!-- Sidebar -->
+    <aside class="docs-sidebar" role="complementary" aria-label="Documentation navigation">
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Getting Started</div>
+        <nav class="sidebar-links" aria-label="Getting started">
+          <a href="#overview" class="active">Overview</a>
+          <a href="#requirements">Requirements</a>
+          <a href="#installation">Installation</a>
+          <a href="#configuration">Configuration</a>
+          <a href="#first-run">First-Run Wizard</a>
+        </nav>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Usage</div>
+        <nav class="sidebar-links">
+          <a href="#admin-guide">Admin Guide</a>
+          <a href="#whistleblower-guide">Whistleblower Guide</a>
+        </nav>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Advanced</div>
+        <nav class="sidebar-links">
+          <a href="#security">Security Architecture</a>
+          <a href="#demo-mode">Demo Mode</a>
+          <a href="#upgrading">Upgrading</a>
+        </nav>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Links</div>
+        <nav class="sidebar-links">
+          <a href="index.html">&#8592; Landing Page</a>
+          <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub Repository</a>
+          <a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Live Demo</a>
+        </nav>
+      </div>
+
+    </aside>
+
+    <!-- Main content -->
+    <main id="main-content" class="docs-content">
+
+      <nav class="docs-breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">OpenWhistle</a>
+        <span>/</span>
+        <span>Documentation</span>
+      </nav>
+
+      <h1>Documentation</h1>
+      <p class="docs-lead">
+        Complete reference for installing, configuring, and operating OpenWhistle —
+        the free, self-hosted whistleblower reporting platform compliant with
+        <em>HinSchG</em> and EU Directive 2019/1937.
+      </p>
+
+      <!-- Overview -->
+      <section class="docs-section" id="overview" aria-labelledby="overview-h2">
+        <h2 id="overview-h2">Overview</h2>
+        <p>
+          OpenWhistle is a stateless, self-hosted web application that provides a secure internal
+          reporting channel as required by the German <em>Hinweisgeberschutzgesetz</em> (HinSchG)
+          and EU Directive 2019/1937. It is released under the GNU General Public License v3.0.
+        </p>
+        <p>
+          The application is built with Python and FastAPI, backed by PostgreSQL 18 and Redis 8,
+          and distributed as a Docker image. It has no external dependencies at runtime —
+          no CDN calls, no telemetry, no third-party services.
+        </p>
+
+        <h3>Key design principles</h3>
+        <ul>
+          <li><strong>Anonymity first:</strong> No IP addresses are stored at any layer. The database schema contains no IP column. Redis session keys carry no identifying metadata.</li>
+          <li><strong>Stateless application:</strong> All session state lives in Redis. The application container is horizontally scalable and disposable.</li>
+          <li><strong>Compliance by design:</strong> §17 HinSchG deadline tracking is built into the data model, not bolted on as a feature.</li>
+          <li><strong>No vendor lock-in:</strong> Standard Docker Compose deployment. Export your data at any time using standard PostgreSQL tools.</li>
+        </ul>
+
+        <h3>Supported platforms</h3>
+        <ul>
+          <li>Any Linux host with Docker 24+ and Docker Compose v2</li>
+          <li>x86_64 and ARM64 (Apple Silicon) architectures</li>
+          <li>Container registries: GitHub Container Registry (ghcr.io), Docker Hub, quay.io</li>
+        </ul>
+
+        <h3>Current version</h3>
+        <p>
+          <strong>v0.1.0</strong> — Initial release. See the
+          <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG</a>
+          for a full list of changes.
+        </p>
+      </section>
+
+      <!-- Requirements -->
+      <section class="docs-section" id="requirements" aria-labelledby="requirements-h2">
+        <h2 id="requirements-h2">Requirements</h2>
+        <p>
+          OpenWhistle is designed to run on minimal infrastructure. A shared VPS with 1&nbsp;vCPU
+          and 1&nbsp;GB RAM is sufficient for most organisations.
+        </p>
+
+        <h3>Software</h3>
+        <ul>
+          <li><strong>Docker</strong> 24.0 or newer</li>
+          <li><strong>Docker Compose</strong> v2.0 or newer (the <code>docker compose</code> plugin, not the legacy <code>docker-compose</code> binary)</li>
+          <li>PostgreSQL 18 and Redis 8 are bundled in the Docker Compose configuration — no separate installation needed</li>
+        </ul>
+
+        <h3>Hardware</h3>
+        <ul>
+          <li>512&nbsp;MB RAM minimum (1&nbsp;GB recommended)</li>
+          <li>1&nbsp;vCPU minimum</li>
+          <li>5&nbsp;GB disk space (for application, database, and logs)</li>
+        </ul>
+
+        <h3>Network</h3>
+        <ul>
+          <li>A domain name pointing to your server</li>
+          <li>A valid HTTPS certificate (Let's Encrypt recommended)</li>
+          <li>Port 80 and 443 open inbound (for nginx)</li>
+        </ul>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">Important — HTTPS required</div>
+          <p>
+            Operating a whistleblower reporting system over plain HTTP violates the confidentiality
+            obligations of §8 HinSchG and GDPR. HTTPS is non-negotiable in production deployments.
+          </p>
+        </div>
+      </section>
+
+      <!-- Installation -->
+      <section class="docs-section" id="installation" aria-labelledby="installation-h2">
+        <h2 id="installation-h2">Installation</h2>
+        <p>
+          The recommended installation method uses Docker Compose. This starts all services
+          (application, PostgreSQL, Redis, nginx) with a single command.
+        </p>
+
+        <h3>Step 1 — Clone the repository</h3>
+        <div class="code-block" role="region" aria-label="Clone repository command">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+          </div>
+          <pre><code><span class="t-prompt">$ </span><span class="t-cmd">git clone https://github.com/openwhistle/OpenWhistle.git</span>
+<span class="t-prompt">$ </span><span class="t-cmd">cd OpenWhistle</span></code></pre>
+        </div>
+
+        <h3>Step 2 — Configure environment</h3>
+        <p>
+          Copy the example environment file and edit it with your settings.
+          At minimum you must set <code>SECRET_KEY</code>, <code>DATABASE_URL</code>,
+          and <code>REDIS_URL</code>.
+        </p>
+        <div class="code-block" role="region" aria-label="Environment configuration">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+          </div>
+          <pre><code><span class="t-prompt">$ </span><span class="t-cmd">cp .env.example .env</span>
+<span class="t-prompt">$ </span><span class="t-cmd">nano .env</span>
+
+<span class="t-comment"># Minimum required values:</span>
+<span class="t-str">SECRET_KEY</span>=your-long-random-secret-key-here
+<span class="t-str">DATABASE_URL</span>=postgresql://openwhistle:password@db:5432/openwhistle
+<span class="t-str">REDIS_URL</span>=redis://redis:6379/0</code></pre>
+        </div>
+
+        <h3>Step 3 — Start services</h3>
+        <div class="code-block" role="region" aria-label="Start services command">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+          </div>
+          <pre><code><span class="t-prompt">$ </span><span class="t-cmd">docker compose up -d</span>
+<span class="t-out">&#x25BA; Network openwhistle_default      Created</span>
+<span class="t-out">&#x25BA; Container openwhistle-db-1        Started</span>
+<span class="t-out">&#x25BA; Container openwhistle-redis-1     Started</span>
+<span class="t-out">&#x25BA; Container openwhistle-app-1       Started</span>
+<span class="t-out">&#x25BA; Container openwhistle-nginx-1     Started</span></code></pre>
+        </div>
+
+        <h3>Step 4 — Run the setup wizard</h3>
+        <p>
+          Open <code>http://localhost:4009/setup</code> (or your domain if nginx is configured)
+          in a browser. Follow the wizard to create your first admin account and configure TOTP.
+          The wizard disables itself permanently after completion.
+        </p>
+
+        <div class="callout callout-note">
+          <div class="callout-title">Database migrations</div>
+          <p>
+            OpenWhistle applies Alembic migrations automatically on startup. The application
+            checks for pending migrations at boot and will not serve traffic until all
+            migrations are applied successfully.
+          </p>
+        </div>
+      </section>
+
+      <!-- Configuration -->
+      <section class="docs-section" id="configuration" aria-labelledby="configuration-h2">
+        <h2 id="configuration-h2">Configuration</h2>
+        <p>
+          All configuration is done via environment variables in the <code>.env</code> file.
+          There are no YAML configuration files or database-stored settings
+          (except admin preferences managed through the UI).
+        </p>
+
+        <table class="env-table" aria-label="Environment variables">
+          <thead>
+            <tr>
+              <th scope="col">Variable</th>
+              <th scope="col">Required</th>
+              <th scope="col">Description</th>
+              <th scope="col">Default</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code class="env-key">SECRET_KEY</code></td>
+              <td><span class="env-required env-req-yes">Required</span></td>
+              <td>Cryptographic key for session signing and CSRF tokens. Generate with <code>openssl rand -hex 32</code>.</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">DATABASE_URL</code></td>
+              <td><span class="env-required env-req-yes">Required</span></td>
+              <td>PostgreSQL connection string. Format: <code>postgresql://user:password@host:port/dbname</code></td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">REDIS_URL</code></td>
+              <td><span class="env-required env-req-yes">Required</span></td>
+              <td>Redis connection string. Format: <code>redis://host:port/db</code></td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">DEMO_MODE</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Set to <code>true</code> to enable demo mode. See <a href="#demo-mode">Demo Mode</a> section.</td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">OIDC_ISSUER</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>OIDC provider discovery URL (e.g. <code>https://accounts.google.com</code>). Required for OIDC login.</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">OIDC_CLIENT_ID</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>OAuth 2.0 client ID from your OIDC provider.</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">OIDC_CLIENT_SECRET</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>OAuth 2.0 client secret from your OIDC provider.</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">OIDC_REDIRECT_URI</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>OAuth 2.0 redirect URI. Must match the URI registered with your provider.</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">LOG_LEVEL</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Application log level. One of: <code>DEBUG</code>, <code>INFO</code>, <code>WARNING</code>, <code>ERROR</code></td>
+              <td><code>INFO</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">ALLOWED_HOSTS</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Comma-separated list of allowed hostnames for the application.</td>
+              <td><code>*</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- First-run wizard -->
+      <section class="docs-section" id="first-run" aria-labelledby="first-run-h2">
+        <h2 id="first-run-h2">First-Run Wizard</h2>
+        <p>
+          On first boot, the <code>/setup</code> route serves a multi-step browser-based wizard.
+          The wizard is automatically disabled once an admin account exists in the database.
+        </p>
+
+        <h3>Wizard steps</h3>
+        <ol class="step-list">
+          <li>
+            <div>
+              <strong>Create admin account</strong><br>
+              Enter a username and a strong password. Password requirements are enforced
+              (minimum 12 characters, mixed case, digits, symbols).
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>Configure TOTP</strong><br>
+              Scan the displayed QR code with an authenticator app (Google Authenticator,
+              Authy, Bitwarden, etc.). Enter the 6-digit code to confirm the secret is
+              correctly registered. TOTP is mandatory and cannot be skipped.
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>Set organisation name</strong><br>
+              Configure the display name shown to whistleblowers on the submission form.
+              This can be changed later from the admin settings panel.
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>Verify setup</strong><br>
+              The wizard performs a health check: database connectivity, Redis connectivity,
+              and email configuration (if configured). Any issues are displayed before the
+              wizard is locked.
+            </div>
+          </li>
+        </ol>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">Save your TOTP secret</div>
+          <p>
+            The TOTP backup codes displayed after setup are the only recovery mechanism
+            if you lose access to your authenticator app. Store them securely offline.
+            If lost, database-level recovery is required.
+          </p>
+        </div>
+      </section>
+
+      <!-- Admin guide -->
+      <section class="docs-section" id="admin-guide" aria-labelledby="admin-guide-h2">
+        <h2 id="admin-guide-h2">Admin Guide</h2>
+        <p>
+          The admin portal is accessible at <code>/admin</code>. Login requires your username,
+          password, and a current TOTP code (or OIDC if configured).
+        </p>
+
+        <h3>Dashboard overview</h3>
+        <p>
+          The dashboard shows all open reports sorted by urgency. Each report card displays:
+        </p>
+        <ul>
+          <li>Unique case number (non-sequential, randomly generated)</li>
+          <li>Submission date and time</li>
+          <li>Report category (if provided by the whistleblower)</li>
+          <li>§17 acknowledgement deadline countdown (red when under 24 hours)</li>
+          <li>§17 feedback deadline countdown</li>
+          <li>Unread message indicator</li>
+        </ul>
+
+        <h3>Managing reports</h3>
+        <p>
+          Click any report to open the case view. From here you can:
+        </p>
+        <ul>
+          <li>Read the full report content</li>
+          <li>Change the case status (Open, In Progress, Closed)</li>
+          <li>Send a message to the whistleblower via the anonymous channel</li>
+          <li>View the full message thread</li>
+          <li>Record internal notes (visible only to admins, never to the whistleblower)</li>
+          <li>Close and hard-delete the case (triggers §26 HinSchG data erasure)</li>
+        </ul>
+
+        <h3>HinSchG deadline tracking</h3>
+        <p>
+          The dashboard enforces the statutory timelines from §17 HinSchG:
+        </p>
+        <ul>
+          <li><strong>7-day acknowledgement:</strong> The countdown starts from report submission. The dashboard shows a yellow warning at 3 days, red at 24 hours.</li>
+          <li><strong>3-month feedback:</strong> The countdown starts from report submission. A feedback response must be sent via the message channel before the deadline.</li>
+        </ul>
+      </section>
+
+      <!-- Whistleblower guide -->
+      <section class="docs-section" id="whistleblower-guide" aria-labelledby="wb-guide-h2">
+        <h2 id="wb-guide-h2">Whistleblower Guide</h2>
+        <p>
+          The whistleblower submission form is accessible at the root URL of your OpenWhistle
+          installation (e.g. <code>https://your-domain.example.com/</code>). No account,
+          email address, or personal information is required.
+        </p>
+
+        <h3>Submitting a report</h3>
+        <ol class="step-list">
+          <li>
+            <div>
+              Navigate to the submission URL. Use a private browsing window and, where
+              possible, a network that is not traceable to you (public Wi-Fi, Tor, etc.)
+              for maximum protection.
+            </div>
+          </li>
+          <li>
+            <div>
+              Fill in the report. The only required field is the report description.
+              Category, date of incident, and supporting details are optional.
+            </div>
+          </li>
+          <li>
+            <div>
+              Submit the form. <strong>Immediately note down the case number and PIN displayed
+              on the confirmation screen.</strong> These are shown only once and cannot be
+              recovered if lost.
+            </div>
+          </li>
+        </ol>
+
+        <h3>Checking report status</h3>
+        <p>
+          Navigate to <code>/status</code> on the same installation. Enter your case number
+          and PIN. You will see:
+        </p>
+        <ul>
+          <li>Current case status</li>
+          <li>Admin responses (if any)</li>
+          <li>A form to send a follow-up message</li>
+        </ul>
+
+        <h3>Security recommendations for whistleblowers</h3>
+        <ul>
+          <li>Do not submit from a device or network that can be traced to you</li>
+          <li>Use a browser in private/incognito mode</li>
+          <li>Store the case number and PIN in a secure location not connected to your work identity</li>
+          <li>Never share the PIN with anyone</li>
+        </ul>
+      </section>
+
+      <!-- Security architecture -->
+      <section class="docs-section" id="security" aria-labelledby="security-h2">
+        <h2 id="security-h2">Security Architecture</h2>
+        <p>
+          OpenWhistle is designed with a defence-in-depth approach to anonymity. There are
+          four independent layers that prevent IP addresses from reaching persistent storage.
+        </p>
+
+        <h3>The four anonymity layers</h3>
+        <div class="security-layers" role="list">
+          <div class="security-layer" role="listitem">
+            <div class="security-layer-num" aria-hidden="true">1</div>
+            <div>
+              <div class="security-layer-title">nginx — Strip X-Forwarded-For</div>
+              <div class="security-layer-desc">
+                The nginx reverse proxy configuration explicitly strips the
+                <code>X-Forwarded-For</code>, <code>X-Real-IP</code>, and all
+                <code>X-Client-*</code> headers before forwarding requests to the
+                application. Even if a CDN or upstream proxy adds these headers,
+                they are removed at the nginx layer.
+              </div>
+            </div>
+          </div>
+          <div class="security-layer" role="listitem">
+            <div class="security-layer-num" aria-hidden="true">2</div>
+            <div>
+              <div class="security-layer-title">Application middleware — Drop remote address</div>
+              <div class="security-layer-desc">
+                A FastAPI middleware intercepts every request before it reaches any
+                route handler and replaces the <code>client.host</code> with
+                <code>0.0.0.0</code>. No route handler can access the real remote address
+                even if it tried.
+              </div>
+            </div>
+          </div>
+          <div class="security-layer" role="listitem">
+            <div class="security-layer-num" aria-hidden="true">3</div>
+            <div>
+              <div class="security-layer-title">Database schema — No IP column</div>
+              <div class="security-layer-desc">
+                The <code>reports</code>, <code>messages</code>, and <code>sessions</code>
+                tables have no <code>ip_address</code> column. It is structurally impossible
+                for the ORM to persist an IP address — not just a matter of policy.
+              </div>
+            </div>
+          </div>
+          <div class="security-layer" role="listitem">
+            <div class="security-layer-num" aria-hidden="true">4</div>
+            <div>
+              <div class="security-layer-title">Redis sessions — No identifying metadata</div>
+              <div class="security-layer-desc">
+                Session tokens in Redis are UUID4 values. The session data structure
+                contains only the case number (not the PIN) and an expiry timestamp.
+                No IP, no User-Agent, no browser fingerprint is stored in session data.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Rate limiting without IP tracking</h3>
+        <p>
+          Brute-force protection on the report access endpoint uses Redis-based rate limiting
+          keyed on the session token, not the IP address. A fixed-window counter increments
+          on each failed PIN attempt. After 10 failed attempts, the session token is invalidated
+          and a new one must be obtained. The whistleblower's IP address is never used as a
+          rate-limiting key.
+        </p>
+
+        <h3>Security headers</h3>
+        <p>
+          The nginx configuration applies a strict set of HTTP security headers to all responses:
+        </p>
+        <ul>
+          <li><code>Strict-Transport-Security</code> with <code>max-age=31536000; includeSubDomains</code></li>
+          <li><code>Content-Security-Policy</code> restricting scripts, styles, and frames to self</li>
+          <li><code>X-Content-Type-Options: nosniff</code></li>
+          <li><code>X-Frame-Options: DENY</code></li>
+          <li><code>Referrer-Policy: no-referrer</code></li>
+          <li><code>Permissions-Policy</code> disabling geolocation, camera, microphone</li>
+        </ul>
+
+        <h3>OIDC integration</h3>
+        <p>
+          When OIDC is configured, admin login is delegated to the external provider.
+          The application validates the ID token, extracts the <code>sub</code> claim,
+          and maps it to a local admin account. TOTP is still enforced as a second factor
+          in addition to OIDC — the OIDC flow alone is not sufficient for login.
+        </p>
+      </section>
+
+      <!-- Demo mode -->
+      <section class="docs-section" id="demo-mode" aria-labelledby="demo-mode-h2">
+        <h2 id="demo-mode-h2">Demo Mode</h2>
+        <p>
+          Demo mode is intended for the public demo instance at
+          <a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">demo.openwhistle.net</a>.
+          It should not be used for production deployments.
+        </p>
+
+        <h3>Enabling demo mode</h3>
+        <div class="code-block" role="region" aria-label="Demo mode environment variable">
+          <div class="code-block-header">
+            <span class="code-block-lang">.env</span>
+          </div>
+          <pre><code><span class="t-str">DEMO_MODE</span>=true</code></pre>
+        </div>
+
+        <h3>Demo mode behaviour</h3>
+        <ul>
+          <li>Prefilled admin credentials: username <code>demo</code>, password <code>demo</code></li>
+          <li>TOTP is bypassed — the demo admin account has no MFA requirement</li>
+          <li>All reports and messages are visible to the demo admin</li>
+          <li>A banner is displayed on all pages indicating this is a demo instance</li>
+          <li>The demo instance at <code>demo.openwhistle.net</code> is automatically wiped and restarted every hour via a cron job</li>
+        </ul>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">Never submit real reports to the demo</div>
+          <p>
+            The demo instance is public and accessible to anyone. Demo data is wiped hourly
+            but may be readable by other users in the interim. Never submit real or sensitive
+            information to the demo instance.
+          </p>
+        </div>
+      </section>
+
+      <!-- Upgrading -->
+      <section class="docs-section" id="upgrading" aria-labelledby="upgrading-h2">
+        <h2 id="upgrading-h2">Upgrading</h2>
+        <p>
+          OpenWhistle follows <a href="https://semver.org" rel="noopener noreferrer" target="_blank">semantic versioning</a>.
+          Minor and patch releases are backward-compatible. Major releases may include
+          breaking changes documented in the
+          <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG</a>.
+        </p>
+
+        <h3>Standard upgrade procedure</h3>
+        <div class="code-block" role="region" aria-label="Upgrade commands">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+          </div>
+          <pre><code><span class="t-comment"># Pull the latest image</span>
+<span class="t-prompt">$ </span><span class="t-cmd">docker compose pull</span>
+
+<span class="t-comment"># Restart containers with the new image</span>
+<span class="t-prompt">$ </span><span class="t-cmd">docker compose up -d</span>
+
+<span class="t-comment"># Database migrations are applied automatically on startup</span>
+<span class="t-prompt">$ </span><span class="t-cmd">docker compose logs app | grep migration</span></code></pre>
+        </div>
+
+        <h3>Before upgrading</h3>
+        <ul>
+          <li>Read the CHANGELOG for the target version</li>
+          <li>Back up your PostgreSQL database: <code>docker compose exec db pg_dump -U openwhistle openwhistle &gt; backup.sql</code></li>
+          <li>Note your current version with <code>docker compose exec app python -m app --version</code></li>
+        </ul>
+
+        <h3>Rollback</h3>
+        <p>
+          To roll back to a specific version, pin the image tag in
+          <code>docker-compose.yml</code> and re-run <code>docker compose up -d</code>.
+          Database migrations cannot be automatically rolled back — restore from backup
+          if a migration causes issues.
+        </p>
+
+        <div class="callout callout-note">
+          <div class="callout-title">Stay up to date</div>
+          <p>
+            Watch the GitHub repository for new releases. Security fixes are released as patch
+            versions. Enable GitHub's Dependabot or watch the repository for release notifications.
+          </p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-inner">
+      <div class="footer-bottom">
+        <span>&copy; OpenWhistle Contributors — GNU General Public License v3.0</span>
+        <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">
+          GitHub &rarr;
+        </a>
+        <a href="index.html">Back to homepage</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Dark mode — persisted in localStorage
+    (function() {
+      var stored = localStorage.getItem('ow-theme');
+      if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+
+    var toggle = document.getElementById('theme-toggle');
+    if (toggle) {
+      toggle.addEventListener('click', function() {
+        var current = document.documentElement.getAttribute('data-theme');
+        var next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('ow-theme', next);
+      });
+    }
+
+    // Mobile nav
+    var navToggle = document.querySelector('.nav-toggle');
+    var navLinks = document.getElementById('nav-links');
+    if (navToggle && navLinks) {
+      navToggle.addEventListener('click', function() {
+        var isOpen = navToggle.getAttribute('aria-expanded') === 'true';
+        navToggle.setAttribute('aria-expanded', String(!isOpen));
+        navLinks.classList.toggle('open', !isOpen);
+      });
+    }
+
+    // Sidebar active link on scroll
+    var sections = document.querySelectorAll('.docs-section[id]');
+    var sidebarLinks = document.querySelectorAll('.sidebar-links a');
+
+    function updateActive() {
+      var scrollY = window.scrollY + 100;
+      var active = null;
+      sections.forEach(function(s) {
+        if (s.offsetTop <= scrollY) {
+          active = s.getAttribute('id');
+        }
+      });
+      sidebarLinks.forEach(function(a) {
+        var href = a.getAttribute('href');
+        if (href === '#' + active) {
+          a.classList.add('active');
+        } else {
+          a.classList.remove('active');
+        }
+      });
+    }
+
+    window.addEventListener('scroll', updateActive, { passive: true });
+    updateActive();
+  </script>
+</body>
+</html>

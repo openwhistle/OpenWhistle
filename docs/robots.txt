@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://openwhistle.net/sitemap.xml
