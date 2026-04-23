@@ -26,6 +26,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - GitHub Pages website deployed from `docs/` directory
 - Image cleanup workflow for GHCR, Docker Hub, and Quay.io (runs weekly; retains the 10 most recent
   `sha-` tagged images per registry)
+- Docker publish workflow now also triggers on every push to `main`, publishing an `edge` tag
+  to GHCR, Docker Hub, and Quay.io for tracking the latest unreleased development state
 
 ## [0.1.0] — 2026-04-21
 
