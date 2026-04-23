@@ -42,5 +42,10 @@ class Settings(BaseSettings):
     oidc_server_metadata_url: str = ""
     oidc_redirect_uri: str = ""
 
+    # Branding (optional — companies can override defaults)
+    brand_primary_color: str = "#0f4c81"
+    brand_secondary_color: str = "#00a878"
+    brand_logo_url: str = ""
+
 
 settings = Settings()  # type: ignore[call-arg]

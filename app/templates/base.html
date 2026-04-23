@@ -5,11 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <meta name="referrer" content="no-referrer">
-    <title>{% block title %}OpenWhistle{% endblock %}</title>
+    <title>{% block title %}{{ brand.name }}{% endblock %}</title>
 
     {# No external resources — DSGVO compliance #}
     <link rel="stylesheet" href="/static/css/fonts.css">
     <link rel="stylesheet" href="/static/css/site.css">
+
+    {# Inject brand colours as CSS custom properties #}
+    <style>
+        :root {
+            --brand-primary:   {{ brand.primary_color }};
+            --brand-secondary: {{ brand.secondary_color }};
+        }
+    </style>
 
     {# Apply theme before page renders to prevent flash #}
     <script>
@@ -25,14 +33,21 @@
 </head>
 <body>
     <nav class="nav" role="navigation" aria-label="Main navigation">
-        <a href="/" class="nav-brand" aria-label="OpenWhistle home">
-            <svg width="28" height="33" viewBox="0 0 28 33" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <path d="M14 2L25 6.5L25 16.5C25 22.5 20.5 27.5 14 30C7.5 27.5 3 22.5 3 16.5L3 6.5Z"
-                      stroke="#3fb950" stroke-width="1.4" fill="rgba(63,185,80,0.08)" stroke-linejoin="round"/>
-                <polyline points="5.5,11 8.5,20 14,14 19.5,20 22.5,11"
-                          stroke="#3fb950" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span>OPEN<strong>WHISTLE</strong></span>
+        <a href="/" class="nav-brand" aria-label="{{ brand.name }} home">
+            {% if brand.logo_url %}
+                <img src="{{ brand.logo_url }}" alt="{{ brand.name }}" class="nav-logo-img">
+            {% else %}
+                <svg class="nav-logo-svg" width="26" height="30" viewBox="0 0 28 33" fill="none"
+                     xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M14 2L25 6.5L25 16.5C25 22.5 20.5 27.5 14 30C7.5 27.5 3 22.5 3 16.5L3 6.5Z"
+                          stroke="var(--accent)" stroke-width="1.5" fill="var(--accent-subtle)"
+                          stroke-linejoin="round"/>
+                    <polyline points="5.5,11 8.5,20 14,14 19.5,20 22.5,11"
+                              stroke="var(--accent)" stroke-width="2"
+                              stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            {% endif %}
+            <span>Open<strong>Whistle</strong></span>
         </a>
 
         <ul class="nav-links" role="list">
@@ -59,7 +74,7 @@
 
     <footer class="footer" role="contentinfo">
         <p>
-            OpenWhistle &mdash; Secure whistleblower reporting &middot;
+            {{ brand.name }} &mdash; Secure whistleblower reporting &middot;
             <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener">Open Source (GPLv3)</a>
             &middot; <a href="https://www.gesetze-im-internet.de/hinschg/" rel="noopener">HinSchG</a>
         </p>

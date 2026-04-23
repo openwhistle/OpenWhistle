@@ -1,39 +1,60 @@
 /* Self-hosted fonts — no external CDN calls (DSGVO compliance) */
 
-/* Spectral — editorial serif for headings */
+/* Sora — geometric headings */
 @font-face {
-    font-family: 'Spectral';
-    src: url('/static/fonts/spectral-latin-400-normal.woff2') format('woff2');
+    font-family: 'Sora';
+    src: url('/static/fonts/sora-latin-400-normal.woff2') format('woff2');
     font-weight: 400;
     font-style: normal;
     font-display: swap;
 }
 @font-face {
-    font-family: 'Spectral';
-    src: url('/static/fonts/spectral-latin-400-italic.woff2') format('woff2');
+    font-family: 'Sora';
+    src: url('/static/fonts/sora-latin-500-normal.woff2') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Sora';
+    src: url('/static/fonts/sora-latin-600-normal.woff2') format('woff2');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Sora';
+    src: url('/static/fonts/sora-latin-700-normal.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Nunito Sans — humanist body text */
+@font-face {
+    font-family: 'Nunito Sans';
+    src: url('/static/fonts/nunito-sans-latin-400-normal.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Nunito Sans';
+    src: url('/static/fonts/nunito-sans-latin-400-italic.woff2') format('woff2');
     font-weight: 400;
     font-style: italic;
     font-display: swap;
 }
 @font-face {
-    font-family: 'Spectral';
-    src: url('/static/fonts/spectral-latin-600-normal.woff2') format('woff2');
+    font-family: 'Nunito Sans';
+    src: url('/static/fonts/nunito-sans-latin-600-normal.woff2') format('woff2');
     font-weight: 600;
     font-style: normal;
     font-display: swap;
 }
-
-/* Source Serif 4 — readable serif for body text */
 @font-face {
-    font-family: 'Source Serif 4';
-    src: url('/static/fonts/source-serif-4-latin-400-normal.woff2') format('woff2');
-    font-weight: 400;
-    font-style: normal;
-    font-display: swap;
-}
-@font-face {
-    font-family: 'Source Serif 4';
-    src: url('/static/fonts/source-serif-4-latin-700-normal.woff2') format('woff2');
+    font-family: 'Nunito Sans';
+    src: url('/static/fonts/nunito-sans-latin-700-normal.woff2') format('woff2');
     font-weight: 700;
     font-style: normal;
     font-display: swap;

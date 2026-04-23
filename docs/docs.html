@@ -44,19 +44,14 @@
 
   <style>
     /* Self-hosted fonts — no external CDN calls */
-    @font-face { font-family: 'Spectral'; src: url('fonts/spectral-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Spectral'; src: url('fonts/spectral-latin-400-italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
-    @font-face { font-family: 'Spectral'; src: url('fonts/spectral-latin-500-normal.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Spectral'; src: url('fonts/spectral-latin-500-italic.woff2') format('woff2'); font-weight: 500; font-style: italic; font-display: swap; }
-    @font-face { font-family: 'Spectral'; src: url('fonts/spectral-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Spectral'; src: url('fonts/spectral-latin-600-italic.woff2') format('woff2'); font-weight: 600; font-style: italic; font-display: swap; }
-    @font-face { font-family: 'Spectral'; src: url('fonts/spectral-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Spectral'; src: url('fonts/spectral-latin-700-italic.woff2') format('woff2'); font-weight: 700; font-style: italic; font-display: swap; }
-    @font-face { font-family: 'Source Serif 4'; src: url('fonts/source-serif-4-latin-300-normal.woff2') format('woff2'); font-weight: 300; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Source Serif 4'; src: url('fonts/source-serif-4-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Source Serif 4'; src: url('fonts/source-serif-4-latin-400-italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
-    @font-face { font-family: 'Source Serif 4'; src: url('fonts/source-serif-4-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Source Serif 4'; src: url('fonts/source-serif-4-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-500-normal.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Nunito Sans'; src: url('fonts/nunito-sans-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Nunito Sans'; src: url('fonts/nunito-sans-latin-400-italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+    @font-face { font-family: 'Nunito Sans'; src: url('fonts/nunito-sans-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Nunito Sans'; src: url('fonts/nunito-sans-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
     @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
     @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
   </style>
@@ -71,7 +66,7 @@
       --bg-surface:    #f4f2ed;
       --bg-raised:     #eeeae0;
       --bg-overlay:    #e8e3d8;
-      --nav-bg:        #1a2744;
+      --nav-bg:        #ffffff;
       --footer-bg:     #1a2744;
       --sidebar-bg:    #f4f2ed;
       --text-primary:  #1e293b;
@@ -91,8 +86,8 @@
       --code-bg:       #1a2744;
       --code-text:     #e2dcd2;
 
-      --font-serif:    'Spectral', 'Georgia', serif;
-      --font-body:     'Source Serif 4', 'Georgia', serif;
+      --font-serif:    'Sora', system-ui, sans-serif;
+      --font-body:     'Nunito Sans', system-ui, sans-serif;
       --font-mono:     'JetBrains Mono', 'Courier New', monospace;
 
       --space-1: 0.25rem; --space-2: 0.5rem;  --space-3: 0.75rem;
@@ -112,7 +107,7 @@
       --bg-surface:    #111827;
       --bg-raised:     #1a2234;
       --bg-overlay:    #1e293b;
-      --nav-bg:        #060c18;
+      --nav-bg:        #111827;
       --footer-bg:     #060c18;
       --sidebar-bg:    #0d1422;
       --text-primary:  #e8e6e0;
@@ -171,7 +166,18 @@
       z-index: 200;
       background: var(--nav-bg);
       border-bottom: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
+    [data-theme="light"] .site-nav { border-bottom-color: #e2e8f0; }
+    [data-theme="light"] .nav-logo { color: #1e293b; }
+    [data-theme="light"] .nav-logo:hover { color: #0f4c81; }
+    [data-theme="light"] .nav-links a { color: rgba(55,65,81,0.75); }
+    [data-theme="light"] .nav-links a:hover { color: #1e293b; }
+    [data-theme="light"] .nav-cta { color: #0f4c81 !important; border-color: rgba(15,76,129,0.4) !important; }
+    [data-theme="light"] .nav-cta:hover { background: rgba(15,76,129,0.08) !important; color: #0f4c81 !important; }
+    [data-theme="light"] .theme-toggle { border-color: #cbd5e1; color: #718096; }
+    [data-theme="light"] .theme-toggle:hover { border-color: #0f4c81; color: #0f4c81; }
+    [data-theme="light"] .nav-toggle { color: #374151; }
     .nav-inner {
       max-width: var(--max-width);
       margin: 0 auto;
@@ -987,6 +993,24 @@
               <td><code class="env-key">OIDC_REDIRECT_URI</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
               <td>OAuth 2.0 callback URL. Must match the redirect URI registered with your OIDC provider. Example: <code>https://yourdomain.com/admin/oidc/callback</code>. Required when <code>OIDC_ENABLED=true</code>.</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">BRAND_PRIMARY_COLOR</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Primary brand colour as a hex value. Used for buttons, accents, and links throughout the UI.</td>
+              <td><code>#0f4c81</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">BRAND_SECONDARY_COLOR</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Secondary/accent colour as a hex value. Used for highlights and the submit-page sidebar.</td>
+              <td><code>#00a878</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">BRAND_LOGO_URL</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>URL to a company logo image. When set, the logo is shown in the navigation bar instead of the default OpenWhistle shield icon.</td>
               <td>—</td>
             </tr>
           </tbody>

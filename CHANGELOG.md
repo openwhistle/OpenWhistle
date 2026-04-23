@@ -9,6 +9,14 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Complete UI redesign: modern "Trusted Institution" aesthetic (Sora + Nunito Sans fonts, white nav,
+  elevation shadows, rounded corners, institutional blue + teal accent palette)
+- Company branding support: `BRAND_PRIMARY_COLOR`, `BRAND_SECONDARY_COLOR`, `BRAND_LOGO_URL` env vars
+  allow organisations to show their logo and colours in the navbar and throughout the UI
+- Professional dark mode: warm blue-gray palette (`#111827`) replaces the GitHub-terminal-black aesthetic
+- Submit-page sidebar redesigned with brand colour background and subtle radial gradient texture
+- Credential display modernised: uses CSS variables instead of hardcoded terminal colours
+- GitHub Pages docs updated to use Sora + Nunito Sans and white navigation bar
 - CSRF protection using Double-Submit Cookie pattern (`app/csrf.py`):
   all admin forms and the setup wizard now require a matching `ow_csrf` cookie + hidden field
 - OIDC Authorization Code Flow (`app/services/oidc.py`):

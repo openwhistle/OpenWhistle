@@ -11,6 +11,9 @@ services:
       OIDC_CLIENT_SECRET: "${OIDC_CLIENT_SECRET:-}"
       OIDC_SERVER_METADATA_URL: "${OIDC_SERVER_METADATA_URL:-}"
       OIDC_REDIRECT_URI: "${OIDC_REDIRECT_URI:-}"
+      BRAND_PRIMARY_COLOR: "${BRAND_PRIMARY_COLOR:-#0f4c81}"
+      BRAND_SECONDARY_COLOR: "${BRAND_SECONDARY_COLOR:-#00a878}"
+      BRAND_LOGO_URL: "${BRAND_LOGO_URL:-}"
     depends_on:
       db:
         condition: service_healthy

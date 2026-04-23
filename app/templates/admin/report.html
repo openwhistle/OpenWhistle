@@ -143,7 +143,7 @@
             </div>
 
             {# Delete (DSGVO Art. 17) #}
-            <div class="panel" style="animation-delay:0.1s;border-top-color:var(--danger);">
+            <div class="panel" style="animation-delay:0.1s;border-color:var(--danger);">
                 <div class="panel-header" style="color:var(--danger);">Delete Report</div>
                 <p style="font-size:0.85rem;margin-bottom:1rem;">Permanently delete this report and all messages (DSGVO Art. 17 right to erasure). This action cannot be undone.</p>
                 <form method="post" action="/admin/reports/{{ report.id }}/delete"
