@@ -1,8 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Apply theme before first paint to avoid flash -->
+  <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
   <title>Documentation — OpenWhistle | Self-Hosted Whistleblower Platform</title>
   <meta name="description" content="Complete documentation for OpenWhistle: installation, configuration, environment variables, admin guide, whistleblower guide, security architecture, and HinSchG compliance details.">
   <meta name="keywords" content="OpenWhistle documentation, whistleblower platform setup, HinSchG software installation, Docker whistleblower system, Hinweisgebersystem Dokumentation, interne Meldestelle einrichten">
@@ -1342,23 +1344,25 @@
   </footer>
 
   <script>
-    // Dark mode — persisted in localStorage
-    (function() {
-      var stored = localStorage.getItem('ow-theme');
-      if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.setAttribute('data-theme', 'dark');
-      }
-    })();
-
+    // Theme toggle — detection already handled by inline head script
     var toggle = document.getElementById('theme-toggle');
     if (toggle) {
       toggle.addEventListener('click', function() {
         var current = document.documentElement.getAttribute('data-theme');
         var next = current === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('ow-theme', next);
+        try { localStorage.setItem('ow-theme', next); } catch(e) {}
       });
     }
+
+    // Follow system preference changes when user hasn't overridden manually
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      var stored;
+      try { stored = localStorage.getItem('ow-theme'); } catch(e2) {}
+      if (!stored) {
+        document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+      }
+    });
 
     // Mobile nav
     var navToggle = document.querySelector('.nav-toggle');
