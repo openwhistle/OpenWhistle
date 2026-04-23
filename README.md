@@ -59,6 +59,30 @@ Demo case numbers and PINs are shown after logging in to the demo admin account.
 
 The demo resets automatically every hour.
 
+## Container Images
+
+Pre-built multi-arch images (linux/amd64, linux/arm64) are published to three registries:
+
+```bash
+# GitHub Container Registry (primary)
+docker pull ghcr.io/openwhistle/openwhistle:latest
+
+# Docker Hub
+docker pull openwhistle/openwhistle:latest
+
+# Quay.io
+docker pull quay.io/openwhistle/openwhistle:latest
+```
+
+| Tag | Updated when | Use for |
+|---|---|---|
+| `latest` | Release tag (`v*.*.*`) | Production |
+| `1.2.3` / `1.2` / `1` | Release tag | Pinned version |
+| `edge` | Every push to `main` | Testing latest dev build |
+| `sha-abc1234` | Every push | Exact reproducible build |
+
+All GHCR images are signed with Cosign (keyless, Sigstore).
+
 ## How to Install
 
 ### Prerequisites

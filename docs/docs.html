@@ -727,6 +727,7 @@
         <nav class="sidebar-links" aria-label="Getting started">
           <a href="#overview" class="active">Overview</a>
           <a href="#requirements">Requirements</a>
+          <a href="#container-images">Container Images</a>
           <a href="#installation">Installation</a>
           <a href="#configuration">Configuration</a>
           <a href="#first-run">First-Run Wizard</a>
@@ -803,7 +804,8 @@
         <ul>
           <li>Any Linux host with Docker 24+ and Docker Compose v2</li>
           <li>x86_64 and ARM64 (Apple Silicon) architectures</li>
-          <li>Container registries: GitHub Container Registry (ghcr.io), Docker Hub, quay.io</li>
+          <li>Container registries: GitHub Container Registry (ghcr.io), Docker Hub, Quay.io —
+            images for linux/amd64 and linux/arm64</li>
         </ul>
 
         <h3>Current version</h3>
@@ -849,6 +851,87 @@
             Operating a whistleblower reporting system over plain HTTP violates the confidentiality
             obligations of §8 HinSchG and GDPR. HTTPS is non-negotiable in production deployments.
           </p>
+        </div>
+      </section>
+
+      <!-- Container Images -->
+      <section class="docs-section" id="container-images" aria-labelledby="container-images-h2">
+        <h2 id="container-images-h2">Container Images</h2>
+        <p>
+          Pre-built multi-arch images (linux/amd64, linux/arm64) are published automatically
+          to three registries on every release and on every commit to <code>main</code>.
+        </p>
+
+        <h3>Registries</h3>
+        <div class="code-block" role="region" aria-label="Docker pull commands">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+          </div>
+          <pre><code><span class="t-comment"># GitHub Container Registry (primary)</span>
+<span class="t-prompt">$ </span><span class="t-cmd">docker pull ghcr.io/openwhistle/openwhistle:latest</span>
+
+<span class="t-comment"># Docker Hub</span>
+<span class="t-prompt">$ </span><span class="t-cmd">docker pull openwhistle/openwhistle:latest</span>
+
+<span class="t-comment"># Quay.io</span>
+<span class="t-prompt">$ </span><span class="t-cmd">docker pull quay.io/openwhistle/openwhistle:latest</span></code></pre>
+        </div>
+
+        <h3>Image tags</h3>
+        <table class="env-table">
+          <thead>
+            <tr>
+              <th>Tag</th>
+              <th>Updated when</th>
+              <th>Use for</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>latest</code></td>
+              <td>Release tag pushed (<code>v*.*.*</code>)</td>
+              <td>Production — always points to the current stable release</td>
+            </tr>
+            <tr>
+              <td><code>1.2.3</code> / <code>1.2</code> / <code>1</code></td>
+              <td>Release tag pushed</td>
+              <td>Pinning to a specific version or minor series</td>
+            </tr>
+            <tr>
+              <td><code>edge</code></td>
+              <td>Every push to <code>main</code></td>
+              <td>Testing the latest unreleased development state — not for production</td>
+            </tr>
+            <tr>
+              <td><code>sha-abc1234</code></td>
+              <td>Every push (tags and branches)</td>
+              <td>Reproducing an exact build — useful for debugging and rollback</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-note">
+          <div class="callout-title">Pinning in production</div>
+          <p>
+            Replace <code>:latest</code> with a specific version tag (e.g. <code>:0.1.0</code>)
+            in <code>docker-compose.prod.yml</code> for deterministic deployments. The
+            <code>sha-</code> tags are ideal for immutable infrastructure pipelines.
+          </p>
+        </div>
+
+        <h3>Image signatures</h3>
+        <p>
+          All GHCR images are signed with
+          <a href="https://docs.sigstore.dev/cosign/overview/" rel="noopener noreferrer" target="_blank">Cosign</a>
+          (keyless, Sigstore). Verify before pulling in security-sensitive environments:
+        </p>
+        <div class="code-block" role="region" aria-label="Cosign verify command">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+          </div>
+          <pre><code><span class="t-prompt">$ </span><span class="t-cmd">cosign verify ghcr.io/openwhistle/openwhistle:latest \
+    --certificate-identity-regexp="https://github.com/openwhistle/OpenWhistle" \
+    --certificate-oidc-issuer="https://token.actions.githubusercontent.com"</span></code></pre>
         </div>
       </section>
 
