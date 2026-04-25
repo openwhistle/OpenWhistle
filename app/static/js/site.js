@@ -80,6 +80,107 @@ window.dismissIpWarning = async function (btn) {
     }
 };
 
+// ─── Session expiry warning ────────────────────────────────────────────────
+
+(function () {
+    const WARN_BEFORE_MS = 5 * 60 * 1000; // show banner 5 minutes before expiry
+    const REDIRECT_DELAY_MS = 5000;        // redirect 5 s after expiry
+
+    const banner = document.getElementById('session-expiry-banner');
+    if (!banner) return;
+
+    const expiresAt = parseInt(banner.dataset.expires, 10) * 1000; // to ms
+    if (!expiresAt) return;
+
+    const countdown  = document.getElementById('session-expiry-countdown');
+    let warnTimer      = null;
+    let tickInterval   = null;
+    let dismissed      = false;
+
+    function fmt(ms) {
+        const total = Math.max(0, Math.floor(ms / 1000));
+        const m = Math.floor(total / 60);
+        const s = total % 60;
+        return `${m}:${s.toString().padStart(2, '0')}`;
+    }
+
+    function showBanner() {
+        if (dismissed) return;
+        banner.style.display = 'flex';
+        startTick(expiresAt);
+    }
+
+    function startTick(targetMs) {
+        if (tickInterval) clearInterval(tickInterval);
+        tickInterval = setInterval(() => {
+            const remaining = targetMs - Date.now();
+            if (countdown) countdown.textContent = fmt(remaining);
+            if (remaining <= 0) {
+                clearInterval(tickInterval);
+                markExpired();
+            }
+        }, 1000);
+        // Tick immediately so countdown is accurate from first render
+        if (countdown) countdown.textContent = fmt(targetMs - Date.now());
+    }
+
+    function markExpired() {
+        banner.classList.add('session-expiry-expired-state');
+        banner.style.display = 'flex';
+
+        const bodyEl = banner.querySelector('.session-expiry-body');
+        if (bodyEl) {
+            const title = banner.dataset.textExpiredTitle || 'Session expired';
+            const body  = banner.dataset.textExpiredBody  || 'You will be redirected shortly.';
+            bodyEl.innerHTML = `<strong>${title}</strong><p>${body}</p>`;
+        }
+
+        const actionsEl = banner.querySelector('.session-expiry-actions');
+        if (actionsEl) actionsEl.style.display = 'none';
+
+        setTimeout(() => { window.location.href = '/admin/login'; }, REDIRECT_DELAY_MS);
+    }
+
+    // Schedule or show immediately if already inside warning window
+    const msUntilWarn = expiresAt - WARN_BEFORE_MS - Date.now();
+    if (msUntilWarn <= 0) {
+        showBanner();
+    } else {
+        warnTimer = setTimeout(showBanner, msUntilWarn);
+    }
+
+    window.sessionExtend = async function () {
+        try {
+            const res = await fetch('/admin/session/refresh', { method: 'POST' });
+            if (!res.ok) { window.location.href = '/admin/login'; return; }
+            const data = await res.json();
+
+            if (tickInterval) clearInterval(tickInterval);
+            if (warnTimer)    clearTimeout(warnTimer);
+            dismissed = false;
+
+            const newExpiresMs = data.expires_at * 1000;
+            banner.dataset.expires = data.expires_at;
+            banner.style.display = 'none';
+            banner.classList.remove('session-expiry-expired-state');
+
+            const msUntilNextWarn = newExpiresMs - WARN_BEFORE_MS - Date.now();
+            if (msUntilNextWarn <= 0) {
+                showBanner();
+            } else {
+                warnTimer = setTimeout(showBanner, msUntilNextWarn);
+            }
+        } catch {
+            window.location.href = '/admin/login';
+        }
+    };
+
+    window.sessionDismiss = function () {
+        dismissed = true;
+        banner.style.display = 'none';
+    };
+})();
+
 // ─── Prevent double-submit ─────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {

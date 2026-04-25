@@ -1401,3 +1401,115 @@ tr:hover td { background: var(--accent-subtle); }
         font-size: 0.78rem;
     }
 }
+
+/* ── Session Expiry Warning Banner ──────────────────────────────────────── */
+
+.session-expiry-banner {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--surface);
+    border: 1.5px solid var(--warning, #d97706);
+    border-radius: 0.6rem;
+    padding: 0.875rem 1rem 0.875rem 0.875rem;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.22);
+    z-index: 2000;
+    max-width: 420px;
+    animation: slideInBanner 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    font-size: 0.88rem;
+}
+
+.session-expiry-banner.session-expiry-expired-state {
+    border-color: var(--error, #dc2626);
+}
+
+@keyframes slideInBanner {
+    from { transform: translateX(120%); opacity: 0; }
+    to   { transform: translateX(0);   opacity: 1; }
+}
+
+.session-expiry-icon {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+    color: var(--warning, #d97706);
+    line-height: 1;
+}
+
+.session-expiry-expired-state .session-expiry-icon {
+    color: var(--error, #dc2626);
+}
+
+.session-expiry-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    color: var(--text-primary);
+    line-height: 1.4;
+}
+
+.session-expiry-body p {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.session-expiry-countdown {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--warning, #d97706);
+    letter-spacing: 0.04em;
+    min-width: 3.2ch;
+    display: inline-block;
+}
+
+.session-expiry-expired-state .session-expiry-countdown {
+    color: var(--error, #dc2626);
+}
+
+.session-expiry-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.session-expiry-extend {
+    white-space: nowrap;
+}
+
+.session-expiry-dismiss {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.2rem 0.3rem;
+    font-size: 0.9rem;
+    line-height: 1;
+    border-radius: 0.25rem;
+    transition: color 0.15s, background 0.15s;
+}
+
+.session-expiry-dismiss:hover {
+    color: var(--text-primary);
+    background: var(--border);
+}
+
+@media (max-width: 480px) {
+    .session-expiry-banner {
+        bottom: 0;
+        right: 0;
+        left: 0;
+        max-width: 100%;
+        border-radius: 0.6rem 0.6rem 0 0;
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
+    }
+}

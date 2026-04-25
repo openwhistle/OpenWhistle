@@ -192,6 +192,12 @@
   "admin.whistleblower": "Hinweisgeber",
   "admin.sender.admin": "Meldestelle",
 
+  "session.expiry.warning": "Ihre Sitzung läuft ab in",
+  "session.expiry.extend": "Sitzung verlängern",
+  "session.expiry.dismiss": "Schließen",
+  "session.expiry.expired_title": "Sitzung abgelaufen",
+  "session.expiry.expired_body": "Sie werden in Kürze zur Anmeldeseite weitergeleitet.",
+
   "system.receipt_message": "Ihre Meldung wurde eingegangen. Sie erhalten innerhalb von 7 Tagen eine Eingangsbestätigung gemäß §17 HinSchG.",
 
   "status.label.received": "Eingegangen",

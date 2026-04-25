@@ -3,14 +3,16 @@
 import secrets
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import APIRouter, Cookie, Depends, Form, HTTPException, Request, status
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import get_current_admin
 from app.config import settings
 from app.csrf import validate_csrf
 from app.database import get_db
+from app.models.user import AdminUser
 from app.redis_client import get_redis
 from app.services import auth as auth_service
 from app.services import oidc as oidc_service
@@ -165,6 +167,50 @@ async def logout(
     response = RedirectResponse("/admin/login", status_code=302)
     response.delete_cookie(
         "ow_session", httponly=True, samesite="lax", secure=not settings.demo_mode
+    )
+    return response
+
+
+# ── Session management ───────────────────────────────────────────────────────
+
+
+@router.get("/session/ttl")
+async def session_ttl(
+    request: Request,
+    _user: AdminUser = Depends(get_current_admin),
+) -> JSONResponse:
+    """Return remaining TTL for the current admin session."""
+    expires_at: int = getattr(request.state, "session_expires_at", 0)
+    ttl = max(0, expires_at - int(datetime.now(UTC).timestamp())) if expires_at else 0
+    return JSONResponse({"ttl_seconds": ttl, "expires_at": expires_at})
+
+
+@router.post("/session/refresh")
+async def session_refresh(
+    request: Request,
+    redis: Redis = Depends(get_redis),
+    current_user: AdminUser = Depends(get_current_admin),
+    session_token: str | None = Cookie(default=None, alias="ow_session"),
+) -> JSONResponse:
+    """Issue a new JWT + Redis session, extending the admin session by the full TTL."""
+    if session_token:
+        await auth_service.revoke_session(redis, session_token)
+
+    new_token = auth_service.create_access_token(str(current_user.id))
+    await auth_service.store_session(redis, str(current_user.id), new_token)
+
+    new_exp = auth_service.decode_access_token_exp(new_token)
+    expires_at = int(new_exp.timestamp()) if new_exp else 0
+    ttl = max(0, expires_at - int(datetime.now(UTC).timestamp()))
+
+    response = JSONResponse({"ttl_seconds": ttl, "expires_at": expires_at})
+    response.set_cookie(
+        key="ow_session",
+        value=new_token,
+        httponly=True,
+        samesite="lax",
+        secure=not settings.demo_mode,
+        max_age=settings.access_token_expire_minutes * 60,
     )
     return response
 

@@ -30,4 +30,8 @@ async def get_current_admin(
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
+    exp = auth_service.decode_access_token_exp(session_token)
+    if exp is not None:
+        request.state.session_expires_at = int(exp.timestamp())
+
     return user

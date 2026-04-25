@@ -53,6 +53,25 @@ def decode_access_token(token: str) -> str | None:
         return None
 
 
+def decode_access_token_exp(token: str) -> datetime | None:
+    """Decode a JWT and return the expiry as a UTC datetime, or None if invalid."""
+    try:
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        exp = payload.get("exp")
+        if exp is None:
+            return None
+        return datetime.fromtimestamp(int(exp), tz=UTC)
+    except JWTError:
+        return None
+
+
+async def get_session_ttl(redis: Redis, token: str) -> int:
+    """Return remaining TTL in seconds for a session token (0 if not found)."""
+    key = f"{_SESSION_PREFIX}{token}"
+    ttl = await redis.ttl(key)
+    return max(0, int(ttl))
+
+
 async def store_session(redis: Redis, user_id: str, token: str) -> None:
     """Store session token in Redis for quick validation and revocation."""
     key = f"{_SESSION_PREFIX}{token}"

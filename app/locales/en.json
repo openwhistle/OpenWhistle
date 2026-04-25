@@ -192,6 +192,12 @@
   "admin.whistleblower": "Whistleblower",
   "admin.sender.admin": "Reporting Office",
 
+  "session.expiry.warning": "Your session expires in",
+  "session.expiry.extend": "Extend Session",
+  "session.expiry.dismiss": "Dismiss",
+  "session.expiry.expired_title": "Session expired",
+  "session.expiry.expired_body": "You will be redirected to the login page shortly.",
+
   "system.receipt_message": "Your report has been received. You will receive an acknowledgement within 7 days as required by §17 HinSchG.",
 
   "status.label.received": "Received",

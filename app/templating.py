@@ -40,4 +40,9 @@ def render(
 
     ctx["t"] = t
     ctx["lang"] = lang
+
+    session_expires_at = getattr(request.state, "session_expires_at", None)
+    if session_expires_at is not None:
+        ctx.setdefault("session_expires_at", session_expires_at)
+
     return templates.TemplateResponse(request, template, ctx, status_code=status_code)

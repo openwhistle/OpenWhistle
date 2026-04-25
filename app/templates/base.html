@@ -83,6 +83,30 @@
         </ul>
     </nav>
 
+    {% if session_expires_at %}
+    <div id="session-expiry-banner"
+         class="session-expiry-banner"
+         data-expires="{{ session_expires_at }}"
+         data-text-warning="{{ t('session.expiry.warning') }}"
+         data-text-extend="{{ t('session.expiry.extend') }}"
+         data-text-dismiss="{{ t('session.expiry.dismiss') }}"
+         data-text-expired-title="{{ t('session.expiry.expired_title') }}"
+         data-text-expired-body="{{ t('session.expiry.expired_body') }}"
+         role="alert"
+         aria-live="polite"
+         style="display:none;">
+        <div class="session-expiry-icon" aria-hidden="true">&#9201;</div>
+        <div class="session-expiry-body">
+            <span class="session-expiry-warning-text">{{ t('session.expiry.warning') }}</span>
+            <strong id="session-expiry-countdown" class="session-expiry-countdown">5:00</strong>
+        </div>
+        <div class="session-expiry-actions">
+            <button type="button" class="btn btn-sm session-expiry-extend" onclick="sessionExtend()">{{ t('session.expiry.extend') }}</button>
+            <button type="button" class="session-expiry-dismiss" onclick="sessionDismiss()" aria-label="{{ t('session.expiry.dismiss') }}">&#10005;</button>
+        </div>
+    </div>
+    {% endif %}
+
     <main id="main-content">
         {% block content %}{% endblock %}
     </main>
