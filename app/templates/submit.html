@@ -53,7 +53,7 @@
             {{ t('submit.alert.body') }}
         </div>
 
-        <form method="post" action="/submit" novalidate>
+        <form method="post" action="/submit" novalidate enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <div class="form-group">
                 <label class="form-label" for="category">{{ t('submit.form.category') }}</label>
@@ -91,6 +91,18 @@
                     oninput="var c=this.value.length;var el=document.getElementById('char-counter');el.textContent=c.toLocaleString()+' / 10,000';el.style.color=c<10?'var(--danger)':c>9500?'var(--warning, #c17b2a)':'var(--text-muted)';"
                 ></textarea>
                 <div class="form-hint">{{ t('submit.form.description.hint') }}</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="files">{{ t('submit.form.files') }}</label>
+                <input
+                    type="file"
+                    class="form-control"
+                    id="files"
+                    name="files"
+                    multiple
+                    accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.txt,.csv,.docx,.doc,.xlsx,.xls">
+                <div class="form-hint">{{ t('submit.form.files.hint') }}</div>
             </div>
 
             <button type="submit" class="btn btn-primary btn-block">

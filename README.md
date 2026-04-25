@@ -30,6 +30,7 @@ solution — free of charge.
 - **HinSchG SLA tracking:** 7-day acknowledgement and 3-month feedback deadlines
 - **Mandatory MFA:** TOTP (Google Authenticator) for all admin accounts
 - **OIDC support:** Optional SSO via any OpenID Connect provider
+- **File attachments:** Whistleblowers can attach evidence files (PDF, images, Word, Excel, CSV, TXT — up to 10 MB each, 5 per report)
 - **DSGVO compliant:** All resources self-hosted, no external CDN calls, hard deletion support
 - **Setup wizard:** First-run admin account creation with TOTP setup
 - **IP leakage detection:** Warning when upstream proxies forward IP headers

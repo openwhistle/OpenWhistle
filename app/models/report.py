@@ -9,6 +9,10 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app.models.attachment import Attachment
+
 from app.database import Base
 
 
@@ -69,6 +73,9 @@ class Report(Base):
 
     messages: Mapped[list[ReportMessage]] = relationship(
         "ReportMessage", back_populates="report", cascade="all, delete-orphan"
+    )
+    attachments: Mapped[list["Attachment"]] = relationship(
+        "Attachment", back_populates="report", cascade="all, delete-orphan"
     )
 
 

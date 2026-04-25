@@ -35,6 +35,21 @@
             </div>
         </div>
 
+        {% if attachments %}
+        <div class="attachment-list" style="margin-top:1.5rem;">
+            <div class="credential-label">{{ t('success.attachments.title') }}</div>
+            <ul class="attachment-items">
+                {% for att in attachments %}
+                <li class="attachment-item">
+                    <span class="attachment-icon">&#128206;</span>
+                    <span class="attachment-name">{{ att.filename }}</span>
+                    <span class="attachment-size">{{ att.size_str }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
         <div class="alert alert-info" style="margin-top: 1.5rem;">
             <div class="alert-title">{{ t('success.next.title') }}</div>
             {{ t('success.next.body.html') }}

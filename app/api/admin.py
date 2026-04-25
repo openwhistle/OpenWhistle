@@ -3,7 +3,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_admin
@@ -153,6 +153,28 @@ async def dismiss_ip_warning(
 ) -> JSONResponse:
     await clear_ip_warning()
     return JSONResponse({"cleared": True})
+
+
+@router.get("/reports/{report_id}/attachments/{attachment_id}")
+async def admin_download_attachment(
+    report_id: uuid.UUID,
+    attachment_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: AdminUser = Depends(get_current_admin),
+) -> Response:
+    """Download a report attachment — requires an active admin session."""
+    from app.services.attachment import get_attachment_by_id
+
+    attachment = await get_attachment_by_id(db, attachment_id)
+    if not attachment or attachment.report_id != report_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    safe_name = attachment.filename.replace('"', "")
+    return Response(
+        content=attachment.data,
+        media_type=attachment.content_type,
+        headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
+    )
 
 
 @router.post("/demo/reset")

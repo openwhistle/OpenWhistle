@@ -3,7 +3,9 @@
 import secrets
 import uuid
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, status
+import uuid as _uuid
+
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -77,6 +79,7 @@ async def submit_post(
     background_tasks: BackgroundTasks,
     category: str = Form(""),
     description: str = Form(""),
+    files: list[UploadFile] = File(default=[]),
     db: AsyncSession = Depends(get_db),
     _csrf: None = Depends(validate_csrf),
 ) -> HTMLResponse:
@@ -122,6 +125,21 @@ async def submit_post(
             },
         )
 
+    from app.services.attachment import format_size, read_upload_files
+    from app.services.notifications import notify_new_report
+
+    file_tuples, file_error = await read_upload_files(files)
+    if file_error:
+        return render(
+            request,
+            "submit.html",
+            {
+                "categories": list(ReportCategory),
+                "error": file_error,
+                "selected_category": category,
+            },
+        )
+
     lang = get_lang(request)
     report, plain_pin = await report_service.create_report(
         db=db,
@@ -130,7 +148,9 @@ async def submit_post(
         lang=lang,
     )
 
-    from app.services.notifications import notify_new_report
+    from app.services.attachment import create_attachments
+    stored = await create_attachments(db, report.id, file_tuples)
+
     background_tasks.add_task(notify_new_report, report.case_number)
 
     response = render(
@@ -139,6 +159,7 @@ async def submit_post(
         {
             "case_number": report.case_number,
             "pin": plain_pin,
+            "attachments": [{"filename": a.filename, "size_str": format_size(a.size)} for a in stored],
         },
     )
     # Clear any stale whistleblower session so "Continue to Report Status"
@@ -302,3 +323,38 @@ async def status_logout(
     response = RedirectResponse("/status", status_code=303)
     response.delete_cookie("ow-status-session")
     return response
+
+
+@router.get("/status/attachments/{attachment_id}")
+async def whistleblower_download_attachment(
+    request: Request,
+    attachment_id: _uuid.UUID,
+    redis: Redis = Depends(get_redis),
+    db: AsyncSession = Depends(get_db),
+) -> Response:
+    """Download an attachment — requires an active whistleblower session.
+
+    The session must map to the same report that owns the attachment.
+    """
+    session_key = request.cookies.get("ow-status-session")
+    if not session_key:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+
+    report_id_str = await redis.get(f"status-session:{session_key}")
+    if not report_id_str:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+
+    decoded_id = report_id_str.decode() if isinstance(report_id_str, bytes) else report_id_str
+
+    from app.services.attachment import get_attachment_by_id
+    attachment = await get_attachment_by_id(db, attachment_id)
+
+    if not attachment or str(attachment.report_id) != decoded_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    safe_name = attachment.filename.replace('"', "")
+    return Response(
+        content=attachment.data,
+        media_type=attachment.content_type,
+        headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
+    )

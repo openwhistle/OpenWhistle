@@ -611,6 +611,77 @@ select.form-control {
     margin-bottom: 0.35rem;
 }
 
+/* ─── Attachment list ─────────────────────────────────────────────────────── */
+
+.attachment-list { margin-bottom: 0.5rem; }
+
+.attachment-items {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.attachment-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+}
+
+.attachment-icon { font-size: 1rem; flex-shrink: 0; opacity: 0.7; }
+
+.attachment-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+a.attachment-name:hover { color: var(--accent); text-decoration: underline; }
+
+.attachment-size {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+}
+
+/* ─── File input styling ──────────────────────────────────────────────────── */
+
+input[type="file"].form-control {
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    background: var(--bg-input);
+}
+
+input[type="file"].form-control::file-selector-button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 0.3rem 0.75rem;
+    margin-right: 0.75rem;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+input[type="file"].form-control::file-selector-button:hover {
+    background: var(--accent-hover);
+}
+
 /* Legacy credential-box */
 .credential-box {
     background: var(--bg-code);

@@ -110,6 +110,25 @@
                 </div>
             </div>
 
+            {# Attachments #}
+            {% if report.attachments %}
+            <div class="panel" style="animation-delay:0.04s;">
+                <div class="panel-header">{{ t('admin.report.attachments.header') }}</div>
+                <ul class="attachment-items">
+                    {% for att in report.attachments %}
+                    <li class="attachment-item">
+                        <span class="attachment-icon">&#128206;</span>
+                        <span class="attachment-name" title="{{ att.filename }}">{{ att.filename }}</span>
+                        <span class="attachment-size">{{ att.size | format_size }}</span>
+                        <a href="/admin/reports/{{ report.id }}/attachments/{{ att.id }}"
+                           class="btn btn-secondary btn-sm"
+                           download="{{ att.filename }}">{{ t('admin.report.attachments.download') }}</a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
             {# Acknowledge action #}
             {% if not report.acknowledged_at %}
             <div class="panel" style="animation-delay:0.05s;">

@@ -1217,6 +1217,54 @@
         </table>
       </section>
 
+      <!-- File attachments -->
+      <section class="docs-section" id="attachments" aria-labelledby="attachments-h2">
+        <h2 id="attachments-h2">File Attachments</h2>
+        <p>
+          Whistleblowers can attach evidence files when submitting a report. Files are stored
+          as binary data in PostgreSQL alongside the report — no additional storage infrastructure
+          is required.
+        </p>
+
+        <h3>Limits and allowed types</h3>
+        <ul>
+          <li><strong>Maximum file size:</strong> 10 MB per attachment</li>
+          <li><strong>Maximum number of attachments:</strong> 5 per report</li>
+          <li><strong>Allowed formats:</strong> PDF, JPEG, PNG, GIF, WebP, TXT, CSV, DOCX (.docx / .doc), XLSX (.xlsx / .xls)</li>
+        </ul>
+        <p>
+          File type is validated by both MIME type and file extension. SVG, executable files,
+          archives, and all other types are rejected.
+        </p>
+
+        <h3>Access control</h3>
+        <ul>
+          <li>
+            <strong>Whistleblower:</strong> downloads are available at
+            <code>/status/attachments/{id}</code> and require an active
+            <code>ow-status-session</code> cookie. The session must be tied to the same
+            report that owns the attachment — a whistleblower cannot access another report's files.
+          </li>
+          <li>
+            <strong>Admin:</strong> downloads are available at
+            <code>/admin/reports/{report_id}/attachments/{id}</code> and require an active
+            admin session. The attachment must belong to the specified report.
+          </li>
+        </ul>
+        <p>
+          All downloads use <code>Content-Disposition: attachment</code> to prevent the browser
+          from rendering files inline. This eliminates MIME-sniffing and script-injection risks.
+        </p>
+
+        <h3>Privacy and deletion</h3>
+        <p>
+          Attachments are stored in the <code>attachments</code> database table with a
+          <code>CASCADE DELETE</code> foreign key constraint. When a report is hard-deleted
+          (DSGVO Art. 17 right to erasure), all associated attachments are automatically
+          and permanently removed.
+        </p>
+      </section>
+
       <!-- First-run wizard -->
       <section class="docs-section" id="first-run" aria-labelledby="first-run-h2">
         <h2 id="first-run-h2">First-Run Wizard</h2>

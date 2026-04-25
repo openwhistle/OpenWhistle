@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.i18n import _DEFAULT, _load
+from app.models.attachment import Attachment  # noqa: F401 — ensures mapper is loaded for selectinload
 from app.models.report import Report, ReportMessage, ReportSender, ReportStatus
 from app.services.auth import hash_pin, verify_pin
 from app.services.pin import generate_case_number, generate_pin
@@ -57,7 +58,7 @@ async def get_report_by_credentials(
     """Retrieve a report after verifying both case_number and PIN."""
     result = await db.execute(
         select(Report)
-        .options(selectinload(Report.messages))
+        .options(selectinload(Report.messages), selectinload(Report.attachments))
         .where(Report.case_number == case_number)
     )
     report = result.scalar_one_or_none()
@@ -123,7 +124,9 @@ async def update_report_status(
 
 async def get_all_reports(db: AsyncSession) -> list[Report]:
     result = await db.execute(
-        select(Report).options(selectinload(Report.messages)).order_by(Report.submitted_at.desc())
+        select(Report)
+        .options(selectinload(Report.messages), selectinload(Report.attachments))
+        .order_by(Report.submitted_at.desc())
     )
     return list(result.scalars().all())
 
@@ -131,7 +134,7 @@ async def get_all_reports(db: AsyncSession) -> list[Report]:
 async def get_report_by_id(db: AsyncSession, report_id: uuid.UUID) -> Report | None:
     result = await db.execute(
         select(Report)
-        .options(selectinload(Report.messages))
+        .options(selectinload(Report.messages), selectinload(Report.attachments))
         .where(Report.id == report_id)
     )
     return result.scalar_one_or_none()

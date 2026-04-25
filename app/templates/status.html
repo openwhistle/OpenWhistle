@@ -144,6 +144,23 @@
         </div>
     </div>
 
+    {# Attachments #}
+    {% if report.attachments %}
+    <div class="panel" style="animation-delay:0.04s;">
+        <div class="panel-header">{{ t('status.attachments.title') }}</div>
+        <ul class="attachment-items">
+            {% for att in report.attachments %}
+            <li class="attachment-item">
+                <span class="attachment-icon">&#128206;</span>
+                <a href="/status/attachments/{{ att.id }}" class="attachment-name" download>{{ att.filename }}</a>
+                <span class="attachment-size">{{ att.size | format_size }}</span>
+                <a href="/status/attachments/{{ att.id }}" class="btn btn-secondary btn-sm" download>{{ t('status.attachments.download') }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
     {# Case closed notice #}
     {% if report.status.value == 'closed' %}
     <div class="alert alert-info" role="alert" style="animation-delay:0.04s;">

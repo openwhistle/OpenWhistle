@@ -10,7 +10,11 @@ from markupsafe import Markup
 from app.config import settings
 from app.i18n import get_lang, make_translator
 
+from app.services.attachment import format_size
+
 templates = Jinja2Templates(directory="app/templates")
+
+templates.env.filters["format_size"] = format_size
 
 templates.env.globals["brand"] = {
     "name": settings.app_name,
