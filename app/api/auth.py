@@ -16,14 +16,20 @@ from app.services import auth as auth_service
 from app.services import oidc as oidc_service
 from app.services import rate_limit as rl
 from app.services.mfa import verify_demo_totp, verify_totp
-from app.templating import templates
+from app.templating import render
 
 router = APIRouter(prefix="/admin")
 
 
+@router.get("", response_class=HTMLResponse, include_in_schema=False)
+@router.get("/", response_class=HTMLResponse, include_in_schema=False)
+async def admin_root(request: Request) -> RedirectResponse:
+    return RedirectResponse("/admin/login", status_code=302)
+
+
 @router.get("/login", response_class=HTMLResponse)
 async def login_get(request: Request) -> HTMLResponse:
-    return templates.TemplateResponse(
+    return render(
         request,
         "login.html",
         {"oidc_enabled": settings.oidc_enabled},
@@ -40,46 +46,43 @@ async def login_post(
     _csrf: None = Depends(validate_csrf),
 ) -> HTMLResponse | RedirectResponse:
     if not await rl.check_admin_login_attempts(redis, username):
-        return templates.TemplateResponse(
+        return render(
             request,
             "login.html",
             {
                 "error": "Account temporarily locked due to too many failed attempts.",
                 "oidc_enabled": settings.oidc_enabled,
             },
-            status_code=429,
         )
 
     user = await auth_service.get_user_by_username(db, username)
 
     if user is None or not auth_service.verify_password(password, user.password_hash):
         await rl.record_admin_login_failure(redis, username)
-        return templates.TemplateResponse(
+        return render(
             request,
             "login.html",
             {
                 "error": "Invalid username or password.",
                 "oidc_enabled": settings.oidc_enabled,
             },
-            status_code=401,
         )
 
     # Block password login for OIDC-only accounts
     if user.oidc_sub and not user.password_hash:
-        return templates.TemplateResponse(
+        return render(
             request,
             "login.html",
             {
                 "error": "This account uses Single Sign-On. Please use the SSO button.",
                 "oidc_enabled": settings.oidc_enabled,
             },
-            status_code=401,
         )
 
     temp_token = secrets.token_urlsafe(32)
     await auth_service.store_totp_pending(redis, temp_token, str(user.id))
 
-    return templates.TemplateResponse(
+    return render(
         request,
         "login_mfa.html",
         {
@@ -113,7 +116,7 @@ async def login_mfa_post(
     if not code_valid:
         new_temp = secrets.token_urlsafe(32)
         await auth_service.store_totp_pending(redis, new_temp, user_id)
-        return templates.TemplateResponse(
+        return render(
             request,
             "login_mfa.html",
             {
@@ -121,7 +124,6 @@ async def login_mfa_post(
                 "error": "Invalid authentication code. Please try again.",
                 "is_demo": settings.demo_mode,
             },
-            status_code=401,
         )
 
     await rl.reset_admin_login_attempts(redis, user.username)
@@ -191,57 +193,53 @@ async def oidc_callback(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
     if error or not code or not state:
-        return templates.TemplateResponse(
+        return render(
             request,
             "login.html",
             {
                 "error": f"SSO authentication failed: {error or 'missing parameters'}.",
                 "oidc_enabled": settings.oidc_enabled,
             },
-            status_code=401,
         )
 
     try:
         userinfo = await oidc_service.exchange_code(redis, code, state)
     except Exception:  # noqa: BLE001
-        return templates.TemplateResponse(
+        return render(
             request,
             "login.html",
             {
                 "error": "SSO authentication failed. Please try again.",
                 "oidc_enabled": settings.oidc_enabled,
             },
-            status_code=401,
         )
 
     if not userinfo:
-        return templates.TemplateResponse(
+        return render(
             request,
             "login.html",
             {
                 "error": "SSO session expired or invalid state. Please try again.",
                 "oidc_enabled": settings.oidc_enabled,
             },
-            status_code=401,
         )
 
     sub: str | None = userinfo.get("sub")
     issuer: str | None = userinfo.get("iss")
 
     if not sub or not issuer:
-        return templates.TemplateResponse(
+        return render(
             request,
             "login.html",
             {
                 "error": "SSO provider did not return required identity information.",
                 "oidc_enabled": settings.oidc_enabled,
             },
-            status_code=401,
         )
 
     user = await auth_service.get_user_by_oidc_sub(db, sub, issuer)
     if not user:
-        return templates.TemplateResponse(
+        return render(
             request,
             "login.html",
             {
@@ -249,7 +247,6 @@ async def oidc_callback(
                 "Contact your system administrator.",
                 "oidc_enabled": settings.oidc_enabled,
             },
-            status_code=401,
         )
 
     token = auth_service.create_access_token(str(user.id))

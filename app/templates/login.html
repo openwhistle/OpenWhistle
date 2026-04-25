@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}Admin Login — OpenWhistle{% endblock %}
+{% block title %}{{ t('login.title') }} — OpenWhistle{% endblock %}
 
 {% block nav_links %}
-<li><a href="/submit">Submit Report</a></li>
-<li><a href="/status">Check Status</a></li>
+<li><a href="/submit">{{ t('nav.submit_report') }}</a></li>
+<li><a href="/status">{{ t('nav.check_status') }}</a></li>
 {% endblock %}
 
 {% block content %}
@@ -12,9 +12,9 @@
     <div style="width: 100%; max-width: 400px;">
 
         <div style="margin-bottom: 2rem; animation: fadeSlideIn 0.5s ease both;">
-            <div class="page-eyebrow">Restricted Access</div>
-            <h1 style="font-size: clamp(1.5rem, 4vw, 2.25rem);">Reporting Office</h1>
-            <p style="font-size: 0.88rem; margin-top: 0.5rem;">For authorised reporting office staff only.</p>
+            <div class="page-eyebrow">{{ t('login.eyebrow') }}</div>
+            <h1 style="font-size: clamp(1.5rem, 4vw, 2.25rem);">{{ t('login.title') }}</h1>
+            <p style="font-size: 0.88rem; margin-top: 0.5rem;">{{ t('login.subtitle') }}</p>
         </div>
 
         {% if error %}
@@ -22,13 +22,13 @@
         {% endif %}
 
         <div class="panel" style="animation: fadeSlideIn 0.5s 0.08s ease both; opacity: 0; animation-fill-mode: forwards;">
-            <div class="panel-header">Credential Verification</div>
+            <div class="panel-header">{{ t('login.panel.header') }}</div>
 
             <form method="post" action="/admin/login" novalidate>
                 <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
 
                 <div class="form-group">
-                    <label class="form-label" for="username">Username</label>
+                    <label class="form-label" for="username">{{ t('login.username') }}</label>
                     <input
                         type="text"
                         class="form-control"
@@ -40,7 +40,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="password">Password</label>
+                    <label class="form-label" for="password">{{ t('login.password') }}</label>
                     <input
                         type="password"
                         class="form-control"
@@ -51,15 +51,15 @@
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-block" style="margin-top: 0.5rem;">
-                    Continue &rarr;
+                    {{ t('login.submit') }}
                 </button>
             </form>
 
             {% if oidc_enabled %}
             <div style="margin-top:1.5rem;text-align:center;">
-                <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.08em;">or</div>
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.08em;">{{ t('login.or') }}</div>
                 <a href="/admin/oidc/authorize" class="btn btn-secondary btn-block">
-                    Single Sign-On (SSO) &rarr;
+                    {{ t('login.sso') }}
                 </a>
             </div>
             {% endif %}

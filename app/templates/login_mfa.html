@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 
-{% block title %}Two-Factor Authentication — OpenWhistle{% endblock %}
+{% block title %}{{ t('mfa.title') }} — OpenWhistle{% endblock %}
 
 {% block content %}
 <div style="min-height: calc(100vh - 56px - 56px); display: flex; align-items: center; justify-content: center; padding: 2rem 1rem;">
     <div style="width: 100%; max-width: 400px;">
 
         <div style="margin-bottom: 2rem; animation: fadeSlideIn 0.5s ease both;">
-            <div class="page-eyebrow">Identity Verification</div>
-            <h1 style="font-size: clamp(1.5rem, 4vw, 2.25rem);">Two-Factor Auth</h1>
-            <p style="font-size: 0.88rem; margin-top: 0.5rem;">Enter the 6-digit code from your authenticator app.</p>
+            <div class="page-eyebrow">{{ t('mfa.eyebrow') }}</div>
+            <h1 style="font-size: clamp(1.5rem, 4vw, 2.25rem);">{{ t('mfa.title') }}</h1>
+            <p style="font-size: 0.88rem; margin-top: 0.5rem;">{{ t('mfa.subtitle') }}</p>
         </div>
 
         {% if error %}
@@ -18,20 +18,20 @@
 
         {% if is_demo %}
         <div class="alert alert-warning" role="alert">
-            <div class="alert-title">Demo Mode</div>
-            Enter <code class="mono">000000</code> to log in.
+            <div class="alert-title">{{ t('mfa.demo.title') }}</div>
+            {{ t('mfa.demo.body.html') }}
         </div>
         {% endif %}
 
         <div class="panel" style="animation: fadeSlideIn 0.5s 0.08s ease both; opacity: 0; animation-fill-mode: forwards;">
-            <div class="panel-header">TOTP Authentication</div>
+            <div class="panel-header">{{ t('mfa.panel.header') }}</div>
 
             <form method="post" action="/admin/login/mfa" novalidate>
                 <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                 <input type="hidden" name="temp_token" value="{{ temp_token }}">
 
                 <div class="form-group">
-                    <label class="form-label" for="totp_code">Authentication Code</label>
+                    <label class="form-label" for="totp_code">{{ t('mfa.code.label') }}</label>
                     <input
                         type="text"
                         class="form-control mono"
@@ -45,16 +45,16 @@
                         required
                         autofocus
                         style="font-size:1.75rem;letter-spacing:0.4em;text-align:center;padding-bottom:0.75rem;">
-                    <div class="form-hint">Open your authenticator app and enter the current 6-digit code.</div>
+                    <div class="form-hint">{{ t('mfa.code.hint') }}</div>
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-block" style="margin-top: 0.5rem;">
-                    Verify Identity &rarr;
+                    {{ t('mfa.submit') }}
                 </button>
             </form>
 
             <div style="margin-top:1.25rem;text-align:center;">
-                <a href="/admin/login" class="btn btn-secondary btn-sm">&larr; Back to login</a>
+                <a href="/admin/login" class="btn btn-secondary btn-sm">{{ t('mfa.back') }}</a>
             </div>
         </div>
 

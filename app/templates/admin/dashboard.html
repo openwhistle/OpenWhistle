@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard — OpenWhistle{% endblock %}
+{% block title %}{{ t('admin.dashboard.title') }} — OpenWhistle{% endblock %}
 
 {% block nav_links %}
-<li><a href="/admin/dashboard" class="active">Dashboard</a></li>
+<li><a href="/admin/dashboard" class="active">{{ t('admin.dashboard.title') }}</a></li>
 <li><a href="/admin/logout">Logout</a></li>
 {% endblock %}
 
@@ -11,13 +11,13 @@
 <div class="container">
     <div class="page-header" style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
         <div>
-            <div class="page-eyebrow">Reporting Office</div>
-            <h1>Reports Dashboard</h1>
+            <div class="page-eyebrow">{{ t('admin.eyebrow') }}</div>
+            <h1>{{ t('admin.dashboard.title') }}</h1>
             <p style="margin-top:0.25rem;font-size:0.8rem;color:var(--text-muted);">
-                Logged in as <strong style="color:var(--accent);font-weight:600;">{{ user.username }}</strong>
+                {{ t('admin.logged_in_as') }} <strong style="color:var(--accent);font-weight:600;">{{ user.username }}</strong>
             </p>
         </div>
-        <a href="/submit" class="btn btn-secondary btn-sm" title="Opens the public submit form in this tab">View Submit Form</a>
+        <a href="/submit" class="btn btn-secondary btn-sm" title="Opens the public submit form in this tab">{{ t('admin.view_submit') }}</a>
     </div>
 
     {# IP leakage warning banner #}
@@ -25,17 +25,14 @@
     <div class="ip-warning-banner" id="ip-warning-banner" role="alert">
         <div class="ip-warning-icon">&#9888;</div>
         <div class="ip-warning-text">
-            <strong>IP Address Detected in Request Headers</strong>
-            OpenWhistle has detected that an upstream proxy is forwarding IP address headers
-            (<code>X-Forwarded-For</code>, <code>X-Real-IP</code>, or similar) to the application.
-            This means the network layer is leaking IP data that could compromise whistleblower anonymity.
+            <strong>{{ t('admin.ip_warning.title') }}</strong>
+            {{ t('admin.ip_warning.body') }}
+            (<code>X-Forwarded-For</code>, <code>X-Real-IP</code>)
             <br><br>
-            Configure your upstream proxy (Cloudflare, Traefik, nginx)
-            to strip these headers before passing requests to OpenWhistle.
-            See <code>nginx/nginx.conf</code> for example configurations.
+            {{ t('admin.ip_warning.hint') }}
         </div>
         <button class="btn btn-danger btn-sm" onclick="dismissIpWarning(this)" style="flex-shrink:0;">
-            Dismiss
+            {{ t('admin.ip_warning.dismiss') }}
         </button>
     </div>
     {% endif %}
@@ -50,33 +47,33 @@
             {% if r.status.value == 'closed' %}{% set ns.closed = ns.closed + 1 %}{% endif %}
         {% endfor %}
 
-        {% for label, count, cls in [
-            ('Received', ns.received, 'badge-received'),
-            ('Acknowledged', ns.acknowledged, 'badge-acknowledged'),
-            ('In Progress', ns.in_progress, 'badge-in_progress'),
-            ('Closed', ns.closed, 'badge-closed')
+        {% for label_key, count, cls in [
+            ('admin.stats.received', ns.received, 'badge-received'),
+            ('admin.stats.acknowledged', ns.acknowledged, 'badge-acknowledged'),
+            ('admin.stats.in_progress', ns.in_progress, 'badge-in_progress'),
+            ('admin.stats.closed', ns.closed, 'badge-closed')
         ] %}
         <div class="stat-card" style="animation-delay: {{ loop.index0 * 0.05 }}s;">
             <div class="stat-number">{{ count }}</div>
-            <span class="badge {{ cls }}">{{ label }}</span>
+            <span class="badge {{ cls }}">{{ t(label_key) }}</span>
         </div>
         {% endfor %}
     </div>
 
     <div class="panel">
-        <div class="panel-header">All Reports</div>
+        <div class="panel-header">{{ t('admin.table.header') }}</div>
 
         {% if reports %}
         <div class="table-wrapper">
             <table>
                 <thead>
                     <tr>
-                        <th>Case Number</th>
-                        <th>Category</th>
-                        <th>Status</th>
-                        <th>Submitted</th>
-                        <th>7-day SLA</th>
-                        <th>3-month SLA</th>
+                        <th>{{ t('admin.table.case_number') }}</th>
+                        <th>{{ t('admin.table.category') }}</th>
+                        <th>{{ t('admin.table.status') }}</th>
+                        <th>{{ t('admin.table.submitted') }}</th>
+                        <th>{{ t('admin.table.sla7') }}</th>
+                        <th>{{ t('admin.table.sla3m') }}</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -91,26 +88,26 @@
                     {% endif %}
                     <tr>
                         <td><span class="mono">{{ report.case_number }}</span></td>
-                        <td style="font-size:0.85rem;color:var(--text-secondary);">{{ report.category.value | replace('_', ' ') | title }}</td>
-                        <td><span class="badge badge-{{ report.status.value }}">{{ report.status.value | replace('_', ' ') | title }}</span></td>
+                        <td style="font-size:0.85rem;color:var(--text-secondary);">{{ t('category.label.' + report.category.value) }}</td>
+                        <td><span class="badge badge-{{ report.status.value }}">{{ t('status.label.' + report.status.value) }}</span></td>
                         <td class="mono" style="font-size:0.78rem;color:var(--text-muted);">{{ report.submitted_at.strftime('%Y-%m-%d') }}</td>
                         <td class="{{ ack_sla_class }}" style="font-size:0.82rem;">
                             {% if report.acknowledged_at %}
-                                &#10003; Done
+                                {{ t('admin.sla.done') }}
                             {% else %}
-                                Day {{ days_since_submit }}/7
+                                {{ t('admin.report.sla.day') }} {{ days_since_submit }}/7
                             {% endif %}
                         </td>
                         <td class="{{ fb_sla_class }}" style="font-size:0.82rem;">
                             {% if report.feedback_due_at %}
                                 {% set days_to_fb = (report.feedback_due_at - now).days %}
-                                {% if days_to_fb > 0 %}{{ days_to_fb }}d left{% else %}Overdue{% endif %}
+                                {% if days_to_fb > 0 %}{{ days_to_fb }}d {% if lang == 'de' %}{{ t('admin.report.sla.days_remaining') }}{% else %}left{% endif %}{% else %}{{ t('admin.report.sla.overdue') }}{% endif %}
                             {% else %}
                                 &mdash;
                             {% endif %}
                         </td>
                         <td>
-                            <a href="/admin/reports/{{ report.id }}" class="btn btn-secondary btn-sm">View</a>
+                            <a href="/admin/reports/{{ report.id }}" class="btn btn-secondary btn-sm">{{ t('admin.table.view') }}</a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -120,9 +117,9 @@
         {% else %}
         <div style="text-align:center;padding:3.5rem 1rem;">
             <div style="font-size:2.5rem;margin-bottom:1rem;opacity:0.3;">&#128274;</div>
-            <p style="font-size:1rem;font-weight:600;color:var(--text-secondary);margin-bottom:0.4rem;">No reports yet</p>
-            <p style="font-size:0.85rem;color:var(--text-muted);">Submitted reports will appear here. Share the submit link with your organisation.</p>
-            <a href="/submit" class="btn btn-secondary btn-sm" style="margin-top:1.25rem;">View Submit Form</a>
+            <p style="font-size:1rem;font-weight:600;color:var(--text-secondary);margin-bottom:0.4rem;">{{ t('admin.empty.title') }}</p>
+            <p style="font-size:0.85rem;color:var(--text-muted);">{{ t('admin.empty.body') }}</p>
+            <a href="/submit" class="btn btn-secondary btn-sm" style="margin-top:1.25rem;">{{ t('admin.view_submit') }}</a>
         </div>
         {% endif %}
     </div>

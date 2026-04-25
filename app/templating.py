@@ -1,8 +1,14 @@
 """Shared Jinja2 templates instance — avoids circular imports."""
 
+from typing import Any
+
+from fastapi import Request
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup
 
 from app.config import settings
+from app.i18n import get_lang, make_translator
 
 templates = Jinja2Templates(directory="app/templates")
 
@@ -12,3 +18,22 @@ templates.env.globals["brand"] = {
     "secondary_color": settings.brand_secondary_color,
     "logo_url": settings.brand_logo_url,
 }
+
+
+def render(
+    request: Request,
+    template: str,
+    context: dict[str, Any] | None = None,
+) -> HTMLResponse:
+    ctx: dict[str, Any] = dict(context or {})
+    lang = get_lang(request)
+    _t = make_translator(lang)
+
+    def t(key: str, **kwargs: Any) -> str | Markup:
+        result = _t(key, **kwargs)
+        # Mark safe only for keys that explicitly contain HTML (suffixed .html)
+        return Markup(result) if key.endswith(".html") else result
+
+    ctx["t"] = t
+    ctx["lang"] = lang
+    return templates.TemplateResponse(request, template, ctx)

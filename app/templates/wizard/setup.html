@@ -1,20 +1,20 @@
 {% extends "base.html" %}
 
-{% block title %}Initial Setup — OpenWhistle{% endblock %}
+{% block title %}{{ t('wizard.title') }} — OpenWhistle{% endblock %}
 
 {% block nav_links %}{% endblock %}
 
 {% block content %}
 <div class="container-sm">
     <div class="page-header">
-        <div class="page-eyebrow">First-Run Wizard</div>
-        <h1>Initial Setup</h1>
-        <p>Create your administrator account to get started. This wizard runs once and cannot be re-accessed after completion.</p>
+        <div class="page-eyebrow">{{ t('wizard.eyebrow') }}</div>
+        <h1>{{ t('wizard.title') }}</h1>
+        <p>{{ t('wizard.subtitle') }}</p>
     </div>
 
     <div class="alert alert-info">
-        <div class="alert-title">One-Time Setup</div>
-        After creating the admin account, this wizard will no longer be accessible.
+        <div class="alert-title">{{ t('wizard.onetime.title') }}</div>
+        {{ t('wizard.onetime.body') }}
     </div>
 
     {% if errors %}
@@ -28,15 +28,15 @@
     {% endif %}
 
     <div class="panel">
-        <div class="panel-header">Step 1 &mdash; Set Up Authenticator App</div>
-        <p>Scan the QR code with Google Authenticator, Aegis, or any compatible TOTP app. Multi-factor authentication is mandatory.</p>
+        <div class="panel-header">{{ t('wizard.step1.header') }}</div>
+        <p>{{ t('wizard.step1.body') }}</p>
 
         <div class="qr-wrapper">
             <img src="data:image/png;base64,{{ qr_code }}" alt="TOTP QR Code" width="200" height="200">
         </div>
 
         <p style="font-size:0.875rem;text-align:center;color:var(--text-secondary);">
-            Or enter this key manually:
+            {{ t('wizard.step1.manual') }}
         </p>
         <div style="text-align:center;margin-top:0.5rem;">
             <span class="mono" style="font-size:0.9rem;user-select:all;word-break:break-all;">{{ totp_secret }}</span>
@@ -44,14 +44,14 @@
     </div>
 
     <div class="panel" style="animation-delay:0.05s;">
-        <div class="panel-header">Step 2 &mdash; Create Admin Account</div>
+        <div class="panel-header">{{ t('wizard.step2.header') }}</div>
 
         <form method="post" action="/setup" novalidate>
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <input type="hidden" name="totp_secret" value="{{ totp_secret }}">
 
             <div class="form-group">
-                <label class="form-label" for="username">Username</label>
+                <label class="form-label" for="username">{{ t('wizard.username') }}</label>
                 <input
                     type="text"
                     class="form-control mono"
@@ -63,11 +63,11 @@
                     pattern="[a-zA-Z0-9_-]+"
                     required
                     autocomplete="username">
-                <div class="form-hint">3–64 characters. Letters, numbers, hyphens and underscores only.</div>
+                <div class="form-hint">{{ t('wizard.username.hint') }}</div>
             </div>
 
             <div class="form-group">
-                <label class="form-label" for="password">Password</label>
+                <label class="form-label" for="password">{{ t('wizard.password') }}</label>
                 <input
                     type="password"
                     class="form-control"
@@ -76,11 +76,11 @@
                     minlength="12"
                     required
                     autocomplete="new-password">
-                <div class="form-hint">Minimum 12 characters. Use a strong, unique password.</div>
+                <div class="form-hint">{{ t('wizard.password.hint') }}</div>
             </div>
 
             <div class="form-group">
-                <label class="form-label" for="password_confirm">Confirm Password</label>
+                <label class="form-label" for="password_confirm">{{ t('wizard.password_confirm') }}</label>
                 <input
                     type="password"
                     class="form-control"
@@ -91,7 +91,7 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label" for="totp_code">Verification Code</label>
+                <label class="form-label" for="totp_code">{{ t('wizard.totp_code') }}</label>
                 <input
                     type="text"
                     class="form-control mono"
@@ -104,11 +104,11 @@
                     required
                     autocomplete="one-time-code"
                     style="font-size:1.4rem;letter-spacing:0.3em;text-align:center;padding-bottom:0.6rem;">
-                <div class="form-hint">Enter the current 6-digit code from your authenticator app to confirm setup.</div>
+                <div class="form-hint">{{ t('wizard.totp_code.hint') }}</div>
             </div>
 
             <button type="submit" class="btn btn-primary btn-block">
-                Create Admin Account &rarr;
+                {{ t('wizard.submit') }}
             </button>
         </form>
     </div>

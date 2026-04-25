@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}Check Report Status — OpenWhistle{% endblock %}
+{% block title %}{{ t('status.form.title') }} — OpenWhistle{% endblock %}
 
 {% block content %}
 <div class="container-sm">
     {% if not report %}
     <div class="page-header">
-        <div class="page-eyebrow">Secure Access</div>
-        <h1>Check Report Status</h1>
-        <p>Enter your case number and secret PIN to view your report and any responses from the reporting office.</p>
+        <div class="page-eyebrow">{{ t('status.form.eyebrow') }}</div>
+        <h1>{{ t('status.form.title') }}</h1>
+        <p>{{ t('status.form.subtitle') }}</p>
     </div>
 
     {% if error %}
@@ -17,44 +17,52 @@
 
     {% if locked %}
     <div class="alert alert-warning" role="alert">
-        <div class="alert-title">Access Locked</div>
-        Too many failed attempts. Please wait before trying again.
+        <div class="alert-title">{{ t('status.locked.title') }}</div>
+        {{ t('status.locked.body') }}
     </div>
     {% else %}
     <div class="panel">
-        <div class="panel-header">Report Lookup</div>
+        <div class="panel-header">{{ t('status.panel.header') }}</div>
         <form method="post" action="/status" novalidate>
             <input type="hidden" name="session_token" value="{{ session_token }}">
 
             <div class="form-group">
-                <label class="form-label" for="case_number">Case Number</label>
+                <label class="form-label" for="case_number">{{ t('status.case_number') }}</label>
                 <input
                     type="text"
                     class="form-control mono"
                     id="case_number"
                     name="case_number"
-                    placeholder="OW-2026-00001"
+                    value="{{ case_number_value or '' }}"
+                    placeholder="{{ t('status.case_number.placeholder') }}"
                     required
                     autocomplete="off"
                     spellcheck="false">
             </div>
 
             <div class="form-group">
-                <label class="form-label" for="pin">Secret PIN</label>
-                <input
-                    type="text"
-                    class="form-control mono"
-                    id="pin"
-                    name="pin"
-                    placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                    required
-                    autocomplete="off"
-                    spellcheck="false">
-                <div class="form-hint">Enter the PIN exactly as shown when you submitted your report.</div>
+                <label class="form-label" for="pin">{{ t('status.pin.label') }}</label>
+                <div style="position:relative;">
+                    <input
+                        type="password"
+                        class="form-control mono"
+                        id="pin"
+                        name="pin"
+                        placeholder="{{ t('status.pin.placeholder') }}"
+                        required
+                        autocomplete="off"
+                        spellcheck="false"
+                        style="padding-right:5rem;">
+                    <button type="button"
+                        id="pin-toggle"
+                        onclick="var i=document.getElementById('pin');var show=i.type==='password';i.type=show?'text':'password';this.textContent=show?'{{ t('status.pin.hide') }}':'{{ t('status.pin.show') }}';"
+                        style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);font-size:0.72rem;font-family:var(--font-body);font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;padding:0.2rem 0.3rem;">{{ t('status.pin.show') }}</button>
+                </div>
+                <div class="form-hint">{{ t('status.pin.hint') }}</div>
             </div>
 
             <button type="submit" class="btn btn-primary btn-block">
-                View Report Status &rarr;
+                {{ t('status.submit') }}
             </button>
         </form>
     </div>
@@ -64,50 +72,72 @@
 
     {# Report found — show status and thread #}
     <div class="page-header">
-        <div class="page-eyebrow">Report Found</div>
-        <h1>Report Status</h1>
+        <div class="page-eyebrow">{{ t('status.report.eyebrow') }}</div>
+        <h1>{{ t('status.report.title') }}</h1>
     </div>
 
     {% if success %}
     <div class="alert alert-success" role="alert">{{ success }}</div>
     {% endif %}
 
+    {# Metadata panel #}
     <div class="panel">
         <div class="panel-header">
             <span class="mono">{{ report.case_number }}</span>
             &nbsp;&nbsp;
-            <span class="badge badge-{{ report.status.value }}">{{ report.status.value | replace('_', ' ') | title }}</span>
+            <span class="badge badge-{{ report.status.value }}">{{ t('status.label.' + report.status.value) }}</span>
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;font-size:0.85rem;color:var(--text-muted);">
             <div>
-                <div style="font-family:var(--font-mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.3rem;color:var(--text-muted);">Submitted</div>
+                <div class="detail-label">{{ t('status.meta.submitted') }}</div>
                 <span class="mono" style="color:var(--text-primary);">{{ report.submitted_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
             </div>
             {% if report.acknowledged_at %}
             <div>
-                <div style="font-family:var(--font-mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.3rem;color:var(--text-muted);">Acknowledged</div>
+                <div class="detail-label">{{ t('status.meta.acknowledged') }}</div>
                 <span class="mono" style="color:var(--text-primary);">{{ report.acknowledged_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
             </div>
             {% endif %}
             {% if report.feedback_due_at %}
             <div>
-                <div style="font-family:var(--font-mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.3rem;color:var(--text-muted);">Feedback Due</div>
+                <div class="detail-label">{{ t('status.meta.feedback_due') }}</div>
                 <span class="mono" style="color:var(--text-primary);">{{ report.feedback_due_at.strftime('%Y-%m-%d') }}</span>
             </div>
             {% endif %}
         </div>
     </div>
 
+    {# Progress indicator #}
+    <div class="panel status-progress-panel" style="animation-delay:0.03s;">
+        <div class="panel-header">{{ t('status.progress.title') }}</div>
+        <div class="progress-steps">
+            {% set steps = ['received', 'acknowledged', 'in_progress', 'closed'] %}
+            {% set current_idx = steps.index(report.status.value) if report.status.value in steps else 0 %}
+            {% for step in steps %}
+            {% set step_idx = loop.index0 %}
+            <div class="progress-step {{ 'done' if step_idx < current_idx else ('active' if step_idx == current_idx else 'pending') }}">
+                <div class="progress-step-dot"></div>
+                <div class="progress-step-label">{{ t('status.progress.' + step + '.label') }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="progress-desc">
+            {{ t('status.progress.' + report.status.value + '.desc') }}
+        </div>
+    </div>
+
+    {# Communication thread #}
     <div class="panel" style="animation-delay:0.05s;">
-        <div class="panel-header">Communication Thread</div>
+        <div class="panel-header">{{ t('status.thread.title') }}</div>
 
         {% if report.messages %}
         <div class="thread">
             {% for msg in report.messages %}
             <div class="message message-{{ msg.sender.value }}">
                 <div class="message-meta">
-                    {{ 'Reporting Office' if msg.sender.value == 'admin' else 'You (Whistleblower)' }}
+                    <span class="message-meta-icon">{{ 'M' if msg.sender.value == 'admin' else 'W' }}</span>
+                    {{ t('status.sender.admin') if msg.sender.value == 'admin' else t('status.sender.user') }}
                     &middot; {{ msg.sent_at.strftime('%Y-%m-%d %H:%M UTC') }}
                 </div>
                 <div class="message-content">{{ msg.content }}</div>
@@ -115,38 +145,38 @@
             {% endfor %}
         </div>
         {% else %}
-        <p style="color:var(--text-muted);">No messages yet. The reporting office will respond within 7 days of submission.</p>
+        <p style="color:var(--text-muted);">{{ t('status.no_messages') }}</p>
         {% endif %}
     </div>
 
     {% if report.status.value != 'closed' %}
     <div class="panel" style="animation-delay:0.1s;">
-        <div class="panel-header">Send a Reply</div>
+        <div class="panel-header">{{ t('status.reply.title') }}</div>
         <form method="post" action="/reply">
-            <input type="hidden" name="case_number" value="{{ case_number }}">
-            <input type="hidden" name="pin" value="{{ pin }}">
+            <input type="hidden" name="case_number" value="{{ case_number or '' }}">
+            <input type="hidden" name="pin" value="{{ pin or '' }}">
             <input type="hidden" name="session_token" value="{{ session_token }}">
 
             <div class="form-group">
-                <label class="form-label" for="reply-content">Your Message</label>
+                <label class="form-label" for="reply-content">{{ t('status.reply.label') }}</label>
                 <textarea
                     class="form-control"
                     id="reply-content"
                     name="content"
                     rows="4"
                     maxlength="5000"
-                    placeholder="Your message to the reporting office…"
+                    placeholder="{{ t('status.reply.placeholder') }}"
                     required></textarea>
             </div>
 
-            <button type="submit" class="btn btn-primary">Send Reply &rarr;</button>
+            <button type="submit" class="btn btn-primary">{{ t('status.reply.button') }}</button>
         </form>
     </div>
     {% endif %}
 
     <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);text-align:center;">
-        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">Need to check another report?</p>
-        <a href="/status" class="btn btn-secondary">&larr; Look up a different report</a>
+        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">{{ t('status.other.title') }}</p>
+        <a href="/status/logout" class="btn btn-secondary">{{ t('status.other.button') }}</a>
     </div>
 
     {% endif %}

@@ -14,7 +14,7 @@ from app.middleware import check_ip_warning, clear_ip_warning
 from app.models.report import ReportStatus
 from app.models.user import AdminUser
 from app.services import report as report_service
-from app.templating import templates
+from app.templating import render
 
 router = APIRouter(prefix="/admin")
 
@@ -31,7 +31,7 @@ async def dashboard(
     now = datetime.now(UTC)
     ip_warning = await check_ip_warning()
 
-    return templates.TemplateResponse(
+    return render(
         request,
         "admin/dashboard.html",
         {
@@ -58,7 +58,7 @@ async def report_detail(
 
     from datetime import UTC, datetime
 
-    return templates.TemplateResponse(
+    return render(
         request,
         "admin/report.html",
         {

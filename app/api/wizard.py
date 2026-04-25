@@ -14,7 +14,7 @@ from app.models.setup import SetupStatus
 from app.models.user import AdminUser
 from app.services.auth import hash_password
 from app.services.mfa import generate_qr_code_base64, generate_totp_secret, verify_totp
-from app.templating import templates
+from app.templating import render
 
 router = APIRouter()
 
@@ -35,7 +35,7 @@ async def setup_get(
     totp_secret = generate_totp_secret()
     qr_code = generate_qr_code_base64(totp_secret, "admin")
 
-    return templates.TemplateResponse(
+    return render(
         request,
         "wizard/setup.html",
         {
@@ -75,7 +75,7 @@ async def setup_post(
 
     if errors:
         qr_code = generate_qr_code_base64(totp_secret, username)
-        return templates.TemplateResponse(
+        return render(
             request,
             "wizard/setup.html",
             {
@@ -84,7 +84,6 @@ async def setup_post(
                 "errors": errors,
                 "username": username,
             },
-            status_code=422,
         )
 
     admin = AdminUser(

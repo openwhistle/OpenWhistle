@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.i18n import _DEFAULT, _load
 from app.models.report import Report, ReportMessage, ReportSender, ReportStatus
 from app.services.auth import hash_pin, verify_pin
 from app.services.pin import generate_case_number, generate_pin
@@ -16,6 +17,7 @@ async def create_report(
     db: AsyncSession,
     category: str,
     description: str,
+    lang: str = "en",
 ) -> tuple[Report, str]:
     """Create a new whistleblower report. Returns (report, plain_pin)."""
     case_number = await generate_case_number(db)
@@ -32,15 +34,16 @@ async def create_report(
     )
     db.add(report)
 
-    # System message: automatic receipt confirmation
+    # System message: automatic receipt confirmation (localized)
+    strings = _load(lang)
+    fallback = _load(_DEFAULT)
+    receipt_text = strings.get("system.receipt_message") or fallback.get("system.receipt_message")
+
     receipt_msg = ReportMessage(
         id=uuid.uuid4(),
         report_id=report.id,
         sender=ReportSender.admin,
-        content=(
-            "Your report has been received. You will receive an acknowledgement "
-            "within 7 days as required by §17 HinSchG."
-        ),
+        content=receipt_text,
     )
     db.add(receipt_msg)
     await db.commit()

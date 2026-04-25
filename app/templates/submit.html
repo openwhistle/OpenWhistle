@@ -1,73 +1,73 @@
 {% extends "base.html" %}
 
-{% block title %}Submit a Report — OpenWhistle{% endblock %}
+{% block title %}{{ t('submit.title') }} — OpenWhistle{% endblock %}
 
 {% block content %}
 <div class="split-layout">
-    <aside class="split-sidebar" aria-label="Privacy guarantees">
-        <div class="sidebar-eyebrow">Protected Reporting</div>
-        <h2 class="sidebar-title">Your identity is <em>guaranteed</em> by design.</h2>
+    <aside class="split-sidebar" aria-label="{{ t('submit.sidebar.eyebrow') }}">
+        <div class="sidebar-eyebrow">{{ t('submit.sidebar.eyebrow') }}</div>
+        <h2 class="sidebar-title">{{ t('submit.sidebar.title') | safe }}</h2>
 
         <div class="guarantee-list">
             <div class="guarantee-item">
-                <span class="guarantee-num">§ 01</span>
+                <span class="guarantee-num">01</span>
                 <div>
-                    <div class="guarantee-title">Zero IP Logging</div>
-                    <div class="guarantee-desc">Not by the application, not by nginx. Four separate technical layers prevent any IP address from being stored.</div>
+                    <div class="guarantee-title">{{ t('submit.sidebar.g01.title') }}</div>
+                    <div class="guarantee-desc">{{ t('submit.sidebar.g01.desc') }}</div>
                 </div>
             </div>
             <div class="guarantee-item">
-                <span class="guarantee-num">§ 02</span>
+                <span class="guarantee-num">02</span>
                 <div>
-                    <div class="guarantee-title">Two-Factor Access</div>
-                    <div class="guarantee-desc">Your report is protected by a case number and a UUID4 secret PIN. Both are required to retrieve it.</div>
+                    <div class="guarantee-title">{{ t('submit.sidebar.g02.title') }}</div>
+                    <div class="guarantee-desc">{{ t('submit.sidebar.g02.desc') }}</div>
                 </div>
             </div>
             <div class="guarantee-item">
-                <span class="guarantee-num">§ 03</span>
+                <span class="guarantee-num">03</span>
                 <div>
-                    <div class="guarantee-title">No Fingerprinting</div>
-                    <div class="guarantee-desc">No cookies, no tracking pixels, no browser fingerprinting of any kind.</div>
+                    <div class="guarantee-title">{{ t('submit.sidebar.g03.title') }}</div>
+                    <div class="guarantee-desc">{{ t('submit.sidebar.g03.desc') }}</div>
                 </div>
             </div>
             <div class="guarantee-item">
-                <span class="guarantee-num">§ 17</span>
+                <span class="guarantee-num">§17</span>
                 <div>
-                    <div class="guarantee-title">HinSchG Compliant</div>
-                    <div class="guarantee-desc">Acknowledgement within 7 days. Response within 3 months. Bidirectional communication as required by law.</div>
+                    <div class="guarantee-title">{{ t('submit.sidebar.g17.title') }}</div>
+                    <div class="guarantee-desc">{{ t('submit.sidebar.g17.desc') }}</div>
                 </div>
             </div>
         </div>
     </aside>
 
     <div class="split-main">
-        <div class="page-eyebrow">Confidential Report</div>
-        <h1>Submit a Report</h1>
+        <div class="page-eyebrow">{{ t('submit.eyebrow') }}</div>
+        <h1>{{ t('submit.title') }}</h1>
 
         {% if error %}
         <div class="alert alert-error" role="alert">{{ error }}</div>
         {% endif %}
 
-        <div class="alert alert-info" style="margin: 1.5rem 0;">
-            <div class="alert-title">Before you submit</div>
-            Save your case number and PIN in a secure location after submission.
-            They are the only way to access your report and cannot be recovered if lost.
+        <div class="alert alert-info" style="margin: 1rem 0;">
+            <div class="alert-title">{{ t('submit.alert.title') }}</div>
+            {{ t('submit.alert.body') }}
         </div>
 
         <form method="post" action="/submit" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <div class="form-group">
-                <label class="form-label" for="category">Category</label>
+                <label class="form-label" for="category">{{ t('submit.form.category') }}</label>
                 <select class="form-control" id="category" name="category" required>
-                    <option value="">— Select a category —</option>
+                    <option value="">{{ t('submit.form.category.placeholder') }}</option>
                     {% for cat in categories %}
-                    <option value="{{ cat.value }}">
-                        {% if cat.value == "financial_fraud" %}Financial Fraud
-                        {% elif cat.value == "workplace_safety" %}Workplace Safety
-                        {% elif cat.value == "environmental" %}Environmental Violation
-                        {% elif cat.value == "corruption" %}Corruption / Bribery
-                        {% elif cat.value == "data_protection" %}Data Protection Violation
-                        {% elif cat.value == "discrimination" %}Discrimination / Harassment
-                        {% else %}Other
+                    <option value="{{ cat.value }}" {% if cat.value == selected_category %}selected{% endif %}>
+                        {% if cat.value == "financial_fraud" %}{{ t('submit.form.category.financial_fraud') }}
+                        {% elif cat.value == "workplace_safety" %}{{ t('submit.form.category.workplace_safety') }}
+                        {% elif cat.value == "environmental" %}{{ t('submit.form.category.environmental') }}
+                        {% elif cat.value == "corruption" %}{{ t('submit.form.category.corruption') }}
+                        {% elif cat.value == "data_protection" %}{{ t('submit.form.category.data_protection') }}
+                        {% elif cat.value == "discrimination" %}{{ t('submit.form.category.discrimination') }}
+                        {% else %}{{ t('submit.form.category.other') }}
                         {% endif %}
                     </option>
                     {% endfor %}
@@ -75,22 +75,26 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label" for="description">Description</label>
+                <label class="form-label" for="description" style="display:flex;justify-content:space-between;align-items:baseline;">
+                    <span>{{ t('submit.form.description') }}</span>
+                    <span id="char-counter" style="font-size:0.72rem;font-weight:400;color:var(--text-muted);font-family:var(--font-mono);">0 / 10,000</span>
+                </label>
                 <textarea
                     class="form-control"
                     id="description"
                     name="description"
-                    rows="10"
+                    rows="8"
                     required
                     minlength="10"
                     maxlength="10000"
-                    placeholder="Describe what you observed in as much detail as possible. Include dates, locations, and names if known. You may remain anonymous — do not include information that could identify you."
+                    placeholder="{{ t('submit.form.description.placeholder') }}"
+                    oninput="var c=this.value.length;var el=document.getElementById('char-counter');el.textContent=c.toLocaleString()+' / 10,000';el.style.color=c<10?'var(--danger)':c>9500?'var(--warning, #c17b2a)':'var(--text-muted)';"
                 ></textarea>
-                <div class="form-hint">Minimum 10 characters. Maximum 10,000 characters. Plain text only.</div>
+                <div class="form-hint">{{ t('submit.form.description.hint') }}</div>
             </div>
 
             <button type="submit" class="btn btn-primary btn-block">
-                Submit Report Securely &rarr;
+                {{ t('submit.form.submit') }}
             </button>
         </form>
     </div>

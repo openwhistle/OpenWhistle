@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="{{ lang }}" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -52,15 +52,27 @@
 
         <ul class="nav-links" role="list">
             {% block nav_links %}
-            <li><a href="/submit">Submit Report</a></li>
-            <li><a href="/status">Check Status</a></li>
+            <li><a href="/submit" {% if request.url.path == '/submit' %}class="active"{% endif %}>{{ t('nav.submit_report') }}</a></li>
+            <li><a href="/status" {% if request.url.path == '/status' %}class="active"{% endif %}>{{ t('nav.check_status') }}</a></li>
             {% endblock %}
+            <li>
+                <form method="post" action="/set-language" style="display:inline;margin:0;">
+                    <input type="hidden" name="next" value="{{ request.url.path }}">
+                    {% if lang == 'de' %}
+                    <input type="hidden" name="lang" value="en">
+                    <button type="submit" class="lang-toggle" title="{{ t('nav.lang_switch_label_en') }}">DE</button>
+                    {% else %}
+                    <input type="hidden" name="lang" value="de">
+                    <button type="submit" class="lang-toggle" title="{{ t('nav.lang_switch_label_de') }}">EN</button>
+                    {% endif %}
+                </form>
+            </li>
             <li>
                 <button
                     class="theme-toggle"
                     id="theme-toggle"
                     onclick="toggleTheme()"
-                    aria-label="Switch theme"
+                    aria-label="{{ t('nav.toggle_theme') }}"
                     title="Toggle dark / light">
                     ◑
                 </button>
@@ -74,9 +86,10 @@
 
     <footer class="footer" role="contentinfo">
         <p>
-            {{ brand.name }} &mdash; Secure whistleblower reporting &middot;
-            <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener">Open Source (GPLv3)</a>
+            {{ brand.name }} &mdash; {{ t('footer.tagline') }} &middot;
+            <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener">{{ t('footer.open_source') }}</a>
             &middot; <a href="https://www.gesetze-im-internet.de/hinschg/" rel="noopener">HinSchG</a>
+            &middot; <a href="/admin" style="opacity:0.4;" title="Reporting office login">{{ t('footer.admin') }}</a>
         </p>
     </footer>
 
