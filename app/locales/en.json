@@ -201,5 +201,8 @@
   "status.progress.closed.desc": "The investigation has been completed. Please review the communication thread above for the outcome and any actions taken.",
 
   "admin.report.status.confirm_close": "Are you sure you want to close this report? The whistleblower will see this as the final outcome. Consider adding a closing message first.",
-  "admin.report.status.confirm_downgrade": "Are you sure you want to move this report back to an earlier status?"
+  "admin.report.status.confirm_downgrade": "Are you sure you want to move this report back to an earlier status?",
+
+  "admin.flash.deleted": "Report permanently deleted:",
+  "admin.report.status.no_change": "Status is already set to this value."
 }

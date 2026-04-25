@@ -198,5 +198,20 @@ function confirmStatusChange(newStatus, currentStatus) {
     }
     return true;
 }
+
+(function() {
+    var sel = document.getElementById('new-status');
+    var btn = sel && sel.closest('form') && sel.closest('form').querySelector('button[type="submit"]');
+    if (!sel || !btn) return;
+    var cur = '{{ report.status.value }}';
+    function sync() {
+        var same = sel.value === cur;
+        btn.disabled = same;
+        btn.style.opacity = same ? '0.45' : '';
+        btn.title = same ? '{{ t("admin.report.status.no_change") }}' : '';
+    }
+    sel.addEventListener('change', sync);
+    sync();
+})();
 </script>
 {% endblock %}

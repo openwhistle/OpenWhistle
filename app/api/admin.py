@@ -41,6 +41,7 @@ async def dashboard(
             "ip_warning": ip_warning,
             "ack_deadline_days": 7,
             "feedback_deadline_days": 90,
+            "deleted_case": request.query_params.get("deleted"),
         },
     )
 
@@ -141,8 +142,9 @@ async def delete_report(
     if not report:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
+    case_number = report.case_number
     await report_service.delete_report(db, report)
-    return RedirectResponse("/admin/dashboard", status_code=302)
+    return RedirectResponse(f"/admin/dashboard?deleted={case_number}", status_code=302)
 
 
 @router.post("/ip-warning/dismiss")

@@ -20,6 +20,13 @@
         <a href="/submit" class="btn btn-secondary btn-sm" title="Opens the public submit form in this tab">{{ t('admin.view_submit') }}</a>
     </div>
 
+    {# Deletion success flash #}
+    {% if deleted_case %}
+    <div class="alert alert-success" role="alert" style="margin-bottom:1.25rem;">
+        {{ t('admin.flash.deleted') }} <span class="mono">{{ deleted_case }}</span>
+    </div>
+    {% endif %}
+
     {# IP leakage warning banner #}
     {% if ip_warning %}
     <div class="ip-warning-banner" id="ip-warning-banner" role="alert">
@@ -87,7 +94,7 @@
                         {% set fb_sla_class = 'sla-ok' if days_to_fb > 14 else ('sla-warning' if days_to_fb > 0 else 'sla-overdue') %}
                     {% endif %}
                     <tr>
-                        <td><span class="mono">{{ report.case_number }}</span></td>
+                        <td><span class="mono" style="white-space:nowrap;">{{ report.case_number }}</span></td>
                         <td style="font-size:0.85rem;color:var(--text-secondary);">{{ t('category.label.' + report.category.value) }}</td>
                         <td><span class="badge badge-{{ report.status.value }}">{{ t('status.label.' + report.status.value) }}</span></td>
                         <td class="mono" style="font-size:0.78rem;color:var(--text-muted);">{{ report.submitted_at.strftime('%Y-%m-%d') }}</td>

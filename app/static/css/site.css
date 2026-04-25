@@ -590,8 +590,13 @@ select.form-control {
     border: 1.5px solid var(--border-strong);
     border-radius: var(--radius-sm);
     margin-bottom: 0.75rem;
-    word-break: break-all;
+    overflow: hidden;
     gap: 1rem;
+}
+.credential-display > span {
+    overflow-x: auto;
+    white-space: nowrap;
+    min-width: 0;
 }
 
 .credential-group { margin-bottom: 1rem; }

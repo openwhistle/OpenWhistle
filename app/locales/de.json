@@ -201,5 +201,8 @@
   "status.progress.closed.desc": "Die Untersuchung wurde abgeschlossen. Bitte lesen Sie den Kommunikationsverlauf für das Ergebnis und die ergriffenen Maßnahmen.",
 
   "admin.report.status.confirm_close": "Möchten Sie diese Meldung wirklich abschließen? Der Hinweisgeber sieht dies als abschließendes Ergebnis. Erwägen Sie, vorher eine abschließende Nachricht zu senden.",
-  "admin.report.status.confirm_downgrade": "Möchten Sie diese Meldung wirklich auf einen früheren Status zurücksetzen?"
+  "admin.report.status.confirm_downgrade": "Möchten Sie diese Meldung wirklich auf einen früheren Status zurücksetzen?",
+
+  "admin.flash.deleted": "Meldung dauerhaft gelöscht:",
+  "admin.report.status.no_change": "Der Status ist bereits auf diesen Wert gesetzt."
 }
