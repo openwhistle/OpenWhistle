@@ -16,10 +16,12 @@ _cache: dict[str, dict[str, str]] = {}
 
 
 def _load(lang: str) -> dict[str, str]:
-    if lang not in _cache:
-        path = _LOCALES_DIR / f"{lang}.json"
-        _cache[lang] = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
-    return _cache[lang]
+    # Restrict to known-good values before using in a file path.
+    safe_lang = lang if lang in _SUPPORTED else _DEFAULT
+    if safe_lang not in _cache:
+        path = _LOCALES_DIR / f"{safe_lang}.json"
+        _cache[safe_lang] = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    return _cache[safe_lang]
 
 
 def get_lang(request: Request) -> str:

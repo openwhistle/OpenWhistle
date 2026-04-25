@@ -1,6 +1,7 @@
 """Admin dashboard endpoints."""
 
 import uuid
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
@@ -84,7 +85,7 @@ async def acknowledge_report(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
     await report_service.acknowledge_report(db, report)
-    return RedirectResponse(f"/admin/reports/{report_id}", status_code=302)
+    return RedirectResponse(f"/admin/reports/{report.id}", status_code=302)
 
 
 @router.post("/reports/{report_id}/status", response_class=HTMLResponse)
@@ -106,7 +107,7 @@ async def update_status(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST) from exc
 
     await report_service.update_report_status(db, report, s)
-    return RedirectResponse(f"/admin/reports/{report_id}", status_code=302)
+    return RedirectResponse(f"/admin/reports/{report.id}", status_code=302)
 
 
 @router.post("/reports/{report_id}/reply", response_class=HTMLResponse)
@@ -126,7 +127,7 @@ async def admin_reply(
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     await report_service.add_admin_message(db, report, content.strip())
-    return RedirectResponse(f"/admin/reports/{report_id}", status_code=302)
+    return RedirectResponse(f"/admin/reports/{report.id}", status_code=302)
 
 
 @router.post("/reports/{report_id}/delete", response_class=HTMLResponse)
@@ -144,7 +145,8 @@ async def delete_report(
 
     case_number = report.case_number
     await report_service.delete_report(db, report)
-    return RedirectResponse(f"/admin/dashboard?deleted={case_number}", status_code=302)
+    safe_case = quote(case_number, safe="")
+    return RedirectResponse(f"/admin/dashboard?deleted={safe_case}", status_code=302)
 
 
 @router.post("/ip-warning/dismiss")

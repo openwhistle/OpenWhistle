@@ -2,6 +2,7 @@
 
 import secrets
 import uuid
+from urllib.parse import urlsplit
 
 from fastapi import (
     APIRouter,
@@ -37,10 +38,13 @@ async def set_language(
     lang: str = Form(...),
     next_url: str = Form("/submit", alias="next"),
 ) -> RedirectResponse:
-    supported = {"en", "de"}
-    safe_lang = lang if lang in supported else "en"
-    # Restrict redirect to same-origin paths only
-    if not next_url.startswith("/") or next_url.startswith("//"):
+    # Use a fixed-set dict lookup so the value is provably from a known set,
+    # severing any taint flow from user input into the cookie value.
+    safe_lang = {"en": "en", "de": "de"}.get(lang, "en")
+    # Restrict redirect to same-origin paths only using urlsplit for reliable
+    # detection of scheme/netloc that would allow open redirection.
+    parsed = urlsplit(next_url)
+    if parsed.scheme or parsed.netloc or not parsed.path.startswith("/"):
         next_url = "/submit"
     response = RedirectResponse(next_url, status_code=303)
     response.set_cookie(
