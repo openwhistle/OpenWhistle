@@ -53,7 +53,7 @@
             {{ t('submit.alert.body') }}
         </div>
 
-        <form method="post" action="/submit" novalidate enctype="multipart/form-data">
+        <form method="post" action="/submit" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <div class="form-group">
                 <label class="form-label" for="category">{{ t('submit.form.category') }}</label>

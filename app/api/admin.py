@@ -5,6 +5,7 @@ from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_admin
@@ -14,10 +15,30 @@ from app.database import get_db
 from app.middleware import check_ip_warning, clear_ip_warning
 from app.models.report import ReportStatus
 from app.models.user import AdminUser
+from app.redis_client import get_redis
 from app.services import report as report_service
 from app.templating import render
 
 router = APIRouter(prefix="/admin")
+
+
+async def _cleanup_report_sessions(redis: Redis, report_id: uuid.UUID) -> None:
+    """Delete any whistleblower status-session keys that reference the given report."""
+    target = str(report_id)
+    cursor = 0
+    while True:
+        cursor, keys = await redis.scan(cursor, match="status-session:*", count=100)
+        if keys:
+            values = await redis.mget(*keys)
+            to_delete = [
+                key for key, val in zip(keys, values, strict=False)
+                if val is not None
+                and (val.decode() if isinstance(val, bytes) else val) == target
+            ]
+            if to_delete:
+                await redis.delete(*to_delete)
+        if cursor == 0:
+            break
 
 
 _ALLOWED_SORT = frozenset({"submitted_at", "case_number", "category", "status"})
@@ -182,6 +203,7 @@ async def delete_report(
     request: Request,
     report_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis),
     current_user: AdminUser = Depends(get_current_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
@@ -192,6 +214,7 @@ async def delete_report(
 
     case_number = report.case_number
     await report_service.delete_report(db, report)
+    await _cleanup_report_sessions(redis, report_id)
     safe_case = quote(case_number, safe="")
     return RedirectResponse(f"/admin/dashboard?deleted={safe_case}", status_code=302)
 

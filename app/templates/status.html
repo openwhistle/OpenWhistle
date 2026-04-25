@@ -40,7 +40,7 @@
     {% else %}
     <div class="panel">
         <div class="panel-header">{{ t('status.panel.header') }}</div>
-        <form method="post" action="/status" novalidate>
+        <form method="post" action="/status">
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <input type="hidden" name="session_token" value="{{ session_token }}">
 
