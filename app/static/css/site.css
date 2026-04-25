@@ -278,6 +278,7 @@ code, .mono {
     color: var(--text-muted);
     cursor: pointer;
     font-size: 0.95rem;
+    font-family: var(--font-body);
     transition: all 0.15s;
     display: flex;
     align-items: center;
