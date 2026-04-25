@@ -166,7 +166,7 @@
                         <td class="{{ fb_sla_class }}" style="font-size:0.82rem;">
                             {% if report.feedback_due_at %}
                                 {% set days_to_fb = (report.feedback_due_at - now).days %}
-                                {% if days_to_fb > 0 %}{{ days_to_fb }}d {% if lang == 'de' %}{{ t('admin.report.sla.days_remaining') }}{% else %}left{% endif %}{% else %}{{ t('admin.report.sla.overdue') }}{% endif %}
+                                {% if days_to_fb > 0 %}{{ days_to_fb }} {{ t('admin.report.sla.days_remaining') }}{% else %}{{ t('admin.report.sla.overdue') }}{% endif %}
                             {% else %}
                                 &mdash;
                             {% endif %}

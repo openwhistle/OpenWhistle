@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}Error {{ status_code }} — OpenWhistle{% endblock %}
+
+{% block content %}
+<div class="container-sm" style="text-align:center;padding:3rem 1rem;">
+    <div class="page-header">
+        <div class="page-eyebrow">Error {{ status_code }}</div>
+        <h1>{{ detail }}</h1>
+    </div>
+    <a href="javascript:history.back()" class="btn btn-secondary" style="margin-top:1rem;">Go Back</a>
+</div>
+{% endblock %}

@@ -6,7 +6,9 @@ import sys
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
@@ -67,6 +69,19 @@ def create_app() -> FastAPI:
 
     application.add_middleware(SecurityMiddleware)
     application.add_middleware(CSRFMiddleware)
+
+    @application.exception_handler(RequestValidationError)
+    async def validation_exception_handler(
+        request: Request, exc: RequestValidationError
+    ) -> HTMLResponse:
+        from app.templating import render
+
+        return render(
+            request,
+            "error.html",
+            {"status_code": 422, "detail": "The submitted form data was invalid."},
+            status_code=422,
+        )
 
     application.mount(
         "/static",
