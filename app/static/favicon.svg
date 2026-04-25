@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 33" width="32" height="32">
+  <!-- Shield -->
+  <path d="M14 2L25 6.5L25 16.5C25 22.5 20.5 27.5 14 30C7.5 27.5 3 22.5 3 16.5L3 6.5Z"
+        fill="#0f4c81" stroke="#1a6aaa" stroke-width="0.8" stroke-linejoin="round"/>
+  <!-- Sound-wave / W mark -->
+  <polyline points="5.5,14 8.5,21 14,15 19.5,21 22.5,14"
+            stroke="white" stroke-width="2.1"
+            stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
