@@ -8,6 +8,8 @@ services:
       REDIS_URL: "redis://redis:6379/0"
       SECRET_KEY: "change-me-in-production-use-a-long-random-string"
       DEMO_MODE: "false"
+    volumes:
+      - ./app/static:/app/app/static
     depends_on:
       db:
         condition: service_healthy

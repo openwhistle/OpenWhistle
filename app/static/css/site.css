@@ -1,5 +1,5 @@
-/* OpenWhistle — "Trusted Institution" design */
-/* Light mode default: clean white, institutional blue, teal accent */
+/* OpenWhistle — editorial institution design */
+/* Light mode default: warm parchment, institutional blue, amber accent */
 
 /* ─── Theme variables ─────────────────────────────────────────────────────── */
 
@@ -7,101 +7,101 @@
 [data-theme="light"] {
     /* Brand hooks — overridden inline by Jinja2 from env vars */
     --brand-primary:   #0f4c81;
-    --brand-secondary: #00a878;
+    --brand-secondary: #b07230;
 
     /* Backgrounds */
-    --bg-page:    #f0f4f8;
-    --bg-card:    #ffffff;
-    --bg-input:   #f8fafc;
-    --bg-nav:     #ffffff;
-    --bg-code:    #eef2f7;
+    --bg-page:    #f2f0eb;
+    --bg-card:    #faf9f7;
+    --bg-input:   #f5f3ef;
+    --bg-nav:     #faf9f7;
+    --bg-code:    #ede9e2;
 
     /* Text */
-    --text-primary:   #1a202c;
-    --text-secondary: #4a5568;
-    --text-muted:     #718096;
-    --text-nav:       #374151;
+    --text-primary:   #1c1a16;
+    --text-secondary: #4a4540;
+    --text-muted:     #7a7269;
+    --text-nav:       #3a3530;
     --text-nav-act:   var(--brand-primary);
 
     /* Accent = brand primary */
     --accent:         var(--brand-primary);
     --accent-hover:   color-mix(in srgb, var(--brand-primary) 82%, black);
-    --accent-subtle:  color-mix(in srgb, var(--brand-primary) 8%, white);
+    --accent-subtle:  color-mix(in srgb, var(--brand-primary) 8%, #f2f0eb);
     --accent-light:   color-mix(in srgb, var(--brand-primary) 60%, white);
 
     /* Second accent = brand secondary */
     --accent2:        var(--brand-secondary);
     --accent2-hover:  color-mix(in srgb, var(--brand-secondary) 82%, black);
-    --accent2-subtle: color-mix(in srgb, var(--brand-secondary) 8%, white);
+    --accent2-subtle: color-mix(in srgb, var(--brand-secondary) 8%, #f2f0eb);
 
     /* Semantic colours */
-    --danger:         #dc2626;
-    --danger-subtle:  #fef2f2;
-    --danger-hover:   #b91c1c;
-    --warning:        #d97706;
-    --warning-subtle: #fffbeb;
-    --success:        #059669;
-    --success-subtle: #ecfdf5;
-    --info:           #0369a1;
-    --info-subtle:    #f0f9ff;
+    --danger:         #c0392b;
+    --danger-subtle:  #fdf0ef;
+    --danger-hover:   #a93226;
+    --warning:        #c47a1a;
+    --warning-subtle: #fef8ec;
+    --success:        #1a7a4a;
+    --success-subtle: #eef7f2;
+    --info:           #1a5fa0;
+    --info-subtle:    #eef4fb;
 
     /* Structure */
-    --border:         #e2e8f0;
-    --border-strong:  #cbd5e1;
-    --radius:         8px;
-    --radius-sm:      5px;
-    --radius-lg:      14px;
+    --border:         #ddd8cf;
+    --border-strong:  #c8c0b4;
+    --radius:         6px;
+    --radius-sm:      4px;
+    --radius-lg:      12px;
     --radius-pill:    999px;
 
-    /* Elevation shadows */
-    --shadow-sm:  0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
-    --shadow-md:  0 4px 12px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06);
-    --shadow-lg:  0 10px 25px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.06);
+    /* Elevation shadows — warmer tones */
+    --shadow-sm:  0 1px 3px rgba(28,20,10,0.08), 0 1px 2px rgba(28,20,10,0.05);
+    --shadow-md:  0 4px 14px rgba(28,20,10,0.10), 0 2px 4px rgba(28,20,10,0.06);
+    --shadow-lg:  0 10px 28px rgba(28,20,10,0.12), 0 4px 8px rgba(28,20,10,0.06);
 
     /* Fonts */
-    --font-heading: 'Sora', system-ui, sans-serif;
-    --font-body:    'Nunito Sans', system-ui, sans-serif;
-    --font-mono:    'JetBrains Mono', 'Courier New', monospace;
+    --font-heading: 'Spectral', Georgia, serif;
+    --font-body:    'Source Serif 4', Georgia, serif;
+    --font-mono:    'Courier New', Courier, monospace;
 }
 
 [data-theme="dark"] {
-    /* Dark blue-gray palette — professional, NOT GitHub-terminal */
-    --bg-page:    #111827;
-    --bg-card:    #1f2937;
-    --bg-input:   #1f2937;
-    --bg-nav:     #111827;
-    --bg-code:    #1a2333;
+    /* Deep midnight navy — not charcoal, not terminal black */
+    --bg-page:    #0d1726;
+    --bg-card:    #152440;
+    --bg-input:   #1c2d4e;
+    --bg-nav:     #0a1220;
+    --bg-code:    #111e34;
 
-    --text-primary:   #f9fafb;
-    --text-secondary: #d1d5db;
-    --text-muted:     #9ca3af;
-    --text-nav:       #d1d5db;
-    --text-nav-act:   #ffffff;
+    --text-primary:   #dde6f2;
+    --text-secondary: #9db4cc;
+    --text-muted:     #6a8aa8;
+    --text-nav:       #adc4d8;
+    --text-nav-act:   #dde6f2;
 
-    --accent:         color-mix(in srgb, var(--brand-primary) 65%, white);
-    --accent-hover:   color-mix(in srgb, var(--brand-primary) 55%, white);
-    --accent-subtle:  color-mix(in srgb, var(--brand-primary) 14%, #111827);
-    --accent-light:   color-mix(in srgb, var(--brand-primary) 45%, white);
+    --accent:         color-mix(in srgb, var(--brand-primary) 58%, white);
+    --accent-hover:   color-mix(in srgb, var(--brand-primary) 46%, white);
+    --accent-subtle:  color-mix(in srgb, var(--brand-primary) 16%, #0d1726);
+    --accent-light:   color-mix(in srgb, var(--brand-primary) 40%, white);
 
-    --accent2:        color-mix(in srgb, var(--brand-secondary) 65%, white);
-    --accent2-subtle: color-mix(in srgb, var(--brand-secondary) 14%, #111827);
+    --accent2:        color-mix(in srgb, var(--brand-secondary) 60%, white);
+    --accent2-subtle: color-mix(in srgb, var(--brand-secondary) 16%, #0d1726);
 
-    --danger:         #f87171;
-    --danger-subtle:  #2d1515;
-    --danger-hover:   #ef4444;
-    --warning:        #fbbf24;
-    --warning-subtle: #1e1500;
-    --success:        #34d399;
-    --success-subtle: #052e16;
-    --info:           #60a5fa;
-    --info-subtle:    #0c1f35;
+    --danger:         #e87070;
+    --danger-subtle:  #2a1414;
+    --danger-hover:   #d45050;
+    --warning:        #e8a840;
+    --warning-subtle: #1e1608;
+    --success:        #3ac88a;
+    --success-subtle: #062418;
+    --info:           #5aadee;
+    --info-subtle:    #0b1c30;
 
-    --border:         #374151;
-    --border-strong:  #4b5563;
+    --border:         #1e3455;
+    --border-strong:  #2e4a6e;
 
-    --shadow-sm:  0 1px 3px rgba(0,0,0,0.35);
-    --shadow-md:  0 4px 12px rgba(0,0,0,0.45);
-    --shadow-lg:  0 10px 25px rgba(0,0,0,0.55);
+    --shadow-sm:  0 1px 3px rgba(0,0,0,0.50);
+    --shadow-md:  0 4px 14px rgba(0,0,0,0.60);
+    --shadow-lg:  0 10px 28px rgba(0,0,0,0.70);
 }
 
 /* ─── Reset & base ────────────────────────────────────────────────────────── */
@@ -118,11 +118,16 @@ body {
     font-family: var(--font-body);
     background-color: var(--bg-page);
     color: var(--text-primary);
-    line-height: 1.65;
+    line-height: 1.7;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    transition: background-color 0.2s, color 0.2s;
+    transition: background-color 0.25s, color 0.25s;
+}
+
+[data-theme="dark"] body {
+    background-image: radial-gradient(ellipse at 30% 0%, rgba(15,76,129,0.08) 0%, transparent 60%),
+                      radial-gradient(ellipse at 80% 100%, rgba(176,114,48,0.05) 0%, transparent 50%);
 }
 
 main { flex: 1; }
@@ -131,14 +136,17 @@ main { flex: 1; }
 
 h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
-    font-weight: 600;
-    line-height: 1.25;
+    font-weight: 700;
+    line-height: 1.2;
     color: var(--text-primary);
 }
 
-h1 { font-size: clamp(1.75rem, 4vw, 2.75rem); letter-spacing: -0.025em; }
-h2 { font-size: 1.5rem;  letter-spacing: -0.02em; }
-h3 { font-size: 1.2rem;  letter-spacing: -0.01em; }
+/* Spectral italic is exceptional — use it for emphasis within headings */
+h1 em, h2 em, h3 em { font-style: italic; font-weight: 600; }
+
+h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); letter-spacing: -0.01em; }
+h2 { font-size: 1.55rem; letter-spacing: -0.008em; font-weight: 600; }
+h3 { font-size: 1.2rem;  letter-spacing: -0.004em; font-weight: 600; }
 h4 { font-size: 1rem;    font-weight: 600; }
 
 p { margin-bottom: 1rem; color: var(--text-secondary); }
@@ -189,12 +197,18 @@ code, .mono {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 60px;
+    height: 62px;
     border-bottom: 1px solid var(--border);
     box-shadow: var(--shadow-sm);
     position: sticky;
     top: 0;
     z-index: 100;
+}
+
+[data-theme="dark"] .nav {
+    background: var(--bg-nav);
+    border-bottom-color: var(--border);
+    box-shadow: 0 1px 0 var(--border), var(--shadow-sm);
 }
 
 .nav-brand {
@@ -616,8 +630,8 @@ select.form-control {
 }
 
 [data-theme="dark"] .split-sidebar {
-    background: color-mix(in srgb, var(--accent) 80%, #111827);
-    border-right-color: rgba(255,255,255,0.08);
+    background: color-mix(in srgb, var(--brand-primary) 70%, #0a1220);
+    border-right-color: rgba(255,255,255,0.06);
 }
 
 .split-main {

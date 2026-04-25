@@ -46,16 +46,18 @@
 
   <style>
     /* Self-hosted fonts — no external CDN calls */
-    @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-500-normal.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Nunito Sans'; src: url('fonts/nunito-sans-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Nunito Sans'; src: url('fonts/nunito-sans-latin-400-italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
-    @font-face { font-family: 'Nunito Sans'; src: url('fonts/nunito-sans-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Nunito Sans'; src: url('fonts/nunito-sans-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Spectral'; src: url('fonts/spectral-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Spectral'; src: url('fonts/spectral-latin-400-italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+    @font-face { font-family: 'Spectral'; src: url('fonts/spectral-latin-500-normal.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Spectral'; src: url('fonts/spectral-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Spectral'; src: url('fonts/spectral-latin-600-italic.woff2') format('woff2'); font-weight: 600; font-style: italic; font-display: swap; }
+    @font-face { font-family: 'Spectral'; src: url('fonts/spectral-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('fonts/source-serif-4-latin-300-normal.woff2') format('woff2'); font-weight: 300; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('fonts/source-serif-4-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('fonts/source-serif-4-latin-400-italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('fonts/source-serif-4-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('fonts/source-serif-4-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+    /* JetBrains Mono removed — mono elements use system Courier New */
   </style>
 
   <style>
@@ -88,9 +90,9 @@
       --code-bg:       #1a2744;
       --code-text:     #e2dcd2;
 
-      --font-serif:    'Sora', system-ui, sans-serif;
-      --font-body:     'Nunito Sans', system-ui, sans-serif;
-      --font-mono:     'JetBrains Mono', 'Courier New', monospace;
+      --font-serif:    'Spectral', Georgia, serif;
+      --font-body:     'Source Serif 4', Georgia, serif;
+      --font-mono:     'Courier New', Courier, monospace;
 
       --space-1: 0.25rem; --space-2: 0.5rem;  --space-3: 0.75rem;
       --space-4: 1rem;    --space-5: 1.25rem; --space-6: 1.5rem;
@@ -105,29 +107,29 @@
     }
 
     [data-theme="dark"] {
-      --bg-base:       #0a0f1e;
-      --bg-surface:    #111827;
-      --bg-raised:     #1a2234;
-      --bg-overlay:    #1e293b;
-      --nav-bg:        #111827;
-      --footer-bg:     #060c18;
-      --sidebar-bg:    #0d1422;
-      --text-primary:  #e8e6e0;
-      --text-secondary:#9aa5bc;
-      --text-muted:    #5a6580;
-      --border-subtle: #1e2d40;
-      --border-default:#263548;
-      --border-strong: #334466;
-      --seal-green:    #3aaa5c;
-      --seal-green-mid:#2d8a4a;
-      --seal-green-dim:rgba(58, 170, 92, 0.15);
-      --seal-green-fog:rgba(58, 170, 92, 0.08);
-      --gold:          #e8a020;
-      --gold-mid:      #c8881a;
-      --gold-dim:      rgba(232, 160, 32, 0.20);
-      --gold-fog:      rgba(232, 160, 32, 0.08);
-      --code-bg:       #060c18;
-      --code-text:     #e2dcd2;
+      --bg-base:       #0b1525;
+      --bg-surface:    #132035;
+      --bg-raised:     #1a2d44;
+      --bg-overlay:    #1f3355;
+      --nav-bg:        #0a1220;
+      --footer-bg:     #070d1e;
+      --sidebar-bg:    #0d1a30;
+      --text-primary:  #dde6f2;
+      --text-secondary:#9db4cc;
+      --text-muted:    #5c7a96;
+      --border-subtle: #1a2e48;
+      --border-default:#243d5a;
+      --border-strong: #2e4e72;
+      --seal-green:    #5a9070;
+      --seal-green-mid:#4a7860;
+      --seal-green-dim:rgba(90, 144, 112, 0.15);
+      --seal-green-fog:rgba(90, 144, 112, 0.08);
+      --gold:          #e0a845;
+      --gold-mid:      #c0882a;
+      --gold-dim:      rgba(224, 168, 69, 0.20);
+      --gold-fog:      rgba(224, 168, 69, 0.08);
+      --code-bg:       #070e1c;
+      --code-text:     #dde6f2;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -194,39 +196,38 @@
       display: flex;
       align-items: center;
       gap: var(--space-3);
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
-      font-weight: 500;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
+      font-family: var(--font-serif);
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
       color: #e2dcd2;
       flex-shrink: 0;
       transition: color var(--duration-fast) ease;
     }
     .nav-logo:hover { color: #fff; }
+    .nav-logo svg path { stroke: var(--gold); }
     .nav-links {
       display: flex;
       align-items: center;
       gap: var(--space-6);
     }
     .nav-links a {
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      letter-spacing: 0.02em;
       color: rgba(226, 220, 210, 0.65);
       transition: color var(--duration-fast) ease;
       white-space: nowrap;
     }
     .nav-links a:hover { color: #e2dcd2; }
-    .nav-links a.active { color: #5ecb7a; }
+    .nav-links a.active { color: var(--gold); }
     .nav-cta {
       padding: var(--space-2) var(--space-4) !important;
-      border: 1px solid rgba(45, 125, 70, 0.5) !important;
-      color: #5ecb7a !important;
+      border: 1px solid rgba(176, 114, 48, 0.5) !important;
+      color: var(--gold) !important;
       border-radius: 2px;
     }
-    .nav-cta:hover { background: rgba(45, 125, 70, 0.15) !important; }
+    .nav-cta:hover { background: rgba(176, 114, 48, 0.15) !important; }
     .nav-actions { display: flex; align-items: center; gap: var(--space-4); flex-shrink: 0; }
     .theme-toggle {
       display: flex;
@@ -281,9 +282,9 @@
       margin-bottom: var(--space-8);
     }
     .sidebar-section-title {
-      font-family: var(--font-mono);
-      font-size: 0.6rem;
-      letter-spacing: 0.16em;
+      font-family: var(--font-body);
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--text-muted);
       margin-bottom: var(--space-3);
@@ -297,8 +298,8 @@
     .sidebar-links a {
       display: block;
       padding: var(--space-2) var(--space-3);
-      font-family: var(--font-mono);
-      font-size: 0.78rem;
+      font-family: var(--font-body);
+      font-size: 0.82rem;
       color: var(--text-secondary);
       border-left: 2px solid transparent;
       border-radius: 0 2px 2px 0;
@@ -321,9 +322,9 @@
     }
 
     .docs-breadcrumb {
-      font-family: var(--font-mono);
-      font-size: 0.68rem;
-      letter-spacing: 0.08em;
+      font-family: var(--font-body);
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
       color: var(--text-muted);
       margin-bottom: var(--space-8);
       display: flex;
@@ -1090,7 +1091,7 @@
               <td><code class="env-key">BRAND_SECONDARY_COLOR</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
               <td>Secondary/accent colour as a hex value. Used for highlights and the submit-page sidebar.</td>
-              <td><code>#00a878</code></td>
+              <td><code>#b07230</code></td>
             </tr>
             <tr>
               <td><code class="env-key">BRAND_LOGO_URL</code></td>

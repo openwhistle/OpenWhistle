@@ -44,7 +44,7 @@ class Settings(BaseSettings):
 
     # Branding (optional — companies can override defaults)
     brand_primary_color: str = "#0f4c81"
-    brand_secondary_color: str = "#00a878"
+    brand_secondary_color: str = "#b07230"
     brand_logo_url: str = ""
 
 

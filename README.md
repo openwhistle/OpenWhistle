@@ -166,7 +166,7 @@ middlewares:
 | `OIDC_SERVER_METADATA_URL` | No | — | OIDC provider discovery URL |
 | `OIDC_REDIRECT_URI` | No | — | OAuth 2.0 callback URL (e.g. `https://yourdomain.com/admin/oidc/callback`) |
 | `BRAND_PRIMARY_COLOR` | No | `#0f4c81` | Primary brand colour (hex) — used for buttons, accents, links |
-| `BRAND_SECONDARY_COLOR` | No | `#00a878` | Secondary/accent colour (hex) — used for highlights |
+| `BRAND_SECONDARY_COLOR` | No | `#b07230` | Secondary/accent colour (hex) — used for highlights |
 | `BRAND_LOGO_URL` | No | — | URL to a company logo (shown in navbar instead of default icon) |
 
 ## Development
