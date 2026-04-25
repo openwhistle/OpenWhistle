@@ -47,5 +47,24 @@ class Settings(BaseSettings):
     brand_secondary_color: str = "#b07230"
     brand_logo_url: str = ""
 
+    # Public base URL used in notification links
+    app_public_url: str = "http://localhost"
+
+    # Email notifications (SMTP)
+    notify_email_enabled: bool = False
+    notify_email_to: str = ""          # comma-separated list of recipients
+    notify_email_from: str = "openwhistle@localhost"
+    notify_smtp_host: str = "localhost"
+    notify_smtp_port: int = 587
+    notify_smtp_user: str = ""
+    notify_smtp_password: str = ""
+    notify_smtp_tls: bool = True       # STARTTLS
+    notify_smtp_ssl: bool = False      # SMTPS (port 465)
+
+    # Webhook notifications (HTTP POST)
+    notify_webhook_enabled: bool = False
+    notify_webhook_url: str = ""
+    notify_webhook_secret: str = ""    # HMAC-SHA256 signing secret (optional)
+
 
 settings = Settings()  # type: ignore[call-arg]

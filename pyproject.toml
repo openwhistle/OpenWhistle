@@ -37,6 +37,7 @@ dependencies = [
 
     # Utilities
     "httpx>=0.28.0",
+    "aiosmtplib>=3.0.0",
 ]
 
 [project.optional-dependencies]
@@ -73,6 +74,7 @@ module = [
     "bcrypt.*",
     "jose.*",
     "authlib.*",
+    "aiosmtplib.*",
 ]
 ignore_missing_imports = true
 
@@ -109,6 +111,10 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
 testpaths = ["tests"]
 addopts = "--cov=app --cov-report=term-missing --cov-fail-under=75"
+
+markers = [
+    "integration: marks tests that require a live database and Redis (deselect with -m 'not integration')",
+]
 
 [tool.coverage.run]
 # sys.monitoring (sysmon) is Python 3.12+'s native tracing API — correctly traces async coroutines

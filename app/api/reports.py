@@ -3,7 +3,7 @@
 import secrets
 import uuid
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -74,6 +74,7 @@ async def submit_get(request: Request) -> HTMLResponse:
 @router.post("/submit", response_class=HTMLResponse)
 async def submit_post(
     request: Request,
+    background_tasks: BackgroundTasks,
     category: str = Form(""),
     description: str = Form(""),
     db: AsyncSession = Depends(get_db),
@@ -128,6 +129,9 @@ async def submit_post(
         description=description_stripped,
         lang=lang,
     )
+
+    from app.services.notifications import notify_new_report
+    background_tasks.add_task(notify_new_report, report.case_number)
 
     response = render(
         request,

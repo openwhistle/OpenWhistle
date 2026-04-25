@@ -1099,6 +1099,120 @@
               <td>URL to a company logo image. When set, the logo is shown in the navigation bar instead of the default OpenWhistle shield icon.</td>
               <td>—</td>
             </tr>
+            <tr>
+              <td><code class="env-key">APP_PUBLIC_URL</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Public base URL of the application. Used to build dashboard links inside notification emails and webhooks. Set to your domain (e.g. <code>https://whistleblower.example.com</code>).</td>
+              <td><code>http://localhost</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 id="notifications">Notifications</h3>
+        <p>
+          OpenWhistle can notify administrators via <strong>email (SMTP)</strong> or a
+          <strong>webhook (HTTP POST)</strong> whenever a new report is submitted. Both channels
+          are disabled by default and can be configured independently.
+        </p>
+        <p>
+          Notifications contain only the <strong>case number</strong> and a timestamp — never the
+          report description or category — to protect the whistleblower's privacy.
+        </p>
+
+        <h4>Email (SMTP)</h4>
+        <table class="env-table">
+          <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code class="env-key">NOTIFY_EMAIL_ENABLED</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Set to <code>true</code> to send an email notification when a new report arrives.</td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">NOTIFY_EMAIL_TO</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Comma-separated list of recipient addresses (e.g. <code>admin@example.com,compliance@example.com</code>).</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">NOTIFY_EMAIL_FROM</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Sender (From) address for notification emails.</td>
+              <td><code>openwhistle@localhost</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">NOTIFY_SMTP_HOST</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Hostname of the SMTP server.</td>
+              <td><code>localhost</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">NOTIFY_SMTP_PORT</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>SMTP port. Use <code>587</code> for STARTTLS or <code>465</code> for SMTPS.</td>
+              <td><code>587</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">NOTIFY_SMTP_USER</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>SMTP authentication username. Leave blank for unauthenticated relay.</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">NOTIFY_SMTP_PASSWORD</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>SMTP authentication password.</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">NOTIFY_SMTP_TLS</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Use STARTTLS on the SMTP connection. Set to <code>false</code> when using SMTPS (port 465).</td>
+              <td><code>true</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">NOTIFY_SMTP_SSL</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Use direct TLS (SMTPS, port 465). When <code>true</code>, also set <code>NOTIFY_SMTP_TLS=false</code>.</td>
+              <td><code>false</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>Webhook</h4>
+        <p>
+          When enabled, OpenWhistle sends a <code>POST</code> request with a JSON body to the
+          configured URL. If a <code>NOTIFY_WEBHOOK_SECRET</code> is set, the request includes an
+          <code>X-OpenWhistle-Signature: sha256=&lt;hex&gt;</code> header so the receiving endpoint
+          can verify authenticity using HMAC-SHA256.
+        </p>
+        <pre><code>{
+  "event": "new_report",
+  "case_number": "OW-2026-00001",
+  "timestamp": "2026-04-25T12:00:00+00:00"
+}</code></pre>
+        <table class="env-table">
+          <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code class="env-key">NOTIFY_WEBHOOK_ENABLED</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Set to <code>true</code> to POST a JSON notification to a webhook URL on new reports.</td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">NOTIFY_WEBHOOK_URL</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Target URL for webhook POST requests (e.g. a Slack incoming webhook or a custom endpoint).</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">NOTIFY_WEBHOOK_SECRET</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>HMAC-SHA256 signing secret. When set, each request carries an <code>X-OpenWhistle-Signature</code> header for verification.</td>
+              <td>—</td>
+            </tr>
           </tbody>
         </table>
       </section>

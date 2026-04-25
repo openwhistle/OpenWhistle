@@ -168,6 +168,19 @@ middlewares:
 | `BRAND_PRIMARY_COLOR` | No | `#0f4c81` | Primary brand colour (hex) — used for buttons, accents, links |
 | `BRAND_SECONDARY_COLOR` | No | `#b07230` | Secondary/accent colour (hex) — used for highlights |
 | `BRAND_LOGO_URL` | No | — | URL to a company logo (shown in navbar instead of default icon) |
+| `APP_PUBLIC_URL` | No | `http://localhost` | Public base URL — used to build dashboard links in notifications |
+| `NOTIFY_EMAIL_ENABLED` | No | `false` | Send an email when a new report is submitted |
+| `NOTIFY_EMAIL_TO` | No | — | Comma-separated recipient addresses (e.g. `admin@example.com`) |
+| `NOTIFY_EMAIL_FROM` | No | `openwhistle@localhost` | Sender address for notification emails |
+| `NOTIFY_SMTP_HOST` | No | `localhost` | SMTP server hostname |
+| `NOTIFY_SMTP_PORT` | No | `587` | SMTP server port (587 = STARTTLS, 465 = SMTPS) |
+| `NOTIFY_SMTP_USER` | No | — | SMTP authentication username (optional) |
+| `NOTIFY_SMTP_PASSWORD` | No | — | SMTP authentication password (optional) |
+| `NOTIFY_SMTP_TLS` | No | `true` | Use STARTTLS (`true`) — set to `false` when using port 465 SMTPS |
+| `NOTIFY_SMTP_SSL` | No | `false` | Use SMTPS direct TLS (port 465) |
+| `NOTIFY_WEBHOOK_ENABLED` | No | `false` | POST a JSON event to a webhook URL when a report is submitted |
+| `NOTIFY_WEBHOOK_URL` | No | — | Target URL for webhook POST requests |
+| `NOTIFY_WEBHOOK_SECRET` | No | — | HMAC-SHA256 signing secret; if set, requests carry `X-OpenWhistle-Signature: sha256=…` |
 
 ## Development
 
