@@ -7,6 +7,23 @@
 <li><a href="/admin/logout">Logout</a></li>
 {% endblock %}
 
+{% macro sort_url(field) %}
+{%- set new_dir = 'asc' if (sort_by == field and sort_dir == 'desc') else 'desc' -%}
+/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ field }}&dir={{ new_dir }}{% if status_filter %}&status={{ status_filter }}{% endif %}
+{%- endmacro %}
+
+{% macro sort_icon(field) %}
+{%- if sort_by == field -%}
+<span class="sort-indicator sort-active" aria-hidden="true">{{ '↑' if sort_dir == 'asc' else '↓' }}</span>
+{%- else -%}
+<span class="sort-indicator" aria-hidden="true">↕</span>
+{%- endif %}
+{%- endmacro %}
+
+{% macro page_url(p) %}
+/admin/dashboard?page={{ p }}&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}{% if status_filter %}&status={{ status_filter }}{% endif %}
+{%- endmacro %}
+
 {% block content %}
 <div class="container">
     <div class="page-header" style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
@@ -44,41 +61,82 @@
     </div>
     {% endif %}
 
-    {# Summary stats #}
+    {# Summary stats — loaded from DB aggregates, not from the current page #}
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:2rem;">
-        {% set ns = namespace(received=0, acknowledged=0, in_progress=0, closed=0) %}
-        {% for r in reports %}
-            {% if r.status.value == 'received' %}{% set ns.received = ns.received + 1 %}{% endif %}
-            {% if r.status.value == 'acknowledged' %}{% set ns.acknowledged = ns.acknowledged + 1 %}{% endif %}
-            {% if r.status.value == 'in_progress' %}{% set ns.in_progress = ns.in_progress + 1 %}{% endif %}
-            {% if r.status.value == 'closed' %}{% set ns.closed = ns.closed + 1 %}{% endif %}
-        {% endfor %}
-
-        {% for label_key, count, cls in [
-            ('admin.stats.received', ns.received, 'badge-received'),
-            ('admin.stats.acknowledged', ns.acknowledged, 'badge-acknowledged'),
-            ('admin.stats.in_progress', ns.in_progress, 'badge-in_progress'),
-            ('admin.stats.closed', ns.closed, 'badge-closed')
+        {% for label_key, status_val, cls in [
+            ('admin.stats.received',    'received',    'badge-received'),
+            ('admin.stats.acknowledged','acknowledged','badge-acknowledged'),
+            ('admin.stats.in_progress', 'in_progress', 'badge-in_progress'),
+            ('admin.stats.closed',      'closed',      'badge-closed')
         ] %}
-        <div class="stat-card" style="animation-delay: {{ loop.index0 * 0.05 }}s;">
+        {% set count = stats.get(status_val, 0) %}
+        <a href="/admin/dashboard?status={{ status_val }}&sort={{ sort_by }}&dir={{ sort_dir }}&per_page={{ per_page }}"
+           class="stat-card stat-card-link {% if status_filter == status_val %}stat-card-active{% endif %}"
+           style="animation-delay: {{ loop.index0 * 0.05 }}s;"
+           aria-label="Filter by {{ t(label_key) }}">
             <div class="stat-number">{{ count }}</div>
             <span class="badge {{ cls }}">{{ t(label_key) }}</span>
-        </div>
+        </a>
         {% endfor %}
     </div>
 
     <div class="panel">
-        <div class="panel-header">{{ t('admin.table.header') }}</div>
+        {# Panel header with filter bar and row count #}
+        <div class="panel-header dashboard-panel-header">
+            <span>{{ t('admin.table.header') }}</span>
+            <div class="dashboard-toolbar">
+                {# Status filter pill row #}
+                <div class="filter-pills">
+                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}"
+                       class="filter-pill {% if not status_filter %}filter-pill-active{% endif %}">
+                        {{ t('admin.filter.all_statuses') }}
+                    </a>
+                    {% for sv, label_key in [
+                        ('received',     'status.label.received'),
+                        ('acknowledged', 'status.label.acknowledged'),
+                        ('in_progress',  'status.label.in_progress'),
+                        ('closed',       'status.label.closed')
+                    ] %}
+                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}&status={{ sv }}"
+                       class="filter-pill {% if status_filter == sv %}filter-pill-active{% endif %}">
+                        {{ t(label_key) }}
+                    </a>
+                    {% endfor %}
+                </div>
+
+                {# Per-page selector #}
+                <div class="per-page-wrap">
+                    <select class="per-page-select" onchange="goPerPage(this.value)" aria-label="{{ t('admin.filter.per_page') }}">
+                        {% for opt in per_page_options %}
+                        <option value="{{ opt }}" {% if per_page == opt %}selected{% endif %}>{{ opt }}</option>
+                        {% endfor %}
+                    </select>
+                    <span class="per-page-label">{{ t('admin.filter.per_page') }}</span>
+                </div>
+            </div>
+        </div>
+
+        {% set from_row = (page - 1) * per_page + 1 %}
+        {% set to_row   = [page * per_page, total] | min %}
 
         {% if reports %}
+        {# Row count summary #}
+        <div class="table-meta">
+            {% if total_pages > 1 %}
+            {{ t('admin.filter.showing', **{'from': from_row, 'to': to_row, 'total': total}) }}
+            {% else %}
+            {{ t('admin.filter.showing_all', total=total) }}
+            {% endif %}
+        </div>
+
         <div class="table-wrapper">
             <table>
                 <thead>
                     <tr>
-                        <th>{{ t('admin.table.case_number') }}</th>
-                        <th>{{ t('admin.table.category') }}</th>
-                        <th>{{ t('admin.table.status') }}</th>
-                        <th>{{ t('admin.table.submitted') }}</th>
+                        <th><a href="{{ sort_url('case_number') }}" class="sort-link">{{ t('admin.table.case_number') }}{{ sort_icon('case_number') }}</a></th>
+                        <th><a href="{{ sort_url('category') }}" class="sort-link">{{ t('admin.table.category') }}{{ sort_icon('category') }}</a></th>
+                        <th><a href="{{ sort_url('status') }}" class="sort-link">{{ t('admin.table.status') }}{{ sort_icon('status') }}</a></th>
+                        <th><a href="{{ sort_url('submitted_at') }}" class="sort-link">{{ t('admin.table.submitted') }}{{ sort_icon('submitted_at') }}</a></th>
                         <th>{{ t('admin.table.sla7') }}</th>
                         <th>{{ t('admin.table.sla3m') }}</th>
                         <th></th>
@@ -121,7 +179,62 @@
                 </tbody>
             </table>
         </div>
+
+        {# Pagination controls #}
+        {% if total_pages > 1 %}
+        <div class="pagination-bar">
+            <div class="pagination-info">
+                {{ t('admin.pagination.page_of', page=page, total_pages=total_pages) }}
+            </div>
+            <div class="pagination-controls">
+                {% if page > 1 %}
+                <a href="{{ page_url(page - 1) }}" class="btn btn-secondary btn-sm pagination-btn">{{ t('admin.pagination.prev') }}</a>
+                {% else %}
+                <span class="btn btn-secondary btn-sm pagination-btn pagination-disabled">{{ t('admin.pagination.prev') }}</span>
+                {% endif %}
+
+                {# Page number pills — show up to 7 around current page #}
+                {% set win = 3 %}
+                {% set pg_start = [1, page - win] | max %}
+                {% set pg_end   = [total_pages, page + win] | min %}
+
+                {% if pg_start > 1 %}
+                <a href="{{ page_url(1) }}" class="pagination-page">1</a>
+                {% if pg_start > 2 %}<span class="pagination-ellipsis">…</span>{% endif %}
+                {% endif %}
+
+                {% for p in range(pg_start, pg_end + 1) %}
+                {% if p == page %}
+                <span class="pagination-page pagination-page-current" aria-current="page">{{ p }}</span>
+                {% else %}
+                <a href="{{ page_url(p) }}" class="pagination-page">{{ p }}</a>
+                {% endif %}
+                {% endfor %}
+
+                {% if pg_end < total_pages %}
+                {% if pg_end < total_pages - 1 %}<span class="pagination-ellipsis">…</span>{% endif %}
+                <a href="{{ page_url(total_pages) }}" class="pagination-page">{{ total_pages }}</a>
+                {% endif %}
+
+                {% if page < total_pages %}
+                <a href="{{ page_url(page + 1) }}" class="btn btn-secondary btn-sm pagination-btn">{{ t('admin.pagination.next') }}</a>
+                {% else %}
+                <span class="btn btn-secondary btn-sm pagination-btn pagination-disabled">{{ t('admin.pagination.next') }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% elif status_filter %}
+        {# Filtered empty state #}
+        <div style="text-align:center;padding:3rem 1rem;">
+            <div style="font-size:2.5rem;margin-bottom:1rem;opacity:0.3;">&#128269;</div>
+            <p style="font-size:1rem;font-weight:600;color:var(--text-secondary);margin-bottom:0.4rem;">{{ t('admin.filter.no_results') }}</p>
+            <a href="/admin/dashboard" class="btn btn-secondary btn-sm" style="margin-top:1rem;">{{ t('admin.filter.all_statuses') }}</a>
+        </div>
+
         {% else %}
+        {# Truly empty — no reports at all #}
         <div style="text-align:center;padding:3.5rem 1rem;">
             <div style="font-size:2.5rem;margin-bottom:1rem;opacity:0.3;">&#128274;</div>
             <p style="font-size:1rem;font-weight:600;color:var(--text-secondary);margin-bottom:0.4rem;">{{ t('admin.empty.title') }}</p>
@@ -131,4 +244,13 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+function goPerPage(val) {
+    const u = new URL(window.location.href);
+    u.searchParams.set('per_page', val);
+    u.searchParams.set('page', '1');
+    window.location.href = u.toString();
+}
+</script>
 {% endblock %}

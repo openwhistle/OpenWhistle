@@ -148,6 +148,15 @@
   "admin.empty.body": "Eingereichte Meldungen erscheinen hier. Teilen Sie den Meldungslink mit Ihrer Organisation.",
   "admin.sla.done": "✓ Erledigt",
 
+  "admin.filter.all_statuses": "Alle Status",
+  "admin.filter.showing": "{from}–{to} von {total} Meldungen",
+  "admin.filter.showing_all": "Alle {total} Meldungen",
+  "admin.filter.no_results": "Keine Meldungen entsprechen dem aktuellen Filter.",
+  "admin.filter.per_page": "pro Seite",
+  "admin.pagination.prev": "← Zurück",
+  "admin.pagination.next": "Weiter →",
+  "admin.pagination.page_of": "Seite {page} von {total_pages}",
+
   "admin.report.attachments.header": "Anhänge",
   "admin.report.attachments.download": "Herunterladen",
   "admin.report.eyebrow": "Fallakte",

@@ -22,6 +22,8 @@ from app.services.report import (
     get_all_reports,
     get_report_by_credentials,
     get_report_by_id,
+    get_report_stats,
+    get_reports_paginated,
     update_report_status,
 )
 
@@ -211,3 +213,98 @@ async def test_delete_report(db_session: AsyncSession) -> None:
     await delete_report(db_session, report)
     found = await get_report_by_id(db_session, report_id)
     assert found is None
+
+
+# ─── get_reports_paginated ────────────────────────────────────────────────────
+
+
+async def test_paginated_returns_all_on_first_page(db_session: AsyncSession) -> None:
+    for i in range(3):
+        await create_report(db_session, "corruption", f"Pagination test report number {i} ok!")
+    reports, total = await get_reports_paginated(db_session, page=1, per_page=100)
+    assert total >= 3
+    assert len(reports) == total
+
+
+async def test_paginated_page_size_is_respected(db_session: AsyncSession) -> None:
+    for i in range(5):
+        await create_report(db_session, "financial_fraud", f"Page size test report {i} long ok!")
+    reports, total = await get_reports_paginated(db_session, page=1, per_page=2)
+    assert len(reports) == 2
+    assert total >= 5
+
+
+async def test_paginated_second_page(db_session: AsyncSession) -> None:
+    for i in range(4):
+        await create_report(db_session, "other", f"Second page test report number {i} here!")
+    _, total = await get_reports_paginated(db_session, page=1, per_page=2)
+    page2, total2 = await get_reports_paginated(db_session, page=2, per_page=2)
+    assert total2 == total
+    assert len(page2) <= 2
+
+
+async def test_paginated_status_filter(db_session: AsyncSession) -> None:
+    r1, _ = await create_report(db_session, "corruption", "Status filter test report one here!")
+    await update_report_status(db_session, r1, ReportStatus.closed)
+    await create_report(db_session, "corruption", "Status filter test report two is open!")
+
+    closed_reports, total_closed = await get_reports_paginated(
+        db_session, page=1, per_page=100, status_filter="closed"
+    )
+    assert total_closed >= 1
+    assert all(r.status == ReportStatus.closed for r in closed_reports)
+
+
+async def test_paginated_invalid_status_filter_returns_all(db_session: AsyncSession) -> None:
+    await create_report(db_session, "other", "Invalid filter fallback test report here ok!")
+    _, total_all = await get_reports_paginated(db_session, page=1, per_page=100)
+    _, total_invalid = await get_reports_paginated(
+        db_session, page=1, per_page=100, status_filter="not_a_real_status"
+    )
+    assert total_invalid == total_all
+
+
+async def test_paginated_sort_asc(db_session: AsyncSession) -> None:
+    reports, _ = await get_reports_paginated(
+        db_session, page=1, per_page=100, sort_by="submitted_at", sort_dir="asc"
+    )
+    dates = [r.submitted_at for r in reports]
+    assert dates == sorted(dates)
+
+
+async def test_paginated_sort_desc(db_session: AsyncSession) -> None:
+    reports, _ = await get_reports_paginated(
+        db_session, page=1, per_page=100, sort_by="submitted_at", sort_dir="desc"
+    )
+    dates = [r.submitted_at for r in reports]
+    assert dates == sorted(dates, reverse=True)
+
+
+async def test_paginated_clamps_per_page(db_session: AsyncSession) -> None:
+    reports, _ = await get_reports_paginated(db_session, page=1, per_page=999)
+    assert len(reports) <= 100
+
+
+async def test_paginated_page_beyond_end_returns_empty(db_session: AsyncSession) -> None:
+    _, total = await get_reports_paginated(db_session, page=1, per_page=100)
+    huge_page = total + 100
+    reports, count = await get_reports_paginated(db_session, page=huge_page, per_page=25)
+    assert reports == []
+    assert count == total
+
+
+# ─── get_report_stats ─────────────────────────────────────────────────────────
+
+
+async def test_get_report_stats_returns_all_statuses(db_session: AsyncSession) -> None:
+    stats = await get_report_stats(db_session)
+    for key in ("received", "acknowledged", "in_progress", "closed"):
+        assert key in stats
+        assert isinstance(stats[key], int)
+
+
+async def test_get_report_stats_counts_correctly(db_session: AsyncSession) -> None:
+    r1, _ = await create_report(db_session, "other", "Stats count test report one long ok!")
+    await update_report_status(db_session, r1, ReportStatus.closed)
+    stats = await get_report_stats(db_session)
+    assert stats["closed"] >= 1

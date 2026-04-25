@@ -2,8 +2,9 @@
 
 import uuid
 from datetime import UTC, datetime, timedelta
+from typing import Any, Literal
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -14,6 +15,18 @@ from app.models.attachment import (
 from app.models.report import Report, ReportMessage, ReportSender, ReportStatus
 from app.services.auth import hash_pin, verify_pin
 from app.services.pin import generate_case_number, generate_pin
+
+SortField = Literal["submitted_at", "case_number", "category", "status"]
+SortDir = Literal["asc", "desc"]
+
+_VALID_SORT_FIELDS: dict[str, Any] = {
+    "submitted_at": Report.submitted_at,
+    "case_number": Report.case_number,
+    "category": Report.category,
+    "status": Report.status,
+}
+
+_VALID_STATUSES: frozenset[str] = frozenset(s.value for s in ReportStatus)
 
 
 async def create_report(
@@ -131,6 +144,55 @@ async def get_all_reports(db: AsyncSession) -> list[Report]:
         .order_by(Report.submitted_at.desc())
     )
     return list(result.scalars().all())
+
+
+async def get_reports_paginated(
+    db: AsyncSession,
+    *,
+    page: int = 1,
+    per_page: int = 25,
+    status_filter: str | None = None,
+    sort_by: SortField = "submitted_at",
+    sort_dir: SortDir = "desc",
+) -> tuple[list[Report], int]:
+    """Return a page of reports and the total matching count.
+
+    All parameters are validated/clamped here so callers can pass raw
+    query-string values without risk of injection or out-of-range results.
+    """
+    page = max(1, page)
+    per_page = max(1, min(100, per_page))
+
+    safe_sort = sort_by if sort_by in _VALID_SORT_FIELDS else "submitted_at"
+    col = _VALID_SORT_FIELDS[safe_sort]
+    order_expr = col.asc() if sort_dir == "asc" else col.desc()
+
+    base_q = select(Report)
+    if status_filter and status_filter in _VALID_STATUSES:
+        base_q = base_q.where(Report.status == ReportStatus(status_filter))
+
+    count_result = await db.execute(select(func.count()).select_from(base_q.subquery()))
+    total: int = count_result.scalar_one()
+
+    rows_result = await db.execute(
+        base_q
+        .options(selectinload(Report.messages), selectinload(Report.attachments))
+        .order_by(order_expr)
+        .offset((page - 1) * per_page)
+        .limit(per_page)
+    )
+    return list(rows_result.scalars().all()), total
+
+
+async def get_report_stats(db: AsyncSession) -> dict[str, int]:
+    """Return counts per status for the dashboard summary cards."""
+    result = await db.execute(
+        select(Report.status, func.count(Report.id)).group_by(Report.status)
+    )
+    counts: dict[str, int] = {s.value: 0 for s in ReportStatus}
+    for status_val, cnt in result.all():
+        counts[status_val.value] = cnt
+    return counts
 
 
 async def get_report_by_id(db: AsyncSession, report_id: uuid.UUID) -> Report | None:

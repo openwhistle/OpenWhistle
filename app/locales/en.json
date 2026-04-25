@@ -148,6 +148,15 @@
   "admin.empty.body": "Submitted reports will appear here. Share the submit link with your organisation.",
   "admin.sla.done": "✓ Done",
 
+  "admin.filter.all_statuses": "All Statuses",
+  "admin.filter.showing": "Showing {from}–{to} of {total}",
+  "admin.filter.showing_all": "Showing all {total}",
+  "admin.filter.no_results": "No reports match the current filter.",
+  "admin.filter.per_page": "per page",
+  "admin.pagination.prev": "← Previous",
+  "admin.pagination.next": "Next →",
+  "admin.pagination.page_of": "Page {page} of {total_pages}",
+
   "admin.report.attachments.header": "Attachments",
   "admin.report.attachments.download": "Download",
   "admin.report.eyebrow": "Case File",

@@ -20,6 +20,10 @@ from app.templating import render
 router = APIRouter(prefix="/admin")
 
 
+_ALLOWED_SORT = frozenset({"submitted_at", "case_number", "category", "status"})
+_ALLOWED_PER_PAGE = frozenset({10, 25, 50, 100})
+
+
 @router.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(
     request: Request,
@@ -28,7 +32,41 @@ async def dashboard(
 ) -> HTMLResponse:
     from datetime import UTC, datetime
 
-    reports = await report_service.get_all_reports(db)
+    from app.services.report import SortDir, SortField
+
+    qp = request.query_params
+
+    raw_page = qp.get("page", "1")
+    raw_per_page = qp.get("per_page", "25")
+    raw_sort = qp.get("sort", "submitted_at")
+    raw_dir = qp.get("dir", "desc")
+    status_filter = qp.get("status", "") or None
+
+    try:
+        page = max(1, int(raw_page))
+    except ValueError:
+        page = 1
+
+    try:
+        per_page_raw = int(raw_per_page)
+        per_page = per_page_raw if per_page_raw in _ALLOWED_PER_PAGE else 25
+    except ValueError:
+        per_page = 25
+
+    sort_by: SortField = raw_sort if raw_sort in _ALLOWED_SORT else "submitted_at"  # type: ignore[assignment]
+    sort_dir: SortDir = "asc" if raw_dir == "asc" else "desc"
+
+    reports, total = await report_service.get_reports_paginated(
+        db,
+        page=page,
+        per_page=per_page,
+        status_filter=status_filter,
+        sort_by=sort_by,
+        sort_dir=sort_dir,
+    )
+    stats = await report_service.get_report_stats(db)
+
+    total_pages = max(1, (total + per_page - 1) // per_page)
     now = datetime.now(UTC)
     ip_warning = await check_ip_warning()
 
@@ -43,6 +81,15 @@ async def dashboard(
             "ack_deadline_days": 7,
             "feedback_deadline_days": 90,
             "deleted_case": request.query_params.get("deleted"),
+            "stats": stats,
+            "page": page,
+            "per_page": per_page,
+            "total": total,
+            "total_pages": total_pages,
+            "sort_by": sort_by,
+            "sort_dir": sort_dir,
+            "status_filter": status_filter or "",
+            "per_page_options": [10, 25, 50, 100],
         },
     )
 
