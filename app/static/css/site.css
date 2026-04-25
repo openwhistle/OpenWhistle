@@ -340,6 +340,17 @@ code, .mono {
     gap: 0.75rem;
 }
 
+/* Metadata label inside detail panels (replaces old inline font-mono labels) */
+.detail-label {
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 0.3rem;
+}
+
 /* Legacy card alias */
 .card {
     background: var(--bg-card);

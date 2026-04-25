@@ -13,11 +13,11 @@
         <div>
             <div class="page-eyebrow">Reporting Office</div>
             <h1>Reports Dashboard</h1>
-            <p style="margin-top:0.25rem;font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);letter-spacing:0.06em;">
-                Logged in as <span style="color:var(--accent);">{{ user.username }}</span>
+            <p style="margin-top:0.25rem;font-size:0.8rem;color:var(--text-muted);">
+                Logged in as <strong style="color:var(--accent);font-weight:600;">{{ user.username }}</strong>
             </p>
         </div>
-        <a href="/submit" class="btn btn-secondary btn-sm">Submit Test Report</a>
+        <a href="/submit" class="btn btn-secondary btn-sm" title="Opens the public submit form in this tab">View Submit Form</a>
     </div>
 
     {# IP leakage warning banner #}
@@ -94,14 +94,14 @@
                         <td style="font-size:0.85rem;color:var(--text-secondary);">{{ report.category.value | replace('_', ' ') | title }}</td>
                         <td><span class="badge badge-{{ report.status.value }}">{{ report.status.value | replace('_', ' ') | title }}</span></td>
                         <td class="mono" style="font-size:0.78rem;color:var(--text-muted);">{{ report.submitted_at.strftime('%Y-%m-%d') }}</td>
-                        <td class="{{ ack_sla_class }}" style="font-size:0.8rem;font-family:var(--font-mono);">
+                        <td class="{{ ack_sla_class }}" style="font-size:0.82rem;">
                             {% if report.acknowledged_at %}
                                 &#10003; Done
                             {% else %}
                                 Day {{ days_since_submit }}/7
                             {% endif %}
                         </td>
-                        <td class="{{ fb_sla_class }}" style="font-size:0.8rem;font-family:var(--font-mono);">
+                        <td class="{{ fb_sla_class }}" style="font-size:0.82rem;">
                             {% if report.feedback_due_at %}
                                 {% set days_to_fb = (report.feedback_due_at - now).days %}
                                 {% if days_to_fb > 0 %}{{ days_to_fb }}d left{% else %}Overdue{% endif %}
@@ -118,9 +118,12 @@
             </table>
         </div>
         {% else %}
-        <p style="color:var(--text-muted);text-align:center;padding:3rem 0;font-family:var(--font-mono);font-size:0.82rem;letter-spacing:0.06em;">
-            No reports yet.
-        </p>
+        <div style="text-align:center;padding:3.5rem 1rem;">
+            <div style="font-size:2.5rem;margin-bottom:1rem;opacity:0.3;">&#128274;</div>
+            <p style="font-size:1rem;font-weight:600;color:var(--text-secondary);margin-bottom:0.4rem;">No reports yet</p>
+            <p style="font-size:0.85rem;color:var(--text-muted);">Submitted reports will appear here. Share the submit link with your organisation.</p>
+            <a href="/submit" class="btn btn-secondary btn-sm" style="margin-top:1.25rem;">View Submit Form</a>
+        </div>
         {% endif %}
     </div>
 </div>

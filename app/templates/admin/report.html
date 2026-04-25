@@ -80,12 +80,12 @@
 
                 <div style="display:flex;flex-direction:column;gap:1rem;font-size:0.875rem;">
                     <div>
-                        <div style="font-family:var(--font-mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:0.3rem;">Submitted</div>
+                        <div class="detail-label">Submitted</div>
                         <span class="mono" style="font-size:0.82rem;">{{ report.submitted_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
                     </div>
 
                     <div>
-                        <div style="font-family:var(--font-mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:0.3rem;">7-Day Acknowledgement (§17 I HinSchG)</div>
+                        <div class="detail-label">7-Day Acknowledgement (§17 I HinSchG)</div>
                         {% if report.acknowledged_at %}
                             <span class="sla-ok mono" style="font-size:0.82rem;">&#10003; {{ report.acknowledged_at.strftime('%Y-%m-%d') }}</span>
                         {% else %}
@@ -98,7 +98,7 @@
 
                     {% if report.feedback_due_at %}
                     <div>
-                        <div style="font-family:var(--font-mono);font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:0.3rem;">3-Month Feedback Deadline (§17 II HinSchG)</div>
+                        <div class="detail-label">3-Month Feedback Deadline (§17 II HinSchG)</div>
                         {% set days_left = (report.feedback_due_at - now).days %}
                         <span class="{{ 'sla-overdue' if days_left < 0 else ('sla-warning' if days_left < 14 else 'sla-ok') }} mono" style="font-size:0.82rem;">
                             {{ report.feedback_due_at.strftime('%Y-%m-%d') }}
@@ -146,13 +146,33 @@
             <div class="panel" style="animation-delay:0.1s;border-color:var(--danger);">
                 <div class="panel-header" style="color:var(--danger);">Delete Report</div>
                 <p style="font-size:0.85rem;margin-bottom:1rem;">Permanently delete this report and all messages (DSGVO Art. 17 right to erasure). This action cannot be undone.</p>
-                <form method="post" action="/admin/reports/{{ report.id }}/delete"
-                    onsubmit="return confirm('Permanently delete this report and all messages? This cannot be undone.');">
-                    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                    <button type="submit" class="btn btn-danger btn-block">
-                        Delete Permanently
+
+                <div id="delete-step-1">
+                    <button type="button" class="btn btn-secondary btn-block"
+                        onclick="document.getElementById('delete-step-1').style.display='none';document.getElementById('delete-step-2').style.display='block';">
+                        Request Deletion &rarr;
                     </button>
-                </form>
+                </div>
+
+                <div id="delete-step-2" style="display:none;">
+                    <div class="alert alert-error" style="margin-bottom:1rem;">
+                        <div class="alert-title">Confirm Permanent Deletion</div>
+                        This will erase the report, all messages, and all associated data. There is no undo.
+                    </div>
+                    <form method="post" action="/admin/reports/{{ report.id }}/delete">
+                        <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                        <div style="display:flex;gap:0.5rem;">
+                            <button type="button" class="btn btn-secondary"
+                                style="flex:1"
+                                onclick="document.getElementById('delete-step-1').style.display='block';document.getElementById('delete-step-2').style.display='none';">
+                                Cancel
+                            </button>
+                            <button type="submit" class="btn btn-danger" style="flex:1">
+                                Delete Permanently
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
