@@ -54,6 +54,7 @@
   "status.form.subtitle": "Geben Sie Ihre Vorgangsnummer und geheime PIN ein, um Ihre Meldung und Antworten der Meldestelle einzusehen.",
   "status.locked.title": "Zugang gesperrt",
   "status.locked.body": "Zu viele fehlgeschlagene Versuche. Bitte warten Sie, bevor Sie es erneut versuchen.",
+  "status.locked.countdown": "Sekunden verbleibend",
   "status.panel.header": "Meldung suchen",
   "status.case_number": "Vorgangsnummer",
   "status.case_number.placeholder": "OW-2026-00001",
@@ -204,5 +205,8 @@
   "admin.report.status.confirm_downgrade": "Möchten Sie diese Meldung wirklich auf einen früheren Status zurücksetzen?",
 
   "admin.flash.deleted": "Meldung dauerhaft gelöscht:",
-  "admin.report.status.no_change": "Der Status ist bereits auf diesen Wert gesetzt."
+  "admin.report.status.no_change": "Der Status ist bereits auf diesen Wert gesetzt.",
+
+  "status.closed.title": "Meldung abgeschlossen",
+  "status.closed.body": "Diese Meldung wurde vollständig untersucht und abgeschlossen. Bitte lesen Sie den Kommunikationsverlauf unten für das Ergebnis und die ergriffenen Maßnahmen."
 }

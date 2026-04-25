@@ -1058,6 +1058,18 @@ tr:hover td { background: var(--accent-subtle); }
     to   { opacity: 1; clip-path: inset(0 0% 0 0);   }
 }
 
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    15%       { transform: translateX(-6px); }
+    30%       { transform: translateX(6px); }
+    45%       { transform: translateX(-5px); }
+    60%       { transform: translateX(5px); }
+    75%       { transform: translateX(-3px); }
+    90%       { transform: translateX(3px); }
+}
+
+.shake { animation: shake 0.45s ease both; }
+
 .card:nth-child(2), .panel:nth-child(2) { animation-delay: 0.05s; }
 .card:nth-child(3), .panel:nth-child(3) { animation-delay: 0.10s; }
 .card:nth-child(4), .panel:nth-child(4) { animation-delay: 0.15s; }

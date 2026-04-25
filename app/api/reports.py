@@ -183,14 +183,15 @@ async def status_post(
     db: AsyncSession = Depends(get_db),
 ) -> Response:
     if not await rl.check_whistleblower_attempts(redis, session_token):
+        lockout_ttl = await rl.get_whistleblower_lockout_ttl(redis, session_token)
         return render(
             request,
             "status.html",
             {
                 "session_token": session_token,
-                "error": "Too many failed attempts. Please wait before trying again.",
                 "report": None,
                 "locked": True,
+                "lockout_ttl": lockout_ttl,
             },
         )
 

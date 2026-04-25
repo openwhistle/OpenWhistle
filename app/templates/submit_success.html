@@ -40,25 +40,43 @@
             {{ t('success.next.body.html') }}
         </div>
 
-        <label class="saved-confirm-label" style="display:flex;align-items:flex-start;gap:0.75rem;margin-top:1.5rem;padding:1rem;background:var(--accent-subtle);border:1px solid var(--border-strong);border-radius:var(--radius-sm);cursor:pointer;">
-            <input type="checkbox" id="confirm-saved" onchange="document.getElementById('go-to-status').disabled=!this.checked;document.getElementById('go-to-status').style.opacity=this.checked?'1':'0.4';" style="margin-top:0.15rem;flex-shrink:0;accent-color:var(--accent);width:1rem;height:1rem;">
+        <label id="confirm-label" class="saved-confirm-label" style="display:flex;align-items:flex-start;gap:0.75rem;margin-top:1.5rem;padding:1rem;background:var(--accent-subtle);border:1px solid var(--border-strong);border-radius:var(--radius-sm);cursor:pointer;">
+            <input type="checkbox" id="confirm-saved" style="margin-top:0.15rem;flex-shrink:0;accent-color:var(--accent);width:1rem;height:1rem;">
             <span style="font-size:0.88rem;color:var(--text-secondary);line-height:1.5;">
                 {{ t('success.confirm.label.html') }}
             </span>
         </label>
 
-        <a href="/status" id="go-to-status" class="btn btn-primary btn-block" style="margin-top:0.75rem;opacity:0.4;pointer-events:none;" tabindex="-1" aria-disabled="true">
+        <a href="/status" id="go-to-status" class="btn btn-primary btn-block" style="margin-top:0.75rem;opacity:0.4;" tabindex="-1" aria-disabled="true">
             {{ t('success.confirm.button') }}
         </a>
         <script>
-            document.getElementById('confirm-saved').addEventListener('change', function() {
-                var btn = document.getElementById('go-to-status');
-                var enabled = this.checked;
-                btn.style.opacity = enabled ? '1' : '0.4';
-                btn.style.pointerEvents = enabled ? 'auto' : 'none';
-                btn.tabIndex = enabled ? '0' : '-1';
-                btn.setAttribute('aria-disabled', enabled ? 'false' : 'true');
+        (function() {
+            var cb = document.getElementById('confirm-saved');
+            var btn = document.getElementById('go-to-status');
+            var lbl = document.getElementById('confirm-label');
+
+            function sync() {
+                var on = cb.checked;
+                btn.style.opacity = on ? '1' : '0.4';
+                btn.tabIndex = on ? '0' : '-1';
+                btn.setAttribute('aria-disabled', on ? 'false' : 'true');
+            }
+
+            cb.addEventListener('change', sync);
+
+            btn.addEventListener('click', function(e) {
+                if (!cb.checked) {
+                    e.preventDefault();
+                    lbl.classList.remove('shake');
+                    void lbl.offsetWidth;
+                    lbl.classList.add('shake');
+                    lbl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
             });
+
+            sync();
+        })();
         </script>
     </div>
 </div>

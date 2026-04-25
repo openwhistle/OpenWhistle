@@ -19,6 +19,23 @@
     <div class="alert alert-warning" role="alert">
         <div class="alert-title">{{ t('status.locked.title') }}</div>
         {{ t('status.locked.body') }}
+        {% if lockout_ttl and lockout_ttl > 0 %}
+        <div style="margin-top:0.6rem;font-size:0.85rem;opacity:0.85;">
+            <span id="lockout-countdown">{{ lockout_ttl }}</span> {{ t('status.locked.countdown') }}
+        </div>
+        <script>
+        (function() {
+            var el = document.getElementById('lockout-countdown');
+            var t = {{ lockout_ttl }};
+            if (!el || t <= 0) return;
+            var iv = setInterval(function() {
+                t--;
+                if (t <= 0) { clearInterval(iv); el.textContent = '0'; return; }
+                el.textContent = t;
+            }, 1000);
+        })();
+        </script>
+        {% endif %}
     </div>
     {% else %}
     <div class="panel">
@@ -126,6 +143,14 @@
             {{ t('status.progress.' + report.status.value + '.desc') }}
         </div>
     </div>
+
+    {# Case closed notice #}
+    {% if report.status.value == 'closed' %}
+    <div class="alert alert-info" role="alert" style="animation-delay:0.04s;">
+        <div class="alert-title">{{ t('status.closed.title') }}</div>
+        {{ t('status.closed.body') }}
+    </div>
+    {% endif %}
 
     {# Communication thread #}
     <div class="panel" style="animation-delay:0.05s;">

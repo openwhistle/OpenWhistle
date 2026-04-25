@@ -38,6 +38,13 @@ async def reset_whistleblower_attempts(redis: Redis, session_token: str) -> None
     await redis.delete(key)
 
 
+async def get_whistleblower_lockout_ttl(redis: Redis, session_token: str) -> int:
+    """Returns seconds remaining in the lockout window, or 0 if not locked."""
+    key = f"{_WB_PREFIX}{session_token}"
+    ttl = await redis.ttl(key)
+    return max(0, int(ttl))
+
+
 async def remaining_whistleblower_attempts(redis: Redis, session_token: str) -> int:
     """Returns how many attempts remain before lockout."""
     key = f"{_WB_PREFIX}{session_token}"

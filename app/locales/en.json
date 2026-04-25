@@ -54,6 +54,7 @@
   "status.form.subtitle": "Enter your case number and secret PIN to view your report and any responses from the reporting office.",
   "status.locked.title": "Access Locked",
   "status.locked.body": "Too many failed attempts. Please wait before trying again.",
+  "status.locked.countdown": "seconds remaining",
   "status.panel.header": "Report Lookup",
   "status.case_number": "Case Number",
   "status.case_number.placeholder": "OW-2026-00001",
@@ -204,5 +205,8 @@
   "admin.report.status.confirm_downgrade": "Are you sure you want to move this report back to an earlier status?",
 
   "admin.flash.deleted": "Report permanently deleted:",
-  "admin.report.status.no_change": "Status is already set to this value."
+  "admin.report.status.no_change": "Status is already set to this value.",
+
+  "status.closed.title": "Case Closed",
+  "status.closed.body": "This report has been fully investigated and closed. Please review the communication thread below for the outcome and any actions taken."
 }
