@@ -69,12 +69,15 @@ async def test_submit_report_invalid_category(client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_status_invalid_credentials(client: AsyncClient) -> None:
+    get_resp = await client.get("/status")
+    csrf_token = get_resp.cookies.get("ow_csrf")
     response = await client.post(
         "/status",
         data={
             "case_number": "OW-2026-99999",
             "pin": "00000000-0000-0000-0000-000000000000",
             "session_token": "a" * 32,
+            "csrf_token": csrf_token,
         },
     )
     assert response.status_code == 401
@@ -90,6 +93,8 @@ async def test_index_redirects(client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_reply_invalid_credentials(client: AsyncClient) -> None:
+    get_resp = await client.get("/status")
+    csrf_token = get_resp.cookies.get("ow_csrf")
     response = await client.post(
         "/reply",
         data={
@@ -97,6 +102,7 @@ async def test_reply_invalid_credentials(client: AsyncClient) -> None:
             "pin": "00000000-0000-0000-0000-000000000000",
             "session_token": "c" * 32,
             "content": "Some reply content.",
+            "csrf_token": csrf_token,
         },
     )
     assert response.status_code == 401
@@ -105,6 +111,8 @@ async def test_reply_invalid_credentials(client: AsyncClient) -> None:
 @pytest.mark.asyncio
 async def test_reply_empty_content(client: AsyncClient) -> None:
     """Empty content is rejected (422) even if credentials are wrong (401 comes first)."""
+    get_resp = await client.get("/status")
+    csrf_token = get_resp.cookies.get("ow_csrf")
     response = await client.post(
         "/reply",
         data={
@@ -112,6 +120,7 @@ async def test_reply_empty_content(client: AsyncClient) -> None:
             "pin": "00000000-0000-0000-0000-000000000000",
             "session_token": "d" * 32,
             "content": "   ",
+            "csrf_token": csrf_token,
         },
     )
     assert response.status_code in (401, 422)
@@ -122,6 +131,8 @@ async def test_status_valid_credentials(client: AsyncClient, db_session: AsyncSe
     """Status page shows report details with correct case_number and PIN."""
     from app.services.report import create_report
 
+    get_resp = await client.get("/status")
+    csrf_token = get_resp.cookies.get("ow_csrf")
     report, pin = await create_report(
         db_session, "financial_fraud", "Valid test report for status check."
     )
@@ -131,6 +142,7 @@ async def test_status_valid_credentials(client: AsyncClient, db_session: AsyncSe
             "case_number": report.case_number,
             "pin": pin,
             "session_token": "e" * 32,
+            "csrf_token": csrf_token,
         },
     )
     assert response.status_code == 200
@@ -142,6 +154,8 @@ async def test_reply_valid_credentials(client: AsyncClient, db_session: AsyncSes
     """Reply with valid credentials succeeds and shows confirmation."""
     from app.services.report import create_report
 
+    get_resp = await client.get("/status")
+    csrf_token = get_resp.cookies.get("ow_csrf")
     report, pin = await create_report(db_session, "corruption", "Valid report for reply endpoint.")
     response = await client.post(
         "/reply",
@@ -150,6 +164,7 @@ async def test_reply_valid_credentials(client: AsyncClient, db_session: AsyncSes
             "pin": pin,
             "session_token": "f" * 32,
             "content": "This is my reply to the investigation team.",
+            "csrf_token": csrf_token,
         },
     )
     assert response.status_code == 200

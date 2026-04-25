@@ -178,7 +178,9 @@ async def submit_post(
     )
     # Clear any stale whistleblower session so "Continue to Report Status"
     # always shows the login form for the newly submitted report.
-    response.delete_cookie("ow-status-session")
+    response.delete_cookie(
+        "ow-status-session", httponly=True, samesite="lax", secure=not settings.demo_mode
+    )
     return response
 
 
@@ -223,6 +225,7 @@ async def status_post(
     session_token: str = Form(...),
     redis: Redis = Depends(get_redis),
     db: AsyncSession = Depends(get_db),
+    _csrf: None = Depends(validate_csrf),
 ) -> Response:
     if not await rl.check_whistleblower_attempts(redis, session_token):
         lockout_ttl = await rl.get_whistleblower_lockout_ttl(redis, session_token)
@@ -281,6 +284,7 @@ async def reply_post(
     content: str = Form(...),
     redis: Redis = Depends(get_redis),
     db: AsyncSession = Depends(get_db),
+    _csrf: None = Depends(validate_csrf),
 ) -> Response:
     # Try status-session cookie first
     status_session_key = request.cookies.get("ow-status-session")
@@ -313,10 +317,13 @@ async def reply_post(
         status_session_key = secrets.token_urlsafe(32)
         await redis.setex(f"status-session:{status_session_key}", 7200, str(report.id))
 
-    if not content.strip():
+    stripped = content.strip()
+    if not stripped:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+    if len(stripped) > 5000:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
-    await report_service.add_whistleblower_message(db, report, content.strip())
+    await report_service.add_whistleblower_message(db, report, stripped)
 
     if status_session_key:
         await redis.expire(f"status-session:{status_session_key}", 7200)
@@ -343,7 +350,9 @@ async def status_logout(
     if session_key:
         await redis.delete(f"status-session:{session_key}")
     response = RedirectResponse("/status", status_code=303)
-    response.delete_cookie("ow-status-session")
+    response.delete_cookie(
+        "ow-status-session", httponly=True, samesite="lax", secure=not settings.demo_mode
+    )
     return response
 
 

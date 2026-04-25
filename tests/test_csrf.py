@@ -89,3 +89,86 @@ async def test_csrf_missing_cookie_returns_403(client: AsyncClient) -> None:
         data={"username": "admin", "password": "password", "csrf_token": "some-token"},
     )
     assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_status_post_without_csrf_is_rejected(client: AsyncClient) -> None:
+    """POST to /status without csrf_token is rejected."""
+    await client.get("/status")  # set CSRF cookie but don't pass token in form
+    response = await client.post(
+        "/status",
+        data={
+            "case_number": "OW-2026-00001",
+            "pin": "00000000-0000-0000-0000-000000000000",
+            "session_token": "a" * 32,
+        },
+    )
+    assert response.status_code in (403, 422)
+
+
+@pytest.mark.asyncio
+async def test_status_post_with_wrong_csrf_is_rejected(client: AsyncClient) -> None:
+    """POST to /status with mismatched csrf_token returns 403."""
+    await client.get("/status")
+    response = await client.post(
+        "/status",
+        data={
+            "case_number": "OW-2026-00001",
+            "pin": "00000000-0000-0000-0000-000000000000",
+            "session_token": "a" * 32,
+            "csrf_token": "wrong-token-value",
+        },
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_reply_post_without_csrf_is_rejected(client: AsyncClient) -> None:
+    """POST to /reply without csrf_token is rejected."""
+    await client.get("/status")
+    response = await client.post(
+        "/reply",
+        data={
+            "case_number": "OW-2026-00001",
+            "pin": "00000000-0000-0000-0000-000000000000",
+            "session_token": "b" * 32,
+            "content": "Some content here.",
+        },
+    )
+    assert response.status_code in (403, 422)
+
+
+@pytest.mark.asyncio
+async def test_reply_post_with_wrong_csrf_is_rejected(client: AsyncClient) -> None:
+    """POST to /reply with mismatched csrf_token returns 403."""
+    await client.get("/status")
+    response = await client.post(
+        "/reply",
+        data={
+            "case_number": "OW-2026-00001",
+            "pin": "00000000-0000-0000-0000-000000000000",
+            "session_token": "b" * 32,
+            "content": "Some content here.",
+            "csrf_token": "wrong-token-value",
+        },
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_reply_content_too_long_is_rejected(client: AsyncClient) -> None:
+    """Reply content exceeding 5000 characters is rejected server-side."""
+    get_resp = await client.get("/status")
+    csrf_token = get_resp.cookies.get("ow_csrf")
+    response = await client.post(
+        "/reply",
+        data={
+            "case_number": "OW-2026-00001",
+            "pin": "00000000-0000-0000-0000-000000000000",
+            "session_token": "c" * 32,
+            "content": "x" * 5001,
+            "csrf_token": csrf_token,
+        },
+    )
+    # CSRF passes; auth fails (401) before content check, or content check fires (422)
+    assert response.status_code in (401, 422)

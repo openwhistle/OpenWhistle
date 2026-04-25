@@ -41,6 +41,7 @@
     <div class="panel">
         <div class="panel-header">{{ t('status.panel.header') }}</div>
         <form method="post" action="/status" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <input type="hidden" name="session_token" value="{{ session_token }}">
 
             <div class="form-group">
@@ -195,6 +196,7 @@
     <div class="panel" style="animation-delay:0.1s;">
         <div class="panel-header">{{ t('status.reply.title') }}</div>
         <form method="post" action="/reply">
+            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <input type="hidden" name="case_number" value="{{ case_number or '' }}">
             <input type="hidden" name="pin" value="{{ pin or '' }}">
             <input type="hidden" name="session_token" value="{{ session_token }}">

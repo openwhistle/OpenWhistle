@@ -163,7 +163,9 @@ async def logout(
         await auth_service.revoke_session(redis, token)
 
     response = RedirectResponse("/admin/login", status_code=302)
-    response.delete_cookie("ow_session")
+    response.delete_cookie(
+        "ow_session", httponly=True, samesite="lax", secure=not settings.demo_mode
+    )
     return response
 
 
