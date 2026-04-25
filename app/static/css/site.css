@@ -78,10 +78,10 @@
     --text-nav:       #adc4d8;
     --text-nav-act:   #dde6f2;
 
-    --accent:         color-mix(in srgb, var(--brand-primary) 58%, white);
-    --accent-hover:   color-mix(in srgb, var(--brand-primary) 46%, white);
-    --accent-subtle:  color-mix(in srgb, var(--brand-primary) 16%, #0d1726);
-    --accent-light:   color-mix(in srgb, var(--brand-primary) 40%, white);
+    --accent:         #3d7ec9;
+    --accent-hover:   #2f6ab8;
+    --accent-subtle:  color-mix(in srgb, #3d7ec9 16%, #0d1726);
+    --accent-light:   color-mix(in srgb, #3d7ec9 50%, white);
 
     --accent2:        color-mix(in srgb, var(--brand-secondary) 60%, white);
     --accent2-subtle: color-mix(in srgb, var(--brand-secondary) 16%, #0d1726);
