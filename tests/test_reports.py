@@ -29,11 +29,14 @@ async def test_status_page_loads(client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_submit_report_success(client: AsyncClient) -> None:
+    get_resp = await client.get("/submit")
+    csrf_token = get_resp.cookies.get("ow_csrf")
     response = await client.post(
         "/submit",
         data={
             "category": "financial_fraud",
             "description": "Test description that is long enough to pass validation.",
+            "csrf_token": csrf_token,
         },
     )
     assert response.status_code == 200

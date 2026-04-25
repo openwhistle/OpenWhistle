@@ -8,7 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.i18n import _DEFAULT, _load
-from app.models.attachment import Attachment  # noqa: F401 — ensures mapper is loaded for selectinload
+from app.models.attachment import (
+    Attachment,  # noqa: F401 — ensures mapper is loaded for selectinload
+)
 from app.models.report import Report, ReportMessage, ReportSender, ReportStatus
 from app.services.auth import hash_pin, verify_pin
 from app.services.pin import generate_case_number, generate_pin

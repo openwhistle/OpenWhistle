@@ -66,6 +66,7 @@ async def login_post(
                 "error": "Invalid username or password.",
                 "oidc_enabled": settings.oidc_enabled,
             },
+            status_code=401,
         )
 
     # Block password login for OIDC-only accounts

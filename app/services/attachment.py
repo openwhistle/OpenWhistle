@@ -62,12 +62,18 @@ def validate_file(filename: str, content_type: str, size: int) -> str | None:
 
     ext = Path(filename).suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
-        return f"'{filename}' has an unsupported file extension. Allowed: PDF, JPEG, PNG, GIF, WebP, TXT, CSV, DOCX, XLSX."
+        return (
+            f"'{filename}' has an unsupported file extension. "
+            "Allowed: PDF, JPEG, PNG, GIF, WebP, TXT, CSV, DOCX, XLSX."
+        )
 
     # Normalise declared MIME type (strip charset suffixes like text/plain; charset=utf-8)
     declared_type = content_type.split(";")[0].strip().lower()
     if declared_type not in ALLOWED_MIME_TYPES:
-        return f"'{filename}' has an unsupported file type ({declared_type}). Allowed: PDF, images, text, Word, Excel."
+        return (
+            f"'{filename}' has an unsupported file type ({declared_type}). "
+            "Allowed: PDF, images, text, Word, Excel."
+        )
 
     return None
 

@@ -16,6 +16,7 @@ import logging
 from datetime import UTC, datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from typing import Any
 
 log = logging.getLogger(__name__)
 
@@ -42,7 +43,7 @@ async def notify_new_report(case_number: str) -> None:
 
 async def _send_email(case_number: str, settings: object) -> None:
     """Send an SMTP notification email."""
-    import aiosmtplib  # type: ignore[import]
+    import aiosmtplib
 
     from app.config import Settings
     cfg: Settings = settings  # type: ignore[assignment]
@@ -64,20 +65,31 @@ async def _send_email(case_number: str, settings: object) -> None:
         "the submitter's privacy and anonymity."
     )
 
-    html_body = f"""\
-<html><body style="font-family:sans-serif;max-width:600px;margin:auto;">
-<h2 style="color:#0f4c81;">New Report Received</h2>
-<p>A new whistleblower report has been submitted to <strong>{cfg.app_name}</strong>.</p>
-<table style="border-collapse:collapse;width:100%;margin:1rem 0;">
-  <tr><td style="padding:0.4rem 0.75rem;border:1px solid #ddd;background:#f5f5f5;font-weight:bold;">Case Number</td>
-      <td style="padding:0.4rem 0.75rem;border:1px solid #ddd;font-family:monospace;">{case_number}</td></tr>
-  <tr><td style="padding:0.4rem 0.75rem;border:1px solid #ddd;background:#f5f5f5;font-weight:bold;">Received at</td>
-      <td style="padding:0.4rem 0.75rem;border:1px solid #ddd;">{datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}</td></tr>
-</table>
-<p><a href="{dashboard_url}" style="display:inline-block;padding:0.6rem 1.2rem;background:#0f4c81;color:#fff;text-decoration:none;border-radius:4px;">Open Admin Dashboard →</a></p>
-<hr style="border:none;border-top:1px solid #eee;margin:1.5rem 0;">
-<p style="font-size:0.8rem;color:#888;">No report content is included in this notification to protect the submitter's privacy.</p>
-</body></html>"""
+    td_label = 'padding:0.4rem 0.75rem;border:1px solid #ddd;background:#f5f5f5;font-weight:bold'
+    td_value = 'padding:0.4rem 0.75rem;border:1px solid #ddd'
+    td_mono = f'{td_value};font-family:monospace'
+    btn = (
+        'display:inline-block;padding:0.6rem 1.2rem;'
+        'background:#0f4c81;color:#fff;text-decoration:none;border-radius:4px'
+    )
+    received = datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')
+    html_body = (
+        '<html><body style="font-family:sans-serif;max-width:600px;margin:auto;">'
+        '<h2 style="color:#0f4c81;">New Report Received</h2>'
+        '<p>A new whistleblower report has been submitted to'
+        f' <strong>{cfg.app_name}</strong>.</p>'
+        '<table style="border-collapse:collapse;width:100%;margin:1rem 0;">'
+        f'<tr><td style="{td_label}">Case Number</td>'
+        f'<td style="{td_mono}">{case_number}</td></tr>'
+        f'<tr><td style="{td_label}">Received at</td>'
+        f'<td style="{td_value}">{received}</td></tr>'
+        '</table>'
+        f'<p><a href="{dashboard_url}" style="{btn}">Open Admin Dashboard →</a></p>'
+        '<hr style="border:none;border-top:1px solid #eee;margin:1.5rem 0;">'
+        '<p style="font-size:0.8rem;color:#888;">No report content is included'
+        ' in this notification to protect the submitter\'s privacy.</p>'
+        '</body></html>'
+    )
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
@@ -86,7 +98,7 @@ async def _send_email(case_number: str, settings: object) -> None:
     msg.attach(MIMEText(text_body, "plain", "utf-8"))
     msg.attach(MIMEText(html_body, "html", "utf-8"))
 
-    smtp_kwargs: dict[str, object] = {
+    smtp_kwargs: dict[str, Any] = {
         "hostname": cfg.notify_smtp_host,
         "port": cfg.notify_smtp_port,
         "use_tls": cfg.notify_smtp_ssl,
@@ -99,7 +111,11 @@ async def _send_email(case_number: str, settings: object) -> None:
 
     try:
         await aiosmtplib.send(msg, recipients=recipients, **smtp_kwargs)
-        log.info("Notification email sent for %s to %d recipient(s)", case_number, len(recipients))
+        log.info(
+            "Notification email sent for %s to %d recipient(s)",
+            case_number,
+            len(recipients),
+        )
     except Exception:
         log.exception("Failed to send notification email for %s", case_number)
 

@@ -8,7 +8,7 @@ from httpx import AsyncClient
 async def test_login_page_loads(client: AsyncClient) -> None:
     response = await client.get("/admin/login")
     assert response.status_code == 200
-    assert "Login" in response.text
+    assert "username" in response.text.lower()
 
 
 @pytest.mark.asyncio

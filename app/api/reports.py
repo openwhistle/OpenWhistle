@@ -3,9 +3,17 @@
 import secrets
 import uuid
 
-import uuid as _uuid
-
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Request, UploadFile, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Request,
+    UploadFile,
+    status,
+)
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -159,7 +167,9 @@ async def submit_post(
         {
             "case_number": report.case_number,
             "pin": plain_pin,
-            "attachments": [{"filename": a.filename, "size_str": format_size(a.size)} for a in stored],
+            "attachments": [
+                {"filename": a.filename, "size_str": format_size(a.size)} for a in stored
+            ],
         },
     )
     # Clear any stale whistleblower session so "Continue to Report Status"
@@ -178,13 +188,16 @@ async def status_get(
     if session_key:
         report_id_str = await redis.get(f"status-session:{session_key}")
         if report_id_str:
-            decoded_id = report_id_str.decode() if isinstance(report_id_str, bytes) else report_id_str
+            decoded_id = (
+                report_id_str.decode() if isinstance(report_id_str, bytes) else report_id_str
+            )
             report = await report_service.get_report_by_id(db, uuid.UUID(decoded_id))
             if report:
                 # Refresh TTL
                 await redis.expire(f"status-session:{session_key}", 7200)
                 new_session_token = secrets.token_urlsafe(32)
-                success = "Your reply has been sent." if request.query_params.get("replied") == "1" else None
+                replied = request.query_params.get("replied") == "1"
+                success = "Your reply has been sent." if replied else None
                 return render(request, "status.html", {
                     "session_token": new_session_token,
                     "report": report,
@@ -234,6 +247,7 @@ async def status_post(
                 "report": None,
                 "case_number_value": case_number.strip(),
             },
+            status_code=401,
         )
 
     await rl.reset_whistleblower_attempts(redis, session_token)
@@ -271,7 +285,9 @@ async def reply_post(
     if status_session_key:
         report_id_str = await redis.get(f"status-session:{status_session_key}")
         if report_id_str:
-            decoded_id = report_id_str.decode() if isinstance(report_id_str, bytes) else report_id_str
+            decoded_id = (
+                report_id_str.decode() if isinstance(report_id_str, bytes) else report_id_str
+            )
             report = await report_service.get_report_by_id(
                 db, uuid.UUID(decoded_id)
             )
@@ -282,7 +298,9 @@ async def reply_post(
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
         if not await rl.check_whistleblower_attempts(redis, session_token):
             raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS)
-        report = await report_service.get_report_by_credentials(db, case_number.strip(), pin.strip())
+        report = await report_service.get_report_by_credentials(
+            db, case_number.strip(), pin.strip()
+        )
         if report is None:
             await rl.record_whistleblower_failure(redis, session_token)
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
@@ -328,7 +346,7 @@ async def status_logout(
 @router.get("/status/attachments/{attachment_id}")
 async def whistleblower_download_attachment(
     request: Request,
-    attachment_id: _uuid.UUID,
+    attachment_id: uuid.UUID,
     redis: Redis = Depends(get_redis),
     db: AsyncSession = Depends(get_db),
 ) -> Response:

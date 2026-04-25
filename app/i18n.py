@@ -2,6 +2,7 @@
 
 import json
 import re
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -33,7 +34,7 @@ def get_lang(request: Request) -> str:
     return _DEFAULT
 
 
-def make_translator(lang: str):  # noqa: ANN201
+def make_translator(lang: str) -> Callable[..., str]:
     strings = _load(lang)
     fallback = _load(_DEFAULT)
 

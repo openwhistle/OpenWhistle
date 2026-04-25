@@ -14,7 +14,6 @@ from app.services.attachment import (
     validate_file,
 )
 
-
 # ─── sanitize_filename ────────────────────────────────────────────────────────
 
 
@@ -309,15 +308,28 @@ async def test_admin_can_download_attachment(client: object, db_session: object)
     import re
     import uuid
 
+    import pyotp
     from httpx import AsyncClient
     from sqlalchemy.ext.asyncio import AsyncSession
 
     from app.models.attachment import Attachment
     from app.models.report import Report, ReportCategory, ReportStatus
-    from app.services.auth import hash_pin
+    from app.models.user import AdminUser
+    from app.services.auth import hash_password, hash_pin
 
     ac: AsyncClient = client  # type: ignore[assignment]
     db: AsyncSession = db_session  # type: ignore[assignment]
+
+    # Create a dedicated admin user for this test
+    totp_secret = "JBSWY3DPEHPK3PXP"
+    admin = AdminUser(
+        id=uuid.uuid4(),
+        username=f"dl_admin_{uuid.uuid4().hex[:6]}",
+        password_hash=hash_password("dl_test_pass_123"),
+        totp_secret=totp_secret,
+        totp_enabled=True,
+    )
+    db.add(admin)
 
     report = Report(
         id=uuid.uuid4(),
@@ -340,12 +352,28 @@ async def test_admin_can_download_attachment(client: object, db_session: object)
     db.add(attachment)
     await db.commit()
 
-    # Log in as admin
-    login_resp = await ac.post("/admin/login",
-                               data={"username": "demo", "password": "demo"})
-    mfa_m = re.search(r'name="csrf_token" value="([^"]+)"', login_resp.text)
-    mfa_csrf = mfa_m.group(1) if mfa_m else ""
-    await ac.post("/admin/mfa", data={"csrf_token": mfa_csrf, "code": "000000"})
+    # Step 1: GET /admin/login for CSRF cookie
+    get_resp = await ac.get("/admin/login")
+    csrf_token = get_resp.cookies.get("ow_csrf")
+
+    # Step 2: POST credentials
+    login_resp = await ac.post(
+        "/admin/login",
+        data={"username": admin.username, "password": "dl_test_pass_123", "csrf_token": csrf_token},
+    )
+
+    # Step 3: Extract temp_token and CSRF from MFA form
+    temp_m = re.search(r'name="temp_token" value="([^"]+)"', login_resp.text)
+    temp_token = temp_m.group(1) if temp_m else ""
+    csrf_m = re.search(r'name="csrf_token" value="([^"]+)"', login_resp.text)
+    mfa_csrf = csrf_m.group(1) if csrf_m else ""
+
+    # Step 4: POST MFA with real TOTP code
+    totp_code = pyotp.TOTP(totp_secret).now()
+    await ac.post(
+        "/admin/login/mfa",
+        data={"csrf_token": mfa_csrf, "temp_token": temp_token, "totp_code": totp_code},
+    )
 
     dl_resp = await ac.get(f"/admin/reports/{report.id}/attachments/{attachment.id}")
     assert dl_resp.status_code == 200
