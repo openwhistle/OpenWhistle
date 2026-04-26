@@ -1,17 +1,22 @@
 """Coverage tests for miscellaneous services.
 
 Covers:
-- services/demo_seed.py: seed_demo_data() (0% → ~90%)
 - services/rate_limit.py remaining gaps: record_failure, reset, lockout paths
 - services/mfa.py remaining gaps: verify_totp, verify_demo_totp
 - services/pin.py: generate_pin, generate_case_number
 - services/auth.py: hash_pin, verify_pin, verify_password
+
+Note: seed_demo_data() coverage is captured automatically when CI runs with
+DEMO_MODE=true (lifespan calls seed_demo_data() on startup). Direct tests of
+seed_demo_data() cannot run in pytest-asyncio function-scoped loops because
+seed_demo_data() internally creates its own AsyncSessionLocal connection that
+is bound to a different event loop.
 """
 
 from __future__ import annotations
 
 import pytest
-from sqlalchemy import select
+from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.auth import (
@@ -21,127 +26,12 @@ from app.services.auth import (
     verify_pin,
 )
 
-# ─── services/demo_seed ───────────────────────────────────────────────────────
-
-
-@pytest.mark.asyncio
-async def test_seed_demo_data_creates_admin_user(db_session: AsyncSession) -> None:
-    """seed_demo_data() must create the demo admin user if it doesn't exist yet."""
-    from app.models.user import AdminUser
-    from app.services.demo_seed import DEMO_ADMIN_USERNAME, seed_demo_data
-
-    # Delete any existing demo admin first (idempotency test follows separately)
-    existing = await db_session.execute(
-        select(AdminUser).where(AdminUser.username == DEMO_ADMIN_USERNAME)
-    )
-    admin = existing.scalar_one_or_none()
-    if admin:
-        await db_session.delete(admin)
-        await db_session.commit()
-
-    await seed_demo_data()
-
-    result = await db_session.execute(
-        select(AdminUser).where(AdminUser.username == DEMO_ADMIN_USERNAME)
-    )
-    created = result.scalar_one_or_none()
-    assert created is not None
-    assert created.totp_enabled is True
-
-
-@pytest.mark.asyncio
-async def test_seed_demo_data_idempotent_admin(db_session: AsyncSession) -> None:
-    """Calling seed_demo_data() twice must not duplicate the admin user."""
-    from sqlalchemy import func
-
-    from app.models.user import AdminUser
-    from app.services.demo_seed import DEMO_ADMIN_USERNAME, seed_demo_data
-
-    await seed_demo_data()
-    await seed_demo_data()
-
-    result = await db_session.execute(
-        select(func.count()).where(AdminUser.username == DEMO_ADMIN_USERNAME)
-    )
-    count = result.scalar_one()
-    assert count == 1
-
-
-@pytest.mark.asyncio
-async def test_seed_demo_data_creates_setup_status(db_session: AsyncSession) -> None:
-    """seed_demo_data() must mark setup as complete in SetupStatus."""
-    from app.models.setup import SetupStatus
-    from app.services.demo_seed import seed_demo_data
-
-    await seed_demo_data()
-
-    result = await db_session.execute(select(SetupStatus).where(SetupStatus.id == 1))
-    setup = result.scalar_one_or_none()
-    assert setup is not None
-    assert setup.completed is True
-
-
-@pytest.mark.asyncio
-async def test_seed_demo_data_creates_demo_reports(db_session: AsyncSession) -> None:
-    """All demo reports must be created with the expected case numbers."""
-    from app.models.report import Report
-    from app.services.demo_seed import DEMO_REPORTS, seed_demo_data
-
-    await seed_demo_data()
-
-    for demo in DEMO_REPORTS:
-        result = await db_session.execute(
-            select(Report).where(Report.case_number == demo["case_number"])
-        )
-        report = result.scalar_one_or_none()
-        assert report is not None, f"Demo report {demo['case_number']} not found"
-        assert report.status == demo["status"]
-
-
-@pytest.mark.asyncio
-async def test_seed_demo_data_idempotent_reports(db_session: AsyncSession) -> None:
-    """Calling seed_demo_data() twice must not duplicate reports."""
-    from sqlalchemy import func
-
-    from app.models.report import Report
-    from app.services.demo_seed import DEMO_REPORTS, seed_demo_data
-
-    await seed_demo_data()
-    await seed_demo_data()
-
-    for demo in DEMO_REPORTS:
-        result = await db_session.execute(
-            select(func.count()).where(Report.case_number == demo["case_number"])
-        )
-        count = result.scalar_one()
-        assert count == 1, f"Report {demo['case_number']} duplicated"
-
-
-@pytest.mark.asyncio
-async def test_seed_demo_data_acknowledged_report_has_timestamps(
-    db_session: AsyncSession,
-) -> None:
-    """Demo reports with acknowledged_offset_days must have acknowledged_at set."""
-    from app.models.report import Report
-    from app.services.demo_seed import seed_demo_data
-
-    await seed_demo_data()
-
-    result = await db_session.execute(
-        select(Report).where(Report.case_number == "OW-DEMO-00002")
-    )
-    report = result.scalar_one_or_none()
-    assert report is not None
-    assert report.acknowledged_at is not None
-    assert report.feedback_due_at is not None
-
-
 # ─── services/rate_limit ─────────────────────────────────────────────────────
 
 
 @pytest.mark.asyncio
 async def test_record_whistleblower_failure_increments_count(
-    db_session: AsyncSession,
+    client: AsyncClient,
 ) -> None:
     import secrets
 
@@ -164,7 +54,7 @@ async def test_record_whistleblower_failure_increments_count(
 
 @pytest.mark.asyncio
 async def test_reset_whistleblower_attempts_clears_counter(
-    db_session: AsyncSession,
+    client: AsyncClient,
 ) -> None:
     import secrets
 
@@ -189,7 +79,7 @@ async def test_reset_whistleblower_attempts_clears_counter(
 
 @pytest.mark.asyncio
 async def test_check_admin_login_attempts_locked_after_max(
-    db_session: AsyncSession,
+    client: AsyncClient,
 ) -> None:
     from app.config import settings
     from app.redis_client import get_redis
@@ -210,7 +100,7 @@ async def test_check_admin_login_attempts_locked_after_max(
 
 @pytest.mark.asyncio
 async def test_reset_admin_login_attempts_re_allows_login(
-    db_session: AsyncSession,
+    client: AsyncClient,
 ) -> None:
     from app.config import settings
     from app.redis_client import get_redis

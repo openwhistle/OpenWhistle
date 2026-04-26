@@ -20,14 +20,13 @@ from httpx import AsyncClient
 @pytest.mark.asyncio
 async def test_validation_error_returns_html_error_page(client: AsyncClient) -> None:
     """RequestValidationError must render error.html with status 422, not raw JSON."""
-    get_resp = await client.get("/submit")
+    get_resp = await client.get("/status")
     csrf = get_resp.cookies.get("ow_csrf")
 
-    # Send an intentionally malformed request: 'category' field is missing entirely
-    # FastAPI will raise RequestValidationError before our endpoint logic runs.
+    # POST /status with only csrf_token — omit all required fields (case_number, pin,
+    # session_token are Form(...) with no defaults) to trigger RequestValidationError.
     resp = await client.post(
-        "/submit",
-        # Omit 'category' — it has no default and triggers validation
+        "/status",
         content=b"csrf_token=" + (csrf or "x").encode(),
         headers={"Content-Type": "application/x-www-form-urlencoded"},
     )

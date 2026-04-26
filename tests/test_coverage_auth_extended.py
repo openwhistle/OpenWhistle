@@ -99,6 +99,10 @@ async def test_login_post_shows_locked_message_when_rate_limited(
 
 
 @pytest.mark.asyncio
+@pytest.mark.skipif(
+    __import__("app.config", fromlist=["settings"]).settings.demo_mode,
+    reason="000000 is always valid in demo mode — wrong-TOTP path not reachable",
+)
 async def test_login_mfa_wrong_totp_returns_error_form(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:

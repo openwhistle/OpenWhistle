@@ -128,6 +128,10 @@ async def test_admin_reply_empty_content_returns_422(
 
 
 @pytest.mark.asyncio
+@pytest.mark.skipif(
+    __import__("app.config", fromlist=["settings"]).settings.demo_mode,
+    reason="Only testable with DEMO_MODE=false",
+)
 async def test_demo_reset_forbidden_in_non_demo_mode(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
