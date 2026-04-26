@@ -1327,28 +1327,65 @@
 
         <h3>Dashboard overview</h3>
         <p>
-          The dashboard shows all open reports sorted by urgency. Each report card displays:
+          The dashboard shows all reports with sortable columns, pagination, and filters for status,
+          assignee, and location. Each row displays:
         </p>
         <ul>
           <li>Unique case number in <code>OW-YYYY-NNNNN</code> format (sequential per year)</li>
           <li>Submission date and time</li>
-          <li>Report category (if provided by the whistleblower)</li>
+          <li>Report category</li>
+          <li>Assignee (admin or case manager)</li>
           <li>§17 acknowledgement deadline countdown (red when under 24 hours)</li>
           <li>§17 feedback deadline countdown</li>
           <li>Unread message indicator</li>
         </ul>
+
+        <h3>Roles</h3>
+        <p>
+          Every admin account has one of two roles:
+        </p>
+        <ul>
+          <li><strong>Admin</strong> — full access including user management, categories, locations, audit log, and report deletion.</li>
+          <li><strong>Case Manager</strong> — can view, comment on, and advance reports assigned to them; cannot manage users or delete reports.</li>
+        </ul>
+        <p>
+          Manage admin accounts at <code>/admin/users</code>. The last active admin account cannot
+          be deactivated to prevent lockout.
+        </p>
 
         <h3>Managing reports</h3>
         <p>
           Click any report to open the case view. From here you can:
         </p>
         <ul>
-          <li>Read the full report content</li>
-          <li>Change the case status (Open, In Progress, Closed)</li>
+          <li>Read the full report content and submission mode (anonymous / confidential)</li>
+          <li>Advance the case status through the workflow: <code>received → in_review → pending_feedback → closed</code></li>
+          <li>Assign the case to a specific admin or case manager</li>
           <li>Send a message to the whistleblower via the anonymous channel</li>
-          <li>View the full message thread</li>
-          <li>Close and hard-delete the case (triggers §26 HinSchG data erasure)</li>
+          <li>Add internal notes (never shown to the whistleblower)</li>
+          <li>Link related cases together</li>
+          <li>Export the full case as a PDF (includes SLA compliance section per HinSchG §17)</li>
+          <li>Request hard deletion — a second admin must confirm (4-eyes principle); triggers GDPR Art. 17 erasure</li>
         </ul>
+
+        <h3>Audit log</h3>
+        <p>
+          Every admin action is recorded in an immutable audit log (required by HinSchG §12 Abs. 3).
+          View and filter the log at <code>/admin/audit-log</code>; export as CSV at any time.
+        </p>
+
+        <h3>Categories and locations</h3>
+        <p>
+          Report categories are database-driven and fully configurable at <code>/admin/categories</code>.
+          Multiple branches or office locations can be managed at <code>/admin/locations</code>;
+          when active locations exist, the whistleblower wizard shows a location selector at step 2.
+        </p>
+
+        <h3>Dashboard statistics</h3>
+        <p>
+          <code>/admin/stats</code> shows the total report count, status distribution bar chart,
+          category breakdown, and the 7-day SLA compliance rate.
+        </p>
 
         <h3>HinSchG deadline tracking</h3>
         <p>

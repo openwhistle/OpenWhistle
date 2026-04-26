@@ -55,6 +55,21 @@ zero vendor lock-in, and privacy-first by design.
   messages using only their case number and PIN.
 - **HinSchG SLA tracking** — 7-day acknowledgement and 3-month feedback deadlines with days
   remaining shown in both the admin dashboard and the whistleblower status page.
+- **Role-based access control** — `ADMIN` and `CASE_MANAGER` roles. Case managers can process
+  their assigned reports; only admins manage users, categories, and deletions.
+- **Case assignment** — Assign reports to any active staff member; "My Cases" dashboard filter
+  for case managers.
+- **Status workflow** — `received → in_review → pending_feedback → closed`; only valid
+  transitions allowed server-side.
+- **4-eyes deletion** — Hard deletion requires two different admins (request + confirm);
+  same-admin confirm returns HTTP 409. GDPR Art. 17 compliant.
+- **Immutable audit log** — Every admin action recorded with timestamp and username; CSV export;
+  required by HinSchG §12 Abs. 3.
+- **Internal notes** — Admin-only notes on cases; never visible to the whistleblower.
+- **Case linking** — Link related cases with bidirectional normalization constraint.
+- **Custom categories** — DB-driven report categories; full management UI at `/admin/categories`.
+- **PDF export** — Full case export including SLA compliance section (HinSchG §17).
+- **Dashboard statistics** — SLA compliance rate, status distribution, category breakdown.
 - **Mandatory MFA** — TOTP (compatible with any authenticator app) required for every admin account.
   No exceptions, no bypass.
 - **OIDC / SSO support** — Optional single sign-on via any OpenID Connect provider (Keycloak,
