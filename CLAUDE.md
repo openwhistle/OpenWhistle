@@ -40,6 +40,38 @@ Folgende Fakten sind festgelegt:
 - The demo at https://demo.openwhistle.net is live and hosted on Hetzner (root01xvp.wdkro.de) via Ansible. It resets hourly.
 - All HTML files in `docs/` must use self-hosted fonts from `docs/fonts/` — never Google Fonts CDN or any other external font CDN.
 
+## Release documentation checklist
+
+Before marking a version as released (ROADMAP.md, CHANGELOG.md, git tag), verify ALL of the
+following. These checks caught v0.3.0 and v0.4.0 gaps retroactively — run them proactively.
+
+### `docs/docs.html`
+
+- **Version number**: the "Current version" paragraph in the Overview section must match
+  `app_version` in `app/config.py`.
+- **Admin guide — status workflow**: the case status values listed in "Managing reports" must
+  match the actual `ReportStatus` enum in `app/models/report.py`. Do not leave stale values
+  from a previous release.
+- **Admin guide — new admin UI sections**: every new `/admin/*` route (categories, locations,
+  users, audit-log, stats, …) must be referenced in the admin guide with its path.
+- **Admin guide — roles**: if roles changed, update the roles section.
+- **Whistleblower guide — submission flow**: if the submission form steps or modes changed,
+  update the numbered list in "Submitting a report".
+- **Whistleblower guide — status page**: if new information appears on the status page
+  (e.g. deadline display), add it to the "Checking report status" bullet list.
+- **Configuration table**: every new env var in `app/config.py` must have a row in the
+  `<table class="env-table">` block. Cross-check `config.py` fields against table rows.
+
+### `docker-compose.prod.yml`
+
+- Every new optional env var in `app/config.py` must appear as
+  `VAR_NAME: "${VAR_NAME:-<default>}"` in the `app` service environment block.
+
+### `README.md`
+
+- Every significant user-facing feature added in the release must appear in the
+  `## ✨ Features` section. One bullet per feature is enough.
+
 Der Code wird auf GitHub in einem öffentlichen Repository von der Organisation openwhistle gehostet.
 Der Code liegt hier: <https://github.com/openwhistle/OpenWhistle>
 
