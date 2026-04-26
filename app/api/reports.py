@@ -4,7 +4,7 @@ import json
 import re
 import secrets
 import uuid
-from typing import Any
+from typing import Any, cast
 from urllib.parse import urlsplit
 
 from fastapi import (
@@ -68,7 +68,7 @@ async def _load_submission(redis: Redis, session_id: str) -> dict[str, Any]:
     if not raw:
         return {}
     data = raw.decode() if isinstance(raw, bytes) else raw
-    return json.loads(data)
+    return cast(dict[str, Any], json.loads(data))
 
 
 async def _save_submission(redis: Redis, session_id: str, state: dict[str, Any]) -> None:
@@ -345,18 +345,15 @@ async def submit_post(
 
         state["files_stored"] = True
         state["step"] = _STEP_REVIEW
-        # Store files temporarily in Redis as JSON (name + size metadata only for review)
         state["file_meta"] = [
-            {"filename": ft[0], "size": ft[2]} for ft in file_tuples
+            {"filename": ft[0], "size": len(ft[2])} for ft in file_tuples
         ]
-        # We need to carry file data forward — store serialised in redis
         import base64 as _b64
         file_data_list = [
             {
                 "filename": ft[0],
                 "content_type": ft[1],
-                "size": ft[2],
-                "data": _b64.b64encode(ft[3]).decode(),
+                "data": _b64.b64encode(ft[2]).decode(),
             }
             for ft in file_tuples
         ]
@@ -413,13 +410,8 @@ async def submit_post(
         from app.services.attachment import create_attachments, format_size
 
         file_data_list = state.get("file_data", [])
-        file_tuples_restored = [
-            (
-                fd["filename"],
-                fd["content_type"],
-                fd["size"],
-                _b64.b64decode(fd["data"]),
-            )
+        file_tuples_restored: list[tuple[str, str, bytes]] = [
+            (fd["filename"], fd["content_type"], _b64.b64decode(fd["data"]))
             for fd in file_data_list
         ]
         stored = await create_attachments(db, report.id, file_tuples_restored)
