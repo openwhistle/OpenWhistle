@@ -7,6 +7,26 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-04-26
+
+### Fixed
+
+- Case number generation now uses `MAX(case_number)` instead of `COUNT(*)`, preventing a
+  previously-issued case number from being reused after a report is hard-deleted
+- Test isolation: orphaned report in `test_delete_report_only_removes_matching_sessions` caused
+  a `UniqueViolationError` on CI; the test now cleans up all created reports
+
+### Security
+
+- Resolved 4 additional CodeQL code scanning alerts:
+  - `py/url-redirection` (set-language endpoint): redirect target resolved via a static
+    `_NEXT_ALLOWLIST` dict, severing any taint flow from user-supplied input
+  - `py/cookie-injection` (reply endpoint): session cookie always rotated to a fresh
+    `secrets.token_urlsafe()` value on every reply, never derived from the inbound cookie
+  - `py/clear-text-logging` ×2 (reset_admin_password.py): replaced variable-based error
+    messages with explicit if-chains where every `print()` argument is a string literal,
+    eliminating any data-flow path from the password variable to a logging sink
+
 ## [0.2.0] — 2026-04-26
 
 ### Added
@@ -102,6 +122,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Rate limiting by session token** (not IP) to maintain full anonymity
 - **alembic upgrade head** on every startup to guarantee migration consistency
 
-[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/openwhistle/OpenWhistle/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/openwhistle/OpenWhistle/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/openwhistle/OpenWhistle/releases/tag/v0.1.0
