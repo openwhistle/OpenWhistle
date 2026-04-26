@@ -6,44 +6,39 @@ feedback — open an issue to discuss anything here.
 
 ---
 
-## v0.3.0 — Multi-User Admin & Custom Categories
+## v0.3.0 — Multi-User Admin & Custom Categories ✓ Released 2026-04-26
 
-> Target: first major feature release beyond compliance baseline
+> All items shipped. See [CHANGELOG.md](CHANGELOG.md#030--2026-04-26) for details.
 
 ### Admin & Case Management
 
-- [ ] **Multiple admin users with roles** — currently all admins are equal; add
-  `ADMIN` and `CASE_MANAGER` roles so organisations can restrict who can delete
-  reports or access sensitive details
-- [ ] **Case assignment** — assign an incoming report to a specific admin user;
-  assigned user receives a notification; dashboard shows "My cases" filter
-- [ ] **Custom report categories** — admins can define their own categories via
-  the admin UI (currently hardcoded enum); includes the standard set
-  (financial fraud, harassment, data protection, supply chain / LkSG, etc.)
-  plus free-text custom entries
-- [ ] **Case linking** — link two reports submitted by the same whistleblower
-  (de-duplication); linked cases are visible in each report's detail view
-- [ ] **4-eyes principle for hard deletion** — a delete request by one admin
-  must be confirmed by a second admin before the report is permanently removed
-- [ ] **Internal notes** — admins can add private notes to a report that are
-  never visible to the whistleblower
-- [ ] **Report status workflow** — extend statuses: `received → in_review →
-  pending_feedback → closed`; each transition logged in the audit log
+- [x] **Multiple admin users with roles** — `ADMIN` and `CASE_MANAGER` roles;
+  `require_role()` FastAPI dependency factory; role shown in dashboard nav
+- [x] **Case assignment** — assign reports to any active admin; "My Cases" filter
+  on dashboard; assignee column in reports table
+- [x] **Custom report categories** — DB-driven `ReportCategory` model replaces
+  hard-coded enum; full management UI at `/admin/categories`
+- [x] **Case linking** — `CaseLink` model with UUID normalization constraint;
+  link/unlink from report detail page
+- [x] **4-eyes principle for hard deletion** — request/confirm by two different
+  admins; same-admin confirm returns HTTP 409
+- [x] **Internal notes** — `AdminNote` model; never shown to the whistleblower
+- [x] **Report status workflow** — `received → in_review → pending_feedback →
+  closed`; `STATUS_TRANSITIONS` enforces valid transitions server-side
 
 ### Audit Log
 
-- [ ] **Immutable audit log** — record every admin action (status change,
-  assignment, deletion request, note added, message sent) with timestamp and
-  username; required for HinSchG traceability (§12 Abs. 3)
-- [ ] **Audit log export** — CSV / PDF download for compliance reviews
+- [x] **Immutable audit log** — 18 `AuditAction` constants; every admin action
+  recorded with timestamp and username; required for HinSchG §12 Abs. 3
+- [x] **Audit log export** — CSV download from `/admin/audit-log`; filterable
+  by action and report ID
 
 ### Export & Reporting
 
-- [ ] **PDF export** — generate a structured PDF of a full report (all messages,
-  metadata, SLA status, attachments list) for offline filing or handover to
-  legal counsel
-- [ ] **Dashboard statistics** — aggregate view: reports per category, average
-  response time, SLA compliance rate
+- [x] **PDF export** — full case export at `/admin/reports/{id}/export.pdf`
+  via fpdf2 (pure Python, no system packages); includes SLA compliance section
+- [x] **Dashboard statistics** — `/admin/stats` with SLA compliance rate,
+  status distribution bars, and category breakdown
 
 ---
 
@@ -219,3 +214,13 @@ feedback — open an issue to discuss anything here.
 - [x] Edge Docker tag for every main-branch push (v0.2.0)
 - [x] Case number uses MAX to prevent reuse after deletion (v0.2.1)
 - [x] 10 CodeQL code scanning alerts resolved (v0.2.0 + v0.2.1)
+- [x] Multiple admin users with roles (ADMIN / CASE_MANAGER) (v0.3.0)
+- [x] Case assignment with "My Cases" dashboard filter (v0.3.0)
+- [x] Custom DB-driven report categories (v0.3.0)
+- [x] Case linking between related reports (v0.3.0)
+- [x] 4-eyes principle for hard deletion (v0.3.0)
+- [x] Internal admin notes (never shown to whistleblower) (v0.3.0)
+- [x] Status workflow: received → in_review → pending_feedback → closed (v0.3.0)
+- [x] Immutable audit log with 18 action types + CSV export (v0.3.0)
+- [x] PDF export of full case report (v0.3.0)
+- [x] Dashboard statistics with SLA compliance rate (v0.3.0)
