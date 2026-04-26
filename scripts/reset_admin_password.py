@@ -102,33 +102,23 @@ async def _reset_password(username: str, new_password: str) -> bool:
     return True
 
 
-# Static check definitions.  The lambdas receive the password; the messages are
-# plain string literals with no data-flow relationship to the password.
-# To prevent CodeQL from tracing the password through any helper's return value
-# to a print() call, both callers inline the iteration: msg is assigned directly
-# from the static tuple, never from a function that accepted the password.
-_PASSWORD_CHECKS: list[tuple[object, str]] = [
-    (lambda p: len(p) >= 12,              "Password must be at least 12 characters."),
-    (lambda p: any(c.isupper() for c in p), "Password must contain at least one uppercase letter."),
-    (lambda p: any(c.islower() for c in p), "Password must contain at least one lowercase letter."),
-    (lambda p: any(c.isdigit() for c in p), "Password must contain at least one digit."),
-]
-
-
 def _prompt_password() -> str:
     """Prompt for a new password twice, validate strength, return confirmed value."""
     while True:
         pw1 = getpass.getpass("  New password: ")
-        # Inline iteration: fail_msg is assigned from _PASSWORD_CHECKS (a static
-        # list of string literals).  check(pw1) only affects control flow; it does
-        # not create a data-flow edge from pw1 to fail_msg.
-        fail_msg: str | None = None
-        for check, msg in _PASSWORD_CHECKS:
-            if not check(pw1):  # type: ignore[operator]
-                fail_msg = msg
-                break
-        if fail_msg is not None:
-            print(f"  ✗ {fail_msg}")
+        # Each print() argument is a string literal — no variable derived from pw1
+        # ever appears in a print() call, severing any CodeQL taint flow.
+        if len(pw1) < 12:
+            print("  ✗ Password must be at least 12 characters.")
+            continue
+        if not any(c.isupper() for c in pw1):
+            print("  ✗ Password must contain at least one uppercase letter.")
+            continue
+        if not any(c.islower() for c in pw1):
+            print("  ✗ Password must contain at least one lowercase letter.")
+            continue
+        if not any(c.isdigit() for c in pw1):
+            print("  ✗ Password must contain at least one digit.")
             continue
         pw2 = getpass.getpass("  Confirm password: ")
         if pw1 != pw2:
@@ -161,15 +151,21 @@ def main() -> None:
     username: str = args.username
 
     if args.password:
-        # Inline iteration — same rationale as _prompt_password: fail_msg is
-        # assigned from _PASSWORD_CHECKS (static), not from args.password.
-        fail_msg: str | None = None
-        for check, msg in _PASSWORD_CHECKS:
-            if not check(args.password):  # type: ignore[operator]
-                fail_msg = msg
-                break
-        if fail_msg is not None:
-            print(f"\n  Error: {fail_msg}\n", file=sys.stderr)
+        # Each print() argument is a string literal — no variable derived from
+        # args.password appears in any print() call, severing the CodeQL taint flow.
+        if len(args.password) < 12:
+            print("\n  Error: Password must be at least 12 characters.\n", file=sys.stderr)
+            sys.exit(1)
+        if not any(c.isupper() for c in args.password):
+            print("\n  Error: Password must contain at least one uppercase letter.\n",
+                  file=sys.stderr)
+            sys.exit(1)
+        if not any(c.islower() for c in args.password):
+            print("\n  Error: Password must contain at least one lowercase letter.\n",
+                  file=sys.stderr)
+            sys.exit(1)
+        if not any(c.isdigit() for c in args.password):
+            print("\n  Error: Password must contain at least one digit.\n", file=sys.stderr)
             sys.exit(1)
         new_password = args.password
     else:
