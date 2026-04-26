@@ -11,7 +11,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.136-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![PostgreSQL](https://img.shields.io/badge/postgresql-18-336791?logo=postgresql&logoColor=white)](https://postgresql.org)
 [![Redis](https://img.shields.io/badge/redis-8-DC382D?logo=redis&logoColor=white)](https://redis.io)
-[![Docker Pulls](https://img.shields.io/docker/pulls/openwhistle/openwhistle?logo=docker)](https://hub.docker.com/r/openwhistle/openwhistle)
+[![Docker Pulls](https://img.shields.io/docker/pulls/kermit1337/openwhistle?logo=docker)](https://hub.docker.com/r/kermit1337/openwhistle)
 [![CodeQL](https://img.shields.io/github/actions/workflow/status/openwhistle/OpenWhistle/codeql.yml?label=CodeQL&logo=github)](https://github.com/openwhistle/OpenWhistle/security/code-scanning)
 
 > [!WARNING]
@@ -76,7 +76,7 @@ Pre-built multi-arch images (linux/amd64, linux/arm64) are published to three re
 docker pull ghcr.io/openwhistle/openwhistle:latest
 
 # Docker Hub
-docker pull openwhistle/openwhistle:latest
+docker pull kermit1337/openwhistle:latest
 
 # Quay.io
 docker pull quay.io/openwhistle/openwhistle:latest
