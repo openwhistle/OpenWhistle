@@ -33,7 +33,7 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "OpenWhistle"
-    app_version: str = "0.1.0"
+    app_version: str = "0.2.0"
 
     # OIDC (optional)
     oidc_enabled: bool = False
