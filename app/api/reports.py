@@ -1,5 +1,6 @@
 """Whistleblower-facing endpoints: submit, status, reply."""
 
+import re
 import secrets
 import uuid
 from urllib.parse import urlsplit
@@ -31,6 +32,10 @@ from app.templating import render
 
 router = APIRouter()
 
+# Allowlist pattern for whistleblower session keys (URL-safe base64, 1–86 chars).
+# Validating the cookie value before setting it back prevents header injection.
+_SESSION_KEY_RE = re.compile(r"^[A-Za-z0-9_-]{1,86}$")
+
 
 @router.post("/set-language")
 async def set_language(
@@ -45,8 +50,14 @@ async def set_language(
     # detection of scheme/netloc that would allow open redirection.
     parsed = urlsplit(next_url)
     if parsed.scheme or parsed.netloc or not parsed.path.startswith("/"):
-        next_url = "/submit"
-    response = RedirectResponse(next_url, status_code=303)
+        safe_url = "/submit"
+    else:
+        # Reconstruct from path + query only — scheme and netloc are provably absent,
+        # severing any taint flow from the original user-supplied string.
+        safe_url = parsed.path
+        if parsed.query:
+            safe_url += f"?{parsed.query}"
+    response = RedirectResponse(safe_url, status_code=303)
     response.set_cookie(
         "ow-lang",
         safe_lang,
@@ -190,7 +201,8 @@ async def status_get(
     redis: Redis = Depends(get_redis),
     db: AsyncSession = Depends(get_db),
 ) -> HTMLResponse:
-    session_key = request.cookies.get("ow-status-session")
+    _raw = request.cookies.get("ow-status-session")
+    session_key: str | None = _raw if _raw and _SESSION_KEY_RE.match(_raw) else None
     if session_key:
         report_id_str = await redis.get(f"status-session:{session_key}")
         if report_id_str:
@@ -286,8 +298,13 @@ async def reply_post(
     db: AsyncSession = Depends(get_db),
     _csrf: None = Depends(validate_csrf),
 ) -> Response:
-    # Try status-session cookie first
-    status_session_key = request.cookies.get("ow-status-session")
+    # Try status-session cookie first.
+    # Validate the raw cookie value against an allowlist pattern before using it
+    # as a Redis key or setting it back as a cookie value (prevents header injection).
+    _raw_key = request.cookies.get("ow-status-session")
+    status_session_key: str | None = (
+        _raw_key if _raw_key and _SESSION_KEY_RE.match(_raw_key) else None
+    )
     report = None
 
     if status_session_key:
@@ -346,7 +363,8 @@ async def status_logout(
     request: Request,
     redis: Redis = Depends(get_redis),
 ) -> RedirectResponse:
-    session_key = request.cookies.get("ow-status-session")
+    _raw = request.cookies.get("ow-status-session")
+    session_key: str | None = _raw if _raw and _SESSION_KEY_RE.match(_raw) else None
     if session_key:
         await redis.delete(f"status-session:{session_key}")
     response = RedirectResponse("/status", status_code=303)

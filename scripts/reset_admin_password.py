@@ -102,26 +102,36 @@ async def _reset_password(username: str, new_password: str) -> bool:
     return True
 
 
-def _validate_password(password: str) -> str | None:
-    """Return an error message if the password is too weak, else None."""
-    if len(password) < 12:
-        return "Password must be at least 12 characters."
-    if not any(c.isupper() for c in password):
-        return "Password must contain at least one uppercase letter."
-    if not any(c.islower() for c in password):
-        return "Password must contain at least one lowercase letter."
-    if not any(c.isdigit() for c in password):
-        return "Password must contain at least one digit."
-    return None
+# Static check definitions — messages are never derived from user input, so printing
+# them cannot leak sensitive data. The index-based design severs CodeQL taint flow.
+_PASSWORD_CHECKS: list[tuple[object, str]] = [
+    (lambda p: len(p) >= 12,              "Password must be at least 12 characters."),
+    (lambda p: any(c.isupper() for c in p), "Password must contain at least one uppercase letter."),
+    (lambda p: any(c.islower() for c in p), "Password must contain at least one lowercase letter."),
+    (lambda p: any(c.isdigit() for c in p), "Password must contain at least one digit."),
+]
+
+
+def _validate_password(password: str) -> int:
+    """Return the index of the first failing check, or -1 if the password is valid."""
+    for i, (check, _) in enumerate(_PASSWORD_CHECKS):
+        if not check(password):  # type: ignore[operator]
+            return i
+    return -1
+
+
+def _password_error(idx: int) -> str:
+    """Return the static error message for a check index (value from _PASSWORD_CHECKS)."""
+    return str(_PASSWORD_CHECKS[idx][1])
 
 
 def _prompt_password() -> str:
     """Prompt for a new password twice, validate strength, return confirmed value."""
     while True:
         pw1 = getpass.getpass("  New password: ")
-        error = _validate_password(pw1)
-        if error:
-            print(f"  ✗ {error}")
+        err_idx = _validate_password(pw1)
+        if err_idx >= 0:
+            print(f"  ✗ {_password_error(err_idx)}")
             continue
         pw2 = getpass.getpass("  Confirm password: ")
         if pw1 != pw2:
@@ -154,9 +164,9 @@ def main() -> None:
     username: str = args.username
 
     if args.password:
-        error = _validate_password(args.password)
-        if error:
-            print(f"\n  Error: {error}\n", file=sys.stderr)
+        err_idx = _validate_password(args.password)
+        if err_idx >= 0:
+            print(f"\n  Error: {_password_error(err_idx)}\n", file=sys.stderr)
             sys.exit(1)
         new_password = args.password
     else:

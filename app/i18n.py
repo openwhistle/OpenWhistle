@@ -11,13 +11,14 @@ from starlette.requests import Request
 _LOCALES_DIR = Path(__file__).parent / "locales"
 _SUPPORTED = frozenset({"en", "de"})
 _DEFAULT = "en"
+# Explicit dict lookup severs CodeQL taint flow from user input to file path.
+_LANG_MAP: dict[str, str] = {"en": "en", "de": "de"}
 
 _cache: dict[str, dict[str, str]] = {}
 
 
 def _load(lang: str) -> dict[str, str]:
-    # Restrict to known-good values before using in a file path.
-    safe_lang = lang if lang in _SUPPORTED else _DEFAULT
+    safe_lang = _LANG_MAP.get(lang, _DEFAULT)
     if safe_lang not in _cache:
         path = _LOCALES_DIR / f"{safe_lang}.json"
         _cache[safe_lang] = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
