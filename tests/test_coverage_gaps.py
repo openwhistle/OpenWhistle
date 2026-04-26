@@ -915,9 +915,8 @@ async def test_pdf_fmt_dt_naive_datetime() -> None:
 
 @pytest.mark.asyncio
 async def test_lifespan_demo_mode_calls_seed() -> None:
-    """When DEMO_MODE=true, the lifespan calls seed_demo_data."""
+    """When DEMO_MODE=true, the lifespan startup calls seed_demo_data."""
     from fastapi import FastAPI
-    from httpx import ASGITransport, AsyncClient
 
     seed_called: list[bool] = []
 
@@ -934,10 +933,9 @@ async def test_lifespan_demo_mode_calls_seed() -> None:
         patch("app.services.demo_seed.seed_demo_data", new=mock_seed),
     ):
         from app.main import lifespan
-        app_tmp = FastAPI(lifespan=lifespan)
-        async with AsyncClient(
-            transport=ASGITransport(app=app_tmp), base_url="http://test"
-        ) as ac:
-            await ac.get("/nonexistent")
+
+        app_tmp = FastAPI()
+        async with lifespan(app_tmp):
+            pass
 
     assert seed_called
