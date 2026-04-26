@@ -7,6 +7,64 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-04-26
+
+### Added
+
+- **Multi-step submission form**: single-page `/submit` replaced with a guided 5–6 step wizard
+  (mode → location → category → description → attachments → review); Redis session stores
+  partial state under `submission-session:{uuid}` with a 2-hour TTL; back/next navigation
+  throughout; progress indicator shows current step and total; `ow-submission-session` cookie
+- **Anonymous vs. confidential mode (Step 1)**: whistleblowers choose anonymous (no personal
+  data) or confidential (optional name, contact info, secure email); confidential data encrypted
+  with Fernet symmetric encryption derived from `SECRET_KEY`; decrypted only on the assigned
+  admin's report detail view; new `SUBMISSION_MODE_ENABLED` config toggle
+- **Multi-location / branch selection (Step 2, conditional)**: `Location` model with `id`,
+  `name`, `code` (unique), `description`, `is_active`, `sort_order`, `created_at`; location
+  selector shown only when active locations exist; admin management at `/admin/locations`
+- **Confidential fields on reports**: `submission_mode` (enum), `location_id` (FK), `confidential_name`
+  (encrypted text), `confidential_contact` (encrypted text), `secure_email` (encrypted text)
+  added to `reports` table via migration 009; all nullable for zero-downtime deploy
+- **Optional secure contact email**: whistleblower can provide an anonymous email address
+  in confidential mode; when admin posts a reply, a brief notification (no report content)
+  is sent; `secure_email` never appears in logs
+- **HinSchG deadline display for whistleblowers**: status page shows 7-day acknowledgement
+  deadline with days remaining (or confirmed date) and 3-month feedback deadline with
+  days left / pending acknowledgement indicator
+- **French language (fr)**: `app/locales/fr.json` with full French translations for all keys;
+  `fr` added to supported languages in `app/i18n.py`; language picker in nav bar shows
+  English / Deutsch / Français dropdown
+- **Location filter on admin dashboard**: filter reports by location; location shown in
+  report detail sidebar
+- **WCAG 2.1 AA accessibility improvements**: skip-to-content link in `base.html`; `aria-label`
+  on all nav elements; `aria-current="page"` on active nav links; `aria-live` regions; `role="alert"`
+  on errors; `aria-required` on required fields; `aria-describedby` on hints; `sr-only` utility;
+  visible focus indicators; language picker keyboard-accessible
+- **New CSS components**: submit progress indicator, mode-selection cards with `:has()` focus
+  handling, step-action row, review table, skip link, lang picker dropdown
+
+### Changed
+
+- `app_version` bumped to `0.4.0`
+- Admin nav in all templates updated to include "Locations" link
+- Demo seed creates two demo locations (HQ, Remote) and one confidential demo report
+- PDF export includes submission mode, location, and confidential fields (secure email noted
+  as "on file — not printed" for privacy)
+- `add_admin_message` accepts `notify_whistleblower=True` to trigger async secure-email
+  notification when a secure email is on file
+- `get_reports_paginated` accepts optional `location_id` filter
+- Health endpoint now returns current `app_version`
+
+### Fixed
+
+- Language switcher now correctly handles French (`fr`) in redirect allowlist
+
+### Migration
+
+- Migration `009_locations_confidential.py`: creates `locations` table, `submissionmode` enum,
+  adds `location_id`, `submission_mode`, `confidential_name`, `confidential_contact`,
+  `secure_email` to `reports`
+
 ## [0.3.0] — 2026-04-26
 
 ### Added

@@ -22,6 +22,7 @@ from app.models.report import (
     ReportMessage,
     ReportSender,
     ReportStatus,
+    SubmissionMode,
 )
 from app.models.user import AdminUser
 from app.services.auth import hash_pin, verify_pin
@@ -56,6 +57,11 @@ async def create_report(
     category: str,
     description: str,
     lang: str = "en",
+    submission_mode: SubmissionMode = SubmissionMode.anonymous,
+    location_id: uuid.UUID | None = None,
+    confidential_name_enc: str | None = None,
+    confidential_contact_enc: str | None = None,
+    secure_email_enc: str | None = None,
 ) -> tuple[Report, str]:
     """Create a new whistleblower report. Returns (report, plain_pin)."""
     case_number = await generate_case_number(db)
@@ -69,6 +75,11 @@ async def create_report(
         category=category,
         description=description,
         status=ReportStatus.received,
+        submission_mode=submission_mode,
+        location_id=location_id,
+        confidential_name=confidential_name_enc,
+        confidential_contact=confidential_contact_enc,
+        secure_email=secure_email_enc,
     )
     db.add(report)
 
@@ -120,7 +131,10 @@ async def add_whistleblower_message(
 
 
 async def add_admin_message(
-    db: AsyncSession, report: Report, content: str
+    db: AsyncSession,
+    report: Report,
+    content: str,
+    notify_whistleblower: bool = False,
 ) -> ReportMessage:
     msg = ReportMessage(
         id=uuid.uuid4(),
@@ -131,6 +145,19 @@ async def add_admin_message(
     db.add(msg)
     await db.commit()
     await db.refresh(msg)
+
+    if notify_whistleblower and report.secure_email:
+        from app.config import settings
+        from app.services.crypto import decrypt_or_none
+        from app.services.notifications import notify_reply_to_whistleblower
+
+        plain_email = decrypt_or_none(report.secure_email)
+        if plain_email:
+            import asyncio
+            asyncio.create_task(
+                notify_reply_to_whistleblower(plain_email, settings.app_public_url)
+            )
+
     return msg
 
 
@@ -203,6 +230,7 @@ async def get_reports_paginated(
     sort_by: SortField = "submitted_at",
     sort_dir: SortDir = "desc",
     assigned_to_id: uuid.UUID | None = None,
+    location_id: uuid.UUID | None = None,
 ) -> tuple[list[Report], int]:
     page = max(1, page)
     per_page = max(1, min(100, per_page))
@@ -216,6 +244,8 @@ async def get_reports_paginated(
         base_q = base_q.where(Report.status == ReportStatus(status_filter))
     if assigned_to_id is not None:
         base_q = base_q.where(Report.assigned_to_id == assigned_to_id)
+    if location_id is not None:
+        base_q = base_q.where(Report.location_id == location_id)
 
     count_result = await db.execute(select(func.count()).select_from(base_q.subquery()))
     total: int = count_result.scalar_one()

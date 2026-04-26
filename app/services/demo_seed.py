@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import AsyncSessionLocal
 from app.models.audit import AuditLog
+from app.models.location import Location
 from app.models.report import (
     AdminNote,
     CaseLink,
@@ -23,6 +24,7 @@ from app.models.report import (
     ReportMessage,
     ReportSender,
     ReportStatus,
+    SubmissionMode,
 )
 from app.models.setup import SetupStatus
 from app.models.user import AdminRole, AdminUser
@@ -126,6 +128,34 @@ async def _seed(db: AsyncSession) -> None:
         db.add(case_mgr)
         await db.flush()
 
+    # Create demo locations if not exist
+    result_loc = await db.execute(select(Location).where(Location.code == "HQ"))
+    demo_location: Location | None = result_loc.scalar_one_or_none()
+    if demo_location is None:
+        demo_location = Location(
+            id=uuid.uuid4(),
+            name="Headquarters",
+            code="HQ",
+            description="Main office location",
+            is_active=True,
+            sort_order=0,
+        )
+        db.add(demo_location)
+
+    result_loc2 = await db.execute(select(Location).where(Location.code == "REMOTE"))
+    demo_location2: Location | None = result_loc2.scalar_one_or_none()
+    if demo_location2 is None:
+        demo_location2 = Location(
+            id=uuid.uuid4(),
+            name="Remote / Home Office",
+            code="REMOTE",
+            description="Remote workers and home office",
+            is_active=True,
+            sort_order=10,
+        )
+        db.add(demo_location2)
+    await db.flush()
+
     # Mark setup as complete for demo
     result_setup = await db.execute(select(SetupStatus).where(SetupStatus.id == 1))
     setup = result_setup.scalar_one_or_none()
@@ -156,6 +186,17 @@ async def _seed(db: AsyncSession) -> None:
         if demo.get("closed"):
             closed_at = now - timedelta(days=3)
 
+        idx = DEMO_REPORTS.index(demo)
+        location_obj: Location | None = demo_location if idx % 2 == 0 else demo_location2
+        mode = SubmissionMode.confidential if idx == 1 else SubmissionMode.anonymous
+
+        conf_name_enc: str | None = None
+        conf_contact_enc: str | None = None
+        if mode == SubmissionMode.confidential:
+            from app.services.crypto import encrypt
+            conf_name_enc = encrypt("Jane Demo")
+            conf_contact_enc = encrypt("jane.demo@example.com")
+
         report = Report(
             id=uuid.uuid4(),
             case_number=demo["case_number"],
@@ -166,6 +207,10 @@ async def _seed(db: AsyncSession) -> None:
             acknowledged_at=acknowledged_at,
             feedback_due_at=feedback_due_at,
             closed_at=closed_at,
+            submission_mode=mode,
+            location_id=location_obj.id,
+            confidential_name=conf_name_enc,
+            confidential_contact=conf_contact_enc,
         )
         db.add(report)
         await db.flush()

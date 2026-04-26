@@ -1,8 +1,10 @@
-"""Whistleblower-facing endpoints: submit, status, reply."""
+"""Whistleblower-facing endpoints: submit (multi-step), status, reply."""
 
+import json
 import re
 import secrets
 import uuid
+from typing import Any
 from urllib.parse import urlsplit
 
 from fastapi import (
@@ -24,21 +26,22 @@ from app.config import settings
 from app.csrf import validate_csrf
 from app.database import get_db
 from app.i18n import get_lang
+from app.models.report import SubmissionMode
 from app.redis_client import get_redis
 from app.services import rate_limit as rl
 from app.services import report as report_service
 from app.services.categories import get_active_categories
+from app.services.locations import get_active_locations, get_location_by_id
 from app.templating import render
 
 router = APIRouter()
 
 # Allowlist pattern for whistleblower session keys (URL-safe base64, 1–86 chars).
-# Validating the cookie value before setting it back prevents header injection.
 _SESSION_KEY_RE = re.compile(r"^[A-Za-z0-9_-]{1,86}$")
 
-# Explicit allowlist for post-language-switch redirects.
-# dict.get() returns a value from the dict's own static strings — never from
-# user-supplied input — severing any CodeQL taint flow from next_url.
+# Submission session TTL — 2 hours
+_SUBMISSION_TTL = 7200
+
 _NEXT_ALLOWLIST: dict[str, str] = {
     "/submit": "/submit",
     "/status": "/status",
@@ -47,6 +50,74 @@ _NEXT_ALLOWLIST: dict[str, str] = {
     "/setup": "/setup",
 }
 
+# Steps: mode → location (conditional) → category → description → attachments → review
+_STEP_MODE = 1
+_STEP_LOCATION = 2
+_STEP_CATEGORY = 3
+_STEP_DESCRIPTION = 4
+_STEP_ATTACHMENTS = 5
+_STEP_REVIEW = 6
+
+
+def _submission_key(session_id: str) -> str:
+    return f"submission-session:{session_id}"
+
+
+async def _load_submission(redis: Redis, session_id: str) -> dict[str, Any]:
+    raw = await redis.get(_submission_key(session_id))
+    if not raw:
+        return {}
+    data = raw.decode() if isinstance(raw, bytes) else raw
+    return json.loads(data)
+
+
+async def _save_submission(redis: Redis, session_id: str, state: dict[str, Any]) -> None:
+    await redis.setex(_submission_key(session_id), _SUBMISSION_TTL, json.dumps(state))
+
+
+async def _get_or_create_submission_session(
+    request: Request, redis: Redis
+) -> tuple[str, dict[str, Any]]:
+    raw = request.cookies.get("ow-submission-session")
+    session_id: str | None = raw if raw and _SESSION_KEY_RE.match(raw) else None
+    if session_id:
+        state = await _load_submission(redis, session_id)
+        if state:
+            return session_id, state
+    session_id = secrets.token_urlsafe(32)
+    return session_id, {}
+
+
+def _set_submission_cookie(response: Response | RedirectResponse, session_id: str) -> None:
+    response.set_cookie(
+        "ow-submission-session",
+        session_id,
+        max_age=_SUBMISSION_TTL,
+        httponly=True,
+        samesite="lax",
+        secure=not settings.demo_mode,
+    )
+
+
+def _clear_submission_cookie(response: Response | RedirectResponse) -> None:
+    response.delete_cookie(
+        "ow-submission-session", httponly=True, samesite="lax", secure=not settings.demo_mode
+    )
+
+
+def _compute_total_steps(has_locations: bool) -> int:
+    return 6 if has_locations else 5
+
+
+def _compute_step_label(step: int, has_locations: bool) -> int:
+    """Return the display step number given logical step and whether locations exist."""
+    if has_locations:
+        return step
+    # Without location step: steps 3-6 shift down by 1 for display
+    if step >= _STEP_CATEGORY:
+        return step - 1
+    return step
+
 
 @router.post("/set-language")
 async def set_language(
@@ -54,17 +125,10 @@ async def set_language(
     lang: str = Form(...),
     next_url: str = Form("/submit", alias="next"),
 ) -> RedirectResponse:
-    # Use a fixed-set dict lookup so the value is provably from a known set,
-    # severing any taint flow from user input into the cookie value.
-    safe_lang = {"en": "en", "de": "de"}.get(lang, "en")
-    # Resolve redirect target from a static allowlist — dict.get() returns a
-    # value from the dict's own static strings, never from user-supplied input,
-    # severing any CodeQL taint flow from next_url to the redirect location.
+    safe_lang = {"en": "en", "de": "de", "fr": "fr"}.get(lang, "en")
     parsed_path = urlsplit(next_url).path
     safe_url = _NEXT_ALLOWLIST.get(parsed_path)
     if safe_url is None:
-        # Paths not in the explicit list: admin sub-pages fall back to the
-        # dashboard; everything else (e.g. unknown paths) falls back to submit.
         safe_url = "/admin/dashboard" if parsed_path.startswith("/admin/") else "/submit"
     response = RedirectResponse(safe_url, status_code=303)
     response.set_cookie(
@@ -80,7 +144,7 @@ async def set_language(
 
 @router.get("/health")
 async def health() -> dict[str, str]:
-    return {"status": "ok", "version": "0.1.0"}
+    return {"status": "ok", "version": settings.app_version}
 
 
 @router.get("/", response_class=HTMLResponse, response_model=None)
@@ -96,114 +160,313 @@ async def index(request: Request, db: AsyncSession = Depends(get_db)) -> Redirec
     return RedirectResponse("/submit", status_code=302)
 
 
+# ── Multi-step submission ──────────────────────────────────────────
+
+
 @router.get("/submit", response_class=HTMLResponse)
-async def submit_get(request: Request, db: AsyncSession = Depends(get_db)) -> HTMLResponse:
+async def submit_get(
+    request: Request,
+    redis: Redis = Depends(get_redis),
+    db: AsyncSession = Depends(get_db),
+) -> HTMLResponse:
+    session_id, state = await _get_or_create_submission_session(request, redis)
+
+    locations = await get_active_locations(db)
+    has_locations = len(locations) > 0
+    total_steps = _compute_total_steps(has_locations)
+
+    # Determine which step to show based on state
+    current_step = state.get("step", _STEP_MODE)
+    if not has_locations and current_step == _STEP_LOCATION:
+        current_step = _STEP_CATEGORY
+        state["step"] = current_step
+
     categories = await get_active_categories(db)
-    return render(
-        request,
-        "submit.html",
-        {"categories": categories, "selected_category": ""},
-    )
+
+    ctx: dict[str, Any] = {
+        "state": state,
+        "step": current_step,
+        "total_steps": total_steps,
+        "has_locations": has_locations,
+        "locations": locations,
+        "categories": categories,
+        "display_step": _compute_step_label(current_step, has_locations),
+    }
+
+    rendered = render(request, "submit.html", ctx)
+    _set_submission_cookie(rendered, session_id)
+    await _save_submission(redis, session_id, state)
+    return rendered
 
 
 @router.post("/submit", response_class=HTMLResponse)
 async def submit_post(
     request: Request,
     background_tasks: BackgroundTasks,
+    action: str = Form("next"),
+    step: int = Form(1),
+    # Step 1 — mode
+    submission_mode: str = Form(""),
+    confidential_name: str = Form(""),
+    confidential_contact: str = Form(""),
+    secure_email: str = Form(""),
+    # Step 2 — location
+    location_id: str = Form(""),
+    # Step 3 — category
     category: str = Form(""),
+    # Step 4 — description
     description: str = Form(""),
+    # Step 5 — attachments handled separately below
     files: list[UploadFile] = File(default=[]),
+    redis: Redis = Depends(get_redis),
     db: AsyncSession = Depends(get_db),
     _csrf: None = Depends(validate_csrf),
-) -> HTMLResponse:
+) -> Response:
+    raw_cookie = request.cookies.get("ow-submission-session")
+    session_id: str = (
+        raw_cookie
+        if raw_cookie and _SESSION_KEY_RE.match(raw_cookie)
+        else secrets.token_urlsafe(32)
+    )
+    state = await _load_submission(redis, session_id)
+
+    locations = await get_active_locations(db)
+    has_locations = len(locations) > 0
+    total_steps = _compute_total_steps(has_locations)
     categories = await get_active_categories(db)
-    valid_slugs = {c.slug for c in categories}
+    valid_cat_slugs = {c.slug for c in categories}
 
-    if not category:
-        return render(
-            request,
-            "submit.html",
+    def _render_step(extra: dict[str, Any] | None = None) -> HTMLResponse:
+        ctx: dict[str, Any] = {
+            "state": state,
+            "step": state.get("step", _STEP_MODE),
+            "total_steps": total_steps,
+            "has_locations": has_locations,
+            "locations": locations,
+            "categories": categories,
+            "display_step": _compute_step_label(state.get("step", _STEP_MODE), has_locations),
+        }
+        if extra:
+            ctx.update(extra)
+        resp = render(request, "submit.html", ctx)
+        _set_submission_cookie(resp, session_id)
+        return resp
+
+    if action == "back":
+        current = state.get("step", _STEP_MODE)
+        prev = current - 1
+        if not has_locations and prev == _STEP_LOCATION:
+            prev = _STEP_MODE
+        state["step"] = max(_STEP_MODE, prev)
+        await _save_submission(redis, session_id, state)
+        return _render_step()
+
+    # ── Step 1: mode selection ─────────────────────────────────────
+    if step == _STEP_MODE:
+        if submission_mode not in ("anonymous", "confidential"):
+            state["step"] = _STEP_MODE
+            await _save_submission(redis, session_id, state)
+            return _render_step({"error": "mode_required"})
+
+        state["submission_mode"] = submission_mode
+
+        if submission_mode == "confidential":
+            name_stripped = confidential_name.strip()
+            contact_stripped = confidential_contact.strip()
+            email_stripped = secure_email.strip()
+            state["confidential_name"] = name_stripped
+            state["confidential_contact"] = contact_stripped
+            state["secure_email"] = email_stripped
+
+        state["step"] = _STEP_LOCATION if has_locations else _STEP_CATEGORY
+        await _save_submission(redis, session_id, state)
+        return _render_step()
+
+    # ── Step 2: location selection (conditional) ──────────────────
+    if step == _STEP_LOCATION:
+        if has_locations:
+            loc_id_stripped = location_id.strip()
+            if loc_id_stripped:
+                try:
+                    loc_uuid = uuid.UUID(loc_id_stripped)
+                except ValueError:
+                    state["step"] = _STEP_LOCATION
+                    await _save_submission(redis, session_id, state)
+                    return _render_step({"error": "invalid_location"})
+                loc = await get_location_by_id(db, loc_uuid)
+                if not loc or not loc.is_active:
+                    state["step"] = _STEP_LOCATION
+                    await _save_submission(redis, session_id, state)
+                    return _render_step({"error": "invalid_location"})
+                state["location_id"] = str(loc_uuid)
+            else:
+                state["location_id"] = None
+
+        state["step"] = _STEP_CATEGORY
+        await _save_submission(redis, session_id, state)
+        return _render_step()
+
+    # ── Step 3: category ──────────────────────────────────────────
+    if step == _STEP_CATEGORY:
+        if not category or category not in valid_cat_slugs:
+            state["step"] = _STEP_CATEGORY
+            await _save_submission(redis, session_id, state)
+            return _render_step({"error": "category_required"})
+        state["category"] = category
+        state["step"] = _STEP_DESCRIPTION
+        await _save_submission(redis, session_id, state)
+        return _render_step()
+
+    # ── Step 4: description ───────────────────────────────────────
+    if step == _STEP_DESCRIPTION:
+        desc_stripped = description.strip()
+        if len(desc_stripped) < 10:
+            state["step"] = _STEP_DESCRIPTION
+            await _save_submission(redis, session_id, state)
+            return _render_step({"error": "description_too_short"})
+        if len(desc_stripped) > 10000:
+            state["step"] = _STEP_DESCRIPTION
+            await _save_submission(redis, session_id, state)
+            return _render_step({"error": "description_too_long"})
+        state["description"] = desc_stripped
+        state["step"] = _STEP_ATTACHMENTS
+        await _save_submission(redis, session_id, state)
+        return _render_step()
+
+    # ── Step 5: attachments ───────────────────────────────────────
+    if step == _STEP_ATTACHMENTS:
+        from app.services.attachment import read_upload_files
+
+        file_tuples, file_error = await read_upload_files(files)
+        if file_error:
+            state["step"] = _STEP_ATTACHMENTS
+            await _save_submission(redis, session_id, state)
+            return _render_step({"error": file_error})
+
+        state["files_stored"] = True
+        state["step"] = _STEP_REVIEW
+        # Store files temporarily in Redis as JSON (name + size metadata only for review)
+        state["file_meta"] = [
+            {"filename": ft[0], "size": ft[2]} for ft in file_tuples
+        ]
+        # We need to carry file data forward — store serialised in redis
+        import base64 as _b64
+        file_data_list = [
             {
-                "categories": categories,
-                "error": "Please select a category.",
-                "selected_category": "",
+                "filename": ft[0],
+                "content_type": ft[1],
+                "size": ft[2],
+                "data": _b64.b64encode(ft[3]).decode(),
+            }
+            for ft in file_tuples
+        ]
+        state["file_data"] = file_data_list
+        await _save_submission(redis, session_id, state)
+        return _render_step()
+
+    # ── Step 6: review + final submit ────────────────────────────
+    if step == _STEP_REVIEW:
+        required = ["submission_mode", "category", "description"]
+        for req in required:
+            if req not in state:
+                state["step"] = _STEP_MODE
+                await _save_submission(redis, session_id, state)
+                return _render_step({"error": "session_incomplete"})
+
+        from app.services.crypto import encrypt
+
+        mode = SubmissionMode(state.get("submission_mode", "anonymous"))
+        loc_id_raw = state.get("location_id")
+        loc_uuid: uuid.UUID | None = uuid.UUID(loc_id_raw) if loc_id_raw else None
+
+        conf_name_enc: str | None = None
+        conf_contact_enc: str | None = None
+        sec_email_enc: str | None = None
+
+        if mode == SubmissionMode.confidential:
+            cn = state.get("confidential_name", "").strip()
+            cc = state.get("confidential_contact", "").strip()
+            se = state.get("secure_email", "").strip()
+            if cn:
+                conf_name_enc = encrypt(cn)
+            if cc:
+                conf_contact_enc = encrypt(cc)
+            if se:
+                sec_email_enc = encrypt(se)
+
+        lang = get_lang(request)
+        report, plain_pin = await report_service.create_report(
+            db=db,
+            category=state["category"],
+            description=state["description"],
+            lang=lang,
+            submission_mode=mode,
+            location_id=loc_uuid,
+            confidential_name_enc=conf_name_enc,
+            confidential_contact_enc=conf_contact_enc,
+            secure_email_enc=sec_email_enc,
+        )
+
+        # Store attachments from session
+        import base64 as _b64  # noqa: PLC0415
+
+        from app.services.attachment import create_attachments, format_size
+
+        file_data_list = state.get("file_data", [])
+        file_tuples_restored = [
+            (
+                fd["filename"],
+                fd["content_type"],
+                fd["size"],
+                _b64.b64decode(fd["data"]),
+            )
+            for fd in file_data_list
+        ]
+        stored = await create_attachments(db, report.id, file_tuples_restored)
+
+        from app.services.notifications import notify_new_report
+        background_tasks.add_task(notify_new_report, report.case_number)
+
+        # Clean up submission session
+        await redis.delete(_submission_key(session_id))
+
+        response = render(
+            request,
+            "submit_success.html",
+            {
+                "case_number": report.case_number,
+                "pin": plain_pin,
+                "attachments": [
+                    {"filename": a.filename, "size_str": format_size(a.size)} for a in stored
+                ],
             },
         )
-
-    if category not in valid_slugs:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid category"
+        _clear_submission_cookie(response)
+        response.delete_cookie(
+            "ow-status-session", httponly=True, samesite="lax", secure=not settings.demo_mode
         )
+        return response
 
-    description_stripped = description.strip()
+    # Unknown step — restart
+    state["step"] = _STEP_MODE
+    await _save_submission(redis, session_id, state)
+    return _render_step()
 
-    if len(description_stripped) < 10:
-        return render(
-            request,
-            "submit.html",
-            {
-                "categories": categories,
-                "error": "Description must be at least 10 characters.",
-                "selected_category": category,
-            },
-        )
 
-    if len(description_stripped) > 10000:
-        return render(
-            request,
-            "submit.html",
-            {
-                "categories": categories,
-                "error": "Description must not exceed 10,000 characters.",
-                "selected_category": category,
-            },
-        )
-
-    from app.services.attachment import format_size, read_upload_files
-    from app.services.notifications import notify_new_report
-
-    file_tuples, file_error = await read_upload_files(files)
-    if file_error:
-        return render(
-            request,
-            "submit.html",
-            {
-                "categories": categories,
-                "error": file_error,
-                "selected_category": category,
-            },
-        )
-
-    lang = get_lang(request)
-    report, plain_pin = await report_service.create_report(
-        db=db,
-        category=category,
-        description=description_stripped,
-        lang=lang,
-    )
-
-    from app.services.attachment import create_attachments
-    stored = await create_attachments(db, report.id, file_tuples)
-
-    background_tasks.add_task(notify_new_report, report.case_number)
-
-    response = render(
-        request,
-        "submit_success.html",
-        {
-            "case_number": report.case_number,
-            "pin": plain_pin,
-            "attachments": [
-                {"filename": a.filename, "size_str": format_size(a.size)} for a in stored
-            ],
-        },
-    )
-    # Clear any stale whistleblower session so "Continue to Report Status"
-    # always shows the login form for the newly submitted report.
-    response.delete_cookie(
-        "ow-status-session", httponly=True, samesite="lax", secure=not settings.demo_mode
-    )
+@router.post("/submit/restart")
+async def submit_restart(
+    request: Request,
+    redis: Redis = Depends(get_redis),
+) -> RedirectResponse:
+    raw = request.cookies.get("ow-submission-session")
+    if raw and _SESSION_KEY_RE.match(raw):
+        await redis.delete(_submission_key(raw))
+    response = RedirectResponse("/submit", status_code=303)
+    _clear_submission_cookie(response)
     return response
+
+
+# ── Status ────────────────────────────────────────────────────────
 
 
 @router.get("/status", response_class=HTMLResponse)
@@ -222,11 +485,21 @@ async def status_get(
             )
             report = await report_service.get_report_by_id(db, uuid.UUID(decoded_id))
             if report:
-                # Refresh TTL
                 await redis.expire(f"status-session:{session_key}", 7200)
                 new_session_token = secrets.token_urlsafe(32)
                 replied = request.query_params.get("replied") == "1"
                 success = "Your reply has been sent." if replied else None
+
+                from datetime import UTC, datetime, timedelta
+
+                now = datetime.now(UTC)
+                submitted = report.submitted_at
+                if submitted.tzinfo is None:
+                    submitted = submitted.replace(tzinfo=UTC)
+
+                ack_deadline = submitted + timedelta(days=7)
+                ack_days_remaining = (ack_deadline - now).days
+
                 return render(request, "status.html", {
                     "session_token": new_session_token,
                     "report": report,
@@ -234,6 +507,9 @@ async def status_get(
                     "pin": None,
                     "from_session": True,
                     "success": success,
+                    "ack_deadline": ack_deadline,
+                    "ack_days_remaining": ack_days_remaining,
+                    "now": now,
                 })
 
     session_token = secrets.token_urlsafe(32)
@@ -282,7 +558,6 @@ async def status_post(
 
     await rl.reset_whistleblower_attempts(redis, session_token)
 
-    # Create a Redis-backed status session (2 hours)
     status_session_key = secrets.token_urlsafe(32)
     await redis.setex(f"status-session:{status_session_key}", 7200, str(report.id))
 
@@ -309,9 +584,6 @@ async def reply_post(
     db: AsyncSession = Depends(get_db),
     _csrf: None = Depends(validate_csrf),
 ) -> Response:
-    # Try status-session cookie first.
-    # Validate the raw cookie value against an allowlist pattern before using it
-    # as a Redis key or setting it back as a cookie value (prevents header injection).
     _raw_key = request.cookies.get("ow-status-session")
     status_session_key: str | None = (
         _raw_key if _raw_key and _SESSION_KEY_RE.match(_raw_key) else None
@@ -328,7 +600,6 @@ async def reply_post(
                 db, uuid.UUID(decoded_id)
             )
 
-    # Fall back to case_number+pin if no session
     if report is None:
         if not case_number or not pin:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
@@ -341,7 +612,6 @@ async def reply_post(
             await rl.record_whistleblower_failure(redis, session_token)
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
         await rl.reset_whistleblower_attempts(redis, session_token)
-        # Create session for this user
         status_session_key = secrets.token_urlsafe(32)
         await redis.setex(f"status-session:{status_session_key}", 7200, str(report.id))
 
@@ -353,10 +623,6 @@ async def reply_post(
 
     await report_service.add_whistleblower_message(db, report, stripped)
 
-    # Always issue a fresh session token for the response cookie.
-    # This rotates the token on every reply (good practice) and ensures the
-    # cookie value is always derived from secrets.token_urlsafe, never from
-    # user-supplied input — severing the CodeQL cookie-injection taint flow.
     fresh_key = secrets.token_urlsafe(32)
     await redis.setex(f"status-session:{fresh_key}", 7200, str(report.id))
     if status_session_key:
@@ -397,10 +663,6 @@ async def whistleblower_download_attachment(
     redis: Redis = Depends(get_redis),
     db: AsyncSession = Depends(get_db),
 ) -> Response:
-    """Download an attachment — requires an active whistleblower session.
-
-    The session must map to the same report that owns the attachment.
-    """
     session_key = request.cookies.get("ow-status-session")
     if not session_key:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)

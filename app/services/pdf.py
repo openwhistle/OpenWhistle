@@ -37,6 +37,9 @@ def generate_report_pdf(report: Report) -> bytes:
     _meta_row(pdf, "Case Number", report.case_number)
     _meta_row(pdf, "Category", report.category)
     _meta_row(pdf, "Status", report.status.value.replace("_", " ").title())
+    _meta_row(pdf, "Submission Mode", report.submission_mode.value.title())
+    if report.location:
+        _meta_row(pdf, "Location", f"{report.location.name} ({report.location.code})")
     _meta_row(pdf, "Submitted", _fmt_dt(report.submitted_at))
     if report.acknowledged_at:
         _meta_row(pdf, "Acknowledged", _fmt_dt(report.acknowledged_at))
@@ -46,6 +49,16 @@ def generate_report_pdf(report: Report) -> bytes:
         _meta_row(pdf, "Closed", _fmt_dt(report.closed_at))
     if report.assigned_to:
         _meta_row(pdf, "Assigned To", report.assigned_to.username)
+    if report.confidential_name or report.confidential_contact:
+        from app.services.crypto import decrypt_or_none
+        if report.confidential_name:
+            name = decrypt_or_none(report.confidential_name) or "[encrypted]"
+            _meta_row(pdf, "Confidential Name", name)
+        if report.confidential_contact:
+            contact = decrypt_or_none(report.confidential_contact) or "[encrypted]"
+            _meta_row(pdf, "Confidential Contact", contact)
+    if report.secure_email:
+        _meta_row(pdf, "Secure Email", "[on file — not printed]")
     pdf.ln(5)
 
     # ── SLA status ────────────────────────────────────────────────

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('admin.locations.title') }} — OpenWhistle{% endblock %}
+
+{% block nav_links %}
+<li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
+<li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
+<li><a href="/admin/categories">{{ t('admin.nav.categories') }}</a></li>
+<li><a href="/admin/locations" class="active" aria-current="page">{{ t('admin.nav.locations') }}</a></li>
+<li><a href="/admin/users">{{ t('admin.nav.users') }}</a></li>
+<li><a href="/admin/audit-log">{{ t('admin.nav.audit_log') }}</a></li>
+<li><a href="/admin/logout">Logout</a></li>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div class="page-eyebrow">{{ t('admin.locations.eyebrow') }}</div>
+        <h1>{{ t('admin.locations.title') }}</h1>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:1.25rem;align-items:start;">
+
+        <div class="panel">
+            <div class="panel-header">{{ t('admin.locations.add.header') }}</div>
+            <form method="post" action="/admin/locations" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                <div class="form-group">
+                    <label class="form-label" for="loc-name">{{ t('admin.locations.add.name') }}</label>
+                    <input type="text" class="form-control" id="loc-name" name="name" required
+                           maxlength="128" placeholder="{{ t('admin.locations.add.name.placeholder') }}"
+                           aria-required="true">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="loc-code">{{ t('admin.locations.add.code') }}</label>
+                    <input type="text" class="form-control" id="loc-code" name="code" required
+                           maxlength="32" pattern="[A-Za-z0-9_-]+"
+                           placeholder="{{ t('admin.locations.add.code.placeholder') }}"
+                           aria-describedby="loc-code-hint" aria-required="true">
+                    <div class="form-hint" id="loc-code-hint">{{ t('admin.locations.add.code.hint') }}</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="loc-desc">{{ t('admin.locations.add.description') }}</label>
+                    <textarea class="form-control" id="loc-desc" name="description"
+                              rows="2" maxlength="512"
+                              placeholder="{{ t('admin.locations.add.description.placeholder') }}"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="loc-sort">{{ t('admin.locations.add.sort_order') }}</label>
+                    <input type="number" class="form-control" id="loc-sort" name="sort_order"
+                           value="0" min="0" max="9999">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">{{ t('admin.locations.add.button') }}</button>
+            </form>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">{{ t('admin.locations.list.header') }}</div>
+
+            {% if locations %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{{ t('admin.locations.col.name') }}</th>
+                            <th>{{ t('admin.locations.col.code') }}</th>
+                            <th>{{ t('admin.locations.col.description') }}</th>
+                            <th>{{ t('admin.locations.col.status') }}</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for loc in locations %}
+                        <tr style="{% if not loc.is_active %}opacity:0.5;{% endif %}">
+                            <td style="font-weight:600;">{{ loc.name }}</td>
+                            <td class="mono" style="font-size:0.82rem;">{{ loc.code }}</td>
+                            <td style="font-size:0.85rem;color:var(--text-muted);">{{ loc.description or '—' }}</td>
+                            <td>
+                                {% if loc.is_active %}
+                                <span class="badge badge-closed">{{ t('admin.locations.active') }}</span>
+                                {% else %}
+                                <span class="badge">{{ t('admin.locations.inactive') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if loc.is_active %}
+                                <form method="post" action="/admin/locations/{{ loc.id }}/deactivate" style="display:inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                                    <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.locations.deactivate') }}</button>
+                                </form>
+                                {% else %}
+                                <form method="post" action="/admin/locations/{{ loc.id }}/reactivate" style="display:inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                                    <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.locations.reactivate') }}</button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p style="color:var(--text-muted);padding:1rem 0;">{{ t('admin.locations.empty') }}</p>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

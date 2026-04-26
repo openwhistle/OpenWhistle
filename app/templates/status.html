@@ -124,6 +124,40 @@
             </div>
             {% endif %}
         </div>
+
+        {# HinSchG deadline display #}
+        <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border);">
+            <div class="detail-label" style="margin-bottom:0.6rem;font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;">{{ t('status.deadlines.title') }}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;font-size:0.83rem;">
+                <div>
+                    <div style="color:var(--text-muted);margin-bottom:0.2rem;">{{ t('status.deadlines.ack') }}</div>
+                    {% if report.acknowledged_at %}
+                    <span style="color:var(--success, #2a7a2a);font-weight:600;">✓ {{ t('status.deadlines.ack_done', date=report.acknowledged_at.strftime('%Y-%m-%d')) }}</span>
+                    {% elif ack_days_remaining is defined and ack_days_remaining >= 0 %}
+                    <span style="color:var(--accent);font-weight:600;">{{ t('status.deadlines.ack_remaining', days=ack_days_remaining) }}</span>
+                    {% else %}
+                    <span style="color:var(--danger);font-weight:600;">{{ t('status.deadlines.ack_overdue') }}</span>
+                    {% endif %}
+                </div>
+                <div>
+                    <div style="color:var(--text-muted);margin-bottom:0.2rem;">{{ t('status.deadlines.feedback') }}</div>
+                    {% if report.acknowledged_at and report.feedback_due_at %}
+                        {% if now is defined %}
+                            {% set days_left = ((report.feedback_due_at - now).days) %}
+                            {% if report.status.value == 'closed' %}
+                            <span style="color:var(--success, #2a7a2a);font-weight:600;">✓ {{ t('status.deadlines.feedback_done') }}</span>
+                            {% elif days_left >= 0 %}
+                            <span style="font-weight:600;">{{ t('status.deadlines.feedback_remaining', days=days_left, date=report.feedback_due_at.strftime('%Y-%m-%d')) }}</span>
+                            {% else %}
+                            <span style="color:var(--danger);font-weight:600;">{{ t('status.deadlines.feedback_overdue') }}</span>
+                            {% endif %}
+                        {% endif %}
+                    {% else %}
+                    <span style="color:var(--text-muted);font-style:italic;">{{ t('status.deadlines.feedback_pending') }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
 
     {# Progress indicator #}

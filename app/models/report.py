@@ -16,6 +16,7 @@ from app.database import Base
 
 if TYPE_CHECKING:
     from app.models.attachment import Attachment
+    from app.models.location import Location
     from app.models.user import AdminUser
 
 
@@ -24,6 +25,11 @@ class ReportStatus(enum.StrEnum):
     in_review = "in_review"
     pending_feedback = "pending_feedback"
     closed = "closed"
+
+
+class SubmissionMode(enum.StrEnum):
+    anonymous = "anonymous"
+    confidential = "confidential"
 
 
 # Valid status transitions: {from_status: set_of_allowed_to_statuses}
@@ -58,6 +64,27 @@ class Report(Base):
         nullable=False,
         default=ReportStatus.received,
     )
+
+    submission_mode: Mapped[SubmissionMode] = mapped_column(
+        Enum(SubmissionMode, name="submissionmode"),
+        nullable=False,
+        default=SubmissionMode.anonymous,
+        server_default="anonymous",
+    )
+
+    # Location (optional — only when multi-location is configured)
+    location_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("locations.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    location: Mapped[Location | None] = relationship("Location", lazy="joined")
+
+    # Confidential fields — stored Fernet-encrypted, only decrypted for assigned admin
+    confidential_name: Mapped[str | None] = mapped_column(Text, nullable=True)
+    confidential_contact: Mapped[str | None] = mapped_column(Text, nullable=True)
+    secure_email: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Case assignment
     assigned_to_id: Mapped[uuid.UUID | None] = mapped_column(

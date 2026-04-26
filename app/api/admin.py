@@ -66,6 +66,13 @@ async def dashboard(
     raw_dir = qp.get("dir", "desc")
     status_filter = qp.get("status", "") or None
     my_cases = qp.get("my_cases", "") == "1"
+    location_filter_str = qp.get("location_id", "") or None
+    location_filter: uuid.UUID | None = None
+    if location_filter_str:
+        try:
+            location_filter = uuid.UUID(location_filter_str)
+        except ValueError:
+            pass
 
     try:
         page = max(1, int(raw_page))
@@ -89,11 +96,16 @@ async def dashboard(
         sort_by=sort_by,
         sort_dir=sort_dir,
         assigned_to_id=assigned_filter,
+        location_id=location_filter,
     )
     stats = await report_service.get_report_stats(db)
     total_pages = max(1, (total + per_page - 1) // per_page)
     now = datetime.now(UTC)
     ip_warning = await check_ip_warning()
+
+    from app.services.locations import get_all_locations
+
+    all_locations = await get_all_locations(db)
 
     return render(
         request,
@@ -116,6 +128,8 @@ async def dashboard(
             "status_filter": status_filter or "",
             "per_page_options": [10, 25, 50, 100],
             "my_cases": my_cases,
+            "all_locations": all_locations,
+            "location_filter": str(location_filter) if location_filter else "",
         },
     )
 
@@ -160,6 +174,12 @@ async def report_detail(
     # Fetch audit log for this report
     audit_entries, _ = await audit_service.get_audit_log(db, report_id=report_id, per_page=20)
 
+    from app.services.crypto import decrypt_or_none
+
+    confidential_name = decrypt_or_none(report.confidential_name)
+    confidential_contact = decrypt_or_none(report.confidential_contact)
+    has_secure_email = bool(report.secure_email)
+
     return render(
         request,
         "admin/report.html",
@@ -173,6 +193,9 @@ async def report_detail(
             "linked_reports": linked,
             "audit_entries": audit_entries,
             "is_admin": current_user.role == AdminRole.admin,
+            "confidential_name": confidential_name,
+            "confidential_contact": confidential_contact,
+            "has_secure_email": has_secure_email,
         },
     )
 
@@ -251,7 +274,9 @@ async def admin_reply(
     if not content.strip():
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
-    await report_service.add_admin_message(db, report, content.strip())
+    await report_service.add_admin_message(
+        db, report, content.strip(), notify_whistleblower=True
+    )
     await audit_service.log(
         db, current_user, AuditAction.REPORT_MESSAGE_SENT, report_id=report.id,
     )
@@ -820,6 +845,96 @@ async def stats_page(
         "stats": stats,
         "cat_map": cat_map,
     })
+
+
+# ── Locations ──────────────────────────────────────────────────────
+
+
+@router.get("/locations", response_class=HTMLResponse)
+async def locations_page(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: AdminUser = Depends(require_admin),
+) -> HTMLResponse:
+    from app.services.locations import get_all_locations
+
+    locs = await get_all_locations(db)
+    return render(request, "admin/locations.html", {"user": current_user, "locations": locs})
+
+
+@router.post("/locations")
+async def create_location(
+    request: Request,
+    name: str = Form(...),
+    code: str = Form(...),
+    description: str = Form(default=""),
+    sort_order: int = Form(default=0),
+    db: AsyncSession = Depends(get_db),
+    current_user: AdminUser = Depends(require_admin),
+    _csrf: None = Depends(validate_csrf),
+) -> RedirectResponse:
+    from app.services.locations import create_location as svc_create
+    from app.services.locations import get_location_by_code
+
+    code_clean = code.strip().upper()
+    if not code_clean:
+        raise HTTPException(status_code=400, detail="Code is required")
+
+    existing = await get_location_by_code(db, code_clean)
+    if existing:
+        raise HTTPException(status_code=409, detail="Location code already exists")
+
+    await svc_create(
+        db,
+        name=name.strip(),
+        code=code_clean,
+        description=description.strip() or None,
+        sort_order=sort_order,
+    )
+    await audit_service.log(
+        db, current_user, AuditAction.CATEGORY_CREATED,
+        detail={"location_code": code_clean, "name": name.strip()},
+    )
+    await db.commit()
+    return RedirectResponse("/admin/locations", status_code=302)
+
+
+@router.post("/locations/{loc_id}/deactivate")
+async def deactivate_location(
+    request: Request,
+    loc_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: AdminUser = Depends(require_admin),
+    _csrf: None = Depends(validate_csrf),
+) -> RedirectResponse:
+    from app.services.locations import deactivate_location as svc_deact
+    from app.services.locations import get_location_by_id
+
+    loc = await get_location_by_id(db, loc_id)
+    if not loc:
+        raise HTTPException(status_code=404)
+    await svc_deact(db, loc)
+    await db.commit()
+    return RedirectResponse("/admin/locations", status_code=302)
+
+
+@router.post("/locations/{loc_id}/reactivate")
+async def reactivate_location(
+    request: Request,
+    loc_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: AdminUser = Depends(require_admin),
+    _csrf: None = Depends(validate_csrf),
+) -> RedirectResponse:
+    from app.services.locations import get_location_by_id
+    from app.services.locations import reactivate_location as svc_react
+
+    loc = await get_location_by_id(db, loc_id)
+    if not loc:
+        raise HTTPException(status_code=404)
+    await svc_react(db, loc)
+    await db.commit()
+    return RedirectResponse("/admin/locations", status_code=302)
 
 
 # ── Misc ───────────────────────────────────────────────────────────

@@ -27,7 +27,7 @@ os.environ.setdefault("DEMO_MODE", "false")
 from app.database import Base, get_db  # noqa: E402
 from app.main import app  # noqa: E402
 
-_ENUM_TYPES = ["reportcategory", "reportstatus", "reportsender"]
+_ENUM_TYPES = ["reportcategory", "reportstatus", "reportsender", "submissionmode"]
 
 
 @pytest_asyncio.fixture(scope="session", loop_scope="session")

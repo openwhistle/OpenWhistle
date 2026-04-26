@@ -9,10 +9,10 @@ from typing import Any
 from starlette.requests import Request
 
 _LOCALES_DIR = Path(__file__).parent / "locales"
-_SUPPORTED = frozenset({"en", "de"})
+_SUPPORTED = frozenset({"en", "de", "fr"})
 _DEFAULT = "en"
 # Explicit dict lookup severs CodeQL taint flow from user input to file path.
-_LANG_MAP: dict[str, str] = {"en": "en", "de": "de"}
+_LANG_MAP: dict[str, str] = {"en": "en", "de": "de", "fr": "fr"}
 
 _cache: dict[str, dict[str, str]] = {}
 

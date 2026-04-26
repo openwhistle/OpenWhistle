@@ -33,7 +33,10 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "OpenWhistle"
-    app_version: str = "0.3.0"
+    app_version: str = "0.4.0"
+
+    # Submission mode
+    submission_mode_enabled: bool = True
 
     # OIDC (optional)
     oidc_enabled: bool = False

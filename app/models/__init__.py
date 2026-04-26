@@ -1,6 +1,7 @@
 from app.models.attachment import Attachment
 from app.models.audit import AuditLog
 from app.models.category import ReportCategory
+from app.models.location import Location
 from app.models.report import (
     STATUS_TRANSITIONS,
     AdminNote,
@@ -10,6 +11,7 @@ from app.models.report import (
     ReportMessage,
     ReportSender,
     ReportStatus,
+    SubmissionMode,
 )
 from app.models.setup import SetupStatus
 from app.models.user import AdminRole, AdminUser
@@ -22,6 +24,7 @@ __all__ = [
     "Attachment",
     "CaseLink",
     "DeletionRequest",
+    "Location",
     "Report",
     "ReportCategory",
     "ReportMessage",
@@ -29,4 +32,5 @@ __all__ = [
     "ReportStatus",
     "STATUS_TRANSITIONS",
     "SetupStatus",
+    "SubmissionMode",
 ]

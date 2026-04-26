@@ -21,6 +21,50 @@ from typing import Any
 log = logging.getLogger(__name__)
 
 
+async def notify_reply_to_whistleblower(secure_email: str, app_public_url: str) -> None:
+    """Send a brief notification to the whistleblower's secure email.
+
+    Content intentionally minimal — no report data, no case number in body.
+    The secure_email is never written to logs.
+    """
+    import aiosmtplib  # noqa: PLC0415
+
+    from app.config import settings  # noqa: PLC0415
+
+    if not settings.notify_email_enabled:
+        return
+
+    status_url = f"{app_public_url.rstrip('/')}/status"
+    subject = f"New reply on your report — {settings.app_name}"
+    text_body = (
+        f"You have a new reply on your report submitted to {settings.app_name}.\n\n"
+        f"Log in at {status_url} using your case number and PIN to read it.\n\n"
+        "This notification does not contain any report content to protect your privacy."
+    )
+
+    msg_obj = MIMEText(text_body, "plain", "utf-8")
+    msg_obj["Subject"] = subject
+    msg_obj["From"] = settings.notify_email_from
+    msg_obj["To"] = secure_email
+
+    smtp_kwargs: dict[str, Any] = {
+        "hostname": settings.notify_smtp_host,
+        "port": settings.notify_smtp_port,
+        "use_tls": settings.notify_smtp_ssl,
+        "start_tls": settings.notify_smtp_tls and not settings.notify_smtp_ssl,
+    }
+    if settings.notify_smtp_user:
+        smtp_kwargs["username"] = settings.notify_smtp_user
+    if settings.notify_smtp_password:
+        smtp_kwargs["password"] = settings.notify_smtp_password
+
+    try:
+        await aiosmtplib.send(msg_obj, recipients=[secure_email], **smtp_kwargs)
+        log.info("Whistleblower reply notification sent (recipient redacted)")
+    except Exception:
+        log.exception("Failed to send whistleblower reply notification (recipient redacted)")
+
+
 async def notify_new_report(case_number: str) -> None:
     """Send all enabled notifications for a newly submitted report.
 

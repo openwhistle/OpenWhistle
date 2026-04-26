@@ -44,46 +44,240 @@
         <div class="page-eyebrow">{{ t('submit.eyebrow') }}</div>
         <h1>{{ t('submit.title') }}</h1>
 
+        {# Progress indicator #}
+        <div class="submit-progress" role="progressbar" aria-valuenow="{{ display_step }}" aria-valuemin="1" aria-valuemax="{{ total_steps }}" aria-label="{{ t('submit.progress.label') }}">
+            {% for i in range(1, total_steps + 1) %}
+            <div class="submit-progress-step {{ 'done' if i < display_step else ('active' if i == display_step else 'pending') }}" aria-hidden="true">
+                <div class="submit-progress-dot">{% if i < display_step %}✓{% else %}{{ i }}{% endif %}</div>
+                <div class="submit-progress-label">
+                    {% if i == 1 %}{{ t('submit.step.mode.short') }}
+                    {% elif has_locations and i == 2 %}{{ t('submit.step.location.short') }}
+                    {% elif (has_locations and i == 3) or (not has_locations and i == 2) %}{{ t('submit.step.category.short') }}
+                    {% elif (has_locations and i == 4) or (not has_locations and i == 3) %}{{ t('submit.step.description.short') }}
+                    {% elif (has_locations and i == 5) or (not has_locations and i == 4) %}{{ t('submit.step.attachments.short') }}
+                    {% else %}{{ t('submit.step.review.short') }}
+                    {% endif %}
+                </div>
+            </div>
+            {% if i < total_steps %}<div class="submit-progress-line {{ 'done' if i < display_step else '' }}" aria-hidden="true"></div>{% endif %}
+            {% endfor %}
+        </div>
+        <p class="submit-progress-text" aria-live="polite">{{ t('submit.progress.step_of', step=display_step, total=total_steps) }}</p>
+
+        {# Error display #}
         {% if error %}
-        <div class="alert alert-error" role="alert">{{ error }}</div>
+        <div class="alert alert-error" role="alert" aria-live="assertive">
+            {% if error == 'mode_required' %}{{ t('submit.error.mode_required') }}
+            {% elif error == 'category_required' %}{{ t('submit.error.category_required') }}
+            {% elif error == 'description_too_short' %}{{ t('submit.error.description_too_short') }}
+            {% elif error == 'description_too_long' %}{{ t('submit.error.description_too_long') }}
+            {% elif error == 'invalid_location' %}{{ t('submit.error.invalid_location') }}
+            {% elif error == 'session_incomplete' %}{{ t('submit.error.session_incomplete') }}
+            {% else %}{{ error }}{% endif %}
+        </div>
         {% endif %}
 
+        {# ── Step 1: Mode selection ── #}
+        {% if step == 1 %}
         <div class="alert alert-info" style="margin: 1rem 0;">
             <div class="alert-title">{{ t('submit.alert.title') }}</div>
             {{ t('submit.alert.body') }}
         </div>
 
-        <form method="post" action="/submit" enctype="multipart/form-data">
+        <form method="post" action="/submit" novalidate>
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+            <input type="hidden" name="step" value="1">
+
+            <fieldset style="border:none;padding:0;margin:0;">
+                <legend class="form-label" style="margin-bottom:1rem;">{{ t('submit.step.mode.title') }}</legend>
+
+                <div class="mode-cards">
+                    <label class="mode-card" for="mode-anonymous">
+                        <input type="radio" id="mode-anonymous" name="submission_mode" value="anonymous"
+                               {% if state.get('submission_mode', 'anonymous') == 'anonymous' %}checked{% endif %}
+                               aria-describedby="mode-anonymous-desc">
+                        <div class="mode-card-inner">
+                            <div class="mode-card-icon" aria-hidden="true">&#128100;</div>
+                            <div class="mode-card-title">{{ t('submit.step.mode.anonymous.label') }}</div>
+                            <p class="mode-card-desc" id="mode-anonymous-desc">{{ t('submit.step.mode.anonymous.desc') }}</p>
+                        </div>
+                    </label>
+
+                    <label class="mode-card" for="mode-confidential">
+                        <input type="radio" id="mode-confidential" name="submission_mode" value="confidential"
+                               {% if state.get('submission_mode') == 'confidential' %}checked{% endif %}
+                               aria-describedby="mode-confidential-desc">
+                        <div class="mode-card-inner">
+                            <div class="mode-card-icon" aria-hidden="true">&#128274;</div>
+                            <div class="mode-card-title">{{ t('submit.step.mode.confidential.label') }}</div>
+                            <p class="mode-card-desc" id="mode-confidential-desc">{{ t('submit.step.mode.confidential.desc') }}</p>
+                        </div>
+                    </label>
+                </div>
+            </fieldset>
+
+            <div id="confidential-fields" style="display:none;margin-top:1.5rem;">
+                <div class="alert alert-info" style="margin-bottom:1rem;">
+                    <div class="alert-title">{{ t('submit.step.mode.confidential.info.title') }}</div>
+                    {{ t('submit.step.mode.confidential.info.body') }}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="confidential_name">{{ t('submit.step.mode.confidential.name.label') }}</label>
+                    <input type="text" class="form-control" id="confidential_name" name="confidential_name"
+                           value="{{ state.get('confidential_name', '') }}"
+                           placeholder="{{ t('submit.step.mode.confidential.name.placeholder') }}"
+                           aria-describedby="confidential-name-hint"
+                           autocomplete="off" maxlength="256">
+                    <div class="form-hint" id="confidential-name-hint">{{ t('submit.step.mode.confidential.name.hint') }}</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="confidential_contact">{{ t('submit.step.mode.confidential.contact.label') }}</label>
+                    <input type="text" class="form-control" id="confidential_contact" name="confidential_contact"
+                           value="{{ state.get('confidential_contact', '') }}"
+                           placeholder="{{ t('submit.step.mode.confidential.contact.placeholder') }}"
+                           aria-describedby="confidential-contact-hint"
+                           autocomplete="off" maxlength="512">
+                    <div class="form-hint" id="confidential-contact-hint">{{ t('submit.step.mode.confidential.contact.hint') }}</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="secure_email">{{ t('submit.step.mode.secure_email.label') }}</label>
+                    <input type="email" class="form-control" id="secure_email" name="secure_email"
+                           value="{{ state.get('secure_email', '') }}"
+                           placeholder="{{ t('submit.step.mode.secure_email.placeholder') }}"
+                           aria-describedby="secure-email-hint"
+                           autocomplete="off" maxlength="320">
+                    <div class="form-hint" id="secure-email-hint">{{ t('submit.step.mode.secure_email.hint') }}</div>
+                </div>
+            </div>
+
+            <div class="submit-step-actions">
+                <span></span>
+                <button type="submit" name="action" value="next" class="btn btn-primary">
+                    {{ t('submit.nav.next') }}
+                </button>
+            </div>
+        </form>
+
+        <script>
+        (function() {
+            var radios = document.querySelectorAll('input[name="submission_mode"]');
+            var fields = document.getElementById('confidential-fields');
+            function toggle() {
+                var checked = document.querySelector('input[name="submission_mode"]:checked');
+                fields.style.display = checked && checked.value === 'confidential' ? 'block' : 'none';
+            }
+            radios.forEach(function(r) { r.addEventListener('change', toggle); });
+            toggle();
+        })();
+        </script>
+
+        {# ── Step 2: Location (conditional) ── #}
+        {% elif step == 2 and has_locations %}
+        <form method="post" action="/submit" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+            <input type="hidden" name="step" value="2">
+
             <div class="form-group">
-                <label class="form-label" for="category">{{ t('submit.form.category') }}</label>
-                <select class="form-control" id="category" name="category" required>
-                    <option value="">{{ t('submit.form.category.placeholder') }}</option>
-                    {% for cat in categories %}
-                    <option value="{{ cat.slug }}" {% if cat.slug == selected_category %}selected{% endif %}>
-                        {{ cat.label_en if lang == 'en' else cat.label_de }}
+                <label class="form-label" for="location_id">{{ t('submit.step.location.title') }}</label>
+                <select class="form-control" id="location_id" name="location_id" aria-describedby="location-hint">
+                    <option value="">{{ t('submit.step.location.placeholder') }}</option>
+                    {% for loc in locations %}
+                    <option value="{{ loc.id }}" {% if state.get('location_id') == loc.id|string %}selected{% endif %}>
+                        {{ loc.name }}{% if loc.description %} — {{ loc.description }}{% endif %}
                     </option>
                     {% endfor %}
                 </select>
+                <div class="form-hint" id="location-hint">{{ t('submit.step.location.hint') }}</div>
             </div>
+
+            <div class="submit-step-actions">
+                <button type="submit" name="action" value="back" class="btn btn-secondary">
+                    {{ t('submit.nav.back') }}
+                </button>
+                <button type="submit" name="action" value="next" class="btn btn-primary">
+                    {{ t('submit.nav.next') }}
+                </button>
+            </div>
+        </form>
+
+        {# ── Step 3: Category ── #}
+        {% elif step == 3 or (step == 2 and not has_locations) %}
+        <form method="post" action="/submit" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+            <input type="hidden" name="step" value="{{ step }}">
+
+            <div class="form-group">
+                <label class="form-label" for="category">{{ t('submit.form.category') }}</label>
+                <select class="form-control" id="category" name="category" required
+                        aria-describedby="category-hint" aria-required="true">
+                    <option value="">{{ t('submit.form.category.placeholder') }}</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.slug }}" {% if state.get('category') == cat.slug %}selected{% endif %}>
+                        {{ cat.label_en if lang == 'en' else (cat.label_de if lang == 'de' else cat.label_en) }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <div class="form-hint" id="category-hint">{{ t('submit.step.category.hint') }}</div>
+            </div>
+
+            <div class="submit-step-actions">
+                <button type="submit" name="action" value="back" class="btn btn-secondary">
+                    {{ t('submit.nav.back') }}
+                </button>
+                <button type="submit" name="action" value="next" class="btn btn-primary">
+                    {{ t('submit.nav.next') }}
+                </button>
+            </div>
+        </form>
+
+        {# ── Step 4: Description ── #}
+        {% elif step == 4 or (step == 3 and not has_locations) %}
+        <form method="post" action="/submit" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+            <input type="hidden" name="step" value="{{ step }}">
 
             <div class="form-group">
                 <label class="form-label" for="description" style="display:flex;justify-content:space-between;align-items:baseline;">
                     <span>{{ t('submit.form.description') }}</span>
-                    <span id="char-counter" style="font-size:0.72rem;font-weight:400;color:var(--text-muted);font-family:var(--font-mono);">0 / 10,000</span>
+                    <span id="char-counter" style="font-size:0.72rem;font-weight:400;color:var(--text-muted);font-family:var(--font-mono);">{{ state.get('description', '') | length | string }} / 10,000</span>
                 </label>
                 <textarea
                     class="form-control"
                     id="description"
                     name="description"
-                    rows="8"
+                    rows="10"
                     required
                     minlength="10"
                     maxlength="10000"
+                    aria-required="true"
+                    aria-describedby="description-hint char-counter"
                     placeholder="{{ t('submit.form.description.placeholder') }}"
                     oninput="var c=this.value.length;var el=document.getElementById('char-counter');el.textContent=c.toLocaleString()+' / 10,000';el.style.color=c<10?'var(--danger)':c>9500?'var(--warning, #c17b2a)':'var(--text-muted)';"
-                ></textarea>
-                <div class="form-hint">{{ t('submit.form.description.hint') }}</div>
+                >{{ state.get('description', '') }}</textarea>
+                <div class="form-hint" id="description-hint">{{ t('submit.form.description.hint') }}</div>
+            </div>
+
+            <div class="submit-step-actions">
+                <button type="submit" name="action" value="back" class="btn btn-secondary">
+                    {{ t('submit.nav.back') }}
+                </button>
+                <button type="submit" name="action" value="next" class="btn btn-primary">
+                    {{ t('submit.nav.next') }}
+                </button>
+            </div>
+        </form>
+
+        {# ── Step 5: Attachments ── #}
+        {% elif step == 5 or (step == 4 and not has_locations) %}
+        <form method="post" action="/submit" enctype="multipart/form-data" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+            <input type="hidden" name="step" value="{{ step }}">
+
+            <div class="alert alert-info" style="margin-bottom:1rem;">
+                {{ t('submit.step.attachments.info') }}
             </div>
 
             <div class="form-group">
@@ -94,14 +288,97 @@
                     id="files"
                     name="files"
                     multiple
+                    aria-describedby="files-hint"
                     accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.txt,.csv,.docx,.doc,.xlsx,.xls">
-                <div class="form-hint">{{ t('submit.form.files.hint') }}</div>
+                <div class="form-hint" id="files-hint">{{ t('submit.form.files.hint') }}</div>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-block">
-                {{ t('submit.form.submit') }}
-            </button>
+            <div class="submit-step-actions">
+                <button type="submit" name="action" value="back" class="btn btn-secondary">
+                    {{ t('submit.nav.back') }}
+                </button>
+                <button type="submit" name="action" value="next" class="btn btn-primary">
+                    {{ t('submit.nav.next') }}
+                </button>
+            </div>
         </form>
+
+        {# ── Step 6: Review ── #}
+        {% elif step == 6 or (step == 5 and not has_locations) %}
+        <div class="alert alert-warning" role="alert" style="margin-bottom:1rem;">
+            <div class="alert-title">{{ t('submit.step.review.warning.title') }}</div>
+            {{ t('submit.step.review.warning.body') }}
+        </div>
+
+        <div class="panel" style="margin-bottom:1rem;">
+            <div class="panel-header">{{ t('submit.step.review.title') }}</div>
+
+            <div class="review-row">
+                <span class="review-label">{{ t('submit.step.mode.label') }}</span>
+                <span class="review-value">
+                    {% if state.get('submission_mode') == 'confidential' %}
+                        {{ t('submit.step.mode.confidential.label') }}
+                    {% else %}
+                        {{ t('submit.step.mode.anonymous.label') }}
+                    {% endif %}
+                </span>
+            </div>
+
+            {% if has_locations %}
+            <div class="review-row">
+                <span class="review-label">{{ t('submit.step.location.label') }}</span>
+                <span class="review-value">
+                    {% if state.get('location_id') %}
+                        {% for loc in locations %}{% if loc.id|string == state.get('location_id') %}{{ loc.name }}{% endif %}{% endfor %}
+                    {% else %}
+                        <em style="color:var(--text-muted);">{{ t('submit.step.location.none') }}</em>
+                    {% endif %}
+                </span>
+            </div>
+            {% endif %}
+
+            <div class="review-row">
+                <span class="review-label">{{ t('submit.form.category') }}</span>
+                <span class="review-value">
+                    {% for cat in categories %}{% if cat.slug == state.get('category') %}{{ cat.label_en if lang == 'en' else cat.label_de }}{% endif %}{% endfor %}
+                </span>
+            </div>
+
+            <div class="review-row" style="align-items:flex-start;">
+                <span class="review-label">{{ t('submit.form.description') }}</span>
+                <span class="review-value" style="white-space:pre-wrap;font-size:0.88rem;max-height:200px;overflow-y:auto;">{{ state.get('description', '') }}</span>
+            </div>
+
+            {% if state.get('file_meta') %}
+            <div class="review-row" style="align-items:flex-start;">
+                <span class="review-label">{{ t('submit.form.files') }}</span>
+                <ul class="review-value" style="list-style:none;padding:0;margin:0;">
+                    {% for f in state.get('file_meta', []) %}
+                    <li>&#128206; {{ f.filename }} ({{ (f.size // 1024) }}KB)</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+
+        <form method="post" action="/submit" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+            <input type="hidden" name="step" value="{{ step }}">
+
+            <div class="submit-step-actions">
+                <button type="submit" name="action" value="back" class="btn btn-secondary">
+                    {{ t('submit.nav.back') }}
+                </button>
+                <button type="submit" name="action" value="next" class="btn btn-primary">
+                    {{ t('submit.form.submit') }}
+                </button>
+            </div>
+        </form>
+
+        <p style="text-align:center;margin-top:1rem;font-size:0.8rem;color:var(--text-muted);">
+            <a href="/submit/restart" style="color:var(--text-muted);">{{ t('submit.nav.restart') }}</a>
+        </p>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

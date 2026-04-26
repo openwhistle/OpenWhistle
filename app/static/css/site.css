@@ -1518,3 +1518,292 @@ tr:hover td { background: var(--accent-subtle); }
         border-bottom: none;
     }
 }
+
+/* ── Skip link (WCAG 2.1 AA) ──────────────────────────────────── */
+.skip-link {
+    position: absolute;
+    top: -100%;
+    left: 0.5rem;
+    z-index: 9999;
+    background: var(--accent);
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: top 0.1s;
+}
+.skip-link:focus {
+    top: 0;
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* ── SR-only utility ─────────────────────────────────────────── */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ── Lang picker dropdown ────────────────────────────────────── */
+.lang-picker {
+    position: relative;
+    display: inline-block;
+}
+
+.lang-picker-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 0.3rem 0.55rem;
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s, color 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+}
+
+.lang-picker-btn:hover,
+.lang-picker-btn:focus-visible {
+    border-color: var(--accent);
+    color: var(--accent);
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.lang-picker-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.25rem);
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    list-style: none;
+    padding: 0.25rem 0;
+    margin: 0;
+    min-width: 8rem;
+    z-index: 200;
+}
+
+.lang-picker-option {
+    display: block;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 0.45rem 1rem;
+    text-align: left;
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.12s;
+}
+
+.lang-picker-option:hover,
+.lang-picker-option:focus-visible {
+    background: var(--accent-subtle);
+    color: var(--accent);
+    outline: none;
+}
+
+.lang-picker-option.active {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+/* ── Multi-step submit progress ─────────────────────────────── */
+.submit-progress {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 1.5rem 0 0.5rem;
+    overflow: hidden;
+}
+
+.submit-progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    flex: 0 0 auto;
+}
+
+.submit-progress-dot {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    border: 2px solid var(--border);
+    background: var(--bg-code);
+    color: var(--text-muted);
+    transition: all 0.2s;
+}
+
+.submit-progress-step.active .submit-progress-dot {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+.submit-progress-step.done .submit-progress-dot {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    opacity: 0.65;
+}
+
+.submit-progress-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+.submit-progress-step.active .submit-progress-label {
+    color: var(--accent);
+}
+
+.submit-progress-line {
+    flex: 1;
+    height: 2px;
+    background: var(--border);
+    margin-bottom: 1.3rem;
+    transition: background 0.2s;
+}
+
+.submit-progress-line.done {
+    background: var(--accent);
+    opacity: 0.5;
+}
+
+.submit-progress-text {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin: 0 0 1.25rem;
+    font-family: var(--font-mono);
+}
+
+/* ── Mode selection cards ────────────────────────────────────── */
+.mode-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 0.75rem 0 1rem;
+}
+
+@media (max-width: 560px) {
+    .mode-cards { grid-template-columns: 1fr; }
+}
+
+.mode-card {
+    display: block;
+    cursor: pointer;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    background: var(--bg-panel);
+}
+
+.mode-card input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.mode-card:has(input:checked),
+.mode-card:has(input:focus-visible) {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+.mode-card:hover {
+    border-color: var(--border-strong);
+}
+
+.mode-card-inner {
+    padding: 1.25rem;
+    text-align: center;
+}
+
+.mode-card-icon {
+    font-size: 2rem;
+    margin-bottom: 0.6rem;
+    display: block;
+}
+
+.mode-card-title {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.4rem;
+    color: var(--text-primary);
+}
+
+.mode-card-desc {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* ── Step action row ─────────────────────────────────────────── */
+.submit-step-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    gap: 0.75rem;
+}
+
+/* ── Review table ────────────────────────────────────────────── */
+.review-row {
+    display: flex;
+    gap: 1rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+}
+
+.review-row:last-child {
+    border-bottom: none;
+}
+
+.review-label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-muted);
+    font-weight: 600;
+    flex: 0 0 7rem;
+}
+
+.review-value {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    flex: 1;
+    min-width: 0;
+}

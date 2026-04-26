@@ -6,6 +6,7 @@
 <li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
 <li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
 <li><a href="/admin/categories">{{ t('admin.nav.categories') }}</a></li>
+<li><a href="/admin/locations">{{ t('admin.nav.locations') }}</a></li>
 <li><a href="/admin/users">{{ t('admin.nav.users') }}</a></li>
 <li><a href="/admin/audit-log">{{ t('admin.nav.audit_log') }}</a></li>
 <li><a href="/admin/logout">Logout</a></li>
@@ -195,6 +196,53 @@
                         <div class="detail-label">{{ t('admin.report.detail.submitted') }}</div>
                         <span class="mono" style="font-size:0.82rem;">{{ report.submitted_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
                     </div>
+
+                    <div>
+                        <div class="detail-label">{{ t('admin.report.detail.mode') }}</div>
+                        <span style="font-size:0.85rem;">
+                            {% if report.submission_mode.value == 'confidential' %}
+                            <span class="badge badge-in_review">{{ t('submit.step.mode.confidential.label') }}</span>
+                            {% else %}
+                            <span class="badge">{{ t('submit.step.mode.anonymous.label') }}</span>
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    {% if report.location %}
+                    <div>
+                        <div class="detail-label">{{ t('admin.report.detail.location') }}</div>
+                        <span style="font-size:0.85rem;font-weight:600;">{{ report.location.name }}</span>
+                        <span class="mono" style="font-size:0.75rem;color:var(--text-muted);margin-left:0.4rem;">{{ report.location.code }}</span>
+                    </div>
+                    {% endif %}
+
+                    {% if confidential_name or confidential_contact %}
+                    <div style="padding:0.75rem;background:var(--accent-subtle);border:1px solid var(--border-strong);border-radius:var(--radius-sm);">
+                        <div class="detail-label" style="margin-bottom:0.5rem;">{{ t('admin.report.confidential.header') }}</div>
+                        {% if confidential_name %}
+                        <div style="margin-bottom:0.4rem;">
+                            <span style="font-size:0.75rem;color:var(--text-muted);display:block;">{{ t('admin.report.confidential.name') }}</span>
+                            <span style="font-size:0.88rem;font-weight:600;">{{ confidential_name }}</span>
+                        </div>
+                        {% endif %}
+                        {% if confidential_contact %}
+                        <div>
+                            <span style="font-size:0.75rem;color:var(--text-muted);display:block;">{{ t('admin.report.confidential.contact') }}</span>
+                            <span style="font-size:0.88rem;">{{ confidential_contact }}</span>
+                        </div>
+                        {% endif %}
+                        {% if has_secure_email %}
+                        <div style="margin-top:0.4rem;">
+                            <span style="font-size:0.75rem;color:var(--text-muted);">{{ t('admin.report.confidential.secure_email_set') }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% elif has_secure_email %}
+                    <div>
+                        <div class="detail-label">{{ t('admin.report.confidential.secure_email_set') }}</div>
+                        <span style="font-size:0.8rem;color:var(--text-muted);font-style:italic;">{{ t('admin.report.confidential.email_note') }}</span>
+                    </div>
+                    {% endif %}
 
                     <div>
                         <div class="detail-label">{{ t('admin.report.detail.sla7') }}</div>

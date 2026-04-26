@@ -35,13 +35,15 @@
     {% block head %}{% endblock %}
 </head>
 <body>
-    <nav class="nav" role="navigation" aria-label="Main navigation">
+    <a href="#main-content" class="skip-link">{{ t('a11y.skip_to_content') }}</a>
+
+    <nav class="nav" role="navigation" aria-label="{{ t('nav.aria_label') }}">
         <a href="/" class="nav-brand" aria-label="{{ brand.name }} home">
             {% if brand.logo_url %}
                 <img src="{{ brand.logo_url }}" alt="{{ brand.name }}" class="nav-logo-img">
             {% else %}
                 <svg class="nav-logo-svg" width="26" height="30" viewBox="0 0 28 33" fill="none"
-                     xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                     xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
                     <path d="M14 2 L25 6.5 L25 18 C25 26 20 31 14 32 C8 31 3 26 3 18 L3 6.5 Z"
                           stroke="var(--accent)" stroke-width="1.5" fill="var(--accent-subtle)"
                           stroke-linejoin="round"/>
@@ -59,20 +61,29 @@
 
         <ul class="nav-links" role="list">
             {% block nav_links %}
-            <li><a href="/submit" {% if request.url.path == '/submit' %}class="active"{% endif %}>{{ t('nav.submit_report') }}</a></li>
-            <li><a href="/status" {% if request.url.path == '/status' %}class="active"{% endif %}>{{ t('nav.check_status') }}</a></li>
+            <li><a href="/submit" {% if request.url.path == '/submit' %}class="active" aria-current="page"{% endif %}>{{ t('nav.submit_report') }}</a></li>
+            <li><a href="/status" {% if request.url.path == '/status' %}class="active" aria-current="page"{% endif %}>{{ t('nav.check_status') }}</a></li>
             {% endblock %}
             <li>
-                <form method="post" action="/set-language" style="display:inline;margin:0;">
-                    <input type="hidden" name="next" value="{{ request.url.path }}">
-                    {% if lang == 'de' %}
-                    <input type="hidden" name="lang" value="en">
-                    <button type="submit" class="lang-toggle" title="{{ t('nav.lang_switch_label_en') }}">DE</button>
-                    {% else %}
-                    <input type="hidden" name="lang" value="de">
-                    <button type="submit" class="lang-toggle" title="{{ t('nav.lang_switch_label_de') }}">EN</button>
-                    {% endif %}
-                </form>
+                <div class="lang-picker" role="navigation" aria-label="{{ t('nav.lang_picker_label') }}">
+                    <button type="button" class="lang-picker-btn" aria-haspopup="listbox" aria-expanded="false" id="lang-picker-btn">
+                        {{ lang | upper }}
+                        <span aria-hidden="true" style="font-size:0.65em;margin-left:0.2em;">▾</span>
+                    </button>
+                    <ul class="lang-picker-menu" role="listbox" aria-label="{{ t('nav.lang_picker_label') }}" id="lang-picker-menu" hidden>
+                        {% for code, label in [('en', 'English'), ('de', 'Deutsch'), ('fr', 'Français')] %}
+                        <li role="option" {% if lang == code %}aria-selected="true"{% endif %}>
+                            <form method="post" action="/set-language" style="margin:0;">
+                                <input type="hidden" name="next" value="{{ request.url.path }}">
+                                <input type="hidden" name="lang" value="{{ code }}">
+                                <button type="submit" class="lang-picker-option {{ 'active' if lang == code else '' }}">
+                                    {{ label }}
+                                </button>
+                            </form>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
             </li>
             <li>
                 <button
@@ -80,7 +91,7 @@
                     id="theme-toggle"
                     onclick="toggleTheme()"
                     aria-label="{{ t('nav.toggle_theme') }}"
-                    title="Toggle dark / light">
+                    title="{{ t('nav.toggle_theme') }}">
                     ◑
                 </button>
             </li>
@@ -111,7 +122,8 @@
     </div>
     {% endif %}
 
-    <main id="main-content">
+    <main id="main-content" tabindex="-1">
+        <div aria-live="polite" aria-atomic="true" class="sr-only" id="status-announcer"></div>
         {% block content %}{% endblock %}
     </main>
 
@@ -120,11 +132,39 @@
             {{ brand.name }} &mdash; {{ t('footer.tagline') }} &middot;
             <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener">{{ t('footer.open_source') }}</a>
             &middot; <a href="https://www.gesetze-im-internet.de/hinschg/" rel="noopener">HinSchG</a>
-            &middot; <a href="/admin" style="opacity:0.4;" title="Reporting office login">{{ t('footer.admin') }}</a>
+            &middot; <a href="/admin" style="opacity:0.4;" title="{{ t('footer.admin_title') }}">{{ t('footer.admin') }}</a>
         </p>
     </footer>
 
     <script src="/static/js/site.js"></script>
+    <script>
+    // Language picker dropdown
+    (function() {
+        var btn = document.getElementById('lang-picker-btn');
+        var menu = document.getElementById('lang-picker-menu');
+        if (!btn || !menu) return;
+
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var open = !menu.hidden;
+            menu.hidden = open;
+            btn.setAttribute('aria-expanded', String(!open));
+        });
+
+        document.addEventListener('click', function() {
+            menu.hidden = true;
+            btn.setAttribute('aria-expanded', 'false');
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                menu.hidden = true;
+                btn.setAttribute('aria-expanded', 'false');
+                btn.focus();
+            }
+        });
+    })();
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>
