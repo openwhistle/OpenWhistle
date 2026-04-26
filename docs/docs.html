@@ -821,7 +821,7 @@
 
         <h3>Current version</h3>
         <p>
-          <strong>v0.1.0</strong> — Initial release. See the
+          <strong>v0.4.0</strong> — Multi-step submission wizard, anonymous/confidential mode, multi-location support, French language, WCAG 2.1 AA. See the
           <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG</a>
           for a full list of changes.
         </p>
@@ -1060,6 +1060,12 @@
               <td><span class="env-required env-req-no">Optional</span></td>
               <td>Set to <code>true</code> to enable demo mode. See <a href="#demo-mode">Demo Mode</a> section.</td>
               <td><code>false</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">SUBMISSION_MODE_ENABLED</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Set to <code>false</code> to hide the anonymous/confidential mode selection step from the submission wizard. When disabled, all reports are treated as anonymous.</td>
+              <td><code>true</code></td>
             </tr>
             <tr>
               <td><code class="env-key">OIDC_ENABLED</code></td>
@@ -1364,6 +1370,10 @@
         </p>
 
         <h3>Submitting a report</h3>
+        <p>
+          Submission uses a guided multi-step wizard. You can navigate back and forward at any step;
+          your partial progress is saved in a temporary session (valid for 2 hours).
+        </p>
         <ol class="step-list">
           <li>
             <div>
@@ -1374,13 +1384,39 @@
           </li>
           <li>
             <div>
-              Fill in the report. The only required field is the report description.
-              Category, date of incident, and supporting details are optional.
+              <strong>Choose submission mode.</strong> Select <em>Anonymous</em> (no personal data
+              ever stored) or <em>Confidential</em> (name, contact details, and optional secure
+              email stored encrypted — only decryptable by the assigned admin). Both modes are
+              fully compliant with HinSchG.
             </div>
           </li>
           <li>
             <div>
-              Submit the form. <strong>Immediately note down the case number and PIN displayed
+              <strong>Select location</strong> (if the operator has configured multiple branches or
+              offices). This step only appears when locations are active.
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>Choose a category</strong> from the operator's configured list (e.g. financial
+              fraud, safety violation, discrimination).
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>Write the description.</strong> This is the only mandatory field. Be as
+              specific as possible without naming yourself.
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>Attach evidence</strong> (optional). Supported formats: PDF, images, Word,
+              Excel, CSV, TXT — up to 10 MB each, 5 files per report.
+            </div>
+          </li>
+          <li>
+            <div>
+              <strong>Review and submit.</strong> <strong>Immediately note down the case number and PIN displayed
               on the confirmation screen.</strong> These are shown only once and cannot be
               recovered if lost.
             </div>
@@ -1395,6 +1431,7 @@
         <ul>
           <li>Current case status</li>
           <li>Admin responses (if any)</li>
+          <li>HinSchG deadlines: the 7-day acknowledgement deadline and 3-month feedback deadline with days remaining</li>
           <li>A form to send a follow-up message</li>
         </ul>
 

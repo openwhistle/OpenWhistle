@@ -45,16 +45,26 @@ zero vendor lock-in, and privacy-first by design.
   network leaves no trace.
 - **Two-factor whistleblower access** — Case number + secret UUID4 PIN with brute-force protection.
   No accounts, no email — nothing to tie the report back to a person.
+- **Multi-step submission wizard** — Guided 5–6 step form with back/next navigation and Redis-backed
+  session state. Anonymous or confidential mode selectable at step 1.
+- **Anonymous / confidential mode** — Anonymous leaves no personal data. Confidential encrypts
+  name, contact info, and optional secure email with Fernet; only the assigned admin can decrypt.
+- **Multi-location / branch selection** — Optional location selector shown when the operator has
+  configured active branches or offices; full admin management UI included.
 - **Bidirectional communication** — Required by HinSchG §17. The whistleblower can reply to admin
   messages using only their case number and PIN.
-- **HinSchG SLA tracking** — Automatic 7-day acknowledgement deadline and 3-month feedback deadline
-  tracking, visible in the admin dashboard.
+- **HinSchG SLA tracking** — 7-day acknowledgement and 3-month feedback deadlines with days
+  remaining shown in both the admin dashboard and the whistleblower status page.
 - **Mandatory MFA** — TOTP (compatible with any authenticator app) required for every admin account.
   No exceptions, no bypass.
 - **OIDC / SSO support** — Optional single sign-on via any OpenID Connect provider (Keycloak,
   Authentik, Azure AD, Google, …).
 - **File attachments** — Whistleblowers can attach evidence files (PDF, images, Word, Excel, CSV,
   TXT — up to 10 MB each, 5 per report).
+- **Internationalisation** — English, German, and French UI; language picker in the nav bar;
+  all 388+ translation keys present in every locale.
+- **WCAG 2.1 AA** — Skip-to-content link, ARIA labels, live regions, visible focus indicators,
+  and keyboard-accessible language picker.
 - **Setup wizard** — Web-based first-run wizard creates the initial admin account with TOTP setup.
   No manual database steps.
 - **IP leakage detection** — The admin dashboard warns when upstream proxies forward IP headers.
