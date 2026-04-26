@@ -90,6 +90,11 @@ module = [
     "jose.*",
     "authlib.*",
     "aiosmtplib.*",
+    "boto3.*",
+    "botocore.*",
+    "ldap3.*",
+    "apscheduler.*",
+    "pythonjsonlogger.*",
 ]
 ignore_missing_imports = true
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import logging.config
+from typing import Any
 
 
 def configure_logging(log_level: str = "INFO", log_format: str = "json") -> None:
@@ -19,7 +20,7 @@ def configure_logging(log_level: str = "INFO", log_format: str = "json") -> None
         else "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
     )
 
-    config: dict = {
+    config: dict[str, Any] = {
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {

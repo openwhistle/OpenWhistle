@@ -2,6 +2,7 @@
 
 import secrets
 from datetime import UTC, datetime
+from typing import Any
 
 from fastapi import APIRouter, Cookie, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
@@ -29,8 +30,11 @@ async def admin_root(request: Request) -> RedirectResponse:
     return RedirectResponse("/admin/login", status_code=302)
 
 
-def _login_ctx(extra: dict | None = None) -> dict:
-    base: dict = {"oidc_enabled": settings.oidc_enabled, "ldap_enabled": settings.ldap_enabled}
+def _login_ctx(extra: dict[str, Any] | None = None) -> dict[str, Any]:
+    base: dict[str, Any] = {
+        "oidc_enabled": settings.oidc_enabled,
+        "ldap_enabled": settings.ldap_enabled,
+    }
     if extra:
         base.update(extra)
     return base
@@ -115,6 +119,7 @@ async def login_post(
             "error": "Invalid username or password.",
         }), status_code=401)
 
+    assert user is not None  # narrowed: pw_ok True implies user is not None
     # Block password login for OIDC-only accounts
     if user.oidc_sub and not user.password_hash:
         return render(request, "login.html", _login_ctx({

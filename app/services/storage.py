@@ -12,6 +12,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import uuid
+from typing import Any
 
 log = logging.getLogger(__name__)
 
@@ -61,10 +62,10 @@ class S3StorageBackend(StorageBackend):
         self._secret_key = secret_key
         self._endpoint_url = endpoint_url or None
 
-    def _client(self) -> object:
+    def _client(self) -> Any:
         import boto3  # noqa: PLC0415
 
-        kwargs: dict = {
+        kwargs: dict[str, Any] = {
             "region_name": self._region,
             "aws_access_key_id": self._access_key,
             "aws_secret_access_key": self._secret_key,
