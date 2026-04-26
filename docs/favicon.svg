@@ -1,9 +1,60 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 33" width="32" height="32">
-  <!-- Shield -->
-  <path d="M14 2L25 6.5L25 16.5C25 22.5 20.5 27.5 14 30C7.5 27.5 3 22.5 3 16.5L3 6.5Z"
-        fill="#0f4c81" stroke="#1a6aaa" stroke-width="0.8" stroke-linejoin="round"/>
-  <!-- Sound-wave / W mark -->
-  <polyline points="5.5,14 8.5,21 14,15 19.5,21 22.5,14"
-            stroke="white" stroke-width="2.1"
-            stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 70" width="56" height="70">
+  <defs>
+    <!-- Main shield gradient: deep navy top → rich blue mid → dark navy bottom -->
+    <linearGradient id="g" x1="0.15" y1="0" x2="0.85" y2="1">
+      <stop offset="0%"   stop-color="#0a2345"/>
+      <stop offset="45%"  stop-color="#1457a8"/>
+      <stop offset="100%" stop-color="#0c3470"/>
+    </linearGradient>
+    <!-- Amber warmth rising from bottom — the "courage" glow -->
+    <radialGradient id="glow" cx="0.5" cy="0.92" r="0.45">
+      <stop offset="0%"   stop-color="#f59e0b" stop-opacity="0.32"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Drop shadow -->
+  <path d="M28 4 L51 13 L51 40 C51 55 41 64 28 68 C15 64 5 55 5 40 L5 13 Z"
+        fill="black" fill-opacity="0.18" transform="translate(1.5,2.5)"/>
+
+  <!-- Shield body -->
+  <path d="M28 4 L51 13 L51 40 C51 55 41 64 28 68 C15 64 5 55 5 40 L5 13 Z"
+        fill="url(#g)"/>
+
+  <!-- Amber glow overlay -->
+  <path d="M28 4 L51 13 L51 40 C51 55 41 64 28 68 C15 64 5 55 5 40 L5 13 Z"
+        fill="url(#glow)"/>
+
+  <!-- Inner bevel line — gives 3-D depth -->
+  <path d="M28 9 L46 17 L46 40 C46 52 38 60 28 64 C18 60 10 52 10 40 L10 17 Z"
+        fill="none" stroke="white" stroke-width="0.7" stroke-opacity="0.13"/>
+
+  <!-- Top-face highlight — simulates a light source from above-left -->
+  <path d="M28 4 L51 13 L46 17 L28 9 L10 17 L5 13 Z"
+        fill="white" fill-opacity="0.08"/>
+
+  <!--
+    Signal mark: three concentric arcs + source dot.
+    All arcs are segments of circles centered at (28, 43)
+    drawn at ±50° from 12-o'clock (calculated exactly).
+       r= 9 → endpoints (21.1, 37.2) and (34.9, 37.2)
+       r=16 → endpoints (15.7, 32.7) and (40.3, 32.7)
+       r=23 → endpoints (10.4, 28.2) and (45.6, 28.2)
+    sweep-flag=1 (clockwise) → arc curves through the TOP of each circle.
+  -->
+
+  <!-- Source dot -->
+  <circle cx="28" cy="43" r="2.7" fill="white"/>
+
+  <!-- Arc 1 — inner, boldest -->
+  <path d="M21,37 A9,9 0 0,1 35,37"
+        fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+
+  <!-- Arc 2 — middle -->
+  <path d="M16,33 A16,16 0 0,1 40,33"
+        fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" opacity="0.72"/>
+
+  <!-- Arc 3 — outer, most transparent -->
+  <path d="M10,28 A23,23 0 0,1 46,28"
+        fill="none" stroke="white" stroke-width="1.4" stroke-linecap="round" opacity="0.38"/>
 </svg>

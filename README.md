@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/openwhistle/OpenWhistle/main/app/static/favicon.svg" alt="OpenWhistle Logo" width="80" height="80">
+  <img src="https://raw.githubusercontent.com/openwhistle/OpenWhistle/main/app/static/favicon.svg" alt="OpenWhistle Logo" width="72">
 </p>
 
 # OpenWhistle
