@@ -170,8 +170,10 @@ async def test_delete_report_only_removes_matching_sessions(
     assert not await redis.exists(key_a)
     assert await redis.exists(key_b)
 
-    # Cleanup
+    # Cleanup Redis and report_b so later tests don't inherit a skewed case number counter
     await redis.delete(key_b)
+    csrf_token2 = (await client.get("/admin/dashboard")).cookies.get("ow_csrf")
+    await client.post(f"/admin/reports/{report_b.id}/delete", data={"csrf_token": csrf_token2})
 
 
 @pytest.mark.asyncio
