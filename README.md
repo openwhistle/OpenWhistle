@@ -26,7 +26,7 @@
 
 ---
 
-## Overview
+## 🔍 Overview
 
 OpenWhistle is a self-hosted whistleblower platform that fulfils the mandatory reporting channel
 requirements under the **German Hinweisgeberschutzgesetz (HinSchG)** and **EU Directive 2019/1937**.
@@ -39,7 +39,7 @@ zero vendor lock-in, and privacy-first by design.
 
 ---
 
-## Features
+## ✨ Features
 
 - **Full anonymity** — No IP addresses logged at any layer. An employee submitting from the office
   network leaves no trace.
@@ -65,7 +65,7 @@ zero vendor lock-in, and privacy-first by design.
 
 ---
 
-## Live Demo
+## 🎭 Live Demo
 
 A live demo is available at **[demo.openwhistle.net](https://demo.openwhistle.net)**
 
@@ -78,7 +78,7 @@ The demo resets automatically every hour.
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
 ```bash
 git clone https://github.com/openwhistle/OpenWhistle.git
@@ -93,7 +93,7 @@ and administration guide, see **[openwhistle.net/docs.html](https://openwhistle.
 
 ---
 
-## Container Images
+## 📦 Container Images
 
 Pre-built multi-arch images (linux/amd64, linux/arm64) are published to three registries:
 
@@ -107,7 +107,7 @@ All GHCR images are signed with Cosign (keyless, Sigstore).
 
 ---
 
-## Legal Reference
+## ⚖️ Legal Reference
 
 OpenWhistle is designed to comply with:
 
@@ -120,19 +120,19 @@ OpenWhistle is designed to comply with:
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
 Contributions are welcome. Please open an issue before submitting a pull request.
 
 ---
 
-## License
+## 📜 License
 
 OpenWhistle is released under the [GNU General Public License v3.0](LICENSE).
 
 ---
 
-## Support
+## 💛 Support
 
 OpenWhistle is developed in free time. If you find it useful, consider supporting the project.
 
