@@ -102,38 +102,46 @@ async def test_status_form_fields_carry_required(client: AsyncClient) -> None:
 # ─── UX #10: Redis session cleanup on report deletion ─────────────────────────
 
 
+async def _delete_report_4eyes(
+    client: AsyncClient,
+    db: AsyncSession,
+    report_id: str,
+    requester_suffix: str,
+    confirmer_suffix: str,
+) -> None:
+    """Full 4-eyes deletion: requester requests, confirmer confirms."""
+    requester, req_secret = await _create_admin(db, requester_suffix)
+    confirmer, con_secret = await _create_admin(db, confirmer_suffix)
+
+    # Requester logs in and requests deletion
+    await _login_admin(client, requester, req_secret)
+    csrf = (await client.get(f"/admin/reports/{report_id}")).cookies.get("ow_csrf")
+    await client.post(f"/admin/reports/{report_id}/request-delete", data={"csrf_token": csrf})
+
+    # Confirmer logs in and confirms
+    await client.get("/admin/logout")
+    await _login_admin(client, confirmer, con_secret)
+    csrf2 = (await client.get(f"/admin/reports/{report_id}")).cookies.get("ow_csrf")
+    await client.post(f"/admin/reports/{report_id}/confirm-delete", data={"csrf_token": csrf2})
+
+
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_delete_report_removes_redis_session(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    """Deleting a report also removes any active whistleblower status-session keys in Redis."""
+    """Confirming 4-eyes deletion removes active whistleblower status-session keys in Redis."""
     from app.redis_client import get_redis
 
-    # Create a report and a matching Redis status-session
-    report, pin = await create_report(db_session, "corruption", "Report for deletion cleanup test.")
+    report, _ = await create_report(db_session, "corruption", "Report for deletion cleanup test.")
 
     redis = await get_redis()
     session_key = f"status-session:test-session-{uuid.uuid4().hex}"
     await redis.setex(session_key, 7200, str(report.id))
-
-    # Verify the session exists before deletion
     assert await redis.exists(session_key)
 
-    # Login as admin and delete the report
-    admin, totp_secret = await _create_admin(db_session, "del1")
-    await _login_admin(client, admin, totp_secret)
+    await _delete_report_4eyes(client, db_session, str(report.id), "dr1a", "dr1b")
 
-    get_resp = await client.get("/admin/dashboard")
-    csrf_token = get_resp.cookies.get("ow_csrf")
-
-    resp = await client.post(
-        f"/admin/reports/{report.id}/delete",
-        data={"csrf_token": csrf_token},
-    )
-    assert resp.status_code == 200  # after redirect to dashboard
-
-    # The Redis session key must be gone
     assert not await redis.exists(session_key)
 
 
@@ -154,26 +162,14 @@ async def test_delete_report_only_removes_matching_sessions(
     await redis.setex(key_a, 7200, str(report_a.id))
     await redis.setex(key_b, 7200, str(report_b.id))
 
-    admin, totp_secret = await _create_admin(db_session, "del2")
-    await _login_admin(client, admin, totp_secret)
+    await _delete_report_4eyes(client, db_session, str(report_a.id), "dr2a", "dr2b")
 
-    get_resp = await client.get("/admin/dashboard")
-    csrf_token = get_resp.cookies.get("ow_csrf")
-
-    # Delete only report A
-    await client.post(
-        f"/admin/reports/{report_a.id}/delete",
-        data={"csrf_token": csrf_token},
-    )
-
-    # Session for A is gone, session for B is intact
     assert not await redis.exists(key_a)
     assert await redis.exists(key_b)
 
-    # Cleanup Redis and report_b so later tests don't inherit a skewed case number counter
+    # Cleanup
     await redis.delete(key_b)
-    csrf_token2 = (await client.get("/admin/dashboard")).cookies.get("ow_csrf")
-    await client.post(f"/admin/reports/{report_b.id}/delete", data={"csrf_token": csrf_token2})
+    await _delete_report_4eyes(client, db_session, str(report_b.id), "dr2c", "dr2d")
 
 
 @pytest.mark.asyncio
@@ -183,18 +179,7 @@ async def test_delete_report_with_no_sessions_succeeds(
 ) -> None:
     """Deleting a report with no associated Redis sessions completes without error."""
     report, _ = await create_report(db_session, "other", "Report with no active sessions.")
-
-    admin, totp_secret = await _create_admin(db_session, "del3")
-    await _login_admin(client, admin, totp_secret)
-
-    get_resp = await client.get("/admin/dashboard")
-    csrf_token = get_resp.cookies.get("ow_csrf")
-
-    resp = await client.post(
-        f"/admin/reports/{report.id}/delete",
-        data={"csrf_token": csrf_token},
-    )
-    assert resp.status_code == 200
+    await _delete_report_4eyes(client, db_session, str(report.id), "dr3a", "dr3b")
 
 
 @pytest.mark.asyncio
@@ -205,28 +190,16 @@ async def test_deleted_report_session_falls_back_to_login(
     """After a report is deleted, an existing status session shows the login form, not a crash."""
     from app.redis_client import get_redis
 
-    report, pin = await create_report(
+    report, _ = await create_report(
         db_session, "workplace_safety", "Report session fallback test."
     )
 
-    # Simulate an active whistleblower session for this report
     redis = await get_redis()
     session_key = uuid.uuid4().hex
     await redis.setex(f"status-session:{session_key}", 7200, str(report.id))
 
-    admin, totp_secret = await _create_admin(db_session, "del4")
-    await _login_admin(client, admin, totp_secret)
+    await _delete_report_4eyes(client, db_session, str(report.id), "dr4a", "dr4b")
 
-    get_resp = await client.get("/admin/dashboard")
-    csrf_token = get_resp.cookies.get("ow_csrf")
-
-    await client.post(
-        f"/admin/reports/{report.id}/delete",
-        data={"csrf_token": csrf_token},
-    )
-
-    # The whistleblower now visits /status with the stale session cookie
-    # (use a separate client to avoid admin cookie interference)
     from httpx import ASGITransport
 
     from app.main import app as ow_app
@@ -239,5 +212,4 @@ async def test_deleted_report_session_falls_back_to_login(
     ) as wb_client:
         resp = await wb_client.get("/status")
         assert resp.status_code == 200
-        # Should show the login form, not an error page
         assert "Case Number" in resp.text or "Vorgangsnummer" in resp.text

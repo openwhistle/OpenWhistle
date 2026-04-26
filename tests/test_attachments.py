@@ -313,7 +313,7 @@ async def test_admin_can_download_attachment(client: object, db_session: object)
     from sqlalchemy.ext.asyncio import AsyncSession
 
     from app.models.attachment import Attachment
-    from app.models.report import Report, ReportCategory, ReportStatus
+    from app.models.report import Report, ReportStatus
     from app.models.user import AdminUser
     from app.services.auth import hash_password, hash_pin
 
@@ -335,7 +335,7 @@ async def test_admin_can_download_attachment(client: object, db_session: object)
         id=uuid.uuid4(),
         case_number=f"OW-TEST-{uuid.uuid4().hex[:6].upper()}",
         pin_hash=hash_pin("test-pin-value"),
-        category=ReportCategory.other,
+        category="other",
         description="Test report for attachment download.",
         status=ReportStatus.received,
     )

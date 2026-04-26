@@ -75,7 +75,7 @@ async def test_generate_pdf_with_note(db_session: AsyncSession):
 
 
 def test_fmt_dt_none():
-    assert _fmt_dt(None) == "—"
+    assert _fmt_dt(None) == "-"
 
 
 def test_fmt_dt_datetime():

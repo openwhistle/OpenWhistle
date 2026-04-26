@@ -324,16 +324,16 @@ async def test_dismiss_ip_warning_returns_cleared(
 async def test_delete_report_cleans_up_whistleblower_sessions(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    """After hard-deleting a report, any associated status-session keys must be gone."""
+    """After hard-deleting a report (4-eyes), associated status-session keys must be gone."""
     from app.redis_client import get_redis
 
-    admin, totp_secret = await _create_admin(db_session)
-    await _login_admin(client, admin, totp_secret)
+    # Admin 1 creates the report and requests deletion
+    admin1, secret1 = await _create_admin(db_session)
+    await _login_admin(client, admin1, secret1)
 
     report_id, _ = await _create_and_find_report(client, db_session)
     assert report_id
 
-    # Plant a fake status-session key pointing to this report
     redis = await get_redis()
     fake_session_key = f"status-session:cleanup-test-{uuid.uuid4().hex}"
     await redis.setex(fake_session_key, 7200, report_id)
@@ -341,8 +341,20 @@ async def test_delete_report_cleans_up_whistleblower_sessions(
 
     csrf = await _get_csrf(client, f"/admin/reports/{report_id}")
     await client.post(
-        f"/admin/reports/{report_id}/delete",
+        f"/admin/reports/{report_id}/request-delete",
         data={"csrf_token": csrf},
+        follow_redirects=True,
+    )
+
+    # Admin 2 logs in and confirms deletion
+    await client.get("/admin/logout")
+    admin2, secret2 = await _create_admin(db_session)
+    await _login_admin(client, admin2, secret2)
+
+    csrf2 = await _get_csrf(client, f"/admin/reports/{report_id}")
+    await client.post(
+        f"/admin/reports/{report_id}/confirm-delete",
+        data={"csrf_token": csrf2},
         follow_redirects=True,
     )
 
