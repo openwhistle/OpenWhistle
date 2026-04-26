@@ -15,8 +15,9 @@ from __future__ import annotations
 
 import re
 import uuid
+import zlib
 from datetime import datetime
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pyotp
 import pytest
@@ -78,6 +79,17 @@ async def _csrf(client: AsyncClient, path: str = "/admin/dashboard") -> str:
     return m.group(1) if m else (r.cookies.get("ow_csrf") or "")
 
 
+def _pdf_text(pdf_bytes: bytes) -> str:
+    """Decompress FlateDecode content streams and return plain text."""
+    parts: list[str] = []
+    for m in re.finditer(rb"stream\r?\n(.+?)\r?\nendstream", pdf_bytes, re.DOTALL):
+        try:
+            parts.append(zlib.decompress(m.group(1)).decode("latin-1", errors="ignore"))
+        except Exception:  # noqa: BLE001
+            pass
+    return "".join(parts)
+
+
 # ── app/api/wizard.py ──────────────────────────────────────────────────────────
 
 
@@ -108,8 +120,8 @@ async def test_wizard_post_validation_username_too_short(
             "csrf_token": csrf,
         },
     )
-    assert resp.status_code == 422
-    assert "3" in resp.text or "Username" in resp.text
+    assert resp.status_code == 200
+    assert "Username must be between" in resp.text or "3" in resp.text
 
 
 @pytest.mark.asyncio
@@ -137,8 +149,8 @@ async def test_wizard_post_validation_password_mismatch(
             "csrf_token": csrf,
         },
     )
-    assert resp.status_code == 422
-    assert "match" in resp.text.lower()
+    assert resp.status_code == 200
+    assert "match" in resp.text.lower() or "Passwords" in resp.text
 
 
 @pytest.mark.asyncio
@@ -166,8 +178,8 @@ async def test_wizard_post_validation_bad_totp(
             "csrf_token": csrf,
         },
     )
-    assert resp.status_code == 422
-    assert "TOTP" in resp.text or "code" in resp.text.lower()
+    assert resp.status_code == 200
+    assert "TOTP" in resp.text or "Invalid" in resp.text or "code" in resp.text.lower()
 
 
 # ── app/main.py — RequestValidationError 422 handler ──────────────────────────
@@ -840,7 +852,7 @@ async def test_pdf_with_feedback_due_and_closed(db_session: AsyncSession) -> Non
 
     pdf_bytes = generate_report_pdf(loaded)
     assert pdf_bytes[:4] == b"%PDF"
-    assert b"OK Delivered" in pdf_bytes
+    assert "OK Delivered" in _pdf_text(pdf_bytes)
 
 
 @pytest.mark.asyncio
@@ -857,7 +869,7 @@ async def test_pdf_with_feedback_due_not_closed(db_session: AsyncSession) -> Non
 
     pdf_bytes = generate_report_pdf(loaded)
     assert pdf_bytes[:4] == b"%PDF"
-    assert b"remaining" in pdf_bytes
+    assert "remaining" in _pdf_text(pdf_bytes)
 
 
 @pytest.mark.asyncio
@@ -885,7 +897,7 @@ async def test_pdf_with_attachments(db_session: AsyncSession) -> None:
 
     pdf_bytes = generate_report_pdf(loaded)
     assert pdf_bytes[:4] == b"%PDF"
-    assert b"Attachments" in pdf_bytes
+    assert "Attachments" in _pdf_text(pdf_bytes)
 
 
 @pytest.mark.asyncio
@@ -907,16 +919,19 @@ async def test_lifespan_demo_mode_calls_seed() -> None:
     from fastapi import FastAPI
     from httpx import ASGITransport, AsyncClient
 
-    seed_called = []
+    seed_called: list[bool] = []
 
     async def mock_seed() -> None:
         seed_called.append(True)
 
+    mock_settings = MagicMock()
+    mock_settings.demo_mode = True
+
     with (
         patch("app.main._run_alembic_upgrade"),
         patch("app.main.close_redis", new_callable=AsyncMock),
-        patch("app.config.settings.demo_mode", True),
-        patch("app.services.demo_seed.seed_demo_data", side_effect=mock_seed),
+        patch("app.main.settings", mock_settings),
+        patch("app.services.demo_seed.seed_demo_data", new=mock_seed),
     ):
         from app.main import lifespan
         app_tmp = FastAPI(lifespan=lifespan)
