@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import re
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -340,35 +341,66 @@ async def test_send_webhook_swallows_http_exception() -> None:
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_submit_triggers_notification(client: object) -> None:
-    """POST /submit must schedule a notification background task.
+    """The final wizard step (review/submit) must schedule a notification background task.
 
     Requires a live test database — run with the full test suite (uv run pytest).
     Skipped automatically when the DB is not reachable.
     """
-    import re
-
     from httpx import AsyncClient
 
     ac: AsyncClient = client  # type: ignore[assignment]
 
-    # Get CSRF token first
+    def _get_csrf(text: str) -> str:
+        m = re.search(r'name="csrf_token" value="([^"]+)"', text)
+        return m.group(1) if m else ""
+
+    def _get_step(text: str) -> int:
+        m = re.search(r'name="step" value="(\d+)"', text)
+        return int(m.group(1)) if m else 1
+
+    # Walk steps 1-5 (mode, optional location, category, description, attachments) without patching
     get_resp = await ac.get("/submit")
-    m = re.search(r'name="csrf_token" value="([^"]+)"', get_resp.text)
-    csrf = m.group(1) if m else ""
+    csrf = _get_csrf(get_resp.text)
+    resp = await ac.post("/submit", data={
+        "csrf_token": csrf, "step": "1", "action": "next", "submission_mode": "anonymous",
+    })
+
+    # Step 2 (location — conditional): skip if present by posting with empty location_id
+    if _get_step(resp.text) == 2:
+        csrf = _get_csrf(resp.text)
+        resp = await ac.post("/submit", data={
+            "csrf_token": csrf, "step": "2", "action": "next", "location_id": "",
+        })
+
+    csrf = _get_csrf(resp.text)
+    resp = await ac.post("/submit", data={
+        "csrf_token": csrf, "step": str(_get_step(resp.text)), "action": "next",
+        "category": "financial_fraud",
+    })
+
+    csrf = _get_csrf(resp.text)
+    resp = await ac.post("/submit", data={
+        "csrf_token": csrf, "step": str(_get_step(resp.text)), "action": "next",
+        "description": "Integration test — notification trigger verification.",
+    })
+
+    csrf = _get_csrf(resp.text)
+    resp = await ac.post("/submit", data={
+        "csrf_token": csrf, "step": str(_get_step(resp.text)), "action": "next",
+    })
+
+    # Step 6 (review): patch notification only for the final submit POST
+    csrf = _get_csrf(resp.text)
+    step6 = _get_step(resp.text)
 
     with patch(
         "app.services.notifications.notify_new_report", new_callable=AsyncMock
     ) as mock_notify:
-        resp = await ac.post(
-            "/submit",
-            data={
-                "csrf_token": csrf,
-                "category": "financial_fraud",
-                "description": "Integration test — notification trigger verification.",
-            },
-        )
+        final_resp = await ac.post("/submit", data={
+            "csrf_token": csrf, "step": str(step6), "action": "next",
+        })
 
-    assert resp.status_code == 200
+    assert final_resp.status_code == 200
     # BackgroundTasks run synchronously in ASGI test transport
     mock_notify.assert_awaited_once()
     called_case = mock_notify.call_args.args[0]

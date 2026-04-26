@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+import re
 
 import pytest
 
@@ -228,73 +229,134 @@ async def test_read_disallowed_type_returns_error() -> None:
 # ─── integration tests (require live DB) ──────────────────────────────────────
 
 
-@pytest.mark.asyncio
-@pytest.mark.integration
-async def test_submit_with_pdf_attachment(client: object) -> None:
-    """Submit form with a PDF attachment; success page shows the filename."""
-    import re
+def _get_csrf(text: str) -> str:
+    m = re.search(r'name="csrf_token" value="([^"]+)"', text)
+    return m.group(1) if m else ""
 
+
+def _detect_step(text: str) -> int:
+    m = re.search(r'name="step" value="(\d+)"', text)
+    return int(m.group(1)) if m else 1
+
+
+async def _walk_to_step5(client: object, category: str = "financial_fraud") -> tuple[object, str]:
+    """Walk the wizard through steps 1-(2)-3-4 and return (response_at_step5, csrf_for_step5).
+
+    Handles both with-locations and without-locations flows.
+    The returned response is the step-5 (attachments) page ready for file upload.
+    """
     from httpx import AsyncClient
 
     ac: AsyncClient = client  # type: ignore[assignment]
 
+    # Step 1: mode selection
     get_resp = await ac.get("/submit")
-    m = re.search(r'name="csrf_token" value="([^"]+)"', get_resp.text)
-    csrf = m.group(1) if m else ""
+    csrf = _get_csrf(get_resp.text)
+    resp = await ac.post("/submit", data={
+        "csrf_token": csrf,
+        "step": "1",
+        "action": "next",
+        "submission_mode": "anonymous",
+    })
+
+    # Step 2 (location — conditional): skip if present by posting with empty location_id
+    if _detect_step(resp.text) == 2:
+        csrf = _get_csrf(resp.text)
+        resp = await ac.post("/submit", data={
+            "csrf_token": csrf,
+            "step": "2",
+            "action": "next",
+            "location_id": "",
+        })
+
+    # Step 3: category
+    csrf = _get_csrf(resp.text)
+    resp = await ac.post("/submit", data={
+        "csrf_token": csrf,
+        "step": str(_detect_step(resp.text)),
+        "action": "next",
+        "category": category,
+    })
+
+    # Step 4: description
+    csrf = _get_csrf(resp.text)
+    resp = await ac.post("/submit", data={
+        "csrf_token": csrf,
+        "step": str(_detect_step(resp.text)),
+        "action": "next",
+        "description": "Testing file upload feature with a PDF attachment.",
+    })
+
+    # Now on step 5 (attachments) — return ready for file upload
+    csrf = _get_csrf(resp.text)
+    return resp, csrf
+
+
+@pytest.mark.asyncio
+@pytest.mark.integration
+async def test_submit_with_pdf_attachment(client: object) -> None:
+    """Submit form with a PDF attachment; success page shows the filename."""
+    from httpx import AsyncClient
+
+    ac: AsyncClient = client  # type: ignore[assignment]
+
+    # Walk steps 1-4, arrive at step 5 (attachments)
+    resp5, csrf = await _walk_to_step5(ac)
+    step5_num = _detect_step(resp5.text)  # type: ignore[attr-defined]
 
     pdf_content = b"%PDF-1.4 minimal fake pdf content for testing"
     resp = await ac.post(
         "/submit",
-        data={"csrf_token": csrf, "category": "financial_fraud",
-              "description": "Testing file upload feature with a PDF attachment."},
+        data={"csrf_token": csrf, "step": str(step5_num), "action": "next"},
         files={"files": ("evidence.pdf", io.BytesIO(pdf_content), "application/pdf")},
     )
     assert resp.status_code == 200
-    assert "evidence.pdf" in resp.text
+
+    # Now on step 6 (review) — submit final
+    csrf6 = _get_csrf(resp.text)
+    step6_num = _detect_step(resp.text)
+    final_resp = await ac.post("/submit", data={
+        "csrf_token": csrf6,
+        "step": str(step6_num),
+        "action": "next",
+    })
+    assert final_resp.status_code == 200
+    assert "evidence.pdf" in final_resp.text
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_submit_without_attachment_still_works(client: object) -> None:
     """Submitting without any file must still succeed."""
-    import re
-
+    from conftest import wizard_submit
     from httpx import AsyncClient
 
     ac: AsyncClient = client  # type: ignore[assignment]
 
-    get_resp = await ac.get("/submit")
-    m = re.search(r'name="csrf_token" value="([^"]+)"', get_resp.text)
-    csrf = m.group(1) if m else ""
-
-    resp = await ac.post(
-        "/submit",
-        data={"csrf_token": csrf, "category": "corruption",
-              "description": "No attachment is attached to this test report."},
+    case_number, pin = await wizard_submit(
+        ac,
+        category="financial_fraud",
+        description="No attachment is attached to this test report.",
     )
-    assert resp.status_code == 200
-    assert "Case Number" in resp.text or "Vorgangsnummer" in resp.text
+    assert case_number.startswith("OW-") or case_number != ""
 
 
 @pytest.mark.asyncio
 @pytest.mark.integration
 async def test_submit_oversized_file_returns_error(client: object) -> None:
     """Uploading a file over 10 MB must show a validation error."""
-    import re
-
     from httpx import AsyncClient
 
     ac: AsyncClient = client  # type: ignore[assignment]
 
-    get_resp = await ac.get("/submit")
-    m = re.search(r'name="csrf_token" value="([^"]+)"', get_resp.text)
-    csrf = m.group(1) if m else ""
+    # Walk steps 1-4, arrive at step 5 (attachments)
+    resp5, csrf = await _walk_to_step5(ac)
+    step5_num = _detect_step(resp5.text)  # type: ignore[attr-defined]
 
     oversized = b"X" * (MAX_SIZE_BYTES + 1)
     resp = await ac.post(
         "/submit",
-        data={"csrf_token": csrf, "category": "financial_fraud",
-              "description": "Testing oversized file rejection."},
+        data={"csrf_token": csrf, "step": str(step5_num), "action": "next"},
         files={"files": ("big.pdf", io.BytesIO(oversized), "application/pdf")},
     )
     assert resp.status_code == 200
@@ -305,7 +367,6 @@ async def test_submit_oversized_file_returns_error(client: object) -> None:
 @pytest.mark.integration
 async def test_admin_can_download_attachment(client: object, db_session: object) -> None:
     """Admin must be able to download an attachment from a report."""
-    import re
     import uuid
 
     import pyotp

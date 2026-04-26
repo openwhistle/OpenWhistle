@@ -65,21 +65,79 @@ async def _get_csrf(client: AsyncClient, path: str = "/admin/dashboard") -> str:
     return m.group(1) if m else (resp.cookies.get("ow_csrf") or "")
 
 
+def _wiz_csrf(text: str) -> str:
+    m = re.search(r'name="csrf_token" value="([^"]+)"', text)
+    return m.group(1) if m else ""
+
+
+def _wiz_step(text: str) -> int:
+    m = re.search(r'name="step" value="(\d+)"', text)
+    return int(m.group(1)) if m else 1
+
+
 async def _create_and_find_report(
     client: AsyncClient, db_session: AsyncSession
 ) -> tuple[str, str]:
-    """Submit a report via API and find it in the dashboard. Returns (report_id, case_number)."""
+    """Submit a report via the multi-step wizard and find it in the dashboard.
+
+    Returns (report_id, case_number).
+    Handles both with-locations and without-locations wizard flows.
+    """
+    # Step 1: mode selection
     get_resp = await client.get("/submit")
-    csrf = get_resp.cookies.get("ow_csrf")
-    submit_resp = await client.post(
-        "/submit",
-        data={
-            "category": "financial_fraud",
-            "description": "Admin extended test report content.",
+    csrf = _wiz_csrf(get_resp.text)
+    resp = await client.post("/submit", data={
+        "csrf_token": csrf,
+        "step": "1",
+        "action": "next",
+        "submission_mode": "anonymous",
+    })
+
+    # Step 2 (location — conditional): skip if present by posting with empty location_id
+    if _wiz_step(resp.text) == 2:
+        csrf = _wiz_csrf(resp.text)
+        resp = await client.post("/submit", data={
             "csrf_token": csrf,
-        },
-    )
-    case_m = re.search(r"OW-\d{4}-\d{5}", submit_resp.text)
+            "step": "2",
+            "action": "next",
+            "location_id": "",
+        })
+
+    # Step 3: category
+    csrf = _wiz_csrf(resp.text)
+    resp = await client.post("/submit", data={
+        "csrf_token": csrf,
+        "step": str(_wiz_step(resp.text)),
+        "action": "next",
+        "category": "financial_fraud",
+    })
+
+    # Step 4: description
+    csrf = _wiz_csrf(resp.text)
+    resp = await client.post("/submit", data={
+        "csrf_token": csrf,
+        "step": str(_wiz_step(resp.text)),
+        "action": "next",
+        "description": "Admin extended test report content.",
+    })
+
+    # Step 5: attachments (skip)
+    csrf = _wiz_csrf(resp.text)
+    resp = await client.post("/submit", data={
+        "csrf_token": csrf,
+        "step": str(_wiz_step(resp.text)),
+        "action": "next",
+    })
+
+    # Step 6: review + final submit
+    csrf = _wiz_csrf(resp.text)
+    resp = await client.post("/submit", data={
+        "csrf_token": csrf,
+        "step": str(_wiz_step(resp.text)),
+        "action": "next",
+    })
+
+    case_m = re.search(r"OW-\d{4}-\d{5}", resp.text)
     case_number = case_m.group(0) if case_m else ""
 
     dash = await client.get("/admin/dashboard")

@@ -84,40 +84,31 @@ async def test_admin_reply_empty_content_returns_422(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
     """POST /admin/reports/<id>/reply with blank content must return 422."""
+    from app.models.report import Report, ReportStatus
+    from app.services.auth import hash_pin
+
     admin, totp_secret = await _create_admin(db_session)
     await _login_admin(client, admin, totp_secret)
 
-    # First create a report to reply to
-    get_resp = await client.get("/submit")
-    csrf = get_resp.cookies.get("ow_csrf")
-    submit_resp = await client.post(
-        "/submit",
-        data={
-            "category": "financial_fraud",
-            "description": "Report for admin reply test.",
-            "csrf_token": csrf,
-        },
+    # Create a report directly in the DB — avoids wizard flow complexity
+    report = Report(
+        id=uuid.uuid4(),
+        case_number=f"OW-{uuid.uuid4().hex[:4].upper()}-{uuid.uuid4().hex[:5].upper()}",
+        pin_hash=hash_pin("test-pin-reply-test"),
+        category="financial_fraud",
+        description="Report for admin reply test.",
+        status=ReportStatus.received,
     )
-    case_m = re.search(r"OW-\d{4}-\d{5}", submit_resp.text)
-    assert case_m is not None, "Could not find case number in submit response"
-
-    # Get the report from the dashboard
-    dash_resp = await client.get("/admin/dashboard")
-    assert dash_resp.status_code == 200
-    report_id_m = re.search(
-        r'/admin/reports/([0-9a-f-]{36})"', dash_resp.text
-    )
-    assert report_id_m is not None, "Could not find report link in dashboard"
-    report_id = report_id_m.group(1)
+    db_session.add(report)
+    await db_session.commit()
 
     # Get a CSRF token from the report detail page
-    detail_resp = await client.get(f"/admin/reports/{report_id}")
-    csrf_detail = detail_resp.cookies.get("ow_csrf")
+    detail_resp = await client.get(f"/admin/reports/{report.id}")
     csrf_form_m = re.search(r'name="csrf_token" value="([^"]+)"', detail_resp.text)
-    csrf_token = csrf_form_m.group(1) if csrf_form_m else csrf_detail
+    csrf_token = csrf_form_m.group(1) if csrf_form_m else detail_resp.cookies.get("ow_csrf", "")
 
     resp = await client.post(
-        f"/admin/reports/{report_id}/reply",
+        f"/admin/reports/{report.id}/reply",
         data={"content": "   ", "csrf_token": csrf_token},
         follow_redirects=False,
     )

@@ -167,7 +167,10 @@ class TestMultiStepSubmission:
 
 
 async def _do_full_anonymous_submit(client: AsyncClient) -> tuple[str, str]:
-    """Walk through all 5 steps (no location) and return (case_number, pin)."""
+    """Walk through all wizard steps and return (case_number, pin).
+
+    Handles both with-locations and without-locations flows.
+    """
     # Step 1: mode
     get_resp = await client.get("/submit")
     csrf = _get_csrf(get_resp)
@@ -178,10 +181,20 @@ async def _do_full_anonymous_submit(client: AsyncClient) -> tuple[str, str]:
         "submission_mode": "anonymous",
     })
     assert resp.status_code == 200
-    csrf = _get_csrf(resp)
 
-    # Determine current step (no locations active → should be step 3 = category)
-    # Step 2/3: category
+    # Step 2 (location — conditional): skip if present by posting with empty location_id
+    if _detect_step(resp) == 2:
+        csrf = _get_csrf(resp)
+        resp = await client.post("/submit", data={
+            "csrf_token": csrf,
+            "step": "2",
+            "action": "next",
+            "location_id": "",
+        })
+        assert resp.status_code == 200
+
+    # Step 3: category
+    csrf = _get_csrf(resp)
     resp = await client.post("/submit", data={
         "csrf_token": csrf,
         "step": str(_detect_step(resp)),
@@ -191,7 +204,7 @@ async def _do_full_anonymous_submit(client: AsyncClient) -> tuple[str, str]:
     assert resp.status_code == 200
     csrf = _get_csrf(resp)
 
-    # Step 3/4: description
+    # Step 4: description
     resp = await client.post("/submit", data={
         "csrf_token": csrf,
         "step": str(_detect_step(resp)),
@@ -201,7 +214,7 @@ async def _do_full_anonymous_submit(client: AsyncClient) -> tuple[str, str]:
     assert resp.status_code == 200
     csrf = _get_csrf(resp)
 
-    # Step 4/5: attachments (skip)
+    # Step 5: attachments (skip)
     resp = await client.post("/submit", data={
         "csrf_token": csrf,
         "step": str(_detect_step(resp)),
@@ -210,7 +223,7 @@ async def _do_full_anonymous_submit(client: AsyncClient) -> tuple[str, str]:
     assert resp.status_code == 200
     csrf = _get_csrf(resp)
 
-    # Step 5/6: review + final submit
+    # Step 6: review + final submit
     resp = await client.post("/submit", data={
         "csrf_token": csrf,
         "step": str(_detect_step(resp)),

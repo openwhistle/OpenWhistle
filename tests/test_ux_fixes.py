@@ -55,18 +55,40 @@ async def _login_admin(ac: AsyncClient, admin: AdminUser, totp_secret: str) -> N
     )
 
 
-# ─── UX #1: Browser validation (no novalidate) ────────────────────────────────
+def _wiz_csrf(text: str) -> str:
+    m = re.search(r'name="csrf_token" value="([^"]+)"', text)
+    return m.group(1) if m else ""
+
+
+def _wiz_step(text: str) -> int:
+    m = re.search(r'name="step" value="(\d+)"', text)
+    return int(m.group(1)) if m else 1
+
+
+# ─── UX #1: Browser validation ────────────────────────────────────────────────
 
 
 @pytest.mark.asyncio
-async def test_submit_form_has_no_novalidate(client: AsyncClient) -> None:
-    """Submit form must not carry novalidate — browser enforces required fields."""
+async def test_submit_step1_server_validates_mode_required(client: AsyncClient) -> None:
+    """Server-side validation: step 1 must re-render with an error when no mode is selected.
+
+    The wizard uses novalidate intentionally (server validates each step).
+    This test confirms the server enforces mode selection at step 1.
+    """
     resp = await client.get("/submit")
     assert resp.status_code == 200
-    # The opening form tag must not contain 'novalidate'
-    form_match = re.search(r"<form[^>]+action=\"/submit\"[^>]*>", resp.text)
-    assert form_match is not None, "Could not find /submit form tag"
-    assert "novalidate" not in form_match.group(0)
+    csrf = _wiz_csrf(resp.text)
+
+    # POST step 1 with no submission_mode — server must reject it
+    resp = await client.post("/submit", data={
+        "csrf_token": csrf,
+        "step": "1",
+        "action": "next",
+        "submission_mode": "",
+    })
+    assert resp.status_code == 200
+    # Must stay on mode-selection (submission_mode radios still present)
+    assert "submission_mode" in resp.text
 
 
 @pytest.mark.asyncio
@@ -80,13 +102,63 @@ async def test_status_form_has_no_novalidate(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_submit_form_fields_carry_required(client: AsyncClient) -> None:
-    """Category select and description textarea have the required attribute."""
-    resp = await client.get("/submit")
+async def test_submit_step3_category_field_carries_required(client: AsyncClient) -> None:
+    """Category select (step 3) must have the required attribute."""
+    # Walk through step 1 to reach step 3 (category), skipping step 2 if locations are active
+    get_resp = await client.get("/submit")
+    csrf = _wiz_csrf(get_resp.text)
+    resp = await client.post("/submit", data={
+        "csrf_token": csrf,
+        "step": "1",
+        "action": "next",
+        "submission_mode": "anonymous",
+    })
     assert resp.status_code == 200
-    # select#category
+
+    # Step 2 (location — conditional): skip if present by posting with empty location_id
+    if _wiz_step(resp.text) == 2:
+        csrf = _wiz_csrf(resp.text)
+        resp = await client.post("/submit", data={
+            "csrf_token": csrf,
+            "step": "2",
+            "action": "next",
+            "location_id": "",
+        })
+        assert resp.status_code == 200
+
+    # Now on step 3: select#category should have required
     assert re.search(r'<select[^>]+id="category"[^>]*required', resp.text)
-    # textarea#description
+
+
+@pytest.mark.asyncio
+async def test_submit_step4_description_field_carries_required(client: AsyncClient) -> None:
+    """Description textarea (step 4) must have the required attribute."""
+    # Walk steps 1 (mode), optional step 2 (location), step 3 (category) to reach step 4
+    get_resp = await client.get("/submit")
+    csrf = _wiz_csrf(get_resp.text)
+
+    # Step 1
+    resp = await client.post("/submit", data={
+        "csrf_token": csrf, "step": "1", "action": "next", "submission_mode": "anonymous",
+    })
+
+    # Step 2 (location — conditional): skip if present by posting with empty location_id
+    if _wiz_step(resp.text) == 2:
+        csrf = _wiz_csrf(resp.text)
+        resp = await client.post("/submit", data={
+            "csrf_token": csrf, "step": "2", "action": "next", "location_id": "",
+        })
+
+    # Step 3 (category)
+    csrf = _wiz_csrf(resp.text)
+    step3_num = _wiz_step(resp.text)
+    resp = await client.post("/submit", data={
+        "csrf_token": csrf, "step": str(step3_num), "action": "next",
+        "category": "financial_fraud",
+    })
+
+    assert resp.status_code == 200
+    # Step 4: textarea#description should have required
     assert re.search(r'<textarea[^>]+id="description"[^>]*required', resp.text)
 
 
@@ -206,7 +278,7 @@ async def test_deleted_report_session_falls_back_to_login(
 
     async with AsyncClient(
         transport=ASGITransport(app=ow_app),
-        base_url="http://test",
+        base_url="https://test",
         follow_redirects=True,
         cookies={"ow-status-session": session_key},
     ) as wb_client:

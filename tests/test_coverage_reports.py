@@ -25,25 +25,66 @@ from httpx import AsyncClient
 # ─── helpers ──────────────────────────────────────────────────────────────────
 
 
-async def _submit_report(client: AsyncClient, description: str = "") -> tuple[str, str]:
-    """Submit a report and return (case_number, pin)."""
+def _wiz_csrf(text: str) -> str:
+    m = re.search(r'name="csrf_token" value="([^"]+)"', text)
+    return m.group(1) if m else ""
+
+
+def _wiz_step(text: str) -> int:
+    m = re.search(r'name="step" value="(\d+)"', text)
+    return int(m.group(1)) if m else 1
+
+
+async def _walk_to_description_step(
+    client: AsyncClient, category: str = "financial_fraud"
+) -> tuple[str, int]:
+    """Walk the wizard through steps 1-3 (mode + optional location + category).
+
+    Returns (csrf_for_step4, step4_number) ready for description submission.
+    Handles both with-locations and without-locations wizard flows.
+    """
+    # Step 1: mode selection
     get_resp = await client.get("/submit")
-    csrf = get_resp.cookies.get("ow_csrf")
-    resp = await client.post(
-        "/submit",
-        data={
-            "category": "financial_fraud",
-            "description": description or "A" * 50,
+    csrf = _wiz_csrf(get_resp.text)
+    resp = await client.post("/submit", data={
+        "csrf_token": csrf,
+        "step": "1",
+        "action": "next",
+        "submission_mode": "anonymous",
+    })
+
+    # Step 2 (location — conditional): skip if present by posting with empty location_id
+    if _wiz_step(resp.text) == 2:
+        csrf = _wiz_csrf(resp.text)
+        resp = await client.post("/submit", data={
             "csrf_token": csrf,
-        },
+            "step": "2",
+            "action": "next",
+            "location_id": "",
+        })
+
+    # Step 3: category
+    csrf = _wiz_csrf(resp.text)
+    resp = await client.post("/submit", data={
+        "csrf_token": csrf,
+        "step": str(_wiz_step(resp.text)),
+        "action": "next",
+        "category": category,
+    })
+
+    # Now on step 4 (description)
+    return _wiz_csrf(resp.text), _wiz_step(resp.text)
+
+
+async def _submit_report(client: AsyncClient, description: str = "") -> tuple[str, str]:
+    """Submit a report via the multi-step wizard and return (case_number, pin)."""
+    from conftest import wizard_submit
+
+    return await wizard_submit(
+        client,
+        category="financial_fraud",
+        description=description or "A" * 50,
     )
-    case_m = re.search(r"OW-\d{4}-\d{5}", resp.text)
-    pin_m = re.search(
-        r"([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})", resp.text
-    )
-    case_number = case_m.group(0) if case_m else ""
-    pin = pin_m.group(1) if pin_m else ""
-    return case_number, pin
 
 
 async def _login_whistleblower(
@@ -132,11 +173,10 @@ async def test_set_language_sets_lang_cookie(client: AsyncClient) -> None:
 @pytest.mark.asyncio
 async def test_submit_description_below_minimum_shows_error(client: AsyncClient) -> None:
     """9-character description (< 10) must render an error, not create a report."""
-    get_resp = await client.get("/submit")
-    csrf = get_resp.cookies.get("ow_csrf")
+    csrf, step = await _walk_to_description_step(client)
     resp = await client.post(
         "/submit",
-        data={"category": "financial_fraud", "description": "A" * 9, "csrf_token": csrf},
+        data={"step": str(step), "action": "next", "description": "A" * 9, "csrf_token": csrf},
     )
     assert resp.status_code == 200
     assert "at least 10" in resp.text
@@ -145,37 +185,28 @@ async def test_submit_description_below_minimum_shows_error(client: AsyncClient)
 @pytest.mark.asyncio
 async def test_submit_description_exact_minimum_succeeds(client: AsyncClient) -> None:
     """10-character description (== minimum) must create a report successfully."""
-    get_resp = await client.get("/submit")
-    csrf = get_resp.cookies.get("ow_csrf")
-    resp = await client.post(
-        "/submit",
-        data={"category": "financial_fraud", "description": "A" * 10, "csrf_token": csrf},
-    )
-    assert resp.status_code == 200
-    assert "OW-" in resp.text
+    from conftest import wizard_submit
+
+    case_number, pin = await wizard_submit(client, description="A" * 10)
+    assert "OW-" in case_number
 
 
 @pytest.mark.asyncio
 async def test_submit_description_exact_maximum_succeeds(client: AsyncClient) -> None:
     """10,000-character description (== maximum) must create a report successfully."""
-    get_resp = await client.get("/submit")
-    csrf = get_resp.cookies.get("ow_csrf")
-    resp = await client.post(
-        "/submit",
-        data={"category": "financial_fraud", "description": "B" * 10000, "csrf_token": csrf},
-    )
-    assert resp.status_code == 200
-    assert "OW-" in resp.text
+    from conftest import wizard_submit
+
+    case_number, pin = await wizard_submit(client, description="B" * 10000)
+    assert "OW-" in case_number
 
 
 @pytest.mark.asyncio
 async def test_submit_description_above_maximum_shows_error(client: AsyncClient) -> None:
     """10,001-character description (> 10,000) must render an error."""
-    get_resp = await client.get("/submit")
-    csrf = get_resp.cookies.get("ow_csrf")
+    csrf, step = await _walk_to_description_step(client)
     resp = await client.post(
         "/submit",
-        data={"category": "financial_fraud", "description": "C" * 10001, "csrf_token": csrf},
+        data={"step": str(step), "action": "next", "description": "C" * 10001, "csrf_token": csrf},
     )
     assert resp.status_code == 200
     assert "10,000" in resp.text or "exceed" in resp.text
@@ -184,11 +215,31 @@ async def test_submit_description_above_maximum_shows_error(client: AsyncClient)
 @pytest.mark.asyncio
 async def test_submit_no_category_shows_error(client: AsyncClient) -> None:
     """Missing category must render an error, not create a report."""
+    # Walk to step 1, then post step 3 with blank category
     get_resp = await client.get("/submit")
-    csrf = get_resp.cookies.get("ow_csrf")
+    csrf = _wiz_csrf(get_resp.text)
+    # Complete step 1 (mode)
+    resp = await client.post("/submit", data={
+        "csrf_token": csrf,
+        "step": "1",
+        "action": "next",
+        "submission_mode": "anonymous",
+    })
+    # Step 2 (location — conditional): skip if present
+    if _wiz_step(resp.text) == 2:
+        csrf = _wiz_csrf(resp.text)
+        resp = await client.post("/submit", data={
+            "csrf_token": csrf,
+            "step": "2",
+            "action": "next",
+            "location_id": "",
+        })
+    # Try step 3 with empty category
+    csrf = _wiz_csrf(resp.text)
+    step3 = _wiz_step(resp.text)
     resp = await client.post(
         "/submit",
-        data={"category": "", "description": "A valid description here", "csrf_token": csrf},
+        data={"step": str(step3), "action": "next", "category": "", "csrf_token": csrf},
     )
     assert resp.status_code == 200
     assert "category" in resp.text.lower()
