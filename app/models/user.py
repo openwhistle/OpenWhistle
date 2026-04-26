@@ -30,7 +30,7 @@ class AdminUser(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     username: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
-    password_hash: Mapped[str] = mapped_column(String(72), nullable=False)
+    password_hash: Mapped[str | None] = mapped_column(String(72), nullable=True)
 
     # TOTP (mandatory)
     totp_secret: Mapped[str] = mapped_column(String(32), nullable=False)
@@ -45,6 +45,9 @@ class AdminUser(Base):
     # OIDC (optional — when set, password login is disabled for this user)
     oidc_sub: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
     oidc_issuer: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    # LDAP (optional — when set, password is verified via LDAP bind, not local hash)
+    ldap_username: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

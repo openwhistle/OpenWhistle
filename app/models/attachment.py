@@ -32,7 +32,8 @@ class Attachment(Base):
     filename: Mapped[str] = mapped_column(String(255), nullable=False)
     content_type: Mapped[str] = mapped_column(String(128), nullable=False)
     size: Mapped[int] = mapped_column(Integer, nullable=False)
-    data: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    data: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    storage_key: Mapped[str | None] = mapped_column(String(512), nullable=True)
     uploaded_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

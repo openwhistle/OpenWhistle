@@ -13,8 +13,11 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.csrf import CSRFMiddleware
+from app.logging_config import configure_logging
 from app.middleware import SecurityMiddleware
 from app.redis_client import close_redis
+
+configure_logging(settings.log_level, settings.log_format)
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +55,20 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         await seed_demo_data()
         logger.info("Demo data seeded.")
 
+    scheduler = None
+    if settings.reminder_enabled:
+        from apscheduler.schedulers.asyncio import AsyncIOScheduler
+        from app.services.reminders import send_sla_reminders
+
+        scheduler = AsyncIOScheduler()
+        scheduler.add_job(send_sla_reminders, "interval", minutes=30, id="sla_reminders")
+        scheduler.start()
+        logger.info("SLA reminder scheduler started (interval: 30 min).")
+
     yield
+
+    if scheduler is not None:
+        scheduler.shutdown(wait=False)
 
     await close_redis()
 

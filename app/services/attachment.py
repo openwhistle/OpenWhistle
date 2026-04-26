@@ -115,16 +115,37 @@ async def create_attachments(
     report_id: uuid.UUID,
     file_tuples: list[tuple[str, str, bytes]],
 ) -> list[Attachment]:
-    """Persist a list of (filename, content_type, data) tuples as Attachment rows."""
+    """Persist a list of (filename, content_type, data) tuples as Attachment rows.
+
+    When STORAGE_BACKEND=s3 the binary data is uploaded to S3 and the DB row
+    stores only the storage_key; data is NULL. For STORAGE_BACKEND=db the binary
+    data is stored in the LargeBinary column as before.
+    """
+    from app.services.storage import get_storage_backend, generate_storage_key
+    from app.config import settings
+
+    backend = get_storage_backend()
+    use_s3 = settings.storage_backend == "s3"
+
     attachments = []
     for filename, content_type, data in file_tuples:
+        att_id = uuid.uuid4()
+        storage_key: str | None = None
+        db_data: bytes | None = data
+
+        if use_s3:
+            storage_key = generate_storage_key(filename)
+            await backend.put(storage_key, data, content_type)
+            db_data = None
+
         att = Attachment(
-            id=uuid.uuid4(),
+            id=att_id,
             report_id=report_id,
             filename=filename,
             content_type=content_type,
             size=len(data),
-            data=data,
+            data=db_data,
+            storage_key=storage_key,
         )
         db.add(att)
         attachments.append(att)

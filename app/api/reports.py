@@ -143,8 +143,36 @@ async def set_language(
 
 
 @router.get("/health")
-async def health() -> dict[str, str]:
-    return {"status": "ok", "version": settings.app_version}
+async def health(
+    db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis),
+) -> Response:
+    from fastapi.responses import JSONResponse
+    from sqlalchemy import text
+
+    components: dict[str, str] = {}
+    healthy = True
+
+    try:
+        await db.execute(text("SELECT 1"))
+        components["database"] = "ok"
+    except Exception:
+        components["database"] = "error"
+        healthy = False
+
+    try:
+        await redis.ping()
+        components["redis"] = "ok"
+    except Exception:
+        components["redis"] = "error"
+        healthy = False
+
+    body = {
+        "status": "ok" if healthy else "degraded",
+        "version": settings.app_version,
+        "components": components,
+    }
+    return JSONResponse(body, status_code=200 if healthy else 503)
 
 
 @router.get("/", response_class=HTMLResponse, response_model=None)
@@ -671,9 +699,17 @@ async def whistleblower_download_attachment(
     if not attachment or str(attachment.report_id) != decoded_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
+    if attachment.storage_key:
+        from app.services.storage import get_storage_backend
+        data = await get_storage_backend().get(attachment.storage_key)
+    else:
+        if attachment.data is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+        data = attachment.data
+
     safe_name = attachment.filename.replace('"', "")
     return Response(
-        content=attachment.data,
+        content=data,
         media_type=attachment.content_type,
         headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
     )

@@ -1,0 +1,25 @@
+---
+# Example group variables for the openwhistle host group.
+# Copy to group_vars/openwhistle.yml and adjust values.
+# Store secrets in vault.yml (ansible-vault encrypt vault.yml).
+
+openwhistle_domain: whistle.example.com
+openwhistle_certbot_email: admin@example.com
+openwhistle_tls_enabled: true
+
+openwhistle_app_name: "ACME Corp Whistleblower System"
+openwhistle_app_public_url: "https://whistle.example.com"
+
+# Secrets — move to vault.yml and encrypt
+# openwhistle_secret_key: "changeme-generate-with-openssl-rand-hex-32"
+# openwhistle_db_password: "changeme"
+# openwhistle_redis_password: "changeme"
+
+# Notifications
+openwhistle_notify_email_enabled: "true"
+openwhistle_notify_email_to: "compliance@example.com"
+openwhistle_notify_email_from: "whistle@example.com"
+openwhistle_notify_smtp_host: smtp.example.com
+openwhistle_notify_smtp_port: 587
+# openwhistle_notify_smtp_user: "..."    # vault
+# openwhistle_notify_smtp_password: "..." # vault

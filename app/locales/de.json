@@ -94,6 +94,7 @@
   "login.submit": "Weiter →",
   "login.or": "oder",
   "login.sso": "Single Sign-On (SSO) →",
+  "login.ldap_active": "LDAP / Active Directory Authentifizierung aktiv",
 
   "mfa.eyebrow": "Identitätsverifizierung",
   "mfa.title": "Zwei-Faktor-Authentifizierung",

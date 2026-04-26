@@ -65,6 +65,175 @@ async def notify_reply_to_whistleblower(secure_email: str, app_public_url: str) 
         log.exception("Failed to send whistleblower reply notification (recipient redacted)")
 
 
+async def _send_reminder_email(
+    case_number: str, deadline_label: str, days_left: int, settings: object
+) -> None:
+    """Send an SLA reminder email to all configured admin recipients."""
+    import aiosmtplib
+
+    from app.config import Settings
+    cfg: Settings = settings  # type: ignore[assignment]
+
+    recipients = [r.strip() for r in cfg.notify_email_to.split(",") if r.strip()]
+    if not recipients:
+        return
+
+    dashboard_url = f"{cfg.app_public_url.rstrip('/')}/admin/dashboard"
+    subject = f"⚠ SLA reminder: {deadline_label} — {cfg.app_name}"
+    text_body = (
+        f"SLA reminder for {cfg.app_name}.\n\n"
+        f"Case number : {case_number}\n"
+        f"Deadline    : {deadline_label}\n"
+        f"Days left   : {days_left}\n\n"
+        f"Review the case: {dashboard_url}\n"
+    )
+
+    msg = MIMEText(text_body, "plain", "utf-8")
+    msg["Subject"] = subject
+    msg["From"] = cfg.notify_email_from
+    msg["To"] = ", ".join(recipients)
+
+    smtp_kwargs: dict[str, Any] = {
+        "hostname": cfg.notify_smtp_host,
+        "port": cfg.notify_smtp_port,
+        "use_tls": cfg.notify_smtp_ssl,
+        "start_tls": cfg.notify_smtp_tls and not cfg.notify_smtp_ssl,
+    }
+    if cfg.notify_smtp_user:
+        smtp_kwargs["username"] = cfg.notify_smtp_user
+    if cfg.notify_smtp_password:
+        smtp_kwargs["password"] = cfg.notify_smtp_password
+
+    try:
+        await aiosmtplib.send(msg, recipients=recipients, **smtp_kwargs)
+        log.info("SLA reminder email sent for %s (%s)", case_number, deadline_label)
+    except Exception:
+        log.exception("Failed to send SLA reminder email for %s", case_number)
+
+
+async def _send_reminder_webhook(
+    case_number: str, deadline_label: str, days_left: int, settings: object
+) -> None:
+    """POST an SLA reminder to the configured webhook URL."""
+    import httpx
+
+    from app.config import Settings
+    cfg: Settings = settings  # type: ignore[assignment]
+
+    dashboard_url = f"{cfg.app_public_url.rstrip('/')}/admin/dashboard"
+    payload = _build_reminder_payload(
+        case_number, deadline_label, days_left, cfg.notify_webhook_type,
+        cfg.app_name, dashboard_url,
+    )
+    body_bytes = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+
+    headers: dict[str, str] = {"Content-Type": "application/json"}
+    if cfg.notify_webhook_secret:
+        sig = hmac.new(
+            cfg.notify_webhook_secret.encode(),
+            body_bytes,
+            hashlib.sha256,
+        ).hexdigest()
+        headers["X-OpenWhistle-Signature"] = f"sha256={sig}"
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.post(cfg.notify_webhook_url, content=body_bytes, headers=headers)
+            resp.raise_for_status()
+        log.info("SLA reminder webhook sent for %s (%s)", case_number, deadline_label)
+    except Exception:
+        log.exception("Failed to send SLA reminder webhook for %s", case_number)
+
+
+def _build_reminder_payload(
+    case_number: str,
+    deadline_label: str,
+    days_left: int,
+    webhook_type: str,
+    app_name: str,
+    dashboard_url: str,
+) -> dict[str, Any]:
+    ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
+    days_text = f"{days_left} day{'s' if days_left != 1 else ''} remaining"
+
+    if webhook_type == "slack":
+        return {
+            "blocks": [
+                {
+                    "type": "header",
+                    "text": {"type": "plain_text", "text": f"⚠ SLA reminder — {app_name}"},
+                },
+                {
+                    "type": "section",
+                    "fields": [
+                        {"type": "mrkdwn", "text": f"*Case number:*\n`{case_number}`"},
+                        {"type": "mrkdwn", "text": f"*Deadline:*\n{deadline_label}"},
+                        {"type": "mrkdwn", "text": f"*Time left:*\n{days_text}"},
+                        {"type": "mrkdwn", "text": f"*Checked at:*\n{ts}"},
+                    ],
+                },
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "button",
+                            "text": {"type": "plain_text", "text": "Open dashboard →"},
+                            "url": dashboard_url,
+                            "style": "danger",
+                        }
+                    ],
+                },
+            ]
+        }
+
+    if webhook_type == "teams":
+        return {
+            "type": "message",
+            "attachments": [
+                {
+                    "contentType": "application/vnd.microsoft.card.adaptive",
+                    "content": {
+                        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                        "type": "AdaptiveCard",
+                        "version": "1.4",
+                        "body": [
+                            {
+                                "type": "TextBlock",
+                                "size": "Medium",
+                                "weight": "Bolder",
+                                "text": f"SLA reminder — {app_name}",
+                                "color": "Warning",
+                            },
+                            {
+                                "type": "FactSet",
+                                "facts": [
+                                    {"title": "Case number", "value": case_number},
+                                    {"title": "Deadline", "value": deadline_label},
+                                    {"title": "Time left", "value": days_text},
+                                ],
+                            },
+                        ],
+                        "actions": [
+                            {
+                                "type": "Action.OpenUrl",
+                                "title": "Open dashboard",
+                                "url": dashboard_url,
+                            }
+                        ],
+                    },
+                }
+            ],
+        }
+
+    return {
+        "event": "sla_reminder",
+        "case_number": case_number,
+        "deadline": deadline_label,
+        "days_left": days_left,
+        "timestamp": datetime.now(UTC).isoformat(),
+    }
+
+
 async def notify_new_report(case_number: str) -> None:
     """Send all enabled notifications for a newly submitted report.
 
@@ -164,6 +333,85 @@ async def _send_email(case_number: str, settings: object) -> None:
         log.exception("Failed to send notification email for %s", case_number)
 
 
+def _build_webhook_payload(
+    case_number: str, webhook_type: str, app_name: str, dashboard_url: str
+) -> dict[str, Any]:
+    """Build webhook payload in the format expected by the target service."""
+    ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
+
+    if webhook_type == "slack":
+        return {
+            "blocks": [
+                {
+                    "type": "header",
+                    "text": {"type": "plain_text", "text": f"🔔 New report — {app_name}"},
+                },
+                {
+                    "type": "section",
+                    "fields": [
+                        {"type": "mrkdwn", "text": f"*Case number:*\n`{case_number}`"},
+                        {"type": "mrkdwn", "text": f"*Received at:*\n{ts}"},
+                    ],
+                },
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "button",
+                            "text": {"type": "plain_text", "text": "Open dashboard →"},
+                            "url": dashboard_url,
+                            "style": "primary",
+                        }
+                    ],
+                },
+            ]
+        }
+
+    if webhook_type == "teams":
+        return {
+            "type": "message",
+            "attachments": [
+                {
+                    "contentType": "application/vnd.microsoft.card.adaptive",
+                    "content": {
+                        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                        "type": "AdaptiveCard",
+                        "version": "1.4",
+                        "body": [
+                            {
+                                "type": "TextBlock",
+                                "size": "Medium",
+                                "weight": "Bolder",
+                                "text": f"New report received — {app_name}",
+                            },
+                            {
+                                "type": "FactSet",
+                                "facts": [
+                                    {"title": "Case number", "value": case_number},
+                                    {"title": "Received at", "value": ts},
+                                ],
+                            },
+                        ],
+                        "actions": [
+                            {
+                                "type": "Action.OpenUrl",
+                                "title": "Open dashboard",
+                                "url": dashboard_url,
+                            }
+                        ],
+                    },
+                }
+            ],
+        }
+
+    # generic (default)
+    return {
+        "event": "new_report",
+        "case_number": case_number,
+        "timestamp": datetime.now(UTC).isoformat(),
+    }
+
+
 async def _send_webhook(case_number: str, settings: object) -> None:
     """POST a JSON notification to the configured webhook URL."""
     import httpx
@@ -171,11 +419,10 @@ async def _send_webhook(case_number: str, settings: object) -> None:
     from app.config import Settings
     cfg: Settings = settings  # type: ignore[assignment]
 
-    payload = {
-        "event": "new_report",
-        "case_number": case_number,
-        "timestamp": datetime.now(UTC).isoformat(),
-    }
+    dashboard_url = f"{cfg.app_public_url.rstrip('/')}/admin/dashboard"
+    payload = _build_webhook_payload(
+        case_number, cfg.notify_webhook_type, cfg.app_name, dashboard_url
+    )
     body_bytes = json.dumps(payload, separators=(",", ":")).encode("utf-8")
 
     headers: dict[str, str] = {"Content-Type": "application/json"}
@@ -191,6 +438,9 @@ async def _send_webhook(case_number: str, settings: object) -> None:
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.post(cfg.notify_webhook_url, content=body_bytes, headers=headers)
             resp.raise_for_status()
-        log.info("Webhook notification sent for %s (HTTP %s)", case_number, resp.status_code)
+        log.info(
+            "Webhook notification sent for %s (type=%s, HTTP %s)",
+            case_number, cfg.notify_webhook_type, resp.status_code,
+        )
     except Exception:
         log.exception("Failed to send webhook notification for %s", case_number)

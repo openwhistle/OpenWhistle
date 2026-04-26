@@ -1,0 +1,88 @@
+---
+# ── Deployment target ────────────────────────────────────────────────────────
+openwhistle_deploy_dir: /opt/openwhistle
+openwhistle_user: openwhistle
+openwhistle_group: openwhistle
+
+# ── Container image ──────────────────────────────────────────────────────────
+openwhistle_image: ghcr.io/openwhistle/openwhistle
+openwhistle_image_tag: latest
+
+# ── TLS / domain ─────────────────────────────────────────────────────────────
+openwhistle_domain: ""                     # e.g. whistle.example.com — required
+openwhistle_certbot_email: ""              # required when tls_enabled is true
+openwhistle_tls_enabled: true
+openwhistle_certbot_staging: false         # set true to test without rate limits
+
+# ── Core application secrets (MUST be overridden in vault) ───────────────────
+openwhistle_secret_key: ""                 # random 64-char hex string
+openwhistle_db_user: openwhistle
+openwhistle_db_password: ""               # override in vault
+openwhistle_db_name: openwhistle
+openwhistle_redis_password: ""            # override in vault
+
+# ── Application configuration ────────────────────────────────────────────────
+openwhistle_app_name: OpenWhistle
+openwhistle_app_public_url: "https://{{ openwhistle_domain }}"
+openwhistle_demo_mode: "false"
+openwhistle_submission_mode_enabled: "true"
+openwhistle_log_level: INFO
+openwhistle_log_format: json
+
+# ── OIDC (optional) ──────────────────────────────────────────────────────────
+openwhistle_oidc_enabled: "false"
+openwhistle_oidc_client_id: ""
+openwhistle_oidc_client_secret: ""
+openwhistle_oidc_server_metadata_url: ""
+openwhistle_oidc_redirect_uri: ""
+
+# ── LDAP / Active Directory (optional) ───────────────────────────────────────
+openwhistle_ldap_enabled: "false"
+openwhistle_ldap_server: ""
+openwhistle_ldap_port: 389
+openwhistle_ldap_use_ssl: "false"
+openwhistle_ldap_bind_dn: ""
+openwhistle_ldap_bind_password: ""
+openwhistle_ldap_base_dn: ""
+openwhistle_ldap_user_filter: "(uid={username})"
+openwhistle_ldap_attr_username: uid
+openwhistle_ldap_attr_email: mail
+
+# ── S3 attachment storage (optional — default: db) ───────────────────────────
+openwhistle_storage_backend: db           # "db" or "s3"
+openwhistle_s3_endpoint_url: ""
+openwhistle_s3_bucket_name: ""
+openwhistle_s3_access_key_id: ""
+openwhistle_s3_secret_access_key: ""
+openwhistle_s3_region: us-east-1
+openwhistle_s3_prefix: attachments/
+
+# ── SLA reminders ─────────────────────────────────────────────────────────────
+openwhistle_reminder_enabled: "false"
+openwhistle_reminder_ack_warn_days: 2
+openwhistle_reminder_feedback_warn_days: 30
+
+# ── Branding (optional) ───────────────────────────────────────────────────────
+openwhistle_brand_primary_color: "#0f4c81"
+openwhistle_brand_secondary_color: "#b07230"
+openwhistle_brand_logo_url: ""
+
+# ── Email notifications (optional) ───────────────────────────────────────────
+openwhistle_notify_email_enabled: "false"
+openwhistle_notify_email_to: ""
+openwhistle_notify_email_from: "openwhistle@localhost"
+openwhistle_notify_smtp_host: localhost
+openwhistle_notify_smtp_port: 587
+openwhistle_notify_smtp_user: ""
+openwhistle_notify_smtp_password: ""
+openwhistle_notify_smtp_tls: "true"
+openwhistle_notify_smtp_ssl: "false"
+
+# ── Webhook notifications (optional) ─────────────────────────────────────────
+openwhistle_notify_webhook_enabled: "false"
+openwhistle_notify_webhook_url: ""
+openwhistle_notify_webhook_secret: ""
+openwhistle_notify_webhook_type: generic   # "generic", "slack", or "teams"
+
+# ── Docker Compose pull policy ────────────────────────────────────────────────
+openwhistle_compose_pull: true             # pull latest image on each deploy

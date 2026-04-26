@@ -1,0 +1,34 @@
+---
+- name: Validate required variables
+  ansible.builtin.assert:
+    that:
+      - openwhistle_domain | length > 0
+      - openwhistle_secret_key | length > 0
+      - openwhistle_db_password | length > 0
+      - openwhistle_redis_password | length > 0
+      - not openwhistle_tls_enabled or openwhistle_certbot_email | length > 0
+    fail_msg: >
+      Required variables missing. Set openwhistle_domain, openwhistle_secret_key,
+      openwhistle_db_password, openwhistle_redis_password, and (if TLS enabled)
+      openwhistle_certbot_email.
+
+- name: Install Docker
+  ansible.builtin.import_tasks: docker.yml
+  tags: docker
+
+- name: Create system user and deploy directory
+  ansible.builtin.import_tasks: user.yml
+  tags: user
+
+- name: Deploy application files
+  ansible.builtin.import_tasks: deploy.yml
+  tags: deploy
+
+- name: Configure systemd service
+  ansible.builtin.import_tasks: systemd.yml
+  tags: systemd
+
+- name: Configure TLS with Certbot
+  ansible.builtin.import_tasks: certbot.yml
+  tags: certbot
+  when: openwhistle_tls_enabled | bool

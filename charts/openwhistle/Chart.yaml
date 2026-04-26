@@ -1,0 +1,19 @@
+apiVersion: v2
+name: openwhistle
+description: Secure, self-hosted whistleblower reporting platform (HinSchG / EU 2019/1937)
+type: application
+version: 0.5.0
+appVersion: "0.5.0"
+home: https://openwhistle.net
+sources:
+  - https://github.com/openwhistle/OpenWhistle
+maintainers:
+  - name: OpenWhistle Contributors
+    url: https://github.com/openwhistle/OpenWhistle
+keywords:
+  - whistleblower
+  - compliance
+  - hinschg
+  - reporting
+  - privacy
+icon: https://raw.githubusercontent.com/openwhistle/OpenWhistle/main/app/static/favicon.svg

@@ -155,6 +155,7 @@
   "login.submit": "Continuer →",
   "login.or": "ou",
   "login.sso": "Connexion unique (SSO) →",
+  "login.ldap_active": "Authentification LDAP / Active Directory active",
 
   "mfa.eyebrow": "Vérification d'identité",
   "mfa.title": "Authentification à deux facteurs",

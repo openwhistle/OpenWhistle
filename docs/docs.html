@@ -821,7 +821,7 @@
 
         <h3>Current version</h3>
         <p>
-          <strong>v0.4.0</strong> — Multi-step submission wizard, anonymous/confidential mode, multi-location support, French language, WCAG 2.1 AA. See the
+          <strong>v0.5.0</strong> — Health-check v2, structured JSON logging, Slack/Teams webhook, SLA reminders, S3 storage, LDAP/AD login, Helm chart, Ansible role. See the
           <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG</a>
           for a full list of changes.
         </p>
@@ -1121,6 +1121,18 @@
               <td>Public base URL of the application. Used to build dashboard links inside notification emails and webhooks. Set to your domain (e.g. <code>https://whistleblower.example.com</code>).</td>
               <td><code>http://localhost</code></td>
             </tr>
+            <tr>
+              <td><code class="env-key">LOG_LEVEL</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Logging verbosity. Accepted values: <code>DEBUG</code>, <code>INFO</code>, <code>WARNING</code>, <code>ERROR</code>, <code>CRITICAL</code>.</td>
+              <td><code>INFO</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">LOG_FORMAT</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Log output format. Use <code>json</code> for structured JSON (recommended for log aggregation pipelines) or <code>text</code> for human-readable output.</td>
+              <td><code>json</code></td>
+            </tr>
           </tbody>
         </table>
 
@@ -1228,6 +1240,169 @@
               <td><span class="env-required env-req-no">Optional</span></td>
               <td>HMAC-SHA256 signing secret. When set, each request carries an <code>X-OpenWhistle-Signature</code> header for verification.</td>
               <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">NOTIFY_WEBHOOK_TYPE</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Payload format for webhook notifications. <code>generic</code> sends a plain JSON object; <code>slack</code> sends a Slack Block Kit message; <code>teams</code> sends a Microsoft Teams Adaptive Card (v1.4).</td>
+              <td><code>generic</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 id="sla-reminders">SLA Reminders</h3>
+        <p>
+          OpenWhistle can automatically send reminders when HinSchG deadlines are approaching.
+          The background scheduler checks all open reports every 30 minutes. Redis dedup keys
+          prevent duplicate notifications during each warning window.
+        </p>
+        <table class="env-table">
+          <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code class="env-key">REMINDER_ENABLED</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Set to <code>true</code> to enable automatic SLA reminder notifications.</td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">REMINDER_ACK_WARN_DAYS</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Send an acknowledgement reminder this many days before the 7-day deadline expires.</td>
+              <td><code>2</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">REMINDER_FEEDBACK_WARN_DAYS</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Send a feedback reminder when this many days or fewer remain before the 3-month feedback deadline.</td>
+              <td><code>30</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 id="ldap">LDAP / Active Directory Login</h3>
+        <p>
+          Admin accounts can authenticate via corporate LDAP in addition to local credentials
+          and OIDC. On first login, an <code>AdminUser</code> record is auto-provisioned
+          (no local password). TOTP enrollment is still required after the first login.
+        </p>
+        <table class="env-table">
+          <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code class="env-key">LDAP_ENABLED</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Set to <code>true</code> to allow admin login via LDAP/AD.</td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">LDAP_SERVER</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Hostname or IP of the LDAP server (e.g. <code>ldap.example.com</code>).</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">LDAP_PORT</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>LDAP port. Use <code>389</code> for plain/STARTTLS or <code>636</code> for LDAPS.</td>
+              <td><code>389</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">LDAP_USE_SSL</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Set to <code>true</code> to use LDAPS (TLS from the start). Set port to <code>636</code>.</td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">LDAP_BIND_DN</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Distinguished name of the service account used to search the directory (e.g. <code>cn=svc-openwhistle,ou=service,dc=example,dc=com</code>).</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">LDAP_BIND_PASSWORD</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Password for the service account bind DN.</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">LDAP_BASE_DN</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Search base for user lookups (e.g. <code>ou=users,dc=example,dc=com</code>).</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">LDAP_USER_FILTER</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>LDAP search filter to locate a user entry. <code>{username}</code> is replaced with the entered username at runtime.</td>
+              <td><code>(uid={username})</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">LDAP_ATTR_USERNAME</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>LDAP attribute to use as the username in the provisioned admin record.</td>
+              <td><code>uid</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">LDAP_ATTR_EMAIL</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>LDAP attribute to read the user's email address from.</td>
+              <td><code>mail</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 id="s3-storage">S3-Compatible Attachment Storage</h3>
+        <p>
+          By default, file attachments are stored as binary data in PostgreSQL
+          (<code>STORAGE_BACKEND=db</code>). For large-scale deployments, set
+          <code>STORAGE_BACKEND=s3</code> to store new attachments in an S3-compatible
+          bucket. Existing DB-backed attachments are not migrated and continue to work.
+        </p>
+        <table class="env-table">
+          <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code class="env-key">STORAGE_BACKEND</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Storage backend for new attachments. <code>db</code> stores data in PostgreSQL; <code>s3</code> stores data in an S3-compatible bucket.</td>
+              <td><code>db</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">S3_ENDPOINT_URL</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Custom endpoint URL for S3-compatible services (e.g. MinIO, Hetzner Object Storage). Leave blank for AWS S3.</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">S3_BUCKET_NAME</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Name of the target S3 bucket. Required when <code>STORAGE_BACKEND=s3</code>.</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">S3_ACCESS_KEY_ID</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>AWS access key ID (or MinIO equivalent). Required when <code>STORAGE_BACKEND=s3</code>.</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">S3_SECRET_ACCESS_KEY</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>AWS secret access key (or MinIO equivalent). Required when <code>STORAGE_BACKEND=s3</code>.</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">S3_REGION</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>AWS region for the bucket (e.g. <code>eu-central-1</code>). Ignored for custom endpoints.</td>
+              <td><code>us-east-1</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">S3_PREFIX</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Key prefix for all stored objects (e.g. <code>attachments/</code>). Useful when sharing a bucket with other applications.</td>
+              <td><code>attachments/</code></td>
             </tr>
           </tbody>
         </table>

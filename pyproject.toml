@@ -41,6 +41,18 @@ dependencies = [
 
     # PDF generation (pure Python, no system packages required)
     "fpdf2>=2.8.0",
+
+    # Structured logging
+    "python-json-logger>=3.2.0",
+
+    # Background task scheduling (SLA reminders)
+    "apscheduler>=3.11.0",
+
+    # S3-compatible object storage (optional backend for attachments)
+    "boto3>=1.38.0",
+
+    # LDAP / Active Directory authentication (optional)
+    "ldap3>=2.9.0",
 ]
 
 [project.optional-dependencies]

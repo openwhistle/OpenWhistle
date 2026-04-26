@@ -1,0 +1,5 @@
+vault.yml
+inventory.ini
+inventory
+group_vars/openwhistle.yml
+.vault-pass

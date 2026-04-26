@@ -1,0 +1,107 @@
+worker_processes auto;
+error_log /dev/stderr warn;
+pid /tmp/nginx.pid;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    # Privacy: disable ALL access logging — never log IP addresses
+    access_log off;
+    log_not_found off;
+    server_tokens off;
+
+    upstream openwhistle {
+        server app:4009;
+        keepalive 32;
+    }
+
+{% if openwhistle_tls_enabled | bool %}
+    # HTTP → HTTPS redirect
+    server {
+        listen 80;
+        server_name {{ openwhistle_domain }};
+        return 301 https://$host$request_uri;
+    }
+
+    server {
+        listen 443 ssl http2;
+        server_name {{ openwhistle_domain }};
+
+        ssl_certificate     /etc/letsencrypt/live/{{ openwhistle_domain }}/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/{{ openwhistle_domain }}/privkey.pem;
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_prefer_server_ciphers off;
+        ssl_session_cache shared:SSL:10m;
+        ssl_session_timeout 1d;
+
+        add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+        add_header X-Content-Type-Options nosniff always;
+        add_header X-Frame-Options SAMEORIGIN always;
+        add_header Referrer-Policy no-referrer always;
+
+        # Strip ALL IP-forwarding headers for whistleblower anonymity
+        proxy_set_header X-Forwarded-For     "";
+        proxy_set_header X-Real-IP           "";
+        proxy_set_header Forwarded           "";
+        proxy_set_header X-Client-IP         "";
+        proxy_set_header X-Cluster-Client-IP "";
+        proxy_set_header True-Client-IP      "";
+        proxy_set_header CF-Connecting-IP    "";
+
+        proxy_set_header Host              $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+
+        location / {
+            proxy_pass http://openwhistle;
+            proxy_read_timeout 60s;
+            proxy_connect_timeout 10s;
+            proxy_send_timeout 60s;
+        }
+
+        location /static/ {
+            proxy_pass http://openwhistle;
+            expires 30d;
+            add_header Cache-Control "public, immutable";
+        }
+    }
+{% else %}
+    server {
+        listen 80;
+        server_name {{ openwhistle_domain }};
+
+        # Strip ALL IP-forwarding headers for whistleblower anonymity
+        proxy_set_header X-Forwarded-For     "";
+        proxy_set_header X-Real-IP           "";
+        proxy_set_header Forwarded           "";
+        proxy_set_header X-Client-IP         "";
+        proxy_set_header X-Cluster-Client-IP "";
+        proxy_set_header True-Client-IP      "";
+        proxy_set_header CF-Connecting-IP    "";
+
+        proxy_set_header Host              $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+
+        location / {
+            proxy_pass http://openwhistle;
+            proxy_read_timeout 60s;
+            proxy_connect_timeout 10s;
+            proxy_send_timeout 60s;
+        }
+
+        location /static/ {
+            proxy_pass http://openwhistle;
+            expires 30d;
+            add_header Cache-Control "public, immutable";
+        }
+    }
+{% endif %}
+}

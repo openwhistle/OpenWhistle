@@ -87,6 +87,21 @@ zero vendor lock-in, and privacy-first by design.
   Redis session data. DSGVO-compliant.
 - **DSGVO compliant** — All resources are self-hosted. No external CDN calls, no tracking.
 - **Multi-registry Docker** — Published to GHCR, Docker Hub, and Quay.io on every release.
+- **Health-check v2** — `/health` reports database and Redis status; suitable for Kubernetes
+  liveness and readiness probes.
+- **Structured JSON logging** — `LOG_FORMAT=json` produces structured log output for aggregation
+  pipelines; `LOG_FORMAT=text` for human-readable development output.
+- **Slack / Teams webhooks** — `NOTIFY_WEBHOOK_TYPE` selects Block Kit (Slack) or Adaptive Card
+  (Teams) payload formats so no custom integration work is needed.
+- **SLA reminders** — Background scheduler automatically sends reminders when the 7-day and
+  3-month HinSchG deadlines approach; Redis dedup keys prevent duplicate notifications.
+- **S3-compatible storage** — Optional `STORAGE_BACKEND=s3` routes new attachments to any
+  S3-compatible bucket (AWS, MinIO, Hetzner Object Storage) instead of PostgreSQL BLOBs.
+- **LDAP / Active Directory login** — Admin accounts can authenticate via corporate LDAP;
+  first login auto-provisions the user; TOTP enrollment still required.
+- **Helm chart** — Official `charts/openwhistle/` Helm chart for Kubernetes deployments.
+- **Ansible role** — Official `ansible/roles/openwhistle/` Ansible role for bare-metal / VM
+  deployments with Docker CE, systemd unit, and optional Certbot TLS.
 
 ---
 

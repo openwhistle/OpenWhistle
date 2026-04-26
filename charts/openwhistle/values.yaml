@@ -1,0 +1,92 @@
+# Default values for openwhistle.
+# Override these in your own values file or via --set on the command line.
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/openwhistle/openwhistle
+  pullPolicy: IfNotPresent
+  tag: ""  # defaults to Chart.appVersion
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 4009
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: whistleblower.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+
+# Application configuration — all values end up as environment variables.
+config:
+  appName: "OpenWhistle"
+  demoMode: "false"
+  logLevel: "INFO"
+  logFormat: "json"
+  appPublicUrl: "https://whistleblower.example.com"
+  submissionModeEnabled: "true"
+  reminderEnabled: "false"
+  reminderAckWarnDays: "2"
+  reminderFeedbackWarnDays: "30"
+  storageBackend: "db"
+  ldapEnabled: "false"
+  oidcEnabled: "false"
+  notifyEmailEnabled: "false"
+  notifyWebhookEnabled: "false"
+  notifyWebhookType: "generic"
+
+# Secrets — these must be provided; they are not defaulted.
+# Create a Kubernetes Secret and reference it, or use an external secrets operator.
+secrets:
+  # Name of an existing Secret containing the keys listed below.
+  # Leave blank to let the chart create a Secret from the values below (not recommended for prod).
+  existingSecret: ""
+  secretKey: ""         # required — generate with: openssl rand -hex 32
+  databaseUrl: ""       # required — postgresql+asyncpg://user:pass@host:5432/db
+  redisUrl: ""          # required — redis://host:6379/0
+  smtpPassword: ""
+  webhookSecret: ""
+  s3SecretAccessKey: ""
+  ldapBindPassword: ""
+  oidcClientSecret: ""
+
+# External PostgreSQL (required — chart does not bundle a DB)
+postgresql:
+  host: ""
+  port: 5432
+  database: openwhistle
+  username: openwhistle
+
+# External Redis (required — chart does not bundle Redis)
+redis:
+  host: ""
+  port: 6379
+  database: 0
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

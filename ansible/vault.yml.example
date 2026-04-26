@@ -1,0 +1,27 @@
+---
+# Ansible Vault secrets — copy to vault.yml and encrypt:
+#   ansible-vault encrypt vault.yml
+#
+# Generate a strong secret_key with:
+#   openssl rand -hex 32
+
+openwhistle_secret_key: "CHANGE_ME_generate_with_openssl_rand_hex_32"
+openwhistle_db_password: "CHANGE_ME_strong_database_password"
+openwhistle_redis_password: "CHANGE_ME_strong_redis_password"
+
+# Optional: OIDC client secret
+# openwhistle_oidc_client_secret: ""
+
+# Optional: LDAP service account password
+# openwhistle_ldap_bind_password: ""
+
+# Optional: SMTP credentials
+# openwhistle_notify_smtp_user: ""
+# openwhistle_notify_smtp_password: ""
+
+# Optional: Webhook HMAC signing secret
+# openwhistle_notify_webhook_secret: ""
+
+# Optional: S3 credentials
+# openwhistle_s3_access_key_id: ""
+# openwhistle_s3_secret_access_key: ""

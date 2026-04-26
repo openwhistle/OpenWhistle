@@ -28,7 +28,7 @@ os.environ.setdefault("DEMO_MODE", "false")
 from app.database import Base, get_db  # noqa: E402
 from app.main import app  # noqa: E402
 
-_ENUM_TYPES = ["reportcategory", "reportstatus", "reportsender", "submissionmode"]
+_ENUM_TYPES = ["reportcategory", "reportstatus", "reportsender", "submissionmode", "adminrole"]
 
 # Step number for the location step in the wizard (only active when locations exist)
 _STEP_LOCATION = 2

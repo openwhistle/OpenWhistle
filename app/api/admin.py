@@ -520,9 +520,17 @@ async def admin_download_attachment(
     if not attachment or attachment.report_id != report_id:
         raise HTTPException(status_code=404)
 
+    if attachment.storage_key:
+        from app.services.storage import get_storage_backend
+        data = await get_storage_backend().get(attachment.storage_key)
+    else:
+        if attachment.data is None:
+            raise HTTPException(status_code=404)
+        data = attachment.data
+
     safe_name = attachment.filename.replace('"', "")
     return Response(
-        content=attachment.data,
+        content=data,
         media_type=attachment.content_type,
         headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
     )

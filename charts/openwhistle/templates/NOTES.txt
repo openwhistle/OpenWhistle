@@ -1,0 +1,18 @@
+OpenWhistle {{ .Chart.AppVersion }} has been deployed.
+
+{{- if .Values.ingress.enabled }}
+Access the application at:
+{{- range .Values.ingress.hosts }}
+  https://{{ .host }}
+{{- end }}
+{{- else }}
+The application is not exposed via Ingress. To access it locally:
+  kubectl port-forward svc/{{ include "openwhistle.fullname" . }} 4009:{{ .Values.service.port }}
+  Open http://localhost:4009
+{{- end }}
+
+First-time setup:
+  1. Open /setup to create the initial admin account with TOTP.
+  2. The setup wizard disables itself permanently after completion.
+
+Documentation: https://openwhistle.net/docs.html

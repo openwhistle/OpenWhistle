@@ -1,0 +1,18 @@
+---
+- name: Install systemd service unit
+  ansible.builtin.template:
+    src: openwhistle.service.j2
+    dest: /etc/systemd/system/openwhistle.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart openwhistle
+
+- name: Enable and start openwhistle service
+  ansible.builtin.systemd:
+    name: openwhistle
+    enabled: true
+    state: started
+    daemon_reload: true

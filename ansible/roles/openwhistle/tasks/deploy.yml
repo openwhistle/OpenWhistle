@@ -1,0 +1,35 @@
+---
+- name: Render .env file
+  ansible.builtin.template:
+    src: env.j2
+    dest: "{{ openwhistle_deploy_dir }}/.env"
+    owner: "{{ openwhistle_user }}"
+    group: "{{ openwhistle_group }}"
+    mode: "0640"
+  notify: restart openwhistle
+
+- name: Render nginx.conf
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: "{{ openwhistle_deploy_dir }}/nginx/nginx.conf"
+    owner: "{{ openwhistle_user }}"
+    group: "{{ openwhistle_group }}"
+    mode: "0640"
+  notify: restart openwhistle
+
+- name: Render docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ openwhistle_deploy_dir }}/docker-compose.yml"
+    owner: "{{ openwhistle_user }}"
+    group: "{{ openwhistle_group }}"
+    mode: "0640"
+  notify: restart openwhistle
+
+- name: Pull latest Docker image
+  community.docker.docker_image:
+    name: "{{ openwhistle_image }}:{{ openwhistle_image_tag }}"
+    source: pull
+    force_source: "{{ openwhistle_compose_pull }}"
+  when: openwhistle_compose_pull | bool
+  notify: restart openwhistle

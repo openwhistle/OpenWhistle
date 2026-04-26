@@ -63,6 +63,13 @@
                 </a>
             </div>
             {% endif %}
+            {% if ldap_enabled %}
+            <div style="margin-top:0.75rem;text-align:center;">
+                <span style="display:inline-block;font-size:0.72rem;color:var(--text-muted);background:var(--surface-2,var(--bg-secondary));border:1px solid var(--border);border-radius:4px;padding:0.2rem 0.6rem;">
+                    {{ t('login.ldap_active') }}
+                </span>
+            </div>
+            {% endif %}
         </div>
 
     </div>

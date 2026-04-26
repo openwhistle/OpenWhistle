@@ -1,0 +1,30 @@
+[Unit]
+Description=OpenWhistle whistleblower platform
+Documentation=https://github.com/openwhistle/OpenWhistle
+Requires=docker.service
+After=docker.service network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory={{ openwhistle_deploy_dir }}
+User={{ openwhistle_user }}
+Group={{ openwhistle_group }}
+
+# Bring up the stack; --wait blocks until all containers are healthy
+ExecStart=/usr/bin/docker compose up --detach --wait --remove-orphans
+ExecStop=/usr/bin/docker compose down
+
+# On failure, give compose 30 s to stop cleanly before killing it
+TimeoutStopSec=30
+Restart=on-failure
+RestartSec=10s
+
+# Harden the service unit
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths={{ openwhistle_deploy_dir }}
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

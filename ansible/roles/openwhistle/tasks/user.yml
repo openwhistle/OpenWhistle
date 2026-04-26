@@ -1,0 +1,33 @@
+---
+- name: Create openwhistle system group
+  ansible.builtin.group:
+    name: "{{ openwhistle_group }}"
+    system: true
+    state: present
+
+- name: Create openwhistle system user
+  ansible.builtin.user:
+    name: "{{ openwhistle_user }}"
+    group: "{{ openwhistle_group }}"
+    groups: docker
+    system: true
+    home: "{{ openwhistle_deploy_dir }}"
+    create_home: false
+    shell: /usr/sbin/nologin
+    state: present
+
+- name: Create deployment directory
+  ansible.builtin.file:
+    path: "{{ openwhistle_deploy_dir }}"
+    owner: "{{ openwhistle_user }}"
+    group: "{{ openwhistle_group }}"
+    mode: "0750"
+    state: directory
+
+- name: Create nginx config directory
+  ansible.builtin.file:
+    path: "{{ openwhistle_deploy_dir }}/nginx"
+    owner: "{{ openwhistle_user }}"
+    group: "{{ openwhistle_group }}"
+    mode: "0750"
+    state: directory

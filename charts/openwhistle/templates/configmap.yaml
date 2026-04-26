@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "openwhistle.fullname" . }}-config
+  labels:
+    {{- include "openwhistle.labels" . | nindent 4 }}
+data:
+  APP_NAME: {{ .Values.config.appName | quote }}
+  DEMO_MODE: {{ .Values.config.demoMode | quote }}
+  LOG_LEVEL: {{ .Values.config.logLevel | quote }}
+  LOG_FORMAT: {{ .Values.config.logFormat | quote }}
+  APP_PUBLIC_URL: {{ .Values.config.appPublicUrl | quote }}
+  SUBMISSION_MODE_ENABLED: {{ .Values.config.submissionModeEnabled | quote }}
+  REMINDER_ENABLED: {{ .Values.config.reminderEnabled | quote }}
+  REMINDER_ACK_WARN_DAYS: {{ .Values.config.reminderAckWarnDays | quote }}
+  REMINDER_FEEDBACK_WARN_DAYS: {{ .Values.config.reminderFeedbackWarnDays | quote }}
+  STORAGE_BACKEND: {{ .Values.config.storageBackend | quote }}
+  LDAP_ENABLED: {{ .Values.config.ldapEnabled | quote }}
+  OIDC_ENABLED: {{ .Values.config.oidcEnabled | quote }}
+  NOTIFY_EMAIL_ENABLED: {{ .Values.config.notifyEmailEnabled | quote }}
+  NOTIFY_WEBHOOK_ENABLED: {{ .Values.config.notifyWebhookEnabled | quote }}
+  NOTIFY_WEBHOOK_TYPE: {{ .Values.config.notifyWebhookType | quote }}

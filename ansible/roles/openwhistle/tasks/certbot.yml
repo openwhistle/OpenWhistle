@@ -1,0 +1,42 @@
+---
+- name: Install Certbot and nginx plugin
+  ansible.builtin.apt:
+    name:
+      - certbot
+      - python3-certbot-nginx
+    state: present
+    update_cache: true
+  when: ansible_os_family == "Debian"
+
+- name: Check if certificate already exists
+  ansible.builtin.stat:
+    path: /etc/letsencrypt/live/{{ openwhistle_domain }}/fullchain.pem
+  register: _cert_stat
+
+- name: Obtain initial certificate (standalone, before nginx runs)
+  ansible.builtin.command:
+    cmd: >-
+      certbot certonly
+      --standalone
+      --non-interactive
+      --agree-tos
+      --email {{ openwhistle_certbot_email }}
+      --domain {{ openwhistle_domain }}
+      {% if openwhistle_certbot_staging | bool %}--staging{% endif %}
+  when: not _cert_stat.stat.exists
+  notify: restart openwhistle
+
+- name: Install Certbot renewal systemd timer
+  ansible.builtin.command:
+    cmd: systemctl enable --now certbot.timer
+  changed_when: false
+
+- name: Configure Certbot renewal deploy hook to restart openwhistle
+  ansible.builtin.copy:
+    dest: /etc/letsencrypt/renewal-hooks/deploy/restart-openwhistle.sh
+    content: |
+      #!/bin/sh
+      systemctl restart openwhistle
+    owner: root
+    group: root
+    mode: "0755"

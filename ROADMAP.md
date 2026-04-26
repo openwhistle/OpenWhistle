@@ -75,38 +75,38 @@ feedback — open an issue to discuss anything here.
 
 ---
 
-## v0.5.0 — Notifications, Integrations & Reliability
+## v0.5.0 — Notifications, Integrations & Reliability ✓ Released 2026-04-26
 
-> Target: production-grade operations
+> All items shipped. See [CHANGELOG.md](CHANGELOG.md#050--2026-04-26) for details.
 
 ### Notifications
 
-- [ ] **Follow-up / reminder system** — configurable automatic reminders when
-  SLA deadlines approach (7-day acknowledgement, 3-month feedback); sent via
-  e-mail or webhook to assigned admin
-- [ ] **Whistleblower reply notification** — if the whistleblower provided a
-  secure contact, notify them when the admin posts a new message
-- [ ] **Slack / Teams webhook** — pre-built webhook payload formatter for Slack
-  and Microsoft Teams so no custom integration work is needed by the operator
+- [x] **Follow-up / reminder system** — APScheduler fires every 30 min; Redis
+  dedup keys prevent duplicate notifications; `REMINDER_ENABLED`,
+  `REMINDER_ACK_WARN_DAYS`, `REMINDER_FEEDBACK_WARN_DAYS` env vars
+- [x] **Whistleblower reply notification** — optional secure-contact email
+  triggered when admin posts a reply (shipped in v0.4.0)
+- [x] **Slack / Teams webhook** — `NOTIFY_WEBHOOK_TYPE` selects Block Kit
+  (Slack) or Adaptive Card v1.4 (Teams) payload
 
 ### Integrations
 
-- [ ] **S3-compatible attachment storage** — optional external object storage
-  (AWS S3, MinIO, Hetzner Object Storage) for attachments instead of database
-  BLOBs; required for large-scale deployments
-- [ ] **LDAP / Active Directory login** — admin accounts can authenticate via
-  corporate LDAP in addition to local credentials and OIDC
+- [x] **S3-compatible attachment storage** — `STORAGE_BACKEND=s3` with
+  `S3_*` env vars; boto3 wrapped in `asyncio.to_thread`; backward-compatible
+  DB migration makes `attachments.data` nullable
+- [x] **LDAP / Active Directory login** — `LDAP_ENABLED=true`; two-phase
+  bind via `ldap3`; auto-provisions `AdminUser` on first login
 
 ### Reliability & Operations
 
-- [ ] **Health-check endpoint v2** — expose database and Redis connectivity in
-  `/health`; suitable for Kubernetes liveness and readiness probes
-- [ ] **Structured JSON logging** — replace plain-text logs with structured JSON
-  (timestamp, level, request ID, path) for log aggregation pipelines
-- [ ] **Helm chart** — official Helm chart for Kubernetes deployments; published
-  to GitHub Pages as a Helm repository
-- [ ] **Ansible role** — official Ansible role for bare-metal / VM deployments
-  (currently Hetzner demo uses a private playbook)
+- [x] **Health-check endpoint v2** — DB + Redis connectivity in `/health`;
+  HTTP 200/503 with `{"status":"ok"|"degraded","components":{...}}`
+- [x] **Structured JSON logging** — `LOG_LEVEL` / `LOG_FORMAT` env vars;
+  `python-json-logger` formatter; all uvicorn loggers reconfigured
+- [x] **Helm chart** — `charts/openwhistle/` with 8 templates; all v0.5.0
+  values exposed; liveness/readiness probes; HPA + Ingress support
+- [x] **Ansible role** — `ansible/roles/openwhistle/`; Docker CE + Compose
+  install; systemd unit; Certbot TLS; Jinja2 nginx config
 
 ---
 
@@ -228,3 +228,11 @@ feedback — open an issue to discuss anything here.
 - [x] HinSchG deadline display (7-day + 3-month) on whistleblower status page (v0.4.0)
 - [x] Full German i18n (388 keys) and French language addition (v0.4.0)
 - [x] WCAG 2.1 AA accessibility pass: ARIA, focus indicators, skip link (v0.4.0)
+- [x] Health-check endpoint v2: DB + Redis components in /health (v0.5.0)
+- [x] Structured JSON logging via LOG_LEVEL / LOG_FORMAT env vars (v0.5.0)
+- [x] Slack / Teams webhook payload formatters (v0.5.0)
+- [x] SLA reminder system with APScheduler + Redis dedup (v0.5.0)
+- [x] S3-compatible attachment storage backend (v0.5.0)
+- [x] LDAP / Active Directory login for admin accounts (v0.5.0)
+- [x] Official Helm chart for Kubernetes deployments (v0.5.0)
+- [x] Official Ansible role for bare-metal / VM deployments (v0.5.0)

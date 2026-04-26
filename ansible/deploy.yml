@@ -1,0 +1,22 @@
+---
+# OpenWhistle deployment playbook
+#
+# Usage:
+#   ansible-playbook -i inventory.ini deploy.yml
+#   ansible-playbook -i inventory.ini deploy.yml --tags deploy   # redeploy only
+#   ansible-playbook -i inventory.ini deploy.yml --tags certbot  # renew TLS cert
+#
+# Secrets should be stored in an Ansible Vault file and loaded via
+#   ansible-playbook ... --vault-password-file .vault-pass
+# or
+#   ansible-playbook ... --ask-vault-pass
+- name: Deploy OpenWhistle
+  hosts: openwhistle
+  become: true
+
+  vars_files:
+    - vault.yml   # contains openwhistle_secret_key, openwhistle_db_password,
+                  # openwhistle_redis_password, and any other secrets
+
+  roles:
+    - role: openwhistle

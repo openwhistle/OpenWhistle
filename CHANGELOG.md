@@ -7,6 +7,86 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-04-26
+
+### Added
+
+- **Health-check v2**: `/health` endpoint now queries the database (`SELECT 1`)
+  and Redis (`PING`) and reports per-component status; returns HTTP 200 with
+  `{"status":"ok"}` when all healthy, HTTP 503 with `{"status":"degraded"}` on
+  any failure; suitable for Kubernetes liveness and readiness probes
+- **Structured JSON logging**: `LOG_LEVEL` (default `INFO`) and `LOG_FORMAT`
+  (`json` or `text`, default `json`) environment variables; JSON output via
+  `python-json-logger`; all uvicorn loggers reconfigured uniformly at startup
+- **Slack / Teams webhook formatter**: `NOTIFY_WEBHOOK_TYPE` (`generic`, `slack`,
+  `teams`) selects the payload format; Slack uses Block Kit (header + fields +
+  action button); Teams uses Adaptive Cards (v1.4, FactSet + OpenUrl action);
+  both new-report and SLA-reminder notifications respect the setting
+- **SLA reminder system**: background scheduler (`APScheduler`, interval 30 min)
+  fires `send_sla_reminders()`; checks all non-closed reports for approaching
+  7-day acknowledgement deadline (`REMINDER_ACK_WARN_DAYS`, default 2 days
+  before expiry) and 3-month feedback deadline (`REMINDER_FEEDBACK_WARN_DAYS`,
+  default 30 days before expiry); Redis dedup keys (`reminder:ack:{case}`,
+  `reminder:feedback:{case}`) with 1-hour TTL prevent duplicate notifications;
+  enabled with `REMINDER_ENABLED=true`
+- **S3-compatible attachment storage**: `STORAGE_BACKEND=s3` routes new
+  attachments to an S3-compatible bucket (AWS S3, MinIO, Hetzner Object Storage)
+  via boto3 (sync calls wrapped in `asyncio.to_thread`); `S3_ENDPOINT_URL`,
+  `S3_BUCKET_NAME`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_REGION`,
+  `S3_PREFIX` configure the target; existing DB-backed attachments are
+  unaffected (backward-compatible migration makes `data` nullable, adds
+  `storage_key VARCHAR(512)`)
+- **LDAP / Active Directory login**: `LDAP_ENABLED=true` enables corporate
+  directory authentication for admin accounts; two-phase bind (service account
+  → user DN re-bind to verify password); `ldap3` runs synchronously in a thread
+  pool; first LDAP login auto-provisions an `AdminUser` record; subsequent logins
+  re-use the existing record; `TOTP` enrollment still required after first login;
+  `LDAP_SERVER`, `LDAP_PORT`, `LDAP_USE_SSL`, `LDAP_BIND_DN`,
+  `LDAP_BIND_PASSWORD`, `LDAP_BASE_DN`, `LDAP_USER_FILTER`,
+  `LDAP_ATTR_USERNAME`, `LDAP_ATTR_EMAIL` configure the connection
+- **Helm chart**: `charts/openwhistle/` — production-grade Helm chart for
+  Kubernetes deployments; `Chart.yaml`, `values.yaml`, 8 templates
+  (`deployment.yaml`, `service.yaml`, `ingress.yaml`, `hpa.yaml`,
+  `configmap.yaml`, `secret.yaml`, `_helpers.tpl`, `NOTES.txt`); all v0.5.0
+  env vars exposed as chart values; supports existing-secret pattern for
+  credentials; liveness/readiness probes wire to `/health`
+- **Ansible role**: `ansible/roles/openwhistle/` — official Ansible role for
+  bare-metal / VM deployments (Debian/Ubuntu); installs Docker CE + Compose
+  plugin; creates system user `openwhistle`; renders `.env`, `nginx.conf`, and
+  `docker-compose.yml` from Jinja2 templates; installs systemd service unit;
+  optionally obtains TLS certificate via Certbot with auto-renewal hook;
+  `ansible/deploy.yml` example playbook; `vault.yml.example` secrets template
+
+### Changed
+
+- `app_version` bumped to `0.5.0`
+- Admin login page shows a badge when `LDAP_ENABLED=true`
+- `admin_users.password_hash` is now nullable (migration 011) — LDAP-only
+  accounts have no local password
+- `attachments.data` is now nullable (migration 010) — S3-backed attachments
+  store only `storage_key`
+
+### Database migrations
+
+- `010_s3_attachment_storage.py`: makes `attachments.data` nullable; adds
+  `storage_key VARCHAR(512)` column to `attachments`
+- `011_ldap_auth.py`: makes `admin_users.password_hash` nullable; adds
+  `ldap_username VARCHAR(255) UNIQUE` column to `admin_users`
+
+### Dependencies added
+
+- `python-json-logger>=3.2.0` — structured JSON log formatter
+- `apscheduler>=3.11.0` — background job scheduler for SLA reminders
+- `boto3>=1.38.0` — AWS S3-compatible object storage client
+- `ldap3>=2.9.0` — LDAP / Active Directory authentication
+
+### Tests
+
+- Added `tests/test_v050.py` — 68 tests covering all new v0.5.0 features
+- Fixed `conftest.py`: added `adminrole` to the enum drop list so re-runs
+  don't fail with "type already exists" on migration 003
+- Coverage maintained at ≥90% (90.36% with full test suite)
+
 ## [0.4.0] — 2026-04-26
 
 ### Added
@@ -266,7 +346,11 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Rate limiting by session token** (not IP) to maintain full anonymity
 - **alembic upgrade head** on every startup to guarantee migration consistency
 
-[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/openwhistle/OpenWhistle/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/openwhistle/OpenWhistle/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/openwhistle/OpenWhistle/compare/v0.2.2...v0.3.0
+[0.2.2]: https://github.com/openwhistle/OpenWhistle/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/openwhistle/OpenWhistle/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/openwhistle/OpenWhistle/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/openwhistle/OpenWhistle/releases/tag/v0.1.0

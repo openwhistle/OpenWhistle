@@ -1,0 +1,6 @@
+[openwhistle]
+whistle.example.com ansible_user=root ansible_python_interpreter=/usr/bin/python3
+
+# Multiple servers (without TLS termination at this layer, e.g. behind load balancer)
+# whistle-1.example.com ansible_user=deploy
+# whistle-2.example.com ansible_user=deploy

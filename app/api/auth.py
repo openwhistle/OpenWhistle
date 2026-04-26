@@ -29,13 +29,16 @@ async def admin_root(request: Request) -> RedirectResponse:
     return RedirectResponse("/admin/login", status_code=302)
 
 
+def _login_ctx(extra: dict | None = None) -> dict:
+    base: dict = {"oidc_enabled": settings.oidc_enabled, "ldap_enabled": settings.ldap_enabled}
+    if extra:
+        base.update(extra)
+    return base
+
+
 @router.get("/login", response_class=HTMLResponse)
 async def login_get(request: Request) -> HTMLResponse:
-    return render(
-        request,
-        "login.html",
-        {"oidc_enabled": settings.oidc_enabled},
-    )
+    return render(request, "login.html", _login_ctx())
 
 
 @router.post("/login", response_class=HTMLResponse, response_model=None)
@@ -48,51 +51,79 @@ async def login_post(
     _csrf: None = Depends(validate_csrf),
 ) -> HTMLResponse | RedirectResponse:
     if not await rl.check_admin_login_attempts(redis, username):
-        return render(
-            request,
-            "login.html",
-            {
-                "error": "Account temporarily locked due to too many failed attempts.",
-                "oidc_enabled": settings.oidc_enabled,
-            },
-        )
+        return render(request, "login.html", _login_ctx({
+            "error": "Account temporarily locked due to too many failed attempts.",
+        }))
 
+    # ── LDAP authentication path ────────────────────────────────────
+    if settings.ldap_enabled:
+        from sqlalchemy import select  # noqa: PLC0415
+        from app.services.ldap_auth import authenticate_ldap, LDAPAuthError  # noqa: PLC0415
+        from app.services.mfa import generate_totp_secret  # noqa: PLC0415
+
+        try:
+            ldap_info = await authenticate_ldap(username, password)
+        except LDAPAuthError:
+            await rl.record_admin_login_failure(redis, username)
+            return render(request, "login.html", _login_ctx({
+                "error": "Invalid username or password.",
+            }), status_code=401)
+
+        # Find or provision the local admin user for this LDAP identity
+        result = await db.execute(
+            select(AdminUser).where(AdminUser.ldap_username == ldap_info.username)
+        )
+        user: AdminUser | None = result.scalar_one_or_none()
+
+        if user is None:
+            # First LDAP login — auto-provision with a temporary TOTP secret.
+            # The user must set up TOTP on their first login via /admin/mfa/setup.
+            user = AdminUser(
+                id=__import__("uuid").uuid4(),
+                username=ldap_info.username,
+                password_hash=None,
+                ldap_username=ldap_info.username,
+                totp_secret=generate_totp_secret(),
+                totp_enabled=False,
+            )
+            db.add(user)
+            await db.commit()
+            await db.refresh(user)
+
+        if not user.is_active:
+            return render(request, "login.html", _login_ctx({
+                "error": "This account has been deactivated.",
+            }), status_code=401)
+
+        temp_token = secrets.token_urlsafe(32)
+        await auth_service.store_totp_pending(redis, temp_token, str(user.id))
+        return render(request, "login_mfa.html", {
+            "temp_token": temp_token,
+            "is_demo": settings.demo_mode,
+        })
+
+    # ── Local password authentication path ─────────────────────────
     user = await auth_service.get_user_by_username(db, username)
 
-    if user is None or not auth_service.verify_password(password, user.password_hash):
+    if user is None or not user.password_hash or not auth_service.verify_password(password, user.password_hash):
         await rl.record_admin_login_failure(redis, username)
-        return render(
-            request,
-            "login.html",
-            {
-                "error": "Invalid username or password.",
-                "oidc_enabled": settings.oidc_enabled,
-            },
-            status_code=401,
-        )
+        return render(request, "login.html", _login_ctx({
+            "error": "Invalid username or password.",
+        }), status_code=401)
 
     # Block password login for OIDC-only accounts
     if user.oidc_sub and not user.password_hash:
-        return render(
-            request,
-            "login.html",
-            {
-                "error": "This account uses Single Sign-On. Please use the SSO button.",
-                "oidc_enabled": settings.oidc_enabled,
-            },
-        )
+        return render(request, "login.html", _login_ctx({
+            "error": "This account uses Single Sign-On. Please use the SSO button.",
+        }))
 
     temp_token = secrets.token_urlsafe(32)
     await auth_service.store_totp_pending(redis, temp_token, str(user.id))
 
-    return render(
-        request,
-        "login_mfa.html",
-        {
-            "temp_token": temp_token,
-            "is_demo": settings.demo_mode,
-        },
-    )
+    return render(request, "login_mfa.html", {
+        "temp_token": temp_token,
+        "is_demo": settings.demo_mode,
+    })
 
 
 @router.post("/login/mfa", response_class=HTMLResponse, response_model=None)
