@@ -278,7 +278,7 @@
     [data-theme="light"] .nav-logo { color: #1e293b; }
     [data-theme="light"] .nav-logo:hover { color: #0f4c81; }
     [data-theme="light"] .nav-logo svg path,
-    [data-theme="light"] .nav-logo svg polyline { stroke: #0f4c81; }
+    [data-theme="light"] .nav-logo svg circle { stroke: #0f4c81; }
     [data-theme="light"] .nav-links a { color: rgba(55,65,81,0.75); }
     [data-theme="light"] .nav-links a:hover { color: #1e293b; }
     [data-theme="light"] .nav-cta { color: #0f4c81 !important; border-color: rgba(15,76,129,0.4) !important; }
@@ -312,7 +312,7 @@
     }
     .nav-logo:hover { color: #fff; }
     .nav-logo svg { flex-shrink: 0; }
-    .nav-logo svg path { stroke: var(--gold); }
+    .nav-logo svg path, .nav-logo svg circle { stroke: var(--gold); }
 
     .nav-links {
       display: flex;
@@ -1223,8 +1223,12 @@
     <div class="nav-inner">
       <a href="index.html" class="nav-logo" aria-label="OpenWhistle home">
         <svg width="22" height="26" viewBox="0 0 22 26" fill="none" aria-hidden="true">
-          <path d="M11 1L2 5.5v7c0 5.25 3.85 10.15 9 11.35C16.15 22.65 20 17.75 20 12.5v-7L11 1z" stroke="#5ecb7a" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
-          <path d="M7.5 13l2.5 2.5L14.5 10" stroke="#5ecb7a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M11 1 L20 5 L20 14 C20 20 17 24 11 25.5 C5 24 2 20 2 14 L2 5 Z"
+                stroke="#5ecb7a" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+          <circle cx="11" cy="18" r="1.1" fill="#5ecb7a"/>
+          <path d="M8.5,16 A3,3 0 0,1 13.5,16" stroke="#5ecb7a" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M7,14.5 A5.5,5.5 0 0,1 15,14.5" stroke="#5ecb7a" stroke-width="1.2" stroke-linecap="round" opacity="0.72"/>
+          <path d="M5,13 A8,8 0 0,1 17,13" stroke="#5ecb7a" stroke-width="1" stroke-linecap="round" opacity="0.42"/>
         </svg>
         OpenWhistle
       </a>
@@ -1859,8 +1863,12 @@
         <div>
           <div class="footer-logo">
             <svg width="20" height="24" viewBox="0 0 22 26" fill="none" aria-hidden="true">
-              <path d="M11 1L2 5.5v7c0 5.25 3.85 10.15 9 11.35C16.15 22.65 20 17.75 20 12.5v-7L11 1z" stroke="rgba(226,220,210,0.5)" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
-              <path d="M7.5 13l2.5 2.5L14.5 10" stroke="rgba(226,220,210,0.5)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M11 1 L20 5 L20 14 C20 20 17 24 11 25.5 C5 24 2 20 2 14 L2 5 Z"
+                    stroke="rgba(226,220,210,0.5)" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+              <circle cx="11" cy="18" r="1.1" fill="rgba(226,220,210,0.5)"/>
+              <path d="M8.5,16 A3,3 0 0,1 13.5,16" stroke="rgba(226,220,210,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M7,14.5 A5.5,5.5 0 0,1 15,14.5" stroke="rgba(226,220,210,0.5)" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+              <path d="M5,13 A8,8 0 0,1 17,13" stroke="rgba(226,220,210,0.5)" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
             </svg>
             OpenWhistle
           </div>
