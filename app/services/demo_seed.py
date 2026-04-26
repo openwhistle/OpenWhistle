@@ -208,7 +208,7 @@ async def _seed(db: AsyncSession) -> None:
             feedback_due_at=feedback_due_at,
             closed_at=closed_at,
             submission_mode=mode,
-            location_id=location_obj.id,
+            location_id=location_obj.id if location_obj else None,
             confidential_name=conf_name_enc,
             confidential_contact=conf_contact_enc,
         )

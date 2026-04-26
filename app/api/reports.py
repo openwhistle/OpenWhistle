@@ -374,7 +374,7 @@ async def submit_post(
 
         mode = SubmissionMode(state.get("submission_mode", "anonymous"))
         loc_id_raw = state.get("location_id")
-        loc_uuid: uuid.UUID | None = uuid.UUID(loc_id_raw) if loc_id_raw else None
+        report_loc_uuid: uuid.UUID | None = uuid.UUID(loc_id_raw) if loc_id_raw else None
 
         conf_name_enc: str | None = None
         conf_contact_enc: str | None = None
@@ -398,7 +398,7 @@ async def submit_post(
             description=state["description"],
             lang=lang,
             submission_mode=mode,
-            location_id=loc_uuid,
+            location_id=report_loc_uuid,
             confidential_name_enc=conf_name_enc,
             confidential_contact_enc=conf_contact_enc,
             secure_email_enc=sec_email_enc,
