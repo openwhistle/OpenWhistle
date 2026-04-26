@@ -36,6 +36,17 @@ router = APIRouter()
 # Validating the cookie value before setting it back prevents header injection.
 _SESSION_KEY_RE = re.compile(r"^[A-Za-z0-9_-]{1,86}$")
 
+# Explicit allowlist for post-language-switch redirects.
+# dict.get() returns a value from the dict's own static strings — never from
+# user-supplied input — severing any CodeQL taint flow from next_url.
+_NEXT_ALLOWLIST: dict[str, str] = {
+    "/submit": "/submit",
+    "/status": "/status",
+    "/admin/login": "/admin/login",
+    "/admin/dashboard": "/admin/dashboard",
+    "/setup": "/setup",
+}
+
 
 @router.post("/set-language")
 async def set_language(
@@ -46,17 +57,15 @@ async def set_language(
     # Use a fixed-set dict lookup so the value is provably from a known set,
     # severing any taint flow from user input into the cookie value.
     safe_lang = {"en": "en", "de": "de"}.get(lang, "en")
-    # Restrict redirect to same-origin paths only using urlsplit for reliable
-    # detection of scheme/netloc that would allow open redirection.
-    parsed = urlsplit(next_url)
-    if parsed.scheme or parsed.netloc or not parsed.path.startswith("/"):
-        safe_url = "/submit"
-    else:
-        # Reconstruct from path + query only — scheme and netloc are provably absent,
-        # severing any taint flow from the original user-supplied string.
-        safe_url = parsed.path
-        if parsed.query:
-            safe_url += f"?{parsed.query}"
+    # Resolve redirect target from a static allowlist — dict.get() returns a
+    # value from the dict's own static strings, never from user-supplied input,
+    # severing any CodeQL taint flow from next_url to the redirect location.
+    parsed_path = urlsplit(next_url).path
+    safe_url = _NEXT_ALLOWLIST.get(parsed_path)
+    if safe_url is None:
+        # Paths not in the explicit list: admin sub-pages fall back to the
+        # dashboard; everything else (e.g. unknown paths) falls back to submit.
+        safe_url = "/admin/dashboard" if parsed_path.startswith("/admin/") else "/submit"
     response = RedirectResponse(safe_url, status_code=303)
     response.set_cookie(
         "ow-lang",
@@ -342,19 +351,24 @@ async def reply_post(
 
     await report_service.add_whistleblower_message(db, report, stripped)
 
+    # Always issue a fresh session token for the response cookie.
+    # This rotates the token on every reply (good practice) and ensures the
+    # cookie value is always derived from secrets.token_urlsafe, never from
+    # user-supplied input — severing the CodeQL cookie-injection taint flow.
+    fresh_key = secrets.token_urlsafe(32)
+    await redis.setex(f"status-session:{fresh_key}", 7200, str(report.id))
     if status_session_key:
-        await redis.expire(f"status-session:{status_session_key}", 7200)
+        await redis.delete(f"status-session:{status_session_key}")
 
     response = RedirectResponse("/status?replied=1", status_code=303)
-    if status_session_key:
-        response.set_cookie(
-            "ow-status-session",
-            status_session_key,
-            max_age=7200,
-            httponly=True,
-            samesite="lax",
-            secure=not settings.demo_mode,
-        )
+    response.set_cookie(
+        "ow-status-session",
+        fresh_key,
+        max_age=7200,
+        httponly=True,
+        samesite="lax",
+        secure=not settings.demo_mode,
+    )
     return response
 
 

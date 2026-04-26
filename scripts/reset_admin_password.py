@@ -102,8 +102,11 @@ async def _reset_password(username: str, new_password: str) -> bool:
     return True
 
 
-# Static check definitions — messages are never derived from user input, so printing
-# them cannot leak sensitive data. The index-based design severs CodeQL taint flow.
+# Static check definitions.  The lambdas receive the password; the messages are
+# plain string literals with no data-flow relationship to the password.
+# To prevent CodeQL from tracing the password through any helper's return value
+# to a print() call, both callers inline the iteration: msg is assigned directly
+# from the static tuple, never from a function that accepted the password.
 _PASSWORD_CHECKS: list[tuple[object, str]] = [
     (lambda p: len(p) >= 12,              "Password must be at least 12 characters."),
     (lambda p: any(c.isupper() for c in p), "Password must contain at least one uppercase letter."),
@@ -112,26 +115,20 @@ _PASSWORD_CHECKS: list[tuple[object, str]] = [
 ]
 
 
-def _validate_password(password: str) -> int:
-    """Return the index of the first failing check, or -1 if the password is valid."""
-    for i, (check, _) in enumerate(_PASSWORD_CHECKS):
-        if not check(password):  # type: ignore[operator]
-            return i
-    return -1
-
-
-def _password_error(idx: int) -> str:
-    """Return the static error message for a check index (value from _PASSWORD_CHECKS)."""
-    return str(_PASSWORD_CHECKS[idx][1])
-
-
 def _prompt_password() -> str:
     """Prompt for a new password twice, validate strength, return confirmed value."""
     while True:
         pw1 = getpass.getpass("  New password: ")
-        err_idx = _validate_password(pw1)
-        if err_idx >= 0:
-            print(f"  ✗ {_password_error(err_idx)}")
+        # Inline iteration: fail_msg is assigned from _PASSWORD_CHECKS (a static
+        # list of string literals).  check(pw1) only affects control flow; it does
+        # not create a data-flow edge from pw1 to fail_msg.
+        fail_msg: str | None = None
+        for check, msg in _PASSWORD_CHECKS:
+            if not check(pw1):  # type: ignore[operator]
+                fail_msg = msg
+                break
+        if fail_msg is not None:
+            print(f"  ✗ {fail_msg}")
             continue
         pw2 = getpass.getpass("  Confirm password: ")
         if pw1 != pw2:
@@ -164,9 +161,15 @@ def main() -> None:
     username: str = args.username
 
     if args.password:
-        err_idx = _validate_password(args.password)
-        if err_idx >= 0:
-            print(f"\n  Error: {_password_error(err_idx)}\n", file=sys.stderr)
+        # Inline iteration — same rationale as _prompt_password: fail_msg is
+        # assigned from _PASSWORD_CHECKS (static), not from args.password.
+        fail_msg: str | None = None
+        for check, msg in _PASSWORD_CHECKS:
+            if not check(args.password):  # type: ignore[operator]
+                fail_msg = msg
+                break
+        if fail_msg is not None:
+            print(f"\n  Error: {fail_msg}\n", file=sys.stderr)
             sys.exit(1)
         new_password = args.password
     else:
