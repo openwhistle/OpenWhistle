@@ -60,7 +60,7 @@ jobs:
 
       - name: Build and push
         id: build-push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
@@ -127,7 +127,7 @@ jobs:
 
       - name: Build and push
         if: env.DOCKERHUB_TOKEN != ''
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
@@ -182,7 +182,7 @@ jobs:
 
       - name: Build and push
         if: env.QUAY_TOKEN != ''
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
