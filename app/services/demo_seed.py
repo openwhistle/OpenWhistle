@@ -13,6 +13,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import AsyncSessionLocal
 from app.models.report import Report, ReportMessage, ReportSender, ReportStatus
@@ -64,96 +65,101 @@ DEMO_REPORTS: list[dict[str, Any]] = [
 ]
 
 
-async def seed_demo_data() -> None:
-    async with AsyncSessionLocal() as db:
-        # Create admin user if not exists
-        result = await db.execute(
-            select(AdminUser).where(AdminUser.username == DEMO_ADMIN_USERNAME)
+async def _seed(db: AsyncSession) -> None:
+    """Core seeding logic — runs against the given session."""
+    # Create admin user if not exists
+    result = await db.execute(
+        select(AdminUser).where(AdminUser.username == DEMO_ADMIN_USERNAME)
+    )
+    if result.scalar_one_or_none() is None:
+        admin = AdminUser(
+            id=uuid.uuid4(),
+            username=DEMO_ADMIN_USERNAME,
+            password_hash=hash_password(DEMO_ADMIN_PASSWORD),
+            totp_secret=DEMO_TOTP_SECRET,
+            totp_enabled=True,
         )
-        if result.scalar_one_or_none() is None:
-            admin = AdminUser(
+        db.add(admin)
+
+    # Mark setup as complete for demo
+    result_setup = await db.execute(select(SetupStatus).where(SetupStatus.id == 1))
+    setup = result_setup.scalar_one_or_none()
+    if setup is None:
+        setup = SetupStatus(id=1, completed=True, completed_at=datetime.now(UTC))
+        db.add(setup)
+    elif not setup.completed:
+        setup.completed = True
+        setup.completed_at = datetime.now(UTC)
+
+    # Create demo reports
+    for demo in DEMO_REPORTS:
+        result_rep = await db.execute(
+            select(Report).where(Report.case_number == demo["case_number"])
+        )
+        if result_rep.scalar_one_or_none() is not None:
+            continue
+
+        now = datetime.now(UTC)
+        acknowledged_at = None
+        feedback_due_at = None
+        if "acknowledged_offset_days" in demo:
+            acknowledged_at = now + timedelta(days=demo["acknowledged_offset_days"])
+            feedback_due_at = acknowledged_at + timedelta(days=90)
+
+        report = Report(
+            id=uuid.uuid4(),
+            case_number=demo["case_number"],
+            pin_hash=hash_pin(demo["pin"]),
+            category=demo["category"],
+            description=demo["description"],
+            status=demo["status"],
+            acknowledged_at=acknowledged_at,
+            feedback_due_at=feedback_due_at,
+        )
+        db.add(report)
+        await db.flush()
+
+        # Initial receipt message
+        db.add(
+            ReportMessage(
                 id=uuid.uuid4(),
-                username=DEMO_ADMIN_USERNAME,
-                password_hash=hash_password(DEMO_ADMIN_PASSWORD),
-                totp_secret=DEMO_TOTP_SECRET,
-                totp_enabled=True,
+                report_id=report.id,
+                sender=ReportSender.admin,
+                content=(
+                    "Your report has been received. You will receive an acknowledgement "
+                    "within 7 days as required by §17 HinSchG."
+                ),
             )
-            db.add(admin)
+        )
 
-        # Mark setup as complete for demo
-        result_setup = await db.execute(select(SetupStatus).where(SetupStatus.id == 1))
-        setup = result_setup.scalar_one_or_none()
-        if setup is None:
-            setup = SetupStatus(id=1, completed=True, completed_at=datetime.now(UTC))
-            db.add(setup)
-        elif not setup.completed:
-            setup.completed = True
-            setup.completed_at = datetime.now(UTC)
-
-        # Create demo reports
-        for demo in DEMO_REPORTS:
-            result_rep = await db.execute(
-                select(Report).where(Report.case_number == demo["case_number"])
-            )
-            if result_rep.scalar_one_or_none() is not None:
-                continue
-
-            now = datetime.now(UTC)
-            acknowledged_at = None
-            feedback_due_at = None
-            if "acknowledged_offset_days" in demo:
-                acknowledged_at = now + timedelta(days=demo["acknowledged_offset_days"])
-                feedback_due_at = acknowledged_at + timedelta(days=90)
-
-            report = Report(
-                id=uuid.uuid4(),
-                case_number=demo["case_number"],
-                pin_hash=hash_pin(demo["pin"]),
-                category=demo["category"],
-                description=demo["description"],
-                status=demo["status"],
-                acknowledged_at=acknowledged_at,
-                feedback_due_at=feedback_due_at,
-            )
-            db.add(report)
-            await db.flush()
-
-            # Initial receipt message
+        if demo["status"] in (ReportStatus.acknowledged, ReportStatus.in_progress):
             db.add(
                 ReportMessage(
                     id=uuid.uuid4(),
                     report_id=report.id,
                     sender=ReportSender.admin,
                     content=(
-                        "Your report has been received. You will receive an acknowledgement "
-                        "within 7 days as required by §17 HinSchG."
+                        "We have acknowledged your report and have begun our internal review. "
+                        "We will provide a full update within 3 months."
                     ),
                 )
             )
 
-            if demo["status"] in (ReportStatus.acknowledged, ReportStatus.in_progress):
-                db.add(
-                    ReportMessage(
-                        id=uuid.uuid4(),
-                        report_id=report.id,
-                        sender=ReportSender.admin,
-                        content=(
-                            "We have acknowledged your report and have begun our internal review. "
-                            "We will provide a full update within 3 months."
-                        ),
-                    )
+        if demo["status"] == ReportStatus.in_progress:
+            db.add(
+                ReportMessage(
+                    id=uuid.uuid4(),
+                    report_id=report.id,
+                    sender=ReportSender.whistleblower,
+                    content=(
+                        "Thank you. I have additional documentation I can provide if needed."
+                    ),
                 )
+            )
 
-            if demo["status"] == ReportStatus.in_progress:
-                db.add(
-                    ReportMessage(
-                        id=uuid.uuid4(),
-                        report_id=report.id,
-                        sender=ReportSender.whistleblower,
-                        content=(
-                            "Thank you. I have additional documentation I can provide if needed."
-                        ),
-                    )
-                )
+    await db.commit()
 
-        await db.commit()
+
+async def seed_demo_data() -> None:
+    async with AsyncSessionLocal() as db:
+        await _seed(db)
