@@ -40,6 +40,14 @@ Folgende Fakten sind festgelegt:
 - The demo at https://demo.openwhistle.net is live and hosted on Hetzner (root01xvp.wdkro.de) via Ansible. It resets hourly.
 - All HTML files in `docs/` must use self-hosted fonts from `docs/fonts/` — never Google Fonts CDN or any other external font CDN.
 
+## Test coverage
+
+- Minimum test coverage is **90 %**. This is enforced via `--cov-fail-under=90` in `pyproject.toml`
+  and will fail CI if coverage drops below the threshold.
+- When adding new features, always add corresponding tests so coverage stays at or above 90 %.
+- Run the full suite inside Docker (`docker run --network openwhistle_default ...`) to get accurate
+  DB-backed numbers; running locally without a DB only measures unit tests and will undercount.
+
 ## Release documentation checklist
 
 Before marking a version as released (ROADMAP.md, CHANGELOG.md, git tag), verify ALL of the
