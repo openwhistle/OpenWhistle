@@ -7,6 +7,34 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.2] — 2026-04-26
+
+### Changed
+
+- Logo redesigned: new "Protected Signal" concept — navy shield with gradient depth, amber glow,
+  and three-arc signal mark; consistent across app favicon, docs favicon, apple-touch-icon,
+  and all inline SVG nav logos
+- README trimmed to overview + quick start; full documentation lives exclusively at
+  openwhistle.net/docs.html (single source of truth, no duplication)
+- docs.html nav CSS aligned with index.html: SVG circle selector, border-color transition on
+  theme-toggle hover, and light-mode stroke overrides for the logo
+
+### Fixed
+
+- Quay.io image reference corrected to `quay.io/jp1337/openwhistle` everywhere
+
+### Tests
+
+- Added 128 new test cases across auth, admin, reports, misc, and demo seed modules
+- Coverage increased from ~75 % to 91 %
+- Resolved all CI test failures caused by DEMO\_MODE=true and function-scoped event loop conflicts
+- Extracted `_seed(db)` helper from `demo_seed.py` to enable direct session injection in tests
+
+### CI / CD
+
+- Codecov integration: added `CODECOV_TOKEN` secret and pinned `codecov-action@v5`
+- GitHub org avatar (500×500) and repository social preview banner (1280×640) added under `docs/`
+
 ## [0.2.1] — 2026-04-26
 
 ### Fixed
