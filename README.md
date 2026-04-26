@@ -1,7 +1,5 @@
 # OpenWhistle
 
-> Open source whistleblower reporting platform — compliant with HinSchG and EU Directive 2019/1937
-
 [![CI](https://img.shields.io/github/actions/workflow/status/openwhistle/OpenWhistle/ci.yml?label=CI&logo=github)](https://github.com/openwhistle/OpenWhistle/actions/workflows/ci.yml)
 [![Docker Build](https://img.shields.io/github/actions/workflow/status/openwhistle/OpenWhistle/docker-publish.yml?label=Docker&logo=docker)](https://github.com/openwhistle/OpenWhistle/actions/workflows/docker-publish.yml)
 [![Coverage](https://codecov.io/gh/openwhistle/OpenWhistle/graph/badge.svg)](https://codecov.io/gh/openwhistle/OpenWhistle)
@@ -13,37 +11,76 @@
 [![Redis](https://img.shields.io/badge/redis-8-DC382D?logo=redis&logoColor=white)](https://redis.io)
 [![Docker Pulls](https://img.shields.io/docker/pulls/kermit1337/openwhistle?logo=docker)](https://hub.docker.com/r/kermit1337/openwhistle)
 [![CodeQL](https://img.shields.io/github/actions/workflow/status/openwhistle/OpenWhistle/codeql.yml?label=CodeQL&logo=github)](https://github.com/openwhistle/OpenWhistle/security/code-scanning)
+[![GitHub Sponsors](https://img.shields.io/badge/sponsor-GitHub-ea4aaa?logo=github-sponsors&logoColor=white)](https://github.com/sponsors/jp1337)
+
+> *"Speaking up takes courage. Staying silent shouldn't be the safer option."*
+
+**A secure, self-hosted internal reporting channel — because every employee deserves protection.**
 
 > [!WARNING]
 > OpenWhistle is currently in early development (alpha). Do not use in production.
 
-## Overview
+---
 
-OpenWhistle provides a secure internal reporting channel as required by:
+## 🔍 Overview
+
+OpenWhistle is a self-hosted whistleblower platform that fulfils the mandatory reporting channel
+requirements under:
 
 - **German law:** Hinweisgeberschutzgesetz (HinSchG), in force since 2 July 2023
 - **EU directive:** Directive (EU) 2019/1937 of the European Parliament
 
-Any company with 50 or more employees and all public authorities are legally required to
-provide an internal reporting channel. OpenWhistle provides a self-hosted, open source
-solution — free of charge.
+Any company with 50 or more employees and all public authorities are legally required to provide
+an internal reporting channel. OpenWhistle provides a fully open source solution — free of charge,
+zero vendor lock-in, and privacy-first by design.
 
-## Key Features
+🌐 **Live demo:** [demo.openwhistle.net](https://demo.openwhistle.net)
+📖 **Documentation:** [openwhistle.net](https://openwhistle.net)
 
-- **Full anonymity:** No IP addresses logged — not by the application, not by nginx
-- **Two-factor whistleblower access:** Case number + secret UUID4 PIN (bruteforce-protected)
-- **Bidirectional communication:** Required by HinSchG §17 — whistleblower can reply
-- **HinSchG SLA tracking:** 7-day acknowledgement and 3-month feedback deadlines
-- **Mandatory MFA:** TOTP (Google Authenticator) for all admin accounts
-- **OIDC support:** Optional SSO via any OpenID Connect provider
-- **File attachments:** Whistleblowers can attach evidence files (PDF, images, Word, Excel, CSV,
-  TXT — up to 10 MB each, 5 per report)
-- **DSGVO compliant:** All resources self-hosted, no external CDN calls, hard deletion support
-- **Setup wizard:** First-run admin account creation with TOTP setup
-- **IP leakage detection:** Warning when upstream proxies forward IP headers
-- **Multi-registry Docker:** Published to ghcr.io, Docker Hub, and quay.io
+---
 
-## Technical Stack
+## ✨ Features
+
+- **Full anonymity** — No IP addresses logged, not by the application and not by nginx. An employee
+  submitting from the office network leaves no trace.
+- **Two-factor whistleblower access** — Case number + secret UUID4 PIN with brute-force protection.
+  No accounts, no email — nothing to tie the report back to a person.
+- **Bidirectional communication** — Required by HinSchG §17. The whistleblower can reply to admin
+  messages using only their case number and PIN.
+- **HinSchG SLA tracking** — Automatic 7-day acknowledgement deadline and 3-month feedback deadline
+  tracking, visible in the admin dashboard.
+- **Mandatory MFA** — TOTP (compatible with any authenticator app) required for every admin account.
+  No exceptions, no bypass.
+- **OIDC / SSO support** — Optional single sign-on via any OpenID Connect provider (Keycloak,
+  Authentik, Azure AD, Google, …).
+- **File attachments** — Whistleblowers can attach evidence files (PDF, images, Word, Excel, CSV,
+  TXT — up to 10 MB each, 5 per report).
+- **Setup wizard** — Web-based first-run wizard creates the initial admin account with TOTP setup.
+  No manual database steps.
+- **IP leakage detection** — The admin dashboard warns when upstream proxies forward IP headers,
+  helping operators catch misconfigured anonymity setups before they become a problem.
+- **Hard deletion** — Reports can be permanently deleted including all messages, attachments, and
+  Redis session data. DSGVO-compliant.
+- **DSGVO compliant** — All resources are self-hosted. No external CDN calls, no tracking, no
+  third-party services.
+- **Multi-registry Docker** — Published to GHCR, Docker Hub, and Quay.io on every release.
+
+---
+
+## 🎭 Live Demo
+
+A live demo is available at **[demo.openwhistle.net](https://demo.openwhistle.net)**
+
+| Role | Username | Password | TOTP Code |
+|---|---|---|---|
+| Admin | `demo` | `demo` | `000000` |
+
+Demo case numbers and PINs are shown after logging in to the demo admin account.
+The demo resets automatically every hour.
+
+---
+
+## 🛠️ Tech Stack
 
 | Component | Technology |
 |---|---|
@@ -55,21 +92,17 @@ solution — free of charge.
 | Templates | Jinja2 (server-side rendering) |
 | Reverse Proxy | nginx (IP logging disabled) |
 
-## Live Demo
+---
 
-A live demo is available at **<https://demo.openwhistle.net>**
-
-| Role | Username | Password | TOTP Code |
-|---|---|---|---|
-| Admin | `demo` | `demo` | `000000` |
-
-Demo case numbers and PINs are shown after logging in to the demo admin account.
-
-The demo resets automatically every hour.
-
-## Container Images
+## 📦 Container Images
 
 Pre-built multi-arch images (linux/amd64, linux/arm64) are published to three registries:
+
+| Registry | Image |
+|---|---|
+| GitHub Container Registry | `ghcr.io/openwhistle/openwhistle` |
+| Docker Hub | `kermit1337/openwhistle` |
+| Quay.io | `quay.io/openwhistle/openwhistle` |
 
 ```bash
 # GitHub Container Registry (primary)
@@ -91,7 +124,9 @@ docker pull quay.io/openwhistle/openwhistle:latest
 
 All GHCR images are signed with Cosign (keyless, Sigstore).
 
-## How to Install
+---
+
+## 🚀 Quick Start
 
 ### Prerequisites
 
@@ -117,11 +152,13 @@ docker compose up -d
 #    to create the first admin account
 ```
 
-### Behind a Reverse Proxy
+---
+
+## 🔒 Behind a Reverse Proxy
 
 **Critical for anonymity:** Disable access logging and strip IP headers.
 
-#### nginx
+### nginx
 
 ```nginx
 server {
@@ -141,13 +178,13 @@ server {
 }
 ```
 
-#### Cloudflare
+### Cloudflare
 
 1. Enable "Remove visitor IPs from logs" in the Cloudflare dashboard
 2. Do **not** use "Restore visitor IP" — it adds `CF-Connecting-IP`
 3. OpenWhistle will warn you in the admin dashboard if IP headers are detected
 
-#### Traefik
+### Traefik
 
 ```yaml
 middlewares:
@@ -159,7 +196,9 @@ middlewares:
         True-Client-IP: ""
 ```
 
-## Environment Variables
+---
+
+## ⚙️ Environment Variables
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
@@ -190,7 +229,9 @@ middlewares:
 | `NOTIFY_WEBHOOK_URL` | No | — | Target URL for webhook POST requests |
 | `NOTIFY_WEBHOOK_SECRET` | No | — | HMAC-SHA256 signing secret; if set, requests carry `X-OpenWhistle-Signature: sha256=…` |
 
-## Development
+---
+
+## 🧑‍💻 Development
 
 ### Setup
 
@@ -226,9 +267,6 @@ python scripts/reset_admin_password.py --username admin
 
 # Reset non-interactively (CI / automation)
 python scripts/reset_admin_password.py --username admin --password "NewPass123!"
-
-# Inside a running Docker container
-docker exec -it <container_name> python scripts/reset_admin_password.py --username admin
 ```
 
 The script validates password strength (≥ 12 chars, upper + lower + digit) and does not touch
@@ -247,14 +285,16 @@ ruff check app/ tests/
 pytest --cov=app --cov-report=term-missing
 ```
 
-### Project Structure
+---
+
+## 🏗️ Project Structure
 
 ```text
 app/
 ├── main.py          # App factory, startup migration check
 ├── config.py        # pydantic-settings configuration
 ├── database.py      # Async SQLAlchemy setup
-├── middleware.py     # Security headers, IP detection warning
+├── middleware.py    # Security headers, IP detection warning
 ├── api/             # FastAPI routers (reports, auth, admin, wizard)
 ├── models/          # SQLAlchemy ORM models
 ├── schemas/         # Pydantic I/O schemas
@@ -266,7 +306,9 @@ nginx/               # nginx config with IP logging disabled
 docs/                # HinSchG reference and documentation
 ```
 
-## Legal Reference
+---
+
+## ⚖️ Legal Reference
 
 OpenWhistle is designed to comply with:
 
@@ -279,16 +321,22 @@ See [`docs/hinschg_reference.md`](docs/hinschg_reference.md) for a summary of re
 > **Disclaimer:** OpenWhistle is a technical tool. Operators are responsible for ensuring
 > their deployment meets all applicable legal requirements in their jurisdiction.
 
-## License
+---
 
-OpenWhistle is released under the [GNU General Public License v3.0](LICENSE).
-
-## Contributing
+## 🤝 Contributing
 
 Contributions are welcome. Please open an issue before submitting a pull request.
 
-## Donate
+---
+
+## 📜 License
+
+OpenWhistle is released under the [GNU General Public License v3.0](LICENSE).
+
+---
+
+## 💛 Support
 
 OpenWhistle is developed in free time. If you find it useful, consider supporting the project.
 
-[![GitHub Sponsors](https://img.shields.io/github/sponsors/jpylypiw?label=Sponsor)](https://github.com/sponsors/jpylypiw)
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/jp1337?label=Sponsor)](https://github.com/sponsors/jp1337)
