@@ -12,16 +12,13 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
-import os
 from datetime import UTC, datetime, timedelta
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from httpx import AsyncClient
-
 
 # ── Logging configuration ────────────────────────────────────────────────────
 
@@ -78,9 +75,10 @@ class TestHealthEndpoint:
         assert "version" in data
 
     async def test_health_db_error_returns_503(self, client: AsyncClient) -> None:
+        from sqlalchemy.ext.asyncio import AsyncSession
+
         from app.database import get_db
         from app.main import app
-        from sqlalchemy.ext.asyncio import AsyncSession
 
         async def broken_db():  # type: ignore[return]
             mock = AsyncMock(spec=AsyncSession)
@@ -252,7 +250,6 @@ class TestSlaReminderLogic:
 
     async def test_check_ack_reminder_skips_when_plenty_of_time(self) -> None:
         from app.services.reminders import _check_ack_reminder
-        from app.config import Settings
 
         mock_report = MagicMock()
         mock_report.acknowledged_at = None
@@ -311,7 +308,9 @@ class TestSlaReminderLogic:
         mock_report.feedback_due_at = None
         mock_redis = AsyncMock()
 
-        await _check_feedback_reminder(mock_report, datetime.now(UTC), None, mock_redis, MagicMock())
+        await _check_feedback_reminder(
+            mock_report, datetime.now(UTC), None, mock_redis, MagicMock()
+        )
         mock_redis.exists.assert_not_called()
 
     async def test_check_feedback_reminder_skips_when_plenty_of_time(self) -> None:
@@ -469,6 +468,7 @@ class TestGenerateStorageKey:
 
     def test_key_format_uuid_slash_filename(self) -> None:
         import re
+
         from app.services.storage import generate_storage_key
 
         key = generate_storage_key("attachment.docx")
@@ -516,7 +516,6 @@ class TestGetStorageBackend:
 
     def test_singleton_returns_same_instance(self) -> None:
         import app.services.storage as storage_mod
-        from app.services.storage import DBStorageBackend
 
         original = storage_mod._backend
         storage_mod._backend = None
@@ -537,7 +536,9 @@ class TestLDAPAuth:
         entry = MagicMock()
         entry.entry_dn = f"uid={username},ou=users,dc=example,dc=com"
         entry.__contains__ = lambda self, key: key in ("uid", "mail")
-        entry.__getitem__ = lambda self, key: MagicMock(__str__=lambda s: email if key == "mail" else username)
+        entry.__getitem__ = lambda self, key: MagicMock(
+            __str__=lambda s: email if key == "mail" else username
+        )
         return entry
 
     def _cfg(self) -> MagicMock:
@@ -553,7 +554,7 @@ class TestLDAPAuth:
         return cfg
 
     def test_ldap_disabled_raises_auth_error(self) -> None:
-        from app.services.ldap_auth import _authenticate_ldap_sync, LDAPAuthError
+        from app.services.ldap_auth import LDAPAuthError, _authenticate_ldap_sync
 
         # patch app.config.settings since settings is imported inside the function
         with patch("app.config.settings") as mock_cfg:
@@ -562,7 +563,7 @@ class TestLDAPAuth:
                 _authenticate_ldap_sync("user", "pass")
 
     def test_successful_ldap_auth(self) -> None:
-        from app.services.ldap_auth import _authenticate_ldap_sync, LDAPUserInfo
+        from app.services.ldap_auth import LDAPUserInfo, _authenticate_ldap_sync
 
         entry = self._mock_entry("jdoe", "jdoe@example.com")
         mock_conn = MagicMock()
@@ -577,8 +578,9 @@ class TestLDAPAuth:
         assert isinstance(result, LDAPUserInfo)
 
     def test_service_bind_failure_raises_auth_error(self) -> None:
-        from app.services.ldap_auth import _authenticate_ldap_sync, LDAPAuthError
         from ldap3.core.exceptions import LDAPException
+
+        from app.services.ldap_auth import LDAPAuthError, _authenticate_ldap_sync
 
         with patch("app.config.settings", self._cfg()), \
              patch("app.services.ldap_auth._make_server"), \
@@ -587,7 +589,7 @@ class TestLDAPAuth:
                 _authenticate_ldap_sync("user", "pass")
 
     def test_user_not_found_raises_auth_error(self) -> None:
-        from app.services.ldap_auth import _authenticate_ldap_sync, LDAPAuthError
+        from app.services.ldap_auth import LDAPAuthError, _authenticate_ldap_sync
 
         mock_conn = MagicMock()
         mock_conn.entries = []  # no users found
@@ -599,8 +601,9 @@ class TestLDAPAuth:
                 _authenticate_ldap_sync("unknown", "pass")
 
     def test_wrong_password_raises_auth_error(self) -> None:
-        from app.services.ldap_auth import _authenticate_ldap_sync, LDAPAuthError
         from ldap3.core.exceptions import LDAPException
+
+        from app.services.ldap_auth import LDAPAuthError, _authenticate_ldap_sync
 
         entry = self._mock_entry()
         service_conn = MagicMock()
@@ -623,7 +626,7 @@ class TestLDAPAuth:
 
     async def test_authenticate_ldap_runs_in_thread(self) -> None:
         """authenticate_ldap wraps the sync function in asyncio.to_thread."""
-        from app.services.ldap_auth import authenticate_ldap, LDAPUserInfo
+        from app.services.ldap_auth import LDAPUserInfo, authenticate_ldap
 
         expected = LDAPUserInfo(username="jdoe", email="jdoe@example.com")
 
@@ -668,12 +671,12 @@ class TestSendReminderWebhook:
         cfg.notify_webhook_secret = ""
         cfg.notify_webhook_url = "https://hooks.example.com/webhook"
 
-        with patch("httpx.AsyncClient") as MockClient:
+        with patch("httpx.AsyncClient") as mock_client:
             mock_ctx = AsyncMock()
             mock_ctx.__aenter__ = AsyncMock(return_value=mock_ctx)
             mock_ctx.__aexit__ = AsyncMock(return_value=None)
             mock_ctx.post = AsyncMock(return_value=mock_response)
-            MockClient.return_value = mock_ctx
+            mock_client.return_value = mock_ctx
 
             await _send_reminder_webhook("OW-2024-00001", "7-day acknowledgement", 1, cfg)
 
@@ -684,7 +687,7 @@ class TestSendReminderWebhook:
     async def test_includes_hmac_signature_when_secret_set(self) -> None:
         import hashlib
         import hmac
-        import json
+
         from app.services.notifications import _send_reminder_webhook
 
         mock_response = MagicMock()
@@ -704,12 +707,12 @@ class TestSendReminderWebhook:
             captured["body"] = content
             return mock_response
 
-        with patch("httpx.AsyncClient") as MockClient:
+        with patch("httpx.AsyncClient") as mock_client:
             mock_ctx = AsyncMock()
             mock_ctx.__aenter__ = AsyncMock(return_value=mock_ctx)
             mock_ctx.__aexit__ = AsyncMock(return_value=None)
             mock_ctx.post = fake_post
-            MockClient.return_value = mock_ctx
+            mock_client.return_value = mock_ctx
 
             await _send_reminder_webhook("OW-2024-00001", "ack", 1, cfg)
 
@@ -827,12 +830,12 @@ class TestSendReminderWebhookError:
         cfg.notify_webhook_secret = ""
         cfg.notify_webhook_url = "https://hooks.example.com/webhook"
 
-        with patch("httpx.AsyncClient") as MockClient:
+        with patch("httpx.AsyncClient") as mock_client:
             mock_ctx = AsyncMock()
             mock_ctx.__aenter__ = AsyncMock(return_value=mock_ctx)
             mock_ctx.__aexit__ = AsyncMock(return_value=None)
             mock_ctx.post = AsyncMock(side_effect=Exception("connection refused"))
-            MockClient.return_value = mock_ctx
+            mock_client.return_value = mock_ctx
 
             # Must not raise
             await _send_reminder_webhook("OW-2024-00001", "test", 1, cfg)
@@ -955,9 +958,10 @@ class TestSendSlaRemindersWithDB:
         mock_redis = AsyncMock()
         mock_redis.exists.return_value = False
 
+        session_maker_path = "sqlalchemy.ext.asyncio.async_sessionmaker"
         with patch("app.config.settings") as mock_cfg, \
              patch("sqlalchemy.ext.asyncio.create_async_engine", return_value=mock_engine), \
-             patch("sqlalchemy.ext.asyncio.async_sessionmaker", return_value=mock_session_factory), \
+             patch(session_maker_path, return_value=mock_session_factory), \
              patch("app.redis_client.get_redis", AsyncMock(return_value=mock_redis)):
             mock_cfg.reminder_enabled = True
             mock_cfg.database_url = "postgresql+asyncpg://test:test@localhost/test"
