@@ -121,8 +121,8 @@ async def create_attachments(
     stores only the storage_key; data is NULL. For STORAGE_BACKEND=db the binary
     data is stored in the LargeBinary column as before.
     """
-    from app.services.storage import get_storage_backend, generate_storage_key
-    from app.config import settings
+    from app.config import settings  # noqa: PLC0415
+    from app.services.storage import generate_storage_key, get_storage_backend  # noqa: PLC0415
 
     backend = get_storage_backend()
     use_s3 = settings.storage_backend == "s3"

@@ -37,7 +37,7 @@ async def send_sla_reminders() -> None:
         return
 
     from sqlalchemy import select
-    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
     from app.models.report import Report, ReportStatus
     from app.redis_client import get_redis
@@ -71,8 +71,8 @@ async def _check_ack_reminder(
     redis: object,
     settings: object,
 ) -> None:
-    from app.models.report import Report
     from app.config import Settings
+    from app.models.report import Report
 
     r: Report = report  # type: ignore[assignment]
     cfg: Settings = settings  # type: ignore[assignment]
@@ -110,8 +110,8 @@ async def _check_feedback_reminder(
     redis: object,
     settings: object,
 ) -> None:
-    from app.models.report import Report
     from app.config import Settings
+    from app.models.report import Report
 
     r: Report = report  # type: ignore[assignment]
     cfg: Settings = settings  # type: ignore[assignment]

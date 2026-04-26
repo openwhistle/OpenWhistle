@@ -58,7 +58,8 @@ async def login_post(
     # ── LDAP authentication path ────────────────────────────────────
     if settings.ldap_enabled:
         from sqlalchemy import select  # noqa: PLC0415
-        from app.services.ldap_auth import authenticate_ldap, LDAPAuthError  # noqa: PLC0415
+
+        from app.services.ldap_auth import LDAPAuthError, authenticate_ldap  # noqa: PLC0415
         from app.services.mfa import generate_totp_secret  # noqa: PLC0415
 
         try:
@@ -105,7 +106,10 @@ async def login_post(
     # ── Local password authentication path ─────────────────────────
     user = await auth_service.get_user_by_username(db, username)
 
-    if user is None or not user.password_hash or not auth_service.verify_password(password, user.password_hash):
+    pw_ok = user is not None and user.password_hash and auth_service.verify_password(
+        password, user.password_hash
+    )
+    if not pw_ok:
         await rl.record_admin_login_failure(redis, username)
         return render(request, "login.html", _login_ctx({
             "error": "Invalid username or password.",

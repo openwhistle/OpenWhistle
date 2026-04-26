@@ -57,8 +57,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 
     scheduler = None
     if settings.reminder_enabled:
-        from apscheduler.schedulers.asyncio import AsyncIOScheduler
-        from app.services.reminders import send_sla_reminders
+        from apscheduler.schedulers.asyncio import AsyncIOScheduler  # noqa: PLC0415
+
+        from app.services.reminders import send_sla_reminders  # noqa: PLC0415
 
         scheduler = AsyncIOScheduler()
         scheduler.add_job(send_sla_reminders, "interval", minutes=30, id="sla_reminders")

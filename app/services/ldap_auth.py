@@ -29,8 +29,9 @@ class LDAPAuthError(Exception):
 
 
 def _make_server(cfg: object) -> object:
-    from ldap3 import Server, Tls  # noqa: PLC0415
     import ssl  # noqa: PLC0415
+
+    from ldap3 import Server, Tls  # noqa: PLC0415
 
     from app.config import Settings  # noqa: PLC0415
     c: Settings = cfg  # type: ignore[assignment]
@@ -50,7 +51,7 @@ async def authenticate_ldap(username: str, password: str) -> LDAPUserInfo:
 
 
 def _authenticate_ldap_sync(username: str, password: str) -> LDAPUserInfo:
-    from ldap3 import Connection, ALL_ATTRIBUTES, SYNC  # noqa: PLC0415
+    from ldap3 import ALL_ATTRIBUTES, SYNC, Connection  # noqa: PLC0415
     from ldap3.core.exceptions import LDAPException  # noqa: PLC0415
 
     from app.config import settings
