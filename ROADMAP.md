@@ -42,39 +42,36 @@ feedback — open an issue to discuss anything here.
 
 ---
 
-## v0.4.0 — Whistleblower UX & Multi-Step Form
+## v0.4.0 — Whistleblower UX & Multi-Step Form ✓ Released 2026-04-26
 
-> Target: match and exceed commercial tool UX
+> All items shipped. See [CHANGELOG.md](CHANGELOG.md#040--2026-04-26) for details.
 
 ### Whistleblower Experience
 
-- [ ] **Multi-step submission form** — break the single-page form into guided
-  steps (category → details → attachments → review → confirmation); progress
-  indicator; back/next navigation; server-side session keeps state between steps
-- [ ] **Anonymous vs. confidential mode** — let the whistleblower choose at the
-  start whether to submit anonymously or provide contact details voluntarily;
-  confidential mode stores name/contact encrypted and only accessible to
-  assigned admin
-- [ ] **Multi-location / branch selection** — organisations with multiple sites
-  can configure locations; whistleblower selects the relevant location during
-  submission; admins can filter by location
-- [ ] **Optional secure contact method** — whistleblower may provide an external
-  anonymous e-mail (e.g. ProtonMail) for reply notifications; address is
-  stored encrypted, used only to send "you have a new reply" without revealing
-  report content; never logged
-- [ ] **Deadline display for whistleblower** — show the HinSchG acknowledgement
-  deadline (7 days) and feedback deadline (3 months) on the status page so the
-  whistleblower knows when to expect a response
+- [x] **Multi-step submission form** — 5–6 step guided wizard (mode → location →
+  category → description → attachments → review); Redis session stores partial
+  state with 2-hour TTL; back/next navigation; progress indicator
+- [x] **Anonymous vs. confidential mode** — whistleblower chooses at step 1;
+  confidential data (name, contact, secure email) stored encrypted with Fernet;
+  decrypted only on the assigned admin's report detail view
+- [x] **Multi-location / branch selection** — `Location` model; selector shown
+  only when active locations exist; full admin management at `/admin/locations`;
+  location filter on admin dashboard
+- [x] **Optional secure contact method** — whistleblower may provide an anonymous
+  e-mail; admin reply triggers a brief notification (no report content); address
+  stored encrypted, never logged
+- [x] **Deadline display for whistleblower** — status page shows 7-day
+  acknowledgement deadline and 3-month feedback deadline with days remaining
 
 ### Accessibility & Internationalisation
 
-- [ ] **Full German i18n** — translate all remaining hardcoded English strings
-  in templates and error responses to German; make all user-facing text go
-  through the translation system
-- [ ] **Third language (French or Polish)** — add a third language to broaden
-  EU reach; locale picker in UI
-- [ ] **WCAG 2.1 AA audit** — full accessibility pass: keyboard navigation,
-  screen reader labels, colour contrast ratio ≥ 4.5:1, focus indicators
+- [x] **Full German i18n** — all 388 translation keys present in `de.json`;
+  all user-facing text routed through the translation system
+- [x] **Third language (French)** — `app/locales/fr.json` with 388 keys;
+  language picker in nav bar shows English / Deutsch / Français
+- [x] **WCAG 2.1 AA audit** — skip-to-content link; `aria-label` on all nav
+  elements; `aria-current="page"`; `aria-live` regions; `role="alert"` on
+  errors; `aria-required`; `aria-describedby`; visible focus indicators
 
 ---
 
@@ -224,3 +221,10 @@ feedback — open an issue to discuss anything here.
 - [x] Immutable audit log with 18 action types + CSV export (v0.3.0)
 - [x] PDF export of full case report (v0.3.0)
 - [x] Dashboard statistics with SLA compliance rate (v0.3.0)
+- [x] Multi-step submission wizard with Redis session state (v0.4.0)
+- [x] Anonymous vs. confidential submission mode with Fernet encryption (v0.4.0)
+- [x] Multi-location / branch selection for whistleblower submissions (v0.4.0)
+- [x] Optional encrypted secure contact email for reply notifications (v0.4.0)
+- [x] HinSchG deadline display (7-day + 3-month) on whistleblower status page (v0.4.0)
+- [x] Full German i18n (388 keys) and French language addition (v0.4.0)
+- [x] WCAG 2.1 AA accessibility pass: ARIA, focus indicators, skip link (v0.4.0)
