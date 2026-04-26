@@ -7,12 +7,23 @@ from typing import Any, Literal
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.strategy_options import _AbstractLoad
 
 from app.i18n import _DEFAULT, _load
 from app.models.attachment import (
     Attachment,  # noqa: F401 — ensures mapper is loaded for selectinload
 )
-from app.models.report import Report, ReportMessage, ReportSender, ReportStatus
+from app.models.report import (
+    STATUS_TRANSITIONS,
+    AdminNote,
+    CaseLink,
+    DeletionRequest,
+    Report,
+    ReportMessage,
+    ReportSender,
+    ReportStatus,
+)
+from app.models.user import AdminUser
 from app.services.auth import hash_pin, verify_pin
 from app.services.pin import generate_case_number, generate_pin
 
@@ -27,6 +38,17 @@ _VALID_SORT_FIELDS: dict[str, Any] = {
 }
 
 _VALID_STATUSES: frozenset[str] = frozenset(s.value for s in ReportStatus)
+
+
+def _report_options() -> list[_AbstractLoad]:
+    return [
+        selectinload(Report.messages),
+        selectinload(Report.attachments),
+        selectinload(Report.notes),
+        selectinload(Report.links_as_a),
+        selectinload(Report.links_as_b),
+        selectinload(Report.deletion_request),
+    ]
 
 
 async def create_report(
@@ -50,7 +72,6 @@ async def create_report(
     )
     db.add(report)
 
-    # System message: automatic receipt confirmation (localized)
     strings = _load(lang)
     fallback = _load(_DEFAULT)
     receipt_text = strings.get("system.receipt_message") or fallback.get("system.receipt_message")
@@ -70,7 +91,6 @@ async def create_report(
 async def get_report_by_credentials(
     db: AsyncSession, case_number: str, plain_pin: str
 ) -> Report | None:
-    """Retrieve a report after verifying both case_number and PIN."""
     result = await db.execute(
         select(Report)
         .options(selectinload(Report.messages), selectinload(Report.attachments))
@@ -115,15 +135,18 @@ async def add_admin_message(
 
 
 async def acknowledge_report(db: AsyncSession, report: Report) -> Report:
-    """Mark report as acknowledged. Sets the 3-month feedback deadline."""
     now = datetime.now(UTC)
     report.acknowledged_at = now
     report.feedback_due_at = now + timedelta(days=90)
     if report.status == ReportStatus.received:
-        report.status = ReportStatus.acknowledged
+        report.status = ReportStatus.in_review
     await db.commit()
     await db.refresh(report)
     return report
+
+
+def is_valid_transition(current: str, new: str) -> bool:
+    return new in STATUS_TRANSITIONS.get(current, set())
 
 
 async def update_report_status(
@@ -137,10 +160,35 @@ async def update_report_status(
     return report
 
 
+async def assign_report(
+    db: AsyncSession, report: Report, admin: AdminUser | None
+) -> Report:
+    report.assigned_to_id = admin.id if admin else None
+    await db.commit()
+    await db.refresh(report)
+    return report
+
+
+async def add_note(
+    db: AsyncSession, report: Report, author: AdminUser, content: str
+) -> AdminNote:
+    note = AdminNote(
+        id=uuid.uuid4(),
+        report_id=report.id,
+        author_id=author.id,
+        author_username=author.username,
+        content=content,
+    )
+    db.add(note)
+    await db.commit()
+    await db.refresh(note)
+    return note
+
+
 async def get_all_reports(db: AsyncSession) -> list[Report]:
     result = await db.execute(
         select(Report)
-        .options(selectinload(Report.messages), selectinload(Report.attachments))
+        .options(*_report_options())
         .order_by(Report.submitted_at.desc())
     )
     return list(result.scalars().all())
@@ -154,12 +202,8 @@ async def get_reports_paginated(
     status_filter: str | None = None,
     sort_by: SortField = "submitted_at",
     sort_dir: SortDir = "desc",
+    assigned_to_id: uuid.UUID | None = None,
 ) -> tuple[list[Report], int]:
-    """Return a page of reports and the total matching count.
-
-    All parameters are validated/clamped here so callers can pass raw
-    query-string values without risk of injection or out-of-range results.
-    """
     page = max(1, page)
     per_page = max(1, min(100, per_page))
 
@@ -170,13 +214,15 @@ async def get_reports_paginated(
     base_q = select(Report)
     if status_filter and status_filter in _VALID_STATUSES:
         base_q = base_q.where(Report.status == ReportStatus(status_filter))
+    if assigned_to_id is not None:
+        base_q = base_q.where(Report.assigned_to_id == assigned_to_id)
 
     count_result = await db.execute(select(func.count()).select_from(base_q.subquery()))
     total: int = count_result.scalar_one()
 
     rows_result = await db.execute(
         base_q
-        .options(selectinload(Report.messages), selectinload(Report.attachments))
+        .options(*_report_options())
         .order_by(order_expr)
         .offset((page - 1) * per_page)
         .limit(per_page)
@@ -185,26 +231,169 @@ async def get_reports_paginated(
 
 
 async def get_report_stats(db: AsyncSession) -> dict[str, int]:
-    """Return counts per status for the dashboard summary cards."""
     result = await db.execute(
         select(Report.status, func.count(Report.id)).group_by(Report.status)
     )
     counts: dict[str, int] = {s.value: 0 for s in ReportStatus}
     for status_val, cnt in result.all():
-        counts[status_val.value] = cnt
+        if isinstance(status_val, ReportStatus):
+            counts[status_val.value] = cnt
+        else:
+            counts[str(status_val)] = cnt
     return counts
 
 
 async def get_report_by_id(db: AsyncSession, report_id: uuid.UUID) -> Report | None:
     result = await db.execute(
         select(Report)
-        .options(selectinload(Report.messages), selectinload(Report.attachments))
+        .options(*_report_options())
         .where(Report.id == report_id)
     )
     return result.scalar_one_or_none()
 
 
+async def get_report_by_case_number(db: AsyncSession, case_number: str) -> Report | None:
+    result = await db.execute(
+        select(Report).where(Report.case_number == case_number)
+    )
+    return result.scalar_one_or_none()
+
+
 async def delete_report(db: AsyncSession, report: Report) -> None:
-    """Hard delete a report and all its messages (DSGVO Art. 17 compliance)."""
     await db.delete(report)
     await db.commit()
+
+
+# ── 4-eyes deletion ────────────────────────────────────────────────
+
+async def request_deletion(
+    db: AsyncSession, report: Report, requester: AdminUser
+) -> DeletionRequest:
+    dr = DeletionRequest(
+        id=uuid.uuid4(),
+        report_id=report.id,
+        requested_by_id=requester.id,
+        requested_by_username=requester.username,
+    )
+    db.add(dr)
+    await db.commit()
+    await db.refresh(dr)
+    return dr
+
+
+async def cancel_deletion_request(
+    db: AsyncSession, deletion_request: DeletionRequest
+) -> None:
+    await db.delete(deletion_request)
+    await db.commit()
+
+
+async def confirm_deletion(
+    db: AsyncSession,
+    report: Report,
+    deletion_request: DeletionRequest,
+    confirmer: AdminUser,
+) -> None:
+    """Confirm and immediately execute the deletion."""
+    from datetime import UTC, datetime
+    deletion_request.confirmed_by_id = confirmer.id
+    deletion_request.confirmed_by_username = confirmer.username
+    deletion_request.confirmed_at = datetime.now(UTC)
+    await db.flush()
+    await db.delete(report)
+    await db.commit()
+
+
+# ── Case linking ───────────────────────────────────────────────────
+
+def _normalize_ids(
+    id_a: uuid.UUID, id_b: uuid.UUID
+) -> tuple[uuid.UUID, uuid.UUID]:
+    return (id_a, id_b) if str(id_a) < str(id_b) else (id_b, id_a)
+
+
+async def get_link(
+    db: AsyncSession, link_id: uuid.UUID
+) -> CaseLink | None:
+    result = await db.execute(select(CaseLink).where(CaseLink.id == link_id))
+    return result.scalar_one_or_none()
+
+
+async def link_cases(
+    db: AsyncSession,
+    report_a: Report,
+    report_b: Report,
+    actor: AdminUser,
+) -> CaseLink:
+    norm_a, norm_b = _normalize_ids(report_a.id, report_b.id)
+    link = CaseLink(
+        id=uuid.uuid4(),
+        report_id_a=norm_a,
+        report_id_b=norm_b,
+        linked_by_id=actor.id,
+        linked_by_username=actor.username,
+    )
+    db.add(link)
+    await db.commit()
+    await db.refresh(link)
+    return link
+
+
+async def unlink_cases(db: AsyncSession, link: CaseLink) -> None:
+    await db.delete(link)
+    await db.commit()
+
+
+def get_linked_reports(report: Report) -> list[tuple[uuid.UUID, str]]:
+    """Return list of (linked_report_id, link_id) for a report."""
+    result: list[tuple[uuid.UUID, str]] = []
+    for lnk in report.links_as_a:
+        result.append((lnk.report_id_b, str(lnk.id)))
+    for lnk in report.links_as_b:
+        result.append((lnk.report_id_a, str(lnk.id)))
+    return result
+
+
+# ── Dashboard statistics ────────────────────────────────────────────
+
+async def get_dashboard_stats(db: AsyncSession) -> dict[str, Any]:
+    """Aggregate statistics for the dashboard stats view."""
+    from sqlalchemy import case as sa_case
+
+    status_counts = await get_report_stats(db)
+
+    cat_result = await db.execute(
+        select(Report.category, func.count(Report.id)).group_by(Report.category)
+    )
+    by_category = {row[0]: row[1] for row in cat_result.all()}
+
+    # SLA compliance: % of reports acknowledged within 7 days
+    ack_result = await db.execute(
+        select(
+            func.count(Report.id).label("total"),
+            func.sum(
+                sa_case(
+                    (
+                        Report.acknowledged_at.isnot(None) &
+                        (
+                            func.extract("epoch", Report.acknowledged_at - Report.submitted_at)
+                            <= 7 * 86400
+                        ),
+                        1,
+                    ),
+                    else_=0,
+                )
+            ).label("on_time"),
+        )
+    )
+    ack_row = ack_result.one()
+    total_reports = ack_row.total or 0
+    on_time = int(ack_row.on_time or 0)
+    sla_rate = round(on_time / total_reports * 100) if total_reports else 0
+
+    return {
+        "status_counts": status_counts,
+        "by_category": by_category,
+        "total_reports": total_reports,
+        "sla_7day_rate": sla_rate,
+    }

@@ -110,8 +110,8 @@ def test_schemas_instantiation() -> None:
     )
     assert rr.content == "Reply content here."
 
-    asu = AdminStatusUpdate(status=ReportStatus.in_progress)
-    assert asu.status == ReportStatus.in_progress
+    asu = AdminStatusUpdate(status=ReportStatus.pending_feedback)
+    assert asu.status == ReportStatus.pending_feedback
 
     arr = AdminReplyRequest(content="Admin reply here.")
     assert arr.content == "Admin reply here."
@@ -176,15 +176,15 @@ async def test_add_admin_message(db_session: AsyncSession) -> None:
 async def test_acknowledge_report(db_session: AsyncSession) -> None:
     report, _ = await create_report(db_session, "financial_fraud", "Acknowledge test description!")
     result = await acknowledge_report(db_session, report)
-    assert result.status == ReportStatus.acknowledged
+    assert result.status == ReportStatus.in_review
     assert result.feedback_due_at is not None
     assert result.acknowledged_at is not None
 
 
-async def test_update_report_status_in_progress(db_session: AsyncSession) -> None:
+async def test_update_report_status_pending_feedback(db_session: AsyncSession) -> None:
     report, _ = await create_report(db_session, "corruption", "Update status test description!")
-    result = await update_report_status(db_session, report, ReportStatus.in_progress)
-    assert result.status == ReportStatus.in_progress
+    result = await update_report_status(db_session, report, ReportStatus.pending_feedback)
+    assert result.status == ReportStatus.pending_feedback
 
 
 async def test_update_report_status_closed(db_session: AsyncSession) -> None:
@@ -298,7 +298,7 @@ async def test_paginated_page_beyond_end_returns_empty(db_session: AsyncSession)
 
 async def test_get_report_stats_returns_all_statuses(db_session: AsyncSession) -> None:
     stats = await get_report_stats(db_session)
-    for key in ("received", "acknowledged", "in_progress", "closed"):
+    for key in ("received", "in_review", "pending_feedback", "closed"):
         assert key in stats
         assert isinstance(stats[key], int)
 

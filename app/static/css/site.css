@@ -571,10 +571,14 @@ select.form-control {
     letter-spacing: 0.05em;
 }
 
-.badge-received     { background: var(--bg-code);       color: var(--text-muted);    border: 1px solid var(--border-strong); }
-.badge-acknowledged { background: var(--info-subtle);   color: var(--info);          }
-.badge-in_progress  { background: var(--warning-subtle);color: var(--warning);       }
-.badge-closed       { background: var(--success-subtle);color: var(--success);       }
+.badge-received          { background: var(--bg-code);       color: var(--text-muted);    border: 1px solid var(--border-strong); }
+.badge-acknowledged      { background: var(--info-subtle);   color: var(--info);          }
+.badge-in_progress       { background: var(--warning-subtle);color: var(--warning);       }
+.badge-in_review         { background: var(--info-subtle);   color: var(--info);          }
+.badge-pending_feedback  { background: var(--warning-subtle);color: var(--warning);       }
+.badge-closed            { background: var(--success-subtle);color: var(--success);       }
+.badge-admin             { background: var(--accent-subtle); color: var(--accent);        }
+.badge-case_manager      { background: var(--bg-code);       color: var(--text-secondary); border: 1px solid var(--border); }
 
 /* ─── Credential display ──────────────────────────────────────────────────── */
 

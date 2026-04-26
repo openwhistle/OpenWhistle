@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('admin.audit.title') }} — OpenWhistle{% endblock %}
+
+{% block nav_links %}
+<li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
+<li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
+<li><a href="/admin/categories">{{ t('admin.nav.categories') }}</a></li>
+<li><a href="/admin/users">{{ t('admin.nav.users') }}</a></li>
+<li><a href="/admin/audit-log" class="active">{{ t('admin.nav.audit_log') }}</a></li>
+<li><a href="/admin/logout">Logout</a></li>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header" style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+        <div>
+            <div class="page-eyebrow">{{ t('admin.audit.eyebrow') }}</div>
+            <h1>{{ t('admin.audit.title') }}</h1>
+        </div>
+        <a href="/admin/audit-log/export.csv" class="btn btn-secondary btn-sm" download>
+            &#128196; {{ t('admin.audit.export_csv') }}
+        </a>
+    </div>
+
+    {# Filter bar #}
+    <div class="panel" style="margin-bottom:1.25rem;">
+        <form method="get" action="/admin/audit-log" style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:flex-end;">
+            <div class="form-group" style="margin:0;flex:1;min-width:180px;">
+                <label class="form-label" for="action-filter">{{ t('admin.audit.filter.action') }}</label>
+                <input type="text" class="form-control" id="action-filter" name="action"
+                    value="{{ action_filter }}"
+                    placeholder="{{ t('admin.audit.filter.all') }}">
+            </div>
+            <div class="form-group" style="margin:0;flex:1;min-width:180px;">
+                <label class="form-label" for="report-filter">{{ t('admin.audit.filter.report_id') }}</label>
+                <input type="text" class="form-control" id="report-filter" name="report_id"
+                    value="{{ report_id_filter }}"
+                    placeholder="UUID…">
+            </div>
+            <button type="submit" class="btn btn-secondary">{{ t('admin.audit.filter.apply') }}</button>
+            {% if action_filter or report_id_filter %}
+            <a href="/admin/audit-log" class="btn btn-secondary">✕ Clear</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="panel">
+        {% if entries %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{{ t('admin.audit.table.time') }}</th>
+                        <th>{{ t('admin.audit.table.admin') }}</th>
+                        <th>{{ t('admin.audit.table.action') }}</th>
+                        <th>{{ t('admin.audit.table.report') }}</th>
+                        <th>{{ t('admin.audit.table.detail') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in entries %}
+                    <tr>
+                        <td class="mono" style="font-size:0.78rem;white-space:nowrap;color:var(--text-muted);">
+                            {{ entry.created_at.strftime('%Y-%m-%d %H:%M UTC') }}
+                        </td>
+                        <td style="font-size:0.85rem;font-weight:600;">{{ entry.admin_username or '—' }}</td>
+                        <td>
+                            <span style="font-family:var(--font-mono);font-size:0.78rem;color:var(--accent);background:var(--accent-subtle);padding:0.15rem 0.4rem;border-radius:4px;">
+                                {{ entry.action }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if entry.report_id %}
+                            <a href="/admin/reports/{{ entry.report_id }}" class="mono" style="font-size:0.78rem;">
+                                {{ entry.report_id | string | truncate(13, true, '…') }}
+                            </a>
+                            {% else %}
+                            &mdash;
+                            {% endif %}
+                        </td>
+                        <td style="font-size:0.78rem;color:var(--text-muted);font-family:var(--font-mono);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ entry.detail or '' }}">
+                            {{ entry.detail or '' }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# Pagination #}
+        {% if total_pages > 1 %}
+        <div class="pagination-bar">
+            <div class="pagination-info">
+                {{ t('admin.pagination.page_of', page=page, total_pages=total_pages) }}
+            </div>
+            <div class="pagination-controls">
+                {% if page > 1 %}
+                <a href="/admin/audit-log?page={{ page - 1 }}{% if action_filter %}&action={{ action_filter }}{% endif %}{% if report_id_filter %}&report_id={{ report_id_filter }}{% endif %}"
+                   class="btn btn-secondary btn-sm pagination-btn">{{ t('admin.pagination.prev') }}</a>
+                {% else %}
+                <span class="btn btn-secondary btn-sm pagination-btn pagination-disabled">{{ t('admin.pagination.prev') }}</span>
+                {% endif %}
+
+                {% if page < total_pages %}
+                <a href="/admin/audit-log?page={{ page + 1 }}{% if action_filter %}&action={{ action_filter }}{% endif %}{% if report_id_filter %}&report_id={{ report_id_filter }}{% endif %}"
+                   class="btn btn-secondary btn-sm pagination-btn">{{ t('admin.pagination.next') }}</a>
+                {% else %}
+                <span class="btn btn-secondary btn-sm pagination-btn pagination-disabled">{{ t('admin.pagination.next') }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div style="text-align:center;padding:3rem 1rem;">
+            <div style="font-size:2.5rem;margin-bottom:1rem;opacity:0.3;">&#128221;</div>
+            <p style="font-size:1rem;color:var(--text-muted);">{{ t('admin.audit.empty') }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

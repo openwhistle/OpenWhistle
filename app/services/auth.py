@@ -32,10 +32,11 @@ def verify_pin(plain: str, hashed: str) -> bool:
     return bcrypt.checkpw(plain.encode(), hashed.encode())
 
 
-def create_access_token(user_id: str) -> str:
+def create_access_token(user_id: str, role: str = "admin") -> str:
     expire = datetime.now(UTC) + timedelta(minutes=settings.access_token_expire_minutes)
     payload = {
         "sub": user_id,
+        "role": role,
         "exp": expire,
         "iat": datetime.now(UTC),
         "jti": str(uuid.uuid4()),

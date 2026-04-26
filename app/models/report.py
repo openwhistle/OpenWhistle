@@ -16,23 +16,23 @@ from app.database import Base
 
 if TYPE_CHECKING:
     from app.models.attachment import Attachment
-
-
-class ReportCategory(enum.StrEnum):
-    financial_fraud = "financial_fraud"
-    workplace_safety = "workplace_safety"
-    environmental = "environmental"
-    corruption = "corruption"
-    data_protection = "data_protection"
-    discrimination = "discrimination"
-    other = "other"
+    from app.models.user import AdminUser
 
 
 class ReportStatus(enum.StrEnum):
     received = "received"
-    acknowledged = "acknowledged"
-    in_progress = "in_progress"
+    in_review = "in_review"
+    pending_feedback = "pending_feedback"
     closed = "closed"
+
+
+# Valid status transitions: {from_status: set_of_allowed_to_statuses}
+STATUS_TRANSITIONS: dict[str, set[str]] = {
+    "received":         {"in_review", "closed"},
+    "in_review":        {"pending_feedback", "closed", "received"},
+    "pending_feedback": {"closed", "in_review"},
+    "closed":           {"in_review"},
+}
 
 
 class ReportSender(enum.StrEnum):
@@ -46,14 +46,11 @@ class Report(Base):
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
-    # Human-readable case reference (e.g. OW-2026-00042) — shown to whistleblower
     case_number: Mapped[str] = mapped_column(String(20), unique=True, nullable=False, index=True)
-    # bcrypt hash of the secret UUID4 PIN
     pin_hash: Mapped[str] = mapped_column(String(72), nullable=False)
 
-    category: Mapped[ReportCategory] = mapped_column(
-        Enum(ReportCategory, name="reportcategory"), nullable=False
-    )
+    # Stored as plain string — denormalized at submit time for history immutability
+    category: Mapped[str] = mapped_column(String(64), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
 
     status: Mapped[ReportStatus] = mapped_column(
@@ -62,31 +59,62 @@ class Report(Base):
         default=ReportStatus.received,
     )
 
+    # Case assignment
+    assigned_to_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("admin_users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    assigned_to: Mapped[AdminUser | None] = relationship(
+        "AdminUser",
+        back_populates="assigned_reports",
+        foreign_keys=[assigned_to_id],
+        lazy="joined",
+    )
+
     submitted_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
-    # Set when admin confirms receipt (HinSchG §17 Abs. 1 — within 7 days)
     acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    # Set automatically when acknowledged (3 months SLA per HinSchG §17 Abs. 2)
     feedback_due_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     messages: Mapped[list[ReportMessage]] = relationship(
-        "ReportMessage", back_populates="report", cascade="all, delete-orphan"
+        "ReportMessage", back_populates="report", cascade="all, delete-orphan",
+        order_by="ReportMessage.sent_at",
     )
     attachments: Mapped[list[Attachment]] = relationship(
         "Attachment", back_populates="report", cascade="all, delete-orphan"
     )
+    notes: Mapped[list[AdminNote]] = relationship(
+        "AdminNote", back_populates="report", cascade="all, delete-orphan",
+        order_by="AdminNote.created_at",
+    )
+    links_as_a: Mapped[list[CaseLink]] = relationship(
+        "CaseLink",
+        foreign_keys="CaseLink.report_id_a",
+        back_populates="report_a",
+        cascade="all, delete-orphan",
+    )
+    links_as_b: Mapped[list[CaseLink]] = relationship(
+        "CaseLink",
+        foreign_keys="CaseLink.report_id_b",
+        back_populates="report_b",
+        cascade="all, delete-orphan",
+    )
+    deletion_request: Mapped[DeletionRequest | None] = relationship(
+        "DeletionRequest",
+        back_populates="report",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
 
 
 class ReportMessage(Base):
-    """A message in the bidirectional communication thread.
-
-    Required by HinSchG §17 Abs. 3 — same channel for follow-up communication.
-    No IP address stored anywhere.
-    """
+    """A message in the bidirectional communication thread."""
 
     __tablename__ = "report_messages"
 
@@ -105,3 +133,87 @@ class ReportMessage(Base):
     )
 
     report: Mapped[Report] = relationship("Report", back_populates="messages")
+
+
+class AdminNote(Base):
+    """Internal note visible only to admins — never shown to the whistleblower."""
+
+    __tablename__ = "admin_notes"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    report_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("reports.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    author_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("admin_users.id", ondelete="SET NULL"), nullable=True
+    )
+    author_username: Mapped[str] = mapped_column(String(64), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    report: Mapped[Report] = relationship("Report", back_populates="notes")
+
+
+class CaseLink(Base):
+    """Bidirectional link between two reports (de-duplication / same whistleblower)."""
+
+    __tablename__ = "case_links"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    # Smaller UUID always in report_id_a for normalization
+    report_id_a: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("reports.id", ondelete="CASCADE"), nullable=False
+    )
+    report_id_b: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("reports.id", ondelete="CASCADE"), nullable=False
+    )
+    linked_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("admin_users.id", ondelete="SET NULL"), nullable=True
+    )
+    linked_by_username: Mapped[str] = mapped_column(String(64), nullable=False)
+    linked_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    report_a: Mapped[Report] = relationship(
+        "Report", foreign_keys=[report_id_a], back_populates="links_as_a"
+    )
+    report_b: Mapped[Report] = relationship(
+        "Report", foreign_keys=[report_id_b], back_populates="links_as_b"
+    )
+
+
+class DeletionRequest(Base):
+    """4-eyes deletion workflow: request by one admin, confirm by another."""
+
+    __tablename__ = "deletion_requests"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    report_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("reports.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+    )
+    requested_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("admin_users.id", ondelete="SET NULL"), nullable=True
+    )
+    requested_by_username: Mapped[str] = mapped_column(String(64), nullable=False)
+    requested_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    confirmed_by_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("admin_users.id", ondelete="SET NULL"), nullable=True
+    )
+    confirmed_by_username: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    report: Mapped[Report] = relationship("Report", back_populates="deletion_request")

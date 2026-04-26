@@ -60,15 +60,8 @@
                 <select class="form-control" id="category" name="category" required>
                     <option value="">{{ t('submit.form.category.placeholder') }}</option>
                     {% for cat in categories %}
-                    <option value="{{ cat.value }}" {% if cat.value == selected_category %}selected{% endif %}>
-                        {% if cat.value == "financial_fraud" %}{{ t('submit.form.category.financial_fraud') }}
-                        {% elif cat.value == "workplace_safety" %}{{ t('submit.form.category.workplace_safety') }}
-                        {% elif cat.value == "environmental" %}{{ t('submit.form.category.environmental') }}
-                        {% elif cat.value == "corruption" %}{{ t('submit.form.category.corruption') }}
-                        {% elif cat.value == "data_protection" %}{{ t('submit.form.category.data_protection') }}
-                        {% elif cat.value == "discrimination" %}{{ t('submit.form.category.discrimination') }}
-                        {% else %}{{ t('submit.form.category.other') }}
-                        {% endif %}
+                    <option value="{{ cat.slug }}" {% if cat.slug == selected_category %}selected{% endif %}>
+                        {{ cat.label_en if lang == 'en' else cat.label_de }}
                     </option>
                     {% endfor %}
                 </select>

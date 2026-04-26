@@ -130,18 +130,22 @@
     <div class="panel status-progress-panel" style="animation-delay:0.03s;">
         <div class="panel-header">{{ t('status.progress.title') }}</div>
         <div class="progress-steps">
-            {% set steps = ['received', 'acknowledged', 'in_progress', 'closed'] %}
+            {% set steps = ['received', 'in_review', 'pending_feedback', 'closed'] %}
             {% set current_idx = steps.index(report.status.value) if report.status.value in steps else 0 %}
             {% for step in steps %}
             {% set step_idx = loop.index0 %}
             <div class="progress-step {{ 'done' if step_idx < current_idx else ('active' if step_idx == current_idx else 'pending') }}">
                 <div class="progress-step-dot"></div>
-                <div class="progress-step-label">{{ t('status.progress.' + step + '.label') }}</div>
+                <div class="progress-step-label">{{ t('status.label.' + step) }}</div>
             </div>
             {% endfor %}
         </div>
         <div class="progress-desc">
+            {% if report.status.value in ['in_review', 'pending_feedback'] %}
+            {{ t('status.progress.acknowledged.desc') }}
+            {% else %}
             {{ t('status.progress.' + report.status.value + '.desc') }}
+            {% endif %}
         </div>
     </div>
 

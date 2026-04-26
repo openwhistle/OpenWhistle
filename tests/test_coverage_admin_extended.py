@@ -212,7 +212,7 @@ async def test_acknowledge_report_not_found_returns_404(
 
 
 @pytest.mark.asyncio
-async def test_update_status_to_in_progress(
+async def test_update_status_to_in_review(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
     admin, totp_secret = await _create_admin(db_session)
@@ -224,7 +224,7 @@ async def test_update_status_to_in_progress(
     csrf = await _get_csrf(client, f"/admin/reports/{report_id}")
     resp = await client.post(
         f"/admin/reports/{report_id}/status",
-        data={"new_status": "in_progress", "csrf_token": csrf},
+        data={"new_status": "in_review", "csrf_token": csrf},
         follow_redirects=False,
     )
     assert resp.status_code == 302
@@ -260,7 +260,7 @@ async def test_update_status_not_found_returns_404(
     csrf = await _get_csrf(client)
     resp = await client.post(
         f"/admin/reports/{fake_id}/status",
-        data={"new_status": "in_progress", "csrf_token": csrf},
+        data={"new_status": "in_review", "csrf_token": csrf},
         follow_redirects=False,
     )
     assert resp.status_code == 404

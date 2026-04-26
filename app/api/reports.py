@@ -24,10 +24,10 @@ from app.config import settings
 from app.csrf import validate_csrf
 from app.database import get_db
 from app.i18n import get_lang
-from app.models.report import ReportCategory
 from app.redis_client import get_redis
 from app.services import rate_limit as rl
 from app.services import report as report_service
+from app.services.categories import get_active_categories
 from app.templating import render
 
 router = APIRouter()
@@ -97,11 +97,12 @@ async def index(request: Request, db: AsyncSession = Depends(get_db)) -> Redirec
 
 
 @router.get("/submit", response_class=HTMLResponse)
-async def submit_get(request: Request) -> HTMLResponse:
+async def submit_get(request: Request, db: AsyncSession = Depends(get_db)) -> HTMLResponse:
+    categories = await get_active_categories(db)
     return render(
         request,
         "submit.html",
-        {"categories": list(ReportCategory), "selected_category": ""},
+        {"categories": categories, "selected_category": ""},
     )
 
 
@@ -115,23 +116,24 @@ async def submit_post(
     db: AsyncSession = Depends(get_db),
     _csrf: None = Depends(validate_csrf),
 ) -> HTMLResponse:
+    categories = await get_active_categories(db)
+    valid_slugs = {c.slug for c in categories}
+
     if not category:
         return render(
             request,
             "submit.html",
             {
-                "categories": list(ReportCategory),
+                "categories": categories,
                 "error": "Please select a category.",
                 "selected_category": "",
             },
         )
 
-    try:
-        cat = ReportCategory(category)
-    except ValueError as exc:
+    if category not in valid_slugs:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid category"
-        ) from exc
+        )
 
     description_stripped = description.strip()
 
@@ -140,7 +142,7 @@ async def submit_post(
             request,
             "submit.html",
             {
-                "categories": list(ReportCategory),
+                "categories": categories,
                 "error": "Description must be at least 10 characters.",
                 "selected_category": category,
             },
@@ -151,7 +153,7 @@ async def submit_post(
             request,
             "submit.html",
             {
-                "categories": list(ReportCategory),
+                "categories": categories,
                 "error": "Description must not exceed 10,000 characters.",
                 "selected_category": category,
             },
@@ -166,7 +168,7 @@ async def submit_post(
             request,
             "submit.html",
             {
-                "categories": list(ReportCategory),
+                "categories": categories,
                 "error": file_error,
                 "selected_category": category,
             },
@@ -175,7 +177,7 @@ async def submit_post(
     lang = get_lang(request)
     report, plain_pin = await report_service.create_report(
         db=db,
-        category=cat.value,
+        category=category,
         description=description_stripped,
         lang=lang,
     )

@@ -3,11 +3,11 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from app.models.report import ReportCategory, ReportSender, ReportStatus
+from app.models.report import ReportSender, ReportStatus
 
 
 class ReportCreate(BaseModel):
-    category: ReportCategory
+    category: str = Field(min_length=1, max_length=64)
     description: str = Field(min_length=10, max_length=10_000)
 
 
@@ -36,7 +36,7 @@ class MessageOut(BaseModel):
 class ReportOut(BaseModel):
     id: UUID
     case_number: str
-    category: ReportCategory
+    category: str
     status: ReportStatus
     submitted_at: datetime
     acknowledged_at: datetime | None

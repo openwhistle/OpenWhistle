@@ -4,15 +4,25 @@
 
 {% block nav_links %}
 <li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
+<li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
+<li><a href="/admin/categories">{{ t('admin.nav.categories') }}</a></li>
+<li><a href="/admin/users">{{ t('admin.nav.users') }}</a></li>
+<li><a href="/admin/audit-log">{{ t('admin.nav.audit_log') }}</a></li>
 <li><a href="/admin/logout">Logout</a></li>
 {% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="page-header">
-        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:0.75rem;">
+        <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-bottom:0.75rem;">
             <a href="/admin/dashboard" class="btn btn-secondary btn-sm">{{ t('admin.back_dashboard') }}</a>
             <span class="badge badge-{{ report.status.value }}">{{ t('status.label.' + report.status.value) }}</span>
+            {% if report.assigned_to %}
+            <span style="font-size:0.78rem;color:var(--text-muted);">&#128100; {{ report.assigned_to.username }}</span>
+            {% endif %}
+            <a href="/admin/reports/{{ report.id }}/export.pdf" class="btn btn-secondary btn-sm" style="margin-left:auto;" download>
+                &#128196; {{ t('admin.report.export_pdf') }}
+            </a>
         </div>
         <div class="page-eyebrow">{{ t('admin.report.eyebrow') }}</div>
         <h1 style="font-family:var(--font-mono);font-size:clamp(1.1rem,3vw,1.75rem);letter-spacing:0.04em;font-weight:400;">
@@ -22,17 +32,20 @@
 
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:1.25rem;align-items:start;">
 
-        {# Left column: report + thread + reply #}
+        {# ── Left column: report + thread + reply + notes + links ── #}
         <div>
+
+            {# Initial report #}
             <div class="panel">
                 <div class="panel-header">
                     {{ t('admin.report.initial') }}
                     &nbsp;&nbsp;
-                    <span class="badge badge-received">{{ t('category.label.' + report.category.value) }}</span>
+                    <span class="badge badge-received">{{ report.category | replace('_', ' ') | title }}</span>
                 </div>
                 <p style="white-space:pre-wrap;font-size:0.95rem;color:var(--text-secondary);line-height:1.7;">{{ report.description }}</p>
             </div>
 
+            {# Communication thread + reply #}
             <div class="panel" style="animation-delay:0.05s;">
                 <div class="panel-header">{{ t('admin.report.thread') }}</div>
 
@@ -72,10 +85,108 @@
                 </form>
                 {% endif %}
             </div>
+
+            {# Internal notes (admin-only) #}
+            <div class="panel" id="notes" style="animation-delay:0.08s;">
+                <div class="panel-header">
+                    {{ t('admin.report.notes.header') }}
+                    <span style="margin-left:0.5rem;font-size:0.7rem;padding:0.15rem 0.5rem;background:var(--warning-subtle);color:var(--warning);border-radius:4px;font-weight:600;letter-spacing:0.05em;">INTERNAL</span>
+                </div>
+
+                {% if report.notes %}
+                <div style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1.25rem;">
+                    {% for note in report.notes %}
+                    <div style="border-left:3px solid var(--warning);padding:0.6rem 0.75rem;background:var(--warning-subtle);border-radius:0 4px 4px 0;">
+                        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.25rem;">
+                            <strong style="color:var(--text-secondary);">{{ note.author_username }}</strong>
+                            &middot; <span class="mono">{{ note.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+                        </div>
+                        <div style="font-size:0.88rem;white-space:pre-wrap;color:var(--text-secondary);">{{ note.content }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p style="color:var(--text-muted);margin-bottom:1rem;font-size:0.88rem;">{{ t('admin.report.notes.none') }}</p>
+                {% endif %}
+
+                <form method="post" action="/admin/reports/{{ report.id }}/notes">
+                    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                    <div class="form-group">
+                        <textarea class="form-control" name="content" rows="3"
+                            maxlength="5000"
+                            placeholder="{{ t('admin.report.notes.placeholder') }}"
+                            required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.report.notes.button') }}</button>
+                </form>
+            </div>
+
+            {# Linked cases #}
+            <div class="panel" id="links" style="animation-delay:0.1s;">
+                <div class="panel-header">{{ t('admin.report.links.header') }}</div>
+
+                {% if linked_reports %}
+                <ul style="list-style:none;padding:0;margin:0 0 1rem;display:flex;flex-direction:column;gap:0.5rem;">
+                    {% for lr in linked_reports %}
+                    <li style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;background:var(--bg-code);border-radius:6px;">
+                        <a href="/admin/reports/{{ lr.id }}" class="mono" style="font-size:0.85rem;font-weight:600;">{{ lr.case_number }}</a>
+                        <span class="badge badge-{{ lr.status }}" style="font-size:0.7rem;">{{ t('status.label.' + lr.status) }}</span>
+                        <span style="font-size:0.8rem;color:var(--text-muted);flex:1;">{{ lr.category | replace('_', ' ') | title }}</span>
+                        <form method="post" action="/admin/reports/{{ report.id }}/links/{{ lr.link_id }}/delete" style="margin:0;">
+                            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                            <button type="submit" class="btn btn-secondary btn-sm"
+                                onclick="return confirm('Remove link with {{ lr.case_number }}?')"
+                                style="font-size:0.75rem;padding:0.2rem 0.5rem;">
+                                {{ t('admin.report.links.remove') }}
+                            </button>
+                        </form>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p style="color:var(--text-muted);margin-bottom:1rem;font-size:0.88rem;">{{ t('admin.report.links.none') }}</p>
+                {% endif %}
+
+                <form method="post" action="/admin/reports/{{ report.id }}/links" style="display:flex;gap:0.5rem;align-items:flex-start;">
+                    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                    <input type="text" class="form-control" name="case_number" style="flex:1;"
+                        placeholder="{{ t('admin.report.links.placeholder') }}"
+                        pattern="OW-\d{4}-\d{5}" title="Format: OW-YYYY-NNNNN"
+                        required>
+                    <button type="submit" class="btn btn-secondary btn-sm" style="white-space:nowrap;">{{ t('admin.report.links.button') }}</button>
+                </form>
+            </div>
+
+            {# Audit log timeline #}
+            <div class="panel" id="audit" style="animation-delay:0.12s;">
+                <div class="panel-header">{{ t('admin.report.audit.header') }}</div>
+                {% if audit_entries %}
+                <div style="display:flex;flex-direction:column;gap:0.4rem;">
+                    {% for entry in audit_entries %}
+                    <div style="display:flex;gap:0.75rem;align-items:baseline;padding:0.35rem 0;border-bottom:1px solid var(--border);font-size:0.8rem;">
+                        <span class="mono" style="color:var(--text-muted);white-space:nowrap;flex-shrink:0;">{{ entry.created_at.strftime('%m-%d %H:%M') }}</span>
+                        <span style="color:var(--text-secondary);font-weight:600;flex-shrink:0;">{{ entry.admin_username or '—' }}</span>
+                        <span style="color:var(--accent);font-family:var(--font-mono);font-size:0.75rem;">{{ entry.action }}</span>
+                        {% if entry.detail %}
+                        <span style="color:var(--text-muted);font-size:0.75rem;font-family:var(--font-mono);">{{ entry.detail[:80] }}</span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <div style="margin-top:0.75rem;">
+                    <a href="/admin/audit-log?report_id={{ report.id }}" class="btn btn-secondary btn-sm" style="font-size:0.78rem;">Full audit trail →</a>
+                </div>
+                {% else %}
+                <p style="color:var(--text-muted);font-size:0.88rem;">{{ t('admin.report.audit.none') }}</p>
+                {% endif %}
+            </div>
+
         </div>
 
-        {# Right column: metadata + actions #}
+        {# ── Right column: metadata + actions ── #}
         <div>
+
+            {# Report details #}
             <div class="panel">
                 <div class="panel-header">{{ t('admin.report.details') }}</div>
 
@@ -143,60 +254,116 @@
             </div>
             {% endif %}
 
-            {# Status update #}
+            {# Case assignment (admin only) #}
+            {% if is_admin %}
+            <div class="panel" style="animation-delay:0.06s;">
+                <div class="panel-header">{{ t('admin.report.assign.header') }}</div>
+                <form method="post" action="/admin/reports/{{ report.id }}/assign">
+                    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                    <div class="form-group">
+                        <label class="form-label" for="assign-admin">{{ t('admin.report.assign.label') }}</label>
+                        <select class="form-control" id="assign-admin" name="admin_id">
+                            <option value="">{{ t('admin.report.assign.unassigned') }}</option>
+                            {% for admin in all_admins %}
+                            {% if admin.is_active %}
+                            <option value="{{ admin.id }}" {{ 'selected' if report.assigned_to_id == admin.id else '' }}>
+                                {{ admin.username }} ({{ t('role.label.' + admin.role.value) }})
+                            </option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-secondary btn-block">{{ t('admin.report.assign.button') }}</button>
+                </form>
+            </div>
+            {% endif %}
+
+            {# Status update — only valid transitions #}
             <div class="panel" style="animation-delay:0.08s;">
                 <div class="panel-header">{{ t('admin.report.status.header') }}</div>
+                {% if allowed_transitions %}
                 <form method="post" action="/admin/reports/{{ report.id }}/status">
                     <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                     <div class="form-group">
                         <label class="form-label" for="new-status">{{ t('admin.report.status.label') }}</label>
                         <select class="form-control" id="new-status" name="new_status">
-                            {% for s in statuses %}
-                            <option value="{{ s.value }}" {{ 'selected' if s.value == report.status.value else '' }}>
-                                {{ t('status.label.' + s.value) }}
-                            </option>
+                            <option value="{{ report.status.value }}" disabled selected>{{ t('status.label.' + report.status.value) }} (current)</option>
+                            {% for sv in allowed_transitions %}
+                            <option value="{{ sv }}">{{ t('status.label.' + sv) }}</option>
                             {% endfor %}
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-secondary btn-block"
+                    <button type="submit" id="status-btn" class="btn btn-secondary btn-block"
                         onclick="return confirmStatusChange(this.form.new_status.value, '{{ report.status.value }}')">
                         {{ t('admin.report.status.button') }}
                     </button>
                 </form>
+                {% else %}
+                <p style="font-size:0.85rem;color:var(--text-muted);">No further status transitions available.</p>
+                {% endif %}
             </div>
 
-            {# Delete (DSGVO Art. 17) #}
+            {# 4-eyes deletion (admin only) #}
+            {% if is_admin %}
             <div class="panel" style="animation-delay:0.1s;border-color:var(--danger);">
                 <div class="panel-header" style="color:var(--danger);">{{ t('admin.report.delete.header') }}</div>
-                <p style="font-size:0.85rem;margin-bottom:1rem;">{{ t('admin.report.delete.body') }}</p>
 
-                <div id="delete-step-1">
-                    <button type="button" class="btn btn-secondary btn-block"
-                        onclick="document.getElementById('delete-step-1').style.display='none';document.getElementById('delete-step-2').style.display='block';">
-                        {{ t('admin.report.delete.request') }}
-                    </button>
-                </div>
-
-                <div id="delete-step-2" style="display:none;">
+                {% if report.deletion_request %}
+                    {# Pending deletion request exists #}
                     <div class="alert alert-error" style="margin-bottom:1rem;">
-                        <div class="alert-title">{{ t('admin.report.delete.confirm.title') }}</div>
-                        {{ t('admin.report.delete.confirm.body') }}
+                        <div class="alert-title">{{ t('admin.report.delete.pending.title') }}</div>
+                        {{ t('admin.report.delete.pending.body', username=report.deletion_request.requested_by_username) }}
+                        <div class="mono" style="font-size:0.75rem;margin-top:0.4rem;">{{ report.deletion_request.requested_at.strftime('%Y-%m-%d %H:%M UTC') }}</div>
                     </div>
-                    <form method="post" action="/admin/reports/{{ report.id }}/delete">
+
+                    {% if report.deletion_request.requested_by_id == user.id %}
+                    {# Current user requested — can only cancel #}
+                    <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">{{ t('admin.report.delete.cannot_self') }}</p>
+                    <form method="post" action="/admin/reports/{{ report.id }}/cancel-delete">
                         <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                        <div style="display:flex;gap:0.5rem;">
-                            <button type="button" class="btn btn-secondary"
-                                style="flex:1"
-                                onclick="document.getElementById('delete-step-1').style.display='block';document.getElementById('delete-step-2').style.display='none';">
-                                {{ t('admin.report.delete.cancel') }}
-                            </button>
-                            <button type="submit" class="btn btn-danger" style="flex:1">
-                                {{ t('admin.report.delete.button') }}
-                            </button>
-                        </div>
+                        <button type="submit" class="btn btn-secondary btn-block">{{ t('admin.report.delete.cancel_request') }}</button>
                     </form>
-                </div>
+                    {% else %}
+                    {# Different admin — can confirm #}
+                    <form method="post" action="/admin/reports/{{ report.id }}/confirm-delete"
+                          onsubmit="return confirm('Permanently delete this report? This cannot be undone.')">
+                        <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                        <button type="submit" class="btn btn-danger btn-block">{{ t('admin.report.delete.confirm_4eyes') }}</button>
+                    </form>
+                    {% endif %}
+
+                {% else %}
+                    {# No pending request — show request button #}
+                    <p style="font-size:0.85rem;margin-bottom:1rem;">{{ t('admin.report.delete.body') }}</p>
+                    <div id="delete-step-1">
+                        <button type="button" class="btn btn-secondary btn-block"
+                            onclick="document.getElementById('delete-step-1').style.display='none';document.getElementById('delete-step-2').style.display='block';">
+                            {{ t('admin.report.delete.request') }}
+                        </button>
+                    </div>
+                    <div id="delete-step-2" style="display:none;">
+                        <div class="alert alert-error" style="margin-bottom:1rem;">
+                            <div class="alert-title">{{ t('admin.report.delete.confirm.title') }}</div>
+                            {{ t('admin.report.delete.confirm.body') }}
+                        </div>
+                        <form method="post" action="/admin/reports/{{ report.id }}/request-delete">
+                            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                            <div style="display:flex;gap:0.5rem;">
+                                <button type="button" class="btn btn-secondary"
+                                    style="flex:1"
+                                    onclick="document.getElementById('delete-step-1').style.display='block';document.getElementById('delete-step-2').style.display='none';">
+                                    {{ t('admin.report.delete.cancel') }}
+                                </button>
+                                <button type="submit" class="btn btn-danger" style="flex:1">
+                                    {{ t('admin.report.delete.request') }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                {% endif %}
             </div>
+            {% endif %}
+
         </div>
     </div>
 </div>
@@ -205,14 +372,12 @@
 {% block scripts %}
 <script>
 function confirmStatusChange(newStatus, currentStatus) {
-    const order = ['received', 'acknowledged', 'in_progress', 'closed'];
-    const currentIdx = order.indexOf(currentStatus);
-    const newIdx = order.indexOf(newStatus);
     if (newStatus === currentStatus) return false;
-    if (newStatus === 'closed' && currentIdx < 2) {
+    if (newStatus === 'closed') {
         return confirm('{{ t("admin.report.status.confirm_close") }}');
     }
-    if (newIdx < currentIdx) {
+    const order = ['received', 'in_review', 'pending_feedback', 'closed'];
+    if (order.indexOf(newStatus) < order.indexOf(currentStatus)) {
         return confirm('{{ t("admin.report.status.confirm_downgrade") }}');
     }
     return true;
@@ -220,17 +385,13 @@ function confirmStatusChange(newStatus, currentStatus) {
 
 (function() {
     var sel = document.getElementById('new-status');
-    var btn = sel && sel.closest('form') && sel.closest('form').querySelector('button[type="submit"]');
-    if (!sel || !btn) return;
-    var cur = '{{ report.status.value }}';
-    function sync() {
-        var same = sel.value === cur;
-        btn.disabled = same;
-        btn.style.opacity = same ? '0.45' : '';
-        btn.title = same ? '{{ t("admin.report.status.no_change") }}' : '';
-    }
-    sel.addEventListener('change', sync);
-    sync();
+    if (!sel) return;
+    var btn = document.getElementById('status-btn');
+    if (!btn) return;
+    sel.addEventListener('change', function() {
+        btn.disabled = false;
+        btn.style.opacity = '';
+    });
 })();
 </script>
 {% endblock %}

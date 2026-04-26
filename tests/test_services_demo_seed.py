@@ -133,7 +133,7 @@ async def test_seed_reports_idempotent(db_session: AsyncSession) -> None:
 
 
 @pytest.mark.asyncio
-async def test_seed_acknowledged_report_has_timestamps(db_session: AsyncSession) -> None:
+async def test_seed_in_review_report_has_timestamps(db_session: AsyncSession) -> None:
     from app.models.report import Report
 
     await _seed(db_session)
@@ -182,7 +182,7 @@ async def test_seed_received_report_has_one_message(db_session: AsyncSession) ->
 
 
 @pytest.mark.asyncio
-async def test_seed_acknowledged_report_has_two_messages(db_session: AsyncSession) -> None:
+async def test_seed_in_review_report_has_two_messages(db_session: AsyncSession) -> None:
     from app.models.report import Report
 
     await _seed(db_session)
@@ -196,8 +196,8 @@ async def test_seed_acknowledged_report_has_two_messages(db_session: AsyncSessio
 
 
 @pytest.mark.asyncio
-async def test_seed_in_progress_report_has_three_messages(db_session: AsyncSession) -> None:
-    """in_progress reports get receipt + acknowledgement + whistleblower reply."""
+async def test_seed_pending_feedback_report_has_four_messages(db_session: AsyncSession) -> None:
+    """pending_feedback reports get receipt + ack + whistleblower reply + admin update."""
     from app.models.report import Report, ReportSender
 
     await _seed(db_session)
@@ -207,6 +207,6 @@ async def test_seed_in_progress_report_has_three_messages(db_session: AsyncSessi
     )
     report = result.scalar_one()
     await db_session.refresh(report, ["messages"])
-    assert len(report.messages) == 3
+    assert len(report.messages) == 4
     senders = {m.sender for m in report.messages}
     assert ReportSender.whistleblower in senders

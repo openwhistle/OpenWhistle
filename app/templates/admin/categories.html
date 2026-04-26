@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('admin.categories.title') }} — OpenWhistle{% endblock %}
+
+{% block nav_links %}
+<li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
+<li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
+<li><a href="/admin/categories" class="active">{{ t('admin.nav.categories') }}</a></li>
+<li><a href="/admin/users">{{ t('admin.nav.users') }}</a></li>
+<li><a href="/admin/audit-log">{{ t('admin.nav.audit_log') }}</a></li>
+<li><a href="/admin/logout">Logout</a></li>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div class="page-eyebrow">{{ t('admin.categories.eyebrow') }}</div>
+        <h1>{{ t('admin.categories.title') }}</h1>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:1.25rem;align-items:start;">
+
+        {# Add category form #}
+        <div class="panel">
+            <div class="panel-header">{{ t('admin.categories.add.header') }}</div>
+            <form method="post" action="/admin/categories">
+                <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                <div class="form-group">
+                    <label class="form-label" for="cat-slug">{{ t('admin.categories.add.slug') }}</label>
+                    <input type="text" class="form-control" id="cat-slug" name="slug" required
+                        pattern="[a-z0-9_]+" title="Lowercase letters, numbers and underscores only"
+                        placeholder="e.g. workplace_safety">
+                    <div class="form-hint">{{ t('admin.categories.add.slug.hint') }}</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="cat-label-en">{{ t('admin.categories.add.label_en') }}</label>
+                    <input type="text" class="form-control" id="cat-label-en" name="label_en" required
+                        maxlength="120" placeholder="Workplace Safety">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="cat-label-de">{{ t('admin.categories.add.label_de') }}</label>
+                    <input type="text" class="form-control" id="cat-label-de" name="label_de" required
+                        maxlength="120" placeholder="Arbeitssicherheit">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="cat-sort">{{ t('admin.categories.add.sort_order') }}</label>
+                    <input type="number" class="form-control" id="cat-sort" name="sort_order"
+                        value="50" min="0" max="9999">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">{{ t('admin.categories.add.button') }}</button>
+            </form>
+        </div>
+
+        {# Existing categories list #}
+        <div class="panel">
+            <div class="panel-header">{{ t('admin.categories.list.header') }}</div>
+
+            {% if categories %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Slug</th>
+                            <th>English</th>
+                            <th>German</th>
+                            <th>Sort</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cat in categories %}
+                        <tr style="{% if not cat.is_active %}opacity:0.5;{% endif %}">
+                            <td class="mono" style="font-size:0.82rem;">{{ cat.slug }}</td>
+                            <td style="font-size:0.9rem;">{{ cat.label_en }}</td>
+                            <td style="font-size:0.9rem;color:var(--text-muted);">{{ cat.label_de }}</td>
+                            <td style="font-size:0.82rem;color:var(--text-muted);text-align:center;">{{ cat.sort_order }}</td>
+                            <td>
+                                {% if cat.is_default %}
+                                <span class="badge badge-received">{{ t('admin.categories.default') }}</span>
+                                {% elif cat.is_active %}
+                                <span class="badge badge-closed">{{ t('admin.categories.active') }}</span>
+                                {% else %}
+                                <span class="badge">{{ t('admin.categories.inactive') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if not cat.is_default %}
+                                {% if cat.is_active %}
+                                <form method="post" action="/admin/categories/{{ cat.id }}/deactivate" style="display:inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                                    <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.categories.deactivate') }}</button>
+                                </form>
+                                {% else %}
+                                <form method="post" action="/admin/categories/{{ cat.id }}/reactivate" style="display:inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                                    <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.categories.reactivate') }}</button>
+                                </form>
+                                {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p style="color:var(--text-muted);padding:1rem 0;">{{ t('admin.categories.empty') }}</p>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -130,7 +130,7 @@ async def login_mfa_post(
         )
 
     await rl.reset_admin_login_attempts(redis, user.username)
-    token = auth_service.create_access_token(str(user.id))
+    token = auth_service.create_access_token(str(user.id), role=user.role.value)
     await auth_service.store_session(redis, str(user.id), token)
 
     from sqlalchemy import select
@@ -196,7 +196,7 @@ async def session_refresh(
     if session_token:
         await auth_service.revoke_session(redis, session_token)
 
-    new_token = auth_service.create_access_token(str(current_user.id))
+    new_token = auth_service.create_access_token(str(current_user.id), role=current_user.role.value)
     await auth_service.store_session(redis, str(current_user.id), new_token)
 
     new_exp = auth_service.decode_access_token_exp(new_token)
@@ -298,7 +298,7 @@ async def oidc_callback(
             },
         )
 
-    token = auth_service.create_access_token(str(user.id))
+    token = auth_service.create_access_token(str(user.id), role=user.role.value)
     await auth_service.store_session(redis, str(user.id), token)
 
     response = RedirectResponse("/admin/dashboard", status_code=302)

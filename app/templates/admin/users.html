@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('admin.users.title') }} — OpenWhistle{% endblock %}
+
+{% block nav_links %}
+<li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
+<li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
+<li><a href="/admin/categories">{{ t('admin.nav.categories') }}</a></li>
+<li><a href="/admin/users" class="active">{{ t('admin.nav.users') }}</a></li>
+<li><a href="/admin/audit-log">{{ t('admin.nav.audit_log') }}</a></li>
+<li><a href="/admin/logout">Logout</a></li>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div class="page-eyebrow">{{ t('admin.users.eyebrow') }}</div>
+        <h1>{{ t('admin.users.title') }}</h1>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:1.25rem;align-items:start;">
+
+        {# Add new user form #}
+        <div class="panel">
+            <div class="panel-header">{{ t('admin.users.add.header') }}</div>
+            <form method="post" action="/admin/users">
+                <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                <div class="form-group">
+                    <label class="form-label" for="new-username">{{ t('admin.users.add.username') }}</label>
+                    <input type="text" class="form-control" id="new-username" name="username" required
+                        minlength="3" maxlength="64"
+                        pattern="[A-Za-z0-9_-]+" title="Letters, numbers, hyphens and underscores only">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="new-password">{{ t('admin.users.add.password') }}</label>
+                    <input type="password" class="form-control" id="new-password" name="password" required
+                        minlength="12" autocomplete="new-password">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="new-role">{{ t('admin.users.add.role') }}</label>
+                    <select class="form-control" id="new-role" name="role">
+                        {% for role in roles %}
+                        <option value="{{ role.value }}">{{ t('role.label.' + role.value) }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="alert alert-info" style="margin-bottom:1rem;font-size:0.82rem;">
+                    {{ t('admin.users.add.totp_note') }}
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">{{ t('admin.users.add.button') }}</button>
+            </form>
+        </div>
+
+        {# Users list #}
+        <div class="panel">
+            <div class="panel-header">{{ t('admin.users.list.header') }}</div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in users %}
+                        <tr style="{% if not u.is_active %}opacity:0.5;{% endif %}">
+                            <td>
+                                <span style="font-weight:600;{% if u.id == user.id %}color:var(--accent);{% endif %}">
+                                    {{ u.username }}
+                                </span>
+                                {% if u.id == user.id %}<span style="font-size:0.72rem;color:var(--text-muted);"> (you)</span>{% endif %}
+                            </td>
+                            <td>
+                                <span class="badge badge-{{ u.role.value }}">{{ t('role.label.' + u.role.value) }}</span>
+                            </td>
+                            <td>
+                                {% if u.is_active %}
+                                <span class="badge badge-closed" style="font-size:0.7rem;">{{ t('admin.users.active') }}</span>
+                                {% else %}
+                                <span class="badge" style="font-size:0.7rem;">{{ t('admin.users.inactive') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+                                    {# Role change #}
+                                    {% if u.id != user.id %}
+                                    <form method="post" action="/admin/users/{{ u.id }}/role" style="display:flex;gap:0.25rem;">
+                                        <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                                        <select name="role" class="form-control" style="font-size:0.78rem;padding:0.2rem 0.4rem;height:auto;">
+                                            {% for role in roles %}
+                                            <option value="{{ role.value }}" {{ 'selected' if u.role == role else '' }}>{{ role.value }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="submit" class="btn btn-secondary btn-sm" style="font-size:0.75rem;padding:0.2rem 0.5rem;">
+                                            {{ t('admin.users.change_role') }}
+                                        </button>
+                                    </form>
+                                    {% endif %}
+
+                                    {# Activate / Deactivate #}
+                                    {% if u.id != user.id %}
+                                    {% if u.is_active %}
+                                    <form method="post" action="/admin/users/{{ u.id }}/deactivate">
+                                        <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                                        <button type="submit" class="btn btn-secondary btn-sm"
+                                            onclick="return confirm('Deactivate {{ u.username }}?')">
+                                            {{ t('admin.users.deactivate') }}
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <form method="post" action="/admin/users/{{ u.id }}/reactivate">
+                                        <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                                        <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.users.reactivate') }}</button>
+                                    </form>
+                                    {% endif %}
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

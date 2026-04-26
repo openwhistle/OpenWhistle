@@ -7,6 +7,64 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-04-26
+
+### Added
+
+- **RBAC — Role-Based Access Control**: `AdminRole` enum with `admin` and `case_manager` roles;
+  `require_role()` FastAPI dependency factory; role shown in dashboard nav and report detail
+- **Case assignment**: admins can assign reports to any active staff member; "My Cases" filter
+  tab on dashboard; assignee column in reports table
+- **Status workflow overhaul**: `received → in_review → pending_feedback → closed` replaces
+  the old `received → acknowledged → in_progress → closed` flow; `STATUS_TRANSITIONS` dict
+  enforces valid transitions server-side; only valid next-states shown in UI
+- **4-eyes deletion principle**: report deletion now requires two different admins — one requests,
+  a different one confirms; same-admin confirm returns HTTP 409
+- **Immutable audit log**: `AuditLog` model with 18 `AuditAction` constants; every admin action
+  is recorded; exportable as CSV from `/admin/audit-log`; last 20 entries shown per report
+- **Custom DB-driven categories**: `ReportCategory` model replaces hard-coded Python enum;
+  category management page at `/admin/categories`; existing reports preserve category as string
+- **Case linking**: `CaseLink` model with normalization constraint (smaller UUID always in
+  `report_id_a`); link/unlink cases from report detail page
+- **Internal notes**: `AdminNote` model — admin-only notes never shown to whistleblower;
+  add notes from report detail page
+- **PDF export**: full case export via `/admin/reports/{id}/export.pdf` using `fpdf2`
+  (pure Python, no system packages); includes SLA compliance section per HinSchG §17
+- **Admin user management**: create, deactivate, reactivate, and change roles of admin users
+  at `/admin/users`; last-active-admin protection prevents lockout
+- **Dashboard statistics**: `/admin/stats` page with status distribution bar charts, category
+  breakdown, total count, and 7-day SLA compliance rate
+- **Demo seed improvements**: case manager demo user (`case_manager`/`demo`); 4 demo reports
+  covering all statuses; demo internal notes, case links, and audit entries
+- **New admin navigation**: persistent links to Stats, Categories, Users, Audit Log from all
+  admin pages
+
+### Changed
+
+- Report `category` field migrated from PostgreSQL enum to `VARCHAR(64)` — stored as plain
+  string at submit time for history immutability (migration 006)
+- `acknowledged_report()` now transitions to `in_review` instead of `acknowledged`
+- Status labels updated throughout UI and i18n files
+
+### Database migrations
+
+- `003_roles_status_assignment.py` — adds `adminrole` enum, `role`/`is_active` to admin_users,
+  adds `in_review`/`pending_feedback` to reportstatus enum, migrates old values, adds
+  `assigned_to_id` FK to reports
+- `004_audit_log.py` — creates `audit_log` table
+- `005_admin_notes.py` — creates `admin_notes` table
+- `006_custom_categories.py` — creates `report_categories` table, seeds 7 defaults, migrates
+  `reports.category` from enum to VARCHAR
+- `007_deletion_requests.py` — creates `deletion_requests` table with UNIQUE(report_id)
+- `008_case_links.py` — creates `case_links` table with normalization CHECK constraint
+
+### Tests
+
+- Added `test_v030_services.py` — 35 service-layer tests for new features
+- Added `test_v030_api.py` — 25 API-level tests for new admin endpoints
+- Added `test_pdf_service.py` — PDF generation tests
+- Updated existing tests to use new `ReportStatus` values (`in_review`, `pending_feedback`)
+
 ## [0.2.2] — 2026-04-26
 
 ### Changed

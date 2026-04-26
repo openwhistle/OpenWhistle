@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('admin.stats.title') }} — OpenWhistle{% endblock %}
+
+{% block nav_links %}
+<li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
+<li><a href="/admin/stats" class="active">{{ t('admin.nav.stats') }}</a></li>
+<li><a href="/admin/categories">{{ t('admin.nav.categories') }}</a></li>
+<li><a href="/admin/users">{{ t('admin.nav.users') }}</a></li>
+<li><a href="/admin/audit-log">{{ t('admin.nav.audit_log') }}</a></li>
+<li><a href="/admin/logout">Logout</a></li>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div class="page-eyebrow">{{ t('admin.stats.eyebrow') }}</div>
+        <h1>{{ t('admin.stats.title') }}</h1>
+    </div>
+
+    {# Top-line KPIs #}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:2rem;">
+        <div class="stat-card" style="animation-delay:0s;">
+            <div class="stat-number">{{ stats.total_reports }}</div>
+            <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;">{{ t('admin.stats.total_reports') }}</div>
+        </div>
+        <div class="stat-card" style="animation-delay:0.05s;">
+            <div class="stat-number" style="color:{% if stats.sla_7day_rate >= 90 %}var(--success){% elif stats.sla_7day_rate >= 70 %}var(--warning){% else %}var(--danger){% endif %};">
+                {{ stats.sla_7day_rate }}%
+            </div>
+            <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.25rem;">{{ t('admin.stats.sla_rate') }}</div>
+        </div>
+        {% for status_val, cls in [
+            ('received', 'badge-received'),
+            ('in_review', 'badge-in_review'),
+            ('pending_feedback', 'badge-pending_feedback'),
+            ('closed', 'badge-closed')
+        ] %}
+        {% set count = stats.status_counts.get(status_val, 0) %}
+        <div class="stat-card" style="animation-delay:{{ loop.index * 0.05 }}s;">
+            <div class="stat-number">{{ count }}</div>
+            <span class="badge {{ cls }}">{{ t('status.label.' + status_val) }}</span>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;">
+
+        {# By status #}
+        <div class="panel">
+            <div class="panel-header">{{ t('admin.stats.by_status') }}</div>
+            {% if stats.total_reports > 0 %}
+            <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                {% for sv, cls, label_key in [
+                    ('received',         'badge-received',         'status.label.received'),
+                    ('in_review',        'badge-in_review',        'status.label.in_review'),
+                    ('pending_feedback', 'badge-pending_feedback', 'status.label.pending_feedback'),
+                    ('closed',           'badge-closed',           'status.label.closed')
+                ] %}
+                {% set count = stats.status_counts.get(sv, 0) %}
+                {% set pct = (count / stats.total_reports * 100) | round(1) %}
+                <div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:0.25rem;">
+                        <span class="badge {{ cls }}">{{ t(label_key) }}</span>
+                        <span style="font-size:0.82rem;color:var(--text-muted);">{{ count }} ({{ pct }}%)</span>
+                    </div>
+                    <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+                        <div style="height:100%;width:{{ pct }}%;background:var(--accent);border-radius:3px;transition:width 0.4s ease;"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p style="color:var(--text-muted);">No data yet.</p>
+            {% endif %}
+        </div>
+
+        {# By category #}
+        <div class="panel">
+            <div class="panel-header">{{ t('admin.stats.by_category') }}</div>
+            {% if stats.by_category %}
+            {% set max_cat = stats.by_category.values() | max %}
+            <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                {% for slug, count in stats.by_category.items() | sort(attribute='1', reverse=True) %}
+                {% set pct = (count / stats.total_reports * 100) | round(1) if stats.total_reports else 0 %}
+                <div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:0.25rem;">
+                        <span style="font-size:0.85rem;color:var(--text-secondary);">{{ cat_map.get(slug, slug | replace('_', ' ') | title) }}</span>
+                        <span style="font-size:0.82rem;color:var(--text-muted);">{{ count }} ({{ pct }}%)</span>
+                    </div>
+                    <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+                        <div style="height:100%;width:{{ (count / max_cat * 100) | round(1) }}%;background:var(--accent-subtle);border:1px solid var(--accent);border-radius:3px;"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p style="color:var(--text-muted);">No data yet.</p>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

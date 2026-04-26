@@ -4,12 +4,16 @@
 
 {% block nav_links %}
 <li><a href="/admin/dashboard" class="active">{{ t('admin.dashboard.title') }}</a></li>
+<li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
+<li><a href="/admin/categories">{{ t('admin.nav.categories') }}</a></li>
+<li><a href="/admin/users">{{ t('admin.nav.users') }}</a></li>
+<li><a href="/admin/audit-log">{{ t('admin.nav.audit_log') }}</a></li>
 <li><a href="/admin/logout">Logout</a></li>
 {% endblock %}
 
 {% macro sort_url(field) %}
 {%- set new_dir = 'asc' if (sort_by == field and sort_dir == 'desc') else 'desc' -%}
-/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ field }}&dir={{ new_dir }}{% if status_filter %}&status={{ status_filter }}{% endif %}
+/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ field }}&dir={{ new_dir }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if my_cases %}&my_cases=1{% endif %}
 {%- endmacro %}
 
 {% macro sort_icon(field) %}
@@ -21,7 +25,7 @@
 {%- endmacro %}
 
 {% macro page_url(p) %}
-/admin/dashboard?page={{ p }}&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}{% if status_filter %}&status={{ status_filter }}{% endif %}
+/admin/dashboard?page={{ p }}&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if my_cases %}&my_cases=1{% endif %}
 {%- endmacro %}
 
 {% block content %}
@@ -32,6 +36,7 @@
             <h1>{{ t('admin.dashboard.title') }}</h1>
             <p style="margin-top:0.25rem;font-size:0.8rem;color:var(--text-muted);">
                 {{ t('admin.logged_in_as') }} <strong style="color:var(--accent);font-weight:600;">{{ user.username }}</strong>
+                <span class="badge badge-{{ user.role.value }}" style="margin-left:0.5rem;font-size:0.7rem;">{{ t('role.label.' + user.role.value) }}</span>
             </p>
         </div>
         <a href="/submit" class="btn btn-secondary btn-sm" title="Opens the public submit form in this tab">{{ t('admin.view_submit') }}</a>
@@ -61,13 +66,13 @@
     </div>
     {% endif %}
 
-    {# Summary stats — loaded from DB aggregates, not from the current page #}
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:2rem;">
+    {# Summary stats cards — clickable filters #}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:2rem;">
         {% for label_key, status_val, cls in [
-            ('admin.stats.received',    'received',    'badge-received'),
-            ('admin.stats.acknowledged','acknowledged','badge-acknowledged'),
-            ('admin.stats.in_progress', 'in_progress', 'badge-in_progress'),
-            ('admin.stats.closed',      'closed',      'badge-closed')
+            ('admin.stats.received',          'received',          'badge-received'),
+            ('admin.stats.in_review',         'in_review',         'badge-in_review'),
+            ('admin.stats.pending_feedback',  'pending_feedback',  'badge-pending_feedback'),
+            ('admin.stats.closed',            'closed',            'badge-closed')
         ] %}
         {% set count = stats.get(status_val, 0) %}
         <a href="/admin/dashboard?status={{ status_val }}&sort={{ sort_by }}&dir={{ sort_dir }}&per_page={{ per_page }}"
@@ -88,20 +93,24 @@
                 {# Status filter pill row #}
                 <div class="filter-pills">
                     <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}"
-                       class="filter-pill {% if not status_filter %}filter-pill-active{% endif %}">
+                       class="filter-pill {% if not status_filter and not my_cases %}filter-pill-active{% endif %}">
                         {{ t('admin.filter.all_statuses') }}
                     </a>
                     {% for sv, label_key in [
-                        ('received',     'status.label.received'),
-                        ('acknowledged', 'status.label.acknowledged'),
-                        ('in_progress',  'status.label.in_progress'),
-                        ('closed',       'status.label.closed')
+                        ('received',          'status.label.received'),
+                        ('in_review',         'status.label.in_review'),
+                        ('pending_feedback',  'status.label.pending_feedback'),
+                        ('closed',            'status.label.closed')
                     ] %}
                     <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}&status={{ sv }}"
-                       class="filter-pill {% if status_filter == sv %}filter-pill-active{% endif %}">
+                       class="filter-pill {% if status_filter == sv and not my_cases %}filter-pill-active{% endif %}">
                         {{ t(label_key) }}
                     </a>
                     {% endfor %}
+                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}&my_cases=1"
+                       class="filter-pill {% if my_cases %}filter-pill-active{% endif %}">
+                        {{ t('admin.filter.my_cases') }}
+                    </a>
                 </div>
 
                 {# Per-page selector #}
@@ -137,6 +146,7 @@
                         <th><a href="{{ sort_url('category') }}" class="sort-link">{{ t('admin.table.category') }}{{ sort_icon('category') }}</a></th>
                         <th><a href="{{ sort_url('status') }}" class="sort-link">{{ t('admin.table.status') }}{{ sort_icon('status') }}</a></th>
                         <th><a href="{{ sort_url('submitted_at') }}" class="sort-link">{{ t('admin.table.submitted') }}{{ sort_icon('submitted_at') }}</a></th>
+                        <th>{{ t('admin.table.assignee') }}</th>
                         <th>{{ t('admin.table.sla7') }}</th>
                         <th>{{ t('admin.table.sla3m') }}</th>
                         <th></th>
@@ -153,9 +163,16 @@
                     {% endif %}
                     <tr>
                         <td><span class="mono" style="white-space:nowrap;">{{ report.case_number }}</span></td>
-                        <td style="font-size:0.85rem;color:var(--text-secondary);">{{ t('category.label.' + report.category.value) }}</td>
+                        <td style="font-size:0.85rem;color:var(--text-secondary);">{{ report.category | replace('_', ' ') | title }}</td>
                         <td><span class="badge badge-{{ report.status.value }}">{{ t('status.label.' + report.status.value) }}</span></td>
                         <td class="mono" style="font-size:0.78rem;color:var(--text-muted);">{{ report.submitted_at.strftime('%Y-%m-%d') }}</td>
+                        <td style="font-size:0.82rem;color:var(--text-muted);">
+                            {% if report.assigned_to %}
+                                <span style="color:var(--text-secondary);">{{ report.assigned_to.username }}</span>
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
                         <td class="{{ ack_sla_class }}" style="font-size:0.82rem;">
                             {% if report.acknowledged_at %}
                                 {{ t('admin.sla.done') }}
@@ -193,7 +210,6 @@
                 <span class="btn btn-secondary btn-sm pagination-btn pagination-disabled">{{ t('admin.pagination.prev') }}</span>
                 {% endif %}
 
-                {# Page number pills — show up to 7 around current page #}
                 {% set win = 3 %}
                 {% set pg_start = [1, page - win] | max %}
                 {% set pg_end   = [total_pages, page + win] | min %}
@@ -225,7 +241,7 @@
         </div>
         {% endif %}
 
-        {% elif status_filter %}
+        {% elif status_filter or my_cases %}
         {# Filtered empty state #}
         <div style="text-align:center;padding:3rem 1rem;">
             <div style="font-size:2.5rem;margin-bottom:1rem;opacity:0.3;">&#128269;</div>

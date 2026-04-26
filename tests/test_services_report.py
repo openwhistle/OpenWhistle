@@ -170,13 +170,13 @@ async def test_acknowledge_report_feedback_due_is_90_days_after_ack(
 
 
 @pytest.mark.asyncio
-async def test_acknowledge_report_received_becomes_acknowledged(
+async def test_acknowledge_report_received_becomes_in_review(
     db_session: AsyncSession,
 ) -> None:
     report, _ = await _make_report(db_session)
     assert report.status == ReportStatus.received
     updated = await acknowledge_report(db_session, report)
-    assert updated.status == ReportStatus.acknowledged
+    assert updated.status == ReportStatus.in_review
 
 
 @pytest.mark.asyncio
@@ -185,21 +185,21 @@ async def test_acknowledge_report_non_received_status_unchanged(
 ) -> None:
     """If status is already beyond 'received', acknowledge must not reset it."""
     report, _ = await _make_report(db_session)
-    report.status = ReportStatus.in_progress
+    report.status = ReportStatus.pending_feedback
     await db_session.commit()
 
     updated = await acknowledge_report(db_session, report)
-    assert updated.status == ReportStatus.in_progress
+    assert updated.status == ReportStatus.pending_feedback
 
 
 # ─── update_report_status ─────────────────────────────────────────────────────
 
 
 @pytest.mark.asyncio
-async def test_update_report_status_in_progress(db_session: AsyncSession) -> None:
+async def test_update_report_status_pending_feedback(db_session: AsyncSession) -> None:
     report, _ = await _make_report(db_session)
-    updated = await update_report_status(db_session, report, ReportStatus.in_progress)
-    assert updated.status == ReportStatus.in_progress
+    updated = await update_report_status(db_session, report, ReportStatus.pending_feedback)
+    assert updated.status == ReportStatus.pending_feedback
     assert updated.closed_at is None
 
 
