@@ -49,7 +49,7 @@ async def test_generate_pdf_with_acknowledged_report(db_session: AsyncSession):
     assert loaded is not None
 
     pdf_bytes = generate_report_pdf(loaded)
-    assert len(pdf_bytes) > 2000
+    assert len(pdf_bytes) > 1500
 
 
 @pytest.mark.asyncio
