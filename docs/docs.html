@@ -178,6 +178,8 @@
     [data-theme="light"] .site-nav { border-bottom-color: #e2e8f0; }
     [data-theme="light"] .nav-logo { color: #1e293b; }
     [data-theme="light"] .nav-logo:hover { color: #0f4c81; }
+    [data-theme="light"] .nav-logo svg path,
+    [data-theme="light"] .nav-logo svg circle { stroke: #0f4c81; }
     [data-theme="light"] .nav-links a { color: rgba(55,65,81,0.75); }
     [data-theme="light"] .nav-links a:hover { color: #1e293b; }
     [data-theme="light"] .nav-cta { color: #0f4c81 !important; border-color: rgba(15,76,129,0.4) !important; }
@@ -208,7 +210,8 @@
       transition: color var(--duration-fast) ease;
     }
     .nav-logo:hover { color: #fff; }
-    .nav-logo svg path { stroke: var(--gold); }
+    .nav-logo svg { flex-shrink: 0; }
+    .nav-logo svg path, .nav-logo svg circle { stroke: var(--gold); }
     .nav-links {
       display: flex;
       align-items: center;
@@ -230,7 +233,7 @@
       color: var(--gold) !important;
       border-radius: 2px;
     }
-    .nav-cta:hover { background: rgba(176, 114, 48, 0.15) !important; }
+    .nav-cta:hover { background: rgba(176, 114, 48, 0.15) !important; color: var(--gold-mid) !important; }
     .nav-actions { display: flex; align-items: center; gap: var(--space-4); flex-shrink: 0; }
     .theme-toggle {
       display: flex;
@@ -241,9 +244,9 @@
       border: 1px solid rgba(255,255,255,0.12);
       border-radius: 2px;
       color: rgba(226, 220, 210, 0.65);
-      transition: color var(--duration-fast) ease;
+      transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease;
     }
-    .theme-toggle:hover { color: #e2dcd2; }
+    .theme-toggle:hover { color: #e2dcd2; border-color: rgba(255,255,255,0.25); }
     .theme-toggle svg { width: 16px; height: 16px; }
     .icon-sun { display: none; }
     [data-theme="dark"] .icon-moon { display: none; }
@@ -882,7 +885,7 @@
 <span class="t-prompt">$ </span><span class="t-cmd">docker pull kermit1337/openwhistle:latest</span>
 
 <span class="t-comment"># Quay.io</span>
-<span class="t-prompt">$ </span><span class="t-cmd">docker pull quay.io/openwhistle/openwhistle:latest</span></code></pre>
+<span class="t-prompt">$ </span><span class="t-cmd">docker pull quay.io/jp1337/openwhistle:latest</span></code></pre>
         </div>
 
         <h3>Image tags</h3>
