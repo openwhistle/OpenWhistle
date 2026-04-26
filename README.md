@@ -2,11 +2,17 @@
 
 > Open source whistleblower reporting platform — compliant with HinSchG and EU Directive 2019/1937
 
-[![CI](https://img.shields.io/github/actions/workflow/status/openwhistle/OpenWhistle/ci.yml?label=CI)](https://github.com/openwhistle/OpenWhistle/actions/workflows/ci.yml)
-[![Docker](https://img.shields.io/github/actions/workflow/status/openwhistle/OpenWhistle/docker-publish.yml?label=Docker)](https://github.com/openwhistle/OpenWhistle/actions/workflows/docker-publish.yml)
-[![License](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.14-blue)](https://python.org)
-[![PostgreSQL](https://img.shields.io/badge/postgresql-18-blue)](https://postgresql.org)
+[![CI](https://img.shields.io/github/actions/workflow/status/openwhistle/OpenWhistle/ci.yml?label=CI&logo=github)](https://github.com/openwhistle/OpenWhistle/actions/workflows/ci.yml)
+[![Docker Build](https://img.shields.io/github/actions/workflow/status/openwhistle/OpenWhistle/docker-publish.yml?label=Docker&logo=docker)](https://github.com/openwhistle/OpenWhistle/actions/workflows/docker-publish.yml)
+[![Coverage](https://codecov.io/gh/openwhistle/OpenWhistle/graph/badge.svg)](https://codecov.io/gh/openwhistle/OpenWhistle)
+[![License](https://img.shields.io/badge/license-GPL--3.0-blue?logo=gnu)](LICENSE)
+[![Version](https://img.shields.io/github/v/release/openwhistle/OpenWhistle?logo=github)](https://github.com/openwhistle/OpenWhistle/releases)
+[![Python](https://img.shields.io/badge/python-3.14-blue?logo=python&logoColor=white)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.136-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![PostgreSQL](https://img.shields.io/badge/postgresql-18-336791?logo=postgresql&logoColor=white)](https://postgresql.org)
+[![Redis](https://img.shields.io/badge/redis-8-DC382D?logo=redis&logoColor=white)](https://redis.io)
+[![Docker Pulls](https://img.shields.io/docker/pulls/openwhistle/openwhistle?logo=docker)](https://hub.docker.com/r/openwhistle/openwhistle)
+[![CodeQL](https://img.shields.io/github/actions/workflow/status/openwhistle/OpenWhistle/codeql.yml?label=CodeQL&logo=github)](https://github.com/openwhistle/OpenWhistle/security/code-scanning)
 
 > [!WARNING]
 > OpenWhistle is currently in early development (alpha). Do not use in production.
