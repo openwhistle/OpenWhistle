@@ -76,16 +76,24 @@ async def test_seed_marks_existing_incomplete_setup_complete(
 
     from app.models.setup import SetupStatus
 
-    existing = SetupStatus(id=1, completed=False, completed_at=None)
-    db_session.add(existing)
+    # The row with id=1 may already exist (DEMO_MODE lifespan commits it before tests run).
+    # In that case update the existing row to completed=False instead of inserting.
+    result = await db_session.execute(select(SetupStatus).where(SetupStatus.id == 1))
+    setup = result.scalar_one_or_none()
+    if setup is None:
+        setup = SetupStatus(id=1, completed=False, completed_at=None)
+        db_session.add(setup)
+    else:
+        setup.completed = False
+        setup.completed_at = None
     await db_session.commit()
 
     await _seed(db_session)
 
-    await db_session.refresh(existing)
-    assert existing.completed is True
-    assert existing.completed_at is not None
-    assert existing.completed_at <= datetime.now(UTC)
+    await db_session.refresh(setup)
+    assert setup.completed is True
+    assert setup.completed_at is not None
+    assert setup.completed_at <= datetime.now(UTC)
 
 
 # ─── demo reports ─────────────────────────────────────────────────────────────
