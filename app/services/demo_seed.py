@@ -220,6 +220,7 @@ async def _seed(db: AsyncSession) -> None:
             location_id=location_obj.id if location_obj else None,
             confidential_name=conf_name_enc,
             confidential_contact=conf_contact_enc,
+            org_id=org_row,
         )
         db.add(report)
         await db.flush()
