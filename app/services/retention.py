@@ -64,6 +64,7 @@ async def run_retention_cleanup() -> None:
                     admin_username="system",
                     action="report.auto_deleted",
                     report_id=None,  # report is about to be deleted; store case_number in detail
+                    org_id=report.org_id,  # preserve org context for multi-tenant audit trails
                     detail=json.dumps({
                         "case_number": report.case_number,
                         "closed_at": report.closed_at.isoformat() if report.closed_at else None,

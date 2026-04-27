@@ -17,14 +17,20 @@ Why envelope encryption?
 from __future__ import annotations
 
 import base64
+import logging
 import os
 
 from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
+log = logging.getLogger(__name__)
+
 _MEK_SALT = b"openwhistle-mek-v1"
 _MEK_INFO = b"report-encryption"
+
+# Fernet tokens always start with this prefix after base64url encoding
+_FERNET_PREFIX = "gAAAA"
 
 
 def derive_mek(secret_key: str) -> bytes:
@@ -80,13 +86,26 @@ def decrypt_field(fernet: Fernet, ciphertext: str) -> str:
 def decrypt_field_safe(fernet: Fernet, ciphertext: str | None) -> str | None:
     """Decrypt a field, returning None on missing value or decryption failure.
 
-    Used for backward-compatibility with pre-encryption data: if the stored
-    value is not a valid Fernet token (e.g. plaintext from before migration),
-    returns the raw value unchanged rather than raising.
+    Two failure modes are handled differently:
+    - Pre-encryption plaintext (value does not look like a Fernet token):
+      returned as-is for backward compatibility with rows written before migration 013.
+    - Fernet token that fails to decrypt (wrong key, e.g. SECRET_KEY was rotated):
+      logs a warning and returns an error sentinel so the UI shows an actionable
+      message rather than raw ciphertext.
     """
     if ciphertext is None:
         return None
     try:
         return fernet.decrypt(ciphertext.encode("utf-8")).decode("utf-8")
-    except (InvalidToken, Exception):  # noqa: BLE001
-        return ciphertext  # pre-encryption plaintext — return as-is
+    except InvalidToken:
+        if ciphertext.startswith(_FERNET_PREFIX):
+            # This looks like a real Fernet token — decryption key mismatch
+            log.warning(
+                "Fernet decryption failed for an encrypted field. "
+                "SECRET_KEY may have been rotated without re-encrypting stored DEKs."
+            )
+            return "[DECRYPTION FAILED — check SECRET_KEY]"
+        # Does not look like a Fernet token — treat as pre-encryption plaintext
+        return ciphertext
+    except Exception:  # noqa: BLE001
+        return ciphertext
