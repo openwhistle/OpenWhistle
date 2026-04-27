@@ -68,8 +68,8 @@ class Report(Base):
     description: Mapped[str] = mapped_column(Text, nullable=False)
 
     # Envelope-encrypted DEK — Fernet token wrapping the per-report Data Encryption Key.
-    # NULL on rows created before migration 013 ran; those rows have plaintext description.
-    encrypted_dek: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Made NOT NULL by migration 013; all new rows must supply an encrypted DEK.
+    encrypted_dek: Mapped[str] = mapped_column(Text, nullable=False)
 
     status: Mapped[ReportStatus] = mapped_column(
         Enum(ReportStatus, name="reportstatus"),

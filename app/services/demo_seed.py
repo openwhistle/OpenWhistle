@@ -29,6 +29,7 @@ from app.models.report import (
 from app.models.setup import SetupStatus
 from app.models.user import AdminRole, AdminUser
 from app.services.auth import hash_password, hash_pin
+from app.services.encryption import encrypt_dek, encrypt_field, generate_dek, make_report_fernet
 
 # Stable demo credentials — published intentionally for the demo instance
 DEMO_ADMIN_USERNAME = "demo"
@@ -206,12 +207,19 @@ async def _seed(db: AsyncSession) -> None:
             conf_name_enc = encrypt("Jane Demo")
             conf_contact_enc = encrypt("jane.demo@example.com")
 
+        from app.config import settings as cfg
+        dek_raw = generate_dek()
+        enc_dek = encrypt_dek(dek_raw, cfg.secret_key)
+        report_fernet = make_report_fernet(enc_dek, cfg.secret_key)
+        enc_description = encrypt_field(report_fernet, demo["description"])
+
         report = Report(
             id=uuid.uuid4(),
             case_number=demo["case_number"],
             pin_hash=hash_pin(demo["pin"]),
             category=demo["category"],
-            description=demo["description"],
+            description=enc_description,
+            encrypted_dek=enc_dek,
             status=demo["status"],
             acknowledged_at=acknowledged_at,
             feedback_due_at=feedback_due_at,
