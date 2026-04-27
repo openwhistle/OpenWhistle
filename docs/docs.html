@@ -1569,9 +1569,10 @@
 
         <h3>Roles</h3>
         <p>
-          Every admin account has one of two roles:
+          Every admin account has one of three roles:
         </p>
         <ul>
+          <li><strong>Superadmin</strong> — all admin capabilities plus organisation management (<code>/admin/organisations</code>). Required for multi-tenant deployments. Superadmin accounts have <code>org_id = NULL</code> (cross-organisation scope).</li>
           <li><strong>Admin</strong> — full access including user management, categories, locations, audit log, and report deletion.</li>
           <li><strong>Case Manager</strong> — can view, comment on, and advance reports assigned to them; cannot manage users or delete reports.</li>
         </ul>
@@ -1621,6 +1622,19 @@
         <ul>
           <li><strong>7-day acknowledgement:</strong> The countdown starts from report submission. The dashboard shows a yellow warning at 3 days, red at 24 hours.</li>
           <li><strong>3-month feedback:</strong> The countdown starts from the date of acknowledgement (§17 Abs. 2). A feedback response must be sent via the message channel before the deadline.</li>
+        </ul>
+
+        <h3>Telephone reporting channel guide</h3>
+        <p>
+          The page at <code>/admin/telephone-channel</code> provides a compliance reference for
+          operating an oral reporting channel alongside the digital channel. It covers:
+        </p>
+        <ul>
+          <li>HinSchG §16 requirements (dedicated number, confidentiality, impartial staff)</li>
+          <li>Implementation options: internal hotline vs. external ombudsman</li>
+          <li>§10 HinSchG recording prohibition — calls may not be recorded without consent</li>
+          <li>Integration workflow: how telephone reports enter the OpenWhistle case system</li>
+          <li>Legal references with links to the official statute text</li>
         </ul>
       </section>
 

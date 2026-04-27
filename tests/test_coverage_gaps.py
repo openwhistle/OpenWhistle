@@ -939,3 +939,21 @@ async def test_lifespan_demo_mode_calls_seed() -> None:
             pass
 
     assert seed_called
+
+
+@pytest.mark.asyncio
+async def test_pdf_export_shows_decrypted_description(db_session: AsyncSession) -> None:
+    """PDF must contain the plaintext description, not Fernet ciphertext (regression guard)."""
+    from app.services.pdf import generate_report_pdf
+    from app.services.report import create_report, get_report_by_id
+
+    plaintext = "Unique confidential description for PDF decryption test."
+    report, _ = await create_report(db_session, "corruption", plaintext)
+    loaded = await get_report_by_id(db_session, report.id)
+    assert loaded is not None
+
+    pdf_bytes = generate_report_pdf(loaded)
+    pdf_text = _pdf_text(pdf_bytes)
+    assert "Unique confidential description" in pdf_text, (
+        "PDF contains encrypted ciphertext instead of decrypted description"
+    )

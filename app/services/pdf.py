@@ -8,9 +8,11 @@ from fpdf import FPDF
 from fpdf.enums import XPos, YPos
 
 from app.models.report import Report
+from app.services.report import decrypt_report_fields
 
 
 def generate_report_pdf(report: Report) -> bytes:
+    description, msg_contents = decrypt_report_fields(report)
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
@@ -104,7 +106,7 @@ def generate_report_pdf(report: Report) -> bytes:
     pdf.line(10, pdf.get_y(), 200, pdf.get_y())
     pdf.ln(3)
     pdf.set_font("Helvetica", "", 10)
-    pdf.multi_cell(0, 5, _safe(report.description))
+    pdf.multi_cell(0, 5, _safe(description))
     pdf.ln(5)
 
     # ── Communication thread ───────────────────────────────────────
@@ -115,7 +117,7 @@ def generate_report_pdf(report: Report) -> bytes:
         pdf.line(10, pdf.get_y(), 200, pdf.get_y())
         pdf.ln(3)
         pdf.set_font("Helvetica", "", 10)
-        for msg in public_msgs:
+        for i, msg in enumerate(public_msgs):
             sender = "Reporting Office" if msg.sender.value == "admin" else "Whistleblower"
             pdf.set_font("Helvetica", "B", 9)
             pdf.cell(
@@ -123,7 +125,8 @@ def generate_report_pdf(report: Report) -> bytes:
                 new_x=XPos.LMARGIN, new_y=YPos.NEXT,
             )
             pdf.set_font("Helvetica", "", 10)
-            pdf.multi_cell(0, 5, _safe(msg.content))
+            msg_text = msg_contents[i] if i < len(msg_contents) else msg.content
+            pdf.multi_cell(0, 5, _safe(msg_text))
             pdf.ln(2)
         pdf.ln(3)
 

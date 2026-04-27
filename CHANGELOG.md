@@ -62,6 +62,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `encrypted_dek` NOT NULL
 - **014** — Replaces global unique constraints on `report_categories.slug` and
   `locations.code` with per-org composite unique constraints
+- **015** — Reverts `admin_users.org_id` to nullable to support superadmin
+  accounts (org_id = NULL means cross-organisation scope) and direct AdminUser
+  creation in external tooling without a prior org lookup
 
 ## [0.5.0] — 2026-04-26
 
