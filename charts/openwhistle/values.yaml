@@ -49,14 +49,55 @@ config:
   logFormat: "json"
   appPublicUrl: "https://whistleblower.example.com"
   submissionModeEnabled: "true"
+
+  # Branding
+  brandPrimaryColor: "#0f4c81"
+  brandSecondaryColor: "#b07230"
+  brandLogoUrl: ""
+
+  # SLA reminders
   reminderEnabled: "false"
   reminderAckWarnDays: "2"
   reminderFeedbackWarnDays: "30"
+
+  # Attachment storage
   storageBackend: "db"
+  s3EndpointUrl: ""
+  s3BucketName: ""
+  s3AccessKeyId: ""
+  s3Region: "us-east-1"
+  s3Prefix: "attachments/"
+
+  # LDAP / Active Directory
   ldapEnabled: "false"
+  ldapServer: ""
+  ldapPort: "389"
+  ldapUseSsl: "false"
+  ldapBindDn: ""
+  ldapBaseDn: ""
+  ldapUserFilter: "(uid={username})"
+  ldapAttrUsername: "uid"
+  ldapAttrEmail: "mail"
+
+  # OIDC / SSO
   oidcEnabled: "false"
+  oidcClientId: ""
+  oidcServerMetadataUrl: ""
+  oidcRedirectUri: ""
+
+  # Email notifications
   notifyEmailEnabled: "false"
+  notifyEmailTo: ""
+  notifyEmailFrom: "openwhistle@localhost"
+  notifySmtpHost: "localhost"
+  notifySmtpPort: "587"
+  notifySmtpUser: ""
+  notifySmtpTls: "true"
+  notifySmtpSsl: "false"
+
+  # Webhook notifications
   notifyWebhookEnabled: "false"
+  notifyWebhookUrl: ""
   notifyWebhookType: "generic"
 
 # Secrets — these must be provided; they are not defaulted.

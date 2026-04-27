@@ -11,12 +11,39 @@ data:
   LOG_FORMAT: {{ .Values.config.logFormat | quote }}
   APP_PUBLIC_URL: {{ .Values.config.appPublicUrl | quote }}
   SUBMISSION_MODE_ENABLED: {{ .Values.config.submissionModeEnabled | quote }}
+  BRAND_PRIMARY_COLOR: {{ .Values.config.brandPrimaryColor | quote }}
+  BRAND_SECONDARY_COLOR: {{ .Values.config.brandSecondaryColor | quote }}
+  BRAND_LOGO_URL: {{ .Values.config.brandLogoUrl | quote }}
   REMINDER_ENABLED: {{ .Values.config.reminderEnabled | quote }}
   REMINDER_ACK_WARN_DAYS: {{ .Values.config.reminderAckWarnDays | quote }}
   REMINDER_FEEDBACK_WARN_DAYS: {{ .Values.config.reminderFeedbackWarnDays | quote }}
   STORAGE_BACKEND: {{ .Values.config.storageBackend | quote }}
+  S3_ENDPOINT_URL: {{ .Values.config.s3EndpointUrl | quote }}
+  S3_BUCKET_NAME: {{ .Values.config.s3BucketName | quote }}
+  S3_ACCESS_KEY_ID: {{ .Values.config.s3AccessKeyId | quote }}
+  S3_REGION: {{ .Values.config.s3Region | quote }}
+  S3_PREFIX: {{ .Values.config.s3Prefix | quote }}
   LDAP_ENABLED: {{ .Values.config.ldapEnabled | quote }}
+  LDAP_SERVER: {{ .Values.config.ldapServer | quote }}
+  LDAP_PORT: {{ .Values.config.ldapPort | quote }}
+  LDAP_USE_SSL: {{ .Values.config.ldapUseSsl | quote }}
+  LDAP_BIND_DN: {{ .Values.config.ldapBindDn | quote }}
+  LDAP_BASE_DN: {{ .Values.config.ldapBaseDn | quote }}
+  LDAP_USER_FILTER: {{ .Values.config.ldapUserFilter | quote }}
+  LDAP_ATTR_USERNAME: {{ .Values.config.ldapAttrUsername | quote }}
+  LDAP_ATTR_EMAIL: {{ .Values.config.ldapAttrEmail | quote }}
   OIDC_ENABLED: {{ .Values.config.oidcEnabled | quote }}
+  OIDC_CLIENT_ID: {{ .Values.config.oidcClientId | quote }}
+  OIDC_SERVER_METADATA_URL: {{ .Values.config.oidcServerMetadataUrl | quote }}
+  OIDC_REDIRECT_URI: {{ .Values.config.oidcRedirectUri | quote }}
   NOTIFY_EMAIL_ENABLED: {{ .Values.config.notifyEmailEnabled | quote }}
+  NOTIFY_EMAIL_TO: {{ .Values.config.notifyEmailTo | quote }}
+  NOTIFY_EMAIL_FROM: {{ .Values.config.notifyEmailFrom | quote }}
+  NOTIFY_SMTP_HOST: {{ .Values.config.notifySmtpHost | quote }}
+  NOTIFY_SMTP_PORT: {{ .Values.config.notifySmtpPort | quote }}
+  NOTIFY_SMTP_USER: {{ .Values.config.notifySmtpUser | quote }}
+  NOTIFY_SMTP_TLS: {{ .Values.config.notifySmtpTls | quote }}
+  NOTIFY_SMTP_SSL: {{ .Values.config.notifySmtpSsl | quote }}
   NOTIFY_WEBHOOK_ENABLED: {{ .Values.config.notifyWebhookEnabled | quote }}
+  NOTIFY_WEBHOOK_URL: {{ .Values.config.notifyWebhookUrl | quote }}
   NOTIFY_WEBHOOK_TYPE: {{ .Values.config.notifyWebhookType | quote }}
