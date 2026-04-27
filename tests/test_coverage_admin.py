@@ -84,11 +84,25 @@ async def test_admin_reply_empty_content_returns_422(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
     """POST /admin/reports/<id>/reply with blank content must return 422."""
+    from sqlalchemy import select
+
+    from app.config import settings as cfg
+    from app.models.organisation import Organisation
     from app.models.report import Report, ReportStatus
     from app.services.auth import hash_pin
+    from app.services.encryption import encrypt_dek, encrypt_field, generate_dek, make_report_fernet
 
     admin, totp_secret = await _create_admin(db_session)
     await _login_admin(client, admin, totp_secret)
+
+    org_row = (await db_session.execute(
+        select(Organisation.id).where(Organisation.slug == cfg.default_org_slug).limit(1)
+    )).scalar_one_or_none()
+
+    dek_raw = generate_dek()
+    enc_dek = encrypt_dek(dek_raw, cfg.secret_key)
+    report_fernet = make_report_fernet(enc_dek, cfg.secret_key)
+    enc_desc = encrypt_field(report_fernet, "Report for admin reply test.")
 
     # Create a report directly in the DB — avoids wizard flow complexity
     report = Report(
@@ -96,7 +110,9 @@ async def test_admin_reply_empty_content_returns_422(
         case_number=f"OW-{uuid.uuid4().hex[:4].upper()}-{uuid.uuid4().hex[:5].upper()}",
         pin_hash=hash_pin("test-pin-reply-test"),
         category="financial_fraud",
-        description="Report for admin reply test.",
+        description=enc_desc,
+        encrypted_dek=enc_dek,
+        org_id=org_row,
         status=ReportStatus.received,
     )
     db_session.add(report)

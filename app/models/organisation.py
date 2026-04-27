@@ -22,7 +22,13 @@ class Organisation(Base):
     )
     name: Mapped[str] = mapped_column(String(128), nullable=False)
     slug: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
-    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default="true", default=True
+    )
+
+    def __init__(self, **kw: Any) -> None:
+        kw.setdefault("is_active", True)
+        super().__init__(**kw)
 
     # Optional JSON branding overrides (brand_primary_color, brand_secondary_color, logo_url, name)
     branding: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)

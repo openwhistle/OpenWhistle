@@ -224,11 +224,15 @@ class TestEncryptedReportStorage:
         msg = result.scalar_one()
         assert msg.content != admin_text
 
-    @pytest.mark.asyncio(loop_scope="function")
-    async def test_decrypt_report_fields_backward_compat_no_dek(
-        self, db_session: AsyncSession
-    ) -> None:
-        """Reports with encrypted_dek=None (pre-migration) return plaintext as-is."""
+    def test_decrypt_report_fields_backward_compat_no_dek(self) -> None:
+        """decrypt_report_fields handles legacy rows with encrypted_dek=None (plaintext).
+
+        After migration 013 all rows have encrypted_dek set, so this scenario
+        only arises for in-memory Report objects (e.g. test doubles or
+        code paths that construct a Report without persisting it).
+        We test the Python code path directly without a DB roundtrip so we
+        are not constrained by the NOT NULL DB constraint.
+        """
         from app.models.report import Report, ReportStatus, SubmissionMode
         from app.services.report import decrypt_report_fields
 
@@ -239,12 +243,10 @@ class TestEncryptedReportStorage:
             pin_hash="fakehash",
             category="fraud",
             description=plaintext,
-            encrypted_dek=None,  # pre-encryption row
+            encrypted_dek=None,  # simulate pre-encryption row in memory
             status=ReportStatus.received,
             submission_mode=SubmissionMode.anonymous,
         )
-        db_session.add(legacy_report)
-        await db_session.flush()
 
         description, _ = decrypt_report_fields(legacy_report)
         assert description == plaintext

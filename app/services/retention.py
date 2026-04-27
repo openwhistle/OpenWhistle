@@ -41,12 +41,11 @@ async def run_retention_cleanup() -> None:
     from app.models.report import Report, ReportStatus
 
     engine = create_async_engine(settings.database_url, echo=False)
-    session_factory = async_sessionmaker(engine, expire_on_commit=False)
-
     cutoff = datetime.now(UTC) - timedelta(days=settings.retention_days)
     deleted_count = 0
 
     try:
+        session_factory = async_sessionmaker(engine, expire_on_commit=False)
         async with session_factory() as db:
             result = await db.execute(
                 select(Report).where(

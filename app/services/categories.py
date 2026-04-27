@@ -8,6 +8,16 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.category import ReportCategory
+from app.models.organisation import Organisation
+
+
+async def _default_org_id(db: AsyncSession) -> uuid.UUID | None:
+    from app.config import settings
+
+    r = await db.execute(
+        select(Organisation.id).where(Organisation.slug == settings.default_org_slug).limit(1)
+    )
+    return r.scalar_one_or_none()
 
 
 async def get_active_categories(db: AsyncSession) -> list[ReportCategory]:
@@ -42,7 +52,10 @@ async def create_category(
     label_en: str,
     label_de: str,
     sort_order: int = 50,
+    org_id: uuid.UUID | None = None,
 ) -> ReportCategory:
+    if org_id is None:
+        org_id = await _default_org_id(db)
     cat = ReportCategory(
         id=uuid.uuid4(),
         slug=slug,
@@ -51,6 +64,7 @@ async def create_category(
         is_default=False,
         is_active=True,
         sort_order=sort_order,
+        org_id=org_id,
     )
     db.add(cat)
     await db.commit()

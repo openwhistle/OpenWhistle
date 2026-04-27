@@ -371,17 +371,27 @@ async def test_admin_can_download_attachment(client: object, db_session: object)
 
     import pyotp
     from httpx import AsyncClient
+    from sqlalchemy import select
     from sqlalchemy.ext.asyncio import AsyncSession
 
     from app.models.attachment import Attachment
+    from app.models.organisation import Organisation
     from app.models.report import Report, ReportStatus
     from app.models.user import AdminUser
     from app.services.auth import hash_password, hash_pin
+    from app.services.encryption import encrypt_dek, encrypt_field, generate_dek, make_report_fernet
 
     ac: AsyncClient = client  # type: ignore[assignment]
     db: AsyncSession = db_session  # type: ignore[assignment]
 
-    # Create a dedicated admin user for this test
+    from app.config import settings as cfg
+
+    # Resolve default org so reports satisfy the org_id NOT NULL constraint
+    org_row = (await db.execute(
+        select(Organisation.id).where(Organisation.slug == cfg.default_org_slug).limit(1)
+    )).scalar_one_or_none()
+
+    # Create a dedicated admin user for this test (org_id nullable for direct creation)
     totp_secret = "JBSWY3DPEHPK3PXP"
     admin = AdminUser(
         id=uuid.uuid4(),
@@ -392,12 +402,20 @@ async def test_admin_can_download_attachment(client: object, db_session: object)
     )
     db.add(admin)
 
+    # Encrypt the description so the NOT NULL encrypted_dek constraint is satisfied
+    dek_raw = generate_dek()
+    enc_dek = encrypt_dek(dek_raw, cfg.secret_key)
+    report_fernet = make_report_fernet(enc_dek, cfg.secret_key)
+    enc_desc = encrypt_field(report_fernet, "Test report for attachment download.")
+
     report = Report(
         id=uuid.uuid4(),
         case_number=f"OW-TEST-{uuid.uuid4().hex[:6].upper()}",
         pin_hash=hash_pin("test-pin-value"),
         category="other",
-        description="Test report for attachment download.",
+        description=enc_desc,
+        encrypted_dek=enc_dek,
+        org_id=org_row,
         status=ReportStatus.received,
     )
     db.add(report)

@@ -13,6 +13,7 @@ from app.i18n import _DEFAULT, _load
 from app.models.attachment import (
     Attachment,  # noqa: F401 — ensures mapper is loaded for selectinload
 )
+from app.models.organisation import Organisation
 from app.models.report import (
     STATUS_TRANSITIONS,
     AdminNote,
@@ -27,6 +28,17 @@ from app.models.report import (
 from app.models.user import AdminUser
 from app.services.auth import hash_pin, verify_pin
 from app.services.pin import generate_case_number, generate_pin
+
+
+async def _get_default_org_id(db: AsyncSession) -> uuid.UUID | None:
+    """Return the ID of the default organisation, or None if not found."""
+    from app.config import settings
+
+    result = await db.execute(
+        select(Organisation.id).where(Organisation.slug == settings.default_org_slug).limit(1)
+    )
+    row = result.scalar_one_or_none()
+    return row
 
 SortField = Literal["submitted_at", "case_number", "category", "status"]
 SortDir = Literal["asc", "desc"]
@@ -82,10 +94,13 @@ async def create_report(
     report_fernet = make_report_fernet(encrypted_dek, settings.secret_key)
     enc_description = encrypt_field(report_fernet, description)
 
+    default_org_id = await _get_default_org_id(db)
+
     report = Report(
         id=uuid.uuid4(),
         case_number=case_number,
         pin_hash=pin_hash,
+        org_id=default_org_id,
         category=category,
         description=enc_description,
         encrypted_dek=encrypted_dek,
