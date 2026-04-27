@@ -102,6 +102,19 @@ zero vendor lock-in, and privacy-first by design.
 - **Helm chart** — Official `charts/openwhistle/` Helm chart for Kubernetes deployments.
 - **Ansible role** — Official `ansible/roles/openwhistle/` Ansible role for bare-metal / VM
   deployments with Docker CE, systemd unit, and optional Certbot TLS.
+- **Encrypted report storage** — All report descriptions and messages are encrypted at-rest
+  using per-report envelope encryption (HKDF-SHA256 MEK + Fernet DEK); the key is never
+  stored in the database; pre-encryption rows are transparently readable (backward compat).
+- **Data retention (GDPR / HinSchG)** — `RETENTION_ENABLED=true` activates automatic deletion
+  of closed reports after `RETENTION_DAYS` days (default 1095 = 3 years); satisfies
+  GDPR Art. 5(1)(e) and HinSchG §12 Abs. 3; each deletion recorded in the audit log.
+- **Multi-tenancy** — `MULTI_TENANCY_ENABLED=true` lets a single deployment serve multiple
+  independent organisations with isolated data, per-tenant categories, locations, and users.
+- **Superadmin role** — New `superadmin` role above `admin` for managing organisations
+  in multi-tenant deployments; existing admin permissions are unchanged.
+- **Telephone channel compliance guide** — Admin page (`/admin/telephone-channel`) provides
+  a HinSchG §16 compliance checklist, implementation options, and the §10 recording
+  prohibition notice for operators setting up a verbal reporting channel.
 
 ---
 

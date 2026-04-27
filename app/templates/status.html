@@ -221,7 +221,7 @@
                     {{ t('status.sender.admin') if msg.sender.value == 'admin' else t('status.sender.user') }}
                     &middot; {{ msg.sent_at.strftime('%Y-%m-%d %H:%M UTC') }}
                 </div>
-                <div class="message-content">{{ msg.content }}</div>
+                <div class="message-content">{{ decrypted_messages[loop.index0] if decrypted_messages and loop.index0 < decrypted_messages|length else msg.content }}</div>
             </div>
             {% endfor %}
         </div>

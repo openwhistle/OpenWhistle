@@ -821,7 +821,7 @@
 
         <h3>Current version</h3>
         <p>
-          <strong>v0.5.0</strong> — Health-check v2, structured JSON logging, Slack/Teams webhook, SLA reminders, S3 storage, LDAP/AD login, Helm chart, Ansible role. See the
+          <strong>v1.0.0</strong> — Envelope encryption at rest, GDPR data retention, multi-tenancy, superadmin role, telephone channel guide. See the
           <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG</a>
           for a full list of changes.
         </p>
@@ -1276,6 +1276,58 @@
               <td><span class="env-required env-req-no">Optional</span></td>
               <td>Send a feedback reminder when this many days or fewer remain before the 3-month feedback deadline.</td>
               <td><code>30</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 id="retention">Data Retention (GDPR / HinSchG)</h3>
+        <p>
+          Closed reports can be automatically deleted after a configurable retention period.
+          This satisfies GDPR Art. 5(1)(e) (storage limitation) and HinSchG §12 Abs. 3
+          (3-year minimum documentation requirement). Each deletion writes an immutable
+          audit log entry (<code>report.auto_deleted</code>) recording the case number and legal basis.
+          The admin UI at <code>/admin/retention</code> shows the current configuration and next
+          scheduled run.
+        </p>
+        <table class="env-table">
+          <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code class="env-key">RETENTION_ENABLED</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Set to <code>true</code> to enable daily automatic deletion of aged closed reports.</td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">RETENTION_DAYS</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Days after a report is closed before it is automatically deleted. Do not set below 1095 without legal advice — HinSchG §12 Abs. 3 requires at least 3 years.</td>
+              <td><code>1095</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 id="multi-tenancy">Multi-Tenancy</h3>
+        <p>
+          A single OpenWhistle deployment can serve multiple independent organisations
+          (tenants). Each organisation has its own reports, categories, locations, and
+          admin users. The <code>superadmin</code> role manages organisations at
+          <code>/admin/organisations</code>.
+        </p>
+        <table class="env-table">
+          <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code class="env-key">MULTI_TENANCY_ENABLED</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Set to <code>true</code> to activate multi-organisation support. Requires at least one organisation to exist; the default org is auto-created at setup.</td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">DEFAULT_ORG_SLUG</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Slug of the default organisation auto-created during setup. Used for single-tenant deployments and as the fallback for legacy data.</td>
+              <td><code>default</code></td>
             </tr>
           </tbody>
         </table>

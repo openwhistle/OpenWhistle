@@ -25,6 +25,7 @@ class AuditAction:
     REPORT_ACKNOWLEDGED     = "report.acknowledged"
     REPORT_LINK_ADDED       = "report.link_added"
     REPORT_LINK_REMOVED     = "report.link_removed"
+    REPORT_AUTO_DELETED     = "report.auto_deleted"
     CATEGORY_CREATED        = "category.created"
     CATEGORY_UPDATED        = "category.updated"
     CATEGORY_DEACTIVATED    = "category.deactivated"
@@ -33,6 +34,8 @@ class AuditAction:
     ADMIN_DEACTIVATED       = "admin.deactivated"
     ADMIN_REACTIVATED       = "admin.reactivated"
     AUTH_LOGIN              = "auth.login"
+    ORG_CREATED             = "org.created"
+    ORG_DEACTIVATED         = "org.deactivated"
 
 
 async def log(

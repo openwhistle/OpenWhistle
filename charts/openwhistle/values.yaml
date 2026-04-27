@@ -100,6 +100,14 @@ config:
   notifyWebhookUrl: ""
   notifyWebhookType: "generic"
 
+  # Data retention (GDPR / HinSchG §12 Abs. 3)
+  retentionEnabled: "false"
+  retentionDays: "1095"
+
+  # Multi-tenancy
+  multiTenancyEnabled: "false"
+  defaultOrgSlug: "default"
+
 # Secrets — these must be provided; they are not defaulted.
 # Create a Kubernetes Secret and reference it, or use an external secrets operator.
 secrets:

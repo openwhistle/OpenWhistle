@@ -9,6 +9,9 @@
 <li><a href="/admin/locations">{{ t('admin.nav.locations') }}</a></li>
 <li><a href="/admin/users">{{ t('admin.nav.users') }}</a></li>
 <li><a href="/admin/audit-log">{{ t('admin.nav.audit_log') }}</a></li>
+<li><a href="/admin/telephone-channel">{{ t('admin.nav.telephone_channel') }}</a></li>
+<li><a href="/admin/retention">{{ t('admin.nav.retention') }}</a></li>
+<li><a href="/admin/organisations">{{ t('admin.nav.organisations') }}</a></li>
 <li><a href="/admin/logout">Logout</a></li>
 {% endblock %}
 
@@ -43,7 +46,7 @@
                     &nbsp;&nbsp;
                     <span class="badge badge-received">{{ report.category | replace('_', ' ') | title }}</span>
                 </div>
-                <p style="white-space:pre-wrap;font-size:0.95rem;color:var(--text-secondary);line-height:1.7;">{{ report.description }}</p>
+                <p style="white-space:pre-wrap;font-size:0.95rem;color:var(--text-secondary);line-height:1.7;">{{ decrypted_description }}</p>
             </div>
 
             {# Communication thread + reply #}
@@ -59,7 +62,7 @@
                             {{ t('admin.sender.admin') if msg.sender.value == 'admin' else t('admin.whistleblower') }}
                             &middot; <span class="mono">{{ msg.sent_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
                         </div>
-                        <div class="message-content">{{ msg.content }}</div>
+                        <div class="message-content">{{ decrypted_messages[loop.index0] if decrypted_messages and loop.index0 < decrypted_messages|length else msg.content }}</div>
                     </div>
                     {% endfor %}
                 </div>

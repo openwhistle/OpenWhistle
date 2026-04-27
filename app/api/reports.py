@@ -520,9 +520,14 @@ async def status_get(
                 ack_deadline = submitted + timedelta(days=7)
                 ack_days_remaining = (ack_deadline - now).days
 
+                from app.services.report import decrypt_report_fields
+
+                _, dec_msgs = decrypt_report_fields(report)
+
                 return render(request, "status.html", {
                     "session_token": new_session_token,
                     "report": report,
+                    "decrypted_messages": dec_msgs,
                     "case_number": None,
                     "pin": None,
                     "from_session": True,

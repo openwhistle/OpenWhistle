@@ -33,7 +33,7 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "OpenWhistle"
-    app_version: str = "0.5.0"
+    app_version: str = "1.0.0"
 
     # Logging
     log_level: str = "INFO"
@@ -99,6 +99,14 @@ class Settings(BaseSettings):
     notify_webhook_url: str = ""
     notify_webhook_secret: str = ""    # HMAC-SHA256 signing secret (optional)
     notify_webhook_type: str = "generic"  # "generic", "slack", or "teams"
+
+    # Data-retention policy (GDPR Art. 5 storage limitation)
+    retention_enabled: bool = False
+    retention_days: int = 1095  # 3 years — HinSchG §12 Abs. 3 minimum
+
+    # Multi-tenancy
+    multi_tenancy_enabled: bool = False
+    default_org_slug: str = "default"
 
 
 settings = Settings()  # type: ignore[call-arg]

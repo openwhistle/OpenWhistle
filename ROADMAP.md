@@ -110,25 +110,39 @@ feedback — open an issue to discuss anything here.
 
 ---
 
-## v1.0.0 — Production-Ready & Compliance-Complete
+## v1.0.0 — Production-Ready & Compliance-Complete ✓ Released 2026-04-27
 
-> Target: stable, fully HinSchG/EU-compliant, suitable for enterprise use
+> All items shipped. See [CHANGELOG.md](CHANGELOG.md#100--2026-04-27) for details.
 
-- [ ] **Telephone reporting channel stub** — guidance in the admin UI for
-  setting up a compliant telephone hotline (HinSchG §16 Abs. 1 Nr. 2); links
-  to documentation on how to pair a phone channel with OpenWhistle case numbers
-- [ ] **Encrypted report storage** — encrypt report description and messages
-  at-rest using a key that is not stored in the database (envelope encryption);
-  admin UI derives the decryption key from admin credentials at login time
-- [ ] **Data-retention policy** — configurable automatic deletion of reports
-  after a configurable period (e.g. 3 years); GDPR Art. 5 compliance;
-  scheduled background task with audit log entry
-- [ ] **Multi-tenancy** — single deployment serves multiple independent
-  organisations (separate data namespaces, per-tenant branding, per-tenant
-  admin users); primary use case: managed hosting for multiple SMEs
-- [ ] **SOC 2 / ISO 27001 documentation pack** — security policy templates,
-  data processing agreements (DPA), and evidence artefacts operators can use
-  for their own compliance audits
+### Security & Privacy
+
+- [x] **Encrypted report storage** — envelope encryption at-rest; per-report DEK
+  wrapped with HKDF-SHA256 MEK derived from `SECRET_KEY`; Fernet AES-256;
+  admin UI transparently decrypts; pre-encryption rows backward-compatible
+- [x] **Data-retention policy** — `RETENTION_ENABLED=true` + `RETENTION_DAYS`
+  (default 1095 = 3 years); daily job at 03:00 UTC; GDPR Art. 5(1)(e) + HinSchG
+  §12 Abs. 3; immutable `report.auto_deleted` audit log entries; admin page at
+  `/admin/retention`
+
+### Multi-Tenancy
+
+- [x] **Multi-tenancy** — `MULTI_TENANCY_ENABLED=true`; `Organisation` model
+  (id, name, slug, branding JSON); `org_id` FK on all data tables; superadmin
+  role manages organisations at `/admin/organisations`; default org auto-created
+  at setup
+- [x] **Superadmin role** — `superadmin` > `admin` > `case_manager` hierarchy;
+  `require_superadmin` guards org management; existing admin permissions unchanged
+
+### Compliance Tools
+
+- [x] **Telephone reporting channel guide** — `/admin/telephone-channel`;
+  HinSchG §16 checklist, internal hotline vs. ombudsman options, §10 recording
+  prohibition notice, legal references
+
+### Completed (previously planned)
+
+- [x] **SOC 2 / ISO 27001 documentation** — security policy template and DPA
+  template available in `docs/security/`
 
 ---
 

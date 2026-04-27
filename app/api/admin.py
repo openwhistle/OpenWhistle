@@ -8,7 +8,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Resp
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_admin, require_admin
+from app.api.deps import get_current_admin, require_admin, require_superadmin
 from app.config import settings
 from app.csrf import validate_csrf
 from app.database import get_db
@@ -175,10 +175,13 @@ async def report_detail(
     audit_entries, _ = await audit_service.get_audit_log(db, report_id=report_id, per_page=20)
 
     from app.services.crypto import decrypt_or_none
+    from app.services.report import decrypt_report_fields
 
     confidential_name = decrypt_or_none(report.confidential_name)
     confidential_contact = decrypt_or_none(report.confidential_contact)
     has_secure_email = bool(report.secure_email)
+
+    decrypted_description, decrypted_msg_contents = decrypt_report_fields(report)
 
     return render(
         request,
@@ -186,13 +189,15 @@ async def report_detail(
         {
             "user": current_user,
             "report": report,
+            "decrypted_description": decrypted_description,
+            "decrypted_messages": decrypted_msg_contents,
             "now": datetime.now(UTC),
             "statuses": list(ReportStatus),
             "allowed_transitions": allowed_transitions,
             "all_admins": all_admins,
             "linked_reports": linked,
             "audit_entries": audit_entries,
-            "is_admin": current_user.role == AdminRole.admin,
+            "is_admin": current_user.role in {AdminRole.admin, AdminRole.superadmin},
             "confidential_name": confidential_name,
             "confidential_contact": confidential_contact,
             "has_secure_email": has_secure_email,
@@ -965,3 +970,124 @@ async def demo_reset(
     from app.services.demo_seed import seed_demo_data
     await seed_demo_data()
     return JSONResponse({"reset": True})
+
+
+# ── Telephone channel stub (HinSchG §16) ─────────────────────────────────────
+
+
+@router.get("/telephone-channel", response_class=HTMLResponse)
+async def telephone_channel_page(
+    request: Request,
+    current_user: AdminUser = Depends(get_current_admin),
+) -> HTMLResponse:
+    return render(request, "admin/telephone_channel.html", {"user": current_user})
+
+
+# ── Data retention ────────────────────────────────────────────────────────────
+
+
+@router.get("/retention", response_class=HTMLResponse)
+async def retention_page(
+    request: Request,
+    current_user: AdminUser = Depends(require_admin),
+) -> HTMLResponse:
+    from datetime import UTC, datetime, timedelta
+
+    now = datetime.now(UTC)
+    next_run = (now + timedelta(days=1)).replace(hour=3, minute=0, second=0, microsecond=0)
+    return render(
+        request,
+        "admin/retention.html",
+        {
+            "user": current_user,
+            "retention_enabled": settings.retention_enabled,
+            "retention_days": settings.retention_days,
+            "next_run": next_run,
+        },
+    )
+
+
+# ── Organisation management (superadmin only) ─────────────────────────────────
+
+
+@router.get("/organisations", response_class=HTMLResponse)
+async def organisations_page(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: AdminUser = Depends(require_superadmin),
+) -> HTMLResponse:
+    from sqlalchemy import select
+
+    from app.models.organisation import Organisation
+
+    result = await db.execute(select(Organisation).order_by(Organisation.created_at))
+    orgs = result.scalars().all()
+    return render(
+        request,
+        "admin/organisations.html",
+        {"user": current_user, "organisations": orgs},
+    )
+
+
+@router.post("/organisations", response_class=HTMLResponse)
+async def create_organisation(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: AdminUser = Depends(require_superadmin),
+    name: str = Form(...),
+    slug: str = Form(...),
+    _csrf: None = Depends(validate_csrf),
+) -> RedirectResponse:
+    import re
+
+    from sqlalchemy import select
+
+    from app.models.organisation import Organisation
+
+    slug_clean = re.sub(r"[^a-z0-9-]", "-", slug.strip().lower())
+    if not slug_clean:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid slug.")
+
+    existing = await db.execute(
+        select(Organisation).where(Organisation.slug == slug_clean)
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Slug already exists."
+        )
+
+    org = Organisation(id=__import__("uuid").uuid4(), name=name.strip(), slug=slug_clean)
+    db.add(org)
+    await audit_service.log(
+        db, current_user, AuditAction.ORG_CREATED, detail={"name": name, "slug": slug_clean}
+    )
+    await db.commit()
+    return RedirectResponse("/admin/organisations", status_code=302)
+
+
+@router.post("/organisations/{org_id}/deactivate")
+async def deactivate_organisation(
+    org_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: AdminUser = Depends(require_superadmin),
+    _csrf: None = Depends(validate_csrf),
+) -> RedirectResponse:
+    from sqlalchemy import select
+
+    from app.models.organisation import Organisation
+
+    result = await db.execute(select(Organisation).where(Organisation.id == org_id))
+    org = result.scalar_one_or_none()
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    if org.slug == "default":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The default organisation cannot be deactivated.",
+        )
+    org.is_active = False
+    await audit_service.log(
+        db, current_user, AuditAction.ORG_DEACTIVATED, detail={"org_id": str(org_id)}
+    )
+    await db.commit()
+    return RedirectResponse("/admin/organisations", status_code=302)

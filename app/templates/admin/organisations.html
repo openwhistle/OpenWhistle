@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Organisations — OpenWhistle{% endblock %}
+
+{% block nav_links %}
+<li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
+<li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
+<li><a href="/admin/categories">{{ t('admin.nav.categories') }}</a></li>
+<li><a href="/admin/locations">{{ t('admin.nav.locations') }}</a></li>
+<li><a href="/admin/users">{{ t('admin.nav.users') }}</a></li>
+<li><a href="/admin/audit-log">{{ t('admin.nav.audit_log') }}</a></li>
+<li><a href="/admin/organisations" class="active" aria-current="page">Organisations</a></li>
+<li><a href="/admin/telephone-channel">{{ t('admin.nav.telephone_channel') }}</a></li>
+<li><a href="/admin/retention">{{ t('admin.nav.retention') }}</a></li>
+<li><a href="/admin/logout">Logout</a></li>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div class="page-eyebrow">Superadmin</div>
+        <h1>Organisations</h1>
+        <p class="page-subtitle">
+            Manage tenants in multi-tenant deployments. Each organisation has its own
+            reports, categories, locations, and admin users.
+        </p>
+    </div>
+
+    <section class="card" aria-labelledby="heading-create">
+        <h2 id="heading-create">Create Organisation</h2>
+        <form method="post" action="/admin/organisations" class="form--inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="org-name">Organisation Name</label>
+                    <input type="text" id="org-name" name="name" required
+                           placeholder="Acme GmbH" maxlength="128"
+                           class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="org-slug">Slug <span class="hint">(subdomain / URL key, lowercase)</span></label>
+                    <input type="text" id="org-slug" name="slug" required
+                           placeholder="acme" maxlength="64" pattern="[a-z0-9-]+"
+                           class="form-control">
+                </div>
+                <div class="form-group form-group--action">
+                    <button type="submit" class="btn btn--primary">Create</button>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <section class="card" aria-labelledby="heading-list">
+        <h2 id="heading-list">All Organisations</h2>
+        {% if organisations %}
+        <table class="data-table" role="table">
+            <thead>
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Slug</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Created</th>
+                    <th scope="col" class="col-actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for org in organisations %}
+                <tr>
+                    <td>{{ org.name }}</td>
+                    <td><code>{{ org.slug }}</code></td>
+                    <td>
+                        {% if org.is_active %}
+                            <span class="badge badge--green">Active</span>
+                        {% else %}
+                            <span class="badge badge--grey">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ org.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td>
+                        {% if org.slug != 'default' and org.is_active %}
+                        <form method="post"
+                              action="/admin/organisations/{{ org.id }}/deactivate"
+                              style="display:inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <button type="submit" class="btn btn--danger btn--sm"
+                                    onclick="return confirm('Deactivate {{ org.name }}?')">
+                                Deactivate
+                            </button>
+                        </form>
+                        {% elif org.slug == 'default' %}
+                            <span class="text-muted">Default</span>
+                        {% else %}
+                            <span class="badge badge--grey">Inactive</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="empty-state">No organisations found.</p>
+        {% endif %}
+    </section>
+
+    <div class="page-actions">
+        <a href="/admin/dashboard" class="btn btn--secondary">← Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}

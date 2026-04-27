@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Data Retention Policy — OpenWhistle{% endblock %}
+
+{% block nav_links %}
+<li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
+<li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
+<li><a href="/admin/categories">{{ t('admin.nav.categories') }}</a></li>
+<li><a href="/admin/locations">{{ t('admin.nav.locations') }}</a></li>
+<li><a href="/admin/users">{{ t('admin.nav.users') }}</a></li>
+<li><a href="/admin/audit-log">{{ t('admin.nav.audit_log') }}</a></li>
+<li><a href="/admin/retention" class="active" aria-current="page">Retention</a></li>
+<li><a href="/admin/telephone-channel">{{ t('admin.nav.telephone_channel') }}</a></li>
+<li><a href="/admin/organisations">{{ t('admin.nav.organisations') }}</a></li>
+<li><a href="/admin/logout">Logout</a></li>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div class="page-eyebrow">Compliance</div>
+        <h1>Data Retention Policy</h1>
+        <p class="page-subtitle">
+            Automatic deletion of closed reports after the configured retention period.
+            Satisfies GDPR Art. 5(1)(e) storage limitation and HinSchG §12 Abs. 3.
+        </p>
+    </div>
+
+    <div class="stats-grid" role="list">
+        <div class="stat-card {% if retention_enabled %}stat-card--active{% else %}stat-card--inactive{% endif %}" role="listitem">
+            <div class="stat-card__label">Status</div>
+            <div class="stat-card__value">
+                {% if retention_enabled %}
+                    <span class="badge badge--green" aria-label="Retention enabled">Enabled</span>
+                {% else %}
+                    <span class="badge badge--grey" aria-label="Retention disabled">Disabled</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="stat-card" role="listitem">
+            <div class="stat-card__label">Retention Period</div>
+            <div class="stat-card__value">{{ retention_days }} days
+                <span class="stat-card__sub">({{ (retention_days / 365)|round(1) }} years)</span>
+            </div>
+        </div>
+        <div class="stat-card" role="listitem">
+            <div class="stat-card__label">Next Scheduled Run</div>
+            <div class="stat-card__value">
+                {% if retention_enabled %}
+                    {{ next_run.strftime('%Y-%m-%d 03:00 UTC') }}
+                {% else %}
+                    —
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if not retention_enabled %}
+    <div class="info-banner info-banner--info" role="note">
+        <strong>Retention is currently disabled.</strong>
+        To enable automatic deletion, set <code>RETENTION_ENABLED=true</code> in your
+        environment configuration. Optionally adjust <code>RETENTION_DAYS</code>
+        (default: 1095 = 3 years).
+    </div>
+    {% endif %}
+
+    <section class="card" aria-labelledby="heading-how">
+        <h2 id="heading-how">How It Works</h2>
+        <ol>
+            <li>Every day at <strong>03:00 UTC</strong> the retention scheduler runs.</li>
+            <li>Reports with status <strong>"closed"</strong> whose <code>closed_at</code>
+                timestamp is older than <strong>{{ retention_days }} days</strong> are
+                permanently deleted.</li>
+            <li>All associated data is removed: messages, attachments, notes, audit-log
+                references (case number preserved in the auto-deletion audit entry).</li>
+            <li>An immutable <strong>audit log entry</strong> (<code>report.auto_deleted</code>)
+                is written for each deleted report, recording the case number, closed date,
+                retention period, and compliance basis.</li>
+        </ol>
+        <p class="note">
+            <strong>Note:</strong> Reports in any status other than "closed" are
+            <em>never</em> auto-deleted, regardless of their age.
+        </p>
+    </section>
+
+    <section class="card" aria-labelledby="heading-legal">
+        <h2 id="heading-legal">Legal Basis</h2>
+        <div class="legal-grid">
+            <div class="legal-item">
+                <h3>GDPR Art. 5(1)(e) — Storage Limitation</h3>
+                <p>Personal data must not be kept longer than necessary for the purpose for
+                   which it was collected. Retaining closed reports indefinitely would violate
+                   this principle.</p>
+            </div>
+            <div class="legal-item">
+                <h3>HinSchG §12 Abs. 3 — Documentation Obligation</h3>
+                <p>Reports and their follow-up must be documented for at least <strong>3 years</strong>
+                   after the procedure is concluded. The default retention period of 1095 days
+                   (3 years) meets this minimum. Do not set <code>RETENTION_DAYS</code> below
+                   1095 unless you have specific legal advice to do so.</p>
+            </div>
+            <div class="legal-item">
+                <h3>GDPR Art. 17 — Right to Erasure</h3>
+                <p>Individuals may request deletion of their personal data. The auto-deletion
+                   mechanism and the existing manual 4-eyes deletion workflow both support
+                   fulfilment of erasure requests.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="card" aria-labelledby="heading-config">
+        <h2 id="heading-config">Configuration Reference</h2>
+        <table class="env-table" role="table">
+            <thead>
+                <tr>
+                    <th scope="col">Variable</th>
+                    <th scope="col">Default</th>
+                    <th scope="col">Current</th>
+                    <th scope="col">Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>RETENTION_ENABLED</code></td>
+                    <td><code>false</code></td>
+                    <td><code>{{ retention_enabled | string | lower }}</code></td>
+                    <td>Enable automatic deletion of aged closed reports.</td>
+                </tr>
+                <tr>
+                    <td><code>RETENTION_DAYS</code></td>
+                    <td><code>1095</code></td>
+                    <td><code>{{ retention_days }}</code></td>
+                    <td>Days after closing before a report is auto-deleted.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <div class="page-actions">
+        <a href="/admin/dashboard" class="btn btn--secondary">← Back to Dashboard</a>
+        <a href="/admin/audit-log?action=report.auto_deleted" class="btn btn--outline">
+            View Auto-Deletion Log
+        </a>
+    </div>
+</div>
+{% endblock %}

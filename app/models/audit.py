@@ -31,3 +31,11 @@ class AuditLog(Base):
         UUID(as_uuid=True), ForeignKey("reports.id", ondelete="CASCADE"), nullable=True, index=True
     )
     detail: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Organisation (multi-tenancy)
+    org_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organisations.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )

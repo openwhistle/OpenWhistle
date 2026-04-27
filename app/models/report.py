@@ -55,9 +55,21 @@ class Report(Base):
     case_number: Mapped[str] = mapped_column(String(20), unique=True, nullable=False, index=True)
     pin_hash: Mapped[str] = mapped_column(String(72), nullable=False)
 
+    # Organisation (multi-tenancy)
+    org_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organisations.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
     # Stored as plain string — denormalized at submit time for history immutability
     category: Mapped[str] = mapped_column(String(64), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
+
+    # Envelope-encrypted DEK — Fernet token wrapping the per-report Data Encryption Key.
+    # NULL on rows created before migration 013 ran; those rows have plaintext description.
+    encrypted_dek: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     status: Mapped[ReportStatus] = mapped_column(
         Enum(ReportStatus, name="reportstatus"),

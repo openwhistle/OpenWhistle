@@ -56,5 +56,7 @@ def require_role(*roles: AdminRole) -> Callable[..., Coroutine[Any, Any, AdminUs
 
 
 # Convenience aliases
-require_admin = require_role(AdminRole.admin)
-require_any_role = require_role(AdminRole.admin, AdminRole.case_manager)
+# superadmin inherits all admin capabilities (included in require_admin)
+require_admin = require_role(AdminRole.admin, AdminRole.superadmin)
+require_any_role = require_role(AdminRole.admin, AdminRole.case_manager, AdminRole.superadmin)
+require_superadmin = require_role(AdminRole.superadmin)

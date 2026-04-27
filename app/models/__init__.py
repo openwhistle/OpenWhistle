@@ -2,6 +2,7 @@ from app.models.attachment import Attachment
 from app.models.audit import AuditLog
 from app.models.category import ReportCategory
 from app.models.location import Location
+from app.models.organisation import Organisation
 from app.models.report import (
     STATUS_TRANSITIONS,
     AdminNote,
@@ -25,6 +26,7 @@ __all__ = [
     "CaseLink",
     "DeletionRequest",
     "Location",
+    "Organisation",
     "Report",
     "ReportCategory",
     "ReportMessage",

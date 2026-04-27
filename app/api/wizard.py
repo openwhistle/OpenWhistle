@@ -86,12 +86,27 @@ async def setup_post(
             },
         )
 
+    # Ensure the default organisation exists (created by migration 012, but guard here)
+    from app.models.organisation import Organisation
+
+    org_result = await db.execute(
+        select(Organisation).where(Organisation.slug == "default")
+    )
+    default_org = org_result.scalar_one_or_none()
+    if default_org is None:
+        default_org = Organisation(
+            id=uuid.uuid4(), name="Default Organisation", slug="default"
+        )
+        db.add(default_org)
+        await db.flush()
+
     admin = AdminUser(
         id=uuid.uuid4(),
         username=username,
         password_hash=hash_password(password),
         totp_secret=totp_secret,
         totp_enabled=True,
+        org_id=default_org.id,
     )
     db.add(admin)
 

@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, Enum, String
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
 
 class AdminRole(enum.StrEnum):
+    superadmin = "superadmin"
     admin = "admin"
     case_manager = "case_manager"
 
@@ -48,6 +49,14 @@ class AdminUser(Base):
 
     # LDAP (optional — when set, password is verified via LDAP bind, not local hash)
     ldap_username: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
+
+    # Organisation (multi-tenancy — nullable for superadmin accounts that span all orgs)
+    org_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("organisations.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

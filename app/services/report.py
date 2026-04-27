@@ -64,16 +64,31 @@ async def create_report(
     secure_email_enc: str | None = None,
 ) -> tuple[Report, str]:
     """Create a new whistleblower report. Returns (report, plain_pin)."""
+    from app.config import settings
+    from app.services.encryption import (
+        encrypt_dek,
+        encrypt_field,
+        generate_dek,
+        make_report_fernet,
+    )
+
     case_number = await generate_case_number(db)
     plain_pin = generate_pin()
     pin_hash = hash_pin(plain_pin)
+
+    # Envelope-encrypt the description with a fresh per-report DEK
+    dek_raw = generate_dek()
+    encrypted_dek = encrypt_dek(dek_raw, settings.secret_key)
+    report_fernet = make_report_fernet(encrypted_dek, settings.secret_key)
+    enc_description = encrypt_field(report_fernet, description)
 
     report = Report(
         id=uuid.uuid4(),
         case_number=case_number,
         pin_hash=pin_hash,
         category=category,
-        description=description,
+        description=enc_description,
+        encrypted_dek=encrypted_dek,
         status=ReportStatus.received,
         submission_mode=submission_mode,
         location_id=location_id,
@@ -87,16 +102,40 @@ async def create_report(
     fallback = _load(_DEFAULT)
     receipt_text = strings.get("system.receipt_message") or fallback.get("system.receipt_message")
 
+    enc_receipt = encrypt_field(report_fernet, receipt_text or "")
     receipt_msg = ReportMessage(
         id=uuid.uuid4(),
         report_id=report.id,
         sender=ReportSender.admin,
-        content=receipt_text,
+        content=enc_receipt,
     )
     db.add(receipt_msg)
     await db.commit()
     await db.refresh(report)
     return report, plain_pin
+
+
+def decrypt_report_fields(report: Report) -> tuple[str, list[str]]:
+    """Return (decrypted_description, [decrypted_message_contents]).
+
+    Falls back to plaintext for rows that pre-date envelope encryption
+    (encrypted_dek is None) — backward-compatible with pre-v1.0 data.
+    """
+    from app.config import settings
+    from app.services.encryption import decrypt_field_safe, make_report_fernet
+
+    if report.encrypted_dek:
+        fernet = make_report_fernet(report.encrypted_dek, settings.secret_key)
+        description = decrypt_field_safe(fernet, report.description) or report.description
+        msg_contents = [
+            decrypt_field_safe(fernet, m.content) or m.content
+            for m in report.messages
+        ]
+    else:
+        description = report.description
+        msg_contents = [m.content for m in report.messages]
+
+    return description, msg_contents
 
 
 async def get_report_by_credentials(
@@ -115,6 +154,17 @@ async def get_report_by_credentials(
     return report
 
 
+def _encrypt_message_content(report: Report, content: str) -> str:
+    """Encrypt message content with the report's DEK if available."""
+    if not report.encrypted_dek:
+        return content
+    from app.config import settings
+    from app.services.encryption import encrypt_field, make_report_fernet
+
+    fernet = make_report_fernet(report.encrypted_dek, settings.secret_key)
+    return encrypt_field(fernet, content)
+
+
 async def add_whistleblower_message(
     db: AsyncSession, report: Report, content: str
 ) -> ReportMessage:
@@ -122,7 +172,7 @@ async def add_whistleblower_message(
         id=uuid.uuid4(),
         report_id=report.id,
         sender=ReportSender.whistleblower,
-        content=content,
+        content=_encrypt_message_content(report, content),
     )
     db.add(msg)
     await db.commit()
@@ -140,7 +190,7 @@ async def add_admin_message(
         id=uuid.uuid4(),
         report_id=report.id,
         sender=ReportSender.admin,
-        content=content,
+        content=_encrypt_message_content(report, content),
     )
     db.add(msg)
     await db.commit()

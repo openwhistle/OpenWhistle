@@ -30,6 +30,10 @@ from app.main import app  # noqa: E402
 
 _ENUM_TYPES = ["reportcategory", "reportstatus", "reportsender", "submissionmode", "adminrole"]
 
+# Ensure new v1.0.0 feature flags are off in tests
+os.environ.setdefault("RETENTION_ENABLED", "false")
+os.environ.setdefault("MULTI_TENANCY_ENABLED", "false")
+
 # Step number for the location step in the wizard (only active when locations exist)
 _STEP_LOCATION = 2
 

@@ -7,6 +7,62 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.0.0] — 2026-04-27
+
+### Added
+
+- **Envelope encryption at rest**: every new report is encrypted on write with a
+  per-report Data Encryption Key (DEK) wrapped via AES-256 (Fernet); the DEK is
+  encrypted with a Master Encryption Key (MEK) derived from `SECRET_KEY` using
+  HKDF-SHA256; MEK is never stored; report description and all message bodies are
+  encrypted; pre-encryption rows are readable without decryption (backward compat)
+- **Data retention (GDPR / HinSchG)**: `RETENTION_ENABLED=true` activates a
+  daily job (03:00 UTC) that permanently deletes closed reports older than
+  `RETENTION_DAYS` (default 1095 = 3 years — HinSchG §12 Abs. 3 minimum); each
+  deletion writes an immutable audit-log entry (`report.auto_deleted`) recording
+  the case number, closure date, and legal basis
+- **Multi-tenancy**: `MULTI_TENANCY_ENABLED=true` activates multi-organisation
+  support; `Organisation` model with `name`, `slug`, `is_active`, and `branding`
+  JSON; all reports, users, categories, locations, and audit entries carry an
+  `org_id` foreign key; per-org unique constraints on category slugs and location
+  codes; superadmin role manages organisations via `/admin/organisations`
+- **Superadmin role**: new `superadmin` role above `admin`; `require_superadmin`
+  dependency guards the organisation management endpoints; existing `admin` role
+  retains all previous permissions; role added to `AdminRole` enum via
+  `ALTER TYPE adminrole ADD VALUE IF NOT EXISTS 'superadmin'`
+- **Telephone reporting channel guide** (`/admin/telephone-channel`): compliance
+  page covering HinSchG §16 requirements, implementation options (internal hotline
+  vs. external ombudsman), §10 recording prohibition, and a compliance checklist
+- **Data retention admin page** (`/admin/retention`): shows current retention
+  config, next scheduled run, legal basis (GDPR Art. 5/17, HinSchG §12), and
+  configuration reference table
+- **Organisation management page** (`/admin/organisations`): superadmin-only page
+  to create and deactivate organisations (default org cannot be deactivated)
+
+### Changed
+
+- Report description and message content are now stored encrypted; existing
+  plaintext rows are transparently decrypted on first read (backward compat via
+  `decrypt_field_safe`)
+- Admin report detail page and whistleblower status page now render decrypted
+  content instead of raw ciphertext
+- Scheduler refactored: both SLA reminders and retention cleanup share a single
+  `AsyncIOScheduler` instance; previous per-feature scheduler creation eliminated
+- `ReportCategory.slug` and `Location.code` unique constraints changed from global
+  to per-organisation composite (`slug + org_id`, `code + org_id`)
+- Nav bar in all admin templates updated with links to Telephone Channel, Retention,
+  and Organisations pages
+
+### Migrations
+
+- **012** — Creates `organisations` table; adds `org_id` FK and `encrypted_dek`
+  column to all data-bearing tables; adds `superadmin` to `adminrole` enum
+- **013** — Data migration: backfills `org_id` with default org; makes `org_id`
+  NOT NULL; encrypts all existing report descriptions and message bodies; makes
+  `encrypted_dek` NOT NULL
+- **014** — Replaces global unique constraints on `report_categories.slug` and
+  `locations.code` with per-org composite unique constraints
+
 ## [0.5.0] — 2026-04-26
 
 ### Added

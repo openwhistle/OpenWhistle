@@ -51,6 +51,10 @@ services:
       NOTIFY_WEBHOOK_URL: "${NOTIFY_WEBHOOK_URL:-}"
       NOTIFY_WEBHOOK_SECRET: "${NOTIFY_WEBHOOK_SECRET:-}"
       NOTIFY_WEBHOOK_TYPE: "${NOTIFY_WEBHOOK_TYPE:-generic}"
+      RETENTION_ENABLED: "${RETENTION_ENABLED:-false}"
+      RETENTION_DAYS: "${RETENTION_DAYS:-1095}"
+      MULTI_TENANCY_ENABLED: "${MULTI_TENANCY_ENABLED:-false}"
+      DEFAULT_ORG_SLUG: "${DEFAULT_ORG_SLUG:-default}"
     depends_on:
       db:
         condition: service_healthy

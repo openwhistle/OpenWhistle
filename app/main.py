@@ -56,15 +56,28 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         logger.info("Demo data seeded.")
 
     scheduler = None
-    if settings.reminder_enabled:
+    if settings.reminder_enabled or settings.retention_enabled:
         from apscheduler.schedulers.asyncio import AsyncIOScheduler  # noqa: PLC0415
 
-        from app.services.reminders import send_sla_reminders  # noqa: PLC0415
-
         scheduler = AsyncIOScheduler()
-        scheduler.add_job(send_sla_reminders, "interval", minutes=30, id="sla_reminders")
+
+        if settings.reminder_enabled:
+            from app.services.reminders import send_sla_reminders  # noqa: PLC0415
+
+            scheduler.add_job(
+                send_sla_reminders, "interval", minutes=30, id="sla_reminders"
+            )
+            logger.info("SLA reminder scheduler registered (interval: 30 min).")
+
+        if settings.retention_enabled:
+            from app.services.retention import run_retention_cleanup  # noqa: PLC0415
+
+            scheduler.add_job(
+                run_retention_cleanup, "cron", hour=3, minute=0, id="retention_cleanup"
+            )
+            logger.info("Data retention scheduler registered (daily at 03:00 UTC).")
+
         scheduler.start()
-        logger.info("SLA reminder scheduler started (interval: 30 min).")
 
     yield
 

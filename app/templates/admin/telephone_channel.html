@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Telephone Reporting Channel — OpenWhistle{% endblock %}
+
+{% block nav_links %}
+<li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
+<li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
+<li><a href="/admin/categories">{{ t('admin.nav.categories') }}</a></li>
+<li><a href="/admin/locations">{{ t('admin.nav.locations') }}</a></li>
+<li><a href="/admin/users">{{ t('admin.nav.users') }}</a></li>
+<li><a href="/admin/audit-log">{{ t('admin.nav.audit_log') }}</a></li>
+<li><a href="/admin/telephone-channel" class="active" aria-current="page">Telephone Channel</a></li>
+<li><a href="/admin/retention">{{ t('admin.nav.retention') }}</a></li>
+<li><a href="/admin/organisations">{{ t('admin.nav.organisations') }}</a></li>
+<li><a href="/admin/logout">Logout</a></li>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div class="page-eyebrow">Compliance</div>
+        <h1>Telephone Reporting Channel</h1>
+        <p class="page-subtitle">
+            HinSchG §16 Abs. 1 Nr. 2 requires that internal reporting channels include
+            a telephone hotline option in addition to the written channel provided by OpenWhistle.
+            This page guides you through setting up a compliant telephone reporting channel.
+        </p>
+    </div>
+
+    <div class="info-banner info-banner--warning" role="note" aria-label="Legal notice">
+        <strong>Legal requirement:</strong>
+        Organisations with 50 or more employees and all public authorities are legally required
+        to offer <em>at least two</em> reporting channels — one of which must allow verbal
+        (telephone) reporting pursuant to <strong>HinSchG §16 Abs. 1 Nr. 2</strong>.
+        OpenWhistle fulfils the written channel; you must provide the telephone channel separately.
+    </div>
+
+    <section class="card" aria-labelledby="heading-checklist">
+        <h2 id="heading-checklist">Compliance Checklist</h2>
+        <p>Verify that your telephone reporting channel meets the following requirements:</p>
+        <ul class="checklist" role="list">
+            <li class="checklist__item">
+                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span>A dedicated telephone number is published internally and accessible to all employees.</span>
+            </li>
+            <li class="checklist__item">
+                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span>The channel is confidential — calls are handled by trained, impartial staff or an external ombudsman.</span>
+            </li>
+            <li class="checklist__item">
+                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span>The person answering is bound by a confidentiality obligation (§9 HinSchG).</span>
+            </li>
+            <li class="checklist__item">
+                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span>A verbal report can be transcribed and submitted to OpenWhistle under a case number by staff — with the whistleblower's consent (§17 Abs. 1 HinSchG).</span>
+            </li>
+            <li class="checklist__item">
+                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span>The whistleblower is informed about the channel via internal communications, intranet, and/or poster.</span>
+            </li>
+            <li class="checklist__item">
+                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span>Call recordings, if any, are compliant with DSGVO and §9 HinSchG confidentiality provisions.</span>
+            </li>
+            <li class="checklist__item">
+                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span>The channel is operational during normal business hours (or 24/7 for critical industries).</span>
+            </li>
+            <li class="checklist__item">
+                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span>
+                    If using an external ombudsman, their engagement letter includes a DSGVO
+                    Art. 28 Data Processing Agreement (DPA).
+                </span>
+            </li>
+        </ul>
+    </section>
+
+    <section class="card" aria-labelledby="heading-options">
+        <h2 id="heading-options">Implementation Options</h2>
+        <div class="grid grid--2col">
+            <div class="option-card">
+                <h3>Internal Hotline</h3>
+                <p>Designate a trained employee (Compliance Officer, HR) as the channel operator.
+                   Assign a dedicated direct-dial number. Document the duty schedule.</p>
+                <p class="option-card__note">
+                    Best for: organisations with an existing compliance or legal function.
+                </p>
+            </div>
+            <div class="option-card">
+                <h3>External Ombudsman</h3>
+                <p>Engage a certified external ombudsman (Ombudsmann) or compliance service
+                   provider. They receive calls on your behalf and forward anonymised reports
+                   to OpenWhistle.</p>
+                <p class="option-card__note">
+                    Best for: smaller organisations or where impartiality is critical.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section class="card" aria-labelledby="heading-integration">
+        <h2 id="heading-integration">Integration with OpenWhistle</h2>
+        <ol>
+            <li>
+                <strong>Staff enters the verbal report via OpenWhistle's submission form.</strong>
+                Ask the caller's consent before creating the report on their behalf.
+            </li>
+            <li>
+                <strong>Select "Confidential" mode</strong> if the caller consents to having
+                their name recorded, so that the whistleblower receives a dedicated case number.
+            </li>
+            <li>
+                <strong>Provide the case number and PIN to the caller</strong> so they can
+                follow up on their report via the whistleblower status page.
+            </li>
+            <li>
+                <strong>Document the telephone report in the admin notes</strong>
+                (never in the public message thread visible to the whistleblower).
+            </li>
+        </ol>
+    </section>
+
+    <section class="card" aria-labelledby="heading-recording">
+        <h2 id="heading-recording">Recording Prohibition Notice (§10 HinSchG)</h2>
+        <div class="info-banner info-banner--danger" role="alert">
+            <strong>Important:</strong>
+            §10 HinSchG prohibits the <em>covert recording</em> of verbal reports without the
+            whistleblower's explicit consent. Any recording must be disclosed at the start of
+            the call and the whistleblower must actively agree. Covert recordings may lead to
+            criminal liability under §201 StGB (violation of spoken word confidentiality).
+        </div>
+        <p>
+            Recommended call opening script (adapt to your organisation):
+        </p>
+        <blockquote class="legal-quote">
+            "Thank you for calling the confidential reporting channel of [Organisation Name].
+            This call is handled by [Name/Role], who is bound by strict confidentiality.
+            Your report will be treated in accordance with the Hinweisgeberschutzgesetz (HinSchG).
+            This call is <strong>not being recorded</strong>. You may remain anonymous.
+            Please go ahead with your report."
+        </blockquote>
+    </section>
+
+    <section class="card" aria-labelledby="heading-references">
+        <h2 id="heading-references">Legal References</h2>
+        <ul>
+            <li>
+                <strong>HinSchG §16</strong> — Establishing internal reporting channels:
+                <a href="https://www.gesetze-im-internet.de/hinschg/__16.html" target="_blank" rel="noopener noreferrer">
+                    gesetze-im-internet.de/hinschg/__16.html
+                </a>
+            </li>
+            <li>
+                <strong>HinSchG §9</strong> — Confidentiality obligation:
+                <a href="https://www.gesetze-im-internet.de/hinschg/__9.html" target="_blank" rel="noopener noreferrer">
+                    gesetze-im-internet.de/hinschg/__9.html
+                </a>
+            </li>
+            <li>
+                <strong>HinSchG §10</strong> — Verbal report — recording prohibition:
+                <a href="https://www.gesetze-im-internet.de/hinschg/__10.html" target="_blank" rel="noopener noreferrer">
+                    gesetze-im-internet.de/hinschg/__10.html
+                </a>
+            </li>
+            <li>
+                <strong>EU Directive 2019/1937</strong> — Art. 9 — Confidentiality:
+                <a href="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32019L1937" target="_blank" rel="noopener noreferrer">
+                    EUR-Lex — Directive 2019/1937
+                </a>
+            </li>
+        </ul>
+    </section>
+
+    <div class="page-actions">
+        <a href="/admin/dashboard" class="btn btn--secondary">← Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}
