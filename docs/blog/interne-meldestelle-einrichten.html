@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
+  <title>Interne Meldestelle einrichten mit OpenWhistle — Schritt-für-Schritt-Anleitung 2025 | OpenWhistle Blog</title>
+  <meta name="description" content="Schritt-für-Schritt-Anleitung: Interne Meldestelle nach HinSchG mit OpenWhistle einrichten. Serverauswahl, Docker-Installation, HTTPS-Zertifikat, Admin-Setup und erste Konfiguration — in unter einer Stunde.">
+  <meta name="keywords" content="interne Meldestelle einrichten Anleitung, OpenWhistle installieren, Hinweisgebersystem installieren Docker, HinSchG Meldestelle selbst hosten, Whistleblower Software einrichten Anleitung, OpenWhistle Setup">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://openwhistle.net/blog/interne-meldestelle-einrichten.html">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <link rel="icon" type="image/x-icon" href="../favicon.ico">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://openwhistle.net/blog/interne-meldestelle-einrichten.html">
+  <meta property="og:title" content="Interne Meldestelle einrichten mit OpenWhistle — Schritt-für-Schritt 2025">
+  <meta property="og:description" content="Von der Serverauswahl bis zur ersten Meldung: vollständige Anleitung für die Installation und Einrichtung von OpenWhistle.">
+  <meta property="og:image" content="https://openwhistle.net/og-image.png">
+  <meta property="article:published_time" content="2025-04-27">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "Interne Meldestelle einrichten mit OpenWhistle",
+    "description": "Schritt-für-Schritt-Anleitung zur Installation und Einrichtung von OpenWhistle als HinSchG-konforme interne Meldestelle.",
+    "url": "https://openwhistle.net/blog/interne-meldestelle-einrichten.html",
+    "totalTime": "PT60M",
+    "estimatedCost": { "@type": "MonetaryAmount", "currency": "EUR", "value": "0" },
+    "tool": [
+      { "@type": "HowToTool", "name": "Docker Compose" },
+      { "@type": "HowToTool", "name": "VPS oder Server (Linux)" },
+      { "@type": "HowToTool", "name": "Domain mit HTTPS" }
+    ],
+    "step": [
+      { "@type": "HowToStep", "name": "Server bereitstellen", "position": 1 },
+      { "@type": "HowToStep", "name": "Docker installieren", "position": 2 },
+      { "@type": "HowToStep", "name": "OpenWhistle konfigurieren", "position": 3 },
+      { "@type": "HowToStep", "name": "Docker Compose starten", "position": 4 },
+      { "@type": "HowToStep", "name": "Admin-Account erstellen", "position": 5 },
+      { "@type": "HowToStep", "name": "Meldestelle testen", "position": 6 }
+    ],
+    "inLanguage": "de",
+    "author": { "@type": "Organization", "name": "OpenWhistle Contributors" }
+  }
+  </script>
+
+  <style>
+    @font-face { font-family: 'Spectral'; src: url('../fonts/spectral-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+    @font-face { font-family: 'Spectral'; src: url('../fonts/spectral-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-300-normal.woff2') format('woff2'); font-weight: 300; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-display: swap; }
+
+    :root {
+      --bg-base: #fafaf7; --bg-surface: #f4f2ed; --nav-bg: #ffffff;
+      --footer-bg: #1a2744; --text-primary: #1e293b; --text-secondary: #3d4f6b;
+      --text-muted: #6b7a96; --border-subtle: #e2d9c8; --border-default: #c9bfaa;
+      --seal-green: #2d7d46; --seal-green-dim: rgba(45,125,70,0.15);
+      --seal-green-fog: rgba(45,125,70,0.08);
+      --gold: #c8972e; --code-bg: #1a2744; --code-text: #e2dcd2;
+      --font-serif: 'Spectral', Georgia, serif;
+      --font-body: 'Source Serif 4', Georgia, serif;
+      --font-mono: 'Courier New', Courier, monospace;
+      --max-width: 800px;
+    }
+    [data-theme="dark"] {
+      --bg-base: #0b1525; --bg-surface: #132035; --nav-bg: #0a1220;
+      --footer-bg: #070d1e; --text-primary: #dde6f2; --text-secondary: #9db4cc;
+      --text-muted: #5c7a96; --border-subtle: #1a2e48; --border-default: #243d5a;
+      --seal-green: #5a9070; --seal-green-dim: rgba(90,144,112,0.15);
+      --seal-green-fog: rgba(90,144,112,0.08);
+      --gold: #e0a845; --code-bg: #070e1c; --code-text: #dde6f2;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg-base); color: var(--text-primary); font-family: var(--font-body); font-size: 1rem; line-height: 1.75; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    a { color: var(--seal-green); text-decoration: underline; text-decoration-color: transparent; transition: text-decoration-color 140ms ease; }
+    a:hover { text-decoration-color: currentColor; }
+    button { cursor: pointer; border: none; background: none; font: inherit; }
+
+    .skip-link { position: absolute; top: -100%; left: 1rem; background: var(--seal-green); color: #fff; padding: 0.5rem 1rem; font-size: 0.75rem; z-index: 9999; text-decoration: none; }
+    .skip-link:focus { top: 1rem; }
+
+    .site-nav { position: sticky; top: 0; z-index: 200; background: var(--nav-bg); border-bottom: 1px solid var(--border-subtle); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 2rem; height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; }
+    .nav-logo { display: flex; align-items: center; gap: 0.75rem; font-family: var(--font-serif); font-size: 0.9rem; font-weight: 600; letter-spacing: 0.04em; color: var(--text-primary); text-decoration: none; }
+    .nav-logo svg path, .nav-logo svg circle { stroke: var(--gold); }
+    .nav-links { display: flex; align-items: center; gap: 1.5rem; }
+    .nav-links a { font-size: 0.8rem; color: var(--text-secondary); text-decoration: none; transition: color 140ms ease; }
+    .nav-links a:hover { color: var(--text-primary); }
+    .theme-toggle { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border: 1px solid var(--border-default); border-radius: 2px; color: var(--text-muted); transition: color 140ms ease, border-color 140ms ease; }
+    .theme-toggle:hover { color: var(--text-primary); border-color: var(--seal-green); }
+    .theme-toggle svg { width: 16px; height: 16px; }
+    .icon-sun { display: none; }
+    [data-theme="dark"] .icon-moon { display: none; }
+    [data-theme="dark"] .icon-sun { display: block; }
+
+    .article-wrap { max-width: var(--max-width); margin: 0 auto; padding: 4rem 2rem; }
+    .article-header { margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border-subtle); }
+    .article-tag { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--seal-green); margin-bottom: 1rem; text-decoration: none; }
+    .article-title { font-family: var(--font-serif); font-size: clamp(1.8rem, 3.5vw, 2.6rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; color: var(--text-primary); margin-bottom: 1rem; }
+    .article-subtitle { font-size: 1.1rem; font-weight: 300; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1.5rem; }
+    .article-meta { font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 1.5rem; flex-wrap: wrap; }
+
+    .article-body h2 { font-family: var(--font-serif); font-size: 1.55rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text-primary); margin: 2.5rem 0 1rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle); }
+    .article-body h3 { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; color: var(--text-primary); margin: 2rem 0 0.75rem; }
+    .article-body p { margin-bottom: 1.25rem; color: var(--text-secondary); }
+    .article-body strong { color: var(--text-primary); font-weight: 600; }
+    .article-body ul, .article-body ol { margin: 1rem 0 1.5rem 1.5rem; }
+    .article-body li { margin-bottom: 0.5rem; color: var(--text-secondary); }
+
+    /* Steps */
+    .step-block { display: flex; gap: 1.5rem; margin: 1.5rem 0; padding: 1.5rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-left: 4px solid var(--seal-green); }
+    .step-num { font-family: var(--font-serif); font-size: 2.5rem; font-weight: 700; color: var(--border-default); line-height: 1; flex-shrink: 0; width: 2.5rem; }
+    .step-content { flex: 1; }
+    .step-content h3 { font-family: var(--font-serif); font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; }
+    .step-content p { font-size: 0.92rem; color: var(--text-secondary); margin-bottom: 0.75rem; }
+    .step-content p:last-child { margin-bottom: 0; }
+
+    /* Code blocks */
+    pre { background: var(--code-bg); color: var(--code-text); padding: 1.25rem 1.5rem; border-radius: 4px; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; overflow-x: auto; margin: 1rem 0; }
+    code { font-family: var(--font-mono); font-size: 0.88em; background: var(--bg-surface); padding: 0.15em 0.4em; border-radius: 3px; color: var(--seal-green); border: 1px solid var(--border-subtle); }
+    pre code { background: none; padding: 0; border: none; color: inherit; font-size: inherit; }
+
+    .callout { padding: 1.25rem 1.5rem; margin: 1.5rem 0; border-left: 4px solid; border-radius: 0 4px 4px 0; }
+    .callout-info { background: var(--seal-green-fog); border-color: var(--seal-green); }
+    .callout-warn { background: rgba(200,151,46,0.06); border-color: var(--gold); }
+    .callout-title { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--seal-green); margin-bottom: 0.5rem; }
+    .callout-warn .callout-title { color: var(--gold); }
+    .callout p { margin-bottom: 0; font-size: 0.92rem; }
+
+    .article-cta { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-top: 4px solid var(--seal-green); padding: 2rem; margin: 3rem 0; text-align: center; }
+    .article-cta h3 { font-family: var(--font-serif); font-size: 1.3rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.75rem; }
+    .article-cta p { font-size: 0.92rem; color: var(--text-secondary); margin-bottom: 1.5rem; }
+    .btn-cta { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.75rem; background: var(--seal-green); color: #fff; border-radius: 2px; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none; transition: background 140ms ease; }
+    .btn-cta:hover { background: #245f37; color: #fff; text-decoration: none; }
+
+    .site-footer { background: var(--footer-bg); color: rgba(226,220,210,0.6); padding: 3rem 2rem; margin-top: 4rem; }
+    .footer-inner { max-width: 1100px; margin: 0 auto; }
+    .footer-bottom { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .footer-bottom p { font-size: 0.78rem; color: rgba(226,220,210,0.3); }
+    .footer-bottom a { color: rgba(226,220,210,0.5); text-decoration: none; }
+    .footer-bottom a:hover { color: rgba(226,220,210,0.9); }
+
+    @media (max-width: 600px) { .article-wrap { padding: 2.5rem 1.25rem; } .nav-links { display: none; } .step-block { flex-direction: column; gap: 0.75rem; } .step-num { font-size: 1.8rem; } }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Zum Inhalt springen</a>
+
+  <nav class="site-nav" role="navigation" aria-label="Hauptnavigation">
+    <div class="nav-inner">
+      <a href="../" class="nav-logo" aria-label="OpenWhistle Startseite">
+        <svg width="22" height="26" viewBox="0 0 22 26" fill="none" aria-hidden="true">
+          <path d="M11 1 L20 5 L20 14 C20 20 17 24 11 25.5 C5 24 2 20 2 14 L2 5 Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+          <circle cx="11" cy="18" r="1.1" fill="currentColor"/>
+          <path d="M8.5,16 A3,3 0 0,1 13.5,16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M7,14.5 A5.5,5.5 0 0,1 15,14.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+        </svg>
+        OpenWhistle
+      </a>
+      <ul class="nav-links" role="list">
+        <li><a href="./" style="color: var(--seal-green);">&larr; Blog</a></li>
+        <li><a href="../docs.html">Dokumentation</a></li>
+        <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Demo</a></li>
+      </ul>
+      <button class="theme-toggle" id="theme-btn" aria-label="Farbschema wechseln">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <main id="main">
+    <div class="article-wrap">
+      <article>
+        <header class="article-header">
+          <p class="article-tag">Anleitung · Self-Hosting · Docker</p>
+          <h1 class="article-title">Interne Meldestelle einrichten: Schritt-für-Schritt-Anleitung mit OpenWhistle</h1>
+          <p class="article-subtitle">Von der Serverauswahl über die Docker-Installation bis zur ersten Meldung — vollständige Anleitung für die Einrichtung Ihrer HinSchG-konformen internen Meldestelle in unter einer Stunde.</p>
+          <div class="article-meta">
+            <span>27. April 2025</span>
+            <span>12 Min. Lesezeit</span>
+            <span>OpenWhistle Contributors</span>
+          </div>
+        </header>
+
+        <div class="article-body">
+
+          <p>Diese Anleitung führt Sie Schritt für Schritt durch die Installation und Erstkonfiguration von OpenWhistle. Am Ende haben Sie eine vollständig funktionsfähige, HinSchG-konforme interne Meldestelle — selbst gehostet, DSGVO-konform, kostenlos.</p>
+
+          <h2>Voraussetzungen</h2>
+
+          <ul>
+            <li>Ein Linux-Server (Ubuntu 22.04 LTS oder Debian 12 empfohlen) mit mindestens 1 GB RAM</li>
+            <li>Eine Domain, die auf Ihren Server zeigt (z. B. <code>meldestelle.ihr-unternehmen.de</code>)</li>
+            <li>Root- oder sudo-Zugriff auf den Server</li>
+            <li>Grundlegende Terminal-Kenntnisse</li>
+          </ul>
+
+          <div class="callout callout-info">
+            <p class="callout-title">Schneller Einstieg</p>
+            <p>Wenn Sie das OpenWhistle Ansible-Role nutzen, werden Docker, Certbot (Let's Encrypt) und OpenWhistle vollautomatisch eingerichtet. Diese Anleitung zeigt den manuellen Weg für maximales Verständnis.</p>
+          </div>
+
+          <h2>Schritt 1: Server bereitstellen</h2>
+
+          <div class="step-block">
+            <div class="step-num" aria-hidden="true">1</div>
+            <div class="step-content">
+              <h3>VPS auswählen und einrichten</h3>
+              <p>Für eine typische Meldestelle (bis 500 aktive Meldungen) reicht ein VPS mit 1 vCPU, 1–2 GB RAM und 20 GB SSD. Empfohlene Anbieter: Hetzner Cloud (CX22, ab ca. 4 €/Monat), Netcup, IONOS.</p>
+              <p>Wichtig für DSGVO: Wählen Sie einen Anbieter mit Servern in Deutschland oder der EU, der einen Auftragsverarbeitungsvertrag (AVV) anbietet.</p>
+              <p>Richten Sie einen Benutzer mit sudo-Rechten ein und hinterlegen Sie Ihren SSH-Key.</p>
+            </div>
+          </div>
+
+          <h2>Schritt 2: Docker installieren</h2>
+
+          <div class="step-block">
+            <div class="step-num" aria-hidden="true">2</div>
+            <div class="step-content">
+              <h3>Docker CE und Docker Compose installieren</h3>
+              <p>OpenWhistle benötigt Docker 24 oder neuer und Docker Compose v2. Installieren Sie Docker auf Ubuntu/Debian:</p>
+            </div>
+          </div>
+
+<pre><code># Docker Repository hinzufügen
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+  https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+  | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Docker CE installieren
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+
+# Aktuellen Benutzer zur Docker-Gruppe hinzufügen
+sudo usermod -aG docker $USER
+newgrp docker
+
+# Installation prüfen
+docker --version
+docker compose version</code></pre>
+
+          <h2>Schritt 3: OpenWhistle konfigurieren</h2>
+
+          <div class="step-block">
+            <div class="step-num" aria-hidden="true">3</div>
+            <div class="step-content">
+              <h3>Repository klonen und Konfiguration erstellen</h3>
+              <p>Klonen Sie das OpenWhistle-Repository und erstellen Sie die <code>.env</code>-Datei:</p>
+            </div>
+          </div>
+
+<pre><code>git clone https://github.com/openwhistle/OpenWhistle.git
+cd OpenWhistle
+
+# Beispiel-Konfiguration als Vorlage kopieren
+cp .env.example .env</code></pre>
+
+          <p>Öffnen Sie <code>.env</code> in einem Editor und passen Sie die wichtigsten Einstellungen an:</p>
+
+<pre><code># Zwingend erforderlich: starker, zufälliger Schlüssel (mindestens 32 Zeichen)
+# Generieren Sie einen sicheren Schlüssel mit:
+# openssl rand -hex 32
+SECRET_KEY=ihr-geheimer-schluessel-hier-ersetzen
+
+# Ihre Domain
+APP_BASE_URL=https://meldestelle.ihr-unternehmen.de
+
+# Datenbankpasswort (stark wählen)
+POSTGRES_PASSWORD=sicheres-passwort-hier
+
+# Optionale E-Mail-Benachrichtigungen bei neuen Meldungen
+# SMTP_HOST=smtp.ihr-mailserver.de
+# SMTP_PORT=587
+# SMTP_USER=compliance@ihr-unternehmen.de
+# SMTP_PASS=mail-passwort
+# NOTIFY_EMAIL=compliance@ihr-unternehmen.de</code></pre>
+
+          <div class="callout callout-warn">
+            <p class="callout-title">Sicherheitshinweis</p>
+            <p>Der <code>SECRET_KEY</code> verschlüsselt alle Meldungsinhalte. Er darf niemals verloren gehen. Sichern Sie ihn in einem Passwortmanager oder Secret-Management-System.</p>
+          </div>
+
+          <h2>Schritt 4: HTTPS einrichten</h2>
+
+          <div class="step-block">
+            <div class="step-num" aria-hidden="true">4</div>
+            <div class="step-content">
+              <h3>Let's Encrypt Zertifikat einrichten</h3>
+              <p>OpenWhistle wird hinter einem nginx-Reverse-Proxy betrieben. Für HTTPS nutzen wir Let's Encrypt. Stellen Sie sicher, dass Ihre Domain bereits auf den Server zeigt (DNS-Record), dann:</p>
+            </div>
+          </div>
+
+<pre><code># Certbot installieren
+sudo apt-get install -y certbot python3-certbot-nginx
+
+# Zertifikat ausstellen (Domain anpassen)
+sudo certbot certonly --standalone \
+  -d meldestelle.ihr-unternehmen.de \
+  --non-interactive --agree-tos \
+  -m admin@ihr-unternehmen.de</code></pre>
+
+          <p>Tragen Sie die Zertifikatspfade in der <code>.env</code> ein:</p>
+
+<pre><code>SSL_CERT=/etc/letsencrypt/live/meldestelle.ihr-unternehmen.de/fullchain.pem
+SSL_KEY=/etc/letsencrypt/live/meldestelle.ihr-unternehmen.de/privkey.pem</code></pre>
+
+          <h2>Schritt 5: OpenWhistle starten</h2>
+
+          <div class="step-block">
+            <div class="step-num" aria-hidden="true">5</div>
+            <div class="step-content">
+              <h3>Docker Compose starten</h3>
+              <p>Für den Produktionsbetrieb verwenden Sie <code>docker-compose.prod.yml</code>:</p>
+            </div>
+          </div>
+
+<pre><code># Alle Container starten (inkl. PostgreSQL, Redis, OpenWhistle, nginx)
+docker compose -f docker-compose.prod.yml up -d
+
+# Status prüfen
+docker compose -f docker-compose.prod.yml ps
+
+# Logs anzeigen (optional)
+docker compose -f docker-compose.prod.yml logs -f app</code></pre>
+
+          <p>Nach etwa 30 Sekunden sollte OpenWhistle unter Ihrer Domain erreichbar sein. Der Health-Check-Endpunkt gibt schnell Auskunft:</p>
+
+<pre><code>curl https://meldestelle.ihr-unternehmen.de/health
+# Erwartete Antwort: {"status":"healthy","database":"ok","redis":"ok"}</code></pre>
+
+          <h2>Schritt 6: Admin-Account erstellen</h2>
+
+          <div class="step-block">
+            <div class="step-num" aria-hidden="true">6</div>
+            <div class="step-content">
+              <h3>Setup-Wizard ausführen</h3>
+              <p>Öffnen Sie <code>https://meldestelle.ihr-unternehmen.de/setup</code> in Ihrem Browser. Der Setup-Wizard führt Sie durch die Erstellung des ersten Admin-Accounts und die TOTP-Einrichtung.</p>
+            </div>
+          </div>
+
+          <p>Im Setup-Wizard:</p>
+          <ol>
+            <li>Wählen Sie einen Benutzernamen und ein starkes Passwort für den Admin-Account</li>
+            <li>Scannen Sie den angezeigten QR-Code mit Ihrer Authenticator-App (Google Authenticator, Authy, Bitwarden, etc.)</li>
+            <li>Geben Sie den 6-stelligen TOTP-Code zur Bestätigung ein</li>
+            <li>Die Meldestelle ist jetzt betriebsbereit</li>
+          </ol>
+
+          <h2>Schritt 7: Grundkonfiguration im Admin-Dashboard</h2>
+
+          <p>Melden Sie sich unter <code>/admin/login</code> an. Im Admin-Dashboard empfehlen wir folgende erste Schritte:</p>
+
+          <h3>Kategorien einrichten</h3>
+          <p>Unter <code>/admin/categories</code> richten Sie die Kategorien für Meldungen ein. Beispiele: "Finanzielle Unregelmäßigkeiten", "Sicherheitsverstöße", "Umweltverstöße", "Diskriminierung". Kategorien helfen beim Routing zu den zuständigen Personen.</p>
+
+          <h3>Weitere Admin-Konten anlegen</h3>
+          <p>Unter <code>/admin/users</code> legen Sie weitere Mitarbeitende an, die Meldungen bearbeiten dürfen. TOTP-Einrichtung ist für alle Konten verpflichtend.</p>
+
+          <h3>E-Mail-Benachrichtigungen testen</h3>
+          <p>Wenn Sie SMTP konfiguriert haben, senden Sie eine Test-Meldung über das Whistleblower-Formular und prüfen Sie, ob die Benachrichtigung ankommt.</p>
+
+          <div class="callout callout-info">
+            <p class="callout-title">Automatische Erinnerungen</p>
+            <p>OpenWhistle sendet automatisch Erinnerungen, wenn die 7-Tage- oder 3-Monats-Fristen nach HinSchG § 17 drohen, überschritten zu werden. Stellen Sie sicher, dass E-Mail-Benachrichtigungen funktionieren.</p>
+          </div>
+
+          <h2>Schritt 8: Meldestelle an Mitarbeiter kommunizieren</h2>
+
+          <p>Gemäß § 13 HinSchG müssen Sie alle Beschäftigten über die Existenz und Nutzung der Meldestelle informieren. Empfohlene Maßnahmen:</p>
+
+          <ul>
+            <li>Interne E-Mail-Ankündigung mit Link zur Meldestelle und Erklärung des Schutzrahmens</li>
+            <li>Eintrag im Intranet / Wiki</li>
+            <li>Erwähnung im Mitarbeiterhandbuch oder Verhaltenskodex</li>
+            <li>Optional: Poster in Gemeinschaftsbereichen (auch für Personen ohne Computer-Zugang)</li>
+          </ul>
+
+          <h2>Automatische Updates einrichten</h2>
+
+          <p>Für Sicherheitsupdates empfehlen wir, regelmäßig die neueste OpenWhistle-Version einzuspielen:</p>
+
+<pre><code># In Ihrem OpenWhistle-Verzeichnis
+git pull origin main
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d</code></pre>
+
+          <p>Oder nutzen Sie <a href="https://github.com/containrrr/watchtower" rel="noopener noreferrer" target="_blank">Watchtower</a> für vollautomatische Container-Updates.</p>
+
+          <h2>Backup-Strategie</h2>
+
+          <p>Die wichtigsten Backup-Targets sind:</p>
+          <ul>
+            <li><strong>PostgreSQL-Datenbank</strong>: tägliche <code>pg_dump</code>-Backups, verschlüsselt gespeichert</li>
+            <li><strong><code>.env</code>-Datei</strong>: enthält den <code>SECRET_KEY</code> — ohne ihn sind alle Meldungen nicht mehr lesbar</li>
+            <li><strong>Anhänge</strong>: falls <code>STORAGE_BACKEND=filesystem</code>, das Upload-Verzeichnis sichern</li>
+          </ul>
+
+<pre><code># PostgreSQL-Datenbank sichern
+docker exec openwhistle-db-1 pg_dump -U openwhistle openwhistle \
+  | gzip > /backup/openwhistle-$(date +%Y%m%d).sql.gz</code></pre>
+
+          <div class="article-cta">
+            <h3>Sehen Sie OpenWhistle in Aktion</h3>
+            <p>Die Live-Demo unter demo.openwhistle.net zeigt alle Funktionen — als Whistleblower und als Admin. Kein Account erforderlich.</p>
+            <a href="https://demo.openwhistle.net" class="btn-cta" rel="noopener noreferrer" target="_blank">Live-Demo öffnen &rarr;</a>
+          </div>
+
+          <h2>Häufige Probleme</h2>
+
+          <h3>Container startet nicht — "port is already allocated"</h3>
+          <p>Port 80 oder 443 ist bereits belegt. Prüfen Sie mit <code>sudo ss -tlnp | grep :80</code>, welcher Prozess den Port belegt. Oft ist es Apache oder ein anderer nginx. Deaktivieren Sie diesen oder passen Sie die Port-Konfiguration in <code>docker-compose.prod.yml</code> an.</p>
+
+          <h3>Datenbank-Verbindungsfehler beim Start</h3>
+          <p>Die Datenbank braucht einige Sekunden zum Starten. OpenWhistle hat einen Retry-Mechanismus, aber bei sehr langsamen Systemen kann der erste Start fehlschlagen. Starten Sie den App-Container neu: <code>docker compose -f docker-compose.prod.yml restart app</code>.</p>
+
+          <h3>HTTPS-Zertifikat wird nicht akzeptiert</h3>
+          <p>Prüfen Sie, ob der Certbot-Zertifikatspfad korrekt in der <code>.env</code> eingetragen ist und ob der nginx-Container Leserechte auf das Let's Encrypt-Verzeichnis hat. Certbot-Zertifikate liegen standardmäßig in <code>/etc/letsencrypt/live/ihr-domain/</code>.</p>
+
+          <p style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle); font-size: 0.82rem; color: var(--text-muted);">
+            <strong>Weitere Ressourcen:</strong>
+            <a href="../docs.html">Vollständige Dokumentation</a> ·
+            <a href="hinschg-compliance-leitfaden.html">HinSchG-Compliance-Leitfaden</a> ·
+            <a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank">GitHub Issues</a>
+          </p>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-inner">
+      <div class="footer-bottom">
+        <p>&copy; 2025 OpenWhistle Contributors · <a href="../">openwhistle.net</a> · <a href="./">Blog</a> · GPL-3.0</p>
+        <p>OpenWhistle bietet keine Rechtsberatung.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const btn = document.getElementById('theme-btn');
+    if (btn) btn.addEventListener('click', () => {
+      const n = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', n);
+      try { localStorage.setItem('ow-theme', n); } catch(e) {}
+    });
+  </script>
+</body>
+</html>

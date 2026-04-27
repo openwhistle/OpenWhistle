@@ -155,35 +155,39 @@ feedback — open an issue to discuss anything here.
 
 ### Technical SEO
 
-- [ ] **GitHub Pages website overhaul** — transform `docs/index.html` into a
-  full landing page with: hero section, feature comparison table (vs. paid
-  tools), installation guide, FAQ, and a "live demo" CTA
-- [ ] **Structured data (JSON-LD)** — add `SoftwareApplication` and
-  `FAQPage` schema markup to the landing page for rich snippets
-- [ ] **German-language landing page** — `/de/` path on openwhistle.net with
-  fully German content targeting HinSchG-specific long-tail keywords
-- [ ] **Open Graph & Twitter Card meta tags** — `og:title`, `og:description`,
-  `og:image` on every docs page; generate a proper `og:image` (1200×630 px)
-- [ ] **Sitemap & robots.txt** — auto-generated `sitemap.xml` and `robots.txt`
-  served from GitHub Pages
-- [ ] **Canonical URLs** — ensure `openwhistle.net` is the canonical domain;
-  redirect `www.` and any alternative hostnames
+- [x] **GitHub Pages website overhaul** — `docs/index.html` is a full landing
+  page with hero section, feature comparison table (vs. paid tools), FAQ,
+  installation guide, and a "live demo" CTA
+- [x] **Structured data (JSON-LD)** — `SoftwareApplication` and `FAQPage`
+  schema markup on the landing page; `Article` and `HowTo` schema on blog posts
+- [x] **German-language landing page** — `docs/de/index.html` with fully German
+  content targeting HinSchG-specific long-tail keywords (`interne Meldestelle
+  HinSchG`, `Hinweisgebersystem kostenlos`, `Meldestelle Software Open Source`)
+- [x] **Open Graph & Twitter Card meta tags** — `og:title`, `og:description`,
+  `og:image` on `index.html`, `de/index.html`, and all blog articles
+- [x] **Sitemap** — `docs/sitemap.xml` updated with all pages including
+  `de/`, `blog/`, and all blog articles; `robots.txt` already present
+- [x] **Canonical URLs** — `<link rel="canonical">` on all pages;
+  CNAME file sets `openwhistle.net` as the canonical domain for GitHub Pages
+- [x] **hreflang alternate links** — `en`/`de` alternate links in `index.html`
+  and `de/index.html` sitemap entries for language-based ranking
 
 ### Content SEO
 
-- [ ] **Blog / news section** — publish articles on HinSchG compliance
-  requirements, how to set up an internal reporting channel, comparisons with
-  commercial tools; each article is an SEO entry point
-- [ ] **"vs. competitors" pages** — dedicated comparison pages
-  (e.g. "OpenWhistle vs. WhistlePort") targeting navigational searches
+- [x] **Blog / news section** — `docs/blog/` with three articles:
+  - `hinschg-compliance-leitfaden.html` — HinSchG compliance guide (10 min read)
+  - `whistleblower-software-vergleich.html` — comparison vs. EQS, BKMS, WhistlePort
+  - `interne-meldestelle-einrichten.html` — step-by-step installation guide
+- [ ] **Additional "vs. competitors" pages** — dedicated comparison pages
+  targeting navigational searches ("OpenWhistle vs. EQS", etc.)
 - [ ] **Keyword research & tracking** — document target keywords, current
   rankings, and monthly search volume in a spreadsheet; track progress
 - [ ] **Backlink outreach** — submit to open-source directories (AlternativeTo,
   SourceForge, LibreHunt), legal-tech directories, and HinSchG resource lists
   maintained by German law firms and compliance associations
-- [ ] **GitHub README badges & SEO** — ensure the README uses the right
-  keywords that GitHub search indexes (`whistleblower`, `HinSchG`, `EU-Richtlinie`,
-  `Meldestelle`, `compliance`, `open-source`)
+- [x] **GitHub README keywords** — README contains keywords `whistleblower`,
+  `HinSchG`, `Hinweisgeberschutz`, `Meldestelle`, `compliance`, `open-source`
+  that GitHub search indexes; alpha warning removed for v1.0.0
 
 ### Community & Distribution
 

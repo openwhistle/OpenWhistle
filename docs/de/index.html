@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
+  <title>OpenWhistle — Kostenloses Hinweisgebersystem | HinSchG-konform | Open Source</title>
+  <meta name="description" content="OpenWhistle ist das kostenlose, Open-Source-Hinweisgebersystem für interne Meldestellen nach HinSchG und EU-Richtlinie 2019/1937. Selbst gehostet, DSGVO-konform, keine IP-Protokollierung. Gratis für alle Unternehmen ab 50 Mitarbeitern.">
+  <meta name="keywords" content="Hinweisgebersystem kostenlos, interne Meldestelle HinSchG, Hinweisgeberschutz Software kostenlos, Hinweisgeberschutzgesetz Software, Meldestelle Software Open Source, Whistleblower Tool kostenlos, HinSchG Meldestelle einrichten, interne Meldestelle Open Source, Hinweisgebersystem DSGVO, Meldestelle Unternehmen kostenlos">
+  <meta name="author" content="OpenWhistle Contributors">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://openwhistle.net/de/">
+  <link rel="alternate" hreflang="en" href="https://openwhistle.net/">
+  <link rel="alternate" hreflang="de" href="https://openwhistle.net/de/">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <link rel="icon" type="image/x-icon" href="../favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://openwhistle.net/de/">
+  <meta property="og:title" content="OpenWhistle — Kostenloses Hinweisgebersystem nach HinSchG">
+  <meta property="og:description" content="Kostenloses, selbst gehostetes Hinweisgebersystem konform mit HinSchG §§ 16–18 und EU-Richtlinie 2019/1937. Keine IP-Protokollierung. GPL-3.0. Für Unternehmen ab 50 Mitarbeitern.">
+  <meta property="og:image" content="https://openwhistle.net/og-image.png">
+  <meta property="og:locale" content="de_DE">
+  <meta property="og:locale:alternate" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="OpenWhistle — Kostenloses Hinweisgebersystem nach HinSchG">
+  <meta name="twitter:description" content="Kostenloses Open-Source-Hinweisgebersystem für Meldestellen nach HinSchG. Selbst gehostet, DSGVO-konform, keine IP-Protokollierung.">
+  <meta name="twitter:image" content="https://openwhistle.net/og-image.png">
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "OpenWhistle",
+    "url": "https://openwhistle.net/de/",
+    "description": "Kostenloses, selbst gehostetes Hinweisgebersystem konform mit dem Hinweisgeberschutzgesetz (HinSchG) und der EU-Richtlinie 2019/1937. Keine IP-Protokollierung, verpflichtende Zwei-Faktor-Authentifizierung, bidirektionale Kommunikation.",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Docker (Linux, macOS, Windows)",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "EUR"
+    },
+    "license": "https://www.gnu.org/licenses/gpl-3.0.html",
+    "softwareVersion": "1.0.0",
+    "inLanguage": "de",
+    "keywords": "Hinweisgebersystem kostenlos, interne Meldestelle HinSchG, Hinweisgeberschutz Software, Meldestelle Open Source",
+    "author": {
+      "@type": "Organization",
+      "name": "OpenWhistle Contributors",
+      "url": "https://github.com/openwhistle"
+    }
+  }
+  </script>
+
+  <!-- FAQ JSON-LD (German) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Was ist ein Hinweisgebersystem nach HinSchG?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Das Hinweisgeberschutzgesetz (HinSchG) verpflichtet Unternehmen ab 50 Mitarbeitern und Behörden zur Einrichtung eines internen Meldekanals. Hinweisgeber müssen Missstände anonym melden können und vor Repressalien geschützt werden. OpenWhistle ist ein kostenlose Softwarelösung, die alle gesetzlichen Anforderungen erfüllt."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Ist OpenWhistle wirklich kostenlos?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ja. OpenWhistle steht unter der GPL-3.0-Lizenz und ist dauerhaft kostenlos. Es gibt keine kostenpflichtigen Funktionen, kein Abonnement und keinen Enterprise-Tier. Die Software wird selbst gehostet — einmalig einrichten, dauerhaft nutzen."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Erfüllt OpenWhistle alle Anforderungen des HinSchG?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ja. OpenWhistle implementiert alle Anforderungen der §§ 16–18 HinSchG: 7-Tage-Eingangsbestätigung und 3-Monats-Rückmeldepflicht nach § 17, bidirektionale Kommunikation (§ 17 Abs. 3), strenge Vertraulichkeit der Identität (§ 8), Datenlöschungspflichten (§ 26) sowie den Hinweis auf das Dokumentationsverbot bei § 10 für telefonische Kanäle."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Ist der Hinweisgeber wirklich anonym?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ja. Es werden keine IP-Adressen gespeichert — weder in der Datenbank noch in Protokollen. Der nginx-Reverse-Proxy entfernt X-Forwarded-For-Header, die Applikationsmiddleware löscht die Remote-Adresse vor jeder Verarbeitung, und Redis-Session-Tokens enthalten keine Identifizierungsmerkmale. Vier unabhängige Anonymitätsschichten."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Wie unterscheidet sich OpenWhistle von kommerziellen Tools wie EQS oder BKMS?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "OpenWhistle ist vollständig selbst gehostet — Ihre Daten verlassen niemals Ihre Infrastruktur. Der Quellcode ist unter GPL-3.0 öffentlich einsehbar und prüfbar. Kommerzielle Tools wie EQS Integrity Line kosten typischerweise 50–200 € pro Monat, laufen auf externer Cloud-Infrastruktur (DSGVO-Risiko) und haben geschlossenen Quellcode."
+        }
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    @font-face { font-family: 'Spectral'; src: url('../fonts/spectral-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Spectral'; src: url('../fonts/spectral-latin-400-italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+    @font-face { font-family: 'Spectral'; src: url('../fonts/spectral-latin-500-normal.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Spectral'; src: url('../fonts/spectral-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Spectral'; src: url('../fonts/spectral-latin-600-italic.woff2') format('woff2'); font-weight: 600; font-style: italic; font-display: swap; }
+    @font-face { font-family: 'Spectral'; src: url('../fonts/spectral-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-300-normal.woff2') format('woff2'); font-weight: 300; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-400-italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+  </style>
+
+  <style>
+    /* ─── Design tokens (same as main site) ──────────────────────── */
+    :root {
+      --bg-base:       #fafaf7;
+      --bg-surface:    #f4f2ed;
+      --bg-raised:     #eeeae0;
+      --nav-bg:        #ffffff;
+      --footer-bg:     #1a2744;
+      --text-primary:  #1e293b;
+      --text-secondary:#3d4f6b;
+      --text-muted:    #6b7a96;
+      --border-subtle: #e2d9c8;
+      --border-default:#c9bfaa;
+      --seal-green:    #2d7d46;
+      --seal-green-mid:#245f37;
+      --seal-green-dim:rgba(45, 125, 70, 0.15);
+      --seal-green-fog:rgba(45, 125, 70, 0.08);
+      --gold:          #c8972e;
+      --gold-mid:      #a87920;
+      --gold-dim:      rgba(200, 151, 46, 0.20);
+      --gold-fog:      rgba(200, 151, 46, 0.08);
+      --font-serif:    'Spectral', Georgia, serif;
+      --font-body:     'Source Serif 4', Georgia, serif;
+      --font-mono:     'Courier New', Courier, monospace;
+      --max-width: 1100px;
+      --ease-stiff: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    [data-theme="dark"] {
+      --bg-base:       #0b1525;
+      --bg-surface:    #132035;
+      --bg-raised:     #1a2d44;
+      --nav-bg:        #0a1220;
+      --footer-bg:     #070d1e;
+      --text-primary:  #dde6f2;
+      --text-secondary:#9db4cc;
+      --text-muted:    #5c7a96;
+      --border-subtle: #1a2e48;
+      --border-default:#243d5a;
+      --seal-green:    #5a9070;
+      --seal-green-mid:#4a7860;
+      --seal-green-dim:rgba(90, 144, 112, 0.15);
+      --seal-green-fog:rgba(90, 144, 112, 0.08);
+      --gold:          #e0a845;
+      --gold-mid:      #c0882a;
+      --gold-dim:      rgba(224, 168, 69, 0.20);
+      --gold-fog:      rgba(224, 168, 69, 0.08);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { cursor: pointer; border: none; background: none; font: inherit; }
+    ul, ol { list-style: none; }
+    img { display: block; max-width: 100%; }
+
+    /* ─── Skip link ──────────────────────────────────────────────── */
+    .skip-link {
+      position: absolute; top: -100%; left: 1rem;
+      background: var(--seal-green); color: #fff;
+      padding: 0.5rem 1rem; font-size: 0.75rem; z-index: 9999;
+    }
+    .skip-link:focus { top: 1rem; }
+
+    /* ─── Nav ────────────────────────────────────────────────────── */
+    .site-nav {
+      position: sticky; top: 0; z-index: 200;
+      background: var(--nav-bg);
+      border-bottom: 1px solid var(--border-subtle);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .nav-inner {
+      max-width: var(--max-width); margin: 0 auto;
+      padding: 0 2rem; height: 60px;
+      display: flex; align-items: center; justify-content: space-between; gap: 1.5rem;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 0.75rem;
+      font-family: var(--font-serif); font-size: 0.9rem; font-weight: 600;
+      letter-spacing: 0.04em; color: var(--text-primary);
+    }
+    .nav-logo svg path, .nav-logo svg circle { stroke: var(--gold); }
+    .nav-links { display: flex; align-items: center; gap: 1.5rem; }
+    .nav-links a {
+      font-size: 0.8rem; letter-spacing: 0.02em;
+      color: var(--text-secondary); transition: color 140ms ease;
+    }
+    .nav-links a:hover { color: var(--text-primary); }
+    .nav-lang {
+      font-size: 0.72rem; letter-spacing: 0.08em;
+      padding: 0.25rem 0.75rem;
+      border: 1px solid var(--border-default);
+      border-radius: 2px; color: var(--text-muted);
+      transition: border-color 140ms ease, color 140ms ease;
+    }
+    .nav-lang:hover { border-color: var(--seal-green); color: var(--seal-green); }
+    .nav-cta {
+      font-size: 0.78rem; padding: 0.35rem 1rem;
+      border: 1px solid rgba(200, 151, 46, 0.5);
+      border-radius: 2px; color: var(--gold); letter-spacing: 0.04em;
+      transition: background 140ms ease;
+    }
+    .nav-cta:hover { background: var(--gold-fog); }
+
+    /* Theme toggle */
+    .theme-toggle {
+      display: flex; align-items: center; justify-content: center;
+      width: 34px; height: 34px;
+      border: 1px solid var(--border-default); border-radius: 2px;
+      color: var(--text-muted); transition: color 140ms ease, border-color 140ms ease;
+    }
+    .theme-toggle:hover { color: var(--text-primary); border-color: var(--seal-green); }
+    .theme-toggle svg { width: 16px; height: 16px; }
+    .icon-sun { display: none; }
+    [data-theme="dark"] .icon-moon { display: none; }
+    [data-theme="dark"] .icon-sun { display: block; }
+
+    /* ─── Hero ───────────────────────────────────────────────────── */
+    .hero {
+      position: relative; min-height: 100svh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 6rem 2rem; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background-image: repeating-linear-gradient(-45deg, transparent, transparent 6px, rgba(0,0,0,0.012) 6px, rgba(0,0,0,0.012) 7px);
+      pointer-events: none; z-index: 0;
+    }
+    .hero::after {
+      content: ''; position: absolute;
+      top: 50%; left: 50%; transform: translate(-50%,-50%);
+      width: min(600px, 80vw); height: min(600px, 80vw);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at center, rgba(176,114,48,0.04) 0%, transparent 60%),
+        radial-gradient(circle at center, transparent 62%, rgba(176,114,48,0.025) 63%, rgba(176,114,48,0.025) 65%, transparent 66%);
+      pointer-events: none; z-index: 0;
+    }
+    [data-theme="dark"] .hero::before {
+      background-image: repeating-linear-gradient(-45deg, transparent, transparent 6px, rgba(255,255,255,0.008) 6px, rgba(255,255,255,0.008) 7px);
+    }
+    .hero-content { position: relative; z-index: 1; text-align: center; max-width: 860px; width: 100%; }
+
+    @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 0.75rem;
+      font-size: 0.68rem; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--seal-green); margin-bottom: 1.5rem;
+      animation: rise 0.6s var(--ease-stiff) 0.1s both;
+    }
+    .hero-eyebrow::before, .hero-eyebrow::after {
+      content: ''; width: 2rem; height: 1px;
+      background: var(--seal-green); opacity: 0.5;
+    }
+    .hero-headline {
+      font-family: var(--font-serif);
+      font-size: clamp(2.4rem, 5.5vw, 4.4rem);
+      font-weight: 700; line-height: 1.08; letter-spacing: -0.04em;
+      color: var(--text-primary); margin-bottom: 1.5rem;
+      animation: rise 0.6s var(--ease-stiff) 0.2s both;
+    }
+    .hero-headline .accent-green { color: var(--seal-green); }
+    .hero-headline .accent-gold  { color: var(--gold); font-style: italic; }
+    .hero-subline {
+      font-size: clamp(1rem, 2vw, 1.15rem); font-weight: 300;
+      color: var(--text-secondary); max-width: 56ch;
+      margin: 0 auto 2.5rem; line-height: 1.7;
+      animation: rise 0.6s var(--ease-stiff) 0.3s both;
+    }
+    .hero-subline em { font-style: italic; color: var(--text-primary); }
+    .hero-actions {
+      display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
+      margin-bottom: 3rem;
+      animation: rise 0.6s var(--ease-stiff) 0.4s both;
+    }
+    .hero-meta {
+      display: flex; align-items: center; justify-content: center;
+      gap: 1.5rem; flex-wrap: wrap;
+      animation: rise 0.6s var(--ease-stiff) 0.5s both;
+    }
+    .hero-meta-item {
+      font-size: 0.72rem; letter-spacing: 0.04em;
+      color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;
+    }
+    .hero-meta-item::before {
+      content: ''; width: 5px; height: 5px; border-radius: 50%;
+      background: var(--border-default);
+    }
+
+    /* ─── Buttons ────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.82rem; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      border-radius: 2px; transition: all 140ms var(--ease-stiff);
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--nav-bg); color: var(--text-primary);
+      border: 1px solid var(--border-default);
+    }
+    .btn-primary:hover {
+      background: var(--seal-green); border-color: var(--seal-green);
+      color: #fff; transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(45,125,70,0.25);
+    }
+    [data-theme="dark"] .btn-primary {
+      background: #3d7ec9; border-color: #3d7ec9; color: #fff;
+    }
+    [data-theme="dark"] .btn-primary:hover { background: #2f6ab8; border-color: #2f6ab8; }
+    .btn-outline {
+      background: transparent; color: var(--text-primary);
+      border: 1px solid var(--border-default);
+    }
+    .btn-outline:hover {
+      border-color: var(--seal-green); color: var(--seal-green);
+      transform: translateY(-1px);
+    }
+
+    /* ─── Trust strip ────────────────────────────────────────────── */
+    .trust-strip {
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 1.25rem 2rem;
+    }
+    .trust-strip-inner {
+      max-width: var(--max-width); margin: 0 auto;
+      display: flex; align-items: center; justify-content: center;
+      gap: 2rem; flex-wrap: wrap;
+    }
+    .trust-item {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    .trust-check {
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--seal-green-fog); border: 1px solid var(--seal-green-dim);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .trust-check svg { width: 8px; height: 8px; }
+
+    /* ─── Sections ───────────────────────────────────────────────── */
+    .section { padding: 5rem 2rem; }
+    .section-alt { background: var(--bg-surface); }
+    .section-inner { max-width: var(--max-width); margin: 0 auto; }
+    .section-eyebrow {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--text-muted); display: flex; align-items: center;
+      gap: 0.75rem; margin-bottom: 1rem;
+    }
+    .section-eyebrow::before { content: ''; width: 2rem; height: 1px; background: var(--border-default); }
+    .section-heading {
+      font-family: var(--font-serif);
+      font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+      font-weight: 700; letter-spacing: -0.03em; line-height: 1.15;
+      color: var(--text-primary); margin-bottom: 1rem;
+    }
+    .section-subheading {
+      font-size: 1.05rem; font-weight: 300; color: var(--text-secondary);
+      max-width: 56ch; line-height: 1.7; margin-bottom: 3rem;
+    }
+    .section-divider {
+      width: 4rem; height: 2px;
+      background: linear-gradient(90deg, var(--seal-green), var(--gold));
+      margin-bottom: 2.5rem;
+    }
+
+    /* ─── Feature cards ──────────────────────────────────────────── */
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem;
+    }
+    .feature-card {
+      background: var(--bg-base); border: 1px solid var(--border-subtle);
+      border-left: 4px solid var(--seal-green-dim); padding: 1.5rem;
+      transition: border-left-color 280ms ease, transform 280ms ease, box-shadow 280ms ease;
+    }
+    .feature-card:hover {
+      border-left-color: var(--seal-green); transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.07);
+    }
+    [data-theme="dark"] .feature-card { background: var(--bg-surface); }
+    .feature-icon {
+      width: 36px; height: 36px; border-radius: 4px;
+      background: var(--seal-green-fog); border: 1px solid var(--seal-green-dim);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1rem;
+    }
+    .feature-icon svg { width: 18px; height: 18px; }
+    .feature-title {
+      font-family: var(--font-serif); font-size: 1rem;
+      font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;
+    }
+    .feature-desc { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.65; }
+
+    /* ─── Law section ────────────────────────────────────────────── */
+    .law-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; }
+    .law-text p { color: var(--text-secondary); line-height: 1.75; margin-bottom: 1.25rem; }
+    .law-text strong { color: var(--text-primary); font-weight: 600; }
+    .law-checklist { list-style: none; }
+    .law-checklist li {
+      display: flex; align-items: flex-start; gap: 0.75rem;
+      padding: 0.75rem 0; border-bottom: 1px solid var(--border-subtle);
+      font-size: 0.9rem; color: var(--text-secondary);
+    }
+    .law-checklist li:last-child { border-bottom: none; }
+    .law-checklist .icon {
+      width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px;
+      color: var(--seal-green);
+    }
+    .law-checklist strong { color: var(--text-primary); display: block; font-size: 0.85rem; }
+
+    /* ─── Comparison table ───────────────────────────────────────── */
+    .comp-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .comp-table thead th {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--text-muted); padding: 0.75rem 1rem;
+      text-align: left; border-bottom: 2px solid var(--border-subtle);
+    }
+    .comp-table thead th.col-ow { color: var(--seal-green); }
+    .comp-table tbody td {
+      padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-secondary); vertical-align: middle;
+    }
+    .comp-table tbody tr:last-child td { border-bottom: none; }
+    .val-good { color: var(--seal-green); font-weight: 600; font-size: 0.85rem; }
+    .val-bad  { color: var(--text-muted); font-size: 0.85rem; }
+
+    /* ─── Steps ──────────────────────────────────────────────────── */
+    .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+    .step { text-align: center; padding: 1.5rem 1rem; }
+    .step-num {
+      font-family: var(--font-serif); font-size: 3rem;
+      font-weight: 700; line-height: 1;
+      color: var(--border-default); margin-bottom: 1rem;
+    }
+    .step-title { font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem; }
+    .step-desc { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.65; }
+
+    /* ─── FAQ ────────────────────────────────────────────────────── */
+    .faq-list { max-width: 720px; }
+    details {
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 1.25rem 0;
+    }
+    details:first-child { border-top: 1px solid var(--border-subtle); }
+    summary {
+      font-family: var(--font-serif); font-size: 1.05rem;
+      font-weight: 600; color: var(--text-primary);
+      cursor: pointer; list-style: none;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 1rem;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary::after {
+      content: '+'; font-size: 1.25rem; font-weight: 300;
+      color: var(--text-muted); flex-shrink: 0;
+      transition: transform 200ms ease;
+    }
+    details[open] summary::after { transform: rotate(45deg); }
+    details p {
+      margin-top: 0.75rem; font-size: 0.9rem;
+      color: var(--text-secondary); line-height: 1.75;
+    }
+
+    /* ─── CTA section ────────────────────────────────────────────── */
+    .cta-section {
+      background: var(--footer-bg); color: #dde6f2;
+      padding: 5rem 2rem; text-align: center;
+    }
+    .cta-section h2 {
+      font-family: var(--font-serif); font-size: clamp(1.8rem, 3vw, 2.4rem);
+      font-weight: 700; margin-bottom: 1rem; letter-spacing: -0.03em;
+    }
+    .cta-section p { font-size: 1rem; color: rgba(221,230,242,0.7); margin-bottom: 2.5rem; }
+    .cta-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .cta-btn-primary {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.85rem 2rem; background: var(--seal-green);
+      color: #fff; border: none; border-radius: 2px;
+      font-size: 0.85rem; font-weight: 600; letter-spacing: 0.06em;
+      text-transform: uppercase; cursor: pointer;
+      transition: background 140ms ease, transform 140ms ease;
+    }
+    .cta-btn-primary:hover { background: var(--seal-green-mid); transform: translateY(-1px); }
+    .cta-btn-outline {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.85rem 2rem; background: transparent;
+      color: rgba(221,230,242,0.8); border: 1px solid rgba(221,230,242,0.2);
+      border-radius: 2px; font-size: 0.85rem; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
+      transition: border-color 140ms ease, color 140ms ease;
+    }
+    .cta-btn-outline:hover { border-color: rgba(221,230,242,0.6); color: #dde6f2; }
+
+    /* ─── Footer ─────────────────────────────────────────────────── */
+    .site-footer {
+      background: var(--footer-bg); color: rgba(226,220,210,0.6);
+      padding: 3rem 2rem;
+    }
+    .footer-inner { max-width: var(--max-width); margin: 0 auto; }
+    .footer-grid {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 3rem; padding-bottom: 2rem;
+      border-bottom: 1px solid rgba(226,220,210,0.1);
+    }
+    .footer-logo {
+      display: flex; align-items: center; gap: 0.75rem;
+      font-family: var(--font-serif); font-size: 0.9rem;
+      font-weight: 600; color: rgba(226,220,210,0.8);
+      margin-bottom: 0.75rem;
+    }
+    .footer-tagline { font-size: 0.82rem; color: rgba(226,220,210,0.4); }
+    .footer-col-title {
+      font-family: var(--font-mono); font-size: 0.62rem;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: rgba(226,220,210,0.35); margin-bottom: 1rem;
+    }
+    .footer-links { list-style: none; }
+    .footer-links li { margin-bottom: 0.5rem; }
+    .footer-links a { font-size: 0.85rem; color: rgba(226,220,210,0.5); transition: color 140ms ease; }
+    .footer-links a:hover { color: rgba(226,220,210,0.9); }
+    .footer-bottom {
+      padding-top: 1.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem;
+    }
+    .footer-bottom p { font-size: 0.78rem; color: rgba(226,220,210,0.3); }
+
+    /* ─── Responsive ─────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .law-grid { grid-template-columns: 1fr; gap: 2rem; }
+      .steps { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .features-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr; gap: 2rem; }
+      .steps { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+      .hero { padding: 4rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Zum Inhalt springen</a>
+
+  <!-- Navigation -->
+  <nav class="site-nav" role="navigation" aria-label="Hauptnavigation">
+    <div class="nav-inner">
+      <a href="../" class="nav-logo" aria-label="OpenWhistle Startseite">
+        <svg width="22" height="26" viewBox="0 0 22 26" fill="none" aria-hidden="true">
+          <path d="M11 1 L20 5 L20 14 C20 20 17 24 11 25.5 C5 24 2 20 2 14 L2 5 Z"
+                stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+          <circle cx="11" cy="18" r="1.1" fill="currentColor"/>
+          <path d="M8.5,16 A3,3 0 0,1 13.5,16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M7,14.5 A5.5,5.5 0 0,1 15,14.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+        </svg>
+        OpenWhistle
+      </a>
+
+      <ul class="nav-links" id="nav-links" role="list">
+        <li><a href="../docs.html">Dokumentation</a></li>
+        <li><a href="../blog/">Blog</a></li>
+        <li><a href="../" class="nav-lang" hreflang="en">🇬🇧 English</a></li>
+        <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank" class="nav-cta">Demo testen</a></li>
+      </ul>
+
+      <button class="theme-toggle" id="theme-btn" aria-label="Farbschema wechseln">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <main id="main">
+
+    <!-- Hero -->
+    <section class="hero" aria-labelledby="hero-heading">
+      <div class="hero-content">
+        <p class="hero-eyebrow">HinSchG-konformes Hinweisgebersystem</p>
+        <h1 class="hero-headline" id="hero-heading">
+          Interne <span class="accent-green">Meldestelle</span><br>
+          kostenlos &amp; <span class="accent-gold">Open Source</span>
+        </h1>
+        <p class="hero-subline">
+          OpenWhistle erfüllt alle Anforderungen des <em>Hinweisgeberschutzgesetzes</em> —
+          selbst gehostet, DSGVO-konform, ohne IP-Protokollierung.
+          Kostenlos für immer unter GPL-3.0.
+        </p>
+        <div class="hero-actions">
+          <a href="https://demo.openwhistle.net" class="btn btn-primary" rel="noopener noreferrer" target="_blank">
+            Demo testen &rarr;
+          </a>
+          <a href="../docs.html" class="btn btn-outline">
+            Dokumentation lesen
+          </a>
+        </div>
+        <div class="hero-meta" role="list">
+          <span class="hero-meta-item" role="listitem">Version 1.0.0</span>
+          <span class="hero-meta-item" role="listitem">GPL-3.0</span>
+          <span class="hero-meta-item" role="listitem">Keine IP-Protokollierung</span>
+          <span class="hero-meta-item" role="listitem">Docker Self-Hosted</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Trust strip -->
+    <div class="trust-strip" role="region" aria-label="Vertrauensindikatoren">
+      <div class="trust-strip-inner">
+        <div class="trust-item">
+          <div class="trust-check" aria-hidden="true">
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#2d7d46" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          HinSchG §§ 16–18
+        </div>
+        <div class="trust-item">
+          <div class="trust-check" aria-hidden="true">
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#2d7d46" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          DSGVO-konform
+        </div>
+        <div class="trust-item">
+          <div class="trust-check" aria-hidden="true">
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#2d7d46" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          Keine IP-Protokollierung
+        </div>
+        <div class="trust-item">
+          <div class="trust-check" aria-hidden="true">
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#2d7d46" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          Open Source
+        </div>
+        <div class="trust-item">
+          <div class="trust-check" aria-hidden="true">
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#2d7d46" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          Selbst gehostet
+        </div>
+        <div class="trust-item">
+          <div class="trust-check" aria-hidden="true">
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#2d7d46" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          Dauerhaft kostenlos
+        </div>
+      </div>
+    </div>
+
+    <!-- Legal obligation section -->
+    <section class="section" aria-labelledby="law-heading">
+      <div class="section-inner">
+        <p class="section-eyebrow">Gesetzliche Pflicht</p>
+        <h2 class="section-heading" id="law-heading">
+          Das HinSchG verpflichtet Ihr Unternehmen
+        </h2>
+        <div class="section-divider" aria-hidden="true"></div>
+
+        <div class="law-grid">
+          <div class="law-text">
+            <p>
+              Das <strong>Hinweisgeberschutzgesetz (HinSchG)</strong>, in Kraft seit dem 2. Juli 2023,
+              verpflichtet alle Unternehmen ab 50 Mitarbeitern sowie alle Behörden zur Einrichtung
+              eines sicheren internen Meldekanals. Zuwiderhandlungen können zu Bußgeldern
+              bis zu 50.000 € führen.
+            </p>
+            <p>
+              OpenWhistle implementiert alle Pflichtanforderungen der §§ 16–18 HinSchG —
+              inklusive der <strong>7-Tage-Eingangsbestätigung</strong> und der
+              <strong>3-Monats-Rückmeldepflicht</strong> nach § 17 — automatisch und ohne
+              manuelle Prozesse.
+            </p>
+            <p>
+              Da die Software selbst gehostet wird, verlassen Ihre Hinweisgeberdaten
+              niemals Ihre eigene Infrastruktur. Kein SaaS-Anbieter, kein
+              Cloud-Drittland-Transfer, keine DSGVO-Grauzone.
+            </p>
+            <a href="../blog/hinschg-compliance-leitfaden.html" style="color: var(--seal-green); font-size: 0.9rem; font-weight: 600;">
+              HinSchG Compliance-Leitfaden lesen &rarr;
+            </a>
+          </div>
+
+          <div>
+            <ul class="law-checklist" aria-label="HinSchG-Anforderungen">
+              <li>
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                <div><strong>§ 16 — Einrichtung interner Meldekanäle</strong>Ab 50 Mitarbeitern verpflichtend; Vertraulichkeit gewährleisten</div>
+              </li>
+              <li>
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                <div><strong>§ 17 Abs. 1 — 7-Tage-Eingangsbestätigung</strong>Eingang der Meldung innerhalb von 7 Tagen bestätigen</div>
+              </li>
+              <li>
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                <div><strong>§ 17 Abs. 2 — 3-Monats-Rückmeldepflicht</strong>Hinweisgeber über ergriffene Maßnahmen informieren</div>
+              </li>
+              <li>
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                <div><strong>§ 17 Abs. 3 — Bidirektionale Kommunikation</strong>Rückfragen an den Hinweisgeber ermöglichen</div>
+              </li>
+              <li>
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                <div><strong>§ 8 — Vertraulichkeit der Identität</strong>Identität des Hinweisgebers schützen</div>
+              </li>
+              <li>
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                <div><strong>§ 26 — Datenlöschung</strong>Meldungen nach Abschluss fristgerecht löschen</div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="section section-alt" aria-labelledby="features-heading">
+      <div class="section-inner">
+        <p class="section-eyebrow">Funktionen</p>
+        <h2 class="section-heading" id="features-heading">Alles inklusive — dauerhaft kostenlos</h2>
+        <p class="section-subheading">
+          Keine abgestufte Lizenzierung, kein bezahltes „Enterprise"-Tier.
+          Alle Funktionen stehen allen Nutzern unter GPL-3.0 zur Verfügung.
+        </p>
+        <div class="features-grid" role="list">
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--seal-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <h3 class="feature-title">Vollständige Anonymität</h3>
+            <p class="feature-desc">Keine IP-Adressen gespeichert — weder in der Datenbank noch in Logs. Vier unabhängige Anonymitätsschichten.</p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--seal-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <h3 class="feature-title">Verschlüsselte Speicherung</h3>
+            <p class="feature-desc">Alle Meldungsinhalte sind at-rest verschlüsselt (HKDF-SHA256 + Fernet per-Meldung). Der Schlüssel liegt nie in der Datenbank.</p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--seal-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <h3 class="feature-title">Automatische SLA-Verfolgung</h3>
+            <p class="feature-desc">7-Tage- und 3-Monats-Fristen werden automatisch berechnet und im Dashboard angezeigt. Erinnerungsbenachrichtigungen vor Ablauf.</p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--seal-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <h3 class="feature-title">Bidirektionale Kommunikation</h3>
+            <p class="feature-desc">Rückfragen an den Hinweisgeber via gesichertem Nachrichtensystem — nur mit Fallnummer und PIN zugänglich.</p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--seal-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <h3 class="feature-title">Mehrsprachige Oberfläche</h3>
+            <p class="feature-desc">Deutsche, englische und französische Benutzeroberfläche mit 388+ Übersetzungsschlüsseln. Sprachauswahl per Klick.</p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--seal-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <h3 class="feature-title">Unveränderliches Audit-Log</h3>
+            <p class="feature-desc">Jede Admin-Aktion wird mit Zeitstempel und Benutzername protokolliert. Export als CSV. Pflichtgemäß nach HinSchG § 12 Abs. 3.</p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--seal-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <h3 class="feature-title">PDF-Export mit SLA-Bericht</h3>
+            <p class="feature-desc">Vollständiger Fallexport als PDF inklusive SLA-Compliance-Abschnitt. Für Berichtspflichten und Dokumentation.</p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--seal-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            </div>
+            <h3 class="feature-title">Einfache Installation</h3>
+            <p class="feature-desc">Docker Compose in 3 Minuten. Web-basierter Setup-Wizard für den ersten Admin-Account. Kein manuelles Datenbanksetup.</p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--seal-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            </div>
+            <h3 class="feature-title">Automatische Datenlöschung</h3>
+            <p class="feature-desc">Konfigurierbares DSGVO-Retention-System löscht abgeschlossene Meldungen automatisch nach einstellbarer Frist (Standard: 3 Jahre).</p>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Comparison -->
+    <section class="section" aria-labelledby="comp-heading">
+      <div class="section-inner">
+        <p class="section-eyebrow">Vergleich</p>
+        <h2 class="section-heading" id="comp-heading">OpenWhistle vs. kommerzielle Lösungen</h2>
+        <p class="section-subheading">
+          Warum für ein Hinweisgebersystem bezahlen, wenn es eine bessere Open-Source-Alternative gibt?
+        </p>
+
+        <table class="comp-table" role="table" aria-label="Vergleich OpenWhistle mit kommerziellen Tools">
+          <thead>
+            <tr>
+              <th scope="col">Merkmal</th>
+              <th scope="col" class="col-ow">OpenWhistle</th>
+              <th scope="col">EQS / BKMS / WhistlePort</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Preis</td>
+              <td class="val-good">Kostenlos (GPL-3.0)</td>
+              <td class="val-bad">50–200 €/Monat</td>
+            </tr>
+            <tr>
+              <td>Hosting</td>
+              <td class="val-good">Selbst gehostet — Ihre Daten</td>
+              <td class="val-bad">Cloud-SaaS (externer Server)</td>
+            </tr>
+            <tr>
+              <td>Quellcode</td>
+              <td class="val-good">Vollständig öffentlich (GitHub)</td>
+              <td class="val-bad">Proprietär / nicht einsehbar</td>
+            </tr>
+            <tr>
+              <td>IP-Protokollierung</td>
+              <td class="val-good">Keine — 4 Schutzschichten</td>
+              <td class="val-bad">Meist unbekannt / Cloud-Logs</td>
+            </tr>
+            <tr>
+              <td>DSGVO-Risiko</td>
+              <td class="val-good">Kein Drittland-Transfer</td>
+              <td class="val-bad">Möglicherweise US-Server</td>
+            </tr>
+            <tr>
+              <td>HinSchG §§ 16–18</td>
+              <td class="val-good">Vollständig implementiert</td>
+              <td class="val-bad">Je nach Anbieter und Paket</td>
+            </tr>
+            <tr>
+              <td>Zwei-Faktor-Authentifizierung</td>
+              <td class="val-good">Verpflichtend für alle Konten</td>
+              <td class="val-bad">Optional oder kostenpflichtig</td>
+            </tr>
+            <tr>
+              <td>Vendor Lock-in</td>
+              <td class="val-good">Kein Lock-in — Docker portierbar</td>
+              <td class="val-bad">Eigene Datenformate / APIs</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="section section-alt" aria-labelledby="how-heading">
+      <div class="section-inner">
+        <p class="section-eyebrow">So funktioniert es</p>
+        <h2 class="section-heading" id="how-heading">In 4 Schritten zum HinSchG-konformen Meldekanal</h2>
+        <div class="section-divider" aria-hidden="true"></div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num" aria-hidden="true">01</div>
+            <h3 class="step-title">Installation</h3>
+            <p class="step-desc">Docker Compose auf Ihrem Server starten. Der Web-Wizard führt durch die Ersteinrichtung und TOTP-Registrierung — in unter 5 Minuten.</p>
+          </div>
+          <div class="step">
+            <div class="step-num" aria-hidden="true">02</div>
+            <h3 class="step-title">Meldung eingehen</h3>
+            <p class="step-desc">Der Hinweisgeber öffnet das Web-Formular, wählt Kategorie und Modus (anonym oder vertraulich) und schildert den Sachverhalt.</p>
+          </div>
+          <div class="step">
+            <div class="step-num" aria-hidden="true">03</div>
+            <h3 class="step-title">Bearbeitung &amp; Kommunikation</h3>
+            <p class="step-desc">Ihr Compliance-Team bearbeitet den Fall, kommuniziert via sicherem Nachrichtensystem mit dem Hinweisgeber und dokumentiert alle Schritte.</p>
+          </div>
+          <div class="step">
+            <div class="step-num" aria-hidden="true">04</div>
+            <h3 class="step-title">Abschluss &amp; Löschung</h3>
+            <p class="step-desc">Nach Abschluss erhält der Hinweisgeber die Rückmeldung. Der Fall wird nach der konfigurierten Frist DSGVO-konform gelöscht.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" aria-labelledby="faq-heading">
+      <div class="section-inner">
+        <p class="section-eyebrow">Häufige Fragen</p>
+        <h2 class="section-heading" id="faq-heading">FAQ</h2>
+        <div class="section-divider" aria-hidden="true"></div>
+
+        <div class="faq-list">
+          <details>
+            <summary>Was ist ein Hinweisgebersystem nach HinSchG?</summary>
+            <p>Das Hinweisgeberschutzgesetz (HinSchG) verpflichtet Unternehmen ab 50 Mitarbeitern und Behörden zur Einrichtung eines internen Meldekanals. Hinweisgeber müssen Missstände anonym melden können und vor Repressalien geschützt werden. OpenWhistle ist eine kostenlose Softwarelösung, die alle gesetzlichen Anforderungen erfüllt.</p>
+          </details>
+          <details>
+            <summary>Ist OpenWhistle wirklich kostenlos — auch für kommerzielle Nutzung?</summary>
+            <p>Ja. OpenWhistle steht unter der GPL-3.0-Lizenz, die kommerzielle Selbst-Hosting-Nutzung ausdrücklich erlaubt. Es gibt keine kostenpflichtigen Funktionen, kein Abonnement und keinen Enterprise-Tier. Die einzige Bedingung der GPL ist: Wenn Sie den Quellcode modifizieren und weitergeben, müssen Sie die Änderungen ebenfalls unter GPL veröffentlichen.</p>
+          </details>
+          <details>
+            <summary>Wie wird die Anonymität des Hinweisgebers sichergestellt?</summary>
+            <p>Vier unabhängige Schutzschichten: (1) nginx entfernt X-Forwarded-For-Header, (2) die Applikationsmiddleware löscht die Remote-Adresse vor jeder Verarbeitung, (3) keine IP-Spalte im Datenbankschema, (4) Redis-Session-Tokens tragen keine Identifizierungsmerkmale. Ein Mitarbeiter, der aus dem Büronetzwerk eine Meldung abgibt, hinterlässt keinerlei Netzwerkidentifikatoren in der Datenbank.</p>
+          </details>
+          <details>
+            <summary>Welche technischen Voraussetzungen brauche ich?</summary>
+            <p>Docker 24 oder neuer, Docker Compose v2, mindestens 512 MB RAM, PostgreSQL 18, Redis 8 und eine Domain mit gültigem HTTPS-Zertifikat. Ein einfacher VPS mit 1 vCPU und 1 GB RAM reicht für die meisten Organisationen. Unser Ansible-Role automatisiert die vollständige Servereinrichtung inklusive Let's Encrypt-Zertifikat.</p>
+          </details>
+          <details>
+            <summary>Unterstützt OpenWhistle Single Sign-On (SSO)?</summary>
+            <p>Ja. OpenWhistle unterstützt OIDC-Login für Admin-Konten. Kompatibel mit Keycloak, Authentik, Azure AD (Entra ID), Google Workspace und jedem anderen OpenID-Connect-Provider. LDAP/Active-Directory-Login ist ebenfalls integriert — ideal für Unternehmen, die ihre bestehende Verzeichnisstruktur nutzen möchten.</p>
+          </details>
+          <details>
+            <summary>Kann ich OpenWhistle für mehrere Standorte oder Gesellschaften nutzen?</summary>
+            <p>Ja. Ab Version 1.0.0 unterstützt OpenWhistle Multi-Tenancy: Eine Installation kann mehrere unabhängige Organisationen mit vollständig getrennten Daten, eigenen Kategorien, Standorten und Nutzern betreiben. Ideal für Konzerne oder Beratungsunternehmen, die mehrere Mandanten betreuen.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section" aria-labelledby="cta-heading">
+      <div style="max-width: var(--max-width); margin: 0 auto;">
+        <h2 id="cta-heading">Jetzt kostenlos starten</h2>
+        <p>Ihre HinSchG-konforme Meldestelle in unter 5 Minuten — ohne Lizenzkosten, ohne Vendor Lock-in.</p>
+        <div class="cta-actions">
+          <a href="https://demo.openwhistle.net" class="cta-btn-primary" rel="noopener noreferrer" target="_blank">
+            Live-Demo testen
+          </a>
+          <a href="../docs.html#installation" class="cta-btn-outline">
+            Installationsanleitung
+          </a>
+          <a href="https://github.com/openwhistle/OpenWhistle" class="cta-btn-outline" rel="noopener noreferrer" target="_blank">
+            GitHub &rarr;
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-inner">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-logo">
+            <svg width="20" height="24" viewBox="0 0 22 26" fill="none" aria-hidden="true">
+              <path d="M11 1 L20 5 L20 14 C20 20 17 24 11 25.5 C5 24 2 20 2 14 L2 5 Z"
+                    stroke="rgba(226,220,210,0.5)" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+              <circle cx="11" cy="18" r="1.1" fill="rgba(226,220,210,0.5)"/>
+              <path d="M8.5,16 A3,3 0 0,1 13.5,16" stroke="rgba(226,220,210,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            OpenWhistle
+          </div>
+          <p class="footer-tagline">Schutz für alle, die den Mut haben zu sprechen.</p>
+        </div>
+
+        <nav aria-label="Footer-Links">
+          <div class="footer-col-title">Ressourcen</div>
+          <ul class="footer-links">
+            <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
+            <li><a href="../docs.html">Dokumentation</a></li>
+            <li><a href="../blog/">Blog</a></li>
+            <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Live-Demo</a></li>
+            <li><a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank">Issues</a></li>
+          </ul>
+        </nav>
+
+        <div>
+          <div class="footer-col-title">Rechtliches</div>
+          <p style="font-size: 0.85rem; color: rgba(226,220,210,0.45); line-height: 1.7;">
+            Lizenziert unter GPL-3.0. Entwickelt für Transparenz.
+          </p>
+          <p style="font-size: 0.82rem; color: rgba(226,220,210,0.35); line-height: 1.7; margin-top: 0.75rem;">
+            OpenWhistle bietet keine Rechtsberatung. Bitte konsultieren Sie qualifizierte
+            Rechtsexperten bezüglich Ihrer spezifischen HinSchG-Pflichten.
+          </p>
+          <p style="font-size: 0.78rem; color: rgba(226,220,210,0.25); margin-top: 0.75rem;">
+            <a href="../" style="color: rgba(226,220,210,0.4);" hreflang="en">🇬🇧 English version</a>
+          </p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 OpenWhistle Contributors. Veröffentlicht unter der GNU General Public License v3.0.</p>
+        <p>Version 1.0.0</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const btn = document.getElementById('theme-btn');
+    if (btn) {
+      btn.addEventListener('click', () => {
+        const cur = document.documentElement.getAttribute('data-theme');
+        const next = cur === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        try { localStorage.setItem('ow-theme', next); } catch(e) {}
+      });
+    }
+  </script>
+</body>
+</html>

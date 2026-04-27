@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
+  <title>Whistleblower-Software Vergleich 2025: OpenWhistle vs. EQS, BKMS, WhistlePort | OpenWhistle Blog</title>
+  <meta name="description" content="Detaillierter Vergleich von Whistleblower-Software 2025: OpenWhistle (kostenlos, Open Source) gegen EQS Integrity Line, BKMS und WhistlePort. Kosten, DSGVO, Datensouveränität, HinSchG-Compliance.">
+  <meta name="keywords" content="Whistleblower Software Vergleich, EQS Integrity Line Alternative, BKMS Alternative kostenlos, WhistlePort Alternative, Hinweisgebersystem Vergleich, HinSchG Software kostenlos, interne Meldestelle Software Kosten, OpenWhistle vs EQS">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://openwhistle.net/blog/whistleblower-software-vergleich.html">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <link rel="icon" type="image/x-icon" href="../favicon.ico">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://openwhistle.net/blog/whistleblower-software-vergleich.html">
+  <meta property="og:title" content="Whistleblower-Software Vergleich 2025: OpenWhistle vs. EQS, BKMS &amp; WhistlePort">
+  <meta property="og:description" content="Wer zahlt 100–200 €/Monat für ein HinSchG-Tool, wenn es eine vollwertige Open-Source-Alternative gibt? Wir vergleichen Kosten, Datensouveränität und DSGVO-Risiken.">
+  <meta property="og:image" content="https://openwhistle.net/og-image.png">
+  <meta property="article:published_time" content="2025-04-27">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Whistleblower-Software Vergleich 2025: OpenWhistle vs. EQS, BKMS und WhistlePort",
+    "description": "Detaillierter Vergleich von Whistleblower-Software: OpenWhistle gegen kommerzielle Lösungen.",
+    "url": "https://openwhistle.net/blog/whistleblower-software-vergleich.html",
+    "datePublished": "2025-04-27",
+    "author": { "@type": "Organization", "name": "OpenWhistle Contributors" },
+    "publisher": { "@type": "Organization", "name": "OpenWhistle", "url": "https://openwhistle.net" },
+    "inLanguage": "de"
+  }
+  </script>
+
+  <style>
+    @font-face { font-family: 'Spectral'; src: url('../fonts/spectral-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+    @font-face { font-family: 'Spectral'; src: url('../fonts/spectral-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-300-normal.woff2') format('woff2'); font-weight: 300; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-display: swap; }
+
+    :root {
+      --bg-base: #fafaf7; --bg-surface: #f4f2ed; --nav-bg: #ffffff;
+      --footer-bg: #1a2744; --text-primary: #1e293b; --text-secondary: #3d4f6b;
+      --text-muted: #6b7a96; --border-subtle: #e2d9c8; --border-default: #c9bfaa;
+      --seal-green: #2d7d46; --seal-green-dim: rgba(45,125,70,0.15);
+      --seal-green-fog: rgba(45,125,70,0.08);
+      --gold: #c8972e; --red: #b91c1c;
+      --font-serif: 'Spectral', Georgia, serif;
+      --font-body: 'Source Serif 4', Georgia, serif;
+      --font-mono: 'Courier New', Courier, monospace;
+      --max-width: 860px;
+    }
+    [data-theme="dark"] {
+      --bg-base: #0b1525; --bg-surface: #132035; --nav-bg: #0a1220;
+      --footer-bg: #070d1e; --text-primary: #dde6f2; --text-secondary: #9db4cc;
+      --text-muted: #5c7a96; --border-subtle: #1a2e48; --border-default: #243d5a;
+      --seal-green: #5a9070; --seal-green-dim: rgba(90,144,112,0.15);
+      --seal-green-fog: rgba(90,144,112,0.08);
+      --gold: #e0a845;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg-base); color: var(--text-primary); font-family: var(--font-body); font-size: 1rem; line-height: 1.75; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    a { color: var(--seal-green); text-decoration: underline; text-decoration-color: transparent; transition: text-decoration-color 140ms ease; }
+    a:hover { text-decoration-color: currentColor; }
+    button { cursor: pointer; border: none; background: none; font: inherit; }
+
+    .skip-link { position: absolute; top: -100%; left: 1rem; background: var(--seal-green); color: #fff; padding: 0.5rem 1rem; font-size: 0.75rem; z-index: 9999; text-decoration: none; }
+    .skip-link:focus { top: 1rem; }
+
+    .site-nav { position: sticky; top: 0; z-index: 200; background: var(--nav-bg); border-bottom: 1px solid var(--border-subtle); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 2rem; height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; }
+    .nav-logo { display: flex; align-items: center; gap: 0.75rem; font-family: var(--font-serif); font-size: 0.9rem; font-weight: 600; letter-spacing: 0.04em; color: var(--text-primary); text-decoration: none; }
+    .nav-logo svg path, .nav-logo svg circle { stroke: var(--gold); }
+    .nav-links { display: flex; align-items: center; gap: 1.5rem; }
+    .nav-links a { font-size: 0.8rem; color: var(--text-secondary); text-decoration: none; transition: color 140ms ease; }
+    .nav-links a:hover { color: var(--text-primary); }
+    .theme-toggle { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border: 1px solid var(--border-default); border-radius: 2px; color: var(--text-muted); transition: color 140ms ease, border-color 140ms ease; }
+    .theme-toggle:hover { color: var(--text-primary); border-color: var(--seal-green); }
+    .theme-toggle svg { width: 16px; height: 16px; }
+    .icon-sun { display: none; }
+    [data-theme="dark"] .icon-moon { display: none; }
+    [data-theme="dark"] .icon-sun { display: block; }
+
+    .article-wrap { max-width: var(--max-width); margin: 0 auto; padding: 4rem 2rem; }
+    .article-header { margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border-subtle); }
+    .article-tag { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--seal-green); margin-bottom: 1rem; text-decoration: none; }
+    .article-title { font-family: var(--font-serif); font-size: clamp(1.8rem, 3.5vw, 2.6rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; color: var(--text-primary); margin-bottom: 1rem; }
+    .article-subtitle { font-size: 1.1rem; font-weight: 300; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1.5rem; }
+    .article-meta { font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 1.5rem; flex-wrap: wrap; }
+
+    .article-body h2 { font-family: var(--font-serif); font-size: 1.55rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text-primary); margin: 2.5rem 0 1rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle); }
+    .article-body h3 { font-family: var(--font-serif); font-size: 1.15rem; font-weight: 600; color: var(--text-primary); margin: 2rem 0 0.75rem; }
+    .article-body p { margin-bottom: 1.25rem; color: var(--text-secondary); }
+    .article-body strong { color: var(--text-primary); font-weight: 600; }
+    .article-body ul, .article-body ol { margin: 1rem 0 1.5rem 1.5rem; }
+    .article-body li { margin-bottom: 0.5rem; color: var(--text-secondary); }
+
+    /* Comparison table — full width, overflows max-width */
+    .comp-wrap { overflow-x: auto; margin: 2rem -1rem; }
+    .comp-table { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 0.88rem; }
+    .comp-table thead th { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); padding: 0.75rem 1rem; text-align: left; border-bottom: 2px solid var(--border-subtle); white-space: nowrap; }
+    .comp-table thead th.col-ow { color: var(--seal-green); background: var(--seal-green-fog); }
+    .comp-table tbody td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); vertical-align: top; }
+    .comp-table tbody td.col-ow { background: var(--seal-green-fog); }
+    .comp-table tbody tr:last-child td { border-bottom: none; }
+    .val-good { color: var(--seal-green); font-weight: 600; }
+    .val-bad { color: var(--text-muted); }
+    .val-warn { color: var(--gold); }
+
+    .callout { padding: 1.25rem 1.5rem; margin: 2rem 0; border-left: 4px solid; border-radius: 0 4px 4px 0; }
+    .callout-info { background: var(--seal-green-fog); border-color: var(--seal-green); }
+    .callout-warn { background: rgba(200,151,46,0.06); border-color: var(--gold); }
+    .callout-title { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--seal-green); margin-bottom: 0.5rem; }
+    .callout-warn .callout-title { color: var(--gold); }
+    .callout p { margin-bottom: 0; font-size: 0.92rem; }
+
+    .cost-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: 1.5rem; margin: 1.5rem 0; }
+    .cost-card-title { font-family: var(--font-serif); font-weight: 700; color: var(--text-primary); margin-bottom: 0.5rem; }
+    .cost-price { font-size: 1.6rem; font-weight: 700; color: var(--seal-green); font-family: var(--font-serif); }
+    .cost-desc { font-size: 0.88rem; color: var(--text-muted); margin-top: 0.25rem; }
+
+    .article-cta { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-top: 4px solid var(--seal-green); padding: 2rem; margin: 3rem 0; text-align: center; }
+    .article-cta h3 { font-family: var(--font-serif); font-size: 1.3rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.75rem; }
+    .article-cta p { font-size: 0.92rem; color: var(--text-secondary); margin-bottom: 1.5rem; }
+    .btn-cta { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.75rem; background: var(--seal-green); color: #fff; border-radius: 2px; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none; transition: background 140ms ease; }
+    .btn-cta:hover { background: #245f37; color: #fff; text-decoration: none; }
+
+    .site-footer { background: var(--footer-bg); color: rgba(226,220,210,0.6); padding: 3rem 2rem; margin-top: 4rem; }
+    .footer-inner { max-width: 1100px; margin: 0 auto; }
+    .footer-bottom { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .footer-bottom p { font-size: 0.78rem; color: rgba(226,220,210,0.3); }
+    .footer-bottom a { color: rgba(226,220,210,0.5); text-decoration: none; }
+    .footer-bottom a:hover { color: rgba(226,220,210,0.9); }
+
+    @media (max-width: 600px) { .article-wrap { padding: 2.5rem 1.25rem; } .nav-links { display: none; } }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Zum Inhalt springen</a>
+
+  <nav class="site-nav" role="navigation" aria-label="Hauptnavigation">
+    <div class="nav-inner">
+      <a href="../" class="nav-logo" aria-label="OpenWhistle Startseite">
+        <svg width="22" height="26" viewBox="0 0 22 26" fill="none" aria-hidden="true">
+          <path d="M11 1 L20 5 L20 14 C20 20 17 24 11 25.5 C5 24 2 20 2 14 L2 5 Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+          <circle cx="11" cy="18" r="1.1" fill="currentColor"/>
+          <path d="M8.5,16 A3,3 0 0,1 13.5,16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M7,14.5 A5.5,5.5 0 0,1 15,14.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+        </svg>
+        OpenWhistle
+      </a>
+      <ul class="nav-links" role="list">
+        <li><a href="./" style="color: var(--seal-green);">&larr; Blog</a></li>
+        <li><a href="../docs.html">Dokumentation</a></li>
+        <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Demo</a></li>
+      </ul>
+      <button class="theme-toggle" id="theme-btn" aria-label="Farbschema wechseln">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <main id="main">
+    <div class="article-wrap">
+      <article>
+        <header class="article-header">
+          <p class="article-tag">Vergleich · Kosten · DSGVO</p>
+          <h1 class="article-title">Whistleblower-Software im Vergleich 2025: OpenWhistle vs. EQS, BKMS und WhistlePort</h1>
+          <p class="article-subtitle">Wer zahlt 100–200 €/Monat für ein HinSchG-Tool, wenn es eine vollwertige Open-Source-Alternative gibt? Wir vergleichen Kosten, Datensouveränität und DSGVO-Risiken.</p>
+          <div class="article-meta">
+            <span>27. April 2025</span>
+            <span>8 Min. Lesezeit</span>
+            <span>OpenWhistle Contributors</span>
+          </div>
+        </header>
+
+        <div class="article-body">
+
+          <div class="callout callout-warn">
+            <p class="callout-title">Transparenzhinweis</p>
+            <p>Dieser Artikel wird von den OpenWhistle-Entwicklern verfasst. Wir bemühen uns um eine faire Darstellung, aber dieser Vergleich ist natürlich nicht neutral. Die genannten Preise für kommerzielle Produkte basieren auf öffentlichen Informationen und können sich ändern.</p>
+          </div>
+
+          <p>Seit dem HinSchG sind hunderte Compliance-Anbieter auf den Markt geströmt und bieten "HinSchG-konforme" Lösungen an — zu Preisen, die für kleine Unternehmen mit 50–100 Mitarbeitern einen erheblichen Kostenfaktor darstellen. Gleichzeitig ist <strong>OpenWhistle eine vollständige, produktionsreife Open-Source-Alternative</strong>, die dauerhaft kostenlos ist.</p>
+
+          <p>In diesem Artikel vergleichen wir die wichtigsten Kriterien: Kosten, DSGVO-Compliance, Datensouveränität, Funktionsumfang und Implementierungsaufwand.</p>
+
+          <h2>Die Kosten im Überblick</h2>
+
+          <p>Typische jährliche Kosten für eine interne Meldestelle nach HinSchG für ein Unternehmen mit 100 Mitarbeitern:</p>
+
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin: 1.5rem 0;">
+            <div class="cost-card">
+              <div class="cost-card-title">OpenWhistle</div>
+              <div class="cost-price">0 €</div>
+              <div class="cost-desc">+ Serverkosten (ca. 5–15 €/Monat für einfachen VPS)</div>
+            </div>
+            <div class="cost-card">
+              <div class="cost-card-title">EQS Integrity Line</div>
+              <div class="cost-price">~1.200–2.400 €</div>
+              <div class="cost-desc">Jahresgebühr (öffentlich kommuniziert: ab ca. 100 €/Monat)</div>
+            </div>
+            <div class="cost-card">
+              <div class="cost-card-title">BKMS® Hinweisgebersystem</div>
+              <div class="cost-price">~1.500–3.600 €</div>
+              <div class="cost-desc">Jahresgebühr je nach Paket und Mitarbeiterzahl</div>
+            </div>
+            <div class="cost-card">
+              <div class="cost-card-title">WhistlePort / ähnliche</div>
+              <div class="cost-price">~600–1.800 €</div>
+              <div class="cost-desc">Jahresgebühr für Basis-/Standard-Pakete</div>
+            </div>
+          </div>
+
+          <p>Über 5 Jahre: Ein Unternehmen, das sich für EQS entscheidet statt OpenWhistle zu nutzen, zahlt <strong>6.000–12.000 € oder mehr</strong> allein für die Lizenz. Hinzu kommen Setup-Gebühren, Schulungen und eventuelle Add-on-Kosten.</p>
+
+          <h2>Detaillierter Funktionsvergleich</h2>
+
+          <div class="comp-wrap">
+            <table class="comp-table" role="table" aria-label="Funktionsvergleich Whistleblower-Software">
+              <thead>
+                <tr>
+                  <th scope="col">Kriterium</th>
+                  <th scope="col" class="col-ow">OpenWhistle</th>
+                  <th scope="col">EQS Integrity Line</th>
+                  <th scope="col">BKMS</th>
+                  <th scope="col">WhistlePort</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Preis (p.a.)</strong></td>
+                  <td class="col-ow val-good">Kostenlos</td>
+                  <td class="val-bad">~1.200–2.400 €</td>
+                  <td class="val-bad">~1.500–3.600 €</td>
+                  <td class="val-bad">~600–1.800 €</td>
+                </tr>
+                <tr>
+                  <td><strong>Hosting</strong></td>
+                  <td class="col-ow val-good">Selbst gehostet</td>
+                  <td class="val-bad">SaaS (Cloud)</td>
+                  <td class="val-bad">SaaS (Cloud)</td>
+                  <td class="val-warn">SaaS oder On-Prem</td>
+                </tr>
+                <tr>
+                  <td><strong>Quellcode</strong></td>
+                  <td class="col-ow val-good">Open Source (GPL-3.0)</td>
+                  <td class="val-bad">Proprietär</td>
+                  <td class="val-bad">Proprietär</td>
+                  <td class="val-bad">Proprietär</td>
+                </tr>
+                <tr>
+                  <td><strong>IP-Protokollierung</strong></td>
+                  <td class="col-ow val-good">Keine (4 Schutzschichten)</td>
+                  <td class="val-warn">Unbekannt / Cloud-Logs</td>
+                  <td class="val-warn">Unbekannt / Cloud-Logs</td>
+                  <td class="val-warn">Unklar</td>
+                </tr>
+                <tr>
+                  <td><strong>DSGVO-Drittland-Transfer</strong></td>
+                  <td class="col-ow val-good">Kein Transfer</td>
+                  <td class="val-bad">Möglicherweise (US-Server)</td>
+                  <td class="val-warn">EU-Server (prüfen)</td>
+                  <td class="val-warn">EU-Server (prüfen)</td>
+                </tr>
+                <tr>
+                  <td><strong>HinSchG §§ 16–18</strong></td>
+                  <td class="col-ow val-good">Vollständig</td>
+                  <td class="val-good">Vollständig</td>
+                  <td class="val-good">Vollständig</td>
+                  <td class="val-warn">Je nach Paket</td>
+                </tr>
+                <tr>
+                  <td><strong>Mehrsprachigkeit</strong></td>
+                  <td class="col-ow val-good">DE, EN, FR (388+ Keys)</td>
+                  <td class="val-good">Viele Sprachen</td>
+                  <td class="val-good">DE, EN</td>
+                  <td class="val-warn">Je nach Paket</td>
+                </tr>
+                <tr>
+                  <td><strong>TOTP / MFA</strong></td>
+                  <td class="col-ow val-good">Verpflichtend für alle</td>
+                  <td class="val-warn">Optional</td>
+                  <td class="val-warn">Optional</td>
+                  <td class="val-warn">Je nach Paket</td>
+                </tr>
+                <tr>
+                  <td><strong>OIDC / SSO</strong></td>
+                  <td class="col-ow val-good">Integriert</td>
+                  <td class="val-good">Integriert</td>
+                  <td class="val-bad">Eingeschränkt</td>
+                  <td class="val-warn">Kostenpflichtig</td>
+                </tr>
+                <tr>
+                  <td><strong>Audit-Log</strong></td>
+                  <td class="col-ow val-good">Unveränderlich, CSV-Export</td>
+                  <td class="val-good">Vorhanden</td>
+                  <td class="val-good">Vorhanden</td>
+                  <td class="val-warn">Eingeschränkt</td>
+                </tr>
+                <tr>
+                  <td><strong>PDF-Export</strong></td>
+                  <td class="col-ow val-good">Inklusive SLA-Bericht</td>
+                  <td class="val-good">Vorhanden</td>
+                  <td class="val-good">Vorhanden</td>
+                  <td class="val-warn">Je nach Paket</td>
+                </tr>
+                <tr>
+                  <td><strong>API-Zugang</strong></td>
+                  <td class="col-ow val-good">Vollständige REST-API</td>
+                  <td class="val-good">Vorhanden</td>
+                  <td class="val-bad">Eingeschränkt</td>
+                  <td class="val-bad">Kostenpflichtig</td>
+                </tr>
+                <tr>
+                  <td><strong>Vendor Lock-in</strong></td>
+                  <td class="col-ow val-good">Kein Lock-in</td>
+                  <td class="val-bad">Hoch</td>
+                  <td class="val-bad">Hoch</td>
+                  <td class="val-bad">Mittel bis hoch</td>
+                </tr>
+                <tr>
+                  <td><strong>Verschlüsselung at-rest</strong></td>
+                  <td class="col-ow val-good">Envelope Encryption (DEK/MEK)</td>
+                  <td class="val-warn">Unklar (SaaS-Anbieter)</td>
+                  <td class="val-warn">Unklar</td>
+                  <td class="val-warn">Unklar</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2>Das DSGVO-Risiko bei SaaS-Lösungen</h2>
+
+          <p>Dies ist der Punkt, der in Compliance-Diskussionen oft unterschätzt wird. Wenn ein Unternehmen ein SaaS-Hinweisgebersystem einsetzt, gelten folgende DSGVO-Anforderungen:</p>
+
+          <ul>
+            <li><strong>Auftragsverarbeitungsvertrag (AVV)</strong> nach Art. 28 DSGVO muss abgeschlossen werden</li>
+            <li>Bei US-Anbietern oder Anbietern mit US-Muttergesellschaft: Prüfung des Drittlandtransfers nach Art. 44 ff. DSGVO (Standard-Vertragsklauseln, Adequacy Decision)</li>
+            <li>Die Daten der Hinweisgeber liegen auf Servern eines Dritten — die Datenkontrolle ist eingeschränkt</li>
+            <li>Löschpflichten müssen über Dritte koordiniert werden</li>
+          </ul>
+
+          <p>Bei OpenWhistle <strong>liegt die vollständige Datenkontrolle bei Ihnen</strong>. Die Daten verlassen Ihre Infrastruktur nie. Es gibt keinen AVV, keinen Drittlandtransfer, keinen externen Datenzugriff. Dies vereinfacht Ihre DSGVO-Dokumentation erheblich.</p>
+
+          <h2>Wann macht eine kommerzielle Lösung Sinn?</h2>
+
+          <p>Fairerweise gibt es Szenarien, in denen eine kommerzielle Lösung sinnvoll sein kann:</p>
+
+          <ul>
+            <li><strong>Kein IT-Team vorhanden:</strong> OpenWhistle erfordert einen Server, Docker und grundlegende IT-Kenntnisse. Wer keine eigene IT-Abteilung hat und keinen IT-Dienstleister beauftragen möchte, ist bei einem Full-Service-SaaS-Anbieter möglicherweise besser aufgehoben.</li>
+            <li><strong>Viele Sprachen erforderlich:</strong> Wenn Sie ein globales Unternehmen mit Meldungen in 15+ Sprachen benötigen, haben die großen Anbieter möglicherweise mehr Sprachoptionen. OpenWhistle unterstützt derzeit DE, EN, FR.</li>
+            <li><strong>Erweiterte Compliance-Dokumentation:</strong> Manche Enterprise-Anbieter bieten zusätzliche Compliance-Berichte, ISO-27001-Zertifizierungen und SLA-Garantien für die Verfügbarkeit der Plattform selbst.</li>
+          </ul>
+
+          <p>Für die überwiegende Mehrheit der HinSchG-Pflichtigen — insbesondere mittelständische Unternehmen mit eigener IT oder einem IT-Dienstleister — bietet OpenWhistle <strong>alle benötigten Funktionen, mehr Datensouveränität, und das zu null Lizenzkosten</strong>.</p>
+
+          <h2>Die 5-Jahres-Kostenrechnung</h2>
+
+          <p>Angenommen, Ihre Organisation hat 200 Mitarbeiter und wählt zwischen OpenWhistle und einem kommerziellen Anbieter zu 150 €/Monat:</p>
+
+          <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: 1.5rem; margin: 1.5rem 0;">
+            <p style="margin-bottom: 0.75rem;"><strong>Kommerzielle Lösung (150 €/Monat):</strong></p>
+            <ul style="margin-left: 1.5rem;">
+              <li>Jahr 1: 1.800 € + Setup-Gebühr (oft 500–2.000 €) = ~2.800–3.800 €</li>
+              <li>Jahre 2–5: je 1.800 € = 7.200 €</li>
+              <li><strong>Gesamt 5 Jahre: ~10.000–11.000 €</strong></li>
+            </ul>
+            <p style="margin-top: 1rem; margin-bottom: 0.75rem;"><strong>OpenWhistle (selbst gehostet):</strong></p>
+            <ul style="margin-left: 1.5rem;">
+              <li>Serverkosten: ~8–15 €/Monat = ~480–900 €/Jahr</li>
+              <li>Einmaliger Einrichtungsaufwand: 2–4 Stunden (mit Ansible-Role weitgehend automatisiert)</li>
+              <li><strong>Gesamt 5 Jahre: ~2.400–4.500 € (nur Serverkosten)</strong></li>
+            </ul>
+          </div>
+
+          <p>Einsparung: <strong>5.500–8.600 € über 5 Jahre</strong> — ohne Funktionseinbußen bei den gesetzlichen HinSchG-Anforderungen.</p>
+
+          <div class="article-cta">
+            <h3>Selbst testen — keine Installation notwendig</h3>
+            <p>Die Live-Demo zeigt Ihnen alle Funktionen von OpenWhistle in einer echten Instanz mit Demo-Daten. Zurücksetzen geschieht stündlich automatisch.</p>
+            <a href="https://demo.openwhistle.net" class="btn-cta" rel="noopener noreferrer" target="_blank">Live-Demo öffnen &rarr;</a>
+          </div>
+
+          <h2>Fazit</h2>
+
+          <p>Für die meisten HinSchG-pflichtigen Unternehmen ist OpenWhistle die bessere Wahl: kostenlos, selbst gehostet, DSGVO-konform ohne externe Datenverarbeitung, vollständige Funktionsabdeckung für §§ 16–18 HinSchG, und ohne Vendor Lock-in.</p>
+
+          <p>Kommerzielle Lösungen haben ihre Berechtigung — aber die Frage sollte aktiv gestellt werden: <em>Welchen konkreten Mehrwert bietet ein Anbieter für 1.800–3.600 €/Jahr, den OpenWhistle nicht bietet?</em></p>
+
+          <p style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle); font-size: 0.82rem; color: var(--text-muted);">
+            <strong>Weitere Ressourcen:</strong>
+            <a href="hinschg-compliance-leitfaden.html">HinSchG-Compliance-Leitfaden</a> ·
+            <a href="interne-meldestelle-einrichten.html">Schritt-für-Schritt-Anleitung zur Installation</a>
+          </p>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-inner">
+      <div class="footer-bottom">
+        <p>&copy; 2025 OpenWhistle Contributors · <a href="../">openwhistle.net</a> · <a href="./">Blog</a> · GPL-3.0</p>
+        <p>OpenWhistle bietet keine Rechtsberatung.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const btn = document.getElementById('theme-btn');
+    if (btn) btn.addEventListener('click', () => {
+      const n = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', n);
+      try { localStorage.setItem('ow-theme', n); } catch(e) {}
+    });
+  </script>
+</body>
+</html>

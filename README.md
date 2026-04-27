@@ -21,12 +21,7 @@
 
 **A secure, self-hosted internal reporting channel — because every employee deserves protection.**
 
-> [!WARNING]
-> OpenWhistle is currently in early development (alpha). Do not use in production.
-
----
-
-## 🔍 Overview
+>## 🔍 Overview
 
 OpenWhistle is a self-hosted whistleblower platform that fulfils the mandatory reporting channel
 requirements under the **German Hinweisgeberschutzgesetz (HinSchG)** and **EU Directive 2019/1937**.

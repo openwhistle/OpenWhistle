@@ -46,8 +46,8 @@
       "priceCurrency": "EUR"
     },
     "license": "https://www.gnu.org/licenses/gpl-3.0.html",
-    "softwareVersion": "0.3.0",
-    "keywords": "whistleblower, HinSchG, Hinweisgeberschutz, interne Meldestelle, DSGVO, GDPR, open source, self-hosted",
+    "softwareVersion": "1.0.0",
+    "keywords": "whistleblower, HinSchG, Hinweisgeberschutz, interne Meldestelle, DSGVO, GDPR, open source, self-hosted, Hinweisgebersystem kostenlos",
     "author": {
       "@type": "Organization",
       "name": "OpenWhistle Contributors",
@@ -62,7 +62,15 @@
       "Mandatory TOTP multi-factor authentication",
       "OIDC / SSO login support",
       "Self-hosted Docker deployment",
-      "GDPR / DSGVO compliant data minimization"
+      "GDPR / DSGVO compliant data minimization",
+      "Envelope encryption at rest — per-report Fernet DEK wrapped with HKDF-SHA256",
+      "Automatic GDPR data retention with configurable deletion schedule",
+      "Multi-tenancy support for multi-organisation deployments",
+      "Superadmin role for cross-organisation management",
+      "Telephone channel compliance guide (HinSchG § 16)",
+      "Multi-language UI: English, German, French",
+      "S3-compatible attachment storage",
+      "Helm chart and Ansible role for Kubernetes and VM deployments"
     ]
   }
   </script>
@@ -1242,6 +1250,8 @@
         <li><a href="#how-it-works">How it Works</a></li>
         <li><a href="#compliance">Compliance</a></li>
         <li><a href="docs.html">Documentation</a></li>
+        <li><a href="blog/">Blog</a></li>
+        <li><a href="de/">Auf Deutsch</a></li>
         <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
         <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank" class="nav-cta">Try Demo</a></li>
       </ul>
@@ -1296,7 +1306,7 @@
         </div>
 
         <div class="hero-meta" role="list">
-          <span class="hero-meta-item" role="listitem">Version 0.3.0</span>
+          <span class="hero-meta-item" role="listitem">Version 1.0.0</span>
           <span class="hero-meta-item" role="listitem">GPL-3.0</span>
           <span class="hero-meta-item" role="listitem">Python 3.14</span>
           <span class="hero-meta-item" role="listitem">Docker</span>
@@ -1880,6 +1890,8 @@
           <ul class="footer-links">
             <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
             <li><a href="docs.html">Documentation</a></li>
+            <li><a href="blog/">Blog</a></li>
+            <li><a href="de/">Auf Deutsch</a></li>
             <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Live Demo</a></li>
             <li><a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank">Issues</a></li>
             <li><a href="https://github.com/openwhistle/OpenWhistle/blob/main/LICENSE" rel="noopener noreferrer" target="_blank">License (GPL-3.0)</a></li>

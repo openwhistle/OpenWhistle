@@ -1,13 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://openwhistle.net/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://openwhistle.net/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://openwhistle.net/de/"/>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+    <lastmod>2025-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://openwhistle.net/de/</loc>
+    <xhtml:link rel="alternate" hreflang="de" href="https://openwhistle.net/de/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://openwhistle.net/"/>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <lastmod>2025-04-27</lastmod>
   </url>
   <url>
     <loc>https://openwhistle.net/docs.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+    <lastmod>2025-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://openwhistle.net/blog/</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <lastmod>2025-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://openwhistle.net/blog/hinschg-compliance-leitfaden.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://openwhistle.net/blog/whistleblower-software-vergleich.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://openwhistle.net/blog/interne-meldestelle-einrichten.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2025-04-27</lastmod>
   </url>
 </urlset>
