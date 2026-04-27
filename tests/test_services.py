@@ -162,15 +162,23 @@ async def test_get_report_wrong_case_number(db_session: AsyncSession) -> None:
 
 
 async def test_add_whistleblower_message(db_session: AsyncSession) -> None:
+    from app.config import settings as cfg
+    from app.services.encryption import decrypt_field_safe, make_report_fernet
+
     report, _ = await create_report(db_session, "financial_fraud", "Description long enough here!")
     msg = await add_whistleblower_message(db_session, report, "Additional info from whistleblower.")
-    assert msg.content == "Additional info from whistleblower."
+    fernet = make_report_fernet(report.encrypted_dek, cfg.secret_key)
+    assert decrypt_field_safe(fernet, msg.content) == "Additional info from whistleblower."
 
 
 async def test_add_admin_message(db_session: AsyncSession) -> None:
+    from app.config import settings as cfg
+    from app.services.encryption import decrypt_field_safe, make_report_fernet
+
     report, _ = await create_report(db_session, "corruption", "Corruption description here pls!")
     msg = await add_admin_message(db_session, report, "Admin response to this report.")
-    assert msg.content == "Admin response to this report."
+    fernet = make_report_fernet(report.encrypted_dek, cfg.secret_key)
+    assert decrypt_field_safe(fernet, msg.content) == "Admin response to this report."
 
 
 async def test_acknowledge_report(db_session: AsyncSession) -> None:

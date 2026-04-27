@@ -92,6 +92,13 @@ DEMO_REPORTS: list[dict[str, Any]] = [
 
 async def _seed(db: AsyncSession) -> None:
     """Core seeding logic — runs against the given session."""
+    from app.config import settings as cfg
+    from app.models.organisation import Organisation
+
+    org_row = (await db.execute(
+        select(Organisation.id).where(Organisation.slug == cfg.default_org_slug).limit(1)
+    )).scalar_one_or_none()
+
     # Create admin user if not exists
     result = await db.execute(
         select(AdminUser).where(AdminUser.username == DEMO_ADMIN_USERNAME)
@@ -139,6 +146,7 @@ async def _seed(db: AsyncSession) -> None:
             description="Main office location",
             is_active=True,
             sort_order=0,
+            org_id=org_row,
         )
         db.add(demo_location)
 
@@ -152,6 +160,7 @@ async def _seed(db: AsyncSession) -> None:
             description="Remote workers and home office",
             is_active=True,
             sort_order=10,
+            org_id=org_row,
         )
         db.add(demo_location2)
     await db.flush()

@@ -140,6 +140,39 @@ class TestEncryptionService:
         result = decrypt_field_safe(fernet, plaintext_legacy)
         assert result == plaintext_legacy
 
+    def test_decrypt_field_safe_rotated_key_returns_error_marker(self) -> None:
+        """A real Fernet token decrypted with the wrong key returns the error marker."""
+        from app.services.encryption import (
+            decrypt_field_safe,
+            encrypt_dek,
+            encrypt_field,
+            generate_dek,
+            make_report_fernet,
+        )
+
+        secret_a = "a" * 32
+        secret_b = "b" * 32
+        enc_dek = encrypt_dek(generate_dek(), secret_a)
+        fernet_enc = make_report_fernet(enc_dek, secret_a)
+        ciphertext = encrypt_field(fernet_enc, "secret text")
+
+        # decrypt with a *different* key — InvalidToken but starts with gAAAA
+        enc_dek2 = encrypt_dek(generate_dek(), secret_b)
+        fernet_dec = make_report_fernet(enc_dek2, secret_b)
+        result = decrypt_field_safe(fernet_dec, ciphertext)
+        assert result == "[DECRYPTION FAILED — check SECRET_KEY]"
+
+    def test_decrypt_field_safe_generic_exception_returns_raw(self) -> None:
+        """A non-InvalidToken exception returns the ciphertext unchanged."""
+        from unittest.mock import MagicMock
+
+        from app.services.encryption import decrypt_field_safe
+
+        fernet = MagicMock()
+        fernet.decrypt.side_effect = ValueError("unexpected error")
+        result = decrypt_field_safe(fernet, "some_value")
+        assert result == "some_value"
+
     def test_mek_fernet_different_key_cannot_decrypt(self) -> None:
         from cryptography.fernet import InvalidToken
 
@@ -195,8 +228,13 @@ class TestEncryptedReportStorage:
         original_text = "Confidential whistleblower description."
         _, _ = await create_report(db_session, "fraud", original_text)
 
+        from sqlalchemy.orm import selectinload
+
         result = await db_session.execute(
-            select(Report).order_by(Report.submitted_at.desc()).limit(1)
+            select(Report)
+            .options(selectinload(Report.messages))
+            .order_by(Report.submitted_at.desc())
+            .limit(1)
         )
         report = result.scalar_one()
         description, msg_contents = decrypt_report_fields(report)
@@ -758,12 +796,21 @@ async def _get_admin_session(client: AsyncClient) -> bool:
 
         login_resp = await client.get("/admin/login")
         csrf = _extract_csrf(login_resp.text)
-        await client.post("/admin/login", data={
+        mfa_resp = await client.post("/admin/login", data={
             "username": "testadmin",
             "password": "TestPassword123!",
             "csrf_token": csrf,
         })
-        # After login we need MFA — skip for now
+        temp_m = re.search(r'name="temp_token" value="([^"]+)"', mfa_resp.text)
+        csrf_m = re.search(r'name="csrf_token" value="([^"]+)"', mfa_resp.text)
+        if not temp_m:
+            return False
+        totp_code = pyotp.TOTP(totp_secret).now()
+        await client.post("/admin/login/mfa", data={
+            "csrf_token": csrf_m.group(1) if csrf_m else "",
+            "temp_token": temp_m.group(1),
+            "totp_code": totp_code,
+        })
         return True
     except Exception:  # noqa: BLE001
         return False
