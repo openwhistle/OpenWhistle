@@ -21,6 +21,7 @@ from app.services.report import (
     create_report,
     delete_report,
     get_all_reports,
+    get_linked_reports,
     get_report_by_credentials,
     get_report_by_id,
     get_report_stats,
@@ -395,3 +396,77 @@ async def test_delete_report_removes_from_db(db_session: AsyncSession) -> None:
 
     gone = await get_report_by_id(db_session, report_id)
     assert gone is None
+
+
+# ─── _encrypt_message_content: no-DEK fallback ────────────────────────────────
+
+
+def test_encrypt_message_no_dek_returns_plaintext() -> None:
+    from unittest.mock import MagicMock
+
+    from app.services.report import _encrypt_message_content
+
+    report = MagicMock()
+    report.encrypted_dek = None
+    assert _encrypt_message_content(report, "raw text") == "raw text"
+
+
+# ─── add_admin_message: notification branch ───────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_add_admin_message_triggers_notification_branch(
+    db_session: AsyncSession,
+) -> None:
+    """add_admin_message with notify_whistleblower=True and a secure_email set
+    must execute the notification import + create_task branches (lines 215-222)."""
+    from unittest.mock import patch
+
+    from app.services.crypto import encrypt
+
+    secure_email_enc = encrypt("test@example.com")
+    report, _ = await create_report(
+        db_session,
+        category="financial_fraud",
+        description="Report with secure email for notification test.",
+        secure_email_enc=secure_email_enc,
+    )
+
+    with patch("asyncio.create_task"):
+        await add_admin_message(
+            db_session, report, "Admin reply with notification.", notify_whistleblower=True
+        )
+
+
+# ─── get_reports_paginated: location_id filter ────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_get_reports_paginated_with_location_id_filter(
+    db_session: AsyncSession,
+) -> None:
+    """Passing location_id to get_reports_paginated applies the WHERE clause (line 313)."""
+    reports, total = await get_reports_paginated(db_session, location_id=uuid.uuid4())
+    assert isinstance(reports, list)
+    assert total == 0
+
+
+# ─── get_linked_reports: links_as_b branch ────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_get_linked_reports_returns_links_as_b(db_session: AsyncSession) -> None:
+    """get_linked_reports must iterate links_as_b (line 448)."""
+    from unittest.mock import MagicMock
+
+    link = MagicMock()
+    link.report_id_a = uuid.uuid4()
+    link.id = uuid.uuid4()
+
+    report = MagicMock()
+    report.links_as_a = []
+    report.links_as_b = [link]
+
+    result = get_linked_reports(report)
+    assert len(result) == 1
+    assert result[0][0] == link.report_id_a

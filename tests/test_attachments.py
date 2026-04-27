@@ -101,6 +101,13 @@ def test_validate_disallowed_mime_type() -> None:
     assert error is not None
 
 
+def test_validate_disallowed_mime_with_allowed_extension() -> None:
+    # .txt extension is allowed but application/x-executable MIME is not
+    error = validate_file("notes.txt", "application/x-executable", 100)
+    assert error is not None
+    assert "unsupported file type" in error.lower()
+
+
 def test_validate_mime_type_with_charset_suffix() -> None:
     # Browser may send 'text/plain; charset=utf-8'
     assert validate_file("notes.txt", "text/plain; charset=utf-8", 100) is None
@@ -137,6 +144,22 @@ async def test_read_empty_files_list_returns_empty() -> None:
     from app.services.attachment import read_upload_files
 
     result, error = await read_upload_files([])
+    assert result == []
+    assert error is None
+
+
+@pytest.mark.asyncio
+async def test_read_skips_zero_byte_file() -> None:
+    from unittest.mock import AsyncMock, MagicMock
+
+    from app.services.attachment import read_upload_files
+
+    upload = MagicMock()
+    upload.filename = "empty.pdf"
+    upload.content_type = "application/pdf"
+    upload.read = AsyncMock(return_value=b"")
+
+    result, error = await read_upload_files([upload])
     assert result == []
     assert error is None
 

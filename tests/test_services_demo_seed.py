@@ -15,6 +15,7 @@ from app.services.demo_seed import (
     DEMO_REPORTS,
     DEMO_TOTP_SECRET,
     _seed,
+    seed_demo_data,
 )
 
 # ─── admin user ───────────────────────────────────────────────────────────────
@@ -210,3 +211,17 @@ async def test_seed_pending_feedback_report_has_four_messages(db_session: AsyncS
     assert len(report.messages) == 4
     senders = {m.sender for m in report.messages}
     assert ReportSender.whistleblower in senders
+
+
+# ─── seed_demo_data wrapper ───────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_seed_demo_data_wrapper_calls_seed() -> None:
+    """seed_demo_data() must call _seed via AsyncSessionLocal (covers lines 364-365)."""
+    from unittest.mock import AsyncMock, patch
+
+    with patch("app.services.demo_seed._seed", new_callable=AsyncMock) as mock_seed:
+        await seed_demo_data()
+
+    mock_seed.assert_called_once()
