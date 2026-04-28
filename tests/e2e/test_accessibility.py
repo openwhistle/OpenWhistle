@@ -59,7 +59,7 @@ def test_axe_admin_mfa(page: Page, base_url: str, axe_source: str) -> None:
     page.wait_for_load_state("networkidle")
     page.fill('input[name="username"]', DEMO_ADMIN_USERNAME)
     page.fill('input[name="password"]', DEMO_ADMIN_PASSWORD)
-    page.click('button[type="submit"]')
+    page.click("button.btn-primary")
     page.wait_for_url("**/admin/login/mfa**")
     page.wait_for_load_state("networkidle")
     _check_axe(page, axe_source, "/admin/login/mfa")
@@ -90,7 +90,7 @@ def test_axe_status_with_report(page: Page, base_url: str, axe_source: str) -> N
     page.wait_for_load_state("networkidle")
     page.fill('input[name="case_number"]', DEMO_CASE_IN_REVIEW["case_number"])
     page.fill('input[name="pin"]', DEMO_CASE_IN_REVIEW["pin"])
-    page.click('button[type="submit"]')
+    page.click("button.btn-primary")
     page.wait_for_load_state("networkidle")
     _check_axe(page, axe_source, "/status (with report)")
 

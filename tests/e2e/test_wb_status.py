@@ -19,7 +19,7 @@ def test_status_form_loads(page: Page, base_url: str) -> None:
     assert "OpenWhistle" in page.title()
     expect(page.locator('input[name="case_number"]')).to_be_visible()
     expect(page.locator('input[name="pin"]')).to_be_visible()
-    expect(page.locator('button[type="submit"]')).to_be_visible()
+    expect(page.locator("button.btn-primary")).to_be_visible()
 
 
 def test_invalid_credentials_show_error(page: Page, base_url: str) -> None:
@@ -28,7 +28,7 @@ def test_invalid_credentials_show_error(page: Page, base_url: str) -> None:
     page.wait_for_load_state("networkidle")
     page.fill('input[name="case_number"]', "OW-FAKE-99999")
     page.fill('input[name="pin"]', "wrong-pin-does-not-exist")
-    page.click('button[type="submit"]')
+    page.click("button.btn-primary")
     page.wait_for_load_state("networkidle")
     body = page.content()
     # Should show some error — either "invalid", "not found", or similar
@@ -46,7 +46,7 @@ def test_valid_credentials_show_report(page: Page, base_url: str) -> None:
     page.wait_for_load_state("networkidle")
     page.fill('input[name="case_number"]', DEMO_CASE_IN_REVIEW["case_number"])
     page.fill('input[name="pin"]', DEMO_CASE_IN_REVIEW["pin"])
-    page.click('button[type="submit"]')
+    page.click("button.btn-primary")
     page.wait_for_load_state("networkidle")
     body = page.content()
     # Report case number should appear on the page
@@ -66,7 +66,7 @@ def test_ack_deadline_visible_for_acknowledged_report(page: Page, base_url: str)
     page.wait_for_load_state("networkidle")
     page.fill('input[name="case_number"]', DEMO_CASE_IN_REVIEW["case_number"])
     page.fill('input[name="pin"]', DEMO_CASE_IN_REVIEW["pin"])
-    page.click('button[type="submit"]')
+    page.click("button.btn-primary")
     page.wait_for_load_state("networkidle")
     body = page.content()
     # The deadlines section should be rendered — look for the acknowledgement date display
@@ -83,7 +83,7 @@ def test_feedback_deadline_visible(page: Page, base_url: str) -> None:
     page.wait_for_load_state("networkidle")
     page.fill('input[name="case_number"]', DEMO_CASE_IN_REVIEW["case_number"])
     page.fill('input[name="pin"]', DEMO_CASE_IN_REVIEW["pin"])
-    page.click('button[type="submit"]')
+    page.click("button.btn-primary")
     page.wait_for_load_state("networkidle")
     body = page.content()
     # Feedback deadline section should be visible — template renders feedback_due_at date
@@ -107,7 +107,7 @@ def test_progress_steps_shown(page: Page, base_url: str) -> None:
     page.wait_for_load_state("networkidle")
     page.fill('input[name="case_number"]', DEMO_CASE_IN_REVIEW["case_number"])
     page.fill('input[name="pin"]', DEMO_CASE_IN_REVIEW["pin"])
-    page.click('button[type="submit"]')
+    page.click("button.btn-primary")
     page.wait_for_load_state("networkidle")
     # The progress-steps div should exist
     expect(page.locator(".progress-steps")).to_be_visible()

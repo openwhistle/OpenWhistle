@@ -73,7 +73,7 @@ def test_whistleblower_session_handles_invalid_token(page: Page, base_url: str) 
     if case_input.count() > 0 and pin_input.count() > 0:
         page.fill('input[name="case_number"]', "OW-FAKE-99999")
         page.fill('input[name="pin"]', "wrong-pin")
-        page.click('button[type="submit"]')
+        page.click("button.btn-primary")
         page.wait_for_load_state("networkidle")
         # Should show error or form, not 500
         assert page.url != f"{base_url}/500"

@@ -40,10 +40,11 @@ def _admin_login(page: Page, base_url: str, username: str, password: str, totp_s
     page.wait_for_load_state("networkidle")
     page.fill('input[name="username"]', username)
     page.fill('input[name="password"]', password)
-    page.click('button[type="submit"]')
+    # Use btn-primary to avoid matching the language-picker submit buttons
+    page.click("button.btn-primary[type='submit']")
     page.wait_for_url("**/admin/login/mfa**")
     page.fill('input[name="totp_code"]', _totp_now(totp_secret))
-    page.click('button[type="submit"]')
+    page.click("button.btn-primary[type='submit']")
     page.wait_for_url("**/admin/dashboard**")
 
 
