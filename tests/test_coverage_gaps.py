@@ -843,13 +843,24 @@ async def test_update_category_label_de(db_session: AsyncSession) -> None:
 @pytest.mark.asyncio
 async def test_get_audit_log_filter_by_admin_id(db_session: AsyncSession) -> None:
     """get_audit_log with admin_id filter applies the WHERE clause."""
+    from app.models.user import AdminUser
     from app.services import audit as audit_service
-    from app.services.auth import create_admin_user
+    from app.services.auth import hash_password
     from app.services.report import create_report
 
-    username = f"auditor_{uuid.uuid4().hex[:6]}"
-    admin = await create_admin_user(db_session, username, "Pass@1234", "admin")
-    report, _ = await create_report(db_session, "admin_filter", "audit admin_id filter test")
+    admin = AdminUser(
+        id=uuid.uuid4(),
+        username=f"auditor_{uuid.uuid4().hex[:6]}",
+        password_hash=hash_password("AuditTest!1"),
+        totp_secret="JBSWY3DPEHPK3PXP",
+        totp_enabled=True,
+        role="admin",
+        is_active=True,
+    )
+    db_session.add(admin)
+    await db_session.commit()
+
+    report, _ = await create_report(db_session, "admin_filter", "audit admin_id filter")
     await audit_service.log_action(db_session, "report.viewed", admin.id, report.id)
 
     entries, total = await audit_service.get_audit_log(db_session, admin_id=admin.id)
