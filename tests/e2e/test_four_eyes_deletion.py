@@ -133,7 +133,8 @@ def test_same_admin_cannot_confirm_own_deletion_request(
     ), f"Expected pending deletion state or self-conflict message, got: {body[:500]}"
 
     # Admin A tries to confirm — the "Confirm" button should NOT appear for the same user
-    confirm_4eyes = admin_page.locator('button.btn-danger').filter(has_text=re.compile(r"[Cc]onfirm"))
+    _confirm_re = re.compile(r"[Cc]onfirm")
+    confirm_4eyes = admin_page.locator('button.btn-danger').filter(has_text=_confirm_re)
     # Either no confirm button, or if present it should lead to an error (self-conflict)
     if confirm_4eyes.count() > 0:
         # Should be blocked — try clicking and expect error
@@ -199,7 +200,8 @@ def test_second_admin_can_confirm_deletion(
     admin_page2.wait_for_load_state("networkidle")
 
     # Admin B should see the "Confirm Deletion" button (4-eyes)
-    confirm_btn = admin_page2.locator('button.btn-danger').filter(has_text=re.compile(r"[Cc]onfirm"))
+    _confirm_re = re.compile(r"[Cc]onfirm")
+    confirm_btn = admin_page2.locator('button.btn-danger').filter(has_text=_confirm_re)
     if confirm_btn.count() == 0:
         pytest.skip("Confirm deletion button not visible for second admin — check demo seed roles")
 
