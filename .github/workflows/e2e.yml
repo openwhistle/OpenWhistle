@@ -1,0 +1,122 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        run: pip install uv==0.6.0
+
+      - name: Install E2E dependencies
+        run: |
+          uv pip install --system -e ".[dev,e2e]"
+          playwright install chromium --with-deps
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          tags: openwhistle:e2e
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Start full stack with demo data
+        run: |
+          cat > docker-compose.e2e.yml <<'EOF'
+          services:
+            app:
+              image: openwhistle:e2e
+              environment:
+                DATABASE_URL: "postgresql+asyncpg://openwhistle:openwhistle@db:5432/openwhistle"
+                REDIS_URL: "redis://redis:6379/0"
+                SECRET_KEY: "e2e-test-secret-key-not-for-production-use"
+                DEMO_MODE: "true"
+              ports:
+                - "4009:4009"
+              depends_on:
+                db:
+                  condition: service_healthy
+                redis:
+                  condition: service_healthy
+            db:
+              image: postgres:18-alpine
+              environment:
+                POSTGRES_USER: openwhistle
+                POSTGRES_PASSWORD: openwhistle
+                POSTGRES_DB: openwhistle
+              healthcheck:
+                test: ["CMD-SHELL", "pg_isready -U openwhistle -d openwhistle"]
+                interval: 5s
+                timeout: 5s
+                retries: 10
+            redis:
+              image: redis:8-alpine
+              healthcheck:
+                test: ["CMD", "redis-cli", "ping"]
+                interval: 5s
+                timeout: 5s
+                retries: 10
+          EOF
+
+          docker compose -f docker-compose.e2e.yml up -d
+
+          echo "Waiting for app to be healthy..."
+          for i in $(seq 1 30); do
+            status=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4009/health || true)
+            if [ "$status" = "200" ]; then
+              echo "App is healthy (attempt $i)"
+              break
+            fi
+            echo "Attempt $i: status=$status — waiting 3s..."
+            sleep 3
+          done
+
+          # Final health check — fail fast if not healthy
+          curl -sf http://localhost:4009/health | grep -q '"status":"ok"'
+
+      - name: Run Playwright E2E tests
+        run: |
+          pytest tests/e2e/ \
+            -m e2e \
+            --base-url http://localhost:4009 \
+            --browser chromium \
+            --headed=false \
+            -v \
+            --tb=short \
+            --no-cov
+        continue-on-error: false
+
+      - name: Upload Playwright traces on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7
+
+      - name: Tear down stack
+        if: always()
+        run: docker compose -f docker-compose.e2e.yml down -v
