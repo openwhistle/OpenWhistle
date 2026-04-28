@@ -103,7 +103,6 @@ jobs:
             -m e2e \
             --base-url http://localhost:4009 \
             --browser chromium \
-            --headed=false \
             -v \
             --tb=short \
             --no-cov
