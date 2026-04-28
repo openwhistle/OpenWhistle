@@ -333,7 +333,7 @@ async def get_report_stats(db: AsyncSession) -> dict[str, int]:
     for status_val, cnt in result.all():
         if isinstance(status_val, ReportStatus):
             counts[status_val.value] = cnt
-        else:
+        else:  # pragma: no cover — SQLAlchemy always returns typed enums
             counts[str(status_val)] = cnt
     return counts
 

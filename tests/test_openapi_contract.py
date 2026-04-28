@@ -25,10 +25,10 @@ async def test_health_response_shape(client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_health_components_present(client: AsyncClient) -> None:
-    """Health check must report db and redis component status."""
+    """Health check must report database and redis component status."""
     r = await client.get("/health")
     body = r.json()
-    assert "db" in body["components"]
+    assert "database" in body["components"]
     assert "redis" in body["components"]
 
 

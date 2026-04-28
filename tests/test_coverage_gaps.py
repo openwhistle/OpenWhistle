@@ -828,6 +828,35 @@ async def test_update_category_no_changes(db_session: AsyncSession) -> None:
     assert updated.sort_order == 40
 
 
+@pytest.mark.asyncio
+async def test_update_category_label_de(db_session: AsyncSession) -> None:
+    """update_category with label_de updates the German label."""
+    from app.services.categories import create_category, update_category
+
+    slug = f"de_cat_{uuid.uuid4().hex[:6]}"
+    cat = await create_category(db_session, slug, "EN Label", "DE Label", 50)
+    updated = await update_category(db_session, cat, label_de="Neuer DE Titel")
+    assert updated.label_de == "Neuer DE Titel"
+    assert updated.label_en == "EN Label"
+
+
+@pytest.mark.asyncio
+async def test_get_audit_log_filter_by_admin_id(db_session: AsyncSession) -> None:
+    """get_audit_log with admin_id filter applies the WHERE clause."""
+    from app.services import audit as audit_service
+    from app.services.auth import create_admin_user
+    from app.services.report import create_report
+
+    username = f"auditor_{uuid.uuid4().hex[:6]}"
+    admin = await create_admin_user(db_session, username, "Pass@1234", "admin")
+    report, _ = await create_report(db_session, "admin_filter", "audit admin_id filter test")
+    await audit_service.log_action(db_session, "report.viewed", admin.id, report.id)
+
+    entries, total = await audit_service.get_audit_log(db_session, admin_id=admin.id)
+    assert total >= 1
+    assert all(e.admin_id == admin.id for e in entries)
+
+
 # ── app/services/pdf.py — branch coverage ─────────────────────────────────────
 
 
