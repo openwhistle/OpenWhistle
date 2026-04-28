@@ -315,11 +315,12 @@ Critical user journeys to cover:
 
 ## v1.3.0 — Privacy Hardening & Attachment Security
 
-> Competitor analysis (WhistlePort, Hintbox, Formalize/WBS, PRIMA) revealed two
-> universal security features missing from OpenWhistle that every commercial tool
-> implements: metadata stripping from uploaded files and virus scanning. This
-> milestone closes those privacy and security gaps and adds key-escrow encryption
-> as a meaningful enterprise differentiator.
+> Uploaded files can carry EXIF and document metadata that inadvertently
+> identifies the whistleblower (GPS coordinates, author names, printer serial
+> numbers). Malware inside attachments is a real attack surface for internal
+> case-management staff. This milestone closes those gaps and adds key-escrow
+> encryption for organisations that need to recover data under legal compulsion
+> without storing the main encryption key on the server.
 
 ### Attachment Privacy & Security
 
@@ -415,12 +416,13 @@ Critical user journeys to cover:
 
 ---
 
-## v1.5.0 — Multi-Channel Intake & REST API
+## v1.5.0 — Multi-Channel Intake & Integration Hooks
 
-> The most significant differentiation gaps identified in the competitor analysis:
-> (1) no competitor offers a public REST API or webhooks — OpenWhistle can be
-> the first; (2) email-based report intake is a standard feature of all commercial
-> tools but absent from OpenWhistle.
+> Operators increasingly need to receive reports through channels beyond the web
+> form, and connect OpenWhistle to existing compliance tooling (SIEM, GRC
+> platforms, ticketing systems) without granting those systems access to sensitive
+> case content. This release adds intake flexibility and privacy-safe integration
+> points.
 
 ### Additional Submission Channels
 
@@ -438,22 +440,27 @@ Critical user journeys to cover:
   speaker identification while keeping the content intelligible; processing done
   server-side via `ffmpeg`
 
-### REST API & Webhooks
+### Integration Hooks
 
-- [ ] **REST API v1** — authenticated REST API for reading case metadata
-  (case number, status, category, submitted-at, assigned-to); write operations
-  for status changes and adding internal notes; JWT Bearer token authentication
-  with scoped API keys (`api_keys` table: `key_hash`, `scopes[]`, `expires_at`);
-  API keys managed from the admin settings page; full OpenAPI spec published at
-  `/api/v1/openapi.json` (separate from the admin UI app); rate-limited per key;
-  designed for SIEM/GRC integrations and custom dashboards
+- [ ] **Admin management API** — scoped REST API for administrative operations
+  that contain no sensitive report content: user management (create/disable
+  accounts), category and location management, system health; JWT Bearer token
+  authentication with scoped API keys (`api_keys` table: `key_hash`, `scopes[]`,
+  `expires_at`); API keys managed from the admin settings page; OpenAPI spec at
+  `/api/v1/openapi.json`; rate-limited per key; designed to allow GRC/ITSM tools
+  to provision OpenWhistle without admin UI access — **no case content, no
+  whistleblower-identifying data exposed via API**
+- [ ] **Aggregate statistics API** — read-only endpoint returning anonymised
+  counts (reports per period, per category, per status); suitable for feeding
+  compliance dashboards; no individual case data
 - [ ] **Outbound webhooks** — push notifications for case lifecycle events
   (`report.created`, `report.status_changed`, `report.reply_added`,
-  `report.deleted`); configurable per event type; payload is a signed JSON
-  envelope (HMAC-SHA256 signature in `X-OpenWhistle-Signature` header);
-  delivery retried up to 3 times with exponential back-off; delivery log in admin
-  UI; `WebhookEndpoint` model with `url`, `secret`, `enabled_events[]`,
-  `last_delivery_at`, `last_status_code`
+  `report.deleted`); payload contains only event type, case number, new status,
+  and timestamp — no message content, no attachments, no metadata that could
+  identify the whistleblower; configurable per event type; signed JSON envelope
+  (HMAC-SHA256 in `X-OpenWhistle-Signature`); retried up to 3× with exponential
+  back-off; delivery log in admin UI; `WebhookEndpoint` model with `url`,
+  `secret`, `enabled_events[]`, `last_delivery_at`, `last_status_code`
 - [ ] **Zapier / n8n integration guide** — `docs/integrations/` with documented
   examples connecting OpenWhistle webhooks to Zapier, n8n, and Make; no code
   changes required; purely documentation but significantly increases integration
@@ -463,10 +470,12 @@ Critical user journeys to cover:
 
 ## v1.6.0 — Compliance Expansion (LkSG, KWG, CSRD)
 
-> Competitor analysis (Hintbox, whistle.law) showed demand for compliance modules
-> beyond HinSchG. German companies increasingly need to satisfy the Lieferkettengesetz
-> (LkSG, since 2023) and financial institutions need KWG-specific reporting channels.
-> These are add-on modules that don't change the core whistleblower flow.
+> German compliance obligations extend beyond HinSchG. Companies in scope for
+> the Lieferkettengesetz (LkSG, since 2023) require a separate supply-chain
+> reporting channel; financial institutions need a KWG-compliant pathway; listed
+> companies increasingly face CSRD disclosure requirements that reference internal
+> reporting systems. These are add-on modules that don't change the core
+> whistleblower flow.
 
 ### Supply Chain Due Diligence (LkSG)
 
