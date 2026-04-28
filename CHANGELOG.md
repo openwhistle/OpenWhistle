@@ -7,6 +7,45 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-04-28
+
+### Added
+
+- **Playwright E2E test suite** (`tests/e2e/`): 13 test modules covering every
+  critical user journey — admin login (incl. MFA), setup wizard redirect behaviour,
+  whistleblower anonymous/confidential/file-attachment submissions, status page
+  with deadline display, admin workflow (acknowledge → reply → status transitions),
+  4-eyes deletion flow, language switcher persistence, PDF export download,
+  session expiry, user management RBAC, category and location management lifecycle
+- **Automated accessibility tests** (`tests/e2e/test_accessibility.py`): axe-core
+  injected into 8 pages; `run_axe` helper filters to critical/serious violations
+  and fails on any finding; CDN-unavailable skips gracefully; keyboard navigation
+  smoke-test (skip link, tab order, form labels)
+- **Locust performance test suite** (`tests/perf/locustfile.py`): three user
+  classes (`WhistleblowerUser`, `AdminUser` with TOTP login in `on_start`,
+  `StatusChecker`); configurable concurrency; `tests/perf/README.md` with
+  thresholds and run instructions
+- **OpenAPI contract tests** (`tests/test_openapi_contract.py`): validates
+  OpenAPI 3.x structure, required paths (`/health`, `/status`, `/submit`),
+  admin route auth enforcement (7 routes assert 3xx for unauthenticated
+  requests), and snapshot regression detection via `tests/fixtures/openapi_snapshot.json`
+- **E2E CI workflow** (`.github/workflows/e2e.yml`): builds `openwhistle:e2e`
+  image, starts full Docker Compose stack with `DEMO_MODE=true`, waits for
+  `/health`, runs Playwright tests with Chromium headless, uploads trace on failure
+- **Performance CI workflow** (`.github/workflows/perf.yml`): manual
+  `workflow_dispatch` with configurable users/run-time/host; uploads HTML + CSV
+  Locust artifacts
+- **Performance baseline** (`docs/performance-baseline.md`): SLO thresholds
+  (`/health` p95 < 50 ms, `/status` p95 < 200 ms, `/admin/dashboard` p95 < 400 ms)
+  and user mix ratios for reproducible benchmarks
+
+### Changed
+
+- `pyproject.toml`: new `[e2e]` and `[perf]` optional dependency groups;
+  `e2e` and `perf` pytest markers registered; mypy overrides for `playwright.*`
+  and `locust.*`; ruff `per-file-ignores` extended to cover `tests/e2e/` and
+  `tests/perf/`
+
 ## [1.0.0] — 2026-04-27
 
 ### Added
