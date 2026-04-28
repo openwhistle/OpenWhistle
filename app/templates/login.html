@@ -17,6 +17,36 @@
             <p style="font-size: 0.88rem; margin-top: 0.5rem;">{{ t('login.subtitle') }}</p>
         </div>
 
+        {% if is_demo %}
+        <div class="demo-credentials" role="note">
+            <div class="demo-credentials-header">
+                <span class="demo-badge">DEMO</span>
+                <span>Try it now — use these credentials</span>
+            </div>
+            <div class="demo-credentials-grid">
+                <div class="demo-cred-item">
+                    <span class="demo-cred-label">Username</span>
+                    <button type="button" class="demo-cred-value" onclick="document.getElementById('username').value='demo';document.getElementById('password').value='demo';" title="Click to fill">
+                        demo
+                    </button>
+                </div>
+                <div class="demo-cred-item">
+                    <span class="demo-cred-label">Password</span>
+                    <button type="button" class="demo-cred-value" onclick="document.getElementById('username').value='demo';document.getElementById('password').value='demo';" title="Click to fill">
+                        demo
+                    </button>
+                </div>
+                <div class="demo-cred-item demo-cred-full">
+                    <span class="demo-cred-label">TOTP code (next step)</span>
+                    <code class="demo-cred-code">0 0 0 0 0 0</code>
+                </div>
+            </div>
+            <button type="button" class="demo-fill-btn" onclick="document.getElementById('username').value='demo';document.getElementById('password').value='demo';this.textContent='✓ Filled';">
+                Fill credentials
+            </button>
+        </div>
+        {% endif %}
+
         {% if error %}
         <div class="alert alert-error" role="alert">{{ error }}</div>
         {% endif %}

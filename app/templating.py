@@ -22,6 +22,8 @@ templates.env.globals["brand"] = {
     "logo_url": settings.brand_logo_url,
 }
 
+templates.env.globals["is_demo"] = settings.demo_mode
+
 
 def render(
     request: Request,

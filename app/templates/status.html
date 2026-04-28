@@ -11,6 +11,37 @@
         <p>{{ t('status.form.subtitle') }}</p>
     </div>
 
+    {% if is_demo %}
+    <div class="demo-credentials" role="note" style="margin-bottom:1.5rem;">
+        <div class="demo-credentials-header">
+            <span class="demo-badge">DEMO</span>
+            <span>Try these example reports — click any row to pre-fill</span>
+        </div>
+        <div class="demo-reports-list">
+            <button type="button" class="demo-report-row"
+                onclick="document.getElementById('case_number').value='OW-DEMO-00001';document.getElementById('pin').value='demo-pin-received-00001';">
+                <code class="demo-cred-code">OW-DEMO-00001</code>
+                <span class="demo-report-status status-badge status-received">Received</span>
+            </button>
+            <button type="button" class="demo-report-row"
+                onclick="document.getElementById('case_number').value='OW-DEMO-00002';document.getElementById('pin').value='demo-pin-inreview-00002';">
+                <code class="demo-cred-code">OW-DEMO-00002</code>
+                <span class="demo-report-status status-badge status-in_review">In Review</span>
+            </button>
+            <button type="button" class="demo-report-row"
+                onclick="document.getElementById('case_number').value='OW-DEMO-00003';document.getElementById('pin').value='demo-pin-pending-00003';">
+                <code class="demo-cred-code">OW-DEMO-00003</code>
+                <span class="demo-report-status status-badge status-pending_feedback">Pending Feedback</span>
+            </button>
+            <button type="button" class="demo-report-row"
+                onclick="document.getElementById('case_number').value='OW-DEMO-00004';document.getElementById('pin').value='demo-pin-closed-00004';">
+                <code class="demo-cred-code">OW-DEMO-00004</code>
+                <span class="demo-report-status status-badge status-closed">Closed</span>
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
     {% if error %}
     <div class="alert alert-error" role="alert">{{ error }}</div>
     {% endif %}

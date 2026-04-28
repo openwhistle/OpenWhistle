@@ -1807,3 +1807,178 @@ tr:hover td { background: var(--accent-subtle); }
     flex: 1;
     min-width: 0;
 }
+
+/* ── Demo banner (global, top of page) ───────────────────────── */
+.demo-banner {
+    background: color-mix(in srgb, var(--warning) 14%, var(--bg-page));
+    border-bottom: 1.5px solid color-mix(in srgb, var(--warning) 38%, var(--border));
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-align: center;
+    padding: 0.45rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    letter-spacing: 0.01em;
+}
+
+.demo-banner-badge {
+    background: var(--warning);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    padding: 0.15rem 0.45rem;
+    border-radius: var(--radius-sm);
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+.demo-banner-link {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+}
+.demo-banner-link:hover {
+    text-decoration: underline;
+}
+
+/* ── Demo credentials box ────────────────────────────────────── */
+.demo-credentials {
+    background: color-mix(in srgb, var(--warning) 7%, var(--bg-card));
+    border: 1.5px solid color-mix(in srgb, var(--warning) 30%, var(--border));
+    border-radius: var(--radius);
+    padding: 1rem 1.1rem;
+    margin-bottom: 1.25rem;
+}
+
+.demo-credentials-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.demo-badge {
+    background: var(--warning);
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    padding: 0.12rem 0.4rem;
+    border-radius: var(--radius-sm);
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+.demo-credentials-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem 1rem;
+}
+
+.demo-cred-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.18rem;
+}
+
+.demo-cred-full {
+    grid-column: 1 / -1;
+}
+
+.demo-cred-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+.demo-cred-value {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.3rem 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s, border-color 0.15s;
+}
+.demo-cred-value:hover {
+    background: color-mix(in srgb, var(--warning) 10%, var(--bg-input));
+    border-color: var(--warning);
+}
+
+.demo-cred-code {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    color: var(--accent);
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.3rem 0.6rem;
+    display: inline-block;
+}
+
+.demo-fill-btn {
+    margin-top: 0.75rem;
+    width: 100%;
+    background: var(--warning);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 1rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+}
+.demo-fill-btn:hover {
+    background: color-mix(in srgb, var(--warning) 85%, black);
+}
+.demo-fill-btn:active {
+    transform: scale(0.98);
+}
+
+/* ── Demo reports list (status page) ─────────────────────────── */
+.demo-reports-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.demo-report-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.45rem 0.75rem;
+    cursor: pointer;
+    font-size: 0.83rem;
+    text-align: left;
+    width: 100%;
+    transition: background 0.13s, border-color 0.13s;
+}
+.demo-report-row:hover {
+    background: color-mix(in srgb, var(--warning) 10%, var(--bg-input));
+    border-color: var(--warning);
+}
+
+.demo-report-status {
+    margin-left: auto;
+    font-size: 0.72rem;
+}

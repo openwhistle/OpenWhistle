@@ -37,6 +37,16 @@
 <body>
     <a href="#main-content" class="skip-link">{{ t('a11y.skip_to_content') }}</a>
 
+    {% if is_demo %}
+    <div class="demo-banner" role="note" aria-label="Demo instance notice">
+        <span class="demo-banner-badge">DEMO</span>
+        This is a live demonstration — data resets every hour.
+        <a href="https://github.com/openwhistle/OpenWhistle" target="_blank" rel="noopener noreferrer" class="demo-banner-link">GitHub</a>
+        &middot;
+        <a href="https://openwhistle.net" target="_blank" rel="noopener noreferrer" class="demo-banner-link">openwhistle.net</a>
+    </div>
+    {% endif %}
+
     <nav class="nav" role="navigation" aria-label="{{ t('nav.aria_label') }}">
         <a href="/" class="nav-brand" aria-label="{{ brand.name }} home">
             {% if brand.logo_url %}
