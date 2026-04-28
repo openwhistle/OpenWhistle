@@ -580,10 +580,10 @@ class TestConfigV100Defaults:
 
         assert settings.default_org_slug == "default"
 
-    def test_app_version_is_1_0_0(self) -> None:
+    def test_app_version_current(self) -> None:
         from app.config import settings
 
-        assert settings.app_version == "1.0.0"
+        assert settings.app_version == "1.1.0"
 
 
 # ---------------------------------------------------------------------------
