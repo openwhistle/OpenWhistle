@@ -258,6 +258,61 @@ Critical user journeys to cover:
 
 ---
 
+## v1.2.0 — Test Quality & CI Hardening
+
+> Goal: close the gaps identified in the v1.1.0 test quality review.
+> All items are improvements to the test infrastructure — no user-facing
+> behaviour changes are planned for this milestone.
+
+### E2E & Browser Coverage
+
+- [ ] **Firefox smoke-test** — run the critical-path E2E subset (login,
+  submission, status, session expiry) against Firefox via a second
+  `pytest-playwright` job in `e2e.yml`; ensures no browser-specific regressions
+- [ ] **Isolate reply tests from demo seed data** — `test_admin_reply_appears_in_thread`
+  currently mutates the shared demo report `OW-DEMO-00002`; refactor to create a
+  throwaway report (same pattern as `test_four_eyes_deletion.py`) so subsequent
+  tests are not affected by leftover reply messages
+- [ ] **Replace silent skips with explicit failures** — tests that `pytest.skip`
+  when critical demo data is missing (e.g., `OW-DEMO-00002 not found`) should
+  `pytest.fail` instead, so a broken demo seed surfaces as a test failure rather
+  than a misleading "skipped" result
+
+### Accessibility
+
+- [ ] **Deduplicate axe-core injection** — `run_axe` and `run_axe_warnings` each
+  call `page.add_script_tag`; the second call is a no-op but adds noise; refactor
+  `_check_axe` to inject once and run both filter passes in a single `page.evaluate`
+  call
+- [ ] **Promote color-contrast to blocking** — fix the remaining `color-contrast`
+  CSS violations flagged as "serious" by axe-core (footer link text, secondary
+  badge text) and promote the check from warning to CI-blocking
+
+### Performance
+
+- [ ] **Automatic performance regression gate** — add a `--csv` output pass to
+  the Locust run and a post-run Python script that reads the CSV and exits non-zero
+  if p95 exceeds the SLO thresholds from `docs/performance-baseline.md`; wire
+  into `perf.yml` so the workflow fails on regression
+- [ ] **Complete wizard flow in `WhistleblowerUser`** — the Locust user class
+  currently issues a simplified POST; replace with a full 6-step session
+  (mode → category → description → review → submit) to measure realistic
+  end-to-end latency including Redis session reads
+
+### API Contract & Unit Tests
+
+- [ ] **Remove version-string unit test** — `test_app_version_current` in
+  `tests/test_v100.py` breaks at every release and provides no safety net;
+  remove it; the version is already exercised by the `/health` endpoint test
+  which asserts the response body contains a valid semver string
+- [ ] **OpenAPI contract via FastAPI `test_client`** — OpenAPI is disabled in
+  production (`openapi_url=None`) but can be enabled in the test app factory;
+  add a `conftest.py` fixture that creates a second `TestClient` with OpenAPI
+  enabled and assert all expected route `operationId`s are present, catching
+  accidental route renames without exposing the schema in production
+
+---
+
 ## SEO & Marketing (ongoing, all versions)
 
 > Goal: rank for "Whistleblower Tool kostenlos", "Whistleblower Tool Open Source",
