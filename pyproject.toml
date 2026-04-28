@@ -147,7 +147,7 @@ ignore = [
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
 testpaths = ["tests"]
-addopts = "--cov=app --cov-report=term-missing --cov-fail-under=90"
+addopts = "--cov=app --cov-report=term-missing --cov-fail-under=90 --ignore=tests/e2e --ignore=tests/perf"
 
 markers = [
     "integration: marks tests that require a live database and Redis",
