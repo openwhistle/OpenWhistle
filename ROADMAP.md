@@ -313,6 +313,206 @@ Critical user journeys to cover:
 
 ---
 
+## v1.3.0 — Privacy Hardening & Attachment Security
+
+> Competitor analysis (WhistlePort, Hintbox, Formalize/WBS, PRIMA) revealed two
+> universal security features missing from OpenWhistle that every commercial tool
+> implements: metadata stripping from uploaded files and virus scanning. This
+> milestone closes those privacy and security gaps and adds key-escrow encryption
+> as a meaningful enterprise differentiator.
+
+### Attachment Privacy & Security
+
+- [ ] **Metadata stripping on upload** — strip all EXIF, XMP, IPTC, and Office
+  document metadata (author, device, GPS, revision history) from every uploaded
+  file before storage; use `exiftool` or `python-exiftool` wrapped in
+  `asyncio.to_thread`; original file is discarded, only the stripped version is
+  stored; no metadata ever reaches the admin or is stored in the database
+- [ ] **Virus scanning of attachments** — integrate ClamAV (open-source) as an
+  optional scanning backend (`CLAMAV_ENABLED=true`, `CLAMAV_HOST`, `CLAMAV_PORT`);
+  files are scanned before storage; infected files are rejected with a clear
+  error message; scan result recorded in the attachment audit log; falls back
+  to accept-without-scan when ClamAV is unavailable (configurable behaviour)
+- [ ] **File type allowlist enforcement** — server-side MIME-type validation
+  (not just extension check) using `python-magic`; configurable allowlist via
+  `ALLOWED_MIME_TYPES` env var; rejects executables, scripts, and archive
+  formats by default
+
+### Encryption Key Control
+
+- [ ] **Bring Your Own Key (BYOK) / key escrow** — optional mode where the
+  operator provides a separate `ENCRYPTION_KEY` env var to wrap the MEK instead
+  of deriving it from `SECRET_KEY`; documented pattern for operators who want
+  the encryption key stored outside the deployment environment (e.g., in a
+  hardware security module or a separate secrets manager); no SaaS provider
+  (including the operator's own Docker host) can decrypt reports without the
+  external key; `BYOK_ENABLED=true` env var activates key rotation warnings in
+  the admin UI
+
+### Access Control
+
+- [ ] **IP allowlist for admin routes** — `ADMIN_IP_ALLOWLIST` env var accepts
+  CIDR notation (`192.168.1.0/24,10.0.0.0/8`); requests from outside the list
+  receive 403; empty/unset means no restriction (backward-compatible default);
+  implemented as FastAPI middleware before route resolution; respects
+  `TRUSTED_PROXY_DEPTH` for correct IP extraction behind load balancers
+
+---
+
+## v1.4.0 — Advanced Case Management
+
+> Features derived from Hintbox, Formalize/WBS, and whistle.law competitive
+> analysis. These address workflows that compliance officers and case managers
+> in larger organizations consistently need but are missing from OpenWhistle.
+
+### Case Handling Workflow
+
+- [ ] **Case redaction** — admin can redact (replace with `[REDACTED]`) any
+  text passage in a report description or message before sharing the case with
+  an external party; redaction is recorded in the audit log; original content
+  is preserved in an encrypted redaction-log visible only to superadmin
+- [ ] **Case anonymization / pseudonymization** — one-click action to replace
+  all personal identifiers in a case with placeholders (name → `[Person A]`,
+  etc.); designed for sharing with external auditors or regulatory bodies;
+  creates a copy of the case content — does not overwrite the original
+- [ ] **Per-case internal task management** — tasks (description, assignee,
+  due date, status: open / in progress / done) attached to a specific report;
+  visible only to the admin team; deadline for tasks tracked separately from
+  the HinSchG statutory deadlines; `AdminTask` model with `report_id`,
+  `assigned_to_id`, `due_date`, `completed_at`
+- [ ] **Case-level access control** — ability to restrict specific cases to a
+  named subset of admin users (in addition to global role-based access);
+  useful for particularly sensitive reports where need-to-know should be
+  limited; `CaseRestriction` model linking `report_id` to a set of allowed
+  `admin_user_id`s; users outside the set see the case number in the dashboard
+  but cannot open the detail view
+
+### External Collaboration
+
+- [ ] **External advisor access** — scoped, time-limited guest accounts for
+  external parties (law firms, auditors, external ombudspersons); `ExternalAdvisor`
+  model with `email`, `access_token` (GUID), `expires_at`, `allowed_report_ids[]`;
+  access via a separate URL (`/advisor/{token}`) without a full admin login;
+  activity logged in the audit trail; advisor can read case content and post
+  internal notes but cannot change status or delete; access revocable instantly
+- [ ] **Communication templates** — pre-defined message templates that admins
+  can insert when replying to whistleblowers or sending notifications; templates
+  stored per organization (multi-tenant aware); helps maintain consistent,
+  legally reviewed language across case handlers; `MessageTemplate` model with
+  `title`, `body_de`, `body_en`, `body_fr`
+
+### Reporting & Transparency
+
+- [ ] **Transparency report generation** — one-click annual compliance report
+  (PDF + JSON) showing: total reports received, reports by category, reports by
+  status at year-end, average processing time, SLA compliance rate, percentage
+  closed within statutory deadlines; required by HinSchG §12 Abs. 3 for
+  internal documentation; downloadable from `/admin/stats`
+- [ ] **Whistleblower sees handler department** — the status page shows the
+  department/category label of the case handler team (not the handler's name);
+  provides transparency without de-anonymizing internal staff; configurable
+  per-organization (`SHOW_HANDLER_DEPARTMENT=true`)
+
+---
+
+## v1.5.0 — Multi-Channel Intake & REST API
+
+> The most significant differentiation gaps identified in the competitor analysis:
+> (1) no competitor offers a public REST API or webhooks — OpenWhistle can be
+> the first; (2) email-based report intake is a standard feature of all commercial
+> tools but absent from OpenWhistle.
+
+### Additional Submission Channels
+
+- [ ] **Email intake channel** — inbound email forwarded to a configured mailbox
+  (`INTAKE_EMAIL_ADDRESS`) is parsed by a background job and converted to a
+  pending report; attachments are extracted and stored; a case number + PIN is
+  sent back to the sender only if the sender provided a return address (anonymous
+  senders receive no reply); admin can configure per-organization intake addresses
+  in multi-tenant deployments; uses `aiosmtplib` or IMAP polling
+- [ ] **Voice recording channel** — whistleblowers can record a voice message
+  directly in the browser (Web Audio API, MediaRecorder) and submit it as an
+  attachment; stored as an `.ogg` or `.webm` file; admins can play it back in
+  the case detail view; optional **voice-pitch shifting** (configurable via
+  `VOICE_DISTORTION_ENABLED=true`) applies a simple frequency shift to prevent
+  speaker identification while keeping the content intelligible; processing done
+  server-side via `ffmpeg`
+
+### REST API & Webhooks
+
+- [ ] **REST API v1** — authenticated REST API for reading case metadata
+  (case number, status, category, submitted-at, assigned-to); write operations
+  for status changes and adding internal notes; JWT Bearer token authentication
+  with scoped API keys (`api_keys` table: `key_hash`, `scopes[]`, `expires_at`);
+  API keys managed from the admin settings page; full OpenAPI spec published at
+  `/api/v1/openapi.json` (separate from the admin UI app); rate-limited per key;
+  designed for SIEM/GRC integrations and custom dashboards
+- [ ] **Outbound webhooks** — push notifications for case lifecycle events
+  (`report.created`, `report.status_changed`, `report.reply_added`,
+  `report.deleted`); configurable per event type; payload is a signed JSON
+  envelope (HMAC-SHA256 signature in `X-OpenWhistle-Signature` header);
+  delivery retried up to 3 times with exponential back-off; delivery log in admin
+  UI; `WebhookEndpoint` model with `url`, `secret`, `enabled_events[]`,
+  `last_delivery_at`, `last_status_code`
+- [ ] **Zapier / n8n integration guide** — `docs/integrations/` with documented
+  examples connecting OpenWhistle webhooks to Zapier, n8n, and Make; no code
+  changes required; purely documentation but significantly increases integration
+  reach for non-technical operators
+
+---
+
+## v1.6.0 — Compliance Expansion (LkSG, KWG, CSRD)
+
+> Competitor analysis (Hintbox, whistle.law) showed demand for compliance modules
+> beyond HinSchG. German companies increasingly need to satisfy the Lieferkettengesetz
+> (LkSG, since 2023) and financial institutions need KWG-specific reporting channels.
+> These are add-on modules that don't change the core whistleblower flow.
+
+### Supply Chain Due Diligence (LkSG)
+
+- [ ] **LkSG reporting channel** — dedicated submission form variant for supply
+  chain violations (§2 LkSG violation categories pre-configured as categories:
+  forced labour, child labour, environmental violations, discrimination,
+  excessive working hours, etc.); separate from the HinSchG channel; reports
+  routed to a configurable LkSG case manager role; LkSG-specific deadline
+  tracking (§12 LkSG: receipt confirmed within 7 days; decision within 3 months;
+  extension to 6 months documented); `LKSG_ENABLED=true` env var activates the
+  module
+- [ ] **LkSG transparency report** — structured annual report template as required
+  by §12 Abs. 4 LkSG (public disclosure of complaints received, investigations
+  conducted, measures taken); downloadable PDF; `LKSG_TRANSPARENCY_YEAR` config
+
+### Financial Sector (KWG / MaRisk)
+
+- [ ] **KWG / MaRisk whistleblowing channel** — separate category set pre-configured
+  for banking-regulatory violations (§25a KWG, MaRisk AT 8.5: reporting channel
+  for employees to report risk management violations, fraud, AML breaches);
+  routed to Compliance/Audit role; `KWG_ENABLED=true` env var; dedicated section
+  in the admin nav
+
+### Sustainability Reporting (CSRD)
+
+- [ ] **CSRD / ESG grievance channel** — intake form for ESG-related reports
+  (environmental impact, human rights, social violations) as required by the
+  Corporate Sustainability Reporting Directive (CSRD) for large companies from
+  2025; categorised by ESRS topic; routes to ESG officer role;
+  `CSRD_ENABLED=true` env var
+
+### Compliance Documentation
+
+- [ ] **ISO 37002 alignment documentation** — `docs/iso37002.md` mapping every
+  ISO 37002:2021 clause to the corresponding OpenWhistle feature or config
+  option; provides operators with a ready-made compliance justification for
+  auditors; updated per release
+- [ ] **30-language support** — extend i18n from 3 (EN, DE, FR) to 30 languages
+  covering all official EU languages (ES, IT, PL, NL, PT, SV, DA, FI, CS, SK,
+  HU, RO, BG, HR, SL, ET, LV, LT, MT, GA, EL, and formal/informal variants for
+  DE/AT/CH); machine-translated initial pass reviewed by native speakers via
+  community contributions; all translation files in `app/locales/{lang}.json`
+  following the existing 388-key schema
+
+---
+
 ## SEO & Marketing (ongoing, all versions)
 
 > Goal: rank for "Whistleblower Tool kostenlos", "Whistleblower Tool Open Source",
