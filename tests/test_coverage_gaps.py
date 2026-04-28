@@ -861,7 +861,8 @@ async def test_get_audit_log_filter_by_admin_id(db_session: AsyncSession) -> Non
     await db_session.commit()
 
     report, _ = await create_report(db_session, "admin_filter", "audit admin_id filter")
-    await audit_service.log_action(db_session, "report.viewed", admin.id, report.id)
+    await audit_service.log(db_session, admin, "report.viewed", report_id=report.id)
+    await db_session.commit()
 
     entries, total = await audit_service.get_audit_log(db_session, admin_id=admin.id)
     assert total >= 1
