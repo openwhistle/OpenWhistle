@@ -146,6 +146,117 @@ feedback — open an issue to discuss anything here.
 
 ---
 
+## v1.1.0 — Complete Test Coverage & Quality Assurance
+
+> Goal: fill every gap left by the unit/integration/HTTP-level suite.
+> All existing tests use `httpx.AsyncClient` against a real DB — they prove
+> the API works but never open a browser, never touch JavaScript, and never
+> exercise real user journeys end-to-end. This milestone adds the missing
+> layers: Playwright E2E, automated accessibility, performance baseline,
+> and API contract validation.
+
+### E2E Tests — Playwright (Python)
+
+Test infrastructure:
+- `playwright` + `pytest-playwright` + `pytest-base-url` added to dev deps
+- New `tests/e2e/` directory; separate `pytest` markers (`e2e`)
+- CI job `e2e` starts the full Docker Compose stack (app + db + redis) with
+  demo seed data and runs the suite against `http://localhost:8000`
+- `conftest.py` provides: `base_url`, `admin_page` fixture (logs in, completes
+  MFA with demo TOTP secret), `whistleblower_page` fixture (fresh browser context)
+- Chromium headless is the primary target; Firefox smoke-test via second CI job
+- All E2E tests tagged `@pytest.mark.e2e` and excluded from the unit/integration
+  run; coverage threshold `--cov-fail-under=90` remains on the non-E2E suite
+
+Critical user journeys to cover:
+
+- [ ] **Setup wizard E2E** — fresh DB; load `/setup`; fill username/password;
+  verify QR code is rendered; enter TOTP from `pyotp`; assert redirect to login
+- [ ] **Admin login E2E** — enter credentials; submit; reach MFA page; enter TOTP;
+  assert dashboard renders with case count; assert session cookie is set
+- [ ] **Whistleblower full submission — anonymous mode** — navigate to `/submit`;
+  proceed through all 6 steps (mode → skip location → category → description →
+  skip attachment → review); submit; assert success page shows case number and PIN
+- [ ] **Whistleblower full submission — confidential mode** — same as above but
+  enter name and contact at step 1; assert encrypted fields visible to admin
+- [ ] **Whistleblower full submission — with file attachment** — upload a PDF at
+  the attachment step; assert filename appears on review page; assert attachment
+  downloadable by admin
+- [ ] **Whistleblower status page** — enter case number + PIN from previous test;
+  assert status badge, 7-day and 3-month deadline counters visible
+- [ ] **Admin case acknowledgement** — open report detail; click Acknowledge;
+  assert status changes to `in_review`; assert 7-day badge disappears
+- [ ] **Admin reply + whistleblower reads reply** — admin posts a reply; open
+  whistleblower status page; assert reply text appears in thread
+- [ ] **Admin status transitions** — cycle `in_review → pending_feedback → closed`;
+  assert each transition reflected in dashboard badge; assert invalid transition
+  (e.g. `closed → in_review`) is blocked with an error message
+- [ ] **4-eyes deletion E2E** — admin A requests deletion; assert pending-delete
+  badge; admin A tries to confirm — assert 409 error message; admin B confirms —
+  assert report gone from dashboard
+- [ ] **Language switcher E2E** — click DE in nav; assert page title contains
+  German text; click FR; assert French; click EN; assert English; assert
+  selection persists on page reload (cookie/localStorage)
+- [ ] **PDF download E2E** — click export PDF button; assert download response
+  is `application/pdf` with non-empty body; no ciphertext visible in PDF text
+- [ ] **Session expiry warning E2E** — mock session close to near-expiry;
+  assert warning banner appears; click extend; assert banner disappears
+- [ ] **Admin user management E2E** — create new `case_manager` user; login as
+  that user; assert no access to `/admin/users` or `/admin/categories`
+- [ ] **Category management E2E** — create a category; deactivate it; assert it
+  no longer appears in the whistleblower submission form
+- [ ] **Location management E2E** — create a location; assert it appears at
+  submission step 2 (location selector shown only when active locations exist)
+- [ ] **Retention admin page E2E** — navigate to `/admin/retention`; assert
+  current settings visible; assert save action returns success flash
+
+### Accessibility Tests (axe-core via Playwright)
+
+- [ ] **axe-core integration** — `axe-playwright` (Python) added to dev deps;
+  `check_accessibility(page)` helper that calls `AxeBuilder(page).analyze()` and
+  fails on `violations` with `impact in ("critical", "serious")`
+- [ ] **Axe: submit form pages** — run on every step of the multi-step wizard
+  (6 steps × 2 modes); zero critical/serious violations
+- [ ] **Axe: status page** — run on whistleblower status page with an open report
+- [ ] **Axe: admin dashboard** — run on `/admin/dashboard` with demo data loaded
+- [ ] **Axe: admin report detail** — run on `/admin/reports/{id}` with messages,
+  notes, and attachments present
+- [ ] **Axe: login and MFA pages** — run on `/admin/login` and `/admin/login/mfa`
+- [ ] **Axe: language variants** — run axe on DE and FR versions of submit and
+  status page; verify no new violations introduced by translated content
+- [ ] **Keyboard navigation smoke-test** — verify skip-link, tab order through
+  form steps, and modal dialogs are keyboard-accessible in Playwright
+
+### Performance Baseline (Locust)
+
+- [ ] **Locust installed as dev dependency**; `tests/perf/locustfile.py` with
+  three user classes: `WhistleblowerUser`, `AdminUser`, `StatusChecker`
+- [ ] **Whistleblower submission load** — 50 concurrent users; each completes the
+  full 6-step form submission; target: p95 < 800 ms per step, p99 < 2 s end-to-end
+- [ ] **Admin dashboard load** — 20 concurrent admin sessions polling the
+  dashboard; target: p95 < 300 ms
+- [ ] **Status page load** — 100 concurrent requests to `/status` with valid
+  credentials; target: p95 < 200 ms
+- [ ] **Performance CI job** — runs `locust --headless -u 20 -r 5 --run-time 60s`
+  in Docker Compose; fails if p95 > configured thresholds; results saved as
+  CI artifact (HTML report)
+- [ ] **Baseline documented** — `docs/performance-baseline.md` records the first
+  official numbers; future regressions measured against this
+
+### API Contract Tests
+
+- [ ] **OpenAPI schema export** — `tests/test_openapi_schema.py` fetches
+  `/openapi.json` and validates it is a valid OpenAPI 3.x document; asserts
+  all expected operation IDs are present; catches accidental route renames
+- [ ] **Response schema validation** — for every JSON-returning endpoint, assert
+  the response body matches the declared Pydantic schema (using `jsonschema`
+  against the resolved `$ref` tree from `/openapi.json`)
+- [ ] **Breaking-change detection** — record the current `/openapi.json` as
+  `tests/fixtures/openapi_snapshot.json`; test fails if a field is removed or
+  a type changes; additions are allowed without failure
+
+---
+
 ## SEO & Marketing (ongoing, all versions)
 
 > Goal: rank for "Whistleblower Tool kostenlos", "Whistleblower Tool Open Source",
