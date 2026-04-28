@@ -390,18 +390,22 @@ async def unlink_report(
     current_user: AdminUser = Depends(get_current_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
+    report = await report_service.get_report_by_id(db, report_id)
+    if not report:
+        raise HTTPException(status_code=404)
     link = await report_service.get_link(db, link_id)
     if not link:
         raise HTTPException(status_code=404)
-    if link.report_id_a != report_id and link.report_id_b != report_id:
+    if link.report_id_a != report.id and link.report_id_b != report.id:
         raise HTTPException(status_code=404)
 
     await report_service.unlink_cases(db, link)
     await audit_service.log(
-        db, current_user, AuditAction.REPORT_LINK_REMOVED, report_id=report_id,
+        db, current_user, AuditAction.REPORT_LINK_REMOVED, report_id=report.id,
     )
     await db.commit()
-    return RedirectResponse(f"/admin/reports/{report_id}#links", status_code=302)
+    # Use report.id (DB-sourced) for the redirect — not the user-supplied path parameter
+    return RedirectResponse(f"/admin/reports/{report.id}#links", status_code=302)
 
 
 # ── 4-eyes deletion ────────────────────────────────────────────────
@@ -479,10 +483,11 @@ async def cancel_delete(
 
     await report_service.cancel_deletion_request(db, dr)
     await audit_service.log(
-        db, current_user, AuditAction.REPORT_DELETE_CANCELLED, report_id=report_id,
+        db, current_user, AuditAction.REPORT_DELETE_CANCELLED, report_id=report.id,
     )
     await db.commit()
-    return RedirectResponse(f"/admin/reports/{report_id}", status_code=302)
+    # Use report.id (DB-sourced) for the redirect — not the user-supplied path parameter
+    return RedirectResponse(f"/admin/reports/{report.id}", status_code=302)
 
 
 # ── PDF export ─────────────────────────────────────────────────────
