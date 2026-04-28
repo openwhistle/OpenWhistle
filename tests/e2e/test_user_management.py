@@ -32,8 +32,8 @@ def test_create_new_user(admin_page: Page, base_url: str) -> None:
     # Fill the add-user form
     admin_page.fill('input[name="username"]', _TEST_USER)
     admin_page.fill('input[name="password"]', _TEST_PASSWORD)
-    # Select a role if available
-    role_select = admin_page.locator('select[name="role"]')
+    # Select a role — use the add-form's specific #new-role to avoid matching per-user selects
+    role_select = admin_page.locator('#new-role')
     if role_select.count() > 0:
         role_select.select_option("case_manager")
 

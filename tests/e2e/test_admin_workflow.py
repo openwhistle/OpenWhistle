@@ -4,6 +4,8 @@ Uses the demo admin account and pre-seeded demo reports.
 """
 from __future__ import annotations
 
+import re
+
 import pytest
 from playwright.sync_api import Page
 
@@ -75,7 +77,7 @@ def test_admin_reply_appears_in_thread(admin_page: Page, base_url: str) -> None:
         pytest.skip("Reply textarea not visible — report may be closed")
     unique_reply = f"E2E test reply {int(time.time())}"
     reply_area.fill(unique_reply)
-    admin_page.locator('button[type="submit"]').filter(has_text_regex=r"[Ss]end|[Rr]eply|[Ss]ubmit|OK").first.click()
+    admin_page.locator('button[type="submit"]').filter(has_text=re.compile(r"[Ss]end|[Rr]eply|[Ss]ubmit|OK")).first.click()
     admin_page.wait_for_load_state("networkidle")
     # The reply should appear in the thread
     body = admin_page.content()

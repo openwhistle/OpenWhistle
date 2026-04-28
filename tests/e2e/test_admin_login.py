@@ -56,8 +56,8 @@ def test_wrong_totp_shows_error(page: Page, base_url: str) -> None:
     page.fill('input[name="password"]', DEMO_ADMIN_PASSWORD)
     page.click("button.btn-primary")
     page.wait_for_selector('input[name="totp_code"]')
-    # Submit a clearly wrong TOTP code
-    page.fill('input[name="totp_code"]', "000000")
+    # Submit a clearly wrong TOTP code (demo mode accepts "000000", so use a different code)
+    page.fill('input[name="totp_code"]', "111111")
     page.click("button.btn-primary")
     page.wait_for_load_state("networkidle")
     # Should not reach dashboard

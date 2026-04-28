@@ -36,8 +36,8 @@ def test_invalid_credentials_show_error(page: Page, base_url: str) -> None:
         indicator in body.lower()
         for indicator in ["invalid", "error", "not found", "incorrect", "wrong"]
     ), "No error message shown for invalid credentials"
-    # Must not show a real report
-    assert "OW-FAKE-99999" not in body or "panel-header" not in body
+    # Must not show report details (progress-steps only appears on successful lookup)
+    assert "progress-steps" not in body, "Report details shown despite invalid credentials"
 
 
 def test_valid_credentials_show_report(page: Page, base_url: str) -> None:

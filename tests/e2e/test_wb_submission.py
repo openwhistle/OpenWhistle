@@ -47,8 +47,8 @@ def test_submit_page_loads(page: Page, base_url: str) -> None:
     page.goto(f"{base_url}/submit")
     page.wait_for_load_state("networkidle")
     assert "OpenWhistle" in page.title()
-    # Step 1 mode cards should be visible
-    expect(page.locator('input[name="submission_mode"]').first).to_be_visible()
+    # Mode card labels are visible (underlying radio inputs are CSS-hidden for styling)
+    expect(page.locator('label.mode-card').first).to_be_visible()
 
 
 def test_anonymous_submission_full_wizard(page: Page, base_url: str) -> None:
@@ -56,8 +56,8 @@ def test_anonymous_submission_full_wizard(page: Page, base_url: str) -> None:
     page.goto(f"{base_url}/submit")
     page.wait_for_load_state("networkidle")
 
-    # Step 1: select anonymous mode (it is the default)
-    page.check('input[name="submission_mode"][value="anonymous"]')
+    # Step 1: select anonymous mode — radio inputs are CSS-hidden; click the label card
+    page.locator('label[for="mode-anonymous"]').click()
     _advance_step(page)
 
     # Step 2 (location — conditional): skip if present
@@ -113,9 +113,9 @@ def test_confidential_submission_full_wizard(page: Page, base_url: str) -> None:
     page.goto(f"{base_url}/submit")
     page.wait_for_load_state("networkidle")
 
-    # Step 1: select confidential mode
-    page.check('input[name="submission_mode"][value="confidential"]')
-    # The confidential fields should become visible
+    # Step 1: select confidential mode — click the label card (radio inputs are CSS-hidden)
+    page.locator('label[for="mode-confidential"]').click()
+    # The confidential fields should become visible (JS toggles on change event)
     confidential_fields = page.locator("#confidential-fields")
     expect(confidential_fields).to_be_visible()
     page.fill('input[name="confidential_name"]', "E2E Test Submitter")
@@ -175,8 +175,8 @@ def test_submission_with_file_attachment(page: Page, base_url: str) -> None:
     page.goto(f"{base_url}/submit")
     page.wait_for_load_state("networkidle")
 
-    # Step 1: anonymous mode
-    page.check('input[name="submission_mode"][value="anonymous"]')
+    # Step 1: anonymous mode — click label card (radio inputs are CSS-hidden)
+    page.locator('label[for="mode-anonymous"]').click()
     _advance_step(page)
 
     # Step 2 (location — conditional): skip if present
