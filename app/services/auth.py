@@ -14,6 +14,7 @@ from app.models.user import AdminUser
 
 _SESSION_PREFIX = "openwhistle:session:"
 _TOTP_PENDING_PREFIX = "openwhistle:totp_pending:"
+_TOTP_SETUP_PREFIX = "openwhistle:totp_setup:"
 
 
 def hash_password(password: str) -> str:
@@ -100,6 +101,26 @@ async def store_totp_pending(redis: Redis, temp_token: str, user_id: str) -> Non
 async def consume_totp_pending(redis: Redis, temp_token: str) -> str | None:
     """Consume a TOTP-pending token and return the user_id, or None if expired."""
     key = f"{_TOTP_PENDING_PREFIX}{temp_token}"
+    user_id: str | None = await redis.getdel(key)
+    return user_id
+
+
+async def store_totp_setup_pending(redis: Redis, temp_token: str, user_id: str) -> None:
+    """Store a temporary token for first-time TOTP setup (10 min expiry)."""
+    key = f"{_TOTP_SETUP_PREFIX}{temp_token}"
+    await redis.setex(key, 600, user_id)
+
+
+async def peek_totp_setup_pending(redis: Redis, temp_token: str) -> str | None:
+    """Peek at a TOTP-setup token without consuming it."""
+    key = f"{_TOTP_SETUP_PREFIX}{temp_token}"
+    user_id: str | None = await redis.get(key)
+    return user_id
+
+
+async def consume_totp_setup_pending(redis: Redis, temp_token: str) -> str | None:
+    """Consume a TOTP-setup token and return the user_id, or None if expired."""
+    key = f"{_TOTP_SETUP_PREFIX}{temp_token}"
     user_id: str | None = await redis.getdel(key)
     return user_id
 

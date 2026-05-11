@@ -15,10 +15,11 @@ from app.csrf import validate_csrf
 from app.database import get_db
 from app.models.user import AdminUser
 from app.redis_client import get_redis
+from app.services import audit as audit_service
 from app.services import auth as auth_service
 from app.services import oidc as oidc_service
 from app.services import rate_limit as rl
-from app.services.mfa import verify_demo_totp, verify_totp
+from app.services.mfa import generate_qr_code_base64, verify_demo_totp, verify_totp
 from app.templating import render
 
 router = APIRouter(prefix="/admin")
@@ -100,6 +101,11 @@ async def login_post(
                 "error": "This account has been deactivated.",
             }), status_code=401)
 
+        if not user.totp_enabled:
+            setup_token = secrets.token_urlsafe(32)
+            await auth_service.store_totp_setup_pending(redis, setup_token, str(user.id))
+            return RedirectResponse(f"/admin/mfa/setup?token={setup_token}", status_code=302)
+
         temp_token = secrets.token_urlsafe(32)
         await auth_service.store_totp_pending(redis, temp_token, str(user.id))
         return render(request, "login_mfa.html", {
@@ -125,6 +131,11 @@ async def login_post(
         return render(request, "login.html", _login_ctx({
             "error": "This account uses Single Sign-On. Please use the SSO button.",
         }))
+
+    if not user.totp_enabled:
+        setup_token = secrets.token_urlsafe(32)
+        await auth_service.store_totp_setup_pending(redis, setup_token, str(user.id))
+        return RedirectResponse(f"/admin/mfa/setup?token={setup_token}", status_code=302)
 
     temp_token = secrets.token_urlsafe(32)
     await auth_service.store_totp_pending(redis, temp_token, str(user.id))
@@ -182,6 +193,84 @@ async def login_mfa_post(
     if db_user:
         db_user.last_login_at = datetime.now(UTC)
         await db.commit()
+
+    response = RedirectResponse("/admin/dashboard", status_code=302)
+    response.set_cookie(
+        key="ow_session",
+        value=token,
+        httponly=True,
+        samesite="lax",
+        secure=not settings.demo_mode,
+        max_age=settings.access_token_expire_minutes * 60,
+    )
+    return response
+
+
+@router.get("/mfa/setup", response_class=HTMLResponse, response_model=None)
+async def mfa_setup_get(
+    request: Request,
+    token: str | None = None,
+    redis: Redis = Depends(get_redis),
+    db: AsyncSession = Depends(get_db),
+) -> HTMLResponse | RedirectResponse:
+    if not token:
+        return RedirectResponse("/admin/login", status_code=302)
+
+    user_id = await auth_service.peek_totp_setup_pending(redis, token)
+    if not user_id:
+        return RedirectResponse("/admin/login", status_code=302)
+
+    user = await auth_service.get_user_by_id(db, user_id)
+    if not user:
+        return RedirectResponse("/admin/login", status_code=302)
+
+    qr_b64 = generate_qr_code_base64(user.totp_secret, user.username)
+    return render(request, "login_mfa_setup.html", {
+        "temp_token": token,
+        "qr_b64": qr_b64,
+        "totp_secret": user.totp_secret,
+        "username": user.username,
+    })
+
+
+@router.post("/mfa/setup", response_class=HTMLResponse, response_model=None)
+async def mfa_setup_post(
+    request: Request,
+    totp_code: str = Form(...),
+    temp_token: str = Form(...),
+    redis: Redis = Depends(get_redis),
+    db: AsyncSession = Depends(get_db),
+    _csrf: None = Depends(validate_csrf),
+) -> HTMLResponse | RedirectResponse:
+    user_id = await auth_service.consume_totp_setup_pending(redis, temp_token)
+    if not user_id:
+        return RedirectResponse("/admin/login", status_code=302)
+
+    user = await auth_service.get_user_by_id(db, user_id)
+    if not user:
+        return RedirectResponse("/admin/login", status_code=302)
+
+    if not verify_totp(user.totp_secret, totp_code):
+        new_setup_token = secrets.token_urlsafe(32)
+        await auth_service.store_totp_setup_pending(redis, new_setup_token, user_id)
+        qr_b64 = generate_qr_code_base64(user.totp_secret, user.username)
+        return render(request, "login_mfa_setup.html", {
+            "temp_token": new_setup_token,
+            "qr_b64": qr_b64,
+            "totp_secret": user.totp_secret,
+            "username": user.username,
+            "error": "Invalid code. Please scan the QR code and try again.",
+        })
+
+    user.totp_enabled = True
+    await audit_service.log(db, user, audit_service.AuditAction.AUTH_TOTP_SETUP)
+    await db.commit()
+
+    token = auth_service.create_access_token(str(user.id), role=user.role.value)
+    await auth_service.store_session(redis, str(user.id), token)
+
+    user.last_login_at = datetime.now(UTC)
+    await db.commit()
 
     response = RedirectResponse("/admin/dashboard", status_code=302)
     response.set_cookie(
