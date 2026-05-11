@@ -401,7 +401,7 @@ async def submit_post(
         from app.services.crypto import encrypt
 
         mode = SubmissionMode(state.get("submission_mode", "anonymous"))
-        loc_id_raw = state.get("location_id")
+        loc_id_raw = state.get("location_id") if has_locations else None
         report_loc_uuid: uuid.UUID | None = uuid.UUID(loc_id_raw) if loc_id_raw else None
 
         conf_name_enc: str | None = None
