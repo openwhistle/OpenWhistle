@@ -340,7 +340,7 @@
             <div class="review-row">
                 <span class="review-label">{{ t('submit.form.category') }}</span>
                 <span class="review-value">
-                    {% for cat in categories %}{% if cat.slug == state.get('category') %}{{ cat.label_en if lang == 'en' else cat.label_de }}{% endif %}{% endfor %}
+                    {% for cat in categories %}{% if cat.slug == state.get('category') %}{{ cat.label_de if lang == 'de' else cat.label_en }}{% endif %}{% endfor %}
                 </span>
             </div>
 

@@ -329,6 +329,7 @@
   "nav.aria_label": "Main navigation",
   "nav.lang_picker_label": "Select language",
   "nav.lang_switch_label_fr": "Passer au français",
+  "nav.lang_switch_label_pt-br": "Switch to Portuguese (Brazil)",
   "footer.admin_title": "Reporting office login",
 
   "a11y.skip_to_content": "Skip to main content",

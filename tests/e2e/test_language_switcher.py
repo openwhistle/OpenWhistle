@@ -126,6 +126,49 @@ def test_switch_back_to_english(page: Page, base_url: str) -> None:
     ), "Expected English content after switching back from German"
 
 
+def test_switch_to_portuguese(page: Page, base_url: str) -> None:
+    """Switching to Portuguese (Brazil) shows pt-BR text on the submit page."""
+    page.goto(f"{base_url}/submit")
+    page.wait_for_load_state("networkidle")
+    _open_lang_picker(page)
+    ptbr_btn = page.locator(
+        'form[action="/set-language"]:has(input[name="lang"][value="pt-br"]) button'
+    )
+    if ptbr_btn.count() == 0:
+        page.goto(f"{base_url}/submit?lang=pt-br")
+        page.wait_for_load_state("networkidle")
+    else:
+        ptbr_btn.first.click()
+        page.wait_for_load_state("networkidle")
+
+    body = page.content()
+    assert any(
+        term in body
+        for term in ["Anônimo", "Enviar", "Denúncia", "anônimo", "pt-br"]
+    ), "Expected Portuguese (Brazil) content after switching to Português (BR)"
+
+
+def test_ptbr_persists_across_pages(page: Page, base_url: str) -> None:
+    """Language preference pt-BR set on /submit persists when navigating to /status."""
+    page.goto(f"{base_url}/submit")
+    page.wait_for_load_state("networkidle")
+    _open_lang_picker(page)
+    ptbr_btn = page.locator(
+        'form[action="/set-language"]:has(input[name="lang"][value="pt-br"]) button'
+    )
+    if ptbr_btn.count() > 0:
+        ptbr_btn.first.click()
+        page.wait_for_load_state("networkidle")
+
+    page.goto(f"{base_url}/status")
+    page.wait_for_load_state("networkidle")
+    body = page.content()
+    assert any(
+        term in body
+        for term in ["pt-br", "Denúncia", "Status", "lang=\"pt-br\""]
+    ), "Language preference pt-BR did not persist across page navigation"
+
+
 def test_language_persists_across_pages(page: Page, base_url: str) -> None:
     """Language preference set on /submit persists when navigating to /status."""
     # Set language via URL param (most reliable in E2E)

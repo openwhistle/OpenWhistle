@@ -302,8 +302,8 @@ class TestI18n:
         import json
         from pathlib import Path
         locales = Path(__file__).parent.parent / "app" / "locales"
-        en = json.loads((locales / "en.json").read_text())
-        de = json.loads((locales / "de.json").read_text())
+        en = json.loads((locales / "en.json").read_text(encoding="utf-8"))
+        de = json.loads((locales / "de.json").read_text(encoding="utf-8"))
         missing = [k for k in en if k not in de]
         assert missing == [], f"Keys missing from de.json: {missing[:10]}"
 
@@ -311,10 +311,40 @@ class TestI18n:
         import json
         from pathlib import Path
         locales = Path(__file__).parent.parent / "app" / "locales"
-        en = json.loads((locales / "en.json").read_text())
-        fr = json.loads((locales / "fr.json").read_text())
+        en = json.loads((locales / "en.json").read_text(encoding="utf-8"))
+        fr = json.loads((locales / "fr.json").read_text(encoding="utf-8"))
         missing = [k for k in en if k not in fr]
         assert missing == [], f"Keys missing from fr.json: {missing[:10]}"
+
+    def test_ptbr_locale_loads(self) -> None:
+        from app.i18n import make_translator
+        t = make_translator("pt-br")
+        assert t("nav.submit_report") == "Enviar Denúncia"
+
+    def test_all_en_keys_present_in_ptbr(self) -> None:
+        import json
+        from pathlib import Path
+        locales = Path(__file__).parent.parent / "app" / "locales"
+        en = json.loads((locales / "en.json").read_text(encoding="utf-8"))
+        ptbr = json.loads((locales / "pt-br.json").read_text(encoding="utf-8"))
+        missing = [k for k in en if k not in ptbr]
+        assert missing == [], f"Keys missing from pt-br.json: {missing[:10]}"
+
+    def test_ptbr_accept_language_header(self) -> None:
+        from unittest.mock import MagicMock
+        from app.i18n import get_lang
+        req = MagicMock()
+        req.cookies.get.return_value = ""
+        req.headers.get.return_value = "pt-BR,pt;q=0.9,en;q=0.8"
+        assert get_lang(req) == "pt-br"
+
+    def test_pt_alias_resolves_to_ptbr(self) -> None:
+        from unittest.mock import MagicMock
+        from app.i18n import get_lang
+        req = MagicMock()
+        req.cookies.get.return_value = ""
+        req.headers.get.return_value = "pt;q=0.9,en;q=0.8"
+        assert get_lang(req) == "pt-br"
 
 
 # ── Admin location routes ─────────────────────────────────────────
@@ -335,6 +365,15 @@ class TestAdminLocationRoutes:
         # Should have fr cookie
         cookies = {c.name: c.value for c in client.cookies.jar}
         assert cookies.get("ow-lang") == "fr"
+
+    async def test_language_switch_ptbr(self, client: AsyncClient) -> None:
+        resp = await client.post("/set-language", data={
+            "lang": "pt-br",
+            "next": "/submit",
+        })
+        assert resp.status_code == 200
+        cookies = {c.name: c.value for c in client.cookies.jar}
+        assert cookies.get("ow-lang") == "pt-br"
 
     async def test_language_switch_unknown_falls_back(self, client: AsyncClient) -> None:
         await client.post("/set-language", data={
