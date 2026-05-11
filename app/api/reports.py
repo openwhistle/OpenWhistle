@@ -125,7 +125,7 @@ async def set_language(
     lang: str = Form(...),
     next_url: str = Form("/submit", alias="next"),
 ) -> RedirectResponse:
-    safe_lang = {"en": "en", "de": "de", "fr": "fr"}.get(lang, "en")
+    safe_lang = {"en": "en", "de": "de", "fr": "fr", "pt-br": "pt-br"}.get(lang, "en")
     parsed_path = urlsplit(next_url).path
     safe_url = _NEXT_ALLOWLIST.get(parsed_path)
     if safe_url is None:

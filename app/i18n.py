@@ -9,10 +9,12 @@ from typing import Any
 from starlette.requests import Request
 
 _LOCALES_DIR = Path(__file__).parent / "locales"
-_SUPPORTED = frozenset({"en", "de", "fr"})
+_SUPPORTED = frozenset({"en", "de", "fr", "pt-br"})
 _DEFAULT = "en"
 # Explicit dict lookup severs CodeQL taint flow from user input to file path.
-_LANG_MAP: dict[str, str] = {"en": "en", "de": "de", "fr": "fr"}
+_LANG_MAP: dict[str, str] = {"en": "en", "de": "de", "fr": "fr", "pt-br": "pt-br"}
+# "pt" is treated as an alias for "pt-br" in Accept-Language negotiation.
+_LANG_ALIAS: dict[str, str] = {"pt": "pt-br"}
 
 _cache: dict[str, dict[str, str]] = {}
 
@@ -31,9 +33,19 @@ def get_lang(request: Request) -> str:
         return lang
     accept = request.headers.get("accept-language", "")
     for part in re.split(r"[,;]", accept):
-        code = part.strip().split("-")[0].lower()
+        raw = part.strip().lower()
+        # Check full subtag (e.g. "pt-br") before falling back to primary tag.
+        if raw in _SUPPORTED:
+            return raw
+        alias = _LANG_ALIAS.get(raw)
+        if alias:
+            return alias
+        code = raw.split("-")[0]
         if code in _SUPPORTED:
             return code
+        alias = _LANG_ALIAS.get(code)
+        if alias:
+            return alias
     return _DEFAULT
 
 

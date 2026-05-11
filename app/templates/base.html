@@ -81,7 +81,7 @@
                         <span aria-hidden="true" style="font-size:0.65em;margin-left:0.2em;">▾</span>
                     </button>
                     <ul class="lang-picker-menu" role="listbox" aria-label="{{ t('nav.lang_picker_label') }}" id="lang-picker-menu" hidden>
-                        {% for code, label in [('en', 'English'), ('de', 'Deutsch'), ('fr', 'Français')] %}
+                        {% for code, label in [('en', 'English'), ('de', 'Deutsch'), ('fr', 'Français'), ('pt-br', 'Português (BR)')] %}
                         <li role="option" {% if lang == code %}aria-selected="true"{% endif %}>
                             <form method="post" action="/set-language" style="margin:0;">
                                 <input type="hidden" name="next" value="{{ request.url.path }}">
