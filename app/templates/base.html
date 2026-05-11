@@ -84,7 +84,7 @@
                         {% for code, label in [('en', 'English'), ('de', 'Deutsch'), ('fr', 'Français')] %}
                         <li role="option" {% if lang == code %}aria-selected="true"{% endif %}>
                             <form method="post" action="/set-language" style="margin:0;">
-                                <input type="hidden" name="next" value="{{ request.url.path }}">
+                                <input type="hidden" name="next" value="{{ request.url.path }}{% if request.url.query %}?{{ request.url.query }}{% endif %}">
                                 <input type="hidden" name="lang" value="{{ code }}">
                                 <button type="submit" class="lang-picker-option {{ 'active' if lang == code else '' }}">
                                     {{ label }}
