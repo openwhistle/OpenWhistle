@@ -194,6 +194,12 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_report_messages_report_id'), 'report_messages', ['report_id'], unique=False)
+    # Seed data — autogenerate omits DML, add it manually
+    op.execute(sa.text("INSERT INTO setup_status (id, completed) VALUES (1, false)"))
+    op.execute(sa.text(
+        "INSERT INTO organisations (id, name, slug, is_active, created_at) "
+        "VALUES (gen_random_uuid(), 'Default Organisation', 'default', true, NOW())"
+    ))
     # ### end Alembic commands ###
 
 
