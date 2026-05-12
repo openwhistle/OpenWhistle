@@ -38,7 +38,7 @@
         <div>
             <div class="page-eyebrow">{{ t('admin.eyebrow') }}</div>
             <h1>{{ t('admin.dashboard.title') }}</h1>
-            <p style="margin-top:0.25rem;font-size:0.8rem;color:var(--text-muted);">
+            <p style="margin-top:0.25rem;font-size:0.8rem;color:var(--muted);">
                 {{ t('admin.logged_in_as') }} <strong style="color:var(--accent);font-weight:600;">{{ user.username }}</strong>
                 <span class="badge badge-{{ user.role.value }}" style="margin-left:0.5rem;font-size:0.7rem;">{{ t('role.label.' + user.role.value) }}</span>
             </p>
@@ -183,12 +183,12 @@
                     {% endif %}
                     <tr>
                         <td><span class="mono" style="white-space:nowrap;">{{ report.case_number }}</span></td>
-                        <td style="font-size:0.85rem;color:var(--text-secondary);">{{ report.category | replace('_', ' ') | title }}</td>
+                        <td style="font-size:0.85rem;color:var(--body-text);">{{ report.category | replace('_', ' ') | title }}</td>
                         <td><span class="badge badge-{{ report.status.value }}">{{ t('status.label.' + report.status.value) }}</span></td>
-                        <td class="mono" style="font-size:0.78rem;color:var(--text-muted);">{{ report.submitted_at.strftime('%Y-%m-%d') }}</td>
-                        <td style="font-size:0.82rem;color:var(--text-muted);">
+                        <td class="mono" style="font-size:0.78rem;color:var(--muted);">{{ report.submitted_at.strftime('%Y-%m-%d') }}</td>
+                        <td style="font-size:0.82rem;color:var(--muted);">
                             {% if report.assigned_to %}
-                                <span style="color:var(--text-secondary);">{{ report.assigned_to.username }}</span>
+                                <span style="color:var(--body-text);">{{ report.assigned_to.username }}</span>
                             {% else %}
                                 N/A
                             {% endif %}
@@ -265,7 +265,7 @@
         {# Filtered empty state #}
         <div style="text-align:center;padding:3rem 1rem;">
             <div style="font-size:2.5rem;margin-bottom:1rem;opacity:0.3;">&#128269;</div>
-            <p style="font-size:1rem;font-weight:600;color:var(--text-secondary);margin-bottom:0.4rem;">{{ t('admin.filter.no_results') }}</p>
+            <p style="font-size:1rem;font-weight:600;color:var(--body-text);margin-bottom:0.4rem;">{{ t('admin.filter.no_results') }}</p>
             <a href="/admin/dashboard" class="btn btn-secondary btn-sm" style="margin-top:1rem;">{{ t('admin.filter.all_statuses') }}</a>
         </div>
 
@@ -273,8 +273,8 @@
         {# Truly empty - no reports at all #}
         <div style="text-align:center;padding:3.5rem 1rem;">
             <div style="font-size:2.5rem;margin-bottom:1rem;opacity:0.3;">&#128274;</div>
-            <p style="font-size:1rem;font-weight:600;color:var(--text-secondary);margin-bottom:0.4rem;">{{ t('admin.empty.title') }}</p>
-            <p style="font-size:0.85rem;color:var(--text-muted);">{{ t('admin.empty.body') }}</p>
+            <p style="font-size:1rem;font-weight:600;color:var(--body-text);margin-bottom:0.4rem;">{{ t('admin.empty.title') }}</p>
+            <p style="font-size:0.85rem;color:var(--muted);">{{ t('admin.empty.body') }}</p>
             <a href="/submit" class="btn btn-secondary btn-sm" style="margin-top:1.25rem;">{{ t('admin.view_submit') }}</a>
         </div>
         {% endif %}

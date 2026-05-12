@@ -87,7 +87,7 @@
 
             {% if oidc_enabled %}
             <div style="margin-top:1.5rem;text-align:center;">
-                <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.08em;">{{ t('login.or') }}</div>
+                <div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.08em;">{{ t('login.or') }}</div>
                 <a href="/admin/oidc/authorize" class="btn btn-secondary btn-block">
                     {{ t('login.sso') }}
                 </a>
@@ -95,7 +95,7 @@
             {% endif %}
             {% if ldap_enabled %}
             <div style="margin-top:0.75rem;text-align:center;">
-                <span style="display:inline-block;font-size:0.72rem;color:var(--text-muted);background:var(--surface-2,var(--bg-secondary));border:1px solid var(--border);border-radius:4px;padding:0.2rem 0.6rem;">
+                <span style="display:inline-block;font-size:0.72rem;color:var(--muted);background:var(--surface-2,var(--surface-card));border:1px solid var(--hairline);border-radius:4px;padding:0.2rem 0.6rem;">
                     {{ t('login.ldap_active') }}
                 </span>
             </div>

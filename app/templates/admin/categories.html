@@ -77,8 +77,8 @@
                         <tr style="{% if not cat.is_active %}opacity:0.5;{% endif %}">
                             <td class="mono" style="font-size:0.82rem;">{{ cat.slug }}</td>
                             <td style="font-size:0.9rem;">{{ cat.label_en }}</td>
-                            <td style="font-size:0.9rem;color:var(--text-muted);">{{ cat.label_de }}</td>
-                            <td style="font-size:0.82rem;color:var(--text-muted);text-align:center;">{{ cat.sort_order }}</td>
+                            <td style="font-size:0.9rem;color:var(--muted);">{{ cat.label_de }}</td>
+                            <td style="font-size:0.82rem;color:var(--muted);text-align:center;">{{ cat.sort_order }}</td>
                             <td>
                                 {% if cat.is_default %}
                                 <span class="badge badge-received">{{ t('admin.categories.default') }}</span>
@@ -109,7 +109,7 @@
                 </table>
             </div>
             {% else %}
-            <p style="color:var(--text-muted);padding:1rem 0;">{{ t('admin.categories.empty') }}</p>
+            <p style="color:var(--muted);padding:1rem 0;">{{ t('admin.categories.empty') }}</p>
             {% endif %}
         </div>
 

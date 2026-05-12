@@ -77,7 +77,7 @@
                         <tr style="{% if not loc.is_active %}opacity:0.5;{% endif %}">
                             <td style="font-weight:600;">{{ loc.name }}</td>
                             <td class="mono" style="font-size:0.82rem;">{{ loc.code }}</td>
-                            <td style="font-size:0.85rem;color:var(--text-muted);">{{ loc.description or '' }}</td>
+                            <td style="font-size:0.85rem;color:var(--muted);">{{ loc.description or '' }}</td>
                             <td>
                                 {% if loc.is_active %}
                                 <span class="badge badge-closed">{{ t('admin.locations.active') }}</span>
@@ -104,7 +104,7 @@
                 </table>
             </div>
             {% else %}
-            <p style="color:var(--text-muted);padding:1rem 0;">{{ t('admin.locations.empty') }}</p>
+            <p style="color:var(--muted);padding:1rem 0;">{{ t('admin.locations.empty') }}</p>
             {% endif %}
         </div>
 
