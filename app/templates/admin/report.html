@@ -60,7 +60,7 @@
                         <div class="message-meta">
                             <span class="message-meta-icon">{{ 'M' if msg.sender.value == 'admin' else 'W' }}</span>
                             {{ t('admin.sender.admin') if msg.sender.value == 'admin' else t('admin.whistleblower') }}
-                            &middot; <span class="mono">{{ msg.sent_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+                            &middot; <span class="mono"><time data-utc="{{ msg.sent_at.isoformat() }}">{{ msg.sent_at.strftime('%Y-%m-%d %H:%M UTC') }}</time></span>
                         </div>
                         <div class="message-content">{{ decrypted_messages[loop.index0] if decrypted_messages and loop.index0 < decrypted_messages|length else msg.content }}</div>
                     </div>
@@ -103,7 +103,7 @@
                     <div style="border-left:3px solid var(--warning);padding:0.6rem 0.75rem;background:var(--warning-subtle);border-radius:0 4px 4px 0;">
                         <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.25rem;">
                             <strong style="color:var(--text-secondary);">{{ note.author_username }}</strong>
-                            &middot; <span class="mono">{{ note.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+                            &middot; <span class="mono"><time data-utc="{{ note.created_at.isoformat() }}">{{ note.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</time></span>
                         </div>
                         <div style="font-size:0.88rem;white-space:pre-wrap;color:var(--text-secondary);">{{ note.content }}</div>
                     </div>
@@ -168,7 +168,7 @@
                 <div style="display:flex;flex-direction:column;gap:0.4rem;">
                     {% for entry in audit_entries %}
                     <div style="display:flex;gap:0.75rem;align-items:baseline;padding:0.35rem 0;border-bottom:1px solid var(--border);font-size:0.8rem;">
-                        <span class="mono" style="color:var(--text-muted);white-space:nowrap;flex-shrink:0;">{{ entry.created_at.strftime('%m-%d %H:%M') }}</span>
+                        <span class="mono" style="color:var(--text-muted);white-space:nowrap;flex-shrink:0;"><time data-utc="{{ entry.created_at.isoformat() }}">{{ entry.created_at.strftime('%m-%d %H:%M') }}</time></span>
                         <span style="color:var(--text-secondary);font-weight:600;flex-shrink:0;">{{ entry.admin_username or '—' }}</span>
                         <span style="color:var(--accent);font-family:var(--font-mono);font-size:0.75rem;">{{ entry.action }}</span>
                         {% if entry.detail %}
@@ -197,7 +197,7 @@
                 <div style="display:flex;flex-direction:column;gap:1rem;font-size:0.875rem;">
                     <div>
                         <div class="detail-label">{{ t('admin.report.detail.submitted') }}</div>
-                        <span class="mono" style="font-size:0.82rem;">{{ report.submitted_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+                        <span class="mono" style="font-size:0.82rem;"><time data-utc="{{ report.submitted_at.isoformat() }}">{{ report.submitted_at.strftime('%Y-%m-%d %H:%M UTC') }}</time></span>
                     </div>
 
                     <div>
@@ -364,7 +364,7 @@
                     <div class="alert alert-error" style="margin-bottom:1rem;">
                         <div class="alert-title">{{ t('admin.report.delete.pending.title') }}</div>
                         {{ t('admin.report.delete.pending.body', username=report.deletion_request.requested_by_username) }}
-                        <div class="mono" style="font-size:0.75rem;margin-top:0.4rem;">{{ report.deletion_request.requested_at.strftime('%Y-%m-%d %H:%M UTC') }}</div>
+                        <div class="mono" style="font-size:0.75rem;margin-top:0.4rem;"><time data-utc="{{ report.deletion_request.requested_at.isoformat() }}">{{ report.deletion_request.requested_at.strftime('%Y-%m-%d %H:%M UTC') }}</time></div>
                     </div>
 
                     {% if report.deletion_request.requested_by_id == user.id %}

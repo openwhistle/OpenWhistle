@@ -66,7 +66,7 @@
                     {% for entry in entries %}
                     <tr>
                         <td class="mono" style="font-size:0.78rem;white-space:nowrap;color:var(--text-muted);">
-                            {{ entry.created_at.strftime('%Y-%m-%d %H:%M UTC') }}
+                            <time data-utc="{{ entry.created_at.isoformat() }}">{{ entry.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</time>
                         </td>
                         <td style="font-size:0.85rem;font-weight:600;">{{ entry.admin_username or '—' }}</td>
                         <td>
