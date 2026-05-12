@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     # Demo mode
     demo_mode: bool = False
 
+    # Cookie security — set to false when the app is served over plain HTTP
+    # (e.g. local network without TLS). Always keep true behind HTTPS.
+    secure_cookies: bool = True
+
     # Application
     app_name: str = "OpenWhistle"
     app_version: str = "1.1.0"

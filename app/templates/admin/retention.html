@@ -47,7 +47,7 @@
             <div class="stat-card__label">Next Scheduled Run</div>
             <div class="stat-card__value">
                 {% if retention_enabled %}
-                    {{ next_run.strftime('%Y-%m-%d 03:00 UTC') }}
+                    <time data-utc="{{ next_run.isoformat() }}">{{ next_run.strftime('%Y-%m-%d 03:00 UTC') }}</time>
                 {% else %}
                     N/A
                 {% endif %}

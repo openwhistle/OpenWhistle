@@ -148,6 +148,29 @@
 
     <script src="/static/js/site.js"></script>
     <script>
+    (function() {
+        function pad(n) { return n < 10 ? '0' + n : '' + n; }
+        function tzLabel(d) {
+            try {
+                var parts = Intl.DateTimeFormat(undefined, {timeZoneName: 'short'}).formatToParts(d);
+                var t = parts.find(function(p) { return p.type === 'timeZoneName'; });
+                return t ? t.value : '';
+            } catch(e) { return ''; }
+        }
+        document.querySelectorAll('time[data-utc]').forEach(function(el) {
+            try {
+                var d = new Date(el.getAttribute('data-utc'));
+                if (isNaN(d)) return;
+                var tz = tzLabel(d);
+                el.textContent = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+                                 ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) +
+                                 (tz ? ' ' + tz : '');
+                el.title = 'UTC: ' + el.getAttribute('data-utc').slice(0, 16).replace('T', ' ');
+            } catch(e) {}
+        });
+    })();
+    </script>
+    <script>
     // Language picker dropdown
     (function() {
         var btn = document.getElementById('lang-picker-btn');

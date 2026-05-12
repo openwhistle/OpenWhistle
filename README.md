@@ -136,6 +136,11 @@ docker compose up -d
 # Open http://localhost:4009/setup to create the first admin account
 ```
 
+> **Accessing from other devices on the same network?**
+> Add `SECURE_COOKIES=false` to your `.env` (or `docker-compose.yml`) when the app is served over
+> plain HTTP. Browsers refuse to send `Secure` cookies over HTTP, causing session failures on
+> remote devices. Always keep `SECURE_COOKIES=true` (the default) behind HTTPS in production.
+
 For full installation instructions, environment variable reference, reverse proxy configuration,
 and administration guide, see **[openwhistle.net/docs.html](https://openwhistle.net/docs.html)**.
 

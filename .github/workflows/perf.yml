@@ -99,7 +99,7 @@ jobs:
             --csv perf-results
 
       - name: Upload performance report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: perf-results-${{ github.run_id }}
           path: |

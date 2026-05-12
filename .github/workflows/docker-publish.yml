@@ -40,7 +40,7 @@ jobs:
 
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/openwhistle/${{ env.IMAGE_NAME }}
           tags: |
@@ -106,7 +106,7 @@ jobs:
       - name: Extract metadata
         id: meta
         if: env.DOCKERHUB_TOKEN != ''
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
           tags: |
@@ -161,7 +161,7 @@ jobs:
       - name: Extract metadata
         id: meta
         if: env.QUAY_TOKEN != ''
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: quay.io/${{ secrets.QUAY_NAMESPACE }}/${{ env.IMAGE_NAME }}
           tags: |
