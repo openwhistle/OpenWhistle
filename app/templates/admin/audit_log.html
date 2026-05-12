@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ t('admin.audit.title') }} — OpenWhistle{% endblock %}
+{% block title %}{{ t('admin.audit.title') }} | OpenWhistle{% endblock %}
 
 {% block nav_links %}
 <li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
@@ -68,7 +68,7 @@
                         <td class="mono" style="font-size:0.78rem;white-space:nowrap;color:var(--text-muted);">
                             {{ entry.created_at.strftime('%Y-%m-%d %H:%M UTC') }}
                         </td>
-                        <td style="font-size:0.85rem;font-weight:600;">{{ entry.admin_username or '—' }}</td>
+                        <td style="font-size:0.85rem;font-weight:600;">{{ entry.admin_username or 'N/A' }}</td>
                         <td>
                             <span style="font-family:var(--font-mono);font-size:0.78rem;color:var(--accent);background:var(--accent-subtle);padding:0.15rem 0.4rem;border-radius:4px;">
                                 {{ entry.action }}
@@ -80,7 +80,7 @@
                                 {{ entry.report_id | string | truncate(13, true, '…') }}
                             </a>
                             {% else %}
-                            &mdash;
+                            N/A
                             {% endif %}
                         </td>
                         <td style="font-size:0.78rem;color:var(--text-muted);font-family:var(--font-mono);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ entry.detail or '' }}">

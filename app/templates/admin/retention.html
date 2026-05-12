@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Data Retention Policy — OpenWhistle{% endblock %}
+{% block title %}Data Retention Policy | OpenWhistle{% endblock %}
 
 {% block nav_links %}
 <li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
@@ -49,7 +49,7 @@
                 {% if retention_enabled %}
                     {{ next_run.strftime('%Y-%m-%d 03:00 UTC') }}
                 {% else %}
-                    —
+                    N/A
                 {% endif %}
             </div>
         </div>
@@ -87,20 +87,20 @@
         <h2 id="heading-legal">Legal Basis</h2>
         <div class="legal-grid">
             <div class="legal-item">
-                <h3>GDPR Art. 5(1)(e) — Storage Limitation</h3>
+                <h3>GDPR Art. 5(1)(e): Storage Limitation</h3>
                 <p>Personal data must not be kept longer than necessary for the purpose for
                    which it was collected. Retaining closed reports indefinitely would violate
                    this principle.</p>
             </div>
             <div class="legal-item">
-                <h3>HinSchG §12 Abs. 3 — Documentation Obligation</h3>
+                <h3>HinSchG §12 Abs. 3: Documentation Obligation</h3>
                 <p>Reports and their follow-up must be documented for at least <strong>3 years</strong>
                    after the procedure is concluded. The default retention period of 1095 days
                    (3 years) meets this minimum. Do not set <code>RETENTION_DAYS</code> below
                    1095 unless you have specific legal advice to do so.</p>
             </div>
             <div class="legal-item">
-                <h3>GDPR Art. 17 — Right to Erasure</h3>
+                <h3>GDPR Art. 17: Right to Erasure</h3>
                 <p>Individuals may request deletion of their personal data. The auto-deletion
                    mechanism and the existing manual 4-eyes deletion workflow both support
                    fulfilment of erasure requests.</p>

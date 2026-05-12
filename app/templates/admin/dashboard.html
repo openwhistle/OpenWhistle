@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ t('admin.dashboard.title') }} — OpenWhistle{% endblock %}
+{% block title %}{{ t('admin.dashboard.title') }} | OpenWhistle{% endblock %}
 
 {% block nav_links %}
 <li><a href="/admin/dashboard" class="active" aria-current="page">{{ t('admin.dashboard.title') }}</a></li>
@@ -70,7 +70,7 @@
     </div>
     {% endif %}
 
-    {# Summary stats cards — clickable filters #}
+    {# Summary stats cards - clickable filters #}
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:2rem;">
         {% for label_key, status_val, cls in [
             ('admin.stats.received',          'received',          'badge-received'),
@@ -190,7 +190,7 @@
                             {% if report.assigned_to %}
                                 <span style="color:var(--text-secondary);">{{ report.assigned_to.username }}</span>
                             {% else %}
-                                &mdash;
+                                N/A
                             {% endif %}
                         </td>
                         <td class="{{ ack_sla_class }}" style="font-size:0.82rem;">
@@ -205,7 +205,7 @@
                                 {% set days_to_fb = (report.feedback_due_at - now).days %}
                                 {% if days_to_fb > 0 %}{{ days_to_fb }} {{ t('admin.report.sla.days_remaining') }}{% else %}{{ t('admin.report.sla.overdue') }}{% endif %}
                             {% else %}
-                                &mdash;
+                                N/A
                             {% endif %}
                         </td>
                         <td>
@@ -270,7 +270,7 @@
         </div>
 
         {% else %}
-        {# Truly empty — no reports at all #}
+        {# Truly empty - no reports at all #}
         <div style="text-align:center;padding:3.5rem 1rem;">
             <div style="font-size:2.5rem;margin-bottom:1rem;opacity:0.3;">&#128274;</div>
             <p style="font-size:1rem;font-weight:600;color:var(--text-secondary);margin-bottom:0.4rem;">{{ t('admin.empty.title') }}</p>

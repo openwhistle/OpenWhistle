@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ t('admin.report.eyebrow') }} {{ report.case_number }} — OpenWhistle{% endblock %}
+{% block title %}{{ t('admin.report.eyebrow') }} {{ report.case_number }} | OpenWhistle{% endblock %}
 
 {% block nav_links %}
 <li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
@@ -169,7 +169,7 @@
                     {% for entry in audit_entries %}
                     <div style="display:flex;gap:0.75rem;align-items:baseline;padding:0.35rem 0;border-bottom:1px solid var(--border);font-size:0.8rem;">
                         <span class="mono" style="color:var(--text-muted);white-space:nowrap;flex-shrink:0;">{{ entry.created_at.strftime('%m-%d %H:%M') }}</span>
-                        <span style="color:var(--text-secondary);font-weight:600;flex-shrink:0;">{{ entry.admin_username or '—' }}</span>
+                        <span style="color:var(--text-secondary);font-weight:600;flex-shrink:0;">{{ entry.admin_username or 'N/A' }}</span>
                         <span style="color:var(--accent);font-family:var(--font-mono);font-size:0.75rem;">{{ entry.action }}</span>
                         {% if entry.detail %}
                         <span style="color:var(--text-muted);font-size:0.75rem;font-family:var(--font-mono);">{{ entry.detail[:80] }}</span>
@@ -254,7 +254,7 @@
                         {% else %}
                             {% set days = (now - report.submitted_at).days %}
                             <span class="{{ 'sla-overdue' if days >= 7 else ('sla-warning' if days >= 5 else 'sla-ok') }} mono" style="font-size:0.82rem;">
-                                {{ t('admin.report.sla.day') }} {{ days }}/7 — {{ t('admin.report.sla.not_ack') }}
+                                {{ t('admin.report.sla.day') }} {{ days }}/7: {{ t('admin.report.sla.not_ack') }}
                             </span>
                         {% endif %}
                     </div>
@@ -329,7 +329,7 @@
             </div>
             {% endif %}
 
-            {# Status update — only valid transitions #}
+            {# Status update - only valid transitions #}
             <div class="panel" style="animation-delay:0.08s;">
                 <div class="panel-header">{{ t('admin.report.status.header') }}</div>
                 {% if allowed_transitions %}
@@ -368,14 +368,14 @@
                     </div>
 
                     {% if report.deletion_request.requested_by_id == user.id %}
-                    {# Current user requested — can only cancel #}
+                    {# Current user requested - can only cancel #}
                     <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">{{ t('admin.report.delete.cannot_self') }}</p>
                     <form method="post" action="/admin/reports/{{ report.id }}/cancel-delete">
                         <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                         <button type="submit" class="btn btn-secondary btn-block">{{ t('admin.report.delete.cancel_request') }}</button>
                     </form>
                     {% else %}
-                    {# Different admin — can confirm #}
+                    {# Different admin - can confirm #}
                     <form method="post" action="/admin/reports/{{ report.id }}/confirm-delete"
                           onsubmit="return confirm('Permanently delete this report? This cannot be undone.')">
                         <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
@@ -384,7 +384,7 @@
                     {% endif %}
 
                 {% else %}
-                    {# No pending request — show request button #}
+                    {# No pending request - show request button #}
                     <p style="font-size:0.85rem;margin-bottom:1rem;">{{ t('admin.report.delete.body') }}</p>
                     <div id="delete-step-1">
                         <button type="button" class="btn btn-secondary btn-block"

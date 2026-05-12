@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ t('submit.title') }} — OpenWhistle{% endblock %}
+{% block title %}{{ t('submit.title') }} | OpenWhistle{% endblock %}
 
 {% block content %}
 <div class="split-layout">
@@ -186,7 +186,7 @@
                     <option value="">{{ t('submit.step.location.placeholder') }}</option>
                     {% for loc in locations %}
                     <option value="{{ loc.id }}" {% if state.get('location_id') == loc.id|string %}selected{% endif %}>
-                        {{ loc.name }}{% if loc.description %} — {{ loc.description }}{% endif %}
+                        {{ loc.name }}{% if loc.description %}: {{ loc.description }}{% endif %}
                     </option>
                     {% endfor %}
                 </select>
