@@ -140,12 +140,12 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;font-size:0.85rem;color:var(--text-muted);">
             <div>
                 <div class="detail-label">{{ t('status.meta.submitted') }}</div>
-                <span class="mono" style="color:var(--text-primary);">{{ report.submitted_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+                <span class="mono" style="color:var(--text-primary);"><time data-utc="{{ report.submitted_at.isoformat() }}">{{ report.submitted_at.strftime('%Y-%m-%d %H:%M UTC') }}</time></span>
             </div>
             {% if report.acknowledged_at %}
             <div>
                 <div class="detail-label">{{ t('status.meta.acknowledged') }}</div>
-                <span class="mono" style="color:var(--text-primary);">{{ report.acknowledged_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+                <span class="mono" style="color:var(--text-primary);"><time data-utc="{{ report.acknowledged_at.isoformat() }}">{{ report.acknowledged_at.strftime('%Y-%m-%d %H:%M UTC') }}</time></span>
             </div>
             {% endif %}
             {% if report.feedback_due_at %}
@@ -250,7 +250,7 @@
                 <div class="message-meta">
                     <span class="message-meta-icon">{{ 'M' if msg.sender.value == 'admin' else 'W' }}</span>
                     {{ t('status.sender.admin') if msg.sender.value == 'admin' else t('status.sender.user') }}
-                    &middot; {{ msg.sent_at.strftime('%Y-%m-%d %H:%M UTC') }}
+                    &middot; <time data-utc="{{ msg.sent_at.isoformat() }}">{{ msg.sent_at.strftime('%Y-%m-%d %H:%M UTC') }}</time>
                 </div>
                 <div class="message-content">{{ decrypted_messages[loop.index0] if decrypted_messages and loop.index0 < decrypted_messages|length else msg.content }}</div>
             </div>
