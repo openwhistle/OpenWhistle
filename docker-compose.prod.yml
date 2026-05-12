@@ -6,6 +6,7 @@ services:
       REDIS_URL: "${REDIS_URL}"
       SECRET_KEY: "${SECRET_KEY}"
       DEMO_MODE: "${DEMO_MODE:-false}"
+      SECURE_COOKIES: "${SECURE_COOKIES:-true}"
       SUBMISSION_MODE_ENABLED: "${SUBMISSION_MODE_ENABLED:-true}"
       LOG_LEVEL: "${LOG_LEVEL:-INFO}"
       LOG_FORMAT: "${LOG_FORMAT:-json}"

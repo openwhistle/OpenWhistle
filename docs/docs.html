@@ -1062,6 +1062,12 @@
               <td><code>false</code></td>
             </tr>
             <tr>
+              <td><code class="env-key">SECURE_COOKIES</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Set to <code>false</code> when the app is served over plain HTTP (e.g. local network without TLS). Must be <code>true</code> behind HTTPS. Browsers block <code>Secure</code> cookies over HTTP, causing session failures when accessed from other devices.</td>
+              <td><code>true</code></td>
+            </tr>
+            <tr>
               <td><code class="env-key">SUBMISSION_MODE_ENABLED</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
               <td>Set to <code>false</code> to hide the anonymous/confidential mode selection step from the submission wizard. When disabled, all reports are treated as anonymous.</td>

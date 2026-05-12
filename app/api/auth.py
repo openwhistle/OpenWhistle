@@ -189,7 +189,7 @@ async def login_mfa_post(
         value=token,
         httponly=True,
         samesite="lax",
-        secure=not settings.demo_mode,
+        secure=settings.secure_cookies,
         max_age=settings.access_token_expire_minutes * 60,
     )
     return response
@@ -206,7 +206,7 @@ async def logout(
 
     response = RedirectResponse("/admin/login", status_code=302)
     response.delete_cookie(
-        "ow_session", httponly=True, samesite="lax", secure=not settings.demo_mode
+        "ow_session", httponly=True, samesite="lax", secure=settings.secure_cookies
     )
     return response
 
@@ -249,7 +249,7 @@ async def session_refresh(
         value=new_token,
         httponly=True,
         samesite="lax",
-        secure=not settings.demo_mode,
+        secure=settings.secure_cookies,
         max_age=settings.access_token_expire_minutes * 60,
     )
     return response
@@ -347,7 +347,7 @@ async def oidc_callback(
         value=token,
         httponly=True,
         samesite="lax",
-        secure=not settings.demo_mode,
+        secure=settings.secure_cookies,
         max_age=settings.access_token_expire_minutes * 60,
     )
     return response
