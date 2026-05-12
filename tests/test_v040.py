@@ -302,8 +302,8 @@ class TestI18n:
         import json
         from pathlib import Path
         locales = Path(__file__).parent.parent / "app" / "locales"
-        en = json.loads((locales / "en.json").read_text())
-        de = json.loads((locales / "de.json").read_text())
+        en = json.loads((locales / "en.json").read_text(encoding="utf-8"))
+        de = json.loads((locales / "de.json").read_text(encoding="utf-8"))
         missing = [k for k in en if k not in de]
         assert missing == [], f"Keys missing from de.json: {missing[:10]}"
 
@@ -311,8 +311,8 @@ class TestI18n:
         import json
         from pathlib import Path
         locales = Path(__file__).parent.parent / "app" / "locales"
-        en = json.loads((locales / "en.json").read_text())
-        fr = json.loads((locales / "fr.json").read_text())
+        en = json.loads((locales / "en.json").read_text(encoding="utf-8"))
+        fr = json.loads((locales / "fr.json").read_text(encoding="utf-8"))
         missing = [k for k in en if k not in fr]
         assert missing == [], f"Keys missing from fr.json: {missing[:10]}"
 
