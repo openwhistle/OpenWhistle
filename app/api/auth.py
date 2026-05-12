@@ -278,7 +278,7 @@ async def mfa_setup_post(
         value=token,
         httponly=True,
         samesite="lax",
-        secure=not settings.demo_mode,
+        secure=settings.secure_cookies,
         max_age=settings.access_token_expire_minutes * 60,
     )
     return response
