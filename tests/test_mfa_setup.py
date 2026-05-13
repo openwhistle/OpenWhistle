@@ -11,11 +11,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import AdminUser
-from app.services.auth import (
-    _TOTP_SETUP_PREFIX,  # noqa: PLC2701
-    hash_password,
-    store_totp_setup_pending,
-)
+from app.services.auth import hash_password, store_totp_setup_pending
 
 
 # ─── helpers ──────────────────────────────────────────────────────────────────
