@@ -331,19 +331,27 @@ class TestI18n:
         assert missing == [], f"Keys missing from pt-br.json: {missing[:10]}"
 
     def test_ptbr_accept_language_header(self) -> None:
-        from unittest.mock import MagicMock
         from app.i18n import get_lang
+        from unittest.mock import MagicMock
         req = MagicMock()
         req.cookies.get.return_value = ""
         req.headers.get.return_value = "pt-BR,pt;q=0.9,en;q=0.8"
         assert get_lang(req) == "pt-br"
 
     def test_pt_alias_resolves_to_ptbr(self) -> None:
-        from unittest.mock import MagicMock
         from app.i18n import get_lang
+        from unittest.mock import MagicMock
         req = MagicMock()
         req.cookies.get.return_value = ""
         req.headers.get.return_value = "pt;q=0.9,en;q=0.8"
+        assert get_lang(req) == "pt-br"
+
+    def test_pt_region_variant_resolves_to_ptbr(self) -> None:
+        from app.i18n import get_lang
+        from unittest.mock import MagicMock
+        req = MagicMock()
+        req.cookies.get.return_value = ""
+        req.headers.get.return_value = "pt-PT,en;q=0.8"
         assert get_lang(req) == "pt-br"
 
 
