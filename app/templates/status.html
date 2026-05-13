@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ t('status.form.title') }} — OpenWhistle{% endblock %}
+{% block title %}{{ t('status.form.title') }} | OpenWhistle{% endblock %}
 
 {% block content %}
 <div class="container-sm">
@@ -15,7 +15,7 @@
     <div class="demo-credentials" role="note" style="margin-bottom:1.5rem;">
         <div class="demo-credentials-header">
             <span class="demo-badge">DEMO</span>
-            <span>Try these example reports — click any row to pre-fill</span>
+            <span>Try these example reports. Click any row to pre-fill.</span>
         </div>
         <div class="demo-reports-list">
             <button type="button" class="demo-report-row"
@@ -105,7 +105,7 @@
                     <button type="button"
                         id="pin-toggle"
                         onclick="var i=document.getElementById('pin');var show=i.type==='password';i.type=show?'text':'password';this.textContent=show?'{{ t('status.pin.hide') }}':'{{ t('status.pin.show') }}';"
-                        style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);font-size:0.72rem;font-family:var(--font-body);font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;padding:0.2rem 0.3rem;">{{ t('status.pin.show') }}</button>
+                        style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:0.72rem;font-family:var(--font-body);font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;padding:0.2rem 0.3rem;">{{ t('status.pin.show') }}</button>
                 </div>
                 <div class="form-hint">{{ t('status.pin.hint') }}</div>
             </div>
@@ -119,7 +119,7 @@
 
     {% else %}
 
-    {# Report found — show status and thread #}
+    {# Report found - show status and thread #}
     <div class="page-header">
         <div class="page-eyebrow">{{ t('status.report.eyebrow') }}</div>
         <h1>{{ t('status.report.title') }}</h1>
@@ -137,15 +137,15 @@
             <span class="badge badge-{{ report.status.value }}">{{ t('status.label.' + report.status.value) }}</span>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;font-size:0.85rem;color:var(--text-muted);">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;font-size:0.85rem;color:var(--muted);">
             <div>
                 <div class="detail-label">{{ t('status.meta.submitted') }}</div>
-                <span class="mono" style="color:var(--text-primary);">{{ report.submitted_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+                <span class="mono" style="color:var(--text-primary);"><time data-utc="{{ report.submitted_at.isoformat() }}">{{ report.submitted_at.strftime('%Y-%m-%d %H:%M UTC') }}</time></span>
             </div>
             {% if report.acknowledged_at %}
             <div>
                 <div class="detail-label">{{ t('status.meta.acknowledged') }}</div>
-                <span class="mono" style="color:var(--text-primary);">{{ report.acknowledged_at.strftime('%Y-%m-%d %H:%M UTC') }}</span>
+                <span class="mono" style="color:var(--text-primary);"><time data-utc="{{ report.acknowledged_at.isoformat() }}">{{ report.acknowledged_at.strftime('%Y-%m-%d %H:%M UTC') }}</time></span>
             </div>
             {% endif %}
             {% if report.feedback_due_at %}
@@ -157,11 +157,11 @@
         </div>
 
         {# HinSchG deadline display #}
-        <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border);">
+        <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--hairline);">
             <div class="detail-label" style="margin-bottom:0.6rem;font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;">{{ t('status.deadlines.title') }}</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;font-size:0.83rem;">
                 <div>
-                    <div style="color:var(--text-muted);margin-bottom:0.2rem;">{{ t('status.deadlines.ack') }}</div>
+                    <div style="color:var(--muted);margin-bottom:0.2rem;">{{ t('status.deadlines.ack') }}</div>
                     {% if report.acknowledged_at %}
                     <span style="color:var(--success, #2a7a2a);font-weight:600;">✓ {{ t('status.deadlines.ack_done', date=report.acknowledged_at.strftime('%Y-%m-%d')) }}</span>
                     {% elif ack_days_remaining is defined and ack_days_remaining >= 0 %}
@@ -171,7 +171,7 @@
                     {% endif %}
                 </div>
                 <div>
-                    <div style="color:var(--text-muted);margin-bottom:0.2rem;">{{ t('status.deadlines.feedback') }}</div>
+                    <div style="color:var(--muted);margin-bottom:0.2rem;">{{ t('status.deadlines.feedback') }}</div>
                     {% if report.acknowledged_at and report.feedback_due_at %}
                         {% if now is defined %}
                             {% set days_left = ((report.feedback_due_at - now).days) %}
@@ -184,7 +184,7 @@
                             {% endif %}
                         {% endif %}
                     {% else %}
-                    <span style="color:var(--text-muted);font-style:italic;">{{ t('status.deadlines.feedback_pending') }}</span>
+                    <span style="color:var(--muted);font-style:italic;">{{ t('status.deadlines.feedback_pending') }}</span>
                     {% endif %}
                 </div>
             </div>
@@ -250,14 +250,14 @@
                 <div class="message-meta">
                     <span class="message-meta-icon">{{ 'M' if msg.sender.value == 'admin' else 'W' }}</span>
                     {{ t('status.sender.admin') if msg.sender.value == 'admin' else t('status.sender.user') }}
-                    &middot; {{ msg.sent_at.strftime('%Y-%m-%d %H:%M UTC') }}
+                    &middot; <time data-utc="{{ msg.sent_at.isoformat() }}">{{ msg.sent_at.strftime('%Y-%m-%d %H:%M UTC') }}</time>
                 </div>
                 <div class="message-content">{{ decrypted_messages[loop.index0] if decrypted_messages and loop.index0 < decrypted_messages|length else msg.content }}</div>
             </div>
             {% endfor %}
         </div>
         {% else %}
-        <p style="color:var(--text-muted);">{{ t('status.no_messages') }}</p>
+        <p style="color:var(--muted);">{{ t('status.no_messages') }}</p>
         {% endif %}
     </div>
 
@@ -287,8 +287,8 @@
     </div>
     {% endif %}
 
-    <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);text-align:center;">
-        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">{{ t('status.other.title') }}</p>
+    <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--hairline);text-align:center;">
+        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.75rem;">{{ t('status.other.title') }}</p>
         <a href="/status/logout" class="btn btn-secondary">{{ t('status.other.button') }}</a>
     </div>
 
