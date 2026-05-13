@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ t('admin.report.eyebrow') }} {{ report.case_number }} — OpenWhistle{% endblock %}
+{% block title %}{{ t('admin.report.eyebrow') }} {{ report.case_number }} | OpenWhistle{% endblock %}
 
 {% block nav_links %}
 <li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
@@ -22,7 +22,7 @@
             <a href="/admin/dashboard" class="btn btn-secondary btn-sm">{{ t('admin.back_dashboard') }}</a>
             <span class="badge badge-{{ report.status.value }}">{{ t('status.label.' + report.status.value) }}</span>
             {% if report.assigned_to %}
-            <span style="font-size:0.78rem;color:var(--text-muted);">&#128100; {{ report.assigned_to.username }}</span>
+            <span style="font-size:0.78rem;color:var(--muted);">&#128100; {{ report.assigned_to.username }}</span>
             {% endif %}
             <a href="/admin/reports/{{ report.id }}/export.pdf" class="btn btn-secondary btn-sm" style="margin-left:auto;" download>
                 &#128196; {{ t('admin.report.export_pdf') }}
@@ -46,7 +46,7 @@
                     &nbsp;&nbsp;
                     <span class="badge badge-received">{{ report.category | replace('_', ' ') | title }}</span>
                 </div>
-                <p style="white-space:pre-wrap;font-size:0.95rem;color:var(--text-secondary);line-height:1.7;">{{ decrypted_description }}</p>
+                <p style="white-space:pre-wrap;font-size:0.95rem;color:var(--body-text);line-height:1.7;">{{ decrypted_description }}</p>
             </div>
 
             {# Communication thread + reply #}
@@ -67,7 +67,7 @@
                     {% endfor %}
                 </div>
                 {% else %}
-                <p style="color:var(--text-muted);margin-bottom:1.5rem;font-size:0.88rem;">{{ t('admin.report.no_messages') }}</p>
+                <p style="color:var(--muted);margin-bottom:1.5rem;font-size:0.88rem;">{{ t('admin.report.no_messages') }}</p>
                 {% endif %}
 
                 {% if report.status.value != 'closed' %}
@@ -100,17 +100,17 @@
                 {% if report.notes %}
                 <div style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1.25rem;">
                     {% for note in report.notes %}
-                    <div style="border-left:3px solid var(--warning);padding:0.6rem 0.75rem;background:var(--warning-subtle);border-radius:0 4px 4px 0;">
-                        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.25rem;">
-                            <strong style="color:var(--text-secondary);">{{ note.author_username }}</strong>
+                    <div style="padding:0.6rem 0.75rem;background:var(--warning-subtle);border-radius:var(--radius-card)">
+                        <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.25rem;">
+                            <strong style="color:var(--body-text);">{{ note.author_username }}</strong>
                             &middot; <span class="mono"><time data-utc="{{ note.created_at.isoformat() }}">{{ note.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</time></span>
                         </div>
-                        <div style="font-size:0.88rem;white-space:pre-wrap;color:var(--text-secondary);">{{ note.content }}</div>
+                        <div style="font-size:0.88rem;white-space:pre-wrap;color:var(--body-text);">{{ note.content }}</div>
                     </div>
                     {% endfor %}
                 </div>
                 {% else %}
-                <p style="color:var(--text-muted);margin-bottom:1rem;font-size:0.88rem;">{{ t('admin.report.notes.none') }}</p>
+                <p style="color:var(--muted);margin-bottom:1rem;font-size:0.88rem;">{{ t('admin.report.notes.none') }}</p>
                 {% endif %}
 
                 <form method="post" action="/admin/reports/{{ report.id }}/notes">
@@ -135,7 +135,7 @@
                     <li style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;background:var(--bg-code);border-radius:6px;">
                         <a href="/admin/reports/{{ lr.id }}" class="mono" style="font-size:0.85rem;font-weight:600;">{{ lr.case_number }}</a>
                         <span class="badge badge-{{ lr.status }}" style="font-size:0.7rem;">{{ t('status.label.' + lr.status) }}</span>
-                        <span style="font-size:0.8rem;color:var(--text-muted);flex:1;">{{ lr.category | replace('_', ' ') | title }}</span>
+                        <span style="font-size:0.8rem;color:var(--muted);flex:1;">{{ lr.category | replace('_', ' ') | title }}</span>
                         <form method="post" action="/admin/reports/{{ report.id }}/links/{{ lr.link_id }}/delete" style="margin:0;">
                             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                             <button type="submit" class="btn btn-secondary btn-sm"
@@ -148,7 +148,7 @@
                     {% endfor %}
                 </ul>
                 {% else %}
-                <p style="color:var(--text-muted);margin-bottom:1rem;font-size:0.88rem;">{{ t('admin.report.links.none') }}</p>
+                <p style="color:var(--muted);margin-bottom:1rem;font-size:0.88rem;">{{ t('admin.report.links.none') }}</p>
                 {% endif %}
 
                 <form method="post" action="/admin/reports/{{ report.id }}/links" style="display:flex;gap:0.5rem;align-items:flex-start;">
@@ -167,12 +167,12 @@
                 {% if audit_entries %}
                 <div style="display:flex;flex-direction:column;gap:0.4rem;">
                     {% for entry in audit_entries %}
-                    <div style="display:flex;gap:0.75rem;align-items:baseline;padding:0.35rem 0;border-bottom:1px solid var(--border);font-size:0.8rem;">
-                        <span class="mono" style="color:var(--text-muted);white-space:nowrap;flex-shrink:0;"><time data-utc="{{ entry.created_at.isoformat() }}">{{ entry.created_at.strftime('%m-%d %H:%M') }}</time></span>
-                        <span style="color:var(--text-secondary);font-weight:600;flex-shrink:0;">{{ entry.admin_username or '—' }}</span>
+                    <div style="display:flex;gap:0.75rem;align-items:baseline;padding:0.35rem 0;border-bottom:1px solid var(--hairline);font-size:0.8rem;">
+                        <span class="mono" style="color:var(--muted);white-space:nowrap;flex-shrink:0;"><time data-utc="{{ entry.created_at.isoformat() }}">{{ entry.created_at.strftime('%m-%d %H:%M') }}</time></span>
+                        <span style="color:var(--body-text);font-weight:600;flex-shrink:0;">{{ entry.admin_username or 'N/A' }}</span>
                         <span style="color:var(--accent);font-family:var(--font-mono);font-size:0.75rem;">{{ entry.action }}</span>
                         {% if entry.detail %}
-                        <span style="color:var(--text-muted);font-size:0.75rem;font-family:var(--font-mono);">{{ entry.detail[:80] }}</span>
+                        <span style="color:var(--muted);font-size:0.75rem;font-family:var(--font-mono);">{{ entry.detail[:80] }}</span>
                         {% endif %}
                     </div>
                     {% endfor %}
@@ -181,7 +181,7 @@
                     <a href="/admin/audit-log?report_id={{ report.id }}" class="btn btn-secondary btn-sm" style="font-size:0.78rem;">Full audit trail →</a>
                 </div>
                 {% else %}
-                <p style="color:var(--text-muted);font-size:0.88rem;">{{ t('admin.report.audit.none') }}</p>
+                <p style="color:var(--muted);font-size:0.88rem;">{{ t('admin.report.audit.none') }}</p>
                 {% endif %}
             </div>
 
@@ -215,7 +215,7 @@
                     <div>
                         <div class="detail-label">{{ t('admin.report.detail.location') }}</div>
                         <span style="font-size:0.85rem;font-weight:600;">{{ report.location.name }}</span>
-                        <span class="mono" style="font-size:0.75rem;color:var(--text-muted);margin-left:0.4rem;">{{ report.location.code }}</span>
+                        <span class="mono" style="font-size:0.75rem;color:var(--muted);margin-left:0.4rem;">{{ report.location.code }}</span>
                     </div>
                     {% endif %}
 
@@ -224,26 +224,26 @@
                         <div class="detail-label" style="margin-bottom:0.5rem;">{{ t('admin.report.confidential.header') }}</div>
                         {% if confidential_name %}
                         <div style="margin-bottom:0.4rem;">
-                            <span style="font-size:0.75rem;color:var(--text-muted);display:block;">{{ t('admin.report.confidential.name') }}</span>
+                            <span style="font-size:0.75rem;color:var(--muted);display:block;">{{ t('admin.report.confidential.name') }}</span>
                             <span style="font-size:0.88rem;font-weight:600;">{{ confidential_name }}</span>
                         </div>
                         {% endif %}
                         {% if confidential_contact %}
                         <div>
-                            <span style="font-size:0.75rem;color:var(--text-muted);display:block;">{{ t('admin.report.confidential.contact') }}</span>
+                            <span style="font-size:0.75rem;color:var(--muted);display:block;">{{ t('admin.report.confidential.contact') }}</span>
                             <span style="font-size:0.88rem;">{{ confidential_contact }}</span>
                         </div>
                         {% endif %}
                         {% if has_secure_email %}
                         <div style="margin-top:0.4rem;">
-                            <span style="font-size:0.75rem;color:var(--text-muted);">{{ t('admin.report.confidential.secure_email_set') }}</span>
+                            <span style="font-size:0.75rem;color:var(--muted);">{{ t('admin.report.confidential.secure_email_set') }}</span>
                         </div>
                         {% endif %}
                     </div>
                     {% elif has_secure_email %}
                     <div>
                         <div class="detail-label">{{ t('admin.report.confidential.secure_email_set') }}</div>
-                        <span style="font-size:0.8rem;color:var(--text-muted);font-style:italic;">{{ t('admin.report.confidential.email_note') }}</span>
+                        <span style="font-size:0.8rem;color:var(--muted);font-style:italic;">{{ t('admin.report.confidential.email_note') }}</span>
                     </div>
                     {% endif %}
 
@@ -254,7 +254,7 @@
                         {% else %}
                             {% set days = (now - report.submitted_at).days %}
                             <span class="{{ 'sla-overdue' if days >= 7 else ('sla-warning' if days >= 5 else 'sla-ok') }} mono" style="font-size:0.82rem;">
-                                {{ t('admin.report.sla.day') }} {{ days }}/7 — {{ t('admin.report.sla.not_ack') }}
+                                {{ t('admin.report.sla.day') }} {{ days }}/7: {{ t('admin.report.sla.not_ack') }}
                             </span>
                         {% endif %}
                     </div>
@@ -329,7 +329,7 @@
             </div>
             {% endif %}
 
-            {# Status update — only valid transitions #}
+            {# Status update - only valid transitions #}
             <div class="panel" style="animation-delay:0.08s;">
                 <div class="panel-header">{{ t('admin.report.status.header') }}</div>
                 {% if allowed_transitions %}
@@ -350,7 +350,7 @@
                     </button>
                 </form>
                 {% else %}
-                <p style="font-size:0.85rem;color:var(--text-muted);">No further status transitions available.</p>
+                <p style="font-size:0.85rem;color:var(--muted);">No further status transitions available.</p>
                 {% endif %}
             </div>
 
@@ -368,14 +368,14 @@
                     </div>
 
                     {% if report.deletion_request.requested_by_id == user.id %}
-                    {# Current user requested — can only cancel #}
-                    <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">{{ t('admin.report.delete.cannot_self') }}</p>
+                    {# Current user requested - can only cancel #}
+                    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.75rem;">{{ t('admin.report.delete.cannot_self') }}</p>
                     <form method="post" action="/admin/reports/{{ report.id }}/cancel-delete">
                         <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                         <button type="submit" class="btn btn-secondary btn-block">{{ t('admin.report.delete.cancel_request') }}</button>
                     </form>
                     {% else %}
-                    {# Different admin — can confirm #}
+                    {# Different admin - can confirm #}
                     <form method="post" action="/admin/reports/{{ report.id }}/confirm-delete"
                           onsubmit="return confirm('Permanently delete this report? This cannot be undone.')">
                         <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
@@ -384,7 +384,7 @@
                     {% endif %}
 
                 {% else %}
-                    {# No pending request — show request button #}
+                    {# No pending request - show request button #}
                     <p style="font-size:0.85rem;margin-bottom:1rem;">{{ t('admin.report.delete.body') }}</p>
                     <div id="delete-step-1">
                         <button type="button" class="btn btn-secondary btn-block"
