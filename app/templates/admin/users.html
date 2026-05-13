@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ t('admin.users.title') }} — OpenWhistle{% endblock %}
+{% block title %}{{ t('admin.users.title') }} | OpenWhistle{% endblock %}
 
 {% block nav_links %}
 <li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
@@ -76,7 +76,7 @@
                                 <span style="font-weight:600;{% if u.id == user.id %}color:var(--accent);{% endif %}">
                                     {{ u.username }}
                                 </span>
-                                {% if u.id == user.id %}<span style="font-size:0.72rem;color:var(--text-muted);"> (you)</span>{% endif %}
+                                {% if u.id == user.id %}<span style="font-size:0.72rem;color:var(--muted);"> (you)</span>{% endif %}
                             </td>
                             <td>
                                 <span class="badge badge-{{ u.role.value }}">{{ t('role.label.' + u.role.value) }}</span>

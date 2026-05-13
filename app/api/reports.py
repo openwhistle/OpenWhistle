@@ -95,13 +95,13 @@ def _set_submission_cookie(response: Response | RedirectResponse, session_id: st
         max_age=_SUBMISSION_TTL,
         httponly=True,
         samesite="lax",
-        secure=not settings.demo_mode,
+        secure=settings.secure_cookies,
     )
 
 
 def _clear_submission_cookie(response: Response | RedirectResponse) -> None:
     response.delete_cookie(
-        "ow-submission-session", httponly=True, samesite="lax", secure=not settings.demo_mode
+        "ow-submission-session", httponly=True, samesite="lax", secure=settings.secure_cookies
     )
 
 
@@ -137,7 +137,7 @@ async def set_language(
         max_age=31_536_000,
         httponly=False,
         samesite="lax",
-        secure=not settings.demo_mode,
+        secure=settings.secure_cookies,
     )
     return response
 
@@ -463,7 +463,7 @@ async def submit_post(
         )
         _clear_submission_cookie(response)
         response.delete_cookie(
-            "ow-status-session", httponly=True, samesite="lax", secure=not settings.demo_mode
+            "ow-status-session", httponly=True, samesite="lax", secure=settings.secure_cookies
         )
         return response
 
@@ -593,7 +593,7 @@ async def status_post(
         max_age=7200,
         httponly=True,
         samesite="lax",
-        secure=not settings.demo_mode,
+        secure=settings.secure_cookies,
     )
     return response
 
@@ -660,7 +660,7 @@ async def reply_post(
         max_age=7200,
         httponly=True,
         samesite="lax",
-        secure=not settings.demo_mode,
+        secure=settings.secure_cookies,
     )
     return response
 
@@ -676,7 +676,7 @@ async def status_logout(
         await redis.delete(f"status-session:{session_key}")
     response = RedirectResponse("/status", status_code=303)
     response.delete_cookie(
-        "ow-status-session", httponly=True, samesite="lax", secure=not settings.demo_mode
+        "ow-status-session", httponly=True, samesite="lax", secure=settings.secure_cookies
     )
     return response
 

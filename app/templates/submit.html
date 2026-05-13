@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ t('submit.title') }} — OpenWhistle{% endblock %}
+{% block title %}{{ t('submit.title') }} | OpenWhistle{% endblock %}
 
 {% block content %}
 <div class="split-layout">
@@ -186,7 +186,7 @@
                     <option value="">{{ t('submit.step.location.placeholder') }}</option>
                     {% for loc in locations %}
                     <option value="{{ loc.id }}" {% if state.get('location_id') == loc.id|string %}selected{% endif %}>
-                        {{ loc.name }}{% if loc.description %} — {{ loc.description }}{% endif %}
+                        {{ loc.name }}{% if loc.description %}: {{ loc.description }}{% endif %}
                     </option>
                     {% endfor %}
                 </select>
@@ -242,7 +242,7 @@
             <div class="form-group">
                 <label class="form-label" for="description" style="display:flex;justify-content:space-between;align-items:baseline;">
                     <span>{{ t('submit.form.description') }}</span>
-                    <span id="char-counter" style="font-size:0.72rem;font-weight:400;color:var(--text-muted);font-family:var(--font-mono);">{{ state.get('description', '') | length | string }} / 10,000</span>
+                    <span id="char-counter" style="font-size:0.72rem;font-weight:400;color:var(--muted);font-family:var(--font-mono);">{{ state.get('description', '') | length | string }} / 10,000</span>
                 </label>
                 <textarea
                     class="form-control"
@@ -255,7 +255,7 @@
                     aria-required="true"
                     aria-describedby="description-hint char-counter"
                     placeholder="{{ t('submit.form.description.placeholder') }}"
-                    oninput="var c=this.value.length;var el=document.getElementById('char-counter');el.textContent=c.toLocaleString()+' / 10,000';el.style.color=c<10?'var(--danger)':c>9500?'var(--warning, #c17b2a)':'var(--text-muted)';"
+                    oninput="var c=this.value.length;var el=document.getElementById('char-counter');el.textContent=c.toLocaleString()+' / 10,000';el.style.color=c<10?'var(--danger)':c>9500?'var(--warning, #c17b2a)':'var(--muted)';"
                 >{{ state.get('description', '') }}</textarea>
                 <div class="form-hint" id="description-hint">{{ t('submit.form.description.hint') }}</div>
             </div>
@@ -331,7 +331,7 @@
                     {% if state.get('location_id') %}
                         {% for loc in locations %}{% if loc.id|string == state.get('location_id') %}{{ loc.name }}{% endif %}{% endfor %}
                     {% else %}
-                        <em style="color:var(--text-muted);">{{ t('submit.step.location.none') }}</em>
+                        <em style="color:var(--muted);">{{ t('submit.step.location.none') }}</em>
                     {% endif %}
                 </span>
             </div>
@@ -375,8 +375,8 @@
             </div>
         </form>
 
-        <p style="text-align:center;margin-top:1rem;font-size:0.8rem;color:var(--text-muted);">
-            <a href="/submit/restart" style="color:var(--text-muted);">{{ t('submit.nav.restart') }}</a>
+        <p style="text-align:center;margin-top:1rem;font-size:0.8rem;color:var(--muted);">
+            <a href="/submit/restart" style="color:var(--muted);">{{ t('submit.nav.restart') }}</a>
         </p>
         {% endif %}
     </div>

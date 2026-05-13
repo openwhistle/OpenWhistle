@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ t('admin.retention.title') }} — OpenWhistle{% endblock %}
+{% block title %}Data Retention Policy | OpenWhistle{% endblock %}
 
 {% block nav_links %}
 <li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
@@ -44,9 +44,9 @@
             <div class="stat-card__label">{{ t('admin.retention.stat.next_run') }}</div>
             <div class="stat-card__value">
                 {% if retention_enabled %}
-                    {{ next_run.strftime('%Y-%m-%d 03:00 UTC') }}
+                    <time data-utc="{{ next_run.isoformat() }}">{{ next_run.strftime('%Y-%m-%d 03:00 UTC') }}</time>
                 {% else %}
-                    —
+                    N/A
                 {% endif %}
             </div>
         </div>
