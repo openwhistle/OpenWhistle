@@ -13,7 +13,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import AdminUser
 from app.services.auth import hash_password, store_totp_setup_pending
 
-
 # ─── helpers ──────────────────────────────────────────────────────────────────
 
 
