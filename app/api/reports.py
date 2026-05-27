@@ -47,6 +47,7 @@ _NEXT_ALLOWLIST: dict[str, str] = {
     "/status": "/status",
     "/admin/login": "/admin/login",
     "/admin/dashboard": "/admin/dashboard",
+    "/admin/mfa/setup": "/admin/mfa/setup",
     "/setup": "/setup",
 }
 
@@ -125,11 +126,13 @@ async def set_language(
     lang: str = Form(...),
     next_url: str = Form("/submit", alias="next"),
 ) -> RedirectResponse:
-    safe_lang = {"en": "en", "de": "de", "fr": "fr"}.get(lang, "en")
-    parsed_path = urlsplit(next_url).path
-    safe_url = _NEXT_ALLOWLIST.get(parsed_path)
-    if safe_url is None:
-        safe_url = "/admin/dashboard" if parsed_path.startswith("/admin/") else "/submit"
+    safe_lang = {"en": "en", "de": "de", "fr": "fr", "pt-br": "pt-br"}.get(lang, "en")
+    parsed = urlsplit(next_url)
+    safe_path = _NEXT_ALLOWLIST.get(parsed.path)
+    if safe_path is None:
+        safe_url = "/admin/dashboard" if parsed.path.startswith("/admin/") else "/submit"
+    else:
+        safe_url = safe_path + (f"?{parsed.query}" if parsed.query else "")
     response = RedirectResponse(safe_url, status_code=303)
     response.set_cookie(
         "ow-lang",

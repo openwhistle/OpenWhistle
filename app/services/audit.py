@@ -34,6 +34,7 @@ class AuditAction:
     ADMIN_DEACTIVATED       = "admin.deactivated"
     ADMIN_REACTIVATED       = "admin.reactivated"
     AUTH_LOGIN              = "auth.login"
+    AUTH_TOTP_SETUP         = "auth.totp_setup"
     ORG_CREATED             = "org.created"
     ORG_DEACTIVATED         = "org.deactivated"
 
