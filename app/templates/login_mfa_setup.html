@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('mfa.setup.title') }} — OpenWhistle{% endblock %}
+
+{% block content %}
+<div style="min-height: calc(100vh - 56px - 56px); display: flex; align-items: center; justify-content: center; padding: 2rem 1rem;">
+    <div style="width: 100%; max-width: 480px;">
+
+        <div style="margin-bottom: 2rem; animation: fadeSlideIn 0.5s ease both;">
+            <div class="page-eyebrow">{{ t('mfa.setup.eyebrow') }}</div>
+            <h1 style="font-size: clamp(1.5rem, 4vw, 2.25rem);">{{ t('mfa.setup.title') }}</h1>
+            <p style="font-size: 0.88rem; margin-top: 0.5rem;">{{ t('mfa.setup.subtitle') }}</p>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-error" role="alert">{{ error }}</div>
+        {% endif %}
+
+        <div class="panel" style="animation: fadeSlideIn 0.5s 0.08s ease both; opacity: 0; animation-fill-mode: forwards;">
+            <div class="panel-header">{{ t('mfa.setup.step1.header') }}</div>
+            <p style="font-size: 0.88rem; margin-bottom: 1rem;">{{ t('mfa.setup.step1.body') }}</p>
+
+            <div style="text-align: center; margin: 1.5rem 0;">
+                <img
+                    src="data:image/png;base64,{{ qr_b64 }}"
+                    alt="{{ t('mfa.setup.qr.alt') }}"
+                    width="200"
+                    height="200"
+                    style="border: 4px solid var(--border); border-radius: 8px; image-rendering: pixelated;">
+            </div>
+
+            <details style="margin-bottom: 1.5rem;">
+                <summary style="font-size: 0.82rem; cursor: pointer; color: var(--text-muted);">
+                    {{ t('mfa.setup.manual.summary') }}
+                </summary>
+                <div style="margin-top: 0.75rem; background: var(--bg-secondary); border-radius: 6px; padding: 0.75rem 1rem;">
+                    <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.4rem;">{{ t('mfa.setup.manual.label') }}</p>
+                    <code style="font-size: 0.9rem; letter-spacing: 0.1em; word-break: break-all;">{{ totp_secret }}</code>
+                </div>
+            </details>
+        </div>
+
+        <div class="panel" style="animation: fadeSlideIn 0.5s 0.18s ease both; opacity: 0; animation-fill-mode: forwards; margin-top: 1.25rem;">
+            <div class="panel-header">{{ t('mfa.setup.step2.header') }}</div>
+            <p style="font-size: 0.88rem; margin-bottom: 1rem;">{{ t('mfa.setup.step2.body') }}</p>
+
+            <form method="post" action="/admin/mfa/setup" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                <input type="hidden" name="temp_token" value="{{ temp_token }}">
+
+                <div class="form-group">
+                    <label class="form-label" for="totp_code">{{ t('mfa.setup.code.label') }}</label>
+                    <input
+                        type="text"
+                        class="form-control mono"
+                        id="totp_code"
+                        name="totp_code"
+                        inputmode="numeric"
+                        pattern="[0-9]{6}"
+                        maxlength="6"
+                        autocomplete="one-time-code"
+                        placeholder="0 0 0 0 0 0"
+                        required
+                        autofocus
+                        style="font-size:1.75rem;letter-spacing:0.4em;text-align:center;padding-bottom:0.75rem;">
+                    <div class="form-hint">{{ t('mfa.setup.code.hint') }}</div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" style="margin-top: 0.5rem;">
+                    {{ t('mfa.setup.submit') }}
+                </button>
+            </form>
+
+            <div style="margin-top:1.25rem;text-align:center;">
+                <a href="/admin/login" class="btn btn-secondary btn-sm">{{ t('mfa.back') }}</a>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
