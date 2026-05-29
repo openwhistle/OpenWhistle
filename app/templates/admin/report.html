@@ -12,7 +12,7 @@
 <li><a href="/admin/telephone-channel">{{ t('admin.nav.telephone_channel') }}</a></li>
 <li><a href="/admin/retention">{{ t('admin.nav.retention') }}</a></li>
 <li><a href="/admin/organisations">{{ t('admin.nav.organisations') }}</a></li>
-<li><a href="/admin/logout">Logout</a></li>
+<li><a href="/admin/logout">{{ t('admin.nav.logout') }}</a></li>
 {% endblock %}
 
 {% block content %}
@@ -94,7 +94,7 @@
             <div class="panel" id="notes" style="animation-delay:0.08s;">
                 <div class="panel-header">
                     {{ t('admin.report.notes.header') }}
-                    <span style="margin-left:0.5rem;font-size:0.7rem;padding:0.15rem 0.5rem;background:var(--warning-subtle);color:var(--warning);border-radius:4px;font-weight:600;letter-spacing:0.05em;">INTERNAL</span>
+                    <span style="margin-left:0.5rem;font-size:0.7rem;padding:0.15rem 0.5rem;background:var(--warning-subtle);color:var(--warning);border-radius:4px;font-weight:600;letter-spacing:0.05em;">{{ t('admin.report.internal_badge') }}</span>
                 </div>
 
                 {% if report.notes %}
@@ -178,7 +178,7 @@
                     {% endfor %}
                 </div>
                 <div style="margin-top:0.75rem;">
-                    <a href="/admin/audit-log?report_id={{ report.id }}" class="btn btn-secondary btn-sm" style="font-size:0.78rem;">Full audit trail →</a>
+                    <a href="/admin/audit-log?report_id={{ report.id }}" class="btn btn-secondary btn-sm" style="font-size:0.78rem;">{{ t('admin.report.audit.full_trail') }}</a>
                 </div>
                 {% else %}
                 <p style="color:var(--muted);font-size:0.88rem;">{{ t('admin.report.audit.none') }}</p>
