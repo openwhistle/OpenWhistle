@@ -101,7 +101,8 @@ async def store_totp_pending(redis: Redis, temp_token: str, user_id: str) -> Non
 async def consume_totp_pending(redis: Redis, temp_token: str) -> str | None:
     """Consume a TOTP-pending token and return the user_id, or None if expired."""
     key = f"{_TOTP_PENDING_PREFIX}{temp_token}"
-    user_id: str | None = await redis.getdel(key)
+    raw = await redis.getdel(key)
+    user_id: str | None = raw.decode() if isinstance(raw, bytes) else raw
     return user_id
 
 
@@ -114,14 +115,16 @@ async def store_totp_setup_pending(redis: Redis, temp_token: str, user_id: str) 
 async def peek_totp_setup_pending(redis: Redis, temp_token: str) -> str | None:
     """Peek at a TOTP-setup token without consuming it."""
     key = f"{_TOTP_SETUP_PREFIX}{temp_token}"
-    user_id: str | None = await redis.get(key)
+    raw = await redis.get(key)
+    user_id: str | None = raw.decode() if isinstance(raw, bytes) else raw
     return user_id
 
 
 async def consume_totp_setup_pending(redis: Redis, temp_token: str) -> str | None:
     """Consume a TOTP-setup token and return the user_id, or None if expired."""
     key = f"{_TOTP_SETUP_PREFIX}{temp_token}"
-    user_id: str | None = await redis.getdel(key)
+    raw = await redis.getdel(key)
+    user_id: str | None = raw.decode() if isinstance(raw, bytes) else raw
     return user_id
 
 
