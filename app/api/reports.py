@@ -164,7 +164,7 @@ async def health(
         healthy = False
 
     try:
-        await redis.ping()  # type: ignore[misc]
+        await redis.ping()
         components["redis"] = "ok"
     except Exception:
         components["redis"] = "error"
