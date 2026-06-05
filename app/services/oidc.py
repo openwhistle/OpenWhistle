@@ -44,7 +44,8 @@ async def create_authorization_url(redis: Redis) -> str:
 async def exchange_code(redis: Redis, code: str, state: str) -> dict[str, Any] | None:
     """Exchange authorization code for user info dict, or None if state is invalid."""
     state_key = f"{_STATE_PREFIX}{state}"
-    nonce: str | None = await redis.getdel(state_key)
+    raw_nonce = await redis.getdel(state_key)
+    nonce: str | None = raw_nonce.decode() if isinstance(raw_nonce, bytes) else raw_nonce
     if not nonce:
         return None
 
