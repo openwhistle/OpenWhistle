@@ -2,6 +2,23 @@
 
 {% block title %}{{ t('admin.audit.title') }} | OpenWhistle{% endblock %}
 
+{% block styles %}
+<style nonce="{{ request.state.csp_nonce }}">
+    .aud-header { display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:1rem; }
+    .aud-filter-panel { margin-bottom:1.25rem; }
+    .aud-filter-form { display:flex;gap:0.75rem;flex-wrap:wrap;align-items:flex-end; }
+    .aud-filter-group { margin:0;flex:1;min-width:180px; }
+    .aud-time-cell { font-size:0.78rem;white-space:nowrap;color:var(--muted); }
+    .aud-admin-cell { font-size:0.85rem;font-weight:600; }
+    .aud-action-badge { font-family:var(--font-mono);font-size:0.78rem;color:var(--accent);background:var(--accent-subtle);padding:0.15rem 0.4rem;border-radius:4px; }
+    .aud-report-link { font-size:0.78rem; }
+    .aud-detail-cell { font-size:0.78rem;color:var(--muted);font-family:var(--font-mono);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+    .aud-empty { text-align:center;padding:3rem 1rem; }
+    .aud-empty-icon { font-size:2.5rem;margin-bottom:1rem;opacity:0.3; }
+    .aud-empty-text { font-size:1rem;color:var(--muted); }
+</style>
+{% endblock %}
+
 {% block nav_links %}
 <li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
 <li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
@@ -17,7 +34,7 @@
 
 {% block content %}
 <div class="container">
-    <div class="page-header" style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+    <div class="page-header aud-header">
         <div>
             <div class="page-eyebrow">{{ t('admin.audit.eyebrow') }}</div>
             <h1>{{ t('admin.audit.title') }}</h1>
@@ -28,15 +45,15 @@
     </div>
 
     {# Filter bar #}
-    <div class="panel" style="margin-bottom:1.25rem;">
-        <form method="get" action="/admin/audit-log" style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:flex-end;">
-            <div class="form-group" style="margin:0;flex:1;min-width:180px;">
+    <div class="panel aud-filter-panel">
+        <form method="get" action="/admin/audit-log" class="aud-filter-form">
+            <div class="form-group aud-filter-group">
                 <label class="form-label" for="action-filter">{{ t('admin.audit.filter.action') }}</label>
                 <input type="text" class="form-control" id="action-filter" name="action"
                     value="{{ action_filter }}"
                     placeholder="{{ t('admin.audit.filter.all') }}">
             </div>
-            <div class="form-group" style="margin:0;flex:1;min-width:180px;">
+            <div class="form-group aud-filter-group">
                 <label class="form-label" for="report-filter">{{ t('admin.audit.filter.report_id') }}</label>
                 <input type="text" class="form-control" id="report-filter" name="report_id"
                     value="{{ report_id_filter }}"
@@ -65,25 +82,25 @@
                 <tbody>
                     {% for entry in entries %}
                     <tr>
-                        <td class="mono" style="font-size:0.78rem;white-space:nowrap;color:var(--muted);">
+                        <td class="mono aud-time-cell">
                             <time data-utc="{{ entry.created_at.isoformat() }}">{{ entry.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</time>
                         </td>
-                        <td style="font-size:0.85rem;font-weight:600;">{{ entry.admin_username or 'N/A' }}</td>
+                        <td class="aud-admin-cell">{{ entry.admin_username or 'N/A' }}</td>
                         <td>
-                            <span style="font-family:var(--font-mono);font-size:0.78rem;color:var(--accent);background:var(--accent-subtle);padding:0.15rem 0.4rem;border-radius:4px;">
+                            <span class="aud-action-badge">
                                 {{ entry.action }}
                             </span>
                         </td>
                         <td>
                             {% if entry.report_id %}
-                            <a href="/admin/reports/{{ entry.report_id }}" class="mono" style="font-size:0.78rem;">
+                            <a href="/admin/reports/{{ entry.report_id }}" class="mono aud-report-link">
                                 {{ entry.report_id | string | truncate(13, true, '…') }}
                             </a>
                             {% else %}
                             N/A
                             {% endif %}
                         </td>
-                        <td style="font-size:0.78rem;color:var(--muted);font-family:var(--font-mono);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ entry.detail or '' }}">
+                        <td class="aud-detail-cell" title="{{ entry.detail or '' }}">
                             {{ entry.detail or '' }}
                         </td>
                     </tr>
@@ -117,9 +134,9 @@
         {% endif %}
 
         {% else %}
-        <div style="text-align:center;padding:3rem 1rem;">
-            <div style="font-size:2.5rem;margin-bottom:1rem;opacity:0.3;">&#128221;</div>
-            <p style="font-size:1rem;color:var(--muted);">{{ t('admin.audit.empty') }}</p>
+        <div class="aud-empty">
+            <div class="aud-empty-icon">&#128221;</div>
+            <p class="aud-empty-text">{{ t('admin.audit.empty') }}</p>
         </div>
         {% endif %}
     </div>

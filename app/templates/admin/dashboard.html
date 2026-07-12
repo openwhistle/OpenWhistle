@@ -1,5 +1,30 @@
 {% extends "base.html" %}
 
+{% block styles %}
+<style nonce="{{ request.state.csp_nonce }}">
+.dash-page-header { display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:1rem; }
+.dash-logged-in-as { margin-top:0.25rem;font-size:0.8rem;color:var(--muted); }
+.dash-username { color:var(--accent);font-weight:600; }
+.dash-role-badge { margin-left:0.5rem;font-size:0.7rem; }
+.dash-alert-mb { margin-bottom:1.25rem; }
+.dash-shrink0 { flex-shrink:0; }
+.dash-stats-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:2rem; }
+.dash-nowrap { white-space:nowrap; }
+.dash-category-cell { font-size:0.85rem;color:var(--body-text); }
+.dash-date-cell { font-size:0.78rem;color:var(--muted); }
+.dash-assignee-cell { font-size:0.82rem;color:var(--muted); }
+.dash-assignee-name { color:var(--body-text); }
+.dash-sla-cell { font-size:0.82rem; }
+.dash-empty-wrap { text-align:center;padding:3rem 1rem; }
+.dash-empty-wrap-lg { text-align:center;padding:3.5rem 1rem; }
+.dash-empty-icon { font-size:2.5rem;margin-bottom:1rem;opacity:0.3; }
+.dash-empty-title { font-size:1rem;font-weight:600;color:var(--body-text);margin-bottom:0.4rem; }
+.dash-empty-body { font-size:0.85rem;color:var(--muted); }
+.dash-mt-btn { margin-top:1rem; }
+.dash-mt-btn-lg { margin-top:1.25rem; }
+</style>
+{% endblock %}
+
 {% block title %}{{ t('admin.dashboard.title') }} | OpenWhistle{% endblock %}
 
 {% block nav_links %}
@@ -34,13 +59,13 @@
 
 {% block content %}
 <div class="container">
-    <div class="page-header" style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+    <div class="page-header dash-page-header">
         <div>
             <div class="page-eyebrow">{{ t('admin.eyebrow') }}</div>
             <h1>{{ t('admin.dashboard.title') }}</h1>
-            <p style="margin-top:0.25rem;font-size:0.8rem;color:var(--muted);">
-                {{ t('admin.logged_in_as') }} <strong style="color:var(--accent);font-weight:600;">{{ user.username }}</strong>
-                <span class="badge badge-{{ user.role.value }}" style="margin-left:0.5rem;font-size:0.7rem;">{{ t('role.label.' + user.role.value) }}</span>
+            <p class="dash-logged-in-as">
+                {{ t('admin.logged_in_as') }} <strong class="dash-username">{{ user.username }}</strong>
+                <span class="badge badge-{{ user.role.value }} dash-role-badge">{{ t('role.label.' + user.role.value) }}</span>
             </p>
         </div>
         <a href="/submit" class="btn btn-secondary btn-sm" title="Opens the public submit form in this tab">{{ t('admin.view_submit') }}</a>
@@ -48,7 +73,7 @@
 
     {# Deletion success flash #}
     {% if deleted_case %}
-    <div class="alert alert-success" role="alert" style="margin-bottom:1.25rem;">
+    <div class="alert alert-success dash-alert-mb" role="alert">
         {{ t('admin.flash.deleted') }} <span class="mono">{{ deleted_case }}</span>
     </div>
     {% endif %}
@@ -64,14 +89,14 @@
             <br><br>
             {{ t('admin.ip_warning.hint') }}
         </div>
-        <button class="btn btn-danger btn-sm" onclick="dismissIpWarning(this)" style="flex-shrink:0;">
+        <button class="btn btn-danger btn-sm dash-shrink0" data-action="dismiss-ip-warning">
             {{ t('admin.ip_warning.dismiss') }}
         </button>
     </div>
     {% endif %}
 
     {# Summary stats cards - clickable filters #}
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:2rem;">
+    <div class="dash-stats-grid">
         {% for label_key, status_val, cls in [
             ('admin.stats.received',          'received',          'badge-received'),
             ('admin.stats.in_review',         'in_review',         'badge-in_review'),
@@ -81,7 +106,7 @@
         {% set count = stats.get(status_val, 0) %}
         <a href="/admin/dashboard?status={{ status_val }}&sort={{ sort_by }}&dir={{ sort_dir }}&per_page={{ per_page }}"
            class="stat-card stat-card-link {% if status_filter == status_val %}stat-card-active{% endif %}"
-           style="animation-delay: {{ loop.index0 * 0.05 }}s;"
+           data-delay="{{ loop.index0 * 0.05 }}"
            aria-label="Filter by {{ t(label_key) }}">
             <div class="stat-number">{{ count }}</div>
             <span class="badge {{ cls }}">{{ t(label_key) }}</span>
@@ -135,7 +160,7 @@
 
                 {# Per-page selector #}
                 <div class="per-page-wrap">
-                    <select class="per-page-select" onchange="goPerPage(this.value)" aria-label="{{ t('admin.filter.per_page') }}">
+                    <select class="per-page-select" id="dash-per-page-select" aria-label="{{ t('admin.filter.per_page') }}">
                         {% for opt in per_page_options %}
                         <option value="{{ opt }}" {% if per_page == opt %}selected{% endif %}>{{ opt }}</option>
                         {% endfor %}
@@ -182,25 +207,25 @@
                         {% set fb_sla_class = 'sla-ok' if days_to_fb > 14 else ('sla-warning' if days_to_fb > 0 else 'sla-overdue') %}
                     {% endif %}
                     <tr>
-                        <td><span class="mono" style="white-space:nowrap;">{{ report.case_number }}</span></td>
-                        <td style="font-size:0.85rem;color:var(--body-text);">{{ report.category | replace('_', ' ') | title }}</td>
+                        <td><span class="mono dash-nowrap">{{ report.case_number }}</span></td>
+                        <td class="dash-category-cell">{{ report.category | replace('_', ' ') | title }}</td>
                         <td><span class="badge badge-{{ report.status.value }}">{{ t('status.label.' + report.status.value) }}</span></td>
-                        <td class="mono" style="font-size:0.78rem;color:var(--muted);">{{ report.submitted_at.strftime('%Y-%m-%d') }}</td>
-                        <td style="font-size:0.82rem;color:var(--muted);">
+                        <td class="mono dash-date-cell">{{ report.submitted_at.strftime('%Y-%m-%d') }}</td>
+                        <td class="dash-assignee-cell">
                             {% if report.assigned_to %}
-                                <span style="color:var(--body-text);">{{ report.assigned_to.username }}</span>
+                                <span class="dash-assignee-name">{{ report.assigned_to.username }}</span>
                             {% else %}
                                 N/A
                             {% endif %}
                         </td>
-                        <td class="{{ ack_sla_class }}" style="font-size:0.82rem;">
+                        <td class="{{ ack_sla_class }} dash-sla-cell">
                             {% if report.acknowledged_at %}
                                 {{ t('admin.sla.done') }}
                             {% else %}
                                 {{ t('admin.report.sla.day') }} {{ days_since_submit }}/7
                             {% endif %}
                         </td>
-                        <td class="{{ fb_sla_class }}" style="font-size:0.82rem;">
+                        <td class="{{ fb_sla_class }} dash-sla-cell">
                             {% if report.feedback_due_at %}
                                 {% set days_to_fb = (report.feedback_due_at - now).days %}
                                 {% if days_to_fb > 0 %}{{ days_to_fb }} {{ t('admin.report.sla.days_remaining') }}{% else %}{{ t('admin.report.sla.overdue') }}{% endif %}
@@ -263,30 +288,45 @@
 
         {% elif status_filter or my_cases %}
         {# Filtered empty state #}
-        <div style="text-align:center;padding:3rem 1rem;">
-            <div style="font-size:2.5rem;margin-bottom:1rem;opacity:0.3;">&#128269;</div>
-            <p style="font-size:1rem;font-weight:600;color:var(--body-text);margin-bottom:0.4rem;">{{ t('admin.filter.no_results') }}</p>
-            <a href="/admin/dashboard" class="btn btn-secondary btn-sm" style="margin-top:1rem;">{{ t('admin.filter.all_statuses') }}</a>
+        <div class="dash-empty-wrap">
+            <div class="dash-empty-icon">&#128269;</div>
+            <p class="dash-empty-title">{{ t('admin.filter.no_results') }}</p>
+            <a href="/admin/dashboard" class="btn btn-secondary btn-sm dash-mt-btn">{{ t('admin.filter.all_statuses') }}</a>
         </div>
 
         {% else %}
         {# Truly empty - no reports at all #}
-        <div style="text-align:center;padding:3.5rem 1rem;">
-            <div style="font-size:2.5rem;margin-bottom:1rem;opacity:0.3;">&#128274;</div>
-            <p style="font-size:1rem;font-weight:600;color:var(--body-text);margin-bottom:0.4rem;">{{ t('admin.empty.title') }}</p>
-            <p style="font-size:0.85rem;color:var(--muted);">{{ t('admin.empty.body') }}</p>
-            <a href="/submit" class="btn btn-secondary btn-sm" style="margin-top:1.25rem;">{{ t('admin.view_submit') }}</a>
+        <div class="dash-empty-wrap-lg">
+            <div class="dash-empty-icon">&#128274;</div>
+            <p class="dash-empty-title">{{ t('admin.empty.title') }}</p>
+            <p class="dash-empty-body">{{ t('admin.empty.body') }}</p>
+            <a href="/submit" class="btn btn-secondary btn-sm dash-mt-btn-lg">{{ t('admin.view_submit') }}</a>
         </div>
         {% endif %}
     </div>
 </div>
+{% endblock %}
 
-<script>
+{% block scripts %}
+<script nonce="{{ request.state.csp_nonce }}">
 function goPerPage(val) {
     const u = new URL(window.location.href);
     u.searchParams.set('per_page', val);
     u.searchParams.set('page', '1');
     window.location.href = u.toString();
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.stat-card-link[data-delay]').forEach(function (el) {
+        el.style.animationDelay = el.dataset.delay + 's';
+    });
+
+    var perPageSelect = document.getElementById('dash-per-page-select');
+    if (perPageSelect) {
+        perPageSelect.addEventListener('change', function () {
+            goPerPage(this.value);
+        });
+    }
+});
 </script>
 {% endblock %}

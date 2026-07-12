@@ -1,5 +1,21 @@
 {% extends "base.html" %}
 
+{% block styles %}
+<style nonce="{{ request.state.csp_nonce }}">
+    .lg-page-center { min-height: calc(100vh - 56px - 56px); display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+    .lg-card-width { width: 100%; max-width: 400px; }
+    .lg-header { margin-bottom: 2rem; animation: fadeSlideIn 0.5s ease both; }
+    .lg-h1 { font-size: clamp(1.5rem, 4vw, 2.25rem); }
+    .lg-subtitle { font-size: 0.88rem; margin-top: 0.5rem; }
+    .lg-panel-anim { animation: fadeSlideIn 0.5s 0.08s ease both; opacity: 0; animation-fill-mode: forwards; }
+    .lg-btn-mt { margin-top: 0.5rem; }
+    .lg-oidc-wrap { margin-top: 1.5rem; text-align: center; }
+    .lg-or-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; }
+    .lg-ldap-wrap { margin-top: 0.75rem; text-align: center; }
+    .lg-ldap-badge { display: inline-block; font-size: 0.72rem; color: var(--muted); background: var(--surface-2,var(--surface-card)); border: 1px solid var(--hairline); border-radius: 4px; padding: 0.2rem 0.6rem; }
+</style>
+{% endblock %}
+
 {% block title %}{{ t('login.title') }} | OpenWhistle{% endblock %}
 
 {% block nav_links %}
@@ -8,13 +24,13 @@
 {% endblock %}
 
 {% block content %}
-<div style="min-height: calc(100vh - 56px - 56px); display: flex; align-items: center; justify-content: center; padding: 2rem 1rem;">
-    <div style="width: 100%; max-width: 400px;">
+<div class="lg-page-center">
+    <div class="lg-card-width">
 
-        <div style="margin-bottom: 2rem; animation: fadeSlideIn 0.5s ease both;">
+        <div class="lg-header">
             <div class="page-eyebrow">{{ t('login.eyebrow') }}</div>
-            <h1 style="font-size: clamp(1.5rem, 4vw, 2.25rem);">{{ t('login.title') }}</h1>
-            <p style="font-size: 0.88rem; margin-top: 0.5rem;">{{ t('login.subtitle') }}</p>
+            <h1 class="lg-h1">{{ t('login.title') }}</h1>
+            <p class="lg-subtitle">{{ t('login.subtitle') }}</p>
         </div>
 
         {% if is_demo %}
@@ -26,13 +42,13 @@
             <div class="demo-credentials-grid">
                 <div class="demo-cred-item">
                     <span class="demo-cred-label">Username</span>
-                    <button type="button" class="demo-cred-value" onclick="document.getElementById('username').value='demo';document.getElementById('password').value='demo';" title="Click to fill">
+                    <button type="button" id="demo-fill-btn-user" class="demo-cred-value" title="Click to fill">
                         demo
                     </button>
                 </div>
                 <div class="demo-cred-item">
                     <span class="demo-cred-label">Password</span>
-                    <button type="button" class="demo-cred-value" onclick="document.getElementById('username').value='demo';document.getElementById('password').value='demo';" title="Click to fill">
+                    <button type="button" id="demo-fill-btn-pass" class="demo-cred-value" title="Click to fill">
                         demo
                     </button>
                 </div>
@@ -41,7 +57,7 @@
                     <code class="demo-cred-code">0 0 0 0 0 0</code>
                 </div>
             </div>
-            <button type="button" class="demo-fill-btn" onclick="document.getElementById('username').value='demo';document.getElementById('password').value='demo';this.textContent='✓ Filled';">
+            <button type="button" id="demo-fill-btn-all" class="demo-fill-btn">
                 Fill credentials
             </button>
         </div>
@@ -51,7 +67,7 @@
         <div class="alert alert-error" role="alert">{{ error }}</div>
         {% endif %}
 
-        <div class="panel" style="animation: fadeSlideIn 0.5s 0.08s ease both; opacity: 0; animation-fill-mode: forwards;">
+        <div class="panel lg-panel-anim">
             <div class="panel-header">{{ t('login.panel.header') }}</div>
 
             <form method="post" action="/admin/login" novalidate>
@@ -80,22 +96,22 @@
                         required>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-block" style="margin-top: 0.5rem;">
+                <button type="submit" class="btn btn-primary btn-block lg-btn-mt">
                     {{ t('login.submit') }}
                 </button>
             </form>
 
             {% if oidc_enabled %}
-            <div style="margin-top:1.5rem;text-align:center;">
-                <div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.08em;">{{ t('login.or') }}</div>
+            <div class="lg-oidc-wrap">
+                <div class="lg-or-label">{{ t('login.or') }}</div>
                 <a href="/admin/oidc/authorize" class="btn btn-secondary btn-block">
                     {{ t('login.sso') }}
                 </a>
             </div>
             {% endif %}
             {% if ldap_enabled %}
-            <div style="margin-top:0.75rem;text-align:center;">
-                <span style="display:inline-block;font-size:0.72rem;color:var(--muted);background:var(--surface-2,var(--surface-card));border:1px solid var(--hairline);border-radius:4px;padding:0.2rem 0.6rem;">
+            <div class="lg-ldap-wrap">
+                <span class="lg-ldap-badge">
                     {{ t('login.ldap_active') }}
                 </span>
             </div>
@@ -104,4 +120,28 @@
 
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ request.state.csp_nonce }}">
+(function() {
+    function fillDemoCredentials() {
+        var u = document.getElementById('username');
+        var p = document.getElementById('password');
+        if (u) u.value = 'demo';
+        if (p) p.value = 'demo';
+    }
+    var userBtn = document.getElementById('demo-fill-btn-user');
+    var passBtn = document.getElementById('demo-fill-btn-pass');
+    var allBtn = document.getElementById('demo-fill-btn-all');
+    if (userBtn) userBtn.addEventListener('click', fillDemoCredentials);
+    if (passBtn) passBtn.addEventListener('click', fillDemoCredentials);
+    if (allBtn) {
+        allBtn.addEventListener('click', function() {
+            fillDemoCredentials();
+            this.textContent = '✓ Filled';
+        });
+    }
+})();
+</script>
 {% endblock %}

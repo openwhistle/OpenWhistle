@@ -1,5 +1,71 @@
 {% extends "base.html" %}
 
+{% block styles %}<style nonce="{{ request.state.csp_nonce }}">
+.rpt-1 { display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-bottom:0.75rem; }
+.rpt-2 { font-size:0.78rem;color:var(--muted); }
+.rpt-3 { margin-left:auto; }
+.rpt-4 { font-family:var(--font-mono);font-size:clamp(1.1rem,3vw,1.75rem);letter-spacing:0.04em;font-weight:400; }
+.rpt-5 { display:grid;grid-template-columns:2fr 1fr;gap:1.25rem;align-items:start; }
+.rpt-6 { white-space:pre-wrap;font-size:0.95rem;color:var(--body-text);line-height:1.7; }
+.rpt-delay-05 { animation-delay:0.05s; }
+.rpt-7 { margin-bottom:1.5rem; }
+.rpt-8 { color:var(--muted);margin-bottom:1.5rem;font-size:0.88rem; }
+.rpt-delay-08 { animation-delay:0.08s; }
+.rpt-9 { margin-left:0.5rem;font-size:0.7rem;padding:0.15rem 0.5rem;background:var(--warning-subtle);color:var(--warning);border-radius:4px;font-weight:600;letter-spacing:0.05em; }
+.rpt-10 { display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1.25rem; }
+.rpt-11 { padding:0.6rem 0.75rem;background:var(--warning-subtle);border-radius:var(--radius-card); }
+.rpt-12 { font-size:0.75rem;color:var(--muted);margin-bottom:0.25rem; }
+.rpt-13 { color:var(--body-text); }
+.rpt-14 { font-size:0.88rem;white-space:pre-wrap;color:var(--body-text); }
+.rpt-15 { color:var(--muted);margin-bottom:1rem;font-size:0.88rem; }
+.rpt-delay-1 { animation-delay:0.1s; }
+.rpt-16 { list-style:none;padding:0;margin:0 0 1rem;display:flex;flex-direction:column;gap:0.5rem; }
+.rpt-17 { display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;background:var(--bg-code);border-radius:6px; }
+.rpt-18 { font-size:0.85rem;font-weight:600; }
+.rpt-19 { font-size:0.7rem; }
+.rpt-20 { font-size:0.8rem;color:var(--muted);flex:1; }
+.rpt-21 { margin:0; }
+.rpt-22 { font-size:0.75rem;padding:0.2rem 0.5rem; }
+.rpt-23 { display:flex;gap:0.5rem;align-items:flex-start; }
+.rpt-24 { flex:1; }
+.rpt-25 { white-space:nowrap; }
+.rpt-delay-12 { animation-delay:0.12s; }
+.rpt-26 { display:flex;flex-direction:column;gap:0.4rem; }
+.rpt-27 { display:flex;gap:0.75rem;align-items:baseline;padding:0.35rem 0;border-bottom:1px solid var(--hairline);font-size:0.8rem; }
+.rpt-28 { color:var(--muted);white-space:nowrap;flex-shrink:0; }
+.rpt-29 { color:var(--body-text);font-weight:600;flex-shrink:0; }
+.rpt-30 { color:var(--accent);font-family:var(--font-mono);font-size:0.75rem; }
+.rpt-31 { color:var(--muted);font-size:0.75rem;font-family:var(--font-mono); }
+.rpt-32 { margin-top:0.75rem; }
+.rpt-33 { font-size:0.78rem; }
+.rpt-34 { color:var(--muted);font-size:0.88rem; }
+.rpt-35 { display:flex;flex-direction:column;gap:1rem;font-size:0.875rem; }
+.rpt-36 { font-size:0.82rem; }
+.rpt-37 { font-size:0.85rem; }
+.rpt-38 { font-size:0.75rem;color:var(--muted);margin-left:0.4rem; }
+.rpt-39 { padding:0.75rem;background:var(--accent-subtle);border:1px solid var(--border-strong);border-radius:var(--radius-sm); }
+.rpt-40 { margin-bottom:0.5rem; }
+.rpt-41 { margin-bottom:0.4rem; }
+.rpt-42 { font-size:0.75rem;color:var(--muted);display:block; }
+.rpt-43 { font-size:0.88rem;font-weight:600; }
+.rpt-44 { font-size:0.88rem; }
+.rpt-45 { margin-top:0.4rem; }
+.rpt-46 { font-size:0.75rem;color:var(--muted); }
+.rpt-47 { font-size:0.8rem;color:var(--muted);font-style:italic; }
+.rpt-delay-04 { animation-delay:0.04s; }
+.rpt-48 { font-size:0.85rem;margin-bottom:1rem; }
+.rpt-delay-06 { animation-delay:0.06s; }
+.rpt-49 { font-size:0.85rem;color:var(--muted); }
+.rpt-delay-1-danger { animation-delay:0.1s;border-color:var(--danger); }
+.rpt-51 { color:var(--danger); }
+.rpt-52 { margin-bottom:1rem; }
+.rpt-53 { font-size:0.75rem;margin-top:0.4rem; }
+.rpt-54 { font-size:0.82rem;color:var(--muted);margin-bottom:0.75rem; }
+.rpt-hidden { display:none; }
+.rpt-55 { display:flex;gap:0.5rem; }
+.rpt-56 { flex:1; }
+</style>{% endblock %}
+
 {% block title %}{{ t('admin.report.eyebrow') }} {{ report.case_number }} | OpenWhistle{% endblock %}
 
 {% block nav_links %}
@@ -18,23 +84,23 @@
 {% block content %}
 <div class="container">
     <div class="page-header">
-        <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-bottom:0.75rem;">
+        <div class="rpt-1">
             <a href="/admin/dashboard" class="btn btn-secondary btn-sm">{{ t('admin.back_dashboard') }}</a>
             <span class="badge badge-{{ report.status.value }}">{{ t('status.label.' + report.status.value) }}</span>
             {% if report.assigned_to %}
-            <span style="font-size:0.78rem;color:var(--muted);">&#128100; {{ report.assigned_to.username }}</span>
+            <span class="rpt-2">&#128100; {{ report.assigned_to.username }}</span>
             {% endif %}
-            <a href="/admin/reports/{{ report.id }}/export.pdf" class="btn btn-secondary btn-sm" style="margin-left:auto;" download>
+            <a href="/admin/reports/{{ report.id }}/export.pdf" class="btn btn-secondary btn-sm rpt-3" download>
                 &#128196; {{ t('admin.report.export_pdf') }}
             </a>
         </div>
         <div class="page-eyebrow">{{ t('admin.report.eyebrow') }}</div>
-        <h1 style="font-family:var(--font-mono);font-size:clamp(1.1rem,3vw,1.75rem);letter-spacing:0.04em;font-weight:400;">
+        <h1 class="rpt-4">
             {{ report.case_number }}
         </h1>
     </div>
 
-    <div style="display:grid;grid-template-columns:2fr 1fr;gap:1.25rem;align-items:start;">
+    <div class="rpt-5">
 
         {# ── Left column: report + thread + reply + notes + links ── #}
         <div>
@@ -46,15 +112,15 @@
                     &nbsp;&nbsp;
                     <span class="badge badge-received">{{ report.category | replace('_', ' ') | title }}</span>
                 </div>
-                <p style="white-space:pre-wrap;font-size:0.95rem;color:var(--body-text);line-height:1.7;">{{ decrypted_description }}</p>
+                <p class="rpt-6">{{ decrypted_description }}</p>
             </div>
 
             {# Communication thread + reply #}
-            <div class="panel" style="animation-delay:0.05s;">
+            <div class="panel rpt-delay-05">
                 <div class="panel-header">{{ t('admin.report.thread') }}</div>
 
                 {% if report.messages %}
-                <div class="thread" style="margin-bottom:1.5rem;">
+                <div class="thread rpt-7">
                     {% for msg in report.messages %}
                     <div class="message message-{{ msg.sender.value }}">
                         <div class="message-meta">
@@ -67,7 +133,7 @@
                     {% endfor %}
                 </div>
                 {% else %}
-                <p style="color:var(--muted);margin-bottom:1.5rem;font-size:0.88rem;">{{ t('admin.report.no_messages') }}</p>
+                <p class="rpt-8">{{ t('admin.report.no_messages') }}</p>
                 {% endif %}
 
                 {% if report.status.value != 'closed' %}
@@ -91,26 +157,26 @@
             </div>
 
             {# Internal notes (admin-only) #}
-            <div class="panel" id="notes" style="animation-delay:0.08s;">
+            <div class="panel rpt-delay-08" id="notes">
                 <div class="panel-header">
                     {{ t('admin.report.notes.header') }}
-                    <span style="margin-left:0.5rem;font-size:0.7rem;padding:0.15rem 0.5rem;background:var(--warning-subtle);color:var(--warning);border-radius:4px;font-weight:600;letter-spacing:0.05em;">{{ t('admin.report.internal_badge') }}</span>
+                    <span class="rpt-9">{{ t('admin.report.internal_badge') }}</span>
                 </div>
 
                 {% if report.notes %}
-                <div style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1.25rem;">
+                <div class="rpt-10">
                     {% for note in report.notes %}
-                    <div style="padding:0.6rem 0.75rem;background:var(--warning-subtle);border-radius:var(--radius-card)">
-                        <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.25rem;">
-                            <strong style="color:var(--body-text);">{{ note.author_username }}</strong>
+                    <div class="rpt-11">
+                        <div class="rpt-12">
+                            <strong class="rpt-13">{{ note.author_username }}</strong>
                             &middot; <span class="mono"><time data-utc="{{ note.created_at.isoformat() }}">{{ note.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</time></span>
                         </div>
-                        <div style="font-size:0.88rem;white-space:pre-wrap;color:var(--body-text);">{{ note.content }}</div>
+                        <div class="rpt-14">{{ note.content }}</div>
                     </div>
                     {% endfor %}
                 </div>
                 {% else %}
-                <p style="color:var(--muted);margin-bottom:1rem;font-size:0.88rem;">{{ t('admin.report.notes.none') }}</p>
+                <p class="rpt-15">{{ t('admin.report.notes.none') }}</p>
                 {% endif %}
 
                 <form method="post" action="/admin/reports/{{ report.id }}/notes">
@@ -126,21 +192,19 @@
             </div>
 
             {# Linked cases #}
-            <div class="panel" id="links" style="animation-delay:0.1s;">
+            <div class="panel rpt-delay-1" id="links">
                 <div class="panel-header">{{ t('admin.report.links.header') }}</div>
 
                 {% if linked_reports %}
-                <ul style="list-style:none;padding:0;margin:0 0 1rem;display:flex;flex-direction:column;gap:0.5rem;">
+                <ul class="rpt-16">
                     {% for lr in linked_reports %}
-                    <li style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.75rem;background:var(--bg-code);border-radius:6px;">
-                        <a href="/admin/reports/{{ lr.id }}" class="mono" style="font-size:0.85rem;font-weight:600;">{{ lr.case_number }}</a>
-                        <span class="badge badge-{{ lr.status }}" style="font-size:0.7rem;">{{ t('status.label.' + lr.status) }}</span>
-                        <span style="font-size:0.8rem;color:var(--muted);flex:1;">{{ lr.category | replace('_', ' ') | title }}</span>
-                        <form method="post" action="/admin/reports/{{ report.id }}/links/{{ lr.link_id }}/delete" style="margin:0;">
+                    <li class="rpt-17">
+                        <a href="/admin/reports/{{ lr.id }}" class="mono rpt-18">{{ lr.case_number }}</a>
+                        <span class="badge badge-{{ lr.status }} rpt-19">{{ t('status.label.' + lr.status) }}</span>
+                        <span class="rpt-20">{{ lr.category | replace('_', ' ') | title }}</span>
+                        <form method="post" action="/admin/reports/{{ report.id }}/links/{{ lr.link_id }}/delete" class="rpt-21" data-confirm="Remove link with {{ lr.case_number }}?">
                             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                            <button type="submit" class="btn btn-secondary btn-sm"
-                                onclick="return confirm('Remove link with {{ lr.case_number }}?')"
-                                style="font-size:0.75rem;padding:0.2rem 0.5rem;">
+                            <button type="submit" class="btn btn-secondary btn-sm rpt-22">
                                 {{ t('admin.report.links.remove') }}
                             </button>
                         </form>
@@ -148,40 +212,40 @@
                     {% endfor %}
                 </ul>
                 {% else %}
-                <p style="color:var(--muted);margin-bottom:1rem;font-size:0.88rem;">{{ t('admin.report.links.none') }}</p>
+                <p class="rpt-15">{{ t('admin.report.links.none') }}</p>
                 {% endif %}
 
-                <form method="post" action="/admin/reports/{{ report.id }}/links" style="display:flex;gap:0.5rem;align-items:flex-start;">
+                <form method="post" action="/admin/reports/{{ report.id }}/links" class="rpt-23">
                     <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                    <input type="text" class="form-control" name="case_number" style="flex:1;"
+                    <input type="text" class="form-control rpt-24" name="case_number"
                         placeholder="{{ t('admin.report.links.placeholder') }}"
                         pattern="OW-\d{4}-\d{5}" title="Format: OW-YYYY-NNNNN"
                         required>
-                    <button type="submit" class="btn btn-secondary btn-sm" style="white-space:nowrap;">{{ t('admin.report.links.button') }}</button>
+                    <button type="submit" class="btn btn-secondary btn-sm rpt-25">{{ t('admin.report.links.button') }}</button>
                 </form>
             </div>
 
             {# Audit log timeline #}
-            <div class="panel" id="audit" style="animation-delay:0.12s;">
+            <div class="panel rpt-delay-12" id="audit">
                 <div class="panel-header">{{ t('admin.report.audit.header') }}</div>
                 {% if audit_entries %}
-                <div style="display:flex;flex-direction:column;gap:0.4rem;">
+                <div class="rpt-26">
                     {% for entry in audit_entries %}
-                    <div style="display:flex;gap:0.75rem;align-items:baseline;padding:0.35rem 0;border-bottom:1px solid var(--hairline);font-size:0.8rem;">
-                        <span class="mono" style="color:var(--muted);white-space:nowrap;flex-shrink:0;"><time data-utc="{{ entry.created_at.isoformat() }}">{{ entry.created_at.strftime('%m-%d %H:%M') }}</time></span>
-                        <span style="color:var(--body-text);font-weight:600;flex-shrink:0;">{{ entry.admin_username or 'N/A' }}</span>
-                        <span style="color:var(--accent);font-family:var(--font-mono);font-size:0.75rem;">{{ entry.action }}</span>
+                    <div class="rpt-27">
+                        <span class="mono rpt-28"><time data-utc="{{ entry.created_at.isoformat() }}">{{ entry.created_at.strftime('%m-%d %H:%M') }}</time></span>
+                        <span class="rpt-29">{{ entry.admin_username or 'N/A' }}</span>
+                        <span class="rpt-30">{{ entry.action }}</span>
                         {% if entry.detail %}
-                        <span style="color:var(--muted);font-size:0.75rem;font-family:var(--font-mono);">{{ entry.detail[:80] }}</span>
+                        <span class="rpt-31">{{ entry.detail[:80] }}</span>
                         {% endif %}
                     </div>
                     {% endfor %}
                 </div>
-                <div style="margin-top:0.75rem;">
-                    <a href="/admin/audit-log?report_id={{ report.id }}" class="btn btn-secondary btn-sm" style="font-size:0.78rem;">{{ t('admin.report.audit.full_trail') }}</a>
+                <div class="rpt-32">
+                    <a href="/admin/audit-log?report_id={{ report.id }}" class="btn btn-secondary btn-sm rpt-33">{{ t('admin.report.audit.full_trail') }}</a>
                 </div>
                 {% else %}
-                <p style="color:var(--muted);font-size:0.88rem;">{{ t('admin.report.audit.none') }}</p>
+                <p class="rpt-34">{{ t('admin.report.audit.none') }}</p>
                 {% endif %}
             </div>
 
@@ -194,15 +258,15 @@
             <div class="panel">
                 <div class="panel-header">{{ t('admin.report.details') }}</div>
 
-                <div style="display:flex;flex-direction:column;gap:1rem;font-size:0.875rem;">
+                <div class="rpt-35">
                     <div>
                         <div class="detail-label">{{ t('admin.report.detail.submitted') }}</div>
-                        <span class="mono" style="font-size:0.82rem;"><time data-utc="{{ report.submitted_at.isoformat() }}">{{ report.submitted_at.strftime('%Y-%m-%d %H:%M UTC') }}</time></span>
+                        <span class="mono rpt-36"><time data-utc="{{ report.submitted_at.isoformat() }}">{{ report.submitted_at.strftime('%Y-%m-%d %H:%M UTC') }}</time></span>
                     </div>
 
                     <div>
                         <div class="detail-label">{{ t('admin.report.detail.mode') }}</div>
-                        <span style="font-size:0.85rem;">
+                        <span class="rpt-37">
                             {% if report.submission_mode.value == 'confidential' %}
                             <span class="badge badge-in_review">{{ t('submit.step.mode.confidential.label') }}</span>
                             {% else %}
@@ -214,46 +278,46 @@
                     {% if report.location %}
                     <div>
                         <div class="detail-label">{{ t('admin.report.detail.location') }}</div>
-                        <span style="font-size:0.85rem;font-weight:600;">{{ report.location.name }}</span>
-                        <span class="mono" style="font-size:0.75rem;color:var(--muted);margin-left:0.4rem;">{{ report.location.code }}</span>
+                        <span class="rpt-18">{{ report.location.name }}</span>
+                        <span class="mono rpt-38">{{ report.location.code }}</span>
                     </div>
                     {% endif %}
 
                     {% if (is_admin or report.assigned_to_id == user.id) and (confidential_name or confidential_contact) %}
-                    <div style="padding:0.75rem;background:var(--accent-subtle);border:1px solid var(--border-strong);border-radius:var(--radius-sm);">
-                        <div class="detail-label" style="margin-bottom:0.5rem;">{{ t('admin.report.confidential.header') }}</div>
+                    <div class="rpt-39">
+                        <div class="detail-label rpt-40">{{ t('admin.report.confidential.header') }}</div>
                         {% if confidential_name %}
-                        <div style="margin-bottom:0.4rem;">
-                            <span style="font-size:0.75rem;color:var(--muted);display:block;">{{ t('admin.report.confidential.name') }}</span>
-                            <span style="font-size:0.88rem;font-weight:600;">{{ confidential_name }}</span>
+                        <div class="rpt-41">
+                            <span class="rpt-42">{{ t('admin.report.confidential.name') }}</span>
+                            <span class="rpt-43">{{ confidential_name }}</span>
                         </div>
                         {% endif %}
                         {% if confidential_contact %}
                         <div>
-                            <span style="font-size:0.75rem;color:var(--muted);display:block;">{{ t('admin.report.confidential.contact') }}</span>
-                            <span style="font-size:0.88rem;">{{ confidential_contact }}</span>
+                            <span class="rpt-42">{{ t('admin.report.confidential.contact') }}</span>
+                            <span class="rpt-44">{{ confidential_contact }}</span>
                         </div>
                         {% endif %}
                         {% if has_secure_email %}
-                        <div style="margin-top:0.4rem;">
-                            <span style="font-size:0.75rem;color:var(--muted);">{{ t('admin.report.confidential.secure_email_set') }}</span>
+                        <div class="rpt-45">
+                            <span class="rpt-46">{{ t('admin.report.confidential.secure_email_set') }}</span>
                         </div>
                         {% endif %}
                     </div>
                     {% elif has_secure_email %}
                     <div>
                         <div class="detail-label">{{ t('admin.report.confidential.secure_email_set') }}</div>
-                        <span style="font-size:0.8rem;color:var(--muted);font-style:italic;">{{ t('admin.report.confidential.email_note') }}</span>
+                        <span class="rpt-47">{{ t('admin.report.confidential.email_note') }}</span>
                     </div>
                     {% endif %}
 
                     <div>
                         <div class="detail-label">{{ t('admin.report.detail.sla7') }}</div>
                         {% if report.acknowledged_at %}
-                            <span class="sla-ok mono" style="font-size:0.82rem;">&#10003; {{ report.acknowledged_at.strftime('%Y-%m-%d') }}</span>
+                            <span class="sla-ok mono rpt-36">&#10003; {{ report.acknowledged_at.strftime('%Y-%m-%d') }}</span>
                         {% else %}
                             {% set days = (now - report.submitted_at).days %}
-                            <span class="{{ 'sla-overdue' if days >= 7 else ('sla-warning' if days >= 5 else 'sla-ok') }} mono" style="font-size:0.82rem;">
+                            <span class="{{ 'sla-overdue' if days >= 7 else ('sla-warning' if days >= 5 else 'sla-ok') }} mono rpt-36">
                                 {{ t('admin.report.sla.day') }} {{ days }}/7: {{ t('admin.report.sla.not_ack') }}
                             </span>
                         {% endif %}
@@ -263,7 +327,7 @@
                     <div>
                         <div class="detail-label">{{ t('admin.report.detail.sla3m') }}</div>
                         {% set days_left = (report.feedback_due_at - now).days %}
-                        <span class="{{ 'sla-overdue' if days_left < 0 else ('sla-warning' if days_left < 14 else 'sla-ok') }} mono" style="font-size:0.82rem;">
+                        <span class="{{ 'sla-overdue' if days_left < 0 else ('sla-warning' if days_left < 14 else 'sla-ok') }} mono rpt-36">
                             {{ report.feedback_due_at.strftime('%Y-%m-%d') }}
                             {% if days_left >= 0 %}({{ days_left }} {{ t('admin.report.sla.days_remaining') }}){% else %}({{ t('admin.report.sla.overdue') }}){% endif %}
                         </span>
@@ -274,7 +338,7 @@
 
             {# Attachments #}
             {% if report.attachments %}
-            <div class="panel" style="animation-delay:0.04s;">
+            <div class="panel rpt-delay-04">
                 <div class="panel-header">{{ t('admin.report.attachments.header') }}</div>
                 <ul class="attachment-items">
                     {% for att in report.attachments %}
@@ -293,9 +357,9 @@
 
             {# Acknowledge action #}
             {% if not report.acknowledged_at %}
-            <div class="panel" style="animation-delay:0.05s;">
+            <div class="panel rpt-delay-05">
                 <div class="panel-header">{{ t('admin.report.ack.header') }}</div>
-                <p style="font-size:0.85rem;margin-bottom:1rem;">{{ t('admin.report.ack.body') }}</p>
+                <p class="rpt-48">{{ t('admin.report.ack.body') }}</p>
                 <form method="post" action="/admin/reports/{{ report.id }}/acknowledge">
                     <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                     <button type="submit" class="btn btn-primary btn-block">
@@ -307,7 +371,7 @@
 
             {# Case assignment (admin only) #}
             {% if is_admin %}
-            <div class="panel" style="animation-delay:0.06s;">
+            <div class="panel rpt-delay-06">
                 <div class="panel-header">{{ t('admin.report.assign.header') }}</div>
                 <form method="post" action="/admin/reports/{{ report.id }}/assign">
                     <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
@@ -330,10 +394,10 @@
             {% endif %}
 
             {# Status update - only valid transitions #}
-            <div class="panel" style="animation-delay:0.08s;">
+            <div class="panel rpt-delay-08">
                 <div class="panel-header">{{ t('admin.report.status.header') }}</div>
                 {% if allowed_transitions %}
-                <form method="post" action="/admin/reports/{{ report.id }}/status">
+                <form method="post" action="/admin/reports/{{ report.id }}/status" id="status-form">
                     <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                     <div class="form-group">
                         <label class="form-label" for="new-status">{{ t('admin.report.status.label') }}</label>
@@ -344,32 +408,31 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <button type="submit" id="status-btn" class="btn btn-secondary btn-block"
-                        onclick="return confirmStatusChange(this.form.new_status.value, '{{ report.status.value }}')">
+                    <button type="submit" id="status-btn" class="btn btn-secondary btn-block">
                         {{ t('admin.report.status.button') }}
                     </button>
                 </form>
                 {% else %}
-                <p style="font-size:0.85rem;color:var(--muted);">No further status transitions available.</p>
+                <p class="rpt-49">No further status transitions available.</p>
                 {% endif %}
             </div>
 
             {# 4-eyes deletion (admin only) #}
             {% if is_admin %}
-            <div class="panel" style="animation-delay:0.1s;border-color:var(--danger);">
-                <div class="panel-header" style="color:var(--danger);">{{ t('admin.report.delete.header') }}</div>
+            <div class="panel rpt-delay-1-danger">
+                <div class="panel-header rpt-51">{{ t('admin.report.delete.header') }}</div>
 
                 {% if report.deletion_request %}
                     {# Pending deletion request exists #}
-                    <div class="alert alert-error" style="margin-bottom:1rem;">
+                    <div class="alert alert-error rpt-52">
                         <div class="alert-title">{{ t('admin.report.delete.pending.title') }}</div>
                         {{ t('admin.report.delete.pending.body', username=report.deletion_request.requested_by_username) }}
-                        <div class="mono" style="font-size:0.75rem;margin-top:0.4rem;"><time data-utc="{{ report.deletion_request.requested_at.isoformat() }}">{{ report.deletion_request.requested_at.strftime('%Y-%m-%d %H:%M UTC') }}</time></div>
+                        <div class="mono rpt-53"><time data-utc="{{ report.deletion_request.requested_at.isoformat() }}">{{ report.deletion_request.requested_at.strftime('%Y-%m-%d %H:%M UTC') }}</time></div>
                     </div>
 
                     {% if report.deletion_request.requested_by_id == user.id %}
                     {# Current user requested - can only cancel #}
-                    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.75rem;">{{ t('admin.report.delete.cannot_self') }}</p>
+                    <p class="rpt-54">{{ t('admin.report.delete.cannot_self') }}</p>
                     <form method="post" action="/admin/reports/{{ report.id }}/cancel-delete">
                         <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                         <button type="submit" class="btn btn-secondary btn-block">{{ t('admin.report.delete.cancel_request') }}</button>
@@ -377,7 +440,7 @@
                     {% else %}
                     {# Different admin - can confirm #}
                     <form method="post" action="/admin/reports/{{ report.id }}/confirm-delete"
-                          onsubmit="return confirm('Permanently delete this report? This cannot be undone.')">
+                          data-confirm="Permanently delete this report? This cannot be undone.">
                         <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                         <button type="submit" class="btn btn-danger btn-block">{{ t('admin.report.delete.confirm_4eyes') }}</button>
                     </form>
@@ -385,27 +448,24 @@
 
                 {% else %}
                     {# No pending request - show request button #}
-                    <p style="font-size:0.85rem;margin-bottom:1rem;">{{ t('admin.report.delete.body') }}</p>
+                    <p class="rpt-48">{{ t('admin.report.delete.body') }}</p>
                     <div id="delete-step-1">
-                        <button type="button" class="btn btn-secondary btn-block"
-                            onclick="document.getElementById('delete-step-1').style.display='none';document.getElementById('delete-step-2').style.display='block';">
+                        <button type="button" id="delete-step-1-btn" class="btn btn-secondary btn-block">
                             {{ t('admin.report.delete.request') }}
                         </button>
                     </div>
-                    <div id="delete-step-2" style="display:none;">
-                        <div class="alert alert-error" style="margin-bottom:1rem;">
+                    <div id="delete-step-2" class="rpt-hidden">
+                        <div class="alert alert-error rpt-52">
                             <div class="alert-title">{{ t('admin.report.delete.confirm.title') }}</div>
                             {{ t('admin.report.delete.confirm.body') }}
                         </div>
                         <form method="post" action="/admin/reports/{{ report.id }}/request-delete">
                             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                            <div style="display:flex;gap:0.5rem;">
-                                <button type="button" class="btn btn-secondary"
-                                    style="flex:1"
-                                    onclick="document.getElementById('delete-step-1').style.display='block';document.getElementById('delete-step-2').style.display='none';">
+                            <div class="rpt-55">
+                                <button type="button" id="delete-step-2-cancel-btn" class="btn btn-secondary rpt-56">
                                     {{ t('admin.report.delete.cancel') }}
                                 </button>
-                                <button type="submit" class="btn btn-danger" style="flex:1">
+                                <button type="submit" class="btn btn-danger rpt-56">
                                     {{ t('admin.report.delete.request') }}
                                 </button>
                             </div>
@@ -421,7 +481,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="{{ request.state.csp_nonce }}">
 function confirmStatusChange(newStatus, currentStatus) {
     if (newStatus === currentStatus) return false;
     if (newStatus === 'closed') {
@@ -443,6 +503,34 @@ function confirmStatusChange(newStatus, currentStatus) {
         btn.disabled = false;
         btn.style.opacity = '';
     });
+
+    var form = document.getElementById('status-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            if (!confirmStatusChange(sel.value, '{{ report.status.value }}')) {
+                e.preventDefault();
+            }
+        });
+    }
+})();
+
+(function() {
+    var step1 = document.getElementById('delete-step-1');
+    var step2 = document.getElementById('delete-step-2');
+    var openBtn = document.getElementById('delete-step-1-btn');
+    var cancelBtn = document.getElementById('delete-step-2-cancel-btn');
+    if (openBtn && step1 && step2) {
+        openBtn.addEventListener('click', function() {
+            step1.style.display = 'none';
+            step2.style.display = 'block';
+        });
+    }
+    if (cancelBtn && step1 && step2) {
+        cancelBtn.addEventListener('click', function() {
+            step1.style.display = 'block';
+            step2.style.display = 'none';
+        });
+    }
 })();
 </script>
 {% endblock %}

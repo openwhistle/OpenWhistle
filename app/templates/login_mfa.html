@@ -1,15 +1,29 @@
 {% extends "base.html" %}
 
+{% block styles %}
+<style nonce="{{ request.state.csp_nonce }}">
+    .mfa-page-center { min-height: calc(100vh - 56px - 56px); display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+    .mfa-card-width { width: 100%; max-width: 400px; }
+    .mfa-header { margin-bottom: 2rem; animation: fadeSlideIn 0.5s ease both; }
+    .mfa-h1 { font-size: clamp(1.5rem, 4vw, 2.25rem); }
+    .mfa-subtitle { font-size: 0.88rem; margin-top: 0.5rem; }
+    .mfa-panel-anim { animation: fadeSlideIn 0.5s 0.08s ease both; opacity: 0; animation-fill-mode: forwards; }
+    .mfa-code-input { font-size: 1.75rem; letter-spacing: 0.4em; text-align: center; padding-bottom: 0.75rem; }
+    .mfa-btn-mt { margin-top: 0.5rem; }
+    .mfa-back-wrap { margin-top: 1.25rem; text-align: center; }
+</style>
+{% endblock %}
+
 {% block title %}{{ t('mfa.title') }} | OpenWhistle{% endblock %}
 
 {% block content %}
-<div style="min-height: calc(100vh - 56px - 56px); display: flex; align-items: center; justify-content: center; padding: 2rem 1rem;">
-    <div style="width: 100%; max-width: 400px;">
+<div class="mfa-page-center">
+    <div class="mfa-card-width">
 
-        <div style="margin-bottom: 2rem; animation: fadeSlideIn 0.5s ease both;">
+        <div class="mfa-header">
             <div class="page-eyebrow">{{ t('mfa.eyebrow') }}</div>
-            <h1 style="font-size: clamp(1.5rem, 4vw, 2.25rem);">{{ t('mfa.title') }}</h1>
-            <p style="font-size: 0.88rem; margin-top: 0.5rem;">{{ t('mfa.subtitle') }}</p>
+            <h1 class="mfa-h1">{{ t('mfa.title') }}</h1>
+            <p class="mfa-subtitle">{{ t('mfa.subtitle') }}</p>
         </div>
 
         {% if error %}
@@ -23,7 +37,7 @@
         </div>
         {% endif %}
 
-        <div class="panel" style="animation: fadeSlideIn 0.5s 0.08s ease both; opacity: 0; animation-fill-mode: forwards;">
+        <div class="panel mfa-panel-anim">
             <div class="panel-header">{{ t('mfa.panel.header') }}</div>
 
             <form method="post" action="/admin/login/mfa" novalidate>
@@ -34,7 +48,7 @@
                     <label class="form-label" for="totp_code">{{ t('mfa.code.label') }}</label>
                     <input
                         type="text"
-                        class="form-control mono"
+                        class="form-control mono mfa-code-input"
                         id="totp_code"
                         name="totp_code"
                         inputmode="numeric"
@@ -43,17 +57,16 @@
                         autocomplete="one-time-code"
                         placeholder="0 0 0 0 0 0"
                         required
-                        autofocus
-                        style="font-size:1.75rem;letter-spacing:0.4em;text-align:center;padding-bottom:0.75rem;">
+                        autofocus>
                     <div class="form-hint">{{ t('mfa.code.hint') }}</div>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-block" style="margin-top: 0.5rem;">
+                <button type="submit" class="btn btn-primary btn-block mfa-btn-mt">
                     {{ t('mfa.submit') }}
                 </button>
             </form>
 
-            <div style="margin-top:1.25rem;text-align:center;">
+            <div class="mfa-back-wrap">
                 <a href="/admin/login" class="btn btn-secondary btn-sm">{{ t('mfa.back') }}</a>
             </div>
         </div>

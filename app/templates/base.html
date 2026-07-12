@@ -14,16 +14,21 @@
     <link rel="stylesheet" href="/static/css/fonts.css">
     <link rel="stylesheet" href="/static/css/site.css">
 
-    {# Inject brand colours as CSS custom properties #}
-    <style>
+    {# Inject brand colours as CSS custom properties + shared base utilities.
+       Nonce'd so it is allowed under the strict CSP (no 'unsafe-inline'). #}
+    <style nonce="{{ request.state.csp_nonce }}">
         :root {
             --brand-primary:   {{ brand.primary_color }};
             --brand-secondary: {{ brand.secondary_color }};
         }
+        .u-hidden { display: none; }
+        .u-m0 { margin: 0; }
+        .u-dim { opacity: 0.4; }
+        .u-caret { font-size: 0.65em; margin-left: 0.2em; }
     </style>
 
     {# Apply theme before page renders to prevent flash #}
-    <script>
+    <script nonce="{{ request.state.csp_nonce }}">
         (function(){
             var t = null;
             try { t = localStorage.getItem('ow-theme'); } catch(e){}
@@ -33,6 +38,7 @@
     </script>
 
     {% block head %}{% endblock %}
+    {% block styles %}{% endblock %}
 </head>
 <body>
     <a href="#main-content" class="skip-link">{{ t('a11y.skip_to_content') }}</a>
@@ -78,12 +84,12 @@
                 <div class="lang-picker" role="navigation" aria-label="{{ t('nav.lang_picker_label') }}">
                     <button type="button" class="lang-picker-btn" aria-haspopup="listbox" aria-expanded="false" id="lang-picker-btn">
                         {{ lang | upper }}
-                        <span aria-hidden="true" style="font-size:0.65em;margin-left:0.2em;">▾</span>
+                        <span aria-hidden="true" class="u-caret">▾</span>
                     </button>
                     <ul class="lang-picker-menu" role="listbox" aria-label="{{ t('nav.lang_picker_label') }}" id="lang-picker-menu" hidden>
                         {% for code, label in [('en', 'English'), ('de', 'Deutsch'), ('fr', 'Français'), ('pt-br', 'Português (BR)')] %}
                         <li role="option" {% if lang == code %}aria-selected="true"{% endif %}>
-                            <form method="post" action="/set-language" style="margin:0;">
+                            <form method="post" action="/set-language" class="u-m0">
                                 <input type="hidden" name="next" value="{{ request.url.path }}{% if request.url.query %}?{{ request.url.query }}{% endif %}">
                                 <input type="hidden" name="lang" value="{{ code }}">
                                 <button type="submit" class="lang-picker-option {{ 'active' if lang == code else '' }}">
@@ -99,7 +105,7 @@
                 <button
                     class="theme-toggle"
                     id="theme-toggle"
-                    onclick="toggleTheme()"
+                    type="button"
                     aria-label="{{ t('nav.toggle_theme') }}"
                     title="{{ t('nav.toggle_theme') }}">
                     ◑
@@ -110,7 +116,7 @@
 
     {% if session_expires_at %}
     <div id="session-expiry-banner"
-         class="session-expiry-banner"
+         class="session-expiry-banner u-hidden"
          data-expires="{{ session_expires_at }}"
          data-text-warning="{{ t('session.expiry.warning') }}"
          data-text-extend="{{ t('session.expiry.extend') }}"
@@ -118,16 +124,15 @@
          data-text-expired-title="{{ t('session.expiry.expired_title') }}"
          data-text-expired-body="{{ t('session.expiry.expired_body') }}"
          role="alert"
-         aria-live="polite"
-         style="display:none;">
+         aria-live="polite">
         <div class="session-expiry-icon" aria-hidden="true">&#9201;</div>
         <div class="session-expiry-body">
             <span class="session-expiry-warning-text">{{ t('session.expiry.warning') }}</span>
             <strong id="session-expiry-countdown" class="session-expiry-countdown">5:00</strong>
         </div>
         <div class="session-expiry-actions">
-            <button type="button" class="btn btn-sm session-expiry-extend" onclick="sessionExtend()">{{ t('session.expiry.extend') }}</button>
-            <button type="button" class="session-expiry-dismiss" onclick="sessionDismiss()" aria-label="{{ t('session.expiry.dismiss') }}">&#10005;</button>
+            <button type="button" class="btn btn-sm session-expiry-extend" data-action="session-extend">{{ t('session.expiry.extend') }}</button>
+            <button type="button" class="session-expiry-dismiss" data-action="session-dismiss" aria-label="{{ t('session.expiry.dismiss') }}">&#10005;</button>
         </div>
     </div>
     {% endif %}
@@ -142,12 +147,12 @@
             {{ brand.name }} &middot; {{ t('footer.tagline') }} &middot;
             <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener">{{ t('footer.open_source') }}</a>
             &middot; <a href="https://www.gesetze-im-internet.de/hinschg/" rel="noopener">HinSchG</a>
-            &middot; <a href="/admin" style="opacity:0.4;" title="{{ t('footer.admin_title') }}">{{ t('footer.admin') }}</a>
+            &middot; <a href="/admin" class="u-dim" title="{{ t('footer.admin_title') }}">{{ t('footer.admin') }}</a>
         </p>
     </footer>
 
-    <script src="/static/js/site.js"></script>
-    <script>
+    <script src="/static/js/site.js" nonce="{{ request.state.csp_nonce }}"></script>
+    <script nonce="{{ request.state.csp_nonce }}">
     (function() {
         function pad(n) { return n < 10 ? '0' + n : '' + n; }
         function tzLabel(d) {
@@ -170,7 +175,7 @@
         });
     })();
     </script>
-    <script>
+    <script nonce="{{ request.state.csp_nonce }}">
     // Language picker dropdown
     (function() {
         var btn = document.getElementById('lang-picker-btn');

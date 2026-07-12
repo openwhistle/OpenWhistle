@@ -1,5 +1,21 @@
 {% extends "base.html" %}
 
+{% block styles %}
+<style nonce="{{ request.state.csp_nonce }}">
+    .sub-alert-spaced { margin: 1rem 0; }
+    .sub-fieldset-reset { border: none; padding: 0; margin: 0; }
+    .sub-mb1 { margin-bottom: 1rem; }
+    .sub-confidential-fields { display: none; margin-top: 1.5rem; }
+    .sub-label-flex { display: flex; justify-content: space-between; align-items: baseline; }
+    .sub-char-counter { font-size: 0.72rem; font-weight: 400; color: var(--muted); font-family: var(--font-mono); }
+    .sub-row-top { align-items: flex-start; }
+    .sub-review-desc { white-space: pre-wrap; font-size: 0.88rem; max-height: 200px; overflow-y: auto; }
+    .sub-file-list { list-style: none; padding: 0; margin: 0; }
+    .sub-muted { color: var(--muted); }
+    .sub-restart-p { text-align: center; margin-top: 1rem; font-size: 0.8rem; color: var(--muted); }
+</style>
+{% endblock %}
+
 {% block title %}{{ t('submit.title') }} | OpenWhistle{% endblock %}
 
 {% block content %}
@@ -79,7 +95,7 @@
 
         {# ── Step 1: Mode selection ── #}
         {% if step == 1 %}
-        <div class="alert alert-info" style="margin: 1rem 0;">
+        <div class="alert alert-info sub-alert-spaced">
             <div class="alert-title">{{ t('submit.alert.title') }}</div>
             {{ t('submit.alert.body') }}
         </div>
@@ -88,8 +104,8 @@
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <input type="hidden" name="step" value="1">
 
-            <fieldset style="border:none;padding:0;margin:0;">
-                <legend class="form-label" style="margin-bottom:1rem;">{{ t('submit.step.mode.title') }}</legend>
+            <fieldset class="sub-fieldset-reset">
+                <legend class="form-label sub-mb1">{{ t('submit.step.mode.title') }}</legend>
 
                 <div class="mode-cards">
                     <label class="mode-card" for="mode-anonymous">
@@ -116,8 +132,8 @@
                 </div>
             </fieldset>
 
-            <div id="confidential-fields" style="display:none;margin-top:1.5rem;">
-                <div class="alert alert-info" style="margin-bottom:1rem;">
+            <div id="confidential-fields" class="sub-confidential-fields">
+                <div class="alert alert-info sub-mb1">
                     <div class="alert-title">{{ t('submit.step.mode.confidential.info.title') }}</div>
                     {{ t('submit.step.mode.confidential.info.body') }}
                 </div>
@@ -160,19 +176,6 @@
                 </button>
             </div>
         </form>
-
-        <script>
-        (function() {
-            var radios = document.querySelectorAll('input[name="submission_mode"]');
-            var fields = document.getElementById('confidential-fields');
-            function toggle() {
-                var checked = document.querySelector('input[name="submission_mode"]:checked');
-                fields.style.display = checked && checked.value === 'confidential' ? 'block' : 'none';
-            }
-            radios.forEach(function(r) { r.addEventListener('change', toggle); });
-            toggle();
-        })();
-        </script>
 
         {# ── Step 2: Location (conditional) ── #}
         {% elif step == 2 and has_locations %}
@@ -240,9 +243,9 @@
             <input type="hidden" name="step" value="{{ step }}">
 
             <div class="form-group">
-                <label class="form-label" for="description" style="display:flex;justify-content:space-between;align-items:baseline;">
+                <label class="form-label sub-label-flex" for="description">
                     <span>{{ t('submit.form.description') }}</span>
-                    <span id="char-counter" style="font-size:0.72rem;font-weight:400;color:var(--muted);font-family:var(--font-mono);">{{ state.get('description', '') | length | string }} / 10,000</span>
+                    <span id="char-counter" class="sub-char-counter">{{ state.get('description', '') | length | string }} / 10,000</span>
                 </label>
                 <textarea
                     class="form-control"
@@ -255,7 +258,6 @@
                     aria-required="true"
                     aria-describedby="description-hint char-counter"
                     placeholder="{{ t('submit.form.description.placeholder') }}"
-                    oninput="var c=this.value.length;var el=document.getElementById('char-counter');el.textContent=c.toLocaleString()+' / 10,000';el.style.color=c<10?'var(--danger)':c>9500?'var(--warning, #c17b2a)':'var(--muted)';"
                 >{{ state.get('description', '') }}</textarea>
                 <div class="form-hint" id="description-hint">{{ t('submit.form.description.hint') }}</div>
             </div>
@@ -276,7 +278,7 @@
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <input type="hidden" name="step" value="{{ step }}">
 
-            <div class="alert alert-info" style="margin-bottom:1rem;">
+            <div class="alert alert-info sub-mb1">
                 {{ t('submit.step.attachments.info') }}
             </div>
 
@@ -305,12 +307,12 @@
 
         {# ── Step 6: Review ── #}
         {% elif step == 6 or (step == 5 and not has_locations) %}
-        <div class="alert alert-warning" role="alert" style="margin-bottom:1rem;">
+        <div class="alert alert-warning sub-mb1" role="alert">
             <div class="alert-title">{{ t('submit.step.review.warning.title') }}</div>
             {{ t('submit.step.review.warning.body') }}
         </div>
 
-        <div class="panel" style="margin-bottom:1rem;">
+        <div class="panel sub-mb1">
             <div class="panel-header">{{ t('submit.step.review.title') }}</div>
 
             <div class="review-row">
@@ -331,7 +333,7 @@
                     {% if state.get('location_id') %}
                         {% for loc in locations %}{% if loc.id|string == state.get('location_id') %}{{ loc.name }}{% endif %}{% endfor %}
                     {% else %}
-                        <em style="color:var(--muted);">{{ t('submit.step.location.none') }}</em>
+                        <em class="sub-muted">{{ t('submit.step.location.none') }}</em>
                     {% endif %}
                 </span>
             </div>
@@ -344,15 +346,15 @@
                 </span>
             </div>
 
-            <div class="review-row" style="align-items:flex-start;">
+            <div class="review-row sub-row-top">
                 <span class="review-label">{{ t('submit.form.description') }}</span>
-                <span class="review-value" style="white-space:pre-wrap;font-size:0.88rem;max-height:200px;overflow-y:auto;">{{ state.get('description', '') }}</span>
+                <span class="review-value sub-review-desc">{{ state.get('description', '') }}</span>
             </div>
 
             {% if state.get('file_meta') %}
-            <div class="review-row" style="align-items:flex-start;">
+            <div class="review-row sub-row-top">
                 <span class="review-label">{{ t('submit.form.files') }}</span>
-                <ul class="review-value" style="list-style:none;padding:0;margin:0;">
+                <ul class="review-value sub-file-list">
                     {% for f in state.get('file_meta', []) %}
                     <li>&#128206; {{ f.filename }} ({{ (f.size // 1024) }}KB)</li>
                     {% endfor %}
@@ -375,10 +377,39 @@
             </div>
         </form>
 
-        <p style="text-align:center;margin-top:1rem;font-size:0.8rem;color:var(--muted);">
-            <a href="/submit/restart" style="color:var(--muted);">{{ t('submit.nav.restart') }}</a>
+        <p class="sub-restart-p">
+            <a href="/submit/restart" class="sub-muted">{{ t('submit.nav.restart') }}</a>
         </p>
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ request.state.csp_nonce }}">
+(function() {
+    // Step 1: submission mode toggle (show/hide confidential fields)
+    var radios = document.querySelectorAll('input[name="submission_mode"]');
+    var fields = document.getElementById('confidential-fields');
+    if (fields) {
+        var toggle = function() {
+            var checked = document.querySelector('input[name="submission_mode"]:checked');
+            fields.style.display = checked && checked.value === 'confidential' ? 'block' : 'none';
+        };
+        radios.forEach(function(r) { r.addEventListener('change', toggle); });
+        toggle();
+    }
+
+    // Step 4: description character counter
+    var description = document.getElementById('description');
+    var charCounter = document.getElementById('char-counter');
+    if (description && charCounter) {
+        description.addEventListener('input', function() {
+            var c = this.value.length;
+            charCounter.textContent = c.toLocaleString() + ' / 10,000';
+            charCounter.style.color = c < 10 ? 'var(--danger)' : (c > 9500 ? 'var(--warning, #c17b2a)' : 'var(--muted)');
+        });
+    }
+})();
+</script>
 {% endblock %}
