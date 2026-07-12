@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import uuid
 
 import pyotp
@@ -10,6 +11,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import AdminRole, AdminUser
 from app.services.auth import hash_password
+
+# Locally-created usernames are restricted to an unambiguous allowlist. This
+# prevents storing quotes / JS metacharacters that could break out of an
+# HTML/JS context in the admin UI (defense in depth alongside contextual output
+# encoding). Directory-provisioned identities (OIDC/LDAP) do not pass through
+# this validator.
+_USERNAME_RE = re.compile(r"^[A-Za-z0-9._@ -]{3,64}$")
+
+
+def validate_username(username: str) -> str:
+    """Return the trimmed username or raise ValueError if it is not allowed."""
+    candidate = username.strip()
+    if not _USERNAME_RE.fullmatch(candidate):
+        raise ValueError(
+            "Username must be 3–64 characters and may only contain letters, "
+            "digits, spaces and the characters . _ @ -"
+        )
+    return candidate
 
 
 async def get_all_users(db: AsyncSession) -> list[AdminUser]:
@@ -38,7 +57,11 @@ async def create_user(
     password: str,
     role: AdminRole = AdminRole.admin,
 ) -> tuple[AdminUser, str]:
-    """Create a new admin user. Returns (user, totp_secret)."""
+    """Create a new admin user. Returns (user, totp_secret).
+
+    Raises ValueError if the username contains disallowed characters.
+    """
+    username = validate_username(username)
     totp_secret = pyotp.random_base32()
     user = AdminUser(
         id=uuid.uuid4(),

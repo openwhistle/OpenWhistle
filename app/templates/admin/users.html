@@ -108,10 +108,10 @@
                                     {# Activate / Deactivate #}
                                     {% if u.id != user.id %}
                                     {% if u.is_active %}
-                                    <form method="post" action="/admin/users/{{ u.id }}/deactivate">
+                                    <form method="post" action="/admin/users/{{ u.id }}/deactivate"
+                                          data-confirm="Deactivate {{ u.username }}?">
                                         <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                                        <button type="submit" class="btn btn-secondary btn-sm"
-                                            onclick="return confirm('Deactivate {{ u.username }}?')">
+                                        <button type="submit" class="btn btn-secondary btn-sm">
                                             {{ t('admin.users.deactivate') }}
                                         </button>
                                     </form>

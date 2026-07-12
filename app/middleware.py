@@ -73,7 +73,6 @@ class SecurityMiddleware:
                 mutable = MutableHeaders(scope=message)
                 for name, value in _SECURITY_HEADERS.items():
                     mutable[name] = value
-                mutable.update(_SECURITY_HEADERS)
                 # Remove server identification headers
                 for h in ("server", "x-powered-by"):
                     if h in mutable:

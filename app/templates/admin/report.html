@@ -219,7 +219,7 @@
                     </div>
                     {% endif %}
 
-                    {% if confidential_name or confidential_contact %}
+                    {% if (is_admin or report.assigned_to_id == user.id) and (confidential_name or confidential_contact) %}
                     <div style="padding:0.75rem;background:var(--accent-subtle);border:1px solid var(--border-strong);border-radius:var(--radius-sm);">
                         <div class="detail-label" style="margin-bottom:0.5rem;">{{ t('admin.report.confidential.header') }}</div>
                         {% if confidential_name %}

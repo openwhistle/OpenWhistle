@@ -185,7 +185,17 @@ window.dismissIpWarning = async function (btn) {
 
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('form').forEach((form) => {
-        form.addEventListener('submit', () => {
+        form.addEventListener('submit', (e) => {
+            // Unobtrusive confirmation. The prompt text lives in a data-confirm
+            // attribute (HTML-attribute autoescaped by the template) and is
+            // passed to confirm() as a runtime string — never interpolated into
+            // an inline event handler, so untrusted values (e.g. usernames)
+            // cannot break out into script.
+            const confirmMsg = form.getAttribute('data-confirm');
+            if (confirmMsg && !window.confirm(confirmMsg)) {
+                e.preventDefault();
+                return;
+            }
             const btn = form.querySelector('[type="submit"]');
             if (btn) {
                 btn.disabled = true;

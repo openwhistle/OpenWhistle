@@ -296,6 +296,7 @@ async def get_reports_paginated(
     sort_dir: SortDir = "desc",
     assigned_to_id: uuid.UUID | None = None,
     location_id: uuid.UUID | None = None,
+    org_id: uuid.UUID | None = None,
 ) -> tuple[list[Report], int]:
     page = max(1, page)
     per_page = max(1, min(100, per_page))
@@ -311,6 +312,8 @@ async def get_reports_paginated(
         base_q = base_q.where(Report.assigned_to_id == assigned_to_id)
     if location_id is not None:
         base_q = base_q.where(Report.location_id == location_id)
+    if org_id is not None:
+        base_q = base_q.where(Report.org_id == org_id)
 
     count_result = await db.execute(select(func.count()).select_from(base_q.subquery()))
     total: int = count_result.scalar_one()
