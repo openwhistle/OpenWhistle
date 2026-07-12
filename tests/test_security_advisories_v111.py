@@ -525,8 +525,13 @@ async def test_create_user_invalid_role_falls_back_to_admin_not_superadmin(
     """A garbage role value must never silently become superadmin."""
     client, set_user = as_admin
     from app.services.auth import get_user_by_username
+    from app.services.users import create_user
 
-    set_user(_user(AdminRole.admin))
+    # Success path writes an audit row (FK on audit_logs.admin_id) → persist actor.
+    actor, _ = await create_user(
+        db_session, f"act-{uuid.uuid4().hex[:6]}", "TestPassword123!", AdminRole.admin
+    )
+    set_user(actor)
     uname = f"fallback-{uuid.uuid4().hex[:6]}"
     resp = await client.post(
         "/admin/users",

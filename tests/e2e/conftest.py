@@ -95,7 +95,12 @@ def run_axe(page: Page, axe_source: str) -> list[dict]:  # type: ignore[type-arg
     """
     if not axe_source:
         return []
-    page.add_script_tag(content=axe_source)
+    # Inject axe via page.evaluate (CDP Runtime.evaluate), NOT add_script_tag:
+    # a <script> element is subject to the page's strict CSP (no 'unsafe-inline'),
+    # whereas evaluate runs through the debugger protocol and is CSP-exempt.
+    # Wrap in an arrow body so the minified UMD runs regardless of whether its
+    # source is an expression or a series of statements.
+    page.evaluate("() => { " + axe_source + "\n; }")
     violations: list[dict] = page.evaluate(  # type: ignore[type-arg]
         """
         async () => {
