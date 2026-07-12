@@ -269,9 +269,7 @@ async def acknowledge_report(
     current_user: AdminUser = Depends(get_current_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
-    report = await report_service.get_report_by_id(db, report_id)
-    if not report:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    report = await _get_authorized_report(db, report_id, current_user)
 
     old_status = report.status.value
     await report_service.acknowledge_report(db, report)
@@ -292,9 +290,7 @@ async def update_status(
     current_user: AdminUser = Depends(get_current_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
-    report = await report_service.get_report_by_id(db, report_id)
-    if not report:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    report = await _get_authorized_report(db, report_id, current_user)
 
     try:
         s = ReportStatus(new_status)
@@ -326,9 +322,7 @@ async def admin_reply(
     current_user: AdminUser = Depends(get_current_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
-    report = await report_service.get_report_by_id(db, report_id)
-    if not report:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    report = await _get_authorized_report(db, report_id, current_user)
     if not content.strip():
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
@@ -353,9 +347,7 @@ async def assign_report(
 ) -> RedirectResponse:
     from app.services.users import get_user_by_id as get_admin_by_id
 
-    report = await report_service.get_report_by_id(db, report_id)
-    if not report:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    report = await _get_authorized_report(db, report_id, current_user)
 
     assignee: AdminUser | None = None
     if admin_id:
@@ -389,9 +381,7 @@ async def add_note(
     current_user: AdminUser = Depends(get_current_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
-    report = await report_service.get_report_by_id(db, report_id)
-    if not report:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    report = await _get_authorized_report(db, report_id, current_user)
     if not content.strip():
         raise HTTPException(status_code=422)
 
