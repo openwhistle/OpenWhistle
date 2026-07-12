@@ -137,11 +137,11 @@ async def dashboard(
         assigned_filter: uuid.UUID | None = current_user.id
     else:
         assigned_filter = current_user.id if my_cases else None
-    org_filter = (
-        current_user.org_id
-        if settings.multi_tenancy_enabled and current_user.role != AdminRole.superadmin
-        else None
-    )
+    # Scope the list to the caller's organisation for multi-tenant non-superadmins.
+    # This must apply even when their org_id is None, otherwise an org-less admin
+    # would fall through to the unfiltered "see everything" branch — a metadata
+    # leak inconsistent with the object-level check that denies them those reports.
+    scope_org = settings.multi_tenancy_enabled and current_user.role != AdminRole.superadmin
     reports, total = await report_service.get_reports_paginated(
         db,
         page=page,
@@ -151,7 +151,8 @@ async def dashboard(
         sort_dir=sort_dir,
         assigned_to_id=assigned_filter,
         location_id=location_filter,
-        org_id=org_filter,
+        org_id=current_user.org_id if scope_org else None,
+        scope_org=scope_org,
     )
     stats = await report_service.get_report_stats(db)
     total_pages = max(1, (total + per_page - 1) // per_page)

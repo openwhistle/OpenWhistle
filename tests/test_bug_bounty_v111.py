@@ -121,9 +121,13 @@ async def test_acknowledge_is_idempotent(db_session: AsyncSession) -> None:
 
 @pytest.mark.asyncio
 async def test_empty_description_decrypts_to_empty_not_ciphertext(db_session: AsyncSession) -> None:
-    from app.services.report import create_report, decrypt_report_fields
+    from app.services.report import create_report, decrypt_report_fields, get_report_by_id
 
-    report, _ = await create_report(db_session, "financial_fraud", "")
+    created, _ = await create_report(db_session, "financial_fraud", "")
+    # Reload with relationships eagerly loaded (decrypt_report_fields iterates
+    # report.messages, which would otherwise lazy-load in a sync context).
+    report = await get_report_by_id(db_session, created.id)
+    assert report is not None
     description, _ = decrypt_report_fields(report)
     assert description == "", "empty plaintext must not be replaced by raw ciphertext"
 
@@ -454,3 +458,66 @@ async def test_confidential_rejected_when_submission_mode_disabled(
     # The identifying fields must not have been stored — the report is forced
     # anonymous. The confidential name must not be echoed on the next step.
     assert "Jane Doe" not in resp.text
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# HIGH: whistleblower PIN lockout must not be bypassable by rotating the token
+# ══════════════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.asyncio
+async def test_pin_lockout_keyed_on_case_number_not_session_token(
+    client: AsyncClient, no_csrf
+) -> None:
+    import re
+
+    from app.config import settings
+    from app.redis_client import get_redis
+    from app.services import rate_limit as rl
+
+    case = f"OW-2026-{uuid.uuid4().int % 100000:05d}"
+    # Guess repeatedly, minting a FRESH session_token before each attempt — the
+    # old bypass reset the counter every time the token changed.
+    for _ in range(settings.max_access_attempts + 1):
+        get_resp = await client.get("/status")
+        m = re.search(r'name="session_token" value="([^"]+)"', get_resp.text)
+        token = m.group(1) if m else uuid.uuid4().hex
+        await client.post(
+            "/status",
+            data={
+                "case_number": case,
+                "pin": "00000000-0000-0000-0000-000000000000",
+                "session_token": token,
+            },
+        )
+
+    redis = await get_redis()
+    # The lockout counter must have accumulated on the case number despite the
+    # rotating tokens, so further guesses are now blocked.
+    assert await rl.check_whistleblower_attempts(redis, case.upper()) is False
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# MEDIUM: org-less non-superadmin must not see other tenants' reports in list
+# ══════════════════════════════════════════════════════════════════════════
+
+
+@pytest.mark.asyncio
+async def test_dashboard_hides_other_org_reports_from_orgless_admin(
+    db_session: AsyncSession, as_admin, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "multi_tenancy_enabled", True)
+
+    report = await _mk_report(db_session)
+    report.org_id = uuid.uuid4()  # belongs to some other organisation
+    await db_session.commit()
+
+    client, set_user = as_admin
+    admin = _user(AdminRole.admin)  # org_id is None
+    admin.org_id = None
+    set_user(admin)
+    resp = await client.get("/admin/dashboard", follow_redirects=False)
+    assert resp.status_code == 200
+    assert report.case_number not in resp.text

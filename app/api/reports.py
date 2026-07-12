@@ -570,8 +570,14 @@ async def status_post(
     db: AsyncSession = Depends(get_db),
     _csrf: None = Depends(validate_csrf),
 ) -> Response:
-    if not await rl.check_whistleblower_attempts(redis, session_token):
-        lockout_ttl = await rl.get_whistleblower_lockout_ttl(redis, session_token)
+    # Rate-limit PIN guessing against the *target case number*, not the
+    # client-supplied session token. The token is minted fresh on every GET
+    # /status and echoed back, so keying the lockout on it let an attacker reset
+    # the counter simply by re-fetching the page before each guess.
+    rl_key = case_number.strip().upper()
+
+    if not await rl.check_whistleblower_attempts(redis, rl_key):
+        lockout_ttl = await rl.get_whistleblower_lockout_ttl(redis, rl_key)
         return render(
             request,
             "status.html",
@@ -586,8 +592,8 @@ async def status_post(
     report = await report_service.get_report_by_credentials(db, case_number.strip(), pin.strip())
 
     if report is None:
-        remaining = await rl.remaining_whistleblower_attempts(redis, session_token)
-        await rl.record_whistleblower_failure(redis, session_token)
+        remaining = await rl.remaining_whistleblower_attempts(redis, rl_key)
+        await rl.record_whistleblower_failure(redis, rl_key)
         return render(
             request,
             "status.html",
@@ -600,7 +606,7 @@ async def status_post(
             status_code=401,
         )
 
-    await rl.reset_whistleblower_attempts(redis, session_token)
+    await rl.reset_whistleblower_attempts(redis, rl_key)
 
     status_session_key = secrets.token_urlsafe(32)
     await redis.setex(f"status-session:{status_session_key}", 7200, str(report.id))
