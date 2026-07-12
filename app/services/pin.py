@@ -21,6 +21,10 @@ async def generate_case_number(db: AsyncSession) -> str:
 
     Uses MAX instead of COUNT so hard-deleting a report never causes a
     subsequent submission to reuse a previously-issued case number.
+
+    Case numbers are globally unique; concurrent submissions can read the same
+    MAX before either commits, so callers must be prepared to retry on the
+    unique-constraint violation (see ``create_report``).
     """
     year = datetime.now(UTC).year
     result = await db.execute(

@@ -13,8 +13,16 @@ from datetime import UTC, datetime, timedelta
 
 log = logging.getLogger(__name__)
 
-# Redis key TTL for dedup locks: slightly longer than the schedule interval
-_DEDUP_TTL_SECONDS = 3600  # 1 hour — prevents double-fire even on restarts
+
+def _dedup_ttl_seconds(days_left: int) -> int:
+    """TTL for a reminder dedup key.
+
+    A fixed 1-hour TTL was far shorter than the multi-day warn window, so the
+    key expired every couple of scheduler ticks and the same reminder re-fired
+    for days. Instead suppress re-reminders until the deadline itself has passed
+    (plus a one-day buffer), giving one reminder per warn-window entry.
+    """
+    return max(days_left, 0) * 86400 + 86400
 
 
 def _ack_dedup_key(case_number: str) -> str:
@@ -58,8 +66,13 @@ async def send_sla_reminders() -> None:
             reports = result.scalars().all()
 
             for report in reports:
-                await _check_ack_reminder(report, now, db, redis, settings)
-                await _check_feedback_reminder(report, now, db, redis, settings)
+                # Isolate per-report failures: one bad row must not abort SLA
+                # checks for every other pending report in this run.
+                try:
+                    await _check_ack_reminder(report, now, db, redis, settings)
+                    await _check_feedback_reminder(report, now, db, redis, settings)
+                except Exception:  # noqa: BLE001
+                    log.exception("SLA reminder check failed for a report; continuing")
     finally:
         await engine.dispose()
 
@@ -99,7 +112,7 @@ async def _check_ack_reminder(
         report=r,
         settings=cfg,
     )
-    await red.setex(key, _DEDUP_TTL_SECONDS, "1")
+    await red.setex(key, _dedup_ttl_seconds(days_left), "1")
     log.info("ACK reminder sent for %s (%d days left)", r.case_number, days_left)
 
 
@@ -137,7 +150,7 @@ async def _check_feedback_reminder(
         report=r,
         settings=cfg,
     )
-    await red.setex(key, _DEDUP_TTL_SECONDS, "1")
+    await red.setex(key, _dedup_ttl_seconds(days_left), "1")
     log.info("Feedback reminder sent for %s (%d days left)", r.case_number, days_left)
 
 

@@ -297,20 +297,33 @@ async def submit_post(
 
     # ── Step 1: mode selection ─────────────────────────────────────
     if step == _STEP_MODE:
-        if submission_mode not in ("anonymous", "confidential"):
+        # When the operator has disabled mode selection, every report is forced
+        # to anonymous — a confidential submission must not be accepted.
+        effective_mode = submission_mode
+        if not settings.submission_mode_enabled:
+            effective_mode = "anonymous"
+
+        if effective_mode not in ("anonymous", "confidential"):
             state["step"] = _STEP_MODE
             await _save_submission(redis, session_id, state)
             return _render_step({"error": "mode_required"})
 
-        state["submission_mode"] = submission_mode
+        state["submission_mode"] = effective_mode
 
-        if submission_mode == "confidential":
+        if effective_mode == "confidential":
             name_stripped = confidential_name.strip()
             contact_stripped = confidential_contact.strip()
             email_stripped = secure_email.strip()
             state["confidential_name"] = name_stripped
             state["confidential_contact"] = contact_stripped
             state["secure_email"] = email_stripped
+        else:
+            # Purge any identifying fields entered on a previous confidential
+            # pass — they must not linger in the Redis session for an anonymous
+            # report.
+            state.pop("confidential_name", None)
+            state.pop("confidential_contact", None)
+            state.pop("secure_email", None)
 
         state["step"] = _STEP_LOCATION if has_locations else _STEP_CATEGORY
         await _save_submission(redis, session_id, state)
@@ -718,9 +731,9 @@ async def whistleblower_download_attachment(
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
         data = attachment.data
 
-    safe_name = attachment.filename.replace('"', "")
+    from app.services.attachment import content_disposition_attachment
     return Response(
         content=data,
         media_type=attachment.content_type,
-        headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
+        headers={"Content-Disposition": content_disposition_attachment(attachment.filename)},
     )

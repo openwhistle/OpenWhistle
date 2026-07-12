@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 import uuid
 from pathlib import Path
+from urllib.parse import quote
 
 from fastapi import UploadFile
 from sqlalchemy import select
@@ -54,6 +55,21 @@ def sanitize_filename(filename: str) -> str:
     return name
 
 
+def content_disposition_attachment(filename: str) -> str:
+    """Build a Content-Disposition header value safe for any filename.
+
+    Response headers are latin-1 encoded, so a raw non-Latin-1 filename (CJK,
+    Cyrillic, emoji, …) raises UnicodeEncodeError and 500s the download. Emit an
+    ASCII-only ``filename`` fallback plus an RFC 5987 ``filename*`` with the full
+    UTF-8 name for modern clients.
+    """
+    ascii_name = filename.encode("ascii", "ignore").decode("ascii").replace('"', "").strip()
+    if not ascii_name:
+        ascii_name = "attachment"
+    utf8_name = quote(filename, safe="")
+    return f"attachment; filename=\"{ascii_name}\"; filename*=UTF-8''{utf8_name}"
+
+
 def validate_file(filename: str, content_type: str, size: int) -> str | None:
     """Return an error string if the file is invalid, or None if it's acceptable."""
     if size > MAX_SIZE_BYTES:
@@ -92,7 +108,14 @@ async def read_upload_files(
         if not upload.filename or upload.filename.strip() == "":
             continue
 
-        data = await upload.read()
+        # Enforce the count limit before touching the next file's bytes, so a
+        # flood of parts can't force us to read them all into memory first.
+        if len(result) >= MAX_ATTACHMENTS:
+            return [], f"Too many files. Maximum {MAX_ATTACHMENTS} attachments per report."
+
+        # Bounded read: pull at most one byte past the limit so an oversized
+        # file is rejected without buffering its entire (potentially huge) body.
+        data = await upload.read(MAX_SIZE_BYTES + 1)
         if len(data) == 0:
             continue
 
@@ -103,9 +126,6 @@ async def read_upload_files(
             return [], error
 
         result.append((name, content_type, data))
-
-    if len(result) > MAX_ATTACHMENTS:
-        return [], f"Too many files. Maximum {MAX_ATTACHMENTS} attachments per report."
 
     return result, None
 

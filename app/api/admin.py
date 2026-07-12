@@ -211,7 +211,10 @@ async def report_detail(
     linked: list[dict[str, str]] = []
     for linked_report_id, link_id in report_service.get_linked_reports(report):
         linked_report = await report_service.get_report_by_id(db, linked_report_id)
-        if linked_report:
+        # Only reveal a linked report's metadata to a viewer who is independently
+        # authorized to see it — a link must not leak case data across the
+        # assignment / organisation boundary.
+        if linked_report and _can_access_report(current_user, linked_report):
             linked.append({
                 "link_id": link_id,
                 "case_number": linked_report.case_number,
@@ -358,6 +361,11 @@ async def assign_report(
         assignee = await get_admin_by_id(db, aid)
         if not assignee:
             raise HTTPException(status_code=404, detail="Admin user not found")
+        if not assignee.is_active:
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot assign a report to a deactivated user.",
+            )
 
     old_assignee = report.assigned_to.username if report.assigned_to else None
     await report_service.assign_report(db, report, assignee)
@@ -412,6 +420,8 @@ async def link_report(
         raise HTTPException(status_code=404, detail="Case number not found")
     if other.id == report.id:
         raise HTTPException(status_code=400, detail="Cannot link a report to itself")
+    if await report_service.get_link_between(db, report.id, other.id) is not None:
+        raise HTTPException(status_code=409, detail="These cases are already linked.")
 
     await report_service.link_cases(db, report, other, current_user)
     await audit_service.log(
@@ -573,11 +583,11 @@ async def admin_download_attachment(
             raise HTTPException(status_code=404)
         data = attachment.data
 
-    safe_name = attachment.filename.replace('"', "")
+    from app.services.attachment import content_disposition_attachment
     return Response(
         content=data,
         media_type=attachment.content_type,
-        headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
+        headers={"Content-Disposition": content_disposition_attachment(attachment.filename)},
     )
 
 
@@ -700,10 +710,10 @@ async def create_user(
     current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
-    from app.services import auth as auth_svc
     from app.services.users import create_user as svc_create
+    from app.services.users import get_user_by_username_ci
 
-    existing = await auth_svc.get_user_by_username(db, username.strip())
+    existing = await get_user_by_username_ci(db, username.strip())
     if existing:
         raise HTTPException(status_code=409, detail="Username already exists")
 
@@ -801,7 +811,7 @@ async def deactivate_user(
     current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
-    from app.services.users import count_active_admins, get_user_by_id
+    from app.services.users import count_active_privileged_admins, get_user_by_id
     from app.services.users import deactivate_user as svc_deact
 
     target = await get_user_by_id(db, user_id)
@@ -810,13 +820,24 @@ async def deactivate_user(
     if target.id == current_user.id:
         raise HTTPException(status_code=400, detail="You cannot deactivate your own account.")
 
-    if target.role == AdminRole.admin:
-        active_admin_count = await count_active_admins(db)
-        if active_admin_count <= 1:
-            raise HTTPException(
-                status_code=422,
-                detail="Cannot deactivate the last active admin.",
-            )
+    # Only a superadmin may deactivate a superadmin (a plain admin cannot disable
+    # a higher-privileged account).
+    if target.role == AdminRole.superadmin and current_user.role != AdminRole.superadmin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only a superadmin can deactivate a superadmin account.",
+        )
+
+    # Availability invariant: never deactivate the last account able to
+    # administer the instance (admin OR superadmin).
+    if (
+        target.role in (AdminRole.admin, AdminRole.superadmin)
+        and await count_active_privileged_admins(db) <= 1
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="Cannot deactivate the last active administrator.",
+        )
 
     await svc_deact(db, target)
     await audit_service.log(

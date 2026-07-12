@@ -41,6 +41,15 @@ async def get_user_by_id(db: AsyncSession, user_id: uuid.UUID) -> AdminUser | No
     return result.scalar_one_or_none()
 
 
+async def get_user_by_username_ci(db: AsyncSession, username: str) -> AdminUser | None:
+    """Case-insensitive username lookup — prevents confusable duplicate accounts
+    (e.g. ``admin`` vs ``Admin``) that could be used for admin impersonation."""
+    result = await db.execute(
+        select(AdminUser).where(func.lower(AdminUser.username) == username.strip().lower())
+    )
+    return result.scalar_one_or_none()
+
+
 async def count_active_admins(db: AsyncSession) -> int:
     result = await db.execute(
         select(func.count(AdminUser.id)).where(

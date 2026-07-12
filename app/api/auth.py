@@ -163,11 +163,26 @@ async def login_mfa_post(
     if not user:
         return RedirectResponse("/admin/login", status_code=302)
 
+    # Second-factor guessing must be throttled just like the password factor,
+    # otherwise an attacker who already holds the password can brute-force the
+    # 6-digit TOTP unhindered.
+    if not await rl.check_admin_login_attempts(redis, user.username):
+        return render(
+            request,
+            "login_mfa.html",
+            {
+                "error": "Account temporarily locked due to too many attempts.",
+                "is_demo": settings.demo_mode,
+            },
+            status_code=429,
+        )
+
     code_valid = (settings.demo_mode and verify_demo_totp(totp_code)) or verify_totp(
         user.totp_secret, totp_code
     )
 
     if not code_valid:
+        await rl.record_admin_login_failure(redis, user.username)
         new_temp = secrets.token_urlsafe(32)
         await auth_service.store_totp_pending(redis, new_temp, user_id)
         return render(
