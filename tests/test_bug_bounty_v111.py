@@ -507,11 +507,16 @@ async def test_dashboard_hides_other_org_reports_from_orgless_admin(
     db_session: AsyncSession, as_admin, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     from app.config import settings
+    from app.models.organisation import Organisation
 
     monkeypatch.setattr(settings, "multi_tenancy_enabled", True)
 
+    other_org = Organisation(id=uuid.uuid4(), name="Other Org", slug=f"org-{uuid.uuid4().hex[:8]}")
+    db_session.add(other_org)
+    await db_session.commit()
+
     report = await _mk_report(db_session)
-    report.org_id = uuid.uuid4()  # belongs to some other organisation
+    report.org_id = other_org.id  # belongs to some other organisation
     await db_session.commit()
 
     client, set_user = as_admin
