@@ -4,6 +4,7 @@ import json
 import re
 import secrets
 import uuid
+from collections.abc import Awaitable
 from typing import Any, cast
 from urllib.parse import urlsplit
 
@@ -164,7 +165,9 @@ async def health(
         healthy = False
 
     try:
-        await redis.ping()
+        # redis-py 8's async stubs type ping() as Awaitable[bool] | bool; the
+        # async client always returns an awaitable here.
+        await cast("Awaitable[Any]", redis.ping())
         components["redis"] = "ok"
     except Exception:
         components["redis"] = "error"
