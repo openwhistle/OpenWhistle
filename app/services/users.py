@@ -51,6 +51,17 @@ async def count_active_admins(db: AsyncSession) -> int:
     return result.scalar_one()
 
 
+async def count_active_privileged_admins(db: AsyncSession) -> int:
+    """Active accounts that can administer the instance (admin OR superadmin)."""
+    result = await db.execute(
+        select(func.count(AdminUser.id)).where(
+            AdminUser.role.in_([AdminRole.admin, AdminRole.superadmin]),
+            AdminUser.is_active.is_(True),
+        )
+    )
+    return result.scalar_one()
+
+
 async def create_user(
     db: AsyncSession,
     username: str,

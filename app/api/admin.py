@@ -750,7 +750,11 @@ async def change_user_role(
     current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
-    from app.services.users import get_user_by_id, update_user_role
+    from app.services.users import (
+        count_active_privileged_admins,
+        get_user_by_id,
+        update_user_role,
+    )
 
     target = await get_user_by_id(db, user_id)
     if not target:
@@ -775,6 +779,18 @@ async def change_user_role(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only a superadmin can assign or change the superadmin role.",
+        )
+    # Availability invariant: never demote the last privileged account, or the
+    # instance would be left with no admin/superadmin able to manage it.
+    if (
+        target.role in (AdminRole.admin, AdminRole.superadmin)
+        and role_enum not in (AdminRole.admin, AdminRole.superadmin)
+        and target.is_active
+        and await count_active_privileged_admins(db) <= 1
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Cannot demote the last active administrator.",
         )
 
     old_role = target.role.value
