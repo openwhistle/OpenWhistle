@@ -744,8 +744,14 @@ async def whistleblower_download_attachment(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
     if attachment.storage_key:
-        from app.services.storage import get_storage_backend
-        data = await get_storage_backend().get(attachment.storage_key)
+        from app.services.storage import (
+            StorageObjectNotFoundError,
+            get_storage_backend,
+        )
+        try:
+            data = await get_storage_backend().get(attachment.storage_key)
+        except StorageObjectNotFoundError as exc:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
     else:
         if attachment.data is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
