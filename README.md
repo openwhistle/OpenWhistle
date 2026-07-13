@@ -91,6 +91,9 @@ zero vendor lock-in, and privacy-first by design.
 - **Multi-registry Docker** — Published to GHCR, Docker Hub, and Quay.io on every release.
 - **Health-check v2** — `/health` reports database and Redis status; suitable for Kubernetes
   liveness and readiness probes.
+- **Version & update check** — the admin **System** page shows the installed version and,
+  when `UPDATE_CHECK_ENABLED=true`, whether a newer release is available on GitHub. Opt-in and
+  off by default; a daily background job caches the result and no instance data is sent out.
 - **Structured JSON logging** — `LOG_FORMAT=json` produces structured log output for aggregation
   pipelines; `LOG_FORMAT=text` for human-readable development output.
 - **Slack / Teams webhooks** — `NOTIFY_WEBHOOK_TYPE` selects Block Kit (Slack) or Adaptive Card

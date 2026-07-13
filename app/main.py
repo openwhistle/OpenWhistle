@@ -56,7 +56,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         logger.info("Demo data seeded.")
 
     scheduler = None
-    if settings.reminder_enabled or settings.retention_enabled:
+    if settings.reminder_enabled or settings.retention_enabled or settings.update_check_enabled:
         from apscheduler.schedulers.asyncio import AsyncIOScheduler  # noqa: PLC0415
 
         scheduler = AsyncIOScheduler()
@@ -76,6 +76,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
                 run_retention_cleanup, "cron", hour=3, minute=0, id="retention_cleanup"
             )
             logger.info("Data retention scheduler registered (daily at 03:00 UTC).")
+
+        if settings.update_check_enabled:
+            from app.services.version_check import refresh_update_check  # noqa: PLC0415
+
+            scheduler.add_job(
+                refresh_update_check, "cron", hour=4, minute=0, id="update_check"
+            )
+            # Populate the cache once at startup so the System page has data
+            # before the first daily run.
+            scheduler.add_job(refresh_update_check, id="update_check_startup")
+            logger.info("Update-check scheduler registered (daily at 04:00 UTC).")
 
         scheduler.start()
 

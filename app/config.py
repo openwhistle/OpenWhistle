@@ -130,5 +130,11 @@ class Settings(BaseSettings):
     multi_tenancy_enabled: bool = False
     default_org_slug: str = "default"
 
+    # Update check — opt-in check against the GitHub Releases API. Default OFF to
+    # preserve the "no external calls" posture and support air-gapped installs.
+    # When enabled, a daily background job caches the latest release in Redis and
+    # the admin System page surfaces it; no instance data is ever sent to GitHub.
+    update_check_enabled: bool = False
+
 
 settings = Settings()  # type: ignore[call-arg]
