@@ -17,6 +17,14 @@ from typing import Any
 log = logging.getLogger(__name__)
 
 
+class StorageObjectNotFoundError(Exception):
+    """Raised when an attachment's stored object is missing from the backend.
+
+    Lets the download handlers return a clean 404 instead of surfacing a raw
+    backend error as a 500 (e.g. the S3 object was deleted out-of-band).
+    """
+
+
 class StorageBackend:
     """Thin protocol that both backends implement."""
 
@@ -90,11 +98,19 @@ class S3StorageBackend(StorageBackend):
         log.info("Stored attachment in S3: %s", full_key)
 
     async def get(self, key: str) -> bytes:
+        from botocore.exceptions import ClientError  # noqa: PLC0415
+
         client = self._client()
         full_key = self._full_key(key)
-        response = await asyncio.to_thread(
-            client.get_object, Bucket=self._bucket, Key=full_key
-        )
+        try:
+            response = await asyncio.to_thread(
+                client.get_object, Bucket=self._bucket, Key=full_key
+            )
+        except ClientError as exc:
+            code = str(exc.response.get("Error", {}).get("Code", ""))
+            if code in {"NoSuchKey", "NoSuchBucket", "404", "AccessDenied"}:
+                raise StorageObjectNotFoundError(full_key) from exc
+            raise  # a genuine backend/connectivity error stays a 5xx
         body: bytes = await asyncio.to_thread(response["Body"].read)
         return body
 
