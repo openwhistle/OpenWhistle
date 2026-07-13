@@ -56,6 +56,7 @@ services:
       RETENTION_DAYS: "${RETENTION_DAYS:-1095}"
       MULTI_TENANCY_ENABLED: "${MULTI_TENANCY_ENABLED:-false}"
       DEFAULT_ORG_SLUG: "${DEFAULT_ORG_SLUG:-default}"
+      UPDATE_CHECK_ENABLED: "${UPDATE_CHECK_ENABLED:-false}"
     depends_on:
       db:
         condition: service_healthy

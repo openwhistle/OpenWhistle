@@ -24,6 +24,9 @@ templates.env.globals["brand"] = {
 
 templates.env.globals["is_demo"] = settings.demo_mode
 
+# Installed version, available to every template (e.g. the footer).
+templates.env.globals["app_version"] = settings.app_version
+
 
 def render(
     request: Request,

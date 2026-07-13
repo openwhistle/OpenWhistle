@@ -7,6 +7,15 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **Admin System page + opt-in update check**: a new **Admin → System** page
+  shows the installed version and, when `UPDATE_CHECK_ENABLED=true`, whether a
+  newer release is available on GitHub. The check is **off by default**, runs as
+  a daily background job (result cached in Redis, ETag-conditional), and sends no
+  instance data to GitHub — only a standard request. The installed version is
+  also shown in the footer.
+
 ## [1.1.1] — 2026-07-13
 
 Security release: four privately-reported advisories plus an internal
@@ -47,6 +56,8 @@ users of 1.1.0 should upgrade.
   `X-Content-Type-Options` and `X-Frame-Options` headers. The Content-Security-
   Policy no longer uses `'unsafe-inline'`: it is now a strict, per-response
   nonce-based policy for both scripts and styles.
+
+Reported by [@openblow](https://github.com/openblow).
 
 ### Fixed (internal bug-bounty audit)
 

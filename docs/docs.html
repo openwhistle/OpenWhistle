@@ -1335,6 +1335,12 @@
               <td>Slug of the default organisation auto-created during setup. Used for single-tenant deployments and as the fallback for legacy data.</td>
               <td><code>default</code></td>
             </tr>
+            <tr>
+              <td><code class="env-key">UPDATE_CHECK_ENABLED</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Set to <code>true</code> to let OpenWhistle check GitHub once a day for a newer release, shown on the <strong>Admin → System</strong> page. Off by default (no external calls); sends no instance data to GitHub — only a standard request.</td>
+              <td><code>false</code></td>
+            </tr>
           </tbody>
         </table>
 
@@ -1619,6 +1625,14 @@
         <p>
           <code>/admin/stats</code> shows the total report count, status distribution bar chart,
           category breakdown, and the 7-day SLA compliance rate.
+        </p>
+
+        <h3>System &amp; updates</h3>
+        <p>
+          <code>/admin/system</code> shows the installed OpenWhistle version. When
+          <code>UPDATE_CHECK_ENABLED=true</code>, it also reports whether a newer release is
+          available on GitHub (checked once a day, cached; no instance data is sent). The check
+          is opt-in and off by default.
         </p>
 
         <h3>HinSchG deadline tracking</h3>

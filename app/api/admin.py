@@ -1114,6 +1114,25 @@ async def retention_page(
     )
 
 
+# ── System / About ────────────────────────────────────────────────────────────
+
+
+@router.get("/system", response_class=HTMLResponse)
+async def system_page(
+    request: Request,
+    redis: Redis = Depends(get_redis),
+    current_user: AdminUser = Depends(require_admin),
+) -> HTMLResponse:
+    from app.services.version_check import get_update_status
+
+    update = await get_update_status(redis, settings.app_version)
+    return render(
+        request,
+        "admin/system.html",
+        {"user": current_user, "update": update},
+    )
+
+
 # ── Organisation management (superadmin only) ─────────────────────────────────
 
 

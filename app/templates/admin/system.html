@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('admin.system.title') }} | OpenWhistle{% endblock %}
+
+{% block nav_links %}
+<li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
+<li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
+<li><a href="/admin/categories">{{ t('admin.nav.categories') }}</a></li>
+<li><a href="/admin/locations">{{ t('admin.nav.locations') }}</a></li>
+<li><a href="/admin/users">{{ t('admin.nav.users') }}</a></li>
+<li><a href="/admin/audit-log">{{ t('admin.nav.audit_log') }}</a></li>
+<li><a href="/admin/retention">{{ t('admin.nav.retention') }}</a></li>
+<li><a href="/admin/telephone-channel">{{ t('admin.nav.telephone_channel') }}</a></li>
+<li><a href="/admin/organisations">{{ t('admin.nav.organisations') }}</a></li>
+<li><a href="/admin/system" class="active" aria-current="page">{{ t('admin.nav.system') }}</a></li>
+<li><a href="/admin/logout">{{ t('admin.nav.logout') }}</a></li>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div class="page-eyebrow">{{ t('admin.system.eyebrow') }}</div>
+        <h1>{{ t('admin.system.title') }}</h1>
+        <p class="page-subtitle">{{ t('admin.system.subtitle') }}</p>
+    </div>
+
+    <div class="stats-grid" role="list">
+        <div class="stat-card" role="listitem">
+            <div class="stat-card__label">{{ t('admin.system.stat.current') }}</div>
+            <div class="stat-card__value"><code>v{{ update.current }}</code></div>
+        </div>
+
+        <div class="stat-card
+            {%- if update.status == 'update_available' %} stat-card--inactive
+            {%- elif update.status == 'up_to_date' %} stat-card--active{% endif %}" role="listitem">
+            <div class="stat-card__label">{{ t('admin.system.stat.status') }}</div>
+            <div class="stat-card__value">
+                {% if not update.enabled %}
+                    <span class="badge badge--grey">{{ t('admin.system.status.disabled') }}</span>
+                {% elif not update.latest %}
+                    <span class="badge badge--grey">{{ t('admin.system.status.never_checked') }}</span>
+                {% elif update.status == 'update_available' %}
+                    <span class="badge badge--amber">{{ t('admin.system.status.update_available') }}</span>
+                {% elif update.status == 'ahead' %}
+                    <span class="badge badge--grey">{{ t('admin.system.status.ahead') }}</span>
+                {% else %}
+                    <span class="badge badge--green">&#10003; {{ t('admin.system.status.up_to_date') }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="stat-card" role="listitem">
+            <div class="stat-card__label">{{ t('admin.system.stat.latest') }}</div>
+            <div class="stat-card__value">
+                {% if update.enabled and update.latest %}
+                    <code>{{ update.latest }}</code>
+                {% else %}
+                    &mdash;
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if update.enabled and update.status == 'update_available' and update.html_url %}
+    <div class="info-banner info-banner--info" role="note">
+        {{ t('admin.system.update_available_notice', latest=update.latest) }}
+        <a href="{{ update.html_url }}" rel="noopener noreferrer" target="_blank">{{ t('admin.system.view_release') }}</a>
+    </div>
+    {% endif %}
+
+    {% if not update.enabled %}
+    <div class="info-banner info-banner--info" role="note">
+        {{ t('admin.system.disabled_notice.html') }}
+    </div>
+    {% elif update.checked_at %}
+    <p class="note">
+        {{ t('admin.system.last_checked') }}
+        <time data-utc="{{ update.checked_at }}">{{ update.checked_at }}</time>
+    </p>
+    {% endif %}
+
+    <section class="card" aria-labelledby="heading-privacy">
+        <h2 id="heading-privacy">{{ t('admin.system.privacy.title') }}</h2>
+        <p>{{ t('admin.system.privacy.body.html') }}</p>
+    </section>
+
+    <section class="card" aria-labelledby="heading-config">
+        <h2 id="heading-config">{{ t('admin.system.config.title') }}</h2>
+        <table class="env-table" role="table">
+            <thead>
+                <tr>
+                    <th scope="col">{{ t('admin.retention.config.col.variable') }}</th>
+                    <th scope="col">{{ t('admin.retention.config.col.default') }}</th>
+                    <th scope="col">{{ t('admin.retention.config.col.current') }}</th>
+                    <th scope="col">{{ t('admin.retention.config.col.description') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>UPDATE_CHECK_ENABLED</code></td>
+                    <td><code>false</code></td>
+                    <td><code>{{ update.enabled | string | lower }}</code></td>
+                    <td>{{ t('admin.system.config.enabled.desc') }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <div class="page-actions">
+        <a href="/admin/dashboard" class="btn btn--secondary">{{ t('admin.back_dashboard') }}</a>
+        <a href="https://github.com/openwhistle/OpenWhistle/releases" rel="noopener noreferrer" target="_blank" class="btn btn--outline">
+            {{ t('admin.system.all_releases') }}
+        </a>
+    </div>
+</div>
+{% endblock %}
