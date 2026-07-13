@@ -68,6 +68,11 @@ COPY --chown=openwhistle:openwhistle . .
 
 RUN chown -R openwhistle:openwhistle /app/app/static/fonts/
 
+# Generate the file-integrity manifest over the exact shipped bytes (after fonts
+# are in place). -B avoids writing .pyc during the walk (PYTHONDONTWRITEBYTECODE
+# is set later); the script imports no settings, so no SECRET_KEY is needed.
+RUN /venv/bin/python -B scripts/generate_integrity_manifest.py
+
 USER openwhistle
 
 ENV PATH="/venv/bin:$PATH" \

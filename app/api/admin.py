@@ -1123,13 +1123,16 @@ async def system_page(
     redis: Redis = Depends(get_redis),
     current_user: AdminUser = Depends(require_admin),
 ) -> HTMLResponse:
+    from app.services.integrity import get_integrity_status
     from app.services.version_check import get_update_status
 
     update = await get_update_status(redis, settings.app_version)
+    recheck = request.query_params.get("recheck") == "1"
+    integrity = await get_integrity_status(redis, recheck=recheck)
     return render(
         request,
         "admin/system.html",
-        {"user": current_user, "update": update},
+        {"user": current_user, "update": update, "integrity": integrity},
     )
 
 

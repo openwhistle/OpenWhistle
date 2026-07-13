@@ -490,5 +490,19 @@
   "admin.system.privacy.body.html": "Wenn aktiviert, führt die Update-Prüfung eine einzelne Anfrage an die öffentliche Releases-API von GitHub aus. Dabei werden <strong>keine</strong> Instanz- oder Meldungsdaten übermittelt — nur eine Standard-HTTP-Anfrage. Das Ergebnis wird zwischengespeichert und einmal täglich aktualisiert.",
   "admin.system.config.title": "Konfiguration",
   "admin.system.config.enabled.desc": "Tägliche GitHub-Update-Prüfung aktivieren (opt-in; es werden keine Daten an GitHub gesendet).",
-  "admin.system.all_releases": "Alle Releases"
+  "admin.system.all_releases": "Alle Releases",
+  "admin.system.integrity.title": "Dateiintegrität",
+  "admin.system.integrity.status": "Integrität",
+  "admin.system.integrity.ok": "Alle Dateien verifiziert",
+  "admin.system.integrity.issues": "Probleme gefunden",
+  "admin.system.integrity.unavailable": "Manifest nicht verfügbar",
+  "admin.system.integrity.checked": "{count} Dateien geprüft",
+  "admin.system.integrity.missing": "Fehlende Dateien",
+  "admin.system.integrity.modified": "Geänderte Dateien",
+  "admin.system.integrity.extra": "Unerwartete Dateien",
+  "admin.system.integrity.generated": "Manifest erstellt",
+  "admin.system.integrity.manifest_hash": "Manifest SHA-256",
+  "admin.system.integrity.recheck": "Jetzt erneut prüfen",
+  "admin.system.integrity.note.html": "Überprüft die Anwendungsdateien anhand eines Manifests, das zur Build-Zeit in dieses Image eingebettet wurde. Dies erkennt versehentliche Änderungen, unvollständige Deployments und Beschädigungen. Es ist <strong>kein</strong> manipulationssicherer Schutz: Ein Angreifer, der Schreibzugriff auf den Container erlangt, könnte auch das Basis-Manifest verändern.",
+  "admin.system.integrity.unavailable_note": "Es ist kein Integritäts-Manifest vorhanden. Das ist außerhalb eines veröffentlichten Docker-Images zu erwarten (z. B. bei lokaler Entwicklung)."
 }

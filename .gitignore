@@ -57,3 +57,6 @@ migrations/versions/__pycache__/
 
 # Logs
 *.log
+
+# Generated at Docker build time (see scripts/generate_integrity_manifest.py)
+integrity-manifest.json

@@ -490,5 +490,19 @@
   "admin.system.privacy.body.html": "Lorsqu'elle est activée, la vérification des mises à jour effectue une seule requête vers l'API publique des versions de GitHub. Elle n'envoie <strong>aucune</strong> donnée d'instance ou de signalement — uniquement une requête HTTP standard. Le résultat est mis en cache et actualisé une fois par jour.",
   "admin.system.config.title": "Configuration",
   "admin.system.config.enabled.desc": "Activer la vérification quotidienne des mises à jour sur GitHub (opt-in ; aucune donnée n'est envoyée à GitHub).",
-  "admin.system.all_releases": "Toutes les versions"
+  "admin.system.all_releases": "Toutes les versions",
+  "admin.system.integrity.title": "Intégrité des fichiers",
+  "admin.system.integrity.status": "Intégrité",
+  "admin.system.integrity.ok": "Tous les fichiers vérifiés",
+  "admin.system.integrity.issues": "Problèmes détectés",
+  "admin.system.integrity.unavailable": "Manifeste indisponible",
+  "admin.system.integrity.checked": "{count} fichiers vérifiés",
+  "admin.system.integrity.missing": "Fichiers manquants",
+  "admin.system.integrity.modified": "Fichiers modifiés",
+  "admin.system.integrity.extra": "Fichiers inattendus",
+  "admin.system.integrity.generated": "Manifeste généré",
+  "admin.system.integrity.manifest_hash": "SHA-256 du manifeste",
+  "admin.system.integrity.recheck": "Revérifier maintenant",
+  "admin.system.integrity.note.html": "Vérifie les fichiers de l'application par rapport à un manifeste intégré à cette image lors de sa construction. Cela permet de détecter une modification accidentelle, un déploiement incomplet ou une corruption. Ce n'est <strong>pas</strong> une protection inviolable : un attaquant capable d'écrire dans le conteneur pourrait également altérer le manifeste de référence.",
+  "admin.system.integrity.unavailable_note": "Aucun manifeste d'intégrité n'est présent. C'est normal en dehors d'une image Docker publiée (par ex. en développement local)."
 }
