@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_admin, require_admin, require_superadmin
 from app.config import settings
-from app.csrf import validate_csrf
+from app.csrf import validate_csrf, validate_csrf_header
 from app.database import get_db
 from app.middleware import check_ip_warning, clear_ip_warning
 from app.models.report import STATUS_TRANSITIONS, Report, ReportStatus
@@ -1069,7 +1069,7 @@ async def reactivate_location(
 @router.post("/ip-warning/dismiss")
 async def dismiss_ip_warning(
     current_user: AdminUser = Depends(get_current_admin),
-    _csrf: None = Depends(validate_csrf),
+    _csrf: None = Depends(validate_csrf_header),
 ) -> JSONResponse:
     await clear_ip_warning()
     return JSONResponse({"cleared": True})
@@ -1078,7 +1078,7 @@ async def dismiss_ip_warning(
 @router.post("/demo/reset")
 async def demo_reset(
     current_user: AdminUser = Depends(get_current_admin),
-    _csrf: None = Depends(validate_csrf),
+    _csrf: None = Depends(validate_csrf_header),
 ) -> JSONResponse:
     if not settings.demo_mode:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)

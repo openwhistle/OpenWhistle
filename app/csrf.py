@@ -57,18 +57,28 @@ def _parse_cookie(header: str, name: str) -> str | None:
 
 
 async def validate_csrf(
-    csrf_token: str | None = Form(None),
+    csrf_token: str = Form(...),
+    ow_csrf: str | None = Cookie(None),
+) -> None:
+    """Dependency: validates CSRF double-submit token on state-changing form submissions."""
+    if not ow_csrf or not secrets.compare_digest(csrf_token, ow_csrf):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="CSRF validation failed.",
+        )
+
+
+async def validate_csrf_header(
     x_csrf_token: str | None = Header(None),
     ow_csrf: str | None = Cookie(None),
 ) -> None:
-    """Validate the CSRF double-submit token on state-changing requests.
+    """CSRF validation for fetch/AJAX endpoints (no form body).
 
-    The submitted token may arrive either as a ``csrf_token`` form field (HTML
-    form posts) or an ``X-CSRF-Token`` header (fetch/AJAX, which cannot read the
-    HttpOnly cookie and instead reads the token from the page's meta tag).
+    The token arrives in the ``X-CSRF-Token`` header — JavaScript reads it from
+    the ``<meta name="csrf-token">`` tag since the double-submit cookie is
+    HttpOnly. Same double-submit comparison against the ``ow_csrf`` cookie.
     """
-    submitted = csrf_token or x_csrf_token
-    if not ow_csrf or not submitted or not secrets.compare_digest(submitted, ow_csrf):
+    if not ow_csrf or not x_csrf_token or not secrets.compare_digest(x_csrf_token, ow_csrf):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="CSRF validation failed.",
