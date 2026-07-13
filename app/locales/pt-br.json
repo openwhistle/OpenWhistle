@@ -496,5 +496,19 @@
   "admin.system.privacy.body.html": "Quando ativada, a verificação de atualizações realiza uma única requisição à API pública de versões do GitHub. Ela não envia <strong>nenhum</strong> dado da instância ou de denúncias — apenas uma requisição HTTP padrão. O resultado é armazenado em cache e atualizado uma vez por dia.",
   "admin.system.config.title": "Configuração",
   "admin.system.config.enabled.desc": "Ativar a verificação diária de atualizações no GitHub (opcional; nenhum dado é enviado ao GitHub).",
-  "admin.system.all_releases": "Todas as versões"
+  "admin.system.all_releases": "Todas as versões",
+  "admin.system.integrity.title": "Integridade dos arquivos",
+  "admin.system.integrity.status": "Integridade",
+  "admin.system.integrity.ok": "Todos os arquivos verificados",
+  "admin.system.integrity.issues": "Problemas encontrados",
+  "admin.system.integrity.unavailable": "Manifesto indisponível",
+  "admin.system.integrity.checked": "{count} arquivos verificados",
+  "admin.system.integrity.missing": "Arquivos ausentes",
+  "admin.system.integrity.modified": "Arquivos modificados",
+  "admin.system.integrity.extra": "Arquivos inesperados",
+  "admin.system.integrity.generated": "Manifesto gerado",
+  "admin.system.integrity.manifest_hash": "SHA-256 do manifesto",
+  "admin.system.integrity.recheck": "Verificar novamente agora",
+  "admin.system.integrity.note.html": "Verifica os arquivos da aplicação em relação a um manifesto incorporado a esta imagem no momento da construção. Isso detecta modificações acidentais, implantações incompletas e corrupção. Isso <strong>não</strong> é à prova de violação: um invasor capaz de gravar no contêiner também poderia alterar o manifesto de referência.",
+  "admin.system.integrity.unavailable_note": "Nenhum manifesto de integridade está presente. Isso é esperado fora de uma imagem Docker lançada oficialmente (por exemplo, em desenvolvimento local)."
 }

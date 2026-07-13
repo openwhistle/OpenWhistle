@@ -1634,6 +1634,13 @@
           available on GitHub (checked once a day, cached; no instance data is sent). The check
           is opt-in and off by default.
         </p>
+        <p>
+          The same page includes a <strong>file integrity check</strong>: it verifies the
+          application files against a SHA-256 manifest baked into the image at build time and
+          reports any missing, modified, or unexpected files. This detects accidental
+          modification, incomplete deployments, and corruption; it is not tamper-proof against an
+          attacker who can also rewrite the manifest. Use the "Re-check now" link to refresh.
+        </p>
 
         <h3>HinSchG deadline tracking</h3>
         <p>

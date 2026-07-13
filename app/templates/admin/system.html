@@ -79,6 +79,56 @@
     </p>
     {% endif %}
 
+    <section class="card" aria-labelledby="heading-integrity">
+        <h2 id="heading-integrity">{{ t('admin.system.integrity.title') }}</h2>
+
+        <div class="detail-row">
+            <div class="detail-label">{{ t('admin.system.integrity.status') }}</div>
+            {% if not integrity.available %}
+                <span class="badge badge--grey">{{ t('admin.system.integrity.unavailable') }}</span>
+            {% elif integrity.ok %}
+                <span class="badge badge--green">&#10003; {{ t('admin.system.integrity.ok') }}</span>
+            {% else %}
+                <span class="badge badge--amber">{{ t('admin.system.integrity.issues') }}</span>
+            {% endif %}
+        </div>
+
+        {% if not integrity.available %}
+        <p class="note">{{ t('admin.system.integrity.unavailable_note') }}</p>
+        {% else %}
+        <p class="note">
+            {{ t('admin.system.integrity.checked', count=integrity.checked) }}
+            {% if integrity.generated_at %}
+                &middot; {{ t('admin.system.integrity.generated') }}
+                <time data-utc="{{ integrity.generated_at }}">{{ integrity.generated_at }}</time>
+            {% endif %}
+        </p>
+
+        {% if integrity.missing %}
+        <h3>{{ t('admin.system.integrity.missing') }}</h3>
+        <ul class="mono">{% for f in integrity.missing %}<li>{{ f }}</li>{% endfor %}</ul>
+        {% endif %}
+        {% if integrity.modified %}
+        <h3>{{ t('admin.system.integrity.modified') }}</h3>
+        <ul class="mono">{% for f in integrity.modified %}<li>{{ f }}</li>{% endfor %}</ul>
+        {% endif %}
+        {% if integrity.extra %}
+        <h3>{{ t('admin.system.integrity.extra') }}</h3>
+        <ul class="mono">{% for f in integrity.extra %}<li>{{ f }}</li>{% endfor %}</ul>
+        {% endif %}
+
+        {% if integrity.manifest_sha256 %}
+        <p class="note">
+            {{ t('admin.system.integrity.manifest_hash') }}
+            <code>{{ integrity.manifest_sha256 }}</code>
+        </p>
+        {% endif %}
+        {% endif %}
+
+        <p class="note">{{ t('admin.system.integrity.note.html') }}</p>
+        <p><a href="?recheck=1">{{ t('admin.system.integrity.recheck') }}</a></p>
+    </section>
+
     <section class="card" aria-labelledby="heading-privacy">
         <h2 id="heading-privacy">{{ t('admin.system.privacy.title') }}</h2>
         <p>{{ t('admin.system.privacy.body.html') }}</p>

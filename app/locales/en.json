@@ -490,5 +490,19 @@
   "admin.system.privacy.body.html": "When enabled, the update check performs a single request to GitHub's public releases API. It sends <strong>no</strong> instance or report data — only a standard HTTP request. The result is cached and refreshed once a day.",
   "admin.system.config.title": "Configuration",
   "admin.system.config.enabled.desc": "Enable the daily GitHub update check (opt-in; no data is sent to GitHub).",
-  "admin.system.all_releases": "All releases"
+  "admin.system.all_releases": "All releases",
+  "admin.system.integrity.title": "File integrity",
+  "admin.system.integrity.status": "Integrity",
+  "admin.system.integrity.ok": "All files verified",
+  "admin.system.integrity.issues": "Issues found",
+  "admin.system.integrity.unavailable": "Manifest unavailable",
+  "admin.system.integrity.checked": "{count} files checked",
+  "admin.system.integrity.missing": "Missing files",
+  "admin.system.integrity.modified": "Modified files",
+  "admin.system.integrity.extra": "Unexpected files",
+  "admin.system.integrity.generated": "Manifest generated",
+  "admin.system.integrity.manifest_hash": "Manifest SHA-256",
+  "admin.system.integrity.recheck": "Re-check now",
+  "admin.system.integrity.note.html": "Verifies application files against a manifest baked into this image at build time. This detects accidental modification, incomplete deployments, and corruption. It is <strong>not</strong> tamper-proof: an attacker able to write to the container could also alter the baseline manifest.",
+  "admin.system.integrity.unavailable_note": "No integrity manifest is present. This is expected outside a released Docker image (e.g. local development)."
 }
