@@ -4,6 +4,7 @@ import json
 import re
 import secrets
 import uuid
+from collections.abc import Awaitable
 from typing import Any, cast
 from urllib.parse import urlsplit
 
@@ -164,7 +165,9 @@ async def health(
         healthy = False
 
     try:
-        await redis.ping()
+        # redis-py 8's async stubs type ping() as Awaitable[bool] | bool; the
+        # async client always returns an awaitable here.
+        await cast("Awaitable[Any]", redis.ping())
         components["redis"] = "ok"
     except Exception:
         components["redis"] = "error"
@@ -260,6 +263,12 @@ async def submit_post(
         else secrets.token_urlsafe(32)
     )
     state = await _load_submission(redis, session_id)
+    if not state and raw_cookie:
+        # Never adopt a client-supplied session id that has no server-side state
+        # (session fixation): mint a fresh server-generated id instead, matching
+        # the GET handler's behaviour.
+        session_id = secrets.token_urlsafe(32)
+        state = {}
 
     locations = await get_active_locations(db)
     has_locations = len(locations) > 0
@@ -283,6 +292,14 @@ async def submit_post(
         _set_submission_cookie(resp, session_id)
         return resp
 
+    # Reject a step that runs ahead of the session's progress. Without this an
+    # unauthenticated client could POST step=<attachments> on a brand-new
+    # session and stash multi-MB blobs in Redis, bypassing the wizard entirely.
+    if action == "next" and step > state.get("step", _STEP_MODE):
+        state.setdefault("step", _STEP_MODE)
+        await _save_submission(redis, session_id, state)
+        return _render_step({"error": "session_incomplete"})
+
     if action == "back":
         current = state.get("step", _STEP_MODE)
         prev = current - 1
@@ -294,20 +311,33 @@ async def submit_post(
 
     # ── Step 1: mode selection ─────────────────────────────────────
     if step == _STEP_MODE:
-        if submission_mode not in ("anonymous", "confidential"):
+        # When the operator has disabled mode selection, every report is forced
+        # to anonymous — a confidential submission must not be accepted.
+        effective_mode = submission_mode
+        if not settings.submission_mode_enabled:
+            effective_mode = "anonymous"
+
+        if effective_mode not in ("anonymous", "confidential"):
             state["step"] = _STEP_MODE
             await _save_submission(redis, session_id, state)
             return _render_step({"error": "mode_required"})
 
-        state["submission_mode"] = submission_mode
+        state["submission_mode"] = effective_mode
 
-        if submission_mode == "confidential":
+        if effective_mode == "confidential":
             name_stripped = confidential_name.strip()
             contact_stripped = confidential_contact.strip()
             email_stripped = secure_email.strip()
             state["confidential_name"] = name_stripped
             state["confidential_contact"] = contact_stripped
             state["secure_email"] = email_stripped
+        else:
+            # Purge any identifying fields entered on a previous confidential
+            # pass — they must not linger in the Redis session for an anonymous
+            # report.
+            state.pop("confidential_name", None)
+            state.pop("confidential_contact", None)
+            state.pop("secure_email", None)
 
         state["step"] = _STEP_LOCATION if has_locations else _STEP_CATEGORY
         await _save_submission(redis, session_id, state)
@@ -554,8 +584,14 @@ async def status_post(
     db: AsyncSession = Depends(get_db),
     _csrf: None = Depends(validate_csrf),
 ) -> Response:
-    if not await rl.check_whistleblower_attempts(redis, session_token):
-        lockout_ttl = await rl.get_whistleblower_lockout_ttl(redis, session_token)
+    # Rate-limit PIN guessing against the *target case number*, not the
+    # client-supplied session token. The token is minted fresh on every GET
+    # /status and echoed back, so keying the lockout on it let an attacker reset
+    # the counter simply by re-fetching the page before each guess.
+    rl_key = case_number.strip().upper()
+
+    if not await rl.check_whistleblower_attempts(redis, rl_key):
+        lockout_ttl = await rl.get_whistleblower_lockout_ttl(redis, rl_key)
         return render(
             request,
             "status.html",
@@ -570,8 +606,8 @@ async def status_post(
     report = await report_service.get_report_by_credentials(db, case_number.strip(), pin.strip())
 
     if report is None:
-        remaining = await rl.remaining_whistleblower_attempts(redis, session_token)
-        await rl.record_whistleblower_failure(redis, session_token)
+        remaining = await rl.remaining_whistleblower_attempts(redis, rl_key)
+        await rl.record_whistleblower_failure(redis, rl_key)
         return render(
             request,
             "status.html",
@@ -584,7 +620,7 @@ async def status_post(
             status_code=401,
         )
 
-    await rl.reset_whistleblower_attempts(redis, session_token)
+    await rl.reset_whistleblower_attempts(redis, rl_key)
 
     status_session_key = secrets.token_urlsafe(32)
     await redis.setex(f"status-session:{status_session_key}", 7200, str(report.id))
@@ -715,9 +751,9 @@ async def whistleblower_download_attachment(
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
         data = attachment.data
 
-    safe_name = attachment.filename.replace('"', "")
+    from app.services.attachment import content_disposition_attachment
     return Response(
         content=data,
         media_type=attachment.content_type,
-        headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
+        headers={"Content-Disposition": content_disposition_attachment(attachment.filename)},
     )

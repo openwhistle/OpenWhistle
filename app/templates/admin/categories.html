@@ -2,6 +2,19 @@
 
 {% block title %}{{ t('admin.categories.title') }} | OpenWhistle{% endblock %}
 
+{% block styles %}
+<style nonce="{{ request.state.csp_nonce }}">
+.cat-grid { display:grid;grid-template-columns:1fr 2fr;gap:1.25rem;align-items:start; }
+.cat-row-inactive { opacity:0.5; }
+.cat-slug { font-size:0.82rem; }
+.cat-label-en { font-size:0.9rem; }
+.cat-label-de { font-size:0.9rem;color:var(--muted); }
+.cat-sort { font-size:0.82rem;color:var(--muted);text-align:center; }
+.cat-inline-form { display:inline; }
+.cat-empty { color:var(--muted);padding:1rem 0; }
+</style>
+{% endblock %}
+
 {% block nav_links %}
 <li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
 <li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
@@ -22,7 +35,7 @@
         <h1>{{ t('admin.categories.title') }}</h1>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 2fr;gap:1.25rem;align-items:start;">
+    <div class="cat-grid">
 
         {# Add category form #}
         <div class="panel">
@@ -74,11 +87,11 @@
                     </thead>
                     <tbody>
                         {% for cat in categories %}
-                        <tr style="{% if not cat.is_active %}opacity:0.5;{% endif %}">
-                            <td class="mono" style="font-size:0.82rem;">{{ cat.slug }}</td>
-                            <td style="font-size:0.9rem;">{{ cat.label_en }}</td>
-                            <td style="font-size:0.9rem;color:var(--muted);">{{ cat.label_de }}</td>
-                            <td style="font-size:0.82rem;color:var(--muted);text-align:center;">{{ cat.sort_order }}</td>
+                        <tr class="{% if not cat.is_active %}cat-row-inactive{% endif %}">
+                            <td class="mono cat-slug">{{ cat.slug }}</td>
+                            <td class="cat-label-en">{{ cat.label_en }}</td>
+                            <td class="cat-label-de">{{ cat.label_de }}</td>
+                            <td class="cat-sort">{{ cat.sort_order }}</td>
                             <td>
                                 {% if cat.is_default %}
                                 <span class="badge badge-received">{{ t('admin.categories.default') }}</span>
@@ -91,12 +104,12 @@
                             <td>
                                 {% if not cat.is_default %}
                                 {% if cat.is_active %}
-                                <form method="post" action="/admin/categories/{{ cat.id }}/deactivate" style="display:inline;">
+                                <form method="post" action="/admin/categories/{{ cat.id }}/deactivate" class="cat-inline-form">
                                     <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                                     <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.categories.deactivate') }}</button>
                                 </form>
                                 {% else %}
-                                <form method="post" action="/admin/categories/{{ cat.id }}/reactivate" style="display:inline;">
+                                <form method="post" action="/admin/categories/{{ cat.id }}/reactivate" class="cat-inline-form">
                                     <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                                     <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.categories.reactivate') }}</button>
                                 </form>
@@ -109,7 +122,7 @@
                 </table>
             </div>
             {% else %}
-            <p style="color:var(--muted);padding:1rem 0;">{{ t('admin.categories.empty') }}</p>
+            <p class="cat-empty">{{ t('admin.categories.empty') }}</p>
             {% endif %}
         </div>
 

@@ -1,5 +1,21 @@
 {% extends "base.html" %}
 
+{% block styles %}
+<style nonce="{{ request.state.csp_nonce }}">
+.stat-kpi-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:2rem; }
+.stat-kpi-label { font-size:0.8rem;color:var(--muted);margin-top:0.25rem; }
+.stat-two-col { display:grid;grid-template-columns:1fr 1fr;gap:1.25rem; }
+.stat-flex-col-gap { display:flex;flex-direction:column;gap:0.75rem; }
+.stat-row-header { display:flex;justify-content:space-between;margin-bottom:0.25rem; }
+.stat-muted-sm { font-size:0.82rem;color:var(--muted); }
+.stat-muted { color:var(--muted); }
+.stat-cat-label { font-size:0.85rem;color:var(--body-text); }
+.stat-bar-track { height:6px;background:var(--hairline);border-radius:3px;overflow:hidden; }
+.stat-bar-fill { height:100%;background:var(--accent);border-radius:3px;transition:width 0.4s ease; }
+.stat-bar-fill-outline { height:100%;background:var(--accent-subtle);border:1px solid var(--accent);border-radius:3px; }
+</style>
+{% endblock %}
+
 {% block title %}{{ t('admin.stats.title') }} | OpenWhistle{% endblock %}
 
 {% block nav_links %}
@@ -23,16 +39,16 @@
     </div>
 
     {# Top-line KPIs #}
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:2rem;">
-        <div class="stat-card" style="animation-delay:0s;">
+    <div class="stat-kpi-grid">
+        <div class="stat-card" data-delay="0">
             <div class="stat-number">{{ stats.total_reports }}</div>
-            <div style="font-size:0.8rem;color:var(--muted);margin-top:0.25rem;">{{ t('admin.stats.total_reports') }}</div>
+            <div class="stat-kpi-label">{{ t('admin.stats.total_reports') }}</div>
         </div>
-        <div class="stat-card" style="animation-delay:0.05s;">
-            <div class="stat-number" style="color:{% if stats.sla_7day_rate >= 90 %}var(--success){% elif stats.sla_7day_rate >= 70 %}var(--warning){% else %}var(--danger){% endif %};">
+        <div class="stat-card" data-delay="0.05">
+            <div class="stat-number" data-tone="{{ 'success' if stats.sla_7day_rate >= 90 else ('warning' if stats.sla_7day_rate >= 70 else 'danger') }}">
                 {{ stats.sla_7day_rate }}%
             </div>
-            <div style="font-size:0.8rem;color:var(--muted);margin-top:0.25rem;">{{ t('admin.stats.sla_rate') }}</div>
+            <div class="stat-kpi-label">{{ t('admin.stats.sla_rate') }}</div>
         </div>
         {% for status_val, cls in [
             ('received', 'badge-received'),
@@ -41,20 +57,20 @@
             ('closed', 'badge-closed')
         ] %}
         {% set count = stats.status_counts.get(status_val, 0) %}
-        <div class="stat-card" style="animation-delay:{{ loop.index * 0.05 }}s;">
+        <div class="stat-card" data-delay="{{ loop.index * 0.05 }}">
             <div class="stat-number">{{ count }}</div>
             <span class="badge {{ cls }}">{{ t('status.label.' + status_val) }}</span>
         </div>
         {% endfor %}
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;">
+    <div class="stat-two-col">
 
         {# By status #}
         <div class="panel">
             <div class="panel-header">{{ t('admin.stats.by_status') }}</div>
             {% if stats.total_reports > 0 %}
-            <div style="display:flex;flex-direction:column;gap:0.75rem;">
+            <div class="stat-flex-col-gap">
                 {% for sv, cls, label_key in [
                     ('received',         'badge-received',         'status.label.received'),
                     ('in_review',        'badge-in_review',        'status.label.in_review'),
@@ -64,18 +80,18 @@
                 {% set count = stats.status_counts.get(sv, 0) %}
                 {% set pct = (count / stats.total_reports * 100) | round(1) %}
                 <div>
-                    <div style="display:flex;justify-content:space-between;margin-bottom:0.25rem;">
+                    <div class="stat-row-header">
                         <span class="badge {{ cls }}">{{ t(label_key) }}</span>
-                        <span style="font-size:0.82rem;color:var(--muted);">{{ count }} ({{ pct }}%)</span>
+                        <span class="stat-muted-sm">{{ count }} ({{ pct }}%)</span>
                     </div>
-                    <div style="height:6px;background:var(--hairline);border-radius:3px;overflow:hidden;">
-                        <div style="height:100%;width:{{ pct }}%;background:var(--accent);border-radius:3px;transition:width 0.4s ease;"></div>
+                    <div class="stat-bar-track">
+                        <div class="stat-bar-fill" data-pct="{{ pct }}"></div>
                     </div>
                 </div>
                 {% endfor %}
             </div>
             {% else %}
-            <p style="color:var(--muted);">No data yet.</p>
+            <p class="stat-muted">No data yet.</p>
             {% endif %}
         </div>
 
@@ -84,25 +100,43 @@
             <div class="panel-header">{{ t('admin.stats.by_category') }}</div>
             {% if stats.by_category %}
             {% set max_cat = stats.by_category.values() | max %}
-            <div style="display:flex;flex-direction:column;gap:0.75rem;">
+            <div class="stat-flex-col-gap">
                 {% for slug, count in stats.by_category.items() | sort(attribute='1', reverse=True) %}
                 {% set pct = (count / stats.total_reports * 100) | round(1) if stats.total_reports else 0 %}
                 <div>
-                    <div style="display:flex;justify-content:space-between;margin-bottom:0.25rem;">
-                        <span style="font-size:0.85rem;color:var(--body-text);">{{ cat_map.get(slug, slug | replace('_', ' ') | title) }}</span>
-                        <span style="font-size:0.82rem;color:var(--muted);">{{ count }} ({{ pct }}%)</span>
+                    <div class="stat-row-header">
+                        <span class="stat-cat-label">{{ cat_map.get(slug, slug | replace('_', ' ') | title) }}</span>
+                        <span class="stat-muted-sm">{{ count }} ({{ pct }}%)</span>
                     </div>
-                    <div style="height:6px;background:var(--hairline);border-radius:3px;overflow:hidden;">
-                        <div style="height:100%;width:{{ (count / max_cat * 100) | round(1) }}%;background:var(--accent-subtle);border:1px solid var(--accent);border-radius:3px;"></div>
+                    <div class="stat-bar-track">
+                        <div class="stat-bar-fill-outline" data-pct="{{ (count / max_cat * 100) | round(1) }}"></div>
                     </div>
                 </div>
                 {% endfor %}
             </div>
             {% else %}
-            <p style="color:var(--muted);">No data yet.</p>
+            <p class="stat-muted">No data yet.</p>
             {% endif %}
         </div>
 
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ request.state.csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-delay]').forEach(function (el) {
+        el.style.animationDelay = el.dataset.delay + 's';
+    });
+
+    document.querySelectorAll('[data-tone]').forEach(function (el) {
+        el.style.color = 'var(--' + el.dataset.tone + ')';
+    });
+
+    document.querySelectorAll('[data-pct]').forEach(function (el) {
+        el.style.width = el.dataset.pct + '%';
+    });
+});
+</script>
 {% endblock %}

@@ -1,4 +1,10 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Minimum SECRET_KEY length. The key is the root secret for admin JWT signing
+# AND (via SHA-256) the Fernet key that encrypts confidential whistleblower
+# identity — so a weak key collapses the platform's core protection.
+_MIN_SECRET_KEY_LEN = 32
 
 
 class Settings(BaseSettings):
@@ -16,6 +22,18 @@ class Settings(BaseSettings):
 
     # Security — no default; must be set in environment
     secret_key: str
+
+    @field_validator("secret_key")
+    @classmethod
+    def _validate_secret_key(cls, v: str) -> str:
+        if len(v) < _MIN_SECRET_KEY_LEN:
+            raise ValueError(
+                f"SECRET_KEY must be at least {_MIN_SECRET_KEY_LEN} characters "
+                "(it is the root key for admin authentication and confidential-"
+                "identity encryption). Generate one with e.g. "
+                "`python -c 'import secrets; print(secrets.token_urlsafe(48))'`."
+            )
+        return v
 
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
@@ -37,7 +55,7 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "OpenWhistle"
-    app_version: str = "1.1.0"
+    app_version: str = "1.1.1"
 
     # Logging
     log_level: str = "INFO"

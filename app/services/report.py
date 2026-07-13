@@ -76,6 +76,8 @@ async def create_report(
     secure_email_enc: str | None = None,
 ) -> tuple[Report, str]:
     """Create a new whistleblower report. Returns (report, plain_pin)."""
+    from sqlalchemy.exc import IntegrityError
+
     from app.config import settings
     from app.services.encryption import (
         encrypt_dek,
@@ -84,7 +86,6 @@ async def create_report(
         make_report_fernet,
     )
 
-    case_number = await generate_case_number(db)
     plain_pin = generate_pin()
     pin_hash = hash_pin(plain_pin)
 
@@ -96,38 +97,51 @@ async def create_report(
 
     default_org_id = await _get_default_org_id(db)
 
-    report = Report(
-        id=uuid.uuid4(),
-        case_number=case_number,
-        pin_hash=pin_hash,
-        org_id=default_org_id,
-        category=category,
-        description=enc_description,
-        encrypted_dek=encrypted_dek,
-        status=ReportStatus.received,
-        submission_mode=submission_mode,
-        location_id=location_id,
-        confidential_name=confidential_name_enc,
-        confidential_contact=confidential_contact_enc,
-        secure_email=secure_email_enc,
-    )
-    db.add(report)
-
     strings = _load(lang)
     fallback = _load(_DEFAULT)
     receipt_text = strings.get("system.receipt_message") or fallback.get("system.receipt_message")
-
     enc_receipt = encrypt_field(report_fernet, receipt_text or "")
-    receipt_msg = ReportMessage(
-        id=uuid.uuid4(),
-        report_id=report.id,
-        sender=ReportSender.admin,
-        content=enc_receipt,
-    )
-    db.add(receipt_msg)
-    await db.commit()
-    await db.refresh(report)
-    return report, plain_pin
+
+    # generate_case_number reads MAX() without a lock, so two concurrent
+    # submissions can compute the same next number. Retry on the resulting
+    # unique-constraint violation instead of surfacing a 500 to the reporter.
+    last_exc: IntegrityError | None = None
+    for _attempt in range(5):
+        report = Report(
+            id=uuid.uuid4(),
+            case_number=await generate_case_number(db),
+            pin_hash=pin_hash,
+            org_id=default_org_id,
+            category=category,
+            description=enc_description,
+            encrypted_dek=encrypted_dek,
+            status=ReportStatus.received,
+            submission_mode=submission_mode,
+            location_id=location_id,
+            confidential_name=confidential_name_enc,
+            confidential_contact=confidential_contact_enc,
+            secure_email=secure_email_enc,
+        )
+        db.add(report)
+        db.add(
+            ReportMessage(
+                id=uuid.uuid4(),
+                report_id=report.id,
+                sender=ReportSender.admin,
+                content=enc_receipt,
+            )
+        )
+        try:
+            await db.commit()
+        except IntegrityError as exc:
+            last_exc = exc
+            await db.rollback()
+            continue
+        await db.refresh(report)
+        return report, plain_pin
+
+    assert last_exc is not None
+    raise last_exc
 
 
 def decrypt_report_fields(report: Report) -> tuple[str, list[str]]:
@@ -141,9 +155,12 @@ def decrypt_report_fields(report: Report) -> tuple[str, list[str]]:
 
     if report.encrypted_dek:
         fernet = make_report_fernet(report.encrypted_dek, settings.secret_key)
-        description = decrypt_field_safe(fernet, report.description) or report.description
+        # Use an explicit None check, not `or`: a value that legitimately
+        # decrypts to an empty string must NOT fall back to the raw ciphertext.
+        dec_desc = decrypt_field_safe(fernet, report.description)
+        description = dec_desc if dec_desc is not None else report.description
         msg_contents = [
-            decrypt_field_safe(fernet, m.content) or m.content
+            dec if (dec := decrypt_field_safe(fernet, m.content)) is not None else m.content
             for m in report.messages
         ]
     else:
@@ -227,9 +244,13 @@ async def add_admin_message(
 
 
 async def acknowledge_report(db: AsyncSession, report: Report) -> Report:
-    now = datetime.now(UTC)
-    report.acknowledged_at = now
-    report.feedback_due_at = now + timedelta(days=90)
+    # Idempotent: the acknowledgement timestamp and the derived statutory
+    # feedback deadline (HinSchG §17) are set exactly once. Re-invoking must
+    # never push the deadline further out.
+    if report.acknowledged_at is None:
+        now = datetime.now(UTC)
+        report.acknowledged_at = now
+        report.feedback_due_at = now + timedelta(days=90)
     if report.status == ReportStatus.received:
         report.status = ReportStatus.in_review
     await db.commit()
@@ -245,8 +266,17 @@ async def update_report_status(
     db: AsyncSession, report: Report, new_status: ReportStatus
 ) -> Report:
     report.status = new_status
-    if new_status == ReportStatus.closed and report.closed_at is None:
-        report.closed_at = datetime.now(UTC)
+    if new_status == ReportStatus.closed:
+        # Stamp the closure time on the first close, and refresh it on a
+        # re-close after a reopen (closed_at was cleared below on reopen), so
+        # the retention clock always runs from the *most recent* closure.
+        if report.closed_at is None:
+            report.closed_at = datetime.now(UTC)
+    elif report.closed_at is not None:
+        # Reopening (leaving the closed state) clears the closure timestamp,
+        # otherwise the retention job would delete the report based on a stale
+        # original closure date, far before the statutory minimum has elapsed.
+        report.closed_at = None
     await db.commit()
     await db.refresh(report)
     return report
@@ -296,6 +326,8 @@ async def get_reports_paginated(
     sort_dir: SortDir = "desc",
     assigned_to_id: uuid.UUID | None = None,
     location_id: uuid.UUID | None = None,
+    org_id: uuid.UUID | None = None,
+    scope_org: bool = False,
 ) -> tuple[list[Report], int]:
     page = max(1, page)
     per_page = max(1, min(100, per_page))
@@ -311,6 +343,10 @@ async def get_reports_paginated(
         base_q = base_q.where(Report.assigned_to_id == assigned_to_id)
     if location_id is not None:
         base_q = base_q.where(Report.location_id == location_id)
+    if scope_org or org_id is not None:
+        # `== org_id` renders `IS NULL` when org_id is None, so an org-less
+        # caller is correctly restricted to org-less reports rather than all.
+        base_q = base_q.where(Report.org_id == org_id)
 
     count_result = await db.execute(select(func.count()).select_from(base_q.subquery()))
     total: int = count_result.scalar_one()
@@ -411,6 +447,35 @@ async def get_link(
     db: AsyncSession, link_id: uuid.UUID
 ) -> CaseLink | None:
     result = await db.execute(select(CaseLink).where(CaseLink.id == link_id))
+    return result.scalar_one_or_none()
+
+
+async def get_active_deletion_request(
+    db: AsyncSession, report_id: uuid.UUID, for_update: bool = False
+) -> DeletionRequest | None:
+    """Fetch a report's pending deletion request, optionally locking the row.
+
+    confirm-delete uses ``for_update=True`` so a concurrent cancel cannot delete
+    the request between the confirm handler reading it and executing the
+    deletion (which would otherwise delete the report despite the withdrawal).
+    """
+    stmt = select(DeletionRequest).where(DeletionRequest.report_id == report_id)
+    if for_update:
+        stmt = stmt.with_for_update()
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()
+
+
+async def get_link_between(
+    db: AsyncSession, report_id_a: uuid.UUID, report_id_b: uuid.UUID
+) -> CaseLink | None:
+    """Return the existing link between two reports (order-independent), if any."""
+    norm_a, norm_b = _normalize_ids(report_id_a, report_id_b)
+    result = await db.execute(
+        select(CaseLink).where(
+            CaseLink.report_id_a == norm_a, CaseLink.report_id_b == norm_b
+        )
+    )
     return result.scalar_one_or_none()
 
 

@@ -1,29 +1,40 @@
 {% extends "base.html" %}
 
+{% block styles %}<style nonce="{{ request.state.csp_nonce }}">
+.ss-fade-in { animation: fadeSlideIn 0.5s ease both; }
+.ss-fade-in-05 { animation: fadeSlideIn 0.5s 0.05s ease both; opacity: 0; animation-fill-mode: forwards; }
+.ss-fade-in-10 { animation: fadeSlideIn 0.5s 0.1s ease both; opacity: 0; animation-fill-mode: forwards; }
+.ss-mt-lg { margin-top: 1.5rem; }
+.ss-confirm-label { display: flex; align-items: flex-start; gap: 0.75rem; margin-top: 1.5rem; padding: 1rem; background: var(--accent-subtle); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); cursor: pointer; }
+.ss-confirm-checkbox { margin-top: 0.15rem; flex-shrink: 0; accent-color: var(--accent); width: 1rem; height: 1rem; }
+.ss-confirm-text { font-size: 0.88rem; color: var(--body-text); line-height: 1.5; }
+.ss-go-to-status { margin-top: 0.75rem; opacity: 0.4; }
+</style>{% endblock %}
+
 {% block title %}{{ t('success.title') }} | OpenWhistle{% endblock %}
 
 {% block content %}
 <div class="container-sm success-wrapper">
 
-    <div class="success-header" style="animation: fadeSlideIn 0.5s ease both;">
+    <div class="success-header ss-fade-in">
         <span class="success-check">✓</span>
         <h1>{{ t('success.title') }}</h1>
         <p>{{ t('success.subtitle') }}</p>
     </div>
 
-    <div class="alert alert-warning" role="alert" style="animation: fadeSlideIn 0.5s 0.05s ease both; opacity: 0; animation-fill-mode: forwards;">
+    <div class="alert alert-warning ss-fade-in-05" role="alert">
         <div class="alert-title">{{ t('success.warning.title') }}</div>
         {{ t('success.warning.body') }}
     </div>
 
-    <div class="panel" style="animation: fadeSlideIn 0.5s 0.1s ease both; opacity: 0; animation-fill-mode: forwards;">
+    <div class="panel ss-fade-in-10">
         <div class="panel-header">{{ t('success.panel.header') }}</div>
 
         <div class="credential-group">
             <div class="credential-label">{{ t('success.case_number') }}</div>
             <div class="credential-display" id="case-number">
                 <span>{{ case_number }}</span>
-                <button class="copy-btn" onclick="copyToClipboard('{{ case_number }}', this)" title="Copy to clipboard" aria-label="Copy case number">&#10697;</button>
+                <button class="copy-btn" data-action="copy" data-copy="{{ case_number }}" title="Copy to clipboard" aria-label="Copy case number">&#10697;</button>
             </div>
         </div>
 
@@ -31,12 +42,12 @@
             <div class="credential-label">{{ t('success.pin') }}</div>
             <div class="credential-display" id="pin-value">
                 <span>{{ pin }}</span>
-                <button class="copy-btn" onclick="copyToClipboard('{{ pin }}', this)" title="Copy to clipboard" aria-label="Copy secret PIN">&#10697;</button>
+                <button class="copy-btn" data-action="copy" data-copy="{{ pin }}" title="Copy to clipboard" aria-label="Copy secret PIN">&#10697;</button>
             </div>
         </div>
 
         {% if attachments %}
-        <div class="attachment-list" style="margin-top:1.5rem;">
+        <div class="attachment-list ss-mt-lg">
             <div class="credential-label">{{ t('success.attachments.title') }}</div>
             <ul class="attachment-items">
                 {% for att in attachments %}
@@ -50,22 +61,22 @@
         </div>
         {% endif %}
 
-        <div class="alert alert-info" style="margin-top: 1.5rem;">
+        <div class="alert alert-info ss-mt-lg">
             <div class="alert-title">{{ t('success.next.title') }}</div>
             {{ t('success.next.body.html') }}
         </div>
 
-        <label id="confirm-label" class="saved-confirm-label" style="display:flex;align-items:flex-start;gap:0.75rem;margin-top:1.5rem;padding:1rem;background:var(--accent-subtle);border:1px solid var(--border-strong);border-radius:var(--radius-sm);cursor:pointer;">
-            <input type="checkbox" id="confirm-saved" style="margin-top:0.15rem;flex-shrink:0;accent-color:var(--accent);width:1rem;height:1rem;">
-            <span style="font-size:0.88rem;color:var(--body-text);line-height:1.5;">
+        <label id="confirm-label" class="saved-confirm-label ss-confirm-label">
+            <input type="checkbox" id="confirm-saved" class="ss-confirm-checkbox">
+            <span class="ss-confirm-text">
                 {{ t('success.confirm.label.html') }}
             </span>
         </label>
 
-        <a href="/status" id="go-to-status" class="btn btn-primary btn-block" style="margin-top:0.75rem;opacity:0.4;" tabindex="-1" aria-disabled="true">
+        <a href="/status" id="go-to-status" class="btn btn-primary btn-block ss-go-to-status" tabindex="-1" aria-disabled="true">
             {{ t('success.confirm.button') }}
         </a>
-        <script>
+        <script nonce="{{ request.state.csp_nonce }}">
         (function() {
             var cb = document.getElementById('confirm-saved');
             var btn = document.getElementById('go-to-status');

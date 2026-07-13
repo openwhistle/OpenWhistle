@@ -10,7 +10,7 @@
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue?logo=gnu)](LICENSE)
 [![Version](https://img.shields.io/github/v/release/openwhistle/OpenWhistle?logo=github)](https://github.com/openwhistle/OpenWhistle/releases)
 [![Python](https://img.shields.io/badge/python-3.14-blue?logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.136-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.139-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![PostgreSQL](https://img.shields.io/badge/postgresql-18-336791?logo=postgresql&logoColor=white)](https://postgresql.org)
 [![Redis](https://img.shields.io/badge/redis-8-DC382D?logo=redis&logoColor=white)](https://redis.io)
 [![Docker Pulls](https://img.shields.io/docker/pulls/kermit1337/openwhistle?logo=docker)](https://hub.docker.com/r/kermit1337/openwhistle)
@@ -67,6 +67,13 @@ zero vendor lock-in, and privacy-first by design.
 - **Dashboard statistics** — SLA compliance rate, status distribution, category breakdown.
 - **Mandatory MFA** — TOTP (compatible with any authenticator app) required for every admin account.
   No exceptions, no bypass.
+- **Object-level authorization** — Every report endpoint enforces per-record access: case managers
+  see only their assigned reports, admins are scoped to their organisation. Role assignment enforces
+  privilege tiers (only superadmins grant superadmin; no self-role-change; the last admin cannot be
+  demoted away).
+- **Hardened HTTP security** — Strict, per-response nonce-based Content-Security-Policy (no
+  `unsafe-inline`), consolidated single-source security headers (HSTS, `X-Frame-Options`, nosniff),
+  and strict username validation.
 - **OIDC / SSO support** — Optional single sign-on via any OpenID Connect provider (Keycloak,
   Authentik, Azure AD, Google, …).
 - **File attachments** — Whistleblowers can attach evidence files (PDF, images, Word, Excel, CSV,

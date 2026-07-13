@@ -143,7 +143,7 @@ def generate_report_pdf(report: Report) -> bytes:
         for note in report.notes:
             pdf.set_font("Helvetica", "B", 9)
             pdf.cell(
-                0, 5, f"{note.author_username}  ·  {_fmt_dt(note.created_at)}",
+                0, 5, f"{_safe(note.author_username)}  ·  {_fmt_dt(note.created_at)}",
                 new_x=XPos.LMARGIN, new_y=YPos.NEXT,
             )
             pdf.set_font("Helvetica", "", 10)

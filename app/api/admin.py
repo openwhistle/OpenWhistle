@@ -13,7 +13,7 @@ from app.config import settings
 from app.csrf import validate_csrf
 from app.database import get_db
 from app.middleware import check_ip_warning, clear_ip_warning
-from app.models.report import STATUS_TRANSITIONS, ReportStatus
+from app.models.report import STATUS_TRANSITIONS, Report, ReportStatus
 from app.models.user import AdminRole, AdminUser
 from app.redis_client import get_redis
 from app.services import audit as audit_service
@@ -44,6 +44,49 @@ async def _cleanup_report_sessions(redis: Redis, report_id: uuid.UUID) -> None:
 
 _ALLOWED_SORT = frozenset({"submitted_at", "case_number", "category", "status"})
 _ALLOWED_PER_PAGE = frozenset({10, 25, 50, 100})
+
+# Role privilege ranking — used for tier checks in user management.
+_ROLE_RANK: dict[AdminRole, int] = {
+    AdminRole.case_manager: 0,
+    AdminRole.admin: 1,
+    AdminRole.superadmin: 2,
+}
+
+
+def _can_access_report(user: AdminUser, report: Report) -> bool:
+    """Object-level authorization for a single report.
+
+    - superadmin: every report.
+    - admin: every report in their own organisation (all reports when
+      multi-tenancy is disabled or the report has no org).
+    - case_manager: only reports assigned to them (and, with multi-tenancy,
+      within their own organisation).
+    """
+    if user.role == AdminRole.superadmin:
+        return True
+    if (
+        settings.multi_tenancy_enabled
+        and report.org_id is not None
+        and user.org_id != report.org_id
+    ):
+        return False
+    if user.role == AdminRole.case_manager:
+        return report.assigned_to_id == user.id
+    return True
+
+
+async def _get_authorized_report(
+    db: AsyncSession, report_id: uuid.UUID, user: AdminUser
+) -> Report:
+    """Fetch a report and enforce object-level authorization.
+
+    Returns 404 (never 403) on both missing and unauthorized reports so that
+    the existence of a report is not leaked across the authorization boundary.
+    """
+    report = await report_service.get_report_by_id(db, report_id)
+    if not report or not _can_access_report(user, report):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    return report
 
 
 # ── Dashboard ──────────────────────────────────────────────────────
@@ -87,7 +130,18 @@ async def dashboard(
     sort_by: SortField = raw_sort if raw_sort in _ALLOWED_SORT else "submitted_at"  # type: ignore[assignment]
     sort_dir: SortDir = "asc" if raw_dir == "asc" else "desc"
 
-    assigned_filter = current_user.id if my_cases else None
+    # Object-level scoping: case managers only ever see reports assigned to
+    # them; multi-tenant admins are confined to their own organisation
+    # (superadmins span all organisations).
+    if current_user.role == AdminRole.case_manager:
+        assigned_filter: uuid.UUID | None = current_user.id
+    else:
+        assigned_filter = current_user.id if my_cases else None
+    # Scope the list to the caller's organisation for multi-tenant non-superadmins.
+    # This must apply even when their org_id is None, otherwise an org-less admin
+    # would fall through to the unfiltered "see everything" branch — a metadata
+    # leak inconsistent with the object-level check that denies them those reports.
+    scope_org = settings.multi_tenancy_enabled and current_user.role != AdminRole.superadmin
     reports, total = await report_service.get_reports_paginated(
         db,
         page=page,
@@ -97,6 +151,8 @@ async def dashboard(
         sort_dir=sort_dir,
         assigned_to_id=assigned_filter,
         location_id=location_filter,
+        org_id=current_user.org_id if scope_org else None,
+        scope_org=scope_org,
     )
     stats = await report_service.get_report_stats(db)
     total_pages = max(1, (total + per_page - 1) // per_page)
@@ -148,9 +204,7 @@ async def report_detail(
 
     from app.services.users import get_all_users
 
-    report = await report_service.get_report_by_id(db, report_id)
-    if not report:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    report = await _get_authorized_report(db, report_id, current_user)
 
     all_admins = await get_all_users(db)
 
@@ -158,7 +212,10 @@ async def report_detail(
     linked: list[dict[str, str]] = []
     for linked_report_id, link_id in report_service.get_linked_reports(report):
         linked_report = await report_service.get_report_by_id(db, linked_report_id)
-        if linked_report:
+        # Only reveal a linked report's metadata to a viewer who is independently
+        # authorized to see it — a link must not leak case data across the
+        # assignment / organisation boundary.
+        if linked_report and _can_access_report(current_user, linked_report):
             linked.append({
                 "link_id": link_id,
                 "case_number": linked_report.case_number,
@@ -216,9 +273,7 @@ async def acknowledge_report(
     current_user: AdminUser = Depends(get_current_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
-    report = await report_service.get_report_by_id(db, report_id)
-    if not report:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    report = await _get_authorized_report(db, report_id, current_user)
 
     old_status = report.status.value
     await report_service.acknowledge_report(db, report)
@@ -239,9 +294,7 @@ async def update_status(
     current_user: AdminUser = Depends(get_current_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
-    report = await report_service.get_report_by_id(db, report_id)
-    if not report:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    report = await _get_authorized_report(db, report_id, current_user)
 
     try:
         s = ReportStatus(new_status)
@@ -273,9 +326,7 @@ async def admin_reply(
     current_user: AdminUser = Depends(get_current_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
-    report = await report_service.get_report_by_id(db, report_id)
-    if not report:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    report = await _get_authorized_report(db, report_id, current_user)
     if not content.strip():
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
@@ -300,9 +351,7 @@ async def assign_report(
 ) -> RedirectResponse:
     from app.services.users import get_user_by_id as get_admin_by_id
 
-    report = await report_service.get_report_by_id(db, report_id)
-    if not report:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    report = await _get_authorized_report(db, report_id, current_user)
 
     assignee: AdminUser | None = None
     if admin_id:
@@ -313,6 +362,11 @@ async def assign_report(
         assignee = await get_admin_by_id(db, aid)
         if not assignee:
             raise HTTPException(status_code=404, detail="Admin user not found")
+        if not assignee.is_active:
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot assign a report to a deactivated user.",
+            )
 
     old_assignee = report.assigned_to.username if report.assigned_to else None
     await report_service.assign_report(db, report, assignee)
@@ -336,9 +390,7 @@ async def add_note(
     current_user: AdminUser = Depends(get_current_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
-    report = await report_service.get_report_by_id(db, report_id)
-    if not report:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    report = await _get_authorized_report(db, report_id, current_user)
     if not content.strip():
         raise HTTPException(status_code=422)
 
@@ -362,15 +414,15 @@ async def link_report(
     current_user: AdminUser = Depends(get_current_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
-    report = await report_service.get_report_by_id(db, report_id)
-    if not report:
-        raise HTTPException(status_code=404)
+    report = await _get_authorized_report(db, report_id, current_user)
 
     other = await report_service.get_report_by_case_number(db, case_number.strip().upper())
-    if not other:
+    if not other or not _can_access_report(current_user, other):
         raise HTTPException(status_code=404, detail="Case number not found")
     if other.id == report.id:
         raise HTTPException(status_code=400, detail="Cannot link a report to itself")
+    if await report_service.get_link_between(db, report.id, other.id) is not None:
+        raise HTTPException(status_code=409, detail="These cases are already linked.")
 
     await report_service.link_cases(db, report, other, current_user)
     await audit_service.log(
@@ -390,9 +442,7 @@ async def unlink_report(
     current_user: AdminUser = Depends(get_current_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
-    report = await report_service.get_report_by_id(db, report_id)
-    if not report:
-        raise HTTPException(status_code=404)
+    report = await _get_authorized_report(db, report_id, current_user)
     link = await report_service.get_link(db, link_id)
     if not link:
         raise HTTPException(status_code=404)
@@ -420,9 +470,7 @@ async def request_delete(
     current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
-    report = await report_service.get_report_by_id(db, report_id)
-    if not report:
-        raise HTTPException(status_code=404)
+    report = await _get_authorized_report(db, report_id, current_user)
     if report.deletion_request is not None:
         raise HTTPException(status_code=409, detail="A deletion request already exists.")
 
@@ -443,11 +491,11 @@ async def confirm_delete(
     current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
-    report = await report_service.get_report_by_id(db, report_id)
-    if not report:
-        raise HTTPException(status_code=404)
+    report = await _get_authorized_report(db, report_id, current_user)
 
-    dr = report.deletion_request
+    # Re-read the deletion request under a row lock so a concurrent cancel
+    # cannot withdraw it between this check and the actual deletion.
+    dr = await report_service.get_active_deletion_request(db, report.id, for_update=True)
     if not dr:
         raise HTTPException(status_code=400, detail="No pending deletion request.")
     if dr.requested_by_id == current_user.id:
@@ -471,9 +519,7 @@ async def cancel_delete(
     current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
-    report = await report_service.get_report_by_id(db, report_id)
-    if not report:
-        raise HTTPException(status_code=404)
+    report = await _get_authorized_report(db, report_id, current_user)
 
     dr = report.deletion_request
     if not dr:
@@ -501,9 +547,7 @@ async def export_pdf(
 ) -> Response:
     from app.services.pdf import generate_report_pdf
 
-    report = await report_service.get_report_by_id(db, report_id)
-    if not report:
-        raise HTTPException(status_code=404)
+    report = await _get_authorized_report(db, report_id, current_user)
 
     pdf_bytes = generate_report_pdf(report)
     safe_name = f"{report.case_number}_export.pdf"
@@ -526,6 +570,10 @@ async def admin_download_attachment(
 ) -> Response:
     from app.services.attachment import get_attachment_by_id
 
+    # Enforce object-level authorization on the parent report before serving
+    # any attachment bytes (prevents cross-assignment / cross-org access).
+    await _get_authorized_report(db, report_id, current_user)
+
     attachment = await get_attachment_by_id(db, attachment_id)
     if not attachment or attachment.report_id != report_id:
         raise HTTPException(status_code=404)
@@ -538,11 +586,11 @@ async def admin_download_attachment(
             raise HTTPException(status_code=404)
         data = attachment.data
 
-    safe_name = attachment.filename.replace('"', "")
+    from app.services.attachment import content_disposition_attachment
     return Response(
         content=data,
         media_type=attachment.content_type,
-        headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
+        headers={"Content-Disposition": content_disposition_attachment(attachment.filename)},
     )
 
 
@@ -665,10 +713,10 @@ async def create_user(
     current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
-    from app.services import auth as auth_svc
     from app.services.users import create_user as svc_create
+    from app.services.users import get_user_by_username_ci
 
-    existing = await auth_svc.get_user_by_username(db, username.strip())
+    existing = await get_user_by_username_ci(db, username.strip())
     if existing:
         raise HTTPException(status_code=409, detail="Username already exists")
 
@@ -677,7 +725,17 @@ async def create_user(
     except ValueError:
         role_enum = AdminRole.admin
 
-    new_user, _totp_secret = await svc_create(db, username.strip(), password, role_enum)
+    # Privilege-tier check: only a superadmin may create superadmin accounts.
+    if role_enum == AdminRole.superadmin and current_user.role != AdminRole.superadmin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only a superadmin can create superadmin accounts.",
+        )
+
+    try:
+        new_user, _totp_secret = await svc_create(db, username.strip(), password, role_enum)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     await audit_service.log(
         db, current_user, AuditAction.ADMIN_CREATED,
         detail={"username": new_user.username, "role": role_enum.value},
@@ -695,7 +753,11 @@ async def change_user_role(
     current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
-    from app.services.users import get_user_by_id, update_user_role
+    from app.services.users import (
+        count_active_privileged_admins,
+        get_user_by_id,
+        update_user_role,
+    )
 
     target = await get_user_by_id(db, user_id)
     if not target:
@@ -704,6 +766,35 @@ async def change_user_role(
         role_enum = AdminRole(role)
     except ValueError as exc:
         raise HTTPException(status_code=400) from exc
+
+    # Prevent self-escalation: an account may not change its own role.
+    if target.id == current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You cannot change your own role.",
+        )
+    # Privilege-tier check: only a superadmin may grant the superadmin role or
+    # modify an existing superadmin (an admin cannot promote itself/others to,
+    # or demote, the top tier).
+    if (
+        role_enum == AdminRole.superadmin or target.role == AdminRole.superadmin
+    ) and current_user.role != AdminRole.superadmin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only a superadmin can assign or change the superadmin role.",
+        )
+    # Availability invariant: never demote the last privileged account, or the
+    # instance would be left with no admin/superadmin able to manage it.
+    if (
+        target.role in (AdminRole.admin, AdminRole.superadmin)
+        and role_enum not in (AdminRole.admin, AdminRole.superadmin)
+        and target.is_active
+        and await count_active_privileged_admins(db) <= 1
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Cannot demote the last active administrator.",
+        )
 
     old_role = target.role.value
     await update_user_role(db, target, role_enum)
@@ -723,7 +814,7 @@ async def deactivate_user(
     current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
-    from app.services.users import count_active_admins, get_user_by_id
+    from app.services.users import count_active_privileged_admins, get_user_by_id
     from app.services.users import deactivate_user as svc_deact
 
     target = await get_user_by_id(db, user_id)
@@ -732,13 +823,24 @@ async def deactivate_user(
     if target.id == current_user.id:
         raise HTTPException(status_code=400, detail="You cannot deactivate your own account.")
 
-    if target.role == AdminRole.admin:
-        active_admin_count = await count_active_admins(db)
-        if active_admin_count <= 1:
-            raise HTTPException(
-                status_code=422,
-                detail="Cannot deactivate the last active admin.",
-            )
+    # Only a superadmin may deactivate a superadmin (a plain admin cannot disable
+    # a higher-privileged account).
+    if target.role == AdminRole.superadmin and current_user.role != AdminRole.superadmin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only a superadmin can deactivate a superadmin account.",
+        )
+
+    # Availability invariant: never deactivate the last account able to
+    # administer the instance (admin OR superadmin).
+    if (
+        target.role in (AdminRole.admin, AdminRole.superadmin)
+        and await count_active_privileged_admins(db) <= 1
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="Cannot deactivate the last active administrator.",
+        )
 
     await svc_deact(db, target)
     await audit_service.log(

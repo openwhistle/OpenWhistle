@@ -34,6 +34,12 @@
         try { localStorage.setItem(STORAGE_KEY, next); } catch { /* private browsing */ }
     };
 
+    // Wire the toggle without an inline onclick (strict CSP forbids inline handlers)
+    document.addEventListener('DOMContentLoaded', () => {
+        const toggle = document.getElementById('theme-toggle');
+        if (toggle) toggle.addEventListener('click', window.toggleTheme);
+    });
+
     // Listen for system preference changes
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
         if (!savedTheme()) applyTheme(e.matches ? 'dark' : 'light');
@@ -181,11 +187,46 @@ window.dismissIpWarning = async function (btn) {
     };
 })();
 
+// ─── Delegated data-action dispatch ─────────────────────────────────────────
+// Replaces inline on* handlers (forbidden by the strict, nonce-based CSP).
+// Elements opt in with data-action="…"; extra inputs travel in data-* attrs.
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.body.addEventListener('click', (e) => {
+        const el = e.target.closest('[data-action]');
+        if (!el) return;
+        switch (el.dataset.action) {
+            case 'session-extend':
+                if (window.sessionExtend) window.sessionExtend();
+                break;
+            case 'session-dismiss':
+                if (window.sessionDismiss) window.sessionDismiss();
+                break;
+            case 'dismiss-ip-warning':
+                if (window.dismissIpWarning) window.dismissIpWarning(el);
+                break;
+            case 'copy':
+                if (window.copyToClipboard) window.copyToClipboard(el.dataset.copy || '', el);
+                break;
+        }
+    });
+});
+
 // ─── Prevent double-submit ─────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('form').forEach((form) => {
-        form.addEventListener('submit', () => {
+        form.addEventListener('submit', (e) => {
+            // Unobtrusive confirmation. The prompt text lives in a data-confirm
+            // attribute (HTML-attribute autoescaped by the template) and is
+            // passed to confirm() as a runtime string — never interpolated into
+            // an inline event handler, so untrusted values (e.g. usernames)
+            // cannot break out into script.
+            const confirmMsg = form.getAttribute('data-confirm');
+            if (confirmMsg && !window.confirm(confirmMsg)) {
+                e.preventDefault();
+                return;
+            }
             const btn = form.querySelector('[type="submit"]');
             if (btn) {
                 btn.disabled = true;

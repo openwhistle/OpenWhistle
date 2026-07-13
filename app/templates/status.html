@@ -1,5 +1,31 @@
 {% extends "base.html" %}
 
+{% block styles %}<style nonce="{{ request.state.csp_nonce }}">
+.st-demo-credentials-margin { margin-bottom: 1.5rem; }
+.st-lockout-countdown { margin-top: 0.6rem; font-size: 0.85rem; opacity: 0.85; }
+.st-pin-wrapper { position: relative; }
+.st-pin-input { padding-right: 5rem; }
+.st-pin-toggle { position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); font-size: 0.72rem; font-family: var(--font-body); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; padding: 0.2rem 0.3rem; }
+.st-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.85rem; color: var(--muted); }
+.st-mono-primary { color: var(--text-primary); }
+.st-deadlines-section { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--hairline); }
+.st-deadlines-title { margin-bottom: 0.6rem; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.st-deadlines-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.83rem; }
+.st-deadline-label { color: var(--muted); margin-bottom: 0.2rem; }
+.st-success-text { color: var(--success, #2a7a2a); font-weight: 600; }
+.st-accent-text { color: var(--accent); font-weight: 600; }
+.st-danger-text { color: var(--danger); font-weight: 600; }
+.st-fw600 { font-weight: 600; }
+.st-muted-italic { color: var(--muted); font-style: italic; }
+.st-muted-text { color: var(--muted); }
+.st-delay-03 { animation-delay: 0.03s; }
+.st-delay-04 { animation-delay: 0.04s; }
+.st-delay-05 { animation-delay: 0.05s; }
+.st-delay-10 { animation-delay: 0.1s; }
+.st-footer-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--hairline); text-align: center; }
+.st-footer-text { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.75rem; }
+</style>{% endblock %}
+
 {% block title %}{{ t('status.form.title') }} | OpenWhistle{% endblock %}
 
 {% block content %}
@@ -12,29 +38,29 @@
     </div>
 
     {% if is_demo %}
-    <div class="demo-credentials" role="note" style="margin-bottom:1.5rem;">
+    <div class="demo-credentials st-demo-credentials-margin" role="note">
         <div class="demo-credentials-header">
             <span class="demo-badge">DEMO</span>
             <span>Try these example reports. Click any row to pre-fill.</span>
         </div>
         <div class="demo-reports-list">
             <button type="button" class="demo-report-row"
-                onclick="document.getElementById('case_number').value='OW-DEMO-00001';document.getElementById('pin').value='demo-pin-received-00001';">
+                data-case="OW-DEMO-00001" data-pin="demo-pin-received-00001">
                 <code class="demo-cred-code">OW-DEMO-00001</code>
                 <span class="demo-report-status status-badge status-received">Received</span>
             </button>
             <button type="button" class="demo-report-row"
-                onclick="document.getElementById('case_number').value='OW-DEMO-00002';document.getElementById('pin').value='demo-pin-inreview-00002';">
+                data-case="OW-DEMO-00002" data-pin="demo-pin-inreview-00002">
                 <code class="demo-cred-code">OW-DEMO-00002</code>
                 <span class="demo-report-status status-badge status-in_review">In Review</span>
             </button>
             <button type="button" class="demo-report-row"
-                onclick="document.getElementById('case_number').value='OW-DEMO-00003';document.getElementById('pin').value='demo-pin-pending-00003';">
+                data-case="OW-DEMO-00003" data-pin="demo-pin-pending-00003">
                 <code class="demo-cred-code">OW-DEMO-00003</code>
                 <span class="demo-report-status status-badge status-pending_feedback">Pending Feedback</span>
             </button>
             <button type="button" class="demo-report-row"
-                onclick="document.getElementById('case_number').value='OW-DEMO-00004';document.getElementById('pin').value='demo-pin-closed-00004';">
+                data-case="OW-DEMO-00004" data-pin="demo-pin-closed-00004">
                 <code class="demo-cred-code">OW-DEMO-00004</code>
                 <span class="demo-report-status status-badge status-closed">Closed</span>
             </button>
@@ -51,10 +77,10 @@
         <div class="alert-title">{{ t('status.locked.title') }}</div>
         {{ t('status.locked.body') }}
         {% if lockout_ttl and lockout_ttl > 0 %}
-        <div style="margin-top:0.6rem;font-size:0.85rem;opacity:0.85;">
+        <div class="st-lockout-countdown">
             <span id="lockout-countdown">{{ lockout_ttl }}</span> {{ t('status.locked.countdown') }}
         </div>
-        <script>
+        <script nonce="{{ request.state.csp_nonce }}">
         (function() {
             var el = document.getElementById('lockout-countdown');
             var t = {{ lockout_ttl }};
@@ -91,21 +117,21 @@
 
             <div class="form-group">
                 <label class="form-label" for="pin">{{ t('status.pin.label') }}</label>
-                <div style="position:relative;">
+                <div class="st-pin-wrapper">
                     <input
                         type="password"
-                        class="form-control mono"
+                        class="form-control mono st-pin-input"
                         id="pin"
                         name="pin"
                         placeholder="{{ t('status.pin.placeholder') }}"
                         required
                         autocomplete="off"
-                        spellcheck="false"
-                        style="padding-right:5rem;">
+                        spellcheck="false">
                     <button type="button"
                         id="pin-toggle"
-                        onclick="var i=document.getElementById('pin');var show=i.type==='password';i.type=show?'text':'password';this.textContent=show?'{{ t('status.pin.hide') }}':'{{ t('status.pin.show') }}';"
-                        style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:0.72rem;font-family:var(--font-body);font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;padding:0.2rem 0.3rem;">{{ t('status.pin.show') }}</button>
+                        class="st-pin-toggle"
+                        data-label-show="{{ t('status.pin.show') }}"
+                        data-label-hide="{{ t('status.pin.hide') }}">{{ t('status.pin.show') }}</button>
                 </div>
                 <div class="form-hint">{{ t('status.pin.hint') }}</div>
             </div>
@@ -137,54 +163,54 @@
             <span class="badge badge-{{ report.status.value }}">{{ t('status.label.' + report.status.value) }}</span>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;font-size:0.85rem;color:var(--muted);">
+        <div class="st-meta-grid">
             <div>
                 <div class="detail-label">{{ t('status.meta.submitted') }}</div>
-                <span class="mono" style="color:var(--text-primary);"><time data-utc="{{ report.submitted_at.isoformat() }}">{{ report.submitted_at.strftime('%Y-%m-%d %H:%M UTC') }}</time></span>
+                <span class="mono st-mono-primary"><time data-utc="{{ report.submitted_at.isoformat() }}">{{ report.submitted_at.strftime('%Y-%m-%d %H:%M UTC') }}</time></span>
             </div>
             {% if report.acknowledged_at %}
             <div>
                 <div class="detail-label">{{ t('status.meta.acknowledged') }}</div>
-                <span class="mono" style="color:var(--text-primary);"><time data-utc="{{ report.acknowledged_at.isoformat() }}">{{ report.acknowledged_at.strftime('%Y-%m-%d %H:%M UTC') }}</time></span>
+                <span class="mono st-mono-primary"><time data-utc="{{ report.acknowledged_at.isoformat() }}">{{ report.acknowledged_at.strftime('%Y-%m-%d %H:%M UTC') }}</time></span>
             </div>
             {% endif %}
             {% if report.feedback_due_at %}
             <div>
                 <div class="detail-label">{{ t('status.meta.feedback_due') }}</div>
-                <span class="mono" style="color:var(--text-primary);">{{ report.feedback_due_at.strftime('%Y-%m-%d') }}</span>
+                <span class="mono st-mono-primary">{{ report.feedback_due_at.strftime('%Y-%m-%d') }}</span>
             </div>
             {% endif %}
         </div>
 
         {# HinSchG deadline display #}
-        <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--hairline);">
-            <div class="detail-label" style="margin-bottom:0.6rem;font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;">{{ t('status.deadlines.title') }}</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;font-size:0.83rem;">
+        <div class="st-deadlines-section">
+            <div class="detail-label st-deadlines-title">{{ t('status.deadlines.title') }}</div>
+            <div class="st-deadlines-grid">
                 <div>
-                    <div style="color:var(--muted);margin-bottom:0.2rem;">{{ t('status.deadlines.ack') }}</div>
+                    <div class="st-deadline-label">{{ t('status.deadlines.ack') }}</div>
                     {% if report.acknowledged_at %}
-                    <span style="color:var(--success, #2a7a2a);font-weight:600;">✓ {{ t('status.deadlines.ack_done', date=report.acknowledged_at.strftime('%Y-%m-%d')) }}</span>
+                    <span class="st-success-text">✓ {{ t('status.deadlines.ack_done', date=report.acknowledged_at.strftime('%Y-%m-%d')) }}</span>
                     {% elif ack_days_remaining is defined and ack_days_remaining >= 0 %}
-                    <span style="color:var(--accent);font-weight:600;">{{ t('status.deadlines.ack_remaining', days=ack_days_remaining) }}</span>
+                    <span class="st-accent-text">{{ t('status.deadlines.ack_remaining', days=ack_days_remaining) }}</span>
                     {% else %}
-                    <span style="color:var(--danger);font-weight:600;">{{ t('status.deadlines.ack_overdue') }}</span>
+                    <span class="st-danger-text">{{ t('status.deadlines.ack_overdue') }}</span>
                     {% endif %}
                 </div>
                 <div>
-                    <div style="color:var(--muted);margin-bottom:0.2rem;">{{ t('status.deadlines.feedback') }}</div>
+                    <div class="st-deadline-label">{{ t('status.deadlines.feedback') }}</div>
                     {% if report.acknowledged_at and report.feedback_due_at %}
                         {% if now is defined %}
                             {% set days_left = ((report.feedback_due_at - now).days) %}
                             {% if report.status.value == 'closed' %}
-                            <span style="color:var(--success, #2a7a2a);font-weight:600;">✓ {{ t('status.deadlines.feedback_done') }}</span>
+                            <span class="st-success-text">✓ {{ t('status.deadlines.feedback_done') }}</span>
                             {% elif days_left >= 0 %}
-                            <span style="font-weight:600;">{{ t('status.deadlines.feedback_remaining', days=days_left, date=report.feedback_due_at.strftime('%Y-%m-%d')) }}</span>
+                            <span class="st-fw600">{{ t('status.deadlines.feedback_remaining', days=days_left, date=report.feedback_due_at.strftime('%Y-%m-%d')) }}</span>
                             {% else %}
-                            <span style="color:var(--danger);font-weight:600;">{{ t('status.deadlines.feedback_overdue') }}</span>
+                            <span class="st-danger-text">{{ t('status.deadlines.feedback_overdue') }}</span>
                             {% endif %}
                         {% endif %}
                     {% else %}
-                    <span style="color:var(--muted);font-style:italic;">{{ t('status.deadlines.feedback_pending') }}</span>
+                    <span class="st-muted-italic">{{ t('status.deadlines.feedback_pending') }}</span>
                     {% endif %}
                 </div>
             </div>
@@ -192,7 +218,7 @@
     </div>
 
     {# Progress indicator #}
-    <div class="panel status-progress-panel" style="animation-delay:0.03s;">
+    <div class="panel status-progress-panel st-delay-03">
         <div class="panel-header">{{ t('status.progress.title') }}</div>
         <div class="progress-steps">
             {% set steps = ['received', 'in_review', 'pending_feedback', 'closed'] %}
@@ -216,7 +242,7 @@
 
     {# Attachments #}
     {% if report.attachments %}
-    <div class="panel" style="animation-delay:0.04s;">
+    <div class="panel st-delay-04">
         <div class="panel-header">{{ t('status.attachments.title') }}</div>
         <ul class="attachment-items">
             {% for att in report.attachments %}
@@ -233,14 +259,14 @@
 
     {# Case closed notice #}
     {% if report.status.value == 'closed' %}
-    <div class="alert alert-info" role="alert" style="animation-delay:0.04s;">
+    <div class="alert alert-info st-delay-04" role="alert">
         <div class="alert-title">{{ t('status.closed.title') }}</div>
         {{ t('status.closed.body') }}
     </div>
     {% endif %}
 
     {# Communication thread #}
-    <div class="panel" style="animation-delay:0.05s;">
+    <div class="panel st-delay-05">
         <div class="panel-header">{{ t('status.thread.title') }}</div>
 
         {% if report.messages %}
@@ -257,12 +283,12 @@
             {% endfor %}
         </div>
         {% else %}
-        <p style="color:var(--muted);">{{ t('status.no_messages') }}</p>
+        <p class="st-muted-text">{{ t('status.no_messages') }}</p>
         {% endif %}
     </div>
 
     {% if report.status.value != 'closed' %}
-    <div class="panel" style="animation-delay:0.1s;">
+    <div class="panel st-delay-10">
         <div class="panel-header">{{ t('status.reply.title') }}</div>
         <form method="post" action="/reply">
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
@@ -287,11 +313,36 @@
     </div>
     {% endif %}
 
-    <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--hairline);text-align:center;">
-        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:0.75rem;">{{ t('status.other.title') }}</p>
+    <div class="st-footer-section">
+        <p class="st-footer-text">{{ t('status.other.title') }}</p>
         <a href="/status/logout" class="btn btn-secondary">{{ t('status.other.button') }}</a>
     </div>
 
     {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ request.state.csp_nonce }}">
+(function() {
+    document.querySelectorAll('.demo-report-row').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var caseInput = document.getElementById('case_number');
+            var pinInput = document.getElementById('pin');
+            if (caseInput) caseInput.value = btn.dataset.case;
+            if (pinInput) pinInput.value = btn.dataset.pin;
+        });
+    });
+
+    var toggle = document.getElementById('pin-toggle');
+    if (toggle) {
+        toggle.addEventListener('click', function() {
+            var i = document.getElementById('pin');
+            var show = i.type === 'password';
+            i.type = show ? 'text' : 'password';
+            toggle.textContent = show ? toggle.dataset.labelHide : toggle.dataset.labelShow;
+        });
+    }
+})();
+</script>
 {% endblock %}

@@ -2,6 +2,18 @@
 
 {% block title %}{{ t('admin.locations.title') }} | OpenWhistle{% endblock %}
 
+{% block styles %}
+<style nonce="{{ request.state.csp_nonce }}">
+.loc-grid { display:grid;grid-template-columns:1fr 2fr;gap:1.25rem;align-items:start; }
+.loc-row-inactive { opacity:0.5; }
+.loc-name { font-weight:600; }
+.loc-code { font-size:0.82rem; }
+.loc-desc { font-size:0.85rem;color:var(--muted); }
+.loc-inline-form { display:inline; }
+.loc-empty { color:var(--muted);padding:1rem 0; }
+</style>
+{% endblock %}
+
 {% block nav_links %}
 <li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
 <li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
@@ -22,7 +34,7 @@
         <h1>{{ t('admin.locations.title') }}</h1>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 2fr;gap:1.25rem;align-items:start;">
+    <div class="loc-grid">
 
         <div class="panel">
             <div class="panel-header">{{ t('admin.locations.add.header') }}</div>
@@ -74,10 +86,10 @@
                     </thead>
                     <tbody>
                         {% for loc in locations %}
-                        <tr style="{% if not loc.is_active %}opacity:0.5;{% endif %}">
-                            <td style="font-weight:600;">{{ loc.name }}</td>
-                            <td class="mono" style="font-size:0.82rem;">{{ loc.code }}</td>
-                            <td style="font-size:0.85rem;color:var(--muted);">{{ loc.description or '' }}</td>
+                        <tr class="{% if not loc.is_active %}loc-row-inactive{% endif %}">
+                            <td class="loc-name">{{ loc.name }}</td>
+                            <td class="mono loc-code">{{ loc.code }}</td>
+                            <td class="loc-desc">{{ loc.description or '' }}</td>
                             <td>
                                 {% if loc.is_active %}
                                 <span class="badge badge-closed">{{ t('admin.locations.active') }}</span>
@@ -87,12 +99,12 @@
                             </td>
                             <td>
                                 {% if loc.is_active %}
-                                <form method="post" action="/admin/locations/{{ loc.id }}/deactivate" style="display:inline;">
+                                <form method="post" action="/admin/locations/{{ loc.id }}/deactivate" class="loc-inline-form">
                                     <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                                     <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.locations.deactivate') }}</button>
                                 </form>
                                 {% else %}
-                                <form method="post" action="/admin/locations/{{ loc.id }}/reactivate" style="display:inline;">
+                                <form method="post" action="/admin/locations/{{ loc.id }}/reactivate" class="loc-inline-form">
                                     <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                                     <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.locations.reactivate') }}</button>
                                 </form>
@@ -104,7 +116,7 @@
                 </table>
             </div>
             {% else %}
-            <p style="color:var(--muted);padding:1rem 0;">{{ t('admin.locations.empty') }}</p>
+            <p class="loc-empty">{{ t('admin.locations.empty') }}</p>
             {% endif %}
         </div>
 

@@ -2,6 +2,17 @@
 
 {% block title %}{{ t('wizard.title') }} | OpenWhistle{% endblock %}
 
+{% block styles %}
+<style nonce="{{ request.state.csp_nonce }}">
+.setup-error-list { margin:0;padding-left:1.25rem; }
+.setup-manual-text { font-size:0.875rem;text-align:center;color:var(--body-text); }
+.setup-secret-wrap { text-align:center;margin-top:0.5rem; }
+.setup-secret { font-size:0.9rem;user-select:all;word-break:break-all; }
+.setup-panel-delay { animation-delay:0.05s; }
+.setup-totp-input { font-size:1.4rem;letter-spacing:0.3em;text-align:center;padding-bottom:0.6rem; }
+</style>
+{% endblock %}
+
 {% block nav_links %}{% endblock %}
 
 {% block content %}
@@ -19,7 +30,7 @@
 
     {% if errors %}
     <div class="alert alert-error" role="alert">
-        <ul style="margin:0;padding-left:1.25rem;">
+        <ul class="setup-error-list">
             {% for e in errors %}
             <li>{{ e }}</li>
             {% endfor %}
@@ -35,15 +46,15 @@
             <img src="data:image/png;base64,{{ qr_code }}" alt="TOTP QR Code" width="200" height="200">
         </div>
 
-        <p style="font-size:0.875rem;text-align:center;color:var(--body-text);">
+        <p class="setup-manual-text">
             {{ t('wizard.step1.manual') }}
         </p>
-        <div style="text-align:center;margin-top:0.5rem;">
-            <span class="mono" style="font-size:0.9rem;user-select:all;word-break:break-all;">{{ totp_secret }}</span>
+        <div class="setup-secret-wrap">
+            <span class="mono setup-secret">{{ totp_secret }}</span>
         </div>
     </div>
 
-    <div class="panel" style="animation-delay:0.05s;">
+    <div class="panel setup-panel-delay">
         <div class="panel-header">{{ t('wizard.step2.header') }}</div>
 
         <form method="post" action="/setup" novalidate>
@@ -94,7 +105,7 @@
                 <label class="form-label" for="totp_code">{{ t('wizard.totp_code') }}</label>
                 <input
                     type="text"
-                    class="form-control mono"
+                    class="form-control mono setup-totp-input"
                     id="totp_code"
                     name="totp_code"
                     inputmode="numeric"
@@ -102,8 +113,7 @@
                     maxlength="6"
                     placeholder="000000"
                     required
-                    autocomplete="one-time-code"
-                    style="font-size:1.4rem;letter-spacing:0.3em;text-align:center;padding-bottom:0.6rem;">
+                    autocomplete="one-time-code">
                 <div class="form-hint">{{ t('wizard.totp_code.hint') }}</div>
             </div>
 

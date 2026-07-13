@@ -7,6 +7,100 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.1.1] — 2026-07-13
+
+Security release: four privately-reported advisories plus an internal
+adversarial "bug-bounty" audit that fixed ~25 further edge-case defects. All
+users of 1.1.0 should upgrade.
+
+### Breaking
+
+- **`SECRET_KEY` must now be at least 32 characters.** The application refuses
+  to start with a shorter key. `SECRET_KEY` is the root secret for admin
+  authentication and for encrypting confidential whistleblower identities, so a
+  weak key undermines the platform's core protection. Generate a strong one
+  with `python -c 'import secrets; print(secrets.token_urlsafe(48))'`. Note:
+  rotating `SECRET_KEY` makes previously-encrypted confidential fields
+  unreadable — set a strong key from the start.
+
+### Security
+
+- **Report deanonymization / IDOR** (GHSA-q3v3-5xf4-xjqr, High): every
+  `/admin/reports/{id}*` endpoint now enforces object-level authorization. Case
+  managers can only access reports assigned to them; admins are scoped to their
+  own organisation (superadmins span all) when multi-tenancy is enabled. The
+  dashboard list and the confidential-identity block are scoped the same way, so
+  an unassigned case manager can no longer read a confidential whistleblower's
+  identity.
+- **Privilege escalation** (GHSA-g3xj-3929-r45h, High): the role-assignment
+  endpoints now enforce privilege tiers. Only a superadmin may grant or modify
+  the superadmin role, an account can no longer change its own role, and the last
+  active administrator can no longer be demoted away.
+- **Stored XSS** (GHSA-24hg-pf84-jj7x, High): admin usernames and organisation
+  names are no longer interpolated into inline `onclick` handlers; confirmation
+  prompts moved to a safe `data-confirm` attribute. Locally-created usernames are
+  validated against a strict allowlist.
+- **Weak / duplicated HTTP security headers** (GHSA-gh23-4h5j-cqj8, Medium):
+  security headers are now emitted by a single authoritative layer (the
+  application middleware); the bundled nginx template no longer re-emits them,
+  removing the duplicated/conflicting `Strict-Transport-Security`,
+  `X-Content-Type-Options` and `X-Frame-Options` headers. The Content-Security-
+  Policy no longer uses `'unsafe-inline'`: it is now a strict, per-response
+  nonce-based policy for both scripts and styles.
+
+### Fixed (internal bug-bounty audit)
+
+Real defects found by an adversarial audit, each covered by a regression test
+in `tests/test_bug_bounty_v111.py`:
+
+- **Retention could delete reopened cases early**: `closed_at` was never
+  refreshed when a case was reopened and re-closed, so the auto-deletion job
+  could remove reports far before the statutory retention period had elapsed
+  since their actual closure. It is now cleared on reopen and re-stamped on
+  re-close.
+- **Superadmin lockout**: a plain admin could deactivate a superadmin, and the
+  last active privileged account could be deactivated/demoted, leaving no one
+  able to administer the instance. Both are now blocked.
+- **Attachment downloads with non-Latin-1 filenames** (CJK, Cyrillic, emoji)
+  raised `UnicodeEncodeError` and 500'd — the evidence became permanently
+  undownloadable. `Content-Disposition` now uses RFC 5987 encoding. PDF export
+  no longer crashes on non-Latin-1 note authors either.
+- **MFA brute-force**: TOTP guessing is now rate-limited, and a valid code is
+  one-time-use within its window (blocks AiTM replay into a second session).
+- **`acknowledge` is now idempotent** so the statutory feedback deadline cannot
+  be pushed out by re-invoking it.
+- **Concurrent submissions** no longer 500 on a case-number collision (retry).
+- Reports can no longer be assigned to a deactivated user (orphaned cases).
+- Linked-report metadata is filtered through the object-level authz check.
+- SLA reminder de-duplication now covers the full warn window (was re-firing
+  every ~hour for days); per-report failures are isolated.
+- `SUBMISSION_MODE_ENABLED=false` now actually forces anonymous submissions,
+  and confidential PII is purged from the session when switching to anonymous.
+- The whistleblower PIN lockout is keyed on the case number, so it can no longer
+  be bypassed by fetching a fresh anonymous session token before each guess.
+- Login now runs a constant dummy password hash for unknown users (removes a
+  username-enumeration timing side-channel).
+- Background scheduler jobs take a Redis lock so a scaled/stateless deployment
+  does not run them once per replica (duplicate audit entries / notifications).
+- 4-eyes delete confirmation re-checks the request under a row lock, so a
+  concurrent cancel cannot be raced into deleting a withdrawn report.
+- The submission wizard rejects out-of-order steps (blocks jumping straight to
+  the attachment step to stash blobs in Redis) and no longer adopts a
+  client-supplied session id with no server-side state (session fixation).
+- Case-insensitive duplicate-username check; empty decrypted bodies no longer
+  fall back to raw ciphertext; oversized uploads are rejected without buffering
+  the whole body; relinking already-linked cases returns 409 instead of 500;
+  decryption failures are logged rather than silently shown as blank.
+
+Remaining lower-severity findings are tracked in GitHub issues #42–#46.
+
+### Changed
+
+- All Python dependency floors raised to their current major versions (notably
+  redis 8, bcrypt 5, SQLAlchemy 2.0.51, uvicorn 0.51, FastAPI 0.139, mypy 2,
+  pytest 9, pytest-asyncio 1.x). GitHub Actions `actions/checkout` and
+  `codecov/codecov-action` bumped to v7.
+
 ## [1.1.0] — 2026-04-28
 
 ### Added

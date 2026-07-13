@@ -2,12 +2,33 @@
 
 {% block title %}Error {{ status_code }} | OpenWhistle{% endblock %}
 
+{% block styles %}
+<style nonce="{{ request.state.csp_nonce }}">
+.err-container { text-align:center;padding:3rem 1rem; }
+.err-back-btn { margin-top:1rem; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container-sm" style="text-align:center;padding:3rem 1rem;">
+<div class="container-sm err-container">
     <div class="page-header">
         <div class="page-eyebrow">Error {{ status_code }}</div>
         <h1>{{ detail }}</h1>
     </div>
-    <a href="javascript:history.back()" class="btn btn-secondary" style="margin-top:1rem;">Go Back</a>
+    <a href="#" id="err-back-link" class="btn btn-secondary err-back-btn">Go Back</a>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ request.state.csp_nonce }}">
+document.addEventListener('DOMContentLoaded', () => {
+    const link = document.getElementById('err-back-link');
+    if (link) {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            history.back();
+        });
+    }
+});
+</script>
 {% endblock %}

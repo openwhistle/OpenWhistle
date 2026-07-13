@@ -24,6 +24,10 @@ from app.templating import render
 
 router = APIRouter(prefix="/admin")
 
+# Precomputed bcrypt hash used only to equalize login timing when no real hash
+# is available (missing user / SSO-only account). Never matches a user password.
+_TIMING_DUMMY_HASH = auth_service.hash_password("timing-equalizer-not-a-real-secret")
+
 
 @router.get("", response_class=HTMLResponse, include_in_schema=False)
 @router.get("/", response_class=HTMLResponse, include_in_schema=False)
@@ -116,9 +120,14 @@ async def login_post(
     # ── Local password authentication path ─────────────────────────
     user = await auth_service.get_user_by_username(db, username)
 
-    pw_ok = user is not None and user.password_hash and auth_service.verify_password(
-        password, user.password_hash
-    )
+    if user is not None and user.password_hash:
+        pw_ok = auth_service.verify_password(password, user.password_hash)
+    else:
+        # Constant-time-ish: run a dummy bcrypt check so a nonexistent username
+        # or an SSO/LDAP-only account (no local hash) is not distinguishable by
+        # response latency (username enumeration side-channel).
+        auth_service.verify_password(password, _TIMING_DUMMY_HASH)
+        pw_ok = False
     if not pw_ok:
         await rl.record_admin_login_failure(redis, username)
         return render(request, "login.html", _login_ctx({
@@ -163,11 +172,35 @@ async def login_mfa_post(
     if not user:
         return RedirectResponse("/admin/login", status_code=302)
 
+    # Second-factor guessing must be throttled just like the password factor,
+    # otherwise an attacker who already holds the password can brute-force the
+    # 6-digit TOTP unhindered.
+    if not await rl.check_admin_login_attempts(redis, user.username):
+        return render(
+            request,
+            "login_mfa.html",
+            {
+                "error": "Account temporarily locked due to too many attempts.",
+                "is_demo": settings.demo_mode,
+            },
+            status_code=429,
+        )
+
     code_valid = (settings.demo_mode and verify_demo_totp(totp_code)) or verify_totp(
         user.totp_secret, totp_code
     )
 
+    # One-time use: a valid code may authenticate exactly one session within its
+    # ~90s validity window. Prevents an intercepted/relayed code from logging in
+    # a second, attacker-controlled session (AiTM replay). Skipped in demo mode
+    # where the static code is intentionally reusable.
+    if code_valid and not settings.demo_mode:
+        used_key = f"openwhistle:totp_used:{user.id}:{totp_code}"
+        if not await redis.set(used_key, "1", nx=True, ex=90):
+            code_valid = False
+
     if not code_valid:
+        await rl.record_admin_login_failure(redis, user.username)
         new_temp = secrets.token_urlsafe(32)
         await auth_service.store_totp_pending(redis, new_temp, user_id)
         return render(

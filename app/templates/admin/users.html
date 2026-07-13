@@ -2,6 +2,22 @@
 
 {% block title %}{{ t('admin.users.title') }} | OpenWhistle{% endblock %}
 
+{% block styles %}
+<style nonce="{{ request.state.csp_nonce }}">
+    .usr-layout { display:grid;grid-template-columns:1fr 2fr;gap:1.25rem;align-items:start; }
+    .usr-note { margin-bottom:1rem;font-size:0.82rem; }
+    .usr-row-inactive { opacity:0.5; }
+    .usr-username { font-weight:600; }
+    .usr-username-self { color:var(--accent); }
+    .usr-you-tag { font-size:0.72rem;color:var(--muted); }
+    .usr-status-badge { font-size:0.7rem; }
+    .usr-actions { display:flex;gap:0.4rem;flex-wrap:wrap; }
+    .usr-role-form { display:flex;gap:0.25rem; }
+    .usr-role-select { font-size:0.78rem;padding:0.2rem 0.4rem;height:auto; }
+    .usr-role-btn { font-size:0.75rem;padding:0.2rem 0.5rem; }
+</style>
+{% endblock %}
+
 {% block nav_links %}
 <li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
 <li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
@@ -22,7 +38,7 @@
         <h1>{{ t('admin.users.title') }}</h1>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 2fr;gap:1.25rem;align-items:start;">
+    <div class="usr-layout">
 
         {# Add new user form #}
         <div class="panel">
@@ -48,7 +64,7 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="alert alert-info" style="margin-bottom:1rem;font-size:0.82rem;">
+                <div class="alert alert-info usr-note">
                     {{ t('admin.users.add.totp_note') }}
                 </div>
                 <button type="submit" class="btn btn-primary btn-block">{{ t('admin.users.add.button') }}</button>
@@ -71,35 +87,35 @@
                     </thead>
                     <tbody>
                         {% for u in users %}
-                        <tr style="{% if not u.is_active %}opacity:0.5;{% endif %}">
+                        <tr class="{% if not u.is_active %}usr-row-inactive{% endif %}">
                             <td>
-                                <span style="font-weight:600;{% if u.id == user.id %}color:var(--accent);{% endif %}">
+                                <span class="usr-username{% if u.id == user.id %} usr-username-self{% endif %}">
                                     {{ u.username }}
                                 </span>
-                                {% if u.id == user.id %}<span style="font-size:0.72rem;color:var(--muted);"> (you)</span>{% endif %}
+                                {% if u.id == user.id %}<span class="usr-you-tag"> (you)</span>{% endif %}
                             </td>
                             <td>
                                 <span class="badge badge-{{ u.role.value }}">{{ t('role.label.' + u.role.value) }}</span>
                             </td>
                             <td>
                                 {% if u.is_active %}
-                                <span class="badge badge-closed" style="font-size:0.7rem;">{{ t('admin.users.active') }}</span>
+                                <span class="badge badge-closed usr-status-badge">{{ t('admin.users.active') }}</span>
                                 {% else %}
-                                <span class="badge" style="font-size:0.7rem;">{{ t('admin.users.inactive') }}</span>
+                                <span class="badge usr-status-badge">{{ t('admin.users.inactive') }}</span>
                                 {% endif %}
                             </td>
                             <td>
-                                <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+                                <div class="usr-actions">
                                     {# Role change #}
                                     {% if u.id != user.id %}
-                                    <form method="post" action="/admin/users/{{ u.id }}/role" style="display:flex;gap:0.25rem;">
+                                    <form method="post" action="/admin/users/{{ u.id }}/role" class="usr-role-form">
                                         <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                                        <select name="role" class="form-control" style="font-size:0.78rem;padding:0.2rem 0.4rem;height:auto;">
+                                        <select name="role" class="form-control usr-role-select">
                                             {% for role in roles %}
                                             <option value="{{ role.value }}" {{ 'selected' if u.role == role else '' }}>{{ role.value }}</option>
                                             {% endfor %}
                                         </select>
-                                        <button type="submit" class="btn btn-secondary btn-sm" style="font-size:0.75rem;padding:0.2rem 0.5rem;">
+                                        <button type="submit" class="btn btn-secondary btn-sm usr-role-btn">
                                             {{ t('admin.users.change_role') }}
                                         </button>
                                     </form>
@@ -108,10 +124,10 @@
                                     {# Activate / Deactivate #}
                                     {% if u.id != user.id %}
                                     {% if u.is_active %}
-                                    <form method="post" action="/admin/users/{{ u.id }}/deactivate">
+                                    <form method="post" action="/admin/users/{{ u.id }}/deactivate"
+                                          data-confirm="Deactivate {{ u.username }}?">
                                         <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                                        <button type="submit" class="btn btn-secondary btn-sm"
-                                            onclick="return confirm('Deactivate {{ u.username }}?')">
+                                        <button type="submit" class="btn btn-secondary btn-sm">
                                             {{ t('admin.users.deactivate') }}
                                         </button>
                                     </form>

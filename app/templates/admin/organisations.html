@@ -2,6 +2,12 @@
 
 {% block title %}Organisations | OpenWhistle{% endblock %}
 
+{% block styles %}
+<style nonce="{{ request.state.csp_nonce }}">
+.org-inline-form { display:inline; }
+</style>
+{% endblock %}
+
 {% block nav_links %}
 <li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
 <li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
@@ -80,10 +86,10 @@
                         {% if org.slug != 'default' and org.is_active %}
                         <form method="post"
                               action="/admin/organisations/{{ org.id }}/deactivate"
-                              style="display:inline">
+                              class="org-inline-form"
+                              data-confirm="Deactivate {{ org.name }}?">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                            <button type="submit" class="btn btn--danger btn--sm"
-                                    onclick="return confirm('Deactivate {{ org.name }}?')">
+                            <button type="submit" class="btn btn--danger btn--sm">
                                 Deactivate
                             </button>
                         </form>
