@@ -1069,6 +1069,7 @@ async def reactivate_location(
 @router.post("/ip-warning/dismiss")
 async def dismiss_ip_warning(
     current_user: AdminUser = Depends(get_current_admin),
+    _csrf: None = Depends(validate_csrf),
 ) -> JSONResponse:
     await clear_ip_warning()
     return JSONResponse({"cleared": True})
@@ -1077,6 +1078,7 @@ async def dismiss_ip_warning(
 @router.post("/demo/reset")
 async def demo_reset(
     current_user: AdminUser = Depends(get_current_admin),
+    _csrf: None = Depends(validate_csrf),
 ) -> JSONResponse:
     if not settings.demo_mode:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)

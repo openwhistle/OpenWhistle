@@ -68,11 +68,21 @@ window.copyToClipboard = async function (text, btn) {
     }
 };
 
+// ─── CSRF token (from the meta tag) for fetch/AJAX requests ─────────────────
+
+function csrfToken() {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') || '' : '';
+}
+
 // ─── IP warning dismiss ────────────────────────────────────────────────────
 
 window.dismissIpWarning = async function (btn) {
     try {
-        const res = await fetch('/admin/ip-warning/dismiss', { method: 'POST' });
+        const res = await fetch('/admin/ip-warning/dismiss', {
+            method: 'POST',
+            headers: { 'X-CSRF-Token': csrfToken() },
+        });
         if (res.ok) {
             const banner = document.getElementById('ip-warning-banner');
             if (banner) {
