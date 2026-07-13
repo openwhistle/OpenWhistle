@@ -493,7 +493,9 @@ async def confirm_delete(
 ) -> RedirectResponse:
     report = await _get_authorized_report(db, report_id, current_user)
 
-    dr = report.deletion_request
+    # Re-read the deletion request under a row lock so a concurrent cancel
+    # cannot withdraw it between this check and the actual deletion.
+    dr = await report_service.get_active_deletion_request(db, report.id, for_update=True)
     if not dr:
         raise HTTPException(status_code=400, detail="No pending deletion request.")
     if dr.requested_by_id == current_user.id:

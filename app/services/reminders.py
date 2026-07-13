@@ -56,6 +56,13 @@ async def send_sla_reminders() -> None:
     try:
         async with session_factory() as db:
             redis = await get_redis()
+            # Distributed lock: the app runs stateless/scaled, so every replica
+            # starts its own scheduler. Only one may run each cycle, else audit
+            # entries and outbound notifications are duplicated per replica.
+            if not await redis.set(
+                "openwhistle:job_lock:sla_reminders", "1", nx=True, ex=1500
+            ):
+                return
             now = datetime.now(UTC)
 
             result = await db.execute(

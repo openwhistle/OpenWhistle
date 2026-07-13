@@ -39,6 +39,14 @@ async def run_retention_cleanup() -> None:
 
     from app.models.audit import AuditLog
     from app.models.report import Report, ReportStatus
+    from app.redis_client import get_redis
+
+    # Distributed lock: with multiple stateless replicas each running a
+    # scheduler, only one may perform the daily cleanup, otherwise the same
+    # deletions are audited twice. TTL well under the 24h cron interval.
+    redis = await get_redis()
+    if not await redis.set("openwhistle:job_lock:retention", "1", nx=True, ex=3600):
+        return
 
     engine = create_async_engine(settings.database_url, echo=False)
     cutoff = datetime.now(UTC) - timedelta(days=settings.retention_days)

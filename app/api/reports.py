@@ -263,6 +263,12 @@ async def submit_post(
         else secrets.token_urlsafe(32)
     )
     state = await _load_submission(redis, session_id)
+    if not state and raw_cookie:
+        # Never adopt a client-supplied session id that has no server-side state
+        # (session fixation): mint a fresh server-generated id instead, matching
+        # the GET handler's behaviour.
+        session_id = secrets.token_urlsafe(32)
+        state = {}
 
     locations = await get_active_locations(db)
     has_locations = len(locations) > 0
@@ -285,6 +291,14 @@ async def submit_post(
         resp = render(request, "submit.html", ctx)
         _set_submission_cookie(resp, session_id)
         return resp
+
+    # Reject a step that runs ahead of the session's progress. Without this an
+    # unauthenticated client could POST step=<attachments> on a brand-new
+    # session and stash multi-MB blobs in Redis, bypassing the wizard entirely.
+    if action == "next" and step > state.get("step", _STEP_MODE):
+        state.setdefault("step", _STEP_MODE)
+        await _save_submission(redis, session_id, state)
+        return _render_step({"error": "session_incomplete"})
 
     if action == "back":
         current = state.get("step", _STEP_MODE)

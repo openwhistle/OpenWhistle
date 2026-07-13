@@ -450,6 +450,22 @@ async def get_link(
     return result.scalar_one_or_none()
 
 
+async def get_active_deletion_request(
+    db: AsyncSession, report_id: uuid.UUID, for_update: bool = False
+) -> DeletionRequest | None:
+    """Fetch a report's pending deletion request, optionally locking the row.
+
+    confirm-delete uses ``for_update=True`` so a concurrent cancel cannot delete
+    the request between the confirm handler reading it and executing the
+    deletion (which would otherwise delete the report despite the withdrawal).
+    """
+    stmt = select(DeletionRequest).where(DeletionRequest.report_id == report_id)
+    if for_update:
+        stmt = stmt.with_for_update()
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()
+
+
 async def get_link_between(
     db: AsyncSession, report_id_a: uuid.UUID, report_id_b: uuid.UUID
 ) -> CaseLink | None:

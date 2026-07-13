@@ -526,3 +526,120 @@ async def test_dashboard_hides_other_org_reports_from_orgless_admin(
     resp = await client.get("/admin/dashboard", follow_redirects=False)
     assert resp.status_code == 200
     assert report.case_number not in resp.text
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# WAVE 3 — maximal pass (incl. breaking config change)
+# ══════════════════════════════════════════════════════════════════════════
+
+
+def test_secret_key_minimum_length_enforced() -> None:
+    from app.config import Settings
+
+    with pytest.raises(ValueError, match="SECRET_KEY"):
+        Settings(secret_key="short")  # type: ignore[call-arg]
+    # A sufficiently long key is accepted.
+    ok = Settings(secret_key="x" * 32)  # type: ignore[call-arg]
+    assert ok.secret_key == "x" * 32
+
+
+def test_decrypt_or_none_logs_on_tampered_token(caplog: pytest.LogCaptureFixture) -> None:
+    from app.services.crypto import decrypt_or_none
+
+    with caplog.at_level("WARNING"):
+        assert decrypt_or_none("gAAAAA-not-a-valid-fernet-token") is None
+    assert any("decrypt" in r.message.lower() for r in caplog.records)
+
+
+@pytest.mark.asyncio
+async def test_submit_post_rejects_unknown_client_session_id(
+    client: AsyncClient, no_csrf
+) -> None:
+    client.cookies.set("ow-submission-session", "attacker-chosen-id-000001")
+    resp = await client.post(
+        "/submit",
+        data={"step": "1", "action": "next", "submission_mode": "anonymous"},
+    )
+    # The server must not persist state under an id it never issued.
+    assert resp.cookies.get("ow-submission-session") not in (None, "attacker-chosen-id-000001")
+
+
+@pytest.mark.asyncio
+async def test_submit_post_rejects_jump_to_attachment_step(client: AsyncClient) -> None:
+    resp = await client.get("/submit")
+    import re
+
+    m = re.search(r'name="csrf_token" value="([^"]+)"', resp.text)
+    csrf = m.group(1) if m else ""
+    # Jump straight to step 5 (attachments) on a fresh session.
+    jump = await client.post(
+        "/submit",
+        data={"csrf_token": csrf, "step": "5", "action": "next"},
+    )
+    # Must bounce back to the mode step, not advance to review (step 6).
+    assert 'name="step" value="6"' not in jump.text
+
+
+@pytest.mark.asyncio
+async def test_totp_code_cannot_be_replayed_across_sessions(
+    client: AsyncClient, db_session: AsyncSession, no_csrf
+) -> None:
+    import pyotp
+
+    from app.redis_client import get_redis
+    from app.services import auth as auth_service
+    from app.services.users import create_user
+
+    secret = pyotp.random_base32()
+    user, _ = await create_user(
+        db_session, f"totp-{uuid.uuid4().hex[:6]}", "TestPassword123!", AdminRole.admin
+    )
+    user.totp_secret = secret
+    user.totp_enabled = True
+    await db_session.commit()
+
+    redis = await get_redis()
+    code = pyotp.TOTP(secret).now()
+
+    temp1 = uuid.uuid4().hex
+    await auth_service.store_totp_pending(redis, temp1, str(user.id))
+    r1 = await client.post(
+        "/admin/login/mfa", data={"totp_code": code, "temp_token": temp1}, follow_redirects=False
+    )
+    assert r1.status_code == 302  # first use succeeds
+
+    temp2 = uuid.uuid4().hex
+    await auth_service.store_totp_pending(redis, temp2, str(user.id))
+    r2 = await client.post(
+        "/admin/login/mfa", data={"totp_code": code, "temp_token": temp2}, follow_redirects=False
+    )
+    assert r2.status_code != 302  # replay of the same code must be rejected
+
+
+@pytest.mark.asyncio
+async def test_retention_cleanup_skipped_when_lock_held(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from datetime import UTC, datetime, timedelta
+
+    from app.config import settings
+    from app.redis_client import get_redis
+    from app.services.report import get_report_by_id
+    from app.services.retention import run_retention_cleanup
+
+    monkeypatch.setattr(settings, "retention_enabled", True)
+
+    report = await _mk_report(db_session)
+    report.status = ReportStatus.closed
+    report.closed_at = datetime.now(UTC) - timedelta(days=settings.retention_days + 10)
+    await db_session.commit()
+
+    # Simulate another replica already holding the job lock.
+    redis = await get_redis()
+    await redis.set("openwhistle:job_lock:retention", "1", nx=True, ex=3600)
+    try:
+        await run_retention_cleanup()
+        # Lock held → this run is skipped → the eligible report survives.
+        assert await get_report_by_id(db_session, report.id) is not None
+    finally:
+        await redis.delete("openwhistle:job_lock:retention")

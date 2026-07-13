@@ -10,8 +10,11 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import logging
 
 from cryptography.fernet import Fernet
+
+log = logging.getLogger(__name__)
 
 
 def _make_fernet() -> Fernet:
@@ -40,4 +43,11 @@ def decrypt_or_none(token: str | None) -> str | None:
     try:
         return decrypt(token)
     except Exception:
+        # A non-empty token that fails to decrypt is NOT the same as an absent
+        # field: it means corruption, a rotated SECRET_KEY, or tampering. Log it
+        # so an operator can investigate rather than silently showing "blank".
+        log.warning(
+            "Failed to decrypt a confidential field; showing it as empty. "
+            "This indicates data corruption or a rotated SECRET_KEY."
+        )
         return None
