@@ -582,13 +582,18 @@ async def test_submit_post_rejects_jump_to_attachment_step(client: AsyncClient) 
 
 @pytest.mark.asyncio
 async def test_totp_code_cannot_be_replayed_across_sessions(
-    client: AsyncClient, db_session: AsyncSession, no_csrf
+    client: AsyncClient, db_session: AsyncSession, no_csrf, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     import pyotp
 
+    from app.config import settings
     from app.redis_client import get_redis
     from app.services import auth as auth_service
     from app.services.users import create_user
+
+    # CI runs with DEMO_MODE=true, which intentionally makes the static code
+    # reusable; force it off so the one-time-use path is exercised.
+    monkeypatch.setattr(settings, "demo_mode", False)
 
     secret = pyotp.random_base32()
     user, _ = await create_user(
@@ -622,8 +627,9 @@ async def test_retention_cleanup_skipped_when_lock_held(
 ) -> None:
     from datetime import UTC, datetime, timedelta
 
+    from redis.asyncio import Redis
+
     from app.config import settings
-    from app.redis_client import get_redis
     from app.services.report import get_report_by_id
     from app.services.retention import run_retention_cleanup
 
@@ -634,12 +640,16 @@ async def test_retention_cleanup_skipped_when_lock_held(
     report.closed_at = datetime.now(UTC) - timedelta(days=settings.retention_days + 10)
     await db_session.commit()
 
-    # Simulate another replica already holding the job lock.
-    redis = await get_redis()
-    await redis.set("openwhistle:job_lock:retention", "1", nx=True, ex=3600)
+    # Simulate another replica already holding the job lock. Use a dedicated
+    # connection (not the shared request-scoped client) to avoid binding it to
+    # this test's event loop.
+    lock_redis = Redis.from_url(settings.redis_url)
+    await lock_redis.set("openwhistle:job_lock:retention", "1", nx=True, ex=600)
     try:
         await run_retention_cleanup()
-        # Lock held → this run is skipped → the eligible report survives.
+        # Lock held by "another replica" → this run is skipped (and must NOT
+        # release a lock it does not own) → the eligible report survives.
         assert await get_report_by_id(db_session, report.id) is not None
     finally:
-        await redis.delete("openwhistle:job_lock:retention")
+        await lock_redis.delete("openwhistle:job_lock:retention")
+        await lock_redis.aclose()

@@ -34,25 +34,30 @@ async def run_retention_cleanup() -> None:
     if not settings.retention_enabled:
         return
 
+    from redis.asyncio import Redis
     from sqlalchemy import delete, select
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
     from app.models.audit import AuditLog
     from app.models.report import Report, ReportStatus
-    from app.redis_client import get_redis
 
     # Distributed lock: with multiple stateless replicas each running a
     # scheduler, only one may perform the daily cleanup, otherwise the same
-    # deletions are audited twice. TTL well under the 24h cron interval.
-    redis = await get_redis()
-    if not await redis.set("openwhistle:job_lock:retention", "1", nx=True, ex=3600):
-        return
-
-    engine = create_async_engine(settings.database_url, echo=False)
-    cutoff = datetime.now(UTC) - timedelta(days=settings.retention_days)
+    # deletions are audited twice. Acquire → run → release; the TTL is only a
+    # crash safety-net. Use a dedicated short-lived connection (not the shared
+    # request-scoped client) so the job never binds/poisons that client's loop.
+    lock_key = "openwhistle:job_lock:retention"
+    lock_redis = Redis.from_url(settings.redis_url)
+    acquired = False
+    engine = None
     deleted_count = 0
-
     try:
+        acquired = bool(await lock_redis.set(lock_key, "1", nx=True, ex=600))
+        if not acquired:
+            return
+
+        engine = create_async_engine(settings.database_url, echo=False)
+        cutoff = datetime.now(UTC) - timedelta(days=settings.retention_days)
         session_factory = async_sessionmaker(engine, expire_on_commit=False)
         async with session_factory() as db:
             result = await db.execute(
@@ -94,7 +99,16 @@ async def run_retention_cleanup() -> None:
     except Exception:
         log.exception("Retention cleanup failed")
     finally:
-        await engine.dispose()
+        if engine is not None:
+            await engine.dispose()
+        # Release the lock (only if we hold it) so the next run — or the next
+        # test — can acquire cleanly; then drop the dedicated connection.
+        if acquired:
+            try:
+                await lock_redis.delete(lock_key)
+            except Exception:  # noqa: BLE001, S110
+                pass
+        await lock_redis.aclose()
 
     if deleted_count:
         log.info("Retention cleanup complete: %d report(s) deleted.", deleted_count)

@@ -59,27 +59,33 @@ async def send_sla_reminders() -> None:
             # Distributed lock: the app runs stateless/scaled, so every replica
             # starts its own scheduler. Only one may run each cycle, else audit
             # entries and outbound notifications are duplicated per replica.
-            if not await redis.set(
-                "openwhistle:job_lock:sla_reminders", "1", nx=True, ex=1500
-            ):
+            # Acquire → run → release; the TTL is only a crash safety-net.
+            lock_key = "openwhistle:job_lock:sla_reminders"
+            if not await redis.set(lock_key, "1", nx=True, ex=300):
                 return
-            now = datetime.now(UTC)
+            try:
+                now = datetime.now(UTC)
 
-            result = await db.execute(
-                select(Report).where(
-                    Report.status.notin_([ReportStatus.closed])
+                result = await db.execute(
+                    select(Report).where(
+                        Report.status.notin_([ReportStatus.closed])
+                    )
                 )
-            )
-            reports = result.scalars().all()
+                reports = result.scalars().all()
 
-            for report in reports:
-                # Isolate per-report failures: one bad row must not abort SLA
-                # checks for every other pending report in this run.
+                for report in reports:
+                    # Isolate per-report failures: one bad row must not abort SLA
+                    # checks for every other pending report in this run.
+                    try:
+                        await _check_ack_reminder(report, now, db, redis, settings)
+                        await _check_feedback_reminder(report, now, db, redis, settings)
+                    except Exception:  # noqa: BLE001
+                        log.exception("SLA reminder check failed for a report; continuing")
+            finally:
                 try:
-                    await _check_ack_reminder(report, now, db, redis, settings)
-                    await _check_feedback_reminder(report, now, db, redis, settings)
-                except Exception:  # noqa: BLE001
-                    log.exception("SLA reminder check failed for a report; continuing")
+                    await redis.delete(lock_key)
+                except Exception:  # noqa: BLE001, S110
+                    pass
     finally:
         await engine.dispose()
 
