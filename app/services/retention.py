@@ -47,14 +47,21 @@ async def run_retention_cleanup() -> None:
     # crash safety-net. Use a dedicated short-lived connection (not the shared
     # request-scoped client) so the job never binds/poisons that client's loop.
     lock_key = "openwhistle:job_lock:retention"
-    lock_redis = Redis.from_url(settings.redis_url)
+    lock_redis = None
     acquired = False
     engine = None
     deleted_count = 0
     try:
-        acquired = bool(await lock_redis.set(lock_key, "1", nx=True, ex=600))
-        if not acquired:
-            return
+        # Best-effort: if the lock backend is unreachable, still run the job
+        # (retention is a compliance obligation) — only skip when we positively
+        # observe another replica holding the lock.
+        try:
+            lock_redis = Redis.from_url(settings.redis_url)
+            if not await lock_redis.set(lock_key, "1", nx=True, ex=600):
+                return
+            acquired = True
+        except Exception:  # noqa: BLE001
+            log.warning("Retention job lock unavailable; proceeding without it")
 
         engine = create_async_engine(settings.database_url, echo=False)
         cutoff = datetime.now(UTC) - timedelta(days=settings.retention_days)
@@ -103,12 +110,13 @@ async def run_retention_cleanup() -> None:
             await engine.dispose()
         # Release the lock (only if we hold it) so the next run — or the next
         # test — can acquire cleanly; then drop the dedicated connection.
-        if acquired:
-            try:
-                await lock_redis.delete(lock_key)
-            except Exception:  # noqa: BLE001, S110
-                pass
-        await lock_redis.aclose()
+        if lock_redis is not None:
+            if acquired:
+                try:
+                    await lock_redis.delete(lock_key)
+                except Exception:  # noqa: BLE001, S110
+                    pass
+            await lock_redis.aclose()
 
     if deleted_count:
         log.info("Retention cleanup complete: %d report(s) deleted.", deleted_count)
