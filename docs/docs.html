@@ -821,7 +821,7 @@
 
         <h3>Current version</h3>
         <p>
-          <strong>v1.0.0</strong> — Envelope encryption at rest, GDPR data retention, multi-tenancy, superadmin role, telephone channel guide. See the
+          <strong>v1.1.1</strong> — Security release: object-level report authorization (deanonymization / IDOR fix), privilege-escalation guards on role assignment, stored-XSS hardening, and a strict nonce-based Content-Security-Policy with consolidated security headers. See the
           <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG</a>
           for a full list of changes.
         </p>
@@ -1034,7 +1034,7 @@
             <tr>
               <td><code class="env-key">SECRET_KEY</code></td>
               <td><span class="env-required env-req-yes">Required</span></td>
-              <td>Cryptographic key for session signing and CSRF tokens. Generate with <code>openssl rand -hex 32</code>.</td>
+              <td>Cryptographic key for session signing, CSRF tokens, and confidential-identity encryption. <strong>Minimum 32 characters</strong> (the app refuses to start otherwise). Generate with <code>openssl rand -hex 32</code>.</td>
               <td>—</td>
             </tr>
             <tr>
