@@ -7,6 +7,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-07-13
+
 ### Added
 
 - **Admin System page + opt-in update check**: a new **Admin → System** page
@@ -15,6 +17,12 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   a daily background job (result cached in Redis, ETag-conditional), and sends no
   instance data to GitHub — only a standard request. The installed version is
   also shown in the footer.
+- **File integrity check** on the Admin → System page: verifies the shipped
+  application files against a SHA-256 manifest generated at Docker build time and
+  reports any missing, modified, or unexpected files. Purely local (no external
+  calls); detects accidental modification, incomplete deployments and corruption
+  (not tamper-proof against an attacker who can also rewrite the manifest — the
+  manifest's own hash is shown for optional out-of-band verification).
 
 ## [1.1.1] — 2026-07-13
 
