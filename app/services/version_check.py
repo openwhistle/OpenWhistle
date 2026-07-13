@@ -81,7 +81,7 @@ async def fetch_latest_release(redis: Redis) -> dict[str, Any] | None:
     etag = await redis.get(_ETAG_KEY)
     if etag:
         # A 304 for an unchanged resource does not count against the rate limit.
-        headers["If-None-Match"] = etag
+        headers["If-None-Match"] = etag.decode() if isinstance(etag, bytes) else etag
 
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
