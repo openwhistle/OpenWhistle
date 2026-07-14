@@ -210,7 +210,7 @@ async def test_read_too_many_files_returns_error() -> None:
         u = MagicMock()
         u.filename = f"file{i}.pdf"
         u.content_type = "application/pdf"
-        u.read = AsyncMock(return_value=b"X" * 100)
+        u.read = AsyncMock(return_value=b"%PDF-1.4" + b"X" * 92)  # valid magic, 100 bytes
         uploads.append(u)
 
     result, error = await read_upload_files(uploads)
@@ -247,6 +247,72 @@ async def test_read_disallowed_type_returns_error() -> None:
 
     result, error = await read_upload_files([upload])
     assert error is not None
+
+
+# ─── magic-byte content verification (issue #43) ──────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_read_rejects_content_disguised_as_image() -> None:
+    """A .png whose bytes are HTML must be rejected — extension/type alone lie."""
+    from unittest.mock import AsyncMock, MagicMock
+
+    from app.services.attachment import read_upload_files
+
+    upload = MagicMock()
+    upload.filename = "evidence.png"
+    upload.content_type = "image/png"
+    upload.read = AsyncMock(return_value=b"<html><script>alert(1)</script></html>")
+
+    result, error = await read_upload_files([upload])
+    assert result == []
+    assert error is not None
+    assert "does not match" in error.lower()
+
+
+@pytest.mark.asyncio
+async def test_read_accepts_real_png_magic() -> None:
+    from unittest.mock import AsyncMock, MagicMock
+
+    from app.services.attachment import read_upload_files
+
+    png = b"\x89PNG\r\n\x1a\n" + b"\x00" * 32
+    upload = MagicMock()
+    upload.filename = "real.png"
+    upload.content_type = "image/png"
+    upload.read = AsyncMock(return_value=png)
+
+    result, error = await read_upload_files([upload])
+    assert error is None
+    assert len(result) == 1
+
+
+@pytest.mark.asyncio
+async def test_read_text_file_needs_no_signature() -> None:
+    """Text formats have no magic number — arbitrary text content is allowed."""
+    from unittest.mock import AsyncMock, MagicMock
+
+    from app.services.attachment import read_upload_files
+
+    upload = MagicMock()
+    upload.filename = "notes.txt"
+    upload.content_type = "text/plain"
+    upload.read = AsyncMock(return_value=b"just some plain notes, no header")
+
+    result, error = await read_upload_files([upload])
+    assert error is None
+    assert len(result) == 1
+
+
+def test_validate_file_magic_mismatch_and_match() -> None:
+    from app.services.attachment import validate_file
+
+    # Header supplied + mismatched → rejected.
+    assert validate_file("x.pdf", "application/pdf", 10, head=b"NOTPDF") is not None
+    # Header supplied + correct magic → accepted.
+    assert validate_file("x.pdf", "application/pdf", 10, head=b"%PDF-1.7") is None
+    # No header (size-only call) → magic check skipped (backward compatible).
+    assert validate_file("x.pdf", "application/pdf", 10) is None
 
 
 # ─── integration tests (require live DB) ──────────────────────────────────────

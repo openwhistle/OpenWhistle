@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Security
 
+- Attachment uploads are now verified by magic number: the file's leading bytes
+  must match its extension (PDF, JPEG, PNG, GIF, WebP, DOCX/XLSX, DOC/XLS), so a
+  file cannot lie about its type (e.g. HTML bytes disguised as a `.png`). Text
+  formats have no signature and are unaffected (#43).
 - Reverse-proxy flood protection for the submission channel: the bundled nginx
   configs now apply a per-IP `limit_req` to dynamic endpoints. The IP is used
   only for in-memory throttling — never logged or forwarded upstream — so
