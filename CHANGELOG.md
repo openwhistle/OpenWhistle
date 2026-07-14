@@ -7,6 +7,16 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Security
+
+- Reverse-proxy flood protection for the submission channel: the bundled nginx
+  configs now apply a per-IP `limit_req` to dynamic endpoints. The IP is used
+  only for in-memory throttling — never logged or forwarded upstream — so
+  whistleblower anonymity is preserved (#46).
+- Removed a dead, unreachable "this account uses Single Sign-On" login branch;
+  SSO-only accounts already receive the generic "invalid credentials" error,
+  which avoids leaking account existence / auth method (#46).
+
 ## [1.2.0] — 2026-07-13
 
 ### Added

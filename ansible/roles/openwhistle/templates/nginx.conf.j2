@@ -15,6 +15,13 @@ http {
     log_not_found off;
     server_tokens off;
 
+    # Flood protection for dynamic endpoints (submission channel especially).
+    # Keys on the client IP only for in-memory throttling — the IP is NOT logged
+    # or forwarded upstream (access_log is off; IP headers are stripped below),
+    # so whistleblower anonymity is preserved while abusive bursts are limited.
+    limit_req_zone $binary_remote_addr zone=ow_req:10m rate=10r/s;
+    limit_req_status 429;
+
     upstream openwhistle {
         server app:4009;
         keepalive 32;
@@ -61,6 +68,9 @@ http {
         proxy_set_header Connection "";
 
         location / {
+            # Generous burst so the multi-step submission wizard and normal
+            # admin use are unaffected; blocks rapid automated floods.
+            limit_req zone=ow_req burst=30 nodelay;
             proxy_pass http://openwhistle;
             proxy_read_timeout 60s;
             proxy_connect_timeout 10s;
@@ -93,6 +103,9 @@ http {
         proxy_set_header Connection "";
 
         location / {
+            # Generous burst so the multi-step submission wizard and normal
+            # admin use are unaffected; blocks rapid automated floods.
+            limit_req zone=ow_req burst=30 nodelay;
             proxy_pass http://openwhistle;
             proxy_read_timeout 60s;
             proxy_connect_timeout 10s;
