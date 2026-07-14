@@ -149,7 +149,7 @@ async def test_create_report_retries_on_case_number_collision(
     fresh_number = f"OW-9999-{uuid.uuid4().int % 100000:05d}"
     seq = iter([taken.case_number, fresh_number])
 
-    async def fake_gen(_db):  # noqa: ANN001
+    def fake_gen() -> str:
         return next(seq)
 
     monkeypatch.setattr(report_svc, "generate_case_number", fake_gen)

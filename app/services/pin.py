@@ -7,32 +7,23 @@ Two-factor design:
 Both are required together to access a report. Neither alone is sufficient.
 """
 
+import secrets
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.report import Report
+def generate_case_number() -> str:
+    """Generate a case number like OW-2026-48210.
 
-
-async def generate_case_number(db: AsyncSession) -> str:
-    """Generate a sequential case number like OW-2026-00042.
-
-    Uses MAX instead of COUNT so hard-deleting a report never causes a
-    subsequent submission to reuse a previously-issued case number.
-
-    Case numbers are globally unique; concurrent submissions can read the same
-    MAX before either commits, so callers must be prepared to retry on the
-    unique-constraint violation (see ``create_report``).
+    The 5-digit component is **random** (not sequential): a sequential number
+    would leak aggregate report volume — in a multi-tenant deployment a new
+    tenant's first report would reveal how many reports exist elsewhere on the
+    instance. The case number is a public, non-secret reference (the PIN is the
+    secret). It is globally unique; a rare random collision is resolved by the
+    caller's retry on the unique-constraint violation (see ``create_report``).
     """
     year = datetime.now(UTC).year
-    result = await db.execute(
-        select(func.max(Report.case_number)).where(Report.case_number.like(f"OW-{year}-%"))
-    )
-    max_case: str | None = result.scalar_one_or_none()
-    sequence = int(max_case.split("-")[2]) + 1 if max_case else 1
-    return f"OW-{year}-{sequence:05d}"
+    return f"OW-{year}-{secrets.randbelow(100000):05d}"
 
 
 def generate_pin() -> str:
