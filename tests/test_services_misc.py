@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.auth import (
     hash_password,
@@ -185,17 +184,25 @@ def test_generate_pin_unique_each_call() -> None:
     assert len(pins) == 20
 
 
-@pytest.mark.asyncio
-async def test_generate_case_number_sequential(db_session: AsyncSession) -> None:
-    """Two consecutive case numbers in the same year must differ by exactly 1."""
+def test_generate_case_number_format_and_randomness() -> None:
+    """Case numbers keep the OW-YYYY-NNNNN format but the suffix is RANDOM, not
+    sequential — a sequential suffix would leak cross-tenant report volume (#42)."""
+    import re
+    from datetime import UTC, datetime
+
     from app.services.pin import generate_case_number
 
-    first = await generate_case_number(db_session)
-    # We can't easily create a real report in-service here, so just verify format
-    year = __import__("datetime").datetime.now().year
-    assert first.startswith(f"OW-{year}-")
-    seq = int(first.split("-")[2])
-    assert seq >= 1
+    year = datetime.now(UTC).year
+    numbers = [generate_case_number() for _ in range(200)]
+
+    for n in numbers:
+        assert re.fullmatch(rf"OW-{year}-\d{{5}}", n), n
+        assert 0 <= int(n.split("-")[2]) <= 99999
+
+    suffixes = [int(n.split("-")[2]) for n in numbers]
+    # Must not be monotonically increasing (i.e. not a sequence) and should vary.
+    assert suffixes != sorted(suffixes)
+    assert len(set(suffixes)) > 100
 
 
 # ─── services/auth: hash_pin / verify_pin / verify_password ──────────────────

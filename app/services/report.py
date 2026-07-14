@@ -102,14 +102,13 @@ async def create_report(
     receipt_text = strings.get("system.receipt_message") or fallback.get("system.receipt_message")
     enc_receipt = encrypt_field(report_fernet, receipt_text or "")
 
-    # generate_case_number reads MAX() without a lock, so two concurrent
-    # submissions can compute the same next number. Retry on the resulting
-    # unique-constraint violation instead of surfacing a 500 to the reporter.
+    # generate_case_number returns a random suffix; on the rare collision (or a
+    # concurrent duplicate) retry with a fresh number instead of surfacing a 500.
     last_exc: IntegrityError | None = None
     for _attempt in range(5):
         report = Report(
             id=uuid.uuid4(),
-            case_number=await generate_case_number(db),
+            case_number=generate_case_number(),
             pin_hash=pin_hash,
             org_id=default_org_id,
             category=category,

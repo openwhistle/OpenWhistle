@@ -9,6 +9,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Security
 
+- Case numbers now use a random 5-digit suffix instead of a global sequence, so
+  a new report no longer reveals aggregate cross-tenant report volume. Format is
+  unchanged (`OW-YYYY-NNNNN`) and existing numbers stay valid (#42).
 - Attachment uploads are now verified by magic number: the file's leading bytes
   must match its extension (PDF, JPEG, PNG, GIF, WebP, DOCX/XLSX, DOC/XLS), so a
   file cannot lie about its type (e.g. HTML bytes disguised as a `.png`). Text
