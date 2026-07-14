@@ -7,8 +7,16 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.2.1] — 2026-07-14
+
+Follow-up hardening release resolving the remaining bug-bounty findings (#42–#46).
+
 ### Security
 
+- CSRF protection extended to the two remaining state-changing admin POST
+  endpoints (`/admin/ip-warning/dismiss`, `/admin/demo/reset`). AJAX requests
+  authenticate via an `X-CSRF-Token` header (read from a `<meta>` tag, since the
+  double-submit cookie is HttpOnly) (#44).
 - Case numbers now use a random 5-digit suffix instead of a global sequence, so
   a new report no longer reveals aggregate cross-tenant report volume. Format is
   unchanged (`OW-YYYY-NNNNN`) and existing numbers stay valid (#42).
@@ -23,6 +31,11 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Removed a dead, unreachable "this account uses Single Sign-On" login branch;
   SSO-only accounts already receive the generic "invalid credentials" error,
   which avoids leaking account existence / auth method (#46).
+
+### Fixed
+
+- Downloading an attachment whose S3 object is missing now returns 404 instead
+  of an unhandled 500; genuine backend errors still surface as 5xx (#45).
 
 ## [1.2.0] — 2026-07-13
 
