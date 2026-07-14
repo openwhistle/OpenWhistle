@@ -369,10 +369,25 @@ async def test_dismiss_ip_warning_returns_cleared(
     admin, totp_secret = await _create_admin(db_session)
     await _login_admin(client, admin, totp_secret)
 
-    resp = await client.post("/admin/ip-warning/dismiss")
+    # AJAX endpoint requires the CSRF token via the X-CSRF-Token header
+    # (double-submit: header must equal the ow_csrf cookie).
+    token = client.cookies.get("ow_csrf")
+    resp = await client.post(
+        "/admin/ip-warning/dismiss", headers={"X-CSRF-Token": token or ""}
+    )
     assert resp.status_code == 200
-    data = resp.json()
-    assert data.get("cleared") is True
+    assert resp.json().get("cleared") is True
+
+
+@pytest.mark.asyncio
+async def test_dismiss_ip_warning_rejects_missing_csrf(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    admin, totp_secret = await _create_admin(db_session)
+    await _login_admin(client, admin, totp_secret)
+
+    resp = await client.post("/admin/ip-warning/dismiss")  # no CSRF token
+    assert resp.status_code == 403
 
 
 # ─── delete_report (cleanup_report_sessions) ─────────────────────────────────

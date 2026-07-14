@@ -2,7 +2,7 @@
 
 import secrets
 
-from fastapi import Cookie, Form, HTTPException, status
+from fastapi import Cookie, Form, Header, HTTPException, status
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
@@ -62,6 +62,23 @@ async def validate_csrf(
 ) -> None:
     """Dependency: validates CSRF double-submit token on state-changing form submissions."""
     if not ow_csrf or not secrets.compare_digest(csrf_token, ow_csrf):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="CSRF validation failed.",
+        )
+
+
+async def validate_csrf_header(
+    x_csrf_token: str | None = Header(None),
+    ow_csrf: str | None = Cookie(None),
+) -> None:
+    """CSRF validation for fetch/AJAX endpoints (no form body).
+
+    The token arrives in the ``X-CSRF-Token`` header — JavaScript reads it from
+    the ``<meta name="csrf-token">`` tag since the double-submit cookie is
+    HttpOnly. Same double-submit comparison against the ``ow_csrf`` cookie.
+    """
+    if not ow_csrf or not x_csrf_token or not secrets.compare_digest(x_csrf_token, ow_csrf):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="CSRF validation failed.",
