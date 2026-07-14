@@ -135,11 +135,10 @@ async def login_post(
         }), status_code=401)
 
     assert user is not None  # narrowed: pw_ok True implies user is not None
-    # Block password login for OIDC-only accounts
-    if user.oidc_sub and not user.password_hash:
-        return render(request, "login.html", _login_ctx({
-            "error": "This account uses Single Sign-On. Please use the SSO button.",
-        }))
+    # Note: SSO-only accounts (oidc_sub set, no password_hash) never reach here —
+    # pw_ok is False for them, so they already received the generic 401 above.
+    # We intentionally do NOT reveal "this account uses SSO", which would leak
+    # account existence / auth method (kept generic for privacy).
 
     if not user.totp_enabled:
         setup_token = secrets.token_urlsafe(32)
