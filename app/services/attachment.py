@@ -70,8 +70,43 @@ def content_disposition_attachment(filename: str) -> str:
     return f"attachment; filename=\"{ascii_name}\"; filename*=UTF-8''{utf8_name}"
 
 
-def validate_file(filename: str, content_type: str, size: int) -> str | None:
-    """Return an error string if the file is invalid, or None if it's acceptable."""
+# Expected leading bytes (magic numbers) per extension, so the declared type /
+# extension cannot lie about the actual content (e.g. HTML bytes named .png).
+# Text formats (.txt/.csv) have no signature and are intentionally omitted.
+_MAGIC_BY_EXT: dict[str, tuple[bytes, ...]] = {
+    ".pdf": (b"%PDF",),
+    ".jpg": (b"\xff\xd8\xff",),
+    ".jpeg": (b"\xff\xd8\xff",),
+    ".png": (b"\x89PNG\r\n\x1a\n",),
+    ".gif": (b"GIF87a", b"GIF89a"),
+    ".webp": (b"RIFF",),  # RIFF container; the WEBP marker is checked separately
+    ".docx": (b"PK\x03\x04",),  # OOXML = zip
+    ".xlsx": (b"PK\x03\x04",),
+    ".doc": (b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1",),  # legacy OLE/CFB
+    ".xls": (b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1",),
+}
+
+
+def _content_matches_ext(ext: str, head: bytes) -> bool:
+    """True if the file header matches the signature expected for the extension.
+
+    Extensions with no registered signature (text formats) always pass.
+    """
+    sigs = _MAGIC_BY_EXT.get(ext)
+    if sigs is None:
+        return True
+    if ext == ".webp":
+        return head[:4] == b"RIFF" and head[8:12] == b"WEBP"
+    return any(head.startswith(sig) for sig in sigs)
+
+
+def validate_file(filename: str, content_type: str, size: int, head: bytes = b"") -> str | None:
+    """Return an error string if the file is invalid, or None if it's acceptable.
+
+    ``head`` is the first bytes of the file; when supplied, the content's magic
+    number must match the extension (declared type/extension alone are
+    attacker-controlled).
+    """
     if size > MAX_SIZE_BYTES:
         mb = size / (1024 * 1024)
         return f"'{filename}' is too large ({mb:.1f} MB). Maximum 10 MB per file."
@@ -89,6 +124,12 @@ def validate_file(filename: str, content_type: str, size: int) -> str | None:
         return (
             f"'{filename}' has an unsupported file type ({declared_type}). "
             "Allowed: PDF, images, text, Word, Excel."
+        )
+
+    if head and not _content_matches_ext(ext, head):
+        return (
+            f"'{filename}' content does not match its '{ext}' type "
+            "(the file may be corrupted or disguised)."
         )
 
     return None
@@ -121,7 +162,7 @@ async def read_upload_files(
 
         name = sanitize_filename(upload.filename)
         content_type = upload.content_type or "application/octet-stream"
-        error = validate_file(name, content_type, len(data))
+        error = validate_file(name, content_type, len(data), head=data[:16])
         if error:
             return [], error
 
