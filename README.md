@@ -65,6 +65,7 @@ zero vendor lock-in, and privacy-first by design.
 - **Custom categories** — DB-driven report categories; full management UI at `/admin/categories`.
 - **PDF export** — Full case export including SLA compliance section (HinSchG §17).
 - **Dashboard statistics** — SLA compliance rate, status distribution, category breakdown.
+- **"Signal" design system** — documented, token-driven identity ([`DESIGN.md`](DESIGN.md)); app + site, light + dark.
 - **Mandatory MFA** — TOTP (compatible with any authenticator app) required for every admin account.
   No exceptions, no bypass.
 - **Object-level authorization** — Every report endpoint enforces per-record access: case managers

@@ -313,7 +313,30 @@ Critical user journeys to cover:
 
 ---
 
-## v1.3.0 — Privacy Hardening & Attachment Security
+## v1.3.0 — Signal Design System ✓ Released 2026-07-15
+
+> A ground-up visual redesign ("Signal") unifying the app and the public site
+> under one identity, delivered with a documented design specification.
+
+### Design system
+
+- [x] **`DESIGN.md`** — canonical design system in the google/design.md format
+  (front-matter tokens + prose, first-class light and dark)
+- [x] **"Signal" restyle** — monochrome warm-neutral ground, single emerald
+  accent, Sora + JetBrains Mono (self-hosted), warm near-black dark mode
+- [x] **Token foundation** — `--space-*` / `--text-*` scales and shared
+  `.anim-in` / `.delay-*` animation utilities
+- [x] **Public site converted** — `docs/index.html` + `docs/docs.html` folded
+  onto the Signal tokens
+- [x] **Stylesheet + template cleanup** — component de-duplication, the admin
+  report page's numbered one-off classes rebuilt as semantic classes, and the
+  scattered animation-delay helpers unified
+- [x] **Bug fixes** — the intended body font now actually loads; dark mode
+  honours the configured brand colour; the public status pills are styled
+
+---
+
+## v1.4.0 — Privacy Hardening & Attachment Security
 
 > Uploaded files can carry EXIF and document metadata that inadvertently
 > identifies the whistleblower (GPS coordinates, author names, printer serial
@@ -360,7 +383,7 @@ Critical user journeys to cover:
 
 ---
 
-## v1.4.0 — Advanced Case Management
+## v1.5.0 — Advanced Case Management
 
 > Features derived from Hintbox, Formalize/WBS, and whistle.law competitive
 > analysis. These address workflows that compliance officers and case managers
@@ -416,7 +439,7 @@ Critical user journeys to cover:
 
 ---
 
-## v1.5.0 — Multi-Channel Intake & Integration Hooks
+## v1.6.0 — Multi-Channel Intake & Integration Hooks
 
 > Operators increasingly need to receive reports through channels beyond the web
 > form, and connect OpenWhistle to existing compliance tooling (SIEM, GRC
@@ -468,7 +491,7 @@ Critical user journeys to cover:
 
 ---
 
-## v1.6.0 — Compliance Expansion (LkSG, KWG, CSRD)
+## v1.7.0 — Compliance Expansion (LkSG, KWG, CSRD)
 
 > German compliance obligations extend beyond HinSchG. Companies in scope for
 > the Lieferkettengesetz (LkSG, since 2023) require a separate supply-chain

@@ -7,6 +7,48 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-07-15
+
+The "Signal" design system — a ground-up visual redesign that unifies the app and
+the public site under one identity, plus a documented design specification.
+
+### Added
+
+- **`DESIGN.md`** — a canonical design system ("Signal") in the google/design.md
+  format: front-matter design tokens (colour, typography, spacing, radii,
+  elevation) and prose covering every component, with first-class light and dark
+  themes.
+- **Design token foundation** in the stylesheet: a `--space-*` spacing scale, a
+  `--text-*` type scale, and shared `.anim-in` / `.delay-*` animation utilities.
+
+### Changed
+
+- **Full "Signal" restyle** of the application — a monochrome warm-neutral ground
+  with a single emerald accent, Sora for display and body text, and JetBrains
+  Mono for case numbers, PINs, timestamps and deadlines. Dark mode is now a warm
+  near-black rather than a cold navy.
+- **Self-hosted fonts reduced to two** (Sora + JetBrains Mono); the Docker image
+  downloads exactly those, replacing the previous three-font set. The default
+  `BRAND_PRIMARY_COLOR` is now emerald (`#0e7c5a`).
+- **Public marketing and documentation pages** (openwhistle.net) converted from
+  their separate serif/gold look onto the same Signal tokens.
+- **Stylesheet and template cleanup**: consolidated duplicated components
+  (`.info-banner` → `.alert`, `.env-table` → `table`, three admin grids →
+  `.admin-split-grid`, inline-form wrappers → `.inline-form`), rebuilt the admin
+  report page's 56 numbered one-off classes into semantic classes on the type
+  scale, and unified the scattered animation-delay helpers.
+
+### Fixed
+
+- The intended body typeface never loaded — its `@font-face` pointed at font
+  files that did not exist, so the app silently fell back to `system-ui`. A real
+  self-hosted font now ships.
+- Dark mode ignored the configured brand colour (the accent was hardcoded); it
+  now derives from `BRAND_PRIMARY_COLOR` in both themes.
+- The public report-status page's status pills were unstyled (they referenced CSS
+  classes that were never defined); they now use the themed badge styles.
+- Removed references to several undefined CSS custom properties.
+
 ## [1.2.1] — 2026-07-14
 
 Follow-up hardening release resolving the remaining bug-bounty findings (#42–#46).
