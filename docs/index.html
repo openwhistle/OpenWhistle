@@ -151,18 +151,12 @@
 
   <style>
     /* Self-hosted fonts — no external CDN calls */
-    @font-face { font-family: 'Spectral'; src: url('fonts/spectral-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Spectral'; src: url('fonts/spectral-latin-400-italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
-    @font-face { font-family: 'Spectral'; src: url('fonts/spectral-latin-500-normal.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Spectral'; src: url('fonts/spectral-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Spectral'; src: url('fonts/spectral-latin-600-italic.woff2') format('woff2'); font-weight: 600; font-style: italic; font-display: swap; }
-    @font-face { font-family: 'Spectral'; src: url('fonts/spectral-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Source Serif 4'; src: url('fonts/source-serif-4-latin-300-normal.woff2') format('woff2'); font-weight: 300; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Source Serif 4'; src: url('fonts/source-serif-4-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Source Serif 4'; src: url('fonts/source-serif-4-latin-400-italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
-    @font-face { font-family: 'Source Serif 4'; src: url('fonts/source-serif-4-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Source Serif 4'; src: url('fonts/source-serif-4-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
-    /* JetBrains Mono removed — mono elements use system Courier New */
+    @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-500-normal.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
   </style>
 
   <style>
@@ -174,33 +168,33 @@
 
     /* ── Tokens ──────────────────────────────────────────────────── */
     :root {
-      --bg-base:       #fafaf7;
-      --bg-surface:    #f4f2ed;
-      --bg-raised:     #eeeae0;
-      --bg-overlay:    #e8e3d8;
+      --bg-base:       #ffffff;
+      --bg-surface:    #f6f6f5;
+      --bg-raised:     #efefee;
+      --bg-overlay:    #e9e9e8;
       --nav-bg:        #ffffff;
-      --footer-bg:     #1a2744;
-      --text-primary:  #1e293b;
-      --text-secondary:#3d4f6b;
-      --text-muted:    #6b7a96;
-      --border-subtle: #e2d9c8;
-      --border-default:#c9bfaa;
-      --border-strong: #a89880;
-      --seal-green:    #2d7d46;
-      --seal-green-mid:#245f37;
-      --seal-green-dim:rgba(45, 125, 70, 0.15);
-      --seal-green-fog:rgba(45, 125, 70, 0.08);
-      --gold:          #c8972e;
-      --gold-mid:      #a87920;
-      --gold-dim:      rgba(200, 151, 46, 0.20);
-      --gold-fog:      rgba(200, 151, 46, 0.08);
-      --red-alert:     #b91c1c;
-      --code-bg:       #1a2744;
-      --code-text:     #e2dcd2;
+      --footer-bg:     #0a0a0b;
+      --text-primary:  #0a0a0b;
+      --text-secondary:#3d3d40;
+      --text-muted:    #737377;
+      --border-subtle: #e6e6e4;
+      --border-default:#d8d8d6;
+      --border-strong: #c9c9c6;
+      --seal-green:    #0e7c5a;
+      --seal-green-mid:#0b6249;
+      --seal-green-dim:rgba(14,124,90,0.15);
+      --seal-green-fog:rgba(14,124,90,0.08);
+      --gold:          #0e7c5a;
+      --gold-mid:      #0b6249;
+      --gold-dim:      rgba(14,124,90,0.15);
+      --gold-fog:      rgba(14,124,90,0.08);
+      --red-alert:     #bf3529;
+      --code-bg:       #0a0a0b;
+      --code-text:     #e9e9e8;
 
-      --font-serif:    'Spectral', Georgia, serif;
-      --font-body:     'Source Serif 4', Georgia, serif;
-      --font-mono:     'Courier New', Courier, monospace;
+      --font-serif:    'Sora', system-ui, sans-serif;
+      --font-body:     'Sora', system-ui, sans-serif;
+      --font-mono:     'JetBrains Mono', ui-monospace, monospace;
 
       --space-1: 0.25rem; --space-2: 0.5rem;  --space-3: 0.75rem;
       --space-4: 1rem;    --space-5: 1.25rem; --space-6: 1.5rem;
@@ -215,28 +209,28 @@
 
     /* Dark mode */
     [data-theme="dark"] {
-      --bg-base:       #0b1525;
-      --bg-surface:    #132035;
-      --bg-raised:     #1a2d44;
-      --bg-overlay:    #1f3355;
-      --nav-bg:        #0a1220;
-      --footer-bg:     #070d1e;
-      --text-primary:  #dde6f2;
-      --text-secondary:#9db4cc;
-      --text-muted:    #5c7a96;
-      --border-subtle: #1a2e48;
-      --border-default:#243d5a;
-      --border-strong: #2e4e72;
-      --seal-green:    #5a9070;
-      --seal-green-mid:#4a7860;
-      --seal-green-dim:rgba(90, 144, 112, 0.15);
-      --seal-green-fog:rgba(90, 144, 112, 0.08);
-      --gold:          #e0a845;
-      --gold-mid:      #c0882a;
-      --gold-dim:      rgba(224, 168, 69, 0.20);
-      --gold-fog:      rgba(224, 168, 69, 0.08);
-      --code-bg:       #070e1c;
-      --code-text:     #dde6f2;
+      --bg-base:       #08080a;
+      --bg-surface:    #131315;
+      --bg-raised:     #1b1b1e;
+      --bg-overlay:    #232327;
+      --nav-bg:        #08080a;
+      --footer-bg:     #050506;
+      --text-primary:  #fafafa;
+      --text-secondary:#bcbcc0;
+      --text-muted:    #808085;
+      --border-subtle: #262629;
+      --border-default:#34343a;
+      --border-strong: #43434a;
+      --seal-green:    #23c088;
+      --seal-green-mid:#1fa878;
+      --seal-green-dim:rgba(35,192,136,0.15);
+      --seal-green-fog:rgba(35,192,136,0.08);
+      --gold:          #23c088;
+      --gold-mid:      #1fa878;
+      --gold-dim:      rgba(35,192,136,0.15);
+      --gold-fog:      rgba(35,192,136,0.08);
+      --code-bg:       #050506;
+      --code-text:     #fafafa;
     }
 
     /* ── Reset ───────────────────────────────────────────────────── */
@@ -284,15 +278,15 @@
     /* Light-mode nav overrides — nav-bg is white, so text must be dark */
     [data-theme="light"] .site-nav { border-bottom-color: #e2e8f0; }
     [data-theme="light"] .nav-logo { color: #1e293b; }
-    [data-theme="light"] .nav-logo:hover { color: #0f4c81; }
+    [data-theme="light"] .nav-logo:hover { color: #0e7c5a; }
     [data-theme="light"] .nav-logo svg path,
-    [data-theme="light"] .nav-logo svg circle { stroke: #0f4c81; }
+    [data-theme="light"] .nav-logo svg circle { stroke: #0e7c5a; }
     [data-theme="light"] .nav-links a { color: rgba(55,65,81,0.75); }
     [data-theme="light"] .nav-links a:hover { color: #1e293b; }
-    [data-theme="light"] .nav-cta { color: #0f4c81 !important; border-color: rgba(15,76,129,0.4) !important; }
-    [data-theme="light"] .nav-cta:hover { background: rgba(15,76,129,0.08) !important; color: #0f4c81 !important; }
+    [data-theme="light"] .nav-cta { color: #0e7c5a !important; border-color: rgba(14,124,90,0.4) !important; }
+    [data-theme="light"] .nav-cta:hover { background: rgba(14,124,90,0.08) !important; color: #0e7c5a !important; }
     [data-theme="light"] .theme-toggle { border-color: #cbd5e1; color: #718096; }
-    [data-theme="light"] .theme-toggle:hover { border-color: #0f4c81; color: #0f4c81; }
+    [data-theme="light"] .theme-toggle:hover { border-color: #0e7c5a; color: #0e7c5a; }
     [data-theme="light"] .nav-toggle { color: #374151; }
 
     .nav-inner {
@@ -340,12 +334,12 @@
 
     .nav-cta {
       padding: var(--space-2) var(--space-4) !important;
-      border: 1px solid rgba(176, 114, 48, 0.5) !important;
+      border: 1px solid rgba(14, 124, 90, 0.5) !important;
       color: var(--gold) !important;
       border-radius: 2px;
       transition: background var(--duration-fast) ease !important;
     }
-    .nav-cta:hover { background: rgba(176, 114, 48, 0.15) !important; color: var(--gold-mid) !important; }
+    .nav-cta:hover { background: rgba(14, 124, 90, 0.15) !important; color: var(--gold-mid) !important; }
 
     .nav-actions {
       display: flex;
@@ -424,9 +418,9 @@
       height: min(600px, 80vw);
       border-radius: 50%;
       background:
-        radial-gradient(circle at center, rgba(176, 114, 48, 0.04) 0%, transparent 60%),
-        radial-gradient(circle at center, transparent 62%, rgba(176, 114, 48, 0.025) 63%, rgba(176, 114, 48, 0.025) 65%, transparent 66%),
-        radial-gradient(circle at center, transparent 72%, rgba(15, 76, 129, 0.03) 73%, rgba(15, 76, 129, 0.03) 75%, transparent 76%);
+        radial-gradient(circle at center, rgba(14, 124, 90, 0.04) 0%, transparent 60%),
+        radial-gradient(circle at center, transparent 62%, rgba(14, 124, 90, 0.025) 63%, rgba(14, 124, 90, 0.025) 65%, transparent 66%),
+        radial-gradient(circle at center, transparent 72%, rgba(14, 124, 90, 0.03) 73%, rgba(14, 124, 90, 0.03) 75%, transparent 76%);
       pointer-events: none;
       z-index: 0;
     }
@@ -443,9 +437,9 @@
     }
     [data-theme="dark"] .hero::after {
       background:
-        radial-gradient(circle at center, rgba(58, 170, 92, 0.04) 0%, transparent 60%),
-        radial-gradient(circle at center, transparent 62%, rgba(58, 170, 92, 0.03) 63%, rgba(58, 170, 92, 0.03) 65%, transparent 66%),
-        radial-gradient(circle at center, transparent 72%, rgba(58, 170, 92, 0.025) 73%, rgba(58, 170, 92, 0.025) 75%, transparent 76%);
+        radial-gradient(circle at center, rgba(35, 192, 136, 0.04) 0%, transparent 60%),
+        radial-gradient(circle at center, transparent 62%, rgba(35, 192, 136, 0.03) 63%, rgba(35, 192, 136, 0.03) 65%, transparent 66%),
+        radial-gradient(circle at center, transparent 72%, rgba(35, 192, 136, 0.025) 73%, rgba(35, 192, 136, 0.025) 75%, transparent 76%);
     }
 
     .hero-content {
@@ -570,16 +564,16 @@
       white-space: nowrap;
     }
     .btn-primary {
-      background: var(--nav-bg);
-      color: #e2dcd2;
-      border: 1px solid var(--nav-bg);
+      background: var(--seal-green);
+      color: #fff;
+      border: 1px solid var(--seal-green);
     }
     .btn-primary:hover {
-      background: var(--seal-green);
-      border-color: var(--seal-green);
+      background: var(--seal-green-mid);
+      border-color: var(--seal-green-mid);
       color: #fff;
       transform: translateY(-1px);
-      box-shadow: 0 4px 20px rgba(176, 114, 48, 0.3);
+      box-shadow: 0 4px 20px rgba(14, 124, 90, 0.3);
     }
     .btn-outline {
       background: transparent;
@@ -601,13 +595,13 @@
       border-color: var(--gold);
     }
     [data-theme="dark"] .btn-primary {
-      background: #3d7ec9;
-      border-color: #3d7ec9;
+      background: #23c088;
+      border-color: #23c088;
       color: #ffffff;
     }
     [data-theme="dark"] .btn-primary:hover {
-      background: #2f6ab8;
-      border-color: #2f6ab8;
+      background: #1fa878;
+      border-color: #1fa878;
       color: #ffffff;
     }
 
@@ -1319,37 +1313,37 @@
       <div class="trust-strip-inner">
         <div class="trust-item">
           <div class="trust-item-check" aria-hidden="true">
-            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#2d7d46" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0e7c5a" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
           HinSchG compliant
         </div>
         <div class="trust-item">
           <div class="trust-item-check" aria-hidden="true">
-            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#2d7d46" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0e7c5a" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
           DSGVO / GDPR
         </div>
         <div class="trust-item">
           <div class="trust-item-check" aria-hidden="true">
-            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#2d7d46" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0e7c5a" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
           No IP logging
         </div>
         <div class="trust-item">
           <div class="trust-item-check" aria-hidden="true">
-            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#2d7d46" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0e7c5a" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
           Open Source
         </div>
         <div class="trust-item">
           <div class="trust-item-check" aria-hidden="true">
-            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#2d7d46" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0e7c5a" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
           Self-hosted
         </div>
         <div class="trust-item">
           <div class="trust-item-check" aria-hidden="true">
-            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#2d7d46" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0e7c5a" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
           Two-factor access
         </div>
@@ -1461,7 +1455,7 @@
           <article class="feature-card" role="listitem">
             <div class="feature-icon-wrap" aria-hidden="true">
               <svg viewBox="0 0 18 18" fill="none">
-                <path d="M9 1.5L2.5 4.5v5c0 4 2.9 7.5 6.5 8.5 3.6-1 6.5-4.5 6.5-8.5v-5L9 1.5z" stroke="#2d7d46" stroke-width="1.4" stroke-linejoin="round"/>
+                <path d="M9 1.5L2.5 4.5v5c0 4 2.9 7.5 6.5 8.5 3.6-1 6.5-4.5 6.5-8.5v-5L9 1.5z" stroke="#0e7c5a" stroke-width="1.4" stroke-linejoin="round"/>
               </svg>
             </div>
             <h3 class="feature-title">Anonymous Reporting</h3>
@@ -1475,9 +1469,9 @@
           <article class="feature-card" role="listitem">
             <div class="feature-icon-wrap" aria-hidden="true">
               <svg viewBox="0 0 18 18" fill="none">
-                <rect x="3" y="7.5" width="12" height="8.5" rx="1.5" stroke="#2d7d46" stroke-width="1.4"/>
-                <path d="M6 7.5V5.5a3 3 0 016 0v2" stroke="#2d7d46" stroke-width="1.4" stroke-linecap="round"/>
-                <circle cx="9" cy="11.5" r="1.5" fill="#2d7d46"/>
+                <rect x="3" y="7.5" width="12" height="8.5" rx="1.5" stroke="#0e7c5a" stroke-width="1.4"/>
+                <path d="M6 7.5V5.5a3 3 0 016 0v2" stroke="#0e7c5a" stroke-width="1.4" stroke-linecap="round"/>
+                <circle cx="9" cy="11.5" r="1.5" fill="#0e7c5a"/>
               </svg>
             </div>
             <h3 class="feature-title">Two-Factor Report Access</h3>
@@ -1491,8 +1485,8 @@
           <article class="feature-card" role="listitem">
             <div class="feature-icon-wrap" aria-hidden="true">
               <svg viewBox="0 0 18 18" fill="none">
-                <path d="M3 9V5l6-3 6 3v4c0 3.5-2.7 6.8-6 7.5C5.7 15.8 3 12.5 3 9z" stroke="#c8972e" stroke-width="1.4" stroke-linejoin="round" fill="none"/>
-                <path d="M6 9l2 2 4-4" stroke="#c8972e" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M3 9V5l6-3 6 3v4c0 3.5-2.7 6.8-6 7.5C5.7 15.8 3 12.5 3 9z" stroke="#0e7c5a" stroke-width="1.4" stroke-linejoin="round" fill="none"/>
+                <path d="M6 9l2 2 4-4" stroke="#0e7c5a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
             <h3 class="feature-title">HinSchG Compliance</h3>
@@ -1505,8 +1499,8 @@
           <article class="feature-card" role="listitem">
             <div class="feature-icon-wrap" aria-hidden="true">
               <svg viewBox="0 0 18 18" fill="none">
-                <path d="M2 4h14v10a1 1 0 01-1 1H3a1 1 0 01-1-1V4z" stroke="#2d7d46" stroke-width="1.4"/>
-                <path d="M2 4l7 6 7-6" stroke="#2d7d46" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 4h14v10a1 1 0 01-1 1H3a1 1 0 01-1-1V4z" stroke="#0e7c5a" stroke-width="1.4"/>
+                <path d="M2 4l7 6 7-6" stroke="#0e7c5a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
             <h3 class="feature-title">Bidirectional Communication</h3>
@@ -1519,9 +1513,9 @@
           <article class="feature-card" role="listitem">
             <div class="feature-icon-wrap" aria-hidden="true">
               <svg viewBox="0 0 18 18" fill="none">
-                <circle cx="9" cy="6" r="3" stroke="#c8972e" stroke-width="1.4"/>
-                <path d="M3 16c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="#c8972e" stroke-width="1.4" stroke-linecap="round"/>
-                <path d="M13 9.5l1 1 2.5-2.5" stroke="#c8972e" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="9" cy="6" r="3" stroke="#0e7c5a" stroke-width="1.4"/>
+                <path d="M3 16c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="#0e7c5a" stroke-width="1.4" stroke-linecap="round"/>
+                <path d="M13 9.5l1 1 2.5-2.5" stroke="#0e7c5a" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
             <h3 class="feature-title">Multi-Factor Admin Auth</h3>
@@ -1534,8 +1528,8 @@
           <article class="feature-card" role="listitem">
             <div class="feature-icon-wrap" aria-hidden="true">
               <svg viewBox="0 0 18 18" fill="none">
-                <rect x="2" y="2" width="14" height="14" rx="2" stroke="#2d7d46" stroke-width="1.4"/>
-                <path d="M5 9h8M5 6h4M5 12h6" stroke="#2d7d46" stroke-width="1.4" stroke-linecap="round"/>
+                <rect x="2" y="2" width="14" height="14" rx="2" stroke="#0e7c5a" stroke-width="1.4"/>
+                <path d="M5 9h8M5 6h4M5 12h6" stroke="#0e7c5a" stroke-width="1.4" stroke-linecap="round"/>
               </svg>
             </div>
             <h3 class="feature-title">Bruteforce Protection</h3>
