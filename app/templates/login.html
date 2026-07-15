@@ -7,7 +7,6 @@
     .lg-header { margin-bottom: 2rem; animation: fadeSlideIn 0.5s ease both; }
     .lg-h1 { font-size: clamp(1.5rem, 4vw, 2.25rem); }
     .lg-subtitle { font-size: 0.88rem; margin-top: 0.5rem; }
-    .lg-panel-anim { animation: fadeSlideIn 0.5s 0.08s ease both; opacity: 0; animation-fill-mode: forwards; }
     .lg-btn-mt { margin-top: 0.5rem; }
     .lg-oidc-wrap { margin-top: 1.5rem; text-align: center; }
     .lg-or-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; }
@@ -67,7 +66,7 @@
         <div class="alert alert-error" role="alert">{{ error }}</div>
         {% endif %}
 
-        <div class="panel lg-panel-anim">
+        <div class="panel anim-in delay-08">
             <div class="panel-header">{{ t('login.panel.header') }}</div>
 
             <form method="post" action="/admin/login" novalidate>

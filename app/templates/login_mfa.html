@@ -7,7 +7,6 @@
     .mfa-header { margin-bottom: 2rem; animation: fadeSlideIn 0.5s ease both; }
     .mfa-h1 { font-size: clamp(1.5rem, 4vw, 2.25rem); }
     .mfa-subtitle { font-size: 0.88rem; margin-top: 0.5rem; }
-    .mfa-panel-anim { animation: fadeSlideIn 0.5s 0.08s ease both; opacity: 0; animation-fill-mode: forwards; }
     .mfa-code-input { font-size: 1.75rem; letter-spacing: 0.4em; text-align: center; padding-bottom: 0.75rem; }
     .mfa-btn-mt { margin-top: 0.5rem; }
     .mfa-back-wrap { margin-top: 1.25rem; text-align: center; }
@@ -37,7 +36,7 @@
         </div>
         {% endif %}
 
-        <div class="panel mfa-panel-anim">
+        <div class="panel anim-in delay-08">
             <div class="panel-header">{{ t('mfa.panel.header') }}</div>
 
             <form method="post" action="/admin/login/mfa" novalidate>

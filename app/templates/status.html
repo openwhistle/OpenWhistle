@@ -18,10 +18,6 @@
 .st-fw600 { font-weight: 600; }
 .st-muted-italic { color: var(--muted); font-style: italic; }
 .st-muted-text { color: var(--muted); }
-.st-delay-03 { animation-delay: 0.03s; }
-.st-delay-04 { animation-delay: 0.04s; }
-.st-delay-05 { animation-delay: 0.05s; }
-.st-delay-10 { animation-delay: 0.1s; }
 .st-footer-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--hairline); text-align: center; }
 .st-footer-text { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.75rem; }
 </style>{% endblock %}
@@ -218,7 +214,7 @@
     </div>
 
     {# Progress indicator #}
-    <div class="panel status-progress-panel st-delay-03">
+    <div class="panel status-progress-panel delay-03">
         <div class="panel-header">{{ t('status.progress.title') }}</div>
         <div class="progress-steps">
             {% set steps = ['received', 'in_review', 'pending_feedback', 'closed'] %}
@@ -242,7 +238,7 @@
 
     {# Attachments #}
     {% if report.attachments %}
-    <div class="panel st-delay-04">
+    <div class="panel delay-04">
         <div class="panel-header">{{ t('status.attachments.title') }}</div>
         <ul class="attachment-items">
             {% for att in report.attachments %}
@@ -259,14 +255,14 @@
 
     {# Case closed notice #}
     {% if report.status.value == 'closed' %}
-    <div class="alert alert-info st-delay-04" role="alert">
+    <div class="alert alert-info delay-04" role="alert">
         <div class="alert-title">{{ t('status.closed.title') }}</div>
         {{ t('status.closed.body') }}
     </div>
     {% endif %}
 
     {# Communication thread #}
-    <div class="panel st-delay-05">
+    <div class="panel delay-05">
         <div class="panel-header">{{ t('status.thread.title') }}</div>
 
         {% if report.messages %}
@@ -288,7 +284,7 @@
     </div>
 
     {% if report.status.value != 'closed' %}
-    <div class="panel st-delay-10">
+    <div class="panel delay-10">
         <div class="panel-header">{{ t('status.reply.title') }}</div>
         <form method="post" action="/reply">
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
