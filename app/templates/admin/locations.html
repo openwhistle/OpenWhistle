@@ -4,12 +4,10 @@
 
 {% block styles %}
 <style nonce="{{ request.state.csp_nonce }}">
-.loc-grid { display:grid;grid-template-columns:1fr 2fr;gap:1.25rem;align-items:start; }
 .loc-row-inactive { opacity:0.5; }
 .loc-name { font-weight:600; }
 .loc-code { font-size:0.82rem; }
 .loc-desc { font-size:0.85rem;color:var(--muted); }
-.loc-inline-form { display:inline; }
 .loc-empty { color:var(--muted);padding:1rem 0; }
 </style>
 {% endblock %}
@@ -35,7 +33,7 @@
         <h1>{{ t('admin.locations.title') }}</h1>
     </div>
 
-    <div class="loc-grid">
+    <div class="admin-split-grid">
 
         <div class="panel">
             <div class="panel-header">{{ t('admin.locations.add.header') }}</div>
@@ -100,12 +98,12 @@
                             </td>
                             <td>
                                 {% if loc.is_active %}
-                                <form method="post" action="/admin/locations/{{ loc.id }}/deactivate" class="loc-inline-form">
+                                <form method="post" action="/admin/locations/{{ loc.id }}/deactivate" class="inline-form">
                                     <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                                     <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.locations.deactivate') }}</button>
                                 </form>
                                 {% else %}
-                                <form method="post" action="/admin/locations/{{ loc.id }}/reactivate" class="loc-inline-form">
+                                <form method="post" action="/admin/locations/{{ loc.id }}/reactivate" class="inline-form">
                                     <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                                     <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.locations.reactivate') }}</button>
                                 </form>

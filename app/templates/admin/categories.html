@@ -4,13 +4,11 @@
 
 {% block styles %}
 <style nonce="{{ request.state.csp_nonce }}">
-.cat-grid { display:grid;grid-template-columns:1fr 2fr;gap:1.25rem;align-items:start; }
 .cat-row-inactive { opacity:0.5; }
 .cat-slug { font-size:0.82rem; }
 .cat-label-en { font-size:0.9rem; }
 .cat-label-de { font-size:0.9rem;color:var(--muted); }
 .cat-sort { font-size:0.82rem;color:var(--muted);text-align:center; }
-.cat-inline-form { display:inline; }
 .cat-empty { color:var(--muted);padding:1rem 0; }
 </style>
 {% endblock %}
@@ -36,7 +34,7 @@
         <h1>{{ t('admin.categories.title') }}</h1>
     </div>
 
-    <div class="cat-grid">
+    <div class="admin-split-grid">
 
         {# Add category form #}
         <div class="panel">
@@ -105,12 +103,12 @@
                             <td>
                                 {% if not cat.is_default %}
                                 {% if cat.is_active %}
-                                <form method="post" action="/admin/categories/{{ cat.id }}/deactivate" class="cat-inline-form">
+                                <form method="post" action="/admin/categories/{{ cat.id }}/deactivate" class="inline-form">
                                     <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                                     <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.categories.deactivate') }}</button>
                                 </form>
                                 {% else %}
-                                <form method="post" action="/admin/categories/{{ cat.id }}/reactivate" class="cat-inline-form">
+                                <form method="post" action="/admin/categories/{{ cat.id }}/reactivate" class="inline-form">
                                     <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                                     <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.categories.reactivate') }}</button>
                                 </form>
