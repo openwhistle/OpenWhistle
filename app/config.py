@@ -98,7 +98,7 @@ class Settings(BaseSettings):
     oidc_redirect_uri: str = ""
 
     # Branding (optional — companies can override defaults)
-    brand_primary_color: str = "#0f4c81"
+    brand_primary_color: str = "#0e7c5a"
     brand_secondary_color: str = "#b07230"
     brand_logo_url: str = ""
 
