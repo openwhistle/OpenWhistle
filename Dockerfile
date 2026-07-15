@@ -23,24 +23,22 @@ RUN uv venv /venv && \
     . /venv/bin/activate && \
     uv pip install --no-cache ".[dev]"
 
-# Download and bundle self-hosted fonts
+# Download and bundle self-hosted fonts (not committed — see .gitignore).
+# Design system "Signal" uses exactly two OFL faces: Sora + JetBrains Mono.
 RUN mkdir -p /build/fonts && \
-    # JetBrains Mono (OFL License)
+    # JetBrains Mono (OFL) — identifiers: case numbers, PINs, timestamps
     curl -L "https://github.com/JetBrains/JetBrainsMono/releases/download/v2.304/JetBrainsMono-2.304.zip" \
          -o /tmp/jbmono.zip && \
-    unzip -j /tmp/jbmono.zip "fonts/webfonts/*.woff2" -d /build/fonts/ && \
-    # Spectral (OFL License)
-    curl -L "https://cdn.jsdelivr.net/npm/@fontsource/spectral@5.1.1/files/spectral-latin-400-normal.woff2" \
-         -o /build/fonts/spectral-latin-400-normal.woff2 && \
-    curl -L "https://cdn.jsdelivr.net/npm/@fontsource/spectral@5.1.1/files/spectral-latin-600-normal.woff2" \
-         -o /build/fonts/spectral-latin-600-normal.woff2 && \
-    curl -L "https://cdn.jsdelivr.net/npm/@fontsource/spectral@5.1.1/files/spectral-latin-400-italic.woff2" \
-         -o /build/fonts/spectral-latin-400-italic.woff2 && \
-    # Source Serif 4 (OFL License)
-    curl -L "https://cdn.jsdelivr.net/npm/@fontsource/source-serif-4@5.1.1/files/source-serif-4-latin-400-normal.woff2" \
-         -o /build/fonts/source-serif-4-latin-400-normal.woff2 && \
-    curl -L "https://cdn.jsdelivr.net/npm/@fontsource/source-serif-4@5.1.1/files/source-serif-4-latin-700-normal.woff2" \
-         -o /build/fonts/source-serif-4-latin-700-normal.woff2 && \
+    unzip -j /tmp/jbmono.zip "fonts/webfonts/JetBrainsMono-Regular.woff2" "fonts/webfonts/JetBrainsMono-Bold.woff2" -d /build/fonts/ && \
+    # Sora (OFL) — display + body
+    curl -L "https://cdn.jsdelivr.net/npm/@fontsource/sora@5.1.1/files/sora-latin-400-normal.woff2" \
+         -o /build/fonts/sora-latin-400-normal.woff2 && \
+    curl -L "https://cdn.jsdelivr.net/npm/@fontsource/sora@5.1.1/files/sora-latin-500-normal.woff2" \
+         -o /build/fonts/sora-latin-500-normal.woff2 && \
+    curl -L "https://cdn.jsdelivr.net/npm/@fontsource/sora@5.1.1/files/sora-latin-600-normal.woff2" \
+         -o /build/fonts/sora-latin-600-normal.woff2 && \
+    curl -L "https://cdn.jsdelivr.net/npm/@fontsource/sora@5.1.1/files/sora-latin-700-normal.woff2" \
+         -o /build/fonts/sora-latin-700-normal.woff2 && \
     rm -f /tmp/jbmono.zip
 
 # ─── Stage 2: production image ────────────────────────────────────────────────

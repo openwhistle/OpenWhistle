@@ -1,29 +1,36 @@
 /* Self-hosted fonts - no external CDN calls (DSGVO compliance) */
 
-/* DM Sans - unified display and body typeface */
+/* Sora - display and body typeface (design system: "Signal") */
 @font-face {
-    font-family: 'DM Sans';
-    src: url('/static/fonts/dm-sans-latin-400-normal.woff2') format('woff2');
+    font-family: 'Sora';
+    src: url('/static/fonts/sora-latin-400-normal.woff2') format('woff2');
     font-weight: 400;
     font-style: normal;
     font-display: swap;
 }
 @font-face {
-    font-family: 'DM Sans';
-    src: url('/static/fonts/dm-sans-latin-500-normal.woff2') format('woff2');
+    font-family: 'Sora';
+    src: url('/static/fonts/sora-latin-500-normal.woff2') format('woff2');
     font-weight: 500;
     font-style: normal;
     font-display: swap;
 }
 @font-face {
-    font-family: 'DM Sans';
-    src: url('/static/fonts/dm-sans-latin-600-normal.woff2') format('woff2');
+    font-family: 'Sora';
+    src: url('/static/fonts/sora-latin-600-normal.woff2') format('woff2');
     font-weight: 600;
     font-style: normal;
     font-display: swap;
 }
+@font-face {
+    font-family: 'Sora';
+    src: url('/static/fonts/sora-latin-700-normal.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
 
-/* JetBrains Mono - for codes, PINs, case numbers */
+/* JetBrains Mono - identifiers: case numbers, PINs, timestamps, eyebrows */
 @font-face {
     font-family: 'JetBrains Mono';
     src: url('/static/fonts/JetBrainsMono-Regular.woff2') format('woff2');
