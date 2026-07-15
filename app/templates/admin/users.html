@@ -4,7 +4,6 @@
 
 {% block styles %}
 <style nonce="{{ request.state.csp_nonce }}">
-    .usr-layout { display:grid;grid-template-columns:1fr 2fr;gap:1.25rem;align-items:start; }
     .usr-note { margin-bottom:1rem;font-size:0.82rem; }
     .usr-row-inactive { opacity:0.5; }
     .usr-username { font-weight:600; }
@@ -39,7 +38,7 @@
         <h1>{{ t('admin.users.title') }}</h1>
     </div>
 
-    <div class="usr-layout">
+    <div class="admin-split-grid">
 
         {# Add new user form #}
         <div class="panel">

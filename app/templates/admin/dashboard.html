@@ -8,7 +8,6 @@
 .dash-role-badge { margin-left:0.5rem;font-size:0.7rem; }
 .dash-alert-mb { margin-bottom:1.25rem; }
 .dash-shrink0 { flex-shrink:0; }
-.dash-stats-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:2rem; }
 .dash-nowrap { white-space:nowrap; }
 .dash-category-cell { font-size:0.85rem;color:var(--body-text); }
 .dash-date-cell { font-size:0.78rem;color:var(--muted); }
@@ -97,7 +96,7 @@
     {% endif %}
 
     {# Summary stats cards - clickable filters #}
-    <div class="dash-stats-grid">
+    <div class="stats-row">
         {% for label_key, status_val, cls in [
             ('admin.stats.received',          'received',          'badge-received'),
             ('admin.stats.in_review',         'in_review',         'badge-in_review'),

@@ -2,7 +2,6 @@
 
 {% block styles %}
 <style nonce="{{ request.state.csp_nonce }}">
-.stat-kpi-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:2rem; }
 .stat-kpi-label { font-size:0.8rem;color:var(--muted);margin-top:0.25rem; }
 .stat-two-col { display:grid;grid-template-columns:1fr 1fr;gap:1.25rem; }
 .stat-flex-col-gap { display:flex;flex-direction:column;gap:0.75rem; }
@@ -40,7 +39,7 @@
     </div>
 
     {# Top-line KPIs #}
-    <div class="stat-kpi-grid">
+    <div class="stats-row">
         <div class="stat-card" data-delay="0">
             <div class="stat-number">{{ stats.total_reports }}</div>
             <div class="stat-kpi-label">{{ t('admin.stats.total_reports') }}</div>

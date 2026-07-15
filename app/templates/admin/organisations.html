@@ -4,7 +4,6 @@
 
 {% block styles %}
 <style nonce="{{ request.state.csp_nonce }}">
-.org-inline-form { display:inline; }
 </style>
 {% endblock %}
 
@@ -87,7 +86,7 @@
                         {% if org.slug != 'default' and org.is_active %}
                         <form method="post"
                               action="/admin/organisations/{{ org.id }}/deactivate"
-                              class="org-inline-form"
+                              class="inline-form"
                               data-confirm="Deactivate {{ org.name }}?">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                             <button type="submit" class="btn btn--danger btn--sm">
