@@ -62,14 +62,14 @@
     </div>
 
     {% if update.enabled and update.status == 'update_available' and update.html_url %}
-    <div class="info-banner info-banner--info" role="note">
+    <div class="alert alert-info" role="note">
         {{ t('admin.system.update_available_notice', latest=update.latest) }}
         <a href="{{ update.html_url }}" rel="noopener noreferrer" target="_blank">{{ t('admin.system.view_release') }}</a>
     </div>
     {% endif %}
 
     {% if not update.enabled %}
-    <div class="info-banner info-banner--info" role="note">
+    <div class="alert alert-info" role="note">
         {{ t('admin.system.disabled_notice.html') }}
     </div>
     {% elif update.checked_at %}
@@ -136,7 +136,7 @@
 
     <section class="card" aria-labelledby="heading-config">
         <h2 id="heading-config">{{ t('admin.system.config.title') }}</h2>
-        <table class="env-table" role="table">
+        <table role="table">
             <thead>
                 <tr>
                     <th scope="col">{{ t('admin.retention.config.col.variable') }}</th>

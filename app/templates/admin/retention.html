@@ -54,7 +54,7 @@
     </div>
 
     {% if not retention_enabled %}
-    <div class="info-banner info-banner--info" role="note">
+    <div class="alert alert-info" role="note">
         {{ t('admin.retention.disabled_notice.html') }}
     </div>
     {% endif %}
@@ -90,7 +90,7 @@
 
     <section class="card" aria-labelledby="heading-config">
         <h2 id="heading-config">{{ t('admin.retention.config.title') }}</h2>
-        <table class="env-table" role="table">
+        <table role="table">
             <thead>
                 <tr>
                     <th scope="col">{{ t('admin.retention.config.col.variable') }}</th>
