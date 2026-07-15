@@ -8,7 +8,6 @@
 .setup-manual-text { font-size:0.875rem;text-align:center;color:var(--body-text); }
 .setup-secret-wrap { text-align:center;margin-top:0.5rem; }
 .setup-secret { font-size:0.9rem;user-select:all;word-break:break-all; }
-.setup-panel-delay { animation-delay:0.05s; }
 .setup-totp-input { font-size:1.4rem;letter-spacing:0.3em;text-align:center;padding-bottom:0.6rem; }
 </style>
 {% endblock %}
@@ -54,7 +53,7 @@
         </div>
     </div>
 
-    <div class="panel setup-panel-delay">
+    <div class="panel delay-05">
         <div class="panel-header">{{ t('wizard.step2.header') }}</div>
 
         <form method="post" action="/setup" novalidate>

@@ -9,8 +9,7 @@
     .mfas-header { margin-bottom: 2rem; animation: fadeSlideIn 0.5s ease both; }
     .mfas-title { font-size: clamp(1.5rem, 4vw, 2.25rem); }
     .mfas-subtitle { font-size: 0.88rem; margin-top: 0.5rem; }
-    .mfas-panel-1 { animation: fadeSlideIn 0.5s 0.08s ease both; opacity: 0; animation-fill-mode: forwards; }
-    .mfas-panel-2 { animation: fadeSlideIn 0.5s 0.18s ease both; opacity: 0; animation-fill-mode: forwards; margin-top: 1.25rem; }
+    .mfas-panel-2 { margin-top: var(--space-5); }
     .mfas-step-body { font-size: 0.88rem; margin-bottom: 1rem; }
     .mfas-qr-wrap { text-align: center; margin: 1.5rem 0; }
     .mfas-qr-img { border: 4px solid var(--border); border-radius: 8px; image-rendering: pixelated; }
@@ -39,7 +38,7 @@
         <div class="alert alert-error" role="alert">{{ error }}</div>
         {% endif %}
 
-        <div class="panel mfas-panel-1">
+        <div class="panel anim-in delay-08">
             <div class="panel-header">{{ t('mfa.setup.step1.header') }}</div>
             <p class="mfas-step-body">{{ t('mfa.setup.step1.body') }}</p>
 
@@ -63,7 +62,7 @@
             </details>
         </div>
 
-        <div class="panel mfas-panel-2">
+        <div class="panel anim-in delay-18 mfas-panel-2">
             <div class="panel-header">{{ t('mfa.setup.step2.header') }}</div>
             <p class="mfas-step-body">{{ t('mfa.setup.step2.body') }}</p>
 
