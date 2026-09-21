@@ -167,6 +167,48 @@ def test_confidential_submission_full_wizard(page: Page, base_url: str) -> None:
     )
 
 
+def test_back_from_empty_description_does_not_validate(page: Page, base_url: str) -> None:
+    """Back navigation from the description step works even when the textarea is empty.
+
+    Regression: the double-submit guard disabled the form's first submit button
+    (which is "Back") while the entry list was still being built, so action=back
+    never reached the server and the step was validated as a "Next".
+    """
+    page.goto(f"{base_url}/submit")
+    page.wait_for_load_state("networkidle")
+
+    # Step 1: anonymous mode
+    page.locator('label[for="mode-anonymous"]').click()
+    _advance_step(page)
+
+    # Step 2 (location — conditional): skip if present
+    _skip_location_if_present(page)
+
+    # Step 3: category
+    page.wait_for_load_state("networkidle")
+    category_select = page.locator('select[name="category"]')
+    expect(category_select).to_be_visible()
+    for opt in category_select.locator("option").all():
+        val = opt.get_attribute("value") or ""
+        if val:
+            category_select.select_option(val)
+            break
+    _advance_step(page)
+
+    # Step 4: description — leave it empty and go back
+    page.wait_for_load_state("networkidle")
+    expect(page.locator('textarea[name="description"]')).to_be_visible()
+    page.click(_BACK_BTN)
+    page.wait_for_load_state("networkidle")
+
+    # We are back on the category step, with no validation error shown
+    expect(page.locator('select[name="category"]')).to_be_visible()
+    expect(page.locator('textarea[name="description"]')).to_have_count(0)
+    assert page.locator(".alert-error").count() == 0, (
+        f"Validation error shown after clicking Back with an empty description: {page.content()}"
+    )
+
+
 def test_submission_with_file_attachment(page: Page, base_url: str) -> None:
     """Submission with a file attachment shows the filename on the review page."""
     # Minimal valid PDF bytes

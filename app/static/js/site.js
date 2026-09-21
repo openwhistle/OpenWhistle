@@ -237,11 +237,48 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 return;
             }
-            const btn = form.querySelector('[type="submit"]');
+            if (form.dataset.owSubmitting === '1') {
+                e.preventDefault();
+                return;
+            }
+            form.dataset.owSubmitting = '1';
+            // Mark the button that was actually clicked — not the first submit
+            // button in the form, which on the wizard steps is "Back".
+            // Deferred to a macrotask: the entry list is built after this
+            // handler returns and disabled controls are excluded from it, so
+            // disabling the submitter synchronously would drop its name/value
+            // (e.g. action=back, making the server treat "Back" as "Next").
+            const btn = e.submitter || form.querySelector('[type="submit"]');
             if (btn) {
-                btn.disabled = true;
-                btn.textContent = 'Please wait…';
+                btn.dataset.owLabel = btn.tagName === 'INPUT' ? btn.value : btn.textContent;
+                setTimeout(() => {
+                    btn.disabled = true;
+                    if (btn.tagName === 'INPUT') {
+                        btn.value = 'Please wait…';
+                    } else {
+                        btn.textContent = 'Please wait…';
+                    }
+                }, 0);
             }
         });
+    });
+});
+
+// Restoring a page from the back/forward cache keeps the DOM as it was when the
+// user navigated away — including the guard flag and the disabled "Please wait…"
+// button. Undo both so the form is usable again after a browser Back.
+window.addEventListener('pageshow', (e) => {
+    if (!e.persisted) return;
+    document.querySelectorAll('form[data-ow-submitting="1"]').forEach((form) => {
+        delete form.dataset.owSubmitting;
+    });
+    document.querySelectorAll('[data-ow-label]').forEach((btn) => {
+        btn.disabled = false;
+        if (btn.tagName === 'INPUT') {
+            btn.value = btn.dataset.owLabel;
+        } else {
+            btn.textContent = btn.dataset.owLabel;
+        }
+        delete btn.dataset.owLabel;
     });
 });
