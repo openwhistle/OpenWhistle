@@ -7,6 +7,20 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- **Dependencies are locked in `uv.lock`.** The image, CI and the E2E/perf
+  workflows install exactly the locked versions; CI fails if the lock is out
+  of date. Dependabot now uses the `uv` ecosystem — the old `pip` entry only
+  saw `>=` floors and had never opened a pull request.
+- **The production image carries runtime dependencies only** (no pytest, mypy
+  or ruff), uv is taken from its official image (0.6.0 → 0.12.18), and the
+  fonts are copied from `docs/fonts` instead of downloaded unverified at build
+  time.
+- `python-jose` replaced by PyJWT, which drops `ecdsa` (PYSEC-2026-1325, no
+  fix planned). Unused `authlib` and `aiofiles` removed; `cryptography` is now
+  a declared dependency instead of an accidental transitive one.
+
 ### Security
 
 - **Attachments no longer carry identifying metadata.** EXIF/GPS and camera

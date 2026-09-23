@@ -4,7 +4,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 import bcrypt
-from jose import JWTError, jwt
+import jwt
 from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -51,7 +51,7 @@ def decode_access_token(token: str) -> str | None:
         payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
         sub: str | None = payload.get("sub")
         return sub
-    except JWTError:
+    except jwt.PyJWTError:
         return None
 
 
@@ -63,7 +63,7 @@ def decode_access_token_exp(token: str) -> datetime | None:
         if exp is None:
             return None
         return datetime.fromtimestamp(int(exp), tz=UTC)
-    except JWTError:
+    except jwt.PyJWTError:
         return None
 
 

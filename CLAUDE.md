@@ -47,8 +47,12 @@ Folgende Fakten sind festgelegt:
 - Minimum test coverage is **90 %**. This is enforced via `--cov-fail-under=90` in `pyproject.toml`
   and will fail CI if coverage drops below the threshold.
 - When adding new features, always add corresponding tests so coverage stays at or above 90 %.
-- Run the full suite inside Docker (`docker run --network openwhistle_default ...`) to get accurate
-  DB-backed numbers; running locally without a DB only measures unit tests and will undercount.
+- Run the full suite against a real PostgreSQL and Redis (e.g. two throwaway containers) with
+  `uv sync --extra dev` and `DATABASE_URL`/`REDIS_URL`/`SECRET_KEY` set, as CI does. Without a DB
+  the DB-backed tests error and coverage undercounts. The production image carries no test
+  dependencies, so tests cannot run inside it.
+- Dependencies are locked in `uv.lock` (CI runs `uv lock --check`); after editing
+  `pyproject.toml`, run `uv lock` and commit both.
 
 ## Release documentation checklist
 

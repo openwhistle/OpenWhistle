@@ -22,8 +22,7 @@ dependencies = [
     "redis[hiredis]>=8.0.0",
 
     # Auth
-    "authlib>=1.7.2",
-    "python-jose[cryptography]>=3.5.0",
+    "pyjwt>=2.15.0",
     "bcrypt>=5.0.0",
     "pyotp>=2.10.0",
     "qrcode[pil]>=8.2",
@@ -33,11 +32,13 @@ dependencies = [
 
     # Templates
     "jinja2>=3.1.6",
-    "aiofiles>=25.1.0",
 
     # Utilities
     "httpx>=0.28.1",
     "aiosmtplib>=5.1.0",
+
+    # Envelope encryption of report fields and attachments (Fernet, HKDF)
+    "cryptography>=50.0.1",
 
     # PDF generation (pure Python, no system packages required)
     "fpdf2>=2.8.7",
@@ -67,7 +68,6 @@ dev = [
     "pytest-cov>=7.1.0",
     "mypy>=2.2.0",
     "ruff>=0.15.0",
-    "types-aiofiles>=25.1.0",
 ]
 e2e = [
     "playwright>=1.61.0",
@@ -100,8 +100,6 @@ module = [
     "pyotp.*",
     "qrcode.*",
     "bcrypt.*",
-    "jose.*",
-    "authlib.*",
     "aiosmtplib.*",
     "boto3.*",
     "botocore.*",
