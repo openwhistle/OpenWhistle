@@ -17,4 +17,5 @@ tests
 docker-compose*.yml
 .github
 docs
+!docs/fonts
 nginx

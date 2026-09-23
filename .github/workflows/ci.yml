@@ -21,10 +21,16 @@ jobs:
           python-version: "3.14"
 
       - name: Install uv
-        run: pip install uv==0.6.0
+        run: pip install uv==0.12.18
 
       - name: Install dependencies
-        run: uv pip install --system ".[dev]"
+        # Exactly the versions in uv.lock, so CI tests what the image ships.
+        run: |
+          uv export --frozen --extra dev --no-emit-project -o /tmp/requirements.txt
+          uv pip install --system -r /tmp/requirements.txt
+
+      - name: uv.lock matches pyproject.toml
+        run: uv lock --check
 
       - name: Run ruff (linting)
         run: ruff check app/ tests/
@@ -71,10 +77,13 @@ jobs:
           python-version: "3.14"
 
       - name: Install uv
-        run: pip install uv==0.6.0
+        run: pip install uv==0.12.18
 
       - name: Install dependencies
-        run: uv pip install --system -e ".[dev]"
+        run: |
+          uv export --frozen --extra dev --no-emit-project -o /tmp/requirements.txt
+          uv pip install --system -r /tmp/requirements.txt
+          uv pip install --system --no-deps -e .
 
       - name: Run tests
         env:

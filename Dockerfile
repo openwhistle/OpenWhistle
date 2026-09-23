@@ -9,37 +9,17 @@ RUN apk add --no-cache \
     gcc \
     musl-dev \
     libffi-dev \
-    postgresql-dev \
-    curl \
-    unzip
+    postgresql-dev
 
-# Install uv for fast dependency resolution
-RUN pip install --no-cache-dir uv==0.6.0
+# uv from its official image, pinned. Keep it in step with the uv pin in
+# .github/workflows/*.yml.
+COPY --from=ghcr.io/astral-sh/uv:0.12.18 /uv /usr/local/bin/uv
 
-COPY pyproject.toml README.md ./
+COPY pyproject.toml uv.lock ./
 
-# Build venv at /venv so shebangs are correct in the final image
-RUN uv venv /venv && \
-    . /venv/bin/activate && \
-    uv pip install --no-cache ".[dev]"
-
-# Download and bundle self-hosted fonts (not committed — see .gitignore).
-# Design system "Signal" uses exactly two OFL faces: Sora + JetBrains Mono.
-RUN mkdir -p /build/fonts && \
-    # JetBrains Mono (OFL) — identifiers: case numbers, PINs, timestamps
-    curl -L "https://github.com/JetBrains/JetBrainsMono/releases/download/v2.304/JetBrainsMono-2.304.zip" \
-         -o /tmp/jbmono.zip && \
-    unzip -j /tmp/jbmono.zip "fonts/webfonts/JetBrainsMono-Regular.woff2" "fonts/webfonts/JetBrainsMono-Bold.woff2" -d /build/fonts/ && \
-    # Sora (OFL) — display + body
-    curl -L "https://cdn.jsdelivr.net/npm/@fontsource/sora@5.1.1/files/sora-latin-400-normal.woff2" \
-         -o /build/fonts/sora-latin-400-normal.woff2 && \
-    curl -L "https://cdn.jsdelivr.net/npm/@fontsource/sora@5.1.1/files/sora-latin-500-normal.woff2" \
-         -o /build/fonts/sora-latin-500-normal.woff2 && \
-    curl -L "https://cdn.jsdelivr.net/npm/@fontsource/sora@5.1.1/files/sora-latin-600-normal.woff2" \
-         -o /build/fonts/sora-latin-600-normal.woff2 && \
-    curl -L "https://cdn.jsdelivr.net/npm/@fontsource/sora@5.1.1/files/sora-latin-700-normal.woff2" \
-         -o /build/fonts/sora-latin-700-normal.woff2 && \
-    rm -f /tmp/jbmono.zip
+# Runtime dependencies only, exactly as locked. Build the venv at /venv so the
+# shebangs are correct in the final image. The app itself is copied, not installed.
+RUN UV_PROJECT_ENVIRONMENT=/venv UV_PYTHON_DOWNLOADS=never uv sync --frozen --no-dev --no-install-project --no-cache
 
 # ─── Stage 2: production image ────────────────────────────────────────────────
 FROM python:3.14-alpine AS final
@@ -58,13 +38,12 @@ RUN addgroup -S openwhistle && adduser -S openwhistle -G openwhistle
 # Copy virtualenv from builder — shebangs point to /venv (same path)
 COPY --from=builder /venv /venv
 
-# Copy fonts from builder
-COPY --from=builder /build/fonts /app/app/static/fonts/
-
 # Copy application code
 COPY --chown=openwhistle:openwhistle . .
 
-RUN chown -R openwhistle:openwhistle /app/app/static/fonts/
+# Self-hosted fonts (Sora + JetBrains Mono, OFL), committed once in docs/fonts
+# and shared with the public site — no download at build time.
+COPY --chown=openwhistle:openwhistle docs/fonts/*.woff2 /app/app/static/fonts/
 
 # Generate the file-integrity manifest over the exact shipped bytes (after fonts
 # are in place). -B avoids writing .pyc during the walk (PYTHONDONTWRITEBYTECODE

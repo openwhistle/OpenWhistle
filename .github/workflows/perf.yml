@@ -32,10 +32,12 @@ jobs:
           python-version: "3.14"
 
       - name: Install uv
-        run: pip install uv==0.6.0
+        run: pip install uv==0.12.18
 
       - name: Install perf dependencies
-        run: uv pip install --system ".[perf]" pyotp
+        run: |
+          uv export --frozen --extra perf --no-emit-project -o /tmp/requirements.txt
+          uv pip install --system -r /tmp/requirements.txt
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4

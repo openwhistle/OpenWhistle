@@ -14,10 +14,10 @@ from __future__ import annotations
 import re
 import uuid
 
+import jwt
 import pyotp
 import pytest
 from httpx import AsyncClient
-from jose import jwt
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 

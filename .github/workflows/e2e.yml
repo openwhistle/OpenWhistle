@@ -23,11 +23,13 @@ jobs:
           python-version: "3.14"
 
       - name: Install uv
-        run: pip install uv==0.6.0
+        run: pip install uv==0.12.18
 
       - name: Install E2E dependencies
         run: |
-          uv pip install --system -e ".[dev,e2e]"
+          uv export --frozen --extra dev --extra e2e --no-emit-project -o /tmp/requirements.txt
+          uv pip install --system -r /tmp/requirements.txt
+          uv pip install --system --no-deps -e .
           playwright install chromium --with-deps
 
       - name: Set up Docker Buildx
