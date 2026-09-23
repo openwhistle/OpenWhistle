@@ -87,6 +87,9 @@ services:
       POSTGRES_USER: "${POSTGRES_USER}"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
       POSTGRES_DB: "${POSTGRES_DB:-openwhistle}"
+      # postgres:18 defaults PGDATA to /var/lib/postgresql/18/docker and refuses
+      # to start when /var/lib/postgresql/data is mounted without this.
+      PGDATA: /var/lib/postgresql/data
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

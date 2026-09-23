@@ -1,8 +1,8 @@
 name: Cleanup Old Images
 
-# Runs weekly to prevent unbounded growth of sha- tagged images across all
-# three container registries. Keeps the 10 most recent sha- tags everywhere;
-# semver tags and `latest` are never deleted.
+# Runs weekly to prevent unbounded growth of sha- tagged images on Docker Hub
+# and Quay.io. Keeps the 10 most recent sha- tags; semver tags and `latest` are
+# never deleted.
 on:
   schedule:
     - cron: '0 3 * * 0'  # Weekly, Sunday 03:00 UTC
@@ -12,31 +12,10 @@ permissions:
   contents: read
 
 jobs:
-  # ── GHCR ──────────────────────────────────────────────────────────────────
-  # Step 1: delete untagged versions (intermediate per-platform digests).
-  # Step 2: keep only the 10 most recent sha- tagged versions;
-  #         semver tags and `latest` are protected by ignore-versions.
-  cleanup-ghcr:
-    runs-on: ubuntu-latest
-    permissions:
-      packages: write
-    steps:
-      - name: Delete untagged GHCR versions
-        uses: actions/delete-package-versions@v5
-        with:
-          package-name: openwhistle
-          package-type: container
-          delete-only-untagged-versions: true
-          min-versions-to-keep: 0
-
-      - name: Keep only 10 most recent sha- versions in GHCR
-        uses: actions/delete-package-versions@v5
-        with:
-          package-name: openwhistle
-          package-type: container
-          # Covers: latest, 0.1, 0.1.0  (semver tags have no 'v' prefix after metadata-action strips it)
-          ignore-versions: '^(latest|\d+\.\d+)'
-          min-versions-to-keep: 10
+  # GHCR is deliberately not cleaned: a multi-arch tag points at untagged
+  # per-platform manifests, and every "delete untagged / keep N versions" rule
+  # deletes those children, leaving the tag unpullable ("manifest unknown").
+  # This broke ghcr.io/openwhistle/openwhistle:1.3.0. Public GHCR storage is free.
 
   # ── Docker Hub + Quay.io ──────────────────────────────────────────────────
   # List all sha- tags sorted newest-first, skip the first 10, delete the rest.

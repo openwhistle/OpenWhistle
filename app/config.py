@@ -124,7 +124,7 @@ class Settings(BaseSettings):
 
     # Data-retention policy (GDPR Art. 5 storage limitation)
     retention_enabled: bool = False
-    retention_days: int = 1095  # 3 years — HinSchG §12 Abs. 3 minimum
+    retention_days: int = 1095  # 3 years — HinSchG §11 Abs. 5 deletion deadline
 
     # Multi-tenancy
     multi_tenancy_enabled: bool = False

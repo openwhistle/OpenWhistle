@@ -26,6 +26,7 @@ from app.models.report import (
     SubmissionMode,
 )
 from app.models.user import AdminUser
+from app.services.attachment import delete_stored_objects, stored_object_keys
 from app.services.auth import hash_pin, verify_pin
 from app.services.pin import generate_case_number, generate_pin
 
@@ -390,8 +391,10 @@ async def get_report_by_case_number(db: AsyncSession, case_number: str) -> Repor
 
 
 async def delete_report(db: AsyncSession, report: Report) -> None:
+    keys = await stored_object_keys(db, [report.id])
     await db.delete(report)
     await db.commit()
+    await delete_stored_objects(keys)
 
 
 # ── 4-eyes deletion ────────────────────────────────────────────────
@@ -430,8 +433,10 @@ async def confirm_deletion(
     deletion_request.confirmed_by_username = confirmer.username
     deletion_request.confirmed_at = datetime.now(UTC)
     await db.flush()
+    keys = await stored_object_keys(db, [report.id])
     await db.delete(report)
     await db.commit()
+    await delete_stored_objects(keys)
 
 
 # ── Case linking ───────────────────────────────────────────────────

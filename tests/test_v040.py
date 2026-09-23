@@ -162,8 +162,15 @@ class TestMultiStepSubmission:
         assert len(pin) > 10
 
     async def test_submit_restart(self, client: AsyncClient) -> None:
-        resp = await client.post("/submit/restart")
+        csrf = (await client.get("/submit")).cookies.get("ow_csrf")
+        resp = await client.post("/submit/restart", data={"csrf_token": csrf})
         assert resp.status_code == 200
+
+    async def test_submit_restart_requires_csrf(self, client: AsyncClient) -> None:
+        resp = await client.post(
+            "/submit/restart", data={"csrf_token": "forged"}, follow_redirects=False
+        )
+        assert resp.status_code == 403
 
 
 async def _do_full_anonymous_submit(client: AsyncClient) -> tuple[str, str]:

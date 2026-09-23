@@ -1,4 +1,4 @@
-"""Audit log service — records every admin action for HinSchG §12 compliance."""
+"""Audit log service — records every admin action for HinSchG §11 compliance."""
 
 from __future__ import annotations
 

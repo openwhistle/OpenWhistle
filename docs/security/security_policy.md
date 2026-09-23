@@ -145,7 +145,7 @@ All report data is **Restricted** and subject to the controls in section 4.
 | GDPR Art. 25 | Data protection by design | No IP logging, anonymity-first architecture |
 | GDPR Art. 32 | Security of processing | Encryption at rest and in transit, MFA |
 | HinSchG §9 | Confidentiality obligation | Role-based access, TOTP MFA |
-| HinSchG §12 Abs. 3 | 3-year documentation minimum | Default `RETENTION_DAYS=1095` |
+| HinSchG §11 Abs. 5 | Deletion 3 years after the procedure ends | Default `RETENTION_DAYS=1095` |
 | HinSchG §16 | Telephone channel requirement | Admin guidance at `/admin/telephone-channel` |
 
 ---
