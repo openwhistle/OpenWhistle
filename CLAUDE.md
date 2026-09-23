@@ -26,7 +26,7 @@ Folgende Fakten sind festgelegt:
 - Es wird für jede Version ein Changelog in der Datei "CHANGELOG.md" geschrieben
 - Es soll eine Live Demo der Software unter der URL "<https://demo.openwhistle.net>" geben.
 - Für die Demo sollen die Zugangsdaten Benutzername und Passwort "demo" sein.
-- Die Demo wird automatisch jede Stunde geleert und neu gestartet.
+- Die Demo wird automatisch alle 6 Stunden geleert und neu gestartet.
 - Es gibt eine Website "openwhistle.net", die aktuell auf die GitHub Page weiterleitet. Zukünftig soll dort eine GitHub Page aus dem Repository laufen, wo Informationen über OpenWhistle stehen und auch die Dokumentation gehostet wird.
 - Wichtig ist, dass der Whistleblower geschützt wird und sogar keine Logs über seine IP-Adresse vorhanden sind. So kann z.B. ein Mitarbeiter eines Unternehmens geschützt sein, der im Büro eine Nachricht verschickt.
 - Das ganze Projekt wird in der Freizeit entwickelt und es kann gespendet werden.
@@ -37,7 +37,9 @@ Folgende Fakten sind festgelegt:
 - Du hast Zugriff auf GitHub über die GitHub CLI
 - Markdown Dokumente müssen nach markdownlint Vorgaben erstellt werden
 - Documentation in `docs/docs.html`, `README.md`, and `docker-compose.prod.yml` must always be kept in sync. When adding or renaming environment variables, update ALL locations in the same commit.
-- The demo at https://demo.openwhistle.net is live and hosted on Hetzner (root01xvp.wdkro.de) via Ansible. It resets hourly.
+- The demo at https://demo.openwhistle.net is live and hosted on Hetzner (root01xvp.wdkro.de) via Ansible. It runs
+  `ghcr.io/openwhistle/openwhistle:edge` and is reset every 6 hours by a Semaphore job that recreates the container
+  with a fresh pull — that reset is also the only thing that updates it (Watchtower does not poll).
 - All HTML files in `docs/` must use self-hosted fonts from `docs/fonts/` — never Google Fonts CDN or any other external font CDN.
 
 ## Test coverage

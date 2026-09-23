@@ -133,7 +133,7 @@ A live demo is available at **[demo.openwhistle.net](https://demo.openwhistle.ne
 | Admin | `demo` | `demo` | `000000` |
 
 Demo case numbers and PINs are shown after logging in to the demo admin account.
-The demo resets automatically every hour.
+The demo resets automatically every 6 hours.
 
 ---
 
