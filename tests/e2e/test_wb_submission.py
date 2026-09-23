@@ -12,6 +12,7 @@ Navigation: each step has a "Next" button (button[type="submit"][name="action"][
 """
 from __future__ import annotations
 
+import io
 import re
 
 import pytest
@@ -211,8 +212,14 @@ def test_back_from_empty_description_does_not_validate(page: Page, base_url: str
 
 def test_submission_with_file_attachment(page: Page, base_url: str) -> None:
     """Submission with a file attachment shows the filename on the review page."""
-    # Minimal valid PDF bytes
-    fake_pdf = b"%PDF-1.4\n1 0 obj\n<<>>\nendobj\n%%EOF"
+    # A parseable PDF: uploads that cannot be stripped of metadata are refused.
+    from pypdf import PdfWriter
+
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    buf = io.BytesIO()
+    writer.write(buf)
+    fake_pdf = buf.getvalue()
 
     page.goto(f"{base_url}/submit")
     page.wait_for_load_state("networkidle")

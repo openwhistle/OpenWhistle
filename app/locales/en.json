@@ -346,6 +346,7 @@
   "submit.step.location.none": "No location specified",
   "submit.step.category.hint": "Select the category that best describes the violation you are reporting.",
   "submit.step.attachments.info": "Attach any supporting evidence. This step is optional. You may click Next to skip.",
+  "submit.step.attachments.privacy": "Before your files are stored, we remove hidden details that could identify you: location and camera data in photos, the author in PDFs and Word/Excel (.docx/.xlsx) files. Older .doc/.xls files and the visible content of any file are not changed — save them as PDF first if unsure.",
   "submit.step.review.title": "Review Your Submission",
   "submit.step.review.warning.title": "Last chance to review",
   "submit.step.review.warning.body": "Please check all details before submitting. Once submitted, the report cannot be modified.",

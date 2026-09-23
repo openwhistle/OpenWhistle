@@ -75,6 +75,7 @@
   "submit.step.location.none": "Aucun lieu spécifié",
   "submit.step.category.hint": "Sélectionnez la catégorie qui décrit le mieux l'infraction que vous signalez.",
   "submit.step.attachments.info": "Joignez toute preuve à l'appui. Cette étape est facultative. Vous pouvez cliquer sur Suivant pour la passer.",
+  "submit.step.attachments.privacy": "Avant l'enregistrement de vos fichiers, nous supprimons les informations cachées qui pourraient vous identifier : localisation et données d'appareil des photos, auteur des PDF et fichiers Word/Excel (.docx/.xlsx). Les anciens fichiers .doc/.xls et le contenu visible ne sont pas modifiés — en cas de doute, enregistrez-les d'abord en PDF.",
   "submit.step.review.title": "Vérifier votre soumission",
   "submit.step.review.warning.title": "Dernière chance de vérification",
   "submit.step.review.warning.body": "Veuillez vérifier tous les détails avant de soumettre. Une fois soumis, le signalement ne peut plus être modifié.",
