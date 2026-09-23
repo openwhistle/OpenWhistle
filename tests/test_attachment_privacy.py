@@ -143,3 +143,64 @@ async def test_legacy_plaintext_attachment_is_still_readable(db_session: AsyncSe
     db_session.add(att)
     await db_session.commit()
     assert await read_attachment(db_session, att) == b"old"
+
+
+def test_encrypted_pdf_is_refused() -> None:
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    writer.encrypt("pw")
+    buf = io.BytesIO()
+    writer.write(buf)
+    with pytest.raises(MetadataError):
+        strip_metadata("locked.pdf", buf.getvalue())
+
+
+def test_office_zip_bomb_is_refused(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.services import attachment
+
+    monkeypatch.setattr(attachment, "MAX_SIZE_BYTES", 1000)  # bomb threshold: 20 kB
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("word/document.xml", b"0" * 21_000)
+    with pytest.raises(MetadataError):
+        strip_metadata("bomb.docx", buf.getvalue())
+
+
+@pytest.mark.asyncio
+async def test_read_attachment_without_bytes_raises_lookup_error(db_session: AsyncSession) -> None:
+    from app.models.attachment import Attachment
+    from app.services.attachment import read_attachment
+
+    att = Attachment(id=uuid.uuid4(), report_id=uuid.uuid4(), filename="x", content_type="t",
+                     size=0, data=None)
+    with pytest.raises(LookupError):
+        await read_attachment(db_session, att)
+
+
+@pytest.mark.asyncio
+async def test_whistleblower_downloads_decrypted_attachment(
+    client: object, db_session: AsyncSession
+) -> None:
+    from httpx import AsyncClient
+    from redis.asyncio import Redis
+
+    from app.config import settings
+    from app.services.attachment import create_attachments
+    from app.services.report import create_report
+
+    ac: AsyncClient = client  # type: ignore[assignment]
+    report, _ = await create_report(db_session, "financial_fraud", "WB download test.")
+    [att] = await create_attachments(db_session, report, [("n.txt", "text/plain", b"evidence")])
+
+    session_key = uuid.uuid4().hex
+    redis = Redis.from_url(settings.redis_url)
+    await redis.set(f"status-session:{session_key}", str(report.id), ex=60)
+    await redis.aclose()
+
+    ac.cookies.set("ow-status-session", session_key)
+    resp = await ac.get(f"/status/attachments/{att.id}")
+    assert resp.status_code == 200
+    assert resp.content == b"evidence"
+
+    missing = await ac.get(f"/status/attachments/{uuid.uuid4()}")
+    assert missing.status_code == 404
