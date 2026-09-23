@@ -23,6 +23,13 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **Images are built once and published identically to all three
+  registries.** Each platform builds on a native runner (arm64 no longer under
+  QEMU) and is pushed to GHCR by digest; one multi-arch index is then written
+  under every tag to GHCR, Docker Hub and Quay.io. Docker Hub and Quay now get
+  the same provenance, SBOM and cosign signature as GHCR (before: separate
+  unsigned builds). The job fails unless every tag and every platform manifest
+  behind it is pullable. Quay.io stays best-effort with a warning.
 - **Dependencies are locked in `uv.lock`.** The image, CI and the E2E/perf
   workflows install exactly the locked versions; CI fails if the lock is out
   of date. Dependabot now uses the `uv` ecosystem — the old `pip` entry only

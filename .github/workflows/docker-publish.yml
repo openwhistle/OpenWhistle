@@ -1,5 +1,14 @@
 name: Publish Docker Images
 
+# One build, three registries. Each platform is built natively and pushed to
+# GHCR by digest; the merge job then writes the same multi-arch index under
+# every tag to GHCR, Docker Hub and Quay.io, signs it in all three, and proves
+# that every tag and every platform manifest behind it can be pulled.
+#
+#   push to main  -> :edge, :sha-<sha>
+#   tag vX.Y.Z    -> :X.Y.Z, :X.Y, :X, :latest, :sha-<sha>
+#
+# Re-publishing an old release: `gh workflow run docker-publish.yml --ref vX.Y.Z`.
 on:
   push:
     tags:
@@ -7,30 +16,109 @@ on:
     branches:
       - main
   workflow_dispatch:
-    inputs:
-      tag:
-        description: "Image tag to publish"
-        required: true
-        default: "latest"
 
 env:
   IMAGE_NAME: openwhistle
-  # Opt into Node.js 24 for all JS-based actions to suppress the Node 20
-  # deprecation warning that fires on 2026-06-02.
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  GHCR_IMAGE: ghcr.io/openwhistle/openwhistle
+
+# Never cancel a publish half way: a cancelled merge leaves tags pointing at
+# whatever the previous run wrote.
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
-  # ── Always: push to GitHub Container Registry ─────────────────────────────
-  push-ghcr:
-    name: Push to GHCR
-    runs-on: ubuntu-latest
+  # ── Build each platform on a native runner, push by digest only ──────────
+  # Emulating arm64 with QEMU inside one buildx run is several times slower;
+  # arm64 runners are free for public repositories.
+  build:
+    name: Build ${{ matrix.platform }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: write
-      id-token: write
-
     steps:
       - uses: actions/checkout@v7
+
+      - name: Platform suffix
+        id: platform
+        run: echo "suffix=$(echo '${{ matrix.platform }}' | tr '/' '-')" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: OCI labels
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.GHCR_IMAGE }}
+
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=image,name=${{ env.GHCR_IMAGE }},push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ steps.platform.outputs.suffix }}
+          cache-to: type=gha,mode=max,scope=${{ steps.platform.outputs.suffix }}
+          provenance: true
+          sbom: true
+
+      - name: Export digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          mkdir -p /tmp/digests
+          touch "/tmp/digests/${DIGEST#sha256:}"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: digests-${{ steps.platform.outputs.suffix }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  # ── Tag, sign and verify in all three registries ─────────────────────────
+  merge:
+    name: Tag, sign and verify
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+      id-token: write   # cosign keyless signing
+    # The secrets context is not available in a step's `if:`; env is.
+    env:
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      QUAY_TOKEN: ${{ secrets.QUAY_TOKEN }}
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -38,11 +126,14 @@ jobs:
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
 
-      - name: Extract metadata
+      - name: Tags for all registries
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ghcr.io/openwhistle/${{ env.IMAGE_NAME }}
+          images: |
+            ${{ env.GHCR_IMAGE }}
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
+            quay.io/${{ secrets.QUAY_NAMESPACE }}/${{ env.IMAGE_NAME }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -51,143 +142,59 @@ jobs:
             type=edge,branch=main
             type=sha,prefix=sha-
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v4
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
-        id: build-push
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64,linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          provenance: true
-          sbom: true
-
-      - name: Sign images with Cosign
-        env:
-          TAGS: ${{ steps.meta.outputs.tags }}
-          DIGEST: ${{ steps.build-push.outputs.digest }}
-        run: |
-          images=""
-          for tag in ${TAGS}; do
-            images+="${tag}@${DIGEST} "
-          done
-          cosign sign --yes ${images}
-
-  # ── Optional: push to Docker Hub ──────────────────────────────────────────
-  # Activate by adding DOCKERHUB_USERNAME + DOCKERHUB_TOKEN repository secrets.
-  # Secrets are mapped to env vars so they can be checked in step `if` conditions
-  # (the secrets context is not available at step level, but env context is).
-  push-dockerhub:
-    name: Push to Docker Hub
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    env:
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-
-    steps:
-      - uses: actions/checkout@v7
-        if: env.DOCKERHUB_TOKEN != ''
-
-      - name: Set up Docker Buildx
-        if: env.DOCKERHUB_TOKEN != ''
-        uses: docker/setup-buildx-action@v4
-
-      - name: Extract metadata
-        id: meta
-        if: env.DOCKERHUB_TOKEN != ''
-        uses: docker/metadata-action@v6
-        with:
-          images: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') }}
-            type=edge,branch=main
-            type=sha,prefix=sha-
-
-      - name: Log in to Docker Hub
-        if: env.DOCKERHUB_TOKEN != ''
+      - if: env.DOCKERHUB_TOKEN != ''
         uses: docker/login-action@v4
         with:
           registry: docker.io
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
-        if: env.DOCKERHUB_TOKEN != ''
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64,linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  # ── Optional: push to Quay.io ─────────────────────────────────────────────
-  # Activate by adding QUAY_USERNAME + QUAY_TOKEN + QUAY_NAMESPACE secrets.
-  # QUAY_NAMESPACE is the plain account/org name (e.g. jp1337) — separate from
-  # QUAY_USERNAME which may be a robot account containing a + character that is
-  # invalid in image references.
-  push-quay:
-    name: Push to Quay.io
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    env:
-      QUAY_TOKEN: ${{ secrets.QUAY_TOKEN }}
-
-    steps:
-      - uses: actions/checkout@v7
-        if: env.QUAY_TOKEN != ''
-
-      - name: Set up Docker Buildx
-        if: env.QUAY_TOKEN != ''
-        uses: docker/setup-buildx-action@v4
-
-      - name: Extract metadata
-        id: meta
-        if: env.QUAY_TOKEN != ''
-        uses: docker/metadata-action@v6
-        with:
-          images: quay.io/${{ secrets.QUAY_NAMESPACE }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') }}
-            type=edge,branch=main
-            type=sha,prefix=sha-
-
-      - name: Log in to Quay.io
-        if: env.QUAY_TOKEN != ''
+      - if: env.QUAY_TOKEN != ''
         uses: docker/login-action@v4
         with:
           registry: quay.io
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_TOKEN }}
 
-      - name: Build and push
-        if: env.QUAY_TOKEN != ''
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64,linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      # GHCR must succeed. Docker Hub must succeed when configured. Quay is
+      # best-effort: a failure there is a warning, not a lost release.
+      - name: Create, sign and verify the multi-arch index
+        working-directory: /tmp/digests
+        run: |
+          set -euo pipefail
+          sources=$(printf "${GHCR_IMAGE}@sha256:%s " *)
+
+          # Explicit `|| return 1`: under `publish ... || warn`, set -e is off.
+          publish() {
+            local registry="$1" tags first repo digest
+            tags=$(jq -r --arg r "$registry" '.tags[] | select(startswith($r))' <<< "$DOCKER_METADATA_OUTPUT_JSON")
+            [[ -z "$tags" ]] && return 0
+            first=$(head -n1 <<< "$tags")
+            repo="${first%:*}"
+            # shellcheck disable=SC2046,SC2086
+            docker buildx imagetools create $(printf -- '-t %s ' $tags) $sources || return 1
+            digest=$(docker buildx imagetools inspect "$first" --format '{{json .Manifest}}' | jq -r .digest) || return 1
+            cosign sign --yes "${repo}@${digest}" || return 1
+
+            # A 200 on the index proves nothing: v1.3.0's tags answered 200
+            # while every platform manifest behind them had been deleted.
+            for tag in $tags; do
+              for child in $(docker buildx imagetools inspect --raw "$tag" | jq -r '.manifests[].digest'); do
+                docker buildx imagetools inspect --raw "${repo}@${child}" > /dev/null \
+                  || { echo "::error::${tag}: platform manifest ${child} is not pullable"; return 1; }
+              done
+              echo "verified ${tag} -> ${digest}"
+            done
+          }
+
+          publish "ghcr.io"
+          if [[ -n "${DOCKERHUB_TOKEN:-}" ]]; then publish "docker.io"; fi
+          if [[ -n "${QUAY_TOKEN:-}" ]]; then
+            publish "quay.io" || echo "::warning title=Quay.io not updated::GHCR and Docker Hub are published and verified; rerun this job once quay.io is reachable."
+          fi
