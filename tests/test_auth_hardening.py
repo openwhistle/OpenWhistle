@@ -99,3 +99,48 @@ async def test_delete_report_removes_stored_objects(
     await delete_report(db_session, report)
 
     backend.delete.assert_awaited_once_with("k/e.pdf")
+
+
+@pytest.mark.asyncio
+async def test_oidc_login_rejects_deactivated_account(
+    client: AsyncClient, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    sub = f"sub-{uuid.uuid4().hex}"
+    db_session.add(AdminUser(
+        id=uuid.uuid4(), username=f"oidc_{uuid.uuid4().hex[:8]}", oidc_sub=sub,
+        oidc_issuer="https://idp.example.com", totp_secret="JBSWY3DPEHPK3PXP",
+        totp_enabled=True, is_active=False,
+    ))
+    await db_session.commit()
+
+    monkeypatch.setattr(settings, "oidc_enabled", True)
+    userinfo = {"sub": sub, "iss": "https://idp.example.com"}
+    with patch("app.services.oidc.exchange_code", AsyncMock(return_value=userinfo)):
+        resp = await client.get("/admin/oidc/callback?code=c&state=s", follow_redirects=False)
+
+    assert resp.status_code == 401
+    assert 'name="temp_token"' not in resp.text
+
+
+def test_ldaps_verifies_server_certificate() -> None:
+    import ssl
+
+    from app.services.ldap_auth import _make_server
+
+    cfg = MagicMock(ldap_server="ldap.example.com", ldap_port=636, ldap_use_ssl=True)
+    server = _make_server(cfg)
+    assert server.tls.validate == ssl.CERT_REQUIRED  # type: ignore[attr-defined]
+
+
+@pytest.mark.asyncio
+async def test_delete_stored_objects_continues_after_a_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.services import storage
+    from app.services.attachment import delete_stored_objects
+
+    backend = MagicMock(delete=AsyncMock(side_effect=[RuntimeError("boom"), None]))
+    monkeypatch.setattr(storage, "get_storage_backend", lambda: backend)
+    await delete_stored_objects(["a", "b"])
+
+    assert backend.delete.await_count == 2
