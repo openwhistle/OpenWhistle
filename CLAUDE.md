@@ -82,6 +82,21 @@ following. These checks caught v0.3.0 and v0.4.0 gaps retroactively — run them
 - Every significant user-facing feature added in the release must appear in the
   `## ✨ Features` section. One bullet per feature is enough.
 
+### Cutting the release
+
+`main` is protected (required checks, enforced for admins), so the release goes through a PR.
+
+1. On a `release/vX.Y.Z` branch: move `[Unreleased]` in `CHANGELOG.md` to the new version with
+   today's date and add its compare link; bump `app_version` in `app/config.py`, `version` and
+   `appVersion` in `charts/openwhistle/Chart.yaml`, the "Current version" in `docs/docs.html`,
+   `softwareVersion` and the hero version in `docs/index.html`; add the ROADMAP entry.
+   `test_every_published_version_string_matches` fails if any of them disagree.
+2. Open the PR, let the checks pass, merge it.
+3. Tag `vX.Y.Z` on the resulting `main` commit and push the tag.
+4. Read the "Publish Docker Images" run, then prove the images are pullable: for GHCR, Docker Hub
+   and Quay, `skopeo inspect --raw` the tag and every child digest of its index. A 200 on the
+   index alone proves nothing — v1.3.0's tags answered 200 while every child was deleted.
+
 Der Code wird auf GitHub in einem öffentlichen Repository von der Organisation openwhistle gehostet.
 Der Code liegt hier: <https://github.com/openwhistle/OpenWhistle>
 
