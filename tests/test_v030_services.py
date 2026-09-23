@@ -292,7 +292,7 @@ async def test_add_note(db_session: AsyncSession):
     note = await add_note(db_session, report, admin, "Test internal note.")
     assert note.id is not None
     assert note.author_username == admin.username
-    assert note.content == "Test internal note."
+    assert note.content != "Test internal note."  # stored encrypted
     assert note.report_id == report.id
 
 

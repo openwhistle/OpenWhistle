@@ -8,7 +8,7 @@ from fpdf import FPDF
 from fpdf.enums import XPos, YPos
 
 from app.models.report import Report
-from app.services.report import decrypt_report_fields
+from app.services.report import decrypt_note_contents, decrypt_report_fields
 
 
 def generate_report_pdf(report: Report) -> bytes:
@@ -140,14 +140,14 @@ def generate_report_pdf(report: Report) -> bytes:
         )
         pdf.line(10, pdf.get_y(), 200, pdf.get_y())
         pdf.ln(3)
-        for note in report.notes:
+        for note, note_text in zip(report.notes, decrypt_note_contents(report), strict=True):
             pdf.set_font("Helvetica", "B", 9)
             pdf.cell(
                 0, 5, f"{_safe(note.author_username)}  ·  {_fmt_dt(note.created_at)}",
                 new_x=XPos.LMARGIN, new_y=YPos.NEXT,
             )
             pdf.set_font("Helvetica", "", 10)
-            pdf.multi_cell(0, 5, _safe(note.content))
+            pdf.multi_cell(0, 5, _safe(note_text))
             pdf.ln(2)
         pdf.ln(3)
 

@@ -7,6 +7,7 @@ Seeds:
   - Internal notes, case links, and status progression examples
 """
 
+import logging
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -38,6 +39,7 @@ DEMO_TOTP_SECRET = "JBSWY3DPEHPK3PXP"  # noqa: S105  # encodes to static codes f
 
 DEMO_CM_USERNAME = "case_manager"
 DEMO_CM_PASSWORD = "demo"  # noqa: S105
+DEMO_USERNAMES = frozenset({DEMO_ADMIN_USERNAME, DEMO_CM_USERNAME})
 
 # Known demo report access credentials (published in docs/demo)
 DEMO_REPORTS: list[dict[str, Any]] = [
@@ -91,10 +93,31 @@ DEMO_REPORTS: list[dict[str, Any]] = [
 ]
 
 
+async def _is_foreign_database(db: AsyncSession) -> bool:
+    """True for a real installation started with DEMO_MODE=true by mistake:
+    the setup wizard has been completed and there is no demo account.
+
+    A fresh demo database has not completed setup (seeding does that), and a
+    seeded one has the demo admin — visitors adding users must not stop it.
+    """
+    setup_done = await db.scalar(select(SetupStatus.completed).where(SetupStatus.id == 1))
+    has_demo = await db.scalar(
+        select(AdminUser.id).where(AdminUser.username == DEMO_ADMIN_USERNAME).limit(1)
+    )
+    return bool(setup_done) and has_demo is None
+
+
 async def _seed(db: AsyncSession) -> None:
     """Core seeding logic — runs against the given session."""
     from app.config import settings as cfg
     from app.models.organisation import Organisation
+
+    if await _is_foreign_database(db):
+        logging.getLogger(__name__).error(
+            "DEMO_MODE is on, but this database has accounts and no demo account. "
+            "Not seeding demo data. Set DEMO_MODE=false for a real installation."
+        )
+        return
 
     org_row = (await db.execute(
         select(Organisation.id).where(Organisation.slug == cfg.default_org_slug).limit(1)

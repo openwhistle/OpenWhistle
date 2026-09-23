@@ -6,10 +6,13 @@ the correct event loop (avoids the AsyncSessionLocal loop-isolation problem).
 
 from __future__ import annotations
 
+from unittest.mock import AsyncMock
+
 import pytest
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.user import AdminUser
 from app.services.demo_seed import (
     DEMO_ADMIN_USERNAME,
     DEMO_REPORTS,
@@ -225,3 +228,40 @@ async def test_seed_demo_data_wrapper_calls_seed() -> None:
         await seed_demo_data()
 
     mock_seed.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_seed_refuses_a_real_installation(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """DEMO_MODE on a real database must not add demo/demo logins to it."""
+    from app.services import demo_seed
+
+    monkeypatch.setattr(demo_seed, "_is_foreign_database", AsyncMock(return_value=True))
+    before = await db_session.scalar(
+        select(func.count()).select_from(AdminUser).where(AdminUser.username == "case_manager")
+    )
+    await demo_seed._seed(db_session)
+    after = await db_session.scalar(
+        select(func.count()).select_from(AdminUser).where(AdminUser.username == "case_manager")
+    )
+    assert after == before
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("setup_done", "demo_admin_id", "foreign"),
+    [
+        (True, None, True),     # real installation, DEMO_MODE on by mistake
+        (True, "id", False),    # seeded demo database
+        (None, None, False),    # fresh database, setup not run yet
+    ],
+)
+async def test_foreign_database_detection(
+    setup_done: bool | None, demo_admin_id: str | None, foreign: bool
+) -> None:
+    from app.services.demo_seed import _is_foreign_database
+
+    db = AsyncMock()
+    db.scalar = AsyncMock(side_effect=[setup_done, demo_admin_id])
+    assert await _is_foreign_database(db) is foreign

@@ -145,13 +145,15 @@ def test_verify_totp_invalid_code() -> None:
 def test_verify_demo_totp_accepts_000000() -> None:
     from app.services.mfa import verify_demo_totp
 
-    assert verify_demo_totp("000000") is True
+    assert verify_demo_totp("000000", "demo") is True
 
 
 def test_verify_demo_totp_rejects_other() -> None:
     from app.services.mfa import verify_demo_totp
 
-    assert verify_demo_totp("123456") is False
+    assert verify_demo_totp("123456", "demo") is False
+    # Not a seeded demo account: the static code must not work.
+    assert verify_demo_totp("000000", "alice") is False
 
 
 def test_generate_qr_code_base64_returns_string() -> None:

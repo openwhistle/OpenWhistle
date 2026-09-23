@@ -170,6 +170,23 @@ def decrypt_report_fields(report: Report) -> tuple[str, list[str]]:
     return description, msg_contents
 
 
+def decrypt_note_contents(report: Report) -> list[str]:
+    """Return the internal notes' plaintext, in report.notes order.
+
+    Notes written before they were encrypted are returned as stored.
+    """
+    from app.config import settings
+    from app.services.encryption import decrypt_field_safe, make_report_fernet
+
+    if not report.encrypted_dek:
+        return [n.content for n in report.notes]
+    fernet = make_report_fernet(report.encrypted_dek, settings.secret_key)
+    return [
+        dec if (dec := decrypt_field_safe(fernet, n.content)) is not None else n.content
+        for n in report.notes
+    ]
+
+
 async def get_report_by_credentials(
     db: AsyncSession, case_number: str, plain_pin: str
 ) -> Report | None:
@@ -299,7 +316,7 @@ async def add_note(
         report_id=report.id,
         author_id=author.id,
         author_username=author.username,
-        content=content,
+        content=_encrypt_message_content(report, content),
     )
     db.add(note)
     await db.commit()
@@ -361,10 +378,13 @@ async def get_reports_paginated(
     return list(rows_result.scalars().all()), total
 
 
-async def get_report_stats(db: AsyncSession) -> dict[str, int]:
-    result = await db.execute(
-        select(Report.status, func.count(Report.id)).group_by(Report.status)
-    )
+async def get_report_stats(
+    db: AsyncSession, *, scope_org: bool = False, org_id: uuid.UUID | None = None
+) -> dict[str, int]:
+    q = select(Report.status, func.count(Report.id)).group_by(Report.status)
+    if scope_org:
+        q = q.where(Report.org_id == org_id)
+    result = await db.execute(q)
     counts: dict[str, int] = {s.value: 0 for s in ReportStatus}
     for status_val, cnt in result.all():
         if isinstance(status_val, ReportStatus):
@@ -520,14 +540,17 @@ def get_linked_reports(report: Report) -> list[tuple[uuid.UUID, str]]:
 
 # ── Dashboard statistics ────────────────────────────────────────────
 
-async def get_dashboard_stats(db: AsyncSession) -> dict[str, Any]:
+async def get_dashboard_stats(
+    db: AsyncSession, *, scope_org: bool = False, org_id: uuid.UUID | None = None
+) -> dict[str, Any]:
     """Aggregate statistics for the dashboard stats view."""
     from sqlalchemy import case as sa_case
 
-    status_counts = await get_report_stats(db)
+    status_counts = await get_report_stats(db, scope_org=scope_org, org_id=org_id)
+    org_filter = [Report.org_id == org_id] if scope_org else []
 
     cat_result = await db.execute(
-        select(Report.category, func.count(Report.id)).group_by(Report.category)
+        select(Report.category, func.count(Report.id)).where(*org_filter).group_by(Report.category)
     )
     by_category = {row[0]: row[1] for row in cat_result.all()}
 
@@ -548,7 +571,7 @@ async def get_dashboard_stats(db: AsyncSession) -> dict[str, Any]:
                     else_=0,
                 )
             ).label("on_time"),
-        )
+        ).where(*org_filter)
     )
     ack_row = ack_result.one()
     total_reports = ack_row.total or 0
