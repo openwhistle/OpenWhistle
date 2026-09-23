@@ -88,7 +88,7 @@ def test_csp_submit_wizard_navigation(page: Page, base_url: str) -> None:
     page.goto(f"{base_url}/submit")
     page.wait_for_load_state("networkidle")
     # Advancing the first step exercises the rewired navigation handlers.
-    nxt = page.query_selector("button[type='submit'], .btn-primary")
+    nxt = page.query_selector("main button[type='submit']")
     if nxt:
         nxt.click()
         page.wait_for_load_state("networkidle")
