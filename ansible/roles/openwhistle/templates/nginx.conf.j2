@@ -1,5 +1,7 @@
 worker_processes auto;
-error_log /dev/stderr warn;
+# crit only: nginx prefixes request-level errors (429 rate limit, 413 body
+# too large) with the client address, which must never be logged.
+error_log /dev/stderr crit;
 pid /tmp/nginx.pid;
 
 events {
@@ -21,6 +23,10 @@ http {
     # so whistleblower anonymity is preserved while abusive bursts are limited.
     limit_req_zone $binary_remote_addr zone=ow_req:10m rate=10r/s;
     limit_req_status 429;
+    limit_req_log_level info;
+
+    # 5 attachments x 10 MB (app/services/attachment.py) plus form overhead.
+    client_max_body_size 55m;
 
     upstream openwhistle {
         server app:4009;

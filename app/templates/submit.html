@@ -13,6 +13,7 @@
     .sub-file-list { list-style: none; padding: 0; margin: 0; }
     .sub-muted { color: var(--muted); }
     .sub-restart-p { text-align: center; margin-top: 1rem; font-size: 0.8rem; color: var(--muted); }
+    .sub-restart-btn { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-decoration: underline; cursor: pointer; }
 </style>
 {% endblock %}
 
@@ -377,9 +378,10 @@
             </div>
         </form>
 
-        <p class="sub-restart-p">
-            <a href="/submit/restart" class="sub-muted">{{ t('submit.nav.restart') }}</a>
-        </p>
+        <form method="post" action="/submit/restart" class="sub-restart-p">
+            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+            <button type="submit" class="sub-restart-btn">{{ t('submit.nav.restart') }}</button>
+        </form>
         {% endif %}
     </div>
 </div>

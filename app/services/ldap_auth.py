@@ -36,7 +36,9 @@ def _make_server(cfg: object) -> object:
     from app.config import Settings  # noqa: PLC0415
     c: Settings = cfg  # type: ignore[assignment]
 
-    tls = Tls(validate=ssl.CERT_NONE) if c.ldap_use_ssl else None
+    # Verify the directory's certificate against the system CA store; a private
+    # CA can be supplied via the standard SSL_CERT_FILE environment variable.
+    tls = Tls(validate=ssl.CERT_REQUIRED) if c.ldap_use_ssl else None
     return Server(c.ldap_server, port=c.ldap_port, use_ssl=c.ldap_use_ssl, tls=tls)
 
 
@@ -53,6 +55,7 @@ async def authenticate_ldap(username: str, password: str) -> LDAPUserInfo:
 def _authenticate_ldap_sync(username: str, password: str) -> LDAPUserInfo:
     from ldap3 import ALL_ATTRIBUTES, SYNC, Connection  # noqa: PLC0415
     from ldap3.core.exceptions import LDAPException  # noqa: PLC0415
+    from ldap3.utils.conv import escape_filter_chars  # noqa: PLC0415
 
     from app.config import settings
 
@@ -75,7 +78,9 @@ def _authenticate_ldap_sync(username: str, password: str) -> LDAPUserInfo:
         log.error("LDAP service bind failed: %s", exc)
         raise LDAPAuthError("LDAP service bind failed") from exc
 
-    search_filter = settings.ldap_user_filter.replace("{username}", username)
+    search_filter = settings.ldap_user_filter.replace(
+        "{username}", escape_filter_chars(username)
+    )
     service_conn.search(
         search_base=settings.ldap_base_dn,
         search_filter=search_filter,

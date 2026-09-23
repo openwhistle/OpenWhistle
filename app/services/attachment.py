@@ -231,3 +231,32 @@ def format_size(size_bytes: int) -> str:
     if size_bytes >= 1024:
         return f"{size_bytes / 1024:.0f} KB"
     return f"{size_bytes} B"
+
+
+async def stored_object_keys(db: AsyncSession, report_ids: list[uuid.UUID]) -> list[str]:
+    """Return external-storage keys of all attachments belonging to the given reports."""
+    result = await db.execute(
+        select(Attachment.storage_key).where(
+            Attachment.report_id.in_(report_ids), Attachment.storage_key.isnot(None)
+        )
+    )
+    return [key for key in result.scalars() if key]
+
+
+async def delete_stored_objects(keys: list[str]) -> None:
+    """Remove attachment objects from external storage after their rows are gone.
+
+    The DB cascade removes attachment rows but cannot reach an S3 bucket, so
+    without this a deleted report's files would stay there indefinitely.
+    Best-effort per key: one failure must not keep the others alive.
+    """
+    import logging  # noqa: PLC0415
+
+    from app.services.storage import get_storage_backend  # noqa: PLC0415
+
+    backend = get_storage_backend()
+    for key in keys:
+        try:
+            await backend.delete(key)
+        except Exception:  # noqa: BLE001
+            logging.getLogger(__name__).exception("Failed to delete stored object %s", key)

@@ -5,12 +5,11 @@ immutable audit log entry (REPORT_AUTO_DELETED) written by the "system" actor.
 
 Compliance basis:
   GDPR Art. 5(1)(e) — storage limitation (data not kept longer than necessary)
-  HinSchG §12 Abs. 3 — documentation obligation (3-year minimum retention)
+  HinSchG §11 Abs. 5 — documentation is deleted three years after the procedure
+  concludes; longer only while necessary and proportionate.
 
-The default RETENTION_DAYS=1095 (3 years) ensures the HinSchG §12 Abs. 3
-minimum is met before auto-deletion begins. Operators may increase this value
-for their own legal requirements; setting it below 1095 is at the operator's
-own legal risk.
+The default RETENTION_DAYS=1095 (3 years) matches that deadline. Operators who
+must keep records longer (e.g. pending litigation) may raise it on legal advice.
 """
 
 from __future__ import annotations
@@ -40,6 +39,7 @@ async def run_retention_cleanup() -> None:
 
     from app.models.audit import AuditLog
     from app.models.report import Report, ReportStatus
+    from app.services.attachment import delete_stored_objects, stored_object_keys
 
     # Distributed lock: with multiple stateless replicas each running a
     # scheduler, only one may perform the daily cleanup, otherwise the same
@@ -75,6 +75,7 @@ async def run_retention_cleanup() -> None:
                 )
             )
             reports = result.scalars().all()
+            stored_keys = await stored_object_keys(db, [r.id for r in reports]) if reports else []
 
             for report in reports:
                 audit_entry = AuditLog(
@@ -88,7 +89,7 @@ async def run_retention_cleanup() -> None:
                         "case_number": report.case_number,
                         "closed_at": report.closed_at.isoformat() if report.closed_at else None,
                         "retention_days": settings.retention_days,
-                        "reason": "GDPR Art. 5(1)(e) / HinSchG §12 — retention period exceeded",
+                        "reason": "GDPR Art. 5(1)(e) / HinSchG §11 — retention period exceeded",
                     }),
                 )
                 db.add(audit_entry)
@@ -102,6 +103,7 @@ async def run_retention_cleanup() -> None:
                 )
 
             await db.commit()
+            await delete_stored_objects(stored_keys)
 
     except Exception:
         log.exception("Retention cleanup failed")

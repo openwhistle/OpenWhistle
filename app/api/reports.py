@@ -510,6 +510,7 @@ async def submit_post(
 async def submit_restart(
     request: Request,
     redis: Redis = Depends(get_redis),
+    _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
     raw = request.cookies.get("ow-submission-session")
     if raw and _SESSION_KEY_RE.match(raw):

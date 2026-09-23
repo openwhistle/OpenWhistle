@@ -13,7 +13,7 @@ from app.api.deps import get_current_admin
 from app.config import settings
 from app.csrf import validate_csrf
 from app.database import get_db
-from app.models.user import AdminUser
+from app.models.user import AdminRole, AdminUser
 from app.redis_client import get_redis
 from app.services import audit as audit_service
 from app.services import auth as auth_service
@@ -43,6 +43,27 @@ def _login_ctx(extra: dict[str, Any] | None = None) -> dict[str, Any]:
     if extra:
         base.update(extra)
     return base
+
+
+async def _second_factor(
+    request: Request, redis: Redis, user: AdminUser
+) -> HTMLResponse | RedirectResponse:
+    """Hand a first-factor-verified user to TOTP setup or verification.
+
+    Every login path (local, LDAP, OIDC) ends here: MFA is mandatory for all
+    accounts, so no path may issue a session directly.
+    """
+    if not user.totp_enabled:
+        setup_token = secrets.token_urlsafe(32)
+        await auth_service.store_totp_setup_pending(redis, setup_token, str(user.id))
+        return RedirectResponse(f"/admin/mfa/setup?token={setup_token}", status_code=302)
+
+    temp_token = secrets.token_urlsafe(32)
+    await auth_service.store_totp_pending(redis, temp_token, str(user.id))
+    return render(request, "login_mfa.html", {
+        "temp_token": temp_token,
+        "is_demo": settings.demo_mode,
+    })
 
 
 @router.get("/login", response_class=HTMLResponse)
@@ -95,6 +116,9 @@ async def login_post(
                 ldap_username=ldap_info.username,
                 totp_secret=generate_totp_secret(),
                 totp_enabled=False,
+                # Least privilege: every directory user can reach this point,
+                # so never inherit the model's admin default. An admin promotes.
+                role=AdminRole.case_manager,
             )
             db.add(user)
             await db.commit()
@@ -105,17 +129,7 @@ async def login_post(
                 "error": "This account has been deactivated.",
             }), status_code=401)
 
-        if not user.totp_enabled:
-            setup_token = secrets.token_urlsafe(32)
-            await auth_service.store_totp_setup_pending(redis, setup_token, str(user.id))
-            return RedirectResponse(f"/admin/mfa/setup?token={setup_token}", status_code=302)
-
-        temp_token = secrets.token_urlsafe(32)
-        await auth_service.store_totp_pending(redis, temp_token, str(user.id))
-        return render(request, "login_mfa.html", {
-            "temp_token": temp_token,
-            "is_demo": settings.demo_mode,
-        })
+        return await _second_factor(request, redis, user)
 
     # ── Local password authentication path ─────────────────────────
     user = await auth_service.get_user_by_username(db, username)
@@ -140,18 +154,7 @@ async def login_post(
     # We intentionally do NOT reveal "this account uses SSO", which would leak
     # account existence / auth method (kept generic for privacy).
 
-    if not user.totp_enabled:
-        setup_token = secrets.token_urlsafe(32)
-        await auth_service.store_totp_setup_pending(redis, setup_token, str(user.id))
-        return RedirectResponse(f"/admin/mfa/setup?token={setup_token}", status_code=302)
-
-    temp_token = secrets.token_urlsafe(32)
-    await auth_service.store_totp_pending(redis, temp_token, str(user.id))
-
-    return render(request, "login_mfa.html", {
-        "temp_token": temp_token,
-        "is_demo": settings.demo_mode,
-    })
+    return await _second_factor(request, redis, user)
 
 
 @router.post("/login/mfa", response_class=HTMLResponse, response_model=None)
@@ -459,16 +462,12 @@ async def oidc_callback(
             },
         )
 
-    token = auth_service.create_access_token(str(user.id), role=user.role.value)
-    await auth_service.store_session(redis, str(user.id), token)
+    if not user.is_active:
+        return render(
+            request,
+            "login.html",
+            {"error": "This account has been deactivated.", "oidc_enabled": settings.oidc_enabled},
+            status_code=401,
+        )
 
-    response = RedirectResponse("/admin/dashboard", status_code=302)
-    response.set_cookie(
-        key="ow_session",
-        value=token,
-        httponly=True,
-        samesite="lax",
-        secure=settings.secure_cookies,
-        max_age=settings.access_token_expire_minutes * 60,
-    )
-    return response
+    return await _second_factor(request, redis, user)
