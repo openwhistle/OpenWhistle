@@ -7,6 +7,9 @@
 .report-case-number{font-family:var(--font-mono);font-size:clamp(1.1rem,3vw,1.75rem);letter-spacing:.04em;font-weight:400}
 /* Two-column layout */
 .report-layout{display:grid;grid-template-columns:2fr 1fr;gap:var(--space-5);align-items:start}
+.report-layout>*{min-width:0}
+@media (max-width:900px){.report-layout{grid-template-columns:1fr}}
+.report-audit-detail{overflow-wrap:anywhere}
 /* Report body + shared text roles */
 .report-description{white-space:pre-wrap;font-size:var(--text-body);color:var(--body-text);line-height:1.7}
 .report-thread{margin-bottom:var(--space-6)}

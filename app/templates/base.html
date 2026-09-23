@@ -82,25 +82,26 @@
             <li><a href="/status" {% if request.url.path == '/status' %}class="active" aria-current="page"{% endif %}>{{ t('nav.check_status') }}</a></li>
             {% endblock %}
             <li>
-                <div class="lang-picker" role="navigation" aria-label="{{ t('nav.lang_picker_label') }}">
-                    <button type="button" class="lang-picker-btn" aria-haspopup="listbox" aria-expanded="false" id="lang-picker-btn">
+                <details class="lang-picker" id="lang-picker">
+                    <summary class="lang-picker-btn">
+                        <span class="sr-only">{{ t('nav.lang_picker_label') }}:</span>
                         {{ lang | upper }}
                         <span aria-hidden="true" class="u-caret">▾</span>
-                    </button>
-                    <ul class="lang-picker-menu" role="listbox" aria-label="{{ t('nav.lang_picker_label') }}" id="lang-picker-menu" hidden>
+                    </summary>
+                    <ul class="lang-picker-menu" role="list">
                         {% for code, label in [('en', 'English'), ('de', 'Deutsch'), ('fr', 'Français'), ('pt-br', 'Português (BR)')] %}
-                        <li role="option" {% if lang == code %}aria-selected="true"{% endif %}>
+                        <li>
                             <form method="post" action="/set-language" class="u-m0">
                                 <input type="hidden" name="next" value="{{ request.url.path }}{% if request.url.query %}?{{ request.url.query }}{% endif %}">
                                 <input type="hidden" name="lang" value="{{ code }}">
-                                <button type="submit" class="lang-picker-option {{ 'active' if lang == code else '' }}">
+                                <button type="submit" class="lang-picker-option {{ 'active' if lang == code else '' }}" lang="{{ code }}"{% if lang == code %} aria-current="true"{% endif %}>
                                     {{ label }}
                                 </button>
                             </form>
                         </li>
                         {% endfor %}
                     </ul>
-                </div>
+                </details>
             </li>
             <li>
                 <button
@@ -178,29 +179,18 @@
     })();
     </script>
     <script nonce="{{ request.state.csp_nonce }}">
-    // Language picker dropdown
+    // Language picker: a native <details>, so it works without JavaScript.
+    // This only adds closing on an outside click and on Escape.
     (function() {
-        var btn = document.getElementById('lang-picker-btn');
-        var menu = document.getElementById('lang-picker-menu');
-        if (!btn || !menu) return;
-
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            var open = !menu.hidden;
-            menu.hidden = open;
-            btn.setAttribute('aria-expanded', String(!open));
+        var picker = document.getElementById('lang-picker');
+        if (!picker) return;
+        document.addEventListener('click', function(e) {
+            if (!picker.contains(e.target)) picker.open = false;
         });
-
-        document.addEventListener('click', function() {
-            menu.hidden = true;
-            btn.setAttribute('aria-expanded', 'false');
-        });
-
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                menu.hidden = true;
-                btn.setAttribute('aria-expanded', 'false');
-                btn.focus();
+            if (e.key === 'Escape' && picker.open) {
+                picker.open = false;
+                picker.querySelector('summary').focus();
             }
         });
     })();

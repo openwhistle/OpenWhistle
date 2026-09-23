@@ -7,6 +7,20 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- **No page scrolls sideways on a phone any more.** At 390 px the navigation
+  (12 items in the admin) now wraps instead of running off-screen, the
+  dashboard toolbar and the report view (two columns, no breakpoint) fit the
+  width. An E2E test checks `/submit`, `/status` and `/admin/login` at 390 px.
+- **Confidential mode works without JavaScript** (Tor Browser "Safest"): the
+  name/contact fields are shown by CSS `:has()` instead of a script.
+- **The language picker works without JavaScript** and no longer misuses
+  `listbox`/`option` roles: it is a native `<details>` list of forms.
+- Contrast: input borders 1.25:1 → ≥ 3:1; a visible focus outline on inputs
+  and on the submission-mode cards (focused and selected looked identical);
+  secondary text 4.37:1 → 4.98:1 on cards; alert titles no longer dimmed.
+
 ### Changed
 
 - **Images are built once and published identically to all three
