@@ -18,6 +18,25 @@ from app.services.attachment import (
 # ─── sanitize_filename ────────────────────────────────────────────────────────
 
 
+def _real_pdf() -> bytes:
+    """A parseable one-page PDF (metadata stripping refuses fake ones)."""
+    from pypdf import PdfWriter
+
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    buf = io.BytesIO()
+    writer.write(buf)
+    return buf.getvalue()
+
+
+def _real_png() -> bytes:
+    from PIL import Image
+
+    buf = io.BytesIO()
+    Image.new("RGB", (2, 2)).save(buf, "PNG")
+    return buf.getvalue()
+
+
 def test_sanitize_plain_filename() -> None:
     assert sanitize_filename("report.pdf") == "report.pdf"
 
@@ -188,7 +207,7 @@ async def test_read_valid_file_returns_tuple() -> None:
     upload = MagicMock()
     upload.filename = "evidence.pdf"
     upload.content_type = "application/pdf"
-    upload.read = AsyncMock(return_value=b"%PDF-1.4 fake content here")
+    upload.read = AsyncMock(return_value=_real_pdf())
 
     result, error = await read_upload_files([upload])
     assert error is None
@@ -196,7 +215,7 @@ async def test_read_valid_file_returns_tuple() -> None:
     name, ct, data = result[0]
     assert name == "evidence.pdf"
     assert ct == "application/pdf"
-    assert data == b"%PDF-1.4 fake content here"
+    assert data.startswith(b"%PDF")  # rewritten without metadata
 
 
 @pytest.mark.asyncio
@@ -208,9 +227,9 @@ async def test_read_too_many_files_returns_error() -> None:
     uploads = []
     for i in range(MAX_ATTACHMENTS + 1):
         u = MagicMock()
-        u.filename = f"file{i}.pdf"
-        u.content_type = "application/pdf"
-        u.read = AsyncMock(return_value=b"%PDF-1.4" + b"X" * 92)  # valid magic, 100 bytes
+        u.filename = f"file{i}.txt"
+        u.content_type = "text/plain"
+        u.read = AsyncMock(return_value=b"X" * 100)
         uploads.append(u)
 
     result, error = await read_upload_files(uploads)
@@ -276,7 +295,7 @@ async def test_read_accepts_real_png_magic() -> None:
 
     from app.services.attachment import read_upload_files
 
-    png = b"\x89PNG\r\n\x1a\n" + b"\x00" * 32
+    png = _real_png()
     upload = MagicMock()
     upload.filename = "real.png"
     upload.content_type = "image/png"
@@ -393,7 +412,7 @@ async def test_submit_with_pdf_attachment(client: object) -> None:
     resp5, csrf = await _walk_to_step5(ac)
     step5_num = _detect_step(resp5.text)  # type: ignore[attr-defined]
 
-    pdf_content = b"%PDF-1.4 minimal fake pdf content for testing"
+    pdf_content = _real_pdf()
     resp = await ac.post(
         "/submit",
         data={"csrf_token": csrf, "step": str(step5_num), "action": "next"},

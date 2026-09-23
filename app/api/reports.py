@@ -475,7 +475,7 @@ async def submit_post(
             (fd["filename"], fd["content_type"], _b64.b64decode(fd["data"]))
             for fd in file_data_list
         ]
-        stored = await create_attachments(db, report.id, file_tuples_restored)
+        stored = await create_attachments(db, report, file_tuples_restored)
 
         from app.services.notifications import notify_new_report
         background_tasks.add_task(notify_new_report, report.case_number)
@@ -744,21 +744,13 @@ async def whistleblower_download_attachment(
     if not attachment or str(attachment.report_id) != decoded_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
-    if attachment.storage_key:
-        from app.services.storage import (
-            StorageObjectNotFoundError,
-            get_storage_backend,
-        )
-        try:
-            data = await get_storage_backend().get(attachment.storage_key)
-        except StorageObjectNotFoundError as exc:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
-    else:
-        if attachment.data is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-        data = attachment.data
+    from app.services.attachment import content_disposition_attachment, read_attachment
 
-    from app.services.attachment import content_disposition_attachment
+    try:
+        data = await read_attachment(db, attachment)
+    except LookupError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
+
     return Response(
         content=data,
         media_type=attachment.content_type,

@@ -1508,12 +1508,20 @@
         </p>
 
         <h3>Privacy and deletion</h3>
-        <p>
-          Attachments are stored in the <code>attachments</code> database table with a
-          <code>CASCADE DELETE</code> foreign key constraint. When a report is hard-deleted
-          (DSGVO Art. 17 right to erasure), all associated attachments are automatically
-          and permanently removed.
-        </p>
+        <ul>
+          <li><strong>Metadata removed on upload:</strong> EXIF/GPS and camera data in JPEG, PNG,
+            WebP and GIF; document info and XMP in PDF; author, company and custom properties in
+            DOCX/XLSX. A file that cannot be parsed for cleaning is refused. Legacy
+            <code>.doc</code>/<code>.xls</code> and plain text are stored as uploaded, and the
+            upload page says so. Comments and tracked-change authors inside Office files are not
+            removed.</li>
+          <li><strong>Encrypted at rest:</strong> file bytes are encrypted with the report's data
+            key before they reach PostgreSQL or the S3 bucket. Attachments uploaded before v1.4.0
+            stay unencrypted and remain readable.</li>
+          <li><strong>Deletion:</strong> when a report is hard-deleted (DSGVO Art. 17), its
+            attachment rows are removed by <code>CASCADE DELETE</code> and its S3 objects are
+            deleted as well.</li>
+        </ul>
       </section>
 
       <!-- First-run wizard -->

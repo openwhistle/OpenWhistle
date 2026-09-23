@@ -7,6 +7,18 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Security
+
+- **Attachments no longer carry identifying metadata.** EXIF/GPS and camera
+  data (JPEG, PNG, WebP, GIF), PDF document info and XMP, and DOCX/XLSX author
+  and company properties are removed on upload — before the file reaches the
+  draft store. A file that cannot be parsed for cleaning is refused instead of
+  stored as-is. The upload step tells the whistleblower what is and is not
+  cleaned.
+- **Attachments are encrypted at rest** with the report's own data key, in
+  PostgreSQL and in S3. Rows from before this release are served as stored
+  (migration `002` adds `attachments.encrypted`).
+
 ## [1.3.1] — 2026-09-23
 
 ### Security

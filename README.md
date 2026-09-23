@@ -78,7 +78,8 @@ zero vendor lock-in, and privacy-first by design.
 - **OIDC / SSO support** — Optional single sign-on via any OpenID Connect provider (Keycloak,
   Authentik, Azure AD, Google, …).
 - **File attachments** — Whistleblowers can attach evidence files (PDF, images, Word, Excel, CSV,
-  TXT — up to 10 MB each, 5 per report).
+  TXT — up to 10 MB each, 5 per report). Identifying metadata (photo GPS/EXIF, PDF and Office
+  author fields) is removed on upload, and files are encrypted with the report's own key.
 - **Internationalisation** — English, German, and French UI; language picker in the nav bar;
   all 388+ translation keys present in every locale.
 - **WCAG 2.1 AA** — Skip-to-content link, ARIA labels, live regions, visible focus indicators,

@@ -42,6 +42,11 @@ dependencies = [
     # PDF generation (pure Python, no system packages required)
     "fpdf2>=2.8.7",
 
+    # Attachment metadata stripping: PDF info/XMP (pure Python). Images use
+    # Pillow, already present via qrcode[pil].
+    "pypdf>=6.19.0",
+    "pillow>=12.0.0",
+
     # Structured logging
     "python-json-logger>=4.1.0",
 

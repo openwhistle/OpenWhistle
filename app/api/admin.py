@@ -578,21 +578,13 @@ async def admin_download_attachment(
     if not attachment or attachment.report_id != report_id:
         raise HTTPException(status_code=404)
 
-    if attachment.storage_key:
-        from app.services.storage import (
-            StorageObjectNotFoundError,
-            get_storage_backend,
-        )
-        try:
-            data = await get_storage_backend().get(attachment.storage_key)
-        except StorageObjectNotFoundError as exc:
-            raise HTTPException(status_code=404) from exc
-    else:
-        if attachment.data is None:
-            raise HTTPException(status_code=404)
-        data = attachment.data
+    from app.services.attachment import content_disposition_attachment, read_attachment
 
-    from app.services.attachment import content_disposition_attachment
+    try:
+        data = await read_attachment(db, attachment)
+    except LookupError as exc:
+        raise HTTPException(status_code=404) from exc
+
     return Response(
         content=data,
         media_type=attachment.content_type,
