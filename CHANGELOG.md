@@ -7,7 +7,43 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Security
+
+- **OIDC logins now require TOTP.** The OIDC callback issued a session directly,
+  so SSO accounts skipped the mandatory second factor. All three login paths
+  (local, LDAP, OIDC) now go through the same MFA step; SSO users enrol TOTP on
+  their next login. Deactivated accounts are also rejected on the OIDC path.
+- **LDAP first login provisions a Case Manager, not an Admin.** Any directory
+  entry matching `LDAP_USER_FILTER` previously got full admin access.
+- **LDAP username is escaped** before it is placed into the search filter
+  (filter injection), and **LDAPS now verifies the server certificate**
+  (`CERT_NONE` before). Private CAs: set `SSL_CERT_FILE`.
+- **Deleting a report removes its S3 objects.** Manual deletion, 4-eyes deletion
+  and the retention job only removed database rows; attachment files in the
+  bucket were kept forever.
+- **nginx no longer logs client IPs.** `error_log` ran at `warn`, and nginx
+  prefixes rate-limit (429) and body-size (413) errors with the client address.
+  It now logs at `crit` only.
+- "Start over" in the submission wizard is now CSRF-protected.
+
 ### Fixed
+
+- **Uploads over 1 MB failed behind the bundled nginx** (default
+  `client_max_body_size`). Set to 55 MB (5 × 10 MB attachments).
+- **Fresh production installs could not start PostgreSQL 18.** The 18 image
+  refuses a volume at `/var/lib/postgresql/data` unless `PGDATA` points there;
+  `docker-compose.prod.yml` and the Ansible template now set it. Existing data
+  is unaffected.
+- **GHCR images were unpullable** (`manifest unknown`): the weekly cleanup job
+  deleted the untagged per-platform manifests that every multi-arch tag points
+  to. GHCR cleanup is removed; Docker Hub and Quay.io were not affected.
+- **Helm chart deployed v0.5.0 by default** — `appVersion` was never bumped. It
+  now tracks the app version, enforced by a test.
+- "Start over" on the review step returned 405 (GET link to a POST-only route).
+- Footer text had 1.8:1 contrast on the dark footer; now 7.7:1.
+- Animations now respect `prefers-reduced-motion`.
+- HinSchG citations: the 3-year deletion rule is §11 Abs. 5, not §12 Abs. 3,
+  and it is a deletion deadline, not a minimum retention period.
 
 - **"Back" in the submission wizard no longer triggers validation.** The
   double-submit guard disabled the form's *first* submit button — which on every

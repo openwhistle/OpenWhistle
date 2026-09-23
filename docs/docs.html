@@ -1284,7 +1284,7 @@
         <h3 id="retention">Data Retention (GDPR / HinSchG)</h3>
         <p>
           Closed reports can be automatically deleted after a configurable retention period.
-          This satisfies GDPR Art. 5(1)(e) (storage limitation) and HinSchG §12 Abs. 3
+          This satisfies GDPR Art. 5(1)(e) (storage limitation) and HinSchG §11 Abs. 5
           (3-year minimum documentation requirement). Each deletion writes an immutable
           audit log entry (<code>report.auto_deleted</code>) recording the case number and legal basis.
           The admin UI at <code>/admin/retention</code> shows the current configuration and next
@@ -1302,7 +1302,7 @@
             <tr>
               <td><code class="env-key">RETENTION_DAYS</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
-              <td>Days after a report is closed before it is automatically deleted. Do not set below 1095 without legal advice — HinSchG §12 Abs. 3 requires at least 3 years.</td>
+              <td>Days after a report is closed before it is automatically deleted. Default matches HinSchG §11 Abs. 5: documentation is deleted 3 years after the procedure ends. Change only on legal advice.</td>
               <td><code>1095</code></td>
             </tr>
           </tbody>
@@ -1343,7 +1343,8 @@
         <p>
           Admin accounts can authenticate via corporate LDAP in addition to local credentials
           and OIDC. On first login, an <code>AdminUser</code> record is auto-provisioned
-          (no local password). TOTP enrollment is still required after the first login.
+          (no local password) with the <strong>Case Manager</strong> role — an admin promotes
+          it if needed. TOTP enrollment is still required after the first login.
         </p>
         <table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
@@ -1369,7 +1370,7 @@
             <tr>
               <td><code class="env-key">LDAP_USE_SSL</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
-              <td>Set to <code>true</code> to use LDAPS (TLS from the start). Set port to <code>636</code>.</td>
+              <td>Set to <code>true</code> to use LDAPS (TLS from the start). Set port to <code>636</code>. The server certificate is verified against the system CA store; for a private CA, mount its PEM file and set <code>SSL_CERT_FILE</code> to its path.</td>
               <td><code>false</code></td>
             </tr>
             <tr>
@@ -1605,7 +1606,7 @@
 
         <h3>Audit log</h3>
         <p>
-          Every admin action is recorded in an immutable audit log (required by HinSchG §12 Abs. 3).
+          Every admin action is recorded in an immutable audit log (required by HinSchG §11 Abs. 5).
           View and filter the log at <code>/admin/audit-log</code>; export as CSV at any time.
         </p>
 

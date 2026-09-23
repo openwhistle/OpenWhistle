@@ -59,7 +59,7 @@ zero vendor lock-in, and privacy-first by design.
 - **4-eyes deletion** — Hard deletion requires two different admins (request + confirm);
   same-admin confirm returns HTTP 409. GDPR Art. 17 compliant.
 - **Immutable audit log** — Every admin action recorded with timestamp and username; CSV export;
-  required by HinSchG §12 Abs. 3.
+  required by HinSchG §11 Abs. 5.
 - **Internal notes** — Admin-only notes on cases; never visible to the whistleblower.
 - **Case linking** — Link related cases with bidirectional normalization constraint.
 - **Custom categories** — DB-driven report categories; full management UI at `/admin/categories`.
@@ -113,7 +113,7 @@ zero vendor lock-in, and privacy-first by design.
   stored in the database; pre-encryption rows are transparently readable (backward compat).
 - **Data retention (GDPR / HinSchG)** — `RETENTION_ENABLED=true` activates automatic deletion
   of closed reports after `RETENTION_DAYS` days (default 1095 = 3 years); satisfies
-  GDPR Art. 5(1)(e) and HinSchG §12 Abs. 3; each deletion recorded in the audit log.
+  GDPR Art. 5(1)(e) and HinSchG §11 Abs. 5; each deletion recorded in the audit log.
 - **Multi-tenancy** — `MULTI_TENANCY_ENABLED=true` lets a single deployment serve multiple
   independent organisations with isolated data, per-tenant categories, locations, and users.
 - **Superadmin role** — New `superadmin` role above `admin` for managing organisations

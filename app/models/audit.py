@@ -1,4 +1,4 @@
-"""Immutable audit log — records every admin action for HinSchG §12 traceability."""
+"""Immutable audit log — records every admin action for HinSchG §11 documentation."""
 
 from __future__ import annotations
 

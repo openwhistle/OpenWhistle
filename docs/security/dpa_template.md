@@ -34,7 +34,7 @@ The Processor hosts and operates the OpenWhistle application, which:
 - Provides an administrative interface for the Controller's staff to review
   and process reports.
 - Deletes reports automatically after the configured retention period
-  (minimum 1095 days, satisfying HinSchG §12 Abs. 3).
+  (default 1095 days, the HinSchG §11 Abs. 5 deletion deadline).
 
 ---
 
