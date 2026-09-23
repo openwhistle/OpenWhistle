@@ -38,6 +38,10 @@ Folgende Fakten sind festgelegt:
 - Markdown Dokumente müssen nach markdownlint Vorgaben erstellt werden
 - Documentation in `docs/docs.html`, `README.md`, and `docker-compose.prod.yml` must always be kept in sync. When adding or renaming environment variables, update ALL locations in the same commit.
 - The demo at https://demo.openwhistle.net is live and hosted on Hetzner (root01xvp.wdkro.de) via Ansible. It resets hourly.
+- The demo runs `ghcr.io/openwhistle/openwhistle:edge`. Its Watchtower has no schedule; the
+  `deploy-demo` job in `docker-publish.yml` (self-hosted `intranet` runner, gated by the
+  repository variable `DEPLOY_DEMO=1`) is the only thing that updates it. Never add a
+  pull-request trigger to a workflow with a self-hosted job — `tests/test_workflows.py` guards it.
 - All HTML files in `docs/` must use self-hosted fonts from `docs/fonts/` — never Google Fonts CDN or any other external font CDN.
 
 ## Test coverage

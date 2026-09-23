@@ -7,6 +7,15 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- **The demo follows `:edge` and is updated by the publish workflow.** A new
+  `deploy-demo` job asks the demo's Watchtower (HTTP API, no schedule) to pull
+  the image after each push to `main` — the same mechanism as easywall. It runs
+  on a self-hosted intranet runner and is off until the repository variable
+  `DEPLOY_DEMO` is `1`. A test fails if a workflow with a self-hosted job ever
+  gains a pull-request trigger.
+
 ### Security
 
 - **OIDC logins now require TOTP.** The OIDC callback issued a session directly,

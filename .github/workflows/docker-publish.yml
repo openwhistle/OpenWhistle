@@ -191,3 +191,33 @@ jobs:
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  # ── Demo: tell Watchtower that a new :edge exists ─────────────────────────
+  # The demo (demo.openwhistle.net) runs ghcr.io/openwhistle/openwhistle:edge.
+  # Its Watchtower runs with the HTTP API only and no schedule, so this POST is
+  # the only thing that updates the demo. The same mechanism as easywall.
+  #
+  # ⚠️ SECURITY: this job runs on a self-hosted runner inside the intranet and
+  # this repository is public. This workflow must only ever trigger on push and
+  # workflow_dispatch — a pull-request trigger would run any fork's code on
+  # that runner. tests/test_workflows.py enforces it.
+  #
+  # Off unless the repository variable DEPLOY_DEMO is "1": a job whose runner
+  # labels nobody answers does not fail, it queues for 24 hours and then
+  # reports the run as cancelled.
+  deploy-demo:
+    name: Update demo
+    needs: push-ghcr
+    if: github.ref == 'refs/heads/main' && vars.DEPLOY_DEMO == '1'
+    runs-on: [self-hosted, intranet]
+    permissions: {}
+    # A nudge to a host behind a VPN lands within a minute or not at all.
+    timeout-minutes: 10
+    steps:
+      - name: Trigger Watchtower update
+        env:
+          WATCHTOWER_API_TOKEN: ${{ secrets.WATCHTOWER_API_TOKEN }}
+        run: |
+          curl -sf -X POST \
+            -H "Authorization: Bearer ${WATCHTOWER_API_TOKEN}" \
+            "http://watchtower:8085/v1/update?image=ghcr.io/openwhistle/openwhistle"
