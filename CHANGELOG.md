@@ -7,6 +7,16 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- **"Back" in the submission wizard no longer triggers validation.** The
+  double-submit guard disabled the form's *first* submit button — which on every
+  wizard step is "Back" — while the browser was still building the submitted
+  entry list. Disabled controls are excluded from that list, so `action=back`
+  never reached the server and the step was processed as a "Next", rejecting an
+  empty description instead of navigating back. The guard now targets the button
+  the user actually clicked and applies after the form data is collected.
+
 ## [1.3.0] — 2026-07-15
 
 The "Signal" design system — a ground-up visual redesign that unifies the app and
