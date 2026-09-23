@@ -23,7 +23,7 @@ colors:
   surface-2:     { light: "#ffffff", dark: "#1b1b1e" }   # cards floated above surface
   ink:           { light: "#0a0a0b", dark: "#fafafa" }   # headings, primary text
   body:          { light: "#3d3d40", dark: "#bcbcc0" }   # body copy
-  muted:         { light: "#737377", dark: "#808085" }   # secondary / metadata
+  muted:         { light: "#6a6a6e", dark: "#808085" }   # secondary / metadata
   hairline:      { light: "#e6e6e4", dark: "#262629" }   # 1px borders & dividers
 
   # Accent — emerald. The ONE brand colour. Scarce as a button, generous as a block.

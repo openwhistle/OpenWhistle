@@ -6,6 +6,8 @@
     .sub-fieldset-reset { border: none; padding: 0; margin: 0; }
     .sub-mb1 { margin-bottom: 1rem; }
     .sub-confidential-fields { display: none; margin-top: 1.5rem; }
+    /* CSS, not JS: must work in Tor Browser's "Safest" mode. */
+    form:has(#mode-confidential:checked) .sub-confidential-fields { display: block; }
     .sub-label-flex { display: flex; justify-content: space-between; align-items: baseline; }
     .sub-char-counter { font-size: 0.72rem; font-weight: 400; color: var(--muted); font-family: var(--font-mono); }
     .sub-row-top { align-items: flex-start; }
@@ -391,18 +393,6 @@
 {% block scripts %}
 <script nonce="{{ request.state.csp_nonce }}">
 (function() {
-    // Step 1: submission mode toggle (show/hide confidential fields)
-    var radios = document.querySelectorAll('input[name="submission_mode"]');
-    var fields = document.getElementById('confidential-fields');
-    if (fields) {
-        var toggle = function() {
-            var checked = document.querySelector('input[name="submission_mode"]:checked');
-            fields.style.display = checked && checked.value === 'confidential' ? 'block' : 'none';
-        };
-        radios.forEach(function(r) { r.addEventListener('change', toggle); });
-        toggle();
-    }
-
     // Step 4: description character counter
     var description = document.getElementById('description');
     var charCounter = document.getElementById('char-counter');

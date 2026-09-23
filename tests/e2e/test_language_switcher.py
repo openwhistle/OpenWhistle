@@ -31,7 +31,7 @@ def _set_language(page: Page, base_url: str, lang_code: str, current_path: str =
 
 def _open_lang_picker(page: Page) -> None:
     """Open the language picker dropdown."""
-    btn = page.locator("#lang-picker-btn")
+    btn = page.locator("#lang-picker summary")
     if btn.count() > 0:
         btn.click()
         page.wait_for_timeout(200)
