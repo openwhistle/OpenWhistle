@@ -149,7 +149,7 @@ feedback — open an issue to discuss anything here.
 ## v1.1.0 — Complete Test Coverage & Quality Assurance ✓ Released 2026-04-28
 
 > All items shipped. See [CHANGELOG.md](CHANGELOG.md#110--2026-04-28) for details.
-
+>
 > Goal: fill every gap left by the unit/integration/HTTP-level suite.
 > All existing tests use `httpx.AsyncClient` against a real DB — they prove
 > the API works but never open a browser, never touch JavaScript, and never
@@ -160,6 +160,7 @@ feedback — open an issue to discuss anything here.
 ### E2E Tests — Playwright (Python)
 
 Test infrastructure:
+
 - `playwright` + `pytest-playwright` + `pytest-base-url` added to dev deps
 - New `tests/e2e/` directory; separate `pytest` markers (`e2e`)
 - CI job `e2e` starts the full Docker Compose stack (app + db + redis) with
@@ -310,6 +311,14 @@ Critical user journeys to cover:
   add a `conftest.py` fixture that creates a second `TestClient` with OpenAPI
   enabled and assert all expected route `operationId`s are present, catching
   accidental route renames without exposing the schema in production
+
+---
+
+## v1.3.1 — Security & Deployment Fixes ✓ Released 2026-09-23
+
+> MFA on every login path, LDAP least privilege, S3 purge on deletion, no client
+> IPs in nginx logs, repaired GHCR images and PostgreSQL 18 volume. See
+> [CHANGELOG.md](CHANGELOG.md#131--2026-09-23).
 
 ---
 

@@ -583,18 +583,34 @@ class TestConfigV100Defaults:
     def test_app_version_current(self) -> None:
         from app.config import settings
 
-        assert settings.app_version == "1.3.0"
+        assert settings.app_version == "1.3.1"
 
-    def test_helm_chart_tracks_app_version(self) -> None:
-        """A default `helm install` deploys Chart.appVersion — it must not lag."""
+    def test_every_published_version_string_matches(self) -> None:
+        """One version, written in several places. A release that bumps only
+        some of them ships a Helm chart deploying an old image (it happened:
+        0.5.0 through 1.3.0) or docs naming the wrong release."""
         import re
         from pathlib import Path
 
         from app.config import settings
 
-        chart = (Path(__file__).parents[1] / "charts/openwhistle/Chart.yaml").read_text()
-        app_version = re.search(r'^appVersion:\s*"?([^"\s]+)', chart, re.M)
-        assert app_version and app_version.group(1) == settings.app_version
+        root = Path(__file__).parents[1]
+
+        def grab(path: str, pattern: str) -> str | None:
+            m = re.search(pattern, (root / path).read_text(), re.M)
+            return m.group(1) if m else None
+
+        chart = "charts/openwhistle/Chart.yaml"
+        found = {
+            "Chart version": grab(chart, r'^version:\s*"?([^"\s]+)'),
+            "Chart appVersion": grab(chart, r'^appVersion:\s*"?([^"\s]+)'),
+            "docs.html": grab("docs/docs.html", r"<strong>v([0-9.]+)</strong>"),
+            "index.html": grab("docs/index.html", r'"softwareVersion":\s*"([^"]+)"'),
+            "CHANGELOG": grab("CHANGELOG.md", r"^## \[(\d+\.\d+\.\d+)\]"),
+        }
+        v = settings.app_version
+        assert found == dict.fromkeys(found, v)
+        assert f"[{v}]: " in (root / "CHANGELOG.md").read_text(), "CHANGELOG compare link missing"
 
 
 # ---------------------------------------------------------------------------
