@@ -585,6 +585,17 @@ class TestConfigV100Defaults:
 
         assert settings.app_version == "1.3.0"
 
+    def test_helm_chart_tracks_app_version(self) -> None:
+        """A default `helm install` deploys Chart.appVersion — it must not lag."""
+        import re
+        from pathlib import Path
+
+        from app.config import settings
+
+        chart = (Path(__file__).parents[1] / "charts/openwhistle/Chart.yaml").read_text()
+        app_version = re.search(r'^appVersion:\s*"?([^"\s]+)', chart, re.M)
+        assert app_version and app_version.group(1) == settings.app_version
+
 
 # ---------------------------------------------------------------------------
 # AuditAction constants

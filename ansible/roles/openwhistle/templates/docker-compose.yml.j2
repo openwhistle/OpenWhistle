@@ -29,6 +29,10 @@ services:
   db:
     image: postgres:18-alpine
     env_file: .env
+    environment:
+      # postgres:18 defaults PGDATA to /var/lib/postgresql/18/docker and refuses
+      # to start when /var/lib/postgresql/data is mounted without this.
+      PGDATA: /var/lib/postgresql/data
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
