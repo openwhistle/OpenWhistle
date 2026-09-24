@@ -420,6 +420,9 @@ Restraint. Motion confirms, it does not entertain.
 - **Keep the three sources of truth in sync** — the app CSS (`app/static/css/`), the
   docs pages (`docs/index.html` and `docs/docs.html`), and `docker-compose.prod.yml`
   — in the same change (see the project design-sync rule).
+- **`site.css` is hand-edited source; keep one rule per block.** The CSS is formatted for
+  readability (not minified) and maintained by hand as the source of truth; the minified
+  build artifact is generated at deployment time.
 - **Lint** — `npx @google/design.md lint DESIGN.md` (format check) and `markdownlint`.
 - **Every `{token}` used in prose must exist in the front-matter.** Adding a
   component may mean adding a token first.
