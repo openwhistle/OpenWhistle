@@ -13,6 +13,7 @@ from app.api.deps import get_current_admin, require_admin, require_superadmin
 from app.config import settings
 from app.csrf import validate_csrf, validate_csrf_header
 from app.database import get_db
+from app.i18n import get_lang, make_translator
 from app.middleware import check_ip_warning, clear_ip_warning
 from app.models.report import STATUS_TRANSITIONS, Report, ReportStatus
 from app.models.user import AdminRole, AdminUser
@@ -128,6 +129,7 @@ async def dashboard(
     status_filter = qp.get("status", "") or None
     my_cases = qp.get("my_cases", "") == "1"
     location_filter_str = qp.get("location_id", "") or None
+    case_query = qp.get("q", "").strip()[:64]
     location_filter: uuid.UUID | None = None
     if location_filter_str:
         try:
@@ -168,6 +170,7 @@ async def dashboard(
         sort_dir=sort_dir,
         assigned_to_id=assigned_filter,
         location_id=location_filter,
+        case_query=case_query or None,
         **_org_scope(current_user),
     )
     stats = await report_service.get_report_stats(db, **_org_scope(current_user))
@@ -198,6 +201,7 @@ async def dashboard(
             "sort_by": sort_by,
             "sort_dir": sort_dir,
             "status_filter": status_filter or "",
+            "case_query": case_query,
             "per_page_options": [10, 25, 50, 100],
             "my_cases": my_cases,
             "all_locations": all_locations,
@@ -251,7 +255,11 @@ async def report_detail(
     audit_entries, _ = await audit_service.get_audit_log(db, report_id=report_id, per_page=20)
 
     from app.services.crypto import decrypt_or_none
-    from app.services.report import decrypt_note_contents, decrypt_report_fields
+    from app.services.report import (
+        decrypt_attachment_names,
+        decrypt_note_contents,
+        decrypt_report_fields,
+    )
 
     confidential_name = decrypt_or_none(report.confidential_name)
     confidential_contact = decrypt_or_none(report.confidential_contact)
@@ -268,6 +276,7 @@ async def report_detail(
             "decrypted_description": decrypted_description,
             "decrypted_messages": decrypted_msg_contents,
             "decrypted_notes": decrypt_note_contents(report),
+            "attachment_names": decrypt_attachment_names(report),
             "now": datetime.now(UTC),
             "statuses": list(ReportStatus),
             "allowed_transitions": allowed_transitions,
@@ -607,17 +616,22 @@ async def admin_download_attachment(
     if not attachment or attachment.report_id != report_id:
         raise HTTPException(status_code=404)
 
-    from app.services.attachment import content_disposition_attachment, read_attachment
+    from app.services.attachment import (
+        attachment_filename,
+        content_disposition_attachment,
+        read_attachment,
+    )
 
     try:
         data = await read_attachment(db, attachment)
     except LookupError as exc:
         raise HTTPException(status_code=404) from exc
 
+    name = await attachment_filename(db, attachment)
     return Response(
         content=data,
         media_type=attachment.content_type,
-        headers={"Content-Disposition": content_disposition_attachment(attachment.filename)},
+        headers={"Content-Disposition": content_disposition_attachment(name)},
     )
 
 
@@ -953,11 +967,13 @@ async def audit_log_page(
         "total_pages": total_pages,
         "action_filter": action_filter,
         "report_id_filter": report_id_str,
+        "audit_actions": audit_service.ALL_ACTIONS,
     })
 
 
 @router.get("/audit-log/export.csv")
 async def audit_log_csv(
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(require_admin),
 ) -> Response:
@@ -967,12 +983,17 @@ async def audit_log_csv(
     entries, _ = await audit_service.get_audit_log(db, per_page=10000, **_org_scope(current_user))
     output = io.StringIO()
     writer = csv.writer(output)
-    writer.writerow(["timestamp", "admin", "action", "report_id", "detail"])
+    # "action" keeps the machine code for tooling; "action_label" is for people.
+    t = make_translator(get_lang(request))
+    writer.writerow(["timestamp", "admin", "action", "action_label", "report_id", "detail"])
     for e in entries:
+        label_key = f"audit.action.{e.action}"
+        label = t(label_key)
         writer.writerow([
             e.created_at.isoformat(),
             e.admin_username,
             e.action,
+            e.action if label == label_key else label,
             str(e.report_id) if e.report_id else "",
             e.detail or "",
         ])
@@ -1049,7 +1070,7 @@ async def create_location(
         sort_order=sort_order,
     )
     await audit_service.log(
-        db, current_user, AuditAction.CATEGORY_CREATED,
+        db, current_user, AuditAction.LOCATION_CREATED,
         detail={"location_code": code_clean, "name": name.strip()},
     )
     await db.commit()

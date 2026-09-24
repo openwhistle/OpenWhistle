@@ -26,9 +26,11 @@ class AuditAction:
     REPORT_LINK_ADDED       = "report.link_added"
     REPORT_LINK_REMOVED     = "report.link_removed"
     REPORT_AUTO_DELETED     = "report.auto_deleted"
+    REPORT_VIEWED           = "report.viewed"
     CATEGORY_CREATED        = "category.created"
     CATEGORY_UPDATED        = "category.updated"
     CATEGORY_DEACTIVATED    = "category.deactivated"
+    LOCATION_CREATED        = "location.created"
     ADMIN_CREATED           = "admin.created"
     ADMIN_ROLE_CHANGED      = "admin.role_changed"
     ADMIN_DEACTIVATED       = "admin.deactivated"
@@ -38,6 +40,12 @@ class AuditAction:
     AUTH_SPRAYING_SUSPECTED = "auth.password_spraying_suspected"
     ORG_CREATED             = "org.created"
     ORG_DEACTIVATED         = "org.deactivated"
+
+
+# Every action code, for the audit-log filter and the label-completeness test.
+ALL_ACTIONS: tuple[str, ...] = tuple(
+    v for k, v in vars(AuditAction).items() if k.isupper()
+)
 
 
 async def log(

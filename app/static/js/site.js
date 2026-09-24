@@ -52,7 +52,7 @@ window.copyToClipboard = async function (text, btn) {
     try {
         await navigator.clipboard.writeText(text);
         const orig = btn.textContent;
-        btn.textContent = 'Copied!';
+        btn.textContent = btn.dataset.copied || 'Copied';
         btn.disabled = true;
         setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2000);
     } catch {

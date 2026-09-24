@@ -8,6 +8,7 @@ from collections.abc import Awaitable
 from typing import Any, cast
 from urllib.parse import urlsplit
 
+from cryptography.fernet import Fernet, InvalidToken
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -26,7 +27,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.csrf import validate_csrf
 from app.database import get_db
-from app.i18n import get_lang
+from app.i18n import get_lang, make_translator
 from app.models.report import SubmissionMode
 from app.redis_client import get_redis
 from app.services import report as report_service
@@ -41,6 +42,10 @@ _SESSION_KEY_RE = re.compile(r"^[A-Za-z0-9_-]{1,86}$")
 
 # Submission session TTL — 2 hours
 _SUBMISSION_TTL = 7200
+
+# Draft cookie "<id>.<key>": the key encrypts the draft and exists only in the
+# whistleblower's browser, so Redis (or a dump of it) holds nothing readable.
+_DRAFT_COOKIE_RE = re.compile(r"^[A-Za-z0-9_-]{43}\.[A-Za-z0-9_-]{43}$")
 
 _NEXT_ALLOWLIST: dict[str, str] = {
     "/submit": "/submit",
@@ -59,33 +64,74 @@ _STEP_DESCRIPTION = 4
 _STEP_ATTACHMENTS = 5
 _STEP_REVIEW = 6
 
+# Which form field a wizard error code belongs to, so the template can mark that
+# field aria-invalid and point it at an inline message. Codes absent here (e.g.
+# session_incomplete) concern no single field and show only in the banner.
+_ERROR_FIELD: dict[str, str] = {
+    "mode_required": "submission_mode",
+    "invalid_location": "location_id",
+    "category_required": "category",
+    "description_too_short": "description",
+    "description_too_long": "description",
+    "attachments_too_large": "files",
+    "attachments_no_room": "files",
+}
+
+
+def _new_draft_id() -> str:
+    return f"{secrets.token_urlsafe(32)}.{secrets.token_urlsafe(32)}"
+
+
+def _draft_fernet(session_id: str) -> Fernet:
+    # token_urlsafe(32) is 32 random bytes in unpadded urlsafe base64 — a Fernet key.
+    return Fernet(session_id.split(".")[1] + "=")
+
 
 def _submission_key(session_id: str) -> str:
-    return f"submission-session:{session_id}"
+    return f"submission-session:{session_id.split('.')[0]}"
 
 
 async def _load_submission(redis: Redis, session_id: str) -> dict[str, Any]:
     raw = await redis.get(_submission_key(session_id))
     if not raw:
         return {}
-    data = raw.decode() if isinstance(raw, bytes) else raw
+    try:
+        data = _draft_fernet(session_id).decrypt(raw)
+    except InvalidToken:
+        return {}  # wrong or missing key: the draft is as good as expired
     return cast(dict[str, Any], json.loads(data))
 
 
 async def _save_submission(redis: Redis, session_id: str, state: dict[str, Any]) -> None:
-    await redis.setex(_submission_key(session_id), _SUBMISSION_TTL, json.dumps(state))
+    token = _draft_fernet(session_id).encrypt(json.dumps(state).encode())
+    await redis.setex(_submission_key(session_id), _SUBMISSION_TTL, token)
+
+
+async def _redis_has_room(redis: Redis) -> bool:
+    """False when Redis is past DRAFT_REDIS_MEMORY_PERCENT of its maxmemory.
+
+    Drafts carry attachments; refusing new ones near the limit keeps room for
+    sessions and rate-limit counters. Without maxmemory there is no limit to
+    measure against, and an unreadable INFO never blocks a report.
+    """
+    try:
+        info = await redis.info("memory")
+    except Exception:  # noqa: BLE001
+        return True
+    limit = int(info.get("maxmemory", 0))
+    return not limit or int(info["used_memory"]) < limit * settings.draft_redis_memory_percent / 100
 
 
 async def _get_or_create_submission_session(
     request: Request, redis: Redis
 ) -> tuple[str, dict[str, Any]]:
     raw = request.cookies.get("ow-submission-session")
-    session_id: str | None = raw if raw and _SESSION_KEY_RE.match(raw) else None
+    session_id: str | None = raw if raw and _DRAFT_COOKIE_RE.match(raw) else None
     if session_id:
         state = await _load_submission(redis, session_id)
         if state:
             return session_id, state
-    session_id = secrets.token_urlsafe(32)
+    session_id = _new_draft_id()
     return session_id, {}
 
 
@@ -258,15 +304,15 @@ async def submit_post(
     raw_cookie = request.cookies.get("ow-submission-session")
     session_id: str = (
         raw_cookie
-        if raw_cookie and _SESSION_KEY_RE.match(raw_cookie)
-        else secrets.token_urlsafe(32)
+        if raw_cookie and _DRAFT_COOKIE_RE.match(raw_cookie)
+        else _new_draft_id()
     )
     state = await _load_submission(redis, session_id)
     if not state and raw_cookie:
         # Never adopt a client-supplied session id that has no server-side state
         # (session fixation): mint a fresh server-generated id instead, matching
         # the GET handler's behaviour.
-        session_id = secrets.token_urlsafe(32)
+        session_id = _new_draft_id()
         state = {}
 
     locations = await get_active_locations(db)
@@ -287,6 +333,9 @@ async def submit_post(
         }
         if extra:
             ctx.update(extra)
+        err = ctx.get("error")
+        if err in _ERROR_FIELD:
+            ctx["field_errors"] = {_ERROR_FIELD[err]: f"submit.error.{err}"}
         resp = render(request, "submit.html", ctx)
         _set_submission_cookie(resp, session_id)
         return resp
@@ -395,13 +444,21 @@ async def submit_post(
 
     # ── Step 5: attachments ───────────────────────────────────────
     if step == _STEP_ATTACHMENTS:
-        from app.services.attachment import read_upload_files
+        from app.services.attachment import MAX_DRAFT_ATTACHMENT_BYTES, read_upload_files
 
         file_tuples, file_error = await read_upload_files(files)
         if file_error:
             state["step"] = _STEP_ATTACHMENTS
             await _save_submission(redis, session_id, state)
-            return _render_step({"error": file_error})
+            return _render_step({"error": file_error, "field_errors": {"files": file_error}})
+        if sum(len(ft[2]) for ft in file_tuples) > MAX_DRAFT_ATTACHMENT_BYTES:
+            state["step"] = _STEP_ATTACHMENTS
+            await _save_submission(redis, session_id, state)
+            return _render_step({"error": "attachments_too_large"})
+        if file_tuples and not await _redis_has_room(redis):
+            state["step"] = _STEP_ATTACHMENTS
+            await _save_submission(redis, session_id, state)
+            return _render_step({"error": "attachments_no_room"})
 
         state["files_stored"] = True
         state["step"] = _STEP_REVIEW
@@ -474,7 +531,7 @@ async def submit_post(
             (fd["filename"], fd["content_type"], _b64.b64decode(fd["data"]))
             for fd in file_data_list
         ]
-        stored = await create_attachments(db, report, file_tuples_restored)
+        await create_attachments(db, report, file_tuples_restored)
 
         from app.services.notifications import notify_new_report
         background_tasks.add_task(notify_new_report, report.case_number)
@@ -489,7 +546,8 @@ async def submit_post(
                 "case_number": report.case_number,
                 "pin": plain_pin,
                 "attachments": [
-                    {"filename": a.filename, "size_str": format_size(a.size)} for a in stored
+                    {"filename": name, "size_str": format_size(len(data))}
+                    for name, _, data in file_tuples_restored
                 ],
             },
         )
@@ -512,7 +570,7 @@ async def submit_restart(
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
     raw = request.cookies.get("ow-submission-session")
-    if raw and _SESSION_KEY_RE.match(raw):
+    if raw and _DRAFT_COOKIE_RE.match(raw):
         await redis.delete(_submission_key(raw))
     response = RedirectResponse("/submit", status_code=303)
     _clear_submission_cookie(response)
@@ -540,7 +598,7 @@ async def status_get(
             if report:
                 await redis.expire(f"status-session:{session_key}", 7200)
                 replied = request.query_params.get("replied") == "1"
-                success = "Your reply has been sent." if replied else None
+                success = "status.reply.sent" if replied else None
 
                 from datetime import UTC, datetime, timedelta
 
@@ -552,13 +610,14 @@ async def status_get(
                 ack_deadline = submitted + timedelta(days=7)
                 ack_days_remaining = (ack_deadline - now).days
 
-                from app.services.report import decrypt_report_fields
+                from app.services.report import decrypt_attachment_names, decrypt_report_fields
 
                 _, dec_msgs = decrypt_report_fields(report)
 
                 return render(request, "status.html", {
                     "report": report,
                     "decrypted_messages": dec_msgs,
+                    "attachment_names": decrypt_attachment_names(report),
                     "case_number": None,
                     "pin": None,
                     "from_session": True,
@@ -589,7 +648,7 @@ async def status_post(
             request,
             "status.html",
             {
-                "error": None if lockout_ttl else "Invalid case number or PIN.",
+                "error": make_translator(get_lang(request))("status.error.invalid"),
                 "report": None,
                 "locked": bool(lockout_ttl),
                 "lockout_ttl": lockout_ttl,
@@ -719,15 +778,20 @@ async def whistleblower_download_attachment(
     if not attachment or str(attachment.report_id) != decoded_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
-    from app.services.attachment import content_disposition_attachment, read_attachment
+    from app.services.attachment import (
+        attachment_filename,
+        content_disposition_attachment,
+        read_attachment,
+    )
 
     try:
         data = await read_attachment(db, attachment)
     except LookupError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
 
+    name = await attachment_filename(db, attachment)
     return Response(
         content=data,
         media_type=attachment.content_type,
-        headers={"Content-Disposition": content_disposition_attachment(attachment.filename)},
+        headers={"Content-Disposition": content_disposition_attachment(name)},
     )

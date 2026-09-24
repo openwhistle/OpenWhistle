@@ -172,6 +172,20 @@ def decrypt_report_fields(report: Report) -> tuple[str, list[str]]:
     return description, msg_contents
 
 
+def decrypt_attachment_names(report: Report) -> list[str]:
+    """Return the attachments' plaintext names, in report.attachments order.
+
+    Names stored before v1.5.0 are returned as stored.
+    """
+    from app.config import settings
+    from app.services.encryption import decrypt_field_safe, make_report_fernet
+
+    if not report.encrypted_dek:
+        return [a.filename for a in report.attachments]
+    fernet = make_report_fernet(report.encrypted_dek, settings.secret_key)
+    return [decrypt_field_safe(fernet, a.filename) or a.filename for a in report.attachments]
+
+
 def decrypt_note_contents(report: Report) -> list[str]:
     """Return the internal notes' plaintext, in report.notes order.
 
@@ -257,6 +271,10 @@ async def add_whistleblower_message(
     db.add(msg)
     await db.commit()
     await db.refresh(msg)
+
+    from app.services.notifications import notify_whistleblower_message
+
+    await notify_whistleblower_message(report.case_number)
     return msg
 
 
@@ -376,6 +394,7 @@ async def get_reports_paginated(
     location_id: uuid.UUID | None = None,
     org_id: uuid.UUID | None = None,
     scope_org: bool = False,
+    case_query: str | None = None,
 ) -> tuple[list[Report], int]:
     page = max(1, page)
     per_page = max(1, min(100, per_page))
@@ -395,6 +414,11 @@ async def get_reports_paginated(
         # `== org_id` renders `IS NULL` when org_id is None, so an org-less
         # caller is correctly restricted to org-less reports rather than all.
         base_q = base_q.where(Report.org_id == org_id)
+    if case_query:
+        # Case number only: report content is encrypted per report and must stay
+        # unsearchable. Escape LIKE wildcards so "%" or "_" match themselves.
+        needle = case_query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        base_q = base_q.where(Report.case_number.ilike(f"%{needle}%", escape="\\"))
 
     count_result = await db.execute(select(func.count()).select_from(base_q.subquery()))
     total: int = count_result.scalar_one()

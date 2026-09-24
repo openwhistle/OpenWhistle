@@ -42,7 +42,7 @@
 
 {% macro sort_url(field) %}
 {%- set new_dir = 'asc' if (sort_by == field and sort_dir == 'desc') else 'desc' -%}
-/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ field }}&dir={{ new_dir }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if my_cases %}&my_cases=1{% endif %}
+/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ field }}&dir={{ new_dir }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if my_cases %}&my_cases=1{% endif %}{% if case_query %}&q={{ case_query | urlencode }}{% endif %}
 {%- endmacro %}
 
 {% macro sort_icon(field) %}
@@ -54,7 +54,7 @@
 {%- endmacro %}
 
 {% macro page_url(p) %}
-/admin/dashboard?page={{ p }}&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if my_cases %}&my_cases=1{% endif %}
+/admin/dashboard?page={{ p }}&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if my_cases %}&my_cases=1{% endif %}{% if case_query %}&q={{ case_query | urlencode }}{% endif %}
 {%- endmacro %}
 
 {% block content %}
@@ -68,7 +68,7 @@
                 <span class="badge badge-{{ user.role.value }} dash-role-badge">{{ t('role.label.' + user.role.value) }}</span>
             </p>
         </div>
-        <a href="/submit" class="btn btn-secondary btn-sm" title="Opens the public submit form in this tab">{{ t('admin.view_submit') }}</a>
+        <a href="/submit" class="btn btn-secondary btn-sm" title="{{ t('admin.view_submit.title') }}">{{ t('admin.view_submit') }}</a>
     </div>
 
     {# Deletion success flash #}
@@ -107,7 +107,7 @@
         <a href="/admin/dashboard?status={{ status_val }}&sort={{ sort_by }}&dir={{ sort_dir }}&per_page={{ per_page }}"
            class="stat-card stat-card-link {% if status_filter == status_val %}stat-card-active{% endif %}"
            data-delay="{{ loop.index0 * 0.05 }}"
-           aria-label="Filter by {{ t(label_key) }}">
+           aria-label="{{ t('admin.stats.filter_by', status=t(label_key)) }}">
             <div class="stat-number">{{ count }}</div>
             <span class="badge {{ cls }}">{{ t(label_key) }}</span>
         </a>
@@ -121,7 +121,7 @@
             <div class="dashboard-toolbar">
                 {# Status filter pill row #}
                 <div class="filter-pills">
-                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}"
+                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}{% if case_query %}&q={{ case_query | urlencode }}{% endif %}"
                        class="filter-pill {% if not status_filter and not my_cases %}filter-pill-active{% endif %}">
                         {{ t('admin.filter.all_statuses') }}
                     </a>
@@ -131,12 +131,12 @@
                         ('pending_feedback',  'status.label.pending_feedback'),
                         ('closed',            'status.label.closed')
                     ] %}
-                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}&status={{ sv }}"
+                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}&status={{ sv }}{% if case_query %}&q={{ case_query | urlencode }}{% endif %}"
                        class="filter-pill {% if status_filter == sv and not my_cases %}filter-pill-active{% endif %}">
                         {{ t(label_key) }}
                     </a>
                     {% endfor %}
-                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}&my_cases=1"
+                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}&my_cases=1{% if case_query %}&q={{ case_query | urlencode }}{% endif %}"
                        class="filter-pill {% if my_cases %}filter-pill-active{% endif %}">
                         {{ t('admin.filter.my_cases') }}
                     </a>
@@ -145,12 +145,12 @@
                 {# Location filter #}
                 {% if all_locations %}
                 <div class="filter-pills">
-                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if my_cases %}&my_cases=1{% endif %}"
+                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if my_cases %}&my_cases=1{% endif %}{% if case_query %}&q={{ case_query | urlencode }}{% endif %}"
                        class="filter-pill {% if not location_filter %}filter-pill-active{% endif %}">
                         {{ t('admin.filter.all_locations') }}
                     </a>
                     {% for loc in all_locations %}
-                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if my_cases %}&my_cases=1{% endif %}&location_id={{ loc.id }}"
+                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if my_cases %}&my_cases=1{% endif %}&location_id={{ loc.id }}{% if case_query %}&q={{ case_query | urlencode }}{% endif %}"
                        class="filter-pill {% if location_filter == loc.id|string %}filter-pill-active{% endif %}">
                         {{ loc.name }}
                     </a>
@@ -169,6 +169,25 @@
                 </div>
             </div>
         </div>
+
+        {# Case-number search: a plain GET form, works without JavaScript. #}
+        <form method="get" action="/admin/dashboard" class="dash-search" role="search">
+            <div class="form-group">
+                <label class="form-label" for="dash-search-q">{{ t('admin.search.label') }}</label>
+                <input type="search" class="form-control mono" id="dash-search-q" name="q"
+                       value="{{ case_query }}" maxlength="64" autocomplete="off" spellcheck="false"
+                       placeholder="{{ t('admin.search.placeholder') }}" aria-describedby="dash-search-hint">
+                <div class="form-hint" id="dash-search-hint">{{ t('admin.search.hint') }}</div>
+            </div>
+            <input type="hidden" name="per_page" value="{{ per_page }}">
+            <input type="hidden" name="sort" value="{{ sort_by }}">
+            <input type="hidden" name="dir" value="{{ sort_dir }}">
+            {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
+            {% if my_cases %}<input type="hidden" name="my_cases" value="1">{% endif %}
+            {% if location_filter %}<input type="hidden" name="location_id" value="{{ location_filter }}">{% endif %}
+            <button type="submit" class="btn btn-secondary">{{ t('admin.search.button') }}</button>
+            {% if case_query %}<a href="/admin/dashboard" class="btn btn-secondary">{{ t('admin.search.clear') }}</a>{% endif %}
+        </form>
 
         {% set from_row = (page - 1) * per_page + 1 %}
         {% set to_row   = [page * per_page, total] | min %}
@@ -215,7 +234,7 @@
                             {% if report.assigned_to %}
                                 <span class="dash-assignee-name">{{ report.assigned_to.username }}</span>
                             {% else %}
-                                N/A
+                                {{ t('admin.table.unassigned') }}
                             {% endif %}
                         </td>
                         <td class="{{ ack_sla_class }} dash-sla-cell">
@@ -230,7 +249,7 @@
                                 {% set days_to_fb = (report.feedback_due_at - now).days %}
                                 {% if days_to_fb > 0 %}{{ days_to_fb }} {{ t('admin.report.sla.days_remaining') }}{% else %}{{ t('admin.report.sla.overdue') }}{% endif %}
                             {% else %}
-                                N/A
+                                {{ t('admin.report.sla.not_ack') }}
                             {% endif %}
                         </td>
                         <td>
@@ -286,11 +305,11 @@
         </div>
         {% endif %}
 
-        {% elif status_filter or my_cases %}
+        {% elif status_filter or my_cases or case_query or location_filter %}
         {# Filtered empty state #}
         <div class="dash-empty-wrap">
-            <div class="dash-empty-icon">&#128269;</div>
-            <p class="dash-empty-title">{{ t('admin.filter.no_results') }}</p>
+            <div class="dash-empty-icon" aria-hidden="true">&#128269;</div>
+            <p class="dash-empty-title">{% if case_query %}{{ t('admin.search.no_results', query=case_query) }}{% else %}{{ t('admin.filter.no_results') }}{% endif %}</p>
             <a href="/admin/dashboard" class="btn btn-secondary btn-sm dash-mt-btn">{{ t('admin.filter.all_statuses') }}</a>
         </div>
 

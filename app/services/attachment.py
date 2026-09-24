@@ -17,6 +17,9 @@ from app.models.report import Report
 
 MAX_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB
 MAX_ATTACHMENTS: int = 5
+# Hard cap on what one submission draft holds in Redis (before base64 and
+# encryption, which add about 78 %).
+MAX_DRAFT_ATTACHMENT_BYTES: int = MAX_ATTACHMENTS * MAX_SIZE_BYTES
 
 ALLOWED_MIME_TYPES: frozenset[str] = frozenset({
     "application/pdf",
@@ -171,6 +174,42 @@ def _strip_pdf(data: bytes) -> bytes:
     return out.getvalue()
 
 
+def _neutral_attrs(xml: bytes, values: dict[bytes, bytes]) -> bytes:
+    """Replace the value of every (optionally prefixed) attribute named in ``values``."""
+    for name, value in values.items():
+        xml = re.sub(
+            rb"(\s(?:\w+:)?" + name + rb")=(?:\"[^\"]*\"|'[^']*')", rb'\1="' + value + b'"', xml
+        )
+    return xml
+
+
+# Who wrote a comment or tracked change. Names are replaced, never removed, so
+# every reference inside the package (threaded comments → person ids) still resolves.
+_WORD_AUTHOR = {b"author": b"Author", b"initials": b"A", b"userId": b"", b"providerId": b"None"}
+_XL_PERSON = {b"displayName": b"Author", b"userId": b"", b"providerId": b"None"}
+
+
+def _anonymise_ooxml_part(name: str, body: bytes) -> bytes:
+    if name.startswith("word/") and name.endswith(".xml"):
+        # comments, w:ins/w:del/…Change in every story part, people.xml
+        return _neutral_attrs(body, _WORD_AUTHOR)
+    if re.fullmatch(r"xl/comments\d*\.xml", name):
+        # "tc={person id}" links a legacy comment to its thread: not a name, kept.
+        return re.sub(rb"<author>(?!tc=)[^<]*</author>", b"<author>Author</author>", body)
+    if name.startswith("xl/persons/"):
+        return _neutral_attrs(body, _XL_PERSON)
+    if name.startswith("xl/revisions/"):
+        values = {b"userName": b"Author"}
+        if name.endswith("userNames.xml"):
+            values[b"name"] = b"Author"
+        return _neutral_attrs(body, values)
+    if name == "_rels/.rels":
+        return re.sub(rb"<Relationship\b[^>]*docProps/thumbnail[^>]*/>", b"", body)
+    if name == "[Content_Types].xml":
+        return re.sub(rb"<Override\b[^>]*docProps/thumbnail[^>]*/>", b"", body)
+    return body
+
+
 def _strip_ooxml(data: bytes) -> bytes:
     import zipfile  # noqa: PLC0415
 
@@ -181,8 +220,14 @@ def _strip_ooxml(data: bytes) -> bytes:
     out = io.BytesIO()
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as dst:
         for info in src.infolist():
+            # The thumbnail is a picture of the first page, names included.
+            if info.filename.startswith("docProps/thumbnail."):
+                continue
             body = _OOXML_EMPTY_PARTS.get(info.filename) or src.read(info)
-            dst.writestr(info, body)
+            # A fresh entry: no original timestamps, no extra fields (Unix
+            # uid/gid, NTFS times) from the whistleblower's machine.
+            clean = zipfile.ZipInfo(info.filename, date_time=(1980, 1, 1, 0, 0, 0))
+            dst.writestr(clean, _anonymise_ooxml_part(info.filename, body), zipfile.ZIP_DEFLATED)
     return out.getvalue()
 
 
@@ -303,7 +348,7 @@ async def create_attachments(
     only the storage_key.
     """
     from app.config import settings  # noqa: PLC0415
-    from app.services.encryption import make_report_fernet  # noqa: PLC0415
+    from app.services.encryption import encrypt_field, make_report_fernet  # noqa: PLC0415
     from app.services.storage import generate_storage_key, get_storage_backend  # noqa: PLC0415
 
     backend = get_storage_backend()
@@ -317,14 +362,15 @@ async def create_attachments(
         db_data: bytes | None = ciphertext
 
         if use_s3:
-            storage_key = generate_storage_key(filename)
+            storage_key = generate_storage_key()
             await backend.put(storage_key, ciphertext, "application/octet-stream")
             db_data = None
 
         att = Attachment(
             id=uuid.uuid4(),
             report_id=report.id,
-            filename=filename,
+            # "Max_Mustermann_evidence.pdf" identifies as well as the content.
+            filename=encrypt_field(fernet, filename),
             content_type=content_type,
             size=len(data),
             data=db_data,
@@ -367,6 +413,18 @@ async def read_attachment(db: AsyncSession, attachment: Attachment) -> bytes:
     if dek is None:
         raise LookupError(str(attachment.report_id))
     return make_report_fernet(dek, settings.secret_key).decrypt(data)
+
+
+async def attachment_filename(db: AsyncSession, attachment: Attachment) -> str:
+    """Return the attachment's plaintext name; names stored before v1.5.0 as stored."""
+    from app.config import settings  # noqa: PLC0415
+    from app.services.encryption import decrypt_field_safe, make_report_fernet  # noqa: PLC0415
+
+    dek = await db.scalar(select(Report.encrypted_dek).where(Report.id == attachment.report_id))
+    if dek is None:
+        return attachment.filename
+    fernet = make_report_fernet(dek, settings.secret_key)
+    return decrypt_field_safe(fernet, attachment.filename) or attachment.filename
 
 
 async def get_attachment_by_id(

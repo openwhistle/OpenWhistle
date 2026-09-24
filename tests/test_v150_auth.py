@@ -126,12 +126,12 @@ async def test_wrong_pin_past_the_limit_shows_wait_notice_and_keeps_the_form(
     report, _pin = await create_report(db_session, "corruption", "Notice test report text.")
     for _ in range(settings.max_access_attempts):
         resp = await _status_login(client, report.case_number, _WRONG_PIN)
-        assert "Too many attempts" not in resp.text
+        assert "Many wrong attempts" not in resp.text
 
     resp = await _status_login(client, report.case_number, _WRONG_PIN)
 
     assert resp.status_code == 401
-    assert "Too many attempts" in resp.text
+    assert "Many wrong attempts" in resp.text
     assert 'name="pin"' in resp.text  # the owner can still log in
 
 
@@ -146,8 +146,8 @@ async def test_successful_login_resets_the_failure_count(
 
     resp = await _status_login(client, report.case_number, _WRONG_PIN)
 
-    assert "Invalid case number or PIN." in resp.text
-    assert "Too many attempts" not in resp.text
+    assert "No report matches this case number and PIN." in resp.text
+    assert "Many wrong attempts" not in resp.text
 
 
 @pytest.mark.asyncio
@@ -172,7 +172,7 @@ async def test_reply_fallback_shares_the_case_number_count_and_accepts_correct_p
 
     # The count is per case number, shared with /status.
     status_resp = await _status_login(client, report.case_number, _WRONG_PIN)
-    assert "Too many attempts" in status_resp.text
+    assert "Many wrong attempts" in status_resp.text
 
     resp = await client.post(
         "/reply",
@@ -591,7 +591,7 @@ async def test_setup_wizard_validates_the_username_like_admin_created_users(
         },
         follow_redirects=False,
     )
-    assert "may only contain" in resp.text
+    assert "letters, digits, spaces" in resp.text
 
 
 # ═════════════════════════════════════════════════════════════════════════════

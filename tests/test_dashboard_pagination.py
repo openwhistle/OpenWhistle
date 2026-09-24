@@ -71,7 +71,7 @@ async def test_dashboard_loads_for_authenticated_admin(
 
     resp = await client.get("/admin/dashboard")
     assert resp.status_code == 200
-    assert "Dashboard" in resp.text or "Meldungen" in resp.text
+    assert "Reports dashboard" in resp.text or "Meldungen" in resp.text
 
 
 @pytest.mark.asyncio

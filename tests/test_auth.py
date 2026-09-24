@@ -20,7 +20,7 @@ async def test_login_invalid_credentials(client: AsyncClient) -> None:
         data={"username": "nonexistent", "password": "wrongpassword", "csrf_token": csrf_token},
     )
     assert response.status_code == 401
-    assert "Invalid" in response.text
+    assert "The username or password is not correct" in response.text
 
 
 @pytest.mark.asyncio

@@ -28,6 +28,30 @@ password fails in the generic path anyway — and the check refused
 owner-password-only PDFs, which open without a password and clean correctly
 (`test_owner_password_only_pdf_is_accepted_and_cleaned`).
 
+## Whistleblower privacy — v1.5.0
+
+Mutations: `docs-tech/mutations/v1.5.0-privacy.json`. Tests: `tests/test_privacy_v150.py`.
+
+| Guard | Test that fires |
+| --- | --- |
+| DOCX comment / tracked-change authors, initials, people.xml ids replaced | `test_docx_comment_and_tracked_change_authors_are_anonymised` |
+| XLSX legacy comment authors, persons, revision user names replaced; `tc=` thread links kept | `test_xlsx_comment_authors_and_persons_are_anonymised` |
+| Office thumbnail removed with its relationship and content-type override | `test_docx_thumbnail_is_removed_with_its_references` |
+| Zip entries rewritten without timestamps or extra fields (Unix uid/gid) | `test_office_zip_entries_lose_timestamps_and_extra_fields` |
+| Attachment filename encrypted; S3 key never carries it | `test_attachment_filename_is_stored_encrypted`, `test_s3_object_key_does_not_carry_the_filename` |
+| Name decrypted on status page, admin page, both downloads, PDF | `test_status_page_download_and_pdf_show_the_decrypted_filename`, `test_admin_report_page_and_download_show_the_decrypted_filename` |
+| Migration 003 encrypts existing names, never twice | `test_migration_encrypts_existing_filenames_idempotently` |
+| Draft in Redis is ciphertext; key only in the cookie; wrong key = expired | `test_draft_in_redis_reveals_nothing_without_the_cookie_key`, `test_draft_with_the_wrong_key_counts_as_expired` |
+| Draft attachment total cap; refused near Redis `maxmemory` | `test_draft_attachments_are_capped_in_total`, `test_draft_attachments_are_refused_when_redis_is_nearly_full`, `test_redis_has_room` |
+| New-report and reply notices queued, sent as one digest, once across replicas | `test_new_report_and_reply_are_queued_not_sent`, `test_digest_is_delivered_once_when_replicas_run_together`, `test_whistleblower_reply_queues_a_notification` |
+| Retention on by default; admin page says why nothing is deleted yet | `test_retention_enabled_defaults_true`, `test_retention_page_explains_the_default` |
+| IP headers and peer address removed before the app; pages `no-store` | `test_ip_headers_and_peer_address_never_reach_the_app`, `test_pages_are_never_cached_but_static_files_are` |
+| Helm Ingress turns the ingress-nginx access log off | `test_helm_ingress_turns_the_nginx_access_log_off` |
+
+**Only one replica sends a digest** without a job lock: the queue is read and
+cleared in one `MULTI/EXEC`, so concurrent runs get the events exactly once
+(`digest-read-not-atomic` turns the concurrency test red).
+
 ## Accounts and organisations
 
 | Guard | Test that fires |
@@ -59,6 +83,16 @@ the key comes from the JWKS as a `PyJWK` bound to its own algorithm, and PyJWT
 refuses a header `alg` that does not match it. The allowlist is kept as a second
 line; `test_id_token_that_does_not_verify_is_refused[symmetric alg]` covers the
 outcome.
+
+## Usability (v1.5, `docs-tech/mutations/v1.5.0-ux.json`, 24 red)
+
+| Guard | Test that fires |
+| --- | --- |
+| A failed field gets `aria-invalid` and `aria-describedby` → inline message (wizard, status, login, TOTP, setup) | `tests/test_v150_ux.py` `test_*_marks_*`, `test_setup_wizard_errors_sit_next_to_their_fields` |
+| Blank admin login answers on the form, not with 422 JSON | `test_login_empty_fields_answer_on_the_form` |
+| `t()` never marks a plain message safe, whatever it ends with | `test_plain_message_passed_through_t_is_never_marked_safe` |
+| Case-number search: LIKE wildcards escaped, case-manager scope kept, links keep `q` | `test_search_escapes_like_wildcards`, `test_search_keeps_the_case_manager_restriction`, `test_dashboard_search_form_and_links_keep_the_query` |
+| Audit entries: every action labelled in 4 languages, detail escaped, CSV keeps codes | `test_every_audit_action_has_a_label_in_every_language`, `test_audit_log_shows_labels_and_readable_detail` |
 
 ## Repository and release
 

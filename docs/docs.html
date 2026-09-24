@@ -735,6 +735,7 @@
           <a href="#requirements">Requirements</a>
           <a href="#container-images">Container Images</a>
           <a href="#installation">Installation</a>
+          <a href="#deployment-privacy">Deployment Privacy</a>
           <a href="#configuration">Configuration</a>
           <a href="#first-run">First-Run Wizard</a>
         </nav>
@@ -1007,6 +1008,47 @@
         </div>
       </section>
 
+      <!-- Deployment privacy -->
+      <section class="docs-section" id="deployment-privacy" aria-labelledby="deployment-privacy-h2">
+        <h2 id="deployment-privacy-h2">Deployment privacy</h2>
+
+        <h3 id="redis-sizing">Redis sizing</h3>
+        <p>
+          A submission draft lives in Redis for up to 2 hours, Fernet-encrypted with a key that
+          exists only in the whistleblower's cookie. Its attachments make it large:
+        </p>
+        <table class="env-table">
+          <thead><tr><th>Draft</th><th>Redis memory</th></tr></thead>
+          <tbody>
+            <tr><td>Text only</td><td>&lt; 30 KB</td></tr>
+            <tr><td>5 × 10 MB attachments (maximum)</td><td>about 90 MB</td></tr>
+          </tbody>
+        </table>
+        <p>
+          Set <code>maxmemory</code> with <code>maxmemory-policy noeviction</code>
+          (<code>docker-compose.prod.yml</code> uses 1 GB): an evicting policy could drop
+          sessions and rate-limit counters. Past <code>DRAFT_REDIS_MEMORY_PERCENT</code> new
+          draft attachments are refused, so the rest of Redis keeps working.
+        </p>
+
+        <h3 id="helm">Kubernetes (Helm)</h3>
+        <p>
+          The ingress controller sees every whistleblower's IP address. The chart
+          (<code>charts/openwhistle/</code>) ships with
+          <code>nginx.ingress.kubernetes.io/enable-access-log: "false"</code> on its Ingress.
+        </p>
+        <ul>
+          <li>Your own <code>ingress.annotations</code> are merged with it; do not set it to
+            <code>null</code>.</li>
+          <li>ingress-nginx still names the client in its error log; set
+            <code>error-log-level: crit</code> in the controller ConfigMap.</li>
+          <li>ingress-nginx always forwards <code>X-Forwarded-For</code> and
+            <code>X-Real-IP</code>. OpenWhistle drops them, and the peer address, in its first
+            middleware; the admin dashboard still warns that the proxy knows the addresses.</li>
+          <li>Other controllers (Traefik: access log off unless enabled): check their logging.</li>
+        </ul>
+      </section>
+
       <!-- Configuration -->
       <section class="docs-section" id="configuration" aria-labelledby="configuration-h2">
         <h2 id="configuration-h2">Configuration</h2>
@@ -1043,6 +1085,12 @@
               <td><span class="env-required env-req-yes">Required</span></td>
               <td>Redis connection string. Format: <code>redis://host:port/db</code></td>
               <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">DRAFT_REDIS_MEMORY_PERCENT</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>New attachments in a submission draft are refused while Redis uses more than this share of its <code>maxmemory</code>; the whistleblower can still submit without them. No effect when Redis has no <code>maxmemory</code>. See <a href="#redis-sizing">Redis sizing</a>.</td>
+              <td><code>80</code></td>
             </tr>
             <tr>
               <td><code class="env-key">APP_NAME</code></td>
@@ -1152,13 +1200,36 @@
         <h3 id="notifications">Notifications</h3>
         <p>
           OpenWhistle can notify administrators via <strong>email (SMTP)</strong> or a
-          <strong>webhook (HTTP POST)</strong> whenever a new report is submitted. Both channels
-          are disabled by default and can be configured independently.
+          <strong>webhook (HTTP POST)</strong> about new reports and new whistleblower messages.
+          Both channels are disabled by default and can be configured independently.
         </p>
         <p>
-          Notifications contain only the <strong>case number</strong> and a timestamp — never the
-          report description or category — to protect the whistleblower's privacy.
+          A notification carries only counts and <strong>case numbers</strong> — never the
+          report description, category or submission time.
         </p>
+        <div class="callout callout-note">
+          <div class="callout-title">Why notifications are batched</div>
+          <p>
+            A notice sent the second a report arrives tells the employer when it was written —
+            and who was at their desk then. Notices are therefore collected and sent as one
+            digest every <code>NOTIFICATION_BATCH_MINUTES</code> (default 60). The trade-off:
+            case managers learn of a report up to that long after it arrives, well inside the
+            7-day acknowledgement deadline. <code>0</code> sends each notice immediately — only
+            if you accept the timing risk.
+          </p>
+        </div>
+
+        <table class="env-table">
+          <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code class="env-key">NOTIFICATION_BATCH_MINUTES</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Minutes between digests of new reports and whistleblower messages. All replicas fire at the same wall-clock moments; exactly one sends. <code>0</code> sends each event at once.</td>
+              <td><code>60</code></td>
+            </tr>
+          </tbody>
+        </table>
 
         <h4>Email (SMTP)</h4>
         <table class="env-table">
@@ -1257,7 +1328,7 @@
             <tr>
               <td><code class="env-key">NOTIFY_WEBHOOK_TYPE</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
-              <td>Payload format for webhook notifications. <code>generic</code> sends a plain JSON object; <code>slack</code> sends a Slack Block Kit message; <code>teams</code> sends a Microsoft Teams Adaptive Card (v1.4).</td>
+              <td>Payload format for webhook notifications. <code>generic</code> sends <code>{"event": "new_activity", "new_reports": [...], "new_messages": [...]}</code>; <code>slack</code> sends a Slack Block Kit message; <code>teams</code> sends a Microsoft Teams Adaptive Card (v1.4).</td>
               <td><code>generic</code></td>
             </tr>
           </tbody>
@@ -1302,14 +1373,20 @@
           The admin UI at <code>/admin/retention</code> shows the current configuration and next
           scheduled run.
         </p>
+        <p>
+          <strong>On by default since v1.5.0.</strong> A report is deleted
+          <code>RETENTION_DAYS</code> after it is closed. OpenWhistle was released in 2026, so no
+          installation holds a report closed three years ago: turning retention on deletes nothing
+          today.
+        </p>
         <table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
             <tr>
               <td><code class="env-key">RETENTION_ENABLED</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
-              <td>Set to <code>true</code> to enable daily automatic deletion of aged closed reports.</td>
-              <td><code>false</code></td>
+              <td>Daily automatic deletion of closed reports older than <code>RETENTION_DAYS</code>. Set to <code>false</code> only on legal advice (e.g. pending litigation).</td>
+              <td><code>true</code></td>
             </tr>
             <tr>
               <td><code class="env-key">RETENTION_DAYS</code></td>
@@ -1531,8 +1608,15 @@
             WebP and GIF; document info and XMP in PDF; author, company and custom properties in
             DOCX/XLSX. A file that cannot be parsed for cleaning is refused. Legacy
             <code>.doc</code>/<code>.xls</code> and plain text are stored as uploaded, and the
-            upload page says so. Comments and tracked-change authors inside Office files are not
-            removed.</li>
+            upload page says so.</li>
+          <li><strong>Office authors anonymised:</strong> comment and tracked-change authors,
+            initials and account ids in DOCX/XLSX are replaced with <code>Author</code>;
+            embedded thumbnails, zip timestamps and zip extra fields are removed. The text of a
+            comment is content and stays — Excel writes the author's name into it.</li>
+          <li><strong>Filenames encrypted:</strong> the original filename is encrypted with the
+            report's data key (existing names are encrypted by migration 003). S3 object keys are
+            random ids and never contain the filename; objects stored before v1.5.0 keep their
+            old key.</li>
           <li><strong>Encrypted at rest:</strong> file bytes are encrypted with the report's data
             key before they reach PostgreSQL or the S3 bucket. Attachments uploaded before v1.4.0
             stay unencrypted and remain readable.</li>
@@ -1617,6 +1701,11 @@
 
         <h3>Managing reports</h3>
         <p>
+          To find a case, type any part of its case number (for example <code>00042</code>) into the
+          search field on <code>/admin/dashboard</code>. Report content is encrypted per report and
+          cannot be searched.
+        </p>
+        <p>
           Click any report to open the case view. From here you can:
         </p>
         <ul>
@@ -1633,7 +1722,8 @@
         <h3>Audit log</h3>
         <p>
           Every admin action is recorded in an immutable audit log (required by HinSchG §11 Abs. 5).
-          View and filter the log at <code>/admin/audit-log</code>; export as CSV at any time.
+          View and filter the log at <code>/admin/audit-log</code>; actions and details are shown as readable
+          labels. Export as CSV at any time — the export keeps the machine action codes and adds a label column.
         </p>
 
         <h3>Categories and locations</h3>

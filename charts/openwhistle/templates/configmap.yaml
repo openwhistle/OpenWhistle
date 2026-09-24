@@ -50,6 +50,8 @@ data:
   NOTIFY_WEBHOOK_ENABLED: {{ .Values.config.notifyWebhookEnabled | quote }}
   NOTIFY_WEBHOOK_URL: {{ .Values.config.notifyWebhookUrl | quote }}
   NOTIFY_WEBHOOK_TYPE: {{ .Values.config.notifyWebhookType | quote }}
+  NOTIFICATION_BATCH_MINUTES: {{ .Values.config.notificationBatchMinutes | quote }}
+  DRAFT_REDIS_MEMORY_PERCENT: {{ .Values.config.draftRedisMemoryPercent | quote }}
   RETENTION_ENABLED: {{ .Values.config.retentionEnabled | quote }}
   RETENTION_DAYS: {{ .Values.config.retentionDays | quote }}
   MULTI_TENANCY_ENABLED: {{ .Values.config.multiTenancyEnabled | quote }}

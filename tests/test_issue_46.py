@@ -41,4 +41,4 @@ async def test_sso_only_account_password_login_returns_generic_error(
     assert resp.status_code == 401
     # Must not reveal the account exists / uses SSO — keep the error generic.
     assert "Single Sign-On" not in resp.text
-    assert "Invalid username or password" in resp.text
+    assert "The username or password is not correct" in resp.text

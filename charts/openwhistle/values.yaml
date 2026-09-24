@@ -19,7 +19,18 @@ service:
 ingress:
   enabled: false
   className: ""
-  annotations: {}
+  # Whistleblower privacy: the ingress controller sees every client address.
+  # - ingress-nginx logs it in its access log by default; the annotation below
+  #   turns that log off for this host (or set `disable-access-log: "true"` in
+  #   the controller ConfigMap). Its error log still names the client on
+  #   errors — keep `error-log-level` at `crit` or ship it nowhere.
+  # - ingress-nginx always sends X-Forwarded-For / X-Real-IP upstream and has
+  #   no per-Ingress switch to stop it. OpenWhistle drops these headers and the
+  #   peer address in its first middleware; nothing in the app sees or logs them.
+  # - Traefik keeps access logs off unless enabled. Other controllers: check.
+  # Your own annotations are merged with this default (Helm merges maps).
+  annotations:
+    nginx.ingress.kubernetes.io/enable-access-log: "false"
   hosts:
     - host: whistleblower.example.com
       paths:
@@ -104,9 +115,16 @@ config:
   notifyWebhookEnabled: "false"
   notifyWebhookUrl: ""
   notifyWebhookType: "generic"
+  # New reports / whistleblower messages are sent as one digest every N minutes,
+  # so their timing reveals nothing. 0 = send each at once.
+  notificationBatchMinutes: "60"
 
-  # Data retention (GDPR / HinSchG §12 Abs. 3)
-  retentionEnabled: "false"
+  # Refuse new draft attachments above this share of Redis maxmemory.
+  draftRedisMemoryPercent: "80"
+
+  # Data retention (GDPR Art. 5 / HinSchG §11 Abs. 5): closed reports are
+  # deleted RETENTION_DAYS after closure. On by default since v1.5.0.
+  retentionEnabled: "true"
   retentionDays: "1095"
 
   # Multi-tenancy

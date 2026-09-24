@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, LargeBinary, String, text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, LargeBinary, String, Text, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -29,7 +29,8 @@ class Attachment(Base):
         nullable=False,
         index=True,
     )
-    filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    # Fernet token under the report key (v1.5.0+); older rows hold plaintext.
+    filename: Mapped[str] = mapped_column(Text, nullable=False)
     content_type: Mapped[str] = mapped_column(String(128), nullable=False)
     size: Mapped[int] = mapped_column(Integer, nullable=False)
     data: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)

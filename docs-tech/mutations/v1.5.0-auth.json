@@ -158,8 +158,8 @@
   {
    "id": "policy-not-in-wizard",
    "file": "app/api/wizard.py",
-   "old": "    try:\n        validate_password(password)\n    except ValueError as exc:\n        errors.append(str(exc))\n",
-   "new": "    if len(password) < 12:\n        errors.append(\"Password must be at least 12 characters.\")\n",
+   "old": "    try:\n        validate_password(password)\n    except ValueError:\n        errors[\"password\"] = \"wizard.error.password\"  # noqa: S105 — locale key\n",
+   "new": "    if len(password) < 12:\n        errors[\"password\"] = \"wizard.error.password\"  # noqa: S105 — locale key\n",
    "tests": "V"
   },
   {
@@ -172,8 +172,8 @@
   {
    "id": "wizard-username-unchecked",
    "file": "app/api/wizard.py",
-   "old": "    try:\n        username = validate_username(username)\n    except ValueError as exc:\n        errors.append(str(exc))\n",
-   "new": "",
+   "old": "    try:\n        username = validate_username(username)\n    except ValueError:\n        errors[\"username\"] = \"wizard.error.username\"\n",
+   "new": "    if len(username) < 3 or len(username) > 64:\n        errors[\"username\"] = \"wizard.error.username\"\n",
    "tests": "V"
   },
   {

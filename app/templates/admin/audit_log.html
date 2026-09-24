@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "admin/_audit.html" as audit with context %}
 
 {% block title %}{{ t('admin.audit.title') }} | OpenWhistle{% endblock %}
 
@@ -10,9 +11,9 @@
     .aud-filter-group { margin:0;flex:1;min-width:180px; }
     .aud-time-cell { font-size:0.78rem;white-space:nowrap;color:var(--muted); }
     .aud-admin-cell { font-size:0.85rem;font-weight:600; }
-    .aud-action-badge { font-family:var(--font-mono);font-size:0.78rem;color:var(--accent);background:var(--accent-subtle);padding:0.15rem 0.4rem;border-radius:4px; }
+    .aud-action-cell { font-size:0.85rem; }
     .aud-report-link { font-size:0.78rem; }
-    .aud-detail-cell { font-size:0.78rem;color:var(--muted);font-family:var(--font-mono);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+    .aud-detail-cell { font-size:0.78rem;max-width:360px; }
     .aud-empty { text-align:center;padding:3rem 1rem; }
     .aud-empty-icon { font-size:2.5rem;margin-bottom:1rem;opacity:0.3; }
     .aud-empty-text { font-size:1rem;color:var(--muted); }
@@ -50,19 +51,22 @@
         <form method="get" action="/admin/audit-log" class="aud-filter-form">
             <div class="form-group aud-filter-group">
                 <label class="form-label" for="action-filter">{{ t('admin.audit.filter.action') }}</label>
-                <input type="text" class="form-control" id="action-filter" name="action"
-                    value="{{ action_filter }}"
-                    placeholder="{{ t('admin.audit.filter.all') }}">
+                <select class="form-control" id="action-filter" name="action">
+                    <option value="">{{ t('admin.audit.filter.all') }}</option>
+                    {% for a in audit_actions %}
+                    <option value="{{ a }}" {% if a == action_filter %}selected{% endif %}>{{ audit.translated('audit.action.', a) }}</option>
+                    {% endfor %}
+                </select>
             </div>
             <div class="form-group aud-filter-group">
                 <label class="form-label" for="report-filter">{{ t('admin.audit.filter.report_id') }}</label>
                 <input type="text" class="form-control" id="report-filter" name="report_id"
                     value="{{ report_id_filter }}"
-                    placeholder="UUID…">
+                    placeholder="{{ t('admin.audit.filter.report_id.placeholder') }}">
             </div>
             <button type="submit" class="btn btn-secondary">{{ t('admin.audit.filter.apply') }}</button>
             {% if action_filter or report_id_filter %}
-            <a href="/admin/audit-log" class="btn btn-secondary">✕ Clear</a>
+            <a href="/admin/audit-log" class="btn btn-secondary">{{ t('admin.audit.filter.clear') }}</a>
             {% endif %}
         </form>
     </div>
@@ -86,24 +90,18 @@
                         <td class="mono aud-time-cell">
                             <time data-utc="{{ entry.created_at.isoformat() }}">{{ entry.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</time>
                         </td>
-                        <td class="aud-admin-cell">{{ entry.admin_username or 'N/A' }}</td>
-                        <td>
-                            <span class="aud-action-badge">
-                                {{ entry.action }}
-                            </span>
-                        </td>
+                        <td class="aud-admin-cell">{{ entry.admin_username or '—' }}</td>
+                        <td class="aud-action-cell">{{ audit.label(entry.action) }}</td>
                         <td>
                             {% if entry.report_id %}
                             <a href="/admin/reports/{{ entry.report_id }}" class="mono aud-report-link">
                                 {{ entry.report_id | string | truncate(13, true, '…') }}
                             </a>
                             {% else %}
-                            N/A
+                            —
                             {% endif %}
                         </td>
-                        <td class="aud-detail-cell" title="{{ entry.detail or '' }}">
-                            {{ entry.detail or '' }}
-                        </td>
+                        <td class="aud-detail-cell">{{ audit.detail(entry.detail) }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -118,14 +116,14 @@
             </div>
             <div class="pagination-controls">
                 {% if page > 1 %}
-                <a href="/admin/audit-log?page={{ page - 1 }}{% if action_filter %}&action={{ action_filter }}{% endif %}{% if report_id_filter %}&report_id={{ report_id_filter }}{% endif %}"
+                <a href="/admin/audit-log?page={{ page - 1 }}{% if action_filter %}&action={{ action_filter | urlencode }}{% endif %}{% if report_id_filter %}&report_id={{ report_id_filter | urlencode }}{% endif %}"
                    class="btn btn-secondary btn-sm pagination-btn">{{ t('admin.pagination.prev') }}</a>
                 {% else %}
                 <span class="btn btn-secondary btn-sm pagination-btn pagination-disabled">{{ t('admin.pagination.prev') }}</span>
                 {% endif %}
 
                 {% if page < total_pages %}
-                <a href="/admin/audit-log?page={{ page + 1 }}{% if action_filter %}&action={{ action_filter }}{% endif %}{% if report_id_filter %}&report_id={{ report_id_filter }}{% endif %}"
+                <a href="/admin/audit-log?page={{ page + 1 }}{% if action_filter %}&action={{ action_filter | urlencode }}{% endif %}{% if report_id_filter %}&report_id={{ report_id_filter | urlencode }}{% endif %}"
                    class="btn btn-secondary btn-sm pagination-btn">{{ t('admin.pagination.next') }}</a>
                 {% else %}
                 <span class="btn btn-secondary btn-sm pagination-btn pagination-disabled">{{ t('admin.pagination.next') }}</span>

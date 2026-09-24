@@ -55,7 +55,9 @@ services:
       NOTIFY_WEBHOOK_URL: "${NOTIFY_WEBHOOK_URL:-}"
       NOTIFY_WEBHOOK_SECRET: "${NOTIFY_WEBHOOK_SECRET:-}"
       NOTIFY_WEBHOOK_TYPE: "${NOTIFY_WEBHOOK_TYPE:-generic}"
-      RETENTION_ENABLED: "${RETENTION_ENABLED:-false}"
+      NOTIFICATION_BATCH_MINUTES: "${NOTIFICATION_BATCH_MINUTES:-60}"
+      DRAFT_REDIS_MEMORY_PERCENT: "${DRAFT_REDIS_MEMORY_PERCENT:-80}"
+      RETENTION_ENABLED: "${RETENTION_ENABLED:-true}"
       RETENTION_DAYS: "${RETENTION_DAYS:-1095}"
       MULTI_TENANCY_ENABLED: "${MULTI_TENANCY_ENABLED:-false}"
       DEFAULT_ORG_SLUG: "${DEFAULT_ORG_SLUG:-default}"
@@ -106,7 +108,9 @@ services:
 
   redis:
     image: redis:8-alpine
-    command: redis-server --save "" --appendonly no --requirepass "${REDIS_PASSWORD}"
+    # noeviction: sessions and rate-limit counters are never dropped; drafts
+    # stop taking attachments at DRAFT_REDIS_MEMORY_PERCENT of maxmemory.
+    command: redis-server --save "" --appendonly no --maxmemory 1gb --maxmemory-policy noeviction --requirepass "${REDIS_PASSWORD}"
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s

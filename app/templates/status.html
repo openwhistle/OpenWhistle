@@ -37,28 +37,28 @@
     <div class="demo-credentials st-demo-credentials-margin" role="note">
         <div class="demo-credentials-header">
             <span class="demo-badge">DEMO</span>
-            <span>Try these example reports. Click any row to pre-fill.</span>
+            <span>{{ t('demo.status.hint') }}</span>
         </div>
         <div class="demo-reports-list">
             <button type="button" class="demo-report-row"
                 data-case="OW-DEMO-00001" data-pin="demo-pin-received-00001">
                 <code class="demo-cred-code">OW-DEMO-00001</code>
-                <span class="demo-report-status badge badge-received">Received</span>
+                <span class="demo-report-status badge badge-received">{{ t('status.label.received') }}</span>
             </button>
             <button type="button" class="demo-report-row"
                 data-case="OW-DEMO-00002" data-pin="demo-pin-inreview-00002">
                 <code class="demo-cred-code">OW-DEMO-00002</code>
-                <span class="demo-report-status badge badge-in_review">In Review</span>
+                <span class="demo-report-status badge badge-in_review">{{ t('status.label.in_review') }}</span>
             </button>
             <button type="button" class="demo-report-row"
                 data-case="OW-DEMO-00003" data-pin="demo-pin-pending-00003">
                 <code class="demo-cred-code">OW-DEMO-00003</code>
-                <span class="demo-report-status badge badge-pending_feedback">Pending Feedback</span>
+                <span class="demo-report-status badge badge-pending_feedback">{{ t('status.label.pending_feedback') }}</span>
             </button>
             <button type="button" class="demo-report-row"
                 data-case="OW-DEMO-00004" data-pin="demo-pin-closed-00004">
                 <code class="demo-cred-code">OW-DEMO-00004</code>
-                <span class="demo-report-status badge badge-closed">Closed</span>
+                <span class="demo-report-status badge badge-closed">{{ t('status.label.closed') }}</span>
             </button>
         </div>
     </div>
@@ -108,7 +108,8 @@
                     placeholder="{{ t('status.case_number.placeholder') }}"
                     required
                     autocomplete="off"
-                    spellcheck="false">
+                    spellcheck="false"
+                    {% if error %}aria-invalid="true" aria-describedby="credentials-error"{% endif %}>
             </div>
 
             <div class="form-group">
@@ -122,14 +123,16 @@
                         placeholder="{{ t('status.pin.placeholder') }}"
                         required
                         autocomplete="off"
-                        spellcheck="false">
+                        spellcheck="false"
+                        {% if error %}aria-invalid="true" aria-describedby="credentials-error pin-hint"{% else %}aria-describedby="pin-hint"{% endif %}>
                     <button type="button"
                         id="pin-toggle"
                         class="st-pin-toggle"
                         data-label-show="{{ t('status.pin.show') }}"
                         data-label-hide="{{ t('status.pin.hide') }}">{{ t('status.pin.show') }}</button>
                 </div>
-                <div class="form-hint">{{ t('status.pin.hint') }}</div>
+                {% if error %}<p class="field-error" id="credentials-error">{{ t('status.error.inline') }}</p>{% endif %}
+                <div class="form-hint" id="pin-hint">{{ t('status.pin.hint') }}</div>
             </div>
 
             <button type="submit" class="btn btn-primary btn-block">
@@ -147,7 +150,7 @@
     </div>
 
     {% if success %}
-    <div class="alert alert-success" role="alert">{{ success }}</div>
+    <div class="alert alert-success" role="alert">{{ t(success) }}</div>
     {% endif %}
 
     {# Metadata panel #}
@@ -243,7 +246,7 @@
             {% for att in report.attachments %}
             <li class="attachment-item">
                 <span class="attachment-icon">&#128206;</span>
-                <a href="/status/attachments/{{ att.id }}" class="attachment-name" download>{{ att.filename }}</a>
+                <a href="/status/attachments/{{ att.id }}" class="attachment-name" download>{{ attachment_names[loop.index0] }}</a>
                 <span class="attachment-size">{{ att.size | format_size }}</span>
                 <a href="/status/attachments/{{ att.id }}" class="btn btn-secondary btn-sm" download>{{ t('status.attachments.download') }}</a>
             </li>

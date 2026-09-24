@@ -110,15 +110,28 @@ async def login_get(request: Request) -> HTMLResponse:
 async def login_post(
     request: Request,
     background_tasks: BackgroundTasks,
-    username: str = Form(...),
-    password: str = Form(...),
+    username: str = Form(""),
+    password: str = Form(""),
     redis: Redis = Depends(get_redis),
     db: AsyncSession = Depends(get_db),
     _csrf: None = Depends(validate_csrf),
 ) -> HTMLResponse | RedirectResponse:
+    # An empty field is answered on the form, next to the field — not with a
+    # bare 422 JSON body (the form is novalidate, and must work without JS).
+    missing: dict[str, str] = {}
+    if not username.strip():
+        missing["username"] = "login.error.username_required"
+    if not password:
+        missing["password"] = "login.error.password_required"  # noqa: S105 — locale key
+    if missing:
+        return render(request, "login.html", _login_ctx({
+            "error": "login.error.required",
+            "field_errors": missing,
+        }), status_code=400)
+
     if not await rl.check_admin_login_attempts(redis, username):
         return render(request, "login.html", _login_ctx({
-            "error": "Account temporarily locked due to too many failed attempts.",
+            "error": "login.error.locked",
         }))
 
     # ── LDAP authentication path ────────────────────────────────────
@@ -133,7 +146,8 @@ async def login_post(
         except LDAPAuthError:
             await _password_failed(redis, db, username, background_tasks)
             return render(request, "login.html", _login_ctx({
-                "error": "Invalid username or password.",
+                "error": "login.error.invalid",
+                "credentials_invalid": True,
             }), status_code=401)
 
         # Find or provision the local admin user for this LDAP identity
@@ -162,7 +176,7 @@ async def login_post(
 
         if not user.is_active:
             return render(request, "login.html", _login_ctx({
-                "error": "This account has been deactivated.",
+                "error": "login.error.deactivated",
             }), status_code=401)
 
         return await _second_factor(request, redis, user)
@@ -181,7 +195,8 @@ async def login_post(
     if not pw_ok:
         await _password_failed(redis, db, username, background_tasks)
         return render(request, "login.html", _login_ctx({
-            "error": "Invalid username or password.",
+            "error": "login.error.invalid",
+            "credentials_invalid": True,
         }), status_code=401)
 
     assert user is not None  # narrowed: pw_ok True implies user is not None
@@ -196,7 +211,7 @@ async def login_post(
 @router.post("/login/mfa", response_class=HTMLResponse, response_model=None)
 async def login_mfa_post(
     request: Request,
-    totp_code: str = Form(...),
+    totp_code: str = Form(""),
     temp_token: str = Form(...),
     redis: Redis = Depends(get_redis),
     db: AsyncSession = Depends(get_db),
@@ -218,7 +233,7 @@ async def login_mfa_post(
             request,
             "login_mfa.html",
             {
-                "error": "Account temporarily locked due to too many attempts.",
+                "error": "login.error.locked",
                 "is_demo": settings.demo_mode,
             },
             status_code=429,
@@ -247,7 +262,8 @@ async def login_mfa_post(
             "login_mfa.html",
             {
                 "temp_token": new_temp,
-                "error": "Invalid authentication code. Please try again.",
+                "error": "mfa.error.invalid",
+                "field_errors": {"totp_code": "mfa.error.invalid"},
                 "is_demo": settings.demo_mode,
             },
         )
@@ -308,7 +324,7 @@ async def mfa_setup_get(
 @router.post("/mfa/setup", response_class=HTMLResponse, response_model=None)
 async def mfa_setup_post(
     request: Request,
-    totp_code: str = Form(...),
+    totp_code: str = Form(""),
     temp_token: str = Form(...),
     redis: Redis = Depends(get_redis),
     db: AsyncSession = Depends(get_db),
@@ -331,7 +347,8 @@ async def mfa_setup_post(
             "qr_b64": qr_b64,
             "totp_secret": user.totp_secret,
             "username": user.username,
-            "error": "Invalid code. Please scan the QR code and try again.",
+            "error": "mfa.setup.error.invalid",
+            "field_errors": {"totp_code": "mfa.setup.error.invalid"},
         })
 
     user.totp_enabled = True
@@ -450,7 +467,7 @@ async def oidc_callback(
             request,
             "login.html",
             {
-                "error": f"SSO authentication failed: {error or 'missing parameters'}.",
+                "error": "login.error.sso_failed",
                 "oidc_enabled": settings.oidc_enabled,
             },
         )
@@ -462,7 +479,7 @@ async def oidc_callback(
             request,
             "login.html",
             {
-                "error": "SSO authentication failed. Please try again.",
+                "error": "login.error.sso_failed",
                 "oidc_enabled": settings.oidc_enabled,
             },
         )
@@ -472,8 +489,7 @@ async def oidc_callback(
             request,
             "login.html",
             {
-                "error": "SSO session expired, invalid state or an ID token that did "
-                "not verify. Please try again.",
+                "error": "login.error.sso_expired",
                 "oidc_enabled": settings.oidc_enabled,
             },
         )
@@ -487,7 +503,7 @@ async def oidc_callback(
             request,
             "login.html",
             {
-                "error": "SSO provider did not return required identity information.",
+                "error": "login.error.sso_identity",
                 "oidc_enabled": settings.oidc_enabled,
             },
         )
@@ -498,8 +514,7 @@ async def oidc_callback(
             request,
             "login.html",
             {
-                "error": "No admin account is linked to this SSO identity. "
-                "Contact your system administrator.",
+                "error": "login.error.sso_unlinked",
                 "oidc_enabled": settings.oidc_enabled,
             },
         )
@@ -508,7 +523,7 @@ async def oidc_callback(
         return render(
             request,
             "login.html",
-            {"error": "This account has been deactivated.", "oidc_enabled": settings.oidc_enabled},
+            {"error": "login.error.deactivated", "oidc_enabled": settings.oidc_enabled},
             status_code=401,
         )
 

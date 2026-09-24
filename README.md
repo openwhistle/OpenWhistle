@@ -58,8 +58,10 @@ zero vendor lock-in, and privacy-first by design.
   transitions allowed server-side.
 - **4-eyes deletion** — Hard deletion requires two different admins (request + confirm);
   same-admin confirm returns HTTP 409. GDPR Art. 17 compliant.
-- **Immutable audit log** — Every admin action recorded with timestamp and username; CSV export;
-  required by HinSchG §11 Abs. 5.
+- **Immutable audit log** — Every admin action recorded with timestamp and username, shown as
+  readable labels in all four languages; CSV export keeps the machine codes; required by HinSchG §11 Abs. 5.
+- **Case-number search** — Find a case on the dashboard by any part of its number. Report content
+  is encrypted per report and deliberately not searchable.
 - **Internal notes** — Admin-only notes on cases; never visible to the whistleblower.
 - **Case linking** — Link related cases with bidirectional normalization constraint.
 - **Custom categories** — DB-driven report categories; full management UI at `/admin/categories`.
@@ -117,9 +119,15 @@ zero vendor lock-in, and privacy-first by design.
 - **Encrypted report storage** — All report descriptions and messages are encrypted at-rest
   using per-report envelope encryption (HKDF-SHA256 MEK + Fernet DEK); the key is never
   stored in the database; pre-encryption rows are transparently readable (backward compat).
-- **Data retention (GDPR / HinSchG)** — `RETENTION_ENABLED=true` activates automatic deletion
-  of closed reports after `RETENTION_DAYS` days (default 1095 = 3 years); satisfies
+- **Data retention (GDPR / HinSchG)** — on by default (`RETENTION_ENABLED`): closed reports
+  are deleted `RETENTION_DAYS` days after closure (default 1095 = 3 years); satisfies
   GDPR Art. 5(1)(e) and HinSchG §11 Abs. 5; each deletion recorded in the audit log.
+- **Batched notifications** — new reports and whistleblower messages are announced in one
+  digest every `NOTIFICATION_BATCH_MINUTES` (default 60), carrying only counts and case
+  numbers, so the notice's timing cannot be matched to who was at their desk.
+- **Encrypted attachment names and drafts** — filenames are encrypted with the report key;
+  a submission draft in Redis is encrypted with a key held only in the whistleblower's
+  cookie; Office comment and tracked-change authors are anonymised on upload.
 - **Multi-tenancy** — `MULTI_TENANCY_ENABLED=true` lets a single deployment serve multiple
   independent organisations with isolated data, per-tenant categories, locations, and users.
 - **Superadmin role** — New `superadmin` role above `admin` for managing organisations

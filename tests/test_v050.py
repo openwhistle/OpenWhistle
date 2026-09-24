@@ -121,15 +121,14 @@ class TestWebhookPayloadBuilders:
     def test_generic_payload_structure(self) -> None:
         from app.services.notifications import _build_webhook_payload
 
-        payload = _build_webhook_payload("OW-2024-00001", "generic", "Acme", "http://dash")
-        assert payload["event"] == "new_report"
-        assert payload["case_number"] == "OW-2024-00001"
-        assert "timestamp" in payload
+        payload = _build_webhook_payload(["OW-2024-00001"], [], "generic", "Acme", "http://dash")
+        assert payload["event"] == "new_activity"
+        assert payload["new_reports"] == ["OW-2024-00001"]
 
     def test_slack_payload_has_blocks(self) -> None:
         from app.services.notifications import _build_webhook_payload
 
-        payload = _build_webhook_payload("OW-2024-00001", "slack", "Acme", "http://dash")
+        payload = _build_webhook_payload(["OW-2024-00001"], [], "slack", "Acme", "http://dash")
         assert "blocks" in payload
         block_types = [b["type"] for b in payload["blocks"]]
         assert "header" in block_types
@@ -139,14 +138,14 @@ class TestWebhookPayloadBuilders:
     def test_slack_payload_contains_case_number(self) -> None:
         from app.services.notifications import _build_webhook_payload
 
-        payload = _build_webhook_payload("OW-2024-99999", "slack", "Acme", "http://dash")
+        payload = _build_webhook_payload(["OW-2024-99999"], [], "slack", "Acme", "http://dash")
         payload_str = str(payload)
         assert "OW-2024-99999" in payload_str
 
     def test_teams_payload_has_adaptive_card(self) -> None:
         from app.services.notifications import _build_webhook_payload
 
-        payload = _build_webhook_payload("OW-2024-00001", "teams", "Acme", "http://dash")
+        payload = _build_webhook_payload(["OW-2024-00001"], [], "teams", "Acme", "http://dash")
         assert payload["type"] == "message"
         content = payload["attachments"][0]["content"]
         assert content["type"] == "AdaptiveCard"
@@ -155,15 +154,15 @@ class TestWebhookPayloadBuilders:
     def test_teams_payload_contains_case_number(self) -> None:
         from app.services.notifications import _build_webhook_payload
 
-        payload = _build_webhook_payload("OW-2024-77777", "teams", "Acme", "http://dash")
+        payload = _build_webhook_payload(["OW-2024-77777"], [], "teams", "Acme", "http://dash")
         payload_str = str(payload)
         assert "OW-2024-77777" in payload_str
 
     def test_unknown_type_falls_back_to_generic(self) -> None:
         from app.services.notifications import _build_webhook_payload
 
-        payload = _build_webhook_payload("OW-2024-00001", "unknown_type", "Acme", "http://dash")
-        assert payload["event"] == "new_report"
+        payload = _build_webhook_payload(["OW-2024-00001"], [], "unknown_type", "Acme", "http://dash")
+        assert payload["event"] == "new_activity"
 
 
 # ── Reminder payload builders ────────────────────────────────────────────────
@@ -454,26 +453,20 @@ class TestDBStorageBackend:
 # ── generate_storage_key ──────────────────────────────────────────────────────
 
 class TestGenerateStorageKey:
-    def test_key_contains_filename(self) -> None:
+    def test_key_is_a_bare_uuid(self) -> None:
+        import uuid
+
         from app.services.storage import generate_storage_key
 
-        key = generate_storage_key("report.pdf")
-        assert key.endswith("/report.pdf")
+        key = generate_storage_key()
+        assert str(uuid.UUID(key)) == key
 
     def test_key_is_unique(self) -> None:
         from app.services.storage import generate_storage_key
 
-        keys = {generate_storage_key("file.txt") for _ in range(50)}
+        keys = {generate_storage_key() for _ in range(50)}
         assert len(keys) == 50
 
-    def test_key_format_uuid_slash_filename(self) -> None:
-        import re
-
-        from app.services.storage import generate_storage_key
-
-        key = generate_storage_key("attachment.docx")
-        uuid_re = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/attachment\.docx$"
-        assert re.match(uuid_re, key), f"Unexpected key format: {key}"
 
 
 # ── get_storage_backend singleton ─────────────────────────────────────────────

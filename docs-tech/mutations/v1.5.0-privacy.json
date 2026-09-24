@@ -1,0 +1,265 @@
+{
+ "test_groups": {
+  "PRIV": [
+   "tests/test_privacy_v150.py"
+  ],
+  "RET": [
+   "tests/test_v100.py",
+   "tests/test_privacy_v150.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "docx-author-kept",
+   "file": "app/services/attachment.py",
+   "old": "        return _neutral_attrs(body, _WORD_AUTHOR)\n",
+   "new": "        return body\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "xlsx-legacy-author-kept",
+   "file": "app/services/attachment.py",
+   "old": "        return re.sub(rb\"<author>(?!tc=)[^<]*</author>\", b\"<author>Author</author>\", body)\n",
+   "new": "        return body\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "xlsx-thread-link-broken",
+   "file": "app/services/attachment.py",
+   "old": "rb\"<author>(?!tc=)[^<]*</author>\"",
+   "new": "rb\"<author>[^<]*</author>\"",
+   "tests": "PRIV"
+  },
+  {
+   "id": "xlsx-person-kept",
+   "file": "app/services/attachment.py",
+   "old": "        return _neutral_attrs(body, _XL_PERSON)\n",
+   "new": "        return body\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "xlsx-revision-header-kept",
+   "file": "app/services/attachment.py",
+   "old": "        values = {b\"userName\": b\"Author\"}\n",
+   "new": "        values = {}\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "xlsx-revision-user-kept",
+   "file": "app/services/attachment.py",
+   "old": "            values[b\"name\"] = b\"Author\"\n",
+   "new": "            pass\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "thumbnail-kept",
+   "file": "app/services/attachment.py",
+   "old": "            if info.filename.startswith(\"docProps/thumbnail.\"):\n                continue\n",
+   "new": "",
+   "tests": "PRIV"
+  },
+  {
+   "id": "thumbnail-relationship-kept",
+   "file": "app/services/attachment.py",
+   "old": "        return re.sub(rb\"<Relationship\\b[^>]*docProps/thumbnail[^>]*/>\", b\"\", body)\n",
+   "new": "        return body\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "thumbnail-content-type-kept",
+   "file": "app/services/attachment.py",
+   "old": "        return re.sub(rb\"<Override\\b[^>]*docProps/thumbnail[^>]*/>\", b\"\", body)\n",
+   "new": "        return body\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "zip-entry-metadata-kept",
+   "file": "app/services/attachment.py",
+   "old": "            clean = zipfile.ZipInfo(info.filename, date_time=(1980, 1, 1, 0, 0, 0))\n",
+   "new": "            clean = info\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "filename-stored-plaintext",
+   "file": "app/services/attachment.py",
+   "old": "            filename=encrypt_field(fernet, filename),\n",
+   "new": "            filename=filename,\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "s3-key-carries-filename",
+   "file": "app/services/attachment.py",
+   "old": "            storage_key = generate_storage_key()\n",
+   "new": "            storage_key = f\"{generate_storage_key()}/{filename}\"\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "wb-download-name-encrypted",
+   "file": "app/api/reports.py",
+   "old": "content_disposition_attachment(name)",
+   "new": "content_disposition_attachment(attachment.filename)",
+   "tests": "PRIV"
+  },
+  {
+   "id": "admin-download-name-encrypted",
+   "file": "app/api/admin.py",
+   "old": "content_disposition_attachment(name)",
+   "new": "content_disposition_attachment(attachment.filename)",
+   "tests": "PRIV"
+  },
+  {
+   "id": "status-page-name-encrypted",
+   "file": "app/templates/status.html",
+   "old": "download>{{ attachment_names[loop.index0] }}</a>",
+   "new": "download>{{ att.filename }}</a>",
+   "tests": "PRIV"
+  },
+  {
+   "id": "admin-page-name-encrypted",
+   "file": "app/templates/admin/report.html",
+   "old": "title=\"{{ attachment_names[loop.index0] }}\">{{ attachment_names[loop.index0] }}</span>",
+   "new": "title=\"{{ att.filename }}\">{{ att.filename }}</span>",
+   "tests": "PRIV"
+  },
+  {
+   "id": "pdf-name-encrypted",
+   "file": "app/services/pdf.py",
+   "old": "_safe(att_name)",
+   "new": "_safe(att.filename)",
+   "tests": "PRIV"
+  },
+  {
+   "id": "migration-skips-encryption",
+   "file": "migrations/versions/003_encrypt_attachment_filenames.py",
+   "old": "            _set(att_id, fernet.encrypt(filename.encode()).decode())\n",
+   "new": "            pass\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "migration-encrypts-twice",
+   "file": "migrations/versions/003_encrypt_attachment_filenames.py",
+   "old": "        elif not _is_token(fernet, filename):\n",
+   "new": "        else:\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "draft-stored-plaintext",
+   "file": "app/api/reports.py",
+   "old": "    token = _draft_fernet(session_id).encrypt(json.dumps(state).encode())\n",
+   "new": "    token = json.dumps(state)\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "draft-wrong-key-crashes",
+   "file": "app/api/reports.py",
+   "old": "    except InvalidToken:\n        return {}  # wrong or missing key: the draft is as good as expired\n",
+   "new": "    except InvalidToken:\n        raise\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "draft-total-cap-removed",
+   "file": "app/api/reports.py",
+   "old": "        if sum(len(ft[2]) for ft in file_tuples) > MAX_DRAFT_ATTACHMENT_BYTES:\n",
+   "new": "        if False:\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "draft-memory-valve-unused",
+   "file": "app/api/reports.py",
+   "old": "        if file_tuples and not await _redis_has_room(redis):\n",
+   "new": "        if False:\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "draft-memory-valve-always-open",
+   "file": "app/api/reports.py",
+   "old": "    return not limit or int(info[\"used_memory\"]) < limit * settings.draft_redis_memory_percent / 100\n",
+   "new": "    return True\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "notify-not-batched",
+   "file": "app/services/notifications.py",
+   "old": "    if settings.notification_batch_minutes <= 0:\n",
+   "new": "    if True:\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "digest-read-not-atomic",
+   "file": "app/services/notifications.py",
+   "old": "        async with redis.pipeline(transaction=True) as pipe:\n            pipe.smembers(_QUEUE_KEYS[\"new_reports\"])\n            pipe.smembers(_QUEUE_KEYS[\"new_messages\"])\n            pipe.delete(*_QUEUE_KEYS.values())\n            new_reports, new_messages, _ = await pipe.execute()\n",
+   "new": "        new_reports = await redis.smembers(_QUEUE_KEYS[\"new_reports\"])\n        new_messages = await redis.smembers(_QUEUE_KEYS[\"new_messages\"])\n        await redis.delete(*_QUEUE_KEYS.values())\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "digest-queue-not-cleared",
+   "file": "app/services/notifications.py",
+   "old": "            pipe.delete(*_QUEUE_KEYS.values())\n",
+   "new": "            pipe.ping()\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "empty-digest-sent",
+   "file": "app/services/notifications.py",
+   "old": "    if new_reports or new_messages:\n",
+   "new": "    if True:\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "reply-not-notified",
+   "file": "app/services/report.py",
+   "old": "    await notify_whistleblower_message(report.case_number)\n",
+   "new": "    pass\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "batching-ignores-zero",
+   "file": "app/services/notifications.py",
+   "old": "    return settings.notification_batch_minutes > 0 and _channels_enabled(settings)\n",
+   "new": "    return _channels_enabled(settings)\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "retention-off-by-default",
+   "file": "app/config.py",
+   "old": "    retention_enabled: bool = True\n",
+   "new": "    retention_enabled: bool = False\n",
+   "tests": "RET"
+  },
+  {
+   "id": "retention-notice-missing",
+   "file": "app/templates/admin/retention.html",
+   "old": "        {{ t('admin.retention.enabled_notice', days=retention_days) }}\n",
+   "new": "",
+   "tests": "RET"
+  },
+  {
+   "id": "ip-headers-reach-app",
+   "file": "app/middleware.py",
+   "old": "            scope[\"headers\"] = [\n                (name, value) for name, value in raw_headers\n                if name.decode(\"latin-1\").lower() not in _IP_REVEAL_HEADERS\n            ]\n",
+   "new": "",
+   "tests": "PRIV"
+  },
+  {
+   "id": "peer-address-reaches-app",
+   "file": "app/middleware.py",
+   "old": "        scope[\"client\"] = None\n",
+   "new": "",
+   "tests": "PRIV"
+  },
+  {
+   "id": "pages-cacheable",
+   "file": "app/middleware.py",
+   "old": "                    mutable[\"Cache-Control\"] = \"no-store\"\n",
+   "new": "                    pass\n",
+   "tests": "PRIV"
+  },
+  {
+   "id": "helm-ingress-access-log-on",
+   "file": "charts/openwhistle/values.yaml",
+   "old": "    nginx.ingress.kubernetes.io/enable-access-log: \"false\"\n",
+   "new": "    nginx.ingress.kubernetes.io/enable-access-log: \"true\"\n",
+   "tests": "PRIV"
+  }
+ ]
+}
