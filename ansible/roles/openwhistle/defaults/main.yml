@@ -20,6 +20,7 @@ openwhistle_db_user: openwhistle
 openwhistle_db_password: ""               # override in vault
 openwhistle_db_name: openwhistle
 openwhistle_redis_password: ""            # override in vault
+openwhistle_redis_maxmemory: 1gb           # a full submission draft is ~90 MB; see docs "Redis sizing"
 
 # ── Application configuration ────────────────────────────────────────────────
 openwhistle_app_name: OpenWhistle
