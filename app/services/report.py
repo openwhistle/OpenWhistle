@@ -124,21 +124,25 @@ async def create_report(
             confidential_contact=confidential_contact_enc,
             secure_email=secure_email_enc,
         )
-        db.add(report)
-        db.add(
-            ReportMessage(
-                id=uuid.uuid4(),
-                report_id=report.id,
-                sender=ReportSender.admin,
-                content=enc_receipt,
-            )
-        )
+        # A SAVEPOINT per attempt: a collision rolls back only this attempt.
+        # A full db.rollback() would expire every object the caller holds in
+        # this session, and their next attribute access would lazy-load
+        # outside the async context (MissingGreenlet).
         try:
-            await db.commit()
+            async with db.begin_nested():
+                db.add(report)
+                db.add(
+                    ReportMessage(
+                        id=uuid.uuid4(),
+                        report_id=report.id,
+                        sender=ReportSender.admin,
+                        content=enc_receipt,
+                    )
+                )
         except IntegrityError as exc:
             last_exc = exc
-            await db.rollback()
             continue
+        await db.commit()
         await db.refresh(report)
         return report, plain_pin
 

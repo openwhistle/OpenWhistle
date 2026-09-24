@@ -157,6 +157,26 @@ async def test_create_report_retries_on_case_number_collision(
     assert report.case_number == fresh_number
 
 
+@pytest.mark.asyncio
+async def test_case_number_collision_keeps_the_callers_objects_loaded(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A retried collision must not expire objects the caller already holds.
+
+    A full-session rollback expires every object in the session; the caller's
+    next plain attribute access (``taken.id``) then lazy-loads outside the
+    async context and raises MissingGreenlet (OPEN-3).
+    """
+    from app.services import report as report_svc
+
+    taken = await _mk_report(db_session)
+    seq = iter([taken.case_number, f"OW-9999-{uuid.uuid4().int % 100000:05d}"])
+    monkeypatch.setattr(report_svc, "generate_case_number", lambda: next(seq))
+    await report_svc.create_report(db_session, "financial_fraud", "Collision test.")
+
+    assert taken.id is not None  # synchronous access: must not need IO
+
+
 # ══════════════════════════════════════════════════════════════════════════
 # HIGH: reminder dedup TTL must cover the warn window
 # ══════════════════════════════════════════════════════════════════════════
