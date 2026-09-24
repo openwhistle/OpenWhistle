@@ -21,7 +21,7 @@
     <div class="admin-split-grid">
 
         <div class="panel">
-            <div class="panel-header">{{ t('admin.locations.add.header') }}</div>
+            <h2 class="panel-header">{{ t('admin.locations.add.header') }}</h2>
             <form method="post" action="/admin/locations" novalidate>
                 <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                 <div class="form-group">
@@ -54,7 +54,7 @@
         </div>
 
         <div class="panel">
-            <div class="panel-header">{{ t('admin.locations.list.header') }}</div>
+            <h2 class="panel-header">{{ t('admin.locations.list.header') }}</h2>
 
             {% if locations %}
             <div class="table-wrapper">

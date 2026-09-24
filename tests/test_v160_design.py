@@ -292,6 +292,11 @@ def test_panel_headers_and_labels_are_not_shouted() -> None:
             assert "uppercase" not in body, selector
 
 
+def test_panel_headers_are_headings_not_divs() -> None:
+    for p in TEMPLATES.rglob("*.html"):
+        assert 'div class="panel-header' not in p.read_text(), p
+
+
 def test_design_fix_list_is_closed() -> None:
     css = (ROOT / "app/static/css/site.css").read_text()
     token_blocks = "".join(re.findall(r"(?::root|\[data-theme=\"?dark\"?\])[^{]*\{[^}]*\}", css))

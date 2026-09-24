@@ -102,7 +102,7 @@
 
     <div class="panel">
         {# Panel header with filter bar and row count #}
-        <div class="panel-header dashboard-panel-header">
+        <h2 class="panel-header dashboard-panel-header">
             <span>{{ t('admin.table.header') }}</span>
             <div class="dashboard-toolbar">
                 {# Status filter pill row #}
@@ -154,7 +154,7 @@
                     <span class="per-page-label">{{ t('admin.filter.per_page') }}</span>
                 </div>
             </div>
-        </div>
+        </h2>
 
         {# Case-number search: a plain GET form, works without JavaScript. #}
         <form method="get" action="/admin/dashboard" class="dash-search" role="search">

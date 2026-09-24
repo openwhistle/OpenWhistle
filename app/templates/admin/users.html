@@ -27,7 +27,7 @@
 
         {# Add new user form #}
         <div class="panel">
-            <div class="panel-header">{{ t('admin.users.add.header') }}</div>
+            <h2 class="panel-header">{{ t('admin.users.add.header') }}</h2>
             <form method="post" action="/admin/users">
                 <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                 <div class="form-group">
@@ -58,7 +58,7 @@
 
         {# Users list #}
         <div class="panel">
-            <div class="panel-header">{{ t('admin.users.list.header') }}</div>
+            <h2 class="panel-header">{{ t('admin.users.list.header') }}</h2>
 
             <div class="table-wrapper">
                 <table class="table-stack" role="table">

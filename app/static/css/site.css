@@ -856,8 +856,7 @@ strong {
   padding-bottom: 0.75rem;
 }
 .card-title,
-.detail-label,
-.panel-header {
+.detail-label {
   color: var(--muted);
   font-family: var(--font-body);
   font-size: 0.75rem;
@@ -866,11 +865,12 @@ strong {
 }
 .panel-header {
   color: var(--ink);
+  font-family: var(--font-body);
   font-size: var(--text-body);
   font-weight: 600;
+  line-height: 1rem;
 }
 .detail-label {
-  color: var(--muted);
   font-size: var(--text-hint);
   font-weight: 500;
   margin-bottom: 0.375rem;

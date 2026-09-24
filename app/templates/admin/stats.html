@@ -55,7 +55,7 @@
 
         {# By status #}
         <div class="panel">
-            <div class="panel-header">{{ t('admin.stats.by_status') }}</div>
+            <h2 class="panel-header">{{ t('admin.stats.by_status') }}</h2>
             {% if stats.total_reports > 0 %}
             <div class="stat-flex-col-gap">
                 {% for sv, cls, label_key in [
@@ -84,7 +84,7 @@
 
         {# By category #}
         <div class="panel">
-            <div class="panel-header">{{ t('admin.stats.by_category') }}</div>
+            <h2 class="panel-header">{{ t('admin.stats.by_category') }}</h2>
             {% if stats.by_category %}
             {% set max_cat = stats.by_category.values() | max %}
             <div class="stat-flex-col-gap">

@@ -82,17 +82,17 @@
 
             {# Initial report #}
             <div class="panel">
-                <div class="panel-header">
+                <h2 class="panel-header">
                     {{ t('admin.report.initial') }}
                     &nbsp;&nbsp;
                     <span class="badge badge-received">{{ report.category | replace('_', ' ') | title }}</span>
-                </div>
+                </h2>
                 <p class="report-description">{{ decrypted_description }}</p>
             </div>
 
             {# Communication thread + reply #}
             <div class="panel delay-05">
-                <div class="panel-header">{{ t('admin.report.thread') }}</div>
+                <h2 class="panel-header">{{ t('admin.report.thread') }}</h2>
 
                 {% if report.messages %}
                 <div class="thread report-thread">
@@ -133,10 +133,10 @@
 
             {# Internal notes (admin-only) #}
             <div class="panel delay-08" id="notes">
-                <div class="panel-header">
+                <h2 class="panel-header">
                     {{ t('admin.report.notes.header') }}
                     <span class="report-internal-badge">{{ t('admin.report.internal_badge') }}</span>
-                </div>
+                </h2>
 
                 {% if report.notes %}
                 <div class="report-note-list">
@@ -168,7 +168,7 @@
 
             {# Linked cases #}
             <div class="panel delay-10" id="links">
-                <div class="panel-header">{{ t('admin.report.links.header') }}</div>
+                <h2 class="panel-header">{{ t('admin.report.links.header') }}</h2>
 
                 {% if linked_reports %}
                 <ul class="report-link-list">
@@ -203,7 +203,7 @@
 
             {# Audit log timeline #}
             <div class="panel delay-12" id="audit">
-                <div class="panel-header">{{ t('admin.report.audit.header') }}</div>
+                <h2 class="panel-header">{{ t('admin.report.audit.header') }}</h2>
                 {% if audit_entries %}
                 <div class="report-audit-list">
                     {% for entry in audit_entries %}
@@ -232,7 +232,7 @@
 
             {# Report details #}
             <div class="panel">
-                <div class="panel-header">{{ t('admin.report.details') }}</div>
+                <h2 class="panel-header">{{ t('admin.report.details') }}</h2>
 
                 <div class="report-detail-list">
                     <div>
@@ -315,7 +315,7 @@
             {# Attachments #}
             {% if report.attachments %}
             <div class="panel delay-04">
-                <div class="panel-header">{{ t('admin.report.attachments.header') }}</div>
+                <h2 class="panel-header">{{ t('admin.report.attachments.header') }}</h2>
                 <ul class="attachment-items">
                     {% for att in report.attachments %}
                     <li class="attachment-item">
@@ -334,7 +334,7 @@
             {# Acknowledge action #}
             {% if not report.acknowledged_at %}
             <div class="panel delay-05">
-                <div class="panel-header">{{ t('admin.report.ack.header') }}</div>
+                <h2 class="panel-header">{{ t('admin.report.ack.header') }}</h2>
                 <p class="report-action-body">{{ t('admin.report.ack.body') }}</p>
                 <form method="post" action="/admin/reports/{{ report.id }}/acknowledge">
                     <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
@@ -348,7 +348,7 @@
             {# Case assignment (admin only) #}
             {% if is_admin %}
             <div class="panel delay-06">
-                <div class="panel-header">{{ t('admin.report.assign.header') }}</div>
+                <h2 class="panel-header">{{ t('admin.report.assign.header') }}</h2>
                 <form method="post" action="/admin/reports/{{ report.id }}/assign">
                     <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                     <div class="form-group">
@@ -371,7 +371,7 @@
 
             {# Status update - only valid transitions #}
             <div class="panel delay-08">
-                <div class="panel-header">{{ t('admin.report.status.header') }}</div>
+                <h2 class="panel-header">{{ t('admin.report.status.header') }}</h2>
                 {% if allowed_transitions %}
                 <form method="post" action="/admin/reports/{{ report.id }}/status" id="status-form">
                     <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
@@ -396,7 +396,7 @@
             {# 4-eyes deletion (admin only) #}
             {% if is_admin %}
             <div class="panel delay-10 report-danger-panel">
-                <div class="panel-header report-delete-header">{{ t('admin.report.delete.header') }}</div>
+                <h2 class="panel-header report-delete-header">{{ t('admin.report.delete.header') }}</h2>
 
                 {% if report.deletion_request %}
                     {# Pending deletion request exists #}

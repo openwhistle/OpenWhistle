@@ -23,7 +23,7 @@
 
         {# Add category form #}
         <div class="panel">
-            <div class="panel-header">{{ t('admin.categories.add.header') }}</div>
+            <h2 class="panel-header">{{ t('admin.categories.add.header') }}</h2>
             <form method="post" action="/admin/categories">
                 <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                 <div class="form-group">
@@ -54,7 +54,7 @@
 
         {# Existing categories list #}
         <div class="panel">
-            <div class="panel-header">{{ t('admin.categories.list.header') }}</div>
+            <h2 class="panel-header">{{ t('admin.categories.list.header') }}</h2>
 
             {% if categories %}
             <div class="table-wrapper">
