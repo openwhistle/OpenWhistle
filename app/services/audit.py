@@ -55,6 +55,12 @@ async def log(
     report_id: uuid.UUID | None = None,
     detail: dict[str, Any] | None = None,
 ) -> AuditLog:
+    org_id = actor.org_id
+    if report_id is not None:
+        from app.models.report import Report  # noqa: PLC0415
+
+        org_id = await db.scalar(select(Report.org_id).where(Report.id == report_id))
+
     entry = AuditLog(
         id=uuid.uuid4(),
         admin_id=actor.id,
@@ -62,6 +68,7 @@ async def log(
         action=action,
         report_id=report_id,
         detail=json.dumps(detail) if detail else None,
+        org_id=org_id,
     )
     db.add(entry)
     # Flush only — caller commits as part of their own transaction

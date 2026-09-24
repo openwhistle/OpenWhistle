@@ -154,6 +154,58 @@ async def test_assignment_picker_offers_only_the_reports_org(
 
 
 @pytest.mark.asyncio
+async def test_audit_rows_carry_the_report_org_and_else_the_actor_org(
+    db_session: AsyncSession,
+) -> None:
+    from app.models.organisation import Organisation
+    from app.services import audit as audit_service
+    from app.services.report import create_report
+
+    org = Organisation(id=uuid.uuid4(), name="Org A", slug=f"a-{uuid.uuid4().hex[:6]}")
+    db_session.add(org)
+    await db_session.flush()
+    actor = AdminUser(
+        id=uuid.uuid4(), username=f"aud_{uuid.uuid4().hex[:8]}", password_hash=None,
+        totp_secret="JBSWY3DPEHPK3PXP", totp_enabled=True, org_id=org.id,
+    )
+    db_session.add(actor)
+    report, _ = await create_report(db_session, "corruption", "Audit org test report text.")
+    report.org_id = org.id
+    await db_session.commit()
+
+    with_report = await audit_service.log(db_session, actor, "report.viewed", report_id=report.id)
+    without = await audit_service.log(db_session, actor, "admin.created")
+    await db_session.commit()
+    assert with_report.org_id == org.id
+    assert without.org_id == org.id
+
+
+@pytest.mark.asyncio
+async def test_audit_log_page_is_scoped_per_org(
+    client: AsyncClient,
+    as_admin_a: AsyncClient,
+    two_orgs: dict[str, AdminUser],
+    db_session: AsyncSession,
+) -> None:
+    """The cross-tenant leak Task 6 fixes: org A's audit row must not leak into org B's page."""
+    from app.services.audit import log as audit_log
+
+    await audit_log(db_session, two_orgs["admin_a"], "admin.created", detail={"username": "probe"})
+    await db_session.commit()
+
+    page_a = (await as_admin_a.get("/admin/audit-log")).text
+    assert two_orgs["admin_a"].username in page_a
+
+    admin_b = _user(two_orgs["user_b"].org_id)
+    app.dependency_overrides[get_current_admin] = lambda: admin_b
+    try:
+        page_b = (await client.get("/admin/audit-log")).text
+    finally:
+        app.dependency_overrides.pop(get_current_admin, None)
+    assert two_orgs["admin_a"].username not in page_b
+
+
+@pytest.mark.asyncio
 async def test_dashboard_statistics_are_scoped(
     db_session: AsyncSession, two_orgs: dict[str, AdminUser]
 ) -> None:

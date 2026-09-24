@@ -650,3 +650,49 @@ async def test_deactivated_user_mfa_setup_makes_no_state_change(
         select(AuditLog).where(AuditLog.admin_id == user.id)
     )).all()
     assert rows == []
+
+
+@pytest.mark.asyncio
+async def test_migration_005_backfills_audit_org_from_report_or_actor(
+    db_session: AsyncSession,
+) -> None:
+    """A pre-v1.6.0 audit row has org_id NULL. Migration 005 must fill it from the
+    row's report when there is one, else from the acting admin — exercised via a
+    real downgrade/upgrade round trip, not just the SQL string."""
+    from app.models.organisation import Organisation
+    from app.services.report import create_report
+
+    org = Organisation(id=uuid.uuid4(), name="Mig005 Org", slug=f"m5-{uuid.uuid4().hex[:6]}")
+    db_session.add(org)
+    await db_session.flush()
+    admin = AdminUser(
+        id=uuid.uuid4(), username=f"mig005_{uuid.uuid4().hex[:8]}",
+        password_hash=hash_password(_PASSWORD), totp_secret=pyotp.random_base32(),
+        totp_enabled=True, org_id=org.id,
+    )
+    db_session.add(admin)
+    report, _ = await create_report(db_session, "corruption", "Migration 005 backfill test.")
+    report.org_id = org.id
+    await db_session.commit()  # close the session's transaction before the subprocess
+
+    row_with_report = uuid.uuid4()
+    row_without_report = uuid.uuid4()
+    try:
+        _alembic("downgrade", "a1c6e0f4b201")
+        await db_session.execute(text(
+            "INSERT INTO audit_log (id, admin_id, admin_username, action, report_id, org_id)"
+            " VALUES (:id, :admin_id, 'mig005', 'report.viewed', :report_id, NULL)"
+        ), {"id": row_with_report, "admin_id": admin.id, "report_id": report.id})
+        await db_session.execute(text(
+            "INSERT INTO audit_log (id, admin_id, admin_username, action, report_id, org_id)"
+            " VALUES (:id, :admin_id, 'mig005', 'admin.created', NULL, NULL)"
+        ), {"id": row_without_report, "admin_id": admin.id})
+        await db_session.commit()  # close the session's transaction before the subprocess
+    finally:
+        _alembic("upgrade", "head")
+
+    rows = dict((await db_session.execute(text(
+        "SELECT id, org_id FROM audit_log WHERE id IN (:a, :b)"
+    ), {"a": row_with_report, "b": row_without_report})).tuples().all())
+    assert rows[row_with_report] == org.id
+    assert rows[row_without_report] == org.id
