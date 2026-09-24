@@ -37,3 +37,10 @@ def test_postgres_and_redis_majors_are_the_same_everywhere() -> None:
     for image in ("postgres", "redis"):
         found = _all(rf"image: {image}:([0-9a-z.\-]+)", *places)
         assert len(found) == 1, f"{image} tags disagree: {found}"
+
+
+def test_security_workflow_audits_dependencies_and_the_image() -> None:
+    wf = (ROOT / ".github/workflows/security.yml").read_text()
+    for needle in ("pull_request:", "schedule:", "pip-audit", "aquasecurity/trivy-action@", "--all-extras"):
+        assert needle in wf, needle
+    assert re.search(r"aquasecurity/trivy-action@[0-9a-f]{40}", wf), "trivy action not pinned by digest"
