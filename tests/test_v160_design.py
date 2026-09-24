@@ -290,3 +290,29 @@ def test_panel_headers_and_labels_are_not_shouted() -> None:
     for selector in (".panel-header", ".card-title", ".detail-label"):
         for body in re.findall(re.escape(selector) + r"[^{]*\{([^}]*)\}", css):
             assert "uppercase" not in body, selector
+
+
+def test_design_fix_list_is_closed() -> None:
+    css = (ROOT / "app/static/css/site.css").read_text()
+    token_blocks = "".join(re.findall(r"(?::root|\[data-theme=\"?dark\"?\])[^{]*\{[^}]*\}", css))
+    outside = css.replace(token_blocks, "") if token_blocks else css
+    assert "#a1a1aa" not in outside.lower() and "#9ca3af" not in outside.lower()
+    html = "".join(p.read_text() for p in TEMPLATES.rglob("*.html"))
+    assert "progress-steps" not in html + css
+    assert "submit-progress" not in html + css  # one stepper, named .stepper
+    assert not re.search(r"stat-card-(?:link|active)\b|stat-number\b", html + css)
+
+
+def test_brand_secondary_colour_is_gone() -> None:
+    for path in ("app/config.py", "app/templating.py", "app/templates/base.html",
+                 "docker-compose.prod.yml", "docs/docs.html", "README.md",
+                 "charts/openwhistle/values.yaml", "charts/openwhistle/templates/configmap.yaml"):
+        text = (ROOT / path).read_text().lower().replace("-", "_")
+        assert "brand_secondary" not in text, path
+
+
+def test_public_site_uses_the_app_token_names() -> None:
+    for page in [*(ROOT / "docs").glob("*.html"), *(ROOT / "docs").glob("*/*.html")]:
+        text = page.read_text()
+        for legacy in ("--gold", "--seal-green", "--font-serif"):
+            assert legacy not in text, (page.name, legacy)

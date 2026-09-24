@@ -67,7 +67,6 @@ config:
 
   # Branding
   brandPrimaryColor: "#0f4c81"
-  brandSecondaryColor: "#b07230"
   brandLogoUrl: ""
 
   # SLA reminders

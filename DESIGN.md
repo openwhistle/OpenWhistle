@@ -281,7 +281,13 @@ Card titles use a mono `eyebrow` over a hairline rule.
 `{colors.surface}` card, mono `eyebrow` label, a `display-lg` figure with
 `tabular-nums`, and a faint accent **sparkline** (SVG polyline in `{colors.accent}`)
 showing trend. An `alert` variant recolours the label and figure to
-`{colors.danger}` when a metric needs attention (e.g. overdue cases).
+`{colors.danger}` when a metric needs attention (e.g. overdue cases). Used only on
+the statistics page.
+
+### Charts
+
+Bars in `{colors.ink}`, the current period in `{colors.accent}`, axis labels
+muted, no gradients. Statistics-page only.
 
 ### Tables
 
@@ -342,7 +348,8 @@ border, right-aligned. Each bubble carries a mono `who` label ("CASE HANDLER",
 One banner system: `{rounded.md}`, `-weak` tint background, matching semantic
 border and text, from `{colors.info}` / `{colors.success}` / `{colors.warning}` /
 `{colors.danger}`. The demo banner and IP-warning banner are variants of this —
-not separate components.
+not separate components. Notification emails are plain text on purpose — no
+tracking pixels, no remote images.
 
 ### Navigation & footer
 
@@ -398,15 +405,22 @@ Restraint. Motion confirms, it does not entertain.
 - Don't add a third typeface, a gradient, or a decorative illustration.
 - Don't let a success pill and the primary CTA share an eyeline (both are emerald).
 - Don't load a font, script, or asset from any third-party host.
+- Don't put an eyebrow above a heading that already says the same thing.
+- Don't put more than five panels on a page.
 
 ## Responsive Behavior
 
-- **Breakpoints** — desktop (default), tablet `≤768px`, mobile `≤480px`.
+- **Breakpoints** — desktop (default); layouts adapt at `900px`, `768px`, `640px`
+  and `540px`; the admin shell alone breaks at `1024px`.
 - **Touch targets** — interactive elements are `≥44×44px` on touch.
 - **Reassurance block & stat grid** — 3/4-up on desktop → 2-up on tablet → 1-up on
   mobile.
-- **Tables** — below `480px` they scroll horizontally inside their wrapper
-  (`min-width` floor); the page never scrolls sideways.
+- **Admin shell** — the sidebar sits beside the content at `≥1024px`; below that it
+  collapses to a single column with the menu below the content.
+- **Tables** — stack into labelled rows at `≤640px`; the page never scrolls
+  sideways.
+- **Report form** — the submit page's split layout stacks at `≤900px`, report form
+  first, reassurance sidebar second.
 - **Hero** — `display-hero` clamps down to ~30px on mobile.
 - **Wizard & nav** — the stepper stays horizontal but tightens; nav padding
   collapses; the session-expiry banner docks to the bottom, full-width.
@@ -426,66 +440,3 @@ Restraint. Motion confirms, it does not entertain.
 - **Lint** — `npx @google/design.md lint DESIGN.md` (format check) and `markdownlint`.
 - **Every `{token}` used in prose must exist in the front-matter.** Adding a
   component may mean adding a token first.
-
-## Known Gaps
-
-- The tokens above are the **target** system. The live app CSS has not yet been
-  migrated onto them — see the fix-list below.
-- Charts beyond the stat sparkline (distributions, trends over time) are not yet
-  specified.
-- Email / webhook notification templates are outside this system and unstyled.
-- No printed / PDF export style is defined for a case record.
-
-## Migration Fix-List
-
-The current frontend has drifted from any system. This is the prioritised cleanup
-to perform when implementing "Signal" into `app/static/css/site.css`, the templates,
-and `docs/`. It is a backlog, not part of writing this document.
-
-### P1 — bugs (broken today)
-
-- **Ship a real, loading typeface.** `fonts.css` declares `dm-sans-*.woff2` files
-  that do not exist → the app silently falls back to `system-ui`. Adopt Sora +
-  JetBrains Mono (already committed) and delete the phantom DM Sans wiring.
-- **Style the public status pills.** `status.html` renders `.status-badge
-  .status-*` classes that have **no CSS anywhere** — the reporter's status page
-  pills are unstyled. Implement them per the status→colour table.
-- **Define or remove undefined vars** referenced in templates: `--radius-sm`,
-  `--bg-code`, `--text-primary` (a docs-only token leaking into `status.html`),
-  `--surface-2` (login).
-- **Dark mode must honour the accent.** Dark currently hardcodes `--accent:#3d7ec9`,
-  ignoring the configured brand colour. Drive the accent from one token in both
-  themes.
-
-### P1 — token layer
-
-- Wire the dead `--radius-*` scale and add a `--space-*` scale and a type scale;
-  stop hardcoding `8px` / `12px` / `9999px` and ad-hoc font sizes per component.
-- Remove dead tokens: `--brand-secondary`, `--accent-hover`, `--ink-active`
-  (defined, referenced zero times).
-- Collapse duplicate hex under different names (`--ink` == `--cta-bg`, etc.) and the
-  ad-hoc greys (`#a1a1aa`, `#9ca3af`) that match no token.
-- **One source of truth for brand colour.** It is currently triplicated across
-  `app/config.py`, the `base.html` injection, and the `site.css :root` copy. Keep
-  the config → CSS-var injection; drop the stale `site.css` duplicate.
-
-### P2 — component dedup
-
-- Merge near-duplicates: `.env-table` ≈ bare `table`; `.info-banner` ≈ `.alert`;
-  the two steppers (`.submit-progress-*` vs `.progress-steps`); the two progress
-  systems. Keep one of each.
-- Unify naming — the `.stat-card` family alone uses kebab, BEM `__`, and BEM `--`
-  for the same states. Pick one convention.
-- Replace the CSP-era one-off classes with shared component/utility classes:
-  `admin/report.html`'s `.rpt-1 … .rpt-56` numbered dump, the three re-implemented
-  `1fr 2fr` admin grids (`.usr-layout` / `.cat-grid` / `.loc-grid`), the duplicated
-  empty-states and page-headers, and the scattered `animation-delay` one-offs.
-
-### P2 — unification & cleanup
-
-- Fold `docs/index.html` and `docs/docs.html` onto the same tokens as the app (they
-  currently run a separate serif/gold system).
-- Remove orphaned fonts (`Source Serif 4`, `Nunito Sans`, unused `Spectral`
-  weights) and reconcile the three font sources of truth: `fonts.css`, the
-  Dockerfile download list, and the committed files in `app/static/fonts/` — down to
-  exactly Sora + JetBrains Mono.

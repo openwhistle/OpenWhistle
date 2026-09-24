@@ -189,6 +189,7 @@
   "admin.report.detail.submitted": "Submitted",
   "admin.report.detail.sla7": "7-day acknowledgement (§17 I HinSchG)",
   "admin.report.detail.sla3m": "3-month feedback deadline (§17 II HinSchG)",
+  "admin.report.sla.acknowledged": "Acknowledged",
   "admin.report.sla.not_ack": "not yet acknowledged",
   "admin.report.sla.day": "Day",
   "admin.report.sla.days_remaining": "days remaining",

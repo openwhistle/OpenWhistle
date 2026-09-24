@@ -207,6 +207,7 @@
   "admin.report.detail.submitted": "Enviado",
   "admin.report.detail.sla7": "Confirmação em 7 dias (§17 I HinSchG)",
   "admin.report.detail.sla3m": "Prazo de resposta de 3 meses (§17 II HinSchG)",
+  "admin.report.sla.acknowledged": "Confirmado",
   "admin.report.sla.not_ack": "ainda não confirmado",
   "admin.report.sla.day": "Dia",
   "admin.report.sla.days_remaining": "dias restantes",

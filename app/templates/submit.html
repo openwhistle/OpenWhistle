@@ -63,11 +63,11 @@
         <h1>{{ t('submit.title') }}</h1>
 
         {# Progress indicator #}
-        <div class="submit-progress" role="progressbar" aria-valuenow="{{ display_step }}" aria-valuemin="1" aria-valuemax="{{ total_steps }}" aria-label="{{ t('submit.progress.label') }}">
+        <div class="stepper" role="progressbar" aria-valuenow="{{ display_step }}" aria-valuemin="1" aria-valuemax="{{ total_steps }}" aria-label="{{ t('submit.progress.label') }}">
             {% for i in range(1, total_steps + 1) %}
-            <div class="submit-progress-step {{ 'done' if i < display_step else ('active' if i == display_step else 'pending') }}" aria-hidden="true">
-                <div class="submit-progress-dot">{% if i < display_step %}{{ icons.icon('check') }}{% else %}{{ i }}{% endif %}</div>
-                <div class="submit-progress-label">
+            <div class="stepper-step {{ 'done' if i < display_step else ('active' if i == display_step else 'pending') }}" aria-hidden="true">
+                <div class="stepper-dot">{% if i < display_step %}{{ icons.icon('check') }}{% else %}{{ i }}{% endif %}</div>
+                <div class="stepper-label">
                     {% if i == 1 %}{{ t('submit.step.mode.short') }}
                     {% elif has_locations and i == 2 %}{{ t('submit.step.location.short') }}
                     {% elif (has_locations and i == 3) or (not has_locations and i == 2) %}{{ t('submit.step.category.short') }}
@@ -77,10 +77,10 @@
                     {% endif %}
                 </div>
             </div>
-            {% if i < total_steps %}<div class="submit-progress-line {{ 'done' if i < display_step else '' }}" aria-hidden="true"></div>{% endif %}
+            {% if i < total_steps %}<div class="stepper-line {{ 'done' if i < display_step else '' }}" aria-hidden="true"></div>{% endif %}
             {% endfor %}
         </div>
-        <p class="submit-progress-text" aria-live="polite">{{ t('submit.progress.step_of', step=display_step, total=total_steps) }}</p>
+        <p class="stepper-text" aria-live="polite">{{ t('submit.progress.step_of', step=display_step, total=total_steps) }}</p>
 
         {# Error display #}
         {% if error %}

@@ -20,7 +20,6 @@ templates.env.filters["format_size"] = format_size
 templates.env.globals["brand"] = {
     "name": settings.app_name,
     "primary_color": settings.brand_primary_color,
-    "secondary_color": settings.brand_secondary_color,
     "logo_url": settings.brand_logo_url,
 }
 

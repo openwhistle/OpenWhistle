@@ -290,7 +290,7 @@
                     <div>
                         <div class="detail-label">{{ t('admin.report.detail.sla7') }}</div>
                         {% if report.acknowledged_at %}
-                            <span class="sla-ok mono report-detail-value">{{ icons.icon('check') }} <span class="sr-only">{{ t('admin.stats.acknowledged') }}</span> {{ report.acknowledged_at.strftime('%Y-%m-%d') }}</span>
+                            <span class="sla-ok mono report-detail-value">{{ icons.icon('check') }} <span class="sr-only">{{ t('admin.report.sla.acknowledged') }}</span> {{ report.acknowledged_at.strftime('%Y-%m-%d') }}</span>
                         {% else %}
                             {% set days = (now - report.submitted_at).days %}
                             <span class="{{ 'sla-overdue' if days >= 7 else ('sla-warning' if days >= 5 else 'sla-ok') }} mono report-detail-value">

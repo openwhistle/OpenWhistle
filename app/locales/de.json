@@ -189,6 +189,7 @@
   "admin.report.detail.submitted": "Eingereicht",
   "admin.report.detail.sla7": "7-Tage-Eingangsbestätigung (§17 I HinSchG)",
   "admin.report.detail.sla3m": "3-Monats-Rückmeldepflicht (§17 II HinSchG)",
+  "admin.report.sla.acknowledged": "Bestätigt",
   "admin.report.sla.not_ack": "noch nicht bestätigt",
   "admin.report.sla.day": "Tag",
   "admin.report.sla.days_remaining": "Tage verbleibend",

@@ -256,6 +256,7 @@
   "admin.report.detail.sla3m": "Délai de retour 3 mois (§17 II HinSchG)",
   "admin.report.detail.mode": "Mode de soumission",
   "admin.report.detail.location": "Lieu",
+  "admin.report.sla.acknowledged": "Accusé de réception",
   "admin.report.sla.not_ack": "pas encore accusé",
   "admin.report.sla.day": "Jour",
   "admin.report.sla.days_remaining": "jours restants",

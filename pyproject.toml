@@ -169,7 +169,7 @@ filterwarnings = [
     # before the event loop gets to run it when a short-lived test engine is
     # disposed right after connecting. Upstream internal, not a coroutine we create.
     # https://github.com/MagicStack/asyncpg/blob/master/asyncpg/connect_utils.py
-    "ignore:coroutine '_connect.<locals>._close_candidates' was never awaited:RuntimeWarning",
+    "ignore:coroutine '_connect.<locals>._close_candidates' was never awaited:RuntimeWarning:asyncpg(\\..*)?$",
 ]
 
 [tool.coverage.run]

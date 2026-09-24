@@ -217,15 +217,16 @@
     {# Progress indicator #}
     <div class="panel status-progress-panel delay-03">
         <div class="panel-header">{{ t('status.progress.title') }}</div>
-        <div class="progress-steps">
+        <div class="stepper" aria-hidden="true">
             {% set steps = ['received', 'in_review', 'pending_feedback', 'closed'] %}
             {% set current_idx = steps.index(report.status.value) if report.status.value in steps else 0 %}
             {% for step in steps %}
-            {% set step_idx = loop.index0 %}
-            <div class="progress-step {{ 'done' if step_idx < current_idx else ('active' if step_idx == current_idx else 'pending') }}">
-                <div class="progress-step-dot"></div>
-                <div class="progress-step-label">{{ t('status.label.' + step) }}</div>
+            {% set state = 'done' if loop.index0 < current_idx else ('active' if loop.index0 == current_idx else 'pending') %}
+            <div class="stepper-step {{ state }}">
+                <div class="stepper-dot">{% if state == 'done' %}{{ icons.icon('check') }}{% else %}{{ loop.index }}{% endif %}</div>
+                <div class="stepper-label">{{ t('status.label.' + step) }}</div>
             </div>
+            {% if not loop.last %}<div class="stepper-line {{ 'done' if loop.index0 < current_idx else '' }}" aria-hidden="true"></div>{% endif %}
             {% endfor %}
         </div>
         <div class="progress-desc">

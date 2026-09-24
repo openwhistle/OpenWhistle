@@ -91,10 +91,10 @@
         ] %}
         {% set count = stats.get(status_val, 0) %}
         <a href="/admin/dashboard?status={{ status_val }}&sort={{ sort_by }}&dir={{ sort_dir }}&per_page={{ per_page }}"
-           class="stat-card stat-card-link {% if status_filter == status_val %}stat-card-active{% endif %}"
+           class="stat-card stat-card--link {% if status_filter == status_val %}stat-card--active{% endif %}"
            data-delay="{{ loop.index0 * 0.05 }}"
            aria-label="{{ t('admin.stats.filter_by', status=t(label_key)) }}">
-            <div class="stat-number">{{ count }}</div>
+            <div class="stat-card__number">{{ count }}</div>
             <span class="badge {{ cls }}">{{ t(label_key) }}</span>
         </a>
         {% endfor %}
@@ -322,7 +322,7 @@ function goPerPage(val) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.stat-card-link[data-delay]').forEach(function (el) {
+    document.querySelectorAll('.stat-card--link[data-delay]').forEach(function (el) {
         el.style.animationDelay = el.dataset.delay + 's';
     });
 

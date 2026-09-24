@@ -28,11 +28,11 @@
     {# Top-line KPIs #}
     <div class="stats-row">
         <div class="stat-card" data-delay="0">
-            <div class="stat-number">{{ stats.total_reports }}</div>
+            <div class="stat-card__number">{{ stats.total_reports }}</div>
             <div class="stat-kpi-label">{{ t('admin.stats.total_reports') }}</div>
         </div>
         <div class="stat-card" data-delay="0.05">
-            <div class="stat-number" data-tone="{{ 'success' if stats.sla_7day_rate >= 90 else ('warning' if stats.sla_7day_rate >= 70 else 'danger') }}">
+            <div class="stat-card__number" data-tone="{{ 'success' if stats.sla_7day_rate >= 90 else ('warning' if stats.sla_7day_rate >= 70 else 'danger') }}">
                 {{ stats.sla_7day_rate }}%
             </div>
             <div class="stat-kpi-label">{{ t('admin.stats.sla_rate') }}</div>
@@ -45,7 +45,7 @@
         ] %}
         {% set count = stats.status_counts.get(status_val, 0) %}
         <div class="stat-card" data-delay="{{ loop.index * 0.05 }}">
-            <div class="stat-number">{{ count }}</div>
+            <div class="stat-card__number">{{ count }}</div>
             <span class="badge {{ cls }}">{{ t('status.label.' + status_val) }}</span>
         </div>
         {% endfor %}
