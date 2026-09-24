@@ -23,6 +23,9 @@ parsers pypdf and Pillow, ldap3) always wait for a person.
   otherwise silent.
 - `tests/test_build_pins.py`: uv, Python, PostgreSQL and Redis carry one version
   across all files.
+- `tests/test_renovate.py::test_no_managed_file_is_ignored`: `ignorePaths` is
+  explicit. The `config:recommended` preset ignores `tests/`, which hid the
+  axe-core pin on Renovate's first run while every other check was green.
 - CI: `uv lock --check`.
 
 ## Writing a version down somewhere new

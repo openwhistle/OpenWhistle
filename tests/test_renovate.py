@@ -45,3 +45,17 @@ def test_every_match_string_matches_somewhere() -> None:
         text = "\n".join(f.read_text() for f in _files(manager))
         for pattern in manager["matchStrings"]:
             assert re.search(pattern.replace("(?<", "(?P<"), text), f"dead pattern: {pattern}"
+
+
+def test_no_managed_file_is_ignored() -> None:
+    """config:recommended ignores tests/ by default (:ignoreModulesAndTests),
+    which silently hid the axe-core pin in tests/e2e/conftest.py. ignorePaths
+    must be explicit, and must not cover any file a custom manager reads."""
+    from fnmatch import fnmatch
+
+    assert "ignorePaths" in CONFIG, "set ignorePaths explicitly; the preset hides tests/"
+    for manager in CONFIG["customManagers"]:
+        for f in _files(manager):
+            rel = f.relative_to(ROOT).as_posix()
+            hit = [g for g in CONFIG["ignorePaths"] if fnmatch(rel, g) or fnmatch("/" + rel, g)]
+            assert not hit, f"{rel} is managed but ignored by {hit}"
