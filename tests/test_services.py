@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.report import ReportStatus
 from app.services.auth import (
     create_access_token,
-    decode_access_token,
+    decode_access_token_claims,
     hash_password,
     hash_pin,
     verify_password,
@@ -68,17 +68,18 @@ def test_totp_verify_invalid_code() -> None:
 def test_create_access_token_and_decode() -> None:
     token = create_access_token("test-user-id-123")
     assert isinstance(token, str)
-    user_id = decode_access_token(token)
-    assert user_id == "test-user-id-123"
+    claims = decode_access_token_claims(token)
+    assert claims is not None
+    assert claims["sub"] == "test-user-id-123"
 
 
 def test_decode_invalid_access_token() -> None:
-    result = decode_access_token("not-a-valid-jwt-token")
+    result = decode_access_token_claims("not-a-valid-jwt-token")
     assert result is None
 
 
 def test_decode_malformed_token() -> None:
-    result = decode_access_token("")
+    result = decode_access_token_claims("")
     assert result is None
 
 

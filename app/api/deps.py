@@ -40,6 +40,7 @@ async def get_current_admin(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
     request.state.session_expires_at = int(claims["exp"])
+    request.state.session_claims = claims
 
     return user
 

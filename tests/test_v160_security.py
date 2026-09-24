@@ -7,7 +7,8 @@ import uuid
 
 import pyotp
 import pytest
-from httpx import AsyncClient
+from fastapi import HTTPException
+from httpx import AsyncClient, Response
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -386,6 +387,15 @@ async def _logged_in_admin(client: AsyncClient, db: AsyncSession) -> AdminUser:
     return user
 
 
+async def _refresh(
+    client: AsyncClient, *, csrf: bool = True, follow_redirects: bool = True
+) -> Response:
+    headers = {"X-CSRF-Token": client.cookies.get("ow_csrf") or ""} if csrf else {}
+    return await client.post(
+        "/admin/session/refresh", headers=headers, follow_redirects=follow_redirects
+    )
+
+
 @pytest.mark.asyncio
 async def test_session_refresh_without_csrf_header_is_refused(
     client: AsyncClient, db_session: AsyncSession
@@ -393,9 +403,7 @@ async def test_session_refresh_without_csrf_header_is_refused(
     await _logged_in_admin(client, db_session)
     resp = await client.post("/admin/session/refresh")
     assert resp.status_code == 403
-    ok = await client.post(
-        "/admin/session/refresh", headers={"X-CSRF-Token": client.cookies.get("ow_csrf") or ""}
-    )
+    ok = await _refresh(client)
     assert ok.status_code == 200
 
 
@@ -418,10 +426,33 @@ async def test_session_older_than_the_absolute_limit_is_rejected(
     )
     await (await get_redis()).setex(f"openwhistle:session:{stale}", 3600, str(user.id))
     _use_session(client, stale)
-    resp = await client.post(
-        "/admin/session/refresh", headers={"X-CSRF-Token": client.cookies.get("ow_csrf") or ""},
-        follow_redirects=False,
+    resp = await _refresh(client, follow_redirects=False)
+    assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_session_older_than_the_absolute_limit_is_401_even_without_csrf_header(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """A stale session is rejected by get_current_admin (401), which runs before
+    the CSRF dependency — so a missing header on a stale session must still read
+    as 401, not be masked by a 403 that would suggest the session was otherwise fine."""
+    import time
+
+    import jwt
+
+    from app.redis_client import get_redis
+
+    user = await _logged_in_admin(client, db_session)
+    now = int(time.time())
+    stale = jwt.encode(
+        {"sub": str(user.id), "role": "admin", "iat": now, "exp": now + 3600,
+         "auth_time": now - (settings.session_max_hours * 3600 + 60), "jti": "x"},
+        settings.secret_key, algorithm=settings.algorithm,
     )
+    await (await get_redis()).setex(f"openwhistle:session:{stale}", 3600, str(user.id))
+    _use_session(client, stale)
+    resp = await _refresh(client, csrf=False, follow_redirects=False)
     assert resp.status_code == 401
 
 
@@ -437,15 +468,78 @@ async def test_refresh_never_extends_past_the_absolute_limit(
     user = await _logged_in_admin(client, db_session)
     started = int(time.time()) - settings.session_max_hours * 3600 + 120  # 2 min left
     token = create_access_token(str(user.id), "admin", auth_time=started)
-    await (await get_redis()).setex(f"openwhistle:session:{token}", 120, str(user.id))
+    redis = await get_redis()
+    await redis.setex(f"openwhistle:session:{token}", 120, str(user.id))
     _use_session(client, token)
-    resp = await client.post(
-        "/admin/session/refresh", headers={"X-CSRF-Token": client.cookies.get("ow_csrf") or ""}
-    )
+    resp = await _refresh(client)
     assert resp.status_code == 200
-    new_exp = decode_access_token_exp(client.cookies.get("ow_session") or "")
+    new_token = client.cookies.get("ow_session") or ""
+    new_exp = decode_access_token_exp(new_token)
     assert new_exp is not None
     assert int(new_exp.timestamp()) <= started + settings.session_max_hours * 3600
+
+    # The refresh must not hand out more than the ~2 minutes actually left on the
+    # absolute limit: neither the new Redis session key nor the Set-Cookie the
+    # browser will honour may outlive it.
+    new_ttl = await redis.ttl(f"openwhistle:session:{new_token}")
+    assert 0 < new_ttl <= 120
+    set_cookie_headers = resp.headers.get_list("set-cookie")
+    session_cookie_header = next(h for h in set_cookie_headers if h.startswith("ow_session="))
+    max_age_m = re.search(r"Max-Age=(\d+)", session_cookie_header, re.IGNORECASE)
+    assert max_age_m
+    assert int(max_age_m.group(1)) <= 120
+
+
+@pytest.mark.asyncio
+async def test_session_refresh_never_restarts_the_clock_when_claims_are_missing() -> None:
+    """`session_refresh` must reuse the claims `get_current_admin` already verified
+    (via `request.state.session_claims`) rather than fall back to `now()` when they
+    are absent — that fallback would silently hand out a fresh SESSION_MAX_HOURS
+    window instead of respecting the login time. This can't happen through the
+    HTTP dependency chain (get_current_admin always sets session_claims before
+    returning), so the guard is exercised directly."""
+    from types import SimpleNamespace
+
+    from app.api.auth import session_refresh
+
+    request = SimpleNamespace(state=SimpleNamespace())  # no session_claims attribute
+    user = AdminUser(id=uuid.uuid4(), username="direct-call-user", role=AdminRole.admin)
+
+    with pytest.raises(HTTPException) as exc_info:
+        await session_refresh(
+            request=request,  # type: ignore[arg-type]
+            redis=None,  # type: ignore[arg-type]
+            current_user=user,
+            session_token="irrelevant",
+            _csrf=None,
+        )
+    assert exc_info.value.status_code == 401
+
+
+def test_session_too_old_with_no_claims_is_true() -> None:
+    from app.services.auth import session_too_old
+
+    assert session_too_old({}) is True
+
+
+def test_session_too_old_past_the_absolute_limit_is_true() -> None:
+    import time
+
+    from app.services.auth import session_too_old
+
+    assert session_too_old({"iat": time.time() - 13 * 3600}) is True
+
+
+def test_session_started_at_prefers_auth_time_over_iat() -> None:
+    from app.services.auth import session_started_at
+
+    assert session_started_at({"iat": 5, "auth_time": 7}) == 7
+
+
+def test_seconds_left_is_zero_for_an_invalid_token() -> None:
+    from app.services.auth import seconds_left
+
+    assert seconds_left("not.a.valid.jwt") == 0
 
 
 # ── Deactivated accounts never reach the second factor (A5) ────────────────

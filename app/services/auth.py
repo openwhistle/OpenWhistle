@@ -92,7 +92,8 @@ def create_access_token(user_id: str, role: str = "admin", auth_time: int | None
 def decode_access_token_claims(token: str) -> dict[str, Any] | None:
     try:
         claims: dict[str, Any] = jwt.decode(
-            token, settings.secret_key, algorithms=[settings.algorithm]
+            token, settings.secret_key, algorithms=[settings.algorithm],
+            options={"require": ["exp", "sub"]},
         )
     except jwt.PyJWTError:
         return None
@@ -108,16 +109,6 @@ def session_too_old(claims: dict[str, Any]) -> bool:
     return time.time() - session_started_at(claims) > settings.session_max_hours * 3600
 
 
-def decode_access_token(token: str) -> str | None:
-    """Decode a JWT and return the subject (user_id), or None if invalid."""
-    try:
-        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
-        sub: str | None = payload.get("sub")
-        return sub
-    except jwt.PyJWTError:
-        return None
-
-
 def decode_access_token_exp(token: str) -> datetime | None:
     """Decode a JWT and return the expiry as a UTC datetime, or None if invalid."""
     try:
@@ -130,6 +121,14 @@ def decode_access_token_exp(token: str) -> datetime | None:
         return None
 
 
+def seconds_left(token: str) -> int:
+    """Seconds remaining until the token's ``exp``; 0 if invalid or already expired."""
+    exp = decode_access_token_exp(token)
+    if exp is None:
+        return 0
+    return max(0, int((exp - datetime.now(UTC)).total_seconds()))
+
+
 async def get_session_ttl(redis: Redis, token: str) -> int:
     """Return remaining TTL in seconds for a session token (0 if not found)."""
     key = f"{_SESSION_PREFIX}{token}"
@@ -139,9 +138,7 @@ async def get_session_ttl(redis: Redis, token: str) -> int:
 
 async def store_session(redis: Redis, user_id: str, token: str) -> None:
     """Store session token in Redis; it lives exactly as long as the JWT."""
-    exp = decode_access_token_exp(token)
-    ttl = int((exp - datetime.now(UTC)).total_seconds()) if exp else 0
-    await redis.setex(f"{_SESSION_PREFIX}{token}", max(1, ttl), user_id)
+    await redis.setex(f"{_SESSION_PREFIX}{token}", max(1, seconds_left(token)), user_id)
 
 
 async def validate_session(redis: Redis, token: str) -> bool:

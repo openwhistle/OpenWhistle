@@ -107,8 +107,7 @@ async def _password_failed(
 
 
 def _set_session_cookie(response: Response, token: str) -> None:
-    exp = auth_service.decode_access_token_exp(token)
-    max_age = max(1, int((exp - datetime.now(UTC)).total_seconds())) if exp else 1
+    max_age = max(1, auth_service.seconds_left(token))
     response.set_cookie(
         key="ow_session", value=token, httponly=True, samesite="lax",
         secure=settings.secure_cookies, max_age=max_age,
@@ -400,18 +399,27 @@ async def session_refresh(
     session_token: str | None = Cookie(default=None, alias="ow_session"),
     _csrf: None = Depends(validate_csrf_header),
 ) -> JSONResponse:
-    """New JWT + Redis session up to the full TTL, never past the absolute limit."""
-    claims = auth_service.decode_access_token_claims(session_token or "") or {}
+    """New JWT + Redis session up to the full TTL, never past the absolute limit.
+
+    Reuses the claims `get_current_admin` already verified for this same request
+    (via `request.state.session_claims`) instead of decoding the cookie a second
+    time: a second decode could observe the token expiring between the two calls,
+    or a crafted/blank `auth_time`, and silently restart the 12 h clock from now.
+    """
+    claims: dict[str, Any] | None = getattr(request.state, "session_claims", None)
+    started_at = auth_service.session_started_at(claims) if claims else 0
+    if not started_at:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+
     if session_token:
         await auth_service.revoke_session(redis, session_token)
     new_token = auth_service.create_access_token(
-        str(current_user.id), role=current_user.role.value,
-        auth_time=auth_service.session_started_at(claims) or None,
+        str(current_user.id), role=current_user.role.value, auth_time=started_at,
     )
     await auth_service.store_session(redis, str(current_user.id), new_token)
     new_exp = auth_service.decode_access_token_exp(new_token)
     expires_at = int(new_exp.timestamp()) if new_exp else 0
-    ttl = max(0, expires_at - int(datetime.now(UTC).timestamp()))
+    ttl = auth_service.seconds_left(new_token)
     response = JSONResponse({"ttl_seconds": ttl, "expires_at": expires_at})
     _set_session_cookie(response, new_token)
     return response

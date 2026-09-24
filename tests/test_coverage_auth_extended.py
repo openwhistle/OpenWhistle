@@ -5,8 +5,8 @@ Covers:
 - login_mfa_post: wrong TOTP code → re-rendered MFA form with new temp token (lines 119-130)
 - session/ttl GET: returns JSON with ttl_seconds (lines 177-185)
 - session/refresh POST: revokes old session, issues new token, sets cookie (lines 188-215)
-- services/auth: decode_access_token invalid JWT (returns None), validate_session paths,
-  revoke_session, consume_totp_pending, get_user_by_id with bad UUID
+- services/auth: validate_session paths, revoke_session, consume_totp_pending,
+  get_user_by_id with bad UUID
 """
 
 from __future__ import annotations
@@ -16,13 +16,12 @@ import uuid
 
 import pyotp
 import pytest
-from httpx import AsyncClient
+from httpx import AsyncClient, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import AdminUser
 from app.services.auth import (
     create_access_token,
-    decode_access_token,
     hash_password,
     revoke_session,
     store_session,
@@ -64,6 +63,13 @@ async def _full_login(client: AsyncClient, admin: AdminUser, totp_secret: str) -
             "temp_token": temp_m.group(1) if temp_m else "",
             "totp_code": totp_code,
         },
+    )
+
+
+async def _refresh(client: AsyncClient) -> Response:
+    return await client.post(
+        "/admin/session/refresh",
+        headers={"X-CSRF-Token": client.cookies.get("ow_csrf") or ""},
     )
 
 
@@ -169,10 +175,7 @@ async def test_session_refresh_extends_session_and_rotates_cookie(
     old_session = client.cookies.get("ow_session")
     assert old_session is not None
 
-    resp = await client.post(
-        "/admin/session/refresh",
-        headers={"X-CSRF-Token": client.cookies.get("ow_csrf") or ""},
-    )
+    resp = await _refresh(client)
     assert resp.status_code == 200
     data = resp.json()
     assert data["ttl_seconds"] > 0
@@ -196,29 +199,10 @@ async def test_session_refresh_old_session_is_revoked(
     old_session = client.cookies.get("ow_session")
     assert old_session is not None
 
-    await client.post(
-        "/admin/session/refresh",
-        headers={"X-CSRF-Token": client.cookies.get("ow_csrf") or ""},
-    )
+    await _refresh(client)
 
     redis = await get_redis()
     assert await validate_session(redis, old_session) is False
-
-
-# ─── services/auth: decode_access_token (invalid JWT) ────────────────────────
-
-
-def test_decode_access_token_invalid_jwt_returns_none() -> None:
-    """decode_access_token must return None for a garbage token string."""
-    result = decode_access_token("not.a.valid.jwt")
-    assert result is None
-
-
-def test_decode_access_token_valid_returns_user_id() -> None:
-    user_id = str(uuid.uuid4())
-    token = create_access_token(user_id)
-    result = decode_access_token(token)
-    assert result == user_id
 
 
 # ─── services/auth: validate_session ─────────────────────────────────────────
