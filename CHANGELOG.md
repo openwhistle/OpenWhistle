@@ -7,6 +7,99 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.5.0] — 2026-09-24
+
+Every finding carried forward from the 2026-09-23 audit is closed. The
+guiding rule: a whistleblower can never be locked out, deanonymised by a file,
+a timestamp or a Redis dump, or promised more than the software does. 124
+mutations over this release's and v1.4.0's guards, all caught.
+
+### Upgrade notes
+
+- **Retention is on by default** (`RETENTION_ENABLED=true`): closed reports are
+  deleted 1095 days after closing (HinSchG §11 Abs. 5). OpenWhistle dates from
+  2026, so nothing is old enough to be deleted yet. Set `false` to opt out.
+- **Notifications are batched** (`NOTIFICATION_BATCH_MINUTES=60`) and the
+  generic webhook payload changed to
+  `{"event": "new_activity", "new_reports": [...], "new_messages": [...]}` with
+  no timestamp. Update receivers that parse the old `new_report` event. `0`
+  restores immediate delivery.
+- **Logout is a POST with a CSRF token**, for admins and whistleblowers; a GET
+  no longer logs anyone out.
+- **OIDC** now requires the provider to return an `id_token` (all compliant
+  providers do); it is verified against the provider's JWKS.
+- **Drafts in progress restart** after the upgrade (new encrypted draft format).
+- **Redis** in `docker-compose.prod.yml` and the Ansible role now runs with
+  `--maxmemory 1gb --maxmemory-policy noeviction`.
+- Migration `003` encrypts existing attachment filenames and widens the column.
+- New settings: `NOTIFICATION_BATCH_MINUTES`, `DRAFT_REDIS_MEMORY_PERCENT`,
+  `ADMIN_FAILED_LOGIN_ALERT_THRESHOLD`, `ADMIN_FAILED_LOGIN_ALERT_WINDOW_MINUTES`,
+  `LDAP_START_TLS`.
+
+### Security
+
+- **A whistleblower can no longer be locked out of their own case.** The status
+  lockout was keyed by the 5-digit case number, so anyone could block a case by
+  typing wrong PINs. Now a correct case number and PIN always open the case;
+  wrong attempts are still counted and answered with a wait notice. Unknown case
+  numbers take the same time as known ones (no timing oracle). The `/reply`
+  fallback shares the same check instead of trusting a client-supplied token.
+- **Password spraying is detected.** Failed admin passwords are counted
+  instance-wide (no IP, no usernames); crossing the threshold raises one alert
+  per window by email/webhook and in the audit log. MFA remains the barrier.
+- **OIDC:** PKCE (S256), a verified `nonce`, and a verified `id_token`
+  (signature, `iss`, `aud`, `exp`, `azp`); identity is taken from the token.
+- **CSRF cookie** gets `Secure`; **logouts** are CSRF-protected POSTs.
+- **Setup wizard** is atomic (advisory lock) — two first-run requests cannot
+  create two admins; **migrations** are serialised across replicas.
+- **One password policy** for the wizard, admin-created users and the reset
+  script; passwords or PINs over 72 bytes no longer cause a 500 (bcrypt 5).
+- **LDAP StartTLS** (`LDAP_START_TLS`) with certificate verification.
+- `t()` marks text as HTML only for `.html` locale keys; SSO error pages no
+  longer echo the provider's `error` parameter.
+
+### Privacy
+
+- **Attachment filenames are encrypted** with the report key (they can carry a
+  name), and new S3 object keys no longer contain the filename.
+- **Office files lose comment and tracked-change authors** (DOCX/XLSX), their
+  thumbnails, and zip timestamps and uid/gid.
+- **Submission drafts are encrypted** with a key that exists only in the
+  whistleblower's cookie; a Redis dump alone reveals nothing. Draft attachments
+  are capped, and refused when Redis is nearly full.
+- **Notifications no longer reveal submission times** (batched digest).
+- **The app never sees client addresses**: IP headers and the peer address are
+  removed from every request after the proxy check.
+- **Pages are not cached** (`Cache-Control: no-store`) — a shared office PC keeps
+  no PIN or report page.
+- **Helm ingress** turns the nginx access log off by default.
+
+### Changed
+
+- **Renovate replaces Dependabot**: patch updates merge themselves behind the
+  required checks; minor/major, the Python runtime and security-relevant
+  libraries wait for review. GitHub Actions are pinned to digests. Tests fail
+  if a Renovate manager reaches nothing or a tool carries two versions.
+  Renovate merges its own patch PRs (`platformAutomerge: false`), because the
+  repository's "Allow auto-merge" setting is off.
+- **Dashboard search by case number.** Report content is encrypted and is
+  deliberately not searchable.
+- **Readable audit log**: every action has a translated label; details are
+  shown as text. The CSV keeps machine codes and adds a label column.
+- **Copy**: sentence case; no absolute promises ("completely protected");
+  plain language instead of "Two-Factor Access / UUID4"; every error says what
+  happened and what to do. All user-facing strings, including upload errors,
+  are translated.
+
+### Fixed
+
+- Errors are tied to their fields (`aria-invalid`, `aria-describedby`) on every
+  form; blank admin login fields answered with a JSON 422.
+- The authenticator setup page showed raw locale keys in en, de and fr.
+- Creating a location was logged as `category.created`.
+- Wrong copy: "no cookies" (functional cookies exist) and confidential data
+  "only visible to the assigned admin" (every admin with access sees it).
+
 ## [1.4.0] — 2026-09-24
 
 Attachments no longer identify the whistleblower, multi-tenant installs keep
@@ -769,7 +862,8 @@ Remaining lower-severity findings are tracked in GitHub issues #42–#46.
 - **Rate limiting by session token** (not IP) to maintain full anonymity
 - **alembic upgrade head** on every startup to guarantee migration consistency
 
-[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.3.1...v1.4.0
 [1.3.1]: https://github.com/openwhistle/OpenWhistle/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.2.1...v1.3.0

@@ -584,7 +584,7 @@ class TestConfigV100Defaults:
     def test_app_version_current(self) -> None:
         from app.config import settings
 
-        assert settings.app_version == "1.4.0"
+        assert settings.app_version == "1.5.0"
 
     def test_every_published_version_string_matches(self) -> None:
         """One version, written in several places. A release that bumps only

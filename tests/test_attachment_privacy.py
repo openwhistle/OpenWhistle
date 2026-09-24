@@ -115,7 +115,7 @@ async def test_upload_refuses_a_file_that_cannot_be_cleaned() -> None:
     upload.read = AsyncMock(return_value=b"%PDF-garbage")
     files, error = await read_upload_files([upload])
     assert files == []
-    assert error and "metadata" in error
+    assert error and error.key == "upload.error.metadata"  # type: ignore[union-attr]
 
 
 @pytest.mark.asyncio
