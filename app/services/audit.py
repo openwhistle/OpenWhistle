@@ -68,6 +68,8 @@ async def get_audit_log(
     admin_id: uuid.UUID | None = None,
     page: int = 1,
     per_page: int = 50,
+    scope_org: bool = False,
+    org_id: uuid.UUID | None = None,
 ) -> tuple[list[AuditLog], int]:
     from sqlalchemy import func
 
@@ -78,6 +80,8 @@ async def get_audit_log(
         q = q.where(AuditLog.action == action)
     if admin_id is not None:
         q = q.where(AuditLog.admin_id == admin_id)
+    if scope_org:
+        q = q.where(AuditLog.org_id == org_id)
 
     count_result = await db.execute(select(func.count()).select_from(q.subquery()))
     total: int = count_result.scalar_one()

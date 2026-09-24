@@ -44,6 +44,17 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Security
 
+- **Multi-tenancy: an org admin now sees and manages only their own
+  organisation.** The users page, role changes, (de)activation, the
+  assignment picker and target, the audit log and its CSV export, and the
+  dashboard and statistics counts were unscoped; new users now join the
+  creator's organisation. Single-organisation installs are unaffected.
+- **`DEMO_MODE` no longer weakens a real installation.** The static TOTP
+  `000000` is accepted only for the seeded demo accounts, and demo data is
+  not seeded into a database that completed the setup wizard and has no demo
+  account.
+- **Internal admin notes are encrypted at rest** with the report's data key,
+  like descriptions and messages. Existing notes are shown as stored.
 - **Attachments no longer carry identifying metadata.** EXIF/GPS and camera
   data (JPEG, PNG, WebP, GIF), PDF document info and XMP, and DOCX/XLSX author
   and company properties are removed on upload — before the file reaches the

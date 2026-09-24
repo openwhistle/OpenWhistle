@@ -1,6 +1,7 @@
 """Admin dashboard endpoints."""
 
 import uuid
+from typing import Any
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
@@ -75,6 +76,23 @@ def _can_access_report(user: AdminUser, report: Report) -> bool:
     return True
 
 
+def _org_scope(user: AdminUser) -> dict[str, Any]:
+    """Query kwargs that confine a multi-tenant non-superadmin to their own org.
+
+    `org_id=None` with `scope_org=True` still filters (to org-less rows), so an
+    org-less admin never falls through to "see everything".
+    """
+    scope = settings.multi_tenancy_enabled and user.role != AdminRole.superadmin
+    return {"scope_org": scope, "org_id": user.org_id if scope else None}
+
+
+def _require_same_org(user: AdminUser, target_org_id: uuid.UUID | None) -> None:
+    """404 when a scoped caller addresses a user outside their organisation."""
+    scope = _org_scope(user)
+    if scope["scope_org"] and target_org_id != scope["org_id"]:
+        raise HTTPException(status_code=404)
+
+
 async def _get_authorized_report(
     db: AsyncSession, report_id: uuid.UUID, user: AdminUser
 ) -> Report:
@@ -141,7 +159,6 @@ async def dashboard(
     # This must apply even when their org_id is None, otherwise an org-less admin
     # would fall through to the unfiltered "see everything" branch — a metadata
     # leak inconsistent with the object-level check that denies them those reports.
-    scope_org = settings.multi_tenancy_enabled and current_user.role != AdminRole.superadmin
     reports, total = await report_service.get_reports_paginated(
         db,
         page=page,
@@ -151,10 +168,9 @@ async def dashboard(
         sort_dir=sort_dir,
         assigned_to_id=assigned_filter,
         location_id=location_filter,
-        org_id=current_user.org_id if scope_org else None,
-        scope_org=scope_org,
+        **_org_scope(current_user),
     )
-    stats = await report_service.get_report_stats(db)
+    stats = await report_service.get_report_stats(db, **_org_scope(current_user))
     total_pages = max(1, (total + per_page - 1) // per_page)
     now = datetime.now(UTC)
     ip_warning = await check_ip_warning()
@@ -206,7 +222,10 @@ async def report_detail(
 
     report = await _get_authorized_report(db, report_id, current_user)
 
-    all_admins = await get_all_users(db)
+    all_admins = [
+        u for u in await get_all_users(db)
+        if not settings.multi_tenancy_enabled or report.org_id is None or u.org_id == report.org_id
+    ]
 
     # Collect linked reports with case numbers for display
     linked: list[dict[str, str]] = []
@@ -232,7 +251,7 @@ async def report_detail(
     audit_entries, _ = await audit_service.get_audit_log(db, report_id=report_id, per_page=20)
 
     from app.services.crypto import decrypt_or_none
-    from app.services.report import decrypt_report_fields
+    from app.services.report import decrypt_note_contents, decrypt_report_fields
 
     confidential_name = decrypt_or_none(report.confidential_name)
     confidential_contact = decrypt_or_none(report.confidential_contact)
@@ -248,6 +267,7 @@ async def report_detail(
             "report": report,
             "decrypted_description": decrypted_description,
             "decrypted_messages": decrypted_msg_contents,
+            "decrypted_notes": decrypt_note_contents(report),
             "now": datetime.now(UTC),
             "statuses": list(ReportStatus),
             "allowed_transitions": allowed_transitions,
@@ -366,6 +386,15 @@ async def assign_report(
             raise HTTPException(
                 status_code=400,
                 detail="Cannot assign a report to a deactivated user.",
+            )
+        if (
+            settings.multi_tenancy_enabled
+            and report.org_id is not None
+            and assignee.org_id != report.org_id
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot assign a report to a user of another organisation.",
             )
 
     old_assignee = report.assigned_to.username if report.assigned_to else None
@@ -693,7 +722,11 @@ async def users_page(
     current_user: AdminUser = Depends(require_admin),
 ) -> HTMLResponse:
     from app.services.users import get_all_users
-    users = await get_all_users(db)
+    scope = _org_scope(current_user)
+    users = [
+        u for u in await get_all_users(db)
+        if not scope["scope_org"] or u.org_id == scope["org_id"]
+    ]
     return render(request, "admin/users.html", {
         "user": current_user,
         "users": users,
@@ -734,6 +767,8 @@ async def create_user(
         new_user, _totp_secret = await svc_create(db, username.strip(), password, role_enum)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    if settings.multi_tenancy_enabled:
+        new_user.org_id = current_user.org_id
     await audit_service.log(
         db, current_user, AuditAction.ADMIN_CREATED,
         detail={"username": new_user.username, "role": role_enum.value},
@@ -760,6 +795,7 @@ async def change_user_role(
     target = await get_user_by_id(db, user_id)
     if not target:
         raise HTTPException(status_code=404)
+    _require_same_org(current_user, target.org_id)
     try:
         role_enum = AdminRole(role)
     except ValueError as exc:
@@ -818,6 +854,7 @@ async def deactivate_user(
     target = await get_user_by_id(db, user_id)
     if not target:
         raise HTTPException(status_code=404)
+    _require_same_org(current_user, target.org_id)
     if target.id == current_user.id:
         raise HTTPException(status_code=400, detail="You cannot deactivate your own account.")
 
@@ -863,6 +900,7 @@ async def reactivate_user(
     target = await get_user_by_id(db, user_id)
     if not target:
         raise HTTPException(status_code=404)
+    _require_same_org(current_user, target.org_id)
 
     await svc_react(db, target)
     await audit_service.log(
@@ -903,6 +941,7 @@ async def audit_log_page(
         action=action_filter or None,
         page=page,
         per_page=50,
+        **_org_scope(current_user),
     )
     total_pages = max(1, (total + 49) // 50)
 
@@ -925,7 +964,7 @@ async def audit_log_csv(
     import csv
     import io
 
-    entries, _ = await audit_service.get_audit_log(db, per_page=10000)
+    entries, _ = await audit_service.get_audit_log(db, per_page=10000, **_org_scope(current_user))
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(["timestamp", "admin", "action", "report_id", "detail"])
@@ -954,7 +993,7 @@ async def stats_page(
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(get_current_admin),
 ) -> HTMLResponse:
-    stats = await report_service.get_dashboard_stats(db)
+    stats = await report_service.get_dashboard_stats(db, **_org_scope(current_user))
     from app.services.categories import get_all_categories
     categories = await get_all_categories(db)
     cat_map = {c.slug: c.label_en for c in categories}

@@ -144,3 +144,53 @@ async def test_delete_stored_objects_continues_after_a_failure(
     await delete_stored_objects(["a", "b"])
 
     assert backend.delete.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_demo_totp_code_only_works_for_demo_accounts(
+    client: AsyncClient, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """DEMO_MODE on a real database must not turn 000000 into a master code."""
+    from app.services.auth import store_totp_pending
+
+    user = AdminUser(
+        id=uuid.uuid4(), username=f"real_{uuid.uuid4().hex[:8]}",
+        totp_secret="JBSWY3DPEHPK3PXP", totp_enabled=True,
+    )
+    db_session.add(user)
+    await db_session.commit()
+    monkeypatch.setattr(settings, "demo_mode", True)
+
+    from redis.asyncio import Redis
+
+    redis = Redis.from_url(settings.redis_url)
+    temp = uuid.uuid4().hex
+    await store_totp_pending(redis, temp, str(user.id))
+    await redis.aclose()
+
+    csrf = (await client.get("/admin/login")).cookies.get("ow_csrf")
+    resp = await client.post(
+        "/admin/login/mfa",
+        data={"totp_code": "000000", "temp_token": temp, "csrf_token": csrf},
+        follow_redirects=False,
+    )
+    assert "ow_session" not in resp.cookies
+
+
+@pytest.mark.asyncio
+async def test_admin_notes_are_stored_encrypted(db_session: AsyncSession) -> None:
+    from app.services.report import add_note, create_report, decrypt_note_contents, get_report_by_id
+
+    report, _ = await create_report(db_session, "financial_fraud", "Note encryption test.")
+    author = AdminUser(
+        id=uuid.uuid4(), username=f"n_{uuid.uuid4().hex[:8]}",
+        totp_secret="JBSWY3DPEHPK3PXP", totp_enabled=True,
+    )
+    db_session.add(author)
+    await db_session.commit()
+    note = await add_note(db_session, report, author, "Witness: J. Doe, 2nd floor")
+
+    assert "J. Doe" not in note.content
+    loaded = await get_report_by_id(db_session, report.id)
+    assert loaded is not None
+    assert decrypt_note_contents(loaded) == ["Witness: J. Doe, 2nd floor"]

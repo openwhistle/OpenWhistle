@@ -188,15 +188,16 @@ async def login_mfa_post(
             status_code=429,
         )
 
-    code_valid = (settings.demo_mode and verify_demo_totp(totp_code)) or verify_totp(
+    demo_code = settings.demo_mode and verify_demo_totp(totp_code, user.username)
+    code_valid = demo_code or verify_totp(
         user.totp_secret, totp_code
     )
 
     # One-time use: a valid code may authenticate exactly one session within its
     # ~90s validity window. Prevents an intercepted/relayed code from logging in
-    # a second, attacker-controlled session (AiTM replay). Skipped in demo mode
-    # where the static code is intentionally reusable.
-    if code_valid and not settings.demo_mode:
+    # a second, attacker-controlled session (AiTM replay). Skipped for the demo
+    # accounts, whose static code is intentionally reusable.
+    if code_valid and not demo_code:
         used_key = f"openwhistle:totp_used:{user.id}:{totp_code}"
         if not await redis.set(used_key, "1", nx=True, ex=90):
             code_valid = False

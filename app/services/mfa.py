@@ -24,9 +24,13 @@ def verify_totp(secret: str, code: str) -> bool:
     return totp.verify(code, valid_window=1)
 
 
-def verify_demo_totp(code: str) -> bool:
-    """In demo mode only: accept the static code '000000'."""
-    return code == "000000"
+def verify_demo_totp(code: str, username: str) -> bool:
+    """In demo mode only: accept the static code '000000' for the seeded demo
+    accounts. Any other account keeps real TOTP, so a production database
+    started with DEMO_MODE=true by mistake does not lose its second factor."""
+    from app.services.demo_seed import DEMO_USERNAMES  # noqa: PLC0415
+
+    return code == "000000" and username in DEMO_USERNAMES
 
 
 def get_provisioning_uri(secret: str, username: str) -> str:

@@ -10,7 +10,6 @@ from __future__ import annotations
 import urllib.request
 from collections.abc import Generator
 
-import pyotp
 import pytest
 from playwright.sync_api import Browser, BrowserContext, Page
 
@@ -32,7 +31,9 @@ AXE_CDN = "https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.9.1/axe.min.js"
 
 
 def _totp_now(secret: str = DEMO_ADMIN_TOTP_SECRET) -> str:
-    return pyotp.TOTP(secret).now()
+    """The demo accounts' static code. A real TOTP code is single-use (replay
+    protection), and these tests log in several times within one 30 s step."""
+    return "000000"
 
 
 def _admin_login(page: Page, base_url: str, username: str, password: str, totp_secret: str) -> None:
