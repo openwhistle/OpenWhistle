@@ -19,5 +19,5 @@ def test_the_technical_docs_are_not_published() -> None:
     # The Pages build uploads exactly docs/. Any other path, or a second
     # upload, is a change of scope that has to be noticed here.
     workflow = (ROOT / ".github/workflows/pages.yml").read_text()
-    uploads = re.findall(r"upload-pages-artifact@\S+\s+with:\s+path:\s*\"?([^\"\s]+)", workflow)
+    uploads = re.findall(r"upload-pages-artifact@\S+(?:[ \t]+#[^\n]*)?\s+with:\s+path:\s*\"?([^\"\s]+)", workflow)
     assert uploads == ["docs"], f"pages.yml publishes {uploads}; only docs/ may be published"
