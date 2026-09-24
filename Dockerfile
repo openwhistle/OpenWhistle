@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.10
+# syntax=docker/dockerfile:1.27
 
 # ─── Stage 1: dependency builder ─────────────────────────────────────────────
 FROM python:3.14-alpine AS builder
