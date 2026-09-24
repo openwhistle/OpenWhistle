@@ -214,3 +214,47 @@ def test_users_and_audit_tables_also_stack() -> None:
     assert 'class="table-stack"' in audit_html
     assert 'stack-primary' in audit_html
     assert 'stack-status' in audit_html
+
+
+def _media_768_blocks(css: str) -> list[str]:
+    blocks = []
+    for match in re.finditer(r"@media \(max-width: 768px\)\s*\{", css):
+        start = match.end() - 1
+        depth = 0
+        end = start
+        for i, ch in enumerate(css[start:], start=start):
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    end = i
+                    break
+        blocks.append(css[start:end])
+    return blocks
+
+
+def test_split_layout_has_only_one_active_phone_breakpoint() -> None:
+    """Regression guard for the Task 25 fix-round-1 finding: a
+    `@media (max-width: 768px)` block and a `@media (max-width: 900px)` block
+    both declared `.split-layout`/`.split-main`/`.split-sidebar` layout, and
+    since the 900px block always applies wherever the 768px one does, the
+    768px declarations were dead code. None of the 768px blocks may redeclare
+    `.split-layout`, `.split-main` max-width/padding, or `.split-sidebar`
+    padding — the 900px block owns that layout now."""
+    css = (ROOT / "app/static/css/site.css").read_text()
+    for block in _media_768_blocks(css):
+        assert not re.search(r"\.split-layout\s*\{", block), block
+        main = re.search(r"\.split-main\s*\{([^}]*)\}", block)
+        if main:
+            assert "max-width" not in main.group(1) and "padding" not in main.group(1), main.group(1)
+        sidebar = re.search(r"\.split-sidebar\s*\{([^}]*)\}", block)
+        if sidebar:
+            assert "padding" not in sidebar.group(1), sidebar.group(1)
+
+
+def test_credential_value_dead_css_removed() -> None:
+    """Regression guard for the Task 25 fix-round-1 finding: `.credential-value`
+    was unreferenced by any template. It must not exist in site.css."""
+    css = (ROOT / "app/static/css/site.css").read_text()
+    assert ".credential-value" not in css
