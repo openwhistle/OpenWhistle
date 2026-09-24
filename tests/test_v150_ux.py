@@ -21,7 +21,12 @@ from app.services.audit import ALL_ACTIONS
 from app.services.mfa import generate_totp_secret
 from app.services.report import create_report, get_reports_paginated
 from app.templating import audit_detail, template_translator
-from tests.conftest import _wizard_detect_step, _wizard_get_csrf, _wizard_skip_location_if_needed
+from tests.conftest import (
+    _wizard_detect_step,
+    _wizard_get_csrf,
+    _wizard_skip_location_if_needed,
+    setup_token,
+)
 from tests.test_v030_api import _login, _make_admin
 
 _LOCALES = Path(__file__).resolve().parents[1] / "app" / "locales"
@@ -304,6 +309,7 @@ async def test_setup_wizard_errors_sit_next_to_their_fields(
                 "password_confirm": "different",
                 "totp_secret": generate_totp_secret(),
                 "totp_code": "000000",
+                "setup_token": await setup_token(),
             },
             follow_redirects=False,
         )

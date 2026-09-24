@@ -60,6 +60,10 @@ class Settings(BaseSettings):
     # (e.g. local network without TLS). Always keep true behind HTTPS.
     secure_cookies: bool = True
 
+    # First-run setup: whoever opens /setup must also know this token. Empty =
+    # a random one is created at startup and logged once at WARNING.
+    setup_token: str = ""
+
     # Application
     app_name: str = "OpenWhistle"
     app_version: str = "1.5.0"

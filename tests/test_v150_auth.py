@@ -31,6 +31,7 @@ from app.models.user import AdminUser
 from app.services.audit import AuditAction
 from app.services.auth import hash_password, validate_session
 from app.services.report import create_report
+from tests.conftest import setup_token
 
 _ADMIN_PASSWORD = "V150-Test-Password"  # noqa: S105
 
@@ -566,6 +567,7 @@ async def test_setup_wizard_applies_the_password_policy(
             "totp_secret": secret,
             "totp_code": pyotp.TOTP(secret).now(),
             "csrf_token": csrf,
+            "setup_token": await setup_token(),
         },
         follow_redirects=False,
     )
@@ -588,6 +590,7 @@ async def test_setup_wizard_validates_the_username_like_admin_created_users(
             "totp_secret": secret,
             "totp_code": pyotp.TOTP(secret).now(),
             "csrf_token": csrf,
+            "setup_token": await setup_token(),
         },
         follow_redirects=False,
     )

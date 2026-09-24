@@ -4,6 +4,7 @@ import pytest
 from httpx import AsyncClient
 
 from app.services.mfa import generate_totp_secret, get_totp
+from tests.conftest import setup_token
 
 
 @pytest.mark.asyncio
@@ -43,6 +44,7 @@ async def test_setup_post_creates_admin(client: AsyncClient) -> None:
             "totp_secret": totp_secret,
             "totp_code": current_code,
             "csrf_token": csrf_token,
+            "setup_token": await setup_token(),
         },
         follow_redirects=False,
     )
@@ -70,6 +72,7 @@ async def test_setup_post_rejects_short_password(client: AsyncClient) -> None:
             "totp_secret": totp_secret,
             "totp_code": totp.now(),
             "csrf_token": csrf_token,
+            "setup_token": await setup_token(),
         },
     )
     assert response.status_code == 422
@@ -95,6 +98,7 @@ async def test_setup_post_rejects_mismatched_passwords(client: AsyncClient) -> N
             "totp_secret": totp_secret,
             "totp_code": totp.now(),
             "csrf_token": csrf_token,
+            "setup_token": await setup_token(),
         },
     )
     assert response.status_code == 422
@@ -119,6 +123,7 @@ async def test_setup_post_rejects_invalid_totp(client: AsyncClient) -> None:
             "totp_secret": totp_secret,
             "totp_code": "000000",  # wrong code (unless astronomically unlucky)
             "csrf_token": csrf_token,
+            "setup_token": await setup_token(),
         },
     )
     assert response.status_code == 422

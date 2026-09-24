@@ -231,3 +231,14 @@ async def wizard_submit(
     )
     pin = pin_m.group(1) if pin_m else ""
     return case_number, pin
+
+
+async def setup_token() -> str:
+    """The current one-time setup token, created if missing (as GET /setup does)."""
+    from app.redis_client import get_redis
+    from app.services.setup_token import SETUP_TOKEN_KEY, ensure_setup_token
+
+    redis = await get_redis()
+    await ensure_setup_token(redis)
+    raw = await redis.get(SETUP_TOKEN_KEY)
+    return raw.decode() if isinstance(raw, bytes) else str(raw)

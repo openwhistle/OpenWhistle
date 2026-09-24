@@ -49,6 +49,16 @@ def _run_alembic_upgrade() -> None:
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     _run_alembic_upgrade()
 
+    if not settings.demo_mode:
+        from app.api.wizard import _is_setup_complete  # noqa: PLC0415
+        from app.database import AsyncSessionLocal  # noqa: PLC0415
+        from app.redis_client import get_redis  # noqa: PLC0415
+        from app.services.setup_token import ensure_setup_token  # noqa: PLC0415
+
+        async with AsyncSessionLocal() as db:
+            if not await _is_setup_complete(db):
+                await ensure_setup_token(await get_redis())
+
     if settings.demo_mode:
         from app.services.demo_seed import seed_demo_data
 

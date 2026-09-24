@@ -140,6 +140,7 @@ secrets:
   secretKey: ""         # required — generate with: openssl rand -hex 32
   databaseUrl: ""       # required — postgresql+asyncpg://user:pass@host:5432/db
   redisUrl: ""          # required — redis://host:6379/0
+  setupToken: ""        # optional — unset: a random token is created at startup and logged once
   smtpPassword: ""
   webhookSecret: ""
   s3SecretAccessKey: ""

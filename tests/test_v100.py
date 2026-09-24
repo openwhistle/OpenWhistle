@@ -801,6 +801,8 @@ async def _get_admin_session(client: AsyncClient) -> bool:
     try:
         import pyotp
 
+        from tests.conftest import setup_token
+
         setup_resp = await client.get("/setup")
         if setup_resp.status_code == 302:
             # Setup already done — try to log in with demo creds
@@ -820,6 +822,7 @@ async def _get_admin_session(client: AsyncClient) -> bool:
             "totp_secret": totp_secret,
             "totp_code": totp_code,
             "csrf_token": csrf,
+            "setup_token": await setup_token(),
         })
 
         login_resp = await client.get("/admin/login")

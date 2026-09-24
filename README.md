@@ -158,6 +158,7 @@ git clone https://github.com/openwhistle/OpenWhistle.git
 cd OpenWhistle
 cp .env.example .env        # Set a strong SECRET_KEY
 docker compose up -d
+docker compose logs app | grep "Setup token"  # read the one-time setup token
 # Open http://localhost:4009/setup to create the first admin account
 ```
 

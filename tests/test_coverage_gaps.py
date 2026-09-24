@@ -28,6 +28,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import AdminRole, AdminUser
 from app.services.auth import create_access_token, hash_password, store_session
 from app.services.mfa import generate_totp_secret, get_totp
+from tests.conftest import setup_token
 
 # ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -118,6 +119,7 @@ async def test_wizard_post_validation_username_too_short(
             "totp_secret": totp_secret,
             "totp_code": get_totp(totp_secret).now(),
             "csrf_token": csrf,
+            "setup_token": await setup_token(),
         },
     )
     assert resp.status_code == 200
@@ -147,6 +149,7 @@ async def test_wizard_post_validation_password_mismatch(
             "totp_secret": totp_secret,
             "totp_code": get_totp(totp_secret).now(),
             "csrf_token": csrf,
+            "setup_token": await setup_token(),
         },
     )
     assert resp.status_code == 200
@@ -176,6 +179,7 @@ async def test_wizard_post_validation_bad_totp(
             "totp_secret": totp_secret,
             "totp_code": "000000",
             "csrf_token": csrf,
+            "setup_token": await setup_token(),
         },
     )
     assert resp.status_code == 200

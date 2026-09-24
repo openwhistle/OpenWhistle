@@ -63,6 +63,14 @@
             <input type="hidden" name="totp_secret" value="{{ totp_secret }}">
 
             <div class="form-group">
+                <label class="form-label" for="setup_token">{{ t('wizard.setup_token') }}</label>
+                <input type="text" class="form-control mono" id="setup_token" name="setup_token"
+                       required autocomplete="off" spellcheck="false"{{ field.attrs('setup_token', 'setup-token-hint') }}>
+                {{ field.error('setup_token') }}
+                <div class="form-hint" id="setup-token-hint">{{ t('wizard.setup_token.hint') }}</div>
+            </div>
+
+            <div class="form-group">
                 <label class="form-label" for="username">{{ t('wizard.username') }}</label>
                 <input
                     type="text"

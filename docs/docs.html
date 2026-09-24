@@ -993,9 +993,19 @@
 
         <h3>Step 4 — Run the setup wizard</h3>
         <p>
+          Unless you set <code>SETUP_TOKEN</code> yourself, read the one-time setup token from the
+          application log before opening the wizard:
+        </p>
+        <div class="code-block" role="region" aria-label="Read the setup token from the log">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+          </div>
+          <pre><code><span class="t-prompt">$ </span><span class="t-cmd">docker compose logs app | grep "Setup token"</span></code></pre>
+        </div>
+        <p>
           Open <code>http://localhost:4009/setup</code> (or your domain if nginx is configured)
-          in a browser. Follow the wizard to create your first admin account and configure TOTP.
-          The wizard disables itself permanently after completion.
+          in a browser. Enter the setup token, then follow the wizard to create your first admin
+          account and configure TOTP. The wizard disables itself permanently after completion.
         </p>
 
         <div class="callout callout-note">
@@ -1073,6 +1083,12 @@
               <td><span class="env-required env-req-yes">Required</span></td>
               <td>Cryptographic key for session signing, CSRF tokens, and confidential-identity encryption. <strong>Minimum 32 characters</strong> (the app refuses to start otherwise). Generate with <code>openssl rand -hex 32</code>.</td>
               <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">SETUP_TOKEN</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Token the first-run wizard at <code>/setup</code> asks for. Unset: a random token is created at startup and written once to the log (<code>docker compose logs app | grep "Setup token"</code>).</td>
+              <td>random</td>
             </tr>
             <tr>
               <td><code class="env-key">DATABASE_URL</code></td>
