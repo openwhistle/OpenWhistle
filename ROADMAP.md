@@ -242,7 +242,7 @@ Critical user journeys to cover:
   credentials; target: p95 < 200 ms
 - [x] **Performance CI job** — `.github/workflows/perf.yml`; manual dispatch;
   runs `locust --headless` in Docker Compose; uploads HTML + CSV artifacts
-- [x] **Baseline documented** — `docs/performance-baseline.md` records SLO
+- [x] **Baseline documented** — `docs-tech/performance-baseline.md` records SLO
   thresholds; future regressions measured against this
 
 ### API Contract Tests
@@ -293,7 +293,7 @@ Critical user journeys to cover:
 
 - [ ] **Automatic performance regression gate** — add a `--csv` output pass to
   the Locust run and a post-run Python script that reads the CSV and exits non-zero
-  if p95 exceeds the SLO thresholds from `docs/performance-baseline.md`; wire
+  if p95 exceeds the SLO thresholds from `docs-tech/performance-baseline.md`; wire
   into `perf.yml` so the workflow fails on regression
 - [ ] **Complete wizard flow in `WhistleblowerUser`** — the Locust user class
   currently issues a simplified POST; replace with a full 6-step session
@@ -311,6 +311,14 @@ Critical user journeys to cover:
   add a `conftest.py` fixture that creates a second `TestClient` with OpenAPI
   enabled and assert all expected route `operationId`s are present, catching
   accidental route renames without exposing the schema in production
+
+---
+
+## v1.4.0 — Attachment Privacy, Tenancy & Accessibility ✓ Released 2026-09-24
+
+> Metadata stripping and encryption for attachments, multi-tenant scoping,
+> mobile layout, full axe pass in both themes, native multi-arch publishing.
+> See [CHANGELOG.md](CHANGELOG.md#140--2026-09-24).
 
 ---
 

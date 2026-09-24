@@ -116,3 +116,54 @@ async def test_audit_log_and_stats_are_scoped(
     stats_b = await get_report_stats(db_session, scope_org=True, org_id=org_b)
     assert sum(stats_a.values()) == 0
     assert sum(stats_b.values()) >= 1
+
+
+@pytest.mark.asyncio
+async def test_new_user_joins_the_creators_org(
+    as_admin_a: AsyncClient, two_orgs: dict[str, AdminUser], db_session: AsyncSession
+) -> None:
+    from sqlalchemy import select
+
+    name = f"new_{uuid.uuid4().hex[:8]}"
+    csrf = await _csrf(as_admin_a)
+    resp = await as_admin_a.post(
+        "/admin/users",
+        data={"username": name, "password": "a-long-password-123", "role": "case_manager",
+              "csrf_token": csrf},
+        follow_redirects=False,
+    )
+    assert resp.status_code == 302
+    query = select(AdminUser).where(AdminUser.username == name)
+    created = (await db_session.execute(query)).scalar_one()
+    assert created.org_id == two_orgs["admin_a"].org_id
+
+
+@pytest.mark.asyncio
+async def test_assignment_picker_offers_only_the_reports_org(
+    as_admin_a: AsyncClient, two_orgs: dict[str, AdminUser], db_session: AsyncSession
+) -> None:
+    from app.services.report import create_report
+
+    report, _ = await create_report(db_session, "financial_fraud", "Picker scoping test.")
+    report.org_id = two_orgs["admin_a"].org_id
+    await db_session.commit()
+
+    page = (await as_admin_a.get(f"/admin/reports/{report.id}")).text
+    assert two_orgs["peer_a"].username in page
+    assert two_orgs["user_b"].username not in page
+
+
+@pytest.mark.asyncio
+async def test_dashboard_statistics_are_scoped(
+    db_session: AsyncSession, two_orgs: dict[str, AdminUser]
+) -> None:
+    from app.services.report import create_report, get_dashboard_stats
+
+    report, _ = await create_report(db_session, "financial_fraud", "Scoped dashboard stats.")
+    report.org_id = two_orgs["user_b"].org_id
+    await db_session.commit()
+
+    org_a = two_orgs["admin_a"].org_id
+    stats_a = await get_dashboard_stats(db_session, scope_org=True, org_id=org_a)
+    assert stats_a["total_reports"] == 0
+    assert stats_a["by_category"] == {}

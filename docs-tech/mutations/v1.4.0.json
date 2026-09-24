@@ -1,0 +1,230 @@
+{
+ "test_groups": {
+  "ATT": [
+   "tests/test_attachment_privacy.py",
+   "tests/test_attachments.py",
+   "tests/test_issue_45_s3_missing.py"
+  ],
+  "ORG": [
+   "tests/test_multitenancy_scoping.py",
+   "tests/test_security_advisories_v111.py",
+   "tests/test_bug_bounty_v111.py",
+   "tests/test_v100.py",
+   "tests/test_coverage_admin.py",
+   "tests/test_coverage_admin_extended.py"
+  ],
+  "AUTH": [
+   "tests/test_auth_hardening.py",
+   "tests/test_services_misc.py",
+   "tests/test_services_demo_seed.py",
+   "tests/test_coverage_auth.py",
+   "tests/test_coverage_auth_extended.py",
+   "tests/test_v050.py",
+   "tests/test_oidc.py"
+  ],
+  "NOTES": [
+   "tests/test_auth_hardening.py",
+   "tests/test_v030_services.py",
+   "tests/test_pdf_service.py",
+   "tests/test_bug_bounty_v111.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "jpeg-exif-kept",
+   "file": "app/services/attachment.py",
+   "old": "        clean = Image.new(upright.mode, upright.size)\n        clean.paste(upright)\n",
+   "new": "        clean = upright\n",
+   "tests": "ATT"
+  },
+  {
+   "id": "jpeg-no-transpose",
+   "file": "app/services/attachment.py",
+   "old": "upright = ImageOps.exif_transpose(img)",
+   "new": "upright = img",
+   "tests": "ATT"
+  },
+  {
+   "id": "gif-comment-kept",
+   "file": "app/services/attachment.py",
+   "old": "img.info.pop(\"comment\", None)",
+   "new": "pass",
+   "tests": "ATT"
+  },
+  {
+   "id": "pdf-info-kept",
+   "file": "app/services/attachment.py",
+   "old": "    writer.metadata = None  # document info",
+   "new": "    pass  # document info",
+   "tests": "ATT"
+  },
+  {
+   "id": "pdf-xmp-kept",
+   "file": "app/services/attachment.py",
+   "old": "    writer._root_object.pop(\"/Metadata\", None)",
+   "new": "    pass",
+   "tests": "ATT"
+  },
+  {
+   "id": "pdf-orphans-kept",
+   "file": "app/services/attachment.py",
+   "old": "    writer.compress_identical_objects(remove_identicals=False, remove_orphans=True)\n",
+   "new": "",
+   "tests": "ATT"
+  },
+  {
+   "id": "ooxml-bomb-accepted",
+   "file": "app/services/attachment.py",
+   "old": "> 20 * MAX_SIZE_BYTES:",
+   "new": "> 10**12:",
+   "tests": "ATT"
+  },
+  {
+   "id": "ooxml-props-kept",
+   "file": "app/services/attachment.py",
+   "old": "body = _OOXML_EMPTY_PARTS.get(info.filename) or src.read(info)",
+   "new": "body = src.read(info)",
+   "tests": "ATT"
+  },
+  {
+   "id": "strip-fail-open",
+   "file": "app/services/attachment.py",
+   "old": "        raise MetadataError(str(exc)) from exc",
+   "new": "        return data",
+   "tests": "ATT"
+  },
+  {
+   "id": "upload-not-stripped",
+   "file": "app/services/attachment.py",
+   "old": "            data = strip_metadata(name, data)",
+   "new": "            data = data",
+   "tests": "ATT"
+  },
+  {
+   "id": "attachment-plaintext-db",
+   "file": "app/services/attachment.py",
+   "old": "        ciphertext = fernet.encrypt(data)",
+   "new": "        ciphertext = data",
+   "tests": "ATT"
+  },
+  {
+   "id": "attachment-no-decrypt",
+   "file": "app/services/attachment.py",
+   "old": "    if not attachment.encrypted:",
+   "new": "    if True:",
+   "tests": "ATT"
+  },
+  {
+   "id": "org-scope-off",
+   "file": "app/api/admin.py",
+   "old": "    return {\"scope_org\": scope, \"org_id\": user.org_id if scope else None}",
+   "new": "    return {\"scope_org\": False, \"org_id\": None}",
+   "tests": "ORG"
+  },
+  {
+   "id": "same-org-noop",
+   "file": "app/api/admin.py",
+   "old": "    if scope[\"scope_org\"] and target_org_id != scope[\"org_id\"]:",
+   "new": "    if False:",
+   "tests": "ORG"
+  },
+  {
+   "id": "assign-cross-org",
+   "file": "app/api/admin.py",
+   "old": "            and assignee.org_id != report.org_id",
+   "new": "            and False",
+   "tests": "ORG"
+  },
+  {
+   "id": "new-user-no-org",
+   "file": "app/api/admin.py",
+   "old": "        new_user.org_id = current_user.org_id",
+   "new": "        pass",
+   "tests": "ORG"
+  },
+  {
+   "id": "users-page-unscoped",
+   "file": "app/api/admin.py",
+   "old": "        if not scope[\"scope_org\"] or u.org_id == scope[\"org_id\"]",
+   "new": "        if True",
+   "tests": "ORG"
+  },
+  {
+   "id": "assign-picker-unscoped",
+   "file": "app/api/admin.py",
+   "old": "        if not settings.multi_tenancy_enabled or report.org_id is None or u.org_id == report.org_id",
+   "new": "        if True",
+   "tests": "ORG"
+  },
+  {
+   "id": "audit-unscoped",
+   "file": "app/services/audit.py",
+   "old": "        q = q.where(AuditLog.org_id == org_id)",
+   "new": "        pass",
+   "tests": "ORG"
+  },
+  {
+   "id": "stats-unscoped",
+   "file": "app/services/report.py",
+   "old": "        q = q.where(Report.org_id == org_id)\n    result = await db.execute(q)",
+   "new": "        pass\n    result = await db.execute(q)",
+   "tests": "ORG"
+  },
+  {
+   "id": "dashboard-stats-unscoped",
+   "file": "app/services/report.py",
+   "old": "    org_filter = [Report.org_id == org_id] if scope_org else []",
+   "new": "    org_filter = []",
+   "tests": "ORG"
+  },
+  {
+   "id": "demo-code-any-user",
+   "file": "app/services/mfa.py",
+   "old": "    return code == \"000000\" and username in DEMO_USERNAMES",
+   "new": "    return code == \"000000\"",
+   "tests": "AUTH"
+  },
+  {
+   "id": "seed-guard-off",
+   "file": "app/services/demo_seed.py",
+   "old": "    return bool(setup_done) and has_demo is None",
+   "new": "    return False",
+   "tests": "AUTH"
+  },
+  {
+   "id": "notes-plaintext",
+   "file": "app/services/report.py",
+   "old": "        author_username=author.username,\n        content=_encrypt_message_content(report, content),\n    )\n    db.add(note)",
+   "new": "        author_username=author.username,\n        content=content,\n    )\n    db.add(note)",
+   "tests": "NOTES"
+  },
+  {
+   "id": "ldap-admin-default",
+   "file": "app/api/auth.py",
+   "old": "                role=AdminRole.case_manager,\n",
+   "new": "",
+   "tests": "AUTH"
+  },
+  {
+   "id": "ldap-no-escape",
+   "file": "app/services/ldap_auth.py",
+   "old": "escape_filter_chars(username)",
+   "new": "username",
+   "tests": "AUTH"
+  },
+  {
+   "id": "ldap-cert-none",
+   "file": "app/services/ldap_auth.py",
+   "old": "Tls(validate=ssl.CERT_REQUIRED)",
+   "new": "Tls(validate=ssl.CERT_NONE)",
+   "tests": "AUTH"
+  },
+  {
+   "id": "oidc-skips-mfa",
+   "file": "app/api/auth.py",
+   "old": "            status_code=401,\n        )\n\n    return await _second_factor(request, redis, user)",
+   "new": "            status_code=401,\n        )\n\n    token = auth_service.create_access_token(str(user.id), role=user.role.value)\n    await auth_service.store_session(redis, str(user.id), token)\n    response = RedirectResponse('/admin/dashboard', status_code=302)\n    response.set_cookie(key='ow_session', value=token)\n    return response",
+   "tests": "AUTH"
+  }
+ ]
+}

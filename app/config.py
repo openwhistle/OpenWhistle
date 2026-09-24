@@ -55,7 +55,7 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "OpenWhistle"
-    app_version: str = "1.3.1"
+    app_version: str = "1.4.0"
 
     # Logging
     log_level: str = "INFO"
@@ -98,7 +98,7 @@ class Settings(BaseSettings):
     oidc_redirect_uri: str = ""
 
     # Branding (optional — companies can override defaults)
-    brand_primary_color: str = "#0e7c5a"
+    brand_primary_color: str = "#0c7253"
     brand_secondary_color: str = "#b07230"
     brand_logo_url: str = ""
 

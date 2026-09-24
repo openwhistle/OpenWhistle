@@ -157,12 +157,15 @@ def _strip_image(data: bytes) -> bytes:
 def _strip_pdf(data: bytes) -> bytes:
     from pypdf import PdfReader, PdfWriter  # noqa: PLC0415
 
-    reader = PdfReader(io.BytesIO(data))
-    if reader.is_encrypted:
-        raise MetadataError("encrypted PDF")
-    writer = PdfWriter(clone_from=reader)
+    # An owner-password-only PDF opens without a password and is written back
+    # unencrypted and cleaned; one that needs a user password cannot be read
+    # and fails here, which strip_metadata turns into a refusal.
+    writer = PdfWriter(clone_from=PdfReader(io.BytesIO(data)))
     writer.metadata = None  # document info: author, creator tool, dates
     writer._root_object.pop("/Metadata", None)  # XMP packet
+    # Unlinking is not removing: the XMP stream would still be written as an
+    # orphaned object that any forensic tool can read.
+    writer.compress_identical_objects(remove_identicals=False, remove_orphans=True)
     out = io.BytesIO()
     writer.write(out)
     return out.getvalue()

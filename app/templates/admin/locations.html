@@ -4,7 +4,7 @@
 
 {% block styles %}
 <style nonce="{{ request.state.csp_nonce }}">
-.loc-row-inactive { opacity:0.5; }
+.loc-row-inactive td { color:var(--muted); font-style:italic; }
 .loc-name { font-weight:600; }
 .loc-code { font-size:0.82rem; }
 .loc-desc { font-size:0.85rem;color:var(--muted); }

@@ -7,8 +7,34 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.4.0] — 2026-09-24
+
+Attachments no longer identify the whistleblower, multi-tenant installs keep
+organisations apart, and every page passes an automated contrast and layout
+check on a phone and in both themes. Found and verified with a mutation audit
+of every guard this release adds (28 of 28 caught).
+
+**Upgrade notes:** migration `002` runs on start. The default
+`BRAND_PRIMARY_COLOR` is now `#0c7253` (was `#0e7c5a`, 4.4:1 on tinted
+backgrounds); installs that set their own colour are unaffected. E2E and demo
+logins for the demo accounts use the static code `000000`; real TOTP codes are
+single-use for every account.
+
 ### Fixed
 
+- **Cleaned PDFs still contained their XMP metadata.** Unlinking it from the
+  catalog left the stream in the file as an orphaned object; orphans are now
+  removed. PDFs restricted by an owner password only are accepted and cleaned
+  instead of refused.
+- **Every page passes axe at impact serious and critical, in both themes.**
+  Fixed: accent colour on tinted backgrounds (4.4 → 5.0:1), white on amber in
+  the dark demo badges (2.3:1), dark-theme secondary text (3.9 → 4.8:1), role
+  badges (2.1 and 3.9:1), footer links distinguishable only by colour, inactive
+  categories and locations faded below AA, an unlabelled role selector and link
+  field, scrollable tables unreachable by keyboard.
+- **Six more admin pages scrolled sideways on a phone** (users, categories,
+  locations, statistics, retention, system — up to 569 px), and long audit
+  entries on the report view.
 - **No page scrolls sideways on a phone any more.** At 390 px the navigation
   (12 items in the admin) now wraps instead of running off-screen, the
   dashboard toolbar and the report view (two columns, no breakpoint) fit the
@@ -23,6 +49,14 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **Stricter tests.** The axe checks fail on *serious* violations, not only
+  *critical* ones (contrast failures used to ship green). A new UI check visits
+  every public and admin page in both themes at 390 and 1440 px and fails on
+  axe violations, console errors or sideways scrolling. Every guard of the
+  release is mutation-tested (`scripts/mutation_audit.py`).
+- **Maintainer documentation moved to `docs-tech/`** (release procedure,
+  invariants, carried-forward findings, performance baseline); a test keeps it
+  out of the published site.
 - **Images are built once and published identically to all three
   registries.** Each platform builds on a native runner (arm64 no longer under
   QEMU) and is pushed to GHCR by digest; one multi-arch index is then written
@@ -735,7 +769,8 @@ Remaining lower-severity findings are tracked in GitHub issues #42–#46.
 - **Rate limiting by session token** (not IP) to maintain full anonymity
 - **alembic upgrade head** on every startup to guarantee migration consistency
 
-[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v1.3.1...HEAD
+[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.3.1...v1.4.0
 [1.3.1]: https://github.com/openwhistle/OpenWhistle/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/openwhistle/OpenWhistle/compare/v1.2.0...v1.2.1

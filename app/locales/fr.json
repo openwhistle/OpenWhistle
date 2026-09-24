@@ -376,6 +376,7 @@
   "admin.users.deactivate": "Désactiver",
   "admin.users.reactivate": "Réactiver",
   "admin.users.change_role": "Changer le rôle",
+  "admin.users.role_for": "Rôle de {username}",
   "admin.users.cannot_self": "Impossible de désactiver votre propre compte.",
   "admin.users.last_admin": "Impossible de désactiver. Dernier administrateur actif.",
 

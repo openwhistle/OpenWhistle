@@ -297,6 +297,7 @@
   "admin.users.deactivate": "Desativar",
   "admin.users.reactivate": "Reativar",
   "admin.users.change_role": "Alterar Função",
+  "admin.users.role_for": "Função de {username}",
   "admin.users.cannot_self": "Não é possível desativar sua própria conta.",
   "admin.users.last_admin": "Não é possível desativar — último administrador ativo.",
   "admin.audit.title": "Registro de Auditoria",

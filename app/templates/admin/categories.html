@@ -4,7 +4,7 @@
 
 {% block styles %}
 <style nonce="{{ request.state.csp_nonce }}">
-.cat-row-inactive { opacity:0.5; }
+.cat-row-inactive td { color:var(--muted); font-style:italic; }
 .cat-slug { font-size:0.82rem; }
 .cat-label-en { font-size:0.9rem; }
 .cat-label-de { font-size:0.9rem;color:var(--muted); }

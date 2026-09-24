@@ -15,7 +15,7 @@ colors:
   # Brand anchor — the emerald IS OpenWhistle's identity colour. `primary` names it
   # for tooling (light value); `accent` (below) carries the same emerald with its
   # light/dark pair and usage role.
-  primary: "#0e7c5a"
+  primary: "#0c7253"
 
   # Neutrals — the monochrome ground. Warm-neutral, chosen not defaulted.
   canvas:        { light: "#ffffff", dark: "#08080a" }   # page background
@@ -23,18 +23,18 @@ colors:
   surface-2:     { light: "#ffffff", dark: "#1b1b1e" }   # cards floated above surface
   ink:           { light: "#0a0a0b", dark: "#fafafa" }   # headings, primary text
   body:          { light: "#3d3d40", dark: "#bcbcc0" }   # body copy
-  muted:         { light: "#6a6a6e", dark: "#808085" }   # secondary / metadata
+  muted:         { light: "#6a6a6e", dark: "#8e8e93" }   # secondary / metadata
   hairline:      { light: "#e6e6e4", dark: "#262629" }   # 1px borders & dividers
 
   # Accent — emerald. The ONE brand colour. Scarce as a button, generous as a block.
-  accent:        { light: "#0e7c5a", dark: "#23c088" }   # seal mark, one primary CTA, focus
+  accent:        { light: "#0c7253", dark: "#23c088" }   # seal mark, one primary CTA, focus
   accent-ink:    { light: "#ffffff", dark: "#06120d" }   # text/marks on an accent fill
   accent-weak:   { light: "#e5f3ee", dark: "#0d211a" }   # accent tint (selected chips, hover)
 
   # Semantic — status & feedback. SEPARATE from the accent, never used as brand colour.
   info:          { light: "#2f57e6", dark: "#6d8dff" }
   info-weak:     { light: "#eaeefc", dark: "#171b2e" }
-  success:       { light: "#0e7c5a", dark: "#23c088" }   # equals accent by design — "resolved" is on-brand
+  success:       { light: "#0c7253", dark: "#23c088" }   # equals accent by design — "resolved" is on-brand
   success-weak:  { light: "#e5f3ee", dark: "#0d211a" }
   warning:       { light: "#8a5a12", dark: "#d6a13c" }
   warning-weak:  { light: "#f6ecd9", dark: "#241c0d" }
@@ -130,7 +130,7 @@ prose the way a receipt separates a total from marketing.
 - **Sober geometry.** `{rounded.md}` corners; **no pill CTAs**; `{rounded.full}`
   is reserved for status dots and avatars.
 - **Both themes are real.** Dark is a warm-neutral near-black, not an inverted
-  light theme. The accent brightens on dark (`#0e7c5a` → `#23c088`) to hold contrast.
+  light theme. The accent brightens on dark (`#0c7253` → `#23c088`) to hold contrast.
 - **Privacy is a design constraint.** Self-hosted fonts only — no CDN, no external
   request from the reporter's browser. Nothing that could log or fingerprint them.
 
