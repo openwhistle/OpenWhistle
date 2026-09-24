@@ -81,7 +81,6 @@ async def create_report(
     """Create a new whistleblower report. Returns (report, plain_pin)."""
     from sqlalchemy.exc import IntegrityError
 
-    from app.config import settings
     from app.services.encryption import (
         encrypt_dek,
         encrypt_field,
@@ -94,8 +93,8 @@ async def create_report(
 
     # Envelope-encrypt the description with a fresh per-report DEK
     dek_raw = generate_dek()
-    encrypted_dek = encrypt_dek(dek_raw, settings.secret_key)
-    report_fernet = make_report_fernet(encrypted_dek, settings.secret_key)
+    encrypted_dek = encrypt_dek(dek_raw)
+    report_fernet = make_report_fernet(encrypted_dek)
     enc_description = encrypt_field(report_fernet, description)
 
     default_org_id = await _get_default_org_id(db)
@@ -152,11 +151,10 @@ def decrypt_report_fields(report: Report) -> tuple[str, list[str]]:
     Falls back to plaintext for rows that pre-date envelope encryption
     (encrypted_dek is None) — backward-compatible with pre-v1.0 data.
     """
-    from app.config import settings
     from app.services.encryption import decrypt_field_safe, make_report_fernet
 
     if report.encrypted_dek:
-        fernet = make_report_fernet(report.encrypted_dek, settings.secret_key)
+        fernet = make_report_fernet(report.encrypted_dek)
         # Use an explicit None check, not `or`: a value that legitimately
         # decrypts to an empty string must NOT fall back to the raw ciphertext.
         dec_desc = decrypt_field_safe(fernet, report.description)
@@ -177,12 +175,11 @@ def decrypt_attachment_names(report: Report) -> list[str]:
 
     Names stored before v1.5.0 are returned as stored.
     """
-    from app.config import settings
     from app.services.encryption import decrypt_field_safe, make_report_fernet
 
     if not report.encrypted_dek:
         return [a.filename for a in report.attachments]
-    fernet = make_report_fernet(report.encrypted_dek, settings.secret_key)
+    fernet = make_report_fernet(report.encrypted_dek)
     return [decrypt_field_safe(fernet, a.filename) or a.filename for a in report.attachments]
 
 
@@ -191,12 +188,11 @@ def decrypt_note_contents(report: Report) -> list[str]:
 
     Notes written before they were encrypted are returned as stored.
     """
-    from app.config import settings
     from app.services.encryption import decrypt_field_safe, make_report_fernet
 
     if not report.encrypted_dek:
         return [n.content for n in report.notes]
-    fernet = make_report_fernet(report.encrypted_dek, settings.secret_key)
+    fernet = make_report_fernet(report.encrypted_dek)
     return [
         dec if (dec := decrypt_field_safe(fernet, n.content)) is not None else n.content
         for n in report.notes
@@ -252,10 +248,9 @@ def _encrypt_message_content(report: Report, content: str) -> str:
     """Encrypt message content with the report's DEK if available."""
     if not report.encrypted_dek:
         return content
-    from app.config import settings
     from app.services.encryption import encrypt_field, make_report_fernet
 
-    fernet = make_report_fernet(report.encrypted_dek, settings.secret_key)
+    fernet = make_report_fernet(report.encrypted_dek)
     return encrypt_field(fernet, content)
 
 

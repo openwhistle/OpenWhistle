@@ -1,9 +1,9 @@
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Minimum SECRET_KEY length. The key is the root secret for admin JWT signing
-# AND (via SHA-256) the Fernet key that encrypts confidential whistleblower
-# identity — so a weak key collapses the platform's core protection.
+# Minimum SECRET_KEY / ENCRYPTION_KEY length. SECRET_KEY signs admin JWTs;
+# ENCRYPTION_KEY (falling back to SECRET_KEY when unset) is the root of all
+# at-rest encryption — so a weak key collapses the platform's core protection.
 _MIN_SECRET_KEY_LEN = 32
 
 # Minimum SETUP_TOKEN length, when one is configured. Long enough that it
@@ -37,6 +37,19 @@ class Settings(BaseSettings):
                 "identity encryption). Generate one with e.g. "
                 "`python -c 'import secrets; print(secrets.token_urlsafe(48))'`."
             )
+        return v
+
+    # Root of all at-rest encryption. Empty = SECRET_KEY (pre-v1.6.0 behaviour,
+    # warned at startup). Old keys go in ENCRYPTION_KEY_PREVIOUS (comma-separated)
+    # until scripts/rotate_encryption_key.py has re-encrypted everything.
+    encryption_key: str = ""
+    encryption_key_previous: str = ""
+
+    @field_validator("encryption_key")
+    @classmethod
+    def _validate_encryption_key(cls, v: str) -> str:
+        if v and len(v) < _MIN_SECRET_KEY_LEN:
+            raise ValueError(f"ENCRYPTION_KEY must be at least {_MIN_SECRET_KEY_LEN} characters.")
         return v
 
     algorithm: str = "HS256"

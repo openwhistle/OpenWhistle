@@ -360,7 +360,7 @@ async def create_attachments(
 
     backend = get_storage_backend()
     use_s3 = settings.storage_backend == "s3"
-    fernet = make_report_fernet(report.encrypted_dek, settings.secret_key)
+    fernet = make_report_fernet(report.encrypted_dek)
 
     attachments = []
     for filename, content_type, data in file_tuples:
@@ -397,7 +397,6 @@ async def read_attachment(db: AsyncSession, attachment: Attachment) -> bytes:
     Raises LookupError when the bytes are gone (e.g. S3 object deleted).
     Rows written before encryption was introduced are returned as stored.
     """
-    from app.config import settings  # noqa: PLC0415
     from app.services.encryption import make_report_fernet  # noqa: PLC0415
     from app.services.storage import (  # noqa: PLC0415
         StorageObjectNotFoundError,
@@ -419,18 +418,17 @@ async def read_attachment(db: AsyncSession, attachment: Attachment) -> bytes:
     dek = await db.scalar(select(Report.encrypted_dek).where(Report.id == attachment.report_id))
     if dek is None:
         raise LookupError(str(attachment.report_id))
-    return make_report_fernet(dek, settings.secret_key).decrypt(data)
+    return make_report_fernet(dek).decrypt(data)
 
 
 async def attachment_filename(db: AsyncSession, attachment: Attachment) -> str:
     """Return the attachment's plaintext name; names stored before v1.5.0 as stored."""
-    from app.config import settings  # noqa: PLC0415
     from app.services.encryption import decrypt_field_safe, make_report_fernet  # noqa: PLC0415
 
     dek = await db.scalar(select(Report.encrypted_dek).where(Report.id == attachment.report_id))
     if dek is None:
         return attachment.filename
-    fernet = make_report_fernet(dek, settings.secret_key)
+    fernet = make_report_fernet(dek)
     return decrypt_field_safe(fernet, attachment.filename) or attachment.filename
 
 

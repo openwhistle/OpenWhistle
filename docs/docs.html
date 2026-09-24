@@ -755,6 +755,7 @@
           <a href="#security">Security Architecture</a>
           <a href="#demo-mode">Demo Mode</a>
           <a href="#upgrading">Upgrading</a>
+          <a href="#key-rotation">Rotating the Encryption Key</a>
         </nav>
       </div>
 
@@ -1089,7 +1090,19 @@
             <tr>
               <td><code class="env-key">SECRET_KEY</code></td>
               <td><span class="env-required env-req-yes">Required</span></td>
-              <td>Cryptographic key for session signing, CSRF tokens, and confidential-identity encryption. <strong>Minimum 32 characters</strong> (the app refuses to start otherwise). Generate with <code>openssl rand -hex 32</code>.</td>
+              <td>Signs admin sessions (and encrypts data when <code>ENCRYPTION_KEY</code> is unset). <strong>Minimum 32 characters</strong> (the app refuses to start otherwise). Generate with <code>openssl rand -hex 32</code>.</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">ENCRYPTION_KEY</code></td>
+              <td><span class="env-required env-req-no">Recommended</span></td>
+              <td>Root key for all encryption at rest, ≥ 32 characters. Unset: <code>SECRET_KEY</code> is used for encryption too. See <a href="#key-rotation">Rotating the encryption key</a>.</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">ENCRYPTION_KEY_PREVIOUS</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Comma-separated keys still accepted for decryption during a rotation.</td>
               <td>—</td>
             </tr>
             <tr>
@@ -2072,6 +2085,25 @@
             Security fixes are released as patch versions. To hear about them, watch the
             repository's releases (GitHub: Watch → Custom → Releases).
           </p>
+        </div>
+      </section>
+
+      <section class="docs-section" id="key-rotation" aria-labelledby="key-rotation-h2">
+        <h2 id="key-rotation-h2">Rotating the encryption key</h2>
+        <p>
+          Only the per-report key wrappers and the directly encrypted fields (confidential
+          identity, TOTP secrets) are re-encrypted; report content and attachments are not touched.
+          Back up the database first.
+        </p>
+        <ol class="step-list">
+          <li><div>Set <code>ENCRYPTION_KEY_PREVIOUS</code> to the key in use: the old <code>ENCRYPTION_KEY</code>, or <code>SECRET_KEY</code> on an install that never set one.</div></li>
+          <li><div>Set <code>ENCRYPTION_KEY</code> to a new value (<code>openssl rand -hex 32</code>) and restart.</div></li>
+          <li><div>Run <code>docker compose exec app python scripts/rotate_encryption_key.py</code>. It is safe to run twice.</div></li>
+          <li><div>Empty <code>ENCRYPTION_KEY_PREVIOUS</code> and restart.</div></li>
+        </ol>
+        <div class="callout callout-warn">
+          <div class="callout-title">Keep the old key until step 3 has succeeded</div>
+          <p>A key removed before the script finished leaves data encrypted under it unreadable.</p>
         </div>
       </section>
 

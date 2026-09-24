@@ -317,7 +317,6 @@ def _alembic(*args: str) -> None:
 async def test_migration_encrypts_existing_filenames_idempotently(
     db_session: AsyncSession,
 ) -> None:
-    from app.config import settings
     from app.services.encryption import make_report_fernet
     from app.services.report import create_report
 
@@ -330,7 +329,7 @@ async def test_migration_encrypts_existing_filenames_idempotently(
     # that lock must be released first or the subprocess's ALTER TABLE deadlocks
     # against this very session.
     await db_session.commit()
-    fernet = make_report_fernet(report.encrypted_dek, settings.secret_key)
+    fernet = make_report_fernet(report.encrypted_dek)
     already = fernet.encrypt(b"done.txt").decode()
     legacy_id, done_id = uuid.uuid4(), uuid.uuid4()
     _alembic("downgrade", "3c1f0a7e9b42")

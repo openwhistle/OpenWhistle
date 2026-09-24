@@ -512,8 +512,8 @@ async def test_admin_can_download_attachment(client: object, db_session: object)
 
     # Encrypt the description so the NOT NULL encrypted_dek constraint is satisfied
     dek_raw = generate_dek()
-    enc_dek = encrypt_dek(dek_raw, cfg.secret_key)
-    report_fernet = make_report_fernet(enc_dek, cfg.secret_key)
+    enc_dek = encrypt_dek(dek_raw)
+    report_fernet = make_report_fernet(enc_dek)
     enc_desc = encrypt_field(report_fernet, "Test report for attachment download.")
 
     report = Report(

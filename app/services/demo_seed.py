@@ -232,8 +232,8 @@ async def _seed(db: AsyncSession) -> None:
 
         from app.config import settings as cfg
         dek_raw = generate_dek()
-        enc_dek = encrypt_dek(dek_raw, cfg.secret_key)
-        report_fernet = make_report_fernet(enc_dek, cfg.secret_key)
+        enc_dek = encrypt_dek(dek_raw)
+        report_fernet = make_report_fernet(enc_dek)
         enc_description = encrypt_field(report_fernet, demo["description"])
 
         report = Report(

@@ -141,6 +141,8 @@ secrets:
   # Leave blank to let the chart create a Secret from the values below (not recommended for prod).
   existingSecret: ""
   secretKey: ""         # required — generate with: openssl rand -hex 32
+  encryptionKey: ""     # recommended — root of at-rest encryption; unset: secretKey is used
+  encryptionKeyPrevious: ""  # optional — comma-separated old keys during a rotation
   databaseUrl: ""       # required — postgresql+asyncpg://user:pass@host:5432/db
   redisUrl: ""          # required — redis://host:6379/0
   setupToken: ""        # optional — unset: a random token is created at startup and logged once

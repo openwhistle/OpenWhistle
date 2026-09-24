@@ -122,6 +122,9 @@ zero vendor lock-in, and privacy-first by design.
 - **Encrypted report storage** — All report descriptions and messages are encrypted at-rest
   using per-report envelope encryption (HKDF-SHA256 MEK + Fernet DEK); the key is never
   stored in the database; pre-encryption rows are transparently readable (backward compat).
+- **Separate encryption key with rotation** — `ENCRYPTION_KEY` is the root of at-rest
+  encryption, independent of the session-signing `SECRET_KEY`; old keys stay readable via
+  `ENCRYPTION_KEY_PREVIOUS` while `scripts/rotate_encryption_key.py` re-encrypts under the new one.
 - **Data retention (GDPR / HinSchG)** — on by default (`RETENTION_ENABLED`): closed reports
   are deleted `RETENTION_DAYS` days after closure (default 1095 = 3 years); satisfies
   GDPR Art. 5(1)(e) and HinSchG §11 Abs. 5; each deletion recorded in the audit log.
@@ -159,7 +162,7 @@ The demo resets automatically every 6 hours.
 ```bash
 git clone https://github.com/openwhistle/OpenWhistle.git
 cd OpenWhistle
-cp .env.example .env        # Set a strong SECRET_KEY
+cp .env.example .env        # Set a strong SECRET_KEY and ENCRYPTION_KEY
 docker compose up -d
 docker compose logs app | grep "Setup token"  # read the one-time setup token
 # Open http://localhost:4009/setup to create the first admin account

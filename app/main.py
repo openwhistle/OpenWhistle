@@ -47,6 +47,11 @@ def _run_alembic_upgrade() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
+    if not settings.encryption_key:
+        logger.warning(
+            "ENCRYPTION_KEY is not set: SECRET_KEY is used for both session signing and "
+            "encryption. See 'Rotating the encryption key' in the documentation."
+        )
     _run_alembic_upgrade()
 
     if not settings.demo_mode:

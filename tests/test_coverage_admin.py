@@ -100,8 +100,8 @@ async def test_admin_reply_empty_content_returns_422(
     )).scalar_one_or_none()
 
     dek_raw = generate_dek()
-    enc_dek = encrypt_dek(dek_raw, cfg.secret_key)
-    report_fernet = make_report_fernet(enc_dek, cfg.secret_key)
+    enc_dek = encrypt_dek(dek_raw)
+    report_fernet = make_report_fernet(enc_dek)
     enc_desc = encrypt_field(report_fernet, "Report for admin reply test.")
 
     # Create a report directly in the DB — avoids wizard flow complexity

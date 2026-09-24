@@ -125,12 +125,11 @@ async def test_get_report_by_credentials_wrong_case_number_returns_none(
 
 @pytest.mark.asyncio
 async def test_add_whistleblower_message_persisted(db_session: AsyncSession) -> None:
-    from app.config import settings as cfg
     from app.services.encryption import decrypt_field_safe, make_report_fernet
 
     report, _ = await _make_report(db_session)
     msg = await add_whistleblower_message(db_session, report, "Follow-up from whistleblower.")
-    fernet = make_report_fernet(report.encrypted_dek, cfg.secret_key)
+    fernet = make_report_fernet(report.encrypted_dek)
     assert msg.id is not None
     assert msg.sender == ReportSender.whistleblower
     assert decrypt_field_safe(fernet, msg.content) == "Follow-up from whistleblower."
@@ -142,12 +141,11 @@ async def test_add_whistleblower_message_persisted(db_session: AsyncSession) -> 
 
 @pytest.mark.asyncio
 async def test_add_admin_message_persisted(db_session: AsyncSession) -> None:
-    from app.config import settings as cfg
     from app.services.encryption import decrypt_field_safe, make_report_fernet
 
     report, _ = await _make_report(db_session)
     msg = await add_admin_message(db_session, report, "Admin reply content.")
-    fernet = make_report_fernet(report.encrypted_dek, cfg.secret_key)
+    fernet = make_report_fernet(report.encrypted_dek)
     assert msg.id is not None
     assert msg.sender == ReportSender.admin
     assert decrypt_field_safe(fernet, msg.content) == "Admin reply content."
