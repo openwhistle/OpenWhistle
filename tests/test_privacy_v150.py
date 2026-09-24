@@ -323,6 +323,13 @@ async def test_migration_encrypts_existing_filenames_idempotently(
 
     report, _ = await create_report(db_session, "financial_fraud", "Migration filename test.")
     assert report.encrypted_dek
+    # create_report() ends with db.refresh(report), whose SELECT LEFT OUTER JOINs
+    # admin_users (Report.assigned_to is lazy="joined"). That leaves this session's
+    # transaction open, holding a lock on admin_users, until the next commit. The
+    # alembic downgrade below now also rewrites admin_users (migration 004), so
+    # that lock must be released first or the subprocess's ALTER TABLE deadlocks
+    # against this very session.
+    await db_session.commit()
     fernet = make_report_fernet(report.encrypted_dek, settings.secret_key)
     already = fernet.encrypt(b"done.txt").decode()
     legacy_id, done_id = uuid.uuid4(), uuid.uuid4()

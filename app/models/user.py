@@ -13,6 +13,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from app.database import Base
+from app.models.types import EncryptedText
 
 if TYPE_CHECKING:
     from app.models.report import Report
@@ -33,8 +34,9 @@ class AdminUser(Base):
     username: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
     password_hash: Mapped[str | None] = mapped_column(String(72), nullable=True)
 
-    # TOTP (mandatory)
-    totp_secret: Mapped[str] = mapped_column(String(32), nullable=False)
+    # TOTP (mandatory). Encrypted at rest: a database dump alone must not yield
+    # the second factor of every account.
+    totp_secret: Mapped[str] = mapped_column(EncryptedText, nullable=False)
     totp_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     # Role-based access control

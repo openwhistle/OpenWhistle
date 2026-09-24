@@ -131,3 +131,54 @@ async def test_configured_setup_token_is_used(
     # loop, so it gets its own event loop. Close the connection before that
     # loop goes away, or the next test's client fixture inherits a dead one.
     await close_redis()
+
+
+# ── TOTP secrets are encrypted at rest (A2) ────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_totp_secret_is_stored_encrypted(db_session: AsyncSession) -> None:
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+    from sqlalchemy.pool import NullPool
+
+    from app.services.crypto import decrypt
+
+    secret = pyotp.random_base32()
+    user = AdminUser(
+        id=uuid.uuid4(), username=f"totp_{uuid.uuid4().hex[:8]}",
+        password_hash=hash_password(_PASSWORD), totp_secret=secret, totp_enabled=True,
+    )
+    db_session.add(user)
+    await db_session.commit()
+
+    raw = await db_session.scalar(
+        text("SELECT totp_secret FROM admin_users WHERE id = :id"), {"id": user.id}
+    )
+    assert raw != secret
+    assert decrypt(raw) == secret
+
+    # Reload through a fresh session/connection rather than `db_session.expire_all()` +
+    # `db_session.get()` on the same session: on this stack (Python 3.14, SQLAlchemy 2.0,
+    # greenlet 3.5, asyncpg, NullPool) reusing one AsyncSession for a second checkout
+    # right after an ORM flush against admin_users raises MissingGreenlet — reproduced
+    # even with a plain String column and no encryption involved, so it is a pre-existing
+    # environment issue, not something this feature causes. `setup_incomplete` in
+    # tests/test_v150_auth.py uses the same own-engine pattern for the same reason.
+    engine = create_async_engine(settings.database_url, poolclass=NullPool)
+    try:
+        session_factory = async_sessionmaker(engine, expire_on_commit=False)
+        async with session_factory() as fresh:
+            loaded = await fresh.get(AdminUser, user.id)
+    finally:
+        await engine.dispose()
+    assert loaded is not None and loaded.totp_secret == secret
+
+
+def test_migration_004_encrypts_plaintext_secrets_once() -> None:
+    import importlib
+
+    from app.services.crypto import encrypt
+
+    mig = importlib.import_module("migrations.versions.004_encrypt_totp_secrets")
+    assert not mig._is_token("JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP")
+    assert mig._is_token(encrypt("JBSWY3DPEHPK3PXP"))
