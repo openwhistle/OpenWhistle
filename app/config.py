@@ -6,6 +6,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # identity — so a weak key collapses the platform's core protection.
 _MIN_SECRET_KEY_LEN = 32
 
+# Minimum SETUP_TOKEN length, when one is configured. Long enough that it
+# cannot be brute-forced over the /setup form's request budget.
+_MIN_SETUP_TOKEN_LEN = 16
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -63,6 +67,24 @@ class Settings(BaseSettings):
     # First-run setup: whoever opens /setup must also know this token. Empty =
     # a random one is created at startup and logged once at WARNING.
     setup_token: str = ""
+
+    @field_validator("setup_token")
+    @classmethod
+    def _validate_setup_token(cls, v: str) -> str:
+        # Empty means "unset" — this is also what docker-compose.prod.yml's
+        # SETUP_TOKEN:-}" interpolates to when the operator never set it —
+        # and a random token is generated instead. Anything else must be a
+        # real token: no bare whitespace, no length short enough to guess.
+        if not v:
+            return v
+        v = v.strip()
+        if not v or len(v) < _MIN_SETUP_TOKEN_LEN:
+            raise ValueError(
+                f"SETUP_TOKEN must be at least {_MIN_SETUP_TOKEN_LEN} characters (or unset, "
+                "to let the app generate one). Generate one with e.g. "
+                "`python -c 'import secrets; print(secrets.token_urlsafe(24))'`."
+            )
+        return v
 
     # Application
     app_name: str = "OpenWhistle"

@@ -68,10 +68,33 @@ async def test_setup_without_the_right_token_is_refused(
         form = _setup_form(csrf, token)
         resp = await client.post("/setup", data=form, follow_redirects=False)
         assert resp.status_code == 403
+        assert "setup token is missing or wrong" in resp.text.lower()
         created = await db_session.scalar(
             select(AdminUser).where(AdminUser.username == form["username"])
         )
         assert created is None
+    finally:
+        await _restore_setup(db_session)
+
+
+@pytest.mark.asyncio
+async def test_setup_post_refused_when_the_redis_key_is_absent(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """Nobody has opened /setup yet in this Redis, so nothing is stored — any
+    supplied token, however plausible, must be refused."""
+    from app.redis_client import get_redis
+    from app.services.setup_token import SETUP_TOKEN_KEY
+
+    await _reset_setup(db_session)
+    try:
+        redis = await get_redis()
+        await redis.delete(SETUP_TOKEN_KEY)
+        csrf = await _csrf(client, "/status")  # sets the CSRF cookie without touching /setup
+        form = _setup_form(csrf, "a-token-nobody-configured-or-was-shown")
+        resp = await client.post("/setup", data=form, follow_redirects=False)
+        assert resp.status_code == 403
+        assert await redis.get(SETUP_TOKEN_KEY) is None
     finally:
         await _restore_setup(db_session)
 
@@ -115,6 +138,22 @@ async def test_get_setup_recreates_a_lost_token(
 
 
 @pytest.mark.asyncio
+async def test_get_setup_creates_no_token_once_setup_is_complete(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    from app.redis_client import get_redis
+    from app.services.setup_token import SETUP_TOKEN_KEY
+
+    await _reset_setup(db_session)
+    await _restore_setup(db_session)  # row exists and is marked complete
+    redis = await get_redis()
+    await redis.delete(SETUP_TOKEN_KEY)
+    resp = await client.get("/setup", follow_redirects=False)
+    assert resp.status_code == 302
+    assert await redis.get(SETUP_TOKEN_KEY) is None
+
+
+@pytest.mark.asyncio
 async def test_configured_setup_token_is_used(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -131,6 +170,28 @@ async def test_configured_setup_token_is_used(
     # loop, so it gets its own event loop. Close the connection before that
     # loop goes away, or the next test's client fixture inherits a dead one.
     await close_redis()
+
+
+@pytest.mark.asyncio
+async def test_configured_setup_token_overrides_a_stale_stored_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A random token already sat in Redis (created before SETUP_TOKEN was set,
+    or by another replica) — the configured value must win immediately, not
+    just after that stale key expires or is deleted by hand."""
+    from app.redis_client import close_redis, get_redis
+    from app.services.setup_token import SETUP_TOKEN_KEY, check_setup_token, ensure_setup_token
+
+    monkeypatch.setattr(settings, "setup_token", "operator-chosen-token-654321")
+    redis = await get_redis()
+    await redis.set(SETUP_TOKEN_KEY, "stale-random-token-from-before")
+    try:
+        await ensure_setup_token(redis)
+        assert await check_setup_token(redis, "operator-chosen-token-654321")
+        assert not await check_setup_token(redis, "stale-random-token-from-before")
+    finally:
+        await redis.delete(SETUP_TOKEN_KEY)
+        await close_redis()
 
 
 # ── TOTP secrets are encrypted at rest (A2) ────────────────────────────────

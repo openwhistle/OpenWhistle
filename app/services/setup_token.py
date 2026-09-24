@@ -19,14 +19,25 @@ def _text(raw: bytes | str | None) -> str | None:
 
 
 async def ensure_setup_token(redis: Redis) -> None:
-    """Create the token unless one exists. Only the caller whose SET won logs it,
-    so a scaled deployment prints it once."""
-    token = settings.setup_token or secrets.token_urlsafe(32)
-    if not await redis.set(SETUP_TOKEN_KEY, token, nx=True):
-        return
+    """Create the token unless one exists, or refresh it to match a configured
+    SETUP_TOKEN. Only the caller whose write actually changes the stored value
+    logs — so a scaled deployment, or a /setup page loaded repeatedly, prints
+    the notice once."""
     if settings.setup_token:
-        log.warning("Setup is open: enter the SETUP_TOKEN from the environment on /setup.")
-    else:
+        # A configured token always wins, overwriting whatever is stored — an
+        # operator who sets SETUP_TOKEN after Redis already holds a random
+        # token (or after another replica's random token) must not be locked
+        # out by a stale value. Every replica writes the same value, so the
+        # overwrite is idempotent; GET-on-SET reports the previous value so
+        # we only log when it actually changed.
+        raw_previous = await redis.set(SETUP_TOKEN_KEY, settings.setup_token, get=True)
+        previous = _text(raw_previous if isinstance(raw_previous, bytes | str) else None)
+        if previous != settings.setup_token:
+            log.warning("Setup is open: enter the SETUP_TOKEN from the environment on /setup.")
+        return
+
+    token = secrets.token_urlsafe(32)
+    if await redis.set(SETUP_TOKEN_KEY, token, nx=True):
         log.warning("Setup is open. Setup token for /setup: %s", token)
 
 

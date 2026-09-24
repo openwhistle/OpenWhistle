@@ -1057,6 +1057,14 @@
             middleware; the admin dashboard still warns that the proxy knows the addresses.</li>
           <li>Other controllers (Traefik: access log off unless enabled): check their logging.</li>
         </ul>
+        <p>
+          With more than one replica, only the pod that wins the race to create the setup token
+          writes it to its own log — find it with
+          <code>kubectl logs -l app.kubernetes.io/name=openwhistle | grep "Setup token"</code>
+          instead of checking pods one by one. Setting <code>secrets.setupToken</code> (chart) /
+          <code>SETUP_TOKEN</code> avoids that hunt entirely: every replica uses the same
+          configured value.
+        </p>
       </section>
 
       <!-- Configuration -->
