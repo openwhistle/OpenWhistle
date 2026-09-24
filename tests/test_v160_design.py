@@ -188,3 +188,29 @@ def test_case_number_and_pin_get_the_token_class() -> None:
     assert success_html.count('class="token"') == 2
     status_html = (TEMPLATES / "status.html").read_text()
     assert 'class="mono token"' in status_html
+
+
+@pytest.mark.asyncio
+async def test_dashboard_cells_carry_labels_for_the_phone_layout(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    from app.services.report import create_report
+
+    await create_report(db_session, "corruption", "Table label test report text.")
+    await _login(client, db_session, AdminRole.admin)
+    html = (await client.get("/admin/dashboard")).text
+    assert 'class="table-stack"' in html
+    assert 'class="stack-status" data-label=' in html
+
+
+def test_users_and_audit_tables_also_stack() -> None:
+    users_html = (TEMPLATES / "admin/users.html").read_text()
+    assert 'class="table-stack"' in users_html
+    assert 'class="stack-primary"' in users_html
+    assert 'class="stack-status"' in users_html
+    assert 'class="stack-action"' in users_html
+
+    audit_html = (TEMPLATES / "admin/audit_log.html").read_text()
+    assert 'class="table-stack"' in audit_html
+    assert 'stack-primary' in audit_html
+    assert 'stack-status' in audit_html

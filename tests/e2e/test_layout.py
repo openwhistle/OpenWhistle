@@ -86,3 +86,11 @@ def test_case_number_stays_on_one_line(browser: Browser, base_url: str) -> None:
     line = float(token.evaluate("e => parseFloat(getComputedStyle(e).lineHeight)"))
     assert box and box["height"] < line * 1.5
     ctx.close()
+
+
+def test_status_is_visible_in_the_phone_table(browser: Browser, base_url: str) -> None:
+    ctx, page = _page(browser, base_url, 390)
+    _admin_login(page, base_url, DEMO_ADMIN_USERNAME, DEMO_ADMIN_PASSWORD, DEMO_ADMIN_TOTP_SECRET)
+    badge = page.locator(".table-stack .stack-status .badge").first.bounding_box()
+    assert badge and badge["x"] + badge["width"] <= 390
+    ctx.close()

@@ -62,35 +62,35 @@
             <div class="panel-header">{{ t('admin.users.list.header') }}</div>
 
             <div class="table-wrapper">
-                <table>
+                <table class="table-stack">
                     <thead>
                         <tr>
-                            <th>Username</th>
-                            <th>Role</th>
-                            <th>Status</th>
-                            <th>Actions</th>
+                            <th>{{ t('admin.users.table.username') }}</th>
+                            <th>{{ t('admin.users.table.role') }}</th>
+                            <th>{{ t('admin.users.table.status') }}</th>
+                            <th>{{ t('admin.users.table.actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for u in users %}
                         <tr class="{% if not u.is_active %}usr-row-inactive{% endif %}">
-                            <td>
+                            <td class="stack-primary" data-label="{{ t('admin.users.table.username') }}">
                                 <span class="usr-username{% if u.id == user.id %} usr-username-self{% endif %}">
                                     {{ u.username }}
                                 </span>
                                 {% if u.id == user.id %}<span class="usr-you-tag"> (you)</span>{% endif %}
                             </td>
-                            <td>
+                            <td data-label="{{ t('admin.users.table.role') }}">
                                 <span class="badge badge-{{ u.role.value }}">{{ t('role.label.' + u.role.value) }}</span>
                             </td>
-                            <td>
+                            <td class="stack-status" data-label="{{ t('admin.users.table.status') }}">
                                 {% if u.is_active %}
                                 <span class="badge badge-closed usr-status-badge">{{ t('admin.users.active') }}</span>
                                 {% else %}
                                 <span class="badge usr-status-badge">{{ t('admin.users.inactive') }}</span>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td class="stack-action">
                                 <div class="usr-actions">
                                     {# Role change #}
                                     {% if u.id != user.id %}
