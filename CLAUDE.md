@@ -104,3 +104,14 @@ following. These checks caught v0.3.0 and v0.4.0 gaps retroactively — run them
 Follow `docs-tech/release.md`: mutation audit of every new guard
 (`scripts/mutation_audit.py`, all RED), UI check, release PR, tag, verify the
 published images from outside.
+
+## Why these rules exist
+
+| Rule | What happened without it |
+| --- | --- |
+| Docs, README and compose change in the same commit as an env var | v0.3.0 and v0.4.0 shipped variables the docs did not list |
+| Every new guard goes through the mutation audit | v1.4.0: removing the PDF XMP step stayed green; the XMP stream shipped as an orphaned object |
+| One version string, checked by a test | 0.5.0–1.3.0: the Helm chart deployed an old image |
+| Tests run against real PostgreSQL and Redis | DB-backed tests error without them and coverage undercounts |
+| Fonts are self-hosted | `fonts.css` pointed at files that did not exist; the app silently used system-ui |
+| No carried-forward list | v1.6 planning first deferred design and three security items to "later" |
