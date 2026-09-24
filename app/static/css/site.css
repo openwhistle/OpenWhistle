@@ -351,7 +351,7 @@ video {
   --info-subtle: #eaeefc;
   --bg-code: #f6f6f5;
   --on-dark: #fafafa;
-  --muted-on-dark: #8e8e93;
+  --muted-on-dark: #a1a1aa;
   --font-display: "Sora",system-ui,sans-serif;
   --font-body: "Sora",system-ui,sans-serif;
   --font-mono: "JetBrains Mono","Courier New",monospace;
@@ -404,7 +404,7 @@ video {
   --info-subtle: #171b2e;
   --bg-code: #161619;
   --on-dark: #fafafa;
-  --muted-on-dark: #8e8e93;
+  --muted-on-dark: #a1a1aa;
 }
 *,
 :after,

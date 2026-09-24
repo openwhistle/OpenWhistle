@@ -319,10 +319,37 @@ def test_panel_header_headings_contain_only_phrasing_content() -> None:
             assert not forbidden.search(text[m.end() : end]), (p, m.group(0))
 
 
+def _strip_token_blocks(css: str) -> str:
+    """Remove every :root / [data-theme="dark"] block from ``css``.
+
+    Uses re.sub, which deletes each match where it stands. An earlier
+    version of this helper did ``"".join(re.findall(...))`` and then a
+    single ``css.replace(joined, "")`` — a no-op whenever there is more than
+    one match with non-adjacent text between them (i.e. always, since real
+    CSS always has other rules between :root and [data-theme="dark"]), which
+    silently checked the *whole* file instead of excluding the token
+    blocks. See test_token_block_exclusion_actually_strips_the_blocks.
+    """
+    return re.sub(r'(?::root|\[data-theme="?dark"?\])[^{]*\{[^}]*\}', "", css)
+
+
+def test_token_block_exclusion_actually_strips_the_blocks() -> None:
+    inside_only = (
+        ':root {\n  --muted-on-dark: #a1a1aa;\n}\n'
+        '[data-theme="dark"] {\n  --muted-on-dark: #a1a1aa;\n}\n'
+        '.thing { color: var(--muted-on-dark); }\n'
+    )
+    # both raw hexes are inside a token block: nothing should leak "outside".
+    assert "#a1a1aa" not in _strip_token_blocks(inside_only)
+
+    leaking = inside_only + ".footer { color: #a1a1aa; }\n"
+    # a genuine outside occurrence must still be caught.
+    assert "#a1a1aa" in _strip_token_blocks(leaking)
+
+
 def test_design_fix_list_is_closed() -> None:
     css = (ROOT / "app/static/css/site.css").read_text()
-    token_blocks = "".join(re.findall(r"(?::root|\[data-theme=\"?dark\"?\])[^{]*\{[^}]*\}", css))
-    outside = css.replace(token_blocks, "") if token_blocks else css
+    outside = _strip_token_blocks(css)
     assert "#a1a1aa" not in outside.lower() and "#9ca3af" not in outside.lower()
     html = "".join(p.read_text() for p in TEMPLATES.rglob("*.html"))
     assert "progress-steps" not in html + css
@@ -343,3 +370,21 @@ def test_public_site_uses_the_app_token_names() -> None:
         text = page.read_text()
         for legacy in ("--gold", "--seal-green", "--font-serif"):
             assert legacy not in text, (page.name, legacy)
+
+
+def test_docs_warn_callouts_do_not_converge_on_the_accent() -> None:
+    """Regression guard: folding --gold and --seal-green onto one --accent
+    token must not leave a "warning" callout coloured identically to the
+    brand accent (or to a "note"/"info" callout). .callout-warn and
+    .val-warn must use their own --warning token."""
+    for name in (
+        "docs.html",
+        "blog/hinschg-compliance-leitfaden.html",
+        "blog/interne-meldestelle-einrichten.html",
+        "blog/whistleblower-software-vergleich.html",
+    ):
+        text = (ROOT / "docs" / name).read_text()
+        assert "--warning" in text, name
+        for selector in (".callout-warn", ".val-warn"):
+            for body in re.findall(re.escape(selector) + r"[^{]*\{([^}]*)\}", text):
+                assert "var(--accent)" not in body, (name, selector, body)

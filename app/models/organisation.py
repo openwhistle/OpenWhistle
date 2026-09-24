@@ -30,7 +30,7 @@ class Organisation(Base):
         kw.setdefault("is_active", True)
         super().__init__(**kw)
 
-    # Optional JSON branding overrides (brand_primary_color, brand_secondary_color, logo_url, name)
+    # Optional JSON branding overrides (brand_primary_color, logo_url, name)
     branding: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
