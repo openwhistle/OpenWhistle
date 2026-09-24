@@ -251,7 +251,11 @@ async def report_detail(
     audit_entries, _ = await audit_service.get_audit_log(db, report_id=report_id, per_page=20)
 
     from app.services.crypto import decrypt_or_none
-    from app.services.report import decrypt_note_contents, decrypt_report_fields
+    from app.services.report import (
+        decrypt_attachment_names,
+        decrypt_note_contents,
+        decrypt_report_fields,
+    )
 
     confidential_name = decrypt_or_none(report.confidential_name)
     confidential_contact = decrypt_or_none(report.confidential_contact)
@@ -268,6 +272,7 @@ async def report_detail(
             "decrypted_description": decrypted_description,
             "decrypted_messages": decrypted_msg_contents,
             "decrypted_notes": decrypt_note_contents(report),
+            "attachment_names": decrypt_attachment_names(report),
             "now": datetime.now(UTC),
             "statuses": list(ReportStatus),
             "allowed_transitions": allowed_transitions,
@@ -607,17 +612,22 @@ async def admin_download_attachment(
     if not attachment or attachment.report_id != report_id:
         raise HTTPException(status_code=404)
 
-    from app.services.attachment import content_disposition_attachment, read_attachment
+    from app.services.attachment import (
+        attachment_filename,
+        content_disposition_attachment,
+        read_attachment,
+    )
 
     try:
         data = await read_attachment(db, attachment)
     except LookupError as exc:
         raise HTTPException(status_code=404) from exc
 
+    name = await attachment_filename(db, attachment)
     return Response(
         content=data,
         media_type=attachment.content_type,
-        headers={"Content-Disposition": content_disposition_attachment(attachment.filename)},
+        headers={"Content-Disposition": content_disposition_attachment(name)},
     )
 
 

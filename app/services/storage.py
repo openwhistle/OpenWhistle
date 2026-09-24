@@ -148,6 +148,10 @@ def get_storage_backend() -> StorageBackend:
     return _backend
 
 
-def generate_storage_key(filename: str) -> str:
-    """Generate a unique, non-guessable S3 object key for an attachment."""
-    return f"{uuid.uuid4()}/{filename}"
+def generate_storage_key() -> str:
+    """Generate a unique, non-guessable S3 object key for an attachment.
+
+    Never derived from the filename: bucket listings and access logs would
+    otherwise carry names like "Max_Mustermann_evidence.pdf" in plaintext.
+    """
+    return str(uuid.uuid4())

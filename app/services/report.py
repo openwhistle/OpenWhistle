@@ -170,6 +170,20 @@ def decrypt_report_fields(report: Report) -> tuple[str, list[str]]:
     return description, msg_contents
 
 
+def decrypt_attachment_names(report: Report) -> list[str]:
+    """Return the attachments' plaintext names, in report.attachments order.
+
+    Names stored before v1.5.0 are returned as stored.
+    """
+    from app.config import settings
+    from app.services.encryption import decrypt_field_safe, make_report_fernet
+
+    if not report.encrypted_dek:
+        return [a.filename for a in report.attachments]
+    fernet = make_report_fernet(report.encrypted_dek, settings.secret_key)
+    return [decrypt_field_safe(fernet, a.filename) or a.filename for a in report.attachments]
+
+
 def decrypt_note_contents(report: Report) -> list[str]:
     """Return the internal notes' plaintext, in report.notes order.
 

@@ -90,6 +90,10 @@ class Settings(BaseSettings):
     # Submission mode
     submission_mode_enabled: bool = True
 
+    # New draft attachments are refused while Redis uses more than this share
+    # of its maxmemory (no effect when Redis has no maxmemory set).
+    draft_redis_memory_percent: int = 80
+
     # OIDC (optional)
     oidc_enabled: bool = False
     oidc_client_id: str = ""

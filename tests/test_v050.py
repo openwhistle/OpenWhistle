@@ -454,26 +454,20 @@ class TestDBStorageBackend:
 # ── generate_storage_key ──────────────────────────────────────────────────────
 
 class TestGenerateStorageKey:
-    def test_key_contains_filename(self) -> None:
+    def test_key_is_a_bare_uuid(self) -> None:
+        import uuid
+
         from app.services.storage import generate_storage_key
 
-        key = generate_storage_key("report.pdf")
-        assert key.endswith("/report.pdf")
+        key = generate_storage_key()
+        assert str(uuid.UUID(key)) == key
 
     def test_key_is_unique(self) -> None:
         from app.services.storage import generate_storage_key
 
-        keys = {generate_storage_key("file.txt") for _ in range(50)}
+        keys = {generate_storage_key() for _ in range(50)}
         assert len(keys) == 50
 
-    def test_key_format_uuid_slash_filename(self) -> None:
-        import re
-
-        from app.services.storage import generate_storage_key
-
-        key = generate_storage_key("attachment.docx")
-        uuid_re = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/attachment\.docx$"
-        assert re.match(uuid_re, key), f"Unexpected key format: {key}"
 
 
 # ── get_storage_backend singleton ─────────────────────────────────────────────
