@@ -6,6 +6,9 @@
     ":semanticCommits",
     "helpers:pinGitHubActionDigests"
   ],
+  "ignorePaths": [
+    "**/node_modules/**"
+  ],
   "timezone": "Europe/Berlin",
   "schedule": [
     "after 2am and before 5am"
