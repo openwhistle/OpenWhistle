@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import uuid
+from html.parser import HTMLParser
 from pathlib import Path
 
 import pyotp
@@ -164,6 +165,16 @@ async def test_submit_page_has_the_short_reassurance_for_phones(client: AsyncCli
     assert 'class="mobile-reassure"' in html
 
 
+@pytest.mark.asyncio
+async def test_submit_page_h1_precedes_the_sidebar_heading_in_reading_order(client: AsyncClient) -> None:
+    """The desktop layout still puts the sidebar on the left (CSS grid
+    placement), but in DOM/reading order the page's own <h1> must come before
+    the sidebar's <h2 class="sidebar-title"> -- a screen reader or a phone
+    (where the layout stacks) should meet the page's own heading first."""
+    html = (await client.get("/submit")).text
+    assert html.index("<h1>") < html.index('class="sidebar-title"')
+
+
 def test_footer_inner_is_declared_once() -> None:
     """Regression guard for the Task 25 controller finding: two `.footer-inner`
     rule blocks (one setting margin/padding/max-width, one setting display/flex
@@ -292,16 +303,74 @@ def test_panel_headers_and_labels_are_not_shouted() -> None:
             assert "uppercase" not in body, selector
 
 
+_VOID_ELEMENTS = frozenset({
+    "area", "base", "br", "col", "embed", "hr", "img", "input",
+    "link", "meta", "param", "source", "track", "wbr",
+})
+
+
+class _PanelHeaderDivChecker(HTMLParser):
+    """Walks real element nesting (not string search, which can't tell a wrapper's
+    own closing tag from an inner element's) to check every `<div class="panel-header
+    ...">`: it must contain a nested `.panel-header-title` heading, and any text that
+    is a *direct* child of the wrapper (not text inside a nested element, e.g. the
+    toolbar) must be whitespace only -- a div standing in for a heading by holding
+    its label as direct text is exactly the pattern this guards against."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.stack: list[dict] = []
+        self.violations: list[str] = []
+
+    def _classes(self, attrs: list[tuple[str, str | None]]) -> list[str]:
+        for name, value in attrs:
+            if name == "class" and value:
+                return value.split()
+        return []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        classes = self._classes(attrs)
+        if "panel-header-title" in classes:
+            for frame in self.stack:
+                if frame["is_ph_div"]:
+                    frame["has_title"] = True
+        if tag in _VOID_ELEMENTS:
+            return
+        self.stack.append({
+            "tag": tag,
+            "is_ph_div": tag == "div" and "panel-header" in classes,
+            "has_title": False,
+            "bad_text": False,
+        })
+
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        self.handle_starttag(tag, attrs)
+        if tag not in _VOID_ELEMENTS:
+            self.handle_endtag(tag)
+
+    def handle_data(self, data: str) -> None:
+        if self.stack and self.stack[-1]["is_ph_div"] and data.strip():
+            self.stack[-1]["bad_text"] = True
+
+    def handle_endtag(self, tag: str) -> None:
+        if not self.stack:
+            return
+        frame = self.stack.pop()
+        if frame["is_ph_div"]:
+            if not frame["has_title"]:
+                self.violations.append("div.panel-header has no nested .panel-header-title")
+            if frame["bad_text"]:
+                self.violations.append("div.panel-header holds text directly, not via .panel-header-title")
+
+
 def test_panel_headers_are_headings_not_divs() -> None:
     """A `.panel-header` div is only legitimate as a layout wrapper around block
     content (a toolbar), and even then must carry its label in a nested
     `.panel-header-title` heading -- it may never stand in for a heading itself."""
     for p in TEMPLATES.rglob("*.html"):
-        text = p.read_text()
-        for m in re.finditer(r'<div class="panel-header[^"]*"', text):
-            end = text.find("</div>", m.end())
-            assert end != -1, (p, m.group(0))
-            assert 'class="panel-header-title"' in text[m.end() : end], (p, m.group(0))
+        checker = _PanelHeaderDivChecker()
+        checker.feed(p.read_text())
+        assert not checker.violations, (p, checker.violations)
 
 
 def test_panel_header_headings_contain_only_phrasing_content() -> None:

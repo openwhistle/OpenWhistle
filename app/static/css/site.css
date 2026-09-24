@@ -869,6 +869,7 @@ strong {
   font-family: var(--font-body);
   font-size: var(--text-body);
   font-weight: 600;
+  letter-spacing: normal;
   line-height: 1rem;
 }
 .panel-header-title {
@@ -1431,6 +1432,7 @@ tr:hover td {
 .split-sidebar {
   background: #111;
   border-right: none;
+  grid-column: 1;
   overflow: hidden;
   padding: 2.5rem 2rem;
   position: relative;
@@ -1451,6 +1453,7 @@ tr:hover td {
 }
 .split-main {
   background: var(--canvas);
+  grid-column: 2;
   max-width: 680px;
   padding: 2.5rem 3rem;
 }
@@ -3351,7 +3354,7 @@ a.attachment-name:hover {
 .mobile-reassure { display: none; }
 @media (max-width: 900px) {
   .split-layout { display: flex; flex-direction: column; }
-  .split-main { order: -1; max-width: none; padding: var(--space-6) var(--space-4); }
+  .split-main { max-width: none; padding: var(--space-6) var(--space-4); }
   .split-sidebar { padding: var(--space-8) var(--space-4); }
   .mobile-reassure {
     display: flex;

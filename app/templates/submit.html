@@ -25,38 +25,6 @@
 
 {% block content %}
 <div class="split-layout">
-    <aside class="split-sidebar" aria-label="{{ t('submit.sidebar.eyebrow') }}">
-        <div class="sidebar-eyebrow">{{ t('submit.sidebar.eyebrow') }}</div>
-        <h2 class="sidebar-title">{{ t('submit.sidebar.title') }}</h2>
-
-        <div class="guarantee-list">
-            <div class="guarantee-item">
-                <div>
-                    <div class="guarantee-title">{{ t('submit.sidebar.g01.title') }}</div>
-                    <div class="guarantee-desc">{{ t('submit.sidebar.g01.desc') }}</div>
-                </div>
-            </div>
-            <div class="guarantee-item">
-                <div>
-                    <div class="guarantee-title">{{ t('submit.sidebar.g02.title') }}</div>
-                    <div class="guarantee-desc">{{ t('submit.sidebar.g02.desc') }}</div>
-                </div>
-            </div>
-            <div class="guarantee-item">
-                <div>
-                    <div class="guarantee-title">{{ t('submit.sidebar.g03.title') }}</div>
-                    <div class="guarantee-desc">{{ t('submit.sidebar.g03.desc') }}</div>
-                </div>
-            </div>
-            <div class="guarantee-item">
-                <div>
-                    <div class="guarantee-title">{{ t('submit.sidebar.g17.title') }}</div>
-                    <div class="guarantee-desc">{{ t('submit.sidebar.g17.desc') }}</div>
-                </div>
-            </div>
-        </div>
-    </aside>
-
     <div class="split-main">
         <p class="mobile-reassure">{{ icons.icon('lock') }} {{ t('submit.sidebar.short') }}</p>
         <div class="page-eyebrow">{{ t('submit.eyebrow') }}</div>
@@ -393,6 +361,38 @@
         </form>
         {% endif %}
     </div>
+
+    <aside class="split-sidebar" aria-label="{{ t('submit.sidebar.eyebrow') }}">
+        <div class="sidebar-eyebrow">{{ t('submit.sidebar.eyebrow') }}</div>
+        <h2 class="sidebar-title">{{ t('submit.sidebar.title') }}</h2>
+
+        <div class="guarantee-list">
+            <div class="guarantee-item">
+                <div>
+                    <div class="guarantee-title">{{ t('submit.sidebar.g01.title') }}</div>
+                    <div class="guarantee-desc">{{ t('submit.sidebar.g01.desc') }}</div>
+                </div>
+            </div>
+            <div class="guarantee-item">
+                <div>
+                    <div class="guarantee-title">{{ t('submit.sidebar.g02.title') }}</div>
+                    <div class="guarantee-desc">{{ t('submit.sidebar.g02.desc') }}</div>
+                </div>
+            </div>
+            <div class="guarantee-item">
+                <div>
+                    <div class="guarantee-title">{{ t('submit.sidebar.g03.title') }}</div>
+                    <div class="guarantee-desc">{{ t('submit.sidebar.g03.desc') }}</div>
+                </div>
+            </div>
+            <div class="guarantee-item">
+                <div>
+                    <div class="guarantee-title">{{ t('submit.sidebar.g17.title') }}</div>
+                    <div class="guarantee-desc">{{ t('submit.sidebar.g17.desc') }}</div>
+                </div>
+            </div>
+        </div>
+    </aside>
 </div>
 {% endblock %}
 
