@@ -1,6 +1,13 @@
 services:
   app:
-    image: ghcr.io/openwhistle/openwhistle:latest
+    image: ghcr.io/openwhistle/openwhistle:${OPENWHISTLE_VERSION:-1.6.0}
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     environment:
       DATABASE_URL: "${DATABASE_URL}"
       REDIS_URL: "${REDIS_URL}"
@@ -78,6 +85,20 @@ services:
 
   nginx:
     image: nginx:alpine
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
     ports:
       - "80:80"
       - "443:443"
@@ -92,6 +113,8 @@ services:
 
   db:
     image: postgres:18-alpine
+    security_opt:
+      - no-new-privileges:true
     environment:
       POSTGRES_USER: "${POSTGRES_USER}"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
@@ -112,6 +135,8 @@ services:
 
   redis:
     image: redis:8-alpine
+    security_opt:
+      - no-new-privileges:true
     # noeviction: sessions and rate-limit counters are never dropped; drafts
     # stop taking attachments at DRAFT_REDIS_MEMORY_PERCENT of maxmemory.
     command: redis-server --save "" --appendonly no --maxmemory 1gb --maxmemory-policy noeviction --requirepass "${REDIS_PASSWORD}"

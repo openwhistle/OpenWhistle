@@ -19,3 +19,4 @@ docker-compose*.yml
 docs
 !docs/fonts
 nginx
+ansible

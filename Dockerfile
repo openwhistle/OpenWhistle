@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.27
 
 # ─── Stage 1: dependency builder ─────────────────────────────────────────────
-FROM python:3.14-alpine AS builder
+FROM python:3.14-alpine@sha256:9e9fde4d32eedce0b661d9ab91e826b62dddf28e928c230ec55f1866cac66b01 AS builder
 
 WORKDIR /build
 
@@ -22,15 +22,14 @@ COPY pyproject.toml uv.lock ./
 RUN UV_PROJECT_ENVIRONMENT=/venv UV_PYTHON_DOWNLOADS=never uv sync --frozen --no-dev --no-install-project --no-cache
 
 # ─── Stage 2: production image ────────────────────────────────────────────────
-FROM python:3.14-alpine AS final
+FROM python:3.14-alpine@sha256:9e9fde4d32eedce0b661d9ab91e826b62dddf28e928c230ec55f1866cac66b01 AS final
 
 WORKDIR /app
 
 # Runtime dependencies only
 RUN apk add --no-cache \
     libpq \
-    libffi \
-    curl
+    libffi
 
 # Non-root user for security
 RUN addgroup -S openwhistle && adduser -S openwhistle -G openwhistle
@@ -60,6 +59,6 @@ ENV PATH="/venv/bin:$PATH" \
 EXPOSE 4009
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:4009/health || exit 1
+    CMD ["python", "-c", "import sys, urllib.request; sys.exit(urllib.request.urlopen('http://127.0.0.1:4009/health', timeout=5).status != 200)"]
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "4009", "--no-access-log"]

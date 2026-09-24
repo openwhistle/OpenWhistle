@@ -37,3 +37,43 @@ def test_postgres_and_redis_majors_are_the_same_everywhere() -> None:
     for image in ("postgres", "redis"):
         found = _all(rf"image: {image}:([0-9a-z.\-]+)", *places)
         assert len(found) == 1, f"{image} tags disagree: {found}"
+
+
+def _final_stage() -> str:
+    return (ROOT / "Dockerfile").read_text().split("AS final", 1)[1]
+
+
+def test_base_images_are_pinned_by_digest() -> None:
+    froms = re.findall(r"^FROM (\S+)", (ROOT / "Dockerfile").read_text(), re.M)
+    assert froms, "no FROM line"
+    assert all(re.search(r"@sha256:[0-9a-f]{64}$", f) for f in froms), froms
+
+
+def test_runtime_image_has_no_curl_and_a_python_healthcheck() -> None:
+    final = _final_stage()
+    assert "curl" not in final
+    assert re.search(r"HEALTHCHECK .*\n?.*python", final)
+
+
+def test_compose_app_is_read_only_without_capabilities() -> None:
+    for path in ("docker-compose.prod.yml", "ansible/roles/openwhistle/templates/docker-compose.yml.j2"):
+        app = (ROOT / path).read_text().split("\n  nginx:", 1)[0]
+        for needle in ("read_only: true", "- /tmp", "cap_drop:", "- ALL", "no-new-privileges:true"):
+            assert needle in app, f"{path}: app service lacks {needle!r}"
+
+
+def test_prod_compose_pins_the_image_version() -> None:
+    text = (ROOT / "docker-compose.prod.yml").read_text()
+    assert "openwhistle:latest" not in text
+    assert re.search(r"openwhistle:\$\{OPENWHISTLE_VERSION:-\d+\.\d+\.\d+\}", text)
+
+
+def test_helm_container_security_context() -> None:
+    deploy = (ROOT / "charts/openwhistle/templates/deployment.yaml").read_text()
+    for needle in ("readOnlyRootFilesystem: true", "allowPrivilegeEscalation: false", "- ALL"):
+        assert needle in deploy
+
+
+def test_ansible_directory_is_kept_out_of_the_build_context() -> None:
+    lines = (ROOT / ".dockerignore").read_text().split()
+    assert "ansible" in lines
