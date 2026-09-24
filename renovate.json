@@ -1,0 +1,220 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "timezone": "Europe/Berlin",
+  "schedule": [
+    "after 2am and before 5am"
+  ],
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 4,
+  "labels": [
+    "renovate",
+    "dependencies"
+  ],
+  "reviewers": [
+    "jp1337"
+  ],
+  "rebaseWhen": "behind-base-branch",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": [
+      "before 5am on monday"
+    ],
+    "automerge": false
+  },
+  "vulnerabilityAlerts": {
+    "description": "A fix for a known vulnerability does not wait for the nightly window. Once Renovate runs, GitHub's 'Dependabot security updates' setting is switched off so one tool raises the pull request rather than two; the alerts themselves stay on — they are what this reads.",
+    "enabled": true,
+    "schedule": [
+      "at any time"
+    ],
+    "labels": [
+      "renovate",
+      "security"
+    ],
+    "semanticCommitType": "fix"
+  },
+  "packageRules": [
+    {
+      "description": "Patch, pin and digest updates merge themselves once the required checks pass (main is protected). Everything else waits for a person: this software holds whistleblower reports, and a bad dependency is a breach, not an outage.",
+      "matchUpdateTypes": [
+        "patch",
+        "pin",
+        "digest"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "labels": [
+        "renovate",
+        "automerge"
+      ]
+    },
+    {
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "automerge": false,
+      "labels": [
+        "renovate",
+        "needs-review"
+      ]
+    },
+    {
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false,
+      "labels": [
+        "renovate",
+        "major",
+        "needs-review"
+      ]
+    },
+    {
+      "description": "Security-relevant libraries never merge themselves, whatever the update type: crypto, JWT, password hashing, TOTP, the web framework and the attachment parsers that see untrusted files.",
+      "matchPackageNames": [
+        "cryptography",
+        "pyjwt",
+        "bcrypt",
+        "pyotp",
+        "fastapi",
+        "starlette",
+        "python-multipart",
+        "pypdf",
+        "pillow",
+        "ldap3"
+      ],
+      "automerge": false,
+      "labels": [
+        "renovate",
+        "security-relevant",
+        "needs-review"
+      ]
+    },
+    {
+      "description": "uv is pinned in the Dockerfile (COPY --from=ghcr.io/astral-sh/uv) and in every workflow. They move in ONE pull request; tests/test_build_pins.py fails if they disagree.",
+      "groupName": "uv",
+      "matchPackageNames": [
+        "uv",
+        "ghcr.io/astral-sh/uv"
+      ]
+    },
+    {
+      "description": "Python is written in the Dockerfile, every workflow's setup-python and pyproject's requires-python. One pull request, never auto-merged — a runtime bump is a release decision.",
+      "groupName": "Python runtime",
+      "matchDepNames": [
+        "python"
+      ],
+      "automerge": false,
+      "labels": [
+        "renovate",
+        "needs-review"
+      ]
+    },
+    {
+      "description": "PostgreSQL and Redis images appear in both compose files, the Ansible template and three workflows. Each moves as one pull request. A PostgreSQL major needs a dump and restore (docs/docs.html upgrade section), so majors are never auto-merged.",
+      "groupName": "PostgreSQL",
+      "matchPackageNames": [
+        "postgres"
+      ],
+      "automerge": false
+    },
+    {
+      "groupName": "Redis",
+      "matchPackageNames": [
+        "redis"
+      ],
+      "matchUpdateTypes": [
+        "major",
+        "minor"
+      ],
+      "automerge": false
+    },
+    {
+      "description": "GitHub Actions, pinned to commit digests.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "semanticCommitScope": "ci",
+      "labels": [
+        "renovate",
+        "dependencies",
+        "ci"
+      ]
+    },
+    {
+      "matchManagers": [
+        "dockerfile",
+        "docker-compose",
+        "custom.regex"
+      ],
+      "matchDatasources": [
+        "docker"
+      ],
+      "semanticCommitScope": "docker",
+      "labels": [
+        "renovate",
+        "dependencies",
+        "docker"
+      ]
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "uv installed with pip in the workflows. The Dockerfile copy is found by the dockerfile manager; tests/test_build_pins.py keeps both equal.",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/[^/]+\\.yml$/"
+      ],
+      "matchStrings": [
+        "pip install uv==(?<currentValue>\\d+\\.\\d+\\.\\d+)"
+      ],
+      "datasourceTemplate": "pypi",
+      "depNameTemplate": "uv"
+    },
+    {
+      "customType": "regex",
+      "description": "Images in files no built-in manager reads: the compose files written inline inside workflow run: steps, and the Ansible compose template.",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/[^/]+\\.yml$/",
+        "/^ansible/roles/openwhistle/templates/docker-compose\\.yml\\.j2$/"
+      ],
+      "matchStrings": [
+        "image: (?<depName>postgres|redis|nginx):(?<currentValue>[0-9a-z.\\-]+)"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "The Python version in setup-python steps and pyproject's requires-python floor. Two components, so docker versioning: under npm versioning a truncated version yields an empty candidate set and the pin is silently left behind (easywall found this the hard way).",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/[^/]+\\.yml$/",
+        "/^pyproject\\.toml$/"
+      ],
+      "matchStrings": [
+        "python-version: \"(?<currentValue>\\d+\\.\\d+)\"",
+        "requires-python = \">=(?<currentValue>\\d+\\.\\d+)\""
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "python",
+      "versioningTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "The axe-core build the accessibility tests inject. A floating version would change what 'accessible' means between two CI runs.",
+      "managerFilePatterns": [
+        "/^tests/e2e/conftest\\.py$/"
+      ],
+      "matchStrings": [
+        "ajax/libs/axe-core/(?<currentValue>\\d+\\.\\d+\\.\\d+)/axe\\.min\\.js"
+      ],
+      "datasourceTemplate": "npm",
+      "depNameTemplate": "axe-core"
+    }
+  ]
+}

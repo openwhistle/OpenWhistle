@@ -17,6 +17,5 @@ is not finished. Newest first.
 | Session | CSRF cookie without `Secure`; logout is a GET | small, but changes every template's logout link |
 | Timing | New-report notifications fire at submission time, which can be correlated with who was at their desk | needs a batching design |
 | Retention | Off by default | turning it on deletes closed reports older than 3 years on upgrade — the operator's decision |
-| Dependencies | Renovate (as in easywall) needs the Renovate app installed on the `openwhistle` org; Dependabot `uv` covers the gap | an owner action |
 | Setup wizard | The setup-complete check and the admin insert are not atomic | two simultaneous first-run requests only |
 | Helm | Migrations run in every replica at startup | a pre-upgrade Job; single-replica installs are unaffected |
