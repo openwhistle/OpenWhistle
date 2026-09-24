@@ -52,7 +52,7 @@ def encryption_keys() -> list[str]:
     from app.config import settings  # noqa: PLC0415
 
     current = settings.encryption_key or settings.secret_key
-    previous = [k.strip() for k in settings.encryption_key_previous.split(",") if k.strip()]
+    previous = [k for k in settings.encryption_key_previous.split(",") if k]
     return [current, *previous]
 
 

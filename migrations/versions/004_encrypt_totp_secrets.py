@@ -63,7 +63,7 @@ def downgrade() -> None:
         rows = _rows()
         # A value longer than the target VARCHAR(32) that does not decrypt is not
         # a legacy plaintext secret — it cannot be narrowed safely (wrong/rotated
-        # SECRET_KEY, corruption). Refuse before touching the column.
+        # ENCRYPTION_KEY/SECRET_KEY, corruption). Refuse before touching the column.
         stuck = [
             user_id for user_id, secret in rows if len(secret) > 32 and not _is_token(secret)
         ]
@@ -71,12 +71,12 @@ def downgrade() -> None:
             for user_id in stuck:
                 log.warning(
                     "Migration 004 downgrade: totp_secret for admin_users.id=%s does not "
-                    "decrypt with the current SECRET_KEY",
+                    "decrypt with the current ENCRYPTION_KEY/SECRET_KEY",
                     user_id,
                 )
             msg = (
                 f"{len(stuck)} totp_secret value(s) do not decrypt with the current "
-                "SECRET_KEY; refusing to downgrade"
+                "ENCRYPTION_KEY/SECRET_KEY; refusing to downgrade"
             )
             raise RuntimeError(msg)
 

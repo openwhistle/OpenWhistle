@@ -1096,13 +1096,13 @@
             <tr>
               <td><code class="env-key">ENCRYPTION_KEY</code></td>
               <td><span class="env-required env-req-no">Recommended</span></td>
-              <td>Root key for all encryption at rest, ≥ 32 characters. Unset: <code>SECRET_KEY</code> is used for encryption too. See <a href="#key-rotation">Rotating the encryption key</a>.</td>
+              <td>Root key for all encryption at rest, ≥ 32 characters. Unset: <code>SECRET_KEY</code> is used for encryption too. <strong>On an existing install, do not just set it:</strong> follow <a href="#key-rotation">Rotating the encryption key</a> — the current key must go into <code>ENCRYPTION_KEY_PREVIOUS</code>.</td>
               <td>—</td>
             </tr>
             <tr>
               <td><code class="env-key">ENCRYPTION_KEY_PREVIOUS</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
-              <td>Comma-separated keys still accepted for decryption during a rotation.</td>
+              <td>Keys still accepted for decryption during a rotation: comma-separated, no spaces, each ≥ 32 characters.</td>
               <td>—</td>
             </tr>
             <tr>
@@ -2069,6 +2069,7 @@
           <li>Read the CHANGELOG for the target version</li>
           <li>Back up your PostgreSQL database: <code>docker compose exec db pg_dump -U openwhistle openwhistle &gt; backup.sql</code></li>
           <li>Note your current version with <code>docker compose exec app python -m app --version</code></li>
+          <li>v1.6.0 adds <code>ENCRYPTION_KEY</code>, a key for encryption separate from <code>SECRET_KEY</code>: see <a href="#key-rotation">Rotating the encryption key</a></li>
         </ul>
 
         <h3>Rollback</h3>
@@ -2091,19 +2092,28 @@
       <section class="docs-section" id="key-rotation" aria-labelledby="key-rotation-h2">
         <h2 id="key-rotation-h2">Rotating the encryption key</h2>
         <p>
-          Only the per-report key wrappers and the directly encrypted fields (confidential
-          identity, TOTP secrets) are re-encrypted; report content and attachments are not touched.
-          Back up the database first.
+          Re-encrypted: the per-report key wrappers, confidential identity and contact, secure
+          e-mail, TOTP secrets, identity-reveal reasons. Report content and attachments are not
+          touched. Back up the database first.
         </p>
         <ol class="step-list">
           <li><div>Set <code>ENCRYPTION_KEY_PREVIOUS</code> to the key in use: the old <code>ENCRYPTION_KEY</code>, or <code>SECRET_KEY</code> on an install that never set one.</div></li>
-          <li><div>Set <code>ENCRYPTION_KEY</code> to a new value (<code>openssl rand -hex 32</code>) and restart.</div></li>
-          <li><div>Run <code>docker compose exec app python scripts/rotate_encryption_key.py</code>. It is safe to run twice.</div></li>
-          <li><div>Empty <code>ENCRYPTION_KEY_PREVIOUS</code> and restart.</div></li>
+          <li><div>Set <code>ENCRYPTION_KEY</code> to a new value (<code>openssl rand -hex 32</code>) and recreate the container: <code>docker compose up -d</code> (a restart keeps the old environment).</div></li>
+          <li><div>Run <code>docker compose exec app python scripts/rotate_encryption_key.py</code>. It writes nothing unless every value can be re-encrypted; otherwise it lists the rows by id. Safe to run twice.</div></li>
+          <li><div>Empty <code>ENCRYPTION_KEY_PREVIOUS</code> and recreate the container again: <code>docker compose up -d</code>.</div></li>
         </ol>
+        <p>
+          <strong>Helm:</strong> before step 3, wait until every pod runs with the new environment
+          (<code>kubectl rollout status</code>). During the rolling update, old pods cannot read data
+          that new pods write.
+        </p>
         <div class="callout callout-warn">
-          <div class="callout-title">Keep the old key until step 3 has succeeded</div>
-          <p>A key removed before the script finished leaves data encrypted under it unreadable.</p>
+          <div class="callout-title">Keep the old key</div>
+          <p>
+            Until step 3 has succeeded, removing it leaves data unreadable. Afterwards, keep it stored
+            safely for as long as any backup made before the rotation is retained: to restore such a
+            backup, put the old key back into <code>ENCRYPTION_KEY_PREVIOUS</code> and run the script.
+          </p>
         </div>
       </section>
 

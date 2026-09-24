@@ -20,5 +20,5 @@ class EncryptedText(TypeDecorator[str]):
 
     def process_result_value(self, value: str | None, dialect: Any) -> str | None:
         # Fail closed: a value that does not decrypt (corruption, tampering, a
-        # rotated SECRET_KEY) raises — it is never shown as an empty string.
+        # rotated ENCRYPTION_KEY/SECRET_KEY) raises — it is never shown as an empty string.
         return None if value is None else decrypt(value)

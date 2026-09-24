@@ -40,8 +40,8 @@ class Settings(BaseSettings):
         return v
 
     # Root of all at-rest encryption. Empty = SECRET_KEY (pre-v1.6.0 behaviour,
-    # warned at startup). Old keys go in ENCRYPTION_KEY_PREVIOUS (comma-separated)
-    # until scripts/rotate_encryption_key.py has re-encrypted everything.
+    # warned at startup). Old keys go in ENCRYPTION_KEY_PREVIOUS (comma-separated,
+    # no spaces) until scripts/rotate_encryption_key.py has re-encrypted everything.
     encryption_key: str = ""
     encryption_key_previous: str = ""
 
@@ -50,6 +50,17 @@ class Settings(BaseSettings):
     def _validate_encryption_key(cls, v: str) -> str:
         if v and len(v) < _MIN_SECRET_KEY_LEN:
             raise ValueError(f"ENCRYPTION_KEY must be at least {_MIN_SECRET_KEY_LEN} characters.")
+        return v
+
+    @field_validator("encryption_key_previous")
+    @classmethod
+    def _validate_encryption_key_previous(cls, v: str) -> str:
+        # A key containing a comma is split into fragments; each is refused here.
+        if any(len(k) < _MIN_SECRET_KEY_LEN for k in v.split(",") if k):
+            raise ValueError(
+                f"Every ENCRYPTION_KEY_PREVIOUS entry must be at least {_MIN_SECRET_KEY_LEN} "
+                "characters (comma-separated, no spaces; keys cannot contain commas)."
+            )
         return v
 
     algorithm: str = "HS256"

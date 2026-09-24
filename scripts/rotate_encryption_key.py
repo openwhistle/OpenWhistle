@@ -1,12 +1,17 @@
 """Re-encrypt everything under the current ENCRYPTION_KEY.
 
-Run after moving the old key into ENCRYPTION_KEY_PREVIOUS and restarting:
+Run after moving the old key into ENCRYPTION_KEY_PREVIOUS, setting the new
+ENCRYPTION_KEY and recreating the container (docker compose up -d):
 
     docker compose exec app python scripts/rotate_encryption_key.py
 
 Only the per-report key wrappers and the directly encrypted fields change;
 report content, messages, notes and attachments stay under their report key.
-Safe to run twice. Afterwards ENCRYPTION_KEY_PREVIOUS can be emptied.
+
+All or nothing: every value is re-encrypted in memory first. If any value
+decrypts under none of the configured keys, the ids of those rows are printed
+and nothing is written. Safe to run twice. Afterwards ENCRYPTION_KEY_PREVIOUS
+can be emptied.
 """
 
 from __future__ import annotations
@@ -14,6 +19,7 @@ from __future__ import annotations
 import asyncio
 import json
 import sys
+from collections.abc import Callable
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -24,53 +30,89 @@ _FIELDS = {
 }
 
 
+def _rotate_reason(detail: str) -> str:
+    from app.services.crypto import rotate
+
+    data = json.loads(detail)
+    data["reason"] = rotate(data["reason"])
+    return json.dumps(data)
+
+
 async def main() -> int:
+    from cryptography.fernet import InvalidToken
     from sqlalchemy import text
     from sqlalchemy.ext.asyncio import create_async_engine
 
     from app.config import settings
     from app.services.crypto import rotate
-    from app.services.encryption import rotate_dek
+    from app.services.encryption import encryption_keys, rotate_dek
+
+    previous = encryption_keys()[1:]
+    if not settings.encryption_key or not previous:
+        print(
+            "Nothing to rotate from: ENCRYPTION_KEY and ENCRYPTION_KEY_PREVIOUS must both "
+            "be set. Was the container recreated with the new variables?"
+        )
+        return 1
+    print(f"Loaded {len(previous)} previous key(s).")
+
+    # (table, column, WHERE clause, transform)
+    sources: list[tuple[str, str, str, Callable[[str], str]]] = [
+        ("reports", "encrypted_dek", "encrypted_dek IS NOT NULL", rotate_dek),
+    ]
+    for table, columns in _FIELDS.items():
+        sources += [(table, c, f"{c} IS NOT NULL", rotate) for c in columns]
+    # Only identity reveals carry an encrypted reason; other rows (e.g. the
+    # retention job's report.auto_deleted) have a plaintext "reason" key.
+    sources.append((
+        "audit_log", "detail",
+        "action = 'report.identity_revealed' AND detail LIKE '%\"reason\"%'",
+        _rotate_reason,
+    ))
 
     engine = create_async_engine(settings.database_url)
-    changed = 0
-    async with engine.begin() as conn:
-        reports = await conn.execute(text("SELECT id, encrypted_dek FROM reports"))
-        for row_id, dek in reports.tuples():
-            await conn.execute(
-                text("UPDATE reports SET encrypted_dek = :v WHERE id = :i"),
-                {"v": rotate_dek(dek), "i": row_id},
-            )
-            changed += 1
-        for table, columns in _FIELDS.items():
-            for column in columns:
+    writes: list[tuple[str, str, object, str, str]] = []
+    failed: list[str] = []
+    try:
+        async with engine.connect() as conn:
+            for table, column, where, transform in sources:
                 rows = await conn.execute(
-                    text(f"SELECT id, {column} FROM {table} WHERE {column} IS NOT NULL")  # noqa: S608
+                    text(f"SELECT id, {column} FROM {table} WHERE {where}")  # noqa: S608
                 )
                 for row_id, value in rows.tuples():
-                    await conn.execute(
-                        text(f"UPDATE {table} SET {column} = :v WHERE id = :i"),  # noqa: S608
-                        {"v": rotate(value), "i": row_id},
-                    )
-                    changed += 1
-        # Only identity reveals carry an encrypted reason; other rows (e.g. the
-        # retention job's report.auto_deleted) have a plaintext "reason" key.
-        audit = await conn.execute(
-            text(
-                "SELECT id, detail FROM audit_log "
-                "WHERE action = 'report.identity_revealed' AND detail LIKE '%\"reason\"%'"
+                    try:
+                        writes.append((table, column, row_id, value, transform(value)))
+                    except InvalidToken:
+                        failed.append(f"{table}.{column} id={row_id}")
+        if failed:
+            for entry in failed:
+                print(entry)
+            print(
+                f"{len(failed)} value(s) decrypt under none of the configured keys; nothing "
+                "was written. Add the key these were written under to "
+                "ENCRYPTION_KEY_PREVIOUS and re-run."
             )
-        )
-        for row_id, detail in audit.tuples():
-            data = json.loads(detail)
-            data["reason"] = rotate(data["reason"])
-            await conn.execute(
-                text("UPDATE audit_log SET detail = :v WHERE id = :i"),
-                {"v": json.dumps(data), "i": row_id},
-            )
-            changed += 1
-    await engine.dispose()
-    print(f"Re-encrypted {changed} values under the current ENCRYPTION_KEY.")
+            return 1
+
+        skipped = 0
+        async with engine.begin() as conn:
+            for table, column, row_id, old, new in writes:
+                # Guard against a lost update: a value rewritten meanwhile (e.g. a
+                # TOTP re-enrolment) is already under the current key; keep it.
+                result = await conn.execute(
+                    text(
+                        f"UPDATE {table} SET {column} = :v "  # noqa: S608
+                        f"WHERE id = :i AND {column} = :old"
+                    ),
+                    {"v": new, "i": row_id, "old": old},
+                )
+                skipped += 1 - result.rowcount
+    finally:
+        await engine.dispose()
+    print(
+        f"Re-encrypted {len(writes) - skipped} values under the current ENCRYPTION_KEY"
+        f" ({skipped} changed meanwhile, left as written)."
+    )
     return 0
 
 
