@@ -10,7 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import AdminRole, AdminUser
-from app.services.auth import hash_password
+from app.services.auth import hash_password, validate_password
 
 # Locally-created usernames are restricted to an unambiguous allowlist. This
 # prevents storing quotes / JS metacharacters that could break out of an
@@ -79,9 +79,10 @@ async def create_user(
 ) -> tuple[AdminUser, str]:
     """Create a new admin user. Returns (user, totp_secret).
 
-    Raises ValueError if the username contains disallowed characters.
+    Raises ValueError if the username or the password is not allowed.
     """
     username = validate_username(username)
+    validate_password(password)
     totp_secret = pyotp.random_base32()
     user = AdminUser(
         id=uuid.uuid4(),

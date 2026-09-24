@@ -31,5 +31,10 @@ async def test_dashboard_requires_auth(client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_logout_clears_session(client: AsyncClient) -> None:
-    response = await client.get("/admin/logout", follow_redirects=True)
+    await client.get("/admin/login")  # sets the CSRF cookie
+    response = await client.post(
+        "/admin/logout",
+        data={"csrf_token": client.cookies.get("ow_csrf")},
+        follow_redirects=True,
+    )
     assert response.status_code == 200

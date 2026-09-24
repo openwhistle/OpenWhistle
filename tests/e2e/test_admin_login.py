@@ -113,8 +113,8 @@ def test_logout_redirects_to_login(page: Page, base_url: str) -> None:
     page.fill('input[name="totp_code"]', _totp_now(DEMO_ADMIN_TOTP_SECRET))
     page.click("button.btn-primary")
     page.wait_for_url("**/admin/dashboard**")
-    # Now navigate to logout
-    page.goto(f"{base_url}/admin/logout")
-    page.wait_for_load_state("networkidle")
+    # Logout is a POST form (with CSRF token) in the nav, not a link
+    page.click('form[action="/admin/logout"] button')
+    page.wait_for_url("**/admin/login**")
     # Should be on login page (or home/landing)
     assert "/admin/login" in page.url or page.url == f"{base_url}/" or "/login" in page.url

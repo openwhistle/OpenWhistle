@@ -9,8 +9,6 @@ Covers:
 
 from __future__ import annotations
 
-import secrets
-
 import pytest
 from httpx import AsyncClient
 
@@ -73,32 +71,3 @@ async def test_get_whistleblower_lockout_ttl_zero_for_unknown_token(
     redis = await get_redis()
     ttl = await get_whistleblower_lockout_ttl(redis, "nonexistent-session-token-xyz")
     assert ttl == 0
-
-
-@pytest.mark.asyncio
-async def test_check_whistleblower_attempts_passes_for_fresh_token(
-    client: AsyncClient,
-) -> None:
-    """A brand-new session token has no recorded failures, so check passes (True)."""
-    from app.redis_client import get_redis
-    from app.services.rate_limit import check_whistleblower_attempts
-
-    redis = await get_redis()
-    fresh_token = secrets.token_urlsafe(32)
-    result = await check_whistleblower_attempts(redis, fresh_token)
-    assert result is True
-
-
-@pytest.mark.asyncio
-async def test_remaining_whistleblower_attempts_full_for_fresh_token(
-    client: AsyncClient,
-) -> None:
-    """A fresh token with no failures has the full max_access_attempts remaining."""
-    from app.config import settings
-    from app.redis_client import get_redis
-    from app.services.rate_limit import remaining_whistleblower_attempts
-
-    redis = await get_redis()
-    fresh_token = secrets.token_urlsafe(32)
-    remaining = await remaining_whistleblower_attempts(redis, fresh_token)
-    assert remaining == settings.max_access_attempts

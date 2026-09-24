@@ -492,9 +492,9 @@ async def test_pin_lockout_keyed_on_case_number_not_session_token(
         )
 
     redis = await get_redis()
-    # The lockout counter must have accumulated on the case number despite the
-    # rotating tokens, so further guesses are now blocked.
-    assert await rl.check_whistleblower_attempts(redis, case.upper()) is False
+    # The failure counter must have accumulated on the case number despite the
+    # rotating tokens (it drives the "too many attempts" notice).
+    assert await rl.record_whistleblower_failure(redis, case.upper()) > settings.max_access_attempts
 
 
 # ══════════════════════════════════════════════════════════════════════════

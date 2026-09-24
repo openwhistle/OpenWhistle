@@ -38,8 +38,25 @@ def _make_server(cfg: object) -> object:
 
     # Verify the directory's certificate against the system CA store; a private
     # CA can be supplied via the standard SSL_CERT_FILE environment variable.
-    tls = Tls(validate=ssl.CERT_REQUIRED) if c.ldap_use_ssl else None
+    # Applies to LDAPS and to StartTLS alike.
+    encrypted = c.ldap_use_ssl or c.ldap_start_tls
+    tls = Tls(validate=ssl.CERT_REQUIRED) if encrypted else None
     return Server(c.ldap_server, port=c.ldap_port, use_ssl=c.ldap_use_ssl, tls=tls)
+
+
+def _auto_bind(cfg: object) -> object:
+    """ldap3 ``auto_bind`` mode: StartTLS before any bind when configured.
+
+    Upgrading after the bind would send the password in clear first; with
+    StartTLS on, a server that refuses the upgrade makes the bind fail.
+    """
+    from ldap3 import AUTO_BIND_TLS_BEFORE_BIND  # noqa: PLC0415
+
+    from app.config import Settings  # noqa: PLC0415
+    c: Settings = cfg  # type: ignore[assignment]
+    if c.ldap_start_tls and not c.ldap_use_ssl:
+        return AUTO_BIND_TLS_BEFORE_BIND
+    return True
 
 
 async def authenticate_ldap(username: str, password: str) -> LDAPUserInfo:
@@ -63,6 +80,7 @@ def _authenticate_ldap_sync(username: str, password: str) -> LDAPUserInfo:
         raise LDAPAuthError("LDAP is not enabled")
 
     server = _make_server(settings)
+    auto_bind = _auto_bind(settings)
 
     # Step 1: service-account bind to find the user entry
     try:
@@ -70,7 +88,7 @@ def _authenticate_ldap_sync(username: str, password: str) -> LDAPUserInfo:
             server,
             user=settings.ldap_bind_dn,
             password=settings.ldap_bind_password,
-            auto_bind=True,
+            auto_bind=auto_bind,
             client_strategy=SYNC,
             raise_exceptions=True,
         )
@@ -100,7 +118,7 @@ def _authenticate_ldap_sync(username: str, password: str) -> LDAPUserInfo:
             server,
             user=user_dn,
             password=password,
-            auto_bind=True,
+            auto_bind=auto_bind,
             client_strategy=SYNC,
             raise_exceptions=True,
         )

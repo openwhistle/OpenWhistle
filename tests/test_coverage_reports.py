@@ -341,8 +341,13 @@ async def test_whistleblower_download_attachment_unknown_redis_key_returns_401(
 
 @pytest.mark.asyncio
 async def test_status_logout_clears_session_cookie(client: AsyncClient) -> None:
-    """GET /status/logout must delete the ow-status-session cookie."""
-    resp = await client.get("/status/logout", follow_redirects=False)
+    """POST /status/logout must delete the ow-status-session cookie."""
+    await client.get("/status")  # sets the CSRF cookie
+    resp = await client.post(
+        "/status/logout",
+        data={"csrf_token": client.cookies.get("ow_csrf")},
+        follow_redirects=False,
+    )
     assert resp.status_code == 303
     # FastAPI/Starlette sets max-age=0 or expires in the past to clear a cookie
     set_cookie = resp.headers.get("set-cookie", "")
@@ -352,6 +357,11 @@ async def test_status_logout_clears_session_cookie(client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_status_logout_without_cookie_does_not_crash(client: AsyncClient) -> None:
-    """GET /status/logout with no session cookie must succeed without error."""
-    resp = await client.get("/status/logout", follow_redirects=True)
+    """POST /status/logout with no session cookie must succeed without error."""
+    await client.get("/status")
+    resp = await client.post(
+        "/status/logout",
+        data={"csrf_token": client.cookies.get("ow_csrf")},
+        follow_redirects=True,
+    )
     assert resp.status_code == 200

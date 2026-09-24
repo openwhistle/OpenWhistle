@@ -420,7 +420,7 @@ async def test_delete_report_cleans_up_whistleblower_sessions(
     )
 
     # Admin 2 logs in and confirms deletion
-    await client.get("/admin/logout")
+    await client.post("/admin/logout", data={"csrf_token": client.cookies.get("ow_csrf")})
     admin2, secret2 = await _create_admin(db_session)
     await _login_admin(client, admin2, secret2)
 

@@ -37,6 +37,7 @@ class AuditAction:
     ADMIN_REACTIVATED       = "admin.reactivated"
     AUTH_LOGIN              = "auth.login"
     AUTH_TOTP_SETUP         = "auth.totp_setup"
+    AUTH_SPRAYING_SUSPECTED = "auth.password_spraying_suspected"
     ORG_CREATED             = "org.created"
     ORG_DEACTIVATED         = "org.deactivated"
 
@@ -64,6 +65,22 @@ async def log(
     )
     db.add(entry)
     # Flush only — caller commits as part of their own transaction
+    await db.flush()
+    return entry
+
+
+async def log_system(
+    db: AsyncSession, action: str, detail: dict[str, Any] | None = None
+) -> AuditLog:
+    """Record an event no admin caused (e.g. a detected attack). Flush only."""
+    entry = AuditLog(
+        id=uuid.uuid4(),
+        admin_id=None,
+        admin_username="system",
+        action=action,
+        detail=json.dumps(detail) if detail else None,
+    )
+    db.add(entry)
     await db.flush()
     return entry
 

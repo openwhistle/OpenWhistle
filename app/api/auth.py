@@ -4,7 +4,16 @@ import secrets
 from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import APIRouter, Cookie, Depends, Form, HTTPException, Request, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Cookie,
+    Depends,
+    Form,
+    HTTPException,
+    Request,
+    status,
+)
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,13 +29,10 @@ from app.services import auth as auth_service
 from app.services import oidc as oidc_service
 from app.services import rate_limit as rl
 from app.services.mfa import generate_qr_code_base64, verify_demo_totp, verify_totp
+from app.services.notifications import notify_security_alert
 from app.templating import render
 
 router = APIRouter(prefix="/admin")
-
-# Precomputed bcrypt hash used only to equalize login timing when no real hash
-# is available (missing user / SSO-only account). Never matches a user password.
-_TIMING_DUMMY_HASH = auth_service.hash_password("timing-equalizer-not-a-real-secret")
 
 
 @router.get("", response_class=HTMLResponse, include_in_schema=False)
@@ -66,6 +72,35 @@ async def _second_factor(
     })
 
 
+async def _password_failed(
+    redis: Redis, db: AsyncSession, username: str, background_tasks: BackgroundTasks
+) -> None:
+    """Count a failed password: per username (lockout) and instance-wide.
+
+    The instance-wide count makes password spraying visible - one guess
+    against each of many accounts never trips a per-username lockout.
+    """
+    await rl.record_admin_login_failure(redis, username)
+    if not await rl.record_instance_login_failure(redis):
+        return
+    threshold = settings.admin_failed_login_alert_threshold
+    minutes = settings.admin_failed_login_alert_window_minutes
+    await audit_service.log_system(
+        db,
+        audit_service.AuditAction.AUTH_SPRAYING_SUSPECTED,
+        detail={"failed_attempts_at_least": threshold, "window_minutes": minutes},
+    )
+    await db.commit()
+    background_tasks.add_task(
+        notify_security_alert,
+        "Possible password spraying",
+        f"At least {threshold} failed admin password attempts in the last {minutes} "
+        "minutes, across all accounts. MFA still protects every account, but check "
+        "the audit log and consider whether the login page should be reachable from "
+        "where these attempts come from. No further alert is sent for this window.",
+    )
+
+
 @router.get("/login", response_class=HTMLResponse)
 async def login_get(request: Request) -> HTMLResponse:
     return render(request, "login.html", _login_ctx())
@@ -74,6 +109,7 @@ async def login_get(request: Request) -> HTMLResponse:
 @router.post("/login", response_class=HTMLResponse, response_model=None)
 async def login_post(
     request: Request,
+    background_tasks: BackgroundTasks,
     username: str = Form(""),
     password: str = Form(""),
     redis: Redis = Depends(get_redis),
@@ -108,7 +144,7 @@ async def login_post(
         try:
             ldap_info = await authenticate_ldap(username, password)
         except LDAPAuthError:
-            await rl.record_admin_login_failure(redis, username)
+            await _password_failed(redis, db, username, background_tasks)
             return render(request, "login.html", _login_ctx({
                 "error": "login.error.invalid",
                 "credentials_invalid": True,
@@ -154,10 +190,10 @@ async def login_post(
         # Constant-time-ish: run a dummy bcrypt check so a nonexistent username
         # or an SSO/LDAP-only account (no local hash) is not distinguishable by
         # response latency (username enumeration side-channel).
-        auth_service.verify_password(password, _TIMING_DUMMY_HASH)
+        auth_service.verify_password(password, auth_service.TIMING_DUMMY_HASH)
         pw_ok = False
     if not pw_ok:
-        await rl.record_admin_login_failure(redis, username)
+        await _password_failed(redis, db, username, background_tasks)
         return render(request, "login.html", _login_ctx({
             "error": "login.error.invalid",
             "credentials_invalid": True,
@@ -337,16 +373,19 @@ async def mfa_setup_post(
     return response
 
 
-@router.get("/logout")
+@router.post("/logout")
 async def logout(
     request: Request,
     redis: Redis = Depends(get_redis),
+    _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
+    # POST + CSRF: a GET logout can be triggered by any page (an <img> tag),
+    # which is a nuisance at best and a session-fixation helper at worst.
     token = request.cookies.get("ow_session")
     if token:
         await auth_service.revoke_session(redis, token)
 
-    response = RedirectResponse("/admin/login", status_code=302)
+    response = RedirectResponse("/admin/login", status_code=303)
     response.delete_cookie(
         "ow_session", httponly=True, samesite="lax", secure=settings.secure_cookies
     )
@@ -434,7 +473,7 @@ async def oidc_callback(
         )
 
     try:
-        userinfo = await oidc_service.exchange_code(redis, code, state)
+        claims = await oidc_service.exchange_code(redis, code, state)
     except Exception:  # noqa: BLE001
         return render(
             request,
@@ -445,7 +484,7 @@ async def oidc_callback(
             },
         )
 
-    if not userinfo:
+    if not claims:
         return render(
             request,
             "login.html",
@@ -455,8 +494,9 @@ async def oidc_callback(
             },
         )
 
-    sub: str | None = userinfo.get("sub")
-    issuer: str | None = userinfo.get("iss")
+    # Both from the verified ID token (see oidc_service.exchange_code).
+    sub: str | None = claims.get("sub")
+    issuer: str | None = claims.get("iss")
 
     if not sub or not issuer:
         return render(

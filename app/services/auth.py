@@ -17,12 +17,41 @@ _TOTP_PENDING_PREFIX = "openwhistle:totp_pending:"
 _TOTP_SETUP_PREFIX = "openwhistle:totp_setup:"
 
 
+# bcrypt only looks at the first 72 bytes, and bcrypt>=5 raises ValueError
+# beyond that instead of truncating silently.
+_BCRYPT_MAX_BYTES = 72
+MIN_PASSWORD_LENGTH = 12
+
+
+def validate_password(password: str) -> str:
+    """The one password policy for every account password a person sets.
+
+    Used by the setup wizard, admin-created users and the reset script.
+    Raises ValueError with a user-facing message.
+    """
+    if len(password) < MIN_PASSWORD_LENGTH:
+        raise ValueError(f"Password must be at least {MIN_PASSWORD_LENGTH} characters.")
+    if len(password.encode()) > _BCRYPT_MAX_BYTES:
+        raise ValueError(f"Password must be at most {_BCRYPT_MAX_BYTES} bytes long.")
+    return password
+
+
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=12)).decode()
 
 
+def _bcrypt_check(plain: str, hashed: str) -> bool:
+    encoded = plain.encode()
+    if len(encoded) > _BCRYPT_MAX_BYTES:
+        # Never a valid secret (the policy and the PIN format forbid it); without
+        # this, bcrypt raises and an over-long login attempt becomes a 500.
+        bcrypt.checkpw(b"", hashed.encode())  # same work, same timing
+        return False
+    return bcrypt.checkpw(encoded, hashed.encode())
+
+
 def verify_password(plain: str, hashed: str) -> bool:
-    return bcrypt.checkpw(plain.encode(), hashed.encode())
+    return _bcrypt_check(plain, hashed)
 
 
 def hash_pin(pin: str) -> str:
@@ -30,7 +59,12 @@ def hash_pin(pin: str) -> str:
 
 
 def verify_pin(plain: str, hashed: str) -> bool:
-    return bcrypt.checkpw(plain.encode(), hashed.encode())
+    return _bcrypt_check(plain, hashed)
+
+
+# Precomputed bcrypt hash used only to equalize timing when no real hash is
+# available (unknown username or case number, SSO-only account). Never matches.
+TIMING_DUMMY_HASH = hash_password("timing-equalizer-not-a-real-secret")
 
 
 def create_access_token(user_id: str, role: str = "admin") -> str:

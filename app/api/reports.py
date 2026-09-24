@@ -30,7 +30,6 @@ from app.database import get_db
 from app.i18n import get_lang, make_translator
 from app.models.report import SubmissionMode
 from app.redis_client import get_redis
-from app.services import rate_limit as rl
 from app.services import report as report_service
 from app.services.categories import get_active_categories
 from app.services.locations import get_active_locations, get_location_by_id
@@ -598,7 +597,6 @@ async def status_get(
             report = await report_service.get_report_by_id(db, uuid.UUID(decoded_id))
             if report:
                 await redis.expire(f"status-session:{session_key}", 7200)
-                new_session_token = secrets.token_urlsafe(32)
                 replied = request.query_params.get("replied") == "1"
                 success = "status.reply.sent" if replied else None
 
@@ -617,7 +615,6 @@ async def status_get(
                 _, dec_msgs = decrypt_report_fields(report)
 
                 return render(request, "status.html", {
-                    "session_token": new_session_token,
                     "report": report,
                     "decrypted_messages": dec_msgs,
                     "attachment_names": decrypt_attachment_names(report),
@@ -630,8 +627,7 @@ async def status_get(
                     "now": now,
                 })
 
-    session_token = secrets.token_urlsafe(32)
-    return render(request, "status.html", {"session_token": session_token, "report": None})
+    return render(request, "status.html", {"report": None})
 
 
 @router.post("/status", response_class=HTMLResponse)
@@ -639,50 +635,27 @@ async def status_post(
     request: Request,
     case_number: str = Form(...),
     pin: str = Form(...),
-    session_token: str = Form(...),
     redis: Redis = Depends(get_redis),
     db: AsyncSession = Depends(get_db),
     _csrf: None = Depends(validate_csrf),
 ) -> Response:
-    # Rate-limit PIN guessing against the *target case number*, not the
-    # client-supplied session token. The token is minted fresh on every GET
-    # /status and echoed back, so keying the lockout on it let an attacker reset
-    # the counter simply by re-fetching the page before each guess.
-    rl_key = case_number.strip().upper()
-
-    if not await rl.check_whistleblower_attempts(redis, rl_key):
-        lockout_ttl = await rl.get_whistleblower_lockout_ttl(redis, rl_key)
-        return render(
-            request,
-            "status.html",
-            {
-                "session_token": session_token,
-                "report": None,
-                "locked": True,
-                "lockout_ttl": lockout_ttl,
-            },
-        )
-
-    report = await report_service.get_report_by_credentials(db, case_number.strip(), pin.strip())
+    report, lockout_ttl = await report_service.authenticate_whistleblower(
+        db, redis, case_number, pin
+    )
 
     if report is None:
-        remaining = await rl.remaining_whistleblower_attempts(redis, rl_key)
-        await rl.record_whistleblower_failure(redis, rl_key)
         return render(
             request,
             "status.html",
             {
-                "session_token": session_token,
-                "error": make_translator(get_lang(request))(
-                    "status.error.invalid", remaining=max(0, remaining - 1)
-                ),
+                "error": make_translator(get_lang(request))("status.error.invalid"),
                 "report": None,
+                "locked": bool(lockout_ttl),
+                "lockout_ttl": lockout_ttl,
                 "case_number_value": case_number.strip(),
             },
             status_code=401,
         )
-
-    await rl.reset_whistleblower_attempts(redis, rl_key)
 
     status_session_key = secrets.token_urlsafe(32)
     await redis.setex(f"status-session:{status_session_key}", 7200, str(report.id))
@@ -704,7 +677,6 @@ async def reply_post(
     request: Request,
     case_number: str = Form(""),
     pin: str = Form(""),
-    session_token: str = Form(...),
     content: str = Form(...),
     redis: Redis = Depends(get_redis),
     db: AsyncSession = Depends(get_db),
@@ -729,15 +701,15 @@ async def reply_post(
     if report is None:
         if not case_number or not pin:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-        if not await rl.check_whistleblower_attempts(redis, session_token):
-            raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS)
-        report = await report_service.get_report_by_credentials(
-            db, case_number.strip(), pin.strip()
+        report, lockout_ttl = await report_service.authenticate_whistleblower(
+            db, redis, case_number, pin
         )
         if report is None:
-            await rl.record_whistleblower_failure(redis, session_token)
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-        await rl.reset_whistleblower_attempts(redis, session_token)
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS
+                if lockout_ttl
+                else status.HTTP_401_UNAUTHORIZED
+            )
         status_session_key = secrets.token_urlsafe(32)
         await redis.setex(f"status-session:{status_session_key}", 7200, str(report.id))
 
@@ -766,10 +738,11 @@ async def reply_post(
     return response
 
 
-@router.get("/status/logout")
+@router.post("/status/logout")
 async def status_logout(
     request: Request,
     redis: Redis = Depends(get_redis),
+    _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
     _raw = request.cookies.get("ow-status-session")
     session_key: str | None = _raw if _raw and _SESSION_KEY_RE.match(_raw) else None

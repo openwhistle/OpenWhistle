@@ -1,4 +1,4 @@
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Minimum SECRET_KEY length. The key is the root secret for admin JWT signing
@@ -46,6 +46,13 @@ class Settings(BaseSettings):
     max_login_attempts: int = 10
     login_lockout_minutes: int = 30
 
+    # Password-spraying detection: failed admin password attempts counted
+    # instance-wide (no username, no IP). Crossing the threshold within the
+    # window sends one alert through the notification channels and writes an
+    # audit log entry. 0 disables it.
+    admin_failed_login_alert_threshold: int = 50
+    admin_failed_login_alert_window_minutes: int = Field(default=15, ge=1)
+
     # Demo mode
     demo_mode: bool = False
 
@@ -66,6 +73,7 @@ class Settings(BaseSettings):
     ldap_server: str = ""
     ldap_port: int = 389
     ldap_use_ssl: bool = False
+    ldap_start_tls: bool = False     # upgrade a plain connection (port 389) before any bind
     ldap_bind_dn: str = ""           # service account DN for the initial bind
     ldap_bind_password: str = ""
     ldap_base_dn: str = ""           # search base, e.g. "ou=users,dc=example,dc=com"

@@ -4,6 +4,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
+from redis.asyncio import Redis
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -26,8 +27,9 @@ from app.models.report import (
     SubmissionMode,
 )
 from app.models.user import AdminUser
+from app.services import rate_limit as rl
 from app.services.attachment import delete_stored_objects, stored_object_keys
-from app.services.auth import hash_pin, verify_pin
+from app.services.auth import TIMING_DUMMY_HASH, hash_pin, verify_pin
 from app.services.pin import generate_case_number, generate_pin
 
 
@@ -211,10 +213,39 @@ async def get_report_by_credentials(
     )
     report = result.scalar_one_or_none()
     if report is None:
+        # Same bcrypt work as for an existing case, so response time does not
+        # tell whether a case number exists.
+        verify_pin(plain_pin, TIMING_DUMMY_HASH)
         return None
     if not verify_pin(plain_pin, report.pin_hash):
         return None
     return report
+
+
+async def authenticate_whistleblower(
+    db: AsyncSession, redis: Redis, case_number: str, pin: str
+) -> tuple[Report | None, int]:
+    """The one whistleblower login check, used by ``/status`` and ``/reply``.
+
+    Returns ``(report, 0)`` for a correct case number and PIN - always, however
+    many wrong attempts preceded it: the PIN is a bcrypt-hashed UUID4 (122 bits)
+    and cannot be guessed, so refusing it would only let a third party lock the
+    whistleblower out of their own case. Wrong attempts are counted per case
+    number; past the limit the second value is the seconds left in the window,
+    for an informational "too many attempts" message.
+    """
+    from app.config import settings
+
+    case_number = case_number.strip()
+    rl_key = case_number.upper()
+    report = await get_report_by_credentials(db, case_number, pin.strip())
+    if report is not None:
+        await rl.reset_whistleblower_attempts(redis, rl_key)
+        return report, 0
+    failures = await rl.record_whistleblower_failure(redis, rl_key)
+    if failures <= settings.max_access_attempts:
+        return None, 0
+    return None, max(1, await rl.get_whistleblower_lockout_ttl(redis, rl_key))
 
 
 def _encrypt_message_content(report: Report, content: str) -> str:

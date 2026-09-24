@@ -1111,6 +1111,18 @@
               <td><code>true</code></td>
             </tr>
             <tr>
+              <td><code class="env-key">ADMIN_FAILED_LOGIN_ALERT_THRESHOLD</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Password-spraying alarm. Failed admin password attempts are counted across all accounts (no username, no IP stored). When this many fail within the window, one alert goes to the email and webhook notification channels and the audit log records <code>auth.password_spraying_suspected</code>. <code>0</code> disables it. Per-account lockout and MFA stay in force either way.</td>
+              <td><code>50</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">ADMIN_FAILED_LOGIN_ALERT_WINDOW_MINUTES</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Sliding window for <code>ADMIN_FAILED_LOGIN_ALERT_THRESHOLD</code>, in minutes. At most one alert per window.</td>
+              <td><code>15</code></td>
+            </tr>
+            <tr>
               <td><code class="env-key">SUBMISSION_MODE_ENABLED</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
               <td>Set to <code>false</code> to hide the anonymous/confidential mode selection step from the submission wizard. When disabled, all reports are treated as anonymous.</td>
@@ -1125,7 +1137,7 @@
             <tr>
               <td><code class="env-key">OIDC_SERVER_METADATA_URL</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
-              <td>OIDC provider discovery URL (e.g. <code>https://accounts.google.com/.well-known/openid-configuration</code>). Required when <code>OIDC_ENABLED=true</code>.</td>
+              <td>OIDC provider discovery URL (e.g. <code>https://accounts.google.com/.well-known/openid-configuration</code>). Required when <code>OIDC_ENABLED=true</code>. Login uses PKCE (S256) and accepts only an ID token signed with an asymmetric key from the provider's <code>jwks_uri</code>, with matching issuer, audience (the client ID), expiry and nonce.</td>
               <td>—</td>
             </tr>
             <tr>
@@ -1441,13 +1453,19 @@
             <tr>
               <td><code class="env-key">LDAP_PORT</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
-              <td>LDAP port. Use <code>389</code> for plain/STARTTLS or <code>636</code> for LDAPS.</td>
+              <td>LDAP port. Use <code>389</code> with <code>LDAP_START_TLS</code> or <code>636</code> for LDAPS. Plain <code>389</code> without either sends passwords in clear.</td>
               <td><code>389</code></td>
             </tr>
             <tr>
               <td><code class="env-key">LDAP_USE_SSL</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
               <td>Set to <code>true</code> to use LDAPS (TLS from the start). Set port to <code>636</code>. The server certificate is verified against the system CA store; for a private CA, mount its PEM file and set <code>SSL_CERT_FILE</code> to its path.</td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">LDAP_START_TLS</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Set to <code>true</code> to upgrade a plain connection on port <code>389</code> with StartTLS before any bind, so neither the service account's nor the user's password crosses the network in clear. The certificate is verified exactly as for LDAPS; a server that refuses the upgrade makes the login fail. Ignored when <code>LDAP_USE_SSL=true</code>.</td>
               <td><code>false</code></td>
             </tr>
             <tr>
@@ -1833,6 +1851,12 @@
           <li>HinSchG deadlines: the 7-day acknowledgement deadline and 3-month feedback deadline with days remaining</li>
           <li>A form to send a follow-up message</li>
         </ul>
+        <p>
+          Nobody can lock you out of your own case: the correct case number and PIN always
+          work. After several wrong attempts on a case number the page asks you to wait, but
+          that is a notice, not a lock. Use <em>Look up a different report</em> to end the session
+          on a shared device.
+        </p>
 
         <h3>Security recommendations for whistleblowers</h3>
         <ul>

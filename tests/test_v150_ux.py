@@ -157,12 +157,10 @@ async def test_submit_valid_step_has_no_invalid_field(client: AsyncClient) -> No
 @pytest.mark.asyncio
 async def test_status_wrong_pin_marks_both_fields(client: AsyncClient) -> None:
     resp = await client.get("/status")
-    token = re.search(r'name="session_token" value="([^"]+)"', resp.text).group(1)  # type: ignore[union-attr]
     resp = await client.post(
         "/status",
         data={
             "csrf_token": _wizard_get_csrf(resp.text),
-            "session_token": token,
             "case_number": f"OW-NONE-{uuid.uuid4().hex[:5]}",
             "pin": "wrong-pin",
         },
@@ -171,24 +169,23 @@ async def test_status_wrong_pin_marks_both_fields(client: AsyncClient) -> None:
     _assert_invalid(resp.text, "case_number", "credentials-error")
     _assert_invalid(resp.text, "pin", "credentials-error")
     assert "No report matches this case number and PIN" in resp.text
-    assert re.search(r"Attempts left: \d+\.", resp.text)
+    # No countdown of attempts: a correct PIN always works, nothing runs out.
+    assert "Attempts left" not in resp.text
 
 
 @pytest.mark.asyncio
 async def test_status_message_is_translated(client: AsyncClient) -> None:
     client.cookies.set("ow-lang", "de")
     resp = await client.get("/status")
-    token = re.search(r'name="session_token" value="([^"]+)"', resp.text).group(1)  # type: ignore[union-attr]
     resp = await client.post(
         "/status",
         data={
             "csrf_token": _wizard_get_csrf(resp.text),
-            "session_token": token,
             "case_number": f"OW-NONE-{uuid.uuid4().hex[:5]}",
             "pin": "wrong-pin",
         },
     )
-    assert "Verbleibende Versuche" in resp.text
+    assert "Zu dieser Vorgangsnummer und PIN gibt es keine Meldung" in resp.text
 
 
 @pytest.mark.asyncio

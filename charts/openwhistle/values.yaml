@@ -61,6 +61,10 @@ config:
   appPublicUrl: "https://whistleblower.example.com"
   submissionModeEnabled: "true"
 
+  # Password-spraying alert: failed admin logins, instance-wide (0 disables)
+  adminFailedLoginAlertThreshold: "50"
+  adminFailedLoginAlertWindowMinutes: "15"
+
   # Branding
   brandPrimaryColor: "#0f4c81"
   brandSecondaryColor: "#b07230"
@@ -84,6 +88,7 @@ config:
   ldapServer: ""
   ldapPort: "389"
   ldapUseSsl: "false"
+  ldapStartTls: "false"
   ldapBindDn: ""
   ldapBaseDn: ""
   ldapUserFilter: "(uid={username})"
