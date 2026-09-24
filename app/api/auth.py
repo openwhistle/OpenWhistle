@@ -59,6 +59,11 @@ async def _second_factor(
     Every login path (local, LDAP, OIDC) ends here: MFA is mandatory for all
     accounts, so no path may issue a session directly.
     """
+    if not user.is_active:
+        return render(request, "login.html", _login_ctx({
+            "error": "login.error.deactivated",
+        }), status_code=401)
+
     if not user.totp_enabled:
         setup_token = secrets.token_urlsafe(32)
         await auth_service.store_totp_setup_pending(redis, setup_token, str(user.id))
@@ -112,6 +117,9 @@ def _set_session_cookie(response: Response, token: str) -> None:
 
 async def _start_session(redis: Redis, db: AsyncSession, user: AdminUser) -> RedirectResponse:
     """The only place a login becomes a session (TOTP verify and TOTP setup)."""
+    if not user.is_active:
+        return RedirectResponse("/admin/login", status_code=302)
+
     token = auth_service.create_access_token(str(user.id), role=user.role.value)
     await auth_service.store_session(redis, str(user.id), token)
     user.last_login_at = datetime.now(UTC)
@@ -193,11 +201,6 @@ async def login_post(
             db.add(user)
             await db.commit()
             await db.refresh(user)
-
-        if not user.is_active:
-            return render(request, "login.html", _login_ctx({
-                "error": "login.error.deactivated",
-            }), status_code=401)
 
         return await _second_factor(request, redis, user)
 
@@ -307,7 +310,7 @@ async def mfa_setup_get(
         return RedirectResponse("/admin/login", status_code=302)
 
     user = await auth_service.get_user_by_id(db, user_id)
-    if not user:
+    if not user or not user.is_active:
         return RedirectResponse("/admin/login", status_code=302)
 
     qr_b64 = generate_qr_code_base64(user.totp_secret, user.username)
@@ -495,14 +498,6 @@ async def oidc_callback(
                 "error": "login.error.sso_unlinked",
                 "oidc_enabled": settings.oidc_enabled,
             },
-        )
-
-    if not user.is_active:
-        return render(
-            request,
-            "login.html",
-            {"error": "login.error.deactivated", "oidc_enabled": settings.oidc_enabled},
-            status_code=401,
         )
 
     return await _second_factor(request, redis, user)

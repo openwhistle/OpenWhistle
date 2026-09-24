@@ -12,7 +12,6 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.models.setup import SetupStatus
 from app.models.user import AdminRole, AdminUser
 from app.services.auth import hash_password
 from tests.conftest import setup_token
@@ -447,3 +446,48 @@ async def test_refresh_never_extends_past_the_absolute_limit(
     new_exp = decode_access_token_exp(client.cookies.get("ow_session") or "")
     assert new_exp is not None
     assert int(new_exp.timestamp()) <= started + settings.session_max_hours * 3600
+
+
+# ── Deactivated accounts never reach the second factor (A5) ────────────────
+
+
+@pytest.mark.asyncio
+async def test_deactivated_user_never_reaches_the_totp_step(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    user = AdminUser(
+        id=uuid.uuid4(), username=f"inactive_{uuid.uuid4().hex[:8]}",
+        password_hash=hash_password(_PASSWORD), totp_secret=pyotp.random_base32(),
+        totp_enabled=True, is_active=False,
+    )
+    db_session.add(user)
+    await db_session.commit()
+    csrf = await _csrf(client, "/admin/login")
+    resp = await client.post("/admin/login", data={
+        "username": user.username, "password": _PASSWORD, "csrf_token": csrf})
+    assert resp.status_code == 401
+    assert 'name="temp_token"' not in resp.text
+
+
+@pytest.mark.asyncio
+async def test_user_deactivated_between_password_and_totp_gets_no_session(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    secret = pyotp.random_base32()
+    user = AdminUser(
+        id=uuid.uuid4(), username=f"late_{uuid.uuid4().hex[:8]}",
+        password_hash=hash_password(_PASSWORD), totp_secret=secret, totp_enabled=True,
+    )
+    db_session.add(user)
+    await db_session.commit()
+    csrf = await _csrf(client, "/admin/login")
+    r = await client.post("/admin/login", data={
+        "username": user.username, "password": _PASSWORD, "csrf_token": csrf})
+    temp = re.search(r'name="temp_token" value="([^"]+)"', r.text)
+    assert temp
+    user.is_active = False
+    await db_session.commit()
+    await client.post("/admin/login/mfa", data={
+        "csrf_token": client.cookies.get("ow_csrf"), "temp_token": temp.group(1),
+        "totp_code": pyotp.TOTP(secret).now()})
+    assert not client.cookies.get("ow_session")
