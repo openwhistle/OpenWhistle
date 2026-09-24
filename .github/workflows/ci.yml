@@ -91,7 +91,7 @@ jobs:
       - name: Run tests
         env:
           DATABASE_URL: "postgresql+asyncpg://openwhistle:openwhistle@localhost:5432/openwhistle_test"
-          REDIS_URL: "redis://localhost:6379/0"
+          REDIS_URL: "redis://localhost:6379/1"
           SECRET_KEY: "ci-test-secret-key-not-for-production"
           DEMO_MODE: "true"
           COVERAGE_CORE: "sysmon"

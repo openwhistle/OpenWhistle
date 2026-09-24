@@ -168,7 +168,7 @@ def _strip_pdf(data: bytes) -> bytes:
     writer._root_object.pop("/Metadata", None)  # XMP packet
     # Unlinking is not removing: the XMP stream would still be written as an
     # orphaned object that any forensic tool can read.
-    writer.compress_identical_objects(remove_identicals=False, remove_orphans=True)
+    writer.compress_identical_objects(remove_duplicates=False, remove_unreferenced=True)
     out = io.BytesIO()
     writer.write(out)
     return out.getvalue()

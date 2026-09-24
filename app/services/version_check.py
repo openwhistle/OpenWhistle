@@ -96,7 +96,7 @@ async def fetch_latest_release(redis: Redis) -> dict[str, Any] | None:
         cached = await _read_cache(redis)
         if cached is not None:
             cached["checked_at"] = now_iso
-            await redis.setex(_CACHE_KEY, _CACHE_TTL, json.dumps(cached))
+            await redis.set(_CACHE_KEY, json.dumps(cached), ex=_CACHE_TTL)
         return cached
 
     if resp.status_code != 200:
@@ -110,10 +110,10 @@ async def fetch_latest_release(redis: Redis) -> dict[str, Any] | None:
         "published_at": data.get("published_at", ""),
         "checked_at": now_iso,
     }
-    await redis.setex(_CACHE_KEY, _CACHE_TTL, json.dumps(payload))
+    await redis.set(_CACHE_KEY, json.dumps(payload), ex=_CACHE_TTL)
     new_etag = resp.headers.get("ETag")
     if new_etag:
-        await redis.setex(_ETAG_KEY, _CACHE_TTL, new_etag)
+        await redis.set(_ETAG_KEY, new_etag, ex=_CACHE_TTL)
     return payload
 
 

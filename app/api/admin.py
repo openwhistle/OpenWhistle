@@ -357,7 +357,7 @@ async def admin_reply(
 ) -> RedirectResponse:
     report = await _get_authorized_report(db, report_id, current_user)
     if not content.strip():
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT)
 
     await report_service.add_admin_message(
         db, report, content.strip(), notify_whistleblower=True
@@ -840,7 +840,7 @@ async def change_user_role(
         and await count_active_privileged_admins(db) <= 1
     ):
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Cannot demote the last active administrator.",
         )
 

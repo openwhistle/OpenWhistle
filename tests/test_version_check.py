@@ -65,7 +65,7 @@ def _mock_httpx(status_code: int, json_body: dict | None = None, etag: str | Non
 async def test_fetch_200_caches_payload_and_etag() -> None:
     redis = AsyncMock()
     redis.get = AsyncMock(return_value=None)  # no prior etag
-    redis.setex = AsyncMock()
+    redis.set = AsyncMock()
     body = {
         "tag_name": "v1.2.0",
         "html_url": "https://x/rel",
@@ -79,7 +79,7 @@ async def test_fetch_200_caches_payload_and_etag() -> None:
     assert result["tag_name"] == "v1.2.0"
     assert "checked_at" in result
     # payload + etag both cached
-    assert redis.setex.await_count == 2
+    assert redis.set.await_count == 2
 
 
 @pytest.mark.asyncio
@@ -87,7 +87,7 @@ async def test_fetch_304_keeps_cache() -> None:
     cached = {"tag_name": "v1.2.0", "html_url": "https://x/rel", "checked_at": "old"}
     redis = AsyncMock()
     redis.get = AsyncMock(side_effect=['W/"abc"', json.dumps(cached)])  # etag, then cache
-    redis.setex = AsyncMock()
+    redis.set = AsyncMock()
 
     with patch("httpx.AsyncClient", return_value=_mock_httpx(304)):
         result = await vc.fetch_latest_release(redis)

@@ -250,6 +250,19 @@ _QUEUE_KEYS = {
 _background: set[asyncio.Task[None]] = set()
 
 
+def schedule_background(coro: Any) -> None:
+    """Run ``coro`` as a fire-and-forget task without letting it get GC'd mid-flight.
+
+    ``asyncio.create_task`` only keeps a weak reference to the task; a caller
+    that drops the returned task risks it being garbage-collected before it
+    runs (surfacing as "coroutine was never awaited"). Keeping it in a
+    module-level set until it finishes avoids that.
+    """
+    task = asyncio.create_task(coro)
+    _background.add(task)
+    task.add_done_callback(_background.discard)
+
+
 def _channels_enabled(cfg: Any) -> bool:
     email = cfg.notify_email_enabled and cfg.notify_email_to.strip()
     webhook = cfg.notify_webhook_enabled and cfg.notify_webhook_url.strip()
@@ -279,9 +292,7 @@ async def _queue_or_send(kind: str, case_number: str) -> None:
         return
     if settings.notification_batch_minutes <= 0:
         # Never delay the whistleblower's response on SMTP or a webhook.
-        task = asyncio.create_task(_deliver(**{kind: [case_number]}))
-        _background.add(task)
-        task.add_done_callback(_background.discard)
+        schedule_background(_deliver(**{kind: [case_number]}))
         return
     try:
         from app.redis_client import get_redis

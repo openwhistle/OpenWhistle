@@ -297,12 +297,11 @@ async def add_admin_message(
     if notify_whistleblower and report.secure_email:
         from app.config import settings
         from app.services.crypto import decrypt_or_none
-        from app.services.notifications import notify_reply_to_whistleblower
+        from app.services.notifications import notify_reply_to_whistleblower, schedule_background
 
         plain_email = decrypt_or_none(report.secure_email)
         if plain_email:
-            import asyncio
-            asyncio.create_task(
+            schedule_background(
                 notify_reply_to_whistleblower(plain_email, settings.app_public_url)
             )
 

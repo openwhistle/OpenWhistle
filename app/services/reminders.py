@@ -125,7 +125,7 @@ async def _check_ack_reminder(
         report=r,
         settings=cfg,
     )
-    await red.setex(key, _dedup_ttl_seconds(days_left), "1")
+    await red.set(key, "1", ex=_dedup_ttl_seconds(days_left))
     log.info("ACK reminder sent for %s (%d days left)", r.case_number, days_left)
 
 
@@ -163,7 +163,7 @@ async def _check_feedback_reminder(
         report=r,
         settings=cfg,
     )
-    await red.setex(key, _dedup_ttl_seconds(days_left), "1")
+    await red.set(key, "1", ex=_dedup_ttl_seconds(days_left))
     log.info("Feedback reminder sent for %s (%d days left)", r.case_number, days_left)
 
 

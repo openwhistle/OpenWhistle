@@ -4,6 +4,7 @@ import os
 import re
 import subprocess
 from collections.abc import AsyncGenerator
+from urllib.parse import urlparse
 
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
@@ -36,6 +37,43 @@ os.environ.setdefault("MULTI_TENANCY_ENABLED", "false")
 
 # Step number for the location step in the wizard (only active when locations exist)
 _STEP_LOCATION = 2
+
+
+def _is_safe_to_flush(redis_url: str) -> bool:
+    """True only for a local Redis URL on a non-default DB index.
+
+    Guards ``_flush_test_redis`` below: DB 0 (what a misconfigured/missing
+    REDIS_URL falls back to) and any non-local host are refused, so a bad
+    env can never flush a real Redis instance.
+    """
+    parsed = urlparse(redis_url)
+    host = parsed.hostname or ""
+    try:
+        db_index = int((parsed.path or "").lstrip("/") or "0")
+    except ValueError:
+        db_index = 0
+    return host in ("localhost", "127.0.0.1") and db_index != 0
+
+
+@pytest_asyncio.fixture(scope="session", loop_scope="session", autouse=True)
+async def _flush_test_redis() -> None:
+    """Flush the test Redis DB once per session.
+
+    A long-lived test Redis keeps rate-limit/lockout keys between runs;
+    without this, a second run in a row sees stale counters and gets 429s
+    that cascade into unrelated failures (task X1 / OPEN-2).
+    """
+    from app.config import settings
+
+    if not _is_safe_to_flush(settings.redis_url):
+        return
+    from redis.asyncio import from_url
+
+    redis = await from_url(settings.redis_url, decode_responses=True)
+    try:
+        await redis.flushdb()
+    finally:
+        await redis.aclose()
 
 
 @pytest_asyncio.fixture(scope="session", loop_scope="session")

@@ -281,7 +281,7 @@ class TestSlaReminderLogic:
 
         await _check_ack_reminder(mock_report, datetime.now(UTC), None, mock_redis, cfg)
         mock_redis.exists.assert_called_once()
-        mock_redis.setex.assert_called_once()
+        mock_redis.set.assert_called_once()
 
     async def test_check_ack_reminder_dedup_skips_if_key_exists(self) -> None:
         from app.services.reminders import _check_ack_reminder
@@ -298,7 +298,7 @@ class TestSlaReminderLogic:
         cfg.reminder_ack_warn_days = 2
 
         await _check_ack_reminder(mock_report, datetime.now(UTC), None, mock_redis, cfg)
-        mock_redis.setex.assert_not_called()
+        mock_redis.set.assert_not_called()
 
     async def test_check_feedback_reminder_skips_when_no_due_date(self) -> None:
         from app.services.reminders import _check_feedback_reminder
@@ -340,7 +340,7 @@ class TestSlaReminderLogic:
         cfg.notify_webhook_enabled = False
 
         await _check_feedback_reminder(mock_report, datetime.now(UTC), None, mock_redis, cfg)
-        mock_redis.setex.assert_called_once()
+        mock_redis.set.assert_called_once()
 
     async def test_dedup_key_format_ack(self) -> None:
         from app.services.reminders import _ack_dedup_key
@@ -889,7 +889,7 @@ class TestDispatchReminder:
         cfg.reminder_feedback_warn_days = 30
 
         await _check_feedback_reminder(mock_report, datetime.now(UTC), None, mock_redis, cfg)
-        mock_redis.setex.assert_not_called()  # should have returned early at line 131
+        mock_redis.set.assert_not_called()  # should have returned early at line 131
 
 
 # ── S3 _client() method coverage ─────────────────────────────────────────────
