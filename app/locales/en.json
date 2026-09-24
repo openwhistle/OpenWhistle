@@ -10,6 +10,7 @@
   "form.please_wait": "Please wait…",
   "submit.sidebar.eyebrow": "Protected reporting",
   "submit.sidebar.title": "What this platform does to protect you",
+  "submit.sidebar.short": "Anonymous unless you choose otherwise. No IP address is stored.",
   "submit.sidebar.g01.title": "No IP address logging",
   "submit.sidebar.g01.desc": "OpenWhistle does not store your IP address, and its bundled web server configuration does not log it. On a work device or network, your employer may still see that you opened this site.",
   "submit.sidebar.g02.title": "Case number and secret PIN",

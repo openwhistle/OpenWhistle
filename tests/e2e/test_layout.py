@@ -63,3 +63,26 @@ def test_footer_links_share_one_row_and_brand_outshines_tagline(browser: Browser
 
     assert _brightness(".footer-brand") > _brightness(".footer-tagline")
     ctx.close()
+
+
+def test_report_form_is_on_the_first_phone_screen(browser: Browser, base_url: str) -> None:
+    ctx, page = _page(browser, base_url, 390)
+    page.goto("/submit")
+    top = page.locator("form[action='/submit']").bounding_box()
+    assert top and top["y"] < 600, top
+    ctx.close()
+
+
+def test_case_number_stays_on_one_line(browser: Browser, base_url: str) -> None:
+    from tests.e2e.conftest import DEMO_CASE_PENDING
+
+    ctx, page = _page(browser, base_url, 390)
+    page.goto("/status")
+    page.fill('input[name="case_number"]', DEMO_CASE_PENDING["case_number"])
+    page.fill('input[name="pin"]', DEMO_CASE_PENDING["pin"])
+    page.click("button.btn-primary[type='submit']")
+    token = page.locator(".token").first
+    box = token.bounding_box()
+    line = float(token.evaluate("e => parseFloat(getComputedStyle(e).lineHeight)"))
+    assert box and box["height"] < line * 1.5
+    ctx.close()

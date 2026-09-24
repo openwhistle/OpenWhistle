@@ -16,6 +16,7 @@
   "a11y.skip_to_content": "Aller au contenu principal",
   "submit.sidebar.eyebrow": "Signalement protégé",
   "submit.sidebar.title": "Ce que cette plateforme fait pour vous protéger",
+  "submit.sidebar.short": "Anonyme sauf si vous en décidez autrement. Aucune adresse IP n'est enregistrée.",
   "submit.sidebar.g01.title": "Aucune journalisation des adresses IP",
   "submit.sidebar.g01.desc": "OpenWhistle n'enregistre pas votre adresse IP, et la configuration du serveur web fournie ne la journalise pas. Sur un appareil ou un réseau professionnel, votre employeur peut néanmoins voir que vous avez ouvert ce site.",
   "submit.sidebar.g02.title": "Numéro de dossier et code PIN secret",

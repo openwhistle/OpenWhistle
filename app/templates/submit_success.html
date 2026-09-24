@@ -31,7 +31,7 @@
         <div class="credential-group">
             <div class="credential-label">{{ t('success.case_number') }}</div>
             <div class="credential-display" id="case-number">
-                <span>{{ case_number }}</span>
+                <span class="token">{{ case_number }}</span>
                 <button class="copy-btn" data-action="copy" data-copy="{{ case_number }}" title="{{ t('success.copy') }}" aria-label="{{ t('success.copy.case_number') }}" data-copied="{{ t('success.copied') }}">{{ icons.icon('copy') }}</button>
             </div>
         </div>
@@ -39,7 +39,7 @@
         <div class="credential-group">
             <div class="credential-label">{{ t('success.pin') }}</div>
             <div class="credential-display" id="pin-value">
-                <span>{{ pin }}</span>
+                <span class="token">{{ pin }}</span>
                 <button class="copy-btn" data-action="copy" data-copy="{{ pin }}" title="{{ t('success.copy') }}" aria-label="{{ t('success.copy.pin') }}" data-copied="{{ t('success.copied') }}">{{ icons.icon('copy') }}</button>
             </div>
         </div>

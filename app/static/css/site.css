@@ -1832,12 +1832,11 @@ tr:hover td {
   justify-content: space-between;
   letter-spacing: 0.03em;
   margin-bottom: 0.75rem;
-  overflow: hidden;
+  overflow-x: auto;
   padding: 1rem 1.25rem;
 }
 .credential-display > span {
   min-width: 0;
-  word-break: break-all;
 }
 .credential-group {
   margin-bottom: 1rem;
@@ -1865,7 +1864,7 @@ tr:hover td {
 .credential-value {
   animation: typeIn 0.8s steps(40) both;
   color: var(--ink);
-  word-break: break-all;
+  overflow-x: auto;
 }
 .copy-btn,
 .credential-value {
@@ -2364,13 +2363,6 @@ a.attachment-name:hover {
   line-height: 1.25rem;
   margin-top: auto;
   padding: 2rem 1.75rem;
-}
-.footer-inner {
-  margin-left: auto;
-  margin-right: auto;
-  max-width: 1200px;
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
 }
 [data-theme="dark"] .footer {
   background: var(--surface-dark);
@@ -3429,6 +3421,22 @@ a.attachment-name:hover {
     display: none;
   }
 }
+.mobile-reassure { display: none; }
+@media (max-width: 900px) {
+  .split-layout { display: flex; flex-direction: column; }
+  .split-main { order: -1; max-width: none; padding: var(--space-6) var(--space-4); }
+  .split-sidebar { padding: var(--space-8) var(--space-4); }
+  .mobile-reassure {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--body-text);
+    font-size: var(--text-body-sm);
+    margin: 0 0 var(--space-4);
+  }
+}
+.token { white-space: nowrap; overflow-wrap: normal; word-break: normal; }
+#pin-value .token { font-size: clamp(0.95rem, 4.2vw, 1.25rem); }
 @media (max-width: 540px) {
   .container,
   .container-sm,
@@ -3731,6 +3739,8 @@ field-error {
   gap: var(--space-4);
   max-width: 1200px;
   margin: 0 auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
 }
 .footer-brand { color: var(--on-dark); font-weight: 600; margin: 0; }
 .footer-tagline { color: var(--muted-on-dark); font-weight: 400; margin-left: var(--space-2); }

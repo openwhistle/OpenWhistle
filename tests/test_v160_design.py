@@ -156,3 +156,35 @@ def test_footer_css_has_no_stale_bare_tag_selectors() -> None:
     css = (ROOT / "app/static/css/site.css").read_text()
     hits = re.findall(r"\.footer\s+(?:p|ul)\b", css)
     assert not hits, hits
+
+
+@pytest.mark.asyncio
+async def test_submit_page_has_the_short_reassurance_for_phones(client: AsyncClient) -> None:
+    html = (await client.get("/submit")).text
+    assert 'class="mobile-reassure"' in html
+
+
+def test_footer_inner_is_declared_once() -> None:
+    """Regression guard for the Task 25 controller finding: two `.footer-inner`
+    rule blocks (one setting margin/padding/max-width, one setting display/flex
+    layout) used to live far apart in the file, silently relying on source
+    order for the cascade to merge them. Merged into a single block."""
+    css = (ROOT / "app/static/css/site.css").read_text()
+    hits = re.findall(r"^\.footer-inner\s*\{", css, flags=re.MULTILINE)
+    assert len(hits) == 1, hits
+
+
+def test_token_class_never_breaks_a_case_number_or_pin() -> None:
+    css = (ROOT / "app/static/css/site.css").read_text()
+    rule = re.search(r"\.token\s*\{([^}]*)\}", css)
+    assert rule
+    body = rule.group(1)
+    assert "white-space: nowrap" in body
+    assert "word-break: normal" in body
+
+
+def test_case_number_and_pin_get_the_token_class() -> None:
+    success_html = (TEMPLATES / "submit_success.html").read_text()
+    assert success_html.count('class="token"') == 2
+    status_html = (TEMPLATES / "status.html").read_text()
+    assert 'class="mono token"' in status_html

@@ -16,6 +16,7 @@
   "a11y.skip_to_content": "Ir para o conteúdo principal",
   "submit.sidebar.eyebrow": "Denúncia protegida",
   "submit.sidebar.title": "O que esta plataforma faz para proteger você",
+  "submit.sidebar.short": "Anônimo, a menos que você escolha o contrário. Nenhum endereço IP é armazenado.",
   "submit.sidebar.g01.title": "Sem registro de endereço IP",
   "submit.sidebar.g01.desc": "O OpenWhistle não armazena seu endereço IP, e a configuração de servidor web incluída não o registra. Em um dispositivo ou rede de trabalho, seu empregador ainda pode ver que você abriu este site.",
   "submit.sidebar.g02.title": "Número do caso e PIN secreto",

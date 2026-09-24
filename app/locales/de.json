@@ -10,6 +10,7 @@
   "form.please_wait": "Bitte warten…",
   "submit.sidebar.eyebrow": "Geschütztes Melden",
   "submit.sidebar.title": "Was diese Plattform zu Ihrem Schutz tut",
+  "submit.sidebar.short": "Anonym, solange Sie nichts anderes wählen. Es wird keine IP-Adresse gespeichert.",
   "submit.sidebar.g01.title": "Keine Speicherung der IP-Adresse",
   "submit.sidebar.g01.desc": "OpenWhistle speichert Ihre IP-Adresse nicht, und die mitgelieferte Webserver-Konfiguration protokolliert sie nicht. Auf einem Arbeitsgerät oder im Firmennetz kann Ihr Arbeitgeber trotzdem sehen, dass Sie diese Seite aufgerufen haben.",
   "submit.sidebar.g02.title": "Vorgangsnummer und geheime PIN",
