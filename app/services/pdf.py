@@ -8,7 +8,11 @@ from fpdf import FPDF
 from fpdf.enums import XPos, YPos
 
 from app.models.report import Report
-from app.services.report import decrypt_note_contents, decrypt_report_fields
+from app.services.report import (
+    decrypt_attachment_names,
+    decrypt_note_contents,
+    decrypt_report_fields,
+)
 
 
 def generate_report_pdf(report: Report) -> bytes:
@@ -158,11 +162,11 @@ def generate_report_pdf(report: Report) -> bytes:
         pdf.line(10, pdf.get_y(), 200, pdf.get_y())
         pdf.ln(3)
         pdf.set_font("Helvetica", "", 10)
-        for att in report.attachments:
+        for att, att_name in zip(report.attachments, decrypt_attachment_names(report), strict=True):
             size_kb = att.size // 1024
             pdf.cell(
                 0, 5,
-                f"- {_safe(att.filename)}  ({size_kb} KB, {att.content_type})",
+                f"- {_safe(att_name)}  ({size_kb} KB, {att.content_type})",
                 new_x=XPos.LMARGIN, new_y=YPos.NEXT,
             )
         pdf.ln(3)

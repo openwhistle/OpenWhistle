@@ -3,18 +3,19 @@
 Notifications are fire-and-forget: failures are logged but never propagated
 to callers, so a misconfigured SMTP server cannot block report submission.
 
-Privacy: notifications contain only the case number and a timestamp.
-Report content (description, category) is never transmitted.
+Privacy: notifications contain only counts and case numbers. Report content
+(description, category) is never transmitted, and new-report notices are
+batched so their timing does not reveal when a report was submitted.
 """
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import hmac
 import json
 import logging
 from datetime import UTC, datetime
-from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Any
 
@@ -234,28 +235,108 @@ def _build_reminder_payload(
     }
 
 
-async def notify_new_report(case_number: str) -> None:
-    """Send all enabled notifications for a newly submitted report.
+# ── New reports and whistleblower messages: batched digest ─────────────────
+#
+# A notification sent the moment a report arrives carries its submission time,
+# and an employer can match that time to who was at their desk. Events are
+# therefore queued in Redis and delivered as one digest every
+# NOTIFICATION_BATCH_MINUTES, on wall-clock boundaries shared by all replicas.
+# NOTIFICATION_BATCH_MINUTES=0 sends each event at once (operator's choice).
 
-    Runs both channels concurrently. Designed to be called as a
-    FastAPI BackgroundTask so it never delays the HTTP response.
+_QUEUE_KEYS = {
+    "new_reports": "openwhistle:notify:new_reports",
+    "new_messages": "openwhistle:notify:new_messages",
+}
+_background: set[asyncio.Task[None]] = set()
+
+
+def _channels_enabled(cfg: Any) -> bool:
+    email = cfg.notify_email_enabled and cfg.notify_email_to.strip()
+    webhook = cfg.notify_webhook_enabled and cfg.notify_webhook_url.strip()
+    return bool(email or webhook)
+
+
+def batching_enabled() -> bool:
+    from app.config import settings
+
+    return settings.notification_batch_minutes > 0 and _channels_enabled(settings)
+
+
+async def notify_new_report(case_number: str) -> None:
+    """Queue (or, unbatched, send) the notice that a report arrived."""
+    await _queue_or_send("new_reports", case_number)
+
+
+async def notify_whistleblower_message(case_number: str) -> None:
+    """Queue (or, unbatched, send) the notice that a whistleblower replied."""
+    await _queue_or_send("new_messages", case_number)
+
+
+async def _queue_or_send(kind: str, case_number: str) -> None:
+    from app.config import settings
+
+    if not _channels_enabled(settings):
+        return
+    if settings.notification_batch_minutes <= 0:
+        # Never delay the whistleblower's response on SMTP or a webhook.
+        task = asyncio.create_task(_deliver(**{kind: [case_number]}))
+        _background.add(task)
+        task.add_done_callback(_background.discard)
+        return
+    try:
+        from app.redis_client import get_redis
+
+        await (await get_redis()).sadd(_QUEUE_KEYS[kind], case_number)
+    except Exception:
+        log.exception("Failed to queue a notification")
+
+
+async def deliver_notification_digest() -> None:
+    """Scheduler job: send everything queued since the last run as one digest.
+
+    The queue is read and cleared in one MULTI/EXEC, so when every replica
+    runs this job at the same moment exactly one of them gets the events.
     """
-    import asyncio
+    from redis.asyncio import Redis
 
     from app.config import settings
 
+    redis = Redis.from_url(settings.redis_url, decode_responses=True)
+    try:
+        async with redis.pipeline(transaction=True) as pipe:
+            pipe.smembers(_QUEUE_KEYS["new_reports"])
+            pipe.smembers(_QUEUE_KEYS["new_messages"])
+            pipe.delete(*_QUEUE_KEYS.values())
+            new_reports, new_messages, _ = await pipe.execute()
+    except Exception:
+        log.exception("Failed to read the notification queue")
+        return
+    finally:
+        await redis.aclose()
+    if new_reports or new_messages:
+        await _deliver(sorted(new_reports), sorted(new_messages))
+
+
+async def _deliver(new_reports: list[str] | None = None,
+                   new_messages: list[str] | None = None) -> None:
+    from app.config import settings
+
+    reports, messages = new_reports or [], new_messages or []
     tasks = []
     if settings.notify_email_enabled and settings.notify_email_to.strip():
-        tasks.append(_send_email(case_number, settings))
+        tasks.append(_send_email(reports, messages, settings))
     if settings.notify_webhook_enabled and settings.notify_webhook_url.strip():
-        tasks.append(_send_webhook(case_number, settings))
-
+        tasks.append(_send_webhook(reports, messages, settings))
     if tasks:
         await asyncio.gather(*tasks, return_exceptions=True)
 
 
-async def _send_email(case_number: str, settings: object) -> None:
-    """Send an SMTP notification email."""
+def _summary(cases: list[str]) -> str:
+    return f"{len(cases)} ({', '.join(cases)})" if cases else "0"
+
+
+async def _send_email(new_reports: list[str], new_messages: list[str], settings: object) -> None:
+    """Send the digest by SMTP: counts and case numbers, nothing else."""
     import aiosmtplib
 
     from app.config import Settings
@@ -266,50 +347,19 @@ async def _send_email(case_number: str, settings: object) -> None:
         return
 
     dashboard_url = f"{cfg.app_public_url.rstrip('/')}/admin/dashboard"
-    subject = f"New report received — {cfg.app_name}"
-
     text_body = (
-        f"A new whistleblower report has been submitted to {cfg.app_name}.\n\n"
-        f"Case number : {case_number}\n"
-        f"Received at : {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}\n\n"
-        f"Review it in the admin dashboard:\n{dashboard_url}\n\n"
+        f"New activity on {cfg.app_name}.\n\n"
+        f"New reports                  : {_summary(new_reports)}\n"
+        f"New whistleblower messages on: {_summary(new_messages)}\n\n"
+        f"Review them in the admin dashboard:\n{dashboard_url}\n\n"
         "-- \n"
-        "No report content is included in this notification to protect\n"
-        "the submitter's privacy and anonymity."
+        "No report content is included in this notification, and notifications\n"
+        "are batched, so their timing does not reveal when a report was sent."
     )
-
-    td_label = 'padding:0.4rem 0.75rem;border:1px solid #ddd;background:#f5f5f5;font-weight:bold'
-    td_value = 'padding:0.4rem 0.75rem;border:1px solid #ddd'
-    td_mono = f'{td_value};font-family:monospace'
-    btn = (
-        'display:inline-block;padding:0.6rem 1.2rem;'
-        'background:#0f4c81;color:#fff;text-decoration:none;border-radius:4px'
-    )
-    received = datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')
-    html_body = (
-        '<html><body style="font-family:sans-serif;max-width:600px;margin:auto;">'
-        '<h2 style="color:#0f4c81;">New Report Received</h2>'
-        '<p>A new whistleblower report has been submitted to'
-        f' <strong>{cfg.app_name}</strong>.</p>'
-        '<table style="border-collapse:collapse;width:100%;margin:1rem 0;">'
-        f'<tr><td style="{td_label}">Case Number</td>'
-        f'<td style="{td_mono}">{case_number}</td></tr>'
-        f'<tr><td style="{td_label}">Received at</td>'
-        f'<td style="{td_value}">{received}</td></tr>'
-        '</table>'
-        f'<p><a href="{dashboard_url}" style="{btn}">Open Admin Dashboard →</a></p>'
-        '<hr style="border:none;border-top:1px solid #eee;margin:1.5rem 0;">'
-        '<p style="font-size:0.8rem;color:#888;">No report content is included'
-        ' in this notification to protect the submitter\'s privacy.</p>'
-        '</body></html>'
-    )
-
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
+    msg = MIMEText(text_body, "plain", "utf-8")
+    msg["Subject"] = f"New activity — {cfg.app_name}"
     msg["From"] = cfg.notify_email_from
     msg["To"] = ", ".join(recipients)
-    msg.attach(MIMEText(text_body, "plain", "utf-8"))
-    msg.attach(MIMEText(html_body, "html", "utf-8"))
 
     smtp_kwargs: dict[str, Any] = {
         "hostname": cfg.notify_smtp_host,
@@ -324,33 +374,33 @@ async def _send_email(case_number: str, settings: object) -> None:
 
     try:
         await aiosmtplib.send(msg, recipients=recipients, **smtp_kwargs)
-        log.info(
-            "Notification email sent for %s to %d recipient(s)",
-            case_number,
-            len(recipients),
-        )
+        log.info("Notification email sent to %d recipient(s)", len(recipients))
     except Exception:
-        log.exception("Failed to send notification email for %s", case_number)
+        log.exception("Failed to send notification email")
 
 
 def _build_webhook_payload(
-    case_number: str, webhook_type: str, app_name: str, dashboard_url: str
+    new_reports: list[str],
+    new_messages: list[str],
+    webhook_type: str,
+    app_name: str,
+    dashboard_url: str,
 ) -> dict[str, Any]:
     """Build webhook payload in the format expected by the target service."""
-    ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
+    reports, messages = _summary(new_reports), _summary(new_messages)
 
     if webhook_type == "slack":
         return {
             "blocks": [
                 {
                     "type": "header",
-                    "text": {"type": "plain_text", "text": f"🔔 New report — {app_name}"},
+                    "text": {"type": "plain_text", "text": f"🔔 New activity — {app_name}"},
                 },
                 {
                     "type": "section",
                     "fields": [
-                        {"type": "mrkdwn", "text": f"*Case number:*\n`{case_number}`"},
-                        {"type": "mrkdwn", "text": f"*Received at:*\n{ts}"},
+                        {"type": "mrkdwn", "text": f"*New reports:*\n{reports}"},
+                        {"type": "mrkdwn", "text": f"*New messages on:*\n{messages}"},
                     ],
                 },
                 {
@@ -382,13 +432,13 @@ def _build_webhook_payload(
                                 "type": "TextBlock",
                                 "size": "Medium",
                                 "weight": "Bolder",
-                                "text": f"New report received — {app_name}",
+                                "text": f"New activity — {app_name}",
                             },
                             {
                                 "type": "FactSet",
                                 "facts": [
-                                    {"title": "Case number", "value": case_number},
-                                    {"title": "Received at", "value": ts},
+                                    {"title": "New reports", "value": reports},
+                                    {"title": "New messages on", "value": messages},
                                 ],
                             },
                         ],
@@ -406,14 +456,14 @@ def _build_webhook_payload(
 
     # generic (default)
     return {
-        "event": "new_report",
-        "case_number": case_number,
-        "timestamp": datetime.now(UTC).isoformat(),
+        "event": "new_activity",
+        "new_reports": new_reports,
+        "new_messages": new_messages,
     }
 
 
-async def _send_webhook(case_number: str, settings: object) -> None:
-    """POST a JSON notification to the configured webhook URL."""
+async def _send_webhook(new_reports: list[str], new_messages: list[str], settings: object) -> None:
+    """POST the digest as JSON to the configured webhook URL."""
     import httpx
 
     from app.config import Settings
@@ -421,7 +471,7 @@ async def _send_webhook(case_number: str, settings: object) -> None:
 
     dashboard_url = f"{cfg.app_public_url.rstrip('/')}/admin/dashboard"
     payload = _build_webhook_payload(
-        case_number, cfg.notify_webhook_type, cfg.app_name, dashboard_url
+        new_reports, new_messages, cfg.notify_webhook_type, cfg.app_name, dashboard_url
     )
     body_bytes = json.dumps(payload, separators=(",", ":")).encode("utf-8")
 
@@ -439,8 +489,8 @@ async def _send_webhook(case_number: str, settings: object) -> None:
             resp = await client.post(cfg.notify_webhook_url, content=body_bytes, headers=headers)
             resp.raise_for_status()
         log.info(
-            "Webhook notification sent for %s (type=%s, HTTP %s)",
-            case_number, cfg.notify_webhook_type, resp.status_code,
+            "Webhook notification sent (type=%s, HTTP %s)",
+            cfg.notify_webhook_type, resp.status_code,
         )
     except Exception:
-        log.exception("Failed to send webhook notification for %s", case_number)
+        log.exception("Failed to send webhook notification")

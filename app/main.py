@@ -55,8 +55,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         await seed_demo_data()
         logger.info("Demo data seeded.")
 
+    from app.services.notifications import batching_enabled  # noqa: PLC0415
+
     scheduler = None
-    if settings.reminder_enabled or settings.retention_enabled or settings.update_check_enabled:
+    if (
+        settings.reminder_enabled
+        or settings.retention_enabled
+        or settings.update_check_enabled
+        or batching_enabled()
+    ):
         from apscheduler.schedulers.asyncio import AsyncIOScheduler  # noqa: PLC0415
 
         scheduler = AsyncIOScheduler()
@@ -76,6 +83,22 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
                 run_retention_cleanup, "cron", hour=3, minute=0, id="retention_cleanup"
             )
             logger.info("Data retention scheduler registered (daily at 03:00 UTC).")
+
+        if batching_enabled():
+            from datetime import UTC, datetime  # noqa: PLC0415
+
+            from app.services.notifications import deliver_notification_digest  # noqa: PLC0415
+
+            # Aligned to a fixed origin, so every replica fires at the same moment.
+            scheduler.add_job(
+                deliver_notification_digest, "interval",
+                minutes=settings.notification_batch_minutes,
+                start_date=datetime(2026, 1, 1, tzinfo=UTC), id="notification_digest",
+            )
+            logger.info(
+                "Notification digest registered (every %d min).",
+                settings.notification_batch_minutes,
+            )
 
         if settings.update_check_enabled:
             from app.services.version_check import refresh_update_check  # noqa: PLC0415
