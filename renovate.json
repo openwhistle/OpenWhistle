@@ -108,10 +108,14 @@
       ]
     },
     {
-      "description": "Python is written in the Dockerfile, every workflow's setup-python and pyproject's requires-python. One pull request, never auto-merged — a runtime bump is a release decision.",
+      "description": "Python is written in the Dockerfile, every workflow's setup-python and pyproject's requires-python. One pull request, never auto-merged for a version bump (minor/major) — a runtime bump is a release decision. Digest-only refreshes of the same tag are a different update type and fall through to the general digest rule above, so they still auto-merge.",
       "groupName": "Python runtime",
       "matchDepNames": [
         "python"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "major"
       ],
       "automerge": false,
       "labels": [

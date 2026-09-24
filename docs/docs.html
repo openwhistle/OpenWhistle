@@ -1042,6 +1042,15 @@
           draft attachments are refused, so the rest of Redis keeps working.
         </p>
 
+        <h3 id="selinux">SELinux hosts</h3>
+        <p>
+          On a host with SELinux enforcing (Fedora, RHEL, CentOS and derivatives), the
+          bind-mounted files in <code>docker-compose.prod.yml</code> and the Ansible template
+          (<code>nginx.conf</code>, <code>nginx/certs</code>, <code>/etc/letsencrypt</code>)
+          carry the <code>:z</code> relabel option, so the container can read them. This is
+          required on SELinux hosts and a no-op everywhere else — nothing to configure.
+        </p>
+
         <h3 id="helm">Kubernetes (Helm)</h3>
         <p>
           The ingress controller sees every whistleblower's IP address. The chart

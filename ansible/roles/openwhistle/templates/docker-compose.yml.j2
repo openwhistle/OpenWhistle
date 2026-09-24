@@ -4,7 +4,7 @@ services:
     env_file: .env
     read_only: true
     tmpfs:
-      - /tmp
+      - /tmp:size=128m
     cap_drop:
       - ALL
     security_opt:
@@ -23,9 +23,8 @@ services:
     image: nginx:alpine
     read_only: true
     tmpfs:
-      - /tmp
-      - /var/cache/nginx
-      - /var/run
+      - /tmp:size=128m
+      - /var/cache/nginx:size=128m
     cap_drop:
       - ALL
     cap_add:
@@ -39,8 +38,10 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
+      # :z relabels for SELinux hosts (shared label; a no-op elsewhere). Never
+      # :Z on /etc/letsencrypt — certbot on the host writes there too.
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro,z
+      - /etc/letsencrypt:/etc/letsencrypt:ro,z
     depends_on:
       - app
     restart: always

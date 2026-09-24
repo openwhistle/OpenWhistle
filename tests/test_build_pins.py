@@ -55,8 +55,14 @@ def test_runtime_image_has_no_curl_and_a_python_healthcheck() -> None:
     assert re.search(r"HEALTHCHECK .*\n?.*python", final)
 
 
+COMPOSE_FILES = (
+    "docker-compose.prod.yml",
+    "ansible/roles/openwhistle/templates/docker-compose.yml.j2",
+)
+
+
 def test_compose_app_is_read_only_without_capabilities() -> None:
-    for path in ("docker-compose.prod.yml", "ansible/roles/openwhistle/templates/docker-compose.yml.j2"):
+    for path in COMPOSE_FILES:
         app = (ROOT / path).read_text().split("\n  nginx:", 1)[0]
         for needle in ("read_only: true", "- /tmp", "cap_drop:", "- ALL", "no-new-privileges:true"):
             assert needle in app, f"{path}: app service lacks {needle!r}"
@@ -77,3 +83,16 @@ def test_helm_container_security_context() -> None:
 def test_ansible_directory_is_kept_out_of_the_build_context() -> None:
     lines = (ROOT / ".dockerignore").read_text().split()
     assert "ansible" in lines
+
+
+def test_compose_host_bind_mounts_carry_the_selinux_label() -> None:
+    """Every host-path bind mount (not a named volume, not tmpfs) needs :z so it
+    is readable under SELinux — a no-op on hosts that don't enforce it."""
+    pattern = re.compile(r"^\s*- (\.{1,2}/\S+|/\S+):(/\S+):(\S+)\s*$", re.M)
+    found = False
+    for path in COMPOSE_FILES:
+        text = (ROOT / path).read_text()
+        for host, _container, opts in pattern.findall(text):
+            found = True
+            assert "z" in opts.split(","), f"{path}: {host} bind mount lacks :z ({opts!r})"
+    assert found, "no bind mount matched — the check reaches nothing"

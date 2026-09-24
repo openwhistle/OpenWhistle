@@ -286,8 +286,12 @@ async def test_audit_log_csv_export_is_scoped_per_org(
     """An org admin's CSV export contains that org's rows and not another org's."""
     from app.services.audit import log as audit_log
 
-    await audit_log(db_session, two_orgs["admin_a"], "admin.created", detail={"username": "org_a_probe"})
-    await audit_log(db_session, two_orgs["user_b"], "admin.created", detail={"username": "org_b_probe"})
+    await audit_log(
+        db_session, two_orgs["admin_a"], "admin.created", detail={"username": "org_a_probe"}
+    )
+    await audit_log(
+        db_session, two_orgs["user_b"], "admin.created", detail={"username": "org_b_probe"}
+    )
     await db_session.commit()
 
     resp = await as_admin_a.get("/admin/audit-log/export.csv")

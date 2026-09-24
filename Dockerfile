@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1.27
 
 # ─── Stage 1: dependency builder ─────────────────────────────────────────────
+# Digest from `skopeo inspect --format '{{.Digest}}' docker://docker.io/library/python:3.14-alpine` (multi-arch index digest); Renovate's pinDigests rule keeps it current.
 FROM python:3.14-alpine@sha256:9e9fde4d32eedce0b661d9ab91e826b62dddf28e928c230ec55f1866cac66b01 AS builder
 
 WORKDIR /build
@@ -22,6 +23,7 @@ COPY pyproject.toml uv.lock ./
 RUN UV_PROJECT_ENVIRONMENT=/venv UV_PYTHON_DOWNLOADS=never uv sync --frozen --no-dev --no-install-project --no-cache
 
 # ─── Stage 2: production image ────────────────────────────────────────────────
+# Same digest and provenance as the builder stage above.
 FROM python:3.14-alpine@sha256:9e9fde4d32eedce0b661d9ab91e826b62dddf28e928c230ec55f1866cac66b01 AS final
 
 WORKDIR /app
@@ -31,8 +33,9 @@ RUN apk add --no-cache \
     libpq \
     libffi
 
-# Non-root user for security
-RUN addgroup -S openwhistle && adduser -S openwhistle -G openwhistle
+# Non-root user for security, uid/gid 1000 to match the Helm chart's
+# securityContext (runAsUser/fsGroup: 1000).
+RUN addgroup -S -g 1000 openwhistle && adduser -S -u 1000 -G openwhistle openwhistle
 
 # Copy virtualenv from builder — shebangs point to /venv (same path)
 COPY --from=builder /venv /venv
