@@ -218,13 +218,7 @@ async def test_totp_secret_is_stored_encrypted(db_session: AsyncSession) -> None
     assert raw != secret
     assert decrypt(raw) == secret
 
-    # Reload through a fresh session/connection rather than `db_session.expire_all()` +
-    # `db_session.get()` on the same session: on this stack (Python 3.14, SQLAlchemy 2.0,
-    # greenlet 3.5, asyncpg, NullPool) reusing one AsyncSession for a second checkout
-    # right after an ORM flush against admin_users raises MissingGreenlet — reproduced
-    # even with a plain String column and no encryption involved, so it is a pre-existing
-    # environment issue, not something this feature causes. `setup_incomplete` in
-    # tests/test_v150_auth.py uses the same own-engine pattern for the same reason.
+    # Reload through a fresh session so the value comes from the database, not the identity map.
     engine = create_async_engine(settings.database_url, poolclass=NullPool)
     try:
         session_factory = async_sessionmaker(engine, expire_on_commit=False)
@@ -233,6 +227,9 @@ async def test_totp_secret_is_stored_encrypted(db_session: AsyncSession) -> None
     finally:
         await engine.dispose()
     assert loaded is not None and loaded.totp_secret == secret
+
+    await db_session.execute(text("DELETE FROM admin_users WHERE id = :id"), {"id": user.id})
+    await db_session.commit()
 
 
 def test_migration_004_encrypts_plaintext_secrets_once() -> None:
@@ -243,3 +240,88 @@ def test_migration_004_encrypts_plaintext_secrets_once() -> None:
     mig = importlib.import_module("migrations.versions.004_encrypt_totp_secrets")
     assert not mig._is_token("JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP")
     assert mig._is_token(encrypt("JBSWY3DPEHPK3PXP"))
+
+
+def _alembic(*args: str) -> None:
+    import subprocess
+
+    run = subprocess.run(  # noqa: S603
+        ["alembic", *args], capture_output=True, text=True, check=False  # noqa: S607
+    )
+    assert run.returncode == 0, run.stderr
+
+
+@pytest.mark.asyncio
+async def test_migration_004_round_trip_encrypts_and_stays_idempotent(
+    db_session: AsyncSession,
+) -> None:
+    """Exercise migration 004's data path (not just `_is_token` on literals): a
+    real downgrade decrypts and narrows, a legacy plaintext row gets picked up
+    by the next upgrade, and a row that already holds a token is left alone."""
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+    from sqlalchemy.pool import NullPool
+
+    from app.services.crypto import decrypt, encrypt
+    from app.services.mfa import verify_totp
+
+    secret1, secret2, secret3 = (pyotp.random_base32() for _ in range(3))
+    ids = {"user1": uuid.uuid4(), "user2": uuid.uuid4(), "user3": uuid.uuid4()}
+
+    user1 = AdminUser(
+        id=ids["user1"], username=f"mig004a_{uuid.uuid4().hex[:8]}",
+        password_hash=hash_password(_PASSWORD), totp_secret=secret1, totp_enabled=True,
+    )
+    db_session.add(user1)
+    await db_session.commit()  # close the session's transaction before the subprocess
+
+    try:
+        _alembic("downgrade", "7d4e2b9c1a05")
+        raw1 = await db_session.scalar(
+            text("SELECT totp_secret FROM admin_users WHERE id = :id"), {"id": ids["user1"]}
+        )
+        assert raw1 == secret1
+
+        # A legacy row (plaintext, never touched migration 004) and, to prove the
+        # upgrade loop's `if not _is_token(...)` guard, a row that already holds a
+        # token — widen the column ourselves first (what migration 004's own
+        # upgrade() does as its first, idempotent step) so the token fits.
+        token3_before = encrypt(secret3)
+        await db_session.execute(text("ALTER TABLE admin_users ALTER COLUMN totp_secret TYPE TEXT"))
+        await db_session.execute(text(
+            "INSERT INTO admin_users (id, username, password_hash, totp_secret, totp_enabled,"
+            " role, is_active) VALUES (:i, :u, :p, :t, true, 'admin', true)"
+        ), {"i": ids["user2"], "u": f"mig004b_{uuid.uuid4().hex[:8]}",
+            "p": hash_password(_PASSWORD), "t": secret2})
+        await db_session.execute(text(
+            "INSERT INTO admin_users (id, username, password_hash, totp_secret, totp_enabled,"
+            " role, is_active) VALUES (:i, :u, :p, :t, true, 'admin', true)"
+        ), {"i": ids["user3"], "u": f"mig004c_{uuid.uuid4().hex[:8]}",
+            "p": hash_password(_PASSWORD), "t": token3_before})
+        await db_session.commit()  # close the session's transaction before the subprocess
+    finally:
+        _alembic("upgrade", "head")
+
+    rows = dict((await db_session.execute(text(
+        "SELECT id, totp_secret FROM admin_users WHERE id IN (:a, :b, :c)"
+    ), {"a": ids["user1"], "b": ids["user2"], "c": ids["user3"]})).tuples().all())
+    assert rows[ids["user1"]] != secret1
+    assert decrypt(rows[ids["user1"]]) == secret1
+    assert rows[ids["user2"]] != secret2
+    assert decrypt(rows[ids["user2"]]) == secret2
+    assert rows[ids["user3"]] == token3_before  # already a token: byte-identical, not re-encrypted
+
+    engine = create_async_engine(settings.database_url, poolclass=NullPool)
+    try:
+        session_factory = async_sessionmaker(engine, expire_on_commit=False)
+        async with session_factory() as fresh:
+            loaded = await fresh.get(AdminUser, ids["user1"])
+    finally:
+        await engine.dispose()
+    assert loaded is not None
+    assert verify_totp(loaded.totp_secret, pyotp.TOTP(secret1).now())
+
+    await db_session.execute(
+        text("DELETE FROM admin_users WHERE id IN (:a, :b, :c)"),
+        {"a": ids["user1"], "b": ids["user2"], "c": ids["user3"]},
+    )
+    await db_session.commit()
