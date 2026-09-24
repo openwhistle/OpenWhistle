@@ -90,6 +90,10 @@ class Settings(BaseSettings):
     # Submission mode
     submission_mode_enabled: bool = True
 
+    # New draft attachments are refused while Redis uses more than this share
+    # of its maxmemory (no effect when Redis has no maxmemory set).
+    draft_redis_memory_percent: int = 80
+
     # OIDC (optional)
     oidc_enabled: bool = False
     oidc_client_id: str = ""
@@ -122,8 +126,13 @@ class Settings(BaseSettings):
     notify_webhook_secret: str = ""    # HMAC-SHA256 signing secret (optional)
     notify_webhook_type: str = "generic"  # "generic", "slack", or "teams"
 
+    # New-report / whistleblower-message notices are sent as one digest every N
+    # minutes, so their timing cannot be matched to who was at their desk.
+    # 0 sends each one immediately.
+    notification_batch_minutes: int = 60
+
     # Data-retention policy (GDPR Art. 5 storage limitation)
-    retention_enabled: bool = False
+    retention_enabled: bool = True
     retention_days: int = 1095  # 3 years — HinSchG §11 Abs. 5 deletion deadline
 
     # Multi-tenancy

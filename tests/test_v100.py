@@ -560,10 +560,11 @@ class TestOrganisationsPage:
 
 
 class TestConfigV100Defaults:
-    def test_retention_enabled_defaults_false(self) -> None:
-        from app.config import settings
+    def test_retention_enabled_defaults_true(self) -> None:
+        # The suite sets RETENTION_ENABLED=false; the shipped default is on (v1.5.0).
+        from app.config import Settings
 
-        assert settings.retention_enabled is False
+        assert Settings.model_fields["retention_enabled"].default is True
 
     def test_retention_days_defaults_1095(self) -> None:
         from app.config import settings

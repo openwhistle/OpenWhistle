@@ -333,11 +333,11 @@
                     {% for att in report.attachments %}
                     <li class="attachment-item">
                         <span class="attachment-icon">&#128206;</span>
-                        <span class="attachment-name" title="{{ att.filename }}">{{ att.filename }}</span>
+                        <span class="attachment-name" title="{{ attachment_names[loop.index0] }}">{{ attachment_names[loop.index0] }}</span>
                         <span class="attachment-size">{{ att.size | format_size }}</span>
                         <a href="/admin/reports/{{ report.id }}/attachments/{{ att.id }}"
                            class="btn btn-secondary btn-sm"
-                           download="{{ att.filename }}">{{ t('admin.report.attachments.download') }}</a>
+                           download="{{ attachment_names[loop.index0] }}">{{ t('admin.report.attachments.download') }}</a>
                     </li>
                     {% endfor %}
                 </ul>

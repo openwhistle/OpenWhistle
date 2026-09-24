@@ -89,6 +89,8 @@
             {% elif error == 'description_too_long' %}{{ t('submit.error.description_too_long') }}
             {% elif error == 'invalid_location' %}{{ t('submit.error.invalid_location') }}
             {% elif error == 'session_incomplete' %}{{ t('submit.error.session_incomplete') }}
+            {% elif error == 'attachments_too_large' %}{{ t('submit.error.attachments_too_large') }}
+            {% elif error == 'attachments_no_room' %}{{ t('submit.error.attachments_no_room') }}
             {% else %}{{ error }}{% endif %}
         </div>
         {% endif %}

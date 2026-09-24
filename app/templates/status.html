@@ -247,7 +247,7 @@
             {% for att in report.attachments %}
             <li class="attachment-item">
                 <span class="attachment-icon">&#128206;</span>
-                <a href="/status/attachments/{{ att.id }}" class="attachment-name" download>{{ att.filename }}</a>
+                <a href="/status/attachments/{{ att.id }}" class="attachment-name" download>{{ attachment_names[loop.index0] }}</a>
                 <span class="attachment-size">{{ att.size | format_size }}</span>
                 <a href="/status/attachments/{{ att.id }}" class="btn btn-secondary btn-sm" download>{{ t('status.attachments.download') }}</a>
             </li>
