@@ -1754,6 +1754,8 @@
           Every admin action is recorded in an immutable audit log (required by HinSchG §11 Abs. 5).
           View and filter the log at <code>/admin/audit-log</code>; actions and details are shown as readable
           labels. Export as CSV at any time — the export keeps the machine action codes and adds a label column.
+          With multi-tenancy on, each organisation sees only its own entries, while instance-wide security
+          events (such as a password-spraying alert) are shown to superadmins only.
         </p>
 
         <h3>Categories and locations</h3>

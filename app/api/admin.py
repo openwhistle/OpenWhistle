@@ -955,6 +955,7 @@ async def audit_log_page(
         action=action_filter or None,
         page=page,
         per_page=50,
+        viewer_id=current_user.id,
         **_org_scope(current_user),
     )
     total_pages = max(1, (total + 49) // 50)
@@ -980,7 +981,9 @@ async def audit_log_csv(
     import csv
     import io
 
-    entries, _ = await audit_service.get_audit_log(db, per_page=10000, **_org_scope(current_user))
+    entries, _ = await audit_service.get_audit_log(
+        db, per_page=10000, viewer_id=current_user.id, **_org_scope(current_user)
+    )
     output = io.StringIO()
     writer = csv.writer(output)
     # "action" keeps the machine code for tooling; "action_label" is for people.

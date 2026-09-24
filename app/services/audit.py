@@ -10,6 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.audit import AuditLog
+from app.models.report import Report
 from app.models.user import AdminUser
 
 
@@ -57,8 +58,6 @@ async def log(
 ) -> AuditLog:
     org_id = actor.org_id
     if report_id is not None:
-        from app.models.report import Report  # noqa: PLC0415
-
         org_id = await db.scalar(select(Report.org_id).where(Report.id == report_id))
 
     entry = AuditLog(
@@ -102,7 +101,15 @@ async def get_audit_log(
     per_page: int = 50,
     scope_org: bool = False,
     org_id: uuid.UUID | None = None,
+    viewer_id: uuid.UUID | None = None,
 ) -> tuple[list[AuditLog], int]:
+    """`scope_org`/`org_id` are `_org_scope(user)` — untouched, org-scoped semantics.
+
+    An org-less non-superadmin (`scope_org=True, org_id=None`) is the one case
+    `_org_scope` can't distinguish from "no scoping": here it must NOT see every
+    org-less row (system alerts, other org-less admins' actions) — only rows they
+    authored themselves. `viewer_id` (the caller's own admin id) carries that.
+    """
     from sqlalchemy import func
 
     q = select(AuditLog).order_by(AuditLog.created_at.desc())
@@ -113,7 +120,10 @@ async def get_audit_log(
     if admin_id is not None:
         q = q.where(AuditLog.admin_id == admin_id)
     if scope_org:
-        q = q.where(AuditLog.org_id == org_id)
+        if org_id is not None:
+            q = q.where(AuditLog.org_id == org_id)
+        else:
+            q = q.where(AuditLog.org_id.is_(None), AuditLog.admin_id == viewer_id)
 
     count_result = await db.execute(select(func.count()).select_from(q.subquery()))
     total: int = count_result.scalar_one()

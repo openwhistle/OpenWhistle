@@ -205,6 +205,80 @@ async def test_audit_log_page_is_scoped_per_org(
     assert two_orgs["admin_a"].username not in page_b
 
 
+def _org_less_admin() -> AdminUser:
+    return AdminUser(
+        id=uuid.uuid4(), username=f"ol_{uuid.uuid4().hex[:8]}", role=AdminRole.admin,
+        is_active=True, totp_secret="JBSWY3DPEHPK3PXP", totp_enabled=True, org_id=None,
+    )
+
+
+@pytest.mark.asyncio
+async def test_org_less_admin_sees_only_their_own_org_less_audit_rows(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Residual NULL-org exposure fix: an org-less admin must not see the system's
+    own alerts (admin_id NULL) nor another org-less admin's rows — only their own."""
+    from app.services import audit as audit_service
+
+    monkeypatch.setattr(settings, "multi_tenancy_enabled", True)
+    viewer, other = _org_less_admin(), _org_less_admin()
+    db_session.add_all([viewer, other])
+    await db_session.flush()
+
+    own = await audit_service.log(db_session, viewer, "admin.created")
+    others_row = await audit_service.log(db_session, other, "admin.created")
+    system_row = await audit_service.log_system(db_session, "auth.password_spraying_suspected")
+    await db_session.commit()
+
+    entries, total = await audit_service.get_audit_log(
+        db_session, scope_org=True, org_id=None, viewer_id=viewer.id,
+    )
+    ids = {e.id for e in entries}
+    assert own.id in ids
+    assert others_row.id not in ids
+    assert system_row.id not in ids
+    assert total == 1
+
+
+@pytest.mark.asyncio
+async def test_superadmin_sees_system_audit_rows(db_session: AsyncSession) -> None:
+    """A superadmin (`_org_scope` gives `scope_org=False`) is unrestricted — the only
+    role that can see instance-wide system rows and every org's rows."""
+    from app.services import audit as audit_service
+
+    system_row = await audit_service.log_system(db_session, "auth.password_spraying_suspected")
+    await db_session.commit()
+
+    entries, _ = await audit_service.get_audit_log(db_session, scope_org=False, org_id=None)
+    assert system_row.id in {e.id for e in entries}
+
+
+@pytest.mark.asyncio
+async def test_audit_log_csv_export_follows_org_less_scoping(
+    client: AsyncClient, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The export route shares `get_audit_log`, so it must follow the same rule as the page."""
+    from app.services import audit as audit_service
+
+    monkeypatch.setattr(settings, "multi_tenancy_enabled", True)
+    viewer, other = _org_less_admin(), _org_less_admin()
+    db_session.add_all([viewer, other])
+    await db_session.flush()
+    await audit_service.log(db_session, viewer, "admin.created")
+    await audit_service.log(db_session, other, "admin.created")
+    await audit_service.log_system(db_session, "auth.password_spraying_suspected")
+    await db_session.commit()
+
+    app.dependency_overrides[get_current_admin] = lambda: viewer
+    try:
+        resp = await client.get("/admin/audit-log/export.csv")
+    finally:
+        app.dependency_overrides.pop(get_current_admin, None)
+    assert viewer.username in resp.text
+    assert other.username not in resp.text
+    assert ",system," not in resp.text
+
+
 @pytest.mark.asyncio
 async def test_dashboard_statistics_are_scoped(
     db_session: AsyncSession, two_orgs: dict[str, AdminUser]
