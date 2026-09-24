@@ -1,5 +1,7 @@
 [codespell]
-skip = .git,.venv,uv.lock,htmlcov,*.woff2,*.png,*.ico,*.svg,.superpowers,.serena,.claude,CLAUDE.md,app/static/css/site.css,*/locales/*.json,docs/de/**,docs/blog/**,docs/hinschg_reference.md,docs-tech/plans/**
+skip = .git,.venv,uv.lock,htmlcov,*.woff2,*.png,*.ico,*.svg,.superpowers,.serena,.claude,CLAUDE.md,app/static/css/site.css,./app/locales/de.json,./app/locales/fr.json,./app/locales/pt-br.json,./docs/de,./docs/blog,./docs/hinschg_reference.md,./docs-tech/plans
 check-hidden = false
-# German language content in documentation and German domain-specific terms
-ignore-words-list = Alle,Aktion,Adresse,Assistent,als,alle,Aktive,aktive,Autor,autor,Dezember,Eine,eine,Ende,Erro,Frist,Funktion,HinSchG,Ist,ist,Juli,Klick,Paket,Plattform,Probleme,Prozess,Tage,Titel,Unser,Vor,vor,Sie,sie,oder,Oder,unter,froms,caracteres,nome,ser,adresse,manuell,garantie,startet
+# Legitimate English word flagged as typo (legal term: secret/undisclosed recording)
+# German text in changelog example (89d Tage verbleibend — bug description)
+# German test data strings in test fixtures (Titel, ist, unter, oder, garantie)
+ignore-words-list = covert,Tage,Titel,ist,unter,oder,garantie
