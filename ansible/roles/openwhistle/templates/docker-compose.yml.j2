@@ -46,7 +46,9 @@ services:
 
   redis:
     image: redis:8-alpine
-    command: redis-server --save "" --appendonly no --requirepass "${REDIS_PASSWORD}"
+    # noeviction: sessions and rate-limit counters are never dropped; drafts
+    # stop taking attachments at DRAFT_REDIS_MEMORY_PERCENT of maxmemory.
+    command: redis-server --save "" --appendonly no --maxmemory {{ openwhistle_redis_maxmemory }} --maxmemory-policy noeviction --requirepass "${REDIS_PASSWORD}"
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
