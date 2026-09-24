@@ -1,5 +1,7 @@
 """Shared Jinja2 templates instance — avoids circular imports."""
 
+import json
+from collections.abc import Callable
 from typing import Any
 
 from fastapi import Request
@@ -28,6 +30,42 @@ templates.env.globals["is_demo"] = settings.demo_mode
 templates.env.globals["app_version"] = settings.app_version
 
 
+def template_translator(lang: str) -> Callable[..., str | Markup]:
+    """The ``t()`` templates call: a translator that marks HTML keys safe."""
+    _t = make_translator(lang)
+
+    def t(key: str, **kwargs: Any) -> str | Markup:
+        result = _t(key, **kwargs)
+        # Mark safe only for locale keys that explicitly contain HTML (suffixed
+        # .html). A miss returns the key itself, and templates also pass plain
+        # messages through t() — those must stay escaped whatever they end with.
+        is_html = key.endswith(".html") and result != key
+        return Markup(result) if is_html else result  # noqa: S704
+
+    return t
+
+
+def audit_detail(detail: str | None) -> list[tuple[str, str]]:
+    """Split an audit entry's JSON detail into (key, value) pairs for display.
+
+    Anything that is not a JSON object is returned as one pair with an empty
+    key, so a legacy free-text detail still shows. Values stay plain strings;
+    Jinja escapes them on output.
+    """
+    if not detail:
+        return []
+    try:
+        data = json.loads(detail)
+    except ValueError:
+        return [("", detail)]
+    if not isinstance(data, dict):
+        return [("", detail)]
+    return [(str(k), "—" if v is None else str(v)) for k, v in data.items()]
+
+
+templates.env.filters["audit_detail"] = audit_detail
+
+
 def render(
     request: Request,
     template: str,
@@ -36,14 +74,7 @@ def render(
 ) -> HTMLResponse:
     ctx: dict[str, Any] = dict(context or {})
     lang = get_lang(request)
-    _t = make_translator(lang)
-
-    def t(key: str, **kwargs: Any) -> str | Markup:
-        result = _t(key, **kwargs)
-        # Mark safe only for keys that explicitly contain HTML (suffixed .html)
-        return Markup(result) if key.endswith(".html") else result  # noqa: S704
-
-    ctx["t"] = t
+    ctx["t"] = template_translator(lang)
     ctx["lang"] = lang
 
     session_expires_at = getattr(request.state, "session_expires_at", None)

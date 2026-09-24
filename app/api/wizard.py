@@ -48,30 +48,31 @@ async def setup_get(
 @router.post("/setup", response_class=HTMLResponse, response_model=None)
 async def setup_post(
     request: Request,
-    username: str = Form(...),
-    password: str = Form(...),
-    password_confirm: str = Form(...),
+    username: str = Form(""),
+    password: str = Form(""),
+    password_confirm: str = Form(""),
     totp_secret: str = Form(...),
-    totp_code: str = Form(...),
+    totp_code: str = Form(""),
     db: AsyncSession = Depends(get_db),
     _csrf: None = Depends(validate_csrf),
 ) -> HTMLResponse | RedirectResponse:
     if await _is_setup_complete(db):
         return RedirectResponse("/admin/login", status_code=302)
 
-    errors: list[str] = []
+    # field -> locale key; each shows next to its field and in the summary banner.
+    errors: dict[str, str] = {}
 
     if len(username) < 3 or len(username) > 64:
-        errors.append("Username must be between 3 and 64 characters.")
+        errors["username"] = "wizard.error.username"
 
     if len(password) < 12:
-        errors.append("Password must be at least 12 characters.")
+        errors["password"] = "wizard.error.password"  # noqa: S105 — locale key
 
     if password != password_confirm:
-        errors.append("Passwords do not match.")
+        errors["password_confirm"] = "wizard.error.password_confirm"  # noqa: S105
 
     if not verify_totp(totp_secret, totp_code):
-        errors.append("Invalid TOTP code. Please scan the QR code and enter the current code.")
+        errors["totp_code"] = "wizard.error.totp_code"
 
     if errors:
         qr_code = generate_qr_code_base64(totp_secret, username)
@@ -81,7 +82,7 @@ async def setup_post(
             {
                 "totp_secret": totp_secret,
                 "qr_code": qr_code,
-                "errors": errors,
+                "field_errors": errors,
                 "username": username,
             },
         )

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_field.html" as field with context %}
 
 {% block styles %}
 <style nonce="{{ request.state.csp_nonce }}">
@@ -36,34 +37,34 @@
         <div class="demo-credentials" role="note">
             <div class="demo-credentials-header">
                 <span class="demo-badge">DEMO</span>
-                <span>Try it now. Use these credentials.</span>
+                <span>{{ t('demo.login.hint') }}</span>
             </div>
             <div class="demo-credentials-grid">
                 <div class="demo-cred-item">
-                    <span class="demo-cred-label">Username</span>
-                    <button type="button" id="demo-fill-btn-user" class="demo-cred-value" title="Click to fill">
+                    <span class="demo-cred-label">{{ t('login.username') }}</span>
+                    <button type="button" id="demo-fill-btn-user" class="demo-cred-value" title="{{ t('demo.login.click_to_fill') }}">
                         demo
                     </button>
                 </div>
                 <div class="demo-cred-item">
-                    <span class="demo-cred-label">Password</span>
-                    <button type="button" id="demo-fill-btn-pass" class="demo-cred-value" title="Click to fill">
+                    <span class="demo-cred-label">{{ t('login.password') }}</span>
+                    <button type="button" id="demo-fill-btn-pass" class="demo-cred-value" title="{{ t('demo.login.click_to_fill') }}">
                         demo
                     </button>
                 </div>
                 <div class="demo-cred-item demo-cred-full">
-                    <span class="demo-cred-label">TOTP code (next step)</span>
+                    <span class="demo-cred-label">{{ t('demo.login.totp') }}</span>
                     <code class="demo-cred-code">0 0 0 0 0 0</code>
                 </div>
             </div>
-            <button type="button" id="demo-fill-btn-all" class="demo-fill-btn">
-                Fill credentials
+            <button type="button" id="demo-fill-btn-all" class="demo-fill-btn" data-filled="{{ t('demo.login.filled') }}">
+                {{ t('demo.login.fill') }}
             </button>
         </div>
         {% endif %}
 
         {% if error %}
-        <div class="alert alert-error" role="alert">{{ error }}</div>
+        <div class="alert alert-error" role="alert">{{ t(error) }}</div>
         {% endif %}
 
         <div class="panel anim-in delay-08">
@@ -81,7 +82,9 @@
                         name="username"
                         autocomplete="username"
                         required
-                        autofocus>
+                        autofocus
+                        {%- if credentials_invalid %} aria-invalid="true" aria-describedby="credentials-error"{% else %}{{ field.attrs('username') }}{% endif %}>
+                    {{ field.error('username') }}
                 </div>
 
                 <div class="form-group">
@@ -92,7 +95,10 @@
                         id="password"
                         name="password"
                         autocomplete="current-password"
-                        required>
+                        required
+                        {%- if credentials_invalid %} aria-invalid="true" aria-describedby="credentials-error"{% else %}{{ field.attrs('password') }}{% endif %}>
+                    {{ field.error('password') }}
+                    {% if credentials_invalid %}<p class="field-error" id="credentials-error">{{ t('login.error.invalid') }}</p>{% endif %}
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-block lg-btn-mt">
@@ -138,7 +144,7 @@
     if (allBtn) {
         allBtn.addEventListener('click', function() {
             fillDemoCredentials();
-            this.textContent = '✓ Filled';
+            this.textContent = this.dataset.filled;
         });
     }
 })();

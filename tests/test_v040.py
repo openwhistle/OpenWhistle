@@ -239,7 +239,7 @@ async def _do_full_anonymous_submit(client: AsyncClient) -> tuple[str, str]:
     assert resp.status_code == 200
 
     # Should be on success page
-    assert any(k in resp.text for k in ("case_number", "Case Number", "Numéro", "Vorgangsnummer"))
+    assert any(k in resp.text for k in ("case_number", "Case number", "Numéro", "Vorgangsnummer"))
 
     # Extract case number and pin from page
     import re
@@ -275,7 +275,7 @@ class TestI18n:
     def test_en_locale_loads(self) -> None:
         from app.i18n import make_translator
         t = make_translator("en")
-        assert t("nav.submit_report") == "Submit Report"
+        assert t("nav.submit_report") == "Submit report"
 
     def test_de_locale_loads(self) -> None:
         from app.i18n import make_translator
@@ -297,7 +297,7 @@ class TestI18n:
     def test_unknown_lang_falls_back(self) -> None:
         from app.i18n import make_translator
         t = make_translator("xx")  # unknown → falls back to en
-        assert t("nav.submit_report") == "Submit Report"
+        assert t("nav.submit_report") == "Submit report"
 
     def test_format_keys(self) -> None:
         from app.i18n import make_translator
@@ -326,7 +326,7 @@ class TestI18n:
     def test_ptbr_locale_loads(self) -> None:
         from app.i18n import make_translator
         t = make_translator("pt-br")
-        assert t("nav.submit_report") == "Enviar Denúncia"
+        assert t("nav.submit_report") == "Enviar denúncia"
 
     def test_all_en_keys_present_in_ptbr(self) -> None:
         import json

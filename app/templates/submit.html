@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_field.html" as field with context %}
 
 {% block styles %}
 <style nonce="{{ request.state.csp_nonce }}">
@@ -25,32 +26,28 @@
 <div class="split-layout">
     <aside class="split-sidebar" aria-label="{{ t('submit.sidebar.eyebrow') }}">
         <div class="sidebar-eyebrow">{{ t('submit.sidebar.eyebrow') }}</div>
-        <h2 class="sidebar-title">{{ t('submit.sidebar.title') | safe }}</h2>
+        <h2 class="sidebar-title">{{ t('submit.sidebar.title') }}</h2>
 
         <div class="guarantee-list">
             <div class="guarantee-item">
-                <span class="guarantee-num">01</span>
                 <div>
                     <div class="guarantee-title">{{ t('submit.sidebar.g01.title') }}</div>
                     <div class="guarantee-desc">{{ t('submit.sidebar.g01.desc') }}</div>
                 </div>
             </div>
             <div class="guarantee-item">
-                <span class="guarantee-num">02</span>
                 <div>
                     <div class="guarantee-title">{{ t('submit.sidebar.g02.title') }}</div>
                     <div class="guarantee-desc">{{ t('submit.sidebar.g02.desc') }}</div>
                 </div>
             </div>
             <div class="guarantee-item">
-                <span class="guarantee-num">03</span>
                 <div>
                     <div class="guarantee-title">{{ t('submit.sidebar.g03.title') }}</div>
                     <div class="guarantee-desc">{{ t('submit.sidebar.g03.desc') }}</div>
                 </div>
             </div>
             <div class="guarantee-item">
-                <span class="guarantee-num">§17</span>
                 <div>
                     <div class="guarantee-title">{{ t('submit.sidebar.g17.title') }}</div>
                     <div class="guarantee-desc">{{ t('submit.sidebar.g17.desc') }}</div>
@@ -109,12 +106,13 @@
 
             <fieldset class="sub-fieldset-reset">
                 <legend class="form-label sub-mb1">{{ t('submit.step.mode.title') }}</legend>
+                {{ field.error('submission_mode') }}
 
                 <div class="mode-cards">
                     <label class="mode-card" for="mode-anonymous">
                         <input type="radio" id="mode-anonymous" name="submission_mode" value="anonymous"
                                {% if state.get('submission_mode', 'anonymous') == 'anonymous' %}checked{% endif %}
-                               aria-describedby="mode-anonymous-desc">
+                               {{ field.attrs('submission_mode', 'mode-anonymous-desc') }}>
                         <div class="mode-card-inner">
                             <div class="mode-card-icon" aria-hidden="true">&#128100;</div>
                             <div class="mode-card-title">{{ t('submit.step.mode.anonymous.label') }}</div>
@@ -125,7 +123,7 @@
                     <label class="mode-card" for="mode-confidential">
                         <input type="radio" id="mode-confidential" name="submission_mode" value="confidential"
                                {% if state.get('submission_mode') == 'confidential' %}checked{% endif %}
-                               aria-describedby="mode-confidential-desc">
+                               {{ field.attrs('submission_mode', 'mode-confidential-desc') }}>
                         <div class="mode-card-inner">
                             <div class="mode-card-icon" aria-hidden="true">&#128274;</div>
                             <div class="mode-card-title">{{ t('submit.step.mode.confidential.label') }}</div>
@@ -188,7 +186,7 @@
 
             <div class="form-group">
                 <label class="form-label" for="location_id">{{ t('submit.step.location.title') }}</label>
-                <select class="form-control" id="location_id" name="location_id" aria-describedby="location-hint">
+                <select class="form-control" id="location_id" name="location_id"{{ field.attrs('location_id', 'location-hint') }}>
                     <option value="">{{ t('submit.step.location.placeholder') }}</option>
                     {% for loc in locations %}
                     <option value="{{ loc.id }}" {% if state.get('location_id') == loc.id|string %}selected{% endif %}>
@@ -196,6 +194,7 @@
                     </option>
                     {% endfor %}
                 </select>
+                {{ field.error('location_id') }}
                 <div class="form-hint" id="location-hint">{{ t('submit.step.location.hint') }}</div>
             </div>
 
@@ -218,7 +217,7 @@
             <div class="form-group">
                 <label class="form-label" for="category">{{ t('submit.form.category') }}</label>
                 <select class="form-control" id="category" name="category" required
-                        aria-describedby="category-hint" aria-required="true">
+                        aria-required="true"{{ field.attrs('category', 'category-hint') }}>
                     <option value="">{{ t('submit.form.category.placeholder') }}</option>
                     {% for cat in categories %}
                     <option value="{{ cat.slug }}" {% if state.get('category') == cat.slug %}selected{% endif %}>
@@ -226,6 +225,7 @@
                     </option>
                     {% endfor %}
                 </select>
+                {{ field.error('category') }}
                 <div class="form-hint" id="category-hint">{{ t('submit.step.category.hint') }}</div>
             </div>
 
@@ -259,9 +259,10 @@
                     minlength="10"
                     maxlength="10000"
                     aria-required="true"
-                    aria-describedby="description-hint char-counter"
+                    {{ field.attrs('description', 'description-hint char-counter') }}
                     placeholder="{{ t('submit.form.description.placeholder') }}"
                 >{{ state.get('description', '') }}</textarea>
+                {{ field.error('description') }}
                 <div class="form-hint" id="description-hint">{{ t('submit.form.description.hint') }}</div>
             </div>
 
@@ -294,8 +295,9 @@
                     id="files"
                     name="files"
                     multiple
-                    aria-describedby="files-hint"
+                    {{ field.attrs('files', 'files-hint') }}
                     accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.txt,.csv,.docx,.doc,.xlsx,.xls">
+                {{ field.error('files') }}
                 <div class="form-hint" id="files-hint">{{ t('submit.form.files.hint') }}</div>
             </div>
 

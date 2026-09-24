@@ -1,0 +1,15 @@
+{#- Field-level validation errors, rendered server-side so they work without JavaScript.
+    The route passes field_errors = {field_name: locale key or message}. Import with
+    `{% import "_field.html" as field with context %}`. -#}
+
+{#- Attributes for the control: aria-invalid plus aria-describedby naming the inline
+    error first, then any hint ids. -#}
+{% macro attrs(name, hint_ids='') -%}
+{%- if field_errors and field_errors.get(name) %} aria-invalid="true" aria-describedby="{{ name }}-error{% if hint_ids %} {{ hint_ids }}{% endif %}"
+{%- elif hint_ids %} aria-describedby="{{ hint_ids }}"{% endif -%}
+{%- endmacro %}
+
+{#- The inline message next to the control. -#}
+{% macro error(name) -%}
+{%- if field_errors and field_errors.get(name) %}<p class="field-error" id="{{ name }}-error">{{ t(field_errors[name]) }}</p>{% endif -%}
+{%- endmacro %}

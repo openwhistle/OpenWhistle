@@ -219,8 +219,8 @@ async def test_report_detail_shows_new_sections(client: AsyncClient, db_session:
     r = await client.get(f"/admin/reports/{rid}")
     assert r.status_code == 200
     # Check for new v0.3.0 sections
-    assert "Internal Notes" in r.text or "Interne Notizen" in r.text
-    assert "Linked Cases" in r.text or "Verknüpfte Fälle" in r.text
+    assert "Internal notes" in r.text or "Interne Notizen" in r.text
+    assert "Linked cases" in r.text or "Verknüpfte Fälle" in r.text
 
 
 # ── assignment ─────────────────────────────────────────────────────────────────
@@ -378,7 +378,7 @@ async def test_request_delete_creates_pending_state(client: AsyncClient, db_sess
     r = await client.post(f"/admin/reports/{rid}/request-delete", data={"csrf_token": csrf})
     assert r.status_code == 200
     # Should show pending deletion UI
-    assert "Deletion Requested" in r.text or "Löschung beantragt" in r.text
+    assert "Deletion requested" in r.text or "Löschung beantragt" in r.text
 
 
 @pytest.mark.asyncio
@@ -410,7 +410,8 @@ async def test_cancel_deletion_request(client: AsyncClient, db_session: AsyncSes
     r = await client.post(f"/admin/reports/{rid}/cancel-delete", data={"csrf_token": csrf2})
     assert r.status_code == 200
     # Pending state should be gone
-    assert "Deletion Requested" not in r.text
+    # (the activity log still lists "Deletion requested"; the pending panel is gone)
+    assert "A different admin must confirm" not in r.text
 
 
 # ── PDF export ─────────────────────────────────────────────────────────────────
@@ -438,7 +439,7 @@ async def test_dashboard_my_cases_filter(client: AsyncClient, db_session: AsyncS
 
     r = await client.get("/admin/dashboard?my_cases=1")
     assert r.status_code == 200
-    assert "My Cases" in r.text or "Meine Fälle" in r.text
+    assert "My cases" in r.text or "Meine Fälle" in r.text
 
 
 @pytest.mark.asyncio

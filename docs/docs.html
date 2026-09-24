@@ -1599,6 +1599,11 @@
 
         <h3>Managing reports</h3>
         <p>
+          To find a case, type any part of its case number (for example <code>00042</code>) into the
+          search field on <code>/admin/dashboard</code>. Report content is encrypted per report and
+          cannot be searched.
+        </p>
+        <p>
           Click any report to open the case view. From here you can:
         </p>
         <ul>
@@ -1615,7 +1620,8 @@
         <h3>Audit log</h3>
         <p>
           Every admin action is recorded in an immutable audit log (required by HinSchG §11 Abs. 5).
-          View and filter the log at <code>/admin/audit-log</code>; export as CSV at any time.
+          View and filter the log at <code>/admin/audit-log</code>; actions and details are shown as readable
+          labels. Export as CSV at any time — the export keeps the machine action codes and adds a label column.
         </p>
 
         <h3>Categories and locations</h3>

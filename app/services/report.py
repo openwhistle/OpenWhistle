@@ -345,6 +345,7 @@ async def get_reports_paginated(
     location_id: uuid.UUID | None = None,
     org_id: uuid.UUID | None = None,
     scope_org: bool = False,
+    case_query: str | None = None,
 ) -> tuple[list[Report], int]:
     page = max(1, page)
     per_page = max(1, min(100, per_page))
@@ -364,6 +365,11 @@ async def get_reports_paginated(
         # `== org_id` renders `IS NULL` when org_id is None, so an org-less
         # caller is correctly restricted to org-less reports rather than all.
         base_q = base_q.where(Report.org_id == org_id)
+    if case_query:
+        # Case number only: report content is encrypted per report and must stay
+        # unsearchable. Escape LIKE wildcards so "%" or "_" match themselves.
+        needle = case_query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        base_q = base_q.where(Report.case_number.ilike(f"%{needle}%", escape="\\"))
 
     count_result = await db.execute(select(func.count()).select_from(base_q.subquery()))
     total: int = count_result.scalar_one()

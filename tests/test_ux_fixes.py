@@ -284,4 +284,4 @@ async def test_deleted_report_session_falls_back_to_login(
     ) as wb_client:
         resp = await wb_client.get("/status")
         assert resp.status_code == 200
-        assert "Case Number" in resp.text or "Vorgangsnummer" in resp.text
+        assert "Case number" in resp.text or "Vorgangsnummer" in resp.text
