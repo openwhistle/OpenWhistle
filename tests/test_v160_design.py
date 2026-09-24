@@ -1,0 +1,85 @@
+"""v1.6.0 design: the findings of the assessment, pinned in rendered HTML and sources."""
+
+from __future__ import annotations
+
+import re
+import uuid
+from pathlib import Path
+
+import pyotp
+import pytest
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.user import AdminRole, AdminUser
+from app.services.auth import hash_password
+
+ROOT = Path(__file__).parents[1]
+TEMPLATES = ROOT / "app/templates"
+_PASSWORD = "V160-Design-Password"  # noqa: S105
+
+
+async def _login(client: AsyncClient, db: AsyncSession, role: AdminRole) -> None:
+    secret = pyotp.random_base32()
+    user = AdminUser(
+        id=uuid.uuid4(),
+        username=f"des_{uuid.uuid4().hex[:8]}",
+        password_hash=hash_password(_PASSWORD),
+        totp_secret=secret,
+        totp_enabled=True,
+        role=role,
+    )
+    db.add(user)
+    await db.commit()
+    await client.get("/admin/login")
+    r = await client.post(
+        "/admin/login",
+        data={
+            "username": user.username,
+            "password": _PASSWORD,
+            "csrf_token": client.cookies.get("ow_csrf"),
+        },
+    )
+    temp = re.search(r'name="temp_token" value="([^"]+)"', r.text)
+    assert temp
+    await client.post(
+        "/admin/login/mfa",
+        data={
+            "csrf_token": client.cookies.get("ow_csrf"),
+            "temp_token": temp.group(1),
+            "totp_code": pyotp.TOTP(secret).now(),
+        },
+    )
+
+
+def test_admin_navigation_lives_in_one_template() -> None:
+    owners = [p.name for p in (TEMPLATES / "admin").glob("*.html") if "admin-nav" in p.read_text()]
+    assert owners == ["_layout.html"]
+    assert not [
+        p.name
+        for p in (TEMPLATES / "admin").glob("*.html")
+        if "block nav_links" in p.read_text() and p.name != "_layout.html"
+    ]
+
+
+@pytest.mark.asyncio
+async def test_case_manager_sees_only_pages_they_may_open(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    await _login(client, db_session, AdminRole.case_manager)
+    html = (await client.get("/admin/dashboard")).text
+    nav = html.split('class="admin-nav"', 1)[1].split("</nav>", 1)[0]
+    for forbidden in ("/admin/users", "/admin/audit-log", "/admin/system", "/admin/categories"):
+        assert forbidden not in nav
+    assert "/admin/dashboard" in nav
+
+
+@pytest.mark.asyncio
+async def test_admin_sees_configuration_and_administration(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    await _login(client, db_session, AdminRole.admin)
+    nav = (await client.get("/admin/users")).text.split('class="admin-nav"', 1)[1]
+    for link in ("/admin/users", "/admin/audit-log", "/admin/system", "/admin/categories"):
+        assert link in nav
+    assert "/admin/organisations" not in nav.split("</nav>", 1)[0]
