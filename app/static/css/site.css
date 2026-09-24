@@ -3738,8 +3738,6 @@ field-error {
   .demo-banner { flex-wrap: nowrap; white-space: nowrap; }
   .demo-banner-text { display: none; }
   .demo-banner-short { display: inline; overflow: hidden; text-overflow: ellipsis; }
-}
-@media (max-width: 640px) {
   .table-stack thead {
     position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);
   }

@@ -203,6 +203,23 @@ async def test_dashboard_cells_carry_labels_for_the_phone_layout(
     assert 'class="stack-status" data-label=' in html
 
 
+@pytest.mark.asyncio
+async def test_stacked_dashboard_table_keeps_its_table_semantics(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """Regression guard for the Task 26 fix-round-1 finding: at <=640px the
+    table-stack CSS sets table/tbody to display:block and tr to display:grid,
+    which strips the implicit table/rowgroup/row/cell ARIA roles some browsers
+    derive from display. Explicit roles restore them."""
+    from app.services.report import create_report
+
+    await create_report(db_session, "corruption", "ARIA role test report text.")
+    await _login(client, db_session, AdminRole.admin)
+    html = (await client.get("/admin/dashboard")).text
+    assert 'role="table"' in html
+    assert 'role="cell"' in html
+
+
 def test_users_and_audit_tables_also_stack() -> None:
     users_html = (TEMPLATES / "admin/users.html").read_text()
     assert 'class="table-stack"' in users_html

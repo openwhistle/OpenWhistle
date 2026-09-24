@@ -190,20 +190,20 @@
         </div>
 
         <div class="table-wrapper">
-            <table class="table-stack">
-                <thead>
-                    <tr>
-                        <th><a href="{{ sort_url('case_number') }}" class="sort-link">{{ t('admin.table.case_number') }}{{ sort_icon('case_number') }}</a></th>
-                        <th><a href="{{ sort_url('category') }}" class="sort-link">{{ t('admin.table.category') }}{{ sort_icon('category') }}</a></th>
-                        <th><a href="{{ sort_url('status') }}" class="sort-link">{{ t('admin.table.status') }}{{ sort_icon('status') }}</a></th>
-                        <th><a href="{{ sort_url('submitted_at') }}" class="sort-link">{{ t('admin.table.submitted') }}{{ sort_icon('submitted_at') }}</a></th>
-                        <th>{{ t('admin.table.assignee') }}</th>
-                        <th>{{ t('admin.table.sla7') }}</th>
-                        <th>{{ t('admin.table.sla3m') }}</th>
-                        <th></th>
+            <table class="table-stack" role="table">
+                <thead role="rowgroup">
+                    <tr role="row">
+                        <th role="columnheader"><a href="{{ sort_url('case_number') }}" class="sort-link">{{ t('admin.table.case_number') }}{{ sort_icon('case_number') }}</a></th>
+                        <th role="columnheader"><a href="{{ sort_url('category') }}" class="sort-link">{{ t('admin.table.category') }}{{ sort_icon('category') }}</a></th>
+                        <th role="columnheader"><a href="{{ sort_url('status') }}" class="sort-link">{{ t('admin.table.status') }}{{ sort_icon('status') }}</a></th>
+                        <th role="columnheader"><a href="{{ sort_url('submitted_at') }}" class="sort-link">{{ t('admin.table.submitted') }}{{ sort_icon('submitted_at') }}</a></th>
+                        <th role="columnheader">{{ t('admin.table.assignee') }}</th>
+                        <th role="columnheader">{{ t('admin.table.sla7') }}</th>
+                        <th role="columnheader">{{ t('admin.table.sla3m') }}</th>
+                        <th role="columnheader"></th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody role="rowgroup">
                     {% for report in reports %}
                     {% set days_since_submit = (now - report.submitted_at).days %}
                     {% set ack_sla_class = 'sla-ok' if report.acknowledged_at else ('sla-ok' if days_since_submit < 5 else ('sla-warning' if days_since_submit < 7 else 'sla-overdue')) %}
@@ -212,26 +212,26 @@
                         {% set days_to_fb = (report.feedback_due_at - now).days %}
                         {% set fb_sla_class = 'sla-ok' if days_to_fb > 14 else ('sla-warning' if days_to_fb > 0 else 'sla-overdue') %}
                     {% endif %}
-                    <tr>
-                        <td class="stack-primary" data-label="{{ t('admin.table.case_number') }}"><span class="mono dash-nowrap">{{ report.case_number }}</span></td>
-                        <td class="dash-category-cell" data-label="{{ t('admin.table.category') }}">{{ report.category | replace('_', ' ') | title }}</td>
-                        <td class="stack-status" data-label="{{ t('admin.table.status') }}"><span class="badge badge-{{ report.status.value }}">{{ t('status.label.' + report.status.value) }}</span></td>
-                        <td class="mono dash-date-cell" data-label="{{ t('admin.table.submitted') }}">{{ report.submitted_at.strftime('%Y-%m-%d') }}</td>
-                        <td class="dash-assignee-cell" data-label="{{ t('admin.table.assignee') }}">
+                    <tr role="row">
+                        <td role="cell" class="stack-primary" data-label="{{ t('admin.table.case_number') }}"><span class="mono dash-nowrap">{{ report.case_number }}</span></td>
+                        <td role="cell" class="dash-category-cell" data-label="{{ t('admin.table.category') }}">{{ report.category | replace('_', ' ') | title }}</td>
+                        <td role="cell" class="stack-status" data-label="{{ t('admin.table.status') }}"><span class="badge badge-{{ report.status.value }}">{{ t('status.label.' + report.status.value) }}</span></td>
+                        <td role="cell" class="mono dash-date-cell" data-label="{{ t('admin.table.submitted') }}">{{ report.submitted_at.strftime('%Y-%m-%d') }}</td>
+                        <td role="cell" class="dash-assignee-cell" data-label="{{ t('admin.table.assignee') }}">
                             {% if report.assigned_to %}
                                 <span class="dash-assignee-name">{{ report.assigned_to.username }}</span>
                             {% else %}
                                 {{ t('admin.table.unassigned') }}
                             {% endif %}
                         </td>
-                        <td class="{{ ack_sla_class }} dash-sla-cell" data-label="{{ t('admin.table.sla7') }}">
+                        <td role="cell" class="{{ ack_sla_class }} dash-sla-cell" data-label="{{ t('admin.table.sla7') }}">
                             {% if report.acknowledged_at %}
                                 {{ t('admin.sla.done') }}
                             {% else %}
                                 {{ t('admin.report.sla.day') }} {{ days_since_submit }}/7
                             {% endif %}
                         </td>
-                        <td class="{{ fb_sla_class }} dash-sla-cell" data-label="{{ t('admin.table.sla3m') }}">
+                        <td role="cell" class="{{ fb_sla_class }} dash-sla-cell" data-label="{{ t('admin.table.sla3m') }}">
                             {% if report.feedback_due_at %}
                                 {% set days_to_fb = (report.feedback_due_at - now).days %}
                                 {% if days_to_fb > 0 %}{{ days_to_fb }} {{ t('admin.report.sla.days_remaining') }}{% else %}{{ t('admin.report.sla.overdue') }}{% endif %}
@@ -239,7 +239,7 @@
                                 {{ t('admin.report.sla.not_ack') }}
                             {% endif %}
                         </td>
-                        <td class="stack-action">
+                        <td role="cell" class="stack-action">
                             <a href="/admin/reports/{{ report.id }}" class="btn btn-secondary btn-sm">{{ t('admin.table.view') }}</a>
                         </td>
                     </tr>
