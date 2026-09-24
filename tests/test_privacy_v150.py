@@ -407,7 +407,7 @@ async def test_draft_attachments_are_refused_when_redis_is_nearly_full(
     monkeypatch.setattr(reports, "_redis_has_room", AsyncMock(return_value=False))
     page = await _walk_to_attachments(client)
     resp = await _upload(client, page)
-    assert "cannot hold attachments right now" in resp.text
+    assert "cannot take attachments right now" in resp.text
     assert 'name="step" value="5"' in resp.text
     # Without attachments the report still goes through.
     from tests.conftest import _wizard_get_csrf

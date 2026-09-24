@@ -58,8 +58,10 @@ zero vendor lock-in, and privacy-first by design.
   transitions allowed server-side.
 - **4-eyes deletion** — Hard deletion requires two different admins (request + confirm);
   same-admin confirm returns HTTP 409. GDPR Art. 17 compliant.
-- **Immutable audit log** — Every admin action recorded with timestamp and username; CSV export;
-  required by HinSchG §11 Abs. 5.
+- **Immutable audit log** — Every admin action recorded with timestamp and username, shown as
+  readable labels in all four languages; CSV export keeps the machine codes; required by HinSchG §11 Abs. 5.
+- **Case-number search** — Find a case on the dashboard by any part of its number. Report content
+  is encrypted per report and deliberately not searchable.
 - **Internal notes** — Admin-only notes on cases; never visible to the whistleblower.
 - **Case linking** — Link related cases with bidirectional normalization constraint.
 - **Custom categories** — DB-driven report categories; full management UI at `/admin/categories`.

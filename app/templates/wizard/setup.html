@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_field.html" as field with context %}
 
 {% block title %}{{ t('wizard.title') }} | OpenWhistle{% endblock %}
 
@@ -27,11 +28,12 @@
         {{ t('wizard.onetime.body') }}
     </div>
 
-    {% if errors %}
+    {% if field_errors %}
     <div class="alert alert-error" role="alert">
+        <div class="alert-title">{{ t('wizard.error.summary') }}</div>
         <ul class="setup-error-list">
-            {% for e in errors %}
-            <li>{{ e }}</li>
+            {% for name, key in field_errors.items() %}
+            <li><a href="#{{ name }}">{{ t(key) }}</a></li>
             {% endfor %}
         </ul>
     </div>
@@ -42,7 +44,7 @@
         <p>{{ t('wizard.step1.body') }}</p>
 
         <div class="qr-wrapper">
-            <img src="data:image/png;base64,{{ qr_code }}" alt="TOTP QR Code" width="200" height="200">
+            <img src="data:image/png;base64,{{ qr_code }}" alt="{{ t('mfa.setup.qr.alt') }}" width="200" height="200">
         </div>
 
         <p class="setup-manual-text">
@@ -72,8 +74,9 @@
                     maxlength="64"
                     pattern="[a-zA-Z0-9_-]+"
                     required
-                    autocomplete="username">
-                <div class="form-hint">{{ t('wizard.username.hint') }}</div>
+                    autocomplete="username"{{ field.attrs('username', 'username-hint') }}>
+                {{ field.error('username') }}
+                <div class="form-hint" id="username-hint">{{ t('wizard.username.hint') }}</div>
             </div>
 
             <div class="form-group">
@@ -85,8 +88,9 @@
                     name="password"
                     minlength="12"
                     required
-                    autocomplete="new-password">
-                <div class="form-hint">{{ t('wizard.password.hint') }}</div>
+                    autocomplete="new-password"{{ field.attrs('password', 'password-hint') }}>
+                {{ field.error('password') }}
+                <div class="form-hint" id="password-hint">{{ t('wizard.password.hint') }}</div>
             </div>
 
             <div class="form-group">
@@ -97,7 +101,8 @@
                     id="password_confirm"
                     name="password_confirm"
                     required
-                    autocomplete="new-password">
+                    autocomplete="new-password"{{ field.attrs('password_confirm') }}>
+                {{ field.error('password_confirm') }}
             </div>
 
             <div class="form-group">
@@ -112,8 +117,9 @@
                     maxlength="6"
                     placeholder="000000"
                     required
-                    autocomplete="one-time-code">
-                <div class="form-hint">{{ t('wizard.totp_code.hint') }}</div>
+                    autocomplete="one-time-code"{{ field.attrs('totp_code', 'totp-hint') }}>
+                {{ field.error('totp_code') }}
+                <div class="form-hint" id="totp-hint">{{ t('wizard.totp_code.hint') }}</div>
             </div>
 
             <button type="submit" class="btn btn-primary btn-block">

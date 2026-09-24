@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_field.html" as field with context %}
 
 {% block title %}{{ t('mfa.setup.title') }} — OpenWhistle{% endblock %}
 
@@ -35,7 +36,7 @@
         </div>
 
         {% if error %}
-        <div class="alert alert-error" role="alert">{{ error }}</div>
+        <div class="alert alert-error" role="alert">{{ t(error) }}</div>
         {% endif %}
 
         <div class="panel anim-in delay-08">
@@ -83,8 +84,9 @@
                         autocomplete="one-time-code"
                         placeholder="0 0 0 0 0 0"
                         required
-                        autofocus>
-                    <div class="form-hint">{{ t('mfa.setup.code.hint') }}</div>
+                        autofocus{{ field.attrs('totp_code', 'totp-hint') }}>
+                    {{ field.error('totp_code') }}
+                    <div class="form-hint" id="totp-hint">{{ t('mfa.setup.code.hint') }}</div>
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-block mfas-submit">

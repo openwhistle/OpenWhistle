@@ -1,0 +1,177 @@
+{
+ "test_groups": {
+  "UX": [
+   "tests/test_v150_ux.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "submit-error-no-field",
+   "file": "app/api/reports.py",
+   "old": "            ctx[\"field_errors\"] = {_ERROR_FIELD[err]: f\"submit.error.{err}\"}",
+   "new": "            pass",
+   "tests": "UX"
+  },
+  {
+   "id": "submit-file-error-no-field",
+   "file": "app/api/reports.py",
+   "old": "return _render_step({\"error\": file_error, \"field_errors\": {\"files\": file_error}})",
+   "new": "return _render_step({\"error\": file_error})",
+   "tests": "UX"
+  },
+  {
+   "id": "field-macro-no-aria-invalid",
+   "file": "app/templates/_field.html",
+   "old": "{%- if field_errors and field_errors.get(name) %} aria-invalid=\"true\" aria-describedby",
+   "new": "{%- if field_errors and field_errors.get(name) %} aria-describedby",
+   "tests": "UX"
+  },
+  {
+   "id": "field-macro-no-inline-error",
+   "file": "app/templates/_field.html",
+   "old": "<p class=\"field-error\" id=\"{{ name }}-error\">",
+   "new": "<p class=\"field-error\">",
+   "tests": "UX"
+  },
+  {
+   "id": "status-case-number-not-invalid",
+   "file": "app/templates/status.html",
+   "old": "                    {% if error %}aria-invalid=\"true\" aria-describedby=\"credentials-error\"{% endif %}>",
+   "new": "                    >",
+   "tests": "UX"
+  },
+  {
+   "id": "status-message-untranslated",
+   "file": "app/api/reports.py",
+   "old": "\"error\": make_translator(get_lang(request))(",
+   "new": "\"error\": make_translator(\"en\")(",
+   "tests": "UX"
+  },
+  {
+   "id": "login-blank-fields-422",
+   "file": "app/api/auth.py",
+   "old": "    if missing:\n",
+   "new": "    if False:\n",
+   "tests": "UX"
+  },
+  {
+   "id": "login-credentials-not-marked",
+   "file": "app/templates/login.html",
+   "old": "                    {% if credentials_invalid %}<p class=\"field-error\" id=\"credentials-error\">",
+   "new": "                    {% if false %}<p class=\"field-error\" id=\"credentials-error\">",
+   "tests": "UX"
+  },
+  {
+   "id": "mfa-error-no-field",
+   "file": "app/api/auth.py",
+   "old": "                \"field_errors\": {\"totp_code\": \"mfa.error.invalid\"},",
+   "new": "",
+   "tests": "UX"
+  },
+  {
+   "id": "wizard-errors-not-per-field",
+   "file": "app/api/wizard.py",
+   "old": "                \"field_errors\": errors,",
+   "new": "                \"errors\": errors,",
+   "tests": "UX"
+  },
+  {
+   "id": "t-marks-plain-message-safe",
+   "file": "app/templating.py",
+   "old": "is_html = key.endswith(\".html\") and result != key",
+   "new": "is_html = key.endswith(\".html\")",
+   "tests": "UX"
+  },
+  {
+   "id": "search-ignored",
+   "file": "app/services/report.py",
+   "old": "        base_q = base_q.where(Report.case_number.ilike(f\"%{needle}%\", escape=\"\\\\\"))",
+   "new": "        pass",
+   "tests": "UX"
+  },
+  {
+   "id": "search-percent-unescaped",
+   "file": "app/services/report.py",
+   "old": ".replace(\"%\", \"\\\\%\")",
+   "new": "",
+   "tests": "UX"
+  },
+  {
+   "id": "search-underscore-unescaped",
+   "file": "app/services/report.py",
+   "old": ".replace(\"_\", \"\\\\_\")",
+   "new": "",
+   "tests": "UX"
+  },
+  {
+   "id": "search-not-passed",
+   "file": "app/api/admin.py",
+   "old": "        case_query=case_query or None,\n",
+   "new": "",
+   "tests": "UX"
+  },
+  {
+   "id": "search-drops-case-manager-scope",
+   "file": "app/api/admin.py",
+   "old": "        assigned_filter: uuid.UUID | None = current_user.id\n",
+   "new": "        assigned_filter: uuid.UUID | None = None\n",
+   "tests": "UX"
+  },
+  {
+   "id": "search-links-drop-query",
+   "file": "app/templates/admin/dashboard.html",
+   "old": "&dir={{ new_dir }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if my_cases %}&my_cases=1{% endif %}{% if case_query %}&q={{ case_query | urlencode }}{% endif %}",
+   "new": "&dir={{ new_dir }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if my_cases %}&my_cases=1{% endif %}",
+   "tests": "UX"
+  },
+  {
+   "id": "audit-raw-action-code",
+   "file": "app/templates/admin/_audit.html",
+   "old": "<span title=\"{{ action }}\">{{ translated('audit.action.', action) }}</span>",
+   "new": "<span title=\"{{ action }}\">{{ action }}</span>",
+   "tests": "UX"
+  },
+  {
+   "id": "audit-detail-raw-json",
+   "file": "app/templating.py",
+   "old": "    return [(str(k), \"—\" if v is None else str(v)) for k, v in data.items()]",
+   "new": "    return [(\"\", detail)]",
+   "tests": "UX"
+  },
+  {
+   "id": "audit-status-value-raw",
+   "file": "app/templates/admin/_audit.html",
+   "old": "{%- if status_label != 'status.label.' ~ v -%}{{ status_label }}",
+   "new": "{%- if false -%}{{ status_label }}",
+   "tests": "UX"
+  },
+  {
+   "id": "audit-detail-unescaped",
+   "file": "app/templates/admin/_audit.html",
+   "old": "{%- else -%}{{ v }}{%- endif -%}",
+   "new": "{%- else -%}{{ v | safe }}{%- endif -%}",
+   "tests": "UX"
+  },
+  {
+   "id": "audit-csv-no-label",
+   "file": "app/api/admin.py",
+   "old": "            e.action if label == label_key else label,\n",
+   "new": "",
+   "tests": "UX"
+  },
+  {
+   "id": "location-logged-as-category",
+   "file": "app/api/admin.py",
+   "old": "db, current_user, AuditAction.LOCATION_CREATED,",
+   "new": "db, current_user, AuditAction.CATEGORY_CREATED,",
+   "tests": "UX"
+  },
+  {
+   "id": "demo-banner-english",
+   "file": "app/templates/base.html",
+   "old": "        {{ t('demo.banner.text') }}",
+   "new": "        This is a live demonstration. Data resets every 6 hours.",
+   "tests": "UX"
+  }
+ ]
+}

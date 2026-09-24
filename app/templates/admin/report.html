@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "admin/_audit.html" as audit with context %}
 
 {% block styles %}<style nonce="{{ request.state.csp_nonce }}">
 /* Header */
@@ -34,8 +35,8 @@
 .report-audit-row{display:flex;flex-wrap:wrap;column-gap:var(--space-3);row-gap:0;align-items:baseline;padding:.35rem 0;border-bottom:1px solid var(--hairline);font-size:var(--text-label)}
 .report-audit-time{color:var(--muted);white-space:nowrap;flex-shrink:0}
 .report-audit-user{color:var(--body-text);font-weight:600;flex-shrink:0}
-.report-audit-action{color:var(--accent);font-family:var(--font-mono);font-size:var(--text-hint)}
-.report-audit-detail{color:var(--muted);font-size:var(--text-hint);font-family:var(--font-mono)}
+.report-audit-action{color:var(--ink)}
+.report-audit-detail{color:var(--muted);font-size:var(--text-hint)}
 /* Details column */
 .report-detail-list{display:flex;flex-direction:column;gap:var(--space-4);font-size:var(--text-body-sm)}
 .report-detail-value{font-size:var(--text-body-sm)}
@@ -221,10 +222,10 @@
                     {% for entry in audit_entries %}
                     <div class="report-audit-row">
                         <span class="mono report-audit-time"><time data-utc="{{ entry.created_at.isoformat() }}">{{ entry.created_at.strftime('%m-%d %H:%M') }}</time></span>
-                        <span class="report-audit-user">{{ entry.admin_username or 'N/A' }}</span>
-                        <span class="report-audit-action">{{ entry.action }}</span>
+                        <span class="report-audit-user">{{ entry.admin_username or '—' }}</span>
+                        <span class="report-audit-action">{{ audit.label(entry.action) }}</span>
                         {% if entry.detail %}
-                        <span class="report-audit-detail">{{ entry.detail[:80] }}</span>
+                        <span class="report-audit-detail">{{ audit.detail(entry.detail) }}</span>
                         {% endif %}
                     </div>
                     {% endfor %}

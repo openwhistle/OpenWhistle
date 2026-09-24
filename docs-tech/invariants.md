@@ -63,6 +63,16 @@ cleared in one `MULTI/EXEC`, so concurrent runs get the events exactly once
 | Multi-tenant scoping: users page, role change, assignment and its picker, new users' org, audit log, stats, dashboard stats | `tests/test_multitenancy_scoping.py` (one test per guard) |
 | Admin notes encrypted | `test_admin_notes_are_stored_encrypted` |
 
+## Usability (v1.5, `docs-tech/mutations/v1.5.0-ux.json`, 24 red)
+
+| Guard | Test that fires |
+| --- | --- |
+| A failed field gets `aria-invalid` and `aria-describedby` → inline message (wizard, status, login, TOTP, setup) | `tests/test_v150_ux.py` `test_*_marks_*`, `test_setup_wizard_errors_sit_next_to_their_fields` |
+| Blank admin login answers on the form, not with 422 JSON | `test_login_empty_fields_answer_on_the_form` |
+| `t()` never marks a plain message safe, whatever it ends with | `test_plain_message_passed_through_t_is_never_marked_safe` |
+| Case-number search: LIKE wildcards escaped, case-manager scope kept, links keep `q` | `test_search_escapes_like_wildcards`, `test_search_keeps_the_case_manager_restriction`, `test_dashboard_search_form_and_links_keep_the_query` |
+| Audit entries: every action labelled in 4 languages, detail escaped, CSV keeps codes | `test_every_audit_action_has_a_label_in_every_language`, `test_audit_log_shows_labels_and_readable_detail` |
+
 ## Repository and release
 
 | Guard | Test |

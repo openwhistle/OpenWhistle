@@ -27,7 +27,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.csrf import validate_csrf
 from app.database import get_db
-from app.i18n import get_lang
+from app.i18n import get_lang, make_translator
 from app.models.report import SubmissionMode
 from app.redis_client import get_redis
 from app.services import rate_limit as rl
@@ -64,6 +64,19 @@ _STEP_CATEGORY = 3
 _STEP_DESCRIPTION = 4
 _STEP_ATTACHMENTS = 5
 _STEP_REVIEW = 6
+
+# Which form field a wizard error code belongs to, so the template can mark that
+# field aria-invalid and point it at an inline message. Codes absent here (e.g.
+# session_incomplete) concern no single field and show only in the banner.
+_ERROR_FIELD: dict[str, str] = {
+    "mode_required": "submission_mode",
+    "invalid_location": "location_id",
+    "category_required": "category",
+    "description_too_short": "description",
+    "description_too_long": "description",
+    "attachments_too_large": "files",
+    "attachments_no_room": "files",
+}
 
 
 def _new_draft_id() -> str:
@@ -321,6 +334,9 @@ async def submit_post(
         }
         if extra:
             ctx.update(extra)
+        err = ctx.get("error")
+        if err in _ERROR_FIELD:
+            ctx["field_errors"] = {_ERROR_FIELD[err]: f"submit.error.{err}"}
         resp = render(request, "submit.html", ctx)
         _set_submission_cookie(resp, session_id)
         return resp
@@ -435,18 +451,15 @@ async def submit_post(
         if file_error:
             state["step"] = _STEP_ATTACHMENTS
             await _save_submission(redis, session_id, state)
-            return _render_step({"error": file_error})
+            return _render_step({"error": file_error, "field_errors": {"files": file_error}})
         if sum(len(ft[2]) for ft in file_tuples) > MAX_DRAFT_ATTACHMENT_BYTES:
             state["step"] = _STEP_ATTACHMENTS
             await _save_submission(redis, session_id, state)
-            return _render_step({"error": "The attachments are too large in total."})
+            return _render_step({"error": "attachments_too_large"})
         if file_tuples and not await _redis_has_room(redis):
             state["step"] = _STEP_ATTACHMENTS
             await _save_submission(redis, session_id, state)
-            return _render_step({"error": (
-                "The server cannot hold attachments right now. Continue without them "
-                "or try again later; you can add details in a reply after submitting."
-            )})
+            return _render_step({"error": "attachments_no_room"})
 
         state["files_stored"] = True
         state["step"] = _STEP_REVIEW
@@ -587,7 +600,7 @@ async def status_get(
                 await redis.expire(f"status-session:{session_key}", 7200)
                 new_session_token = secrets.token_urlsafe(32)
                 replied = request.query_params.get("replied") == "1"
-                success = "Your reply has been sent." if replied else None
+                success = "status.reply.sent" if replied else None
 
                 from datetime import UTC, datetime, timedelta
 
@@ -660,7 +673,9 @@ async def status_post(
             "status.html",
             {
                 "session_token": session_token,
-                "error": f"Invalid case number or PIN. {remaining - 1} attempts remaining.",
+                "error": make_translator(get_lang(request))(
+                    "status.error.invalid", remaining=max(0, remaining - 1)
+                ),
                 "report": None,
                 "case_number_value": case_number.strip(),
             },

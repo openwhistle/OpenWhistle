@@ -24,7 +24,7 @@ async def test_submit_page_loads(client: AsyncClient) -> None:
 async def test_status_page_loads(client: AsyncClient) -> None:
     response = await client.get("/status")
     assert response.status_code == 200
-    assert "Case Number" in response.text
+    assert "Case number" in response.text
 
 
 @pytest.mark.asyncio
@@ -40,7 +40,7 @@ async def test_submit_report_success(client: AsyncClient) -> None:
         },
     )
     assert response.status_code == 200
-    assert "Case Number" in response.text or "PIN" in response.text
+    assert "Case number" in response.text or "PIN" in response.text
 
 
 @pytest.mark.asyncio
@@ -81,7 +81,7 @@ async def test_status_invalid_credentials(client: AsyncClient) -> None:
         },
     )
     assert response.status_code == 401
-    assert "Invalid" in response.text
+    assert "No report matches this case number and PIN" in response.text
 
 
 @pytest.mark.asyncio
