@@ -169,7 +169,10 @@ async def test_session_refresh_extends_session_and_rotates_cookie(
     old_session = client.cookies.get("ow_session")
     assert old_session is not None
 
-    resp = await client.post("/admin/session/refresh")
+    resp = await client.post(
+        "/admin/session/refresh",
+        headers={"X-CSRF-Token": client.cookies.get("ow_csrf") or ""},
+    )
     assert resp.status_code == 200
     data = resp.json()
     assert data["ttl_seconds"] > 0
@@ -193,7 +196,10 @@ async def test_session_refresh_old_session_is_revoked(
     old_session = client.cookies.get("ow_session")
     assert old_session is not None
 
-    await client.post("/admin/session/refresh")
+    await client.post(
+        "/admin/session/refresh",
+        headers={"X-CSRF-Token": client.cookies.get("ow_csrf") or ""},
+    )
 
     redis = await get_redis()
     assert await validate_session(redis, old_session) is False

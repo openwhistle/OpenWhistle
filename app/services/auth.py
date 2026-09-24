@@ -1,7 +1,9 @@
 """Authentication service: passwords, JWT sessions, OIDC."""
 
+import time
 import uuid
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import bcrypt
 import jwt
@@ -67,16 +69,43 @@ def verify_pin(plain: str, hashed: str) -> bool:
 TIMING_DUMMY_HASH = hash_password("timing-equalizer-not-a-real-secret")
 
 
-def create_access_token(user_id: str, role: str = "admin") -> str:
-    expire = datetime.now(UTC) + timedelta(minutes=settings.access_token_expire_minutes)
+def create_access_token(user_id: str, role: str = "admin", auth_time: int | None = None) -> str:
+    """A session JWT. ``auth_time`` (login time, epoch seconds) survives refreshes,
+    so ``exp`` never passes auth_time + SESSION_MAX_HOURS."""
+    now = datetime.now(UTC)
+    started = auth_time if auth_time is not None else int(now.timestamp())
+    expire = min(
+        now + timedelta(minutes=settings.access_token_expire_minutes),
+        datetime.fromtimestamp(started, tz=UTC) + timedelta(hours=settings.session_max_hours),
+    )
     payload = {
         "sub": user_id,
         "role": role,
         "exp": expire,
-        "iat": datetime.now(UTC),
+        "iat": now,
+        "auth_time": started,
         "jti": str(uuid.uuid4()),
     }
     return str(jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm))
+
+
+def decode_access_token_claims(token: str) -> dict[str, Any] | None:
+    try:
+        claims: dict[str, Any] = jwt.decode(
+            token, settings.secret_key, algorithms=[settings.algorithm]
+        )
+    except jwt.PyJWTError:
+        return None
+    return claims
+
+
+def session_started_at(claims: dict[str, Any]) -> int:
+    """Login time; tokens issued before v1.6.0 carry only ``iat``."""
+    return int(claims.get("auth_time", claims.get("iat", 0)))
+
+
+def session_too_old(claims: dict[str, Any]) -> bool:
+    return time.time() - session_started_at(claims) > settings.session_max_hours * 3600
 
 
 def decode_access_token(token: str) -> str | None:
@@ -109,9 +138,10 @@ async def get_session_ttl(redis: Redis, token: str) -> int:
 
 
 async def store_session(redis: Redis, user_id: str, token: str) -> None:
-    """Store session token in Redis for quick validation and revocation."""
-    key = f"{_SESSION_PREFIX}{token}"
-    await redis.setex(key, settings.access_token_expire_minutes * 60, user_id)
+    """Store session token in Redis; it lives exactly as long as the JWT."""
+    exp = decode_access_token_exp(token)
+    ttl = int((exp - datetime.now(UTC)).total_seconds()) if exp else 0
+    await redis.setex(f"{_SESSION_PREFIX}{token}", max(1, ttl), user_id)
 
 
 async def validate_session(redis: Redis, token: str) -> bool:

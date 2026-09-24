@@ -194,6 +194,27 @@ async def test_configured_setup_token_overrides_a_stale_stored_token(
         await close_redis()
 
 
+@pytest.mark.parametrize(
+    ("value", "valid"),
+    [
+        ("a-real-setup-token-1234", True),   # >= 16 chars: valid as-is
+        ("  a-real-setup-token-1234  ", True),  # padded: stripped before the length check
+        ("too-short", False),                # < 16 chars after strip
+        ("   ", False),                      # whitespace-only: blank after strip
+        ("", True),                          # empty means "unset"
+    ],
+)
+def test_setup_token_validator(value: str, valid: bool) -> None:
+    from app.config import Settings
+
+    if valid:
+        s = Settings(secret_key="x" * 32, setup_token=value)  # type: ignore[call-arg]
+        assert s.setup_token == value.strip()
+    else:
+        with pytest.raises(ValueError, match="SETUP_TOKEN"):
+            Settings(secret_key="x" * 32, setup_token=value)  # type: ignore[call-arg]
+
+
 # ── TOTP secrets are encrypted at rest (A2) ────────────────────────────────
 
 
@@ -325,3 +346,104 @@ async def test_migration_004_round_trip_encrypts_and_stays_idempotent(
         {"a": ids["user1"], "b": ids["user2"], "c": ids["user3"]},
     )
     await db_session.commit()
+
+
+# ── Session refresh needs CSRF; absolute session lifetime (A3) ─────────────
+
+
+def _use_session(client: AsyncClient, token: str) -> None:
+    """Replace the session cookie; keep the CSRF cookie the header is checked against.
+
+    The domain is taken from the jar's own ow_csrf cookie (set by the server on an
+    earlier response) rather than left unspecified: an unspecified-domain cookie and
+    a same-name cookie the server later sets via Set-Cookie are stored as two distinct
+    entries by httpx's cookie jar, and client.cookies.get() then raises CookieConflict.
+    """
+    domain = next((c.domain for c in client.cookies.jar if c.name == "ow_csrf"), "")
+    csrf = client.cookies.get("ow_csrf") or ""
+    client.cookies.clear()
+    client.cookies.set("ow_csrf", csrf, domain=domain)
+    client.cookies.set("ow_session", token, domain=domain)
+
+
+async def _logged_in_admin(client: AsyncClient, db: AsyncSession) -> AdminUser:
+    secret = pyotp.random_base32()
+    user = AdminUser(
+        id=uuid.uuid4(), username=f"sess_{uuid.uuid4().hex[:8]}",
+        password_hash=hash_password(_PASSWORD), totp_secret=secret, totp_enabled=True,
+        role=AdminRole.admin,
+    )
+    db.add(user)
+    await db.commit()
+    csrf = await _csrf(client, "/admin/login")
+    r = await client.post("/admin/login", data={
+        "username": user.username, "password": _PASSWORD, "csrf_token": csrf})
+    temp = re.search(r'name="temp_token" value="([^"]+)"', r.text)
+    assert temp
+    await client.post("/admin/login/mfa", data={
+        "csrf_token": client.cookies.get("ow_csrf"), "temp_token": temp.group(1),
+        "totp_code": pyotp.TOTP(secret).now()})
+    assert client.cookies.get("ow_session")
+    return user
+
+
+@pytest.mark.asyncio
+async def test_session_refresh_without_csrf_header_is_refused(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    await _logged_in_admin(client, db_session)
+    resp = await client.post("/admin/session/refresh")
+    assert resp.status_code == 403
+    ok = await client.post(
+        "/admin/session/refresh", headers={"X-CSRF-Token": client.cookies.get("ow_csrf") or ""}
+    )
+    assert ok.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_session_older_than_the_absolute_limit_is_rejected(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    import time
+
+    import jwt
+
+    from app.redis_client import get_redis
+
+    user = await _logged_in_admin(client, db_session)
+    now = int(time.time())
+    stale = jwt.encode(
+        {"sub": str(user.id), "role": "admin", "iat": now, "exp": now + 3600,
+         "auth_time": now - (settings.session_max_hours * 3600 + 60), "jti": "x"},
+        settings.secret_key, algorithm=settings.algorithm,
+    )
+    await (await get_redis()).setex(f"openwhistle:session:{stale}", 3600, str(user.id))
+    _use_session(client, stale)
+    resp = await client.post(
+        "/admin/session/refresh", headers={"X-CSRF-Token": client.cookies.get("ow_csrf") or ""},
+        follow_redirects=False,
+    )
+    assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_refresh_never_extends_past_the_absolute_limit(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    import time
+
+    from app.redis_client import get_redis
+    from app.services.auth import create_access_token, decode_access_token_exp
+
+    user = await _logged_in_admin(client, db_session)
+    started = int(time.time()) - settings.session_max_hours * 3600 + 120  # 2 min left
+    token = create_access_token(str(user.id), "admin", auth_time=started)
+    await (await get_redis()).setex(f"openwhistle:session:{token}", 120, str(user.id))
+    _use_session(client, token)
+    resp = await client.post(
+        "/admin/session/refresh", headers={"X-CSRF-Token": client.cookies.get("ow_csrf") or ""}
+    )
+    assert resp.status_code == 200
+    new_exp = decode_access_token_exp(client.cookies.get("ow_session") or "")
+    assert new_exp is not None
+    assert int(new_exp.timestamp()) <= started + settings.session_max_hours * 3600

@@ -167,7 +167,10 @@ window.dismissIpWarning = async function (btn) {
 
     window.sessionExtend = async function () {
         try {
-            const res = await fetch('/admin/session/refresh', { method: 'POST' });
+            const res = await fetch('/admin/session/refresh', {
+                method: 'POST',
+                headers: { 'X-CSRF-Token': csrfToken() },
+            });
             if (!res.ok) { window.location.href = '/admin/login'; return; }
             const data = await res.json();
 

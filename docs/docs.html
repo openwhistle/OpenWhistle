@@ -1135,6 +1135,12 @@
               <td><code>true</code></td>
             </tr>
             <tr>
+              <td><code class="env-key">SESSION_MAX_HOURS</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Absolute admin session lifetime in hours, counted from login; extending a session never passes it.</td>
+              <td><code>12</code></td>
+            </tr>
+            <tr>
               <td><code class="env-key">ADMIN_FAILED_LOGIN_ALERT_THRESHOLD</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
               <td>Password-spraying alarm. Failed admin password attempts are counted across all accounts (no username, no IP stored). When this many fail within the window, one alert goes to the email and webhook notification channels and the audit log records <code>auth.password_spraying_suspected</code>. <code>0</code> disables it. Per-account lockout and MFA stay in force either way.</td>

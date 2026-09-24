@@ -61,6 +61,9 @@ config:
   appPublicUrl: "https://whistleblower.example.com"
   submissionModeEnabled: "true"
 
+  # Absolute admin session lifetime in hours, counted from login (never extended)
+  sessionMaxHours: "12"
+
   # Password-spraying alert: failed admin logins, instance-wide (0 disables)
   adminFailedLoginAlertThreshold: "50"
   adminFailedLoginAlertWindowMinutes: "15"

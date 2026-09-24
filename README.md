@@ -81,6 +81,9 @@ zero vendor lock-in, and privacy-first by design.
 - **Hardened HTTP security** — Strict, per-response nonce-based Content-Security-Policy (no
   `unsafe-inline`), consolidated single-source security headers (HSTS, `X-Frame-Options`, nosniff),
   and strict username validation.
+- **Absolute admin session lifetime** — An admin session can be kept alive by refreshing it, but
+  never past `SESSION_MAX_HOURS` (default 12) from login; the refresh endpoint itself requires a
+  CSRF token, not just a valid cookie.
 - **OIDC / SSO support** — Optional single sign-on via any OpenID Connect provider (Keycloak,
   Authentik, Azure AD, Google, …), with PKCE and a verified ID token (signature, issuer,
   audience, expiry, nonce). LDAP supports LDAPS and StartTLS (`LDAP_START_TLS`).

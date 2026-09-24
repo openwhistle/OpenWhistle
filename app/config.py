@@ -42,6 +42,10 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
 
+    # Absolute admin session lifetime, counted from login and never extended by
+    # "stay signed in": after this a fresh password + TOTP login is required.
+    session_max_hours: int = Field(default=12, ge=1)
+
     # Whistleblower rate limiting (Redis-based, no IP tracking)
     max_access_attempts: int = 5
     access_lockout_minutes: int = 15

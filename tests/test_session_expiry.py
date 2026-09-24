@@ -157,7 +157,10 @@ async def test_session_refresh_returns_new_ttl(
     admin, totp_secret = await _create_admin(db_session, "ref1")
     await _login_admin(client, admin, totp_secret)
 
-    resp = await client.post("/admin/session/refresh")
+    resp = await client.post(
+        "/admin/session/refresh",
+        headers={"X-CSRF-Token": client.cookies.get("ow_csrf") or ""},
+    )
     assert resp.status_code == 200
 
     data = resp.json()
@@ -176,7 +179,10 @@ async def test_session_refresh_sets_new_cookie(
     await _login_admin(client, admin, totp_secret)
 
     old_cookie = client.cookies.get("ow_session")
-    resp = await client.post("/admin/session/refresh")
+    resp = await client.post(
+        "/admin/session/refresh",
+        headers={"X-CSRF-Token": client.cookies.get("ow_csrf") or ""},
+    )
     assert resp.status_code == 200
 
     new_cookie = client.cookies.get("ow_session")
@@ -194,7 +200,10 @@ async def test_session_refresh_new_session_is_still_valid(
     admin, totp_secret = await _create_admin(db_session, "ref3")
     await _login_admin(client, admin, totp_secret)
 
-    await client.post("/admin/session/refresh")
+    await client.post(
+        "/admin/session/refresh",
+        headers={"X-CSRF-Token": client.cookies.get("ow_csrf") or ""},
+    )
 
     # The refreshed session must still grant dashboard access
     resp = await client.get("/admin/dashboard")
@@ -212,7 +221,10 @@ async def test_session_refresh_extends_ttl_to_full_duration(
     admin, totp_secret = await _create_admin(db_session, "ref4")
     await _login_admin(client, admin, totp_secret)
 
-    resp = await client.post("/admin/session/refresh")
+    resp = await client.post(
+        "/admin/session/refresh",
+        headers={"X-CSRF-Token": client.cookies.get("ow_csrf") or ""},
+    )
     data = resp.json()
 
     max_ttl = settings.access_token_expire_minutes * 60

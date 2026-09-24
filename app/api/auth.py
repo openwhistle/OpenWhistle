@@ -14,13 +14,13 @@ from fastapi import (
     Request,
     status,
 )
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_admin
 from app.config import settings
-from app.csrf import validate_csrf
+from app.csrf import validate_csrf, validate_csrf_header
 from app.database import get_db
 from app.models.user import AdminRole, AdminUser
 from app.redis_client import get_redis
@@ -99,6 +99,26 @@ async def _password_failed(
         "the audit log and consider whether the login page should be reachable from "
         "where these attempts come from. No further alert is sent for this window.",
     )
+
+
+def _set_session_cookie(response: Response, token: str) -> None:
+    exp = auth_service.decode_access_token_exp(token)
+    max_age = max(1, int((exp - datetime.now(UTC)).total_seconds())) if exp else 1
+    response.set_cookie(
+        key="ow_session", value=token, httponly=True, samesite="lax",
+        secure=settings.secure_cookies, max_age=max_age,
+    )
+
+
+async def _start_session(redis: Redis, db: AsyncSession, user: AdminUser) -> RedirectResponse:
+    """The only place a login becomes a session (TOTP verify and TOTP setup)."""
+    token = auth_service.create_access_token(str(user.id), role=user.role.value)
+    await auth_service.store_session(redis, str(user.id), token)
+    user.last_login_at = datetime.now(UTC)
+    await db.commit()
+    response = RedirectResponse("/admin/dashboard", status_code=302)
+    _set_session_cookie(response, token)
+    return response
 
 
 @router.get("/login", response_class=HTMLResponse)
@@ -269,29 +289,7 @@ async def login_mfa_post(
         )
 
     await rl.reset_admin_login_attempts(redis, user.username)
-    token = auth_service.create_access_token(str(user.id), role=user.role.value)
-    await auth_service.store_session(redis, str(user.id), token)
-
-    from sqlalchemy import select
-
-    from app.models.user import AdminUser
-
-    result = await db.execute(select(AdminUser).where(AdminUser.id == user.id))
-    db_user = result.scalar_one_or_none()
-    if db_user:
-        db_user.last_login_at = datetime.now(UTC)
-        await db.commit()
-
-    response = RedirectResponse("/admin/dashboard", status_code=302)
-    response.set_cookie(
-        key="ow_session",
-        value=token,
-        httponly=True,
-        samesite="lax",
-        secure=settings.secure_cookies,
-        max_age=settings.access_token_expire_minutes * 60,
-    )
-    return response
+    return await _start_session(redis, db, user)
 
 
 @router.get("/mfa/setup", response_class=HTMLResponse, response_model=None)
@@ -355,22 +353,7 @@ async def mfa_setup_post(
     await audit_service.log(db, user, audit_service.AuditAction.AUTH_TOTP_SETUP)
     await db.commit()
 
-    token = auth_service.create_access_token(str(user.id), role=user.role.value)
-    await auth_service.store_session(redis, str(user.id), token)
-
-    user.last_login_at = datetime.now(UTC)
-    await db.commit()
-
-    response = RedirectResponse("/admin/dashboard", status_code=302)
-    response.set_cookie(
-        key="ow_session",
-        value=token,
-        httponly=True,
-        samesite="lax",
-        secure=settings.secure_cookies,
-        max_age=settings.access_token_expire_minutes * 60,
-    )
-    return response
+    return await _start_session(redis, db, user)
 
 
 @router.post("/logout")
@@ -412,27 +395,22 @@ async def session_refresh(
     redis: Redis = Depends(get_redis),
     current_user: AdminUser = Depends(get_current_admin),
     session_token: str | None = Cookie(default=None, alias="ow_session"),
+    _csrf: None = Depends(validate_csrf_header),
 ) -> JSONResponse:
-    """Issue a new JWT + Redis session, extending the admin session by the full TTL."""
+    """New JWT + Redis session up to the full TTL, never past the absolute limit."""
+    claims = auth_service.decode_access_token_claims(session_token or "") or {}
     if session_token:
         await auth_service.revoke_session(redis, session_token)
-
-    new_token = auth_service.create_access_token(str(current_user.id), role=current_user.role.value)
+    new_token = auth_service.create_access_token(
+        str(current_user.id), role=current_user.role.value,
+        auth_time=auth_service.session_started_at(claims) or None,
+    )
     await auth_service.store_session(redis, str(current_user.id), new_token)
-
     new_exp = auth_service.decode_access_token_exp(new_token)
     expires_at = int(new_exp.timestamp()) if new_exp else 0
     ttl = max(0, expires_at - int(datetime.now(UTC).timestamp()))
-
     response = JSONResponse({"ttl_seconds": ttl, "expires_at": expires_at})
-    response.set_cookie(
-        key="ow_session",
-        value=new_token,
-        httponly=True,
-        samesite="lax",
-        secure=settings.secure_cookies,
-        max_age=settings.access_token_expire_minutes * 60,
-    )
+    _set_session_cookie(response, new_token)
     return response
 
 

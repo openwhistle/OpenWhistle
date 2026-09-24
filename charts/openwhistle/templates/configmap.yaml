@@ -11,6 +11,7 @@ data:
   LOG_FORMAT: {{ .Values.config.logFormat | quote }}
   APP_PUBLIC_URL: {{ .Values.config.appPublicUrl | quote }}
   SUBMISSION_MODE_ENABLED: {{ .Values.config.submissionModeEnabled | quote }}
+  SESSION_MAX_HOURS: {{ .Values.config.sessionMaxHours | quote }}
   ADMIN_FAILED_LOGIN_ALERT_THRESHOLD: {{ .Values.config.adminFailedLoginAlertThreshold | quote }}
   ADMIN_FAILED_LOGIN_ALERT_WINDOW_MINUTES: {{ .Values.config.adminFailedLoginAlertWindowMinutes | quote }}
   BRAND_PRIMARY_COLOR: {{ .Values.config.brandPrimaryColor | quote }}
