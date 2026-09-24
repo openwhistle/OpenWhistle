@@ -240,6 +240,10 @@ async def add_whistleblower_message(
     db.add(msg)
     await db.commit()
     await db.refresh(msg)
+
+    from app.services.notifications import notify_whistleblower_message
+
+    await notify_whistleblower_message(report.case_number)
     return msg
 
 

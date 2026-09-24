@@ -8,6 +8,7 @@ from collections.abc import Awaitable
 from typing import Any, cast
 from urllib.parse import urlsplit
 
+from cryptography.fernet import Fernet, InvalidToken
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -19,7 +20,6 @@ from fastapi import (
     UploadFile,
     status,
 )
-from cryptography.fernet import Fernet, InvalidToken
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -429,9 +429,7 @@ async def submit_post(
 
     # ── Step 5: attachments ───────────────────────────────────────
     if step == _STEP_ATTACHMENTS:
-        from app.services.attachment import read_upload_files
-
-        from app.services.attachment import MAX_DRAFT_ATTACHMENT_BYTES
+        from app.services.attachment import MAX_DRAFT_ATTACHMENT_BYTES, read_upload_files
 
         file_tuples, file_error = await read_upload_files(files)
         if file_error:

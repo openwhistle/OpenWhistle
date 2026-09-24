@@ -450,6 +450,7 @@
   "admin.retention.stat.period": "Aufbewahrungszeitraum",
   "admin.retention.stat.period.sub": "({years} Jahre)",
   "admin.retention.stat.next_run": "Nächster geplanter Lauf",
+  "admin.retention.enabled_notice": "Die Aufbewahrungsfrist ist seit v1.5.0 standardmäßig aktiv. Ein abgeschlossener Bericht wird {days} Tage nach dem Abschluss gelöscht (HinSchG §11 Abs. 5: drei Jahre nach Abschluss des Verfahrens). OpenWhistle erschien 2026, daher enthält keine Installation einen so lange abgeschlossenen Bericht — nichts wurde vorzeitig gelöscht, die ersten Löschungen liegen Jahre in der Zukunft.",
   "admin.retention.disabled_notice.html": "<strong>Aufbewahrung ist derzeit deaktiviert.</strong> Setzen Sie <code>RETENTION_ENABLED=true</code>, um die automatische Löschung zu aktivieren.",
   "admin.retention.how.title": "Funktionsweise",
   "admin.retention.how.1": "Jeden Tag um 03:00 UTC wird der Aufbewahrungsplaner ausgeführt.",

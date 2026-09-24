@@ -450,6 +450,7 @@
   "admin.retention.stat.period": "Période de conservation",
   "admin.retention.stat.period.sub": "({years} ans)",
   "admin.retention.stat.next_run": "Prochaine exécution planifiée",
+  "admin.retention.enabled_notice": "La conservation est activée par défaut depuis la v1.5.0. Un signalement clôturé est supprimé {days} jours après sa clôture (HinSchG §11 al. 5 : trois ans après la fin de la procédure). OpenWhistle est sorti en 2026 : aucune installation ne contient de signalement clôturé depuis si longtemps — rien n'a été supprimé prématurément et les premières suppressions n'auront lieu que dans plusieurs années.",
   "admin.retention.disabled_notice.html": "<strong>La conservation est actuellement désactivée.</strong> Définissez <code>RETENTION_ENABLED=true</code> pour activer la suppression automatique.",
   "admin.retention.how.title": "Fonctionnement",
   "admin.retention.how.1": "Chaque jour à 03h00 UTC, le planificateur s’exécute.",

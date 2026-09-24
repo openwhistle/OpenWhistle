@@ -94,6 +94,14 @@ class SecurityMiddleware:
                 await redis.set(_REDIS_IP_WARNING_KEY, "1")
             except Exception:  # noqa: BLE001, S110
                 pass
+            # Noted above; now gone, so no handler, error report or log line
+            # further down can ever see a whistleblower's address.
+            scope["headers"] = [
+                (name, value) for name, value in raw_headers
+                if name.decode("latin-1").lower() not in _IP_REVEAL_HEADERS
+            ]
+        # The peer address is the proxy's at best, the whistleblower's at worst.
+        scope["client"] = None
 
         async def send_with_security(message: Message) -> None:
             if message["type"] == "http.response.start":
@@ -101,6 +109,10 @@ class SecurityMiddleware:
                 for name, value in _STATIC_SECURITY_HEADERS.items():
                     mutable[name] = value
                 mutable["Content-Security-Policy"] = _build_csp(nonce)
+                # A PIN, a report or an attachment must not be left in the browser
+                # cache of a shared office computer for the next user to find.
+                if not str(scope.get("path", "")).startswith("/static/"):
+                    mutable["Cache-Control"] = "no-store"
                 # Remove server identification headers
                 for h in ("server", "x-powered-by"):
                     if h in mutable:

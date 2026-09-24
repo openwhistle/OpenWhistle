@@ -456,6 +456,7 @@
   "admin.retention.stat.period": "Período de Retenção",
   "admin.retention.stat.period.sub": "({years} anos)",
   "admin.retention.stat.next_run": "Próxima Execução Programada",
+  "admin.retention.enabled_notice": "A retenção está ativada por padrão desde a v1.5.0. Uma denúncia encerrada é excluída {days} dias após o encerramento (HinSchG §11 Abs. 5: três anos após a conclusão do procedimento). O OpenWhistle foi lançado em 2026, portanto nenhuma instalação tem denúncias encerradas há tanto tempo — nada foi excluído antecipadamente e as primeiras exclusões ainda estão a anos de distância.",
   "admin.retention.disabled_notice.html": "<strong>A retenção está atualmente desativada.</strong> Defina <code>RETENTION_ENABLED=true</code> para ativar a exclusão automática.",
   "admin.retention.how.title": "Como Funciona",
   "admin.retention.how.1": "Todos os dias às 03:00 UTC, o agendador de retenção é executado.",

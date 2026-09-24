@@ -112,9 +112,15 @@ zero vendor lock-in, and privacy-first by design.
 - **Encrypted report storage** — All report descriptions and messages are encrypted at-rest
   using per-report envelope encryption (HKDF-SHA256 MEK + Fernet DEK); the key is never
   stored in the database; pre-encryption rows are transparently readable (backward compat).
-- **Data retention (GDPR / HinSchG)** — `RETENTION_ENABLED=true` activates automatic deletion
-  of closed reports after `RETENTION_DAYS` days (default 1095 = 3 years); satisfies
+- **Data retention (GDPR / HinSchG)** — on by default (`RETENTION_ENABLED`): closed reports
+  are deleted `RETENTION_DAYS` days after closure (default 1095 = 3 years); satisfies
   GDPR Art. 5(1)(e) and HinSchG §11 Abs. 5; each deletion recorded in the audit log.
+- **Batched notifications** — new reports and whistleblower messages are announced in one
+  digest every `NOTIFICATION_BATCH_MINUTES` (default 60), carrying only counts and case
+  numbers, so the notice's timing cannot be matched to who was at their desk.
+- **Encrypted attachment names and drafts** — filenames are encrypted with the report key;
+  a submission draft in Redis is encrypted with a key held only in the whistleblower's
+  cookie; Office comment and tracked-change authors are anonymised on upload.
 - **Multi-tenancy** — `MULTI_TENANCY_ENABLED=true` lets a single deployment serve multiple
   independent organisations with isolated data, per-tenant categories, locations, and users.
 - **Superadmin role** — New `superadmin` role above `admin` for managing organisations

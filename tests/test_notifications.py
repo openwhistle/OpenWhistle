@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import hmac
 import json
@@ -29,6 +30,7 @@ def _make_settings(**overrides: object) -> MagicMock:
     cfg.notify_webhook_enabled = False
     cfg.notify_webhook_url = ""
     cfg.notify_webhook_secret = ""
+    cfg.notification_batch_minutes = 0  # immediate; batching is tested in test_privacy_v150
     for k, v in overrides.items():
         setattr(cfg, k, v)
     return cfg
@@ -64,6 +66,7 @@ async def test_notify_dispatches_email_only() -> None:
     ):
         from app.services import notifications as svc
         await svc.notify_new_report("OW-2026-00001")
+        await asyncio.gather(*svc._background)
 
     mock_mail.assert_awaited_once()
     mock_hook.assert_not_called()
@@ -82,6 +85,7 @@ async def test_notify_dispatches_webhook_only() -> None:
     ):
         from app.services import notifications as svc
         await svc.notify_new_report("OW-2026-00001")
+        await asyncio.gather(*svc._background)
 
     mock_mail.assert_not_called()
     mock_hook.assert_awaited_once()
@@ -102,6 +106,7 @@ async def test_notify_dispatches_both_channels() -> None:
     ):
         from app.services import notifications as svc
         await svc.notify_new_report("OW-2026-00001")
+        await asyncio.gather(*svc._background)
 
     mock_mail.assert_awaited_once()
     mock_hook.assert_awaited_once()
@@ -121,7 +126,7 @@ async def test_send_email_calls_aiosmtplib() -> None:
 
     with patch("aiosmtplib.send", mock_send):
         from app.services.notifications import _send_email
-        await _send_email("OW-2026-00001", cfg)
+        await _send_email(["OW-2026-00001"], [], cfg)
 
     mock_send.assert_awaited_once()
     call_kwargs = mock_send.call_args
@@ -143,7 +148,7 @@ async def test_send_email_subject_contains_app_name() -> None:
 
     with patch("aiosmtplib.send", fake_send):
         from app.services.notifications import _send_email
-        await _send_email("OW-2026-00042", cfg)
+        await _send_email(["OW-2026-00042"], [], cfg)
 
     subject = captured_msg["msg"]["Subject"]
     assert "AcmeCorp Whistleblower" in subject
@@ -161,7 +166,7 @@ async def test_send_email_body_contains_case_number_not_content() -> None:
 
     with patch("aiosmtplib.send", fake_send):
         from app.services.notifications import _send_email
-        await _send_email("OW-2026-00099", cfg)
+        await _send_email(["OW-2026-00099"], [], cfg)
 
     # Get plain-text part
     msg = captured_msg["msg"]
@@ -186,7 +191,7 @@ async def test_send_email_swallows_smtp_exception() -> None:
     with patch("aiosmtplib.send", failing_send):
         from app.services.notifications import _send_email
         # Should not raise
-        await _send_email("OW-2026-00001", cfg)
+        await _send_email(["OW-2026-00001"], [], cfg)
 
 
 @pytest.mark.asyncio
@@ -196,7 +201,7 @@ async def test_send_email_skips_empty_recipient_list() -> None:
 
     with patch("aiosmtplib.send", mock_send):
         from app.services.notifications import _send_email
-        await _send_email("OW-2026-00001", cfg)
+        await _send_email(["OW-2026-00001"], [], cfg)
 
     mock_send.assert_not_called()
 
@@ -216,7 +221,7 @@ async def test_send_email_uses_ssl_when_configured() -> None:
 
     with patch("aiosmtplib.send", fake_send):
         from app.services.notifications import _send_email
-        await _send_email("OW-2026-00001", cfg)
+        await _send_email(["OW-2026-00001"], [], cfg)
 
     assert captured_kw.get("use_tls") is True
     assert captured_kw.get("start_tls") is False
@@ -239,7 +244,7 @@ async def test_send_webhook_posts_json_payload() -> None:
 
     with patch("httpx.AsyncClient", return_value=mock_client):
         from app.services.notifications import _send_webhook
-        await _send_webhook("OW-2026-00001", cfg)
+        await _send_webhook(["OW-2026-00001"], [], cfg)
 
     mock_client.post.assert_awaited_once()
     call_args = mock_client.post.call_args
@@ -248,9 +253,9 @@ async def test_send_webhook_posts_json_payload() -> None:
     payload = json.loads(body_bytes)
 
     assert url == "https://hooks.example.com/notify"
-    assert payload["event"] == "new_report"
-    assert payload["case_number"] == "OW-2026-00001"
-    assert "timestamp" in payload
+    assert payload == {
+        "event": "new_activity", "new_reports": ["OW-2026-00001"], "new_messages": [],
+    }
     # Privacy: no report description or category in payload
     assert "description" not in payload
     assert "category" not in payload
@@ -282,7 +287,7 @@ async def test_send_webhook_includes_hmac_signature_when_secret_set() -> None:
 
     with patch("httpx.AsyncClient", return_value=mock_client):
         from app.services.notifications import _send_webhook
-        await _send_webhook("OW-2026-00001", cfg)
+        await _send_webhook(["OW-2026-00001"], [], cfg)
 
     assert "X-OpenWhistle-Signature" in captured_headers
     sig_header = captured_headers["X-OpenWhistle-Signature"]
@@ -315,7 +320,7 @@ async def test_send_webhook_no_signature_without_secret() -> None:
 
     with patch("httpx.AsyncClient", return_value=mock_client):
         from app.services.notifications import _send_webhook
-        await _send_webhook("OW-2026-00001", cfg)
+        await _send_webhook(["OW-2026-00001"], [], cfg)
 
     assert "X-OpenWhistle-Signature" not in captured_headers
 
@@ -332,7 +337,7 @@ async def test_send_webhook_swallows_http_exception() -> None:
     with patch("httpx.AsyncClient", return_value=mock_client):
         from app.services.notifications import _send_webhook
         # Should not raise
-        await _send_webhook("OW-2026-00001", cfg)
+        await _send_webhook(["OW-2026-00001"], [], cfg)
 
 
 # ─── integration: submit endpoint triggers notification ───────────────────────

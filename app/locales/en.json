@@ -450,6 +450,7 @@
   "admin.retention.stat.period": "Retention Period",
   "admin.retention.stat.period.sub": "({years} years)",
   "admin.retention.stat.next_run": "Next Scheduled Run",
+  "admin.retention.enabled_notice": "Retention is on by default since v1.5.0. A closed report is deleted {days} days after it was closed (HinSchG §11 Abs. 5: three years after the procedure concludes). OpenWhistle was released in 2026, so no installation holds a report closed that long ago — nothing has been deleted early, and the first deletions are years away.",
   "admin.retention.disabled_notice.html": "<strong>Retention is currently disabled.</strong> To enable automatic deletion, set <code>RETENTION_ENABLED=true</code> in your environment configuration. Optionally adjust <code>RETENTION_DAYS</code> (default: 1095 = 3 years).",
   "admin.retention.how.title": "How It Works",
   "admin.retention.how.1": "Every day at 03:00 UTC the retention scheduler runs.",

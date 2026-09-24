@@ -6,9 +6,11 @@ from __future__ import annotations
 import io
 import uuid
 import zipfile
-from unittest.mock import AsyncMock, MagicMock
+from collections.abc import AsyncGenerator
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+import pytest_asyncio
 from httpx import AsyncClient, Response
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -257,6 +259,7 @@ async def test_admin_report_page_and_download_show_the_decrypted_filename(
     page = await client.get(f"/admin/reports/{report.id}")
     assert page.status_code == 200
     assert _NAME in page.text
+    assert 'gAAAA' not in page.text  # no ciphertext anywhere on the page
     download = await client.get(f"/admin/reports/{report.id}/attachments/{att.id}")
     assert _NAME in download.headers["content-disposition"]
 
@@ -426,3 +429,190 @@ async def test_redis_has_room(info: dict[str, int] | Exception, room: bool) -> N
 
     redis = MagicMock(info=AsyncMock(side_effect=[info]))
     assert await _redis_has_room(redis) is room
+
+
+# ── Notifications are batched: their timing must not identify anyone ──────────
+
+
+@pytest_asyncio.fixture(loop_scope="function")
+async def notify_settings(monkeypatch: pytest.MonkeyPatch) -> AsyncGenerator[AsyncMock]:
+    """Email channel on, batching at 60 minutes, delivery replaced by a mock."""
+    from redis.asyncio import Redis
+
+    from app.config import settings
+    from app.redis_client import close_redis
+    from app.services import notifications
+
+    monkeypatch.setattr(settings, "notify_email_enabled", True)
+    monkeypatch.setattr(settings, "notify_email_to", "compliance@example.com")
+    monkeypatch.setattr(settings, "notification_batch_minutes", 60)
+    deliver = AsyncMock()
+    monkeypatch.setattr(notifications, "_deliver", deliver)
+
+    async def _clear() -> None:
+        redis = Redis.from_url(settings.redis_url)
+        await redis.delete(*notifications._QUEUE_KEYS.values())
+        await redis.aclose()
+
+    await close_redis()
+    await _clear()
+    yield deliver
+    await _clear()
+    await close_redis()
+
+
+@pytest.mark.asyncio
+async def test_new_report_and_reply_are_queued_not_sent(notify_settings: AsyncMock) -> None:
+    from app.services.notifications import (
+        deliver_notification_digest,
+        notify_new_report,
+        notify_whistleblower_message,
+    )
+
+    await notify_new_report("OW-2026-00002")
+    await notify_new_report("OW-2026-00001")
+    await notify_whistleblower_message("OW-2026-00003")
+    await notify_whistleblower_message("OW-2026-00003")
+    notify_settings.assert_not_called()
+
+    await deliver_notification_digest()
+    notify_settings.assert_awaited_once_with(["OW-2026-00001", "OW-2026-00002"], ["OW-2026-00003"])
+    await deliver_notification_digest()  # queue emptied: nothing more to send
+    notify_settings.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_digest_is_delivered_once_when_replicas_run_together(
+    notify_settings: AsyncMock,
+) -> None:
+    import asyncio
+
+    from app.services.notifications import deliver_notification_digest, notify_new_report
+
+    await notify_new_report("OW-2026-00001")
+    await asyncio.gather(*(deliver_notification_digest() for _ in range(5)))
+    notify_settings.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_whistleblower_reply_queues_a_notification(
+    notify_settings: AsyncMock, db_session: AsyncSession
+) -> None:
+    from app.services.notifications import deliver_notification_digest
+    from app.services.report import add_whistleblower_message, create_report
+
+    report, _ = await create_report(db_session, "financial_fraud", "Reply notification test.")
+    await add_whistleblower_message(db_session, report, "More details.")
+    await deliver_notification_digest()
+    notify_settings.assert_awaited_once_with([], [report.case_number])
+
+
+@pytest.mark.asyncio
+async def test_batch_zero_sends_immediately(
+    notify_settings: AsyncMock, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import asyncio
+
+    from app.config import settings
+    from app.services import notifications
+
+    monkeypatch.setattr(settings, "notification_batch_minutes", 0)
+    await notifications.notify_new_report("OW-2026-00001")
+    await asyncio.gather(*notifications._background)
+    notify_settings.assert_awaited_once_with(new_reports=["OW-2026-00001"])
+
+
+def test_batching_needs_an_interval_and_a_channel(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.config import settings
+    from app.services.notifications import batching_enabled
+
+    monkeypatch.setattr(settings, "notify_email_enabled", True)
+    monkeypatch.setattr(settings, "notify_email_to", "compliance@example.com")
+    monkeypatch.setattr(settings, "notification_batch_minutes", 60)
+    assert batching_enabled()
+    monkeypatch.setattr(settings, "notification_batch_minutes", 0)
+    assert not batching_enabled()
+    monkeypatch.setattr(settings, "notification_batch_minutes", 60)
+    monkeypatch.setattr(settings, "notify_email_enabled", False)
+    assert not batching_enabled()
+
+
+@pytest.mark.asyncio
+async def test_digest_carries_counts_and_case_numbers_only() -> None:
+    from app.config import settings
+    from app.services.notifications import _build_webhook_payload, _send_email
+
+    sent = AsyncMock()
+    cfg = settings.model_copy(update={"notify_email_to": "compliance@example.com"})
+    with patch("aiosmtplib.send", sent):
+        await _send_email(["OW-2026-00001", "OW-2026-00002"], ["OW-2026-00003"], cfg)
+    body = sent.await_args.args[0].get_payload(decode=True).decode()
+    assert "2 (OW-2026-00001, OW-2026-00002)" in body
+    assert "1 (OW-2026-00003)" in body
+    assert "UTC" not in body and "Received" not in body  # no per-event time
+    assert _build_webhook_payload(["OW-2026-00001"], [], "generic", "OW", "https://x") == {
+        "event": "new_activity", "new_reports": ["OW-2026-00001"], "new_messages": [],
+    }
+
+
+# ── Retention is on by default ────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_retention_page_explains_the_default(
+    client: AsyncClient, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.config import settings
+    from app.models.user import AdminRole
+    from tests.test_coverage_admin import _create_admin, _login_admin
+
+    monkeypatch.setattr(settings, "retention_enabled", True)
+    admin, totp = await _create_admin(db_session)
+    admin.role = AdminRole.admin
+    await db_session.commit()
+    await _login_admin(client, admin, totp)
+    page = await client.get("/admin/retention")
+    assert "on by default since v1.5.0" in page.text
+    assert "1095 days after it was closed" in page.text
+
+
+# ── No client address reaches the application ─────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_ip_headers_and_peer_address_never_reach_the_app() -> None:
+    from app.middleware import SecurityMiddleware
+
+    seen: dict[str, object] = {}
+
+    async def app(scope: dict[str, object], receive: object, send: object) -> None:
+        seen.update(scope)
+
+    scope = {
+        "type": "http", "client": ("203.0.113.7", 50000),
+        "headers": [(b"x-forwarded-for", b"203.0.113.7"), (b"x-real-ip", b"203.0.113.7"),
+                    (b"accept", b"text/html")],
+    }
+    with patch("app.redis_client.get_redis", AsyncMock()):
+        await SecurityMiddleware(app)(scope, AsyncMock(), AsyncMock())  # type: ignore[arg-type]
+    assert seen["client"] is None
+    assert seen["headers"] == [(b"accept", b"text/html")]
+
+
+@pytest.mark.asyncio
+async def test_pages_are_never_cached_but_static_files_are(client: AsyncClient) -> None:
+    for path in ("/submit", "/status", "/health"):
+        assert (await client.get(path)).headers["cache-control"] == "no-store", path
+    static = await client.get("/static/css/fonts.css")
+    assert static.status_code == 200
+    assert static.headers.get("cache-control") != "no-store"
+
+
+def test_helm_ingress_turns_the_nginx_access_log_off() -> None:
+    from pathlib import Path
+
+    import yaml
+
+    values = yaml.safe_load(Path("charts/openwhistle/values.yaml").read_text())
+    annotations = values["ingress"]["annotations"]
+    assert annotations["nginx.ingress.kubernetes.io/enable-access-log"] == "false"
