@@ -457,7 +457,7 @@ async def test_change_user_role_404_unknown(
 
 
 @pytest.mark.asyncio
-async def test_change_user_role_400_invalid_role(
+async def test_change_user_role_422_invalid_role(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
     admin, secret = await _make_admin(db_session)
@@ -468,7 +468,9 @@ async def test_change_user_role_400_invalid_role(
         f"/admin/users/{target.id}/role",
         data={"csrf_token": csrf, "role": "not_a_real_role"},
     )
-    assert r.status_code == 400
+    assert r.status_code == 422
+    await db_session.refresh(target)
+    assert target.role == AdminRole.admin
 
 
 @pytest.mark.asyncio

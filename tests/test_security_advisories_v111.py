@@ -519,10 +519,11 @@ async def test_cannot_demote_last_privileged_admin(
 
 
 @pytest.mark.asyncio
-async def test_create_user_invalid_role_falls_back_to_admin_not_superadmin(
+async def test_create_user_invalid_role_rejected_never_becomes_superadmin(
     db_session: AsyncSession, as_admin, no_csrf
 ) -> None:
-    """A garbage role value must never silently become superadmin."""
+    """A garbage role value must be refused outright, never silently become
+    any role — least of all superadmin."""
     client, set_user = as_admin
     from app.services.auth import get_user_by_username
     from app.services.users import create_user
@@ -538,10 +539,9 @@ async def test_create_user_invalid_role_falls_back_to_admin_not_superadmin(
         data={"username": uname, "password": "TestPassword123!", "role": "root"},
         follow_redirects=False,
     )
-    assert resp.status_code == 302
+    assert resp.status_code == 422
     created = await get_user_by_username(db_session, uname)
-    assert created is not None
-    assert created.role == AdminRole.admin
+    assert created is None
 
 
 # ── GHSA-24hg: username validation — boundaries and injection payloads ─────

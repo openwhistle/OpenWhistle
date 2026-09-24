@@ -813,7 +813,7 @@ async def change_user_role(
     try:
         role_enum = AdminRole(role)
     except ValueError as exc:
-        raise HTTPException(status_code=400) from exc
+        raise HTTPException(status_code=422, detail="Unknown role.") from exc
 
     # Prevent self-escalation: an account may not change its own role.
     if target.id == current_user.id:
