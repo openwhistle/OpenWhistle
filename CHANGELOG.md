@@ -556,7 +556,7 @@ Remaining lower-severity findings are tracked in GitHub issues #42–#46.
   directory authentication for admin accounts; two-phase bind (service account
   → user DN re-bind to verify password); `ldap3` runs synchronously in a thread
   pool; first LDAP login auto-provisions an `AdminUser` record; subsequent logins
-  re-use the existing record; `TOTP` enrollment still required after first login;
+  reuse the existing record; `TOTP` enrollment still required after first login;
   `LDAP_SERVER`, `LDAP_PORT`, `LDAP_USE_SSL`, `LDAP_BIND_DN`,
   `LDAP_BIND_PASSWORD`, `LDAP_BASE_DN`, `LDAP_USER_FILTER`,
   `LDAP_ATTR_USERNAME`, `LDAP_ATTR_EMAIL` configure the connection
