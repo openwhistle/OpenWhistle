@@ -39,3 +39,13 @@ def test_admin_menu_is_closed_on_a_phone(browser: Browser, base_url: str) -> Non
     page.click(".admin-menu-toggle")
     assert page.locator(".admin-nav a[href='/admin/dashboard']").is_visible()
     ctx.close()
+
+
+def test_demo_banner_is_one_line_on_a_phone(browser: Browser, base_url: str) -> None:
+    ctx, page = _page(browser, base_url, 390)
+    page.goto("/submit")
+    assert page.locator(".demo-banner").bounding_box()["height"] <= 56  # type: ignore[index]
+    theme = page.locator("#theme-toggle").bounding_box()
+    brand = page.locator(".nav-brand").bounding_box()
+    assert theme and brand and abs(theme["y"] - brand["y"]) < 24  # same row as the brand
+    ctx.close()

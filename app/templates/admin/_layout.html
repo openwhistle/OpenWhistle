@@ -23,15 +23,15 @@
             </form>
         </nav>
     </details>
+    <script nonce="{{ request.state.csp_nonce }}">
+        // Closed on narrow screens; open (and the toggle hidden by CSS) on wide ones.
+        (function () {
+            var menu = document.getElementById('admin-menu');
+            if (menu && window.matchMedia('(max-width: 1023px)').matches) menu.open = false;
+        })();
+    </script>
     <div class="admin-main">
         {% block admin_content %}{% endblock %}
     </div>
 </div>
-<script nonce="{{ request.state.csp_nonce }}">
-    // Closed on narrow screens; open (and the toggle hidden by CSS) on wide ones.
-    (function () {
-        var menu = document.getElementById('admin-menu');
-        if (menu && window.matchMedia('(max-width: 1023px)').matches) menu.open = false;
-    })();
-</script>
 {% endblock %}

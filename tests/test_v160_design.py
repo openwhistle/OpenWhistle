@@ -83,3 +83,27 @@ async def test_admin_sees_configuration_and_administration(
     for link in ("/admin/users", "/admin/audit-log", "/admin/system", "/admin/categories"):
         assert link in nav
     assert "/admin/organisations" not in nav.split("</nav>", 1)[0]
+
+
+@pytest.mark.asyncio
+async def test_footer_and_demo_banner_use_lists_not_middots(client: AsyncClient) -> None:
+    html = (await client.get("/submit")).text
+    footer = html.split('<footer', 1)[1]
+    assert "&middot;" not in footer and "·" not in footer
+    assert 'class="footer-links"' in footer
+
+
+@pytest.mark.asyncio
+async def test_theme_toggle_is_an_icon_with_a_translated_name(client: AsyncClient) -> None:
+    client.cookies.set("ow-lang", "de")
+    html = (await client.get("/submit")).text
+    button = html.split('id="theme-toggle"', 1)[1].split("</button>", 1)[0]
+    assert "<svg" in button and "◑" not in button
+    assert 'aria-pressed="false"' in button
+    assert 'aria-label="Dunkelmodus"' in button
+
+
+def test_site_js_has_no_english_ui_strings() -> None:
+    js = (ROOT / "app/static/js/site.js").read_text()
+    for text in ("Light", "Dark", "Please wait", "Switch to"):
+        assert text not in js, text
