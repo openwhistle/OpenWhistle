@@ -1,7 +1,11 @@
 [codespell]
 skip = .git,.venv,uv.lock,htmlcov,*.woff2,*.png,*.ico,*.svg,.superpowers,.serena,.claude,CLAUDE.md,app/static/css/site.css,./app/locales/de.json,./app/locales/fr.json,./app/locales/pt-br.json,./docs/de,./docs/blog,./docs/hinschg_reference.md,./docs-tech/plans
 check-hidden = false
-# Legitimate English word flagged as typo (legal term: secret/undisclosed recording)
-# German text in changelog example (89d Tage verbleibend — bug description)
-# German test data strings in test fixtures (Titel, ist, unter, oder, garantie)
+# covert — correct English legal term (secret recording), app/locales/en.json:431
+# Tage — German text in changelog example, CHANGELOG.md:809
+# Titel — German test data in test fixture, tests/test_coverage_gaps.py:838
+# ist — German text in meta description, docs/index.html:9
+# unter — German text in meta description, docs/index.html:9
+# oder — German text in meta content, docs/index.html:145
+# garantie — German test data in test fixture, tests/test_v150_ux.py:494
 ignore-words-list = covert,Tage,Titel,ist,unter,oder,garantie
