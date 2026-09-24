@@ -23,7 +23,6 @@
     "jp1337"
   ],
   "rebaseWhen": "behind-base-branch",
-  "platformAutomerge": false,
   "lockFileMaintenance": {
     "enabled": true,
     "schedule": [
