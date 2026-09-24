@@ -127,3 +127,15 @@ def test_selected_mode_card_uses_the_accent() -> None:
     css = (ROOT / "app/static/css/site.css").read_text()
     rule = re.search(r"\.mode-card:has\(input:checked\)\s*\{([^}]*)\}", css)
     assert rule and "var(--accent)" in rule.group(1) and "var(--ink)" not in rule.group(1)
+
+
+def test_footer_css_has_no_stale_bare_tag_selectors() -> None:
+    """Regression guard for the Task 23 fix-round-1 finding: `.footer p` and
+    `.footer ul` are bare-tag selectors that match the current footer markup
+    (a <p class="footer-brand"> and a <ul class="footer-links">) at the same
+    specificity as the intended `.footer-brand`/`.footer-links` rules, so
+    whichever is declared later in the file silently wins. Neither selector
+    may exist in site.css."""
+    css = (ROOT / "app/static/css/site.css").read_text()
+    hits = re.findall(r"\.footer\s+(?:p|ul)\b", css)
+    assert not hits, hits

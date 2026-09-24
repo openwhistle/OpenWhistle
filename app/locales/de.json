@@ -520,7 +520,7 @@
   "demo.login.filled": "✓ Eingetragen",
   "demo.banner.label": "Demo-Hinweis",
   "demo.banner.text": "Dies ist eine öffentliche Demo – geben Sie keine echten Meldungen ein. Alle Daten werden alle 6 Stunden gelöscht.",
-  "demo.banner.short": "Demo – wird alle 6 Stunden zurückgesetzt",
+  "demo.banner.short": "Demo — wird alle 6 Stunden zurückgesetzt",
   "nav.home": "{name} Startseite",
   "success.copy": "In die Zwischenablage kopieren",
   "success.copy.case_number": "Vorgangsnummer kopieren",

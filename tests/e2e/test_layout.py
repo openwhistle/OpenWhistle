@@ -49,3 +49,17 @@ def test_demo_banner_is_one_line_on_a_phone(browser: Browser, base_url: str) -> 
     brand = page.locator(".nav-brand").bounding_box()
     assert theme and brand and abs(theme["y"] - brand["y"]) < 24  # same row as the brand
     ctx.close()
+
+
+def test_footer_links_share_one_row_and_brand_outshines_tagline(browser: Browser, base_url: str) -> None:
+    ctx, page = _page(browser, base_url, 1440)
+    page.goto("/submit")
+    ys = page.eval_on_selector_all(".footer-links li", "els => els.map(e => e.getBoundingClientRect().y)")
+    assert ys and max(ys) - min(ys) < 4, ys  # one row, not stacked
+
+    def _brightness(selector: str) -> float:
+        color = page.eval_on_selector(selector, "e => getComputedStyle(e).color")
+        return sum(float(n) for n in color.strip("rgba()").split(",")[:3])
+
+    assert _brightness(".footer-brand") > _brightness(".footer-tagline")
+    ctx.close()
