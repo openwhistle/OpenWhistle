@@ -1622,6 +1622,17 @@ tr:hover td {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+@media (forced-colors: active) {
+  .mode-card:has(input:checked) {
+    border: 2px solid Highlight;
+  }
+  .mode-card:has(input:focus-visible) {
+    outline-color: Highlight;
+  }
+  .admin-nav a.active {
+    border-left: 3px solid Highlight;
+  }
+}
 .mode-card:hover {
   border-color: var(--border-strong);
 }
@@ -3506,10 +3517,6 @@ a.attachment-name:hover {
 .form-control:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
-}
-.mode-card:has(input:focus-visible) {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
 }
 @media (max-width: 768px) {
   .nav {

@@ -129,6 +129,23 @@ def test_selected_mode_card_uses_the_accent() -> None:
     assert rule and "var(--accent)" in rule.group(1) and "var(--ink)" not in rule.group(1)
 
 
+def test_forced_colors_keep_the_selected_mode_card_visible() -> None:
+    css = (ROOT / "app/static/css/site.css").read_text()
+    start = css.index("@media (forced-colors: active)")
+    depth = 0
+    end = start
+    for i, ch in enumerate(css[start:], start=start):
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                end = i
+                break
+    block = css[start:end]
+    assert ".mode-card:has(input:checked)" in block
+
+
 def test_footer_css_has_no_stale_bare_tag_selectors() -> None:
     """Regression guard for the Task 23 fix-round-1 finding: `.footer p` and
     `.footer ul` are bare-tag selectors that match the current footer markup
