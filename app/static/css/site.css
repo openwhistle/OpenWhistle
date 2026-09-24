@@ -1614,10 +1614,13 @@ tr:hover td {
   position: absolute;
   width: 0;
 }
-.mode-card:has(input:checked),
+.mode-card:has(input:checked) {
+  background: var(--accent-subtle);
+  border-color: var(--accent);
+}
 .mode-card:has(input:focus-visible) {
-  border-color: var(--ink);
-  box-shadow: 0 0 0 3px var(--accent-subtle);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .mode-card:hover {
   border-color: var(--border-strong);
@@ -1630,6 +1633,11 @@ tr:hover td {
   display: block;
   font-size: 2rem;
   margin-bottom: 0.625rem;
+}
+.mode-card-svg {
+  color: var(--accent);
+  height: 28px;
+  width: 28px;
 }
 .mode-card-title {
   color: var(--ink);

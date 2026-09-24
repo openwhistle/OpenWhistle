@@ -107,3 +107,23 @@ def test_site_js_has_no_english_ui_strings() -> None:
     js = (ROOT / "app/static/js/site.js").read_text()
     for text in ("Light", "Dark", "Please wait", "Switch to"):
         assert text not in js, text
+
+
+_PICTOGRAPH = re.compile(
+    "[⌀-⏿■-◿☀-➿⬀-⯿\U0001f000-\U0001faff]"
+    r"|&#(?:9[0-9]{3}|1[0-9]{4}|12[0-9]{4});"
+)
+
+
+def test_no_emoji_or_symbol_glyphs_as_icons() -> None:
+    hits = {
+        str(p.relative_to(ROOT)): _PICTOGRAPH.findall(p.read_text())
+        for p in [*TEMPLATES.rglob("*.html"), ROOT / "app/static/js/site.js"]
+    }
+    assert not {k: v for k, v in hits.items() if v}, hits
+
+
+def test_selected_mode_card_uses_the_accent() -> None:
+    css = (ROOT / "app/static/css/site.css").read_text()
+    rule = re.search(r"\.mode-card:has\(input:checked\)\s*\{([^}]*)\}", css)
+    assert rule and "var(--accent)" in rule.group(1) and "var(--ink)" not in rule.group(1)

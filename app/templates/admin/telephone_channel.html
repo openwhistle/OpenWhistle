@@ -1,4 +1,5 @@
 {% extends "admin/_layout.html" %}
+{% import "_icons.html" as icons %}
 
 {% block title %}{{ t('admin.telephone.title') }} — OpenWhistle{% endblock %}
 
@@ -20,35 +21,35 @@
         <p>{{ t('admin.telephone.checklist.intro') }}</p>
         <ul class="checklist" role="list">
             <li class="checklist__item">
-                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span class="checklist__icon" aria-hidden="true">{{ icons.icon('square') }}</span>
                 <span>{{ t('admin.telephone.checklist.1') }}</span>
             </li>
             <li class="checklist__item">
-                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span class="checklist__icon" aria-hidden="true">{{ icons.icon('square') }}</span>
                 <span>{{ t('admin.telephone.checklist.2') }}</span>
             </li>
             <li class="checklist__item">
-                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span class="checklist__icon" aria-hidden="true">{{ icons.icon('square') }}</span>
                 <span>{{ t('admin.telephone.checklist.3') }}</span>
             </li>
             <li class="checklist__item">
-                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span class="checklist__icon" aria-hidden="true">{{ icons.icon('square') }}</span>
                 <span>{{ t('admin.telephone.checklist.4') }}</span>
             </li>
             <li class="checklist__item">
-                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span class="checklist__icon" aria-hidden="true">{{ icons.icon('square') }}</span>
                 <span>{{ t('admin.telephone.checklist.5') }}</span>
             </li>
             <li class="checklist__item">
-                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span class="checklist__icon" aria-hidden="true">{{ icons.icon('square') }}</span>
                 <span>{{ t('admin.telephone.checklist.6') }}</span>
             </li>
             <li class="checklist__item">
-                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span class="checklist__icon" aria-hidden="true">{{ icons.icon('square') }}</span>
                 <span>{{ t('admin.telephone.checklist.7') }}</span>
             </li>
             <li class="checklist__item">
-                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span class="checklist__icon" aria-hidden="true">{{ icons.icon('square') }}</span>
                 <span>{{ t('admin.telephone.checklist.8') }}</span>
             </li>
         </ul>

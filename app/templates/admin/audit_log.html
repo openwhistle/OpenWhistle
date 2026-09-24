@@ -1,4 +1,5 @@
 {% extends "admin/_layout.html" %}
+{% import "_icons.html" as icons %}
 {% import "admin/_audit.html" as audit with context %}
 
 {% block title %}{{ t('admin.audit.title') }} | OpenWhistle{% endblock %}
@@ -28,7 +29,7 @@
             <h1>{{ t('admin.audit.title') }}</h1>
         </div>
         <a href="/admin/audit-log/export.csv" class="btn btn-secondary btn-sm" download>
-            &#128196; {{ t('admin.audit.export_csv') }}
+            {{ icons.icon('file') }} {{ t('admin.audit.export_csv') }}
         </a>
     </div>
 
@@ -120,7 +121,7 @@
 
         {% else %}
         <div class="aud-empty">
-            <div class="aud-empty-icon">&#128221;</div>
+            <div class="aud-empty-icon">{{ icons.icon('note') }}</div>
             <p class="aud-empty-text">{{ t('admin.audit.empty') }}</p>
         </div>
         {% endif %}

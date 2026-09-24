@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_icons.html" as icons %}
 
 {% block styles %}<style nonce="{{ request.state.csp_nonce }}">
 .st-demo-credentials-margin { margin-bottom: 1.5rem; }
@@ -187,7 +188,7 @@
                 <div>
                     <div class="st-deadline-label">{{ t('status.deadlines.ack') }}</div>
                     {% if report.acknowledged_at %}
-                    <span class="st-success-text">✓ {{ t('status.deadlines.ack_done', date=report.acknowledged_at.strftime('%Y-%m-%d')) }}</span>
+                    <span class="st-success-text">{{ icons.icon('check') }} {{ t('status.deadlines.ack_done', date=report.acknowledged_at.strftime('%Y-%m-%d')) }}</span>
                     {% elif ack_days_remaining is defined and ack_days_remaining >= 0 %}
                     <span class="st-accent-text">{{ t('status.deadlines.ack_remaining', days=ack_days_remaining) }}</span>
                     {% else %}
@@ -200,7 +201,7 @@
                         {% if now is defined %}
                             {% set days_left = ((report.feedback_due_at - now).days) %}
                             {% if report.status.value == 'closed' %}
-                            <span class="st-success-text">✓ {{ t('status.deadlines.feedback_done') }}</span>
+                            <span class="st-success-text">{{ icons.icon('check') }} {{ t('status.deadlines.feedback_done') }}</span>
                             {% elif days_left >= 0 %}
                             <span class="st-fw600">{{ t('status.deadlines.feedback_remaining', days=days_left, date=report.feedback_due_at.strftime('%Y-%m-%d')) }}</span>
                             {% else %}
@@ -245,7 +246,7 @@
         <ul class="attachment-items">
             {% for att in report.attachments %}
             <li class="attachment-item">
-                <span class="attachment-icon">&#128206;</span>
+                <span class="attachment-icon">{{ icons.icon('paperclip') }}</span>
                 <a href="/status/attachments/{{ att.id }}" class="attachment-name" download>{{ attachment_names[loop.index0] }}</a>
                 <span class="attachment-size">{{ att.size | format_size }}</span>
                 <a href="/status/attachments/{{ att.id }}" class="btn btn-secondary btn-sm" download>{{ t('status.attachments.download') }}</a>

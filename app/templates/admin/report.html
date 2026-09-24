@@ -1,4 +1,5 @@
 {% extends "admin/_layout.html" %}
+{% import "_icons.html" as icons %}
 {% import "admin/_audit.html" as audit with context %}
 
 {% block styles %}<style nonce="{{ request.state.csp_nonce }}">
@@ -62,10 +63,10 @@
             <a href="/admin/dashboard" class="btn btn-secondary btn-sm">{{ t('admin.back_dashboard') }}</a>
             <span class="badge badge-{{ report.status.value }}">{{ t('status.label.' + report.status.value) }}</span>
             {% if report.assigned_to %}
-            <span class="report-assignee">&#128100; {{ report.assigned_to.username }}</span>
+            <span class="report-assignee">{{ icons.icon('user') }} {{ report.assigned_to.username }}</span>
             {% endif %}
             <a href="/admin/reports/{{ report.id }}/export.pdf" class="btn btn-secondary btn-sm ml-auto" download>
-                &#128196; {{ t('admin.report.export_pdf') }}
+                {{ icons.icon('file') }} {{ t('admin.report.export_pdf') }}
             </a>
         </div>
         <div class="page-eyebrow">{{ t('admin.report.eyebrow') }}</div>
@@ -289,7 +290,7 @@
                     <div>
                         <div class="detail-label">{{ t('admin.report.detail.sla7') }}</div>
                         {% if report.acknowledged_at %}
-                            <span class="sla-ok mono report-detail-value">&#10003; {{ report.acknowledged_at.strftime('%Y-%m-%d') }}</span>
+                            <span class="sla-ok mono report-detail-value">{{ icons.icon('check') }} {{ report.acknowledged_at.strftime('%Y-%m-%d') }}</span>
                         {% else %}
                             {% set days = (now - report.submitted_at).days %}
                             <span class="{{ 'sla-overdue' if days >= 7 else ('sla-warning' if days >= 5 else 'sla-ok') }} mono report-detail-value">
@@ -318,7 +319,7 @@
                 <ul class="attachment-items">
                     {% for att in report.attachments %}
                     <li class="attachment-item">
-                        <span class="attachment-icon">&#128206;</span>
+                        <span class="attachment-icon">{{ icons.icon('paperclip') }}</span>
                         <span class="attachment-name" title="{{ attachment_names[loop.index0] }}">{{ attachment_names[loop.index0] }}</span>
                         <span class="attachment-size">{{ att.size | format_size }}</span>
                         <a href="/admin/reports/{{ report.id }}/attachments/{{ att.id }}"
