@@ -388,3 +388,44 @@ def test_docs_warn_callouts_do_not_converge_on_the_accent() -> None:
         for selector in (".callout-warn", ".val-warn"):
             for body in re.findall(re.escape(selector) + r"[^{]*\{([^}]*)\}", text):
                 assert "var(--accent)" not in body, (name, selector, body)
+
+
+def _relative_luminance(hex_color: str) -> float:
+    hex_color = hex_color.lstrip("#")
+
+    def channel(c: str) -> float:
+        v = int(c, 16) / 255
+        return v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
+
+    r, g, b = (channel(hex_color[i : i + 2]) for i in (0, 2, 4))
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def _contrast_ratio(hex_a: str, hex_b: str) -> float:
+    """WCAG 2.1 contrast ratio between two hex colours."""
+    la, lb = _relative_luminance(hex_a), _relative_luminance(hex_b)
+    la, lb = max(la, lb), min(la, lb)
+    return (la + 0.05) / (lb + 0.05)
+
+
+def test_docs_warning_colour_meets_contrast() -> None:
+    """Each docs page's --warning must read against its --bg-base at >= 4.5:1
+    (WCAG AA, normal text) in both themes — a warning colour nobody can read
+    is not a fix. Regression guard for the round-1 finding that the restored
+    former-gold light value (#c8972e, ~2.5:1 on the blog pages) was too low."""
+    for name in (
+        "docs.html",
+        "blog/hinschg-compliance-leitfaden.html",
+        "blog/interne-meldestelle-einrichten.html",
+        "blog/whistleblower-software-vergleich.html",
+    ):
+        text = (ROOT / "docs" / name).read_text()
+        light_block = re.search(r":root\s*\{([^}]*)\}", text)
+        dark_block = re.search(r'\[data-theme="dark"\]\s*\{([^}]*)\}', text)
+        assert light_block and dark_block, name
+        for theme, block in (("light", light_block), ("dark", dark_block)):
+            warning = re.search(r"--warning:\s*(#[0-9a-fA-F]{6})", block.group(1))
+            bg_base = re.search(r"--bg-base:\s*(#[0-9a-fA-F]{6})", block.group(1))
+            assert warning and bg_base, (name, theme)
+            ratio = _contrast_ratio(warning.group(1), bg_base.group(1))
+            assert ratio >= 4.5, (name, theme, warning.group(1), bg_base.group(1), ratio)
