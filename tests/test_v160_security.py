@@ -585,3 +585,68 @@ async def test_user_deactivated_between_password_and_totp_gets_no_session(
         "csrf_token": client.cookies.get("ow_csrf"), "temp_token": temp.group(1),
         "totp_code": pyotp.TOTP(secret).now()})
     assert not client.cookies.get("ow_session")
+
+
+@pytest.mark.asyncio
+async def test_unknown_role_creates_no_user(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    await _logged_in_admin(client, db_session)
+    name = f"role_{uuid.uuid4().hex[:8]}"
+    resp = await client.post("/admin/users", data={
+        "username": name, "password": _PASSWORD, "role": "root",
+        "csrf_token": client.cookies.get("ow_csrf")}, follow_redirects=False)
+    assert resp.status_code == 422
+    assert await db_session.scalar(select(AdminUser).where(AdminUser.username == name)) is None
+
+
+@pytest.mark.asyncio
+async def test_case_manager_cannot_dismiss_the_ip_warning(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    user = await _logged_in_admin(client, db_session)
+    user.role = AdminRole.case_manager
+    await db_session.commit()
+    resp = await client.post(
+        "/admin/ip-warning/dismiss", headers={"X-CSRF-Token": client.cookies.get("ow_csrf") or ""}
+    )
+    assert resp.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_deactivated_user_mfa_setup_makes_no_state_change(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """A deactivated user holding a valid setup-pending token must not flip
+    totp_enabled or write an AUTH_TOTP_SETUP audit row before rejection."""
+    from app.models.audit import AuditLog
+    from app.redis_client import get_redis
+    from app.services import auth as auth_service
+
+    secret = pyotp.random_base32()
+    user = AdminUser(
+        id=uuid.uuid4(), username=f"deact_{uuid.uuid4().hex[:8]}",
+        password_hash=hash_password(_PASSWORD), totp_secret=secret,
+        totp_enabled=False, is_active=False,
+    )
+    db_session.add(user)
+    await db_session.commit()
+
+    redis = await get_redis()
+    temp_token = uuid.uuid4().hex
+    await auth_service.store_totp_setup_pending(redis, temp_token, str(user.id))
+
+    csrf = await _csrf(client, "/admin/login")
+    resp = await client.post("/admin/mfa/setup", data={
+        "csrf_token": csrf, "temp_token": temp_token,
+        "totp_code": pyotp.TOTP(secret).now(),
+    }, follow_redirects=False)
+
+    assert resp.status_code == 302
+    assert resp.headers["location"] == "/admin/login"
+    await db_session.refresh(user)
+    assert user.totp_enabled is False
+    rows = (await db_session.scalars(
+        select(AuditLog).where(AuditLog.admin_id == user.id)
+    )).all()
+    assert rows == []

@@ -89,9 +89,11 @@
             <br><br>
             {{ t('admin.ip_warning.hint') }}
         </div>
+        {% if user.role.value in ('admin', 'superadmin') %}
         <button class="btn btn-danger btn-sm dash-shrink0" data-action="dismiss-ip-warning">
             {{ t('admin.ip_warning.dismiss') }}
         </button>
+        {% endif %}
     </div>
     {% endif %}
 

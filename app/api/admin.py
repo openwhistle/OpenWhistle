@@ -753,7 +753,7 @@ async def create_user(
     request: Request,
     username: str = Form(...),
     password: str = Form(...),
-    role: str = Form(default="admin"),
+    role: str = Form(default=AdminRole.case_manager.value),
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf),
@@ -767,8 +767,8 @@ async def create_user(
 
     try:
         role_enum = AdminRole(role)
-    except ValueError:
-        role_enum = AdminRole.admin
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="Unknown role.") from exc
 
     # Privilege-tier check: only a superadmin may create superadmin accounts.
     if role_enum == AdminRole.superadmin and current_user.role != AdminRole.superadmin:
@@ -1120,7 +1120,7 @@ async def reactivate_location(
 
 @router.post("/ip-warning/dismiss")
 async def dismiss_ip_warning(
-    current_user: AdminUser = Depends(get_current_admin),
+    current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf_header),
 ) -> JSONResponse:
     await clear_ip_warning()

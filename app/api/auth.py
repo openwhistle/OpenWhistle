@@ -335,7 +335,7 @@ async def mfa_setup_post(
         return RedirectResponse("/admin/login", status_code=302)
 
     user = await auth_service.get_user_by_id(db, user_id)
-    if not user:
+    if not user or not user.is_active:
         return RedirectResponse("/admin/login", status_code=302)
 
     if not verify_totp(user.totp_secret, totp_code):
