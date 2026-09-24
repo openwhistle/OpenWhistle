@@ -852,7 +852,6 @@ strong {
   border-color: var(--hairline);
   display: flex;
   gap: 0.75rem;
-  letter-spacing: 0.08em;
   margin-bottom: 1.25rem;
   padding-bottom: 0.75rem;
 }
@@ -864,10 +863,16 @@ strong {
   font-size: 0.75rem;
   font-weight: 600;
   line-height: 1rem;
-  text-transform: uppercase;
+}
+.panel-header {
+  color: var(--ink);
+  font-size: var(--text-body);
+  font-weight: 600;
 }
 .detail-label {
-  letter-spacing: 0.07em;
+  color: var(--muted);
+  font-size: var(--text-hint);
+  font-weight: 500;
   margin-bottom: 0.375rem;
 }
 .stat-card {

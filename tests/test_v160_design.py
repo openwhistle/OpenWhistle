@@ -275,3 +275,18 @@ def test_credential_value_dead_css_removed() -> None:
     was unreferenced by any template. It must not exist in site.css."""
     css = (ROOT / "app/static/css/site.css").read_text()
     assert ".credential-value" not in css
+
+
+def test_eyebrows_are_the_exception() -> None:
+    count = sum(
+        len(re.findall(r'class="(?:page|sidebar)-eyebrow"', p.read_text()))
+        for p in TEMPLATES.rglob("*.html")
+    )
+    assert count <= 5, count
+
+
+def test_panel_headers_and_labels_are_not_shouted() -> None:
+    css = (ROOT / "app/static/css/site.css").read_text()
+    for selector in (".panel-header", ".card-title", ".detail-label"):
+        for body in re.findall(re.escape(selector) + r"[^{]*\{([^}]*)\}", css):
+            assert "uppercase" not in body, selector

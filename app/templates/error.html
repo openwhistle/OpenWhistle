@@ -12,7 +12,7 @@
 {% block content %}
 <div class="container-sm err-container">
     <div class="page-header">
-        <div class="page-eyebrow">Error {{ status_code }}</div>
+        <div class="page-eyebrow">{{ t('error.eyebrow', code=status_code) }}</div>
         <h1>{{ detail }}</h1>
     </div>
     <a href="#" id="err-back-link" class="btn btn-secondary err-back-btn">Go Back</a>
