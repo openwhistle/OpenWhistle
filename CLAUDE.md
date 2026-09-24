@@ -89,43 +89,6 @@ following. These checks caught v0.3.0 and v0.4.0 gaps retroactively — run them
 
 ### Cutting the release
 
-`main` is protected (required checks, enforced for admins), so the release goes through a PR.
-
-1. On a `release/vX.Y.Z` branch: move `[Unreleased]` in `CHANGELOG.md` to the new version with
-   today's date and add its compare link; bump `app_version` in `app/config.py`, `version` and
-   `appVersion` in `charts/openwhistle/Chart.yaml`, the "Current version" in `docs/docs.html`,
-   `softwareVersion` and the hero version in `docs/index.html`; add the ROADMAP entry.
-   `test_every_published_version_string_matches` fails if any of them disagree.
-2. Open the PR, let the checks pass, merge it.
-3. Tag `vX.Y.Z` on the resulting `main` commit and push the tag.
-4. Read the "Publish Docker Images" run, then prove the images are pullable: for GHCR, Docker Hub
-   and Quay, `skopeo inspect --raw` the tag and every child digest of its index. A 200 on the
-   index alone proves nothing — v1.3.0's tags answered 200 while every child was deleted.
-
-Der Code wird auf GitHub in einem öffentlichen Repository von der Organisation openwhistle gehostet.
-Der Code liegt hier: <https://github.com/openwhistle/OpenWhistle>
-
-Für das Design des Frontends beachte bitte folgenden Text:
-
-DISTILLED_AESTHETICS_PROMPT = """
-<frontend_aesthetics>
-You tend to converge toward generic, "on distribution" outputs. In frontend design, this creates what users call the "AI slop" aesthetic. Avoid this: make creative, distinctive frontends that surprise and delight. Focus on:
-
-Typography: Choose fonts that are beautiful, unique, and interesting. Avoid generic fonts like Arial and Inter; opt instead for distinctive choices that elevate the frontend's aesthetics.
-
-Color & Theme: Commit to a cohesive aesthetic. Use CSS variables for consistency. Dominant colors with sharp accents outperform timid, evenly-distributed palettes. Draw from IDE themes and cultural aesthetics for inspiration.
-
-Motion: Use animations for effects and micro-interactions. Prioritize CSS-only solutions for HTML. Use Motion library for React when available. Focus on high-impact moments: one well-orchestrated page load with staggered reveals (animation-delay) creates more delight than scattered micro-interactions.
-
-Backgrounds: Create atmosphere and depth rather than defaulting to solid colors. Layer CSS gradients, use geometric patterns, or add contextual effects that match the overall aesthetic.
-
-Avoid generic AI-generated aesthetics:
-
-- Overused font families (Inter, Roboto, Arial, system fonts)
-- Clichéd color schemes (particularly purple gradients on white backgrounds)
-- Predictable layouts and component patterns
-- Cookie-cutter design that lacks context-specific character
-
-Interpret creatively and make unexpected choices that feel genuinely designed for the context. Vary between light and dark themes, different fonts, different aesthetics. You still tend to converge on common choices (Space Grotesk, for example) across generations. Avoid this: it is critical that you think outside the box!
-</frontend_aesthetics>
-"""
+Follow `docs-tech/release.md`: mutation audit of every new guard
+(`scripts/mutation_audit.py`, all RED), UI check, release PR, tag, verify the
+published images from outside.

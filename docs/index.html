@@ -46,7 +46,7 @@
       "priceCurrency": "EUR"
     },
     "license": "https://www.gnu.org/licenses/gpl-3.0.html",
-    "softwareVersion": "1.3.1",
+    "softwareVersion": "1.4.0",
     "keywords": "whistleblower, HinSchG, Hinweisgeberschutz, interne Meldestelle, DSGVO, GDPR, open source, self-hosted, Hinweisgebersystem kostenlos",
     "author": {
       "@type": "Organization",
@@ -180,14 +180,14 @@
       --border-subtle: #e6e6e4;
       --border-default:#d8d8d6;
       --border-strong: #c9c9c6;
-      --seal-green:    #0e7c5a;
+      --seal-green:    #0c7253;
       --seal-green-mid:#0b6249;
-      --seal-green-dim:rgba(14,124,90,0.15);
-      --seal-green-fog:rgba(14,124,90,0.08);
-      --gold:          #0e7c5a;
+      --seal-green-dim:rgba(12,114,83,0.15);
+      --seal-green-fog:rgba(12,114,83,0.08);
+      --gold:          #0c7253;
       --gold-mid:      #0b6249;
-      --gold-dim:      rgba(14,124,90,0.15);
-      --gold-fog:      rgba(14,124,90,0.08);
+      --gold-dim:      rgba(12,114,83,0.15);
+      --gold-fog:      rgba(12,114,83,0.08);
       --red-alert:     #bf3529;
       --code-bg:       #0a0a0b;
       --code-text:     #e9e9e8;
@@ -217,7 +217,7 @@
       --footer-bg:     #050506;
       --text-primary:  #fafafa;
       --text-secondary:#bcbcc0;
-      --text-muted:    #808085;
+      --text-muted:    #8e8e93;
       --border-subtle: #262629;
       --border-default:#34343a;
       --border-strong: #43434a;
@@ -278,15 +278,15 @@
     /* Light-mode nav overrides — nav-bg is white, so text must be dark */
     [data-theme="light"] .site-nav { border-bottom-color: #e2e8f0; }
     [data-theme="light"] .nav-logo { color: #1e293b; }
-    [data-theme="light"] .nav-logo:hover { color: #0e7c5a; }
+    [data-theme="light"] .nav-logo:hover { color: #0c7253; }
     [data-theme="light"] .nav-logo svg path,
-    [data-theme="light"] .nav-logo svg circle { stroke: #0e7c5a; }
+    [data-theme="light"] .nav-logo svg circle { stroke: #0c7253; }
     [data-theme="light"] .nav-links a { color: rgba(55,65,81,0.75); }
     [data-theme="light"] .nav-links a:hover { color: #1e293b; }
-    [data-theme="light"] .nav-cta { color: #0e7c5a !important; border-color: rgba(14,124,90,0.4) !important; }
-    [data-theme="light"] .nav-cta:hover { background: rgba(14,124,90,0.08) !important; color: #0e7c5a !important; }
+    [data-theme="light"] .nav-cta { color: #0c7253 !important; border-color: rgba(12,114,83,0.4) !important; }
+    [data-theme="light"] .nav-cta:hover { background: rgba(12,114,83,0.08) !important; color: #0c7253 !important; }
     [data-theme="light"] .theme-toggle { border-color: #cbd5e1; color: #718096; }
-    [data-theme="light"] .theme-toggle:hover { border-color: #0e7c5a; color: #0e7c5a; }
+    [data-theme="light"] .theme-toggle:hover { border-color: #0c7253; color: #0c7253; }
     [data-theme="light"] .nav-toggle { color: #374151; }
 
     .nav-inner {
@@ -334,12 +334,12 @@
 
     .nav-cta {
       padding: var(--space-2) var(--space-4) !important;
-      border: 1px solid rgba(14, 124, 90, 0.5) !important;
+      border: 1px solid rgba(12, 114, 83, 0.5) !important;
       color: var(--gold) !important;
       border-radius: 2px;
       transition: background var(--duration-fast) ease !important;
     }
-    .nav-cta:hover { background: rgba(14, 124, 90, 0.15) !important; color: var(--gold-mid) !important; }
+    .nav-cta:hover { background: rgba(12, 114, 83, 0.15) !important; color: var(--gold-mid) !important; }
 
     .nav-actions {
       display: flex;
@@ -418,9 +418,9 @@
       height: min(600px, 80vw);
       border-radius: 50%;
       background:
-        radial-gradient(circle at center, rgba(14, 124, 90, 0.04) 0%, transparent 60%),
-        radial-gradient(circle at center, transparent 62%, rgba(14, 124, 90, 0.025) 63%, rgba(14, 124, 90, 0.025) 65%, transparent 66%),
-        radial-gradient(circle at center, transparent 72%, rgba(14, 124, 90, 0.03) 73%, rgba(14, 124, 90, 0.03) 75%, transparent 76%);
+        radial-gradient(circle at center, rgba(12, 114, 83, 0.04) 0%, transparent 60%),
+        radial-gradient(circle at center, transparent 62%, rgba(12, 114, 83, 0.025) 63%, rgba(12, 114, 83, 0.025) 65%, transparent 66%),
+        radial-gradient(circle at center, transparent 72%, rgba(12, 114, 83, 0.03) 73%, rgba(12, 114, 83, 0.03) 75%, transparent 76%);
       pointer-events: none;
       z-index: 0;
     }
@@ -573,7 +573,7 @@
       border-color: var(--seal-green-mid);
       color: #fff;
       transform: translateY(-1px);
-      box-shadow: 0 4px 20px rgba(14, 124, 90, 0.3);
+      box-shadow: 0 4px 20px rgba(12, 114, 83, 0.3);
     }
     .btn-outline {
       background: transparent;
@@ -1300,7 +1300,7 @@
         </div>
 
         <div class="hero-meta" role="list">
-          <span class="hero-meta-item" role="listitem">Version 1.3.1</span>
+          <span class="hero-meta-item" role="listitem">Version 1.4.0</span>
           <span class="hero-meta-item" role="listitem">GPL-3.0</span>
           <span class="hero-meta-item" role="listitem">Python 3.14</span>
           <span class="hero-meta-item" role="listitem">Docker</span>
@@ -1313,37 +1313,37 @@
       <div class="trust-strip-inner">
         <div class="trust-item">
           <div class="trust-item-check" aria-hidden="true">
-            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0e7c5a" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0c7253" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
           HinSchG compliant
         </div>
         <div class="trust-item">
           <div class="trust-item-check" aria-hidden="true">
-            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0e7c5a" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0c7253" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
           DSGVO / GDPR
         </div>
         <div class="trust-item">
           <div class="trust-item-check" aria-hidden="true">
-            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0e7c5a" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0c7253" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
           No IP logging
         </div>
         <div class="trust-item">
           <div class="trust-item-check" aria-hidden="true">
-            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0e7c5a" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0c7253" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
           Open Source
         </div>
         <div class="trust-item">
           <div class="trust-item-check" aria-hidden="true">
-            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0e7c5a" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0c7253" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
           Self-hosted
         </div>
         <div class="trust-item">
           <div class="trust-item-check" aria-hidden="true">
-            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0e7c5a" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0c7253" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
           Two-factor access
         </div>
@@ -1455,7 +1455,7 @@
           <article class="feature-card" role="listitem">
             <div class="feature-icon-wrap" aria-hidden="true">
               <svg viewBox="0 0 18 18" fill="none">
-                <path d="M9 1.5L2.5 4.5v5c0 4 2.9 7.5 6.5 8.5 3.6-1 6.5-4.5 6.5-8.5v-5L9 1.5z" stroke="#0e7c5a" stroke-width="1.4" stroke-linejoin="round"/>
+                <path d="M9 1.5L2.5 4.5v5c0 4 2.9 7.5 6.5 8.5 3.6-1 6.5-4.5 6.5-8.5v-5L9 1.5z" stroke="#0c7253" stroke-width="1.4" stroke-linejoin="round"/>
               </svg>
             </div>
             <h3 class="feature-title">Anonymous Reporting</h3>
@@ -1469,9 +1469,9 @@
           <article class="feature-card" role="listitem">
             <div class="feature-icon-wrap" aria-hidden="true">
               <svg viewBox="0 0 18 18" fill="none">
-                <rect x="3" y="7.5" width="12" height="8.5" rx="1.5" stroke="#0e7c5a" stroke-width="1.4"/>
-                <path d="M6 7.5V5.5a3 3 0 016 0v2" stroke="#0e7c5a" stroke-width="1.4" stroke-linecap="round"/>
-                <circle cx="9" cy="11.5" r="1.5" fill="#0e7c5a"/>
+                <rect x="3" y="7.5" width="12" height="8.5" rx="1.5" stroke="#0c7253" stroke-width="1.4"/>
+                <path d="M6 7.5V5.5a3 3 0 016 0v2" stroke="#0c7253" stroke-width="1.4" stroke-linecap="round"/>
+                <circle cx="9" cy="11.5" r="1.5" fill="#0c7253"/>
               </svg>
             </div>
             <h3 class="feature-title">Two-Factor Report Access</h3>
@@ -1485,8 +1485,8 @@
           <article class="feature-card" role="listitem">
             <div class="feature-icon-wrap" aria-hidden="true">
               <svg viewBox="0 0 18 18" fill="none">
-                <path d="M3 9V5l6-3 6 3v4c0 3.5-2.7 6.8-6 7.5C5.7 15.8 3 12.5 3 9z" stroke="#0e7c5a" stroke-width="1.4" stroke-linejoin="round" fill="none"/>
-                <path d="M6 9l2 2 4-4" stroke="#0e7c5a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M3 9V5l6-3 6 3v4c0 3.5-2.7 6.8-6 7.5C5.7 15.8 3 12.5 3 9z" stroke="#0c7253" stroke-width="1.4" stroke-linejoin="round" fill="none"/>
+                <path d="M6 9l2 2 4-4" stroke="#0c7253" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
             <h3 class="feature-title">HinSchG Compliance</h3>
@@ -1499,8 +1499,8 @@
           <article class="feature-card" role="listitem">
             <div class="feature-icon-wrap" aria-hidden="true">
               <svg viewBox="0 0 18 18" fill="none">
-                <path d="M2 4h14v10a1 1 0 01-1 1H3a1 1 0 01-1-1V4z" stroke="#0e7c5a" stroke-width="1.4"/>
-                <path d="M2 4l7 6 7-6" stroke="#0e7c5a" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 4h14v10a1 1 0 01-1 1H3a1 1 0 01-1-1V4z" stroke="#0c7253" stroke-width="1.4"/>
+                <path d="M2 4l7 6 7-6" stroke="#0c7253" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
             <h3 class="feature-title">Bidirectional Communication</h3>
@@ -1513,9 +1513,9 @@
           <article class="feature-card" role="listitem">
             <div class="feature-icon-wrap" aria-hidden="true">
               <svg viewBox="0 0 18 18" fill="none">
-                <circle cx="9" cy="6" r="3" stroke="#0e7c5a" stroke-width="1.4"/>
-                <path d="M3 16c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="#0e7c5a" stroke-width="1.4" stroke-linecap="round"/>
-                <path d="M13 9.5l1 1 2.5-2.5" stroke="#0e7c5a" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="9" cy="6" r="3" stroke="#0c7253" stroke-width="1.4"/>
+                <path d="M3 16c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="#0c7253" stroke-width="1.4" stroke-linecap="round"/>
+                <path d="M13 9.5l1 1 2.5-2.5" stroke="#0c7253" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             </div>
             <h3 class="feature-title">Multi-Factor Admin Auth</h3>
@@ -1528,8 +1528,8 @@
           <article class="feature-card" role="listitem">
             <div class="feature-icon-wrap" aria-hidden="true">
               <svg viewBox="0 0 18 18" fill="none">
-                <rect x="2" y="2" width="14" height="14" rx="2" stroke="#0e7c5a" stroke-width="1.4"/>
-                <path d="M5 9h8M5 6h4M5 12h6" stroke="#0e7c5a" stroke-width="1.4" stroke-linecap="round"/>
+                <rect x="2" y="2" width="14" height="14" rx="2" stroke="#0c7253" stroke-width="1.4"/>
+                <path d="M5 9h8M5 6h4M5 12h6" stroke="#0c7253" stroke-width="1.4" stroke-linecap="round"/>
               </svg>
             </div>
             <h3 class="feature-title">Bruteforce Protection</h3>

@@ -43,6 +43,14 @@ def test_png_text_chunks_are_removed() -> None:
     assert b"Mustermann" not in strip_metadata("scan.png", buf.getvalue())
 
 
+def test_png_icc_profile_is_removed() -> None:
+    """ICC profiles can name the device; Pillow copies them from im.info by default."""
+    buf = io.BytesIO()
+    Image.new("RGB", (4, 4)).save(buf, "PNG", icc_profile=b"Pixel 8 Pro display profile")
+    out = Image.open(io.BytesIO(strip_metadata("screen.png", buf.getvalue())))
+    assert "icc_profile" not in out.info
+
+
 def test_webp_exif_is_removed() -> None:
     exif = Image.new("RGB", (1, 1)).getexif()
     exif[0x010F] = "SecretCam"
@@ -57,15 +65,24 @@ def test_gif_comment_is_removed() -> None:
     assert b"Mustermann" not in strip_metadata("a.gif", buf.getvalue())
 
 
+_XMP = (
+    b'<x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/'
+    b'22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/">'
+    b"<dc:creator>Erika XMP</dc:creator></rdf:Description></rdf:RDF></x:xmpmeta>"
+)
+
+
 def test_pdf_document_info_is_removed() -> None:
     writer = PdfWriter()
     writer.add_blank_page(100, 100)
     writer.add_metadata({"/Author": "Max Mustermann", "/Producer": "SecretTool"})
+    writer.xmp_metadata = _XMP
     buf = io.BytesIO()
     writer.write(buf)
     out = strip_metadata("memo.pdf", buf.getvalue())
     assert b"Mustermann" not in out
     assert b"SecretTool" not in out
+    assert b"Erika XMP" not in out
 
 
 def test_office_properties_are_emptied_and_content_kept() -> None:
@@ -145,7 +162,7 @@ async def test_legacy_plaintext_attachment_is_still_readable(db_session: AsyncSe
     assert await read_attachment(db_session, att) == b"old"
 
 
-def test_encrypted_pdf_is_refused() -> None:
+def test_pdf_that_needs_a_password_is_refused() -> None:
     writer = PdfWriter()
     writer.add_blank_page(72, 72)
     writer.encrypt("pw")
@@ -153,6 +170,21 @@ def test_encrypted_pdf_is_refused() -> None:
     writer.write(buf)
     with pytest.raises(MetadataError):
         strip_metadata("locked.pdf", buf.getvalue())
+
+
+def test_owner_password_only_pdf_is_accepted_and_cleaned() -> None:
+    """Permission-restricted PDFs are common and readable without a password."""
+    from pypdf import PdfReader
+
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    writer.add_metadata({"/Author": "Max Mustermann"})
+    writer.encrypt(user_password="", owner_password="owner")
+    buf = io.BytesIO()
+    writer.write(buf)
+    out = PdfReader(io.BytesIO(strip_metadata("restricted.pdf", buf.getvalue())))
+    assert not out.is_encrypted
+    assert not (out.metadata or {}).get("/Author")
 
 
 def test_office_zip_bomb_is_refused(monkeypatch: pytest.MonkeyPatch) -> None:

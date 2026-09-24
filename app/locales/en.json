@@ -284,6 +284,7 @@
   "admin.users.deactivate": "Deactivate",
   "admin.users.reactivate": "Reactivate",
   "admin.users.change_role": "Change Role",
+  "admin.users.role_for": "Role for {username}",
   "admin.users.cannot_self": "Cannot deactivate your own account.",
   "admin.users.last_admin": "Cannot deactivate. Last active admin.",
 

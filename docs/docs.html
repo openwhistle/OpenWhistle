@@ -76,14 +76,14 @@
       --border-subtle: #e6e6e4;
       --border-default:#d8d8d6;
       --border-strong: #c9c9c6;
-      --seal-green:    #0e7c5a;
+      --seal-green:    #0c7253;
       --seal-green-mid:#0b6249;
-      --seal-green-dim:rgba(14,124,90,0.15);
-      --seal-green-fog:rgba(14,124,90,0.08);
-      --gold:          #0e7c5a;
+      --seal-green-dim:rgba(12,114,83,0.15);
+      --seal-green-fog:rgba(12,114,83,0.08);
+      --gold:          #0c7253;
       --gold-mid:      #0b6249;
-      --gold-dim:      rgba(14,124,90,0.15);
-      --gold-fog:      rgba(14,124,90,0.08);
+      --gold-dim:      rgba(12,114,83,0.15);
+      --gold-fog:      rgba(12,114,83,0.08);
       --red-alert:     #bf3529;
       --code-bg:       #0a0a0b;
       --code-text:     #e9e9e8;
@@ -114,7 +114,7 @@
       --sidebar-bg:    #131315;
       --text-primary:  #fafafa;
       --text-secondary:#bcbcc0;
-      --text-muted:    #808085;
+      --text-muted:    #8e8e93;
       --border-subtle: #262629;
       --border-default:#34343a;
       --border-strong: #43434a;
@@ -172,15 +172,15 @@
     }
     [data-theme="light"] .site-nav { border-bottom-color: #e2e8f0; }
     [data-theme="light"] .nav-logo { color: #1e293b; }
-    [data-theme="light"] .nav-logo:hover { color: #0e7c5a; }
+    [data-theme="light"] .nav-logo:hover { color: #0c7253; }
     [data-theme="light"] .nav-logo svg path,
-    [data-theme="light"] .nav-logo svg circle { stroke: #0e7c5a; }
+    [data-theme="light"] .nav-logo svg circle { stroke: #0c7253; }
     [data-theme="light"] .nav-links a { color: rgba(55,65,81,0.75); }
     [data-theme="light"] .nav-links a:hover { color: #1e293b; }
-    [data-theme="light"] .nav-cta { color: #0e7c5a !important; border-color: rgba(14,124,90,0.4) !important; }
-    [data-theme="light"] .nav-cta:hover { background: rgba(14,124,90,0.08) !important; color: #0e7c5a !important; }
+    [data-theme="light"] .nav-cta { color: #0c7253 !important; border-color: rgba(12,114,83,0.4) !important; }
+    [data-theme="light"] .nav-cta:hover { background: rgba(12,114,83,0.08) !important; color: #0c7253 !important; }
     [data-theme="light"] .theme-toggle { border-color: #cbd5e1; color: #718096; }
-    [data-theme="light"] .theme-toggle:hover { border-color: #0e7c5a; color: #0e7c5a; }
+    [data-theme="light"] .theme-toggle:hover { border-color: #0c7253; color: #0c7253; }
     [data-theme="light"] .nav-toggle { color: #374151; }
     .nav-inner {
       max-width: var(--max-width);
@@ -224,11 +224,11 @@
     .nav-links a.active { color: var(--gold); }
     .nav-cta {
       padding: var(--space-2) var(--space-4) !important;
-      border: 1px solid rgba(14, 124, 90, 0.5) !important;
+      border: 1px solid rgba(12, 114, 83, 0.5) !important;
       color: var(--gold) !important;
       border-radius: 2px;
     }
-    .nav-cta:hover { background: rgba(14, 124, 90, 0.15) !important; color: var(--gold-mid) !important; }
+    .nav-cta:hover { background: rgba(12, 114, 83, 0.15) !important; color: var(--gold-mid) !important; }
     .nav-actions { display: flex; align-items: center; gap: var(--space-4); flex-shrink: 0; }
     .theme-toggle {
       display: flex;
@@ -816,7 +816,7 @@
 
         <h3>Current version</h3>
         <p>
-          <strong>v1.3.1</strong> — Security and deployment fixes on top of v1.3.0, the "Signal" design system: a ground-up visual redesign unifying the app and this site under one identity (monochrome ground, single emerald accent, self-hosted Sora + JetBrains Mono, first-class light and dark), a documented design specification in <code>DESIGN.md</code>, and a stylesheet/template cleanup. Builds on the v1.2.x hardening releases. See the
+          <strong>v1.4.0</strong> — Attachments stripped of identifying metadata and encrypted at rest, multi-tenant scoping, a phone-ready interface that passes automated contrast checks in both themes, and one signed image in all three registries. See the
           <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG</a>
           for a full list of changes.
         </p>
@@ -1102,7 +1102,7 @@
               <td><code class="env-key">BRAND_PRIMARY_COLOR</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
               <td>Primary brand colour as a hex value. Used for buttons, accents, and links throughout the UI.</td>
-              <td><code>#0e7c5a</code></td>
+              <td><code>#0c7253</code></td>
             </tr>
             <tr>
               <td><code class="env-key">BRAND_SECONDARY_COLOR</code></td>

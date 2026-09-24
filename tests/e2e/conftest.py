@@ -89,10 +89,10 @@ def admin_page2(browser: Browser, base_url: str) -> Generator[Page]:
 
 
 def run_axe(page: Page, axe_source: str) -> list[dict]:  # type: ignore[type-arg]
-    """Inject axe-core and return critical violations only.
+    """Inject axe-core and return critical and serious violations.
 
-    Serious violations (color-contrast, link-in-text-block, etc.) are returned
-    separately via run_axe_all() and reported as warnings but do not block CI.
+    Serious includes color-contrast and link-in-text-block. It used to be a
+    warning only, and every contrast failure on the site shipped green.
     """
     if not axe_source:
         return []
@@ -106,7 +106,7 @@ def run_axe(page: Page, axe_source: str) -> list[dict]:  # type: ignore[type-arg
         """
         async () => {
             const results = await axe.run();
-            return results.violations.filter(v => v.impact === 'critical');
+            return results.violations.filter(v => ['critical', 'serious'].includes(v.impact));
         }
     """
     )

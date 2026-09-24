@@ -9,7 +9,7 @@
 .report-layout{display:grid;grid-template-columns:2fr 1fr;gap:var(--space-5);align-items:start}
 .report-layout>*{min-width:0}
 @media (max-width:900px){.report-layout{grid-template-columns:1fr}}
-.report-audit-detail{overflow-wrap:anywhere}
+.report-audit-action,.report-audit-detail{overflow-wrap:anywhere;min-width:0}
 /* Report body + shared text roles */
 .report-description{white-space:pre-wrap;font-size:var(--text-body);color:var(--body-text);line-height:1.7}
 .report-thread{margin-bottom:var(--space-6)}
@@ -31,7 +31,7 @@
 .report-btn-xs{font-size:var(--text-hint);padding:.2rem .5rem}
 /* Audit trail */
 .report-audit-list{display:flex;flex-direction:column;gap:var(--space-1)}
-.report-audit-row{display:flex;gap:var(--space-3);align-items:baseline;padding:.35rem 0;border-bottom:1px solid var(--hairline);font-size:var(--text-label)}
+.report-audit-row{display:flex;flex-wrap:wrap;column-gap:var(--space-3);row-gap:0;align-items:baseline;padding:.35rem 0;border-bottom:1px solid var(--hairline);font-size:var(--text-label)}
 .report-audit-time{color:var(--muted);white-space:nowrap;flex-shrink:0}
 .report-audit-user{color:var(--body-text);font-weight:600;flex-shrink:0}
 .report-audit-action{color:var(--accent);font-family:var(--font-mono);font-size:var(--text-hint)}
@@ -205,6 +205,7 @@
                 <form method="post" action="/admin/reports/{{ report.id }}/links" class="report-link-add">
                     <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                     <input type="text" class="form-control flex-1" name="case_number"
+                        aria-label="{{ t('admin.report.links.header') }}"
                         placeholder="{{ t('admin.report.links.placeholder') }}"
                         pattern="OW-\d{4}-\d{5}" title="Format: OW-YYYY-NNNNN"
                         required>

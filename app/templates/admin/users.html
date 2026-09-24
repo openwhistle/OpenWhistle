@@ -110,7 +110,7 @@
                                     {% if u.id != user.id %}
                                     <form method="post" action="/admin/users/{{ u.id }}/role" class="usr-role-form">
                                         <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                                        <select name="role" class="form-control usr-role-select">
+                                        <select name="role" class="form-control usr-role-select" aria-label="{{ t('admin.users.role_for', username=u.username) }}">
                                             {% for role in roles %}
                                             <option value="{{ role.value }}" {{ 'selected' if u.role == role else '' }}>{{ role.value }}</option>
                                             {% endfor %}
