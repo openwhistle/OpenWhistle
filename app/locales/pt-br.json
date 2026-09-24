@@ -516,7 +516,6 @@
   "admin.system.integrity.recheck": "Verificar novamente agora",
   "admin.system.integrity.note.html": "Verifica os arquivos da aplicação em relação a um manifesto incorporado a esta imagem no momento da construção. Isso detecta modificações acidentais, implantações incompletas e corrupção. Isso <strong>não</strong> é à prova de violação: um invasor capaz de gravar no contêiner também poderia alterar o manifesto de referência.",
   "admin.system.integrity.unavailable_note": "Nenhum manifesto de integridade está presente. Isso é esperado fora de uma imagem Docker lançada oficialmente (por exemplo, em desenvolvimento local).",
-
   "status.error.invalid": "Nenhuma denúncia corresponde a este número de caso e PIN. Verifique os dois e tente novamente.",
   "status.error.inline": "Verifique o número do caso e o PIN — ambos devem corresponder exatamente à sua denúncia.",
   "status.reply.sent": "Sua resposta foi enviada.",
@@ -606,5 +605,11 @@
   "audit.detail.case_number": "Número do caso",
   "audit.detail.closed_at": "Encerrado em",
   "audit.detail.retention_days": "Retenção (dias)",
-  "audit.detail.reason": "Motivo"
+  "audit.detail.reason": "Motivo",
+  "upload.error.too_large": "\"{name}\" é grande demais ({size}). Cada arquivo pode ter no máximo 10 MB.",
+  "upload.error.bad_extension": "\"{name}\" não pode ser anexado. Permitidos: PDF, JPEG, PNG, GIF, WebP, TXT, CSV, DOCX, XLSX, DOC, XLS.",
+  "upload.error.bad_type": "\"{name}\" tem um tipo de arquivo não suportado ({type}). Permitidos: PDF, imagens, texto, Word, Excel.",
+  "upload.error.content_mismatch": "\"{name}\" não contém o que a extensão \"{ext}\" indica (o arquivo pode estar danificado ou disfarçado). Salve-o novamente e tente de novo.",
+  "upload.error.too_many": "Arquivos demais. Você pode anexar no máximo {max} arquivos.",
+  "upload.error.metadata": "\"{name}\" não pôde ser verificado quanto a informações ocultas (autor, local, dispositivo) e não foi aceito. Salve-o novamente ou exporte-o como PDF."
 }

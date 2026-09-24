@@ -12,6 +12,9 @@ Reference: how versions are pinned and who moves them.
 | axe-core | `tests/e2e/conftest.py` | Renovate custom manager |
 
 Patch, pin and digest updates merge themselves once the required checks pass.
+Renovate merges them itself (`platformAutomerge: false`): the repository keeps
+GitHub's "Allow auto-merge" off, and with it on Renovate's default the first
+pin PR sat green and unmerged.
 Minor and major updates, the Python runtime, and security-relevant libraries
 (crypto, JWT, bcrypt, TOTP, FastAPI/Starlette, multipart, the attachment
 parsers pypdf and Pillow, ldap3) always wait for a person.

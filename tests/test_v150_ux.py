@@ -144,7 +144,34 @@ async def test_submit_file_error_marks_the_file_input(client: AsyncClient) -> No
         files={"files": ("tool.exe", b"MZ\x90\x00binary", "application/octet-stream")},
     )
     _assert_invalid(resp.text, "files", "files-error")
-    assert "unsupported file extension" in resp.text
+    assert "cannot be attached" in resp.text
+
+
+@pytest.mark.asyncio
+async def test_upload_error_follows_the_language(client: AsyncClient) -> None:
+    """Upload refusals were English whatever language the whistleblower chose."""
+    client.cookies.set("ow-lang", "de")
+    text = await _to_step(client, "description")
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": _wizard_get_csrf(text),
+            "step": str(_wizard_detect_step(text)),
+            "action": "next",
+            "description": "Eine Beschreibung, die lang genug ist.",
+        },
+    )
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": _wizard_get_csrf(resp.text),
+            "step": str(_wizard_detect_step(resp.text)),
+            "action": "next",
+        },
+        files={"files": ("tool.exe", b"MZ\x90\x00binary", "application/octet-stream")},
+    )
+    assert "kann nicht angehängt werden" in resp.text
+    assert "cannot be attached" not in resp.text
 
 
 @pytest.mark.asyncio

@@ -112,7 +112,7 @@ def test_validate_file_at_exact_limit_is_valid() -> None:
 def test_validate_disallowed_extension() -> None:
     error = validate_file("script.exe", "application/octet-stream", 100)
     assert error is not None
-    assert "unsupported file extension" in error.lower()
+    assert "cannot be attached" in error.lower()
 
 
 def test_validate_disallowed_mime_type() -> None:
@@ -286,7 +286,7 @@ async def test_read_rejects_content_disguised_as_image() -> None:
     result, error = await read_upload_files([upload])
     assert result == []
     assert error is not None
-    assert "does not match" in error.lower()
+    assert error.key == "upload.error.content_mismatch"  # type: ignore[union-attr]
 
 
 @pytest.mark.asyncio

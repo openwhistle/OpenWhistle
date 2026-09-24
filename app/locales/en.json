@@ -36,7 +36,6 @@
   "submit.form.files": "Evidence files (optional)",
   "submit.form.files.hint": "Up to 5 files, 10 MB each. Allowed types: PDF, JPEG, PNG, GIF, WebP, TXT, CSV, DOCX, XLSX.",
   "submit.form.submit": "Submit report securely",
-
   "success.attachments.title": "Attached files",
   "success.title": "Report submitted",
   "success.subtitle": "Save the credentials below immediately. This page will not be shown again.",
@@ -49,7 +48,6 @@
   "success.next.body.html": "Acknowledgement within <strong>7 days</strong> (§17 Abs. 1 HinSchG). Full response within <strong>3 months</strong> of acknowledgement. Use your case number and PIN at any time to check status and communicate with the reporting office.",
   "success.confirm.label.html": "I have saved my <strong>case number</strong> and <strong>secret PIN</strong> in a secure location. I understand they cannot be recovered if lost.",
   "success.confirm.button": "Continue to report status",
-
   "status.form.eyebrow": "Secure access",
   "status.form.title": "Check report status",
   "status.form.subtitle": "Enter your case number and secret PIN to view your report and any responses from the reporting office.",
@@ -82,7 +80,6 @@
   "status.reply.button": "Send reply",
   "status.other.title": "Need to check another report?",
   "status.other.button": "Look up a different report",
-
   "login.eyebrow": "Restricted access",
   "login.title": "Reporting office",
   "login.subtitle": "For authorised reporting office staff only.",
@@ -103,7 +100,6 @@
   "mfa.code.hint": "Open your authenticator app and enter the current 6-digit code.",
   "mfa.submit": "Verify",
   "mfa.back": "Back to login",
-
   "wizard.eyebrow": "First-run wizard",
   "wizard.title": "Initial setup",
   "wizard.subtitle": "Create your administrator account to get started. This wizard runs once and cannot be re-accessed after completion.",
@@ -121,7 +117,6 @@
   "wizard.totp_code": "Verification code",
   "wizard.totp_code.hint": "Enter the current 6-digit code from your authenticator app to confirm setup.",
   "wizard.submit": "Create admin account",
-
   "admin.eyebrow": "Reporting office",
   "admin.dashboard.title": "Reports dashboard",
   "admin.logged_in_as": "Logged in as",
@@ -251,7 +246,6 @@
   "admin.report.delete.confirm_4eyes": "Confirm & delete permanently",
   "admin.report.delete.cancel_request": "Cancel request",
   "admin.report.delete.cannot_self": "You requested this deletion. A different admin must confirm it.",
-
   "role.label.admin": "Administrator",
   "role.label.case_manager": "Case manager",
   "admin.categories.title": "Category management",
@@ -287,7 +281,6 @@
   "admin.users.role_for": "Role for {username}",
   "admin.users.cannot_self": "Cannot deactivate your own account.",
   "admin.users.last_admin": "Cannot deactivate. Last active admin.",
-
   "admin.audit.title": "Audit log",
   "admin.audit.eyebrow": "Compliance",
   "admin.audit.export_csv": "Export CSV",
@@ -510,7 +503,6 @@
   "admin.system.integrity.recheck": "Re-check now",
   "admin.system.integrity.note.html": "Verifies application files against a manifest baked into this image at build time. This detects accidental modification, incomplete deployments, and corruption. It is <strong>not</strong> tamper-proof: an attacker able to write to the container could also alter the baseline manifest.",
   "admin.system.integrity.unavailable_note": "No integrity manifest is present. This is expected outside a released Docker image (e.g. local development).",
-
   "status.error.invalid": "No report matches this case number and PIN. Check both and try again.",
   "status.error.inline": "Check the case number and the PIN — both must match your report exactly.",
   "status.reply.sent": "Your reply has been sent.",
@@ -613,5 +605,11 @@
   "mfa.setup.step2.body": "Enter the 6-digit code shown in your authenticator app to confirm the setup.",
   "mfa.setup.code.label": "Verification code",
   "mfa.setup.code.hint": "Enter the 6-digit code from your authenticator app.",
-  "mfa.setup.submit": "Turn on two-factor authentication"
+  "mfa.setup.submit": "Turn on two-factor authentication",
+  "upload.error.too_large": "'{name}' is too large ({size}). Each file may be at most 10 MB.",
+  "upload.error.bad_extension": "'{name}' cannot be attached. Allowed: PDF, JPEG, PNG, GIF, WebP, TXT, CSV, DOCX, XLSX, DOC, XLS.",
+  "upload.error.bad_type": "'{name}' has an unsupported file type ({type}). Allowed: PDF, images, text, Word, Excel.",
+  "upload.error.content_mismatch": "'{name}' does not contain what its '{ext}' ending says (the file may be damaged or disguised). Save it again and retry.",
+  "upload.error.too_many": "Too many files. You can attach at most {max} files.",
+  "upload.error.metadata": "'{name}' could not be checked for hidden details (author, location, device) and was not accepted. Save it again or export it as a PDF."
 }

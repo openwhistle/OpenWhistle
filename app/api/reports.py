@@ -444,12 +444,18 @@ async def submit_post(
 
     # ── Step 5: attachments ───────────────────────────────────────
     if step == _STEP_ATTACHMENTS:
-        from app.services.attachment import MAX_DRAFT_ATTACHMENT_BYTES, read_upload_files
+        from app.services.attachment import (
+            MAX_DRAFT_ATTACHMENT_BYTES,
+            UploadError,
+            read_upload_files,
+        )
 
         file_tuples, file_error = await read_upload_files(files)
         if file_error:
             state["step"] = _STEP_ATTACHMENTS
             await _save_submission(redis, session_id, state)
+            if isinstance(file_error, UploadError):
+                file_error = make_translator(get_lang(request))(file_error.key, **file_error.params)
             return _render_step({"error": file_error, "field_errors": {"files": file_error}})
         if sum(len(ft[2]) for ft in file_tuples) > MAX_DRAFT_ATTACHMENT_BYTES:
             state["step"] = _STEP_ATTACHMENTS

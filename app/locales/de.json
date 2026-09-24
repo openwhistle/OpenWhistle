@@ -36,7 +36,6 @@
   "submit.form.files": "Beweisdokumente (optional)",
   "submit.form.files.hint": "Bis zu 5 Dateien, je max. 10 MB. Erlaubte Typen: PDF, JPEG, PNG, GIF, WebP, TXT, CSV, DOCX, XLSX.",
   "submit.form.submit": "Meldung sicher abgeben",
-
   "success.attachments.title": "Angehängte Dateien",
   "success.title": "Meldung eingereicht",
   "success.subtitle": "Speichern Sie die folgenden Zugangsdaten sofort. Diese Seite wird nicht erneut angezeigt.",
@@ -49,7 +48,6 @@
   "success.next.body.html": "Eingangsbestätigung innerhalb von <strong>7 Tagen</strong> (§17 Abs. 1 HinSchG). Vollständige Rückmeldung innerhalb von <strong>3 Monaten</strong>. Nutzen Sie Vorgangsnummer und PIN jederzeit zur Statusprüfung und Kommunikation mit der Meldestelle.",
   "success.confirm.label.html": "Ich habe meine <strong>Vorgangsnummer</strong> und <strong>geheime PIN</strong> sicher gespeichert. Ich verstehe, dass sie nicht wiederhergestellt werden können.",
   "success.confirm.button": "Weiter zum Meldungsstatus",
-
   "status.form.eyebrow": "Sicherer Zugang",
   "status.form.title": "Meldungsstatus prüfen",
   "status.form.subtitle": "Geben Sie Ihre Vorgangsnummer und geheime PIN ein, um Ihre Meldung und Antworten der Meldestelle einzusehen.",
@@ -82,7 +80,6 @@
   "status.reply.button": "Antwort senden",
   "status.other.title": "Eine andere Meldung prüfen?",
   "status.other.button": "Andere Meldung suchen",
-
   "login.eyebrow": "Eingeschränkter Zugang",
   "login.title": "Meldestelle",
   "login.subtitle": "Nur für autorisiertes Meldestellen-Personal.",
@@ -103,7 +100,6 @@
   "mfa.code.hint": "Öffnen Sie Ihre Authenticator-App und geben Sie den aktuellen 6-stelligen Code ein.",
   "mfa.submit": "Identität bestätigen",
   "mfa.back": "Zurück zur Anmeldung",
-
   "wizard.eyebrow": "Ersteinrichtungs-Assistent",
   "wizard.title": "Ersteinrichtung",
   "wizard.subtitle": "Erstellen Sie Ihr Administratorkonto zum Einstieg. Dieser Assistent läuft einmalig und ist nach Abschluss nicht mehr zugänglich.",
@@ -121,7 +117,6 @@
   "wizard.totp_code": "Verifizierungscode",
   "wizard.totp_code.hint": "Geben Sie den aktuellen 6-stelligen Code aus Ihrer Authenticator-App ein, um die Einrichtung zu bestätigen.",
   "wizard.submit": "Administratorkonto erstellen",
-
   "admin.eyebrow": "Meldestelle",
   "admin.dashboard.title": "Meldungs-Dashboard",
   "admin.logged_in_as": "Angemeldet als",
@@ -251,7 +246,6 @@
   "admin.report.delete.confirm_4eyes": "Bestätigen & dauerhaft löschen",
   "admin.report.delete.cancel_request": "Antrag zurückziehen",
   "admin.report.delete.cannot_self": "Sie haben diese Löschung beantragt. Ein anderer Administrator muss sie bestätigen.",
-
   "role.label.admin": "Administrator",
   "role.label.case_manager": "Fallbearbeiter",
   "admin.categories.title": "Kategorienverwaltung",
@@ -287,7 +281,6 @@
   "admin.users.role_for": "Rolle für {username}",
   "admin.users.cannot_self": "Eigenes Konto kann nicht deaktiviert werden.",
   "admin.users.last_admin": "Kann nicht deaktiviert werden. Letzter aktiver Administrator.",
-
   "admin.audit.title": "Auditprotokoll",
   "admin.audit.eyebrow": "Compliance",
   "admin.audit.export_csv": "CSV exportieren",
@@ -510,7 +503,6 @@
   "admin.system.integrity.recheck": "Jetzt erneut prüfen",
   "admin.system.integrity.note.html": "Überprüft die Anwendungsdateien anhand eines Manifests, das zur Build-Zeit in dieses Image eingebettet wurde. Dies erkennt versehentliche Änderungen, unvollständige Deployments und Beschädigungen. Es ist <strong>kein</strong> manipulationssicherer Schutz: Ein Angreifer, der Schreibzugriff auf den Container erlangt, könnte auch das Basis-Manifest verändern.",
   "admin.system.integrity.unavailable_note": "Es ist kein Integritäts-Manifest vorhanden. Das ist außerhalb eines veröffentlichten Docker-Images zu erwarten (z. B. bei lokaler Entwicklung).",
-
   "status.error.invalid": "Zu dieser Vorgangsnummer und PIN gibt es keine Meldung. Prüfen Sie beide Angaben und versuchen Sie es erneut.",
   "status.error.inline": "Prüfen Sie Vorgangsnummer und PIN – beide müssen genau mit Ihrer Meldung übereinstimmen.",
   "status.reply.sent": "Ihre Antwort wurde gesendet.",
@@ -613,5 +605,11 @@
   "mfa.setup.step2.body": "Geben Sie den 6-stelligen Code aus Ihrer Authenticator-App ein, um die Einrichtung zu bestätigen.",
   "mfa.setup.code.label": "Bestätigungscode",
   "mfa.setup.code.hint": "Geben Sie den 6-stelligen Code aus Ihrer Authenticator-App ein.",
-  "mfa.setup.submit": "Zwei-Faktor-Authentifizierung aktivieren"
+  "mfa.setup.submit": "Zwei-Faktor-Authentifizierung aktivieren",
+  "upload.error.too_large": "„{name}“ ist zu groß ({size}). Jede Datei darf höchstens 10 MB haben.",
+  "upload.error.bad_extension": "„{name}“ kann nicht angehängt werden. Erlaubt: PDF, JPEG, PNG, GIF, WebP, TXT, CSV, DOCX, XLSX, DOC, XLS.",
+  "upload.error.bad_type": "„{name}“ hat einen nicht unterstützten Dateityp ({type}). Erlaubt: PDF, Bilder, Text, Word, Excel.",
+  "upload.error.content_mismatch": "„{name}“ enthält nicht, was die Endung „{ext}“ angibt (die Datei ist vielleicht beschädigt oder getarnt). Speichern Sie sie neu und versuchen Sie es erneut.",
+  "upload.error.too_many": "Zu viele Dateien. Sie können höchstens {max} Dateien anhängen.",
+  "upload.error.metadata": "„{name}“ konnte nicht auf versteckte Angaben (Autor, Standort, Gerät) geprüft werden und wurde nicht angenommen. Speichern Sie die Datei neu oder exportieren Sie sie als PDF."
 }

@@ -256,6 +256,26 @@ def strip_metadata(filename: str, data: bytes) -> bytes:
         raise MetadataError(str(exc)) from exc
 
 
+class UploadError(str):
+    """Why an upload was refused.
+
+    The string value is the English message (logs, tests); ``key`` and
+    ``params`` let the page show it in the whistleblower's language. The
+    English text comes from en.json, so there is one source for it.
+    """
+
+    key: str
+    params: dict[str, object]
+
+    def __new__(cls, key: str, **params: object) -> UploadError:
+        from app.i18n import make_translator  # noqa: PLC0415
+
+        obj = super().__new__(cls, make_translator("en")(key, **params))
+        obj.key = key
+        obj.params = params
+        return obj
+
+
 def validate_file(filename: str, content_type: str, size: int, head: bytes = b"") -> str | None:
     """Return an error string if the file is invalid, or None if it's acceptable.
 
@@ -264,29 +284,19 @@ def validate_file(filename: str, content_type: str, size: int, head: bytes = b""
     attacker-controlled).
     """
     if size > MAX_SIZE_BYTES:
-        mb = size / (1024 * 1024)
-        return f"'{filename}' is too large ({mb:.1f} MB). Maximum 10 MB per file."
+        return UploadError("upload.error.too_large", name=filename, size=format_size(size))
 
     ext = Path(filename).suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
-        return (
-            f"'{filename}' has an unsupported file extension. "
-            "Allowed: PDF, JPEG, PNG, GIF, WebP, TXT, CSV, DOCX, XLSX."
-        )
+        return UploadError("upload.error.bad_extension", name=filename)
 
     # Normalise declared MIME type (strip charset suffixes like text/plain; charset=utf-8)
     declared_type = content_type.split(";")[0].strip().lower()
     if declared_type not in ALLOWED_MIME_TYPES:
-        return (
-            f"'{filename}' has an unsupported file type ({declared_type}). "
-            "Allowed: PDF, images, text, Word, Excel."
-        )
+        return UploadError("upload.error.bad_type", name=filename, type=declared_type)
 
     if head and not _content_matches_ext(ext, head):
-        return (
-            f"'{filename}' content does not match its '{ext}' type "
-            "(the file may be corrupted or disguised)."
-        )
+        return UploadError("upload.error.content_mismatch", name=filename, ext=ext)
 
     return None
 
@@ -308,7 +318,7 @@ async def read_upload_files(
         # Enforce the count limit before touching the next file's bytes, so a
         # flood of parts can't force us to read them all into memory first.
         if len(result) >= MAX_ATTACHMENTS:
-            return [], f"Too many files. Maximum {MAX_ATTACHMENTS} attachments per report."
+            return [], UploadError("upload.error.too_many", max=MAX_ATTACHMENTS)
 
         # Bounded read: pull at most one byte past the limit so an oversized
         # file is rejected without buffering its entire (potentially huge) body.
@@ -325,10 +335,7 @@ async def read_upload_files(
         try:
             data = strip_metadata(name, data)
         except MetadataError:
-            return [], (
-                f"'{name}' could not be checked for hidden metadata (author, location, "
-                "device) and was not accepted. Save it again or export it as a PDF."
-            )
+            return [], UploadError("upload.error.metadata", name=name)
 
         result.append((name, content_type, data))
 

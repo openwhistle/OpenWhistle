@@ -172,6 +172,13 @@
    "old": "        {{ t('demo.banner.text') }}",
    "new": "        This is a live demonstration. Data resets every 6 hours.",
    "tests": "UX"
+  },
+  {
+   "id": "upload-error-untranslated",
+   "file": "app/api/reports.py",
+   "old": "            if isinstance(file_error, UploadError):\n",
+   "new": "            if False:\n",
+   "tests": "UX"
   }
  ]
 }
