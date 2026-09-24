@@ -863,12 +863,16 @@ strong {
   font-weight: 600;
   line-height: 1rem;
 }
-.panel-header {
+.panel-header,
+.panel-header-title {
   color: var(--ink);
   font-family: var(--font-body);
   font-size: var(--text-body);
   font-weight: 600;
   line-height: 1rem;
+}
+.panel-header-title {
+  margin: 0;
 }
 .detail-label {
   font-size: var(--text-hint);

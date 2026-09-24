@@ -293,8 +293,30 @@ def test_panel_headers_and_labels_are_not_shouted() -> None:
 
 
 def test_panel_headers_are_headings_not_divs() -> None:
+    """A `.panel-header` div is only legitimate as a layout wrapper around block
+    content (a toolbar), and even then must carry its label in a nested
+    `.panel-header-title` heading -- it may never stand in for a heading itself."""
     for p in TEMPLATES.rglob("*.html"):
-        assert 'div class="panel-header' not in p.read_text(), p
+        text = p.read_text()
+        for m in re.finditer(r'<div class="panel-header[^"]*"', text):
+            end = text.find("</div>", m.end())
+            assert end != -1, (p, m.group(0))
+            assert 'class="panel-header-title"' in text[m.end() : end], (p, m.group(0))
+
+
+def test_panel_header_headings_contain_only_phrasing_content() -> None:
+    """An <h2>/<h3> may contain phrasing content only. A panel header that needs
+    to wrap block-level content (a toolbar, a form, a list) stays a <div>, with
+    just its label text in a nested <h2 class="panel-header-title">."""
+    forbidden = re.compile(r"<(?:div|form|select|button|ul)\b", re.IGNORECASE)
+    for p in TEMPLATES.rglob("*.html"):
+        text = p.read_text()
+        for m in re.finditer(r'<h[23] class="panel-header[^"]*"[^>]*>', text):
+            end = text.find("</h2>", m.end())
+            if end == -1:
+                end = text.find("</h3>", m.end())
+            assert end != -1, (p, m.group(0))
+            assert not forbidden.search(text[m.end() : end]), (p, m.group(0))
 
 
 def test_design_fix_list_is_closed() -> None:
