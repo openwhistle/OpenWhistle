@@ -148,7 +148,7 @@ single-use for every account.
   axe violations, console errors or sideways scrolling. Every guard of the
   release is mutation-tested (`scripts/mutation_audit.py`).
 - **Maintainer documentation moved to `docs-tech/`** (release procedure,
-  invariants, carried-forward findings, performance baseline); a test keeps it
+  invariants, performance baseline); a test keeps it
   out of the published site.
 - **Images are built once and published identically to all three
   registries.** Each platform builds on a native runner (arm64 no longer under

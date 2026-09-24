@@ -1,8 +1,12 @@
 # openwhistle
 
-Das EU-Whistleblower-Gesetz (Richtlinie (EU) 2019/1937) verpflichtet Unternehmen (ab 50 Mitarbeitern) und Behörden zur Einrichtung sicherer interner Meldekanäle, um Hinweisgeber vor Repressalien zu schützen. In Deutschland wurde dies durch das Hinweisgeberschutzgesetz (HinSchG) umgesetzt, das seit dem 2. Juli 2023 in Kraft ist und Repressalien verbietet.
+Das EU-Whistleblower-Gesetz (Richtlinie (EU) 2019/1937) verpflichtet Unternehmen (ab 50 Mitarbeitern) und
+Behörden zur Einrichtung sicherer interner Meldekanäle, um Hinweisgeber vor Repressalien zu schützen. In Deutschland
+wurde dies durch das Hinweisgeberschutzgesetz (HinSchG) umgesetzt, das seit dem 2. Juli 2023 in Kraft ist und
+Repressalien verbietet.
 
-Referenz zum Hinweisgeberschutzgesetz zum nachlesen: https://www.gesetze-im-internet.de/hinschg/
+Referenz zum Hinweisgeberschutzgesetz zum nachlesen:
+<https://www.gesetze-im-internet.de/hinschg/>
 
 OpenWhistle ist eine Plattform, wo ein Whistleblower die Möglichkeit hat eine Meldung abzugeben.
 
@@ -27,21 +31,29 @@ Folgende Fakten sind festgelegt:
 - Es soll eine Live Demo der Software unter der URL "<https://demo.openwhistle.net>" geben.
 - Für die Demo sollen die Zugangsdaten Benutzername und Passwort "demo" sein.
 - Die Demo wird automatisch alle 6 Stunden geleert und neu gestartet.
-- Es gibt eine Website "openwhistle.net", die aktuell auf die GitHub Page weiterleitet. Zukünftig soll dort eine GitHub Page aus dem Repository laufen, wo Informationen über OpenWhistle stehen und auch die Dokumentation gehostet wird.
-- Wichtig ist, dass der Whistleblower geschützt wird und sogar keine Logs über seine IP-Adresse vorhanden sind. So kann z.B. ein Mitarbeiter eines Unternehmens geschützt sein, der im Büro eine Nachricht verschickt.
+- Es gibt eine Website "openwhistle.net", die aktuell auf die GitHub Page weiterleitet. Zukünftig soll dort
+  eine GitHub Page aus dem Repository laufen, wo Informationen über OpenWhistle stehen und auch die Dokumentation
+  gehostet wird.
+- Wichtig ist, dass der Whistleblower geschützt wird und sogar keine Logs über seine IP-Adresse vorhanden
+  sind. So kann z.B. ein Mitarbeiter eines Unternehmens geschützt sein, der im Büro eine Nachricht verschickt.
 - Das ganze Projekt wird in der Freizeit entwickelt und es kann gespendet werden.
 - Es sollen unter GitHub die Sicherheitsfeatures genutzt werden, um den Code zu scannen und Dependencies zu scannen.
 - Wenn du eine technische Entscheindung triffst, aktualisiere bitte immer die README.md mit aktuellen Daten
-- Der Docker Container soll für jede Version immer auf der GitHub Container Registry, DockerHub und quay.io über einen GitHub Workflow / Action gepushed werden
+- Der Docker Container soll für jede Version immer auf der GitHub Container Registry, DockerHub und quay.io
+  über einen GitHub Workflow / Action gepushed werden
 - Beim erstellen von Commit Messages erwähnst du bitte nicht Claude Code
 - Du hast Zugriff auf GitHub über die GitHub CLI
 - Markdown Dokumente müssen nach markdownlint Vorgaben erstellt werden
-- Documentation in `docs/docs.html`, `README.md`, and `docker-compose.prod.yml` must always be kept in sync. When adding or renaming environment variables, update ALL locations in the same commit.
+- Documentation in `docs/docs.html`, `README.md`, and `docker-compose.prod.yml` must always be kept in
+  sync. When adding or renaming environment variables, update ALL locations in the same commit.
 - The demo at <https://demo.openwhistle.net> is live and hosted on Hetzner (root01xvp.wdkro.de) via
   Ansible. It runs `ghcr.io/openwhistle/openwhistle:edge` and is reset every 6 hours by a Semaphore job
   that recreates the container with a fresh pull — that reset is also the only thing that updates it
   (Watchtower does not poll).
-- All HTML files in `docs/` must use self-hosted fonts from `docs/fonts/` — never Google Fonts CDN or any other external font CDN.
+- All HTML files in `docs/` must use self-hosted fonts from `docs/fonts/` — never Google Fonts CDN or
+  any other external font CDN.
+- Every finding — design, security, privacy, process, any size — is fixed in the work that found it. There is
+  no "carried forward" or "out of scope" list; a finding too big for one task is split, never postponed.
 
 ## Test coverage
 

@@ -316,10 +316,9 @@ Critical user journeys to cover:
 
 ## v1.5.0 — No Lockouts, No Traces ✓ Released 2026-09-24
 
-> Closes every carried-forward finding: lockout-proof whistleblower login,
-> spraying detection, OIDC PKCE + ID token, encrypted filenames and drafts,
-> batched notifications, retention on by default, field-level errors,
-> case-number search, readable audit log, Renovate.
+> Lockout-proof whistleblower login, spraying detection, OIDC PKCE + ID token,
+> encrypted filenames and drafts, batched notifications, retention on by default,
+> field-level errors, case-number search, readable audit log, Renovate.
 > See [CHANGELOG.md](CHANGELOG.md#150--2026-09-24).
 
 ---
