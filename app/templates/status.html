@@ -90,12 +90,12 @@
         </script>
         {% endif %}
     </div>
-    {% else %}
+    {% endif %}
+    {# Always offered, also after too many attempts: a correct PIN always works. #}
     <div class="panel">
         <div class="panel-header">{{ t('status.panel.header') }}</div>
         <form method="post" action="/status">
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-            <input type="hidden" name="session_token" value="{{ session_token }}">
 
             <div class="form-group">
                 <label class="form-label" for="case_number">{{ t('status.case_number') }}</label>
@@ -137,7 +137,6 @@
             </button>
         </form>
     </div>
-    {% endif %}
 
     {% else %}
 
@@ -290,7 +289,6 @@
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <input type="hidden" name="case_number" value="{{ case_number or '' }}">
             <input type="hidden" name="pin" value="{{ pin or '' }}">
-            <input type="hidden" name="session_token" value="{{ session_token }}">
 
             <div class="form-group">
                 <label class="form-label" for="reply-content">{{ t('status.reply.label') }}</label>
@@ -311,7 +309,10 @@
 
     <div class="st-footer-section">
         <p class="st-footer-text">{{ t('status.other.title') }}</p>
-        <a href="/status/logout" class="btn btn-secondary">{{ t('status.other.button') }}</a>
+        <form method="post" action="/status/logout">
+            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+            <button type="submit" class="btn btn-secondary">{{ t('status.other.button') }}</button>
+        </form>
     </div>
 
     {% endif %}

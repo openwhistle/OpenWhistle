@@ -63,7 +63,7 @@ async def test_generate_pdf_with_note(db_session: AsyncSession):
     user, _ = await create_user(
         db_session,
         username=f"pdf_noter_{uuid.uuid4().hex[:6]}",
-        password="PDFTest12!",
+        password="PDFTest12!-long",
         role=AdminRole.admin,
     )
     await add_note(db_session, report, user, "Internal note content for PDF test.")

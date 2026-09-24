@@ -39,6 +39,27 @@ owner-password-only PDFs, which open without a password and clean correctly
 | Multi-tenant scoping: users page, role change, assignment and its picker, new users' org, audit log, stats, dashboard stats | `tests/test_multitenancy_scoping.py` (one test per guard) |
 | Admin notes encrypted | `test_admin_notes_are_stored_encrypted` |
 
+## Authentication (v1.5.0)
+
+Mutations: `docs-tech/mutations/v1.5.0-auth.json` (35, all red); tests in
+`tests/test_v150_auth.py` and `tests/test_oidc.py`.
+
+| Guard | Test that fires |
+| --- | --- |
+| Correct case number + PIN always opens the case; wrong attempts only inform | `test_correct_pin_opens_case_after_many_wrong_attempts`, `test_wrong_pin_past_the_limit_shows_wait_notice_and_keeps_the_form` |
+| Unknown case number still costs a bcrypt check (no timing oracle) | `test_unknown_case_number_costs_a_bcrypt_check` |
+| Password spraying: one alert and one audit entry per window, local and LDAP failures | `test_spraying_*` |
+| Logouts are POST + CSRF; GET does nothing | `test_get_*_logout_does_not_log_out`, `test_*_logout_without_csrf_token_is_refused` |
+| Setup: check and insert under an advisory lock, re-check reads the row again | `test_setup_waits_for_a_concurrent_completion_and_creates_nothing`, `test_setup_recheck_is_not_fooled_by_the_session_cache` |
+| `alembic upgrade` waits for the migration advisory lock | `test_alembic_upgrade_waits_for_the_migration_lock` |
+| OIDC: PKCE S256, single-use state, ID token signature/iss/aud/exp/nonce/azp | `tests/test_oidc.py` |
+
+**Not a mutation.** Adding `HS256` to the OIDC algorithm allowlist stays green:
+the key comes from the JWKS as a `PyJWK` bound to its own algorithm, and PyJWT
+refuses a header `alg` that does not match it. The allowlist is kept as a second
+line; `test_id_token_that_does_not_verify_is_refused[symmetric alg]` covers the
+outcome.
+
 ## Repository and release
 
 | Guard | Test |

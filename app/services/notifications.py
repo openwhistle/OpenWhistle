@@ -444,3 +444,83 @@ async def _send_webhook(case_number: str, settings: object) -> None:
         )
     except Exception:
         log.exception("Failed to send webhook notification for %s", case_number)
+
+
+def _build_security_alert_payload(subject: str, text: str, webhook_type: str) -> dict[str, Any]:
+    if webhook_type == "slack":
+        return {"text": f"*{subject}*\n{text}"}
+    if webhook_type == "teams":
+        return {
+            "type": "message",
+            "attachments": [
+                {
+                    "contentType": "application/vnd.microsoft.card.adaptive",
+                    "content": {
+                        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                        "type": "AdaptiveCard",
+                        "version": "1.4",
+                        "body": [
+                            {"type": "TextBlock", "weight": "Bolder", "color": "Attention",
+                             "text": subject},
+                            {"type": "TextBlock", "wrap": True, "text": text},
+                        ],
+                    },
+                }
+            ],
+        }
+    return {
+        "event": "security_alert",
+        "subject": subject,
+        "message": text,
+        "timestamp": datetime.now(UTC).isoformat(),
+    }
+
+
+async def notify_security_alert(subject: str, text: str) -> None:
+    """Send a security alert to the admin email recipients and the webhook.
+
+    Same channels and fire-and-forget contract as the new-report notification.
+    """
+    import aiosmtplib
+    import httpx
+
+    from app.config import settings as cfg
+
+    if cfg.notify_email_enabled and cfg.notify_email_to.strip():
+        recipients = [r.strip() for r in cfg.notify_email_to.split(",") if r.strip()]
+        msg = MIMEText(text, "plain", "utf-8")
+        msg["Subject"] = f"{subject} — {cfg.app_name}"
+        msg["From"] = cfg.notify_email_from
+        msg["To"] = ", ".join(recipients)
+        smtp_kwargs: dict[str, Any] = {
+            "hostname": cfg.notify_smtp_host,
+            "port": cfg.notify_smtp_port,
+            "use_tls": cfg.notify_smtp_ssl,
+            "start_tls": cfg.notify_smtp_tls and not cfg.notify_smtp_ssl,
+        }
+        if cfg.notify_smtp_user:
+            smtp_kwargs["username"] = cfg.notify_smtp_user
+        if cfg.notify_smtp_password:
+            smtp_kwargs["password"] = cfg.notify_smtp_password
+        try:
+            await aiosmtplib.send(msg, recipients=recipients, **smtp_kwargs)
+            log.info("Security alert email sent: %s", subject)
+        except Exception:
+            log.exception("Failed to send security alert email")
+
+    if cfg.notify_webhook_enabled and cfg.notify_webhook_url.strip():
+        payload = _build_security_alert_payload(subject, text, cfg.notify_webhook_type)
+        body_bytes = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+        headers: dict[str, str] = {"Content-Type": "application/json"}
+        if cfg.notify_webhook_secret:
+            sig = hmac.new(cfg.notify_webhook_secret.encode(), body_bytes, hashlib.sha256)
+            headers["X-OpenWhistle-Signature"] = f"sha256={sig.hexdigest()}"
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.post(
+                    cfg.notify_webhook_url, content=body_bytes, headers=headers
+                )
+                resp.raise_for_status()
+            log.info("Security alert webhook sent: %s", subject)
+        except Exception:
+            log.exception("Failed to send security alert webhook")

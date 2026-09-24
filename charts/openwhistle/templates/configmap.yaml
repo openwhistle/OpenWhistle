@@ -11,6 +11,8 @@ data:
   LOG_FORMAT: {{ .Values.config.logFormat | quote }}
   APP_PUBLIC_URL: {{ .Values.config.appPublicUrl | quote }}
   SUBMISSION_MODE_ENABLED: {{ .Values.config.submissionModeEnabled | quote }}
+  ADMIN_FAILED_LOGIN_ALERT_THRESHOLD: {{ .Values.config.adminFailedLoginAlertThreshold | quote }}
+  ADMIN_FAILED_LOGIN_ALERT_WINDOW_MINUTES: {{ .Values.config.adminFailedLoginAlertWindowMinutes | quote }}
   BRAND_PRIMARY_COLOR: {{ .Values.config.brandPrimaryColor | quote }}
   BRAND_SECONDARY_COLOR: {{ .Values.config.brandSecondaryColor | quote }}
   BRAND_LOGO_URL: {{ .Values.config.brandLogoUrl | quote }}
@@ -27,6 +29,7 @@ data:
   LDAP_SERVER: {{ .Values.config.ldapServer | quote }}
   LDAP_PORT: {{ .Values.config.ldapPort | quote }}
   LDAP_USE_SSL: {{ .Values.config.ldapUseSsl | quote }}
+  LDAP_START_TLS: {{ .Values.config.ldapStartTls | quote }}
   LDAP_BIND_DN: {{ .Values.config.ldapBindDn | quote }}
   LDAP_BASE_DN: {{ .Values.config.ldapBaseDn | quote }}
   LDAP_USER_FILTER: {{ .Values.config.ldapUserFilter | quote }}

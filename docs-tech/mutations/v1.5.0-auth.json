@@ -1,0 +1,257 @@
+{
+ "test_groups": {
+  "V": [
+   "tests/test_v150_auth.py"
+  ],
+  "O": [
+   "tests/test_oidc.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "wb-lock-before-verify",
+   "file": "app/services/report.py",
+   "old": "    report = await get_report_by_credentials(db, case_number, pin.strip())\n    if report is not None:\n        await rl.reset_whistleblower_attempts",
+   "new": "    report = (await get_report_by_credentials(db, case_number, pin.strip())) if int(await redis.get(rl._WB_PREFIX + rl_key) or 0) < settings.max_access_attempts else None\n    if report is not None:\n        await rl.reset_whistleblower_attempts",
+   "tests": "V"
+  },
+  {
+   "id": "wb-no-reset-on-success",
+   "file": "app/services/report.py",
+   "old": "        await rl.reset_whistleblower_attempts(redis, rl_key)\n        return report, 0",
+   "new": "        return report, 0",
+   "tests": "V"
+  },
+  {
+   "id": "wb-never-notice",
+   "file": "app/services/report.py",
+   "old": "    if failures <= settings.max_access_attempts:",
+   "new": "    if True:",
+   "tests": "V"
+  },
+  {
+   "id": "wb-no-dummy-bcrypt",
+   "file": "app/services/report.py",
+   "old": "        verify_pin(plain_pin, TIMING_DUMMY_HASH)\n        return None",
+   "new": "        return None",
+   "tests": "V"
+  },
+  {
+   "id": "wb-form-hidden-when-locked",
+   "file": "app/templates/status.html",
+   "old": "    {% endif %}\n    {# Always offered, also after too many attempts: a correct PIN always works. #}\n    <div class=\"panel\">",
+   "new": "    {% endif %}\n    {% if not locked %}<div class=\"panel\">",
+   "tests": "V"
+  },
+  {
+   "id": "bcrypt-long-raises",
+   "file": "app/services/auth.py",
+   "old": "    if len(encoded) > _BCRYPT_MAX_BYTES:\n        # Never",
+   "new": "    if False:\n        # Never",
+   "tests": "V"
+  },
+  {
+   "id": "spray-never-alerts",
+   "file": "app/api/auth.py",
+   "old": "    if not await rl.record_instance_login_failure(redis):\n        return",
+   "new": "    await rl.record_instance_login_failure(redis)\n    return",
+   "tests": "V"
+  },
+  {
+   "id": "spray-alert-every-time",
+   "file": "app/services/rate_limit.py",
+   "old": "await redis.set(_SPRAY_ALERTED, \"1\", nx=True, ex=minutes * 60)",
+   "new": "await redis.set(_SPRAY_ALERTED, \"1\", ex=minutes * 60)",
+   "tests": "V"
+  },
+  {
+   "id": "spray-current-minute-only",
+   "file": "app/services/rate_limit.py",
+   "old": "    if sum(int(c) for c in counts if c) < threshold:",
+   "new": "    if int(counts[-1] or 0) < threshold:",
+   "tests": "V"
+  },
+  {
+   "id": "spray-no-audit",
+   "file": "app/api/auth.py",
+   "old": "    await audit_service.log_system(\n        db,",
+   "new": "    None and await audit_service.log_system(\n        db,",
+   "tests": "V"
+  },
+  {
+   "id": "spray-ldap-not-counted",
+   "file": "app/api/auth.py",
+   "old": "        except LDAPAuthError:\n            await _password_failed(redis, db, username, background_tasks)",
+   "new": "        except LDAPAuthError:\n            await rl.record_admin_login_failure(redis, username)",
+   "tests": "V"
+  },
+  {
+   "id": "admin-logout-get",
+   "file": "app/api/auth.py",
+   "old": "@router.post(\"/logout\")",
+   "new": "@router.api_route(\"/logout\", methods=[\"GET\", \"POST\"])",
+   "tests": "V"
+  },
+  {
+   "id": "admin-logout-no-csrf",
+   "file": "app/api/auth.py",
+   "old": "    redis: Redis = Depends(get_redis),\n    _csrf: None = Depends(validate_csrf),\n) -> RedirectResponse:\n    # POST + CSRF",
+   "new": "    redis: Redis = Depends(get_redis),\n) -> RedirectResponse:\n    # POST + CSRF",
+   "tests": "V"
+  },
+  {
+   "id": "status-logout-get",
+   "file": "app/api/reports.py",
+   "old": "@router.post(\"/status/logout\")",
+   "new": "@router.api_route(\"/status/logout\", methods=[\"GET\", \"POST\"])",
+   "tests": "V"
+  },
+  {
+   "id": "status-logout-no-csrf",
+   "file": "app/api/reports.py",
+   "old": "async def status_logout(\n    request: Request,\n    redis: Redis = Depends(get_redis),\n    _csrf: None = Depends(validate_csrf),\n",
+   "new": "async def status_logout(\n    request: Request,\n    redis: Redis = Depends(get_redis),\n",
+   "tests": "V"
+  },
+  {
+   "id": "admin-nav-logout-link",
+   "file": "app/templates/admin/dashboard.html",
+   "old": "<li><form method=\"post\" action=\"/admin/logout\">",
+   "new": "<li><a href=\"/admin/logout\">x</a><form method=\"post\" action=\"/admin/logout\">",
+   "tests": "V"
+  },
+  {
+   "id": "csrf-cookie-not-secure",
+   "file": "app/csrf.py",
+   "old": "secure = \"; Secure\" if settings.secure_cookies else \"\"",
+   "new": "secure = \"\"",
+   "tests": "V"
+  },
+  {
+   "id": "setup-no-lock",
+   "file": "app/api/wizard.py",
+   "old": "    await db.execute(text(\"SELECT pg_advisory_xact_lock(:key)\"), {\"key\": SETUP_LOCK_KEY})\n",
+   "new": "",
+   "tests": "V"
+  },
+  {
+   "id": "setup-stale-recheck",
+   "file": "app/api/wizard.py",
+   "old": "        .execution_options(populate_existing=True)\n",
+   "new": "",
+   "tests": "V"
+  },
+  {
+   "id": "migrations-no-lock",
+   "file": "migrations/env.py",
+   "old": "    connection.execute(text(\"SELECT pg_advisory_lock(:key)\"), {\"key\": MIGRATION_LOCK_KEY})\n",
+   "new": "",
+   "tests": "V"
+  },
+  {
+   "id": "policy-not-in-create-user",
+   "file": "app/services/users.py",
+   "old": "    username = validate_username(username)\n    validate_password(password)\n",
+   "new": "    username = validate_username(username)\n",
+   "tests": "V"
+  },
+  {
+   "id": "policy-not-in-wizard",
+   "file": "app/api/wizard.py",
+   "old": "    try:\n        validate_password(password)\n    except ValueError as exc:\n        errors.append(str(exc))\n",
+   "new": "    if len(password) < 12:\n        errors.append(\"Password must be at least 12 characters.\")\n",
+   "tests": "V"
+  },
+  {
+   "id": "policy-not-in-reset-script",
+   "file": "scripts/reset_admin_password.py",
+   "old": "    try:\n        validate_password(password)\n    except ValueError:\n        return False\n    return True",
+   "new": "    return len(password) >= 12",
+   "tests": "V"
+  },
+  {
+   "id": "wizard-username-unchecked",
+   "file": "app/api/wizard.py",
+   "old": "    try:\n        username = validate_username(username)\n    except ValueError as exc:\n        errors.append(str(exc))\n",
+   "new": "",
+   "tests": "V"
+  },
+  {
+   "id": "ldap-starttls-no-verify",
+   "file": "app/services/ldap_auth.py",
+   "old": "    encrypted = c.ldap_use_ssl or c.ldap_start_tls",
+   "new": "    encrypted = c.ldap_use_ssl",
+   "tests": "V"
+  },
+  {
+   "id": "ldap-starttls-never",
+   "file": "app/services/ldap_auth.py",
+   "old": "        return AUTO_BIND_TLS_BEFORE_BIND\n    return True",
+   "new": "        return True\n    return True",
+   "tests": "V"
+  },
+  {
+   "id": "oidc-no-pkce-challenge",
+   "file": "app/services/oidc.py",
+   "old": "        \"code_challenge\": _pkce_challenge(code_verifier),\n        \"code_challenge_method\": \"S256\",\n",
+   "new": "",
+   "tests": "O"
+  },
+  {
+   "id": "oidc-no-code-verifier",
+   "file": "app/services/oidc.py",
+   "old": "                \"code_verifier\": stored[\"code_verifier\"],\n",
+   "new": "",
+   "tests": "O"
+  },
+  {
+   "id": "oidc-state-reusable",
+   "file": "app/services/oidc.py",
+   "old": "raw = await redis.getdel(f\"{_STATE_PREFIX}{state}\")",
+   "new": "raw = await redis.get(f\"{_STATE_PREFIX}{state}\")",
+   "tests": "O"
+  },
+  {
+   "id": "oidc-nonce-unchecked",
+   "file": "app/services/oidc.py",
+   "old": "    if not secrets.compare_digest(str(claims[\"nonce\"]), nonce):\n        return None\n",
+   "new": "",
+   "tests": "O"
+  },
+  {
+   "id": "oidc-no-signature",
+   "file": "app/services/oidc.py",
+   "old": "options={\"require\": [",
+   "new": "options={\"verify_signature\": False, \"require\": [",
+   "tests": "O"
+  },
+  {
+   "id": "oidc-no-aud",
+   "file": "app/services/oidc.py",
+   "old": "options={\"require\": [",
+   "new": "options={\"verify_aud\": False, \"require\": [",
+   "tests": "O"
+  },
+  {
+   "id": "oidc-no-iss",
+   "file": "app/services/oidc.py",
+   "old": "            issuer=issuer,\n",
+   "new": "            issuer=None,\n",
+   "tests": "O"
+  },
+  {
+   "id": "oidc-no-exp",
+   "file": "app/services/oidc.py",
+   "old": "options={\"require\": [",
+   "new": "options={\"verify_exp\": False, \"require\": [",
+   "tests": "O"
+  },
+  {
+   "id": "oidc-no-azp",
+   "file": "app/services/oidc.py",
+   "old": "    if isinstance(aud, list) and len(aud) > 1 and claims.get(\"azp\") != settings.oidc_client_id:\n        return None\n",
+   "new": "",
+   "tests": "O"
+  }
+ ]
+}

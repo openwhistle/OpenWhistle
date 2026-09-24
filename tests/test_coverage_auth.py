@@ -185,7 +185,9 @@ async def test_logout_revokes_redis_session(
     redis = await get_redis()
     assert await validate_session(redis, session_token) is True
 
-    await client.get("/admin/logout", follow_redirects=True)
+    await client.post(
+        "/admin/logout", data={"csrf_token": client.cookies.get("ow_csrf")}
+    )
 
     assert await validate_session(redis, session_token) is False
 
@@ -194,8 +196,11 @@ async def test_logout_revokes_redis_session(
 async def test_logout_without_session_cookie_does_not_crash(
     client: AsyncClient,
 ) -> None:
-    """GET /admin/logout with no session cookie must complete without error."""
-    resp = await client.get("/admin/logout", follow_redirects=True)
+    """POST /admin/logout with no session cookie must complete without error."""
+    await client.get("/admin/login")  # sets the CSRF cookie
+    resp = await client.post(
+        "/admin/logout", data={"csrf_token": client.cookies.get("ow_csrf")}
+    )
     assert resp.status_code == 200
 
 

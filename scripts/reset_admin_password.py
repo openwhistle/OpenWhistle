@@ -7,7 +7,7 @@ Usage
     python scripts/reset_admin_password.py --username admin
 
     # Non-interactive (CI / automation):
-    python scripts/reset_admin_password.py --username admin --password "NewPass123!"
+    python scripts/reset_admin_password.py --username admin --password "a-long-passphrase"
 
     # List all admin users:
     python scripts/reset_admin_password.py --list
@@ -102,23 +102,30 @@ async def _reset_password(username: str, new_password: str) -> bool:
     return True
 
 
+# Printed instead of the validator's message: no value derived from the
+# password ever reaches print() (keeps CodeQL's taint tracking quiet).
+_POLICY = "Password must be at least 12 characters and at most 72 bytes."
+
+
+def _password_allowed(password: str) -> bool:
+    """The same policy as the setup wizard and admin-created users."""
+    from app.services.auth import validate_password
+
+    try:
+        validate_password(password)
+    except ValueError:
+        return False
+    return True
+
+
 def _prompt_password() -> str:
     """Prompt for a new password twice, validate strength, return confirmed value."""
     while True:
         pw1 = getpass.getpass("  New password: ")
         # Each print() argument is a string literal — no variable derived from pw1
         # ever appears in a print() call, severing any CodeQL taint flow.
-        if len(pw1) < 12:
-            print("  ✗ Password must be at least 12 characters.")
-            continue
-        if not any(c.isupper() for c in pw1):
-            print("  ✗ Password must contain at least one uppercase letter.")
-            continue
-        if not any(c.islower() for c in pw1):
-            print("  ✗ Password must contain at least one lowercase letter.")
-            continue
-        if not any(c.isdigit() for c in pw1):
-            print("  ✗ Password must contain at least one digit.")
+        if not _password_allowed(pw1):
+            print(f"  ✗ {_POLICY}")
             continue
         pw2 = getpass.getpass("  Confirm password: ")
         if pw1 != pw2:
@@ -153,24 +160,13 @@ def main() -> None:
     if args.password:
         # Each print() argument is a string literal — no variable derived from
         # args.password appears in any print() call, severing the CodeQL taint flow.
-        if len(args.password) < 12:
-            print("\n  Error: Password must be at least 12 characters.\n", file=sys.stderr)
-            sys.exit(1)
-        if not any(c.isupper() for c in args.password):
-            print("\n  Error: Password must contain at least one uppercase letter.\n",
-                  file=sys.stderr)
-            sys.exit(1)
-        if not any(c.islower() for c in args.password):
-            print("\n  Error: Password must contain at least one lowercase letter.\n",
-                  file=sys.stderr)
-            sys.exit(1)
-        if not any(c.isdigit() for c in args.password):
-            print("\n  Error: Password must contain at least one digit.\n", file=sys.stderr)
+        if not _password_allowed(args.password):
+            print(f"\n  Error: {_POLICY}\n", file=sys.stderr)
             sys.exit(1)
         new_password = args.password
     else:
         print(f"\nResetting password for admin user: {username}")
-        print("Password requirements: ≥12 chars, upper + lower + digit\n")
+        print(f"{_POLICY}\n")
         new_password = _prompt_password()
 
     print("\n  Connecting to database…")

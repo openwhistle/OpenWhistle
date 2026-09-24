@@ -35,20 +35,13 @@ async def test_record_whistleblower_failure_increments_count(
     import secrets
 
     from app.redis_client import get_redis
-    from app.services.rate_limit import (
-        record_whistleblower_failure,
-        remaining_whistleblower_attempts,
-    )
+    from app.services.rate_limit import record_whistleblower_failure
 
     redis = await get_redis()
     token = secrets.token_urlsafe(32)
 
-    count = await record_whistleblower_failure(redis, token)
-    assert count == 1
-
-    remaining = await remaining_whistleblower_attempts(redis, token)
-    from app.config import settings
-    assert remaining == settings.max_access_attempts - 1
+    assert await record_whistleblower_failure(redis, token) == 1
+    assert await record_whistleblower_failure(redis, token) == 2
 
 
 @pytest.mark.asyncio
@@ -60,7 +53,6 @@ async def test_reset_whistleblower_attempts_clears_counter(
     from app.redis_client import get_redis
     from app.services.rate_limit import (
         record_whistleblower_failure,
-        remaining_whistleblower_attempts,
         reset_whistleblower_attempts,
     )
 
@@ -71,9 +63,7 @@ async def test_reset_whistleblower_attempts_clears_counter(
     await record_whistleblower_failure(redis, token)
     await reset_whistleblower_attempts(redis, token)
 
-    from app.config import settings
-    remaining = await remaining_whistleblower_attempts(redis, token)
-    assert remaining == settings.max_access_attempts
+    assert await record_whistleblower_failure(redis, token) == 1
 
 
 @pytest.mark.asyncio

@@ -57,7 +57,7 @@
   "status.form.eyebrow": "Acesso Seguro",
   "status.form.title": "Verificar Status da Denúncia",
   "status.form.subtitle": "Insira seu número de caso e PIN secreto para visualizar sua denúncia e quaisquer respostas do escritório de denúncias.",
-  "status.locked.title": "Acesso Bloqueado",
+  "status.locked.title": "Muitas tentativas",
   "status.locked.body": "Muitas tentativas frustradas. Aguarde antes de tentar novamente.",
   "status.locked.countdown": "segundos restantes",
   "status.panel.header": "Consulta de Denúncia",

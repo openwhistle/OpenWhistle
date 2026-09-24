@@ -6,6 +6,8 @@ from fastapi import Cookie, Form, Header, HTTPException, status
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
+from app.config import settings
+
 _CSRF_COOKIE = "ow_csrf"
 _TOKEN_BYTES = 32
 
@@ -39,9 +41,12 @@ class CSRFMiddleware:
         async def send_with_csrf(message: Message) -> None:
             if message["type"] == "http.response.start":
                 mutable = MutableHeaders(scope=message)
+                # Secure like every other cookie: over HTTPS the token must
+                # never be sent on a plain-HTTP request to the same host.
+                secure = "; Secure" if settings.secure_cookies else ""
                 mutable.append(
                     "set-cookie",
-                    f"{_CSRF_COOKIE}={token}; Path=/; SameSite=Lax; HttpOnly",
+                    f"{_CSRF_COOKIE}={token}; Path=/; SameSite=Lax; HttpOnly{secure}",
                 )
             await send(message)
 

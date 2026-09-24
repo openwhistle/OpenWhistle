@@ -68,6 +68,10 @@ zero vendor lock-in, and privacy-first by design.
 - **"Signal" design system** — documented, token-driven identity ([`DESIGN.md`](DESIGN.md)); app + site, light + dark.
 - **Mandatory MFA** — TOTP (compatible with any authenticator app) required for every admin account.
   No exceptions, no bypass.
+- **Lockout-proof whistleblower login** — a correct case number and PIN always open the case;
+  wrong guesses are counted but can never lock the rightful whistleblower out.
+- **Password-spraying alarm** — failed admin logins are counted instance-wide (no username, no IP);
+  crossing `ADMIN_FAILED_LOGIN_ALERT_THRESHOLD` sends one alert and writes an audit entry.
 - **Object-level authorization** — Every report endpoint enforces per-record access: case managers
   see only their assigned reports, admins are scoped to their organisation. Role assignment enforces
   privilege tiers (only superadmins grant superadmin; no self-role-change; the last admin cannot be
@@ -76,7 +80,8 @@ zero vendor lock-in, and privacy-first by design.
   `unsafe-inline`), consolidated single-source security headers (HSTS, `X-Frame-Options`, nosniff),
   and strict username validation.
 - **OIDC / SSO support** — Optional single sign-on via any OpenID Connect provider (Keycloak,
-  Authentik, Azure AD, Google, …).
+  Authentik, Azure AD, Google, …), with PKCE and a verified ID token (signature, issuer,
+  audience, expiry, nonce). LDAP supports LDAPS and StartTLS (`LDAP_START_TLS`).
 - **File attachments** — Whistleblowers can attach evidence files (PDF, images, Word, Excel, CSV,
   TXT — up to 10 MB each, 5 per report). Identifying metadata (photo GPS/EXIF, PDF and Office
   author fields) is removed on upload, and files are encrypted with the report's own key.

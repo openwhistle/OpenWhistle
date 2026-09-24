@@ -191,7 +191,7 @@ async def _delete_report_4eyes(
     await client.post(f"/admin/reports/{report_id}/request-delete", data={"csrf_token": csrf})
 
     # Confirmer logs in and confirms
-    await client.get("/admin/logout")
+    await client.post("/admin/logout", data={"csrf_token": client.cookies.get("ow_csrf")})
     await _login_admin(client, confirmer, con_secret)
     csrf2 = (await client.get(f"/admin/reports/{report_id}")).cookies.get("ow_csrf")
     await client.post(f"/admin/reports/{report_id}/confirm-delete", data={"csrf_token": csrf2})

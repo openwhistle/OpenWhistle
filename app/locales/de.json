@@ -53,7 +53,7 @@
   "status.form.eyebrow": "Sicherer Zugang",
   "status.form.title": "Meldungsstatus prüfen",
   "status.form.subtitle": "Geben Sie Ihre Vorgangsnummer und geheime PIN ein, um Ihre Meldung und Antworten der Meldestelle einzusehen.",
-  "status.locked.title": "Zugang gesperrt",
+  "status.locked.title": "Zu viele Versuche",
   "status.locked.body": "Zu viele fehlgeschlagene Versuche. Bitte warten Sie, bevor Sie es erneut versuchen.",
   "status.locked.countdown": "Sekunden verbleibend",
   "status.panel.header": "Meldung suchen",

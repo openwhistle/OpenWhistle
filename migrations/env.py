@@ -5,7 +5,7 @@ import os
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import pool
+from sqlalchemy import pool, text
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
@@ -25,6 +25,10 @@ if database_url:
 
 target_metadata = Base.metadata
 
+# Session-level pg_advisory_lock key: every replica runs `alembic upgrade head`
+# at start-up, and this makes them take turns instead of racing on DDL.
+MIGRATION_LOCK_KEY = 0x4F57_0002
+
 
 def run_migrations_offline() -> None:
     url = config.get_main_option("sqlalchemy.url")
@@ -39,6 +43,12 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
+    # Waits until no other replica is migrating. The lock is released when this
+    # connection closes (NullPool: at the end of run_async_migrations), also on
+    # failure. The commit ends the implicit transaction the SELECT began, so
+    # Alembic starts - and commits - its own.
+    connection.execute(text("SELECT pg_advisory_lock(:key)"), {"key": MIGRATION_LOCK_KEY})
+    connection.commit()
     context.configure(connection=connection, target_metadata=target_metadata)
     with context.begin_transaction():
         context.run_migrations()

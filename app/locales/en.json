@@ -53,7 +53,7 @@
   "status.form.eyebrow": "Secure Access",
   "status.form.title": "Check Report Status",
   "status.form.subtitle": "Enter your case number and secret PIN to view your report and any responses from the reporting office.",
-  "status.locked.title": "Access Locked",
+  "status.locked.title": "Too many attempts",
   "status.locked.body": "Too many failed attempts. Please wait before trying again.",
   "status.locked.countdown": "seconds remaining",
   "status.panel.header": "Report Lookup",
