@@ -36,8 +36,8 @@ def test_invalid_credentials_show_error(page: Page, base_url: str) -> None:
         indicator in body.lower()
         for indicator in ["invalid", "error", "not found", "incorrect", "wrong"]
     ), "No error message shown for invalid credentials"
-    # Must not show report details (progress-steps only appears on successful lookup)
-    assert "progress-steps" not in body, "Report details shown despite invalid credentials"
+    # Must not show report details (the stepper only appears on successful lookup)
+    assert 'class="stepper"' not in body, "Report details shown despite invalid credentials"
 
 
 def test_valid_credentials_show_report(page: Page, base_url: str) -> None:
@@ -109,5 +109,7 @@ def test_progress_steps_shown(page: Page, base_url: str) -> None:
     page.fill('input[name="pin"]', DEMO_CASE_IN_REVIEW["pin"])
     page.click("button.btn-primary")
     page.wait_for_load_state("networkidle")
-    # The progress-steps div should exist
-    expect(page.locator(".progress-steps")).to_be_visible()
+    # The progress indicator is the one platform-wide stepper component (DESIGN.md
+    # "Submission wizard stepper": "One stepper component platform-wide"), not a
+    # second, status-page-only ".progress-steps" pattern.
+    expect(page.locator(".stepper")).to_be_visible()

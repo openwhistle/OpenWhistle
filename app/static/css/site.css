@@ -2497,6 +2497,7 @@ a.attachment-name:hover {
   letter-spacing: 0.07em;
   line-height: 1rem;
   margin-bottom: 0.5rem;
+  overflow-wrap: break-word;
   text-transform: uppercase;
 }
 .stat-card__label,
