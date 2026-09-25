@@ -92,6 +92,11 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   pill groups (status/my-cases and location) can each have an active pill at once — "page"
   implies a single current page. Filter pills now use `aria-current="true"`; pagination and
   navigation keep `"page"`.
+- **The browser's own Back button broke the submission wizard halfway through** (a "Confirm
+  Form Resubmission" dialog, or a stale step that rewound progress when resent). Every wizard
+  step now answers its POST with a redirect to `GET /submit`, and a step that does not match
+  the session's progress is ignored instead of processed. Reported and fixed by Zachary
+  Bridges (#94).
 
 ### Removed
 

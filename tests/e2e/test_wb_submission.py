@@ -43,6 +43,91 @@ def _go_through_wizard_to_category(page: Page) -> None:
     _skip_location_if_present(page)
 
 
+def _click_expect_redirect(page: Page, selector: str) -> None:
+    """Click a wizard nav button and assert the POST is answered with a redirect.
+
+    Every step transition must go through Post/Redirect/Get: the POST to
+    /submit returns a 303 to /submit, and a GET renders the step. If a step
+    ever renders straight from the POST's 200 response again, a native
+    browser Back to that page forces the browser to either replay the POST
+    (the "Confirm Form Resubmission" dialog) or serve a stale snapshot —
+    this is the regression this whole test file guards against.
+    """
+    with page.expect_response(
+        lambda r: r.request.method == "POST" and r.url.endswith("/submit")
+    ) as resp_info:
+        page.click(selector)
+    assert resp_info.value.status == 303, (
+        f"Expected the wizard POST to redirect (303), got {resp_info.value.status}. "
+        "A step that renders directly from a POST breaks the native browser Back button."
+    )
+    page.wait_for_load_state("networkidle")
+
+
+def _fill_mode_step(page: Page) -> None:
+    page.locator('label[for="mode-anonymous"]').click()
+
+
+def _fill_category_step(page: Page) -> None:
+    category_select = page.locator('select[name="category"]')
+    expect(category_select).to_be_visible()
+    for opt in category_select.locator("option").all():
+        val = opt.get_attribute("value") or ""
+        if val:
+            category_select.select_option(val)
+            break
+
+
+def _fill_description_step(page: Page) -> None:
+    page.locator('textarea[name="description"]').fill(
+        "This report exercises the native browser Back button at every wizard "
+        "step. Long enough to pass the minimum description length validation."
+    )
+
+
+def _fill_whatever_step_is_showing(page: Page) -> None:
+    """Fill in the current step's required field(s), if it has any, and advance.
+
+    Location, attachments, and review need no input to click Next. Written
+    generically (rather than assuming a fixed step order) because a native
+    Back navigation always resolves to the session's real current step, which
+    may not be the step the test last saw.
+    """
+    if page.locator('label[for="mode-anonymous"]').count() > 0:
+        _fill_mode_step(page)
+    elif page.locator('select[name="category"]').count() > 0:
+        _fill_category_step(page)
+    elif page.locator('textarea[name="description"]').count() > 0:
+        _fill_description_step(page)
+    _advance_step(page)
+
+
+def _assert_submit_page_healthy(page: Page) -> None:
+    """After a browser Back to /submit, the page must be a normal, working step —
+
+    not a browser-generated resubmission/error interstitial, and not a server
+    error page.
+    """
+    assert page.url.rstrip("/").endswith("/submit"), (
+        f"Back navigation left the browser on an unexpected URL: {page.url}"
+    )
+    assert page.locator(".alert-error").count() == 0, (
+        f"Unexpected validation error shown after Back: {page.content()}"
+    )
+    # A real wizard step always has exactly one of these controls visible.
+    step_markers = [
+        'label[for="mode-anonymous"]',
+        'select[name="location_id"]',
+        'select[name="category"]',
+        'textarea[name="description"]',
+        'input[type="file"][name="files"]',
+        _NEXT_BTN,
+    ]
+    assert any(page.locator(sel).count() > 0 for sel in step_markers), (
+        f"Back navigation did not land on a recognizable wizard step: {page.content()}"
+    )
+
+
 def test_submit_page_loads(page: Page, base_url: str) -> None:
     """The submission wizard landing page (step 1) loads correctly."""
     page.goto(f"{base_url}/submit")
@@ -271,4 +356,101 @@ def test_submission_with_file_attachment(page: Page, base_url: str) -> None:
     body = page.content()
     assert _CASE_RE.search(body) is not None, (
         f"No case number found on success page after attachment submission. URL: {page.url}"
+    )
+
+
+def test_every_wizard_step_transition_is_post_redirect_get(page: Page, base_url: str) -> None:
+    """Every step's Next/Back POST redirects rather than rendering HTML directly.
+
+    Regression guard: a step that renders straight from its POST's 200 response
+    creates a browser history entry for a POST. Native Back to that entry then
+    forces the browser to either replay the POST (the "Confirm Form
+    Resubmission" dialog) or serve a stale cached snapshot — the underlying
+    cause of the Back button "not working" halfway through the form. Every
+    transition must instead redirect (303) to a plain GET /submit, which a
+    browser can always safely re-issue with no dialog.
+    """
+    page.goto(f"{base_url}/submit")
+    page.wait_for_load_state("networkidle")
+
+    _fill_mode_step(page)
+    _click_expect_redirect(page, _NEXT_BTN)
+
+    if page.locator('select[name="location_id"]').count() > 0:
+        _click_expect_redirect(page, _NEXT_BTN)
+
+    _fill_category_step(page)
+    _click_expect_redirect(page, _NEXT_BTN)
+
+    _fill_description_step(page)
+    _click_expect_redirect(page, _NEXT_BTN)
+
+    # Step 5: attachments (skip — no file) — also exercises the in-wizard Back
+    # button, which lands back on step 4 (description), not step 5 itself.
+    _click_expect_redirect(page, _BACK_BTN)  # attachments -> description
+    _fill_description_step(page)
+    _click_expect_redirect(page, _NEXT_BTN)  # description -> attachments again
+    _click_expect_redirect(page, _NEXT_BTN)  # attachments -> review
+
+    # Step 6: review + final submit — deliberately NOT part of this guard. It
+    # creates the report and deletes the session, so it renders the success
+    # page directly rather than redirecting; a native Back to it is a
+    # separate, out-of-scope concern.
+    _advance_step(page)
+
+    page.wait_for_load_state("networkidle")
+    assert _CASE_RE.search(page.content()) is not None, (
+        f"Wizard did not reach the success page after redirect-based navigation. URL: {page.url}"
+    )
+
+
+def test_native_back_button_after_every_step_keeps_wizard_usable(
+    page: Page, base_url: str
+) -> None:
+    """The browser's native Back button never leaves the wizard in a broken state.
+
+    Walks the full wizard and, after every step transition, uses the browser's
+    own Back button (not the in-page "Back" link) — the exact action the bug
+    report described as "not working when halfway through the form" — then
+    verifies the page is a healthy, recognizable wizard step (no validation
+    error, no server error, no stuck resubmission interstitial) and that the
+    wizard is still completable afterward.
+
+    Every Back is immediately preceded and followed by a forward step, so the
+    browser always has a history entry to go back to; the loop is driven by
+    whatever step is actually showing rather than an assumed step order,
+    since a session-authoritative wizard can legitimately show the same
+    "current step" again rather than a literal history rewind.
+    """
+    page.goto(f"{base_url}/submit")
+    page.wait_for_load_state("networkidle")
+
+    def _done() -> bool:
+        return _CASE_RE.search(page.content()) is not None
+
+    # Checking for completion right after each forward step — before ever
+    # calling go_back() again — matters: the final review submission renders
+    # the success page directly rather than through the redirect pattern this
+    # fix adds (a separate, out-of-scope concern), so Back from *that* page
+    # isn't something this test should assert is healthy.
+    for _ in range(8):
+        _fill_whatever_step_is_showing(page)
+        if _done():
+            break
+
+        page.go_back()
+        page.wait_for_load_state("networkidle")
+        _assert_submit_page_healthy(page)
+
+        # Recover forward from wherever Back landed before the next iteration
+        # can go back again — otherwise the test itself could run off the
+        # start of history, which is a bug in the test, not in the app.
+        _fill_whatever_step_is_showing(page)
+        if _done():
+            break
+    else:
+        pytest.fail(f"Wizard did not reach the success page within 8 steps. URL: {page.url}")
+
+    assert _done(), (
+        f"Wizard was not completable after native Back navigation at every step. URL: {page.url}"
     )

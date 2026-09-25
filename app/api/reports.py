@@ -264,6 +264,8 @@ async def submit_get(
         state["step"] = current_step
 
     categories = await get_active_categories(db)
+    flash_error = state.pop("_flash_error", None)
+    flash_field_errors = state.pop("_flash_field_errors", None)
 
     ctx: dict[str, Any] = {
         "state": state,
@@ -274,6 +276,12 @@ async def submit_get(
         "categories": categories,
         "display_step": _compute_step_label(current_step, has_locations),
     }
+    if flash_error:
+        ctx["error"] = flash_error
+        if flash_field_errors:
+            ctx["field_errors"] = flash_field_errors
+        elif flash_error in _ERROR_FIELD:
+            ctx["field_errors"] = {_ERROR_FIELD[flash_error]: f"submit.error.{flash_error}"}
 
     rendered = render(request, "submit.html", ctx)
     _set_submission_cookie(rendered, session_id, request)
@@ -320,36 +328,37 @@ async def submit_post(
 
     locations = await get_active_locations(db)
     has_locations = len(locations) > 0
-    total_steps = _compute_total_steps(has_locations)
     categories = await get_active_categories(db)
     valid_cat_slugs = {c.slug for c in categories}
 
-    def _render_step(extra: dict[str, Any] | None = None) -> HTMLResponse:
-        ctx: dict[str, Any] = {
-            "state": state,
-            "step": state.get("step", _STEP_MODE),
-            "total_steps": total_steps,
-            "has_locations": has_locations,
-            "locations": locations,
-            "categories": categories,
-            "display_step": _compute_step_label(state.get("step", _STEP_MODE), has_locations),
-        }
-        if extra:
-            ctx.update(extra)
-        err = ctx.get("error")
-        if err in _ERROR_FIELD:
-            ctx["field_errors"] = {_ERROR_FIELD[err]: f"submit.error.{err}"}
-        resp = render(request, "submit.html", ctx)
+    def _redirect_after_post() -> RedirectResponse:
+        # Post/Redirect/Get: every step is rendered by GET /submit, so a native
+        # browser Back never lands on a POST result (resubmit dialog, stale page).
+        resp = RedirectResponse("/submit", status_code=303)
         _set_submission_cookie(resp, session_id, request)
         return resp
 
-    # Reject a step that runs ahead of the session's progress. Without this an
-    # unauthenticated client could POST step=<attachments> on a brand-new
-    # session and stash multi-MB blobs in Redis, bypassing the wizard entirely.
-    if action == "next" and step > state.get("step", _STEP_MODE):
+    async def _fail(
+        step_no: int, error: str, field_errors: dict[str, str] | None = None
+    ) -> RedirectResponse:
+        # One-shot flash, shown and popped by the next GET /submit.
+        state["step"] = step_no
+        state["_flash_error"] = error
+        if field_errors:
+            state["_flash_field_errors"] = field_errors
+        await _save_submission(redis, session_id, state)
+        return _redirect_after_post()
+
+    # A step that does not match the session's progress exactly is stale (a
+    # back/forward-cached page, a replayed POST) or runs ahead of the wizard
+    # (a brand-new session posting step=<attachments> to stash blobs in Redis).
+    # Never process it: show the session's real step instead.
+    if action == "next" and step != state.get("step", _STEP_MODE):
+        if not state:
+            state["_flash_error"] = "session_incomplete"
         state.setdefault("step", _STEP_MODE)
         await _save_submission(redis, session_id, state)
-        return _render_step({"error": "session_incomplete"})
+        return _redirect_after_post()
 
     if action == "back":
         current = state.get("step", _STEP_MODE)
@@ -358,7 +367,7 @@ async def submit_post(
             prev = _STEP_MODE
         state["step"] = max(_STEP_MODE, prev)
         await _save_submission(redis, session_id, state)
-        return _render_step()
+        return _redirect_after_post()
 
     # ── Step 1: mode selection ─────────────────────────────────────
     if step == _STEP_MODE:
@@ -369,9 +378,7 @@ async def submit_post(
             effective_mode = "anonymous"
 
         if effective_mode not in ("anonymous", "confidential"):
-            state["step"] = _STEP_MODE
-            await _save_submission(redis, session_id, state)
-            return _render_step({"error": "mode_required"})
+            return await _fail(_STEP_MODE, "mode_required")
 
         state["submission_mode"] = effective_mode
 
@@ -392,7 +399,7 @@ async def submit_post(
 
         state["step"] = _STEP_LOCATION if has_locations else _STEP_CATEGORY
         await _save_submission(redis, session_id, state)
-        return _render_step()
+        return _redirect_after_post()
 
     # ── Step 2: location selection (conditional) ──────────────────
     if step == _STEP_LOCATION:
@@ -402,48 +409,38 @@ async def submit_post(
                 try:
                     loc_uuid = uuid.UUID(loc_id_stripped)
                 except ValueError:
-                    state["step"] = _STEP_LOCATION
-                    await _save_submission(redis, session_id, state)
-                    return _render_step({"error": "invalid_location"})
+                    return await _fail(_STEP_LOCATION, "invalid_location")
                 loc = await get_location_by_id(db, loc_uuid)
                 if not loc or not loc.is_active:
-                    state["step"] = _STEP_LOCATION
-                    await _save_submission(redis, session_id, state)
-                    return _render_step({"error": "invalid_location"})
+                    return await _fail(_STEP_LOCATION, "invalid_location")
                 state["location_id"] = str(loc_uuid)
             else:
                 state["location_id"] = None
 
         state["step"] = _STEP_CATEGORY
         await _save_submission(redis, session_id, state)
-        return _render_step()
+        return _redirect_after_post()
 
     # ── Step 3: category ──────────────────────────────────────────
     if step == _STEP_CATEGORY:
         if not category or category not in valid_cat_slugs:
-            state["step"] = _STEP_CATEGORY
-            await _save_submission(redis, session_id, state)
-            return _render_step({"error": "category_required"})
+            return await _fail(_STEP_CATEGORY, "category_required")
         state["category"] = category
         state["step"] = _STEP_DESCRIPTION
         await _save_submission(redis, session_id, state)
-        return _render_step()
+        return _redirect_after_post()
 
     # ── Step 4: description ───────────────────────────────────────
     if step == _STEP_DESCRIPTION:
         desc_stripped = description.strip()
         if len(desc_stripped) < 10:
-            state["step"] = _STEP_DESCRIPTION
-            await _save_submission(redis, session_id, state)
-            return _render_step({"error": "description_too_short"})
+            return await _fail(_STEP_DESCRIPTION, "description_too_short")
         if len(desc_stripped) > 10000:
-            state["step"] = _STEP_DESCRIPTION
-            await _save_submission(redis, session_id, state)
-            return _render_step({"error": "description_too_long"})
+            return await _fail(_STEP_DESCRIPTION, "description_too_long")
         state["description"] = desc_stripped
         state["step"] = _STEP_ATTACHMENTS
         await _save_submission(redis, session_id, state)
-        return _render_step()
+        return _redirect_after_post()
 
     # ── Step 5: attachments ───────────────────────────────────────
     if step == _STEP_ATTACHMENTS:
@@ -455,19 +452,13 @@ async def submit_post(
 
         file_tuples, file_error = await read_upload_files(files)
         if file_error:
-            state["step"] = _STEP_ATTACHMENTS
-            await _save_submission(redis, session_id, state)
             if isinstance(file_error, UploadError):
                 file_error = make_translator(get_lang(request))(file_error.key, **file_error.params)
-            return _render_step({"error": file_error, "field_errors": {"files": file_error}})
+            return await _fail(_STEP_ATTACHMENTS, file_error, {"files": file_error})
         if sum(len(ft[2]) for ft in file_tuples) > MAX_DRAFT_ATTACHMENT_BYTES:
-            state["step"] = _STEP_ATTACHMENTS
-            await _save_submission(redis, session_id, state)
-            return _render_step({"error": "attachments_too_large"})
+            return await _fail(_STEP_ATTACHMENTS, "attachments_too_large")
         if file_tuples and not await _redis_has_room(redis):
-            state["step"] = _STEP_ATTACHMENTS
-            await _save_submission(redis, session_id, state)
-            return _render_step({"error": "attachments_no_room"})
+            return await _fail(_STEP_ATTACHMENTS, "attachments_no_room")
 
         state["files_stored"] = True
         state["step"] = _STEP_REVIEW
@@ -485,16 +476,14 @@ async def submit_post(
         ]
         state["file_data"] = file_data_list
         await _save_submission(redis, session_id, state)
-        return _render_step()
+        return _redirect_after_post()
 
     # ── Step 6: review + final submit ────────────────────────────
     if step == _STEP_REVIEW:
         required = ["submission_mode", "category", "description"]
         for req in required:
             if req not in state:
-                state["step"] = _STEP_MODE
-                await _save_submission(redis, session_id, state)
-                return _render_step({"error": "session_incomplete"})
+                return await _fail(_STEP_MODE, "session_incomplete")
 
         from app.services.crypto import encrypt
 
@@ -569,7 +558,7 @@ async def submit_post(
     # Unknown step — restart
     state["step"] = _STEP_MODE
     await _save_submission(redis, session_id, state)
-    return _render_step()
+    return _redirect_after_post()
 
 
 @router.post("/submit/restart")
