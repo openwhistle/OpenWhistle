@@ -101,6 +101,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   empty on revisit, so Next from there cleared them. Files now stay attached unless new ones
   are chosen, and the attachments step lists what is already attached. Reported and fixed by
   Zachary Bridges (#94).
+- A description that failed validation (too short or too long) was discarded, and the step
+  showed an empty field or the previous text. It now keeps what was typed (a too-long one cut
+  at 10,000 characters). Reported and fixed by Zachary Bridges (#94).
 
 ### Removed
 

@@ -434,8 +434,10 @@ async def submit_post(
     if step == _STEP_DESCRIPTION:
         desc_stripped = description.strip()
         if len(desc_stripped) < 10:
+            state["description"] = desc_stripped  # keep what was typed
             return await _fail(_STEP_DESCRIPTION, "description_too_short")
         if len(desc_stripped) > 10000:
+            state["description"] = desc_stripped[:10000]
             return await _fail(_STEP_DESCRIPTION, "description_too_long")
         state["description"] = desc_stripped
         state["step"] = _STEP_ATTACHMENTS

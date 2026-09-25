@@ -223,3 +223,35 @@ async def test_unstrippable_replacement_keeps_the_attached_file(
     review = (await client.get("/submit")).text
     assert "kept.txt" in review
     assert "broken.txt" not in review
+
+
+# ── A failed description keeps what was typed (#94) ────────────────
+
+
+@pytest.mark.asyncio
+async def test_too_short_description_is_kept_in_the_textarea(client: AsyncClient) -> None:
+    await _walk_to_description(client)
+    await _post(client, description="abcdef")
+    page = (await client.get("/submit")).text
+    assert "at least 10" in page
+    assert re.search(r"<textarea[^>]*>abcdef</textarea>", page, re.S)
+
+
+@pytest.mark.asyncio
+async def test_too_long_description_is_kept_truncated(client: AsyncClient) -> None:
+    await _walk_to_description(client)
+    await _post(client, description="x" * 10001)
+    page = (await client.get("/submit")).text
+    assert re.search(r"<textarea[^>]*>" + "x" * 10000 + "</textarea>", page, re.S)
+
+
+@pytest.mark.asyncio
+async def test_short_description_does_not_advance_the_session(client: AsyncClient) -> None:
+    """Keeping the text must not count it as accepted: submit still needs a valid one."""
+    await _walk_to_description(client)
+    step = _step((await client.get("/submit")).text)
+    await _post(client, description="abcdef")
+    assert _step((await client.get("/submit")).text) == step
+    resp = await _post(client, step=step + 2)  # jump to review
+    assert resp.status_code == 303
+    assert _step((await client.get("/submit")).text) == step
