@@ -1011,3 +1011,174 @@ def test_every_docs_font_face_url_resolves_to_a_real_file() -> None:
                 assert resolved.is_file(), f"{page.relative_to(ROOT)}: {src} does not exist"
                 checked += 1
     assert checked, "no @font-face url() found under docs/ -- test target moved?"
+
+
+def _unwrap_at_rules(css: str) -> str:
+    """Flatten @media { ... } blocks so a flat rule scan also sees the rules
+    inside them (font-face/family/weight declarations never live under any
+    other at-rule on these pages)."""
+    out: list[str] = []
+    i, n = 0, len(css)
+    while i < n:
+        m = re.match(r"@media[^{]*\{", css[i:])
+        if m and not css[i:].startswith("@font-face"):
+            start = i + m.end()
+            depth, j = 1, start
+            while j < n and depth:
+                if css[j] == "{":
+                    depth += 1
+                elif css[j] == "}":
+                    depth -= 1
+                j += 1
+            out.append(_unwrap_at_rules(css[start : j - 1]))
+            i = j
+        else:
+            out.append(css[i])
+            i += 1
+    return "".join(out)
+
+
+def _norm_weight(w: str) -> int | str:
+    w = w.strip().lower()
+    mapped = {"normal": 400, "bold": 700}
+    if w in mapped:
+        return mapped[w]
+    try:
+        return int(w)
+    except ValueError:
+        return w
+
+
+def _norm_style(s: str) -> str:
+    s = s.strip().lower()
+    return s if s in ("italic", "oblique") else "normal"
+
+
+def _resolve_family(famval: str, varmap: dict[str, str]) -> str | None:
+    m = re.match(r"var\((--font-[a-zA-Z-]+)\)", famval)
+    if m:
+        return varmap.get(m.group(1))
+    return famval.split(",")[0].strip().strip("'\"")
+
+
+# A selector whose real font context comes from a nested/descendant
+# relationship a flat CSS rule scan can't see (e.g. an inline <em> inside a
+# paragraph that itself sets an explicit weight, or a code-comment span
+# inside a code block whose ancestor overrides font-family to the mono
+# stack) -- keyed by the exact relative page path, since the same class name
+# can sit under a different real ancestor on a different page.
+_ANCESTOR_OVERRIDES: dict[str, dict[str, str]] = {
+    "docs/index.html": {
+        ".hero-subline em": ".hero-subline",  # inherits its weight (300), not body's default
+        ".hero-headline .accent-emphasis": ".hero-headline",  # inherits its weight (700)
+        ".t-comment": ".terminal-body",  # ancestor sets font-family: var(--font-mono)
+    },
+    "docs/de/index.html": {
+        ".hero-subline em": ".hero-subline",
+        ".hero-headline .accent-emphasis": ".hero-headline",
+    },
+    "docs/docs.html": {
+        ".t-comment": ".code-block pre code",  # ancestor sets font-family: var(--font-mono)
+    },
+}
+
+# (family, style) pairs excused from the coverage check below: Sora has no
+# italic member in its official @fontsource package at all (verified: the
+# extracted package's files/ directory contains zero *-italic files) -- the
+# three spots on docs/index.html that ask for italic Sora
+# (.footer-tagline, .hero-headline .accent-emphasis, .hero-subline em) can
+# never get a self-hosted italic face; the browser synthesizes a faux-slant
+# regardless of what we ship. Not a hosting gap, a font-family limitation.
+_KNOWN_UNAVAILABLE_STYLES = {("Sora", "italic")}
+
+
+def test_every_docs_page_font_usage_has_a_matching_font_face() -> None:
+    """Regression guard (review round 2): the blog scaffold's CSS asks for
+    Spectral weight 600 (`.nav-logo`, `.article-body h3`, blog index's
+    `.footer-logo`) but only 400/700 were shipped -- the browser silently
+    synthesized a faux-bold instead of using the real weight. Same root
+    cause as the missing-font-file bug the previous round fixed (a font
+    family self-hosted on the page but not with every face the page's own
+    CSS actually asks for), so it needed the same kind of guard: for every
+    docs/ page, every (font-family, font-weight, font-style) its CSS
+    declares (in the same rule, or inherited from body/an explicit ancestor
+    override above) for a family the page self-hosts at all must have a
+    matching @font-face -- not just "the url resolves" (the previous
+    round's guard), but "the exact face used exists"."""
+    font_face_re = re.compile(r"@font-face\s*\{([^}]*)\}", re.DOTALL)
+    fam_re = re.compile(r"font-family:\s*['\"]?([^'\";]+)['\"]?")
+    weight_re = re.compile(r"font-weight:\s*([^;]+);")
+    style_re = re.compile(r"font-style:\s*([^;]+);")
+    var_re = re.compile(r"(--font-[a-zA-Z-]+)\s*:\s*([^;]+);")
+    rule_re = re.compile(r"([^{}]+)\{([^{}]*)\}", re.DOTALL)
+
+    checked_pages = 0
+    for page in sorted((ROOT / "docs").rglob("*.html")):
+        rel = str(page.relative_to(ROOT))
+        html = page.read_text(encoding="utf-8")
+        style = "\n".join(re.findall(r"<style[^>]*>(.*?)</style>", html, re.DOTALL))
+        if not style.strip():
+            continue
+        style = _unwrap_at_rules(style)
+
+        faces: set[tuple[str, int | str, str]] = set()
+        for block in font_face_re.findall(style):
+            fam_m = fam_re.search(block)
+            if not fam_m:
+                continue
+            w_m, s_m = weight_re.search(block), style_re.search(block)
+            faces.add(
+                (
+                    fam_m.group(1).strip(),
+                    _norm_weight(w_m.group(1)) if w_m else 400,
+                    _norm_style(s_m.group(1)) if s_m else "normal",
+                )
+            )
+        if not faces:
+            continue
+        checked_pages += 1
+        hosted_families = {f for f, _w, _s in faces}
+        varmap = {
+            name: val.split(",")[0].strip().strip("'\"") for name, val in var_re.findall(style)
+        }
+        rest = font_face_re.sub("", style)
+        ancestors = _ANCESTOR_OVERRIDES.get(rel, {})
+
+        rules: dict[str, dict[str, object]] = {}
+        for sel, decl in rule_re.findall(rest):
+            sel_clean = sel.strip().replace("\n", " ")
+            fam_m, w_m, s_m = fam_re.search(decl), weight_re.search(decl), style_re.search(decl)
+            rules[sel_clean] = {
+                "family": _resolve_family(fam_m.group(1).strip(), varmap) if fam_m else None,
+                "weight": _norm_weight(w_m.group(1)) if w_m else None,
+                "style": _norm_style(s_m.group(1)) if s_m else None,
+            }
+
+        def resolve(
+            sel: str,
+            seen: frozenset[str] = frozenset(),
+            rules: dict[str, dict[str, object]] = rules,
+            ancestors: dict[str, str] = ancestors,
+        ) -> tuple[str | None, int | str, str]:
+            r = rules.get(sel, {})
+            fam, w, s = r.get("family"), r.get("weight"), r.get("style")
+            parent = ancestors.get(sel, "body" if sel != "body" else None)
+            if (fam is None or w is None) and parent and parent not in seen:
+                pfam, pw, _ps = resolve(parent, seen | {sel}, rules, ancestors)
+                fam = fam or pfam
+                w = w if w is not None else pw
+            return fam, (w if w is not None else 400), (s or "normal")
+
+        for sel, r in rules.items():
+            if r["family"] is None and r["weight"] is None and r["style"] is None:
+                continue
+            fam, w, s = resolve(sel)
+            if fam not in hosted_families:
+                continue
+            if (fam, w, s) in faces or (fam, s) in _KNOWN_UNAVAILABLE_STYLES:
+                continue
+            raise AssertionError(
+                f"{rel}: {sel!r} uses {fam} weight={w} style={s}, "
+                f"but no matching @font-face exists (has: {sorted(faces)})"
+            )
+    assert checked_pages, "no docs/ page with @font-face declarations found -- test target moved?"

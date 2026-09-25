@@ -49,9 +49,12 @@ weights/styles some page actually declares, nothing extra:
   spectral-latin-600-normal.woff2       de/index.html only
   spectral-latin-600-italic.woff2       de/index.html only
   spectral-latin-700-normal.woff2       blog + de/index.html
+  spectral-latin-700-italic.woff2       de/index.html only (round 2)
   spectral-latin-ext-400-normal.woff2   blog only
+  spectral-latin-ext-600-normal.woff2   blog only (round 2)
   spectral-latin-ext-700-normal.woff2   blog only
   source-serif-4-latin-300-normal.woff2      blog + de/index.html
+  source-serif-4-latin-300-italic.woff2      de/index.html only (round 2)
   source-serif-4-latin-400-normal.woff2      blog + de/index.html
   source-serif-4-latin-400-italic.woff2      de/index.html only
   source-serif-4-latin-600-normal.woff2      blog + de/index.html
@@ -59,6 +62,18 @@ weights/styles some page actually declares, nothing extra:
   source-serif-4-latin-ext-300-normal.woff2  blog only
   source-serif-4-latin-ext-400-normal.woff2  blog only
   source-serif-4-latin-ext-600-normal.woff2  blog only
+
+Round 2 additions: the blog scaffold's own CSS asks for Spectral weight 600
+(`.nav-logo`, `.article-body h3`, and blog index's `.footer-logo`), and
+docs/de/index.html's CSS asks for Spectral 700 italic
+(`.hero-headline .accent-emphasis`, which inherits `.hero-headline`'s
+weight 700) and Source Serif 4 300 italic (`.hero-subline em`, which
+inherits `.hero-subline`'s weight 300) — none of these were shipped, so the
+browser was synthesizing a faux-bold or faux-italic instead of using the
+real face. `tests/test_v160_design.py::test_every_docs_page_font_usage_has_a_matching_font_face`
+now catches this class of gap (a shipped family missing a specific
+weight/style the page's own CSS actually uses), not just "the declared
+@font-face url() resolves" (round 1's narrower guard).
 
 Only the blog pages split `latin`/`latin-ext` into separate @font-face
 rules with a `unicode-range` each (the exact ranges fontsource publishes
@@ -70,7 +85,8 @@ in too, so a future article naming a person or place with those characters
 renders in the real typeface instead of silently falling back to Georgia.
 docs/de/index.html predates that split; it declares one `latin`-only rule
 per weight/style, unchanged here — only the missing files it already
-referenced were added, not a redesign of its CSS.
+referenced (or, round 2, actually uses) were added, not a redesign of its
+CSS.
 
 License
 -------
@@ -81,10 +97,66 @@ Spectral Project Authors) and source-serif-4-LICENSE (Source Serif 4).
 Permissive, attribution-preserving, explicitly allows embedding and
 redistribution; compatible with this project's GPLv3.
 
-Also in this directory
------------------------
+Sora and JetBrains Mono (docs.html + docs/index.html EN)
+==========================================================
 
-sora-latin-*.woff2 and JetBrainsMono-*.woff2 are unrelated: they serve
-docs/docs.html and docs/index.html (EN — the newer "Signal design
-system"), fetched the same way (@fontsource), not covered by this fix —
-left untouched.
+Round 1 called `sora-latin-*.woff2`/`JetBrainsMono-*.woff2` "unrelated,
+not covered by this fix" — round 2's broader coverage test found the same
+class of gap here too: docs/index.html's `.hero-subline`/`.docs-lead`/
+`.section-subheading` ask for Sora weight 300 (only 400/500/600/700 were
+shipped), and `.t-comment` (inside a code block, so it inherits
+`font-family: var(--font-mono)` from its ancestor, not body's Sora) and
+docs/index.html's `.footer-logo` ask for JetBrains Mono weight 500 and
+weight 400 italic (only 400/700 normal were shipped). Fixed the same way
+as Spectral/Source Serif 4:
+
+  @fontsource/sora@5.3.0
+    https://registry.npmjs.org/@fontsource/sora/-/sora-5.3.0.tgz
+    sha512-SqW3OpKxxfKvxDLPlbdrWf2KooPfbd+W3jaYn483o+Y/JrmU87vjFPNptDqwP428c3vY+gnranLhjcbRaXB0Jw==
+
+  @fontsource/jetbrains-mono@5.3.0
+    https://registry.npmjs.org/@fontsource/jetbrains-mono/-/jetbrains-mono-5.3.0.tgz
+    sha512-fqDfB5I9f1p1TV486aUgB9t8zP84P0O1FtQR5Ol9vjwPy+S+EIGlVYm1cvj2W5shcZMTg2nZFdVMoH5wFu8a1A==
+
+Verified the *existing* `sora-latin-{400,500,600,700}-normal.woff2` are
+byte-identical to this exact package's own files (`cmp`) — same source,
+confirmed rather than assumed. New file: `sora-latin-300-normal.woff2`
+(docs.html + docs/index.html both use weight 300; no `latin-ext`, matching
+the flat single-subset style this family already used here).
+
+**`JetBrainsMono-Regular.woff2`/`JetBrainsMono-Bold.woff2` do NOT match
+this package** (`cmp` differs at byte 11; they are roughly double the
+size of the package's own latin-only 400/700 files) — their real origin
+predates any docs/fonts documentation and is unverified. Not re-sourced
+here (replacing an already-working, already-resolving pair of files that
+nothing in this fix's scope asked to touch, with unknown risk to whatever
+broader glyph coverage the larger files might carry, is a separate
+decision from shipping the two weights/styles that were simply missing).
+New files, from the package above, added under the same naming scheme as
+the existing two (not fontsource's own `jetbrains-mono-latin-*` naming,
+to stay consistent with what's already here):
+
+  JetBrainsMono-Medium.woff2   (weight 500 normal — docs/index.html `.footer-logo`)
+  JetBrainsMono-Italic.woff2   (weight 400 italic — docs.html + docs/index.html `.t-comment`)
+
+License: SIL Open Font License 1.1 for both (same family as Spectral/
+Source Serif 4/DejaVu — Google Fonts and JetBrains both publish under
+OFL); not re-added as separate LICENSE files here since the pre-existing
+Sora/JetBrains Mono files were never accompanied by one in this directory
+either — flagging as a pre-existing gap, not introduced or fixed by this
+round.
+
+Known, permanent exception (not a hosting gap)
+------------------------------------------------
+
+docs/index.html's `.footer-tagline` (weight 400), `.hero-headline
+.accent-emphasis` (weight 700, inherited from `.hero-headline`), and
+`.hero-subline em` (weight 300, inherited from `.hero-subline`) all
+request italic Sora text. **Sora has no italic member at all** — verified
+by extracting the official `@fontsource/sora@5.3.0` package and confirming
+its `files/` directory contains zero `*-italic` files, upstream. There is
+no self-hosted file to ship; the browser synthesizes a faux-slant for
+these three spots regardless. `test_every_docs_page_font_usage_has_a_matching_font_face`
+excuses `(family="Sora", style="italic")` explicitly, with this same
+reasoning in its own comment, rather than silently failing on something
+that can never turn green.
