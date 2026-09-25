@@ -1809,7 +1809,8 @@
           <li>Send a message to the whistleblower via the anonymous channel</li>
           <li>Add internal notes (never shown to the whistleblower)</li>
           <li>Link related cases together</li>
-          <li>Export the full case as a PDF (includes SLA compliance section per HinSchG §17)</li>
+          <li>Export the case as a PDF (includes SLA compliance section per HinSchG §17) — the confidential
+          identity is left out by default, the same as the case page</li>
           <li>Request hard deletion — a second admin must confirm (4-eyes principle); triggers GDPR Art. 17 erasure</li>
         </ul>
         <p>
@@ -1818,7 +1819,9 @@
           <em>Show identity</em> and gives a reason (10–500 characters; do not write the reporter's name into it).
           The identity is shown on that page only; the audit log records who, when and why. The case page says only
           that a reason was recorded; the reason itself is on <code>/admin/audit-log</code> and in the CSV export.
-          Opening a case is logged as <em>Report opened</em>.
+          Opening a case is logged as <em>Report opened</em>. The same rule applies to the PDF export: the
+          <em>Export PDF with identity</em> button asks for the same audited reason and is recorded the same way;
+          the plain <em>Export PDF</em> download never includes it.
         </p>
 
         <h3>Audit log</h3>

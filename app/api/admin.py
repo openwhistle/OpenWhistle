@@ -268,6 +268,33 @@ async def report_detail(
     return await _render_report(request, db, report, current_user)
 
 
+async def _reveal_gate(
+    request: Request,
+    db: AsyncSession,
+    report_id: uuid.UUID,
+    current_user: AdminUser,
+    reason: str,
+) -> tuple[Report, str] | HTMLResponse:
+    """Shared 404 → 403 → reason-validation gate for both ways to reveal an
+    identity (the case page and the PDF export). A refused reveal is still an
+    audited view of the whole case, and the typed reason is refilled — the
+    same rule either way, so the two callers cannot drift again.
+    """
+    report = await _get_authorized_report(db, report_id, current_user)
+    if not can_reveal_identity(current_user, report):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+    valid = _validated_reason(reason)
+    if valid is None:
+        await audit_service.log(db, current_user, AuditAction.REPORT_VIEWED, report_id=report.id)
+        await db.commit()
+        return await _render_report(
+            request, db, report, current_user,
+            field_errors={"reason": "admin.report.identity.reason_error"}, status_code=422,
+            reason_draft=reason,
+        )
+    return report, valid
+
+
 @router.post("/reports/{report_id}/identity", response_class=HTMLResponse)
 async def reveal_identity(
     request: Request,
@@ -279,19 +306,10 @@ async def reveal_identity(
 ) -> HTMLResponse:
     from app.services.crypto import decrypt_or_none, encrypt
 
-    report = await _get_authorized_report(db, report_id, current_user)
-    if not can_reveal_identity(current_user, report):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-    valid = _validated_reason(reason)
-    if valid is None:
-        # The refusal still renders the whole case: it is a view like any other.
-        await audit_service.log(db, current_user, AuditAction.REPORT_VIEWED, report_id=report.id)
-        await db.commit()
-        return await _render_report(
-            request, db, report, current_user,
-            field_errors={"reason": "admin.report.identity.reason_error"}, status_code=422,
-            reason_draft=reason,
-        )
+    gate = await _reveal_gate(request, db, report_id, current_user, reason)
+    if isinstance(gate, HTMLResponse):
+        return gate
+    report, valid = gate
     await audit_service.log(
         db, current_user, AuditAction.IDENTITY_REVEALED,
         report_id=report.id, detail={"reason": encrypt(valid)},
@@ -705,15 +723,10 @@ async def export_pdf_with_identity(
     from app.services.crypto import encrypt
     from app.services.pdf import generate_report_pdf
 
-    report = await _get_authorized_report(db, report_id, current_user)
-    if not can_reveal_identity(current_user, report):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-    valid = _validated_reason(reason)
-    if valid is None:
-        return await _render_report(
-            request, db, report, current_user,
-            field_errors={"reason": "admin.report.identity.reason_error"}, status_code=422,
-        )
+    gate = await _reveal_gate(request, db, report_id, current_user, reason)
+    if isinstance(gate, HTMLResponse):
+        return gate
+    report, valid = gate
     await audit_service.log(
         db, current_user, AuditAction.IDENTITY_REVEALED,
         report_id=report.id, detail={"reason": encrypt(valid), "via": "pdf"},
@@ -1125,8 +1138,20 @@ def _csv_detail(raw: str | None, t: Any) -> str:
         is_object = False
     if not is_object:
         return raw or ""
-    data = {k: t(v) if v == REASON_UNREADABLE else v for k, v in audit_detail(raw)}
+    data = {k: _csv_detail_value(k, v, t) for k, v in audit_detail(raw)}
     return json.dumps(data, ensure_ascii=False)
+
+
+def _csv_detail_value(key: str, value: str, t: Any) -> str:
+    """A reveal's `via` reads as its label, the same as the case page; everything else as-is."""
+    if value == REASON_UNREADABLE:
+        return str(t(value))
+    if key == "via":
+        label_key = f"audit.detail.via.{value}"
+        label = t(label_key)
+        if label != label_key:
+            return str(label)
+    return value
 
 
 @router.get("/audit-log/export.csv")

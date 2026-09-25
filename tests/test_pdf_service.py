@@ -91,3 +91,11 @@ def test_safe_replaces_non_latin1():
     result = _safe("Ö test → value")
     assert isinstance(result, str)
     # Should not raise, replaces unmappable chars
+
+
+def test_safe_maps_typographic_punctuation_instead_of_dropping_it():
+    # An em dash is common in generated strings ("[on file — not included]") and
+    # in text a whistleblower's own editor "smart-quoted"; Helvetica's WinAnsi
+    # encoding has no glyph for it, so errors="replace" alone would print "?".
+    assert _safe("on file — not included") == "on file - not included"
+    assert _safe("“quoted”") == '"quoted"'

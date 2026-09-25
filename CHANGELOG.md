@@ -30,6 +30,13 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   receivers that parsed the old array or per-case fields. The reminder email is unchanged — it
   still carries the case number, since only your own admins receive it.
 
+### Privacy
+
+- **PDF export leaves the confidential identity out** unless the handler gives an audited reason.
+  The default export prints "Identity: [on file — not included]"; a new "Export PDF with identity"
+  button asks for the same 10–500 character reason as the on-screen reveal and writes the same
+  `IDENTITY_REVEALED` audit entry.
+
 ### Changed
 
 - **Times the whistleblower causes are stored and shown as the day only** (UTC): submission, the

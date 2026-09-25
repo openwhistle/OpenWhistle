@@ -70,7 +70,8 @@ zero vendor lock-in, and privacy-first by design.
 - **Internal notes** — Admin-only notes on cases; never visible to the whistleblower.
 - **Case linking** — Link related cases with bidirectional normalization constraint.
 - **Custom categories** — DB-driven report categories; full management UI at `/admin/categories`.
-- **PDF export** — Full case export including SLA compliance section (HinSchG §17).
+- **PDF export** — Case export including SLA compliance section (HinSchG §17); the confidential
+  identity is left out by default and only included via the same audited reveal as the case page.
 - **Dashboard statistics** — SLA compliance rate, status distribution, category breakdown.
 - **"Signal" design system** — documented, token-driven identity ([`DESIGN.md`](DESIGN.md)); app + site, light + dark.
 - **Mandatory MFA** — TOTP (compatible with any authenticator app) required for every admin account.

@@ -24,6 +24,7 @@ from app.templating import REASON_UNREADABLE
 
 _PASSWORD = "V160-Privacy-Password"  # noqa: S105
 _NAME = "Erika Musterfrau"
+_CONTACT = "+49 30 1234"
 _REASON = "Needed to arrange the protected interview."
 
 
@@ -67,7 +68,7 @@ async def _confidential_report(db: AsyncSession, assigned: AdminUser | None = No
     report, _ = await create_report(
         db, "corruption", "Confidential identity test report.",
         submission_mode=SubmissionMode.confidential,
-        confidential_name_enc=encrypt(_NAME), confidential_contact_enc=encrypt("+49 30 1234"),
+        confidential_name_enc=encrypt(_NAME), confidential_contact_enc=encrypt(_CONTACT),
     )
     report.assigned_to_id = assigned.id if assigned else None
     await db.commit()
@@ -89,7 +90,7 @@ async def test_case_page_hides_identity_and_records_the_view(
     report = await _confidential_report(db_session, assigned=user)
     resp = await client.get(f"/admin/reports/{report.id}")
     assert resp.status_code == 200
-    assert _NAME not in resp.text and "+49 30 1234" not in resp.text
+    assert _NAME not in resp.text and _CONTACT not in resp.text
     await client.get(f"/admin/reports/{report.id}")
     assert await _audit_count(db_session, report, AuditAction.REPORT_VIEWED) == 2
 
@@ -326,6 +327,34 @@ async def test_audit_csv_marks_an_unreadable_reason(
 
 
 @pytest.mark.asyncio
+async def test_audit_csv_translates_the_via_label_for_a_pdf_export(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    import json
+
+    user = await _login(client, db_session, AdminRole.admin)
+    report = await _confidential_report(db_session, assigned=user)
+    await client.post(f"/admin/reports/{report.id}/export.pdf", data={
+        "reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")})
+    rows = [r for r in await _csv_rows(client) if r["action"] == AuditAction.IDENTITY_REVEALED
+            and r["report_id"] == str(report.id)]
+    assert [json.loads(r["detail"])["via"] for r in rows] == ["PDF export"]
+
+
+@pytest.mark.asyncio
+async def test_audit_trail_shows_a_localised_via_label_for_pdf(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    user = await _login(client, db_session, AdminRole.admin)
+    report = await _confidential_report(db_session, assigned=user)
+    await client.post(f"/admin/reports/{report.id}/export.pdf", data={
+        "reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")})
+    trail = await client.get(f"/admin/audit-log?report_id={report.id}")
+    assert "PDF export" in trail.text
+    assert ">pdf<" not in trail.text
+
+
+@pytest.mark.asyncio
 async def test_case_page_says_a_reason_was_recorded_but_not_what(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
@@ -534,7 +563,45 @@ async def test_pdf_export_omits_identity_by_default(
     report = await _confidential_report(db_session, assigned=user)
     resp = await client.get(f"/admin/reports/{report.id}/export.pdf")
     assert resp.status_code == 200
-    assert _NAME not in _pdf_text(resp.content)
+    text = _pdf_text(resp.content)
+    assert _NAME not in text
+    assert _CONTACT not in text
+    assert "[on file - not included]" in text
+    assert await _audit_count(db_session, report, AuditAction.REPORT_VIEWED) == 1
+
+
+@pytest.mark.asyncio
+async def test_pdf_export_csrf_is_required_for_the_identity_export(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    user = await _login(client, db_session, AdminRole.case_manager)
+    report = await _confidential_report(db_session, assigned=user)
+    resp = await client.post(f"/admin/reports/{report.id}/export.pdf", data={
+        "reason": _REASON, "csrf_token": "forged-token"})
+    assert resp.status_code == 403
+    assert await _audit_count(db_session, report, AuditAction.IDENTITY_REVEALED) == 0
+
+
+@pytest.mark.asyncio
+async def test_pdf_export_with_identity_is_refused_to_a_non_handler(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    other = AdminUser(
+        id=uuid.uuid4(), username=f"pdf_handler_{uuid.uuid4().hex[:8]}", password_hash=None,
+        totp_secret=pyotp.random_base32(), totp_enabled=True, role=AdminRole.case_manager,
+    )
+    db_session.add(other)
+    await db_session.commit()
+    # An admin can reach the report (object-level access) but is not its handler
+    # (can_reveal_identity), unlike a case manager who is refused earlier, at 404,
+    # for not being able to see the case at all.
+    await _login(client, db_session, AdminRole.admin)
+    report = await _confidential_report(db_session, assigned=other)
+    resp = await client.post(f"/admin/reports/{report.id}/export.pdf", data={
+        "reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")})
+    assert resp.status_code == 403
+    assert _NAME not in resp.text
+    assert await _audit_count(db_session, report, AuditAction.IDENTITY_REVEALED) == 0
 
 
 @pytest.mark.asyncio
@@ -544,13 +611,32 @@ async def test_pdf_with_identity_needs_a_reason_and_is_audited(
     user = await _login(client, db_session, AdminRole.case_manager)
     report = await _confidential_report(db_session, assigned=user)
     refused = await client.post(f"/admin/reports/{report.id}/export.pdf", data={
-        "reason": "", "csrf_token": client.cookies.get("ow_csrf")})
+        "reason": "too short", "csrf_token": client.cookies.get("ow_csrf")})
     assert refused.status_code == 422
+    assert _NAME not in refused.text
+    assert ">too short</textarea>" in refused.text
+    # The refusal is still an audited view of the whole case, and only that.
+    assert await _audit_count(db_session, report, AuditAction.REPORT_VIEWED) == 1
+    assert await _audit_count(db_session, report, AuditAction.IDENTITY_REVEALED) == 0
+
     resp = await client.post(f"/admin/reports/{report.id}/export.pdf", data={
         "reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")})
     assert resp.headers["content-type"] == "application/pdf"
-    assert _NAME in _pdf_text(resp.content)
+    assert resp.headers["cache-control"] == "no-store"
+    text = _pdf_text(resp.content)
+    assert _NAME in text
+    assert _CONTACT in text
     assert await _audit_count(db_session, report, AuditAction.IDENTITY_REVEALED) == 1
+    import json
+
+    from app.services.crypto import decrypt
+
+    row = await db_session.scalar(select(AuditLog).where(
+        AuditLog.report_id == report.id, AuditLog.action == AuditAction.IDENTITY_REVEALED))
+    assert row is not None
+    detail = json.loads(row.detail or "{}")
+    assert detail["via"] == "pdf"
+    assert decrypt(detail["reason"]) == _REASON
 
 
 @pytest.mark.asyncio
