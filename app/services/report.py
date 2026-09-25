@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
 from redis.asyncio import Redis
-from sqlalchemy import func, select
+from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.orm.strategy_options import _AbstractLoad
@@ -172,6 +172,41 @@ def decrypt_report_fields(report: Report) -> tuple[str, list[str]]:
         msg_contents = [m.content for m in report.messages]
 
     return description, msg_contents
+
+
+# ponytail: decrypts up to this many newest in-scope reports per search; a
+# larger installation needs a blind index (HMAC tokens), not a plaintext one.
+CONTENT_SEARCH_LIMIT = 5000
+
+
+async def content_match_ids(
+    db: AsyncSession,
+    needle: str,
+    *,
+    assigned_to_id: uuid.UUID | None = None,
+    org_id: uuid.UUID | None = None,
+    scope_org: bool = False,
+) -> list[uuid.UUID]:
+    """Ids of in-scope reports whose description or messages contain ``needle``.
+
+    Decrypted in memory for this request only; no searchable copy is stored.
+    Never matches the confidential name/contact fields — those stay hidden
+    until a handler reveals them with an audited reason, and a search hit
+    would confirm an identity guess with no reveal recorded.
+    """
+    q = select(Report).options(selectinload(Report.messages))
+    if assigned_to_id is not None:
+        q = q.where(Report.assigned_to_id == assigned_to_id)
+    if scope_org or org_id is not None:
+        q = q.where(Report.org_id == org_id)
+    rows = await db.execute(q.order_by(Report.submitted_at.desc()).limit(CONTENT_SEARCH_LIMIT))
+    folded = needle.casefold()
+    hits = []
+    for report in rows.scalars().all():
+        description, messages = decrypt_report_fields(report)
+        if any(folded in text.casefold() for text in (description, *messages)):
+            hits.append(report.id)
+    return hits
 
 
 def decrypt_attachment_names(report: Report) -> list[str]:
@@ -393,6 +428,7 @@ async def get_reports_paginated(
     org_id: uuid.UUID | None = None,
     scope_org: bool = False,
     case_query: str | None = None,
+    content_ids: list[uuid.UUID] | None = None,
 ) -> tuple[list[Report], int]:
     page = max(1, page)
     per_page = max(1, min(100, per_page))
@@ -413,10 +449,14 @@ async def get_reports_paginated(
         # caller is correctly restricted to org-less reports rather than all.
         base_q = base_q.where(Report.org_id == org_id)
     if case_query:
-        # Case number only: report content is encrypted per report and must stay
-        # unsearchable. Escape LIKE wildcards so "%" or "_" match themselves.
+        # Case numbers by LIKE; content only through ids found by decrypting in
+        # memory (content_match_ids). Escape LIKE wildcards so "%"/"_" match
+        # themselves literally.
         needle = case_query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-        base_q = base_q.where(Report.case_number.ilike(f"%{needle}%", escape="\\"))
+        match: ColumnElement[bool] = Report.case_number.ilike(f"%{needle}%", escape="\\")
+        if content_ids:
+            match = or_(match, Report.id.in_(content_ids))
+        base_q = base_q.where(match)
 
     count_result = await db.execute(select(func.count()).select_from(base_q.subquery()))
     total: int = count_result.scalar_one()

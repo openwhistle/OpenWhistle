@@ -164,3 +164,39 @@ async def test_audit_csv_carries_the_reason_decrypted(
     csv = await client.get("/admin/audit-log/export.csv")
     assert f"reason={_REASON}" in csv.text
     assert _NAME not in csv.text
+
+
+@pytest.mark.asyncio
+async def test_dashboard_search_finds_words_inside_reports(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    await _login(client, db_session, AdminRole.admin)
+    word = f"Zebra{uuid.uuid4().hex[:6]}"
+    report, _ = await create_report(db_session, "corruption", f"The invoice mentions {word} twice.")
+    other, _ = await create_report(db_session, "corruption", "Nothing to see in this report here.")
+    resp = await client.get(f"/admin/dashboard?q={word.lower()}")
+    assert report.case_number in resp.text
+    assert other.case_number not in resp.text
+
+
+@pytest.mark.asyncio
+async def test_case_manager_search_never_reaches_other_cases(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    await _login(client, db_session, AdminRole.case_manager)
+    word = f"Okapi{uuid.uuid4().hex[:6]}"
+    report, _ = await create_report(db_session, "corruption", f"Unassigned report about {word}.")
+    resp = await client.get(f"/admin/dashboard?q={word}")
+    assert report.case_number not in resp.text
+
+
+@pytest.mark.asyncio
+async def test_dashboard_search_never_matches_the_confidential_name(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """A hit on the confidential name would confirm an identity guess with no
+    reveal recorded, so content search must never look at that field."""
+    await _login(client, db_session, AdminRole.admin)
+    report = await _confidential_report(db_session)
+    resp = await client.get("/admin/dashboard", params={"q": _NAME})
+    assert report.case_number not in resp.text

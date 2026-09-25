@@ -180,6 +180,16 @@ async def dashboard(
     # This must apply even when their org_id is None, otherwise an org-less admin
     # would fall through to the unfiltered "see everything" branch — a metadata
     # leak inconsistent with the object-level check that denies them those reports.
+    # Content search decrypts in memory, so it is only worth doing for a query
+    # long enough to be meaningful, and it is scoped identically to the listing
+    # itself (same assigned_to_id/org filters) so it never decrypts a report
+    # outside what this caller may already see.
+    content_ids = (
+        await report_service.content_match_ids(
+            db, case_query, assigned_to_id=assigned_filter, **_org_scope(current_user)
+        )
+        if len(case_query) >= 3 else None
+    )
     reports, total = await report_service.get_reports_paginated(
         db,
         page=page,
@@ -190,6 +200,7 @@ async def dashboard(
         assigned_to_id=assigned_filter,
         location_id=location_filter,
         case_query=case_query or None,
+        content_ids=content_ids,
         **_org_scope(current_user),
     )
     stats = await report_service.get_report_stats(db, **_org_scope(current_user))
