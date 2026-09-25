@@ -28,9 +28,14 @@ ingress:
   #   no per-Ingress switch to stop it. OpenWhistle drops these headers and the
   #   peer address in its first middleware; nothing in the app sees or logs them.
   # - Traefik keeps access logs off unless enabled. Other controllers: check.
+  # Rate limit, like the bundled nginx (10 r/s, burst 30 per client address,
+  # in controller memory only): ingress-nginx's burst is rps x multiplier.
+  # Other controllers: set an equivalent limit.
   # Your own annotations are merged with this default (Helm merges maps).
   annotations:
     nginx.ingress.kubernetes.io/enable-access-log: "false"
+    nginx.ingress.kubernetes.io/limit-rps: "10"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "3"
   hosts:
     - host: whistleblower.example.com
       paths:

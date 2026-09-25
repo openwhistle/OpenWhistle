@@ -184,3 +184,27 @@ def test_ansible_nginx_template_renders_with_the_roles_own_defaults_and_clears_x
     assert "proxy_set_header X-OW-Onion" not in rendered
     assert rendered.count("include /etc/nginx/snippets/proxy-headers.conf;") == 1
     assert "ow-test.example.com" in rendered
+
+
+def test_every_public_route_is_rate_limited_in_both_deployments() -> None:
+    """POST /submit (and every other public route) is limited by the bundled
+    nginx's catch-all location and, on Kubernetes, by the ingress annotations
+    at the same rate and burst."""
+    import yaml
+
+    conf = (ROOT / "nginx/nginx.conf").read_text()
+    servers = re.findall(r"\n    server \{.*?\n    \}", conf, re.S)
+    proxied = [s for s in servers if "proxy_pass" in s]
+    assert proxied
+    for server in proxied:
+        for location in re.findall(r"location [^{]*\{[^}]*\}", server):
+            if "proxy_pass" in location:
+                assert "limit_req zone=" in location, location
+    rate = int(re.search(r"\bow_req:\w+ rate=(\d+)r/s", conf).group(1))  # type: ignore[union-attr]
+    burst = int(re.search(r"ow_req burst=(\d+)", conf).group(1))  # type: ignore[union-attr]
+
+    values = yaml.safe_load((ROOT / "charts/openwhistle/values.yaml").read_text())
+    annotations = values["ingress"]["annotations"]
+    rps = int(annotations["nginx.ingress.kubernetes.io/limit-rps"])
+    multiplier = int(annotations["nginx.ingress.kubernetes.io/limit-burst-multiplier"])
+    assert (rps, rps * multiplier) == (rate, burst)

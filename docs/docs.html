@@ -1161,7 +1161,9 @@
         <p>
           The ingress controller sees every whistleblower's IP address. The chart
           (<code>charts/openwhistle/</code>) ships with
-          <code>nginx.ingress.kubernetes.io/enable-access-log: "false"</code> on its Ingress.
+          <code>nginx.ingress.kubernetes.io/enable-access-log: "false"</code> on its Ingress,
+          and with the bundled nginx's rate limit (<code>limit-rps: "10"</code>,
+          <code>limit-burst-multiplier: "3"</code>, so a burst of 30).
         </p>
         <ul>
           <li>Your own <code>ingress.annotations</code> are merged with it; do not set it to
@@ -2194,6 +2196,13 @@ CLAMAV_HOST=clamav</code></pre>
           on each failed PIN attempt. After 5 failed attempts within 15 minutes, the session
           token is invalidated and a new one must be obtained. The whistleblower's IP address
           is never used as a rate-limiting key.
+        </p>
+        <p>
+          In front of that, the bundled nginx limits every route, the submission wizard
+          (<code>POST /submit</code>) included: 10 requests/s with a burst of 30 per client
+          address, held in nginx memory only and never logged; the onion listener has its own
+          shared zone. The Helm chart sets the same limit on its ingress-nginx Ingress; with
+          another ingress controller, set an equivalent one.
         </p>
 
         <h3>Security headers</h3>
