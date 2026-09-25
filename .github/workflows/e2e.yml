@@ -47,42 +47,6 @@ jobs:
 
       - name: Start full stack with demo data
         run: |
-          cat > docker-compose.e2e.yml <<'EOF'
-          services:
-            app:
-              image: openwhistle:e2e
-              environment:
-                DATABASE_URL: "postgresql+asyncpg://openwhistle:openwhistle@db:5432/openwhistle"
-                REDIS_URL: "redis://redis:6379/0"
-                SECRET_KEY: "e2e-test-secret-key-not-for-production-use"
-                DEMO_MODE: "true"
-              ports:
-                - "4009:4009"
-              depends_on:
-                db:
-                  condition: service_healthy
-                redis:
-                  condition: service_healthy
-            db:
-              image: postgres:18-alpine
-              environment:
-                POSTGRES_USER: openwhistle
-                POSTGRES_PASSWORD: openwhistle
-                POSTGRES_DB: openwhistle
-              healthcheck:
-                test: ["CMD-SHELL", "pg_isready -U openwhistle -d openwhistle"]
-                interval: 5s
-                timeout: 5s
-                retries: 10
-            redis:
-              image: redis:8-alpine
-              healthcheck:
-                test: ["CMD", "redis-cli", "ping"]
-                interval: 5s
-                timeout: 5s
-                retries: 10
-          EOF
-
           docker compose -f docker-compose.e2e.yml up -d
 
           echo "Waiting for app to be healthy..."

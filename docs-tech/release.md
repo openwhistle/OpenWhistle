@@ -30,6 +30,12 @@ at 390 px and 1440 px and fails on an axe violation of impact *serious* or
 *critical*, a console error, or sideways scrolling. It runs in the E2E job; run
 it locally against a demo instance when the interface changed.
 
+```bash
+docker compose -f docker-compose.e2e.yml up -d --build
+uv run pytest tests/e2e -m e2e --base-url http://localhost:4009
+docker compose -f docker-compose.e2e.yml down -v
+```
+
 ## 3. Release PR
 
 On `release/vX.Y.Z`:
