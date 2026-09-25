@@ -2325,6 +2325,7 @@ a.attachment-name:hover {
   border-color: var(--hairline);
   border-top-width: 1px;
   display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
   margin-top: 2rem;
   padding-top: 1.5rem;
