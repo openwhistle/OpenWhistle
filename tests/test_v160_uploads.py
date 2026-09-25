@@ -339,6 +339,8 @@ async def test_lifespan_does_not_schedule_rekey_when_backend_is_not_s3() -> None
         patch("app.main._run_alembic_upgrade"),
         patch("app.main.close_redis", new_callable=AsyncMock),
         patch("app.main.settings", mock_settings),
+        # setup already complete: the lifespan's setup-token branch opens no Redis client
+        patch("app.api.wizard._is_setup_complete", new_callable=AsyncMock, return_value=True),
         patch("app.services.notifications.batching_enabled", return_value=False),
         patch("app.services.attachment.run_s3_rekey", new_callable=AsyncMock) as rekey_mock,
     ):
