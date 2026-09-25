@@ -262,9 +262,6 @@ async def submit_get(
 
     categories = await get_active_categories(db)
 
-    # One-shot flash set by submit_post before its Post/Redirect/Get redirect
-    # here. Popped (not just read) so a page refresh after seeing it doesn't
-    # show it again.
     flash_error = state.pop("_flash_error", None)
     flash_field_errors = state.pop("_flash_field_errors", None)
 
@@ -333,29 +330,10 @@ async def submit_post(
     valid_cat_slugs = {c.slug for c in categories}
 
     def _redirect_after_post() -> RedirectResponse:
-        # Post/Redirect/Get: every step transition ends in a redirect to the GET
-        # handler rather than rendering HTML directly from this POST. A native
-        # browser Back to a page that was rendered from a POST forces the
-        # browser to either replay that POST (the "Confirm Form Resubmission"
-        # dialog) or serve a stale snapshot from cache — both wrong for a
-        # session-authoritative wizard with no per-step URL. Redirecting makes
-        # every step a GET, which a browser can always safely re-issue with no
-        # dialog, and GET /submit already renders whatever step the session is
-        # really on.
         resp = RedirectResponse("/submit", status_code=303)
         _set_submission_cookie(resp, session_id)
         return resp
 
-    # A stale page can resubmit a step number that no longer matches the
-    # session's progress, in either direction: served from the browser's
-    # back/forward cache after a native Back navigation, or replayed via the
-    # "Confirm Form Resubmission" prompt. Reprocessing it as a live submission
-    # would either let an unauthenticated client skip ahead (POST
-    # step=<attachments> on a brand-new session to stash multi-MB blobs in
-    # Redis) or silently rewind completed progress. Discard it and redirect to
-    # the session's real current step instead: an empty session gets the usual
-    # "start over" message, and a session that simply moved on is shown where
-    # it actually is, with no data loss and no reprocessing.
     if action == "next" and step != state.get("step", _STEP_MODE):
         if not state:
             state["_flash_error"] = "session_incomplete"
@@ -491,12 +469,6 @@ async def submit_post(
             await _save_submission(redis, session_id, state)
             return _redirect_after_post()
 
-        # A browser can never pre-fill a file input, so revisiting this step
-        # via Back always shows it empty regardless of what's already
-        # attached. Submitting Next from there with no new files selected
-        # must not be read as "clear the attachments" — that silently drops
-        # already-uploaded evidence with no warning. Only replace the stored
-        # files when new ones were actually submitted this time.
         if file_tuples:
             state["files_stored"] = True
             state["file_meta"] = [

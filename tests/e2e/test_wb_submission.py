@@ -114,7 +114,6 @@ def _assert_submit_page_healthy(page: Page) -> None:
     assert page.locator(".alert-error").count() == 0, (
         f"Unexpected validation error shown after Back: {page.content()}"
     )
-    # A real wizard step always has exactly one of these controls visible.
     step_markers = [
         'label[for="mode-anonymous"]',
         'select[name="location_id"]',
@@ -385,17 +384,11 @@ def test_every_wizard_step_transition_is_post_redirect_get(page: Page, base_url:
     _fill_description_step(page)
     _click_expect_redirect(page, _NEXT_BTN)
 
-    # Step 5: attachments (skip — no file) — also exercises the in-wizard Back
-    # button, which lands back on step 4 (description), not step 5 itself.
-    _click_expect_redirect(page, _BACK_BTN)  # attachments -> description
+    _click_expect_redirect(page, _BACK_BTN)
     _fill_description_step(page)
-    _click_expect_redirect(page, _NEXT_BTN)  # description -> attachments again
-    _click_expect_redirect(page, _NEXT_BTN)  # attachments -> review
+    _click_expect_redirect(page, _NEXT_BTN)
+    _click_expect_redirect(page, _NEXT_BTN)
 
-    # Step 6: review + final submit — deliberately NOT part of this guard. It
-    # creates the report and deletes the session, so it renders the success
-    # page directly rather than redirecting; a native Back to it is a
-    # separate, out-of-scope concern.
     _advance_step(page)
 
     page.wait_for_load_state("networkidle")
@@ -428,11 +421,6 @@ def test_native_back_button_after_every_step_keeps_wizard_usable(
     def _done() -> bool:
         return _CASE_RE.search(page.content()) is not None
 
-    # Checking for completion right after each forward step — before ever
-    # calling go_back() again — matters: the final review submission renders
-    # the success page directly rather than through the redirect pattern this
-    # fix adds (a separate, out-of-scope concern), so Back from *that* page
-    # isn't something this test should assert is healthy.
     for _ in range(8):
         _fill_whatever_step_is_showing(page)
         if _done():
@@ -442,9 +430,6 @@ def test_native_back_button_after_every_step_keeps_wizard_usable(
         page.wait_for_load_state("networkidle")
         _assert_submit_page_healthy(page)
 
-        # Recover forward from wherever Back landed before the next iteration
-        # can go back again — otherwise the test itself could run off the
-        # start of history, which is a bug in the test, not in the app.
         _fill_whatever_step_is_showing(page)
         if _done():
             break
@@ -490,7 +475,6 @@ def test_in_wizard_back_button_preserves_uploaded_attachment(page: Page, base_ur
     _fill_description_step(page)
     _advance_step(page)
 
-    # Step 5: attachments — upload a file, then advance to review.
     page.wait_for_load_state("networkidle")
     page.locator('input[type="file"][name="files"]').set_input_files(
         [{"name": "back_button_test.pdf", "mimeType": "application/pdf", "buffer": fake_pdf}]
@@ -500,7 +484,6 @@ def test_in_wizard_back_button_preserves_uploaded_attachment(page: Page, base_ur
     page.wait_for_load_state("networkidle")
     assert "back_button_test.pdf" in page.content(), "Filename not shown on review page"
 
-    # Click the in-wizard Back button — lands back on attachments.
     page.click(_BACK_BTN)
     page.wait_for_load_state("networkidle")
     assert page.locator('input[type="file"][name="files"]').count() == 1, (
@@ -510,7 +493,6 @@ def test_in_wizard_back_button_preserves_uploaded_attachment(page: Page, base_ur
         "Attachments step gives no indication the file is already attached after Back"
     )
 
-    # Click Next again WITHOUT re-selecting a file.
     _advance_step(page)
 
     page.wait_for_load_state("networkidle")
