@@ -80,15 +80,33 @@ _ERROR_FIELD: dict[str, str] = {
 }
 
 
-# A final submit takes the draft itself (GETDEL) and marks it pending; a
-# concurrent submit of the same draft waits up to this long for the result.
+# A final submit claims the draft by renaming it to its ":claimed" key (same
+# encryption, same TTL) and marks the submit pending. The claimed copy is
+# deleted only once the commit is confirmed; if the worker dies first, it is
+# given back when "pending" expires. A concurrent submit of the same draft
+# waits up to _RESULT_WAIT_SECONDS for the stored result.
 _RESULT_WAIT_SECONDS = 10.0
 _RESULT_TTL = 120
+_PENDING_TTL = 120
 
+# KEYS: draft, claimed, pending. ARGV: pending TTL.
 _CLAIM_DRAFT = """
-local draft = redis.call('GETDEL', KEYS[1])
-if draft then redis.call('SET', KEYS[2], '1', 'EX', ARGV[1]) end
-return draft
+if redis.call('EXISTS', KEYS[1]) == 0 or redis.call('EXISTS', KEYS[2]) == 1 then
+  return false
+end
+redis.call('RENAME', KEYS[1], KEYS[2])
+redis.call('SET', KEYS[3], '1', 'EX', ARGV[1])
+return redis.call('GET', KEYS[2])
+"""
+
+# KEYS: draft, claimed, pending. A claim whose submit never finished.
+_RECOVER_DRAFT = """
+if redis.call('EXISTS', KEYS[3]) == 0 and redis.call('EXISTS', KEYS[2]) == 1
+   and redis.call('EXISTS', KEYS[1]) == 0 then
+  redis.call('RENAME', KEYS[2], KEYS[1])
+  return 1
+end
+return 0
 """
 
 
@@ -146,6 +164,55 @@ def _pending_key(session_id: str) -> str:
 
 def _result_key(session_id: str) -> str:
     return _submission_key(session_id) + ":result"
+
+
+def _claimed_key(session_id: str) -> str:
+    return _submission_key(session_id) + ":claimed"
+
+
+def _claim_keys(session_id: str) -> tuple[str, str, str]:
+    return _submission_key(session_id), _claimed_key(session_id), _pending_key(session_id)
+
+
+async def _claim_draft(redis: Redis, session_id: str) -> str | None:
+    """The draft's token for exactly one of several concurrent submits, else None."""
+    return await cast(
+        Awaitable[str | None],
+        redis.eval(_CLAIM_DRAFT, 3, *_claim_keys(session_id), _PENDING_TTL),
+    )
+
+
+async def _recover_draft(redis: Redis, session_id: str) -> bool:
+    """Give back a claimed draft whose submit died before its commit."""
+    return bool(
+        await cast(Awaitable[int], redis.eval(_RECOVER_DRAFT, 3, *_claim_keys(session_id)))
+    )
+
+
+async def _give_back_draft(redis: Redis, session_id: str, token: str) -> None:
+    """The submit failed before its commit: the draft is the reporter's again."""
+    async with redis.pipeline(transaction=True) as pipe:
+        pipe.set(_submission_key(session_id), token, ex=_SUBMISSION_TTL)
+        pipe.delete(_claimed_key(session_id), _pending_key(session_id))
+        await pipe.execute()
+
+
+async def _report_exists(db: AsyncSession, report_id: uuid.UUID) -> bool:
+    """Whether a commit whose reply was lost went through: asked on a fresh session."""
+    from sqlalchemy import select  # noqa: PLC0415
+
+    from app.models.report import Report  # noqa: PLC0415
+
+    async with AsyncSession(db.bind) as fresh:
+        return await fresh.scalar(select(Report.id).where(Report.id == report_id)) is not None
+
+
+async def _submit_in_flight(redis: Redis, session_id: str) -> bool:
+    return bool(
+        await redis.exists(
+            _pending_key(session_id), _result_key(session_id), _claimed_key(session_id)
+        )
+    )
 
 
 def _new_draft_id() -> str:
@@ -319,7 +386,18 @@ async def submit_get(
     request: Request,
     redis: Redis = Depends(get_redis),
     db: AsyncSession = Depends(get_db),
-) -> HTMLResponse:
+) -> Response:
+    raw_cookie = request.cookies.get("ow-submission-session")
+    if raw_cookie and _DRAFT_COOKIE_RE.match(raw_cookie):
+        if not await _load_submission(redis, raw_cookie):
+            await _recover_draft(redis, raw_cookie)
+        if not await _load_submission(redis, raw_cookie) and await _submit_in_flight(
+            redis, raw_cookie
+        ):
+            # "Check again" after a submit whose outcome was not known yet.
+            page = await _submit_outcome(request, redis, raw_cookie, wait=0)
+            if page is not None:
+                return page
     session_id, state = await _get_or_create_submission_session(request, redis)
 
     locations = await get_active_locations(db)
@@ -388,15 +466,13 @@ async def submit_post(
         else _new_draft_id()
     )
     state = await _load_submission(redis, session_id)
-    if (
-        not state
-        and raw_cookie == session_id
-        and action == "next"
-        and step == _STEP_REVIEW
-        and (await redis.exists(_pending_key(session_id), _result_key(session_id)))
-    ):
-        # A second click on "Submit" after the first one took the draft.
-        return await _await_other_submit(request, redis, session_id)
+    if not state and raw_cookie == session_id:
+        if await _recover_draft(redis, session_id):
+            state = await _load_submission(redis, session_id)
+        elif await _submit_in_flight(redis, session_id):
+            # Another request holds this draft's submit (a second click on
+            # "Submit"): show its outcome, never touch the draft.
+            return await _await_other_submit(request, redis, session_id)
     if not state and raw_cookie:
         # Never adopt a client-supplied session id that has no server-side state
         # (session fixation): mint a fresh server-generated id instead, matching
@@ -552,21 +628,12 @@ async def submit_post(
 
     # ── Step 6: review + final submit ────────────────────────────
     if step == _STEP_REVIEW:
-        # The draft itself is the claim: GETDEL hands it to exactly one of two
-        # concurrent submits (no JS guard in Tor Browser "Safest").
-        claimed = await cast(
-            Awaitable[str | None],
-            redis.eval(
-                _CLAIM_DRAFT, 2, _submission_key(session_id), _pending_key(session_id),
-                _RESULT_TTL,
-            ),
-        )
+        # Renaming the draft to its claimed key hands it to exactly one of
+        # several concurrent submits (no JS guard in Tor Browser "Safest").
+        claimed = await _claim_draft(redis, session_id)
         if claimed is None:
+            await db.rollback()  # do not hold a pooled connection while waiting
             return await _await_other_submit(request, redis, session_id)
-
-        async def _restore_draft() -> None:
-            await redis.set(_submission_key(session_id), claimed, ex=_SUBMISSION_TTL)
-            await redis.delete(_pending_key(session_id))
 
         import base64 as _b64  # noqa: PLC0415
 
@@ -579,7 +646,7 @@ async def submit_post(
             state.clear()
             state.update(json.loads(_draft_fernet(session_id).decrypt(claimed)))
             if draft_error := await _draft_error(db, state, valid_cat_slugs, has_locations):
-                await redis.delete(_pending_key(session_id))
+                await _give_back_draft(redis, session_id, claimed)
                 return await _fail(*draft_error)  # saves the draft again, flagged
 
             mode = SubmissionMode(state["submission_mode"])
@@ -617,11 +684,20 @@ async def submit_post(
                 commit=False,
             )
             await create_attachments(db, report, file_tuples_restored, commit=False)
-            case_number = report.case_number
-            await db.commit()
+            case_number, report_id = report.case_number, report.id
         except BaseException:
-            await _restore_draft()
+            await _give_back_draft(redis, session_id, claimed)
             raise
+        commit_error: BaseException | None = None
+        try:
+            await db.commit()
+        except BaseException as exc:
+            # A lost reply (connection reset, cancellation) can hide a commit
+            # that went through: give the draft back only if it did not.
+            if not await _report_exists(db, report_id):
+                await _give_back_draft(redis, session_id, claimed)
+                raise
+            commit_error = exc
         # Committed: from here on nothing may bring the draft back.
 
         from app.services.notifications import notify_new_report
@@ -638,14 +714,18 @@ async def submit_post(
         # For a concurrent second click, which the browser shows instead of
         # this response; encrypted with the draft's key, like the draft was.
         try:
-            await redis.set(
-                _result_key(session_id),
-                _draft_fernet(session_id).encrypt(json.dumps(result).encode()),
-                ex=_RESULT_TTL,
-            )
-            await redis.delete(_pending_key(session_id))
+            async with redis.pipeline(transaction=True) as pipe:
+                pipe.set(
+                    _result_key(session_id),
+                    _draft_fernet(session_id).encrypt(json.dumps(result).encode()),
+                    ex=_RESULT_TTL,
+                )
+                pipe.delete(_claimed_key(session_id), _pending_key(session_id))
+                await pipe.execute()
         except Exception:  # noqa: BLE001, S110 — best effort: this response has the PIN
             pass
+        if isinstance(commit_error, asyncio.CancelledError):
+            raise commit_error  # nobody to answer; a retry reads the stored result
         return _success_page(request, result)
 
     # Unknown step — restart
@@ -654,12 +734,8 @@ async def submit_post(
     return _redirect_after_post()
 
 
-def _success_page(request: Request, result: dict[str, Any] | None) -> HTMLResponse:
-    response = (
-        render(request, "submit_success.html", result)
-        if result
-        else render(request, "submit_received.html", {})
-    )
+def _success_page(request: Request, result: dict[str, Any]) -> HTMLResponse:
+    response = render(request, "submit_success.html", result)
     _clear_submission_cookie(response, request)
     response.delete_cookie(
         "ow-status-session", httponly=True, samesite="lax", secure=cookie_secure(request)
@@ -667,10 +743,17 @@ def _success_page(request: Request, result: dict[str, Any] | None) -> HTMLRespon
     return response
 
 
-async def _await_other_submit(request: Request, redis: Redis, session_id: str) -> Response:
-    """Show a concurrent submit's case number and PIN (the browser shows only
-    the last click's response), or say the report was received there."""
-    deadline = asyncio.get_running_loop().time() + _RESULT_WAIT_SECONDS
+async def _submit_outcome(
+    request: Request, redis: Redis, session_id: str, wait: float
+) -> Response | None:
+    """A concurrent submit's success page once its result is stored (the
+    browser shows only the last click's response); the "still processing"
+    page while it runs; None once the draft is the reporter's again.
+
+    The cookie stays until the outcome is known: a restored draft must remain
+    reachable, and "received" is said only with a case number.
+    """
+    deadline = asyncio.get_running_loop().time() + wait
     while (
         await redis.exists(_pending_key(session_id))
         and asyncio.get_running_loop().time() < deadline
@@ -682,12 +765,20 @@ async def _await_other_submit(request: Request, redis: Redis, session_id: str) -
         raw = await redis.getdel(_result_key(session_id))
     if raw:
         return _success_page(request, json.loads(_draft_fernet(session_id).decrypt(raw)))
+    await _recover_draft(redis, session_id)
     if await _load_submission(redis, session_id):
-        # The other submit failed before its commit and gave the draft back.
-        resp = RedirectResponse("/submit", status_code=303)
-        _set_submission_cookie(resp, session_id, request)
-        return resp
-    return _success_page(request, None)
+        return None
+    return render(request, "submit_pending.html", {})
+
+
+async def _await_other_submit(request: Request, redis: Redis, session_id: str) -> Response:
+    page = await _submit_outcome(request, redis, session_id, wait=_RESULT_WAIT_SECONDS)
+    if page is not None:
+        return page
+    # The other submit failed before its commit and gave the draft back.
+    resp = RedirectResponse("/submit", status_code=303)
+    _set_submission_cookie(resp, session_id, request)
+    return resp
 
 
 @router.post("/submit/attachments/remove")

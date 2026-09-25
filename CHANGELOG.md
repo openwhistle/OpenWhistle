@@ -58,6 +58,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **Helm: the Ingress rate-limits every route** like the bundled nginx (`limit-rps: "10"`,
+  burst 30). Before, a Kubernetes deployment had no limit on `POST /submit` or any other
+  public route.
 - **Times the whistleblower causes are stored and shown as the day only** (UTC): submission, the
   receipt message, whistleblower messages and attachment uploads. Migration 006 rounds existing
   rows; the exact times are gone for good (downgrade leaves the rounded values). Thread order is
@@ -108,11 +111,13 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   at 10,000 characters). Reported and fixed by Zachary Bridges (#94).
 - **A double final submit created two reports**: two concurrent POSTs of the review form
   (a double click with JavaScript off, e.g. Tor Browser "Safest") both read the draft before
-  either deleted it, and the PIN of one report was never shown. Now the draft is taken
+  either deleted it, and the PIN of one report was never shown. Now the draft is claimed
   atomically, exactly one report is created, and both responses show its case number and PIN.
-  The report and its attachments are committed together: a failure before the commit leaves
-  nothing behind and the draft can be submitted again. The race predates the #94 port:
-  v1.5.0 has the same load → create → delete sequence.
+  A click that finds the first one still running says so and offers "Check again", never a
+  receipt without a case number. The report and its attachments are committed together: a
+  failure before the commit, or a worker that dies before it, gives the draft back; a commit
+  whose reply was lost is looked up, never repeated. The race predates the #94 port: v1.5.0
+  has the same load → create → delete sequence.
 - The final submit re-checks each step the way the step itself does: a location or category
   switched off, or confidential mode disabled, after the reporter chose it returns them to
   that step with a message instead of failing.

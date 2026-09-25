@@ -29,21 +29,31 @@ Type: explanation. What OpenWhistle defends, against whom, and what it deliberat
 ## The PIN in Redis for 120 seconds
 
 A double click on "Submit" sends two requests, and the browser shows only the
-last response. The request that takes the draft (`GETDEL`) creates the report;
-the other would show an empty wizard, and the reporter would never see the PIN.
-So the winner stores `{case number, PIN, attachment names}` for 120 s, and the
-other request reads it once (`GETDEL`) and shows the same page.
+last response. The request that claims the draft creates the report. The other
+would show an empty wizard, and the reporter would never see the PIN. So the
+winner stores `{case number, PIN, attachment names}` for 120 s. The other
+request reads it once (`GETDEL`) and shows the same page.
 
-| | Draft | Stored result |
-| --- | --- | --- |
-| Holds | description, identity (confidential), attachments | case number, PIN, file names |
-| Encrypted with | the key in the reporter's cookie only | the same key |
-| Lives | up to 2 h | 120 s, deleted on first read |
+| | Draft | Claimed draft | Stored result |
+| --- | --- | --- | --- |
+| Holds | description, identity (confidential), attachments | the same bytes, renamed | case number, PIN, file names |
+| Encrypted with | the key in the reporter's cookie only | the same key | the same key |
+| Lives | up to 2 h | the draft's remaining TTL; deleted once the commit is confirmed | 120 s, deleted on first read |
 
 Anyone who can read that key can already read the draft, which is the report
 itself, for longer. The PIN never reaches the database in clear or a log line.
-Pinned by `test_the_result_is_kept_120_seconds_for_a_second_click` and
-`test_concurrent_final_submits_create_one_report_and_both_show_the_pin`.
+
+The claim is a `RENAME`, not a delete, so a worker that dies between the claim
+and the commit loses nothing. Once `pending` (120 s) expires, the next request
+of that session gets the draft back at the review step. A commit whose reply
+was lost is checked on a fresh session before the draft is given back, so it
+never yields a second report. Until a case number is known, the waiting click
+says "still being processed" and keeps the cookie. It never says "received".
+
+Pinned by `test_the_result_is_kept_120_seconds_for_a_second_click`,
+`test_concurrent_final_submits_create_one_report_and_both_show_the_pin`,
+`test_worker_dying_after_the_claim_gives_the_draft_back_when_pending_expires`
+and `test_commit_whose_reply_is_lost_counts_as_done`.
 
 ## Not defended
 
