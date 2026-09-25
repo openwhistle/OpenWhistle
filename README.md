@@ -1,8 +1,10 @@
 # OpenWhistle
 
+<!-- markdownlint-disable MD033 -->
 <p align="center">
   <img src="app/static/favicon.svg" alt="OpenWhistle Logo" width="72">
 </p>
+<!-- markdownlint-enable MD033 -->
 
 [![CI](https://img.shields.io/github/actions/workflow/status/openwhistle/OpenWhistle/ci.yml?label=CI&logo=github)](https://github.com/openwhistle/OpenWhistle/actions/workflows/ci.yml)
 [![Docker Build](https://img.shields.io/github/actions/workflow/status/openwhistle/OpenWhistle/docker-publish.yml?label=Docker&logo=docker)](https://github.com/openwhistle/OpenWhistle/actions/workflows/docker-publish.yml)
