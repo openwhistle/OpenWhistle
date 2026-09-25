@@ -226,11 +226,15 @@ async def test_delete_report(db_session: AsyncSession) -> None:
 
 
 async def test_paginated_returns_all_on_first_page(db_session: AsyncSession) -> None:
-    for i in range(3):
-        await create_report(db_session, "corruption", f"Pagination test report number {i} ok!")
+    created = [
+        (await create_report(db_session, "corruption", f"Pagination test report number {i} ok!"))[0]
+        for i in range(3)
+    ]
     reports, total = await get_reports_paginated(db_session, page=1, per_page=100)
     assert total >= 3
-    # The shared test database keeps committed reports, and per_page caps at 100.
+    # The shared test database keeps committed reports and per_page caps at 100:
+    # the newest reports (default sort) must all be on page one.
+    assert {r.id for r in created} <= {r.id for r in reports}
     assert len(reports) == min(total, 100)
 
 
