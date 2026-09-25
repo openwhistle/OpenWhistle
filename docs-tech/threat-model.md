@@ -59,6 +59,7 @@ the stored result is there.
 | Commit reply lost | the case number and PIN (checked on a fresh session) | 1 |
 | Result write fails after the commit | the PIN in the first response; later the case number only | 1 |
 | Submit fails or times out before the commit | the review step: "NOT sent, answers kept" | 0, then 1 on submit |
+| Submit fails or times out during the commit, and the check finds no report | "still being processed" (the commit may still land); after `pending` expires, the draft at review or the case number | 0 or 1 |
 | Commit reply and the check both lost | "still being processed"; after `pending` expires, the case number only | 1 |
 | A submit still running after `pending` expired | the draft may come back; a resubmit shows the one report | 1 |
 
@@ -86,8 +87,9 @@ Pinned by `test_the_result_is_kept_120_seconds_for_a_second_click`,
 `test_commit_and_lookup_both_failing_yield_one_report`,
 `test_a_submit_outliving_pending_still_yields_one_report`,
 `test_a_draft_back_after_its_report_was_committed_makes_no_second_report`,
-`test_a_stale_save_of_a_pre_v1_6_draft_yields_one_report` and
-`test_a_submit_failing_before_its_commit_says_not_sent_and_keeps_the_answers`.
+`test_a_stale_save_of_a_pre_v1_6_draft_yields_one_report`,
+`test_a_submit_failing_before_its_commit_says_not_sent_and_keeps_the_answers` and
+`test_a_commit_failing_without_a_report_is_pending_not_not_sent`.
 
 ## Not defended
 

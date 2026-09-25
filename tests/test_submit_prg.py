@@ -948,24 +948,55 @@ async def test_commit_whose_reply_is_lost_counts_as_done(
 
 
 @pytest.mark.asyncio
-async def test_failed_commit_that_did_not_go_through_gives_the_draft_back(
-    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize("fault", ["reset", "timeout", "killed"])
+async def test_a_commit_failing_without_a_report_is_pending_not_not_sent(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch, fault: str
 ) -> None:
+    """N-R5-2: once the COMMIT is issued, a lookup finding no report proves
+    nothing (the commit may still land): the claim is kept and the reporter
+    is told it is being processed, never "NOT sent"."""
+    import asyncio
+
     from sqlalchemy.ext.asyncio import AsyncSession as _Session
 
-    async def _refused(self: _Session) -> None:
-        raise ConnectionResetError("reset before COMMIT")
+    import app.api.reports as reports
+    from app.redis_client import get_redis
+
+    class _WorkerKilled(BaseException):
+        pass
+
+    async def _failing_commit(self: _Session) -> None:
+        if fault == "timeout":
+            await asyncio.sleep(5)  # the submit's own timeout fires inside the COMMIT
+        if fault == "killed":
+            raise _WorkerKilled  # nobody to answer: re-raised, the claim kept
+        raise ConnectionResetError("reset during COMMIT")
 
     await _walk_to_review(client)
     data = _final_form((await client.get("/submit")).text)
+    session_id = await _session_id(client)
     before = await _report_count()
-    monkeypatch.setattr(_Session, "commit", _refused)
-    resp = await client.post("/submit", data=data, follow_redirects=False)
+    monkeypatch.setattr(reports, "_SUBMIT_TIMEOUT_SECONDS", 0.5)
+    monkeypatch.setattr(_Session, "commit", _failing_commit)
+    if fault == "killed":
+        with pytest.raises(_WorkerKilled):
+            await client.post("/submit", data=data, follow_redirects=False)
+        resp = await client.get("/submit")
+    else:
+        resp = await client.post("/submit", data=data, follow_redirects=False)
     monkeypatch.undo()
 
-    assert resp.status_code == 303
+    assert resp.status_code == 200
+    assert "still being processed" in resp.text
+    assert "answers are kept" in resp.text
+    assert "NOT sent" not in resp.text
+    redis = await get_redis()
+    assert await redis.exists(reports._claimed_key(session_id))  # the claim is kept
+    assert not await redis.exists(reports._submission_key(session_id))
+
+    await redis.delete(reports._pending_key(session_id))  # the pending TTL ran out
+    assert _step((await client.get("/submit")).text) == 6  # no report: given back
     assert await _report_count() == before
-    assert _step((await client.get("/submit")).text) == 6
 
 
 # ── One draft, one report: the primary key decides (X6 round 4) ─────
@@ -1241,7 +1272,9 @@ async def test_claim_to_commit_is_bounded_well_under_pending(
 
     assert seen == ["500ms"]
     assert await _report_count() == before
-    assert _step((await client.get("/submit")).text) == 6  # given back
+    page = (await client.get("/submit")).text
+    assert _step(page) == 6  # given back
+    assert "Your report was NOT sent." in page  # no COMMIT was issued
 
 
 @pytest.mark.asyncio
@@ -1464,3 +1497,43 @@ async def test_start_over_deletes_a_pre_v1_6_drafts_report_id_too(client: AsyncC
     assert not await redis.exists(
         reports._submission_key(session_id), reports._report_id_key(session_id)
     )
+
+
+@pytest.mark.asyncio
+async def test_a_draft_re_saved_without_an_id_on_every_load_is_given_up_after_3_attempts(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """N-R5-1: the retry is bounded; the draft then counts as expired."""
+    import json
+
+    import app.api.reports as reports
+    from app.redis_client import get_redis
+
+    await _walk_to_review(client)
+    await _strip_report_id(client)
+    session_id = await _session_id(client)
+    key = reports._submission_key(session_id)
+    redis = await get_redis()
+    idless = reports._draft_fernet(session_id).decrypt(await redis.get(key))
+    real_get, real_eval = redis.get, redis.eval
+    gets: list[str] = []
+
+    async def _counting_get(k: str) -> object:
+        if k == key:
+            gets.append(k)
+        return await real_get(k)
+
+    async def _resave_then_eval(script: str, *args: object) -> object:
+        if script == reports._ASSIGN_REPORT_ID:  # another writer between GET and EVAL
+            await redis.set(key, reports._draft_fernet(session_id).encrypt(idless), ex=600)
+        return await real_eval(script, *args)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(redis, "get", _counting_get, raising=False)
+    monkeypatch.setattr(redis, "eval", _resave_then_eval, raising=False)
+    try:
+        assert await reports._load_submission(redis, session_id) == {}
+    finally:
+        monkeypatch.undo()
+    assert len(gets) == 3
+    assert "report_id" not in json.loads(idless)
+    assert (await client.get("/submit")).status_code == 200  # the loop is healthy

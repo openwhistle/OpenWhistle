@@ -329,27 +329,30 @@ def _report_id_key(session_id: str) -> str:
 
 
 async def _load_submission(redis: Redis, session_id: str) -> dict[str, Any]:
-    raw = await redis.get(_submission_key(session_id))
-    if not raw:
-        return {}
-    try:
-        data = _draft_fernet(session_id).decrypt(raw)
-    except InvalidToken:
-        return {}  # wrong or missing key: the draft is as good as expired
-    state = cast(dict[str, Any], json.loads(data))
-    if state and "report_id" not in state:
-        # Saved before v1.6.0: concurrent loaders must agree on one id.
-        report_id = await cast(
-            Awaitable[str | None],
-            redis.eval(
-                _ASSIGN_REPORT_ID, 2, _submission_key(session_id), _report_id_key(session_id),
-                raw, str(uuid.uuid4()), _SUBMISSION_TTL,
-            ),
-        )
-        if report_id is None:  # saved or spent meanwhile: read what is there now
-            return await _load_submission(redis, session_id)
-        state["report_id"] = report_id
-    return state
+    # Bounded: a draft re-saved without an id on every attempt counts as expired.
+    for _ in range(3):
+        raw = await redis.get(_submission_key(session_id))
+        if not raw:
+            return {}
+        try:
+            data = _draft_fernet(session_id).decrypt(raw)
+        except InvalidToken:
+            return {}  # wrong or missing key: the draft is as good as expired
+        state = cast(dict[str, Any], json.loads(data))
+        if state and "report_id" not in state:
+            # Saved before v1.6.0: concurrent loaders must agree on one id.
+            report_id = await cast(
+                Awaitable[str | None],
+                redis.eval(
+                    _ASSIGN_REPORT_ID, 2, _submission_key(session_id), _report_id_key(session_id),
+                    raw, str(uuid.uuid4()), _SUBMISSION_TTL,
+                ),
+            )
+            if report_id is None:  # saved or spent meanwhile: read what is there now
+                continue
+            state["report_id"] = report_id
+        return state
+    return {}
 
 
 async def _save_submission(redis: Redis, session_id: str, state: dict[str, Any]) -> None:
@@ -829,6 +832,10 @@ async def submit_post(
                     raise exc from None
                 return render(request, "submit_pending.html", {"answers_kept": True})
             if committed_case is None:
+                if our_case is not None:  # the COMMIT was issued and may still land
+                    if not isinstance(exc, Exception):
+                        raise
+                    return render(request, "submit_pending.html", {"answers_kept": True})
                 given_back = await _give_back_draft(redis, session_id, claimed, nonce)
                 if not isinstance(exc, Exception):
                     raise  # cancelled, or the worker is going away: nobody to answer
