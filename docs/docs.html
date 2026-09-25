@@ -1569,7 +1569,9 @@
         <ul>
           <li><strong>Maximum file size:</strong> 10 MB per attachment</li>
           <li><strong>Maximum number of attachments:</strong> 5 per report</li>
-          <li><strong>Allowed formats:</strong> PDF, JPEG, PNG, GIF, WebP, TXT, CSV, DOCX (.docx / .doc), XLSX (.xlsx / .xls)</li>
+          <li><strong>Allowed formats:</strong> PDF, JPEG, PNG, GIF, WebP, TXT, CSV, DOCX, XLSX. Legacy
+            <code>.doc</code>/<code>.xls</code> files are refused — their author cannot be removed;
+            save them as <code>.docx</code>/<code>.xlsx</code> and attach again.</li>
         </ul>
         <p>
           File type is validated by both MIME type and file extension. SVG, executable files,
@@ -1599,9 +1601,9 @@
         <ul>
           <li><strong>Metadata removed on upload:</strong> EXIF/GPS and camera data in JPEG, PNG,
             WebP and GIF; document info and XMP in PDF; author, company and custom properties in
-            DOCX/XLSX. A file that cannot be parsed for cleaning is refused. Legacy
-            <code>.doc</code>/<code>.xls</code> and plain text are stored as uploaded, and the
-            upload page says so.</li>
+            DOCX/XLSX. A file that cannot be parsed for cleaning is refused. Plain text is stored
+            as uploaded. Legacy <code>.doc</code>/<code>.xls</code> files are refused outright —
+            their author cannot be removed.</li>
           <li><strong>Office authors anonymised:</strong> comment and tracked-change authors,
             initials and account ids in DOCX/XLSX are replaced with <code>Author</code>;
             embedded thumbnails, zip timestamps and zip extra fields are removed. The text of a

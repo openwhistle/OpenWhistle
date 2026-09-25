@@ -31,8 +31,6 @@ ALLOWED_MIME_TYPES: frozenset[str] = frozenset({
     "text/csv",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "application/msword",
-    "application/vnd.ms-excel",
 })
 
 ALLOWED_EXTENSIONS: frozenset[str] = frozenset({
@@ -40,8 +38,8 @@ ALLOWED_EXTENSIONS: frozenset[str] = frozenset({
     ".jpg", ".jpeg",
     ".png", ".gif", ".webp",
     ".txt", ".csv",
-    ".docx", ".doc",
-    ".xlsx", ".xls",
+    ".docx",
+    ".xlsx",
 })
 
 
@@ -87,8 +85,6 @@ _MAGIC_BY_EXT: dict[str, tuple[bytes, ...]] = {
     ".webp": (b"RIFF",),  # RIFF container; the WEBP marker is checked separately
     ".docx": (b"PK\x03\x04",),  # OOXML = zip
     ".xlsx": (b"PK\x03\x04",),
-    ".doc": (b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1",),  # legacy OLE/CFB
-    ".xls": (b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1",),
 }
 
 
@@ -242,8 +238,7 @@ _STRIPPERS = {
 def strip_metadata(filename: str, data: bytes) -> bytes:
     """Remove identifying metadata (EXIF/GPS, PDF author, Office properties).
 
-    Plain text has none; legacy .doc/.xls cannot be cleaned and the upload page
-    says so. Anything else that fails to clean raises MetadataError.
+    Plain text has none. Anything else that fails to clean raises MetadataError.
     """
     stripper = _STRIPPERS.get(Path(filename).suffix.lower())
     if stripper is None:
@@ -283,10 +278,14 @@ def validate_file(filename: str, content_type: str, size: int, head: bytes = b""
     number must match the extension (declared type/extension alone are
     attacker-controlled).
     """
+    ext = Path(filename).suffix.lower()
+    if ext in {".doc", ".xls"}:
+        # Legacy OLE files keep the author in places no parser here can clean.
+        return UploadError("upload.error.legacy_office", name=filename)
+
     if size > MAX_SIZE_BYTES:
         return UploadError("upload.error.too_large", name=filename, size=format_size(size))
 
-    ext = Path(filename).suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
         return UploadError("upload.error.bad_extension", name=filename)
 

@@ -7,6 +7,11 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed (breaking)
+
+- `.doc` and `.xls` uploads are refused; their author field cannot be removed. The message tells
+  the reporter to save as `.docx`/`.xlsx`.
+
 ### Removed
 
 - `BRAND_SECONDARY_COLOR` — it styled nothing; Signal has one accent.
