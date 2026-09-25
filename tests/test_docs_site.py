@@ -15,10 +15,11 @@ NAV_PAGES = {
     "docs/de/index.html": "../roadmap.html",
     "docs/docs.html": "roadmap.html",
     "docs/roadmap.html": "roadmap.html",
-    "docs/blog/index.html": "../roadmap.html",
-    "docs/blog/hinschg-compliance-leitfaden.html": "../roadmap.html",
-    "docs/blog/whistleblower-software-vergleich.html": "../roadmap.html",
-    "docs/blog/interne-meldestelle-einrichten.html": "../roadmap.html",
+    # Every blog page, discovered — a new article cannot miss the link unnoticed.
+    **{
+        f"docs/blog/{p.name}": "../roadmap.html"
+        for p in sorted((ROOT / "docs" / "blog").glob("*.html"))
+    },
 }
 
 
