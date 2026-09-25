@@ -208,3 +208,12 @@ def test_every_public_route_is_rate_limited_in_both_deployments() -> None:
     rps = int(annotations["nginx.ingress.kubernetes.io/limit-rps"])
     multiplier = int(annotations["nginx.ingress.kubernetes.io/limit-burst-multiplier"])
     assert (rps, rps * multiplier) == (rate, burst)
+
+
+def test_the_chart_requires_crit_error_logging_where_the_operator_reads() -> None:
+    """Below crit, ingress-nginx logs each rate-limited reporter's IP address."""
+    for path in ("values.yaml", "templates/NOTES.txt"):
+        text = (ROOT / "charts/openwhistle" / path).read_text()
+        assert "REQUIRED" in text and "error-log-level: crit" in text, path
+    docs = (ROOT / "docs/docs.html").read_text()
+    assert "limit-req-status-code" in docs and "use-forwarded-headers" in docs

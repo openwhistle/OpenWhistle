@@ -22,14 +22,19 @@ ingress:
   # Whistleblower privacy: the ingress controller sees every client address.
   # - ingress-nginx logs it in its access log by default; the annotation below
   #   turns that log off for this host (or set `disable-access-log: "true"` in
-  #   the controller ConfigMap). Its error log still names the client on
-  #   errors — keep `error-log-level` at `crit` or ship it nowhere.
+  #   the controller ConfigMap). Its error log names the client on every
+  #   rate-limited request and upstream error: `error-log-level: crit` in the
+  #   controller ConfigMap is REQUIRED for a whistleblower platform.
   # - ingress-nginx always sends X-Forwarded-For / X-Real-IP upstream and has
   #   no per-Ingress switch to stop it. OpenWhistle drops these headers and the
   #   peer address in its first middleware; nothing in the app sees or logs them.
   # - Traefik keeps access logs off unless enabled. Other controllers: check.
   # Rate limit, like the bundled nginx (10 r/s, burst 30 per client address,
   # in controller memory only): ingress-nginx's burst is rps x multiplier.
+  # It rejects with 503 (429 needs `limit-req-status-code: "429"` in the
+  # controller ConfigMap) and keys on the peer address: behind an SNAT load
+  # balancer set `use-forwarded-headers` / proxy protocol, or all reporters
+  # share one budget.
   # Other controllers: set an equivalent limit.
   # Your own annotations are merged with this default (Helm merges maps).
   annotations:

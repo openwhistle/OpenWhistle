@@ -5,6 +5,10 @@ Access the application at:
 {{- range .Values.ingress.hosts }}
   https://{{ .host }}
 {{- end }}
+
+REQUIRED with ingress-nginx: set `error-log-level: crit` in the controller
+ConfigMap. Otherwise its error log records the IP address of every
+rate-limited reporter.
 {{- else }}
 The application is not exposed via Ingress. To access it locally:
   kubectl port-forward svc/{{ include "openwhistle.fullname" . }} 4009:{{ .Values.service.port }}

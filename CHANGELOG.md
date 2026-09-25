@@ -60,7 +60,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - **Helm: the Ingress rate-limits every route** like the bundled nginx (`limit-rps: "10"`,
   burst 30). Before, a Kubernetes deployment had no limit on `POST /submit` or any other
-  public route.
+  public route. ingress-nginx answers a rejected request with 503 and keys on the peer address; the
+  chart and its install notes now state that `error-log-level: crit` is required, since below
+  it the controller logs each rejected reporter's IP address.
 - **Times the whistleblower causes are stored and shown as the day only** (UTC): submission, the
   receipt message, whistleblower messages and attachment uploads. Migration 006 rounds existing
   rows; the exact times are gone for good (downgrade leaves the rounded values). Thread order is

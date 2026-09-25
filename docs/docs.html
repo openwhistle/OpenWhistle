@@ -1168,8 +1168,15 @@
         <ul>
           <li>Your own <code>ingress.annotations</code> are merged with it; do not set it to
             <code>null</code>.</li>
-          <li>ingress-nginx still names the client in its error log; set
-            <code>error-log-level: crit</code> in the controller ConfigMap.</li>
+          <li><strong>Required:</strong> <code>error-log-level: crit</code> in the controller
+            ConfigMap. Below <code>crit</code>, ingress-nginx logs every rate-limited request
+            and every upstream error with the client's IP address.</li>
+          <li>A rate-limited request gets <code>503</code>, not the bundled nginx's
+            <code>429</code>, unless the controller ConfigMap sets
+            <code>limit-req-status-code: "429"</code> (controller-wide).</li>
+          <li>The limit is per peer address. Behind a load balancer that rewrites the source
+            address (SNAT), set <code>use-forwarded-headers</code> or proxy protocol so the
+            controller sees the real client; otherwise every reporter shares one budget.</li>
           <li>ingress-nginx always forwards <code>X-Forwarded-For</code> and
             <code>X-Real-IP</code>. OpenWhistle drops them, and the peer address, in its first
             middleware; the admin dashboard still warns that the proxy knows the addresses.</li>
