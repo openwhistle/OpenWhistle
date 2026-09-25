@@ -10,6 +10,7 @@
     .aud-filter-panel { margin-bottom:1.25rem; }
     .aud-filter-form { display:flex;gap:0.75rem;flex-wrap:wrap;align-items:flex-end; }
     .aud-filter-group { margin:0;flex:1;min-width:180px; }
+    .aud-views-toggle { display:flex;align-items:center;gap:0.4rem;min-height:2.75rem;font-size:0.85rem; }
     .aud-time-cell { font-size:0.78rem;white-space:nowrap;color:var(--muted); }
     .aud-admin-cell { font-size:0.85rem;font-weight:600; }
     .aud-action-cell { font-size:0.85rem; }
@@ -27,7 +28,7 @@
         <div>
             <h1>{{ t('admin.audit.title') }}</h1>
         </div>
-        <a href="/admin/audit-log/export.csv" class="btn btn-secondary btn-sm" download>
+        <a href="/admin/audit-log/export.csv{% if show_views %}?views=1{% endif %}" class="btn btn-secondary btn-sm" download>
             {{ icons.icon('file') }} {{ t('admin.audit.export_csv') }}
         </a>
     </div>
@@ -50,8 +51,12 @@
                     value="{{ report_id_filter }}"
                     placeholder="{{ t('admin.audit.filter.report_id.placeholder') }}">
             </div>
+            <label class="aud-views-toggle">
+                <input type="checkbox" name="views" value="1" {% if show_views %}checked{% endif %}>
+                {{ t('admin.audit.filter.show_views') }}
+            </label>
             <button type="submit" class="btn btn-secondary">{{ t('admin.audit.filter.apply') }}</button>
-            {% if action_filter or report_id_filter %}
+            {% if action_filter or report_id_filter or show_views %}
             <a href="/admin/audit-log" class="btn btn-secondary">{{ t('admin.audit.filter.clear') }}</a>
             {% endif %}
         </form>
@@ -102,14 +107,14 @@
             </div>
             <div class="pagination-controls">
                 {% if page > 1 %}
-                <a href="/admin/audit-log?page={{ page - 1 }}{% if action_filter %}&action={{ action_filter | urlencode }}{% endif %}{% if report_id_filter %}&report_id={{ report_id_filter | urlencode }}{% endif %}"
+                <a href="/admin/audit-log?page={{ page - 1 }}{% if action_filter %}&action={{ action_filter | urlencode }}{% endif %}{% if report_id_filter %}&report_id={{ report_id_filter | urlencode }}{% endif %}{% if show_views %}&views=1{% endif %}"
                    class="btn btn-secondary btn-sm pagination-btn">{{ t('admin.pagination.prev') }}</a>
                 {% else %}
                 <span class="btn btn-secondary btn-sm pagination-btn pagination-disabled">{{ t('admin.pagination.prev') }}</span>
                 {% endif %}
 
                 {% if page < total_pages %}
-                <a href="/admin/audit-log?page={{ page + 1 }}{% if action_filter %}&action={{ action_filter | urlencode }}{% endif %}{% if report_id_filter %}&report_id={{ report_id_filter | urlencode }}{% endif %}"
+                <a href="/admin/audit-log?page={{ page + 1 }}{% if action_filter %}&action={{ action_filter | urlencode }}{% endif %}{% if report_id_filter %}&report_id={{ report_id_filter | urlencode }}{% endif %}{% if show_views %}&views=1{% endif %}"
                    class="btn btn-secondary btn-sm pagination-btn">{{ t('admin.pagination.next') }}</a>
                 {% else %}
                 <span class="btn btn-secondary btn-sm pagination-btn pagination-disabled">{{ t('admin.pagination.next') }}</span>

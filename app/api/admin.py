@@ -21,7 +21,7 @@ from app.redis_client import get_redis
 from app.services import audit as audit_service
 from app.services import report as report_service
 from app.services.audit import AuditAction
-from app.templating import audit_detail, render
+from app.templating import REASON_UNREADABLE, audit_detail, render
 
 router = APIRouter(prefix="/admin")
 
@@ -111,12 +111,19 @@ async def _get_authorized_report(
 def can_reveal_identity(user: AdminUser, report: Report) -> bool:
     """HinSchG §8: a confidential identity is for whoever handles the report.
 
-    Assigned case: only the assignee. Unassigned: admin or superadmin, who
-    must assign it before anyone else may see who sent it.
+    Assigned case: only the assignee. Unassigned: an admin or superadmin of the
+    case's own organisation, who must assign it before anyone else may see who
+    sent it. The instance operator of another organisation is not a handler.
     """
     if report.assigned_to_id is not None:
         return report.assigned_to_id == user.id
-    return user.role in {AdminRole.admin, AdminRole.superadmin}
+    if user.role not in {AdminRole.admin, AdminRole.superadmin}:
+        return False
+    return (
+        not settings.multi_tenancy_enabled
+        or report.org_id is None
+        or user.org_id == report.org_id
+    )
 
 
 _REASON_MIN, _REASON_MAX = 10, 500
@@ -272,9 +279,13 @@ async def reveal_identity(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
     valid = _validated_reason(reason)
     if valid is None:
+        # The refusal still renders the whole case: it is a view like any other.
+        await audit_service.log(db, current_user, AuditAction.REPORT_VIEWED, report_id=report.id)
+        await db.commit()
         return await _render_report(
             request, db, report, current_user,
             field_errors={"reason": "admin.report.identity.reason_error"}, status_code=422,
+            reason_draft=reason,
         )
     await audit_service.log(
         db, current_user, AuditAction.IDENTITY_REVEALED,
@@ -296,6 +307,7 @@ async def _render_report(
     identity: dict[str, str | None] | None = None,
     field_errors: dict[str, str] | None = None,
     status_code: int = 200,
+    reason_draft: str = "",
 ) -> HTMLResponse:
     from datetime import UTC, datetime
 
@@ -362,6 +374,7 @@ async def _render_report(
             "can_reveal": can_reveal_identity(current_user, report),
             "identity": identity,
             "field_errors": field_errors or {},
+            "reason_draft": reason_draft,
             "has_secure_email": has_secure_email,
         },
         status_code=status_code,
@@ -1018,6 +1031,7 @@ async def audit_log_page(
         page = 1
     report_id_str = qp.get("report_id", "")
     action_filter = qp.get("action", "")
+    show_views = qp.get("views") == "1"
 
     report_id = None
     if report_id_str:
@@ -1030,6 +1044,7 @@ async def audit_log_page(
         db,
         report_id=report_id,
         action=action_filter or None,
+        exclude_action=_views_excluded(show_views or action_filter == AuditAction.REPORT_VIEWED),
         page=page,
         per_page=50,
         viewer_id=current_user.id,
@@ -1045,8 +1060,31 @@ async def audit_log_page(
         "total_pages": total_pages,
         "action_filter": action_filter,
         "report_id_filter": report_id_str,
+        "show_views": show_views,
         "audit_actions": audit_service.ALL_ACTIONS,
     })
+
+
+def _views_excluded(show_views: bool) -> str | None:
+    """Case views outnumber every other action; the trail hides them unless asked."""
+    return None if show_views else AuditAction.REPORT_VIEWED
+
+
+def _csv_cell(value: str) -> str:
+    """Neutralise spreadsheet formulas (OWASP CSV injection)."""
+    return f"'{value}" if value[:1] in ("=", "+", "-", "@", "\t", "\r") else value
+
+
+def _csv_detail(pairs: list[tuple[str, str]], t: Any) -> str:
+    """One unambiguous cell: a JSON object, or a legacy free-text detail as is."""
+    import json
+
+    if not pairs:
+        return ""
+    if not pairs[0][0]:
+        return pairs[0][1]
+    data = {k: t(v) if v == REASON_UNREADABLE else v for k, v in pairs}
+    return json.dumps(data, ensure_ascii=False)
 
 
 @router.get("/audit-log/export.csv")
@@ -1059,7 +1097,9 @@ async def audit_log_csv(
     import io
 
     entries, _ = await audit_service.get_audit_log(
-        db, per_page=10000, viewer_id=current_user.id, **_org_scope(current_user)
+        db, per_page=10000, viewer_id=current_user.id,
+        exclude_action=_views_excluded(request.query_params.get("views") == "1"),
+        **_org_scope(current_user),
     )
     output = io.StringIO()
     writer = csv.writer(output)
@@ -1069,14 +1109,14 @@ async def audit_log_csv(
     for e in entries:
         label_key = f"audit.action.{e.action}"
         label = t(label_key)
-        writer.writerow([
+        writer.writerow([_csv_cell(c) for c in (
             e.created_at.isoformat(),
-            e.admin_username,
+            e.admin_username or "",
             e.action,
             e.action if label == label_key else label,
             str(e.report_id) if e.report_id else "",
-            "; ".join(f"{k}={v}" if k else v for k, v in audit_detail(e.detail)),
-        ])
+            _csv_detail(audit_detail(e.detail), t),
+        )])
 
     return Response(
         content=output.getvalue().encode("utf-8"),

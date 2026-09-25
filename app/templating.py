@@ -44,7 +44,11 @@ def template_translator(lang: str) -> Callable[..., str | Markup]:
     return t
 
 
-def audit_detail(detail: str | None) -> list[tuple[str, str]]:
+# Locale key shown in place of an encrypted reason that no longer decrypts.
+REASON_UNREADABLE = "audit.detail.reason_unreadable"
+
+
+def audit_detail(detail: str | None, decrypt: bool = True) -> list[tuple[str, str]]:
     """Split an audit entry's JSON detail into (key, value) pairs for display.
 
     Anything that is not a JSON object is returned as one pair with an empty
@@ -59,22 +63,23 @@ def audit_detail(detail: str | None) -> list[tuple[str, str]]:
         return [("", detail)]
     if not isinstance(data, dict):
         return [("", detail)]
-    return [(str(k), _detail_value(str(k), v)) for k, v in data.items()]
+    return [(str(k), _detail_value(str(k), v, decrypt)) for k, v in data.items()]
 
 
-def _detail_value(key: str, value: object) -> str:
+def _detail_value(key: str, value: object, decrypt: bool) -> str:
     """An identity reveal's `reason` is a Fernet token; the retention job's is plain text."""
     from app.services.crypto import decrypt_or_none  # noqa: PLC0415
 
     if value is None:
         return "—"
     text = str(value)
-    if key == "reason" and text.startswith("gAAAAA"):
-        return decrypt_or_none(text) or "—"
+    if decrypt and key == "reason" and text.startswith("gAAAAA"):
+        return decrypt_or_none(text) or REASON_UNREADABLE
     return text
 
 
 templates.env.filters["audit_detail"] = audit_detail
+templates.env.globals["REASON_UNREADABLE"] = REASON_UNREADABLE
 
 
 def render(

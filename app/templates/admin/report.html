@@ -213,7 +213,7 @@
                         <span class="report-audit-user">{{ entry.admin_username or '—' }}</span>
                         <span class="report-audit-action">{{ audit.label(entry.action) }}</span>
                         {% if entry.detail %}
-                        <span class="report-audit-detail">{{ audit.detail(entry.detail) }}</span>
+                        <span class="report-audit-detail">{{ audit.detail(entry.detail, redact_reason=true) }}</span>
                         {% endif %}
                     </div>
                     {% endfor %}
@@ -282,7 +282,7 @@
                                 <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                                 <label class="form-label" for="identity-reason">{{ t('admin.report.identity.reason') }}</label>
                                 <textarea class="form-control" id="identity-reason" name="reason" rows="2"
-                                          minlength="10" maxlength="500" required{{ field.attrs('reason', 'identity-reason-hint') }}></textarea>
+                                          minlength="10" maxlength="500" required{{ field.attrs('reason', 'identity-reason-hint') }}>{{ reason_draft }}</textarea>
                                 {{ field.error('reason') }}
                                 <p class="form-hint" id="identity-reason-hint">{{ t('admin.report.identity.reason_hint') }}</p>
                                 <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.report.identity.reveal') }}</button>

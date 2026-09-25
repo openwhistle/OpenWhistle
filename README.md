@@ -43,8 +43,9 @@ zero vendor lock-in, and privacy-first by design.
 - **Multi-step submission wizard** — Guided 5–6 step form with back/next navigation and Redis-backed
   session state. Anonymous or confidential mode selectable at step 1.
 - **Anonymous / confidential mode** — Anonymous leaves no personal data. Confidential encrypts
-  name, contact info, and optional secure email with Fernet; only the assigned admin can decrypt.
-- **Identity on request** — a confidential reporter's name is shown only to the case handler, with a logged reason.
+  name, contact info, and optional secure email with Fernet.
+- **Identity on request** — a confidential reporter's name is hidden by default and shown only to the case
+  handler (an admin of the case's organisation while it is unassigned), after a reason that the audit log records.
 - **Multi-location / branch selection** — Optional location selector shown when the operator has
   configured active branches or offices; full admin management UI included.
 - **Bidirectional communication** — Required by HinSchG §17. The whistleblower can reply to admin

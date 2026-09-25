@@ -1805,16 +1805,20 @@
         </ul>
         <p>
           <strong>Confidential identity.</strong> A confidential reporter's name and contact are hidden by default.
-          The case handler — or an admin while the case is unassigned — clicks <em>Show identity</em> and gives a
-          reason (10–500 characters). The identity is shown on that page only; the audit log records who, when and
-          why. Opening a case is logged as <em>Report opened</em>.
+          The case handler — or, while the case is unassigned, an admin of the case's organisation — clicks
+          <em>Show identity</em> and gives a reason (10–500 characters; do not write the reporter's name into it).
+          The identity is shown on that page only; the audit log records who, when and why. The case page says only
+          that a reason was recorded; the reason itself is on <code>/admin/audit-log</code> and in the CSV export.
+          Opening a case is logged as <em>Report opened</em>.
         </p>
 
         <h3>Audit log</h3>
         <p>
           Every admin action is recorded in an immutable audit log (required by HinSchG §11 Abs. 5).
           View and filter the log at <code>/admin/audit-log</code>; actions and details are shown as readable
-          labels. Export as CSV at any time — the export keeps the machine action codes and adds a label column.
+          labels. Export as CSV at any time — the export keeps the machine action codes and adds a label column,
+          and the detail column is a JSON object. Case views (<em>Report opened</em>) are hidden from the log and
+          the export unless you tick <em>Show case views</em> (<code>?views=1</code>).
           With multi-tenancy on, each organisation sees only its own entries, while instance-wide security
           events (such as a password-spraying alert) are shown to superadmins only.
         </p>
