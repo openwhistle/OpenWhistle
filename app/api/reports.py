@@ -428,11 +428,13 @@ async def submit_post(
         desc_stripped = description.strip()
         if len(desc_stripped) < 10:
             state["step"] = _STEP_DESCRIPTION
+            state["description"] = desc_stripped
             state["_flash_error"] = "description_too_short"
             await _save_submission(redis, session_id, state)
             return _redirect_after_post()
         if len(desc_stripped) > 10000:
             state["step"] = _STEP_DESCRIPTION
+            state["description"] = desc_stripped[:10000]
             state["_flash_error"] = "description_too_long"
             await _save_submission(redis, session_id, state)
             return _redirect_after_post()

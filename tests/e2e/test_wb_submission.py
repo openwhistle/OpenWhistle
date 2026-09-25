@@ -500,3 +500,34 @@ def test_in_wizard_back_button_preserves_uploaded_attachment(page: Page, base_ur
         "The previously-uploaded attachment was silently dropped after "
         "Back then Next without re-selecting a file"
     )
+
+
+def test_description_validation_failure_preserves_typed_text(page: Page, base_url: str) -> None:
+    page.goto(f"{base_url}/submit")
+    page.wait_for_load_state("networkidle")
+
+    page.locator('label[for="mode-anonymous"]').click()
+    _advance_step(page)
+    _skip_location_if_present(page)
+
+    page.wait_for_load_state("networkidle")
+    _fill_category_step(page)
+    _advance_step(page)
+
+    page.wait_for_load_state("networkidle")
+    desc_area = page.locator('textarea[name="description"]')
+    desc_area.fill("abcdef")
+    _advance_step(page)
+
+    page.wait_for_load_state("networkidle")
+    assert page.locator('textarea[name="description"]').input_value() == "abcdef", (
+        f"Typed text was not preserved after a failed validation. URL: {page.url}"
+    )
+
+    page.locator('textarea[name="description"]').fill("xyztuv")
+    _advance_step(page)
+
+    page.wait_for_load_state("networkidle")
+    assert page.locator('textarea[name="description"]').input_value() == "xyztuv", (
+        f"Textarea reverted to a previous value instead of the just-typed text. URL: {page.url}"
+    )
