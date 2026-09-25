@@ -166,7 +166,9 @@ async def test_submit_page_has_the_short_reassurance_for_phones(client: AsyncCli
 
 
 @pytest.mark.asyncio
-async def test_submit_page_h1_precedes_the_sidebar_heading_in_reading_order(client: AsyncClient) -> None:
+async def test_submit_page_h1_precedes_the_sidebar_heading_in_reading_order(
+    client: AsyncClient,
+) -> None:
     """The desktop layout still puts the sidebar on the left (CSS grid
     placement), but in DOM/reading order the page's own <h1> must come before
     the sidebar's <h2 class="sidebar-title"> -- a screen reader or a phone
@@ -275,7 +277,9 @@ def test_split_layout_has_only_one_active_phone_breakpoint() -> None:
         assert not re.search(r"\.split-layout\s*\{", block), block
         main = re.search(r"\.split-main\s*\{([^}]*)\}", block)
         if main:
-            assert "max-width" not in main.group(1) and "padding" not in main.group(1), main.group(1)
+            assert (
+                "max-width" not in main.group(1) and "padding" not in main.group(1)
+            ), main.group(1)
         sidebar = re.search(r"\.split-sidebar\s*\{([^}]*)\}", block)
         if sidebar:
             assert "padding" not in sidebar.group(1), sidebar.group(1)
@@ -360,7 +364,9 @@ class _PanelHeaderDivChecker(HTMLParser):
             if not frame["has_title"]:
                 self.violations.append("div.panel-header has no nested .panel-header-title")
             if frame["bad_text"]:
-                self.violations.append("div.panel-header holds text directly, not via .panel-header-title")
+                self.violations.append(
+                    "div.panel-header holds text directly, not via .panel-header-title"
+                )
 
 
 def test_panel_headers_are_headings_not_divs() -> None:
@@ -428,8 +434,10 @@ def test_design_fix_list_is_closed() -> None:
 
 def test_brand_secondary_colour_is_gone() -> None:
     for path in ("app/config.py", "app/templating.py", "app/templates/base.html",
-                 "docker-compose.prod.yml", "docs/docs.html", "README.md",
-                 "charts/openwhistle/values.yaml", "charts/openwhistle/templates/configmap.yaml"):
+                 "docker-compose.yml", "docker-compose.e2e.yml", "docker-compose.prod.yml",
+                 "docs/docs.html", "README.md", ".env.example",
+                 "charts/openwhistle/values.yaml", "charts/openwhistle/templates/configmap.yaml",
+                 "charts/openwhistle/templates/secret.yaml"):
         text = (ROOT / path).read_text().lower().replace("-", "_")
         assert "brand_secondary" not in text, path
 
