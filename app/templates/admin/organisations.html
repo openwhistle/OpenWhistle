@@ -6,6 +6,7 @@
 <div class="container">
     <div class="page-header">
         <h1>{{ t('admin.organisations.title') }}</h1>
+        <p class="page-subtitle">{{ t('admin.organisations.subtitle') }}</p>
     </div>
 
     <div class="admin-split-grid">
@@ -67,7 +68,7 @@
                                       class="inline-form"
                                       data-confirm="{{ t('admin.organisations.deactivate_confirm', name=org.name) }}">
                                     <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                                    <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.organisations.deactivate') }}</button>
+                                    <button type="submit" class="btn btn-danger btn-sm">{{ t('admin.organisations.deactivate') }}</button>
                                 </form>
                                 {% endif %}
                             </td>

@@ -694,15 +694,20 @@ _JINJA_MACRO = re.compile(r"\{%-?\s*macro\b.*?-?%\}.*?\{%-?\s*endmacro\s*-?%\}",
 _JINJA_EXPR = re.compile(r"\{\{.*?\}\}|\{%.*?%\}|\{#.*?#\}", re.DOTALL)
 _LANGUAGE_WORD = re.compile(r"[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]{2,}")
 
-_CHECKED_ATTRS = {"title", "aria-label", "placeholder", "data-confirm", "value"}
+_CHECKED_ATTRS = {"title", "aria-label", "placeholder", "data-confirm", "value", "alt"}
 # Elements whose text/attrs are identifiers or data, not UI language, and so are exempt:
 # a <code> (env var names, hashes, case-number placeholders), and anything carrying one
 # of these two classes (the app's own "this is a mono/identifier value" convention, plus
 # demo-cred-value: the literal demo credential text, e.g. "demo" -- a data value, not copy).
 _NON_LANGUAGE_CLASSES = {"mono", "demo-cred-value"}
-# "OpenWhistle" is the brand name (explicitly allowed by the brief); "Open"/"Whistle" are
-# its two halves, split across tags in base.html's nav brand mark for the bold second half.
-_ALLOWED_WORDS = {"openwhistle", "open", "whistle"}
+# The brand name, as ONE word, is the only allowed literal (explicitly named by the brief).
+# "open" and "whistle" are NOT allow-listed as bare words -- a hardcoded "Open" or "Whistle"
+# used generically elsewhere must still fail this test.
+_ALLOWED_WORDS = {"openwhistle"}
+# The one place the name is split across tags for styling -- base.html's nav-brand wraps
+# the seal and `<span>Open<strong>Whistle</strong></span>` -- is exempt by ELEMENT (this
+# class), not by allow-listing "open"/"whistle" as words anywhere in any template.
+_BRAND_MARK_CLASSES = {"nav-brand"}
 # categories.html's label_en/label_de placeholders demonstrate the exact language required
 # for that specific bilingual data field (an English example, a German example) -- they are
 # a data example, not UI chrome, and stay put regardless of the admin's own UI language.
@@ -711,17 +716,18 @@ _EXAMPLE_DATA_PLACEHOLDER_IDS = {"cat-label-en", "cat-label-de"}
 
 class _UntranslatedTextChecker(HTMLParser):
     """Flags literal, translatable words in text nodes and in a short list of
-    user-visible attributes (title, aria-label, placeholder, data-confirm, and
+    user-visible attributes (title, aria-label, placeholder, data-confirm, alt, and
     value -- but only on an <input type="submit"|"button">, where value IS the
     visible label; a <button>'s value attribute is never rendered)."""
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self.violations: list[str] = []
-        self._tag_stack: list[tuple[bool, bool, bool]] = []
+        self._tag_stack: list[tuple[bool, bool, bool, bool]] = []
         self._skip_depth = 0
         self._nonlang_depth = 0
         self._external_link_depth = 0
+        self._brand_depth = 0
 
     def _check(self, raw: str, where: str) -> None:
         stripped = _JINJA_EXPR.sub(" ", raw)
@@ -732,7 +738,7 @@ class _UntranslatedTextChecker(HTMLParser):
             self.violations.append(f"{where}={word!r} in {raw.strip()[:80]!r}")
 
     def _handle_attrs(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        if self._skip_depth:
+        if self._skip_depth or self._brand_depth:
             return
         attrs_dict = dict(attrs)
         elem_id = attrs_dict.get("id")
@@ -756,10 +762,12 @@ class _UntranslatedTextChecker(HTMLParser):
         # text) is a citation/URL label, not UI copy -- e.g. the HinSchG footer link,
         # the EUR-Lex / gesetze-im-internet.de citations on the telephone-channel page.
         opens_external = tag == "a" and href.startswith(("http://", "https://"))
+        opens_brand = bool(_BRAND_MARK_CLASSES & classes)
         self._skip_depth += opens_skip
         self._nonlang_depth += opens_nonlang
         self._external_link_depth += opens_external
-        self._tag_stack.append((opens_skip, opens_nonlang, opens_external))
+        self._brand_depth += opens_brand
+        self._tag_stack.append((opens_skip, opens_nonlang, opens_external, opens_brand))
         self._handle_attrs(tag, attrs)
 
     def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
@@ -768,20 +776,26 @@ class _UntranslatedTextChecker(HTMLParser):
     def handle_endtag(self, tag: str) -> None:
         if not self._tag_stack:
             return
-        opens_skip, opens_nonlang, opens_external = self._tag_stack.pop()
+        opens_skip, opens_nonlang, opens_external, opens_brand = self._tag_stack.pop()
         self._skip_depth -= opens_skip
         self._nonlang_depth -= opens_nonlang
         self._external_link_depth -= opens_external
+        self._brand_depth -= opens_brand
 
     def handle_data(self, data: str) -> None:
-        if self._skip_depth or self._nonlang_depth or self._external_link_depth:
+        if (
+            self._skip_depth
+            or self._nonlang_depth
+            or self._external_link_depth
+            or self._brand_depth
+        ):
             return
         self._check(data, "text")
 
 
 def test_no_untranslated_literal_text_in_templates() -> None:
     """Every user-visible string is a locale key: no literal English (or any other
-    language) text sits outside t(...) in text nodes or in title/aria-label/
+    language) text sits outside t(...) in text nodes or in title/aria-label/alt/
     placeholder/data-confirm/button-value attributes. Caught two untranslated admin
     pages (organisations.html, users.html) plus smaller misses across the sweep."""
     for p in sorted(TEMPLATES.rglob("*.html")):
@@ -841,26 +855,132 @@ _JS_HOOK_CLASSES = {
 def test_every_template_class_exists_in_css_or_is_a_documented_js_hook() -> None:
     """Every class in `class="..."` (its static parts; a `{{ expr }}` computed class
     is skipped, see `_static_class_tokens`) is defined in site.css, in that same
-    template's own page-scoped <style> block (an established pattern here, e.g.
-    users.html's `.usr-*`), or is a documented JS hook. Caught BEM-style classes
-    (btn--secondary, badge--green, stats-grid, ...) that don't exist in site.css at
-    all -- the real names are single-dash (btn-secondary, badge-closed, stats-row)."""
+    template's OWN page-scoped <style> block (an established pattern here, e.g.
+    users.html's `.usr-*`), or is a documented JS hook. Scoped per file -- a class
+    defined in one template's <style> does not satisfy another template, so a typo
+    that happens to collide with an unrelated page's own scoped name would still be
+    caught. Caught BEM-style classes (btn--secondary, badge--green, stats-grid, ...)
+    that don't exist in site.css at all -- the real names are single-dash
+    (btn-secondary, badge-closed, stats-row)."""
     css = (ROOT / "app/static/css/site.css").read_text()
     css_no_comments = re.sub(r"/\*.*?\*/", "", css, flags=re.DOTALL)
-    known = set(re.findall(r"\.([a-zA-Z_][\w-]*)", css_no_comments))
-    known |= _JS_HOOK_CLASSES
-
-    # Page-scoped <style> blocks are a template-authoring convention throughout the
-    # admin templates (each page defines its own `.xxx-*` classes); a class defined
-    # in ANY template's own <style> block is available to every template equally,
-    # since none of them share these page-scoped names by accident (they're all
-    # namespaced by a per-page prefix, e.g. usr-/cat-/loc-/aud-/dash-/report-/stat-).
-    for p in TEMPLATES.rglob("*.html"):
-        for style_body in re.findall(r"<style[^>]*>(.*?)</style>", p.read_text(), re.DOTALL):
-            style_no_comments = re.sub(r"/\*.*?\*/", "", style_body, flags=re.DOTALL)
-            known |= set(re.findall(r"\.([a-zA-Z_][\w-]*)", style_no_comments))
+    css_known = set(re.findall(r"\.([a-zA-Z_][\w-]*)", css_no_comments))
+    css_known |= _JS_HOOK_CLASSES
 
     for p in sorted(TEMPLATES.rglob("*.html")):
-        checker = _ClassUsageChecker(known)
-        checker.feed(p.read_text())
+        text = p.read_text()
+        local_known = set(css_known)
+        for style_body in re.findall(r"<style[^>]*>(.*?)</style>", text, re.DOTALL):
+            style_no_comments = re.sub(r"/\*.*?\*/", "", style_body, flags=re.DOTALL)
+            local_known |= set(re.findall(r"\.([a-zA-Z_][\w-]*)", style_no_comments))
+        checker = _ClassUsageChecker(local_known)
+        checker.feed(text)
         assert not checker.unknown, (p, sorted(set(checker.unknown)))
+
+
+# ── Fix round 1: regression tests for the organisations CSRF bug ───────────────
+
+
+@pytest.mark.asyncio
+async def test_organisation_create_and_deactivate_succeed_with_valid_csrf(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """Regression test for the organisations CSRF bug (review round 1, Important #2):
+    the page used to post an undefined `{{ csrf_token }}` (always rendered empty), so
+    every real submission would 403 in production. With `request.state.csrf_token` a
+    real double-submit token now lets both the create and the deactivate route through,
+    and each one's DB effect actually happens."""
+    from sqlalchemy import select
+
+    from app.models.organisation import Organisation
+
+    await _login(client, db_session, AdminRole.superadmin)
+    await client.get("/admin/organisations")  # ensures the ow_csrf cookie is set
+    csrf_token = client.cookies.get("ow_csrf")
+    slug = f"csrf-ok-{uuid.uuid4().hex[:8]}"
+
+    create_resp = await client.post(
+        "/admin/organisations",
+        data={"name": "CSRF Regression Org", "slug": slug, "csrf_token": csrf_token},
+        follow_redirects=False,
+    )
+    assert create_resp.status_code == 302
+
+    result = await db_session.execute(select(Organisation).where(Organisation.slug == slug))
+    org = result.scalar_one()
+    assert org.is_active
+
+    deactivate_resp = await client.post(
+        f"/admin/organisations/{org.id}/deactivate",
+        data={"csrf_token": csrf_token},
+        follow_redirects=False,
+    )
+    assert deactivate_resp.status_code == 302
+    await db_session.refresh(org)
+    assert org.is_active is False
+
+
+@pytest.mark.asyncio
+async def test_organisation_create_and_deactivate_fail_without_valid_csrf(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """The other half of the CSRF regression: a missing or wrong token must still be
+    rejected (403) and must not touch the database, on both routes."""
+    from sqlalchemy import select
+
+    from app.models.organisation import Organisation
+
+    await _login(client, db_session, AdminRole.superadmin)
+    await client.get("/admin/organisations")
+    slug = f"csrf-fail-{uuid.uuid4().hex[:8]}"
+
+    missing_token_resp = await client.post(
+        "/admin/organisations", data={"name": "Should Not Exist", "slug": slug}
+    )
+    assert missing_token_resp.status_code == 422  # required Form field missing entirely
+
+    wrong_token_resp = await client.post(
+        "/admin/organisations",
+        data={"name": "Should Not Exist", "slug": slug, "csrf_token": "wrong-token"},
+    )
+    assert wrong_token_resp.status_code == 403
+
+    result = await db_session.execute(select(Organisation).where(Organisation.slug == slug))
+    assert result.scalar_one_or_none() is None
+
+    default_result = await db_session.execute(
+        select(Organisation).where(Organisation.slug == "default")
+    )
+    default_org = default_result.scalar_one()
+    was_active = default_org.is_active
+    deactivate_resp = await client.post(
+        f"/admin/organisations/{default_org.id}/deactivate",
+        data={"csrf_token": "wrong-token"},
+    )
+    assert deactivate_resp.status_code == 403
+    await db_session.refresh(default_org)
+    assert default_org.is_active == was_active
+
+
+@pytest.mark.asyncio
+async def test_organisation_deactivate_is_a_danger_action(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """Ruling (review round 1, Important #3): organisations have no reactivate route,
+    so deactivating one is one-way -- the button must use the real DESIGN.md danger
+    class, and the confirm prompt must say the action cannot be undone, in every
+    locale (spot-checked here in French)."""
+    from app.models.organisation import Organisation
+
+    org = Organisation(
+        id=uuid.uuid4(), name="Danger Button Org", slug=f"danger-btn-{uuid.uuid4().hex[:8]}"
+    )
+    db_session.add(org)
+    await db_session.commit()
+
+    await _login(client, db_session, AdminRole.superadmin)
+    client.cookies.set("ow-lang", "fr")
+    html = (await client.get("/admin/organisations")).text
+    row = html.split(org.slug, 1)[1].split("</tr>", 1)[0]
+    assert 'class="btn btn-danger btn-sm"' in row
+    assert "irréversible" in row

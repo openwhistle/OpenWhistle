@@ -74,9 +74,10 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   found the same two problems on the retention, system, telephone-channel and category pages too
   (BEM-style classes that were never styled, a couple of untranslated titles and hints, a broken
   `field-error` CSS selector missing its leading dot). All now use real locale keys and the
-  actual button/badge/grid class names. The organisations page's create/deactivate forms were
-  also submitting an empty CSRF token (`{{ csrf_token }}` instead of
-  `{{ request.state.csrf_token }}`) — both POST routes would have failed CSRF validation.
+  actual button/badge/grid class names.
+- **Creating and deactivating organisations failed with a CSRF error.** The page posted
+  `{{ csrf_token }}`, a context variable the route never sets, instead of
+  `{{ request.state.csrf_token }}` — every real submission sent an empty token and got a 403.
 - The dashboard's active filter pills all carried `aria-current="page"`, but two independent
   pill groups (status/my-cases and location) can each have an active pill at once — "page"
   implies a single current page. Filter pills now use `aria-current="true"`; pagination and
