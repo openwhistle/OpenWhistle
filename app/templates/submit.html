@@ -289,6 +289,18 @@
                 <p>{{ t('submit.step.attachments.privacy') }}</p>
             </div>
 
+            {% if state.get('file_meta') %}
+            <div class="alert alert-info sub-mb1">
+                {{ t('submit.step.attachments.already_attached') }}
+                <ul class="sub-file-list">
+                    {% for f in state.get('file_meta', []) %}
+                    <li>&#128206; {{ f.filename }} ({{ (f.size // 1024) }}KB)</li>
+                    {% endfor %}
+                </ul>
+                {{ t('submit.step.attachments.already_attached.hint') }}
+            </div>
+            {% endif %}
+
             <div class="form-group">
                 <label class="form-label" for="files">{{ t('submit.form.files') }}</label>
                 <input

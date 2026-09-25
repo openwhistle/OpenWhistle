@@ -454,3 +454,67 @@ def test_native_back_button_after_every_step_keeps_wizard_usable(
     assert _done(), (
         f"Wizard was not completable after native Back navigation at every step. URL: {page.url}"
     )
+
+
+def test_in_wizard_back_button_preserves_uploaded_attachment(page: Page, base_url: str) -> None:
+    """The in-wizard "Back" button must not silently drop an uploaded attachment.
+
+    A browser can never pre-fill a file input, so revisiting the attachments
+    step via the "Back" button always shows it empty regardless of what's
+    already attached. Clicking "Next" again without re-selecting anything
+    must be read as "leave it as-is", not "clear the attachments" — this is
+    the concrete bug report behind "the back button doesn't work correctly
+    halfway through the form": going back and continuing forward again used
+    to silently discard the already-uploaded evidence file with no warning.
+    """
+    from pypdf import PdfWriter
+
+    writer = PdfWriter()
+    writer.add_blank_page(72, 72)
+    buf = io.BytesIO()
+    writer.write(buf)
+    fake_pdf = buf.getvalue()
+
+    page.goto(f"{base_url}/submit")
+    page.wait_for_load_state("networkidle")
+
+    page.locator('label[for="mode-anonymous"]').click()
+    _advance_step(page)
+    _skip_location_if_present(page)
+
+    page.wait_for_load_state("networkidle")
+    _fill_category_step(page)
+    _advance_step(page)
+
+    page.wait_for_load_state("networkidle")
+    _fill_description_step(page)
+    _advance_step(page)
+
+    # Step 5: attachments — upload a file, then advance to review.
+    page.wait_for_load_state("networkidle")
+    page.locator('input[type="file"][name="files"]').set_input_files(
+        [{"name": "back_button_test.pdf", "mimeType": "application/pdf", "buffer": fake_pdf}]
+    )
+    _advance_step(page)
+
+    page.wait_for_load_state("networkidle")
+    assert "back_button_test.pdf" in page.content(), "Filename not shown on review page"
+
+    # Click the in-wizard Back button — lands back on attachments.
+    page.click(_BACK_BTN)
+    page.wait_for_load_state("networkidle")
+    assert page.locator('input[type="file"][name="files"]').count() == 1, (
+        "Back from review did not land on the attachments step"
+    )
+    assert "back_button_test.pdf" in page.content(), (
+        "Attachments step gives no indication the file is already attached after Back"
+    )
+
+    # Click Next again WITHOUT re-selecting a file.
+    _advance_step(page)
+
+    page.wait_for_load_state("networkidle")
+    assert "back_button_test.pdf" in page.content(), (
+        "The previously-uploaded attachment was silently dropped after "
+        "Back then Next without re-selecting a file"
+    )

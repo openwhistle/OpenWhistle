@@ -491,21 +491,27 @@ async def submit_post(
             await _save_submission(redis, session_id, state)
             return _redirect_after_post()
 
-        state["files_stored"] = True
+        # A browser can never pre-fill a file input, so revisiting this step
+        # via Back always shows it empty regardless of what's already
+        # attached. Submitting Next from there with no new files selected
+        # must not be read as "clear the attachments" — that silently drops
+        # already-uploaded evidence with no warning. Only replace the stored
+        # files when new ones were actually submitted this time.
+        if file_tuples:
+            state["files_stored"] = True
+            state["file_meta"] = [
+                {"filename": ft[0], "size": len(ft[2])} for ft in file_tuples
+            ]
+            import base64 as _b64
+            state["file_data"] = [
+                {
+                    "filename": ft[0],
+                    "content_type": ft[1],
+                    "data": _b64.b64encode(ft[2]).decode(),
+                }
+                for ft in file_tuples
+            ]
         state["step"] = _STEP_REVIEW
-        state["file_meta"] = [
-            {"filename": ft[0], "size": len(ft[2])} for ft in file_tuples
-        ]
-        import base64 as _b64
-        file_data_list = [
-            {
-                "filename": ft[0],
-                "content_type": ft[1],
-                "data": _b64.b64encode(ft[2]).decode(),
-            }
-            for ft in file_tuples
-        ]
-        state["file_data"] = file_data_list
         await _save_submission(redis, session_id, state)
         return _redirect_after_post()
 
