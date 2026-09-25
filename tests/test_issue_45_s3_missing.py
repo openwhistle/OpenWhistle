@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
 from unittest.mock import MagicMock, patch
 
@@ -38,6 +39,48 @@ async def test_s3_get_other_error_propagates() -> None:
     client.get_object.side_effect = ClientError({"Error": {"Code": "InternalError"}}, "GetObject")
     with patch("boto3.client", return_value=client), pytest.raises(ClientError):
         await _s3_backend().get("some/key")
+
+
+# ── Task 17 fix round 1: a legacy (filename-bearing) key must never reach a
+# log line or an exception message ──────────────────────────────────────────
+
+_FILENAME_KEY = "Max_Mustermann_evidence.pdf"
+
+
+@pytest.mark.asyncio
+async def test_s3_get_missing_object_message_has_no_filename(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """The raised exception's message — which can end up in logs via str(exc)
+    — must not carry the legacy key, even though it names a person.
+    """
+    client = MagicMock()
+    client.get_object.side_effect = ClientError({"Error": {"Code": "NoSuchKey"}}, "GetObject")
+    with (
+        caplog.at_level(logging.INFO, logger="app.services.storage"),
+        patch("boto3.client", return_value=client),
+        pytest.raises(StorageObjectNotFoundError) as exc_info,
+    ):
+        await _s3_backend().get(_FILENAME_KEY)
+
+    assert "Max_Mustermann" not in str(exc_info.value)
+    assert "Max_Mustermann" not in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_s3_delete_logs_no_filename(caplog: pytest.LogCaptureFixture) -> None:
+    """delete() must log that an object was deleted, without the key itself:
+    a re-key deletes the *old* (filename-bearing) key once the copy succeeds.
+    """
+    client = MagicMock()
+    with (
+        caplog.at_level(logging.INFO, logger="app.services.storage"),
+        patch("boto3.client", return_value=client),
+    ):
+        await _s3_backend().delete(_FILENAME_KEY)
+
+    assert "Max_Mustermann" not in caplog.text
+    assert any("Deleted attachment from S3" in record.message for record in caplog.records)
 
 
 # ── Handler maps the missing-object error to 404 ───────────────────────────
