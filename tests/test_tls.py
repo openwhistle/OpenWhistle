@@ -216,4 +216,15 @@ def test_the_chart_requires_crit_error_logging_where_the_operator_reads() -> Non
         text = (ROOT / "charts/openwhistle" / path).read_text()
         assert "REQUIRED" in text and "error-log-level: crit" in text, path
     docs = (ROOT / "docs/docs.html").read_text()
-    assert "limit-req-status-code" in docs and "use-forwarded-headers" in docs
+    assert "limit-req-status-code" in docs
+    values = (ROOT / "charts/openwhistle/values.yaml").read_text()
+    for text in (docs, values):
+        # L4: proxy protocol or a local traffic policy; L7: forwarded headers
+        # only with the trusted range, or clients spoof X-Forwarded-For.
+        for setting in (
+            "use-proxy-protocol",
+            "externalTrafficPolicy: Local",
+            "use-forwarded-headers",
+            "proxy-real-ip-cidr",
+        ):
+            assert setting in text, setting

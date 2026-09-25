@@ -32,9 +32,14 @@ ingress:
   # Rate limit, like the bundled nginx (10 r/s, burst 30 per client address,
   # in controller memory only): ingress-nginx's burst is rps x multiplier.
   # It rejects with 503 (429 needs `limit-req-status-code: "429"` in the
-  # controller ConfigMap) and keys on the peer address: behind an SNAT load
-  # balancer set `use-forwarded-headers` / proxy protocol, or all reporters
-  # share one budget.
+  # controller ConfigMap) and keys on the peer address, so behind a load
+  # balancer all reporters share one budget unless the controller sees the client:
+  # - L4 (TCP, SNAT): `use-proxy-protocol: "true"` in the controller ConfigMap
+  #   (and on the load balancer), or `externalTrafficPolicy: Local` on the
+  #   controller Service.
+  # - L7 (HTTP): `use-forwarded-headers: "true"` only with `proxy-real-ip-cidr`
+  #   set to the load balancer's range; otherwise clients spoof X-Forwarded-For
+  #   and escape the limit.
   # Other controllers: set an equivalent limit.
   # Your own annotations are merged with this default (Helm merges maps).
   annotations:
