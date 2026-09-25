@@ -364,10 +364,17 @@ Critical user journeys to cover:
 
 ## v1.6.0 — Hardening
 
-Every finding of the v1.5.0 assessment, fixed: setup token, encrypted TOTP secrets, separate and rotatable
-encryption key, absolute session lifetime, hardened containers with TLS by default, python-ldap; identity shown only
-to the handler with an audited reason, day-rounded times, webhooks without case numbers, ClamAV, Tor onion address,
-content search without an index; one admin shell and a phone-first layout; CVE scans, translation parity, threat model.
+> Every finding of the v1.5.0 assessment, fixed: setup token, encrypted TOTP secrets, separate and rotatable
+> encryption key, absolute session lifetime, hardened containers with TLS by default, python-ldap; identity shown only
+> to the handler with an audited reason, day-rounded times, webhooks without case numbers, ClamAV, Tor onion address,
+> content search without an index; one admin shell and a phone-first layout; CVE scans, translation parity, threat model.
+
+- [ ] **Separate, rotatable encryption key** — `ENCRYPTION_KEY` is the encryption root (no longer derived from
+  `SECRET_KEY`, which now signs sessions only); `ENCRYPTION_KEY_PREVIOUS` keeps old keys readable during rotation;
+  `scripts/rotate_encryption_key.py` re-encrypts everything under the current key
+- [ ] **Virus scanning of attachments** — optional ClamAV scanning via `CLAMAV_HOST`, `CLAMAV_PORT`,
+  `CLAMAV_TIMEOUT_SECONDS` (empty host = off); files are scanned before storage; a configured but unreachable
+  scanner refuses the upload instead of storing it unscanned (fail-closed)
 
 ---
 
