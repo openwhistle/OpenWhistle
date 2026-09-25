@@ -607,7 +607,7 @@
   "audit.detail.reason": "Motivo",
   "upload.error.too_large": "\"{name}\" é grande demais ({size}). Cada arquivo pode ter no máximo 10 MB.",
   "upload.error.bad_extension": "\"{name}\" não pode ser anexado. Permitidos: PDF, JPEG, PNG, GIF, WebP, TXT, CSV, DOCX, XLSX.",
-  "upload.error.legacy_office": "'{name}' é um arquivo antigo do Word/Excel (.doc/.xls) cujo autor não pode ser removido. Salve-o como .docx ou .xlsx e anexe novamente.",
+  "upload.error.legacy_office": "\"{name}\" é um arquivo antigo do Word/Excel (.doc/.xls) cujo autor não pode ser removido. Salve-o como .docx ou .xlsx e anexe novamente.",
   "upload.error.bad_type": "\"{name}\" tem um tipo de arquivo não suportado ({type}). Permitidos: PDF, imagens, texto, Word, Excel.",
   "upload.error.content_mismatch": "\"{name}\" não contém o que a extensão \"{ext}\" indica (o arquivo pode estar danificado ou disfarçado). Salve-o novamente e tente de novo.",
   "upload.error.too_many": "Arquivos demais. Você pode anexar no máximo {max} arquivos.",

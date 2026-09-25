@@ -39,6 +39,39 @@ def test_doc_and_xls_removed_from_allow_lists() -> None:
     assert "application/vnd.ms-excel" not in ALLOWED_MIME_TYPES
 
 
+@pytest.mark.parametrize("name", ["MINUTES.DOC", "BUDGET.XLS"])
+def test_legacy_office_files_are_refused_regardless_of_case(name: str) -> None:
+    error = validate_file(name, "application/msword", 100, head=_OLE_HEAD)
+    assert error is not None
+    assert error.key == "upload.error.legacy_office"
+
+
+def test_dotted_stem_with_pdf_extension_is_treated_as_pdf() -> None:
+    # "report.doc.pdf" ends in .pdf; only the true extension is checked, not
+    # every dot in the name.
+    error = validate_file("report.doc.pdf", "application/pdf", 100, head=b"%PDF-1.4")
+    assert error is None
+
+
+def test_ole_bytes_under_a_docx_name_are_a_content_mismatch() -> None:
+    # Renaming a .doc to .docx doesn't fool the magic-number check; this is a
+    # disguised file, not a legacy-office refusal.
+    mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    error = validate_file("fake.docx", mime, 100, head=_OLE_HEAD)
+    assert error is not None
+    assert error.key == "upload.error.content_mismatch"
+
+
+def test_real_zip_docx_is_still_accepted() -> None:
+    mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("word/document.xml", "<document/>")
+    data = buf.getvalue()
+    error = validate_file("real.docx", mime, len(data), head=data[:16])
+    assert error is None
+
+
 def test_xlsx_comment_author_label_is_removed_but_the_comment_is_kept() -> None:
     part = (
         b'<comments><authors><author>Max Mustermann</author></authors><commentList>'
