@@ -147,6 +147,25 @@ async def test_delete_stored_objects_continues_after_a_failure(
 
 
 @pytest.mark.asyncio
+async def test_delete_stored_objects_logs_no_filename(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A not-yet-rekeyed legacy row's key is the original filename (task 17);
+    a failure deleting it must not put that key/filename into the log line.
+    """
+    from app.services import storage
+    from app.services.attachment import delete_stored_objects
+
+    backend = MagicMock(delete=AsyncMock(side_effect=RuntimeError("boom")))
+    monkeypatch.setattr(storage, "get_storage_backend", lambda: backend)
+    with caplog.at_level("ERROR", logger="app.services.attachment"):
+        await delete_stored_objects(["Max_Mustermann_evidence.pdf"])
+
+    assert "Max_Mustermann" not in caplog.text
+    assert "Failed to delete a stored object" in caplog.text
+
+
+@pytest.mark.asyncio
 async def test_demo_totp_code_only_works_for_demo_accounts(
     client: AsyncClient, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
 ) -> None:

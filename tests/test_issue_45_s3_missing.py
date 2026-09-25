@@ -132,3 +132,42 @@ async def test_admin_download_missing_s3_object_returns_404(
         f"/admin/reports/{report.id}/attachments/{att.id}", follow_redirects=False
     )
     assert resp.status_code == 404
+
+
+# ── Task 17 fix round 2: read_attachment()'s LookupError must not carry a
+# not-yet-rekeyed legacy row's storage_key, which is the original filename ──
+
+
+@pytest.mark.asyncio
+async def test_read_attachment_lookup_error_has_no_filename(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.models.attachment import Attachment
+    from app.services import storage
+    from app.services.attachment import read_attachment
+    from app.services.report import create_report
+
+    report, _ = await create_report(db_session, "financial_fraud", "Legacy S3 lookup test.")
+    # A per-test-unique key: this row is committed to the shared test DB, and
+    # rekey_legacy_objects() elsewhere scans the *whole* attachments table, so
+    # reusing the exact literal _FILENAME_KEY here would collide with that
+    # test's own row of the same key once both are committed in one session.
+    legacy_key = f"Max_Mustermann_evidence-{uuid.uuid4().hex}.pdf"
+    att = Attachment(
+        id=uuid.uuid4(),
+        report_id=report.id,
+        filename="x",
+        content_type="application/pdf",
+        size=3,
+        data=None,
+        storage_key=legacy_key,
+    )
+    db_session.add(att)
+    await db_session.commit()
+
+    monkeypatch.setattr(storage, "get_storage_backend", lambda: _RaisingBackend())
+    with pytest.raises(LookupError) as exc_info:
+        await read_attachment(db_session, att)
+
+    assert "Max_Mustermann" not in str(exc_info.value)
+    assert str(exc_info.value) == str(att.id)
