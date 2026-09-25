@@ -31,6 +31,10 @@ templates.env.globals["is_demo"] = settings.demo_mode
 # Installed version, available to every template (e.g. the footer).
 templates.env.globals["app_version"] = settings.app_version
 
+# A callable (not the value) so templates re-read it at render time — tests
+# that monkeypatch settings.onion_location must see the new value.
+templates.env.globals["onion_location"] = lambda: settings.onion_location
+
 
 def template_translator(lang: str) -> Callable[..., str | Markup]:
     """The ``t()`` templates call: a translator that marks HTML keys safe."""

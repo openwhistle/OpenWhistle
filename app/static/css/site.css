@@ -1586,6 +1586,15 @@ tr:hover td {
   font-size: 0.8125rem;
   line-height: 1.55;
 }
+.sidebar-note {
+  border-top: 1px solid hsla(0, 0%, 100%, 0.08);
+  color: hsla(0, 0%, 100%, 0.55);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+}
 .stepper {
   align-items: center;
   display: flex;

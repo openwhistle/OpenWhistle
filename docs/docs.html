@@ -1081,6 +1081,82 @@
           required on SELinux hosts and a no-op everywhere else — nothing to configure.
         </p>
 
+        <h3 id="onion-address">Offering an onion address</h3>
+        <p>
+          A reporter on a monitored network (a workplace, a school) can be seen visiting
+          OpenWhistle even though the report itself stays private — Tor Browser hides that too.
+          Run a Tor hidden service on the same host pointing at the onion-only nginx entry on
+          <code>127.0.0.1:8080</code> (published there only — see the <code>ports:</code> entry
+          in <code>docker-compose.prod.yml</code>), then set <code>ONION_LOCATION</code> to the
+          address it gives you:
+        </p>
+        <div class="code-block" role="region" aria-label="Set up a Tor hidden service">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+          </div>
+          <pre><code><span class="t-comment"># 1. Install tor on the host, then add to /etc/tor/torrc:</span>
+<span class="t-str">HiddenServiceDir</span> /var/lib/tor/openwhistle/
+<span class="t-str">HiddenServicePort</span> 80 127.0.0.1:8080
+
+<span class="t-comment"># 2. Restart tor, then read the generated address:</span>
+<span class="t-prompt">$ </span><span class="t-cmd">systemctl restart tor</span>
+<span class="t-prompt">$ </span><span class="t-cmd">cat /var/lib/tor/openwhistle/hostname</span>
+<span class="t-out">abc...xyz.onion</span>
+
+<span class="t-comment"># 3. Set ONION_LOCATION in .env and restart the app:</span>
+<span class="t-str">ONION_LOCATION</span>=http://abc...xyz.onion
+<span class="t-prompt">$ </span><span class="t-cmd">docker compose up -d app</span></code></pre>
+        </div>
+        <p>
+          Every HTML response then carries an <code>Onion-Location</code> header (Tor Browser
+          offers to switch) and the submit page shows the address — except to a visitor already
+          on the onion service, who would just be pointed back at the same page. Cookies and
+          <code>Strict-Transport-Security</code> also adapt automatically: the app drops the
+          <code>Secure</code> cookie flag and HSTS for a request that arrived through the onion
+          listener, since that connection was never TLS (Tor encrypts it instead) and a browser
+          can refuse a <code>Secure</code> cookie sent over plain HTTP.
+        </p>
+        <div class="callout callout-note">
+          <div class="callout-title">The app trusts nginx, not the client, to say "this is the onion listener"</div>
+          <p>
+            A request's <code>Host</code> header is never used for this — any client on the
+            regular HTTPS listener could send <code>Host: &lt;anything&gt;.onion</code> and would
+            otherwise get treated as already-on-Tor. Instead the bundled <code>nginx/nginx.conf</code>
+            sets a request header, <code>X-OW-Onion: 1</code>, only inside the onion (port 8080)
+            server block, and clears it inside the regular (443) one — the same pattern already
+            used to strip incoming IP-forwarding headers. This means <strong>the app's own port
+            (<code>4009</code>) must stay reachable only through this nginx</strong>, exactly as
+            already required for IP-address stripping to hold: a deployment that exposes the app
+            directly, or proxies it through something else, must set or clear
+            <code>X-OW-Onion</code> itself or this protection (and the IP-stripping one) does
+            nothing.
+          </p>
+        </div>
+        <div class="callout callout-warn">
+          <div class="callout-title"><code>/var/lib/tor/openwhistle/</code> holds the address's private key</div>
+          <p>
+            <code>hs_ed25519_secret_key</code> inside that directory <em>is</em> the onion address
+            — losing it changes the address permanently, breaking every link already given to a
+            reporter, and anyone who obtains it can stand up a service that impersonates it.
+            Back the directory up before any host migration or volume change, keep it root/tor-only
+            (Tor sets <code>0700</code> on creation; a bind-mount or backup step can widen that —
+            check it), and never commit it or publish it anywhere the how-to above is shared.
+          </p>
+        </div>
+        <div class="callout callout-note">
+          <div class="callout-title">Rate limiting on the onion listener</div>
+          <p>
+            <code>HiddenServicePort</code> forwards every Tor visitor to nginx from
+            <code>127.0.0.1</code> — the real, distinct visitor is never visible to nginx, so
+            per-IP rate limiting cannot distinguish them. The onion server block therefore uses
+            its own zone, sized for several concurrent legitimate reporters instead of one
+            visitor, rather than the public listener's per-IP zone. A burst of onion traffic
+            still shares that one budget: expect occasional 429s under heavy concurrent use, and
+            raise the zone's <code>rate</code>/<code>burst</code> in <code>nginx/nginx.conf</code>
+            if that happens in practice.
+          </p>
+        </div>
+
         <h3 id="helm">Kubernetes (Helm)</h3>
         <p>
           The ingress controller sees every whistleblower's IP address. The chart
@@ -1257,6 +1333,12 @@
               <td><span class="env-required env-req-no">Optional</span></td>
               <td>Public base URL of the application. Used to build dashboard links inside notification emails and webhooks. Set to your domain (e.g. <code>https://whistleblower.example.com</code>).</td>
               <td><code>http://localhost</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">ONION_LOCATION</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Tor onion (v3) address of this instance, e.g. <code>http://&lt;56 chars&gt;.onion</code>, no path or query string. When set, every response carries an <code>Onion-Location</code> header (Tor Browser offers to switch) and the submit page shows the address to reporters on a monitored network. Never sent to a visitor already on the onion service itself. See <a href="#onion-address">Offering an onion address</a>.</td>
+              <td>—</td>
             </tr>
             <tr>
               <td><code class="env-key">LOG_LEVEL</code></td>
@@ -1658,6 +1740,61 @@
           as binary data in PostgreSQL alongside the report — no additional storage infrastructure
           is required.
         </p>
+
+        <h3 id="virus-scanning">Scanning uploads for viruses</h3>
+        <p>
+          Attachments can be scanned by a
+          <a href="https://www.clamav.net/" rel="noopener noreferrer" target="_blank">ClamAV</a>
+          <code>clamd</code> daemon before they are stored. Off by default. To turn it on:
+        </p>
+        <pre><code>COMPOSE_PROFILES=clamav
+CLAMAV_HOST=clamav</code></pre>
+        <p>
+          <code>docker-compose.prod.yml</code> ships a <code>clamav</code> service behind the
+          <code>clamav</code> profile; it is never reachable from the host, and shares only the
+          internal Docker network with <code>app</code> — not the <code>proxy</code> network nginx
+          uses, so nginx cannot reach it either. Signature updates need outbound internet access,
+          unlike the rest of the stack, so <code>clamav</code> gets its own dedicated egress network
+          instead of sharing one with another service. It needs roughly 1.5 GB RAM for the loaded
+          signature database.
+        </p>
+        <p>
+          Scanning is <strong>fail-closed</strong>: with <code>CLAMAV_HOST</code> set, an upload is
+          refused whenever <code>clamd</code> cannot be reached or times out, exactly as if it were
+          infected — nothing is ever stored unscanned. The whistleblower sees a generic
+          "try again in a few minutes" message; no file name, size or content reaches the log.
+        </p>
+        <p>
+          The Helm chart ships <strong>no clamav pod</strong> — <code>docker-compose.prod.yml</code>'s
+          profile-gated service has no Kubernetes equivalent. Setting <code>config.clamavHost</code>
+          in <code>values.yaml</code> without a real, reachable <code>clamd</code> behind it turns on
+          the fail-closed behaviour above for every upload: unreachable means refused, not skipped.
+          Point it at a <code>clamd</code> you run and reach from the cluster yourself — as its own
+          Deployment and Service, or an external instance — and leave it empty to keep scanning off.
+        </p>
+        <table class="env-table">
+          <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code class="env-key">CLAMAV_HOST</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Hostname of the <code>clamd</code> daemon. Empty disables scanning entirely — no connection is ever made.</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">CLAMAV_PORT</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td><code>clamd</code>'s TCP port.</td>
+              <td><code>3310</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">CLAMAV_TIMEOUT_SECONDS</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Connect and reply timeout for one scan. Exceeding it refuses the upload (fail closed).</td>
+              <td><code>30</code></td>
+            </tr>
+          </tbody>
+        </table>
 
         <h3>Limits and allowed types</h3>
         <ul>
@@ -2070,6 +2207,20 @@
           <li><code>Referrer-Policy: no-referrer</code></li>
           <li><code>Permissions-Policy</code> disabling geolocation, camera, microphone</li>
         </ul>
+
+        <h3>Onion listener trust boundary</h3>
+        <p>
+          When <code>ONION_LOCATION</code> is set, the app must know whether a request arrived
+          through the onion (Tor) listener or the regular HTTPS one, to decide whether to send
+          <code>Secure</code> cookies, HSTS, and the <code>Onion-Location</code> header itself
+          (see <a href="#onion-address">Offering an onion address</a>). That decision is never
+          made from the client-supplied <code>Host</code> header — a request on the real HTTPS
+          listener could claim <code>Host: &lt;anything&gt;.onion</code>. Instead nginx sets an
+          <code>X-OW-Onion: 1</code> request header only inside the onion server block and clears
+          it inside the regular one, the same trust model already used for stripping
+          IP-forwarding headers (layer 1 above): it depends on the application port never being
+          reachable except through this nginx.
+        </p>
 
         <h3>OIDC integration</h3>
         <p>

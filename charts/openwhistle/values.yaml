@@ -61,6 +61,10 @@ config:
   appPublicUrl: "https://whistleblower.example.com"
   submissionModeEnabled: "true"
 
+  # Tor onion address for reporters on a monitored network (Onion-Location
+  # header + a note on the submit page). Empty disables both.
+  onionLocation: ""
+
   # Absolute admin session lifetime in hours, counted from login (never extended)
   sessionMaxHours: "12"
 
@@ -132,6 +136,16 @@ config:
   # Multi-tenancy
   multiTenancyEnabled: "false"
   defaultOrgSlug: "default"
+
+  # Virus scanning of uploads through clamd (INSTREAM). Empty host = off. When
+  # set, an upload is refused if clamd cannot be reached (fail closed). This
+  # chart does not deploy a clamav pod — point clamavHost at a clamd you run
+  # and reach from the cluster yourself (your own Deployment/Service, or an
+  # external instance). Setting it without a reachable clamd behind it fails
+  # every upload closed, not open.
+  clamavHost: ""
+  clamavPort: "3310"
+  clamavTimeoutSeconds: "30"
 
 # Secrets — these must be provided; they are not defaulted.
 # Create a Kubernetes Secret and reference it, or use an external secrets operator.

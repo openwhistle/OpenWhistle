@@ -10,6 +10,7 @@ data:
   LOG_LEVEL: {{ .Values.config.logLevel | quote }}
   LOG_FORMAT: {{ .Values.config.logFormat | quote }}
   APP_PUBLIC_URL: {{ .Values.config.appPublicUrl | quote }}
+  ONION_LOCATION: {{ .Values.config.onionLocation | quote }}
   SUBMISSION_MODE_ENABLED: {{ .Values.config.submissionModeEnabled | quote }}
   SESSION_MAX_HOURS: {{ .Values.config.sessionMaxHours | quote }}
   ADMIN_FAILED_LOGIN_ALERT_THRESHOLD: {{ .Values.config.adminFailedLoginAlertThreshold | quote }}
@@ -56,3 +57,6 @@ data:
   RETENTION_DAYS: {{ .Values.config.retentionDays | quote }}
   MULTI_TENANCY_ENABLED: {{ .Values.config.multiTenancyEnabled | quote }}
   DEFAULT_ORG_SLUG: {{ .Values.config.defaultOrgSlug | quote }}
+  CLAMAV_HOST: {{ .Values.config.clamavHost | quote }}
+  CLAMAV_PORT: {{ .Values.config.clamavPort | quote }}
+  CLAMAV_TIMEOUT_SECONDS: {{ .Values.config.clamavTimeoutSeconds | quote }}

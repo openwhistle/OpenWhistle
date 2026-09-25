@@ -23,6 +23,7 @@ from app.config import settings
 from app.csrf import validate_csrf, validate_csrf_header
 from app.database import get_db
 from app.models.user import AdminRole, AdminUser
+from app.onion import cookie_secure
 from app.redis_client import get_redis
 from app.services import audit as audit_service
 from app.services import auth as auth_service
@@ -106,15 +107,17 @@ async def _password_failed(
     )
 
 
-def _set_session_cookie(response: Response, token: str) -> None:
+def _set_session_cookie(response: Response, token: str, request: Request) -> None:
     max_age = max(1, auth_service.seconds_left(token))
     response.set_cookie(
         key="ow_session", value=token, httponly=True, samesite="lax",
-        secure=settings.secure_cookies, max_age=max_age,
+        secure=cookie_secure(request), max_age=max_age,
     )
 
 
-async def _start_session(redis: Redis, db: AsyncSession, user: AdminUser) -> RedirectResponse:
+async def _start_session(
+    redis: Redis, db: AsyncSession, user: AdminUser, request: Request
+) -> RedirectResponse:
     """The only place a login becomes a session (TOTP verify and TOTP setup)."""
     if not user.is_active:
         return RedirectResponse("/admin/login", status_code=302)
@@ -124,7 +127,7 @@ async def _start_session(redis: Redis, db: AsyncSession, user: AdminUser) -> Red
     user.last_login_at = datetime.now(UTC)
     await db.commit()
     response = RedirectResponse("/admin/dashboard", status_code=302)
-    _set_session_cookie(response, token)
+    _set_session_cookie(response, token, request)
     return response
 
 
@@ -291,7 +294,7 @@ async def login_mfa_post(
         )
 
     await rl.reset_admin_login_attempts(redis, user.username)
-    return await _start_session(redis, db, user)
+    return await _start_session(redis, db, user, request)
 
 
 @router.get("/mfa/setup", response_class=HTMLResponse, response_model=None)
@@ -355,7 +358,7 @@ async def mfa_setup_post(
     await audit_service.log(db, user, audit_service.AuditAction.AUTH_TOTP_SETUP)
     await db.commit()
 
-    return await _start_session(redis, db, user)
+    return await _start_session(redis, db, user, request)
 
 
 @router.post("/logout")
@@ -372,7 +375,7 @@ async def logout(
 
     response = RedirectResponse("/admin/login", status_code=303)
     response.delete_cookie(
-        "ow_session", httponly=True, samesite="lax", secure=settings.secure_cookies
+        "ow_session", httponly=True, samesite="lax", secure=cookie_secure(request)
     )
     return response
 
@@ -421,7 +424,7 @@ async def session_refresh(
     expires_at = int(new_exp.timestamp()) if new_exp else 0
     ttl = auth_service.seconds_left(new_token)
     response = JSONResponse({"ttl_seconds": ttl, "expires_at": expires_at})
-    _set_session_cookie(response, new_token)
+    _set_session_cookie(response, new_token, request)
     return response
 
 

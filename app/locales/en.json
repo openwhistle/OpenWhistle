@@ -21,6 +21,7 @@
   "submit.sidebar.g03.desc": "No analytics, tracking pixels or third-party requests. The only cookies are those the form and your language choice need to work.",
   "submit.sidebar.g17.title": "HinSchG deadlines",
   "submit.sidebar.g17.desc": "The reporting office must confirm receipt within 7 days and give feedback within 3 months. You can exchange messages with it here.",
+  "submit.sidebar.onion": "Your employer's network can see that this site was visited, not what you send. On a work network, use Tor Browser and this address:",
   "submit.eyebrow": "Confidential report",
   "submit.title": "Submit a report",
   "submit.alert.title": "Before you submit",
@@ -663,5 +664,7 @@
   "upload.error.bad_type": "'{name}' has an unsupported file type ({type}). Allowed: PDF, images, text, Word, Excel.",
   "upload.error.content_mismatch": "'{name}' does not contain what its '{ext}' ending says (the file may be damaged or disguised). Save it again and retry.",
   "upload.error.too_many": "Too many files. You can attach at most {max} files.",
-  "upload.error.metadata": "'{name}' could not be checked for hidden details (author, location, device) and was not accepted. Save it again or export it as a PDF."
+  "upload.error.metadata": "'{name}' could not be checked for hidden details (author, location, device) and was not accepted. Save it again or export it as a PDF.",
+  "upload.error.malware": "'{name}' was not accepted: the virus scanner flagged it. If you believe the file is safe, export it as PDF and try again.",
+  "upload.error.scan_unavailable": "'{name}' could not be checked for viruses right now and was not stored. Try again in a few minutes."
 }

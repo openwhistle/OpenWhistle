@@ -27,6 +27,7 @@
   "submit.sidebar.g03.desc": "Aucun outil d'analyse, pixel de suivi ni requête vers des tiers. Les seuls cookies sont ceux dont le formulaire et votre choix de langue ont besoin.",
   "submit.sidebar.g17.title": "Délais de la HinSchG",
   "submit.sidebar.g17.desc": "Le bureau de signalement doit accuser réception sous 7 jours et vous répondre sous 3 mois. Vous pouvez échanger des messages avec lui ici.",
+  "submit.sidebar.onion": "Le réseau de votre employeur peut voir que ce site a été consulté, pas ce que vous envoyez. Sur un réseau professionnel, utilisez Tor Browser et cette adresse :",
   "submit.eyebrow": "Signalement confidentiel",
   "submit.title": "Soumettre un signalement",
   "submit.alert.title": "Avant de soumettre",
@@ -663,5 +664,7 @@
   "upload.error.bad_type": "« {name} » a un type de fichier non pris en charge ({type}). Autorisés : PDF, images, texte, Word, Excel.",
   "upload.error.content_mismatch": "« {name} » ne contient pas ce qu'indique son extension « {ext} » (fichier endommagé ou déguisé). Enregistrez-le à nouveau et réessayez.",
   "upload.error.too_many": "Trop de fichiers. Vous pouvez joindre au plus {max} fichiers.",
-  "upload.error.metadata": "« {name} » n'a pas pu être vérifié pour les informations cachées (auteur, lieu, appareil) et n'a pas été accepté. Enregistrez-le à nouveau ou exportez-le en PDF."
+  "upload.error.metadata": "« {name} » n'a pas pu être vérifié pour les informations cachées (auteur, lieu, appareil) et n'a pas été accepté. Enregistrez-le à nouveau ou exportez-le en PDF.",
+  "upload.error.malware": "« {name} » n'a pas été accepté : l'antivirus l'a signalé. Si vous pensez que le fichier est sûr, exportez-le en PDF et réessayez.",
+  "upload.error.scan_unavailable": "« {name} » n'a pas pu être analysé pour l'instant et n'a pas été enregistré. Réessayez dans quelques minutes."
 }

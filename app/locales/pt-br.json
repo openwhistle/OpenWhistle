@@ -27,6 +27,7 @@
   "submit.sidebar.g03.desc": "Sem ferramentas de análise, pixels de rastreamento ou requisições a terceiros. Os únicos cookies são os necessários para o formulário e para a sua escolha de idioma.",
   "submit.sidebar.g17.title": "Prazos da HinSchG",
   "submit.sidebar.g17.desc": "O escritório de denúncias deve confirmar o recebimento em 7 dias e dar retorno em 3 meses. Você pode trocar mensagens com ele aqui.",
+  "submit.sidebar.onion": "A rede do seu empregador pode ver que este site foi acessado, não o que você envia. Em uma rede corporativa, use o Tor Browser e este endereço:",
   "submit.eyebrow": "Denúncia confidencial",
   "submit.title": "Enviar uma denúncia",
   "submit.alert.title": "Antes de enviar",
@@ -663,5 +664,7 @@
   "upload.error.bad_type": "\"{name}\" tem um tipo de arquivo não suportado ({type}). Permitidos: PDF, imagens, texto, Word, Excel.",
   "upload.error.content_mismatch": "\"{name}\" não contém o que a extensão \"{ext}\" indica (o arquivo pode estar danificado ou disfarçado). Salve-o novamente e tente de novo.",
   "upload.error.too_many": "Arquivos demais. Você pode anexar no máximo {max} arquivos.",
-  "upload.error.metadata": "\"{name}\" não pôde ser verificado quanto a informações ocultas (autor, local, dispositivo) e não foi aceito. Salve-o novamente ou exporte-o como PDF."
+  "upload.error.metadata": "\"{name}\" não pôde ser verificado quanto a informações ocultas (autor, local, dispositivo) e não foi aceito. Salve-o novamente ou exporte-o como PDF.",
+  "upload.error.malware": "\"{name}\" não foi aceito: o antivírus o sinalizou. Se você acha que o arquivo é seguro, exporte-o como PDF e tente novamente.",
+  "upload.error.scan_unavailable": "\"{name}\" não pôde ser verificado agora e não foi armazenado. Tente novamente em alguns minutos."
 }
