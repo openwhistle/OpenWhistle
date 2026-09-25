@@ -70,7 +70,7 @@ Folgende Fakten sind festgelegt:
 
 ## Release documentation checklist
 
-Before marking a version as released (ROADMAP.md, CHANGELOG.md, git tag), verify ALL of the
+Before marking a version as released (the roadmap page at `docs/roadmap.html`, CHANGELOG.md, git tag), verify ALL of the
 following. These checks caught v0.3.0 and v0.4.0 gaps retroactively — run them proactively.
 
 ### `docs/docs.html`

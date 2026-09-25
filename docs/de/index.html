@@ -47,7 +47,7 @@
       "priceCurrency": "EUR"
     },
     "license": "https://www.gnu.org/licenses/gpl-3.0.html",
-    "softwareVersion": "1.0.0",
+    "softwareVersion": "1.5.0",
     "inLanguage": "de",
     "keywords": "Hinweisgebersystem kostenlos, interne Meldestelle HinSchG, Hinweisgeberschutz Software, Meldestelle Open Source",
     "author": {
@@ -115,7 +115,9 @@
     @font-face { font-family: 'Spectral'; src: url('../fonts/spectral-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
     @font-face { font-family: 'Spectral'; src: url('../fonts/spectral-latin-600-italic.woff2') format('woff2'); font-weight: 600; font-style: italic; font-display: swap; }
     @font-face { font-family: 'Spectral'; src: url('../fonts/spectral-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Spectral'; src: url('../fonts/spectral-latin-700-italic.woff2') format('woff2'); font-weight: 700; font-style: italic; font-display: swap; }
     @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-300-normal.woff2') format('woff2'); font-weight: 300; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-300-italic.woff2') format('woff2'); font-weight: 300; font-style: italic; font-display: swap; }
     @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
     @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-400-italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
     @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
@@ -590,6 +592,7 @@
 
       <ul class="nav-links" id="nav-links" role="list">
         <li><a href="../docs.html">Dokumentation</a></li>
+        <li><a href="../roadmap.html">Roadmap</a></li>
         <li><a href="../blog/">Blog</a></li>
         <li><a href="../" class="nav-lang" hreflang="en">🇬🇧 English</a></li>
         <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank" class="nav-cta">Demo testen</a></li>
@@ -626,7 +629,7 @@
           </a>
         </div>
         <div class="hero-meta" role="list">
-          <span class="hero-meta-item" role="listitem">Version 1.0.0</span>
+          <span class="hero-meta-item" role="listitem">Version 1.5.0</span>
           <span class="hero-meta-item" role="listitem">GPL-3.0</span>
           <span class="hero-meta-item" role="listitem">Keine IP-Protokollierung</span>
           <span class="hero-meta-item" role="listitem">Docker Self-Hosted</span>
@@ -828,6 +831,85 @@
       </div>
     </section>
 
+    <!-- Neu in 1.6 -->
+    <section class="section" id="whats-new" aria-labelledby="whats-new-heading">
+      <div class="section-inner">
+        <p class="section-eyebrow">Release 1.6</p>
+        <h2 class="section-heading" id="whats-new-heading">Neu in 1.6</h2>
+        <p class="section-subheading">
+          Acht Änderungen aus diesem Release. Alle Details im
+          <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG</a>.
+        </p>
+        <div class="features-grid" role="list">
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+            </div>
+            <h3 class="feature-title">Vertrauliche Identität nur auf Anfrage</h3>
+            <p class="feature-desc">Die vertrauliche Identität des Hinweisgebers bleibt vor der bearbeitenden Person verborgen, bis diese einen protokollierten Grund angibt. Auch der PDF-Export lässt sie standardmäßig weg, sofern nicht derselbe Grund angegeben wird.</p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </div>
+            <h3 class="feature-title">Optionale Tor-Onion-Adresse</h3>
+            <p class="feature-desc">Mit <code>ONION_LOCATION</code> sendet jede Antwort einen Onion-Location-Header, sodass der Tor Browser Hinweisgebern in einem überwachten Netzwerk den Wechsel anbietet — die Adresse erscheint auch auf der Meldeseite.</p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+            </div>
+            <h3 class="feature-title">Viren-Scan für Anhänge, fail-closed</h3>
+            <p class="feature-desc">Mit <code>CLAMAV_HOST</code> wird jeder Anhang vor der Speicherung von ClamAV geprüft. Ist clamd nicht erreichbar, wird der Upload abgelehnt — nie ungescannt gespeichert.</p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <h3 class="feature-title">Zeiten des Hinweisgebers nur auf den Tag genau</h3>
+            <p class="feature-desc">Einreichung, Empfangsbestätigung sowie Nachrichten und Anhänge des Hinweisgebers werden nur auf den Tag genau (UTC) gespeichert und angezeigt. Admin-Aktionen behalten ihre genaue Uhrzeit.</p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+            <h3 class="feature-title">Suche im Meldungsinhalt</h3>
+            <p class="feature-desc">Das Suchfeld im Dashboard findet auch ein Wort aus Beschreibung oder Nachrichten einer Meldung — nur für diese Anfrage im Arbeitsspeicher entschlüsselt. Gespeichert wird nichts, der vertrauliche Name wird nie durchsucht.</p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 1 1 8 0v3"/><circle cx="12" cy="15.5" r="1"/></svg>
+            </div>
+            <h3 class="feature-title">TLS standardmäßig aktiv</h3>
+            <p class="feature-desc">Der mitgelieferte Docker-Compose-Stack liefert HTTPS von Anfang an: ein selbstsigniertes Zertifikat beim ersten Start, Ihr eigenes Zertifikat, sobald Sie es hinterlegen.</p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+            </div>
+            <h3 class="feature-title">Webhooks übertragen nur Zahlen</h3>
+            <p class="feature-desc">Die Sammel- und Erinnerungs-Webhooks senden nur, wie viele Meldungen oder Nachrichten neu sind — nie eine Fallnummer oder Frist. Fallnummern erreichen weiterhin nur die eigenen Admins per E-Mail.</p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+            </div>
+            <h3 class="feature-title">Zurück-Button behält Eingaben</h3>
+            <p class="feature-desc">Der Zurück-Button im Melde-Assistenten löscht keine angehängten Dateien oder eine halb ausgefüllte Meldung mehr. Gemeldet und behoben von Zachary Bridges (#94).</p>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
     <!-- Comparison -->
     <section class="section" aria-labelledby="comp-heading">
       <div class="section-inner">
@@ -1023,7 +1105,7 @@
       </div>
       <div class="footer-bottom">
         <p>&copy; 2025 OpenWhistle Contributors. Veröffentlicht unter der GNU General Public License v3.0.</p>
-        <p>Version 1.0.0</p>
+        <p>Version 1.5.0</p>
       </div>
     </div>
   </footer>

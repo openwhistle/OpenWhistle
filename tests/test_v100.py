@@ -613,6 +613,7 @@ class TestConfigV100Defaults:
             "Chart appVersion": grab(chart, r'^appVersion:\s*"?([^"\s]+)'),
             "docs.html": grab("docs/docs.html", r"<strong>v([0-9.]+)</strong>"),
             "index.html": grab("docs/index.html", r'"softwareVersion":\s*"([^"]+)"'),
+            "de/index.html": grab("docs/de/index.html", r'"softwareVersion":\s*"([^"]+)"'),
             "CHANGELOG": grab("CHANGELOG.md", r"^## \[(\d+\.\d+\.\d+)\]"),
             "pyproject": grab("pyproject.toml", r'^version = "([^"]+)"'),
             "compose image": grab("docker-compose.prod.yml", r"OPENWHISTLE_VERSION:-([0-9.]+)\}"),
@@ -620,6 +621,27 @@ class TestConfigV100Defaults:
         v = settings.app_version
         assert found == dict.fromkeys(found, v)
         assert f"[{v}]: " in (root / "CHANGELOG.md").read_text(), "CHANGELOG compare link missing"
+
+        # Every visible "Version X.Y.Z" string on both landing pages (hero
+        # badge and footer) must also match — the structured-data check above
+        # only covers the invisible JSON-LD softwareVersion.
+        for page in ("docs/index.html", "docs/de/index.html"):
+            visible = re.findall(r">Version ([0-9.]+)<", (root / page).read_text())
+            assert visible, f"{page}: no visible 'Version X.Y.Z' string found"
+            assert visible == [v] * len(visible), (page, visible, v)
+
+        # Regression guard (review round 1): a blanket find-replace of the
+        # three "current version" spots above once swept in a fourth,
+        # unrelated occurrence -- a *historical* claim ("multi-tenancy has
+        # existed since 1.0.0") that must never move with app_version. The
+        # loop above can't catch it (the sentence doesn't end in "<"), so
+        # pin the historical fact directly against CHANGELOG's own [1.0.0]
+        # section.
+        de_text = (root / "docs/de/index.html").read_text()
+        assert "Ab Version 1.0.0 unterstützt OpenWhistle Multi-Tenancy" in de_text
+        changelog = (root / "CHANGELOG.md").read_text()
+        v100_section = changelog.split("## [1.0.0]", 1)[1].split("\n## [", 1)[0]
+        assert "Multi-tenancy" in v100_section, "multi-tenancy no longer documented under [1.0.0]"
 
 
 # ---------------------------------------------------------------------------
