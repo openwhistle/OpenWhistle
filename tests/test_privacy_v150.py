@@ -538,7 +538,9 @@ def test_batching_needs_an_interval_and_a_channel(monkeypatch: pytest.MonkeyPatc
 
 
 @pytest.mark.asyncio
-async def test_digest_carries_counts_and_case_numbers_only() -> None:
+async def test_digest_email_carries_case_numbers_webhook_carries_counts_only() -> None:
+    import json
+
     from app.config import settings
     from app.services.notifications import _build_webhook_payload, _send_email
 
@@ -550,9 +552,12 @@ async def test_digest_carries_counts_and_case_numbers_only() -> None:
     assert "2 (OW-2026-00001, OW-2026-00002)" in body
     assert "1 (OW-2026-00003)" in body
     assert "UTC" not in body and "Received" not in body  # no per-event time
-    assert _build_webhook_payload(["OW-2026-00001"], [], "generic", "OW", "https://x") == {
-        "event": "new_activity", "new_reports": ["OW-2026-00001"], "new_messages": [],
+    payload = _build_webhook_payload(1, 0, "generic", "OW", "https://x")
+    assert payload == {
+        "event": "new_activity", "new_reports": 1, "new_messages": 0,
+        "message": "1 new report, 0 new messages",
     }
+    assert "OW-" not in json.dumps(payload)
 
 
 # ── Retention is on by default ────────────────────────────────────────────────

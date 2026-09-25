@@ -308,7 +308,7 @@ async def test_run_s3_rekey_noop_when_another_replica_holds_the_lock(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """A replica that loses the Redis lock race must not touch the DB at all."""
-    from app.redis_client import get_redis
+    from app.redis_client import close_redis, get_redis
     from app.services import attachment as att_service
 
     redis = await get_redis()
@@ -321,6 +321,10 @@ async def test_run_s3_rekey_noop_when_another_replica_holds_the_lock(
         rekey_mock.assert_not_called()
     finally:
         await redis.delete(lock_key)
+        # get_redis() was called outside the `client` fixture: close it now, or
+        # it leaks a connection bound to this test's event loop into the next
+        # test, which fails with "Event loop is closed" (RTK/lane note).
+        await close_redis()
 
 
 @pytest.mark.asyncio
