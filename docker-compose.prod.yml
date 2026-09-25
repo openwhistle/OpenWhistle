@@ -52,6 +52,7 @@ services:
       BRAND_PRIMARY_COLOR: "${BRAND_PRIMARY_COLOR:-#0c7253}"
       BRAND_LOGO_URL: "${BRAND_LOGO_URL:-}"
       APP_PUBLIC_URL: "${APP_PUBLIC_URL:-http://localhost}"
+      ONION_LOCATION: "${ONION_LOCATION:-}"
       NOTIFY_EMAIL_ENABLED: "${NOTIFY_EMAIL_ENABLED:-false}"
       NOTIFY_EMAIL_TO: "${NOTIFY_EMAIL_TO:-}"
       NOTIFY_EMAIL_FROM: "${NOTIFY_EMAIL_FROM:-openwhistle@localhost}"
@@ -116,6 +117,9 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      # Onion service entry point — reachable only from the host running tor
+      # (see docs/docs.html "Offering an onion address"); never exposed publicly.
+      - "127.0.0.1:8080:8080"
     volumes:
       # :z relabels for SELinux hosts (shared label; a no-op elsewhere).
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro,z

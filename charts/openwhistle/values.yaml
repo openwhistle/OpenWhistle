@@ -61,6 +61,10 @@ config:
   appPublicUrl: "https://whistleblower.example.com"
   submissionModeEnabled: "true"
 
+  # Tor onion address for reporters on a monitored network (Onion-Location
+  # header + a note on the submit page). Empty disables both.
+  onionLocation: ""
+
   # Absolute admin session lifetime in hours, counted from login (never extended)
   sessionMaxHours: "12"
 

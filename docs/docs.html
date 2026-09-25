@@ -1081,6 +1081,38 @@
           required on SELinux hosts and a no-op everywhere else — nothing to configure.
         </p>
 
+        <h3 id="onion-address">Offering an onion address</h3>
+        <p>
+          A reporter on a monitored network (a workplace, a school) can be seen visiting
+          OpenWhistle even though the report itself stays private — Tor Browser hides that too.
+          Run a Tor hidden service on the same host pointing at the onion-only nginx entry on
+          <code>127.0.0.1:8080</code> (published there only — see the <code>ports:</code> entry
+          in <code>docker-compose.prod.yml</code>), then set <code>ONION_LOCATION</code> to the
+          address it gives you:
+        </p>
+        <div class="code-block" role="region" aria-label="Set up a Tor hidden service">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+          </div>
+          <pre><code><span class="t-comment"># 1. Install tor on the host, then add to /etc/tor/torrc:</span>
+<span class="t-str">HiddenServiceDir</span> /var/lib/tor/openwhistle/
+<span class="t-str">HiddenServicePort</span> 80 127.0.0.1:8080
+
+<span class="t-comment"># 2. Restart tor, then read the generated address:</span>
+<span class="t-prompt">$ </span><span class="t-cmd">systemctl restart tor</span>
+<span class="t-prompt">$ </span><span class="t-cmd">cat /var/lib/tor/openwhistle/hostname</span>
+<span class="t-out">abc...xyz.onion</span>
+
+<span class="t-comment"># 3. Set ONION_LOCATION in .env and restart the app:</span>
+<span class="t-str">ONION_LOCATION</span>=http://abc...xyz.onion
+<span class="t-prompt">$ </span><span class="t-cmd">docker compose up -d app</span></code></pre>
+        </div>
+        <p>
+          Every response then carries an <code>Onion-Location</code> header (Tor Browser offers
+          to switch) and the submit page shows the address — except to a visitor already on the
+          onion service, who would just be pointed back at the same page.
+        </p>
+
         <h3 id="helm">Kubernetes (Helm)</h3>
         <p>
           The ingress controller sees every whistleblower's IP address. The chart
@@ -1257,6 +1289,12 @@
               <td><span class="env-required env-req-no">Optional</span></td>
               <td>Public base URL of the application. Used to build dashboard links inside notification emails and webhooks. Set to your domain (e.g. <code>https://whistleblower.example.com</code>).</td>
               <td><code>http://localhost</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">ONION_LOCATION</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Tor onion (v3) address of this instance, e.g. <code>http://&lt;56 chars&gt;.onion</code>, no path or query string. When set, every response carries an <code>Onion-Location</code> header (Tor Browser offers to switch) and the submit page shows the address to reporters on a monitored network. Never sent to a visitor already on the onion service itself. See <a href="#onion-address">Offering an onion address</a>.</td>
+              <td>—</td>
             </tr>
             <tr>
               <td><code class="env-key">LOG_LEVEL</code></td>

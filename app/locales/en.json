@@ -20,6 +20,7 @@
   "submit.sidebar.g03.desc": "No analytics, tracking pixels or third-party requests. The only cookies are those the form and your language choice need to work.",
   "submit.sidebar.g17.title": "HinSchG deadlines",
   "submit.sidebar.g17.desc": "The reporting office must confirm receipt within 7 days and give feedback within 3 months. You can exchange messages with it here.",
+  "submit.sidebar.onion": "Your employer's network can see that this site was visited, not what you send. On a work network, use Tor Browser and this address:",
   "submit.eyebrow": "Confidential report",
   "submit.title": "Submit a report",
   "submit.alert.title": "Before you submit",

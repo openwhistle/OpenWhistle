@@ -26,6 +26,7 @@
   "submit.sidebar.g03.desc": "Sem ferramentas de análise, pixels de rastreamento ou requisições a terceiros. Os únicos cookies são os necessários para o formulário e para a sua escolha de idioma.",
   "submit.sidebar.g17.title": "Prazos da HinSchG",
   "submit.sidebar.g17.desc": "O escritório de denúncias deve confirmar o recebimento em 7 dias e dar retorno em 3 meses. Você pode trocar mensagens com ele aqui.",
+  "submit.sidebar.onion": "A rede do seu empregador pode ver que este site foi acessado, não o que você envia. Em uma rede corporativa, use o Tor Browser e este endereço:",
   "submit.eyebrow": "Denúncia confidencial",
   "submit.title": "Enviar uma denúncia",
   "submit.alert.title": "Antes de enviar",

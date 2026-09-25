@@ -81,6 +81,17 @@ class SecurityMiddleware:
 
         # scope["headers"] is list[tuple[bytes, bytes]] in the ASGI spec
         raw_headers: list[tuple[bytes, bytes]] = list(scope.get("headers", []))
+        # Host is read here (not touched by the IP-header stripping below) so
+        # Onion-Location is never offered to a visitor already on the onion
+        # service itself — that would just point back at the same page.
+        host_header = next(
+            (
+                value.decode("latin-1")
+                for name, value in raw_headers
+                if name.decode("latin-1").lower() == "host"
+            ),
+            "",
+        )
         ip_headers_present = any(
             name.decode("latin-1").lower() in _IP_REVEAL_HEADERS
             for name, _ in raw_headers
@@ -109,6 +120,16 @@ class SecurityMiddleware:
                 for name, value in _STATIC_SECURITY_HEADERS.items():
                     mutable[name] = value
                 mutable["Content-Security-Policy"] = _build_csp(nonce)
+                from app.config import settings  # noqa: PLC0415
+
+                if (
+                    settings.onion_location
+                    and not str(scope.get("path", "")).startswith("/static/")
+                    and not host_header.lower().endswith(".onion")
+                ):
+                    mutable["Onion-Location"] = (
+                        settings.onion_location.rstrip("/") + str(scope.get("path", "/"))
+                    )
                 # A PIN, a report or an attachment must not be left in the browser
                 # cache of a shared office computer for the next user to find.
                 if not str(scope.get("path", "")).startswith("/static/"):

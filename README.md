@@ -154,6 +154,9 @@ zero vendor lock-in, and privacy-first by design.
   the app's HSTS header pins a browser that clicked through the warning. To renew, drop the new
   certificate into `nginx/certs/` and run `docker compose up -d tls-init nginx` (`tls-init` is
   one-shot; restarting `nginx` alone keeps the old certificate).
+- **Tor onion address** — `ONION_LOCATION` adds an `Onion-Location` header (Tor Browser offers to
+  switch) and a note on the submit page for reporters on a monitored network; see
+  [docs/docs.html](https://openwhistle.net/docs.html#onion-address) "Offering an onion address".
 
 ---
 

@@ -1,5 +1,10 @@
+import re
+
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# A v3 onion address is 56 base32 characters (RFC 4648, lowercase a-z2-7).
+_ONION_LOCATION_RE = re.compile(r"^https?://[a-z2-7]{56}\.onion$", re.IGNORECASE)
 
 # Minimum SECRET_KEY / ENCRYPTION_KEY length. SECRET_KEY signs admin JWTs;
 # ENCRYPTION_KEY (falling back to SECRET_KEY when unset) is the root of all
@@ -169,6 +174,23 @@ class Settings(BaseSettings):
 
     # Public base URL used in notification links
     app_public_url: str = "http://localhost"
+
+    # Tor onion address for reporters on a monitored network, e.g.
+    # http://<56 base32 chars>.onion — Tor Browser offers it to visitors and the
+    # submit page shows it. Empty disables both. See docs/docs.html
+    # "Offering an onion address" for how to run the hidden service.
+    onion_location: str = ""
+
+    @field_validator("onion_location")
+    @classmethod
+    def _validate_onion_location(cls, v: str) -> str:
+        v = v.strip()
+        if v and not _ONION_LOCATION_RE.match(v):
+            raise ValueError(
+                "ONION_LOCATION must be empty or http(s)://<56-character-onion-address>.onion "
+                "with no path or query string, e.g. http://" + "a" * 56 + ".onion."
+            )
+        return v
 
     # Email notifications (SMTP)
     notify_email_enabled: bool = False

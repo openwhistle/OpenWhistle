@@ -392,6 +392,9 @@
                 </div>
             </div>
         </div>
+        {% if onion_location() %}
+        <p class="sidebar-note">{{ t('submit.sidebar.onion') }} <span class="mono">{{ onion_location() }}</span></p>
+        {% endif %}
     </aside>
 </div>
 {% endblock %}

@@ -46,9 +46,11 @@ def test_nginx_redirects_http_and_strips_ip_headers_on_https() -> None:
     servers = re.findall(r"\n    server \{.*?\n    \}", conf, re.S)
     plain = next(s for s in servers if "listen 80;" in s)
     tls = next(s for s in servers if "listen 443 ssl" in s)
+    onion = next(s for s in servers if "listen 8080;" in s)
     assert "return 301 https://$host$request_uri;" in plain
     assert "proxy_pass" not in plain
     for header in (
         "X-Forwarded-For", "X-Real-IP", "Forwarded", "CF-Connecting-IP", "True-Client-IP",
     ):
         assert f"proxy_set_header {header}" in tls
+        assert f"proxy_set_header {header}" in onion
