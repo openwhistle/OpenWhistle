@@ -78,10 +78,17 @@ async def test_scanning_off_by_default_never_connects(monkeypatch: pytest.Monkey
 
 
 @pytest.mark.asyncio
-async def test_scan_unavailable_on_size_limit_reply(monkeypatch: pytest.MonkeyPatch) -> None:
-    """A clamd StreamMaxLength rejection is not a clean/infected verdict — treat
-    it as unavailable, same as an unreachable daemon (fail closed)."""
-    server = await _fake_clamd(b"INSTREAM size limit exceeded. ERROR\0")
+@pytest.mark.parametrize("reply", [
+    b"INSTREAM size limit exceeded. ERROR\0",  # clamd's own StreamMaxLength rejection
+    b"stream: UNKNOWN COMMAND ERROR\0",  # any other clamd ERROR reply
+    b"\x00\x01\xffnonsense\xfe\x00",  # garbage: neither OK, FOUND, nor readable text
+])
+async def test_scan_unavailable_on_non_ok_non_found_reply(
+    monkeypatch: pytest.MonkeyPatch, reply: bytes
+) -> None:
+    """Anything that isn't a clean or infected verdict is not a scan result —
+    treat it as unavailable, same as an unreachable daemon (fail closed)."""
+    server = await _fake_clamd(reply)
     monkeypatch.setattr(settings, "clamav_host", "127.0.0.1")
     monkeypatch.setattr(settings, "clamav_port", server.sockets[0].getsockname()[1])
     async with server:
@@ -92,25 +99,146 @@ async def test_scan_unavailable_on_size_limit_reply(monkeypatch: pytest.MonkeyPa
 
 
 @pytest.mark.asyncio
+async def test_empty_signature_name_is_still_treated_as_infected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """`str | None` means only None is clean — a FOUND reply with a blank
+    signature name (extra whitespace, a clamd bug) must not become a falsy
+    empty string that a naive `if await scan_bytes(...)` reads as clean."""
+    server = await _fake_clamd(b"stream:  FOUND\0")
+    monkeypatch.setattr(settings, "clamav_host", "127.0.0.1")
+    monkeypatch.setattr(settings, "clamav_port", server.sockets[0].getsockname()[1])
+    async with server:
+        result = await scan_bytes(b"x" * 100)
+    assert result is not None
+    assert result == "unknown"
+
+
+@pytest.mark.asyncio
+async def test_scan_unavailable_when_reply_has_no_terminator(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """clamd closes the connection mid-reply, before the '\\0' terminator ever
+    arrives — an incomplete reply, not a verdict."""
+    async def handle(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        assert await reader.readexactly(10) == b"zINSTREAM\0"
+        while True:
+            size = int.from_bytes(await reader.readexactly(4), "big")
+            if size == 0:
+                break
+            await reader.readexactly(size)
+        writer.write(b"stream: O")  # no trailing \0 — then just disappear
+        await writer.drain()
+        writer.close()
+
+    server = await asyncio.start_server(handle, "127.0.0.1", 0)
+    monkeypatch.setattr(settings, "clamav_host", "127.0.0.1")
+    monkeypatch.setattr(settings, "clamav_port", server.sockets[0].getsockname()[1])
+    async with server:
+        from app.services.virus_scan import ScanUnavailableError
+
+        with pytest.raises(ScanUnavailableError):
+            await scan_bytes(b"x" * 100)
+
+
+@pytest.mark.asyncio
+async def test_scan_unavailable_on_over_long_reply(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A reply longer than the bounded receive buffer and still no '\\0' must
+    raise promptly (asyncio.LimitOverrunError) rather than buffer without limit
+    or hang — a compromised or badly broken clamd must not stall the request."""
+    async def handle(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        assert await reader.readexactly(10) == b"zINSTREAM\0"
+        while True:
+            size = int.from_bytes(await reader.readexactly(4), "big")
+            if size == 0:
+                break
+            await reader.readexactly(size)
+        writer.write(b"x" * 100_000)  # far past the reply size bound, no '\0'
+        await writer.drain()
+        writer.close()
+
+    server = await asyncio.start_server(handle, "127.0.0.1", 0)
+    monkeypatch.setattr(settings, "clamav_host", "127.0.0.1")
+    monkeypatch.setattr(settings, "clamav_port", server.sockets[0].getsockname()[1])
+    async with server:
+        from app.services.virus_scan import ScanUnavailableError
+
+        with pytest.raises(ScanUnavailableError):
+            await scan_bytes(b"x" * 100)
+
+
+@pytest.mark.asyncio
+async def test_scan_unavailable_on_drain_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    """clamd accepts the connection but stops reading after the protocol
+    header: with nothing draining the socket, a large-enough upload fills the
+    client's own send buffer and `writer.drain()` must time out too — not
+    just the reply read."""
+    stop_reading = asyncio.Event()
+
+    async def handle(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        await reader.readexactly(10)  # protocol header only, then go silent
+        await stop_reading.wait()
+        writer.close()
+
+    server = await asyncio.start_server(handle, "127.0.0.1", 0)
+    monkeypatch.setattr(settings, "clamav_host", "127.0.0.1")
+    monkeypatch.setattr(settings, "clamav_port", server.sockets[0].getsockname()[1])
+    monkeypatch.setattr(settings, "clamav_timeout_seconds", 1)
+    try:
+        from app.services.virus_scan import ScanUnavailableError
+
+        # Large enough that the un-drained transport write buffer actually
+        # fills (default high-water mark is 64 KiB) — a real stall, not a
+        # coincidence of timing.
+        with pytest.raises(ScanUnavailableError):
+            await scan_bytes(b"x" * 8_000_000)
+    finally:
+        stop_reading.set()
+        server.close()
+        await server.wait_closed()
+
+
+@pytest.mark.asyncio
 async def test_scan_unavailable_on_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
     """clamd accepts the connection but never replies: the read must time out
-    and be treated as unavailable, not hang forever."""
+    and be treated as unavailable, not hang forever.
+
+    The fake handler parks on an Event rather than a bare `sleep(3600)`, and
+    the test wakes + reaps it in `finally`. `pyproject.toml` runs the whole
+    suite on one session-scoped event loop, so a handler task left running
+    here would keep an open socket alive for the rest of the session instead
+    of just this test.
+    """
+    released = asyncio.Event()
+    handler_done = asyncio.Event()
+
     async def handle(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        await reader.readexactly(10)
-        while await reader.readexactly(4) != b"\0\0\0\0":
-            pass
-        await asyncio.sleep(3600)
+        try:
+            await reader.readexactly(10)
+            while True:
+                size = int.from_bytes(await reader.readexactly(4), "big")
+                if size == 0:
+                    break
+                await reader.readexactly(size)
+            await released.wait()
+        finally:
+            writer.close()
+            handler_done.set()
 
     server = await asyncio.start_server(handle, "127.0.0.1", 0)
     monkeypatch.setattr(settings, "clamav_host", "127.0.0.1")
     monkeypatch.setattr(settings, "clamav_port", server.sockets[0].getsockname()[1])
     monkeypatch.setattr(settings, "clamav_timeout_seconds", 1)
     # Not `async with server:` — its __aexit__ awaits wait_closed(), which
-    # would block on the handler above, deliberately stuck in sleep(3600).
+    # would block until the handler task above finishes; it is deliberately
+    # parked until `released` is set below.
     try:
         from app.services.virus_scan import ScanUnavailableError
 
         with pytest.raises(ScanUnavailableError):
             await scan_bytes(b"x" * 1000)
     finally:
+        released.set()
         server.close()
+        await asyncio.wait_for(handler_done.wait(), 5)
+        await server.wait_closed()

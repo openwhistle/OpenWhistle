@@ -177,9 +177,10 @@ services:
 
   # Optional upload virus scan (Task 20). Off unless CLAMAV_HOST is set and
   # this profile is enabled: `COMPOSE_PROFILES=clamav`. Not reachable from the
-  # host — only the app container talks to it, over the internal network.
-  # `internal` has no internet access, but freshclam (signature updates) needs
-  # one to reach database.clamav.net, hence also `proxy`.
+  # host, and not on `proxy` — nginx has no business reaching clamd, so it
+  # shares only `internal` with `app`. `internal` has no internet access, but
+  # freshclam (signature updates) needs one to reach database.clamav.net,
+  # hence its own `clamav-egress` network instead of the shared `proxy` one.
   clamav:
     image: clamav/clamav:1.4@sha256:a5f03c12a79dbe9f6d8a527b6bb1ea053fa8dd061d3738a26897f055ee2d9303
     profiles: ["clamav"]
@@ -209,7 +210,7 @@ services:
       start_period: 6m
     networks:
       - internal
-      - proxy
+      - clamav-egress
 
 volumes:
   postgres_data:
@@ -220,5 +221,9 @@ networks:
   internal:
     driver: bridge
     internal: true
+  # clamd's only route to the internet (freshclam signature updates). Used by
+  # no other service — in particular, not shared with nginx's `proxy` network.
+  clamav-egress:
+    driver: bridge
   proxy:
     driver: bridge

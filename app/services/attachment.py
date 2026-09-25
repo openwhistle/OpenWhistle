@@ -352,7 +352,10 @@ async def read_upload_files(
         from app.services.virus_scan import ScanUnavailableError, scan_bytes  # noqa: PLC0415
 
         try:
-            if await scan_bytes(data):
+            # str | None: only None means clean. Never `if await scan_bytes(...)`
+            # — an (unexpected) empty-string signature would be falsy and read
+            # as clean, storing an infected file unscanned in all but name.
+            if (await scan_bytes(data)) is not None:
                 return [], UploadError("upload.error.malware", name=name)
         except ScanUnavailableError:
             return [], UploadError("upload.error.scan_unavailable", name=name)

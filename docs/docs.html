@@ -1751,10 +1751,12 @@
 CLAMAV_HOST=clamav</code></pre>
         <p>
           <code>docker-compose.prod.yml</code> ships a <code>clamav</code> service behind the
-          <code>clamav</code> profile; it is not reachable from the host, only from the <code>app</code>
-          container over the internal network. It needs roughly 1.5 GB RAM for the loaded signature
-          database, and — unlike the rest of the stack — outbound internet access, to fetch signature
-          updates from <code>database.clamav.net</code>.
+          <code>clamav</code> profile; it is never reachable from the host, and shares only the
+          internal Docker network with <code>app</code> — not the <code>proxy</code> network nginx
+          uses, so nginx cannot reach it either. Signature updates need outbound internet access,
+          unlike the rest of the stack, so <code>clamav</code> gets its own dedicated egress network
+          instead of sharing one with another service. It needs roughly 1.5 GB RAM for the loaded
+          signature database.
         </p>
         <p>
           Scanning is <strong>fail-closed</strong>: with <code>CLAMAV_HOST</code> set, an upload is

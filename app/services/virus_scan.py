@@ -15,13 +15,24 @@ class ScanUnavailableError(Exception):
     """clamd is configured but could not give an answer."""
 
 
+# A clamd reply is a few dozen bytes ("stream: OK\0" or "stream: <signature>
+# FOUND\0"). Bound the receive buffer well below that so a reply with no "\0"
+# terminator (truncated, garbled, or a hostile daemon) hits
+# asyncio.LimitOverrunError quickly instead of buffering up to the default
+# 64 KiB before giving up.
+_MAX_REPLY_BYTES = 4096
+
+
 async def scan_bytes(data: bytes) -> str | None:
     if not settings.clamav_host:
         return None
     timeout = settings.clamav_timeout_seconds
     try:
         reader, writer = await asyncio.wait_for(
-            asyncio.open_connection(settings.clamav_host, settings.clamav_port), timeout
+            asyncio.open_connection(
+                settings.clamav_host, settings.clamav_port, limit=_MAX_REPLY_BYTES
+            ),
+            timeout,
         )
     except (OSError, TimeoutError) as exc:
         raise ScanUnavailableError(str(exc)) from exc
@@ -35,7 +46,12 @@ async def scan_bytes(data: bytes) -> str | None:
         # draining its receive buffer must not hang the request forever.
         await asyncio.wait_for(writer.drain(), timeout)
         reply = await asyncio.wait_for(reader.readuntil(b"\0"), timeout)
-    except (OSError, TimeoutError, asyncio.IncompleteReadError) as exc:
+    except (
+        OSError,
+        TimeoutError,
+        asyncio.IncompleteReadError,
+        asyncio.LimitOverrunError,
+    ) as exc:
         raise ScanUnavailableError(str(exc)) from exc
     finally:
         writer.close()
@@ -43,5 +59,7 @@ async def scan_bytes(data: bytes) -> str | None:
     if text == "OK":
         return None
     if text.endswith(" FOUND"):
-        return text.removesuffix(" FOUND")
+        # A blank or whitespace-only signature name must still read as
+        # infected — the interface is "None means clean", nothing else does.
+        return text.removesuffix(" FOUND").strip() or "unknown"
     raise ScanUnavailableError(text)
