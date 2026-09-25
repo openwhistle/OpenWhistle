@@ -294,7 +294,8 @@ async def test_inactive_user_gets_401(
     token = create_access_token(str(admin.id), role=admin.role.value)
     await store_session(redis, str(admin.id), token)
 
-    resp = await client.get("/admin/dashboard", cookies={"ow_session": token})
+    client.cookies.set("ow_session", token)
+    resp = await client.get("/admin/dashboard")
     assert resp.status_code in (401, 302)
 
 

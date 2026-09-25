@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_icons.html" as icons %}
 
 {% block styles %}<style nonce="{{ request.state.csp_nonce }}">
 .ss-mt-lg { margin-top: 1.5rem; }
@@ -14,7 +15,7 @@
 <div class="container-sm success-wrapper">
 
     <div class="success-header anim-in">
-        <span class="success-check">✓</span>
+        <span class="success-check">{{ icons.icon('check') }}</span>
         <h1>{{ t('success.title') }}</h1>
         <p>{{ t('success.subtitle') }}</p>
     </div>
@@ -25,21 +26,21 @@
     </div>
 
     <div class="panel anim-in delay-10">
-        <div class="panel-header">{{ t('success.panel.header') }}</div>
+        <h2 class="panel-header">{{ t('success.panel.header') }}</h2>
 
         <div class="credential-group">
             <div class="credential-label">{{ t('success.case_number') }}</div>
             <div class="credential-display" id="case-number">
-                <span>{{ case_number }}</span>
-                <button class="copy-btn" data-action="copy" data-copy="{{ case_number }}" title="{{ t('success.copy') }}" aria-label="{{ t('success.copy.case_number') }}" data-copied="{{ t('success.copied') }}">&#10697;</button>
+                <span class="token">{{ case_number }}</span>
+                <button class="copy-btn" data-action="copy" data-copy="{{ case_number }}" title="{{ t('success.copy') }}" aria-label="{{ t('success.copy.case_number') }}" data-copied="{{ t('success.copied') }}">{{ icons.icon('copy') }}</button>
             </div>
         </div>
 
         <div class="credential-group">
             <div class="credential-label">{{ t('success.pin') }}</div>
             <div class="credential-display" id="pin-value">
-                <span>{{ pin }}</span>
-                <button class="copy-btn" data-action="copy" data-copy="{{ pin }}" title="{{ t('success.copy') }}" aria-label="{{ t('success.copy.pin') }}" data-copied="{{ t('success.copied') }}">&#10697;</button>
+                <span class="token">{{ pin }}</span>
+                <button class="copy-btn" data-action="copy" data-copy="{{ pin }}" title="{{ t('success.copy') }}" aria-label="{{ t('success.copy.pin') }}" data-copied="{{ t('success.copied') }}">{{ icons.icon('copy') }}</button>
             </div>
         </div>
 
@@ -49,7 +50,7 @@
             <ul class="attachment-items">
                 {% for att in attachments %}
                 <li class="attachment-item">
-                    <span class="attachment-icon">&#128206;</span>
+                    <span class="attachment-icon">{{ icons.icon('paperclip') }}</span>
                     <span class="attachment-name">{{ att.filename }}</span>
                     <span class="attachment-size">{{ att.size_str }}</span>
                 </li>

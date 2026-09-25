@@ -165,7 +165,6 @@ class Settings(BaseSettings):
 
     # Branding (optional — companies can override defaults)
     brand_primary_color: str = "#0c7253"
-    brand_secondary_color: str = "#b07230"
     brand_logo_url: str = ""
 
     # Public base URL used in notification links

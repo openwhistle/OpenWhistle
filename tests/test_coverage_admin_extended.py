@@ -409,7 +409,7 @@ async def test_delete_report_cleans_up_whistleblower_sessions(
 
     redis = await get_redis()
     fake_session_key = f"status-session:cleanup-test-{uuid.uuid4().hex}"
-    await redis.setex(fake_session_key, 7200, report_id)
+    await redis.set(fake_session_key, report_id, ex=7200)
     assert await redis.exists(fake_session_key) == 1
 
     csrf = await _get_csrf(client, f"/admin/reports/{report_id}")

@@ -30,7 +30,6 @@
     <div class="mfas-card">
 
         <div class="mfas-header">
-            <div class="page-eyebrow">{{ t('mfa.setup.eyebrow') }}</div>
             <h1 class="mfas-title">{{ t('mfa.setup.title') }}</h1>
             <p class="mfas-subtitle">{{ t('mfa.setup.subtitle') }}</p>
         </div>
@@ -40,7 +39,7 @@
         {% endif %}
 
         <div class="panel anim-in delay-08">
-            <div class="panel-header">{{ t('mfa.setup.step1.header') }}</div>
+            <h2 class="panel-header">{{ t('mfa.setup.step1.header') }}</h2>
             <p class="mfas-step-body">{{ t('mfa.setup.step1.body') }}</p>
 
             <div class="mfas-qr-wrap">
@@ -64,7 +63,7 @@
         </div>
 
         <div class="panel anim-in delay-18 mfas-panel-2">
-            <div class="panel-header">{{ t('mfa.setup.step2.header') }}</div>
+            <h2 class="panel-header">{{ t('mfa.setup.step2.header') }}</h2>
             <p class="mfas-step-body">{{ t('mfa.setup.step2.body') }}</p>
 
             <form method="post" action="/admin/mfa/setup" novalidate>

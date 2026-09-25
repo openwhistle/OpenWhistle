@@ -52,10 +52,10 @@ async def create_authorization_url(redis: Redis) -> str:
     state = secrets.token_urlsafe(32)
     nonce = secrets.token_urlsafe(32)
     code_verifier = secrets.token_urlsafe(64)  # 86 chars, within RFC 7636's 43-128
-    await redis.setex(
+    await redis.set(
         f"{_STATE_PREFIX}{state}",
-        _STATE_TTL,
         json.dumps({"nonce": nonce, "code_verifier": code_verifier}),
+        ex=_STATE_TTL,
     )
 
     params = {

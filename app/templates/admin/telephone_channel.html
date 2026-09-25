@@ -1,25 +1,11 @@
-{% extends "base.html" %}
+{% extends "admin/_layout.html" %}
+{% import "_icons.html" as icons %}
 
 {% block title %}{{ t('admin.telephone.title') }} — OpenWhistle{% endblock %}
 
-{% block nav_links %}
-<li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
-<li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
-<li><a href="/admin/categories">{{ t('admin.nav.categories') }}</a></li>
-<li><a href="/admin/locations">{{ t('admin.nav.locations') }}</a></li>
-<li><a href="/admin/users">{{ t('admin.nav.users') }}</a></li>
-<li><a href="/admin/audit-log">{{ t('admin.nav.audit_log') }}</a></li>
-<li><a href="/admin/telephone-channel" class="active" aria-current="page">{{ t('admin.nav.telephone_channel') }}</a></li>
-<li><a href="/admin/retention">{{ t('admin.nav.retention') }}</a></li>
-<li><a href="/admin/organisations">{{ t('admin.nav.organisations') }}</a></li>
-<li><a href="/admin/system">{{ t('admin.nav.system') }}</a></li>
-<li><form method="post" action="/admin/logout"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button type="submit" class="nav-link-button">{{ t('admin.nav.logout') }}</button></form></li>
-{% endblock %}
-
-{% block content %}
+{% block admin_content %}
 <div class="container">
     <div class="page-header">
-        <div class="page-eyebrow">{{ t('admin.telephone.eyebrow') }}</div>
         <h1>{{ t('admin.telephone.title') }}</h1>
         <p class="page-subtitle">{{ t('admin.telephone.subtitle') }}</p>
     </div>
@@ -34,35 +20,35 @@
         <p>{{ t('admin.telephone.checklist.intro') }}</p>
         <ul class="checklist" role="list">
             <li class="checklist__item">
-                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span class="checklist__icon" aria-hidden="true">{{ icons.icon('square') }}</span>
                 <span>{{ t('admin.telephone.checklist.1') }}</span>
             </li>
             <li class="checklist__item">
-                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span class="checklist__icon" aria-hidden="true">{{ icons.icon('square') }}</span>
                 <span>{{ t('admin.telephone.checklist.2') }}</span>
             </li>
             <li class="checklist__item">
-                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span class="checklist__icon" aria-hidden="true">{{ icons.icon('square') }}</span>
                 <span>{{ t('admin.telephone.checklist.3') }}</span>
             </li>
             <li class="checklist__item">
-                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span class="checklist__icon" aria-hidden="true">{{ icons.icon('square') }}</span>
                 <span>{{ t('admin.telephone.checklist.4') }}</span>
             </li>
             <li class="checklist__item">
-                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span class="checklist__icon" aria-hidden="true">{{ icons.icon('square') }}</span>
                 <span>{{ t('admin.telephone.checklist.5') }}</span>
             </li>
             <li class="checklist__item">
-                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span class="checklist__icon" aria-hidden="true">{{ icons.icon('square') }}</span>
                 <span>{{ t('admin.telephone.checklist.6') }}</span>
             </li>
             <li class="checklist__item">
-                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span class="checklist__icon" aria-hidden="true">{{ icons.icon('square') }}</span>
                 <span>{{ t('admin.telephone.checklist.7') }}</span>
             </li>
             <li class="checklist__item">
-                <span class="checklist__icon" aria-hidden="true">☐</span>
+                <span class="checklist__icon" aria-hidden="true">{{ icons.icon('square') }}</span>
                 <span>{{ t('admin.telephone.checklist.8') }}</span>
             </li>
         </ul>
@@ -106,7 +92,7 @@
 
     <section class="card" aria-labelledby="heading-references">
         <h2 id="heading-references">{{ t('admin.telephone.refs.title') }}</h2>
-        <ul>
+        <ul class="refs-list">
             <li>
                 <strong>{{ t('admin.telephone.refs.16') }}</strong>
                 <a href="https://www.gesetze-im-internet.de/hinschg/__16.html" target="_blank" rel="noopener noreferrer">

@@ -15,7 +15,6 @@ data:
   ADMIN_FAILED_LOGIN_ALERT_THRESHOLD: {{ .Values.config.adminFailedLoginAlertThreshold | quote }}
   ADMIN_FAILED_LOGIN_ALERT_WINDOW_MINUTES: {{ .Values.config.adminFailedLoginAlertWindowMinutes | quote }}
   BRAND_PRIMARY_COLOR: {{ .Values.config.brandPrimaryColor | quote }}
-  BRAND_SECONDARY_COLOR: {{ .Values.config.brandSecondaryColor | quote }}
   BRAND_LOGO_URL: {{ .Values.config.brandLogoUrl | quote }}
   REMINDER_ENABLED: {{ .Values.config.reminderEnabled | quote }}
   REMINDER_ACK_WARN_DAYS: {{ .Values.config.reminderAckWarnDays | quote }}

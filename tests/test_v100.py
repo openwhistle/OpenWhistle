@@ -616,6 +616,8 @@ class TestConfigV100Defaults:
             "docs.html": grab("docs/docs.html", r"<strong>v([0-9.]+)</strong>"),
             "index.html": grab("docs/index.html", r'"softwareVersion":\s*"([^"]+)"'),
             "CHANGELOG": grab("CHANGELOG.md", r"^## \[(\d+\.\d+\.\d+)\]"),
+            "pyproject": grab("pyproject.toml", r'^version = "([^"]+)"'),
+            "compose image": grab("docker-compose.prod.yml", r"OPENWHISTLE_VERSION:-([0-9.]+)\}"),
         }
         v = settings.app_version
         assert found == dict.fromkeys(found, v)

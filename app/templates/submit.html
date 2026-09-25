@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_icons.html" as icons %}
 {% import "_field.html" as field with context %}
 
 {% block styles %}
@@ -24,48 +25,17 @@
 
 {% block content %}
 <div class="split-layout">
-    <aside class="split-sidebar" aria-label="{{ t('submit.sidebar.eyebrow') }}">
-        <div class="sidebar-eyebrow">{{ t('submit.sidebar.eyebrow') }}</div>
-        <h2 class="sidebar-title">{{ t('submit.sidebar.title') }}</h2>
-
-        <div class="guarantee-list">
-            <div class="guarantee-item">
-                <div>
-                    <div class="guarantee-title">{{ t('submit.sidebar.g01.title') }}</div>
-                    <div class="guarantee-desc">{{ t('submit.sidebar.g01.desc') }}</div>
-                </div>
-            </div>
-            <div class="guarantee-item">
-                <div>
-                    <div class="guarantee-title">{{ t('submit.sidebar.g02.title') }}</div>
-                    <div class="guarantee-desc">{{ t('submit.sidebar.g02.desc') }}</div>
-                </div>
-            </div>
-            <div class="guarantee-item">
-                <div>
-                    <div class="guarantee-title">{{ t('submit.sidebar.g03.title') }}</div>
-                    <div class="guarantee-desc">{{ t('submit.sidebar.g03.desc') }}</div>
-                </div>
-            </div>
-            <div class="guarantee-item">
-                <div>
-                    <div class="guarantee-title">{{ t('submit.sidebar.g17.title') }}</div>
-                    <div class="guarantee-desc">{{ t('submit.sidebar.g17.desc') }}</div>
-                </div>
-            </div>
-        </div>
-    </aside>
-
     <div class="split-main">
+        <p class="mobile-reassure">{{ icons.icon('lock') }} {{ t('submit.sidebar.short') }}</p>
         <div class="page-eyebrow">{{ t('submit.eyebrow') }}</div>
         <h1>{{ t('submit.title') }}</h1>
 
         {# Progress indicator #}
-        <div class="submit-progress" role="progressbar" aria-valuenow="{{ display_step }}" aria-valuemin="1" aria-valuemax="{{ total_steps }}" aria-label="{{ t('submit.progress.label') }}">
+        <div class="stepper" role="progressbar" aria-valuenow="{{ display_step }}" aria-valuemin="1" aria-valuemax="{{ total_steps }}" aria-label="{{ t('submit.progress.label') }}">
             {% for i in range(1, total_steps + 1) %}
-            <div class="submit-progress-step {{ 'done' if i < display_step else ('active' if i == display_step else 'pending') }}" aria-hidden="true">
-                <div class="submit-progress-dot">{% if i < display_step %}✓{% else %}{{ i }}{% endif %}</div>
-                <div class="submit-progress-label">
+            <div class="stepper-step {{ 'done' if i < display_step else ('active' if i == display_step else 'pending') }}" aria-hidden="true">
+                <div class="stepper-dot">{% if i < display_step %}{{ icons.icon('check') }}{% else %}{{ i }}{% endif %}</div>
+                <div class="stepper-label">
                     {% if i == 1 %}{{ t('submit.step.mode.short') }}
                     {% elif has_locations and i == 2 %}{{ t('submit.step.location.short') }}
                     {% elif (has_locations and i == 3) or (not has_locations and i == 2) %}{{ t('submit.step.category.short') }}
@@ -75,10 +45,10 @@
                     {% endif %}
                 </div>
             </div>
-            {% if i < total_steps %}<div class="submit-progress-line {{ 'done' if i < display_step else '' }}" aria-hidden="true"></div>{% endif %}
+            {% if i < total_steps %}<div class="stepper-line {{ 'done' if i < display_step else '' }}" aria-hidden="true"></div>{% endif %}
             {% endfor %}
         </div>
-        <p class="submit-progress-text" aria-live="polite">{{ t('submit.progress.step_of', step=display_step, total=total_steps) }}</p>
+        <p class="stepper-text" aria-live="polite">{{ t('submit.progress.step_of', step=display_step, total=total_steps) }}</p>
 
         {# Error display #}
         {% if error %}
@@ -116,7 +86,7 @@
                                {% if state.get('submission_mode', 'anonymous') == 'anonymous' %}checked{% endif %}
                                {{ field.attrs('submission_mode', 'mode-anonymous-desc') }}>
                         <div class="mode-card-inner">
-                            <div class="mode-card-icon" aria-hidden="true">&#128100;</div>
+                            <div class="mode-card-icon" aria-hidden="true">{{ icons.icon('user', 'mode-card-svg') }}</div>
                             <div class="mode-card-title">{{ t('submit.step.mode.anonymous.label') }}</div>
                             <p class="mode-card-desc" id="mode-anonymous-desc">{{ t('submit.step.mode.anonymous.desc') }}</p>
                         </div>
@@ -127,7 +97,7 @@
                                {% if state.get('submission_mode') == 'confidential' %}checked{% endif %}
                                {{ field.attrs('submission_mode', 'mode-confidential-desc') }}>
                         <div class="mode-card-inner">
-                            <div class="mode-card-icon" aria-hidden="true">&#128274;</div>
+                            <div class="mode-card-icon" aria-hidden="true">{{ icons.icon('lock', 'mode-card-svg') }}</div>
                             <div class="mode-card-title">{{ t('submit.step.mode.confidential.label') }}</div>
                             <p class="mode-card-desc" id="mode-confidential-desc">{{ t('submit.step.mode.confidential.desc') }}</p>
                         </div>
@@ -298,7 +268,7 @@
                     name="files"
                     multiple
                     {{ field.attrs('files', 'files-hint') }}
-                    accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.txt,.csv,.docx,.doc,.xlsx,.xls">
+                    accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.txt,.csv,.docx,.xlsx">
                 {{ field.error('files') }}
                 <div class="form-hint" id="files-hint">{{ t('submit.form.files.hint') }}</div>
             </div>
@@ -321,7 +291,7 @@
         </div>
 
         <div class="panel sub-mb1">
-            <div class="panel-header">{{ t('submit.step.review.title') }}</div>
+            <h2 class="panel-header">{{ t('submit.step.review.title') }}</h2>
 
             <div class="review-row">
                 <span class="review-label">{{ t('submit.step.mode.label') }}</span>
@@ -364,7 +334,7 @@
                 <span class="review-label">{{ t('submit.form.files') }}</span>
                 <ul class="review-value sub-file-list">
                     {% for f in state.get('file_meta', []) %}
-                    <li>&#128206; {{ f.filename }} ({{ (f.size // 1024) }}KB)</li>
+                    <li>{{ icons.icon('paperclip') }} {{ f.filename }} ({{ (f.size // 1024) }}KB)</li>
                     {% endfor %}
                 </ul>
             </div>
@@ -391,6 +361,38 @@
         </form>
         {% endif %}
     </div>
+
+    <aside class="split-sidebar" aria-label="{{ t('submit.sidebar.eyebrow') }}">
+        <div class="sidebar-eyebrow">{{ t('submit.sidebar.eyebrow') }}</div>
+        <h2 class="sidebar-title">{{ t('submit.sidebar.title') }}</h2>
+
+        <div class="guarantee-list">
+            <div class="guarantee-item">
+                <div>
+                    <div class="guarantee-title">{{ t('submit.sidebar.g01.title') }}</div>
+                    <div class="guarantee-desc">{{ t('submit.sidebar.g01.desc') }}</div>
+                </div>
+            </div>
+            <div class="guarantee-item">
+                <div>
+                    <div class="guarantee-title">{{ t('submit.sidebar.g02.title') }}</div>
+                    <div class="guarantee-desc">{{ t('submit.sidebar.g02.desc') }}</div>
+                </div>
+            </div>
+            <div class="guarantee-item">
+                <div>
+                    <div class="guarantee-title">{{ t('submit.sidebar.g03.title') }}</div>
+                    <div class="guarantee-desc">{{ t('submit.sidebar.g03.desc') }}</div>
+                </div>
+            </div>
+            <div class="guarantee-item">
+                <div>
+                    <div class="guarantee-title">{{ t('submit.sidebar.g17.title') }}</div>
+                    <div class="guarantee-desc">{{ t('submit.sidebar.g17.desc') }}</div>
+                </div>
+            </div>
+        </div>
+    </aside>
 </div>
 {% endblock %}
 

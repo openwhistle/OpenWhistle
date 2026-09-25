@@ -107,10 +107,10 @@ def test_verify_unavailable(tmp_path: Path, content: str | None) -> None:
 async def test_get_integrity_status_caches_result() -> None:
     redis = AsyncMock()
     redis.get = AsyncMock(return_value=None)
-    redis.setex = AsyncMock()
+    redis.set = AsyncMock()
     result = await ig.get_integrity_status(redis)
     assert "available" in result
-    redis.setex.assert_awaited_once()
+    redis.set.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -118,7 +118,7 @@ async def test_get_integrity_status_recheck_busts_cache() -> None:
     redis = AsyncMock()
     redis.delete = AsyncMock()
     redis.get = AsyncMock(return_value=None)
-    redis.setex = AsyncMock()
+    redis.set = AsyncMock()
     await ig.get_integrity_status(redis, recheck=True)
     redis.delete.assert_awaited_once()
     redis.get.assert_not_called()  # recheck skips the cache read

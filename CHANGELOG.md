@@ -18,6 +18,15 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   includes both; installing from source needs `pip install '.[ldap,s3]'` and
   `libldap2-dev libsasl2-dev`.
 
+### Changed (breaking)
+
+- `.doc` and `.xls` uploads are refused; their author field cannot be removed. The message tells
+  the reporter to save as `.docx`/`.xlsx`.
+
+### Removed
+
+- `BRAND_SECONDARY_COLOR` — it styled nothing; Signal has one accent.
+
 ## [1.5.0] — 2026-09-24
 
 Every finding carried forward from the 2026-09-23 audit is closed. The

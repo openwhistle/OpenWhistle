@@ -123,21 +123,25 @@ async def create_report(
             confidential_contact=confidential_contact_enc,
             secure_email=secure_email_enc,
         )
-        db.add(report)
-        db.add(
-            ReportMessage(
-                id=uuid.uuid4(),
-                report_id=report.id,
-                sender=ReportSender.admin,
-                content=enc_receipt,
-            )
-        )
+        # A SAVEPOINT per attempt: a collision rolls back only this attempt.
+        # A full db.rollback() would expire every object the caller holds in
+        # this session, and their next attribute access would lazy-load
+        # outside the async context (MissingGreenlet).
         try:
-            await db.commit()
+            async with db.begin_nested():
+                db.add(report)
+                db.add(
+                    ReportMessage(
+                        id=uuid.uuid4(),
+                        report_id=report.id,
+                        sender=ReportSender.admin,
+                        content=enc_receipt,
+                    )
+                )
         except IntegrityError as exc:
             last_exc = exc
-            await db.rollback()
             continue
+        await db.commit()
         await db.refresh(report)
         return report, plain_pin
 
@@ -292,12 +296,11 @@ async def add_admin_message(
     if notify_whistleblower and report.secure_email:
         from app.config import settings
         from app.services.crypto import decrypt_or_none
-        from app.services.notifications import notify_reply_to_whistleblower
+        from app.services.notifications import notify_reply_to_whistleblower, schedule_background
 
         plain_email = decrypt_or_none(report.secure_email)
         if plain_email:
-            import asyncio
-            asyncio.create_task(
+            schedule_background(
                 notify_reply_to_whistleblower(plain_email, settings.app_public_url)
             )
 

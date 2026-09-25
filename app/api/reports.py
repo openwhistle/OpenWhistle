@@ -104,7 +104,7 @@ async def _load_submission(redis: Redis, session_id: str) -> dict[str, Any]:
 
 async def _save_submission(redis: Redis, session_id: str, state: dict[str, Any]) -> None:
     token = _draft_fernet(session_id).encrypt(json.dumps(state).encode())
-    await redis.setex(_submission_key(session_id), _SUBMISSION_TTL, token)
+    await redis.set(_submission_key(session_id), token, ex=_SUBMISSION_TTL)
 
 
 async def _redis_has_room(redis: Redis) -> bool:
@@ -664,7 +664,7 @@ async def status_post(
         )
 
     status_session_key = secrets.token_urlsafe(32)
-    await redis.setex(f"status-session:{status_session_key}", 7200, str(report.id))
+    await redis.set(f"status-session:{status_session_key}", str(report.id), ex=7200)
 
     response = RedirectResponse("/status", status_code=303)
     response.set_cookie(
@@ -717,18 +717,18 @@ async def reply_post(
                 else status.HTTP_401_UNAUTHORIZED
             )
         status_session_key = secrets.token_urlsafe(32)
-        await redis.setex(f"status-session:{status_session_key}", 7200, str(report.id))
+        await redis.set(f"status-session:{status_session_key}", str(report.id), ex=7200)
 
     stripped = content.strip()
     if not stripped:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT)
     if len(stripped) > 5000:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT)
 
     await report_service.add_whistleblower_message(db, report, stripped)
 
     fresh_key = secrets.token_urlsafe(32)
-    await redis.setex(f"status-session:{fresh_key}", 7200, str(report.id))
+    await redis.set(f"status-session:{fresh_key}", str(report.id), ex=7200)
     if status_session_key:
         await redis.delete(f"status-session:{status_session_key}")
 

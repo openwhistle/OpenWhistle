@@ -1,4 +1,5 @@
-{% extends "base.html" %}
+{% extends "admin/_layout.html" %}
+{% import "_icons.html" as icons %}
 {% import "admin/_audit.html" as audit with context %}
 
 {% block title %}{{ t('admin.audit.title') }} | OpenWhistle{% endblock %}
@@ -20,29 +21,14 @@
 </style>
 {% endblock %}
 
-{% block nav_links %}
-<li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
-<li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
-<li><a href="/admin/categories">{{ t('admin.nav.categories') }}</a></li>
-<li><a href="/admin/locations">{{ t('admin.nav.locations') }}</a></li>
-<li><a href="/admin/users">{{ t('admin.nav.users') }}</a></li>
-<li><a href="/admin/audit-log" class="active" aria-current="page">{{ t('admin.nav.audit_log') }}</a></li>
-<li><a href="/admin/telephone-channel">{{ t('admin.nav.telephone_channel') }}</a></li>
-<li><a href="/admin/retention">{{ t('admin.nav.retention') }}</a></li>
-<li><a href="/admin/organisations">{{ t('admin.nav.organisations') }}</a></li>
-<li><a href="/admin/system">{{ t('admin.nav.system') }}</a></li>
-<li><form method="post" action="/admin/logout"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button type="submit" class="nav-link-button">{{ t('admin.nav.logout') }}</button></form></li>
-{% endblock %}
-
-{% block content %}
+{% block admin_content %}
 <div class="container">
     <div class="page-header aud-header">
         <div>
-            <div class="page-eyebrow">{{ t('admin.audit.eyebrow') }}</div>
             <h1>{{ t('admin.audit.title') }}</h1>
         </div>
         <a href="/admin/audit-log/export.csv" class="btn btn-secondary btn-sm" download>
-            &#128196; {{ t('admin.audit.export_csv') }}
+            {{ icons.icon('file') }} {{ t('admin.audit.export_csv') }}
         </a>
     </div>
 
@@ -74,25 +60,25 @@
     <div class="panel">
         {% if entries %}
         <div class="table-wrapper" tabindex="0" role="region" aria-label="{{ t('admin.audit.title') }}">
-            <table>
-                <thead>
-                    <tr>
-                        <th>{{ t('admin.audit.table.time') }}</th>
-                        <th>{{ t('admin.audit.table.admin') }}</th>
-                        <th>{{ t('admin.audit.table.action') }}</th>
-                        <th>{{ t('admin.audit.table.report') }}</th>
-                        <th>{{ t('admin.audit.table.detail') }}</th>
+            <table class="table-stack" role="table">
+                <thead role="rowgroup">
+                    <tr role="row">
+                        <th role="columnheader">{{ t('admin.audit.table.time') }}</th>
+                        <th role="columnheader">{{ t('admin.audit.table.admin') }}</th>
+                        <th role="columnheader">{{ t('admin.audit.table.action') }}</th>
+                        <th role="columnheader">{{ t('admin.audit.table.report') }}</th>
+                        <th role="columnheader">{{ t('admin.audit.table.detail') }}</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody role="rowgroup">
                     {% for entry in entries %}
-                    <tr>
-                        <td class="mono aud-time-cell">
+                    <tr role="row">
+                        <td role="cell" class="mono aud-time-cell stack-status" data-label="{{ t('admin.audit.table.time') }}">
                             <time data-utc="{{ entry.created_at.isoformat() }}">{{ entry.created_at.strftime('%Y-%m-%d %H:%M UTC') }}</time>
                         </td>
-                        <td class="aud-admin-cell">{{ entry.admin_username or '—' }}</td>
-                        <td class="aud-action-cell">{{ audit.label(entry.action) }}</td>
-                        <td>
+                        <td role="cell" class="aud-admin-cell" data-label="{{ t('admin.audit.table.admin') }}">{{ entry.admin_username or '—' }}</td>
+                        <td role="cell" class="aud-action-cell stack-primary" data-label="{{ t('admin.audit.table.action') }}">{{ audit.label(entry.action) }}</td>
+                        <td role="cell" data-label="{{ t('admin.audit.table.report') }}">
                             {% if entry.report_id %}
                             <a href="/admin/reports/{{ entry.report_id }}" class="mono aud-report-link">
                                 {{ entry.report_id | string | truncate(13, true, '…') }}
@@ -101,7 +87,7 @@
                             —
                             {% endif %}
                         </td>
-                        <td class="aud-detail-cell">{{ audit.detail(entry.detail) }}</td>
+                        <td role="cell" class="aud-detail-cell" data-label="{{ t('admin.audit.table.detail') }}">{{ audit.detail(entry.detail) }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -134,7 +120,7 @@
 
         {% else %}
         <div class="aud-empty">
-            <div class="aud-empty-icon">&#128221;</div>
+            <div class="aud-empty-icon">{{ icons.icon('note') }}</div>
             <p class="aud-empty-text">{{ t('admin.audit.empty') }}</p>
         </div>
         {% endif %}

@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "admin/_layout.html" %}
 
 {% block title %}{{ t('admin.categories.title') }} | OpenWhistle{% endblock %}
 
@@ -13,24 +13,9 @@
 </style>
 {% endblock %}
 
-{% block nav_links %}
-<li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
-<li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
-<li><a href="/admin/categories" class="active" aria-current="page">{{ t('admin.nav.categories') }}</a></li>
-<li><a href="/admin/locations">{{ t('admin.nav.locations') }}</a></li>
-<li><a href="/admin/users">{{ t('admin.nav.users') }}</a></li>
-<li><a href="/admin/audit-log">{{ t('admin.nav.audit_log') }}</a></li>
-<li><a href="/admin/telephone-channel">{{ t('admin.nav.telephone_channel') }}</a></li>
-<li><a href="/admin/retention">{{ t('admin.nav.retention') }}</a></li>
-<li><a href="/admin/organisations">{{ t('admin.nav.organisations') }}</a></li>
-<li><a href="/admin/system">{{ t('admin.nav.system') }}</a></li>
-<li><form method="post" action="/admin/logout"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button type="submit" class="nav-link-button">{{ t('admin.nav.logout') }}</button></form></li>
-{% endblock %}
-
-{% block content %}
+{% block admin_content %}
 <div class="container">
     <div class="page-header">
-        <div class="page-eyebrow">{{ t('admin.categories.eyebrow') }}</div>
         <h1>{{ t('admin.categories.title') }}</h1>
     </div>
 
@@ -38,7 +23,7 @@
 
         {# Add category form #}
         <div class="panel">
-            <div class="panel-header">{{ t('admin.categories.add.header') }}</div>
+            <h2 class="panel-header">{{ t('admin.categories.add.header') }}</h2>
             <form method="post" action="/admin/categories">
                 <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                 <div class="form-group">
@@ -69,10 +54,10 @@
 
         {# Existing categories list #}
         <div class="panel">
-            <div class="panel-header">{{ t('admin.categories.list.header') }}</div>
+            <h2 class="panel-header">{{ t('admin.categories.list.header') }}</h2>
 
             {% if categories %}
-            <div class="table-wrapper">
+            <div class="table-wrapper" tabindex="0" role="region" aria-label="{{ t('admin.categories.list.header') }}">
                 <table>
                     <thead>
                         <tr>

@@ -362,110 +362,23 @@ Critical user journeys to cover:
 
 ---
 
-## v1.4.0 — Privacy Hardening & Attachment Security
+## v1.6.0 — Hardening
 
-> Uploaded files can carry EXIF and document metadata that inadvertently
-> identifies the whistleblower (GPS coordinates, author names, printer serial
-> numbers). Malware inside attachments is a real attack surface for internal
-> case-management staff. This milestone closes those gaps and adds key-escrow
-> encryption for organisations that need to recover data under legal compulsion
-> without storing the main encryption key on the server.
+> Every finding of the v1.5.0 assessment, fixed: setup token, encrypted TOTP secrets, separate and rotatable
+> encryption key, absolute session lifetime, hardened containers with TLS by default, python-ldap; identity shown only
+> to the handler with an audited reason, day-rounded times, webhooks without case numbers, ClamAV, Tor onion address,
+> content search without an index; one admin shell and a phone-first layout; CVE scans, translation parity, threat model.
 
-### Attachment Privacy & Security
-
-- [ ] **Metadata stripping on upload** — strip all EXIF, XMP, IPTC, and Office
-  document metadata (author, device, GPS, revision history) from every uploaded
-  file before storage; use `exiftool` or `python-exiftool` wrapped in
-  `asyncio.to_thread`; original file is discarded, only the stripped version is
-  stored; no metadata ever reaches the admin or is stored in the database
-- [ ] **Virus scanning of attachments** — integrate ClamAV (open-source) as an
-  optional scanning backend (`CLAMAV_ENABLED=true`, `CLAMAV_HOST`, `CLAMAV_PORT`);
-  files are scanned before storage; infected files are rejected with a clear
-  error message; scan result recorded in the attachment audit log; falls back
-  to accept-without-scan when ClamAV is unavailable (configurable behaviour)
-- [ ] **File type allowlist enforcement** — server-side MIME-type validation
-  (not just extension check) using `python-magic`; configurable allowlist via
-  `ALLOWED_MIME_TYPES` env var; rejects executables, scripts, and archive
-  formats by default
-
-### Encryption Key Control
-
-- [ ] **Bring Your Own Key (BYOK) / key escrow** — optional mode where the
-  operator provides a separate `ENCRYPTION_KEY` env var to wrap the MEK instead
-  of deriving it from `SECRET_KEY`; documented pattern for operators who want
-  the encryption key stored outside the deployment environment (e.g., in a
-  hardware security module or a separate secrets manager); no SaaS provider
-  (including the operator's own Docker host) can decrypt reports without the
-  external key; `BYOK_ENABLED=true` env var activates key rotation warnings in
-  the admin UI
-
-### Access Control
-
-- [ ] **IP allowlist for admin routes** — `ADMIN_IP_ALLOWLIST` env var accepts
-  CIDR notation (`192.168.1.0/24,10.0.0.0/8`); requests from outside the list
-  receive 403; empty/unset means no restriction (backward-compatible default);
-  implemented as FastAPI middleware before route resolution; respects
-  `TRUSTED_PROXY_DEPTH` for correct IP extraction behind load balancers
+- [ ] **Separate, rotatable encryption key** — `ENCRYPTION_KEY` is the encryption root (no longer derived from
+  `SECRET_KEY`, which now signs sessions only); `ENCRYPTION_KEY_PREVIOUS` keeps old keys readable during rotation;
+  `scripts/rotate_encryption_key.py` re-encrypts everything under the current key
+- [ ] **Virus scanning of attachments** — optional ClamAV scanning via `CLAMAV_HOST`, `CLAMAV_PORT`,
+  `CLAMAV_TIMEOUT_SECONDS` (empty host = off); files are scanned before storage; a configured but unreachable
+  scanner refuses the upload instead of storing it unscanned (fail-closed)
 
 ---
 
-## v1.5.0 — Advanced Case Management
-
-> Features derived from Hintbox, Formalize/WBS, and whistle.law competitive
-> analysis. These address workflows that compliance officers and case managers
-> in larger organizations consistently need but are missing from OpenWhistle.
-
-### Case Handling Workflow
-
-- [ ] **Case redaction** — admin can redact (replace with `[REDACTED]`) any
-  text passage in a report description or message before sharing the case with
-  an external party; redaction is recorded in the audit log; original content
-  is preserved in an encrypted redaction-log visible only to superadmin
-- [ ] **Case anonymization / pseudonymization** — one-click action to replace
-  all personal identifiers in a case with placeholders (name → `[Person A]`,
-  etc.); designed for sharing with external auditors or regulatory bodies;
-  creates a copy of the case content — does not overwrite the original
-- [ ] **Per-case internal task management** — tasks (description, assignee,
-  due date, status: open / in progress / done) attached to a specific report;
-  visible only to the admin team; deadline for tasks tracked separately from
-  the HinSchG statutory deadlines; `AdminTask` model with `report_id`,
-  `assigned_to_id`, `due_date`, `completed_at`
-- [ ] **Case-level access control** — ability to restrict specific cases to a
-  named subset of admin users (in addition to global role-based access);
-  useful for particularly sensitive reports where need-to-know should be
-  limited; `CaseRestriction` model linking `report_id` to a set of allowed
-  `admin_user_id`s; users outside the set see the case number in the dashboard
-  but cannot open the detail view
-
-### External Collaboration
-
-- [ ] **External advisor access** — scoped, time-limited guest accounts for
-  external parties (law firms, auditors, external ombudspersons); `ExternalAdvisor`
-  model with `email`, `access_token` (GUID), `expires_at`, `allowed_report_ids[]`;
-  access via a separate URL (`/advisor/{token}`) without a full admin login;
-  activity logged in the audit trail; advisor can read case content and post
-  internal notes but cannot change status or delete; access revocable instantly
-- [ ] **Communication templates** — pre-defined message templates that admins
-  can insert when replying to whistleblowers or sending notifications; templates
-  stored per organization (multi-tenant aware); helps maintain consistent,
-  legally reviewed language across case handlers; `MessageTemplate` model with
-  `title`, `body_de`, `body_en`, `body_fr`
-
-### Reporting & Transparency
-
-- [ ] **Transparency report generation** — one-click annual compliance report
-  (PDF + JSON) showing: total reports received, reports by category, reports by
-  status at year-end, average processing time, SLA compliance rate, percentage
-  closed within statutory deadlines; required by HinSchG §12 Abs. 3 for
-  internal documentation; downloadable from `/admin/stats`
-- [ ] **Whistleblower sees handler department** — the status page shows the
-  department/category label of the case handler team (not the handler's name);
-  provides transparency without de-anonymizing internal staff; configurable
-  per-organization (`SHOW_HANDLER_DEPARTMENT=true`)
-
----
-
-## v1.6.0 — Multi-Channel Intake & Integration Hooks
+## v1.7.0 — Multi-Channel Intake & Integration Hooks
 
 > Operators increasingly need to receive reports through channels beyond the web
 > form, and connect OpenWhistle to existing compliance tooling (SIEM, GRC
@@ -515,9 +428,17 @@ Critical user journeys to cover:
   changes required; purely documentation but significantly increases integration
   reach for non-technical operators
 
+### Access Control
+
+- [ ] **IP allowlist for admin routes** — `ADMIN_IP_ALLOWLIST` env var accepts
+  CIDR notation (`192.168.1.0/24,10.0.0.0/8`); requests from outside the list
+  receive 403; empty/unset means no restriction (backward-compatible default);
+  implemented as FastAPI middleware before route resolution; respects
+  `TRUSTED_PROXY_DEPTH` for correct IP extraction behind load balancers
+
 ---
 
-## v1.7.0 — Compliance Expansion (LkSG, KWG, CSRD)
+## v1.8.0 — Compliance Expansion (LkSG, KWG, CSRD)
 
 > German compliance obligations extend beyond HinSchG. Companies in scope for
 > the Lieferkettengesetz (LkSG, since 2023) require a separate supply-chain
@@ -568,6 +489,54 @@ Critical user journeys to cover:
   DE/AT/CH); machine-translated initial pass reviewed by native speakers via
   community contributions; all translation files in `app/locales/{lang}.json`
   following the existing 388-key schema
+
+### Case Handling Workflow
+
+- [ ] **Case redaction** — admin can redact (replace with `[REDACTED]`) any
+  text passage in a report description or message before sharing the case with
+  an external party; redaction is recorded in the audit log; original content
+  is preserved in an encrypted redaction-log visible only to superadmin
+- [ ] **Case anonymization / pseudonymization** — one-click action to replace
+  all personal identifiers in a case with placeholders (name → `[Person A]`,
+  etc.); designed for sharing with external auditors or regulatory bodies;
+  creates a copy of the case content — does not overwrite the original
+- [ ] **Per-case internal task management** — tasks (description, assignee,
+  due date, status: open / in progress / done) attached to a specific report;
+  visible only to the admin team; deadline for tasks tracked separately from
+  the HinSchG statutory deadlines; `AdminTask` model with `report_id`,
+  `assigned_to_id`, `due_date`, `completed_at`
+- [ ] **Case-level access control** — ability to restrict specific cases to a
+  named subset of admin users (in addition to global role-based access);
+  useful for particularly sensitive reports where need-to-know should be
+  limited; `CaseRestriction` model linking `report_id` to a set of allowed
+  `admin_user_id`s; users outside the set see the case number in the dashboard
+  but cannot open the detail view
+
+### External Collaboration
+
+- [ ] **External advisor access** — scoped, time-limited guest accounts for
+  external parties (law firms, auditors, external ombudspersons); `ExternalAdvisor`
+  model with `email`, `access_token` (GUID), `expires_at`, `allowed_report_ids[]`;
+  access via a separate URL (`/advisor/{token}`) without a full admin login;
+  activity logged in the audit trail; advisor can read case content and post
+  internal notes but cannot change status or delete; access revocable instantly
+- [ ] **Communication templates** — pre-defined message templates that admins
+  can insert when replying to whistleblowers or sending notifications; templates
+  stored per organization (multi-tenant aware); helps maintain consistent,
+  legally reviewed language across case handlers; `MessageTemplate` model with
+  `title`, `body_de`, `body_en`, `body_fr`
+
+### Reporting & Transparency
+
+- [ ] **Transparency report generation** — one-click annual compliance report
+  (PDF + JSON) showing: total reports received, reports by category, reports by
+  status at year-end, average processing time, SLA compliance rate, percentage
+  closed within statutory deadlines; required by HinSchG §12 Abs. 3 for
+  internal documentation; downloadable from `/admin/stats`
+- [ ] **Whistleblower sees handler department** — the status page shows the
+  department/category label of the case handler team (not the handler's name);
+  provides transparency without de-anonymizing internal staff; configurable
+  per-organization (`SHOW_HANDLER_DEPARTMENT=true`)
 
 ---
 

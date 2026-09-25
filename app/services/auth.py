@@ -138,7 +138,7 @@ async def get_session_ttl(redis: Redis, token: str) -> int:
 
 async def store_session(redis: Redis, user_id: str, token: str) -> None:
     """Store session token in Redis; it lives exactly as long as the JWT."""
-    await redis.setex(f"{_SESSION_PREFIX}{token}", max(1, seconds_left(token)), user_id)
+    await redis.set(f"{_SESSION_PREFIX}{token}", user_id, ex=max(1, seconds_left(token)))
 
 
 async def validate_session(redis: Redis, token: str) -> bool:
@@ -156,7 +156,7 @@ async def revoke_session(redis: Redis, token: str) -> None:
 async def store_totp_pending(redis: Redis, temp_token: str, user_id: str) -> None:
     """Store a temporary token awaiting TOTP verification (5 min expiry)."""
     key = f"{_TOTP_PENDING_PREFIX}{temp_token}"
-    await redis.setex(key, 300, user_id)
+    await redis.set(key, user_id, ex=300)
 
 
 async def consume_totp_pending(redis: Redis, temp_token: str) -> str | None:
@@ -170,7 +170,7 @@ async def consume_totp_pending(redis: Redis, temp_token: str) -> str | None:
 async def store_totp_setup_pending(redis: Redis, temp_token: str, user_id: str) -> None:
     """Store a temporary token for first-time TOTP setup (10 min expiry)."""
     key = f"{_TOTP_SETUP_PREFIX}{temp_token}"
-    await redis.setex(key, 600, user_id)
+    await redis.set(key, user_id, ex=600)
 
 
 async def peek_totp_setup_pending(redis: Redis, temp_token: str) -> str | None:

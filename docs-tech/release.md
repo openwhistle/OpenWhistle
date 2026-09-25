@@ -30,15 +30,22 @@ at 390 px and 1440 px and fails on an axe violation of impact *serious* or
 *critical*, a console error, or sideways scrolling. It runs in the E2E job; run
 it locally against a demo instance when the interface changed.
 
+```bash
+docker compose -f docker-compose.e2e.yml up -d --build
+uv run pytest tests/e2e -m e2e --base-url http://localhost:4009
+docker compose -f docker-compose.e2e.yml down -v
+```
+
 ## 3. Release PR
 
 On `release/vX.Y.Z`:
 
 - `CHANGELOG.md`: `[Unreleased]` → `[X.Y.Z] — <date>`, add its compare link and
   repoint `[Unreleased]`.
-- Version in `app/config.py`, `charts/openwhistle/Chart.yaml` (`version` and
-  `appVersion`), `docs/docs.html` ("Current version"), `docs/index.html`
-  (`softwareVersion` and hero). `test_every_published_version_string_matches`
+- Version in `app/config.py`, `pyproject.toml`, `charts/openwhistle/Chart.yaml`
+  (`version` and `appVersion`), `docs/docs.html` ("Current version"),
+  `docs/index.html` (`softwareVersion` and hero), and the `OPENWHISTLE_VERSION`
+  default in `docker-compose.prod.yml`. `test_every_published_version_string_matches`
   fails on any mismatch.
 - ROADMAP entry.
 

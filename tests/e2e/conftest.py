@@ -50,8 +50,8 @@ def _admin_login(page: Page, base_url: str, username: str, password: str, totp_s
 
 
 @pytest.fixture(scope="session")
-def base_url() -> str:  # type: ignore[override]
-    return DEMO_BASE_URL
+def base_url(request: pytest.FixtureRequest) -> str:  # type: ignore[override]
+    return request.config.getoption("base_url") or DEMO_BASE_URL
 
 
 @pytest.fixture(scope="session")

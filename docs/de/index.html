@@ -125,49 +125,41 @@
   <style>
     /* ─── Design tokens (same as main site) ──────────────────────── */
     :root {
-      --bg-base:       #fafaf7;
-      --bg-surface:    #f4f2ed;
-      --bg-raised:     #eeeae0;
-      --nav-bg:        #ffffff;
-      --footer-bg:     #1a2744;
-      --text-primary:  #1e293b;
-      --text-secondary:#3d4f6b;
-      --text-muted:    #6b7a96;
+      --bg-base: #fafaf7;
+      --bg-surface: #f4f2ed;
+      --bg-raised: #eeeae0;
+      --nav-bg: #ffffff;
+      --footer-bg: #1a2744;
+      --text-primary: #1e293b;
+      --text-secondary: #3d4f6b;
+      --text-muted: #6b7a96;
       --border-subtle: #e2d9c8;
-      --border-default:#c9bfaa;
-      --seal-green:    #2d7d46;
-      --seal-green-mid:#245f37;
-      --seal-green-dim:rgba(45, 125, 70, 0.15);
-      --seal-green-fog:rgba(45, 125, 70, 0.08);
-      --gold:          #c8972e;
-      --gold-mid:      #a87920;
-      --gold-dim:      rgba(200, 151, 46, 0.20);
-      --gold-fog:      rgba(200, 151, 46, 0.08);
-      --font-serif:    'Spectral', Georgia, serif;
-      --font-body:     'Source Serif 4', Georgia, serif;
-      --font-mono:     'Courier New', Courier, monospace;
+      --border-default: #c9bfaa;
+      --accent: #2d7d46;
+      --accent-strong: #245f37;
+      --accent-dim: rgba(45, 125, 70, 0.15);
+      --accent-fog: rgba(45, 125, 70, 0.08);
+      --font-display: 'Spectral', Georgia, serif;
+      --font-body: 'Source Serif 4', Georgia, serif;
+      --font-mono: 'Courier New', Courier, monospace;
       --max-width: 1100px;
       --ease-stiff: cubic-bezier(0.16, 1, 0.3, 1);
     }
     [data-theme="dark"] {
-      --bg-base:       #0b1525;
-      --bg-surface:    #132035;
-      --bg-raised:     #1a2d44;
-      --nav-bg:        #0a1220;
-      --footer-bg:     #070d1e;
-      --text-primary:  #dde6f2;
-      --text-secondary:#9db4cc;
-      --text-muted:    #5c7a96;
+      --bg-base: #0b1525;
+      --bg-surface: #132035;
+      --bg-raised: #1a2d44;
+      --nav-bg: #0a1220;
+      --footer-bg: #070d1e;
+      --text-primary: #dde6f2;
+      --text-secondary: #9db4cc;
+      --text-muted: #5c7a96;
       --border-subtle: #1a2e48;
-      --border-default:#243d5a;
-      --seal-green:    #5a9070;
-      --seal-green-mid:#4a7860;
-      --seal-green-dim:rgba(90, 144, 112, 0.15);
-      --seal-green-fog:rgba(90, 144, 112, 0.08);
-      --gold:          #e0a845;
-      --gold-mid:      #c0882a;
-      --gold-dim:      rgba(224, 168, 69, 0.20);
-      --gold-fog:      rgba(224, 168, 69, 0.08);
+      --border-default: #243d5a;
+      --accent: #5a9070;
+      --accent-strong: #4a7860;
+      --accent-dim: rgba(90, 144, 112, 0.15);
+      --accent-fog: rgba(90, 144, 112, 0.08);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -189,7 +181,7 @@
     /* ─── Skip link ──────────────────────────────────────────────── */
     .skip-link {
       position: absolute; top: -100%; left: 1rem;
-      background: var(--seal-green); color: #fff;
+      background: var(--accent); color: #fff;
       padding: 0.5rem 1rem; font-size: 0.75rem; z-index: 9999;
     }
     .skip-link:focus { top: 1rem; }
@@ -208,10 +200,10 @@
     }
     .nav-logo {
       display: flex; align-items: center; gap: 0.75rem;
-      font-family: var(--font-serif); font-size: 0.9rem; font-weight: 600;
+      font-family: var(--font-display); font-size: 0.9rem; font-weight: 600;
       letter-spacing: 0.04em; color: var(--text-primary);
     }
-    .nav-logo svg path, .nav-logo svg circle { stroke: var(--gold); }
+    .nav-logo svg path, .nav-logo svg circle { stroke: var(--accent); }
     .nav-links { display: flex; align-items: center; gap: 1.5rem; }
     .nav-links a {
       font-size: 0.8rem; letter-spacing: 0.02em;
@@ -225,14 +217,14 @@
       border-radius: 2px; color: var(--text-muted);
       transition: border-color 140ms ease, color 140ms ease;
     }
-    .nav-lang:hover { border-color: var(--seal-green); color: var(--seal-green); }
+    .nav-lang:hover { border-color: var(--accent); color: var(--accent); }
     .nav-cta {
       font-size: 0.78rem; padding: 0.35rem 1rem;
       border: 1px solid rgba(200, 151, 46, 0.5);
-      border-radius: 2px; color: var(--gold); letter-spacing: 0.04em;
+      border-radius: 2px; color: var(--accent); letter-spacing: 0.04em;
       transition: background 140ms ease;
     }
-    .nav-cta:hover { background: var(--gold-fog); }
+    .nav-cta:hover { background: var(--accent-fog); }
 
     /* Theme toggle */
     .theme-toggle {
@@ -241,7 +233,7 @@
       border: 1px solid var(--border-default); border-radius: 2px;
       color: var(--text-muted); transition: color 140ms ease, border-color 140ms ease;
     }
-    .theme-toggle:hover { color: var(--text-primary); border-color: var(--seal-green); }
+    .theme-toggle:hover { color: var(--text-primary); border-color: var(--accent); }
     .theme-toggle svg { width: 16px; height: 16px; }
     .icon-sun { display: none; }
     [data-theme="dark"] .icon-moon { display: none; }
@@ -278,22 +270,22 @@
     .hero-eyebrow {
       display: inline-flex; align-items: center; gap: 0.75rem;
       font-size: 0.68rem; letter-spacing: 0.18em; text-transform: uppercase;
-      color: var(--seal-green); margin-bottom: 1.5rem;
+      color: var(--accent); margin-bottom: 1.5rem;
       animation: rise 0.6s var(--ease-stiff) 0.1s both;
     }
     .hero-eyebrow::before, .hero-eyebrow::after {
       content: ''; width: 2rem; height: 1px;
-      background: var(--seal-green); opacity: 0.5;
+      background: var(--accent); opacity: 0.5;
     }
     .hero-headline {
-      font-family: var(--font-serif);
+      font-family: var(--font-display);
       font-size: clamp(2.4rem, 5.5vw, 4.4rem);
       font-weight: 700; line-height: 1.08; letter-spacing: -0.04em;
       color: var(--text-primary); margin-bottom: 1.5rem;
       animation: rise 0.6s var(--ease-stiff) 0.2s both;
     }
-    .hero-headline .accent-green { color: var(--seal-green); }
-    .hero-headline .accent-gold  { color: var(--gold); font-style: italic; }
+    .hero-headline .accent-green { color: var(--accent); }
+    .hero-headline .accent-emphasis  { color: var(--accent); font-style: italic; }
     .hero-subline {
       font-size: clamp(1rem, 2vw, 1.15rem); font-weight: 300;
       color: var(--text-secondary); max-width: 56ch;
@@ -334,7 +326,7 @@
       border: 1px solid var(--border-default);
     }
     .btn-primary:hover {
-      background: var(--seal-green); border-color: var(--seal-green);
+      background: var(--accent); border-color: var(--accent);
       color: #fff; transform: translateY(-1px);
       box-shadow: 0 4px 20px rgba(45,125,70,0.25);
     }
@@ -347,7 +339,7 @@
       border: 1px solid var(--border-default);
     }
     .btn-outline:hover {
-      border-color: var(--seal-green); color: var(--seal-green);
+      border-color: var(--accent); color: var(--accent);
       transform: translateY(-1px);
     }
 
@@ -370,7 +362,7 @@
     }
     .trust-check {
       width: 16px; height: 16px; border-radius: 50%;
-      background: var(--seal-green-fog); border: 1px solid var(--seal-green-dim);
+      background: var(--accent-fog); border: 1px solid var(--accent-dim);
       display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
     .trust-check svg { width: 8px; height: 8px; }
@@ -387,7 +379,7 @@
     }
     .section-eyebrow::before { content: ''; width: 2rem; height: 1px; background: var(--border-default); }
     .section-heading {
-      font-family: var(--font-serif);
+      font-family: var(--font-display);
       font-size: clamp(1.8rem, 3.5vw, 2.6rem);
       font-weight: 700; letter-spacing: -0.03em; line-height: 1.15;
       color: var(--text-primary); margin-bottom: 1rem;
@@ -398,7 +390,7 @@
     }
     .section-divider {
       width: 4rem; height: 2px;
-      background: linear-gradient(90deg, var(--seal-green), var(--gold));
+      background: var(--accent);
       margin-bottom: 2.5rem;
     }
 
@@ -408,23 +400,23 @@
     }
     .feature-card {
       background: var(--bg-base); border: 1px solid var(--border-subtle);
-      border-left: 4px solid var(--seal-green-dim); padding: 1.5rem;
+      border-left: 4px solid var(--accent-dim); padding: 1.5rem;
       transition: border-left-color 280ms ease, transform 280ms ease, box-shadow 280ms ease;
     }
     .feature-card:hover {
-      border-left-color: var(--seal-green); transform: translateY(-2px);
+      border-left-color: var(--accent); transform: translateY(-2px);
       box-shadow: 0 8px 32px rgba(0,0,0,0.07);
     }
     [data-theme="dark"] .feature-card { background: var(--bg-surface); }
     .feature-icon {
       width: 36px; height: 36px; border-radius: 4px;
-      background: var(--seal-green-fog); border: 1px solid var(--seal-green-dim);
+      background: var(--accent-fog); border: 1px solid var(--accent-dim);
       display: flex; align-items: center; justify-content: center;
       margin-bottom: 1rem;
     }
     .feature-icon svg { width: 18px; height: 18px; }
     .feature-title {
-      font-family: var(--font-serif); font-size: 1rem;
+      font-family: var(--font-display); font-size: 1rem;
       font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;
     }
     .feature-desc { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.65; }
@@ -442,7 +434,7 @@
     .law-checklist li:last-child { border-bottom: none; }
     .law-checklist .icon {
       width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px;
-      color: var(--seal-green);
+      color: var(--accent);
     }
     .law-checklist strong { color: var(--text-primary); display: block; font-size: 0.85rem; }
 
@@ -454,20 +446,20 @@
       color: var(--text-muted); padding: 0.75rem 1rem;
       text-align: left; border-bottom: 2px solid var(--border-subtle);
     }
-    .comp-table thead th.col-ow { color: var(--seal-green); }
+    .comp-table thead th.col-ow { color: var(--accent); }
     .comp-table tbody td {
       padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-subtle);
       color: var(--text-secondary); vertical-align: middle;
     }
     .comp-table tbody tr:last-child td { border-bottom: none; }
-    .val-good { color: var(--seal-green); font-weight: 600; font-size: 0.85rem; }
+    .val-good { color: var(--accent); font-weight: 600; font-size: 0.85rem; }
     .val-bad  { color: var(--text-muted); font-size: 0.85rem; }
 
     /* ─── Steps ──────────────────────────────────────────────────── */
     .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
     .step { text-align: center; padding: 1.5rem 1rem; }
     .step-num {
-      font-family: var(--font-serif); font-size: 3rem;
+      font-family: var(--font-display); font-size: 3rem;
       font-weight: 700; line-height: 1;
       color: var(--border-default); margin-bottom: 1rem;
     }
@@ -482,7 +474,7 @@
     }
     details:first-child { border-top: 1px solid var(--border-subtle); }
     summary {
-      font-family: var(--font-serif); font-size: 1.05rem;
+      font-family: var(--font-display); font-size: 1.05rem;
       font-weight: 600; color: var(--text-primary);
       cursor: pointer; list-style: none;
       display: flex; justify-content: space-between; align-items: center;
@@ -506,20 +498,20 @@
       padding: 5rem 2rem; text-align: center;
     }
     .cta-section h2 {
-      font-family: var(--font-serif); font-size: clamp(1.8rem, 3vw, 2.4rem);
+      font-family: var(--font-display); font-size: clamp(1.8rem, 3vw, 2.4rem);
       font-weight: 700; margin-bottom: 1rem; letter-spacing: -0.03em;
     }
     .cta-section p { font-size: 1rem; color: rgba(221,230,242,0.7); margin-bottom: 2.5rem; }
     .cta-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
     .cta-btn-primary {
       display: inline-flex; align-items: center; gap: 0.5rem;
-      padding: 0.85rem 2rem; background: var(--seal-green);
+      padding: 0.85rem 2rem; background: var(--accent);
       color: #fff; border: none; border-radius: 2px;
       font-size: 0.85rem; font-weight: 600; letter-spacing: 0.06em;
       text-transform: uppercase; cursor: pointer;
       transition: background 140ms ease, transform 140ms ease;
     }
-    .cta-btn-primary:hover { background: var(--seal-green-mid); transform: translateY(-1px); }
+    .cta-btn-primary:hover { background: var(--accent-strong); transform: translateY(-1px); }
     .cta-btn-outline {
       display: inline-flex; align-items: center; gap: 0.5rem;
       padding: 0.85rem 2rem; background: transparent;
@@ -543,7 +535,7 @@
     }
     .footer-logo {
       display: flex; align-items: center; gap: 0.75rem;
-      font-family: var(--font-serif); font-size: 0.9rem;
+      font-family: var(--font-display); font-size: 0.9rem;
       font-weight: 600; color: rgba(226,220,210,0.8);
       margin-bottom: 0.75rem;
     }
@@ -618,7 +610,7 @@
         <p class="hero-eyebrow">HinSchG-konformes Hinweisgebersystem</p>
         <h1 class="hero-headline" id="hero-heading">
           Interne <span class="accent-green">Meldestelle</span><br>
-          kostenlos &amp; <span class="accent-gold">Open Source</span>
+          kostenlos &amp; <span class="accent-emphasis">Open Source</span>
         </h1>
         <p class="hero-subline">
           OpenWhistle erfüllt alle Anforderungen des <em>Hinweisgeberschutzgesetzes</em> —
@@ -712,7 +704,7 @@
               niemals Ihre eigene Infrastruktur. Kein SaaS-Anbieter, kein
               Cloud-Drittland-Transfer, keine DSGVO-Grauzone.
             </p>
-            <a href="../blog/hinschg-compliance-leitfaden.html" style="color: var(--seal-green); font-size: 0.9rem; font-weight: 600;">
+            <a href="../blog/hinschg-compliance-leitfaden.html" style="color: var(--accent); font-size: 0.9rem; font-weight: 600;">
               HinSchG Compliance-Leitfaden lesen &rarr;
             </a>
           </div>
@@ -762,7 +754,7 @@
 
           <article class="feature-card" role="listitem">
             <div class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--seal-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             </div>
             <h3 class="feature-title">Vollständige Anonymität</h3>
             <p class="feature-desc">Keine IP-Adressen gespeichert — weder in der Datenbank noch in Logs. Vier unabhängige Anonymitätsschichten.</p>
@@ -770,7 +762,7 @@
 
           <article class="feature-card" role="listitem">
             <div class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--seal-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             </div>
             <h3 class="feature-title">Verschlüsselte Speicherung</h3>
             <p class="feature-desc">Alle Meldungsinhalte sind at-rest verschlüsselt (HKDF-SHA256 + Fernet per-Meldung). Der Schlüssel liegt nie in der Datenbank.</p>
@@ -778,7 +770,7 @@
 
           <article class="feature-card" role="listitem">
             <div class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--seal-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             </div>
             <h3 class="feature-title">Automatische SLA-Verfolgung</h3>
             <p class="feature-desc">7-Tage- und 3-Monats-Fristen werden automatisch berechnet und im Dashboard angezeigt. Erinnerungsbenachrichtigungen vor Ablauf.</p>
@@ -786,7 +778,7 @@
 
           <article class="feature-card" role="listitem">
             <div class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--seal-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             </div>
             <h3 class="feature-title">Bidirektionale Kommunikation</h3>
             <p class="feature-desc">Rückfragen an den Hinweisgeber via gesichertem Nachrichtensystem — nur mit Fallnummer und PIN zugänglich.</p>
@@ -794,7 +786,7 @@
 
           <article class="feature-card" role="listitem">
             <div class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--seal-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             </div>
             <h3 class="feature-title">Mehrsprachige Oberfläche</h3>
             <p class="feature-desc">Deutsche, englische und französische Benutzeroberfläche mit 388+ Übersetzungsschlüsseln. Sprachauswahl per Klick.</p>
@@ -802,7 +794,7 @@
 
           <article class="feature-card" role="listitem">
             <div class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--seal-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
             </div>
             <h3 class="feature-title">Unveränderliches Audit-Log</h3>
             <p class="feature-desc">Jede Admin-Aktion wird mit Zeitstempel und Benutzername protokolliert. Export als CSV. Unterstützt die Dokumentationspflicht nach HinSchG § 11.</p>
@@ -810,7 +802,7 @@
 
           <article class="feature-card" role="listitem">
             <div class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--seal-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
             </div>
             <h3 class="feature-title">PDF-Export mit SLA-Bericht</h3>
             <p class="feature-desc">Vollständiger Fallexport als PDF inklusive SLA-Compliance-Abschnitt. Für Berichtspflichten und Dokumentation.</p>
@@ -818,7 +810,7 @@
 
           <article class="feature-card" role="listitem">
             <div class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--seal-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
             </div>
             <h3 class="feature-title">Einfache Installation</h3>
             <p class="feature-desc">Docker Compose in 3 Minuten. Web-basierter Setup-Wizard für den ersten Admin-Account. Kein manuelles Datenbanksetup.</p>
@@ -826,7 +818,7 @@
 
           <article class="feature-card" role="listitem">
             <div class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="var(--seal-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
             </div>
             <h3 class="feature-title">Automatische Datenlöschung</h3>
             <p class="feature-desc">Konfigurierbares DSGVO-Retention-System löscht abgeschlossene Meldungen automatisch nach einstellbarer Frist (Standard: 3 Jahre).</p>

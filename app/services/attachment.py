@@ -6,6 +6,7 @@ import io
 import re
 import uuid
 from pathlib import Path
+from typing import TYPE_CHECKING
 from urllib.parse import quote
 
 from fastapi import UploadFile
@@ -14,6 +15,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.attachment import Attachment
 from app.models.report import Report
+
+if TYPE_CHECKING:
+    from app.services.storage import StorageBackend
 
 MAX_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB
 MAX_ATTACHMENTS: int = 5
@@ -31,8 +35,6 @@ ALLOWED_MIME_TYPES: frozenset[str] = frozenset({
     "text/csv",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "application/msword",
-    "application/vnd.ms-excel",
 })
 
 ALLOWED_EXTENSIONS: frozenset[str] = frozenset({
@@ -40,8 +42,8 @@ ALLOWED_EXTENSIONS: frozenset[str] = frozenset({
     ".jpg", ".jpeg",
     ".png", ".gif", ".webp",
     ".txt", ".csv",
-    ".docx", ".doc",
-    ".xlsx", ".xls",
+    ".docx",
+    ".xlsx",
 })
 
 
@@ -87,8 +89,6 @@ _MAGIC_BY_EXT: dict[str, tuple[bytes, ...]] = {
     ".webp": (b"RIFF",),  # RIFF container; the WEBP marker is checked separately
     ".docx": (b"PK\x03\x04",),  # OOXML = zip
     ".xlsx": (b"PK\x03\x04",),
-    ".doc": (b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1",),  # legacy OLE/CFB
-    ".xls": (b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1",),
 }
 
 
@@ -168,7 +168,7 @@ def _strip_pdf(data: bytes) -> bytes:
     writer._root_object.pop("/Metadata", None)  # XMP packet
     # Unlinking is not removing: the XMP stream would still be written as an
     # orphaned object that any forensic tool can read.
-    writer.compress_identical_objects(remove_identicals=False, remove_orphans=True)
+    writer.compress_identical_objects(remove_duplicates=False, remove_unreferenced=True)
     out = io.BytesIO()
     writer.write(out)
     return out.getvalue()
@@ -195,6 +195,20 @@ def _anonymise_ooxml_part(name: str, body: bytes) -> bytes:
         return _neutral_attrs(body, _WORD_AUTHOR)
     if re.fullmatch(r"xl/comments\d*\.xml", name):
         # "tc={person id}" links a legacy comment to its thread: not a name, kept.
+        authors = set(re.findall(rb"<author>(?!tc=)([^<]+)</author>", body))
+        for author in authors:
+            # Excel's own "Name:" label opens the first run of each comment; the
+            # rest of the comment (including any mentions of the author) is what
+            # the whistleblower wrote and stays untouched.
+            # Only replace in the first <t> inside each <comment>…<text> block.
+            body = re.sub(
+                rb"(<comment\b[^>]*>\s*<text>\s*<r>(?:\s*<rPr>.*?</rPr>)?\s*<t(?:\s[^>]*)?>)"
+                + re.escape(author)
+                + rb":",
+                rb"\1Author:",
+                body,
+                flags=re.DOTALL,
+            )
         return re.sub(rb"<author>(?!tc=)[^<]*</author>", b"<author>Author</author>", body)
     if name.startswith("xl/persons/"):
         return _neutral_attrs(body, _XL_PERSON)
@@ -242,8 +256,7 @@ _STRIPPERS = {
 def strip_metadata(filename: str, data: bytes) -> bytes:
     """Remove identifying metadata (EXIF/GPS, PDF author, Office properties).
 
-    Plain text has none; legacy .doc/.xls cannot be cleaned and the upload page
-    says so. Anything else that fails to clean raises MetadataError.
+    Plain text has none. Anything else that fails to clean raises MetadataError.
     """
     stripper = _STRIPPERS.get(Path(filename).suffix.lower())
     if stripper is None:
@@ -283,10 +296,14 @@ def validate_file(filename: str, content_type: str, size: int, head: bytes = b""
     number must match the extension (declared type/extension alone are
     attacker-controlled).
     """
+    ext = Path(filename).suffix.lower()
+    if ext in {".doc", ".xls"}:
+        # Legacy OLE files keep the author in places no parser here can clean.
+        return UploadError("upload.error.legacy_office", name=filename)
+
     if size > MAX_SIZE_BYTES:
         return UploadError("upload.error.too_large", name=filename, size=format_size(size))
 
-    ext = Path(filename).suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
         return UploadError("upload.error.bad_extension", name=filename)
 
@@ -477,3 +494,58 @@ async def delete_stored_objects(keys: list[str]) -> None:
             await backend.delete(key)
         except Exception:  # noqa: BLE001
             logging.getLogger(__name__).exception("Failed to delete stored object %s", key)
+
+
+_UUID_KEY = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
+
+
+def _storage() -> StorageBackend:
+    from app.services.storage import get_storage_backend  # noqa: PLC0415
+
+    return get_storage_backend()
+
+
+async def rekey_legacy_objects(db: AsyncSession) -> int:
+    """Move objects stored before v1.5.0 (keys carrying the filename) to bare UUIDs.
+
+    Copy first, then point the row at the copy, then delete the old object, so
+    no step can lose a file. A failure leaves that row as it was for the next run.
+    """
+    import logging  # noqa: PLC0415
+
+    from app.services.storage import generate_storage_key  # noqa: PLC0415
+
+    log = logging.getLogger(__name__)
+    backend = _storage()
+    rows = await db.execute(select(Attachment).where(Attachment.storage_key.isnot(None)))
+    moved = 0
+    for att in rows.scalars().all():
+        old = att.storage_key or ""
+        if _UUID_KEY.fullmatch(old):
+            continue
+        new = generate_storage_key()
+        try:
+            await backend.copy(old, new)
+        except Exception:  # noqa: BLE001
+            log.warning("Could not re-key attachment %s; retried at next start", att.id)
+            continue
+        att.storage_key = new
+        await db.commit()
+        try:
+            await backend.delete(old)
+        except Exception:  # noqa: BLE001
+            log.warning("Re-keyed attachment %s; its old object could not be deleted", att.id)
+        moved += 1
+    return moved
+
+
+async def run_s3_rekey() -> None:
+    """Startup job: once across replicas (Redis lock), own DB session."""
+    from app.database import AsyncSessionLocal  # noqa: PLC0415
+    from app.redis_client import get_redis  # noqa: PLC0415
+
+    redis = await get_redis()
+    if not await redis.set("openwhistle:job_lock:s3_rekey", "1", nx=True, ex=3600):
+        return
+    async with AsyncSessionLocal() as db:
+        await rekey_legacy_objects(db)

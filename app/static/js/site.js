@@ -10,10 +10,7 @@
     function applyTheme(theme) {
         html.setAttribute('data-theme', theme);
         const btn = document.getElementById('theme-toggle');
-        if (btn) {
-            btn.textContent = theme === 'dark' ? '☀ Light' : '◑ Dark';
-            btn.setAttribute('aria-label', `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`);
-        }
+        if (btn) btn.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
     }
 
     function savedTheme() {
@@ -51,10 +48,10 @@
 window.copyToClipboard = async function (text, btn) {
     try {
         await navigator.clipboard.writeText(text);
-        const orig = btn.textContent;
-        btn.textContent = btn.dataset.copied || 'Copied';
+        const orig = btn.innerHTML;
+        btn.textContent = btn.dataset.copied || document.body.dataset.copiedLabel || '';
         btn.disabled = true;
-        setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2000);
+        setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 2000);
     } catch {
         // Fallback for older browsers or non-HTTPS contexts
         const el = document.createElement('textarea');
@@ -253,13 +250,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // (e.g. action=back, making the server treat "Back" as "Next").
             const btn = e.submitter || form.querySelector('[type="submit"]');
             if (btn) {
+                const wait = document.body.dataset.waitLabel || '…';
                 btn.dataset.owLabel = btn.tagName === 'INPUT' ? btn.value : btn.textContent;
                 setTimeout(() => {
                     btn.disabled = true;
                     if (btn.tagName === 'INPUT') {
-                        btn.value = 'Please wait…';
+                        btn.value = wait;
                     } else {
-                        btn.textContent = 'Please wait…';
+                        btn.textContent = wait;
                     }
                 }, 0);
             }
@@ -268,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Restoring a page from the back/forward cache keeps the DOM as it was when the
-// user navigated away — including the guard flag and the disabled "Please wait…"
+// user navigated away — including the guard flag and the disabled submit
 // button. Undo both so the form is usable again after a browser Back.
 window.addEventListener('pageshow', (e) => {
     if (!e.persisted) return;
