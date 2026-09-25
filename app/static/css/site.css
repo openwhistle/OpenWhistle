@@ -2330,6 +2330,11 @@ a.attachment-name:hover {
   margin-top: 2rem;
   padding-top: 1.5rem;
 }
+/* A reference link sits next to a text label in flowing content: underline
+   it so it is distinguishable without relying on color alone (WCAG 1.4.1). */
+.refs-list a {
+  text-decoration-line: underline;
+}
 .empty-state {
   color: var(--muted);
   padding-bottom: 3rem;
