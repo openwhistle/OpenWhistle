@@ -43,17 +43,46 @@ request reads it once (`GETDEL`) and shows the same page.
 Anyone who can read that key can already read the draft, which is the report
 itself, for longer. The PIN never reaches the database in clear or a log line.
 
-The claim is a `RENAME`, not a delete, so a worker that dies between the claim
-and the commit loses nothing. Once `pending` (120 s) expires, the next request
-of that session gets the draft back at the review step. A commit whose reply
-was lost is checked on a fresh session before the draft is given back, so it
-never yields a second report. Until a case number is known, the waiting click
-says "still being processed" and keeps the cookie. It never says "received".
+**One draft, at most one report.** Every draft carries a report id from its
+first non-empty save, and every submit of it inserts that primary key. PostgreSQL refuses
+a second insert, whatever Redis holds and however late a request runs. A submit
+that loses that race shows the existing report's case number, and its PIN while
+the stored result is there.
+
+| Fault | What the reporter sees | Reports |
+| --- | --- | --- |
+| Two clicks at once | the same case number and PIN on both | 1 |
+| Worker dies after the claim | "still being processed", then the draft at review once `pending` (120 s) expires | 0, then 1 on submit |
+| Commit reply lost | the case number and PIN (checked on a fresh session) | 1 |
+| Result write fails after the commit | the PIN in the first response; later the case number only | 1 |
+| Commit reply and the check both lost | an error; after `pending` expires, the case number only | 1 |
+| A submit still running after `pending` expired | the draft may come back; a resubmit shows the one report | 1 |
+
+The claim is a `RENAME` of the draft, so a dead worker loses nothing. After
+`pending` expires, the claimed draft is given back only if the database has no
+report with its id; otherwise the session gets a page with the case number that
+says the PIN was shown once and cannot be shown again. Claim to commit is
+bounded at 30 s (`asyncio.timeout` and `statement_timeout`), the check at 30 s
+more, both under the 120 s `pending`. A request that outlives it anyway (a
+paused process) compares its claim nonce before it deletes or restores
+anything, so it never touches a newer claim. Until a case number is known, the
+waiting click says "still being processed", keeps the cookie, and promises kept
+answers only while the claimed draft exists.
+
+Residual: the PIN of a report whose first response was lost (the reply-and-
+check double fault, or a result write that failed while the first response
+never arrived) is gone. The reporter sees the case number and is told to submit
+a new report if they need to follow up. Drafts saved before v1.6.0 get their
+report id on their next save.
 
 Pinned by `test_the_result_is_kept_120_seconds_for_a_second_click`,
 `test_concurrent_final_submits_create_one_report_and_both_show_the_pin`,
-`test_worker_dying_after_the_claim_gives_the_draft_back_when_pending_expires`
-and `test_commit_whose_reply_is_lost_counts_as_done`.
+`test_worker_dying_after_the_claim_gives_the_draft_back_when_pending_expires`,
+`test_commit_whose_reply_is_lost_counts_as_done`,
+`test_a_lost_result_write_after_the_commit_never_reopens_the_draft`,
+`test_commit_and_lookup_both_failing_yield_one_report`,
+`test_a_submit_outliving_pending_still_yields_one_report` and
+`test_a_draft_back_after_its_report_was_committed_makes_no_second_report`.
 
 ## Not defended
 

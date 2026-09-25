@@ -110,11 +110,13 @@ async def create_report(
     secure_email_enc: str | None = None,
     *,
     commit: bool = True,
+    report_id: uuid.UUID | None = None,
 ) -> tuple[Report, str]:
     """Create a new whistleblower report. Returns (report, plain_pin).
 
     ``commit=False`` only flushes, for a caller that commits the report
-    together with its attachments.
+    together with its attachments. ``report_id`` fixes the primary key, so a
+    second insert with the same id fails instead of creating a second report.
     """
     from sqlalchemy.exc import IntegrityError
 
@@ -145,9 +147,10 @@ async def create_report(
     # concurrent duplicate) retry with a fresh number instead of surfacing a 500.
     today = day_floor(datetime.now(UTC))
     last_exc: IntegrityError | None = None
+    fixed_id = report_id or uuid.uuid4()
     for _attempt in range(5):
         report = Report(
-            id=uuid.uuid4(),
+            id=fixed_id,
             case_number=generate_case_number(),
             pin_hash=pin_hash,
             org_id=default_org_id,

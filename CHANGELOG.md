@@ -116,8 +116,10 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   A click that finds the first one still running says so and offers "Check again", never a
   receipt without a case number. The report and its attachments are committed together: a
   failure before the commit, or a worker that dies before it, gives the draft back; a commit
-  whose reply was lost is looked up, never repeated. The race predates the #94 port: v1.5.0
-  has the same load → create → delete sequence.
+  whose reply was lost is looked up, never repeated. Each draft carries its report's id, so
+  the database refuses a second report of the same draft whatever the timing or fault; a draft
+  whose report exists is never given back, and the page then shows its case number. The race
+  predates the #94 port: v1.5.0 has the same load → create → delete sequence.
 - The final submit re-checks each step the way the step itself does: a location or category
   switched off, or confidential mode disabled, after the reporter chose it returns them to
   that step with a message instead of failing.
