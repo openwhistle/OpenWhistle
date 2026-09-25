@@ -437,7 +437,9 @@ def test_brand_secondary_colour_is_gone() -> None:
                  "docker-compose.yml", "docker-compose.e2e.yml", "docker-compose.prod.yml",
                  "docs/docs.html", "README.md", ".env.example",
                  "charts/openwhistle/values.yaml", "charts/openwhistle/templates/configmap.yaml",
-                 "charts/openwhistle/templates/secret.yaml"):
+                 "charts/openwhistle/templates/secret.yaml",
+                 "ansible/roles/openwhistle/templates/env.j2",
+                 "ansible/roles/openwhistle/defaults/main.yml"):
         text = (ROOT / path).read_text().lower().replace("-", "_")
         assert "brand_secondary" not in text, path
 
