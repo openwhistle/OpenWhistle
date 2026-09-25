@@ -1,7 +1,10 @@
 """Tests for service-layer functions."""
 
+import uuid
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.location import Location
 from app.models.report import ReportStatus
 from app.services.auth import (
     create_access_token,
@@ -226,16 +229,74 @@ async def test_delete_report(db_session: AsyncSession) -> None:
 
 
 async def test_paginated_returns_all_on_first_page(db_session: AsyncSession) -> None:
+    """Filtered to a location of its own, so other tests' reports never interfere."""
+    loc = Location(
+        id=uuid.uuid4(), name="Pagination site", code=f"G{uuid.uuid4().hex[:5]}",
+        is_active=False,  # an active location would add a wizard step to later tests
+    )
+    db_session.add(loc)
+    await db_session.commit()
     created = [
-        (await create_report(db_session, "corruption", f"Pagination test report number {i} ok!"))[0]
+        (
+            await create_report(
+                db_session, "corruption", f"Pagination test report number {i} ok!",
+                location_id=loc.id,
+            )
+        )[0]
         for i in range(3)
     ]
-    reports, total = await get_reports_paginated(db_session, page=1, per_page=100)
-    assert total >= 3
-    # The shared test database keeps committed reports and per_page caps at 100:
-    # the newest reports (default sort) must all be on page one.
-    assert {r.id for r in created} <= {r.id for r in reports}
-    assert len(reports) == min(total, 100)
+    reports, total = await get_reports_paginated(
+        db_session, page=1, per_page=100, location_id=loc.id
+    )
+    assert total == 3
+    assert {r.id for r in reports} == {r.id for r in created}
+
+
+async def test_paginated_order_is_total_across_same_day_reports(db_session: AsyncSession) -> None:
+    """submitted_at is the day, so every report of today ties: the id breaks the tie,
+    and one-per-page walks every report exactly once, newest id first."""
+    loc = Location(
+        id=uuid.uuid4(), name="Tie site", code=f"T{uuid.uuid4().hex[:5]}",
+        is_active=False,  # an active location would add a wizard step to later tests
+    )
+    db_session.add(loc)
+    await db_session.commit()
+    created = [
+        (
+            await create_report(
+                db_session, "corruption", f"Same-day tie report number {i} ok!", location_id=loc.id
+            )
+        )[0]
+        for i in range(4)
+    ]
+    assert len({r.submitted_at for r in created}) == 1
+    walked = []
+    for page in range(1, 5):
+        rows, _ = await get_reports_paginated(
+            db_session, page=page, per_page=1, location_id=loc.id
+        )
+        walked += [r.id for r in rows]
+    assert walked == sorted((r.id for r in created), reverse=True)
+
+
+async def test_audit_log_order_is_total_when_times_tie(db_session: AsyncSession) -> None:
+    from datetime import UTC, datetime
+
+    from app.models.audit import AuditLog
+    from app.services.audit import get_audit_log
+
+    same = datetime(2026, 1, 1, tzinfo=UTC)
+    action = f"tie-{uuid.uuid4().hex[:8]}"
+    ids = [uuid.uuid4() for _ in range(4)]
+    db_session.add_all(
+        AuditLog(id=i, admin_username="x", action=action, created_at=same) for i in ids
+    )
+    await db_session.commit()
+    walked = []
+    for page in range(1, 5):
+        rows, _ = await get_audit_log(db_session, action=action, page=page, per_page=1)
+        walked += [r.id for r in rows]
+    assert walked == sorted(ids, reverse=True)
 
 
 async def test_paginated_page_size_is_respected(db_session: AsyncSession) -> None:

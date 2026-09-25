@@ -114,7 +114,8 @@ async def get_audit_log(
     """
     from sqlalchemy import func
 
-    q = select(AuditLog).order_by(AuditLog.created_at.desc())
+    # created_at ties (same instant, or a day-floored row) need the id for a stable page.
+    q = select(AuditLog).order_by(AuditLog.created_at.desc(), AuditLog.id.desc())
     if report_id is not None:
         q = q.where(AuditLog.report_id == report_id)
     if action:
