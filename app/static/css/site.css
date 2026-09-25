@@ -884,11 +884,18 @@ strong {
   animation: fadeSlideIn 0.4s ease both;
   background: var(--surface-card);
   border-radius: 12px;
+  min-width: 0;
   padding: 1.5rem;
   text-align: center;
   transition-duration: 0.15s;
   transition-property: box-shadow;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* A status badge is the sole label of a KPI card here, unlike a badge next
+   to table text: let it wrap instead of forcing the card, and the page,
+   wider than its grid track. German status labels are the long ones. */
+.stat-card .badge {
+  white-space: normal;
 }
 .stat-card:hover {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
