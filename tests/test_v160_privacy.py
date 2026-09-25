@@ -955,6 +955,8 @@ def test_local_time_script_shows_date_only_values_as_the_utc_day() -> None:
 
     node = shutil.which("node")
     if node is None:
+        # CI sets up Node for this test; a skip there would hide the guard.
+        assert not os.environ.get("CI"), "node is missing in CI (actions/setup-node)"
         pytest.skip("node is not installed")
     html = Path("app/templates/base.html").read_text()
     script = next(

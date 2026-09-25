@@ -107,3 +107,17 @@ def test_security_workflow_audits_dependencies_and_the_image() -> None:
         assert needle in wf, needle
     pinned = re.search(r"aquasecurity/trivy-action@[0-9a-f]{40}", wf)
     assert pinned, "trivy action not pinned by digest"
+
+
+def test_every_workflow_action_is_pinned_by_commit_sha() -> None:
+    uses = [
+        line.split("uses:", 1)[1].strip()
+        for wf in (ROOT / ".github/workflows").glob("*.yml")
+        for line in wf.read_text().splitlines()
+        if line.strip().lstrip("- ").startswith("uses:")
+    ]
+    assert uses
+    unpinned = [u for u in uses if not re.fullmatch(r"[\w./-]+@[0-9a-f]{40} # v[\w.]+", u)]
+    assert not unpinned, unpinned
+    # The Node date-only formatter test fails in CI without it.
+    assert any(u.startswith("actions/setup-node@") for u in uses)
