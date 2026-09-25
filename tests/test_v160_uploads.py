@@ -7,7 +7,13 @@ import zipfile
 
 import pytest
 
-from app.services.attachment import ALLOWED_EXTENSIONS, ALLOWED_MIME_TYPES, validate_file, _anonymise_ooxml_part, strip_metadata
+from app.services.attachment import (
+    ALLOWED_EXTENSIONS,
+    ALLOWED_MIME_TYPES,
+    _anonymise_ooxml_part,
+    strip_metadata,
+    validate_file,
+)
 
 _OLE_HEAD = b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1" + b"\0" * 8
 
@@ -74,9 +80,12 @@ def test_real_zip_docx_is_still_accepted() -> None:
 
 def test_xlsx_comment_author_label_is_removed_but_the_comment_is_kept() -> None:
     part = (
-        b'<comments><authors><author>Max Mustermann</author></authors><commentList>'
-        b'<comment ref="A1" authorId="0"><text><r><rPr><b/></rPr><t>Max Mustermann:</t></r>'
-        b'<r><t xml:space="preserve">\nI spoke to Max Mustermann about it.</t></r></text></comment>'
+        b'<comments><authors><author>Max Mustermann</author></authors>'
+        b'<commentList>'
+        b'<comment ref="A1" authorId="0"><text><r><rPr><b/></rPr>'
+        b'<t>Max Mustermann:</t></r>'
+        b'<r><t xml:space="preserve">\nI spoke to Max Mustermann about it.'
+        b'</t></r></text></comment>'
         b'</commentList></comments>'
     )
     out = _anonymise_ooxml_part("xl/comments1.xml", part)
@@ -85,57 +94,121 @@ def test_xlsx_comment_author_label_is_removed_but_the_comment_is_kept() -> None:
     assert b"I spoke to Max Mustermann about it." in out  # what they wrote stays
 
 
+def test_xlsx_comment_only_first_run_label_is_replaced() -> None:
+    """Excel's label is only the first run; a whistleblower's later run starting
+    with the author name should not be altered."""
+    part = (
+        b'<comments><authors><author>Max Mustermann</author></authors>'
+        b'<commentList>'
+        b'<comment ref="A1" authorId="0"><text><r><rPr><b/></rPr>'
+        b'<t>Max Mustermann:</t></r>'
+        b'<r><t>Max Mustermann told me this himself.</t></r>'
+        b'</text></comment>'
+        b'</commentList></comments>'
+    )
+    out = _anonymise_ooxml_part("xl/comments1.xml", part)
+    # First run label is replaced
+    assert b"<t>Author:</t>" in out
+    # But the name in the second run (whistleblower's own text) is preserved
+    assert b"Max Mustermann told me this himself." in out
+
+
 def test_xlsx_comment_author_removed_end_to_end() -> None:
-    """Build a minimal .xlsx with comments, strip metadata, verify author name gone everywhere."""
+    """Build a minimal .xlsx with comments, strip metadata, verify author name gone
+    everywhere in the archive."""
     # Create a minimal XLSX structure with comments in memory
     out = io.BytesIO()
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zf:
         # Minimal [Content_Types].xml
-        zf.writestr(
-            "[Content_Types].xml",
-            b'<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
-            b'<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        content_types = (
+            b'<?xml version="1.0"?>'
+            b'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+            b'<Default Extension="rels"'
+            b' ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
             b'<Default Extension="xml" ContentType="application/xml"/>'
-            b'<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
-            b'<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
-            b'<Override PartName="/xl/comments1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.comments+xml"/>'
-            b'<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>'
-            b'<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>'
+            b'<Override PartName="/xl/workbook.xml"'
+            b' ContentType="application/vnd.openxmlformats-officedocument.'
+            b'spreadsheetml.sheet.main+xml"/>'
+            b'<Override PartName="/xl/worksheets/sheet1.xml"'
+            b' ContentType="application/vnd.openxmlformats-officedocument.'
+            b'spreadsheetml.worksheet+xml"/>'
+            b'<Override PartName="/xl/comments1.xml"'
+            b' ContentType="application/vnd.openxmlformats-officedocument.'
+            b'spreadsheetml.comments+xml"/>'
+            b'<Override PartName="/docProps/core.xml"'
+            b' ContentType="application/vnd.openxmlformats-package.'
+            b'core-properties+xml"/>'
+            b'<Override PartName="/docProps/app.xml"'
+            b' ContentType="application/vnd.openxmlformats-officedocument.'
+            b'extended-properties+xml"/>'
             b'</Types>'
         )
+        zf.writestr("[Content_Types].xml", content_types)
+
         # Minimal _rels/.rels
-        zf.writestr(
-            "_rels/.rels",
-            b'<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-            b'<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'
-            b'<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>'
-            b'<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>'
+        rels = (
+            b'<?xml version="1.0"?>'
+            b'<Relationships xmlns="http://schemas.openxmlformats.org/package/'
+            b'2006/relationships">'
+            b'<Relationship Id="rId1"'
+            b' Type="http://schemas.openxmlformats.org/officeDocument/2006/'
+            b'relationships/officeDocument" Target="xl/workbook.xml"/>'
+            b'<Relationship Id="rId2"'
+            b' Type="http://schemas.openxmlformats.org/package/2006/'
+            b'relationships/metadata/core-properties"'
+            b' Target="docProps/core.xml"/>'
+            b'<Relationship Id="rId3"'
+            b' Type="http://schemas.openxmlformats.org/officeDocument/2006/'
+            b'relationships/extended-properties" Target="docProps/app.xml"/>'
             b'</Relationships>'
         )
+        zf.writestr("_rels/.rels", rels)
+
         # Workbook
-        zf.writestr(
-            "xl/workbook.xml",
-            b'<?xml version="1.0"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheets>'
-            b'<sheet name="Sheet1" sheetId="1" r:id="rId1" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/>'
+        workbook = (
+            b'<?xml version="1.0"?>'
+            b'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/'
+            b'2006/main"><sheets>'
+            b'<sheet name="Sheet1" sheetId="1" r:id="rId1"'
+            b' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/'
+            b'relationships"/>'
             b'</sheets></workbook>'
         )
+        zf.writestr("xl/workbook.xml", workbook)
+
         # Sheet
-        zf.writestr(
-            "xl/worksheets/sheet1.xml",
-            b'<?xml version="1.0"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData/></worksheet>'
+        sheet = (
+            b'<?xml version="1.0"?>'
+            b'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/'
+            b'2006/main"><sheetData/></worksheet>'
         )
+        zf.writestr("xl/worksheets/sheet1.xml", sheet)
+
         # Comments with author name in both the <author> tag and the <t> tag
-        zf.writestr(
-            "xl/comments1.xml",
-            b'<?xml version="1.0"?><comments xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+        comments = (
+            b'<?xml version="1.0"?>'
+            b'<comments xmlns="http://schemas.openxmlformats.org/spreadsheetml/'
+            b'2006/main">'
             b'<authors><author>Alice Smith</author></authors>'
             b'<commentList>'
-            b'<comment ref="A1" authorId="0"><text><r><rPr><b/></rPr><t>Alice Smith:</t></r>'
-            b'<r><t xml:space="preserve"> This is a problem.</t></r></text></comment>'
+            b'<comment ref="A1" authorId="0"><text><r><rPr><b/></rPr>'
+            b'<t>Alice Smith:</t></r>'
+            b'<r><t xml:space="preserve"> This is a problem.</t></r>'
+            b'</text></comment>'
             b'</commentList></comments>'
         )
-        # Core properties
-        zf.writestr("docProps/core.xml", b'<?xml version="1.0"?><coreProperties/>')
+        zf.writestr("xl/comments1.xml", comments)
+
+        # Core properties with creator (author) metadata
+        core_props = (
+            b'<?xml version="1.0"?>'
+            b'<coreProperties xmlns="http://schemas.openxmlformats.org/package/'
+            b'2006/metadata/core-properties">'
+            b'<creator>Alice Smith</creator>'
+            b'</coreProperties>'
+        )
+        zf.writestr("docProps/core.xml", core_props)
+
         zf.writestr("docProps/app.xml", b'<?xml version="1.0"?><Properties/>')
 
     xlsx_data = out.getvalue()
@@ -143,12 +216,16 @@ def test_xlsx_comment_author_removed_end_to_end() -> None:
     # Strip metadata
     cleaned = strip_metadata("test.xlsx", xlsx_data)
 
-    # Verify the author name is gone from the zip
+    # Verify the author name is gone from EVERY zip entry
     with zipfile.ZipFile(io.BytesIO(cleaned), "r") as zf:
-        comments = zf.read("xl/comments1.xml")
-        # Author name should be replaced with "Author"
-        assert b"Alice Smith" not in comments, "Author name should be removed from comments"
-        assert b"<author>Author</author>" in comments, "Author tag should be neutralized"
-        assert b"<t>Author:</t>" in comments, "Comment label should be neutralized"
-        # But the actual comment text should stay
-        assert b"This is a problem." in comments, "Comment text should be preserved"
+        for filename in zf.namelist():
+            entry_data = zf.read(filename)
+            assert (
+                b"Alice Smith" not in entry_data
+            ), f"Author name found in {filename}"
+
+        # Also verify specific transformations in comments
+        comments_data = zf.read("xl/comments1.xml")
+        assert b"<author>Author</author>" in comments_data
+        assert b"<t>Author:</t>" in comments_data
+        assert b"This is a problem." in comments_data

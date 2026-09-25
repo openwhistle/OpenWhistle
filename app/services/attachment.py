@@ -193,9 +193,18 @@ def _anonymise_ooxml_part(name: str, body: bytes) -> bytes:
         # "tc={person id}" links a legacy comment to its thread: not a name, kept.
         authors = set(re.findall(rb"<author>(?!tc=)([^<]+)</author>", body))
         for author in authors:
-            # Excel's own "Name:" label opening a comment run; the rest of the
-            # comment is what the whistleblower wrote and stays untouched.
-            body = re.sub(rb"(<t(?:\s[^>]*)?>)" + re.escape(author) + rb":", rb"\1Author:", body)
+            # Excel's own "Name:" label opens the first run of each comment; the
+            # rest of the comment (including any mentions of the author) is what
+            # the whistleblower wrote and stays untouched.
+            # Only replace in the first <t> inside each <comment>…<text> block.
+            body = re.sub(
+                rb"(<comment\b[^>]*>\s*<text>\s*<r>(?:\s*<rPr>.*?</rPr>)?\s*<t(?:\s[^>]*)?>)"
+                + re.escape(author)
+                + rb":",
+                rb"\1Author:",
+                body,
+                flags=re.DOTALL,
+            )
         return re.sub(rb"<author>(?!tc=)[^<]*</author>", b"<author>Author</author>", body)
     if name.startswith("xl/persons/"):
         return _neutral_attrs(body, _XL_PERSON)
