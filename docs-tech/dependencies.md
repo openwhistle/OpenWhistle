@@ -63,6 +63,10 @@ uv pip install --no-deps /tmp/wheels/python_ldap-*.whl
 - `tests/test_renovate.py::test_no_managed_file_is_ignored`: `ignorePaths` is
   explicit. The `config:recommended` preset ignores `tests/`, which hid the
   axe-core pin on Renovate's first run while every other check was green.
+- `tests/test_renovate.py::test_axe_core_is_fetched_from_the_registry_renovate_checks`:
+  axe-core loads from jsDelivr's npm mirror. The 4.13.0 bump pointed at cdnjs,
+  which did not have it yet; the fixture read the 404 as "offline" and every axe
+  check skipped. An HTTP error now fails the e2e run.
 - CI: `uv lock --check`.
 
 ## Writing a version down somewhere new

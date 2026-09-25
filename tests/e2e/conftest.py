@@ -7,6 +7,7 @@ Override with: pytest --base-url=http://your-host:port
 """
 from __future__ import annotations
 
+import urllib.error
 import urllib.request
 from collections.abc import Generator
 
@@ -27,7 +28,9 @@ DEMO_CASE_IN_REVIEW = {"case_number": "OW-DEMO-00002", "pin": "demo-pin-inreview
 DEMO_CASE_PENDING = {"case_number": "OW-DEMO-00003", "pin": "demo-pin-pending-00003"}
 DEMO_CASE_CLOSED = {"case_number": "OW-DEMO-00004", "pin": "demo-pin-closed-00004"}
 
-AXE_CDN = "https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.9.1/axe.min.js"
+# jsDelivr serves npm, the datasource Renovate checks; cdnjs lags npm and
+# 404ed on the 4.13.0 bump (#93).
+AXE_CDN = "https://cdn.jsdelivr.net/npm/axe-core@4.13.0/axe.min.js"
 
 
 def _totp_now(secret: str = DEMO_ADMIN_TOTP_SECRET) -> str:
@@ -60,6 +63,8 @@ def axe_source() -> str:
     try:
         with urllib.request.urlopen(AXE_CDN, timeout=10) as resp:  # noqa: S310
             return resp.read().decode("utf-8")
+    except urllib.error.HTTPError:
+        raise  # a wrong URL or version must fail, not skip every axe check
     except Exception:
         return ""  # gracefully skip axe if offline
 

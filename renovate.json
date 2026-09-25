@@ -223,7 +223,7 @@
         "/^tests/e2e/conftest\\.py$/"
       ],
       "matchStrings": [
-        "ajax/libs/axe-core/(?<currentValue>\\d+\\.\\d+\\.\\d+)/axe\\.min\\.js"
+        "npm/axe-core@(?<currentValue>\\d+\\.\\d+\\.\\d+)/axe\\.min\\.js"
       ],
       "datasourceTemplate": "npm",
       "depNameTemplate": "axe-core"
