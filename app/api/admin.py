@@ -1078,15 +1078,17 @@ def _csv_cell(value: str) -> str:
     return f"'{value}" if value[:1] in ("=", "+", "-", "@", "\t", "\r") else value
 
 
-def _csv_detail(pairs: list[tuple[str, str]], t: Any) -> str:
+def _csv_detail(raw: str | None, t: Any) -> str:
     """One unambiguous cell: a JSON object, or a legacy free-text detail as is."""
     import json
 
-    if not pairs:
-        return ""
-    if not pairs[0][0]:
-        return pairs[0][1]
-    data = {k: t(v) if v == REASON_UNREADABLE else v for k, v in pairs}
+    try:
+        is_object = isinstance(json.loads(raw or ""), dict)
+    except ValueError:
+        is_object = False
+    if not is_object:
+        return raw or ""
+    data = {k: t(v) if v == REASON_UNREADABLE else v for k, v in audit_detail(raw)}
     return json.dumps(data, ensure_ascii=False)
 
 
@@ -1118,7 +1120,7 @@ async def audit_log_csv(
             e.action,
             e.action if label == label_key else label,
             str(e.report_id) if e.report_id else "",
-            _csv_detail(audit_detail(e.detail), t),
+            _csv_detail(e.detail, t),
         )])
 
     return Response(

@@ -137,14 +137,16 @@ async def test_superadmin_may_reveal_an_unassigned_case(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(("role", "same_org", "expected"), [
-    (AdminRole.admin, True, 200),
-    (AdminRole.superadmin, True, 200),
-    (AdminRole.superadmin, False, 403),
+@pytest.mark.parametrize(("role", "same_org", "org_less_report", "expected"), [
+    (AdminRole.admin, True, False, 200),
+    (AdminRole.superadmin, True, False, 200),
+    (AdminRole.superadmin, False, False, 403),
+    # A report with no organisation belongs to no tenant: any admin may handle it.
+    (AdminRole.admin, False, True, 200),
 ])
 async def test_multi_tenant_unassigned_reveal_is_for_the_case_org_only(
     client: AsyncClient, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch,
-    role: AdminRole, same_org: bool, expected: int,
+    role: AdminRole, same_org: bool, org_less_report: bool, expected: int,
 ) -> None:
     from app.config import settings
     from app.models.organisation import Organisation
@@ -155,7 +157,7 @@ async def test_multi_tenant_unassigned_reveal_is_for_the_case_org_only(
     await db_session.commit()
     await _login(client, db_session, role, org_id=orgs[0].id if same_org else orgs[1].id)
     report = await _confidential_report(db_session, assigned=None)
-    report.org_id = orgs[0].id
+    report.org_id = None if org_less_report else orgs[0].id
     await db_session.commit()
     resp = await client.post(f"/admin/reports/{report.id}/identity", data={
         "reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")})
@@ -287,6 +289,22 @@ async def test_audit_csv_neutralises_formulas(
     row = next(r for r in await _csv_rows(client) if r["action"] == "legacy.entry")
     assert row["admin"].startswith("'=")
     assert row["detail"].startswith("'=")
+
+
+@pytest.mark.asyncio
+async def test_audit_csv_keeps_every_key_of_a_detail(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    import json
+
+    await _login(client, db_session, AdminRole.admin)
+    db_session.add(AuditLog(
+        id=uuid.uuid4(), admin_id=None, admin_username="system",
+        action="keys.entry", detail=json.dumps({"": "blank key", "via": "kept"}),
+    ))
+    await db_session.commit()
+    row = next(r for r in await _csv_rows(client) if r["action"] == "keys.entry")
+    assert json.loads(row["detail"]) == {"": "blank key", "via": "kept"}
 
 
 @pytest.mark.asyncio
