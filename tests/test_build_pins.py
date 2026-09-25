@@ -147,19 +147,24 @@ def test_every_workflow_action_is_pinned_by_commit_sha() -> None:
     (`uses: ./...`) is not a remote pin and is exempt."""
     pattern = re.compile(r"^(\s*-?\s*)?uses:\s*(\S+)\s*(#.*)?$", re.M)
     unpinned: dict[str, list[str]] = {}
+    refs: list[str] = []
     for wf in (ROOT / ".github" / "workflows").glob("*.yml"):
         text = wf.read_text()
         for _prefix, ref, comment in pattern.findall(text):
+            refs.append(ref)
             if ref.startswith("./") or ref.startswith("docker://"):
                 continue  # local/inline action, nothing to pin by SHA
             bad = []
             if not re.search(r"@[0-9a-f]{40}$", ref):
                 bad.append(f"{ref!r} is not pinned to a 40-hex commit SHA")
-            elif not re.search(r"#\s*v\S+", comment):
+            elif not re.fullmatch(r"#\s*v[\w.]+\s*", comment):
                 bad.append(f"{ref!r} has no '# vX' version comment")
             if bad:
                 unpinned.setdefault(wf.name, []).extend(bad)
+    assert refs, "no `uses:` line found — the check reaches nothing"
     assert unpinned == {}, unpinned
+    # The Node date-only formatter test fails in CI without it.
+    assert any(r.startswith("actions/setup-node@") for r in refs)
 
 
 def test_no_bare_pip_install_in_any_workflow() -> None:
@@ -198,16 +203,3 @@ def test_security_workflow_audits_dependencies_and_the_image() -> None:
     pinned = re.search(r"aquasecurity/trivy-action@[0-9a-f]{40}", wf)
     assert pinned, "trivy action not pinned by digest"
 
-
-def test_every_workflow_action_is_pinned_by_commit_sha() -> None:
-    uses = [
-        line.split("uses:", 1)[1].strip()
-        for wf in (ROOT / ".github/workflows").glob("*.yml")
-        for line in wf.read_text().splitlines()
-        if line.strip().lstrip("- ").startswith("uses:")
-    ]
-    assert uses
-    unpinned = [u for u in uses if not re.fullmatch(r"[\w./-]+@[0-9a-f]{40} # v[\w.]+", u)]
-    assert not unpinned, unpinned
-    # The Node date-only formatter test fails in CI without it.
-    assert any(u.startswith("actions/setup-node@") for u in uses)
