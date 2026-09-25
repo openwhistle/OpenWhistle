@@ -83,6 +83,22 @@ services:
       - internal
       - proxy
 
+  tls-init:
+    image: ghcr.io/openwhistle/openwhistle:${OPENWHISTLE_VERSION:-1.6.0}
+    command: ["python", "scripts/ensure_tls_cert.py", "/certs-in", "/tls", "${TLS_HOSTNAME:-localhost}"]
+    user: "0:0"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      # :z relabels for SELinux hosts (shared label; a no-op elsewhere).
+      - ./nginx/certs:/certs-in:ro,z
+      - tls:/tls
+    restart: "no"
+    network_mode: none
+
   nginx:
     image: nginx:alpine
     read_only: true
@@ -104,9 +120,12 @@ services:
     volumes:
       # :z relabels for SELinux hosts (shared label; a no-op elsewhere).
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro,z
-      - ./nginx/certs:/etc/nginx/certs:ro,z
+      - tls:/etc/nginx/tls:ro
     depends_on:
-      - app
+      tls-init:
+        condition: service_completed_successfully
+      app:
+        condition: service_started
     restart: always
     networks:
       - proxy
@@ -151,6 +170,7 @@ services:
 
 volumes:
   postgres_data:
+  tls:
 
 networks:
   internal:

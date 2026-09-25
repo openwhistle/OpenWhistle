@@ -141,6 +141,9 @@ zero vendor lock-in, and privacy-first by design.
 - **Telephone channel compliance guide** — Admin page (`/admin/telephone-channel`) provides
   a HinSchG §16 compliance checklist, implementation options, and the §10 recording
   prohibition notice for operators setting up a verbal reporting channel.
+- **TLS on by default** — the bundled nginx in `docker-compose.prod.yml` serves HTTPS out of
+  the box: drop `fullchain.pem`/`privkey.pem` into `nginx/certs/`, or a self-signed certificate
+  for `TLS_HOSTNAME` is generated on first start; plain HTTP only redirects.
 
 ---
 

@@ -113,6 +113,8 @@ async def main() -> int:
         f"Re-encrypted {len(writes) - skipped} values under the current ENCRYPTION_KEY"
         f" ({skipped} changed meanwhile, left as written)."
     )
+    if skipped:
+        print("Re-run before emptying ENCRYPTION_KEY_PREVIOUS.")
     return 0
 
 

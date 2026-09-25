@@ -50,6 +50,7 @@ app/static/fonts/*.ttf
 
 # Docker
 docker-compose.override.yml
+nginx/certs/*.pem
 
 # Alembic
 migrations/versions/__pycache__/

@@ -992,6 +992,19 @@
 <span class="t-out">&#x25BA; Container openwhistle-nginx-1     Started</span></code></pre>
         </div>
 
+        <div class="callout callout-note">
+          <div class="callout-title">TLS is on by default</div>
+          <p>
+            The bundled nginx serves HTTPS on port 443 and redirects plain HTTP on port 80.
+            Put your own <code>fullchain.pem</code> and <code>privkey.pem</code> (e.g. from
+            certbot) in <code>nginx/certs/</code> and restart; without them, the one-shot
+            <code>tls-init</code> service generates a self-signed certificate for
+            <code>TLS_HOSTNAME</code> (a <code>.env</code> variable read only by
+            <code>docker-compose.prod.yml</code>, default <code>localhost</code>) before nginx
+            starts.
+          </p>
+        </div>
+
         <h3>Step 4 — Run the setup wizard</h3>
         <p>
           Unless you set <code>SETUP_TOKEN</code> yourself, read the one-time setup token from the
