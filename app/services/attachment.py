@@ -6,6 +6,7 @@ import io
 import re
 import uuid
 from pathlib import Path
+from typing import TYPE_CHECKING
 from urllib.parse import quote
 
 from fastapi import UploadFile
@@ -14,6 +15,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.attachment import Attachment
 from app.models.report import Report
+
+if TYPE_CHECKING:
+    from app.services.storage import StorageBackend
 
 MAX_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB
 MAX_ATTACHMENTS: int = 5
@@ -492,3 +496,58 @@ async def delete_stored_objects(keys: list[str]) -> None:
             await backend.delete(key)
         except Exception:  # noqa: BLE001
             logging.getLogger(__name__).exception("Failed to delete stored object %s", key)
+
+
+_UUID_KEY = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
+
+
+def _storage() -> StorageBackend:
+    from app.services.storage import get_storage_backend  # noqa: PLC0415
+
+    return get_storage_backend()
+
+
+async def rekey_legacy_objects(db: AsyncSession) -> int:
+    """Move objects stored before v1.5.0 (keys carrying the filename) to bare UUIDs.
+
+    Copy first, then point the row at the copy, then delete the old object, so
+    no step can lose a file. A failure leaves that row as it was for the next run.
+    """
+    import logging  # noqa: PLC0415
+
+    from app.services.storage import generate_storage_key  # noqa: PLC0415
+
+    log = logging.getLogger(__name__)
+    backend = _storage()
+    rows = await db.execute(select(Attachment).where(Attachment.storage_key.isnot(None)))
+    moved = 0
+    for att in rows.scalars().all():
+        old = att.storage_key or ""
+        if _UUID_KEY.fullmatch(old):
+            continue
+        new = generate_storage_key()
+        try:
+            await backend.copy(old, new)
+        except Exception:  # noqa: BLE001
+            log.warning("Could not re-key attachment %s; retried at next start", att.id)
+            continue
+        att.storage_key = new
+        await db.commit()
+        try:
+            await backend.delete(old)
+        except Exception:  # noqa: BLE001
+            log.warning("Re-keyed attachment %s; its old object could not be deleted", att.id)
+        moved += 1
+    return moved
+
+
+async def run_s3_rekey() -> None:
+    """Startup job: once across replicas (Redis lock), own DB session."""
+    from app.database import AsyncSessionLocal  # noqa: PLC0415
+    from app.redis_client import get_redis  # noqa: PLC0415
+
+    redis = await get_redis()
+    if not await redis.set("openwhistle:job_lock:s3_rekey", "1", nx=True, ex=3600):
+        return
+    async with AsyncSessionLocal() as db:
+        await rekey_legacy_objects(db)

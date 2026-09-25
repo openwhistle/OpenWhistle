@@ -55,6 +55,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         await seed_demo_data()
         logger.info("Demo data seeded.")
 
+    rekey_task = None
+    if settings.storage_backend == "s3":
+        import asyncio  # noqa: PLC0415
+
+        from app.services.attachment import run_s3_rekey  # noqa: PLC0415
+
+        rekey_task = asyncio.create_task(run_s3_rekey())
+
     from app.services.notifications import batching_enabled  # noqa: PLC0415
 
     scheduler = None
@@ -114,6 +122,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         scheduler.start()
 
     yield
+
+    if rekey_task is not None:
+        rekey_task.cancel()
 
     if scheduler is not None:
         scheduler.shutdown(wait=False)

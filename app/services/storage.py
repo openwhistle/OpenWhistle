@@ -37,6 +37,9 @@ class StorageBackend:
     async def delete(self, key: str) -> None:
         raise NotImplementedError
 
+    async def copy(self, src: str, dst: str) -> None:
+        raise NotImplementedError
+
 
 class DBStorageBackend(StorageBackend):
     """No-op backend: data is stored directly in the Attachment.data column."""
@@ -49,6 +52,9 @@ class DBStorageBackend(StorageBackend):
 
     async def delete(self, key: str) -> None:
         pass  # cascade delete handles cleanup
+
+    async def copy(self, src: str, dst: str) -> None:
+        pass  # nothing to copy: data lives in the row, not under a key
 
 
 class S3StorageBackend(StorageBackend):
@@ -121,6 +127,15 @@ class S3StorageBackend(StorageBackend):
             client.delete_object, Bucket=self._bucket, Key=full_key
         )
         log.info("Deleted attachment from S3: %s", full_key)
+
+    async def copy(self, src: str, dst: str) -> None:
+        client = self._client()
+        await asyncio.to_thread(
+            client.copy_object,
+            Bucket=self._bucket,
+            Key=self._full_key(dst),
+            CopySource={"Bucket": self._bucket, "Key": self._full_key(src)},
+        )
 
 
 _backend: StorageBackend | None = None
