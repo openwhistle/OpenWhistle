@@ -381,6 +381,7 @@
   "submit.error.description_too_long": "Description must not exceed 10,000 characters.",
   "submit.error.invalid_location": "The selected location is not valid.",
   "submit.error.session_incomplete": "Your session is incomplete. Please start over.",
+  "submit.error.submit_failed": "Your report was NOT sent. Your answers are kept: check them and submit again.",
   "submit.error.attachments_too_large": "The attachments are too large in total. Remove a file or make it smaller, then try again.",
   "submit.error.attachments_no_room": "The server cannot take attachments right now. Continue without them or try again later; after submitting you can add details in a reply.",
   "status.deadlines.title": "Legal deadlines (HinSchG)",

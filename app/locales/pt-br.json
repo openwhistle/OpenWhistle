@@ -393,6 +393,7 @@
   "submit.error.description_too_long": "A descrição não deve exceder 10.000 caracteres.",
   "submit.error.invalid_location": "O local selecionado não é válido.",
   "submit.error.session_incomplete": "Sua sessão está incompleta. Comece novamente.",
+  "submit.error.submit_failed": "Sua denúncia NÃO foi enviada. Suas respostas foram mantidas: confira-as e envie novamente.",
   "submit.error.attachments_too_large": "Os anexos são grandes demais no total. Remova ou reduza um arquivo e tente novamente.",
   "submit.error.attachments_no_room": "O servidor não pode receber anexos agora. Continue sem eles ou tente mais tarde; depois do envio, você pode adicionar detalhes em uma resposta.",
   "status.deadlines.title": "Prazos legais (HinSchG)",

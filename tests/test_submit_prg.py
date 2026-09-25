@@ -713,8 +713,7 @@ async def test_slow_winner_that_fails_leaves_the_draft_reachable(
     await asyncio.sleep(0.2)
     second = await client.post("/submit", data=data)
     assert "still being processed" in second.text
-    with pytest.raises(RuntimeError):
-        await first
+    assert "was NOT sent" in (await first).text  # back at review
     monkeypatch.undo()
 
     page = (await client.get("/submit")).text  # "Check again"
@@ -853,8 +852,8 @@ async def test_failed_create_restores_the_draft_for_a_retry(
 
     monkeypatch.setattr(report_service, "create_report", _flaky_create)
     await _walk_to_review(client)
-    with pytest.raises(RuntimeError):
-        await _post(client)
+    assert (await _post(client)).status_code == 303
+    assert "was NOT sent" in (await client.get("/submit")).text
     retry = await _post(client)
     assert retry.status_code == 200
     assert _CASE_RE.search(retry.text)
@@ -876,8 +875,7 @@ async def test_failed_attachment_store_leaves_no_report_and_restores_the_draft(
         raise RuntimeError("storage backend down")
 
     monkeypatch.setattr(attachment, "create_attachments", _broken)
-    with pytest.raises(RuntimeError):
-        await _post(client)
+    assert (await _post(client)).status_code == 303
     assert await _report_count() == before  # rolled back with the attachments
     draft = await _draft(client)
     assert draft["step"] == 6
@@ -962,10 +960,10 @@ async def test_failed_commit_that_did_not_go_through_gives_the_draft_back(
     data = _final_form((await client.get("/submit")).text)
     before = await _report_count()
     monkeypatch.setattr(_Session, "commit", _refused)
-    with pytest.raises(ConnectionResetError):
-        await client.post("/submit", data=data)
+    resp = await client.post("/submit", data=data, follow_redirects=False)
     monkeypatch.undo()
 
+    assert resp.status_code == 303
     assert await _report_count() == before
     assert _step((await client.get("/submit")).text) == 6
 
@@ -1067,9 +1065,11 @@ async def test_a_lost_result_write_after_the_commit_never_reopens_the_draft(
 
     redis = await get_redis()
     assert await redis.exists(reports._claimed_key(session_id))
+    await redis.set(reports._report_id_key(session_id), "left by a pre-v1.6.0 load")
     await redis.delete(reports._pending_key(session_id))  # the pending TTL ran out
     client.cookies.set("ow-submission-session", session_id)  # the browser kept it
     page = (await client.get("/submit")).text
+    assert not await redis.exists(reports._report_id_key(session_id))  # spent with the draft
     assert case.group(0) in page
     assert "shown only once" in page
     assert _PIN_RE.search(page) is None
@@ -1105,9 +1105,10 @@ async def test_commit_and_lookup_both_failing_yield_one_report(
     before = await _report_count()
     monkeypatch.setattr(_Session, "commit", _commit_then_reset)
     monkeypatch.setattr(reports, "_committed_case_number", _lookup_down)
-    with pytest.raises(ConnectionResetError):
-        await client.post("/submit", data=data)
+    unknown = await client.post("/submit", data=data)
     monkeypatch.undo()
+    assert "still being processed" in unknown.text  # the outcome is not known yet
+    assert "answers are kept" in unknown.text
 
     redis = await get_redis()
     await redis.delete(reports._pending_key(session_id))  # the pending TTL ran out
@@ -1235,8 +1236,7 @@ async def test_claim_to_commit_is_bounded_well_under_pending(
     monkeypatch.setattr(report_service, "create_report", _hang)
     await _walk_to_review(client)
     before = await _report_count()
-    with pytest.raises(TimeoutError):
-        await _post(client)
+    assert (await _post(client)).status_code == 303
     monkeypatch.undo()
 
     assert seen == ["500ms"]
@@ -1307,3 +1307,160 @@ async def test_the_report_id_is_fixed_at_the_first_save_and_kept_by_every_step(
     await _upload(client)
     await client.get("/submit")
     assert (await _draft(client))["report_id"] == report_id
+
+
+async def _strip_report_id(client: AsyncClient) -> None:
+    """Rewrite the draft as a pre-v1.6.0 one: no report id."""
+    import json
+
+    import app.api.reports as reports
+    from app.redis_client import get_redis
+
+    draft = await _draft(client)
+    draft.pop("report_id")
+    session_id = await _session_id(client)
+    await (await get_redis()).set(
+        reports._submission_key(session_id),
+        reports._draft_fernet(session_id).encrypt(json.dumps(draft).encode()),
+        ex=600,
+    )
+
+
+@pytest.mark.asyncio
+async def test_a_stale_save_of_a_pre_v1_6_draft_yields_one_report(client: AsyncClient) -> None:
+    """The review's X6-R4-A probe: a request loads an id-less draft and stalls
+    while the reporter submits; its late save must not give the draft a new id."""
+    import app.api.reports as reports
+    from app.redis_client import get_redis
+
+    await _walk_to_review(client)
+    data = _final_form((await client.get("/submit")).text)
+    await _strip_report_id(client)
+    session_id = await _session_id(client)
+    redis = await get_redis()
+    before = await _report_count()
+
+    stalled = await reports._load_submission(redis, session_id)  # request X, stalled
+    assert (await client.post("/submit", data=data, follow_redirects=False)).status_code == 303
+    assert _CASE_RE.search((await _post(client)).text)  # report A
+    await reports._save_submission(redis, session_id, stalled)  # X resumes
+    client.cookies.set("ow-submission-session", session_id)  # X's redirect sets it again
+
+    await _post(client)  # the draft is back at review; submitting it again
+    assert await _report_count() == before + 1
+    assert not await redis.exists(reports._submission_key(session_id) + ":report-id")
+
+
+@pytest.mark.asyncio
+async def test_a_pre_v1_6_draft_spent_while_loading_is_not_given_an_id(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A loader that read the id-less draft just before its report finished must
+    not mint a fresh id for it: the draft is gone, so the state is empty."""
+    import app.api.reports as reports
+    from app.redis_client import get_redis
+
+    await _walk_to_review(client)
+    await _strip_report_id(client)
+    session_id = await _session_id(client)
+    redis = await get_redis()
+    stale_token = await redis.get(reports._submission_key(session_id))
+    await client.get("/submit")  # assigns the id
+    assert _CASE_RE.search((await _post(client)).text)  # spent: draft and side key deleted
+
+    real_get = redis.get
+    stale_reads = [stale_token]  # the one read made just before the report finished
+
+    async def _stale_get(key: str) -> str | None:
+        if key == reports._submission_key(session_id) and stale_reads:
+            return stale_reads.pop()
+        return await real_get(key)
+
+    monkeypatch.setattr(redis, "get", _stale_get, raising=False)
+    try:
+        assert await reports._load_submission(redis, session_id) == {}
+    finally:
+        monkeypatch.undo()
+    assert not await redis.exists(reports._submission_key(session_id) + ":report-id")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("lang", "message"),
+    [
+        ("en", "Your report was NOT sent."),
+        ("de", "Ihre Meldung wurde NICHT gesendet."),
+        ("fr", "Votre signalement n&#39;a PAS été envoyé."),
+        ("pt-br", "Sua denúncia NÃO foi enviada."),
+    ],
+)
+async def test_a_submit_failing_before_its_commit_says_not_sent_and_keeps_the_answers(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch, lang: str, message: str
+) -> None:
+    """The review's X6-R4-B: no bare 500, but the review step with a message."""
+    from app.services import report as report_service
+
+    async def _down(*args: object, **kwargs: object) -> None:
+        raise ConnectionResetError("database went away")
+
+    client.cookies.set("ow-lang", lang)
+    await _walk_to_attachments(client)
+    await _upload(client, ("evidence.txt", b"evidence that must survive"))
+    before = await _report_count()
+    monkeypatch.setattr(report_service, "create_report", _down)
+    resp = await _post(client)
+    monkeypatch.undo()
+
+    assert resp.status_code == 303
+    page = (await client.get("/submit")).text
+    assert message in page
+    assert _step(page) == 6
+    assert "evidence.txt" in page
+    assert (await _draft(client))["description"] == "A description long enough to pass."
+    assert await _report_count() == before
+
+
+@pytest.mark.asyncio
+async def test_a_failed_late_submit_leaves_a_newer_claim_alone(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A submit that lost its draft to a newer claim and then fails must not
+    put the draft back beside that claim: it waits for the newer one."""
+    import app.api.reports as reports
+    from app.redis_client import get_redis
+    from app.services import report as report_service
+
+    await _walk_to_review(client)
+    session_id = await _session_id(client)
+    redis = await get_redis()
+
+    async def _overtaken_then_down(*args: object, **kwargs: object) -> None:
+        await redis.set(reports._pending_key(session_id), "a-newer-claim", ex=60)
+        raise ConnectionResetError("database went away")
+
+    monkeypatch.setattr(reports, "_RESULT_WAIT_SECONDS", 0.2)
+    monkeypatch.setattr(report_service, "create_report", _overtaken_then_down)
+    resp = await _post(client)
+    monkeypatch.undo()
+
+    assert "still being processed" in resp.text
+    assert not await redis.exists(reports._submission_key(session_id))
+    assert await redis.exists(reports._claimed_key(session_id))
+
+
+@pytest.mark.asyncio
+async def test_start_over_deletes_a_pre_v1_6_drafts_report_id_too(client: AsyncClient) -> None:
+    import app.api.reports as reports
+    from app.redis_client import get_redis
+
+    await _walk_to_review(client)
+    await _strip_report_id(client)
+    session_id = await _session_id(client)
+    page = (await client.get("/submit")).text  # the load assigns the id
+    redis = await get_redis()
+    assert await redis.exists(reports._report_id_key(session_id))
+
+    await client.post("/submit/restart", data={"csrf_token": _csrf(page)})
+    assert not await redis.exists(
+        reports._submission_key(session_id), reports._report_id_key(session_id)
+    )

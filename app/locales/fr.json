@@ -96,6 +96,7 @@
   "submit.error.description_too_long": "La description ne doit pas dépasser 10 000 caractères.",
   "submit.error.invalid_location": "Le lieu sélectionné n'est pas valide.",
   "submit.error.session_incomplete": "Votre session est incomplète. Veuillez recommencer.",
+  "submit.error.submit_failed": "Votre signalement n'a PAS été envoyé. Vos réponses sont conservées : vérifiez-les et envoyez à nouveau.",
   "submit.error.attachments_too_large": "Les pièces jointes sont trop volumineuses au total. Retirez ou réduisez un fichier, puis réessayez.",
   "submit.error.attachments_no_room": "Le serveur ne peut pas recevoir de pièces jointes pour le moment. Continuez sans elles ou réessayez plus tard ; après l'envoi, vous pourrez ajouter des détails dans une réponse.",
   "success.attachments.title": "Fichiers joints",

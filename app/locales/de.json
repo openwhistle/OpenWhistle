@@ -381,6 +381,7 @@
   "submit.error.description_too_long": "Die Beschreibung darf 10.000 Zeichen nicht überschreiten.",
   "submit.error.invalid_location": "Der ausgewählte Standort ist nicht gültig.",
   "submit.error.session_incomplete": "Ihre Sitzung ist unvollständig. Bitte beginnen Sie von vorne.",
+  "submit.error.submit_failed": "Ihre Meldung wurde NICHT gesendet. Ihre Angaben bleiben erhalten: Prüfen Sie sie und senden Sie erneut.",
   "submit.error.attachments_too_large": "Die Anhänge sind zusammen zu groß. Entfernen oder verkleinern Sie eine Datei und versuchen Sie es erneut.",
   "submit.error.attachments_no_room": "Der Server kann gerade keine Anhänge annehmen. Fahren Sie ohne sie fort oder versuchen Sie es später; nach dem Absenden können Sie Details in einer Antwort ergänzen.",
   "status.deadlines.title": "Gesetzliche Fristen (HinSchG)",

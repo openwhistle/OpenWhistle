@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import logging
 import re
 import secrets
 import uuid
@@ -38,6 +39,7 @@ from app.services.locations import get_active_locations, get_location_by_id
 from app.templating import render
 
 router = APIRouter()
+_log = logging.getLogger(__name__)
 
 # Allowlist pattern for whistleblower session keys (URL-safe base64, 1–86 chars).
 _SESSION_KEY_RE = re.compile(r"^[A-Za-z0-9_-]{1,86}$")
@@ -94,6 +96,17 @@ _RESULT_TTL = 120
 _PENDING_TTL = 120
 _SUBMIT_TIMEOUT_SECONDS = 30
 
+# KEYS: draft, report-id. ARGV: draft token as read, new id, TTL.
+# One id for a draft saved before v1.6.0, whoever loads it; none once the
+# draft changed or was spent (its report-id key goes with it).
+_ASSIGN_REPORT_ID = """
+if redis.call('GET', KEYS[1]) ~= ARGV[1] then
+  return false
+end
+redis.call('SET', KEYS[2], ARGV[2], 'NX', 'EX', ARGV[3])
+return redis.call('GET', KEYS[2])
+"""
+
 # KEYS: draft, claimed, pending. ARGV: pending TTL, nonce.
 _CLAIM_DRAFT = """
 if redis.call('EXISTS', KEYS[1]) == 0 or redis.call('EXISTS', KEYS[2]) == 1 then
@@ -104,8 +117,8 @@ redis.call('SET', KEYS[3], ARGV[2], 'EX', ARGV[1])
 return redis.call('GET', KEYS[2])
 """
 
-# KEYS: draft, claimed, pending, result. ARGV: claimed token, result token or
-# "" (the report does not exist: give the draft back), result TTL.
+# KEYS: draft, claimed, pending, result, report-id. ARGV: claimed token, result
+# token or "" (the report does not exist: give the draft back), result TTL.
 _RECOVER_DRAFT = """
 if redis.call('EXISTS', KEYS[3]) == 1 or redis.call('EXISTS', KEYS[1]) == 1
    or redis.call('GET', KEYS[2]) ~= ARGV[1] then
@@ -114,7 +127,7 @@ end
 if ARGV[2] == '' then
   redis.call('RENAME', KEYS[2], KEYS[1])
 else
-  redis.call('DEL', KEYS[2])
+  redis.call('DEL', KEYS[2], KEYS[5])
   redis.call('SET', KEYS[4], ARGV[2], 'EX', ARGV[3])
 end
 return 1
@@ -134,15 +147,15 @@ redis.call('DEL', KEYS[2], KEYS[3])
 return 1
 """
 
-# KEYS: draft, claimed, pending, result. ARGV: nonce, result token or "", TTL.
-# The report exists: the draft is spent, unless a newer claim holds it.
+# KEYS: draft, claimed, pending, result, report-id. ARGV: nonce, result token
+# or "", TTL. The report exists: the draft is spent, unless a newer claim holds it.
 _FINISH_CLAIM = """
 if ARGV[2] ~= '' then
   redis.call('SET', KEYS[4], ARGV[2], 'EX', ARGV[3])
 end
 local pending = redis.call('GET', KEYS[3])
 if not pending or pending == ARGV[1] then
-  redis.call('DEL', KEYS[1], KEYS[2], KEYS[3])
+  redis.call('DEL', KEYS[1], KEYS[2], KEYS[3], KEYS[5])
 end
 return 1
 """
@@ -238,22 +251,31 @@ async def _recover_draft(redis: Redis, db: AsyncSession, session_id: str) -> Non
     case_number = await _committed_case_number(db, report_id) if report_id else None
     result = "" if case_number is None else _encrypt_result(session_id, _received(case_number))
     await redis.eval(
-        _RECOVER_DRAFT, 4, draft_key, claimed_key, pending_key, _result_key(session_id),
-        token, result, _RESULT_TTL,
+        _RECOVER_DRAFT, 5, draft_key, claimed_key, pending_key, _result_key(session_id),
+        _report_id_key(session_id), token, result, _RESULT_TTL,
     )
 
 
-async def _give_back_draft(redis: Redis, session_id: str, token: str, nonce: str) -> None:
-    """The submit failed and its report does not exist: the draft is the reporter's again."""
-    await redis.eval(_GIVE_BACK_DRAFT, 3, *_claim_keys(session_id), token, _SUBMISSION_TTL, nonce)
+async def _give_back_draft(redis: Redis, session_id: str, token: str, nonce: str) -> bool:
+    """The submit failed and its report does not exist: the draft is the reporter's
+    again. False when a newer claim holds it."""
+    return bool(
+        await cast(
+            Awaitable[int],
+            redis.eval(
+                _GIVE_BACK_DRAFT, 3, *_claim_keys(session_id), token, _SUBMISSION_TTL, nonce
+            ),
+        )
+    )
 
 
 async def _finish_claim(
     redis: Redis, session_id: str, nonce: str, result: dict[str, Any] | None
 ) -> None:
     await redis.eval(
-        _FINISH_CLAIM, 4, *_claim_keys(session_id), _result_key(session_id),
-        nonce, "" if result is None else _encrypt_result(session_id, result), _RESULT_TTL,
+        _FINISH_CLAIM, 5, *_claim_keys(session_id), _result_key(session_id),
+        _report_id_key(session_id), nonce,
+        "" if result is None else _encrypt_result(session_id, result), _RESULT_TTL,
     )
 
 
@@ -302,6 +324,10 @@ def _submission_key(session_id: str) -> str:
     return f"submission-session:{session_id.split('.')[0]}"
 
 
+def _report_id_key(session_id: str) -> str:
+    return _submission_key(session_id) + ":report-id"
+
+
 async def _load_submission(redis: Redis, session_id: str) -> dict[str, Any]:
     raw = await redis.get(_submission_key(session_id))
     if not raw:
@@ -310,7 +336,20 @@ async def _load_submission(redis: Redis, session_id: str) -> dict[str, Any]:
         data = _draft_fernet(session_id).decrypt(raw)
     except InvalidToken:
         return {}  # wrong or missing key: the draft is as good as expired
-    return cast(dict[str, Any], json.loads(data))
+    state = cast(dict[str, Any], json.loads(data))
+    if state and "report_id" not in state:
+        # Saved before v1.6.0: concurrent loaders must agree on one id.
+        report_id = await cast(
+            Awaitable[str | None],
+            redis.eval(
+                _ASSIGN_REPORT_ID, 2, _submission_key(session_id), _report_id_key(session_id),
+                raw, str(uuid.uuid4()), _SUBMISSION_TTL,
+            ),
+        )
+        if report_id is None:  # saved or spent meanwhile: read what is there now
+            return await _load_submission(redis, session_id)
+        state["report_id"] = report_id
+    return state
 
 
 async def _save_submission(redis: Redis, session_id: str, state: dict[str, Any]) -> None:
@@ -783,10 +822,20 @@ async def submit_post(
             # through, and another submit of this draft may own the report. If
             # this lookup fails too, nothing is given back: the recovery asks
             # again once "pending" expires.
-            committed_case = await _committed_case_number(db, report_id)
+            try:
+                committed_case = await _committed_case_number(db, report_id)
+            except Exception:
+                if not isinstance(exc, Exception):
+                    raise exc from None
+                return render(request, "submit_pending.html", {"answers_kept": True})
             if committed_case is None:
-                await _give_back_draft(redis, session_id, claimed, nonce)
-                raise
+                given_back = await _give_back_draft(redis, session_id, claimed, nonce)
+                if not isinstance(exc, Exception):
+                    raise  # cancelled, or the worker is going away: nobody to answer
+                if not given_back:  # a newer claim holds the draft
+                    return await _await_other_submit(request, redis, db, session_id)
+                _log.warning("Final submit failed before its commit: %s", type(exc).__name__)
+                return await _fail(_STEP_REVIEW, "submit_failed")  # nothing was sent
             if committed_case != our_case:  # another submit of this draft made it
                 await _finish_claim(redis, session_id, nonce, None)
                 if isinstance(exc, asyncio.CancelledError):
@@ -913,7 +962,7 @@ async def submit_restart(
 ) -> RedirectResponse:
     raw = request.cookies.get("ow-submission-session")
     if raw and _DRAFT_COOKIE_RE.match(raw):
-        await redis.delete(_submission_key(raw))
+        await redis.delete(_submission_key(raw), _report_id_key(raw))
     response = RedirectResponse("/submit", status_code=303)
     _clear_submission_cookie(response, request)
     return response
