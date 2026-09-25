@@ -375,6 +375,8 @@ async def create_attachments(
     db: AsyncSession,
     report: Report,
     file_tuples: list[tuple[str, str, bytes]],
+    *,
+    commit: bool = True,
 ) -> list[Attachment]:
     """Persist (filename, content_type, data) tuples as encrypted Attachment rows.
 
@@ -419,7 +421,7 @@ async def create_attachments(
         )
         db.add(att)
         attachments.append(att)
-    if attachments:
+    if attachments and commit:
         await db.commit()
     return attachments
 

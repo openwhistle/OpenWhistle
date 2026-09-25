@@ -6,6 +6,7 @@ import re
 
 import pytest
 from httpx import AsyncClient, Response
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 def _csrf(text: str) -> str:
@@ -391,67 +392,283 @@ async def test_unknown_action_on_a_fresh_session_stores_no_file(client: AsyncCli
     assert "file_data" not in draft
 
 
+_PIN_RE = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}")
+
+
+async def _set_draft(client: AsyncClient, draft: dict[str, object]) -> None:
+    import app.api.reports as reports
+    from app.redis_client import get_redis
+
+    session_id = client.cookies.get("ow-submission-session")
+    assert session_id
+    await reports._save_submission(await get_redis(), session_id, draft)
+
+
+async def _report_count() -> int:
+    from sqlalchemy import func, select
+    from sqlalchemy.ext.asyncio import create_async_engine
+
+    from app.config import settings
+    from app.models.report import Report
+
+    engine = create_async_engine(settings.database_url)
+    try:
+        async with engine.connect() as conn:
+            return int((await conn.execute(select(func.count()).select_from(Report))).scalar_one())
+    finally:
+        await engine.dispose()
+
+
+def _final_form(page_text: str) -> dict[str, str]:
+    return {"csrf_token": _csrf(page_text), "step": str(_step(page_text)), "action": "next"}
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ("field", "value"),
+    ("field", "value", "back_to", "message"),
     [
-        ("description", "abcdef"),
-        ("description", "x" * 10001),
-        ("description", "   short   "),
-        ("category", "no_such_category"),
-        ("submission_mode", "public"),
+        ("description", "abcdef", 4, "at least 10"),
+        ("description", "x" * 10001, 4, "10,000"),
+        ("description", "   short   ", 4, "at least 10"),
+        ("category", "no_such_category", 3, "Please select a category"),
+        ("submission_mode", "public", 1, "submission mode"),
     ],
     ids=["short", "too-long", "short-after-strip", "unknown-category", "unknown-mode"],
 )
 async def test_review_revalidates_the_draft_before_creating_a_report(
-    client: AsyncClient, field: str, value: str
+    client: AsyncClient, field: str, value: str, back_to: int, message: str
 ) -> None:
-    import app.api.reports as reports
-    from app.redis_client import get_redis
-
     await _walk_to_review(client)
     draft = await _draft(client)
     draft[field] = value
-    session_id = client.cookies.get("ow-submission-session")
-    assert session_id
-    await reports._save_submission(await get_redis(), session_id, draft)
+    await _set_draft(client, draft)
+    before = await _report_count()
 
     resp = await _post(client)  # final submit on the review step
     assert resp.status_code == 303
     page = (await client.get("/submit")).text
     assert _CASE_RE.search(page) is None
-    assert "start over" in page.lower()
+    assert message in page
+    assert (await _draft(client))["step"] == back_to
+    assert await _report_count() == before
 
 
 @pytest.mark.asyncio
-async def test_concurrent_final_submits_create_one_report(
+async def test_location_deactivated_after_its_step_returns_to_the_location_step(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    import uuid
+
+    from app.models.location import Location
+
+    chosen = Location(id=uuid.uuid4(), name="Closing site", code=f"C{uuid.uuid4().hex[:5]}")
+    other = Location(id=uuid.uuid4(), name="Open site", code=f"O{uuid.uuid4().hex[:5]}")
+    db_session.add_all([chosen, other])
+    await db_session.commit()
+    try:
+        await _post(client, submission_mode="anonymous")
+        await _post(client, location_id=str(chosen.id))
+        await _post(client, category="financial_fraud")
+        await _post(client, description="A description long enough to pass.")
+        await _upload(client)
+        chosen.is_active = False
+        await db_session.commit()
+
+        resp = await _post(client)
+        assert resp.status_code == 303
+        page = (await client.get("/submit")).text
+        assert _step(page) == 2
+        assert "location is not valid" in page
+        assert _CASE_RE.search(page) is None
+    finally:
+        await db_session.delete(chosen)
+        await db_session.delete(other)
+        await db_session.commit()
+
+
+@pytest.mark.asyncio
+async def test_confidential_mode_switched_off_returns_to_the_mode_step(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    from app.config import settings
+
+    await _post(client, submission_mode="confidential", confidential_name="Jane Roe")
+    if _step((await client.get("/submit")).text) == 2:
+        await _post(client, location_id="")
+    await _post(client, category="financial_fraud")
+    await _post(client, description="A description long enough to pass.")
+    await _upload(client)
+    monkeypatch.setattr(settings, "submission_mode_enabled", False)
+
+    resp = await _post(client)
+    assert resp.status_code == 303
+    page = (await client.get("/submit")).text
+    assert _step(page) == 1
+    assert "submission mode" in page
+    assert _CASE_RE.search(page) is None
+
+
+def _slow_create(monkeypatch: pytest.MonkeyPatch, delay: float) -> None:
     import asyncio
 
     from app.services import report as report_service
 
     real_create = report_service.create_report
 
-    async def _slow_create(*args: object, **kwargs: object):  # type: ignore[no-untyped-def]
-        await asyncio.sleep(0.2)  # both requests are past loading the draft
+    async def _slow(*args: object, **kwargs: object):  # type: ignore[no-untyped-def]
+        await asyncio.sleep(delay)
         return await real_create(*args, **kwargs)  # type: ignore[arg-type]
 
-    monkeypatch.setattr(report_service, "create_report", _slow_create)
+    monkeypatch.setattr(report_service, "create_report", _slow)
+
+
+@pytest.mark.asyncio
+async def test_concurrent_final_submits_create_one_report_and_both_show_the_pin(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import asyncio
+
+    _slow_create(monkeypatch, 0.3)
     await _walk_to_review(client)
-    page = await client.get("/submit")
-    data = {"csrf_token": _csrf(page.text), "step": str(_step(page.text)), "action": "next"}
+    data = _final_form((await client.get("/submit")).text)
+    before = await _report_count()
 
     first, second = await asyncio.gather(
         client.post("/submit", data=data), client.post("/submit", data=data)
     )
-    cases = {m.group(0) for r in (first, second) if (m := _CASE_RE.search(r.text))}
-    assert len(cases) == 1
-    assert sum(bool(_CASE_RE.search(r.text)) for r in (first, second)) == 1
+    assert await _report_count() == before + 1
+    shown = []
+    for resp in (first, second):
+        case, pin = _CASE_RE.search(resp.text), _PIN_RE.search(resp.text)
+        assert case and pin, "every click must show the case number and PIN"
+        shown.append((case.group(0), pin.group(0)))
+    assert shown[0] == shown[1]
 
 
 @pytest.mark.asyncio
-async def test_failed_create_releases_the_claim_for_a_retry(
+async def test_second_click_after_the_draft_was_taken_shows_the_same_pin(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The review's P4: the second POST arrives while the first is still creating."""
+    import asyncio
+
+    import app.api.reports as reports
+    from app.redis_client import get_redis
+
+    _slow_create(monkeypatch, 1.0)
+    await _walk_to_review(client)
+    data = _final_form((await client.get("/submit")).text)
+    before = await _report_count()
+
+    first = asyncio.create_task(client.post("/submit", data=data))
+    await asyncio.sleep(0.3)  # the first request holds the draft now
+    session_id = client.cookies.get("ow-submission-session")
+    assert session_id
+    second = await client.post("/submit", data=data)
+    first_resp = await first
+
+    assert await _report_count() == before + 1
+    pin = _PIN_RE.search(first_resp.text)
+    assert pin
+    assert pin.group(0) in second.text
+    redis = await get_redis()
+    assert not await redis.exists(reports._result_key(session_id))  # read once, then gone
+
+
+@pytest.mark.asyncio
+async def test_the_result_is_kept_120_seconds_for_a_second_click(client: AsyncClient) -> None:
+    import app.api.reports as reports
+    from app.redis_client import get_redis
+
+    await _walk_to_review(client)
+    session_id = client.cookies.get("ow-submission-session")
+    assert session_id
+    resp = await _post(client)
+    assert resp.status_code == 200
+    redis = await get_redis()
+    ttl = await redis.ttl(reports._result_key(session_id))
+    assert 0 < ttl <= 120
+    stored = await redis.get(reports._result_key(session_id))
+    assert _PIN_RE.search(resp.text).group(0) not in stored  # type: ignore[union-attr]
+    assert not await redis.exists(reports._pending_key(session_id))
+
+
+@pytest.mark.asyncio
+async def test_second_click_without_a_result_says_where_the_pin_was_shown(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import app.api.reports as reports
+    from app.redis_client import get_redis
+
+    monkeypatch.setattr(reports, "_RESULT_WAIT_SECONDS", 0.3)
+    await _walk_to_review(client)
+    data = _final_form((await client.get("/submit")).text)
+    session_id = client.cookies.get("ow-submission-session")
+    assert session_id
+    redis = await get_redis()
+    # A first click that took the draft and has not finished within the wait.
+    await redis.delete(reports._submission_key(session_id))
+    await redis.set(reports._pending_key(session_id), "1", ex=30)
+
+    resp = await client.post("/submit", data=data)
+    assert resp.status_code == 200
+    assert "Report already submitted" in resp.text
+    assert _PIN_RE.search(resp.text) is None
+    assert 'name="step"' not in resp.text  # not an empty wizard step 1
+
+
+@pytest.mark.asyncio
+async def test_losing_claim_waits_for_the_other_request_in_the_review_branch(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The draft was loaded, but another request took it before this one's GETDEL."""
+    import app.api.reports as reports
+    from app.redis_client import get_redis
+
+    await _walk_to_review(client)
+    data = _final_form((await client.get("/submit")).text)
+    session_id = client.cookies.get("ow-submission-session")
+    assert session_id
+    redis = await get_redis()
+    result = {"case_number": "OW-2026-12345", "pin": str(__import__("uuid").uuid4()),
+              "attachments": []}
+    token = reports._draft_fernet(session_id).encrypt(__import__("json").dumps(result).encode())
+
+    real_eval = redis.eval
+
+    async def _taken(*args: object) -> None:
+        await redis.delete(reports._submission_key(session_id))
+        await redis.set(reports._result_key(session_id), token, ex=120)
+        return None
+
+    monkeypatch.setattr(redis, "eval", _taken)
+    resp = await client.post("/submit", data=data)
+    monkeypatch.setattr(redis, "eval", real_eval)
+    assert "OW-2026-12345" in resp.text
+    assert result["pin"] in resp.text
+
+
+@pytest.mark.asyncio
+async def test_losing_claim_after_a_failed_first_submit_returns_to_the_wizard(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.redis_client import get_redis
+
+    await _walk_to_review(client)
+    data = _final_form((await client.get("/submit")).text)
+    redis = await get_redis()
+
+    async def _gave_it_back(*args: object) -> None:
+        return None  # the other request failed and restored the draft
+
+    monkeypatch.setattr(redis, "eval", _gave_it_back)
+    resp = await client.post("/submit", data=data, follow_redirects=False)
+    assert resp.status_code == 303
+    assert resp.headers["location"] == "/submit"
+
+
+@pytest.mark.asyncio
+async def test_failed_create_restores_the_draft_for_a_retry(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     from app.services import report as report_service
@@ -473,3 +690,56 @@ async def test_failed_create_releases_the_claim_for_a_retry(
     retry = await _post(client)
     assert retry.status_code == 200
     assert _CASE_RE.search(retry.text)
+
+
+@pytest.mark.asyncio
+async def test_failed_attachment_store_leaves_no_report_and_restores_the_draft(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import app.services.attachment as attachment
+
+    await _walk_to_attachments(client)
+    await _upload(client, ("evidence.txt", b"evidence for the report"))
+    before = await _report_count()
+
+    real_store = attachment.create_attachments
+
+    async def _broken(*args: object, **kwargs: object) -> None:
+        raise RuntimeError("storage backend down")
+
+    monkeypatch.setattr(attachment, "create_attachments", _broken)
+    with pytest.raises(RuntimeError):
+        await _post(client)
+    assert await _report_count() == before  # rolled back with the attachments
+    draft = await _draft(client)
+    assert draft["step"] == 6
+    assert draft["file_meta"]
+
+    monkeypatch.setattr(attachment, "create_attachments", real_store)
+    retry = await _post(client)
+    assert _CASE_RE.search(retry.text)
+    assert await _report_count() == before + 1
+
+
+@pytest.mark.asyncio
+async def test_exception_after_the_commit_never_allows_a_second_report(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The review's P5: the report is committed, then the request fails."""
+    import app.api.reports as reports
+
+    await _walk_to_review(client)
+    before = await _report_count()
+
+    def _boom(*args: object) -> None:
+        raise RuntimeError("client went away")
+
+    monkeypatch.setattr(reports, "_success_page", _boom)
+    with pytest.raises(RuntimeError):
+        await _post(client)
+    monkeypatch.undo()
+    # A retry finds no draft: it can only show the one report's stored result.
+    page = await client.get("/submit")
+    retry = await client.post("/submit", data={"csrf_token": _csrf(page.text), "step": "6"})
+    assert retry.status_code == 200
+    assert await _report_count() == before + 1

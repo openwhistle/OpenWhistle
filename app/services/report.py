@@ -108,8 +108,14 @@ async def create_report(
     confidential_name_enc: str | None = None,
     confidential_contact_enc: str | None = None,
     secure_email_enc: str | None = None,
+    *,
+    commit: bool = True,
 ) -> tuple[Report, str]:
-    """Create a new whistleblower report. Returns (report, plain_pin)."""
+    """Create a new whistleblower report. Returns (report, plain_pin).
+
+    ``commit=False`` only flushes, for a caller that commits the report
+    together with its attachments.
+    """
     from sqlalchemy.exc import IntegrityError
 
     from app.services.encryption import (
@@ -177,8 +183,11 @@ async def create_report(
                 raise
             last_exc = exc
             continue
-        await db.commit()
-        await db.refresh(report)
+        if commit:
+            await db.commit()
+            await db.refresh(report)
+        else:
+            await db.flush()
         return report, plain_pin
 
     assert last_exc is not None

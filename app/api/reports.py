@@ -1,5 +1,6 @@
 """Whistleblower-facing endpoints: submit (multi-step), status, reply."""
 
+import asyncio
 import json
 import re
 import secrets
@@ -79,32 +80,72 @@ _ERROR_FIELD: dict[str, str] = {
 }
 
 
-# A final submit holds this claim while it creates the report.
-_SUBMIT_CLAIM_TTL = 60
+# A final submit takes the draft itself (GETDEL) and marks it pending; a
+# concurrent submit of the same draft waits up to this long for the result.
+_RESULT_WAIT_SECONDS = 10.0
+_RESULT_TTL = 120
+
+_CLAIM_DRAFT = """
+local draft = redis.call('GETDEL', KEYS[1])
+if draft then redis.call('SET', KEYS[2], '1', 'EX', ARGV[1]) end
+return draft
+"""
 
 
-def _draft_is_complete(
-    state: dict[str, Any], category_slugs: set[str], has_locations: bool
-) -> bool:
-    """Re-check before the final submit what each step validated.
+def _mode_error(mode: object) -> str | None:
+    allowed = ("anonymous", "confidential") if settings.submission_mode_enabled else ("anonymous",)
+    return None if mode in allowed else "mode_required"
 
-    A description rejected at its step is kept in the draft for editing, so the
-    presence of a field proves nothing.
+
+async def _location_error(db: AsyncSession, location_id: object) -> str | None:
+    if not location_id:
+        return None
+    try:
+        loc_uuid = uuid.UUID(str(location_id))
+    except ValueError:
+        return "invalid_location"
+    loc = await get_location_by_id(db, loc_uuid)
+    return None if loc and loc.is_active else "invalid_location"
+
+
+def _category_error(category: object, category_slugs: set[str]) -> str | None:
+    return None if category in category_slugs else "category_required"
+
+
+def _description_error(description: object) -> str | None:
+    length = len(description.strip()) if isinstance(description, str) else 0
+    if length < 10:
+        return "description_too_short"
+    return "description_too_long" if length > 10000 else None
+
+
+async def _draft_error(
+    db: AsyncSession, state: dict[str, Any], category_slugs: set[str], has_locations: bool
+) -> tuple[int, str] | None:
+    """The first step whose value no longer passes its own check, and why.
+
+    Run again before the final submit: a rejected description stays in the
+    draft for editing, and a location, category or mode can be switched off
+    by the operator after the reporter chose it.
     """
-    if state.get("submission_mode") not in ("anonymous", "confidential"):
-        return False
-    if state.get("category") not in category_slugs:
-        return False
-    description = state.get("description")
-    if not isinstance(description, str) or not 10 <= len(description.strip()) <= 10000:
-        return False
-    loc = state.get("location_id")
-    if has_locations and loc:
-        try:
-            uuid.UUID(str(loc))
-        except ValueError:
-            return False
-    return True
+    checks: list[tuple[int, str | None]] = [
+        (_STEP_MODE, _mode_error(state.get("submission_mode"))),
+        (
+            _STEP_LOCATION,
+            await _location_error(db, state.get("location_id")) if has_locations else None,
+        ),
+        (_STEP_CATEGORY, _category_error(state.get("category"), category_slugs)),
+        (_STEP_DESCRIPTION, _description_error(state.get("description"))),
+    ]
+    return next(((step_no, err) for step_no, err in checks if err), None)
+
+
+def _pending_key(session_id: str) -> str:
+    return _submission_key(session_id) + ":pending"
+
+
+def _result_key(session_id: str) -> str:
+    return _submission_key(session_id) + ":result"
 
 
 def _new_draft_id() -> str:
@@ -347,6 +388,15 @@ async def submit_post(
         else _new_draft_id()
     )
     state = await _load_submission(redis, session_id)
+    if (
+        not state
+        and raw_cookie == session_id
+        and action == "next"
+        and step == _STEP_REVIEW
+        and (await redis.exists(_pending_key(session_id), _result_key(session_id)))
+    ):
+        # A second click on "Submit" after the first one took the draft.
+        return await _await_other_submit(request, redis, session_id)
     if not state and raw_cookie:
         # Never adopt a client-supplied session id that has no server-side state
         # (session fixation): mint a fresh server-generated id instead, matching
@@ -407,8 +457,8 @@ async def submit_post(
         if not settings.submission_mode_enabled:
             effective_mode = "anonymous"
 
-        if effective_mode not in ("anonymous", "confidential"):
-            return await _fail(_STEP_MODE, "mode_required")
+        if mode_error := _mode_error(effective_mode):
+            return await _fail(_STEP_MODE, mode_error)
 
         state["submission_mode"] = effective_mode
 
@@ -435,17 +485,9 @@ async def submit_post(
     if step == _STEP_LOCATION:
         if has_locations:
             loc_id_stripped = location_id.strip()
-            if loc_id_stripped:
-                try:
-                    loc_uuid = uuid.UUID(loc_id_stripped)
-                except ValueError:
-                    return await _fail(_STEP_LOCATION, "invalid_location")
-                loc = await get_location_by_id(db, loc_uuid)
-                if not loc or not loc.is_active:
-                    return await _fail(_STEP_LOCATION, "invalid_location")
-                state["location_id"] = str(loc_uuid)
-            else:
-                state["location_id"] = None
+            if loc_error := await _location_error(db, loc_id_stripped):
+                return await _fail(_STEP_LOCATION, loc_error)
+            state["location_id"] = str(uuid.UUID(loc_id_stripped)) if loc_id_stripped else None
 
         state["step"] = _STEP_CATEGORY
         await _save_submission(redis, session_id, state)
@@ -453,8 +495,8 @@ async def submit_post(
 
     # ── Step 3: category ──────────────────────────────────────────
     if step == _STEP_CATEGORY:
-        if not category or category not in valid_cat_slugs:
-            return await _fail(_STEP_CATEGORY, "category_required")
+        if cat_error := _category_error(category, valid_cat_slugs):
+            return await _fail(_STEP_CATEGORY, cat_error)
         state["category"] = category
         state["step"] = _STEP_DESCRIPTION
         await _save_submission(redis, session_id, state)
@@ -463,13 +505,10 @@ async def submit_post(
     # ── Step 4: description ───────────────────────────────────────
     if step == _STEP_DESCRIPTION:
         desc_stripped = description.strip()
-        if len(desc_stripped) < 10:
-            state["description"] = desc_stripped  # keep what was typed
-            return await _fail(_STEP_DESCRIPTION, "description_too_short")
-        if len(desc_stripped) > 10000:
-            state["description"] = desc_stripped[:10000]
-            return await _fail(_STEP_DESCRIPTION, "description_too_long")
-        state["description"] = desc_stripped
+        # Kept even when rejected, so the reporter can edit what was typed.
+        state["description"] = desc_stripped[:10000]
+        if desc_error := _description_error(desc_stripped):
+            return await _fail(_STEP_DESCRIPTION, desc_error)
         state["step"] = _STEP_ATTACHMENTS
         await _save_submission(redis, session_id, state)
         return _redirect_after_post()
@@ -513,93 +552,142 @@ async def submit_post(
 
     # ── Step 6: review + final submit ────────────────────────────
     if step == _STEP_REVIEW:
-        if not _draft_is_complete(state, valid_cat_slugs, has_locations):
-            return await _fail(_STEP_MODE, "session_incomplete")
+        # The draft itself is the claim: GETDEL hands it to exactly one of two
+        # concurrent submits (no JS guard in Tor Browser "Safest").
+        claimed = await cast(
+            Awaitable[str | None],
+            redis.eval(
+                _CLAIM_DRAFT, 2, _submission_key(session_id), _pending_key(session_id),
+                _RESULT_TTL,
+            ),
+        )
+        if claimed is None:
+            return await _await_other_submit(request, redis, session_id)
 
-        # Claim the draft before creating the report: a double submit (no JS in
-        # Tor Browser "Safest", so no client-side guard) must not create two.
-        claim_key = _submission_key(session_id) + ":claim"
-        if not await redis.set(claim_key, "1", nx=True, ex=_SUBMIT_CLAIM_TTL):
-            state.clear()  # never re-save the draft the winner is deleting
-            return await _fail(_STEP_MODE, "session_incomplete")
+        async def _restore_draft() -> None:
+            await redis.set(_submission_key(session_id), claimed, ex=_SUBMISSION_TTL)
+            await redis.delete(_pending_key(session_id))
 
+        import base64 as _b64  # noqa: PLC0415
+
+        from app.services.attachment import create_attachments, format_size
         from app.services.crypto import encrypt
 
-        mode = SubmissionMode(state.get("submission_mode", "anonymous"))
-        loc_id_raw = state.get("location_id") if has_locations else None
-        report_loc_uuid: uuid.UUID | None = uuid.UUID(loc_id_raw) if loc_id_raw else None
-
-        conf_name_enc: str | None = None
-        conf_contact_enc: str | None = None
-        sec_email_enc: str | None = None
-
-        if mode == SubmissionMode.confidential:
-            cn = state.get("confidential_name", "").strip()
-            cc = state.get("confidential_contact", "").strip()
-            se = state.get("secure_email", "").strip()
-            if cn:
-                conf_name_enc = encrypt(cn)
-            if cc:
-                conf_contact_enc = encrypt(cc)
-            if se:
-                sec_email_enc = encrypt(se)
-
-        lang = get_lang(request)
+        # Until the commit returns, any failure gives the draft back for a retry;
+        # report and attachments commit together, so nothing is left behind.
         try:
+            state.clear()
+            state.update(json.loads(_draft_fernet(session_id).decrypt(claimed)))
+            if draft_error := await _draft_error(db, state, valid_cat_slugs, has_locations):
+                await redis.delete(_pending_key(session_id))
+                return await _fail(*draft_error)  # saves the draft again, flagged
+
+            mode = SubmissionMode(state["submission_mode"])
+            loc_id_raw = state.get("location_id") if has_locations else None
+            report_loc_uuid: uuid.UUID | None = uuid.UUID(loc_id_raw) if loc_id_raw else None
+
+            conf_name_enc: str | None = None
+            conf_contact_enc: str | None = None
+            sec_email_enc: str | None = None
+            if mode == SubmissionMode.confidential:
+                cn = state.get("confidential_name", "").strip()
+                cc = state.get("confidential_contact", "").strip()
+                se = state.get("secure_email", "").strip()
+                if cn:
+                    conf_name_enc = encrypt(cn)
+                if cc:
+                    conf_contact_enc = encrypt(cc)
+                if se:
+                    sec_email_enc = encrypt(se)
+
+            file_tuples_restored: list[tuple[str, str, bytes]] = [
+                (fd["filename"], fd["content_type"], _b64.b64decode(fd["data"]))
+                for fd in state.get("file_data", [])
+            ]
             report, plain_pin = await report_service.create_report(
                 db=db,
                 category=state["category"],
                 description=state["description"].strip(),
-                lang=lang,
+                lang=get_lang(request),
                 submission_mode=mode,
                 location_id=report_loc_uuid,
                 confidential_name_enc=conf_name_enc,
                 confidential_contact_enc=conf_contact_enc,
                 secure_email_enc=sec_email_enc,
+                commit=False,
             )
+            await create_attachments(db, report, file_tuples_restored, commit=False)
+            case_number = report.case_number
+            await db.commit()
         except BaseException:
-            await redis.delete(claim_key)  # nothing was created: allow a retry
+            await _restore_draft()
             raise
-        # The report is committed: drop the draft now, so no retry can repeat it.
-        await redis.delete(_submission_key(session_id))
-
-        # Store attachments from session
-        import base64 as _b64  # noqa: PLC0415
-
-        from app.services.attachment import create_attachments, format_size
-
-        file_data_list = state.get("file_data", [])
-        file_tuples_restored: list[tuple[str, str, bytes]] = [
-            (fd["filename"], fd["content_type"], _b64.b64decode(fd["data"]))
-            for fd in file_data_list
-        ]
-        await create_attachments(db, report, file_tuples_restored)
+        # Committed: from here on nothing may bring the draft back.
 
         from app.services.notifications import notify_new_report
-        background_tasks.add_task(notify_new_report, report.case_number)
+        background_tasks.add_task(notify_new_report, case_number)
 
-        response = render(
-            request,
-            "submit_success.html",
-            {
-                "case_number": report.case_number,
-                "pin": plain_pin,
-                "attachments": [
-                    {"filename": name, "size_str": format_size(len(data))}
-                    for name, _, data in file_tuples_restored
-                ],
-            },
-        )
-        _clear_submission_cookie(response, request)
-        response.delete_cookie(
-            "ow-status-session", httponly=True, samesite="lax", secure=cookie_secure(request)
-        )
-        return response
+        result = {
+            "case_number": case_number,
+            "pin": plain_pin,
+            "attachments": [
+                {"filename": name, "size_str": format_size(len(data))}
+                for name, _, data in file_tuples_restored
+            ],
+        }
+        # For a concurrent second click, which the browser shows instead of
+        # this response; encrypted with the draft's key, like the draft was.
+        try:
+            await redis.set(
+                _result_key(session_id),
+                _draft_fernet(session_id).encrypt(json.dumps(result).encode()),
+                ex=_RESULT_TTL,
+            )
+            await redis.delete(_pending_key(session_id))
+        except Exception:  # noqa: BLE001, S110 — best effort: this response has the PIN
+            pass
+        return _success_page(request, result)
 
     # Unknown step — restart
     state["step"] = _STEP_MODE
     await _save_submission(redis, session_id, state)
     return _redirect_after_post()
+
+
+def _success_page(request: Request, result: dict[str, Any] | None) -> HTMLResponse:
+    response = (
+        render(request, "submit_success.html", result)
+        if result
+        else render(request, "submit_received.html", {})
+    )
+    _clear_submission_cookie(response, request)
+    response.delete_cookie(
+        "ow-status-session", httponly=True, samesite="lax", secure=cookie_secure(request)
+    )
+    return response
+
+
+async def _await_other_submit(request: Request, redis: Redis, session_id: str) -> Response:
+    """Show a concurrent submit's case number and PIN (the browser shows only
+    the last click's response), or say the report was received there."""
+    deadline = asyncio.get_running_loop().time() + _RESULT_WAIT_SECONDS
+    while (
+        await redis.exists(_pending_key(session_id))
+        and asyncio.get_running_loop().time() < deadline
+    ):
+        if raw := await redis.getdel(_result_key(session_id)):
+            break
+        await asyncio.sleep(0.1)
+    else:
+        raw = await redis.getdel(_result_key(session_id))
+    if raw:
+        return _success_page(request, json.loads(_draft_fernet(session_id).decrypt(raw)))
+    if await _load_submission(redis, session_id):
+        # The other submit failed before its commit and gave the draft back.
+        resp = RedirectResponse("/submit", status_code=303)
+        _set_submission_cookie(resp, session_id, request)
+        return resp
+    return _success_page(request, None)
 
 
 @router.post("/submit/attachments/remove")

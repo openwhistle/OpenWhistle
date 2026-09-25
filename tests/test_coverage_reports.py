@@ -17,7 +17,7 @@ Covers:
 - submit_get downgrades a stored location step when locations are later deactivated
 - submit_post "back" action
 - submit_post location step: invalid UUID and unknown/inactive location
-- submit_post review step with incomplete session state ("session_incomplete")
+- submit_post review step with incomplete session state (back to the first invalid step)
 - submit_post confidential mode encrypts identifying fields
 - submit_post falls back to a wizard restart on an unrecognised step
 - status_get treats a naive submitted_at as UTC
@@ -616,7 +616,7 @@ async def test_submit_location_step_unknown_location_shows_error(
 
 
 @pytest.mark.asyncio
-async def test_submit_review_step_with_missing_state_shows_session_incomplete(
+async def test_submit_review_step_with_missing_state_returns_to_the_mode_step(
     client: AsyncClient,
 ) -> None:
     """Reaching the review step without the required fields must restart the wizard."""
@@ -643,7 +643,7 @@ async def test_submit_review_step_with_missing_state_shows_session_incomplete(
     )
     assert resp.status_code == 200
     assert _wiz_step(resp.text) == 1
-    assert "start over" in resp.text.lower()
+    assert "Please select a submission mode." in resp.text
 
 
 @pytest.mark.asyncio

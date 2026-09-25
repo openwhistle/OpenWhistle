@@ -108,9 +108,16 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   at 10,000 characters). Reported and fixed by Zachary Bridges (#94).
 - **A double final submit created two reports**: two concurrent POSTs of the review form
   (a double click with JavaScript off, e.g. Tor Browser "Safest") both read the draft before
-  either deleted it, and one PIN was never shown. The submit now claims the draft atomically
-  first; a second request gets "session incomplete". The race predates the #94 port: v1.5.0
-  has the same load → create → delete sequence.
+  either deleted it, and the PIN of one report was never shown. Now the draft is taken
+  atomically, exactly one report is created, and both responses show its case number and PIN.
+  The report and its attachments are committed together: a failure before the commit leaves
+  nothing behind and the draft can be submitted again. The race predates the #94 port:
+  v1.5.0 has the same load → create → delete sequence.
+- The final submit re-checks each step the way the step itself does: a location or category
+  switched off, or confidential mode disabled, after the reporter chose it returns them to
+  that step with a message instead of failing.
+- The audit log sorted only by time, so entries with the same time could repeat or go missing
+  between pages; ties are now broken by id, as the report list already does.
 - **The wizard processed any posted step when `action` was neither `next` nor `back`**, so a
   crafted request could skip ahead (store a file on a fresh draft) or submit a rejected
   description. Unknown actions are now ignored, and the final submit re-checks every field

@@ -26,6 +26,25 @@ Type: explanation. What OpenWhistle defends, against whom, and what it deliberat
 | Slack/Teams provider | case volume and timing | webhooks carry counts only | `test_webhook_payloads_carry_no_case_number` |
 | Malicious upload | admin's machine | type + magic check, metadata strip, optional ClamAV fail-closed | `test_upload_is_refused_when_the_scanner_is_unreachable` |
 
+## The PIN in Redis for 120 seconds
+
+A double click on "Submit" sends two requests, and the browser shows only the
+last response. The request that takes the draft (`GETDEL`) creates the report;
+the other would show an empty wizard, and the reporter would never see the PIN.
+So the winner stores `{case number, PIN, attachment names}` for 120 s, and the
+other request reads it once (`GETDEL`) and shows the same page.
+
+| | Draft | Stored result |
+| --- | --- | --- |
+| Holds | description, identity (confidential), attachments | case number, PIN, file names |
+| Encrypted with | the key in the reporter's cookie only | the same key |
+| Lives | up to 2 h | 120 s, deleted on first read |
+
+Anyone who can read that key can already read the draft, which is the report
+itself, for longer. The PIN never reaches the database in clear or a log line.
+Pinned by `test_the_result_is_kept_120_seconds_for_a_second_click` and
+`test_concurrent_final_submits_create_one_report_and_both_show_the_pin`.
+
 ## Not defended
 
 | Threat | Why not | What the operator does |
