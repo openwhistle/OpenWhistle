@@ -1112,10 +1112,26 @@
           offers to switch) and the submit page shows the address — except to a visitor already
           on the onion service, who would just be pointed back at the same page. Cookies and
           <code>Strict-Transport-Security</code> also adapt automatically: the app drops the
-          <code>Secure</code> cookie flag and HSTS for a request whose Host is already the onion
-          address, since that connection was never TLS (Tor encrypts it instead) and a browser can
-          refuse a <code>Secure</code> cookie sent over plain HTTP.
+          <code>Secure</code> cookie flag and HSTS for a request that arrived through the onion
+          listener, since that connection was never TLS (Tor encrypts it instead) and a browser
+          can refuse a <code>Secure</code> cookie sent over plain HTTP.
         </p>
+        <div class="callout callout-note">
+          <div class="callout-title">The app trusts nginx, not the client, to say "this is the onion listener"</div>
+          <p>
+            A request's <code>Host</code> header is never used for this — any client on the
+            regular HTTPS listener could send <code>Host: &lt;anything&gt;.onion</code> and would
+            otherwise get treated as already-on-Tor. Instead the bundled <code>nginx/nginx.conf</code>
+            sets a request header, <code>X-OW-Onion: 1</code>, only inside the onion (port 8080)
+            server block, and clears it inside the regular (443) one — the same pattern already
+            used to strip incoming IP-forwarding headers. This means <strong>the app's own port
+            (<code>4009</code>) must stay reachable only through this nginx</strong>, exactly as
+            already required for IP-address stripping to hold: a deployment that exposes the app
+            directly, or proxies it through something else, must set or clear
+            <code>X-OW-Onion</code> itself or this protection (and the IP-stripping one) does
+            nothing.
+          </p>
+        </div>
         <div class="callout callout-warn">
           <div class="callout-title"><code>/var/lib/tor/openwhistle/</code> holds the address's private key</div>
           <p>
@@ -2167,6 +2183,20 @@ CLAMAV_HOST=clamav</code></pre>
           <li><code>Referrer-Policy: no-referrer</code></li>
           <li><code>Permissions-Policy</code> disabling geolocation, camera, microphone</li>
         </ul>
+
+        <h3>Onion listener trust boundary</h3>
+        <p>
+          When <code>ONION_LOCATION</code> is set, the app must know whether a request arrived
+          through the onion (Tor) listener or the regular HTTPS one, to decide whether to send
+          <code>Secure</code> cookies, HSTS, and the <code>Onion-Location</code> header itself
+          (see <a href="#onion-address">Offering an onion address</a>). That decision is never
+          made from the client-supplied <code>Host</code> header — a request on the real HTTPS
+          listener could claim <code>Host: &lt;anything&gt;.onion</code>. Instead nginx sets an
+          <code>X-OW-Onion: 1</code> request header only inside the onion server block and clears
+          it inside the regular one, the same trust model already used for stripping
+          IP-forwarding headers (layer 1 above): it depends on the application port never being
+          reachable except through this nginx.
+        </p>
 
         <h3>OIDC integration</h3>
         <p>

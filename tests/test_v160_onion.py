@@ -19,6 +19,9 @@ from app.config import Settings, settings
 ROOT = Path(__file__).parents[1]
 ONION_HOST = "a" * 56 + ".onion"
 ONION = "http://" + ONION_HOST
+# The nginx-asserted signal the app trusts for "this is the onion listener"
+# (fix round 2) — never the client-supplied Host. See app/onion.py.
+ON_ONION = {"X-OW-Onion": "1"}
 
 
 # ── Onion-Location header ──────────────────────────────────────────────────
@@ -46,9 +49,10 @@ async def test_onion_location_header_not_sent_on_the_onion_service_itself(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """A visitor already on http://<...>.onion must not be offered the same
-    address again — the Host header reveals they are already there."""
+    address again — nginx's X-OW-Onion header (set only by the 8080 server
+    block) reveals they are already there. Never the client-supplied Host."""
     monkeypatch.setattr(settings, "onion_location", ONION)
-    resp = await client.get("/status", headers={"Host": ONION_HOST})
+    resp = await client.get("/status", headers=ON_ONION)
     assert "onion-location" not in resp.headers
 
 
@@ -60,6 +64,18 @@ async def test_onion_location_header_still_sent_for_a_normal_host(
     assert resp.headers["onion-location"] == f"{ONION}/status"
 
 
+async def test_onion_location_header_still_sent_when_host_is_onion_but_nginx_never_marked_it(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Fix round 2 (re-review Important): a client that merely SENDS
+    Host: <onion> — without ever going through the onion nginx listener,
+    which is the only place X-OW-Onion is set — must not be treated as
+    already-on-the-onion-service. Spoofing Host alone must do nothing."""
+    monkeypatch.setattr(settings, "onion_location", ONION)
+    resp = await client.get("/status", headers={"Host": ONION_HOST})
+    assert resp.headers["onion-location"] == f"{ONION}/status"
+
+
 # ── Cookies (Critical fix-round-1 #1) ────────────────────────────────────────
 
 
@@ -67,17 +83,17 @@ def _set_cookie_headers(resp: Response) -> list[str]:
     return [v for k, v in resp.headers.multi_items() if k.lower() == "set-cookie"]
 
 
-async def test_cookies_have_no_secure_flag_over_the_onion_host(
+async def test_cookies_have_no_secure_flag_over_the_onion_listener(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """A Secure cookie set over the onion listener's plain-HTTP connection can
     be silently refused by the browser, breaking the CSRF double-submit
     cookie and every reporter-facing POST it protects — the whole point of
-    offering an onion address. Every Set-Cookie for this Host must drop
+    offering an onion address. Every Set-Cookie for this listener must drop
     Secure, whatever settings.secure_cookies says."""
     monkeypatch.setattr(settings, "onion_location", ONION)
     assert settings.secure_cookies is True
-    client.headers["Host"] = ONION_HOST
+    client.headers.update(ON_ONION)
     resp = await client.get("/submit")
     cookies = _set_cookie_headers(resp)
     assert cookies, "expected at least the CSRF and submission-session cookies"
@@ -97,16 +113,33 @@ async def test_cookies_keep_the_secure_flag_on_a_normal_host(
         assert "Secure" in cookie, cookie
 
 
-async def test_full_submission_wizard_succeeds_over_the_onion_host(
+async def test_cookies_keep_the_secure_flag_when_host_is_onion_but_nginx_never_marked_it(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Fix round 2 (re-review Important, the core regression test): a client
+    on the real TLS listener sending Host: <onion> — without the X-OW-Onion
+    header only the onion nginx server block sets — is a spoofing attempt,
+    not a genuine onion visitor, and must still get Secure cookies."""
+    monkeypatch.setattr(settings, "onion_location", ONION)
+    assert settings.secure_cookies is True
+    resp = await client.get("/submit", headers={"Host": ONION_HOST})
+    cookies = _set_cookie_headers(resp)
+    assert cookies
+    for cookie in cookies:
+        assert "Secure" in cookie, cookie
+
+
+async def test_full_submission_wizard_succeeds_over_the_onion_listener(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """End-to-end proof the CSRF double-submit cookie round-trips (GET form →
     POST with the CSRF cookie, through every wizard step) when every cookie
-    on the way was set without Secure, because the Host is the onion one."""
+    on the way was set without Secure, because nginx marked this request as
+    onion."""
     from conftest import wizard_submit  # noqa: PLC0415
 
     monkeypatch.setattr(settings, "onion_location", ONION)
-    client.headers["Host"] = ONION_HOST
+    client.headers.update(ON_ONION)
     case_number, pin = await wizard_submit(client)
     assert case_number.startswith("OW-")
     assert pin
@@ -115,16 +148,55 @@ async def test_full_submission_wizard_succeeds_over_the_onion_host(
 # ── HSTS (Important fix-round-1 #2) ──────────────────────────────────────────
 
 
-async def test_hsts_absent_over_the_onion_host(client: AsyncClient) -> None:
+async def test_hsts_absent_over_the_onion_listener(client: AsyncClient) -> None:
     """RFC 6797 §8.1: an HSTS host MUST NOT send this header over a
     connection that was not secure — the onion listener never is."""
-    resp = await client.get("/status", headers={"Host": ONION_HOST})
+    resp = await client.get("/status", headers=ON_ONION)
     assert "strict-transport-security" not in resp.headers
 
 
 async def test_hsts_present_on_a_normal_host(client: AsyncClient) -> None:
     resp = await client.get("/status")
     assert "strict-transport-security" in resp.headers
+
+
+async def test_hsts_present_when_host_is_onion_but_nginx_never_marked_it(
+    client: AsyncClient,
+) -> None:
+    """Fix round 2: spoofing Host alone (no X-OW-Onion) must not suppress HSTS
+    on a connection that genuinely is TLS."""
+    resp = await client.get("/status", headers={"Host": ONION_HOST})
+    assert "strict-transport-security" in resp.headers
+
+
+# ── Onion trust: nginx-asserted header only, never the client Host ──────────
+# (fix round 2, re-review Important)
+
+
+def test_is_onion_request_trusts_only_the_exact_nginx_header() -> None:
+    from app.onion import is_onion_request
+
+    assert is_onion_request([(b"x-ow-onion", b"1")]) is True
+    assert is_onion_request([(b"X-OW-Onion", b"1")]) is True  # header names are case-insensitive
+    assert is_onion_request([]) is False
+    assert is_onion_request([(b"x-ow-onion", b"true")]) is False
+    assert is_onion_request([(b"x-ow-onion", b"0")]) is False
+    assert is_onion_request([(b"x-ow-onion", b"")]) is False  # nginx's clear value
+    # A spoofed Host must never substitute for the header.
+    assert is_onion_request([(b"host", ("a" * 56 + ".onion").encode())]) is False
+
+
+def test_cookie_secure_fails_loudly_when_security_middleware_never_ran() -> None:
+    """Ruling: no silent fallback — a wiring bug (SecurityMiddleware not
+    registered, so request.state.is_onion was never set) must raise, not
+    guess at Secure."""
+    from starlette.requests import Request
+
+    from app.onion import cookie_secure
+
+    request = Request(scope={"type": "http", "headers": [], "state": {}})
+    with pytest.raises(AttributeError):
+        cookie_secure(request)
 
 
 # ── Onion-Location scoped to HTML (Minor fix-round-1 #6) ────────────────────
@@ -280,6 +352,21 @@ def test_onion_howto_explains_the_shared_rate_limit_budget() -> None:
     section = text.split('id="onion-address"')[1].split('id="helm"')[0]
     assert "127.0.0.1" in section
     assert "429" in section
+
+
+def test_onion_howto_and_security_section_explain_the_x_ow_onion_trust_boundary() -> None:
+    """Fix round 2 (re-review Important, ruling): both the how-to and the
+    Security Architecture section must document that the app trusts nginx's
+    X-OW-Onion header (never the client Host), and that this requires the
+    app port to be reachable only through the shipped nginx."""
+    text = (ROOT / "docs/docs.html").read_text()
+    howto = text.split('id="onion-address"')[1].split('id="helm"')[0]
+    assert "X-OW-Onion" in howto
+    assert "reachable only through" in howto
+
+    security = text.split('id="security"')[1]
+    assert "X-OW-Onion" in security
+    assert "Host" in security
 
 
 # ── Locale ────────────────────────────────────────────────────────────────────

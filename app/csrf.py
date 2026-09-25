@@ -7,7 +7,7 @@ from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.config import settings
-from app.onion import is_onion_host, raw_host_header
+from app.onion import is_onion_request
 
 _CSRF_COOKIE = "ow_csrf"
 _TOKEN_BYTES = 32
@@ -44,8 +44,10 @@ class CSRFMiddleware:
         # CSRF-protected POST — exactly the submissions this feature exists
         # to protect. Computed independently of SecurityMiddleware's own
         # is_onion (rather than reading request.state) since this middleware
-        # can run before it and must not depend on that ordering.
-        is_onion = is_onion_host(raw_host_header(raw_headers))
+        # can run before it and must not depend on that ordering. Trusts only
+        # the nginx-asserted X-OW-Onion header, never the client-supplied
+        # Host — see app/onion.py.
+        is_onion = is_onion_request(raw_headers)
 
         async def send_with_csrf(message: Message) -> None:
             if message["type"] == "http.response.start":

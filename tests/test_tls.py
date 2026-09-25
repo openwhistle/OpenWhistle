@@ -100,3 +100,23 @@ def test_onion_listener_has_its_own_higher_budget_rate_limit_zone() -> None:
     onion_burst = int(re.search(r"ow_req_onion burst=(\d+)", onion).group(1))  # type: ignore[union-attr]
     tls_burst = int(re.search(r"ow_req burst=(\d+)", tls).group(1))  # type: ignore[union-attr]
     assert onion_burst > tls_burst
+
+
+def test_x_ow_onion_is_cleared_by_default_and_set_only_on_the_onion_listener() -> None:
+    """Fix round 2 (re-review Important): the app must never decide "onion"
+    from the client-supplied Host, so nginx asserts it instead. The shared
+    snippet clears the header for every server block that includes it (so
+    the TLS listener can never forget to), and only the onion (8080) block
+    sets it back to "1", after its own include — an override, not a merge."""
+    snippet = (ROOT / "nginx/snippets/proxy-headers.conf").read_text()
+    assert 'proxy_set_header X-OW-Onion "";' in snippet
+
+    conf = (ROOT / "nginx/nginx.conf").read_text()
+    servers = re.findall(r"\n    server \{.*?\n    \}", conf, re.S)
+    tls = next(s for s in servers if "listen 443 ssl" in s)
+    onion = next(s for s in servers if "listen 8080;" in s)
+
+    assert 'proxy_set_header X-OW-Onion "1";' not in tls
+    include_idx = onion.index("include /etc/nginx/snippets/proxy-headers.conf;")
+    set_idx = onion.index('proxy_set_header X-OW-Onion "1";')
+    assert set_idx > include_idx, "must come AFTER the include to override it, not before"

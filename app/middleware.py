@@ -5,7 +5,7 @@ import secrets
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from app.onion import is_onion_host, raw_host_header
+from app.onion import is_onion_request
 
 # Headers that indicate an upstream proxy is forwarding IP information.
 _IP_REVEAL_HEADERS = frozenset(
@@ -86,11 +86,11 @@ class SecurityMiddleware:
 
         # scope["headers"] is list[tuple[bytes, bytes]] in the ASGI spec
         raw_headers: list[tuple[bytes, bytes]] = list(scope.get("headers", []))
-        # Host is read here (not touched by the IP-header stripping below) so
-        # every onion-aware decision below — Onion-Location, HSTS, and (via
+        # nginx-asserted, never the client-supplied Host — see app/onion.py.
+        # Every onion-aware decision below — Onion-Location, HSTS, and (via
         # app.onion.cookie_secure, reused from request.state) every Set-Cookie
         # — answers the same question from the same value instead of drifting.
-        is_onion = is_onion_host(raw_host_header(raw_headers))
+        is_onion = is_onion_request(raw_headers)
         state["is_onion"] = is_onion
         ip_headers_present = any(
             name.decode("latin-1").lower() in _IP_REVEAL_HEADERS
