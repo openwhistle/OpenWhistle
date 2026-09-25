@@ -630,6 +630,19 @@ class TestConfigV100Defaults:
             assert visible, f"{page}: no visible 'Version X.Y.Z' string found"
             assert visible == [v] * len(visible), (page, visible, v)
 
+        # Regression guard (review round 1): a blanket find-replace of the
+        # three "current version" spots above once swept in a fourth,
+        # unrelated occurrence -- a *historical* claim ("multi-tenancy has
+        # existed since 1.0.0") that must never move with app_version. The
+        # loop above can't catch it (the sentence doesn't end in "<"), so
+        # pin the historical fact directly against CHANGELOG's own [1.0.0]
+        # section.
+        de_text = (root / "docs/de/index.html").read_text()
+        assert "Ab Version 1.0.0 unterstützt OpenWhistle Multi-Tenancy" in de_text
+        changelog = (root / "CHANGELOG.md").read_text()
+        v100_section = changelog.split("## [1.0.0]", 1)[1].split("\n## [", 1)[0]
+        assert "Multi-tenancy" in v100_section, "multi-tenancy no longer documented under [1.0.0]"
+
 
 # ---------------------------------------------------------------------------
 # AuditAction constants

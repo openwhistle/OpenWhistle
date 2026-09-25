@@ -27,6 +27,11 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Virus scan of uploads with ClamAV** (`CLAMAV_HOST`, `CLAMAV_PORT`,
   `CLAMAV_TIMEOUT_SECONDS`; optional `clamav` compose profile). Fail-closed: if `clamd` cannot
   be reached, the upload is refused, never stored unscanned.
+- **TLS by default in the shipped Compose stack.** The bundled nginx now serves HTTPS on 443 and
+  redirects plain HTTP on 80 — nothing is proxied without TLS. A one-shot `tls-init` service
+  generates a self-signed certificate for `TLS_HOSTNAME` (`.env`, default `localhost`) before
+  nginx starts, so the stack comes up without any manual certificate step; drop your own
+  `fullchain.pem`/`privkey.pem` into `nginx/certs/` and restart to use a real one instead.
 
 ### Changed (breaking)
 

@@ -986,3 +986,28 @@ async def test_organisation_deactivate_is_a_danger_action(
     row = html.split(org.slug, 1)[1].split("</tr>", 1)[0]
     assert 'class="btn btn-danger btn-sm"' in row
     assert "irréversible" in row
+
+
+def test_every_docs_font_face_url_resolves_to_a_real_file() -> None:
+    """Regression guard: docs/blog's four articles and its index declared
+    @font-face rules for Spectral/Source Serif 4 that pointed at files which
+    did not exist anywhere in the repo (fetched once in commit fc47183, then
+    deleted by an unrelated redesign, commit 241e926, that never touched the
+    older blog scaffold) -- every browser silently fell back to the declared
+    Georgia/serif fallback, so nothing visibly broke, but nothing was
+    actually self-hosted either. This scans every @font-face in every HTML
+    file under docs/ and asserts its url()'s local path exists on disk."""
+    url_re = re.compile(r"url\(\s*['\"]?([^'\")\s]+)['\"]?\s*\)")
+    font_face_re = re.compile(r"@font-face\s*\{[^}]*\}", re.DOTALL)
+    checked = 0
+    for page in (ROOT / "docs").rglob("*.html"):
+        text = page.read_text(encoding="utf-8")
+        for block in font_face_re.findall(text):
+            for m in url_re.finditer(block):
+                src = m.group(1)
+                if src.startswith(("http://", "https://", "data:")):
+                    continue
+                resolved = (page.parent / src).resolve()
+                assert resolved.is_file(), f"{page.relative_to(ROOT)}: {src} does not exist"
+                checked += 1
+    assert checked, "no @font-face url() found under docs/ -- test target moved?"
