@@ -56,6 +56,9 @@ def _connection(cfg: Settings) -> Iterator[Any]:
             for option in (ldap.OPT_X_TLS_CACERTFILE, ldap.OPT_X_TLS_CACERTDIR):
                 if path := ldap.get_option(option):
                     conn.set_option(option, path)
+            # The new context also drops a host TLS_PROTOCOL_MIN; set the floor here.
+            # Client certificates (TLS_CERT/TLS_KEY) are not supported and not copied.
+            conn.set_option(ldap.OPT_X_TLS_PROTOCOL_MIN, ldap.OPT_X_TLS_PROTOCOL_TLS1_2)
             conn.set_option(ldap.OPT_X_TLS_NEWCTX, 0)  # must follow the other TLS options
         if cfg.ldap_start_tls and not cfg.ldap_use_ssl:
             conn.start_tls_s()

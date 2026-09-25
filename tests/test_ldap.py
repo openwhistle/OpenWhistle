@@ -92,6 +92,9 @@ def test_ldaps_demands_a_valid_certificate(ldap_on: None, monkeypatch: pytest.Mo
         ldap_auth._authenticate_ldap_sync("alice", "pw")
     assert init.call_args.args[0] == "ldaps://dir.example.org:389"
     conn.set_option.assert_any_call(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_DEMAND)
+    conn.set_option.assert_any_call(ldap.OPT_X_TLS_PROTOCOL_MIN, 0x303)  # TLS 1.2
+    options = [c.args[0] for c in conn.set_option.call_args_list]
+    assert options.index(ldap.OPT_X_TLS_PROTOCOL_MIN) < options.index(ldap.OPT_X_TLS_NEWCTX)
     conn.start_tls_s.assert_not_called()
 
 
@@ -308,3 +311,113 @@ def test_ldaps_without_the_private_ca_refuses_the_handshake(
     )
     assert not bind_sent
     assert error.startswith(("SERVER_DOWN", "CONNECT_ERROR")), error
+
+
+# A permissive OpenSSL config for both ends, so that only the connection's own
+# TLS 1.2 floor can refuse TLS 1.1 (a host crypto policy would otherwise mask
+# a missing floor). alg_section re-allows SHA-1 signatures on Fedora/RHEL.
+_LEGACY_OPENSSL_CONF = """
+openssl_conf = openssl_init
+[openssl_init]
+ssl_conf = ssl_sect
+alg_section = evp_properties
+[evp_properties]
+rh-allow-sha1-signatures = yes
+[ssl_sect]
+system_default = system_default_sect
+[system_default_sect]
+MinProtocol = TLSv1
+CipherString = DEFAULT:@SECLEVEL=0
+"""
+
+_TLS11_SERVER = """
+import socket, ssl, sys, warnings
+warnings.simplefilter("ignore", DeprecationWarning)
+ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+ctx.load_cert_chain(sys.argv[1], sys.argv[2])
+ctx.minimum_version = ctx.maximum_version = ssl.TLSVersion.TLSv1_1
+ctx.set_ciphers("DEFAULT:@SECLEVEL=0")
+server = socket.create_server(("127.0.0.1", 0))
+server.settimeout(20)
+print(server.getsockname()[1], flush=True)
+for _ in range(3):
+    sock, _ = server.accept()
+    try:
+        with ctx.wrap_socket(sock, server_side=True) as tls:
+            print("bind" if tls.recv(1024) else "closed", flush=True)
+    except OSError:
+        print("refused", flush=True)
+"""
+
+_TLS11_PROBE = """
+import socket, ssl, sys, warnings
+warnings.simplefilter("ignore", DeprecationWarning)
+ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+ctx.load_verify_locations(sys.argv[1])
+ctx.minimum_version = ssl.TLSVersion.TLSv1_1
+ctx.set_ciphers("DEFAULT:@SECLEVEL=0")
+try:
+    with ctx.wrap_socket(socket.create_connection(("127.0.0.1", int(sys.argv[2]))),
+                         server_hostname="127.0.0.1") as tls:
+        tls.sendall(b"probe")
+except OSError:
+    pass
+"""
+
+
+# libldap with the floor lowered to TLS 1.0: shows whether the TLS backend
+# itself would speak TLS 1.1 here. GnuTLS (Ubuntu) ignores OPENSSL_CONF and
+# refuses it anyway, which would mask a missing floor.
+_TLS10_FLOOR_CLIENT = """
+import sys, ldap
+conn = ldap.initialize("ldaps://127.0.0.1:" + sys.argv[1])
+conn.set_option(ldap.OPT_NETWORK_TIMEOUT, 10)
+conn.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_DEMAND)
+conn.set_option(ldap.OPT_X_TLS_CACERTFILE, ldap.get_option(ldap.OPT_X_TLS_CACERTFILE))
+conn.set_option(ldap.OPT_X_TLS_PROTOCOL_MIN, ldap.OPT_X_TLS_PROTOCOL_TLS1_0)
+conn.set_option(ldap.OPT_X_TLS_NEWCTX, 0)
+try:
+    conn.simple_bind_s("cn=x", "pw")
+except ldap.LDAPError:
+    pass
+"""
+
+
+def test_ldaps_refuses_a_tls_1_1_only_server(tmp_path: Path) -> None:
+    _pki(tmp_path, x509.IPAddress(ipaddress.ip_address("127.0.0.1")))
+    conf = tmp_path / "openssl.cnf"
+    conf.write_text(_LEGACY_OPENSSL_CONF)
+    env = {**os.environ, "HOME": str(tmp_path), "OPENSSL_CONF": str(conf),
+           "LDAPTLS_CACERT": str(tmp_path / "ca.pem")}
+    env.pop("LDAPTLS_REQCERT", None)
+    run = {"env": env, "capture_output": True, "text": True, "timeout": 60}
+    server = subprocess.Popen(  # noqa: S603
+        [sys.executable, "-c", _TLS11_SERVER, str(tmp_path / "cert.pem"),
+         str(tmp_path / "key.pem")],
+        env=env, stdout=subprocess.PIPE, text=True,
+    )
+    try:
+        assert server.stdout is not None
+        port = server.stdout.readline().strip()
+        # Can this OpenSSL speak TLS 1.1 at all? Python's ssl as the client.
+        subprocess.run(  # noqa: S603
+            [sys.executable, "-c", _TLS11_PROBE, str(tmp_path / "ca.pem"), port],
+            check=True, **run,
+        )
+        if server.stdout.readline().strip() != "bind":
+            pytest.skip("the local OpenSSL cannot negotiate TLS 1.1, even with SECLEVEL=0")
+        subprocess.run(  # noqa: S603
+            [sys.executable, "-c", _TLS10_FLOOR_CLIENT, port], check=True, **run,
+        )
+        if server.stdout.readline().strip() != "bind":
+            pytest.skip("libldap's TLS backend refuses TLS 1.1 by itself (e.g. GnuTLS), "
+                        "so a missing floor cannot be told apart here")
+        client = subprocess.run(  # noqa: S603
+            [sys.executable, "-c", _CLIENT, port], check=True,
+            cwd=Path(__file__).resolve().parent.parent, **run,
+        )
+        assert server.stdout.readline().strip() != "bind", client.stdout
+        assert client.stdout.startswith(("SERVER_DOWN", "CONNECT_ERROR")), client.stdout
+    finally:
+        server.kill()
+        server.wait()

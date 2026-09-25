@@ -1521,7 +1521,7 @@
         <p>
           LDAP uses python-ldap (the OpenLDAP client), S3 storage uses boto3; both are optional
           extras. The container image includes both. Installing from source needs
-          <code>libldap2-dev libsasl2-dev</code> and <code>pip install .[ldap,s3]</code>.
+          <code>libldap2-dev libsasl2-dev</code> and <code>pip install '.[ldap,s3]'</code>.
         </p>
         <table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>

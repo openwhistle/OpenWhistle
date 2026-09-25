@@ -15,7 +15,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **LDAP uses python-ldap** (the OpenLDAP client) instead of ldap3, which has
   had no release since 2021.
 - **LDAP and S3 are optional extras** (`ldap`, `s3`). The container image
-  includes both; installing from source needs `pip install .[ldap,s3]` and
+  includes both; installing from source needs `pip install '.[ldap,s3]'` and
   `libldap2-dev libsasl2-dev`.
 
 ## [1.5.0] — 2026-09-24

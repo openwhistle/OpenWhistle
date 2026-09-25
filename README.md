@@ -117,7 +117,7 @@ zero vendor lock-in, and privacy-first by design.
 - **LDAP / Active Directory login** — Admin accounts can authenticate via corporate LDAP;
   first login auto-provisions the user; TOTP enrollment still required. LDAP uses python-ldap
   (OpenLDAP client); installing from source needs `libldap2-dev libsasl2-dev` and
-  `pip install .[ldap,s3]`. The container image includes both.
+  `pip install '.[ldap,s3]'`. The container image includes both.
 - **Helm chart** — Official `charts/openwhistle/` Helm chart for Kubernetes deployments.
 - **Ansible role** — Official `ansible/roles/openwhistle/` Ansible role for bare-metal / VM
   deployments with Docker CE, systemd unit, and optional Certbot TLS.
