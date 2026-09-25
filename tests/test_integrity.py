@@ -67,8 +67,8 @@ def test_verify_detects_missing_modified_extra(tmp_path: Path) -> None:
     _write_manifest(manifest, appdir)
     m = json.loads(manifest.read_text())
     m["files"]["app/GONE.py"] = {"sha256": "0" * 64, "size": 1}  # missing on disk
-    m["files"]["app/a.py"]["sha256"] = "deadbeef"                # hash mismatch → modified
-    del m["files"]["app/sub/b.txt"]                              # on disk, not in manifest → extra
+    m["files"]["app/a.py"]["sha256"] = "deadbeef"  # hash mismatch → modified
+    del m["files"]["app/sub/b.txt"]  # on disk, not in manifest → extra
     manifest.write_text(json.dumps(m), encoding="utf-8")
 
     r = ig.verify_integrity(root=appdir, manifest_path=manifest)
@@ -87,6 +87,19 @@ def test_verify_detects_size_only_change(tmp_path: Path) -> None:
     manifest.write_text(json.dumps(m), encoding="utf-8")
     r = ig.verify_integrity(root=appdir, manifest_path=manifest)
     assert "app/a.py" in r["modified"]
+
+
+def test_build_file_index_skips_unreadable_file(tmp_path: Path) -> None:
+    appdir = _make_tree(tmp_path)
+    broken = appdir / "broken_link.py"
+    broken.symlink_to(appdir / "does_not_exist.py")
+    idx = ig.build_file_index(appdir)
+    assert "app/broken_link.py" not in idx
+    assert "app/a.py" in idx
+
+
+def test_manifest_sha256_missing_file_returns_none(tmp_path: Path) -> None:
+    assert ig._manifest_sha256(tmp_path / "does_not_exist.json") is None
 
 
 @pytest.mark.parametrize(
@@ -122,6 +135,45 @@ async def test_get_integrity_status_recheck_busts_cache() -> None:
     await ig.get_integrity_status(redis, recheck=True)
     redis.delete.assert_awaited_once()
     redis.get.assert_not_called()  # recheck skips the cache read
+
+
+@pytest.mark.asyncio
+async def test_get_integrity_status_recheck_survives_delete_failure() -> None:
+    redis = AsyncMock()
+    redis.delete = AsyncMock(side_effect=RuntimeError("redis down"))
+    redis.setex = AsyncMock()
+    result = await ig.get_integrity_status(redis, recheck=True)  # must not raise
+    assert "available" in result
+
+
+@pytest.mark.asyncio
+async def test_get_integrity_status_returns_cached_result() -> None:
+    cached = {"available": True, "ok": True, "checked": 3}
+    redis = AsyncMock()
+    redis.get = AsyncMock(return_value=json.dumps(cached))
+    redis.setex = AsyncMock()
+    result = await ig.get_integrity_status(redis)
+    assert result == cached
+    redis.setex.assert_not_called()  # cache hit, no re-verification
+
+
+@pytest.mark.asyncio
+async def test_get_integrity_status_ignores_malformed_cache() -> None:
+    redis = AsyncMock()
+    redis.get = AsyncMock(return_value="not json")
+    redis.setex = AsyncMock()
+    result = await ig.get_integrity_status(redis)
+    assert "available" in result
+    redis.setex.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_get_integrity_status_survives_setex_failure() -> None:
+    redis = AsyncMock()
+    redis.get = AsyncMock(return_value=None)
+    redis.setex = AsyncMock(side_effect=RuntimeError("redis down"))
+    result = await ig.get_integrity_status(redis)  # must not raise
+    assert "available" in result
 
 
 # ── Integration: admin System page renders the integrity section ───────────

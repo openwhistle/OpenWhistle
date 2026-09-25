@@ -49,37 +49,40 @@ def _assert_valid_package(data: bytes) -> zipfile.ZipFile:
 
 
 def _docx() -> bytes:
-    return _zip({
-        "[Content_Types].xml": (
-            '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
-            '<Default Extension="jpeg" ContentType="image/jpeg"/>'
-            '<Override PartName="/docProps/thumbnail.jpeg" ContentType="image/jpeg"/>'
-            '<Override PartName="/word/document.xml" ContentType="application/xml"/></Types>'
-        ),
-        "_rels/.rels": (
-            f'<Relationships xmlns="{_RELS}">'
-            '<Relationship Id="rId1" Type="officeDocument" Target="word/document.xml"/>'
-            f'<Relationship Id="rId2" Type="{_RT}" Target="docProps/thumbnail.jpeg"/>'
-            "</Relationships>"
-        ),
-        "docProps/thumbnail.jpeg": b"\xff\xd8\xffMax Mustermann page one",
-        "word/document.xml": (
-            f"<w:document {_W}><w:body><w:p>"
-            '<w:ins w:id="1" w:author="Max Mustermann" w:date="2026-01-01T00:00:00Z">'
-            "<w:r><w:t>evidence</w:t></w:r></w:ins>"
-            "<w:del w:id='2' w:author='Max Mustermann'><w:r><w:delText>x</w:delText></w:r></w:del>"
-            "</w:p></w:body></w:document>"
-        ),
-        "word/comments.xml": (
-            f'<w:comments {_W}><w:comment w:id="0" w:author="Max Mustermann" w:initials="MM">'
-            "<w:p><w:r><w:t>see page 2</w:t></w:r></w:p></w:comment></w:comments>"
-        ),
-        "word/people.xml": (
-            f'<w15:people {_W15}><w15:person w15:author="Max Mustermann">'
-            '<w15:presenceInfo w15:providerId="AD" w15:userId="S::max@acme.example::1234"/>'
-            "</w15:person></w15:people>"
-        ),
-    })
+    return _zip(
+        {
+            "[Content_Types].xml": (
+                '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+                '<Default Extension="jpeg" ContentType="image/jpeg"/>'
+                '<Override PartName="/docProps/thumbnail.jpeg" ContentType="image/jpeg"/>'
+                '<Override PartName="/word/document.xml" ContentType="application/xml"/></Types>'
+            ),
+            "_rels/.rels": (
+                f'<Relationships xmlns="{_RELS}">'
+                '<Relationship Id="rId1" Type="officeDocument" Target="word/document.xml"/>'
+                f'<Relationship Id="rId2" Type="{_RT}" Target="docProps/thumbnail.jpeg"/>'
+                "</Relationships>"
+            ),
+            "docProps/thumbnail.jpeg": b"\xff\xd8\xffMax Mustermann page one",
+            "word/document.xml": (
+                f"<w:document {_W}><w:body><w:p>"
+                '<w:ins w:id="1" w:author="Max Mustermann" w:date="2026-01-01T00:00:00Z">'
+                "<w:r><w:t>evidence</w:t></w:r></w:ins>"
+                "<w:del w:id='2' w:author='Max Mustermann'>"
+                "<w:r><w:delText>x</w:delText></w:r></w:del>"
+                "</w:p></w:body></w:document>"
+            ),
+            "word/comments.xml": (
+                f'<w:comments {_W}><w:comment w:id="0" w:author="Max Mustermann" w:initials="MM">'
+                "<w:p><w:r><w:t>see page 2</w:t></w:r></w:p></w:comment></w:comments>"
+            ),
+            "word/people.xml": (
+                f'<w15:people {_W15}><w15:person w15:author="Max Mustermann">'
+                '<w15:presenceInfo w15:providerId="AD" w15:userId="S::max@acme.example::1234"/>'
+                "</w15:person></w15:people>"
+            ),
+        }
+    )
 
 
 def test_docx_comment_and_tracked_change_authors_are_anonymised() -> None:
@@ -115,30 +118,34 @@ def test_office_zip_entries_lose_timestamps_and_extra_fields() -> None:
 
 def test_xlsx_comment_authors_and_persons_are_anonymised() -> None:
     person_id = "{5C0E2A1B-0000-4000-8000-000000000001}"
-    xlsx = _zip({
-        "[Content_Types].xml": "<Types/>",
-        "xl/comments1.xml": (
-            f'<comments xmlns="{_SML}"><authors><author>Max Mustermann</author>'
-            f"<author>tc={person_id}</author></authors>"
-            '<commentList><comment ref="A1" authorId="0"><text><t>check</t></text></comment>'
-            "</commentList></comments>"
-        ),
-        "xl/persons/person.xml": (
-            f'<personList xmlns="{_TC}"><person displayName="Max Mustermann" id="{person_id}" '
-            'userId="max@acme.example" providerId="AD"/></personList>'
-        ),
-        "xl/threadedComments/threadedComment1.xml": (
-            f'<ThreadedComments xmlns="{_TC}"><threadedComment ref="A1" personId="{person_id}">'
-            "<text>check</text></threadedComment></ThreadedComments>"
-        ),
-        "xl/revisions/userNames.xml": (
-            f'<users xmlns="{_SML}"><userInfo guid="{{1}}" name="Max Mustermann" id="1"/></users>'
-        ),
-        "xl/revisions/revisionHeaders.xml": (
-            f'<headers xmlns="{_SML}"><header guid="{{2}}" userName="Max Mustermann"/></headers>'
-        ),
-        "xl/tables/table1.xml": '<table displayName="Payments" name="Payments"/>',
-    })
+    xlsx = _zip(
+        {
+            "[Content_Types].xml": "<Types/>",
+            "xl/comments1.xml": (
+                f'<comments xmlns="{_SML}"><authors><author>Max Mustermann</author>'
+                f"<author>tc={person_id}</author></authors>"
+                '<commentList><comment ref="A1" authorId="0"><text><t>check</t></text></comment>'
+                "</commentList></comments>"
+            ),
+            "xl/persons/person.xml": (
+                f'<personList xmlns="{_TC}"><person displayName="Max Mustermann" id="{person_id}" '
+                'userId="max@acme.example" providerId="AD"/></personList>'
+            ),
+            "xl/threadedComments/threadedComment1.xml": (
+                f'<ThreadedComments xmlns="{_TC}"><threadedComment ref="A1" personId="{person_id}">'
+                "<text>check</text></threadedComment></ThreadedComments>"
+            ),
+            "xl/revisions/userNames.xml": (
+                f'<users xmlns="{_SML}"><userInfo guid="{{1}}" name="Max Mustermann" '
+                'id="1"/></users>'
+            ),
+            "xl/revisions/revisionHeaders.xml": (
+                f'<headers xmlns="{_SML}"><header guid="{{2}}" '
+                'userName="Max Mustermann"/></headers>'
+            ),
+            "xl/tables/table1.xml": '<table displayName="Payments" name="Payments"/>',
+        }
+    )
     out = _assert_valid_package(strip_metadata("book.xlsx", xlsx))
     for name in out.namelist():
         assert b"Mustermann" not in out.read(name), name
@@ -205,8 +212,14 @@ async def test_legacy_plaintext_filename_is_shown_as_stored(db_session: AsyncSes
     from app.services.report import create_report, decrypt_attachment_names, get_report_by_id
 
     report, _ = await create_report(db_session, "financial_fraud", "Legacy filename test.")
-    att = Attachment(id=uuid.uuid4(), report_id=report.id, filename="old.txt",
-                     content_type="text/plain", size=1, data=b"x")
+    att = Attachment(
+        id=uuid.uuid4(),
+        report_id=report.id,
+        filename="old.txt",
+        content_type="text/plain",
+        size=1,
+        data=b"x",
+    )
     db_session.add(att)
     await db_session.commit()
     assert await attachment_filename(db_session, att) == "old.txt"
@@ -259,27 +272,36 @@ async def test_admin_report_page_and_download_show_the_decrypted_filename(
     page = await client.get(f"/admin/reports/{report.id}")
     assert page.status_code == 200
     assert _NAME in page.text
-    assert 'gAAAA' not in page.text  # no ciphertext anywhere on the page
+    assert "gAAAA" not in page.text  # no ciphertext anywhere on the page
     download = await client.get(f"/admin/reports/{report.id}/attachments/{att.id}")
     assert _NAME in download.headers["content-disposition"]
 
 
 @pytest.mark.asyncio
-async def _walk_to_attachments(
-    client: AsyncClient, mode: dict[str, str] | None = None
-) -> Response:
+async def _walk_to_attachments(client: AsyncClient, mode: dict[str, str] | None = None) -> Response:
     """Walk the wizard to the attachment step; return that step's page."""
     from tests.conftest import _wizard_detect_step, _wizard_get_csrf
 
     resp = await client.get("/submit")
-    for data in (mode or {"submission_mode": "anonymous"}, {"category": "financial_fraud"},
-                 {"description": "Enough characters to pass validation."}):
+    for data in (
+        mode or {"submission_mode": "anonymous"},
+        {"category": "financial_fraud"},
+        {"description": "Enough characters to pass validation."},
+    ):
         if _wizard_detect_step(resp.text) == 2:  # location step, when locations exist
-            resp = await client.post("/submit", data={
-                "csrf_token": _wizard_get_csrf(resp.text), "step": "2", "action": "next"})
-        resp = await client.post("/submit", data={
-            "csrf_token": _wizard_get_csrf(resp.text),
-            "step": str(_wizard_detect_step(resp.text)), "action": "next", **data})
+            resp = await client.post(
+                "/submit",
+                data={"csrf_token": _wizard_get_csrf(resp.text), "step": "2", "action": "next"},
+            )
+        resp = await client.post(
+            "/submit",
+            data={
+                "csrf_token": _wizard_get_csrf(resp.text),
+                "step": str(_wizard_detect_step(resp.text)),
+                "action": "next",
+                **data,
+            },
+        )
     return resp
 
 
@@ -298,8 +320,9 @@ async def test_submit_success_page_lists_the_plaintext_filename(client: AsyncCli
     from tests.conftest import _wizard_get_csrf
 
     resp = await _upload(client, await _walk_to_attachments(client))
-    resp = await client.post("/submit", data={
-        "csrf_token": _wizard_get_csrf(resp.text), "step": "6", "action": "next"})
+    resp = await client.post(
+        "/submit", data={"csrf_token": _wizard_get_csrf(resp.text), "step": "6", "action": "next"}
+    )
     assert _NAME in resp.text
     assert "gAAAA" not in resp.text
 
@@ -308,7 +331,10 @@ def _alembic(*args: str) -> None:
     import subprocess
 
     run = subprocess.run(  # noqa: S603
-        ["alembic", *args], capture_output=True, text=True, check=False  # noqa: S607
+        ["alembic", *args],  # noqa: S607
+        capture_output=True,
+        text=True,
+        check=False,
     )
     assert run.returncode == 0, run.stderr
 
@@ -329,17 +355,28 @@ async def test_migration_encrypts_existing_filenames_idempotently(
     _alembic("downgrade", "3c1f0a7e9b42")
     try:
         for att_id, name in ((legacy_id, _NAME), (done_id, already)):
-            await db_session.execute(text(
-                "INSERT INTO attachments (id, report_id, filename, content_type, size, encrypted)"
-                " VALUES (:i, :r, :f, 'text/plain', 1, false)"
-            ), {"i": att_id, "r": report.id, "f": name})
+            await db_session.execute(
+                text(
+                    "INSERT INTO attachments"
+                    " (id, report_id, filename, content_type, size, encrypted)"
+                    " VALUES (:i, :r, :f, 'text/plain', 1, false)"
+                ),
+                {"i": att_id, "r": report.id, "f": name},
+            )
         await db_session.commit()
     finally:
         _alembic("upgrade", "head")
 
-    rows = dict((await db_session.execute(text(
-        "SELECT id, filename FROM attachments WHERE id IN (:a, :b)"
-    ), {"a": legacy_id, "b": done_id})).tuples().all())
+    rows = dict(
+        (
+            await db_session.execute(
+                text("SELECT id, filename FROM attachments WHERE id IN (:a, :b)"),
+                {"a": legacy_id, "b": done_id},
+            )
+        )
+        .tuples()
+        .all()
+    )
     assert fernet.decrypt(rows[legacy_id].encode()) == _NAME.encode()
     assert rows[done_id] == already  # not encrypted twice
 
@@ -363,10 +400,17 @@ async def _draft_in_redis(cookie: str) -> str:
 async def test_draft_in_redis_reveals_nothing_without_the_cookie_key(client: AsyncClient) -> None:
     from cryptography.fernet import Fernet
 
-    await _upload(client, await _walk_to_attachments(client, {
-        "submission_mode": "confidential", "confidential_name": "Max Mustermann",
-        "confidential_contact": "+49 170 0000000",
-    }))
+    await _upload(
+        client,
+        await _walk_to_attachments(
+            client,
+            {
+                "submission_mode": "confidential",
+                "confidential_name": "Max Mustermann",
+                "confidential_contact": "+49 170 0000000",
+            },
+        ),
+    )
     cookie = client.cookies["ow-submission-session"]
     stored = await _draft_in_redis(cookie)
     assert stored
@@ -412,18 +456,22 @@ async def test_draft_attachments_are_refused_when_redis_is_nearly_full(
     # Without attachments the report still goes through.
     from tests.conftest import _wizard_get_csrf
 
-    resp = await client.post("/submit", data={
-        "csrf_token": _wizard_get_csrf(resp.text), "step": "5", "action": "next"})
+    resp = await client.post(
+        "/submit", data={"csrf_token": _wizard_get_csrf(resp.text), "step": "5", "action": "next"}
+    )
     assert 'name="step" value="6"' in resp.text
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(("info", "room"), [
-    ({"maxmemory": 0, "used_memory": 10**12}, True),     # no limit configured
-    ({"maxmemory": 1000, "used_memory": 790}, True),
-    ({"maxmemory": 1000, "used_memory": 800}, False),    # at 80 %
-    (RuntimeError("INFO disabled"), True),                # never blocks a report
-])
+@pytest.mark.parametrize(
+    ("info", "room"),
+    [
+        ({"maxmemory": 0, "used_memory": 10**12}, True),  # no limit configured
+        ({"maxmemory": 1000, "used_memory": 790}, True),
+        ({"maxmemory": 1000, "used_memory": 800}, False),  # at 80 %
+        (RuntimeError("INFO disabled"), True),  # never blocks a report
+    ],
+)
 async def test_redis_has_room(info: dict[str, int] | Exception, room: bool) -> None:
     from app.api.reports import _redis_has_room
 
@@ -551,7 +599,9 @@ async def test_digest_carries_counts_and_case_numbers_only() -> None:
     assert "1 (OW-2026-00003)" in body
     assert "UTC" not in body and "Received" not in body  # no per-event time
     assert _build_webhook_payload(["OW-2026-00001"], [], "generic", "OW", "https://x") == {
-        "event": "new_activity", "new_reports": ["OW-2026-00001"], "new_messages": [],
+        "event": "new_activity",
+        "new_reports": ["OW-2026-00001"],
+        "new_messages": [],
     }
 
 
@@ -589,9 +639,13 @@ async def test_ip_headers_and_peer_address_never_reach_the_app() -> None:
         seen.update(scope)
 
     scope = {
-        "type": "http", "client": ("203.0.113.7", 50000),
-        "headers": [(b"x-forwarded-for", b"203.0.113.7"), (b"x-real-ip", b"203.0.113.7"),
-                    (b"accept", b"text/html")],
+        "type": "http",
+        "client": ("203.0.113.7", 50000),
+        "headers": [
+            (b"x-forwarded-for", b"203.0.113.7"),
+            (b"x-real-ip", b"203.0.113.7"),
+            (b"accept", b"text/html"),
+        ],
     }
     with patch("app.redis_client.get_redis", AsyncMock()):
         await SecurityMiddleware(app)(scope, AsyncMock(), AsyncMock())  # type: ignore[arg-type]

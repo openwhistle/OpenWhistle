@@ -2,6 +2,7 @@
 
 Uses the demo report OW-DEMO-00002 (status=in_review, acknowledged).
 """
+
 from __future__ import annotations
 
 import pytest
@@ -54,10 +55,9 @@ def test_valid_credentials_show_report(page: Page, base_url: str) -> None:
         f"Case number {DEMO_CASE_IN_REVIEW['case_number']!r} not visible on status page"
     )
     # Status badge for in_review should be present
-    assert any(
-        term in body.lower()
-        for term in ["in_review", "in review", "review"]
-    ), "in_review status not visible on status page"
+    assert any(term in body.lower() for term in ["in_review", "in review", "review"]), (
+        "in_review status not visible on status page"
+    )
 
 
 def test_ack_deadline_visible_for_acknowledged_report(page: Page, base_url: str) -> None:

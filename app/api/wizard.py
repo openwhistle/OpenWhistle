@@ -28,9 +28,7 @@ async def _is_setup_complete(db: AsyncSession) -> bool:
     # populate_existing: a re-check inside the same session must see the row
     # as it is now, not the copy the identity map loaded before the lock.
     result = await db.execute(
-        select(SetupStatus)
-        .where(SetupStatus.id == 1)
-        .execution_options(populate_existing=True)
+        select(SetupStatus).where(SetupStatus.id == 1).execution_options(populate_existing=True)
     )
     setup = result.scalar_one_or_none()
     return setup is not None and setup.completed
@@ -54,14 +52,10 @@ async def create_initial_admin(
     # Ensure the default organisation exists (created by migration 012, but guard here)
     from app.models.organisation import Organisation
 
-    org_result = await db.execute(
-        select(Organisation).where(Organisation.slug == "default")
-    )
+    org_result = await db.execute(select(Organisation).where(Organisation.slug == "default"))
     default_org = org_result.scalar_one_or_none()
     if default_org is None:
-        default_org = Organisation(
-            id=uuid.uuid4(), name="Default Organisation", slug="default"
-        )
+        default_org = Organisation(id=uuid.uuid4(), name="Default Organisation", slug="default")
         db.add(default_org)
         await db.flush()
 

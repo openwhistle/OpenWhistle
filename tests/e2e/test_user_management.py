@@ -2,6 +2,7 @@
 
 Tests user creation, deactivation, reactivation and role-based access control.
 """
+
 from __future__ import annotations
 
 import time
@@ -33,7 +34,7 @@ def test_create_new_user(admin_page: Page, base_url: str) -> None:
     admin_page.fill('input[name="username"]', _TEST_USER)
     admin_page.fill('input[name="password"]', _TEST_PASSWORD)
     # Select a role — use the add-form's specific #new-role to avoid matching per-user selects
-    role_select = admin_page.locator('#new-role')
+    role_select = admin_page.locator("#new-role")
     if role_select.count() > 0:
         role_select.select_option("case_manager")
 
@@ -70,10 +71,9 @@ def test_deactivate_user(admin_page: Page, base_url: str) -> None:
     # Verify inactive status in the updated table
     body = admin_page.content()
     # The inactive badge text or opacity style should indicate deactivation
-    assert any(
-        term in body.lower()
-        for term in ["inactive", "deactivated", "opacity:0.5"]
-    ), "User not shown as inactive after deactivation"
+    assert any(term in body.lower() for term in ["inactive", "deactivated", "opacity:0.5"]), (
+        "User not shown as inactive after deactivation"
+    )
 
 
 def test_reactivate_user(admin_page: Page, base_url: str) -> None:
@@ -94,10 +94,9 @@ def test_reactivate_user(admin_page: Page, base_url: str) -> None:
 
     body = admin_page.content()
     # User should now appear as active again
-    assert any(
-        term in body
-        for term in ["Active", "active", "badge-closed"]
-    ), "User not shown as active after reactivation"
+    assert any(term in body for term in ["Active", "active", "badge-closed"]), (
+        "User not shown as active after reactivation"
+    )
 
 
 def test_case_manager_cannot_access_users_page(cm_page: Page, base_url: str) -> None:
@@ -118,9 +117,6 @@ def test_case_manager_cannot_access_users_page(cm_page: Page, base_url: str) -> 
             "login",
             "not allowed",
         ]
-    ), (
-        f"case_manager should not access /admin/users. "
-        f"URL: {final_url}, body excerpt: {body[:200]}"
-    )
+    ), f"case_manager should not access /admin/users. URL: {final_url}, body excerpt: {body[:200]}"
     # The add-user form must NOT be present
     assert 'input[name="username"]' not in body or "admin.users" not in body

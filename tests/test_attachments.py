@@ -360,40 +360,52 @@ async def _walk_to_step5(client: object, category: str = "financial_fraud") -> t
     # Step 1: mode selection
     get_resp = await ac.get("/submit")
     csrf = _get_csrf(get_resp.text)
-    resp = await ac.post("/submit", data={
-        "csrf_token": csrf,
-        "step": "1",
-        "action": "next",
-        "submission_mode": "anonymous",
-    })
+    resp = await ac.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": "1",
+            "action": "next",
+            "submission_mode": "anonymous",
+        },
+    )
 
     # Step 2 (location — conditional): skip if present by posting with empty location_id
     if _detect_step(resp.text) == 2:
         csrf = _get_csrf(resp.text)
-        resp = await ac.post("/submit", data={
-            "csrf_token": csrf,
-            "step": "2",
-            "action": "next",
-            "location_id": "",
-        })
+        resp = await ac.post(
+            "/submit",
+            data={
+                "csrf_token": csrf,
+                "step": "2",
+                "action": "next",
+                "location_id": "",
+            },
+        )
 
     # Step 3: category
     csrf = _get_csrf(resp.text)
-    resp = await ac.post("/submit", data={
-        "csrf_token": csrf,
-        "step": str(_detect_step(resp.text)),
-        "action": "next",
-        "category": category,
-    })
+    resp = await ac.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": str(_detect_step(resp.text)),
+            "action": "next",
+            "category": category,
+        },
+    )
 
     # Step 4: description
     csrf = _get_csrf(resp.text)
-    resp = await ac.post("/submit", data={
-        "csrf_token": csrf,
-        "step": str(_detect_step(resp.text)),
-        "action": "next",
-        "description": "Testing file upload feature with a PDF attachment.",
-    })
+    resp = await ac.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": str(_detect_step(resp.text)),
+            "action": "next",
+            "description": "Testing file upload feature with a PDF attachment.",
+        },
+    )
 
     # Now on step 5 (attachments) — return ready for file upload
     csrf = _get_csrf(resp.text)
@@ -423,11 +435,14 @@ async def test_submit_with_pdf_attachment(client: object) -> None:
     # Now on step 6 (review) — submit final
     csrf6 = _get_csrf(resp.text)
     step6_num = _detect_step(resp.text)
-    final_resp = await ac.post("/submit", data={
-        "csrf_token": csrf6,
-        "step": str(step6_num),
-        "action": "next",
-    })
+    final_resp = await ac.post(
+        "/submit",
+        data={
+            "csrf_token": csrf6,
+            "step": str(step6_num),
+            "action": "next",
+        },
+    )
     assert final_resp.status_code == 200
     assert "evidence.pdf" in final_resp.text
 
@@ -495,9 +510,11 @@ async def test_admin_can_download_attachment(client: object, db_session: object)
     from app.config import settings as cfg
 
     # Resolve default org so reports satisfy the org_id NOT NULL constraint
-    org_row = (await db.execute(
-        select(Organisation.id).where(Organisation.slug == cfg.default_org_slug).limit(1)
-    )).scalar_one_or_none()
+    org_row = (
+        await db.execute(
+            select(Organisation.id).where(Organisation.slug == cfg.default_org_slug).limit(1)
+        )
+    ).scalar_one_or_none()
 
     # Create a dedicated admin user for this test (org_id nullable for direct creation)
     totp_secret = "JBSWY3DPEHPK3PXP"

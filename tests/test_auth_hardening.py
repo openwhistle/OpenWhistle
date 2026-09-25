@@ -20,14 +20,16 @@ async def test_oidc_login_requires_totp(
     client: AsyncClient, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     sub = f"sub-{uuid.uuid4().hex}"
-    db_session.add(AdminUser(
-        id=uuid.uuid4(),
-        username=f"oidc_{uuid.uuid4().hex[:8]}",
-        oidc_sub=sub,
-        oidc_issuer="https://idp.example.com",
-        totp_secret="JBSWY3DPEHPK3PXP",
-        totp_enabled=True,
-    ))
+    db_session.add(
+        AdminUser(
+            id=uuid.uuid4(),
+            username=f"oidc_{uuid.uuid4().hex[:8]}",
+            oidc_sub=sub,
+            oidc_issuer="https://idp.example.com",
+            totp_secret="JBSWY3DPEHPK3PXP",
+            totp_enabled=True,
+        )
+    )
     await db_session.commit()
 
     monkeypatch.setattr(settings, "oidc_enabled", True)
@@ -59,9 +61,9 @@ async def test_ldap_first_login_provisions_case_manager(
 
     assert resp.status_code == 302
     assert resp.headers["location"].startswith("/admin/mfa/setup")
-    user = (await db_session.execute(
-        select(AdminUser).where(AdminUser.ldap_username == username)
-    )).scalar_one()
+    user = (
+        await db_session.execute(select(AdminUser).where(AdminUser.ldap_username == username))
+    ).scalar_one()
     assert user.role == AdminRole.case_manager
 
 
@@ -70,10 +72,12 @@ def test_ldap_filter_escapes_username() -> None:
 
     cfg = MagicMock(ldap_enabled=True, ldap_user_filter="(uid={username})")
     conn = MagicMock(entries=[])
-    with patch("app.config.settings", cfg), \
-         patch("app.services.ldap_auth._make_server"), \
-         patch("ldap3.Connection", return_value=conn), \
-         pytest.raises(LDAPAuthError):
+    with (
+        patch("app.config.settings", cfg),
+        patch("app.services.ldap_auth._make_server"),
+        patch("ldap3.Connection", return_value=conn),
+        pytest.raises(LDAPAuthError),
+    ):
         _authenticate_ldap_sync("*)(uid=*", "pw")
 
     assert conn.search.call_args.kwargs["search_filter"] == r"(uid=\2a\29\28uid=\2a)"
@@ -88,10 +92,17 @@ async def test_delete_report_removes_stored_objects(
     from app.services.report import create_report, delete_report
 
     report, _ = await create_report(db_session, "financial_fraud", "Stored object cleanup.")
-    db_session.add(Attachment(
-        id=uuid.uuid4(), report_id=report.id, filename="e.pdf",
-        content_type="application/pdf", size=3, data=None, storage_key="k/e.pdf",
-    ))
+    db_session.add(
+        Attachment(
+            id=uuid.uuid4(),
+            report_id=report.id,
+            filename="e.pdf",
+            content_type="application/pdf",
+            size=3,
+            data=None,
+            storage_key="k/e.pdf",
+        )
+    )
     await db_session.commit()
 
     backend = MagicMock(delete=AsyncMock())
@@ -106,11 +117,17 @@ async def test_oidc_login_rejects_deactivated_account(
     client: AsyncClient, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     sub = f"sub-{uuid.uuid4().hex}"
-    db_session.add(AdminUser(
-        id=uuid.uuid4(), username=f"oidc_{uuid.uuid4().hex[:8]}", oidc_sub=sub,
-        oidc_issuer="https://idp.example.com", totp_secret="JBSWY3DPEHPK3PXP",
-        totp_enabled=True, is_active=False,
-    ))
+    db_session.add(
+        AdminUser(
+            id=uuid.uuid4(),
+            username=f"oidc_{uuid.uuid4().hex[:8]}",
+            oidc_sub=sub,
+            oidc_issuer="https://idp.example.com",
+            totp_secret="JBSWY3DPEHPK3PXP",
+            totp_enabled=True,
+            is_active=False,
+        )
+    )
     await db_session.commit()
 
     monkeypatch.setattr(settings, "oidc_enabled", True)
@@ -154,8 +171,10 @@ async def test_demo_totp_code_only_works_for_demo_accounts(
     from app.services.auth import store_totp_pending
 
     user = AdminUser(
-        id=uuid.uuid4(), username=f"real_{uuid.uuid4().hex[:8]}",
-        totp_secret="JBSWY3DPEHPK3PXP", totp_enabled=True,
+        id=uuid.uuid4(),
+        username=f"real_{uuid.uuid4().hex[:8]}",
+        totp_secret="JBSWY3DPEHPK3PXP",
+        totp_enabled=True,
     )
     db_session.add(user)
     await db_session.commit()
@@ -183,8 +202,10 @@ async def test_admin_notes_are_stored_encrypted(db_session: AsyncSession) -> Non
 
     report, _ = await create_report(db_session, "financial_fraud", "Note encryption test.")
     author = AdminUser(
-        id=uuid.uuid4(), username=f"n_{uuid.uuid4().hex[:8]}",
-        totp_secret="JBSWY3DPEHPK3PXP", totp_enabled=True,
+        id=uuid.uuid4(),
+        username=f"n_{uuid.uuid4().hex[:8]}",
+        totp_secret="JBSWY3DPEHPK3PXP",
+        totp_enabled=True,
     )
     db_session.add(author)
     await db_session.commit()

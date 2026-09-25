@@ -232,9 +232,7 @@ async def test_run_alembic_upgrade_logs_stdout() -> None:
 
 
 @pytest.mark.asyncio
-async def test_login_post_rate_limit_lockout(
-    client: AsyncClient, db_session: AsyncSession
-) -> None:
+async def test_login_post_rate_limit_lockout(client: AsyncClient, db_session: AsyncSession) -> None:
     """After exceeding max login attempts, login returns a lockout message."""
     from app.config import settings
     from app.redis_client import get_redis
@@ -279,9 +277,7 @@ async def test_login_mfa_invalid_temp_token(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_inactive_user_gets_401(
-    client: AsyncClient, db_session: AsyncSession
-) -> None:
+async def test_inactive_user_gets_401(client: AsyncClient, db_session: AsyncSession) -> None:
     """A deactivated admin cannot access protected endpoints even with a valid session."""
     from app.redis_client import get_redis
 
@@ -353,9 +349,7 @@ async def test_cancel_delete_400_when_no_request(
 
 
 @pytest.mark.asyncio
-async def test_export_pdf_404_unknown_report(
-    client: AsyncClient, db_session: AsyncSession
-) -> None:
+async def test_export_pdf_404_unknown_report(client: AsyncClient, db_session: AsyncSession) -> None:
     admin, secret = await _make_admin(db_session)
     await _login(client, admin, secret)
     r = await client.get(f"/admin/reports/{uuid.uuid4()}/export.pdf")
@@ -439,9 +433,7 @@ async def test_create_category_duplicate_slug_409(
 
 
 @pytest.mark.asyncio
-async def test_change_user_role_404_unknown(
-    client: AsyncClient, db_session: AsyncSession
-) -> None:
+async def test_change_user_role_404_unknown(client: AsyncClient, db_session: AsyncSession) -> None:
     admin, secret = await _make_admin(db_session)
     await _login(client, admin, secret)
     csrf = await _csrf(client, "/admin/users")
@@ -468,9 +460,7 @@ async def test_change_user_role_400_invalid_role(
 
 
 @pytest.mark.asyncio
-async def test_deactivate_user_404_unknown(
-    client: AsyncClient, db_session: AsyncSession
-) -> None:
+async def test_deactivate_user_404_unknown(client: AsyncClient, db_session: AsyncSession) -> None:
     admin, secret = await _make_admin(db_session)
     await _login(client, admin, secret)
     csrf = await _csrf(client, "/admin/users")
@@ -482,9 +472,7 @@ async def test_deactivate_user_404_unknown(
 
 
 @pytest.mark.asyncio
-async def test_deactivate_user_400_self(
-    client: AsyncClient, db_session: AsyncSession
-) -> None:
+async def test_deactivate_user_400_self(client: AsyncClient, db_session: AsyncSession) -> None:
     admin, secret = await _make_admin(db_session)
     await _login(client, admin, secret)
     csrf = await _csrf(client, "/admin/users")
@@ -526,9 +514,7 @@ async def test_deactivate_user_422_last_admin(
 
 
 @pytest.mark.asyncio
-async def test_reactivate_user_404_unknown(
-    client: AsyncClient, db_session: AsyncSession
-) -> None:
+async def test_reactivate_user_404_unknown(client: AsyncClient, db_session: AsyncSession) -> None:
     admin, secret = await _make_admin(db_session)
     await _login(client, admin, secret)
     csrf = await _csrf(client, "/admin/users")
@@ -560,9 +546,7 @@ async def test_create_user_duplicate_username_409(
 
 
 @pytest.mark.asyncio
-async def test_audit_log_with_filters(
-    client: AsyncClient, db_session: AsyncSession
-) -> None:
+async def test_audit_log_with_filters(client: AsyncClient, db_session: AsyncSession) -> None:
     """Audit log page with action and report_id filters still returns 200."""
     admin, secret = await _make_admin(db_session)
     await _login(client, admin, secret)
@@ -713,9 +697,7 @@ async def test_admin_reply_404_unknown_report(
 
 
 @pytest.mark.asyncio
-async def test_admin_reply_422_empty_content(
-    client: AsyncClient, db_session: AsyncSession
-) -> None:
+async def test_admin_reply_422_empty_content(client: AsyncClient, db_session: AsyncSession) -> None:
     from app.services.report import create_report
 
     report, _ = await create_report(db_session, "corruption", "Reply empty test.")

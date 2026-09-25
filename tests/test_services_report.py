@@ -297,9 +297,7 @@ async def test_get_reports_paginated_sort_by_case_number_asc(
 ) -> None:
     await _make_report(db_session)
     await _make_report(db_session)
-    reports, _ = await get_reports_paginated(
-        db_session, sort_by="case_number", sort_dir="asc"
-    )
+    reports, _ = await get_reports_paginated(db_session, sort_by="case_number", sort_dir="asc")
     case_numbers = [r.case_number for r in reports]
     assert case_numbers == sorted(case_numbers)
 
@@ -308,9 +306,7 @@ async def test_get_reports_paginated_sort_by_case_number_asc(
 async def test_get_reports_paginated_sort_by_category_desc(
     db_session: AsyncSession,
 ) -> None:
-    reports, _ = await get_reports_paginated(
-        db_session, sort_by="category", sort_dir="desc"
-    )
+    reports, _ = await get_reports_paginated(db_session, sort_by="category", sort_dir="desc")
     assert isinstance(reports, list)
 
 
@@ -328,9 +324,7 @@ async def test_get_reports_paginated_page_beyond_end_returns_empty(
     db_session: AsyncSession,
 ) -> None:
     _, total = await get_reports_paginated(db_session, per_page=1000)
-    reports, _ = await get_reports_paginated(
-        db_session, page=total + 100, per_page=25
-    )
+    reports, _ = await get_reports_paginated(db_session, page=total + 100, per_page=25)
     assert reports == []
 
 

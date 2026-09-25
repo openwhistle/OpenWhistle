@@ -217,9 +217,7 @@ class TestEncryptedReportStorage:
         assert len(report.encrypted_dek) > 32
 
     @pytest.mark.asyncio(loop_scope="function")
-    async def test_decrypt_report_fields_returns_plaintext(
-        self, db_session: AsyncSession
-    ) -> None:
+    async def test_decrypt_report_fields_returns_plaintext(self, db_session: AsyncSession) -> None:
         from sqlalchemy import select
 
         from app.models.report import Report
@@ -241,9 +239,7 @@ class TestEncryptedReportStorage:
         assert description == original_text
 
     @pytest.mark.asyncio(loop_scope="function")
-    async def test_messages_are_encrypted_in_db(
-        self, db_session: AsyncSession
-    ) -> None:
+    async def test_messages_are_encrypted_in_db(self, db_session: AsyncSession) -> None:
         from sqlalchemy import select
 
         from app.models.report import ReportMessage
@@ -324,9 +320,7 @@ class TestRetentionService:
         mock_session.__aexit__ = AsyncMock(return_value=None)
         scalars_result = MagicMock(all=lambda: [old_report])
         scalars_mock = MagicMock(return_value=scalars_result)
-        mock_session.execute = AsyncMock(
-            return_value=MagicMock(scalars=scalars_mock)
-        )
+        mock_session.execute = AsyncMock(return_value=MagicMock(scalars=scalars_mock))
         mock_session.add = MagicMock()
         mock_session.commit = AsyncMock()
 
@@ -334,9 +328,11 @@ class TestRetentionService:
         mock_engine = AsyncMock()
         mock_engine.dispose = AsyncMock()
 
-        with patch("app.config.settings") as mock_cfg, \
-             patch("sqlalchemy.ext.asyncio.create_async_engine", return_value=mock_engine), \
-             patch("sqlalchemy.ext.asyncio.async_sessionmaker", return_value=mock_session_factory):
+        with (
+            patch("app.config.settings") as mock_cfg,
+            patch("sqlalchemy.ext.asyncio.create_async_engine", return_value=mock_engine),
+            patch("sqlalchemy.ext.asyncio.async_sessionmaker", return_value=mock_session_factory),
+        ):
             mock_cfg.retention_enabled = True
             mock_cfg.retention_days = 365
             mock_cfg.database_url = "postgresql+asyncpg://test/test"
@@ -353,9 +349,7 @@ class TestRetentionService:
         mock_session.__aenter__ = AsyncMock(return_value=mock_session)
         mock_session.__aexit__ = AsyncMock(return_value=None)
         mock_session.execute = AsyncMock(
-            return_value=MagicMock(
-                scalars=MagicMock(return_value=MagicMock(all=lambda: []))
-            )
+            return_value=MagicMock(scalars=MagicMock(return_value=MagicMock(all=lambda: [])))
         )
         mock_session.commit = AsyncMock()
         mock_session.add = MagicMock()
@@ -363,10 +357,14 @@ class TestRetentionService:
         mock_engine = AsyncMock()
         mock_engine.dispose = AsyncMock()
 
-        with patch("app.config.settings") as mock_cfg, \
-             patch("sqlalchemy.ext.asyncio.create_async_engine", return_value=mock_engine), \
-             patch("sqlalchemy.ext.asyncio.async_sessionmaker",
-                   return_value=MagicMock(return_value=mock_session)):
+        with (
+            patch("app.config.settings") as mock_cfg,
+            patch("sqlalchemy.ext.asyncio.create_async_engine", return_value=mock_engine),
+            patch(
+                "sqlalchemy.ext.asyncio.async_sessionmaker",
+                return_value=MagicMock(return_value=mock_session),
+            ),
+        ):
             mock_cfg.retention_enabled = True
             mock_cfg.retention_days = 365
             mock_cfg.database_url = "postgresql+asyncpg://test/test"
@@ -381,9 +379,11 @@ class TestRetentionService:
         mock_engine = AsyncMock()
         mock_engine.dispose = AsyncMock()
 
-        with patch("app.config.settings") as mock_cfg, \
-             patch("sqlalchemy.ext.asyncio.create_async_engine", return_value=mock_engine), \
-             patch("sqlalchemy.ext.asyncio.async_sessionmaker", side_effect=Exception("db down")):
+        with (
+            patch("app.config.settings") as mock_cfg,
+            patch("sqlalchemy.ext.asyncio.create_async_engine", return_value=mock_engine),
+            patch("sqlalchemy.ext.asyncio.async_sessionmaker", side_effect=Exception("db down")),
+        ):
             mock_cfg.retention_enabled = True
             mock_cfg.retention_days = 365
             mock_cfg.database_url = "postgresql+asyncpg://test/test"
@@ -413,14 +413,13 @@ class TestRetentionAdminPage:
         _, _ = await wizard_submit(client)
         login_resp = await client.get("/admin/login")
         csrf = _extract_csrf(login_resp.text)
-        await client.post("/admin/login", data={
-            "username": "admin", "password": "wrongpassword", "csrf_token": csrf
-        })
+        await client.post(
+            "/admin/login",
+            data={"username": "admin", "password": "wrongpassword", "csrf_token": csrf},
+        )
 
     @pytest.mark.asyncio(loop_scope="function")
-    async def test_retention_page_shows_retention_settings(
-        self, client: AsyncClient
-    ) -> None:
+    async def test_retention_page_shows_retention_settings(self, client: AsyncClient) -> None:
         token = await _get_admin_session(client)
         if not token:
             pytest.skip("Could not obtain admin session")
@@ -452,9 +451,7 @@ class TestTelephoneChannelPage:
         assert resp.status_code == 200
 
     @pytest.mark.asyncio(loop_scope="function")
-    async def test_telephone_channel_contains_hinschg_reference(
-        self, client: AsyncClient
-    ) -> None:
+    async def test_telephone_channel_contains_hinschg_reference(self, client: AsyncClient) -> None:
         token = await _get_admin_session(client)
         if not token:
             pytest.skip("Could not obtain admin session")
@@ -543,9 +540,7 @@ class TestSuperAdminRole:
 
 class TestOrganisationsPage:
     @pytest.mark.asyncio(loop_scope="function")
-    async def test_organisations_page_requires_superadmin(
-        self, client: AsyncClient
-    ) -> None:
+    async def test_organisations_page_requires_superadmin(self, client: AsyncClient) -> None:
         token = await _get_admin_session(client)
         if not token:
             pytest.skip("Could not obtain admin session")
@@ -645,23 +640,16 @@ class TestMigration012Schema:
     """Verify that migration 012 created all expected schema elements."""
 
     @pytest.mark.asyncio(loop_scope="function")
-    async def test_organisations_table_exists(
-        self, db_session: AsyncSession
-    ) -> None:
+    async def test_organisations_table_exists(self, db_session: AsyncSession) -> None:
         from sqlalchemy import text
 
         result = await db_session.execute(
-            text(
-                "SELECT 1 FROM information_schema.tables "
-                "WHERE table_name = 'organisations'"
-            )
+            text("SELECT 1 FROM information_schema.tables WHERE table_name = 'organisations'")
         )
         assert result.scalar() is not None
 
     @pytest.mark.asyncio(loop_scope="function")
-    async def test_reports_has_encrypted_dek_column(
-        self, db_session: AsyncSession
-    ) -> None:
+    async def test_reports_has_encrypted_dek_column(self, db_session: AsyncSession) -> None:
         from sqlalchemy import text
 
         result = await db_session.execute(
@@ -673,9 +661,7 @@ class TestMigration012Schema:
         assert result.scalar() is not None
 
     @pytest.mark.asyncio(loop_scope="function")
-    async def test_reports_has_org_id_column(
-        self, db_session: AsyncSession
-    ) -> None:
+    async def test_reports_has_org_id_column(self, db_session: AsyncSession) -> None:
         from sqlalchemy import text
 
         result = await db_session.execute(
@@ -687,9 +673,7 @@ class TestMigration012Schema:
         assert result.scalar() is not None
 
     @pytest.mark.asyncio(loop_scope="function")
-    async def test_admin_users_has_org_id_column(
-        self, db_session: AsyncSession
-    ) -> None:
+    async def test_admin_users_has_org_id_column(self, db_session: AsyncSession) -> None:
         from sqlalchemy import text
 
         result = await db_session.execute(
@@ -701,9 +685,7 @@ class TestMigration012Schema:
         assert result.scalar() is not None
 
     @pytest.mark.asyncio(loop_scope="function")
-    async def test_default_organisation_exists(
-        self, db_session: AsyncSession
-    ) -> None:
+    async def test_default_organisation_exists(self, db_session: AsyncSession) -> None:
         from sqlalchemy import text
 
         result = await db_session.execute(
@@ -712,9 +694,7 @@ class TestMigration012Schema:
         assert result.scalar() is not None
 
     @pytest.mark.asyncio(loop_scope="function")
-    async def test_adminrole_has_superadmin_value(
-        self, db_session: AsyncSession
-    ) -> None:
+    async def test_adminrole_has_superadmin_value(self, db_session: AsyncSession) -> None:
         from sqlalchemy import text
 
         result = await db_session.execute(
@@ -813,32 +793,41 @@ async def _get_admin_session(client: AsyncClient) -> bool:
         totp_code = pyotp.TOTP(totp_secret).now()
         csrf = _extract_csrf(setup_resp.text)
 
-        await client.post("/setup", data={
-            "username": "testadmin",
-            "password": "TestPassword123!",
-            "password_confirm": "TestPassword123!",
-            "totp_secret": totp_secret,
-            "totp_code": totp_code,
-            "csrf_token": csrf,
-        })
+        await client.post(
+            "/setup",
+            data={
+                "username": "testadmin",
+                "password": "TestPassword123!",
+                "password_confirm": "TestPassword123!",
+                "totp_secret": totp_secret,
+                "totp_code": totp_code,
+                "csrf_token": csrf,
+            },
+        )
 
         login_resp = await client.get("/admin/login")
         csrf = _extract_csrf(login_resp.text)
-        mfa_resp = await client.post("/admin/login", data={
-            "username": "testadmin",
-            "password": "TestPassword123!",
-            "csrf_token": csrf,
-        })
+        mfa_resp = await client.post(
+            "/admin/login",
+            data={
+                "username": "testadmin",
+                "password": "TestPassword123!",
+                "csrf_token": csrf,
+            },
+        )
         temp_m = re.search(r'name="temp_token" value="([^"]+)"', mfa_resp.text)
         csrf_m = re.search(r'name="csrf_token" value="([^"]+)"', mfa_resp.text)
         if not temp_m:
             return False
         totp_code = pyotp.TOTP(totp_secret).now()
-        await client.post("/admin/login/mfa", data={
-            "csrf_token": csrf_m.group(1) if csrf_m else "",
-            "temp_token": temp_m.group(1),
-            "totp_code": totp_code,
-        })
+        await client.post(
+            "/admin/login/mfa",
+            data={
+                "csrf_token": csrf_m.group(1) if csrf_m else "",
+                "temp_token": temp_m.group(1),
+                "totp_code": totp_code,
+            },
+        )
         return True
     except Exception:  # noqa: BLE001
         return False

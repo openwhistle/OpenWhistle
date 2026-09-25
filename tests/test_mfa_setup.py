@@ -96,9 +96,7 @@ async def test_mfa_setup_get_with_invalid_token_redirects_to_login(
     client: AsyncClient,
 ) -> None:
     """GET /admin/mfa/setup with unknown token redirects to login."""
-    resp = await client.get(
-        "/admin/mfa/setup?token=totally-fake-token-xyz", follow_redirects=False
-    )
+    resp = await client.get("/admin/mfa/setup?token=totally-fake-token-xyz", follow_redirects=False)
     assert resp.status_code == 302
     assert "/admin/login" in resp.headers["location"]
 
@@ -179,9 +177,7 @@ async def test_mfa_setup_post_with_valid_code_enables_totp_and_logs_in(
     from app.redis_client import get_redis
 
     totp_secret = pyotp.random_base32()
-    user = await _create_user_totp_disabled(
-        db_session, totp_secret=totp_secret
-    )
+    user = await _create_user_totp_disabled(db_session, totp_secret=totp_secret)
     redis = await get_redis()
     setup_token = "test-setup-token-success-001"
     await store_totp_setup_pending(redis, setup_token, str(user.id))
@@ -200,9 +196,7 @@ async def test_mfa_setup_post_with_valid_code_enables_totp_and_logs_in(
 
     # Verify totp_enabled was persisted in the DB (populate_existing forces re-fetch)
     result = await db_session.execute(
-        select(AdminUser)
-        .where(AdminUser.id == user.id)
-        .execution_options(populate_existing=True)
+        select(AdminUser).where(AdminUser.id == user.id).execution_options(populate_existing=True)
     )
     updated = result.scalar_one_or_none()
     assert updated is not None
@@ -210,14 +204,10 @@ async def test_mfa_setup_post_with_valid_code_enables_totp_and_logs_in(
 
 
 @pytest.mark.asyncio
-async def test_full_first_login_setup_flow(
-    client: AsyncClient, db_session: AsyncSession
-) -> None:
+async def test_full_first_login_setup_flow(client: AsyncClient, db_session: AsyncSession) -> None:
     """End-to-end: create user → login → redirected to setup → scan → verify → dashboard."""
     totp_secret = pyotp.random_base32()
-    user = await _create_user_totp_disabled(
-        db_session, totp_secret=totp_secret
-    )
+    user = await _create_user_totp_disabled(db_session, totp_secret=totp_secret)
 
     # Step 1: POST /admin/login — should redirect to /admin/mfa/setup
     get_resp = await client.get("/admin/login")

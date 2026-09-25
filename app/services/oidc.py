@@ -26,7 +26,16 @@ _STATE_TTL = 300  # 5 minutes
 # HS* would turn the (shared) client secret into a signing key and "none"
 # would disable the check entirely.
 _ALLOWED_ALGORITHMS = [
-    "RS256", "RS384", "RS512", "PS256", "PS384", "PS512", "ES256", "ES384", "ES512", "EdDSA",
+    "RS256",
+    "RS384",
+    "RS512",
+    "PS256",
+    "PS384",
+    "PS512",
+    "ES256",
+    "ES384",
+    "ES512",
+    "EdDSA",
 ]
 _CLOCK_SKEW_SECONDS = 60
 

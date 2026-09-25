@@ -67,9 +67,7 @@ async def send_sla_reminders() -> None:
                 now = datetime.now(UTC)
 
                 result = await db.execute(
-                    select(Report).where(
-                        Report.status.notin_([ReportStatus.closed])
-                    )
+                    select(Report).where(Report.status.notin_([ReportStatus.closed]))
                 )
                 reports = result.scalars().all()
 
@@ -112,6 +110,7 @@ async def _check_ack_reminder(
         return
 
     from redis.asyncio import Redis as RedisType
+
     red: RedisType = redis  # type: ignore[assignment]
 
     key = _ack_dedup_key(r.case_number)
@@ -150,6 +149,7 @@ async def _check_feedback_reminder(
         return
 
     from redis.asyncio import Redis as RedisType
+
     red: RedisType = redis  # type: ignore[assignment]
 
     key = _feedback_dedup_key(r.case_number)
@@ -184,13 +184,9 @@ async def _dispatch_reminder(
 
     tasks = []
     if cfg.notify_email_enabled and cfg.notify_email_to.strip():
-        tasks.append(
-            _send_reminder_email(case_number, deadline_label, days_left, cfg)
-        )
+        tasks.append(_send_reminder_email(case_number, deadline_label, days_left, cfg))
     if cfg.notify_webhook_enabled and cfg.notify_webhook_url.strip():
-        tasks.append(
-            _send_reminder_webhook(case_number, deadline_label, days_left, cfg)
-        )
+        tasks.append(_send_reminder_webhook(case_number, deadline_label, days_left, cfg))
 
     if tasks:
         await asyncio.gather(*tasks, return_exceptions=True)

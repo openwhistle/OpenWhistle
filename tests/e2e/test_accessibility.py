@@ -3,6 +3,7 @@
 axe-core is downloaded once per session via the axe_source fixture in conftest.py.
 If network is unavailable, tests are skipped gracefully.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -27,17 +28,15 @@ def _check_axe(page: Page, axe_source: str, context: str) -> None:
     serious = run_axe_warnings(page, axe_source)
     if serious:
         import warnings
+
         warnings.warn(
             f"Serious (non-blocking) a11y violations on {context}: "
             + ", ".join(v.get("id", "") for v in serious),
             stacklevel=2,
         )
-    assert critical == [], (
-        f"Critical accessibility violations on {context}:\n"
-        + "\n".join(
-            f"  [{v.get('impact', 'unknown')}] {v.get('id', '')}: {v.get('description', '')}"
-            for v in critical
-        )
+    assert critical == [], f"Critical accessibility violations on {context}:\n" + "\n".join(
+        f"  [{v.get('impact', 'unknown')}] {v.get('id', '')}: {v.get('description', '')}"
+        for v in critical
     )
 
 
@@ -153,6 +152,4 @@ def test_form_labels_on_login(page: Page, base_url: str) -> None:
         inp_id = inp.get_attribute("id")
         if inp_id:
             label = page.locator(f'label[for="{inp_id}"]')
-            assert label.count() > 0, (
-                f"Input #{inp_id} has no associated <label for='...'>"
-            )
+            assert label.count() > 0, f"Input #{inp_id} has no associated <label for='...'>"

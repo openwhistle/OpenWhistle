@@ -298,6 +298,7 @@ async def test_link_cases_via_api(client: AsyncClient, db_session: AsyncSession)
 
     # Create second report and get its case number
     from app.services.report import create_report
+
     report_b, _ = await create_report(
         db_session, category="corruption", description="Second report for linking test.", lang="en"
     )
@@ -318,6 +319,7 @@ async def test_link_self_returns_400(client: AsyncClient, db_session: AsyncSessi
     rid = await _make_report(db_session)
 
     from app.services.report import get_report_by_id
+
     report = await get_report_by_id(db_session, uuid.UUID(rid))
 
     csrf = await _get_csrf(client, f"/admin/reports/{rid}")

@@ -1,4 +1,5 @@
 """E2E tests for PDF export of admin reports."""
+
 from __future__ import annotations
 
 import pytest
@@ -35,15 +36,14 @@ def test_pdf_export_download(admin_page: Page, base_url: str) -> None:
 
     download = download_info.value
     filename = download.suggested_filename
-    assert filename.endswith(".pdf"), (
-        f"Downloaded file does not have .pdf extension: {filename!r}"
-    )
+    assert filename.endswith(".pdf"), f"Downloaded file does not have .pdf extension: {filename!r}"
 
     # Save and check file size
     path = download.path()
     assert path is not None, "Download did not produce a file"
 
     import os
+
     file_size = os.path.getsize(path)
     assert file_size > 1000, (
         f"Downloaded PDF is suspiciously small ({file_size} bytes) — may be empty or corrupt"

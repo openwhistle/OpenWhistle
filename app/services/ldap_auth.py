@@ -34,6 +34,7 @@ def _make_server(cfg: object) -> object:
     from ldap3 import Server, Tls  # noqa: PLC0415
 
     from app.config import Settings  # noqa: PLC0415
+
     c: Settings = cfg  # type: ignore[assignment]
 
     # Verify the directory's certificate against the system CA store; a private
@@ -53,6 +54,7 @@ def _auto_bind(cfg: object) -> object:
     from ldap3 import AUTO_BIND_TLS_BEFORE_BIND  # noqa: PLC0415
 
     from app.config import Settings  # noqa: PLC0415
+
     c: Settings = cfg  # type: ignore[assignment]
     if c.ldap_start_tls and not c.ldap_use_ssl:
         return AUTO_BIND_TLS_BEFORE_BIND
@@ -96,9 +98,7 @@ def _authenticate_ldap_sync(username: str, password: str) -> LDAPUserInfo:
         log.error("LDAP service bind failed: %s", exc)
         raise LDAPAuthError("LDAP service bind failed") from exc
 
-    search_filter = settings.ldap_user_filter.replace(
-        "{username}", escape_filter_chars(username)
-    )
+    search_filter = settings.ldap_user_filter.replace("{username}", escape_filter_chars(username))
     service_conn.search(
         search_base=settings.ldap_base_dn,
         search_filter=search_filter,
@@ -130,11 +130,7 @@ def _authenticate_ldap_sync(username: str, password: str) -> LDAPUserInfo:
     attr_username = settings.ldap_attr_username
     attr_email = settings.ldap_attr_email
 
-    resolved_username = (
-        str(entry[attr_username]) if attr_username in entry else username
-    )
-    email: str | None = (
-        str(entry[attr_email]) if attr_email in entry else None
-    )
+    resolved_username = str(entry[attr_username]) if attr_username in entry else username
+    email: str | None = str(entry[attr_email]) if attr_email in entry else None
 
     return LDAPUserInfo(username=resolved_username, email=email)

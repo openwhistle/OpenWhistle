@@ -20,9 +20,7 @@ class Location(Base):
         UniqueConstraint("code", "org_id", name="uq_locations_code_org"),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(128), nullable=False)
     code: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)

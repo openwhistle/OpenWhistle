@@ -10,6 +10,7 @@ The wizard has up to 6 steps (with location step conditional):
 
 Navigation: each step has a "Next" button (button[type="submit"][name="action"][value="next"]).
 """
+
 from __future__ import annotations
 
 import io
@@ -133,7 +134,7 @@ def test_submit_page_loads(page: Page, base_url: str) -> None:
     page.wait_for_load_state("networkidle")
     assert "OpenWhistle" in page.title()
     # Mode card labels are visible (underlying radio inputs are CSS-hidden for styling)
-    expect(page.locator('label.mode-card').first).to_be_visible()
+    expect(page.locator("label.mode-card").first).to_be_visible()
 
 
 def test_anonymous_submission_full_wizard(page: Page, base_url: str) -> None:
@@ -186,11 +187,10 @@ def test_anonymous_submission_full_wizard(page: Page, base_url: str) -> None:
         f"No case number (OW-XXXX-NNNNN) found on success page. URL: {page.url}"
     )
     # PIN should be a UUID-like or long string
-    assert re.search(
-        r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", body
-    ) is not None or re.search(r"[a-zA-Z0-9\-]{20,}", body) is not None, (
-        "No PIN found on success page"
-    )
+    assert (
+        re.search(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", body) is not None
+        or re.search(r"[a-zA-Z0-9\-]{20,}", body) is not None
+    ), "No PIN found on success page"
 
 
 def test_confidential_submission_full_wizard(page: Page, base_url: str) -> None:
@@ -345,9 +345,7 @@ def test_submission_with_file_attachment(page: Page, base_url: str) -> None:
     # Step 6: review — check that the filename is shown
     page.wait_for_load_state("networkidle")
     review_content = page.content()
-    assert "e2e_test_attachment.pdf" in review_content, (
-        "Uploaded filename not shown on review page"
-    )
+    assert "e2e_test_attachment.pdf" in review_content, "Uploaded filename not shown on review page"
     _advance_step(page)
 
     # Success page
@@ -397,9 +395,7 @@ def test_every_wizard_step_transition_is_post_redirect_get(page: Page, base_url:
     )
 
 
-def test_native_back_button_after_every_step_keeps_wizard_usable(
-    page: Page, base_url: str
-) -> None:
+def test_native_back_button_after_every_step_keeps_wizard_usable(page: Page, base_url: str) -> None:
     """The browser's native Back button never leaves the wizard in a broken state.
 
     Walks the full wizard and, after every step transition, uses the browser's

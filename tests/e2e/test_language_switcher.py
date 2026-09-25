@@ -4,6 +4,7 @@ The language picker is a dropdown button that posts to /set-language with a
 hidden 'lang' field. On the submit page, English shows "Anonymous",
 German shows "Anonym", French shows "Anonyme".
 """
+
 from __future__ import annotations
 
 import pytest
@@ -43,10 +44,9 @@ def test_submit_page_defaults_to_english(page: Page, base_url: str) -> None:
     page.wait_for_load_state("networkidle")
     body = page.content()
     # English anonymous label should be present
-    assert any(
-        term in body
-        for term in ["Anonymous", "Submit Report", "Report", "anonymous"]
-    ), "Expected English content on default /submit page"
+    assert any(term in body for term in ["Anonymous", "Submit Report", "Report", "anonymous"]), (
+        "Expected English content on default /submit page"
+    )
 
 
 def test_switch_to_german(page: Page, base_url: str) -> None:
@@ -70,10 +70,9 @@ def test_switch_to_german(page: Page, base_url: str) -> None:
 
     body = page.content()
     # German content — "Anonym" is the German label for anonymous
-    assert any(
-        term in body
-        for term in ["Anonym", "Melden", "Hinweis", "anonym", "de"]
-    ), "Expected German content after switching to Deutsch"
+    assert any(term in body for term in ["Anonym", "Melden", "Hinweis", "anonym", "de"]), (
+        "Expected German content after switching to Deutsch"
+    )
 
 
 def test_switch_to_french(page: Page, base_url: str) -> None:
@@ -93,10 +92,9 @@ def test_switch_to_french(page: Page, base_url: str) -> None:
 
     body = page.content()
     # French content — "Anonyme" is the French label
-    assert any(
-        term in body
-        for term in ["Anonyme", "Signalement", "anonyme", "fr", "Français"]
-    ), "Expected French content after switching to Français"
+    assert any(term in body for term in ["Anonyme", "Signalement", "anonyme", "fr", "Français"]), (
+        "Expected French content after switching to Français"
+    )
 
 
 def test_switch_back_to_english(page: Page, base_url: str) -> None:
@@ -121,8 +119,7 @@ def test_switch_back_to_english(page: Page, base_url: str) -> None:
 
     body = page.content()
     assert any(
-        term in body
-        for term in ["Anonymous", "Submit", "Report", "anonymous", "English"]
+        term in body for term in ["Anonymous", "Submit", "Report", "anonymous", "English"]
     ), "Expected English content after switching back from German"
 
 
@@ -142,10 +139,9 @@ def test_switch_to_portuguese(page: Page, base_url: str) -> None:
         page.wait_for_load_state("networkidle")
 
     body = page.content()
-    assert any(
-        term in body
-        for term in ["Anônimo", "Enviar", "Denúncia", "anônimo", "pt-br"]
-    ), "Expected Portuguese (Brazil) content after switching to Português (BR)"
+    assert any(term in body for term in ["Anônimo", "Enviar", "Denúncia", "anônimo", "pt-br"]), (
+        "Expected Portuguese (Brazil) content after switching to Português (BR)"
+    )
 
 
 def test_ptbr_persists_across_pages(page: Page, base_url: str) -> None:
@@ -163,10 +159,9 @@ def test_ptbr_persists_across_pages(page: Page, base_url: str) -> None:
     page.goto(f"{base_url}/status")
     page.wait_for_load_state("networkidle")
     body = page.content()
-    assert any(
-        term in body
-        for term in ["pt-br", "Denúncia", "Status", "lang=\"pt-br\""]
-    ), "Language preference pt-BR did not persist across page navigation"
+    assert any(term in body for term in ["pt-br", "Denúncia", "Status", 'lang="pt-br"']), (
+        "Language preference pt-BR did not persist across page navigation"
+    )
 
 
 def test_language_persists_across_pages(page: Page, base_url: str) -> None:
@@ -176,9 +171,7 @@ def test_language_persists_across_pages(page: Page, base_url: str) -> None:
     page.wait_for_load_state("networkidle")
     # Switch via the picker form (POST to /set-language sets a cookie)
     _open_lang_picker(page)
-    de_btn = page.locator(
-        'form[action="/set-language"]:has(input[name="lang"][value="de"]) button'
-    )
+    de_btn = page.locator('form[action="/set-language"]:has(input[name="lang"][value="de"]) button')
     if de_btn.count() > 0:
         de_btn.first.click()
         page.wait_for_load_state("networkidle")
@@ -190,7 +183,6 @@ def test_language_persists_across_pages(page: Page, base_url: str) -> None:
     # If language persisted, German terms should appear on the status page
     # The nav/body/lang attribute gives us a signal
     # Accept if any German-language indicator is present
-    assert any(
-        term in body
-        for term in ["de", "Meldung", "Status", "Anonym", "lang=\"de\""]
-    ), "Language preference did not persist across page navigation"
+    assert any(term in body for term in ["de", "Meldung", "Status", "Anonym", 'lang="de"']), (
+        "Language preference did not persist across page navigation"
+    )

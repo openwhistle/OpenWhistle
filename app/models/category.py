@@ -18,9 +18,7 @@ class ReportCategory(Base):
         UniqueConstraint("slug", "org_id", name="uq_report_categories_slug_org"),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     slug: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     label_en: Mapped[str] = mapped_column(String(128), nullable=False)
     label_de: Mapped[str] = mapped_column(String(128), nullable=False)

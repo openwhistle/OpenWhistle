@@ -93,9 +93,9 @@ def test_validate_username_accepts_allowlist(name: str) -> None:
 @pytest.mark.parametrize(
     "name",
     [
-        "a'+__XSS('x')+'",       # the advisory's breakout payload
-        "ab",                     # too short
-        "x" * 65,                 # too long
+        "a'+__XSS('x')+'",  # the advisory's breakout payload
+        "ab",  # too short
+        "x" * 65,  # too long
         'quote"here',
         "semi;colon",
         "<script>",
@@ -113,6 +113,7 @@ def test_validate_username_rejects_bad_input(name: str) -> None:
 @pytest_asyncio.fixture(loop_scope="function")
 async def as_admin(client: AsyncClient):
     """Yield (client, setter) where setter(user) forces the current admin."""
+
     def _set(user: AdminUser) -> None:
         app.dependency_overrides[get_current_admin] = lambda: user
 
@@ -226,9 +227,7 @@ async def test_admin_cannot_self_promote_to_superadmin(
 
 
 @pytest.mark.asyncio
-async def test_admin_cannot_change_own_role(
-    db_session: AsyncSession, as_admin, no_csrf
-) -> None:
+async def test_admin_cannot_change_own_role(db_session: AsyncSession, as_admin, no_csrf) -> None:
     client, set_user = as_admin
     from app.services.users import create_user
 
@@ -243,9 +242,7 @@ async def test_admin_cannot_change_own_role(
 
 
 @pytest.mark.asyncio
-async def test_admin_cannot_create_superadmin(
-    client: AsyncClient, as_admin, no_csrf
-) -> None:
+async def test_admin_cannot_create_superadmin(client: AsyncClient, as_admin, no_csrf) -> None:
     _client, set_user = as_admin
     set_user(_user(AdminRole.admin))
     resp = await _client.post(
@@ -289,9 +286,7 @@ async def test_superadmin_can_create_superadmin(
 
 
 @pytest.mark.asyncio
-async def test_create_user_rejects_xss_username(
-    client: AsyncClient, as_admin, no_csrf
-) -> None:
+async def test_create_user_rejects_xss_username(client: AsyncClient, as_admin, no_csrf) -> None:
     _client, set_user = as_admin
     set_user(_user(AdminRole.superadmin))
     resp = await _client.post(
@@ -555,15 +550,15 @@ def test_validate_username_boundaries_ok(name: str) -> None:
 @pytest.mark.parametrize(
     "name",
     [
-        "ab",                         # 2 chars (below min)
-        "a" * 65,                     # 65 chars (above max)
-        "",                           # empty
-        "   ",                        # whitespace-only
-        "a\nb",                       # newline injection
-        "a\tb",                       # tab
-        "a\x00b",                     # null byte
-        "аdmin",                      # cyrillic homoglyph 'а'
-        "a<b",                        # angle bracket
+        "ab",  # 2 chars (below min)
+        "a" * 65,  # 65 chars (above max)
+        "",  # empty
+        "   ",  # whitespace-only
+        "a\nb",  # newline injection
+        "a\tb",  # tab
+        "a\x00b",  # null byte
+        "аdmin",  # cyrillic homoglyph 'а'
+        "a<b",  # angle bracket
         "a>b",
         'a"b',
         "a'b",

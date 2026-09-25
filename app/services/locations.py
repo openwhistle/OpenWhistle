@@ -30,9 +30,7 @@ async def get_active_locations(db: AsyncSession) -> list[Location]:
 
 
 async def get_all_locations(db: AsyncSession) -> list[Location]:
-    result = await db.execute(
-        select(Location).order_by(Location.sort_order, Location.name)
-    )
+    result = await db.execute(select(Location).order_by(Location.sort_order, Location.name))
     return list(result.scalars().all())
 
 

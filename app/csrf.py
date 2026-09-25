@@ -57,7 +57,7 @@ def _parse_cookie(header: str, name: str) -> str | None:
     for part in header.split(";"):
         stripped = part.strip()
         if stripped.startswith(f"{name}="):
-            return stripped[len(f"{name}="):]
+            return stripped[len(f"{name}=") :]
     return None
 
 

@@ -45,6 +45,7 @@ async def get_current_admin(
 
 def require_role(*roles: AdminRole) -> Callable[..., Coroutine[Any, Any, AdminUser]]:
     """Dependency factory: raises 403 if the current user doesn't have one of the given roles."""
+
     async def _check(current_user: AdminUser = Depends(get_current_admin)) -> AdminUser:
         if current_user.role not in roles:
             raise HTTPException(
@@ -52,6 +53,7 @@ def require_role(*roles: AdminRole) -> Callable[..., Coroutine[Any, Any, AdminUs
                 detail="Insufficient permissions.",
             )
         return current_user
+
     return _check
 
 

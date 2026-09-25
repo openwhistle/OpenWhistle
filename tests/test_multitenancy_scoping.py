@@ -20,8 +20,13 @@ from app.models.user import AdminRole, AdminUser
 
 def _user(org: uuid.UUID, role: AdminRole = AdminRole.admin) -> AdminUser:
     return AdminUser(
-        id=uuid.uuid4(), username=f"mt_{uuid.uuid4().hex[:8]}", role=role, org_id=org,
-        is_active=True, totp_secret="JBSWY3DPEHPK3PXP", totp_enabled=True,
+        id=uuid.uuid4(),
+        username=f"mt_{uuid.uuid4().hex[:8]}",
+        role=role,
+        org_id=org,
+        is_active=True,
+        totp_secret="JBSWY3DPEHPK3PXP",
+        totp_enabled=True,
     )
 
 
@@ -72,7 +77,8 @@ async def test_cannot_change_role_of_other_org_user(
     csrf = await _csrf(as_admin_a)
     resp = await as_admin_a.post(
         f"/admin/users/{two_orgs['user_b'].id}/role",
-        data={"role": "admin", "csrf_token": csrf}, follow_redirects=False,
+        data={"role": "admin", "csrf_token": csrf},
+        follow_redirects=False,
     )
     assert resp.status_code == 404
 
@@ -128,8 +134,12 @@ async def test_new_user_joins_the_creators_org(
     csrf = await _csrf(as_admin_a)
     resp = await as_admin_a.post(
         "/admin/users",
-        data={"username": name, "password": "a-long-password-123", "role": "case_manager",
-              "csrf_token": csrf},
+        data={
+            "username": name,
+            "password": "a-long-password-123",
+            "role": "case_manager",
+            "csrf_token": csrf,
+        },
         follow_redirects=False,
     )
     assert resp.status_code == 302

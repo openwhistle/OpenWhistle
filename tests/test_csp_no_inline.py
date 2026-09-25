@@ -59,9 +59,7 @@ def test_script_and_style_blocks_carry_nonce(tpl: Path) -> None:
     text = tpl.read_text(encoding="utf-8")
     offenders: list[str] = []
     for m in _OPEN_TAG_RE.finditer(text):
-        attrs = (m.group(2) or "")
+        attrs = m.group(2) or ""
         if _NONCE_ATTR not in attrs:
             offenders.append(m.group(0)[:60])
-    assert not offenders, (
-        f"{tpl.name}: <script>/<style> block(s) without a CSP nonce: {offenders}"
-    )
+    assert not offenders, f"{tpl.name}: <script>/<style> block(s) without a CSP nonce: {offenders}"

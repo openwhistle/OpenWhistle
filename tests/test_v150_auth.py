@@ -193,9 +193,7 @@ async def test_unknown_case_number_costs_a_bcrypt_check(db_session: AsyncSession
     from app.services import report as report_service
     from app.services.auth import TIMING_DUMMY_HASH
 
-    with patch.object(
-        report_service, "verify_pin", wraps=report_service.verify_pin
-    ) as spy:
+    with patch.object(report_service, "verify_pin", wraps=report_service.verify_pin) as spy:
         found = await report_service.get_report_by_credentials(
             db_session, "OW-1999-00000", _WRONG_PIN
         )
@@ -345,8 +343,10 @@ async def test_security_alert_goes_to_email_and_webhook(
     http.post = AsyncMock(return_value=MagicMock(raise_for_status=MagicMock()))
     http.__aenter__ = AsyncMock(return_value=http)
     http.__aexit__ = AsyncMock(return_value=None)
-    with patch("aiosmtplib.send", new=AsyncMock()) as smtp, \
-         patch("httpx.AsyncClient", return_value=http):
+    with (
+        patch("aiosmtplib.send", new=AsyncMock()) as smtp,
+        patch("httpx.AsyncClient", return_value=http),
+    ):
         await notifications.notify_security_alert("Subject", "Body")
 
     smtp.assert_awaited_once()
@@ -355,8 +355,10 @@ async def test_security_alert_goes_to_email_and_webhook(
     assert headers["X-OpenWhistle-Signature"].startswith("sha256=")
 
     # A failing channel is logged, never raised.
-    with patch("aiosmtplib.send", new=AsyncMock(side_effect=OSError)), \
-         patch("httpx.AsyncClient", side_effect=OSError):
+    with (
+        patch("aiosmtplib.send", new=AsyncMock(side_effect=OSError)),
+        patch("httpx.AsyncClient", side_effect=OSError),
+    ):
         await notifications.notify_security_alert("Subject", "Body")
 
 
@@ -498,9 +500,7 @@ async def setup_incomplete(db_engine: object) -> AsyncGenerator[async_sessionmak
 
 async def _admins_named(factory: async_sessionmaker[AsyncSession], name: str) -> int:
     async with factory() as s:
-        result = await s.execute(
-            select(func.count(AdminUser.id)).where(AdminUser.username == name)
-        )
+        result = await s.execute(select(func.count(AdminUser.id)).where(AdminUser.username == name))
         return int(result.scalar_one())
 
 
@@ -541,12 +541,16 @@ async def test_setup_recheck_is_not_fooled_by_the_session_cache(
         held = (await late.execute(select(SetupStatus).where(SetupStatus.id == 1))).scalar_one()
         assert held.completed is False  # the fast-path check, row kept in the session
         async with factory() as winner:
-            assert await create_initial_admin(
-                winner, "v150-setup-winner", _ADMIN_PASSWORD, "JBSWY3DPEHPK3PXP"
-            ) is True
-        assert await create_initial_admin(
-            late, "v150-setup-late", _ADMIN_PASSWORD, "JBSWY3DPEHPK3PXP"
-        ) is False
+            assert (
+                await create_initial_admin(
+                    winner, "v150-setup-winner", _ADMIN_PASSWORD, "JBSWY3DPEHPK3PXP"
+                )
+                is True
+            )
+        assert (
+            await create_initial_admin(late, "v150-setup-late", _ADMIN_PASSWORD, "JBSWY3DPEHPK3PXP")
+            is False
+        )
     assert await _admins_named(factory, "v150-setup-late") == 0
 
 
@@ -611,8 +615,11 @@ async def test_alembic_upgrade_waits_for_the_migration_lock(db_engine: object) -
         await conn.execute(text("SELECT pg_advisory_lock(:k)"), {"k": key})
         await conn.commit()
         proc = await asyncio.create_subprocess_exec(
-            "alembic", "upgrade", "head",
-            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+            "alembic",
+            "upgrade",
+            "head",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
         with pytest.raises(TimeoutError):
             # Another replica is migrating: this one must wait, not race.

@@ -21,28 +21,38 @@ MAX_ATTACHMENTS: int = 5
 # encryption, which add about 78 %).
 MAX_DRAFT_ATTACHMENT_BYTES: int = MAX_ATTACHMENTS * MAX_SIZE_BYTES
 
-ALLOWED_MIME_TYPES: frozenset[str] = frozenset({
-    "application/pdf",
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-    "image/webp",
-    "text/plain",
-    "text/csv",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "application/msword",
-    "application/vnd.ms-excel",
-})
+ALLOWED_MIME_TYPES: frozenset[str] = frozenset(
+    {
+        "application/pdf",
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "text/plain",
+        "text/csv",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/msword",
+        "application/vnd.ms-excel",
+    }
+)
 
-ALLOWED_EXTENSIONS: frozenset[str] = frozenset({
-    ".pdf",
-    ".jpg", ".jpeg",
-    ".png", ".gif", ".webp",
-    ".txt", ".csv",
-    ".docx", ".doc",
-    ".xlsx", ".xls",
-})
+ALLOWED_EXTENSIONS: frozenset[str] = frozenset(
+    {
+        ".pdf",
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".webp",
+        ".txt",
+        ".csv",
+        ".docx",
+        ".doc",
+        ".xlsx",
+        ".xls",
+    }
+)
 
 
 def sanitize_filename(filename: str) -> str:
@@ -232,10 +242,14 @@ def _strip_ooxml(data: bytes) -> bytes:
 
 
 _STRIPPERS = {
-    ".jpg": _strip_image, ".jpeg": _strip_image, ".png": _strip_image,
-    ".gif": _strip_image, ".webp": _strip_image,
+    ".jpg": _strip_image,
+    ".jpeg": _strip_image,
+    ".png": _strip_image,
+    ".gif": _strip_image,
+    ".webp": _strip_image,
     ".pdf": _strip_pdf,
-    ".docx": _strip_ooxml, ".xlsx": _strip_ooxml,
+    ".docx": _strip_ooxml,
+    ".xlsx": _strip_ooxml,
 }
 
 
@@ -434,12 +448,8 @@ async def attachment_filename(db: AsyncSession, attachment: Attachment) -> str:
     return decrypt_field_safe(fernet, attachment.filename) or attachment.filename
 
 
-async def get_attachment_by_id(
-    db: AsyncSession, attachment_id: uuid.UUID
-) -> Attachment | None:
-    result = await db.execute(
-        select(Attachment).where(Attachment.id == attachment_id)
-    )
+async def get_attachment_by_id(db: AsyncSession, attachment_id: uuid.UUID) -> Attachment | None:
+    result = await db.execute(select(Attachment).where(Attachment.id == attachment_id))
     return result.scalar_one_or_none()
 
 

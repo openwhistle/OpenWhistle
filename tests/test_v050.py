@@ -22,6 +22,7 @@ from httpx import AsyncClient
 
 # ── Logging configuration ────────────────────────────────────────────────────
 
+
 class TestConfigureLogging:
     def test_json_format_sets_json_formatter(self) -> None:
         from app.logging_config import configure_logging
@@ -63,6 +64,7 @@ class TestConfigureLogging:
 
 
 # ── Health endpoint ──────────────────────────────────────────────────────────
+
 
 class TestHealthEndpoint:
     async def test_health_ok(self, client: AsyncClient) -> None:
@@ -117,6 +119,7 @@ class TestHealthEndpoint:
 
 # ── Webhook payload builders ─────────────────────────────────────────────────
 
+
 class TestWebhookPayloadBuilders:
     def test_generic_payload_structure(self) -> None:
         from app.services.notifications import _build_webhook_payload
@@ -161,11 +164,14 @@ class TestWebhookPayloadBuilders:
     def test_unknown_type_falls_back_to_generic(self) -> None:
         from app.services.notifications import _build_webhook_payload
 
-        payload = _build_webhook_payload(["OW-2024-00001"], [], "unknown_type", "Acme", "http://dash")
+        payload = _build_webhook_payload(
+            ["OW-2024-00001"], [], "unknown_type", "Acme", "http://dash"
+        )
         assert payload["event"] == "new_activity"
 
 
 # ── Reminder payload builders ────────────────────────────────────────────────
+
 
 class TestReminderPayloadBuilders:
     def test_generic_reminder_structure(self) -> None:
@@ -227,6 +233,7 @@ class TestReminderPayloadBuilders:
 
 
 # ── SLA reminder dedup logic ─────────────────────────────────────────────────
+
 
 class TestSlaReminderLogic:
     async def test_send_sla_reminders_disabled_returns_early(self) -> None:
@@ -357,6 +364,7 @@ class TestSlaReminderLogic:
 
 # ── S3 storage backend ────────────────────────────────────────────────────────
 
+
 class TestS3StorageBackend:
     def _make_backend(self) -> Any:
         from app.services.storage import S3StorageBackend
@@ -378,8 +386,12 @@ class TestS3StorageBackend:
         from app.services.storage import S3StorageBackend
 
         backend = S3StorageBackend(
-            bucket="b", prefix="prefix//", region="us-east-1",
-            access_key="k", secret_key="s", endpoint_url=None,
+            bucket="b",
+            prefix="prefix//",
+            region="us-east-1",
+            access_key="k",
+            secret_key="s",
+            endpoint_url=None,
         )
         # rstrip("/") then + "/" yields exactly one trailing slash
         assert backend._prefix == "prefix/"
@@ -421,13 +433,18 @@ class TestS3StorageBackend:
         from app.services.storage import S3StorageBackend
 
         backend = S3StorageBackend(
-            bucket="b", prefix="p/", region="eu-central-1",
-            access_key="k", secret_key="s", endpoint_url="",
+            bucket="b",
+            prefix="p/",
+            region="eu-central-1",
+            access_key="k",
+            secret_key="s",
+            endpoint_url="",
         )
         assert backend._endpoint_url is None
 
 
 # ── DB storage backend ────────────────────────────────────────────────────────
+
 
 class TestDBStorageBackend:
     async def test_put_is_noop(self) -> None:
@@ -452,6 +469,7 @@ class TestDBStorageBackend:
 
 # ── generate_storage_key ──────────────────────────────────────────────────────
 
+
 class TestGenerateStorageKey:
     def test_key_is_a_bare_uuid(self) -> None:
         import uuid
@@ -468,8 +486,8 @@ class TestGenerateStorageKey:
         assert len(keys) == 50
 
 
-
 # ── get_storage_backend singleton ─────────────────────────────────────────────
+
 
 class TestGetStorageBackend:
     def test_returns_db_backend_by_default(self) -> None:
@@ -524,6 +542,7 @@ class TestGetStorageBackend:
 
 # ── LDAP authentication ───────────────────────────────────────────────────────
 
+
 class TestLDAPAuth:
     def _mock_entry(self, username: str = "jdoe", email: str = "jdoe@example.com") -> MagicMock:
         entry = MagicMock()
@@ -563,9 +582,11 @@ class TestLDAPAuth:
         mock_conn.entries = [entry]
 
         # Connection is imported fresh from ldap3 inside the function, so patch there
-        with patch("app.config.settings", self._cfg()), \
-             patch("app.services.ldap_auth._make_server"), \
-             patch("ldap3.Connection", return_value=mock_conn):
+        with (
+            patch("app.config.settings", self._cfg()),
+            patch("app.services.ldap_auth._make_server"),
+            patch("ldap3.Connection", return_value=mock_conn),
+        ):
             result = _authenticate_ldap_sync("jdoe", "password")
 
         assert isinstance(result, LDAPUserInfo)
@@ -575,9 +596,11 @@ class TestLDAPAuth:
 
         from app.services.ldap_auth import LDAPAuthError, _authenticate_ldap_sync
 
-        with patch("app.config.settings", self._cfg()), \
-             patch("app.services.ldap_auth._make_server"), \
-             patch("ldap3.Connection", side_effect=LDAPException("bind failed")):
+        with (
+            patch("app.config.settings", self._cfg()),
+            patch("app.services.ldap_auth._make_server"),
+            patch("ldap3.Connection", side_effect=LDAPException("bind failed")),
+        ):
             with pytest.raises(LDAPAuthError, match="service bind failed"):
                 _authenticate_ldap_sync("user", "pass")
 
@@ -587,9 +610,11 @@ class TestLDAPAuth:
         mock_conn = MagicMock()
         mock_conn.entries = []  # no users found
 
-        with patch("app.config.settings", self._cfg()), \
-             patch("app.services.ldap_auth._make_server"), \
-             patch("ldap3.Connection", return_value=mock_conn):
+        with (
+            patch("app.config.settings", self._cfg()),
+            patch("app.services.ldap_auth._make_server"),
+            patch("ldap3.Connection", return_value=mock_conn),
+        ):
             with pytest.raises(LDAPAuthError, match="not found"):
                 _authenticate_ldap_sync("unknown", "pass")
 
@@ -611,9 +636,11 @@ class TestLDAPAuth:
                 return service_conn
             raise LDAPException("invalid credentials")
 
-        with patch("app.config.settings", self._cfg()), \
-             patch("app.services.ldap_auth._make_server"), \
-             patch("ldap3.Connection", side_effect=conn_factory):
+        with (
+            patch("app.config.settings", self._cfg()),
+            patch("app.services.ldap_auth._make_server"),
+            patch("ldap3.Connection", side_effect=conn_factory),
+        ):
             with pytest.raises(LDAPAuthError, match="Invalid LDAP credentials"):
                 _authenticate_ldap_sync("jdoe", "wrong")
 
@@ -632,6 +659,7 @@ class TestLDAPAuth:
 
 # ── LDAPUserInfo dataclass ────────────────────────────────────────────────────
 
+
 class TestLDAPUserInfo:
     def test_fields(self) -> None:
         from app.services.ldap_auth import LDAPUserInfo
@@ -648,6 +676,7 @@ class TestLDAPUserInfo:
 
 
 # ── Send reminder webhook (mocked httpx) ─────────────────────────────────────
+
 
 class TestSendReminderWebhook:
     async def test_sends_correct_payload(self) -> None:
@@ -711,13 +740,14 @@ class TestSendReminderWebhook:
 
         assert "X-OpenWhistle-Signature" in captured.get("headers", {})
         sig_header = captured["headers"]["X-OpenWhistle-Signature"]
-        expected_sig = "sha256=" + hmac.new(
-            b"mysecret", captured["body"], hashlib.sha256
-        ).hexdigest()
+        expected_sig = (
+            "sha256=" + hmac.new(b"mysecret", captured["body"], hashlib.sha256).hexdigest()
+        )
         assert sig_header == expected_sig
 
 
 # ── notify_reply_to_whistleblower ────────────────────────────────────────────
+
 
 class TestNotifyReplyToWhistleblower:
     async def test_email_disabled_returns_early(self) -> None:
@@ -731,8 +761,10 @@ class TestNotifyReplyToWhistleblower:
     async def test_sends_email_when_enabled(self) -> None:
         from app.services.notifications import notify_reply_to_whistleblower
 
-        with patch("app.config.settings") as mock_cfg, \
-             patch("aiosmtplib.send", new_callable=AsyncMock) as mock_send:
+        with (
+            patch("app.config.settings") as mock_cfg,
+            patch("aiosmtplib.send", new_callable=AsyncMock) as mock_send,
+        ):
             mock_cfg.notify_email_enabled = True
             mock_cfg.app_name = "TestApp"
             mock_cfg.notify_email_from = "noreply@example.com"
@@ -748,8 +780,10 @@ class TestNotifyReplyToWhistleblower:
     async def test_swallows_smtp_exception(self) -> None:
         from app.services.notifications import notify_reply_to_whistleblower
 
-        with patch("app.config.settings") as mock_cfg, \
-             patch("aiosmtplib.send", side_effect=Exception("SMTP error")) as mock_send:
+        with (
+            patch("app.config.settings") as mock_cfg,
+            patch("aiosmtplib.send", side_effect=Exception("SMTP error")) as mock_send,
+        ):
             mock_cfg.notify_email_enabled = True
             mock_cfg.app_name = "TestApp"
             mock_cfg.notify_email_from = "noreply@example.com"
@@ -765,6 +799,7 @@ class TestNotifyReplyToWhistleblower:
 
 
 # ── _send_reminder_email ──────────────────────────────────────────────────────
+
 
 class TestSendReminderEmail:
     def _cfg(self) -> MagicMock:
@@ -812,6 +847,7 @@ class TestSendReminderEmail:
 
 # ── _send_reminder_webhook exception path ─────────────────────────────────────
 
+
 class TestSendReminderWebhookError:
     async def test_swallows_httpx_exception(self) -> None:
         from app.services.notifications import _send_reminder_webhook
@@ -836,6 +872,7 @@ class TestSendReminderWebhookError:
 
 # ── _dispatch_reminder ────────────────────────────────────────────────────────
 
+
 class TestDispatchReminder:
     async def test_dispatches_email_and_webhook(self) -> None:
         from app.services.reminders import _dispatch_reminder
@@ -855,8 +892,10 @@ class TestDispatchReminder:
         async def mock_webhook(*a: Any, **kw: Any) -> None:
             webhook_called.append(1)
 
-        with patch("app.services.notifications._send_reminder_email", mock_email), \
-             patch("app.services.notifications._send_reminder_webhook", mock_webhook):
+        with (
+            patch("app.services.notifications._send_reminder_email", mock_email),
+            patch("app.services.notifications._send_reminder_webhook", mock_webhook),
+        ):
             await _dispatch_reminder("OW-2024-00001", "test", 1, MagicMock(), cfg)
 
         assert len(email_called) == 1
@@ -869,8 +908,10 @@ class TestDispatchReminder:
         cfg.notify_email_enabled = False
         cfg.notify_webhook_enabled = False
 
-        with patch("app.services.notifications._send_reminder_email") as m_email, \
-             patch("app.services.notifications._send_reminder_webhook") as m_webhook:
+        with (
+            patch("app.services.notifications._send_reminder_email") as m_email,
+            patch("app.services.notifications._send_reminder_webhook") as m_webhook,
+        ):
             await _dispatch_reminder("OW-2024-00001", "test", 1, MagicMock(), cfg)
 
         m_email.assert_not_called()
@@ -894,13 +935,17 @@ class TestDispatchReminder:
 
 # ── S3 _client() method coverage ─────────────────────────────────────────────
 
+
 class TestS3ClientMethod:
     def test_client_includes_endpoint_url(self) -> None:
         from app.services.storage import S3StorageBackend
 
         backend = S3StorageBackend(
-            bucket="b", prefix="p/", region="eu-west-1",
-            access_key="AKID", secret_key="SECRET",
+            bucket="b",
+            prefix="p/",
+            region="eu-west-1",
+            access_key="AKID",
+            secret_key="SECRET",
             endpoint_url="http://minio:9000",
         )
         with patch("boto3.client") as mock_boto:
@@ -913,8 +958,12 @@ class TestS3ClientMethod:
         from app.services.storage import S3StorageBackend
 
         backend = S3StorageBackend(
-            bucket="b", prefix="p/", region="us-east-1",
-            access_key="AKID", secret_key="SECRET", endpoint_url=None,
+            bucket="b",
+            prefix="p/",
+            region="us-east-1",
+            access_key="AKID",
+            secret_key="SECRET",
+            endpoint_url=None,
         )
         with patch("boto3.client") as mock_boto:
             mock_boto.return_value = MagicMock()
@@ -924,6 +973,7 @@ class TestS3ClientMethod:
 
 
 # ── send_sla_reminders with DB (mocked engine) ───────────────────────────────
+
 
 class TestSendSlaRemindersWithDB:
     async def test_send_sla_reminders_runs_full_loop(self) -> None:
@@ -952,10 +1002,12 @@ class TestSendSlaRemindersWithDB:
         mock_redis.exists.return_value = False
 
         session_maker_path = "sqlalchemy.ext.asyncio.async_sessionmaker"
-        with patch("app.config.settings") as mock_cfg, \
-             patch("sqlalchemy.ext.asyncio.create_async_engine", return_value=mock_engine), \
-             patch(session_maker_path, return_value=mock_session_factory), \
-             patch("app.redis_client.get_redis", AsyncMock(return_value=mock_redis)):
+        with (
+            patch("app.config.settings") as mock_cfg,
+            patch("sqlalchemy.ext.asyncio.create_async_engine", return_value=mock_engine),
+            patch(session_maker_path, return_value=mock_session_factory),
+            patch("app.redis_client.get_redis", AsyncMock(return_value=mock_redis)),
+        ):
             mock_cfg.reminder_enabled = True
             mock_cfg.database_url = "postgresql+asyncpg://test:test@localhost/test"
             mock_cfg.reminder_ack_warn_days = 2

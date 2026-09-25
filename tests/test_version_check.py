@@ -98,6 +98,18 @@ async def test_fetch_304_keeps_cache() -> None:
 
 
 @pytest.mark.asyncio
+async def test_fetch_non_200_non_304_serves_stale_cache() -> None:
+    cached = {"tag_name": "v1.0.0", "html_url": "https://x", "checked_at": "t"}
+    redis = AsyncMock()
+    redis.get = AsyncMock(side_effect=[None, json.dumps(cached)])  # no etag, then cache read
+
+    with patch("httpx.AsyncClient", return_value=_mock_httpx(500)):
+        result = await vc.fetch_latest_release(redis)
+
+    assert result == cached
+
+
+@pytest.mark.asyncio
 async def test_fetch_network_error_serves_stale_cache() -> None:
     cached = {"tag_name": "v1.1.0", "html_url": "https://x", "checked_at": "t"}
     redis = AsyncMock()
@@ -148,6 +160,21 @@ async def test_get_update_status_no_cache(monkeypatch: pytest.MonkeyPatch) -> No
 
 
 @pytest.mark.asyncio
+async def test_get_update_status_malformed_cache_ignored(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "update_check_enabled", True)
+    redis = AsyncMock()
+    redis.get = AsyncMock(return_value="not json")
+
+    status = await vc.get_update_status(redis, "1.1.1")
+    assert status["latest"] is None
+    assert status["status"] == "unknown"
+
+
+@pytest.mark.asyncio
 async def test_refresh_noop_when_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
     from app.config import settings
 
@@ -156,6 +183,94 @@ async def test_refresh_noop_when_disabled(monkeypatch: pytest.MonkeyPatch) -> No
     with patch("httpx.AsyncClient") as httpx_client:
         await vc.refresh_update_check()
     httpx_client.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_refresh_acquires_lock_fetches_and_releases(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "update_check_enabled", True)
+    redis_conn = AsyncMock()
+    redis_conn.set = AsyncMock(return_value=True)
+    redis_conn.delete = AsyncMock()
+    redis_conn.aclose = AsyncMock()
+    fetch = AsyncMock()
+
+    with (
+        patch("app.services.version_check.Redis.from_url", return_value=redis_conn),
+        patch("app.services.version_check.fetch_latest_release", fetch),
+    ):
+        await vc.refresh_update_check()
+
+    fetch.assert_awaited_once_with(redis_conn)
+    redis_conn.delete.assert_awaited_once_with(vc._LOCK_KEY)
+    redis_conn.aclose.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_refresh_skips_fetch_when_lock_held(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "update_check_enabled", True)
+    redis_conn = AsyncMock()
+    redis_conn.set = AsyncMock(return_value=False)  # another replica holds the lock
+    redis_conn.delete = AsyncMock()
+    redis_conn.aclose = AsyncMock()
+    fetch = AsyncMock()
+
+    with (
+        patch("app.services.version_check.Redis.from_url", return_value=redis_conn),
+        patch("app.services.version_check.fetch_latest_release", fetch),
+    ):
+        await vc.refresh_update_check()
+
+    fetch.assert_not_awaited()
+    redis_conn.delete.assert_not_awaited()
+    redis_conn.aclose.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_refresh_proceeds_when_lock_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "update_check_enabled", True)
+    redis_conn = AsyncMock()
+    redis_conn.set = AsyncMock(side_effect=RuntimeError("redis down"))
+    redis_conn.delete = AsyncMock()
+    redis_conn.aclose = AsyncMock()
+    fetch = AsyncMock()
+
+    with (
+        patch("app.services.version_check.Redis.from_url", return_value=redis_conn),
+        patch("app.services.version_check.fetch_latest_release", fetch),
+    ):
+        await vc.refresh_update_check()
+
+    fetch.assert_awaited_once_with(redis_conn)
+    redis_conn.delete.assert_not_awaited()
+    redis_conn.aclose.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_refresh_survives_lock_release_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "update_check_enabled", True)
+    redis_conn = AsyncMock()
+    redis_conn.set = AsyncMock(return_value=True)
+    redis_conn.delete = AsyncMock(side_effect=RuntimeError("redis down"))
+    redis_conn.aclose = AsyncMock()
+    fetch = AsyncMock()
+
+    with (
+        patch("app.services.version_check.Redis.from_url", return_value=redis_conn),
+        patch("app.services.version_check.fetch_latest_release", fetch),
+    ):
+        await vc.refresh_update_check()  # must not raise
+
+    redis_conn.aclose.assert_awaited_once()
 
 
 # ── Integration: admin System page ─────────────────────────────────────────

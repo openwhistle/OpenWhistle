@@ -552,9 +552,7 @@ def test_decrypt_or_none_logs_on_tampered_token(caplog: pytest.LogCaptureFixture
 
 
 @pytest.mark.asyncio
-async def test_submit_post_rejects_unknown_client_session_id(
-    client: AsyncClient, no_csrf
-) -> None:
+async def test_submit_post_rejects_unknown_client_session_id(client: AsyncClient, no_csrf) -> None:
     client.cookies.set("ow-submission-session", "attacker-chosen-id-000001")
     resp = await client.post(
         "/submit",

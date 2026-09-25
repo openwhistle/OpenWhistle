@@ -66,10 +66,14 @@ async def _second_factor(
 
     temp_token = secrets.token_urlsafe(32)
     await auth_service.store_totp_pending(redis, temp_token, str(user.id))
-    return render(request, "login_mfa.html", {
-        "temp_token": temp_token,
-        "is_demo": settings.demo_mode,
-    })
+    return render(
+        request,
+        "login_mfa.html",
+        {
+            "temp_token": temp_token,
+            "is_demo": settings.demo_mode,
+        },
+    )
 
 
 async def _password_failed(
@@ -124,15 +128,28 @@ async def login_post(
     if not password:
         missing["password"] = "login.error.password_required"  # noqa: S105 — locale key
     if missing:
-        return render(request, "login.html", _login_ctx({
-            "error": "login.error.required",
-            "field_errors": missing,
-        }), status_code=400)
+        return render(
+            request,
+            "login.html",
+            _login_ctx(
+                {
+                    "error": "login.error.required",
+                    "field_errors": missing,
+                }
+            ),
+            status_code=400,
+        )
 
     if not await rl.check_admin_login_attempts(redis, username):
-        return render(request, "login.html", _login_ctx({
-            "error": "login.error.locked",
-        }))
+        return render(
+            request,
+            "login.html",
+            _login_ctx(
+                {
+                    "error": "login.error.locked",
+                }
+            ),
+        )
 
     # ── LDAP authentication path ────────────────────────────────────
     if settings.ldap_enabled:
@@ -145,10 +162,17 @@ async def login_post(
             ldap_info = await authenticate_ldap(username, password)
         except LDAPAuthError:
             await _password_failed(redis, db, username, background_tasks)
-            return render(request, "login.html", _login_ctx({
-                "error": "login.error.invalid",
-                "credentials_invalid": True,
-            }), status_code=401)
+            return render(
+                request,
+                "login.html",
+                _login_ctx(
+                    {
+                        "error": "login.error.invalid",
+                        "credentials_invalid": True,
+                    }
+                ),
+                status_code=401,
+            )
 
         # Find or provision the local admin user for this LDAP identity
         result = await db.execute(
@@ -175,9 +199,16 @@ async def login_post(
             await db.refresh(user)
 
         if not user.is_active:
-            return render(request, "login.html", _login_ctx({
-                "error": "login.error.deactivated",
-            }), status_code=401)
+            return render(
+                request,
+                "login.html",
+                _login_ctx(
+                    {
+                        "error": "login.error.deactivated",
+                    }
+                ),
+                status_code=401,
+            )
 
         return await _second_factor(request, redis, user)
 
@@ -194,10 +225,17 @@ async def login_post(
         pw_ok = False
     if not pw_ok:
         await _password_failed(redis, db, username, background_tasks)
-        return render(request, "login.html", _login_ctx({
-            "error": "login.error.invalid",
-            "credentials_invalid": True,
-        }), status_code=401)
+        return render(
+            request,
+            "login.html",
+            _login_ctx(
+                {
+                    "error": "login.error.invalid",
+                    "credentials_invalid": True,
+                }
+            ),
+            status_code=401,
+        )
 
     assert user is not None  # narrowed: pw_ok True implies user is not None
     # Note: SSO-only accounts (oidc_sub set, no password_hash) never reach here —
@@ -240,9 +278,7 @@ async def login_mfa_post(
         )
 
     demo_code = settings.demo_mode and verify_demo_totp(totp_code, user.username)
-    code_valid = demo_code or verify_totp(
-        user.totp_secret, totp_code
-    )
+    code_valid = demo_code or verify_totp(user.totp_secret, totp_code)
 
     # One-time use: a valid code may authenticate exactly one session within its
     # ~90s validity window. Prevents an intercepted/relayed code from logging in
@@ -313,12 +349,16 @@ async def mfa_setup_get(
         return RedirectResponse("/admin/login", status_code=302)
 
     qr_b64 = generate_qr_code_base64(user.totp_secret, user.username)
-    return render(request, "login_mfa_setup.html", {
-        "temp_token": token,
-        "qr_b64": qr_b64,
-        "totp_secret": user.totp_secret,
-        "username": user.username,
-    })
+    return render(
+        request,
+        "login_mfa_setup.html",
+        {
+            "temp_token": token,
+            "qr_b64": qr_b64,
+            "totp_secret": user.totp_secret,
+            "username": user.username,
+        },
+    )
 
 
 @router.post("/mfa/setup", response_class=HTMLResponse, response_model=None)
@@ -342,14 +382,18 @@ async def mfa_setup_post(
         new_setup_token = secrets.token_urlsafe(32)
         await auth_service.store_totp_setup_pending(redis, new_setup_token, user_id)
         qr_b64 = generate_qr_code_base64(user.totp_secret, user.username)
-        return render(request, "login_mfa_setup.html", {
-            "temp_token": new_setup_token,
-            "qr_b64": qr_b64,
-            "totp_secret": user.totp_secret,
-            "username": user.username,
-            "error": "mfa.setup.error.invalid",
-            "field_errors": {"totp_code": "mfa.setup.error.invalid"},
-        })
+        return render(
+            request,
+            "login_mfa_setup.html",
+            {
+                "temp_token": new_setup_token,
+                "qr_b64": qr_b64,
+                "totp_secret": user.totp_secret,
+                "username": user.username,
+                "error": "mfa.setup.error.invalid",
+                "field_errors": {"totp_code": "mfa.setup.error.invalid"},
+            },
+        )
 
     user.totp_enabled = True
     await audit_service.log(db, user, audit_service.AuditAction.AUTH_TOTP_SETUP)

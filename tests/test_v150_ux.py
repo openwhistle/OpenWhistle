@@ -383,8 +383,8 @@ async def test_dashboard_search_form_and_links_keep_the_query(
     assert 'name="q"' in resp.text and f'value="{q}"' in resp.text
     assert "encrypted and cannot be searched" in resp.text
     # column sort links and status pills carry the search
-    assert re.search(r"sort=case_number&dir=\w+&q=" + q + "\"", resp.text)
-    assert re.search(r"&status=closed&q=" + q + "\"", resp.text)
+    assert re.search(r"sort=case_number&dir=\w+&q=" + q + '"', resp.text)
+    assert re.search(r"&status=closed&q=" + q + '"', resp.text)
     assert report.case_number in resp.text
     resp = await client.get("/admin/dashboard", params={"q": "zz-no-such-case"})
     assert "No case number contains" in resp.text

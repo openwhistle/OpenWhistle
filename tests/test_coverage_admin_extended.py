@@ -75,9 +75,7 @@ def _wiz_step(text: str) -> int:
     return int(m.group(1)) if m else 1
 
 
-async def _create_and_find_report(
-    client: AsyncClient, db_session: AsyncSession
-) -> tuple[str, str]:
+async def _create_and_find_report(client: AsyncClient, db_session: AsyncSession) -> tuple[str, str]:
     """Submit a report via the multi-step wizard and find it in the dashboard.
 
     Returns (report_id, case_number).
@@ -86,56 +84,74 @@ async def _create_and_find_report(
     # Step 1: mode selection
     get_resp = await client.get("/submit")
     csrf = _wiz_csrf(get_resp.text)
-    resp = await client.post("/submit", data={
-        "csrf_token": csrf,
-        "step": "1",
-        "action": "next",
-        "submission_mode": "anonymous",
-    })
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": "1",
+            "action": "next",
+            "submission_mode": "anonymous",
+        },
+    )
 
     # Step 2 (location — conditional): skip if present by posting with empty location_id
     if _wiz_step(resp.text) == 2:
         csrf = _wiz_csrf(resp.text)
-        resp = await client.post("/submit", data={
-            "csrf_token": csrf,
-            "step": "2",
-            "action": "next",
-            "location_id": "",
-        })
+        resp = await client.post(
+            "/submit",
+            data={
+                "csrf_token": csrf,
+                "step": "2",
+                "action": "next",
+                "location_id": "",
+            },
+        )
 
     # Step 3: category
     csrf = _wiz_csrf(resp.text)
-    resp = await client.post("/submit", data={
-        "csrf_token": csrf,
-        "step": str(_wiz_step(resp.text)),
-        "action": "next",
-        "category": "financial_fraud",
-    })
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": str(_wiz_step(resp.text)),
+            "action": "next",
+            "category": "financial_fraud",
+        },
+    )
 
     # Step 4: description
     csrf = _wiz_csrf(resp.text)
-    resp = await client.post("/submit", data={
-        "csrf_token": csrf,
-        "step": str(_wiz_step(resp.text)),
-        "action": "next",
-        "description": "Admin extended test report content.",
-    })
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": str(_wiz_step(resp.text)),
+            "action": "next",
+            "description": "Admin extended test report content.",
+        },
+    )
 
     # Step 5: attachments (skip)
     csrf = _wiz_csrf(resp.text)
-    resp = await client.post("/submit", data={
-        "csrf_token": csrf,
-        "step": str(_wiz_step(resp.text)),
-        "action": "next",
-    })
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": str(_wiz_step(resp.text)),
+            "action": "next",
+        },
+    )
 
     # Step 6: review + final submit
     csrf = _wiz_csrf(resp.text)
-    resp = await client.post("/submit", data={
-        "csrf_token": csrf,
-        "step": str(_wiz_step(resp.text)),
-        "action": "next",
-    })
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": str(_wiz_step(resp.text)),
+            "action": "next",
+        },
+    )
 
     case_m = re.search(r"OW-\d{4}-\d{5}", resp.text)
     case_number = case_m.group(0) if case_m else ""
@@ -150,9 +166,7 @@ async def _create_and_find_report(
 
 
 @pytest.mark.asyncio
-async def test_dashboard_loads_successfully(
-    client: AsyncClient, db_session: AsyncSession
-) -> None:
+async def test_dashboard_loads_successfully(client: AsyncClient, db_session: AsyncSession) -> None:
     admin, totp_secret = await _create_admin(db_session)
     await _login_admin(client, admin, totp_secret)
 
@@ -172,9 +186,7 @@ async def test_dashboard_with_sort_asc_case_number(
 
 
 @pytest.mark.asyncio
-async def test_dashboard_with_per_page_10(
-    client: AsyncClient, db_session: AsyncSession
-) -> None:
+async def test_dashboard_with_per_page_10(client: AsyncClient, db_session: AsyncSession) -> None:
     admin, totp_secret = await _create_admin(db_session)
     await _login_admin(client, admin, totp_secret)
 
@@ -216,9 +228,7 @@ async def test_dashboard_with_invalid_sort_field_falls_back(
 
 
 @pytest.mark.asyncio
-async def test_dashboard_page_2(
-    client: AsyncClient, db_session: AsyncSession
-) -> None:
+async def test_dashboard_page_2(client: AsyncClient, db_session: AsyncSession) -> None:
     admin, totp_secret = await _create_admin(db_session)
     await _login_admin(client, admin, totp_secret)
 
@@ -270,9 +280,7 @@ async def test_acknowledge_report_not_found_returns_404(
 
 
 @pytest.mark.asyncio
-async def test_update_status_to_in_review(
-    client: AsyncClient, db_session: AsyncSession
-) -> None:
+async def test_update_status_to_in_review(client: AsyncClient, db_session: AsyncSession) -> None:
     admin, totp_secret = await _create_admin(db_session)
     await _login_admin(client, admin, totp_secret)
 
@@ -372,9 +380,7 @@ async def test_dismiss_ip_warning_returns_cleared(
     # AJAX endpoint requires the CSRF token via the X-CSRF-Token header
     # (double-submit: header must equal the ow_csrf cookie).
     token = client.cookies.get("ow_csrf")
-    resp = await client.post(
-        "/admin/ip-warning/dismiss", headers={"X-CSRF-Token": token or ""}
-    )
+    resp = await client.post("/admin/ip-warning/dismiss", headers={"X-CSRF-Token": token or ""})
     assert resp.status_code == 200
     assert resp.json().get("cleared") is True
 

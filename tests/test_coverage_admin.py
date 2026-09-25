@@ -95,9 +95,11 @@ async def test_admin_reply_empty_content_returns_422(
     admin, totp_secret = await _create_admin(db_session)
     await _login_admin(client, admin, totp_secret)
 
-    org_row = (await db_session.execute(
-        select(Organisation.id).where(Organisation.slug == cfg.default_org_slug).limit(1)
-    )).scalar_one_or_none()
+    org_row = (
+        await db_session.execute(
+            select(Organisation.id).where(Organisation.slug == cfg.default_org_slug).limit(1)
+        )
+    ).scalar_one_or_none()
 
     dek_raw = generate_dek()
     enc_dek = encrypt_dek(dek_raw, cfg.secret_key)

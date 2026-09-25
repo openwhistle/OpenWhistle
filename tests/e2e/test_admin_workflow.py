@@ -2,6 +2,7 @@
 
 Uses the demo admin account and pre-seeded demo reports.
 """
+
 from __future__ import annotations
 
 import re
@@ -42,9 +43,7 @@ def test_received_report_has_acknowledge_button(admin_page: Page, base_url: str)
     admin_page.goto(f"{base_url}/admin/dashboard")
     admin_page.wait_for_load_state("networkidle")
     # Look for the row with OW-DEMO-00001 and click its View button
-    row = admin_page.locator("table tbody tr").filter(
-        has_text=DEMO_CASE_RECEIVED["case_number"]
-    )
+    row = admin_page.locator("table tbody tr").filter(has_text=DEMO_CASE_RECEIVED["case_number"])
     if row.count() == 0:
         case = DEMO_CASE_RECEIVED["case_number"]
         pytest.skip(f"Demo report {case} not found — demo may need reset")
@@ -53,15 +52,15 @@ def test_received_report_has_acknowledge_button(admin_page: Page, base_url: str)
     admin_page.wait_for_load_state("networkidle")
     # The acknowledge form/button should be visible (only shown when not yet acknowledged)
     body = admin_page.content()
-    assert any(
-        term in body.lower()
-        for term in ["acknowledge", "ack", "bestätigen"]
-    ), "Acknowledge button/form not found on received report detail page"
+    assert any(term in body.lower() for term in ["acknowledge", "ack", "bestätigen"]), (
+        "Acknowledge button/form not found on received report detail page"
+    )
 
 
 def test_admin_reply_appears_in_thread(admin_page: Page, base_url: str) -> None:
     """Admin can post a reply message which then appears in the communication thread."""
     import time
+
     # Navigate to OW-DEMO-00002 (in_review — not closed, can receive replies)
     admin_page.goto(f"{base_url}/admin/dashboard")
     admin_page.wait_for_load_state("networkidle")
@@ -77,7 +76,9 @@ def test_admin_reply_appears_in_thread(admin_page: Page, base_url: str) -> None:
         pytest.skip("Reply textarea not visible — report may be closed")
     unique_reply = f"E2E test reply {int(time.time())}"
     reply_area.fill(unique_reply)
-    admin_page.locator('button[type="submit"]').filter(has_text=re.compile(r"[Ss]end|[Rr]eply|[Ss]ubmit|OK")).first.click()
+    admin_page.locator('button[type="submit"]').filter(
+        has_text=re.compile(r"[Ss]end|[Rr]eply|[Ss]ubmit|OK")
+    ).first.click()
     admin_page.wait_for_load_state("networkidle")
     # The reply should appear in the thread
     body = admin_page.content()
@@ -88,9 +89,7 @@ def test_status_dropdown_has_valid_options(admin_page: Page, base_url: str) -> N
     """Status change dropdown shows valid transition options for OW-DEMO-00001."""
     admin_page.goto(f"{base_url}/admin/dashboard")
     admin_page.wait_for_load_state("networkidle")
-    row = admin_page.locator("table tbody tr").filter(
-        has_text=DEMO_CASE_RECEIVED["case_number"]
-    )
+    row = admin_page.locator("table tbody tr").filter(has_text=DEMO_CASE_RECEIVED["case_number"])
     if row.count() == 0:
         pytest.skip(f"{DEMO_CASE_RECEIVED['case_number']} not on dashboard")
     row.locator("a.btn").first.click()
@@ -113,10 +112,9 @@ def test_audit_log_has_entries(admin_page: Page, base_url: str) -> None:
     body = admin_page.content()
     # After demo seed, there should be audit entries
     # The audit log uses a table or list of entries
-    assert any(
-        indicator in body
-        for indicator in ["<tbody>", "audit", "action", "created_at"]
-    ), "No audit log entries found"
+    assert any(indicator in body for indicator in ["<tbody>", "audit", "action", "created_at"]), (
+        "No audit log entries found"
+    )
 
 
 def test_stats_page_loads(admin_page: Page, base_url: str) -> None:
@@ -129,6 +127,5 @@ def test_stats_page_loads(admin_page: Page, base_url: str) -> None:
     assert "500" not in admin_page.url
     # Stats page should show some numeric content or chart
     assert any(
-        term in body.lower()
-        for term in ["stats", "report", "total", "count", "chart", "0"]
+        term in body.lower() for term in ["stats", "report", "total", "count", "chart", "0"]
     ), "Stats page appears empty or broken"

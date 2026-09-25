@@ -73,6 +73,7 @@ async def _send_reminder_email(
     import aiosmtplib
 
     from app.config import Settings
+
     cfg: Settings = settings  # type: ignore[assignment]
 
     recipients = [r.strip() for r in cfg.notify_email_to.split(",") if r.strip()]
@@ -119,12 +120,17 @@ async def _send_reminder_webhook(
     import httpx
 
     from app.config import Settings
+
     cfg: Settings = settings  # type: ignore[assignment]
 
     dashboard_url = f"{cfg.app_public_url.rstrip('/')}/admin/dashboard"
     payload = _build_reminder_payload(
-        case_number, deadline_label, days_left, cfg.notify_webhook_type,
-        cfg.app_name, dashboard_url,
+        case_number,
+        deadline_label,
+        days_left,
+        cfg.notify_webhook_type,
+        cfg.app_name,
+        dashboard_url,
     )
     body_bytes = json.dumps(payload, separators=(",", ":")).encode("utf-8")
 
@@ -317,8 +323,9 @@ async def deliver_notification_digest() -> None:
         await _deliver(sorted(new_reports), sorted(new_messages))
 
 
-async def _deliver(new_reports: list[str] | None = None,
-                   new_messages: list[str] | None = None) -> None:
+async def _deliver(
+    new_reports: list[str] | None = None, new_messages: list[str] | None = None
+) -> None:
     from app.config import settings
 
     reports, messages = new_reports or [], new_messages or []
@@ -340,6 +347,7 @@ async def _send_email(new_reports: list[str], new_messages: list[str], settings:
     import aiosmtplib
 
     from app.config import Settings
+
     cfg: Settings = settings  # type: ignore[assignment]
 
     recipients = [r.strip() for r in cfg.notify_email_to.split(",") if r.strip()]
@@ -467,6 +475,7 @@ async def _send_webhook(new_reports: list[str], new_messages: list[str], setting
     import httpx
 
     from app.config import Settings
+
     cfg: Settings = settings  # type: ignore[assignment]
 
     dashboard_url = f"{cfg.app_public_url.rstrip('/')}/admin/dashboard"
@@ -490,7 +499,8 @@ async def _send_webhook(new_reports: list[str], new_messages: list[str], setting
             resp.raise_for_status()
         log.info(
             "Webhook notification sent (type=%s, HTTP %s)",
-            cfg.notify_webhook_type, resp.status_code,
+            cfg.notify_webhook_type,
+            resp.status_code,
         )
     except Exception:
         log.exception("Failed to send webhook notification")
@@ -510,8 +520,12 @@ def _build_security_alert_payload(subject: str, text: str, webhook_type: str) ->
                         "type": "AdaptiveCard",
                         "version": "1.4",
                         "body": [
-                            {"type": "TextBlock", "weight": "Bolder", "color": "Attention",
-                             "text": subject},
+                            {
+                                "type": "TextBlock",
+                                "weight": "Bolder",
+                                "color": "Attention",
+                                "text": subject,
+                            },
                             {"type": "TextBlock", "wrap": True, "text": text},
                         ],
                     },

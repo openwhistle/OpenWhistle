@@ -74,9 +74,7 @@ async def _reset_password(username: str, new_password: str) -> bool:
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
     async with session_factory() as session:
-        result = await session.execute(
-            select(AdminUser).where(AdminUser.username == username)
-        )
+        result = await session.execute(select(AdminUser).where(AdminUser.username == username))
         user = result.scalar_one_or_none()
 
         if user is None:

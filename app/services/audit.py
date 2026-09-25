@@ -14,38 +14,36 @@ from app.models.user import AdminUser
 
 
 class AuditAction:
-    REPORT_STATUS_CHANGED   = "report.status_changed"
-    REPORT_ASSIGNED         = "report.assigned"
-    REPORT_UNASSIGNED       = "report.unassigned"
-    REPORT_NOTE_ADDED       = "report.note_added"
-    REPORT_MESSAGE_SENT     = "report.message_sent"
+    REPORT_STATUS_CHANGED = "report.status_changed"
+    REPORT_ASSIGNED = "report.assigned"
+    REPORT_UNASSIGNED = "report.unassigned"
+    REPORT_NOTE_ADDED = "report.note_added"
+    REPORT_MESSAGE_SENT = "report.message_sent"
     REPORT_DELETE_REQUESTED = "report.delete_requested"
     REPORT_DELETE_CONFIRMED = "report.delete_confirmed"
     REPORT_DELETE_CANCELLED = "report.delete_cancelled"
-    REPORT_ACKNOWLEDGED     = "report.acknowledged"
-    REPORT_LINK_ADDED       = "report.link_added"
-    REPORT_LINK_REMOVED     = "report.link_removed"
-    REPORT_AUTO_DELETED     = "report.auto_deleted"
-    REPORT_VIEWED           = "report.viewed"
-    CATEGORY_CREATED        = "category.created"
-    CATEGORY_UPDATED        = "category.updated"
-    CATEGORY_DEACTIVATED    = "category.deactivated"
-    LOCATION_CREATED        = "location.created"
-    ADMIN_CREATED           = "admin.created"
-    ADMIN_ROLE_CHANGED      = "admin.role_changed"
-    ADMIN_DEACTIVATED       = "admin.deactivated"
-    ADMIN_REACTIVATED       = "admin.reactivated"
-    AUTH_LOGIN              = "auth.login"
-    AUTH_TOTP_SETUP         = "auth.totp_setup"
+    REPORT_ACKNOWLEDGED = "report.acknowledged"
+    REPORT_LINK_ADDED = "report.link_added"
+    REPORT_LINK_REMOVED = "report.link_removed"
+    REPORT_AUTO_DELETED = "report.auto_deleted"
+    REPORT_VIEWED = "report.viewed"
+    CATEGORY_CREATED = "category.created"
+    CATEGORY_UPDATED = "category.updated"
+    CATEGORY_DEACTIVATED = "category.deactivated"
+    LOCATION_CREATED = "location.created"
+    ADMIN_CREATED = "admin.created"
+    ADMIN_ROLE_CHANGED = "admin.role_changed"
+    ADMIN_DEACTIVATED = "admin.deactivated"
+    ADMIN_REACTIVATED = "admin.reactivated"
+    AUTH_LOGIN = "auth.login"
+    AUTH_TOTP_SETUP = "auth.totp_setup"
     AUTH_SPRAYING_SUSPECTED = "auth.password_spraying_suspected"
-    ORG_CREATED             = "org.created"
-    ORG_DEACTIVATED         = "org.deactivated"
+    ORG_CREATED = "org.created"
+    ORG_DEACTIVATED = "org.deactivated"
 
 
 # Every action code, for the audit-log filter and the label-completeness test.
-ALL_ACTIONS: tuple[str, ...] = tuple(
-    v for k, v in vars(AuditAction).items() if k.isupper()
-)
+ALL_ACTIONS: tuple[str, ...] = tuple(v for k, v in vars(AuditAction).items() if k.isupper())
 
 
 async def log(

@@ -12,7 +12,6 @@ matching the nav logo in base.html (viewBox 0 0 28 33).
 """
 
 import io
-import math
 import struct
 from pathlib import Path
 
@@ -40,8 +39,8 @@ SVG_CONTENT = """\
 
 # ─── helpers ──────────────────────────────────────────────────────────────────
 
-BLUE  = (15, 76, 129)        # #0f4c81
-BLUE2 = (26, 106, 170)       # #1a6aaa  (border)
+BLUE = (15, 76, 129)  # #0f4c81
+BLUE2 = (26, 106, 170)  # #1a6aaa  (border)
 WHITE = (255, 255, 255, 255)
 TRANS = (0, 0, 0, 0)
 
@@ -53,8 +52,8 @@ def _shield_polygon(size: int) -> list[tuple[float, float]]:
     canvas with a small margin.
     """
     margin = size * 0.06
-    sx = (size - 2 * margin) / 22   # 22 = 25 - 3 (x span)
-    sy = (size - 2 * margin) / 28   # 28 = 30 - 2 (y span)
+    sx = (size - 2 * margin) / 22  # 22 = 25 - 3 (x span)
+    sy = (size - 2 * margin) / 28  # 28 = 30 - 2 (y span)
     s = min(sx, sy)
     # Center offset
     ox = (size - 22 * s) / 2
@@ -65,18 +64,18 @@ def _shield_polygon(size: int) -> list[tuple[float, float]]:
 
     # Approximate bezier shield with straight lines; good enough at favicon size
     pts = [
-        pt(14, 2),   # top center
-        pt(25, 6.5), # top-right
-        pt(25, 16.5),# mid-right
+        pt(14, 2),  # top center
+        pt(25, 6.5),  # top-right
+        pt(25, 16.5),  # mid-right
     ]
     # Right curve (25,16.5) → (20.5,27.5) → (14,30): approximate with 4 steps
     for t in [0.25, 0.5, 0.75, 1.0]:
         # Quadratic bezier: B(t) = (1-t)^2 * P0 + 2*(1-t)*t * P1 + t^2 * P2
         p0x, p0y = 25, 16.5
-        p1x, p1y = 25, 27.5   # control point
+        p1x, p1y = 25, 27.5  # control point
         p2x, p2y = 20.5, 27.5
-        x = (1 - t)**2 * p0x + 2 * (1 - t) * t * p1x + t**2 * p2x
-        y = (1 - t)**2 * p0y + 2 * (1 - t) * t * p1y + t**2 * p2y
+        x = (1 - t) ** 2 * p0x + 2 * (1 - t) * t * p1x + t**2 * p2x
+        y = (1 - t) ** 2 * p0y + 2 * (1 - t) * t * p1y + t**2 * p2y
         pts.append(pt(x, y))
     pts.append(pt(14, 30))
     # Left curve mirror
@@ -84,8 +83,8 @@ def _shield_polygon(size: int) -> list[tuple[float, float]]:
         p0x, p0y = 14, 30
         p1x, p1y = 3, 27.5
         p2x, p2y = 3, 27.5
-        x = (1 - t)**2 * p0x + 2 * (1 - t) * t * p1x + t**2 * p2x
-        y = (1 - t)**2 * p0y + 2 * (1 - t) * t * p1y + t**2 * p2y
+        x = (1 - t) ** 2 * p0x + 2 * (1 - t) * t * p1x + t**2 * p2x
+        y = (1 - t) ** 2 * p0y + 2 * (1 - t) * t * p1y + t**2 * p2y
         pts.append(pt(x, y))
     pts.append(pt(3, 16.5))
     pts.append(pt(3, 6.5))
@@ -139,13 +138,16 @@ def _make_ico(sizes: list[int]) -> bytes:
     entries = b""
     for i, data in enumerate(images):
         s = sizes[i]
-        w = 0 if s == 256 else s   # 0 = 256 in ICO spec
+        w = 0 if s == 256 else s  # 0 = 256 in ICO spec
         h = 0 if s == 256 else s
         entries += struct.pack(
             "<BBBBHHII",
-            w, h,     # width, height
-            0, 0,     # color count, reserved
-            1, 32,    # color planes, bits per pixel
+            w,
+            h,  # width, height
+            0,
+            0,  # color count, reserved
+            1,
+            32,  # color planes, bits per pixel
             len(data),
             offset,
         )
@@ -155,6 +157,7 @@ def _make_ico(sizes: list[int]) -> bytes:
 
 
 # ─── main ─────────────────────────────────────────────────────────────────────
+
 
 def main() -> None:
     # favicon.svg

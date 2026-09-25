@@ -143,12 +143,15 @@ async def _wizard_skip_location_if_needed(
 
     # Location step is active — submit with no location_id (optional field)
     csrf = _wizard_get_csrf(resp_after_step1_text)
-    resp = await client.post("/submit", data={
-        "csrf_token": csrf,
-        "step": str(current_step),
-        "action": "next",
-        "location_id": "",
-    })
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": str(current_step),
+            "action": "next",
+            "location_id": "",
+        },
+    )
     return resp.text, _wizard_get_csrf(resp.text)
 
 
@@ -180,54 +183,67 @@ async def wizard_submit(
     # Step 1: mode selection
     get_resp = await client.get("/submit")
     csrf = _wizard_get_csrf(get_resp.text)
-    resp = await client.post("/submit", data={
-        "csrf_token": csrf,
-        "step": "1",
-        "action": "next",
-        "submission_mode": submission_mode,
-    })
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": "1",
+            "action": "next",
+            "submission_mode": submission_mode,
+        },
+    )
 
     # Step 2 (location — conditional): skip if present
     resp_text, csrf = await _wizard_skip_location_if_needed(client, resp.text)
 
     # Step 3: category
-    resp = await client.post("/submit", data={
-        "csrf_token": csrf,
-        "step": str(_wizard_detect_step(resp_text)),
-        "action": "next",
-        "category": category,
-    })
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": str(_wizard_detect_step(resp_text)),
+            "action": "next",
+            "category": category,
+        },
+    )
 
     # Step 4: description
     csrf = _wizard_get_csrf(resp.text)
-    resp = await client.post("/submit", data={
-        "csrf_token": csrf,
-        "step": str(_wizard_detect_step(resp.text)),
-        "action": "next",
-        "description": description,
-    })
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": str(_wizard_detect_step(resp.text)),
+            "action": "next",
+            "description": description,
+        },
+    )
 
     # Step 5: attachments (skip — no files)
     csrf = _wizard_get_csrf(resp.text)
-    resp = await client.post("/submit", data={
-        "csrf_token": csrf,
-        "step": str(_wizard_detect_step(resp.text)),
-        "action": "next",
-    })
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": str(_wizard_detect_step(resp.text)),
+            "action": "next",
+        },
+    )
 
     # Step 6: review + final submit
     csrf = _wizard_get_csrf(resp.text)
-    resp = await client.post("/submit", data={
-        "csrf_token": csrf,
-        "step": str(_wizard_detect_step(resp.text)),
-        "action": "next",
-    })
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": str(_wizard_detect_step(resp.text)),
+            "action": "next",
+        },
+    )
 
     # Extract case number and PIN from success page
     cn_m = re.search(r"OW-\d{4}-\d{5}", resp.text)
     case_number = cn_m.group(0) if cn_m else ""
-    pin_m = re.search(
-        r"([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})", resp.text
-    )
+    pin_m = re.search(r"([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})", resp.text)
     pin = pin_m.group(1) if pin_m else ""
     return case_number, pin

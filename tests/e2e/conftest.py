@@ -5,6 +5,7 @@ Start with: docker compose up -d (or the CI e2e workflow).
 Default base URL: http://localhost:4009
 Override with: pytest --base-url=http://your-host:port
 """
+
 from __future__ import annotations
 
 import urllib.request

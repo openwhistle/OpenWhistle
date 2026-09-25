@@ -85,12 +85,14 @@ async def run_retention_cleanup() -> None:
                     action="report.auto_deleted",
                     report_id=None,  # report is about to be deleted; store case_number in detail
                     org_id=report.org_id,  # preserve org context for multi-tenant audit trails
-                    detail=json.dumps({
-                        "case_number": report.case_number,
-                        "closed_at": report.closed_at.isoformat() if report.closed_at else None,
-                        "retention_days": settings.retention_days,
-                        "reason": "GDPR Art. 5(1)(e) / HinSchG §11 — retention period exceeded",
-                    }),
+                    detail=json.dumps(
+                        {
+                            "case_number": report.case_number,
+                            "closed_at": report.closed_at.isoformat() if report.closed_at else None,
+                            "retention_days": settings.retention_days,
+                            "reason": "GDPR Art. 5(1)(e) / HinSchG §11 — retention period exceeded",
+                        }
+                    ),
                 )
                 db.add(audit_entry)
                 await db.execute(delete(Report).where(Report.id == report.id))

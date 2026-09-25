@@ -6,6 +6,7 @@ that the same admin cannot both request and confirm deletion.
 A throwaway report is created via the submission wizard before each test
 to avoid permanently destroying demo seed data.
 """
+
 from __future__ import annotations
 
 import re
@@ -85,9 +86,7 @@ def _find_report_detail_url(admin_page: Page, base_url: str, case_number: str) -
     return admin_page.url
 
 
-def test_same_admin_cannot_confirm_own_deletion_request(
-    admin_page: Page, base_url: str
-) -> None:
+def test_same_admin_cannot_confirm_own_deletion_request(admin_page: Page, base_url: str) -> None:
     """Admin A requests deletion, then tries to confirm it — should see a conflict message."""
     # Create a throwaway report using a fresh anonymous browser context for submission
     case_number = _create_throwaway_report(admin_page, base_url)
@@ -134,7 +133,7 @@ def test_same_admin_cannot_confirm_own_deletion_request(
 
     # Admin A tries to confirm — the "Confirm" button should NOT appear for the same user
     _confirm_re = re.compile(r"[Cc]onfirm")
-    confirm_4eyes = admin_page.locator('button.btn-danger').filter(has_text=_confirm_re)
+    confirm_4eyes = admin_page.locator("button.btn-danger").filter(has_text=_confirm_re)
     # Either no confirm button, or if present it should lead to an error (self-conflict)
     if confirm_4eyes.count() > 0:
         # Should be blocked — try clicking and expect error
@@ -190,10 +189,9 @@ def test_second_admin_can_confirm_deletion(
 
     # Verify pending state
     body = admin_page.content()
-    assert any(
-        term in body.lower()
-        for term in ["pending", "requested", "cancel", "cannot"]
-    ), "Deletion request did not create pending state"
+    assert any(term in body.lower() for term in ["pending", "requested", "cancel", "cannot"]), (
+        "Deletion request did not create pending state"
+    )
 
     # Step 3: Admin B navigates to same report and confirms deletion
     admin_page2.goto(detail_url)
@@ -201,7 +199,7 @@ def test_second_admin_can_confirm_deletion(
 
     # Admin B should see the "Confirm Deletion" button (4-eyes)
     _confirm_re = re.compile(r"[Cc]onfirm")
-    confirm_btn = admin_page2.locator('button.btn-danger').filter(has_text=_confirm_re)
+    confirm_btn = admin_page2.locator("button.btn-danger").filter(has_text=_confirm_re)
     if confirm_btn.count() == 0:
         pytest.skip("Confirm deletion button not visible for second admin — check demo seed roles")
 

@@ -1,4 +1,5 @@
 """E2E tests for category and location management in the admin panel."""
+
 from __future__ import annotations
 
 import time
@@ -50,10 +51,9 @@ def test_deactivate_category(admin_page: Page, base_url: str) -> None:
     admin_page.wait_for_load_state("networkidle")
 
     body = admin_page.content()
-    assert any(
-        term in body.lower()
-        for term in ["inactive", "deactivated", "opacity:0.5"]
-    ), "Category not marked as inactive after deactivation"
+    assert any(term in body.lower() for term in ["inactive", "deactivated", "opacity:0.5"]), (
+        "Category not marked as inactive after deactivation"
+    )
 
 
 def test_create_location(admin_page: Page, base_url: str) -> None:
@@ -112,10 +112,9 @@ def test_deactivate_location(admin_page: Page, base_url: str) -> None:
     admin_page.wait_for_load_state("networkidle")
 
     body = admin_page.content()
-    assert any(
-        term in body.lower()
-        for term in ["inactive", "deactivated", "opacity:0.5"]
-    ), "Location not marked as inactive after deactivation"
+    assert any(term in body.lower() for term in ["inactive", "deactivated", "opacity:0.5"]), (
+        "Location not marked as inactive after deactivation"
+    )
 
 
 def test_deactivated_location_not_in_submit_wizard(admin_page: Page, base_url: str) -> None:

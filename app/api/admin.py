@@ -34,9 +34,9 @@ async def _cleanup_report_sessions(redis: Redis, report_id: uuid.UUID) -> None:
         if keys:
             values = await redis.mget(*keys)
             to_delete = [
-                key for key, val in zip(keys, values, strict=False)
-                if val is not None
-                and (val.decode() if isinstance(val, bytes) else val) == target
+                key
+                for key, val in zip(keys, values, strict=False)
+                if val is not None and (val.decode() if isinstance(val, bytes) else val) == target
             ]
             if to_delete:
                 await redis.delete(*to_delete)
@@ -94,9 +94,7 @@ def _require_same_org(user: AdminUser, target_org_id: uuid.UUID | None) -> None:
         raise HTTPException(status_code=404)
 
 
-async def _get_authorized_report(
-    db: AsyncSession, report_id: uuid.UUID, user: AdminUser
-) -> Report:
+async def _get_authorized_report(db: AsyncSession, report_id: uuid.UUID, user: AdminUser) -> Report:
     """Fetch a report and enforce object-level authorization.
 
     Returns 404 (never 403) on both missing and unauthorized reports so that
@@ -227,7 +225,8 @@ async def report_detail(
     report = await _get_authorized_report(db, report_id, current_user)
 
     all_admins = [
-        u for u in await get_all_users(db)
+        u
+        for u in await get_all_users(db)
         if not settings.multi_tenancy_enabled or report.org_id is None or u.org_id == report.org_id
     ]
 
@@ -239,17 +238,17 @@ async def report_detail(
         # authorized to see it — a link must not leak case data across the
         # assignment / organisation boundary.
         if linked_report and _can_access_report(current_user, linked_report):
-            linked.append({
-                "link_id": link_id,
-                "case_number": linked_report.case_number,
-                "category": linked_report.category,
-                "status": linked_report.status.value,
-                "id": str(linked_report.id),
-            })
+            linked.append(
+                {
+                    "link_id": link_id,
+                    "case_number": linked_report.case_number,
+                    "category": linked_report.category,
+                    "status": linked_report.status.value,
+                    "id": str(linked_report.id),
+                }
+            )
 
-    allowed_transitions = list(
-        STATUS_TRANSITIONS.get(report.status.value, set())
-    )
+    allowed_transitions = list(STATUS_TRANSITIONS.get(report.status.value, set()))
 
     # Fetch audit log for this report
     audit_entries, _ = await audit_service.get_audit_log(db, report_id=report_id, per_page=20)
@@ -307,7 +306,10 @@ async def acknowledge_report(
     old_status = report.status.value
     await report_service.acknowledge_report(db, report)
     await audit_service.log(
-        db, current_user, AuditAction.REPORT_ACKNOWLEDGED, report_id=report.id,
+        db,
+        current_user,
+        AuditAction.REPORT_ACKNOWLEDGED,
+        report_id=report.id,
         detail={"old_status": old_status, "new_status": report.status.value},
     )
     await db.commit()
@@ -339,7 +341,10 @@ async def update_status(
     old_status = report.status.value
     await report_service.update_report_status(db, report, s)
     await audit_service.log(
-        db, current_user, AuditAction.REPORT_STATUS_CHANGED, report_id=report.id,
+        db,
+        current_user,
+        AuditAction.REPORT_STATUS_CHANGED,
+        report_id=report.id,
         detail={"old": old_status, "new": s.value},
     )
     await db.commit()
@@ -359,11 +364,12 @@ async def admin_reply(
     if not content.strip():
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
-    await report_service.add_admin_message(
-        db, report, content.strip(), notify_whistleblower=True
-    )
+    await report_service.add_admin_message(db, report, content.strip(), notify_whistleblower=True)
     await audit_service.log(
-        db, current_user, AuditAction.REPORT_MESSAGE_SENT, report_id=report.id,
+        db,
+        current_user,
+        AuditAction.REPORT_MESSAGE_SENT,
+        report_id=report.id,
     )
     await db.commit()
     return RedirectResponse(f"/admin/reports/{report.id}", status_code=302)
@@ -409,7 +415,10 @@ async def assign_report(
     old_assignee = report.assigned_to.username if report.assigned_to else None
     await report_service.assign_report(db, report, assignee)
     await audit_service.log(
-        db, current_user, AuditAction.REPORT_ASSIGNED, report_id=report.id,
+        db,
+        current_user,
+        AuditAction.REPORT_ASSIGNED,
+        report_id=report.id,
         detail={"from": old_assignee, "to": assignee.username if assignee else None},
     )
     await db.commit()
@@ -434,7 +443,10 @@ async def add_note(
 
     await report_service.add_note(db, report, current_user, content.strip())
     await audit_service.log(
-        db, current_user, AuditAction.REPORT_NOTE_ADDED, report_id=report.id,
+        db,
+        current_user,
+        AuditAction.REPORT_NOTE_ADDED,
+        report_id=report.id,
     )
     await db.commit()
     return RedirectResponse(f"/admin/reports/{report.id}#notes", status_code=302)
@@ -464,7 +476,10 @@ async def link_report(
 
     await report_service.link_cases(db, report, other, current_user)
     await audit_service.log(
-        db, current_user, AuditAction.REPORT_LINK_ADDED, report_id=report.id,
+        db,
+        current_user,
+        AuditAction.REPORT_LINK_ADDED,
+        report_id=report.id,
         detail={"linked_with": other.case_number},
     )
     await db.commit()
@@ -489,7 +504,10 @@ async def unlink_report(
 
     await report_service.unlink_cases(db, link)
     await audit_service.log(
-        db, current_user, AuditAction.REPORT_LINK_REMOVED, report_id=report.id,
+        db,
+        current_user,
+        AuditAction.REPORT_LINK_REMOVED,
+        report_id=report.id,
     )
     await db.commit()
     # Use report.id (DB-sourced) for the redirect — not the user-supplied path parameter
@@ -514,7 +532,10 @@ async def request_delete(
 
     await report_service.request_deletion(db, report, current_user)
     await audit_service.log(
-        db, current_user, AuditAction.REPORT_DELETE_REQUESTED, report_id=report.id,
+        db,
+        current_user,
+        AuditAction.REPORT_DELETE_REQUESTED,
+        report_id=report.id,
     )
     await db.commit()
     return RedirectResponse(f"/admin/reports/{report.id}", status_code=302)
@@ -567,7 +588,10 @@ async def cancel_delete(
 
     await report_service.cancel_deletion_request(db, dr)
     await audit_service.log(
-        db, current_user, AuditAction.REPORT_DELETE_CANCELLED, report_id=report.id,
+        db,
+        current_user,
+        AuditAction.REPORT_DELETE_CANCELLED,
+        report_id=report.id,
     )
     await db.commit()
     # Use report.id (DB-sourced) for the redirect — not the user-supplied path parameter
@@ -645,6 +669,7 @@ async def categories_page(
     current_user: AdminUser = Depends(require_admin),
 ) -> HTMLResponse:
     from app.services.categories import get_all_categories
+
     cats = await get_all_categories(db)
     return render(request, "admin/categories.html", {"user": current_user, "categories": cats})
 
@@ -670,7 +695,9 @@ async def create_category(
 
     cat = await svc_create(db, slug_clean, label_en.strip(), label_de.strip(), sort_order)
     await audit_service.log(
-        db, current_user, AuditAction.CATEGORY_CREATED,
+        db,
+        current_user,
+        AuditAction.CATEGORY_CREATED,
         detail={"slug": cat.slug, "label_en": cat.label_en},
     )
     await db.commit()
@@ -696,7 +723,9 @@ async def deactivate_category(
 
     await svc_deact(db, cat)
     await audit_service.log(
-        db, current_user, AuditAction.CATEGORY_DEACTIVATED,
+        db,
+        current_user,
+        AuditAction.CATEGORY_DEACTIVATED,
         detail={"slug": cat.slug},
     )
     await db.commit()
@@ -719,7 +748,9 @@ async def reactivate_category(
         raise HTTPException(status_code=404)
     await svc_react(db, cat)
     await audit_service.log(
-        db, current_user, AuditAction.CATEGORY_UPDATED,
+        db,
+        current_user,
+        AuditAction.CATEGORY_UPDATED,
         detail={"slug": cat.slug, "action": "reactivated"},
     )
     await db.commit()
@@ -736,16 +767,20 @@ async def users_page(
     current_user: AdminUser = Depends(require_admin),
 ) -> HTMLResponse:
     from app.services.users import get_all_users
+
     scope = _org_scope(current_user)
     users = [
-        u for u in await get_all_users(db)
-        if not scope["scope_org"] or u.org_id == scope["org_id"]
+        u for u in await get_all_users(db) if not scope["scope_org"] or u.org_id == scope["org_id"]
     ]
-    return render(request, "admin/users.html", {
-        "user": current_user,
-        "users": users,
-        "roles": list(AdminRole),
-    })
+    return render(
+        request,
+        "admin/users.html",
+        {
+            "user": current_user,
+            "users": users,
+            "roles": list(AdminRole),
+        },
+    )
 
 
 @router.post("/users")
@@ -784,7 +819,9 @@ async def create_user(
     if settings.multi_tenancy_enabled:
         new_user.org_id = current_user.org_id
     await audit_service.log(
-        db, current_user, AuditAction.ADMIN_CREATED,
+        db,
+        current_user,
+        AuditAction.ADMIN_CREATED,
         detail={"username": new_user.username, "role": role_enum.value},
     )
     await db.commit()
@@ -847,7 +884,9 @@ async def change_user_role(
     old_role = target.role.value
     await update_user_role(db, target, role_enum)
     await audit_service.log(
-        db, current_user, AuditAction.ADMIN_ROLE_CHANGED,
+        db,
+        current_user,
+        AuditAction.ADMIN_ROLE_CHANGED,
         detail={"username": target.username, "old": old_role, "new": role_enum.value},
     )
     await db.commit()
@@ -893,7 +932,9 @@ async def deactivate_user(
 
     await svc_deact(db, target)
     await audit_service.log(
-        db, current_user, AuditAction.ADMIN_DEACTIVATED,
+        db,
+        current_user,
+        AuditAction.ADMIN_DEACTIVATED,
         detail={"username": target.username},
     )
     await db.commit()
@@ -918,7 +959,9 @@ async def reactivate_user(
 
     await svc_react(db, target)
     await audit_service.log(
-        db, current_user, AuditAction.ADMIN_REACTIVATED,
+        db,
+        current_user,
+        AuditAction.ADMIN_REACTIVATED,
         detail={"username": target.username},
     )
     await db.commit()
@@ -959,16 +1002,20 @@ async def audit_log_page(
     )
     total_pages = max(1, (total + 49) // 50)
 
-    return render(request, "admin/audit_log.html", {
-        "user": current_user,
-        "entries": entries,
-        "total": total,
-        "page": page,
-        "total_pages": total_pages,
-        "action_filter": action_filter,
-        "report_id_filter": report_id_str,
-        "audit_actions": audit_service.ALL_ACTIONS,
-    })
+    return render(
+        request,
+        "admin/audit_log.html",
+        {
+            "user": current_user,
+            "entries": entries,
+            "total": total,
+            "page": page,
+            "total_pages": total_pages,
+            "action_filter": action_filter,
+            "report_id_filter": report_id_str,
+            "audit_actions": audit_service.ALL_ACTIONS,
+        },
+    )
 
 
 @router.get("/audit-log/export.csv")
@@ -989,14 +1036,16 @@ async def audit_log_csv(
     for e in entries:
         label_key = f"audit.action.{e.action}"
         label = t(label_key)
-        writer.writerow([
-            e.created_at.isoformat(),
-            e.admin_username,
-            e.action,
-            e.action if label == label_key else label,
-            str(e.report_id) if e.report_id else "",
-            e.detail or "",
-        ])
+        writer.writerow(
+            [
+                e.created_at.isoformat(),
+                e.admin_username,
+                e.action,
+                e.action if label == label_key else label,
+                str(e.report_id) if e.report_id else "",
+                e.detail or "",
+            ]
+        )
 
     return Response(
         content=output.getvalue().encode("utf-8"),
@@ -1016,13 +1065,18 @@ async def stats_page(
 ) -> HTMLResponse:
     stats = await report_service.get_dashboard_stats(db, **_org_scope(current_user))
     from app.services.categories import get_all_categories
+
     categories = await get_all_categories(db)
     cat_map = {c.slug: c.label_en for c in categories}
-    return render(request, "admin/stats.html", {
-        "user": current_user,
-        "stats": stats,
-        "cat_map": cat_map,
-    })
+    return render(
+        request,
+        "admin/stats.html",
+        {
+            "user": current_user,
+            "stats": stats,
+            "cat_map": cat_map,
+        },
+    )
 
 
 # ── Locations ──────────────────────────────────────────────────────
@@ -1070,7 +1124,9 @@ async def create_location(
         sort_order=sort_order,
     )
     await audit_service.log(
-        db, current_user, AuditAction.LOCATION_CREATED,
+        db,
+        current_user,
+        AuditAction.LOCATION_CREATED,
         detail={"location_code": code_clean, "name": name.strip()},
     )
     await db.commit()
@@ -1135,6 +1191,7 @@ async def demo_reset(
     if not settings.demo_mode:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
     from app.services.demo_seed import seed_demo_data
+
     await seed_demo_data()
     return JSONResponse({"reset": True})
 
@@ -1237,13 +1294,9 @@ async def create_organisation(
     if not slug_clean:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid slug.")
 
-    existing = await db.execute(
-        select(Organisation).where(Organisation.slug == slug_clean)
-    )
+    existing = await db.execute(select(Organisation).where(Organisation.slug == slug_clean))
     if existing.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="Slug already exists."
-        )
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Slug already exists.")
 
     org = Organisation(id=__import__("uuid").uuid4(), name=name.strip(), slug=slug_clean)
     db.add(org)

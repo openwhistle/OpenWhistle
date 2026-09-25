@@ -65,6 +65,7 @@ async def test_notify_dispatches_email_only() -> None:
         patch("app.config.settings", cfg),
     ):
         from app.services import notifications as svc
+
         await svc.notify_new_report("OW-2026-00001")
         await asyncio.gather(*svc._background)
 
@@ -84,6 +85,7 @@ async def test_notify_dispatches_webhook_only() -> None:
         patch("app.config.settings", cfg),
     ):
         from app.services import notifications as svc
+
         await svc.notify_new_report("OW-2026-00001")
         await asyncio.gather(*svc._background)
 
@@ -105,6 +107,7 @@ async def test_notify_dispatches_both_channels() -> None:
         patch("app.config.settings", cfg),
     ):
         from app.services import notifications as svc
+
         await svc.notify_new_report("OW-2026-00001")
         await asyncio.gather(*svc._background)
 
@@ -126,6 +129,7 @@ async def test_send_email_calls_aiosmtplib() -> None:
 
     with patch("aiosmtplib.send", mock_send):
         from app.services.notifications import _send_email
+
         await _send_email(["OW-2026-00001"], [], cfg)
 
     mock_send.assert_awaited_once()
@@ -148,6 +152,7 @@ async def test_send_email_subject_contains_app_name() -> None:
 
     with patch("aiosmtplib.send", fake_send):
         from app.services.notifications import _send_email
+
         await _send_email(["OW-2026-00042"], [], cfg)
 
     subject = captured_msg["msg"]["Subject"]
@@ -166,6 +171,7 @@ async def test_send_email_body_contains_case_number_not_content() -> None:
 
     with patch("aiosmtplib.send", fake_send):
         from app.services.notifications import _send_email
+
         await _send_email(["OW-2026-00099"], [], cfg)
 
     # Get plain-text part
@@ -190,6 +196,7 @@ async def test_send_email_swallows_smtp_exception() -> None:
 
     with patch("aiosmtplib.send", failing_send):
         from app.services.notifications import _send_email
+
         # Should not raise
         await _send_email(["OW-2026-00001"], [], cfg)
 
@@ -201,6 +208,7 @@ async def test_send_email_skips_empty_recipient_list() -> None:
 
     with patch("aiosmtplib.send", mock_send):
         from app.services.notifications import _send_email
+
         await _send_email(["OW-2026-00001"], [], cfg)
 
     mock_send.assert_not_called()
@@ -221,6 +229,7 @@ async def test_send_email_uses_ssl_when_configured() -> None:
 
     with patch("aiosmtplib.send", fake_send):
         from app.services.notifications import _send_email
+
         await _send_email(["OW-2026-00001"], [], cfg)
 
     assert captured_kw.get("use_tls") is True
@@ -244,6 +253,7 @@ async def test_send_webhook_posts_json_payload() -> None:
 
     with patch("httpx.AsyncClient", return_value=mock_client):
         from app.services.notifications import _send_webhook
+
         await _send_webhook(["OW-2026-00001"], [], cfg)
 
     mock_client.post.assert_awaited_once()
@@ -254,7 +264,9 @@ async def test_send_webhook_posts_json_payload() -> None:
 
     assert url == "https://hooks.example.com/notify"
     assert payload == {
-        "event": "new_activity", "new_reports": ["OW-2026-00001"], "new_messages": [],
+        "event": "new_activity",
+        "new_reports": ["OW-2026-00001"],
+        "new_messages": [],
     }
     # Privacy: no report description or category in payload
     assert "description" not in payload
@@ -287,14 +299,13 @@ async def test_send_webhook_includes_hmac_signature_when_secret_set() -> None:
 
     with patch("httpx.AsyncClient", return_value=mock_client):
         from app.services.notifications import _send_webhook
+
         await _send_webhook(["OW-2026-00001"], [], cfg)
 
     assert "X-OpenWhistle-Signature" in captured_headers
     sig_header = captured_headers["X-OpenWhistle-Signature"]
     assert sig_header.startswith("sha256=")
-    expected_sig = hmac.new(
-        secret.encode(), captured_body, hashlib.sha256
-    ).hexdigest()
+    expected_sig = hmac.new(secret.encode(), captured_body, hashlib.sha256).hexdigest()
     assert sig_header == f"sha256={expected_sig}"
 
 
@@ -320,6 +331,7 @@ async def test_send_webhook_no_signature_without_secret() -> None:
 
     with patch("httpx.AsyncClient", return_value=mock_client):
         from app.services.notifications import _send_webhook
+
         await _send_webhook(["OW-2026-00001"], [], cfg)
 
     assert "X-OpenWhistle-Signature" not in captured_headers
@@ -336,6 +348,7 @@ async def test_send_webhook_swallows_http_exception() -> None:
 
     with patch("httpx.AsyncClient", return_value=mock_client):
         from app.services.notifications import _send_webhook
+
         # Should not raise
         await _send_webhook(["OW-2026-00001"], [], cfg)
 
@@ -366,33 +379,60 @@ async def test_submit_triggers_notification(client: object) -> None:
     # Walk steps 1-5 (mode, optional location, category, description, attachments) without patching
     get_resp = await ac.get("/submit")
     csrf = _get_csrf(get_resp.text)
-    resp = await ac.post("/submit", data={
-        "csrf_token": csrf, "step": "1", "action": "next", "submission_mode": "anonymous",
-    })
+    resp = await ac.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": "1",
+            "action": "next",
+            "submission_mode": "anonymous",
+        },
+    )
 
     # Step 2 (location — conditional): skip if present by posting with empty location_id
     if _get_step(resp.text) == 2:
         csrf = _get_csrf(resp.text)
-        resp = await ac.post("/submit", data={
-            "csrf_token": csrf, "step": "2", "action": "next", "location_id": "",
-        })
+        resp = await ac.post(
+            "/submit",
+            data={
+                "csrf_token": csrf,
+                "step": "2",
+                "action": "next",
+                "location_id": "",
+            },
+        )
 
     csrf = _get_csrf(resp.text)
-    resp = await ac.post("/submit", data={
-        "csrf_token": csrf, "step": str(_get_step(resp.text)), "action": "next",
-        "category": "financial_fraud",
-    })
+    resp = await ac.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": str(_get_step(resp.text)),
+            "action": "next",
+            "category": "financial_fraud",
+        },
+    )
 
     csrf = _get_csrf(resp.text)
-    resp = await ac.post("/submit", data={
-        "csrf_token": csrf, "step": str(_get_step(resp.text)), "action": "next",
-        "description": "Integration test — notification trigger verification.",
-    })
+    resp = await ac.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": str(_get_step(resp.text)),
+            "action": "next",
+            "description": "Integration test — notification trigger verification.",
+        },
+    )
 
     csrf = _get_csrf(resp.text)
-    resp = await ac.post("/submit", data={
-        "csrf_token": csrf, "step": str(_get_step(resp.text)), "action": "next",
-    })
+    resp = await ac.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": str(_get_step(resp.text)),
+            "action": "next",
+        },
+    )
 
     # Step 6 (review): patch notification only for the final submit POST
     csrf = _get_csrf(resp.text)
@@ -401,9 +441,14 @@ async def test_submit_triggers_notification(client: object) -> None:
     with patch(
         "app.services.notifications.notify_new_report", new_callable=AsyncMock
     ) as mock_notify:
-        final_resp = await ac.post("/submit", data={
-            "csrf_token": csrf, "step": str(step6), "action": "next",
-        })
+        final_resp = await ac.post(
+            "/submit",
+            data={
+                "csrf_token": csrf,
+                "step": str(step6),
+                "action": "next",
+            },
+        )
 
     assert final_resp.status_code == 200
     # BackgroundTasks run synchronously in ASGI test transport

@@ -34,14 +34,32 @@ def main() -> int:
         path.write_text(original.replace(m["old"], m["new"]))
         try:
             run = subprocess.run(  # noqa: S603 — pytest on test paths from a repo file
-                [sys.executable, "-m", "pytest", "-x", "-q", "--no-cov", "-p", "no:cacheprovider",
-                 *spec["test_groups"][m["tests"]]],
-                cwd=ROOT, capture_output=True, text=True, timeout=900,
+                [
+                    sys.executable,
+                    "-m",
+                    "pytest",
+                    "-x",
+                    "-q",
+                    "--no-cov",
+                    "-p",
+                    "no:cacheprovider",
+                    *spec["test_groups"][m["tests"]],
+                ],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+                timeout=900,
             )
         finally:
             path.write_text(original)
-        fired = next((line.split(" - ")[0] for line in run.stdout.splitlines()
-                      if line.startswith(("FAILED", "ERROR"))), "")
+        fired = next(
+            (
+                line.split(" - ")[0]
+                for line in run.stdout.splitlines()
+                if line.startswith(("FAILED", "ERROR"))
+            ),
+            "",
+        )
         verdict = "RED" if run.returncode else "GREEN"
         green += verdict == "GREEN"
         print(f"{m['id']:28} {verdict:6} {fired}", flush=True)

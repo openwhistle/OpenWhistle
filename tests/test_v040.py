@@ -20,6 +20,7 @@ from app.services.report import create_report
 
 # ── Crypto service ─────────────────────────────────────────────────
 
+
 class TestCrypto:
     def test_round_trip(self) -> None:
         token = encrypt("hello world")
@@ -46,6 +47,7 @@ class TestCrypto:
 
 
 # ── Location service ───────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 class TestLocationService:
@@ -86,6 +88,7 @@ class TestLocationService:
 
 
 # ── Report service with new fields ────────────────────────────────
+
 
 @pytest.mark.asyncio
 class TestReportCreateWithNewFields:
@@ -136,6 +139,7 @@ class TestReportCreateWithNewFields:
 
 # ── Multi-step submission (HTTP) ──────────────────────────────────
 
+
 @pytest.mark.asyncio
 class TestMultiStepSubmission:
     async def test_submit_get_returns_step1(self, client: AsyncClient) -> None:
@@ -147,12 +151,15 @@ class TestMultiStepSubmission:
     async def test_submit_step1_requires_mode(self, client: AsyncClient) -> None:
         get_resp = await client.get("/submit")
         csrf = _get_csrf(get_resp)
-        resp = await client.post("/submit", data={
-            "csrf_token": csrf,
-            "step": "1",
-            "action": "next",
-            "submission_mode": "",
-        })
+        resp = await client.post(
+            "/submit",
+            data={
+                "csrf_token": csrf,
+                "step": "1",
+                "action": "next",
+                "submission_mode": "",
+            },
+        )
         assert resp.status_code == 200
         assert "submission_mode" in resp.text
 
@@ -181,61 +188,79 @@ async def _do_full_anonymous_submit(client: AsyncClient) -> tuple[str, str]:
     # Step 1: mode
     get_resp = await client.get("/submit")
     csrf = _get_csrf(get_resp)
-    resp = await client.post("/submit", data={
-        "csrf_token": csrf,
-        "step": "1",
-        "action": "next",
-        "submission_mode": "anonymous",
-    })
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": "1",
+            "action": "next",
+            "submission_mode": "anonymous",
+        },
+    )
     assert resp.status_code == 200
 
     # Step 2 (location — conditional): skip if present by posting with empty location_id
     if _detect_step(resp) == 2:
         csrf = _get_csrf(resp)
-        resp = await client.post("/submit", data={
-            "csrf_token": csrf,
-            "step": "2",
-            "action": "next",
-            "location_id": "",
-        })
+        resp = await client.post(
+            "/submit",
+            data={
+                "csrf_token": csrf,
+                "step": "2",
+                "action": "next",
+                "location_id": "",
+            },
+        )
         assert resp.status_code == 200
 
     # Step 3: category
     csrf = _get_csrf(resp)
-    resp = await client.post("/submit", data={
-        "csrf_token": csrf,
-        "step": str(_detect_step(resp)),
-        "action": "next",
-        "category": "financial_fraud",
-    })
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": str(_detect_step(resp)),
+            "action": "next",
+            "category": "financial_fraud",
+        },
+    )
     assert resp.status_code == 200
     csrf = _get_csrf(resp)
 
     # Step 4: description
-    resp = await client.post("/submit", data={
-        "csrf_token": csrf,
-        "step": str(_detect_step(resp)),
-        "action": "next",
-        "description": "This is a test report with enough characters to pass validation.",
-    })
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": str(_detect_step(resp)),
+            "action": "next",
+            "description": "This is a test report with enough characters to pass validation.",
+        },
+    )
     assert resp.status_code == 200
     csrf = _get_csrf(resp)
 
     # Step 5: attachments (skip)
-    resp = await client.post("/submit", data={
-        "csrf_token": csrf,
-        "step": str(_detect_step(resp)),
-        "action": "next",
-    })
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": str(_detect_step(resp)),
+            "action": "next",
+        },
+    )
     assert resp.status_code == 200
     csrf = _get_csrf(resp)
 
     # Step 6: review + final submit
-    resp = await client.post("/submit", data={
-        "csrf_token": csrf,
-        "step": str(_detect_step(resp)),
-        "action": "next",
-    })
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": str(_detect_step(resp)),
+            "action": "next",
+        },
+    )
     assert resp.status_code == 200
 
     # Should be on success page
@@ -243,6 +268,7 @@ async def _do_full_anonymous_submit(client: AsyncClient) -> tuple[str, str]:
 
     # Extract case number and pin from page
     import re
+
     cn_match = re.search(r"OW-\d{4}-\d{5}", resp.text)
     case_number = cn_match.group(0) if cn_match else "OW-0000-00000"
     uuid_pattern = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
@@ -255,6 +281,7 @@ def _get_csrf(response: object) -> str:
     import re
 
     from httpx import Response as HttpxResponse
+
     r: HttpxResponse = response  # type: ignore[assignment]
     match = re.search(r'name="csrf_token" value="([^"]+)"', r.text)
     return match.group(1) if match else ""
@@ -264,6 +291,7 @@ def _detect_step(response: object) -> int:
     import re
 
     from httpx import Response as HttpxResponse
+
     r: HttpxResponse = response  # type: ignore[assignment]
     match = re.search(r'name="step" value="(\d+)"', r.text)
     return int(match.group(1)) if match else 1
@@ -271,24 +299,29 @@ def _detect_step(response: object) -> int:
 
 # ── i18n / Language ───────────────────────────────────────────────
 
+
 class TestI18n:
     def test_en_locale_loads(self) -> None:
         from app.i18n import make_translator
+
         t = make_translator("en")
         assert t("nav.submit_report") == "Submit report"
 
     def test_de_locale_loads(self) -> None:
         from app.i18n import make_translator
+
         t = make_translator("de")
         assert t("nav.submit_report") == "Meldung abgeben"
 
     def test_fr_locale_loads(self) -> None:
         from app.i18n import make_translator
+
         t = make_translator("fr")
         assert t("nav.submit_report") == "Soumettre un signalement"
 
     def test_fr_new_keys(self) -> None:
         from app.i18n import make_translator
+
         t = make_translator("fr")
         assert t("submit.step.mode.anonymous.label") == "Anonyme"
         assert t("admin.nav.locations") == "Lieux"
@@ -296,11 +329,13 @@ class TestI18n:
 
     def test_unknown_lang_falls_back(self) -> None:
         from app.i18n import make_translator
+
         t = make_translator("xx")  # unknown → falls back to en
         assert t("nav.submit_report") == "Submit report"
 
     def test_format_keys(self) -> None:
         from app.i18n import make_translator
+
         t = make_translator("en")
         result = t("submit.progress.step_of", step=2, total=5)
         assert "2" in result and "5" in result
@@ -308,6 +343,7 @@ class TestI18n:
     def test_all_en_keys_present_in_de(self) -> None:
         import json
         from pathlib import Path
+
         locales = Path(__file__).parent.parent / "app" / "locales"
         en = json.loads((locales / "en.json").read_text(encoding="utf-8"))
         de = json.loads((locales / "de.json").read_text(encoding="utf-8"))
@@ -317,6 +353,7 @@ class TestI18n:
     def test_all_en_keys_present_in_fr(self) -> None:
         import json
         from pathlib import Path
+
         locales = Path(__file__).parent.parent / "app" / "locales"
         en = json.loads((locales / "en.json").read_text(encoding="utf-8"))
         fr = json.loads((locales / "fr.json").read_text(encoding="utf-8"))
@@ -325,12 +362,14 @@ class TestI18n:
 
     def test_ptbr_locale_loads(self) -> None:
         from app.i18n import make_translator
+
         t = make_translator("pt-br")
         assert t("nav.submit_report") == "Enviar denúncia"
 
     def test_all_en_keys_present_in_ptbr(self) -> None:
         import json
         from pathlib import Path
+
         locales = Path(__file__).parent.parent / "app" / "locales"
         en = json.loads((locales / "en.json").read_text(encoding="utf-8"))
         ptbr = json.loads((locales / "pt-br.json").read_text(encoding="utf-8"))
@@ -341,6 +380,7 @@ class TestI18n:
         from unittest.mock import MagicMock
 
         from app.i18n import get_lang
+
         req = MagicMock()
         req.cookies.get.return_value = ""
         req.headers.get.return_value = "pt-BR,pt;q=0.9,en;q=0.8"
@@ -350,6 +390,7 @@ class TestI18n:
         from unittest.mock import MagicMock
 
         from app.i18n import get_lang
+
         req = MagicMock()
         req.cookies.get.return_value = ""
         req.headers.get.return_value = "pt;q=0.9,en;q=0.8"
@@ -359,6 +400,7 @@ class TestI18n:
         from unittest.mock import MagicMock
 
         from app.i18n import get_lang
+
         req = MagicMock()
         req.cookies.get.return_value = ""
         req.headers.get.return_value = "pt-PT,en;q=0.8"
@@ -366,6 +408,7 @@ class TestI18n:
 
 
 # ── Admin location routes ─────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 class TestAdminLocationRoutes:
@@ -375,28 +418,37 @@ class TestAdminLocationRoutes:
         assert resp.status_code in (200, 302, 401)
 
     async def test_language_switch_fr(self, client: AsyncClient) -> None:
-        resp = await client.post("/set-language", data={
-            "lang": "fr",
-            "next": "/submit",
-        })
+        resp = await client.post(
+            "/set-language",
+            data={
+                "lang": "fr",
+                "next": "/submit",
+            },
+        )
         assert resp.status_code == 200  # follows redirects
         # Should have fr cookie
         cookies = {c.name: c.value for c in client.cookies.jar}
         assert cookies.get("ow-lang") == "fr"
 
     async def test_language_switch_ptbr(self, client: AsyncClient) -> None:
-        resp = await client.post("/set-language", data={
-            "lang": "pt-br",
-            "next": "/submit",
-        })
+        resp = await client.post(
+            "/set-language",
+            data={
+                "lang": "pt-br",
+                "next": "/submit",
+            },
+        )
         assert resp.status_code == 200
         cookies = {c.name: c.value for c in client.cookies.jar}
         assert cookies.get("ow-lang") == "pt-br"
 
     async def test_language_switch_unknown_falls_back(self, client: AsyncClient) -> None:
-        await client.post("/set-language", data={
-            "lang": "zz",
-            "next": "/submit",
-        })
+        await client.post(
+            "/set-language",
+            data={
+                "lang": "zz",
+                "next": "/submit",
+            },
+        )
         cookies = {c.name: c.value for c in client.cookies.jar}
         assert cookies.get("ow-lang") == "en"

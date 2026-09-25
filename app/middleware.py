@@ -82,8 +82,7 @@ class SecurityMiddleware:
         # scope["headers"] is list[tuple[bytes, bytes]] in the ASGI spec
         raw_headers: list[tuple[bytes, bytes]] = list(scope.get("headers", []))
         ip_headers_present = any(
-            name.decode("latin-1").lower() in _IP_REVEAL_HEADERS
-            for name, _ in raw_headers
+            name.decode("latin-1").lower() in _IP_REVEAL_HEADERS for name, _ in raw_headers
         )
 
         if ip_headers_present:
@@ -97,7 +96,8 @@ class SecurityMiddleware:
             # Noted above; now gone, so no handler, error report or log line
             # further down can ever see a whistleblower's address.
             scope["headers"] = [
-                (name, value) for name, value in raw_headers
+                (name, value)
+                for name, value in raw_headers
                 if name.decode("latin-1").lower() not in _IP_REVEAL_HEADERS
             ]
         # The peer address is the proxy's at best, the whistleblower's at worst.

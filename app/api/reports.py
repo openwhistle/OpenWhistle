@@ -312,9 +312,7 @@ async def submit_post(
 ) -> Response:
     raw_cookie = request.cookies.get("ow-submission-session")
     session_id: str = (
-        raw_cookie
-        if raw_cookie and _DRAFT_COOKIE_RE.match(raw_cookie)
-        else _new_draft_id()
+        raw_cookie if raw_cookie and _DRAFT_COOKIE_RE.match(raw_cookie) else _new_draft_id()
     )
     state = await _load_submission(redis, session_id)
     if not state and raw_cookie:
@@ -473,10 +471,9 @@ async def submit_post(
 
         if file_tuples:
             state["files_stored"] = True
-            state["file_meta"] = [
-                {"filename": ft[0], "size": len(ft[2])} for ft in file_tuples
-            ]
+            state["file_meta"] = [{"filename": ft[0], "size": len(ft[2])} for ft in file_tuples]
             import base64 as _b64
+
             state["file_data"] = [
                 {
                     "filename": ft[0],
@@ -546,6 +543,7 @@ async def submit_post(
         await create_attachments(db, report, file_tuples_restored)
 
         from app.services.notifications import notify_new_report
+
         background_tasks.add_task(notify_new_report, report.case_number)
 
         # Clean up submission session
@@ -626,18 +624,22 @@ async def status_get(
 
                 _, dec_msgs = decrypt_report_fields(report)
 
-                return render(request, "status.html", {
-                    "report": report,
-                    "decrypted_messages": dec_msgs,
-                    "attachment_names": decrypt_attachment_names(report),
-                    "case_number": None,
-                    "pin": None,
-                    "from_session": True,
-                    "success": success,
-                    "ack_deadline": ack_deadline,
-                    "ack_days_remaining": ack_days_remaining,
-                    "now": now,
-                })
+                return render(
+                    request,
+                    "status.html",
+                    {
+                        "report": report,
+                        "decrypted_messages": dec_msgs,
+                        "attachment_names": decrypt_attachment_names(report),
+                        "case_number": None,
+                        "pin": None,
+                        "from_session": True,
+                        "success": success,
+                        "ack_deadline": ack_deadline,
+                        "ack_days_remaining": ack_days_remaining,
+                        "now": now,
+                    },
+                )
 
     return render(request, "status.html", {"report": None})
 
@@ -706,9 +708,7 @@ async def reply_post(
             decoded_id = (
                 report_id_str.decode() if isinstance(report_id_str, bytes) else report_id_str
             )
-            report = await report_service.get_report_by_id(
-                db, uuid.UUID(decoded_id)
-            )
+            report = await report_service.get_report_by_id(db, uuid.UUID(decoded_id))
 
     if report is None:
         if not case_number or not pin:
@@ -785,6 +785,7 @@ async def whistleblower_download_attachment(
     decoded_id = report_id_str.decode() if isinstance(report_id_str, bytes) else report_id_str
 
     from app.services.attachment import get_attachment_by_id
+
     attachment = await get_attachment_by_id(db, attachment_id)
 
     if not attachment or str(attachment.report_id) != decoded_id:

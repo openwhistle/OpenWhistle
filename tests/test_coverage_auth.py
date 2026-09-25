@@ -128,6 +128,7 @@ async def test_mfa_with_expired_temp_token_redirects_to_login(
     temp_token = "already-expired-token-xyz"
     await store_totp_pending(redis, temp_token, str(uuid.uuid4()))
     from app.services.auth import _TOTP_PENDING_PREFIX  # noqa: PLC2701
+
     await redis.delete(f"{_TOTP_PENDING_PREFIX}{temp_token}")
 
     get_resp = await client.get("/admin/login")
@@ -169,9 +170,7 @@ async def test_last_login_at_is_set_after_successful_mfa(
 
 
 @pytest.mark.asyncio
-async def test_logout_revokes_redis_session(
-    client: AsyncClient, db_session: AsyncSession
-) -> None:
+async def test_logout_revokes_redis_session(client: AsyncClient, db_session: AsyncSession) -> None:
     """After logout, the session token must no longer be valid in Redis."""
     from app.redis_client import get_redis
 
@@ -185,9 +184,7 @@ async def test_logout_revokes_redis_session(
     redis = await get_redis()
     assert await validate_session(redis, session_token) is True
 
-    await client.post(
-        "/admin/logout", data={"csrf_token": client.cookies.get("ow_csrf")}
-    )
+    await client.post("/admin/logout", data={"csrf_token": client.cookies.get("ow_csrf")})
 
     assert await validate_session(redis, session_token) is False
 
@@ -198,9 +195,7 @@ async def test_logout_without_session_cookie_does_not_crash(
 ) -> None:
     """POST /admin/logout with no session cookie must complete without error."""
     await client.get("/admin/login")  # sets the CSRF cookie
-    resp = await client.post(
-        "/admin/logout", data={"csrf_token": client.cookies.get("ow_csrf")}
-    )
+    resp = await client.post("/admin/logout", data={"csrf_token": client.cookies.get("ow_csrf")})
     assert resp.status_code == 200
 
 

@@ -19,9 +19,7 @@ def test_uv_version_is_the_same_in_the_image_and_every_workflow() -> None:
 
 
 def _all(pattern: str, *globs: str) -> set[str]:
-    return {
-        m for g in globs for f in ROOT.glob(g) for m in re.findall(pattern, f.read_text())
-    }
+    return {m for g in globs for f in ROOT.glob(g) for m in re.findall(pattern, f.read_text())}
 
 
 def test_python_version_is_the_same_everywhere() -> None:
@@ -32,8 +30,11 @@ def test_python_version_is_the_same_everywhere() -> None:
 
 
 def test_postgres_and_redis_majors_are_the_same_everywhere() -> None:
-    places = ("docker-compose*.yml", ".github/workflows/*.yml",
-              "ansible/roles/openwhistle/templates/*.j2")
+    places = (
+        "docker-compose*.yml",
+        ".github/workflows/*.yml",
+        "ansible/roles/openwhistle/templates/*.j2",
+    )
     for image in ("postgres", "redis"):
         found = _all(rf"image: {image}:([0-9a-z.\-]+)", *places)
         assert len(found) == 1, f"{image} tags disagree: {found}"
