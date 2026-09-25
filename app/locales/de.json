@@ -625,5 +625,7 @@
   "upload.error.bad_type": "„{name}“ hat einen nicht unterstützten Dateityp ({type}). Erlaubt: PDF, Bilder, Text, Word, Excel.",
   "upload.error.content_mismatch": "„{name}“ enthält nicht, was die Endung „{ext}“ angibt (die Datei ist vielleicht beschädigt oder getarnt). Speichern Sie sie neu und versuchen Sie es erneut.",
   "upload.error.too_many": "Zu viele Dateien. Sie können höchstens {max} Dateien anhängen.",
-  "upload.error.metadata": "„{name}“ konnte nicht auf versteckte Angaben (Autor, Standort, Gerät) geprüft werden und wurde nicht angenommen. Speichern Sie die Datei neu oder exportieren Sie sie als PDF."
+  "upload.error.metadata": "„{name}“ konnte nicht auf versteckte Angaben (Autor, Standort, Gerät) geprüft werden und wurde nicht angenommen. Speichern Sie die Datei neu oder exportieren Sie sie als PDF.",
+  "upload.error.malware": "„{name}“ wurde nicht angenommen: Der Virenscanner hat sie markiert. Wenn Sie die Datei für sicher halten, exportieren Sie sie als PDF und versuchen Sie es erneut.",
+  "upload.error.scan_unavailable": "„{name}“ konnte gerade nicht auf Viren geprüft werden und wurde nicht gespeichert. Versuchen Sie es in einigen Minuten erneut."
 }

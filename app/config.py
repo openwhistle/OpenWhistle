@@ -228,5 +228,11 @@ class Settings(BaseSettings):
     # the admin System page surfaces it; no instance data is ever sent to GitHub.
     update_check_enabled: bool = False
 
+    # Virus scan of uploads through clamd (INSTREAM). Empty = off. When set, an
+    # upload is refused if clamd cannot be reached: nothing is stored unscanned.
+    clamav_host: str = ""
+    clamav_port: int = 3310
+    clamav_timeout_seconds: int = Field(default=30, ge=1)
+
 
 settings = Settings()  # type: ignore[call-arg]

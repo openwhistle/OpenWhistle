@@ -137,6 +137,12 @@ config:
   multiTenancyEnabled: "false"
   defaultOrgSlug: "default"
 
+  # Virus scanning of uploads through clamd (INSTREAM). Empty host = off. When
+  # set, an upload is refused if clamd cannot be reached (fail closed).
+  clamavHost: ""
+  clamavPort: "3310"
+  clamavTimeoutSeconds: "30"
+
 # Secrets — these must be provided; they are not defaulted.
 # Create a Kubernetes Secret and reference it, or use an external secrets operator.
 secrets:

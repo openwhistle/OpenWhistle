@@ -73,6 +73,9 @@ services:
       MULTI_TENANCY_ENABLED: "${MULTI_TENANCY_ENABLED:-false}"
       DEFAULT_ORG_SLUG: "${DEFAULT_ORG_SLUG:-default}"
       UPDATE_CHECK_ENABLED: "${UPDATE_CHECK_ENABLED:-false}"
+      CLAMAV_HOST: "${CLAMAV_HOST:-}"
+      CLAMAV_PORT: "${CLAMAV_PORT:-3310}"
+      CLAMAV_TIMEOUT_SECONDS: "${CLAMAV_TIMEOUT_SECONDS:-30}"
     depends_on:
       db:
         condition: service_healthy
@@ -172,9 +175,46 @@ services:
     networks:
       - internal
 
+  # Optional upload virus scan (Task 20). Off unless CLAMAV_HOST is set and
+  # this profile is enabled: `COMPOSE_PROFILES=clamav`. Not reachable from the
+  # host — only the app container talks to it, over the internal network.
+  # `internal` has no internet access, but freshclam (signature updates) needs
+  # one to reach database.clamav.net, hence also `proxy`.
+  clamav:
+    image: clamav/clamav:1.4@sha256:a5f03c12a79dbe9f6d8a527b6bb1ea053fa8dd061d3738a26897f055ee2d9303
+    profiles: ["clamav"]
+    restart: always
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+      - /run:size=16m
+      - /var/log/clamav:size=16m
+    volumes:
+      - clamav_data:/var/lib/clamav
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - FOWNER
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "clamdcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 6m
+    networks:
+      - internal
+      - proxy
+
 volumes:
   postgres_data:
   tls:
+  clamav_data:
 
 networks:
   internal:

@@ -1725,6 +1725,51 @@
           is required.
         </p>
 
+        <h3 id="virus-scanning">Scanning uploads for viruses</h3>
+        <p>
+          Attachments can be scanned by a
+          <a href="https://www.clamav.net/" rel="noopener noreferrer" target="_blank">ClamAV</a>
+          <code>clamd</code> daemon before they are stored. Off by default. To turn it on:
+        </p>
+        <pre><code>COMPOSE_PROFILES=clamav
+CLAMAV_HOST=clamav</code></pre>
+        <p>
+          <code>docker-compose.prod.yml</code> ships a <code>clamav</code> service behind the
+          <code>clamav</code> profile; it is not reachable from the host, only from the <code>app</code>
+          container over the internal network. It needs roughly 1.5 GB RAM for the loaded signature
+          database, and — unlike the rest of the stack — outbound internet access, to fetch signature
+          updates from <code>database.clamav.net</code>.
+        </p>
+        <p>
+          Scanning is <strong>fail-closed</strong>: with <code>CLAMAV_HOST</code> set, an upload is
+          refused whenever <code>clamd</code> cannot be reached or times out, exactly as if it were
+          infected — nothing is ever stored unscanned. The whistleblower sees a generic
+          "try again in a few minutes" message; no file name, size or content reaches the log.
+        </p>
+        <table class="env-table">
+          <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code class="env-key">CLAMAV_HOST</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Hostname of the <code>clamd</code> daemon. Empty disables scanning entirely — no connection is ever made.</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">CLAMAV_PORT</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td><code>clamd</code>'s TCP port.</td>
+              <td><code>3310</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">CLAMAV_TIMEOUT_SECONDS</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Connect and reply timeout for one scan. Exceeding it refuses the upload (fail closed).</td>
+              <td><code>30</code></td>
+            </tr>
+          </tbody>
+        </table>
+
         <h3>Limits and allowed types</h3>
         <ul>
           <li><strong>Maximum file size:</strong> 10 MB per attachment</li>

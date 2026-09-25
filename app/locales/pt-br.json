@@ -625,5 +625,7 @@
   "upload.error.bad_type": "\"{name}\" tem um tipo de arquivo não suportado ({type}). Permitidos: PDF, imagens, texto, Word, Excel.",
   "upload.error.content_mismatch": "\"{name}\" não contém o que a extensão \"{ext}\" indica (o arquivo pode estar danificado ou disfarçado). Salve-o novamente e tente de novo.",
   "upload.error.too_many": "Arquivos demais. Você pode anexar no máximo {max} arquivos.",
-  "upload.error.metadata": "\"{name}\" não pôde ser verificado quanto a informações ocultas (autor, local, dispositivo) e não foi aceito. Salve-o novamente ou exporte-o como PDF."
+  "upload.error.metadata": "\"{name}\" não pôde ser verificado quanto a informações ocultas (autor, local, dispositivo) e não foi aceito. Salve-o novamente ou exporte-o como PDF.",
+  "upload.error.malware": "\"{name}\" não foi aceito: o antivírus o sinalizou. Se você acha que o arquivo é seguro, exporte-o como PDF e tente novamente.",
+  "upload.error.scan_unavailable": "\"{name}\" não pôde ser verificado agora e não foi armazenado. Tente novamente em alguns minutos."
 }

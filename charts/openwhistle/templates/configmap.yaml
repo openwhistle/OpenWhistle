@@ -57,3 +57,6 @@ data:
   RETENTION_DAYS: {{ .Values.config.retentionDays | quote }}
   MULTI_TENANCY_ENABLED: {{ .Values.config.multiTenancyEnabled | quote }}
   DEFAULT_ORG_SLUG: {{ .Values.config.defaultOrgSlug | quote }}
+  CLAMAV_HOST: {{ .Values.config.clamavHost | quote }}
+  CLAMAV_PORT: {{ .Values.config.clamavPort | quote }}
+  CLAMAV_TIMEOUT_SECONDS: {{ .Values.config.clamavTimeoutSeconds | quote }}

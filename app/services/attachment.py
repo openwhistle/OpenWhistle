@@ -349,6 +349,14 @@ async def read_upload_files(
         if error:
             return [], error
 
+        from app.services.virus_scan import ScanUnavailableError, scan_bytes  # noqa: PLC0415
+
+        try:
+            if await scan_bytes(data):
+                return [], UploadError("upload.error.malware", name=name)
+        except ScanUnavailableError:
+            return [], UploadError("upload.error.scan_unavailable", name=name)
+
         try:
             data = strip_metadata(name, data)
         except MetadataError:

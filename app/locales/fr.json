@@ -625,5 +625,7 @@
   "upload.error.bad_type": "« {name} » a un type de fichier non pris en charge ({type}). Autorisés : PDF, images, texte, Word, Excel.",
   "upload.error.content_mismatch": "« {name} » ne contient pas ce qu'indique son extension « {ext} » (fichier endommagé ou déguisé). Enregistrez-le à nouveau et réessayez.",
   "upload.error.too_many": "Trop de fichiers. Vous pouvez joindre au plus {max} fichiers.",
-  "upload.error.metadata": "« {name} » n'a pas pu être vérifié pour les informations cachées (auteur, lieu, appareil) et n'a pas été accepté. Enregistrez-le à nouveau ou exportez-le en PDF."
+  "upload.error.metadata": "« {name} » n'a pas pu être vérifié pour les informations cachées (auteur, lieu, appareil) et n'a pas été accepté. Enregistrez-le à nouveau ou exportez-le en PDF.",
+  "upload.error.malware": "« {name} » n'a pas été accepté : l'antivirus l'a signalé. Si vous pensez que le fichier est sûr, exportez-le en PDF et réessayez.",
+  "upload.error.scan_unavailable": "« {name} » n'a pas pu être analysé pour l'instant et n'a pas été enregistré. Réessayez dans quelques minutes."
 }
