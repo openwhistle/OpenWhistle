@@ -460,21 +460,22 @@ async def submit_post(
         if file_tuples and not await _redis_has_room(redis):
             return await _fail(_STEP_ATTACHMENTS, "attachments_no_room")
 
-        state["files_stored"] = True
+        # A file input is always empty on revisit, so Next with nothing chosen
+        # keeps what is attached; new files (already scanned and stripped by
+        # read_upload_files) replace it.
+        if file_tuples:
+            import base64 as _b64
+
+            state["file_meta"] = [{"filename": ft[0], "size": len(ft[2])} for ft in file_tuples]
+            state["file_data"] = [
+                {
+                    "filename": ft[0],
+                    "content_type": ft[1],
+                    "data": _b64.b64encode(ft[2]).decode(),
+                }
+                for ft in file_tuples
+            ]
         state["step"] = _STEP_REVIEW
-        state["file_meta"] = [
-            {"filename": ft[0], "size": len(ft[2])} for ft in file_tuples
-        ]
-        import base64 as _b64
-        file_data_list = [
-            {
-                "filename": ft[0],
-                "content_type": ft[1],
-                "data": _b64.b64encode(ft[2]).decode(),
-            }
-            for ft in file_tuples
-        ]
-        state["file_data"] = file_data_list
         await _save_submission(redis, session_id, state)
         return _redirect_after_post()
 

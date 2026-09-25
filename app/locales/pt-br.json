@@ -372,6 +372,8 @@
   "submit.step.category.hint": "Selecione a categoria que melhor descreve a violação que você está denunciando.",
   "submit.step.attachments.info": "Anexe qualquer evidência de suporte. Esta etapa é opcional — você pode clicar em Próximo para pular.",
   "submit.step.attachments.privacy": "Antes de armazenar seus arquivos, removemos informações ocultas que poderiam identificá-lo: localização e dados da câmera em fotos, o autor em PDFs e arquivos Word/Excel (.docx/.xlsx). O conteúdo visível de qualquer arquivo não é alterado — na dúvida, salve-o antes como PDF.",
+  "submit.step.attachments.already_attached": "Já anexado:",
+  "submit.step.attachments.already_attached.hint": "Seu navegador não consegue mostrar aqui os arquivos já selecionados, mas eles estão salvos. Clique em Próximo para mantê-los como estão, ou escolha novos arquivos abaixo para substituí-los.",
   "submit.step.review.title": "Revise seu envio",
   "submit.step.review.warning.title": "Última chance de revisar",
   "submit.step.review.warning.body": "Verifique todos os detalhes antes de enviar. Uma vez enviada, a denúncia não pode ser modificada.",

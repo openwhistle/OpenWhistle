@@ -117,3 +117,109 @@ async def test_step_ahead_on_fresh_session_shows_session_incomplete(
     page = await client.get("/submit")
     assert _step(page.text) == 1
     assert "start over" in page.text.lower()
+
+
+# ── Attachments survive Back (#94) ─────────────────────────────────
+
+
+async def _walk_to_attachments(client: AsyncClient) -> None:
+    await _walk_to_description(client)
+    await _post(client, description="A description long enough to pass.")
+
+
+async def _upload(client: AsyncClient, *files: tuple[str, bytes]) -> Response:
+    page = await client.get("/submit")
+    return await client.post(
+        "/submit",
+        data={"csrf_token": _csrf(page.text), "step": str(_step(page.text)), "action": "next"},
+        files=[("files", (name, data, "text/plain")) for name, data in files],
+        follow_redirects=False,
+    )
+
+
+async def _back(client: AsyncClient) -> None:
+    page = await client.get("/submit")
+    await client.post(
+        "/submit",
+        data={"csrf_token": _csrf(page.text), "step": str(_step(page.text)), "action": "back"},
+        follow_redirects=False,
+    )
+
+
+@pytest.mark.asyncio
+async def test_back_then_next_without_files_keeps_attachments(client: AsyncClient) -> None:
+    await _walk_to_attachments(client)
+    await _upload(client, ("evidence.txt", b"first evidence file"))
+    assert "evidence.txt" in (await client.get("/submit")).text  # review
+
+    await _back(client)
+    attachments_step = (await client.get("/submit")).text
+    assert 'name="files"' in attachments_step
+    assert "Already attached" in attachments_step
+    assert "evidence.txt" in attachments_step
+
+    await _upload(client)  # Next with the (always empty) file input
+    assert "evidence.txt" in (await client.get("/submit")).text
+
+
+@pytest.mark.asyncio
+async def test_new_files_replace_the_attached_ones(client: AsyncClient) -> None:
+    await _walk_to_attachments(client)
+    await _upload(client, ("old.txt", b"the old evidence"))
+    await _back(client)
+    await _upload(client, ("new.txt", b"the new evidence"))
+    review = (await client.get("/submit")).text
+    assert "new.txt" in review
+    assert "old.txt" not in review
+
+
+@pytest.mark.asyncio
+async def test_infected_replacement_keeps_the_attached_file(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import app.services.virus_scan as virus_scan
+
+    async def _scan(data: bytes) -> str | None:
+        return "Eicar-Test-Signature" if b"EICAR" in data else None
+
+    monkeypatch.setattr(virus_scan, "scan_bytes", _scan)
+    await _walk_to_attachments(client)
+    await _upload(client, ("clean.txt", b"clean evidence"))
+    await _back(client)
+
+    resp = await _upload(client, ("infected.txt", b"EICAR payload"))
+    assert resp.status_code == 303
+    page = (await client.get("/submit")).text
+    assert 'name="files"' in page  # still on the attachments step, with the error
+    assert "infected.txt" in page
+    assert "clean.txt" in page
+
+    await _upload(client)
+    review = (await client.get("/submit")).text
+    assert "clean.txt" in review
+    assert "infected.txt" not in review
+
+
+@pytest.mark.asyncio
+async def test_unstrippable_replacement_keeps_the_attached_file(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import app.services.attachment as attachment
+
+    real_strip = attachment.strip_metadata
+
+    def _strip(name: str, data: bytes) -> bytes:
+        if name == "broken.txt":
+            raise attachment.MetadataError(name)
+        return real_strip(name, data)
+
+    monkeypatch.setattr(attachment, "strip_metadata", _strip)
+    await _walk_to_attachments(client)
+    await _upload(client, ("kept.txt", b"kept evidence"))
+    await _back(client)
+
+    await _upload(client, ("broken.txt", b"cannot be stripped"))
+    await _upload(client)
+    review = (await client.get("/submit")).text
+    assert "kept.txt" in review
+    assert "broken.txt" not in review

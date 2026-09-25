@@ -97,6 +97,10 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   step now answers its POST with a redirect to `GET /submit`, and a step that does not match
   the session's progress is ignored instead of processed. Reported and fixed by Zachary
   Bridges (#94).
+- **The wizard's Back button silently dropped uploaded attachments**: a file input is always
+  empty on revisit, so Next from there cleared them. Files now stay attached unless new ones
+  are chosen, and the attachments step lists what is already attached. Reported and fixed by
+  Zachary Bridges (#94).
 
 ### Removed
 
