@@ -362,6 +362,8 @@
   "submit.step.attachments.privacy": "Bevor Ihre Dateien gespeichert werden, entfernen wir versteckte Angaben, die Sie identifizieren könnten: Standort- und Kameradaten in Fotos, den Autor in PDFs und Word-/Excel-Dateien (.docx/.xlsx). Der sichtbare Inhalt einer Datei wird nicht verändert — speichern Sie sie im Zweifel vorher als PDF.",
   "submit.step.attachments.already_attached": "Bereits angehängt:",
   "submit.step.attachments.already_attached.hint": "Ihr Browser kann bereits ausgewählte Dateien hier nicht anzeigen, sie sind aber gespeichert. Klicken Sie auf Weiter, um sie unverändert zu behalten, oder wählen Sie unten neue Dateien aus, um sie zu ersetzen.",
+  "submit.step.attachments.remove": "Entfernen",
+  "submit.step.attachments.remove.label": "{name} entfernen",
   "submit.step.review.title": "Ihre Meldung überprüfen",
   "submit.step.review.warning.title": "Letzte Möglichkeit zur Überprüfung",
   "submit.step.review.warning.body": "Bitte überprüfen Sie alle Angaben vor dem Absenden. Nach dem Absenden kann die Meldung nicht mehr geändert werden.",

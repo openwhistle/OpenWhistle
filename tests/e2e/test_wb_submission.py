@@ -531,3 +531,41 @@ def test_description_validation_failure_preserves_typed_text(page: Page, base_ur
     assert page.locator('textarea[name="description"]').input_value() == "xyztuv", (
         f"Textarea reverted to a previous value instead of the just-typed text. URL: {page.url}"
     )
+
+
+def test_wrongly_attached_file_can_be_removed(page: Page, base_url: str) -> None:
+    """Attachments survive Back, so a mistaken file needs its own Remove control."""
+    page.goto(f"{base_url}/submit")
+    page.wait_for_load_state("networkidle")
+    _fill_mode_step(page)
+    _advance_step(page)
+    _skip_location_if_present(page)
+    page.wait_for_load_state("networkidle")
+    _fill_category_step(page)
+    _advance_step(page)
+    page.wait_for_load_state("networkidle")
+    _fill_description_step(page)
+    _advance_step(page)
+
+    page.wait_for_load_state("networkidle")
+    page.locator('input[type="file"][name="files"]').set_input_files(
+        [
+            {"name": "keep.txt", "mimeType": "text/plain", "buffer": b"evidence to keep"},
+            {"name": "wrong.txt", "mimeType": "text/plain", "buffer": b"attached by mistake"},
+        ]
+    )
+    _advance_step(page)
+    page.wait_for_load_state("networkidle")
+    page.click(_BACK_BTN)
+    page.wait_for_load_state("networkidle")
+
+    page.get_by_role("button", name="Remove wrong.txt").click()
+    page.wait_for_load_state("networkidle")
+    assert "wrong.txt" not in page.content()
+    assert "keep.txt" in page.content()
+
+    _advance_step(page)
+    page.wait_for_load_state("networkidle")
+    review = page.content()
+    assert "keep.txt" in review
+    assert "wrong.txt" not in review

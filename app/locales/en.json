@@ -362,6 +362,8 @@
   "submit.step.attachments.privacy": "Before your files are stored, we remove hidden details that could identify you: location and camera data in photos, the author in PDFs and Word/Excel (.docx/.xlsx) files. The visible content of any file is not changed — save it as PDF first if unsure.",
   "submit.step.attachments.already_attached": "Already attached:",
   "submit.step.attachments.already_attached.hint": "Your browser can't show previously selected files here, but they're saved. Click Next to keep them as-is, or choose new files below to replace them.",
+  "submit.step.attachments.remove": "Remove",
+  "submit.step.attachments.remove.label": "Remove {name}",
   "submit.step.review.title": "Review your submission",
   "submit.step.review.warning.title": "Last chance to review",
   "submit.step.review.warning.body": "Please check all details before submitting. Once submitted, the report cannot be modified.",

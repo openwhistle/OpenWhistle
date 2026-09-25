@@ -82,6 +82,8 @@
   "submit.step.attachments.privacy": "Avant l'enregistrement de vos fichiers, nous supprimons les informations cachées qui pourraient vous identifier : localisation et données d'appareil des photos, auteur des PDF et fichiers Word/Excel (.docx/.xlsx). Le contenu visible d'un fichier n'est pas modifié — en cas de doute, enregistrez-le d'abord en PDF.",
   "submit.step.attachments.already_attached": "Déjà joint :",
   "submit.step.attachments.already_attached.hint": "Votre navigateur ne peut pas afficher ici les fichiers déjà sélectionnés, mais ils sont enregistrés. Cliquez sur Suivant pour les conserver tels quels, ou choisissez de nouveaux fichiers ci-dessous pour les remplacer.",
+  "submit.step.attachments.remove": "Retirer",
+  "submit.step.attachments.remove.label": "Retirer {name}",
   "submit.step.review.title": "Vérifier votre soumission",
   "submit.step.review.warning.title": "Dernière chance de vérification",
   "submit.step.review.warning.body": "Veuillez vérifier tous les détails avant de soumettre. Une fois soumis, le signalement ne peut plus être modifié.",

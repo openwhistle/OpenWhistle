@@ -564,6 +564,25 @@ async def submit_post(
     return _redirect_after_post()
 
 
+@router.post("/submit/attachments/remove")
+async def submit_remove_attachment(
+    request: Request,
+    index: int = Form(...),
+    redis: Redis = Depends(get_redis),
+    _csrf: None = Depends(validate_csrf),
+) -> RedirectResponse:
+    """Remove one already-attached file from the draft, on the attachments step only."""
+    raw = request.cookies.get("ow-submission-session")
+    if raw and _DRAFT_COOKIE_RE.match(raw):
+        state = await _load_submission(redis, raw)
+        files = state.get("file_data", [])
+        if state.get("step") == _STEP_ATTACHMENTS and 0 <= index < len(files):
+            del files[index]
+            del state["file_meta"][index]
+            await _save_submission(redis, raw, state)
+    return RedirectResponse("/submit", status_code=303)
+
+
 @router.post("/submit/restart")
 async def submit_restart(
     request: Request,

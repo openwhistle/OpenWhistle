@@ -104,6 +104,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A description that failed validation (too short or too long) was discarded, and the step
   showed an empty field or the previous text. It now keeps what was typed (a too-long one cut
   at 10,000 characters). Reported and fixed by Zachary Bridges (#94).
+- Since attachments now stay attached, a file attached by mistake could only be replaced, never
+  dropped. The attachments step has a Remove button for each attached file.
 
 ### Removed
 

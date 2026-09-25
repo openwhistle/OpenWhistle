@@ -255,3 +255,85 @@ async def test_short_description_does_not_advance_the_session(client: AsyncClien
     resp = await _post(client, step=step + 2)  # jump to review
     assert resp.status_code == 303
     assert _step((await client.get("/submit")).text) == step
+
+
+# ── Removing a wrongly attached file ────────────────────────────────
+
+
+async def _remove(client: AsyncClient, index: str, csrf: str | None = None) -> Response:
+    page = await client.get("/submit")
+    return await client.post(
+        "/submit/attachments/remove",
+        data={"csrf_token": _csrf(page.text) if csrf is None else csrf, "index": index},
+        follow_redirects=False,
+    )
+
+
+async def _attach_two_and_go_back(client: AsyncClient) -> None:
+    await _walk_to_attachments(client)
+    await _upload(client, ("keep.txt", b"evidence to keep"), ("wrong.txt", b"attached by mistake"))
+    await _back(client)
+
+
+@pytest.mark.asyncio
+async def test_remove_drops_only_the_chosen_file(client: AsyncClient) -> None:
+    await _attach_two_and_go_back(client)
+    page = (await client.get("/submit")).text
+    assert 'action="/submit/attachments/remove"' in page
+    assert 'aria-label="Remove wrong.txt"' in page
+
+    resp = await _remove(client, "1")
+    assert resp.status_code == 303
+    assert resp.headers["location"] == "/submit"
+    page = (await client.get("/submit")).text
+    assert 'name="files"' in page  # still on the attachments step
+    assert "wrong.txt" not in page
+
+    await _upload(client)
+    review = (await client.get("/submit")).text
+    assert "keep.txt" in review
+    assert "wrong.txt" not in review
+
+
+@pytest.mark.asyncio
+async def test_removing_the_last_file_leaves_no_attachments(client: AsyncClient) -> None:
+    await _walk_to_attachments(client)
+    await _upload(client, ("only.txt", b"attached by mistake"))
+    await _back(client)
+    await _remove(client, "0")
+    assert "Already attached" not in (await client.get("/submit")).text
+    await _upload(client)
+    assert "only.txt" not in (await client.get("/submit")).text
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("index", ["2", "-1"])
+async def test_remove_out_of_range_index_changes_nothing(client: AsyncClient, index: str) -> None:
+    await _attach_two_and_go_back(client)
+    await _remove(client, index)
+    page = (await client.get("/submit")).text
+    assert "keep.txt" in page
+    assert "wrong.txt" in page
+
+
+@pytest.mark.asyncio
+async def test_remove_is_refused_outside_the_attachments_step(client: AsyncClient) -> None:
+    await _walk_to_attachments(client)
+    await _upload(client, ("keep.txt", b"evidence to keep"))  # now on review
+    await _remove(client, "0")
+    assert "keep.txt" in (await client.get("/submit")).text
+
+
+@pytest.mark.asyncio
+async def test_remove_requires_csrf(client: AsyncClient) -> None:
+    await _attach_two_and_go_back(client)
+    resp = await _remove(client, "0", csrf="not-the-token")
+    assert resp.status_code == 403
+    assert "keep.txt" in (await client.get("/submit")).text
+
+
+@pytest.mark.asyncio
+async def test_remove_without_a_draft_just_redirects(client: AsyncClient) -> None:
+    resp = await _remove(client, "0")
+    assert resp.status_code == 303
+    assert resp.headers["location"] == "/submit"

@@ -255,7 +255,14 @@
             {{ t('submit.step.attachments.already_attached') }}
             <ul class="sub-file-list">
                 {% for f in state.get('file_meta', []) %}
-                <li>{{ icons.icon('paperclip') }} {{ f.filename }} ({{ f.size | format_size }})</li>
+                <li>
+                    {{ icons.icon('paperclip') }} {{ f.filename }} ({{ f.size | format_size }})
+                    <form method="post" action="/submit/attachments/remove" class="inline-form">
+                        <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                        <input type="hidden" name="index" value="{{ loop.index0 }}">
+                        <button type="submit" class="sub-restart-btn" aria-label="{{ t('submit.step.attachments.remove.label', name=f.filename) }}">{{ t('submit.step.attachments.remove') }}</button>
+                    </form>
+                </li>
                 {% endfor %}
             </ul>
             {{ t('submit.step.attachments.already_attached.hint') }}
