@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import asyncio
 import io
+import re
+from pathlib import Path
 
 import pytest
 from starlette.datastructures import Headers, UploadFile
@@ -15,6 +17,8 @@ from starlette.datastructures import Headers, UploadFile
 from app.config import settings
 from app.services.attachment import read_upload_files
 from app.services.virus_scan import scan_bytes
+
+ROOT = Path(__file__).parents[1]
 
 
 async def _fake_clamd(reply: bytes) -> asyncio.AbstractServer:
@@ -242,3 +246,28 @@ async def test_scan_unavailable_on_timeout(monkeypatch: pytest.MonkeyPatch) -> N
         server.close()
         await asyncio.wait_for(handler_done.wait(), 5)
         await server.wait_closed()
+
+
+# ── Docs: Helm ships no clamd (fix round 2, re-review required) ─────────────
+
+
+def test_virus_scan_docs_warn_that_helm_ships_no_clamd() -> None:
+    """The chart deploys no clamav pod; enabling CLAMAV_HOST via Helm without
+    pointing it at a real, reachable clamd fails every upload closed. RED if
+    this warning is ever removed from the how-to."""
+    text = (ROOT / "docs/docs.html").read_text()
+    section = text.split('id="virus-scanning"')[1].split('id="first-run"')[0]
+    assert "Helm" in section
+    assert "no clamav pod" in section
+    assert "clamavHost" in section
+    assert "reachable" in section and "refused" in section
+
+
+def test_helm_values_warn_that_the_chart_ships_no_clamd() -> None:
+    """Same warning, at the point an operator actually sets clamavHost."""
+    values = (ROOT / "charts/openwhistle/values.yaml").read_text()
+    match = re.search(r"((?:^  #.*\n)+)  clamavHost:", values, re.M)
+    assert match, "no comment block directly above clamavHost"
+    comment = match.group(1)
+    assert "does not deploy a clamav pod" in comment
+    assert "reachable clamd" in comment

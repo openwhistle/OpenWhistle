@@ -138,7 +138,11 @@ config:
   defaultOrgSlug: "default"
 
   # Virus scanning of uploads through clamd (INSTREAM). Empty host = off. When
-  # set, an upload is refused if clamd cannot be reached (fail closed).
+  # set, an upload is refused if clamd cannot be reached (fail closed). This
+  # chart does not deploy a clamav pod — point clamavHost at a clamd you run
+  # and reach from the cluster yourself (your own Deployment/Service, or an
+  # external instance). Setting it without a reachable clamd behind it fails
+  # every upload closed, not open.
   clamavHost: ""
   clamavPort: "3310"
   clamavTimeoutSeconds: "30"

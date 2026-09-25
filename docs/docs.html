@@ -1764,6 +1764,14 @@ CLAMAV_HOST=clamav</code></pre>
           infected — nothing is ever stored unscanned. The whistleblower sees a generic
           "try again in a few minutes" message; no file name, size or content reaches the log.
         </p>
+        <p>
+          The Helm chart ships <strong>no clamav pod</strong> — <code>docker-compose.prod.yml</code>'s
+          profile-gated service has no Kubernetes equivalent. Setting <code>config.clamavHost</code>
+          in <code>values.yaml</code> without a real, reachable <code>clamd</code> behind it turns on
+          the fail-closed behaviour above for every upload: unreachable means refused, not skipped.
+          Point it at a <code>clamd</code> you run and reach from the cluster yourself — as its own
+          Deployment and Service, or an external instance — and leave it empty to keep scanning off.
+        </p>
         <table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
