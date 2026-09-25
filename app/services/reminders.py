@@ -3,7 +3,10 @@
 Runs as an APScheduler job every 30 minutes. Redis keys are used to prevent
 duplicate reminders within each warning window.
 
-Privacy: notifications to admins contain only the case number — never report content.
+Privacy: the reminder email to the org's own admins carries the case number;
+the reminder webhook (Slack, Teams, generic — third parties) carries only the
+aggregate count of cases due, sent once per run — never a case number or a
+deadline date.
 """
 
 from __future__ import annotations
@@ -73,14 +76,22 @@ async def send_sla_reminders() -> None:
                 )
                 reports = result.scalars().all()
 
+                ack_due = feedback_due = 0
                 for report in reports:
                     # Isolate per-report failures: one bad row must not abort SLA
                     # checks for every other pending report in this run.
                     try:
-                        await _check_ack_reminder(report, now, db, redis, settings)
-                        await _check_feedback_reminder(report, now, db, redis, settings)
+                        ack_due += await _check_ack_reminder(report, now, db, redis, settings)
+                        feedback_due += await _check_feedback_reminder(
+                            report, now, db, redis, settings
+                        )
                     except Exception:  # noqa: BLE001
                         log.exception("SLA reminder check failed for a report; continuing")
+                if (ack_due or feedback_due) and settings.notify_webhook_enabled \
+                        and settings.notify_webhook_url.strip():
+                    from app.services import notifications  # noqa: PLC0415
+
+                    await notifications._send_reminder_webhook(ack_due, feedback_due, settings)
             finally:
                 try:
                     await redis.delete(lock_key)
@@ -96,7 +107,12 @@ async def _check_ack_reminder(
     db: object,
     redis: object,
     settings: object,
-) -> None:
+) -> bool:
+    """Check and, if due, send the ack reminder for one report.
+
+    Returns True when a reminder was dispatched (used by the caller to build
+    the aggregate count for the once-per-run webhook), False otherwise.
+    """
     from app.config import Settings
     from app.models.report import Report
 
@@ -104,29 +120,29 @@ async def _check_ack_reminder(
     cfg: Settings = settings  # type: ignore[assignment]
 
     if r.acknowledged_at is not None:
-        return  # already acknowledged
+        return False  # already acknowledged
 
     ack_deadline = r.submitted_at + timedelta(days=7)
     days_left = (ack_deadline - now).days
     if days_left > cfg.reminder_ack_warn_days:
-        return
+        return False
 
     from redis.asyncio import Redis as RedisType
     red: RedisType = redis  # type: ignore[assignment]
 
     key = _ack_dedup_key(r.case_number)
     if await red.exists(key):
-        return
+        return False
 
     await _dispatch_reminder(
         case_number=r.case_number,
         deadline_label="7-day acknowledgement",
         days_left=days_left,
-        report=r,
         settings=cfg,
     )
     await red.set(key, "1", ex=_dedup_ttl_seconds(days_left))
     log.info("ACK reminder sent for %s (%d days left)", r.case_number, days_left)
+    return True
 
 
 async def _check_feedback_reminder(
@@ -135,7 +151,12 @@ async def _check_feedback_reminder(
     db: object,
     redis: object,
     settings: object,
-) -> None:
+) -> bool:
+    """Check and, if due, send the feedback reminder for one report.
+
+    Returns True when a reminder was dispatched, False otherwise (see
+    ``_check_ack_reminder``).
+    """
     from app.config import Settings
     from app.models.report import Report
 
@@ -143,54 +164,45 @@ async def _check_feedback_reminder(
     cfg: Settings = settings  # type: ignore[assignment]
 
     if r.feedback_due_at is None:
-        return
+        return False
 
     days_left = (r.feedback_due_at - now).days
     if days_left > cfg.reminder_feedback_warn_days:
-        return
+        return False
 
     from redis.asyncio import Redis as RedisType
     red: RedisType = redis  # type: ignore[assignment]
 
     key = _feedback_dedup_key(r.case_number)
     if await red.exists(key):
-        return
+        return False
 
     await _dispatch_reminder(
         case_number=r.case_number,
         deadline_label="3-month feedback",
         days_left=days_left,
-        report=r,
         settings=cfg,
     )
     await red.set(key, "1", ex=_dedup_ttl_seconds(days_left))
     log.info("Feedback reminder sent for %s (%d days left)", r.case_number, days_left)
+    return True
 
 
 async def _dispatch_reminder(
     case_number: str,
     deadline_label: str,
     days_left: int,
-    report: object,
     settings: object,
 ) -> None:
-    """Send reminder via all enabled notification channels."""
-    import asyncio
+    """Send the per-report reminder email to admins.
 
+    The webhook is not sent here: it carries counts only, aggregated and sent
+    once per ``send_sla_reminders`` run, never per report.
+    """
     from app.config import Settings
-    from app.services.notifications import _send_reminder_email, _send_reminder_webhook
+    from app.services.notifications import _send_reminder_email
 
     cfg: Settings = settings  # type: ignore[assignment]
 
-    tasks = []
     if cfg.notify_email_enabled and cfg.notify_email_to.strip():
-        tasks.append(
-            _send_reminder_email(case_number, deadline_label, days_left, cfg)
-        )
-    if cfg.notify_webhook_enabled and cfg.notify_webhook_url.strip():
-        tasks.append(
-            _send_reminder_webhook(case_number, deadline_label, days_left, cfg)
-        )
-
-    if tasks:
-        await asyncio.gather(*tasks, return_exceptions=True)
+        await _send_reminder_email(case_number, deadline_label, days_left, cfg)

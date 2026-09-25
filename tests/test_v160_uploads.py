@@ -4,6 +4,8 @@ S3 re-keying of attachments stored under filename keys before v1.5.0.
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import io
 import uuid
 import zipfile
@@ -308,7 +310,7 @@ async def test_run_s3_rekey_noop_when_another_replica_holds_the_lock(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """A replica that loses the Redis lock race must not touch the DB at all."""
-    from app.redis_client import get_redis
+    from app.redis_client import close_redis, get_redis
     from app.services import attachment as att_service
 
     redis = await get_redis()
@@ -321,6 +323,10 @@ async def test_run_s3_rekey_noop_when_another_replica_holds_the_lock(
         rekey_mock.assert_not_called()
     finally:
         await redis.delete(lock_key)
+        # get_redis() was called outside the `client` fixture: close it now, or
+        # it leaks a connection bound to this test's event loop into the next
+        # test, which fails with "Event loop is closed" (RTK/lane note).
+        await close_redis()
 
 
 @pytest.mark.asyncio
@@ -351,3 +357,57 @@ async def test_lifespan_does_not_schedule_rekey_when_backend_is_not_s3() -> None
             pass
 
     rekey_mock.assert_not_called()
+
+
+# ── Background re-key task: a failure must not be silently swallowed ───────
+
+
+@pytest.mark.asyncio
+async def test_log_rekey_task_result_logs_exception_type_not_message(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A failed background re-key task is logged by exception type only — never
+    its message, which could carry a legacy (filename-bearing) storage key.
+    """
+    from app.main import _log_rekey_task_result
+
+    async def _boom() -> None:
+        raise ValueError("Max_Mustermann_evidence.pdf could not be copied")
+
+    task = asyncio.create_task(_boom())
+    await asyncio.gather(task, return_exceptions=True)
+
+    with caplog.at_level("ERROR", logger="app.main"):
+        _log_rekey_task_result(task)
+
+    assert "ValueError" in caplog.text
+    assert "Max_Mustermann" not in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_log_rekey_task_result_silent_on_success() -> None:
+    from app.main import _log_rekey_task_result
+
+    async def _ok() -> None:
+        return None
+
+    task = asyncio.create_task(_ok())
+    await task
+    _log_rekey_task_result(task)  # must not raise, nothing to log
+
+
+@pytest.mark.asyncio
+async def test_log_rekey_task_result_silent_on_cancel() -> None:
+    """Cancelling the task at shutdown (main.py's `rekey_task.cancel()`) must
+    not itself be treated as a failure worth logging.
+    """
+    from app.main import _log_rekey_task_result
+
+    async def _sleep_forever() -> None:
+        await asyncio.sleep(10)
+
+    task = asyncio.create_task(_sleep_forever())
+    task.cancel()
+    with contextlib.suppress(asyncio.CancelledError):
+        await task
+    _log_rekey_task_result(task)  # must not raise

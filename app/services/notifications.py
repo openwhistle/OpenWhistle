@@ -3,9 +3,12 @@
 Notifications are fire-and-forget: failures are logged but never propagated
 to callers, so a misconfigured SMTP server cannot block report submission.
 
-Privacy: notifications contain only counts and case numbers. Report content
-(description, category) is never transmitted, and new-report notices are
-batched so their timing does not reveal when a report was submitted.
+Privacy: webhooks (Slack, Teams, generic — third parties) carry counts only,
+never a case number or a deadline date. Email (the org's own admins) keeps
+case numbers, since only they can act on a specific case. Report content
+(description, category) is never transmitted on either channel, and
+new-report notices are batched so their timing does not reveal when a report
+was submitted.
 """
 
 from __future__ import annotations
@@ -15,7 +18,6 @@ import hashlib
 import hmac
 import json
 import logging
-from datetime import UTC, datetime
 from email.mime.text import MIMEText
 from typing import Any
 
@@ -112,10 +114,23 @@ async def _send_reminder_email(
         log.exception("Failed to send SLA reminder email for %s", case_number)
 
 
-async def _send_reminder_webhook(
-    case_number: str, deadline_label: str, days_left: int, settings: object
-) -> None:
-    """POST an SLA reminder to the configured webhook URL."""
+def _plural(n: int, one: str, many: str) -> str:
+    return f"{n} {one if n == 1 else many}"
+
+
+def _reminder_text(ack_due: int, feedback_due: int, ack_days: int, feedback_days: int) -> str:
+    parts = []
+    if ack_due:
+        cases = _plural(ack_due, "case", "cases")
+        parts.append(f"{cases}: acknowledgement due within {ack_days} days")
+    if feedback_due:
+        cases = _plural(feedback_due, "case", "cases")
+        parts.append(f"{cases}: feedback due within {feedback_days} days")
+    return "; ".join(parts)
+
+
+async def _send_reminder_webhook(ack_due: int, feedback_due: int, settings: object) -> None:
+    """POST an SLA reminder digest to the configured webhook URL — counts only."""
     import httpx
 
     from app.config import Settings
@@ -123,8 +138,8 @@ async def _send_reminder_webhook(
 
     dashboard_url = f"{cfg.app_public_url.rstrip('/')}/admin/dashboard"
     payload = _build_reminder_payload(
-        case_number, deadline_label, days_left, cfg.notify_webhook_type,
-        cfg.app_name, dashboard_url,
+        ack_due, feedback_due, cfg.notify_webhook_type, cfg.app_name, dashboard_url,
+        cfg.reminder_ack_warn_days, cfg.reminder_feedback_warn_days,
     )
     body_bytes = json.dumps(payload, separators=(",", ":")).encode("utf-8")
 
@@ -141,21 +156,22 @@ async def _send_reminder_webhook(
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.post(cfg.notify_webhook_url, content=body_bytes, headers=headers)
             resp.raise_for_status()
-        log.info("SLA reminder webhook sent for %s (%s)", case_number, deadline_label)
+        log.info("SLA reminder webhook sent (ack_due=%d, feedback_due=%d)", ack_due, feedback_due)
     except Exception:
-        log.exception("Failed to send SLA reminder webhook for %s", case_number)
+        log.exception("Failed to send SLA reminder webhook")
 
 
 def _build_reminder_payload(
-    case_number: str,
-    deadline_label: str,
-    days_left: int,
+    ack_due: int,
+    feedback_due: int,
     webhook_type: str,
     app_name: str,
     dashboard_url: str,
+    ack_days: int,
+    feedback_days: int,
 ) -> dict[str, Any]:
-    ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
-    days_text = f"{days_left} day{'s' if days_left != 1 else ''} remaining"
+    """Build the SLA reminder webhook payload — counts only, no case numbers or dates."""
+    text = _reminder_text(ack_due, feedback_due, ack_days, feedback_days)
 
     if webhook_type == "slack":
         return {
@@ -166,12 +182,7 @@ def _build_reminder_payload(
                 },
                 {
                     "type": "section",
-                    "fields": [
-                        {"type": "mrkdwn", "text": f"*Case number:*\n`{case_number}`"},
-                        {"type": "mrkdwn", "text": f"*Deadline:*\n{deadline_label}"},
-                        {"type": "mrkdwn", "text": f"*Time left:*\n{days_text}"},
-                        {"type": "mrkdwn", "text": f"*Checked at:*\n{ts}"},
-                    ],
+                    "text": {"type": "mrkdwn", "text": text},
                 },
                 {
                     "type": "actions",
@@ -206,12 +217,9 @@ def _build_reminder_payload(
                                 "color": "Warning",
                             },
                             {
-                                "type": "FactSet",
-                                "facts": [
-                                    {"title": "Case number", "value": case_number},
-                                    {"title": "Deadline", "value": deadline_label},
-                                    {"title": "Time left", "value": days_text},
-                                ],
+                                "type": "TextBlock",
+                                "wrap": True,
+                                "text": text,
                             },
                         ],
                         "actions": [
@@ -228,10 +236,9 @@ def _build_reminder_payload(
 
     return {
         "event": "sla_reminder",
-        "case_number": case_number,
-        "deadline": deadline_label,
-        "days_left": days_left,
-        "timestamp": datetime.now(UTC).isoformat(),
+        "ack_due": ack_due,
+        "feedback_due": feedback_due,
+        "message": text,
     }
 
 
@@ -390,15 +397,22 @@ async def _send_email(new_reports: list[str], new_messages: list[str], settings:
         log.exception("Failed to send notification email")
 
 
+def _activity_text(new_reports: int, new_messages: int) -> str:
+    return (
+        f"{_plural(new_reports, 'new report', 'new reports')}, "
+        f"{_plural(new_messages, 'new message', 'new messages')}"
+    )
+
+
 def _build_webhook_payload(
-    new_reports: list[str],
-    new_messages: list[str],
+    new_reports: int,
+    new_messages: int,
     webhook_type: str,
     app_name: str,
     dashboard_url: str,
 ) -> dict[str, Any]:
-    """Build webhook payload in the format expected by the target service."""
-    reports, messages = _summary(new_reports), _summary(new_messages)
+    """Build the digest webhook payload — counts only, no case numbers."""
+    text = _activity_text(new_reports, new_messages)
 
     if webhook_type == "slack":
         return {
@@ -409,10 +423,7 @@ def _build_webhook_payload(
                 },
                 {
                     "type": "section",
-                    "fields": [
-                        {"type": "mrkdwn", "text": f"*New reports:*\n{reports}"},
-                        {"type": "mrkdwn", "text": f"*New messages on:*\n{messages}"},
-                    ],
+                    "text": {"type": "mrkdwn", "text": text},
                 },
                 {
                     "type": "actions",
@@ -447,10 +458,7 @@ def _build_webhook_payload(
                             },
                             {
                                 "type": "FactSet",
-                                "facts": [
-                                    {"title": "New reports", "value": reports},
-                                    {"title": "New messages on", "value": messages},
-                                ],
+                                "facts": [{"title": "Activity", "value": text}],
                             },
                         ],
                         "actions": [
@@ -470,11 +478,12 @@ def _build_webhook_payload(
         "event": "new_activity",
         "new_reports": new_reports,
         "new_messages": new_messages,
+        "message": text,
     }
 
 
 async def _send_webhook(new_reports: list[str], new_messages: list[str], settings: object) -> None:
-    """POST the digest as JSON to the configured webhook URL."""
+    """POST the digest as JSON to the configured webhook URL — counts only, never case numbers."""
     import httpx
 
     from app.config import Settings
@@ -482,7 +491,7 @@ async def _send_webhook(new_reports: list[str], new_messages: list[str], setting
 
     dashboard_url = f"{cfg.app_public_url.rstrip('/')}/admin/dashboard"
     payload = _build_webhook_payload(
-        new_reports, new_messages, cfg.notify_webhook_type, cfg.app_name, dashboard_url
+        len(new_reports), len(new_messages), cfg.notify_webhook_type, cfg.app_name, dashboard_url
     )
     body_bytes = json.dumps(payload, separators=(",", ":")).encode("utf-8")
 

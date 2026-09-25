@@ -44,6 +44,17 @@ jobs:
       - name: Run mypy (type checking)
         run: mypy app/ --strict
 
+      - name: Markdown lint
+        uses: DavidAnson/markdownlint-cli2-action@21c1be1b93ad9ed58fa840aacc3f279cde2a72ff # v24.2.0
+        with:
+          globs: |
+            **/*.md
+            !.venv
+            !node_modules
+            !.superpowers
+            !.claude
+            !.serena
+
   test:
     name: Tests
     runs-on: ubuntu-latest

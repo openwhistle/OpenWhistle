@@ -1280,8 +1280,10 @@
           Both channels are disabled by default and can be configured independently.
         </p>
         <p>
-          A notification carries only counts and <strong>case numbers</strong> — never the
-          report description, category or submission time.
+          Webhooks go to third parties (Slack, Teams, a generic endpoint) and carry
+          <strong>counts only</strong> — never a case number or a deadline date. Email goes to
+          your own admins and keeps the case number, since only they can act on a specific case.
+          Neither channel ever carries the report description, category or submission time.
         </p>
         <div class="callout callout-note">
           <div class="callout-title">Why notifications are batched</div>
@@ -1376,9 +1378,10 @@
           can verify authenticity using HMAC-SHA256.
         </p>
         <pre><code>{
-  "event": "new_report",
-  "case_number": "OW-2026-00001",
-  "timestamp": "2026-04-25T12:00:00+00:00"
+  "event": "new_activity",
+  "new_reports": 2,
+  "new_messages": 1,
+  "message": "2 new reports, 1 new message"
 }</code></pre>
         <table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
@@ -1404,7 +1407,7 @@
             <tr>
               <td><code class="env-key">NOTIFY_WEBHOOK_TYPE</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
-              <td>Payload format for webhook notifications. <code>generic</code> sends <code>{"event": "new_activity", "new_reports": [...], "new_messages": [...]}</code>; <code>slack</code> sends a Slack Block Kit message; <code>teams</code> sends a Microsoft Teams Adaptive Card (v1.4).</td>
+              <td>Payload format for webhook notifications. <code>generic</code> sends <code>{"event": "new_activity", "new_reports": 2, "new_messages": 1, "message": "..."}</code> (counts, never case numbers); <code>slack</code> sends a Slack Block Kit message; <code>teams</code> sends a Microsoft Teams Adaptive Card (v1.4). The SLA reminder webhook uses the same three formats with <code>{"event": "sla_reminder", "ack_due": ..., "feedback_due": ..., "message": "..."}</code> for <code>generic</code>.</td>
               <td><code>generic</code></td>
             </tr>
           </tbody>
@@ -1414,7 +1417,10 @@
         <p>
           OpenWhistle can automatically send reminders when HinSchG deadlines are approaching.
           The background scheduler checks all open reports every 30 minutes. Redis dedup keys
-          prevent duplicate notifications during each warning window.
+          prevent duplicate notifications during each warning window. The reminder email (to your
+          own admins) is sent per case and carries its case number; the reminder webhook is sent
+          once per run and carries only the number of cases due — never a case number or a
+          deadline date.
         </p>
         <table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>

@@ -433,8 +433,12 @@ def test_design_fix_list_is_closed() -> None:
 
 def test_brand_secondary_colour_is_gone() -> None:
     for path in ("app/config.py", "app/templating.py", "app/templates/base.html",
-                 "docker-compose.prod.yml", "docs/docs.html", "README.md",
-                 "charts/openwhistle/values.yaml", "charts/openwhistle/templates/configmap.yaml"):
+                 "docker-compose.yml", "docker-compose.e2e.yml", "docker-compose.prod.yml",
+                 "docs/docs.html", "README.md", ".env.example",
+                 "charts/openwhistle/values.yaml", "charts/openwhistle/templates/configmap.yaml",
+                 "charts/openwhistle/templates/secret.yaml",
+                 "ansible/roles/openwhistle/templates/env.j2",
+                 "ansible/roles/openwhistle/defaults/main.yml"):
         text = (ROOT / path).read_text().lower().replace("-", "_")
         assert "brand_secondary" not in text, path
 

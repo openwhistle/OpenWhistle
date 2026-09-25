@@ -5,6 +5,7 @@ import subprocess
 import sys
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -16,6 +17,9 @@ from app.csrf import CSRFMiddleware
 from app.logging_config import configure_logging
 from app.middleware import SecurityMiddleware
 from app.redis_client import close_redis
+
+if TYPE_CHECKING:
+    import asyncio
 
 configure_logging(settings.log_level, settings.log_format)
 
@@ -43,6 +47,21 @@ def _run_alembic_upgrade() -> None:
     logger.info("Database migrations applied successfully.")
     if result.stdout:
         logger.info(result.stdout)
+
+
+def _log_rekey_task_result(task: asyncio.Task[None]) -> None:
+    """Done-callback for the background S3 re-key task.
+
+    A bare create_task() swallows a failing task's exception until something
+    awaits it — which nothing does here, so surface it. Only the exception
+    type is logged, never its message: a legacy storage_key is a filename and
+    could end up inside some other exception's text.
+    """
+    if task.cancelled():
+        return
+    exc = task.exception()
+    if exc is not None:
+        logger.error("Background S3 re-key task failed: %s", type(exc).__name__)
 
 
 @asynccontextmanager
@@ -78,6 +97,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         from app.services.attachment import run_s3_rekey  # noqa: PLC0415
 
         rekey_task = asyncio.create_task(run_s3_rekey())
+        rekey_task.add_done_callback(_log_rekey_task_result)
 
     from app.services.notifications import batching_enabled  # noqa: PLC0415
 

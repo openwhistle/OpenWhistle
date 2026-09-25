@@ -121,47 +121,50 @@ class TestWebhookPayloadBuilders:
     def test_generic_payload_structure(self) -> None:
         from app.services.notifications import _build_webhook_payload
 
-        payload = _build_webhook_payload(["OW-2024-00001"], [], "generic", "Acme", "http://dash")
+        payload = _build_webhook_payload(1, 0, "generic", "Acme", "http://dash")
         assert payload["event"] == "new_activity"
-        assert payload["new_reports"] == ["OW-2024-00001"]
+        assert payload["new_reports"] == 1
+        assert payload["new_messages"] == 0
 
     def test_slack_payload_has_blocks(self) -> None:
         from app.services.notifications import _build_webhook_payload
 
-        payload = _build_webhook_payload(["OW-2024-00001"], [], "slack", "Acme", "http://dash")
+        payload = _build_webhook_payload(1, 0, "slack", "Acme", "http://dash")
         assert "blocks" in payload
         block_types = [b["type"] for b in payload["blocks"]]
         assert "header" in block_types
         assert "section" in block_types
         assert "actions" in block_types
 
-    def test_slack_payload_contains_case_number(self) -> None:
+    def test_slack_payload_contains_counts_not_case_number(self) -> None:
         from app.services.notifications import _build_webhook_payload
 
-        payload = _build_webhook_payload(["OW-2024-99999"], [], "slack", "Acme", "http://dash")
+        payload = _build_webhook_payload(3, 0, "slack", "Acme", "http://dash")
         payload_str = str(payload)
-        assert "OW-2024-99999" in payload_str
+        assert "3 new reports" in payload_str
+        assert "OW-" not in payload_str
 
     def test_teams_payload_has_adaptive_card(self) -> None:
         from app.services.notifications import _build_webhook_payload
 
-        payload = _build_webhook_payload(["OW-2024-00001"], [], "teams", "Acme", "http://dash")
+        payload = _build_webhook_payload(1, 0, "teams", "Acme", "http://dash")
         assert payload["type"] == "message"
         content = payload["attachments"][0]["content"]
         assert content["type"] == "AdaptiveCard"
         assert content["version"] == "1.4"
 
-    def test_teams_payload_contains_case_number(self) -> None:
+    def test_teams_payload_contains_counts_not_case_number(self) -> None:
         from app.services.notifications import _build_webhook_payload
 
-        payload = _build_webhook_payload(["OW-2024-77777"], [], "teams", "Acme", "http://dash")
+        payload = _build_webhook_payload(7, 0, "teams", "Acme", "http://dash")
         payload_str = str(payload)
-        assert "OW-2024-77777" in payload_str
+        assert "7 new reports" in payload_str
+        assert "OW-" not in payload_str
 
     def test_unknown_type_falls_back_to_generic(self) -> None:
         from app.services.notifications import _build_webhook_payload
 
-        payload = _build_webhook_payload(["OW-2024-00001"], [], "unknown_type", "Acme", "http://dash")
+        payload = _build_webhook_payload(1, 0, "unknown_type", "Acme", "http://dash")
         assert payload["event"] == "new_activity"
 
 
@@ -171,20 +174,15 @@ class TestReminderPayloadBuilders:
     def test_generic_reminder_structure(self) -> None:
         from app.services.notifications import _build_reminder_payload
 
-        payload = _build_reminder_payload(
-            "OW-2024-00001", "7-day acknowledgement", 2, "generic", "Acme", "http://dash"
-        )
+        payload = _build_reminder_payload(2, 0, "generic", "Acme", "http://dash", 2, 30)
         assert payload["event"] == "sla_reminder"
-        assert payload["case_number"] == "OW-2024-00001"
-        assert payload["deadline"] == "7-day acknowledgement"
-        assert payload["days_left"] == 2
+        assert payload["ack_due"] == 2
+        assert payload["feedback_due"] == 0
 
     def test_slack_reminder_has_blocks(self) -> None:
         from app.services.notifications import _build_reminder_payload
 
-        payload = _build_reminder_payload(
-            "OW-2024-00001", "3-month feedback", 5, "slack", "Acme", "http://dash"
-        )
+        payload = _build_reminder_payload(0, 5, "slack", "Acme", "http://dash", 2, 30)
         assert "blocks" in payload
         block_types = [b["type"] for b in payload["blocks"]]
         assert "header" in block_types
@@ -192,38 +190,32 @@ class TestReminderPayloadBuilders:
     def test_teams_reminder_has_adaptive_card(self) -> None:
         from app.services.notifications import _build_reminder_payload
 
-        payload = _build_reminder_payload(
-            "OW-2024-00001", "7-day acknowledgement", 1, "teams", "Acme", "http://dash"
-        )
+        payload = _build_reminder_payload(1, 0, "teams", "Acme", "http://dash", 2, 30)
         content = payload["attachments"][0]["content"]
         assert content["type"] == "AdaptiveCard"
 
-    def test_singular_day_text(self) -> None:
+    def test_singular_case_text(self) -> None:
         from app.services.notifications import _build_reminder_payload
 
-        payload = _build_reminder_payload(
-            "OW-2024-00001", "test", 1, "generic", "Acme", "http://dash"
-        )
-        # days_left=1 should not produce "1 days remaining"
-        assert payload["days_left"] == 1
+        payload = _build_reminder_payload(1, 0, "generic", "Acme", "http://dash", 2, 30)
+        # ack_due=1 should produce "1 case" not "1 cases"
+        assert payload["ack_due"] == 1
+        assert "1 case:" in payload["message"]
 
-    def test_slack_reminder_days_text_plural(self) -> None:
+    def test_slack_reminder_text_plural(self) -> None:
         from app.services.notifications import _build_reminder_payload
 
-        payload = _build_reminder_payload(
-            "OW-2024-00001", "test", 3, "slack", "Acme", "http://dash"
-        )
+        payload = _build_reminder_payload(3, 0, "slack", "Acme", "http://dash", 2, 30)
         payload_str = str(payload)
-        assert "3 days remaining" in payload_str
+        assert "3 cases" in payload_str
+        assert "OW-" not in payload_str
 
-    def test_slack_reminder_days_text_singular(self) -> None:
+    def test_slack_reminder_text_singular(self) -> None:
         from app.services.notifications import _build_reminder_payload
 
-        payload = _build_reminder_payload(
-            "OW-2024-00001", "test", 1, "slack", "Acme", "http://dash"
-        )
+        payload = _build_reminder_payload(1, 0, "slack", "Acme", "http://dash", 2, 30)
         payload_str = str(payload)
-        assert "1 day remaining" in payload_str
+        assert "1 case:" in payload_str
 
 
 # ── SLA reminder dedup logic ─────────────────────────────────────────────────
@@ -555,6 +547,8 @@ class TestSendReminderWebhook:
         cfg.app_name = "TestApp"
         cfg.notify_webhook_secret = ""
         cfg.notify_webhook_url = "https://hooks.example.com/webhook"
+        cfg.reminder_ack_warn_days = 2
+        cfg.reminder_feedback_warn_days = 30
 
         with patch("httpx.AsyncClient") as mock_client:
             mock_ctx = AsyncMock()
@@ -563,7 +557,7 @@ class TestSendReminderWebhook:
             mock_ctx.post = AsyncMock(return_value=mock_response)
             mock_client.return_value = mock_ctx
 
-            await _send_reminder_webhook("OW-2024-00001", "7-day acknowledgement", 1, cfg)
+            await _send_reminder_webhook(1, 0, cfg)
 
         mock_ctx.post.assert_called_once()
         call_kwargs = mock_ctx.post.call_args
@@ -584,6 +578,8 @@ class TestSendReminderWebhook:
         cfg.app_name = "TestApp"
         cfg.notify_webhook_secret = "mysecret"
         cfg.notify_webhook_url = "https://hooks.example.com/webhook"
+        cfg.reminder_ack_warn_days = 2
+        cfg.reminder_feedback_warn_days = 30
 
         captured: dict = {}
 
@@ -599,7 +595,7 @@ class TestSendReminderWebhook:
             mock_ctx.post = fake_post
             mock_client.return_value = mock_ctx
 
-            await _send_reminder_webhook("OW-2024-00001", "ack", 1, cfg)
+            await _send_reminder_webhook(1, 0, cfg)
 
         assert "X-OpenWhistle-Signature" in captured.get("headers", {})
         sig_header = captured["headers"]["X-OpenWhistle-Signature"]
@@ -714,6 +710,8 @@ class TestSendReminderWebhookError:
         cfg.app_name = "TestApp"
         cfg.notify_webhook_secret = ""
         cfg.notify_webhook_url = "https://hooks.example.com/webhook"
+        cfg.reminder_ack_warn_days = 2
+        cfg.reminder_feedback_warn_days = 30
 
         with patch("httpx.AsyncClient") as mock_client:
             mock_ctx = AsyncMock()
@@ -723,13 +721,15 @@ class TestSendReminderWebhookError:
             mock_client.return_value = mock_ctx
 
             # Must not raise
-            await _send_reminder_webhook("OW-2024-00001", "test", 1, cfg)
+            await _send_reminder_webhook(1, 0, cfg)
 
 
 # ── _dispatch_reminder ────────────────────────────────────────────────────────
 
 class TestDispatchReminder:
-    async def test_dispatches_email_and_webhook(self) -> None:
+    async def test_dispatches_email_only(self) -> None:
+        """_dispatch_reminder sends the per-report email; the webhook is sent
+        separately, once per run, with aggregate counts (see send_sla_reminders)."""
         from app.services.reminders import _dispatch_reminder
 
         cfg = MagicMock()
@@ -749,10 +749,10 @@ class TestDispatchReminder:
 
         with patch("app.services.notifications._send_reminder_email", mock_email), \
              patch("app.services.notifications._send_reminder_webhook", mock_webhook):
-            await _dispatch_reminder("OW-2024-00001", "test", 1, MagicMock(), cfg)
+            await _dispatch_reminder("OW-2024-00001", "test", 1, cfg)
 
         assert len(email_called) == 1
-        assert len(webhook_called) == 1
+        assert len(webhook_called) == 0
 
     async def test_no_tasks_when_both_disabled(self) -> None:
         from app.services.reminders import _dispatch_reminder
@@ -763,7 +763,7 @@ class TestDispatchReminder:
 
         with patch("app.services.notifications._send_reminder_email") as m_email, \
              patch("app.services.notifications._send_reminder_webhook") as m_webhook:
-            await _dispatch_reminder("OW-2024-00001", "test", 1, MagicMock(), cfg)
+            await _dispatch_reminder("OW-2024-00001", "test", 1, cfg)
 
         m_email.assert_not_called()
         m_webhook.assert_not_called()

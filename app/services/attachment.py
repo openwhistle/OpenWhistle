@@ -424,7 +424,9 @@ async def read_attachment(db: AsyncSession, attachment: Attachment) -> bytes:
         try:
             data = await get_storage_backend().get(attachment.storage_key)
         except StorageObjectNotFoundError as exc:
-            raise LookupError(attachment.storage_key) from exc
+            # The attachment id, never storage_key: a not-yet-rekeyed legacy
+            # row's storage_key is the original filename (task 17).
+            raise LookupError(str(attachment.id)) from exc
     elif attachment.data is None:
         raise LookupError(str(attachment.id))
     else:
@@ -493,7 +495,9 @@ async def delete_stored_objects(keys: list[str]) -> None:
         try:
             await backend.delete(key)
         except Exception:  # noqa: BLE001
-            logging.getLogger(__name__).exception("Failed to delete stored object %s", key)
+            # No key in the log line: a not-yet-rekeyed legacy row's key is
+            # the original filename (task 17).
+            logging.getLogger(__name__).exception("Failed to delete a stored object")
 
 
 _UUID_KEY = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
@@ -540,7 +544,13 @@ async def rekey_legacy_objects(db: AsyncSession) -> int:
 
 
 async def run_s3_rekey() -> None:
-    """Startup job: once across replicas (Redis lock), own DB session."""
+    """Startup job: once across replicas (Redis lock), own DB session.
+
+    The lock's 1h TTL is only a crash safety-net, not a correctness
+    requirement: rekey_legacy_objects() is idempotent (it skips rows already
+    holding a UUID key), so a replica that starts after the lock has expired
+    just finds nothing left to move.
+    """
     from app.database import AsyncSessionLocal  # noqa: PLC0415
     from app.redis_client import get_redis  # noqa: PLC0415
 

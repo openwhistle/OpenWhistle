@@ -104,7 +104,9 @@ class S3StorageBackend(StorageBackend):
             Body=data,
             ContentType=content_type,
         )
-        log.info("Stored attachment in S3: %s", full_key)
+        # No key in the log line: a re-keyed object's *old* key is a filename
+        # (task 17), and put()/delete()/get() share this backend either way.
+        log.info("Stored attachment in S3")
 
     async def get(self, key: str) -> bytes:
         from botocore.exceptions import ClientError  # noqa: PLC0415
@@ -118,7 +120,9 @@ class S3StorageBackend(StorageBackend):
         except ClientError as exc:
             code = str(exc.response.get("Error", {}).get("Code", ""))
             if code in {"NoSuchKey", "NoSuchBucket", "404", "AccessDenied"}:
-                raise StorageObjectNotFoundError(full_key) from exc
+                # No key in the exception message: it can propagate into logs
+                # (str(exc) on a caught error), and a legacy key is a filename.
+                raise StorageObjectNotFoundError("object not found") from exc
             raise  # a genuine backend/connectivity error stays a 5xx
         body: bytes = await asyncio.to_thread(response["Body"].read)
         return body
@@ -129,9 +133,13 @@ class S3StorageBackend(StorageBackend):
         await asyncio.to_thread(
             client.delete_object, Bucket=self._bucket, Key=full_key
         )
-        log.info("Deleted attachment from S3: %s", full_key)
+        log.info("Deleted attachment from S3")
 
     async def copy(self, src: str, dst: str) -> None:
+        # Not interruptible: boto3's copy_object is a single blocking call run
+        # in a thread. A shutdown mid-copy just leaves the old object in
+        # place (the row is only repointed after copy() returns), so the
+        # next run's rekey_legacy_objects() re-copies it — safe, if wasteful.
         client = self._client()
         await asyncio.to_thread(
             client.copy_object,
