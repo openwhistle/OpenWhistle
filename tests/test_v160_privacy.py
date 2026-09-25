@@ -456,8 +456,8 @@ async def test_content_search_normalizes_unicode_composition_before_matching(
     await _login(client, db_session, AdminRole.admin)
     nfd_e = "é"  # "e" + combining acute accent (U+0301)
     suffix = uuid.uuid4().hex[:6]
-    nfc_word = unicodedata.normalize("NFC", f"caf{nfd_e}{suffix}")  # "café..." precomposed
-    nfd_query = f"caf{nfd_e}{suffix}"  # same text, decomposed
+    nfc_word = unicodedata.normalize("NFC", f"Andr{nfd_e}{suffix}")  # "André..." precomposed
+    nfd_query = f"Andr{nfd_e}{suffix}"  # same text, decomposed
     assert nfc_word != nfd_query  # sanity: genuinely different code point sequences
     report, _ = await create_report(db_session, "corruption", f"Meeting at the {nfc_word}.")
     resp = await client.get("/admin/dashboard", params={"q": nfd_query})
