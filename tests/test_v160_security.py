@@ -424,7 +424,7 @@ async def test_session_older_than_the_absolute_limit_is_rejected(
          "auth_time": now - (settings.session_max_hours * 3600 + 60), "jti": "x"},
         settings.secret_key, algorithm=settings.algorithm,
     )
-    await (await get_redis()).setex(f"openwhistle:session:{stale}", 3600, str(user.id))
+    await (await get_redis()).set(f"openwhistle:session:{stale}", str(user.id), ex=3600)
     _use_session(client, stale)
     resp = await _refresh(client, follow_redirects=False)
     assert resp.status_code == 401
@@ -450,7 +450,7 @@ async def test_session_older_than_the_absolute_limit_is_401_even_without_csrf_he
          "auth_time": now - (settings.session_max_hours * 3600 + 60), "jti": "x"},
         settings.secret_key, algorithm=settings.algorithm,
     )
-    await (await get_redis()).setex(f"openwhistle:session:{stale}", 3600, str(user.id))
+    await (await get_redis()).set(f"openwhistle:session:{stale}", str(user.id), ex=3600)
     _use_session(client, stale)
     resp = await _refresh(client, csrf=False, follow_redirects=False)
     assert resp.status_code == 401
@@ -469,7 +469,7 @@ async def test_refresh_never_extends_past_the_absolute_limit(
     started = int(time.time()) - settings.session_max_hours * 3600 + 120  # 2 min left
     token = create_access_token(str(user.id), "admin", auth_time=started)
     redis = await get_redis()
-    await redis.setex(f"openwhistle:session:{token}", 120, str(user.id))
+    await redis.set(f"openwhistle:session:{token}", str(user.id), ex=120)
     _use_session(client, token)
     resp = await _refresh(client)
     assert resp.status_code == 200

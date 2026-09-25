@@ -163,11 +163,6 @@ markers = [
 ]
 
 filterwarnings = [
-    # ldap3's own asn1 module refers to its (renamed) TAG_MAP/TYPE_MAP constants by
-    # their old names on import; nothing we call, and it's raised before any code of
-    # ours runs. https://github.com/cannatag/ldap3/blob/master/ldap3/utils/asn1.py
-    "ignore:tagMap is deprecated:DeprecationWarning:ldap3(\\..*)?$",
-    "ignore:typeMap is deprecated:DeprecationWarning:ldap3(\\..*)?$",
     # asyncpg's own internal connection-candidate cleanup task
     # (asyncpg.connect_utils._connect._close_candidates) can be garbage-collected
     # before the event loop gets to run it when a short-lived test engine is

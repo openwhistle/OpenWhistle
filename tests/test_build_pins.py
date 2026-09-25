@@ -44,9 +44,9 @@ def _final_stage() -> str:
 
 
 def test_base_images_are_pinned_by_digest() -> None:
-    froms = re.findall(r"^FROM (\S+)", (ROOT / "Dockerfile").read_text(), re.M)
-    assert froms, "no FROM line"
-    assert all(re.search(r"@sha256:[0-9a-f]{64}$", f) for f in froms), froms
+    images = re.findall(r"^FROM (\S+)", (ROOT / "Dockerfile").read_text(), re.M)
+    assert images, "no FROM line"
+    assert all(re.search(r"@sha256:[0-9a-f]{64}$", f) for f in images), images
 
 
 def test_runtime_image_has_no_curl_and_a_python_healthcheck() -> None:
@@ -100,6 +100,10 @@ def test_compose_host_bind_mounts_carry_the_selinux_label() -> None:
 
 def test_security_workflow_audits_dependencies_and_the_image() -> None:
     wf = (ROOT / ".github/workflows/security.yml").read_text()
-    for needle in ("pull_request:", "schedule:", "pip-audit", "aquasecurity/trivy-action@", "--all-extras"):
+    needles = (
+        "pull_request:", "schedule:", "pip-audit", "aquasecurity/trivy-action@", "--all-extras",
+    )
+    for needle in needles:
         assert needle in wf, needle
-    assert re.search(r"aquasecurity/trivy-action@[0-9a-f]{40}", wf), "trivy action not pinned by digest"
+    pinned = re.search(r"aquasecurity/trivy-action@[0-9a-f]{40}", wf)
+    assert pinned, "trivy action not pinned by digest"
