@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 import uuid
 
 import pyotp
@@ -12,12 +13,12 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.audit import AuditLog
-from app.models.report import Report, SubmissionMode
+from app.models.report import Report, ReportStatus, SubmissionMode
 from app.models.user import AdminRole, AdminUser
 from app.services.audit import AuditAction
 from app.services.auth import hash_password
 from app.services.crypto import encrypt
-from app.services.report import create_report
+from app.services.report import content_match_ids, create_report, get_reports_paginated
 from app.templating import REASON_UNREADABLE
 
 _PASSWORD = "V160-Privacy-Password"  # noqa: S105
@@ -45,6 +46,19 @@ async def _login(
     await client.post("/admin/login/mfa", data={
         "csrf_token": client.cookies.get("ow_csrf"), "temp_token": temp.group(1),
         "totp_code": pyotp.TOTP(secret).now()})
+    return user
+
+
+async def _bare_admin(db: AsyncSession) -> AdminUser:
+    """An admin row with no login, used only to isolate a report by assigned_to_id
+    (a real foreign key) from every other report ever created in this test run."""
+    user = AdminUser(
+        id=uuid.uuid4(), username=f"iso_{uuid.uuid4().hex[:8]}",
+        password_hash=hash_password(_PASSWORD), totp_secret=pyotp.random_base32(),
+        totp_enabled=True,
+    )
+    db.add(user)
+    await db.commit()
     return user
 
 
@@ -363,3 +377,127 @@ async def test_dashboard_search_never_matches_the_confidential_name(
     report = await _confidential_report(db_session)
     resp = await client.get("/admin/dashboard", params={"q": _NAME})
     assert report.case_number not in resp.text
+
+
+@pytest.mark.asyncio
+async def test_content_search_limit_caps_how_many_reports_are_decrypted(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """CONTENT_SEARCH_LIMIT is the only thing bounding per-request decryption
+    cost; this goes RED if the `.limit()` call is dropped or the constant is
+    raised without a matching test."""
+    import app.services.report as report_service
+
+    monkeypatch.setattr(report_service, "CONTENT_SEARCH_LIMIT", 2)
+    isolate_to = await _bare_admin(db_session)
+    word = f"Capybara{uuid.uuid4().hex[:6]}"
+    for _ in range(3):
+        report, _ = await create_report(db_session, "corruption", f"Report about {word}.")
+        report.assigned_to_id = isolate_to.id
+        await db_session.commit()
+
+    hits = await content_match_ids(db_session, word, assigned_to_id=isolate_to.id)
+    assert len(hits) == 2
+
+
+@pytest.mark.asyncio
+async def test_content_search_normalizes_unicode_composition_before_matching(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """A precomposed accented character (NFC) must match a query typed in the
+    decomposed form (NFD, base letter + combining accent), and vice versa."""
+    await _login(client, db_session, AdminRole.admin)
+    nfd_e = "é"  # "e" + combining acute accent (U+0301)
+    suffix = uuid.uuid4().hex[:6]
+    nfc_word = unicodedata.normalize("NFC", f"caf{nfd_e}{suffix}")  # "café..." precomposed
+    nfd_query = f"caf{nfd_e}{suffix}"  # same text, decomposed
+    assert nfc_word != nfd_query  # sanity: genuinely different code point sequences
+    report, _ = await create_report(db_session, "corruption", f"Meeting at the {nfc_word}.")
+    resp = await client.get("/admin/dashboard", params={"q": nfd_query})
+    assert report.case_number in resp.text
+
+
+@pytest.mark.asyncio
+async def test_content_search_matches_strasse_case_folded(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """casefold() expands "ß" to "ss"; normalizing for composition must not
+    break that expansion."""
+    await _login(client, db_session, AdminRole.admin)
+    word = f"Straße{uuid.uuid4().hex[:6]}"
+    report, _ = await create_report(db_session, "corruption", f"Address: {word} 12.")
+    resp = await client.get("/admin/dashboard", params={"q": word.upper()})  # "STRASSE..."
+    assert report.case_number in resp.text
+
+
+@pytest.mark.asyncio
+async def test_dashboard_search_matches_an_uppercase_query_against_lowercase_content(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """The existing search test only checks a lowercased query against mixed-case
+    content; this checks the reverse direction."""
+    await _login(client, db_session, AdminRole.admin)
+    word = f"lemur{uuid.uuid4().hex[:6]}"
+    report, _ = await create_report(
+        db_session, "corruption", f"A note about the {word} in the field."
+    )
+    resp = await client.get("/admin/dashboard", params={"q": word.upper()})
+    assert report.case_number in resp.text
+
+
+@pytest.mark.asyncio
+async def test_combined_case_number_and_content_match_has_no_duplicates(
+    db_session: AsyncSession,
+) -> None:
+    """A report matching both by case number and by decrypted content must be
+    counted, and returned, exactly once."""
+    from app.services.encryption import encrypt_field, make_report_fernet
+
+    report, _ = await create_report(db_session, "corruption", "placeholder")
+    digits = report.case_number.split("-")[-1]
+    fernet = make_report_fernet(report.encrypted_dek)
+    report.description = encrypt_field(fernet, f"Mentions case {digits} in the body too.")
+    isolate_to = await _bare_admin(db_session)
+    report.assigned_to_id = isolate_to.id
+    await db_session.commit()
+
+    hits = await content_match_ids(db_session, digits, assigned_to_id=isolate_to.id)
+    assert hits == [report.id]
+
+    reports, total = await get_reports_paginated(
+        db_session, assigned_to_id=isolate_to.id, case_query=digits, content_ids=hits
+    )
+    assert total == 1
+    assert [r.id for r in reports] == [report.id]
+
+
+@pytest.mark.asyncio
+async def test_content_search_respects_the_active_status_and_location_filter(
+    db_session: AsyncSession,
+) -> None:
+    """Ruling: content_match_ids takes the same location_id/status_filter as
+    get_reports_paginated, so the CONTENT_SEARCH_LIMIT budget follows the
+    caller's current view — a report outside the active filter must not be
+    decrypted/matched."""
+    isolate_to = await _bare_admin(db_session)
+    word = f"Otter{uuid.uuid4().hex[:6]}"
+    report, _ = await create_report(db_session, "corruption", f"About the {word}.")
+    report.assigned_to_id = isolate_to.id
+    await db_session.commit()
+    assert report.status == ReportStatus.received
+
+    # Filtered to a status the report is not in: no match.
+    hits = await content_match_ids(
+        db_session, word, assigned_to_id=isolate_to.id, status_filter=ReportStatus.closed.value
+    )
+    assert hits == []
+
+    # Filtered to a location the report is not in: no match.
+    hits = await content_match_ids(
+        db_session, word, assigned_to_id=isolate_to.id, location_id=uuid.uuid4()
+    )
+    assert hits == []
+
+    # No status/location filter beyond assignment: matches.
+    hits = await content_match_ids(db_session, word, assigned_to_id=isolate_to.id)
+    assert hits == [report.id]

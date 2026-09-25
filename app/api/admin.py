@@ -189,11 +189,14 @@ async def dashboard(
     # leak inconsistent with the object-level check that denies them those reports.
     # Content search decrypts in memory, so it is only worth doing for a query
     # long enough to be meaningful, and it is scoped identically to the listing
-    # itself (same assigned_to_id/org filters) so it never decrypts a report
-    # outside what this caller may already see.
+    # itself (same assigned_to_id/location/status/org filters) so it never
+    # decrypts a report outside what this caller may already see, and the
+    # CONTENT_SEARCH_LIMIT budget is spent on the caller's current view rather
+    # than every status/location outside it.
     content_ids = (
         await report_service.content_match_ids(
-            db, case_query, assigned_to_id=assigned_filter, **_org_scope(current_user)
+            db, case_query, assigned_to_id=assigned_filter, location_id=location_filter,
+            status_filter=status_filter, **_org_scope(current_user)
         )
         if len(case_query) >= 3 else None
     )

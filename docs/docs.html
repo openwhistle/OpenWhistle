@@ -1788,7 +1788,10 @@
           from the report, into the search field on <code>/admin/dashboard</code>. A word search decrypts
           the description and messages of the reports you may already see, in memory, for that request
           only — nothing searchable is ever stored. The confidential name is never matched: a hit there
-          would confirm an identity guess without an audited reveal.
+          would confirm an identity guess without an audited reveal. The search term travels in the URL
+          query string; the shipped nginx (<code>access_log off</code>) and uvicorn
+          (<code>--no-access-log</code>) log nothing, but a reverse proxy an operator puts in front of
+          OpenWhistle must not log query strings either.
         </p>
         <p>
           Click any report to open the case view. From here you can:
@@ -1983,7 +1986,10 @@
                 <code>X-Forwarded-For</code>, <code>X-Real-IP</code>, and all
                 <code>X-Client-*</code> headers before forwarding requests to the
                 application. Even if a CDN or upstream proxy adds these headers,
-                they are removed at the nginx layer.
+                they are removed at the nginx layer. <code>access_log off</code> also means
+                request URIs — including the admin dashboard's <code>?q=</code> search
+                terms — are never written to disk; an operator's own reverse proxy in
+                front of OpenWhistle must not log query strings either.
               </div>
             </div>
           </div>

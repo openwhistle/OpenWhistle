@@ -1,5 +1,6 @@
 """Business logic for whistleblower reports."""
 
+import unicodedata
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
@@ -179,11 +180,23 @@ def decrypt_report_fields(report: Report) -> tuple[str, list[str]]:
 CONTENT_SEARCH_LIMIT = 5000
 
 
+def _fold(text: str) -> str:
+    """Normalize composition form, then fold case, for a search comparison.
+
+    NFC first: casefold() reconciles case (and expands "ß" to "ss") but does
+    not reconcile NFC vs NFD encodings of the same accented character, so a
+    precomposed "é" and "e" + combining acute would otherwise fail to match.
+    """
+    return unicodedata.normalize("NFC", text).casefold()
+
+
 async def content_match_ids(
     db: AsyncSession,
     needle: str,
     *,
     assigned_to_id: uuid.UUID | None = None,
+    location_id: uuid.UUID | None = None,
+    status_filter: str | None = None,
     org_id: uuid.UUID | None = None,
     scope_org: bool = False,
 ) -> list[uuid.UUID]:
@@ -193,18 +206,26 @@ async def content_match_ids(
     Never matches the confidential name/contact fields — those stay hidden
     until a handler reveals them with an audited reason, and a search hit
     would confirm an identity guess with no reveal recorded.
+
+    Takes the same ``location_id``/``status_filter`` as ``get_reports_paginated``
+    so the ``CONTENT_SEARCH_LIMIT`` budget is spent on the caller's current view,
+    not on every status/location outside it.
     """
     q = select(Report).options(selectinload(Report.messages))
     if assigned_to_id is not None:
         q = q.where(Report.assigned_to_id == assigned_to_id)
+    if location_id is not None:
+        q = q.where(Report.location_id == location_id)
+    if status_filter and status_filter in _VALID_STATUSES:
+        q = q.where(Report.status == ReportStatus(status_filter))
     if scope_org or org_id is not None:
         q = q.where(Report.org_id == org_id)
     rows = await db.execute(q.order_by(Report.submitted_at.desc()).limit(CONTENT_SEARCH_LIMIT))
-    folded = needle.casefold()
+    folded = _fold(needle)
     hits = []
     for report in rows.scalars().all():
         description, messages = decrypt_report_fields(report)
-        if any(folded in text.casefold() for text in (description, *messages)):
+        if any(folded in _fold(text) for text in (description, *messages)):
             hits.append(report.id)
     return hits
 
