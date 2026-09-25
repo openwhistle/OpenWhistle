@@ -1,6 +1,6 @@
 services:
   app:
-    image: ghcr.io/openwhistle/openwhistle:latest
+    image: ghcr.io/openwhistle/openwhistle:${OPENWHISTLE_VERSION:-1.5.0}
     environment:
       DATABASE_URL: "${DATABASE_URL}"
       REDIS_URL: "${REDIS_URL}"

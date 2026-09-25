@@ -1,6 +1,6 @@
 [project]
 name = "openwhistle"
-version = "0.1.0"
+version = "1.5.0"
 description = "Open source whistleblower reporting platform (HinSchG / EU 2019/1937)"
 license = { text = "GPL-3.0-only" }
 readme = "README.md"

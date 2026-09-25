@@ -36,9 +36,10 @@ On `release/vX.Y.Z`:
 
 - `CHANGELOG.md`: `[Unreleased]` → `[X.Y.Z] — <date>`, add its compare link and
   repoint `[Unreleased]`.
-- Version in `app/config.py`, `charts/openwhistle/Chart.yaml` (`version` and
-  `appVersion`), `docs/docs.html` ("Current version"), `docs/index.html`
-  (`softwareVersion` and hero). `test_every_published_version_string_matches`
+- Version in `app/config.py`, `pyproject.toml`, `charts/openwhistle/Chart.yaml`
+  (`version` and `appVersion`), `docs/docs.html` ("Current version"),
+  `docs/index.html` (`softwareVersion` and hero), and the `OPENWHISTLE_VERSION`
+  default in `docker-compose.prod.yml`. `test_every_published_version_string_matches`
   fails on any mismatch.
 - ROADMAP entry.
 
