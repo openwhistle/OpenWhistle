@@ -83,25 +83,6 @@
     </div>
     {% endif %}
 
-    {# Summary stats cards - clickable filters #}
-    <div class="stats-row">
-        {% for label_key, status_val, cls in [
-            ('admin.stats.received',          'received',          'badge-received'),
-            ('admin.stats.in_review',         'in_review',         'badge-in_review'),
-            ('admin.stats.pending_feedback',  'pending_feedback',  'badge-pending_feedback'),
-            ('admin.stats.closed',            'closed',            'badge-closed')
-        ] %}
-        {% set count = stats.get(status_val, 0) %}
-        <a href="/admin/dashboard?status={{ status_val }}&sort={{ sort_by }}&dir={{ sort_dir }}&per_page={{ per_page }}"
-           class="stat-card stat-card--link {% if status_filter == status_val %}stat-card--active{% endif %}"
-           data-delay="{{ loop.index0 * 0.05 }}"
-           aria-label="{{ t('admin.stats.filter_by', status=t(label_key)) }}">
-            <div class="stat-card__number">{{ count }}</div>
-            <span class="badge {{ cls }}">{{ t(label_key) }}</span>
-        </a>
-        {% endfor %}
-    </div>
-
     <div class="panel">
         {# Panel header with filter bar and row count #}
         <div class="panel-header dashboard-panel-header">
@@ -109,7 +90,7 @@
             <div class="dashboard-toolbar">
                 {# Status filter pill row #}
                 <div class="filter-pills">
-                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}{% if case_query %}&q={{ case_query | urlencode }}{% endif %}"
+                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}{% if location_filter %}&location_id={{ location_filter }}{% endif %}{% if case_query %}&q={{ case_query | urlencode }}{% endif %}"
                        class="filter-pill {% if not status_filter and not my_cases %}filter-pill-active{% endif %}">
                         {{ t('admin.filter.all_statuses') }}
                     </a>
@@ -119,12 +100,12 @@
                         ('pending_feedback',  'status.label.pending_feedback'),
                         ('closed',            'status.label.closed')
                     ] %}
-                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}&status={{ sv }}{% if case_query %}&q={{ case_query | urlencode }}{% endif %}"
+                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}&status={{ sv }}{% if location_filter %}&location_id={{ location_filter }}{% endif %}{% if case_query %}&q={{ case_query | urlencode }}{% endif %}"
                        class="filter-pill {% if status_filter == sv and not my_cases %}filter-pill-active{% endif %}">
-                        {{ t(label_key) }}
+                        {{ t(label_key) }} <span class="filter-pill-count">{{ stats.get(sv, 0) }}</span>
                     </a>
                     {% endfor %}
-                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}&my_cases=1{% if case_query %}&q={{ case_query | urlencode }}{% endif %}"
+                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}&my_cases=1{% if location_filter %}&location_id={{ location_filter }}{% endif %}{% if case_query %}&q={{ case_query | urlencode }}{% endif %}"
                        class="filter-pill {% if my_cases %}filter-pill-active{% endif %}">
                         {{ t('admin.filter.my_cases') }}
                     </a>
@@ -324,10 +305,6 @@ function goPerPage(val) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.stat-card--link[data-delay]').forEach(function (el) {
-        el.style.animationDelay = el.dataset.delay + 's';
-    });
-
     var perPageSelect = document.getElementById('dash-per-page-select');
     if (perPageSelect) {
         perPageSelect.addEventListener('change', function () {

@@ -20,7 +20,9 @@ TEMPLATES = ROOT / "app/templates"
 _PASSWORD = "V160-Design-Password"  # noqa: S105
 
 
-async def _login(client: AsyncClient, db: AsyncSession, role: AdminRole) -> None:
+async def _login(
+    client: AsyncClient, db: AsyncSession, role: AdminRole, org_id: uuid.UUID | None = None
+) -> AdminUser:
     secret = pyotp.random_base32()
     user = AdminUser(
         id=uuid.uuid4(),
@@ -29,6 +31,7 @@ async def _login(client: AsyncClient, db: AsyncSession, role: AdminRole) -> None
         totp_secret=secret,
         totp_enabled=True,
         role=role,
+        org_id=org_id,
     )
     db.add(user)
     await db.commit()
@@ -51,6 +54,7 @@ async def _login(client: AsyncClient, db: AsyncSession, role: AdminRole) -> None
             "totp_code": pyotp.TOTP(secret).now(),
         },
     )
+    return user
 
 
 def test_admin_navigation_lives_in_one_template() -> None:
@@ -507,3 +511,148 @@ def test_docs_warning_colour_meets_contrast() -> None:
             assert warning and bg_base, (name, theme)
             ratio = _contrast_ratio(warning.group(1), bg_base.group(1))
             assert ratio >= 4.5, (name, theme, warning.group(1), bg_base.group(1), ratio)
+
+
+def _pill_counts(html: str) -> dict[str, int]:
+    """Status value -> the count shown in its filter pill."""
+    return {
+        m.group(1): int(m.group(2))
+        for m in re.finditer(
+            r'&status=(\w+)[^"]*"[^>]*>[^<]*<span class="filter-pill-count">(\d+)</span>', html
+        )
+    }
+
+
+@pytest.mark.asyncio
+async def test_dashboard_counts_live_in_the_filter_pills(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    await _login(client, db_session, AdminRole.admin)
+    html = (await client.get("/admin/dashboard")).text
+    assert "stat-card" not in html and "stats-row" not in html
+    assert html.count('class="filter-pill-count"') == 4
+    assert set(_pill_counts(html)) == {"received", "in_review", "pending_feedback", "closed"}
+
+
+@pytest.mark.asyncio
+async def test_case_manager_pill_counts_only_their_cases(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    from app.services.report import create_report
+
+    user = await _login(client, db_session, AdminRole.case_manager)
+    mine, _ = await create_report(db_session, "corruption", "Pill count: assigned to me.")
+    await create_report(db_session, "corruption", "Pill count: somebody else's case.")
+    mine.assigned_to_id = user.id
+    await db_session.commit()
+    counts = _pill_counts((await client.get("/admin/dashboard")).text)
+    assert counts == {"received": 1, "in_review": 0, "pending_feedback": 0, "closed": 0}
+    stats = (await client.get("/admin/stats")).text
+    assert '<div class="stat-card__number">1</div>' in stats
+
+
+@pytest.mark.asyncio
+async def test_org_admin_pill_counts_only_their_org(
+    client: AsyncClient, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.config import settings
+    from app.models.organisation import Organisation
+    from app.services.report import create_report
+
+    monkeypatch.setattr(settings, "multi_tenancy_enabled", True)
+    orgs = [Organisation(id=uuid.uuid4(), name=n, slug=f"{n}-{uuid.uuid4().hex[:6]}") for n in "ab"]
+    db_session.add_all(orgs)
+    await db_session.commit()
+    await _login(client, db_session, AdminRole.admin, org_id=orgs[0].id)
+    ours, _ = await create_report(db_session, "corruption", "Pill count: our organisation.")
+    theirs, _ = await create_report(db_session, "corruption", "Pill count: other organisation.")
+    ours.org_id, theirs.org_id = orgs[0].id, orgs[1].id
+    await db_session.commit()
+    counts = _pill_counts((await client.get("/admin/dashboard")).text)
+    assert counts == {"received": 1, "in_review": 0, "pending_feedback": 0, "closed": 0}
+
+
+@pytest.mark.asyncio
+async def test_status_pills_keep_and_count_within_the_location_and_search(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    from app.models.location import Location
+    from app.services.report import create_report
+
+    await _login(client, db_session, AdminRole.admin)
+    loc = Location(id=uuid.uuid4(), name="Pill HQ", code=f"P{uuid.uuid4().hex[:5]}")
+    db_session.add(loc)
+    await db_session.commit()
+    await create_report(
+        db_session, "corruption", "Pill count: at the location.", location_id=loc.id
+    )
+    html = (await client.get(f"/admin/dashboard?location_id={loc.id}&q=abc")).text
+    # The count is what the pill's link shows: within the chosen location.
+    assert _pill_counts(html)["received"] == 1
+    pills = re.findall(r'<a href="([^"]*)"\s+class="filter-pill', html)
+    status_pills = [h for h in pills if "&status=" in h or "my_cases=1" in h]
+    assert len(status_pills) == 5
+    for href in status_pills:
+        assert f"location_id={loc.id}" in href and "q=abc" in href, href
+
+
+def _panel_of(html: str, needle: str) -> str:
+    """The title of the `.panel` holding ``needle``."""
+    pos = html.index(needle)
+    starts = [m.start() for m in re.finditer(r'class="panel[ "]', html[:pos])]
+    assert starts, needle
+    start = starts[-1]
+    title = re.search(r'<h2 class="panel-header[^"]*">\s*([^<&]+)', html[start:pos])
+    return title.group(1).strip() if title else ""
+
+
+@pytest.mark.asyncio
+async def test_case_page_has_at_most_five_panels(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    from app.models.report import SubmissionMode
+    from app.services.crypto import encrypt
+    from app.services.report import create_report
+
+    user = await _login(client, db_session, AdminRole.admin)
+    report, _ = await create_report(
+        db_session, "corruption", "Panel count test report text.",
+        submission_mode=SubmissionMode.confidential,
+        confidential_name_enc=encrypt("Panel Name"), confidential_contact_enc=encrypt("Panel"),
+    )
+    report.assigned_to_id = user.id
+    await db_session.commit()
+    html = (await client.get(f"/admin/reports/{report.id}")).text
+    assert len(re.findall(r'class="panel[ "]', html)) <= 5
+    assert '<details class="danger-zone"' in html
+    assert 'class="panel panel-primary"' in html
+    placed = {
+        f'action="/admin/reports/{report.id}/identity"': "Actions",
+        f'formaction="/admin/reports/{report.id}/export.pdf"': "Actions",
+        f'href="/admin/reports/{report.id}/export.pdf"': "Actions",
+        'id="audit"': "History",
+        f'action="/admin/reports/{report.id}/links"': "History",
+        f'action="/admin/reports/{report.id}/request-delete"': "Actions",
+        f'action="/admin/reports/{report.id}/status"': "Actions",
+        f'action="/admin/reports/{report.id}/reply"': "Communication thread",
+        'class="report-description"': "Initial report",
+    }
+    for needle, panel in placed.items():
+        assert _panel_of(html, needle) == panel, needle
+    assert "Panel Name" not in html
+
+
+@pytest.mark.asyncio
+async def test_case_page_strings_are_translated_and_script_safe(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    from app.services.report import create_report
+
+    await _login(client, db_session, AdminRole.admin)
+    report, _ = await create_report(db_session, "corruption", "Translated strings test report.")
+    client.cookies.set("ow-lang", "fr")
+    html = (await client.get(f"/admin/reports/{report.id}")).text
+    script = html.split("function confirmStatusChange", 1)[1].split("</script>", 1)[0]
+    # French prompts carry apostrophes; HTML-escaped inside JS they would show as "&#39;".
+    assert "&#39;" not in script and "confirm(\"" in script
+    assert "(actuel)" in html and "(current)" not in html

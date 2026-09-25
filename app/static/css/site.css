@@ -875,6 +875,42 @@ strong {
 .panel-header-title {
   margin: 0;
 }
+/* The accent marks the main content of a page once. */
+.panel-primary {
+  box-shadow: inset 0 3px 0 var(--accent);
+}
+/* Case page: facts without panel chrome, actions as sections of one panel. */
+.report-facts {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-6);
+  padding: 0;
+}
+.report-facts > div {
+  border-bottom: 1px solid var(--hairline);
+  padding-bottom: var(--space-3);
+}
+.action-section + .action-section {
+  border-top: 1px solid var(--hairline);
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+}
+.action-title {
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+  margin: 0 0 var(--space-3);
+}
+.danger-zone {
+  border-top: 1px solid var(--hairline);
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+}
+.danger-zone > summary {
+  color: var(--danger);
+  cursor: pointer;
+  font-weight: 600;
+  min-height: 44px;
+}
 .detail-label {
   font-size: var(--text-hint);
   font-weight: 500;
@@ -908,14 +944,6 @@ strong {
   letter-spacing: -0.04em;
   line-height: 1;
   margin-bottom: 0.5rem;
-}
-.stat-card--link {
-  cursor: pointer;
-  display: block;
-}
-.stat-card--link,
-.stat-card--link:hover {
-  text-decoration-line: none;
 }
 .stat-card--active {
   border-color: var(--ink);
@@ -1268,6 +1296,14 @@ input[type="file"].form-control::file-selector-button {
   background: hsla(0, 0%, 100%, 0.12);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   color: var(--ink);
+}
+.filter-pill-count {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  margin-left: var(--space-1);
+}
+.filter-pill-active .filter-pill-count {
+  color: inherit;
 }
 .per-page-wrap {
   align-items: center;

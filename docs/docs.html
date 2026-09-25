@@ -1762,7 +1762,8 @@
         <h3>Dashboard overview</h3>
         <p>
           The dashboard shows all reports with sortable columns, pagination, and filters for status,
-          assignee, and location. Each row displays:
+          assignee, and location. Each status filter shows its case count within the chosen location;
+          a case manager's counts cover only the cases assigned to them. Each row displays:
         </p>
         <ul>
           <li>Unique case number in <code>OW-YYYY-NNNNN</code> format (sequential per year)</li>
@@ -1812,7 +1813,7 @@
           <li>Export the case as a PDF (includes SLA compliance section per HinSchG §17) — the confidential
           identity is left out by default, the same as the case page. Text prints in Latin (any diacritic),
           Greek or Cyrillic script; CJK and right-to-left scripts (Arabic, Hebrew) are not supported</li>
-          <li>Request hard deletion — a second admin must confirm (4-eyes principle); triggers GDPR Art. 17 erasure</li>
+          <li>Request hard deletion (<em>Delete report</em>, collapsed at the end of <em>Actions</em>) — a second admin must confirm (4-eyes principle); triggers GDPR Art. 17 erasure</li>
         </ul>
         <p>
           <strong>Confidential identity.</strong> A confidential reporter's name and contact are hidden by default.
@@ -1847,7 +1848,7 @@
         <p>
           <code>/admin/stats</code> shows the total report count, status distribution bar chart,
           category breakdown, and the 7-day SLA compliance rate (acknowledged within 7 days of
-          00:00 UTC on the submission day).
+          00:00 UTC on the submission day). A case manager's figures cover only their own cases.
         </p>
 
         <h3>System &amp; updates</h3>

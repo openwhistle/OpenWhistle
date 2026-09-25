@@ -87,6 +87,11 @@ def _org_scope(user: AdminUser) -> dict[str, Any]:
     return {"scope_org": scope, "org_id": user.org_id if scope else None}
 
 
+def _own_cases_only(user: AdminUser) -> uuid.UUID | None:
+    """A case manager sees only the cases assigned to them — in counts, too."""
+    return user.id if user.role == AdminRole.case_manager else None
+
+
 def _require_same_org(user: AdminUser, target_org_id: uuid.UUID | None) -> None:
     """404 when a scoped caller addresses a user outside their organisation."""
     scope = _org_scope(user)
@@ -181,10 +186,7 @@ async def dashboard(
     # Object-level scoping: case managers only ever see reports assigned to
     # them; multi-tenant admins are confined to their own organisation
     # (superadmins span all organisations).
-    if current_user.role == AdminRole.case_manager:
-        assigned_filter: uuid.UUID | None = current_user.id
-    else:
-        assigned_filter = current_user.id if my_cases else None
+    assigned_filter = _own_cases_only(current_user) or (current_user.id if my_cases else None)
     # Scope the list to the caller's organisation for multi-tenant non-superadmins.
     # This must apply even when their org_id is None, otherwise an org-less admin
     # would fall through to the unfiltered "see everything" branch — a metadata
@@ -215,7 +217,12 @@ async def dashboard(
         content_ids=content_ids,
         **_org_scope(current_user),
     )
-    stats = await report_service.get_report_stats(db, **_org_scope(current_user))
+    # Pill counts are what each status pill's link would show: the caller's
+    # visible cases (a case manager's own only), within the chosen location.
+    stats = await report_service.get_report_stats(
+        db, assigned_to_id=_own_cases_only(current_user), location_id=location_filter,
+        **_org_scope(current_user),
+    )
     total_pages = max(1, (total + per_page - 1) // per_page)
     now = datetime.now(UTC)
     ip_warning = await check_ip_warning()
@@ -1201,7 +1208,9 @@ async def stats_page(
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(get_current_admin),
 ) -> HTMLResponse:
-    stats = await report_service.get_dashboard_stats(db, **_org_scope(current_user))
+    stats = await report_service.get_dashboard_stats(
+        db, assigned_to_id=_own_cases_only(current_user), **_org_scope(current_user)
+    )
     from app.services.categories import get_all_categories
     categories = await get_all_categories(db)
     cat_map = {c.slug: c.label_en for c in categories}

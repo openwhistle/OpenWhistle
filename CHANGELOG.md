@@ -40,6 +40,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `app/fonts/`) replaces fpdf2's core Helvetica, which silently turned anything outside latin-1
   into "?" — a report or message written in Polish, Greek or Cyrillic used to lose its own text in
   the printed record. CJK and right-to-left scripts are still unsupported (missing-glyph boxes).
+- **A case manager's counts cover only their own cases.** The dashboard's status counts and the
+  `/admin/stats` figures counted every case in the organisation, though the list showed only the
+  cases assigned to them.
 
 ### Changed
 
@@ -51,6 +54,12 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   of the submission day. A same-day message keeps its place in the thread, one microsecond after
   the message before it. Demo data follows the same rule.
 - The dashboard orders reports with equal submission days by id, so a page boundary is stable.
+- **The dashboard has no KPI tiles**; each status filter pill carries its count, within the
+  chosen location. The pills keep the location and search when switching status.
+- **The case page has five panels**: Report (with its attachments), Communication thread,
+  Notes, History (linked cases and the collapsed activity log) and Actions (acknowledge,
+  assign, status, confidential identity, PDF export, and deletion collapsed under
+  *Delete report*). The facts sit above Actions without panel chrome.
 
 ### Fixed
 
@@ -58,6 +67,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   collision and raises any other error at once.
 - Two messages posted to one case at the same moment could get the same time and an arbitrary
   order; the case row is now locked while a message's time is chosen.
+- The case page's confirmation prompts, "(current)" status label and "no further transitions"
+  note were English in every language; a French prompt showed `&#39;` for each apostrophe.
 
 ### Removed
 

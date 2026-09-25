@@ -551,11 +551,20 @@ async def get_reports_paginated(
 
 
 async def get_report_stats(
-    db: AsyncSession, *, scope_org: bool = False, org_id: uuid.UUID | None = None
+    db: AsyncSession,
+    *,
+    scope_org: bool = False,
+    org_id: uuid.UUID | None = None,
+    assigned_to_id: uuid.UUID | None = None,
+    location_id: uuid.UUID | None = None,
 ) -> dict[str, int]:
     q = select(Report.status, func.count(Report.id)).group_by(Report.status)
     if scope_org:
         q = q.where(Report.org_id == org_id)
+    if assigned_to_id is not None:
+        q = q.where(Report.assigned_to_id == assigned_to_id)
+    if location_id is not None:
+        q = q.where(Report.location_id == location_id)
     result = await db.execute(q)
     counts: dict[str, int] = {s.value: 0 for s in ReportStatus}
     for status_val, cnt in result.all():
@@ -713,13 +722,21 @@ def get_linked_reports(report: Report) -> list[tuple[uuid.UUID, str]]:
 # ── Dashboard statistics ────────────────────────────────────────────
 
 async def get_dashboard_stats(
-    db: AsyncSession, *, scope_org: bool = False, org_id: uuid.UUID | None = None
+    db: AsyncSession,
+    *,
+    scope_org: bool = False,
+    org_id: uuid.UUID | None = None,
+    assigned_to_id: uuid.UUID | None = None,
 ) -> dict[str, Any]:
     """Aggregate statistics for the dashboard stats view."""
     from sqlalchemy import case as sa_case
 
-    status_counts = await get_report_stats(db, scope_org=scope_org, org_id=org_id)
+    status_counts = await get_report_stats(
+        db, scope_org=scope_org, org_id=org_id, assigned_to_id=assigned_to_id
+    )
     org_filter = [Report.org_id == org_id] if scope_org else []
+    if assigned_to_id is not None:
+        org_filter.append(Report.assigned_to_id == assigned_to_id)
 
     cat_result = await db.execute(
         select(Report.category, func.count(Report.id)).where(*org_filter).group_by(Report.category)
