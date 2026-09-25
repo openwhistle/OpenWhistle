@@ -230,7 +230,8 @@ async def test_paginated_returns_all_on_first_page(db_session: AsyncSession) -> 
         await create_report(db_session, "corruption", f"Pagination test report number {i} ok!")
     reports, total = await get_reports_paginated(db_session, page=1, per_page=100)
     assert total >= 3
-    assert len(reports) == total
+    # The shared test database keeps committed reports, and per_page caps at 100.
+    assert len(reports) == min(total, 100)
 
 
 async def test_paginated_page_size_is_respected(db_session: AsyncSession) -> None:
