@@ -233,6 +233,14 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
+      - name: Set up Python 3.14
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        run: pip install uv==0.12.18
+
       - name: Set up a throwaway TLS cert and a header-echoing backend
         run: |
           mkdir -p /tmp/ow-nginx-test/tls /tmp/ow-nginx-test/echo
@@ -301,9 +309,12 @@ jobs:
           ! grep -qi '^x-real-ip:' <<< "$out"
 
       - name: Render nginx.conf.j2 with the Ansible role's own defaults
+        # jinja2 (direct dependency) and pyyaml (via uvicorn[standard]) are
+        # both already resolved in uv.lock, so `uv run --frozen` gives an
+        # exactly-locked environment for the render — no bare/unpinned `pip
+        # install`, consistent with every other dependency install in this
+        # repo (see test_build_pins.py::test_no_bare_pip_install_in_any_workflow).
         run: |
-          python3 -m venv /tmp/render-venv
-          /tmp/render-venv/bin/pip install --quiet jinja2 pyyaml
           cat > /tmp/render_ansible_nginx.py <<'PY'
           import yaml
           from jinja2 import Environment
@@ -333,7 +344,7 @@ jobs:
           with open("/tmp/ow-nginx-test/ansible-nginx.conf", "w") as f:
               f.write(tmpl.render(**data))
           PY
-          /tmp/render-venv/bin/python3 /tmp/render_ansible_nginx.py
+          uv run --frozen python3 /tmp/render_ansible_nginx.py
           cat /tmp/ow-nginx-test/ansible-nginx.conf
 
       - name: Start nginx with the rendered nginx.conf.j2 (same snippets, same backend)

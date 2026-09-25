@@ -162,6 +162,32 @@ def test_every_workflow_action_is_pinned_by_commit_sha() -> None:
     assert unpinned == {}, unpinned
 
 
+def test_no_bare_pip_install_in_any_workflow() -> None:
+    """A `pip install` (or `uv pip install`) line in a workflow must be
+    pinned, not a floating "whatever's latest today" install that bypasses
+    uv.lock — the same pinning discipline
+    test_every_workflow_action_is_pinned_by_commit_sha enforces for actions.
+    Allowed without a version pin: `-r <file>` (a requirements file that was
+    itself generated from the lock, e.g. `uv export --frozen`) and `-e .`
+    (installing this project from the checkout, which has no separate
+    version to pin). Every other package argument must carry `==<version>`.
+    """
+    pattern = re.compile(r"\bpip install\b(.*)$", re.M)
+    bad: dict[str, list[str]] = {}
+    for wf in (ROOT / ".github" / "workflows").glob("*.yml"):
+        for line in pattern.findall(wf.read_text()):
+            if re.search(r"(^|\s)-r\s+\S+", line) or re.search(r"(^|\s)-e\s+\S+", line):
+                continue  # requirements file or local editable install
+            for token in line.split():
+                if token.startswith("-"):
+                    continue
+                if "==" not in token:
+                    bad.setdefault(wf.name, []).append(
+                        f"unpinned package {token!r} in 'pip install{line}'"
+                    )
+    assert bad == {}, bad
+
+
 def test_security_workflow_audits_dependencies_and_the_image() -> None:
     wf = (ROOT / ".github/workflows/security.yml").read_text()
     needles = (
