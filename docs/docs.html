@@ -1324,7 +1324,7 @@
             <tr>
               <td><code class="env-key">NOTIFY_WEBHOOK_TYPE</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
-              <td>Payload format for webhook notifications. <code>generic</code> sends <code>{"event": "new_activity", "new_reports": 2, "new_messages": 1, "message": "..."}</code> (counts, never case numbers); <code>slack</code> sends a Slack Block Kit message; <code>teams</code> sends a Microsoft Teams Adaptive Card (v1.4). The SLA reminder webhook uses the same three formats with <code>{"event": "sla_reminder", "ack_due": ..., "feedback_due": ...}</code> for <code>generic</code>.</td>
+              <td>Payload format for webhook notifications. <code>generic</code> sends <code>{"event": "new_activity", "new_reports": 2, "new_messages": 1, "message": "..."}</code> (counts, never case numbers); <code>slack</code> sends a Slack Block Kit message; <code>teams</code> sends a Microsoft Teams Adaptive Card (v1.4). The SLA reminder webhook uses the same three formats with <code>{"event": "sla_reminder", "ack_due": ..., "feedback_due": ..., "message": "..."}</code> for <code>generic</code>.</td>
               <td><code>generic</code></td>
             </tr>
           </tbody>

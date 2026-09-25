@@ -138,7 +138,6 @@ async def _check_ack_reminder(
         case_number=r.case_number,
         deadline_label="7-day acknowledgement",
         days_left=days_left,
-        report=r,
         settings=cfg,
     )
     await red.set(key, "1", ex=_dedup_ttl_seconds(days_left))
@@ -182,7 +181,6 @@ async def _check_feedback_reminder(
         case_number=r.case_number,
         deadline_label="3-month feedback",
         days_left=days_left,
-        report=r,
         settings=cfg,
     )
     await red.set(key, "1", ex=_dedup_ttl_seconds(days_left))
@@ -194,7 +192,6 @@ async def _dispatch_reminder(
     case_number: str,
     deadline_label: str,
     days_left: int,
-    report: object,
     settings: object,
 ) -> None:
     """Send the per-report reminder email to admins.

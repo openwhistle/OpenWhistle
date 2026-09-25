@@ -857,7 +857,7 @@ class TestDispatchReminder:
 
         with patch("app.services.notifications._send_reminder_email", mock_email), \
              patch("app.services.notifications._send_reminder_webhook", mock_webhook):
-            await _dispatch_reminder("OW-2024-00001", "test", 1, MagicMock(), cfg)
+            await _dispatch_reminder("OW-2024-00001", "test", 1, cfg)
 
         assert len(email_called) == 1
         assert len(webhook_called) == 0
@@ -871,7 +871,7 @@ class TestDispatchReminder:
 
         with patch("app.services.notifications._send_reminder_email") as m_email, \
              patch("app.services.notifications._send_reminder_webhook") as m_webhook:
-            await _dispatch_reminder("OW-2024-00001", "test", 1, MagicMock(), cfg)
+            await _dispatch_reminder("OW-2024-00001", "test", 1, cfg)
 
         m_email.assert_not_called()
         m_webhook.assert_not_called()

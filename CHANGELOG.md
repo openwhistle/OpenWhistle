@@ -13,10 +13,11 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the reporter to save as `.docx`/`.xlsx`.
 - **Webhooks carry counts only, never case numbers or deadlines.** The generic digest webhook's
   `new_reports`/`new_messages` fields are now integers (were arrays of case numbers), plus a
-  human-readable `message` field. The SLA reminder webhook now carries `ack_due`/`feedback_due`
-  counts, sent once per scheduler run, instead of one webhook per case with its case number and
-  deadline. Update receivers that parsed the old array or per-case fields. The reminder email is
-  unchanged — it still carries the case number, since only your own admins receive it.
+  human-readable `message` field built from those counts. The SLA reminder webhook now carries
+  `ack_due`/`feedback_due` counts, likewise with a `message` field built from them, sent once per
+  scheduler run, instead of one webhook per case with its case number and deadline. Update
+  receivers that parsed the old array or per-case fields. The reminder email is unchanged — it
+  still carries the case number, since only your own admins receive it.
 
 ### Removed
 
