@@ -102,10 +102,14 @@ async def db_engine() -> AsyncGenerator[AsyncEngine]:
 
     yield engine
 
+    # Full clean slate again: leaving alembic_version at head with no tables
+    # underneath it breaks a later `alembic downgrade` run against this same
+    # database (it thinks the schema is already migrated).
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         for enum_type in _ENUM_TYPES:
             await conn.execute(text(f"DROP TYPE IF EXISTS {enum_type} CASCADE"))
+        await conn.execute(text("DROP TABLE IF EXISTS alembic_version CASCADE"))
     await engine.dispose()
 
 

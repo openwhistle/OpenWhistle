@@ -1,10 +1,12 @@
-"""Unit tests for the test-Redis flush guard in conftest.py (task X1 / OPEN-2).
+"""Unit tests for fixture guards in conftest.py.
 
-No live Redis needed — this only exercises the pure URL-parsing guard that
-decides whether ``_flush_test_redis`` is allowed to run.
+No live Redis/Postgres needed — these only exercise pure guard logic and
+the shape of ``conftest.py`` itself.
 """
 
-from conftest import _is_safe_to_flush
+import inspect
+
+from conftest import _is_safe_to_flush, db_engine
 
 
 def test_refuses_db_0() -> None:
@@ -36,3 +38,17 @@ def test_allows_127_0_0_1_non_zero_db() -> None:
 def test_refuses_non_numeric_db_index() -> None:
     """An unparsable path falls back to db 0 (refused), not an exception."""
     assert _is_safe_to_flush("redis://localhost:6379/notanumber") is False
+
+
+def test_db_engine_teardown_also_drops_alembic_version() -> None:
+    """Regression guard (task X4): the session teardown must drop
+    ``alembic_version`` along with the tables/enums it already drops.
+
+    Without it, ``alembic_version`` survives at head with no tables
+    underneath it, so a later ``alembic downgrade`` against the same
+    database fails as if the schema were already migrated.
+    """
+    source = inspect.getsource(db_engine)
+    setup, teardown = source.split("yield engine", 1)
+    assert "alembic_version" in setup
+    assert "alembic_version" in teardown
