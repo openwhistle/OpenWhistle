@@ -322,6 +322,7 @@
   "admin.report.links.none": "Aucun dossier lié.",
   "admin.report.links.remove": "Délier",
   "admin.report.links.remove_confirm": "Supprimer le lien avec {case} ?",
+  "admin.report.export.header": "Exportation",
   "admin.report.export_pdf": "Exporter en PDF",
   "admin.report.audit.header": "Journal d'activité",
   "admin.report.audit.none": "Aucune activité enregistrée pour l'instant.",

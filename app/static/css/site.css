@@ -875,9 +875,10 @@ strong {
 .panel-header-title {
   margin: 0;
 }
-/* The accent marks the main content of a page once. */
+/* The main content of a page: an ink stripe, not the accent — the accent
+   budget belongs to the view's one primary action. */
 .panel-primary {
-  box-shadow: inset 0 3px 0 var(--accent);
+  box-shadow: inset 0 3px 0 var(--ink);
 }
 /* Case page: facts without panel chrome, actions as sections of one panel. */
 .report-facts {

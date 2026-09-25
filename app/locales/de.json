@@ -242,6 +242,7 @@
   "admin.report.links.none": "Keine verknüpften Fälle.",
   "admin.report.links.remove": "Verknüpfung lösen",
   "admin.report.links.remove_confirm": "Verknüpfung mit {case} entfernen?",
+  "admin.report.export.header": "Export",
   "admin.report.export_pdf": "PDF exportieren",
   "admin.report.audit.header": "Aktivitätsprotokoll",
   "admin.report.audit.none": "Noch keine Aktivitäten protokolliert.",

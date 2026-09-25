@@ -409,6 +409,7 @@
                 {% endif %}
 
                 <section class="action-section">
+                    <h3 class="action-title">{{ t('admin.report.export.header') }}</h3>
                     <a href="/admin/reports/{{ report.id }}/export.pdf" class="btn btn-secondary btn-block" download>
                         {{ icons.icon('file') }} {{ t('admin.report.export_pdf') }}
                     </a>

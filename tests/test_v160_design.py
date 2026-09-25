@@ -532,6 +532,10 @@ async def test_dashboard_counts_live_in_the_filter_pills(
     assert "stat-card" not in html and "stats-row" not in html
     assert html.count('class="filter-pill-count"') == 4
     assert set(_pill_counts(html)) == {"received", "in_review", "pending_feedback", "closed"}
+    active = re.findall(r'<a [^>]*class="filter-pill filter-pill-active"[^>]*>', html)
+    assert active and all('aria-current="page"' in a for a in active)
+    inactive = re.findall(r'<a [^>]*class="filter-pill "[^>]*>', html)
+    assert inactive and not any("aria-current" in a for a in inactive)
 
 
 @pytest.mark.asyncio
@@ -656,3 +660,24 @@ async def test_case_page_strings_are_translated_and_script_safe(
     # French prompts carry apostrophes; HTML-escaped inside JS they would show as "&#39;".
     assert "&#39;" not in script and "confirm(\"" in script
     assert "(actuel)" in html and "(current)" not in html
+
+
+def test_primary_panel_stripe_leaves_the_accent_to_the_primary_action() -> None:
+    css = (ROOT / "app/static/css/site.css").read_text()
+    bodies = re.findall(r"\.panel-primary\s*\{([^}]*)\}", css)
+    assert bodies and all("--accent" not in b for b in bodies)
+    assert all("var(--ink)" in b for b in bodies)
+
+
+@pytest.mark.asyncio
+async def test_every_action_section_has_a_title(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    from app.services.report import create_report
+
+    await _login(client, db_session, AdminRole.admin)
+    report, _ = await create_report(db_session, "corruption", "Action titles test report.")
+    html = (await client.get(f"/admin/reports/{report.id}")).text
+    sections = re.findall(r'<section class="action-section">(.*?)</section>', html, re.S)
+    assert len(sections) >= 4
+    assert all('<h3 class="action-title">' in s for s in sections)

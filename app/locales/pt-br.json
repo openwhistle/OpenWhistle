@@ -260,6 +260,7 @@
   "admin.report.links.none": "Nenhum caso vinculado.",
   "admin.report.links.remove": "Desvincular",
   "admin.report.links.remove_confirm": "Remover o vínculo com {case}?",
+  "admin.report.export.header": "Exportação",
   "admin.report.export_pdf": "Exportar PDF",
   "admin.report.audit.header": "Registro de atividade",
   "admin.report.audit.none": "Nenhuma atividade registrada ainda.",

@@ -277,6 +277,9 @@ the only place the accent is used generously.
 `{colors.surface-2}` fill, 1px `{colors.hairline}`, `{rounded.md}`, `{spacing.scale.x6}`
 padding, optional `{elevation.card}`. A panel is the same at `{colors.surface}`.
 Card titles use a mono `eyebrow` over a hairline rule.
+The page's main content panel (`.panel-primary`, the report on the case page) carries a
+3px inset top stripe in `{colors.ink}`, never `{colors.accent}`: the accent stays with the
+view's one primary action.
 
 ### Stat cards (admin)
 

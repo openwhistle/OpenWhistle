@@ -91,7 +91,7 @@
                 {# Status filter pill row #}
                 <div class="filter-pills">
                     <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}{% if location_filter %}&location_id={{ location_filter }}{% endif %}{% if case_query %}&q={{ case_query | urlencode }}{% endif %}"
-                       class="filter-pill {% if not status_filter and not my_cases %}filter-pill-active{% endif %}">
+                       class="filter-pill {% if not status_filter and not my_cases %}filter-pill-active{% endif %}"{% if not status_filter and not my_cases %} aria-current="page"{% endif %}>
                         {{ t('admin.filter.all_statuses') }}
                     </a>
                     {% for sv, label_key in [
@@ -101,12 +101,12 @@
                         ('closed',            'status.label.closed')
                     ] %}
                     <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}&status={{ sv }}{% if location_filter %}&location_id={{ location_filter }}{% endif %}{% if case_query %}&q={{ case_query | urlencode }}{% endif %}"
-                       class="filter-pill {% if status_filter == sv and not my_cases %}filter-pill-active{% endif %}">
+                       class="filter-pill {% if status_filter == sv and not my_cases %}filter-pill-active{% endif %}"{% if status_filter == sv and not my_cases %} aria-current="page"{% endif %}>
                         {{ t(label_key) }} <span class="filter-pill-count">{{ stats.get(sv, 0) }}</span>
                     </a>
                     {% endfor %}
                     <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}&my_cases=1{% if location_filter %}&location_id={{ location_filter }}{% endif %}{% if case_query %}&q={{ case_query | urlencode }}{% endif %}"
-                       class="filter-pill {% if my_cases %}filter-pill-active{% endif %}">
+                       class="filter-pill {% if my_cases %}filter-pill-active{% endif %}"{% if my_cases %} aria-current="page"{% endif %}>
                         {{ t('admin.filter.my_cases') }}
                     </a>
                 </div>
@@ -115,12 +115,12 @@
                 {% if all_locations %}
                 <div class="filter-pills">
                     <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if my_cases %}&my_cases=1{% endif %}{% if case_query %}&q={{ case_query | urlencode }}{% endif %}"
-                       class="filter-pill {% if not location_filter %}filter-pill-active{% endif %}">
+                       class="filter-pill {% if not location_filter %}filter-pill-active{% endif %}"{% if not location_filter %} aria-current="page"{% endif %}>
                         {{ t('admin.filter.all_locations') }}
                     </a>
                     {% for loc in all_locations %}
                     <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if my_cases %}&my_cases=1{% endif %}&location_id={{ loc.id }}{% if case_query %}&q={{ case_query | urlencode }}{% endif %}"
-                       class="filter-pill {% if location_filter == loc.id|string %}filter-pill-active{% endif %}">
+                       class="filter-pill {% if location_filter == loc.id|string %}filter-pill-active{% endif %}"{% if location_filter == loc.id|string %} aria-current="page"{% endif %}>
                         {{ loc.name }}
                     </a>
                     {% endfor %}
