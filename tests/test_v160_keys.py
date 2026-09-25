@@ -135,25 +135,29 @@ async def rotation_db(monkeypatch: pytest.MonkeyPatch):  # type: ignore[no-untyp
     await admin_engine.dispose()
 
     rot_url = base_url.set(database=db_name)
-    result = subprocess.run(  # noqa: S603
-        ["alembic", "upgrade", "head"],  # noqa: S607
-        capture_output=True,
-        text=True,
-        check=False,
-        env={**os.environ, "DATABASE_URL": rot_url.render_as_string(hide_password=False)},
-    )
-    if result.returncode != 0:
-        raise RuntimeError(f"Failed to migrate throwaway rotation DB {db_name}:\n{result.stderr}")
+    engine = None
+    try:  # everything after CREATE DATABASE: a failing migration must not leak it
+        result = subprocess.run(  # noqa: S603
+            ["alembic", "upgrade", "head"],  # noqa: S607
+            capture_output=True,
+            text=True,
+            check=False,
+            env={**os.environ, "DATABASE_URL": rot_url.render_as_string(hide_password=False)},
+        )
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"Failed to migrate throwaway rotation DB {db_name}:\n{result.stderr}"
+            )
 
-    monkeypatch.setattr(settings, "database_url", rot_url.render_as_string(hide_password=False))
+        monkeypatch.setattr(settings, "database_url", rot_url.render_as_string(hide_password=False))
 
-    engine = create_async_engine(rot_url, poolclass=NullPool)
-    session_factory = async_sessionmaker(engine, expire_on_commit=False)
-    try:
+        engine = create_async_engine(rot_url, poolclass=NullPool)
+        session_factory = async_sessionmaker(engine, expire_on_commit=False)
         async with session_factory() as session:
             yield session
     finally:
-        await engine.dispose()
+        if engine is not None:
+            await engine.dispose()
         admin_engine = create_async_engine(
             admin_url, poolclass=NullPool, isolation_level="AUTOCOMMIT"
         )
