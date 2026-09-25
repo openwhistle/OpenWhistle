@@ -10,6 +10,7 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
+    AsyncConnection,
     AsyncEngine,
     AsyncSession,
     async_sessionmaker,
@@ -76,6 +77,20 @@ async def _flush_test_redis() -> None:
         await redis.aclose()
 
 
+async def _drop_test_schema(conn: AsyncConnection) -> None:
+    """Drop every app table, raw enum type, and the alembic tracking table.
+
+    Shared by ``db_engine``'s setup (clean slate before migrating) and
+    teardown (clean slate after the session) so both halves stay in sync --
+    see ``test_drop_test_schema_leaves_no_tables_and_no_alembic_version``
+    for the behavioural guard on this.
+    """
+    await conn.run_sync(Base.metadata.drop_all)
+    for enum_type in _ENUM_TYPES:
+        await conn.execute(text(f"DROP TYPE IF EXISTS {enum_type} CASCADE"))
+    await conn.execute(text("DROP TABLE IF EXISTS alembic_version CASCADE"))
+
+
 @pytest_asyncio.fixture(scope="session", loop_scope="session")
 async def db_engine() -> AsyncGenerator[AsyncEngine]:
     """Session-scoped: runs alembic migrations once for the entire test session."""
@@ -83,12 +98,8 @@ async def db_engine() -> AsyncGenerator[AsyncEngine]:
 
     engine = create_async_engine(settings.database_url, echo=False)
 
-    # Full clean slate: drop tables + raw enum types + alembic tracking table
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        for enum_type in _ENUM_TYPES:
-            await conn.execute(text(f"DROP TYPE IF EXISTS {enum_type} CASCADE"))
-        await conn.execute(text("DROP TABLE IF EXISTS alembic_version CASCADE"))
+        await _drop_test_schema(conn)
 
     # Apply migrations once for the whole session
     result = subprocess.run(  # noqa: S603
@@ -102,14 +113,11 @@ async def db_engine() -> AsyncGenerator[AsyncEngine]:
 
     yield engine
 
-    # Full clean slate again: leaving alembic_version at head with no tables
-    # underneath it breaks a later `alembic downgrade` run against this same
-    # database (it thinks the schema is already migrated).
+    # Leaving alembic_version at head with no tables underneath it breaks a
+    # later `alembic downgrade` run against this same database (it thinks
+    # the schema is already migrated) -- so the teardown must drop it too.
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        for enum_type in _ENUM_TYPES:
-            await conn.execute(text(f"DROP TYPE IF EXISTS {enum_type} CASCADE"))
-        await conn.execute(text("DROP TABLE IF EXISTS alembic_version CASCADE"))
+        await _drop_test_schema(conn)
     await engine.dispose()
 
 
