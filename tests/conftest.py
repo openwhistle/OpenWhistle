@@ -6,6 +6,7 @@ import subprocess
 from collections.abc import AsyncGenerator
 from urllib.parse import urlparse
 
+import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
@@ -292,3 +293,59 @@ async def setup_token() -> str:
     await ensure_setup_token(redis)
     raw = await redis.get(SETUP_TOKEN_KEY)
     return raw.decode() if isinstance(raw, bytes) else str(raw)
+
+
+@pytest_asyncio.fixture(loop_scope="function")
+async def throwaway_db(monkeypatch: pytest.MonkeyPatch):  # type: ignore[no-untyped-def]
+    """An isolated Postgres database for a test that touches *every* row — a
+    key-rotation script, an alembic downgrade/upgrade — so the shared test DB
+    and every other test's rows are never rewritten.
+
+    Creates a uniquely named database on the same server, migrates it with
+    alembic (subprocess, DATABASE_URL overridden), points settings.database_url
+    at it (so a subprocess given ``settings.database_url`` uses it too), yields
+    an AsyncSession on it, and drops the database in a finally.
+    """
+    import uuid
+
+    from sqlalchemy.engine import make_url
+
+    from app.config import settings
+
+    base_url = make_url(settings.database_url)
+    db_name = f"openwhistle_tmp_{uuid.uuid4().hex[:12]}"
+    admin_url = base_url.set(database="postgres")
+
+    admin_engine = create_async_engine(admin_url, poolclass=NullPool, isolation_level="AUTOCOMMIT")
+    async with admin_engine.connect() as conn:
+        await conn.execute(text(f'CREATE DATABASE "{db_name}"'))
+    await admin_engine.dispose()
+
+    tmp_url = base_url.set(database=db_name)
+    engine = None
+    try:  # everything after CREATE DATABASE: a failing migration must not leak it
+        result = subprocess.run(  # noqa: S603
+            ["alembic", "upgrade", "head"],  # noqa: S607
+            capture_output=True,
+            text=True,
+            check=False,
+            env={**os.environ, "DATABASE_URL": tmp_url.render_as_string(hide_password=False)},
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"Failed to migrate throwaway DB {db_name}:\n{result.stderr}")
+
+        monkeypatch.setattr(settings, "database_url", tmp_url.render_as_string(hide_password=False))
+
+        engine = create_async_engine(tmp_url, poolclass=NullPool)
+        session_factory = async_sessionmaker(engine, expire_on_commit=False)
+        async with session_factory() as session:
+            yield session
+    finally:
+        if engine is not None:
+            await engine.dispose()
+        admin_engine = create_async_engine(
+            admin_url, poolclass=NullPool, isolation_level="AUTOCOMMIT"
+        )
+        async with admin_engine.connect() as conn:
+            await conn.execute(text(f'DROP DATABASE IF EXISTS "{db_name}" WITH (FORCE)'))
+        await admin_engine.dispose()

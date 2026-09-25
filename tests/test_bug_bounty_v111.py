@@ -203,6 +203,35 @@ async def test_create_report_does_not_retry_other_integrity_errors(
     await db_session.rollback()
 
 
+@pytest.mark.asyncio
+async def test_create_report_does_not_retry_a_unique_violation_on_another_constraint(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A 23505 is retried only on the case-number index: a duplicate primary
+    key (reports_pkey) is a real fault, not a case-number collision."""
+    from types import SimpleNamespace
+
+    from sqlalchemy.exc import IntegrityError
+
+    from app.services import report as report_svc
+    from app.services.pin import generate_case_number
+
+    taken_id = (await _mk_report(db_session)).id
+    db_session.expunge_all()  # the clash is the database's, not the identity map's
+    calls: list[str] = []
+
+    def counting_gen() -> str:
+        calls.append(number := generate_case_number())
+        return number
+
+    monkeypatch.setattr(report_svc, "generate_case_number", counting_gen)
+    monkeypatch.setattr(report_svc, "uuid", SimpleNamespace(uuid4=lambda: taken_id))
+    with pytest.raises(IntegrityError, match="reports_pkey"):
+        await report_svc.create_report(db_session, "financial_fraud", "PK test.")
+    assert len(calls) == 1
+    await db_session.rollback()
+
+
 # ══════════════════════════════════════════════════════════════════════════
 # HIGH: reminder dedup TTL must cover the warn window
 # ══════════════════════════════════════════════════════════════════════════

@@ -43,13 +43,17 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   receipt message, whistleblower messages and attachment uploads. Migration 006 rounds existing
   rows; the exact times are gone for good (downgrade leaves the rounded values). Thread order is
   kept. Admin replies, notes, acknowledgement and closure keep their time, on screen and in the PDF.
-  The 7-day acknowledgement deadline now counts from 00:00 UTC of the submission day.
+  The 7-day acknowledgement deadline and the stats page's on-time rate now count from 00:00 UTC
+  of the submission day. A same-day message keeps its place in the thread, one microsecond after
+  the message before it. Demo data follows the same rule.
 - The dashboard orders reports with equal submission days by id, so a page boundary is stable.
 
 ### Fixed
 
 - Report creation retried on any database integrity error; it now retries only a case-number
   collision and raises any other error at once.
+- Two messages posted to one case at the same moment could get the same time and an arbitrary
+  order; the case row is now locked while a message's time is chosen.
 
 ### Removed
 

@@ -351,16 +351,26 @@ def _encrypt_message_content(report: Report, content: str) -> str:
     return encrypt_field(fernet, content)
 
 
-async def add_whistleblower_message(
-    db: AsyncSession, report: Report, content: str
-) -> ReportMessage:
+async def _next_sent_at(db: AsyncSession, report: Report, earliest: datetime) -> datetime:
+    """``earliest``, or just after the thread's last message if that is later.
+
+    Locks the report row until the caller commits, so two messages posted at
+    once cannot read the same last time and tie.
+    """
+    await db.execute(select(Report.id).where(Report.id == report.id).with_for_update())
     latest = await db.scalar(
         select(func.max(ReportMessage.sent_at)).where(ReportMessage.report_id == report.id)
     )
-    sent_at = day_floor(datetime.now(UTC))
-    if latest is not None and latest >= sent_at:
-        # Same day as the last message: stay after it, reveal nothing finer.
-        sent_at = latest + timedelta(microseconds=1)
+    if latest is not None and latest >= earliest:
+        return latest + timedelta(microseconds=1)
+    return earliest
+
+
+async def add_whistleblower_message(
+    db: AsyncSession, report: Report, content: str
+) -> ReportMessage:
+    # The day only; on the same day as the last message, just after it.
+    sent_at = await _next_sent_at(db, report, day_floor(datetime.now(UTC)))
     msg = ReportMessage(
         id=uuid.uuid4(),
         report_id=report.id,
@@ -389,6 +399,7 @@ async def add_admin_message(
         report_id=report.id,
         sender=ReportSender.admin,
         content=_encrypt_message_content(report, content),
+        sent_at=await _next_sent_at(db, report, datetime.now(UTC)),
     )
     db.add(msg)
     await db.commit()

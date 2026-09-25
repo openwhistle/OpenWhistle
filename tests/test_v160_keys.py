@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-import pytest_asyncio
 from cryptography.fernet import InvalidToken
 
 from app.config import settings
@@ -102,70 +101,6 @@ def _rotation_script():  # type: ignore[no-untyped-def]
     return rot
 
 
-@pytest_asyncio.fixture(loop_scope="function")
-async def rotation_db(monkeypatch: pytest.MonkeyPatch):  # type: ignore[no-untyped-def]
-    """An isolated, throwaway Postgres database for tests that call
-    rotate_encryption_key.main(): that script always operates on the *entire*
-    configured database (every row in reports/admin_users/audit_log, not just
-    rows a test created), so pointing it at the shared test DB would rotate —
-    or on a real failure, permanently corrupt — every other test's rows.
-
-    Creates a uniquely named database on the same Postgres server, migrates it
-    with alembic (subprocess, DATABASE_URL overridden), points
-    settings.database_url (what the script reads) at it, yields an
-    AsyncSession for seeding the rows a test needs, and drops the database
-    again in a finally.
-    """
-    import os
-    import subprocess
-    import uuid
-
-    from sqlalchemy import text
-    from sqlalchemy.engine import make_url
-    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-    from sqlalchemy.pool import NullPool
-
-    base_url = make_url(settings.database_url)
-    db_name = f"openwhistle_rot_{uuid.uuid4().hex[:12]}"
-    admin_url = base_url.set(database="postgres")
-
-    admin_engine = create_async_engine(admin_url, poolclass=NullPool, isolation_level="AUTOCOMMIT")
-    async with admin_engine.connect() as conn:
-        await conn.execute(text(f'CREATE DATABASE "{db_name}"'))
-    await admin_engine.dispose()
-
-    rot_url = base_url.set(database=db_name)
-    engine = None
-    try:  # everything after CREATE DATABASE: a failing migration must not leak it
-        result = subprocess.run(  # noqa: S603
-            ["alembic", "upgrade", "head"],  # noqa: S607
-            capture_output=True,
-            text=True,
-            check=False,
-            env={**os.environ, "DATABASE_URL": rot_url.render_as_string(hide_password=False)},
-        )
-        if result.returncode != 0:
-            raise RuntimeError(
-                f"Failed to migrate throwaway rotation DB {db_name}:\n{result.stderr}"
-            )
-
-        monkeypatch.setattr(settings, "database_url", rot_url.render_as_string(hide_password=False))
-
-        engine = create_async_engine(rot_url, poolclass=NullPool)
-        session_factory = async_sessionmaker(engine, expire_on_commit=False)
-        async with session_factory() as session:
-            yield session
-    finally:
-        if engine is not None:
-            await engine.dispose()
-        admin_engine = create_async_engine(
-            admin_url, poolclass=NullPool, isolation_level="AUTOCOMMIT"
-        )
-        async with admin_engine.connect() as conn:
-            await conn.execute(text(f'DROP DATABASE IF EXISTS "{db_name}" WITH (FORCE)'))
-        await admin_engine.dispose()
-
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize(("current", "previous"), [("", _A), (_A, "")])
 async def test_rotation_script_refuses_without_both_keys(
@@ -180,7 +115,7 @@ async def test_rotation_script_refuses_without_both_keys(
 
 @pytest.mark.asyncio
 async def test_rotation_script_names_unreadable_rows_and_writes_nothing(
-    rotation_db, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
+    throwaway_db, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     from sqlalchemy import text
@@ -188,16 +123,16 @@ async def test_rotation_script_names_unreadable_rows_and_writes_nothing(
     from app.services.encryption import encrypt_dek
     from app.services.report import create_report
 
-    good, _ = await create_report(rotation_db, "corruption", "Readable report.")
-    bad, _ = await create_report(rotation_db, "corruption", "Report under a lost key.")
+    good, _ = await create_report(throwaway_db, "corruption", "Readable report.")
+    bad, _ = await create_report(throwaway_db, "corruption", "Report under a lost key.")
     monkeypatch.setattr(settings, "encryption_key", "c" * 40)
-    await rotation_db.execute(
+    await throwaway_db.execute(
         text("UPDATE reports SET encrypted_dek = :v WHERE id = :i"),
         {"v": encrypt_dek(b"k" * 32), "i": bad.id},
     )
-    await rotation_db.commit()
+    await throwaway_db.commit()
     before = dict(
-        (await rotation_db.execute(text("SELECT id, encrypted_dek FROM reports"))).tuples().all()
+        (await throwaway_db.execute(text("SELECT id, encrypted_dek FROM reports"))).tuples().all()
     )
 
     monkeypatch.setattr(settings, "encryption_key", _B)
@@ -207,14 +142,14 @@ async def test_rotation_script_names_unreadable_rows_and_writes_nothing(
     assert f"reports.encrypted_dek id={bad.id}" in out
     assert str(good.id) not in out
     after = dict(
-        (await rotation_db.execute(text("SELECT id, encrypted_dek FROM reports"))).tuples().all()
+        (await throwaway_db.execute(text("SELECT id, encrypted_dek FROM reports"))).tuples().all()
     )
     assert after == before
 
 
 @pytest.mark.asyncio
 async def test_rotation_script_moves_every_value_to_the_new_key(
-    rotation_db, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
+    throwaway_db, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
 ) -> None:
     import json
     import uuid
@@ -228,8 +163,8 @@ async def test_rotation_script_moves_every_value_to_the_new_key(
     from app.services.report import create_report
 
     rot = _rotation_script()
-    report, _ = await create_report(rotation_db, "corruption", "Rotation script test report.")
-    await rotation_db.execute(
+    report, _ = await create_report(throwaway_db, "corruption", "Rotation script test report.")
+    await throwaway_db.execute(
         text("UPDATE reports SET confidential_name = :v WHERE id = :i"),
         {"v": crypto.encrypt("Jane Doe"), "i": report.id},
     )
@@ -246,11 +181,11 @@ async def test_rotation_script_moves_every_value_to_the_new_key(
         id=uuid.uuid4(), admin_username="system", action="report.identity_revealed",
         report_id=report.id, detail=json.dumps({"reason": crypto.encrypt("needed for case")}),
     )
-    rotation_db.add_all([admin, retention, reveal])
-    await rotation_db.commit()
+    throwaway_db.add_all([admin, retention, reveal])
+    await throwaway_db.commit()
 
     async def raw(sql: str, row_id: object) -> str:
-        value = await rotation_db.scalar(text(sql), {"i": row_id})
+        value = await throwaway_db.scalar(text(sql), {"i": row_id})
         assert isinstance(value, str)
         return value
 
@@ -280,7 +215,7 @@ async def test_rotation_script_moves_every_value_to_the_new_key(
 
 @pytest.mark.asyncio
 async def test_rotation_script_flags_a_row_changed_during_the_run(
-    rotation_db, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
+    throwaway_db, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """A row rewritten between the script's read and its guarded write (e.g. a
@@ -301,12 +236,12 @@ async def test_rotation_script_flags_a_row_changed_during_the_run(
     from app.services import crypto
     from app.services.report import create_report
 
-    report, _ = await create_report(rotation_db, "corruption", "Lost update simulation.")
-    await rotation_db.execute(
+    report, _ = await create_report(throwaway_db, "corruption", "Lost update simulation.")
+    await throwaway_db.execute(
         text("UPDATE reports SET confidential_name = :v WHERE id = :i"),
         {"v": crypto.encrypt("Old Name"), "i": report.id},
     )
-    await rotation_db.commit()
+    await throwaway_db.commit()
 
     monkeypatch.setattr(settings, "encryption_key", _B)
     monkeypatch.setattr(settings, "encryption_key_previous", settings.secret_key)
