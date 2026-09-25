@@ -681,6 +681,8 @@ async def export_pdf(
     from app.services.pdf import generate_report_pdf
 
     report = await _get_authorized_report(db, report_id, current_user)
+    await audit_service.log(db, current_user, AuditAction.REPORT_VIEWED, report_id=report.id)
+    await db.commit()
 
     pdf_bytes = generate_report_pdf(report)
     safe_name = f"{report.case_number}_export.pdf"
@@ -688,6 +690,39 @@ async def export_pdf(
         content=pdf_bytes,
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
+    )
+
+
+@router.post("/reports/{report_id}/export.pdf", response_model=None)
+async def export_pdf_with_identity(
+    request: Request,
+    report_id: uuid.UUID,
+    reason: str = Form(""),
+    db: AsyncSession = Depends(get_db),
+    current_user: AdminUser = Depends(get_current_admin),
+    _csrf: None = Depends(validate_csrf),
+) -> Response:
+    from app.services.crypto import encrypt
+    from app.services.pdf import generate_report_pdf
+
+    report = await _get_authorized_report(db, report_id, current_user)
+    if not can_reveal_identity(current_user, report):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+    valid = _validated_reason(reason)
+    if valid is None:
+        return await _render_report(
+            request, db, report, current_user,
+            field_errors={"reason": "admin.report.identity.reason_error"}, status_code=422,
+        )
+    await audit_service.log(
+        db, current_user, AuditAction.IDENTITY_REVEALED,
+        report_id=report.id, detail={"reason": encrypt(valid), "via": "pdf"},
+    )
+    await db.commit()
+    return Response(
+        content=generate_report_pdf(report, include_identity=True),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{report.case_number}_export.pdf"'},
     )
 
 

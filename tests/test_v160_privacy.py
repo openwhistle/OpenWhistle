@@ -518,6 +518,41 @@ async def test_combined_case_number_and_content_match_has_no_duplicates(
     assert [r.id for r in reports] == [report.id]
 
 
+def _pdf_text(data: bytes) -> str:
+    import io
+
+    from pypdf import PdfReader
+
+    return "\n".join(p.extract_text() or "" for p in PdfReader(io.BytesIO(data)).pages)
+
+
+@pytest.mark.asyncio
+async def test_pdf_export_omits_identity_by_default(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    user = await _login(client, db_session, AdminRole.case_manager)
+    report = await _confidential_report(db_session, assigned=user)
+    resp = await client.get(f"/admin/reports/{report.id}/export.pdf")
+    assert resp.status_code == 200
+    assert _NAME not in _pdf_text(resp.content)
+
+
+@pytest.mark.asyncio
+async def test_pdf_with_identity_needs_a_reason_and_is_audited(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    user = await _login(client, db_session, AdminRole.case_manager)
+    report = await _confidential_report(db_session, assigned=user)
+    refused = await client.post(f"/admin/reports/{report.id}/export.pdf", data={
+        "reason": "", "csrf_token": client.cookies.get("ow_csrf")})
+    assert refused.status_code == 422
+    resp = await client.post(f"/admin/reports/{report.id}/export.pdf", data={
+        "reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")})
+    assert resp.headers["content-type"] == "application/pdf"
+    assert _NAME in _pdf_text(resp.content)
+    assert await _audit_count(db_session, report, AuditAction.IDENTITY_REVEALED) == 1
+
+
 @pytest.mark.asyncio
 async def test_content_search_respects_the_active_status_and_location_filter(
     db_session: AsyncSession,

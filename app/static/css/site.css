@@ -979,6 +979,16 @@ strong {
   color: var(--ink);
   text-decoration-line: none;
 }
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--muted);
+}
+.btn-ghost:hover {
+  background: var(--surface-card);
+  color: var(--body-text);
+  text-decoration-line: none;
+}
 .btn-danger {
   background: var(--danger);
   border-color: var(--danger);

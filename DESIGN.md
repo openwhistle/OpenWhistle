@@ -258,6 +258,8 @@ in `display` weight 600. The mark is the one place the accent always appears.
 - **Primary** — `{colors.accent}` fill, `{colors.accent-ink}` text, `{rounded.md}`,
   ~`12px 20px` padding, weight 600. **One per view.**
 - **Secondary** — transparent fill, `{colors.hairline}` border, `{colors.ink}` text.
+- **Ghost** — transparent fill, transparent border, `{colors.muted}` text; a low-emphasis
+  action beside a primary/secondary one (e.g. an export alongside a reveal).
 - **Danger** — `{colors.danger}` fill, white text; destructive actions only.
 - `:disabled` drops to `opacity: .4`. Focus is a 2px `{colors.accent}` outline,
   `2px` offset — always visible.
@@ -357,6 +359,19 @@ Sticky nav on a translucent `{colors.canvas}` with a bottom hairline: seal +
 wordmark left, utility controls (theme, language) right as equal-sized icon buttons
 (1px hairline, `{rounded.md}`). Footer sits on `{colors.surface}` with a top
 hairline; muted metadata; the version string in mono.
+
+### Printed case record
+
+The PDF export is a printed record, not a screen — fixed ink on paper, so it takes its
+own restrained palette rather than the live app's accent-forward one: section headings
+`#0A0A0B` (ink) 13pt bold, one emerald `#0C7253` rule 0.6mm under the title only, row
+labels muted `#6A6A6E`, values ink. Section dividers below the title use a hairline
+`#D8D8D6`, not the accent — the accent marks the document once, at the top, the way a
+letterhead does. Dates are day-rounded (`YYYY-MM-DD`); a printed page is read later, not
+in the minute it was made. By default the confidential name and contact are left out of
+the export — a row reads "Identity: [on file — not included]" — the same rule as the
+on-screen case view: identity is shown only through the audited reveal, whether that
+produces a page view or this PDF.
 
 ## Motion
 

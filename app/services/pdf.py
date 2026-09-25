@@ -14,14 +14,21 @@ from app.services.report import (
     decrypt_report_fields,
 )
 
+# Signal-style printed record (DESIGN.md, "Printed case record").
+_INK = (10, 10, 11)
+_MUTED = (106, 106, 110)
+_ACCENT = (12, 114, 83)
+_HAIRLINE = (216, 216, 214)
 
-def generate_report_pdf(report: Report) -> bytes:
+
+def generate_report_pdf(report: Report, include_identity: bool = False) -> bytes:
     description, msg_contents = decrypt_report_fields(report)
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
 
     # ── Header ────────────────────────────────────────────────────
+    pdf.set_text_color(*_INK)
     pdf.set_font("Helvetica", "B", 18)
     pdf.cell(
         0, 10, "OpenWhistle - Case Export",
@@ -30,12 +37,16 @@ def generate_report_pdf(report: Report) -> bytes:
     pdf.set_font("Helvetica", "", 10)
     generated = f"Generated: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}"
     pdf.cell(0, 6, generated, align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.set_draw_color(*_ACCENT)
+    pdf.set_line_width(0.6)
+    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+    pdf.set_line_width(0.2)
     pdf.ln(6)
 
     # ── Case metadata ─────────────────────────────────────────────
     pdf.set_font("Helvetica", "B", 13)
     pdf.cell(0, 8, "Case Information", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-    pdf.set_draw_color(180, 180, 180)
+    pdf.set_draw_color(*_HAIRLINE)
     pdf.line(10, pdf.get_y(), 200, pdf.get_y())
     pdf.ln(3)
 
@@ -56,13 +67,16 @@ def generate_report_pdf(report: Report) -> bytes:
     if report.assigned_to:
         _meta_row(pdf, "Assigned To", report.assigned_to.username)
     if report.confidential_name or report.confidential_contact:
-        from app.services.crypto import decrypt_or_none
-        if report.confidential_name:
-            name = decrypt_or_none(report.confidential_name) or "[encrypted]"
-            _meta_row(pdf, "Confidential Name", name)
-        if report.confidential_contact:
-            contact = decrypt_or_none(report.confidential_contact) or "[encrypted]"
-            _meta_row(pdf, "Confidential Contact", contact)
+        if include_identity:
+            from app.services.crypto import decrypt_or_none
+            if report.confidential_name:
+                name = decrypt_or_none(report.confidential_name) or "[encrypted]"
+                _meta_row(pdf, "Confidential Name", name)
+            if report.confidential_contact:
+                contact = decrypt_or_none(report.confidential_contact) or "[encrypted]"
+                _meta_row(pdf, "Confidential Contact", contact)
+        else:
+            _meta_row(pdf, "Identity", "[on file — not included]")
     if report.secure_email:
         _meta_row(pdf, "Secure Email", "[on file — not printed]")
     pdf.ln(5)
@@ -185,15 +199,17 @@ def generate_report_pdf(report: Report) -> bytes:
 
 def _meta_row(pdf: FPDF, label: str, value: str) -> None:
     pdf.set_font("Helvetica", "B", 10)
+    pdf.set_text_color(*_MUTED)
     pdf.cell(55, 5, label + ":", new_x=XPos.RIGHT, new_y=YPos.TOP)
     pdf.set_font("Helvetica", "", 10)
+    pdf.set_text_color(*_INK)
     pdf.cell(0, 5, _safe(value), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
 
 def _fmt_dt(dt: datetime | None) -> str:
     if not dt:
         return "-"
-    return dt.strftime("%Y-%m-%d %H:%M UTC")
+    return dt.strftime("%Y-%m-%d")
 
 
 def _safe(text: str) -> str:
