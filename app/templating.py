@@ -59,7 +59,19 @@ def audit_detail(detail: str | None) -> list[tuple[str, str]]:
         return [("", detail)]
     if not isinstance(data, dict):
         return [("", detail)]
-    return [(str(k), "—" if v is None else str(v)) for k, v in data.items()]
+    return [(str(k), _detail_value(str(k), v)) for k, v in data.items()]
+
+
+def _detail_value(key: str, value: object) -> str:
+    """An identity reveal's `reason` is a Fernet token; the retention job's is plain text."""
+    from app.services.crypto import decrypt_or_none  # noqa: PLC0415
+
+    if value is None:
+        return "—"
+    text = str(value)
+    if key == "reason" and text.startswith("gAAAAA"):
+        return decrypt_or_none(text) or "—"
+    return text
 
 
 templates.env.filters["audit_detail"] = audit_detail

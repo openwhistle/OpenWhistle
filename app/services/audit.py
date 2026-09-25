@@ -28,6 +28,7 @@ class AuditAction:
     REPORT_LINK_REMOVED     = "report.link_removed"
     REPORT_AUTO_DELETED     = "report.auto_deleted"
     REPORT_VIEWED           = "report.viewed"
+    IDENTITY_REVEALED       = "report.identity_revealed"
     CATEGORY_CREATED        = "category.created"
     CATEGORY_UPDATED        = "category.updated"
     CATEGORY_DEACTIVATED    = "category.deactivated"
@@ -102,6 +103,7 @@ async def get_audit_log(
     scope_org: bool = False,
     org_id: uuid.UUID | None = None,
     viewer_id: uuid.UUID | None = None,
+    exclude_action: str | None = None,
 ) -> tuple[list[AuditLog], int]:
     """`scope_org`/`org_id` are `_org_scope(user)` — untouched, org-scoped semantics.
 
@@ -117,6 +119,8 @@ async def get_audit_log(
         q = q.where(AuditLog.report_id == report_id)
     if action:
         q = q.where(AuditLog.action == action)
+    if exclude_action:
+        q = q.where(AuditLog.action != exclude_action)
     if admin_id is not None:
         q = q.where(AuditLog.admin_id == admin_id)
     if scope_org:

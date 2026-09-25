@@ -21,7 +21,7 @@ from app.redis_client import get_redis
 from app.services import audit as audit_service
 from app.services import report as report_service
 from app.services.audit import AuditAction
-from app.templating import render
+from app.templating import audit_detail, render
 
 router = APIRouter(prefix="/admin")
 
@@ -106,6 +106,25 @@ async def _get_authorized_report(
     if not report or not _can_access_report(user, report):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return report
+
+
+def can_reveal_identity(user: AdminUser, report: Report) -> bool:
+    """HinSchG §8: a confidential identity is for whoever handles the report.
+
+    Assigned case: only the assignee. Unassigned: admin or superadmin, who
+    must assign it before anyone else may see who sent it.
+    """
+    if report.assigned_to_id is not None:
+        return report.assigned_to_id == user.id
+    return user.role in {AdminRole.admin, AdminRole.superadmin}
+
+
+_REASON_MIN, _REASON_MAX = 10, 500
+
+
+def _validated_reason(raw: str) -> str | None:
+    reason = raw.strip()
+    return reason if _REASON_MIN <= len(reason) <= _REASON_MAX else None
 
 
 # ── Dashboard ──────────────────────────────────────────────────────
@@ -220,11 +239,56 @@ async def report_detail(
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(get_current_admin),
 ) -> HTMLResponse:
+    report = await _get_authorized_report(db, report_id, current_user)
+    await audit_service.log(db, current_user, AuditAction.REPORT_VIEWED, report_id=report.id)
+    await db.commit()
+    return await _render_report(request, db, report, current_user)
+
+
+@router.post("/reports/{report_id}/identity", response_class=HTMLResponse)
+async def reveal_identity(
+    request: Request,
+    report_id: uuid.UUID,
+    reason: str = Form(""),
+    db: AsyncSession = Depends(get_db),
+    current_user: AdminUser = Depends(get_current_admin),
+    _csrf: None = Depends(validate_csrf),
+) -> HTMLResponse:
+    from app.services.crypto import decrypt_or_none, encrypt
+
+    report = await _get_authorized_report(db, report_id, current_user)
+    if not can_reveal_identity(current_user, report):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
+    valid = _validated_reason(reason)
+    if valid is None:
+        return await _render_report(
+            request, db, report, current_user,
+            field_errors={"reason": "admin.report.identity.reason_error"}, status_code=422,
+        )
+    await audit_service.log(
+        db, current_user, AuditAction.IDENTITY_REVEALED,
+        report_id=report.id, detail={"reason": encrypt(valid)},
+    )
+    await db.commit()
+    return await _render_report(request, db, report, current_user, identity={
+        "name": decrypt_or_none(report.confidential_name),
+        "contact": decrypt_or_none(report.confidential_contact),
+    })
+
+
+async def _render_report(
+    request: Request,
+    db: AsyncSession,
+    report: Report,
+    current_user: AdminUser,
+    *,
+    identity: dict[str, str | None] | None = None,
+    field_errors: dict[str, str] | None = None,
+    status_code: int = 200,
+) -> HTMLResponse:
     from datetime import UTC, datetime
 
     from app.services.users import get_all_users
-
-    report = await _get_authorized_report(db, report_id, current_user)
 
     all_admins = [
         u for u in await get_all_users(db)
@@ -252,17 +316,16 @@ async def report_detail(
     )
 
     # Fetch audit log for this report
-    audit_entries, _ = await audit_service.get_audit_log(db, report_id=report_id, per_page=20)
+    audit_entries, _ = await audit_service.get_audit_log(
+        db, report_id=report.id, per_page=20, exclude_action=AuditAction.REPORT_VIEWED
+    )
 
-    from app.services.crypto import decrypt_or_none
     from app.services.report import (
         decrypt_attachment_names,
         decrypt_note_contents,
         decrypt_report_fields,
     )
 
-    confidential_name = decrypt_or_none(report.confidential_name)
-    confidential_contact = decrypt_or_none(report.confidential_contact)
     has_secure_email = bool(report.secure_email)
 
     decrypted_description, decrypted_msg_contents = decrypt_report_fields(report)
@@ -284,10 +347,13 @@ async def report_detail(
             "linked_reports": linked,
             "audit_entries": audit_entries,
             "is_admin": current_user.role in {AdminRole.admin, AdminRole.superadmin},
-            "confidential_name": confidential_name,
-            "confidential_contact": confidential_contact,
+            "has_identity": bool(report.confidential_name or report.confidential_contact),
+            "can_reveal": can_reveal_identity(current_user, report),
+            "identity": identity,
+            "field_errors": field_errors or {},
             "has_secure_email": has_secure_email,
         },
+        status_code=status_code,
     )
 
 
@@ -998,7 +1064,7 @@ async def audit_log_csv(
             e.action,
             e.action if label == label_key else label,
             str(e.report_id) if e.report_id else "",
-            e.detail or "",
+            "; ".join(f"{k}={v}" if k else v for k, v in audit_detail(e.detail)),
         ])
 
     return Response(

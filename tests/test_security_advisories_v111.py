@@ -154,7 +154,7 @@ async def test_case_manager_cannot_open_unassigned_report(
 
 @pytest.mark.asyncio
 async def test_case_manager_sees_identity_only_when_assigned(
-    db_session: AsyncSession, as_admin
+    db_session: AsyncSession, as_admin, no_csrf
 ) -> None:
     client, set_user = as_admin
     from app.services.users import create_user
@@ -167,6 +167,12 @@ async def test_case_manager_sees_identity_only_when_assigned(
 
     set_user(cm)
     resp = await client.get(f"/admin/reports/{report.id}", follow_redirects=False)
+    assert resp.status_code == 200
+    # v1.6.0: hidden until the handler asks for it with a reason.
+    assert "REALNAME-CANARY" not in resp.text
+    resp = await client.post(
+        f"/admin/reports/{report.id}/identity", data={"reason": "Arrange the interview."}
+    )
     assert resp.status_code == 200
     assert "REALNAME-CANARY" in resp.text
 
@@ -377,15 +383,26 @@ async def test_assigned_case_manager_can_acknowledge(
 
 @pytest.mark.asyncio
 async def test_admin_may_read_unassigned_report_single_tenant(
-    db_session: AsyncSession, as_admin
+    db_session: AsyncSession, as_admin, no_csrf
 ) -> None:
     """Regression: single-tenant admins are NOT restricted to assigned reports."""
     client, set_user = as_admin
+    from app.services.users import create_user
+
+    # A real row: opening the case writes an audit entry (FK on audit_log.admin_id).
+    admin, _ = await create_user(
+        db_session, f"a-{uuid.uuid4().hex[:8]}", "TestPassword123!", AdminRole.admin
+    )
     report = await _make_confidential_report(db_session, assigned_to_id=None)
-    set_user(_user(AdminRole.admin))
+    set_user(admin)
     resp = await client.get(f"/admin/reports/{report.id}", follow_redirects=False)
     assert resp.status_code == 200
-    # An admin legitimately sees the confidential identity even when unassigned.
+    assert "REALNAME-CANARY" not in resp.text
+    # An admin may reveal the identity of an unassigned case, with a reason.
+    resp = await client.post(
+        f"/admin/reports/{report.id}/identity", data={"reason": "Triage before assigning."}
+    )
+    assert resp.status_code == 200
     assert "REALNAME-CANARY" in resp.text
 
 

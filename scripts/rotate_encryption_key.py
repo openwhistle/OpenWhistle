@@ -44,6 +44,7 @@ async def main() -> int:
     from sqlalchemy.ext.asyncio import create_async_engine
 
     from app.config import settings
+    from app.services.audit import AuditAction
     from app.services.crypto import rotate
     from app.services.encryption import encryption_keys, rotate_dek
 
@@ -66,7 +67,7 @@ async def main() -> int:
     # retention job's report.auto_deleted) have a plaintext "reason" key.
     sources.append((
         "audit_log", "detail",
-        "action = 'report.identity_revealed' AND detail LIKE '%\"reason\"%'",
+        f"action = '{AuditAction.IDENTITY_REVEALED}' AND detail LIKE '%\"reason\"%'",
         _rotate_reason,
     ))
 

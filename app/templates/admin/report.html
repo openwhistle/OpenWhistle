@@ -1,6 +1,7 @@
 {% extends "admin/_layout.html" %}
 {% import "_icons.html" as icons %}
 {% import "admin/_audit.html" as audit with context %}
+{% import "_field.html" as field with context %}
 
 {% block styles %}<style nonce="{{ request.state.csp_nonce }}">
 /* Header */
@@ -259,28 +260,39 @@
                     </div>
                     {% endif %}
 
-                    {% if (is_admin or report.assigned_to_id == user.id) and (confidential_name or confidential_contact) %}
+                    {% if has_identity %}
                     <div class="report-confidential">
                         <div class="detail-label mb-2">{{ t('admin.report.confidential.header') }}</div>
-                        {% if confidential_name %}
-                        <div class="mb-2">
-                            <span class="report-confidential-label">{{ t('admin.report.confidential.name') }}</span>
-                            <span class="report-confidential-value">{{ confidential_name }}</span>
-                        </div>
-                        {% endif %}
-                        {% if confidential_contact %}
-                        <div>
-                            <span class="report-confidential-label">{{ t('admin.report.confidential.contact') }}</span>
-                            <span class="report-confidential-value">{{ confidential_contact }}</span>
-                        </div>
-                        {% endif %}
-                        {% if has_secure_email %}
-                        <div class="mt-2">
-                            <span class="report-confidential-label">{{ t('admin.report.confidential.secure_email_set') }}</span>
-                        </div>
+                        {% if identity %}
+                            {% if identity.name %}
+                            <div class="mb-2">
+                                <span class="report-confidential-label">{{ t('admin.report.confidential.name') }}</span>
+                                <span class="report-confidential-value">{{ identity.name }}</span>
+                            </div>
+                            {% endif %}
+                            {% if identity.contact %}
+                            <div class="mb-2">
+                                <span class="report-confidential-label">{{ t('admin.report.confidential.contact') }}</span>
+                                <span class="report-confidential-value">{{ identity.contact }}</span>
+                            </div>
+                            {% endif %}
+                            <p class="form-hint">{{ t('admin.report.identity.shown_once') }}</p>
+                        {% elif can_reveal %}
+                            <form method="post" action="/admin/reports/{{ report.id }}/identity">
+                                <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                                <label class="form-label" for="identity-reason">{{ t('admin.report.identity.reason') }}</label>
+                                <textarea class="form-control" id="identity-reason" name="reason" rows="2"
+                                          minlength="10" maxlength="500" required{{ field.attrs('reason', 'identity-reason-hint') }}></textarea>
+                                {{ field.error('reason') }}
+                                <p class="form-hint" id="identity-reason-hint">{{ t('admin.report.identity.reason_hint') }}</p>
+                                <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.report.identity.reveal') }}</button>
+                            </form>
+                        {% else %}
+                            <p class="form-hint">{{ t('admin.report.identity.handler_only') }}</p>
                         {% endif %}
                     </div>
-                    {% elif has_secure_email %}
+                    {% endif %}
+                    {% if has_secure_email %}
                     <div>
                         <div class="detail-label">{{ t('admin.report.confidential.secure_email_set') }}</div>
                         <span class="report-email-note">{{ t('admin.report.confidential.email_note') }}</span>

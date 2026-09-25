@@ -44,6 +44,7 @@ zero vendor lock-in, and privacy-first by design.
   session state. Anonymous or confidential mode selectable at step 1.
 - **Anonymous / confidential mode** — Anonymous leaves no personal data. Confidential encrypts
   name, contact info, and optional secure email with Fernet; only the assigned admin can decrypt.
+- **Identity on request** — a confidential reporter's name is shown only to the case handler, with a logged reason.
 - **Multi-location / branch selection** — Optional location selector shown when the operator has
   configured active branches or offices; full admin management UI included.
 - **Bidirectional communication** — Required by HinSchG §17. The whistleblower can reply to admin
