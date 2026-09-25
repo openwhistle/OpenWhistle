@@ -173,7 +173,9 @@ async def dashboard(
     except ValueError:
         per_page = 25
 
-    sort_by: SortField = raw_sort if raw_sort in _ALLOWED_SORT else "submitted_at"  # type: ignore[assignment]
+    sort_by: SortField = (
+        raw_sort if raw_sort in _ALLOWED_SORT else "submitted_at"  # type: ignore[assignment]
+    )
     sort_dir: SortDir = "asc" if raw_dir == "asc" else "desc"
 
     # Object-level scoping: case managers only ever see reports assigned to

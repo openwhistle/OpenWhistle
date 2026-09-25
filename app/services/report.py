@@ -220,7 +220,9 @@ async def content_match_ids(
         q = q.where(Report.status == ReportStatus(status_filter))
     if scope_org or org_id is not None:
         q = q.where(Report.org_id == org_id)
-    rows = await db.execute(q.order_by(Report.submitted_at.desc()).limit(CONTENT_SEARCH_LIMIT))
+    rows = await db.execute(
+        q.order_by(Report.submitted_at.desc(), Report.id.desc()).limit(CONTENT_SEARCH_LIMIT)
+    )
     folded = _fold(needle)
     hits = []
     for report in rows.scalars().all():

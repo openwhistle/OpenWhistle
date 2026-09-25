@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 import unicodedata
 import uuid
+from datetime import UTC, datetime
 
 import pyotp
 import pytest
@@ -416,6 +417,34 @@ async def test_content_search_limit_caps_how_many_reports_are_decrypted(
 
     hits = await content_match_ids(db_session, word, assigned_to_id=isolate_to.id)
     assert len(hits) == 2
+
+
+@pytest.mark.asyncio
+async def test_content_search_limit_tiebreaks_deterministically_on_equal_timestamp(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """order_by(submitted_at.desc()) alone leaves ties (equal timestamps)
+    non-deterministic once the corpus exceeds CONTENT_SEARCH_LIMIT — Report.id
+    is a secondary sort key so "which N get searched" is pinned. Goes RED if
+    that tiebreaker is removed: with two equal-timestamp matching reports and
+    the limit patched to 1, only the report with the larger id must be kept."""
+    import app.services.report as report_service
+
+    monkeypatch.setattr(report_service, "CONTENT_SEARCH_LIMIT", 1)
+    isolate_to = await _bare_admin(db_session)
+    word = f"Wombat{uuid.uuid4().hex[:6]}"
+    same_time = datetime.now(UTC)
+    report_a, _ = await create_report(db_session, "corruption", f"About the {word}, first.")
+    report_a.assigned_to_id = isolate_to.id
+    report_a.submitted_at = same_time
+    report_b, _ = await create_report(db_session, "corruption", f"About the {word}, second.")
+    report_b.assigned_to_id = isolate_to.id
+    report_b.submitted_at = same_time
+    await db_session.commit()
+
+    winner = max(report_a.id, report_b.id)
+    hits = await content_match_ids(db_session, word, assigned_to_id=isolate_to.id)
+    assert hits == [winner]
 
 
 @pytest.mark.asyncio
