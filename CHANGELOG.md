@@ -27,6 +27,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Virus scan of uploads with ClamAV** (`CLAMAV_HOST`, `CLAMAV_PORT`,
   `CLAMAV_TIMEOUT_SECONDS`; optional `clamav` compose profile). Fail-closed: if `clamd` cannot
   be reached, the upload is refused, never stored unscanned.
+- **Remove an attached file before submitting.** Attachments now stay attached when going
+  back (see Fixed), so the attachments step has a Remove button for each file.
 
 ### Changed (breaking)
 
@@ -104,8 +106,15 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A description that failed validation (too short or too long) was discarded, and the step
   showed an empty field or the previous text. It now keeps what was typed (a too-long one cut
   at 10,000 characters). Reported and fixed by Zachary Bridges (#94).
-- Since attachments now stay attached, a file attached by mistake could only be replaced, never
-  dropped. The attachments step has a Remove button for each attached file.
+- **A double final submit created two reports**: two concurrent POSTs of the review form
+  (a double click with JavaScript off, e.g. Tor Browser "Safest") both read the draft before
+  either deleted it, and one PIN was never shown. The submit now claims the draft atomically
+  first; a second request gets "session incomplete". The race predates the #94 port: v1.5.0
+  has the same load → create → delete sequence.
+- **The wizard processed any posted step when `action` was neither `next` nor `back`**, so a
+  crafted request could skip ahead (store a file on a fresh draft) or submit a rejected
+  description. Unknown actions are now ignored, and the final submit re-checks every field
+  before the report is created. The skip-ahead was already possible in v1.5.0.
 
 ### Removed
 

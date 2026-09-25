@@ -79,6 +79,34 @@ _ERROR_FIELD: dict[str, str] = {
 }
 
 
+# A final submit holds this claim while it creates the report.
+_SUBMIT_CLAIM_TTL = 60
+
+
+def _draft_is_complete(
+    state: dict[str, Any], category_slugs: set[str], has_locations: bool
+) -> bool:
+    """Re-check before the final submit what each step validated.
+
+    A description rejected at its step is kept in the draft for editing, so the
+    presence of a field proves nothing.
+    """
+    if state.get("submission_mode") not in ("anonymous", "confidential"):
+        return False
+    if state.get("category") not in category_slugs:
+        return False
+    description = state.get("description")
+    if not isinstance(description, str) or not 10 <= len(description.strip()) <= 10000:
+        return False
+    loc = state.get("location_id")
+    if has_locations and loc:
+        try:
+            uuid.UUID(str(loc))
+        except ValueError:
+            return False
+    return True
+
+
 def _new_draft_id() -> str:
     return f"{secrets.token_urlsafe(32)}.{secrets.token_urlsafe(32)}"
 
@@ -352,8 +380,10 @@ async def submit_post(
     # A step that does not match the session's progress exactly is stale (a
     # back/forward-cached page, a replayed POST) or runs ahead of the wizard
     # (a brand-new session posting step=<attachments> to stash blobs in Redis).
-    # Never process it: show the session's real step instead.
-    if action == "next" and step != state.get("step", _STEP_MODE):
+    # Never process it, nor an unknown action: show the session's real step.
+    if action not in ("next", "back") or (
+        action == "next" and step != state.get("step", _STEP_MODE)
+    ):
         if not state:
             state["_flash_error"] = "session_incomplete"
         state.setdefault("step", _STEP_MODE)
@@ -483,10 +513,15 @@ async def submit_post(
 
     # ── Step 6: review + final submit ────────────────────────────
     if step == _STEP_REVIEW:
-        required = ["submission_mode", "category", "description"]
-        for req in required:
-            if req not in state:
-                return await _fail(_STEP_MODE, "session_incomplete")
+        if not _draft_is_complete(state, valid_cat_slugs, has_locations):
+            return await _fail(_STEP_MODE, "session_incomplete")
+
+        # Claim the draft before creating the report: a double submit (no JS in
+        # Tor Browser "Safest", so no client-side guard) must not create two.
+        claim_key = _submission_key(session_id) + ":claim"
+        if not await redis.set(claim_key, "1", nx=True, ex=_SUBMIT_CLAIM_TTL):
+            state.clear()  # never re-save the draft the winner is deleting
+            return await _fail(_STEP_MODE, "session_incomplete")
 
         from app.services.crypto import encrypt
 
@@ -510,17 +545,23 @@ async def submit_post(
                 sec_email_enc = encrypt(se)
 
         lang = get_lang(request)
-        report, plain_pin = await report_service.create_report(
-            db=db,
-            category=state["category"],
-            description=state["description"],
-            lang=lang,
-            submission_mode=mode,
-            location_id=report_loc_uuid,
-            confidential_name_enc=conf_name_enc,
-            confidential_contact_enc=conf_contact_enc,
-            secure_email_enc=sec_email_enc,
-        )
+        try:
+            report, plain_pin = await report_service.create_report(
+                db=db,
+                category=state["category"],
+                description=state["description"].strip(),
+                lang=lang,
+                submission_mode=mode,
+                location_id=report_loc_uuid,
+                confidential_name_enc=conf_name_enc,
+                confidential_contact_enc=conf_contact_enc,
+                secure_email_enc=sec_email_enc,
+            )
+        except BaseException:
+            await redis.delete(claim_key)  # nothing was created: allow a retry
+            raise
+        # The report is committed: drop the draft now, so no retry can repeat it.
+        await redis.delete(_submission_key(session_id))
 
         # Store attachments from session
         import base64 as _b64  # noqa: PLC0415
@@ -536,9 +577,6 @@ async def submit_post(
 
         from app.services.notifications import notify_new_report
         background_tasks.add_task(notify_new_report, report.case_number)
-
-        # Clean up submission session
-        await redis.delete(_submission_key(session_id))
 
         response = render(
             request,

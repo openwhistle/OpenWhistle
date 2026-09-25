@@ -337,3 +337,139 @@ async def test_remove_without_a_draft_just_redirects(client: AsyncClient) -> Non
     resp = await _remove(client, "0")
     assert resp.status_code == 303
     assert resp.headers["location"] == "/submit"
+
+
+# ── Review-step integrity (#94 review) ──────────────────────────────
+
+_CASE_RE = re.compile(r"OW-\d{4}-\d+")
+
+
+async def _draft(client: AsyncClient) -> dict[str, object]:
+    import app.api.reports as reports
+    from app.redis_client import get_redis
+
+    session_id = client.cookies.get("ow-submission-session")
+    assert session_id
+    return await reports._load_submission(await get_redis(), session_id)
+
+
+async def _walk_to_review(client: AsyncClient) -> None:
+    await _walk_to_attachments(client)
+    await _upload(client)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action", ["x", "", "submit"])
+async def test_unknown_action_with_a_kept_short_description_creates_no_report(
+    client: AsyncClient, action: str
+) -> None:
+    await _walk_to_description(client)
+    await _post(client, description="abcdef")  # rejected, but kept for editing
+    page = await client.get("/submit")
+    resp = await client.post(
+        "/submit",
+        data={"csrf_token": _csrf(page.text), "step": "6", "action": action},
+        follow_redirects=False,
+    )
+    assert resp.status_code == 303
+    assert _CASE_RE.search((await client.get("/submit")).text) is None
+    assert (await _draft(client))["step"] == _step(page.text)  # still on description
+
+
+@pytest.mark.asyncio
+async def test_unknown_action_on_a_fresh_session_stores_no_file(client: AsyncClient) -> None:
+    page = await client.get("/submit")
+    resp = await client.post(
+        "/submit",
+        data={"csrf_token": _csrf(page.text), "step": "5", "action": "x"},
+        files={"files": ("stash.txt", b"a blob to stash in redis", "text/plain")},
+        follow_redirects=False,
+    )
+    assert resp.status_code == 303
+    draft = await _draft(client)
+    assert draft["step"] == 1
+    assert "file_data" not in draft
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("description", "abcdef"),
+        ("description", "x" * 10001),
+        ("description", "   short   "),
+        ("category", "no_such_category"),
+        ("submission_mode", "public"),
+    ],
+    ids=["short", "too-long", "short-after-strip", "unknown-category", "unknown-mode"],
+)
+async def test_review_revalidates_the_draft_before_creating_a_report(
+    client: AsyncClient, field: str, value: str
+) -> None:
+    import app.api.reports as reports
+    from app.redis_client import get_redis
+
+    await _walk_to_review(client)
+    draft = await _draft(client)
+    draft[field] = value
+    session_id = client.cookies.get("ow-submission-session")
+    assert session_id
+    await reports._save_submission(await get_redis(), session_id, draft)
+
+    resp = await _post(client)  # final submit on the review step
+    assert resp.status_code == 303
+    page = (await client.get("/submit")).text
+    assert _CASE_RE.search(page) is None
+    assert "start over" in page.lower()
+
+
+@pytest.mark.asyncio
+async def test_concurrent_final_submits_create_one_report(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import asyncio
+
+    from app.services import report as report_service
+
+    real_create = report_service.create_report
+
+    async def _slow_create(*args: object, **kwargs: object):  # type: ignore[no-untyped-def]
+        await asyncio.sleep(0.2)  # both requests are past loading the draft
+        return await real_create(*args, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(report_service, "create_report", _slow_create)
+    await _walk_to_review(client)
+    page = await client.get("/submit")
+    data = {"csrf_token": _csrf(page.text), "step": str(_step(page.text)), "action": "next"}
+
+    first, second = await asyncio.gather(
+        client.post("/submit", data=data), client.post("/submit", data=data)
+    )
+    cases = {m.group(0) for r in (first, second) if (m := _CASE_RE.search(r.text))}
+    assert len(cases) == 1
+    assert sum(bool(_CASE_RE.search(r.text)) for r in (first, second)) == 1
+
+
+@pytest.mark.asyncio
+async def test_failed_create_releases_the_claim_for_a_retry(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.services import report as report_service
+
+    real_create = report_service.create_report
+    calls = 0
+
+    async def _flaky_create(*args: object, **kwargs: object):  # type: ignore[no-untyped-def]
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise RuntimeError("database went away")
+        return await real_create(*args, **kwargs)  # type: ignore[arg-type]
+
+    monkeypatch.setattr(report_service, "create_report", _flaky_create)
+    await _walk_to_review(client)
+    with pytest.raises(RuntimeError):
+        await _post(client)
+    retry = await _post(client)
+    assert retry.status_code == 200
+    assert _CASE_RE.search(retry.text)
