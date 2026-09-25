@@ -12,10 +12,13 @@ from markupsafe import Markup
 from app.config import settings
 from app.i18n import get_lang, make_translator
 from app.services.attachment import format_size
+from app.services.report import format_day, whistleblower_caused
 
 templates = Jinja2Templates(directory="app/templates")
 
 templates.env.filters["format_size"] = format_size
+templates.env.filters["day"] = format_day
+templates.env.globals["whistleblower_caused"] = whistleblower_caused
 
 templates.env.globals["brand"] = {
     "name": settings.app_name,

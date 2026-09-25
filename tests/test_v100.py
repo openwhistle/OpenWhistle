@@ -213,11 +213,9 @@ class TestEncryptedReportStorage:
         from app.models.report import Report
         from app.services.report import create_report
 
-        _, _ = await create_report(db_session, "fraud", "Very sensitive report content here.")
+        created, _ = await create_report(db_session, "fraud", "Very sensitive report content here.")
 
-        result = await db_session.execute(
-            select(Report).order_by(Report.submitted_at.desc()).limit(1)
-        )
+        result = await db_session.execute(select(Report).where(Report.id == created.id))
         report = result.scalar_one_or_none()
         assert report is not None
         assert report.description != "Very sensitive report content here."
@@ -234,15 +232,15 @@ class TestEncryptedReportStorage:
         from app.services.report import create_report, decrypt_report_fields
 
         original_text = "Confidential whistleblower description."
-        _, _ = await create_report(db_session, "fraud", original_text)
+        created, _ = await create_report(db_session, "fraud", original_text)
 
         from sqlalchemy.orm import selectinload
 
+        # By id: submission times are whole days, so "newest" is not unique.
         result = await db_session.execute(
             select(Report)
             .options(selectinload(Report.messages))
-            .order_by(Report.submitted_at.desc())
-            .limit(1)
+            .where(Report.id == created.id)
         )
         report = result.scalar_one()
         description, msg_contents = decrypt_report_fields(report)

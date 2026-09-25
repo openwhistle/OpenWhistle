@@ -12,6 +12,8 @@ from app.services.report import (
     decrypt_attachment_names,
     decrypt_note_contents,
     decrypt_report_fields,
+    format_day,
+    whistleblower_caused,
 )
 
 # Signal-style printed record (DESIGN.md, "Printed case record").
@@ -57,7 +59,7 @@ def generate_report_pdf(report: Report, include_identity: bool = False) -> bytes
     _meta_row(pdf, "Submission Mode", report.submission_mode.value.title())
     if report.location:
         _meta_row(pdf, "Location", f"{report.location.name} ({report.location.code})")
-    _meta_row(pdf, "Submitted", _fmt_dt(report.submitted_at))
+    _meta_row(pdf, "Submitted", format_day(report.submitted_at))
     if report.acknowledged_at:
         _meta_row(pdf, "Acknowledged", _fmt_dt(report.acknowledged_at))
     if report.feedback_due_at:
@@ -137,9 +139,10 @@ def generate_report_pdf(report: Report, include_identity: bool = False) -> bytes
         pdf.set_font("Helvetica", "", 10)
         for i, msg in enumerate(public_msgs):
             sender = "Reporting Office" if msg.sender.value == "admin" else "Whistleblower"
+            when = format_day(msg.sent_at) if whistleblower_caused(msg, i) else _fmt_dt(msg.sent_at)
             pdf.set_font("Helvetica", "B", 9)
             pdf.cell(
-                0, 5, f"{sender}  ·  {_fmt_dt(msg.sent_at)}",
+                0, 5, f"{sender}  ·  {when}",
                 new_x=XPos.LMARGIN, new_y=YPos.NEXT,
             )
             pdf.set_font("Helvetica", "", 10)
@@ -209,7 +212,7 @@ def _meta_row(pdf: FPDF, label: str, value: str) -> None:
 def _fmt_dt(dt: datetime | None) -> str:
     if not dt:
         return "-"
-    return dt.strftime("%Y-%m-%d")
+    return dt.strftime("%Y-%m-%d %H:%M UTC")
 
 
 def _safe(text: str) -> str:

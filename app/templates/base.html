@@ -169,6 +169,12 @@
             try {
                 var d = new Date(el.getAttribute('data-utc'));
                 if (isNaN(d)) return;
+                if (el.hasAttribute('data-date-only')) {
+                    // A whistleblower's time is stored as its UTC day; shown in a
+                    // zone west of UTC, midnight would read as the day before.
+                    el.textContent = d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate());
+                    return;
+                }
                 var tz = tzLabel(d);
                 el.textContent = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
                                  ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) +

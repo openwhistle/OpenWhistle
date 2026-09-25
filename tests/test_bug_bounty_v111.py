@@ -177,6 +177,32 @@ async def test_case_number_collision_keeps_the_callers_objects_loaded(
     assert taken.id is not None  # synchronous access: must not need IO
 
 
+@pytest.mark.asyncio
+async def test_create_report_does_not_retry_other_integrity_errors(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Only a case-number collision is retried; a foreign-key violation is a
+    real fault and must surface at once, not after five identical attempts."""
+    from sqlalchemy.exc import IntegrityError
+
+    from app.services import report as report_svc
+    from app.services.pin import generate_case_number
+
+    calls: list[str] = []
+
+    def counting_gen() -> str:
+        calls.append(number := generate_case_number())
+        return number
+
+    monkeypatch.setattr(report_svc, "generate_case_number", counting_gen)
+    with pytest.raises(IntegrityError):
+        await report_svc.create_report(
+            db_session, "financial_fraud", "FK test.", location_id=uuid.uuid4()
+        )
+    assert len(calls) == 1
+    await db_session.rollback()
+
+
 # ══════════════════════════════════════════════════════════════════════════
 # HIGH: reminder dedup TTL must cover the warn window
 # ══════════════════════════════════════════════════════════════════════════

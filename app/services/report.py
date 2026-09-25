@@ -57,6 +57,36 @@ _VALID_SORT_FIELDS: dict[str, Any] = {
 _VALID_STATUSES: frozenset[str] = frozenset(s.value for s in ReportStatus)
 
 
+def day_floor(moment: datetime) -> datetime:
+    """The UTC day of an event the whistleblower caused. The exact time could be
+    matched to who was at their desk; the day is what HinSchG deadlines need."""
+    return moment.astimezone(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+def format_day(moment: datetime | None) -> str:
+    """A whistleblower-caused time as shown on a page or in the PDF: the day only."""
+    return day_floor(moment).strftime("%Y-%m-%d") if moment else "-"
+
+
+def whistleblower_caused(msg: ReportMessage, index: int) -> bool:
+    """Whether a thread message's time is the whistleblower's: their own messages
+    and the receipt (always first), which is the moment of submission."""
+    return index == 0 or msg.sender == ReportSender.whistleblower
+
+
+def _is_case_number_collision(exc: Exception) -> bool:
+    """True only for the unique violation on ``reports.case_number``.
+
+    asyncpg's UniqueViolationError (SQLSTATE 23505) is the DBAPI error's cause
+    and names the index it hit; any other integrity error is a real fault.
+    """
+    cause = getattr(getattr(exc, "orig", None), "__cause__", None)
+    return (
+        getattr(cause, "sqlstate", None) == "23505"
+        and getattr(cause, "constraint_name", None) == "ix_reports_case_number"
+    )
+
+
 def _report_options() -> list[_AbstractLoad]:
     return [
         selectinload(Report.messages),
@@ -107,6 +137,7 @@ async def create_report(
 
     # generate_case_number returns a random suffix; on the rare collision (or a
     # concurrent duplicate) retry with a fresh number instead of surfacing a 500.
+    today = day_floor(datetime.now(UTC))
     last_exc: IntegrityError | None = None
     for _attempt in range(5):
         report = Report(
@@ -123,6 +154,7 @@ async def create_report(
             confidential_name=confidential_name_enc,
             confidential_contact=confidential_contact_enc,
             secure_email=secure_email_enc,
+            submitted_at=today,
         )
         # A SAVEPOINT per attempt: a collision rolls back only this attempt.
         # A full db.rollback() would expire every object the caller holds in
@@ -137,9 +169,12 @@ async def create_report(
                         report_id=report.id,
                         sender=ReportSender.admin,
                         content=enc_receipt,
+                        sent_at=today,
                     )
                 )
         except IntegrityError as exc:
+            if not _is_case_number_collision(exc):
+                raise
             last_exc = exc
             continue
         await db.commit()
@@ -319,11 +354,19 @@ def _encrypt_message_content(report: Report, content: str) -> str:
 async def add_whistleblower_message(
     db: AsyncSession, report: Report, content: str
 ) -> ReportMessage:
+    latest = await db.scalar(
+        select(func.max(ReportMessage.sent_at)).where(ReportMessage.report_id == report.id)
+    )
+    sent_at = day_floor(datetime.now(UTC))
+    if latest is not None and latest >= sent_at:
+        # Same day as the last message: stay after it, reveal nothing finer.
+        sent_at = latest + timedelta(microseconds=1)
     msg = ReportMessage(
         id=uuid.uuid4(),
         report_id=report.id,
         sender=ReportSender.whistleblower,
         content=_encrypt_message_content(report, content),
+        sent_at=sent_at,
     )
     db.add(msg)
     await db.commit()
@@ -433,7 +476,7 @@ async def get_all_reports(db: AsyncSession) -> list[Report]:
     result = await db.execute(
         select(Report)
         .options(*_report_options())
-        .order_by(Report.submitted_at.desc())
+        .order_by(Report.submitted_at.desc(), Report.id.desc())
     )
     return list(result.scalars().all())
 
@@ -487,7 +530,9 @@ async def get_reports_paginated(
     rows_result = await db.execute(
         base_q
         .options(*_report_options())
-        .order_by(order_expr)
+        # Submission times are whole days, so ties are common: the id makes
+        # the order total and a page boundary stable.
+        .order_by(order_expr, Report.id.desc())
         .offset((page - 1) * per_page)
         .limit(per_page)
     )

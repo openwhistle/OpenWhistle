@@ -30,6 +30,20 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   receivers that parsed the old array or per-case fields. The reminder email is unchanged — it
   still carries the case number, since only your own admins receive it.
 
+### Changed
+
+- **Times the whistleblower causes are stored and shown as the day only** (UTC): submission, the
+  receipt message, whistleblower messages and attachment uploads. Migration 006 rounds existing
+  rows; the exact times are gone for good (downgrade leaves the rounded values). Thread order is
+  kept. Admin replies, notes, acknowledgement and closure keep their time, on screen and in the PDF.
+  The 7-day acknowledgement deadline now counts from 00:00 UTC of the submission day.
+- The dashboard orders reports with equal submission days by id, so a page boundary is stable.
+
+### Fixed
+
+- Report creation retried on any database integrity error; it now retries only a case-number
+  collision and raises any other error at once.
+
 ### Removed
 
 - `BRAND_SECONDARY_COLOR` — it styled nothing; Signal has one accent.

@@ -80,7 +80,7 @@ def test_fmt_dt_none():
 
 def test_fmt_dt_datetime():
     dt = datetime(2026, 4, 25, 12, 0, 0, tzinfo=UTC)
-    assert _fmt_dt(dt) == "2026-04-25"
+    assert _fmt_dt(dt) == "2026-04-25 12:00 UTC"  # admin times keep the minute
 
 
 def test_safe_ascii():

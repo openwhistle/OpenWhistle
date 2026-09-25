@@ -583,3 +583,179 @@ async def test_content_search_respects_the_active_status_and_location_filter(
     # No status/location filter beyond assignment: matches.
     hits = await content_match_ids(db_session, word, assigned_to_id=isolate_to.id)
     assert hits == [report.id]
+
+
+# ── Times the whistleblower caused are stored and shown as the day ────────────
+
+
+def _is_midnight(moment: datetime) -> bool:
+    return (moment.hour, moment.minute, moment.second, moment.microsecond) == (0, 0, 0, 0)
+
+
+@pytest.mark.asyncio
+async def test_submission_and_receipt_carry_only_the_day(db_session: AsyncSession) -> None:
+    report, _ = await create_report(db_session, "corruption", "Day rounding test report text.")
+    await db_session.refresh(report, ["messages"])
+    for moment in [report.submitted_at, *(m.sent_at for m in report.messages)]:
+        assert _is_midnight(moment.astimezone(UTC))
+
+
+@pytest.mark.asyncio
+async def test_attachment_upload_time_is_the_day(db_session: AsyncSession) -> None:
+    from app.services.attachment import create_attachments
+
+    report, _ = await create_report(db_session, "corruption", "Attachment day test report text.")
+    [att] = await create_attachments(db_session, report, [("n.txt", "text/plain", b"hello")])
+    await db_session.refresh(att)
+    assert _is_midnight(att.uploaded_at.astimezone(UTC))
+
+
+@pytest.mark.asyncio
+async def test_same_day_whistleblower_reply_stays_after_the_admin_reply(
+    db_session: AsyncSession,
+) -> None:
+    from app.models.report import ReportSender
+    from app.services.report import add_admin_message, add_whistleblower_message
+
+    report, _ = await create_report(db_session, "corruption", "Thread order test report text.")
+    admin_msg = await add_admin_message(
+        db_session, report, "Admin answer", notify_whistleblower=False
+    )
+    wb_msg = await add_whistleblower_message(db_session, report, "Whistleblower follow-up")
+    assert wb_msg.sent_at > admin_msg.sent_at
+    await db_session.refresh(report, ["messages"])
+    senders = [m.sender for m in report.messages]
+    assert senders[-2:] == [ReportSender.admin, ReportSender.whistleblower]
+
+
+@pytest.mark.asyncio
+async def test_whistleblower_reply_on_a_new_day_is_that_midnight(db_session: AsyncSession) -> None:
+    from sqlalchemy import text
+
+    from app.services.report import add_whistleblower_message
+
+    report, _ = await create_report(db_session, "corruption", "New day reply test report text.")
+    await db_session.execute(text(
+        "UPDATE report_messages SET sent_at = sent_at - interval '3 days' WHERE report_id = :r"
+    ), {"r": report.id})
+    await db_session.commit()
+    wb_msg = await add_whistleblower_message(db_session, report, "Next-day follow-up")
+    assert _is_midnight(wb_msg.sent_at.astimezone(UTC))
+    assert wb_msg.sent_at.date() == datetime.now(UTC).date()
+
+
+def test_day_floor_is_the_utc_day() -> None:
+    from datetime import timedelta, timezone
+
+    from app.services.report import day_floor
+
+    berlin_early = datetime(2026, 9, 2, 1, 30, tzinfo=timezone(timedelta(hours=2)))
+    assert day_floor(berlin_early) == datetime(2026, 9, 1, tzinfo=UTC)
+
+
+def test_migration_006_keeps_thread_order() -> None:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "m006", "migrations/versions/006_whistleblower_times_by_day.py")
+    assert spec and spec.loader
+    mig = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mig)
+
+    def t(h: int, m: int) -> datetime:
+        return datetime(2026, 9, 1, h, m, tzinfo=UTC)
+
+    rows = [("r", "admin", t(9, 5)), ("a", "admin", t(14, 0)), ("w", "whistleblower", t(16, 30))]
+    out = dict(mig.retime(rows, first_id="r"))
+    assert out["r"] == datetime(2026, 9, 1, tzinfo=UTC)
+    assert out["a"] == t(14, 0)
+    assert out["w"] > out["a"] and out["w"] < t(16, 30)
+
+
+def _alembic(*args: str) -> None:
+    import subprocess
+
+    run = subprocess.run(  # noqa: S603
+        ["alembic", *args], capture_output=True, text=True, check=False  # noqa: S607
+    )
+    assert run.returncode == 0, run.stderr
+
+
+@pytest.mark.asyncio
+async def test_migration_006_rounds_existing_rows_and_round_trips(
+    db_session: AsyncSession,
+) -> None:
+    from sqlalchemy import text
+
+    from app.services.attachment import create_attachments
+    from app.services.report import add_admin_message, add_whistleblower_message
+
+    report, _ = await create_report(db_session, "corruption", "Migration 006 test report text.")
+    await add_admin_message(db_session, report, "Admin answer")
+    await add_whistleblower_message(db_session, report, "Whistleblower follow-up")
+    await create_attachments(db_session, report, [("m.txt", "text/plain", b"x")])
+    exact = datetime(2026, 9, 1, 9, 5, 7, tzinfo=UTC)
+    await db_session.execute(text(
+        "UPDATE reports SET submitted_at = :t WHERE id = :r"), {"t": exact, "r": report.id})
+    await db_session.execute(text(
+        "UPDATE attachments SET uploaded_at = :t WHERE report_id = :r"),
+        {"t": exact, "r": report.id})
+    # receipt 09:05:07, admin 14:00, whistleblower 16:30 (all exact, as before v1.6)
+    for sender, stamp in (("admin", exact), ("admin", datetime(2026, 9, 1, 14, tzinfo=UTC)),
+                          ("whistleblower", datetime(2026, 9, 1, 16, 30, tzinfo=UTC))):
+        await db_session.execute(text(
+            "UPDATE report_messages SET sent_at = :t WHERE id = (SELECT id FROM report_messages "
+            "WHERE report_id = :r AND sender = CAST(:s AS reportsender) AND sent_at > '2026-09-02' "
+            "ORDER BY sent_at LIMIT 1)"), {"t": stamp, "r": report.id, "s": sender})
+    await db_session.commit()  # release locks before the alembic subprocess
+
+    async def snapshot() -> tuple[object, ...]:
+        submitted = await db_session.scalar(
+            text("SELECT submitted_at FROM reports WHERE id = :r"), {"r": report.id})
+        uploaded = await db_session.scalar(
+            text("SELECT uploaded_at FROM attachments WHERE report_id = :r"), {"r": report.id})
+        msgs = (await db_session.execute(text(
+            "SELECT sender::text, sent_at FROM report_messages WHERE report_id = :r "
+            "ORDER BY sent_at"), {"r": report.id})).tuples().all()
+        await db_session.commit()
+        return submitted, uploaded, tuple(msgs)
+
+    _alembic("downgrade", "b2d7f1a5c302")
+    _alembic("upgrade", "head")
+    first = await snapshot()
+    submitted, uploaded, msgs = first
+    day = datetime(2026, 9, 1, tzinfo=UTC)
+    assert submitted == day and uploaded == day
+    assert [s for s, _ in msgs] == ["admin", "admin", "whistleblower"]
+    assert msgs[0][1] == day  # the receipt is the submission
+    assert msgs[1][1] == datetime(2026, 9, 1, 14, tzinfo=UTC)  # an admin's own time stays
+    assert msgs[1][1] < msgs[2][1] < datetime(2026, 9, 1, 16, 30, tzinfo=UTC)
+
+    _alembic("downgrade", "b2d7f1a5c302")  # a no-op on data: the rounding is lossy
+    assert await snapshot() == first
+    _alembic("upgrade", "head")
+    assert await snapshot() == first  # idempotent
+
+
+@pytest.mark.asyncio
+async def test_case_page_and_pdf_show_whistleblower_times_as_the_day_only(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    from app.services.report import add_admin_message, add_whistleblower_message
+
+    user = await _login(client, db_session, AdminRole.case_manager)
+    report, _ = await create_report(db_session, "corruption", "Date-only display test text.")
+    report.assigned_to_id = user.id
+    await db_session.commit()
+    admin_msg = await add_admin_message(db_session, report, "Admin answer")
+    await add_whistleblower_message(db_session, report, "Whistleblower follow-up")
+
+    page = (await client.get(f"/admin/reports/{report.id}")).text
+    day = report.submitted_at.strftime("%Y-%m-%d")
+    assert page.count("data-date-only>") == 3  # submitted, receipt, whistleblower reply
+    assert f"{day} 00:00" not in page
+    assert admin_msg.sent_at.strftime("%Y-%m-%d %H:%M UTC") in page
+
+    pdf = _pdf_text((await client.get(f"/admin/reports/{report.id}/export.pdf")).content)
+    assert f"{day} 00:00" not in pdf
+    assert admin_msg.sent_at.strftime("%Y-%m-%d %H:%M UTC") in pdf

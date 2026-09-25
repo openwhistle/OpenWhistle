@@ -367,11 +367,12 @@ own restrained palette rather than the live app's accent-forward one: section he
 `#0A0A0B` (ink) 13pt bold, one emerald `#0C7253` rule 0.6mm under the title only, row
 labels muted `#6A6A6E`, values ink. Section dividers below the title use a hairline
 `#D8D8D6`, not the accent — the accent marks the document once, at the top, the way a
-letterhead does. Dates are day-rounded (`YYYY-MM-DD`); a printed page is read later, not
-in the minute it was made. By default the confidential name and contact are left out of
-the export — a row reads "Identity: [on file — not included]" — the same rule as the
-on-screen case view: identity is shown only through the audited reveal, whether that
-produces a page view or this PDF.
+letterhead does. Times the whistleblower caused — submission, the receipt, their messages —
+print as the day only (`YYYY-MM-DD`, UTC), as on screen; the office's own times (its
+messages, notes, acknowledged, closed, "Generated") keep `YYYY-MM-DD HH:MM UTC`. By
+default the confidential name and contact are left out of the export — a row reads
+"Identity: [on file — not included]" — the same rule as the on-screen case view: identity
+is shown only through the audited reveal, whether that produces a page view or this PDF.
 
 ## Motion
 

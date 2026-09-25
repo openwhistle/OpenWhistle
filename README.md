@@ -39,7 +39,8 @@ zero vendor lock-in, and privacy-first by design.
 ## ✨ Features
 
 - **Full anonymity** — No IP addresses logged at any layer. An employee submitting from the office
-  network leaves no trace.
+  network leaves no trace. Times the reporter causes (submission, their messages, their files) are
+  stored as the day only, so no exact time can be matched to who was at their desk.
 - **Two-factor whistleblower access** — Case number + secret UUID4 PIN with brute-force protection.
   No accounts, no email — nothing to tie the report back to a person.
 - **Multi-step submission wizard** — Guided 5–6 step form with back/next navigation and Redis-backed

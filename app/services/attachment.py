@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 import re
 import uuid
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 from urllib.parse import quote
@@ -377,7 +378,10 @@ async def create_attachments(
 
     backend = get_storage_backend()
     use_s3 = settings.storage_backend == "s3"
+    from app.services.report import day_floor  # noqa: PLC0415
+
     fernet = make_report_fernet(report.encrypted_dek)
+    today = day_floor(datetime.now(UTC))
 
     attachments = []
     for filename, content_type, data in file_tuples:
@@ -400,6 +404,7 @@ async def create_attachments(
             data=db_data,
             storage_key=storage_key,
             encrypted=True,
+            uploaded_at=today,  # the day only: the exact time could name the uploader
         )
         db.add(att)
         attachments.append(att)
