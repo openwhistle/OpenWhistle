@@ -53,12 +53,6 @@ dependencies = [
 
     # Background task scheduling (SLA reminders)
     "apscheduler>=3.11.3",
-
-    # S3-compatible object storage (optional backend for attachments)
-    "boto3>=1.43.0",
-
-    # LDAP / Active Directory authentication (optional)
-    "ldap3>=2.9.1",
 ]
 
 [project.optional-dependencies]
@@ -76,6 +70,15 @@ e2e = [
 ]
 perf = [
     "locust>=2.45.0",
+]
+# LDAP / Active Directory authentication. python-ldap builds against the
+# OpenLDAP client: needs libldap2-dev libsasl2-dev (Debian) to install.
+ldap = [
+    "python-ldap>=3.4.8",
+]
+# S3-compatible object storage (optional backend for attachments)
+s3 = [
+    "boto3>=1.43.0",
 ]
 
 [build-system]
@@ -103,7 +106,8 @@ module = [
     "aiosmtplib.*",
     "boto3.*",
     "botocore.*",
-    "ldap3.*",
+    "ldap",
+    "ldap.*",
     "apscheduler.*",
     "pythonjsonlogger.*",
 ]

@@ -10,7 +10,9 @@ RUN apk add --no-cache \
     gcc \
     musl-dev \
     libffi-dev \
-    postgresql-dev
+    postgresql-dev \
+    openldap-dev \
+    cyrus-sasl-dev
 
 # uv from its official image, pinned. Keep it in step with the uv pin in
 # .github/workflows/*.yml.
@@ -20,7 +22,7 @@ COPY pyproject.toml uv.lock ./
 
 # Runtime dependencies only, exactly as locked. Build the venv at /venv so the
 # shebangs are correct in the final image. The app itself is copied, not installed.
-RUN UV_PROJECT_ENVIRONMENT=/venv UV_PYTHON_DOWNLOADS=never uv sync --frozen --no-dev --no-install-project --no-cache
+RUN UV_PROJECT_ENVIRONMENT=/venv UV_PYTHON_DOWNLOADS=never uv sync --frozen --no-dev --no-install-project --no-cache --extra ldap --extra s3
 
 # ─── Stage 2: production image ────────────────────────────────────────────────
 # Same digest and provenance as the builder stage above.
@@ -31,7 +33,9 @@ WORKDIR /app
 # Runtime dependencies only
 RUN apk add --no-cache \
     libpq \
-    libffi
+    libffi \
+    libldap \
+    libsasl
 
 # Non-root user for security, uid/gid 1000 to match the Helm chart's
 # securityContext (runAsUser/fsGroup: 1000).

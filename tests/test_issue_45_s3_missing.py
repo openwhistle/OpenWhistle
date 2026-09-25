@@ -40,6 +40,12 @@ async def test_s3_get_other_error_propagates() -> None:
         await _s3_backend().get("some/key")
 
 
+def test_s3_without_the_extra_names_it() -> None:
+    with patch.dict("sys.modules", {"boto3": None}), \
+         pytest.raises(RuntimeError, match="'s3' extra"):
+        _s3_backend()._client()
+
+
 # ── Handler maps the missing-object error to 404 ───────────────────────────
 
 

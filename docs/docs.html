@@ -1500,6 +1500,11 @@
           (no local password) with the <strong>Case Manager</strong> role — an admin promotes
           it if needed. TOTP enrollment is still required after the first login.
         </p>
+        <p>
+          LDAP uses python-ldap (the OpenLDAP client), S3 storage uses boto3; both are optional
+          extras. The container image includes both. Installing from source needs
+          <code>libldap2-dev libsasl2-dev</code> and <code>pip install .[ldap,s3]</code>.
+        </p>
         <table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
@@ -1524,7 +1529,7 @@
             <tr>
               <td><code class="env-key">LDAP_USE_SSL</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
-              <td>Set to <code>true</code> to use LDAPS (TLS from the start). Set port to <code>636</code>. The server certificate is verified against the system CA store; for a private CA, mount its PEM file and set <code>SSL_CERT_FILE</code> to its path.</td>
+              <td>Set to <code>true</code> to use LDAPS (TLS from the start). Set port to <code>636</code>. The server certificate is verified against the system CA store; for a private CA, mount its PEM file and set <code>LDAPTLS_CACERT</code> to its path.</td>
               <td><code>false</code></td>
             </tr>
             <tr>

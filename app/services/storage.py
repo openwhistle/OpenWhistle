@@ -71,7 +71,10 @@ class S3StorageBackend(StorageBackend):
         self._endpoint_url = endpoint_url or None
 
     def _client(self) -> Any:
-        import boto3  # noqa: PLC0415
+        try:
+            import boto3  # noqa: PLC0415
+        except ImportError as exc:
+            raise RuntimeError("STORAGE_BACKEND=s3 needs the 's3' extra (boto3).") from exc
 
         kwargs: dict[str, Any] = {
             "region_name": self._region,

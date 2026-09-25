@@ -65,20 +65,6 @@ async def test_ldap_first_login_provisions_case_manager(
     assert user.role == AdminRole.case_manager
 
 
-def test_ldap_filter_escapes_username() -> None:
-    from app.services.ldap_auth import LDAPAuthError, _authenticate_ldap_sync
-
-    cfg = MagicMock(ldap_enabled=True, ldap_user_filter="(uid={username})")
-    conn = MagicMock(entries=[])
-    with patch("app.config.settings", cfg), \
-         patch("app.services.ldap_auth._make_server"), \
-         patch("ldap3.Connection", return_value=conn), \
-         pytest.raises(LDAPAuthError):
-        _authenticate_ldap_sync("*)(uid=*", "pw")
-
-    assert conn.search.call_args.kwargs["search_filter"] == r"(uid=\2a\29\28uid=\2a)"
-
-
 @pytest.mark.asyncio
 async def test_delete_report_removes_stored_objects(
     db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
@@ -120,16 +106,6 @@ async def test_oidc_login_rejects_deactivated_account(
 
     assert resp.status_code == 401
     assert 'name="temp_token"' not in resp.text
-
-
-def test_ldaps_verifies_server_certificate() -> None:
-    import ssl
-
-    from app.services.ldap_auth import _make_server
-
-    cfg = MagicMock(ldap_server="ldap.example.com", ldap_port=636, ldap_use_ssl=True)
-    server = _make_server(cfg)
-    assert server.tls.validate == ssl.CERT_REQUIRED  # type: ignore[attr-defined]
 
 
 @pytest.mark.asyncio

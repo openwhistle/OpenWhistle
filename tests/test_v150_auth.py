@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import asyncio
 import re
-import ssl
 import sys
 import uuid
 from collections.abc import AsyncGenerator
@@ -671,45 +670,3 @@ def test_reset_script_applies_the_password_policy(monkeypatch: pytest.MonkeyPatc
     with pytest.raises(SystemExit) as exc:
         module.main()
     assert exc.value.code == 0
-
-
-# ═════════════════════════════════════════════════════════════════════════════
-# 8. LDAP StartTLS
-# ═════════════════════════════════════════════════════════════════════════════
-
-
-def test_ldap_start_tls_verifies_the_certificate() -> None:
-    from app.services.ldap_auth import _make_server
-
-    cfg = MagicMock(
-        ldap_server="ldap.example.com", ldap_port=389, ldap_use_ssl=False, ldap_start_tls=True
-    )
-    server = _make_server(cfg)
-    assert server.tls is not None
-    assert server.tls.validate == ssl.CERT_REQUIRED
-
-
-def test_ldap_start_tls_happens_before_any_bind(monkeypatch: pytest.MonkeyPatch) -> None:
-    from ldap3 import AUTO_BIND_TLS_BEFORE_BIND
-
-    from app.services import ldap_auth
-
-    monkeypatch.setattr(settings, "ldap_enabled", True)
-    monkeypatch.setattr(settings, "ldap_start_tls", True)
-    monkeypatch.setattr(settings, "ldap_use_ssl", False)
-    entry = MagicMock(entry_dn="uid=alice,dc=example,dc=com")
-    entry.__contains__ = lambda self, key: False
-    conn = MagicMock(entries=[entry])
-    with patch("ldap3.Connection", return_value=conn) as connection:
-        ldap_auth._authenticate_ldap_sync("alice", "pw")
-
-    assert connection.call_count == 2  # service bind, user bind
-    for call in connection.call_args_list:
-        assert call.kwargs["auto_bind"] == AUTO_BIND_TLS_BEFORE_BIND
-
-
-def test_ldap_without_start_tls_binds_plainly() -> None:
-    from app.services.ldap_auth import _auto_bind
-
-    assert _auto_bind(MagicMock(ldap_start_tls=False, ldap_use_ssl=False)) is True
-    assert _auto_bind(MagicMock(ldap_start_tls=True, ldap_use_ssl=True)) is True

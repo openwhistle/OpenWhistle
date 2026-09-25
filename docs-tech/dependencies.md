@@ -18,7 +18,12 @@ Branch protection still decides — auto-merge only fires once the required
 checks pass.
 Minor and major updates, the Python runtime, and security-relevant libraries
 (crypto, JWT, bcrypt, TOTP, FastAPI/Starlette, multipart, the attachment
-parsers pypdf and Pillow, ldap3) always wait for a person.
+parsers pypdf and Pillow, python-ldap) always wait for a person.
+
+LDAP uses python-ldap, a wrapper around the maintained OpenLDAP client
+library. It replaced ldap3 in v1.6.0: ldap3 has had no release since 2021.
+python-ldap builds from source against `libldap`/`libsasl` headers, so it and
+boto3 are optional extras (`ldap`, `s3`): the image and CI install both.
 
 ## Guards
 

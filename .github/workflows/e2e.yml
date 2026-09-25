@@ -25,9 +25,12 @@ jobs:
       - name: Install uv
         run: pip install uv==0.12.18
 
+      - name: OpenLDAP headers (python-ldap builds from source)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libldap2-dev libsasl2-dev
+
       - name: Install E2E dependencies
         run: |
-          uv export --frozen --extra dev --extra e2e --no-emit-project -o /tmp/requirements.txt
+          uv export --frozen --extra dev --extra ldap --extra s3 --extra e2e --no-emit-project -o /tmp/requirements.txt
           uv pip install --system -r /tmp/requirements.txt
           uv pip install --system --no-deps -e .
           playwright install chromium --with-deps
