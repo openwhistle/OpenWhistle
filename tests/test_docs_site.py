@@ -23,10 +23,11 @@ NAV_PAGES = {
 
 
 def _app_version() -> tuple[int, ...]:
-    config = (ROOT / "app/config.py").read_text()
-    match = re.search(r'app_version:\s*str\s*=\s*"([^"]+)"', config)
-    assert match, "app_version not found in app/config.py"
-    return tuple(int(p) for p in match.group(1).split("."))
+    # Same source tests/test_v100.py::test_every_published_version_string_matches
+    # reads from, rather than a second regex over app/config.py's source text.
+    from app.config import settings
+
+    return tuple(int(p) for p in settings.app_version.split("."))
 
 
 def test_roadmap_md_does_not_exist() -> None:
