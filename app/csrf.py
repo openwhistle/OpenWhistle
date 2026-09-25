@@ -7,6 +7,7 @@ from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.config import settings
+from app.onion import is_onion_host, raw_host_header
 
 _CSRF_COOKIE = "ow_csrf"
 _TOKEN_BYTES = 32
@@ -37,13 +38,19 @@ class CSRFMiddleware:
         if "state" not in scope:
             scope["state"] = {}
         scope["state"]["csrf_token"] = token
+        # Same question the Onion-Location header answers (app/onion.py): a
+        # Secure cookie set over the onion listener's plain-HTTP connection
+        # can be silently refused by the browser, which would break every
+        # CSRF-protected POST — exactly the submissions this feature exists
+        # to protect. Computed independently of SecurityMiddleware's own
+        # is_onion (rather than reading request.state) since this middleware
+        # can run before it and must not depend on that ordering.
+        is_onion = is_onion_host(raw_host_header(raw_headers))
 
         async def send_with_csrf(message: Message) -> None:
             if message["type"] == "http.response.start":
                 mutable = MutableHeaders(scope=message)
-                # Secure like every other cookie: over HTTPS the token must
-                # never be sent on a plain-HTTP request to the same host.
-                secure = "; Secure" if settings.secure_cookies else ""
+                secure = "; Secure" if (settings.secure_cookies and not is_onion) else ""
                 mutable.append(
                     "set-cookie",
                     f"{_CSRF_COOKIE}={token}; Path=/; SameSite=Lax; HttpOnly{secure}",

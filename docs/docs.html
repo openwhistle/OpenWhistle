@@ -1108,10 +1108,38 @@
 <span class="t-prompt">$ </span><span class="t-cmd">docker compose up -d app</span></code></pre>
         </div>
         <p>
-          Every response then carries an <code>Onion-Location</code> header (Tor Browser offers
-          to switch) and the submit page shows the address — except to a visitor already on the
-          onion service, who would just be pointed back at the same page.
+          Every HTML response then carries an <code>Onion-Location</code> header (Tor Browser
+          offers to switch) and the submit page shows the address — except to a visitor already
+          on the onion service, who would just be pointed back at the same page. Cookies and
+          <code>Strict-Transport-Security</code> also adapt automatically: the app drops the
+          <code>Secure</code> cookie flag and HSTS for a request whose Host is already the onion
+          address, since that connection was never TLS (Tor encrypts it instead) and a browser can
+          refuse a <code>Secure</code> cookie sent over plain HTTP.
         </p>
+        <div class="callout callout-warn">
+          <div class="callout-title"><code>/var/lib/tor/openwhistle/</code> holds the address's private key</div>
+          <p>
+            <code>hs_ed25519_secret_key</code> inside that directory <em>is</em> the onion address
+            — losing it changes the address permanently, breaking every link already given to a
+            reporter, and anyone who obtains it can stand up a service that impersonates it.
+            Back the directory up before any host migration or volume change, keep it root/tor-only
+            (Tor sets <code>0700</code> on creation; a bind-mount or backup step can widen that —
+            check it), and never commit it or publish it anywhere the how-to above is shared.
+          </p>
+        </div>
+        <div class="callout callout-note">
+          <div class="callout-title">Rate limiting on the onion listener</div>
+          <p>
+            <code>HiddenServicePort</code> forwards every Tor visitor to nginx from
+            <code>127.0.0.1</code> — the real, distinct visitor is never visible to nginx, so
+            per-IP rate limiting cannot distinguish them. The onion server block therefore uses
+            its own zone, sized for several concurrent legitimate reporters instead of one
+            visitor, rather than the public listener's per-IP zone. A burst of onion traffic
+            still shares that one budget: expect occasional 429s under heavy concurrent use, and
+            raise the zone's <code>rate</code>/<code>burst</code> in <code>nginx/nginx.conf</code>
+            if that happens in practice.
+          </p>
+        </div>
 
         <h3 id="helm">Kubernetes (Helm)</h3>
         <p>

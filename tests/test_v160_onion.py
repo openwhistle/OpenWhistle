@@ -6,17 +6,19 @@ service itself), ONION_LOCATION config validation, and the submit-page note.
 
 from __future__ import annotations
 
+import ast
 import json
 import re
 from pathlib import Path
 
 import pytest
-from httpx import AsyncClient
+from httpx import AsyncClient, Response
 
 from app.config import Settings, settings
 
 ROOT = Path(__file__).parents[1]
-ONION = "http://" + "a" * 56 + ".onion"
+ONION_HOST = "a" * 56 + ".onion"
+ONION = "http://" + ONION_HOST
 
 
 # ── Onion-Location header ──────────────────────────────────────────────────
@@ -46,7 +48,7 @@ async def test_onion_location_header_not_sent_on_the_onion_service_itself(
     """A visitor already on http://<...>.onion must not be offered the same
     address again — the Host header reveals they are already there."""
     monkeypatch.setattr(settings, "onion_location", ONION)
-    resp = await client.get("/status", headers={"Host": "a" * 56 + ".onion"})
+    resp = await client.get("/status", headers={"Host": ONION_HOST})
     assert "onion-location" not in resp.headers
 
 
@@ -56,6 +58,85 @@ async def test_onion_location_header_still_sent_for_a_normal_host(
     monkeypatch.setattr(settings, "onion_location", ONION)
     resp = await client.get("/status", headers={"Host": "example.com"})
     assert resp.headers["onion-location"] == f"{ONION}/status"
+
+
+# ── Cookies (Critical fix-round-1 #1) ────────────────────────────────────────
+
+
+def _set_cookie_headers(resp: Response) -> list[str]:
+    return [v for k, v in resp.headers.multi_items() if k.lower() == "set-cookie"]
+
+
+async def test_cookies_have_no_secure_flag_over_the_onion_host(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A Secure cookie set over the onion listener's plain-HTTP connection can
+    be silently refused by the browser, breaking the CSRF double-submit
+    cookie and every reporter-facing POST it protects — the whole point of
+    offering an onion address. Every Set-Cookie for this Host must drop
+    Secure, whatever settings.secure_cookies says."""
+    monkeypatch.setattr(settings, "onion_location", ONION)
+    assert settings.secure_cookies is True
+    client.headers["Host"] = ONION_HOST
+    resp = await client.get("/submit")
+    cookies = _set_cookie_headers(resp)
+    assert cookies, "expected at least the CSRF and submission-session cookies"
+    for cookie in cookies:
+        assert "Secure" not in cookie, cookie
+
+
+async def test_cookies_keep_the_secure_flag_on_a_normal_host(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "onion_location", ONION)
+    assert settings.secure_cookies is True
+    resp = await client.get("/submit", headers={"Host": "example.com"})
+    cookies = _set_cookie_headers(resp)
+    assert cookies
+    for cookie in cookies:
+        assert "Secure" in cookie, cookie
+
+
+async def test_full_submission_wizard_succeeds_over_the_onion_host(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """End-to-end proof the CSRF double-submit cookie round-trips (GET form →
+    POST with the CSRF cookie, through every wizard step) when every cookie
+    on the way was set without Secure, because the Host is the onion one."""
+    from conftest import wizard_submit  # noqa: PLC0415
+
+    monkeypatch.setattr(settings, "onion_location", ONION)
+    client.headers["Host"] = ONION_HOST
+    case_number, pin = await wizard_submit(client)
+    assert case_number.startswith("OW-")
+    assert pin
+
+
+# ── HSTS (Important fix-round-1 #2) ──────────────────────────────────────────
+
+
+async def test_hsts_absent_over_the_onion_host(client: AsyncClient) -> None:
+    """RFC 6797 §8.1: an HSTS host MUST NOT send this header over a
+    connection that was not secure — the onion listener never is."""
+    resp = await client.get("/status", headers={"Host": ONION_HOST})
+    assert "strict-transport-security" not in resp.headers
+
+
+async def test_hsts_present_on_a_normal_host(client: AsyncClient) -> None:
+    resp = await client.get("/status")
+    assert "strict-transport-security" in resp.headers
+
+
+# ── Onion-Location scoped to HTML (Minor fix-round-1 #6) ────────────────────
+
+
+async def test_onion_location_absent_on_json_health_endpoint(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "onion_location", ONION)
+    resp = await client.get("/health")
+    assert resp.headers["content-type"].startswith("application/json")
+    assert "onion-location" not in resp.headers
 
 
 # ── Config validation ────────────────────────────────────────────────────────
@@ -145,6 +226,60 @@ def test_onion_location_env_var_is_documented_everywhere() -> None:
     ):
         text = (ROOT / path).read_text()
         assert needle in text, path
+
+
+# ── Ansible env.j2 field parity (controller ruling, fix round 1 #8) ─────────
+
+
+def _settings_field_names() -> list[str]:
+    """Every app.config.Settings field name, found without importing the
+    module (so this stays a static source check, not a runtime one)."""
+    tree = ast.parse((ROOT / "app" / "config.py").read_text())
+    names = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "Settings":
+            for item in node.body:
+                if isinstance(item, ast.AnnAssign) and isinstance(item.target, ast.Name):
+                    names.append(item.target.id)
+    return names
+
+
+def test_every_config_field_appears_in_ansible_env_j2() -> None:
+    """RED when a Settings field is missing from env.j2 — live (VAR={{ ... }})
+    or, for one not yet wired to an Ansible variable, at least documented as
+    a commented VAR=default line an operator can uncomment."""
+    env_j2 = (ROOT / "ansible/roles/openwhistle/templates/env.j2").read_text()
+    present = {m.group(1).lower() for m in re.finditer(r"^#?\s*([A-Z][A-Z0-9_]*)=", env_j2, re.M)}
+    missing = [f for f in _settings_field_names() if f not in present]
+    assert missing == []
+
+
+def test_ansible_env_j2_live_vars_have_defaults() -> None:
+    """Every {{ openwhistle_xxx }} template var env.j2 actually uses must be
+    defined in defaults/main.yml, or a deploy with no extra vars fails."""
+    env_j2 = (ROOT / "ansible/roles/openwhistle/templates/env.j2").read_text()
+    used = set(re.findall(r"\{\{\s*(openwhistle_[a-z0-9_]+)\s*\}\}", env_j2))
+    defaults = (ROOT / "ansible/roles/openwhistle/defaults/main.yml").read_text()
+    defined = set(re.findall(r"^(openwhistle_[a-z0-9_]+):", defaults, re.M))
+    assert used - defined == set()
+
+
+# ── Docs: key-backup warning and rate-limit callout (Important #5, Minor #7) ─
+
+
+def test_onion_howto_warns_about_the_hidden_service_private_key() -> None:
+    text = (ROOT / "docs/docs.html").read_text()
+    section = text.split('id="onion-address"')[1].split('id="helm"')[0]
+    assert "hs_ed25519_secret_key" in section
+    assert "0700" in section
+    assert re.search(r"back(s|ing)? (it|the directory) up|back up", section, re.I)
+
+
+def test_onion_howto_explains_the_shared_rate_limit_budget() -> None:
+    text = (ROOT / "docs/docs.html").read_text()
+    section = text.split('id="onion-address"')[1].split('id="helm"')[0]
+    assert "127.0.0.1" in section
+    assert "429" in section
 
 
 # ── Locale ────────────────────────────────────────────────────────────────────

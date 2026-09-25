@@ -5,6 +5,8 @@ import secrets
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
+from app.onion import is_onion_host, raw_host_header
+
 # Headers that indicate an upstream proxy is forwarding IP information.
 _IP_REVEAL_HEADERS = frozenset(
     [
@@ -22,14 +24,17 @@ _REDIS_IP_WARNING_KEY = "openwhistle:ip_headers_detected"
 
 # Static headers that never vary per request. The Content-Security-Policy is
 # built per request in _build_csp() because it carries a per-response nonce.
+# Strict-Transport-Security is added separately (see send_with_security) —
+# RFC 6797 forbids sending it over a connection that was never TLS, which the
+# plain-HTTP onion listener never is.
 _STATIC_SECURITY_HEADERS: dict[str, str] = {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
     "X-XSS-Protection": "0",
     "Referrer-Policy": "no-referrer",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
-    "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
 }
+_HSTS = "max-age=31536000; includeSubDomains; preload"
 
 
 def _build_csp(nonce: str) -> str:
@@ -82,16 +87,11 @@ class SecurityMiddleware:
         # scope["headers"] is list[tuple[bytes, bytes]] in the ASGI spec
         raw_headers: list[tuple[bytes, bytes]] = list(scope.get("headers", []))
         # Host is read here (not touched by the IP-header stripping below) so
-        # Onion-Location is never offered to a visitor already on the onion
-        # service itself — that would just point back at the same page.
-        host_header = next(
-            (
-                value.decode("latin-1")
-                for name, value in raw_headers
-                if name.decode("latin-1").lower() == "host"
-            ),
-            "",
-        )
+        # every onion-aware decision below — Onion-Location, HSTS, and (via
+        # app.onion.cookie_secure, reused from request.state) every Set-Cookie
+        # — answers the same question from the same value instead of drifting.
+        is_onion = is_onion_host(raw_host_header(raw_headers))
+        state["is_onion"] = is_onion
         ip_headers_present = any(
             name.decode("latin-1").lower() in _IP_REVEAL_HEADERS
             for name, _ in raw_headers
@@ -120,12 +120,22 @@ class SecurityMiddleware:
                 for name, value in _STATIC_SECURITY_HEADERS.items():
                     mutable[name] = value
                 mutable["Content-Security-Policy"] = _build_csp(nonce)
+                # RFC 6797 §8.1: an HSTS host MUST NOT send this header over a
+                # connection that was not secure — the onion listener never is.
+                if not is_onion:
+                    mutable["Strict-Transport-Security"] = _HSTS
                 from app.config import settings  # noqa: PLC0415
 
+                # Onion-Location is a page-navigation hint (Tor Browser acts on
+                # it only for a top-level document load): scope to HTML so a
+                # JSON endpoint like /health never carries it — this also
+                # covers every /static/ asset (css/js/images/fonts), none of
+                # which are ever served as text/html, without a second check.
+                content_type = mutable.get("content-type", "")
                 if (
                     settings.onion_location
-                    and not str(scope.get("path", "")).startswith("/static/")
-                    and not host_header.lower().endswith(".onion")
+                    and not is_onion
+                    and content_type.lower().startswith("text/html")
                 ):
                     mutable["Onion-Location"] = (
                         settings.onion_location.rstrip("/") + str(scope.get("path", "/"))
