@@ -7,6 +7,7 @@ Override with: pytest --base-url=http://your-host:port
 """
 from __future__ import annotations
 
+import os
 import urllib.error
 import urllib.request
 from collections.abc import Generator
@@ -66,7 +67,9 @@ def axe_source() -> str:
     except urllib.error.HTTPError:
         raise  # a wrong URL or version must fail, not skip every axe check
     except Exception:
-        return ""  # gracefully skip axe if offline
+        if os.environ.get("CI"):
+            raise  # CI is never "offline": a skipped axe check would pass green
+        return ""  # local offline run: skip the axe checks
 
 
 @pytest.fixture
