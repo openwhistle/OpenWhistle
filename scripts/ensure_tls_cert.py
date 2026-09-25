@@ -48,6 +48,7 @@ def ensure(src: Path, dst: Path, hostname: str) -> str:
     if (src / _CERT).is_file() and (src / _KEY).is_file():
         shutil.copyfile(src / _CERT, dst / _CERT)
         shutil.copyfile(src / _KEY, dst / _KEY)
+        (dst / _KEY).chmod(0o600)  # copyfile keeps the umask mode, not the source's
         return "provided"
     if (dst / _CERT).is_file() and (dst / _KEY).is_file():
         return "kept"

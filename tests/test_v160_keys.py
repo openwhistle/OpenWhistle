@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+import pytest_asyncio
 from cryptography.fernet import InvalidToken
 
 from app.config import settings
@@ -101,6 +102,66 @@ def _rotation_script():  # type: ignore[no-untyped-def]
     return rot
 
 
+@pytest_asyncio.fixture(loop_scope="function")
+async def rotation_db(monkeypatch: pytest.MonkeyPatch):  # type: ignore[no-untyped-def]
+    """An isolated, throwaway Postgres database for tests that call
+    rotate_encryption_key.main(): that script always operates on the *entire*
+    configured database (every row in reports/admin_users/audit_log, not just
+    rows a test created), so pointing it at the shared test DB would rotate —
+    or on a real failure, permanently corrupt — every other test's rows.
+
+    Creates a uniquely named database on the same Postgres server, migrates it
+    with alembic (subprocess, DATABASE_URL overridden), points
+    settings.database_url (what the script reads) at it, yields an
+    AsyncSession for seeding the rows a test needs, and drops the database
+    again in a finally.
+    """
+    import os
+    import subprocess
+    import uuid
+
+    from sqlalchemy import text
+    from sqlalchemy.engine import make_url
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+    from sqlalchemy.pool import NullPool
+
+    base_url = make_url(settings.database_url)
+    db_name = f"openwhistle_rot_{uuid.uuid4().hex[:12]}"
+    admin_url = base_url.set(database="postgres")
+
+    admin_engine = create_async_engine(admin_url, poolclass=NullPool, isolation_level="AUTOCOMMIT")
+    async with admin_engine.connect() as conn:
+        await conn.execute(text(f'CREATE DATABASE "{db_name}"'))
+    await admin_engine.dispose()
+
+    rot_url = base_url.set(database=db_name)
+    result = subprocess.run(  # noqa: S603
+        ["alembic", "upgrade", "head"],  # noqa: S607
+        capture_output=True,
+        text=True,
+        check=False,
+        env={**os.environ, "DATABASE_URL": rot_url.render_as_string(hide_password=False)},
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"Failed to migrate throwaway rotation DB {db_name}:\n{result.stderr}")
+
+    monkeypatch.setattr(settings, "database_url", rot_url.render_as_string(hide_password=False))
+
+    engine = create_async_engine(rot_url, poolclass=NullPool)
+    session_factory = async_sessionmaker(engine, expire_on_commit=False)
+    try:
+        async with session_factory() as session:
+            yield session
+    finally:
+        await engine.dispose()
+        admin_engine = create_async_engine(
+            admin_url, poolclass=NullPool, isolation_level="AUTOCOMMIT"
+        )
+        async with admin_engine.connect() as conn:
+            await conn.execute(text(f'DROP DATABASE IF EXISTS "{db_name}" WITH (FORCE)'))
+        await admin_engine.dispose()
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize(("current", "previous"), [("", _A), (_A, "")])
 async def test_rotation_script_refuses_without_both_keys(
@@ -115,7 +176,7 @@ async def test_rotation_script_refuses_without_both_keys(
 
 @pytest.mark.asyncio
 async def test_rotation_script_names_unreadable_rows_and_writes_nothing(
-    db_session, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
+    rotation_db, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     from sqlalchemy import text
@@ -123,59 +184,33 @@ async def test_rotation_script_names_unreadable_rows_and_writes_nothing(
     from app.services.encryption import encrypt_dek
     from app.services.report import create_report
 
-    good, _ = await create_report(db_session, "corruption", "Readable report.")
-    bad, _ = await create_report(db_session, "corruption", "Report under a lost key.")
+    good, _ = await create_report(rotation_db, "corruption", "Readable report.")
+    bad, _ = await create_report(rotation_db, "corruption", "Report under a lost key.")
     monkeypatch.setattr(settings, "encryption_key", "c" * 40)
-    await db_session.execute(
+    await rotation_db.execute(
         text("UPDATE reports SET encrypted_dek = :v WHERE id = :i"),
         {"v": encrypt_dek(b"k" * 32), "i": bad.id},
     )
-    await db_session.commit()
-    # Scoped to the two rows this test created: main() touches the whole shared
-    # test DB, but this assertion must not depend on what other tests left behind.
-    own_rows = text("SELECT id, encrypted_dek FROM reports WHERE id IN (:good, :bad)")
-    own_ids = {"good": good.id, "bad": bad.id}
-    before = dict((await db_session.execute(own_rows, own_ids)).tuples().all())
+    await rotation_db.commit()
+    before = dict(
+        (await rotation_db.execute(text("SELECT id, encrypted_dek FROM reports"))).tuples().all()
+    )
 
     monkeypatch.setattr(settings, "encryption_key", _B)
     monkeypatch.setattr(settings, "encryption_key_previous", settings.secret_key)
-    try:
-        assert await _rotation_script().main() == 1
-        out = capsys.readouterr().out
-        assert f"reports.encrypted_dek id={bad.id}" in out
-        assert str(good.id) not in out
-        after = dict((await db_session.execute(own_rows, own_ids)).tuples().all())
-        assert after == before
-    finally:
-        # Full cleanup: an un-deleted `good` row would persist under the default
-        # key forever, which is harmless by itself but the invariant this whole
-        # file depends on is that no row is left behind under a non-default key.
-        await db_session.execute(
-            text("DELETE FROM reports WHERE id IN (:good, :bad)"), {"good": good.id, "bad": bad.id}
-        )
-        await db_session.commit()
-
-
-@pytest.fixture
-async def _clean_stray_rotation_state(monkeypatch: pytest.MonkeyPatch):  # type: ignore[no-untyped-def]
-    """This file's tests rotate the *entire* shared reports/admin_users/audit_log
-    tables (main() has no notion of "this test's rows"). A previous run that
-    died between the forward and backward rotation below would leave rows
-    stuck under _A/_B/"c"*40 forever, and every later test touching those
-    tables — anywhere in the suite — would then fail to decrypt them. Restore
-    everything to the default key first, so this test's own round trip can't
-    be sabotaged by state it did not create, and so a prior failure heals
-    instead of compounding.
-    """
-    monkeypatch.setattr(settings, "encryption_key", settings.secret_key)
-    monkeypatch.setattr(settings, "encryption_key_previous", f"{_A},{_B},{'c' * 40}")
-    await _rotation_script().main()
+    assert await _rotation_script().main() == 1
+    out = capsys.readouterr().out
+    assert f"reports.encrypted_dek id={bad.id}" in out
+    assert str(good.id) not in out
+    after = dict(
+        (await rotation_db.execute(text("SELECT id, encrypted_dek FROM reports"))).tuples().all()
+    )
+    assert after == before
 
 
 @pytest.mark.asyncio
 async def test_rotation_script_moves_every_value_to_the_new_key(
-    db_session, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
-    _clean_stray_rotation_state,  # type: ignore[no-untyped-def]
+    rotation_db, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
 ) -> None:
     import json
     import uuid
@@ -189,8 +224,8 @@ async def test_rotation_script_moves_every_value_to_the_new_key(
     from app.services.report import create_report
 
     rot = _rotation_script()
-    report, _ = await create_report(db_session, "corruption", "Rotation script test report.")
-    await db_session.execute(
+    report, _ = await create_report(rotation_db, "corruption", "Rotation script test report.")
+    await rotation_db.execute(
         text("UPDATE reports SET confidential_name = :v WHERE id = :i"),
         {"v": crypto.encrypt("Jane Doe"), "i": report.id},
     )
@@ -207,59 +242,41 @@ async def test_rotation_script_moves_every_value_to_the_new_key(
         id=uuid.uuid4(), admin_username="system", action="report.identity_revealed",
         report_id=report.id, detail=json.dumps({"reason": crypto.encrypt("needed for case")}),
     )
-    db_session.add_all([admin, retention, reveal])
-    await db_session.commit()
+    rotation_db.add_all([admin, retention, reveal])
+    await rotation_db.commit()
 
     async def raw(sql: str, row_id: object) -> str:
-        value = await db_session.scalar(text(sql), {"i": row_id})
+        value = await rotation_db.scalar(text(sql), {"i": row_id})
         assert isinstance(value, str)
         return value
 
-    # The script rewrites every row of the shared test DB: rotate to _B, check,
-    # then rotate back to the default key (SECRET_KEY, set explicitly as current)
-    # so later tests read their rows.
     monkeypatch.setattr(settings, "encryption_key", _B)
     monkeypatch.setattr(settings, "encryption_key_previous", settings.secret_key)
-    try:
-        assert await rot.main() == 0
-        dek = await raw("SELECT encrypted_dek FROM reports WHERE id = :i", report.id)
-        name = await raw("SELECT confidential_name FROM reports WHERE id = :i", report.id)
-        totp = await raw("SELECT totp_secret FROM admin_users WHERE id = :i", admin.id)
-        reason = json.loads(await raw("SELECT detail FROM audit_log WHERE id = :i", reveal.id))
-        plain = json.loads(await raw("SELECT detail FROM audit_log WHERE id = :i", retention.id))
+    assert await rot.main() == 0
+    dek = await raw("SELECT encrypted_dek FROM reports WHERE id = :i", report.id)
+    name = await raw("SELECT confidential_name FROM reports WHERE id = :i", report.id)
+    totp = await raw("SELECT totp_secret FROM admin_users WHERE id = :i", admin.id)
+    reason = json.loads(await raw("SELECT detail FROM audit_log WHERE id = :i", reveal.id))
+    plain = json.loads(await raw("SELECT detail FROM audit_log WHERE id = :i", retention.id))
 
-        monkeypatch.setattr(settings, "encryption_key_previous", "")  # new key alone
-        assert len(decrypt_dek(dek)) == 32
-        assert crypto.decrypt(name) == "Jane Doe"
-        assert crypto.decrypt(totp) == "JBSWY3DPEHPK3PXP"
-        assert crypto.decrypt(reason["reason"]) == "needed for case"
-        assert plain["reason"] == "retention period exceeded"
+    monkeypatch.setattr(settings, "encryption_key_previous", "")  # new key alone
+    assert len(decrypt_dek(dek)) == 32
+    assert crypto.decrypt(name) == "Jane Doe"
+    assert crypto.decrypt(totp) == "JBSWY3DPEHPK3PXP"
+    assert crypto.decrypt(reason["reason"]) == "needed for case"
+    assert plain["reason"] == "retention period exceeded"
 
-        monkeypatch.setattr(settings, "encryption_key", settings.secret_key)  # old key alone
-        for token in (name, totp, reason["reason"]):
-            with pytest.raises(InvalidToken):
-                crypto.decrypt(token)
+    monkeypatch.setattr(settings, "encryption_key", settings.secret_key)  # old key alone
+    for token in (name, totp, reason["reason"]):
         with pytest.raises(InvalidToken):
-            decrypt_dek(dek)
-    finally:
-        # Full cleanup: main() operates on the whole shared test DB, so a row
-        # left behind here under a non-default key would break the next run
-        # of any rotation test that happens to touch it.
-        monkeypatch.setattr(settings, "encryption_key", settings.secret_key)
-        monkeypatch.setattr(settings, "encryption_key_previous", _B)
-        assert await rot.main() == 0
-        await db_session.execute(text("DELETE FROM admin_users WHERE id = :i"), {"i": admin.id})
-        await db_session.execute(
-            text("DELETE FROM audit_log WHERE id IN (:retention, :reveal)"),
-            {"retention": retention.id, "reveal": reveal.id},
-        )
-        await db_session.execute(text("DELETE FROM reports WHERE id = :i"), {"i": report.id})
-        await db_session.commit()
+            crypto.decrypt(token)
+    with pytest.raises(InvalidToken):
+        decrypt_dek(dek)
 
 
 @pytest.mark.asyncio
 async def test_rotation_script_flags_a_row_changed_during_the_run(
-    db_session, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
+    rotation_db, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """A row rewritten between the script's read and its guarded write (e.g. a
@@ -280,12 +297,12 @@ async def test_rotation_script_flags_a_row_changed_during_the_run(
     from app.services import crypto
     from app.services.report import create_report
 
-    report, _ = await create_report(db_session, "corruption", "Lost update simulation.")
-    await db_session.execute(
+    report, _ = await create_report(rotation_db, "corruption", "Lost update simulation.")
+    await rotation_db.execute(
         text("UPDATE reports SET confidential_name = :v WHERE id = :i"),
         {"v": crypto.encrypt("Old Name"), "i": report.id},
     )
-    await db_session.commit()
+    await rotation_db.commit()
 
     monkeypatch.setattr(settings, "encryption_key", _B)
     monkeypatch.setattr(settings, "encryption_key_previous", settings.secret_key)
@@ -322,16 +339,5 @@ async def test_rotation_script_flags_a_row_changed_during_the_run(
     monkeypatch.setattr(
         "sqlalchemy.ext.asyncio.create_async_engine", patched_create_async_engine
     )
-    try:
-        assert await _rotation_script().main() == 0
-        assert "Re-run before emptying ENCRYPTION_KEY_PREVIOUS." in capsys.readouterr().out
-    finally:
-        # main() just rotated the *entire* shared reports/admin_users/audit_log
-        # tables to _B, not just this test's own row — rotate everything back
-        # to the default key before cleaning up, or every other row in the
-        # suite is left permanently unreadable under the real ENCRYPTION_KEY.
-        monkeypatch.setattr(settings, "encryption_key", settings.secret_key)
-        monkeypatch.setattr(settings, "encryption_key_previous", _B)
-        assert await _rotation_script().main() == 0
-        await db_session.execute(text("DELETE FROM reports WHERE id = :i"), {"i": report.id})
-        await db_session.commit()
+    assert await _rotation_script().main() == 0
+    assert "Re-run before emptying ENCRYPTION_KEY_PREVIOUS." in capsys.readouterr().out

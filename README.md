@@ -145,7 +145,11 @@ zero vendor lock-in, and privacy-first by design.
   prohibition notice for operators setting up a verbal reporting channel.
 - **TLS on by default** — the bundled nginx in `docker-compose.prod.yml` serves HTTPS out of
   the box: drop `fullchain.pem`/`privkey.pem` into `nginx/certs/`, or a self-signed certificate
-  for `TLS_HOSTNAME` is generated on first start; plain HTTP only redirects.
+  for `TLS_HOSTNAME` is generated on first start; plain HTTP only redirects. The self-signed
+  certificate is for first boot/testing only — install a real one before real users arrive, since
+  the app's HSTS header pins a browser that clicked through the warning. To renew, drop the new
+  certificate into `nginx/certs/` and run `docker compose up -d tls-init nginx` (`tls-init` is
+  one-shot; restarting `nginx` alone keeps the old certificate).
 
 ---
 

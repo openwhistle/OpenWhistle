@@ -1003,6 +1003,24 @@
             <code>docker-compose.prod.yml</code>, default <code>localhost</code>) before nginx
             starts.
           </p>
+          <p>
+            To renew: drop the new certificate into <code>nginx/certs/</code> and run
+            <code>docker compose up -d tls-init nginx</code>. <code>tls-init</code> is a
+            one-shot service — restarting <code>nginx</code> alone leaves the old certificate in
+            place, since nginx never re-reads <code>nginx/certs/</code> itself.
+          </p>
+        </div>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">Self-signed is for first boot only</div>
+          <p>
+            The generated self-signed certificate lets the stack come up before you have a real
+            one; it is not meant to serve real users. A browser that clicks through the
+            certificate warning gets an HSTS pin (<code>Strict-Transport-Security:
+            max-age=31536000; includeSubDomains; preload</code>) for that hostname — install a
+            real certificate (see <a href="#requirements">Requirements</a>, "HTTPS required")
+            before anyone but you visits the instance.
+          </p>
         </div>
 
         <h3>Step 4 — Run the setup wizard</h3>

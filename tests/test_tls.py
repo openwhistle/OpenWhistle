@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import re
+import stat
 from pathlib import Path
 
 from cryptography import x509
@@ -36,6 +37,8 @@ def test_operator_certificate_wins(tmp_path: Path) -> None:
     (src / "privkey.pem").write_text("KEY")
     assert ensure(src, tmp_path / "tls", "x") == "provided"
     assert (tmp_path / "tls/fullchain.pem").read_text() == "CERT"
+    mode = stat.S_IMODE((tmp_path / "tls/privkey.pem").stat().st_mode)
+    assert mode == 0o600, oct(mode)
 
 
 def test_nginx_redirects_http_and_strips_ip_headers_on_https() -> None:
