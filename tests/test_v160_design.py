@@ -533,7 +533,11 @@ async def test_dashboard_counts_live_in_the_filter_pills(
     assert html.count('class="filter-pill-count"') == 4
     assert set(_pill_counts(html)) == {"received", "in_review", "pending_feedback", "closed"}
     active = re.findall(r'<a [^>]*class="filter-pill filter-pill-active"[^>]*>', html)
-    assert active and all('aria-current="page"' in a for a in active)
+    # Two independent filter dimensions (status/my-cases and location) can each have an
+    # active pill at once, so "page" (a single current page) would be wrong here; "true"
+    # is the correct aria-current token for a set of independent toggles. "page" stays
+    # reserved for real navigation/pagination (see admin/_layout.html, the pagination span).
+    assert active and all('aria-current="true"' in a for a in active)
     inactive = re.findall(r'<a [^>]*class="filter-pill "[^>]*>', html)
     assert inactive and not any("aria-current" in a for a in inactive)
 
@@ -681,3 +685,182 @@ async def test_every_action_section_has_a_title(
     sections = re.findall(r'<section class="action-section">(.*?)</section>', html, re.S)
     assert len(sections) >= 4
     assert all('<h3 class="action-title">' in s for s in sections)
+
+
+# ── Task X5: every template's user-visible text goes through t(), and every
+# class used in a template is a real CSS class or a documented JS hook. ─────
+
+_JINJA_MACRO = re.compile(r"\{%-?\s*macro\b.*?-?%\}.*?\{%-?\s*endmacro\s*-?%\}", re.DOTALL)
+_JINJA_EXPR = re.compile(r"\{\{.*?\}\}|\{%.*?%\}|\{#.*?#\}", re.DOTALL)
+_LANGUAGE_WORD = re.compile(r"[A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u00FF]{2,}")
+
+_CHECKED_ATTRS = {"title", "aria-label", "placeholder", "data-confirm", "value"}
+# Elements whose text/attrs are identifiers or data, not UI language, and so are exempt:
+# a <code> (env var names, hashes, case-number placeholders), and anything carrying one
+# of these two classes (the app's own "this is a mono/identifier value" convention, plus
+# demo-cred-value: the literal demo credential text, e.g. "demo" -- a data value, not copy).
+_NON_LANGUAGE_CLASSES = {"mono", "demo-cred-value"}
+# "OpenWhistle" is the brand name (explicitly allowed by the brief); "Open"/"Whistle" are
+# its two halves, split across tags in base.html's nav brand mark for the bold second half.
+_ALLOWED_WORDS = {"openwhistle", "open", "whistle"}
+# categories.html's label_en/label_de placeholders demonstrate the exact language required
+# for that specific bilingual data field (an English example, a German example) -- they are
+# a data example, not UI chrome, and stay put regardless of the admin's own UI language.
+_EXAMPLE_DATA_PLACEHOLDER_IDS = {"cat-label-en", "cat-label-de"}
+
+
+class _UntranslatedTextChecker(HTMLParser):
+    """Flags literal, translatable words in text nodes and in a short list of
+    user-visible attributes (title, aria-label, placeholder, data-confirm, and
+    value -- but only on an <input type="submit"|"button">, where value IS the
+    visible label; a <button>'s value attribute is never rendered)."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.violations: list[str] = []
+        self._tag_stack: list[tuple[bool, bool, bool]] = []
+        self._skip_depth = 0
+        self._nonlang_depth = 0
+        self._external_link_depth = 0
+
+    def _check(self, raw: str, where: str) -> None:
+        stripped = _JINJA_EXPR.sub(" ", raw)
+        for m in _LANGUAGE_WORD.finditer(stripped):
+            word = m.group(0)
+            if word.lower() in _ALLOWED_WORDS:
+                continue
+            self.violations.append(f"{where}={word!r} in {raw.strip()[:80]!r}")
+
+    def _handle_attrs(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if self._skip_depth:
+            return
+        attrs_dict = dict(attrs)
+        elem_id = attrs_dict.get("id")
+        is_button_value = tag == "input" and attrs_dict.get("type") in ("submit", "button")
+        for name, val in attrs_dict.items():
+            if name not in _CHECKED_ATTRS or not val:
+                continue
+            if name == "value" and not is_button_value:
+                continue
+            if name == "placeholder" and elem_id in _EXAMPLE_DATA_PLACEHOLDER_IDS:
+                continue
+            self._check(val, f"@{name}")
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        attrs_dict = dict(attrs)
+        classes = set((attrs_dict.get("class") or "").split())
+        href = attrs_dict.get("href") or ""
+        opens_skip = tag in ("script", "style")
+        opens_nonlang = tag == "code" or bool(_NON_LANGUAGE_CLASSES & classes)
+        # External reference text (an https:// citation, a URL shown as its own link
+        # text) is a citation/URL label, not UI copy -- e.g. the HinSchG footer link,
+        # the EUR-Lex / gesetze-im-internet.de citations on the telephone-channel page.
+        opens_external = tag == "a" and href.startswith(("http://", "https://"))
+        self._skip_depth += opens_skip
+        self._nonlang_depth += opens_nonlang
+        self._external_link_depth += opens_external
+        self._tag_stack.append((opens_skip, opens_nonlang, opens_external))
+        self._handle_attrs(tag, attrs)
+
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        self._handle_attrs(tag, attrs)
+
+    def handle_endtag(self, tag: str) -> None:
+        if not self._tag_stack:
+            return
+        opens_skip, opens_nonlang, opens_external = self._tag_stack.pop()
+        self._skip_depth -= opens_skip
+        self._nonlang_depth -= opens_nonlang
+        self._external_link_depth -= opens_external
+
+    def handle_data(self, data: str) -> None:
+        if self._skip_depth or self._nonlang_depth or self._external_link_depth:
+            return
+        self._check(data, "text")
+
+
+def test_no_untranslated_literal_text_in_templates() -> None:
+    """Every user-visible string is a locale key: no literal English (or any other
+    language) text sits outside t(...) in text nodes or in title/aria-label/
+    placeholder/data-confirm/button-value attributes. Caught two untranslated admin
+    pages (organisations.html, users.html) plus smaller misses across the sweep."""
+    for p in sorted(TEMPLATES.rglob("*.html")):
+        raw = p.read_text()
+        preprocessed = _JINJA_EXPR.sub(" ", _JINJA_MACRO.sub(" ", raw))
+        checker = _UntranslatedTextChecker()
+        checker.feed(preprocessed)
+        assert not checker.violations, (p, checker.violations)
+
+
+_DYNAMIC_CLASS_TOKEN = "\x00DYNAMIC\x00"
+
+
+def _static_class_tokens(class_attr_value: str) -> list[str]:
+    """The literal class names in a `class="..."` value: a `{{ expr }}` (a computed
+    class, e.g. `badge-{{ status }}`) fuses into one token that is then dropped
+    entirely -- it cannot be checked statically. A `{% if %}...{% endif %}` control
+    tag is removed but the literal text it wraps (e.g. a conditionally-applied
+    class name) is kept, since that text is a real, checkable class name."""
+    value = _JINJA_MACRO.sub(" ", class_attr_value)
+    value = re.sub(r"\{\{.*?\}\}", _DYNAMIC_CLASS_TOKEN, value, flags=re.DOTALL)
+    value = re.sub(r"\{%.*?%\}", " ", value, flags=re.DOTALL)
+    return [t for t in value.split() if _DYNAMIC_CLASS_TOKEN not in t]
+
+
+class _ClassUsageChecker(HTMLParser):
+    def __init__(self, known_classes: set[str]) -> None:
+        super().__init__(convert_charrefs=True)
+        self.known_classes = known_classes
+        self.unknown: list[str] = []
+
+    def _check(self, attrs: list[tuple[str, str | None]]) -> None:
+        for name, val in attrs:
+            if name == "class" and val:
+                for cls in _static_class_tokens(val):
+                    if cls not in self.known_classes:
+                        self.unknown.append(cls)
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        self._check(attrs)
+
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        self._check(attrs)
+
+
+# JS hook classes with no CSS rule of their own (styling for all three lives on
+# selectors composed with another class, e.g. ".session-expiry-expired-state
+# .session-expiry-icon" -- so the bare hook class itself still needs listing here
+# for any file that used ONLY the hook name; kept explicit and short, per the brief).
+_JS_HOOK_CLASSES = {
+    "session-expiry-expired-state",  # site.js: classList.add/remove
+    "session-expiry-actions",  # site.js: querySelector('.session-expiry-actions')
+    "session-expiry-body",  # site.js: querySelector('.session-expiry-body')
+}
+
+
+def test_every_template_class_exists_in_css_or_is_a_documented_js_hook() -> None:
+    """Every class in `class="..."` (its static parts; a `{{ expr }}` computed class
+    is skipped, see `_static_class_tokens`) is defined in site.css, in that same
+    template's own page-scoped <style> block (an established pattern here, e.g.
+    users.html's `.usr-*`), or is a documented JS hook. Caught BEM-style classes
+    (btn--secondary, badge--green, stats-grid, ...) that don't exist in site.css at
+    all -- the real names are single-dash (btn-secondary, badge-closed, stats-row)."""
+    css = (ROOT / "app/static/css/site.css").read_text()
+    css_no_comments = re.sub(r"/\*.*?\*/", "", css, flags=re.DOTALL)
+    known = set(re.findall(r"\.([a-zA-Z_][\w-]*)", css_no_comments))
+    known |= _JS_HOOK_CLASSES
+
+    # Page-scoped <style> blocks are a template-authoring convention throughout the
+    # admin templates (each page defines its own `.xxx-*` classes); a class defined
+    # in ANY template's own <style> block is available to every template equally,
+    # since none of them share these page-scoped names by accident (they're all
+    # namespaced by a per-page prefix, e.g. usr-/cat-/loc-/aud-/dash-/report-/stat-).
+    for p in TEMPLATES.rglob("*.html"):
+        for style_body in re.findall(r"<style[^>]*>(.*?)</style>", p.read_text(), re.DOTALL):
+            style_no_comments = re.sub(r"/\*.*?\*/", "", style_body, flags=re.DOTALL)
+            known |= set(re.findall(r"\.([a-zA-Z_][\w-]*)", style_no_comments))
+
+    for p in sorted(TEMPLATES.rglob("*.html")):
+        checker = _ClassUsageChecker(known)
+        checker.feed(p.read_text())
+        assert not checker.unknown, (p, sorted(set(checker.unknown)))

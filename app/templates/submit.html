@@ -334,7 +334,7 @@
                 <span class="review-label">{{ t('submit.form.files') }}</span>
                 <ul class="review-value sub-file-list">
                     {% for f in state.get('file_meta', []) %}
-                    <li>{{ icons.icon('paperclip') }} {{ f.filename }} ({{ (f.size // 1024) }}KB)</li>
+                    <li>{{ icons.icon('paperclip') }} {{ f.filename }} ({{ f.size | format_size }})</li>
                     {% endfor %}
                 </ul>
             </div>

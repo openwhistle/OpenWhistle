@@ -46,7 +46,7 @@
 
     {% if is_demo %}
     <div class="demo-banner" role="note" aria-label="{{ t('demo.banner.label') }}">
-        <span class="demo-banner-badge">DEMO</span>
+        <span class="demo-banner-badge">{{ t('demo.badge') }}</span>
         <span class="demo-banner-text">{{ t('demo.banner.text') }}</span>
         <span class="demo-banner-short">{{ t('demo.banner.short') }}</span>
         <a href="https://openwhistle.net" target="_blank" rel="noopener noreferrer" class="demo-banner-link">openwhistle.net</a>
@@ -58,7 +58,7 @@
             {% if brand.logo_url %}
                 <img src="{{ brand.logo_url }}" alt="{{ brand.name }}" class="nav-logo-img">
             {% else %}
-                <svg class="nav-logo-svg" width="26" height="30" viewBox="0 0 28 33" fill="none"
+                <svg width="26" height="30" viewBox="0 0 28 33" fill="none"
                      xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
                     <path d="M14 2 L25 6.5 L25 18 C25 26 20 31 14 32 C8 31 3 26 3 18 L3 6.5 Z"
                           stroke="var(--accent)" stroke-width="1.5" fill="var(--accent-subtle)"
@@ -127,7 +127,7 @@
          aria-live="polite">
         <div class="session-expiry-icon" aria-hidden="true">{{ icons.icon('clock') }}</div>
         <div class="session-expiry-body">
-            <span class="session-expiry-warning-text">{{ t('session.expiry.warning') }}</span>
+            <span>{{ t('session.expiry.warning') }}</span>
             <strong id="session-expiry-countdown" class="session-expiry-countdown">5:00</strong>
         </div>
         <div class="session-expiry-actions">

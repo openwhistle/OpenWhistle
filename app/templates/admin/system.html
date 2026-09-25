@@ -10,7 +10,7 @@
         <p class="page-subtitle">{{ t('admin.system.subtitle') }}</p>
     </div>
 
-    <div class="stats-grid" role="list">
+    <div class="stats-row" role="list">
         <div class="stat-card" role="listitem">
             <div class="stat-card__label">{{ t('admin.system.stat.current') }}</div>
             <div class="stat-card__value"><code>v{{ update.current }}</code></div>
@@ -22,15 +22,15 @@
             <div class="stat-card__label">{{ t('admin.system.stat.status') }}</div>
             <div class="stat-card__value">
                 {% if not update.enabled %}
-                    <span class="badge badge--grey">{{ t('admin.system.status.disabled') }}</span>
+                    <span class="badge">{{ t('admin.system.status.disabled') }}</span>
                 {% elif not update.latest %}
-                    <span class="badge badge--grey">{{ t('admin.system.status.never_checked') }}</span>
+                    <span class="badge">{{ t('admin.system.status.never_checked') }}</span>
                 {% elif update.status == 'update_available' %}
-                    <span class="badge badge--amber">{{ t('admin.system.status.update_available') }}</span>
+                    <span class="badge badge-pending_feedback">{{ t('admin.system.status.update_available') }}</span>
                 {% elif update.status == 'ahead' %}
-                    <span class="badge badge--grey">{{ t('admin.system.status.ahead') }}</span>
+                    <span class="badge">{{ t('admin.system.status.ahead') }}</span>
                 {% else %}
-                    <span class="badge badge--green">{{ icons.icon('check') }} {{ t('admin.system.status.up_to_date') }}</span>
+                    <span class="badge badge-closed">{{ icons.icon('check') }} {{ t('admin.system.status.up_to_date') }}</span>
                 {% endif %}
             </div>
         </div>
@@ -71,11 +71,11 @@
         <div class="detail-row">
             <div class="detail-label">{{ t('admin.system.integrity.status') }}</div>
             {% if not integrity.available %}
-                <span class="badge badge--grey">{{ t('admin.system.integrity.unavailable') }}</span>
+                <span class="badge">{{ t('admin.system.integrity.unavailable') }}</span>
             {% elif integrity.ok %}
-                <span class="badge badge--green">{{ icons.icon('check') }} {{ t('admin.system.integrity.ok') }}</span>
+                <span class="badge badge-closed">{{ icons.icon('check') }} {{ t('admin.system.integrity.ok') }}</span>
             {% else %}
-                <span class="badge badge--amber">{{ t('admin.system.integrity.issues') }}</span>
+                <span class="badge badge-pending_feedback">{{ t('admin.system.integrity.issues') }}</span>
             {% endif %}
         </div>
 
@@ -145,8 +145,8 @@
     </section>
 
     <div class="page-actions">
-        <a href="/admin/dashboard" class="btn btn--secondary">{{ t('admin.back_dashboard') }}</a>
-        <a href="https://github.com/openwhistle/OpenWhistle/releases" rel="noopener noreferrer" target="_blank" class="btn btn--outline">
+        <a href="/admin/dashboard" class="btn btn-secondary">{{ t('admin.back_dashboard') }}</a>
+        <a href="https://github.com/openwhistle/OpenWhistle/releases" rel="noopener noreferrer" target="_blank" class="btn btn-secondary">
             {{ t('admin.system.all_releases') }}
         </a>
     </div>

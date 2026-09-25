@@ -1,100 +1,86 @@
 {% extends "admin/_layout.html" %}
 
-{% block title %}Organisations | OpenWhistle{% endblock %}
-
-{% block styles %}
-<style nonce="{{ request.state.csp_nonce }}">
-</style>
-{% endblock %}
+{% block title %}{{ t('admin.organisations.title') }} | OpenWhistle{% endblock %}
 
 {% block admin_content %}
 <div class="container">
     <div class="page-header">
-        <h1>Organisations</h1>
-        <p class="page-subtitle">
-            Manage tenants in multi-tenant deployments. Each organisation has its own
-            reports, categories, locations, and admin users.
-        </p>
+        <h1>{{ t('admin.organisations.title') }}</h1>
     </div>
 
-    <section class="card" aria-labelledby="heading-create">
-        <h2 id="heading-create">Create Organisation</h2>
-        <form method="post" action="/admin/organisations" class="form--inline">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-            <div class="form-row">
+    <div class="admin-split-grid">
+
+        <div class="panel">
+            <h2 class="panel-header">{{ t('admin.organisations.add.header') }}</h2>
+            <form method="post" action="/admin/organisations">
+                <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                 <div class="form-group">
-                    <label for="org-name">Organisation Name</label>
-                    <input type="text" id="org-name" name="name" required
-                           placeholder="Acme GmbH" maxlength="128"
-                           class="form-control">
+                    <label class="form-label" for="org-name">{{ t('admin.organisations.add.name') }}</label>
+                    <input type="text" class="form-control" id="org-name" name="name" required
+                           maxlength="128" placeholder="{{ t('admin.organisations.add.name.placeholder') }}">
                 </div>
                 <div class="form-group">
-                    <label for="org-slug">Slug <span class="hint">(subdomain / URL key, lowercase)</span></label>
-                    <input type="text" id="org-slug" name="slug" required
-                           placeholder="acme" maxlength="64" pattern="[a-z0-9-]+"
-                           class="form-control">
+                    <label class="form-label" for="org-slug">{{ t('admin.organisations.add.slug') }}</label>
+                    <input type="text" class="form-control" id="org-slug" name="slug" required
+                           maxlength="64" pattern="[a-z0-9-]+"
+                           placeholder="{{ t('admin.organisations.add.slug.placeholder') }}"
+                           aria-describedby="org-slug-hint">
+                    <div class="form-hint" id="org-slug-hint">{{ t('admin.organisations.add.slug.hint') }}</div>
                 </div>
-                <div class="form-group form-group--action">
-                    <button type="submit" class="btn btn--primary">Create</button>
-                </div>
+                <button type="submit" class="btn btn-primary btn-block">{{ t('admin.organisations.add.button') }}</button>
+            </form>
+        </div>
+
+        <div class="panel">
+            <h2 class="panel-header">{{ t('admin.organisations.list.header') }}</h2>
+
+            {% if organisations %}
+            <div class="table-wrapper" tabindex="0" role="region" aria-label="{{ t('admin.organisations.list.header') }}">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{{ t('admin.organisations.col.name') }}</th>
+                            <th>{{ t('admin.organisations.col.slug') }}</th>
+                            <th>{{ t('admin.organisations.col.status') }}</th>
+                            <th>{{ t('admin.organisations.col.created') }}</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for org in organisations %}
+                        <tr>
+                            <td>{{ org.name }}</td>
+                            <td class="mono">{{ org.slug }}</td>
+                            <td>
+                                {% if org.is_active %}
+                                <span class="badge badge-closed">{{ t('admin.organisations.active') }}</span>
+                                {% else %}
+                                <span class="badge">{{ t('admin.organisations.inactive') }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="mono">{{ org.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                {% if org.slug == 'default' %}
+                                <span class="badge">{{ t('admin.organisations.default') }}</span>
+                                {% elif org.is_active %}
+                                <form method="post" action="/admin/organisations/{{ org.id }}/deactivate"
+                                      class="inline-form"
+                                      data-confirm="{{ t('admin.organisations.deactivate_confirm', name=org.name) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                                    <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.organisations.deactivate') }}</button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-        </form>
-    </section>
+            {% else %}
+            <p class="empty-state">{{ t('admin.organisations.empty') }}</p>
+            {% endif %}
+        </div>
 
-    <section class="card" aria-labelledby="heading-list">
-        <h2 id="heading-list">All Organisations</h2>
-        {% if organisations %}
-        <table class="data-table" role="table">
-            <thead>
-                <tr>
-                    <th scope="col">Name</th>
-                    <th scope="col">Slug</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Created</th>
-                    <th scope="col" class="col-actions">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for org in organisations %}
-                <tr>
-                    <td>{{ org.name }}</td>
-                    <td><code>{{ org.slug }}</code></td>
-                    <td>
-                        {% if org.is_active %}
-                            <span class="badge badge--green">Active</span>
-                        {% else %}
-                            <span class="badge badge--grey">Inactive</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ org.created_at.strftime('%Y-%m-%d') }}</td>
-                    <td>
-                        {% if org.slug != 'default' and org.is_active %}
-                        <form method="post"
-                              action="/admin/organisations/{{ org.id }}/deactivate"
-                              class="inline-form"
-                              data-confirm="Deactivate {{ org.name }}?">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                            <button type="submit" class="btn btn--danger btn--sm">
-                                Deactivate
-                            </button>
-                        </form>
-                        {% elif org.slug == 'default' %}
-                            <span class="muted">Default</span>
-                        {% else %}
-                            <span class="badge badge--grey">Inactive</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <p class="empty-state">No organisations found.</p>
-        {% endif %}
-    </section>
-
-    <div class="page-actions">
-        <a href="/admin/dashboard" class="btn btn--secondary">{{ t('admin.back_dashboard') }}</a>
     </div>
 </div>
 {% endblock %}

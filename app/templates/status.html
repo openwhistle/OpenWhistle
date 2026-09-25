@@ -36,7 +36,7 @@
     {% if is_demo %}
     <div class="demo-credentials st-demo-credentials-margin" role="note">
         <div class="demo-credentials-header">
-            <span class="demo-badge">DEMO</span>
+            <span class="demo-badge">{{ t('demo.badge') }}</span>
             <span>{{ t('demo.status.hint') }}</span>
         </div>
         <div class="demo-reports-list">
@@ -215,7 +215,7 @@
     </div>
 
     {# Progress indicator #}
-    <div class="panel status-progress-panel delay-03">
+    <div class="panel delay-03">
         <h2 class="panel-header">{{ t('status.progress.title') }}</h2>
         <div class="stepper" aria-hidden="true">
             {% set steps = ['received', 'in_review', 'pending_feedback', 'closed'] %}

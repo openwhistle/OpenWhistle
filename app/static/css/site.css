@@ -863,6 +863,12 @@ strong {
   font-weight: 600;
   line-height: 1rem;
 }
+.detail-row {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
 .panel-header,
 .panel-header-title {
   color: var(--ink);
@@ -953,6 +959,9 @@ strong {
 }
 [data-theme="dark"] .stat-card--active {
   border-color: var(--accent);
+}
+.stat-card--inactive {
+  opacity: 0.7;
 }
 .\!btn,
 .btn {
@@ -3579,7 +3588,7 @@ a.attachment-name:hover {
   background: var(--surface-card);
   color: var(--ink);
 }
-field-error {
+.field-error {
   color: var(--danger);
   font-family: var(--font-body);
   font-size: 0.8125rem;

@@ -10,7 +10,7 @@
         <p class="page-subtitle">{{ t('admin.telephone.subtitle') }}</p>
     </div>
 
-    <div class="alert alert-warning" role="note" aria-label="Legal notice">
+    <div class="alert alert-warning" role="note" aria-label="{{ t('admin.telephone.legal_req.aria_label') }}">
         <strong>{{ t('admin.telephone.legal_req.label') }}</strong>
         {{ t('admin.telephone.legal_req.body.html') }}
     </div>
@@ -56,7 +56,7 @@
 
     <section class="card" aria-labelledby="heading-options">
         <h2 id="heading-options">{{ t('admin.telephone.options.title') }}</h2>
-        <div class="grid grid--2col">
+        <div class="grid grid-cols-2">
             <div class="option-card">
                 <h3>{{ t('admin.telephone.options.internal.title') }}</h3>
                 <p>{{ t('admin.telephone.options.internal.body') }}</p>
@@ -121,7 +121,7 @@
     </section>
 
     <div class="page-actions">
-        <a href="/admin/dashboard" class="btn btn--secondary">{{ t('admin.back_dashboard') }}</a>
+        <a href="/admin/dashboard" class="btn btn-secondary">{{ t('admin.back_dashboard') }}</a>
     </div>
 </div>
 {% endblock %}

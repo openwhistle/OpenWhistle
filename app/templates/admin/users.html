@@ -34,7 +34,7 @@
                     <label class="form-label" for="new-username">{{ t('admin.users.add.username') }}</label>
                     <input type="text" class="form-control" id="new-username" name="username" required
                         minlength="3" maxlength="64"
-                        pattern="[A-Za-z0-9_-]+" title="Letters, numbers, hyphens and underscores only">
+                        pattern="[A-Za-z0-9_-]+" title="{{ t('admin.users.add.username.title') }}">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="new-password">{{ t('admin.users.add.password') }}</label>
@@ -77,7 +77,7 @@
                                 <span class="usr-username{% if u.id == user.id %} usr-username-self{% endif %}">
                                     {{ u.username }}
                                 </span>
-                                {% if u.id == user.id %}<span class="usr-you-tag"> (you)</span>{% endif %}
+                                {% if u.id == user.id %}<span class="usr-you-tag"> {{ t('admin.users.you_tag') }}</span>{% endif %}
                             </td>
                             <td role="cell" data-label="{{ t('admin.users.table.role') }}">
                                 <span class="badge badge-{{ u.role.value }}">{{ t('role.label.' + u.role.value) }}</span>
@@ -97,7 +97,7 @@
                                         <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                                         <select name="role" class="form-control usr-role-select" aria-label="{{ t('admin.users.role_for', username=u.username) }}">
                                             {% for role in roles %}
-                                            <option value="{{ role.value }}" {{ 'selected' if u.role == role else '' }}>{{ role.value }}</option>
+                                            <option value="{{ role.value }}" {{ 'selected' if u.role == role else '' }}>{{ t('role.label.' + role.value) }}</option>
                                             {% endfor %}
                                         </select>
                                         <button type="submit" class="btn btn-secondary btn-sm usr-role-btn">
@@ -110,7 +110,7 @@
                                     {% if u.id != user.id %}
                                     {% if u.is_active %}
                                     <form method="post" action="/admin/users/{{ u.id }}/deactivate"
-                                          data-confirm="Deactivate {{ u.username }}?">
+                                          data-confirm="{{ t('admin.users.deactivate_confirm', username=u.username) }}">
                                         <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                                         <button type="submit" class="btn btn-secondary btn-sm">
                                             {{ t('admin.users.deactivate') }}

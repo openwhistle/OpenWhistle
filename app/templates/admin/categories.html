@@ -29,8 +29,8 @@
                 <div class="form-group">
                     <label class="form-label" for="cat-slug">{{ t('admin.categories.add.slug') }}</label>
                     <input type="text" class="form-control" id="cat-slug" name="slug" required
-                        pattern="[a-z0-9_]+" title="Lowercase letters, numbers and underscores only"
-                        placeholder="e.g. workplace_safety">
+                        pattern="[a-z0-9_]+" title="{{ t('admin.categories.add.slug.hint') }}"
+                        placeholder="{{ t('admin.categories.add.slug.placeholder') }}">
                     <div class="form-hint">{{ t('admin.categories.add.slug.hint') }}</div>
                 </div>
                 <div class="form-group">
@@ -61,11 +61,11 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Slug</th>
-                            <th>English</th>
-                            <th>German</th>
-                            <th>Sort</th>
-                            <th>Status</th>
+                            <th>{{ t('admin.categories.col.slug') }}</th>
+                            <th>{{ t('admin.categories.col.label_en') }}</th>
+                            <th>{{ t('admin.categories.col.label_de') }}</th>
+                            <th>{{ t('admin.categories.col.sort') }}</th>
+                            <th>{{ t('admin.categories.col.status') }}</th>
                             <th></th>
                         </tr>
                     </thead>
