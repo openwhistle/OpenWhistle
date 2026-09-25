@@ -32,6 +32,11 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   generates a self-signed certificate for `TLS_HOSTNAME` (`.env`, default `localhost`) before
   nginx starts, so the stack comes up without any manual certificate step; drop your own
   `fullchain.pem`/`privkey.pem` into `nginx/certs/` and restart to use a real one instead.
+- **Separate, rotatable encryption key** (`ENCRYPTION_KEY`, optional). At-rest encryption is
+  now rooted in `ENCRYPTION_KEY` instead of `SECRET_KEY`; unset falls back to `SECRET_KEY`
+  (pre-v1.6.0 behaviour, warned at startup). `ENCRYPTION_KEY_PREVIOUS` keeps old keys readable
+  during rotation, and `scripts/rotate_encryption_key.py` re-encrypts every DEK, confidential
+  identity and contact, secure e-mail, TOTP secret and identity-reveal reason under the new key.
 
 ### Changed (breaking)
 

@@ -47,7 +47,7 @@ On `release/vX.Y.Z`:
   `docs/index.html` (`softwareVersion` and hero), and the `OPENWHISTLE_VERSION`
   default in `docker-compose.prod.yml`. `test_every_published_version_string_matches`
   fails on any mismatch.
-- ROADMAP entry.
+- Move the released version off `docs/roadmap.html` (it holds only what's still ahead).
 
 Merge once the checks are green.
 
