@@ -343,6 +343,11 @@ async def test_security_headers_single_and_consistent(client: AsyncClient) -> No
         ("post", "/reply", {"content": "sneaky reply"}),
         ("post", "/notes", {"content": "sneaky note"}),
         ("get", "/export.pdf", None),
+        # export_pdf_with_identity's _reveal_gate must 404 before it ever
+        # reaches can_reveal_identity (403) or _validated_reason (422) — a
+        # valid-looking reason here, so a wrong check order would surface as
+        # a 422 or 200, not accidentally pass by coincidence.
+        ("post", "/export.pdf", {"reason": "A long enough reason to pass validation."}),
     ],
 )
 @pytest.mark.asyncio

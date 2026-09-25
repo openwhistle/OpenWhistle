@@ -1,0 +1,46 @@
+DejaVu LGC Sans (Regular, Bold)
+================================
+
+Used by app/services/pdf.py so the case-export PDF can print any Latin,
+Greek or Cyrillic text a whistleblower or handler wrote — not just the
+latin-1 subset Helvetica (fpdf2's core font) supports. CJK and right-to-left
+scripts (Arabic, Hebrew) are outside this font's coverage and are not
+supported; see DESIGN.md ("Printed case record") and docs/docs.html.
+
+Source
+------
+
+Upstream project: https://github.com/dejavu-fonts/dejavu-fonts
+Release:          version_2_37 (2016-07-30)
+Archive fetched:  https://github.com/dejavu-fonts/dejavu-fonts/releases/download/version_2_37/dejavu-lgc-fonts-ttf-2.37.zip
+                  sha256 bc73bd1c64299a95951fd8c1d493d391ded78cef5b9d3dd3df5859e1f85f5ec6
+
+The GitHub release does not publish an official checksum for this asset
+(its API "digest" field is null — the asset predates GitHub's checksum
+support). The sha256 above was computed locally right after downloading it
+over HTTPS from the URL above; re-download and compare against it, or
+against upstream's own build of 2.37, to confirm nothing changed in transit.
+
+Files taken from the archive's ttf/ directory, unmodified:
+
+  DejaVuLGCSans.ttf       sha256 321487efd1b5fa5bffc0597755708fb7b308b3a9a613cebaa013f6a9dd873ab8
+  DejaVuLGCSans-Bold.ttf  sha256 0746f87aafab1227658d304e36dab999bfa95f2a6811a1031ca38ed243540a78
+
+"LGC" (Latin/Greek/Cyrillic) is the official subset of the full DejaVu Sans
+family, ~1.2 MB for the two weights used here versus ~1.5 MB for the full
+family plus Armenian/Georgian/Hebrew glyphs this project makes no claim to
+render correctly (no right-to-left shaping) — the smaller, script-scoped
+font makes the documented coverage claim (Latin, Greek, Cyrillic) true by
+construction rather than by omission.
+
+License
+-------
+
+Bitstream Vera Fonts Copyright license (the license the DejaVu project
+ships all its fonts under; DejaVu's own additions are public domain, see
+LICENSE in this directory for the full text). It is a permissive,
+attribution-preserving font license — free to embed, modify and
+redistribute as part of a GPLv3 program, provided the font itself keeps
+this notice and isn't redistributed under the "Bitstream" or "Vera" name if
+modified (we don't modify it). Classified as GPL-compatible by the FSF and
+used unmodified throughout Debian/Fedora main.

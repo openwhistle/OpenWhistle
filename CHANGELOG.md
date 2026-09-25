@@ -36,6 +36,10 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   The default export prints "Identity: [on file — not included]"; a new "Export PDF with identity"
   button asks for the same 10–500 character reason as the on-screen reveal and writes the same
   `IDENTITY_REVEALED` audit entry.
+- **PDF export prints Latin, Greek and Cyrillic text intact.** DejaVu LGC Sans (bundled under
+  `app/fonts/`) replaces fpdf2's core Helvetica, which silently turned anything outside latin-1
+  into "?" — a report or message written in Polish, Greek or Cyrillic used to lose its own text in
+  the printed record. CJK and right-to-left scripts are still unsupported (missing-glyph boxes).
 
 ### Changed
 

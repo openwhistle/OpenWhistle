@@ -87,15 +87,88 @@ def test_safe_ascii():
     assert _safe("hello world") == "hello world"
 
 
-def test_safe_replaces_non_latin1():
-    result = _safe("Ö test → value")
-    assert isinstance(result, str)
-    # Should not raise, replaces unmappable chars
+def test_safe_preserves_unicode_text():
+    # DejaVu (loaded via app.services.pdf._register_font) renders these directly;
+    # _safe no longer needs to transliterate or replace anything to fit latin-1.
+    assert _safe("Ö test → value") == "Ö test → value"
+    assert _safe("Zażółć gęślą jaźń, Ελληνικά, Кириллица, „Anführung“") == (
+        "Zażółć gęślą jaźń, Ελληνικά, Кириллица, „Anführung“"
+    )
 
 
-def test_safe_maps_typographic_punctuation_instead_of_dropping_it():
-    # An em dash is common in generated strings ("[on file — not included]") and
-    # in text a whistleblower's own editor "smart-quoted"; Helvetica's WinAnsi
-    # encoding has no glyph for it, so errors="replace" alone would print "?".
-    assert _safe("on file — not included") == "on file - not included"
-    assert _safe("“quoted”") == '"quoted"'
+def test_safe_strips_control_characters_but_keeps_layout_whitespace():
+    assert _safe("\x00Hello\x01\x1fWorld\x7f") == "HelloWorld"
+    assert _safe("line one\nline two\ttabbed\r\n") == "line one\nline two\ttabbed\r\n"
+
+
+def _pdf_text(data: bytes) -> str:
+    import io
+
+    from pypdf import PdfReader
+
+    return "\n".join(p.extract_text() or "" for p in PdfReader(io.BytesIO(data)).pages)
+
+
+@pytest.mark.asyncio
+async def test_generate_pdf_renders_latin_greek_and_cyrillic_text(db_session: AsyncSession):
+    """DejaVu LGC Sans (app/fonts/) replaces core Helvetica so the printed
+    record isn't limited to latin-1: a report written in Polish, Greek or
+    Cyrillic must render intact, not as "?"."""
+    polish = "Zażółć gęślą jaźń"
+    greek = "Ελληνικά"
+    cyrillic = "Кириллица"
+    german_quotes = "„Anführung“"
+    report, _ = await create_report(
+        db_session,
+        category="corruption",
+        description=f"{polish} — {greek} — {cyrillic} — {german_quotes}",
+        lang="en",
+    )
+    loaded = await get_report_by_id(db_session, report.id)
+    assert loaded is not None
+
+    text = _pdf_text(generate_report_pdf(loaded))
+    assert polish in text
+    assert greek in text
+    assert cyrillic in text
+    assert german_quotes in text
+    assert "?" not in text  # no tofu/latin-1 substitution anywhere on the page
+
+
+@pytest.mark.asyncio
+async def test_generate_pdf_does_not_write_into_the_font_directory(
+    db_session: AsyncSession,
+):
+    """fpdf2 must not need a writable font cache — the font directory ships
+    read-only in the container image. Made the directory (and the two font
+    files) actually read-only for the call, so a write would raise rather
+    than silently succeed because the test process owns the files."""
+    import os
+    import stat
+
+    from app.services.pdf import _FONT_DIR
+
+    report, _ = await create_report(
+        db_session, category="corruption", description="Read-only font dir check.", lang="en",
+    )
+    loaded = await get_report_by_id(db_session, report.id)
+    assert loaded is not None
+
+    before = {p: p.stat().st_mode for p in _FONT_DIR.iterdir()}
+    original_dir_mode = _FONT_DIR.stat().st_mode
+    try:
+        for p in _FONT_DIR.iterdir():
+            os.chmod(p, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+        # Deliberately read-only (not writable) — that's the point of the test.
+        ro_dir = stat.S_IRUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP
+        os.chmod(_FONT_DIR, ro_dir)  # noqa: S103
+        pdf_bytes = generate_report_pdf(loaded)
+    finally:
+        os.chmod(_FONT_DIR, original_dir_mode)
+        for p, mode in before.items():
+            os.chmod(p, mode)
+
+    assert pdf_bytes[:4] == b"%PDF"
+    assert {p.name for p in _FONT_DIR.iterdir()} == {
+        "DejaVuLGCSans.ttf", "DejaVuLGCSans-Bold.ttf", "LICENSE", "README",
+    }

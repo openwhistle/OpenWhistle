@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import re
 import uuid
-import zlib
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -81,14 +80,20 @@ async def _csrf(client: AsyncClient, path: str = "/admin/dashboard") -> str:
 
 
 def _pdf_text(pdf_bytes: bytes) -> str:
-    """Decompress FlateDecode content streams and return plain text."""
-    parts: list[str] = []
-    for m in re.finditer(rb"stream\r?\n(.+?)\r?\nendstream", pdf_bytes, re.DOTALL):
-        try:
-            parts.append(zlib.decompress(m.group(1)).decode("latin-1", errors="ignore"))
-        except Exception:  # noqa: BLE001
-            pass
-    return "".join(parts)
+    """Extract page text via pypdf.
+
+    The PDF text is now set in an embedded Unicode TrueType font (DejaVu,
+    app/services/pdf.py), shown with 2-byte CID glyph indices rather than
+    single-byte WinAnsi character codes — a raw FlateDecode-and-latin-1-decode
+    of the content stream (this helper's previous implementation) no longer
+    recovers readable text; only a real PDF text extractor that follows the
+    font's ToUnicode CMap does.
+    """
+    import io
+
+    from pypdf import PdfReader
+
+    return "\n".join(p.extract_text() or "" for p in PdfReader(io.BytesIO(pdf_bytes)).pages)
 
 
 # ── app/api/wizard.py ──────────────────────────────────────────────────────────

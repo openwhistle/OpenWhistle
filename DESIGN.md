@@ -373,6 +373,11 @@ messages, notes, acknowledged, closed, "Generated") keep `YYYY-MM-DD HH:MM UTC`.
 default the confidential name and contact are left out of the export — a row reads
 "Identity: [on file — not included]" — the same rule as the on-screen case view: identity
 is shown only through the audited reveal, whether that produces a page view or this PDF.
+Text is set in DejaVu LGC Sans (Regular/Bold, bundled under `app/fonts/`, see its
+`README`), not fpdf2's core Helvetica — a report written in Latin (with any diacritic),
+Greek or Cyrillic script prints intact. CJK and right-to-left scripts (Arabic, Hebrew)
+are outside this font and are not supported: those characters render as missing-glyph
+boxes, not as the report's own text.
 
 ## Motion
 
