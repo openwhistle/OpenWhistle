@@ -60,5 +60,6 @@ def ensure(src: Path, dst: Path, hostname: str) -> str:
 
 
 if __name__ == "__main__":
-    result = ensure(Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3] if len(sys.argv) > 3 else "localhost")
+    host = sys.argv[3] if len(sys.argv) > 3 else "localhost"
+    result = ensure(Path(sys.argv[1]), Path(sys.argv[2]), host)
     print(f"TLS certificate: {result}")

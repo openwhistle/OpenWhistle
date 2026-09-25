@@ -14,7 +14,6 @@ Compared to the old incremental migrations this single revision:
 from collections.abc import Sequence
 
 import sqlalchemy as sa
-
 from alembic import op
 
 revision: str = '26b6f459846b'

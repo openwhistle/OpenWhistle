@@ -36,7 +36,7 @@ jobs:
         run: uv lock --check
 
       - name: Run ruff (linting)
-        run: ruff check app/ tests/
+        run: ruff check .
 
       - name: Spelling (codespell)
         run: uvx codespell==2.4.3

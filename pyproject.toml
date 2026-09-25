@@ -147,6 +147,8 @@ ignore = [
 "tests/*" = ["S101", "S105", "S106", "S107", "S110"]
 "tests/e2e/*" = ["S101", "S105", "S106", "S107", "S110"]
 "tests/perf/*" = ["S101", "S105", "S106", "S107", "S110"]
+# Generated schema: wide column lists and seed rows; the only f-string is a fixed UUID constant.
+"migrations/versions/001_initial_schema.py" = ["E501", "S608"]
 
 # ─── pytest ──────────────────────────────────────────────────────────────────
 
