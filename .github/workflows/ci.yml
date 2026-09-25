@@ -205,3 +205,94 @@ jobs:
           [ "$setup_status" = "200" ]
 
           docker compose -f docker-compose.ci.yml down -v
+
+  nginx-onion-trust:
+    # Runs the SHIPPED nginx image against the repo's real nginx.conf +
+    # snippets/*.conf (not a copy, not a string match) with a tiny
+    # header-echoing backend standing in for the app, and asserts with real
+    # HTTP requests that the client can never forge the X-OW-Onion /
+    # IP-forwarding trust headers the app relies on (see app/onion.py,
+    # nginx/snippets/proxy-headers.conf, docs/docs.html "Onion listener
+    # trust boundary"). A CI job, not a pytest, so it always runs on GitHub's
+    # Docker-equipped runners rather than skipping when a contributor's
+    # machine lacks docker/podman.
+    name: nginx onion-listener trust boundary
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up a throwaway TLS cert and a header-echoing backend
+        run: |
+          mkdir -p /tmp/ow-nginx-test/tls /tmp/ow-nginx-test/echo
+          openssl req -x509 -newkey rsa:2048 \
+            -keyout /tmp/ow-nginx-test/tls/privkey.pem \
+            -out /tmp/ow-nginx-test/tls/fullchain.pem \
+            -days 1 -nodes -subj "/CN=test"
+          cat > /tmp/ow-nginx-test/echo/server.py <<'PY'
+          import http.server
+
+          class H(http.server.BaseHTTPRequestHandler):
+              def do_GET(self):
+                  self.send_response(200)
+                  self.send_header("Content-Type", "text/plain")
+                  self.end_headers()
+                  for k, v in self.headers.items():
+                      self.wfile.write(f"{k}: {v}\n".encode())
+
+          http.server.HTTPServer(("0.0.0.0", 4009), H).serve_forever()
+          PY
+
+      - name: Start the backend and the shipped nginx image
+        run: |
+          docker network create ow-onion-test
+
+          # python:3-alpine
+          docker run -d --name ow-onion-test-app --network ow-onion-test \
+            --network-alias app \
+            -v /tmp/ow-nginx-test/echo/server.py:/server.py:ro \
+            python@sha256:9e9fde4d32eedce0b661d9ab91e826b62dddf28e928c230ec55f1866cac66b01 \
+            python /server.py
+
+          # nginx:alpine — the exact image docker-compose.prod.yml ships
+          docker run -d --name ow-onion-test-nginx --network ow-onion-test \
+            -p 18443:443 -p 18080:8080 \
+            -v "$PWD/nginx/nginx.conf:/etc/nginx/nginx.conf:ro" \
+            -v "$PWD/nginx/snippets:/etc/nginx/snippets:ro" \
+            -v /tmp/ow-nginx-test/tls:/etc/nginx/tls:ro \
+            nginx@sha256:1ed1b0e1d7652937d6cbdaf4018c7b6fc009a7dd6c3047351e2eddda745de43f
+
+          for i in $(seq 1 15); do
+            curl -sk https://localhost:18443/ -o /dev/null && break
+            sleep 1
+          done
+
+      - name: TLS (443) never forwards a client-forged trust header
+        run: |
+          out=$(curl -sk https://localhost:18443/ \
+            -H "X-OW-Onion: 1" -H "x-ow-onion: 1" \
+            -H "X-Forwarded-For: 1.2.3.4" -H "X-Real-IP: 1.2.3.4" \
+            -H "X_OW_Onion: 1")
+          echo "$out"
+          ! grep -qi '^x-ow-onion:' <<< "$out"
+          ! grep -qi '^x-forwarded-for:' <<< "$out"
+          ! grep -qi '^x-real-ip:' <<< "$out"
+          ! grep -qi '^x.ow.onion:' <<< "$out"
+
+      - name: Onion (8080) forces X-OW-Onion to exactly "1", strips IP headers
+        run: |
+          out=$(curl -s http://localhost:18080/ \
+            -H "X-OW-Onion: 0" -H "X-OW-Onion: 0" \
+            -H "X-Forwarded-For: 1.2.3.4" -H "X-Real-IP: 1.2.3.4")
+          echo "$out"
+          grep -qx 'X-OW-Onion: 1' <<< "$out"
+          ! grep -qi '^x-forwarded-for:' <<< "$out"
+          ! grep -qi '^x-real-ip:' <<< "$out"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker rm -f ow-onion-test-app ow-onion-test-nginx || true
+          docker network rm ow-onion-test || true

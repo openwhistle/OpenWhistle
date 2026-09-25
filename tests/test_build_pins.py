@@ -137,6 +137,31 @@ def test_clamav_service_is_identical_and_hardened_in_both_compose_files() -> Non
     )
 
 
+def test_every_workflow_action_is_pinned_by_commit_sha() -> None:
+    """Every `uses: owner/repo@...` in every workflow must pin a full 40-hex
+    commit SHA, with a `# vX...` comment recording the human-readable
+    version — never a floating tag/branch (`@v4`, `@main`), which a
+    compromised upstream tag could silently repoint. `docker/*-action`,
+    `actions/*`, and third-party actions (e.g. `aquasecurity/trivy-action`,
+    `DavidAnson/markdownlint-cli2-action`) are all covered; a local action
+    (`uses: ./...`) is not a remote pin and is exempt."""
+    pattern = re.compile(r"^(\s*-?\s*)?uses:\s*(\S+)\s*(#.*)?$", re.M)
+    unpinned: dict[str, list[str]] = {}
+    for wf in (ROOT / ".github" / "workflows").glob("*.yml"):
+        text = wf.read_text()
+        for _prefix, ref, comment in pattern.findall(text):
+            if ref.startswith("./") or ref.startswith("docker://"):
+                continue  # local/inline action, nothing to pin by SHA
+            bad = []
+            if not re.search(r"@[0-9a-f]{40}$", ref):
+                bad.append(f"{ref!r} is not pinned to a 40-hex commit SHA")
+            elif not re.search(r"#\s*v\S+", comment):
+                bad.append(f"{ref!r} has no '# vX' version comment")
+            if bad:
+                unpinned.setdefault(wf.name, []).extend(bad)
+    assert unpinned == {}, unpinned
+
+
 def test_security_workflow_audits_dependencies_and_the_image() -> None:
     wf = (ROOT / ".github/workflows/security.yml").read_text()
     needles = (
