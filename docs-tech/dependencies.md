@@ -25,6 +25,34 @@ library. It replaced ldap3 in v1.6.0: ldap3 has had no release since 2021.
 python-ldap builds from source against `libldap`/`libsasl` headers, so it and
 boto3 are optional extras (`ldap`, `s3`): the image and CI install both.
 
+## Development setup
+
+The suite imports both extras, so `uv sync --extra dev` alone no longer runs it:
+
+```bash
+uv sync --extra dev --extra ldap --extra s3
+```
+
+python-ldap compiles against OpenLDAP and SASL headers:
+
+| OS | Packages |
+| --- | --- |
+| Debian / Ubuntu | `libldap2-dev libsasl2-dev` |
+| Fedora | `openldap-devel cyrus-sasl-devel python3-devel` |
+| Alpine | `openldap-dev cyrus-sasl-dev` |
+
+Immutable host (Bazzite, Silverblue): build the wheel in a toolbox and install
+it into the host venv. The toolbox and host share `libldap.so.2` and
+`libsasl2.so.3`, so the wheel runs on the host.
+
+```bash
+toolbox run sudo dnf install -y openldap-devel cyrus-sasl-devel python3.14-devel gcc
+toolbox run uv tool run --python /usr/bin/python3.14 --from pip \
+  pip wheel --no-deps "python-ldap==<locked version>" -w /tmp/wheels
+uv sync --extra dev --extra s3
+uv pip install --no-deps /tmp/wheels/python_ldap-*.whl
+```
+
 ## Guards
 
 - `tests/test_renovate.py`: every custom manager reaches a tracked file and

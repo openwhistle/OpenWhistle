@@ -61,9 +61,10 @@ Folgende Fakten sind festgelegt:
   and will fail CI if coverage drops below the threshold.
 - When adding new features, always add corresponding tests so coverage stays at or above 90 %.
 - Run the full suite against a real PostgreSQL and Redis (e.g. two throwaway containers) with
-  `uv sync --extra dev` and `DATABASE_URL`/`REDIS_URL`/`SECRET_KEY` set, as CI does. Without a DB
-  the DB-backed tests error and coverage undercounts. The production image carries no test
-  dependencies, so tests cannot run inside it.
+  `uv sync --extra dev --extra ldap --extra s3` (python-ldap needs OS headers, see
+  `docs-tech/dependencies.md` "Development setup") and `DATABASE_URL`/`REDIS_URL`/`SECRET_KEY`
+  set, as CI does. Without a DB the DB-backed tests error and coverage undercounts. The
+  production image carries no test dependencies, so tests cannot run inside it.
 - Dependencies are locked in `uv.lock` (CI runs `uv lock --check`); after editing
   `pyproject.toml`, run `uv lock` and commit both.
 

@@ -7,6 +7,17 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Upgrade notes
+
+- **LDAP with a private CA reads `LDAPTLS_CACERT`** (or `LDAPTLS_CACERTDIR`).
+  `SSL_CERT_FILE` is ignored for LDAPS and StartTLS: point `LDAPTLS_CACERT`
+  at the CA's PEM file.
+- **LDAP uses python-ldap** (the OpenLDAP client) instead of ldap3, which has
+  had no release since 2021.
+- **LDAP and S3 are optional extras** (`ldap`, `s3`). The container image
+  includes both; installing from source needs `pip install .[ldap,s3]` and
+  `libldap2-dev libsasl2-dev`.
+
 ## [1.5.0] — 2026-09-24
 
 Every finding carried forward from the 2026-09-23 audit is closed. The
