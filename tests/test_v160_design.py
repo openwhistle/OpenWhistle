@@ -1082,15 +1082,6 @@ _ANCESTOR_OVERRIDES: dict[str, dict[str, str]] = {
     },
 }
 
-# (family, style) pairs excused from the coverage check below: Sora has no
-# italic member in its official @fontsource package at all (verified: the
-# extracted package's files/ directory contains zero *-italic files) -- the
-# three spots on docs/index.html that ask for italic Sora
-# (.footer-tagline, .hero-headline .accent-emphasis, .hero-subline em) can
-# never get a self-hosted italic face; the browser synthesizes a faux-slant
-# regardless of what we ship. Not a hosting gap, a font-family limitation.
-_KNOWN_UNAVAILABLE_STYLES = {("Sora", "italic")}
-
 
 def test_every_docs_page_font_usage_has_a_matching_font_face() -> None:
     """Regression guard (review round 2): the blog scaffold's CSS asks for
@@ -1175,7 +1166,7 @@ def test_every_docs_page_font_usage_has_a_matching_font_face() -> None:
             fam, w, s = resolve(sel)
             if fam not in hosted_families:
                 continue
-            if (fam, w, s) in faces or (fam, s) in _KNOWN_UNAVAILABLE_STYLES:
+            if (fam, w, s) in faces:
                 continue
             raise AssertionError(
                 f"{rel}: {sel!r} uses {fam} weight={w} style={s}, "
