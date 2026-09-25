@@ -18,6 +18,16 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   includes both; installing from source needs `pip install '.[ldap,s3]'` and
   `libldap2-dev libsasl2-dev`.
 
+### Added
+
+- **Tor onion address** (`ONION_LOCATION`, optional). Sends an `Onion-Location` header, so Tor
+  Browser offers the switch, and shows the address on the submit page for reporters on a
+  monitored network. nginx sets `X-OW-Onion` only on the onion listener and strips any
+  client-sent copy.
+- **Virus scan of uploads with ClamAV** (`CLAMAV_HOST`, `CLAMAV_PORT`,
+  `CLAMAV_TIMEOUT_SECONDS`; optional `clamav` compose profile). Fail-closed: if `clamd` cannot
+  be reached, the upload is refused, never stored unscanned.
+
 ### Changed (breaking)
 
 - `.doc` and `.xls` uploads are refused; their author field cannot be removed. The message tells
