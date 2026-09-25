@@ -17,6 +17,19 @@
     mode: "0640"
   notify: restart openwhistle
 
+- name: Copy the shared nginx snippets (proxy-headers.conf, static-location.conf)
+  # Same files nginx.conf.j2's `include` directives reference, and the same
+  # files docker-compose.prod.yml's nginx bind-mounts directly — copied
+  # verbatim from the repo, never retyped into this role, so the two
+  # deployment paths cannot drift apart on IP-header / X-OW-Onion stripping.
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../nginx/snippets/"
+    dest: "{{ openwhistle_deploy_dir }}/nginx/snippets/"
+    owner: "{{ openwhistle_user }}"
+    group: "{{ openwhistle_group }}"
+    mode: "0640"
+  notify: restart openwhistle
+
 - name: Render docker-compose.yml
   ansible.builtin.template:
     src: docker-compose.yml.j2

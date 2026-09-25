@@ -216,6 +216,15 @@ jobs:
     # trust boundary"). A CI job, not a pytest, so it always runs on GitHub's
     # Docker-equipped runners rather than skipping when a contributor's
     # machine lacks docker/podman.
+    #
+    # Also renders ansible/roles/openwhistle/templates/nginx.conf.j2 with the
+    # role's own defaults (a tiny Jinja2 render, no Ansible install needed)
+    # and re-runs the TLS-listener assertion against it, over the SAME
+    # nginx/snippets/*.conf files — the Ansible deployment (the live demo)
+    # has no onion listener, but must still clear X-OW-Onion so a client
+    # can't spoof onion-listener behaviour against it (non-Secure cookies,
+    # no HSTS) — see "single source" in deploy.yml's "Copy the shared nginx
+    # snippets" task.
     name: nginx onion-listener trust boundary
     runs-on: ubuntu-latest
     permissions:
@@ -291,8 +300,78 @@ jobs:
           ! grep -qi '^x-forwarded-for:' <<< "$out"
           ! grep -qi '^x-real-ip:' <<< "$out"
 
+      - name: Render nginx.conf.j2 with the Ansible role's own defaults
+        run: |
+          python3 -m venv /tmp/render-venv
+          /tmp/render-venv/bin/pip install --quiet jinja2 pyyaml
+          cat > /tmp/render_ansible_nginx.py <<'PY'
+          import yaml
+          from jinja2 import Environment
+
+          with open("ansible/roles/openwhistle/defaults/main.yml") as f:
+              data = yaml.safe_load(f)
+
+          # Ansible's `bool` filter, reimplemented just enough for this
+          # template's one use — openwhistle_tls_enabled is already a native
+          # YAML bool here, so this is mostly a pass-through.
+          def _bool(v):
+              if isinstance(v, bool):
+                  return v
+              return str(v).strip().lower() in ("true", "yes", "1", "on")
+
+          env = Environment()
+          env.filters["bool"] = _bool
+
+          with open("ansible/roles/openwhistle/templates/nginx.conf.j2") as f:
+              tmpl = env.from_string(f.read())
+
+          # openwhistle_domain defaults to "" (documented as required in
+          # production); give it a real value so server_name/the cert paths
+          # are valid — the only override, everything else is the role's own
+          # default straight from defaults/main.yml.
+          data["openwhistle_domain"] = "ow-ansible-test.example.com"
+          with open("/tmp/ow-nginx-test/ansible-nginx.conf", "w") as f:
+              f.write(tmpl.render(**data))
+          PY
+          /tmp/render-venv/bin/python3 /tmp/render_ansible_nginx.py
+          cat /tmp/ow-nginx-test/ansible-nginx.conf
+
+      - name: Start nginx with the rendered nginx.conf.j2 (same snippets, same backend)
+        run: |
+          mkdir -p /tmp/ow-nginx-test/letsencrypt/live/ow-ansible-test.example.com
+          openssl req -x509 -newkey rsa:2048 \
+            -keyout /tmp/ow-nginx-test/letsencrypt/live/ow-ansible-test.example.com/privkey.pem \
+            -out /tmp/ow-nginx-test/letsencrypt/live/ow-ansible-test.example.com/fullchain.pem \
+            -days 1 -nodes -subj "/CN=ow-ansible-test.example.com"
+
+          # Same nginx:alpine image, same nginx/snippets/*.conf, same "app"
+          # backend on ow-onion-test — only nginx.conf itself differs.
+          docker run -d --name ow-onion-test-nginx-ansible --network ow-onion-test \
+            -p 28443:443 \
+            -v /tmp/ow-nginx-test/ansible-nginx.conf:/etc/nginx/nginx.conf:ro \
+            -v "$PWD/nginx/snippets:/etc/nginx/snippets:ro" \
+            -v /tmp/ow-nginx-test/letsencrypt:/etc/letsencrypt:ro \
+            nginx@sha256:1ed1b0e1d7652937d6cbdaf4018c7b6fc009a7dd6c3047351e2eddda745de43f
+
+          for i in $(seq 1 15); do
+            curl -sk https://localhost:28443/ -o /dev/null && break
+            sleep 1
+          done
+
+      - name: Ansible-rendered TLS (443) never forwards a client-forged trust header
+        run: |
+          out=$(curl -sk https://localhost:28443/ \
+            -H "X-OW-Onion: 1" -H "x-ow-onion: 1" \
+            -H "X-Forwarded-For: 1.2.3.4" -H "X-Real-IP: 1.2.3.4" \
+            -H "X_OW_Onion: 1")
+          echo "$out"
+          ! grep -qi '^x-ow-onion:' <<< "$out"
+          ! grep -qi '^x-forwarded-for:' <<< "$out"
+          ! grep -qi '^x-real-ip:' <<< "$out"
+          ! grep -qi '^x.ow.onion:' <<< "$out"
+
       - name: Cleanup
         if: always()
         run: |
-          docker rm -f ow-onion-test-app ow-onion-test-nginx || true
+          docker rm -f ow-onion-test-app ow-onion-test-nginx ow-onion-test-nginx-ansible || true
           docker network rm ow-onion-test || true

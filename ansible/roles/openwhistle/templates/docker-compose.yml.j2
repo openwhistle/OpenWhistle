@@ -41,6 +41,7 @@ services:
       # :z relabels for SELinux hosts (shared label; a no-op elsewhere). Never
       # :Z on /etc/letsencrypt — certbot on the host writes there too.
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro,z
+      - ./nginx/snippets:/etc/nginx/snippets:ro,z
       - /etc/letsencrypt:/etc/letsencrypt:ro,z
     depends_on:
       - app
