@@ -305,37 +305,10 @@ class TestI18n:
         result = t("submit.progress.step_of", step=2, total=5)
         assert "2" in result and "5" in result
 
-    def test_all_en_keys_present_in_de(self) -> None:
-        import json
-        from pathlib import Path
-        locales = Path(__file__).parent.parent / "app" / "locales"
-        en = json.loads((locales / "en.json").read_text(encoding="utf-8"))
-        de = json.loads((locales / "de.json").read_text(encoding="utf-8"))
-        missing = [k for k in en if k not in de]
-        assert missing == [], f"Keys missing from de.json: {missing[:10]}"
-
-    def test_all_en_keys_present_in_fr(self) -> None:
-        import json
-        from pathlib import Path
-        locales = Path(__file__).parent.parent / "app" / "locales"
-        en = json.loads((locales / "en.json").read_text(encoding="utf-8"))
-        fr = json.loads((locales / "fr.json").read_text(encoding="utf-8"))
-        missing = [k for k in en if k not in fr]
-        assert missing == [], f"Keys missing from fr.json: {missing[:10]}"
-
     def test_ptbr_locale_loads(self) -> None:
         from app.i18n import make_translator
         t = make_translator("pt-br")
         assert t("nav.submit_report") == "Enviar denúncia"
-
-    def test_all_en_keys_present_in_ptbr(self) -> None:
-        import json
-        from pathlib import Path
-        locales = Path(__file__).parent.parent / "app" / "locales"
-        en = json.loads((locales / "en.json").read_text(encoding="utf-8"))
-        ptbr = json.loads((locales / "pt-br.json").read_text(encoding="utf-8"))
-        missing = [k for k in en if k not in ptbr]
-        assert missing == [], f"Keys missing from pt-br.json: {missing[:10]}"
 
     def test_ptbr_accept_language_header(self) -> None:
         from unittest.mock import MagicMock

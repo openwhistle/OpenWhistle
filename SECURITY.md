@@ -23,6 +23,16 @@ anonymity leaks, authorization/tenant-isolation bypasses, and anything that coul
 deanonymize a reporter. We aim to acknowledge reports promptly and will credit
 reporters (with their consent) in the advisory and here.
 
+## Response times
+
+| Step | Within |
+| --- | --- |
+| Acknowledge your report | 48 hours |
+| Assess it and tell you the plan | 7 days |
+| Release a fix for a critical or high issue | 14 days |
+
+OpenWhistle is maintained in spare time; these are commitments, and when one slips you hear why.
+
 ## Security acknowledgements
 
 Our thanks to those who have responsibly disclosed security issues:

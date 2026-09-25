@@ -38,6 +38,9 @@ jobs:
       - name: Run ruff (linting)
         run: ruff check app/ tests/
 
+      - name: Spelling (codespell)
+        run: uvx codespell==2.4.3
+
       - name: Run mypy (type checking)
         run: mypy app/ --strict
 

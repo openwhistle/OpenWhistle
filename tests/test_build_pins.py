@@ -96,3 +96,10 @@ def test_compose_host_bind_mounts_carry_the_selinux_label() -> None:
             found = True
             assert "z" in opts.split(","), f"{path}: {host} bind mount lacks :z ({opts!r})"
     assert found, "no bind mount matched — the check reaches nothing"
+
+
+def test_security_workflow_audits_dependencies_and_the_image() -> None:
+    wf = (ROOT / ".github/workflows/security.yml").read_text()
+    for needle in ("pull_request:", "schedule:", "pip-audit", "aquasecurity/trivy-action@", "--all-extras"):
+        assert needle in wf, needle
+    assert re.search(r"aquasecurity/trivy-action@[0-9a-f]{40}", wf), "trivy action not pinned by digest"

@@ -461,7 +461,7 @@
   "admin.retention.legal.hinschg.title": "HinSchG §11 Abs. 5 — documentation obligation",
   "admin.retention.legal.hinschg.body.html": "The documentation of a report must be deleted <strong>3 years</strong> after the procedure is concluded; it may be kept longer only while that is necessary and proportionate. The default retention period of 1095 days (3 years) matches this deadline. Change <code>RETENTION_DAYS</code> only on specific legal advice.",
   "admin.retention.legal.gdpr17.title": "GDPR Art. 17 — right to erasure",
-  "admin.retention.legal.gdpr17.body": "Individuals may request deletion of their personal data. The auto-deletion mechanism and the existing manual 4-eyes deletion workflow both support fulfilment of erasure requests.",
+  "admin.retention.legal.gdpr17.body": "Individuals may request deletion of their personal data. The auto-deletion mechanism and the existing manual 4-eyes deletion workflow both support fulfillment of erasure requests.",
   "admin.retention.config.title": "Configuration reference",
   "admin.retention.config.col.variable": "Variable",
   "admin.retention.config.col.default": "Default",
