@@ -1540,6 +1540,146 @@
       </div>
     </section>
 
+    <!-- What's new in 1.6 -->
+    <section class="section" id="whats-new" aria-labelledby="whats-new-heading">
+      <div class="section-inner">
+        <span class="section-eyebrow">Release 1.6</span>
+        <h2 class="section-heading" id="whats-new-heading">
+          What's new in 1.6
+        </h2>
+        <p class="section-subheading">
+          Eight changes from this release. Full details in the
+          <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG</a>.
+        </p>
+
+        <div class="features-grid" role="list">
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 18 18" fill="none">
+                <path d="M2 9s2.8-4.5 7-4.5 7 4.5 7 4.5-2.8 4.5-7 4.5-7-4.5-7-4.5z" stroke="#0c7253" stroke-width="1.4" stroke-linejoin="round"/>
+                <circle cx="9" cy="9" r="2" stroke="#0c7253" stroke-width="1.4"/>
+                <path d="M3 3l12 12" stroke="#0c7253" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h3 class="feature-title">Confidential Identity, Revealed Only on Request</h3>
+            <p class="feature-desc">
+              The whistleblower's confidential identity stays hidden from the case handler
+              until they give an audited reason. The PDF export leaves it out too, unless
+              the same audited reason is given for that export.
+            </p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 18 18" fill="none">
+                <circle cx="9" cy="9" r="6.5" stroke="#0c7253" stroke-width="1.4"/>
+                <circle cx="9" cy="9" r="4" stroke="#0c7253" stroke-width="1.4"/>
+                <circle cx="9" cy="9" r="1.3" fill="#0c7253"/>
+              </svg>
+            </div>
+            <h3 class="feature-title">Optional Tor Onion Address</h3>
+            <p class="feature-desc">
+              Set <code>ONION_LOCATION</code> and every response carries an
+              Onion-Location header, so Tor Browser offers reporters on a watched
+              network the switch — the submit page shows the address too.
+            </p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 18 18" fill="none">
+                <path d="M9 1.5L2.5 4.5v5c0 4 2.9 7.5 6.5 8.5 3.6-1 6.5-4.5 6.5-8.5v-5L9 1.5z" stroke="#0c7253" stroke-width="1.4" stroke-linejoin="round"/>
+                <path d="M6.5 9l1.7 1.7L12 7" stroke="#0c7253" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3 class="feature-title">Virus-Scanned Uploads, Fail-Closed</h3>
+            <p class="feature-desc">
+              Point <code>CLAMAV_HOST</code> at a clamd instance and every attachment
+              is scanned before it is stored. If clamd cannot be reached, the upload
+              is refused — never stored unscanned.
+            </p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 18 18" fill="none">
+                <circle cx="9" cy="9" r="7" stroke="#0c7253" stroke-width="1.4"/>
+                <path d="M9 5v4l3 2" stroke="#0c7253" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3 class="feature-title">Whistleblower Times, Day Only</h3>
+            <p class="feature-desc">
+              Submission, receipt, and every whistleblower message or attachment
+              upload are stored and shown to the day (UTC), not the minute. Admin
+              actions keep their exact time.
+            </p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 18 18" fill="none">
+                <circle cx="7.5" cy="7.5" r="5" stroke="#0c7253" stroke-width="1.4"/>
+                <path d="M11.5 11.5L16 16" stroke="#0c7253" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h3 class="feature-title">Search Inside Report Content</h3>
+            <p class="feature-desc">
+              The dashboard search field also matches a word in a report's
+              description or messages — decrypted in memory for that request
+              only. Nothing searchable is ever stored, and the confidential name
+              is never matched.
+            </p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 18 18" fill="none">
+                <rect x="4" y="8" width="10" height="7" rx="1.2" stroke="#0c7253" stroke-width="1.4"/>
+                <path d="M6.5 8V5.5a2.5 2.5 0 015 0V8" stroke="#0c7253" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h3 class="feature-title">TLS by Default</h3>
+            <p class="feature-desc">
+              The shipped Docker Compose stack serves HTTPS out of the box: a
+              self-signed certificate on first boot, your own certificate the
+              moment you drop one in.
+            </p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 18 18" fill="none">
+                <path d="M4 14V8M9 14V4M14 14v-6" stroke="#0c7253" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h3 class="feature-title">Webhooks Carry Counts, Not Cases</h3>
+            <p class="feature-desc">
+              The digest and reminder webhooks now send how many reports or
+              messages are new — never a case number or a deadline. Case numbers
+              still reach your own admins by email.
+            </p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 18 18" fill="none">
+                <path d="M6 5L2 9l4 4" stroke="#0c7253" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 9h8a5 5 0 015 5v1" stroke="#0c7253" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h3 class="feature-title">Wizard Back Keeps What You Entered</h3>
+            <p class="feature-desc">
+              The submission wizard's Back button no longer clears attached
+              files or a half-finished report. Reported and fixed by
+              Zachary Bridges (#94).
+            </p>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
     <!-- How it works -->
     <section class="section" id="how-it-works" aria-labelledby="how-it-works-heading">
       <div class="section-inner">

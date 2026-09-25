@@ -613,6 +613,7 @@ class TestConfigV100Defaults:
             "Chart appVersion": grab(chart, r'^appVersion:\s*"?([^"\s]+)'),
             "docs.html": grab("docs/docs.html", r"<strong>v([0-9.]+)</strong>"),
             "index.html": grab("docs/index.html", r'"softwareVersion":\s*"([^"]+)"'),
+            "de/index.html": grab("docs/de/index.html", r'"softwareVersion":\s*"([^"]+)"'),
             "CHANGELOG": grab("CHANGELOG.md", r"^## \[(\d+\.\d+\.\d+)\]"),
             "pyproject": grab("pyproject.toml", r'^version = "([^"]+)"'),
             "compose image": grab("docker-compose.prod.yml", r"OPENWHISTLE_VERSION:-([0-9.]+)\}"),
@@ -620,6 +621,14 @@ class TestConfigV100Defaults:
         v = settings.app_version
         assert found == dict.fromkeys(found, v)
         assert f"[{v}]: " in (root / "CHANGELOG.md").read_text(), "CHANGELOG compare link missing"
+
+        # Every visible "Version X.Y.Z" string on both landing pages (hero
+        # badge and footer) must also match — the structured-data check above
+        # only covers the invisible JSON-LD softwareVersion.
+        for page in ("docs/index.html", "docs/de/index.html"):
+            visible = re.findall(r">Version ([0-9.]+)<", (root / page).read_text())
+            assert visible, f"{page}: no visible 'Version X.Y.Z' string found"
+            assert visible == [v] * len(visible), (page, visible, v)
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
+  <title>Was ist neu in OpenWhistle 1.6? Sechs Funde aus einem Härtungs-Release | OpenWhistle Blog</title>
+  <meta name="description" content="Sechs Funde aus OpenWhistle 1.6: ein PDF, das fremde Schriften verschluckte, ein Header, dem zu sehr vertraut wurde, und ein Rollback, der halbe Sitzungen zum Absturz brachte.">
+  <meta name="keywords" content="OpenWhistle 1.6, OpenWhistle Changelog, Hinweisgebersystem Update, HinSchG Software Update, Tor Onion Adresse, PDF Unicode Fehler, Whistleblower Software Sicherheitslücke">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://openwhistle.net/blog/was-ist-neu-in-1-6.html">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <link rel="icon" type="image/x-icon" href="../favicon.ico">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://openwhistle.net/blog/was-ist-neu-in-1-6.html">
+  <meta property="og:title" content="Was ist neu in OpenWhistle 1.6? Sechs Funde aus einem Härtungs-Release">
+  <meta property="og:description" content="Ein PDF, das fremde Schriften verschluckte. Ein Header, dem zu sehr vertraut wurde. Und ein Rollback, der halbe Sitzungen zum Absturz brachte — sechs Funde aus Release 1.6.">
+  <meta property="og:image" content="https://openwhistle.net/og-image.png">
+  <meta property="article:published_time" content="2026-09-25">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Was ist neu in OpenWhistle 1.6? Sechs Funde aus einem Härtungs-Release",
+    "description": "Sechs Funde aus OpenWhistle 1.6, erzählt als Geschichten: ein PDF, das fremde Schriften verschluckte, ein zu vertrauensseliger Header, und ein Rollback, der halbe Sitzungen zum Absturz brachte.",
+    "url": "https://openwhistle.net/blog/was-ist-neu-in-1-6.html",
+    "datePublished": "2026-09-25",
+    "author": { "@type": "Organization", "name": "OpenWhistle Contributors" },
+    "publisher": { "@type": "Organization", "name": "OpenWhistle", "url": "https://openwhistle.net" },
+    "inLanguage": "de"
+  }
+  </script>
+
+  <style>
+    @font-face { font-family: 'Spectral'; src: url('../fonts/spectral-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+    @font-face { font-family: 'Spectral'; src: url('../fonts/spectral-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-300-normal.woff2') format('woff2'); font-weight: 300; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+    @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-display: swap; }
+
+    :root {
+      --bg-base: #fafaf7;
+      --bg-surface: #f4f2ed;
+      --nav-bg: #ffffff;
+      --footer-bg: #1a2744;
+      --text-primary: #1e293b;
+      --text-secondary: #3d4f6b;
+      --text-muted: #6b7a96;
+      --border-subtle: #e2d9c8;
+      --border-default: #c9bfaa;
+      --accent: #2d7d46;
+      --accent-dim: rgba(45,125,70,0.15);
+      --accent-fog: rgba(45,125,70,0.08);
+      --warning: #8a5a12;
+      --font-display: 'Spectral', Georgia, serif;
+      --font-body: 'Source Serif 4', Georgia, serif;
+      --font-mono: 'Courier New', Courier, monospace;
+      --max-width: 800px;
+    }
+    [data-theme="dark"] {
+      --bg-base: #0b1525;
+      --bg-surface: #132035;
+      --nav-bg: #0a1220;
+      --footer-bg: #070d1e;
+      --text-primary: #dde6f2;
+      --text-secondary: #9db4cc;
+      --text-muted: #5c7a96;
+      --border-subtle: #1a2e48;
+      --border-default: #243d5a;
+      --accent: #5a9070;
+      --accent-dim: rgba(90,144,112,0.15);
+      --accent-fog: rgba(90,144,112,0.08);
+      --warning: #e0a845;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg-base); color: var(--text-primary); font-family: var(--font-body); font-size: 1rem; line-height: 1.75; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    a { color: var(--accent); text-decoration: underline; text-decoration-color: transparent; transition: text-decoration-color 140ms ease; }
+    a:hover { text-decoration-color: currentColor; }
+    button { cursor: pointer; border: none; background: none; font: inherit; }
+
+    .skip-link { position: absolute; top: -100%; left: 1rem; background: var(--accent); color: #fff; padding: 0.5rem 1rem; font-size: 0.75rem; z-index: 9999; text-decoration: none; }
+    .skip-link:focus { top: 1rem; }
+
+    /* Nav */
+    .site-nav { position: sticky; top: 0; z-index: 200; background: var(--nav-bg); border-bottom: 1px solid var(--border-subtle); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+    .nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 2rem; height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; }
+    .nav-logo { display: flex; align-items: center; gap: 0.75rem; font-family: var(--font-display); font-size: 0.9rem; font-weight: 600; letter-spacing: 0.04em; color: var(--text-primary); text-decoration: none; }
+    .nav-logo svg path, .nav-logo svg circle { stroke: var(--accent); }
+    .nav-links { display: flex; align-items: center; gap: 1.5rem; }
+    .nav-links a { font-size: 0.8rem; color: var(--text-secondary); text-decoration: none; transition: color 140ms ease; }
+    .nav-links a:hover { color: var(--text-primary); text-decoration: none; }
+    .theme-toggle { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border: 1px solid var(--border-default); border-radius: 2px; color: var(--text-muted); transition: color 140ms ease, border-color 140ms ease; }
+    .theme-toggle:hover { color: var(--text-primary); border-color: var(--accent); }
+    .theme-toggle svg { width: 16px; height: 16px; }
+    .icon-sun { display: none; }
+    [data-theme="dark"] .icon-moon { display: none; }
+    [data-theme="dark"] .icon-sun { display: block; }
+
+    /* Article layout */
+    .article-wrap { max-width: var(--max-width); margin: 0 auto; padding: 4rem 2rem; }
+
+    .article-header { margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border-subtle); }
+    .article-tag { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem; text-decoration: none; }
+    .article-title { font-family: var(--font-display); font-size: clamp(1.8rem, 3.5vw, 2.8rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; color: var(--text-primary); margin-bottom: 1rem; }
+    .article-subtitle { font-size: 1.1rem; font-weight: 300; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1.5rem; }
+    .article-meta { font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 1.5rem; flex-wrap: wrap; }
+
+    /* Article body */
+    .article-body h2 { font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text-primary); margin: 2.5rem 0 1rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle); }
+    .article-body h3 { font-family: var(--font-display); font-size: 1.2rem; font-weight: 600; color: var(--text-primary); margin: 2rem 0 0.75rem; }
+    .article-body p { margin-bottom: 1.25rem; color: var(--text-secondary); }
+    .article-body strong { color: var(--text-primary); font-weight: 600; }
+    .article-body ul, .article-body ol { margin: 1rem 0 1.5rem 1.5rem; }
+    .article-body li { margin-bottom: 0.5rem; color: var(--text-secondary); }
+
+    /* Callout boxes */
+    .callout { padding: 1.25rem 1.5rem; margin: 2rem 0; border-left: 4px solid; border-radius: 0 4px 4px 0; }
+    .callout-info { background: var(--accent-fog); border-color: var(--accent); }
+    .callout-warn { background: rgba(200,151,46,0.06); border-color: var(--warning); }
+    .callout-title { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
+    .callout-warn .callout-title { color: var(--warning); }
+    .callout p { margin-bottom: 0; font-size: 0.92rem; }
+
+    code { font-family: var(--font-mono); font-size: 0.88em; background: var(--bg-surface); padding: 0.15em 0.4em; border-radius: 3px; color: var(--accent); border: 1px solid var(--border-subtle); }
+
+    /* CTA */
+    .article-cta { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-top: 4px solid var(--accent); padding: 2rem; margin: 3rem 0; text-align: center; }
+    .article-cta h3 { font-family: var(--font-display); font-size: 1.3rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.75rem; }
+    .article-cta p { font-size: 0.92rem; color: var(--text-secondary); margin-bottom: 1.5rem; }
+    .btn-cta { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.75rem; background: var(--accent); color: #fff; border-radius: 2px; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none; transition: background 140ms ease; }
+    .btn-cta:hover { background: #245f37; color: #fff; text-decoration: none; }
+
+    /* Footer */
+    .site-footer { background: var(--footer-bg); color: rgba(226,220,210,0.6); padding: 3rem 2rem; margin-top: 4rem; }
+    .footer-inner { max-width: 1100px; margin: 0 auto; }
+    .footer-bottom { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .footer-bottom p { font-size: 0.78rem; color: rgba(226,220,210,0.3); }
+    .footer-bottom a { color: rgba(226,220,210,0.5); text-decoration: none; }
+    .footer-bottom a:hover { color: rgba(226,220,210,0.9); }
+
+    @media (max-width: 600px) { .article-wrap { padding: 2.5rem 1.25rem; } .nav-links { display: none; } }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Zum Inhalt springen</a>
+
+  <nav class="site-nav" role="navigation" aria-label="Hauptnavigation">
+    <div class="nav-inner">
+      <a href="../" class="nav-logo" aria-label="OpenWhistle Startseite">
+        <svg width="22" height="26" viewBox="0 0 22 26" fill="none" aria-hidden="true">
+          <path d="M11 1 L20 5 L20 14 C20 20 17 24 11 25.5 C5 24 2 20 2 14 L2 5 Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+          <circle cx="11" cy="18" r="1.1" fill="currentColor"/>
+          <path d="M8.5,16 A3,3 0 0,1 13.5,16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M7,14.5 A5.5,5.5 0 0,1 15,14.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+        </svg>
+        OpenWhistle
+      </a>
+      <ul class="nav-links" id="nav-links" role="list">
+        <li><a href="./" style="color: var(--accent);">&larr; Blog</a></li>
+        <li><a href="../docs.html">Dokumentation</a></li>
+        <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Demo</a></li>
+      </ul>
+      <button class="theme-toggle" id="theme-btn" aria-label="Farbschema wechseln">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <main id="main">
+    <div class="article-wrap">
+      <article>
+        <header class="article-header">
+          <p class="article-tag">Release · Sicherheit · v1.6</p>
+          <h1 class="article-title">Was ist neu in OpenWhistle 1.6? Sechs Funde aus einem Härtungs-Release</h1>
+          <p class="article-subtitle">Ein PDF, das die Worte des Hinweisgebers verschluckte. Ein Header, dem zu sehr vertraut wurde. Und ein Rollback, der halbe Sitzungen zum Absturz brachte — sechs Funde aus Release 1.6, erzählt so, wie sie gefunden wurden.</p>
+          <div class="article-meta">
+            <span>25. September 2026</span>
+            <span>5 Min. Lesezeit</span>
+            <span>OpenWhistle Contributors</span>
+          </div>
+        </header>
+
+        <div class="article-body">
+
+          <p>Release 1.6 ist kein Feature-Release, sondern das Ergebnis eines Härtungs-Audits: sechs Stellen, an denen OpenWhistle mehr preisgab, als nötig war, oder nicht hielt, was es versprach. Alle Details im <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG</a>.</p>
+
+          <h2>Das PDF, das die eigenen Worte verschluckte</h2>
+          <p>Ein Fallbericht auf Polnisch, Griechisch oder Kyrillisch ließ sich als PDF exportieren — nur stand der Text der meldenden Person danach nicht mehr darin. Jedes Zeichen außerhalb des lateinischen Alphabets und jedes typografische Anführungszeichen „wie dieses" wurde beim Export zu einem einzelnen <code>?</code>. Ursache: Die eingebaute PDF-Schriftart kennt nur Latin-1. Der Fix behebt die Ursache: eine echte Unicode-Schriftart (DejaVu LGC Sans, Latin/Griechisch/Kyrillisch) ist jetzt eingebettet. Chinesisch, Japanisch, Koreanisch und rechts-nach-links-Schriften bleiben eine offene Baustelle — mit einem sichtbaren Ersatzkästchen statt eines stillen „?".</p>
+
+          <h2>Die Identität kommt nur noch auf Anfrage ans Licht</h2>
+          <p>Bislang stand Name und Kontakt einer vertraulichen Meldung offen auf der Fallseite. Ab 1.6 bleiben beide verborgen, auf der Fallseite wie im PDF-Export, bis jemand auf <em>Identität anzeigen</em> klickt und einen protokollierten Grund von 10 bis 500 Zeichen angibt. Der Grund landet verschlüsselt im Audit-Log. Und weil bislang nicht einmal das bloße Öffnen eines Falls vermerkt wurde, schreibt jetzt jeder Aufruf einer Fallseite einen eigenen Log-Eintrag. Details im <a href="../docs.html#admin-guide">Admin-Handbuch</a>.</p>
+
+          <h2>Die Onion-Adresse vertraute dem falschen Header</h2>
+          <p>Wer OpenWhistle über einen Tor-Hidden-Service anbietet, tut das für Hinweisgeber in einem überwachten Netzwerk. Die erste Fassung entschied „bin ich der Onion-Dienst?" anhand des <code>Host</code>-Headers — den aber der Client mitschickt, nicht der Server. Eine gefälschte <code>Host: irgendwas.onion</code>-Anfrage hätte sich so als Tor-Besucher ausgegeben, mit Cookies ohne <code>Secure</code>-Flag und ganz ohne HSTS. Jetzt entscheidet nginx: Es setzt einen eigenen Header nur im Onion-Listener und löscht jeden Client-Wert überall sonst — ein CI-Job prüft das bei jedem Push gegen einen echten Container. Details in der Anleitung <a href="../docs.html#onion-address">Eine Onion-Adresse anbieten</a>.</p>
+
+          <h2>Webhooks verraten nur noch Zahlen</h2>
+          <p>Der Sammel-Webhook für neue Meldungen schickte bislang Fallnummern selbst mit, als Array in der Payload. Er sendet jetzt nur noch Zählwerte: wie viele Meldungen, wie viele Nachrichten, plus einen daraus gebauten Satz. Die Erinnerungs-Mail an die eigenen Admins nennt weiterhin die Fallnummer; nur der Weg nach außen wurde beschnitten. Siehe <a href="../docs.html#notifications">Benachrichtigungen</a>.</p>
+
+          <h2>Ein Kollisionsfall legte halbe Sitzungen lahm</h2>
+          <p>Fallnummern erhalten einen zufälligen fünfstelligen Zusatz, der gelegentlich kollidiert — dann versucht die Anwendung es erneut. Der Retry rief dafür ein volles <code>rollback()</code> der Datenbank-Sitzung auf, das jedes bereits geladene Objekt ungültig macht, nicht nur den fehlgeschlagenen Datensatz. Der nächste Lesezugriff auf ein solches Objekt stürzte dann mit <code>MissingGreenlet</code> ab — unberechenbar, weil er erst bei einer schon vollen Datenbank auftrat. Die Lösung: ein <em>SAVEPOINT</em> pro Versuch, das nur den kollidierenden Versuch zurückrollt.</p>
+
+          <h2>Der Zurück-Button, der nichts mehr vergisst</h2>
+          <p>Ein Dateiupload-Feld zeigt beim Zurücknavigieren immer einen leeren Zustand — klickte man im Melde-Assistenten auf <em>Zurück</em> und dann auf <em>Weiter</em>, löschte die Anwendung bereits hochgeladene Dateien. Jeder Schritt antwortet jetzt auf ein Absenden mit einer Weiterleitung, ein nicht passender Schritt wird ignoriert, und Anhänge bleiben erhalten, bis neue gewählt werden. Gemeldet und behoben von <strong>Zachary Bridges</strong> (<a href="https://github.com/openwhistle/OpenWhistle/issues/94" rel="noopener noreferrer" target="_blank">#94</a>) — vielen Dank dafür.</p>
+
+          <div class="article-cta">
+            <h3>Alle sechs Funde im Detail</h3>
+            <p>Der vollständige technische Verlauf steht im CHANGELOG; die Live-Demo zeigt Release 1.6 in Aktion.</p>
+            <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank" class="btn-cta">CHANGELOG lesen &rarr;</a>
+          </div>
+
+          <p style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle); font-size: 0.82rem; color: var(--text-muted);">
+            <strong>Weitere Ressourcen:</strong>
+            <a href="../docs.html">Vollständige Dokumentation</a> ·
+            <a href="hinschg-compliance-leitfaden.html">HinSchG-Compliance-Leitfaden</a> ·
+            <a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank">GitHub Issues</a>
+          </p>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-inner">
+      <div class="footer-bottom">
+        <p>&copy; 2026 OpenWhistle Contributors · <a href="../">openwhistle.net</a> · <a href="./">Blog</a> · GPL-3.0</p>
+        <p>OpenWhistle bietet keine Rechtsberatung.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const btn = document.getElementById('theme-btn');
+    if (btn) btn.addEventListener('click', () => {
+      const n = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', n);
+      try { localStorage.setItem('ow-theme', n); } catch(e) {}
+    });
+  </script>
+</body>
+</html>

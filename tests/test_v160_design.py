@@ -464,6 +464,7 @@ def test_docs_warn_callouts_do_not_converge_on_the_accent() -> None:
         "blog/hinschg-compliance-leitfaden.html",
         "blog/interne-meldestelle-einrichten.html",
         "blog/whistleblower-software-vergleich.html",
+        "blog/was-ist-neu-in-1-6.html",
     ):
         text = (ROOT / "docs" / name).read_text()
         assert "--warning" in text, name
@@ -500,6 +501,7 @@ def test_docs_warning_colour_meets_contrast() -> None:
         "blog/hinschg-compliance-leitfaden.html",
         "blog/interne-meldestelle-einrichten.html",
         "blog/whistleblower-software-vergleich.html",
+        "blog/was-ist-neu-in-1-6.html",
     ):
         text = (ROOT / "docs" / name).read_text()
         light_block = re.search(r":root\s*\{([^}]*)\}", text)
