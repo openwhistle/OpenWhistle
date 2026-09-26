@@ -1,7 +1,7 @@
 """Guards for docs/img/screens/ and scripts/take_screenshots.py.
 
-Does not check that a screenshot is referenced from docs/docs.html — lane B
-embeds them and adds that guard once the markup exists.
+That every screenshot is embedded, with its dark twin and alt text, is
+tests/test_docs_figures.py's job.
 """
 
 import re
