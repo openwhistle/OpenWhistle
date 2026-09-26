@@ -108,14 +108,13 @@ meant editing the database. Each rule below is a trust decision; the tests are i
 | `oidc_sub` stays unique on its own, not per issuer; a clash is refused, never moved | one configured IdP; the constraint is the check, so a race cannot win either |
 | An account with no password and no LDAP cannot unlink | it would have no first factor left |
 | Linking changes no login requirement: every path still ends in `_second_factor` | SSO replaces the password, never TOTP |
-| Reset in the browser: superadmin only, never one's own account | resetting is taking over the second factor; one's own reset would end the session and leave the account behind a password |
+| Reset in the browser: superadmin only, never one's own account | resetting is taking over the second factor; one's own reset would end the caller's session |
+| A browser reset also replaces a local password with a random temporary one, shown once to the superadmin, never logged or audited | a reset often follows a suspected compromise; with the old password, whoever holds it would enrol their own authenticator at `/admin/mfa/setup` |
+| LDAP and SSO accounts keep their first factor | the directory or provider owns it; resetting it there is the operator's step |
 | A reset replaces the secret and clears `totp_enabled`; no session is accepted while it is clear | the old app must stop at once, in the same commit, before Redis is swept |
 | After the commit, every session, TOTP-pending and TOTP-setup key of the user is deleted | a session minted from the old secret must not outlive re-enrolment |
 | The CLI prints the new secret once and enrols it; it works for any account | it is the way back when the last superadmin lost their phone; whoever runs the host holds the keys anyway |
 | `DEMO_MODE` refuses resetting the demo accounts | the public demo must keep its static code |
-
-Residual: between a browser reset and re-enrolment, the password alone reaches `/admin/mfa/setup`.
-The superadmin tells the user at once; `admin.totp_reset` in the audit log dates the window.
 
 ## Not defended
 
@@ -128,4 +127,3 @@ The superadmin tells the user at once; `admin.totp_reset` in the audit log dates
 | Traffic analysis across a long time window | batching narrows, cannot remove | raise `NOTIFICATION_BATCH_MINUTES` |
 | The installation count's source address | a TCP request has one; the far end is trusted not to log it, and anyone on the path sees that this host talks to `telemetry.wdkro.de` once a day | leave it off, or send it through a proxy; the id and version alone name no organisation |
 | Content search over more than 5 000 reports per scope | decrypt-in-memory ceiling | narrow with filters (documented limit) |
-| Someone who has the password of an account whose authenticator was just reset | the reset exists because the second factor is gone | re-enrol straight away; check `admin.totp_reset` against the next `auth.totp_setup` |

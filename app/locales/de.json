@@ -731,9 +731,12 @@
   "admin.sso.result.taken": "Nicht verknüpft: Diese Single-Sign-on-Identität gehört bereits zu einem anderen Konto.",
   "admin.sso.result.only_way_in": "Nicht getrennt: Ihr Konto hat kein Passwort, Single Sign-on ist also der einzige Zugang.",
   "admin.users.reset_totp": "Authenticator zurücksetzen",
-  "admin.users.reset_totp_confirm": "Authenticator von {username} zurücksetzen? Die bisherige App funktioniert nicht mehr, die Person wird abgemeldet und richtet bei der nächsten Anmeldung eine neue ein.",
+  "admin.users.reset_totp_confirm": "Authenticator von {username} zurücksetzen? Die bisherige App und das Passwort funktionieren nicht mehr, die Person wird abgemeldet. Sie erhalten ein vorläufiges Passwort zur Übergabe; bei der nächsten Anmeldung richtet die Person eine neue App ein.",
   "admin.users.totp_pending": "Authenticator nicht eingerichtet",
   "audit.action.admin.totp_reset": "Authenticator zurückgesetzt",
   "audit.action.auth.sso_linked": "Single Sign-on verknüpft",
-  "audit.action.auth.sso_unlinked": "Single Sign-on getrennt"
+  "audit.action.auth.sso_unlinked": "Single Sign-on getrennt",
+  "admin.users.reset_done.title": "Der Authenticator von {username} ist zurückgesetzt.",
+  "admin.users.reset_done.password": "Vorläufiges Passwort, nur jetzt sichtbar. Übergeben Sie es persönlich, nicht per E-Mail. Bei der nächsten Anmeldung führt es zur Einrichtung einer neuen Authenticator-App:",
+  "admin.users.reset_done.no_password": "Dieses Konto meldet sich über den Verzeichnisdienst oder Single Sign-on an; das bleibt unverändert. Bei der nächsten Anmeldung richtet es eine neue Authenticator-App ein."
 }

@@ -731,9 +731,12 @@
   "admin.sso.result.taken": "Not linked: this single sign-on identity already belongs to another account.",
   "admin.sso.result.only_way_in": "Not unlinked: your account has no password, so single sign-on is its only way in.",
   "admin.users.reset_totp": "Reset authenticator",
-  "admin.users.reset_totp_confirm": "Reset the authenticator of {username}? Their app stops working, they are signed out, and they set up a new one at their next login.",
+  "admin.users.reset_totp_confirm": "Reset the authenticator of {username}? Their app and their password stop working and they are signed out. You get a temporary password to hand over; at the next login they set up a new app.",
   "admin.users.totp_pending": "authenticator not set up",
   "audit.action.admin.totp_reset": "Authenticator reset",
   "audit.action.auth.sso_linked": "Single sign-on linked",
-  "audit.action.auth.sso_unlinked": "Single sign-on unlinked"
+  "audit.action.auth.sso_unlinked": "Single sign-on unlinked",
+  "admin.users.reset_done.title": "The authenticator of {username} is reset.",
+  "admin.users.reset_done.password": "Temporary password, shown only now. Hand it over in person, not by e-mail. It leads to setting up a new authenticator app at the next login:",
+  "admin.users.reset_done.no_password": "This account signs in through the directory or single sign-on, which is unchanged. At its next login it sets up a new authenticator app."
 }

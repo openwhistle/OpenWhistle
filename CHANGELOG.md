@@ -15,9 +15,11 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   login state never links and a link state never signs in. An identity linked to another account
   is refused. Both are audited (`auth.sso_linked`, `auth.sso_unlinked`).
 - **A lost authenticator can be reset.** A superadmin clicks **Reset authenticator** on
-  `/admin/users` (`POST /admin/users/{id}/reset-totp`): the old app stops working, the user's
-  sessions end, and the next login enrols a new app at `/admin/mfa/setup`. Not for one's own
-  account, and not for the demo accounts in `DEMO_MODE`. On the host,
+  `/admin/users` (`POST /admin/users/{id}/reset-totp`): the account becomes new again. The old
+  app and the old password stop working, the user's sessions end, and the superadmin sees a
+  random temporary password once, to hand over; with it, the next login enrols a new app at
+  `/admin/mfa/setup`. The password is in no log and no audit entry. LDAP and SSO accounts keep
+  their first factor. Not for one's own account, and not for the demo accounts in `DEMO_MODE`. On the host,
   `scripts/reset_admin_password.py --reset-totp <username>` prints a new secret and `otpauth://`
   URI once, for any account including the last superadmin. Both are audited (`admin.totp_reset`).
 

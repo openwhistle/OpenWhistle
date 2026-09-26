@@ -731,9 +731,12 @@
   "admin.sso.result.taken": "Non associée : cette identité d'authentification unique appartient déjà à un autre compte.",
   "admin.sso.result.only_way_in": "Non dissociée : votre compte n'a pas de mot de passe, l'authentification unique est donc son seul accès.",
   "admin.users.reset_totp": "Réinitialiser l'authentificateur",
-  "admin.users.reset_totp_confirm": "Réinitialiser l'authentificateur de {username} ? Son application cesse de fonctionner, la personne est déconnectée et en configure une nouvelle à sa prochaine connexion.",
+  "admin.users.reset_totp_confirm": "Réinitialiser l'authentificateur de {username} ? Son application et son mot de passe cessent de fonctionner et la personne est déconnectée. Vous recevez un mot de passe provisoire à lui remettre ; à la prochaine connexion, elle configure une nouvelle application.",
   "admin.users.totp_pending": "authentificateur non configuré",
   "audit.action.admin.totp_reset": "Authentificateur réinitialisé",
   "audit.action.auth.sso_linked": "Authentification unique associée",
-  "audit.action.auth.sso_unlinked": "Authentification unique dissociée"
+  "audit.action.auth.sso_unlinked": "Authentification unique dissociée",
+  "admin.users.reset_done.title": "L'authentificateur de {username} est réinitialisé.",
+  "admin.users.reset_done.password": "Mot de passe provisoire, affiché uniquement maintenant. Remettez-le en personne, pas par e-mail. À la prochaine connexion, il mène à la configuration d'une nouvelle application d'authentification :",
+  "admin.users.reset_done.no_password": "Ce compte se connecte via l'annuaire ou l'authentification unique, qui restent inchangés. À sa prochaine connexion, il configure une nouvelle application d'authentification."
 }

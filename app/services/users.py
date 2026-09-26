@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import secrets
 import uuid
 
 import pyotp
@@ -136,3 +137,9 @@ def require_new_authenticator(user: AdminUser) -> str:
     user.totp_secret = pyotp.random_base32()
     user.totp_enabled = False
     return user.totp_secret
+
+
+def new_temporary_password() -> str:
+    """A random password for an account reset by a superadmin: 24 URL-safe
+    characters (144 bits), within the policy's 12 characters and 72 bytes."""
+    return validate_password(secrets.token_urlsafe(18))

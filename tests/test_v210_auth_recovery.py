@@ -8,10 +8,13 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import logging
+import re
 import sys
 import uuid
 from pathlib import Path
 from types import ModuleType
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 from urllib.parse import parse_qs, urlsplit
 
@@ -25,6 +28,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.models.audit import AuditLog
 from app.models.user import AdminRole, AdminUser
+from app.services import auth as auth_service
 from app.services import oidc as oidc_service
 from app.services.audit import AuditAction
 from app.services.auth import create_access_token, hash_password, store_session
@@ -366,7 +370,8 @@ async def test_superadmin_resets_an_authenticator(
 
     resp = await _reset(client, csrf, target)
 
-    assert resp.status_code == 302  # type: ignore[attr-defined]
+    assert resp.status_code == 200  # type: ignore[attr-defined]
+    temporary = _temporary_password(resp.text)  # type: ignore[attr-defined]
     fresh = await _fresh(db_session, target)
     assert fresh.totp_enabled is False
     assert fresh.totp_secret != old_secret
@@ -374,17 +379,86 @@ async def test_superadmin_resets_an_authenticator(
     assert await validate_session(redis, bystander_token)
     entry = [e for e in await _audit(db_session, AuditAction.ADMIN_TOTP_RESET)
              if e.admin_id == boss.id]
-    assert json.loads(entry[0].detail or "{}") == {"username": target.username}
+    assert json.loads(entry[0].detail or "{}") == {
+        "username": target.username, "password_reset": True,
+    }
+    # Shown once: the next page load does not carry it.
+    assert temporary not in (await client.get("/admin/users")).text
 
-    # The target's old session is dead; the next login enrols a new authenticator.
+    # The target's old session is dead, and so is the old password.
     client.cookies.set("ow_session", target_token)
     assert (await client.get("/admin/dashboard")).status_code == 401
     client.cookies.delete("ow_session")
-    login = await client.post("/admin/login", data={
-        "username": target.username, "password": _PASSWORD, "csrf_token": csrf,
-    }, follow_redirects=False)
+    old = await _password_login(client, csrf, target.username, _PASSWORD)
+    assert old.status_code == 401
+
+    # The temporary password takes the path of a new account: set up TOTP, then in.
+    login = await _password_login(client, csrf, target.username, temporary)
     assert login.status_code == 302
     assert login.headers["location"].startswith("/admin/mfa/setup")
+    setup_token = parse_qs(urlsplit(login.headers["location"]).query)["token"][0]
+    new_secret = (await _fresh(db_session, target)).totp_secret
+    done = await client.post("/admin/mfa/setup", data={
+        "csrf_token": csrf, "temp_token": setup_token,
+        "totp_code": pyotp.TOTP(new_secret).now(),
+    }, follow_redirects=False)
+    assert done.headers["location"] == "/admin/dashboard"
+    assert "ow_session" in done.cookies
+    assert (await _fresh(db_session, target)).totp_enabled is True
+
+
+async def _password_login(
+    client: AsyncClient, csrf: str, username: str, password: str
+) -> Any:
+    return await client.post("/admin/login", data={
+        "username": username, "password": password, "csrf_token": csrf,
+    }, follow_redirects=False)
+
+
+def _temporary_password(page: str) -> str:
+    found = re.search(r'<code class="usr-temp-password">([^<]+)</code>', page)
+    assert found, "no temporary password on the result page"
+    return found.group(1)
+
+
+@pytest.mark.asyncio
+async def test_the_temporary_password_leaks_nowhere(
+    client: AsyncClient, db_session: AsyncSession, caplog: pytest.LogCaptureFixture
+) -> None:
+    target = await _user(db_session)
+    csrf = await _sign_in(client, await _user(db_session, role=AdminRole.superadmin))
+
+    with caplog.at_level(logging.DEBUG):
+        resp = await _reset(client, csrf, target)
+    temporary = _temporary_password(resp.text)  # type: ignore[attr-defined]
+
+    assert auth_service.validate_password(temporary) == temporary
+    assert temporary not in caplog.text
+    assert all(temporary not in v for v in resp.headers.values())  # type: ignore[attr-defined]
+    assert resp.headers["cache-control"] == "no-store"  # type: ignore[attr-defined]
+    rows = (await db_session.execute(select(AuditLog.detail))).scalars()
+    assert all(temporary not in (d or "") for d in rows)
+    assert temporary not in (await _fresh(db_session, target)).password_hash  # type: ignore[operator]
+
+
+@pytest.mark.asyncio
+async def test_an_account_without_a_password_keeps_its_directory_login(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    target = await _user(db_session, ldap_username=f"ldap_{uuid.uuid4().hex[:8]}")
+    target.password_hash = None
+    await db_session.commit()
+    csrf = await _sign_in(client, await _user(db_session, role=AdminRole.superadmin))
+
+    resp = await _reset(client, csrf, target)
+
+    assert '<code class="usr-temp-password">' not in resp.text  # type: ignore[attr-defined]
+    assert "signs in through the directory" in resp.text  # type: ignore[attr-defined]
+    fresh = await _fresh(db_session, target)
+    assert (fresh.password_hash, fresh.totp_enabled) == (None, False)
+    entry = [e for e in await _audit(db_session, AuditAction.ADMIN_TOTP_RESET)
+             if target.username in (e.detail or "")]
+    assert json.loads(entry[0].detail or "{}")["password_reset"] is False
 
 
 @pytest.mark.asyncio
@@ -493,7 +567,7 @@ async def test_demo_accounts_keep_their_authenticator(
     assert (await _reset(client, csrf, demo)).status_code == 403  # type: ignore[attr-defined]
     assert (await _fresh(db_session, demo)).totp_enabled is True
     monkeypatch.setattr(settings, "demo_mode", False)
-    assert (await _reset(client, csrf, demo)).status_code == 302  # type: ignore[attr-defined]
+    assert (await _reset(client, csrf, demo)).status_code == 200  # type: ignore[attr-defined]
 
 
 # ── TOTP reset: CLI ──────────────────────────────────────────────────────────

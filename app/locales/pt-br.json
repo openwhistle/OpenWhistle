@@ -731,9 +731,12 @@
   "admin.sso.result.taken": "Não vinculado: esta identidade de login único já pertence a outra conta.",
   "admin.sso.result.only_way_in": "Não desvinculado: sua conta não tem senha, então o login único é o único acesso.",
   "admin.users.reset_totp": "Redefinir autenticador",
-  "admin.users.reset_totp_confirm": "Redefinir o autenticador de {username}? O aplicativo atual deixa de funcionar, a pessoa é desconectada e configura um novo no próximo login.",
+  "admin.users.reset_totp_confirm": "Redefinir o autenticador de {username}? O aplicativo e a senha atuais deixam de funcionar e a pessoa é desconectada. Você recebe uma senha provisória para entregar; no próximo login, a pessoa configura um novo aplicativo.",
   "admin.users.totp_pending": "autenticador não configurado",
   "audit.action.admin.totp_reset": "Autenticador redefinido",
   "audit.action.auth.sso_linked": "Login único vinculado",
-  "audit.action.auth.sso_unlinked": "Login único desvinculado"
+  "audit.action.auth.sso_unlinked": "Login único desvinculado",
+  "admin.users.reset_done.title": "O autenticador de {username} foi redefinido.",
+  "admin.users.reset_done.password": "Senha provisória, exibida apenas agora. Entregue-a pessoalmente, não por e-mail. No próximo login, ela leva à configuração de um novo aplicativo autenticador:",
+  "admin.users.reset_done.no_password": "Esta conta entra pelo diretório ou pelo login único, que não mudam. No próximo login, ela configura um novo aplicativo autenticador."
 }

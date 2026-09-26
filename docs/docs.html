@@ -2226,8 +2226,10 @@ CLAMAV_HOST=clamav</code></pre>
         <ul>
           <li>Run the script inside the container: <code>docker exec -it openwhistle python scripts/reset_admin_password.py …</code>.</li>
           <li>Either reset ends every session of the account at once. The old app stops working.</li>
-          <li>After a reset in <code>/admin/users</code>, the next login goes to <code>/admin/mfa/setup</code> to enrol a new app.</li>
-          <li>Until then the password alone reaches that page, so tell the user straight away.</li>
+          <li>A reset in <code>/admin/users</code> makes the account new again: new authenticator, and a new temporary password in place of the old one.</li>
+          <li>The temporary password is shown once, to the superadmin. It is in no log and no audit entry. Hand it over in person.</li>
+          <li>With it, the next login goes to <code>/admin/mfa/setup</code> to enrol a new app, as for a new account.</li>
+          <li>An LDAP or single sign-on account has no local password. It keeps its directory or provider login and enrols a new app.</li>
           <li>The script prints the new secret and its <code>otpauth://</code> URI once. Hand them over in person.</li>
           <li>A superadmin cannot reset their own authenticator in the browser: it would end their session and leave the account behind a password. Another superadmin or the script does it.</li>
           <li>The script works for any account, the last superadmin included.</li>

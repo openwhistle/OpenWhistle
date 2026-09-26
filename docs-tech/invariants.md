@@ -555,7 +555,7 @@ Each was proven red locally with podman: files written `0640` (nginx:
 
 ## SSO linking and authenticator reset (v2.1.0)
 
-`docs-tech/mutations/v2.1.0-auth-recovery.json`: 24 mutations, 24 red, all in
+`docs-tech/mutations/v2.1.0-auth-recovery.json`: 28 mutations, 28 red, all in
 `tests/test_v210_auth_recovery.py`. The rules and why: [threat model](threat-model.md).
 
 | Guard | Test that fires |
@@ -568,6 +568,9 @@ Each was proven red locally with podman: files written `0640` (nginx:
 | Reset: superadmin only, not self, CSRF, not the demo accounts | `test_only_a_superadmin_resets_an_authenticator`, `test_a_superadmin_cannot_reset_their_own_authenticator`, `test_reset_needs_csrf`, `test_demo_accounts_keep_their_authenticator` |
 | Reset: new secret, enrolment forced, sessions of that user (only) swept | `test_superadmin_resets_an_authenticator` |
 | No session while `totp_enabled` is off | `test_no_session_is_accepted_while_the_authenticator_awaits_enrolment` |
+| Browser reset replaces a local password; the old one fails, the new one leads to TOTP setup | `test_superadmin_resets_an_authenticator` |
+| The temporary password is in no log, header or audit row | `test_the_temporary_password_leaks_nowhere` |
+| An LDAP/SSO account gets no password | `test_an_account_without_a_password_keeps_its_directory_login` |
 
 **Not a guard, so not kept.** A select-then-refuse check for an already linked identity could
 never turn a test red: the unique constraint refuses the same link, caught as `IntegrityError`.
