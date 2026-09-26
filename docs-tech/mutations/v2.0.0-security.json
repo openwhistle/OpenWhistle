@@ -27,8 +27,8 @@
   {
    "id": "setup-token-kept-after-setup",
    "file": "app/api/wizard.py",
-   "old": "    if await create_initial_admin(db, username, password, totp_secret):\n        await delete_setup_token(redis)",
-   "new": "    await create_initial_admin(db, username, password, totp_secret)",
+   "old": "    if await create_initial_admin(\n        db, username, password, totp_secret, telemetry=telemetry == \"1\"\n    ):\n        await delete_setup_token(redis)",
+   "new": "    await create_initial_admin(\n        db, username, password, totp_secret, telemetry=telemetry == \"1\"\n    )",
    "tests": "S"
   },
   {

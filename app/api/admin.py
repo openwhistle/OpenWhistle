@@ -1528,7 +1528,10 @@ async def system_telemetry_reset_id(
 ) -> RedirectResponse:
     from app.services import telemetry
 
-    state = await telemetry.ensure_state(db)
+    state = await telemetry.get_state(db)
+    if state is None:
+        # No ID exists before consent, and a reset must not mint one.
+        return RedirectResponse("/admin/system#heading-telemetry", status_code=302)
     state.installation_id = telemetry.new_installation_id()
     state.last_sent_at = None  # a new installation, as far as the far end can tell
     await audit_service.log(db, current_user, AuditAction.TELEMETRY_ID_RESET)

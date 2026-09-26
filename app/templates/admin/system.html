@@ -165,12 +165,14 @@ User-Agent: openwhistle/{{ telemetry.version }}</code></pre>
         </form>
         {% endif %}
 
+        {% if telemetry.installation_id %}
         <form method="post" action="/admin/system/telemetry/reset-id"
               data-confirm="{{ t('admin.system.telemetry.reset_confirm') }}">
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.system.telemetry.reset') }}</button>
         </form>
         <p class="note">{{ t('admin.system.telemetry.reset_note') }}</p>
+        {% endif %}
     </section>
 
     <section class="card" aria-labelledby="heading-config">

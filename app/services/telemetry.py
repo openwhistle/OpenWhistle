@@ -92,7 +92,7 @@ async def get_state(db: AsyncSession) -> TelemetryState | None:
 
 async def ensure_state(db: AsyncSession) -> TelemetryState:
     """The single row, created switched off with a new identifier if missing.
-    Only for a consent path (wizard yes, switch on, reset, a first send under
+    Only for a consent path (wizard yes, switch on, a first send under
     TELEMETRY_ENABLED=true). Race-free against a concurrent creator; the
     caller commits."""
     await db.execute(

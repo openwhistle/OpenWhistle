@@ -545,22 +545,6 @@ async def test_switching_off_a_never_asked_install_writes_nothing(
 
 
 @pytest.mark.asyncio
-async def test_reset_on_a_never_asked_install_creates_a_row_that_stays_off(
-    signed_in: tuple[AsyncClient, AdminUser, str], db_session: AsyncSession,
-    consent_from_db: None,
-) -> None:
-    client, _, csrf = signed_in
-    await _set_row(db_session, enabled=None)
-
-    resp = await client.post("/admin/system/telemetry/reset-id", data={"csrf_token": csrf},
-                             follow_redirects=False)
-
-    assert resp.status_code == 302
-    row = await _row(db_session)
-    assert row is not None and row.enabled is False
-
-
-@pytest.mark.asyncio
 @pytest.mark.parametrize(("setting", "value", "key"), [
     ("telemetry_enabled", False, "admin.system.telemetry.locked.env_off"),
     ("telemetry_enabled", True, "admin.system.telemetry.locked.env_on"),
@@ -680,6 +664,24 @@ async def test_reset_gives_a_new_random_identifier(
     assert row.enabled is True
     assert row.last_sent_at is None  # a new installation as far as the far end can tell
     assert await _audit(db_session, admin) == [AuditAction.TELEMETRY_ID_RESET]
+
+
+@pytest.mark.asyncio
+async def test_reset_before_consent_mints_no_identifier(
+    signed_in: tuple[AsyncClient, AdminUser, str], db_session: AsyncSession,
+    consent_from_db: None,
+) -> None:
+    client, admin, csrf = signed_in
+    await _set_row(db_session, enabled=None)
+
+    page = await client.get("/admin/system")
+    resp = await client.post("/admin/system/telemetry/reset-id", data={"csrf_token": csrf},
+                             follow_redirects=False)
+
+    assert 'action="/admin/system/telemetry/reset-id"' not in page.text
+    assert resp.status_code == 302
+    assert await _row(db_session) is None
+    assert await _audit(db_session, admin) == []
 
 
 @pytest.mark.asyncio

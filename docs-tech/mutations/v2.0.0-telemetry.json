@@ -331,8 +331,8 @@
   {
    "id": "reset-needs-existing-row",
    "file": "app/api/admin.py",
-   "old": "    state = await telemetry.ensure_state(db)\n    state.installation_id",
-   "new": "    state = await telemetry.get_state(db)\n    assert state is not None\n    state.installation_id",
+   "old": "    state = await telemetry.get_state(db)\n    if state is None:\n        # No ID exists before consent, and a reset must not mint one.\n",
+   "new": "    state = await telemetry.ensure_state(db)\n    if state is None:\n        # No ID exists before consent, and a reset must not mint one.\n",
    "tests": "T"
   },
   {
@@ -354,6 +354,13 @@
    "file": "tests/conftest.py",
    "old": "    monkeypatch.setattr(telemetry, \"TELEMETRY_ENDPOINT\", \"http://127.0.0.1:9/v1/openwhistle/count\")\n",
    "new": "    del telemetry, monkeypatch\n",
+   "tests": "T"
+  },
+  {
+   "id": "reset-button-without-id",
+   "file": "app/templates/admin/system.html",
+   "old": "        {% if telemetry.installation_id %}\n        <form method=\"post\" action=\"/admin/system/telemetry/reset-id\"",
+   "new": "        {% if true %}\n        <form method=\"post\" action=\"/admin/system/telemetry/reset-id\"",
    "tests": "T"
   }
  ]
