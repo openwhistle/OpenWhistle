@@ -43,7 +43,7 @@
                         <tr>
                             <th>{{ t('admin.organisations.col.name') }}</th>
                             <th>{{ t('admin.organisations.col.slug') }}</th>
-                            <th>{{ t('admin.organisations.col.link') }}</th>
+                            {% if public_url %}<th>{{ t('admin.organisations.col.link') }}</th>{% endif %}
                             <th>{{ t('admin.organisations.col.status') }}</th>
                             <th>{{ t('admin.organisations.col.created') }}</th>
                             <th></th>
@@ -54,6 +54,7 @@
                         <tr>
                             <td>{{ org.name }}</td>
                             <td class="mono">{{ org.slug }}</td>
+                            {% if public_url %}
                             <td>
                                 {% if org.is_active %}
                                 {% set link = public_url ~ '/submit/' ~ org.slug %}
@@ -64,6 +65,7 @@
                                         data-copied="{{ t('success.copied') }}">{{ icons.icon('copy') }}</button>
                                 {% endif %}
                             </td>
+                            {% endif %}
                             <td>
                                 {% if org.is_active %}
                                 <span class="badge badge-closed">{{ t('admin.organisations.active') }}</span>

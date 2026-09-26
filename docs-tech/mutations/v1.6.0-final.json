@@ -541,6 +541,13 @@
    "old": "                                {% if org.is_active %}\n                                {% set link",
    "new": "                                {% if true %}\n                                {% set link",
    "tests": "MW"
+  },
+  {
+   "id": "orgs-page-links-without-tenancy",
+   "file": "app/api/admin.py",
+   "old": "            if settings.multi_tenancy_enabled\n            else None,",
+   "new": "            if True\n            else None,",
+   "tests": "MW"
   }
  ]
 }

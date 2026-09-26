@@ -516,6 +516,25 @@ async def test_the_organisations_page_shows_each_reporting_link(
 
 
 @pytest.mark.asyncio
+async def test_without_multi_tenancy_the_organisations_page_lists_no_links(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """/submit/<slug> is a 404 then: a link to it would mislead."""
+    monkeypatch.setattr(settings, "multi_tenancy_enabled", False)
+    root = AdminUser(
+        id=uuid.uuid4(), username=f"root_{uuid.uuid4().hex[:6]}", role=AdminRole.superadmin,
+        is_active=True, totp_secret="JBSWY3DPEHPK3PXP", totp_enabled=True,
+    )
+    app.dependency_overrides[get_current_admin] = lambda: root
+    try:
+        page = (await client.get("/admin/organisations")).text
+    finally:
+        app.dependency_overrides.pop(get_current_admin, None)
+    assert "Reporting link" not in page
+    assert "data-copy=" not in page
+
+
+@pytest.mark.asyncio
 async def test_an_org_admins_dashboard_shows_their_own_reporting_link(
     client: AsyncClient, orgs: dict[str, _Org]
 ) -> None:

@@ -1501,7 +1501,10 @@ async def organisations_page(
             "user": current_user,
             "organisations": orgs,
             "default_org_slug": settings.default_org_slug,
-            "public_url": settings.app_public_url.rstrip("/"),
+            # Without multi-tenancy there is one wizard, at /submit: no links to list.
+            "public_url": settings.app_public_url.rstrip("/")
+            if settings.multi_tenancy_enabled
+            else None,
         },
     )
 
