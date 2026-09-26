@@ -113,8 +113,8 @@
   {
    "id": "curl-in-the-image",
    "file": "Dockerfile",
-   "old": "    libsasl\n",
-   "new": "    libsasl \\\n    curl\n",
+   "old": "    libsasl \\\n    && rm -rf /usr/local/lib/python3.*/site-packages/pip",
+   "new": "    libsasl \\\n    curl \\\n    && rm -rf /usr/local/lib/python3.*/site-packages/pip",
    "tests": "B"
   },
   {

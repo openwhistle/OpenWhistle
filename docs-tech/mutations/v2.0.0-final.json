@@ -429,8 +429,8 @@
   {
    "id": "inactive-org-served",
    "file": "app/api/reports.py",
-   "old": "            Organisation.is_active.is_(True),\n",
-   "new": "",
+   "old": "            Organisation.slug == org_slug, Organisation.is_active.is_(True)\n",
+   "new": "            Organisation.slug == org_slug\n",
    "tests": "MW"
   },
   {

@@ -22,8 +22,8 @@
   {
    "id": "step-renders-post-result",
    "file": "app/api/reports.py",
-   "old": "        resp = RedirectResponse(\"/submit\", status_code=303)\n        _set_submission_cookie(resp, session_id, request)\n        return resp\n\n    async def _fail",
-   "new": "        resp = RedirectResponse(\"/submit\", status_code=302)\n        _set_submission_cookie(resp, session_id, request)\n        return resp\n\n    async def _fail",
+   "old": "        resp = RedirectResponse(tenant.path, status_code=303)\n        _set_submission_cookie(resp, session_id, request)\n        return resp\n\n    async def _fail",
+   "new": "        resp = RedirectResponse(tenant.path, status_code=302)\n        _set_submission_cookie(resp, session_id, request)\n        return resp\n\n    async def _fail",
    "tests": "W"
   },
   {
@@ -64,8 +64,8 @@
   {
    "id": "remove-no-csrf",
    "file": "app/api/reports.py",
-   "old": "    _csrf: None = Depends(validate_csrf),\n) -> RedirectResponse:\n    \"\"\"Remove one",
-   "new": "    _csrf: None = None,\n) -> RedirectResponse:\n    \"\"\"Remove one",
+   "old": "    _csrf: None = Depends(validate_csrf),\n) -> Response:\n    \"\"\"Remove one",
+   "new": "    _csrf: None = None,\n) -> Response:\n    \"\"\"Remove one",
    "tests": "W"
   },
   {
@@ -113,14 +113,14 @@
   {
    "id": "no-final-revalidation",
    "file": "app/api/reports.py",
-   "old": "                if draft_error := await _draft_error(db, state, valid_cat_slugs, has_locations):",
+   "old": "                if draft_error := await _draft_error(\n                    db, state, valid_cat_slugs, has_locations, tenant\n                ):",
    "new": "                if draft_error := None:",
    "tests": "W"
   },
   {
    "id": "final-check-ignores-location",
    "file": "app/api/reports.py",
-   "old": "            await _location_error(db, state.get(\"location_id\")) if has_locations else None,",
+   "old": "            await _location_error(db, state.get(\"location_id\"), tenant)\n            if has_locations\n            else None,",
    "new": "            None,",
    "tests": "W"
   },
