@@ -1170,12 +1170,17 @@
           to know which.
         </p>
         <p>What is sent, in full, once a day and nothing else:</p>
-        <pre><code>GET /v1/openwhistle/count?id=&lt;32 hex characters&gt;&amp;v=&lt;version&gt; HTTP/1.1
+        <div class="code-block" role="region" aria-label="Telemetry request" tabindex="0">
+          <div class="code-block-header">
+            <span class="code-block-lang">http</span>
+          </div>
+          <pre><code>GET /v1/openwhistle/count?id=&lt;32 hex characters&gt;&amp;v=&lt;version&gt; HTTP/1.1
 Host: telemetry.wdkro.de
 Accept: */*
 Accept-Encoding: gzip, deflate
 Connection: keep-alive
 User-Agent: openwhistle/&lt;version&gt;</code></pre>
+        </div>
         <p>
           Over HTTPS; no cookie, no body. The last four headers are what the HTTP library sends
           with every request (<code>Accept-Encoding</code> grows if a brotli or zstd package is ever installed).
