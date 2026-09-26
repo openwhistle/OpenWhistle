@@ -298,3 +298,21 @@ def test_helm_values_warn_that_the_chart_ships_no_clamd() -> None:
     comment = match.group(1)
     assert "does not deploy a clamav pod" in comment
     assert "reachable clamd" in comment
+
+
+@pytest.mark.asyncio
+async def test_scan_unavailable_when_connecting_hangs(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A clamd host that never completes the TCP handshake (a dropped SYN) must
+    not hang the upload: the connect is bounded like the reply read."""
+    never = asyncio.Event()
+
+    async def _hanging_connect(*args: object, **kwargs: object) -> None:
+        await never.wait()
+
+    monkeypatch.setattr(settings, "clamav_host", "192.0.2.1")
+    monkeypatch.setattr(settings, "clamav_timeout_seconds", 1)
+    monkeypatch.setattr(asyncio, "open_connection", _hanging_connect)
+    from app.services.virus_scan import ScanUnavailableError
+
+    with pytest.raises(ScanUnavailableError):
+        await scan_bytes(b"x" * 100)

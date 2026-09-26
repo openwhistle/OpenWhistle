@@ -1,0 +1,31 @@
+{
+ "timeout_seconds": 120,
+ "test_groups": {
+  "C": [
+   "tests/test_v160_clamav.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "clamav-connect-unbounded",
+   "file": "app/services/virus_scan.py",
+   "old": "            timeout,\n        )\n    except (OSError, TimeoutError) as exc:",
+   "new": "            None,\n        )\n    except (OSError, TimeoutError) as exc:",
+   "tests": "C"
+  },
+  {
+   "id": "clamav-drain-unbounded",
+   "file": "app/services/virus_scan.py",
+   "old": "        await asyncio.wait_for(writer.drain(), timeout)",
+   "new": "        await writer.drain()",
+   "tests": "C"
+  },
+  {
+   "id": "clamav-reply-unbounded",
+   "file": "app/services/virus_scan.py",
+   "old": "        reply = await asyncio.wait_for(reader.readuntil(b\"\\0\"), timeout)",
+   "new": "        reply = await reader.readuntil(b\"\\0\")",
+   "tests": "C"
+  }
+ ]
+}

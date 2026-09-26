@@ -18,7 +18,8 @@ once) and run:
 python scripts/mutation_audit.py docs-tech/mutations/vX.Y.Z.json
 ```
 
-Every line must read `RED`. For a `GREEN` one, either write the test that
+Every line must read `RED`. A mutation that removes a timeout hangs its
+test: put it in a spec with `"timeout_seconds"` (a hang past it counts as red). For a `GREEN` one, either write the test that
 catches it, or show the mutation cannot change behaviour and record why in
 [invariants](invariants.md). Read *which* test fired: a guard caught by an
 unrelated test is caught by luck.
