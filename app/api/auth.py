@@ -46,6 +46,7 @@ def _login_ctx(extra: dict[str, Any] | None = None) -> dict[str, Any]:
     base: dict[str, Any] = {
         "oidc_enabled": settings.oidc_enabled,
         "ldap_enabled": settings.ldap_enabled,
+        "local_review_login": settings.local_review_login,
     }
     if extra:
         base.update(extra)
@@ -231,6 +232,38 @@ async def login_post(
     # account existence / auth method (kept generic for privacy).
 
     return await _second_factor(request, redis, user)
+
+
+@router.post(
+    "/local-review-login", response_class=HTMLResponse, response_model=None, include_in_schema=False
+)
+async def local_review_login_post(
+    request: Request,
+    csrf_token: str = Form(""),
+    ow_csrf: str | None = Cookie(None),
+    redis: Redis = Depends(get_redis),
+    db: AsyncSession = Depends(get_db),
+) -> RedirectResponse:
+    """One-click sign-in as the seeded demo admin, full session, no password or
+    MFA check — LOCAL_REVIEW_LOGIN only, so an agent can review every admin
+    page without a human typing credentials. The setting check runs first: the
+    route must answer 404 (it does not exist), never 403, when disabled."""
+    if not settings.local_review_login:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    # Not a Depends(validate_csrf): that would run before the check above and
+    # turn a disabled route into a 403 (CSRF failure) instead of a 404.
+    await validate_csrf(csrf_token, ow_csrf)
+
+    from app.services.demo_seed import DEMO_ADMIN_USERNAME  # noqa: PLC0415
+
+    user = await auth_service.get_user_by_username(db, DEMO_ADMIN_USERNAME)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    await audit_service.log(db, user, audit_service.AuditAction.AUTH_LOCAL_REVIEW_LOGIN)
+    await db.commit()
+    return await _start_session(redis, db, user, request)
 
 
 @router.post("/login/mfa", response_class=HTMLResponse, response_model=None)

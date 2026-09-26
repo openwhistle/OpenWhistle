@@ -1278,6 +1278,15 @@
               <td><code>false</code></td>
             </tr>
             <tr>
+              <td><code class="env-key">LOCAL_REVIEW_LOGIN</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Local review only — never in production. Requires <code>DEMO_MODE=true</code> (the app refuses to
+                start otherwise). Shows a one-click "Enter the local review" button on <code>/admin/login</code> that
+                signs in as the seeded demo admin with no password or MFA check, so an agent can review every admin
+                page without a human typing credentials. See <code>docs-tech/local-review.md</code>.</td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
               <td><code class="env-key">SECURE_COOKIES</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
               <td>Set to <code>false</code> when the app is served over plain HTTP (e.g. local network without TLS). Must be <code>true</code> behind HTTPS. Browsers block <code>Secure</code> cookies over HTTP, causing session failures when accessed from other devices.</td>

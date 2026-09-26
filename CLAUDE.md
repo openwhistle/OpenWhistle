@@ -103,8 +103,9 @@ following. These checks caught v0.3.0 and v0.4.0 gaps retroactively — run them
 ### Cutting the release
 
 Follow `docs-tech/release.md`: mutation audit of every new guard
-(`scripts/mutation_audit.py`, all RED), UI check, release PR, tag, verify the
-published images from outside.
+(`scripts/mutation_audit.py`, all RED), UI check, Chrome check (every page
+visually reviewed in the Claude-in-Chrome extension, `docs-tech/local-review.md`),
+release PR, tag, verify the published images from outside.
 
 ## Why these rules exist
 
