@@ -53,7 +53,7 @@ async def send_sla_reminders() -> None:
     from app.models.report import Report, ReportStatus
     from app.redis_client import get_redis
 
-    engine = create_async_engine(settings.database_url, echo=False)
+    engine = create_async_engine(settings.database_url, echo=False, hide_parameters=True)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
     try:

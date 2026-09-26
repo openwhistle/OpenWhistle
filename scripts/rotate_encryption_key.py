@@ -71,7 +71,7 @@ async def main() -> int:
         _rotate_reason,
     ))
 
-    engine = create_async_engine(settings.database_url)
+    engine = create_async_engine(settings.database_url, hide_parameters=True)
     writes: list[tuple[str, str, object, str, str]] = []
     failed: list[str] = []
     try:
