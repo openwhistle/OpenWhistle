@@ -7,6 +7,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.6.0] — 2026-09-26
+
 ### Upgrade notes
 
 - **LDAP with a private CA reads `LDAPTLS_CACERT`** (or `LDAPTLS_CACERTDIR`).
@@ -1079,7 +1081,8 @@ Remaining lower-severity findings are tracked in GitHub issues #42–#46.
 - **Rate limiting by session token** (not IP) to maintain full anonymity
 - **alembic upgrade head** on every startup to guarantee migration consistency
 
-[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.3.1...v1.4.0
 [1.3.1]: https://github.com/openwhistle/OpenWhistle/compare/v1.3.0...v1.3.1

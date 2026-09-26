@@ -1,6 +1,6 @@
 services:
   app:
-    image: ghcr.io/openwhistle/openwhistle:${OPENWHISTLE_VERSION:-1.5.0}
+    image: ghcr.io/openwhistle/openwhistle:${OPENWHISTLE_VERSION:-1.6.0}
     read_only: true
     tmpfs:
       - /tmp:size=128m

@@ -590,7 +590,7 @@ class TestConfigV100Defaults:
     def test_app_version_current(self) -> None:
         from app.config import settings
 
-        assert settings.app_version == "1.5.0"
+        assert settings.app_version == "1.6.0"
 
     def test_every_published_version_string_matches(self) -> None:
         """One version, written in several places. A release that bumps only
@@ -620,6 +620,11 @@ class TestConfigV100Defaults:
         }
         v = settings.app_version
         assert found == dict.fromkeys(found, v)
+        # Every image default, not only the first: tls-init runs the same image
+        # and once pointed at a different version than the app service.
+        compose = (root / "docker-compose.prod.yml").read_text()
+        defaults = re.findall(r"OPENWHISTLE_VERSION:-([0-9.]+)\}", compose)
+        assert len(defaults) >= 2 and set(defaults) == {v}, defaults
         assert f"[{v}]: " in (root / "CHANGELOG.md").read_text(), "CHANGELOG compare link missing"
 
         # Every visible "Version X.Y.Z" string on both landing pages (hero
