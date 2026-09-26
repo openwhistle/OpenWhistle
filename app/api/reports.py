@@ -916,7 +916,7 @@ async def submit_post(
                 await create_attachments(db, report, file_tuples_restored, commit=False)
                 our_case = report.case_number
                 await db.commit()
-        except BaseException as exc:
+        except (Exception, asyncio.CancelledError) as exc:
             # The database decides: a lost reply can hide a commit that went
             # through, and another submit of this draft may own the report. If
             # this lookup fails too, nothing is given back: the recovery asks

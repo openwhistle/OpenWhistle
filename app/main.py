@@ -1,11 +1,11 @@
 """FastAPI application factory with startup migration check."""
 
+import asyncio
 import logging
 import subprocess
 import sys
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING
 
 from fastapi import FastAPI, Request
 from fastapi.exception_handlers import (
@@ -34,9 +34,6 @@ _HTML_ERROR_DETAIL_KEYS: dict[int, str] = {
     409: "error.detail.409",
     422: "error.detail.422",
 }
-
-if TYPE_CHECKING:
-    import asyncio
 
 configure_logging(settings.log_level, settings.log_format)
 
@@ -140,8 +137,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 
     rekey_task = None
     if settings.storage_backend == "s3":
-        import asyncio  # noqa: PLC0415
-
         from app.services.attachment import run_s3_rekey  # noqa: PLC0415
 
         rekey_task = asyncio.create_task(run_s3_rekey())
