@@ -17,6 +17,7 @@ _WB_PREFIX = "openwhistle:wb_ratelimit:"
 _ADMIN_PREFIX = "openwhistle:admin_ratelimit:"
 _SPRAY_PREFIX = "openwhistle:admin_failed_logins:"  # + minute number
 _SPRAY_ALERTED = "openwhistle:admin_spray_alerted"
+_SETUP_TOKEN_FAILURES = "openwhistle:setup_token_failures"  # noqa: S105 — Redis key name
 
 
 async def record_whistleblower_failure(redis: Redis, case_key: str) -> int:
@@ -88,3 +89,23 @@ async def record_instance_login_failure(redis: Redis) -> bool:
     if sum(int(c) for c in counts if c) < threshold:
         return False
     return bool(await redis.set(_SPRAY_ALERTED, "1", nx=True, ex=minutes * 60))
+
+
+async def setup_token_locked(redis: Redis) -> bool:
+    """True once MAX_LOGIN_ATTEMPTS wrong setup tokens were tried in the lockout window.
+
+    Counted for the whole instance (there is no account yet, and no IP is read).
+    """
+    count = await redis.get(_SETUP_TOKEN_FAILURES)
+    return count is not None and int(count) >= settings.max_login_attempts
+
+
+async def record_setup_token_failure(redis: Redis) -> None:
+    count = await redis.incr(_SETUP_TOKEN_FAILURES)
+    if count == 1:
+        await redis.expire(_SETUP_TOKEN_FAILURES, settings.login_lockout_minutes * 60)
+
+
+async def reset_setup_token_failures(redis: Redis) -> None:
+    """Clear the count after a right token (only reachable while not locked)."""
+    await redis.delete(_SETUP_TOKEN_FAILURES)

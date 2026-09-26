@@ -599,6 +599,7 @@
   "mfa.setup.error.invalid": "Ce code n'est pas valide. Scannez à nouveau le code QR et saisissez le code à 6 chiffres actuel.",
   "wizard.error.summary": "Vérifiez ces champs :",
   "wizard.error.setup_token": "Le jeton d'installation est absent ou incorrect.",
+  "wizard.error.setup_token_locked": "Trop de jetons d'installation incorrects. Réessayez plus tard.",
   "wizard.error.username": "Saisissez un nom d'utilisateur de 3 à 64 caractères : lettres, chiffres, espaces et . _ @ -",
   "wizard.error.password": "Saisissez un mot de passe d'au moins 12 caractères et d'au plus 72 octets (une lettre accentuée compte double).",
   "wizard.error.password_confirm": "Les deux mots de passe ne correspondent pas.",

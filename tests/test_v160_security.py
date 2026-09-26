@@ -197,9 +197,10 @@ async def test_configured_setup_token_overrides_a_stale_stored_token(
 @pytest.mark.parametrize(
     ("value", "valid"),
     [
-        ("a-real-setup-token-1234", True),   # >= 16 chars: valid as-is
-        ("  a-real-setup-token-1234  ", True),  # padded: stripped before the length check
-        ("too-short", False),                # < 16 chars after strip
+        ("a-real-setup-token-1234-abcdefghij", True),   # >= 32 chars: valid as-is
+        ("  a-real-setup-token-1234-abcdefghij  ", True),  # padded: stripped first
+        ("a-real-setup-token-1234", False),  # < 32 chars after strip
+        ("too-short", False),
         ("   ", False),                      # whitespace-only: blank after strip
         ("", True),                          # empty means "unset"
     ],

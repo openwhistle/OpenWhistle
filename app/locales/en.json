@@ -599,6 +599,7 @@
   "mfa.setup.error.invalid": "That code is not valid. Scan the QR code again and enter the current 6-digit code.",
   "wizard.error.summary": "Check these fields:",
   "wizard.error.setup_token": "The setup token is missing or wrong.",
+  "wizard.error.setup_token_locked": "Too many wrong setup tokens. Try again later.",
   "wizard.error.username": "Enter a username of 3 to 64 characters: letters, digits, spaces and . _ @ -",
   "wizard.error.password": "Enter a password of at least 12 characters and at most 72 bytes (an accented letter counts as two).",
   "wizard.error.password_confirm": "The two passwords do not match.",

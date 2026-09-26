@@ -1314,7 +1314,7 @@
             <tr>
               <td><code class="env-key">SETUP_TOKEN</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
-              <td>Token the first-run wizard at <code>/setup</code> asks for. Unset: a random token is created at startup and written once to the log (<code>docker compose logs app | grep "Setup token"</code>).</td>
+              <td>Token the first-run wizard at <code>/setup</code> asks for, at least 32 characters (the app refuses to start with a shorter one; <code>openssl rand -hex 16</code>). After <code>MAX_LOGIN_ATTEMPTS</code> wrong tokens, <code>/setup</code> refuses every token for <code>LOGIN_LOCKOUT_MINUTES</code>. Unset: a random token is created at startup and written once to the log (<code>docker compose logs app | grep "Setup token"</code>).</td>
               <td>random</td>
             </tr>
             <tr>

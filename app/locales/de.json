@@ -599,6 +599,7 @@
   "mfa.setup.error.invalid": "Dieser Code ist ungültig. Scannen Sie den QR-Code erneut und geben Sie den aktuellen 6-stelligen Code ein.",
   "wizard.error.summary": "Bitte prüfen Sie diese Felder:",
   "wizard.error.setup_token": "Das Einrichtungs-Token fehlt oder ist falsch.",
+  "wizard.error.setup_token_locked": "Zu viele falsche Einrichtungs-Token. Bitte später erneut versuchen.",
   "wizard.error.username": "Geben Sie einen Benutzernamen mit 3 bis 64 Zeichen ein: Buchstaben, Ziffern, Leerzeichen und . _ @ -",
   "wizard.error.password": "Geben Sie ein Passwort mit mindestens 12 Zeichen und höchstens 72 Byte ein (ein Umlaut zählt doppelt).",
   "wizard.error.password_confirm": "Die beiden Passwörter stimmen nicht überein.",

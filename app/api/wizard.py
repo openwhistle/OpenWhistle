@@ -14,6 +14,7 @@ from app.database import get_db
 from app.models.setup import SetupStatus
 from app.models.user import AdminUser
 from app.redis_client import get_redis
+from app.services import rate_limit as rl
 from app.services.auth import hash_password, validate_password
 from app.services.mfa import generate_qr_code_base64, generate_totp_secret, verify_totp
 from app.services.setup_token import check_setup_token, delete_setup_token, ensure_setup_token
@@ -131,18 +132,23 @@ async def setup_post(
     if await _is_setup_complete(db):
         return RedirectResponse("/admin/login", status_code=302)
 
-    if not await check_setup_token(redis, setup_token.strip()):
+    locked = await rl.setup_token_locked(redis)
+    if locked or not await check_setup_token(redis, setup_token.strip()):
+        if not locked:
+            await rl.record_setup_token_failure(redis)
+        error = "wizard.error.setup_token_locked" if locked else "wizard.error.setup_token"
         return render(
             request,
             "wizard/setup.html",
             {
                 "totp_secret": totp_secret,
                 "qr_code": generate_qr_code_base64(totp_secret, username or "admin"),
-                "field_errors": {"setup_token": "wizard.error.setup_token"},
+                "field_errors": {"setup_token": error},
                 "username": username,
             },
-            status_code=403,
+            status_code=429 if locked else 403,
         )
+    await rl.reset_setup_token_failures(redis)
 
     # field -> locale key; each shows next to its field and in the summary banner.
     errors: dict[str, str] = {}

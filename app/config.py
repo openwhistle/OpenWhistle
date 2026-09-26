@@ -14,7 +14,7 @@ _MIN_SECRET_KEY_LEN = 32
 
 # Minimum SETUP_TOKEN length, when one is configured. Long enough that it
 # cannot be brute-forced over the /setup form's request budget.
-_MIN_SETUP_TOKEN_LEN = 16
+_MIN_SETUP_TOKEN_LEN = 32
 
 
 class Settings(BaseSettings):

@@ -611,6 +611,7 @@
   "mfa.setup.error.invalid": "Este código não é válido. Escaneie o QR code novamente e informe o código atual de 6 dígitos.",
   "wizard.error.summary": "Verifique estes campos:",
   "wizard.error.setup_token": "O token de configuração está ausente ou incorreto.",
+  "wizard.error.setup_token_locked": "Muitos tokens de configuração incorretos. Tente novamente mais tarde.",
   "wizard.error.username": "Informe um nome de usuário com 3 a 64 caracteres: letras, números, espaços e . _ @ -",
   "wizard.error.password": "Informe uma senha com pelo menos 12 caracteres e no máximo 72 bytes (uma letra acentuada conta como duas).",
   "wizard.error.password_confirm": "As duas senhas não coincidem.",

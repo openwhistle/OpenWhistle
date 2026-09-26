@@ -20,8 +20,10 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   includes both; installing from source needs `pip install '.[ldap,s3]'` and
   `libldap2-dev libsasl2-dev`.
 - **A fresh install needs the setup token.** `/setup` asks for a one-time token: set
-  `SETUP_TOKEN` (16+ characters), or read the random one the app logs once at WARNING on its
-  first start. An existing installation is not affected.
+  `SETUP_TOKEN` (32+ characters; the app refuses to start with a shorter one), or read the
+  random one the app logs once at WARNING on its first start. After `MAX_LOGIN_ATTEMPTS` wrong
+  tokens, `/setup` refuses every token for `LOGIN_LOCKOUT_MINUTES`. An existing installation
+  is not affected.
 - **Setting `ENCRYPTION_KEY` on an existing install needs `ENCRYPTION_KEY_PREVIOUS`.**
   Existing data is under `SECRET_KEY`: set `ENCRYPTION_KEY=<new>` together with
   `ENCRYPTION_KEY_PREVIOUS=<your SECRET_KEY>`, recreate the container, then run
@@ -49,7 +51,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   Creating a category or location commits in one transaction with its audit row.
 - **The first-run setup page belonged to whoever opened it first.** `/setup` now needs a
   one-time setup token (`SETUP_TOKEN`, or a random token logged once at start), deleted when
-  the first admin exists.
+  the first admin exists. Wrong tokens are rate-limited (`MAX_LOGIN_ATTEMPTS` per
+  `LOGIN_LOCKOUT_MINUTES`, counted per instance), and an operator-set token needs 32
+  characters.
 - **TOTP secrets are encrypted at rest** (migration 004): a database dump no longer yields the
   second factor of every account.
 - **Admin sessions have an absolute lifetime** (`SESSION_MAX_HOURS`, default 12). "Stay signed

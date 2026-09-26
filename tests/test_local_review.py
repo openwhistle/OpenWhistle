@@ -535,7 +535,7 @@ def test_review_setup_profile_is_a_fresh_install_without_the_review_login() -> N
     assert 'profiles: ["setup"]' in block
     assert 'DEMO_MODE: "false"' in block
     assert "LOCAL_REVIEW_LOGIN" not in block
-    assert re.search(r'SETUP_TOKEN: "[^"]{16,}"', block)
+    assert re.search(r'SETUP_TOKEN: "[^"]{32,}"', block)
     assert '"127.0.0.1:4010:4009"' in block
 
 

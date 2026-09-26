@@ -384,3 +384,40 @@ def test_pdf_loses_annotation_authors_photo_exif_and_its_file_id() -> None:
     reader = PdfReader(io.BytesIO(clean))
     assert reader.trailer["/ID"][0] != original_id
     assert list(reader.pages[0].images)[0].image.size == (8, 8)
+
+
+# --- M11: setup-token guesses are rate-limited ---------------------------------------------
+
+
+async def test_setup_token_guesses_lock_setup(  # type: ignore[no-untyped-def]
+    client, db_session, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from sqlalchemy import select
+
+    from app.config import settings
+    from app.models.user import AdminUser
+    from app.redis_client import get_redis
+    from app.services.rate_limit import _SETUP_TOKEN_FAILURES
+    from tests.conftest import setup_token
+    from tests.test_v160_security import _csrf, _reset_setup, _restore_setup, _setup_form
+
+    monkeypatch.setattr(settings, "max_login_attempts", 3)
+    redis = await get_redis()
+    await redis.delete(_SETUP_TOKEN_FAILURES)
+    await _reset_setup(db_session)
+    try:
+        csrf = await _csrf(client, "/setup")
+        for _ in range(3):
+            wrong = await client.post("/setup", data=_setup_form(csrf, "x" * 40))
+            assert wrong.status_code == 403
+        form = _setup_form(csrf, await setup_token())
+        locked = await client.post("/setup", data=form, follow_redirects=False)
+        assert locked.status_code == 429
+        assert "Too many wrong setup tokens" in locked.text
+        created = await db_session.scalar(
+            select(AdminUser).where(AdminUser.username == form["username"])
+        )
+        assert created is None
+    finally:
+        await redis.delete(_SETUP_TOKEN_FAILURES)
+        await _restore_setup(db_session)
