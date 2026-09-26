@@ -162,11 +162,14 @@ async def test_audit_rows_carry_the_report_org_and_else_the_actor_org(
     from app.services.report import create_report
 
     org = Organisation(id=uuid.uuid4(), name="Org A", slug=f"a-{uuid.uuid4().hex[:6]}")
-    db_session.add(org)
+    actor_org = Organisation(id=uuid.uuid4(), name="Org B", slug=f"b-{uuid.uuid4().hex[:6]}")
+    db_session.add_all([org, actor_org])
     await db_session.flush()
+    # The actor belongs to another organisation (e.g. an operator acting on a
+    # tenant's case): a row about a report takes the report's org, not the actor's.
     actor = AdminUser(
         id=uuid.uuid4(), username=f"aud_{uuid.uuid4().hex[:8]}", password_hash=None,
-        totp_secret="JBSWY3DPEHPK3PXP", totp_enabled=True, org_id=org.id,
+        totp_secret="JBSWY3DPEHPK3PXP", totp_enabled=True, org_id=actor_org.id,
     )
     db_session.add(actor)
     report, _ = await create_report(db_session, "corruption", "Audit org test report text.")
@@ -177,7 +180,7 @@ async def test_audit_rows_carry_the_report_org_and_else_the_actor_org(
     without = await audit_service.log(db_session, actor, "admin.created")
     await db_session.commit()
     assert with_report.org_id == org.id
-    assert without.org_id == org.id
+    assert without.org_id == actor_org.id
 
 
 @pytest.mark.asyncio

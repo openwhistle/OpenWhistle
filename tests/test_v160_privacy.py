@@ -6,6 +6,7 @@ import re
 import unicodedata
 import uuid
 from datetime import UTC, datetime
+from unittest.mock import AsyncMock
 
 import pyotp
 import pytest
@@ -206,6 +207,10 @@ async def test_admin_who_is_not_the_handler_cannot_reveal(
         "reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")})
     assert resp.status_code == 403
     assert _NAME not in resp.text
+    # Nor is the form offered to them: the page says who may see the identity.
+    page = (await client.get(f"/admin/reports/{report.id}")).text
+    assert f'action="/admin/reports/{report.id}/identity"' not in page
+    assert "Only the person handling this case can see the identity." in page
 
 
 @pytest.mark.asyncio
@@ -920,12 +925,18 @@ async def test_concurrent_whistleblower_replies_get_distinct_ordered_times(
 
 
 @pytest.mark.asyncio
-async def test_demo_seed_stores_reporter_times_as_the_day(db_session: AsyncSession) -> None:
+async def test_demo_seed_stores_reporter_times_as_the_day(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
     from sqlalchemy.orm import selectinload
 
     from app.models.report import ReportSender
+    from app.services import demo_seed
     from app.services.demo_seed import DEMO_REPORTS, _seed
 
+    # Whether earlier tests left a completed setup without a demo account is
+    # not this test's concern: it must seed whatever ran before it.
+    monkeypatch.setattr(demo_seed, "_is_foreign_database", AsyncMock(return_value=False))
     await _seed(db_session)
     reports = (await db_session.execute(
         select(Report).options(selectinload(Report.messages))
@@ -983,3 +994,25 @@ def test_local_time_script_shows_date_only_values_as_the_utc_day() -> None:
     (day_only, day_only_title), (local, _) = json.loads(run.stdout)
     assert day_only == "2026-09-01" and day_only_title == ""
     assert local.startswith("2026-08-31 20:00")
+
+
+@pytest.mark.asyncio
+async def test_content_search_stays_inside_the_callers_organisation(
+    db_session: AsyncSession,
+) -> None:
+    """No report of another organisation is decrypted for the search, and none
+    spends the CONTENT_SEARCH_LIMIT budget of this one."""
+    from app.models.organisation import Organisation
+
+    ours = Organisation(id=uuid.uuid4(), name="Ours", slug=f"o-{uuid.uuid4().hex[:6]}")
+    theirs = Organisation(id=uuid.uuid4(), name="Theirs", slug=f"t-{uuid.uuid4().hex[:6]}")
+    db_session.add_all([ours, theirs])
+    await db_session.flush()
+    word = f"Okapi{uuid.uuid4().hex[:6]}"
+    mine, _ = await create_report(db_session, "corruption", f"Our report on {word}.")
+    other, _ = await create_report(db_session, "corruption", f"Their report on {word}.")
+    mine.org_id, other.org_id = ours.id, theirs.id
+    await db_session.commit()
+
+    hits = await content_match_ids(db_session, word, scope_org=True, org_id=ours.id)
+    assert hits == [mine.id]

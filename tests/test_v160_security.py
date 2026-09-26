@@ -696,3 +696,152 @@ async def test_migration_005_backfills_audit_org_from_report_or_actor(
     ), {"a": row_with_report, "b": row_without_report})).tuples().all())
     assert rows[row_with_report] == org.id
     assert rows[row_without_report] == org.id
+
+
+# ── Guards the v1.6.0 mutation audit found unpinned ───────────────────────
+
+
+@pytest.mark.asyncio
+async def test_get_setup_keeps_the_token_it_already_created(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """Reloading /setup must not replace the token the log already showed."""
+    from app.redis_client import get_redis
+    from app.services.setup_token import SETUP_TOKEN_KEY
+
+    await _reset_setup(db_session)
+    try:
+        redis = await get_redis()
+        await redis.delete(SETUP_TOKEN_KEY)
+        await client.get("/setup")
+        first = await redis.get(SETUP_TOKEN_KEY)
+        await client.get("/setup")
+        assert first is not None
+        assert await redis.get(SETUP_TOKEN_KEY) == first
+    finally:
+        await _restore_setup(db_session)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("complete", [False, True])
+async def test_startup_creates_the_setup_token_only_while_setup_is_open(complete: bool) -> None:
+    """The token is logged at start, so an operator has it before opening /setup."""
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    from fastapi import FastAPI
+
+    redis = object()
+    cfg = MagicMock(
+        demo_mode=False, reminder_enabled=False, retention_enabled=False,
+        update_check_enabled=False, storage_backend="db", encryption_key="k" * 32,
+    )
+    with (
+        patch("app.main._run_alembic_upgrade"),
+        patch("app.main.close_redis", new_callable=AsyncMock),
+        patch("app.main.settings", cfg),
+        patch("app.api.wizard._is_setup_complete", new_callable=AsyncMock, return_value=complete),
+        patch("app.redis_client.get_redis", new_callable=AsyncMock, return_value=redis),
+        patch("app.services.setup_token.ensure_setup_token", new_callable=AsyncMock) as ensure,
+        patch("app.services.notifications.batching_enabled", return_value=False),
+    ):
+        from app.main import lifespan
+
+        async with lifespan(FastAPI()):
+            pass
+    if complete:
+        ensure.assert_not_awaited()
+    else:
+        ensure.assert_awaited_once_with(redis)
+
+
+@pytest.mark.asyncio
+async def test_migration_004_downgrade_names_an_unreadable_secret(
+    db_session: AsyncSession,
+) -> None:
+    """A secret that decrypts under no configured key is named by id, and the
+    downgrade changes nothing (one transaction)."""
+    import subprocess
+
+    uid = uuid.uuid4()
+    await db_session.execute(text(
+        "INSERT INTO admin_users (id, username, password_hash, totp_secret, totp_enabled,"
+        " role, is_active) VALUES (:i, :u, :p, :t, true, 'admin', true)"
+    ), {"i": uid, "u": f"mig004d_{uuid.uuid4().hex[:8]}", "p": hash_password(_PASSWORD),
+        "t": "gAAAAA" + "x" * 80})
+    await db_session.commit()
+    try:
+        run = subprocess.run(  # noqa: S603
+            ["alembic", "downgrade", "7d4e2b9c1a05"],  # noqa: S607
+            capture_output=True, text=True, check=False,
+        )
+        assert run.returncode != 0
+        assert str(uid) in run.stderr
+    finally:
+        _alembic("upgrade", "head")
+        await db_session.execute(text("DELETE FROM admin_users WHERE id = :i"), {"i": uid})
+        await db_session.commit()
+
+
+def test_a_session_token_without_exp_or_sub_is_refused() -> None:
+    import jwt
+
+    from app.services.auth import decode_access_token_claims
+
+    for claims in ({"sub": "someone", "auth_time": 1}, {"exp": 4102444800}):
+        token = jwt.encode(claims, settings.secret_key, algorithm=settings.algorithm)
+        assert decode_access_token_claims(token) is None, claims
+
+
+@pytest.mark.asyncio
+async def test_deactivated_user_gets_no_mfa_setup_page(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    from app.redis_client import get_redis
+    from app.services import auth as auth_service
+
+    user = AdminUser(
+        id=uuid.uuid4(), username=f"deact_{uuid.uuid4().hex[:8]}",
+        password_hash=hash_password(_PASSWORD), totp_secret=pyotp.random_base32(),
+        totp_enabled=False, is_active=False,
+    )
+    db_session.add(user)
+    await db_session.commit()
+    temp_token = uuid.uuid4().hex
+    await auth_service.store_totp_setup_pending(await get_redis(), temp_token, str(user.id))
+
+    resp = await client.get(f"/admin/mfa/setup?token={temp_token}", follow_redirects=False)
+    assert resp.status_code == 302
+    assert resp.headers["location"] == "/admin/login"
+
+
+@pytest.mark.asyncio
+async def test_unknown_role_change_is_422_and_changes_nothing(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    await _logged_in_admin(client, db_session)
+    target = AdminUser(
+        id=uuid.uuid4(), username=f"target_{uuid.uuid4().hex[:8]}",
+        password_hash=hash_password(_PASSWORD), totp_secret=pyotp.random_base32(),
+        totp_enabled=True, role=AdminRole.case_manager,
+    )
+    db_session.add(target)
+    await db_session.commit()
+    resp = await client.post(f"/admin/users/{target.id}/role", data={
+        "role": "root", "csrf_token": client.cookies.get("ow_csrf")}, follow_redirects=False)
+    assert resp.status_code == 422
+    await db_session.refresh(target)
+    assert target.role == AdminRole.case_manager
+
+
+@pytest.mark.asyncio
+async def test_a_new_user_without_a_role_is_a_case_manager(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    await _logged_in_admin(client, db_session)
+    name = f"role_{uuid.uuid4().hex[:8]}"
+    await client.post("/admin/users", data={
+        "username": name, "password": _PASSWORD,
+        "csrf_token": client.cookies.get("ow_csrf")}, follow_redirects=False)
+    created = await db_session.scalar(select(AdminUser).where(AdminUser.username == name))
+    assert created is not None
+    assert created.role == AdminRole.case_manager

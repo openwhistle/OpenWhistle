@@ -509,12 +509,11 @@ async def submit_get(
 ) -> Response:
     raw_cookie = request.cookies.get("ow-submission-session")
     if raw_cookie and _DRAFT_COOKIE_RE.match(raw_cookie):
-        if not await _load_submission(redis, raw_cookie):
-            await _recover_draft(redis, db, raw_cookie)
         if not await _load_submission(redis, raw_cookie) and await _submit_in_flight(
             redis, raw_cookie
         ):
-            # "Check again" after a submit whose outcome was not known yet.
+            # "Check again" after a submit whose outcome was not known yet;
+            # _submit_outcome also gives the draft back once "pending" expired.
             page = await _submit_outcome(request, redis, db, raw_cookie, wait=0)
             if page is not None:
                 return page

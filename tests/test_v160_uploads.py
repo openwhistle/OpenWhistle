@@ -110,15 +110,15 @@ def test_xlsx_comment_only_first_run_label_is_replaced() -> None:
         b'<commentList>'
         b'<comment ref="A1" authorId="0"><text><r><rPr><b/></rPr>'
         b'<t>Max Mustermann:</t></r>'
-        b'<r><t>Max Mustermann told me this himself.</t></r>'
+        b'<r><t>Max Mustermann: told me this himself.</t></r>'
         b'</text></comment>'
         b'</commentList></comments>'
     )
     out = _anonymise_ooxml_part("xl/comments1.xml", part)
     # First run label is replaced
     assert b"<t>Author:</t>" in out
-    # But the name in the second run (whistleblower's own text) is preserved
-    assert b"Max Mustermann told me this himself." in out
+    # But the second run (whistleblower's own text), even starting "Name:", is kept
+    assert b"<t>Max Mustermann: told me this himself.</t>" in out
 
 
 def test_xlsx_comment_author_removed_end_to_end() -> None:

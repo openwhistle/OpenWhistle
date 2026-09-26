@@ -587,7 +587,7 @@ async def test_the_result_is_kept_120_seconds_for_a_second_click(client: AsyncCl
     assert resp.status_code == 200
     redis = await get_redis()
     ttl = await redis.ttl(reports._result_key(session_id))
-    assert 0 < ttl <= 120
+    assert 110 < ttl <= 120
     stored = await redis.get(reports._result_key(session_id))
     assert _PIN_RE.search(resp.text).group(0) not in stored  # type: ignore[union-attr]
     assert not await redis.exists(reports._pending_key(session_id))
@@ -914,10 +914,12 @@ async def test_exception_after_the_commit_never_allows_a_second_report(
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("files", [(), (("evidence.txt", b"evidence of a lost reply"),)])
 async def test_commit_whose_reply_is_lost_counts_as_done(
-    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch, files: tuple[tuple[str, bytes], ...]
 ) -> None:
-    """The review's N6 probe: the commit goes through, then CancelledError."""
+    """The review's N6 probe: the commit goes through, then CancelledError. With
+    an attachment, too: report and attachments are one commit, the submit's own."""
     import asyncio
 
     from sqlalchemy.ext.asyncio import AsyncSession as _Session
@@ -932,7 +934,8 @@ async def test_commit_whose_reply_is_lost_counts_as_done(
         if calls == 1:
             raise asyncio.CancelledError
 
-    await _walk_to_review(client)
+    await _walk_to_attachments(client)
+    await _upload(client, *files)
     data = _final_form((await client.get("/submit")).text)
     before = await _report_count()
     monkeypatch.setattr(_Session, "commit", _commit_then_cancel)
@@ -1537,3 +1540,43 @@ async def test_a_draft_re_saved_without_an_id_on_every_load_is_given_up_after_3_
     assert len(gets) == 3
     assert "report_id" not in json.loads(idless)
     assert (await client.get("/submit")).status_code == 200  # the loop is healthy
+
+
+@pytest.mark.asyncio
+async def test_a_second_claim_never_takes_over_a_claimed_draft(client: AsyncClient) -> None:
+    import app.api.reports as reports
+    from app.redis_client import get_redis
+
+    await _walk_to_review(client)
+    session_id = await _session_id(client)
+    redis = await get_redis()
+    first = await reports._claim_draft(redis, session_id)
+    assert first
+    # A draft under the plain key again while the first claim still runs.
+    await redis.set(reports._submission_key(session_id), "a-newer-draft", ex=60)
+    assert await reports._claim_draft(redis, session_id) is None
+    assert await redis.get(reports._claimed_key(session_id)) == first[0]
+
+
+@pytest.mark.asyncio
+async def test_recovery_never_acts_on_a_claim_that_changed_since_it_was_read(
+    client: AsyncClient,
+) -> None:
+    import app.api.reports as reports
+    from app.redis_client import get_redis
+
+    await _walk_to_review(client)
+    session_id = await _session_id(client)
+    redis = await get_redis()
+    claim = await reports._claim_draft(redis, session_id)
+    assert claim
+    draft_key, claimed_key, pending_key = reports._claim_keys(session_id)
+    await redis.delete(pending_key)  # the pending TTL ran out
+    done = await redis.eval(
+        reports._RECOVER_DRAFT, 5, draft_key, claimed_key, pending_key,
+        reports._result_key(session_id), reports._report_id_key(session_id),
+        "the-token-an-earlier-read-saw", "", 120,
+    )
+    assert done == 0
+    assert await redis.get(claimed_key) == claim[0]
+    assert not await redis.exists(draft_key)

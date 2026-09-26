@@ -65,6 +65,14 @@ def test_nginx_redirects_http_and_strips_ip_headers_on_https() -> None:
     assert "include /etc/nginx/snippets/proxy-headers.conf;" in onion
 
 
+def test_nginx_tls_listener_offers_only_tls_1_2_and_1_3() -> None:
+    conf = (ROOT / "nginx/nginx.conf").read_text()
+    tls = next(
+        s for s in re.findall(r"\n    server \{.*?\n    \}", conf, re.S) if "listen 443 ssl" in s
+    )
+    assert re.findall(r"ssl_protocols ([^;]+);", tls) == ["TLSv1.2 TLSv1.3"]
+
+
 def test_nginx_static_location_is_a_shared_snippet_too() -> None:
     conf = (ROOT / "nginx/nginx.conf").read_text()
     servers = re.findall(r"\n    server \{.*?\n    \}", conf, re.S)

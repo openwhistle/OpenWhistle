@@ -146,6 +146,33 @@ async def test_scan_unavailable_when_reply_has_no_terminator(
 
 
 @pytest.mark.asyncio
+async def test_a_reply_longer_than_the_bound_is_not_trusted(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A terminated reply past _MAX_REPLY_BYTES is no answer clamd gives: the
+    scan counts as unavailable instead of being parsed."""
+    async def handle(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        assert await reader.readexactly(10) == b"zINSTREAM\0"
+        while True:
+            size = int.from_bytes(await reader.readexactly(4), "big")
+            if size == 0:
+                break
+            await reader.readexactly(size)
+        writer.write(b"stream: " + b"x" * 5000 + b" FOUND\0")
+        await writer.drain()
+        writer.close()
+
+    server = await asyncio.start_server(handle, "127.0.0.1", 0)
+    monkeypatch.setattr(settings, "clamav_host", "127.0.0.1")
+    monkeypatch.setattr(settings, "clamav_port", server.sockets[0].getsockname()[1])
+    async with server:
+        from app.services.virus_scan import ScanUnavailableError
+
+        with pytest.raises(ScanUnavailableError):
+            await scan_bytes(b"x" * 100)
+
+
+@pytest.mark.asyncio
 async def test_scan_unavailable_on_over_long_reply(monkeypatch: pytest.MonkeyPatch) -> None:
     """A reply longer than the bounded receive buffer and still no '\\0' must
     raise promptly (asyncio.LimitOverrunError) rather than buffer without limit

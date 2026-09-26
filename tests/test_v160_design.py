@@ -1173,3 +1173,23 @@ def test_every_docs_page_font_usage_has_a_matching_font_face() -> None:
                 f"but no matching @font-face exists (has: {sorted(faces)})"
             )
     assert checked_pages, "no docs/ page with @font-face declarations found -- test target moved?"
+
+
+@pytest.mark.asyncio
+async def test_case_manager_statistics_cover_only_their_cases(db_session: AsyncSession) -> None:
+    """/admin/stats: category breakdown and SLA rate, not only the status counts."""
+    from app.services.report import create_report, get_dashboard_stats
+
+    manager = AdminUser(
+        id=uuid.uuid4(), username=f"stats_{uuid.uuid4().hex[:8]}", password_hash=None,
+        totp_secret=pyotp.random_base32(), totp_enabled=True, role=AdminRole.case_manager,
+    )
+    db_session.add(manager)
+    mine, _ = await create_report(db_session, "corruption", "A case assigned to the manager.")
+    mine.assigned_to_id = manager.id
+    await create_report(db_session, "corruption", "A case assigned to nobody at all.")
+    await db_session.commit()
+
+    stats = await get_dashboard_stats(db_session, assigned_to_id=manager.id)
+    assert stats["total_reports"] == 1
+    assert stats["by_category"] == {"corruption": 1}

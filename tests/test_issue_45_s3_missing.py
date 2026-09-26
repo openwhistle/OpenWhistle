@@ -89,6 +89,37 @@ async def test_s3_delete_logs_no_filename(caplog: pytest.LogCaptureFixture) -> N
     assert any("Deleted attachment from S3" in record.message for record in caplog.records)
 
 
+@pytest.mark.asyncio
+async def test_s3_put_logs_no_filename(caplog: pytest.LogCaptureFixture) -> None:
+    with (
+        caplog.at_level(logging.INFO, logger="app.services.storage"),
+        patch("boto3.client", return_value=MagicMock()),
+    ):
+        await _s3_backend().put(_FILENAME_KEY, b"data", "application/pdf")
+
+    assert "Max_Mustermann" not in caplog.text
+    assert any("Stored attachment in S3" in record.message for record in caplog.records)
+
+
+@pytest.mark.asyncio
+async def test_failed_object_delete_logs_no_key(
+    caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.services import storage
+    from app.services.attachment import delete_stored_objects
+
+    class _FailingBackend:
+        async def delete(self, key: str) -> None:
+            raise RuntimeError("backend unavailable")
+
+    monkeypatch.setattr(storage, "get_storage_backend", lambda: _FailingBackend())
+    with caplog.at_level(logging.INFO, logger="app.services.attachment"):
+        await delete_stored_objects([_FILENAME_KEY])
+
+    assert "Max_Mustermann" not in caplog.text
+    assert any("Failed to delete a stored object" in r.message for r in caplog.records)
+
+
 # ── Handler maps the missing-object error to 404 ───────────────────────────
 
 

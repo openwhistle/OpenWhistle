@@ -38,10 +38,14 @@ def main() -> int:
                  *spec["test_groups"][m["tests"]]],
                 cwd=ROOT, capture_output=True, text=True, timeout=900,
             )
+        except subprocess.TimeoutExpired:
+            # A mutation that hangs the tests is caught: CI would time out too.
+            print(f"{m['id']:28} RED    TIMEOUT after 900 s", flush=True)
+            continue
         finally:
             path.write_text(original)
         fired = next((line.split(" - ")[0] for line in run.stdout.splitlines()
-                      if line.startswith(("FAILED", "ERROR"))), "")
+                      if line.startswith(("FAILED ", "ERROR tests"))), "")
         verdict = "RED" if run.returncode else "GREEN"
         green += verdict == "GREEN"
         print(f"{m['id']:28} {verdict:6} {fired}", flush=True)
