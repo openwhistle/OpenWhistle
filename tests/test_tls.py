@@ -255,7 +255,7 @@ def _render_role_template(name: str) -> str:
             return v
         return str(v).strip().lower() in ("true", "yes", "1", "on")
 
-    env = jinja2.Environment()
+    env = jinja2.Environment()  # noqa: S701 — renders nginx/compose config, not HTML
     env.filters["bool"] = _bool
     return env.from_string(
         (ROOT / "ansible/roles/openwhistle/templates" / name).read_text()

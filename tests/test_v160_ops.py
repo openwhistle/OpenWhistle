@@ -9,9 +9,9 @@ from pathlib import Path
 import pytest
 
 
-@pytest.mark.parametrize(
-    "direction", [("upgrade", "7d4e2b9c1a05:a1c6e0f4b201"), ("downgrade", "a1c6e0f4b201:7d4e2b9c1a05")]
-)
+@pytest.mark.parametrize("direction", [
+    ("upgrade", "7d4e2b9c1a05:a1c6e0f4b201"), ("downgrade", "a1c6e0f4b201:7d4e2b9c1a05"),
+])
 def test_migration_004_refuses_offline_sql(direction: tuple[str, str]) -> None:
     """--sql would emit only the ALTER and leave the TOTP secrets unencrypted."""
     run = subprocess.run(  # noqa: S603
