@@ -455,3 +455,41 @@ async def test_location_deactivate_and_reactivate_are_audited(
     )).all()
     assert (AuditAction.LOCATION_DEACTIVATED, org_a) in rows
     assert (AuditAction.LOCATION_REACTIVATED, org_a) in rows
+
+
+@pytest.mark.asyncio
+async def test_superadmin_actions_on_users_and_orgs_carry_the_targets_org(
+    client: AsyncClient, two_orgs: dict[str, AdminUser], db_session: AsyncSession
+) -> None:
+    """The target org's admins must see what a superadmin did to their users."""
+    from sqlalchemy import select
+
+    from app.models.audit import AuditLog
+    from app.services.audit import AuditAction
+
+    boss = _user(two_orgs["admin_a"].org_id, AdminRole.superadmin)
+    db_session.add(boss)
+    await db_session.commit()
+    app.dependency_overrides[get_current_admin] = lambda: boss
+    try:
+        csrf = await _csrf(client)
+        target = two_orgs["user_b"]
+        resp = await client.post(
+            f"/admin/users/{target.id}/role", data={"role": "admin", "csrf_token": csrf},
+            follow_redirects=False,
+        )
+        assert resp.status_code == 302
+        slug = f"org-{uuid.uuid4().hex[:6]}"
+        resp = await client.post(
+            "/admin/organisations", data={"name": "New", "slug": slug, "csrf_token": csrf},
+            follow_redirects=False,
+        )
+        assert resp.status_code == 302
+    finally:
+        app.dependency_overrides.pop(get_current_admin, None)
+    rows = dict((await db_session.execute(
+        select(AuditLog.action, AuditLog.org_id).where(AuditLog.admin_id == boss.id)
+    )).tuples().all())
+    new_org = await db_session.scalar(select(Organisation.id).where(Organisation.slug == slug))
+    assert rows[AuditAction.ADMIN_ROLE_CHANGED] == target.org_id
+    assert rows[AuditAction.ORG_CREATED] == new_org

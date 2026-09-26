@@ -67,7 +67,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Only admins may dismiss the IP-header warning.
 - **Audit entries carry their organisation** (migration 005 backfills existing rows), so an
   organisation's audit log shows its own entries and no one else's; an admin without an
-  organisation sees only entries they wrote.
+  organisation sees only entries they wrote. A superadmin's action on a user, organisation,
+  category or location is filed under the target's organisation, so its admins see it.
 - **Containers are hardened**: read-only root file system, all capabilities dropped,
   `no-new-privileges`, base images pinned by digest, no `curl` in the image, uid 1000 to match
   the Helm chart's `securityContext` (`readOnlyRootFilesystem`, no privilege escalation).

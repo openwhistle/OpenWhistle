@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from types import EllipsisType
 from typing import Any
 
 from sqlalchemy import select
@@ -60,8 +61,12 @@ async def log(
     action: str,
     report_id: uuid.UUID | None = None,
     detail: dict[str, Any] | None = None,
+    target_org: uuid.UUID | None | EllipsisType = ...,
 ) -> AuditLog:
-    org_id = actor.org_id
+    """Record an admin action, visible to the admins of the organisation it concerns:
+    the report's, else ``target_org`` (the user, organisation, category or location
+    acted on — a superadmin's action belongs to the target's org), else the actor's."""
+    org_id = actor.org_id if isinstance(target_org, EllipsisType) else target_org
     if report_id is not None:
         org_id = await db.scalar(select(Report.org_id).where(Report.id == report_id))
 

@@ -883,7 +883,7 @@ async def create_category(
         raise HTTPException(status_code=409, detail="Slug already exists") from None
     await audit_service.log(
         db, current_user, AuditAction.CATEGORY_CREATED,
-        detail={"slug": cat.slug, "label_en": cat.label_en},
+        detail={"slug": cat.slug, "label_en": cat.label_en}, target_org=cat.org_id,
     )
     await db.commit()
     return RedirectResponse("/admin/categories", status_code=302)
@@ -910,7 +910,7 @@ async def deactivate_category(
     await svc_deact(db, cat)
     await audit_service.log(
         db, current_user, AuditAction.CATEGORY_DEACTIVATED,
-        detail={"slug": cat.slug},
+        detail={"slug": cat.slug}, target_org=cat.org_id,
     )
     await db.commit()
     return RedirectResponse("/admin/categories", status_code=302)
@@ -934,7 +934,7 @@ async def reactivate_category(
     await svc_react(db, cat)
     await audit_service.log(
         db, current_user, AuditAction.CATEGORY_UPDATED,
-        detail={"slug": cat.slug, "action": "reactivated"},
+        detail={"slug": cat.slug, "action": "reactivated"}, target_org=cat.org_id,
     )
     await db.commit()
     return RedirectResponse("/admin/categories", status_code=302)
@@ -1000,6 +1000,7 @@ async def create_user(
     await audit_service.log(
         db, current_user, AuditAction.ADMIN_CREATED,
         detail={"username": new_user.username, "role": role_enum.value},
+        target_org=new_user.org_id,
     )
     await db.commit()
     return RedirectResponse("/admin/users", status_code=302)
@@ -1063,6 +1064,7 @@ async def change_user_role(
     await audit_service.log(
         db, current_user, AuditAction.ADMIN_ROLE_CHANGED,
         detail={"username": target.username, "old": old_role, "new": role_enum.value},
+        target_org=target.org_id,
     )
     await db.commit()
     return RedirectResponse("/admin/users", status_code=302)
@@ -1108,7 +1110,7 @@ async def deactivate_user(
     await svc_deact(db, target)
     await audit_service.log(
         db, current_user, AuditAction.ADMIN_DEACTIVATED,
-        detail={"username": target.username},
+        detail={"username": target.username}, target_org=target.org_id,
     )
     await db.commit()
     return RedirectResponse("/admin/users", status_code=302)
@@ -1133,7 +1135,7 @@ async def reactivate_user(
     await svc_react(db, target)
     await audit_service.log(
         db, current_user, AuditAction.ADMIN_REACTIVATED,
-        detail={"username": target.username},
+        detail={"username": target.username}, target_org=target.org_id,
     )
     await db.commit()
     return RedirectResponse("/admin/users", status_code=302)
@@ -1318,7 +1320,7 @@ async def create_location(
         raise HTTPException(status_code=400, detail="Code is required")
 
     try:
-        await svc_create(
+        loc = await svc_create(
             db,
             name=name.strip(),
             code=code_clean,
@@ -1330,7 +1332,7 @@ async def create_location(
         raise HTTPException(status_code=409, detail="Location code already exists") from None
     await audit_service.log(
         db, current_user, AuditAction.LOCATION_CREATED,
-        detail={"location_code": code_clean, "name": name.strip()},
+        detail={"location_code": code_clean, "name": name.strip()}, target_org=loc.org_id,
     )
     await db.commit()
     return RedirectResponse("/admin/locations", status_code=302)
@@ -1354,6 +1356,7 @@ async def deactivate_location(
     await svc_deact(db, loc)
     await audit_service.log(
         db, current_user, AuditAction.LOCATION_DEACTIVATED, detail={"location_code": loc.code},
+        target_org=loc.org_id,
     )
     await db.commit()
     return RedirectResponse("/admin/locations", status_code=302)
@@ -1377,6 +1380,7 @@ async def reactivate_location(
     await svc_react(db, loc)
     await audit_service.log(
         db, current_user, AuditAction.LOCATION_REACTIVATED, detail={"location_code": loc.code},
+        target_org=loc.org_id,
     )
     await db.commit()
     return RedirectResponse("/admin/locations", status_code=302)
@@ -1514,8 +1518,10 @@ async def create_organisation(
 
     org = Organisation(id=__import__("uuid").uuid4(), name=name.strip(), slug=slug_clean)
     db.add(org)
+    await db.flush()  # the audit row references it
     await audit_service.log(
-        db, current_user, AuditAction.ORG_CREATED, detail={"name": name, "slug": slug_clean}
+        db, current_user, AuditAction.ORG_CREATED, detail={"name": name, "slug": slug_clean},
+        target_org=org.id,
     )
     await db.commit()
     return RedirectResponse("/admin/organisations", status_code=302)
@@ -1543,7 +1549,8 @@ async def deactivate_organisation(
         )
     org.is_active = False
     await audit_service.log(
-        db, current_user, AuditAction.ORG_DEACTIVATED, detail={"org_id": str(org_id)}
+        db, current_user, AuditAction.ORG_DEACTIVATED, detail={"org_id": str(org_id)},
+        target_org=org.id,
     )
     await db.commit()
     return RedirectResponse("/admin/organisations", status_code=302)
