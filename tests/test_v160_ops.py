@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import logging
 import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -18,3 +20,15 @@ def test_migration_004_refuses_offline_sql(direction: tuple[str, str]) -> None:
     )
     assert run.returncode != 0
     assert "must run online" in run.stderr
+
+
+def test_a_stale_brand_secondary_color_in_env_is_ignored_with_a_warning(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    from app.config import Settings
+
+    env = tmp_path / ".env"
+    env.write_text("BRAND_SECONDARY_COLOR=#b07230\n")
+    with caplog.at_level(logging.WARNING, logger="app.config"):
+        Settings(_env_file=env)  # type: ignore[call-arg]
+    assert "BRAND_SECONDARY_COLOR was removed" in caplog.text

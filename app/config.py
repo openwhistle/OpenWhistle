@@ -1,4 +1,6 @@
+import logging
 import re
+from typing import Any
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -240,6 +242,17 @@ class Settings(BaseSettings):
     clamav_host: str = ""
     clamav_port: int = 3310
     clamav_timeout_seconds: int = Field(default=30, ge=1)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _ignore_removed_settings(cls, data: Any) -> Any:
+        # Removed in 1.6.0. A .env file that still sets it is warned about, not
+        # refused (pydantic-settings rejects unknown .env keys).
+        if isinstance(data, dict) and data.pop("brand_secondary_color", None) is not None:
+            logging.getLogger(__name__).warning(
+                "BRAND_SECONDARY_COLOR was removed in 1.6.0 and is ignored; delete it."
+            )
+        return data
 
     @model_validator(mode="after")
     def _validate_local_review_login(self) -> Settings:
