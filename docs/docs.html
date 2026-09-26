@@ -1228,6 +1228,13 @@
             <code>X-OW-Onion</code> itself or this protection (and the IP-stripping one) does
             nothing.
           </p>
+          <p>
+            Without <code>ONION_LOCATION</code> the app ignores <code>X-OW-Onion</code>, so a
+            path that forwards it from the client, such as the Helm chart's ingress, is safe. If
+            you set <code>ONION_LOCATION</code> behind ingress-nginx, clear the header there:
+            annotation <code>nginx.ingress.kubernetes.io/configuration-snippet: proxy_set_header
+            X-OW-Onion "";</code> (the controller needs <code>allow-snippet-annotations</code>).
+          </p>
         </div>
         <div class="callout callout-warn">
           <div class="callout-title"><code>/var/lib/tor/openwhistle/</code> holds the address's private key</div>

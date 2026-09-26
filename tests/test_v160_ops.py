@@ -8,6 +8,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from httpx import AsyncClient
 
 
 @pytest.mark.parametrize("direction", [
@@ -53,3 +54,21 @@ def test_the_docs_run_no_module_that_does_not_exist() -> None:
     for module in re.findall(r"python -m ([\w.]+)", docs):
         path = ROOT / module.replace(".", "/")
         assert (path / "__main__.py").exists() or path.with_suffix(".py").exists(), module
+
+
+async def test_x_ow_onion_is_ignored_without_an_onion_address(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The Helm ingress forwards a client-sent X-OW-Onion; with no onion
+    listener configured it must not strip HSTS or the Secure cookie flag."""
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "onion_location", "")
+    resp = await client.get("/status", headers={"X-OW-Onion": "1"})
+    assert "strict-transport-security" in resp.headers
+
+
+def test_the_chart_says_to_clear_x_ow_onion_when_an_onion_address_is_set() -> None:
+    for path in ("charts/openwhistle/values.yaml", "docs/docs.html"):
+        text = (ROOT / path).read_text()
+        assert 'proxy_set_header X-OW-Onion "";' in text.replace("\n            ", " "), path

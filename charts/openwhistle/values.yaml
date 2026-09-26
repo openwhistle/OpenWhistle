@@ -77,7 +77,11 @@ config:
   submissionModeEnabled: "true"
 
   # Tor onion address for reporters on a monitored network (Onion-Location
-  # header + a note on the submit page). Empty disables both.
+  # header + a note on the submit page). Empty disables both, and the app then
+  # ignores X-OW-Onion. When set, the ingress must clear a client-sent copy:
+  #   nginx.ingress.kubernetes.io/configuration-snippet: |
+  #     proxy_set_header X-OW-Onion "";
+  # (ingress-nginx needs allow-snippet-annotations in its ConfigMap.)
   onionLocation: ""
 
   # Absolute admin session lifetime in hours, counted from login (never extended)

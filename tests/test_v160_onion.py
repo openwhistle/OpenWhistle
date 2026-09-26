@@ -148,9 +148,12 @@ async def test_full_submission_wizard_succeeds_over_the_onion_listener(
 # ── HSTS (Important fix-round-1 #2) ──────────────────────────────────────────
 
 
-async def test_hsts_absent_over_the_onion_listener(client: AsyncClient) -> None:
+async def test_hsts_absent_over_the_onion_listener(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """RFC 6797 §8.1: an HSTS host MUST NOT send this header over a
     connection that was not secure — the onion listener never is."""
+    monkeypatch.setattr(settings, "onion_location", ONION)
     resp = await client.get("/status", headers=ON_ONION)
     assert "strict-transport-security" not in resp.headers
 
@@ -173,8 +176,12 @@ async def test_hsts_present_when_host_is_onion_but_nginx_never_marked_it(
 # (fix round 2, re-review Important)
 
 
-def test_is_onion_request_trusts_only_the_exact_nginx_header() -> None:
+def test_is_onion_request_trusts_only_the_exact_nginx_header(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     from app.onion import is_onion_request
+
+    monkeypatch.setattr(settings, "onion_location", ONION)
 
     assert is_onion_request([(b"x-ow-onion", b"1")]) is True
     assert is_onion_request([(b"X-OW-Onion", b"1")]) is True  # header names are case-insensitive
