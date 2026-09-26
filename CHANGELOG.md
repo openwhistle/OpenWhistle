@@ -22,6 +22,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **A fresh install needs the setup token.** `/setup` asks for a one-time token: set
   `SETUP_TOKEN` (16+ characters), or read the random one the app logs once at WARNING on its
   first start. An existing installation is not affected.
+- **New-report and reply notices arrive once a day** (00:00 UTC) unless
+  `NOTIFICATION_BATCH_MINUTES` is set; the default was 60.
 - **Admin sessions end 12 hours after login** (`SESSION_MAX_HOURS`), however often "Stay
   signed in" is used; then password and TOTP again.
 - **The Compose stack listens on 443** and only redirects on 80 (see Added). Put your
@@ -100,6 +102,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Privacy
 
+- **Notification digests are daily by default** (`NOTIFICATION_BATCH_MINUTES=1440`, was 60).
+  Report times are stored as the day, and an hourly digest said which hour a report or reply
+  arrived. Set a smaller value to hear sooner, at that precision.
 - **The confidential identity is shown only to the handler, with an audited reason.** The case
   page no longer prints the reporter's name and contact: the assigned handler (for an
   unassigned case, an admin of the case's organisation) enters a 10–500 character reason, sees

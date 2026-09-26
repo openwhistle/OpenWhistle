@@ -8,7 +8,7 @@ Type: explanation. What OpenWhistle defends, against whom, and what it deliberat
 |---|---|
 | Who the whistleblower is | never stored for anonymous reports; confidential: encrypted name/contact |
 | What they reported | description, messages, attachments: encrypted per report (DEK) |
-| When and from where they reported | IP never reaches the app; times stored as the day |
+| When and from where they reported | IP never reaches the app; times stored as the day (migration 006, `day_floor`); the notification digest interval bounds the precision too, so it defaults to a day (`NOTIFICATION_BATCH_MINUTES=1440`) |
 | Access to a case | case number + UUID PIN (bcrypt), admin password + TOTP |
 | Keys | `ENCRYPTION_KEY` (data), `SECRET_KEY` (sessions), in the environment only |
 

@@ -219,7 +219,7 @@ class Settings(BaseSettings):
     # New-report / whistleblower-message notices are sent as one digest every N
     # minutes, so their timing cannot be matched to who was at their desk.
     # 0 sends each one immediately.
-    notification_batch_minutes: int = 60
+    notification_batch_minutes: int = 1440
 
     # Data-retention policy (GDPR Art. 5 storage limitation)
     retention_enabled: bool = True

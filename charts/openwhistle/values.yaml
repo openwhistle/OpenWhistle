@@ -138,7 +138,7 @@ config:
   notifyWebhookType: "generic"
   # New reports / whistleblower messages are sent as one digest every N minutes,
   # so their timing reveals nothing. 0 = send each at once.
-  notificationBatchMinutes: "60"
+  notificationBatchMinutes: "1440"
 
   # Refuse new draft attachments above this share of Redis maxmemory.
   draftRedisMemoryPercent: "80"

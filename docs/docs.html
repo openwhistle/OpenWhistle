@@ -1517,9 +1517,11 @@
           <p>
             A notice sent the second a report arrives tells the employer when it was written —
             and who was at their desk then. Notices are therefore collected and sent as one
-            digest every <code>NOTIFICATION_BATCH_MINUTES</code> (default 60). The trade-off:
-            case managers learn of a report up to that long after it arrives, well inside the
-            7-day acknowledgement deadline. <code>0</code> sends each notice immediately — only
+            digest every <code>NOTIFICATION_BATCH_MINUTES</code> (default 1440, once a day at 00:00 UTC).
+            Report times are stored as the day only, and the digest interval bounds how precisely a
+            notice dates a report: an hourly digest would say which hour. The trade-off: case
+            managers learn of a report up to a day after it arrives, well inside the 7-day
+            acknowledgement deadline. <code>0</code> sends each notice immediately — only
             if you accept the timing risk.
           </p>
         </div>
@@ -1532,7 +1534,7 @@
               <td><code class="env-key">NOTIFICATION_BATCH_MINUTES</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
               <td>Minutes between digests of new reports and whistleblower messages. All replicas fire at the same wall-clock moments; exactly one sends. <code>0</code> sends each event at once.</td>
-              <td><code>60</code></td>
+              <td><code>1440</code></td>
             </tr>
           </tbody>
         </table>

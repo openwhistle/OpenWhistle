@@ -44,3 +44,15 @@ def test_every_engine_hides_parameters() -> None:
             if "hide_parameters=True" not in source[match.end():i]:
                 offenders.append(f"{path.relative_to(_ROOT)}:{source[:match.start()].count(chr(10)) + 1}")
     assert offenders == []
+
+
+# --- I6: the digest is no more precise than the stored day --------------------------------
+
+
+def test_notification_digest_defaults_to_one_day() -> None:
+    from app.config import Settings
+
+    assert Settings.model_fields["notification_batch_minutes"].default == 1440
+    compose = (_ROOT / "docker-compose.prod.yml").read_text()
+    assert '"${NOTIFICATION_BATCH_MINUTES:-1440}"' in compose
+    assert 'notificationBatchMinutes: "1440"' in (_ROOT / "charts/openwhistle/values.yaml").read_text()

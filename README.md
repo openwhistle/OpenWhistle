@@ -148,9 +148,10 @@ zero vendor lock-in, and privacy-first by design.
   are deleted `RETENTION_DAYS` days after closure (default 1095 = 3 years); satisfies
   GDPR Art. 5(1)(e) and HinSchG §11 Abs. 5; each deletion recorded in the audit log.
 - **Batched notifications** — new reports and whistleblower messages are announced in one
-  digest every `NOTIFICATION_BATCH_MINUTES` (default 60), so the notice's timing cannot be
-  matched to who was at their desk. Webhooks (Slack, Teams, generic) carry counts only; the
-  email to your own admins also names the case numbers.
+  digest every `NOTIFICATION_BATCH_MINUTES` (default 1440, once a day), so the notice's
+  timing cannot be matched to who was at their desk, and is no more precise than the stored
+  day. Webhooks (Slack, Teams, generic) carry counts only; the email to your own admins also
+  names the case numbers.
 - **Encrypted attachment names and drafts** — filenames are encrypted with the report key;
   a submission draft in Redis is encrypted with a key held only in the whistleblower's
   cookie; Office comment and tracked-change authors are anonymised on upload.
