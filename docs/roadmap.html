@@ -667,8 +667,7 @@
 
       <h1>Roadmap</h1>
       <p class="docs-lead">
-        What's planned next for OpenWhistle — future releases only. Everything already
-        released is in the
+        What comes next, and only that. Everything released is in the
         <a href="changelog.html">Changelog</a>, rendered from
         <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG.md</a>.
       </p>
@@ -676,12 +675,9 @@
       <div class="callout callout-note">
         <div class="callout-title">Ordering principle</div>
         <p>
-          Breadth before depth. v2.1.0 extends how <em>every</em> deployment receives and
-          connects reports — additional intake channels, integration hooks, access
-          control. v2.2.0 adds compliance modules that apply only to specific German
-          regulatory contexts (LkSG, KWG, CSRD), useful to a subset of operators
-          rather than all of them. What follows is planned in this order, not
-          promised in it — it moves when a reason to reorder it turns up.
+          Breadth before depth. v2.1.0 changes how <em>every</em> deployment receives and connects
+          reports. v2.2.0 adds modules for specific German regulations (LkSG, KWG, CSRD), useful to
+          some operators only. The order is a plan, not a promise: it moves when a reason turns up.
         </p>
       </div>
 
@@ -689,74 +685,70 @@
       <section class="docs-section" id="v2-1-0" aria-labelledby="v2-1-0-h2">
         <h2 id="v2-1-0-h2">v2.1.0 — Multi-Channel Intake &amp; Integration Hooks</h2>
         <p>
-          Operators increasingly need to receive reports through channels beyond the
-          web form, and connect OpenWhistle to existing compliance tooling (SIEM, GRC
-          platforms, ticketing systems) without granting those systems access to
-          sensitive case content. This release adds intake flexibility and
-          privacy-safe integration points.
+          More ways to receive a report, and hooks into compliance tooling (SIEM, GRC, ticketing)
+          that never expose case content.
         </p>
 
         <h3>Additional submission channels</h3>
         <ul>
-          <li><strong>Email intake channel</strong> — inbound email forwarded to a configured mailbox
-            (<code>INTAKE_EMAIL_ADDRESS</code>) is parsed by a background job and converted to a
-            pending report; attachments are extracted and stored; a case number + PIN is
-            sent back to the sender only if the sender provided a return address (anonymous
-            senders receive no reply); admin can configure per-organization intake addresses
-            in multi-tenant deployments; uses <code>aiosmtplib</code> or IMAP polling</li>
-          <li><strong>Voice recording channel</strong> — whistleblowers can record a voice message
-            directly in the browser (Web Audio API, MediaRecorder) and submit it as an
-            attachment; stored as an <code>.ogg</code> or <code>.webm</code> file; admins can play it back in
-            the case detail view; optional voice-pitch shifting (configurable via
-            <code>VOICE_DISTORTION_ENABLED=true</code>) applies a simple frequency shift to prevent
-            speaker identification while keeping the content intelligible; processing done
-            server-side via <code>ffmpeg</code></li>
+          <li><strong>Email intake</strong>
+            <ul>
+              <li>Mail to <code>INTAKE_EMAIL_ADDRESS</code> becomes a pending report, attachments included.</li>
+              <li>A case number and PIN go back only to a sender who gave a return address.</li>
+              <li>One intake address per organisation in multi-tenant deployments.</li>
+              <li>Built on <code>aiosmtplib</code> or IMAP polling.</li>
+            </ul>
+          </li>
+          <li><strong>Voice recording</strong>
+            <ul>
+              <li>Recorded in the browser (Web Audio API, MediaRecorder), stored as an <code>.ogg</code> or <code>.webm</code> attachment.</li>
+              <li>Played back in the case view.</li>
+              <li>Optional pitch shift against speaker identification: <code>VOICE_DISTORTION_ENABLED=true</code>, server-side with <code>ffmpeg</code>.</li>
+            </ul>
+          </li>
         </ul>
 
         <h3>Integration hooks</h3>
         <ul>
-          <li><strong>Admin management API</strong> — scoped REST API for administrative operations
-            that contain no sensitive report content: user management (create/disable
-            accounts), category and location management, system health; JWT Bearer token
-            authentication with scoped API keys (<code>api_keys</code> table: <code>key_hash</code>, <code>scopes[]</code>,
-            <code>expires_at</code>); API keys managed from the admin settings page; OpenAPI spec at
-            <code>/api/v1/openapi.json</code>; rate-limited per key; designed to allow GRC/ITSM tools
-            to provision OpenWhistle without admin UI access — no case content, no
-            whistleblower-identifying data exposed via API</li>
-          <li><strong>Aggregate statistics API</strong> — read-only endpoint returning anonymised
-            counts (reports per period, per category, per status); suitable for feeding
-            compliance dashboards; no individual case data</li>
-          <li><strong>Outbound webhooks</strong> — push notifications for case lifecycle events
-            (<code>report.created</code>, <code>report.status_changed</code>, <code>report.reply_added</code>,
-            <code>report.deleted</code>); payload contains only event type, case number, new status,
-            and timestamp — no message content, no attachments, no metadata that could
-            identify the whistleblower; configurable per event type; signed JSON envelope
-            (HMAC-SHA256 in <code>X-OpenWhistle-Signature</code>); retried up to 3&times; with exponential
-            back-off; delivery log in admin UI; <code>WebhookEndpoint</code> model with <code>url</code>,
-            <code>secret</code>, <code>enabled_events[]</code>, <code>last_delivery_at</code>, <code>last_status_code</code></li>
-          <li><strong>Zapier / n8n integration guide</strong> — <code>docs/integrations/</code> with documented
-            examples connecting OpenWhistle webhooks to Zapier, n8n, and Make; no code
-            changes required; purely documentation but significantly increases integration
-            reach for non-technical operators</li>
+          <li><strong>Admin management API</strong>
+            <ul>
+              <li>Users, categories, locations and system health; no case content, nothing that identifies a whistleblower.</li>
+              <li>JWT Bearer tokens with scoped API keys: <code>api_keys</code> (<code>key_hash</code>, <code>scopes[]</code>, <code>expires_at</code>), managed on the admin settings page.</li>
+              <li>OpenAPI spec at <code>/api/v1/openapi.json</code>; rate-limited per key.</li>
+              <li>Lets GRC and ITSM tools provision OpenWhistle without the admin UI.</li>
+            </ul>
+          </li>
+          <li><strong>Aggregate statistics API</strong>: read-only, anonymised counts per period, category and status for compliance dashboards.</li>
+          <li><strong>Outbound webhooks</strong>
+            <ul>
+              <li>Events <code>report.created</code>, <code>report.status_changed</code>, <code>report.reply_added</code>, <code>report.deleted</code>, each switchable.</li>
+              <li>Payload: event type, case number, new status, timestamp. No message, attachment or identifying metadata.</li>
+              <li>Signed with HMAC-SHA256 in <code>X-OpenWhistle-Signature</code>; retried up to 3&times; with exponential back-off.</li>
+              <li>Delivery log in the admin UI; <code>WebhookEndpoint</code> model (<code>url</code>, <code>secret</code>, <code>enabled_events[]</code>, <code>last_delivery_at</code>, <code>last_status_code</code>).</li>
+            </ul>
+          </li>
+          <li><strong>Zapier / n8n guide</strong>: examples for Zapier, n8n and Make in <code>docs/integrations/</code>. Documentation only, no code change.</li>
         </ul>
 
         <h3>Access control</h3>
         <ul>
-          <li><strong>IP allowlist for admin routes</strong> — <code>ADMIN_IP_ALLOWLIST</code> env var accepts
-            CIDR notation (<code>192.168.1.0/24,10.0.0.0/8</code>); requests from outside the list
-            receive 403; empty/unset means no restriction (backward-compatible default);
-            implemented as FastAPI middleware before route resolution; respects
-            <code>TRUSTED_PROXY_DEPTH</code> for correct IP extraction behind load balancers</li>
+          <li><strong>IP allowlist for admin routes</strong>
+            <ul>
+              <li><code>ADMIN_IP_ALLOWLIST</code> takes CIDR ranges (<code>192.168.1.0/24,10.0.0.0/8</code>); outside them, 403.</li>
+              <li>Unset or empty: no restriction, as today.</li>
+              <li>FastAPI middleware before routing; a new <code>TRUSTED_PROXY_DEPTH</code> setting finds the client address behind load balancers.</li>
+            </ul>
+          </li>
         </ul>
 
         <h3>Design system</h3>
         <ul>
-          <li><strong><code>DESIGN.md</code> brought to the depth of the easywall design spec</strong> — OpenWhistle's
-            <code>DESIGN.md</code> has carried the "Signal" tokens and prose since v1.3.0, but at a
-            fraction of the depth of easywall's own design document: component states, motion
-            and interaction rules, and per-pattern accessibility notes are largely undocumented.
-            Brought up to that depth so the design system is something the next contributor can
-            follow, not something they have to reverse-engineer from the CSS</li>
+          <li><strong><code>DESIGN.md</code> to the depth of easywall's design spec</strong>
+            <ul>
+              <li>It has held the "Signal" tokens since v1.3.0, but not component states, motion rules or per-pattern accessibility notes.</li>
+              <li>The goal: a design system the next contributor follows instead of reverse-engineering the CSS.</li>
+            </ul>
+          </li>
         </ul>
       </section>
 
@@ -764,110 +756,108 @@
       <section class="docs-section" id="v2-2-0" aria-labelledby="v2-2-0-h2">
         <h2 id="v2-2-0-h2">v2.2.0 — Compliance Expansion (LkSG, KWG, CSRD)</h2>
         <p>
-          German compliance obligations extend beyond HinSchG. Companies in scope for
-          the Lieferkettengesetz (LkSG, since 2023) require a separate supply-chain
-          reporting channel; financial institutions need a KWG-compliant pathway; listed
-          companies increasingly face CSRD disclosure requirements that reference internal
-          reporting systems. These are add-on modules that don't change the core
-          whistleblower flow.
+          Obligations beyond HinSchG, as add-on modules that leave the whistleblower flow unchanged.
+          LkSG (since 2023) needs a supply-chain channel, KWG a banking one; CSRD disclosures refer
+          to internal reporting systems.
         </p>
 
         <h3>Supply chain due diligence (LkSG)</h3>
         <ul>
-          <li><strong>LkSG reporting channel</strong> — dedicated submission form variant for supply
-            chain violations (&sect;2 LkSG violation categories pre-configured as categories:
-            forced labour, child labour, environmental violations, discrimination,
-            excessive working hours, etc.); separate from the HinSchG channel; reports
-            routed to a configurable LkSG case manager role; LkSG-specific deadline
-            tracking (&sect;12 LkSG: receipt confirmed within 7 days; decision within 3 months;
-            extension to 6 months documented); <code>LKSG_ENABLED=true</code> env var activates the
-            module</li>
-          <li><strong>LkSG transparency report</strong> — structured annual report template as required
-            by &sect;12 Abs. 4 LkSG (public disclosure of complaints received, investigations
-            conducted, measures taken); downloadable PDF; <code>LKSG_TRANSPARENCY_YEAR</code> config</li>
+          <li><strong>LkSG reporting channel</strong>
+            <ul>
+              <li>A separate form with the &sect;2 LkSG violations as categories: forced labour, child labour, environmental violations, discrimination, excessive working hours and more.</li>
+              <li>Routed to a configurable LkSG case manager role.</li>
+              <li>&sect;12 LkSG deadlines: receipt within 7 days, decision within 3 months, extension to 6 months documented.</li>
+              <li>Switched on by <code>LKSG_ENABLED=true</code>.</li>
+            </ul>
+          </li>
+          <li><strong>LkSG transparency report</strong>: the annual report of &sect;12 Abs. 4 LkSG (complaints, investigations, measures) as a PDF; <code>LKSG_TRANSPARENCY_YEAR</code>.</li>
         </ul>
 
         <h3>Financial sector (KWG / MaRisk)</h3>
         <ul>
-          <li><strong>KWG / MaRisk whistleblowing channel</strong> — separate category set pre-configured
-            for banking-regulatory violations (&sect;25a KWG, MaRisk AT 8.5: reporting channel
-            for employees to report risk management violations, fraud, AML breaches);
-            routed to Compliance/Audit role; <code>KWG_ENABLED=true</code> env var; dedicated section
-            in the admin nav</li>
+          <li><strong>KWG / MaRisk channel</strong>
+            <ul>
+              <li>Categories for &sect;25a KWG and MaRisk AT 8.5: risk management violations, fraud, AML breaches.</li>
+              <li>Routed to a Compliance/Audit role, with its own admin nav section; <code>KWG_ENABLED=true</code>.</li>
+            </ul>
+          </li>
         </ul>
 
         <h3>Sustainability reporting (CSRD)</h3>
         <ul>
-          <li><strong>CSRD / ESG grievance channel</strong> — intake form for ESG-related reports
-            (environmental impact, human rights, social violations) as required by the
-            Corporate Sustainability Reporting Directive (CSRD) for large companies from
-            2025; categorised by ESRS topic; routes to ESG officer role;
-            <code>CSRD_ENABLED=true</code> env var</li>
+          <li><strong>CSRD / ESG grievance channel</strong>
+            <ul>
+              <li>Environmental impact, human rights and social violations, as CSRD requires of large companies from 2025.</li>
+              <li>Categorised by ESRS topic, routed to an ESG officer role; <code>CSRD_ENABLED=true</code>.</li>
+            </ul>
+          </li>
         </ul>
 
         <h3>Compliance documentation</h3>
         <ul>
-          <li><strong>ISO 37002 alignment documentation</strong> — <code>docs/iso37002.md</code> mapping every
-            ISO 37002:2021 clause to the corresponding OpenWhistle feature or config
-            option; provides operators with a ready-made compliance justification for
-            auditors; updated per release</li>
-          <li><strong>30-language support</strong> — extend i18n from 3 (EN, DE, FR) to 30 languages
-            covering all official EU languages (ES, IT, PL, NL, PT, SV, DA, FI, CS, SK,
-            HU, RO, BG, HR, SL, ET, LV, LT, MT, GA, EL, and formal/informal variants for
-            DE/AT/CH); machine-translated initial pass reviewed by native speakers via
-            community contributions; all translation files in <code>app/locales/{lang}.json</code>
-            following the existing 388-key schema</li>
+          <li><strong>ISO 37002 alignment</strong>: <code>docs/iso37002.md</code> maps every ISO 37002:2021 clause to a feature or setting, for auditors. Updated per release.</li>
+          <li><strong>30 languages</strong>
+            <ul>
+              <li>From four locales (EN, DE, FR, PT-BR) to every official EU language.</li>
+              <li>New: ES, IT, PL, NL, PT, SV, DA, FI, CS, SK, HU, RO, BG, HR, SL, ET, LV, LT, MT, GA, EL.</li>
+              <li>Formal and informal variants for DE/AT/CH.</li>
+              <li>Machine-translated first, then reviewed by native speakers, in <code>app/locales/{lang}.json</code> with the existing key schema.</li>
+            </ul>
+          </li>
         </ul>
 
         <h3>Case handling workflow</h3>
         <ul>
-          <li><strong>Case redaction</strong> — admin can redact (replace with <code>[REDACTED]</code>) any
-            text passage in a report description or message before sharing the case with
-            an external party; redaction is recorded in the audit log; original content
-            is preserved in an encrypted redaction-log visible only to superadmin</li>
-          <li><strong>Case anonymization / pseudonymization</strong> — one-click action to replace
-            all personal identifiers in a case with placeholders (name &rarr; <code>[Person A]</code>,
-            etc.); designed for sharing with external auditors or regulatory bodies;
-            creates a copy of the case content — does not overwrite the original</li>
-          <li><strong>Per-case internal task management</strong> — tasks (description, assignee,
-            due date, status: open / in progress / done) attached to a specific report;
-            visible only to the admin team; deadline for tasks tracked separately from
-            the HinSchG statutory deadlines; <code>AdminTask</code> model with <code>report_id</code>,
-            <code>assigned_to_id</code>, <code>due_date</code>, <code>completed_at</code></li>
-          <li><strong>Case-level access control</strong> — ability to restrict specific cases to a
-            named subset of admin users (in addition to global role-based access);
-            useful for particularly sensitive reports where need-to-know should be
-            limited; <code>CaseRestriction</code> model linking <code>report_id</code> to a set of allowed
-            <code>admin_user_id</code>s; users outside the set see the case number in the dashboard
-            but cannot open the detail view</li>
+          <li><strong>Case redaction</strong>
+            <ul>
+              <li>Replace any passage of a description or message with <code>[REDACTED]</code> before a case is shared outside.</li>
+              <li>Logged in the audit log; the original is kept in an encrypted redaction log only a superadmin sees.</li>
+            </ul>
+          </li>
+          <li><strong>Anonymization / pseudonymization</strong>: one click replaces personal identifiers with placeholders (name &rarr; <code>[Person A]</code>) in a copy for auditors or regulators. The original stays.</li>
+          <li><strong>Per-case tasks</strong>
+            <ul>
+              <li>Description, assignee, due date, status (open / in progress / done), visible to the admin team only.</li>
+              <li>Task deadlines are tracked apart from the HinSchG ones.</li>
+              <li><code>AdminTask</code> model (<code>report_id</code>, <code>assigned_to_id</code>, <code>due_date</code>, <code>completed_at</code>).</li>
+            </ul>
+          </li>
+          <li><strong>Case-level access control</strong>
+            <ul>
+              <li>Restricts a sensitive case to named admins, on top of roles.</li>
+              <li>Others see its case number on the dashboard but cannot open it.</li>
+              <li><code>CaseRestriction</code> model linking <code>report_id</code> to allowed <code>admin_user_id</code>s.</li>
+            </ul>
+          </li>
         </ul>
 
         <h3>External collaboration</h3>
         <ul>
-          <li><strong>External advisor access</strong> — scoped, time-limited guest accounts for
-            external parties (law firms, auditors, external ombudspersons); <code>ExternalAdvisor</code>
-            model with <code>email</code>, <code>access_token</code> (GUID), <code>expires_at</code>, <code>allowed_report_ids[]</code>;
-            access via a separate URL (<code>/advisor/{token}</code>) without a full admin login;
-            activity logged in the audit trail; advisor can read case content and post
-            internal notes but cannot change status or delete; access revocable instantly</li>
-          <li><strong>Communication templates</strong> — pre-defined message templates that admins
-            can insert when replying to whistleblowers or sending notifications; templates
-            stored per organization (multi-tenant aware); helps maintain consistent,
-            legally reviewed language across case handlers; <code>MessageTemplate</code> model with
-            <code>title</code>, <code>body_de</code>, <code>body_en</code>, <code>body_fr</code></li>
+          <li><strong>External advisor access</strong>
+            <ul>
+              <li>Time-limited guest access for law firms, auditors and external ombudspersons, at <code>/advisor/{token}</code> without an admin login.</li>
+              <li>Read cases and add internal notes; never change status or delete. Revocable at once, logged in the audit trail.</li>
+              <li><code>ExternalAdvisor</code> model (<code>email</code>, <code>access_token</code> as a GUID, <code>expires_at</code>, <code>allowed_report_ids[]</code>).</li>
+            </ul>
+          </li>
+          <li><strong>Communication templates</strong>
+            <ul>
+              <li>Reviewed wording that admins insert into replies and notifications, per organisation.</li>
+              <li><code>MessageTemplate</code> model (<code>title</code>, <code>body_de</code>, <code>body_en</code>, <code>body_fr</code>).</li>
+            </ul>
+          </li>
         </ul>
 
         <h3>Reporting &amp; transparency</h3>
         <ul>
-          <li><strong>Transparency report generation</strong> — one-click annual compliance report
-            (PDF + JSON) showing: total reports received, reports by category, reports by
-            status at year-end, average processing time, SLA compliance rate, percentage
-            closed within statutory deadlines; required by HinSchG &sect;12 Abs. 3 for
-            internal documentation; downloadable from <code>/admin/stats</code></li>
-          <li><strong>Whistleblower sees handler department</strong> — the status page shows the
-            department/category label of the case handler team (not the handler's name);
-            provides transparency without de-anonymizing internal staff; configurable
-            per-organization (<code>SHOW_HANDLER_DEPARTMENT=true</code>)</li>
+          <li><strong>Transparency report</strong>
+            <ul>
+              <li>An annual PDF + JSON from <code>/admin/stats</code>, for the internal documentation of HinSchG &sect;12 Abs. 3.</li>
+              <li>Totals, by category, status at year-end, average processing time, SLA compliance rate, share closed in time.</li>
+            </ul>
+          </li>
+          <li><strong>Handler department on the status page</strong>: the team's department label, never a name; <code>SHOW_HANDLER_DEPARTMENT=true</code>, per organisation.</li>
         </ul>
       </section>
 
