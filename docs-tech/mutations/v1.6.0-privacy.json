@@ -47,8 +47,8 @@
   {
    "id": "pdf-view-not-audited",
    "file": "app/api/admin.py",
-   "old": "    report = await _get_authorized_report(db, report_id, current_user)\n    await audit_service.log(db, current_user, AuditAction.REPORT_VIEWED, report_id=report.id)\n    await db.commit()\n\n    pdf_bytes",
-   "new": "    report = await _get_authorized_report(db, report_id, current_user)\n\n    pdf_bytes",
+   "old": "    report = await _get_authorized_report(db, report_id, current_user)\n    await audit_service.log(db, current_user, AuditAction.REPORT_VIEWED, report_id=report.id)\n    await db.commit()\n\n    category_labels",
+   "new": "    report = await _get_authorized_report(db, report_id, current_user)\n\n    category_labels",
    "tests": "P"
   },
   {
@@ -103,8 +103,8 @@
   {
    "id": "pdf-identity-no-csrf",
    "file": "app/api/admin.py",
-   "old": "    _csrf: None = Depends(validate_csrf),\n) -> Response:\n    from app.services.crypto import encrypt",
-   "new": "    _csrf: None = None,\n) -> Response:\n    from app.services.crypto import encrypt",
+   "old": "    _csrf: None = Depends(validate_csrf),\n) -> Response:\n    from app.services.categories import get_category_labels\n    from app.services.crypto import encrypt",
+   "new": "    _csrf: None = None,\n) -> Response:\n    from app.services.categories import get_category_labels\n    from app.services.crypto import encrypt",
    "tests": "P"
   },
   {

@@ -1,0 +1,376 @@
+{
+ "test_groups": {
+  "I": [
+   "tests/test_icon_inline_layout.py"
+  ],
+  "V": [
+   "tests/test_static_versioning.py"
+  ],
+  "C": [
+   "tests/test_privacy_v150.py::test_pages_are_never_cached_but_static_files_are"
+  ],
+  "T": [
+   "tests/test_tls.py"
+  ],
+  "L": [
+   "tests/test_login_layout.py"
+  ],
+  "K": [
+   "tests/test_locale_key_completeness.py"
+  ],
+  "D": [
+   "tests/test_v160_design.py"
+  ],
+  "M": [
+   "tests/test_multitenancy_scoping.py"
+  ],
+  "P": [
+   "tests/test_pdf_service.py"
+  ],
+  "W": [
+   "tests/test_docs_site.py"
+  ],
+  "E": [
+   "-o",
+   "addopts=",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium",
+   "tests/e2e/test_layout.py",
+   "-k",
+   "docs_page"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "icon-block",
+   "file": "app/static/css/site.css",
+   "old": "so they are unaffected. */\n  display: inline-block;",
+   "new": "so they are unaffected. */\n  display: block;",
+   "tests": "I"
+  },
+  {
+   "id": "static-url-no-version",
+   "file": "app/templating.py",
+   "old": "return f\"/static/{path}?v={settings.app_version}\"",
+   "new": "return f\"/static/{path}\"",
+   "tests": "V"
+  },
+  {
+   "id": "base-css-hand-typed",
+   "file": "app/templates/base.html",
+   "old": "href=\"{{ static_url('css/site.css') }}\"",
+   "new": "href=\"/static/css/site.css\"",
+   "tests": "V"
+  },
+  {
+   "id": "static-cache-dropped",
+   "file": "app/middleware.py",
+   "old": "mutable[\"Cache-Control\"] = \"no-cache\"",
+   "new": "pass",
+   "tests": "C"
+  },
+  {
+   "id": "nginx-static-immutable",
+   "file": "nginx/snippets/static-location.conf",
+   "old": "location /static/ {\n    proxy_pass http://openwhistle;\n}",
+   "new": "location /static/ {\n    proxy_pass http://openwhistle;\n    expires 30d;\n    add_header Cache-Control \"public, immutable\";\n}",
+   "tests": "T"
+  },
+  {
+   "id": "login-card-flush",
+   "file": "app/static/css/site.css",
+   "old": ".panel + .panel,\n.panel + .demo-credentials {",
+   "new": ".panel + .panel {",
+   "tests": "L"
+  },
+  {
+   "id": "superadmin-label-missing",
+   "file": "app/locales/en.json",
+   "old": "  \"role.label.superadmin\": \"Super administrator\",\n",
+   "new": "",
+   "tests": "K"
+  },
+  {
+   "id": "role-default-unselected",
+   "file": "app/templates/admin/users.html",
+   "old": "<option value=\"{{ role.value }}\" {{ 'selected' if role.value == 'case_manager' else '' }}>",
+   "new": "<option value=\"{{ role.value }}\">",
+   "tests": "D"
+  },
+  {
+   "id": "role-enum-superadmin-first",
+   "file": "app/models/user.py",
+   "old": "    case_manager = \"case_manager\"\n    admin = \"admin\"\n    superadmin = \"superadmin\"\n",
+   "new": "    superadmin = \"superadmin\"\n    admin = \"admin\"\n    case_manager = \"case_manager\"\n",
+   "tests": "D"
+  },
+  {
+   "id": "badge-superadmin-missing",
+   "file": "app/static/css/site.css",
+   "old": ".badge-superadmin {\n  background: #fef2f2;",
+   "new": ".badge-superadmin-gone {\n  background: #fef2f2;",
+   "tests": "D"
+  },
+  {
+   "id": "category-label-ignores-lang",
+   "file": "app/models/category.py",
+   "old": "if lang == \"de\" and self.label_de:",
+   "new": "if False:",
+   "tests": "D"
+  },
+  {
+   "id": "category-filter-ignores-map",
+   "file": "app/templating.py",
+   "old": "return labels.get(slug) or slug.replace(\"_\", \" \").title()",
+   "new": "return slug.replace(\"_\", \" \").title()",
+   "tests": "D"
+  },
+  {
+   "id": "category-labels-unscoped",
+   "file": "app/services/categories.py",
+   "old": "categories = await get_all_categories(db, scope_org=scope_org, org_id=org_id)",
+   "new": "categories = await get_all_categories(db)",
+   "tests": "M"
+  },
+  {
+   "id": "dashboard-category-raw",
+   "file": "app/templates/admin/dashboard.html",
+   "old": "{{ report.category | category_label(category_labels) }}",
+   "new": "{{ report.category | replace('_', ' ') | title }}",
+   "tests": "D"
+  },
+  {
+   "id": "case-page-category-raw",
+   "file": "app/templates/admin/report.html",
+   "old": "<span class=\"badge badge-received\">{{ report.category | category_label(category_labels) }}</span>",
+   "new": "<span class=\"badge badge-received\">{{ report.category | replace('_', ' ') | title }}</span>",
+   "tests": "D"
+  },
+  {
+   "id": "linked-report-category-raw",
+   "file": "app/templates/admin/report.html",
+   "old": "{{ lr.category | category_label(category_labels) }}",
+   "new": "{{ lr.category | replace('_', ' ') | title }}",
+   "tests": "D"
+  },
+  {
+   "id": "stats-category-english",
+   "file": "app/api/admin.py",
+   "old": "cat_map = await get_category_labels(db, get_lang(request), **_org_scope(current_user))",
+   "new": "cat_map = await get_category_labels(db, \"en\", **_org_scope(current_user))",
+   "tests": "D"
+  },
+  {
+   "id": "stats-category-unscoped",
+   "file": "app/api/admin.py",
+   "old": "cat_map = await get_category_labels(db, get_lang(request), **_org_scope(current_user))",
+   "new": "cat_map = await get_category_labels(db, get_lang(request))",
+   "tests": "M"
+  },
+  {
+   "id": "pdf-category-slug",
+   "file": "app/services/pdf.py",
+   "old": "_meta_row(pdf, \"Category\", category_label or report.category)",
+   "new": "_meta_row(pdf, \"Category\", report.category)",
+   "tests": "P"
+  },
+  {
+   "id": "pdf-route-no-label",
+   "file": "app/api/admin.py",
+   "old": "        report, category_label=category_labels.get(report.category, report.category)\n    )",
+   "new": "        report\n    )",
+   "tests": "D"
+  },
+  {
+   "id": "pdf-identity-route-no-label",
+   "file": "app/api/admin.py",
+   "old": "            include_identity=True,\n            category_label=category_labels.get(report.category, report.category),\n",
+   "new": "            include_identity=True,\n",
+   "tests": "D"
+  },
+  {
+   "id": "sticky-action-static",
+   "file": "app/static/css/site.css",
+   "old": ".table-stack th.stack-action-header {\n  position: sticky;",
+   "new": ".table-stack th.stack-action-header {\n  position: static;",
+   "tests": "D"
+  },
+  {
+   "id": "status-badge-nowrap",
+   "file": "app/static/css/site.css",
+   "old": ".table-stack .stack-status .badge {\n  white-space: normal;",
+   "new": ".table-stack .stack-status .badge {\n  white-space: nowrap;",
+   "tests": "D"
+  },
+  {
+   "id": "dashboard-header-unpinned",
+   "file": "app/templates/admin/dashboard.html",
+   "old": "<th role=\"columnheader\" class=\"stack-action-header\"></th>",
+   "new": "<th role=\"columnheader\"></th>",
+   "tests": "D"
+  },
+  {
+   "id": "docs-env-table-unscrolled",
+   "file": "docs/docs.html",
+   "old": ".table-scroll { overflow-x: auto; }",
+   "new": ".table-scroll { }",
+   "tests": "E"
+  },
+  {
+   "id": "de-token-drift",
+   "file": "docs/de/index.html",
+   "old": "      --accent: #0c7253;",
+   "new": "      --accent: #0c7254;",
+   "tests": "W"
+  },
+  {
+   "id": "de-faq-jsonld-drift",
+   "file": "docs/de/index.html",
+   "old": "\"name\": \"Unterstützt OpenWhistle Single Sign-On (SSO)?\"",
+   "new": "\"name\": \"Was ist ein Hinweisgebersystem nach HinSchG?\"",
+   "tests": "W"
+  },
+  {
+   "id": "en-hreflang-de-dropped",
+   "file": "docs/index.html",
+   "old": "  <link rel=\"alternate\" hreflang=\"de\" href=\"https://openwhistle.net/de/\">\n",
+   "new": "",
+   "tests": "W"
+  },
+  {
+   "id": "de-hreflang-default-dropped",
+   "file": "docs/de/index.html",
+   "old": "  <link rel=\"alternate\" hreflang=\"x-default\" href=\"https://openwhistle.net/\">\n",
+   "new": "",
+   "tests": "W"
+  },
+  {
+   "id": "de-comparison-table-auto",
+   "file": "docs/de/index.html",
+   "old": "      table-layout: fixed;\n      border-collapse: collapse;\n      font-size: 0.88rem;",
+   "new": "      border-collapse: collapse;\n      font-size: 0.88rem;",
+   "tests": "E"
+  },
+  {
+   "id": "de-btn-nowrap",
+   "file": "docs/de/index.html",
+   "old": ".btn { justify-content: center; white-space: normal; text-align: center; }",
+   "new": ".btn { justify-content: center; text-align: center; }",
+   "tests": "E"
+  },
+  {
+   "id": "docs-nav-blog-missing",
+   "file": "docs/docs.html",
+   "old": "\n        <li><a href=\"blog/\">Blog</a></li>",
+   "new": "",
+   "tests": "W"
+  },
+  {
+   "id": "roadmap-nav-current-unmarked",
+   "file": "docs/roadmap.html",
+   "old": "<a href=\"roadmap.html\" class=\"active\" aria-current=\"page\">Roadmap</a>",
+   "new": "<a href=\"roadmap.html\" class=\"active\">Roadmap</a>",
+   "tests": "W"
+  },
+  {
+   "id": "roadmap-footer-issues-missing",
+   "file": "docs/roadmap.html",
+   "old": "            <li><a href=\"https://github.com/openwhistle/OpenWhistle/issues\" rel=\"noopener noreferrer\" target=\"_blank\">Issues</a></li>\n",
+   "new": "",
+   "tests": "W"
+  },
+  {
+   "id": "blog-token-drift",
+   "file": "docs/blog/index.html",
+   "old": "      --accent: #0c7253;",
+   "new": "      --accent: #0c7254;",
+   "tests": "W"
+  },
+  {
+   "id": "nav-collapse-768-en",
+   "file": "docs/index.html",
+   "old": "@media (max-width: 1080px) {\n      .nav-links { display: none; }",
+   "new": "@media (max-width: 768px) {\n      .nav-links { display: none; }",
+   "tests": "E"
+  },
+  {
+   "id": "nav-collapse-768-de",
+   "file": "docs/de/index.html",
+   "old": "@media (max-width: 1080px) {\n      .nav-links { display: none; }",
+   "new": "@media (max-width: 768px) {\n      .nav-links { display: none; }",
+   "tests": "E"
+  },
+  {
+   "id": "nav-collapse-768-docs",
+   "file": "docs/docs.html",
+   "old": "@media (max-width: 1080px) {\n      .nav-links { display: none; }",
+   "new": "@media (max-width: 768px) {\n      .nav-links { display: none; }",
+   "tests": "E"
+  },
+  {
+   "id": "nav-collapse-768-roadmap",
+   "file": "docs/roadmap.html",
+   "old": "@media (max-width: 1080px) {\n      .nav-links { display: none; }",
+   "new": "@media (max-width: 768px) {\n      .nav-links { display: none; }",
+   "tests": "E"
+  },
+  {
+   "id": "nav-collapse-768-blog",
+   "file": "docs/blog/index.html",
+   "old": "@media (max-width: 1080px) {\n      .nav-links { display: none; }",
+   "new": "@media (max-width: 768px) {\n      .nav-links { display: none; }",
+   "tests": "E"
+  },
+  {
+   "id": "nav-collapse-768-hinschg-compliance-leitfaden",
+   "file": "docs/blog/hinschg-compliance-leitfaden.html",
+   "old": "@media (max-width: 1080px) {\n      .nav-links { display: none; }",
+   "new": "@media (max-width: 768px) {\n      .nav-links { display: none; }",
+   "tests": "E"
+  },
+  {
+   "id": "nav-collapse-768-interne-meldestelle-einrichten",
+   "file": "docs/blog/interne-meldestelle-einrichten.html",
+   "old": "@media (max-width: 1080px) {\n      .nav-links { display: none; }",
+   "new": "@media (max-width: 768px) {\n      .nav-links { display: none; }",
+   "tests": "E"
+  },
+  {
+   "id": "nav-collapse-768-was-ist-neu-in-1-6",
+   "file": "docs/blog/was-ist-neu-in-1-6.html",
+   "old": "@media (max-width: 1080px) {\n      .nav-links { display: none; }",
+   "new": "@media (max-width: 768px) {\n      .nav-links { display: none; }",
+   "tests": "E"
+  },
+  {
+   "id": "nav-collapse-768-whistleblower-software-vergleich",
+   "file": "docs/blog/whistleblower-software-vergleich.html",
+   "old": "@media (max-width: 1080px) {\n      .nav-links { display: none; }",
+   "new": "@media (max-width: 768px) {\n      .nav-links { display: none; }",
+   "tests": "E"
+  },
+  {
+   "id": "docs-mono-500-face-missing",
+   "file": "docs/docs.html",
+   "old": "    @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }\n",
+   "new": "",
+   "tests": "D"
+  },
+  {
+   "id": "roadmap-mono-500-face-missing",
+   "file": "docs/roadmap.html",
+   "old": "    @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }\n",
+   "new": "",
+   "tests": "D"
+  },
+  {
+   "id": "blog-deadline-table-auto",
+   "file": "docs/blog/hinschg-compliance-leitfaden.html",
+   "old": ".deadline-table { width: 100%; table-layout: fixed;",
+   "new": ".deadline-table { width: 100%;",
+   "tests": "E"
+  }
+ ]
+}

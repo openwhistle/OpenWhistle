@@ -96,8 +96,8 @@ outcome.
 
 ## v1.6.0 hardening
 
-Mutations: `docs-tech/mutations/v1.6.0-{security,privacy,wizard,timeouts,platform,review}.json`
-(234, all red). One row per guard; the test is the first one that fired.
+Mutations: `docs-tech/mutations/v1.6.0-{security,privacy,wizard,timeouts,platform,review,site}.json`
+(281, all red). One row per guard; the test is the first one that fired.
 
 **Found by the v1.6.0 audit.** The first run left 26 of 205 green. Six
 had a test that the spec did not run (the S3 key tests live in
@@ -413,6 +413,78 @@ flip on random uuids); its test now also checks the statement's `ORDER BY`.
 | `review-matrix-drops-a-site-page` | `docs-tech/local-review.md` | `test_local_review_page_matrix_covers_every_docs_site_page` |
 | `review-release-step-dropped` | `docs-tech/release.md` | `test_release_md_names_the_chrome_check_before_the_release_pr` |
 | `docs-link-into-docs-tech` | `docs/docs.html` | `test_no_published_page_links_docs_tech` |
+
+### Admin UI fixes and website
+
+`docs-tech/mutations/v1.6.0-site.json`. The docs mutations run
+`tests/e2e/test_layout.py -k docs_page` (every `docs/**/*.html` at 390 and
+1024 px, served from a local HTTP server, no app).
+
+The first run left 8 of 48 green. Five category-label paths had no test (the
+linked-report list, `/admin/stats` by language and by organisation, both PDF
+routes); the nginx snippet's own `Cache-Control` had none; the superadmin
+badge test matched the dark override. Each got one. The German landing
+page's `min-width: 0` grid children changed nothing at either width and were
+deleted, as were the merge's second overflow fix for the deadline table and
+the cost grid.
+Re-running the other six after the merge: `pdf-view-not-audited` and
+`pdf-identity-no-csrf` (privacy) were stale, because both PDF routes now
+fetch category labels; the snippets are updated and red.
+
+| Mutation | File | Test that fires |
+| --- | --- | --- |
+| `icon-block` | `app/static/css/site.css` | `test_icon_class_overrides_svg_reset_to_inline` |
+| `static-url-no-version` | `app/templating.py` | `test_static_url_appends_version_query` |
+| `base-css-hand-typed` | `app/templates/base.html` | `test_stylesheet_and_script_links_use_static_url_helper` |
+| `static-cache-dropped` | `app/middleware.py` | `test_pages_are_never_cached_but_static_files_are` |
+| `nginx-static-immutable` | `nginx/snippets/static-location.conf` | `test_nginx_static_location_is_a_shared_snippet_too` |
+| `login-card-flush` | `app/static/css/site.css` | `test_panel_before_demo_credentials_has_spacing` |
+| `superadmin-label-missing` | `app/locales/en.json` | `test_every_dynamic_locale_key_exists` |
+| `role-default-unselected` | `app/templates/admin/users.html` | `test_new_user_role_select_defaults_to_the_least_privileged_role` |
+| `role-enum-superadmin-first` | `app/models/user.py` | `test_new_user_role_select_defaults_to_the_least_privileged_role` |
+| `badge-superadmin-missing` | `app/static/css/site.css` | `test_every_admin_role_has_a_badge_color` |
+| `category-label-ignores-lang` | `app/models/category.py` | `test_dashboard_and_case_page_show_the_category_in_german` |
+| `category-filter-ignores-map` | `app/templating.py` | `test_dashboard_and_case_page_show_the_category_in_german` |
+| `category-labels-unscoped` | `app/services/categories.py` | `test_category_labels_do_not_leak_across_orgs_with_a_colliding_slug` |
+| `dashboard-category-raw` | `app/templates/admin/dashboard.html` | `test_dashboard_and_case_page_show_the_category_in_german` |
+| `case-page-category-raw` | `app/templates/admin/report.html` | `test_dashboard_and_case_page_show_the_category_in_german` |
+| `linked-report-category-raw` | `app/templates/admin/report.html` | `test_linked_reports_and_stats_show_the_category_in_german` |
+| `stats-category-english` | `app/api/admin.py` | `test_linked_reports_and_stats_show_the_category_in_german` |
+| `stats-category-unscoped` | `app/api/admin.py` | `test_stats_page_category_label_is_the_own_orgs` |
+| `pdf-category-slug` | `app/services/pdf.py` | `test_generate_pdf_prints_the_localised_category_label` |
+| `pdf-route-no-label` | `app/api/admin.py` | `test_both_pdf_exports_print_the_category_in_german` |
+| `pdf-identity-route-no-label` | `app/api/admin.py` | `test_both_pdf_exports_print_the_category_in_german` |
+| `sticky-action-static` | `app/static/css/site.css` | `test_dashboard_table_action_column_is_pinned_and_status_badge_wraps` |
+| `status-badge-nowrap` | `app/static/css/site.css` | `test_dashboard_table_action_column_is_pinned_and_status_badge_wraps` |
+| `dashboard-header-unpinned` | `app/templates/admin/dashboard.html` | `test_table_stack_sticky_action_column_is_paired_header_and_data` |
+| `docs-env-table-unscrolled` | `docs/docs.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `de-token-drift` | `docs/de/index.html` | `test_de_landing_page_shares_design_tokens_with_english` |
+| `de-faq-jsonld-drift` | `docs/de/index.html` | `test_faqpage_jsonld_matches_visible_faq_one_to_one` |
+| `en-hreflang-de-dropped` | `docs/index.html` | `test_landing_pages_link_each_other_via_hreflang` |
+| `de-hreflang-default-dropped` | `docs/de/index.html` | `test_landing_pages_link_each_other_via_hreflang` |
+| `de-comparison-table-auto` | `docs/de/index.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `de-btn-nowrap` | `docs/de/index.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `docs-nav-blog-missing` | `docs/docs.html` | `test_every_docs_page_nav_has_the_same_item_set` |
+| `roadmap-nav-current-unmarked` | `docs/roadmap.html` | `test_current_nav_item_is_marked` |
+| `roadmap-footer-issues-missing` | `docs/roadmap.html` | `test_every_page_footer_has_the_same_link_set_as_its_landing_page` |
+| `blog-token-drift` | `docs/blog/index.html` | `test_blog_pages_share_design_tokens_with_english_landing` |
+| `nav-collapse-768-en` | `docs/index.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `nav-collapse-768-de` | `docs/de/index.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `nav-collapse-768-docs` | `docs/docs.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `nav-collapse-768-roadmap` | `docs/roadmap.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `nav-collapse-768-blog` | `docs/blog/index.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `nav-collapse-768-hinschg-compliance-leitfaden` | `docs/blog/hinschg-compliance-leitfaden.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `nav-collapse-768-interne-meldestelle-einrichten` | `docs/blog/interne-meldestelle-einrichten.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `nav-collapse-768-was-ist-neu-in-1-6` | `docs/blog/was-ist-neu-in-1-6.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `nav-collapse-768-whistleblower-software-vergleich` | `docs/blog/whistleblower-software-vergleich.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `docs-mono-500-face-missing` | `docs/docs.html` | `test_every_docs_page_font_usage_has_a_matching_font_face` |
+| `roadmap-mono-500-face-missing` | `docs/roadmap.html` | `test_every_docs_page_font_usage_has_a_matching_font_face` |
+| `blog-deadline-table-auto` | `docs/blog/hinschg-compliance-leitfaden.html` | `test_docs_page_has_no_horizontal_overflow` |
+
+**Not a mutation.** `tests/e2e/test_admin_table_layout.py` measures the
+dashboard's pinned action column in the running app, so the script cannot
+change the CSS it is served; `sticky-action-static`, `status-badge-nowrap` and
+`dashboard-header-unpinned` pin the same rules in source.
 
 ## Repository and release
 
