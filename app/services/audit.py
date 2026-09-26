@@ -47,6 +47,9 @@ class AuditAction:
     AUTH_SPRAYING_SUSPECTED = "auth.password_spraying_suspected"
     ORG_CREATED             = "org.created"
     ORG_DEACTIVATED         = "org.deactivated"
+    TELEMETRY_ENABLED       = "telemetry.enabled"
+    TELEMETRY_DISABLED      = "telemetry.disabled"
+    TELEMETRY_ID_RESET      = "telemetry.id_reset"
 
 
 # Every action code, for the audit-log filter and the label-completeness test.

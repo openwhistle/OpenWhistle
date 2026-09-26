@@ -27,6 +27,9 @@ os.environ.setdefault(
 )
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/1")  # DB 1 for tests
 os.environ.setdefault("DEMO_MODE", "false")
+# The installation count never leaves a test run, whatever the shell exports;
+# tests that need it patch the setting (and _telemetry_endpoint_is_local below).
+os.environ["TELEMETRY_ENABLED"] = "false"
 
 from app.database import Base, get_db  # noqa: E402
 from app.main import app  # noqa: E402
@@ -55,6 +58,15 @@ def _is_safe_to_flush(redis_url: str) -> bool:
     except ValueError:
         db_index = 0
     return host in ("localhost", "127.0.0.1") and db_index != 0
+
+
+@pytest.fixture(autouse=True)
+def _telemetry_endpoint_is_local(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Second belt: even a test that switches the count on reaches nothing real
+    unless it points the endpoint at its own server."""
+    from app.services import telemetry
+
+    monkeypatch.setattr(telemetry, "TELEMETRY_ENDPOINT", "http://127.0.0.1:9/v1/openwhistle/count")
 
 
 @pytest_asyncio.fixture(scope="session", loop_scope="session", autouse=True)

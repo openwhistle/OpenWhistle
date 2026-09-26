@@ -166,6 +166,11 @@ config:
   clamavPort: "3310"
   clamavTimeoutSeconds: "30"
 
+  # Installation count (a random id and the version, once a day, to
+  # telemetry.wdkro.de). Empty: the in-app switch decides, off until an admin
+  # agrees. "false": always off. "true": always on.
+  telemetryEnabled: ""
+
 # Any other (non-secret) setting from the configuration table, as NAME: value,
 # e.g. SECURE_COOKIES, ACCESS_TOKEN_EXPIRE_MINUTES, UPDATE_CHECK_ENABLED or the
 # lockout settings. Added to the ConfigMap; never repeat a key set above.

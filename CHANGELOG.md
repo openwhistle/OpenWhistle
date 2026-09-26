@@ -134,6 +134,18 @@ Changed (breaking) below and the upgrade notes before deploying.
   the reason instead of falling back to self-signed.
 - **`docker-compose.behind-proxy.yml`** for an install behind an external TLS terminator: nginx
   proxies plain HTTP on 80 and publishes no 443.
+- **Voluntary installation count** (`TELEMETRY_ENABLED`, off by default). Only if an admin
+  agrees — in the setup wizard (unchecked by default) or on `/admin/system`, no restart — one
+  request a day: `GET https://telemetry.wdkro.de/v1/openwhistle/count?id=<32 hex>&v=<version>`,
+  nothing else. The identifier is 16 random bytes made on the server and kept in the new
+  `telemetry_state` table (migration 007); the System page shows the exact request and the
+  identifier, the last success, a switch (one audit entry per change) and *Reset identifier*.
+  An installation upgraded to 2.0.0 stays off until an admin switches it on. The first attempt
+  waits a random part of an hour, a Redis lock lets one replica send, a failure is a debug
+  line retried at the next hourly check, redirects are refused, the timeout is 10 s.
+  `TELEMETRY_ENABLED=false` locks it off, `true` on; `DEMO_MODE` is never counted. The far end
+  keeps timestamp, identifier and version, not the address, for 35 days. Every request the
+  application can make is now listed in the docs under "Every request that leaves the host".
 - **Helm `extraEnv`** sets any non-secret setting that `values.yaml` has no key for.
 - **Separate, rotatable encryption key** (`ENCRYPTION_KEY`, optional). At-rest encryption is
   now rooted in `ENCRYPTION_KEY` instead of `SECRET_KEY`; unset falls back to `SECRET_KEY`

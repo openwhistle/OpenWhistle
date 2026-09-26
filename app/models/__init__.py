@@ -15,6 +15,7 @@ from app.models.report import (
     SubmissionMode,
 )
 from app.models.setup import SetupStatus
+from app.models.telemetry import TelemetryState
 from app.models.user import AdminRole, AdminUser
 
 __all__ = [
@@ -35,4 +36,5 @@ __all__ = [
     "STATUS_TRANSITIONS",
     "SetupStatus",
     "SubmissionMode",
+    "TelemetryState",
 ]

@@ -160,6 +160,7 @@ jobs:
                 REDIS_URL: "redis://redis:6379/0"
                 SECRET_KEY: "ci-smoke-test-secret-not-for-production"
                 DEMO_MODE: "false"
+                TELEMETRY_ENABLED: "false"
               ports:
                 - "4009:4009"
               depends_on:

@@ -80,6 +80,9 @@ services:
       MULTI_TENANCY_ENABLED: "${MULTI_TENANCY_ENABLED:-false}"
       DEFAULT_ORG_SLUG: "${DEFAULT_ORG_SLUG:-default}"
       UPDATE_CHECK_ENABLED: "${UPDATE_CHECK_ENABLED:-false}"
+      # Installation count: empty = the in-app switch decides (off until an admin
+      # agrees); false = always off; true = always on. See docs "Counting installations".
+      TELEMETRY_ENABLED: "${TELEMETRY_ENABLED:-}"
       CLAMAV_HOST: "${CLAMAV_HOST:-}"
       CLAMAV_PORT: "${CLAMAV_PORT:-3310}"
       CLAMAV_TIMEOUT_SECONDS: "${CLAMAV_TIMEOUT_SECONDS:-30}"
