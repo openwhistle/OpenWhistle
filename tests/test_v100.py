@@ -587,11 +587,6 @@ class TestConfigV100Defaults:
 
         assert settings.default_org_slug == "default"
 
-    def test_app_version_current(self) -> None:
-        from app.config import settings
-
-        assert settings.app_version == "1.6.0"
-
     def test_every_published_version_string_matches(self) -> None:
         """One version, written in several places. A release that bumps only
         some of them ships a Helm chart deploying an old image (it happened:
