@@ -114,13 +114,12 @@ async def send_report(installation_id: str) -> bool:
     """One GET, two parameters. A redirect is refused: the documentation names
     exactly one destination. Any failure is a debug line and False.
 
-    httpx's timeout bounds each phase (connect, each read) separately; the
-    asyncio.timeout bounds the whole request, so a trickling server cannot
-    hold it longer than TIMEOUT_SECONDS either."""
+    The bound is asyncio.timeout over the whole request: httpx's own timeout
+    is per phase (connect, each read), so a trickling server could outlast it."""
     try:
         async with (
             asyncio.timeout(TIMEOUT_SECONDS),
-            httpx.AsyncClient(timeout=TIMEOUT_SECONDS, follow_redirects=False) as client,
+            httpx.AsyncClient(follow_redirects=False) as client,
         ):
             resp = await client.get(
                 TELEMETRY_ENDPOINT,
