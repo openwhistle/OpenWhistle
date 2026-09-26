@@ -35,7 +35,7 @@ services:
       SECRET_KEY: "e2e-review-setup-secret-key-not-for-production-use"
       DEMO_MODE: "false"
       # Pinned so the wizard is reachable without reading a startup log —
-      # 16+ chars, this compose file's own value, never a production secret.
+      # 32+ chars (the minimum), this compose file's own value, never a production secret.
       SETUP_TOKEN: "review-setup-token-not-for-production"
       SECURE_COOKIES: "false"
       MULTI_TENANCY_ENABLED: "true"
