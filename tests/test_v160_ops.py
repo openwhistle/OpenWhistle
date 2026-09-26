@@ -100,3 +100,17 @@ def test_no_tracked_file_holds_a_machine_local_path() -> None:
         and local.search((ROOT / name).read_bytes().decode("utf-8", "ignore"))
     ]
     assert not offenders, offenders
+
+
+def test_the_image_ships_exactly_the_font_files_the_app_css_uses() -> None:
+    dockerfile = (ROOT / "Dockerfile").read_text()
+    copied = set(re.findall(r"docs/fonts/([\w.-]+\.woff2)", dockerfile))
+    css = "".join(p.read_text() for p in (ROOT / "app/static/css").glob("*.css"))
+    assert copied == set(re.findall(r"([\w.-]+\.woff2)", css))
+
+
+def test_local_tooling_and_maintainer_docs_stay_out_of_the_build_context() -> None:
+    ignored = (ROOT / ".dockerignore").read_text().split()
+    for path in (".serena", ".superpowers", ".claude", "docs-tech"):
+        assert path in ignored, path
+    assert ".serena/" in (ROOT / ".gitignore").read_text().split()
