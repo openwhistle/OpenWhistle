@@ -48,6 +48,14 @@ On `release/vX.Y.Z`:
   default in `docker-compose.prod.yml`. `test_every_published_version_string_matches`
   fails on any mismatch.
 - Move the released version off `docs/roadmap.html` (it holds only what's still ahead).
+- `test_every_new_setting_is_in_the_changelog` compares `Settings` with the
+  previous release's fields in `tests/data/previous_release_settings.txt`. After
+  the tag, refresh that list from it (CI checkouts have no tags, so the test
+  cannot ask git):
+
+  ```bash
+  git show vX.Y.Z:app/config.py | python3 scripts/list_settings.py > tests/data/previous_release_settings.txt
+  ```
 
 Merge once the checks are green.
 

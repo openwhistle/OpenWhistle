@@ -17,6 +17,42 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **LDAP and S3 are optional extras** (`ldap`, `s3`). The container image
   includes both; installing from source needs `pip install '.[ldap,s3]'` and
   `libldap2-dev libsasl2-dev`.
+- **A fresh install needs the setup token.** `/setup` asks for a one-time token: set
+  `SETUP_TOKEN` (16+ characters), or read the random one the app logs once at WARNING on its
+  first start. An existing installation is not affected.
+- **Admin sessions end 12 hours after login** (`SESSION_MAX_HOURS`), however often "Stay
+  signed in" is used; then password and TOTP again.
+- **The Compose stack listens on 443** and only redirects on 80 (see Added). Put your
+  certificate into `nginx/certs/`, or accept the self-signed one.
+- **`docker-compose.prod.yml` pins the image** to `${OPENWHISTLE_VERSION:-1.6.0}` instead of
+  `:latest`; set `OPENWHISTLE_VERSION` to upgrade.
+- Migrations 004–006 run at start: TOTP secrets are encrypted, audit rows get their
+  organisation, whistleblower times are rounded to the day (not reversible).
+
+### Security
+
+- **The first-run setup page belonged to whoever opened it first.** `/setup` now needs a
+  one-time setup token (`SETUP_TOKEN`, or a random token logged once at start), deleted when
+  the first admin exists.
+- **TOTP secrets are encrypted at rest** (migration 004): a database dump no longer yields the
+  second factor of every account.
+- **Admin sessions have an absolute lifetime** (`SESSION_MAX_HOURS`, default 12). "Stay signed
+  in" renews the token up to that limit, never past it, and the renewal needs the CSRF header.
+- **A deactivated account gets neither the TOTP step nor a session**, on every login path
+  (password, LDAP, OIDC, first TOTP setup).
+- **An unknown role is refused with 422** when creating a user or changing a role (it used to
+  create an *admin*); the role picker defaults to case manager.
+- Only admins may dismiss the IP-header warning.
+- **Audit entries carry their organisation** (migration 005 backfills existing rows), so an
+  organisation's audit log shows its own entries and no one else's; an admin without an
+  organisation sees only entries they wrote.
+- **Containers are hardened**: read-only root file system, all capabilities dropped,
+  `no-new-privileges`, base images pinned by digest, no `curl` in the image, uid 1000 to match
+  the Helm chart's `securityContext` (`readOnlyRootFilesystem`, no privilege escalation).
+- **LDAP refuses an empty password** (a simple bind with an empty password is an anonymous bind
+  and succeeds), escapes the username in the search filter, demands a valid certificate with
+  TLS 1.2 or later, and always closes its connections.
+- CI runs `pip-audit` and Trivy on every pull request and weekly.
 
 ### Added
 
@@ -42,6 +78,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed (breaking)
 
+- `BRAND_SECONDARY_COLOR` is gone (see Removed); remove it from your environment.
+- **Existing whistleblower times are rounded to the day** by migration 006, irreversibly (see
+  Changed).
 - `.doc` and `.xls` uploads are refused; their author field cannot be removed. The message tells
   the reporter to save as `.docx`/`.xlsx`.
 - **Webhooks carry counts only, never case numbers or deadlines.** The generic digest webhook's
@@ -54,6 +93,21 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Privacy
 
+- **The confidential identity is shown only to the handler, with an audited reason.** The case
+  page no longer prints the reporter's name and contact: the assigned handler (for an
+  unassigned case, an admin of the case's organisation) enters a 10–500 character reason, sees
+  the identity once, and the reason is stored encrypted in the audit log. Every case view is
+  audited too; the audit log hides views unless *Show case views* is ticked.
+- **Search inside reports.** The dashboard search also finds words in descriptions and
+  messages (three characters or more), decrypted in memory for that request only — no index is
+  stored, the confidential name never matches, and at most the 5,000 newest cases in the
+  current view are searched.
+- **The audit CSV export neutralises spreadsheet formulas** and writes each detail as one JSON
+  cell, so a reason cannot forge extra fields.
+- **Excel's own "Name:" label is removed from comment text** in `.xlsx` uploads, not only the
+  comment's author field.
+- **S3 objects stored before v1.5.0 are moved to keys without the filename** at start (once
+  across replicas), and no log line or error message names a storage key.
 - **PDF export leaves the confidential identity out** unless the handler gives an audited reason.
   The default export prints "Identity: [on file — not included]"; a new "Export PDF with identity"
   button asks for the same 10–500 character reason as the on-screen reveal and writes the same
@@ -90,6 +144,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **A case-number collision expired every object the caller held** (a full rollback), so the
+  next attribute access failed with `MissingGreenlet`; each attempt now uses its own
+  SAVEPOINT.
 - Report creation retried on any database integrity error; it now retries only a case-number
   collision and raises any other error at once.
 - Two messages posted to one case at the same moment could get the same time and an arbitrary
@@ -141,6 +198,27 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   crafted request could skip ahead (store a file on a fresh draft) or submit a rejected
   description. Unknown actions are now ignored, and the final submit re-checks every field
   before the report is created. The skip-ahead was already possible in v1.5.0.
+
+### Design
+
+- **Signal design across the app**: one admin shell with a role-aware sidebar (a case manager
+  sees only the pages they may open) and a phone menu; SVG icons instead of emoji; an icon
+  theme toggle; footer as a list; eyebrows only where they carry information; panel headers
+  are real headings.
+- **Phones**: the report form comes first, a case number or PIN never breaks across lines, and
+  tables stack into labelled rows that keep their table semantics.
+- The website describes 1.6 (English and German landing pages, the "Was ist neu in 1.6"
+  article), serves every font it uses itself, and the roadmap moved from `ROADMAP.md` to
+  [openwhistle.net/roadmap.html](https://openwhistle.net/roadmap.html).
+
+### Process
+
+- CI runs codespell, markdownlint and ruff over the whole repository, a runtime check of the
+  nginx onion-listener trust boundary, and every GitHub Action is pinned by commit SHA.
+- A test fails when a setting added since the previous release is missing from this
+  changelog.
+- Every new guard of this release is pinned by a mutation that turns its test red
+  (`scripts/mutation_audit.py`).
 
 ### Removed
 
