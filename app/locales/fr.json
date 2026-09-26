@@ -348,6 +348,7 @@
   "admin.report.delete.cannot_self": "Vous avez demandé cette suppression. Un autre administrateur doit la confirmer.",
   "role.label.admin": "Administrateur",
   "role.label.case_manager": "Gestionnaire de dossier",
+  "role.label.superadmin": "Super-administrateur",
   "admin.categories.title": "Gestion des catégories",
   "admin.categories.add.header": "Ajouter une nouvelle catégorie",
   "admin.categories.add.slug": "Slug",

@@ -1205,3 +1205,87 @@ async def test_case_manager_statistics_cover_only_their_cases(db_session: AsyncS
     stats = await get_dashboard_stats(db_session, assigned_to_id=manager.id)
     assert stats["total_reports"] == 1
     assert stats["by_category"] == {"corruption": 1}
+
+
+@pytest.mark.asyncio
+async def test_new_user_role_select_defaults_to_the_least_privileged_role(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """The "Add new user" role <select> used to default to whatever `AdminRole`
+    declared first (superadmin) because no <option> carried `selected` — a new
+    account silently got the most privileged role unless the operator noticed
+    and changed it. It must default to case_manager, and least-to-most
+    privileged is also the on-screen option order (admin/users.html)."""
+    await _login(client, db_session, AdminRole.admin)
+    html = (await client.get("/admin/users")).text
+    select_html = html.split('id="new-role"', 1)[1].split("</select>", 1)[0]
+    options = re.findall(
+        r'<option value="([a-z_]+)"\s*(selected)?[^>]*>', select_html
+    )
+    assert [value for value, _ in options] == ["case_manager", "admin", "superadmin"]
+    selected = [value for value, sel in options if sel]
+    assert selected == ["case_manager"], options
+
+
+def test_every_admin_role_has_a_badge_color() -> None:
+    """admin/users.html and dashboard.html render `badge-{{ role.value }}` —
+    `role.label.superadmin` shipping without `.badge-superadmin` would leave a
+    superadmin's badge with no colour (the same class of gap as the missing
+    locale key)."""
+    css = (Path(__file__).parents[1] / "app/static/css/site.css").read_text()
+    for role in AdminRole:
+        assert f".badge-{role.value} {{" in css, f".badge-{role.value} rule missing"
+
+
+@pytest.mark.asyncio
+async def test_dashboard_and_case_page_show_the_category_in_german(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """The dashboard row and case page header used to render `report.category`
+    through `| replace('_', ' ') | title` — always English-shaped ("Financial
+    Fraud") regardless of the admin's UI language, even though categories
+    carry a `label_de` ("Finanzbetrug", seeded by migration 001)."""
+    from app.services.report import create_report
+
+    await _login(client, db_session, AdminRole.admin)
+    report, _ = await create_report(db_session, "financial_fraud", "x" * 20)
+    client.cookies.set("ow-lang", "de")
+
+    dashboard_html = (await client.get("/admin/dashboard")).text
+    assert "Finanzbetrug" in dashboard_html
+    assert "Financial Fraud" not in dashboard_html
+
+    case_html = (await client.get(f"/admin/reports/{report.id}")).text
+    assert "Finanzbetrug" in case_html
+    assert "Financial Fraud" not in case_html
+
+
+def test_dashboard_table_action_column_is_pinned_and_status_badge_wraps() -> None:
+    """Reproduced by rendering the dashboard with a `pending_feedback` report
+    (its German status badge, "Rückmeldung ausstehend", is unbreakable —
+    `.badge` is `white-space: nowrap` — and alone widens the 8-column table
+    past `.table-wrapper`'s 1064px viewport at both 1440 and 1920px, where the
+    admin-shell caps content width at 1440px regardless of screen size). The
+    wrapper's `overflow-x: auto` already contains that, but its default scroll
+    position hid the last column — the row's "Ansehen" action — off the right
+    edge, unreachable without knowing to scroll a table that shows no
+    scrollbar hint. Confirmed with Playwright against the rendered HTML
+    (dashboard's `<td class="stack-action">` / `<a class="btn">`
+    `getBoundingClientRect().right` exceeded the panel's before this fix, and
+    stayed within it after — see task-X10-report.md).
+
+    This guard pins the fix in source: the action column must stay visible
+    regardless of scroll position (`position: sticky; right: 0`), and the
+    status badge must be allowed to wrap so the common case does not need to
+    scroll at all."""
+    css = (Path(__file__).parents[1] / "app/static/css/site.css").read_text()
+    assert re.search(
+        r"\.table-stack td\.stack-action[^{]*\{[^}]*position:\s*sticky[^}]*right:\s*0",
+        css,
+        re.DOTALL,
+    ), "the dashboard table's action column must stay pinned to the right edge"
+    assert re.search(
+        r"\.table-stack \.stack-status \.badge\s*\{[^}]*white-space:\s*normal",
+        css,
+        re.DOTALL,
+    ), "the dashboard table's status badge must be allowed to wrap"

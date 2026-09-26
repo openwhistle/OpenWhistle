@@ -227,9 +227,11 @@ async def dashboard(
     now = datetime.now(UTC)
     ip_warning = await check_ip_warning()
 
+    from app.services.categories import get_category_labels
     from app.services.locations import get_all_locations
 
     all_locations = await get_all_locations(db)
+    category_labels = await get_category_labels(db, get_lang(request))
 
     return render(
         request,
@@ -239,6 +241,7 @@ async def dashboard(
             "reports": reports,
             "now": now,
             "ip_warning": ip_warning,
+            "category_labels": category_labels,
             "ack_deadline_days": 7,
             "feedback_deadline_days": 90,
             "deleted_case": request.query_params.get("deleted"),
@@ -341,7 +344,10 @@ async def _render_report(
 ) -> HTMLResponse:
     from datetime import UTC, datetime
 
+    from app.services.categories import get_category_labels
     from app.services.users import get_all_users
+
+    category_labels = await get_category_labels(db, get_lang(request))
 
     all_admins = [
         u for u in await get_all_users(db)
@@ -398,6 +404,7 @@ async def _render_report(
             "allowed_transitions": allowed_transitions,
             "all_admins": all_admins,
             "linked_reports": linked,
+            "category_labels": category_labels,
             "audit_entries": audit_entries,
             "is_admin": current_user.role in {AdminRole.admin, AdminRole.superadmin},
             "has_identity": bool(report.confidential_name or report.confidential_contact),
@@ -1211,9 +1218,8 @@ async def stats_page(
     stats = await report_service.get_dashboard_stats(
         db, assigned_to_id=_own_cases_only(current_user), **_org_scope(current_user)
     )
-    from app.services.categories import get_all_categories
-    categories = await get_all_categories(db)
-    cat_map = {c.slug: c.label_en for c in categories}
+    from app.services.categories import get_category_labels
+    cat_map = await get_category_labels(db, get_lang(request))
     return render(request, "admin/stats.html", {
         "user": current_user,
         "stats": stats,

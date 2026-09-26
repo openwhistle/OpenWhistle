@@ -263,6 +263,7 @@
   "admin.report.delete.cannot_self": "Sie haben diese Löschung beantragt. Ein anderer Administrator muss sie bestätigen.",
   "role.label.admin": "Administrator",
   "role.label.case_manager": "Fallbearbeiter",
+  "role.label.superadmin": "Superadministrator",
   "admin.categories.title": "Kategorienverwaltung",
   "admin.categories.add.header": "Neue Kategorie hinzufügen",
   "admin.categories.add.slug": "Slug",

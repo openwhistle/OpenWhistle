@@ -45,7 +45,7 @@
                     <label class="form-label" for="new-role">{{ t('admin.users.add.role') }}</label>
                     <select class="form-control" id="new-role" name="role">
                         {% for role in roles %}
-                        <option value="{{ role.value }}">{{ t('role.label.' + role.value) }}</option>
+                        <option value="{{ role.value }}" {{ 'selected' if role.value == 'case_manager' else '' }}>{{ t('role.label.' + role.value) }}</option>
                         {% endfor %}
                     </select>
                 </div>

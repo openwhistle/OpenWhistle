@@ -281,6 +281,7 @@
   "admin.report.delete.cannot_self": "Você solicitou esta exclusão — um administrador diferente deve confirmá-la.",
   "role.label.admin": "Administrador",
   "role.label.case_manager": "Gerente de casos",
+  "role.label.superadmin": "Superadministrador",
   "admin.categories.title": "Gerenciamento de categorias",
   "admin.categories.add.header": "Adicionar nova categoria",
   "admin.categories.add.slug": "Slug",

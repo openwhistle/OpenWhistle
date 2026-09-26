@@ -82,7 +82,7 @@
                 <h2 class="panel-header">
                     {{ t('admin.report.initial') }}
                     &nbsp;&nbsp;
-                    <span class="badge badge-received">{{ report.category | replace('_', ' ') | title }}</span>
+                    <span class="badge badge-received">{{ report.category | category_label(category_labels) }}</span>
                 </h2>
                 <p class="report-description">{{ decrypted_description }}</p>
 
@@ -193,7 +193,7 @@
                         <li class="report-link-row">
                             <a href="/admin/reports/{{ lr.id }}" class="mono report-value-strong">{{ lr.case_number }}</a>
                             <span class="badge badge-{{ lr.status }} report-link-badge">{{ t('status.label.' + lr.status) }}</span>
-                            <span class="report-link-category">{{ lr.category | replace('_', ' ') | title }}</span>
+                            <span class="report-link-category">{{ lr.category | category_label(category_labels) }}</span>
                             <form method="post" action="/admin/reports/{{ report.id }}/links/{{ lr.link_id }}/delete" class="m-0" data-confirm="{{ t('admin.report.links.remove_confirm', case=lr.case_number) }}">
                                 <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                                 <button type="submit" class="btn btn-secondary btn-sm report-btn-xs">

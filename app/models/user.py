@@ -20,9 +20,12 @@ if TYPE_CHECKING:
 
 
 class AdminRole(enum.StrEnum):
-    superadmin = "superadmin"
-    admin = "admin"
+    """Declared least- to most-privileged: `list(AdminRole)` drives every role
+    <select> in the admin UI, and that order is the display order there."""
+
     case_manager = "case_manager"
+    admin = "admin"
+    superadmin = "superadmin"
 
 
 class AdminUser(Base):

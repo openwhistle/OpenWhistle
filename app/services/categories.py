@@ -36,6 +36,13 @@ async def get_all_categories(db: AsyncSession) -> list[ReportCategory]:
     return list(result.scalars().all())
 
 
+async def get_category_labels(db: AsyncSession, lang: str) -> dict[str, str]:
+    """slug -> label in the caller's UI language, for every category
+    (including deactivated ones — an existing report can still reference a
+    deactivated category and must still show a real label, not its slug)."""
+    return {c.slug: c.label_for(lang) for c in await get_all_categories(db)}
+
+
 async def get_category_by_id(db: AsyncSession, cat_id: uuid.UUID) -> ReportCategory | None:
     result = await db.execute(select(ReportCategory).where(ReportCategory.id == cat_id))
     return result.scalar_one_or_none()

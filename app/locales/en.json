@@ -263,6 +263,7 @@
   "admin.report.delete.cannot_self": "You requested this deletion. A different admin must confirm it.",
   "role.label.admin": "Administrator",
   "role.label.case_manager": "Case manager",
+  "role.label.superadmin": "Super administrator",
   "admin.categories.title": "Category management",
   "admin.categories.add.header": "Add new category",
   "admin.categories.add.slug": "Slug",
