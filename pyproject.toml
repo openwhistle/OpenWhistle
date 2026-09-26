@@ -148,6 +148,9 @@ ignore = [
 "tests/perf/*" = ["S101", "S105", "S106", "S107", "S110"]
 # Generated schema: wide column lists and seed rows; the only f-string is a fixed UUID constant.
 "migrations/versions/001_initial_schema.py" = ["E501", "S608"]
+# The page shell is copied verbatim from docs/roadmap.html as a template string;
+# its CSS/HTML lines are not code and keep roadmap.html's own line lengths.
+"scripts/render_changelog.py" = ["E501"]
 
 # ─── pytest ──────────────────────────────────────────────────────────────────
 
