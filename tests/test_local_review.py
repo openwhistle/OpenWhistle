@@ -78,11 +78,11 @@ async def _delete_demo_admin(db: AsyncSession) -> None:
 
 def test_local_review_login_requires_demo_mode() -> None:
     with pytest.raises(ValidationError):
-        Settings(secret_key="x" * 32, local_review_login=True, demo_mode=False)  # type: ignore[call-arg]
+        Settings(secret_key="x" * 32, local_review_login=True, demo_mode=False)
 
 
 def test_local_review_login_allowed_with_demo_mode() -> None:
-    s = Settings(secret_key="x" * 32, local_review_login=True, demo_mode=True)  # type: ignore[call-arg]
+    s = Settings(secret_key="x" * 32, local_review_login=True, demo_mode=True)
     assert s.local_review_login is True
 
 
