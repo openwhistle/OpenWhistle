@@ -10,9 +10,10 @@ import subprocess
 import threading
 import time
 import uuid
-from collections.abc import AsyncGenerator, Iterator
+from collections.abc import AsyncGenerator, Awaitable, Callable, Iterator
 from datetime import UTC, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 from urllib.parse import parse_qs, urlsplit
@@ -58,6 +59,15 @@ def _handler(hits: _Hits) -> type[BaseHTTPRequestHandler]:
                 return
             if path == "/slow":
                 time.sleep(1.5)
+            if path == "/trickle":
+                self.send_response(200)
+                self.send_header("Content-Length", "20")
+                self.end_headers()
+                for _ in range(20):
+                    self.wfile.write(b"x")
+                    self.wfile.flush()
+                    time.sleep(0.15)
+                return
             if path == "/fail":
                 self.send_response(500)
                 self.end_headers()
@@ -140,7 +150,28 @@ async def test_a_report_is_one_get_with_the_id_and_the_version_and_nothing_else(
 
 
 def test_the_production_endpoint_is_the_documented_one() -> None:
-    assert telemetry.TELEMETRY_ENDPOINT == "https://telemetry.wdkro.de/v1/openwhistle/count"
+    # Read from the source: conftest points the module value at 127.0.0.1:9 for every test.
+    source = (Path(__file__).parents[1] / "app/services/telemetry.py").read_text()
+    assert 'TELEMETRY_ENDPOINT = "https://telemetry.wdkro.de/v1/openwhistle/count"\n' in source
+
+
+def test_no_test_can_reach_the_real_endpoint() -> None:
+    assert telemetry.TELEMETRY_ENDPOINT.startswith("http://127.0.0.1:9/")
+    assert settings.telemetry_enabled is False  # conftest, not the shell
+
+
+@pytest.mark.asyncio
+async def test_a_trickling_endpoint_is_bounded_as_a_whole(
+    fake_server: tuple[str, _Hits], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """httpx's timeout is per read; each byte here arrives well inside it."""
+    base, _ = fake_server
+    monkeypatch.setattr(telemetry, "TELEMETRY_ENDPOINT", f"{base}/trickle")
+    monkeypatch.setattr(telemetry, "TIMEOUT_SECONDS", 0.5)
+
+    started = time.monotonic()
+    assert await telemetry.send_report("ab" * 16) is False
+    assert time.monotonic() - started < 1.5
 
 
 @pytest.mark.asyncio
@@ -243,6 +274,8 @@ async def test_nothing_is_sent_without_consent_or_under_a_hard_off(
 
     assert await telemetry.report_if_due(db_session, redis) is False
     assert hits == []
+    if enabled is None:
+        assert await _row(db_session) is None  # the job wrote nothing either
 
 
 @pytest.mark.asyncio
@@ -257,6 +290,9 @@ async def test_telemetry_enabled_true_reports_without_a_row(
 
     assert await telemetry.report_if_due(db_session, redis) is True
     assert len(hits) == 1
+    row = await _row(db_session)
+    assert row is not None and row.last_sent_at is not None
+    assert parse_qs(hits[0]["query"])["id"] == [row.installation_id]
 
 
 @pytest.mark.asyncio
@@ -456,19 +492,72 @@ async def test_the_system_page_shows_the_exact_request_and_this_installations_id
 
 
 @pytest.mark.asyncio
-async def test_the_system_page_creates_the_identifier_on_first_use(
+async def test_viewing_the_system_page_writes_nothing(
     signed_in: tuple[AsyncClient, AdminUser, str], db_session: AsyncSession,
     consent_from_db: None,
 ) -> None:
+    from app.i18n import make_translator
+
     client, _, _ = signed_in
     await _set_row(db_session, enabled=None)
 
     resp = await client.get("/admin/system")
 
+    assert resp.status_code == 200
+    assert await _row(db_session) is None
+    assert make_translator("en")("admin.system.telemetry.id_placeholder") in resp.text
+    assert telemetry.TELEMETRY_ENDPOINT in resp.text
+    assert 'action="/admin/system/telemetry"' in resp.text
+
+
+@pytest.mark.asyncio
+async def test_switching_on_a_never_asked_install_creates_the_identifier(
+    signed_in: tuple[AsyncClient, AdminUser, str], db_session: AsyncSession,
+    consent_from_db: None,
+) -> None:
+    client, admin, csrf = signed_in
+    await _set_row(db_session, enabled=None)
+
+    resp = await client.post("/admin/system/telemetry",
+                             data={"csrf_token": csrf, "enabled": "1"}, follow_redirects=False)
+
+    assert resp.status_code == 302
+    row = await _row(db_session)
+    assert row is not None and row.enabled is True
+    assert re.fullmatch(r"[0-9a-f]{32}", row.installation_id)
+    assert await _audit(db_session, admin) == [AuditAction.TELEMETRY_ENABLED]
+
+
+@pytest.mark.asyncio
+async def test_switching_off_a_never_asked_install_writes_nothing(
+    signed_in: tuple[AsyncClient, AdminUser, str], db_session: AsyncSession,
+    consent_from_db: None,
+) -> None:
+    client, admin, csrf = signed_in
+    await _set_row(db_session, enabled=None)
+
+    resp = await client.post("/admin/system/telemetry",
+                             data={"csrf_token": csrf, "enabled": "0"}, follow_redirects=False)
+
+    assert resp.status_code == 302
+    assert await _row(db_session) is None
+    assert await _audit(db_session, admin) == []
+
+
+@pytest.mark.asyncio
+async def test_reset_on_a_never_asked_install_creates_a_row_that_stays_off(
+    signed_in: tuple[AsyncClient, AdminUser, str], db_session: AsyncSession,
+    consent_from_db: None,
+) -> None:
+    client, _, csrf = signed_in
+    await _set_row(db_session, enabled=None)
+
+    resp = await client.post("/admin/system/telemetry/reset-id", data={"csrf_token": csrf},
+                             follow_redirects=False)
+
+    assert resp.status_code == 302
     row = await _row(db_session)
     assert row is not None and row.enabled is False
-    assert re.fullmatch(r"[0-9a-f]{32}", row.installation_id)
-    assert row.installation_id in resp.text
 
 
 @pytest.mark.asyncio
@@ -611,10 +700,11 @@ async def test_reset_needs_the_csrf_token(
 
 
 @pytest.mark.asyncio
-async def test_the_wizard_asks_with_the_box_unchecked(client: AsyncClient) -> None:
+async def test_the_wizard_asks_with_the_box_unchecked(
+    throwaway_db: AsyncSession, client: AsyncClient
+) -> None:
     resp = await client.get("/setup", follow_redirects=False)
-    if resp.status_code != 200:
-        pytest.skip("setup already completed on the shared test database")
+    assert resp.status_code == 200
     box = re.search(r'<input[^>]*name="telemetry"[^>]*>', resp.text)
     assert box is not None
     assert "checked" not in box.group(0)
@@ -624,15 +714,59 @@ async def test_the_wizard_asks_with_the_box_unchecked(client: AsyncClient) -> No
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(("answer", "stored", "row_first"), [
-    (None, False, False), ("1", True, False),
-    ("1", True, True),  # the hourly job already created the row, switched off
+    (None, None, False),   # no: no row at all, which is off
+    ("1", True, False),
+    ("1", True, True),     # a row already exists (e.g. TELEMETRY_ENABLED=true sent once)
 ])
 async def test_the_wizard_stores_the_answer(
-    throwaway_db: AsyncSession, client: AsyncClient, answer: str | None, stored: bool,
+    throwaway_db: AsyncSession, client: AsyncClient, answer: str | None, stored: bool | None,
     row_first: bool,
 ) -> None:
     if row_first:
         await _set_row(throwaway_db, enabled=False)
+    resp = await _wizard_post(client, answer)
+
+    assert resp.status_code == 302
+    row = await _row(throwaway_db)
+    if stored is None:
+        assert row is None
+    else:
+        assert row is not None and row.enabled is stored
+        assert re.fullmatch(r"[0-9a-f]{32}", row.installation_id)
+
+
+@pytest.mark.asyncio
+async def test_the_wizard_survives_a_row_created_while_it_runs(
+    throwaway_db: AsyncSession, client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Another writer commits the row after the wizard started its transaction and
+    before it writes its own: setup still succeeds and the answer is kept."""
+    import app.api.wizard as wizard
+
+    real: Callable[[AsyncSession], Awaitable[TelemetryState]] = wizard.ensure_telemetry_state
+    engine = create_async_engine(settings.database_url, poolclass=NullPool)
+
+    async def racing(db: AsyncSession) -> TelemetryState:
+        async with engine.begin() as conn:
+            await conn.execute(text(
+                "INSERT INTO telemetry_state (id, enabled, installation_id)"
+                " VALUES (1, false, 'cd' || repeat('0', 30))"
+            ))
+        return await real(db)
+
+    monkeypatch.setattr(wizard, "ensure_telemetry_state", racing)
+    try:
+        resp = await _wizard_post(client, "1")
+    finally:
+        await engine.dispose()
+
+    assert resp.status_code == 302
+    row = await _row(throwaway_db)
+    assert row is not None and row.enabled is True
+    assert row.installation_id == "cd" + "0" * 30
+
+
+async def _wizard_post(client: AsyncClient, answer: str | None) -> Any:
     get_resp = await client.get("/setup", follow_redirects=False)
     assert get_resp.status_code == 200
     secret = generate_totp_secret()
@@ -644,13 +778,7 @@ async def test_the_wizard_stores_the_answer(
     }
     if answer is not None:
         data["telemetry"] = answer
-
-    resp = await client.post("/setup", data=data, follow_redirects=False)
-
-    assert resp.status_code == 302
-    row = await _row(throwaway_db)
-    assert row is not None and row.enabled is stored
-    assert re.fullmatch(r"[0-9a-f]{32}", row.installation_id)
+    return await client.post("/setup", data=data, follow_redirects=False)
 
 
 # ── Migration 007 ──────────────────────────────────────────────────────────
@@ -700,6 +828,9 @@ async def test_startup_registers_the_job_even_while_the_switch_is_off(
     ):
         async with lifespan(FastAPI()):
             pass
+    from app.redis_client import close_redis
+
+    await close_redis()  # the lifespan's client lives on this test's loop
 
     ids = [c.kwargs.get("id") for c in scheduler.add_job.call_args_list]
     assert ids == ["telemetry"]

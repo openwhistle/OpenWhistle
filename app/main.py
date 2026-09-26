@@ -143,7 +143,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         rekey_task.add_done_callback(_log_rekey_task_result)
 
     from app.services.notifications import batching_enabled  # noqa: PLC0415
-    from app.services.telemetry import locked_by as telemetry_locked_by  # noqa: PLC0415
+    from app.services.telemetry import hard_off as telemetry_hard_off  # noqa: PLC0415
 
     scheduler = None
     if (
@@ -151,7 +151,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         or settings.retention_enabled
         or settings.update_check_enabled
         or batching_enabled()
-        or telemetry_locked_by() not in ("demo", "env_off")
+        or not telemetry_hard_off()
     ):
         from apscheduler.schedulers.asyncio import AsyncIOScheduler  # noqa: PLC0415
 

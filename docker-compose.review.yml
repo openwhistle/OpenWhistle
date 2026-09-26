@@ -39,6 +39,8 @@ services:
       SETUP_TOKEN: "review-setup-token-not-for-production"
       SECURE_COOKIES: "false"
       MULTI_TENANCY_ENABLED: "true"
+      # A review stack is not an installation: never counted, whatever is ticked.
+      TELEMETRY_ENABLED: "false"
     ports:
       - "127.0.0.1:4010:4009"
     depends_on:

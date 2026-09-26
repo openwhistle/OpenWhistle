@@ -1474,8 +1474,7 @@ async def system_page(
     update = await get_update_status(redis, settings.app_version)
     recheck = request.query_params.get("recheck") == "1"
     integrity = await get_integrity_status(redis, recheck=recheck)
-    state = await telemetry.get_state(db)
-    await db.commit()  # the identifier, if this was its first use
+    state = await telemetry.get_state(db)  # reads only; None until someone agrees
     return render(
         request,
         "admin/system.html",
@@ -1484,10 +1483,12 @@ async def system_page(
             "telemetry": {
                 "enabled": telemetry.is_enabled(state),
                 "locked_by": telemetry.locked_by(),
-                "installation_id": state.installation_id,
-                "url": telemetry.report_url(state.installation_id),
-                "last_sent_at": state.last_sent_at,
+                "installation_id": state.installation_id if state else None,
+                "url": telemetry.report_url(state.installation_id) if state else None,
+                "last_sent_at": state.last_sent_at if state else None,
                 "env": settings.telemetry_enabled,
+                "endpoint": telemetry.TELEMETRY_ENDPOINT,
+                "version": settings.app_version,
             },
         },
     )
@@ -1505,9 +1506,11 @@ async def system_telemetry_toggle(
     if telemetry.locked_by() is not None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,
                             detail="The installation count is set by the environment.")
-    state = await telemetry.get_state(db)
     wanted = enabled == "1"
-    if state.enabled != wanted:
+    state = await telemetry.get_state(db)
+    if state is None and wanted:
+        state = await telemetry.ensure_state(db)
+    if state is not None and state.enabled != wanted:
         state.enabled = wanted
         await audit_service.log(
             db, current_user,
@@ -1525,7 +1528,7 @@ async def system_telemetry_reset_id(
 ) -> RedirectResponse:
     from app.services import telemetry
 
-    state = await telemetry.get_state(db)
+    state = await telemetry.ensure_state(db)
     state.installation_id = telemetry.new_installation_id()
     state.last_sent_at = None  # a new installation, as far as the far end can tell
     await audit_service.log(db, current_user, AuditAction.TELEMETRY_ID_RESET)

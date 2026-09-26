@@ -16,6 +16,7 @@ in-app answer, and a demo or local-review instance is never counted.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import secrets
 from datetime import UTC, datetime, timedelta
@@ -62,6 +63,11 @@ def locked_by() -> str | None:
     return None
 
 
+def hard_off() -> bool:
+    """Nothing can ever be sent: a demo, a local review stack, TELEMETRY_ENABLED=false."""
+    return locked_by() in ("demo", "env_off")
+
+
 def is_enabled(state: TelemetryState | None) -> bool:
     lock = locked_by()
     if lock is not None:
@@ -75,18 +81,26 @@ def new_installation_id() -> str:
     return secrets.token_hex(16)
 
 
-async def get_state(db: AsyncSession) -> TelemetryState:
-    """The single row, created switched off with a new identifier on first use.
-    Flushes only; the caller commits."""
+async def get_state(db: AsyncSession) -> TelemetryState | None:
+    """The single row, or None on an installation never asked. Reads only."""
+    state: TelemetryState | None = await db.scalar(
+        select(TelemetryState).where(TelemetryState.id == 1)
+        .execution_options(populate_existing=True)
+    )
+    return state
+
+
+async def ensure_state(db: AsyncSession) -> TelemetryState:
+    """The single row, created switched off with a new identifier if missing.
+    Only for a consent path (wizard yes, switch on, reset, a first send under
+    TELEMETRY_ENABLED=true). Race-free against a concurrent creator; the
+    caller commits."""
     await db.execute(
         insert(TelemetryState)
         .values(id=1, enabled=False, installation_id=new_installation_id())
         .on_conflict_do_nothing(index_elements=["id"])
     )
-    state = await db.scalar(
-        select(TelemetryState).where(TelemetryState.id == 1)
-        .execution_options(populate_existing=True)
-    )
+    state = await get_state(db)
     assert state is not None  # noqa: S101 — inserted just above
     return state
 
@@ -98,9 +112,16 @@ def report_url(installation_id: str) -> str:
 
 async def send_report(installation_id: str) -> bool:
     """One GET, two parameters. A redirect is refused: the documentation names
-    exactly one destination. Any failure is a debug line and False."""
+    exactly one destination. Any failure is a debug line and False.
+
+    httpx's timeout bounds each phase (connect, each read) separately; the
+    asyncio.timeout bounds the whole request, so a trickling server cannot
+    hold it longer than TIMEOUT_SECONDS either."""
     try:
-        async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS, follow_redirects=False) as client:
+        async with (
+            asyncio.timeout(TIMEOUT_SECONDS),
+            httpx.AsyncClient(timeout=TIMEOUT_SECONDS, follow_redirects=False) as client,
+        ):
             resp = await client.get(
                 TELEMETRY_ENDPOINT,
                 params={"id": installation_id, "v": settings.app_version},
@@ -122,11 +143,10 @@ def _due(state: TelemetryState, now: datetime) -> bool:
 async def report_if_due(db: AsyncSession, redis: Redis) -> bool:
     """Send one report if consent is in place and a day passed since the last
     success. True only when a report was accepted (and recorded)."""
-    if locked_by() in ("demo", "env_off"):
+    if hard_off():
         return False
-    state = await get_state(db)
-    await db.commit()
-    if not is_enabled(state) or not _due(state, datetime.now(UTC)):
+    state = await get_state(db)  # reads only: a never-asked install gets no row
+    if not is_enabled(state) or (state is not None and not _due(state, datetime.now(UTC))):
         return False
 
     try:
@@ -136,6 +156,9 @@ async def report_if_due(db: AsyncSession, redis: Redis) -> bool:
         log.debug("Installation count skipped, no lock: %s", type(exc).__name__)
         return False
 
+    if state is None:  # TELEMETRY_ENABLED=true and never sent: the identifier is made now
+        state = await ensure_state(db)
+        await db.commit()
     if not await send_report(state.installation_id):
         # Not recorded: a host offline for a week reports on the day it is back.
         return False
@@ -164,7 +187,7 @@ async def run_telemetry_job() -> None:
 def schedule(scheduler: Any) -> bool:
     """Register the hourly job unless nothing could ever be sent. The first run
     waits a random part of an hour."""
-    if locked_by() in ("demo", "env_off"):
+    if hard_off():
         return False
     first = datetime.now(UTC) + timedelta(seconds=secrets.randbelow(MAX_SPREAD_SECONDS))
     scheduler.add_job(

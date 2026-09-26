@@ -13,14 +13,13 @@ from app.config import settings
 from app.csrf import validate_csrf
 from app.database import get_db
 from app.models.setup import SetupStatus
-from app.models.telemetry import TelemetryState
 from app.models.user import AdminUser
 from app.redis_client import get_redis
 from app.services import rate_limit as rl
 from app.services.auth import hash_password, validate_password
 from app.services.mfa import generate_qr_code_base64, generate_totp_secret, verify_totp
 from app.services.setup_token import check_setup_token, delete_setup_token, ensure_setup_token
-from app.services.telemetry import new_installation_id
+from app.services.telemetry import ensure_state as ensure_telemetry_state
 from app.services.users import validate_username
 from app.templating import render
 
@@ -91,12 +90,11 @@ async def create_initial_admin(
         setup.completed = True
         setup.completed_at = datetime.now(UTC)
 
-    # The installation-count answer; unchecked by default in the form.
-    state = await db.get(TelemetryState, 1)
-    if state is None:
-        db.add(TelemetryState(id=1, enabled=telemetry, installation_id=new_installation_id()))
-    else:
-        state.enabled = telemetry
+    # The installation-count answer, unchecked by default in the form. Only a
+    # yes creates the row; no row means off.
+    if telemetry:
+        state = await ensure_telemetry_state(db)
+        state.enabled = True
 
     await db.commit()
     return True

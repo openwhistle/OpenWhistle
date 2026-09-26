@@ -133,11 +133,16 @@
         </div>
 
         <p>{{ t('admin.system.telemetry.body.html') }}</p>
-        <pre><code>GET {{ telemetry.url }}</code></pre>
+        <pre><code>GET {{ telemetry.url or (telemetry.endpoint ~ '?id=<' ~ t('admin.system.telemetry.id_placeholder') ~ '>&v=' ~ telemetry.version) }}
+User-Agent: openwhistle/{{ telemetry.version }}</code></pre>
 
         <div class="detail-row">
             <div class="detail-label">{{ t('admin.system.telemetry.id') }}</div>
-            <code>{{ telemetry.installation_id }}</code>
+            {% if telemetry.installation_id %}
+                <code>{{ telemetry.installation_id }}</code>
+            {% else %}
+                <span>{{ t('admin.system.telemetry.id_placeholder') }}</span>
+            {% endif %}
         </div>
         <div class="detail-row">
             <div class="detail-label">{{ t('admin.system.telemetry.last_sent') }}</div>
