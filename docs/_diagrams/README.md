@@ -32,9 +32,10 @@ one-time step before a commit; nothing at request time or in CI runs node.
 
 Both variants go in the markup; CSS shows the one matching the page's
 `data-theme`, the same attribute the theme toggle already sets on `<html>` (see
-"Why not `<picture>`" below). This is lane B's markup to add when it embeds these
-figures into `docs/docs.html` — not added here, and no CSS for it belongs in
-`docs.html` on this branch.
+"Why not `<picture>`" below). The CSS lives once in `docs/docs.html`'s `<style>`;
+screenshots use the same pattern with `doc-shot`, `shot-light` and `shot-dark`.
+`tests/test_docs_figures.py` fails when a diagram or screenshot is on disk but not
+embedded with both twins, or an image has no alt text.
 
 ```html
 <figure class="diagram">
@@ -51,9 +52,11 @@ figures into `docs/docs.html` — not added here, and no CSS for it belongs in
 [data-theme="dark"] .diagram-dark { display: block; }
 ```
 
-The `alt` text is not optional. It is what a screen reader gets instead of the
-picture, and what everyone gets if the image fails to load — write what the
-diagram shows, not "diagram" or the file name.
+The `alt` text is not optional, and both twins carry the same one. The hidden
+twin is `display: none`, which takes it out of the accessibility tree, so each
+theme announces exactly one picture; an empty `alt` on the dark twin would leave
+dark-theme screen-reader users with none. Write what the diagram shows, not
+"diagram" or the file name.
 
 ## Why not `<picture>`
 
