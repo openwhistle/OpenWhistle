@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock
 import pyotp
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import func, select
+from sqlalchemy import event, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.audit import AuditLog
@@ -476,9 +476,25 @@ async def test_content_search_limit_tiebreaks_deterministically_on_equal_timesta
     report_b.submitted_at = same_time
     await db_session.commit()
 
-    winner = max(report_a.id, report_b.id)
-    hits = await content_match_ids(db_session, word, assigned_to_id=isolate_to.id)
+    # Which of two tied rows Postgres returns without the tiebreaker depends
+    # on their physical order and random uuids: the result alone is a coin
+    # flip against the mutation. The statement itself is not.
+    statements: list[str] = []
+
+    def _capture(conn: object, cursor: object, statement: str, *args: object) -> None:
+        statements.append(statement)
+
+    engine = db_session.bind.sync_engine
+    event.listen(engine, "before_cursor_execute", _capture)
+    try:
+        winner = max(report_a.id, report_b.id)
+        hits = await content_match_ids(db_session, word, assigned_to_id=isolate_to.id)
+    finally:
+        event.remove(engine, "before_cursor_execute", _capture)
     assert hits == [winner]
+    assert any(
+        "ORDER BY reports.submitted_at DESC, reports.id DESC" in s for s in statements
+    ), statements
 
 
 @pytest.mark.asyncio

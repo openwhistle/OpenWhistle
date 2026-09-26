@@ -167,8 +167,8 @@
   {
    "id": "inactive-reaches-totp",
    "file": "app/api/auth.py",
-   "old": "    if not user.is_active:\n        return render(request, \"login.html\", _login_ctx({\n            \"error\": \"login.error.deactivated\",",
-   "new": "    if False:\n        return render(request, \"login.html\", _login_ctx({\n            \"error\": \"login.error.deactivated\",",
+   "old": "    if not user.is_active:\n        return render(request, \"login.html\", _login_ctx(request, {\n            \"error\": \"login.error.deactivated\",",
+   "new": "    if False:\n        return render(request, \"login.html\", _login_ctx(request, {\n            \"error\": \"login.error.deactivated\",",
    "tests": "S"
   },
   {
