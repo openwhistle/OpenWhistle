@@ -270,6 +270,56 @@ def test_current_nav_item_is_marked() -> None:
         )
 
 
+def _footer_targets(page: Path) -> set[str]:
+    html = page.read_text()
+    m = re.search(r'<ul class="footer-links"[^>]*>(.*?)</ul>', html, re.DOTALL)
+    assert m, f"{page}: no <ul class=\"footer-links\"> found"
+    return {
+        _resolve_nav_target(page, href)
+        for href in re.findall(r'<a\s+href="([^"]+)"', m.group(1))
+    }
+
+
+# Every blog page's footer link-list must resolve to the same target set as
+# docs/blog/index.html -- the blog's own landing page. Not docs/de/index.html
+# (the site's German homepage): that page's footer links *out* to the blog
+# section (a "Blog" entry), which a page already inside that section has no
+# reason to link back to itself, so the two can never share an identical set
+# regardless of how well-maintained either one is. docs.html/roadmap.html use
+# a structurally different (much smaller, footer-bottom-only) footer with no
+# `.footer-links` list at all -- a separate, larger gap from the one this
+# round's review flagged (four blog articles vs. the already-unified blog
+# index), not covered here; see the fix-round report.
+_FOOTER_LANDING_PAGE = {
+    "docs/index.html": "docs/index.html",
+    "docs/de/index.html": "docs/de/index.html",
+    **{
+        f"docs/blog/{p.name}": "docs/blog/index.html"
+        for p in sorted((ROOT / "docs" / "blog").glob("*.html"))
+    },
+}
+
+
+def test_every_page_footer_has_the_same_link_set_as_its_landing_page() -> None:
+    """Regression guard (Task X12 fix round 1): the four blog articles kept
+    their old, smaller footer link-list (6 targets, missing Issues and
+    License) after docs/blog/index.html was rebuilt with the full one (7
+    targets). Every page in `_FOOTER_LANDING_PAGE` must resolve to the exact
+    same footer link-target set as its landing page."""
+    mismatches = {}
+    for page_str, landing_str in _FOOTER_LANDING_PAGE.items():
+        page = ROOT / page_str
+        landing = ROOT / landing_str
+        targets = _footer_targets(page)
+        canonical = _footer_targets(landing)
+        if targets != canonical:
+            mismatches[page_str] = {
+                "missing": sorted(canonical - targets),
+                "extra": sorted(targets - canonical),
+            }
+    assert not mismatches, mismatches
+
+
 def _root_tokens_dict(html: str) -> dict[str, str]:
     m = re.search(r":root\s*\{([^}]*)\}", html, re.DOTALL)
     assert m, ":root token block not found"
