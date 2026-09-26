@@ -1767,9 +1767,9 @@
         <ul>
           <li>The wizard there offers only that organisation's categories and locations, and files the report under it.</li>
           <li>The link, with a copy button, is on <code>/admin/organisations</code> (superadmin) and on an organisation admin's dashboard.</li>
-          <li><code>/submit</code> is the default organisation's (<code>DEFAULT_ORG_SLUG</code>).</li>
+          <li><code>/submit</code> is the default organisation's (<code>DEFAULT_ORG_SLUG</code>). If that names no active organisation, <code>/submit</code> answers 503 and logs the setting, and a set-up instance refuses to start.</li>
           <li>An unknown or deactivated slug is a 404. There is no list of the instance's organisations, but a slug is part of a public link: anyone can test whether a guessed one exists.</li>
-          <li>A draft stays with the organisation it was started for; opening another organisation's link starts a new one.</li>
+          <li>A draft stays with the organisation it was started for. Another organisation's link shows a fresh wizard; its first step replaces the draft, and the earlier one is no longer reachable from that browser.</li>
           <li>With multi-tenancy off there is one wizard, at <code>/submit</code>: <code>/submit/&lt;default slug&gt;</code> redirects there, any other slug is a 404.</li>
         </ul>
         <div class="table-scroll">

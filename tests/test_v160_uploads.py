@@ -335,6 +335,7 @@ async def test_lifespan_does_not_schedule_rekey_when_backend_is_not_s3() -> None
     from fastapi import FastAPI
 
     mock_settings = MagicMock()
+    mock_settings.multi_tenancy_enabled = False
     mock_settings.demo_mode = False
     mock_settings.reminder_enabled = False
     mock_settings.retention_enabled = False

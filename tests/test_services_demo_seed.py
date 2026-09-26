@@ -64,6 +64,32 @@ async def test_demo_accounts_belong_to_the_default_org(db_session: AsyncSession)
 
 
 @pytest.mark.asyncio
+async def test_seed_gives_existing_org_less_demo_accounts_the_default_org(
+    db_session: AsyncSession,
+) -> None:
+    from sqlalchemy import update
+
+    from app.services.demo_seed import DEMO_CM_USERNAME
+
+    names = [DEMO_ADMIN_USERNAME, DEMO_CM_USERNAME]
+    await _seed(db_session)
+    await db_session.execute(
+        update(AdminUser).where(AdminUser.username.in_(names)).values(org_id=None)
+    )
+    await db_session.commit()
+
+    await _seed(db_session)
+    orgs = (
+        await db_session.execute(
+            select(AdminUser.org_id)
+            .where(AdminUser.username.in_(names))
+            .execution_options(populate_existing=True)
+        )
+    ).scalars().all()
+    assert len(orgs) == 2 and None not in orgs
+
+
+@pytest.mark.asyncio
 async def test_seed_admin_idempotent(db_session: AsyncSession) -> None:
     """Calling _seed twice must not duplicate the admin user."""
     from app.models.user import AdminUser

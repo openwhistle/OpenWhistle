@@ -735,6 +735,7 @@ async def test_startup_creates_the_setup_token_only_while_setup_is_open(complete
     cfg = MagicMock(
         demo_mode=False, reminder_enabled=False, retention_enabled=False,
         update_check_enabled=False, storage_backend="db", encryption_key="k" * 32,
+        multi_tenancy_enabled=False,
     )
     with (
         patch("app.main._run_alembic_upgrade"),

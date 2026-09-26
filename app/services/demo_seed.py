@@ -138,7 +138,6 @@ async def _seed(db: AsyncSession) -> None:
             totp_enabled=True,
             role=AdminRole.admin,
             is_active=True,
-            org_id=org_row,  # the default org, like setup's first admin
         )
         db.add(admin)
         await db.flush()
@@ -157,10 +156,14 @@ async def _seed(db: AsyncSession) -> None:
             totp_enabled=True,
             role=AdminRole.case_manager,
             is_active=True,
-            org_id=org_row,  # the default org, like setup's first admin
         )
         db.add(case_mgr)
         await db.flush()
+    # The default org, like setup's first admin; also for accounts seeded before
+    # they had one (a database that outlived a reset).
+    for account in (admin, case_mgr):
+        if account.org_id is None:
+            account.org_id = org_row
 
     # Create demo locations if not exist
     result_loc = await db.execute(select(Location).where(Location.code == "HQ"))

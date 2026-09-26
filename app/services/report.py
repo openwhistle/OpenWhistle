@@ -44,6 +44,29 @@ async def _get_default_org_id(db: AsyncSession) -> uuid.UUID | None:
     row = result.scalar_one_or_none()
     return row
 
+async def active_default_org_id(db: AsyncSession) -> uuid.UUID | None:
+    """The default organisation's id if it exists and is active: with
+    multi-tenancy, what /submit files its reports under."""
+    from app.config import settings
+
+    org_id: uuid.UUID | None = await db.scalar(
+        select(Organisation.id).where(
+            Organisation.slug == settings.default_org_slug, Organisation.is_active.is_(True)
+        )
+    )
+    return org_id
+
+
+def default_org_missing_message() -> str:
+    from app.config import settings
+
+    return (
+        f"MULTI_TENANCY_ENABLED is on, but DEFAULT_ORG_SLUG={settings.default_org_slug!r} "
+        "names no active organisation, so /submit has nowhere to file a report. Create or "
+        "reactivate that organisation, or set DEFAULT_ORG_SLUG to an active one."
+    )
+
+
 SortField = Literal["submitted_at", "case_number", "category", "status"]
 SortDir = Literal["asc", "desc"]
 

@@ -555,9 +555,51 @@
   {
    "id": "demo-admin-org-less",
    "file": "app/services/demo_seed.py",
-   "old": "            role=AdminRole.admin,\n            is_active=True,\n            org_id=org_row,  # the default org, like setup's first admin\n",
-   "new": "            role=AdminRole.admin,\n            is_active=True,\n",
+   "old": "        if account.org_id is None:\n            account.org_id = org_row\n",
+   "new": "        pass\n",
    "tests": "DS"
+  },
+  {
+   "id": "default-org-missing-served",
+   "file": "app/api/reports.py",
+   "old": "        if default_id is None:\n            _log.error",
+   "new": "        if False:\n            _log.error",
+   "tests": "MW"
+  },
+  {
+   "id": "default-org-inactive-served",
+   "file": "app/services/report.py",
+   "old": "Organisation.slug == settings.default_org_slug, Organisation.is_active.is_(True)",
+   "new": "Organisation.slug == settings.default_org_slug",
+   "tests": "MW"
+  },
+  {
+   "id": "startup-ignores-default-org",
+   "file": "app/main.py",
+   "old": "            if await _is_setup_complete(db) and await active_default_org_id(db) is None:",
+   "new": "            if False:",
+   "tests": "MW"
+  },
+  {
+   "id": "startup-refuses-fresh-install",
+   "file": "app/main.py",
+   "old": "            if await _is_setup_complete(db) and await active_default_org_id(db) is None:",
+   "new": "            if await active_default_org_id(db) is None:",
+   "tests": "MW"
+  },
+  {
+   "id": "other-orgs-link-replaces-cookie",
+   "file": "app/api/reports.py",
+   "old": "    if not other_orgs_draft:\n        _set_submission_cookie",
+   "new": "    if True:\n        _set_submission_cookie",
+   "tests": "MW"
+  },
+  {
+   "id": "slug-hint-no-probe-warning",
+   "file": "app/locales/en.json",
+   "old": "which is public: anyone can check whether a slug exists, so choose one you are fine with being known. ",
+   "new": "",
+   "tests": "MW"
   }
  ]
 }

@@ -253,13 +253,17 @@ async def test_a_draft_does_not_move_to_another_org(
     a_cookie = client.cookies.get("ow-submission-session")
     assert a_cookie
 
-    # Opening org B's link starts a draft for org B: nothing of A's shows.
-    page = (await client.get(b.path)).text
+    # Opening org B's link shows a fresh wizard: nothing of A's shows, and
+    # the cookie still holds A's draft (only a POST there replaces it).
+    opened = await client.get(b.path)
+    page = opened.text
     assert _step(page) == 1
     assert "What org A" not in page
+    assert "ow-submission-session" not in opened.headers.get("set-cookie", "")
+    assert client.cookies.get("ow-submission-session") == a_cookie
+    assert _step((await client.get(a.path)).text) == 6
 
     # A crafted final submit to org B's URL with org A's draft creates nothing.
-    client.cookies.set("ow-submission-session", a_cookie)
     before = await _count(db_session)
     resp = await client.post(
         b.path, data={"csrf_token": _csrf(page), "step": "6", "action": "next"},
@@ -299,6 +303,72 @@ async def test_submit_without_a_slug_is_the_default_org(
     case = _CASE_RE.search((await _post(client, "/submit")).text)
     assert case
     assert (await _report(db_session, case.group(0))).org_id == default_id
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("which", ["missing", "inactive"])
+async def test_submit_is_refused_without_an_active_default_org(
+    client: AsyncClient, orgs: dict[str, _Org], db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture, which: str,
+) -> None:
+    """A report filed under no organisation would reach no one."""
+    csrf = _csrf((await client.get("/submit")).text)
+    slug = "no-such-default" if which == "missing" else orgs["c"].org.slug
+    monkeypatch.setattr(settings, "default_org_slug", slug)
+    before = await _count(db_session)
+    with caplog.at_level("ERROR", logger="app.api.reports"):
+        page = await client.get("/submit")
+        post = await client.post(
+            "/submit", data={"csrf_token": csrf, "step": "1", "submission_mode": "anonymous"},
+        )
+    for resp in (page, post):
+        assert resp.status_code == 503
+        assert "Reporting is not set up on this service yet" in resp.text
+        assert 'name="step"' not in resp.text
+    assert f"DEFAULT_ORG_SLUG={slug!r}" in caplog.text
+    assert await _count(db_session) == before
+    assert (await client.get(orgs["a"].path)).status_code == 200  # other orgs still work
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("set_up", "default_org", "refused"),
+    [(True, False, True), (False, False, False), (True, True, False)],
+    ids=["set-up-without-default-org", "fresh-install", "set-up-with-default-org"],
+)
+async def test_startup_refuses_a_set_up_instance_without_its_default_org(
+    set_up: bool, default_org: bool, refused: bool
+) -> None:
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    from fastapi import FastAPI
+
+    from app.main import lifespan
+
+    cfg = MagicMock(
+        demo_mode=False, reminder_enabled=False, retention_enabled=False,
+        update_check_enabled=False, storage_backend="db", encryption_key="k" * 32,
+        multi_tenancy_enabled=True, local_review_login=False,
+    )
+    org_id = uuid.uuid4() if default_org else None
+    with (
+        patch("app.main._run_alembic_upgrade"),
+        patch("app.main.close_redis", new_callable=AsyncMock),
+        patch("app.main.settings", cfg),
+        patch("app.api.wizard._is_setup_complete", new_callable=AsyncMock, return_value=set_up),
+        patch("app.services.report.active_default_org_id", new_callable=AsyncMock,
+              return_value=org_id),
+        patch("app.redis_client.get_redis", new_callable=AsyncMock),
+        patch("app.services.setup_token.ensure_setup_token", new_callable=AsyncMock),
+        patch("app.services.notifications.batching_enabled", return_value=False),
+    ):
+        if refused:
+            with pytest.raises(RuntimeError, match="DEFAULT_ORG_SLUG"):
+                async with lifespan(FastAPI()):
+                    pass
+        else:
+            async with lifespan(FastAPI()):
+                pass
 
 
 @pytest.mark.asyncio
@@ -345,11 +415,24 @@ async def test_with_multi_tenancy_off_the_wizard_is_not_scoped(
 ) -> None:
     """Off means as before: every active category, and the default org files it."""
     monkeypatch.setattr(settings, "multi_tenancy_enabled", False)
+    default_id = (
+        await db_session.execute(
+            select(Organisation.id).where(Organisation.slug == settings.default_org_slug)
+        )
+    ).scalar_one()
     await _post(client, "/submit", submission_mode="anonymous")
     await _post(client, "/submit", location_id=str(orgs["a"].location.id))
     page = (await client.get("/submit")).text
     assert _step(page) == 3
     assert orgs["a"].category.slug in page and orgs["b"].category.slug in page
+    await _post(client, "/submit", category=orgs["a"].category.slug)
+    await _post(client, "/submit", description="A description long enough to pass.")
+    await _post(client, "/submit")
+    case = _CASE_RE.search((await _post(client, "/submit")).text)
+    assert case
+    report = await _report(db_session, case.group(0))
+    assert report.org_id == default_id
+    assert report.category == orgs["a"].category.slug
 
 
 @pytest.mark.asyncio
@@ -513,6 +596,8 @@ async def test_the_organisations_page_shows_each_reporting_link(
         assert (f'data-copy="{base}{o.path}"' in page) is o.org.is_active
     assert 'data-action="copy"' in page
     assert "Copy reporting link" in page
+    # The slug is chosen here, so the warning that it can be probed is here too.
+    assert "anyone can check whether a slug exists" in page
 
 
 @pytest.mark.asyncio

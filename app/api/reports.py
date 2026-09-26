@@ -184,11 +184,14 @@ class _Tenant:
         return str(self.org_id) if self.org_id else None
 
 
-async def _tenant(request: Request, db: AsyncSession) -> _Tenant | RedirectResponse:
+async def _tenant(request: Request, db: AsyncSession) -> _Tenant | Response:
     """/submit is the default organisation's wizard, /submit/<slug> that
     organisation's. An unknown or inactive slug is a 404; there is no list of
     the instance's organisations. With multi-tenancy off there is one unscoped
-    wizard at /submit, and only the default slug redirects to it."""
+    wizard at /submit, and only the default slug redirects to it.
+
+    Without an active default organisation /submit is refused (503): a report
+    filed under no organisation would reach no one."""
     org_slug: str | None = request.path_params.get("org_slug")
     if not settings.multi_tenancy_enabled:
         if org_slug is None:
@@ -196,14 +199,22 @@ async def _tenant(request: Request, db: AsyncSession) -> _Tenant | RedirectRespo
         if org_slug == settings.default_org_slug:
             return RedirectResponse("/submit", status_code=303)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    if org_slug is None:
+        default_id = await report_service.active_default_org_id(db)
+        if default_id is None:
+            _log.error(report_service.default_org_missing_message())
+            t = make_translator(get_lang(request))
+            return render(
+                request, "error.html",
+                {"status_code": 503, "detail": t("error.detail.reporting_not_configured")},
+                status_code=503,
+            )
+        return _Tenant(scoped=True, org_id=default_id, path="/submit")
     org_id = await db.scalar(
         select(Organisation.id).where(
-            Organisation.slug == (org_slug or settings.default_org_slug),
-            Organisation.is_active.is_(True),
+            Organisation.slug == org_slug, Organisation.is_active.is_(True)
         )
     )
-    if org_slug is None:
-        return _Tenant(scoped=True, org_id=org_id, path="/submit")
     if org_id is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return _Tenant(scoped=True, org_id=org_id, path=f"/submit/{org_slug}")
@@ -586,6 +597,13 @@ async def submit_get(
             if page is not None:
                 return page
     session_id, state = await _get_or_create_submission_session(request, redis, tenant)
+    # Another organisation's draft: this wizard starts fresh, but only its first
+    # POST replaces the cookie, so merely opening this link loses nothing.
+    other_orgs_draft = (
+        raw_cookie != session_id
+        and bool(raw_cookie and _DRAFT_COOKIE_RE.match(raw_cookie))
+        and bool(await _load_submission(redis, str(raw_cookie)))
+    )
 
     locations = await get_active_locations(db, **tenant.scope)
     has_locations = len(locations) > 0
@@ -619,8 +637,9 @@ async def submit_get(
             ctx["field_errors"] = {_ERROR_FIELD[flash_error]: f"submit.error.{flash_error}"}
 
     rendered = render(request, "submit.html", ctx)
-    _set_submission_cookie(rendered, session_id, request)
-    await _save_submission(redis, session_id, state)
+    if not other_orgs_draft:
+        _set_submission_cookie(rendered, session_id, request)
+        await _save_submission(redis, session_id, state)
     return rendered
 
 
@@ -1032,10 +1051,10 @@ async def submit_remove_attachment(
     redis: Redis = Depends(get_redis),
     db: AsyncSession = Depends(get_db),
     _csrf: None = Depends(validate_csrf),
-) -> RedirectResponse:
+) -> Response:
     """Remove one already-attached file from the draft, on the attachments step only."""
     tenant = await _tenant(request, db)
-    if isinstance(tenant, RedirectResponse):
+    if isinstance(tenant, Response):
         return tenant
     raw = request.cookies.get("ow-submission-session")
     if raw and _DRAFT_COOKIE_RE.match(raw):
@@ -1054,9 +1073,9 @@ async def submit_restart(
     redis: Redis = Depends(get_redis),
     db: AsyncSession = Depends(get_db),
     _csrf: None = Depends(validate_csrf),
-) -> RedirectResponse:
+) -> Response:
     tenant = await _tenant(request, db)
-    if isinstance(tenant, RedirectResponse):
+    if isinstance(tenant, Response):
         return tenant
     raw = request.cookies.get("ow-submission-session")
     if raw and _DRAFT_COOKIE_RE.match(raw):
