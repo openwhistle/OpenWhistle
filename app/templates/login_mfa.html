@@ -3,7 +3,7 @@
 
 {% block styles %}
 <style nonce="{{ request.state.csp_nonce }}">
-    .mfa-page-center { min-height: calc(100vh - 56px - 56px); display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+    .mfa-page-center { display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
     .mfa-card-width { width: 100%; max-width: 400px; }
     .mfa-header { margin-bottom: 2rem; animation: fadeSlideIn 0.5s ease both; }
     .mfa-h1 { font-size: clamp(1.5rem, 4vw, 2.25rem); }
@@ -17,7 +17,7 @@
 {% block title %}{{ t('mfa.title') }} | OpenWhistle{% endblock %}
 
 {% block content %}
-<div class="mfa-page-center">
+<div class="mfa-page-center page-fill">
     <div class="mfa-card-width">
 
         <div class="mfa-header">
