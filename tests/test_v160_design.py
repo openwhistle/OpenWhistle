@@ -268,6 +268,18 @@ def _media_768_blocks(css: str) -> list[str]:
     return blocks
 
 
+def test_split_layout_keeps_the_sidebar_beside_the_form_on_desktop() -> None:
+    """submit.html puts the form before the sidebar so phones read it first.
+    On the desktop grid both must sit in row 1: with only `grid-column` set,
+    auto-placement dropped the sidebar into a second row under the form (found
+    by the 1.6.0 Chrome check at 1920 px)."""
+    css = (ROOT / "app/static/css/site.css").read_text()
+    for selector in (r"\.split-main", r"\.split-sidebar"):
+        top_level = re.search(r"(?m)^" + selector + r"\s*\{([^}]*)\}", css)
+        assert top_level, selector
+        assert re.search(r"grid-row:\s*1;", top_level.group(1)), (selector, top_level.group(1))
+
+
 def test_split_layout_has_only_one_active_phone_breakpoint() -> None:
     """Regression guard for the Task 25 fix-round-1 finding: a
     `@media (max-width: 768px)` block and a `@media (max-width: 900px)` block
