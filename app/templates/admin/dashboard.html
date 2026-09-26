@@ -72,8 +72,17 @@
                 {{ t('admin.logged_in_as') }} <strong class="dash-username">{{ user.username }}</strong>
                 <span class="badge badge-{{ user.role.value }} dash-role-badge">{{ t('role.label.' + user.role.value) }}</span>
             </p>
+            {% if reporting_link %}
+            <p class="dash-logged-in-as">
+                {{ t('admin.dashboard.reporting_link') }} <span class="mono">{{ reporting_link }}</span>
+                <button type="button" class="copy-btn" data-action="copy" data-copy="{{ reporting_link }}"
+                        title="{{ t('admin.organisations.copy_link') }}"
+                        aria-label="{{ t('admin.organisations.copy_link') }}"
+                        data-copied="{{ t('success.copied') }}">{{ icons.icon('copy') }}</button>
+            </p>
+            {% endif %}
         </div>
-        <a href="/submit" class="btn btn-secondary btn-sm" title="{{ t('admin.view_submit.title') }}">{{ t('admin.view_submit') }}</a>
+        <a href="{{ reporting_path }}" class="btn btn-secondary btn-sm" title="{{ t('admin.view_submit.title') }}">{{ t('admin.view_submit') }}</a>
     </div>
 
     {# Deletion success flash #}

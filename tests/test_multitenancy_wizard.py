@@ -467,7 +467,7 @@ async def test_the_processing_page_checks_again_on_the_org_link(
     assert "still being processed" in (await client.get(b.path)).text
 
 
-# ── Status page ───────────────────────────────────────────
+# ── Status page and admin ───────────────────────────────────────────
 
 
 @pytest.mark.asyncio
@@ -492,6 +492,62 @@ async def test_the_status_page_never_names_the_org(
     for page in (wrong.text, right.text):
         assert b.org.name not in page
         assert b.org.slug not in page
+
+
+@pytest.mark.asyncio
+async def test_the_organisations_page_shows_each_reporting_link(
+    client: AsyncClient, orgs: dict[str, _Org]
+) -> None:
+    root = AdminUser(
+        id=uuid.uuid4(), username=f"root_{uuid.uuid4().hex[:6]}", role=AdminRole.superadmin,
+        is_active=True, totp_secret="JBSWY3DPEHPK3PXP", totp_enabled=True,
+    )
+    app.dependency_overrides[get_current_admin] = lambda: root
+    try:
+        page = (await client.get("/admin/organisations")).text
+    finally:
+        app.dependency_overrides.pop(get_current_admin, None)
+    base = settings.app_public_url.rstrip("/")
+    for o in orgs.values():
+        # An inactive org's link would only 404.
+        assert (f'data-copy="{base}{o.path}"' in page) is o.org.is_active
+    assert 'data-action="copy"' in page
+    assert "Copy reporting link" in page
+
+
+@pytest.mark.asyncio
+async def test_an_org_admins_dashboard_shows_their_own_reporting_link(
+    client: AsyncClient, orgs: dict[str, _Org]
+) -> None:
+    a, b = orgs["a"], orgs["b"]
+    app.dependency_overrides[get_current_admin] = lambda: a.admin
+    try:
+        page = (await client.get("/admin/dashboard")).text
+    finally:
+        app.dependency_overrides.pop(get_current_admin, None)
+    base = settings.app_public_url.rstrip("/")
+    assert f'data-copy="{base}{a.path}"' in page
+    assert f'href="{a.path}"' in page  # "View submission form" opens the org's own
+    assert b.org.slug not in page
+
+
+@pytest.mark.asyncio
+async def test_without_multi_tenancy_the_dashboard_shows_no_reporting_link(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    admin = AdminUser(
+        id=uuid.uuid4(), username=f"solo_{uuid.uuid4().hex[:6]}", role=AdminRole.admin,
+        is_active=True, totp_secret="JBSWY3DPEHPK3PXP", totp_enabled=True,
+    )
+    db_session.add(admin)
+    await db_session.commit()
+    app.dependency_overrides[get_current_admin] = lambda: admin
+    try:
+        page = (await client.get("/admin/dashboard")).text
+    finally:
+        app.dependency_overrides.pop(get_current_admin, None)
+    assert "Copy reporting link" not in page
+    assert 'href="/submit"' in page
 
 
 @pytest.mark.asyncio

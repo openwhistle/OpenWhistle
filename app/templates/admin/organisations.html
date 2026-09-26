@@ -1,4 +1,5 @@
 {% extends "admin/_layout.html" %}
+{% import "_icons.html" as icons %}
 
 {% block title %}{{ t('admin.organisations.title') }} | OpenWhistle{% endblock %}
 
@@ -42,6 +43,7 @@
                         <tr>
                             <th>{{ t('admin.organisations.col.name') }}</th>
                             <th>{{ t('admin.organisations.col.slug') }}</th>
+                            <th>{{ t('admin.organisations.col.link') }}</th>
                             <th>{{ t('admin.organisations.col.status') }}</th>
                             <th>{{ t('admin.organisations.col.created') }}</th>
                             <th></th>
@@ -52,6 +54,16 @@
                         <tr>
                             <td>{{ org.name }}</td>
                             <td class="mono">{{ org.slug }}</td>
+                            <td>
+                                {% if org.is_active %}
+                                {% set link = public_url ~ '/submit/' ~ org.slug %}
+                                <span class="mono">{{ link }}</span>
+                                <button type="button" class="copy-btn" data-action="copy" data-copy="{{ link }}"
+                                        title="{{ t('admin.organisations.copy_link') }}"
+                                        aria-label="{{ t('admin.organisations.copy_link') }}"
+                                        data-copied="{{ t('success.copied') }}">{{ icons.icon('copy') }}</button>
+                                {% endif %}
+                            </td>
                             <td>
                                 {% if org.is_active %}
                                 <span class="badge badge-closed">{{ t('admin.organisations.active') }}</span>
