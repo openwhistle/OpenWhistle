@@ -205,6 +205,27 @@ Fix every finding before the release PR — nothing here is carried forward.
 | Serving `docs/` from the wrong directory | `docs/`-relative links assume the server root is `docs/` itself, matching how GitHub Pages roots the site there via `docs/CNAME`. |
 | A stack kept up across two review sessions | The four seeded demo reports (`OW-DEMO-00001`..`00004`) are always the same rows — nothing accumulates, so this one has no gotcha, unlike a counting assertion in an automated test. |
 
+## Re-taking the documentation screenshots
+
+`scripts/take_screenshots.py` renders `docs/img/screens/*-{light,dark}.png` against
+this same review stack — the login button above is how it signs in, with no
+password ever typed:
+
+```bash
+podman compose -f docker-compose.e2e.yml -f docker-compose.review.yml up -d --build
+uv run python scripts/take_screenshots.py
+podman compose -f docker-compose.e2e.yml -f docker-compose.review.yml down -v
+```
+
+Look at every written PNG before committing — `tests/test_screenshots.py` checks
+that both themes exist and that the viewport is still above the admin layout's
+two-column breakpoint, not that a page's content is still accurate.
+
+Re-run it in the change that alters the interface a screenshot documents — a
+template, `site.css`, or the theme/demo-banner behaviour in `app/static/js/site.js`
+— never on an unrelated release. A screenshot nobody looked at since is still
+correct; one nobody re-took after the page changed underneath it is not.
+
 ## Tearing down
 
 ```bash

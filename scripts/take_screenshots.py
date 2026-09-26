@@ -1,0 +1,234 @@
+#!/usr/bin/env python3
+"""Take the documentation screenshots for docs/img/screens.
+
+Run against the local-review stack (see docs-tech/local-review.md):
+
+    podman compose -f docker-compose.e2e.yml -f docker-compose.review.yml up -d --build
+    uv run python scripts/take_screenshots.py
+    podman compose -f docker-compose.e2e.yml -f docker-compose.review.yml down -v
+
+Re-take these whenever the change alters the interface they document (a
+template, site.css, or the theme/demo-banner behaviour) — not on every
+release. tests/test_screenshots.py checks the *output* (both themes present,
+viewport still above the breakpoint); it cannot tell whether a page's
+content is stale, only a look at the images can.
+
+One list of (name, path, setup) drives every shot: `path` is the page's own
+URL, documentation of what it is; `setup` is what gets the browser there —
+for the wizard and the admin pages that means driving the whole flow, not
+just a GET.
+"""
+
+from __future__ import annotations
+
+import io
+from collections.abc import Callable
+from dataclasses import dataclass
+from pathlib import Path
+
+from PIL import Image
+from playwright.sync_api import Browser, BrowserContext, Page, sync_playwright
+
+BASE_URL = "http://127.0.0.1:4009"
+OUT_DIR = Path(__file__).resolve().parent.parent / "docs" / "img" / "screens"
+
+# The admin two-column layout (`.admin-shell` in app/static/css/site.css) drops
+# its sidebar to a single column at `max-width: 1023px` (that media query sits
+# right next to the class, see site.css around line 3754). This viewport must
+# stay wider than that breakpoint, or every admin screenshot shows the
+# collapsed, single-column fallback instead of the layout the docs describe —
+# see easywall's TestScreenshotsAreTakenAboveTheTwoColumnBreakpoint, which is
+# the guard tests/test_screenshots.py adapts for this constant.
+VIEWPORT_WIDTH = 1440
+VIEWPORT_HEIGHT = 900
+
+# The `ow-theme` localStorage key app/templates/base.html and
+# app/static/js/site.js read before first paint.
+THEME_STORAGE_KEY = "ow-theme"
+
+DEMO_DESCRIPTION = (
+    "Screenshot placeholder: a short description of a workplace safety "
+    "concern, long enough to pass the minimum length check."
+)
+
+# Hides the DEMO_MODE banner (app/templates/base.html) on every page. It is
+# an artifact of running this script against the review stack, not part of
+# what an installed instance shows its users, so a docs screenshot should not
+# carry it — kept consistent across every page rather than deciding it
+# per-screenshot.
+_HIDE_DEMO_BANNER_SCRIPT = """
+document.addEventListener('DOMContentLoaded', () => {
+  const el = document.querySelector('.demo-banner');
+  if (el) el.style.display = 'none';
+});
+"""
+
+
+def _login_admin(page: Page) -> None:
+    page.goto(f"{BASE_URL}/admin/login")
+    page.click("#local-review-login-btn")
+    page.wait_for_load_state("networkidle")
+
+
+def _advance_wizard_step(page: Page) -> None:
+    page.click("button[name=action][value=next]")
+    page.wait_for_load_state("networkidle")
+
+
+def _fill_wizard_through_review(page: Page) -> None:
+    """Drive the whistleblower submission wizard from step 1 to the review step."""
+    page.goto(f"{BASE_URL}/submit")
+    page.check("#mode-anonymous")
+    _advance_wizard_step(page)
+
+    if page.query_selector("#location_id"):
+        page.select_option("#location_id", index=1)
+        _advance_wizard_step(page)
+
+    page.select_option("#category", index=1)
+    _advance_wizard_step(page)
+
+    page.fill("#description", DEMO_DESCRIPTION)
+    _advance_wizard_step(page)
+
+    # Step 5, attachments: none to add.
+    _advance_wizard_step(page)
+
+
+def setup_submit_step1(page: Page) -> None:
+    page.goto(f"{BASE_URL}/submit")
+
+
+def setup_submit_review(page: Page) -> None:
+    _fill_wizard_through_review(page)
+
+
+def setup_submit_success(page: Page) -> None:
+    _fill_wizard_through_review(page)
+    _advance_wizard_step(page)
+
+
+def setup_status(page: Page) -> None:
+    page.goto(f"{BASE_URL}/status")
+
+
+def setup_admin_login(page: Page) -> None:
+    page.goto(f"{BASE_URL}/admin/login")
+
+
+def setup_admin_dashboard(page: Page) -> None:
+    _login_admin(page)
+    page.goto(f"{BASE_URL}/admin/dashboard")
+    page.wait_for_load_state("networkidle")
+
+
+def setup_admin_report(page: Page) -> None:
+    _login_admin(page)
+    page.goto(f"{BASE_URL}/admin/dashboard")
+    page.wait_for_load_state("networkidle")
+    href = page.eval_on_selector("a[href^='/admin/reports/']", "el => el.getAttribute('href')")
+    page.goto(f"{BASE_URL}{href}")
+    page.wait_for_load_state("networkidle")
+
+
+def setup_admin_system(page: Page) -> None:
+    _login_admin(page)
+    page.goto(f"{BASE_URL}/admin/system")
+    page.wait_for_load_state("networkidle")
+
+
+@dataclass(frozen=True)
+class Screenshot:
+    name: str
+    path: str
+    setup: Callable[[Page], None]
+
+
+SCREENSHOTS: list[Screenshot] = [
+    Screenshot("submit-step1", "/submit", setup_submit_step1),
+    Screenshot("submit-review", "/submit", setup_submit_review),
+    Screenshot("submit-success", "/submit", setup_submit_success),
+    Screenshot("status", "/status", setup_status),
+    Screenshot("admin-login", "/admin/login", setup_admin_login),
+    Screenshot("admin-dashboard", "/admin/dashboard", setup_admin_dashboard),
+    Screenshot("admin-report", "/admin/reports/{id}", setup_admin_report),
+    Screenshot("admin-system", "/admin/system", setup_admin_system),
+]
+
+
+def _save_optimised_png(page_bytes: bytes, out_path: Path) -> None:
+    """Re-save the PNG through Pillow with palette quantisation.
+
+    Playwright's own PNG encoder writes full 24-bit colour; these are mostly
+    flat UI colours, so quantising to an adaptive palette shrinks the file a
+    lot with no visible loss, and needs no extra dependency (Pillow is
+    already required by app/services for attachment images).
+    """
+    img = Image.open(io.BytesIO(page_bytes)).convert("RGB")
+    img = img.quantize(colors=256, method=Image.Quantize.FASTOCTREE)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    img.save(out_path, format="PNG", optimize=True)
+
+
+def shoot(page: Page, name: str, theme: str) -> None:
+    """Screenshot the current page into docs/img/screens/<name>-<theme>.png.
+
+    Grows the viewport to the document's height instead of passing
+    `full_page=True`: easywall's TestScreenshotsGrowTheWindowInsteadOfCapturingBeyondIt
+    documents why — a fixed/sticky element (here, `.admin-menu`'s sticky
+    positioning and the session-expiry banner) stays laid out against the
+    viewport it was rendered in, so a full-page capture beyond that window
+    leaves it stranded partway down the image instead of tracking the page.
+    """
+    height = page.evaluate("document.documentElement.scrollHeight")
+    height = max(height, VIEWPORT_HEIGHT)
+    page.set_viewport_size({"width": VIEWPORT_WIDTH, "height": height})
+    page.wait_for_timeout(200)  # let a sticky/fixed element settle after reflow.
+
+    out_path = OUT_DIR / f"{name}-{theme}.png"
+    png_bytes = page.screenshot(full_page=False)
+    _save_optimised_png(png_bytes, out_path)
+
+    page.set_viewport_size({"width": VIEWPORT_WIDTH, "height": VIEWPORT_HEIGHT})
+    size_kb = out_path.stat().st_size / 1024
+    print(f"  wrote {out_path.relative_to(OUT_DIR.parent.parent.parent)} ({size_kb:.0f} KiB)")
+
+
+def _themed_context(browser: Browser, theme: str) -> BrowserContext:
+    context = browser.new_context(
+        viewport={"width": VIEWPORT_WIDTH, "height": VIEWPORT_HEIGHT},
+        locale="en-US",
+    )
+    context.add_cookies(
+        [{"name": "ow-lang", "value": "en", "url": BASE_URL}],
+    )
+    context.add_init_script(
+        f"try {{ localStorage.setItem('{THEME_STORAGE_KEY}', '{theme}'); }} catch (e) {{}}"
+    )
+    context.add_init_script(_HIDE_DEMO_BANNER_SCRIPT)
+    return context
+
+
+def main() -> None:
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        try:
+            for theme in ("light", "dark"):
+                print(f"Theme: {theme}")
+                # A fresh context per shot, not one shared per theme: the
+                # whistleblower wizard's step lives in a server-side session
+                # keyed off a cookie, so reusing one context across shots
+                # left later ones seeing whatever step an earlier shot ended
+                # on instead of the fresh /submit they asked for.
+                for shot in SCREENSHOTS:
+                    context = _themed_context(browser, theme)
+                    page = context.new_page()
+                    shot.setup(page)
+                    shoot(page, shot.name, theme)
+                    context.close()
+        finally:
+            browser.close()
+
+
+if __name__ == "__main__":
+    main()
