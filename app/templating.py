@@ -20,6 +20,17 @@ templates.env.filters["format_size"] = format_size
 templates.env.filters["day"] = format_day
 templates.env.globals["whistleblower_caused"] = whistleblower_caused
 
+
+def category_label(slug: str, labels: dict[str, str]) -> str:
+    """slug -> localized label from a per-request `category_labels` map (see
+    app.services.categories.get_category_labels); a slug missing from the map
+    (a category deleted outright, not merely deactivated) falls back to a
+    title-cased rendering of the slug itself, same as before this existed."""
+    return labels.get(slug) or slug.replace("_", " ").title()
+
+
+templates.env.filters["category_label"] = category_label
+
 templates.env.globals["brand"] = {
     "name": settings.app_name,
     "primary_color": settings.brand_primary_color,
@@ -30,6 +41,20 @@ templates.env.globals["is_demo"] = settings.demo_mode
 
 # Installed version, available to every template (e.g. the footer).
 templates.env.globals["app_version"] = settings.app_version
+
+
+def static_url(path: str) -> str:
+    """A cache-busted `/static/` URL for CSS, JS and font assets.
+
+    `/static/` is served without cache-busting (see app/main.py), so a
+    browser that visited before an upgrade keeps the old file. The version
+    query forces a fresh fetch; every stylesheet/script link must go through
+    this helper rather than hand-typing `/static/...` (test_static_versioning.py).
+    """
+    return f"/static/{path}?v={settings.app_version}"
+
+
+templates.env.globals["static_url"] = static_url
 
 # A callable (not the value) so templates re-read it at render time — tests
 # that monkeypatch settings.onion_location must see the new value.

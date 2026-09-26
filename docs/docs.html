@@ -506,12 +506,16 @@
       margin-bottom: 0;
     }
 
+    /* Table scrolls horizontally inside its column at narrow widths instead
+       of widening the page (390px layout check). */
+    .table-scroll { overflow-x: auto; }
+    .table-scroll .env-table { margin: var(--space-5) 0; }
+
     /* Env var table */
     .env-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.875rem;
-      margin: var(--space-5) 0;
     }
     .env-table thead th {
       font-family: var(--font-mono);
@@ -888,7 +892,8 @@
         </div>
 
         <h3>Image tags</h3>
-        <table class="env-table">
+        <div class="table-scroll">
+<table class="env-table">
           <thead>
             <tr>
               <th>Tag</th>
@@ -919,6 +924,7 @@
             </tr>
           </tbody>
         </table>
+</div>
 
         <div class="callout callout-note">
           <div class="callout-title">Pinning in production</div>
@@ -1061,13 +1067,15 @@
           A submission draft lives in Redis for up to 2 hours, Fernet-encrypted with a key that
           exists only in the whistleblower's cookie. Its attachments make it large:
         </p>
-        <table class="env-table">
+        <div class="table-scroll">
+<table class="env-table">
           <thead><tr><th>Draft</th><th>Redis memory</th></tr></thead>
           <tbody>
             <tr><td>Text only</td><td>&lt; 30 KB</td></tr>
             <tr><td>5 × 10 MB attachments (maximum)</td><td>about 90 MB</td></tr>
           </tbody>
         </table>
+</div>
         <p>
           Set <code>maxmemory</code> with <code>maxmemory-policy noeviction</code>
           (<code>docker-compose.prod.yml</code> uses 1 GB): an evicting policy could drop
@@ -1213,7 +1221,8 @@
           (except admin preferences managed through the UI).
         </p>
 
-        <table class="env-table" aria-label="Environment variables">
+        <div class="table-scroll">
+<table class="env-table" aria-label="Environment variables">
           <thead>
             <tr>
               <th scope="col">Variable</th>
@@ -1428,6 +1437,7 @@
             </tr>
           </tbody>
         </table>
+</div>
 
         <h3 id="notifications">Notifications</h3>
         <p>
@@ -1453,7 +1463,8 @@
           </p>
         </div>
 
-        <table class="env-table">
+        <div class="table-scroll">
+<table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
             <tr>
@@ -1464,9 +1475,11 @@
             </tr>
           </tbody>
         </table>
+</div>
 
         <h4>Email (SMTP)</h4>
-        <table class="env-table">
+        <div class="table-scroll">
+<table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
             <tr>
@@ -1525,6 +1538,7 @@
             </tr>
           </tbody>
         </table>
+</div>
 
         <h4>Webhook</h4>
         <p>
@@ -1539,7 +1553,8 @@
   "new_messages": 1,
   "message": "2 new reports, 1 new message"
 }</code></pre>
-        <table class="env-table">
+        <div class="table-scroll">
+<table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
             <tr>
@@ -1568,6 +1583,7 @@
             </tr>
           </tbody>
         </table>
+</div>
 
         <h3 id="sla-reminders">SLA Reminders</h3>
         <p>
@@ -1578,7 +1594,8 @@
           once per run and carries only the number of cases due — never a case number or a
           deadline date.
         </p>
-        <table class="env-table">
+        <div class="table-scroll">
+<table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
             <tr>
@@ -1601,6 +1618,7 @@
             </tr>
           </tbody>
         </table>
+</div>
 
         <h3 id="retention">Data Retention (GDPR / HinSchG)</h3>
         <p>
@@ -1617,7 +1635,8 @@
           installation holds a report closed three years ago: turning retention on deletes nothing
           today.
         </p>
-        <table class="env-table">
+        <div class="table-scroll">
+<table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
             <tr>
@@ -1634,6 +1653,7 @@
             </tr>
           </tbody>
         </table>
+</div>
 
         <h3 id="multi-tenancy">Multi-Tenancy</h3>
         <p>
@@ -1642,7 +1662,8 @@
           admin users. The <code>superadmin</code> role manages organisations at
           <code>/admin/organisations</code>.
         </p>
-        <table class="env-table">
+        <div class="table-scroll">
+<table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
             <tr>
@@ -1665,6 +1686,7 @@
             </tr>
           </tbody>
         </table>
+</div>
 
         <h3 id="ldap">LDAP / Active Directory Login</h3>
         <p>
@@ -1678,7 +1700,8 @@
           extras. The container image includes both. Installing from source needs
           <code>libldap2-dev libsasl2-dev</code> and <code>pip install '.[ldap,s3]'</code>.
         </p>
-        <table class="env-table">
+        <div class="table-scroll">
+<table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
             <tr>
@@ -1749,6 +1772,7 @@
             </tr>
           </tbody>
         </table>
+</div>
 
         <h3 id="s3-storage">S3-Compatible Attachment Storage</h3>
         <p>
@@ -1757,7 +1781,8 @@
           <code>STORAGE_BACKEND=s3</code> to store new attachments in an S3-compatible
           bucket. Existing DB-backed attachments are not migrated and continue to work.
         </p>
-        <table class="env-table">
+        <div class="table-scroll">
+<table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
             <tr>
@@ -1804,6 +1829,7 @@
             </tr>
           </tbody>
         </table>
+</div>
       </section>
 
       <!-- File attachments -->
@@ -1846,7 +1872,8 @@ CLAMAV_HOST=clamav</code></pre>
           Point it at a <code>clamd</code> you run and reach from the cluster yourself — as its own
           Deployment and Service, or an external instance — and leave it empty to keep scanning off.
         </p>
-        <table class="env-table">
+        <div class="table-scroll">
+<table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
             <tr>
@@ -1869,6 +1896,7 @@ CLAMAV_HOST=clamav</code></pre>
             </tr>
           </tbody>
         </table>
+</div>
 
         <h3>Limits and allowed types</h3>
         <ul>

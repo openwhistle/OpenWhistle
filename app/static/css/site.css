@@ -834,7 +834,8 @@ strong {
   border-width: 1px;
 }
 .card + .card,
-.panel + .panel {
+.panel + .panel,
+.panel + .demo-credentials {
   margin-top: 1.25rem;
 }
 .panel-outline {
@@ -1188,6 +1189,10 @@ input[type="file"].form-control::file-selector-button {
   background: #fff7ed;
   color: #c2410c;
 }
+.badge-superadmin {
+  background: #fef2f2;
+  color: #b91c1c;
+}
 [data-theme="dark"] .badge-admin {
   background: rgba(139, 92, 246, 0.15);
   color: #a78bfa;
@@ -1195,6 +1200,10 @@ input[type="file"].form-control::file-selector-button {
 [data-theme="dark"] .badge-case_manager {
   background: rgba(251, 146, 60, 0.15);
   color: #fb923c;
+}
+[data-theme="dark"] .badge-superadmin {
+  background: rgba(248, 113, 113, 0.15);
+  color: #f87171;
 }
 .badge-action {
   background: var(--accent-subtle);
@@ -1378,6 +1387,27 @@ input[type="file"].form-control::file-selector-button {
 }
 .table-wrapper {
   overflow-x: auto;
+}
+/* A long unbreakable value (a German status badge — "Rückmeldung ausstehend" —
+   is wider than its English equivalent and forces a nowrap badge) can widen
+   the table past .table-wrapper's scrollable viewport. The wrapper already
+   handles that overflow, but its default scroll position hides whatever sits
+   in the last column — the row's own "view" action — behind the fold with no
+   visual hint to scroll. Pin that column so the action stays reachable
+   regardless of how wide any other column's content gets. */
+.table-stack td.stack-action,
+.table-stack th:last-child {
+  position: sticky;
+  right: 0;
+  background: var(--surface-card);
+}
+.table-stack td.stack-action {
+  border-left: 1px solid var(--hairline);
+}
+/* Let a status badge wrap onto two lines instead of forcing the table wider
+   still — the badge shape survives wrapping fine, unlike breaking mid-word. */
+.table-stack .stack-status .badge {
+  white-space: normal;
 }
 table {
   border-collapse: collapse;
@@ -3736,6 +3766,11 @@ a.attachment-name:hover {
   }
 }
 .icon {
+  /* svg is display:block in the reset above; without this override an icon
+     placed next to inline text (e.g. an SLA value) renders on its own line
+     — vertical-align has no effect on a block box. Flex parents (.btn,
+     .badge, .stepper-dot, …) blockify this back, so they are unaffected. */
+  display: inline-block;
   flex: none;
   vertical-align: -0.2em;
 }

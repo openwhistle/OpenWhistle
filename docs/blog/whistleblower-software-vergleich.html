@@ -122,8 +122,12 @@
     .article-body ul, .article-body ol { margin: 1rem 0 1.5rem 1.5rem; }
     .article-body li { margin-bottom: 0.5rem; color: var(--text-secondary); }
 
-    /* Comparison table — full width, overflows max-width */
-    .comp-wrap { overflow-x: auto; margin: 2rem -1rem; }
+    /* Comparison table: scrolls horizontally inside its column rather than
+       widening the page. A negative margin here used to bleed it to the
+       viewport edge, but -1rem never matched the 1.25rem side padding at the
+       600px breakpoint (article-wrap below) — the leftover mismatch was
+       exactly the horizontal overflow the 390px layout check caught. */
+    .comp-wrap { overflow-x: auto; margin: 2rem 0; }
     .comp-table { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 0.88rem; }
     .comp-table thead th { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); padding: 0.75rem 1rem; text-align: left; border-bottom: 2px solid var(--border-subtle); white-space: nowrap; }
     .comp-table thead th.col-ow { color: var(--accent); background: var(--accent-fog); }
@@ -218,7 +222,7 @@
 
           <p>Typische jährliche Kosten für eine interne Meldestelle nach HinSchG für ein Unternehmen mit 100 Mitarbeitern:</p>
 
-          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin: 1.5rem 0;">
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin: 1.5rem 0;">
             <div class="cost-card">
               <div class="cost-card-title">OpenWhistle</div>
               <div class="cost-price">0 €</div>

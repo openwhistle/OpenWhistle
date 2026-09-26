@@ -2,6 +2,12 @@
 
 from __future__ import annotations
 
+import http.server
+import threading
+from collections.abc import Generator
+from functools import partial
+from pathlib import Path
+
 import pytest
 from playwright.sync_api import Browser
 
@@ -13,6 +19,58 @@ from tests.e2e.conftest import (
 )
 
 pytestmark = pytest.mark.e2e
+
+# The static marketing/docs site (docs/) ships no server of its own — it is
+# published as GitHub Pages. Serve it locally so the 390px overflow check
+# below runs standalone, without the FastAPI app or the review stack.
+_DOCS_DIR = Path(__file__).resolve().parent.parent.parent / "docs"
+_DOCS_PAGES = sorted(str(p.relative_to(_DOCS_DIR)) for p in _DOCS_DIR.rglob("*.html"))
+
+# docs/de/index.html is being rebuilt in the current design by task X11
+# (including its 390px overflow); remove this xfail once that lands.
+_KNOWN_OVERFLOW = {"de/index.html"}
+
+
+@pytest.fixture(scope="module")
+def docs_server_url() -> Generator[str]:
+    handler = partial(http.server.SimpleHTTPRequestHandler, directory=str(_DOCS_DIR))
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield f"http://127.0.0.1:{server.server_port}"
+    finally:
+        server.shutdown()
+        thread.join()
+
+
+@pytest.mark.parametrize(
+    "docs_page",
+    [
+        pytest.param(
+            p,
+            marks=pytest.mark.xfail(
+                strict=True,
+                reason="X11 rebuilds docs/de/index.html in the current design, "
+                "including this overflow — remove this xfail once it lands",
+            ),
+        )
+        if p in _KNOWN_OVERFLOW
+        else p
+        for p in _DOCS_PAGES
+    ],
+)
+def test_docs_page_has_no_horizontal_overflow_on_a_phone(
+    browser: Browser, docs_server_url: str, docs_page: str
+) -> None:
+    ctx, page = _page(browser, docs_server_url, 390)
+    page.goto(f"{docs_server_url}/{docs_page}")
+    page.wait_for_load_state("networkidle")
+    overflow = page.evaluate(
+        "document.documentElement.scrollWidth - document.documentElement.clientWidth"
+    )
+    ctx.close()
+    assert overflow == 0, f"{docs_page}: {overflow}px horizontal overflow at 390px"
 
 
 def _page(browser: Browser, base_url: str, width: int):  # type: ignore[no-untyped-def]

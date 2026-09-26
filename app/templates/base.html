@@ -13,8 +13,8 @@
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
-    <link rel="stylesheet" href="/static/css/fonts.css">
-    <link rel="stylesheet" href="/static/css/site.css">
+    <link rel="stylesheet" href="{{ static_url('css/fonts.css') }}">
+    <link rel="stylesheet" href="{{ static_url('css/site.css') }}">
 
     {# Inject brand colours as CSS custom properties + shared base utilities.
        Nonce'd so it is allowed under the strict CSP (no 'unsafe-inline'). #}
@@ -154,7 +154,7 @@
         </div>
     </footer>
 
-    <script src="/static/js/site.js" nonce="{{ request.state.csp_nonce }}"></script>
+    <script src="{{ static_url('js/site.js') }}" nonce="{{ request.state.csp_nonce }}"></script>
     <script nonce="{{ request.state.csp_nonce }}">
     (function() {
         function pad(n) { return n < 10 ? '0' + n : '' + n; }

@@ -145,8 +145,13 @@
     .check-label strong { color: var(--text-primary); display: block; margin-bottom: 0.2rem; }
     .check-label span { font-size: 0.88rem; color: var(--text-secondary); }
 
+    /* Table scrolls horizontally inside its column at narrow widths instead
+       of widening the page (390px layout check). */
+    .table-scroll { overflow-x: auto; margin: 1.5rem 0; }
+    .table-scroll .deadline-table { margin: 0; }
+
     /* Deadline table */
-    .deadline-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9rem; }
+    .deadline-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
     .deadline-table th { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); padding: 0.75rem 1rem; text-align: left; border-bottom: 2px solid var(--border-subtle); }
     .deadline-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); }
     .deadline-table tr:last-child td { border-bottom: none; }
@@ -287,7 +292,8 @@
 
           <h2>Die Fristen im Überblick</h2>
 
-          <table class="deadline-table" role="table" aria-label="HinSchG Fristen">
+          <div class="table-scroll">
+<table class="deadline-table" role="table" aria-label="HinSchG Fristen">
             <thead>
               <tr>
                 <th scope="col">Frist</th>
@@ -318,6 +324,7 @@
               </tr>
             </tbody>
           </table>
+</div>
 
           <h2>Was darf und was muss gemeldet werden?</h2>
 
