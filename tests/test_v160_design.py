@@ -1235,7 +1235,8 @@ def test_every_admin_role_has_a_badge_color() -> None:
     locale key)."""
     css = (Path(__file__).parents[1] / "app/static/css/site.css").read_text()
     for role in AdminRole:
-        assert f".badge-{role.value} {{" in css, f".badge-{role.value} rule missing"
+        # At line start: the dark-theme override alone is not the rule.
+        assert re.search(rf"^\.badge-{role.value} \{{", css, re.M), f".badge-{role.value} missing"
 
 
 @pytest.mark.asyncio
@@ -1259,6 +1260,53 @@ async def test_dashboard_and_case_page_show_the_category_in_german(
     case_html = (await client.get(f"/admin/reports/{report.id}")).text
     assert "Finanzbetrug" in case_html
     assert "Financial Fraud" not in case_html
+
+
+@pytest.mark.asyncio
+async def test_linked_reports_and_stats_show_the_category_in_german(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """The case page's linked-report list and /admin/stats read the same
+    label map as the case header; both used to print English."""
+    from app.services.report import create_report, link_cases
+
+    user = await _login(client, db_session, AdminRole.admin)
+    report, _ = await create_report(db_session, "corruption", "x" * 20)
+    other, _ = await create_report(db_session, "financial_fraud", "y" * 20)
+    await link_cases(db_session, report, other, user)
+    await db_session.commit()
+    client.cookies.set("ow-lang", "de")
+
+    links = (await client.get(f"/admin/reports/{report.id}")).text
+    assert re.search(r'report-link-category">\s*Finanzbetrug', links)
+    stats = (await client.get("/admin/stats")).text
+    assert "Finanzbetrug" in stats
+    assert "Financial Fraud" not in stats
+
+
+@pytest.mark.asyncio
+async def test_both_pdf_exports_print_the_category_in_german(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """Both PDF routes pass the admin-language label to the generator; the
+    PDF used to print the raw slug."""
+    from tests.test_pdf_service import _pdf_text
+    from tests.test_v160_privacy import _REASON, _confidential_report
+
+    user = await _login(client, db_session, AdminRole.admin)
+    report = await _confidential_report(db_session, assigned=user)
+    client.cookies.set("ow-lang", "de")
+
+    plain = await client.get(f"/admin/reports/{report.id}/export.pdf")
+    with_identity = await client.post(
+        f"/admin/reports/{report.id}/export.pdf",
+        data={"reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")},
+    )
+    for resp in (plain, with_identity):
+        assert resp.headers["content-type"].startswith("application/pdf")
+        text = _pdf_text(resp.content)
+        assert "Korruption" in text, text
+        assert "corruption" not in text
 
 
 def test_dashboard_table_action_column_is_pinned_and_status_badge_wraps() -> None:

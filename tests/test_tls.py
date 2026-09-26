@@ -80,6 +80,10 @@ def test_nginx_static_location_is_a_shared_snippet_too() -> None:
     onion = next(s for s in servers if "listen 8080;" in s)
     snippet = (ROOT / "nginx/snippets/static-location.conf").read_text()
     assert "location /static/" in snippet
+    # The app sets Cache-Control: no-cache; add_header would append a second,
+    # conflicting value rather than replace it.
+    directives = re.sub(r"#.*", "", snippet)
+    assert "add_header" not in directives and "expires" not in directives
     assert "location /static/" not in tls, "duplicated instead of included"
     assert "location /static/" not in onion, "duplicated instead of included"
     assert "include /etc/nginx/snippets/static-location.conf;" in tls

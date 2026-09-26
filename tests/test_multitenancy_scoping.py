@@ -346,3 +346,26 @@ async def test_category_labels_do_not_leak_across_orgs_with_a_colliding_slug(
     labels_b = await get_category_labels(db_session, "en", scope_org=True, org_id=org_b)
     assert labels_a["custom"] == "Org A label"
     assert labels_b["custom"] == "Org B label"
+
+
+@pytest.mark.asyncio
+async def test_stats_page_category_label_is_the_own_orgs(
+    as_admin_a: AsyncClient, two_orgs: dict[str, AdminUser], db_session: AsyncSession
+) -> None:
+    """/admin/stats labels its category breakdown from the admin's own org:
+    unscoped, org B's same-slug label (sorted last) wins the key."""
+    from app.models.category import ReportCategory
+    from app.services.report import create_report
+
+    org_a, org_b = two_orgs["admin_a"].org_id, two_orgs["user_b"].org_id
+    db_session.add_all([
+        ReportCategory(id=uuid.uuid4(), slug="custom", label_en="Org A label", label_de="A", org_id=org_a),
+        ReportCategory(id=uuid.uuid4(), slug="custom", label_en="Org B label", label_de="B", org_id=org_b),
+    ])
+    report, _ = await create_report(db_session, "custom", "Scoped stats label test.")
+    report.org_id = org_a
+    await db_session.commit()
+
+    resp = await as_admin_a.get("/admin/stats")
+    assert "Org A label" in resp.text
+    assert "Org B label" not in resp.text
