@@ -14,13 +14,6 @@
    "tests": "T"
   },
   {
-   "id": "no-timeout",
-   "file": "app/services/telemetry.py",
-   "old": "httpx.AsyncClient(timeout=TIMEOUT_SECONDS,",
-   "new": "httpx.AsyncClient(timeout=None,",
-   "tests": "T"
-  },
-  {
    "id": "timeout-not-10s",
    "file": "app/services/telemetry.py",
    "old": "TIMEOUT_SECONDS: float = 10\n",
@@ -142,7 +135,7 @@
   {
    "id": "hard-off-scheduled",
    "file": "app/services/telemetry.py",
-   "old": "    if locked_by() in (\"demo\", \"env_off\"):\n        return False\n    first",
+   "old": "    if hard_off():\n        return False\n    first",
    "new": "    first",
    "tests": "T"
   },
@@ -177,7 +170,7 @@
   {
    "id": "startup-no-scheduler",
    "file": "app/main.py",
-   "old": "        or telemetry_locked_by() not in (\"demo\", \"env_off\")\n",
+   "old": "        or not telemetry_hard_off()\n",
    "new": "",
    "tests": "T"
   },
@@ -205,7 +198,7 @@
   {
    "id": "audit-without-change",
    "file": "app/api/admin.py",
-   "old": "    if state.enabled != wanted:\n",
+   "old": "    if state is not None and state.enabled != wanted:\n",
    "new": "    if True:\n",
    "tests": "T"
   },
@@ -252,10 +245,10 @@
    "tests": "T"
   },
   {
-   "id": "page-no-id-commit",
+   "id": "page-writes",
    "file": "app/api/admin.py",
-   "old": "    await db.commit()  # the identifier, if this was its first use\n",
-   "new": "",
+   "old": "    state = await telemetry.get_state(db)  # reads only; None until someone agrees\n",
+   "new": "    state = await telemetry.ensure_state(db)\n    await db.commit()\n",
    "tests": "T"
   },
   {
@@ -275,8 +268,8 @@
   {
    "id": "wizard-answer-not-stored",
    "file": "app/api/wizard.py",
-   "old": "    else:\n        state.enabled = telemetry\n",
-   "new": "    else:\n        pass\n",
+   "old": "        state.enabled = True\n",
+   "new": "",
    "tests": "T"
   },
   {
@@ -291,6 +284,76 @@
    "file": "migrations/versions/007_telemetry_state.py",
    "old": "    op.drop_table(\"telemetry_state\")",
    "new": "    pass",
+   "tests": "T"
+  },
+  {
+   "id": "hard-off-helper",
+   "file": "app/services/telemetry.py",
+   "old": "    return locked_by() in (\"demo\", \"env_off\")",
+   "new": "    return locked_by() == \"demo\"",
+   "tests": "T"
+  },
+  {
+   "id": "no-total-timeout",
+   "file": "app/services/telemetry.py",
+   "old": "            asyncio.timeout(TIMEOUT_SECONDS),\n",
+   "new": "",
+   "tests": "T"
+  },
+  {
+   "id": "job-writes-on-never-asked",
+   "file": "app/services/telemetry.py",
+   "old": "    state = await get_state(db)  # reads only: a never-asked install gets no row\n",
+   "new": "    state = await ensure_state(db)\n    await db.commit()\n",
+   "tests": "T"
+  },
+  {
+   "id": "env-on-first-send-no-row",
+   "file": "app/services/telemetry.py",
+   "old": "    if state is None:  # TELEMETRY_ENABLED=true and never sent: the identifier is made now\n        state = await ensure_state(db)\n        await db.commit()\n",
+   "new": "",
+   "tests": "T"
+  },
+  {
+   "id": "toggle-on-no-row",
+   "file": "app/api/admin.py",
+   "old": "    if state is None and wanted:\n        state = await telemetry.ensure_state(db)\n",
+   "new": "",
+   "tests": "T"
+  },
+  {
+   "id": "toggle-off-creates-row",
+   "file": "app/api/admin.py",
+   "old": "    if state is None and wanted:\n",
+   "new": "    if state is None:\n",
+   "tests": "T"
+  },
+  {
+   "id": "reset-needs-existing-row",
+   "file": "app/api/admin.py",
+   "old": "    state = await telemetry.ensure_state(db)\n    state.installation_id",
+   "new": "    state = await telemetry.get_state(db)\n    assert state is not None\n    state.installation_id",
+   "tests": "T"
+  },
+  {
+   "id": "wizard-no-creates-row",
+   "file": "app/api/wizard.py",
+   "old": "    if telemetry:\n        state = await ensure_telemetry_state(db)",
+   "new": "    if True:\n        state = await ensure_telemetry_state(db)",
+   "tests": "T"
+  },
+  {
+   "id": "wizard-insert-races",
+   "file": "app/api/wizard.py",
+   "old": "        state = await ensure_telemetry_state(db)\n",
+   "new": "        from app.models.telemetry import TelemetryState\n        state = TelemetryState(id=1, enabled=False, installation_id=\"0\" * 32)\n        db.add(state)\n",
+   "tests": "T"
+  },
+  {
+   "id": "tests-reach-real-endpoint",
+   "file": "tests/conftest.py",
+   "old": "    monkeypatch.setattr(telemetry, \"TELEMETRY_ENDPOINT\", \"http://127.0.0.1:9/v1/openwhistle/count\")\n",
+   "new": "    del telemetry, monkeypatch\n",
    "tests": "T"
   }
  ]
