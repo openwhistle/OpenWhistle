@@ -141,8 +141,8 @@
   {
    "id": "tls-key-world-readable",
    "file": "scripts/ensure_tls_cert.py",
-   "old": "        (dst / _KEY).chmod(0o600)  # copyfile keeps",
-   "new": "        pass  # copyfile keeps",
+   "old": "        (dst / _KEY).chmod(0o600)\n        return \"provided\"",
+   "new": "        pass\n        return \"provided\"",
    "tests": "B"
   },
   {

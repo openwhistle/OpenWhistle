@@ -621,15 +621,15 @@
   {
    "id": "onion-trusts-host",
    "file": "app/onion.py",
-   "old": "    return raw_header(_ONION_HEADER, headers) == \"1\"",
-   "new": "    return raw_header(_ONION_HEADER, headers) == \"1\" or raw_header(\"host\", headers).endswith(\".onion\")",
+   "old": "raw_header(_ONION_HEADER, headers) == \"1\"",
+   "new": "raw_header(_ONION_HEADER, headers) == \"1\" or raw_header(\"host\", headers).endswith(\".onion\")",
    "tests": "O"
   },
   {
    "id": "onion-any-header-value",
    "file": "app/onion.py",
-   "old": "    return raw_header(_ONION_HEADER, headers) == \"1\"",
-   "new": "    return raw_header(_ONION_HEADER, headers) != \"\"",
+   "old": "raw_header(_ONION_HEADER, headers) == \"1\"",
+   "new": "raw_header(_ONION_HEADER, headers) != \"\"",
    "tests": "O"
   },
   {
