@@ -832,7 +832,7 @@ async def test_migration_006_rounds_existing_rows_keeps_order_and_round_trips(
     async def snapshot() -> tuple[object, ...]:
         rows = (await db.execute(text(
             "SELECT id, sent_at FROM report_messages ORDER BY report_id, sent_at"
-        ))).tuples().all()
+        ))).all()
         days = (await db.execute(text(
             "SELECT submitted_at FROM reports UNION ALL SELECT uploaded_at FROM attachments"
         ))).scalars().all()

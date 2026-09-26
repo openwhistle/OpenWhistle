@@ -345,7 +345,7 @@ async def test_migration_encrypts_existing_filenames_idempotently(
 
     rows = dict((await db_session.execute(text(
         "SELECT id, filename FROM attachments WHERE id IN (:a, :b)"
-    ), {"a": legacy_id, "b": done_id})).tuples().all())
+    ), {"a": legacy_id, "b": done_id})).all())
     assert fernet.decrypt(rows[legacy_id].encode()) == _NAME.encode()
     assert rows[done_id] == already  # not encrypted twice
 

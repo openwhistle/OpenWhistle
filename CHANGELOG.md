@@ -200,6 +200,8 @@ Changed (breaking) below and the upgrade notes before deploying.
 
 ### Changed
 
+- Dependencies refreshed (SQLAlchemy 2.1, uvicorn 0.54, boto3 1.43.103, ruff 0.16.9, uv 0.12.19);
+  the SQLAlchemy mypy plugin, removed in 2.1, is no longer configured.
 - **Helm: the Ingress rate-limits every route** like the bundled nginx (`limit-rps: "10"`,
   burst 30). Before, a Kubernetes deployment had no limit on `POST /submit` or any other
   public route. ingress-nginx answers a rejected request with 503 and keys on the peer address; the

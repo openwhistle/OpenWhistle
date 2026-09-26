@@ -96,7 +96,6 @@ strict = true
 warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = false
-plugins = ["sqlalchemy.ext.mypy.plugin"]
 
 [[tool.mypy.overrides]]
 module = [

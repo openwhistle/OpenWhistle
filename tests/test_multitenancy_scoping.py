@@ -500,7 +500,7 @@ async def test_superadmin_actions_on_users_and_orgs_carry_the_targets_org(
         app.dependency_overrides.pop(get_current_admin, None)
     rows = dict((await db_session.execute(
         select(AuditLog.action, AuditLog.org_id).where(AuditLog.admin_id == boss.id)
-    )).tuples().all())
+    )).all())
     new_org = await db_session.scalar(select(Organisation.id).where(Organisation.slug == slug))
     assert rows[AuditAction.ADMIN_ROLE_CHANGED] == target.org_id
     assert rows[AuditAction.ORG_CREATED] == new_org

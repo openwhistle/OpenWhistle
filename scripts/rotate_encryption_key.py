@@ -95,7 +95,7 @@ async def main() -> int:
                 rows = await conn.execute(
                     text(f"SELECT id, {column} FROM {table} WHERE {where}")  # noqa: S608
                 )
-                for row_id, value in rows.tuples():
+                for row_id, value in rows:
                     try:
                         writes.append((table, column, row_id, value, transform(value)))
                     except InvalidToken:

@@ -132,7 +132,7 @@ async def test_rotation_script_names_unreadable_rows_and_writes_nothing(
     )
     await throwaway_db.commit()
     before = dict(
-        (await throwaway_db.execute(text("SELECT id, encrypted_dek FROM reports"))).tuples().all()
+        (await throwaway_db.execute(text("SELECT id, encrypted_dek FROM reports"))).all()
     )
 
     monkeypatch.setattr(settings, "encryption_key", _B)
@@ -142,7 +142,7 @@ async def test_rotation_script_names_unreadable_rows_and_writes_nothing(
     assert f"reports.encrypted_dek id={bad.id}" in out
     assert str(good.id) not in out
     after = dict(
-        (await throwaway_db.execute(text("SELECT id, encrypted_dek FROM reports"))).tuples().all()
+        (await throwaway_db.execute(text("SELECT id, encrypted_dek FROM reports"))).all()
     )
     assert after == before
 

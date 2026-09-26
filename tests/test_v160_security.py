@@ -325,7 +325,7 @@ async def test_migration_004_round_trip_encrypts_and_stays_idempotent(
 
     rows = dict((await db_session.execute(text(
         "SELECT id, totp_secret FROM admin_users WHERE id IN (:a, :b, :c)"
-    ), {"a": ids["user1"], "b": ids["user2"], "c": ids["user3"]})).tuples().all())
+    ), {"a": ids["user1"], "b": ids["user2"], "c": ids["user3"]})).all())
     assert rows[ids["user1"]] != secret1
     assert decrypt(rows[ids["user1"]]) == secret1
     assert rows[ids["user2"]] != secret2
@@ -694,7 +694,7 @@ async def test_migration_005_backfills_audit_org_from_report_or_actor(
 
     rows = dict((await db_session.execute(text(
         "SELECT id, org_id FROM audit_log WHERE id IN (:a, :b)"
-    ), {"a": row_with_report, "b": row_without_report})).tuples().all())
+    ), {"a": row_with_report, "b": row_without_report})).all())
     assert rows[row_with_report] == org.id
     assert rows[row_without_report] == org.id
 # ── Setup token, token claims, migration downgrade and user roles ──────────

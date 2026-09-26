@@ -72,5 +72,5 @@ class AdminUser(Base):
         "Report",
         back_populates="assigned_to",
         foreign_keys="Report.assigned_to_id",
-        lazy="noload",
+        lazy="raise",
     )
