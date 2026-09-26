@@ -359,8 +359,10 @@ async def test_stats_page_category_label_is_the_own_orgs(
 
     org_a, org_b = two_orgs["admin_a"].org_id, two_orgs["user_b"].org_id
     db_session.add_all([
-        ReportCategory(id=uuid.uuid4(), slug="custom", label_en="Org A label", label_de="A", org_id=org_a),
-        ReportCategory(id=uuid.uuid4(), slug="custom", label_en="Org B label", label_de="B", org_id=org_b),
+        ReportCategory(
+            id=uuid.uuid4(), slug="custom", label_en=f"Org {n} label", label_de=n, org_id=org
+        )
+        for n, org in (("A", org_a), ("B", org_b))
     ])
     report, _ = await create_report(db_session, "custom", "Scoped stats label test.")
     report.org_id = org_a
