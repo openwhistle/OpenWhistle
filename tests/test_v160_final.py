@@ -303,3 +303,84 @@ async def test_rotation_script_rotates_content_search_terms(
     monkeypatch.setattr(settings, "encryption_key", settings.secret_key)
     with pytest.raises(InvalidToken):
         crypto.decrypt(detail["term"])
+
+
+# --- I10: metadata inside Office packages and PDFs ---------------------------------------
+
+_CAMERA = "SecretCamMaker-4711"
+
+
+def _exif_jpeg() -> bytes:
+    import io
+
+    from PIL import Image
+
+    exif = Image.Exif()
+    exif[0x010F] = _CAMERA  # Make; GPS sits in the same EXIF block
+    out = io.BytesIO()
+    Image.new("RGB", (8, 8), "red").save(out, "JPEG", exif=exif.tobytes())
+    assert _CAMERA.encode() in out.getvalue()
+    return out.getvalue()
+
+
+@pytest.mark.parametrize(("name", "media"), [("a.docx", "word/media/image1.jpeg"),
+                                             ("a.xlsx", "xl/media/image1.JPG")])
+def test_photos_inside_office_files_lose_their_exif(name: str, media: str) -> None:
+    import io
+    import zipfile
+
+    from PIL import Image
+
+    from app.services.attachment import strip_metadata
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("[Content_Types].xml", "<Types/>")
+        z.writestr(media, _exif_jpeg())
+    clean = zipfile.ZipFile(io.BytesIO(strip_metadata(name, buf.getvalue())))
+    photo = clean.read(media)
+    assert _CAMERA.encode() not in photo
+    assert Image.open(io.BytesIO(photo)).size == (8, 8)
+
+
+def test_pdf_loses_annotation_authors_photo_exif_and_its_file_id() -> None:
+    import io
+
+    from PIL import Image
+    from pypdf import PdfReader, PdfWriter
+    from pypdf.generic import (
+        ArrayObject,
+        ByteStringObject,
+        DictionaryObject,
+        NameObject,
+        NumberObject,
+        TextStringObject,
+    )
+
+    from app.services.attachment import strip_metadata
+
+    base = io.BytesIO()
+    Image.new("RGB", (8, 8), "red").save(base, "PDF")
+    writer = PdfWriter(clone_from=PdfReader(io.BytesIO(base.getvalue())))
+    page = writer.pages[0]
+    image = next(iter(page["/Resources"]["/XObject"].values())).get_object()
+    image._data = _exif_jpeg()  # a JPEG is embedded as-is, EXIF included
+    note = DictionaryObject({
+        NameObject("/Type"): NameObject("/Annot"), NameObject("/Subtype"): NameObject("/Text"),
+        NameObject("/Rect"): ArrayObject([NumberObject(0)] * 4),
+        NameObject("/T"): TextStringObject("Jane Whistle"),
+        NameObject("/M"): TextStringObject("D:20260926101500Z"),
+    })
+    page[NameObject("/Annots")] = ArrayObject([writer._add_object(note)])
+    original_id = ByteStringObject(b"ORIGINAL-FILE-ID")
+    writer._ID = ArrayObject([original_id, original_id])
+    out = io.BytesIO()
+    writer.write(out)
+    assert b"Jane Whistle" in out.getvalue() and _CAMERA.encode() in out.getvalue()
+
+    clean = strip_metadata("a.pdf", out.getvalue())
+    for leak in (b"Jane Whistle", _CAMERA.encode(), b"D:20260926", b"ORIGINAL-FILE-ID"):
+        assert leak not in clean, leak
+    reader = PdfReader(io.BytesIO(clean))
+    assert reader.trailer["/ID"][0] != original_id
+    assert list(reader.pages[0].images)[0].image.size == (8, 8)

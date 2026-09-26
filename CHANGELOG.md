@@ -114,6 +114,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Privacy
 
+- **Photos inside Word and Excel files lose their EXIF** (GPS, camera) on upload, like a photo
+  uploaded on its own. **PDFs lose their comment authors and times**, the EXIF of embedded
+  JPEG photos, and the file identifier that linked the upload to the original file.
 - **Database errors no longer log their bound values.** Every engine (app, migrations, scripts)
   sets `hide_parameters`, so a failed query on `/status` or a reply no longer writes the case
   number or report id into the error log next to an exact time.

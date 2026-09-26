@@ -153,13 +153,48 @@ def _strip_image(data: bytes) -> bytes:
             clean.save(out, format="PNG", optimize=True)
         elif fmt == "WEBP":
             clean.save(out, format="WEBP", quality=95)
+        elif fmt == "TIFF":
+            clean.save(out, format="TIFF", compression="tiff_lzw")
         else:
             raise MetadataError(f"unsupported image format {fmt}")
     return out.getvalue()
 
 
+# JPEG markers that carry no metadata: APP0 (JFIF) and APP14 (Adobe colour transform).
+_JPEG_KEEP_APP = {0xE0, 0xEE}
+
+
+def _strip_jpeg_segments(data: bytes) -> bytes:
+    """Drop the APPn (EXIF, XMP, IPTC, ICC) and COM segments of a JPEG, pixels untouched.
+
+    A PDF embeds a JPEG as-is (/DCTDecode), so a photo keeps its GPS inside the PDF.
+    Re-encoding would change the image; cutting the header segments does not.
+    """
+    if data[:2] != b"\xff\xd8":
+        return data
+    out, i = bytearray(data[:2]), 2
+    while i + 4 <= len(data) and data[i] == 0xFF:
+        marker = data[i + 1]
+        if marker == 0xDA:  # start of scan: the rest is image data
+            break
+        end = i + 2 + int.from_bytes(data[i + 2:i + 4], "big")
+        if not ((0xE0 <= marker <= 0xEF and marker not in _JPEG_KEEP_APP) or marker == 0xFE):
+            out += data[i:end]
+        i = end
+    return bytes(out + data[i:])
+
+
 def _strip_pdf(data: bytes) -> bytes:
+    import os  # noqa: PLC0415
+
     from pypdf import PdfReader, PdfWriter  # noqa: PLC0415
+    from pypdf.generic import (  # noqa: PLC0415
+        ArrayObject,
+        ByteStringObject,
+        NameObject,
+        StreamObject,
+        TextStringObject,
+    )
 
     # An owner-password-only PDF opens without a password and is written back
     # unencrypted and cleaned; one that needs a user password cannot be read
@@ -167,9 +202,24 @@ def _strip_pdf(data: bytes) -> bytes:
     writer = PdfWriter(clone_from=PdfReader(io.BytesIO(data)))
     writer.metadata = None  # document info: author, creator tool, dates
     writer._root_object.pop("/Metadata", None)  # XMP packet
+    for page in writer.pages:
+        for ref in page.get("/Annots") or []:
+            annot = ref.get_object()
+            if "/T" in annot:  # the commenter's name
+                annot[NameObject("/T")] = TextStringObject("Author")
+            for key in ("/M", "/CreationDate"):  # when they commented
+                annot.pop(key, None)
+    for obj in writer._objects:
+        # A JPEG alone in its stream is the file as-is; set the raw bytes (pypdf
+        # cannot re-encode DCT). A JPEG behind a second filter is left alone.
+        if isinstance(obj, StreamObject) and obj.get("/Filter") in ("/DCTDecode", ["/DCTDecode"]):
+            obj._data = _strip_jpeg_segments(obj._data)
     # Unlinking is not removing: the XMP stream would still be written as an
     # orphaned object that any forensic tool can read.
     writer.compress_identical_objects(remove_duplicates=False, remove_unreferenced=True)
+    # The file identifier is carried over from the original and links the two files.
+    fresh_id = ByteStringObject(os.urandom(16))
+    writer._ID = ArrayObject([fresh_id, fresh_id])
     out = io.BytesIO()
     writer.write(out)
     return out.getvalue()
@@ -225,6 +275,9 @@ def _anonymise_ooxml_part(name: str, body: bytes) -> bytes:
     return body
 
 
+_OOXML_MEDIA = re.compile(r"(?:word|xl|ppt)/media/[^/]+\.(?:jpe?g|png|gif|webp|tiff?)", re.I)
+
+
 def _strip_ooxml(data: bytes) -> bytes:
     import zipfile  # noqa: PLC0415
 
@@ -239,6 +292,9 @@ def _strip_ooxml(data: bytes) -> bytes:
             if info.filename.startswith("docProps/thumbnail."):
                 continue
             body = _OOXML_EMPTY_PARTS.get(info.filename) or src.read(info)
+            # A photo pasted into a document keeps its EXIF (GPS, camera) inside the package.
+            if _OOXML_MEDIA.fullmatch(info.filename):
+                body = _strip_image(body)
             # A fresh entry: no original timestamps, no extra fields (Unix
             # uid/gid, NTFS times) from the whistleblower's machine.
             clean = zipfile.ZipInfo(info.filename, date_time=(1980, 1, 1, 0, 0, 0))
