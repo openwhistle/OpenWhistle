@@ -41,6 +41,12 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Security
 
+- **Categories and locations stay inside their organisation.** With multi-tenancy on, an org
+  admin saw every organisation's categories and locations and could deactivate or reactivate
+  them by id; now the lists are scoped and another organisation's id answers 404. A slug or
+  code is unique per organisation (a shared slug no longer caused a 500), new ones are created
+  in the admin's own organisation, and deactivating or reactivating a location is audited.
+  Creating a category or location commits in one transaction with its audit row.
 - **The first-run setup page belonged to whoever opened it first.** `/setup` now needs a
   one-time setup token (`SETUP_TOKEN`, or a random token logged once at start), deleted when
   the first admin exists.
