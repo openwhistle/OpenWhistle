@@ -1996,8 +1996,9 @@ CLAMAV_HOST=clamav</code></pre>
         <h3>Privacy and deletion</h3>
         <ul>
           <li><strong>Metadata removed on upload:</strong> EXIF/GPS and camera data in JPEG, PNG,
-            WebP and GIF; document info and XMP in PDF; author, company and custom properties in
-            DOCX/XLSX. A file that cannot be parsed for cleaning is refused. Plain text is stored
+            WebP and GIF, also in photos inside DOCX/XLSX; document info, XMP, comment authors and
+            times, the EXIF of embedded JPEG photos and the file identifier in PDF; author, company
+            and custom properties in DOCX/XLSX. A file that cannot be parsed for cleaning is refused. Plain text is stored
             as uploaded. Legacy <code>.doc</code>/<code>.xls</code> files are refused outright —
             their author cannot be removed.</li>
           <li><strong>Office authors anonymised:</strong> comment and tracked-change authors,
