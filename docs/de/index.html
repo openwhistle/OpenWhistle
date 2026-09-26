@@ -6,13 +6,14 @@
   <!-- Apply theme before first paint to avoid flash -->
   <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
   <title>OpenWhistle — Kostenloses Hinweisgebersystem | HinSchG-konform | Open Source</title>
-  <meta name="description" content="OpenWhistle ist das kostenlose, Open-Source-Hinweisgebersystem für interne Meldestellen nach HinSchG und EU-Richtlinie 2019/1937. Selbst gehostet, DSGVO-konform, keine IP-Protokollierung. Gratis für alle Unternehmen ab 50 Mitarbeitern.">
+  <meta name="description" content="OpenWhistle ist das kostenlose, Open-Source-Hinweisgebersystem für interne Meldestellen nach HinSchG und EU-Richtlinie 2019/1937. Selbst gehostet, DSGVO-konform, keine IP-Protokollierung. Gratis für alle Unternehmen ab 50 Mitarbeitenden.">
   <meta name="keywords" content="Hinweisgebersystem kostenlos, interne Meldestelle HinSchG, Hinweisgeberschutz Software kostenlos, Hinweisgeberschutzgesetz Software, Meldestelle Software Open Source, Whistleblower Tool kostenlos, HinSchG Meldestelle einrichten, interne Meldestelle Open Source, Hinweisgebersystem DSGVO, Meldestelle Unternehmen kostenlos">
   <meta name="author" content="OpenWhistle Contributors">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://openwhistle.net/de/">
   <link rel="alternate" hreflang="en" href="https://openwhistle.net/">
   <link rel="alternate" hreflang="de" href="https://openwhistle.net/de/">
+  <link rel="alternate" hreflang="x-default" href="https://openwhistle.net/">
   <link rel="icon" type="image/svg+xml" href="../favicon.svg">
   <link rel="icon" type="image/x-icon" href="../favicon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
@@ -21,7 +22,7 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://openwhistle.net/de/">
   <meta property="og:title" content="OpenWhistle — Kostenloses Hinweisgebersystem nach HinSchG">
-  <meta property="og:description" content="Kostenloses, selbst gehostetes Hinweisgebersystem konform mit HinSchG §§ 16–18 und EU-Richtlinie 2019/1937. Keine IP-Protokollierung. GPL-3.0. Für Unternehmen ab 50 Mitarbeitern.">
+  <meta property="og:description" content="Kostenloses, selbst gehostetes Hinweisgebersystem konform mit HinSchG §§ 16–18 und EU-Richtlinie 2019/1937. Keine IP-Protokollierung. GPL-3.0. Für Unternehmen ab 50 Mitarbeitenden.">
   <meta property="og:image" content="https://openwhistle.net/og-image.png">
   <meta property="og:locale" content="de_DE">
   <meta property="og:locale:alternate" content="en_US">
@@ -59,7 +60,8 @@
   }
   </script>
 
-  <!-- FAQ JSON-LD (German) -->
+  <!-- FAQ JSON-LD (German) — mirrors the visible FAQ list below 1:1: same
+       questions, same answers, same order (Task X11 fix round 1). -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -67,18 +69,10 @@
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "Was ist ein Hinweisgebersystem nach HinSchG?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Das Hinweisgeberschutzgesetz (HinSchG) verpflichtet Unternehmen ab 50 Mitarbeitern und Behörden zur Einrichtung eines internen Meldekanals. Hinweisgeber müssen Missstände anonym melden können und vor Repressalien geschützt werden. OpenWhistle ist eine kostenlose Softwarelösung, die alle gesetzlichen Anforderungen erfüllt."
-        }
-      },
-      {
-        "@type": "Question",
         "name": "Ist OpenWhistle wirklich kostenlos?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja. OpenWhistle steht unter der GPL-3.0-Lizenz und ist dauerhaft kostenlos. Es gibt keine kostenpflichtigen Funktionen, kein Abonnement und keinen Enterprise-Tier. Die Software wird selbst gehostet — einmalig einrichten, dauerhaft nutzen."
+          "text": "Ja. OpenWhistle steht unter der GNU General Public License v3.0. Es ist vollständig und dauerhaft kostenlos — es gibt keinen Enterprise-Tier, keine kostenpflichtigen Funktionen und kein Abonnement. Sie können die Software auf Ihrer eigenen Infrastruktur ohne Kosten selbst betreiben. Der Quellcode ist öffentlich auf GitHub verfügbar."
         }
       },
       {
@@ -86,7 +80,7 @@
         "name": "Erfüllt OpenWhistle alle Anforderungen des HinSchG?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja. OpenWhistle implementiert alle Anforderungen der §§ 16–18 HinSchG: 7-Tage-Eingangsbestätigung und 3-Monats-Rückmeldepflicht nach § 17, bidirektionale Kommunikation (§ 17 Abs. 3), strenge Vertraulichkeit der Identität (§ 8), Datenlöschungspflichten (§ 26) sowie den Hinweis auf das Dokumentationsverbot bei § 10 für telefonische Kanäle."
+          "text": "Ja. OpenWhistle implementiert alle Anforderungen der §§ 16–18 HinSchG, einschließlich der 7-Tage-Eingangsbestätigung (§ 17 Abs. 1), der 3-Monats-Rückmeldepflicht (§ 17 Abs. 2), des bidirektionalen Kommunikationskanals (§ 17 Abs. 3), der Vertraulichkeit der Identität (§ 8) und der Datenlöschung (§ 26)."
         }
       },
       {
@@ -94,15 +88,55 @@
         "name": "Ist der Hinweisgeber wirklich anonym?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja. Es werden keine IP-Adressen gespeichert — weder in der Datenbank noch in Protokollen. Der nginx-Reverse-Proxy entfernt X-Forwarded-For-Header, die Applikationsmiddleware löscht die Remote-Adresse vor jeder Verarbeitung, und Redis-Session-Tokens enthalten keine Identifizierungsmerkmale. Vier unabhängige Anonymitätsschichten."
+          "text": "Es werden keine IP-Adressen gespeichert — weder in der Datenbank noch in Protokollen. Der nginx-Reverse-Proxy entfernt X-Forwarded-For-Header, die Applikationsmiddleware löscht die Remote-Adresse vor jeder Verarbeitung, es gibt keine IP-Spalte im Datenbankschema, und Redis-Session-Tokens enthalten keine Identifizierungsmerkmale. Vier unabhängige Anonymitätsschichten."
         }
       },
       {
         "@type": "Question",
-        "name": "Wie unterscheidet sich OpenWhistle von kommerziellen Tools wie EQS oder BKMS?",
+        "name": "Kann ich OpenWhistle für mein Unternehmen nutzen?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "OpenWhistle ist vollständig selbst gehostet — Ihre Daten verlassen niemals Ihre Infrastruktur. Der Quellcode ist unter GPL-3.0 öffentlich einsehbar und prüfbar. Kommerzielle Tools wie EQS Integrity Line kosten typischerweise 50–200 € pro Monat, laufen auf externer Cloud-Infrastruktur (DSGVO-Risiko) und haben geschlossenen Quellcode."
+          "text": "Ja. OpenWhistle ist für jede Organisation gedacht, die dem HinSchG unterliegt — private Unternehmen ab 50 Mitarbeitenden, alle Bundes- und Landesbehörden, Gemeinden ab 10.000 Einwohnern sowie Unternehmen des Finanzsektors. Die GPL-3.0-Lizenz erlaubt ausdrücklich die kommerzielle Nutzung im Selbst-Hosting."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Welche technischen Voraussetzungen gibt es?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Docker 24 oder neuer, Docker Compose v2, mindestens 512 MB RAM, PostgreSQL 18 und Redis 8 (beide in der Docker-Compose-Konfiguration enthalten) sowie eine Domain mit gültigem HTTPS-Zertifikat. Ein einfacher VPS mit 1 vCPU und 1 GB RAM reicht für die meisten Organisationen aus."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Gibt es kommerziellen Support?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Community-Support ist über GitHub Issues verfügbar. Das Projekt freut sich über Beiträge, Fehlerberichte und Funktionswünsche. Derzeit gibt es keinen kostenpflichtigen Support-Tier."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Wie unterscheidet sich OpenWhistle von EQS, BKMS oder anderen kommerziellen Tools?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "OpenWhistle ist vollständig selbst gehostet — Ihre Daten verlassen niemals Ihre Infrastruktur. Es ist Open Source unter GPL-3.0, sodass Sie jede Zeile Code prüfen können. Kommerzielle Tools wie EQS Integrity Line oder BKMS kosten typischerweise 50–200 € pro Monat, laufen auf externer Cloud-Infrastruktur (DSGVO-Risiko) und haben geschlossenen Quellcode. OpenWhistle ist kostenlos, vollständig prüfbar, und Sie behalten die Kontrolle über die Daten."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Unterstützt OpenWhistle Single Sign-On (SSO)?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ja. OpenWhistle unterstützt OIDC-Login für Admin-Konten — kompatibel mit Keycloak, Authentik, Azure AD (Entra ID), Google Workspace und jedem anderen OpenID-Connect-Provider. LDAP/Active-Directory-Login ist ebenfalls integriert, ideal für Unternehmen mit einer bestehenden Verzeichnisstruktur."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kann ich OpenWhistle für mehrere Standorte oder Gesellschaften nutzen?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ja. Ab Version 1.0.0 unterstützt OpenWhistle Multi-Tenancy: Eine Installation kann mehrere unabhängige Organisationen mit vollständig getrennten Daten, eigenen Kategorien, Standorten und Nutzern betreiben. Ideal für Konzerne oder Beratungsunternehmen, die mehrere Mandanten betreuen."
         }
       }
     ]
@@ -1331,7 +1365,7 @@
           <div class="problem-text">
             <p>
               Seit Juli 2023 verpflichtet das <strong>Hinweisgeberschutzgesetz (HinSchG)</strong>
-              Unternehmen ab 50 Mitarbeitern zum Betrieb eines sicheren internen Meldekanals.
+              Unternehmen ab 50 Mitarbeitenden zum Betrieb eines sicheren internen Meldekanals.
               Trotzdem beginnt konforme Software oft bei <strong>50&nbsp;€ im Monat</strong> —
               für eine gesetzliche Pflicht.
             </p>
@@ -1433,7 +1467,7 @@
                 <path d="M9 1.5L2.5 4.5v5c0 4 2.9 7.5 6.5 8.5 3.6-1 6.5-4.5 6.5-8.5v-5L9 1.5z" stroke="#0c7253" stroke-width="1.4" stroke-linejoin="round"/>
               </svg>
             </div>
-            <h3 class="feature-title">Vollständige Anonymität</h3>
+            <h3 class="feature-title">Anonyme Meldung</h3>
             <p class="feature-desc">
               Keine IP-Adressen werden je gespeichert — nicht einmal auf nginx-Ebene. Vier
               unabhängige Anonymitätsschichten stellen sicher, dass der Hinweisgeber allein
@@ -1681,7 +1715,7 @@
                 <div class="flow-step-num" aria-hidden="true">1</div>
                 <div>
                   <div class="flow-step-title">Anonymes Formular ausfüllen</div>
-                  <div class="flow-step-desc">Kein Konto erforderlich. Keine E-Mail-Adresse. Keine personenbezogenen Daten werden erhoben. Das Meldeformular ist über eine öffentliche URL erreichbar — jede Mitarbeiterin und jeder Mitarbeiter kann es nutzen.</div>
+                  <div class="flow-step-desc">Kein Konto erforderlich. Keine E-Mail-Adresse. Keine personenbezogenen Daten werden erhoben. Das Meldeformular ist über eine öffentliche URL erreichbar — alle Mitarbeitenden können es nutzen.</div>
                 </div>
               </div>
               <div class="flow-step">
@@ -1757,7 +1791,7 @@
               bidirektionalen Kommunikationskanal.
             </p>
             <ul class="compliance-list">
-              <li>§ 16 — Einrichtung interner Meldekanäle ab 50 Mitarbeitern</li>
+              <li>§ 16 — Einrichtung interner Meldekanäle ab 50 Mitarbeitenden</li>
               <li>7-Tage-Eingangsbestätigung nach § 17 Abs. 1</li>
               <li>3-Monats-Rückmeldefrist nach § 17 Abs. 2</li>
               <li>Sicherer bidirektionaler Kanal nach § 17 Abs. 3</li>
@@ -1786,12 +1820,12 @@
             <span class="compliance-card-badge">EU 2019/1937</span>
             <h3>EU-Hinweisgeberrichtlinie</h3>
             <p>
-              Die Richtlinie erfasst Organisationen ab 50 Mitarbeitern und alle öffentlichen
+              Die Richtlinie erfasst Organisationen ab 50 Mitarbeitenden und alle öffentlichen
               Stellen. Deutschland hat sie mit dem HinSchG umgesetzt, in Kraft seit dem
               2. Juli 2023.
             </p>
             <ul class="compliance-list">
-              <li>Privatwirtschaft ab 50 Mitarbeitern</li>
+              <li>Privatwirtschaft ab 50 Mitarbeitenden</li>
               <li>Alle Bundes- und Landesbehörden</li>
               <li>Gemeinden mit 10.000 oder mehr Einwohnern</li>
               <li>Finanzsektor unabhängig von der Größe</li>
@@ -1920,7 +1954,7 @@
           <details class="faq-item">
             <summary>Ist der Hinweisgeber wirklich anonym?</summary>
             <div class="faq-answer">
-              Ja. Es werden keine IP-Adressen gespeichert — weder in der Datenbank noch in
+              Es werden keine IP-Adressen gespeichert — weder in der Datenbank noch in
               Protokollen. Der nginx-Reverse-Proxy entfernt X-Forwarded-For-Header, die
               Applikationsmiddleware löscht die Remote-Adresse vor jeder Verarbeitung, es
               gibt keine IP-Spalte im Datenbankschema, und Redis-Session-Tokens enthalten
@@ -1932,7 +1966,7 @@
             <summary>Kann ich OpenWhistle für mein Unternehmen nutzen?</summary>
             <div class="faq-answer">
               Ja. OpenWhistle ist für jede Organisation gedacht, die dem HinSchG unterliegt —
-              private Unternehmen ab 50 Mitarbeitern, alle Bundes- und Landesbehörden,
+              private Unternehmen ab 50 Mitarbeitenden, alle Bundes- und Landesbehörden,
               Gemeinden ab 10.000 Einwohnern sowie Unternehmen des Finanzsektors. Die
               GPL-3.0-Lizenz erlaubt ausdrücklich die kommerzielle Nutzung im Selbst-Hosting.
             </div>
@@ -1949,12 +1983,12 @@
           </details>
 
           <details class="faq-item">
-            <summary>Unterstützt OpenWhistle Single Sign-On (SSO)?</summary>
+            <summary>Gibt es kommerziellen Support?</summary>
             <div class="faq-answer">
-              Ja. OpenWhistle unterstützt OIDC-Login für Admin-Konten — kompatibel mit
-              Keycloak, Authentik, Azure AD (Entra ID), Google Workspace und jedem anderen
-              OpenID-Connect-Provider. LDAP/Active-Directory-Login ist ebenfalls integriert,
-              ideal für Unternehmen mit einer bestehenden Verzeichnisstruktur.
+              Community-Support ist über
+              <a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank" style="color: var(--accent);">GitHub Issues</a>
+              verfügbar. Das Projekt freut sich über Beiträge, Fehlerberichte und
+              Funktionswünsche. Derzeit gibt es keinen kostenpflichtigen Support-Tier.
             </div>
           </details>
 
@@ -1968,6 +2002,16 @@
               Cloud-Infrastruktur (DSGVO-Risiko) und haben geschlossenen Quellcode.
               OpenWhistle ist kostenlos, vollständig prüfbar, und Sie behalten die Kontrolle
               über die Daten.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>Unterstützt OpenWhistle Single Sign-On (SSO)?</summary>
+            <div class="faq-answer">
+              Ja. OpenWhistle unterstützt OIDC-Login für Admin-Konten — kompatibel mit
+              Keycloak, Authentik, Azure AD (Entra ID), Google Workspace und jedem anderen
+              OpenID-Connect-Provider. LDAP/Active-Directory-Login ist ebenfalls integriert,
+              ideal für Unternehmen mit einer bestehenden Verzeichnisstruktur.
             </div>
           </details>
 
