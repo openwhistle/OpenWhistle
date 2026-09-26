@@ -102,6 +102,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Privacy
 
+- **Database errors no longer log their bound values.** Every engine (app, migrations, scripts)
+  sets `hide_parameters`, so a failed query on `/status` or a reply no longer writes the case
+  number or report id into the error log next to an exact time.
 - **Notification digests are daily by default** (`NOTIFICATION_BATCH_MINUTES=1440`, was 60).
   Report times are stored as the day, and an hourly digest said which hour a report or reply
   arrived. Set a smaller value to hear sooner, at that precision.
