@@ -11,6 +11,9 @@
   <meta name="author" content="OpenWhistle Contributors">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://openwhistle.net/">
+  <link rel="alternate" hreflang="en" href="https://openwhistle.net/">
+  <link rel="alternate" hreflang="de" href="https://openwhistle.net/de/">
+  <link rel="alternate" hreflang="x-default" href="https://openwhistle.net/">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
@@ -1180,7 +1183,11 @@
     }
 
     /* ── Responsive ─────────────────────────────────────────────── */
-    @media (max-width: 768px) {
+    /* Nav collapses at 1080px, not 768px: at 1024px the full item list
+       (Features/How it Works/Documentation/Roadmap/Blog/language switch/
+       GitHub/Try Demo) no longer fits the nav-inner row and overflows the
+       viewport horizontally (Task X12 Chrome-check finding). */
+    @media (max-width: 1080px) {
       .nav-links { display: none; }
       .nav-links.open {
         display: flex;
@@ -1196,6 +1203,9 @@
         z-index: 201;
       }
       .nav-toggle { display: flex; }
+    }
+
+    @media (max-width: 768px) {
       .hero-rule-left, .hero-rule-right { display: none; }
       .problem-layout,
       .flows-grid,
