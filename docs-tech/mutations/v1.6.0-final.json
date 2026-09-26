@@ -11,6 +11,12 @@
   ],
   "S": [
    "tests/test_v160_security.py"
+  ],
+  "MW": [
+   "tests/test_multitenancy_wizard.py"
+  ],
+  "DS": [
+   "tests/test_services_demo_seed.py"
   ]
  },
  "mutations": [
@@ -363,6 +369,195 @@
    "old": "{{ report.submitted_at|day }}",
    "new": "{{ report.submitted_at.strftime('%Y-%m-%d') }}",
    "tests": "F"
+  },
+  {
+   "id": "wizard-get-categories-unscoped",
+   "file": "app/api/reports.py",
+   "old": "    categories = await get_active_categories(db, **tenant.scope)\n    flash_error",
+   "new": "    categories = await get_active_categories(db)\n    flash_error",
+   "tests": "MW"
+  },
+  {
+   "id": "wizard-get-locations-unscoped",
+   "file": "app/api/reports.py",
+   "old": "    locations = await get_active_locations(db, **tenant.scope)\n    has_locations = len(locations) > 0\n    total_steps",
+   "new": "    locations = await get_active_locations(db)\n    has_locations = len(locations) > 0\n    total_steps",
+   "tests": "MW"
+  },
+  {
+   "id": "wizard-post-categories-unscoped",
+   "file": "app/api/reports.py",
+   "old": "    categories = await get_active_categories(db, **tenant.scope)\n    valid_cat_slugs",
+   "new": "    categories = await get_active_categories(db)\n    valid_cat_slugs",
+   "tests": "MW"
+  },
+  {
+   "id": "wizard-location-any-org",
+   "file": "app/api/reports.py",
+   "old": " or (tenant.scoped and loc.org_id != tenant.org_id)",
+   "new": "",
+   "tests": "MW"
+  },
+  {
+   "id": "report-filed-under-default-org",
+   "file": "app/api/reports.py",
+   "old": "                    org_id=tenant.org_id,\n",
+   "new": "",
+   "tests": "MW"
+  },
+  {
+   "id": "draft-moves-between-orgs",
+   "file": "app/api/reports.py",
+   "old": "    if tenant.scoped and state.get(\"org_id\", tenant.draft_org) != tenant.draft_org:",
+   "new": "    if False:",
+   "tests": "MW"
+  },
+  {
+   "id": "draft-org-not-pinned",
+   "file": "app/api/reports.py",
+   "old": "        state.setdefault(\"org_id\", tenant.draft_org)  # fixed from here on",
+   "new": "        pass",
+   "tests": "MW"
+  },
+  {
+   "id": "unknown-slug-served",
+   "file": "app/api/reports.py",
+   "old": "    if org_id is None:\n        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)\n    return _Tenant(scoped=True",
+   "new": "    return _Tenant(scoped=True",
+   "tests": "MW"
+  },
+  {
+   "id": "inactive-org-served",
+   "file": "app/api/reports.py",
+   "old": "            Organisation.is_active.is_(True),\n",
+   "new": "",
+   "tests": "MW"
+  },
+  {
+   "id": "single-tenant-slug-served",
+   "file": "app/api/reports.py",
+   "old": "            return RedirectResponse(\"/submit\", status_code=303)\n        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)",
+   "new": "            return RedirectResponse(\"/submit\", status_code=303)\n        return _Tenant(scoped=False, org_id=None, path=\"/submit\")",
+   "tests": "MW"
+  },
+  {
+   "id": "single-tenant-default-slug-404",
+   "file": "app/api/reports.py",
+   "old": "        if org_slug == settings.default_org_slug:",
+   "new": "        if False:",
+   "tests": "MW"
+  },
+  {
+   "id": "prg-back-to-default-org",
+   "file": "app/api/reports.py",
+   "old": "        resp = RedirectResponse(tenant.path, status_code=303)",
+   "new": "        resp = RedirectResponse(\"/submit\", status_code=303)",
+   "tests": "MW"
+  },
+  {
+   "id": "check-again-default-org",
+   "file": "app/api/reports.py",
+   "old": "    return _pending_page(request, path, kept=kept)",
+   "new": "    return _pending_page(request, \"/submit\", kept=kept)",
+   "tests": "MW"
+  },
+  {
+   "id": "language-switch-drops-org",
+   "file": "app/api/reports.py",
+   "old": "    if safe_path is None and (org_path :=",
+   "new": "    if False and (org_path :=",
+   "tests": "MW"
+  },
+  {
+   "id": "restart-to-default-org",
+   "file": "app/api/reports.py",
+   "old": "    response = RedirectResponse(tenant.path, status_code=303)\n    _clear_submission_cookie",
+   "new": "    response = RedirectResponse(\"/submit\", status_code=303)\n    _clear_submission_cookie",
+   "tests": "MW"
+  },
+  {
+   "id": "remove-to-default-org",
+   "file": "app/api/reports.py",
+   "old": "            await _save_submission(redis, raw, state)\n    return RedirectResponse(tenant.path, status_code=303)",
+   "new": "            await _save_submission(redis, raw, state)\n    return RedirectResponse(\"/submit\", status_code=303)",
+   "tests": "MW"
+  },
+  {
+   "id": "nav-link-default-org",
+   "file": "app/templates/base.html",
+   "old": "{% set nav_submit = submit_path | default('/submit') %}",
+   "new": "{% set nav_submit = '/submit' %}",
+   "tests": "MW"
+  },
+  {
+   "id": "create-report-ignores-org",
+   "file": "app/services/report.py",
+   "old": "    if org_id is None:\n        org_id = await _get_default_org_id(db)\n",
+   "new": "    org_id = await _get_default_org_id(db)\n",
+   "tests": "MW"
+  },
+  {
+   "id": "active-categories-unscoped",
+   "file": "app/services/categories.py",
+   "old": "        q = q.where(ReportCategory.org_id.is_not_distinct_from(org_id))\n",
+   "new": "        pass\n",
+   "tests": "MW"
+  },
+  {
+   "id": "active-locations-unscoped",
+   "file": "app/services/locations.py",
+   "old": "        q = q.where(Location.org_id.is_not_distinct_from(org_id))\n",
+   "new": "        pass\n",
+   "tests": "MW"
+  },
+  {
+   "id": "org-slug-restart-allowed",
+   "file": "app/api/admin.py",
+   "old": "    if not slug_clean or slug_clean == \"restart\":",
+   "new": "    if not slug_clean:",
+   "tests": "MW"
+  },
+  {
+   "id": "default-org-deactivatable",
+   "file": "app/api/admin.py",
+   "old": "    if org.slug == settings.default_org_slug:",
+   "new": "    if org.slug == \"default\":",
+   "tests": "MW"
+  },
+  {
+   "id": "setup-ignores-default-slug",
+   "file": "app/api/wizard.py",
+   "old": "        select(Organisation).where(Organisation.slug == settings.default_org_slug)",
+   "new": "        select(Organisation).where(Organisation.slug == \"default\")",
+   "tests": "MW"
+  },
+  {
+   "id": "dashboard-no-reporting-link",
+   "file": "app/api/admin.py",
+   "old": "        if org is not None and org.is_active:\n            reporting_path",
+   "new": "        if False:\n            reporting_path",
+   "tests": "MW"
+  },
+  {
+   "id": "orgs-page-links-inactive",
+   "file": "app/templates/admin/organisations.html",
+   "old": "                                {% if org.is_active %}\n                                {% set link",
+   "new": "                                {% if true %}\n                                {% set link",
+   "tests": "MW"
+  },
+  {
+   "id": "orgs-page-links-without-tenancy",
+   "file": "app/api/admin.py",
+   "old": "            if settings.multi_tenancy_enabled\n            else None,",
+   "new": "            if True\n            else None,",
+   "tests": "MW"
+  },
+  {
+   "id": "demo-admin-org-less",
+   "file": "app/services/demo_seed.py",
+   "old": "            role=AdminRole.admin,\n            is_active=True,\n            org_id=org_row,  # the default org, like setup's first admin\n",
+   "new": "            role=AdminRole.admin,\n            is_active=True,\n",
+   "tests": "DS"
   }
  ]
 }

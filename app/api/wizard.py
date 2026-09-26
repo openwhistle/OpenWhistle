@@ -9,6 +9,7 @@ from redis.asyncio import Redis
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.csrf import validate_csrf
 from app.database import get_db
 from app.models.setup import SetupStatus
@@ -55,16 +56,16 @@ async def create_initial_admin(
         await db.rollback()
         return False
 
-    # Ensure the default organisation exists (created by migration 012, but guard here)
+    # The migration seeds "default"; DEFAULT_ORG_SLUG may name another one.
     from app.models.organisation import Organisation
 
     org_result = await db.execute(
-        select(Organisation).where(Organisation.slug == "default")
+        select(Organisation).where(Organisation.slug == settings.default_org_slug)
     )
     default_org = org_result.scalar_one_or_none()
     if default_org is None:
         default_org = Organisation(
-            id=uuid.uuid4(), name="Default Organisation", slug="default"
+            id=uuid.uuid4(), name="Default Organisation", slug=settings.default_org_slug
         )
         db.add(default_org)
         await db.flush()

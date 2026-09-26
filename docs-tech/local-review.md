@@ -126,6 +126,7 @@ marketing/documentation site under `docs/`.
 |---|---|---|
 | `/` | — | Redirects to `/setup` or `/submit`; no template of its own. |
 | `/submit` | `submit.html` | Whistleblower submission wizard — walk every step, both submission modes. |
+| `/submit/{org_slug}` | `submit.html` | An organisation's wizard. Multi-tenancy only: the review stack runs with it off, so `/submit/default` redirects to `/submit` and any other slug is the 404 page. |
 | — (finishing the wizard) | `submit_success.html` | The PIN screen. Complete a submission on `/submit` to reach it. |
 | — (a concurrent double-submit) | `submit_pending.html` | "Still processing" page for a second submit of the same draft. Hard to force by hand reliably — throttle the network in devtools and click Submit twice quickly; `tests/test_submit_prg.py` exercises it directly if a manual attempt does not land. |
 | `/status` | `status.html` | Whistleblower status/PIN lookup — use a seeded demo case (`OW-DEMO-00001` / `demo-pin-received-00001`); also check the signed-in state after a lookup succeeds. |

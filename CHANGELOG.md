@@ -104,6 +104,12 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Per-organisation reporting link** (multi-tenancy). Each organisation's wizard is at
+  `/submit/<org-slug>`: it offers only that organisation's categories and locations and files
+  the report under it. `/submit` is the default organisation's; an unknown or deactivated slug
+  is a 404, and there is no public list of organisations. The link, with a copy button, is on
+  `/admin/organisations` and on an organisation admin's dashboard. With multi-tenancy off,
+  nothing changes: `/submit/<default slug>` redirects to `/submit`, any other slug is a 404.
 - **Tor onion address** (`ONION_LOCATION`, optional). Sends an `Onion-Location` header, so Tor
   Browser offers the switch, and shows the address on the submit page for reporters on a
   monitored network. nginx sets `X-OW-Onion` only on the onion listener and strips any
@@ -307,6 +313,14 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   styled, localised error page; an API/JSON client is unaffected.
 - The "Was ist neu in 1.6" blog article was dated 25 September; the release is the 26th
   (visible date, meta tags, JSON-LD `datePublished`/`dateModified`, sitemap `lastmod`).
+- **With multi-tenancy on, the wizard offered every organisation's categories and locations**,
+  and every report was filed under the default organisation (since v1.4). A category or
+  location of another organisation is now refused at its step and again at the final submit.
+- The demo accounts belonged to no organisation, so with multi-tenancy on they saw none of the
+  default organisation's demo reports; they now belong to it, like setup's first admin.
+- **`DEFAULT_ORG_SLUG` was ignored by setup and by the organisations page**: setup always
+  created `default`, and only `default` was protected from deactivation. Both now use the
+  configured slug.
 
 ### Design
 

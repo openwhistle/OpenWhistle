@@ -7,6 +7,7 @@ import re
 import secrets
 import uuid
 from collections.abc import Awaitable
+from dataclasses import dataclass
 from typing import Any, cast
 from urllib.parse import urlsplit
 
@@ -24,12 +25,14 @@ from fastapi import (
 )
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from redis.asyncio import Redis
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.csrf import validate_csrf
 from app.database import get_db
 from app.i18n import get_lang, make_translator
+from app.models.organisation import Organisation
 from app.models.report import SubmissionMode
 from app.onion import cookie_secure
 from app.redis_client import get_redis
@@ -59,6 +62,8 @@ _NEXT_ALLOWLIST: dict[str, str] = {
     "/admin/mfa/setup": "/admin/mfa/setup",
     "/setup": "/setup",
 }
+# An organisation's wizard, /submit/<slug> (slugs are [a-z0-9-], see create_organisation).
+_ORG_SUBMIT_RE = re.compile(r"/submit/([a-z0-9-]{1,64})")
 
 # Steps: mode → location (conditional) → category → description → attachments → review
 _STEP_MODE = 1
@@ -161,12 +166,65 @@ return 1
 """
 
 
+@dataclass(frozen=True)
+class _Tenant:
+    """Whose wizard a request is on: the organisation its reports are filed
+    under, and the wizard's own URL. Unscoped with multi-tenancy off."""
+
+    scoped: bool
+    org_id: uuid.UUID | None
+    path: str
+
+    @property
+    def scope(self) -> dict[str, Any]:
+        return {"scope_org": self.scoped, "org_id": self.org_id}
+
+    @property
+    def draft_org(self) -> str | None:
+        return str(self.org_id) if self.org_id else None
+
+
+async def _tenant(request: Request, db: AsyncSession) -> _Tenant | RedirectResponse:
+    """/submit is the default organisation's wizard, /submit/<slug> that
+    organisation's. An unknown or inactive slug is a 404; there is no list of
+    the instance's organisations. With multi-tenancy off there is one unscoped
+    wizard at /submit, and only the default slug redirects to it."""
+    org_slug: str | None = request.path_params.get("org_slug")
+    if not settings.multi_tenancy_enabled:
+        if org_slug is None:
+            return _Tenant(scoped=False, org_id=None, path="/submit")
+        if org_slug == settings.default_org_slug:
+            return RedirectResponse("/submit", status_code=303)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    org_id = await db.scalar(
+        select(Organisation.id).where(
+            Organisation.slug == (org_slug or settings.default_org_slug),
+            Organisation.is_active.is_(True),
+        )
+    )
+    if org_slug is None:
+        return _Tenant(scoped=True, org_id=org_id, path="/submit")
+    if org_id is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    return _Tenant(scoped=True, org_id=org_id, path=f"/submit/{org_slug}")
+
+
+async def _load_draft(redis: Redis, session_id: str, tenant: _Tenant) -> dict[str, Any]:
+    """The draft, unless it belongs to another organisation: a draft never
+    moves between organisations (its categories and locations are its own).
+    One saved without an organisation joins the first wizard that saves it."""
+    state = await _load_submission(redis, session_id)
+    if tenant.scoped and state.get("org_id", tenant.draft_org) != tenant.draft_org:
+        return {}
+    return state
+
+
 def _mode_error(mode: object) -> str | None:
     allowed = ("anonymous", "confidential") if settings.submission_mode_enabled else ("anonymous",)
     return None if mode in allowed else "mode_required"
 
 
-async def _location_error(db: AsyncSession, location_id: object) -> str | None:
+async def _location_error(db: AsyncSession, location_id: object, tenant: _Tenant) -> str | None:
     if not location_id:
         return None
     try:
@@ -174,7 +232,9 @@ async def _location_error(db: AsyncSession, location_id: object) -> str | None:
     except ValueError:
         return "invalid_location"
     loc = await get_location_by_id(db, loc_uuid)
-    return None if loc and loc.is_active else "invalid_location"
+    if not loc or not loc.is_active or (tenant.scoped and loc.org_id != tenant.org_id):
+        return "invalid_location"
+    return None
 
 
 def _category_error(category: object, category_slugs: set[str]) -> str | None:
@@ -189,7 +249,11 @@ def _description_error(description: object) -> str | None:
 
 
 async def _draft_error(
-    db: AsyncSession, state: dict[str, Any], category_slugs: set[str], has_locations: bool
+    db: AsyncSession,
+    state: dict[str, Any],
+    category_slugs: set[str],
+    has_locations: bool,
+    tenant: _Tenant,
 ) -> tuple[int, str] | None:
     """The first step whose value no longer passes its own check, and why.
 
@@ -201,7 +265,9 @@ async def _draft_error(
         (_STEP_MODE, _mode_error(state.get("submission_mode"))),
         (
             _STEP_LOCATION,
-            await _location_error(db, state.get("location_id")) if has_locations else None,
+            await _location_error(db, state.get("location_id"), tenant)
+            if has_locations
+            else None,
         ),
         (_STEP_CATEGORY, _category_error(state.get("category"), category_slugs)),
         (_STEP_DESCRIPTION, _description_error(state.get("description"))),
@@ -292,8 +358,6 @@ def _received(case_number: str) -> dict[str, Any]:
 async def _committed_case_number(db: AsyncSession, report_id: str | uuid.UUID) -> str | None:
     """The case number of the report with this id, if one was committed. Asked on
     a fresh session (the request's may be broken), bounded like the submit."""
-    from sqlalchemy import select  # noqa: PLC0415
-
     from app.models.report import Report  # noqa: PLC0415
 
     async with asyncio.timeout(_SUBMIT_TIMEOUT_SECONDS), AsyncSession(db.bind) as fresh:
@@ -380,12 +444,12 @@ async def _redis_has_room(redis: Redis) -> bool:
 
 
 async def _get_or_create_submission_session(
-    request: Request, redis: Redis
+    request: Request, redis: Redis, tenant: _Tenant
 ) -> tuple[str, dict[str, Any]]:
     raw = request.cookies.get("ow-submission-session")
     session_id: str | None = raw if raw and _DRAFT_COOKIE_RE.match(raw) else None
     if session_id:
-        state = await _load_submission(redis, session_id)
+        state = await _load_draft(redis, session_id, tenant)
         if state:
             return session_id, state
     session_id = _new_draft_id()
@@ -435,6 +499,8 @@ async def set_language(
     safe_lang = {"en": "en", "de": "de", "fr": "fr", "pt-br": "pt-br"}.get(lang, "en")
     parsed = urlsplit(next_url)
     safe_path = _NEXT_ALLOWLIST.get(parsed.path)
+    if safe_path is None and (org_path := _ORG_SUBMIT_RE.fullmatch(parsed.path)):
+        safe_path = f"/submit/{org_path.group(1)}"
     if safe_path is None:
         safe_url = "/admin/dashboard" if parsed.path.startswith("/admin/") else "/submit"
     else:
@@ -488,8 +554,6 @@ async def health(
 
 @router.get("/", response_class=HTMLResponse, response_model=None)
 async def index(request: Request, db: AsyncSession = Depends(get_db)) -> RedirectResponse:
-    from sqlalchemy import select
-
     from app.models.setup import SetupStatus
 
     result = await db.execute(select(SetupStatus).where(SetupStatus.id == 1))
@@ -508,6 +572,9 @@ async def submit_get(
     redis: Redis = Depends(get_redis),
     db: AsyncSession = Depends(get_db),
 ) -> Response:
+    tenant = await _tenant(request, db)
+    if isinstance(tenant, Response):
+        return tenant
     raw_cookie = request.cookies.get("ow-submission-session")
     if raw_cookie and _DRAFT_COOKIE_RE.match(raw_cookie):
         if not await _load_submission(redis, raw_cookie) and await _submit_in_flight(
@@ -515,12 +582,12 @@ async def submit_get(
         ):
             # "Check again" after a submit whose outcome was not known yet;
             # _submit_outcome also gives the draft back once "pending" expired.
-            page = await _submit_outcome(request, redis, db, raw_cookie, wait=0)
+            page = await _submit_outcome(request, redis, db, raw_cookie, tenant.path, wait=0)
             if page is not None:
                 return page
-    session_id, state = await _get_or_create_submission_session(request, redis)
+    session_id, state = await _get_or_create_submission_session(request, redis, tenant)
 
-    locations = await get_active_locations(db)
+    locations = await get_active_locations(db, **tenant.scope)
     has_locations = len(locations) > 0
     total_steps = _compute_total_steps(has_locations)
 
@@ -530,7 +597,7 @@ async def submit_get(
         current_step = _STEP_CATEGORY
         state["step"] = current_step
 
-    categories = await get_active_categories(db)
+    categories = await get_active_categories(db, **tenant.scope)
     flash_error = state.pop("_flash_error", None)
     flash_field_errors = state.pop("_flash_field_errors", None)
 
@@ -542,6 +609,7 @@ async def submit_get(
         "locations": locations,
         "categories": categories,
         "display_step": _compute_step_label(current_step, has_locations),
+        "submit_path": tenant.path,
     }
     if flash_error:
         ctx["error"] = flash_error
@@ -579,21 +647,24 @@ async def submit_post(
     db: AsyncSession = Depends(get_db),
     _csrf: None = Depends(validate_csrf),
 ) -> Response:
+    tenant = await _tenant(request, db)
+    if isinstance(tenant, Response):
+        return tenant
     raw_cookie = request.cookies.get("ow-submission-session")
     session_id: str = (
         raw_cookie
         if raw_cookie and _DRAFT_COOKIE_RE.match(raw_cookie)
         else _new_draft_id()
     )
-    state = await _load_submission(redis, session_id)
+    state = await _load_draft(redis, session_id, tenant)
     if not state and raw_cookie == session_id:
         # Reload whoever recovered it: a concurrent request may have.
         await _recover_draft(redis, db, session_id)
-        state = await _load_submission(redis, session_id)
+        state = await _load_draft(redis, session_id, tenant)
         if not state and await _submit_in_flight(redis, session_id):
             # Another request holds this draft's submit (a second click on
             # "Submit"): show its outcome, never touch the draft.
-            return await _await_other_submit(request, redis, db, session_id)
+            return await _await_other_submit(request, redis, db, session_id, tenant.path)
     if not state and raw_cookie:
         # Never adopt a client-supplied session id that has no server-side state
         # (session fixation): mint a fresh server-generated id instead, matching
@@ -601,15 +672,15 @@ async def submit_post(
         session_id = _new_draft_id()
         state = {}
 
-    locations = await get_active_locations(db)
+    locations = await get_active_locations(db, **tenant.scope)
     has_locations = len(locations) > 0
-    categories = await get_active_categories(db)
+    categories = await get_active_categories(db, **tenant.scope)
     valid_cat_slugs = {c.slug for c in categories}
 
     def _redirect_after_post() -> RedirectResponse:
-        # Post/Redirect/Get: every step is rendered by GET /submit, so a native
+        # Post/Redirect/Get: every step is rendered by the GET, so a native
         # browser Back never lands on a POST result (resubmit dialog, stale page).
-        resp = RedirectResponse("/submit", status_code=303)
+        resp = RedirectResponse(tenant.path, status_code=303)
         _set_submission_cookie(resp, session_id, request)
         return resp
 
@@ -636,6 +707,9 @@ async def submit_post(
         state.setdefault("step", _STEP_MODE)
         await _save_submission(redis, session_id, state)
         return _redirect_after_post()
+
+    if tenant.scoped:
+        state.setdefault("org_id", tenant.draft_org)  # fixed from here on
 
     if action == "back":
         current = state.get("step", _STEP_MODE)
@@ -682,7 +756,7 @@ async def submit_post(
     if step == _STEP_LOCATION:
         if has_locations:
             loc_id_stripped = location_id.strip()
-            if loc_error := await _location_error(db, loc_id_stripped):
+            if loc_error := await _location_error(db, loc_id_stripped, tenant):
                 return await _fail(_STEP_LOCATION, loc_error)
             state["location_id"] = str(uuid.UUID(loc_id_stripped)) if loc_id_stripped else None
 
@@ -754,7 +828,7 @@ async def submit_post(
         claim = await _claim_draft(redis, session_id)
         if claim is None:
             await db.rollback()  # do not hold a pooled connection while waiting
-            return await _await_other_submit(request, redis, db, session_id)
+            return await _await_other_submit(request, redis, db, session_id, tenant.path)
         claimed, nonce = claim
 
         import base64 as _b64  # noqa: PLC0415
@@ -778,7 +852,9 @@ async def submit_post(
                 await db.execute(
                     text(f"SET LOCAL statement_timeout = {_SUBMIT_TIMEOUT_SECONDS * 1000}")
                 )
-                if draft_error := await _draft_error(db, state, valid_cat_slugs, has_locations):
+                if draft_error := await _draft_error(
+                    db, state, valid_cat_slugs, has_locations, tenant
+                ):
                     await _give_back_draft(redis, session_id, claimed, nonce)
                     return await _fail(*draft_error)  # saves the draft again, flagged
 
@@ -816,6 +892,7 @@ async def submit_post(
                     secure_email_enc=sec_email_enc,
                     commit=False,
                     report_id=uuid.UUID(report_id),
+                    org_id=tenant.org_id,
                 )
                 await create_attachments(db, report, file_tuples_restored, commit=False)
                 our_case = report.case_number
@@ -830,17 +907,19 @@ async def submit_post(
             except Exception:
                 if not isinstance(exc, Exception):
                     raise exc from None
-                return render(request, "submit_pending.html", {"answers_kept": True})
+                return _pending_page(request, tenant.path, kept=True)
             if committed_case is None:
                 if our_case is not None:  # the COMMIT was issued and may still land
                     if not isinstance(exc, Exception):
                         raise
-                    return render(request, "submit_pending.html", {"answers_kept": True})
+                    return _pending_page(request, tenant.path, kept=True)
                 given_back = await _give_back_draft(redis, session_id, claimed, nonce)
                 if not isinstance(exc, Exception):
                     raise  # cancelled, or the worker is going away: nobody to answer
                 if not given_back:  # a newer claim holds the draft
-                    return await _await_other_submit(request, redis, db, session_id)
+                    return await _await_other_submit(
+                        request, redis, db, session_id, tenant.path
+                    )
                 _log.warning("Final submit failed before its commit: %s", type(exc).__name__)
                 return await _fail(_STEP_REVIEW, "submit_failed")  # nothing was sent
             if committed_case != our_case:  # another submit of this draft made it
@@ -888,6 +967,10 @@ def _success_page(request: Request, result: dict[str, Any]) -> HTMLResponse:
     return response
 
 
+def _pending_page(request: Request, path: str, *, kept: bool) -> HTMLResponse:
+    return render(request, "submit_pending.html", {"answers_kept": kept, "submit_path": path})
+
+
 async def _stored_result_page(
     request: Request, redis: Redis, session_id: str, case_number: str
 ) -> HTMLResponse:
@@ -901,7 +984,7 @@ async def _stored_result_page(
 
 
 async def _submit_outcome(
-    request: Request, redis: Redis, db: AsyncSession, session_id: str, wait: float
+    request: Request, redis: Redis, db: AsyncSession, session_id: str, path: str, wait: float
 ) -> Response | None:
     """A concurrent submit's success page once its result is stored (the
     browser shows only the last click's response); the "still processing"
@@ -927,17 +1010,17 @@ async def _submit_outcome(
         return None
     # The answers are kept only while the claimed draft exists.
     kept = bool(await redis.exists(_claimed_key(session_id)))
-    return render(request, "submit_pending.html", {"answers_kept": kept})
+    return _pending_page(request, path, kept=kept)
 
 
 async def _await_other_submit(
-    request: Request, redis: Redis, db: AsyncSession, session_id: str
+    request: Request, redis: Redis, db: AsyncSession, session_id: str, path: str
 ) -> Response:
-    page = await _submit_outcome(request, redis, db, session_id, wait=_RESULT_WAIT_SECONDS)
+    page = await _submit_outcome(request, redis, db, session_id, path, wait=_RESULT_WAIT_SECONDS)
     if page is not None:
         return page
     # The other submit failed before its commit and gave the draft back.
-    resp = RedirectResponse("/submit", status_code=303)
+    resp = RedirectResponse(path, status_code=303)
     _set_submission_cookie(resp, session_id, request)
     return resp
 
@@ -947,32 +1030,54 @@ async def submit_remove_attachment(
     request: Request,
     index: int = Form(...),
     redis: Redis = Depends(get_redis),
+    db: AsyncSession = Depends(get_db),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
     """Remove one already-attached file from the draft, on the attachments step only."""
+    tenant = await _tenant(request, db)
+    if isinstance(tenant, RedirectResponse):
+        return tenant
     raw = request.cookies.get("ow-submission-session")
     if raw and _DRAFT_COOKIE_RE.match(raw):
-        state = await _load_submission(redis, raw)
+        state = await _load_draft(redis, raw, tenant)
         files = state.get("file_data", [])
         if state.get("step") == _STEP_ATTACHMENTS and 0 <= index < len(files):
             del files[index]
             del state["file_meta"][index]
             await _save_submission(redis, raw, state)
-    return RedirectResponse("/submit", status_code=303)
+    return RedirectResponse(tenant.path, status_code=303)
 
 
 @router.post("/submit/restart")
 async def submit_restart(
     request: Request,
     redis: Redis = Depends(get_redis),
+    db: AsyncSession = Depends(get_db),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
+    tenant = await _tenant(request, db)
+    if isinstance(tenant, RedirectResponse):
+        return tenant
     raw = request.cookies.get("ow-submission-session")
     if raw and _DRAFT_COOKIE_RE.match(raw):
         await redis.delete(_submission_key(raw), _report_id_key(raw))
-    response = RedirectResponse("/submit", status_code=303)
+    response = RedirectResponse(tenant.path, status_code=303)
     _clear_submission_cookie(response, request)
     return response
+
+
+# An organisation's wizard. Registered after /submit/restart, which a slug
+# route would otherwise take (create_organisation refuses the slug "restart").
+router.add_api_route(
+    "/submit/{org_slug}", submit_get, methods=["GET"], response_class=HTMLResponse
+)
+router.add_api_route(
+    "/submit/{org_slug}", submit_post, methods=["POST"], response_class=HTMLResponse
+)
+router.add_api_route(
+    "/submit/{org_slug}/attachments/remove", submit_remove_attachment, methods=["POST"]
+)
+router.add_api_route("/submit/{org_slug}/restart", submit_restart, methods=["POST"])
 
 
 # ── Status ────────────────────────────────────────────────────────

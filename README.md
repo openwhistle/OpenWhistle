@@ -157,6 +157,9 @@ zero vendor lock-in, and privacy-first by design.
   cookie; Office comment and tracked-change authors are anonymised on upload.
 - **Multi-tenancy** — `MULTI_TENANCY_ENABLED=true` lets a single deployment serve multiple
   independent organisations with isolated data, per-tenant categories, locations, and users.
+- **Per-organisation reporting link** — with multi-tenancy, each organisation's employees report
+  at `/submit/<org-slug>`, which offers only that organisation's categories and locations and
+  files the report under it. Admins copy the link from their dashboard.
 - **Superadmin role** — New `superadmin` role above `admin` for managing organisations
   in multi-tenant deployments; existing admin permissions are unchanged.
 - **Telephone channel compliance guide** — Admin page (`/admin/telephone-channel`) provides

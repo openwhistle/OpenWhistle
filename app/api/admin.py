@@ -256,6 +256,16 @@ async def _dashboard(
     now = datetime.now(UTC)
     ip_warning = await check_ip_warning()
 
+    # An org's own reporting link, to hand to its employees (/submit is the default org's).
+    reporting_path, reporting_link = "/submit", None
+    if settings.multi_tenancy_enabled and current_user.org_id is not None:
+        from app.models.organisation import Organisation  # noqa: PLC0415
+
+        org = await db.get(Organisation, current_user.org_id)
+        if org is not None and org.is_active:
+            reporting_path = f"/submit/{org.slug}"
+            reporting_link = settings.app_public_url.rstrip("/") + reporting_path
+
     from app.services.categories import get_category_labels
     from app.services.locations import get_all_locations
 
@@ -272,6 +282,8 @@ async def _dashboard(
             "reports": reports,
             "now": now,
             "ip_warning": ip_warning,
+            "reporting_path": reporting_path,
+            "reporting_link": reporting_link,
             "category_labels": category_labels,
             "ack_deadline_days": 7,
             "feedback_deadline_days": 90,
@@ -1485,7 +1497,15 @@ async def organisations_page(
     return render(
         request,
         "admin/organisations.html",
-        {"user": current_user, "organisations": orgs},
+        {
+            "user": current_user,
+            "organisations": orgs,
+            "default_org_slug": settings.default_org_slug,
+            # Without multi-tenancy there is one wizard, at /submit: no links to list.
+            "public_url": settings.app_public_url.rstrip("/")
+            if settings.multi_tenancy_enabled
+            else None,
+        },
     )
 
 
@@ -1505,7 +1525,8 @@ async def create_organisation(
     from app.models.organisation import Organisation
 
     slug_clean = re.sub(r"[^a-z0-9-]", "-", slug.strip().lower())
-    if not slug_clean:
+    # /submit/restart is the wizard's own: that org's link would never reach its wizard.
+    if not slug_clean or slug_clean == "restart":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid slug.")
 
     existing = await db.execute(
@@ -1542,7 +1563,7 @@ async def deactivate_organisation(
     org = result.scalar_one_or_none()
     if not org:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    if org.slug == "default":
+    if org.slug == settings.default_org_slug:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="The default organisation cannot be deactivated.",

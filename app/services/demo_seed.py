@@ -138,6 +138,7 @@ async def _seed(db: AsyncSession) -> None:
             totp_enabled=True,
             role=AdminRole.admin,
             is_active=True,
+            org_id=org_row,  # the default org, like setup's first admin
         )
         db.add(admin)
         await db.flush()
@@ -156,6 +157,7 @@ async def _seed(db: AsyncSession) -> None:
             totp_enabled=True,
             role=AdminRole.case_manager,
             is_active=True,
+            org_id=org_row,  # the default org, like setup's first admin
         )
         db.add(case_mgr)
         await db.flush()

@@ -459,31 +459,46 @@ async def test_submit_get_downgrades_location_step_when_locations_removed(
 ) -> None:
     """A session stuck on the location step must fall through to category once
     locations are deactivated, instead of showing a dead step."""
+    from sqlalchemy import select, update
+
+    from app.models.location import Location
     from app.services.locations import create_location, deactivate_location
 
+    # Only this test's location may be active, whatever earlier tests left behind.
+    others = (
+        await db_session.scalars(select(Location.id).where(Location.is_active.is_(True)))
+    ).all()
+    await db_session.execute(
+        update(Location).where(Location.id.in_(others)).values(is_active=False)
+    )
     loc = await create_location(
         db_session, "Coverage Temp Office", f"COVTMP{uuid.uuid4().hex[:6].upper()}"
     )
     await db_session.commit()
+    try:
+        get_resp = await client.get("/submit")
+        csrf = _wiz_csrf(get_resp.text)
+        resp = await client.post(
+            "/submit",
+            data={
+                "csrf_token": csrf,
+                "step": "1",
+                "action": "next",
+                "submission_mode": "anonymous",
+            },
+        )
+        assert _wiz_step(resp.text) == 2
 
-    get_resp = await client.get("/submit")
-    csrf = _wiz_csrf(get_resp.text)
-    resp = await client.post(
-        "/submit",
-        data={
-            "csrf_token": csrf,
-            "step": "1",
-            "action": "next",
-            "submission_mode": "anonymous",
-        },
-    )
-    assert _wiz_step(resp.text) == 2
+        await deactivate_location(db_session, loc)
 
-    await deactivate_location(db_session, loc)
-
-    resp = await client.get("/submit")
-    assert resp.status_code == 200
-    assert _wiz_step(resp.text) == 3
+        resp = await client.get("/submit")
+        assert resp.status_code == 200
+        assert _wiz_step(resp.text) == 3
+    finally:
+        await db_session.execute(
+            update(Location).where(Location.id.in_(others)).values(is_active=True)
+        )
+        await db_session.commit()
 
 
 @pytest.mark.asyncio

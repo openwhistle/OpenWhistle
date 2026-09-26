@@ -72,7 +72,7 @@
             {{ t('submit.alert.body') }}
         </div>
 
-        <form method="post" action="/submit" novalidate>
+        <form method="post" action="{{ submit_path }}" novalidate>
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <input type="hidden" name="step" value="1">
 
@@ -152,7 +152,7 @@
 
         {# ── Step 2: Location (conditional) ── #}
         {% elif step == 2 and has_locations %}
-        <form method="post" action="/submit" novalidate>
+        <form method="post" action="{{ submit_path }}" novalidate>
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <input type="hidden" name="step" value="2">
 
@@ -182,7 +182,7 @@
 
         {# ── Step 3: Category ── #}
         {% elif step == 3 %}
-        <form method="post" action="/submit" novalidate>
+        <form method="post" action="{{ submit_path }}" novalidate>
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <input type="hidden" name="step" value="{{ step }}">
 
@@ -213,7 +213,7 @@
 
         {# ── Step 4: Description ── #}
         {% elif step == 4 %}
-        <form method="post" action="/submit" novalidate>
+        <form method="post" action="{{ submit_path }}" novalidate>
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <input type="hidden" name="step" value="{{ step }}">
 
@@ -257,7 +257,7 @@
                 {% for f in state.get('file_meta', []) %}
                 <li>
                     {{ icons.icon('paperclip') }} {{ f.filename }} ({{ f.size | format_size }})
-                    <form method="post" action="/submit/attachments/remove" class="inline-form">
+                    <form method="post" action="{{ submit_path }}/attachments/remove" class="inline-form">
                         <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                         <input type="hidden" name="index" value="{{ loop.index0 }}">
                         <button type="submit" class="sub-restart-btn" aria-label="{{ t('submit.step.attachments.remove.label', name=f.filename) }}">{{ t('submit.step.attachments.remove') }}</button>
@@ -269,7 +269,7 @@
         </div>
         {% endif %}
 
-        <form method="post" action="/submit" enctype="multipart/form-data" novalidate>
+        <form method="post" action="{{ submit_path }}" enctype="multipart/form-data" novalidate>
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <input type="hidden" name="step" value="{{ step }}">
 
@@ -360,7 +360,7 @@
             {% endif %}
         </div>
 
-        <form method="post" action="/submit" novalidate>
+        <form method="post" action="{{ submit_path }}" novalidate>
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <input type="hidden" name="step" value="{{ step }}">
 
@@ -374,7 +374,7 @@
             </div>
         </form>
 
-        <form method="post" action="/submit/restart" class="sub-restart-p">
+        <form method="post" action="{{ submit_path }}/restart" class="sub-restart-p">
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <button type="submit" class="sub-restart-btn">{{ t('submit.nav.restart') }}</button>
         </form>
