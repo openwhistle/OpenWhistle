@@ -216,7 +216,7 @@
                         <td role="cell" class="stack-primary" data-label="{{ t('admin.table.case_number') }}"><span class="mono dash-nowrap">{{ report.case_number }}</span></td>
                         <td role="cell" class="dash-category-cell" data-label="{{ t('admin.table.category') }}">{{ report.category | category_label(category_labels) }}</td>
                         <td role="cell" class="stack-status" data-label="{{ t('admin.table.status') }}"><span class="badge badge-{{ report.status.value }}">{{ t('status.label.' + report.status.value) }}</span></td>
-                        <td role="cell" class="mono dash-date-cell" data-label="{{ t('admin.table.submitted') }}">{{ report.submitted_at.strftime('%Y-%m-%d') }}</td>
+                        <td role="cell" class="mono dash-date-cell" data-label="{{ t('admin.table.submitted') }}">{{ report.submitted_at|day }}</td>
                         <td role="cell" class="dash-assignee-cell" data-label="{{ t('admin.table.assignee') }}">
                             {% if report.assigned_to %}
                                 <span class="dash-assignee-name">{{ report.assigned_to.username }}</span>

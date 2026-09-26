@@ -519,3 +519,14 @@ async def test_an_unlabelled_category_reads_the_same_on_stats_case_page_and_pdf(
     assert full is not None
     text = PdfReader(io.BytesIO(generate_report_pdf(full))).pages[0].extract_text()
     assert expected in text
+
+
+# --- M26: the submission time is shown through the one day formatter ---------------------
+
+
+def test_no_template_formats_the_submission_time_itself() -> None:
+    offenders = [
+        str(p.relative_to(_ROOT)) for p in (_ROOT / "app/templates").rglob("*.html")
+        if re.search(r"submitted_at\s*\.\s*strftime", p.read_text())
+    ]
+    assert offenders == []
