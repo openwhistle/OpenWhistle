@@ -280,40 +280,42 @@ def _footer_targets(page: Path) -> set[str]:
     }
 
 
-# Every blog page's footer link-list must resolve to the same target set as
-# docs/blog/index.html -- the blog's own landing page. Not docs/de/index.html
-# (the site's German homepage): that page's footer links *out* to the blog
-# section (a "Blog" entry), which a page already inside that section has no
-# reason to link back to itself, so the two can never share an identical set
-# regardless of how well-maintained either one is. docs.html/roadmap.html use
-# a structurally different (much smaller, footer-bottom-only) footer with no
-# `.footer-links` list at all -- a separate, larger gap from the one this
-# round's review flagged (four blog articles vs. the already-unified blog
-# index), not covered here; see the fix-round report.
-_FOOTER_LANDING_PAGE = {
-    "docs/index.html": "docs/index.html",
-    "docs/de/index.html": "docs/de/index.html",
-    **{
-        f"docs/blog/{p.name}": "docs/blog/index.html"
-        for p in sorted((ROOT / "docs" / "blog").glob("*.html"))
-    },
-}
+# Every page's footer link-list must resolve to the same target set as its
+# landing page: docs/blog/index.html for the blog section (not
+# docs/de/index.html -- that page's footer links *out* to the blog section as
+# a "Blog" entry, which a page already inside that section has no reason to
+# link back to itself, so the two can never share an identical set regardless
+# of maintenance), docs/de/index.html for itself, and docs/index.html for
+# every other page -- no page is exempt (Task X12 fix round 2: docs.html and
+# roadmap.html used to carry a structurally different, much smaller footer
+# with no `.footer-links` list at all; they now carry the same footer as
+# docs/index.html, so they're covered like every other page).
+def _footer_landing_page(page: Path) -> Path:
+    if page.parent.name == "blog":
+        return ROOT / "docs/blog/index.html"
+    if page == ROOT / "docs/de/index.html":
+        return page
+    return ROOT / "docs/index.html"
 
 
 def test_every_page_footer_has_the_same_link_set_as_its_landing_page() -> None:
-    """Regression guard (Task X12 fix round 1): the four blog articles kept
-    their old, smaller footer link-list (6 targets, missing Issues and
+    """Regression guard (Task X12 fix rounds 1-2): the four blog articles
+    kept their old, smaller footer link-list (6 targets, missing Issues and
     License) after docs/blog/index.html was rebuilt with the full one (7
-    targets). Every page in `_FOOTER_LANDING_PAGE` must resolve to the exact
-    same footer link-target set as its landing page."""
+    targets) -- round 1. docs.html/roadmap.html carried an entirely
+    different, much smaller footer (no `.footer-links` list at all) -- round
+    2. Every docs/**/*.html page must resolve to the exact same footer
+    link-target set as its landing page (see `_footer_landing_page`); no
+    page is exempt."""
+    pages = sorted((ROOT / "docs").rglob("*.html"))
+    assert pages
     mismatches = {}
-    for page_str, landing_str in _FOOTER_LANDING_PAGE.items():
-        page = ROOT / page_str
-        landing = ROOT / landing_str
+    for page in pages:
+        landing = _footer_landing_page(page)
         targets = _footer_targets(page)
         canonical = _footer_targets(landing)
         if targets != canonical:
-            mismatches[page_str] = {
+            mismatches[str(page.relative_to(ROOT))] = {
                 "missing": sorted(canonical - targets),
                 "extra": sorted(targets - canonical),
             }

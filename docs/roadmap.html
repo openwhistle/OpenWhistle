@@ -56,6 +56,7 @@
     @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
     @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
     @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+    @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
     @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
   </style>
 
@@ -464,16 +465,62 @@
     }
 
     /* ── Footer ──────────────────────────────────────────────────── */
+/* ── Footer ──────────────────────────────────────────────────── */
     .site-footer {
       background: var(--footer-bg);
       color: rgba(226, 220, 210, 0.7);
-      padding: var(--space-10) var(--space-8) var(--space-6);
-      border-top: 1px solid rgba(255,255,255,0.04);
+      padding: var(--space-16) var(--space-8) var(--space-8);
     }
     .footer-inner {
       max-width: var(--max-width);
       margin: 0 auto;
     }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.8fr 1fr 1fr;
+      gap: var(--space-12);
+      margin-bottom: var(--space-12);
+      padding-bottom: var(--space-10);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #e2dcd2;
+      margin-bottom: var(--space-4);
+    }
+    .footer-tagline {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: rgba(226, 220, 210, 0.5);
+      line-height: 1.6;
+      max-width: 32ch;
+    }
+    .footer-col-title {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(226, 220, 210, 0.4);
+      margin-bottom: var(--space-5);
+    }
+    .footer-links {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+    .footer-links a {
+      font-size: 0.875rem;
+      color: rgba(226, 220, 210, 0.6);
+      transition: color var(--duration-fast) ease;
+    }
+    .footer-links a:hover { color: #e2dcd2; }
     .footer-bottom {
       display: flex;
       align-items: center;
@@ -485,9 +532,13 @@
       gap: var(--space-4);
       flex-wrap: wrap;
     }
-    .footer-bottom a { color: rgba(226, 220, 210, 0.4); transition: color var(--duration-fast) ease; }
+    .footer-bottom a {
+      color: rgba(226, 220, 210, 0.4);
+      transition: color var(--duration-fast) ease;
+    }
     .footer-bottom a:hover { color: rgba(226, 220, 210, 0.7); }
 
+    
     /* ── Animations ─────────────────────────────────────────────── */
     @keyframes rise {
       from { opacity: 0; transform: translateY(12px); }
@@ -525,6 +576,7 @@
         border-bottom: 1px solid var(--border-subtle);
       }
       .docs-content { padding: var(--space-8) var(--space-5) var(--space-12); }
+      .footer-grid { grid-template-columns: 1fr; gap: var(--space-8); }
       .footer-bottom { flex-direction: column; align-items: flex-start; }
     }
   </style>
@@ -871,12 +923,52 @@
   <!-- Footer -->
   <footer class="site-footer" role="contentinfo">
     <div class="footer-inner">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-logo">
+            <svg width="20" height="24" viewBox="0 0 22 26" fill="none" aria-hidden="true">
+              <path d="M11 1 L20 5 L20 14 C20 20 17 24 11 25.5 C5 24 2 20 2 14 L2 5 Z"
+                    stroke="rgba(226,220,210,0.5)" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+              <circle cx="11" cy="18" r="1.1" fill="rgba(226,220,210,0.5)"/>
+              <path d="M8.5,16 A3,3 0 0,1 13.5,16" stroke="rgba(226,220,210,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M7,14.5 A5.5,5.5 0 0,1 15,14.5" stroke="rgba(226,220,210,0.5)" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+              <path d="M5,13 A8,8 0 0,1 17,13" stroke="rgba(226,220,210,0.5)" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
+            </svg>
+            OpenWhistle
+          </div>
+          <p class="footer-tagline">Protecting those who speak up.</p>
+        </div>
+
+        <nav aria-label="Footer links">
+          <div class="footer-col-title">Resources</div>
+          <ul class="footer-links">
+            <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
+            <li><a href="docs.html">Documentation</a></li>
+            <li><a href="blog/">Blog</a></li>
+            <li><a href="de/">Auf Deutsch</a></li>
+            <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Live Demo</a></li>
+            <li><a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank">Issues</a></li>
+            <li><a href="https://github.com/openwhistle/OpenWhistle/blob/main/LICENSE" rel="noopener noreferrer" target="_blank">License (GPL-3.0)</a></li>
+          </ul>
+        </nav>
+
+        <div>
+          <div class="footer-col-title">Legal</div>
+          <p style="font-size: 0.85rem; color: rgba(226,220,210,0.45); line-height: 1.7;">
+            Licensed under GPL-3.0. Built with &#10084;&#65039; for transparency.
+          </p>
+          <p style="font-size: 0.82rem; color: rgba(226,220,210,0.35); line-height: 1.7; margin-top: 0.75rem;">
+            OpenWhistle does not provide legal advice. Please consult qualified counsel
+            regarding your specific HinSchG obligations.
+          </p>
+        </div>
+      </div>
+
       <div class="footer-bottom">
         <span>&copy; OpenWhistle Contributors — GNU General Public License v3.0</span>
         <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">
-          GitHub &rarr;
+          Contribute on GitHub &rarr;
         </a>
-        <a href="index.html">Back to homepage</a>
       </div>
     </div>
   </footer>
