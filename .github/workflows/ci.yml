@@ -21,7 +21,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install uv
-        run: pip install uv==0.12.18
+        run: pip install uv==0.12.19
 
       - name: Install dependencies
         # Exactly the versions in uv.lock, so CI tests what the image ships.
@@ -77,7 +77,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install uv
-        run: pip install uv==0.12.18
+        run: pip install uv==0.12.19
 
       - name: Install dependencies
         run: |
