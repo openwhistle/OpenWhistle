@@ -1066,7 +1066,10 @@
           <p>
             The bundled nginx serves HTTPS on port 443 and redirects plain HTTP on port 80.
             Put your own <code>fullchain.pem</code> and <code>privkey.pem</code> (e.g. from
-            certbot) in <code>nginx/certs/</code> and restart; without them, the one-shot
+            certbot) in <code>nginx/certs/</code> and restart. Copy them there, do not symlink
+            (a link into <code>/etc/letsencrypt/live</code> dangles inside the container), and
+            keep the key root-owned <code>0600</code>, or <code>0644</code>; otherwise
+            <code>tls-init</code> stops with the path and the reason. Without them, the one-shot
             <code>tls-init</code> service generates a self-signed certificate for
             <code>TLS_HOSTNAME</code> (a <code>.env</code> variable read only by
             <code>docker-compose.prod.yml</code>, default <code>localhost</code>) before nginx

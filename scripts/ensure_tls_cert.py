@@ -9,7 +9,6 @@ settings, so it needs no SECRET_KEY.
 from __future__ import annotations
 
 import datetime
-import shutil
 import sys
 from pathlib import Path
 
@@ -43,12 +42,32 @@ def _self_signed(hostname: str) -> tuple[bytes, bytes]:
     return cert.public_bytes(serialization.Encoding.PEM), key_pem
 
 
+def _operator_pair(src: Path) -> tuple[bytes, bytes] | None:
+    """The operator's certificate and key, or None when neither is there.
+
+    Anything half-there fails loudly instead of falling back to self-signed:
+    a symlink (certbot's /etc/letsencrypt/live) dangles inside the container,
+    and a key only its non-root host owner may read is unreadable here."""
+    paths = (src / _CERT, src / _KEY)
+    if not any(p.is_symlink() or p.exists() for p in paths):
+        return None
+    try:
+        return paths[0].read_bytes(), paths[1].read_bytes()
+    except OSError as exc:
+        raise SystemExit(
+            f"tls-init: cannot read {exc.filename}: {exc.strerror}. Copy the certificate"
+            f" and key into {src} (do not symlink them); the key must be root-owned 0600,"
+            " or 0644."
+        ) from exc
+
+
 def ensure(src: Path, dst: Path, hostname: str) -> str:
     dst.mkdir(parents=True, exist_ok=True)
-    if (src / _CERT).is_file() and (src / _KEY).is_file():
-        shutil.copyfile(src / _CERT, dst / _CERT)
-        shutil.copyfile(src / _KEY, dst / _KEY)
-        (dst / _KEY).chmod(0o600)  # copyfile keeps the umask mode, not the source's
+    pair = _operator_pair(src)
+    if pair:
+        (dst / _CERT).write_bytes(pair[0])
+        (dst / _KEY).write_bytes(pair[1])
+        (dst / _KEY).chmod(0o600)
         return "provided"
     if (dst / _CERT).is_file() and (dst / _KEY).is_file():
         return "kept"

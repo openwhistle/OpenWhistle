@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import re
 import stat
 from pathlib import Path
@@ -40,6 +41,37 @@ def test_operator_certificate_wins(tmp_path: Path) -> None:
     assert (tmp_path / "tls/fullchain.pem").read_text() == "CERT"
     mode = stat.S_IMODE((tmp_path / "tls/privkey.pem").stat().st_mode)
     assert mode == 0o600, oct(mode)
+
+
+def test_a_dangling_certificate_symlink_fails_loudly(tmp_path: Path) -> None:
+    """A certbot symlink dangles inside the container; it must not quietly
+    turn into a self-signed certificate."""
+    src = tmp_path / "certs"
+    src.mkdir()
+    (src / "fullchain.pem").write_text("CERT")
+    (src / "privkey.pem").symlink_to(tmp_path / "live/privkey.pem")
+    with pytest.raises(SystemExit, match="privkey.pem.*do not symlink"):
+        _ensure()(src, tmp_path / "tls", "x")
+    assert not (tmp_path / "tls/fullchain.pem").exists()
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="root reads any file")
+def test_an_unreadable_operator_key_fails_loudly(tmp_path: Path) -> None:
+    src = tmp_path / "certs"
+    src.mkdir()
+    (src / "fullchain.pem").write_text("CERT")
+    (src / "privkey.pem").write_text("KEY")
+    (src / "privkey.pem").chmod(0)
+    with pytest.raises(SystemExit, match="privkey.pem: Permission denied.*root-owned 0600"):
+        _ensure()(src, tmp_path / "tls", "x")
+
+
+def test_a_certificate_without_its_key_fails_loudly(tmp_path: Path) -> None:
+    src = tmp_path / "certs"
+    src.mkdir()
+    (src / "fullchain.pem").write_text("CERT")
+    with pytest.raises(SystemExit, match="privkey.pem"):
+        _ensure()(src, tmp_path / "tls", "x")
 
 
 def test_nginx_redirects_http_and_strips_ip_headers_on_https() -> None:
