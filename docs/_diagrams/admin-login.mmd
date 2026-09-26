@@ -1,0 +1,15 @@
+flowchart TD
+    start(["Admin login"]) --> pick{"First factor"}
+    pick -- "username + password" --> db[("Database")]
+    pick -- "LDAP" --> ldap["LDAP server"]
+    pick -- "OIDC" --> idp["External identity provider"]
+
+    db --> verified["First factor verified"]
+    ldap --> verified
+    idp --> verified
+
+    verified --> totpSet{"TOTP enrolled?"}
+    totpSet -- no --> setup["Enroll TOTP<br/>mandatory for every account"]
+    totpSet -- yes --> totp["Enter TOTP code"]
+    setup --> totp
+    totp --> session(["Admin session"])
