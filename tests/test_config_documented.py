@@ -9,8 +9,10 @@ from app.config import Settings
 
 ROOT = Path(__file__).parents[1]
 
-# Set by the image itself; a Compose default would pin a stale version.
-_NOT_IN_COMPOSE = {"APP_VERSION"}
+# APP_VERSION is set by the image itself; a Compose default would pin a stale
+# version. LOCAL_REVIEW_LOGIN must never reach a deployment: only
+# docker-compose.review.yml sets it (tests/test_local_review.py).
+_NOT_IN_COMPOSE = {"APP_VERSION", "LOCAL_REVIEW_LOGIN"}
 
 
 def test_every_setting_has_a_row_in_the_docs_env_table() -> None:
