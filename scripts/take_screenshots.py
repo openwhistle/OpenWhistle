@@ -51,22 +51,26 @@ DEMO_DESCRIPTION = (
     "concern, long enough to pass the minimum length check."
 )
 
-# Hides the DEMO_MODE banner (app/templates/base.html) on every page. It is
-# an artifact of running this script against the review stack, not part of
-# what an installed instance shows its users, so a docs screenshot should not
-# carry it — kept consistent across every page rather than deciding it
-# per-screenshot.
-_HIDE_DEMO_BANNER_SCRIPT = """
+# Hides what only the review stack shows: the DEMO_MODE banner
+# (app/templates/base.html), the demo credential panels on the login and
+# status pages, and the LOCAL_REVIEW_LOGIN button. None of them is on an
+# installed instance, so a docs screenshot must not carry them: the admin
+# login shot once documented a maintainer-only button as part of the page.
+_HIDE_REVIEW_ARTIFACTS_SCRIPT = """
 document.addEventListener('DOMContentLoaded', () => {
-  const el = document.querySelector('.demo-banner');
-  if (el) el.style.display = 'none';
+  document.querySelectorAll('.demo-banner, .demo-credentials')
+    .forEach((el) => { el.style.display = 'none'; });
+  const btn = document.getElementById('local-review-login-btn');
+  if (btn) btn.closest('.panel').style.display = 'none';
 });
 """
 
 
 def _login_admin(page: Page) -> None:
     page.goto(f"{BASE_URL}/admin/login")
-    page.click("#local-review-login-btn")
+    # The button is hidden for the shots (see above); click() still submits it.
+    with page.expect_navigation():
+        page.evaluate("document.getElementById('local-review-login-btn').click()")
     page.wait_for_load_state("networkidle")
 
 
@@ -198,6 +202,10 @@ def _themed_context(browser: Browser, theme: str) -> BrowserContext:
     context = browser.new_context(
         viewport={"width": VIEWPORT_WIDTH, "height": VIEWPORT_HEIGHT},
         locale="en-US",
+        # The pages fade in (`.anim-in`); site.css cuts every animation to
+        # 0.01 ms under reduced motion. Without it a shot can catch a form
+        # half-faded, as the first admin-login shot did.
+        reduced_motion="reduce",
     )
     context.add_cookies(
         [{"name": "ow-lang", "value": "en", "url": BASE_URL}],
@@ -205,7 +213,7 @@ def _themed_context(browser: Browser, theme: str) -> BrowserContext:
     context.add_init_script(
         f"try {{ localStorage.setItem('{THEME_STORAGE_KEY}', '{theme}'); }} catch (e) {{}}"
     )
-    context.add_init_script(_HIDE_DEMO_BANNER_SCRIPT)
+    context.add_init_script(_HIDE_REVIEW_ARTIFACTS_SCRIPT)
     return context
 
 
