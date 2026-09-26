@@ -93,7 +93,7 @@ def test_no_tracked_file_holds_a_machine_local_path() -> None:
     files = subprocess.run(  # noqa: S603
         ["git", "ls-files", "-z"], cwd=ROOT, capture_output=True, check=True,  # noqa: S607
     ).stdout.decode().split("\0")
-    local = re.compile(r"/tmp/claude-\d+/|/var/home/\w+|/home/jpy\b")
+    local = re.compile(r"/tmp/claude-\d+/|/var/home/\w+|/home/jpy\b")  # noqa: S108
     offenders = [
         name for name in files
         if name and name != "tests/test_v160_ops.py" and (ROOT / name).is_file()
