@@ -24,8 +24,33 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   first start. An existing installation is not affected.
 - **Admin sessions end 12 hours after login** (`SESSION_MAX_HOURS`), however often "Stay
   signed in" is used; then password and TOTP again.
-- **The Compose stack listens on 443** and only redirects on 80 (see Added). Put your
-  certificate into `nginx/certs/`, or accept the self-signed one.
+- **Upgrading the Compose stack needs `git pull`**, not only `docker compose pull`: it needs
+  the new `nginx/snippets/` and the `tls-init` service. A customised `nginx/nginx.conf` makes
+  the pull conflict; replace it with the shipped one.
+- **The Compose stack listens on 443** and only redirects on 80 (see Added). Copy your
+  certificate into `nginx/certs/` (`fullchain.pem`, `privkey.pem`; no symlinks, key root-owned
+  0600 or 0644): the old `./nginx/certs:/etc/nginx/certs` mount is gone. Without one, a
+  self-signed certificate is served.
+- **Behind an external TLS terminator** (Cloudflare, Traefik, a host nginx), point it at
+  `https://…:443`, or add `docker-compose.behind-proxy.yml`, which proxies plain HTTP on 80 and
+  publishes no 443. Aimed at the new port 80, the terminator loops on the redirect.
+- **nginx publishes `127.0.0.1:8080`** (the onion listener). If the host already uses 8080,
+  `docker compose up` fails: free the port first.
+- **Back up before upgrading; the rollback changed.** The 1.5.0 image refuses the migrated
+  schema. Restore the backup, or run `alembic downgrade 7d4e2b9c1a05` with the 1.6.0 image
+  (`docker compose run --rm app alembic downgrade 7d4e2b9c1a05`) before pinning 1.5.0. The
+  downgrade keeps the day-rounded times of migration 006: the exact times are gone by design.
+- **`BRAND_SECONDARY_COLOR` is ignored** with a warning at startup; delete it from `.env`.
+- **Webhooks carry counts only, never case numbers or deadlines**; update receivers that parsed
+  the old fields. The SLA reminder is one webhook per scheduler run, not one per case.
+  - Generic reminder: `case_number`, `deadline`, `days_left` and `timestamp` are gone;
+    `ack_due`, `feedback_due` and `message` are new.
+  - Generic digest: `new_reports`/`new_messages` are counts, not arrays of case numbers, plus
+    `message`.
+  - Slack: the `fields` block is one `text` block. Teams: the reminder's `FactSet` is a
+    `TextBlock`, and the digest has one "Activity" fact instead of case numbers.
+  - The reminder email is unchanged: it still carries the case number, since only your own
+    admins receive it.
 - **`docker-compose.prod.yml` pins the image** to `${OPENWHISTLE_VERSION:-1.6.0}` instead of
   `:latest`; set `OPENWHISTLE_VERSION` to upgrade.
 - Migrations 004–006 run at start: TOTP secrets are encrypted, audit rows get their
@@ -85,18 +110,11 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed (breaking)
 
-- `BRAND_SECONDARY_COLOR` is gone (see Removed); remove it from your environment.
+- `BRAND_SECONDARY_COLOR` is gone (see Removed); a `.env` that still sets it gets a warning.
 - **Existing whistleblower times are rounded to the day** by migration 006, irreversibly (see
   Changed).
 - `.doc` and `.xls` uploads are refused; their author field cannot be removed. The message tells
   the reporter to save as `.docx`/`.xlsx`.
-- **Webhooks carry counts only, never case numbers or deadlines.** The generic digest webhook's
-  `new_reports`/`new_messages` fields are now integers (were arrays of case numbers), plus a
-  human-readable `message` field built from those counts. The SLA reminder webhook now carries
-  `ack_due`/`feedback_due` counts, likewise with a `message` field built from them, sent once per
-  scheduler run, instead of one webhook per case with its case number and deadline. Update
-  receivers that parsed the old array or per-case fields. The reminder email is unchanged — it
-  still carries the case number, since only your own admins receive it.
 
 ### Privacy
 

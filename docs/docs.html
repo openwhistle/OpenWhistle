@@ -1042,6 +1042,9 @@
           <pre><code><span class="t-prompt">$ </span><span class="t-cmd">cp .env.example .env</span>
 <span class="t-prompt">$ </span><span class="t-cmd">nano .env</span>
 
+<span class="t-comment"># The production stack (TLS, nginx); every docker compose command below uses it:</span>
+<span class="t-str">COMPOSE_FILE</span>=docker-compose.prod.yml
+
 <span class="t-comment"># Minimum required values:</span>
 <span class="t-str">SECRET_KEY</span>=your-long-random-secret-key-here
 <span class="t-str">DATABASE_URL</span>=postgresql+asyncpg://openwhistle:password@db:5432/openwhistle
@@ -1146,6 +1149,25 @@
           sessions and rate-limit counters. Past <code>DRAFT_REDIS_MEMORY_PERCENT</code> new
           draft attachments are refused, so the rest of Redis keeps working.
         </p>
+
+        <h3 id="behind-proxy">Behind a TLS-terminating proxy</h3>
+        <p>
+          When Cloudflare, Traefik or a host nginx terminates TLS in front of the stack, either
+          point it at <code>https://…:443</code> (with the bundled nginx's certificate), or
+          switch the bundled nginx to plain HTTP on port 80 with the shipped override. Port 80
+          then proxies instead of redirecting, and 443 is not published:
+        </p>
+        <div class="code-block" role="region" aria-label="Plain-HTTP override">
+          <div class="code-block-header">
+            <span class="code-block-lang">.env</span>
+          </div>
+          <pre><code><span class="t-str">COMPOSE_FILE</span>=docker-compose.prod.yml:docker-compose.behind-proxy.yml</code></pre>
+        </div>
+        <ul>
+          <li>Keep port 80 reachable only from the terminator: nothing on it is encrypted.</li>
+          <li><code>SECURE_COOKIES</code> stays <code>true</code>; the browser still talks HTTPS.</li>
+          <li>The client-IP headers the terminator adds are still stripped, so nginx rate-limits the terminator's address, not each client: rate-limit per client at the terminator.</li>
+        </ul>
 
         <h3 id="selinux">SELinux hosts</h3>
         <p>
@@ -2468,30 +2490,54 @@ CLAMAV_HOST=clamav</code></pre>
           <div class="code-block-header">
             <span class="code-block-lang">bash</span>
           </div>
-          <pre><code><span class="t-comment"># Pull the latest image</span>
-<span class="t-prompt">$ </span><span class="t-cmd">docker compose pull</span>
+          <pre><code><span class="t-comment"># Back up first: a rollback needs it</span>
+<span class="t-prompt">$ </span><span class="t-cmd">docker compose exec db pg_dump -U openwhistle openwhistle &gt; backup.sql</span>
 
-<span class="t-comment"># Restart containers with the new image</span>
+<span class="t-comment"># The compose file and nginx config change between releases</span>
+<span class="t-prompt">$ </span><span class="t-cmd">git pull</span>
+
+<span class="t-comment"># Set OPENWHISTLE_VERSION in .env to the new version, then</span>
+<span class="t-prompt">$ </span><span class="t-cmd">docker compose pull</span>
 <span class="t-prompt">$ </span><span class="t-cmd">docker compose up -d</span>
 
-<span class="t-comment"># Database migrations are applied automatically on startup</span>
-<span class="t-prompt">$ </span><span class="t-cmd">docker compose logs app | grep migration</span></code></pre>
+<span class="t-comment"># Migrations run at startup; the version is in the health check</span>
+<span class="t-prompt">$ </span><span class="t-cmd">curl -sk https://localhost/health</span></code></pre>
         </div>
 
         <h3>Before upgrading</h3>
         <ul>
-          <li>Read the CHANGELOG for the target version</li>
-          <li>Back up your PostgreSQL database: <code>docker compose exec db pg_dump -U openwhistle openwhistle &gt; backup.sql</code></li>
-          <li>Note your current version with <code>docker compose exec app python -m app --version</code></li>
-          <li>v1.6.0 adds <code>ENCRYPTION_KEY</code>, a key for encryption separate from <code>SECRET_KEY</code>: see <a href="#key-rotation">Rotating the encryption key</a></li>
+          <li>Read the CHANGELOG for the target version.</li>
+          <li>v1.6.0 adds <code>ENCRYPTION_KEY</code>, a key for encryption separate from <code>SECRET_KEY</code>: see <a href="#key-rotation">Rotating the encryption key</a>.</li>
+        </ul>
+
+        <h3 id="upgrading-1-6">Upgrading to 1.6.0 with Docker Compose</h3>
+        <ul>
+          <li><code>git pull</code> is required, not only <code>docker compose pull</code>: the stack needs the new <code>nginx/snippets/</code> and the <code>tls-init</code> service.</li>
+          <li>A customised <code>nginx/nginx.conf</code> makes <code>git pull</code> conflict: replace it with the shipped one (<code>git checkout -- nginx/nginx.conf</code>).</li>
+          <li>Certificates move from the old <code>./nginx/certs:/etc/nginx/certs</code> mount to <code>nginx/certs/</code> as <code>fullchain.pem</code> and <code>privkey.pem</code>, copied, not symlinked. Without them, a self-signed certificate is served.</li>
+          <li>Port 80 now only redirects to 443. Behind an external TLS terminator, see <a href="#behind-proxy">Behind a TLS-terminating proxy</a>.</li>
+          <li>nginx also publishes <code>127.0.0.1:8080</code> (the onion listener). If another service on the host uses 8080, <code>up</code> fails: free the port first.</li>
         </ul>
 
         <h3>Rollback</h3>
         <p>
-          To roll back to a specific version, pin the image tag in
-          <code>docker-compose.yml</code> and re-run <code>docker compose up -d</code>.
-          Database migrations cannot be automatically rolled back — restore from backup
-          if a migration causes issues.
+          The previous image refuses to start on a migrated database. Either restore the backup
+          into an empty database and pin the old <code>OPENWHISTLE_VERSION</code>, or, from 1.6.0
+          to 1.5.x, downgrade the schema with the <strong>1.6.0</strong> image first, then pin the
+          old version:
+        </p>
+        <div class="code-block" role="region" aria-label="Rollback commands">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+          </div>
+          <pre><code><span class="t-prompt">$ </span><span class="t-cmd">docker compose run --rm app alembic downgrade 7d4e2b9c1a05</span>
+<span class="t-comment"># then set OPENWHISTLE_VERSION=1.5.0 in .env</span>
+<span class="t-prompt">$ </span><span class="t-cmd">docker compose up -d</span></code></pre>
+        </div>
+        <p>
+          The downgrade decrypts the TOTP secrets again and needs the same encryption keys.
+          Migration 006 rounded whistleblower times to the day; the downgrade keeps them
+          rounded, the exact times are gone by design.
         </p>
 
         <div class="callout callout-note">
