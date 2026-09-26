@@ -184,3 +184,122 @@ async def test_rotation_script_names_the_key_mismatch(
     spec.loader.exec_module(rot)
     assert await rot.main() == 1
     assert UNREADABLE_DATA_MESSAGE in capsys.readouterr().out
+
+
+# --- I8: content search is POST-only and audited -----------------------------------------
+
+
+def _csrf_of(client) -> str:  # type: ignore[no-untyped-def]
+    return client.cookies.get("ow_csrf") or ""
+
+
+async def _content_search_rows(db, admin_id):  # type: ignore[no-untyped-def]
+    from sqlalchemy import select
+
+    from app.models.audit import AuditLog
+    from app.services.audit import AuditAction
+
+    return list((await db.execute(select(AuditLog).where(
+        AuditLog.admin_id == admin_id, AuditLog.action == AuditAction.CONTENT_SEARCHED,
+    ))).scalars())
+
+
+async def test_content_search_is_audited_with_the_term_encrypted(client, db_session) -> None:  # type: ignore[no-untyped-def]
+    import json
+    import uuid
+
+    from app.models.user import AdminRole
+    from app.services.crypto import decrypt
+    from app.services.report import create_report
+    from tests.test_v160_privacy import _login
+
+    admin = await _login(client, db_session, AdminRole.admin)
+    word = f"Tapir{uuid.uuid4().hex[:6]}"
+    report, _ = await create_report(db_session, "corruption", f"The ledger names {word}.")
+    resp = await client.post("/admin/dashboard", data={"q": word, "csrf_token": _csrf_of(client)})
+    assert report.case_number in resp.text
+    rows = await _content_search_rows(db_session, admin.id)
+    assert len(rows) == 1
+    assert word not in (rows[0].detail or "")
+    detail = json.loads(rows[0].detail or "{}")
+    assert decrypt(detail["term"]) == word and detail["hits"] == 1
+    log = await client.get("/admin/audit-log")
+    assert word in log.text  # the audit log shows the term to whoever may read it
+
+
+async def test_a_search_term_in_the_url_is_ignored(client, db_session) -> None:  # type: ignore[no-untyped-def]
+    import uuid
+
+    from app.models.user import AdminRole
+    from app.services.report import create_report
+    from tests.test_v160_privacy import _login
+
+    admin = await _login(client, db_session, AdminRole.admin)
+    word = f"Quokka{uuid.uuid4().hex[:6]}"
+    await create_report(db_session, "corruption", f"Nothing but {word}.")
+    resp = await client.get("/admin/dashboard", params={"q": word})
+    assert resp.status_code == 200 and f'value="{word}"' not in resp.text
+    assert await _content_search_rows(db_session, admin.id) == []
+    refused = await client.post("/admin/dashboard", data={"q": word, "csrf_token": "forged"})
+    assert refused.status_code == 403
+
+
+async def test_search_pagination_posts_the_term_and_never_links_it(client, db_session) -> None:  # type: ignore[no-untyped-def]
+    import re
+    import uuid
+
+    from app.models.user import AdminRole
+    from app.services.report import create_report
+    from tests.test_v160_privacy import _login
+
+    await _login(client, db_session, AdminRole.admin)
+    word = f"Numbat{uuid.uuid4().hex[:6]}"
+    cases = [(await create_report(db_session, "corruption", f"{word} no. {i}"))[0].case_number
+             for i in range(12)]
+    form = {"q": word, "per_page": "10", "csrf_token": _csrf_of(client)}
+    first = await client.post("/admin/dashboard", data=form)
+    second = await client.post("/admin/dashboard", data={**form, "page": "2"})
+    shown = [c for c in cases if c in first.text] + [c for c in cases if c in second.text]
+    assert sorted(shown) == sorted(cases)
+    assert not re.search(r'href="[^"]*[?&]q=', first.text)
+    nav_form = r'<form method="post"[^>]*class="dash-nav-form">(.*?)</form>'
+    forms = re.findall(nav_form, first.text, re.S)
+    assert any(f'name="q" value="{word}"' in f and 'name="page" value="2"' in f for f in forms)
+
+
+async def test_rotation_script_rotates_content_search_terms(
+    throwaway_db, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
+) -> None:
+    import importlib.util
+    import json
+    import uuid
+
+    from cryptography.fernet import InvalidToken
+    from sqlalchemy import text as sql
+
+    from app.config import settings
+    from app.models.audit import AuditLog
+    from app.services import crypto
+    from app.services.audit import AuditAction
+
+    row = AuditLog(
+        id=uuid.uuid4(), admin_username="x", action=AuditAction.CONTENT_SEARCHED,
+        detail=json.dumps({"term": crypto.encrypt("Müller"), "hits": 2}),
+    )
+    throwaway_db.add(row)
+    await throwaway_db.commit()
+    monkeypatch.setattr(settings, "encryption_key", _KEY_B)
+    monkeypatch.setattr(settings, "encryption_key_previous", settings.secret_key)
+    spec = importlib.util.spec_from_file_location("rot", _ROOT / "scripts/rotate_encryption_key.py")
+    assert spec and spec.loader
+    rot = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(rot)
+    assert await rot.main() == 0
+    detail = json.loads(await throwaway_db.scalar(
+        sql("SELECT detail FROM audit_log WHERE id = :i"), {"i": row.id}
+    ))
+    monkeypatch.setattr(settings, "encryption_key_previous", "")
+    assert crypto.decrypt(detail["term"]) == "Müller" and detail["hits"] == 2
+    monkeypatch.setattr(settings, "encryption_key", settings.secret_key)
+    with pytest.raises(InvalidToken):
+        crypto.decrypt(detail["term"])

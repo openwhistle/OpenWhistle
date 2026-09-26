@@ -15,6 +15,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import AdminRole, AdminUser
 from app.services.auth import hash_password
 
+
+async def _search(client: AsyncClient, q: str, **form: str):  # type: ignore[no-untyped-def]
+    """Dashboard search: POST, so the term never sits in a URL."""
+    return await client.post(
+        "/admin/dashboard", data={"q": q, "csrf_token": client.cookies.get("ow_csrf"), **form}
+    )
+
 ROOT = Path(__file__).parents[1]
 TEMPLATES = ROOT / "app/templates"
 _PASSWORD = "V160-Design-Password"  # noqa: S105
@@ -545,11 +552,13 @@ def test_docs_warning_colour_meets_contrast() -> None:
 
 
 def _pill_counts(html: str) -> dict[str, int]:
-    """Status value -> the count shown in its filter pill."""
+    """Status value -> the count shown in its filter pill (a link, or a form during a search)."""
+    link = r'&status=(\w+)[^"]*"[^>]*>'
+    form = r'name="status" value="(\w+)">(?:<input[^>]*>)*<button[^>]*>'
     return {
-        m.group(1): int(m.group(2))
+        (m.group(1) or m.group(2)): int(m.group(3))
         for m in re.finditer(
-            r'&status=(\w+)[^"]*"[^>]*>[^<]*<span class="filter-pill-count">(\d+)</span>', html
+            rf'(?:{link}|{form})[^<]*<span class="filter-pill-count">(\d+)</span>', html
         )
     }
 
@@ -569,7 +578,7 @@ async def test_dashboard_counts_live_in_the_filter_pills(
     # is the correct aria-current token for a set of independent toggles. "page" stays
     # reserved for real navigation/pagination (see admin/_layout.html, the pagination span).
     assert active and all('aria-current="true"' in a for a in active)
-    inactive = re.findall(r'<a [^>]*class="filter-pill "[^>]*>', html)
+    inactive = re.findall(r'<a [^>]*class="filter-pill"[^>]*>', html)
     assert inactive and not any("aria-current" in a for a in inactive)
 
 
@@ -625,14 +634,16 @@ async def test_status_pills_keep_and_count_within_the_location_and_search(
     await create_report(
         db_session, "corruption", "Pill count: at the location.", location_id=loc.id
     )
-    html = (await client.get(f"/admin/dashboard?location_id={loc.id}&q=abc")).text
+    html = (await _search(client, "abc", location_id=str(loc.id))).text
     # The count is what the pill's link shows: within the chosen location.
     assert _pill_counts(html)["received"] == 1
-    pills = re.findall(r'<a href="([^"]*)"\s+class="filter-pill', html)
-    status_pills = [h for h in pills if "&status=" in h or "my_cases=1" in h]
+    # During a search every pill is a POST form carrying the location and the term.
+    pills = re.findall(r'<form method="post"[^>]*class="dash-nav-form">(.*?)</form>', html, re.S)
+    status_pills = [p for p in pills if 'name="status"' in p or 'name="my_cases"' in p]
     assert len(status_pills) == 5
-    for href in status_pills:
-        assert f"location_id={loc.id}" in href and "q=abc" in href, href
+    for form in status_pills:
+        assert f'name="location_id" value="{loc.id}"' in form, form
+        assert 'name="q" value="abc"' in form, form
 
 
 def _panel_of(html: str, needle: str) -> str:

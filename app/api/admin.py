@@ -148,11 +148,30 @@ async def dashboard(
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(get_current_admin),
 ) -> HTMLResponse:
+    # A search term never travels in the URL (browser history, proxy logs): search is POST.
+    params = {k: v for k, v in request.query_params.items() if k != "q"}
+    return await _dashboard(request, db, current_user, params)
+
+
+@router.post("/dashboard", response_class=HTMLResponse)
+async def dashboard_search(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: AdminUser = Depends(get_current_admin),
+    _csrf: None = Depends(validate_csrf),
+) -> HTMLResponse:
+    form = await request.form()
+    params = {k: v for k, v in form.items() if isinstance(v, str)}
+    return await _dashboard(request, db, current_user, params)
+
+
+async def _dashboard(
+    request: Request, db: AsyncSession, current_user: AdminUser, qp: dict[str, str]
+) -> HTMLResponse:
     from datetime import UTC, datetime
 
     from app.services.report import SortDir, SortField
 
-    qp = request.query_params
     raw_page = qp.get("page", "1")
     raw_per_page = qp.get("per_page", "25")
     raw_sort = qp.get("sort", "submitted_at")
@@ -204,6 +223,16 @@ async def dashboard(
         )
         if len(case_query) >= 3 else None
     )
+    if content_ids is not None:
+        # Reading report text is audited like opening a case; the term is encrypted
+        # like an identity-reveal reason (scripts/rotate_encryption_key.py rotates both).
+        from app.services.crypto import encrypt  # noqa: PLC0415
+
+        await audit_service.log(
+            db, current_user, AuditAction.CONTENT_SEARCHED,
+            detail={"term": encrypt(case_query), "hits": len(content_ids)},
+        )
+        await db.commit()
     reports, total = await report_service.get_reports_paginated(
         db,
         page=page,
@@ -260,6 +289,11 @@ async def dashboard(
             "my_cases": my_cases,
             "all_locations": all_locations,
             "location_filter": str(location_filter) if location_filter else "",
+            "view": {
+                "page": 1, "per_page": per_page, "sort": sort_by, "dir": sort_dir,
+                "status": status_filter or "", "my_cases": "1" if my_cases else "",
+                "location_id": str(location_filter) if location_filter else "",
+            },
         },
     )
 

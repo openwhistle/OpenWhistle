@@ -128,7 +128,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Search inside reports.** The dashboard search also finds words in descriptions and
   messages (three characters or more), decrypted in memory for that request only — no index is
   stored, the confidential name never matches, and at most the 5,000 newest cases in the
-  current view are searched.
+  current view are searched. The search is a POST form, so the term stays out of URLs and the
+  browser history, and each word search is audited (`report.content_searched`, term encrypted,
+  hit count).
 - **The audit CSV export neutralises spreadsheet formulas** and writes each detail as one JSON
   cell, so a reason cannot forge extra fields.
 - **Excel's own "Name:" label is removed from comment text** in `.xlsx` uploads, not only the
@@ -176,6 +178,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Paging and sorting the dashboard dropped the location filter.** Every dashboard link now
+  keeps the whole current view.
 - **A case-number collision expired every object the caller held** (a full rollback), so the
   next attribute access failed with `MissingGreenlet`; each attempt now uses its own
   SAVEPOINT.

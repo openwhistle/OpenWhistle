@@ -90,6 +90,9 @@ def template_translator(lang: str) -> Callable[..., str | Markup]:
     return t
 
 
+# Audit detail keys whose value is stored encrypted (app.services.crypto).
+ENCRYPTED_DETAIL_KEYS = ("reason", "term")
+
 # Locale key shown in place of an encrypted reason that no longer decrypts.
 REASON_UNREADABLE = "audit.detail.reason_unreadable"
 
@@ -113,13 +116,14 @@ def audit_detail(detail: str | None, decrypt: bool = True) -> list[tuple[str, st
 
 
 def _detail_value(key: str, value: object, decrypt: bool) -> str:
-    """An identity reveal's `reason` is a Fernet token; the retention job's is plain text."""
+    """An identity reveal's `reason` and a content search's `term` are Fernet tokens;
+    the retention job's `reason` is plain text."""
     from app.services.crypto import decrypt_or_none  # noqa: PLC0415
 
     if value is None:
         return "—"
     text = str(value)
-    if decrypt and key == "reason" and text.startswith("gAAAAA"):
+    if decrypt and key in ENCRYPTED_DETAIL_KEYS and text.startswith("gAAAAA"):
         return decrypt_or_none(text) or REASON_UNREADABLE
     return text
 

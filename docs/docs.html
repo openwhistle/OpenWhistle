@@ -2100,10 +2100,11 @@ CLAMAV_HOST=clamav</code></pre>
           from the report, into the search field on <code>/admin/dashboard</code>. A word search decrypts
           the description and messages of the reports you may already see, in memory, for that request
           only — nothing searchable is ever stored. The confidential name is never matched: a hit there
-          would confirm an identity guess without an audited reveal. The search term travels in the URL
-          query string; the shipped nginx (<code>access_log off</code>) and uvicorn
-          (<code>--no-access-log</code>) log nothing, but a reverse proxy an operator puts in front of
-          OpenWhistle must not log query strings either.
+          would confirm an identity guess without an audited reveal. The search is sent as a form
+          (POST), so the term never appears in a URL, the browser history or a proxy's access log;
+          paging through the results keeps it the same way. Every word search is recorded in the
+          audit log (<code>report.content_searched</code>) with the term, stored encrypted, and the
+          number of matching reports.
         </p>
         <p>
           Click any report to open the case view. From here you can:
@@ -2321,9 +2322,9 @@ CLAMAV_HOST=clamav</code></pre>
                 <code>X-Client-*</code> headers before forwarding requests to the
                 application. Even if a CDN or upstream proxy adds these headers,
                 they are removed at the nginx layer. <code>access_log off</code> also means
-                request URIs — including the admin dashboard's <code>?q=</code> search
-                terms — are never written to disk; an operator's own reverse proxy in
-                front of OpenWhistle must not log query strings either.
+                request URIs are never written to disk; an operator's own reverse proxy in
+                front of OpenWhistle must not log them either. Dashboard search terms are
+                sent by POST and never appear in a URL.
               </div>
             </div>
           </div>

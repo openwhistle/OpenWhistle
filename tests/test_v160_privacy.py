@@ -23,6 +23,13 @@ from app.services.crypto import encrypt
 from app.services.report import content_match_ids, create_report, get_reports_paginated
 from app.templating import REASON_UNREADABLE
 
+
+async def _search(client: AsyncClient, q: str, **form: str):  # type: ignore[no-untyped-def]
+    """Dashboard search: POST, so the term never sits in a URL."""
+    return await client.post(
+        "/admin/dashboard", data={"q": q, "csrf_token": client.cookies.get("ow_csrf"), **form}
+    )
+
 _PASSWORD = "V160-Privacy-Password"  # noqa: S105
 _NAME = "Erika Musterfrau"
 _CONTACT = "+49 30 1234"
@@ -404,7 +411,7 @@ async def test_dashboard_search_finds_words_inside_reports(
     word = f"Zebra{uuid.uuid4().hex[:6]}"
     report, _ = await create_report(db_session, "corruption", f"The invoice mentions {word} twice.")
     other, _ = await create_report(db_session, "corruption", "Nothing to see in this report here.")
-    resp = await client.get(f"/admin/dashboard?q={word.lower()}")
+    resp = await _search(client, word.lower())
     assert report.case_number in resp.text
     assert other.case_number not in resp.text
 
@@ -416,7 +423,7 @@ async def test_case_manager_search_never_reaches_other_cases(
     await _login(client, db_session, AdminRole.case_manager)
     word = f"Okapi{uuid.uuid4().hex[:6]}"
     report, _ = await create_report(db_session, "corruption", f"Unassigned report about {word}.")
-    resp = await client.get(f"/admin/dashboard?q={word}")
+    resp = await _search(client, word)
     assert report.case_number not in resp.text
 
 
@@ -428,7 +435,7 @@ async def test_dashboard_search_never_matches_the_confidential_name(
     reveal recorded, so content search must never look at that field."""
     await _login(client, db_session, AdminRole.admin)
     report = await _confidential_report(db_session)
-    resp = await client.get("/admin/dashboard", params={"q": _NAME})
+    resp = await _search(client, _NAME)
     assert report.case_number not in resp.text
 
 
@@ -510,7 +517,7 @@ async def test_content_search_normalizes_unicode_composition_before_matching(
     nfd_query = f"Andr{nfd_e}{suffix}"  # same text, decomposed
     assert nfc_word != nfd_query  # sanity: genuinely different code point sequences
     report, _ = await create_report(db_session, "corruption", f"Meeting at the {nfc_word}.")
-    resp = await client.get("/admin/dashboard", params={"q": nfd_query})
+    resp = await _search(client, nfd_query)
     assert report.case_number in resp.text
 
 
@@ -523,7 +530,7 @@ async def test_content_search_matches_strasse_case_folded(
     await _login(client, db_session, AdminRole.admin)
     word = f"Straße{uuid.uuid4().hex[:6]}"
     report, _ = await create_report(db_session, "corruption", f"Address: {word} 12.")
-    resp = await client.get("/admin/dashboard", params={"q": word.upper()})  # "STRASSE..."
+    resp = await _search(client, word.upper())  # "STRASSE..."
     assert report.case_number in resp.text
 
 
@@ -538,7 +545,7 @@ async def test_dashboard_search_matches_an_uppercase_query_against_lowercase_con
     report, _ = await create_report(
         db_session, "corruption", f"A note about the {word} in the field."
     )
-    resp = await client.get("/admin/dashboard", params={"q": word.upper()})
+    resp = await _search(client, word.upper())
     assert report.case_number in resp.text
 
 

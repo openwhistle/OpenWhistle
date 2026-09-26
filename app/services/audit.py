@@ -29,6 +29,7 @@ class AuditAction:
     REPORT_AUTO_DELETED     = "report.auto_deleted"
     REPORT_VIEWED           = "report.viewed"
     IDENTITY_REVEALED       = "report.identity_revealed"
+    CONTENT_SEARCHED        = "report.content_searched"
     CATEGORY_CREATED        = "category.created"
     CATEGORY_UPDATED        = "category.updated"
     CATEGORY_DEACTIVATED    = "category.deactivated"

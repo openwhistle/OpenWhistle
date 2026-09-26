@@ -30,12 +30,15 @@ _FIELDS = {
 }
 
 
-def _rotate_reason(detail: str) -> str:
-    from app.services.crypto import rotate
+def _detail_rotator(key: str) -> Callable[[str], str]:
+    def _rotate_detail(detail: str) -> str:
+        from app.services.crypto import rotate
 
-    data = json.loads(detail)
-    data["reason"] = rotate(data["reason"])
-    return json.dumps(data)
+        data = json.loads(detail)
+        data[key] = rotate(data[key])
+        return json.dumps(data)
+
+    return _rotate_detail
 
 
 async def main() -> int:
@@ -71,13 +74,17 @@ async def main() -> int:
     ]
     for table, columns in _FIELDS.items():
         sources += [(table, c, f"{c} IS NOT NULL", rotate) for c in columns]
-    # Only identity reveals carry an encrypted reason; other rows (e.g. the
+    # Only these actions carry an encrypted detail value; other rows (e.g. the
     # retention job's report.auto_deleted) have a plaintext "reason" key.
-    sources.append((
-        "audit_log", "detail",
-        f"action = '{AuditAction.IDENTITY_REVEALED}' AND detail LIKE '%\"reason\"%'",
-        _rotate_reason,
-    ))
+    for action, key in (
+        (AuditAction.IDENTITY_REVEALED, "reason"),
+        (AuditAction.CONTENT_SEARCHED, "term"),
+    ):
+        sources.append((
+            "audit_log", "detail",
+            f"action = '{action}' AND detail LIKE '%\"{key}\"%'",
+            _detail_rotator(key),
+        ))
 
     engine = create_async_engine(settings.database_url, hide_parameters=True)
     writes: list[tuple[str, str, object, str, str]] = []
