@@ -124,3 +124,53 @@ def decrypt_field_safe(fernet: Fernet, ciphertext: str | None) -> str | None:
         return ciphertext
     except Exception:  # noqa: BLE001
         return ciphertext
+
+
+UNREADABLE_DATA_MESSAGE = (
+    "Existing data does not decrypt under ENCRYPTION_KEY or any key in ENCRYPTION_KEY_PREVIOUS. "
+    "If ENCRYPTION_KEY was just set on an existing install, set ENCRYPTION_KEY_PREVIOUS to the "
+    "old SECRET_KEY, then run scripts/rotate_encryption_key.py. If ENCRYPTION_KEY was just "
+    "removed or changed, put the old value back (or into ENCRYPTION_KEY_PREVIOUS)."
+)
+
+
+async def configured_keys_read_existing_data() -> bool:
+    """Unwrap one stored DEK and one encrypted TOTP secret with the configured keys.
+
+    Setting ENCRYPTION_KEY on an existing install without ENCRYPTION_KEY_PREVIOUS (or
+    dropping it again) would leave every report unreadable and lock every admin out of
+    TOTP. Run before migrations, so migration 004 never encrypts under the wrong key.
+    A fresh database (no tables yet) has nothing to check.
+    """
+    from sqlalchemy import text  # noqa: PLC0415
+    from sqlalchemy.ext.asyncio import create_async_engine  # noqa: PLC0415
+    from sqlalchemy.pool import NullPool  # noqa: PLC0415
+
+    from app.config import settings  # noqa: PLC0415
+    from app.services.crypto import decrypt  # noqa: PLC0415
+
+    engine = create_async_engine(settings.database_url, poolclass=NullPool, hide_parameters=True)
+    try:
+        async with engine.connect() as conn:
+            dek = totp = None
+            if await conn.scalar(text("SELECT to_regclass('reports')")):
+                dek = await conn.scalar(text(
+                    "SELECT encrypted_dek FROM reports WHERE encrypted_dek IS NOT NULL LIMIT 1"
+                ))
+            # A plaintext base32 TOTP secret (before migration 004) never starts with the
+            # lowercase Fernet prefix, so only encrypted secrets are sampled.
+            if await conn.scalar(text("SELECT to_regclass('admin_users')")):
+                totp = await conn.scalar(
+                    text("SELECT totp_secret FROM admin_users WHERE totp_secret LIKE :p LIMIT 1"),
+                    {"p": f"{_FERNET_PREFIX}%"},
+                )
+    finally:
+        await engine.dispose()
+    try:
+        if dek:
+            decrypt_dek(dek)
+        if totp:
+            decrypt(totp)
+    except InvalidToken:
+        return False
+    return True

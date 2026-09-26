@@ -2516,6 +2516,13 @@ CLAMAV_HOST=clamav</code></pre>
           <li><div>Empty <code>ENCRYPTION_KEY_PREVIOUS</code> and recreate the container again: <code>docker compose up -d</code>.</div></li>
         </ol>
         <p>
+          The app checks one stored report key and one TOTP secret at every start, before
+          migrating. If neither <code>ENCRYPTION_KEY</code> nor a key in
+          <code>ENCRYPTION_KEY_PREVIOUS</code> opens them — for example <code>ENCRYPTION_KEY</code>
+          set on an existing install without step 1, or removed again — it refuses to start and
+          writes nothing. The log line names <code>ENCRYPTION_KEY_PREVIOUS</code>.
+        </p>
+        <p>
           <strong>Helm:</strong> before step 3, wait until every pod runs with the new environment
           (<code>kubectl rollout status</code>). During the rolling update, old pods cannot read data
           that new pods write.

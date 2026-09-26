@@ -46,7 +46,12 @@ async def main() -> int:
     from app.config import settings
     from app.services.audit import AuditAction
     from app.services.crypto import rotate
-    from app.services.encryption import encryption_keys, rotate_dek
+    from app.services.encryption import (
+        UNREADABLE_DATA_MESSAGE,
+        configured_keys_read_existing_data,
+        encryption_keys,
+        rotate_dek,
+    )
 
     previous = encryption_keys()[1:]
     if not settings.encryption_key or not previous:
@@ -56,6 +61,9 @@ async def main() -> int:
         )
         return 1
     print(f"Loaded {len(previous)} previous key(s).")
+    if not await configured_keys_read_existing_data():
+        # The full pass below names every unreadable row and writes nothing.
+        print(UNREADABLE_DATA_MESSAGE)
 
     # (table, column, WHERE clause, transform)
     sources: list[tuple[str, str, str, Callable[[str], str]]] = [

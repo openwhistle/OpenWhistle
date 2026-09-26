@@ -89,6 +89,15 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
             "encryption. On an existing install do not just set it (data would become "
             "unreadable): see 'Rotating the encryption key' in the documentation."
         )
+    from app.services.encryption import (  # noqa: PLC0415
+        UNREADABLE_DATA_MESSAGE,
+        configured_keys_read_existing_data,
+    )
+
+    if not await configured_keys_read_existing_data():
+        msg = f"Refusing to start, nothing was written. {UNREADABLE_DATA_MESSAGE}"
+        logger.error(msg)
+        raise RuntimeError(msg)
     _run_alembic_upgrade()
 
     if not settings.demo_mode:

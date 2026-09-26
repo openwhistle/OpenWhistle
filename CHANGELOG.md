@@ -22,6 +22,12 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **A fresh install needs the setup token.** `/setup` asks for a one-time token: set
   `SETUP_TOKEN` (16+ characters), or read the random one the app logs once at WARNING on its
   first start. An existing installation is not affected.
+- **Setting `ENCRYPTION_KEY` on an existing install needs `ENCRYPTION_KEY_PREVIOUS`.**
+  Existing data is under `SECRET_KEY`: set `ENCRYPTION_KEY=<new>` together with
+  `ENCRYPTION_KEY_PREVIOUS=<your SECRET_KEY>`, recreate the container, then run
+  `scripts/rotate_encryption_key.py`. The app now refuses to start, before migrating, when
+  neither key opens a stored report key or TOTP secret (also when `ENCRYPTION_KEY` is
+  removed again).
 - **New-report and reply notices arrive once a day** (00:00 UTC) unless
   `NOTIFICATION_BATCH_MINUTES` is set; the default was 60.
 - **Admin sessions end 12 hours after login** (`SESSION_MAX_HOURS`), however often "Stay
