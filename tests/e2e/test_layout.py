@@ -26,9 +26,14 @@ pytestmark = pytest.mark.e2e
 _DOCS_DIR = Path(__file__).resolve().parent.parent.parent / "docs"
 _DOCS_PAGES = sorted(str(p.relative_to(_DOCS_DIR)) for p in _DOCS_DIR.rglob("*.html"))
 
-# docs/de/index.html is being rebuilt in the current design by task X11
-# (including its 390px overflow); remove this xfail once that lands.
-_KNOWN_OVERFLOW = {"de/index.html"}
+# Every page of the published site, found by glob so a new page is covered
+# the day it is added. Nine pages exist today; a glob that suddenly finds
+# fewer means the directory moved, not that the site shrank.
+_DOCS_PAGE_FLOOR = 9
+
+
+def test_docs_page_glob_finds_every_page() -> None:
+    assert len(_DOCS_PAGES) >= _DOCS_PAGE_FLOOR, _DOCS_PAGES
 
 
 @pytest.fixture(scope="module")
@@ -44,33 +49,21 @@ def docs_server_url() -> Generator[str]:
         thread.join()
 
 
-@pytest.mark.parametrize(
-    "docs_page",
-    [
-        pytest.param(
-            p,
-            marks=pytest.mark.xfail(
-                strict=True,
-                reason="X11 rebuilds docs/de/index.html in the current design, "
-                "including this overflow — remove this xfail once it lands",
-            ),
-        )
-        if p in _KNOWN_OVERFLOW
-        else p
-        for p in _DOCS_PAGES
-    ],
-)
-def test_docs_page_has_no_horizontal_overflow_on_a_phone(
-    browser: Browser, docs_server_url: str, docs_page: str
+# 390 px is a phone; 1024 px is the narrowest desktop width, where the full
+# nav row has the least room before it collapses at 1080 px.
+@pytest.mark.parametrize("width", [390, 1024])
+@pytest.mark.parametrize("docs_page", _DOCS_PAGES)
+def test_docs_page_has_no_horizontal_overflow(
+    browser: Browser, docs_server_url: str, docs_page: str, width: int
 ) -> None:
-    ctx, page = _page(browser, docs_server_url, 390)
+    ctx, page = _page(browser, docs_server_url, width)
     page.goto(f"{docs_server_url}/{docs_page}")
     page.wait_for_load_state("networkidle")
     overflow = page.evaluate(
         "document.documentElement.scrollWidth - document.documentElement.clientWidth"
     )
     ctx.close()
-    assert overflow == 0, f"{docs_page}: {overflow}px horizontal overflow at 390px"
+    assert overflow == 0, f"{docs_page}: {overflow}px horizontal overflow at {width}px"
 
 
 def _page(browser: Browser, base_url: str, width: int):  # type: ignore[no-untyped-def]
