@@ -191,13 +191,13 @@
     },
     {
       "customType": "regex",
-      "description": "Images in files no built-in manager reads: the compose files written inline inside workflow run: steps, and the Ansible compose template.",
+      "description": "Images in files no built-in manager reads: the compose files written inline inside workflow run: steps, and the Ansible compose template. A digest after the tag is updated with it; without currentDigest Renovate would move the tag and leave the old digest behind.",
       "managerFilePatterns": [
         "/^\\.github/workflows/[^/]+\\.yml$/",
         "/^ansible/roles/openwhistle/templates/docker-compose\\.yml\\.j2$/"
       ],
       "matchStrings": [
-        "image: (?<depName>postgres|redis|nginx):(?<currentValue>[0-9a-z.\\-]+)"
+        "image: (?<depName>postgres|redis|nginx|clamav/clamav):(?<currentValue>[0-9a-z.\\-]+)(?:@(?<currentDigest>sha256:[0-9a-f]{64}))?"
       ],
       "datasourceTemplate": "docker"
     },
