@@ -70,10 +70,15 @@ async def _flush_test_redis() -> None:
     if not _is_safe_to_flush(settings.redis_url):
         return
     from redis.asyncio import from_url
+    from redis.exceptions import ConnectionError as RedisConnectionError
 
     redis = await from_url(settings.redis_url, decode_responses=True)
     try:
         await redis.flushdb()
+    except (RedisConnectionError, OSError):
+        # No local test Redis (the e2e job talks to the app over HTTP only):
+        # there is nothing to flush, and tests that need Redis fail on their own.
+        return
     finally:
         await redis.aclose()
 

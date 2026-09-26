@@ -22,7 +22,10 @@ COPY pyproject.toml uv.lock ./
 
 # Runtime dependencies only, exactly as locked. Build the venv at /venv so the
 # shebangs are correct in the final image. The app itself is copied, not installed.
-RUN UV_PROJECT_ENVIRONMENT=/venv UV_PYTHON_DOWNLOADS=never uv sync --frozen --no-dev --no-install-project --no-cache --extra ldap --extra s3
+RUN UV_PROJECT_ENVIRONMENT=/venv UV_PYTHON_DOWNLOADS=never uv sync --frozen --no-dev --no-install-project --no-cache --extra ldap --extra s3 \
+    # python-ldap ships its test-server helper with private keys (slapdtest/certs);
+    # nothing imports it at runtime, and a key in the image is a finding.
+    && rm -rf /venv/lib/python3.*/site-packages/slapdtest
 
 # ─── Stage 2: production image ────────────────────────────────────────────────
 # Same digest and provenance as the builder stage above.
@@ -30,12 +33,16 @@ FROM python:3.14-alpine@sha256:9e9fde4d32eedce0b661d9ab91e826b62dddf28e928c230ec
 
 WORKDIR /app
 
-# Runtime dependencies only
+# Runtime dependencies only. pip is removed: nothing installs packages at
+# runtime (the builder uses uv), and its vendored copies (msgpack, …) only add
+# scanner findings and attack surface.
 RUN apk add --no-cache \
     libpq \
     libffi \
     libldap \
-    libsasl
+    libsasl \
+    && rm -rf /usr/local/lib/python3.*/site-packages/pip /usr/local/lib/python3.*/site-packages/pip-*.dist-info \
+        /usr/local/bin/pip /usr/local/bin/pip3*
 
 # Non-root user for security, uid/gid 1000 to match the Helm chart's
 # securityContext (runAsUser/fsGroup: 1000).
