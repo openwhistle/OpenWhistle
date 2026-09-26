@@ -116,9 +116,8 @@ interface.
 
 ### §26 Abs. 1 — Legal Basis
 
-The processing of personal data in connection with internal reporting channels is lawful under DSGVO
-Art. 6(1)(c) (legal obligation) and Art. 6(1)(e) (public interest task), as far as required for
-compliance with HinSchG.
+Processing personal data for an internal reporting channel is lawful as far as HinSchG requires it.
+The basis is DSGVO Art. 6(1)(c) (legal obligation) and Art. 6(1)(e) (public interest task).
 
 ### §26 Abs. 2 — Confidentiality of Third Parties
 
