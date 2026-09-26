@@ -206,6 +206,18 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   crafted request could skip ahead (store a file on a fresh draft) or submit a rejected
   description. Unknown actions are now ignored, and the final submit re-checks every field
   before the report is created. The skip-ahead was already possible in v1.5.0.
+- **The dashboard and case page showed a report's category in English** ("Financial Fraud",
+  "Workplace Safety") regardless of the admin's language, even though every category carries a
+  German label — the templates read the raw slug, never the category's `label_de`. The
+  dashboard's "by category" stats already had its own (also English-only) copy of the same bug;
+  both now read the label for the admin's language, falling back to English only when a
+  language has no label of its own (French and Portuguese, which have none yet).
+- **A new admin user defaulted to the most privileged role.** The "add user" role picker had no
+  `selected` option, so the browser pre-selected whichever `AdminRole` was declared first
+  (`superadmin`); it now defaults to `case_manager`, and the enum's declaration order — which
+  drives every role `<select>` — runs least- to most-privileged.
+- `role.label.superadmin` had no translation in any language: `/admin/users` showed the literal
+  key text in the role picker and the users table for a superadmin account.
 
 ### Design
 
@@ -218,6 +230,26 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The website describes 1.6 (English and German landing pages, the "Was ist neu in 1.6"
   article), serves every font it uses itself, and the roadmap moved from `ROADMAP.md` to
   [openwhistle.net/roadmap.html](https://openwhistle.net/roadmap.html).
+- **An icon next to text (an SLA value, an assignee name, an attachment filename, a
+  "Rückmeldung ausstehend" status badge, …) rendered on its own line above the text**: the
+  shared reset makes every `svg` `display: block`, so an icon's `vertical-align` was a no-op.
+  `.icon` now overrides that back to inline.
+- **`/static/css/site.css` and `/static/js/site.js` were served with no version in the URL**, so
+  a browser that visited before an upgrade kept the stale file after a deploy. Every stylesheet
+  and script link now goes through one `static_url()` helper that appends `?v={app_version}`.
+- **Three docs pages overflowed horizontally at 390px** (a wide table with no scroll container):
+  `docs.html` (519px), the HinSchG compliance guide (80px) and the software-comparison article,
+  whose comparison table also had a `grid-template-columns: repeat(2, 1fr)` cost-card grid that
+  overflowed its column on a long unbreakable price string (10px, fixed with `minmax(0, 1fr)`).
+  `docs/de/index.html`'s own overflow (69px) is task X11's — it rebuilds that page.
+- **The review stack's local-review login button sat flush against the demo-credentials box**
+  below it: `.panel + .panel` gives two stacked panels a gap, but the credentials box is a
+  different class, so the rule never matched.
+- **A German status badge ("Rückmeldung ausstehend", unbreakable, wider than English) could
+  widen the dashboard table past its scroll container**, and the container's default scroll
+  position hid the row's own "Ansehen" action behind the right edge with no visible scrollbar
+  hint. The status badge may now wrap, and the action column stays pinned to the visible edge
+  regardless of how wide anything else in the row gets.
 
 ### Process
 
