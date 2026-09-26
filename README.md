@@ -123,6 +123,9 @@ zero vendor lock-in, and privacy-first by design.
 - **Version & update check** — the admin **System** page shows the installed version and,
   when `UPDATE_CHECK_ENABLED=true`, whether a newer release is available on GitHub. Opt-in and
   off by default; a daily background job caches the result and no instance data is sent out.
+- **Voluntary installation count** — off unless an admin agrees in the setup wizard or on the
+  **System** page: once a day a random identifier and the version go to `telemetry.wdkro.de`,
+  nothing else. `TELEMETRY_ENABLED=false` locks it off; the demo is never counted.
 - **Structured JSON logging** — `LOG_FORMAT=json` produces structured log output for aggregation
   pipelines; `LOG_FORMAT=text` for human-readable development output.
 - **Slack / Teams webhooks** — `NOTIFY_WEBHOOK_TYPE` selects Block Kit (Slack) or Adaptive Card

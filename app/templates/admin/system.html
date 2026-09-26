@@ -120,6 +120,54 @@
         <p>{{ t('admin.system.privacy.body.html') }}</p>
     </section>
 
+    <section class="card" aria-labelledby="heading-telemetry">
+        <h2 id="heading-telemetry">{{ t('admin.system.telemetry.title') }}</h2>
+
+        <div class="detail-row">
+            <div class="detail-label">{{ t('admin.system.telemetry.state') }}</div>
+            {% if telemetry.enabled %}
+                <span class="badge badge-closed">{{ icons.icon('check') }} {{ t('admin.system.telemetry.on') }}</span>
+            {% else %}
+                <span class="badge">{{ t('admin.system.telemetry.off') }}</span>
+            {% endif %}
+        </div>
+
+        <p>{{ t('admin.system.telemetry.body.html') }}</p>
+        <pre><code>GET {{ telemetry.url }}</code></pre>
+
+        <div class="detail-row">
+            <div class="detail-label">{{ t('admin.system.telemetry.id') }}</div>
+            <code>{{ telemetry.installation_id }}</code>
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">{{ t('admin.system.telemetry.last_sent') }}</div>
+            {% if telemetry.last_sent_at %}
+                <time data-utc="{{ telemetry.last_sent_at.isoformat() }}">{{ telemetry.last_sent_at.isoformat() }}</time>
+            {% else %}
+                <span>{{ t('admin.system.telemetry.never') }}</span>
+            {% endif %}
+        </div>
+
+        {% if telemetry.locked_by %}
+        <p class="note">{{ t('admin.system.telemetry.locked.' ~ telemetry.locked_by) }}</p>
+        {% else %}
+        <form method="post" action="/admin/system/telemetry">
+            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+            <input type="hidden" name="enabled" value="{{ '0' if telemetry.enabled else '1' }}">
+            <button type="submit" class="btn {{ 'btn-secondary' if telemetry.enabled else 'btn-primary' }}">
+                {{ t('admin.system.telemetry.turn_off' if telemetry.enabled else 'admin.system.telemetry.turn_on') }}
+            </button>
+        </form>
+        {% endif %}
+
+        <form method="post" action="/admin/system/telemetry/reset-id"
+              data-confirm="{{ t('admin.system.telemetry.reset_confirm') }}">
+            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+            <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.system.telemetry.reset') }}</button>
+        </form>
+        <p class="note">{{ t('admin.system.telemetry.reset_note') }}</p>
+    </section>
+
     <section class="card" aria-labelledby="heading-config">
         <h2 id="heading-config">{{ t('admin.system.config.title') }}</h2>
         <div class="table-wrapper" tabindex="0" role="region" aria-label="{{ t('admin.system.config.title') }}">
@@ -138,6 +186,12 @@
                     <td><code>false</code></td>
                     <td><code>{{ update.enabled | string | lower }}</code></td>
                     <td>{{ t('admin.system.config.enabled.desc') }}</td>
+                </tr>
+                <tr>
+                    <td><code>TELEMETRY_ENABLED</code></td>
+                    <td><code>(empty)</code></td>
+                    <td><code>{{ '(empty)' if telemetry.env is none else telemetry.env | string | lower }}</code></td>
+                    <td>{{ t('admin.system.config.telemetry.desc') }}</td>
                 </tr>
             </tbody>
         </table>

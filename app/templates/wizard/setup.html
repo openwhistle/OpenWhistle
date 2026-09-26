@@ -9,6 +9,8 @@
 .setup-manual-text { font-size:0.875rem;text-align:center;color:var(--body-text); }
 .setup-secret-wrap { text-align:center;margin-top:0.5rem; }
 .setup-secret { font-size:0.9rem;user-select:all;word-break:break-all; }
+.setup-telemetry { border:0;padding:0;margin-inline:0; }
+.setup-telemetry-label { display:flex;gap:0.5rem;align-items:flex-start; }
 .setup-totp-input { font-size:1.4rem;letter-spacing:0.3em;text-align:center;padding-bottom:0.6rem; }
 </style>
 {% endblock %}
@@ -128,6 +130,15 @@
                 {{ field.error('totp_code') }}
                 <div class="form-hint" id="totp-hint">{{ t('wizard.totp_code.hint') }}</div>
             </div>
+
+            <fieldset class="form-group setup-telemetry">
+                <legend class="form-label">{{ t('wizard.telemetry.title') }}</legend>
+                <p class="form-hint" id="telemetry-hint">{{ t('wizard.telemetry.body.html') }}</p>
+                <label class="setup-telemetry-label">
+                    <input type="checkbox" name="telemetry" value="1" aria-describedby="telemetry-hint"{% if telemetry %} checked{% endif %}>
+                    {{ t('wizard.telemetry.label') }}
+                </label>
+            </fieldset>
 
             <button type="submit" class="btn btn-primary btn-block">
                 {{ t('wizard.submit') }}

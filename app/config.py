@@ -238,6 +238,18 @@ class Settings(BaseSettings):
     # the admin System page surfaces it; no instance data is ever sent to GitHub.
     update_check_enabled: bool = False
 
+    # Installation count — one GET a day to telemetry.wdkro.de with a random id
+    # and the version, only if an admin agreed (setup wizard or System page).
+    # Unset/empty: that in-app answer decides (off until given). false: always
+    # off, the switch is locked. true: on, locked. DEMO_MODE is never counted.
+    telemetry_enabled: bool | None = None
+
+    @field_validator("telemetry_enabled", mode="before")
+    @classmethod
+    def _empty_telemetry_is_unset(cls, v: Any) -> Any:
+        # docker-compose.prod.yml passes "${TELEMETRY_ENABLED:-}", i.e. "".
+        return None if isinstance(v, str) and not v.strip() else v
+
     # Virus scan of uploads through clamd (INSTREAM). Empty = off. When set, an
     # upload is refused if clamd cannot be reached: nothing is stored unscanned.
     clamav_host: str = ""

@@ -27,6 +27,8 @@ os.environ.setdefault(
 )
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/1")  # DB 1 for tests
 os.environ.setdefault("DEMO_MODE", "false")
+# The installation count never leaves a test run; tests that need it patch the setting.
+os.environ.setdefault("TELEMETRY_ENABLED", "false")
 
 from app.database import Base, get_db  # noqa: E402
 from app.main import app  # noqa: E402

@@ -13,12 +13,14 @@ from app.config import settings
 from app.csrf import validate_csrf
 from app.database import get_db
 from app.models.setup import SetupStatus
+from app.models.telemetry import TelemetryState
 from app.models.user import AdminUser
 from app.redis_client import get_redis
 from app.services import rate_limit as rl
 from app.services.auth import hash_password, validate_password
 from app.services.mfa import generate_qr_code_base64, generate_totp_secret, verify_totp
 from app.services.setup_token import check_setup_token, delete_setup_token, ensure_setup_token
+from app.services.telemetry import new_installation_id
 from app.services.users import validate_username
 from app.templating import render
 
@@ -42,7 +44,7 @@ async def _is_setup_complete(db: AsyncSession) -> bool:
 
 
 async def create_initial_admin(
-    db: AsyncSession, username: str, password: str, totp_secret: str
+    db: AsyncSession, username: str, password: str, totp_secret: str, telemetry: bool = False
 ) -> bool:
     """Create the first admin and mark setup complete, atomically.
 
@@ -89,6 +91,13 @@ async def create_initial_admin(
         setup.completed = True
         setup.completed_at = datetime.now(UTC)
 
+    # The installation-count answer; unchecked by default in the form.
+    state = await db.get(TelemetryState, 1)
+    if state is None:
+        db.add(TelemetryState(id=1, enabled=telemetry, installation_id=new_installation_id()))
+    else:
+        state.enabled = telemetry
+
     await db.commit()
     return True
 
@@ -126,6 +135,7 @@ async def setup_post(
     totp_secret: str = Form(...),
     totp_code: str = Form(""),
     setup_token: str = Form(""),
+    telemetry: str = Form(""),
     db: AsyncSession = Depends(get_db),
     redis: Redis = Depends(get_redis),
     _csrf: None = Depends(validate_csrf),
@@ -146,6 +156,7 @@ async def setup_post(
                 "qr_code": generate_qr_code_base64(totp_secret, username or "admin"),
                 "field_errors": {"setup_token": error},
                 "username": username,
+                "telemetry": telemetry == "1",
             },
             status_code=429 if locked else 403,
         )
@@ -180,11 +191,14 @@ async def setup_post(
                 "qr_code": qr_code,
                 "field_errors": errors,
                 "username": username,
+                "telemetry": telemetry == "1",
             },
         )
 
     # A concurrent submission that won the race makes this a no-op; either
     # way the only thing left to do is log in.
-    if await create_initial_admin(db, username, password, totp_secret):
+    if await create_initial_admin(
+        db, username, password, totp_secret, telemetry=telemetry == "1"
+    ):
         await delete_setup_token(redis)
     return RedirectResponse("/admin/login", status_code=302)
