@@ -93,7 +93,7 @@ def _own_cases_only(user: AdminUser) -> uuid.UUID | None:
 
 
 def _require_same_org(user: AdminUser, target_org_id: uuid.UUID | None) -> None:
-    """404 when a scoped caller addresses a user outside their organisation."""
+    """404 when a scoped caller addresses a row outside their organisation."""
     scope = _org_scope(user)
     if scope["scope_org"] and target_org_id != scope["org_id"]:
         raise HTTPException(status_code=404)
@@ -230,7 +230,7 @@ async def dashboard(
     from app.services.categories import get_category_labels
     from app.services.locations import get_all_locations
 
-    all_locations = await get_all_locations(db)
+    all_locations = await get_all_locations(db, **_org_scope(current_user))
     category_labels = await get_category_labels(
         db, get_lang(request), **_org_scope(current_user)
     )
@@ -821,7 +821,7 @@ async def categories_page(
     current_user: AdminUser = Depends(require_admin),
 ) -> HTMLResponse:
     from app.services.categories import get_all_categories
-    cats = await get_all_categories(db)
+    cats = await get_all_categories(db, **_org_scope(current_user))
     return render(request, "admin/categories.html", {"user": current_user, "categories": cats})
 
 
@@ -836,15 +836,17 @@ async def create_category(
     current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
+    from app.services.categories import DuplicateSlugError
     from app.services.categories import create_category as svc_create
-    from app.services.categories import get_category_by_slug
 
     slug_clean = slug.strip().lower().replace(" ", "_")
-    existing = await get_category_by_slug(db, slug_clean)
-    if existing:
-        raise HTTPException(status_code=409, detail="Slug already exists")
-
-    cat = await svc_create(db, slug_clean, label_en.strip(), label_de.strip(), sort_order)
+    try:
+        cat = await svc_create(
+            db, slug_clean, label_en.strip(), label_de.strip(), sort_order,
+            org_id=current_user.org_id,
+        )
+    except DuplicateSlugError:
+        raise HTTPException(status_code=409, detail="Slug already exists") from None
     await audit_service.log(
         db, current_user, AuditAction.CATEGORY_CREATED,
         detail={"slug": cat.slug, "label_en": cat.label_en},
@@ -867,6 +869,7 @@ async def deactivate_category(
     cat = await get_category_by_id(db, cat_id)
     if not cat:
         raise HTTPException(status_code=404)
+    _require_same_org(current_user, cat.org_id)
     if cat.is_default:
         raise HTTPException(status_code=422, detail="Default categories cannot be deactivated.")
 
@@ -893,6 +896,7 @@ async def reactivate_category(
     cat = await get_category_by_id(db, cat_id)
     if not cat:
         raise HTTPException(status_code=404)
+    _require_same_org(current_user, cat.org_id)
     await svc_react(db, cat)
     await audit_service.log(
         db, current_user, AuditAction.CATEGORY_UPDATED,
@@ -1257,7 +1261,7 @@ async def locations_page(
 ) -> HTMLResponse:
     from app.services.locations import get_all_locations
 
-    locs = await get_all_locations(db)
+    locs = await get_all_locations(db, **_org_scope(current_user))
     return render(request, "admin/locations.html", {"user": current_user, "locations": locs})
 
 
@@ -1272,24 +1276,24 @@ async def create_location(
     current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
+    from app.services.locations import DuplicateCodeError
     from app.services.locations import create_location as svc_create
-    from app.services.locations import get_location_by_code
 
     code_clean = code.strip().upper()
     if not code_clean:
         raise HTTPException(status_code=400, detail="Code is required")
 
-    existing = await get_location_by_code(db, code_clean)
-    if existing:
-        raise HTTPException(status_code=409, detail="Location code already exists")
-
-    await svc_create(
-        db,
-        name=name.strip(),
-        code=code_clean,
-        description=description.strip() or None,
-        sort_order=sort_order,
-    )
+    try:
+        await svc_create(
+            db,
+            name=name.strip(),
+            code=code_clean,
+            description=description.strip() or None,
+            sort_order=sort_order,
+            org_id=current_user.org_id,
+        )
+    except DuplicateCodeError:
+        raise HTTPException(status_code=409, detail="Location code already exists") from None
     await audit_service.log(
         db, current_user, AuditAction.LOCATION_CREATED,
         detail={"location_code": code_clean, "name": name.strip()},
@@ -1312,7 +1316,11 @@ async def deactivate_location(
     loc = await get_location_by_id(db, loc_id)
     if not loc:
         raise HTTPException(status_code=404)
+    _require_same_org(current_user, loc.org_id)
     await svc_deact(db, loc)
+    await audit_service.log(
+        db, current_user, AuditAction.LOCATION_DEACTIVATED, detail={"location_code": loc.code},
+    )
     await db.commit()
     return RedirectResponse("/admin/locations", status_code=302)
 
@@ -1331,7 +1339,11 @@ async def reactivate_location(
     loc = await get_location_by_id(db, loc_id)
     if not loc:
         raise HTTPException(status_code=404)
+    _require_same_org(current_user, loc.org_id)
     await svc_react(db, loc)
+    await audit_service.log(
+        db, current_user, AuditAction.LOCATION_REACTIVATED, detail={"location_code": loc.code},
+    )
     await db.commit()
     return RedirectResponse("/admin/locations", status_code=302)
 

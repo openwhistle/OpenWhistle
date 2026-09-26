@@ -33,6 +33,8 @@ class AuditAction:
     CATEGORY_UPDATED        = "category.updated"
     CATEGORY_DEACTIVATED    = "category.deactivated"
     LOCATION_CREATED        = "location.created"
+    LOCATION_DEACTIVATED    = "location.deactivated"
+    LOCATION_REACTIVATED    = "location.reactivated"
     ADMIN_CREATED           = "admin.created"
     ADMIN_ROLE_CHANGED      = "admin.role_changed"
     ADMIN_DEACTIVATED       = "admin.deactivated"

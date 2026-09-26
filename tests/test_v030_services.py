@@ -170,7 +170,7 @@ async def test_deactivate_and_reactivate_category(db_session: AsyncSession):
 async def test_get_category_by_slug(db_session: AsyncSession):
     slug = f"byslug_{uuid.uuid4().hex[:6]}"
     created = await create_category(db_session, slug, "By Slug", "Nach Slug", 50)
-    fetched = await get_category_by_slug(db_session, slug)
+    fetched = await get_category_by_slug(db_session, slug, created.org_id)
     assert fetched is not None
     assert fetched.id == created.id
 

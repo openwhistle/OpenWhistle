@@ -371,3 +371,87 @@ async def test_stats_page_category_label_is_the_own_orgs(
     resp = await as_admin_a.get("/admin/stats")
     assert "Org A label" in resp.text
     assert "Org B label" not in resp.text
+
+
+# ── Categories and locations are managed per organisation ────────────────────
+
+
+async def _other_org_rows(db: AsyncSession, org_b: uuid.UUID | None, tag: str):  # type: ignore[no-untyped-def]
+    from app.services.categories import create_category
+    from app.services.locations import create_location
+
+    cat = await create_category(db, f"cat_{tag}", f"Label {tag}", f"Label {tag}", org_id=org_b)
+    loc = await create_location(db, f"Office {tag}", f"LOC{tag}".upper(), org_id=org_b)
+    await db.commit()
+    return cat, loc
+
+
+@pytest.mark.asyncio
+async def test_category_and_location_pages_list_only_own_org(
+    as_admin_a: AsyncClient, two_orgs: dict[str, AdminUser], db_session: AsyncSession
+) -> None:
+    tag = uuid.uuid4().hex[:8]
+    await _other_org_rows(db_session, two_orgs["user_b"].org_id, tag)
+    own, _ = await _other_org_rows(db_session, two_orgs["admin_a"].org_id, f"own{tag}")
+    cats = (await as_admin_a.get("/admin/categories")).text
+    assert own.label_en in cats
+    assert f"Label {tag}" not in cats and f"cat_{tag}" not in cats
+    assert f"Office {tag}" not in (await as_admin_a.get("/admin/locations")).text
+    assert f"Office {tag}" not in (await as_admin_a.get("/admin/")).text
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action", ["deactivate", "reactivate"])
+async def test_cannot_toggle_another_orgs_category_or_location(
+    as_admin_a: AsyncClient, two_orgs: dict[str, AdminUser], db_session: AsyncSession,
+    action: str,
+) -> None:
+    cat, loc = await _other_org_rows(db_session, two_orgs["user_b"].org_id, uuid.uuid4().hex[:8])
+    csrf = await _csrf(as_admin_a)
+    for path in (f"/admin/categories/{cat.id}/{action}", f"/admin/locations/{loc.id}/{action}"):
+        resp = await as_admin_a.post(path, data={"csrf_token": csrf}, follow_redirects=False)
+        assert resp.status_code == 404, path
+    await db_session.refresh(cat)
+    await db_session.refresh(loc)
+    assert cat.is_active and loc.is_active
+
+
+@pytest.mark.asyncio
+async def test_a_slug_or_code_another_org_uses_is_free_and_a_duplicate_is_409(
+    as_admin_a: AsyncClient, two_orgs: dict[str, AdminUser], db_session: AsyncSession
+) -> None:
+    tag = uuid.uuid4().hex[:8]
+    await _other_org_rows(db_session, two_orgs["user_b"].org_id, tag)
+    csrf = await _csrf(as_admin_a)
+    cat_form = {"slug": f"cat_{tag}", "label_en": "Mine", "label_de": "Meins", "csrf_token": csrf}
+    loc_form = {"name": "Mine", "code": f"LOC{tag}".upper(), "csrf_token": csrf}
+    for path, form in (("/admin/categories", cat_form), ("/admin/locations", loc_form)):
+        first = await as_admin_a.post(path, data=form, follow_redirects=False)
+        assert first.status_code == 302, path
+        again = await as_admin_a.post(path, data=form, follow_redirects=False)
+        assert again.status_code == 409, path
+
+
+@pytest.mark.asyncio
+async def test_location_deactivate_and_reactivate_are_audited(
+    as_admin_a: AsyncClient, two_orgs: dict[str, AdminUser], db_session: AsyncSession
+) -> None:
+    from sqlalchemy import select
+
+    from app.models.audit import AuditLog
+    from app.services.audit import AuditAction
+
+    org_a = two_orgs["admin_a"].org_id
+    _, loc = await _other_org_rows(db_session, org_a, uuid.uuid4().hex[:8])
+    csrf = await _csrf(as_admin_a)
+    for action in ("deactivate", "reactivate"):
+        resp = await as_admin_a.post(
+            f"/admin/locations/{loc.id}/{action}", data={"csrf_token": csrf},
+            follow_redirects=False,
+        )
+        assert resp.status_code == 302
+    rows = (await db_session.execute(
+        select(AuditLog.action, AuditLog.org_id).where(AuditLog.detail.contains(loc.code))
+    )).all()
+    assert (AuditAction.LOCATION_DEACTIVATED, org_a) in rows
+    assert (AuditAction.LOCATION_REACTIVATED, org_a) in rows

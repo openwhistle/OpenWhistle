@@ -69,9 +69,18 @@ async def get_category_by_id(db: AsyncSession, cat_id: uuid.UUID) -> ReportCateg
     return result.scalar_one_or_none()
 
 
-async def get_category_by_slug(db: AsyncSession, slug: str) -> ReportCategory | None:
-    result = await db.execute(select(ReportCategory).where(ReportCategory.slug == slug))
+async def get_category_by_slug(
+    db: AsyncSession, slug: str, org_id: uuid.UUID | None
+) -> ReportCategory | None:
+    """A slug is unique per organisation only: look it up within one."""
+    result = await db.execute(select(ReportCategory).where(
+        ReportCategory.slug == slug, ReportCategory.org_id.is_not_distinct_from(org_id)
+    ))
     return result.scalar_one_or_none()
+
+
+class DuplicateSlugError(ValueError):
+    """The organisation already has a category with this slug."""
 
 
 async def create_category(
@@ -84,6 +93,8 @@ async def create_category(
 ) -> ReportCategory:
     if org_id is None:
         org_id = await _default_org_id(db)
+    if await get_category_by_slug(db, slug, org_id):
+        raise DuplicateSlugError(slug)
     cat = ReportCategory(
         id=uuid.uuid4(),
         slug=slug,
@@ -95,8 +106,7 @@ async def create_category(
         org_id=org_id,
     )
     db.add(cat)
-    await db.commit()
-    await db.refresh(cat)
+    await db.flush()  # the caller commits together with its audit row
     return cat
 
 

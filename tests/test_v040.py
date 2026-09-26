@@ -56,8 +56,8 @@ class TestLocationService:
         assert loc.is_active is True
 
     async def test_get_by_code(self, db_session: AsyncSession) -> None:
-        await create_location(db_session, "Branch A", "BRANCH-A")
-        found = await get_location_by_code(db_session, "BRANCH-A")
+        loc = await create_location(db_session, "Branch A", "BRANCH-A")
+        found = await get_location_by_code(db_session, "BRANCH-A", loc.org_id)
         assert found is not None
         assert found.name == "Branch A"
 

@@ -632,6 +632,8 @@
   "audit.action.category.updated": "Catégorie modifiée",
   "audit.action.category.deactivated": "Catégorie désactivée",
   "audit.action.location.created": "Lieu créé",
+  "audit.action.location.deactivated": "Lieu désactivé",
+  "audit.action.location.reactivated": "Lieu réactivé",
   "audit.action.admin.created": "Utilisateur créé",
   "audit.action.admin.role_changed": "Rôle de l'utilisateur modifié",
   "audit.action.admin.deactivated": "Utilisateur désactivé",

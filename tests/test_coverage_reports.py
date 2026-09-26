@@ -462,6 +462,7 @@ async def test_submit_get_downgrades_location_step_when_locations_removed(
     loc = await create_location(
         db_session, "Coverage Temp Office", f"COVTMP{uuid.uuid4().hex[:6].upper()}"
     )
+    await db_session.commit()
 
     get_resp = await client.get("/submit")
     csrf = _wiz_csrf(get_resp.text)
@@ -513,6 +514,7 @@ async def test_submit_location_step_invalid_uuid_shows_error(
     from app.services.locations import create_location
 
     await create_location(db_session, "Coverage Office A", f"COVA{uuid.uuid4().hex[:6].upper()}")
+    await db_session.commit()
 
     get_resp = await client.get("/submit")
     csrf = _wiz_csrf(get_resp.text)
@@ -551,6 +553,7 @@ async def test_submit_location_step_valid_location_is_accepted(
     loc = await create_location(
         db_session, "Coverage Office C", f"COVC{uuid.uuid4().hex[:6].upper()}"
     )
+    await db_session.commit()
 
     get_resp = await client.get("/submit")
     csrf = _wiz_csrf(get_resp.text)
@@ -587,6 +590,7 @@ async def test_submit_location_step_unknown_location_shows_error(
     from app.services.locations import create_location
 
     await create_location(db_session, "Coverage Office B", f"COVB{uuid.uuid4().hex[:6].upper()}")
+    await db_session.commit()
 
     get_resp = await client.get("/submit")
     csrf = _wiz_csrf(get_resp.text)
