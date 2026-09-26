@@ -41,3 +41,13 @@ def test_locale_keeps_every_placeholder(path: Path) -> None:
 
 def test_there_are_other_locales() -> None:
     assert len(OTHERS) >= 3
+
+
+_INFORMAL_DE = re.compile(
+    r"\b(du|dich|dir|dein\w*|kannst|musst|hast|bist|wirst|setze|gib|klicke)\b", re.IGNORECASE
+)
+
+
+def test_german_addresses_the_reader_formally() -> None:
+    informal = {k: v for k, v in _load(LOCALES / "de.json").items() if _INFORMAL_DE.search(v)}
+    assert not informal, informal
