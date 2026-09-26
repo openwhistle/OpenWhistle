@@ -41,9 +41,12 @@ class AuditAction:
     ADMIN_ROLE_CHANGED      = "admin.role_changed"
     ADMIN_DEACTIVATED       = "admin.deactivated"
     ADMIN_REACTIVATED       = "admin.reactivated"
+    ADMIN_TOTP_RESET        = "admin.totp_reset"
     AUTH_LOGIN              = "auth.login"
     AUTH_LOCAL_REVIEW_LOGIN = "auth.local_review_login"
     AUTH_TOTP_SETUP         = "auth.totp_setup"
+    AUTH_SSO_LINKED         = "auth.sso_linked"
+    AUTH_SSO_UNLINKED       = "auth.sso_unlinked"
     AUTH_SPRAYING_SUSPECTED = "auth.password_spraying_suspected"
     ORG_CREATED             = "org.created"
     ORG_DEACTIVATED         = "org.deactivated"
@@ -89,15 +92,20 @@ async def log(
 
 
 async def log_system(
-    db: AsyncSession, action: str, detail: dict[str, Any] | None = None
+    db: AsyncSession,
+    action: str,
+    detail: dict[str, Any] | None = None,
+    org_id: uuid.UUID | None = None,
 ) -> AuditLog:
-    """Record an event no admin caused (e.g. a detected attack). Flush only."""
+    """Record an event no admin caused (a detected attack, a command run on the
+    host). ``org_id`` makes it visible to that organisation's admins. Flush only."""
     entry = AuditLog(
         id=uuid.uuid4(),
         admin_id=None,
         admin_username="system",
         action=action,
         detail=json.dumps(detail) if detail else None,
+        org_id=org_id,
     )
     db.add(entry)
     await db.flush()

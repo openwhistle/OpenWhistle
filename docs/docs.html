@@ -2143,8 +2143,8 @@ CLAMAV_HOST=clamav</code></pre>
           <div class="callout-title">Save your TOTP secret</div>
           <p>
             Write down the TOTP secret shown during setup and keep it offline. There are no backup
-            codes: without the authenticator app, the TOTP secret must be reset directly in the
-            database.
+            codes. A lost authenticator is reset by a superadmin or on the host
+            (<a href="#lost-access">Lost password or authenticator</a>).
           </p>
         </div>
       </section>
@@ -2211,6 +2211,28 @@ CLAMAV_HOST=clamav</code></pre>
           another role is chosen; an unknown role is refused. The last active admin cannot be
           deactivated, so nobody is locked out. Only admins may dismiss the IP-header warning.
         </p>
+
+        <h3 id="lost-access">Lost password or authenticator</h3>
+        <div class="table-scroll">
+<table class="env-table">
+          <thead><tr><th>Lost</th><th>Who resets it</th><th>How</th></tr></thead>
+          <tbody>
+            <tr><td>Authenticator</td><td>a superadmin</td><td><strong>Reset authenticator</strong> on <code>/admin/users</code></td></tr>
+            <tr><td>Authenticator</td><td>whoever runs the host</td><td><code>python scripts/reset_admin_password.py --reset-totp &lt;username&gt;</code></td></tr>
+            <tr><td>Password</td><td>whoever runs the host</td><td><code>python scripts/reset_admin_password.py --username &lt;username&gt;</code></td></tr>
+          </tbody>
+        </table>
+</div>
+        <ul>
+          <li>Run the script inside the container: <code>docker exec -it openwhistle python scripts/reset_admin_password.py …</code>.</li>
+          <li>Either reset ends every session of the account at once. The old app stops working.</li>
+          <li>After a reset in <code>/admin/users</code>, the next login goes to <code>/admin/mfa/setup</code> to enrol a new app.</li>
+          <li>Until then the password alone reaches that page, so tell the user straight away.</li>
+          <li>The script prints the new secret and its <code>otpauth://</code> URI once. Hand them over in person.</li>
+          <li>A superadmin cannot reset their own authenticator in the browser: it would end their session and leave the account behind a password. Another superadmin or the script does it.</li>
+          <li>The script works for any account, the last superadmin included.</li>
+          <li>Every reset is in the audit log as <code>admin.totp_reset</code>. With <code>DEMO_MODE</code>, the demo accounts cannot be reset.</li>
+        </ul>
 
         <h3>Managing reports</h3>
         <p>
@@ -2501,11 +2523,15 @@ CLAMAV_HOST=clamav</code></pre>
         </p>
 
         <h3>OIDC integration</h3>
-        <p>With OIDC on, the identity provider replaces the password, not the second factor.</p>
+        <p>With OIDC on, the identity provider is a second way past the first factor. It never replaces the second factor.</p>
         <ul>
           <li>Login uses PKCE; the app checks the provider's signed ID token (see <code>OIDC_SERVER_METADATA_URL</code> in the <a href="#configuration">configuration table</a>).</li>
-          <li>The token's <code>sub</code> and issuer map to a local admin account, which a system administrator must link beforehand. An unlinked identity is refused.</li>
-          <li>Then TOTP, as for <a href="#admin-login">every account</a>.</li>
+          <li>Each person links their own account. Sign in with password and TOTP, then choose <strong>Link single sign-on</strong> in the sidebar.</li>
+          <li>The provider's <code>sub</code> and issuer are stored on the signed-in account, and nowhere else. The audit log records <code>auth.sso_linked</code>.</li>
+          <li>The link request is bound to that session. Finished in another browser or after sign-out, it links nothing.</li>
+          <li>An identity already linked to another account is refused. An unlinked identity cannot sign in.</li>
+          <li><strong>Unlink single sign-on</strong> removes the link (<code>auth.sso_unlinked</code>). An account without a password cannot unlink its only way in.</li>
+          <li>The password keeps working. Every login still ends with TOTP, as for <a href="#admin-login">every account</a>.</li>
         </ul>
       </section>
 

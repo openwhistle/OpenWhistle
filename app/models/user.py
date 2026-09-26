@@ -40,6 +40,8 @@ class AdminUser(Base):
     # TOTP (mandatory). Encrypted at rest: a database dump alone must not yield
     # the second factor of every account.
     totp_secret: Mapped[str] = mapped_column(EncryptedText, nullable=False)
+    # False until the authenticator is enrolled; a reset turns it off again, so
+    # the next login goes to /admin/mfa/setup and no session is accepted.
     totp_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     # Role-based access control
@@ -48,7 +50,9 @@ class AdminUser(Base):
     )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
-    # OIDC (optional — when set, password login is disabled for this user)
+    # OIDC (optional). Set by the account holder (POST /admin/oidc/link) while
+    # signed in; a second way past the first factor, never past TOTP. The
+    # password, if any, keeps working.
     oidc_sub: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
     oidc_issuer: Mapped[str | None] = mapped_column(String(255), nullable=True)
 

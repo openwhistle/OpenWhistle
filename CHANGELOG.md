@@ -7,7 +7,28 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **Admins link their own single sign-on identity.** Signed in with password and TOTP, choose
+  **Link single sign-on** in the sidebar (`POST /admin/oidc/link`); **Unlink single sign-on**
+  removes it. The link request is bound to that session and to the purpose "link" in Redis, so a
+  login state never links and a link state never signs in. An identity linked to another account
+  is refused. Both are audited (`auth.sso_linked`, `auth.sso_unlinked`).
+- **A lost authenticator can be reset.** A superadmin clicks **Reset authenticator** on
+  `/admin/users` (`POST /admin/users/{id}/reset-totp`): the old app stops working, the user's
+  sessions end, and the next login enrols a new app at `/admin/mfa/setup`. Not for one's own
+  account, and not for the demo accounts in `DEMO_MODE`. On the host,
+  `scripts/reset_admin_password.py --reset-totp <username>` prints a new secret and `otpauth://`
+  URI once, for any account including the last superadmin. Both are audited (`admin.totp_reset`).
+
 ### Fixed
+
+- **OIDC login could never succeed.** Nothing ever wrote an account's OIDC `sub` and issuer, so
+  every SSO login ended in "no account is linked". Linking now exists (see Added).
+- **A lost authenticator locked its admin out for good.** The reset script kept the TOTP secret,
+  and the docs said to edit the database. See Added.
+- **No session is accepted for an account whose authenticator awaits enrolment.** A reset takes
+  effect in the same commit, before its sessions are swept from Redis.
 
 - **Pages that fit the window scrolled anyway, with the footer below the fold.** The submission
   wizard and the login and MFA screens sized themselves as the viewport minus a guessed nav and

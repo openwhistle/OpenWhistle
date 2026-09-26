@@ -122,3 +122,17 @@ async def reactivate_user(db: AsyncSession, user: AdminUser) -> AdminUser:
     await db.commit()
     await db.refresh(user)
     return user
+
+
+def require_new_authenticator(user: AdminUser) -> str:
+    """Replace the TOTP secret and make the next login enrol it.
+
+    The old authenticator stops working at once (its secret is gone), and with
+    ``totp_enabled`` off the next login goes to /admin/mfa/setup, the same
+    flow a new account takes. The caller audits, commits, then ends the
+    user's sessions (``auth.revoke_user_sessions``) — after the commit, so a
+    login racing the reset cannot leave a session behind. Returns the secret.
+    """
+    user.totp_secret = pyotp.random_base32()
+    user.totp_enabled = False
+    return user.totp_secret

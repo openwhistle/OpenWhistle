@@ -23,6 +23,8 @@ Type: explanation. What OpenWhistle defends, against whom, and what it deliberat
 | Admin of another organisation | other tenants' cases or audit rows | object-level checks, org-scoped audit | `tests/test_multitenancy_scoping.py` |
 | Password sprayer, TOTP guesser | an admin session | lockout, spraying alert, single-use TOTP | `tests/test_v150_auth.py` |
 | Stolen admin session cookie | lasting access | 60 min TTL, 12 h absolute limit, CSRF on refresh | `test_session_older_than_the_absolute_limit_is_rejected` |
+| Admin who links SSO, or someone luring them | an identity on another account | link state bound to purpose and session; `oidc_sub` unique | `test_a_link_started_by_one_session_cannot_land_on_another` |
+| Thief of a lost or stolen phone | the second factor | superadmin or host resets it; old secret gone, sessions ended | `test_superadmin_resets_an_authenticator` |
 | Slack/Teams provider | case volume and timing | webhooks carry counts only | `test_webhook_payloads_carry_no_case_number` |
 | Whoever runs or watches `telemetry.wdkro.de` | which organisations run OpenWhistle | off unless an admin agrees; only a random id and the version, no host, URL or counts; no redirect followed; the far end keeps no address | `test_a_report_is_one_get_with_the_id_and_the_version_and_nothing_else`, `test_nothing_is_sent_without_consent_or_under_a_hard_off` |
 | Malicious upload | admin's machine | type + magic check, metadata strip, optional ClamAV fail-closed | `test_upload_is_refused_when_the_scanner_is_unreachable` |
@@ -92,6 +94,29 @@ Pinned by `test_the_result_is_kept_120_seconds_for_a_second_click`,
 `test_a_submit_failing_before_its_commit_says_not_sent_and_keeps_the_answers` and
 `test_a_commit_failing_without_a_report_is_pending_not_not_sent`.
 
+## Linking SSO and resetting an authenticator (v2.1.0)
+
+Until v2.1.0 nothing wrote `oidc_sub`, so SSO login could never succeed, and a lost authenticator
+meant editing the database. Each rule below is a trust decision; the tests are in
+`tests/test_v210_auth_recovery.py`, the mutations in `docs-tech/mutations/v2.1.0-auth-recovery.json`.
+
+| Rule | Why |
+| --- | --- |
+| Only the account holder links, while signed in with first factor + TOTP | an admin linking for someone else would decide who that person is at the IdP; self-service needs no such trust |
+| The link state stores `purpose: link` and `sha256(user id : session token)`; the callback redeems it only with both matching | a login state must never write an identity, and a flow started in the attacker's session must never land on the victim's |
+| A link callback without a live session renders an error, never a login | a link state is not a first factor |
+| `oidc_sub` stays unique on its own, not per issuer; a clash is refused, never moved | one configured IdP; the constraint is the check, so a race cannot win either |
+| An account with no password and no LDAP cannot unlink | it would have no first factor left |
+| Linking changes no login requirement: every path still ends in `_second_factor` | SSO replaces the password, never TOTP |
+| Reset in the browser: superadmin only, never one's own account | resetting is taking over the second factor; one's own reset would end the session and leave the account behind a password |
+| A reset replaces the secret and clears `totp_enabled`; no session is accepted while it is clear | the old app must stop at once, in the same commit, before Redis is swept |
+| After the commit, every session, TOTP-pending and TOTP-setup key of the user is deleted | a session minted from the old secret must not outlive re-enrolment |
+| The CLI prints the new secret once and enrols it; it works for any account | it is the way back when the last superadmin lost their phone; whoever runs the host holds the keys anyway |
+| `DEMO_MODE` refuses resetting the demo accounts | the public demo must keep its static code |
+
+Residual: between a browser reset and re-enrolment, the password alone reaches `/admin/mfa/setup`.
+The superadmin tells the user at once; `admin.totp_reset` in the audit log dates the window.
+
 ## Not defended
 
 | Threat | Why not | What the operator does |
@@ -103,3 +128,4 @@ Pinned by `test_the_result_is_kept_120_seconds_for_a_second_click`,
 | Traffic analysis across a long time window | batching narrows, cannot remove | raise `NOTIFICATION_BATCH_MINUTES` |
 | The installation count's source address | a TCP request has one; the far end is trusted not to log it, and anyone on the path sees that this host talks to `telemetry.wdkro.de` once a day | leave it off, or send it through a proxy; the id and version alone name no organisation |
 | Content search over more than 5 000 reports per scope | decrypt-in-memory ceiling | narrow with filters (documented limit) |
+| Someone who has the password of an account whose authenticator was just reset | the reset exists because the second factor is gone | re-enrol straight away; check `admin.totp_reset` against the next `auth.totp_setup` |

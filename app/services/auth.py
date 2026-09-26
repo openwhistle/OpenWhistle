@@ -153,6 +153,24 @@ async def revoke_session(redis: Redis, token: str) -> None:
     await redis.delete(key)
 
 
+async def revoke_user_sessions(redis: Redis, user_id: str) -> int:
+    """End every session of one user, and every login of theirs waiting at the
+    TOTP step or at TOTP setup. Returns how many keys were removed.
+
+    Sessions are keyed by token, not by user, so this scans; the value of each
+    key is the user id. ponytail: a SCAN over all sessions — fine for the
+    number of admins an instance has, a per-user index if that ever changes.
+    """
+    removed = 0
+    for prefix in (_SESSION_PREFIX, _TOTP_PENDING_PREFIX, _TOTP_SETUP_PREFIX):
+        async for key in redis.scan_iter(match=f"{prefix}*", count=500):
+            raw = await redis.get(key)
+            value = raw.decode() if isinstance(raw, bytes) else raw
+            if value == user_id:
+                removed += int(await redis.delete(key))
+    return removed
+
+
 async def store_totp_pending(redis: Redis, temp_token: str, user_id: str) -> None:
     """Store a temporary token awaiting TOTP verification (5 min expiry)."""
     key = f"{_TOTP_PENDING_PREFIX}{temp_token}"

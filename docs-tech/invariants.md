@@ -553,6 +553,29 @@ Each was proven red locally with podman: files written `0640` (nginx:
 | `docs-link-docs-tech` | `docs/docs.html` | `test_no_published_page_links_docs_tech` |
 | `roadmap-test-chore` | `docs/roadmap.html` | `test_the_public_roadmap_holds_no_test_chores` |
 
+## SSO linking and authenticator reset (v2.1.0)
+
+`docs-tech/mutations/v2.1.0-auth-recovery.json`: 24 mutations, 24 red, all in
+`tests/test_v210_auth_recovery.py`. The rules and why: [threat model](threat-model.md).
+
+| Guard | Test that fires |
+| --- | --- |
+| A state redeems only for its own purpose | `test_a_login_state_cannot_link_and_a_link_state_cannot_log_in` |
+| A link state redeems only for the session that started it | `test_a_link_started_by_one_session_cannot_land_on_another` |
+| A link callback without a session is an error page, never a login | `test_link_callback_without_a_session_links_nothing_and_signs_nobody_in` |
+| An identity on another account is refused (unique `oidc_sub`) | `test_link_is_refused_when_the_identity_belongs_to_another_account` |
+| No unlink of the only way in | `test_unlink_is_refused_when_sso_is_the_only_way_in` |
+| Reset: superadmin only, not self, CSRF, not the demo accounts | `test_only_a_superadmin_resets_an_authenticator`, `test_a_superadmin_cannot_reset_their_own_authenticator`, `test_reset_needs_csrf`, `test_demo_accounts_keep_their_authenticator` |
+| Reset: new secret, enrolment forced, sessions of that user (only) swept | `test_superadmin_resets_an_authenticator` |
+| No session while `totp_enabled` is off | `test_no_session_is_accepted_while_the_authenticator_awaits_enrolment` |
+
+**Not a guard, so not kept.** A select-then-refuse check for an already linked identity could
+never turn a test red: the unique constraint refuses the same link, caught as `IntegrityError`.
+The constraint is the guard; the mutation breaks the `except` around the audit flush and commit.
+
+**Not a mutation.** `link-without-session` first stayed green: without the `except`, the
+`HTTPException` still answers 401. The test now asserts the error page, not only the status.
+
 ## Repository and release
 
 | Guard | Test |

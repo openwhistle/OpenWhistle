@@ -1153,6 +1153,50 @@ async def reactivate_user(
     return RedirectResponse("/admin/users", status_code=302)
 
 
+@router.post("/users/{user_id}/reset-totp")
+async def reset_user_totp(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis),
+    current_user: AdminUser = Depends(require_superadmin),
+    _csrf: None = Depends(validate_csrf),
+) -> RedirectResponse:
+    """A lost authenticator: the user enrols a new one at their next login.
+
+    Not for one's own account: the reset ends the caller's session and leaves
+    the account behind the password alone until re-enrolment. A superadmin
+    who lost their own authenticator uses the CLI on the host, or another
+    superadmin. The demo accounts are never reset, so the public demo keeps
+    its static code.
+    """
+    from app.services import auth as auth_service
+    from app.services.demo_seed import DEMO_USERNAMES
+    from app.services.users import get_user_by_id, require_new_authenticator
+
+    target = await get_user_by_id(db, user_id)
+    if not target:
+        raise HTTPException(status_code=404)
+    _require_same_org(current_user, target.org_id)
+    if target.id == current_user.id:
+        raise HTTPException(
+            status_code=400, detail="You cannot reset your own authenticator here."
+        )
+    if settings.demo_mode and target.username in DEMO_USERNAMES:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The demo accounts keep their authenticator.",
+        )
+
+    require_new_authenticator(target)
+    await audit_service.log(
+        db, current_user, AuditAction.ADMIN_TOTP_RESET,
+        detail={"username": target.username}, target_org=target.org_id,
+    )
+    await db.commit()
+    await auth_service.revoke_user_sessions(redis, str(target.id))
+    return RedirectResponse("/admin/users", status_code=302)
+
+
 # ── Audit log ──────────────────────────────────────────────────────
 
 

@@ -1,0 +1,177 @@
+{
+ "test_groups": {
+  "A": [
+   "tests/test_v210_auth_recovery.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "link-purpose-unchecked",
+   "file": "app/services/oidc.py",
+   "old": "    if stored.get(\"purpose\", PURPOSE_LOGIN) != purpose:\n        return None\n",
+   "new": "",
+   "tests": "A"
+  },
+  {
+   "id": "link-binding-unchecked",
+   "file": "app/services/oidc.py",
+   "old": "    if not secrets.compare_digest(stored.get(\"binding\", \"\"), binding):\n        return None\n",
+   "new": "",
+   "tests": "A"
+  },
+  {
+   "id": "link-state-no-binding",
+   "file": "app/api/auth.py",
+   "old": "redis, purpose=oidc_service.PURPOSE_LINK, binding=binding\n",
+   "new": "redis, purpose=oidc_service.PURPOSE_LINK, binding=\"\"\n",
+   "tests": "A"
+  },
+  {
+   "id": "link-mode-not-dispatched",
+   "file": "app/api/auth.py",
+   "old": "    if state and state.startswith(oidc_service.LINK_STATE_PREFIX):\n",
+   "new": "    if False:\n",
+   "tests": "A"
+  },
+  {
+   "id": "link-without-session",
+   "file": "app/api/auth.py",
+   "old": "    session_token = request.cookies.get(\"ow_session\")\n    try:\n        user = await get_current_admin(request, db, redis, session_token)\n    except HTTPException:",
+   "new": "    session_token = request.cookies.get(\"ow_session\")\n    try:\n        user = await get_current_admin(request, db, redis, session_token)\n    except ZeroDivisionError:",
+   "tests": "A"
+  },
+  {
+   "id": "link-taken-not-refused",
+   "file": "app/api/auth.py",
+   "old": "    except IntegrityError:\n        await db.rollback()\n        return _sso_result(\"taken\")\n",
+   "new": "    except ZeroDivisionError:\n        await db.rollback()\n        return _sso_result(\"taken\")\n",
+   "tests": "A"
+  },
+  {
+   "id": "link-no-csrf",
+   "file": "app/api/auth.py",
+   "old": "    session_token: str = Cookie(alias=\"ow_session\"),\n    _csrf: None = Depends(validate_csrf),\n",
+   "new": "    session_token: str = Cookie(alias=\"ow_session\"),\n",
+   "tests": "A"
+  },
+  {
+   "id": "link-offered-without-oidc",
+   "file": "app/api/auth.py",
+   "old": "    if not settings.oidc_enabled:\n        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)\n\n    binding =",
+   "new": "    binding =",
+   "tests": "A"
+  },
+  {
+   "id": "unlink-no-csrf",
+   "file": "app/api/auth.py",
+   "old": "    current_user: AdminUser = Depends(get_current_admin),\n    _csrf: None = Depends(validate_csrf),\n) -> RedirectResponse:\n    if not settings.oidc_enabled:\n        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)\n    if not current_user.oidc_sub:",
+   "new": "    current_user: AdminUser = Depends(get_current_admin),\n) -> RedirectResponse:\n    if not settings.oidc_enabled:\n        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)\n    if not current_user.oidc_sub:",
+   "tests": "A"
+  },
+  {
+   "id": "unlink-removes-only-way-in",
+   "file": "app/api/auth.py",
+   "old": "    if not current_user.password_hash and not current_user.ldap_username:\n",
+   "new": "    if False:\n",
+   "tests": "A"
+  },
+  {
+   "id": "reset-not-superadmin-only",
+   "file": "app/api/admin.py",
+   "old": "    redis: Redis = Depends(get_redis),\n    current_user: AdminUser = Depends(require_superadmin),\n    _csrf: None = Depends(validate_csrf),\n) -> RedirectResponse:\n    \"\"\"A lost authenticator",
+   "new": "    redis: Redis = Depends(get_redis),\n    current_user: AdminUser = Depends(get_current_admin),\n    _csrf: None = Depends(validate_csrf),\n) -> RedirectResponse:\n    \"\"\"A lost authenticator",
+   "tests": "A"
+  },
+  {
+   "id": "reset-no-csrf",
+   "file": "app/api/admin.py",
+   "old": "    current_user: AdminUser = Depends(require_superadmin),\n    _csrf: None = Depends(validate_csrf),\n) -> RedirectResponse:\n    \"\"\"A lost authenticator",
+   "new": "    current_user: AdminUser = Depends(require_superadmin),\n) -> RedirectResponse:\n    \"\"\"A lost authenticator",
+   "tests": "A"
+  },
+  {
+   "id": "reset-own-account",
+   "file": "app/api/admin.py",
+   "old": "    if target.id == current_user.id:\n        raise HTTPException(\n            status_code=400, detail=\"You cannot reset your own authenticator here.\"",
+   "new": "    if False:\n        raise HTTPException(\n            status_code=400, detail=\"You cannot reset your own authenticator here.\"",
+   "tests": "A"
+  },
+  {
+   "id": "reset-demo-account",
+   "file": "app/api/admin.py",
+   "old": "    if settings.demo_mode and target.username in DEMO_USERNAMES:\n",
+   "new": "    if False:\n",
+   "tests": "A"
+  },
+  {
+   "id": "reset-keeps-enrolment",
+   "file": "app/services/users.py",
+   "old": "    user.totp_enabled = False\n    return user.totp_secret\n",
+   "new": "    return user.totp_secret\n",
+   "tests": "A"
+  },
+  {
+   "id": "reset-keeps-secret",
+   "file": "app/services/users.py",
+   "old": "    user.totp_secret = pyotp.random_base32()\n    user.totp_enabled = False\n",
+   "new": "    user.totp_enabled = False\n",
+   "tests": "A"
+  },
+  {
+   "id": "reset-keeps-sessions",
+   "file": "app/api/admin.py",
+   "old": "    await db.commit()\n    await auth_service.revoke_user_sessions(redis, str(target.id))\n",
+   "new": "    await db.commit()\n",
+   "tests": "A"
+  },
+  {
+   "id": "revoke-hits-everyone",
+   "file": "app/services/auth.py",
+   "old": "            if value == user_id:\n",
+   "new": "            if True:\n",
+   "tests": "A"
+  },
+  {
+   "id": "revoke-skips-pending-logins",
+   "file": "app/services/auth.py",
+   "old": "    for prefix in (_SESSION_PREFIX, _TOTP_PENDING_PREFIX, _TOTP_SETUP_PREFIX):\n",
+   "new": "    for prefix in (_SESSION_PREFIX,):\n",
+   "tests": "A"
+  },
+  {
+   "id": "session-while-unenrolled",
+   "file": "app/api/deps.py",
+   "old": "    if not user.is_active or not user.totp_enabled:\n",
+   "new": "    if not user.is_active:\n",
+   "tests": "A"
+  },
+  {
+   "id": "cli-keeps-sessions",
+   "file": "scripts/reset_admin_password.py",
+   "old": "        await revoke_user_sessions(redis, user_id)\n",
+   "new": "        pass\n",
+   "tests": "A"
+  },
+  {
+   "id": "cli-secret-not-enrolled",
+   "file": "scripts/reset_admin_password.py",
+   "old": "        user.totp_enabled = True\n",
+   "new": "",
+   "tests": "A"
+  },
+  {
+   "id": "cli-unaudited",
+   "file": "scripts/reset_admin_password.py",
+   "old": "        await audit.log_system(\n",
+   "new": "        None and await audit.log_system(\n",
+   "tests": "A"
+  },
+  {
+   "id": "sso-result-unfiltered",
+   "file": "app/templating.py",
+   "old": "    return value if value in SSO_RESULTS else None\n",
+   "new": "    return value\n",
+   "tests": "A"
+  }
+ ]
+}

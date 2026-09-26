@@ -94,7 +94,11 @@ zero vendor lock-in, and privacy-first by design.
   CSRF token, not just a valid cookie.
 - **OIDC / SSO support** — Optional single sign-on via any OpenID Connect provider (Keycloak,
   Authentik, Azure AD, Google, …), with PKCE and a verified ID token (signature, issuer,
-  audience, expiry, nonce). LDAP supports LDAPS and StartTLS (`LDAP_START_TLS`).
+  audience, expiry, nonce). Each admin links their own account while signed in; TOTP is still
+  required. LDAP supports LDAPS and StartTLS (`LDAP_START_TLS`).
+- **Authenticator recovery** — a superadmin resets a lost authenticator on `/admin/users` (the
+  user enrols a new one at the next login), or the operator runs
+  `scripts/reset_admin_password.py --reset-totp <username>`. Both end the account's sessions.
 - **File attachments** — Whistleblowers can attach evidence files (PDF, images, `.docx`, `.xlsx`,
   CSV, TXT — up to 10 MB each, 5 per report; legacy `.doc`/`.xls` are refused, since their author
   cannot be removed). Identifying metadata (photo GPS/EXIF, PDF and Office
