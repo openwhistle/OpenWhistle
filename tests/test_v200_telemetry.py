@@ -623,10 +623,16 @@ async def test_the_wizard_asks_with_the_box_unchecked(client: AsyncClient) -> No
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(("answer", "stored"), [(None, False), ("1", True)])
+@pytest.mark.parametrize(("answer", "stored", "row_first"), [
+    (None, False, False), ("1", True, False),
+    ("1", True, True),  # the hourly job already created the row, switched off
+])
 async def test_the_wizard_stores_the_answer(
-    throwaway_db: AsyncSession, client: AsyncClient, answer: str | None, stored: bool
+    throwaway_db: AsyncSession, client: AsyncClient, answer: str | None, stored: bool,
+    row_first: bool,
 ) -> None:
+    if row_first:
+        await _set_row(throwaway_db, enabled=False)
     get_resp = await client.get("/setup", follow_redirects=False)
     assert get_resp.status_code == 200
     secret = generate_totp_secret()
@@ -671,3 +677,30 @@ async def test_migration_007_round_trip(throwaway_db: AsyncSession) -> None:
 
     _alembic("upgrade", "head")
     assert (await throwaway_db.scalar(exists)) is True
+
+
+@pytest.mark.asyncio
+async def test_startup_registers_the_job_even_while_the_switch_is_off(
+    monkeypatch: pytest.MonkeyPatch, consent_from_db: None
+) -> None:
+    from unittest.mock import AsyncMock, patch
+
+    from fastapi import FastAPI
+
+    from app.main import lifespan
+
+    for name in ("reminder_enabled", "retention_enabled", "update_check_enabled"):
+        monkeypatch.setattr(settings, name, False)
+    scheduler = MagicMock()
+    with (
+        patch("app.main._run_alembic_upgrade"),
+        patch("app.main.close_redis", new_callable=AsyncMock),
+        patch("apscheduler.schedulers.asyncio.AsyncIOScheduler", return_value=scheduler),
+        patch("app.services.notifications.batching_enabled", return_value=False),
+    ):
+        async with lifespan(FastAPI()):
+            pass
+
+    ids = [c.kwargs.get("id") for c in scheduler.add_job.call_args_list]
+    assert ids == ["telemetry"]
+    scheduler.start.assert_called_once()

@@ -45,6 +45,8 @@ MAX_SPREAD_SECONDS = 3600
 
 # Taken per attempt and never released: across all replicas at most one
 # attempt per ~hour, and a failure is retried at the next tick, not in a loop.
+# The TTL outlasts the send, so a replica that saw "due" before another's
+# success cannot take the lock until that success is committed.
 LOCK_KEY = "openwhistle:job_lock:telemetry"
 _LOCK_TTL_SECONDS = 55 * 60
 
@@ -134,10 +136,6 @@ async def report_if_due(db: AsyncSession, redis: Redis) -> bool:
         log.debug("Installation count skipped, no lock: %s", type(exc).__name__)
         return False
 
-    # Read again under the lock: another replica may have just reported.
-    await db.refresh(state)
-    if not is_enabled(state) or not _due(state, datetime.now(UTC)):
-        return False
     if not await send_report(state.installation_id):
         # Not recorded: a host offline for a week reports on the day it is back.
         return False
