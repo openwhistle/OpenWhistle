@@ -97,6 +97,41 @@ def test_nginx_redirects_http_and_strips_ip_headers_on_https() -> None:
     assert "include /etc/nginx/snippets/proxy-headers.conf;" in onion
 
 
+def _servers(conf: str) -> list[str]:
+    return re.findall(r"\n    server \{.*?\n    \}", conf, re.S)
+
+
+def test_the_behind_proxy_nginx_differs_from_nginx_conf_only_in_its_listeners() -> None:
+    """The plain-HTTP config for an external TLS terminator is a second file;
+    everything but its port-80 block must stay identical to nginx.conf."""
+    conf = (ROOT / "nginx/nginx.conf").read_text()
+    behind = (ROOT / "nginx/nginx.behind-proxy.conf").read_text()
+
+    def preamble(text: str) -> str:
+        text = text[text.index("worker_processes"):]
+        return text[: text.index("\n    }\n", text.index("upstream openwhistle"))]
+
+    assert preamble(behind) == preamble(conf)
+    tls = next(s for s in _servers(conf) if "listen 443 ssl" in s)
+    onion = next(s for s in _servers(conf) if "listen 8080;" in s)
+    assert onion in _servers(behind)
+    assert "listen 443" not in behind
+    plain = next(s for s in _servers(behind) if "listen 80;" in s)
+    assert "return 301" not in plain
+    location = re.search(r"\n        location / \{.*?\n        \}", tls, re.S)
+    assert location and location.group(0) in plain
+    for snippet in ("proxy-headers.conf", "static-location.conf"):
+        assert f"include /etc/nginx/snippets/{snippet};" in plain
+
+
+def test_the_behind_proxy_override_swaps_the_config_and_drops_443() -> None:
+    override = (ROOT / "docker-compose.behind-proxy.yml").read_text()
+    assert "./nginx/nginx.behind-proxy.conf:/etc/nginx/nginx.conf:ro" in override
+    # !override replaces the port list; a plain list would be merged with 443.
+    assert "ports: !override" in override
+    assert '"443:443"' not in override
+
+
 def test_nginx_tls_listener_offers_only_tls_1_2_and_1_3() -> None:
     conf = (ROOT / "nginx/nginx.conf").read_text()
     tls = next(

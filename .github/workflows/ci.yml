@@ -313,6 +313,24 @@ jobs:
           [ "$(grep -ci '^x.ow.onion:' <<< "$out")" = 1 ]
           if grep -qiE '^(x-forwarded-for|x-real-ip):' <<< "$out"; then exit 1; fi
 
+      - name: Behind-proxy config (plain 80) proxies and strips client trust headers
+        # nginx/nginx.behind-proxy.conf, mounted by docker-compose.behind-proxy.yml.
+        run: |
+          docker run -d --name ow-onion-test-nginx-behind --network ow-onion-test \
+            -p 18081:80 \
+            -v "$PWD/nginx/nginx.behind-proxy.conf:/etc/nginx/nginx.conf:ro" \
+            -v "$PWD/nginx/snippets:/etc/nginx/snippets:ro" \
+            nginx@sha256:1ed1b0e1d7652937d6cbdaf4018c7b6fc009a7dd6c3047351e2eddda745de43f
+          for i in $(seq 1 15); do
+            curl -sf http://localhost:18081/ -o /dev/null && break
+            sleep 1
+          done
+          out=$(curl -sf http://localhost:18081/ \
+            -H "X-OW-Onion: 1" -H "X-Forwarded-For: 1.2.3.4" -H "X-Real-IP: 1.2.3.4")
+          echo "$out"
+          grep -qi '^host:' <<< "$out"
+          if grep -qiE '^(x.ow.onion|x-forwarded-for|x-real-ip):' <<< "$out"; then exit 1; fi
+
       - name: Render the Ansible role's nginx files and compose with its own defaults and modes
         # jinja2 (direct dependency) and pyyaml (via uvicorn[standard]) are
         # both already resolved in uv.lock, so `uv run --frozen` gives an
@@ -431,5 +449,6 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
-          docker rm -f ow-onion-test-app ow-onion-test-nginx ow-onion-test-nginx-ansible || true
+          docker rm -f ow-onion-test-app ow-onion-test-nginx ow-onion-test-nginx-behind \
+            ow-onion-test-nginx-ansible || true
           docker network rm ow-onion-test || true

@@ -1,0 +1,15 @@
+# For an install whose TLS is terminated in front of this stack (Cloudflare,
+# Traefik, a host nginx): nginx proxies plain HTTP on port 80 instead of
+# redirecting it to 443, and publishes no 443. Point the terminator at :80.
+#
+#   docker compose -f docker-compose.prod.yml -f docker-compose.behind-proxy.yml up -d
+#
+# See "Behind a TLS-terminating proxy" in docs/docs.html.
+services:
+  nginx:
+    ports: !override
+      - "80:80"
+      # Onion service entry point, as in docker-compose.prod.yml.
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./nginx/nginx.behind-proxy.conf:/etc/nginx/nginx.conf:ro,z
