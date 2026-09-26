@@ -2,16 +2,11 @@
 
 from __future__ import annotations
 
-import http.server
-import threading
-from collections.abc import Generator
-from functools import partial
-from pathlib import Path
-
 import pytest
 from playwright.sync_api import Browser
 
 from tests.e2e.conftest import (
+    _DOCS_DIR,
     DEMO_ADMIN_PASSWORD,
     DEMO_ADMIN_TOTP_SECRET,
     DEMO_ADMIN_USERNAME,
@@ -20,10 +15,6 @@ from tests.e2e.conftest import (
 
 pytestmark = pytest.mark.e2e
 
-# The static marketing/docs site (docs/) ships no server of its own — it is
-# published as GitHub Pages. Serve it locally so the 390px overflow check
-# below runs standalone, without the FastAPI app or the review stack.
-_DOCS_DIR = Path(__file__).resolve().parent.parent.parent / "docs"
 _DOCS_PAGES = sorted(str(p.relative_to(_DOCS_DIR)) for p in _DOCS_DIR.rglob("*.html"))
 
 # Every page of the published site, found by glob so a new page is covered
@@ -36,17 +27,8 @@ def test_docs_page_glob_finds_every_page() -> None:
     assert len(_DOCS_PAGES) >= _DOCS_PAGE_FLOOR, _DOCS_PAGES
 
 
-@pytest.fixture(scope="module")
-def docs_server_url() -> Generator[str]:
-    handler = partial(http.server.SimpleHTTPRequestHandler, directory=str(_DOCS_DIR))
-    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-    try:
-        yield f"http://127.0.0.1:{server.server_port}"
-    finally:
-        server.shutdown()
-        thread.join()
+# `docs_server_url` (module-scoped: serves docs/ over HTTP) lives in
+# tests/e2e/conftest.py, shared with test_docs_behaviour.py.
 
 
 # 390 px is a phone; 1024 px is the narrowest desktop width, where the full

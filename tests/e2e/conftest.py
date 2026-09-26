@@ -7,13 +7,38 @@ Override with: pytest --base-url=http://your-host:port
 """
 from __future__ import annotations
 
+import http.server
 import os
+import threading
 import urllib.error
 import urllib.request
 from collections.abc import Generator
+from functools import partial
+from pathlib import Path
 
 import pytest
 from playwright.sync_api import Browser, BrowserContext, Page
+
+# The static marketing/docs site (docs/) ships no server of its own — it is
+# published as GitHub Pages. Serve it locally so browser tests against it
+# (layout, theme/nav/scroll-spy behaviour) run standalone, without the
+# FastAPI app or the review stack. Shared by every test module that needs
+# it, so each one does not spin up its own copy of the same fixture.
+_DOCS_DIR = Path(__file__).resolve().parent.parent.parent / "docs"
+
+
+@pytest.fixture(scope="module")
+def docs_server_url() -> Generator[str]:
+    handler = partial(http.server.SimpleHTTPRequestHandler, directory=str(_DOCS_DIR))
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield f"http://127.0.0.1:{server.server_port}"
+    finally:
+        server.shutdown()
+        thread.join()
+
 
 # Demo credentials — published intentionally for the demo instance
 DEMO_BASE_URL = "http://localhost:4009"
