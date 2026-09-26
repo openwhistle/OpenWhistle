@@ -1088,6 +1088,7 @@ _ANCESTOR_OVERRIDES: dict[str, dict[str, str]] = {
     "docs/de/index.html": {
         ".hero-subline em": ".hero-subline",
         ".hero-headline .accent-emphasis": ".hero-headline",
+        ".t-comment": ".terminal-body",
     },
     "docs/docs.html": {
         ".t-comment": ".code-block pre code",  # ancestor sets font-family: var(--font-mono)

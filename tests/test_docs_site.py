@@ -78,3 +78,29 @@ def test_roadmap_uses_only_self_hosted_fonts() -> None:
 def test_roadmap_points_to_changelog_for_everything_released() -> None:
     html = (ROOT / "docs/roadmap.html").read_text()
     assert "CHANGELOG.md" in html
+
+
+def _root_tokens_block(html: str) -> str:
+    """The first top-level `:root { ... }` block (the light-mode design
+    tokens), whitespace-normalised so formatting differences don't matter."""
+    m = re.search(r":root\s*\{([^}]*)\}", html, re.DOTALL)
+    assert m, ":root token block not found"
+    return re.sub(r"\s+", " ", m.group(1)).strip()
+
+
+def test_de_landing_page_shares_design_tokens_with_english() -> None:
+    """Regression guard (Task X11): docs/index.html was rebuilt onto the
+    "Signal" design (Sora + JetBrains Mono, ink/green tokens) while
+    docs/de/index.html kept an older serif/navy design, so the two pages
+    drifted apart. Pin the :root tokens and font-family variables identical
+    so a future edit to one page can't silently un-sync the other."""
+    en = (ROOT / "docs/index.html").read_text()
+    de = (ROOT / "docs/de/index.html").read_text()
+    assert _root_tokens_block(en) == _root_tokens_block(de)
+    for var in ("--font-display", "--font-body", "--font-mono"):
+        pattern = re.escape(var) + r":\s*([^;]+);"
+        en_m, de_m = re.search(pattern, en), re.search(pattern, de)
+        assert en_m and de_m, var
+        assert en_m.group(1).strip() == de_m.group(1).strip(), (
+            var, en_m.group(1), de_m.group(1)
+        )
