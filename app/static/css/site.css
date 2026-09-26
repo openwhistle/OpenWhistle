@@ -1533,10 +1533,23 @@ tr:hover td {
   -moz-user-select: none;
   user-select: none;
 }
+/* A page that fills the space between the nav and the footer (the wizard,
+   the login and MFA screens) is marked .page-fill. Each used to take
+   a min-height of the viewport minus a guess at nav plus footer: 144 px for the
+   wizard, 112 px for the login screens, against a real 151 px, plus the
+   36 px demo banner. Every one of those pages scrolled, with the footer
+   below the fold. main already flexes to the leftover height; a .page-fill
+   child follows it, whatever the chrome above and below measures. */
+main:has(> .page-fill) {
+  display: flex;
+  flex-direction: column;
+}
+.page-fill {
+  flex: 1 1 auto;
+}
 .split-layout {
   display: grid;
   grid-template-columns: 300px 1fr;
-  min-height: calc(100vh - 144px);
 }
 .split-sidebar {
   background: #111;

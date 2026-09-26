@@ -178,3 +178,22 @@ def test_status_is_visible_in_the_phone_table(browser: Browser, base_url: str) -
     badge = page.locator(".table-stack .stack-status .badge").first.bounding_box()
     assert badge and badge["x"] + badge["width"] <= 390
     ctx.close()
+
+
+@pytest.mark.parametrize("path", ["/", "/status", "/admin/login"])
+def test_a_page_that_fits_does_not_scroll_with_the_demo_banner(
+    browser: Browser, base_url: str, path: str
+) -> None:
+    """The e2e stack runs in demo mode, so the banner is on every page. On a
+    screen tall enough for the content, the footer ends flush with the window:
+    no scrollbar, nothing below the fold."""
+    ctx = browser.new_context(viewport={"width": 1920, "height": 1400}, base_url=base_url)
+    page = ctx.new_page()
+    page.goto(path)
+    assert page.locator(".demo-banner").is_visible()
+    heights = page.evaluate(
+        "[document.documentElement.scrollHeight, innerHeight,"
+        " Math.round(document.querySelector('footer').getBoundingClientRect().bottom)]"
+    )
+    ctx.close()
+    assert heights[0] == heights[1] == heights[2], heights

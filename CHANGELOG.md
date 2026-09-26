@@ -7,6 +7,13 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Pages that fit the window scrolled anyway, with the footer below the fold.** The submission
+  wizard and the login and MFA screens sized themselves as the viewport minus a guessed nav and
+  footer height (144 or 112 px, against a real 151 px, plus the 36 px demo banner). They now
+  fill the space between nav and footer by flexbox, whatever those measure.
+
 ## [2.0.0] — 2026-09-26
 
 A major version: the webhook payload, the Compose TLS/port
