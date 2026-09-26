@@ -1763,6 +1763,15 @@
           admin users. The <code>superadmin</code> role manages organisations at
           <code>/admin/organisations</code>.
         </p>
+        <p>Each organisation has its own reporting link, <code>/submit/&lt;slug&gt;</code> — the one to give its employees:</p>
+        <ul>
+          <li>The wizard there offers only that organisation's categories and locations, and files the report under it.</li>
+          <li>The link, with a copy button, is on <code>/admin/organisations</code> (superadmin) and on an organisation admin's dashboard.</li>
+          <li><code>/submit</code> is the default organisation's (<code>DEFAULT_ORG_SLUG</code>).</li>
+          <li>An unknown or deactivated slug is a 404. There is no list of the instance's organisations, but a slug is part of a public link: anyone can test whether a guessed one exists.</li>
+          <li>A draft stays with the organisation it was started for; opening another organisation's link starts a new one.</li>
+          <li>With multi-tenancy off there is one wizard, at <code>/submit</code>: <code>/submit/&lt;default slug&gt;</code> redirects there, any other slug is a 404.</li>
+        </ul>
         <div class="table-scroll">
 <table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
@@ -2245,6 +2254,11 @@ CLAMAV_HOST=clamav</code></pre>
           The whistleblower submission form is accessible at the root URL of your OpenWhistle
           installation (e.g. <code>https://your-domain.example.com/</code>). No account,
           email address, or personal information is required.
+        </p>
+        <p>
+          If several organisations share one installation, use the link your organisation gave you
+          (<code>/submit/&lt;organisation&gt;</code>): a report sent through another link goes to
+          another organisation.
         </p>
 
         <h3>Submitting a report</h3>
