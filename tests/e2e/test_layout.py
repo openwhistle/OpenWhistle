@@ -197,3 +197,31 @@ def test_a_page_that_fits_does_not_scroll_with_the_demo_banner(
     )
     ctx.close()
     assert heights[0] == heights[1] == heights[2], heights
+
+
+def test_the_wizard_sidebar_does_not_set_the_page_height(browser: Browser, base_url: str) -> None:
+    """The sidebar's text is longer than the form (German: 1,023 px in a 300 px
+    column). In two columns it takes the height of the row and scrolls inside
+    itself, so the page is as tall as the form, not as tall as the sidebar."""
+    ctx = browser.new_context(viewport={"width": 1920, "height": 700}, base_url=base_url)
+    page = ctx.new_page()
+    page.goto("/submit")
+    sidebar, form = page.evaluate(
+        "[document.querySelector('.split-sidebar'), document.querySelector('.split-main')]"
+        ".map(e => [Math.round(e.getBoundingClientRect().height), e.scrollHeight])"
+    )
+    ctx.close()
+    assert sidebar[0] == form[0], (sidebar, form)
+    assert sidebar[1] > sidebar[0], "sidebar fits at 700 px: the overflow is not exercised"
+
+
+def test_the_demo_credentials_sit_beside_the_login_form(browser: Browser, base_url: str) -> None:
+    ctx = browser.new_context(viewport={"width": 1440, "height": 900}, base_url=base_url)
+    page = ctx.new_page()
+    page.goto("/admin/login")
+    box = page.locator(".demo-credentials").bounding_box()
+    form = page.locator("form[action='/admin/login']").bounding_box()
+    ctx.close()
+    assert box and form
+    assert box["x"] >= form["x"] + form["width"], (box, form)
+    assert box["y"] < form["y"] + form["height"], (box, form)

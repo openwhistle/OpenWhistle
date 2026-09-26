@@ -5,6 +5,14 @@
 <style nonce="{{ request.state.csp_nonce }}">
     .lg-page-center { display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
     .lg-card-width { width: 100%; max-width: 400px; }
+    /* Demo only: the credentials box sits beside the form, not above it, so
+       both fit a Full HD window at once. */
+    @media (min-width: 1024px) {
+        .lg-with-demo { display: grid; grid-template-columns: 400px 320px; column-gap: 2rem; max-width: none; width: auto; align-items: start; }
+        .lg-with-demo > * { grid-column: 1; }
+        .lg-with-demo > .lg-header { grid-column: 1 / -1; }
+        .lg-with-demo > .demo-credentials { grid-column: 2; grid-row: 2 / span 8; }
+    }
     .lg-header { margin-bottom: 2rem; animation: fadeSlideIn 0.5s ease both; }
     .lg-h1 { font-size: clamp(1.5rem, 4vw, 2.25rem); }
     .lg-subtitle { font-size: 0.88rem; margin-top: 0.5rem; }
@@ -25,7 +33,7 @@
 
 {% block content %}
 <div class="lg-page-center page-fill">
-    <div class="lg-card-width">
+    <div class="lg-card-width{% if is_demo %} lg-with-demo{% endif %}">
 
         <div class="lg-header">
             <h1 class="lg-h1">{{ t('login.title') }}</h1>

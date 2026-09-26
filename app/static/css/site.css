@@ -3494,6 +3494,13 @@ a.attachment-name:hover {
   }
 }
 .mobile-reassure { display: none; }
+/* Two columns: the sidebar must not make the page taller than the form. With
+   contain: size it adds no height of its own, stretches to the row the form
+   and the leftover window height set, and scrolls inside itself when its
+   text is longer (German: 1,023 px in a 300 px column). */
+@media (min-width: 901px) {
+  .split-sidebar { contain: size; overflow-y: auto; }
+}
 @media (max-width: 900px) {
   .split-layout { display: flex; flex-direction: column; }
   .split-main { max-width: none; padding: var(--space-6) var(--space-4); }

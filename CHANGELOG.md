@@ -13,6 +13,11 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   wizard and the login and MFA screens sized themselves as the viewport minus a guessed nav and
   footer height (144 or 112 px, against a real 151 px, plus the 36 px demo banner). They now
   fill the space between nav and footer by flexbox, whatever those measure.
+- **The wizard's sidebar made the page as tall as its own text.** In German it runs to about
+  1,000 px, so the wizard scrolled on a Full HD window with the footer out of sight. In the
+  two-column layout it now takes the form's height and scrolls inside itself.
+- **The demo login did not fit a Full HD window.** From 1024 px on, the demo credentials sit
+  beside the login form instead of above it.
 
 ## [2.0.0] — 2026-09-26
 
