@@ -1131,18 +1131,20 @@
 
         <h3 id="outbound-requests">Every request that leaves the host</h3>
         <p>
-          This is the whole list. Everything except the installation count goes to a
-          destination you configure; nothing is on until you switch it on.
+          This is the whole list, and nothing on it is on until you switch it on. Three
+          destinations are fixed &mdash; <code>api.github.com</code>, <code>telemetry.wdkro.de</code>
+          and ClamAV's mirrors; every other one is a server you name.
         </p>
         <div class="table-scroll">
 <table class="env-table">
           <thead><tr><th>Request</th><th>Switched on by</th><th>Destination</th><th>How often</th><th>Carries</th></tr></thead>
           <tbody>
-            <tr><td>Update check</td><td><code>UPDATE_CHECK_ENABLED=true</code></td><td><code>api.github.com</code></td><td>once a day</td><td>a GET for the latest release; the User-Agent names the version</td></tr>
-            <tr><td>Installation count</td><td>the setup wizard or <strong>Admin &rarr; System</strong>, or <code>TELEMETRY_ENABLED=true</code></td><td><code>telemetry.wdkro.de</code></td><td>once a day</td><td>a random identifier and the version, <a href="#counting-installations">in full below</a></td></tr>
-            <tr><td>Email</td><td><code>NOTIFY_EMAIL_ENABLED=true</code></td><td><code>NOTIFY_SMTP_HOST</code> &mdash; yours</td><td>a digest every <code>NOTIFICATION_BATCH_MINUTES</code>; a reply notice when a case manager answers</td><td>counts and case numbers to your admins; a bare "you have a reply" to a whistleblower's own address</td></tr>
-            <tr><td>Webhook</td><td><code>NOTIFY_WEBHOOK_ENABLED=true</code></td><td><code>NOTIFY_WEBHOOK_URL</code> &mdash; yours</td><td>with the digest</td><td>counts only, never a case number (<a href="#notifications">Notifications</a>)</td></tr>
-            <tr><td>Virus signatures</td><td><code>COMPOSE_PROFILES=clamav</code></td><td>ClamAV's mirrors, from the <code>clamav</code> container, not the app</td><td>freshclam's schedule</td><td>nothing from OpenWhistle</td></tr>
+            <tr><td>Update check</td><td><code>UPDATE_CHECK_ENABLED=true</code></td><td><code>api.github.com</code> &mdash; fixed</td><td>at every start, then daily at 04:00 UTC</td><td>a GET for the latest release; the User-Agent names the version</td></tr>
+            <tr><td>Installation count</td><td>the setup wizard or <strong>Admin &rarr; System</strong>, or <code>TELEMETRY_ENABLED=true</code></td><td><code>telemetry.wdkro.de</code> &mdash; fixed</td><td>once a day</td><td>a random identifier and the version, <a href="#counting-installations">in full below</a></td></tr>
+            <tr><td>Email</td><td><code>NOTIFY_EMAIL_ENABLED=true</code></td><td><code>NOTIFY_SMTP_HOST</code> &mdash; yours</td><td>a digest every <code>NOTIFICATION_BATCH_MINUTES</code>; SLA reminders (<code>REMINDER_ENABLED</code>, checked every 30 min); a security alert at once on suspected password spraying; a reply notice when a case manager answers</td><td>counts and case numbers to your admins; a bare "you have a reply" to a whistleblower's own address</td></tr>
+            <tr><td>Webhook</td><td><code>NOTIFY_WEBHOOK_ENABLED=true</code></td><td><code>NOTIFY_WEBHOOK_URL</code> &mdash; yours</td><td>the digest, SLA reminders and the security alert, as for email</td><td>counts only, never a case number (<a href="#notifications">Notifications</a>)</td></tr>
+            <tr><td>Virus signatures</td><td><code>COMPOSE_PROFILES=clamav</code></td><td>ClamAV's mirrors &mdash; fixed, from the <code>clamav</code> container's freshclam, not the app</td><td>freshclam's schedule</td><td>nothing from OpenWhistle</td></tr>
+            <tr><td>Tor network</td><td><code>ONION_LOCATION</code> and the Tor daemon you run (<a href="#onion-address">Offering an onion address</a>)</td><td>Tor relays, from that daemon, not the app</td><td>continuously while it runs</td><td>the hidden service's own circuits; nothing from OpenWhistle</td></tr>
             <tr><td>Attachment storage</td><td><code>STORAGE_BACKEND=s3</code></td><td><code>S3_ENDPOINT_URL</code> &mdash; yours</td><td>on upload and download</td><td>encrypted attachments under random keys</td></tr>
             <tr><td>Sign-in</td><td><code>OIDC_ENABLED</code> / <code>LDAP_ENABLED</code></td><td><code>OIDC_SERVER_METADATA_URL</code> / <code>LDAP_SERVER</code> &mdash; yours</td><td>at an admin sign-in</td><td>the admin's credentials, to your identity provider</td></tr>
           </tbody>
@@ -1151,6 +1153,12 @@
         <p>
           None carries a whistleblower's words or files in readable form: attachments reach S3
           encrypted, and notifications never include report content.
+        </p>
+        <p>
+          <strong>Through a proxy:</strong> the update check, the installation count, webhooks,
+          OIDC and S3 honour <code>HTTPS_PROXY</code>, <code>ALL_PROXY</code> and
+          <code>NO_PROXY</code> in the app container's environment (and <code>SSL_CERT_FILE</code>
+          for a proxy's CA). SMTP and LDAP connect directly.
         </p>
 
         <h3 id="counting-installations">Counting installations</h3>
@@ -1162,17 +1170,25 @@
           to know which.
         </p>
         <p>What is sent, in full, once a day and nothing else:</p>
-        <pre><code>GET https://telemetry.wdkro.de/v1/openwhistle/count?id=&lt;32 hex characters&gt;&amp;v=&lt;version&gt;
+        <pre><code>GET /v1/openwhistle/count?id=&lt;32 hex characters&gt;&amp;v=&lt;version&gt; HTTP/1.1
+Host: telemetry.wdkro.de
+Accept: */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
 User-Agent: openwhistle/&lt;version&gt;</code></pre>
+        <p>
+          Over HTTPS; no cookie, no body. The last four headers are what the HTTP library sends
+          with every request (<code>Accept-Encoding</code> grows if a brotli or zstd package is ever installed).
+        </p>
         <div class="table-scroll">
 <table class="env-table">
           <tbody>
             <tr><td><strong>Not</strong> sent</td><td>the hostname, any address, <code>APP_PUBLIC_URL</code>, any count of reports, users or organisations, any setting</td></tr>
-            <tr><td>The identifier</td><td>16 random bytes made on your server and kept in the database. <strong>Admin &rarr; System</strong> shows it and <em>Reset identifier</em> replaces it: the next report is then a new installation as far as anyone can tell</td></tr>
+            <tr><td>The identifier</td><td>16 random bytes made on your server when you first agree, and kept in the database. <strong>Admin &rarr; System</strong> shows it and <em>Reset identifier</em> replaces it: the next report is then a new installation as far as anyone can tell</td></tr>
             <tr><td>Why random</td><td>a value derived from the hostname or a machine id could be recomputed by anyone who knows the host, which turns a count into a lookup</td></tr>
             <tr><td>At the far end</td><td>one line: timestamp, identifier, version. <strong>Your address is not recorded.</strong> Lines are kept 35 days, then only the rolled-up number</td></tr>
             <tr><td>When</td><td>checked every hour, sent when 24 hours passed since the last success; the first attempt waits a random part of an hour after start. With several replicas only one sends (Redis lock)</td></tr>
-            <tr><td>A failure</td><td>10-second timeout, redirects refused, one debug log line; retried at the next hourly check, never in a loop, never shown on a page</td></tr>
+            <tr><td>A failure</td><td>10 seconds for the whole request, redirects refused, one debug log line; retried at the next hourly check, never in a loop, never shown on a page</td></tr>
             <tr><td>Never counted</td><td><code>DEMO_MODE</code> (the public demo) and <code>LOCAL_REVIEW_LOGIN</code> instances</td></tr>
           </tbody>
         </table>
