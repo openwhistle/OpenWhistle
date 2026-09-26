@@ -1,6 +1,6 @@
 import re
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # A v3 onion address is 56 base32 characters (RFC 4648, lowercase a-z2-7).
@@ -92,6 +92,13 @@ class Settings(BaseSettings):
 
     # Demo mode
     demo_mode: bool = False
+
+    # Local review only: /admin/login shows a one-click button that signs in as
+    # the seeded demo admin with no password or MFA check, so an agent (e.g. the
+    # Claude-in-Chrome extension) can review every admin page without a human
+    # typing credentials. Requires demo_mode=true (enforced below) — never set
+    # this against a real database. See docs-tech/local-review.md.
+    local_review_login: bool = False
 
     # Cookie security — set to false when the app is served over plain HTTP
     # (e.g. local network without TLS). Always keep true behind HTTPS.
@@ -233,6 +240,16 @@ class Settings(BaseSettings):
     clamav_host: str = ""
     clamav_port: int = 3310
     clamav_timeout_seconds: int = Field(default=30, ge=1)
+
+    @model_validator(mode="after")
+    def _validate_local_review_login(self) -> Settings:
+        if self.local_review_login and not self.demo_mode:
+            raise ValueError(
+                "LOCAL_REVIEW_LOGIN requires DEMO_MODE=true: it signs in as the seeded "
+                "demo admin with no password or MFA check, so it must never be reachable "
+                "against a real database. Refusing to start."
+            )
+        return self
 
 
 settings = Settings()  # type: ignore[call-arg]

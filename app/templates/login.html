@@ -32,6 +32,17 @@
             <p class="lg-subtitle">{{ t('login.subtitle') }}</p>
         </div>
 
+        {% if local_review_login %}
+        <div class="panel anim-in delay-08">
+            <form method="post" action="/admin/local-review-login">
+                <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                <button type="submit" id="local-review-login-btn" class="btn btn-secondary btn-block">
+                    {{ t('login.local_review.button') }}
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
         {% if is_demo %}
         <div class="demo-credentials" role="note">
             <div class="demo-credentials-header">

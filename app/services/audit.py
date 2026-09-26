@@ -38,6 +38,7 @@ class AuditAction:
     ADMIN_DEACTIVATED       = "admin.deactivated"
     ADMIN_REACTIVATED       = "admin.reactivated"
     AUTH_LOGIN              = "auth.login"
+    AUTH_LOCAL_REVIEW_LOGIN = "auth.local_review_login"
     AUTH_TOTP_SETUP         = "auth.totp_setup"
     AUTH_SPRAYING_SUSPECTED = "auth.password_spraying_suspected"
     ORG_CREATED             = "org.created"

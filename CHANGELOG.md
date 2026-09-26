@@ -58,6 +58,11 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Local review login** (`LOCAL_REVIEW_LOGIN`, optional, requires `DEMO_MODE=true`; never set
+  outside the local review / e2e stack). Puts a one-click "Enter the local review" button on
+  `/admin/login` so an agent (e.g. the Claude-in-Chrome extension) can sign in as the seeded
+  demo admin, with a full session, and visually check every admin page before a release without
+  a human typing credentials. See `docs-tech/local-review.md`.
 - **Tor onion address** (`ONION_LOCATION`, optional). Sends an `Onion-Location` header, so Tor
   Browser offers the switch, and shows the address on the submit page for reporters on a
   monitored network. nginx sets `X-OW-Onion` only on the onion listener and strips any

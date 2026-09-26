@@ -90,6 +90,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         await seed_demo_data()
         logger.info("Demo data seeded.")
 
+    if settings.local_review_login:
+        logger.warning(
+            "LOCAL_REVIEW_LOGIN is enabled: /admin/login shows a one-click button that "
+            "signs in as the seeded demo admin with no password or MFA check. This must "
+            "never run against a real database — see docs-tech/local-review.md."
+        )
+
     rekey_task = None
     if settings.storage_backend == "s3":
         import asyncio  # noqa: PLC0415
