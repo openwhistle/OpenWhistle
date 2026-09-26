@@ -168,18 +168,19 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   pill groups (status/my-cases and location) can each have an active pill at once — "page"
   implies a single current page. Filter pills now use `aria-current="true"`; pagination and
   navigation keep `"page"`.
-- **The browser's own Back button broke the submission wizard halfway through** (a "Confirm
-  Form Resubmission" dialog, or a stale step that rewound progress when resent). Every wizard
-  step now answers its POST with a redirect to `GET /submit`, and a step that does not match
-  the session's progress is ignored instead of processed. Reported and fixed by Zachary
-  Bridges (#94).
+- **The browser's own Back button broke the submission wizard halfway through** (a "Confirm Form
+  Resubmission" dialog, or a stale step that rewound progress when resent). Every wizard step
+  now answers its POST with a redirect to `GET /submit`, and a step that does not match the
+  session's progress is ignored instead of processed. Found and fixed by Zachary Bridges; his
+  #94 fix is ported into this release with him as co-author.
 - **The wizard's Back button silently dropped uploaded attachments**: a file input is always
-  empty on revisit, so Next from there cleared them. Files now stay attached unless new ones
-  are chosen, and the attachments step lists what is already attached. Reported and fixed by
-  Zachary Bridges (#94).
+  empty on revisit, so Next from there cleared them. Files now stay attached unless new ones are
+  chosen, and the attachments step lists what is already attached. Found and fixed by Zachary
+  Bridges; his #94 fix is ported into this release with him as co-author.
 - A description that failed validation (too short or too long) was discarded, and the step
-  showed an empty field or the previous text. It now keeps what was typed (a too-long one cut
-  at 10,000 characters). Reported and fixed by Zachary Bridges (#94).
+  showed an empty field or the previous text. It now keeps what was typed (a too-long one cut at
+  10,000 characters). Found and fixed by Zachary Bridges; his #94 fix is ported into this
+  release with him as co-author.
 - **A double final submit created two reports**: two concurrent POSTs of the review form
   (a double click with JavaScript off, e.g. Tor Browser "Safest") both read the draft before
   either deleted it, and the PIN of one report was never shown. Now the draft is claimed
