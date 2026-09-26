@@ -47,8 +47,8 @@ def test_s3_without_the_extra_names_it() -> None:
         _s3_backend()._client()
 
 
-# ── Task 17 fix round 1: a legacy (filename-bearing) key must never reach a
-# log line or an exception message ──────────────────────────────────────────
+# ── A legacy (filename-bearing) key must never reach a log line or an
+# exception message ─────────────────────────────────────────────────────────
 
 _FILENAME_KEY = "Max_Mustermann_evidence.pdf"
 
@@ -171,7 +171,7 @@ async def test_admin_download_missing_s3_object_returns_404(
     assert resp.status_code == 404
 
 
-# ── Task 17 fix round 2: read_attachment()'s LookupError must not carry a
+# ── read_attachment()'s LookupError must not carry a
 # not-yet-rekeyed legacy row's storage_key, which is the original filename ──
 
 

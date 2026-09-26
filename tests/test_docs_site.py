@@ -91,7 +91,7 @@ def _root_tokens_block(html: str) -> str:
 
 
 def test_de_landing_page_shares_design_tokens_with_english() -> None:
-    """Regression guard (Task X11): docs/index.html was rebuilt onto the
+    """Regression guard: docs/index.html was rebuilt onto the
     "Signal" design (Sora + JetBrains Mono, ink/green tokens) while
     docs/de/index.html kept an older serif/navy design, so the two pages
     drifted apart. Pin the :root tokens and font-family variables identical
@@ -148,7 +148,7 @@ def _visible_faq(html: str) -> list[tuple[str, str]]:
 
 
 def test_faqpage_jsonld_matches_visible_faq_one_to_one() -> None:
-    """Regression guard (Task X11 fix round 1): docs/de/index.html's FAQPage
+    """Regression guard: docs/de/index.html's FAQPage
     JSON-LD used to carry a question ("Was ist ein Hinweisgebersystem nach
     HinSchG?") that doesn't appear anywhere in the visible FAQ list, and was
     missing several visible questions outright (5 JSON-LD entries vs. 8
@@ -212,7 +212,7 @@ def _nav_targets(page: Path) -> set[str]:
 
 
 def test_every_docs_page_nav_has_the_same_item_set() -> None:
-    """Regression guard (Task X12): docs.html and roadmap.html's nav lacked
+    """Regression guard: docs.html and roadmap.html's nav lacked
     a Blog link and a language-switch link that every other docs/ page
     carried, and the blog scaffold's nav lacked Features/How-it-works and
     GitHub entirely. Every docs/**/*.html page's top nav must resolve to the
@@ -286,10 +286,8 @@ def _footer_targets(page: Path) -> set[str]:
 # a "Blog" entry, which a page already inside that section has no reason to
 # link back to itself, so the two can never share an identical set regardless
 # of maintenance), docs/de/index.html for itself, and docs/index.html for
-# every other page -- no page is exempt (Task X12 fix round 2: docs.html and
-# roadmap.html used to carry a structurally different, much smaller footer
-# with no `.footer-links` list at all; they now carry the same footer as
-# docs/index.html, so they're covered like every other page).
+# every other page -- no page is exempt (docs.html and roadmap.html carry
+# the same footer as docs/index.html).
 def _footer_landing_page(page: Path) -> Path:
     if page.parent.name == "blog":
         return ROOT / "docs/blog/index.html"
@@ -299,14 +297,13 @@ def _footer_landing_page(page: Path) -> Path:
 
 
 def test_every_page_footer_has_the_same_link_set_as_its_landing_page() -> None:
-    """Regression guard (Task X12 fix rounds 1-2): the four blog articles
-    kept their old, smaller footer link-list (6 targets, missing Issues and
-    License) after docs/blog/index.html was rebuilt with the full one (7
-    targets) -- round 1. docs.html/roadmap.html carried an entirely
-    different, much smaller footer (no `.footer-links` list at all) -- round
-    2. Every docs/**/*.html page must resolve to the exact same footer
-    link-target set as its landing page (see `_footer_landing_page`); no
-    page is exempt."""
+    """Regression guard: the four blog articles kept their old, smaller
+    footer link-list (6 targets, missing Issues and License) after
+    docs/blog/index.html was rebuilt with the full one (7 targets), and
+    docs.html/roadmap.html carried an entirely different, much smaller
+    footer (no `.footer-links` list at all). Every docs/**/*.html page must
+    resolve to the exact same footer link-target set as its landing page
+    (see `_footer_landing_page`); no page is exempt."""
     pages = sorted((ROOT / "docs").rglob("*.html"))
     assert pages
     mismatches = {}
@@ -330,7 +327,7 @@ def _root_tokens_dict(html: str) -> dict[str, str]:
 
 def test_blog_pages_share_design_tokens_with_english_landing() -> None:
     """Extends `test_de_landing_page_shares_design_tokens_with_english`
-    (Task X11) to the blog (Task X12): the blog scaffold used to run its own
+    to the blog: the blog scaffold used to run its own
     Spectral/Source Serif 4 + navy design, disconnected from the rest of the
     site. Unlike the strict de/index.html <-> index.html guard, this is not
     byte-identical -- the blog (like docs.html before it) legitimately
@@ -356,7 +353,7 @@ def test_blog_pages_share_design_tokens_with_english_landing() -> None:
 
 
 def test_landing_pages_link_each_other_via_hreflang() -> None:
-    """Regression guard (Task X11 fix round 1): neither page declared
+    """Regression guard: neither page declared
     hreflang alternates for the other before this. Every one of the two
     pages must declare itself, the other language, and an x-default,
     pointing at absolute URLs."""

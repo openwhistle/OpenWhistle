@@ -63,7 +63,7 @@ async def _flush_test_redis() -> None:
 
     A long-lived test Redis keeps rate-limit/lockout keys between runs;
     without this, a second run in a row sees stale counters and gets 429s
-    that cascade into unrelated failures (task X1 / OPEN-2).
+    that cascade into unrelated failures.
     """
     from app.config import settings
 

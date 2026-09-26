@@ -2,9 +2,8 @@
 
 `/static/` is served with no far-future cache header and no hashed filename
 (app/main.py just mounts the directory), so a browser that visited the site
-before an upgrade keeps serving the old cached CSS/JS after a deploy — the
-release Chrome check hit exactly this after a CSS fix shipped and the page
-kept rendering with the stale stylesheet. `static_url()` (app/templating.py)
+before an upgrade keeps serving the old cached CSS/JS after a deploy, so a
+CSS fix does not reach it. `static_url()` (app/templating.py)
 appends `?v={app_version}`, which changes on every release and busts the
 cache. This test fails the build if a template reintroduces a hand-typed
 `/static/...` stylesheet or script URL that bypasses the helper.

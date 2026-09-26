@@ -165,7 +165,7 @@ async def test_case_number_collision_keeps_the_callers_objects_loaded(
 
     A full-session rollback expires every object in the session; the caller's
     next plain attribute access (``taken.id``) then lazy-loads outside the
-    async context and raises MissingGreenlet (OPEN-3).
+    async context and raises MissingGreenlet.
     """
     from app.services import report as report_svc
 

@@ -190,7 +190,7 @@ async def test_audit_log_page_is_scoped_per_org(
     two_orgs: dict[str, AdminUser],
     db_session: AsyncSession,
 ) -> None:
-    """The cross-tenant leak Task 6 fixes: org A's audit row must not leak into org B's page."""
+    """No cross-tenant leak: org A's audit row must not leak into org B's page."""
     from app.services.audit import log as audit_log
 
     await audit_log(db_session, two_orgs["admin_a"], "admin.created", detail={"username": "probe"})

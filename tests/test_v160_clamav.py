@@ -1,4 +1,4 @@
-"""v1.6.0 Task 20: optional ClamAV virus scan of uploads, fail-closed.
+"""Optional ClamAV virus scan of uploads, fail-closed.
 
 clamd is spoken to over its INSTREAM protocol via a tiny in-process fake
 server (asyncio.start_server) — no real clamd needed for these tests.
@@ -275,7 +275,7 @@ async def test_scan_unavailable_on_timeout(monkeypatch: pytest.MonkeyPatch) -> N
         await server.wait_closed()
 
 
-# ── Docs: Helm ships no clamd (fix round 2, re-review required) ─────────────
+# ── Docs: Helm ships no clamd ───────────────────────────────────────────────
 
 
 def test_virus_scan_docs_warn_that_helm_ships_no_clamd() -> None:

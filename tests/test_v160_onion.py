@@ -1,4 +1,4 @@
-"""v1.6.0 Task 19: Tor onion address for reporters on a watched network.
+"""Tor onion address for reporters on a watched network.
 
 Onion-Location header (skipped for /static/ and when already on the onion
 service itself), ONION_LOCATION config validation, and the submit-page note.
@@ -20,7 +20,7 @@ ROOT = Path(__file__).parents[1]
 ONION_HOST = "a" * 56 + ".onion"
 ONION = "http://" + ONION_HOST
 # The nginx-asserted signal the app trusts for "this is the onion listener"
-# (fix round 2) — never the client-supplied Host. See app/onion.py.
+# — never the client-supplied Host. See app/onion.py.
 ON_ONION = {"X-OW-Onion": "1"}
 
 
@@ -67,7 +67,7 @@ async def test_onion_location_header_still_sent_for_a_normal_host(
 async def test_onion_location_header_still_sent_when_host_is_onion_but_nginx_never_marked_it(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Fix round 2 (re-review Important): a client that merely SENDS
+    """A client that merely SENDS
     Host: <onion> — without ever going through the onion nginx listener,
     which is the only place X-OW-Onion is set — must not be treated as
     already-on-the-onion-service. Spoofing Host alone must do nothing."""
@@ -76,7 +76,7 @@ async def test_onion_location_header_still_sent_when_host_is_onion_but_nginx_nev
     assert resp.headers["onion-location"] == f"{ONION}/status"
 
 
-# ── Cookies (Critical fix-round-1 #1) ────────────────────────────────────────
+# ── Cookies ──────────────────────────────────────────────────────────────────
 
 
 def _set_cookie_headers(resp: Response) -> list[str]:
@@ -116,7 +116,7 @@ async def test_cookies_keep_the_secure_flag_on_a_normal_host(
 async def test_cookies_keep_the_secure_flag_when_host_is_onion_but_nginx_never_marked_it(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Fix round 2 (re-review Important, the core regression test): a client
+    """The core regression test: a client
     on the real TLS listener sending Host: <onion> — without the X-OW-Onion
     header only the onion nginx server block sets — is a spoofing attempt,
     not a genuine onion visitor, and must still get Secure cookies."""
@@ -145,7 +145,7 @@ async def test_full_submission_wizard_succeeds_over_the_onion_listener(
     assert pin
 
 
-# ── HSTS (Important fix-round-1 #2) ──────────────────────────────────────────
+# ── HSTS ───────────────────────────────────────────────────────────────────────
 
 
 async def test_hsts_absent_over_the_onion_listener(
@@ -166,14 +166,13 @@ async def test_hsts_present_on_a_normal_host(client: AsyncClient) -> None:
 async def test_hsts_present_when_host_is_onion_but_nginx_never_marked_it(
     client: AsyncClient,
 ) -> None:
-    """Fix round 2: spoofing Host alone (no X-OW-Onion) must not suppress HSTS
+    """Spoofing Host alone (no X-OW-Onion) must not suppress HSTS
     on a connection that genuinely is TLS."""
     resp = await client.get("/status", headers={"Host": ONION_HOST})
     assert "strict-transport-security" in resp.headers
 
 
 # ── Onion trust: nginx-asserted header only, never the client Host ──────────
-# (fix round 2, re-review Important)
 
 
 def test_is_onion_request_trusts_only_the_exact_nginx_header(
@@ -194,7 +193,7 @@ def test_is_onion_request_trusts_only_the_exact_nginx_header(
 
 
 def test_cookie_secure_fails_loudly_when_security_middleware_never_ran() -> None:
-    """Ruling: no silent fallback — a wiring bug (SecurityMiddleware not
+    """No silent fallback — a wiring bug (SecurityMiddleware not
     registered, so request.state.is_onion was never set) must raise, not
     guess at Secure."""
     from starlette.requests import Request
@@ -206,7 +205,7 @@ def test_cookie_secure_fails_loudly_when_security_middleware_never_ran() -> None
         cookie_secure(request)
 
 
-# ── Onion-Location scoped to HTML (Minor fix-round-1 #6) ────────────────────
+# ── Onion-Location scoped to HTML ───────────────────────────────────────────
 
 
 async def test_onion_location_absent_on_json_health_endpoint(
@@ -307,7 +306,7 @@ def test_onion_location_env_var_is_documented_everywhere() -> None:
         assert needle in text, path
 
 
-# ── Ansible env.j2 field parity (controller ruling, fix round 1 #8) ─────────
+# ── Ansible env.j2 field parity ─────────────────────────────────────────────────
 
 
 def _settings_field_names() -> list[str]:
@@ -343,7 +342,7 @@ def test_ansible_env_j2_live_vars_have_defaults() -> None:
     assert used - defined == set()
 
 
-# ── Docs: key-backup warning and rate-limit callout (Important #5, Minor #7) ─
+# ── Docs: key-backup warning and rate-limit callout ─────────────────────────────
 
 
 def test_onion_howto_warns_about_the_hidden_service_private_key() -> None:
@@ -362,7 +361,7 @@ def test_onion_howto_explains_the_shared_rate_limit_budget() -> None:
 
 
 def test_onion_howto_and_security_section_explain_the_x_ow_onion_trust_boundary() -> None:
-    """Fix round 2 (re-review Important, ruling): both the how-to and the
+    """Both the how-to and the
     Security Architecture section must document that the app trusts nginx's
     X-OW-Onion header (never the client Host), and that this requires the
     app port to be reachable only through the shipped nginx."""

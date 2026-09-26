@@ -4,9 +4,8 @@ login.html renders three cards in a column when local review + demo mode are
 both on: the local-review-login `.panel`, the `.demo-credentials` box, then
 the real login `.panel`. Spacing between two `.panel`s comes from the
 adjacent-sibling rule `.panel + .panel` in site.css — but `.demo-credentials`
-is a different class, so that rule never matched the review-stack Chrome
-check's "Enter the local review" card sitting flush against the demo
-credentials card below it. This guard fails if the matching
+is a different class, so that rule never matched, and the "Enter the local
+review" card sat flush against the demo credentials card below it. This guard fails if the matching
 `.panel + .demo-credentials` spacing rule regresses.
 """
 

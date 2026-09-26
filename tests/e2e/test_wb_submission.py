@@ -600,8 +600,7 @@ def test_pin_and_case_number_fit_without_scrolling(
 ) -> None:
     """The success screen's case number and PIN must be fully visible at every
     width, never cut off behind a scrollbar, and never sit under the copy
-    button — Chrome review finding: 469px of PIN content in a 434px box, the
-    PIN scrolled and partly hidden behind the copy button."""
+    button (a 469px PIN in a 434px box used to scroll behind it)."""
     ctx = browser.new_context(viewport={"width": width, "height": 900}, base_url=base_url)
     page = ctx.new_page()
     _walk_to_review(
@@ -650,7 +649,7 @@ def test_pin_and_case_number_fit_without_scrolling(
 def test_review_step_label_and_value_do_not_overlap_in_german(
     browser: Browser, base_url: str
 ) -> None:
-    """Chrome review finding: the German label "EINREICHUNGSMODUS" overlapped
+    """The German label "EINREICHUNGSMODUS" overlapped
     its value "Anonym" — the label column was too narrow for that locale."""
     ctx = browser.new_context(viewport={"width": 1440, "height": 900}, base_url=base_url)
     ctx.add_cookies([{"name": "ow-lang", "value": "de", "url": base_url}])

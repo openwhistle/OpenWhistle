@@ -1,4 +1,4 @@
-"""Layout findings of the v1.5.0 assessment, measured in a real browser."""
+"""Layout rules that only a real browser can measure."""
 
 from __future__ import annotations
 
@@ -156,7 +156,7 @@ def test_case_number_stays_on_one_line(browser: Browser, base_url: str) -> None:
 
 
 def test_stats_panels_share_the_same_top(browser: Browser, base_url: str) -> None:
-    """Chrome review finding: `.panel + .panel` (site.css) adds a stacking
+    """`.panel + .panel` (site.css) adds a stacking
     margin meant for panels in normal vertical flow; inside the stats page's
     two-column grid it also fired, pushing "nach Kategorie" 23px below "nach
     Status" even though the grid's own `gap` already spaces them."""

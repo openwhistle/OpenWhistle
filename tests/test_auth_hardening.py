@@ -126,7 +126,7 @@ async def test_delete_stored_objects_continues_after_a_failure(
 async def test_delete_stored_objects_logs_no_filename(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """A not-yet-rekeyed legacy row's key is the original filename (task 17);
+    """A not-yet-rekeyed legacy row's key is the original filename;
     a failure deleting it must not put that key/filename into the log line.
     """
     from app.services import storage

@@ -1,20 +1,17 @@
-"""Rendered check for the admin table-stack tables (fix round 1, item 5;
-rewritten in fix round 2 per task-X10-rereview-1.md): the dashboard, users
+"""Rendered check for the admin table-stack tables: the dashboard, users
 and audit-log tables must not clip their last visible column outside the
-enclosing panel at 1440/1920px in German — the exact defect a shared
-`.table-stack th:last-child` selector used to cause on whichever of these
-tables was not the one it was built for (task-X10-review, Important 2), and
-the badge/column-width overflow item 8 originally found on the dashboard.
+enclosing panel at 1440/1920px in German. A shared
+`.table-stack th:last-child` selector used to do exactly that on whichever
+table it was not built for, and long badges overflowed the dashboard.
 
-Round 1's version used the ASGI test client + a real `db_session` to render
-the pages, which needs a host-reachable Postgres/Redis — the E2E CI job
-(.github/workflows/e2e.yml, the only job that collects tests/e2e/) provisions
-neither (docker-compose.e2e.yml's db/redis publish no host ports) and would
-have errored on every push. This version follows the same pattern as every
-other test in this file: a real HTTP request to the already-running `app` at
-`base_url`, signed in with the demo admin credentials from this directory's
-own conftest.py (test values for this project, published intentionally for
-the demo instance) — no database access from the test process at all.
+The E2E CI job (.github/workflows/e2e.yml, the only job that collects
+tests/e2e/) provides no host-reachable Postgres/Redis
+(docker-compose.e2e.yml's db/redis publish no host ports), so like every
+other test here this one sends real HTTP requests to the already-running
+`app` at `base_url`, signed in with the demo admin credentials from this
+directory's own conftest.py (test values for this project, published
+intentionally for the demo instance) — no database access from the test
+process at all.
 """
 
 from __future__ import annotations

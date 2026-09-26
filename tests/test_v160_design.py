@@ -1,4 +1,4 @@
-"""v1.6.0 design: the findings of the assessment, pinned in rendered HTML and sources."""
+"""v1.6.0 design rules, pinned in rendered HTML and sources."""
 
 from __future__ import annotations
 
@@ -159,7 +159,7 @@ def test_forced_colors_keep_the_selected_mode_card_visible() -> None:
 
 
 def test_footer_css_has_no_stale_bare_tag_selectors() -> None:
-    """Regression guard for the Task 23 fix-round-1 finding: `.footer p` and
+    """Regression guard: `.footer p` and
     `.footer ul` are bare-tag selectors that match the current footer markup
     (a <p class="footer-brand"> and a <ul class="footer-links">) at the same
     specificity as the intended `.footer-brand`/`.footer-links` rules, so
@@ -189,7 +189,7 @@ async def test_submit_page_h1_precedes_the_sidebar_heading_in_reading_order(
 
 
 def test_footer_inner_is_declared_once() -> None:
-    """Regression guard for the Task 25 controller finding: two `.footer-inner`
+    """Regression guard: two `.footer-inner`
     rule blocks (one setting margin/padding/max-width, one setting display/flex
     layout) used to live far apart in the file, silently relying on source
     order for the cascade to merge them. Merged into a single block."""
@@ -199,9 +199,9 @@ def test_footer_inner_is_declared_once() -> None:
 
 
 def test_token_class_wraps_only_at_the_explicit_hyphen_breaks() -> None:
-    """Superseded by the X13 fix: `white-space: nowrap` (the original guard
-    against a case number/PIN breaking) is exactly what made the PIN scroll
-    behind the copy button instead of wrapping (task X13). `.token` may now
+    """`white-space: nowrap` (once the guard against a case number/PIN
+    breaking) made the PIN scroll behind the copy button instead of
+    wrapping. `.token` may now
     wrap, but only at the `<wbr>` the server inserts after each hyphen
     (wbr_after_hyphens in app/templating.py) — no automatic mid-word break."""
     css = (ROOT / "app/static/css/site.css").read_text()
@@ -226,7 +226,7 @@ def test_case_number_and_pin_wrap_only_at_hyphens() -> None:
     PIN or case number wraps, if it must, only at a group boundary — never
     inside a group, and (together with `.token` allowing wrapping, see
     test_token_class_wraps_only_at_the_explicit_hyphen_breaks) never behind
-    a scrollbar or the copy button (Chrome review finding, task X13)."""
+    a scrollbar or the copy button."""
     success_html = (TEMPLATES / "submit_success.html").read_text()
     assert success_html.count("| wbr_after_hyphens") == 2
 
@@ -248,7 +248,7 @@ async def test_dashboard_cells_carry_labels_for_the_phone_layout(
 async def test_stacked_dashboard_table_keeps_its_table_semantics(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    """Regression guard for the Task 26 fix-round-1 finding: at <=640px the
+    """Regression guard: at <=640px the
     table-stack CSS sets table/tbody to display:block and tr to display:grid,
     which strips the implicit table/rowgroup/row/cell ARIA roles some browsers
     derive from display. Explicit roles restore them."""
@@ -305,7 +305,7 @@ def test_split_layout_keeps_the_sidebar_beside_the_form_on_desktop() -> None:
 
 
 def test_split_layout_has_only_one_active_phone_breakpoint() -> None:
-    """Regression guard for the Task 25 fix-round-1 finding: a
+    """Regression guard: a
     `@media (max-width: 768px)` block and a `@media (max-width: 900px)` block
     both declared `.split-layout`/`.split-main`/`.split-sidebar` layout, and
     since the 900px block always applies wherever the 768px one does, the
@@ -325,7 +325,7 @@ def test_split_layout_has_only_one_active_phone_breakpoint() -> None:
 
 
 def test_credential_value_dead_css_removed() -> None:
-    """Regression guard for the Task 25 fix-round-1 finding: `.credential-value`
+    """Regression guard: `.credential-value`
     was unreferenced by any template. It must not exist in site.css."""
     css = (ROOT / "app/static/css/site.css").read_text()
     assert ".credential-value" not in css
@@ -534,8 +534,8 @@ def _contrast_ratio(hex_a: str, hex_b: str) -> float:
 def test_docs_warning_colour_meets_contrast() -> None:
     """Each docs page's --warning must read against its --bg-base at >= 4.5:1
     (WCAG AA, normal text) in both themes — a warning colour nobody can read
-    is not a fix. Regression guard for the round-1 finding that the restored
-    former-gold light value (#c8972e, ~2.5:1 on the blog pages) was too low."""
+    is not a fix (the former gold light value #c8972e was ~2.5:1 on the blog
+    pages)."""
     for name in (
         "docs.html",
         "blog/hinschg-compliance-leitfaden.html",
@@ -733,7 +733,7 @@ async def test_every_action_section_has_a_title(
     assert all('<h3 class="action-title">' in s for s in sections)
 
 
-# ── Task X5: every template's user-visible text goes through t(), and every
+# ── Every template's user-visible text goes through t(), and every
 # class used in a template is a real CSS class or a documented JS hook. ─────
 
 _JINJA_MACRO = re.compile(r"\{%-?\s*macro\b.*?-?%\}.*?\{%-?\s*endmacro\s*-?%\}", re.DOTALL)
@@ -746,7 +746,7 @@ _CHECKED_ATTRS = {"title", "aria-label", "placeholder", "data-confirm", "value",
 # of these two classes (the app's own "this is a mono/identifier value" convention, plus
 # demo-cred-value: the literal demo credential text, e.g. "demo" -- a data value, not copy).
 _NON_LANGUAGE_CLASSES = {"mono", "demo-cred-value"}
-# The brand name, as ONE word, is the only allowed literal (explicitly named by the brief).
+# The brand name, as ONE word, is the only allowed literal.
 # "open" and "whistle" are NOT allow-listed as bare words -- a hardcoded "Open" or "Whistle"
 # used generically elsewhere must still fail this test.
 _ALLOWED_WORDS = {"openwhistle"}
@@ -890,7 +890,7 @@ class _ClassUsageChecker(HTMLParser):
 # JS hook classes with no CSS rule of their own (styling for all three lives on
 # selectors composed with another class, e.g. ".session-expiry-expired-state
 # .session-expiry-icon" -- so the bare hook class itself still needs listing here
-# for any file that used ONLY the hook name; kept explicit and short, per the brief).
+# for any file that used ONLY the hook name; kept explicit and short).
 _JS_HOOK_CLASSES = {
     "session-expiry-expired-state",  # site.js: classList.add/remove
     "session-expiry-actions",  # site.js: querySelector('.session-expiry-actions')
@@ -924,14 +924,14 @@ def test_every_template_class_exists_in_css_or_is_a_documented_js_hook() -> None
         assert not checker.unknown, (p, sorted(set(checker.unknown)))
 
 
-# ── Fix round 1: regression tests for the organisations CSRF bug ───────────────
+# ── Regression tests for the organisations CSRF bug ────────────────────────────
 
 
 @pytest.mark.asyncio
 async def test_organisation_create_and_deactivate_succeed_with_valid_csrf(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    """Regression test for the organisations CSRF bug (review round 1, Important #2):
+    """Regression test for the organisations CSRF bug:
     the page used to post an undefined `{{ csrf_token }}` (always rendered empty), so
     every real submission would 403 in production. With `request.state.csrf_token` a
     real double-submit token now lets both the create and the deactivate route through,
@@ -1012,7 +1012,7 @@ async def test_organisation_create_and_deactivate_fail_without_valid_csrf(
 async def test_organisation_deactivate_is_a_danger_action(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    """Ruling (review round 1, Important #3): organisations have no reactivate route,
+    """Organisations have no reactivate route,
     so deactivating one is one-way -- the button must use the real DESIGN.md danger
     class, and the confirm prompt must say the action cannot be undone, in every
     locale (spot-checked here in French)."""
@@ -1129,18 +1129,13 @@ _ANCESTOR_OVERRIDES: dict[str, dict[str, str]] = {
 
 
 def test_every_docs_page_font_usage_has_a_matching_font_face() -> None:
-    """Regression guard (review round 2): the blog scaffold's CSS asks for
-    Spectral weight 600 (`.nav-logo`, `.article-body h3`, blog index's
-    `.footer-logo`) but only 400/700 were shipped -- the browser silently
-    synthesized a faux-bold instead of using the real weight. Same root
-    cause as the missing-font-file bug the previous round fixed (a font
-    family self-hosted on the page but not with every face the page's own
-    CSS actually asks for), so it needed the same kind of guard: for every
+    """A page that asks for a weight or style its self-hosted family does
+    not ship gets a synthesized faux face from the browser. For every
     docs/ page, every (font-family, font-weight, font-style) its CSS
     declares (in the same rule, or inherited from body/an explicit ancestor
     override above) for a family the page self-hosts at all must have a
-    matching @font-face -- not just "the url resolves" (the previous
-    round's guard), but "the exact face used exists"."""
+    matching @font-face -- not just "the url resolves", but "the exact face
+    used exists"."""
     font_face_re = re.compile(r"@font-face\s*\{([^}]*)\}", re.DOTALL)
     fam_re = re.compile(r"font-family:\s*['\"]?([^'\";]+)['\"]?")
     weight_re = re.compile(r"font-weight:\s*([^;]+);")
@@ -1353,7 +1348,7 @@ def test_dashboard_table_action_column_is_pinned_and_status_badge_wraps() -> Non
     scrollbar hint. Confirmed with Playwright against the rendered HTML
     (dashboard's `<td class="stack-action">` / `<a class="btn">`
     `getBoundingClientRect().right` exceeded the panel's before this fix, and
-    stayed within it after — see task-X10-report.md).
+    stayed within it after).
 
     This guard pins the fix in source: the action column must stay visible
     regardless of scroll position (`position: sticky; right: 0`), and the
@@ -1397,11 +1392,11 @@ def test_table_stack_sticky_action_column_is_paired_header_and_data(tpl: Path) -
     )
 
 
-# ── Second Chrome check (task X13) ──────────────────────────────────────────
+# ── Wording and dates ───────────────────────────────────────────────────────
 
 
 def test_submit_eyebrow_is_neutral_across_locales() -> None:
-    """Chrome review finding: the wizard eyebrow said "VERTRAULICHE MELDUNG" /
+    """The wizard eyebrow said "VERTRAULICHE MELDUNG" /
     "CONFIDENTIAL REPORT" even after the reporter chose "Anonym" — a neutral
     eyebrow that does not clash with whichever submission mode is selected."""
     import json
@@ -1424,7 +1419,7 @@ def test_submit_eyebrow_is_neutral_across_locales() -> None:
 
 
 def test_blog_1_6_release_date_is_2026_09_26() -> None:
-    """Chrome review finding: the article was dated 25 September while the
+    """The article was dated 25 September while the
     actual release is the 26th — every date on the page, the sitemap and the
     JSON-LD must agree with the real release date."""
     text = (ROOT / "docs/blog/was-ist-neu-in-1-6.html").read_text()

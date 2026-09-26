@@ -163,7 +163,7 @@ def test_docker_compose_mounts_the_nginx_snippets_directory() -> None:
 
 
 def test_onion_listener_has_its_own_higher_budget_rate_limit_zone() -> None:
-    """Ruling: every onion visitor arrives from 127.0.0.1 (the host's Tor
+    """Every onion visitor arrives from 127.0.0.1 (the host's Tor
     daemon), so ow_req (per-IP) would give them all ONE shared bucket by
     coincidence; the onion listener gets its own zone, keyed on a constant
     to make that explicit, with a higher rate/burst than the per-IP zone."""
@@ -183,7 +183,7 @@ def test_onion_listener_has_its_own_higher_budget_rate_limit_zone() -> None:
 
 
 def test_x_ow_onion_is_cleared_by_default_and_set_only_on_the_onion_listener() -> None:
-    """Fix round 2 (re-review Important): the app must never decide "onion"
+    """The app must never decide "onion"
     from the client-supplied Host, so nginx asserts it instead. The shared
     snippet clears the header for every server block that includes it (so
     the TLS listener can never forget to), and only the onion (8080) block
@@ -202,11 +202,11 @@ def test_x_ow_onion_is_cleared_by_default_and_set_only_on_the_onion_listener() -
     assert set_idx > include_idx, "must come AFTER the include to override it, not before"
 
 
-# ── Fix round 4: the Ansible-deployed nginx (the live demo) must clear
-# X-OW-Onion too — it has no onion listener of its own, but the app trusts
-# that header globally, so any deployment path that never clears it lets a
-# client spoof onion-listener behaviour (non-Secure cookies, no HSTS). The
-# ruling: one source, not a second hand-maintained copy of the snippet.
+# ── The Ansible-deployed nginx (the live demo) must clear X-OW-Onion too —
+# with ONION_LOCATION set the app trusts that header, so any deployment path
+# that never clears it lets a client spoof onion-listener behaviour
+# (non-Secure cookies, no HSTS). One source, not a second hand-maintained
+# copy of the snippet.
 
 
 def test_ansible_nginx_template_includes_the_shared_snippets_not_a_second_copy() -> None:

@@ -671,7 +671,7 @@ async def test_pdf_with_identity_needs_a_reason_and_is_audited(
 async def test_content_search_respects_the_active_status_and_location_filter(
     db_session: AsyncSession,
 ) -> None:
-    """Ruling: content_match_ids takes the same location_id/status_filter as
+    """content_match_ids takes the same location_id/status_filter as
     get_reports_paginated, so the CONTENT_SEARCH_LIMIT budget follows the
     caller's current view — a report outside the active filter must not be
     decrypted/matched."""

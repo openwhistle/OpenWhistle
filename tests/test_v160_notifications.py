@@ -1,4 +1,4 @@
-"""Tests for v1.6.0 Task 14 (B4): webhooks carry counts only.
+"""Webhooks carry counts only.
 
 Webhooks (Slack, Teams, generic — third parties) must never carry a case
 number or a deadline date; only aggregate counts. Email to the org's own

@@ -1,13 +1,7 @@
 """LOCAL_REVIEW_LOGIN: one-click admin login for the release Chrome check.
 
 Security-sensitive — this is an admin login with no password and no MFA
-check. Fix round 1 (task-X9-review.md): the flag alone was the only barrier,
-the flag lived in CI's own E2E stack, and the page-list completeness test
-could pass on an empty walk. Fix round 2 (task-X9-rereview-1.md):
-PUT/DELETE/PATCH/OPTIONS still answered 405 (a per-method decorator only
-covered GET/HEAD/POST), and a malformed bracketed Host header crashed
-`_local_review_reachable` with an uncaught `ValueError` instead of 404.
-Every guard below has a test that fails without it:
+check, so the flag cannot be the only barrier. Every guard below has a test that fails without it:
   - refuses to start (DEMO_MODE=false + LOCAL_REVIEW_LOGIN=true)
   - the route is 404, not 403 or 405, for every HTTP method, when the flag
     is off or the second barrier fails
@@ -171,10 +165,10 @@ def test_local_review_reachable_rejects_non_loopback_host(host: str) -> None:
 
 @pytest.mark.parametrize("host", ["[::1].evil.com", "[::1", "[", "not[valid]host", "[::1]]"])
 def test_local_review_reachable_treats_malformed_bracketed_host_as_unreachable(host: str) -> None:
-    """Fix round 2: `urlsplit` raises `ValueError` for an unmatched/misplaced
+    """`urlsplit` raises `ValueError` for an unmatched/misplaced
     IPv6 bracket instead of returning an unparsed hostname — unparsable is
     not loopback, so this must return False, not propagate the exception
-    (which reached a real client as an uncaught 500 before this fix)."""
+    (which would reach the client as an uncaught 500)."""
     from app.api.auth import _local_review_reachable
 
     assert _local_review_reachable(_request_with_headers({"host": host})) is False
@@ -240,11 +234,10 @@ async def test_local_review_login_route_404_for_every_method_when_disabled(
 async def test_local_review_login_route_404_for_every_method_when_enabled(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch, method: str
 ) -> None:
-    """Fix round 2, controller ruling: every method but POST is 404, not the
-    405 Starlette's default route matching gives a path that has *some*
-    handler for a different method — a per-method decorator for only
-    GET/HEAD/POST (fix round 1) still left PUT/DELETE/PATCH/OPTIONS
-    answering 405, reproduced live against the running container. One
+    """Every method but POST is 404, not the 405 Starlette's default route
+    matching gives a path that has *some* handler for a different method —
+    a per-method decorator for only GET/HEAD/POST leaves
+    PUT/DELETE/PATCH/OPTIONS answering 405. One
     `api_route` registered for every method, 404 for anything but an
     allowed POST, closes it regardless of which method is tried."""
     monkeypatch.setattr(settings, "demo_mode", True)
@@ -291,11 +284,11 @@ async def test_local_review_login_404_with_non_loopback_host(
 async def test_local_review_login_404_not_500_with_malformed_host(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch, host: str
 ) -> None:
-    """Fix round 2: reproduced live as an uncaught 500 before the fix — the
+    """A malformed Host must not crash the route with a 500. The
     setting check alone doesn't short-circuit this (`or` only skips
     `_local_review_reachable` when the setting itself is already off), so
-    the malformed Host must reach the barrier here to prove the crash is
-    actually fixed, not just that a disabled route still 404s regardless."""
+    the malformed Host must reach the barrier here to prove it does not
+    crash, not just that a disabled route still 404s regardless."""
     monkeypatch.setattr(settings, "demo_mode", True)
     monkeypatch.setattr(settings, "local_review_login", True)
     resp = await client.post(
@@ -367,7 +360,7 @@ async def test_local_review_login_deactivated_admin_redirects_without_audit_row(
 ) -> None:
     """is_active is checked before the audit write, so a deactivated demo
     admin never gets a 'signed in via local review' row for a login that
-    did not happen (fix round 1, Minor 3)."""
+    did not happen."""
     monkeypatch.setattr(settings, "demo_mode", True)
     monkeypatch.setattr(settings, "local_review_login", True)
 
@@ -475,8 +468,8 @@ def _is_scannable_config_file(relpath: str) -> bool:
 
 
 def test_local_review_login_literal_false_or_absent_everywhere_except_allowlist() -> None:
-    """Every git-tracked deployment/config file, not a fixed guess list (fix
-    round 1, Minor 2): a mention must be commented out, or its value must
+    """Every git-tracked deployment/config file, not a fixed guess list: a
+    mention must be commented out, or its value must
     literally be `false` — rejects `${LOCAL_REVIEW_LOGIN:-false}` (lets
     `.env` pass `true` through) and `LOCAL_REVIEW_LOGIN=true # not false`
     (a trailing comment does not change the real value)."""
@@ -606,10 +599,9 @@ def _matrix_table_tokens() -> set[str]:
     """Every backtick-quoted token found only on genuine markdown table rows
     (a line starting with '|') in the page matrix — not a stray backtick
     path in running prose elsewhere in the file (an absolute filesystem
-    path, a shell command). Deliberately '|', not the reviewer's literal
-    '| `' suggestion: some rows use a non-path placeholder in the first
-    cell for a POST-rendered page, with the real path/template token in a
-    later cell instead."""
+    path, a shell command). Deliberately '|', not '| `': some rows use a
+    non-path placeholder in the first cell for a POST-rendered page, with
+    the real path/template token in a later cell instead."""
     text = (ROOT / "docs-tech/local-review.md").read_text()
     tokens: set[str] = set()
     for line in text.splitlines():

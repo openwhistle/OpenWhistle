@@ -6,8 +6,8 @@ attachment filename, ...). site.css resets `svg { display: block }` for
 predictable sizing elsewhere (cards, avatars, ...); without `.icon`
 overriding that back to an inline display, `vertical-align` on `.icon` is a
 no-op (it only applies to inline-level boxes) and the icon renders on its
-own line above the text — the release Chrome check caught this on the
-admin/report.html "7-day acknowledgement" SLA value. A flex/inline-flex
+own line above the text (as it did on the admin/report.html "7-day
+acknowledgement" SLA value). A flex/inline-flex
 ancestor (.btn, .badge, .stepper-dot, ...) blockifies flex-item children
 regardless of their own `display`, so those are unaffected either way; this
 guard only has to hold for `.icon` itself.

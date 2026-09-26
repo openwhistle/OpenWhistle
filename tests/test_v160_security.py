@@ -216,7 +216,7 @@ def test_setup_token_validator(value: str, valid: bool) -> None:
             Settings(secret_key="x" * 32, setup_token=value)  # type: ignore[call-arg]
 
 
-# ── TOTP secrets are encrypted at rest (A2) ────────────────────────────────
+# ── TOTP secrets are encrypted at rest ───────────────────────────────────────
 
 
 @pytest.mark.asyncio
@@ -349,7 +349,7 @@ async def test_migration_004_round_trip_encrypts_and_stays_idempotent(
     await db_session.commit()
 
 
-# ── Session refresh needs CSRF; absolute session lifetime (A3) ─────────────
+# ── Session refresh needs CSRF; absolute session lifetime ────────────────────
 
 
 def _use_session(client: AsyncClient, token: str) -> None:
@@ -543,7 +543,7 @@ def test_seconds_left_is_zero_for_an_invalid_token() -> None:
     assert seconds_left("not.a.valid.jwt") == 0
 
 
-# ── Deactivated accounts never reach the second factor (A5) ────────────────
+# ── Deactivated accounts never reach the second factor ───────────────────────
 
 
 @pytest.mark.asyncio
@@ -697,7 +697,7 @@ async def test_migration_005_backfills_audit_org_from_report_or_actor(
     ), {"a": row_with_report, "b": row_without_report})).tuples().all())
     assert rows[row_with_report] == org.id
     assert rows[row_without_report] == org.id
-
+# ── Setup token, token claims, migration downgrade and user roles ──────────
 
 # ── Guards the v1.6.0 mutation audit found unpinned ───────────────────────
 

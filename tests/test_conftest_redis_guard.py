@@ -54,7 +54,7 @@ def _throwaway_db_url(base_url: str, dbname: str) -> str:
 
 @pytest.mark.asyncio
 async def test_drop_test_schema_leaves_no_tables_and_no_alembic_version() -> None:
-    """Behavioural regression guard (task X4, fix round 1).
+    """Behavioural regression guard.
 
     A source-text check (grepping ``db_engine`` for the string
     "alembic_version") has two failure modes: it stays green if a future

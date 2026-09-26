@@ -630,7 +630,7 @@ class TestConfigV100Defaults:
             assert visible, f"{page}: no visible 'Version X.Y.Z' string found"
             assert visible == [v] * len(visible), (page, visible, v)
 
-        # Regression guard (review round 1): a blanket find-replace of the
+        # Regression guard: a blanket find-replace of the
         # three "current version" spots above once swept in a fourth,
         # unrelated occurrence -- a *historical* claim ("multi-tenancy has
         # existed since 1.0.0") that must never move with app_version. The

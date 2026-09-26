@@ -1,4 +1,4 @@
-"""v1.6.0 final-review guards: one test per finding."""
+"""v1.6.0 release guards, one section per rule."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from sqlalchemy.exc import DBAPIError
 _ROOT = Path(__file__).resolve().parent.parent
 
 
-# --- I7: database errors carry no bound parameters ---------------------------------------
+# --- database errors carry no bound parameters ---------------------------------------
 
 
 async def test_db_error_log_line_has_no_bound_parameter(caplog: pytest.LogCaptureFixture) -> None:
@@ -48,7 +48,7 @@ def test_every_engine_hides_parameters() -> None:
     assert offenders == []
 
 
-# --- I6: the digest is no more precise than the stored day --------------------------------
+# --- the digest is no more precise than the stored day --------------------------------
 
 
 def test_notification_digest_defaults_to_one_day() -> None:
@@ -61,7 +61,7 @@ def test_notification_digest_defaults_to_one_day() -> None:
     assert 'notificationBatchMinutes: "1440"' in values
 
 
-# --- I2: a key change that leaves existing data unreadable refuses to start ---------------
+# --- a key change that leaves existing data unreadable refuses to start ---------------
 
 _KEY_A = "a" * 40
 _KEY_B = "b" * 40
@@ -201,7 +201,7 @@ async def test_rotation_script_names_the_key_mismatch(
     assert UNREADABLE_DATA_MESSAGE in capsys.readouterr().out
 
 
-# --- I8: content search is POST-only and audited -----------------------------------------
+# --- content search is POST-only and audited -----------------------------------------
 
 
 def _csrf_of(client) -> str:  # type: ignore[no-untyped-def]
@@ -320,7 +320,7 @@ async def test_rotation_script_rotates_content_search_terms(
         crypto.decrypt(detail["term"])
 
 
-# --- I10: metadata inside Office packages and PDFs ---------------------------------------
+# --- metadata inside Office packages and PDFs ---------------------------------------
 
 _CAMERA = "SecretCamMaker-4711"
 
@@ -405,7 +405,7 @@ def test_pdf_loses_annotation_authors_photo_exif_and_its_file_id() -> None:
     assert list(reader.pages[0].images)[0].image.size == (8, 8)
 
 
-# --- M11: setup-token guesses are rate-limited ---------------------------------------------
+# --- setup-token guesses are rate-limited ---------------------------------------------
 
 
 async def test_setup_token_guesses_lock_setup(  # type: ignore[no-untyped-def]
@@ -442,7 +442,7 @@ async def test_setup_token_guesses_lock_setup(  # type: ignore[no-untyped-def]
         await _restore_setup(db_session)
 
 
-# --- M12: /set-language is CSRF-protected -------------------------------------------------
+# --- /set-language is CSRF-protected -------------------------------------------------
 
 
 async def test_set_language_without_csrf_is_refused(client) -> None:  # type: ignore[no-untyped-def]
@@ -456,7 +456,7 @@ async def test_set_language_without_csrf_is_refused(client) -> None:  # type: ig
     assert 'name="csrf_token"' in form[:form.index("</form>")]
 
 
-# --- M13: the status session and the attempt counter reveal nothing ----------------------
+# --- the status session and the attempt counter reveal nothing ----------------------
 
 
 async def test_status_view_does_not_extend_the_session(client, db_session) -> None:  # type: ignore[no-untyped-def]
@@ -512,7 +512,7 @@ async def test_reply_rotates_the_session_without_extending_it(client, db_session
     assert 0 < await redis.ttl(f"status-session:{new}") <= 100
 
 
-# --- M25: one fallback for a category without a label ------------------------------------
+# --- one fallback for a category without a label ------------------------------------
 
 
 async def test_an_unlabelled_category_reads_the_same_on_stats_case_page_and_pdf(  # type: ignore[no-untyped-def]
@@ -540,7 +540,7 @@ async def test_an_unlabelled_category_reads_the_same_on_stats_case_page_and_pdf(
     assert expected in text
 
 
-# --- M26: the submission time is shown through the one day formatter ---------------------
+# --- the submission time is shown through the one day formatter ---------------------
 
 
 def test_no_template_formats_the_submission_time_itself() -> None:

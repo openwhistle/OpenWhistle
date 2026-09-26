@@ -549,7 +549,7 @@ async def test_concurrent_final_submits_create_one_report_and_both_show_the_pin(
 async def test_second_click_after_the_draft_was_taken_shows_the_same_pin(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The review's P4: the second POST arrives while the first is still creating."""
+    """The second POST arrives while the first is still creating."""
     import asyncio
 
     import app.api.reports as reports
@@ -891,7 +891,7 @@ async def test_failed_attachment_store_leaves_no_report_and_restores_the_draft(
 async def test_exception_after_the_commit_never_allows_a_second_report(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The review's P5: the report is committed, then the request fails. Retrying
+    """The report is committed, then the request fails. Retrying
     the same review form in the same session shows that report's stored result."""
     import app.api.reports as reports
 
@@ -918,7 +918,7 @@ async def test_exception_after_the_commit_never_allows_a_second_report(
 async def test_commit_whose_reply_is_lost_counts_as_done(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch, files: tuple[tuple[str, bytes], ...]
 ) -> None:
-    """The review's N6 probe: the commit goes through, then CancelledError. With
+    """The commit goes through, then CancelledError. With
     an attachment, too: report and attachments are one commit, the submit's own."""
     import asyncio
 
@@ -955,7 +955,7 @@ async def test_commit_whose_reply_is_lost_counts_as_done(
 async def test_a_commit_failing_without_a_report_is_pending_not_not_sent(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch, fault: str
 ) -> None:
-    """N-R5-2: once the COMMIT is issued, a lookup finding no report proves
+    """Once the COMMIT is issued, a lookup finding no report proves
     nothing (the commit may still land): the claim is kept and the reporter
     is told it is being processed, never "NOT sent"."""
     import asyncio
@@ -1002,14 +1002,14 @@ async def test_a_commit_failing_without_a_report_is_pending_not_not_sent(
     assert await _report_count() == before
 
 
-# ── One draft, one report: the primary key decides (X6 round 4) ─────
+# ── One draft, one report: the primary key decides ───────────────────
 
 
 @pytest.mark.asyncio
 async def test_a_submit_outliving_pending_still_yields_one_report(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The review's R1 probe: pending expires while the first submit still runs;
+    """Pending expires while the first submit still runs;
     the draft comes back and is submitted again."""
     import asyncio
 
@@ -1078,7 +1078,7 @@ async def test_a_second_insert_waits_for_the_first_and_yields_one_report(
 async def test_a_lost_result_write_after_the_commit_never_reopens_the_draft(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The review's R2 probe: the commit went through, storing the result failed."""
+    """The commit went through, storing the result failed."""
     import app.api.reports as reports
     from app.redis_client import get_redis
 
@@ -1207,7 +1207,7 @@ async def test_a_late_submit_never_touches_a_newer_claim(client: AsyncClient) ->
 async def test_two_posts_racing_the_recovery_stay_on_the_same_session(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The review's R3 probe: both load an empty state, only one recovers."""
+    """Both load an empty state, only one recovers."""
     import asyncio
 
     import app.api.reports as reports
@@ -1364,7 +1364,7 @@ async def _strip_report_id(client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_a_stale_save_of_a_pre_v1_6_draft_yields_one_report(client: AsyncClient) -> None:
-    """The review's X6-R4-A probe: a request loads an id-less draft and stalls
+    """A request loads an id-less draft and stalls
     while the reporter submits; its late save must not give the draft a new id."""
     import app.api.reports as reports
     from app.redis_client import get_redis
@@ -1433,7 +1433,7 @@ async def test_a_pre_v1_6_draft_spent_while_loading_is_not_given_an_id(
 async def test_a_submit_failing_before_its_commit_says_not_sent_and_keeps_the_answers(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch, lang: str, message: str
 ) -> None:
-    """The review's X6-R4-B: no bare 500, but the review step with a message."""
+    """No bare 500, but the review step with a message."""
     from app.services import report as report_service
 
     async def _down(*args: object, **kwargs: object) -> None:
@@ -1506,7 +1506,7 @@ async def test_start_over_deletes_a_pre_v1_6_drafts_report_id_too(client: AsyncC
 async def test_a_draft_re_saved_without_an_id_on_every_load_is_given_up_after_3_attempts(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """N-R5-1: the retry is bounded; the draft then counts as expired."""
+    """The retry is bounded; the draft then counts as expired."""
     import json
 
     import app.api.reports as reports
