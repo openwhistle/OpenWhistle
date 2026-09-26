@@ -165,6 +165,13 @@
    "old": "        <h3>Design system</h3>",
    "new": "        <h3>Quality</h3>\n        <ul><li>Delete <code>tests/test_v100.py</code></li></ul>\n\n        <h3>Design system</h3>",
    "tests": "B"
+  },
+  {
+   "id": "process-note-in-comment",
+   "file": "app/services/storage.py",
+   "old": "a re-keyed object's *old* key is a filename,",
+   "new": "a re-keyed object's *old* key is a filename (task 17),",
+   "tests": "O"
   }
  ]
 }

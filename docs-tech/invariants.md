@@ -515,7 +515,7 @@ real behaviour without a dedicated mutation of its own.
 
 ### Deployment and upgrade (final review)
 
-`docs-tech/mutations/v1.6.0-ops.json`: 22 mutations, 22 red.
+`docs-tech/mutations/v1.6.0-ops.json`: 23 mutations, 23 red.
 The CI job `nginx-onion-trust` holds three more guards that no pytest can:
 nginx started as the demo host runs it (the role's file modes, a non-root
 owner, the rendered compose file's `cap_drop`), and header checks written as
@@ -543,6 +543,7 @@ Each was proven red locally with podman: files written `0640` (nginx:
 | `docs-python-m-app` | `docs/docs.html` | `test_the_docs_run_no_module_that_does_not_exist` |
 | `machine-path-committed` | `docs-tech/plans/2026-09-24-v1.6-hardening.md` | `test_no_tracked_file_holds_a_machine_local_path` |
 | `image-ships-unused-font` | `Dockerfile` | `test_the_image_ships_exactly_the_font_files_the_app_css_uses` |
+| `process-note-in-comment` | `app/services/storage.py` | `test_shipped_files_explain_the_code_not_the_review_history` |
 | `build-context-has-superpowers` | `.dockerignore` | `test_local_tooling_and_maintainer_docs_stay_out_of_the_build_context` |
 | `serena-tracked` | `.gitignore` | `test_local_tooling_and_maintainer_docs_stay_out_of_the_build_context` |
 | `docs-link-docs-tech` | `docs/docs.html` | `test_no_published_page_links_docs_tech` |

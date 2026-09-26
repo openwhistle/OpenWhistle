@@ -102,6 +102,31 @@ def test_no_tracked_file_holds_a_machine_local_path() -> None:
     assert not offenders, offenders
 
 
+_PROCESS_NOTE = re.compile(
+    r"fix[ -]rounds?\b|\bround[ -]\d\b|\bruling\b|\breviewers?\b|\bre-review|\btask[ -]x?\d"
+    r"|chrome[ -](?:review|check) finding",
+    re.IGNORECASE,
+)
+_SHIPPED = re.compile(r"(?:app|nginx|ansible|charts|docs)/|docker-compose[^/]*\.yml$|Dockerfile$")
+
+
+def test_shipped_files_explain_the_code_not_the_review_history() -> None:
+    """What ships or is published says why the code is like this; "fix round 2"
+    or "Task 17" points at review notes the reader of the image or site does
+    not have."""
+    files = subprocess.run(  # noqa: S603
+        ["git", "ls-files", "-z"], cwd=ROOT, capture_output=True, check=True,  # noqa: S607
+    ).stdout.decode().split("\0")
+    offenders = [
+        f"{name}: {m.group(0)}"
+        for name in files
+        if _SHIPPED.match(name) and (ROOT / name).is_file()
+        for m in [_PROCESS_NOTE.search((ROOT / name).read_bytes().decode("utf-8", "ignore"))]
+        if m
+    ]
+    assert not offenders, offenders
+
+
 def test_the_image_ships_exactly_the_font_files_the_app_css_uses() -> None:
     dockerfile = (ROOT / "Dockerfile").read_text()
     copied = set(re.findall(r"docs/fonts/([\w.-]+\.woff2)", dockerfile))
