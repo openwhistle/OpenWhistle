@@ -348,7 +348,7 @@ class TestAdminLocationRoutes:
         assert resp.status_code in (200, 302, 401)
 
     async def test_language_switch_fr(self, client: AsyncClient) -> None:
-        resp = await client.post("/set-language", data={
+        resp = await client.post("/set-language", data={"csrf_token": await _lang_csrf(client),
             "lang": "fr",
             "next": "/submit",
         })
@@ -358,7 +358,7 @@ class TestAdminLocationRoutes:
         assert cookies.get("ow-lang") == "fr"
 
     async def test_language_switch_ptbr(self, client: AsyncClient) -> None:
-        resp = await client.post("/set-language", data={
+        resp = await client.post("/set-language", data={"csrf_token": await _lang_csrf(client),
             "lang": "pt-br",
             "next": "/submit",
         })
@@ -367,9 +367,15 @@ class TestAdminLocationRoutes:
         assert cookies.get("ow-lang") == "pt-br"
 
     async def test_language_switch_unknown_falls_back(self, client: AsyncClient) -> None:
-        await client.post("/set-language", data={
+        await client.post("/set-language", data={"csrf_token": await _lang_csrf(client),
             "lang": "zz",
             "next": "/submit",
         })
         cookies = {c.name: c.value for c in client.cookies.jar}
         assert cookies.get("ow-lang") == "en"
+
+
+async def _lang_csrf(client: AsyncClient) -> str:
+    """/set-language is CSRF-protected: load a page first for the cookie."""
+    await client.get("/submit")
+    return client.cookies.get("ow_csrf") or ""

@@ -430,6 +430,7 @@ async def set_language(
     request: Request,
     lang: str = Form(...),
     next_url: str = Form("/submit", alias="next"),
+    _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
     safe_lang = {"en": "en", "de": "de", "fr": "fr", "pt-br": "pt-br"}.get(lang, "en")
     parsed = urlsplit(next_url)

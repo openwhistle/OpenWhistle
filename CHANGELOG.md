@@ -43,6 +43,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Security
 
+- **Switching the language needs the CSRF token** (`POST /set-language`), like every other
+  form: another site can no longer change a visitor's language cookie.
 - **Categories and locations stay inside their organisation.** With multi-tenancy on, an org
   admin saw every organisation's categories and locations and could deactivate or reactivate
   them by id; now the lists are scoped and another organisation's id answers 404. A slug or

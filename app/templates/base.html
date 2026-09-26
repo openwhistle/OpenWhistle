@@ -94,6 +94,7 @@
                         {% for code, label in [('en', 'English'), ('de', 'Deutsch'), ('fr', 'Français'), ('pt-br', 'Português (BR)')] %}
                         <li>
                             <form method="post" action="/set-language" class="u-m0">
+                                <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                                 <input type="hidden" name="next" value="{{ request.url.path }}{% if request.url.query %}?{{ request.url.query }}{% endif %}">
                                 <input type="hidden" name="lang" value="{{ code }}">
                                 <button type="submit" class="lang-picker-option {{ 'active' if lang == code else '' }}" lang="{{ code }}"{% if lang == code %} aria-current="true"{% endif %}>

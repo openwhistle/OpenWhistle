@@ -421,3 +421,17 @@ async def test_setup_token_guesses_lock_setup(  # type: ignore[no-untyped-def]
     finally:
         await redis.delete(_SETUP_TOKEN_FAILURES)
         await _restore_setup(db_session)
+
+
+# --- M12: /set-language is CSRF-protected -------------------------------------------------
+
+
+async def test_set_language_without_csrf_is_refused(client) -> None:  # type: ignore[no-untyped-def]
+    resp = await client.post(
+        "/set-language", data={"lang": "de", "next": "/submit", "csrf_token": "forged"},
+        follow_redirects=False,
+    )
+    assert resp.status_code == 403
+    page = (await client.get("/submit")).text
+    form = page[page.index('action="/set-language"'):]
+    assert 'name="csrf_token"' in form[:form.index("</form>")]

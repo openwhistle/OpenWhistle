@@ -131,7 +131,9 @@ async def test_set_language_admin_subpath_falls_back_to_dashboard(
     """/admin/reports/... is not in the allowlist, so it should fall back to /admin/dashboard."""
     resp = await client.post(
         "/set-language",
-        data={"lang": "de", "next": "/admin/reports/some-id"},
+        data={
+            "csrf_token": await _lang_csrf(client), "lang": "de", "next": "/admin/reports/some-id",
+        },
         follow_redirects=False,
     )
     assert resp.status_code == 303
@@ -145,7 +147,7 @@ async def test_set_language_unknown_path_falls_back_to_submit(
     """An unknown path (not /admin/*) falls back to /submit."""
     resp = await client.post(
         "/set-language",
-        data={"lang": "en", "next": "/some-unknown-path"},
+        data={"csrf_token": await _lang_csrf(client), "lang": "en", "next": "/some-unknown-path"},
         follow_redirects=False,
     )
     assert resp.status_code == 303
@@ -159,7 +161,7 @@ async def test_set_language_exact_allowlist_path_is_preserved(
     """Exact allowlist entries (/status) are preserved without modification."""
     resp = await client.post(
         "/set-language",
-        data={"lang": "en", "next": "/status"},
+        data={"csrf_token": await _lang_csrf(client), "lang": "en", "next": "/status"},
         follow_redirects=False,
     )
     assert resp.status_code == 303
@@ -171,7 +173,7 @@ async def test_set_language_sets_lang_cookie(client: AsyncClient) -> None:
     """The ow-lang cookie must be set to the requested language."""
     resp = await client.post(
         "/set-language",
-        data={"lang": "de", "next": "/submit"},
+        data={"csrf_token": await _lang_csrf(client), "lang": "de", "next": "/submit"},
         follow_redirects=False,
     )
     assert resp.status_code == 303
@@ -905,3 +907,9 @@ async def test_whistleblower_download_attachment_missing_bytes_returns_404(
 
     resp = await client.get(f"/status/attachments/{attachment.id}", follow_redirects=False)
     assert resp.status_code == 404
+
+
+async def _lang_csrf(client: AsyncClient) -> str:
+    """/set-language is CSRF-protected: load a page first for the cookie."""
+    await client.get("/submit")
+    return client.cookies.get("ow_csrf") or ""
