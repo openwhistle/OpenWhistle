@@ -86,3 +86,17 @@ def test_helm_extra_env_reaches_the_configmap() -> None:
         capture_output=True, text=True, check=True,
     )
     assert 'SECURE_COOKIES: "false"' in run.stdout
+
+
+def test_no_tracked_file_holds_a_machine_local_path() -> None:
+    """A session scratchpad path (user, session id) once reached a public plan."""
+    files = subprocess.run(  # noqa: S603
+        ["git", "ls-files", "-z"], cwd=ROOT, capture_output=True, check=True,  # noqa: S607
+    ).stdout.decode().split("\0")
+    local = re.compile(r"/tmp/claude-\d+/|/var/home/\w+|/home/jpy\b")
+    offenders = [
+        name for name in files
+        if name and name != "tests/test_v160_ops.py" and (ROOT / name).is_file()
+        and local.search((ROOT / name).read_bytes().decode("utf-8", "ignore"))
+    ]
+    assert not offenders, offenders
