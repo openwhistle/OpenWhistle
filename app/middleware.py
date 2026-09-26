@@ -144,6 +144,16 @@ class SecurityMiddleware:
                 # cache of a shared office computer for the next user to find.
                 if not str(scope.get("path", "")).startswith("/static/"):
                     mutable["Cache-Control"] = "no-store"
+                else:
+                    # /static/ is otherwise unversioned (fonts.css's @font-face
+                    # src: url(...) values are plain paths — static_url()'s
+                    # ?v={app_version} only reaches <link>/<script> tags a
+                    # template renders, not another CSS file's own url()s). A
+                    # font's ETag/Last-Modified still let a conditional GET
+                    # find out a file changed: no-cache forces that revalidation
+                    # on every request instead of trusting a stale cached copy,
+                    # while a 304 (unchanged file) costs nothing.
+                    mutable["Cache-Control"] = "no-cache"
                 # Remove server identification headers
                 for h in ("server", "x-powered-by"):
                     if h in mutable:
