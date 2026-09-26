@@ -121,6 +121,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Privacy
 
+- **The whistleblower's status session is no longer extended on every view**, so its remaining
+  lifetime in Redis does not reveal the last visit; it ends 2 hours after login. Failed-attempt
+  counters are keyed by an HMAC of the case number, not the case number itself.
 - **Photos inside Word and Excel files lose their EXIF** (GPS, camera) on upload, like a photo
   uploaded on its own. **PDFs lose their comment authors and times**, the EXIF of embedded
   JPEG photos, and the file identifier that linked the upload to the original file.

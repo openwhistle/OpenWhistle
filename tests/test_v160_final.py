@@ -435,3 +435,38 @@ async def test_set_language_without_csrf_is_refused(client) -> None:  # type: ig
     page = (await client.get("/submit")).text
     form = page[page.index('action="/set-language"'):]
     assert 'name="csrf_token"' in form[:form.index("</form>")]
+
+
+# --- M13: the status session and the attempt counter reveal nothing ----------------------
+
+
+async def test_status_view_does_not_extend_the_session(client, db_session) -> None:  # type: ignore[no-untyped-def]
+    from app.redis_client import get_redis
+    from app.services.report import create_report
+
+    report, pin = await create_report(db_session, "corruption", "Status session TTL test.")
+    await client.get("/status")
+    login = await client.post("/status", data={
+        "case_number": report.case_number, "pin": pin,
+        "csrf_token": client.cookies.get("ow_csrf")}, follow_redirects=False)
+    assert login.status_code == 303
+    key = f"status-session:{client.cookies.get('ow-status-session')}"
+    redis = await get_redis()
+    await redis.expire(key, 100)
+    assert (await client.get("/status")).status_code == 200
+    assert 0 < await redis.ttl(key) <= 100
+
+
+async def test_attempt_counter_key_holds_no_case_number(client) -> None:  # type: ignore[no-untyped-def]
+    import uuid
+
+    from app.redis_client import get_redis
+
+    case = f"OW-2026-{uuid.uuid4().int % 100000:05d}"
+    await client.get("/status")
+    await client.post("/status", data={
+        "case_number": case, "pin": str(uuid.uuid4()), "csrf_token": client.cookies.get("ow_csrf")})
+    redis = await get_redis()
+    keys = [k.decode() if isinstance(k, bytes) else k
+            async for k in redis.scan_iter("openwhistle:wb_ratelimit:*")]
+    assert keys and not any(case in k for k in keys)

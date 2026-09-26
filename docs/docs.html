@@ -1982,6 +1982,8 @@ CLAMAV_HOST=clamav</code></pre>
             <code>/status/attachments/{id}</code> and require an active
             <code>ow-status-session</code> cookie. The session must be tied to the same
             report that owns the attachment — a whistleblower cannot access another report's files.
+            It ends 2 hours after the login and is not extended by viewing, so its remaining
+            lifetime does not tell when the case was last opened.
           </li>
           <li>
             <strong>Admin:</strong> downloads are available at

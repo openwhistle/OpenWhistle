@@ -7,6 +7,8 @@ informational message only — a correct case number and PIN always succeed (see
 For admin login: rate limits are tracked per username.
 """
 
+import hashlib
+import hmac
 import time
 
 from redis.asyncio import Redis
@@ -20,9 +22,16 @@ _SPRAY_ALERTED = "openwhistle:admin_spray_alerted"
 _SETUP_TOKEN_FAILURES = "openwhistle:setup_token_failures"  # noqa: S105 — Redis key name
 
 
+def _wb_key(case_key: str) -> str:
+    """The Redis key for a case's failure counter: an HMAC, never the case number,
+    so a Redis dump does not list which cases someone tried to open."""
+    digest = hmac.new(settings.secret_key.encode(), case_key.encode(), hashlib.sha256)
+    return f"{_WB_PREFIX}{digest.hexdigest()}"
+
+
 async def record_whistleblower_failure(redis: Redis, case_key: str) -> int:
     """Record a failed access attempt. Returns total failure count."""
-    key = f"{_WB_PREFIX}{case_key}"
+    key = _wb_key(case_key)
     count = await redis.incr(key)
     if count == 1:
         await redis.expire(key, settings.access_lockout_minutes * 60)
@@ -31,13 +40,13 @@ async def record_whistleblower_failure(redis: Redis, case_key: str) -> int:
 
 async def reset_whistleblower_attempts(redis: Redis, case_key: str) -> None:
     """Clear the failure counter after a successful access."""
-    key = f"{_WB_PREFIX}{case_key}"
+    key = _wb_key(case_key)
     await redis.delete(key)
 
 
 async def get_whistleblower_lockout_ttl(redis: Redis, case_key: str) -> int:
     """Returns seconds remaining in the lockout window, or 0 if not locked."""
-    key = f"{_WB_PREFIX}{case_key}"
+    key = _wb_key(case_key)
     ttl = await redis.ttl(key)
     return max(0, int(ttl))
 

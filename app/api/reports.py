@@ -994,7 +994,8 @@ async def status_get(
             )
             report = await report_service.get_report_by_id(db, uuid.UUID(decoded_id))
             if report:
-                await redis.expire(f"status-session:{session_key}", 7200)
+                # No TTL refresh on view: the session ends 2 h after login, so its
+                # remaining lifetime does not reveal when the page was last opened.
                 replied = request.query_params.get("replied") == "1"
                 success = "status.reply.sent" if replied else None
 
