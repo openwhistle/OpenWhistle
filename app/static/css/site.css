@@ -1394,9 +1394,14 @@ input[type="file"].form-control::file-selector-button {
    handles that overflow, but its default scroll position hides whatever sits
    in the last column — the row's own "view" action — behind the fold with no
    visual hint to scroll. Pin that column so the action stays reachable
-   regardless of how wide any other column's content gets. */
+   regardless of how wide any other column's content gets.
+   Scoped by an explicit class on both the header and the data cell, not
+   `th:last-child` — not every .table-stack table's last column is an action
+   column (admin/audit_log.html's is "Detail", real content), and a positional
+   selector would pin that header while its own data cells scroll normally
+   underneath it, desyncing the two. */
 .table-stack td.stack-action,
-.table-stack th:last-child {
+.table-stack th.stack-action-header {
   position: sticky;
   right: 0;
   background: var(--surface-card);

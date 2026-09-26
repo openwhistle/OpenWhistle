@@ -1289,3 +1289,28 @@ def test_dashboard_table_action_column_is_pinned_and_status_badge_wraps() -> Non
         css,
         re.DOTALL,
     ), "the dashboard table's status badge must be allowed to wrap"
+
+
+_TABLE_STACK_TEMPLATES = sorted(
+    p for p in (TEMPLATES / "admin").glob("*.html") if 'class="table-stack"' in p.read_text()
+)
+
+
+@pytest.mark.parametrize("tpl", _TABLE_STACK_TEMPLATES, ids=lambda p: p.name)
+def test_table_stack_sticky_action_column_is_paired_header_and_data(tpl: Path) -> None:
+    """The sticky-action CSS (`.table-stack td.stack-action,
+    .table-stack th.stack-action-header`) used to be `.table-stack
+    th:last-child` — every `.table-stack` table's last header, regardless of
+    whether that table has an action column at all. admin/audit_log.html's
+    last column is "Detail" (real content, td class `aud-detail-cell`, not
+    `stack-action`): the positional selector pinned its header to the right
+    edge while its own data column scrolled normally underneath it, a real
+    header/data desync this diff did not intend. A table opts in with the
+    class on both cells or neither — never one without the other."""
+    html = tpl.read_text()
+    has_header = "stack-action-header" in html
+    has_data = 'class="stack-action"' in html
+    assert has_header == has_data, (
+        f"{tpl.name}: stack-action-header present={has_header}, "
+        f"stack-action (td) present={has_data} — must match"
+    )
