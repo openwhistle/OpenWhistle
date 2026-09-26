@@ -1388,6 +1388,12 @@ input[type="file"].form-control::file-selector-button {
 .table-wrapper {
   overflow-x: auto;
 }
+/* The telemetry request line is one unbroken URL; at phone width it would
+   widen the whole page. Wrap it instead, anywhere. */
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 /* A long unbreakable value (a German status badge — "Rückmeldung ausstehend" —
    is wider than its English equivalent and forces a nowrap badge) can widen
    the table past .table-wrapper's scrollable viewport. The wrapper already
