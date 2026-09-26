@@ -225,3 +225,17 @@ def test_the_demo_credentials_sit_beside_the_login_form(browser: Browser, base_u
     assert box and form
     assert box["x"] >= form["x"] + form["width"], (box, form)
     assert box["y"] < form["y"] + form["height"], (box, form)
+
+
+@pytest.mark.parametrize("lang", ["en", "de"])
+def test_the_wizard_first_step_fits_a_full_hd_window(
+    browser: Browser, base_url: str, lang: str
+) -> None:
+    """1920 x 890 is a Full HD screen minus the browser's own chrome. The first
+    step, with the demo banner, ends flush with it: no scrollbar, footer in view."""
+    ctx = browser.new_context(viewport={"width": 1920, "height": 890}, base_url=base_url)
+    page = ctx.new_page()
+    page.goto(f"/submit?lang={lang}")
+    heights = page.evaluate("[document.documentElement.scrollHeight, innerHeight]")
+    ctx.close()
+    assert heights[0] == heights[1], heights

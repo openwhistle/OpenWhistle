@@ -1485,8 +1485,12 @@ tr:hover td {
   padding-right: 0.75rem;
 }
 .pagination-disabled {
+  /* Muted colour, not opacity: 38 % opacity fell below the 4.5:1 contrast
+     axe asks of text, which showed once the dashboard had a second page. */
+  background: transparent;
+  border-style: dashed;
+  color: var(--muted);
   cursor: default;
-  opacity: 0.38;
   pointer-events: none;
 }
 .pagination-page {
@@ -1580,8 +1584,10 @@ main:has(> .page-fill) {
   background: var(--canvas);
   grid-column: 2;
   grid-row: 1;
-  max-width: 680px;
-  padding: 2.5rem 3rem;
+  /* 860 px and this padding keep the wizard's first step inside a Full HD
+     window (1920 x 890 with browser chrome), demo banner included. */
+  max-width: 860px;
+  padding: 1.75rem 3rem;
 }
 .sidebar-eyebrow {
   color: hsla(0, 0%, 100%, 0.55);
@@ -1663,7 +1669,7 @@ main:has(> .page-fill) {
   display: flex;
   gap: 0;
   margin-bottom: 0.5rem;
-  margin-top: 1.5rem;
+  margin-top: 1rem;
   overflow: hidden;
 }
 .stepper-step {
