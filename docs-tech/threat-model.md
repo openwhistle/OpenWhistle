@@ -24,6 +24,7 @@ Type: explanation. What OpenWhistle defends, against whom, and what it deliberat
 | Password sprayer, TOTP guesser | an admin session | lockout, spraying alert, single-use TOTP | `tests/test_v150_auth.py` |
 | Stolen admin session cookie | lasting access | 60 min TTL, 12 h absolute limit, CSRF on refresh | `test_session_older_than_the_absolute_limit_is_rejected` |
 | Slack/Teams provider | case volume and timing | webhooks carry counts only | `test_webhook_payloads_carry_no_case_number` |
+| Whoever runs or watches `telemetry.wdkro.de` | which organisations run OpenWhistle | off unless an admin agrees; only a random id and the version, no host, URL or counts; no redirect followed; the far end keeps no address | `test_a_report_is_one_get_with_the_id_and_the_version_and_nothing_else`, `test_nothing_is_sent_without_consent_or_under_a_hard_off` |
 | Malicious upload | admin's machine | type + magic check, metadata strip, optional ClamAV fail-closed | `test_upload_is_refused_when_the_scanner_is_unreachable` |
 
 ## The PIN in Redis for 120 seconds
@@ -100,4 +101,5 @@ Pinned by `test_the_result_is_kept_120_seconds_for_a_second_click`,
 | A handler who reveals an identity and passes it on | HinSchG allows the handler to know it | the audit log names who revealed it and why |
 | TLS terminated by a proxy the operator configured badly | outside the bundled stack | follow the deployment guide; keep access logs off |
 | Traffic analysis across a long time window | batching narrows, cannot remove | raise `NOTIFICATION_BATCH_MINUTES` |
+| The installation count's source address | a TCP request has one; the far end is trusted not to log it, and anyone on the path sees that this host talks to `telemetry.wdkro.de` once a day | leave it off, or send it through a proxy; the id and version alone name no organisation |
 | Content search over more than 5 000 reports per scope | decrypt-in-memory ceiling | narrow with filters (documented limit) |
