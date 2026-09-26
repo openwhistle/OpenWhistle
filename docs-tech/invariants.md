@@ -494,7 +494,7 @@ dashboard's pinned action column in the running app, so the script cannot
 change the CSS it is served; `sticky-action-static`, `status-badge-nowrap` and
 `dashboard-header-unpinned` pin the same rules in source.
 
-**Doubly redundant on purpose — task X13 (PIN/case-number overflow).** The
+**Doubly redundant on purpose (PIN/case-number overflow).** The
 fix has two independent parts: `.token` no longer forces `white-space:
 nowrap`, and the case number/PIN are rendered through `wbr_after_hyphens`
 (`app/templating.py`), which inserts a `<wbr>` after each hyphen. In Chromium,

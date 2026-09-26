@@ -36,9 +36,8 @@
 
   <style>
     /* ================================================================
-       OpenWhistle Blog — shares docs/index.html's design tokens
-       (Task X12: the blog scaffold used to run its own Spectral/Source
-       Serif 4 + navy design, disconnected from the rest of the site)
+       OpenWhistle Blog — shares docs/index.html's design tokens, so the
+       blog looks like the rest of the site
        ================================================================ */
 
     :root {
@@ -424,7 +423,7 @@
     /* ── Responsive ─────────────────────────────────────────────── */
     /* Nav collapses at 1080px, not 768px: at 1024px the full item list
        no longer fits the nav-inner row and overflows the viewport
-       horizontally (Task X12 Chrome-check finding). */
+       horizontally. */
     @media (max-width: 1080px) {
       .nav-links { display: none; }
       .nav-links.open {

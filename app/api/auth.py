@@ -73,8 +73,7 @@ def _local_review_reachable(request: Request) -> bool:
         # A malformed bracketed Host (e.g. "[::1].evil.com", "[::1") makes
         # urlsplit raise ValueError instead of returning an unparsed/empty
         # hostname — unparsable is not loopback, so treat it as unreachable
-        # rather than let the exception escape as an uncaught 500 (fix
-        # round 2 finding).
+        # rather than let the exception escape as an uncaught 500.
         hostname = urlsplit(f"//{host_header}").hostname or ""
     except ValueError:
         return False
@@ -274,7 +273,7 @@ async def login_post(
 
 
 # Every method FastAPI/Starlette route matching supports, registered on ONE
-# api_route (fix round 2, controller ruling): a per-method decorator for only
+# api_route: a per-method decorator for only
 # GET/HEAD/POST still left PUT/DELETE/PATCH/OPTIONS answering Starlette's
 # default 405 — which, like the 405 this whole route exists to avoid for
 # GET/HEAD, still confirms to a probe that *some* handler lives at this path.

@@ -3,25 +3,14 @@ Sora and JetBrains Mono (self-hosted web fonts)
 
 Used by every page under docs/ (the landing pages, docs.html, roadmap.html
 and the blog) for --font-display/--font-body (Sora) and --font-mono
-(JetBrains Mono). Self-hosted so the pages carry no external font CDN
-(Google Fonts or otherwise) — see CLAUDE.md's font policy.
+(JetBrains Mono). Self-hosted so the pages load no font from an external
+CDN.
 
-Task X12 rebuilt docs/blog/*.html onto this same design (they used to run
-their own Spectral/Source Serif 4 + navy design, disconnected from the
-rest of the site); with docs/de/index.html already migrated in an earlier
-task, nothing under docs/ referenced Spectral or Source Serif 4 any more,
-so both families' `.woff2` files and LICENSE files were deleted from this
-directory rather than kept unreferenced.
+Source
+------
 
-Round 1 called `sora-latin-*.woff2`/`JetBrainsMono-*.woff2` "unrelated,
-not covered by this fix" — round 2's broader coverage test found the same
-class of gap here too: docs/index.html's `.hero-subline`/`.docs-lead`/
-`.section-subheading` ask for Sora weight 300 (only 400/500/600/700 were
-shipped), and `.t-comment` (inside a code block, so it inherits
-`font-family: var(--font-mono)` from its ancestor, not body's Sora) and
-docs/index.html's `.footer-logo` ask for JetBrains Mono weight 500 and
-weight 400 italic (only 400/700 normal were shipped). Fixed the same way
-as any other missing-weight gap:
+Every file is byte-identical (`cmp`) to the file of the same weight and
+style in these packages; the sha512 is the npm registry's dist.integrity:
 
   @fontsource/sora@5.3.0
     https://registry.npmjs.org/@fontsource/sora/-/sora-5.3.0.tgz
@@ -31,83 +20,34 @@ as any other missing-weight gap:
     https://registry.npmjs.org/@fontsource/jetbrains-mono/-/jetbrains-mono-5.3.0.tgz
     sha512-fqDfB5I9f1p1TV486aUgB9t8zP84P0O1FtQR5Ol9vjwPy+S+EIGlVYm1cvj2W5shcZMTg2nZFdVMoH5wFu8a1A==
 
-Verified the *existing* `sora-latin-{400,500,600,700}-normal.woff2` are
-byte-identical to this exact package's own files (`cmp`) — same source,
-confirmed rather than assumed. New file: `sora-latin-300-normal.woff2`
-(docs.html + docs/index.html both use weight 300; no `latin-ext`, matching
-the flat single-subset style this family already used here).
+Files
+-----
 
-**Round 3: `JetBrainsMono-Regular.woff2`/`JetBrainsMono-Bold.woff2`
-re-sourced.** Round 2 found they did NOT match `@fontsource/jetbrains-mono`
-at all (`cmp` differed at byte 11; they were roughly double the package's
-own latin-only 400/700 file sizes) and left them alone as an unverified
-prior origin, out of that round's scope. Controller ruling: re-source them
-properly rather than carry the gap forward. Re-verified the tarball fresh
-(`npm view @fontsource/jetbrains-mono@5.3.0 dist.integrity` against a
-freshly downloaded tarball's own sha512 — matches exactly, same value as
-below) and replaced both files' bytes with the package's own
-`jetbrains-mono-latin-400-normal.woff2`/`jetbrains-mono-latin-700-normal.woff2`
-(same target filenames — nothing referencing them needed to change; sizes
-dropped from ~39.5 KB to ~20–21 KB each, confirming the previous files
-really were a different, larger source). All four `JetBrainsMono-*.woff2`
-files in this directory (Regular, Bold, and round 2's Medium/Italic) are
-now `cmp`-identical to this one package:
-
-  @fontsource/jetbrains-mono@5.3.0
-    https://registry.npmjs.org/@fontsource/jetbrains-mono/-/jetbrains-mono-5.3.0.tgz
-    sha512-fqDfB5I9f1p1TV486aUgB9t8zP84P0O1FtQR5Ol9vjwPy+S+EIGlVYm1cvj2W5shcZMTg2nZFdVMoH5wFu8a1A==
-
+  sora-latin-{300,400,500,600,700}-normal.woff2
   JetBrainsMono-Regular.woff2  (weight 400 normal)
   JetBrainsMono-Bold.woff2     (weight 700 normal)
-  JetBrainsMono-Medium.woff2   (weight 500 normal — docs/index.html `.footer-logo`)
-  JetBrainsMono-Italic.woff2   (weight 400 italic — docs.html + docs/index.html `.t-comment`)
+  JetBrainsMono-Medium.woff2   (weight 500 normal)
+  JetBrainsMono-Italic.woff2   (weight 400 italic)
 
-No `unicode-range` was added: none of these four rules ever declared one,
-and every use of this family on every page is plain ASCII (case numbers, PINs,
-timestamps, code-comment prose, the "OpenWhistle" wordmark), and adding a
-narrow range without a second face to cover what it excludes would only
-ever *lose* coverage, never gain any — nothing to "update" that wasn't
-already correct.
+Latin subset only, no `unicode-range`: every use of JetBrains Mono is plain
+ASCII (case numbers, PINs, timestamps, code, the wordmark), and a narrow
+range without a second face would only lose coverage.
 
-**These are the same files the running application ships**, not a
-separate copy: `app/static/fonts/` does not exist in the repository at
-all — the Dockerfile (`COPY --chown=openwhistle:openwhistle
-docs/fonts/*.woff2 /app/app/static/fonts/`) copies this exact directory
-into the image at build time, and `app/static/css/fonts.css` declares the
-identical four `@font-face` rules (400/700 normal only — the app never
-uses weight 500 or italic JetBrains Mono) pointing at the same four
-filenames. Re-sourcing here fixes both the public docs pages and the
-running app in one step; `app/static/css/fonts.css` needed no edit since
-the filenames it references didn't change.
+Sora has no italic face upstream, so no page asks for italic Sora; emphasis
+uses weight or colour instead. `test_every_docs_page_font_usage_has_a_matching_font_face`
+checks that every (family, weight, style) a docs page uses has a shipped
+`@font-face`, with no exceptions.
 
-License: SIL Open Font License 1.1 for both Sora and JetBrains Mono (same
-license family as DejaVu, in app/fonts/). Round 2 left both
-without a LICENSE file in this directory, flagged as a pre-existing gap;
-closed here alongside the JetBrains Mono re-sourcing since the packages
-were already being verified anyway: `sora-LICENSE`, `jetbrains-mono-LICENSE`
-(both unmodified, full OFL-1.1 text as shipped by their packages).
+The application
+---------------
 
-Sora italic: removed at the source, not shipped as an exception
--------------------------------------------------------------------
+`app/static/fonts/` is not in the repository: the Dockerfile copies the six
+faces `app/static/css/fonts.css` declares (Sora 400/500/600/700, JetBrains
+Mono Regular/Bold) from this directory into the image. One copy serves both
+the site and the app.
 
-Round 2 found three spots on docs/index.html requesting italic Sora
-(`.footer-tagline`, `.hero-headline .accent-emphasis`, `.hero-subline
-em`) and, since **Sora has no italic member at all** — verified by
-extracting the official `@fontsource/sora@5.3.0` package and confirming
-its `files/` directory contains zero `*-italic` files, upstream — excused
-them in the coverage test rather than leave it permanently red. Round 3's
-controller ruling: don't ship (or excuse) a style the family can never
-have — remove the request instead. All three rules now use `font-weight`
-or an existing `color` token for emphasis in place of `font-style:
-italic` (the `.hero-subline em` rule also needed an explicit `font-style:
-normal`, since `<em>` is browser-default-italic and simply deleting the
-authored italic line would have left the user-agent stylesheet's own
-italic in force):
+License
+-------
 
-  .footer-tagline              font-style: italic  ->  font-weight: 500 (already shipped)
-  .hero-headline .accent-emphasis   font-style: italic  ->  (dropped; var(--accent) color already carries the emphasis)
-  .hero-subline em              font-style: italic  ->  font-style: normal; font-weight: 600 (already shipped)
-
-`test_every_docs_page_font_usage_has_a_matching_font_face` no longer
-carries any exception list — every (family, weight, style) any docs/ page
-uses now has a real, shipped `@font-face`, with nothing excused.
+SIL Open Font License 1.1 for both families: `sora-LICENSE`,
+`jetbrains-mono-LICENSE`, unmodified as shipped by their packages.

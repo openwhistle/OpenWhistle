@@ -499,7 +499,7 @@ async def read_attachment(db: AsyncSession, attachment: Attachment) -> bytes:
             data = await get_storage_backend().get(attachment.storage_key)
         except StorageObjectNotFoundError as exc:
             # The attachment id, never storage_key: a not-yet-rekeyed legacy
-            # row's storage_key is the original filename (task 17).
+            # row's storage_key is the original filename.
             raise LookupError(str(attachment.id)) from exc
     elif attachment.data is None:
         raise LookupError(str(attachment.id))
@@ -570,7 +570,7 @@ async def delete_stored_objects(keys: list[str]) -> None:
             await backend.delete(key)
         except Exception:  # noqa: BLE001
             # No key in the log line: a not-yet-rekeyed legacy row's key is
-            # the original filename (task 17).
+            # the original filename.
             logging.getLogger(__name__).exception("Failed to delete a stored object")
 
 

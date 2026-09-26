@@ -85,7 +85,7 @@ services:
     networks:
       - internal
 
-  # Optional upload virus scan (Task 20). Off unless CLAMAV_HOST is set and
+  # Optional upload virus scan. Off unless CLAMAV_HOST is set and
   # this profile is enabled: `COMPOSE_PROFILES=clamav`. Not reachable from the
   # host, and not on `proxy` — nginx has no business reaching clamd, so it
   # shares only `internal` with `app`. `internal` has no internet access, but

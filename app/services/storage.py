@@ -104,8 +104,8 @@ class S3StorageBackend(StorageBackend):
             Body=data,
             ContentType=content_type,
         )
-        # No key in the log line: a re-keyed object's *old* key is a filename
-        # (task 17), and put()/delete()/get() share this backend either way.
+        # No key in the log line: a re-keyed object's *old* key is a filename,
+        # and put()/delete()/get() share this backend either way.
         log.info("Stored attachment in S3")
 
     async def get(self, key: str) -> bytes:
