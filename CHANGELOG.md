@@ -9,7 +9,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [2.0.0] — 2026-09-26
 
-A major version, not a feature release: the webhook payload, the Compose TLS/port
+A major version: the webhook payload, the Compose TLS/port
 layout and the first-run setup flow all break compatibility with 1.5.x — see
 Changed (breaking) below and the upgrade notes before deploying.
 

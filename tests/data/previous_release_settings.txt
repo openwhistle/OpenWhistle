@@ -2,8 +2,11 @@
 database_url
 redis_url
 secret_key
+encryption_key
+encryption_key_previous
 algorithm
 access_token_expire_minutes
+session_max_hours
 max_access_attempts
 access_lockout_minutes
 max_login_attempts
@@ -11,7 +14,9 @@ login_lockout_minutes
 admin_failed_login_alert_threshold
 admin_failed_login_alert_window_minutes
 demo_mode
+local_review_login
 secure_cookies
+setup_token
 app_name
 app_version
 log_level
@@ -45,9 +50,9 @@ oidc_client_secret
 oidc_server_metadata_url
 oidc_redirect_uri
 brand_primary_color
-brand_secondary_color
 brand_logo_url
 app_public_url
+onion_location
 notify_email_enabled
 notify_email_to
 notify_email_from
@@ -67,3 +72,7 @@ retention_days
 multi_tenancy_enabled
 default_org_slug
 update_check_enabled
+telemetry_enabled
+clamav_host
+clamav_port
+clamav_timeout_seconds
