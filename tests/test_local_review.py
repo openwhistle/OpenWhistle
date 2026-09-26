@@ -71,8 +71,12 @@ async def _delete_demo_admin(db: AsyncSession) -> None:
 
 
 def test_local_review_login_requires_demo_mode() -> None:
-    with pytest.raises(ValidationError):
-        Settings(secret_key="x" * 32, local_review_login=True, demo_mode=False)
+    # A loopback, plain-HTTP stack, so only the missing DEMO_MODE can refuse it.
+    with pytest.raises(ValidationError, match="DEMO_MODE"):
+        Settings(
+            secret_key="x" * 32, local_review_login=True, demo_mode=False,
+            app_public_url="http://localhost:4009", secure_cookies=False,
+        )
 
 
 def test_local_review_login_allowed_with_demo_mode() -> None:
