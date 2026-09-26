@@ -56,8 +56,8 @@ def _operator_pair(src: Path) -> tuple[bytes, bytes] | None:
     except OSError as exc:
         raise SystemExit(
             f"tls-init: cannot read {exc.filename}: {exc.strerror}. Copy the certificate"
-            f" and key into {src} (do not symlink them); the key must be root-owned 0600,"
-            " or 0644."
+            f" and key into nginx/certs/ (mounted at {src}); do not symlink them. The key"
+            " must be root-owned 0600, or 0644."
         ) from exc
 
 
