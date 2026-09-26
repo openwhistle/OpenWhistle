@@ -368,8 +368,8 @@
    "tests": "E"
   },
   {
-   "id": "nav-collapse-768-was-ist-neu-in-1-6",
-   "file": "docs/blog/was-ist-neu-in-1-6.html",
+   "id": "nav-collapse-768-was-ist-neu-in-2-0",
+   "file": "docs/blog/was-ist-neu-in-2-0.html",
    "old": "@media (max-width: 1080px) {\n      .nav-links { display: none; }",
    "new": "@media (max-width: 768px) {\n      .nav-links { display: none; }",
    "tests": "E"
@@ -445,8 +445,8 @@
    "tests": "EYEBROW"
   },
   {
-   "id": "blog-1-6-date-off-by-one",
-   "file": "docs/blog/was-ist-neu-in-1-6.html",
+   "id": "blog-2-0-date-off-by-one",
+   "file": "docs/blog/was-ist-neu-in-2-0.html",
    "old": "26. September 2026",
    "new": "25. September 2026",
    "tests": "DATE"

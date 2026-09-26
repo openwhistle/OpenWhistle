@@ -7,7 +7,11 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## [1.6.0] — 2026-09-26
+## [2.0.0] — 2026-09-26
+
+A major version, not a feature release: the webhook payload, the Compose TLS/port
+layout and the first-run setup flow all break compatibility with 1.5.x — see
+Changed (breaking) below and the upgrade notes before deploying.
 
 ### Upgrade notes
 
@@ -47,7 +51,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **nginx publishes `127.0.0.1:8080`** (the onion listener). If the host already uses 8080,
   `docker compose up` fails: free the port first.
 - **Back up before upgrading; the rollback changed.** The 1.5.0 image refuses the migrated
-  schema. Restore the backup, or run `alembic downgrade 7d4e2b9c1a05` with the 1.6.0 image
+  schema. Restore the backup, or run `alembic downgrade 7d4e2b9c1a05` with the 2.0.0 image
   (`docker compose run --rm app alembic downgrade 7d4e2b9c1a05`) before pinning 1.5.0. The
   downgrade keeps the day-rounded times of migration 006: the exact times are gone by design.
 - **`BRAND_SECONDARY_COLOR` is ignored** with a warning at startup; delete it from `.env`.
@@ -61,7 +65,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `TextBlock`, and the digest has one "Activity" fact instead of case numbers.
   - The reminder email is unchanged: it still carries the case number, since only your own
     admins receive it.
-- **`docker-compose.prod.yml` pins the image** to `${OPENWHISTLE_VERSION:-1.6.0}` instead of
+- **`docker-compose.prod.yml` pins the image** to `${OPENWHISTLE_VERSION:-2.0.0}` instead of
   `:latest`; set `OPENWHISTLE_VERSION` to upgrade.
 - Migrations 004–006 run at start: TOTP secrets are encrypted, audit rows get their
   organisation, whistleblower times are rounded to the day (not reversible).
@@ -131,7 +135,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Helm `extraEnv`** sets any non-secret setting that `values.yaml` has no key for.
 - **Separate, rotatable encryption key** (`ENCRYPTION_KEY`, optional). At-rest encryption is
   now rooted in `ENCRYPTION_KEY` instead of `SECRET_KEY`; unset falls back to `SECRET_KEY`
-  (pre-v1.6.0 behaviour, warned at startup). `ENCRYPTION_KEY_PREVIOUS` keeps old keys readable
+  (pre-v2.0.0 behaviour, warned at startup). `ENCRYPTION_KEY_PREVIOUS` keeps old keys readable
   during rotation, and `scripts/rotate_encryption_key.py` re-encrypts every DEK, confidential
   identity and contact, secure e-mail, TOTP secret and identity-reveal reason under the new key.
 - **Maintainer tooling: local review login** (`LOCAL_REVIEW_LOGIN`, requires `DEMO_MODE=true`,
@@ -311,7 +315,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A logged-in admin opening a stale `/admin/reports/<id>` got a raw JSON `{"detail":"Not
   Found"}` page. A browser request (`Accept: text/html`) to an HTML route now gets the
   styled, localised error page; an API/JSON client is unaffected.
-- The "Was ist neu in 1.6" blog article was dated 25 September; the release is the 26th
+- The "Was ist neu in 2.0" blog article was dated 25 September; the release is the 26th
   (visible date, meta tags, JSON-LD `datePublished`/`dateModified`, sitemap `lastmod`).
 - **With multi-tenancy on, the wizard offered every organisation's categories and locations**,
   and every report was filed under the default organisation (since v1.4). A category or
@@ -330,7 +334,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   are real headings.
 - **Phones**: the report form comes first, a case number or PIN never breaks across lines, and
   tables stack into labelled rows that keep their table semantics.
-- The website describes 1.6 (English and German landing pages, the "Was ist neu in 1.6"
+- The website describes 2.0 (English and German landing pages, the "Was ist neu in 2.0"
   article), serves every font it uses itself, and the roadmap moved from `ROADMAP.md` to
   [openwhistle.net/roadmap.html](https://openwhistle.net/roadmap.html).
 
@@ -1206,8 +1210,8 @@ Remaining lower-severity findings are tracked in GitHub issues #42–#46.
 - **Rate limiting by session token** (not IP) to maintain full anonymity
 - **alembic upgrade head** on every startup to guarantee migration consistency
 
-[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v1.6.0...HEAD
-[1.6.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.5.0...v1.6.0
+[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.5.0...v2.0.0
 [1.5.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.3.1...v1.4.0
 [1.3.1]: https://github.com/openwhistle/OpenWhistle/compare/v1.3.0...v1.3.1

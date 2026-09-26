@@ -78,7 +78,7 @@
   {
    "id": "compose-image-latest",
    "file": "docker-compose.prod.yml",
-   "old": "    image: ghcr.io/openwhistle/openwhistle:${OPENWHISTLE_VERSION:-1.6.0}\n    read_only: true",
+   "old": "    image: ghcr.io/openwhistle/openwhistle:${OPENWHISTLE_VERSION:-2.0.0}\n    read_only: true",
    "new": "    image: ghcr.io/openwhistle/openwhistle:latest\n    read_only: true",
    "tests": "B"
   },
@@ -239,14 +239,14 @@
   {
    "id": "pyproject-version-drift",
    "file": "pyproject.toml",
-   "old": "version = \"1.6.0\"",
+   "old": "version = \"2.0.0\"",
    "new": "version = \"0.1.0\"",
    "tests": "I"
   },
   {
    "id": "tls-init-version-drift",
    "file": "docker-compose.prod.yml",
-   "old": "    image: ghcr.io/openwhistle/openwhistle:${OPENWHISTLE_VERSION:-1.6.0}\n    command:",
+   "old": "    image: ghcr.io/openwhistle/openwhistle:${OPENWHISTLE_VERSION:-2.0.0}\n    command:",
    "new": "    image: ghcr.io/openwhistle/openwhistle:${OPENWHISTLE_VERSION:-1.5.0}\n    command:",
    "tests": "I"
   },

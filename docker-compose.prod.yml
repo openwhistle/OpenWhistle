@@ -1,6 +1,6 @@
 services:
   app:
-    image: ghcr.io/openwhistle/openwhistle:${OPENWHISTLE_VERSION:-1.6.0}
+    image: ghcr.io/openwhistle/openwhistle:${OPENWHISTLE_VERSION:-2.0.0}
     read_only: true
     tmpfs:
       - /tmp:size=128m
@@ -94,7 +94,7 @@ services:
       - proxy
 
   tls-init:
-    image: ghcr.io/openwhistle/openwhistle:${OPENWHISTLE_VERSION:-1.6.0}
+    image: ghcr.io/openwhistle/openwhistle:${OPENWHISTLE_VERSION:-2.0.0}
     command: ["python", "scripts/ensure_tls_cert.py", "/certs-in", "/tls", "${TLS_HOSTNAME:-localhost}"]
     user: "0:0"
     read_only: true

@@ -101,7 +101,7 @@ def decode_access_token_claims(token: str) -> dict[str, Any] | None:
 
 
 def session_started_at(claims: dict[str, Any]) -> int:
-    """Login time; tokens issued before v1.6.0 carry only ``iat``."""
+    """Login time; tokens issued before v2.0.0 carry only ``iat``."""
     return int(claims.get("auth_time", claims.get("iat", 0)))
 
 

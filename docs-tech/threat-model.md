@@ -45,7 +45,7 @@ itself, for longer. The PIN never reaches the database in clear or a log line.
 
 **One draft, at most one report.** Every draft carries a report id from its
 first non-empty save, and every submit of it inserts that primary key. A draft
-saved before v1.6.0 gets its id when it is loaded: `SET NX` on a side key
+saved before v2.0.0 gets its id when it is loaded: `SET NX` on a side key
 (`…:report-id`, a random UUID, deleted with the draft) that every concurrent
 loader reads back, and only while the draft is still the one it read. PostgreSQL refuses
 a second insert, whatever Redis holds and however late a request runs. A submit

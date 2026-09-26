@@ -47,7 +47,7 @@ class Settings(BaseSettings):
             )
         return v
 
-    # Root of all at-rest encryption. Empty = SECRET_KEY (pre-v1.6.0 behaviour,
+    # Root of all at-rest encryption. Empty = SECRET_KEY (pre-v2.0.0 behaviour,
     # warned at startup). Old keys go in ENCRYPTION_KEY_PREVIOUS (comma-separated,
     # no spaces) until scripts/rotate_encryption_key.py has re-encrypted everything.
     encryption_key: str = ""
@@ -131,7 +131,7 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "OpenWhistle"
-    app_version: str = "1.6.0"
+    app_version: str = "2.0.0"
 
     # Logging
     log_level: str = "INFO"
@@ -247,11 +247,11 @@ class Settings(BaseSettings):
     @model_validator(mode="before")
     @classmethod
     def _ignore_removed_settings(cls, data: Any) -> Any:
-        # Removed in 1.6.0. A .env file that still sets it is warned about, not
+        # Removed in 2.0.0. A .env file that still sets it is warned about, not
         # refused (pydantic-settings rejects unknown .env keys).
         if isinstance(data, dict) and data.pop("brand_secondary_color", None) is not None:
             logging.getLogger(__name__).warning(
-                "BRAND_SECONDARY_COLOR was removed in 1.6.0 and is ignored; delete it."
+                "BRAND_SECONDARY_COLOR was removed in 2.0.0 and is ignored; delete it."
             )
         return data
 

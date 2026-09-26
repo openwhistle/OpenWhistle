@@ -102,7 +102,7 @@ _PENDING_TTL = 120
 _SUBMIT_TIMEOUT_SECONDS = 30
 
 # KEYS: draft, report-id. ARGV: draft token as read, new id, TTL.
-# One id for a draft saved before v1.6.0, whoever loads it; none once the
+# One id for a draft saved before v2.0.0, whoever loads it; none once the
 # draft changed or was spent (its report-id key goes with it).
 _ASSIGN_REPORT_ID = """
 if redis.call('GET', KEYS[1]) ~= ARGV[1] then
@@ -404,7 +404,7 @@ async def _load_submission(redis: Redis, session_id: str) -> dict[str, Any]:
             return {}  # wrong or missing key: the draft is as good as expired
         state = cast(dict[str, Any], json.loads(data))
         if state and "report_id" not in state:
-            # Saved before v1.6.0: concurrent loaders must agree on one id.
+            # Saved before v2.0.0: concurrent loaders must agree on one id.
             report_id = await cast(
                 Awaitable[str | None],
                 redis.eval(
@@ -841,7 +841,7 @@ async def submit_post(
         state.clear()
         state.update(json.loads(_draft_fernet(session_id).decrypt(claimed)))
         report_id = state.get("report_id")
-        if not report_id:  # a draft saved before v1.6.0: the next save adds one
+        if not report_id:  # a draft saved before v2.0.0: the next save adds one
             await _give_back_draft(redis, session_id, claimed, nonce)
             return _redirect_after_post()
         our_case: str | None = None

@@ -885,7 +885,7 @@
 
         <h3>Current version</h3>
         <p>
-          <strong>v1.6.0</strong> — The confidential identity is shown only to the handler, with an audited reason; the first-run setup needs a one-time token; whistleblower times are stored as the day only; an optional Tor onion address and ClamAV upload scan; TLS by default in the Compose stack; words inside reports are searchable without an index. See the
+          <strong>v2.0.0</strong> — The confidential identity is shown only to the handler, with an audited reason; the first-run setup needs a one-time token; whistleblower times are stored as the day only; an optional Tor onion address and ClamAV upload scan; TLS by default in the Compose stack; words inside reports are searchable without an index. See the
           <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG</a>
           for a full list of changes.
         </p>
@@ -2540,10 +2540,10 @@ CLAMAV_HOST=clamav</code></pre>
         <h3>Before upgrading</h3>
         <ul>
           <li>Read the CHANGELOG for the target version.</li>
-          <li>v1.6.0 adds <code>ENCRYPTION_KEY</code>, a key for encryption separate from <code>SECRET_KEY</code>: see <a href="#key-rotation">Rotating the encryption key</a>.</li>
+          <li>v2.0.0 adds <code>ENCRYPTION_KEY</code>, a key for encryption separate from <code>SECRET_KEY</code>: see <a href="#key-rotation">Rotating the encryption key</a>.</li>
         </ul>
 
-        <h3 id="upgrading-1-6">Upgrading to 1.6.0 with Docker Compose</h3>
+        <h3 id="upgrading-2-0">Upgrading to 2.0.0 with Docker Compose</h3>
         <ul>
           <li><code>git pull</code> is required, not only <code>docker compose pull</code>: the stack needs the new <code>nginx/snippets/</code> and the <code>tls-init</code> service.</li>
           <li>A customised <code>nginx/nginx.conf</code> makes <code>git pull</code> conflict: replace it with the shipped one (<code>git checkout -- nginx/nginx.conf</code>).</li>
@@ -2555,8 +2555,8 @@ CLAMAV_HOST=clamav</code></pre>
         <h3>Rollback</h3>
         <p>
           The previous image refuses to start on a migrated database. Either restore the backup
-          into an empty database and pin the old <code>OPENWHISTLE_VERSION</code>, or, from 1.6.0
-          to 1.5.x, downgrade the schema with the <strong>1.6.0</strong> image first, then pin the
+          into an empty database and pin the old <code>OPENWHISTLE_VERSION</code>, or, from 2.0.0
+          to 1.5.x, downgrade the schema with the <strong>2.0.0</strong> image first, then pin the
           old version:
         </p>
         <div class="code-block" role="region" aria-label="Rollback commands">

@@ -1,6 +1,6 @@
 """Every setting added since the previous release is in the changelog.
 
-Four shipped features of v1.6.0 had no changelog entry until the release audit;
+Four shipped features of v2.0.0 had no changelog entry until the release audit;
 a new setting is the cheapest sign of a user-visible change to check for.
 """
 

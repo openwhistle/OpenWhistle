@@ -4,7 +4,7 @@ Revision ID: b2d7f1a5c302
 Revises: a1c6e0f4b201
 Create Date: 2026-09-24
 
-Before v1.6.0 only retention rows carried org_id, so organisation-scoped audit
+Before v2.0.0 only retention rows carried org_id, so organisation-scoped audit
 pages showed nothing. Rows about a report take the report's organisation, other
 rows the acting admin's. Downgrade keeps the values (they are correct).
 """

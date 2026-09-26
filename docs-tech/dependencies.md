@@ -21,7 +21,7 @@ Minor and major updates, the Python runtime, and security-relevant libraries
 parsers pypdf and Pillow, python-ldap) always wait for a person.
 
 LDAP uses python-ldap, a wrapper around the maintained OpenLDAP client
-library. It replaced ldap3 in v1.6.0: ldap3 has had no release since 2021.
+library. It replaced ldap3 in v2.0.0: ldap3 has had no release since 2021.
 python-ldap builds from source against `libldap`/`libsasl` headers, so it and
 boto3 are optional extras (`ldap`, `s3`): the image and CI install both.
 

@@ -504,7 +504,7 @@ def test_docs_warn_callouts_do_not_converge_on_the_accent() -> None:
         "blog/hinschg-compliance-leitfaden.html",
         "blog/interne-meldestelle-einrichten.html",
         "blog/whistleblower-software-vergleich.html",
-        "blog/was-ist-neu-in-1-6.html",
+        "blog/was-ist-neu-in-2-0.html",
     ):
         text = (ROOT / "docs" / name).read_text()
         assert "--warning" in text, name
@@ -541,7 +541,7 @@ def test_docs_warning_colour_meets_contrast() -> None:
         "blog/hinschg-compliance-leitfaden.html",
         "blog/interne-meldestelle-einrichten.html",
         "blog/whistleblower-software-vergleich.html",
-        "blog/was-ist-neu-in-1-6.html",
+        "blog/was-ist-neu-in-2-0.html",
     ):
         text = (ROOT / "docs" / name).read_text()
         light_block = re.search(r":root\s*\{([^}]*)\}", text)
@@ -1422,7 +1422,7 @@ def test_blog_1_6_release_date_is_2026_09_26() -> None:
     """The article was dated 25 September while the
     actual release is the 26th — every date on the page, the sitemap and the
     JSON-LD must agree with the real release date."""
-    text = (ROOT / "docs/blog/was-ist-neu-in-1-6.html").read_text()
+    text = (ROOT / "docs/blog/was-ist-neu-in-2-0.html").read_text()
     assert "25. September 2026" not in text
     assert "2026-09-25" not in text
     assert "26. September 2026" in text
@@ -1431,11 +1431,11 @@ def test_blog_1_6_release_date_is_2026_09_26() -> None:
 
     sitemap = (ROOT / "docs/sitemap.xml").read_text()
     article_block = re.search(
-        r"<loc>https://openwhistle\.net/blog/was-ist-neu-in-1-6\.html</loc>.*?</url>",
+        r"<loc>https://openwhistle\.net/blog/was-ist-neu-in-2-0\.html</loc>.*?</url>",
         sitemap,
         re.DOTALL,
     )
-    assert article_block, "sitemap entry for the 1.6 blog article not found"
+    assert article_block, "sitemap entry for the 2.0 blog article not found"
     assert "<lastmod>2026-09-26</lastmod>" in article_block.group(0)
 
 

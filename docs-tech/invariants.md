@@ -94,12 +94,12 @@ outcome.
 | Case-number search: LIKE wildcards escaped, case-manager scope kept, links keep `q` | `test_search_escapes_like_wildcards`, `test_search_keeps_the_case_manager_restriction`, `test_dashboard_search_form_and_links_keep_the_query` |
 | Audit entries: every action labelled in 4 languages, detail escaped, CSV keeps codes | `test_every_audit_action_has_a_label_in_every_language`, `test_audit_log_shows_labels_and_readable_detail` |
 
-## v1.6.0 hardening
+## v2.0.0 hardening
 
-Mutations: `docs-tech/mutations/v1.6.0-{security,privacy,wizard,timeouts,platform,review,site}.json`
+Mutations: `docs-tech/mutations/v2.0.0-{security,privacy,wizard,timeouts,platform,review,site}.json`
 (281, all red). One row per guard; the test is the first one that fired.
 
-**Found by the v1.6.0 audit.** The first run left 26 of 205 green. Six
+**Found by the v2.0.0 audit.** The first run left 26 of 205 green. Six
 had a test that the spec did not run (the S3 key tests live in
 `tests/test_issue_45_s3_missing.py`, the case-manager counts in
 `tests/test_v160_design.py`); twenty had none: eighteen got one, two are
@@ -111,10 +111,10 @@ an attachment, and the 4 KiB bound on a clamd reply (an over-long `FOUND` reply 
 *unavailable*, never parsed as a signature).
 
 The three ClamAV timeouts were added after that run: removing one hangs its
-test, so `v1.6.0-timeouts.json` sets `timeout_seconds: 120` and the script
+test, so `v2.0.0-timeouts.json` sets `timeout_seconds: 120` and the script
 counts a hang as red.
 
-`v1.6.0-review.json` (the local review login) first left 4 of 27 green: the
+`v2.0.0-review.json` (the local review login) first left 4 of 27 green: the
 disabled-route and hidden-button tests failed the Host barrier before they
 reached the flag, a missing demo admin and the `app-setup` profile had no
 test. Each got one; the release.md test now reads the numbered step, not the
@@ -140,7 +140,7 @@ flip on random uuids); its test now also checks the statement's `ORDER BY`.
 
 ### Setup, sessions, roles, keys, audit scope
 
-`docs-tech/mutations/v1.6.0-security.json`
+`docs-tech/mutations/v2.0.0-security.json`
 
 | Mutation | File | Test that fires |
 | --- | --- | --- |
@@ -192,7 +192,7 @@ flip on random uuids); its test now also checks the statement's `ORDER BY`.
 
 ### Identity, audit trail, search, day-only times, notifications, uploads, onion
 
-`docs-tech/mutations/v1.6.0-privacy.json`
+`docs-tech/mutations/v2.0.0-privacy.json`
 
 | Mutation | File | Test that fires |
 | --- | --- | --- |
@@ -288,7 +288,7 @@ flip on random uuids); its test now also checks the statement's `ORDER BY`.
 
 ### Submission wizard (#94 port)
 
-`docs-tech/mutations/v1.6.0-wizard.json`
+`docs-tech/mutations/v2.0.0-wizard.json`
 
 | Mutation | File | Test that fires |
 | --- | --- | --- |
@@ -327,7 +327,7 @@ flip on random uuids); its test now also checks the statement's `ORDER BY`.
 
 ### Timeouts (spec bounds a hang at 120 s)
 
-`docs-tech/mutations/v1.6.0-timeouts.json`
+`docs-tech/mutations/v2.0.0-timeouts.json`
 
 | Mutation | File | Test that fires |
 | --- | --- | --- |
@@ -337,7 +337,7 @@ flip on random uuids); its test now also checks the statement's `ORDER BY`.
 
 ### Build, deployment, LDAP, locales, design
 
-`docs-tech/mutations/v1.6.0-platform.json`
+`docs-tech/mutations/v2.0.0-platform.json`
 
 | Mutation | File | Test that fires |
 | --- | --- | --- |
@@ -381,7 +381,7 @@ flip on random uuids); its test now also checks the statement's `ORDER BY`.
 
 ### Local review login (maintainer tooling)
 
-`docs-tech/mutations/v1.6.0-review.json`
+`docs-tech/mutations/v2.0.0-review.json`
 
 | Mutation | File | Test that fires |
 | --- | --- | --- |
@@ -416,7 +416,7 @@ flip on random uuids); its test now also checks the statement's `ORDER BY`.
 
 ### Admin UI fixes and website
 
-`docs-tech/mutations/v1.6.0-site.json`. The docs mutations run
+`docs-tech/mutations/v2.0.0-site.json`. The docs mutations run
 `tests/e2e/test_layout.py -k docs_page` (every `docs/**/*.html` at 390 and
 1024 px, served from a local HTTP server, no app).
 
@@ -475,7 +475,7 @@ fetch category labels; the snippets are updated and red.
 | `nav-collapse-768-blog` | `docs/blog/index.html` | `test_docs_page_has_no_horizontal_overflow` |
 | `nav-collapse-768-hinschg-compliance-leitfaden` | `docs/blog/hinschg-compliance-leitfaden.html` | `test_docs_page_has_no_horizontal_overflow` |
 | `nav-collapse-768-interne-meldestelle-einrichten` | `docs/blog/interne-meldestelle-einrichten.html` | `test_docs_page_has_no_horizontal_overflow` |
-| `nav-collapse-768-was-ist-neu-in-1-6` | `docs/blog/was-ist-neu-in-1-6.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `nav-collapse-768-was-ist-neu-in-2-0` | `docs/blog/was-ist-neu-in-2-0.html` | `test_docs_page_has_no_horizontal_overflow` |
 | `nav-collapse-768-whistleblower-software-vergleich` | `docs/blog/whistleblower-software-vergleich.html` | `test_docs_page_has_no_horizontal_overflow` |
 | `docs-mono-500-face-missing` | `docs/docs.html` | `test_every_docs_page_font_usage_has_a_matching_font_face` |
 | `roadmap-mono-500-face-missing` | `docs/roadmap.html` | `test_every_docs_page_font_usage_has_a_matching_font_face` |
@@ -487,7 +487,7 @@ fetch category labels; the snippets are updated and red.
 | `stats-grid-panel-margin` | `app/templates/admin/stats.html` | `test_stats_grid_panels_drop_the_stacking_margin` |
 | `http-exception-always-json` | `app/main.py` | `test_stale_report_id_returns_styled_html_for_a_browser` |
 | `eyebrow-restates-confidential` | `app/locales/de.json` | `test_submit_eyebrow_is_neutral_across_locales` |
-| `blog-1-6-date-off-by-one` | `docs/blog/was-ist-neu-in-1-6.html` | `test_blog_1_6_release_date_is_2026_09_26` |
+| `blog-2-0-date-off-by-one` | `docs/blog/was-ist-neu-in-2-0.html` | `test_blog_1_6_release_date_is_2026_09_26` |
 
 **Not a mutation.** The e2e tests that measure the running app
 (`tests/e2e/test_admin_table_layout.py`,
@@ -519,7 +519,7 @@ real behaviour without a dedicated mutation of its own.
 
 ### Deployment and upgrade (final review)
 
-`docs-tech/mutations/v1.6.0-ops.json`: 23 mutations, 23 red.
+`docs-tech/mutations/v2.0.0-ops.json`: 23 mutations, 23 red.
 The CI job `nginx-onion-trust` holds three more guards that no pytest can:
 nginx started as the demo host runs it (the role's file modes, a non-root
 owner, the rendered compose file's `cap_drop`), and header checks written as

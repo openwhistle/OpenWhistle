@@ -176,7 +176,7 @@ against the repo root), and every root-absolute link (`/docs.html`,
 | `docs/blog/index.html` | Blog index. |
 | `docs/blog/hinschg-compliance-leitfaden.html` | Article. |
 | `docs/blog/interne-meldestelle-einrichten.html` | Article. |
-| `docs/blog/was-ist-neu-in-1-6.html` | Article. |
+| `docs/blog/was-ist-neu-in-2-0.html` | Article. |
 | `docs/blog/whistleblower-software-vergleich.html` | Article. |
 
 ## What to check, on every page
