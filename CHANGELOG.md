@@ -86,7 +86,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Tor onion address** (`ONION_LOCATION`, optional). Sends an `Onion-Location` header, so Tor
   Browser offers the switch, and shows the address on the submit page for reporters on a
   monitored network. nginx sets `X-OW-Onion` only on the onion listener and strips any
-  client-sent copy.
+  client-sent copy; without `ONION_LOCATION` the app ignores the header.
 - **Virus scan of uploads with ClamAV** (`CLAMAV_HOST`, `CLAMAV_PORT`,
   `CLAMAV_TIMEOUT_SECONDS`; optional `clamav` compose profile). Fail-closed: if `clamd` cannot
   be reached, the upload is refused, never stored unscanned.
@@ -96,7 +96,12 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   redirects plain HTTP on 80 — nothing is proxied without TLS. A one-shot `tls-init` service
   generates a self-signed certificate for `TLS_HOSTNAME` (`.env`, default `localhost`) before
   nginx starts, so the stack comes up without any manual certificate step; drop your own
-  `fullchain.pem`/`privkey.pem` into `nginx/certs/` and restart to use a real one instead.
+  `fullchain.pem`/`privkey.pem` into `nginx/certs/` and restart to use a real one instead. A
+  certificate there that cannot be read, or is a symlink, stops `tls-init` with the path and
+  the reason instead of falling back to self-signed.
+- **`docker-compose.behind-proxy.yml`** for an install behind an external TLS terminator: nginx
+  proxies plain HTTP on 80 and publishes no 443.
+- **Helm `extraEnv`** sets any non-secret setting that `values.yaml` has no key for.
 - **Separate, rotatable encryption key** (`ENCRYPTION_KEY`, optional). At-rest encryption is
   now rooted in `ENCRYPTION_KEY` instead of `SECRET_KEY`; unset falls back to `SECRET_KEY`
   (pre-v1.6.0 behaviour, warned at startup). `ENCRYPTION_KEY_PREVIOUS` keeps old keys readable
