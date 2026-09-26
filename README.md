@@ -246,7 +246,8 @@ OpenWhistle is designed to comply with:
 
 ## 🤝 Contributing
 
-Contributions are welcome. Please open an issue before submitting a pull request.
+Contributions are welcome. Please open an issue before submitting a pull request, and read
+[CONTRIBUTING.md](CONTRIBUTING.md) first.
 
 ---
 
