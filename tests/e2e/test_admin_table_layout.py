@@ -1,164 +1,83 @@
-"""Rendered check for the admin table-stack tables (fix round 1, item 5):
-the dashboard, users and audit-log tables must not clip their last visible
-column outside the enclosing panel at 1440/1920px in German — the exact
-defect a shared `.table-stack th:last-child` selector used to cause on
-whichever of these tables was not the one it was built for (task-X10-review,
-Important 2).
+"""Rendered check for the admin table-stack tables (fix round 1, item 5;
+rewritten in fix round 2 per task-X10-rereview-1.md): the dashboard, users
+and audit-log tables must not clip their last visible column outside the
+enclosing panel at 1440/1920px in German — the exact defect a shared
+`.table-stack th:last-child` selector used to cause on whichever of these
+tables was not the one it was built for (task-X10-review, Important 2), and
+the badge/column-width overflow item 8 originally found on the dashboard.
 
-No live server or review stack needed: renders each page through the normal
-ASGI test client (the app's own `client`/`db_session` fixtures), serves that
-HTML plus `app/static/` from a local `ThreadingHTTPServer`, and measures it
-with Playwright's async API (compatible with the already-running pytest-
-asyncio event loop; the sync API is not).
+Round 1's version used the ASGI test client + a real `db_session` to render
+the pages, which needs a host-reachable Postgres/Redis — the E2E CI job
+(.github/workflows/e2e.yml, the only job that collects tests/e2e/) provisions
+neither (docker-compose.e2e.yml's db/redis publish no host ports) and would
+have errored on every push. This version follows the same pattern as every
+other test in this file: a real HTTP request to the already-running `app` at
+`base_url`, signed in with the demo admin credentials from this directory's
+own conftest.py (test values for this project, published intentionally for
+the demo instance) — no database access from the test process at all.
 """
 
 from __future__ import annotations
 
-import contextlib
-import http.server
-import threading
-import uuid
-from collections.abc import Iterator
-from datetime import UTC, datetime, timedelta
-from pathlib import Path
-
-import pyotp
 import pytest
-from httpx import AsyncClient
-from playwright.async_api import async_playwright
-from sqlalchemy.ext.asyncio import AsyncSession
+from playwright.sync_api import Browser
 
-from app.models.report import ReportStatus
-from app.models.user import AdminRole, AdminUser
-from app.services.auth import hash_password
-from app.services.report import create_report
-from tests.test_v160_design import _login
+from tests.e2e.conftest import (
+    DEMO_ADMIN_PASSWORD,
+    DEMO_ADMIN_TOTP_SECRET,
+    DEMO_ADMIN_USERNAME,
+    _admin_login,
+)
 
 pytestmark = pytest.mark.e2e
 
-_STATIC_DIR = Path(__file__).resolve().parent.parent.parent / "app" / "static"
+# Demo report OW-DEMO-00003 (app/services/demo_seed.py) is seeded
+# pending_feedback and unassigned — its German status badge ("Rückmeldung
+# ausstehend", unbreakable — .badge is white-space: nowrap) alone is the
+# item-8 repro: it widens the dashboard's 8-column table past its scroll
+# viewport at both 1440 and 1920px (the admin-shell caps content width at
+# 1440px regardless of screen size), and used to push the row's own "view"
+# action off the visible edge.
+_TABLE_PAGES = ("/admin/dashboard", "/admin/users", "/admin/audit-log")
 
 
-class _PageServer(http.server.BaseHTTPRequestHandler):
-    pages: dict[str, str] = {}
-
-    def log_message(self, *args: object) -> None:
-        pass
-
-    def do_GET(self) -> None:  # noqa: N802
-        path = self.path.split("?", 1)[0]
-        if path.startswith("/static/"):
-            fs_path = _STATIC_DIR / path.removeprefix("/static/")
-            if not fs_path.is_file():
-                self.send_response(404)
-                self.end_headers()
-                return
-            self.send_response(200)
-            if fs_path.suffix == ".css":
-                self.send_header("Content-Type", "text/css")
-            elif fs_path.suffix == ".js":
-                self.send_header("Content-Type", "application/javascript")
-            elif fs_path.suffix == ".woff2":
-                self.send_header("Content-Type", "font/woff2")
-            self.end_headers()
-            self.wfile.write(fs_path.read_bytes())
-            return
-        body = self.pages.get(path.lstrip("/"))
-        if body is None:
-            self.send_response(404)
-            self.end_headers()
-            return
-        self.send_response(200)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
-        self.end_headers()
-        self.wfile.write(body.encode("utf-8"))
-
-
-@contextlib.contextmanager
-def _serve(pages: dict[str, str]) -> Iterator[str]:
-    handler = type("Handler", (_PageServer,), {"pages": pages})
-    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-    try:
-        yield f"http://127.0.0.1:{server.server_port}"
-    finally:
-        server.shutdown()
-        thread.join()
-
-
-async def _last_column_overflow(url: str, page_name: str, width: int) -> dict[str, float]:
-    """{table_right, panel_right} for the bottom-right table cell at `width`px."""
-    async with async_playwright() as p:
-        browser = await p.chromium.launch()
-        ctx = await browser.new_context(viewport={"width": width, "height": 1000})
-        page = await ctx.new_page()
-        await page.goto(f"{url}/{page_name}")
-        await page.wait_for_load_state("networkidle")
-        result: dict[str, float] = await page.evaluate(
-            """
-            () => {
-                const cell = document.querySelector(
-                    '.table-stack tbody tr:last-child td:last-child'
-                );
-                const panel = cell ? cell.closest('.panel') : null;
-                if (!cell || !panel) return {cell_right: -1, panel_right: -1};
-                return {
-                    cell_right: cell.getBoundingClientRect().right,
-                    panel_right: panel.getBoundingClientRect().right,
-                };
-            }
-            """
-        )
-        await browser.close()
-        return result
-
-
-@pytest.mark.asyncio
-async def test_admin_tables_last_column_stays_inside_the_panel_in_german(
-    client: AsyncClient, db_session: AsyncSession
-) -> None:
-    admin = await _login(client, db_session, AdminRole.admin)
-
-    # Dashboard: the reproduced defect — a pending_feedback report's German
-    # status badge ("Rückmeldung ausstehend", unbreakable) alone widens the
-    # 8-column table past its scroll viewport at both 1440 and 1920px (the
-    # admin-shell caps content width at 1440px regardless of screen size).
-    assignee = AdminUser(
-        id=uuid.uuid4(), username="case_manager_hamburg",
-        password_hash=hash_password("Fixture-Password-160"),
-        totp_secret=pyotp.random_base32(), totp_enabled=True, role=AdminRole.case_manager,
+def _last_column_overflow(page, width: int) -> dict[str, float]:  # type: ignore[no-untyped-def]
+    """{cell_right, panel_right} for the bottom-right table cell at `width`px."""
+    page.set_viewport_size({"width": width, "height": 1000})
+    return page.evaluate(
+        """
+        () => {
+            const cell = document.querySelector(
+                '.table-stack tbody tr:last-child td:last-child'
+            );
+            const panel = cell ? cell.closest('.panel') : null;
+            if (!cell || !panel) return {cell_right: -1, panel_right: -1};
+            return {
+                cell_right: cell.getBoundingClientRect().right,
+                panel_right: panel.getBoundingClientRect().right,
+            };
+        }
+        """
     )
-    db_session.add(assignee)
-    await db_session.commit()
-    report, _ = await create_report(db_session, "discrimination", "x" * 30)
-    report.assigned_to_id = assignee.id
-    report.status = ReportStatus.pending_feedback
-    report.acknowledged_at = datetime.now(UTC)
-    report.feedback_due_at = datetime.now(UTC) + timedelta(days=45)
-    await db_session.commit()
 
-    client.cookies.set("ow-lang", "de")
-    dashboard_html = (await client.get("/admin/dashboard")).text
-    users_html = (await client.get("/admin/users")).text
 
-    from app.services import audit as audit_service
-    await audit_service.log(db_session, admin, "auth.login")
-    await db_session.commit()
-    audit_html = (await client.get("/admin/audit-log")).text
+def test_admin_tables_last_column_stays_inside_the_panel_in_german(
+    browser: Browser, base_url: str
+) -> None:
+    ctx = browser.new_context(viewport={"width": 1440, "height": 1000})
+    page = ctx.new_page()
+    _admin_login(page, base_url, DEMO_ADMIN_USERNAME, DEMO_ADMIN_PASSWORD, DEMO_ADMIN_TOTP_SECRET)
+    # Every request after this carries the cookie for this context.
+    ctx.add_cookies([{"name": "ow-lang", "value": "de", "url": base_url}])
 
-    pages = {
-        "dashboard.html": dashboard_html,
-        "users.html": users_html,
-        "audit-log.html": audit_html,
-    }
-    with _serve(pages) as url:
-        for page_name in pages:
-            for width in (1440, 1920):
-                info = await _last_column_overflow(url, page_name, width)
-                assert info["cell_right"] > 0, f"{page_name}@{width}: no table row found"
-                assert info["cell_right"] <= info["panel_right"] + 1, (
-                    f"{page_name}@{width}px: last column right edge "
-                    f"({info['cell_right']}) exceeds its panel "
-                    f"({info['panel_right']})"
-                )
+    for path in _TABLE_PAGES:
+        page.goto(f"{base_url}{path}")
+        page.wait_for_load_state("networkidle")
+        for width in (1440, 1920):
+            info = _last_column_overflow(page, width)
+            assert info["cell_right"] > 0, f"{path}@{width}: no table row found"
+            assert info["cell_right"] <= info["panel_right"] + 1, (
+                f"{path}@{width}px: last column right edge "
+                f"({info['cell_right']}) exceeds its panel ({info['panel_right']})"
+            )
+    ctx.close()
