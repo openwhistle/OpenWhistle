@@ -60,6 +60,10 @@ _HIDE_REVIEW_ARTIFACTS_SCRIPT = """
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.demo-banner, .demo-credentials')
     .forEach((el) => { el.style.display = 'none'; });
+  // The demo login lays the form and the credentials out side by side; with
+  // the credentials hidden the form would sit off-centre in an empty grid.
+  document.querySelectorAll('.lg-with-demo')
+    .forEach((el) => { el.classList.remove('lg-with-demo'); });
   const btn = document.getElementById('local-review-login-btn');
   if (btn) btn.closest('.panel').style.display = 'none';
 });
@@ -161,15 +165,13 @@ SCREENSHOTS: list[Screenshot] = [
 
 
 def _save_optimised_png(page_bytes: bytes, out_path: Path) -> None:
-    """Re-save the PNG through Pillow with palette quantisation.
+    """Re-save the PNG losslessly through Pillow's optimiser.
 
-    Playwright's own PNG encoder writes full 24-bit colour; these are mostly
-    flat UI colours, so quantising to an adaptive palette shrinks the file a
-    lot with no visible loss, and needs no extra dependency (Pillow is
-    already required by app/services for attachment images).
+    Palette quantisation was tried and dropped: it turned the light theme's
+    card surface (246, 246, 245) into near-white 253, so every light shot lost
+    its cards against the page.
     """
     img = Image.open(io.BytesIO(page_bytes)).convert("RGB")
-    img = img.quantize(colors=256, method=Image.Quantize.FASTOCTREE)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(out_path, format="PNG", optimize=True)
 
@@ -187,7 +189,10 @@ def shoot(page: Page, name: str, theme: str) -> None:
     height = page.evaluate("document.documentElement.scrollHeight")
     height = max(height, VIEWPORT_HEIGHT)
     page.set_viewport_size({"width": VIEWPORT_WIDTH, "height": height})
-    page.wait_for_timeout(200)  # let a sticky/fixed element settle after reflow.
+    # Let a sticky/fixed element settle after reflow, and the theme's colour
+    # transitions finish: a shot taken sooner caught the light cards still
+    # white, before their background had faded in.
+    page.wait_for_timeout(600)
 
     out_path = OUT_DIR / f"{name}-{theme}.png"
     png_bytes = page.screenshot(full_page=False)
@@ -221,14 +226,15 @@ def main() -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch()
         try:
-            for theme in ("light", "dark"):
-                print(f"Theme: {theme}")
-                # A fresh context per shot, not one shared per theme: the
-                # whistleblower wizard's step lives in a server-side session
-                # keyed off a cookie, so reusing one context across shots
-                # left later ones seeing whatever step an earlier shot ended
-                # on instead of the fresh /submit they asked for.
-                for shot in SCREENSHOTS:
+            # Page outer, theme inner, and submit-success last: that shot
+            # files a real report, and the dashboard shots must show the same
+            # seeded cases in both themes, not one more in dark.
+            order = sorted(SCREENSHOTS, key=lambda s: s.name == "submit-success")
+            for shot in order:
+                for theme in ("light", "dark"):
+                    # A fresh context per shot: the whistleblower wizard's
+                    # step lives in a server-side session keyed off a cookie,
+                    # so a shared context left later shots on an earlier step.
                     context = _themed_context(browser, theme)
                     page = context.new_page()
                     shot.setup(page)
