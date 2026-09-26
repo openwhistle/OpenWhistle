@@ -1485,7 +1485,11 @@ async def organisations_page(
     return render(
         request,
         "admin/organisations.html",
-        {"user": current_user, "organisations": orgs},
+        {
+            "user": current_user,
+            "organisations": orgs,
+            "default_org_slug": settings.default_org_slug,
+        },
     )
 
 
@@ -1542,7 +1546,7 @@ async def deactivate_organisation(
     org = result.scalar_one_or_none()
     if not org:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    if org.slug == "default":
+    if org.slug == settings.default_org_slug:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="The default organisation cannot be deactivated.",

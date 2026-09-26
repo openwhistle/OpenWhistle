@@ -61,7 +61,7 @@
                             </td>
                             <td class="mono">{{ org.created_at.strftime('%Y-%m-%d') }}</td>
                             <td>
-                                {% if org.slug == 'default' %}
+                                {% if org.slug == default_org_slug %}
                                 <span class="badge">{{ t('admin.organisations.default') }}</span>
                                 {% elif org.is_active %}
                                 <form method="post" action="/admin/organisations/{{ org.id }}/deactivate"

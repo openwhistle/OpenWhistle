@@ -307,6 +307,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   styled, localised error page; an API/JSON client is unaffected.
 - The "Was ist neu in 1.6" blog article was dated 25 September; the release is the 26th
   (visible date, meta tags, JSON-LD `datePublished`/`dateModified`, sitemap `lastmod`).
+- **`DEFAULT_ORG_SLUG` was ignored by setup and by the organisations page**: setup always
+  created `default`, and only `default` was protected from deactivation. Both now use the
+  configured slug.
 
 ### Design
 
