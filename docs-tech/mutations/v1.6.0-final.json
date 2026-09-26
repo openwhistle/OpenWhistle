@@ -14,6 +14,9 @@
   ],
   "MW": [
    "tests/test_multitenancy_wizard.py"
+  ],
+  "DS": [
+   "tests/test_services_demo_seed.py"
   ]
  },
  "mutations": [
@@ -548,6 +551,13 @@
    "old": "            if settings.multi_tenancy_enabled\n            else None,",
    "new": "            if True\n            else None,",
    "tests": "MW"
+  },
+  {
+   "id": "demo-admin-org-less",
+   "file": "app/services/demo_seed.py",
+   "old": "            role=AdminRole.admin,\n            is_active=True,\n            org_id=org_row,  # the default org, like setup's first admin\n",
+   "new": "            role=AdminRole.admin,\n            is_active=True,\n",
+   "tests": "DS"
   }
  ]
 }

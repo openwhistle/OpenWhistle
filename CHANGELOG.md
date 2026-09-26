@@ -316,6 +316,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **With multi-tenancy on, the wizard offered every organisation's categories and locations**,
   and every report was filed under the default organisation (since v1.4). A category or
   location of another organisation is now refused at its step and again at the final submit.
+- The demo accounts belonged to no organisation, so with multi-tenancy on they saw none of the
+  default organisation's demo reports; they now belong to it, like setup's first admin.
 - **`DEFAULT_ORG_SLUG` was ignored by setup and by the organisations page**: setup always
   created `default`, and only `default` was protected from deactivation. Both now use the
   configured slug.
