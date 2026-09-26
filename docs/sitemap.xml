@@ -30,6 +30,12 @@
     <lastmod>2026-09-26</lastmod>
   </url>
   <url>
+    <loc>https://openwhistle.net/changelog.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+    <lastmod>2026-09-26</lastmod>
+  </url>
+  <url>
     <loc>https://openwhistle.net/blog/</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>

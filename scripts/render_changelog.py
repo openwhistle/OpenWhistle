@@ -1,40 +1,218 @@
-<!DOCTYPE html>
+#!/usr/bin/env python3
+"""CHANGELOG.md -> docs/changelog.html.
+
+CHANGELOG.md stays the single source at the repository root: GitHub reads it,
+and so does release tooling. This renders it as one page in the site's own
+design (the shell copied from docs/roadmap.html), newest release first.
+
+    uv run python scripts/render_changelog.py           write docs/changelog.html
+    uv run python scripts/render_changelog.py --check    fail if the committed
+                                                          page is not what this
+                                                          would write
+
+The output is committed, like docs/roadmap.html: the site is static HTML with
+no build step in CI.
+
+CHANGELOG.md uses a small Markdown subset, and this parses exactly that:
+h2 (`## [x.y.z] — date`) and h3 (`### Section`) headings, paragraphs, bullet
+lists nested one level deep, **bold**, *italic*, `code`, [text](url) links,
+and reference-style link definitions (`[x.y.z]: https://...`) at the foot of
+the file. Nothing else is needed because nothing else appears there; see
+`tests/test_changelog_page.py` for the self-test that pins this.
+"""
+
+from __future__ import annotations
+
+import html
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "CHANGELOG.md"
+OUT = ROOT / "docs" / "changelog.html"
+
+# "## [2.0.0] — 2026-09-26" and "## [Unreleased]" (no date) both occur.
+HEADING_RE = re.compile(r"^## \[([^\]]+)\](?:\s*[—-]\s*(\S+))?\s*$")
+SUBHEADING_RE = re.compile(r"^### (.+)$")
+LINK_DEF_RE = re.compile(r"^\[([^\]]+)\]:\s*(\S+)\s*$")
+
+
+class Version:
+    def __init__(self, name: str, date: str) -> None:
+        self.name = name
+        self.date = date
+        self.lines: list[str] = []
+
+
+def parse(markdown: str) -> tuple[list[Version], dict[str, str]]:
+    """Split CHANGELOG.md into per-version bodies and the link definitions."""
+    versions: list[Version] = []
+    link_defs: dict[str, str] = {}
+    current: Version | None = None
+    for line in markdown.splitlines():
+        link_def = LINK_DEF_RE.match(line)
+        if link_def:
+            link_defs[link_def.group(1)] = link_def.group(2)
+            continue
+        heading = HEADING_RE.match(line)
+        if heading:
+            current = Version(heading.group(1), heading.group(2) or "")
+            versions.append(current)
+            continue
+        if current is not None:
+            current.lines.append(line)
+    return versions, link_defs
+
+
+def slug(version_name: str) -> str:
+    """A stable heading id: "2.0.0" -> "v2-0-0", "Unreleased" -> "unreleased"."""
+    if version_name.lower() == "unreleased":
+        return "unreleased"
+    return "v" + version_name.replace(".", "-")
+
+
+def esc(text: str) -> str:
+    return html.escape(text, quote=False)
+
+
+# Inline spans, applied in this order so `code` is escaped before **bold** or
+# [links] could mangle punctuation inside it. Applied left-to-right over the
+# escaped text with non-overlapping regex substitution.
+_CODE_RE = re.compile(r"`([^`]+)`")
+_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+_BOLD_RE = re.compile(r"\*\*([^*]+)\*\*")
+_ITALIC_RE = re.compile(r"(?<!\*)\*([^*]+)\*(?!\*)")
+
+
+def render_inline(text: str) -> str:
+    # Escape once, up front; every substitution below operates on text that
+    # is already entity-escaped, so captured groups are reused verbatim —
+    # escaping them again would turn "&lt;" into "&amp;lt;".
+    escaped = esc(text)
+    escaped = _CODE_RE.sub(lambda m: f"<code>{m.group(1)}</code>", escaped)
+    escaped = _LINK_RE.sub(lambda m: f'<a href="{m.group(2)}">{m.group(1)}</a>', escaped)
+    escaped = _BOLD_RE.sub(lambda m: f"<strong>{m.group(1)}</strong>", escaped)
+    escaped = _ITALIC_RE.sub(lambda m: f"<em>{m.group(1)}</em>", escaped)
+    return escaped
+
+
+class _Item:
+    """One bullet's raw markdown text plus its (at most one level of)
+    nested bullets' raw markdown text — rendered to HTML only once, at the
+    end, so a nested `<ul>` already built never gets escaped a second time."""
+
+    def __init__(self, text: str) -> None:
+        self.text = text
+        self.nested: list[str] = []
+
+    def render(self) -> str:
+        li = render_inline(self.text)
+        if self.nested:
+            li += "<ul>" + "".join(f"<li>{render_inline(t)}</li>" for t in self.nested) + "</ul>"
+        return f"<li>{li}</li>"
+
+
+def render_body(lines: list[str]) -> str:
+    """Paragraphs, one level of nested bullets, and h3 subheadings."""
+    out: list[str] = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        line = lines[i]
+        stripped = line.strip()
+        if not stripped:
+            i += 1
+            continue
+        sub = SUBHEADING_RE.match(line)
+        if sub:
+            out.append(f"<h3>{render_inline(sub.group(1))}</h3>")
+            i += 1
+            continue
+        if stripped.startswith("- "):
+            items: list[_Item] = []
+            while i < n and lines[i].strip():
+                cur = lines[i]
+                if cur.startswith("  - ") or cur.startswith("    - "):
+                    items[-1].nested.append(cur.strip()[2:])
+                    i += 1
+                    continue
+                if cur.strip().startswith("- "):
+                    items.append(_Item(cur.strip()[2:]))
+                    i += 1
+                    continue
+                # a continuation line, wrapped for width: belongs to whichever
+                # item (or nested item) most recently started
+                if items[-1].nested:
+                    items[-1].nested[-1] += " " + cur.strip()
+                else:
+                    items[-1].text += " " + cur.strip()
+                i += 1
+            out.append("<ul>" + "".join(it.render() for it in items) + "</ul>")
+            continue
+        # a paragraph: gather continuation lines until a blank line, a
+        # heading, or a bullet
+        para = [stripped]
+        i += 1
+        while i < n and lines[i].strip() and not lines[i].strip().startswith("- ") \
+                and not SUBHEADING_RE.match(lines[i]):
+            para.append(lines[i].strip())
+            i += 1
+        out.append(f"<p>{render_inline(' '.join(para))}</p>")
+    return "\n        ".join(out)
+
+
+def compare_line(version: Version, link_defs: dict[str, str]) -> str:
+    url = link_defs.get(version.name)
+    if not url:
+        return ""
+    m = re.search(r"/compare/(.+?)\.\.\.(.+)$", url)
+    if version.name.lower() == "unreleased":
+        text = "See everything changed since the last release"
+    elif m:
+        text = f"See the code changes between {m.group(1).lstrip('v')} and {m.group(2).lstrip('v')}"
+    else:
+        text = "See the code as first released"
+    return f'<p><a href="{esc(url)}">{text}</a></p>'
+
+
+SHELL_HEAD = """<!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Apply theme before first paint to avoid flash -->
   <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
-  <title>Roadmap — OpenWhistle | Self-Hosted Whistleblower Platform</title>
-  <meta name="description" content="What's planned next for OpenWhistle: multi-channel intake and integration hooks in v2.1.0, then compliance expansion (LkSG, KWG, CSRD) in v2.2.0.">
-  <meta name="keywords" content="OpenWhistle roadmap, whistleblower platform roadmap, HinSchG software roadmap">
+  <title>Changelog — OpenWhistle | Self-Hosted Whistleblower Platform</title>
+  <meta name="description" content="Every OpenWhistle release, newest first, rendered from CHANGELOG.md.">
+  <meta name="keywords" content="OpenWhistle changelog, release notes, version history">
   <meta name="author" content="OpenWhistle Contributors">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://openwhistle.net/roadmap.html">
+  <link rel="canonical" href="https://openwhistle.net/changelog.html">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://openwhistle.net/roadmap.html">
-  <meta property="og:title" content="Roadmap — OpenWhistle">
-  <meta property="og:description" content="What's planned next for OpenWhistle, in the order it's planned — not promised.">
+  <meta property="og:url" content="https://openwhistle.net/changelog.html">
+  <meta property="og:title" content="Changelog — OpenWhistle">
+  <meta property="og:description" content="Every OpenWhistle release, newest first, rendered from CHANGELOG.md.">
   <meta property="og:image" content="https://openwhistle.net/og-image.png">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Roadmap — OpenWhistle">
-  <meta name="twitter:description" content="What's planned next for OpenWhistle, in the order it's planned — not promised.">
+  <meta name="twitter:title" content="Changelog — OpenWhistle">
+  <meta name="twitter:description" content="Every OpenWhistle release, newest first, rendered from CHANGELOG.md.">
 
   <!-- JSON-LD -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    "headline": "OpenWhistle Roadmap",
-    "description": "What's planned next for OpenWhistle, in the order it's planned — not promised. Everything already released is in the CHANGELOG.",
-    "url": "https://openwhistle.net/roadmap.html",
+    "headline": "OpenWhistle Changelog",
+    "description": "Every OpenWhistle release, newest first, rendered from CHANGELOG.md.",
+    "url": "https://openwhistle.net/changelog.html",
     "author": {
       "@type": "Organization",
       "name": "OpenWhistle Contributors",
@@ -42,7 +220,7 @@
     },
     "mainEntityOfPage": {
       "@type": "WebPage",
-      "@id": "https://openwhistle.net/roadmap.html"
+      "@id": "https://openwhistle.net/changelog.html"
     }
   }
   </script>
@@ -418,6 +596,10 @@
       margin-bottom: var(--space-2);
       max-width: 68ch;
     }
+    .docs-section li ul {
+      margin-top: var(--space-2);
+      margin-bottom: 0;
+    }
 
     .docs-section code {
       font-family: var(--font-mono);
@@ -465,7 +647,6 @@
     }
 
     /* ── Footer ──────────────────────────────────────────────────── */
-/* ── Footer ──────────────────────────────────────────────────── */
     .site-footer {
       background: var(--footer-bg);
       color: rgba(226, 220, 210, 0.7);
@@ -538,7 +719,7 @@
     }
     .footer-bottom a:hover { color: rgba(226, 220, 210, 0.7); }
 
-    
+
     /* ── Animations ─────────────────────────────────────────────── */
     @keyframes rise {
       from { opacity: 0; transform: translateY(12px); }
@@ -608,8 +789,8 @@
         <li><a href="index.html#how-it-works">How it Works</a></li>
         <li><a href="index.html#compliance">Compliance</a></li>
         <li><a href="docs.html">Documentation</a></li>
-        <li><a href="roadmap.html" class="active" aria-current="page">Roadmap</a></li>
-        <li><a href="changelog.html">Changelog</a></li>
+        <li><a href="roadmap.html">Roadmap</a></li>
+        <li><a href="changelog.html" class="active" aria-current="page">Changelog</a></li>
         <li><a href="blog/">Blog</a></li>
         <li><a href="de/">Auf Deutsch</a></li>
         <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
@@ -633,15 +814,14 @@
   <div class="docs-layout">
 
     <!-- Sidebar -->
-    <aside class="docs-sidebar" role="complementary" aria-label="Roadmap navigation">
+    <aside class="docs-sidebar" role="complementary" aria-label="Changelog navigation">
 
       <div class="sidebar-section">
-        <div class="sidebar-section-title">On This Page</div>
+        <div class="sidebar-section-title">Versions</div>
         <nav class="sidebar-links" aria-label="On this page">
-          <a href="#v2-1-0" class="active">v2.1.0</a>
-          <a href="#v2-2-0">v2.2.0</a>
-          <a href="#released">Already released</a>
-        </nav>
+"""
+
+SHELL_TAIL = """        </nav>
       </div>
 
       <div class="sidebar-section">
@@ -649,7 +829,8 @@
         <nav class="sidebar-links">
           <a href="index.html">&#8592; Landing Page</a>
           <a href="docs.html">Documentation</a>
-          <a href="changelog.html">Changelog</a>
+          <a href="roadmap.html">Roadmap</a>
+          <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG.md source</a>
           <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub Repository</a>
         </nav>
       </div>
@@ -662,225 +843,19 @@
       <nav class="docs-breadcrumb" aria-label="Breadcrumb">
         <a href="index.html">OpenWhistle</a>
         <span>/</span>
-        <span>Roadmap</span>
+        <span>Changelog</span>
       </nav>
 
-      <h1>Roadmap</h1>
+      <h1>Changelog</h1>
       <p class="docs-lead">
-        What's planned next for OpenWhistle — future releases only. Everything already
-        released is in the
-        <a href="changelog.html">Changelog</a>, rendered from
-        <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG.md</a>.
+        Every release, newest first. Rendered from
+        <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG.md</a>,
+        the file GitHub and the release tooling read.
       </p>
 
-      <div class="callout callout-note">
-        <div class="callout-title">Ordering principle</div>
-        <p>
-          Breadth before depth. v2.1.0 extends how <em>every</em> deployment receives and
-          connects reports — additional intake channels, integration hooks, access
-          control. v2.2.0 adds compliance modules that apply only to specific German
-          regulatory contexts (LkSG, KWG, CSRD), useful to a subset of operators
-          rather than all of them. What follows is planned in this order, not
-          promised in it — it moves when a reason to reorder it turns up.
-        </p>
-      </div>
+"""
 
-      <!-- v2.1.0 -->
-      <section class="docs-section" id="v2-1-0" aria-labelledby="v2-1-0-h2">
-        <h2 id="v2-1-0-h2">v2.1.0 — Multi-Channel Intake &amp; Integration Hooks</h2>
-        <p>
-          Operators increasingly need to receive reports through channels beyond the
-          web form, and connect OpenWhistle to existing compliance tooling (SIEM, GRC
-          platforms, ticketing systems) without granting those systems access to
-          sensitive case content. This release adds intake flexibility and
-          privacy-safe integration points.
-        </p>
-
-        <h3>Additional submission channels</h3>
-        <ul>
-          <li><strong>Email intake channel</strong> — inbound email forwarded to a configured mailbox
-            (<code>INTAKE_EMAIL_ADDRESS</code>) is parsed by a background job and converted to a
-            pending report; attachments are extracted and stored; a case number + PIN is
-            sent back to the sender only if the sender provided a return address (anonymous
-            senders receive no reply); admin can configure per-organization intake addresses
-            in multi-tenant deployments; uses <code>aiosmtplib</code> or IMAP polling</li>
-          <li><strong>Voice recording channel</strong> — whistleblowers can record a voice message
-            directly in the browser (Web Audio API, MediaRecorder) and submit it as an
-            attachment; stored as an <code>.ogg</code> or <code>.webm</code> file; admins can play it back in
-            the case detail view; optional voice-pitch shifting (configurable via
-            <code>VOICE_DISTORTION_ENABLED=true</code>) applies a simple frequency shift to prevent
-            speaker identification while keeping the content intelligible; processing done
-            server-side via <code>ffmpeg</code></li>
-        </ul>
-
-        <h3>Integration hooks</h3>
-        <ul>
-          <li><strong>Admin management API</strong> — scoped REST API for administrative operations
-            that contain no sensitive report content: user management (create/disable
-            accounts), category and location management, system health; JWT Bearer token
-            authentication with scoped API keys (<code>api_keys</code> table: <code>key_hash</code>, <code>scopes[]</code>,
-            <code>expires_at</code>); API keys managed from the admin settings page; OpenAPI spec at
-            <code>/api/v1/openapi.json</code>; rate-limited per key; designed to allow GRC/ITSM tools
-            to provision OpenWhistle without admin UI access — no case content, no
-            whistleblower-identifying data exposed via API</li>
-          <li><strong>Aggregate statistics API</strong> — read-only endpoint returning anonymised
-            counts (reports per period, per category, per status); suitable for feeding
-            compliance dashboards; no individual case data</li>
-          <li><strong>Outbound webhooks</strong> — push notifications for case lifecycle events
-            (<code>report.created</code>, <code>report.status_changed</code>, <code>report.reply_added</code>,
-            <code>report.deleted</code>); payload contains only event type, case number, new status,
-            and timestamp — no message content, no attachments, no metadata that could
-            identify the whistleblower; configurable per event type; signed JSON envelope
-            (HMAC-SHA256 in <code>X-OpenWhistle-Signature</code>); retried up to 3&times; with exponential
-            back-off; delivery log in admin UI; <code>WebhookEndpoint</code> model with <code>url</code>,
-            <code>secret</code>, <code>enabled_events[]</code>, <code>last_delivery_at</code>, <code>last_status_code</code></li>
-          <li><strong>Zapier / n8n integration guide</strong> — <code>docs/integrations/</code> with documented
-            examples connecting OpenWhistle webhooks to Zapier, n8n, and Make; no code
-            changes required; purely documentation but significantly increases integration
-            reach for non-technical operators</li>
-        </ul>
-
-        <h3>Access control</h3>
-        <ul>
-          <li><strong>IP allowlist for admin routes</strong> — <code>ADMIN_IP_ALLOWLIST</code> env var accepts
-            CIDR notation (<code>192.168.1.0/24,10.0.0.0/8</code>); requests from outside the list
-            receive 403; empty/unset means no restriction (backward-compatible default);
-            implemented as FastAPI middleware before route resolution; respects
-            <code>TRUSTED_PROXY_DEPTH</code> for correct IP extraction behind load balancers</li>
-        </ul>
-
-        <h3>Design system</h3>
-        <ul>
-          <li><strong><code>DESIGN.md</code> brought to the depth of the easywall design spec</strong> — OpenWhistle's
-            <code>DESIGN.md</code> has carried the "Signal" tokens and prose since v1.3.0, but at a
-            fraction of the depth of easywall's own design document: component states, motion
-            and interaction rules, and per-pattern accessibility notes are largely undocumented.
-            Brought up to that depth so the design system is something the next contributor can
-            follow, not something they have to reverse-engineer from the CSS</li>
-        </ul>
-      </section>
-
-      <!-- v2.2.0 -->
-      <section class="docs-section" id="v2-2-0" aria-labelledby="v2-2-0-h2">
-        <h2 id="v2-2-0-h2">v2.2.0 — Compliance Expansion (LkSG, KWG, CSRD)</h2>
-        <p>
-          German compliance obligations extend beyond HinSchG. Companies in scope for
-          the Lieferkettengesetz (LkSG, since 2023) require a separate supply-chain
-          reporting channel; financial institutions need a KWG-compliant pathway; listed
-          companies increasingly face CSRD disclosure requirements that reference internal
-          reporting systems. These are add-on modules that don't change the core
-          whistleblower flow.
-        </p>
-
-        <h3>Supply chain due diligence (LkSG)</h3>
-        <ul>
-          <li><strong>LkSG reporting channel</strong> — dedicated submission form variant for supply
-            chain violations (&sect;2 LkSG violation categories pre-configured as categories:
-            forced labour, child labour, environmental violations, discrimination,
-            excessive working hours, etc.); separate from the HinSchG channel; reports
-            routed to a configurable LkSG case manager role; LkSG-specific deadline
-            tracking (&sect;12 LkSG: receipt confirmed within 7 days; decision within 3 months;
-            extension to 6 months documented); <code>LKSG_ENABLED=true</code> env var activates the
-            module</li>
-          <li><strong>LkSG transparency report</strong> — structured annual report template as required
-            by &sect;12 Abs. 4 LkSG (public disclosure of complaints received, investigations
-            conducted, measures taken); downloadable PDF; <code>LKSG_TRANSPARENCY_YEAR</code> config</li>
-        </ul>
-
-        <h3>Financial sector (KWG / MaRisk)</h3>
-        <ul>
-          <li><strong>KWG / MaRisk whistleblowing channel</strong> — separate category set pre-configured
-            for banking-regulatory violations (&sect;25a KWG, MaRisk AT 8.5: reporting channel
-            for employees to report risk management violations, fraud, AML breaches);
-            routed to Compliance/Audit role; <code>KWG_ENABLED=true</code> env var; dedicated section
-            in the admin nav</li>
-        </ul>
-
-        <h3>Sustainability reporting (CSRD)</h3>
-        <ul>
-          <li><strong>CSRD / ESG grievance channel</strong> — intake form for ESG-related reports
-            (environmental impact, human rights, social violations) as required by the
-            Corporate Sustainability Reporting Directive (CSRD) for large companies from
-            2025; categorised by ESRS topic; routes to ESG officer role;
-            <code>CSRD_ENABLED=true</code> env var</li>
-        </ul>
-
-        <h3>Compliance documentation</h3>
-        <ul>
-          <li><strong>ISO 37002 alignment documentation</strong> — <code>docs/iso37002.md</code> mapping every
-            ISO 37002:2021 clause to the corresponding OpenWhistle feature or config
-            option; provides operators with a ready-made compliance justification for
-            auditors; updated per release</li>
-          <li><strong>30-language support</strong> — extend i18n from 3 (EN, DE, FR) to 30 languages
-            covering all official EU languages (ES, IT, PL, NL, PT, SV, DA, FI, CS, SK,
-            HU, RO, BG, HR, SL, ET, LV, LT, MT, GA, EL, and formal/informal variants for
-            DE/AT/CH); machine-translated initial pass reviewed by native speakers via
-            community contributions; all translation files in <code>app/locales/{lang}.json</code>
-            following the existing 388-key schema</li>
-        </ul>
-
-        <h3>Case handling workflow</h3>
-        <ul>
-          <li><strong>Case redaction</strong> — admin can redact (replace with <code>[REDACTED]</code>) any
-            text passage in a report description or message before sharing the case with
-            an external party; redaction is recorded in the audit log; original content
-            is preserved in an encrypted redaction-log visible only to superadmin</li>
-          <li><strong>Case anonymization / pseudonymization</strong> — one-click action to replace
-            all personal identifiers in a case with placeholders (name &rarr; <code>[Person A]</code>,
-            etc.); designed for sharing with external auditors or regulatory bodies;
-            creates a copy of the case content — does not overwrite the original</li>
-          <li><strong>Per-case internal task management</strong> — tasks (description, assignee,
-            due date, status: open / in progress / done) attached to a specific report;
-            visible only to the admin team; deadline for tasks tracked separately from
-            the HinSchG statutory deadlines; <code>AdminTask</code> model with <code>report_id</code>,
-            <code>assigned_to_id</code>, <code>due_date</code>, <code>completed_at</code></li>
-          <li><strong>Case-level access control</strong> — ability to restrict specific cases to a
-            named subset of admin users (in addition to global role-based access);
-            useful for particularly sensitive reports where need-to-know should be
-            limited; <code>CaseRestriction</code> model linking <code>report_id</code> to a set of allowed
-            <code>admin_user_id</code>s; users outside the set see the case number in the dashboard
-            but cannot open the detail view</li>
-        </ul>
-
-        <h3>External collaboration</h3>
-        <ul>
-          <li><strong>External advisor access</strong> — scoped, time-limited guest accounts for
-            external parties (law firms, auditors, external ombudspersons); <code>ExternalAdvisor</code>
-            model with <code>email</code>, <code>access_token</code> (GUID), <code>expires_at</code>, <code>allowed_report_ids[]</code>;
-            access via a separate URL (<code>/advisor/{token}</code>) without a full admin login;
-            activity logged in the audit trail; advisor can read case content and post
-            internal notes but cannot change status or delete; access revocable instantly</li>
-          <li><strong>Communication templates</strong> — pre-defined message templates that admins
-            can insert when replying to whistleblowers or sending notifications; templates
-            stored per organization (multi-tenant aware); helps maintain consistent,
-            legally reviewed language across case handlers; <code>MessageTemplate</code> model with
-            <code>title</code>, <code>body_de</code>, <code>body_en</code>, <code>body_fr</code></li>
-        </ul>
-
-        <h3>Reporting &amp; transparency</h3>
-        <ul>
-          <li><strong>Transparency report generation</strong> — one-click annual compliance report
-            (PDF + JSON) showing: total reports received, reports by category, reports by
-            status at year-end, average processing time, SLA compliance rate, percentage
-            closed within statutory deadlines; required by HinSchG &sect;12 Abs. 3 for
-            internal documentation; downloadable from <code>/admin/stats</code></li>
-          <li><strong>Whistleblower sees handler department</strong> — the status page shows the
-            department/category label of the case handler team (not the handler's name);
-            provides transparency without de-anonymizing internal staff; configurable
-            per-organization (<code>SHOW_HANDLER_DEPARTMENT=true</code>)</li>
-        </ul>
-      </section>
-
-      <!-- Already released -->
-      <section class="docs-section" id="released" aria-labelledby="released-h2">
-        <h2 id="released-h2">Already released</h2>
-        <p>
-          Every shipped release, newest first, is on the
-          <a href="changelog.html">Changelog</a> page.
-        </p>
-      </section>
-
-    </main>
+SHELL_FOOT = """    </main>
   </div>
 
   <!-- Footer -->
@@ -996,3 +971,54 @@
   </script>
 </body>
 </html>
+"""
+
+
+def render(versions: list[Version], link_defs: dict[str, str]) -> str:
+    shown = [v for v in versions if any(line.strip() for line in v.lines)]
+
+    nav_links = "\n".join(
+        f'          <a href="#{slug(v.name)}">{esc(v.name)}</a>' for v in shown
+    )
+
+    sections = []
+    for v in shown:
+        date_suffix = f" — {esc(v.date)}" if v.date else ""
+        body_html = render_body(v.lines)
+        compare = compare_line(v, link_defs)
+        sections.append(
+            f'      <section class="docs-section" id="{slug(v.name)}" '
+            f'aria-labelledby="{slug(v.name)}-h2">\n'
+            f'        <h2 id="{slug(v.name)}-h2">{esc(v.name)}{date_suffix}</h2>\n'
+            f"        {body_html}\n"
+            f"        {compare}\n"
+            f"      </section>\n"
+        )
+
+    return SHELL_HEAD + nav_links + "\n" + SHELL_TAIL + "\n".join(sections) + SHELL_FOOT
+
+
+def main() -> int:
+    check = "--check" in sys.argv
+    versions, link_defs = parse(SRC.read_text())
+    want = render(versions, link_defs)
+
+    if check:
+        have = OUT.read_text() if OUT.exists() else ""
+        if have == want:
+            print(f"docs/changelog.html is current — {len(versions)} versions")
+            return 0
+        print(
+            "docs/changelog.html is not what CHANGELOG.md would produce.\n"
+            "  Run `uv run python scripts/render_changelog.py` and commit the result.",
+            file=sys.stderr,
+        )
+        return 1
+
+    OUT.write_text(want)
+    print(f"wrote docs/changelog.html — {len(versions)} versions")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Apply theme before first paint to avoid flash -->
+  <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
+  <title>Changelog — OpenWhistle | Self-Hosted Whistleblower Platform</title>
+  <meta name="description" content="Every OpenWhistle release, newest first, rendered from CHANGELOG.md.">
+  <meta name="keywords" content="OpenWhistle changelog, release notes, version history">
+  <meta name="author" content="OpenWhistle Contributors">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://openwhistle.net/changelog.html">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://openwhistle.net/changelog.html">
+  <meta property="og:title" content="Changelog — OpenWhistle">
+  <meta property="og:description" content="Every OpenWhistle release, newest first, rendered from CHANGELOG.md.">
+  <meta property="og:image" content="https://openwhistle.net/og-image.png">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Changelog — OpenWhistle">
+  <meta name="twitter:description" content="Every OpenWhistle release, newest first, rendered from CHANGELOG.md.">
+
+  <!-- JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "headline": "OpenWhistle Changelog",
+    "description": "Every OpenWhistle release, newest first, rendered from CHANGELOG.md.",
+    "url": "https://openwhistle.net/changelog.html",
+    "author": {
+      "@type": "Organization",
+      "name": "OpenWhistle Contributors",
+      "url": "https://github.com/openwhistle"
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://openwhistle.net/changelog.html"
+    }
+  }
+  </script>
+
+  <style>
+    /* Self-hosted fonts — no external CDN calls */
+    @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-300-normal.woff2') format('woff2'); font-weight: 300; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-500-normal.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+    @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+  </style>
+
+  <style>
+    /* ================================================================
+       OpenWhistle Documentation — Shared + Docs-specific styles
+       ================================================================ */
+
+    :root {
+      --bg-base: #ffffff;
+      --bg-surface: #f6f6f5;
+      --bg-raised: #efefee;
+      --bg-overlay: #e9e9e8;
+      --nav-bg: #ffffff;
+      --footer-bg: #0a0a0b;
+      --sidebar-bg: #f6f6f5;
+      --text-primary: #0a0a0b;
+      --text-secondary: #3d3d40;
+      --text-muted: #6a6a6e;
+      --border-subtle: #e6e6e4;
+      --border-default: #d8d8d6;
+      --border-strong: #c9c9c6;
+      --accent: #0c7253;
+      --accent-strong: #0b6249;
+      --accent-dim: rgba(12,114,83,0.15);
+      --accent-fog: rgba(12,114,83,0.08);
+      --warning: #8a5a12;
+      --warning-fog: rgba(138,90,18,0.08);
+      --red-alert: #bf3529;
+      --code-bg: #0a0a0b;
+      --code-text: #e9e9e8;
+      --font-display: 'Sora', system-ui, sans-serif;
+      --font-body: 'Sora', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+      --space-1: 0.25rem;
+      --space-2: 0.5rem;
+      --space-3: 0.75rem;
+      --space-4: 1rem;
+      --space-5: 1.25rem;
+      --space-6: 1.5rem;
+      --space-8: 2rem;
+      --space-10: 2.5rem;
+      --space-12: 3rem;
+      --space-16: 4rem;
+      --max-width: 1200px;
+      --sidebar-width: 260px;
+      --ease-stiff: cubic-bezier(0.16, 1, 0.3, 1);
+      --duration-fast: 140ms;
+      --duration-mid: 280ms;
+    }
+
+    [data-theme="dark"] {
+      --bg-base: #08080a;
+      --bg-surface: #131315;
+      --bg-raised: #1b1b1e;
+      --bg-overlay: #232327;
+      --nav-bg: #08080a;
+      --footer-bg: #050506;
+      --sidebar-bg: #131315;
+      --text-primary: #fafafa;
+      --text-secondary: #bcbcc0;
+      --text-muted: #8e8e93;
+      --border-subtle: #262629;
+      --border-default: #34343a;
+      --border-strong: #43434a;
+      --accent: #23c088;
+      --accent-strong: #1fa878;
+      --accent-dim: rgba(35,192,136,0.15);
+      --accent-fog: rgba(35,192,136,0.08);
+      --warning: #d6a13c;
+      --warning-fog: rgba(214,161,60,0.1);
+      --code-bg: #050506;
+      --code-text: #fafafa;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; -webkit-text-size-adjust: 100%; }
+    img, svg { display: block; max-width: 100%; }
+    a { color: inherit; text-decoration: none; }
+    button { cursor: pointer; border: none; background: none; font: inherit; }
+    ul, ol { list-style: none; }
+
+    body {
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      transition: background var(--duration-mid) ease, color var(--duration-mid) ease;
+    }
+
+    .skip-link {
+      position: absolute;
+      top: -100%;
+      left: var(--space-4);
+      background: var(--accent);
+      color: #fff;
+      padding: var(--space-2) var(--space-4);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      z-index: 9999;
+    }
+    .skip-link:focus { top: var(--space-4); }
+
+    /* ── Navigation ──────────────────────────────────────────────── */
+    .site-nav {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      background: var(--nav-bg);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    [data-theme="light"] .site-nav { border-bottom-color: #e2e8f0; }
+    [data-theme="light"] .nav-logo { color: #1e293b; }
+    [data-theme="light"] .nav-logo:hover { color: #0c7253; }
+    [data-theme="light"] .nav-logo svg path,
+    [data-theme="light"] .nav-logo svg circle { stroke: #0c7253; }
+    [data-theme="light"] .nav-links a { color: rgba(55,65,81,0.75); }
+    [data-theme="light"] .nav-links a:hover { color: #1e293b; }
+    [data-theme="light"] .nav-cta { color: #0c7253 !important; border-color: rgba(12,114,83,0.4) !important; }
+    [data-theme="light"] .nav-cta:hover { background: rgba(12,114,83,0.08) !important; color: #0c7253 !important; }
+    [data-theme="light"] .theme-toggle { border-color: #cbd5e1; color: #718096; }
+    [data-theme="light"] .theme-toggle:hover { border-color: #0c7253; color: #0c7253; }
+    [data-theme="light"] .nav-toggle { color: #374151; }
+    .nav-inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 var(--space-8);
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-6);
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: #e2dcd2;
+      flex-shrink: 0;
+      transition: color var(--duration-fast) ease;
+    }
+    .nav-logo:hover { color: #fff; }
+    .nav-logo svg { flex-shrink: 0; }
+    .nav-logo svg path, .nav-logo svg circle { stroke: var(--accent); }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: var(--space-6);
+    }
+    .nav-links a {
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      letter-spacing: 0.02em;
+      color: rgba(226, 220, 210, 0.65);
+      transition: color var(--duration-fast) ease;
+      white-space: nowrap;
+    }
+    .nav-links a:hover { color: #e2dcd2; }
+    .nav-links a.active { color: var(--accent); }
+    .nav-cta {
+      padding: var(--space-2) var(--space-4) !important;
+      border: 1px solid rgba(12, 114, 83, 0.5) !important;
+      color: var(--accent) !important;
+      border-radius: 2px;
+    }
+    .nav-cta:hover { background: rgba(12, 114, 83, 0.15) !important; color: var(--accent-strong) !important; }
+    .nav-actions { display: flex; align-items: center; gap: var(--space-4); flex-shrink: 0; }
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 2px;
+      color: rgba(226, 220, 210, 0.65);
+      transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease;
+    }
+    .theme-toggle:hover { color: #e2dcd2; border-color: rgba(255,255,255,0.25); }
+    .theme-toggle svg { width: 16px; height: 16px; }
+    .icon-sun { display: none; }
+    [data-theme="dark"] .icon-moon { display: none; }
+    [data-theme="dark"] .icon-sun { display: block; }
+    .nav-toggle {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      padding: var(--space-2);
+      color: rgba(226, 220, 210, 0.65);
+    }
+    .nav-toggle span { display: block; width: 20px; height: 1.5px; background: currentColor; }
+
+    /* ── Docs layout ─────────────────────────────────────────────── */
+    .docs-layout {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr;
+      min-height: calc(100vh - 60px);
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
+
+    /* ── Sidebar ─────────────────────────────────────────────────── */
+    .docs-sidebar {
+      position: sticky;
+      top: 60px;
+      height: calc(100vh - 60px);
+      overflow-y: auto;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border-subtle);
+      padding: var(--space-8) var(--space-5);
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-default) transparent;
+    }
+    .docs-sidebar::-webkit-scrollbar { width: 4px; }
+    .docs-sidebar::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 2px; }
+
+    .sidebar-section {
+      margin-bottom: var(--space-8);
+    }
+    .sidebar-section-title {
+      font-family: var(--font-body);
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: var(--space-3);
+      padding-left: var(--space-3);
+    }
+    .sidebar-links {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .sidebar-links a {
+      display: block;
+      padding: var(--space-2) var(--space-3);
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      border-left: 2px solid transparent;
+      border-radius: 0 2px 2px 0;
+      transition: color var(--duration-fast) ease, background var(--duration-fast) ease, border-left-color var(--duration-fast) ease;
+    }
+    .sidebar-links a:hover {
+      color: var(--text-primary);
+      background: var(--bg-raised);
+    }
+    .sidebar-links a.active {
+      color: var(--accent);
+      background: var(--accent-fog);
+      border-left-color: var(--accent);
+    }
+
+    /* ── Content ─────────────────────────────────────────────────── */
+    .docs-content {
+      padding: var(--space-12) var(--space-12) var(--space-16);
+      min-width: 0;
+    }
+
+    .docs-breadcrumb {
+      font-family: var(--font-body);
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      margin-bottom: var(--space-8);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+    .docs-breadcrumb a { color: var(--accent); transition: color var(--duration-fast) ease; }
+    .docs-breadcrumb a:hover { color: var(--accent-strong); }
+    .docs-breadcrumb span { color: var(--text-muted); }
+
+    /* Content typography */
+    .docs-content h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 3.5vw, 2.8rem);
+      font-weight: 700;
+      letter-spacing: -0.035em;
+      line-height: 1.12;
+      color: var(--text-primary);
+      margin-bottom: var(--space-5);
+      animation: rise 0.5s var(--ease-stiff) both;
+    }
+
+    .docs-lead {
+      font-size: 1.05rem;
+      font-weight: 300;
+      color: var(--text-secondary);
+      line-height: 1.75;
+      max-width: 60ch;
+      margin-bottom: var(--space-10);
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: var(--space-8);
+      animation: rise 0.5s var(--ease-stiff) 0.1s both;
+    }
+
+    .docs-section {
+      margin-bottom: var(--space-12);
+      padding-bottom: var(--space-12);
+      border-bottom: 1px solid var(--border-subtle);
+      scroll-margin-top: 80px;
+    }
+    .docs-section:last-child {
+      border-bottom: none;
+    }
+
+    .docs-section h2 {
+      font-family: var(--font-display);
+      font-size: clamp(1.4rem, 2.5vw, 1.9rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      color: var(--text-primary);
+      margin-bottom: var(--space-5);
+      line-height: 1.2;
+    }
+
+    .docs-section h3 {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: var(--space-8) 0 var(--space-3);
+    }
+
+    .docs-section p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.8;
+      margin-bottom: var(--space-4);
+      max-width: 70ch;
+    }
+
+    .docs-section a {
+      color: var(--accent);
+      border-bottom: 1px solid var(--accent-dim);
+      transition: all var(--duration-fast) ease;
+    }
+    .docs-section a:hover { border-bottom-color: var(--accent); }
+
+    .docs-section ul, .docs-section ol {
+      padding-left: var(--space-6);
+      margin-bottom: var(--space-5);
+    }
+    .docs-section ul { list-style: disc; }
+    .docs-section ol { list-style: decimal; }
+    .docs-section li {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.75;
+      margin-bottom: var(--space-2);
+      max-width: 68ch;
+    }
+    .docs-section li ul {
+      margin-top: var(--space-2);
+      margin-bottom: 0;
+    }
+
+    .docs-section code {
+      font-family: var(--font-mono);
+      font-size: 0.82em;
+      background: var(--bg-raised);
+      border: 1px solid var(--border-subtle);
+      padding: 1px 5px;
+      border-radius: 2px;
+      color: var(--text-primary);
+    }
+    [data-theme="dark"] .docs-section code {
+      background: var(--bg-overlay);
+    }
+
+    /* Callout boxes */
+    .callout {
+      padding: var(--space-4) var(--space-6);
+      margin: var(--space-6) 0;
+      border-left: 3px solid;
+      border-radius: 0 2px 2px 0;
+    }
+    .callout-note {
+      background: var(--accent-fog);
+      border-color: var(--accent);
+    }
+    .callout-warn {
+      background: var(--warning-fog);
+      border-color: var(--warning);
+    }
+    .callout-title {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: var(--space-2);
+    }
+    .callout-note .callout-title { color: var(--accent); }
+    .callout-warn .callout-title { color: var(--warning); }
+    .callout p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      max-width: none;
+      margin-bottom: 0;
+    }
+
+    /* ── Footer ──────────────────────────────────────────────────── */
+    .site-footer {
+      background: var(--footer-bg);
+      color: rgba(226, 220, 210, 0.7);
+      padding: var(--space-16) var(--space-8) var(--space-8);
+    }
+    .footer-inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.8fr 1fr 1fr;
+      gap: var(--space-12);
+      margin-bottom: var(--space-12);
+      padding-bottom: var(--space-10);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #e2dcd2;
+      margin-bottom: var(--space-4);
+    }
+    .footer-tagline {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: rgba(226, 220, 210, 0.5);
+      line-height: 1.6;
+      max-width: 32ch;
+    }
+    .footer-col-title {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(226, 220, 210, 0.4);
+      margin-bottom: var(--space-5);
+    }
+    .footer-links {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+    .footer-links a {
+      font-size: 0.875rem;
+      color: rgba(226, 220, 210, 0.6);
+      transition: color var(--duration-fast) ease;
+    }
+    .footer-links a:hover { color: #e2dcd2; }
+    .footer-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.06em;
+      color: rgba(226, 220, 210, 0.3);
+      gap: var(--space-4);
+      flex-wrap: wrap;
+    }
+    .footer-bottom a {
+      color: rgba(226, 220, 210, 0.4);
+      transition: color var(--duration-fast) ease;
+    }
+    .footer-bottom a:hover { color: rgba(226, 220, 210, 0.7); }
+
+
+    /* ── Animations ─────────────────────────────────────────────── */
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Responsive ─────────────────────────────────────────────── */
+    /* Nav collapses at 1080px, not 768px: at 1024px the full item list no
+       longer fits the nav-inner row and overflows the viewport
+       horizontally. */
+    @media (max-width: 1080px) {
+      .nav-links { display: none; }
+      .nav-links.open {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: var(--nav-bg);
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        padding: var(--space-5) var(--space-6);
+        gap: var(--space-4);
+        z-index: 201;
+      }
+      .nav-toggle { display: flex; }
+    }
+
+    @media (max-width: 768px) {
+      .docs-layout { grid-template-columns: 1fr; }
+      .docs-sidebar {
+        position: static;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border-subtle);
+      }
+      .docs-content { padding: var(--space-8) var(--space-5) var(--space-12); }
+      .footer-grid { grid-template-columns: 1fr; gap: var(--space-8); }
+      .footer-bottom { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Navigation -->
+  <nav class="site-nav" role="navigation" aria-label="Primary navigation">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo" aria-label="OpenWhistle home">
+        <svg width="22" height="26" viewBox="0 0 22 26" fill="none" aria-hidden="true">
+          <path d="M11 1 L20 5 L20 14 C20 20 17 24 11 25.5 C5 24 2 20 2 14 L2 5 Z"
+                stroke="#5ecb7a" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+          <circle cx="11" cy="18" r="1.1" fill="#5ecb7a"/>
+          <path d="M8.5,16 A3,3 0 0,1 13.5,16" stroke="#5ecb7a" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M7,14.5 A5.5,5.5 0 0,1 15,14.5" stroke="#5ecb7a" stroke-width="1.2" stroke-linecap="round" opacity="0.72"/>
+          <path d="M5,13 A8,8 0 0,1 17,13" stroke="#5ecb7a" stroke-width="1" stroke-linecap="round" opacity="0.42"/>
+        </svg>
+        OpenWhistle
+      </a>
+
+      <button class="nav-toggle" aria-controls="nav-links" aria-expanded="false" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+      </button>
+
+      <ul class="nav-links" id="nav-links" role="list">
+        <li><a href="index.html#features">Features</a></li>
+        <li><a href="index.html#how-it-works">How it Works</a></li>
+        <li><a href="index.html#compliance">Compliance</a></li>
+        <li><a href="docs.html">Documentation</a></li>
+        <li><a href="roadmap.html">Roadmap</a></li>
+        <li><a href="changelog.html" class="active" aria-current="page">Changelog</a></li>
+        <li><a href="blog/">Blog</a></li>
+        <li><a href="de/">Auf Deutsch</a></li>
+        <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
+        <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank" class="nav-cta">Try Demo</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+          <svg class="icon-moon" viewBox="0 0 16 16" fill="none">
+            <path d="M13.5 9.5A6 6 0 016 2a6 6 0 100 12 6 6 0 007.5-4.5z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+          <svg class="icon-sun" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.3"/>
+            <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M11.54 4.46l-1.41 1.41M4.95 11.54l-1.41 1.41" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="docs-layout">
+
+    <!-- Sidebar -->
+    <aside class="docs-sidebar" role="complementary" aria-label="Changelog navigation">
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Versions</div>
+        <nav class="sidebar-links" aria-label="On this page">
+          <a href="#v2-0-0">2.0.0</a>
+          <a href="#v1-5-0">1.5.0</a>
+          <a href="#v1-4-0">1.4.0</a>
+          <a href="#v1-3-1">1.3.1</a>
+          <a href="#v1-3-0">1.3.0</a>
+          <a href="#v1-2-1">1.2.1</a>
+          <a href="#v1-2-0">1.2.0</a>
+          <a href="#v1-1-1">1.1.1</a>
+          <a href="#v1-1-0">1.1.0</a>
+          <a href="#v1-0-0">1.0.0</a>
+          <a href="#v0-5-0">0.5.0</a>
+          <a href="#v0-4-0">0.4.0</a>
+          <a href="#v0-3-0">0.3.0</a>
+          <a href="#v0-2-2">0.2.2</a>
+          <a href="#v0-2-1">0.2.1</a>
+          <a href="#v0-2-0">0.2.0</a>
+          <a href="#v0-1-0">0.1.0</a>
+        </nav>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Links</div>
+        <nav class="sidebar-links">
+          <a href="index.html">&#8592; Landing Page</a>
+          <a href="docs.html">Documentation</a>
+          <a href="roadmap.html">Roadmap</a>
+          <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG.md source</a>
+          <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub Repository</a>
+        </nav>
+      </div>
+
+    </aside>
+
+    <!-- Main content -->
+    <main id="main-content" class="docs-content">
+
+      <nav class="docs-breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">OpenWhistle</a>
+        <span>/</span>
+        <span>Changelog</span>
+      </nav>
+
+      <h1>Changelog</h1>
+      <p class="docs-lead">
+        Every release, newest first. Rendered from
+        <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG.md</a>,
+        the file GitHub and the release tooling read.
+      </p>
+
+      <section class="docs-section" id="v2-0-0" aria-labelledby="v2-0-0-h2">
+        <h2 id="v2-0-0-h2">2.0.0 — 2026-09-26</h2>
+        <p>A major version: the webhook payload, the Compose TLS/port layout and the first-run setup flow all break compatibility with 1.5.x — see Changed (breaking) below and the upgrade notes before deploying.</p>
+        <h3>Upgrade notes</h3>
+        <ul><li><strong>LDAP with a private CA reads <code>LDAPTLS_CACERT</code></strong> (or <code>LDAPTLS_CACERTDIR</code>). <code>SSL_CERT_FILE</code> is ignored for LDAPS and StartTLS: point <code>LDAPTLS_CACERT</code> at the CA's PEM file.</li><li><strong>LDAP uses python-ldap</strong> (the OpenLDAP client) instead of ldap3, which has had no release since 2021.</li><li><strong>LDAP and S3 are optional extras</strong> (<code>ldap</code>, <code>s3</code>). The container image includes both; installing from source needs <code>pip install '.[ldap,s3]'</code> and <code>libldap2-dev libsasl2-dev</code>.</li><li><strong>A fresh install needs the setup token.</strong> <code>/setup</code> asks for a one-time token: set <code>SETUP_TOKEN</code> (32+ characters; the app refuses to start with a shorter one), or read the random one the app logs once at WARNING on its first start. After <code>MAX_LOGIN_ATTEMPTS</code> wrong tokens, <code>/setup</code> refuses every token for <code>LOGIN_LOCKOUT_MINUTES</code>. An existing installation is not affected.</li><li><strong>Setting <code>ENCRYPTION_KEY</code> on an existing install needs <code>ENCRYPTION_KEY_PREVIOUS</code>.</strong> Existing data is under <code>SECRET_KEY</code>: set <code>ENCRYPTION_KEY=&lt;new&gt;</code> together with <code>ENCRYPTION_KEY_PREVIOUS=&lt;your SECRET_KEY&gt;</code>, recreate the container, then run <code>scripts/rotate_encryption_key.py</code>. The app now refuses to start, before migrating, when neither key opens a stored report key or TOTP secret (also when <code>ENCRYPTION_KEY</code> is removed again).</li><li><strong>New-report and reply notices arrive once a day</strong> (00:00 UTC) unless <code>NOTIFICATION_BATCH_MINUTES</code> is set; the default was 60.</li><li><strong>Admin sessions end 12 hours after login</strong> (<code>SESSION_MAX_HOURS</code>), however often "Stay signed in" is used; then password and TOTP again.</li><li><strong>Upgrading the Compose stack needs <code>git pull</code></strong>, not only <code>docker compose pull</code>: it needs the new <code>nginx/snippets/</code> and the <code>tls-init</code> service. A customised <code>nginx/nginx.conf</code> makes the pull conflict; replace it with the shipped one.</li><li><strong>The Compose stack listens on 443</strong> and only redirects on 80 (see Added). Copy your certificate into <code>nginx/certs/</code> (<code>fullchain.pem</code>, <code>privkey.pem</code>; no symlinks, key root-owned 0600 or 0644): the old <code>./nginx/certs:/etc/nginx/certs</code> mount is gone. Without one, a self-signed certificate is served.</li><li><strong>Behind an external TLS terminator</strong> (Cloudflare, Traefik, a host nginx), point it at <code>https://…:443</code>, or add <code>docker-compose.behind-proxy.yml</code>, which proxies plain HTTP on 80 and publishes no 443. Aimed at the new port 80, the terminator loops on the redirect.</li><li><strong>nginx publishes <code>127.0.0.1:8080</code></strong> (the onion listener). If the host already uses 8080, <code>docker compose up</code> fails: free the port first.</li><li><strong>Back up before upgrading; the rollback changed.</strong> The 1.5.0 image refuses the migrated schema. Restore the backup, or run <code>alembic downgrade 7d4e2b9c1a05</code> with the 2.0.0 image (<code>docker compose run --rm app alembic downgrade 7d4e2b9c1a05</code>) before pinning 1.5.0. The downgrade keeps the day-rounded times of migration 006: the exact times are gone by design.</li><li><strong><code>BRAND_SECONDARY_COLOR</code> is ignored</strong> with a warning at startup; delete it from <code>.env</code>.</li><li><strong>Webhooks carry counts only, never case numbers or deadlines</strong>; update receivers that parsed the old fields. The SLA reminder is one webhook per scheduler run, not one per case.<ul><li>Generic reminder: <code>case_number</code>, <code>deadline</code>, <code>days_left</code> and <code>timestamp</code> are gone; <code>ack_due</code>, <code>feedback_due</code> and <code>message</code> are new.</li><li>Generic digest: <code>new_reports</code>/<code>new_messages</code> are counts, not arrays of case numbers, plus <code>message</code>.</li><li>Slack: the <code>fields</code> block is one <code>text</code> block. Teams: the reminder's <code>FactSet</code> is a <code>TextBlock</code>, and the digest has one "Activity" fact instead of case numbers.</li><li>The reminder email is unchanged: it still carries the case number, since only your own admins receive it.</li></ul></li><li><strong><code>docker-compose.prod.yml</code> pins the image</strong> to <code>${OPENWHISTLE_VERSION:-2.0.0}</code> instead of <code>:latest</code>; set <code>OPENWHISTLE_VERSION</code> to upgrade.</li><li>Migrations 004–006 run at start: TOTP secrets are encrypted, audit rows get their organisation, whistleblower times are rounded to the day (not reversible).</li></ul>
+        <h3>Security</h3>
+        <ul><li><strong>Switching the language needs the CSRF token</strong> (<code>POST /set-language</code>), like every other form: another site can no longer change a visitor's language cookie.</li><li><strong>Categories and locations stay inside their organisation.</strong> With multi-tenancy on, an org admin saw every organisation's categories and locations and could deactivate or reactivate them by id; now the lists are scoped and another organisation's id answers 404. A slug or code is unique per organisation (a shared slug no longer caused a 500), new ones are created in the admin's own organisation, and deactivating or reactivating a location is audited. Creating a category or location commits in one transaction with its audit row.</li><li><strong>The first-run setup page belonged to whoever opened it first.</strong> <code>/setup</code> now needs a one-time setup token (<code>SETUP_TOKEN</code>, or a random token logged once at start), deleted when the first admin exists. Wrong tokens are rate-limited (<code>MAX_LOGIN_ATTEMPTS</code> per <code>LOGIN_LOCKOUT_MINUTES</code>, counted per instance), and an operator-set token needs 32 characters.</li><li><strong>TOTP secrets are encrypted at rest</strong> (migration 004): a database dump no longer yields the second factor of every account.</li><li><strong>Admin sessions have an absolute lifetime</strong> (<code>SESSION_MAX_HOURS</code>, default 12). "Stay signed in" renews the token up to that limit, never past it, and the renewal needs the CSRF header.</li><li><strong>A deactivated account gets neither the TOTP step nor a session</strong>, on every login path (password, LDAP, OIDC, first TOTP setup).</li><li><strong>An unknown role is refused with 422</strong> when creating a user or changing a role (it used to create an <em>admin</em>); the role picker defaults to case manager.</li><li>Only admins may dismiss the IP-header warning.</li><li><strong>Audit entries carry their organisation</strong> (migration 005 backfills existing rows), so an organisation's audit log shows its own entries and no one else's; an admin without an organisation sees only entries they wrote. A superadmin's action on a user, organisation, category or location is filed under the target's organisation, so its admins see it.</li><li><strong>Containers are hardened</strong>: read-only root file system, all capabilities dropped, <code>no-new-privileges</code>, base images pinned by digest, no <code>curl</code> in the image, uid 1000 to match the Helm chart's <code>securityContext</code> (<code>readOnlyRootFilesystem</code>, no privilege escalation).</li><li><strong>LDAP refuses an empty password</strong> (a simple bind with an empty password is an anonymous bind and succeeds), escapes the username in the search filter, demands a valid certificate with TLS 1.2 or later, and always closes its connections.</li><li>CI runs <code>pip-audit</code> and Trivy on every pull request and weekly.</li></ul>
+        <h3>Added</h3>
+        <ul><li><strong>Per-organisation reporting link</strong> (multi-tenancy). Each organisation's wizard is at <code>/submit/&lt;org-slug&gt;</code>: it offers only that organisation's categories and locations and files the report under it. <code>/submit</code> is the default organisation's; an unknown or deactivated slug is a 404, and there is no public list of organisations. With multi-tenancy on and <code>DEFAULT_ORG_SLUG</code> naming no active organisation, <code>/submit</code> answers 503 and a set-up instance refuses to start. The link, with a copy button, is on <code>/admin/organisations</code> and on an organisation admin's dashboard. With multi-tenancy off, nothing changes: <code>/submit/&lt;default slug&gt;</code> redirects to <code>/submit</code>, any other slug is a 404.</li><li><strong>Tor onion address</strong> (<code>ONION_LOCATION</code>, optional). Sends an <code>Onion-Location</code> header, so Tor Browser offers the switch, and shows the address on the submit page for reporters on a monitored network. nginx sets <code>X-OW-Onion</code> only on the onion listener and strips any client-sent copy; without <code>ONION_LOCATION</code> the app ignores the header.</li><li><strong>Virus scan of uploads with ClamAV</strong> (<code>CLAMAV_HOST</code>, <code>CLAMAV_PORT</code>, <code>CLAMAV_TIMEOUT_SECONDS</code>; optional <code>clamav</code> compose profile). Fail-closed: if <code>clamd</code> cannot be reached, the upload is refused, never stored unscanned.</li><li><strong>Remove an attached file before submitting.</strong> Attachments now stay attached when going back (see Fixed), so the attachments step has a Remove button for each file.</li><li><strong>TLS by default in the shipped Compose stack.</strong> The bundled nginx now serves HTTPS on 443 and redirects plain HTTP on 80 — nothing is proxied without TLS. A one-shot <code>tls-init</code> service generates a self-signed certificate for <code>TLS_HOSTNAME</code> (<code>.env</code>, default <code>localhost</code>) before nginx starts, so the stack comes up without any manual certificate step; drop your own <code>fullchain.pem</code>/<code>privkey.pem</code> into <code>nginx/certs/</code> and restart to use a real one instead. A certificate there that cannot be read, or is a symlink, stops <code>tls-init</code> with the path and the reason instead of falling back to self-signed.</li><li><strong><code>docker-compose.behind-proxy.yml</code></strong> for an install behind an external TLS terminator: nginx proxies plain HTTP on 80 and publishes no 443.</li><li><strong>Voluntary installation count</strong> (<code>TELEMETRY_ENABLED</code>, off by default). Only if an admin agrees — in the setup wizard (unchecked by default) or on <code>/admin/system</code>, no restart — one request a day: <code>GET https://telemetry.wdkro.de/v1/openwhistle/count?id=&lt;32 hex&gt;&amp;v=&lt;version&gt;</code>, nothing else. The identifier is 16 random bytes made on the server and kept in the new <code>telemetry_state</code> table (migration 007); the System page shows the exact request and the identifier, the last success, a switch (one audit entry per change) and <em>Reset identifier</em>. An installation upgraded to 2.0.0 stays off until an admin switches it on. The first attempt waits a random part of an hour, a Redis lock lets one replica send, a failure is a debug line retried at the next hourly check, redirects are refused, the timeout is 10 s. <code>TELEMETRY_ENABLED=false</code> locks it off, <code>true</code> on; <code>DEMO_MODE</code> is never counted. The far end keeps timestamp, identifier and version, not the address, for 35 days. Every request the application can make is now listed in the docs under "Every request that leaves the host".</li><li><strong>Helm <code>extraEnv</code></strong> sets any non-secret setting that <code>values.yaml</code> has no key for.</li><li><strong>Separate, rotatable encryption key</strong> (<code>ENCRYPTION_KEY</code>, optional). At-rest encryption is now rooted in <code>ENCRYPTION_KEY</code> instead of <code>SECRET_KEY</code>; unset falls back to <code>SECRET_KEY</code> (pre-v2.0.0 behaviour, warned at startup). <code>ENCRYPTION_KEY_PREVIOUS</code> keeps old keys readable during rotation, and <code>scripts/rotate_encryption_key.py</code> re-encrypts every DEK, confidential identity and contact, secure e-mail, TOTP secret and identity-reveal reason under the new key.</li><li><strong>Maintainer tooling: local review login</strong> (<code>LOCAL_REVIEW_LOGIN</code>, requires <code>DEMO_MODE=true</code>, <code>SECURE_COOKIES=false</code> and a loopback <code>APP_PUBLIC_URL</code>; set only by the <code>docker-compose.review.yml</code> override, never in a deployment). A one-click button on <code>/admin/login</code> signs a browser agent in as the seeded demo admin for the release's Chrome check. The route answers 404 for every method unless the flag is on, the request carries no proxy header and the <code>Host</code> is loopback. See <code>docs-tech/local-review.md</code>.</li></ul>
+        <h3>Changed (breaking)</h3>
+        <ul><li><code>BRAND_SECONDARY_COLOR</code> is gone (see Removed); a <code>.env</code> that still sets it gets a warning.</li><li><strong>Existing whistleblower times are rounded to the day</strong> by migration 006, irreversibly (see Changed).</li><li><code>.doc</code> and <code>.xls</code> uploads are refused; their author field cannot be removed. The message tells the reporter to save as <code>.docx</code>/<code>.xlsx</code>.</li></ul>
+        <h3>Privacy</h3>
+        <ul><li><strong>The whistleblower's status session is no longer extended on every view</strong>, so its remaining lifetime in Redis does not reveal the last visit; it ends 2 hours after login. Failed-attempt counters are keyed by an HMAC of the case number, not the case number itself.</li><li><strong>Photos inside Word and Excel files lose their EXIF</strong> (GPS, camera) on upload, like a photo uploaded on its own. <strong>PDFs lose their comment authors and times</strong>, the EXIF of embedded JPEG photos, and the file identifier that linked the upload to the original file.</li><li><strong>Database errors no longer log their bound values.</strong> Every engine (app, migrations, scripts) sets <code>hide_parameters</code>, so a failed query on <code>/status</code> or a reply no longer writes the case number or report id into the error log next to an exact time.</li><li><strong>Notification digests are daily by default</strong> (<code>NOTIFICATION_BATCH_MINUTES=1440</code>, was 60). Report times are stored as the day, and an hourly digest said which hour a report or reply arrived. Set a smaller value to hear sooner, at that precision.</li><li><strong>The confidential identity is shown only to the handler, with an audited reason.</strong> The case page no longer prints the reporter's name and contact: the assigned handler (for an unassigned case, an admin of the case's organisation) enters a 10–500 character reason, sees the identity once, and the reason is stored encrypted in the audit log. Every case view is audited too; the audit log hides views unless <em>Show case views</em> is ticked.</li><li><strong>Search inside reports.</strong> The dashboard search also finds words in descriptions and messages (three characters or more), decrypted in memory for that request only — no index is stored, the confidential name never matches, and at most the 5,000 newest cases in the current view are searched. The search is a POST form, so the term stays out of URLs and the browser history, and each word search is audited (<code>report.content_searched</code>, term encrypted, hit count).</li><li><strong>The audit CSV export neutralises spreadsheet formulas</strong> and writes each detail as one JSON cell, so a reason cannot forge extra fields.</li><li><strong>Excel's own "Name:" label is removed from comment text</strong> in <code>.xlsx</code> uploads, not only the comment's author field.</li><li><strong>S3 objects stored before v1.5.0 are moved to keys without the filename</strong> at start (once across replicas), and no log line or error message names a storage key.</li><li><strong>PDF export leaves the confidential identity out</strong> unless the handler gives an audited reason. The default export prints "Identity: [on file — not included]"; a new "Export PDF with identity" button asks for the same 10–500 character reason as the on-screen reveal and writes the same <code>IDENTITY_REVEALED</code> audit entry.</li><li><strong>PDF export prints Latin, Greek and Cyrillic text intact.</strong> DejaVu LGC Sans (bundled under <code>app/fonts/</code>) replaces fpdf2's core Helvetica, which silently turned anything outside latin-1 into "?" — a report or message written in Polish, Greek or Cyrillic used to lose its own text in the printed record. CJK and right-to-left scripts are still unsupported (missing-glyph boxes).</li><li><strong>A case manager's counts cover only their own cases.</strong> The dashboard's status counts and the <code>/admin/stats</code> figures counted every case in the organisation, though the list showed only the cases assigned to them.</li></ul>
+        <h3>Changed</h3>
+        <ul><li>Dependencies refreshed (SQLAlchemy 2.1, uvicorn 0.54, boto3 1.43.103, ruff 0.16.9, uv 0.12.19); the SQLAlchemy mypy plugin, removed in 2.1, is no longer configured.</li><li><strong>Helm: the Ingress rate-limits every route</strong> like the bundled nginx (<code>limit-rps: "10"</code>, burst 30). Before, a Kubernetes deployment had no limit on <code>POST /submit</code> or any other public route. ingress-nginx answers a rejected request with 503 and keys on the peer address; the chart and its install notes now state that <code>error-log-level: crit</code> is required, since below it the controller logs each rejected reporter's IP address.</li><li><strong>Times the whistleblower causes are stored and shown as the day only</strong> (UTC): submission, the receipt message, whistleblower messages and attachment uploads. Migration 006 rounds existing rows; the exact times are gone for good (downgrade leaves the rounded values). Thread order is kept. Admin replies, notes, acknowledgement and closure keep their time, on screen and in the PDF. The 7-day acknowledgement deadline and the stats page's on-time rate now count from 00:00 UTC of the submission day. A same-day message keeps its place in the thread, one microsecond after the message before it. Demo data follows the same rule.</li><li>The dashboard orders reports with equal submission days by id, so a page boundary is stable.</li><li><strong>The dashboard has no KPI tiles</strong>; each status filter pill carries its count, within the chosen location. The pills keep the location and search when switching status.</li><li><strong>The case page has five panels</strong>: Report (with its attachments), Communication thread, Notes, History (linked cases and the collapsed activity log) and Actions (acknowledge, assign, status, confidential identity, PDF export, and deletion collapsed under <em>Delete report</em>). The facts sit above Actions without panel chrome.</li></ul>
+        <ul><li><strong>Website</strong>: the German landing page and the blog are on the current design; every page shares one nav (collapsing below 1080 px) and one footer. The landing pages link each other with <code>hreflang</code>, and the German FAQ's structured data matches its visible questions. The unused Spectral and Source Serif fonts are removed.</li></ul>
+        <h3>Fixed</h3>
+        <ul><li><strong>A category deleted outright read differently on the PDF</strong> (its raw slug) than on the pages (title-cased). One fallback now serves the templates, the stats page and the PDF.</li><li><strong>Paging and sorting the dashboard dropped the location filter.</strong> Every dashboard link now keeps the whole current view.</li><li><strong>A case-number collision expired every object the caller held</strong> (a full rollback), so the next attribute access failed with <code>MissingGreenlet</code>; each attempt now uses its own SAVEPOINT.</li><li>Report creation retried on any database integrity error; it now retries only a case-number collision and raises any other error at once.</li><li>Two messages posted to one case at the same moment could get the same time and an arbitrary order; the case row is now locked while a message's time is chosen.</li><li>The case page's confirmation prompts, "(current)" status label and "no further transitions" note were English in every language; a French prompt showed <code>&amp;#39;</code> for each apostrophe.</li><li><strong>Organisations and admin-users pages were hardcoded English</strong>, with button/badge classes (<code>btn--danger</code>, <code>badge--green</code>, ...) that don't exist in <code>site.css</code>. A sweep of every template found the same two problems on the retention, system, telephone-channel and category pages too (BEM-style classes that were never styled, a couple of untranslated titles and hints, a broken <code>field-error</code> CSS selector missing its leading dot). All now use real locale keys and the actual button/badge/grid class names.</li><li><strong>Creating and deactivating organisations failed with a CSRF error.</strong> The page posted <code>{{ csrf_token }}</code>, a context variable the route never sets, instead of <code>{{ request.state.csrf_token }}</code> — every real submission sent an empty token and got a 403.</li><li>The dashboard's active filter pills all carried <code>aria-current="page"</code>, but two independent pill groups (status/my-cases and location) can each have an active pill at once — "page" implies a single current page. Filter pills now use <code>aria-current="true"</code>; pagination and navigation keep <code>"page"</code>.</li><li><strong>The browser's own Back button broke the submission wizard halfway through</strong> (a "Confirm Form Resubmission" dialog, or a stale step that rewound progress when resent). Every wizard step now answers its POST with a redirect to <code>GET /submit</code>, and a step that does not match the session's progress is ignored instead of processed. Found and fixed by Zachary Bridges; his #94 fix is ported into this release with him as co-author.</li><li><strong>The wizard's Back button silently dropped uploaded attachments</strong>: a file input is always empty on revisit, so Next from there cleared them. Files now stay attached unless new ones are chosen, and the attachments step lists what is already attached. Found and fixed by Zachary Bridges; his #94 fix is ported into this release with him as co-author.</li><li>A description that failed validation (too short or too long) was discarded, and the step showed an empty field or the previous text. It now keeps what was typed (a too-long one cut at 10,000 characters). Found and fixed by Zachary Bridges; his #94 fix is ported into this release with him as co-author.</li><li><strong>A double final submit created two reports</strong>: two concurrent POSTs of the review form (a double click with JavaScript off, e.g. Tor Browser "Safest") both read the draft before either deleted it, and the PIN of one report was never shown. Now the draft is claimed atomically, exactly one report is created, and both responses show its case number and PIN. A click that finds the first one still running says so and offers "Check again", never a receipt without a case number. The report and its attachments are committed together: a failure before the commit, or a worker that dies before it, gives the draft back; a commit whose reply was lost is looked up, never repeated. Each draft carries its report's id, so the database refuses a second report of the same draft whatever the timing or fault; a draft whose report exists is never given back, and the page then shows its case number. The race predates the #94 port: v1.5.0 has the same load → create → delete sequence.</li><li>The final submit re-checks each step the way the step itself does: a location or category switched off, or confidential mode disabled, after the reporter chose it returns them to that step with a message instead of failing.</li><li>The audit log sorted only by time, so entries with the same time could repeat or go missing between pages; ties are now broken by id, as the report list already does.</li><li><strong>The wizard processed any posted step when <code>action</code> was neither <code>next</code> nor <code>back</code></strong>, so a crafted request could skip ahead (store a file on a fresh draft) or submit a rejected description. Unknown actions are now ignored, and the final submit re-checks every field before the report is created. The skip-ahead was already possible in v1.5.0.</li><li><strong>Categories showed in English</strong> on the dashboard, case page, stats and PDF export (the PDF printed the raw slug). They now use the admin's language, falling back to English, and a label comes only from the admin's own organisation.</li><li><strong>A new admin user defaulted to <code>superadmin</code></strong>; the role picker now defaults to <code>case_manager</code>. <code>role.label.superadmin</code> had no translation and showed as the raw key.</li><li>An icon next to text (SLA value, assignee, filename) rendered on its own line.</li><li>Stylesheet and script URLs carried no version, and <code>/static/</code> had no <code>Cache-Control</code>, so a browser kept stale files after an upgrade. Links now carry <code>?v={app_version}</code>, and every <code>/static/</code> response is <code>no-cache</code> (the nginx snippet's conflicting <code>immutable</code> is gone).</li><li>A long German status badge pushed the dashboard's "Ansehen" button out of view; the badge wraps and the action column stays pinned. The pinned header is chosen by class, so the audit log's last column no longer detaches from its data.</li><li><code>docs.html</code> and two blog articles overflowed horizontally on a phone (up to 519 px).</li><li>The local-review login button sat flush against the demo-credentials box.</li><li><strong>The PIN on the success screen was cut off.</strong> A 36-character PIN or case number scrolled behind the copy button instead of fitting its box; it now wraps only after a hyphen (never inside a group) and is always fully visible, at every width, without scrolling.</li><li>The review step's German label "EINREICHUNGSMODUS" overlapped its value "Anonym" (a fixed 7rem label column, too narrow for the longest label in some locales); the review list now stacks each label over its value instead of sizing one column for every language.</li><li>The description step's character counter always showed "10,000" regardless of language; a shared <code>format_count</code> helper (Python and JavaScript) now groups digits per locale ("10.000" in German and Portuguese, "10 000" in French).</li><li>The wizard eyebrow said "CONFIDENTIAL REPORT" even in anonymous mode, clashing with "Anonymous" right below it; it is now a neutral "Secure report" in all four languages.</li><li><code>/admin/stats</code>'s two-column grid pushed "nach Kategorie" 23px below "nach Status": a stacking margin meant for panels in normal vertical flow was also firing inside the grid, on top of its own <code>gap</code>.</li><li>A logged-in admin opening a stale <code>/admin/reports/&lt;id&gt;</code> got a raw JSON <code>{"detail":"Not Found"}</code> page. A browser request (<code>Accept: text/html</code>) to an HTML route now gets the styled, localised error page; an API/JSON client is unaffected.</li><li>The "Was ist neu in 2.0" blog article was dated 25 September; the release is the 26th (visible date, meta tags, JSON-LD <code>datePublished</code>/<code>dateModified</code>, sitemap <code>lastmod</code>).</li><li><strong>With multi-tenancy on, the wizard offered every organisation's categories and locations</strong>, and every report was filed under the default organisation (since v1.4). A category or location of another organisation is now refused at its step and again at the final submit.</li><li>The demo accounts belonged to no organisation, so with multi-tenancy on they saw none of the default organisation's demo reports; the seed now gives them the default organisation, also on an existing database.</li><li><strong><code>DEFAULT_ORG_SLUG</code> was ignored by setup and by the organisations page</strong>: setup always created <code>default</code>, and only <code>default</code> was protected from deactivation. Both now use the configured slug.</li></ul>
+        <h3>Design</h3>
+        <ul><li><strong>Signal design across the app</strong>: one admin shell with a role-aware sidebar (a case manager sees only the pages they may open) and a phone menu; SVG icons instead of emoji; an icon theme toggle; footer as a list; eyebrows only where they carry information; panel headers are real headings.</li><li><strong>Phones</strong>: the report form comes first, a case number or PIN never breaks across lines, and tables stack into labelled rows that keep their table semantics.</li><li>The website describes 2.0 (English and German landing pages, the "Was ist neu in 2.0" article), serves every font it uses itself, and the roadmap moved from <code>ROADMAP.md</code> to <a href="https://openwhistle.net/roadmap.html">openwhistle.net/roadmap.html</a>.</li></ul>
+        <h3>Process</h3>
+        <ul><li>CI runs codespell, markdownlint and ruff over the whole repository, a runtime check of the nginx onion-listener trust boundary, and every GitHub Action is pinned by commit SHA.</li><li>A test fails when a setting added since the previous release is missing from this changelog, or any setting from the documentation's environment table or <code>docker-compose.prod.yml</code> (seven were: <code>ACCESS_TOKEN_EXPIRE_MINUTES</code>, <code>ALGORITHM</code>, the four lockout settings and <code>APP_VERSION</code>/<code>APP_NAME</code>).</li><li>Every new guard of this release is pinned by a mutation that turns its test red (<code>scripts/mutation_audit.py</code>).</li><li>The docs pages' horizontal-overflow check ran in the light theme only; it now runs in dark too.</li></ul>
+        <h3>Removed</h3>
+        <ul><li>The PayPal link in <code>.github/FUNDING.yml</code>: the sponsor options are GitHub Sponsors and Ko-fi (<code>jp1337</code>), like the other projects; a test keeps personal payment handles out of the repository.</li><li><code>BRAND_SECONDARY_COLOR</code> — it styled nothing; Signal has one accent.</li></ul>
+        <p><a href="https://github.com/openwhistle/OpenWhistle/compare/v1.5.0...v2.0.0">See the code changes between 1.5.0 and 2.0.0</a></p>
+      </section>
+
+      <section class="docs-section" id="v1-5-0" aria-labelledby="v1-5-0-h2">
+        <h2 id="v1-5-0-h2">1.5.0 — 2026-09-24</h2>
+        <p>Every finding carried forward from the 2026-09-23 audit is closed. The guiding rule: a whistleblower can never be locked out, deanonymised by a file, a timestamp or a Redis dump, or promised more than the software does. 124 mutations over this release's and v1.4.0's guards, all caught.</p>
+        <h3>Upgrade notes</h3>
+        <ul><li><strong>Retention is on by default</strong> (<code>RETENTION_ENABLED=true</code>): closed reports are deleted 1095 days after closing (HinSchG §11 Abs. 5). OpenWhistle dates from 2026, so nothing is old enough to be deleted yet. Set <code>false</code> to opt out.</li><li><strong>Notifications are batched</strong> (<code>NOTIFICATION_BATCH_MINUTES=60</code>) and the generic webhook payload changed to <code>{"event": "new_activity", "new_reports": [...], "new_messages": [...]}</code> with no timestamp. Update receivers that parse the old <code>new_report</code> event. <code>0</code> restores immediate delivery.</li><li><strong>Logout is a POST with a CSRF token</strong>, for admins and whistleblowers; a GET no longer logs anyone out.</li><li><strong>OIDC</strong> now requires the provider to return an <code>id_token</code> (all compliant providers do); it is verified against the provider's JWKS.</li><li><strong>Drafts in progress restart</strong> after the upgrade (new encrypted draft format).</li><li><strong>Redis</strong> in <code>docker-compose.prod.yml</code> and the Ansible role now runs with <code>--maxmemory 1gb --maxmemory-policy noeviction</code>.</li><li>Migration <code>003</code> encrypts existing attachment filenames and widens the column.</li><li>New settings: <code>NOTIFICATION_BATCH_MINUTES</code>, <code>DRAFT_REDIS_MEMORY_PERCENT</code>, <code>ADMIN_FAILED_LOGIN_ALERT_THRESHOLD</code>, <code>ADMIN_FAILED_LOGIN_ALERT_WINDOW_MINUTES</code>, <code>LDAP_START_TLS</code>.</li></ul>
+        <h3>Security</h3>
+        <ul><li><strong>A whistleblower can no longer be locked out of their own case.</strong> The status lockout was keyed by the 5-digit case number, so anyone could block a case by typing wrong PINs. Now a correct case number and PIN always open the case; wrong attempts are still counted and answered with a wait notice. Unknown case numbers take the same time as known ones (no timing oracle). The <code>/reply</code> fallback shares the same check instead of trusting a client-supplied token.</li><li><strong>Password spraying is detected.</strong> Failed admin passwords are counted instance-wide (no IP, no usernames); crossing the threshold raises one alert per window by email/webhook and in the audit log. MFA remains the barrier.</li><li><strong>OIDC:</strong> PKCE (S256), a verified <code>nonce</code>, and a verified <code>id_token</code> (signature, <code>iss</code>, <code>aud</code>, <code>exp</code>, <code>azp</code>); identity is taken from the token.</li><li><strong>CSRF cookie</strong> gets <code>Secure</code>; <strong>logouts</strong> are CSRF-protected POSTs.</li><li><strong>Setup wizard</strong> is atomic (advisory lock) — two first-run requests cannot create two admins; <strong>migrations</strong> are serialised across replicas.</li><li><strong>One password policy</strong> for the wizard, admin-created users and the reset script; passwords or PINs over 72 bytes no longer cause a 500 (bcrypt 5).</li><li><strong>LDAP StartTLS</strong> (<code>LDAP_START_TLS</code>) with certificate verification.</li><li><code>t()</code> marks text as HTML only for <code>.html</code> locale keys; SSO error pages no longer echo the provider's <code>error</code> parameter.</li></ul>
+        <h3>Privacy</h3>
+        <ul><li><strong>Attachment filenames are encrypted</strong> with the report key (they can carry a name), and new S3 object keys no longer contain the filename.</li><li><strong>Office files lose comment and tracked-change authors</strong> (DOCX/XLSX), their thumbnails, and zip timestamps and uid/gid.</li><li><strong>Submission drafts are encrypted</strong> with a key that exists only in the whistleblower's cookie; a Redis dump alone reveals nothing. Draft attachments are capped, and refused when Redis is nearly full.</li><li><strong>Notifications no longer reveal submission times</strong> (batched digest).</li><li><strong>The app never sees client addresses</strong>: IP headers and the peer address are removed from every request after the proxy check.</li><li><strong>Pages are not cached</strong> (<code>Cache-Control: no-store</code>) — a shared office PC keeps no PIN or report page.</li><li><strong>Helm ingress</strong> turns the nginx access log off by default.</li></ul>
+        <h3>Changed</h3>
+        <ul><li><strong>Renovate replaces Dependabot</strong>: patch updates merge themselves behind the required checks; minor/major, the Python runtime and security-relevant libraries wait for review. GitHub Actions are pinned to digests. Tests fail if a Renovate manager reaches nothing or a tool carries two versions. Renovate merges its own patch PRs (<code>platformAutomerge: false</code>), because the repository's "Allow auto-merge" setting is off.</li><li><strong>Dashboard search by case number.</strong> Report content is encrypted and is deliberately not searchable.</li><li><strong>Readable audit log</strong>: every action has a translated label; details are shown as text. The CSV keeps machine codes and adds a label column.</li><li><strong>Copy</strong>: sentence case; no absolute promises ("completely protected"); plain language instead of "Two-Factor Access / UUID4"; every error says what happened and what to do. All user-facing strings, including upload errors, are translated.</li></ul>
+        <h3>Fixed</h3>
+        <ul><li>Errors are tied to their fields (<code>aria-invalid</code>, <code>aria-describedby</code>) on every form; blank admin login fields answered with a JSON 422.</li><li>The authenticator setup page showed raw locale keys in en, de and fr.</li><li>Creating a location was logged as <code>category.created</code>.</li><li>Wrong copy: "no cookies" (functional cookies exist) and confidential data "only visible to the assigned admin" (every admin with access sees it).</li></ul>
+        <p><a href="https://github.com/openwhistle/OpenWhistle/compare/v1.4.0...v1.5.0">See the code changes between 1.4.0 and 1.5.0</a></p>
+      </section>
+
+      <section class="docs-section" id="v1-4-0" aria-labelledby="v1-4-0-h2">
+        <h2 id="v1-4-0-h2">1.4.0 — 2026-09-24</h2>
+        <p>Attachments no longer identify the whistleblower, multi-tenant installs keep organisations apart, and every page passes an automated contrast and layout check on a phone and in both themes. Found and verified with a mutation audit of every guard this release adds (28 of 28 caught).</p>
+        <p><strong>Upgrade notes:</strong> migration <code>002</code> runs on start. The default <code>BRAND_PRIMARY_COLOR</code> is now <code>#0c7253</code> (was <code>#0e7c5a</code>, 4.4:1 on tinted backgrounds); installs that set their own colour are unaffected. E2E and demo logins for the demo accounts use the static code <code>000000</code>; real TOTP codes are single-use for every account.</p>
+        <h3>Fixed</h3>
+        <ul><li><strong>Cleaned PDFs still contained their XMP metadata.</strong> Unlinking it from the catalog left the stream in the file as an orphaned object; orphans are now removed. PDFs restricted by an owner password only are accepted and cleaned instead of refused.</li><li><strong>Every page passes axe at impact serious and critical, in both themes.</strong> Fixed: accent colour on tinted backgrounds (4.4 → 5.0:1), white on amber in the dark demo badges (2.3:1), dark-theme secondary text (3.9 → 4.8:1), role badges (2.1 and 3.9:1), footer links distinguishable only by colour, inactive categories and locations faded below AA, an unlabelled role selector and link field, scrollable tables unreachable by keyboard.</li><li><strong>Six more admin pages scrolled sideways on a phone</strong> (users, categories, locations, statistics, retention, system — up to 569 px), and long audit entries on the report view.</li><li><strong>No page scrolls sideways on a phone any more.</strong> At 390 px the navigation (12 items in the admin) now wraps instead of running off-screen, the dashboard toolbar and the report view (two columns, no breakpoint) fit the width. An E2E test checks <code>/submit</code>, <code>/status</code> and <code>/admin/login</code> at 390 px.</li><li><strong>Confidential mode works without JavaScript</strong> (Tor Browser "Safest"): the name/contact fields are shown by CSS <code>:has()</code> instead of a script.</li><li><strong>The language picker works without JavaScript</strong> and no longer misuses <code>listbox</code>/<code>option</code> roles: it is a native <code>&lt;details&gt;</code> list of forms.</li><li>Contrast: input borders 1.25:1 → ≥ 3:1; a visible focus outline on inputs and on the submission-mode cards (focused and selected looked identical); secondary text 4.37:1 → 4.98:1 on cards; alert titles no longer dimmed.</li></ul>
+        <h3>Changed</h3>
+        <ul><li><strong>Stricter tests.</strong> The axe checks fail on <em>serious</em> violations, not only <em>critical</em> ones (contrast failures used to ship green). A new UI check visits every public and admin page in both themes at 390 and 1440 px and fails on axe violations, console errors or sideways scrolling. Every guard of the release is mutation-tested (<code>scripts/mutation_audit.py</code>).</li><li><strong>Maintainer documentation moved to <code>docs-tech/</code></strong> (release procedure, invariants, performance baseline); a test keeps it out of the published site.</li><li><strong>Images are built once and published identically to all three registries.</strong> Each platform builds on a native runner (arm64 no longer under QEMU) and is pushed to GHCR by digest; one multi-arch index is then written under every tag to GHCR, Docker Hub and Quay.io. Docker Hub and Quay now get the same provenance, SBOM and cosign signature as GHCR (before: separate unsigned builds). The job fails unless every tag and every platform manifest behind it is pullable. Quay.io stays best-effort with a warning.</li><li><strong>Dependencies are locked in <code>uv.lock</code>.</strong> The image, CI and the E2E/perf workflows install exactly the locked versions; CI fails if the lock is out of date. Dependabot now uses the <code>uv</code> ecosystem — the old <code>pip</code> entry only saw <code>&gt;=</code> floors and had never opened a pull request.</li><li><strong>The production image carries runtime dependencies only</strong> (no pytest, mypy or ruff), uv is taken from its official image (0.6.0 → 0.12.18), and the fonts are copied from <code>docs/fonts</code> instead of downloaded unverified at build time.</li><li><code>python-jose</code> replaced by PyJWT, which drops <code>ecdsa</code> (PYSEC-2026-1325, no fix planned). Unused <code>authlib</code> and <code>aiofiles</code> removed; <code>cryptography</code> is now a declared dependency instead of an accidental transitive one.</li></ul>
+        <h3>Security</h3>
+        <ul><li><strong>Multi-tenancy: an org admin now sees and manages only their own organisation.</strong> The users page, role changes, (de)activation, the assignment picker and target, the audit log and its CSV export, and the dashboard and statistics counts were unscoped; new users now join the creator's organisation. Single-organisation installs are unaffected.</li><li><strong><code>DEMO_MODE</code> no longer weakens a real installation.</strong> The static TOTP <code>000000</code> is accepted only for the seeded demo accounts, and demo data is not seeded into a database that completed the setup wizard and has no demo account.</li><li><strong>Internal admin notes are encrypted at rest</strong> with the report's data key, like descriptions and messages. Existing notes are shown as stored.</li><li><strong>Attachments no longer carry identifying metadata.</strong> EXIF/GPS and camera data (JPEG, PNG, WebP, GIF), PDF document info and XMP, and DOCX/XLSX author and company properties are removed on upload — before the file reaches the draft store. A file that cannot be parsed for cleaning is refused instead of stored as-is. The upload step tells the whistleblower what is and is not cleaned.</li><li><strong>Attachments are encrypted at rest</strong> with the report's own data key, in PostgreSQL and in S3. Rows from before this release are served as stored (migration <code>002</code> adds <code>attachments.encrypted</code>).</li></ul>
+        <p><a href="https://github.com/openwhistle/OpenWhistle/compare/v1.3.1...v1.4.0">See the code changes between 1.3.1 and 1.4.0</a></p>
+      </section>
+
+      <section class="docs-section" id="v1-3-1" aria-labelledby="v1-3-1-h2">
+        <h2 id="v1-3-1-h2">1.3.1 — 2026-09-23</h2>
+        <h3>Security</h3>
+        <ul><li><strong>OIDC logins now require TOTP.</strong> The OIDC callback issued a session directly, so SSO accounts skipped the mandatory second factor. All three login paths (local, LDAP, OIDC) now go through the same MFA step; SSO users enrol TOTP on their next login. Deactivated accounts are also rejected on the OIDC path.</li><li><strong>LDAP first login provisions a Case Manager, not an Admin.</strong> Any directory entry matching <code>LDAP_USER_FILTER</code> previously got full admin access.</li><li><strong>LDAP username is escaped</strong> before it is placed into the search filter (filter injection), and <strong>LDAPS now verifies the server certificate</strong> (<code>CERT_NONE</code> before). Private CAs: set <code>SSL_CERT_FILE</code>.</li><li><strong>Deleting a report removes its S3 objects.</strong> Manual deletion, 4-eyes deletion and the retention job only removed database rows; attachment files in the bucket were kept forever.</li><li><strong>nginx no longer logs client IPs.</strong> <code>error_log</code> ran at <code>warn</code>, and nginx prefixes rate-limit (429) and body-size (413) errors with the client address. It now logs at <code>crit</code> only.</li><li>"Start over" in the submission wizard is now CSRF-protected.</li></ul>
+        <h3>Fixed</h3>
+        <ul><li><strong>Uploads over 1 MB failed behind the bundled nginx</strong> (default <code>client_max_body_size</code>). Set to 55 MB (5 × 10 MB attachments).</li><li><strong>Fresh production installs could not start PostgreSQL 18.</strong> The 18 image refuses a volume at <code>/var/lib/postgresql/data</code> unless <code>PGDATA</code> points there; <code>docker-compose.prod.yml</code> and the Ansible template now set it. Existing data is unaffected.</li><li><strong>GHCR images were unpullable</strong> (<code>manifest unknown</code>): the weekly cleanup job deleted the untagged per-platform manifests that every multi-arch tag points to. GHCR cleanup is removed; Docker Hub and Quay.io were not affected.</li><li><strong>Helm chart deployed v0.5.0 by default</strong> — <code>appVersion</code> was never bumped. It now tracks the app version, enforced by a test.</li><li>"Start over" on the review step returned 405 (GET link to a POST-only route).</li><li>Footer text had 1.8:1 contrast on the dark footer; now 7.7:1.</li><li>Animations now respect <code>prefers-reduced-motion</code>.</li><li>HinSchG citations: the 3-year deletion rule is §11 Abs. 5, not §12 Abs. 3, and it is a deletion deadline, not a minimum retention period.</li></ul>
+        <ul><li><strong>"Back" in the submission wizard no longer triggers validation.</strong> The double-submit guard disabled the form's <em>first</em> submit button — which on every wizard step is "Back" — while the browser was still building the submitted entry list. Disabled controls are excluded from that list, so <code>action=back</code> never reached the server and the step was processed as a "Next", rejecting an empty description instead of navigating back. The guard now targets the button the user actually clicked and applies after the form data is collected.</li></ul>
+        <p><a href="https://github.com/openwhistle/OpenWhistle/compare/v1.3.0...v1.3.1">See the code changes between 1.3.0 and 1.3.1</a></p>
+      </section>
+
+      <section class="docs-section" id="v1-3-0" aria-labelledby="v1-3-0-h2">
+        <h2 id="v1-3-0-h2">1.3.0 — 2026-07-15</h2>
+        <p>The "Signal" design system — a ground-up visual redesign that unifies the app and the public site under one identity, plus a documented design specification.</p>
+        <h3>Added</h3>
+        <ul><li><strong><code>DESIGN.md</code></strong> — a canonical design system ("Signal") in the google/design.md format: front-matter design tokens (colour, typography, spacing, radii, elevation) and prose covering every component, with first-class light and dark themes.</li><li><strong>Design token foundation</strong> in the stylesheet: a <code>--space-<em></code> spacing scale, a <code>--text-</em></code> type scale, and shared <code>.anim-in</code> / <code>.delay-*</code> animation utilities.</li></ul>
+        <h3>Changed</h3>
+        <ul><li><strong>Full "Signal" restyle</strong> of the application — a monochrome warm-neutral ground with a single emerald accent, Sora for display and body text, and JetBrains Mono for case numbers, PINs, timestamps and deadlines. Dark mode is now a warm near-black rather than a cold navy.</li><li><strong>Self-hosted fonts reduced to two</strong> (Sora + JetBrains Mono); the Docker image downloads exactly those, replacing the previous three-font set. The default <code>BRAND_PRIMARY_COLOR</code> is now emerald (<code>#0e7c5a</code>).</li><li><strong>Public marketing and documentation pages</strong> (openwhistle.net) converted from their separate serif/gold look onto the same Signal tokens.</li><li><strong>Stylesheet and template cleanup</strong>: consolidated duplicated components (<code>.info-banner</code> → <code>.alert</code>, <code>.env-table</code> → <code>table</code>, three admin grids → <code>.admin-split-grid</code>, inline-form wrappers → <code>.inline-form</code>), rebuilt the admin report page's 56 numbered one-off classes into semantic classes on the type scale, and unified the scattered animation-delay helpers.</li></ul>
+        <h3>Fixed</h3>
+        <ul><li>The intended body typeface never loaded — its <code>@font-face</code> pointed at font files that did not exist, so the app silently fell back to <code>system-ui</code>. A real self-hosted font now ships.</li><li>Dark mode ignored the configured brand colour (the accent was hardcoded); it now derives from <code>BRAND_PRIMARY_COLOR</code> in both themes.</li><li>The public report-status page's status pills were unstyled (they referenced CSS classes that were never defined); they now use the themed badge styles.</li><li>Removed references to several undefined CSS custom properties.</li></ul>
+        <p><a href="https://github.com/openwhistle/OpenWhistle/compare/v1.2.1...v1.3.0">See the code changes between 1.2.1 and 1.3.0</a></p>
+      </section>
+
+      <section class="docs-section" id="v1-2-1" aria-labelledby="v1-2-1-h2">
+        <h2 id="v1-2-1-h2">1.2.1 — 2026-07-14</h2>
+        <p>Follow-up hardening release resolving the remaining bug-bounty findings (#42–#46).</p>
+        <h3>Security</h3>
+        <ul><li>CSRF protection extended to the two remaining state-changing admin POST endpoints (<code>/admin/ip-warning/dismiss</code>, <code>/admin/demo/reset</code>). AJAX requests authenticate via an <code>X-CSRF-Token</code> header (read from a <code>&lt;meta&gt;</code> tag, since the double-submit cookie is HttpOnly) (#44).</li><li>Case numbers now use a random 5-digit suffix instead of a global sequence, so a new report no longer reveals aggregate cross-tenant report volume. Format is unchanged (<code>OW-YYYY-NNNNN</code>) and existing numbers stay valid (#42).</li><li>Attachment uploads are now verified by magic number: the file's leading bytes must match its extension (PDF, JPEG, PNG, GIF, WebP, DOCX/XLSX, DOC/XLS), so a file cannot lie about its type (e.g. HTML bytes disguised as a <code>.png</code>). Text formats have no signature and are unaffected (#43).</li><li>Reverse-proxy flood protection for the submission channel: the bundled nginx configs now apply a per-IP <code>limit_req</code> to dynamic endpoints. The IP is used only for in-memory throttling — never logged or forwarded upstream — so whistleblower anonymity is preserved (#46).</li><li>Removed a dead, unreachable "this account uses Single Sign-On" login branch; SSO-only accounts already receive the generic "invalid credentials" error, which avoids leaking account existence / auth method (#46).</li></ul>
+        <h3>Fixed</h3>
+        <ul><li>Downloading an attachment whose S3 object is missing now returns 404 instead of an unhandled 500; genuine backend errors still surface as 5xx (#45).</li></ul>
+        <p><a href="https://github.com/openwhistle/OpenWhistle/compare/v1.2.0...v1.2.1">See the code changes between 1.2.0 and 1.2.1</a></p>
+      </section>
+
+      <section class="docs-section" id="v1-2-0" aria-labelledby="v1-2-0-h2">
+        <h2 id="v1-2-0-h2">1.2.0 — 2026-07-13</h2>
+        <h3>Added</h3>
+        <ul><li><strong>Admin System page + opt-in update check</strong>: a new <strong>Admin → System</strong> page shows the installed version and, when <code>UPDATE_CHECK_ENABLED=true</code>, whether a newer release is available on GitHub. The check is <strong>off by default</strong>, runs as a daily background job (result cached in Redis, ETag-conditional), and sends no instance data to GitHub — only a standard request. The installed version is also shown in the footer.</li><li><strong>File integrity check</strong> on the Admin → System page: verifies the shipped application files against a SHA-256 manifest generated at Docker build time and reports any missing, modified, or unexpected files. Purely local (no external calls); detects accidental modification, incomplete deployments and corruption (not tamper-proof against an attacker who can also rewrite the manifest — the manifest's own hash is shown for optional out-of-band verification).</li></ul>
+        <p><a href="https://github.com/openwhistle/OpenWhistle/compare/v1.1.1...v1.2.0">See the code changes between 1.1.1 and 1.2.0</a></p>
+      </section>
+
+      <section class="docs-section" id="v1-1-1" aria-labelledby="v1-1-1-h2">
+        <h2 id="v1-1-1-h2">1.1.1 — 2026-07-13</h2>
+        <p>Security release: four privately-reported advisories plus an internal adversarial "bug-bounty" audit that fixed ~25 further edge-case defects. All users of 1.1.0 should upgrade.</p>
+        <h3>Breaking</h3>
+        <ul><li><strong><code>SECRET_KEY</code> must now be at least 32 characters.</strong> The application refuses to start with a shorter key. <code>SECRET_KEY</code> is the root secret for admin authentication and for encrypting confidential whistleblower identities, so a weak key undermines the platform's core protection. Generate a strong one with <code>python -c 'import secrets; print(secrets.token_urlsafe(48))'</code>. Note: rotating <code>SECRET_KEY</code> makes previously-encrypted confidential fields unreadable — set a strong key from the start.</li></ul>
+        <h3>Security</h3>
+        <ul><li><strong>Report deanonymization / IDOR</strong> (GHSA-q3v3-5xf4-xjqr, High): every <code>/admin/reports/{id}*</code> endpoint now enforces object-level authorization. Case managers can only access reports assigned to them; admins are scoped to their own organisation (superadmins span all) when multi-tenancy is enabled. The dashboard list and the confidential-identity block are scoped the same way, so an unassigned case manager can no longer read a confidential whistleblower's identity.</li><li><strong>Privilege escalation</strong> (GHSA-g3xj-3929-r45h, High): the role-assignment endpoints now enforce privilege tiers. Only a superadmin may grant or modify the superadmin role, an account can no longer change its own role, and the last active administrator can no longer be demoted away.</li><li><strong>Stored XSS</strong> (GHSA-24hg-pf84-jj7x, High): admin usernames and organisation names are no longer interpolated into inline <code>onclick</code> handlers; confirmation prompts moved to a safe <code>data-confirm</code> attribute. Locally-created usernames are validated against a strict allowlist.</li><li><strong>Weak / duplicated HTTP security headers</strong> (GHSA-gh23-4h5j-cqj8, Medium): security headers are now emitted by a single authoritative layer (the application middleware); the bundled nginx template no longer re-emits them, removing the duplicated/conflicting <code>Strict-Transport-Security</code>, <code>X-Content-Type-Options</code> and <code>X-Frame-Options</code> headers. The Content-Security- Policy no longer uses <code>'unsafe-inline'</code>: it is now a strict, per-response nonce-based policy for both scripts and styles.</li></ul>
+        <p>Reported by <a href="https://github.com/openblow">@openblow</a>.</p>
+        <h3>Fixed (internal bug-bounty audit)</h3>
+        <p>Real defects found by an adversarial audit, each covered by a regression test in <code>tests/test_bug_bounty_v111.py</code>:</p>
+        <ul><li><strong>Retention could delete reopened cases early</strong>: <code>closed_at</code> was never refreshed when a case was reopened and re-closed, so the auto-deletion job could remove reports far before the statutory retention period had elapsed since their actual closure. It is now cleared on reopen and re-stamped on re-close.</li><li><strong>Superadmin lockout</strong>: a plain admin could deactivate a superadmin, and the last active privileged account could be deactivated/demoted, leaving no one able to administer the instance. Both are now blocked.</li><li><strong>Attachment downloads with non-Latin-1 filenames</strong> (CJK, Cyrillic, emoji) raised <code>UnicodeEncodeError</code> and 500'd — the evidence became permanently undownloadable. <code>Content-Disposition</code> now uses RFC 5987 encoding. PDF export no longer crashes on non-Latin-1 note authors either.</li><li><strong>MFA brute-force</strong>: TOTP guessing is now rate-limited, and a valid code is one-time-use within its window (blocks AiTM replay into a second session).</li><li><strong><code>acknowledge</code> is now idempotent</strong> so the statutory feedback deadline cannot be pushed out by re-invoking it.</li><li><strong>Concurrent submissions</strong> no longer 500 on a case-number collision (retry).</li><li>Reports can no longer be assigned to a deactivated user (orphaned cases).</li><li>Linked-report metadata is filtered through the object-level authz check.</li><li>SLA reminder de-duplication now covers the full warn window (was re-firing every ~hour for days); per-report failures are isolated.</li><li><code>SUBMISSION_MODE_ENABLED=false</code> now actually forces anonymous submissions, and confidential PII is purged from the session when switching to anonymous.</li><li>The whistleblower PIN lockout is keyed on the case number, so it can no longer be bypassed by fetching a fresh anonymous session token before each guess.</li><li>Login now runs a constant dummy password hash for unknown users (removes a username-enumeration timing side-channel).</li><li>Background scheduler jobs take a Redis lock so a scaled/stateless deployment does not run them once per replica (duplicate audit entries / notifications).</li><li>4-eyes delete confirmation re-checks the request under a row lock, so a concurrent cancel cannot be raced into deleting a withdrawn report.</li><li>The submission wizard rejects out-of-order steps (blocks jumping straight to the attachment step to stash blobs in Redis) and no longer adopts a client-supplied session id with no server-side state (session fixation).</li><li>Case-insensitive duplicate-username check; empty decrypted bodies no longer fall back to raw ciphertext; oversized uploads are rejected without buffering the whole body; relinking already-linked cases returns 409 instead of 500; decryption failures are logged rather than silently shown as blank.</li></ul>
+        <p>Remaining lower-severity findings are tracked in GitHub issues #42–#46.</p>
+        <h3>Changed</h3>
+        <ul><li>All Python dependency floors raised to their current major versions (notably redis 8, bcrypt 5, SQLAlchemy 2.0.51, uvicorn 0.51, FastAPI 0.139, mypy 2, pytest 9, pytest-asyncio 1.x). GitHub Actions <code>actions/checkout</code> and <code>codecov/codecov-action</code> bumped to v7.</li></ul>
+        <p><a href="https://github.com/openwhistle/OpenWhistle/compare/v1.1.0...v1.1.1">See the code changes between 1.1.0 and 1.1.1</a></p>
+      </section>
+
+      <section class="docs-section" id="v1-1-0" aria-labelledby="v1-1-0-h2">
+        <h2 id="v1-1-0-h2">1.1.0 — 2026-04-28</h2>
+        <h3>Added</h3>
+        <ul><li><strong>Playwright E2E test suite</strong> (<code>tests/e2e/</code>): 13 test modules covering every critical user journey — admin login (incl. MFA), setup wizard redirect behaviour, whistleblower anonymous/confidential/file-attachment submissions, status page with deadline display, admin workflow (acknowledge → reply → status transitions), 4-eyes deletion flow, language switcher persistence, PDF export download, session expiry, user management RBAC, category and location management lifecycle</li><li><strong>Automated accessibility tests</strong> (<code>tests/e2e/test_accessibility.py</code>): axe-core injected into 8 pages; <code>run_axe</code> helper filters to critical/serious violations and fails on any finding; CDN-unavailable skips gracefully; keyboard navigation smoke-test (skip link, tab order, form labels)</li><li><strong>Locust performance test suite</strong> (<code>tests/perf/locustfile.py</code>): three user classes (<code>WhistleblowerUser</code>, <code>AdminUser</code> with TOTP login in <code>on_start</code>, <code>StatusChecker</code>); configurable concurrency; <code>tests/perf/README.md</code> with thresholds and run instructions</li><li><strong>OpenAPI contract tests</strong> (<code>tests/test_openapi_contract.py</code>): validates OpenAPI 3.x structure, required paths (<code>/health</code>, <code>/status</code>, <code>/submit</code>), admin route auth enforcement (7 routes assert 3xx for unauthenticated requests), and snapshot regression detection via <code>tests/fixtures/openapi_snapshot.json</code></li><li><strong>E2E CI workflow</strong> (<code>.github/workflows/e2e.yml</code>): builds <code>openwhistle:e2e</code> image, starts full Docker Compose stack with <code>DEMO_MODE=true</code>, waits for <code>/health</code>, runs Playwright tests with Chromium headless, uploads trace on failure</li><li><strong>Performance CI workflow</strong> (<code>.github/workflows/perf.yml</code>): manual <code>workflow_dispatch</code> with configurable users/run-time/host; uploads HTML + CSV Locust artifacts</li><li><strong>Performance baseline</strong> (<code>docs/performance-baseline.md</code>): SLO thresholds (<code>/health</code> p95 &lt; 50 ms, <code>/status</code> p95 &lt; 200 ms, <code>/admin/dashboard</code> p95 &lt; 400 ms) and user mix ratios for reproducible benchmarks</li></ul>
+        <h3>Changed</h3>
+        <ul><li><code>pyproject.toml</code>: new <code>[e2e]</code> and <code>[perf]</code> optional dependency groups; <code>e2e</code> and <code>perf</code> pytest markers registered; mypy overrides for <code>playwright.<em></code> and <code>locust.</em></code>; ruff <code>per-file-ignores</code> extended to cover <code>tests/e2e/</code> and <code>tests/perf/</code></li></ul>
+        <p><a href="https://github.com/openwhistle/OpenWhistle/compare/v1.0.0...v1.1.0">See the code changes between 1.0.0 and 1.1.0</a></p>
+      </section>
+
+      <section class="docs-section" id="v1-0-0" aria-labelledby="v1-0-0-h2">
+        <h2 id="v1-0-0-h2">1.0.0 — 2026-04-27</h2>
+        <h3>Added</h3>
+        <ul><li><strong>Envelope encryption at rest</strong>: every new report is encrypted on write with a per-report Data Encryption Key (DEK) wrapped via AES-256 (Fernet); the DEK is encrypted with a Master Encryption Key (MEK) derived from <code>SECRET_KEY</code> using HKDF-SHA256; MEK is never stored; report description and all message bodies are encrypted; pre-encryption rows are readable without decryption (backward compat)</li><li><strong>Data retention (GDPR / HinSchG)</strong>: <code>RETENTION_ENABLED=true</code> activates a daily job (03:00 UTC) that permanently deletes closed reports older than <code>RETENTION_DAYS</code> (default 1095 = 3 years — HinSchG §12 Abs. 3 minimum); each deletion writes an immutable audit-log entry (<code>report.auto_deleted</code>) recording the case number, closure date, and legal basis</li><li><strong>Multi-tenancy</strong>: <code>MULTI_TENANCY_ENABLED=true</code> activates multi-organisation support; <code>Organisation</code> model with <code>name</code>, <code>slug</code>, <code>is_active</code>, and <code>branding</code> JSON; all reports, users, categories, locations, and audit entries carry an <code>org_id</code> foreign key; per-org unique constraints on category slugs and location codes; superadmin role manages organisations via <code>/admin/organisations</code></li><li><strong>Superadmin role</strong>: new <code>superadmin</code> role above <code>admin</code>; <code>require_superadmin</code> dependency guards the organisation management endpoints; existing <code>admin</code> role retains all previous permissions; role added to <code>AdminRole</code> enum via <code>ALTER TYPE adminrole ADD VALUE IF NOT EXISTS 'superadmin'</code></li><li><strong>Telephone reporting channel guide</strong> (<code>/admin/telephone-channel</code>): compliance page covering HinSchG §16 requirements, implementation options (internal hotline vs. external ombudsman), §10 recording prohibition, and a compliance checklist</li><li><strong>Data retention admin page</strong> (<code>/admin/retention</code>): shows current retention config, next scheduled run, legal basis (GDPR Art. 5/17, HinSchG §12), and configuration reference table</li><li><strong>Organisation management page</strong> (<code>/admin/organisations</code>): superadmin-only page to create and deactivate organisations (default org cannot be deactivated)</li></ul>
+        <h3>Changed</h3>
+        <ul><li>Report description and message content are now stored encrypted; existing plaintext rows are transparently decrypted on first read (backward compat via <code>decrypt_field_safe</code>)</li><li>Admin report detail page and whistleblower status page now render decrypted content instead of raw ciphertext</li><li>Scheduler refactored: both SLA reminders and retention cleanup share a single <code>AsyncIOScheduler</code> instance; previous per-feature scheduler creation eliminated</li><li><code>ReportCategory.slug</code> and <code>Location.code</code> unique constraints changed from global to per-organisation composite (<code>slug + org_id</code>, <code>code + org_id</code>)</li><li>Nav bar in all admin templates updated with links to Telephone Channel, Retention, and Organisations pages</li></ul>
+        <h3>Migrations</h3>
+        <ul><li><strong>012</strong> — Creates <code>organisations</code> table; adds <code>org_id</code> FK and <code>encrypted_dek</code> column to all data-bearing tables; adds <code>superadmin</code> to <code>adminrole</code> enum</li><li><strong>013</strong> — Data migration: backfills <code>org_id</code> with default org; makes <code>org_id</code> NOT NULL; encrypts all existing report descriptions and message bodies; makes <code>encrypted_dek</code> NOT NULL</li><li><strong>014</strong> — Replaces global unique constraints on <code>report_categories.slug</code> and <code>locations.code</code> with per-org composite unique constraints</li><li><strong>015</strong> — Reverts <code>admin_users.org_id</code> to nullable to support superadmin accounts (org_id = NULL means cross-organisation scope) and direct AdminUser creation in external tooling without a prior org lookup</li></ul>
+        <p><a href="https://github.com/openwhistle/OpenWhistle/compare/v0.5.0...v1.0.0">See the code changes between 0.5.0 and 1.0.0</a></p>
+      </section>
+
+      <section class="docs-section" id="v0-5-0" aria-labelledby="v0-5-0-h2">
+        <h2 id="v0-5-0-h2">0.5.0 — 2026-04-26</h2>
+        <h3>Added</h3>
+        <ul><li><strong>Health-check v2</strong>: <code>/health</code> endpoint now queries the database (<code>SELECT 1</code>) and Redis (<code>PING</code>) and reports per-component status; returns HTTP 200 with <code>{"status":"ok"}</code> when all healthy, HTTP 503 with <code>{"status":"degraded"}</code> on any failure; suitable for Kubernetes liveness and readiness probes</li><li><strong>Structured JSON logging</strong>: <code>LOG_LEVEL</code> (default <code>INFO</code>) and <code>LOG_FORMAT</code> (<code>json</code> or <code>text</code>, default <code>json</code>) environment variables; JSON output via <code>python-json-logger</code>; all uvicorn loggers reconfigured uniformly at startup</li><li><strong>Slack / Teams webhook formatter</strong>: <code>NOTIFY_WEBHOOK_TYPE</code> (<code>generic</code>, <code>slack</code>, <code>teams</code>) selects the payload format; Slack uses Block Kit (header + fields + action button); Teams uses Adaptive Cards (v1.4, FactSet + OpenUrl action); both new-report and SLA-reminder notifications respect the setting</li><li><strong>SLA reminder system</strong>: background scheduler (<code>APScheduler</code>, interval 30 min) fires <code>send_sla_reminders()</code>; checks all non-closed reports for approaching 7-day acknowledgement deadline (<code>REMINDER_ACK_WARN_DAYS</code>, default 2 days before expiry) and 3-month feedback deadline (<code>REMINDER_FEEDBACK_WARN_DAYS</code>, default 30 days before expiry); Redis dedup keys (<code>reminder:ack:{case}</code>, <code>reminder:feedback:{case}</code>) with 1-hour TTL prevent duplicate notifications; enabled with <code>REMINDER_ENABLED=true</code></li><li><strong>S3-compatible attachment storage</strong>: <code>STORAGE_BACKEND=s3</code> routes new attachments to an S3-compatible bucket (AWS S3, MinIO, Hetzner Object Storage) via boto3 (sync calls wrapped in <code>asyncio.to_thread</code>); <code>S3_ENDPOINT_URL</code>, <code>S3_BUCKET_NAME</code>, <code>S3_ACCESS_KEY_ID</code>, <code>S3_SECRET_ACCESS_KEY</code>, <code>S3_REGION</code>, <code>S3_PREFIX</code> configure the target; existing DB-backed attachments are unaffected (backward-compatible migration makes <code>data</code> nullable, adds <code>storage_key VARCHAR(512)</code>)</li><li><strong>LDAP / Active Directory login</strong>: <code>LDAP_ENABLED=true</code> enables corporate directory authentication for admin accounts; two-phase bind (service account → user DN re-bind to verify password); <code>ldap3</code> runs synchronously in a thread pool; first LDAP login auto-provisions an <code>AdminUser</code> record; subsequent logins reuse the existing record; <code>TOTP</code> enrollment still required after first login; <code>LDAP_SERVER</code>, <code>LDAP_PORT</code>, <code>LDAP_USE_SSL</code>, <code>LDAP_BIND_DN</code>, <code>LDAP_BIND_PASSWORD</code>, <code>LDAP_BASE_DN</code>, <code>LDAP_USER_FILTER</code>, <code>LDAP_ATTR_USERNAME</code>, <code>LDAP_ATTR_EMAIL</code> configure the connection</li><li><strong>Helm chart</strong>: <code>charts/openwhistle/</code> — production-grade Helm chart for Kubernetes deployments; <code>Chart.yaml</code>, <code>values.yaml</code>, 8 templates (<code>deployment.yaml</code>, <code>service.yaml</code>, <code>ingress.yaml</code>, <code>hpa.yaml</code>, <code>configmap.yaml</code>, <code>secret.yaml</code>, <code>_helpers.tpl</code>, <code>NOTES.txt</code>); all v0.5.0 env vars exposed as chart values; supports existing-secret pattern for credentials; liveness/readiness probes wire to <code>/health</code></li><li><strong>Ansible role</strong>: <code>ansible/roles/openwhistle/</code> — official Ansible role for bare-metal / VM deployments (Debian/Ubuntu); installs Docker CE + Compose plugin; creates system user <code>openwhistle</code>; renders <code>.env</code>, <code>nginx.conf</code>, and <code>docker-compose.yml</code> from Jinja2 templates; installs systemd service unit; optionally obtains TLS certificate via Certbot with auto-renewal hook; <code>ansible/deploy.yml</code> example playbook; <code>vault.yml.example</code> secrets template</li></ul>
+        <h3>Changed</h3>
+        <ul><li><code>app_version</code> bumped to <code>0.5.0</code></li><li>Admin login page shows a badge when <code>LDAP_ENABLED=true</code></li><li><code>admin_users.password_hash</code> is now nullable (migration 011) — LDAP-only accounts have no local password</li><li><code>attachments.data</code> is now nullable (migration 010) — S3-backed attachments store only <code>storage_key</code></li></ul>
+        <h3>Database migrations</h3>
+        <ul><li><code>010_s3_attachment_storage.py</code>: makes <code>attachments.data</code> nullable; adds <code>storage_key VARCHAR(512)</code> column to <code>attachments</code></li><li><code>011_ldap_auth.py</code>: makes <code>admin_users.password_hash</code> nullable; adds <code>ldap_username VARCHAR(255) UNIQUE</code> column to <code>admin_users</code></li></ul>
+        <h3>Dependencies added</h3>
+        <ul><li><code>python-json-logger&gt;=3.2.0</code> — structured JSON log formatter</li><li><code>apscheduler&gt;=3.11.0</code> — background job scheduler for SLA reminders</li><li><code>boto3&gt;=1.38.0</code> — AWS S3-compatible object storage client</li><li><code>ldap3&gt;=2.9.0</code> — LDAP / Active Directory authentication</li></ul>
+        <h3>Tests</h3>
+        <ul><li>Added <code>tests/test_v050.py</code> — 68 tests covering all new v0.5.0 features</li><li>Fixed <code>conftest.py</code>: added <code>adminrole</code> to the enum drop list so re-runs don't fail with "type already exists" on migration 003</li><li>Coverage maintained at ≥90% (90.36% with full test suite)</li></ul>
+        <p><a href="https://github.com/openwhistle/OpenWhistle/compare/v0.4.0...v0.5.0">See the code changes between 0.4.0 and 0.5.0</a></p>
+      </section>
+
+      <section class="docs-section" id="v0-4-0" aria-labelledby="v0-4-0-h2">
+        <h2 id="v0-4-0-h2">0.4.0 — 2026-04-26</h2>
+        <h3>Added</h3>
+        <ul><li><strong>Multi-step submission form</strong>: single-page <code>/submit</code> replaced with a guided 5–6 step wizard (mode → location → category → description → attachments → review); Redis session stores partial state under <code>submission-session:{uuid}</code> with a 2-hour TTL; back/next navigation throughout; progress indicator shows current step and total; <code>ow-submission-session</code> cookie</li><li><strong>Anonymous vs. confidential mode (Step 1)</strong>: whistleblowers choose anonymous (no personal data) or confidential (optional name, contact info, secure email); confidential data encrypted with Fernet symmetric encryption derived from <code>SECRET_KEY</code>; decrypted only on the assigned admin's report detail view; new <code>SUBMISSION_MODE_ENABLED</code> config toggle</li><li><strong>Multi-location / branch selection (Step 2, conditional)</strong>: <code>Location</code> model with <code>id</code>, <code>name</code>, <code>code</code> (unique), <code>description</code>, <code>is_active</code>, <code>sort_order</code>, <code>created_at</code>; location selector shown only when active locations exist; admin management at <code>/admin/locations</code></li><li><strong>Confidential fields on reports</strong>: <code>submission_mode</code> (enum), <code>location_id</code> (FK), <code>confidential_name</code> (encrypted text), <code>confidential_contact</code> (encrypted text), <code>secure_email</code> (encrypted text) added to <code>reports</code> table via migration 009; all nullable for zero-downtime deploy</li><li><strong>Optional secure contact email</strong>: whistleblower can provide an anonymous email address in confidential mode; when admin posts a reply, a brief notification (no report content) is sent; <code>secure_email</code> never appears in logs</li><li><strong>HinSchG deadline display for whistleblowers</strong>: status page shows 7-day acknowledgement deadline with days remaining (or confirmed date) and 3-month feedback deadline with days left / pending acknowledgement indicator</li><li><strong>French language (fr)</strong>: <code>app/locales/fr.json</code> with full French translations for all keys; <code>fr</code> added to supported languages in <code>app/i18n.py</code>; language picker in nav bar shows English / Deutsch / Français dropdown</li><li><strong>Location filter on admin dashboard</strong>: filter reports by location; location shown in report detail sidebar</li><li><strong>WCAG 2.1 AA accessibility improvements</strong>: skip-to-content link in <code>base.html</code>; <code>aria-label</code> on all nav elements; <code>aria-current="page"</code> on active nav links; <code>aria-live</code> regions; <code>role="alert"</code> on errors; <code>aria-required</code> on required fields; <code>aria-describedby</code> on hints; <code>sr-only</code> utility; visible focus indicators; language picker keyboard-accessible</li><li><strong>New CSS components</strong>: submit progress indicator, mode-selection cards with <code>:has()</code> focus handling, step-action row, review table, skip link, lang picker dropdown</li></ul>
+        <h3>Changed</h3>
+        <ul><li><code>app_version</code> bumped to <code>0.4.0</code></li><li>Admin nav in all templates updated to include "Locations" link</li><li>Demo seed creates two demo locations (HQ, Remote) and one confidential demo report</li><li>PDF export includes submission mode, location, and confidential fields (secure email noted as "on file — not printed" for privacy)</li><li><code>add_admin_message</code> accepts <code>notify_whistleblower=True</code> to trigger async secure-email notification when a secure email is on file</li><li><code>get_reports_paginated</code> accepts optional <code>location_id</code> filter</li><li>Health endpoint now returns current <code>app_version</code></li></ul>
+        <h3>Fixed</h3>
+        <ul><li>Language switcher now correctly handles French (<code>fr</code>) in redirect allowlist</li></ul>
+        <h3>Migration</h3>
+        <ul><li>Migration <code>009_locations_confidential.py</code>: creates <code>locations</code> table, <code>submissionmode</code> enum, adds <code>location_id</code>, <code>submission_mode</code>, <code>confidential_name</code>, <code>confidential_contact</code>, <code>secure_email</code> to <code>reports</code></li></ul>
+        <p><a href="https://github.com/openwhistle/OpenWhistle/compare/v0.3.0...v0.4.0">See the code changes between 0.3.0 and 0.4.0</a></p>
+      </section>
+
+      <section class="docs-section" id="v0-3-0" aria-labelledby="v0-3-0-h2">
+        <h2 id="v0-3-0-h2">0.3.0 — 2026-04-26</h2>
+        <h3>Added</h3>
+        <ul><li><strong>RBAC — Role-Based Access Control</strong>: <code>AdminRole</code> enum with <code>admin</code> and <code>case_manager</code> roles; <code>require_role()</code> FastAPI dependency factory; role shown in dashboard nav and report detail</li><li><strong>Case assignment</strong>: admins can assign reports to any active staff member; "My Cases" filter tab on dashboard; assignee column in reports table</li><li><strong>Status workflow overhaul</strong>: <code>received → in_review → pending_feedback → closed</code> replaces the old <code>received → acknowledged → in_progress → closed</code> flow; <code>STATUS_TRANSITIONS</code> dict enforces valid transitions server-side; only valid next-states shown in UI</li><li><strong>4-eyes deletion principle</strong>: report deletion now requires two different admins — one requests, a different one confirms; same-admin confirm returns HTTP 409</li><li><strong>Immutable audit log</strong>: <code>AuditLog</code> model with 18 <code>AuditAction</code> constants; every admin action is recorded; exportable as CSV from <code>/admin/audit-log</code>; last 20 entries shown per report</li><li><strong>Custom DB-driven categories</strong>: <code>ReportCategory</code> model replaces hard-coded Python enum; category management page at <code>/admin/categories</code>; existing reports preserve category as string</li><li><strong>Case linking</strong>: <code>CaseLink</code> model with normalization constraint (smaller UUID always in <code>report_id_a</code>); link/unlink cases from report detail page</li><li><strong>Internal notes</strong>: <code>AdminNote</code> model — admin-only notes never shown to whistleblower; add notes from report detail page</li><li><strong>PDF export</strong>: full case export via <code>/admin/reports/{id}/export.pdf</code> using <code>fpdf2</code> (pure Python, no system packages); includes SLA compliance section per HinSchG §17</li><li><strong>Admin user management</strong>: create, deactivate, reactivate, and change roles of admin users at <code>/admin/users</code>; last-active-admin protection prevents lockout</li><li><strong>Dashboard statistics</strong>: <code>/admin/stats</code> page with status distribution bar charts, category breakdown, total count, and 7-day SLA compliance rate</li><li><strong>Demo seed improvements</strong>: case manager demo user (<code>case_manager</code>/<code>demo</code>); 4 demo reports covering all statuses; demo internal notes, case links, and audit entries</li><li><strong>New admin navigation</strong>: persistent links to Stats, Categories, Users, Audit Log from all admin pages</li></ul>
+        <h3>Changed</h3>
+        <ul><li>Report <code>category</code> field migrated from PostgreSQL enum to <code>VARCHAR(64)</code> — stored as plain string at submit time for history immutability (migration 006)</li><li><code>acknowledged_report()</code> now transitions to <code>in_review</code> instead of <code>acknowledged</code></li><li>Status labels updated throughout UI and i18n files</li></ul>
+        <h3>Database migrations</h3>
+        <ul><li><code>003_roles_status_assignment.py</code> — adds <code>adminrole</code> enum, <code>role</code>/<code>is_active</code> to admin_users, adds <code>in_review</code>/<code>pending_feedback</code> to reportstatus enum, migrates old values, adds <code>assigned_to_id</code> FK to reports</li><li><code>004_audit_log.py</code> — creates <code>audit_log</code> table</li><li><code>005_admin_notes.py</code> — creates <code>admin_notes</code> table</li><li><code>006_custom_categories.py</code> — creates <code>report_categories</code> table, seeds 7 defaults, migrates <code>reports.category</code> from enum to VARCHAR</li><li><code>007_deletion_requests.py</code> — creates <code>deletion_requests</code> table with UNIQUE(report_id)</li><li><code>008_case_links.py</code> — creates <code>case_links</code> table with normalization CHECK constraint</li></ul>
+        <h3>Tests</h3>
+        <ul><li>Added <code>test_v030_services.py</code> — 35 service-layer tests for new features</li><li>Added <code>test_v030_api.py</code> — 25 API-level tests for new admin endpoints</li><li>Added <code>test_pdf_service.py</code> — PDF generation tests</li><li>Updated existing tests to use new <code>ReportStatus</code> values (<code>in_review</code>, <code>pending_feedback</code>)</li></ul>
+        <p><a href="https://github.com/openwhistle/OpenWhistle/compare/v0.2.2...v0.3.0">See the code changes between 0.2.2 and 0.3.0</a></p>
+      </section>
+
+      <section class="docs-section" id="v0-2-2" aria-labelledby="v0-2-2-h2">
+        <h2 id="v0-2-2-h2">0.2.2 — 2026-04-26</h2>
+        <h3>Changed</h3>
+        <ul><li>Logo redesigned: new "Protected Signal" concept — navy shield with gradient depth, amber glow, and three-arc signal mark; consistent across app favicon, docs favicon, apple-touch-icon, and all inline SVG nav logos</li><li>README trimmed to overview + quick start; full documentation lives exclusively at openwhistle.net/docs.html (single source of truth, no duplication)</li><li>docs.html nav CSS aligned with index.html: SVG circle selector, border-color transition on theme-toggle hover, and light-mode stroke overrides for the logo</li></ul>
+        <h3>Fixed</h3>
+        <ul><li>Quay.io image reference corrected to <code>quay.io/jp1337/openwhistle</code> everywhere</li></ul>
+        <h3>Tests</h3>
+        <ul><li>Added 128 new test cases across auth, admin, reports, misc, and demo seed modules</li><li>Coverage increased from ~75 % to 91 %</li><li>Resolved all CI test failures caused by DEMO\_MODE=true and function-scoped event loop conflicts</li><li>Extracted <code>_seed(db)</code> helper from <code>demo_seed.py</code> to enable direct session injection in tests</li></ul>
+        <h3>CI / CD</h3>
+        <ul><li>Codecov integration: added <code>CODECOV_TOKEN</code> secret and pinned <code>codecov-action@v5</code></li><li>GitHub org avatar (500×500) and repository social preview banner (1280×640) added under <code>docs/</code></li></ul>
+        <p><a href="https://github.com/openwhistle/OpenWhistle/compare/v0.2.1...v0.2.2">See the code changes between 0.2.1 and 0.2.2</a></p>
+      </section>
+
+      <section class="docs-section" id="v0-2-1" aria-labelledby="v0-2-1-h2">
+        <h2 id="v0-2-1-h2">0.2.1 — 2026-04-26</h2>
+        <h3>Fixed</h3>
+        <ul><li>Case number generation now uses <code>MAX(case_number)</code> instead of <code>COUNT(*)</code>, preventing a previously-issued case number from being reused after a report is hard-deleted</li><li>Test isolation: orphaned report in <code>test_delete_report_only_removes_matching_sessions</code> caused a <code>UniqueViolationError</code> on CI; the test now cleans up all created reports</li></ul>
+        <h3>Security</h3>
+        <ul><li>Resolved 4 additional CodeQL code scanning alerts:<ul><li><code>py/url-redirection</code> (set-language endpoint): redirect target resolved via a static <code>_NEXT_ALLOWLIST</code> dict, severing any taint flow from user-supplied input</li><li><code>py/cookie-injection</code> (reply endpoint): session cookie always rotated to a fresh <code>secrets.token_urlsafe()</code> value on every reply, never derived from the inbound cookie</li><li><code>py/clear-text-logging</code> ×2 (reset_admin_password.py): replaced variable-based error messages with explicit if-chains where every <code>print()</code> argument is a string literal, eliminating any data-flow path from the password variable to a logging sink</li></ul></li></ul>
+        <p><a href="https://github.com/openwhistle/OpenWhistle/compare/v0.2.0...v0.2.1">See the code changes between 0.2.0 and 0.2.1</a></p>
+      </section>
+
+      <section class="docs-section" id="v0-2-0" aria-labelledby="v0-2-0-h2">
+        <h2 id="v0-2-0-h2">0.2.0 — 2026-04-26</h2>
+        <h3>Added</h3>
+        <ul><li>Admin session expiry warning: a non-intrusive banner appears 5 minutes before the session expires with a live countdown and a one-click "Extend Session" button that silently refreshes the JWT and Redis TTL without losing work (<code>GET /admin/session/ttl</code>, <code>POST /admin/session/refresh</code>)</li><li>Admin dashboard pagination with configurable page size (10 / 25 / 50 / 100), server-side</li><li>Admin dashboard column sorting (submitted date, case number, category, status)</li><li>Admin dashboard status filtering with clickable stat cards</li><li>File attachment support: whistleblowers can upload evidence files (PDF, images, Word, Excel, CSV, TXT — up to 10 MB each, 5 files per report); admins can download attachments from the report detail page</li><li>Email and webhook notifications when a new report is submitted (<code>NOTIFY_EMAIL_<em></code> and <code>NOTIFY_WEBHOOK_</em></code> environment variables)</li><li>CSRF Double-Submit Cookie protection extended to all whistleblower POST endpoints (<code>/submit</code>, <code>/status</code>, <code>/reply</code>)</li><li><code>scripts/reset_admin_password.py</code>: interactive CLI to reset any admin user's password without direct database access; supports <code>--list</code>, <code>--username</code>, <code>--password</code>; enforces password strength requirements; does not touch the TOTP secret</li><li>HTML error page for form validation errors (422) instead of raw JSON API response</li><li>Company branding: <code>BRAND_PRIMARY_COLOR</code>, <code>BRAND_SECONDARY_COLOR</code>, <code>BRAND_LOGO_URL</code> env vars allow organisations to customise the UI with their own colours and logo</li><li>OIDC Authorization Code Flow: admins can log in via any OpenID Connect provider when <code>OIDC_ENABLED=true</code> (authlib 1.7+, state stored in Redis with 5-minute TTL)</li><li>Docker image cleanup workflow (GHCR, Docker Hub, Quay.io — runs weekly, retains 10 most recent <code>sha-</code> tagged images per registry)</li><li><code>edge</code> Docker tag published on every push to <code>main</code> for tracking the latest unreleased state</li><li>Complete UI redesign: "Trusted Institution" aesthetic (Sora + Nunito Sans typography, white navigation bar, institutional blue + teal accent palette, elevation shadows, rounded corners)</li><li>Professional dark mode with warm blue-gray palette (<code>#111827</code>)</li><li>Submit-page sidebar redesigned with brand-colour background and subtle radial gradient</li><li>SSO button on admin login page (shown only when <code>OIDC_ENABLED=true</code>)</li><li>GitHub Pages website deployed from <code>docs/</code> directory</li></ul>
+        <h3>Fixed</h3>
+        <ul><li>Whistleblower status-session Redis keys are now cleaned up immediately when a report is hard-deleted (previously persisted for up to 2 hours as orphaned entries)</li><li>SLA "days remaining" dashboard column no longer renders a double unit (e.g. "89d Tage verbleibend")</li><li>Session cookie deletion now passes matching security attributes (httponly, samesite, secure) so browsers reliably remove the cookie on logout</li><li>Theme toggle button now inherits the correct body font instead of falling back to the system font</li><li>Public forms no longer bypass browser <code>required</code>-attribute validation (removed <code>novalidate</code> from <code>/submit</code> and <code>/status</code> forms)</li><li>Empty reply content and oversized descriptions now return 422 with server-side length enforcement (previously validated by HTML attribute only, bypassable via direct HTTP requests)</li></ul>
+        <h3>Security</h3>
+        <ul><li>All whistleblower-facing cookies now use <code>secure=not settings.demo_mode</code> (was hardcoded <code>False</code>, meaning cookies were sent over HTTP even in production)</li><li>Server-side max-length validation added for report description (≤ 10 000 chars) and reply content (≤ 5 000 chars) — previously enforced by HTML <code>maxlength</code> attribute only</li><li>CSRF Double-Submit Cookie pattern extended to <code>/status</code> and <code>/reply</code> whistleblower endpoints</li></ul>
+        <p><a href="https://github.com/openwhistle/OpenWhistle/compare/v0.1.0...v0.2.0">See the code changes between 0.1.0 and 0.2.0</a></p>
+      </section>
+
+      <section class="docs-section" id="v0-1-0" aria-labelledby="v0-1-0-h2">
+        <h2 id="v0-1-0-h2">0.1.0 — 2026-04-21</h2>
+        <h3>Added</h3>
+        <ul><li>Complete rewrite from C# ASP.NET Core to Python 3.14 / FastAPI</li><li>Whistleblower report submission with category and description</li><li>Two-factor whistleblower access: case number (OW-YYYY-NNNNN) + UUID4 secret PIN</li><li>Bidirectional communication thread between whistleblower and reporting office (HinSchG §17)</li><li>First-run setup wizard for admin account creation with TOTP enrollment</li><li>Mandatory TOTP (RFC 6238) MFA for all administrator accounts</li><li>Optional OIDC login for administrators (authlib 1.7+)</li><li>HinSchG SLA tracking: 7-day acknowledgement deadline (§17 Abs. 1) and 3-month feedback deadline (§17 Abs. 2)</li><li>IP anonymity: nginx configured with <code>access_log off</code>, application never reads or stores IP addresses</li><li>IP leakage detection: admin dashboard warning when upstream proxies forward IP headers</li><li>Redis-based bruteforce protection with no IP tracking (session-token-based rate limiting)</li><li>Hard deletion of reports (DSGVO Art. 17 right to erasure)</li><li>Demo mode with seed data (<code>DEMO_MODE=true</code>)</li><li>Automatic database migration check on every startup (alembic upgrade head)</li><li>DSGVO-compliant: all fonts and static assets self-hosted (Spectral, Source Serif 4, JetBrains Mono)</li><li>Light / dark mode with localStorage persistence and CSS media query fallback</li><li>Security headers: CSP, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy</li><li>Multi-registry Docker publishing: ghcr.io, Docker Hub, quay.io</li><li>Image signing with Cosign</li><li>GitHub Actions CI: mypy --strict, ruff, pytest with coverage, docker build</li><li>HinSchG reference document (<code>docs/hinschg_reference.md</code>)</li><li>PostgreSQL 18 + Redis 8 support</li></ul>
+        <h3>Technical Decisions</h3>
+        <ul><li><strong>Python 3.14</strong> over Go/Rust: team familiarity with Python; mypy --strict provides compile-like type safety guarantees in CI</li><li><strong>FastAPI</strong> for async performance and Pydantic validation</li><li><strong>SQLAlchemy 2.0 async</strong> for type-safe database access</li><li><strong>Authlib 1.7.0+</strong> required due to CVE-2026-28498 in earlier versions</li><li><strong>SSR with Jinja2</strong> over SPA: simpler security model, no client-side secrets, works without JavaScript</li><li><strong>Session tokens in Redis</strong> for instant revocation without database lookups</li><li><strong>Rate limiting by session token</strong> (not IP) to maintain full anonymity</li><li><strong>alembic upgrade head</strong> on every startup to guarantee migration consistency</li></ul>
+        <p><a href="https://github.com/openwhistle/OpenWhistle/releases/tag/v0.1.0">See the code as first released</a></p>
+      </section>
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-inner">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-logo">
+            <svg width="20" height="24" viewBox="0 0 22 26" fill="none" aria-hidden="true">
+              <path d="M11 1 L20 5 L20 14 C20 20 17 24 11 25.5 C5 24 2 20 2 14 L2 5 Z"
+                    stroke="rgba(226,220,210,0.5)" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+              <circle cx="11" cy="18" r="1.1" fill="rgba(226,220,210,0.5)"/>
+              <path d="M8.5,16 A3,3 0 0,1 13.5,16" stroke="rgba(226,220,210,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M7,14.5 A5.5,5.5 0 0,1 15,14.5" stroke="rgba(226,220,210,0.5)" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+              <path d="M5,13 A8,8 0 0,1 17,13" stroke="rgba(226,220,210,0.5)" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
+            </svg>
+            OpenWhistle
+          </div>
+          <p class="footer-tagline">Protecting those who speak up.</p>
+        </div>
+
+        <nav aria-label="Footer links">
+          <div class="footer-col-title">Resources</div>
+          <ul class="footer-links">
+            <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
+            <li><a href="docs.html">Documentation</a></li>
+            <li><a href="changelog.html">Changelog</a></li>
+            <li><a href="blog/">Blog</a></li>
+            <li><a href="de/">Auf Deutsch</a></li>
+            <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Live Demo</a></li>
+            <li><a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank">Issues</a></li>
+            <li><a href="https://github.com/openwhistle/OpenWhistle/blob/main/LICENSE" rel="noopener noreferrer" target="_blank">License (GPL-3.0)</a></li>
+          </ul>
+        </nav>
+
+        <div>
+          <div class="footer-col-title">Legal</div>
+          <p style="font-size: 0.85rem; color: rgba(226,220,210,0.45); line-height: 1.7;">
+            Licensed under GPL-3.0. Built with &#10084;&#65039; for transparency.
+          </p>
+          <p style="font-size: 0.82rem; color: rgba(226,220,210,0.35); line-height: 1.7; margin-top: 0.75rem;">
+            OpenWhistle does not provide legal advice. Please consult qualified counsel
+            regarding your specific HinSchG obligations.
+          </p>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>&copy; OpenWhistle Contributors — GNU General Public License v3.0</span>
+        <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">
+          Contribute on GitHub &rarr;
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Theme toggle — detection already handled by inline head script
+    var toggle = document.getElementById('theme-toggle');
+    if (toggle) {
+      toggle.addEventListener('click', function() {
+        var current = document.documentElement.getAttribute('data-theme');
+        var next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        try { localStorage.setItem('ow-theme', next); } catch(e) {}
+      });
+    }
+
+    // Follow system preference changes when user hasn't overridden manually
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      var stored;
+      try { stored = localStorage.getItem('ow-theme'); } catch(e2) {}
+      if (!stored) {
+        document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+      }
+    });
+
+    // Mobile nav
+    var navToggle = document.querySelector('.nav-toggle');
+    var navLinks = document.getElementById('nav-links');
+    if (navToggle && navLinks) {
+      navToggle.addEventListener('click', function() {
+        var isOpen = navToggle.getAttribute('aria-expanded') === 'true';
+        navToggle.setAttribute('aria-expanded', String(!isOpen));
+        navLinks.classList.toggle('open', !isOpen);
+      });
+    }
+
+    // Sidebar active link on scroll
+    var sections = document.querySelectorAll('.docs-section[id]');
+    var sidebarLinks = document.querySelectorAll('.sidebar-links a[href^="#"]');
+
+    function updateActive() {
+      var scrollY = window.scrollY + 100;
+      var active = null;
+      sections.forEach(function(s) {
+        if (s.offsetTop <= scrollY) {
+          active = s.getAttribute('id');
+        }
+      });
+      sidebarLinks.forEach(function(a) {
+        var href = a.getAttribute('href');
+        if (href === '#' + active) {
+          a.classList.add('active');
+        } else {
+          a.classList.remove('active');
+        }
+      });
+    }
+
+    window.addEventListener('scroll', updateActive, { passive: true });
+    updateActive();
+  </script>
+</body>
+</html>
