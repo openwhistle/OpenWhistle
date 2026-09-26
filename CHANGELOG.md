@@ -218,7 +218,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - CI runs codespell, markdownlint and ruff over the whole repository, a runtime check of the
   nginx onion-listener trust boundary, and every GitHub Action is pinned by commit SHA.
 - A test fails when a setting added since the previous release is missing from this
-  changelog.
+  changelog, or any setting from the documentation's environment table or
+  `docker-compose.prod.yml` (seven were: `ACCESS_TOKEN_EXPIRE_MINUTES`, `ALGORITHM`, the four
+  lockout settings and `APP_VERSION`/`APP_NAME`).
 - Every new guard of this release is pinned by a mutation that turns its test red
   (`scripts/mutation_audit.py`).
 
