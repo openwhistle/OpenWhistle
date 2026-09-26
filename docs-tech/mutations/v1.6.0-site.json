@@ -42,15 +42,9 @@
    "docs_page"
   ],
   "REVIEW": [
-   "-o",
-   "addopts=",
-   "-m",
-   "e2e",
-   "--browser",
-   "chromium",
-   "tests/e2e/test_wb_submission.py",
+   "tests/test_v160_design.py",
    "-k",
-   "test_review_step_label_and_value_do_not_overlap_in_german"
+   "test_review_label_stacks_over_its_value"
   ],
   "COUNT": [
    "tests/test_v150_ux.py",
@@ -58,15 +52,9 @@
    "char_counter"
   ],
   "STATS": [
-   "-o",
-   "addopts=",
-   "-m",
-   "e2e",
-   "--browser",
-   "chromium",
-   "tests/e2e/test_layout.py",
+   "tests/test_v160_design.py",
    "-k",
-   "test_stats_panels_share_the_same_top"
+   "test_stats_grid_panels_drop_the_stacking_margin"
   ],
   "ERR": [
    "tests/test_coverage_gaps.py",

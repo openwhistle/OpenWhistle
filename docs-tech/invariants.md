@@ -482,17 +482,21 @@ fetch category labels; the snippets are updated and red.
 | `blog-deadline-table-auto` | `docs/blog/hinschg-compliance-leitfaden.html` | `test_docs_page_has_no_horizontal_overflow` |
 | `pin-token-nowrap` | `app/static/css/site.css` | `test_token_class_wraps_only_at_the_explicit_hyphen_breaks` |
 | `pin-wbr-filter-not-applied` | `app/templates/submit_success.html` | `test_case_number_and_pin_wrap_only_at_hyphens` |
-| `review-label-fixed-width` | `app/static/css/site.css` | `test_review_step_label_and_value_do_not_overlap_in_german` (e2e) |
+| `review-label-fixed-width` | `app/static/css/site.css` | `test_review_label_stacks_over_its_value` |
 | `char-counter-not-localized` | `app/i18n.py` | `test_char_counter_uses_locale_number_format` |
-| `stats-grid-panel-margin` | `app/templates/admin/stats.html` | `test_stats_panels_share_the_same_top` (e2e) |
+| `stats-grid-panel-margin` | `app/templates/admin/stats.html` | `test_stats_grid_panels_drop_the_stacking_margin` |
 | `http-exception-always-json` | `app/main.py` | `test_stale_report_id_returns_styled_html_for_a_browser` |
 | `eyebrow-restates-confidential` | `app/locales/de.json` | `test_submit_eyebrow_is_neutral_across_locales` |
 | `blog-1-6-date-off-by-one` | `docs/blog/was-ist-neu-in-1-6.html` | `test_blog_1_6_release_date_is_2026_09_26` |
 
-**Not a mutation.** `tests/e2e/test_admin_table_layout.py` measures the
-dashboard's pinned action column in the running app, so the script cannot
-change the CSS it is served; `sticky-action-static`, `status-badge-nowrap` and
-`dashboard-header-unpinned` pin the same rules in source.
+**Not a mutation.** The e2e tests that measure the running app
+(`tests/e2e/test_admin_table_layout.py`,
+`test_review_step_label_and_value_do_not_overlap_in_german`,
+`test_stats_panels_share_the_same_top`) run against a built image, so the
+script's working-tree edit never reaches them: they stay GREEN whatever it
+changes. Each rule is pinned in source instead: `sticky-action-static`,
+`status-badge-nowrap`, `dashboard-header-unpinned`, `review-label-fixed-width`
+and `stats-grid-panel-margin`.
 
 **Doubly redundant on purpose (PIN/case-number overflow).** The
 fix has two independent parts: `.token` no longer forces `white-space:

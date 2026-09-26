@@ -1437,3 +1437,24 @@ def test_blog_1_6_release_date_is_2026_09_26() -> None:
     )
     assert article_block, "sitemap entry for the 1.6 blog article not found"
     assert "<lastmod>2026-09-26</lastmod>" in article_block.group(0)
+
+
+def test_review_label_stacks_over_its_value() -> None:
+    """Browser-free half of the e2e overlap test: a fixed label column cannot
+    fit "EINREICHUNGSMODUS", so the label stacks over the value and has no
+    width of its own. The e2e test measures the rendered page; this one pins
+    the rule in source, where the mutation audit can reach it."""
+    css = (ROOT / "app/static/css/site.css").read_text()
+    row = re.search(r"^\.review-row\s*\{([^}]*)\}", css, re.MULTILINE)
+    label = re.search(r"^\.review-label\s*\{([^}]*)\}", css, re.MULTILINE)
+    assert row and label
+    assert "flex-direction: column" in row.group(1)
+    assert not re.search(r"(?<![-\w])width\s*:", label.group(1))
+
+
+def test_stats_grid_panels_drop_the_stacking_margin() -> None:
+    """Browser-free half of `test_stats_panels_share_the_same_top`: inside the
+    two-column grid, `.panel + .panel`'s stacking margin would push the second
+    panel below the first, so the grid resets it."""
+    html = (TEMPLATES / "admin/stats.html").read_text()
+    assert re.search(r"\.stat-two-col\s*>\s*\.panel\s*\{\s*margin-top:\s*0;?\s*\}", html)
