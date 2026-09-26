@@ -1,0 +1,31 @@
+{
+ "timeout_seconds": 120,
+ "test_groups": {
+  "D": [
+   "tests/test_diagrams.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "mmd-edited-without-rerender",
+   "file": "docs/_diagrams/architecture.mmd",
+   "old": "    client[\"Browser / Tor Browser\"]",
+   "new": "    client[\"Browser or Tor Browser\"]",
+   "tests": "D"
+  },
+  {
+   "id": "svg-foreign-color",
+   "file": "docs/img/diagrams/architecture-light.svg",
+   "old": "<svg data-source-digest=\"",
+   "new": "<svg fill=\"#ff00ff\" data-source-digest=\"",
+   "tests": "D"
+  },
+  {
+   "id": "svg-external-href",
+   "file": "docs/img/diagrams/architecture-dark.svg",
+   "old": "<svg data-source-digest=\"",
+   "new": "<svg xlink:href=\"https://evil.example/pixel.png\" data-source-digest=\"",
+   "tests": "D"
+  }
+ ]
+}
