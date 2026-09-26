@@ -22,3 +22,19 @@ def test_the_technical_docs_are_not_published() -> None:
     upload = r"upload-pages-artifact@\S+(?:[ \t]+#[^\n]*)?\s+with:\s+path:\s*\"?([^\"\s]+)"
     uploads = re.findall(upload, workflow)
     assert uploads == ["docs"], f"pages.yml publishes {uploads}; only docs/ may be published"
+
+
+_DOCS_TECH_HREF = re.compile(r'(?:href|src)=["\']([^"\']*docs-tech/[^"\']*)["\']')
+
+
+def test_no_published_page_links_docs_tech() -> None:
+    """A *relative* link into docs-tech/ from a published page 404s once the
+    site ships (docs-tech/ is never uploaded — see the test above). Naming a
+    docs-tech/ file in running text (a citation, a `<code>` mention), or a
+    full URL to it on GitHub, is fine — only a same-site href/src is not."""
+    offenders = []
+    for p in (ROOT / "docs").rglob("*.html"):
+        for m in _DOCS_TECH_HREF.finditer(p.read_text()):
+            if not m.group(1).startswith(("http://", "https://")):
+                offenders.append(f"{p.relative_to(ROOT)}: {m.group(1)}")
+    assert not offenders, f"published page(s) link docs-tech/ relatively: {offenders}"

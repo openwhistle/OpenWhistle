@@ -36,7 +36,7 @@
         <div class="panel anim-in delay-08">
             <form method="post" action="/admin/local-review-login">
                 <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                <button type="submit" class="btn btn-primary btn-block">
+                <button type="submit" id="local-review-login-btn" class="btn btn-secondary btn-block">
                     {{ t('login.local_review.button') }}
                 </button>
             </form>

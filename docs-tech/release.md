@@ -44,8 +44,7 @@ not "run the axe suite again," it is looking at the rendered page. Full
 page matrix, traps, and start/stop commands: `docs-tech/local-review.md`.
 `tests/test_local_review.py::test_local_review_page_matrix_covers_every_app_page`
 and `..._covers_every_docs_site_page` fail when a page exists that the matrix
-does not list, so a new route or a new `docs/` page cannot be reviewed by
-accident being skipped.
+does not list, so a new route or `docs/` page cannot be skipped by accident.
 
 For each page: light and dark theme, 1440px and 390px, `en` and `de`; the
 interactive paths (wizard steps, identity-reveal form, filters, theme

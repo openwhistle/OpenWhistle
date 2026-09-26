@@ -3,6 +3,7 @@
 import secrets
 from datetime import UTC, datetime
 from typing import Any
+from urllib.parse import urlsplit
 
 from fastapi import (
     APIRouter,
@@ -42,11 +43,35 @@ async def admin_root(request: Request) -> RedirectResponse:
     return RedirectResponse("/admin/login", status_code=302)
 
 
-def _login_ctx(extra: dict[str, Any] | None = None) -> dict[str, Any]:
+# Second barrier for LOCAL_REVIEW_LOGIN, beyond the config flag: the button
+# and the route both disappear unless the request looks like it came straight
+# from a browser on the local machine. A client-*address* check does not work
+# here — uvicorn runs without --proxy-headers (see Dockerfile), so a browser
+# on the operator's own machine, reaching the container through podman/
+# docker's NAT, shows up as the container's gateway IP, never as 127.0.0.1.
+# Instead, reject the request if either:
+#   - it carries a header only a reverse proxy adds (nginx and every ingress
+#     controller always set X-Forwarded-Proto in front of this app; a client
+#     cannot strip a header the proxy adds after it); or
+#   - the Host it addressed is not a loopback name.
+# Either check alone can be spoofed (a stray client-sent header; nginx's
+# default server echoing whatever Host it was given); together they hold.
+_PROXY_HEADERS = ("x-forwarded-proto", "x-forwarded-for", "x-real-ip", "forwarded", "via")
+_LOOPBACK_HOSTNAMES = {"localhost", "127.0.0.1", "::1"}
+
+
+def _local_review_reachable(request: Request) -> bool:
+    if any(h in request.headers for h in _PROXY_HEADERS):
+        return False
+    hostname = urlsplit(f"//{request.headers.get('host', '')}").hostname or ""
+    return hostname.lower() in _LOOPBACK_HOSTNAMES
+
+
+def _login_ctx(request: Request, extra: dict[str, Any] | None = None) -> dict[str, Any]:
     base: dict[str, Any] = {
         "oidc_enabled": settings.oidc_enabled,
         "ldap_enabled": settings.ldap_enabled,
-        "local_review_login": settings.local_review_login,
+        "local_review_login": settings.local_review_login and _local_review_reachable(request),
     }
     if extra:
         base.update(extra)
@@ -62,7 +87,7 @@ async def _second_factor(
     accounts, so no path may issue a session directly.
     """
     if not user.is_active:
-        return render(request, "login.html", _login_ctx({
+        return render(request, "login.html", _login_ctx(request, {
             "error": "login.error.deactivated",
         }), status_code=401)
 
@@ -134,7 +159,7 @@ async def _start_session(
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_get(request: Request) -> HTMLResponse:
-    return render(request, "login.html", _login_ctx())
+    return render(request, "login.html", _login_ctx(request))
 
 
 @router.post("/login", response_class=HTMLResponse, response_model=None)
@@ -155,13 +180,13 @@ async def login_post(
     if not password:
         missing["password"] = "login.error.password_required"  # noqa: S105 — locale key
     if missing:
-        return render(request, "login.html", _login_ctx({
+        return render(request, "login.html", _login_ctx(request, {
             "error": "login.error.required",
             "field_errors": missing,
         }), status_code=400)
 
     if not await rl.check_admin_login_attempts(redis, username):
-        return render(request, "login.html", _login_ctx({
+        return render(request, "login.html", _login_ctx(request, {
             "error": "login.error.locked",
         }))
 
@@ -176,7 +201,7 @@ async def login_post(
             ldap_info = await authenticate_ldap(username, password)
         except LDAPAuthError:
             await _password_failed(redis, db, username, background_tasks)
-            return render(request, "login.html", _login_ctx({
+            return render(request, "login.html", _login_ctx(request, {
                 "error": "login.error.invalid",
                 "credentials_invalid": True,
             }), status_code=401)
@@ -220,7 +245,7 @@ async def login_post(
         pw_ok = False
     if not pw_ok:
         await _password_failed(redis, db, username, background_tasks)
-        return render(request, "login.html", _login_ctx({
+        return render(request, "login.html", _login_ctx(request, {
             "error": "login.error.invalid",
             "credentials_invalid": True,
         }), status_code=401)
@@ -232,6 +257,16 @@ async def login_post(
     # account existence / auth method (kept generic for privacy).
 
     return await _second_factor(request, redis, user)
+
+
+@router.get("/local-review-login", include_in_schema=False)
+@router.head("/local-review-login", include_in_schema=False)
+async def local_review_login_get_or_head() -> None:
+    """No GET/HEAD ever existed for this path. Explicit here so a bare method
+    probe gets the same 404 the POST gives when disabled, instead of the
+    405 FastAPI would otherwise answer for a path that has *some* handler —
+    which would itself reveal that the path exists."""
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
 @router.post(
@@ -246,13 +281,20 @@ async def local_review_login_post(
 ) -> RedirectResponse:
     """One-click sign-in as the seeded demo admin, full session, no password or
     MFA check — LOCAL_REVIEW_LOGIN only, so an agent can review every admin
-    page without a human typing credentials. The setting check runs first: the
-    route must answer 404 (it does not exist), never 403, when disabled."""
-    if not settings.local_review_login:
+    page without a human typing credentials. Every check below runs before
+    any state changes, in this order, so a disabled/unreachable/deactivated
+    outcome never writes an audit row for a login that did not really happen:
+      1. the setting, and the request-shape barrier (`_local_review_reachable`)
+         — both 404 (it does not exist), never 403, when either fails;
+      2. CSRF, called directly rather than via Depends(validate_csrf), which
+         would run before step 1 and turn a disabled route into a 403;
+      3. the seeded demo admin exists and is active.
+    Not rate-limited: `_local_review_reachable` already confines it to a
+    loopback request with no proxy header in front of it.
+    """
+    if not settings.local_review_login or not _local_review_reachable(request):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
-    # Not a Depends(validate_csrf): that would run before the check above and
-    # turn a disabled route into a 403 (CSRF failure) instead of a 404.
     await validate_csrf(csrf_token, ow_csrf)
 
     from app.services.demo_seed import DEMO_ADMIN_USERNAME  # noqa: PLC0415
@@ -260,6 +302,11 @@ async def local_review_login_post(
     user = await auth_service.get_user_by_username(db, DEMO_ADMIN_USERNAME)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    if not user.is_active:
+        # Same outcome _start_session gives an inactive user — checked here,
+        # before the audit write, so a deactivated demo admin never gets a
+        # "signed in via local review" row for a login that did not happen.
+        return RedirectResponse("/admin/login", status_code=302)
 
     await audit_service.log(db, user, audit_service.AuditAction.AUTH_LOCAL_REVIEW_LOGIN)
     await db.commit()
