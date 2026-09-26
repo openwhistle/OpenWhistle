@@ -114,7 +114,8 @@ Changed (breaking) below and the upgrade notes before deploying.
   is a 404, and there is no public list of organisations. With multi-tenancy on and
   `DEFAULT_ORG_SLUG` naming no active organisation, `/submit` answers 503 and a set-up instance
   refuses to start. The link, with a copy button, is on `/admin/organisations` and on an
-  organisation admin's dashboard. With multi-tenancy off, nothing changes: `/submit/<default slug>` redirects to `/submit`, any other slug is a 404.
+  organisation admin's dashboard. With multi-tenancy off, nothing changes:
+  `/submit/<default slug>` redirects to `/submit`, any other slug is a 404.
 - **Tor onion address** (`ONION_LOCATION`, optional). Sends an `Onion-Location` header, so Tor
   Browser offers the switch, and shows the address on the submit page for reporters on a
   monitored network. nginx sets `X-OW-Onion` only on the onion listener and strips any
@@ -355,6 +356,8 @@ Changed (breaking) below and the upgrade notes before deploying.
 
 ### Removed
 
+- The PayPal link in `.github/FUNDING.yml`: the sponsor options are GitHub Sponsors and Ko-fi
+  (`jp1337`), like the other projects; a test keeps personal payment handles out of the repository.
 - `BRAND_SECONDARY_COLOR` — it styled nothing; Signal has one accent.
 
 ## [1.5.0] — 2026-09-24
