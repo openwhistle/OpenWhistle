@@ -491,3 +491,31 @@ async def test_reply_rotates_the_session_without_extending_it(client, db_session
     new = client.cookies.get("ow-status-session")
     assert new != old
     assert 0 < await redis.ttl(f"status-session:{new}") <= 100
+
+
+# --- M25: one fallback for a category without a label ------------------------------------
+
+
+async def test_an_unlabelled_category_reads_the_same_on_stats_case_page_and_pdf(  # type: ignore[no-untyped-def]
+    client, db_session,
+) -> None:
+    import io
+    import uuid
+
+    from pypdf import PdfReader
+
+    from app.models.user import AdminRole
+    from app.services.pdf import generate_report_pdf
+    from app.services.report import create_report, get_report_by_id
+    from tests.test_v160_privacy import _login
+
+    await _login(client, db_session, AdminRole.admin)
+    slug = f"gone_{uuid.uuid4().hex[:6]}"
+    report, _ = await create_report(db_session, slug, "A report whose category was deleted.")
+    expected = slug.replace("_", " ").title()
+    assert expected in (await client.get("/admin/stats")).text
+    assert expected in (await client.get(f"/admin/reports/{report.id}")).text
+    full = await get_report_by_id(db_session, report.id)
+    assert full is not None
+    text = PdfReader(io.BytesIO(generate_report_pdf(full))).pages[0].extract_text()
+    assert expected in text

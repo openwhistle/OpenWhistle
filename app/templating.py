@@ -12,6 +12,7 @@ from markupsafe import Markup, escape
 from app.config import settings
 from app.i18n import format_count, get_lang, make_translator
 from app.services.attachment import format_size
+from app.services.categories import category_label
 from app.services.report import format_day, whistleblower_caused
 
 templates = Jinja2Templates(directory="app/templates")
@@ -33,14 +34,6 @@ def wbr_after_hyphens(value: str) -> Markup:
 
 
 templates.env.filters["wbr_after_hyphens"] = wbr_after_hyphens
-
-
-def category_label(slug: str, labels: dict[str, str]) -> str:
-    """slug -> localized label from a per-request `category_labels` map (see
-    app.services.categories.get_category_labels); a slug missing from the map
-    (a category deleted outright, not merely deactivated) falls back to a
-    title-cased rendering of the slug itself, same as before this existed."""
-    return labels.get(slug) or slug.replace("_", " ").title()
 
 
 templates.env.filters["category_label"] = category_label

@@ -749,7 +749,7 @@ async def export_pdf(
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(get_current_admin),
 ) -> Response:
-    from app.services.categories import get_category_labels
+    from app.services.categories import category_label, get_category_labels
     from app.services.pdf import generate_report_pdf
 
     report = await _get_authorized_report(db, report_id, current_user)
@@ -760,7 +760,7 @@ async def export_pdf(
         db, get_lang(request), **_org_scope(current_user)
     )
     pdf_bytes = generate_report_pdf(
-        report, category_label=category_labels.get(report.category, report.category)
+        report, category_label=category_label(report.category, category_labels)
     )
     safe_name = f"{report.case_number}_export.pdf"
     return Response(
@@ -779,7 +779,7 @@ async def export_pdf_with_identity(
     current_user: AdminUser = Depends(get_current_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> Response:
-    from app.services.categories import get_category_labels
+    from app.services.categories import category_label, get_category_labels
     from app.services.crypto import encrypt
     from app.services.pdf import generate_report_pdf
 
@@ -799,7 +799,7 @@ async def export_pdf_with_identity(
         content=generate_report_pdf(
             report,
             include_identity=True,
-            category_label=category_labels.get(report.category, report.category),
+            category_label=category_label(report.category, category_labels),
         ),
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{report.case_number}_export.pdf"'},

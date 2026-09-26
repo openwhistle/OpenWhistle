@@ -192,6 +192,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **A category deleted outright read differently on the PDF** (its raw slug) than on the
+  pages (title-cased). One fallback now serves the templates, the stats page and the PDF.
 - **Paging and sorting the dashboard dropped the location filter.** Every dashboard link now
   keeps the whole current view.
 - **A case-number collision expired every object the caller held** (a full rollback), so the

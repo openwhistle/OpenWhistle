@@ -97,7 +97,7 @@
                 {% set pct = (count / stats.total_reports * 100) | round(1) if stats.total_reports else 0 %}
                 <div>
                     <div class="stat-row-header">
-                        <span class="stat-cat-label">{{ cat_map.get(slug, slug | replace('_', ' ') | title) }}</span>
+                        <span class="stat-cat-label">{{ slug | category_label(cat_map) }}</span>
                         <span class="stat-muted-sm">{{ count }} ({{ pct }}%)</span>
                     </div>
                     <div class="stat-bar-track">

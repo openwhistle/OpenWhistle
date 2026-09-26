@@ -10,6 +10,7 @@ from fpdf import FPDF
 from fpdf.enums import XPos, YPos
 
 from app.models.report import Report
+from app.services.categories import category_label as label_for_slug
 from app.services.report import (
     decrypt_attachment_names,
     decrypt_note_contents,
@@ -71,10 +72,9 @@ def generate_report_pdf(
 
     pdf.set_font(_FONT, "", 10)
     _meta_row(pdf, "Case Number", report.case_number)
-    # The exporting admin's language, org-scoped label (get_category_labels) —
-    # falls back to the raw slug if the caller has none (e.g. a category
-    # deleted outright since), same as the case page's category_label filter.
-    _meta_row(pdf, "Category", category_label or report.category)
+    # The exporting admin's language, org-scoped label (get_category_labels);
+    # without one, the same fallback as every page.
+    _meta_row(pdf, "Category", category_label or label_for_slug(report.category, {}))
     _meta_row(pdf, "Status", report.status.value.replace("_", " ").title())
     _meta_row(pdf, "Submission Mode", report.submission_mode.value.title())
     if report.location:

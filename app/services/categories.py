@@ -42,6 +42,13 @@ async def get_all_categories(
     return list(result.scalars().all())
 
 
+def category_label(slug: str, labels: dict[str, str]) -> str:
+    """slug -> label from a `get_category_labels` map. The one fallback for a slug
+    missing from it (a category deleted outright, not merely deactivated): the
+    slug title-cased. Used by the templates, the stats page and the PDF alike."""
+    return labels.get(slug) or slug.replace("_", " ").title()
+
+
 async def get_category_labels(
     db: AsyncSession,
     lang: str,
