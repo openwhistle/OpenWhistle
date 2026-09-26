@@ -20,8 +20,8 @@
   {
    "id": "setup-token-unchecked",
    "file": "app/api/wizard.py",
-   "old": "    if not await check_setup_token(redis, setup_token.strip()):",
-   "new": "    if False:",
+   "old": "    if locked or not await check_setup_token(redis, setup_token.strip()):",
+   "new": "    if locked:",
    "tests": "S"
   },
   {
@@ -230,8 +230,8 @@
   {
    "id": "audit-row-without-actor-org",
    "file": "app/services/audit.py",
-   "old": "    org_id = actor.org_id\n",
-   "new": "    org_id = None\n",
+   "old": "    org_id = actor.org_id if isinstance(target_org, EllipsisType) else target_org\n",
+   "new": "    org_id = None if isinstance(target_org, EllipsisType) else target_org\n",
    "tests": "M"
   },
   {
@@ -307,8 +307,8 @@
   {
    "id": "rotation-touches-plain-reasons",
    "file": "scripts/rotate_encryption_key.py",
-   "old": "f\"action = '{AuditAction.IDENTITY_REVEALED}' AND detail LIKE '%\\\"reason\\\"%'\",",
-   "new": "\"detail LIKE '%\\\"reason\\\"%'\",",
+   "old": "            f\"action = '{action}' AND detail LIKE '%\\\"{key}\\\"%'\",",
+   "new": "            f\"detail LIKE '%\\\"{key}\\\"%'\",",
    "tests": "K"
   },
   {

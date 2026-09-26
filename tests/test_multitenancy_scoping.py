@@ -397,7 +397,7 @@ async def test_category_and_location_pages_list_only_own_org(
     assert own.label_en in cats
     assert f"Label {tag}" not in cats and f"cat_{tag}" not in cats
     assert f"Office {tag}" not in (await as_admin_a.get("/admin/locations")).text
-    assert f"Office {tag}" not in (await as_admin_a.get("/admin/")).text
+    assert f"Office {tag}" not in (await as_admin_a.get("/admin/dashboard")).text
 
 
 @pytest.mark.asyncio
@@ -430,6 +430,17 @@ async def test_a_slug_or_code_another_org_uses_is_free_and_a_duplicate_is_409(
         assert first.status_code == 302, path
         again = await as_admin_a.post(path, data=form, follow_redirects=False)
         assert again.status_code == 409, path
+    from sqlalchemy import select
+
+    from app.models.category import ReportCategory
+    from app.models.location import Location
+
+    org_a = two_orgs["admin_a"].org_id
+    mine = ReportCategory.slug == f"cat_{tag}"
+    assert await db_session.scalar(select(ReportCategory.org_id).where(
+        mine, ReportCategory.label_en == "Mine")) == org_a
+    assert await db_session.scalar(select(Location.org_id).where(
+        Location.code == f"LOC{tag}".upper(), Location.name == "Mine")) == org_a
 
 
 @pytest.mark.asyncio
@@ -493,3 +504,33 @@ async def test_superadmin_actions_on_users_and_orgs_carry_the_targets_org(
     new_org = await db_session.scalar(select(Organisation.id).where(Organisation.slug == slug))
     assert rows[AuditAction.ADMIN_ROLE_CHANGED] == target.org_id
     assert rows[AuditAction.ORG_CREATED] == new_org
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("kind", ["categories", "locations"])
+async def test_a_category_or_location_is_not_kept_without_its_audit_row(
+    as_admin_a: AsyncClient, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch,
+    kind: str,
+) -> None:
+    """Created and audited in one transaction: a failing audit write keeps neither."""
+    from sqlalchemy import select
+
+    from app.models.category import ReportCategory
+    from app.models.location import Location
+    from app.services import audit as audit_service
+
+    async def broken_log(*args: object, **kwargs: object) -> None:
+        raise RuntimeError("audit write failed")
+
+    monkeypatch.setattr(audit_service, "log", broken_log)
+    tag = uuid.uuid4().hex[:8]
+    form = ({"slug": f"cat_{tag}", "label_en": "X", "label_de": "X"} if kind == "categories"
+            else {"name": "X", "code": f"LOC{tag}".upper()})
+    csrf = await _csrf(as_admin_a)
+    with pytest.raises(RuntimeError, match="audit write failed"):
+        await as_admin_a.post(f"/admin/{kind}", data={**form, "csrf_token": csrf})
+    if kind == "categories":
+        stmt = select(ReportCategory.id).where(ReportCategory.slug == f"cat_{tag}")
+    else:
+        stmt = select(Location.id).where(Location.code == f"LOC{tag}".upper())
+    assert await db_session.scalar(stmt) is None

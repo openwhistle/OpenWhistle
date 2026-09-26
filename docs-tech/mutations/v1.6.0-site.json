@@ -164,7 +164,7 @@
   },
   {
    "id": "category-filter-ignores-map",
-   "file": "app/templating.py",
+   "file": "app/services/categories.py",
    "old": "return labels.get(slug) or slug.replace(\"_\", \" \").title()",
    "new": "return slug.replace(\"_\", \" \").title()",
    "tests": "D"
@@ -214,21 +214,21 @@
   {
    "id": "pdf-category-slug",
    "file": "app/services/pdf.py",
-   "old": "_meta_row(pdf, \"Category\", category_label or report.category)",
+   "old": "_meta_row(pdf, \"Category\", category_label or label_for_slug(report.category, {}))",
    "new": "_meta_row(pdf, \"Category\", report.category)",
    "tests": "P"
   },
   {
    "id": "pdf-route-no-label",
    "file": "app/api/admin.py",
-   "old": "        report, category_label=category_labels.get(report.category, report.category)\n    )",
+   "old": "        report, category_label=category_label(report.category, category_labels)\n    )",
    "new": "        report\n    )",
    "tests": "D"
   },
   {
    "id": "pdf-identity-route-no-label",
    "file": "app/api/admin.py",
-   "old": "            include_identity=True,\n            category_label=category_labels.get(report.category, report.category),\n",
+   "old": "            include_identity=True,\n            category_label=category_label(report.category, category_labels),\n",
    "new": "            include_identity=True,\n",
    "tests": "D"
   },

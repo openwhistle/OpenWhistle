@@ -103,8 +103,8 @@
   {
    "id": "pdf-identity-no-csrf",
    "file": "app/api/admin.py",
-   "old": "    _csrf: None = Depends(validate_csrf),\n) -> Response:\n    from app.services.categories import get_category_labels\n    from app.services.crypto import encrypt",
-   "new": "    _csrf: None = None,\n) -> Response:\n    from app.services.categories import get_category_labels\n    from app.services.crypto import encrypt",
+   "old": "    _csrf: None = Depends(validate_csrf),\n) -> Response:\n    from app.services.categories import category_label, get_category_labels\n    from app.services.crypto import encrypt",
+   "new": "    _csrf: None = None,\n) -> Response:\n    from app.services.categories import category_label, get_category_labels\n    from app.services.crypto import encrypt",
    "tests": "P"
   },
   {
@@ -173,7 +173,7 @@
   {
    "id": "reason-not-decrypted-for-the-log",
    "file": "app/templating.py",
-   "old": "    if decrypt and key == \"reason\" and text.startswith(\"gAAAAA\"):",
+   "old": "    if decrypt and key in ENCRYPTED_DETAIL_KEYS and text.startswith(\"gAAAAA\"):",
    "new": "    if False:",
    "tests": "P"
   },

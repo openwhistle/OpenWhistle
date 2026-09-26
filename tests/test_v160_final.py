@@ -112,6 +112,21 @@ async def test_removing_encryption_key_is_detected(
     assert not await configured_keys_read_existing_data()
 
 
+async def test_an_unreadable_report_key_alone_is_detected(
+    throwaway_db, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
+) -> None:
+    """No admin yet (setup still open): the reports alone must still stop the start."""
+    from app.config import settings
+    from app.services.encryption import configured_keys_read_existing_data
+    from app.services.report import create_report
+
+    monkeypatch.setattr(settings, "encryption_key", _KEY_A)
+    monkeypatch.setattr(settings, "encryption_key_previous", "")
+    await create_report(throwaway_db, "corruption", "Written before setup was finished.")
+    monkeypatch.setattr(settings, "encryption_key", _KEY_B)
+    assert not await configured_keys_read_existing_data()
+
+
 async def test_an_unreadable_totp_secret_alone_is_detected(
     throwaway_db, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
 ) -> None:
@@ -376,13 +391,17 @@ def test_pdf_loses_annotation_authors_photo_exif_and_its_file_id() -> None:
     writer._ID = ArrayObject([original_id, original_id])
     out = io.BytesIO()
     writer.write(out)
-    assert b"Jane Whistle" in out.getvalue() and _CAMERA.encode() in out.getvalue()
+    for marker in (b"Jane Whistle", _CAMERA.encode(), b"20260926101500"):
+        assert marker in out.getvalue(), marker
 
     clean = strip_metadata("a.pdf", out.getvalue())
-    for leak in (b"Jane Whistle", _CAMERA.encode(), b"D:20260926", b"ORIGINAL-FILE-ID"):
+    # pypdf escapes ":" in a date string, so look for the digits alone.
+    for leak in (b"Jane Whistle", _CAMERA.encode(), b"20260926101500"):
         assert leak not in clean, leak
     reader = PdfReader(io.BytesIO(clean))
-    assert reader.trailer["/ID"][0] != original_id
+    file_ids = [x.get_original_bytes() if hasattr(x, "get_original_bytes") else bytes(x)
+                for x in reader.trailer["/ID"]]
+    assert b"ORIGINAL-FILE-ID" not in file_ids
     assert list(reader.pages[0].images)[0].image.size == (8, 8)
 
 
