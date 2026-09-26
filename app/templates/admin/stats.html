@@ -5,6 +5,11 @@
 .stat-kpi-label { font-size:0.8rem;color:var(--muted);margin-top:0.25rem; }
 .stat-two-col { display:grid;grid-template-columns:1fr 1fr;gap:1.25rem; }
 .stat-two-col > * { min-width:0; }
+/* .panel + .panel (site.css) adds a stacking margin for panels in normal
+   flow; inside this grid it only pushed the second column down against the
+   first (gap already spaces both), so it is reset to 0 here. */
+.stat-two-col > .panel { margin-top:0; }
+
 @media (max-width:768px) { .stat-two-col { grid-template-columns:1fr; } }
 .stat-flex-col-gap { display:flex;flex-direction:column;gap:0.75rem; }
 .stat-row-header { display:flex;justify-content:space-between;margin-bottom:0.25rem; }

@@ -1890,7 +1890,6 @@ tr:hover td {
   justify-content: space-between;
   letter-spacing: 0.03em;
   margin-bottom: 0.75rem;
-  overflow-x: auto;
   padding: 1rem 1.25rem;
 }
 .credential-display > span {
@@ -2061,15 +2060,20 @@ a.attachment-name:hover {
   justify-content: space-between;
   margin-top: 1.5rem;
 }
-.review-row,
 .submit-step-actions {
   align-items: center;
   display: flex;
 }
+/* Label stacked over value, not side-by-side: a fixed label column cannot
+   fit the longest label in every locale ("EINREICHUNGSMODUS" overlapped its
+   value) without either wasting space for short labels or being wide for
+   short ones — stacking fits every locale with no per-language tuning. */
 .review-row {
   border-bottom-width: 1px;
   border-color: var(--hairline);
-  gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
   padding-bottom: 0.625rem;
   padding-top: 0.625rem;
 }
@@ -2078,20 +2082,16 @@ a.attachment-name:hover {
 }
 .review-label {
   color: var(--muted);
-  flex: none;
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.07em;
   line-height: 1rem;
   text-transform: uppercase;
-  width: 7rem;
 }
 .review-value {
   color: var(--body-text);
-  flex: 1 1 0%;
   font-size: 0.875rem;
   line-height: 1.25rem;
-  min-width: 0;
 }
 .auth-page {
   align-items: center;
@@ -3483,7 +3483,10 @@ a.attachment-name:hover {
     margin: 0 0 var(--space-4);
   }
 }
-.token { white-space: nowrap; overflow-wrap: normal; word-break: normal; }
+/* No white-space: nowrap here: a case number or PIN must be free to wrap
+   at the <wbr> the server inserts after each hyphen (wbr_after_hyphens in
+   app/templating.py) rather than scroll behind the copy button. */
+.token { overflow-wrap: normal; word-break: normal; }
 #pin-value .token { font-size: clamp(0.95rem, 4.2vw, 1.25rem); }
 @media (max-width: 540px) {
   .container,

@@ -180,6 +180,24 @@ async def test_upload_error_follows_the_language(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("lang", "expected"),
+    [
+        ("en", "0 / 10,000"),
+        ("de", "0 / 10.000"),
+        ("fr", "0 / 10 000"),
+        ("pt-br", "0 / 10.000"),
+    ],
+)
+async def test_char_counter_uses_locale_number_format(
+    client: AsyncClient, lang: str, expected: str
+) -> None:
+    """The description step's max-length counter was always rendered as the
+    literal "10,000" regardless of locale; German/Portuguese group with a
+    period, French with a (narrow no-break) space."""
+    client.cookies.set("ow-lang", lang)
+    text = await _to_step(client, "description")
+    assert expected.replace(" ", " ") in text.replace(" ", " "), text
 async def test_submit_valid_step_has_no_invalid_field(client: AsyncClient) -> None:
     text = await _to_step(client, "description")
     assert 'aria-invalid="true"' not in text

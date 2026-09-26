@@ -49,6 +49,20 @@ def get_lang(request: Request) -> str:
     return _DEFAULT
 
 
+# Thousands separator per supported locale, used everywhere a count is shown
+# to a user (e.g. the description character counter). Not locale.setlocale
+# (a process-global mutation, unsafe for a stateless async app under
+# concurrent requests) and not Intl (server-side Python has none) — just the
+# one separator character each locale's number convention actually uses.
+_THOUSANDS_SEPARATOR: dict[str, str] = {"en": ",", "de": ".", "fr": " ", "pt-br": "."}
+
+
+def format_count(n: int, lang: str) -> str:
+    """Group an integer's digits in threes with the locale's separator."""
+    sep = _THOUSANDS_SEPARATOR.get(lang, _THOUSANDS_SEPARATOR[_DEFAULT])
+    return f"{n:,}".replace(",", sep)
+
+
 def make_translator(lang: str) -> Callable[..., str]:
     strings = _load(lang)
     fallback = _load(_DEFAULT)

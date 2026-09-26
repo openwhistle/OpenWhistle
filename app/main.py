@@ -8,15 +8,32 @@ from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
 from fastapi import FastAPI, Request
+from fastapi.exception_handlers import (
+    http_exception_handler as _default_http_exception_handler,
+)
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import settings
 from app.csrf import CSRFMiddleware
+from app.i18n import get_lang, make_translator
 from app.logging_config import configure_logging
 from app.middleware import SecurityMiddleware
 from app.redis_client import close_redis
+
+# A generic, localised message per status code an HTML page may show for a
+# raised HTTPException — never the raw exc.detail, which can carry internal
+# detail (e.g. "Case number not found") not meant for a reporter/admin's screen.
+_HTML_ERROR_DETAIL_KEYS: dict[int, str] = {
+    400: "error.detail.400",
+    401: "error.detail.401",
+    403: "error.detail.403",
+    404: "error.detail.404",
+    409: "error.detail.409",
+    422: "error.detail.422",
+}
 
 if TYPE_CHECKING:
     import asyncio
@@ -199,6 +216,28 @@ def create_app() -> FastAPI:
             "error.html",
             {"status_code": 422, "detail": "The submitted form data was invalid."},
             status_code=422,
+        )
+
+    @application.exception_handler(StarletteHTTPException)
+    async def http_exception_handler(
+        request: Request, exc: StarletteHTTPException
+    ) -> Response:
+        """A browser navigating to an HTML route gets the styled, localised
+        error page; an API/JSON client keeps the plain `{"detail": ...}` body
+        it always got (this replaces FastAPI's own default handler, which
+        always returned JSON — see the 404 on a stale /admin/reports/<id>)."""
+        if "text/html" not in request.headers.get("accept", ""):
+            return await _default_http_exception_handler(request, exc)
+
+        from app.templating import render
+
+        t = make_translator(get_lang(request))
+        key = _HTML_ERROR_DETAIL_KEYS.get(exc.status_code, "error.detail.generic")
+        return render(
+            request,
+            "error.html",
+            {"status_code": exc.status_code, "detail": t(key)},
+            status_code=exc.status_code,
         )
 
     application.mount(

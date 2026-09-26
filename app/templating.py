@@ -7,10 +7,10 @@ from typing import Any
 from fastapi import Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from markupsafe import Markup
+from markupsafe import Markup, escape
 
 from app.config import settings
-from app.i18n import get_lang, make_translator
+from app.i18n import format_count, get_lang, make_translator
 from app.services.attachment import format_size
 from app.services.report import format_day, whistleblower_caused
 
@@ -18,7 +18,21 @@ templates = Jinja2Templates(directory="app/templates")
 
 templates.env.filters["format_size"] = format_size
 templates.env.filters["day"] = format_day
+templates.env.filters["format_count"] = format_count
 templates.env.globals["whistleblower_caused"] = whistleblower_caused
+
+
+def wbr_after_hyphens(value: str) -> Markup:
+    """Insert a `<wbr>` after each hyphen of an identifier (case number, PIN).
+
+    A `<wbr>` is a wrap opportunity, never a forced break: the browser only
+    uses it when the identifier does not fit its box, and only right after a
+    hyphen, so a case number or PIN never breaks in the middle of a group.
+    """
+    return Markup("-<wbr>").join(escape(part) for part in str(value).split("-"))
+
+
+templates.env.filters["wbr_after_hyphens"] = wbr_after_hyphens
 
 
 def category_label(slug: str, labels: dict[str, str]) -> str:

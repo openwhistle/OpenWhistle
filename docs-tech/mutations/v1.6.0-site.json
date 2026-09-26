@@ -40,6 +40,48 @@
    "tests/e2e/test_layout.py",
    "-k",
    "docs_page"
+  ],
+  "REVIEW": [
+   "-o",
+   "addopts=",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium",
+   "tests/e2e/test_wb_submission.py",
+   "-k",
+   "test_review_step_label_and_value_do_not_overlap_in_german"
+  ],
+  "COUNT": [
+   "tests/test_v150_ux.py",
+   "-k",
+   "char_counter"
+  ],
+  "STATS": [
+   "-o",
+   "addopts=",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium",
+   "tests/e2e/test_layout.py",
+   "-k",
+   "test_stats_panels_share_the_same_top"
+  ],
+  "ERR": [
+   "tests/test_coverage_gaps.py",
+   "-k",
+   "stale_report_id"
+  ],
+  "EYEBROW": [
+   "tests/test_v160_design.py",
+   "-k",
+   "test_submit_eyebrow_is_neutral_across_locales"
+  ],
+  "DATE": [
+   "tests/test_v160_design.py",
+   "-k",
+   "test_blog_1_6_release_date_is_2026_09_26"
   ]
  },
  "mutations": [
@@ -371,6 +413,62 @@
    "old": ".deadline-table { width: 100%; table-layout: fixed;",
    "new": ".deadline-table { width: 100%;",
    "tests": "E"
+  },
+  {
+   "id": "pin-token-nowrap",
+   "file": "app/static/css/site.css",
+   "old": ".token { overflow-wrap: normal; word-break: normal; }",
+   "new": ".token { white-space: nowrap; overflow-wrap: normal; word-break: normal; }",
+   "tests": "D"
+  },
+  {
+   "id": "review-label-fixed-width",
+   "file": "app/static/css/site.css",
+   "old": ".submit-step-actions {\n  align-items: center;\n  display: flex;\n}\n/* Label stacked over value, not side-by-side: a fixed label column cannot\n   fit the longest label in every locale (\"EINREICHUNGSMODUS\" overlapped its\n   value) without either wasting space for short labels or being wide for\n   short ones — stacking fits every locale with no per-language tuning. */\n.review-row {\n  border-bottom-width: 1px;\n  border-color: var(--hairline);\n  display: flex;\n  flex-direction: column;\n  gap: 0.25rem;\n  padding-bottom: 0.625rem;\n  padding-top: 0.625rem;\n}\n.review-row:last-child {\n  border-bottom-width: 0;\n}\n.review-label {\n  color: var(--muted);\n  font-size: 0.75rem;\n  font-weight: 600;\n  letter-spacing: 0.07em;\n  line-height: 1rem;\n  text-transform: uppercase;\n}\n.review-value {\n  color: var(--body-text);\n  font-size: 0.875rem;\n  line-height: 1.25rem;\n}",
+   "new": ".review-row,\n.submit-step-actions {\n  align-items: center;\n  display: flex;\n}\n.review-row {\n  border-bottom-width: 1px;\n  border-color: var(--hairline);\n  gap: 1rem;\n  padding-bottom: 0.625rem;\n  padding-top: 0.625rem;\n}\n.review-row:last-child {\n  border-bottom-width: 0;\n}\n.review-label {\n  color: var(--muted);\n  flex: none;\n  font-size: 0.75rem;\n  font-weight: 600;\n  letter-spacing: 0.07em;\n  line-height: 1rem;\n  text-transform: uppercase;\n  width: 7rem;\n}\n.review-value {\n  color: var(--body-text);\n  flex: 1 1 0%;\n  font-size: 0.875rem;\n  line-height: 1.25rem;\n  min-width: 0;\n}",
+   "tests": "REVIEW"
+  },
+  {
+   "id": "char-counter-not-localized",
+   "file": "app/i18n.py",
+   "old": "    sep = _THOUSANDS_SEPARATOR.get(lang, _THOUSANDS_SEPARATOR[_DEFAULT])\n    return f\"{n:,}\".replace(\",\", sep)",
+   "new": "    return f\"{n:,}\"",
+   "tests": "COUNT"
+  },
+  {
+   "id": "stats-grid-panel-margin",
+   "file": "app/templates/admin/stats.html",
+   "old": ".stat-two-col > .panel { margin-top:0; }",
+   "new": "",
+   "tests": "STATS"
+  },
+  {
+   "id": "http-exception-always-json",
+   "file": "app/main.py",
+   "old": "        if \"text/html\" not in request.headers.get(\"accept\", \"\"):\n            return await _default_http_exception_handler(request, exc)",
+   "new": "        return await _default_http_exception_handler(request, exc)",
+   "tests": "ERR"
+  },
+  {
+   "id": "eyebrow-restates-confidential",
+   "file": "app/locales/de.json",
+   "old": "\"submit.eyebrow\": \"Sichere Meldung\",",
+   "new": "\"submit.eyebrow\": \"Vertrauliche Meldung\",",
+   "tests": "EYEBROW"
+  },
+  {
+   "id": "blog-1-6-date-off-by-one",
+   "file": "docs/blog/was-ist-neu-in-1-6.html",
+   "old": "26. September 2026",
+   "new": "25. September 2026",
+   "tests": "DATE"
+  },
+  {
+   "id": "pin-wbr-filter-not-applied",
+   "file": "app/templates/submit_success.html",
+   "old": "{{ case_number | wbr_after_hyphens }}",
+   "new": "{{ case_number }}",
+   "tests": "D"
   }
  ]
 }

@@ -17,7 +17,7 @@ import io
 import re
 
 import pytest
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Browser, Page, expect
 
 pytestmark = pytest.mark.e2e
 
@@ -565,3 +565,117 @@ def test_wrongly_attached_file_can_be_removed(page: Page, base_url: str) -> None
     review = page.content()
     assert "keep.txt" in review
     assert "wrong.txt" not in review
+
+
+def _walk_to_review(page: Page, base_url: str, description: str) -> None:
+    """Anonymous submission, mode through attachments; stops on the review step."""
+    page.goto(f"{base_url}/submit")
+    page.wait_for_load_state("networkidle")
+    _fill_mode_step(page)
+    _advance_step(page)
+    _skip_location_if_present(page)
+    page.wait_for_load_state("networkidle")
+    _fill_category_step(page)
+    _advance_step(page)
+    page.wait_for_load_state("networkidle")
+    page.locator('textarea[name="description"]').fill(description)
+    _advance_step(page)
+    page.wait_for_load_state("networkidle")
+    _advance_step(page)  # attachments step — skip, no file
+    page.wait_for_load_state("networkidle")
+
+
+def _boxes_overlap(a: dict, b: dict) -> bool:
+    return not (
+        a["x"] + a["width"] <= b["x"]
+        or b["x"] + b["width"] <= a["x"]
+        or a["y"] + a["height"] <= b["y"]
+        or b["y"] + b["height"] <= a["y"]
+    )
+
+
+@pytest.mark.parametrize("width", [1440, 390])
+def test_pin_and_case_number_fit_without_scrolling(
+    browser: Browser, base_url: str, width: int
+) -> None:
+    """The success screen's case number and PIN must be fully visible at every
+    width, never cut off behind a scrollbar, and never sit under the copy
+    button — Chrome review finding: 469px of PIN content in a 434px box, the
+    PIN scrolled and partly hidden behind the copy button."""
+    ctx = browser.new_context(viewport={"width": width, "height": 900}, base_url=base_url)
+    page = ctx.new_page()
+    _walk_to_review(
+        page,
+        base_url,
+        "Overflow regression test report — long enough to pass the minimum "
+        "description length validation for the wizard.",
+    )
+    _advance_step(page)  # review -> submit
+    page.wait_for_load_state("networkidle")
+
+    for elem_id in ("case-number", "pin-value"):
+        box_el = page.locator(f"#{elem_id}")
+        if box_el.count() == 0:
+            continue
+        overflow = box_el.evaluate("el => el.scrollWidth - el.clientWidth")
+        assert overflow <= 0, f"#{elem_id}: {overflow}px horizontal overflow at {width}px"
+
+        token = box_el.locator(".token")
+        copy_btn = box_el.locator(".copy-btn")
+        # The container's own scrollWidth is blind to a flex child's ink
+        # overflow (a `min-width: 0` child that cannot wrap just paints past
+        # its shrunk box without enlarging the flex row) — checking the token
+        # span's own scrollWidth is what actually catches a reintroduced
+        # `white-space: nowrap` on `.token`.
+        token_overflow = token.evaluate("el => el.scrollWidth - el.clientWidth")
+        assert token_overflow <= 0, (
+            f"#{elem_id} .token: {token_overflow}px of text does not fit its own box "
+            f"at {width}px (white-space: nowrap would cause exactly this)"
+        )
+
+        token_box, btn_box = token.bounding_box(), copy_btn.bounding_box()
+        assert token_box and btn_box
+        assert not _boxes_overlap(token_box, btn_box), (
+            f"#{elem_id}: copy button overlaps the value at {width}px"
+        )
+
+        visible_text = token.inner_text().strip()
+        raw_value = copy_btn.get_attribute("data-copy")
+        assert visible_text == raw_value, (
+            f"#{elem_id}: visible text {visible_text!r} != raw value {raw_value!r}"
+        )
+    ctx.close()
+
+
+def test_review_step_label_and_value_do_not_overlap_in_german(
+    browser: Browser, base_url: str
+) -> None:
+    """Chrome review finding: the German label "EINREICHUNGSMODUS" overlapped
+    its value "Anonym" — the label column was too narrow for that locale."""
+    ctx = browser.new_context(viewport={"width": 1440, "height": 900}, base_url=base_url)
+    ctx.add_cookies([{"name": "ow-lang", "value": "de", "url": base_url}])
+    page = ctx.new_page()
+    _walk_to_review(
+        page,
+        base_url,
+        "Deutschsprachiger Testbericht mit ausreichend Zeichen zur Validierung "
+        "der Mindestlänge im Formular.",
+    )
+
+    mode_row = page.locator(".review-row").first
+    label = mode_row.locator(".review-label")
+    value = mode_row.locator(".review-value")
+    # A fixed-width label with an unbreakable, single-word value ("EINREICHUNGS-
+    # MODUS") doesn't shrink its own box to the overflowing text — the box
+    # (and getBoundingClientRect) stays at its CSS width while the text paints
+    # past it, so an overlap check on the two boxes alone can miss it; the
+    # label's own scrollWidth vs. clientWidth catches exactly that overflow.
+    label_overflow = label.evaluate("el => el.scrollWidth - el.clientWidth")
+    assert label_overflow <= 0, (
+        f"German review label does not fit its own column ({label_overflow}px over)"
+    )
+    label_box, value_box = label.bounding_box(), value.bounding_box()
+    assert label_box and value_box
+    assert not _boxes_overlap(label_box, value_box), "German review label overlaps its value"
+    assert "Anonym" in value.inner_text()
+    ctx.close()

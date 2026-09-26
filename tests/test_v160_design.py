@@ -191,12 +191,18 @@ def test_footer_inner_is_declared_once() -> None:
     assert len(hits) == 1, hits
 
 
-def test_token_class_never_breaks_a_case_number_or_pin() -> None:
+def test_token_class_wraps_only_at_the_explicit_hyphen_breaks() -> None:
+    """Superseded by the X13 fix: `white-space: nowrap` (the original guard
+    against a case number/PIN breaking) is exactly what made the PIN scroll
+    behind the copy button instead of wrapping (task X13). `.token` may now
+    wrap, but only at the `<wbr>` the server inserts after each hyphen
+    (wbr_after_hyphens in app/templating.py) — no automatic mid-word break."""
     css = (ROOT / "app/static/css/site.css").read_text()
     rule = re.search(r"\.token\s*\{([^}]*)\}", css)
     assert rule
     body = rule.group(1)
-    assert "white-space: nowrap" in body
+    assert "white-space: nowrap" not in body
+    assert "overflow-wrap: normal" in body
     assert "word-break: normal" in body
 
 
@@ -205,6 +211,17 @@ def test_case_number_and_pin_get_the_token_class() -> None:
     assert success_html.count('class="token"') == 2
     status_html = (TEMPLATES / "status.html").read_text()
     assert 'class="mono token"' in status_html
+
+
+def test_case_number_and_pin_wrap_only_at_hyphens() -> None:
+    """Both identifiers on the success screen go through `wbr_after_hyphens`
+    (app/templating.py), which inserts a `<wbr>` after each hyphen so a long
+    PIN or case number wraps, if it must, only at a group boundary — never
+    inside a group, and (together with `.token` allowing wrapping, see
+    test_token_class_wraps_only_at_the_explicit_hyphen_breaks) never behind
+    a scrollbar or the copy button (Chrome review finding, task X13)."""
+    success_html = (TEMPLATES / "submit_success.html").read_text()
+    assert success_html.count("| wbr_after_hyphens") == 2
 
 
 @pytest.mark.asyncio
@@ -1363,3 +1380,50 @@ def test_table_stack_sticky_action_column_is_paired_header_and_data(tpl: Path) -
         f"{tpl.name}: stack-action-header present={has_header}, "
         f"stack-action (td) present={has_data} — must match"
     )
+
+
+# ── Second Chrome check (task X13) ──────────────────────────────────────────
+
+
+def test_submit_eyebrow_is_neutral_across_locales() -> None:
+    """Chrome review finding: the wizard eyebrow said "VERTRAULICHE MELDUNG" /
+    "CONFIDENTIAL REPORT" even after the reporter chose "Anonym" — a neutral
+    eyebrow that does not clash with whichever submission mode is selected."""
+    import json
+
+    expected = {
+        "en": "Secure report",
+        "de": "Sichere Meldung",
+        "fr": "Signalement sécurisé",
+        "pt-br": "Denúncia segura",
+    }
+    for lang, value in expected.items():
+        data = json.loads((ROOT / "app/locales" / f"{lang}.json").read_text())
+        assert data["submit.eyebrow"] == value, lang
+        # Must not restate the confidential mode's own name (DESIGN.md: an
+        # eyebrow must not say what a heading/label right below it already
+        # says), regardless of language.
+        assert "confidential" not in data["submit.eyebrow"].lower()
+        assert "vertraulich" not in data["submit.eyebrow"].lower()
+        assert "confidentie" not in data["submit.eyebrow"].lower()
+
+
+def test_blog_1_6_release_date_is_2026_09_26() -> None:
+    """Chrome review finding: the article was dated 25 September while the
+    actual release is the 26th — every date on the page, the sitemap and the
+    JSON-LD must agree with the real release date."""
+    text = (ROOT / "docs/blog/was-ist-neu-in-1-6.html").read_text()
+    assert "25. September 2026" not in text
+    assert "2026-09-25" not in text
+    assert "26. September 2026" in text
+    assert text.count('"2026-09-26"') >= 2  # datePublished and dateModified
+    assert 'content="2026-09-26"' in text  # article:published_time / modified_time
+
+    sitemap = (ROOT / "docs/sitemap.xml").read_text()
+    article_block = re.search(
+        r"<loc>https://openwhistle\.net/blog/was-ist-neu-in-1-6\.html</loc>.*?</url>",
+        sitemap,
+        re.DOTALL,
+    )
+    assert article_block, "sitemap entry for the 1.6 blog article not found"
+    assert "<lastmod>2026-09-26</lastmod>" in article_block.group(0)

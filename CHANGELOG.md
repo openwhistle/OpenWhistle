@@ -225,6 +225,25 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   log's last column no longer detaches from its data.
 - `docs.html` and two blog articles overflowed horizontally on a phone (up to 519 px).
 - The local-review login button sat flush against the demo-credentials box.
+- **The PIN on the success screen was cut off.** A 36-character PIN or case number scrolled
+  behind the copy button instead of fitting its box; it now wraps only after a hyphen (never
+  inside a group) and is always fully visible, at every width, without scrolling.
+- The review step's German label "EINREICHUNGSMODUS" overlapped its value "Anonym" (a fixed
+  7rem label column, too narrow for the longest label in some locales); the review list now
+  stacks each label over its value instead of sizing one column for every language.
+- The description step's character counter always showed "10,000" regardless of language; a
+  shared `format_count` helper (Python and JavaScript) now groups digits per locale
+  ("10.000" in German and Portuguese, "10 000" in French).
+- The wizard eyebrow said "CONFIDENTIAL REPORT" even in anonymous mode, clashing with
+  "Anonymous" right below it; it is now a neutral "Secure report" in all four languages.
+- `/admin/stats`'s two-column grid pushed "nach Kategorie" 23px below "nach Status": a
+  stacking margin meant for panels in normal vertical flow was also firing inside the grid,
+  on top of its own `gap`.
+- A logged-in admin opening a stale `/admin/reports/<id>` got a raw JSON `{"detail":"Not
+  Found"}` page. A browser request (`Accept: text/html`) to an HTML route now gets the
+  styled, localised error page; an API/JSON client is unaffected.
+- The "Was ist neu in 1.6" blog article was dated 25 September; the release is the 26th
+  (visible date, meta tags, JSON-LD `datePublished`/`dateModified`, sitemap `lastmod`).
 
 ### Design
 
@@ -248,6 +267,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   lockout settings and `APP_VERSION`/`APP_NAME`).
 - Every new guard of this release is pinned by a mutation that turns its test red
   (`scripts/mutation_audit.py`).
+- The docs pages' horizontal-overflow check ran in the light theme only; it now runs in dark
+  too.
 
 ### Removed
 

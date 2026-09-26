@@ -50,24 +50,36 @@ def docs_server_url() -> Generator[str]:
 
 
 # 390 px is a phone; 1024 px is the narrowest desktop width, where the full
-# nav row has the least room before it collapses at 1080 px.
+# nav row has the least room before it collapses at 1080 px. Both themes: the
+# first round of this check only ever ran with the browser's default (light)
+# colour scheme, so a dark-only overflow (a token that only widens under
+# [data-theme="dark"]) had no test to catch it.
+@pytest.mark.parametrize("color_scheme", ["light", "dark"])
 @pytest.mark.parametrize("width", [390, 1024])
 @pytest.mark.parametrize("docs_page", _DOCS_PAGES)
 def test_docs_page_has_no_horizontal_overflow(
-    browser: Browser, docs_server_url: str, docs_page: str, width: int
+    browser: Browser, docs_server_url: str, docs_page: str, width: int, color_scheme: str
 ) -> None:
-    ctx, page = _page(browser, docs_server_url, width)
+    ctx, page = _page(browser, docs_server_url, width, color_scheme=color_scheme)
     page.goto(f"{docs_server_url}/{docs_page}")
     page.wait_for_load_state("networkidle")
     overflow = page.evaluate(
         "document.documentElement.scrollWidth - document.documentElement.clientWidth"
     )
     ctx.close()
-    assert overflow == 0, f"{docs_page}: {overflow}px horizontal overflow at {width}px"
+    assert overflow == 0, (
+        f"{docs_page}: {overflow}px horizontal overflow at {width}px ({color_scheme})"
+    )
 
 
-def _page(browser: Browser, base_url: str, width: int):  # type: ignore[no-untyped-def]
-    ctx = browser.new_context(viewport={"width": width, "height": 900}, base_url=base_url)
+def _page(browser: Browser, base_url: str, width: int, color_scheme: str = "light"):  # type: ignore[no-untyped-def]
+    # The docs pages' own inline script falls back to `prefers-color-scheme`
+    # when no `ow-theme` was ever saved in this (fresh) context's localStorage,
+    # so setting the context's colour scheme is enough to render dark mode —
+    # no cookie or script injection needed.
+    ctx = browser.new_context(
+        viewport={"width": width, "height": 900}, base_url=base_url, color_scheme=color_scheme
+    )
     return ctx, ctx.new_page()
 
 
@@ -140,6 +152,23 @@ def test_case_number_stays_on_one_line(browser: Browser, base_url: str) -> None:
     box = token.bounding_box()
     line = float(token.evaluate("e => parseFloat(getComputedStyle(e).lineHeight)"))
     assert box and box["height"] < line * 1.5
+    ctx.close()
+
+
+def test_stats_panels_share_the_same_top(browser: Browser, base_url: str) -> None:
+    """Chrome review finding: `.panel + .panel` (site.css) adds a stacking
+    margin meant for panels in normal vertical flow; inside the stats page's
+    two-column grid it also fired, pushing "nach Kategorie" 23px below "nach
+    Status" even though the grid's own `gap` already spaces them."""
+    ctx, page = _page(browser, base_url, 1440)
+    _admin_login(page, base_url, DEMO_ADMIN_USERNAME, DEMO_ADMIN_PASSWORD, DEMO_ADMIN_TOTP_SECRET)
+    page.goto(f"{base_url}/admin/stats")
+    page.wait_for_load_state("networkidle")
+    tops = page.eval_on_selector_all(
+        ".stat-two-col > .panel", "els => els.map(e => e.getBoundingClientRect().y)"
+    )
+    assert len(tops) >= 2, tops
+    assert max(tops) - min(tops) < 2, tops
     ctx.close()
 
 

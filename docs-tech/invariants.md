@@ -480,11 +480,38 @@ fetch category labels; the snippets are updated and red.
 | `docs-mono-500-face-missing` | `docs/docs.html` | `test_every_docs_page_font_usage_has_a_matching_font_face` |
 | `roadmap-mono-500-face-missing` | `docs/roadmap.html` | `test_every_docs_page_font_usage_has_a_matching_font_face` |
 | `blog-deadline-table-auto` | `docs/blog/hinschg-compliance-leitfaden.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `pin-token-nowrap` | `app/static/css/site.css` | `test_token_class_wraps_only_at_the_explicit_hyphen_breaks` |
+| `pin-wbr-filter-not-applied` | `app/templates/submit_success.html` | `test_case_number_and_pin_wrap_only_at_hyphens` |
+| `review-label-fixed-width` | `app/static/css/site.css` | `test_review_step_label_and_value_do_not_overlap_in_german` (e2e) |
+| `char-counter-not-localized` | `app/i18n.py` | `test_char_counter_uses_locale_number_format` |
+| `stats-grid-panel-margin` | `app/templates/admin/stats.html` | `test_stats_panels_share_the_same_top` (e2e) |
+| `http-exception-always-json` | `app/main.py` | `test_stale_report_id_returns_styled_html_for_a_browser` |
+| `eyebrow-restates-confidential` | `app/locales/de.json` | `test_submit_eyebrow_is_neutral_across_locales` |
+| `blog-1-6-date-off-by-one` | `docs/blog/was-ist-neu-in-1-6.html` | `test_blog_1_6_release_date_is_2026_09_26` |
 
 **Not a mutation.** `tests/e2e/test_admin_table_layout.py` measures the
 dashboard's pinned action column in the running app, so the script cannot
 change the CSS it is served; `sticky-action-static`, `status-badge-nowrap` and
 `dashboard-header-unpinned` pin the same rules in source.
+
+**Doubly redundant on purpose — task X13 (PIN/case-number overflow).** The
+fix has two independent parts: `.token` no longer forces `white-space:
+nowrap`, and the case number/PIN are rendered through `wbr_after_hyphens`
+(`app/templating.py`), which inserts a `<wbr>` after each hyphen. In Chromium,
+either change alone already prevents the overflow: with `nowrap` removed, the
+browser's default line breaking already wraps after a plain hyphen (no
+`<wbr>` needed); and a `<wbr>` is honoured as a break opportunity even when
+`white-space: nowrap` is reinstated. So a single-property mutation of either
+piece against the rendered page (`tests/e2e/test_wb_submission.py::
+test_pin_and_case_number_fit_without_scrolling`) stays GREEN — not because
+the guard is weak, but because the other half of the fix silently covers for
+it. Reverting *both* together (confirmed manually, not via
+`mutation_audit.py`, which mutates one file at a time) reproduces the
+original overflow exactly (`.token`'s own `scrollWidth` exceeds its
+`clientWidth`). Each half is instead pinned by its own reliable, browser-free
+source check (`pin-token-nowrap`, `pin-wbr-filter-not-applied`, both group
+`D`); the rendered e2e test stays as additional, valuable coverage of the
+real behaviour without a dedicated mutation of its own.
 
 ## Repository and release
 

@@ -212,6 +212,43 @@ async def test_validation_error_handler_returns_422_html(client: AsyncClient) ->
         assert resp.status_code == 422
 
 
+# ── app/main.py — StarletteHTTPException handler (HTML vs JSON) ──────────────
+
+
+@pytest.mark.asyncio
+async def test_stale_report_id_returns_json_for_an_api_style_request(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """A client that never asked for HTML (no Accept header, as every plain
+    httpx/fetch caller in this suite is) keeps the plain JSON body."""
+    admin, secret = await _make_admin(db_session)
+    await _login(client, admin, secret)
+    r = await client.get(f"/admin/reports/{uuid.uuid4()}")
+    assert r.status_code == 404
+    assert r.headers["content-type"].startswith("application/json")
+    assert "detail" in r.json()
+
+
+@pytest.mark.asyncio
+async def test_stale_report_id_returns_styled_html_for_a_browser(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """A logged-in admin opening a stale /admin/reports/<id> (deleted, or
+    from another organisation) used to get raw JSON `{"detail":"Not
+    Found"}`. A browser navigation (Accept: text/html) now gets the same
+    styled, localised error.html every other error page uses."""
+    admin, secret = await _make_admin(db_session)
+    await _login(client, admin, secret)
+    r = await client.get(
+        f"/admin/reports/{uuid.uuid4()}", headers={"accept": "text/html,*/*"}
+    )
+    assert r.status_code == 404
+    assert r.headers["content-type"].startswith("text/html")
+    assert '"detail"' not in r.text
+    assert "OpenWhistle" in r.text
+    assert "doesn&#39;t exist" in r.text or "doesn't exist" in r.text
+
+
 @pytest.mark.asyncio
 async def test_run_alembic_upgrade_failure_raises() -> None:
     """_run_alembic_upgrade raises RuntimeError when alembic exits non-zero."""

@@ -12,7 +12,6 @@
     form:has(#mode-confidential:checked) .sub-confidential-fields { display: block; }
     .sub-label-flex { display: flex; justify-content: space-between; align-items: baseline; }
     .sub-char-counter { font-size: 0.72rem; font-weight: 400; color: var(--muted); font-family: var(--font-mono); }
-    .sub-row-top { align-items: flex-start; }
     .sub-review-desc { white-space: pre-wrap; font-size: 0.88rem; max-height: 200px; overflow-y: auto; }
     .sub-file-list { list-style: none; padding: 0; margin: 0; }
     .sub-muted { color: var(--muted); }
@@ -221,7 +220,7 @@
             <div class="form-group">
                 <label class="form-label sub-label-flex" for="description">
                     <span>{{ t('submit.form.description') }}</span>
-                    <span id="char-counter" class="sub-char-counter">{{ state.get('description', '') | length | string }} / 10,000</span>
+                    <span id="char-counter" class="sub-char-counter" data-max="10000">{{ state.get('description', '') | length | format_count(lang) }} / {{ 10000 | format_count(lang) }}</span>
                 </label>
                 <textarea
                     class="form-control"
@@ -344,13 +343,13 @@
                 </span>
             </div>
 
-            <div class="review-row sub-row-top">
+            <div class="review-row">
                 <span class="review-label">{{ t('submit.form.description') }}</span>
                 <span class="review-value sub-review-desc">{{ state.get('description', '') }}</span>
             </div>
 
             {% if state.get('file_meta') %}
-            <div class="review-row sub-row-top">
+            <div class="review-row">
                 <span class="review-label">{{ t('submit.form.files') }}</span>
                 <ul class="review-value sub-file-list">
                     {% for f in state.get('file_meta', []) %}
@@ -426,9 +425,17 @@
     var description = document.getElementById('description');
     var charCounter = document.getElementById('char-counter');
     if (description && charCounter) {
+        // Same thousands separator per locale as app.i18n.format_count, so the
+        // live count never disagrees with the page's own initial render.
+        var THOUSANDS_SEPARATOR = { en: ',', de: '.', fr: ' ', 'pt-br': '.' };
+        var formatCount = function(n) {
+            var sep = THOUSANDS_SEPARATOR[document.documentElement.lang] || ',';
+            return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, sep);
+        };
+        var max = parseInt(charCounter.dataset.max, 10);
         description.addEventListener('input', function() {
             var c = this.value.length;
-            charCounter.textContent = c.toLocaleString() + ' / 10,000';
+            charCounter.textContent = formatCount(c) + ' / ' + formatCount(max);
             charCounter.style.color = c < 10 ? 'var(--danger)' : (c > 9500 ? 'var(--warning, #c17b2a)' : 'var(--muted)');
         });
     }
