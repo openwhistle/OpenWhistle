@@ -60,3 +60,6 @@ data:
   CLAMAV_HOST: {{ .Values.config.clamavHost | quote }}
   CLAMAV_PORT: {{ .Values.config.clamavPort | quote }}
   CLAMAV_TIMEOUT_SECONDS: {{ .Values.config.clamavTimeoutSeconds | quote }}
+  {{- range $name, $value := .Values.extraEnv }}
+  {{ $name }}: {{ $value | quote }}
+  {{- end }}

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -72,3 +73,16 @@ def test_the_chart_says_to_clear_x_ow_onion_when_an_onion_address_is_set() -> No
     for path in ("charts/openwhistle/values.yaml", "docs/docs.html"):
         text = (ROOT / path).read_text()
         assert 'proxy_set_header X-OW-Onion "";' in text.replace("\n            ", " "), path
+
+
+@pytest.mark.skipif(not shutil.which("helm"), reason="helm not installed")
+def test_helm_extra_env_reaches_the_configmap() -> None:
+    """Settings without a values.yaml key (SECURE_COOKIES, the lockout
+    settings, ...) can still be set on Helm."""
+    run = subprocess.run(  # noqa: S603
+        ["helm", "template", "t", str(ROOT / "charts/openwhistle"),  # noqa: S607
+         "--set", "secrets.existingSecret=x", "--set", "extraEnv.SECURE_COOKIES=false",
+         "-s", "templates/configmap.yaml"],
+        capture_output=True, text=True, check=True,
+    )
+    assert 'SECURE_COOKIES: "false"' in run.stdout

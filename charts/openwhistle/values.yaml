@@ -166,6 +166,11 @@ config:
   clamavPort: "3310"
   clamavTimeoutSeconds: "30"
 
+# Any other (non-secret) setting from the configuration table, as NAME: value,
+# e.g. SECURE_COOKIES, ACCESS_TOKEN_EXPIRE_MINUTES, UPDATE_CHECK_ENABLED or the
+# lockout settings. Added to the ConfigMap; never repeat a key set above.
+extraEnv: {}
+
 # Secrets — these must be provided; they are not defaulted.
 # Create a Kubernetes Secret and reference it, or use an external secrets operator.
 secrets:

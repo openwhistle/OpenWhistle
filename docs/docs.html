@@ -1303,6 +1303,12 @@
           <code>SETUP_TOKEN</code> avoids that hunt entirely: every replica uses the same
           configured value.
         </p>
+        <p>
+          A setting from the <a href="#configuration">configuration table</a> that
+          <code>values.yaml</code> has no key for goes into <code>extraEnv</code>, as
+          <code>NAME: value</code> (for example <code>SECURE_COOKIES: "false"</code>). Secrets
+          belong in <code>secrets</code>.
+        </p>
       </section>
 
       <!-- Configuration -->
