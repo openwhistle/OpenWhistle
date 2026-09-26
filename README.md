@@ -56,7 +56,8 @@ zero vendor lock-in, and privacy-first by design.
 - **HinSchG SLA tracking** — 7-day acknowledgement and 3-month feedback deadlines with days
   remaining shown in both the admin dashboard and the whistleblower status page.
 - **Role-based access control** — `ADMIN` and `CASE_MANAGER` roles. Case managers can process
-  their assigned reports; only admins manage users, categories, and deletions.
+  their assigned reports; only admins manage users, categories, and deletions. The admin sidebar
+  shows each role only the pages it may open.
 - **Case assignment** — Assign reports to any active staff member; "My Cases" dashboard filter
   for case managers.
 - **Status workflow** — `received → in_review → pending_feedback → closed`; only valid
@@ -65,8 +66,9 @@ zero vendor lock-in, and privacy-first by design.
   same-admin confirm returns HTTP 409. GDPR Art. 17 compliant.
 - **Immutable audit log** — Every admin action recorded with timestamp and username, shown as
   readable labels in all four languages; CSV export keeps the machine codes; required by HinSchG §11 Abs. 5.
-- **Case-number search** — Find a case on the dashboard by any part of its number. Report content
-  is encrypted per report and deliberately not searchable.
+- **Search by case number or content** — Find a case by any part of its number or by a word
+  in its description or messages. Content is decrypted in memory for that request only; no
+  searchable index is stored, and the confidential name never matches.
 - **Internal notes** — Admin-only notes on cases; never visible to the whistleblower.
 - **Case linking** — Link related cases with bidirectional normalization constraint.
 - **Custom categories** — DB-driven report categories; full management UI at `/admin/categories`.
@@ -93,18 +95,24 @@ zero vendor lock-in, and privacy-first by design.
 - **OIDC / SSO support** — Optional single sign-on via any OpenID Connect provider (Keycloak,
   Authentik, Azure AD, Google, …), with PKCE and a verified ID token (signature, issuer,
   audience, expiry, nonce). LDAP supports LDAPS and StartTLS (`LDAP_START_TLS`).
-- **File attachments** — Whistleblowers can attach evidence files (PDF, images, Word, Excel, CSV,
-  TXT — up to 10 MB each, 5 per report). Identifying metadata (photo GPS/EXIF, PDF and Office
+- **File attachments** — Whistleblowers can attach evidence files (PDF, images, `.docx`, `.xlsx`,
+  CSV, TXT — up to 10 MB each, 5 per report; legacy `.doc`/`.xls` are refused, since their author
+  cannot be removed). Identifying metadata (photo GPS/EXIF, PDF and Office
   author fields) is removed on upload, and files are encrypted with the report's own key.
 - **Optional virus scanning** — Attachments can be checked against a ClamAV `clamd` daemon before
   they are stored (`CLAMAV_HOST`). Fail-closed: if the scanner is unreachable, the upload is
   refused rather than stored unscanned.
-- **Internationalisation** — English, German, and French UI; language picker in the nav bar;
-  all 388+ translation keys present in every locale.
+- **Internationalisation** — English, German, French and Brazilian Portuguese UI; language
+  picker in the nav bar; a test keeps every key and placeholder present in every locale.
 - **WCAG 2.1 AA** — Skip-to-content link, ARIA labels, live regions, visible focus indicators,
   and keyboard-accessible language picker.
 - **Setup wizard** — Web-based first-run wizard creates the initial admin account with TOTP setup.
-  No manual database steps.
+  No manual database steps. It asks for a one-time setup token (`SETUP_TOKEN`, or a random one
+  logged at first start), so reaching `/setup` first is not enough to own the installation.
+- **Encrypted second factor** — TOTP secrets are stored encrypted; a database dump alone yields
+  no account's second factor.
+- **Hardened containers** — read-only root file system, no capabilities, `no-new-privileges`,
+  base images pinned by digest, no `curl` in the image; the Helm chart sets the same.
 - **IP leakage detection** — The admin dashboard warns when upstream proxies forward IP headers.
 - **Hard deletion** — Reports can be permanently deleted including all messages, attachments, and
   Redis session data. DSGVO-compliant.
@@ -140,8 +148,9 @@ zero vendor lock-in, and privacy-first by design.
   are deleted `RETENTION_DAYS` days after closure (default 1095 = 3 years); satisfies
   GDPR Art. 5(1)(e) and HinSchG §11 Abs. 5; each deletion recorded in the audit log.
 - **Batched notifications** — new reports and whistleblower messages are announced in one
-  digest every `NOTIFICATION_BATCH_MINUTES` (default 60), carrying only counts and case
-  numbers, so the notice's timing cannot be matched to who was at their desk.
+  digest every `NOTIFICATION_BATCH_MINUTES` (default 60), so the notice's timing cannot be
+  matched to who was at their desk. Webhooks (Slack, Teams, generic) carry counts only; the
+  email to your own admins also names the case numbers.
 - **Encrypted attachment names and drafts** — filenames are encrypted with the report key;
   a submission draft in Redis is encrypted with a key held only in the whistleblower's
   cookie; Office comment and tracked-change authors are anonymised on upload.

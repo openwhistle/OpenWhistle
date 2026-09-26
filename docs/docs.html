@@ -1290,6 +1290,48 @@
               <td><code>12</code></td>
             </tr>
             <tr>
+              <td><code class="env-key">ACCESS_TOKEN_EXPIRE_MINUTES</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Lifetime of one admin session token; <em>Stay signed in</em> renews it, up to <code>SESSION_MAX_HOURS</code>.</td>
+              <td><code>60</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">ALGORITHM</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>JWT signing algorithm of admin sessions. Leave it.</td>
+              <td><code>HS256</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">MAX_ACCESS_ATTEMPTS</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Wrong PINs for one case number before the status page asks the reporter to wait. A correct PIN always works.</td>
+              <td><code>5</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">ACCESS_LOCKOUT_MINUTES</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>How long that wait notice lasts.</td>
+              <td><code>15</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">MAX_LOGIN_ATTEMPTS</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Wrong admin passwords for one username before that username is locked.</td>
+              <td><code>10</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">LOGIN_LOCKOUT_MINUTES</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>How long an admin username stays locked.</td>
+              <td><code>30</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">APP_VERSION</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Informational; set by the image. Do not override.</td>
+              <td>the image's version</td>
+            </tr>
+            <tr>
               <td><code class="env-key">ADMIN_FAILED_LOGIN_ALERT_THRESHOLD</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
               <td>Password-spraying alarm. Failed admin password attempts are counted across all accounts (no username, no IP stored). When this many fail within the window, one alert goes to the email and webhook notification channels and the audit log records <code>auth.password_spraying_suspected</code>. <code>0</code> disables it. Per-account lockout and MFA stay in force either way.</td>
@@ -1944,7 +1986,10 @@ CLAMAV_HOST=clamav</code></pre>
         </ul>
         <p>
           Manage admin accounts at <code>/admin/users</code>. The last active admin account cannot
-          be deactivated to prevent lockout.
+          be deactivated to prevent lockout. A new account is a case manager unless another role is
+          chosen; an unknown role is refused. The sidebar shows each role only the pages it may open
+          (a case manager: dashboard, statistics, telephone channel); only admins may dismiss the
+          IP-header warning.
         </p>
 
         <h3>Managing reports</h3>
@@ -1976,11 +2021,13 @@ CLAMAV_HOST=clamav</code></pre>
         <p>
           <strong>Confidential identity.</strong> A confidential reporter's name and contact are hidden by default.
           The case handler — or, while the case is unassigned, an admin of the case's organisation — clicks
-          <em>Show identity</em> and gives a reason (10–500 characters; do not write the reporter's name into it).
+          <em>Show identity</em> (<code>POST /admin/reports/{id}/identity</code>) and gives a reason
+          (10–500 characters; do not write the reporter's name into it).
           The identity is shown on that page only; the audit log records who, when and why. The case page says only
           that a reason was recorded; the reason itself is on <code>/admin/audit-log</code> and in the CSV export.
           Opening a case is logged as <em>Report opened</em>. The same rule applies to the PDF export: the
-          <em>Export PDF with identity</em> button asks for the same audited reason and is recorded the same way;
+          <em>Export PDF with identity</em> button (<code>POST /admin/reports/{id}/export.pdf</code>) asks for
+          the same audited reason and is recorded the same way;
           the plain <em>Export PDF</em> download never includes it.
         </p>
 
@@ -2073,7 +2120,7 @@ CLAMAV_HOST=clamav</code></pre>
             <div>
               <strong>Choose submission mode.</strong> Select <em>Anonymous</em> (no personal data
               ever stored) or <em>Confidential</em> (name, contact details, and optional secure
-              email stored encrypted — only decryptable by the assigned admin). Both modes are
+              email stored encrypted — shown only to the case handler, who must record a reason). Both modes are
               fully compliant with HinSchG.
             </div>
           </li>
@@ -2097,8 +2144,11 @@ CLAMAV_HOST=clamav</code></pre>
           </li>
           <li>
             <div>
-              <strong>Attach evidence</strong> (optional). Supported formats: PDF, images, Word,
-              Excel, CSV, TXT — up to 10 MB each, 5 files per report. Going back keeps attached
+              <strong>Attach evidence</strong> (optional). Supported formats: PDF, images, Word
+              (<code>.docx</code>), Excel (<code>.xlsx</code>), CSV, TXT — up to 10 MB each, 5 files per
+              report. Legacy <code>.doc</code>/<code>.xls</code> files are refused (their author cannot be
+              removed): save them as <code>.docx</code>/<code>.xlsx</code>. Metadata is removed, and where the
+              operator turned on virus scanning, an infected file is refused. Going back keeps attached
               files; choosing new ones replaces them, and <strong>Remove</strong> drops one.
             </div>
           </li>
@@ -2106,7 +2156,10 @@ CLAMAV_HOST=clamav</code></pre>
             <div>
               <strong>Review and submit.</strong> <strong>Immediately note down the case number and PIN displayed
               on the confirmation screen.</strong> These are shown only once and cannot be
-              recovered if lost.
+              recovered if lost. A second click on <em>Submit</em> never creates a second report: it
+              shows the same case number and PIN, or, while the first click is still running, a
+              <em>still being processed</em> page with <em>Check again</em>. If the operator offers an
+              onion address, the submit page shows it for use with Tor Browser.
             </div>
           </li>
         </ol>
