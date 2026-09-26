@@ -177,9 +177,8 @@ async def test_generate_pdf_does_not_write_into_the_font_directory(
 @pytest.mark.asyncio
 async def test_generate_pdf_prints_the_localised_category_label(db_session: AsyncSession):
     """The PDF used to print the raw category slug ("financial_fraud") — the
-    caller now resolves the exporting admin's localised label (falling back
-    to English, then the slug) via get_category_labels() and passes it in,
-    consistent with the case page's category_label filter."""
+    caller now resolves the exporting admin's localised label via
+    get_category_labels() and passes it in; without one, the shared fallback."""
     report, _ = await create_report(
         db_session,
         category="financial_fraud",
@@ -193,7 +192,7 @@ async def test_generate_pdf_prints_the_localised_category_label(db_session: Asyn
     assert "Finanzbetrug" in text_labelled
     assert "financial_fraud" not in text_labelled
 
-    # No label supplied (e.g. a category deleted since) falls back to the slug,
-    # never a blank field.
+    # No label supplied (e.g. a category deleted since): the same fallback as every
+    # page (categories.category_label), never a blank field.
     text_fallback = _pdf_text(generate_report_pdf(loaded))
-    assert "financial_fraud" in text_fallback
+    assert "Financial Fraud" in text_fallback
