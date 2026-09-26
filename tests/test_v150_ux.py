@@ -21,8 +21,20 @@ from app.services.audit import ALL_ACTIONS
 from app.services.mfa import generate_totp_secret
 from app.services.report import create_report, get_reports_paginated
 from app.templating import audit_detail, template_translator
-from tests.conftest import _wizard_detect_step, _wizard_get_csrf, _wizard_skip_location_if_needed
+from tests.conftest import (
+    _wizard_detect_step,
+    _wizard_get_csrf,
+    _wizard_skip_location_if_needed,
+    setup_token,
+)
 from tests.test_v030_api import _login, _make_admin
+
+
+async def _search(client: AsyncClient, q: str, **form: str):  # type: ignore[no-untyped-def]
+    """Dashboard search: POST, so the term never sits in a URL."""
+    return await client.post(
+        "/admin/dashboard", data={"q": q, "csrf_token": client.cookies.get("ow_csrf"), **form}
+    )
 
 _LOCALES = Path(__file__).resolve().parents[1] / "app" / "locales"
 
@@ -175,6 +187,24 @@ async def test_upload_error_follows_the_language(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("lang", "expected"),
+    [
+        ("en", "0 / 10,000"),
+        ("de", "0 / 10.000"),
+        ("fr", "0 / 10 000"),
+        ("pt-br", "0 / 10.000"),
+    ],
+)
+async def test_char_counter_uses_locale_number_format(
+    client: AsyncClient, lang: str, expected: str
+) -> None:
+    """The description step's max-length counter was always rendered as the
+    literal "10,000" regardless of locale; German/Portuguese group with a
+    period, French with a (narrow no-break) space."""
+    client.cookies.set("ow-lang", lang)
+    text = await _to_step(client, "description")
+    assert expected.replace(" ", " ") in text.replace(" ", " "), text
 async def test_submit_valid_step_has_no_invalid_field(client: AsyncClient) -> None:
     text = await _to_step(client, "description")
     assert 'aria-invalid="true"' not in text
@@ -304,6 +334,7 @@ async def test_setup_wizard_errors_sit_next_to_their_fields(
                 "password_confirm": "different",
                 "totp_secret": generate_totp_secret(),
                 "totp_code": "000000",
+                "setup_token": await setup_token(),
             },
             follow_redirects=False,
         )
@@ -363,10 +394,10 @@ async def test_search_keeps_the_case_manager_restriction(
     def row(case: str) -> str:
         return f'<span class="mono dash-nowrap">{case}</span>'
 
-    resp = await client.get("/admin/dashboard", params={"q": "OW-"})
+    resp = await _search(client, "OW-")
     assert row(mine.case_number) in resp.text
     assert row(other.case_number) not in resp.text
-    resp = await client.get("/admin/dashboard", params={"q": other.case_number})
+    resp = await _search(client, other.case_number)
     assert row(other.case_number) not in resp.text
 
 
@@ -378,16 +409,20 @@ async def test_dashboard_search_form_and_links_keep_the_query(
     admin, secret = await _make_admin(db_session)
     await _login(client, admin, secret)
     q = report.case_number.split("-")[-1]
-    resp = await client.get("/admin/dashboard", params={"q": q})
+    resp = await _search(client, q)
     assert resp.status_code == 200
     assert 'name="q"' in resp.text and f'value="{q}"' in resp.text
-    assert "encrypted and cannot be searched" in resp.text
-    # column sort links and status pills carry the search
-    assert re.search(r"sort=case_number&dir=\w+&q=" + q + "\"", resp.text)
-    assert re.search(r"&status=closed&q=" + q + "\"", resp.text)
+    assert "decrypted only for this search and never indexed" in resp.text
+    # column sort links and status pills carry the search, as POST forms: never in a URL
+    assert f"q={q}" not in resp.text
+    nav_form = r'<form method="post"[^>]*class="dash-nav-form">(.*?)</form>'
+    forms = re.findall(nav_form, resp.text, re.S)
+    assert all(f'name="q" value="{q}"' in form for form in forms)
+    assert any('name="sort" value="case_number"' in form for form in forms)
+    assert any('name="status" value="closed"' in form for form in forms)
     assert report.case_number in resp.text
-    resp = await client.get("/admin/dashboard", params={"q": "zz-no-such-case"})
-    assert "No case number contains" in resp.text
+    resp = await _search(client, "zz-no-such-case")
+    assert "No report matches" in resp.text
 
 
 # ── 3. readable audit log ────────────────────────────────────────────────────

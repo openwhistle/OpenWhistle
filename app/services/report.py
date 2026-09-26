@@ -1,11 +1,12 @@
 """Business logic for whistleblower reports."""
 
+import unicodedata
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
 from redis.asyncio import Redis
-from sqlalchemy import func, select
+from sqlalchemy import ColumnElement, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.orm.strategy_options import _AbstractLoad
@@ -43,6 +44,29 @@ async def _get_default_org_id(db: AsyncSession) -> uuid.UUID | None:
     row = result.scalar_one_or_none()
     return row
 
+async def active_default_org_id(db: AsyncSession) -> uuid.UUID | None:
+    """The default organisation's id if it exists and is active: with
+    multi-tenancy, what /submit files its reports under."""
+    from app.config import settings
+
+    org_id: uuid.UUID | None = await db.scalar(
+        select(Organisation.id).where(
+            Organisation.slug == settings.default_org_slug, Organisation.is_active.is_(True)
+        )
+    )
+    return org_id
+
+
+def default_org_missing_message() -> str:
+    from app.config import settings
+
+    return (
+        f"MULTI_TENANCY_ENABLED is on, but DEFAULT_ORG_SLUG={settings.default_org_slug!r} "
+        "names no active organisation, so /submit has nowhere to file a report. Create or "
+        "reactivate that organisation, or set DEFAULT_ORG_SLUG to an active one."
+    )
+
+
 SortField = Literal["submitted_at", "case_number", "category", "status"]
 SortDir = Literal["asc", "desc"]
 
@@ -54,6 +78,36 @@ _VALID_SORT_FIELDS: dict[str, Any] = {
 }
 
 _VALID_STATUSES: frozenset[str] = frozenset(s.value for s in ReportStatus)
+
+
+def day_floor(moment: datetime) -> datetime:
+    """The UTC day of an event the whistleblower caused. The exact time could be
+    matched to who was at their desk; the day is what HinSchG deadlines need."""
+    return moment.astimezone(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+def format_day(moment: datetime | None) -> str:
+    """A whistleblower-caused time as shown on a page or in the PDF: the day only."""
+    return day_floor(moment).strftime("%Y-%m-%d") if moment else "-"
+
+
+def whistleblower_caused(msg: ReportMessage, index: int) -> bool:
+    """Whether a thread message's time is the whistleblower's: their own messages
+    and the receipt (always first), which is the moment of submission."""
+    return index == 0 or msg.sender == ReportSender.whistleblower
+
+
+def _is_case_number_collision(exc: Exception) -> bool:
+    """True only for the unique violation on ``reports.case_number``.
+
+    asyncpg's UniqueViolationError (SQLSTATE 23505) is the DBAPI error's cause
+    and names the index it hit; any other integrity error is a real fault.
+    """
+    cause = getattr(getattr(exc, "orig", None), "__cause__", None)
+    return (
+        getattr(cause, "sqlstate", None) == "23505"
+        and getattr(cause, "constraint_name", None) == "ix_reports_case_number"
+    )
 
 
 def _report_options() -> list[_AbstractLoad]:
@@ -77,11 +131,22 @@ async def create_report(
     confidential_name_enc: str | None = None,
     confidential_contact_enc: str | None = None,
     secure_email_enc: str | None = None,
+    *,
+    commit: bool = True,
+    report_id: uuid.UUID | None = None,
+    org_id: uuid.UUID | None = None,
 ) -> tuple[Report, str]:
-    """Create a new whistleblower report. Returns (report, plain_pin)."""
+    """Create a new whistleblower report. Returns (report, plain_pin).
+
+    Filed under ``org_id`` (the organisation whose link the report came
+    through), else under the default organisation.
+
+    ``commit=False`` only flushes, for a caller that commits the report
+    together with its attachments. ``report_id`` fixes the primary key, so a
+    second insert with the same id fails instead of creating a second report.
+    """
     from sqlalchemy.exc import IntegrityError
 
-    from app.config import settings
     from app.services.encryption import (
         encrypt_dek,
         encrypt_field,
@@ -94,11 +159,12 @@ async def create_report(
 
     # Envelope-encrypt the description with a fresh per-report DEK
     dek_raw = generate_dek()
-    encrypted_dek = encrypt_dek(dek_raw, settings.secret_key)
-    report_fernet = make_report_fernet(encrypted_dek, settings.secret_key)
+    encrypted_dek = encrypt_dek(dek_raw)
+    report_fernet = make_report_fernet(encrypted_dek)
     enc_description = encrypt_field(report_fernet, description)
 
-    default_org_id = await _get_default_org_id(db)
+    if org_id is None:
+        org_id = await _get_default_org_id(db)
 
     strings = _load(lang)
     fallback = _load(_DEFAULT)
@@ -107,13 +173,15 @@ async def create_report(
 
     # generate_case_number returns a random suffix; on the rare collision (or a
     # concurrent duplicate) retry with a fresh number instead of surfacing a 500.
+    today = day_floor(datetime.now(UTC))
     last_exc: IntegrityError | None = None
+    fixed_id = report_id or uuid.uuid4()
     for _attempt in range(5):
         report = Report(
-            id=uuid.uuid4(),
+            id=fixed_id,
             case_number=generate_case_number(),
             pin_hash=pin_hash,
-            org_id=default_org_id,
+            org_id=org_id,
             category=category,
             description=enc_description,
             encrypted_dek=encrypted_dek,
@@ -123,23 +191,34 @@ async def create_report(
             confidential_name=confidential_name_enc,
             confidential_contact=confidential_contact_enc,
             secure_email=secure_email_enc,
+            submitted_at=today,
         )
-        db.add(report)
-        db.add(
-            ReportMessage(
-                id=uuid.uuid4(),
-                report_id=report.id,
-                sender=ReportSender.admin,
-                content=enc_receipt,
-            )
-        )
+        # A SAVEPOINT per attempt: a collision rolls back only this attempt.
+        # A full db.rollback() would expire every object the caller holds in
+        # this session, and their next attribute access would lazy-load
+        # outside the async context (MissingGreenlet).
         try:
-            await db.commit()
+            async with db.begin_nested():
+                db.add(report)
+                db.add(
+                    ReportMessage(
+                        id=uuid.uuid4(),
+                        report_id=report.id,
+                        sender=ReportSender.admin,
+                        content=enc_receipt,
+                        sent_at=today,
+                    )
+                )
         except IntegrityError as exc:
+            if not _is_case_number_collision(exc):
+                raise
             last_exc = exc
-            await db.rollback()
             continue
-        await db.refresh(report)
+        if commit:
+            await db.commit()
+            await db.refresh(report)
+        else:
+            await db.flush()
         return report, plain_pin
 
     assert last_exc is not None
@@ -152,11 +231,10 @@ def decrypt_report_fields(report: Report) -> tuple[str, list[str]]:
     Falls back to plaintext for rows that pre-date envelope encryption
     (encrypted_dek is None) — backward-compatible with pre-v1.0 data.
     """
-    from app.config import settings
     from app.services.encryption import decrypt_field_safe, make_report_fernet
 
     if report.encrypted_dek:
-        fernet = make_report_fernet(report.encrypted_dek, settings.secret_key)
+        fernet = make_report_fernet(report.encrypted_dek)
         # Use an explicit None check, not `or`: a value that legitimately
         # decrypts to an empty string must NOT fall back to the raw ciphertext.
         dec_desc = decrypt_field_safe(fernet, report.description)
@@ -172,17 +250,73 @@ def decrypt_report_fields(report: Report) -> tuple[str, list[str]]:
     return description, msg_contents
 
 
+# ponytail: decrypts up to this many newest in-scope reports per search; a
+# larger installation needs a blind index (HMAC tokens), not a plaintext one.
+CONTENT_SEARCH_LIMIT = 5000
+
+
+def _fold(text: str) -> str:
+    """Normalize composition form, then fold case, for a search comparison.
+
+    NFC first: casefold() reconciles case (and expands "ß" to "ss") but does
+    not reconcile NFC vs NFD encodings of the same accented character, so a
+    precomposed "é" and "e" + combining acute would otherwise fail to match.
+    """
+    return unicodedata.normalize("NFC", text).casefold()
+
+
+async def content_match_ids(
+    db: AsyncSession,
+    needle: str,
+    *,
+    assigned_to_id: uuid.UUID | None = None,
+    location_id: uuid.UUID | None = None,
+    status_filter: str | None = None,
+    org_id: uuid.UUID | None = None,
+    scope_org: bool = False,
+) -> list[uuid.UUID]:
+    """Ids of in-scope reports whose description or messages contain ``needle``.
+
+    Decrypted in memory for this request only; no searchable copy is stored.
+    Never matches the confidential name/contact fields — those stay hidden
+    until a handler reveals them with an audited reason, and a search hit
+    would confirm an identity guess with no reveal recorded.
+
+    Takes the same ``location_id``/``status_filter`` as ``get_reports_paginated``
+    so the ``CONTENT_SEARCH_LIMIT`` budget is spent on the caller's current view,
+    not on every status/location outside it.
+    """
+    q = select(Report).options(selectinload(Report.messages))
+    if assigned_to_id is not None:
+        q = q.where(Report.assigned_to_id == assigned_to_id)
+    if location_id is not None:
+        q = q.where(Report.location_id == location_id)
+    if status_filter and status_filter in _VALID_STATUSES:
+        q = q.where(Report.status == ReportStatus(status_filter))
+    if scope_org or org_id is not None:
+        q = q.where(Report.org_id == org_id)
+    rows = await db.execute(
+        q.order_by(Report.submitted_at.desc(), Report.id.desc()).limit(CONTENT_SEARCH_LIMIT)
+    )
+    folded = _fold(needle)
+    hits = []
+    for report in rows.scalars().all():
+        description, messages = decrypt_report_fields(report)
+        if any(folded in _fold(text) for text in (description, *messages)):
+            hits.append(report.id)
+    return hits
+
+
 def decrypt_attachment_names(report: Report) -> list[str]:
     """Return the attachments' plaintext names, in report.attachments order.
 
     Names stored before v1.5.0 are returned as stored.
     """
-    from app.config import settings
     from app.services.encryption import decrypt_field_safe, make_report_fernet
 
     if not report.encrypted_dek:
         return [a.filename for a in report.attachments]
-    fernet = make_report_fernet(report.encrypted_dek, settings.secret_key)
+    fernet = make_report_fernet(report.encrypted_dek)
     return [decrypt_field_safe(fernet, a.filename) or a.filename for a in report.attachments]
 
 
@@ -191,12 +325,11 @@ def decrypt_note_contents(report: Report) -> list[str]:
 
     Notes written before they were encrypted are returned as stored.
     """
-    from app.config import settings
     from app.services.encryption import decrypt_field_safe, make_report_fernet
 
     if not report.encrypted_dek:
         return [n.content for n in report.notes]
-    fernet = make_report_fernet(report.encrypted_dek, settings.secret_key)
+    fernet = make_report_fernet(report.encrypted_dek)
     return [
         dec if (dec := decrypt_field_safe(fernet, n.content)) is not None else n.content
         for n in report.notes
@@ -252,21 +385,38 @@ def _encrypt_message_content(report: Report, content: str) -> str:
     """Encrypt message content with the report's DEK if available."""
     if not report.encrypted_dek:
         return content
-    from app.config import settings
     from app.services.encryption import encrypt_field, make_report_fernet
 
-    fernet = make_report_fernet(report.encrypted_dek, settings.secret_key)
+    fernet = make_report_fernet(report.encrypted_dek)
     return encrypt_field(fernet, content)
+
+
+async def _next_sent_at(db: AsyncSession, report: Report, earliest: datetime) -> datetime:
+    """``earliest``, or just after the thread's last message if that is later.
+
+    Locks the report row until the caller commits, so two messages posted at
+    once cannot read the same last time and tie.
+    """
+    await db.execute(select(Report.id).where(Report.id == report.id).with_for_update())
+    latest = await db.scalar(
+        select(func.max(ReportMessage.sent_at)).where(ReportMessage.report_id == report.id)
+    )
+    if latest is not None and latest >= earliest:
+        return latest + timedelta(microseconds=1)
+    return earliest
 
 
 async def add_whistleblower_message(
     db: AsyncSession, report: Report, content: str
 ) -> ReportMessage:
+    # The day only; on the same day as the last message, just after it.
+    sent_at = await _next_sent_at(db, report, day_floor(datetime.now(UTC)))
     msg = ReportMessage(
         id=uuid.uuid4(),
         report_id=report.id,
         sender=ReportSender.whistleblower,
         content=_encrypt_message_content(report, content),
+        sent_at=sent_at,
     )
     db.add(msg)
     await db.commit()
@@ -289,6 +439,7 @@ async def add_admin_message(
         report_id=report.id,
         sender=ReportSender.admin,
         content=_encrypt_message_content(report, content),
+        sent_at=await _next_sent_at(db, report, datetime.now(UTC)),
     )
     db.add(msg)
     await db.commit()
@@ -297,12 +448,11 @@ async def add_admin_message(
     if notify_whistleblower and report.secure_email:
         from app.config import settings
         from app.services.crypto import decrypt_or_none
-        from app.services.notifications import notify_reply_to_whistleblower
+        from app.services.notifications import notify_reply_to_whistleblower, schedule_background
 
         plain_email = decrypt_or_none(report.secure_email)
         if plain_email:
-            import asyncio
-            asyncio.create_task(
+            schedule_background(
                 notify_reply_to_whistleblower(plain_email, settings.app_public_url)
             )
 
@@ -377,7 +527,7 @@ async def get_all_reports(db: AsyncSession) -> list[Report]:
     result = await db.execute(
         select(Report)
         .options(*_report_options())
-        .order_by(Report.submitted_at.desc())
+        .order_by(Report.submitted_at.desc(), Report.id.desc())
     )
     return list(result.scalars().all())
 
@@ -395,6 +545,7 @@ async def get_reports_paginated(
     org_id: uuid.UUID | None = None,
     scope_org: bool = False,
     case_query: str | None = None,
+    content_ids: list[uuid.UUID] | None = None,
 ) -> tuple[list[Report], int]:
     page = max(1, page)
     per_page = max(1, min(100, per_page))
@@ -415,10 +566,14 @@ async def get_reports_paginated(
         # caller is correctly restricted to org-less reports rather than all.
         base_q = base_q.where(Report.org_id == org_id)
     if case_query:
-        # Case number only: report content is encrypted per report and must stay
-        # unsearchable. Escape LIKE wildcards so "%" or "_" match themselves.
+        # Case numbers by LIKE; content only through ids found by decrypting in
+        # memory (content_match_ids). Escape LIKE wildcards so "%"/"_" match
+        # themselves literally.
         needle = case_query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-        base_q = base_q.where(Report.case_number.ilike(f"%{needle}%", escape="\\"))
+        match: ColumnElement[bool] = Report.case_number.ilike(f"%{needle}%", escape="\\")
+        if content_ids:
+            match = or_(match, Report.id.in_(content_ids))
+        base_q = base_q.where(match)
 
     count_result = await db.execute(select(func.count()).select_from(base_q.subquery()))
     total: int = count_result.scalar_one()
@@ -426,7 +581,9 @@ async def get_reports_paginated(
     rows_result = await db.execute(
         base_q
         .options(*_report_options())
-        .order_by(order_expr)
+        # Submission times are whole days, so ties are common: the id makes
+        # the order total and a page boundary stable.
+        .order_by(order_expr, Report.id.desc())
         .offset((page - 1) * per_page)
         .limit(per_page)
     )
@@ -434,11 +591,20 @@ async def get_reports_paginated(
 
 
 async def get_report_stats(
-    db: AsyncSession, *, scope_org: bool = False, org_id: uuid.UUID | None = None
+    db: AsyncSession,
+    *,
+    scope_org: bool = False,
+    org_id: uuid.UUID | None = None,
+    assigned_to_id: uuid.UUID | None = None,
+    location_id: uuid.UUID | None = None,
 ) -> dict[str, int]:
     q = select(Report.status, func.count(Report.id)).group_by(Report.status)
     if scope_org:
         q = q.where(Report.org_id == org_id)
+    if assigned_to_id is not None:
+        q = q.where(Report.assigned_to_id == assigned_to_id)
+    if location_id is not None:
+        q = q.where(Report.location_id == location_id)
     result = await db.execute(q)
     counts: dict[str, int] = {s.value: 0 for s in ReportStatus}
     for status_val, cnt in result.all():
@@ -596,13 +762,21 @@ def get_linked_reports(report: Report) -> list[tuple[uuid.UUID, str]]:
 # ── Dashboard statistics ────────────────────────────────────────────
 
 async def get_dashboard_stats(
-    db: AsyncSession, *, scope_org: bool = False, org_id: uuid.UUID | None = None
+    db: AsyncSession,
+    *,
+    scope_org: bool = False,
+    org_id: uuid.UUID | None = None,
+    assigned_to_id: uuid.UUID | None = None,
 ) -> dict[str, Any]:
     """Aggregate statistics for the dashboard stats view."""
     from sqlalchemy import case as sa_case
 
-    status_counts = await get_report_stats(db, scope_org=scope_org, org_id=org_id)
+    status_counts = await get_report_stats(
+        db, scope_org=scope_org, org_id=org_id, assigned_to_id=assigned_to_id
+    )
     org_filter = [Report.org_id == org_id] if scope_org else []
+    if assigned_to_id is not None:
+        org_filter.append(Report.assigned_to_id == assigned_to_id)
 
     cat_result = await db.execute(
         select(Report.category, func.count(Report.id)).where(*org_filter).group_by(Report.category)

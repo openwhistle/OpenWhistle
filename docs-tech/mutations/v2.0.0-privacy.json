@@ -1,0 +1,650 @@
+{
+ "test_groups": {
+  "P": [
+   "tests/test_v160_privacy.py"
+  ],
+  "N": [
+   "tests/test_v160_notifications.py"
+  ],
+  "U": [
+   "tests/test_v160_uploads.py"
+  ],
+  "C": [
+   "tests/test_v160_clamav.py"
+  ],
+  "O": [
+   "tests/test_v160_onion.py"
+  ],
+  "D": [
+   "tests/test_v160_design.py"
+  ],
+  "S3": [
+   "tests/test_issue_45_s3_missing.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "case-manager-counts-all",
+   "file": "app/api/admin.py",
+   "old": "    return user.id if user.role == AdminRole.case_manager else None",
+   "new": "    return None",
+   "tests": "D"
+  },
+  {
+   "id": "identity-always-shown",
+   "file": "app/api/admin.py",
+   "old": "            \"identity\": identity,",
+   "new": "            \"identity\": identity or {\"name\": __import__(\"app.services.crypto\", fromlist=[\"x\"]).decrypt_or_none(report.confidential_name), \"contact\": None},",
+   "tests": "P"
+  },
+  {
+   "id": "view-not-audited",
+   "file": "app/api/admin.py",
+   "old": "    report = await _get_authorized_report(db, report_id, current_user)\n    await audit_service.log(db, current_user, AuditAction.REPORT_VIEWED, report_id=report.id)\n    await db.commit()\n    return await _render_report",
+   "new": "    report = await _get_authorized_report(db, report_id, current_user)\n    return await _render_report",
+   "tests": "P"
+  },
+  {
+   "id": "pdf-view-not-audited",
+   "file": "app/api/admin.py",
+   "old": "    report = await _get_authorized_report(db, report_id, current_user)\n    await audit_service.log(db, current_user, AuditAction.REPORT_VIEWED, report_id=report.id)\n    await db.commit()\n\n    category_labels",
+   "new": "    report = await _get_authorized_report(db, report_id, current_user)\n\n    category_labels",
+   "tests": "P"
+  },
+  {
+   "id": "refused-reveal-not-audited",
+   "file": "app/api/admin.py",
+   "old": "    if valid is None:\n        await audit_service.log(db, current_user, AuditAction.REPORT_VIEWED, report_id=report.id)\n",
+   "new": "    if valid is None:\n",
+   "tests": "P"
+  },
+  {
+   "id": "reveal-without-reason",
+   "file": "app/api/admin.py",
+   "old": "    valid = _validated_reason(reason)\n    if valid is None:",
+   "new": "    valid = reason or \"none\"\n    if False:",
+   "tests": "P"
+  },
+  {
+   "id": "reason-unbounded",
+   "file": "app/api/admin.py",
+   "old": "    return reason if _REASON_MIN <= len(reason) <= _REASON_MAX else None",
+   "new": "    return reason if _REASON_MIN <= len(reason) else None",
+   "tests": "P"
+  },
+  {
+   "id": "reason-too-short-accepted",
+   "file": "app/api/admin.py",
+   "old": "    return reason if _REASON_MIN <= len(reason) <= _REASON_MAX else None",
+   "new": "    return reason if len(reason) <= _REASON_MAX else None",
+   "tests": "P"
+  },
+  {
+   "id": "reason-not-stripped",
+   "file": "app/api/admin.py",
+   "old": "    reason = raw.strip()\n",
+   "new": "    reason = raw\n",
+   "tests": "P"
+  },
+  {
+   "id": "reveal-gate-open",
+   "file": "app/api/admin.py",
+   "old": "    if not can_reveal_identity(current_user, report):\n        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)",
+   "new": "    if False:\n        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)",
+   "tests": "P"
+  },
+  {
+   "id": "reveal-no-csrf",
+   "file": "app/api/admin.py",
+   "old": "    _csrf: None = Depends(validate_csrf),\n) -> HTMLResponse:\n    from app.services.crypto import decrypt_or_none, encrypt",
+   "new": "    _csrf: None = None,\n) -> HTMLResponse:\n    from app.services.crypto import decrypt_or_none, encrypt",
+   "tests": "P"
+  },
+  {
+   "id": "pdf-identity-no-csrf",
+   "file": "app/api/admin.py",
+   "old": "    _csrf: None = Depends(validate_csrf),\n) -> Response:\n    from app.services.categories import category_label, get_category_labels\n    from app.services.crypto import encrypt",
+   "new": "    _csrf: None = None,\n) -> Response:\n    from app.services.categories import category_label, get_category_labels\n    from app.services.crypto import encrypt",
+   "tests": "P"
+  },
+  {
+   "id": "reason-stored-plain",
+   "file": "app/api/admin.py",
+   "old": "report_id=report.id, detail={\"reason\": encrypt(valid)},",
+   "new": "report_id=report.id, detail={\"reason\": valid},",
+   "tests": "P"
+  },
+  {
+   "id": "pdf-reason-stored-plain",
+   "file": "app/api/admin.py",
+   "old": "detail={\"reason\": encrypt(valid), \"via\": \"pdf\"}",
+   "new": "detail={\"reason\": valid, \"via\": \"pdf\"}",
+   "tests": "P"
+  },
+  {
+   "id": "pdf-reveal-not-audited",
+   "file": "app/api/admin.py",
+   "old": "    await audit_service.log(\n        db, current_user, AuditAction.IDENTITY_REVEALED,\n        report_id=report.id, detail={\"reason\": encrypt(valid), \"via\": \"pdf\"},\n    )\n",
+   "new": "",
+   "tests": "P"
+  },
+  {
+   "id": "pdf-reveal-skips-the-gate",
+   "file": "app/api/admin.py",
+   "old": "    gate = await _reveal_gate(request, db, report_id, current_user, reason)\n    if isinstance(gate, HTMLResponse):\n        return gate\n    report, valid = gate\n    await audit_service.log(\n        db, current_user, AuditAction.IDENTITY_REVEALED,\n        report_id=report.id, detail={\"reason\": encrypt(valid), \"via\": \"pdf\"},",
+   "new": "    report = await _get_authorized_report(db, report_id, current_user)\n    valid = reason\n    await audit_service.log(\n        db, current_user, AuditAction.IDENTITY_REVEALED,\n        report_id=report.id, detail={\"reason\": encrypt(valid), \"via\": \"pdf\"},",
+   "tests": "P"
+  },
+  {
+   "id": "any-assigned-admin-reveals",
+   "file": "app/api/admin.py",
+   "old": "    if report.assigned_to_id is not None:\n        return report.assigned_to_id == user.id\n",
+   "new": "    if report.assigned_to_id is not None:\n        return True\n",
+   "tests": "P"
+  },
+  {
+   "id": "reveal-across-orgs",
+   "file": "app/api/admin.py",
+   "old": "        or user.org_id == report.org_id\n",
+   "new": "        or True\n",
+   "tests": "P"
+  },
+  {
+   "id": "orgless-report-never-revealed",
+   "file": "app/api/admin.py",
+   "old": "        or report.org_id is None\n",
+   "new": "",
+   "tests": "P"
+  },
+  {
+   "id": "reveal-form-for-everyone",
+   "file": "app/templates/admin/report.html",
+   "old": "{% elif can_reveal %}",
+   "new": "{% elif true %}",
+   "tests": "P"
+  },
+  {
+   "id": "case-page-shows-the-reason",
+   "file": "app/templates/admin/_audit.html",
+   "old": "{% if redact_reason and k == 'reason' %}",
+   "new": "{% if false %}",
+   "tests": "P"
+  },
+  {
+   "id": "reason-not-decrypted-for-the-log",
+   "file": "app/templating.py",
+   "old": "    if decrypt and key in ENCRYPTED_DETAIL_KEYS and text.startswith(\"gAAAAA\"):",
+   "new": "    if False:",
+   "tests": "P"
+  },
+  {
+   "id": "case-views-always-listed",
+   "file": "app/api/admin.py",
+   "old": "    return None if show_views else AuditAction.REPORT_VIEWED",
+   "new": "    return None",
+   "tests": "P"
+  },
+  {
+   "id": "csv-formula-kept",
+   "file": "app/api/admin.py",
+   "old": "    return f\"'{value}\" if value[:1] in (\"=\", \"+\", \"-\", \"@\", \"\\t\", \"\\r\") else value",
+   "new": "    return value",
+   "tests": "P"
+  },
+  {
+   "id": "csv-detail-forgeable",
+   "file": "app/api/admin.py",
+   "old": "    data = {k: _csv_detail_value(k, v, t) for k, v in audit_detail(raw)}\n    return json.dumps(data, ensure_ascii=False)",
+   "new": "    return \"; \".join(f\"{k}={v}\" for k, v in audit_detail(raw))",
+   "tests": "P"
+  },
+  {
+   "id": "csv-unreadable-reason-unmarked",
+   "file": "app/api/admin.py",
+   "old": "    if value == REASON_UNREADABLE:\n        return str(t(value))\n",
+   "new": "",
+   "tests": "P"
+  },
+  {
+   "id": "search-matches-the-identity",
+   "file": "app/services/report.py",
+   "old": "        if any(folded in _fold(text) for text in (description, *messages)):",
+   "new": "        if any(folded in _fold(text) for text in (description, *messages, __import__(\"app.services.crypto\", fromlist=[\"x\"]).decrypt_or_none(report.confidential_name) or \"\")):",
+   "tests": "P"
+  },
+  {
+   "id": "search-unlimited",
+   "file": "app/services/report.py",
+   "old": ".limit(CONTENT_SEARCH_LIMIT)",
+   "new": ".limit(None)",
+   "tests": "P"
+  },
+  {
+   "id": "search-order-unstable",
+   "file": "app/services/report.py",
+   "old": "q.order_by(Report.submitted_at.desc(), Report.id.desc()).limit(CONTENT_SEARCH_LIMIT)",
+   "new": "q.order_by(Report.submitted_at.desc()).limit(CONTENT_SEARCH_LIMIT)",
+   "tests": "P"
+  },
+  {
+   "id": "search-not-nfc",
+   "file": "app/services/report.py",
+   "old": "    return unicodedata.normalize(\"NFC\", text).casefold()",
+   "new": "    return text.casefold()",
+   "tests": "P"
+  },
+  {
+   "id": "search-lowercase-only",
+   "file": "app/services/report.py",
+   "old": "    return unicodedata.normalize(\"NFC\", text).casefold()",
+   "new": "    return unicodedata.normalize(\"NFC\", text).lower()",
+   "tests": "P"
+  },
+  {
+   "id": "search-ignores-assignment",
+   "file": "app/services/report.py",
+   "old": "    q = select(Report).options(selectinload(Report.messages))\n    if assigned_to_id is not None:\n        q = q.where(Report.assigned_to_id == assigned_to_id)",
+   "new": "    q = select(Report).options(selectinload(Report.messages))",
+   "tests": "P"
+  },
+  {
+   "id": "search-ignores-view-filters",
+   "file": "app/services/report.py",
+   "old": "    if location_id is not None:\n        q = q.where(Report.location_id == location_id)\n    if status_filter and status_filter in _VALID_STATUSES:\n        q = q.where(Report.status == ReportStatus(status_filter))\n    if scope_org",
+   "new": "    if scope_org",
+   "tests": "P"
+  },
+  {
+   "id": "search-ignores-org",
+   "file": "app/services/report.py",
+   "old": "    if scope_org or org_id is not None:\n        q = q.where(Report.org_id == org_id)\n    rows",
+   "new": "    rows",
+   "tests": "P"
+  },
+  {
+   "id": "content-hits-dropped",
+   "file": "app/services/report.py",
+   "old": "        if content_ids:\n            match = or_(match, Report.id.in_(content_ids))",
+   "new": "        if False:\n            match = or_(match, Report.id.in_(content_ids))",
+   "tests": "P"
+  },
+  {
+   "id": "list-order-unstable",
+   "file": "app/services/report.py",
+   "old": "        .order_by(order_expr, Report.id.desc())",
+   "new": "        .order_by(order_expr)",
+   "tests": "P"
+  },
+  {
+   "id": "counts-ignore-assignment",
+   "file": "app/services/report.py",
+   "old": "    if assigned_to_id is not None:\n        q = q.where(Report.assigned_to_id == assigned_to_id)\n    if location_id is not None:\n        q = q.where(Report.location_id == location_id)\n    result = await db.execute(q)",
+   "new": "    if location_id is not None:\n        q = q.where(Report.location_id == location_id)\n    result = await db.execute(q)",
+   "tests": "D"
+  },
+  {
+   "id": "counts-ignore-location",
+   "file": "app/services/report.py",
+   "old": "    if location_id is not None:\n        q = q.where(Report.location_id == location_id)\n    result = await db.execute(q)",
+   "new": "    result = await db.execute(q)",
+   "tests": "D"
+  },
+  {
+   "id": "stats-ignore-assignment",
+   "file": "app/services/report.py",
+   "old": "    if assigned_to_id is not None:\n        org_filter.append(Report.assigned_to_id == assigned_to_id)",
+   "new": "",
+   "tests": "D"
+  },
+  {
+   "id": "exact-times",
+   "file": "app/services/report.py",
+   "old": "    return moment.astimezone(UTC).replace(hour=0, minute=0, second=0, microsecond=0)",
+   "new": "    return moment",
+   "tests": "P"
+  },
+  {
+   "id": "submission-exact-time",
+   "file": "app/services/report.py",
+   "old": "    today = day_floor(datetime.now(UTC))\n    last_exc",
+   "new": "    today = datetime.now(UTC)\n    last_exc",
+   "tests": "P"
+  },
+  {
+   "id": "upload-exact-time",
+   "file": "app/services/attachment.py",
+   "old": "    today = day_floor(datetime.now(UTC))\n",
+   "new": "    today = datetime.now(UTC)\n",
+   "tests": "P"
+  },
+  {
+   "id": "reply-exact-time",
+   "file": "app/services/report.py",
+   "old": "    sent_at = await _next_sent_at(db, report, day_floor(datetime.now(UTC)))",
+   "new": "    sent_at = await _next_sent_at(db, report, datetime.now(UTC))",
+   "tests": "P"
+  },
+  {
+   "id": "thread-order-lost",
+   "file": "app/services/report.py",
+   "old": "    if latest is not None and latest >= earliest:",
+   "new": "    if False:",
+   "tests": "P"
+  },
+  {
+   "id": "thread-time-race",
+   "file": "app/services/report.py",
+   "old": "    await db.execute(select(Report.id).where(Report.id == report.id).with_for_update())\n",
+   "new": "",
+   "tests": "P"
+  },
+  {
+   "id": "receipt-shown-exact",
+   "file": "app/services/report.py",
+   "old": "    return index == 0 or msg.sender == ReportSender.whistleblower",
+   "new": "    return msg.sender == ReportSender.whistleblower",
+   "tests": "P"
+  },
+  {
+   "id": "wb-message-shown-exact",
+   "file": "app/services/report.py",
+   "old": "    return index == 0 or msg.sender == ReportSender.whistleblower",
+   "new": "    return index == 0",
+   "tests": "P"
+  },
+  {
+   "id": "pdf-submitted-exact",
+   "file": "app/services/pdf.py",
+   "old": "_meta_row(pdf, \"Submitted\", format_day(report.submitted_at))",
+   "new": "_meta_row(pdf, \"Submitted\", _fmt_dt(report.submitted_at))",
+   "tests": "P"
+  },
+  {
+   "id": "pdf-message-exact",
+   "file": "app/services/pdf.py",
+   "old": "            when = format_day(msg.sent_at) if whistleblower_caused(msg, i) else _fmt_dt(msg.sent_at)",
+   "new": "            when = _fmt_dt(msg.sent_at)",
+   "tests": "P"
+  },
+  {
+   "id": "migration-006-receipt-exact",
+   "file": "migrations/versions/006_whistleblower_times_by_day.py",
+   "old": "CASE WHEN n = 1 OR sender = 'whistleblower'",
+   "new": "CASE WHEN sender = 'whistleblower'",
+   "tests": "P"
+  },
+  {
+   "id": "migration-006-order-lost",
+   "file": "migrations/versions/006_whistleblower_times_by_day.py",
+   "old": "           max(r - n * interval '1 microsecond')\n               OVER (PARTITION BY report_id ORDER BY n)\n           + n * interval '1 microsecond' AS new",
+   "new": "           r AS new",
+   "tests": "P"
+  },
+  {
+   "id": "local-time-shifts-the-day",
+   "file": "app/templates/base.html",
+   "old": "                if (el.hasAttribute('data-date-only')) {",
+   "new": "                if (false) {",
+   "tests": "P"
+  },
+  {
+   "id": "demo-seed-exact-times",
+   "file": "app/services/demo_seed.py",
+   "old": "        submitted_at = day_floor(\n",
+   "new": "        submitted_at = (\n",
+   "tests": "P"
+  },
+  {
+   "id": "pdf-identity-default",
+   "file": "app/services/pdf.py",
+   "old": "        if include_identity:\n",
+   "new": "        if True:\n",
+   "tests": "P"
+  },
+  {
+   "id": "webhook-lists-cases",
+   "file": "app/services/notifications.py",
+   "old": "        len(new_reports), len(new_messages),",
+   "new": "        new_reports, new_messages,",
+   "tests": "N"
+  },
+  {
+   "id": "reminder-webhook-dropped",
+   "file": "app/services/reminders.py",
+   "old": "if (ack_due or feedback_due) and settings.notify_webhook_enabled",
+   "new": "if False and settings.notify_webhook_enabled",
+   "tests": "N"
+  },
+  {
+   "id": "reminder-ack-not-counted",
+   "file": "app/services/reminders.py",
+   "old": "                        ack_due += await _check_ack_reminder(report, now, db, redis, settings)",
+   "new": "                        await _check_ack_reminder(report, now, db, redis, settings)",
+   "tests": "N"
+  },
+  {
+   "id": "legacy-office-accepted-message",
+   "file": "app/services/attachment.py",
+   "old": "    if ext in {\".doc\", \".xls\"}:",
+   "new": "    if False:",
+   "tests": "U"
+  },
+  {
+   "id": "xlsx-author-label-kept",
+   "file": "app/services/attachment.py",
+   "old": "        for author in authors:\n",
+   "new": "        for author in []:\n",
+   "tests": "U"
+  },
+  {
+   "id": "xlsx-label-replaced-everywhere",
+   "file": "app/services/attachment.py",
+   "old": "                rb\"(<comment\\b[^>]*>\\s*<text>\\s*<r>(?:\\s*<rPr>.*?</rPr>)?\\s*<t(?:\\s[^>]*)?>)\"",
+   "new": "                rb\"(<t(?:\\s[^>]*)?>)\"",
+   "tests": "U"
+  },
+  {
+   "id": "rekey-without-copy",
+   "file": "app/services/attachment.py",
+   "old": "            await backend.copy(old, new)",
+   "new": "            pass",
+   "tests": "U"
+  },
+  {
+   "id": "rekey-repoints-after-failed-copy",
+   "file": "app/services/attachment.py",
+   "old": "retried at next start\", att.id)\n            continue",
+   "new": "retried at next start\", att.id)",
+   "tests": "U"
+  },
+  {
+   "id": "rekey-on-every-replica",
+   "file": "app/services/attachment.py",
+   "old": "await redis.set(\"openwhistle:job_lock:s3_rekey\", \"1\", nx=True, ex=3600)",
+   "new": "await redis.set(\"openwhistle:job_lock:s3_rekey\", \"1\", ex=3600)",
+   "tests": "U"
+  },
+  {
+   "id": "rekey-failure-logs-message",
+   "file": "app/main.py",
+   "old": "logger.error(\"Background S3 re-key task failed: %s\", type(exc).__name__)",
+   "new": "logger.error(\"Background S3 re-key task failed: %s\", exc)",
+   "tests": "U"
+  },
+  {
+   "id": "legacy-key-in-lookup-error",
+   "file": "app/services/attachment.py",
+   "old": "            raise LookupError(str(attachment.id)) from exc",
+   "new": "            raise LookupError(attachment.storage_key) from exc",
+   "tests": "S3"
+  },
+  {
+   "id": "legacy-key-in-delete-log",
+   "file": "app/services/attachment.py",
+   "old": "logging.getLogger(__name__).exception(\"Failed to delete a stored object\")",
+   "new": "logging.getLogger(__name__).exception(\"Failed to delete stored object %s\", key)",
+   "tests": "S3"
+  },
+  {
+   "id": "legacy-key-in-s3-put-log",
+   "file": "app/services/storage.py",
+   "old": "        log.info(\"Stored attachment in S3\")",
+   "new": "        log.info(\"Stored attachment in S3: %s\", full_key)",
+   "tests": "S3"
+  },
+  {
+   "id": "legacy-key-in-s3-delete-log",
+   "file": "app/services/storage.py",
+   "old": "        log.info(\"Deleted attachment from S3\")",
+   "new": "        log.info(\"Deleted attachment from S3: %s\", full_key)",
+   "tests": "S3"
+  },
+  {
+   "id": "legacy-key-in-s3-not-found",
+   "file": "app/services/storage.py",
+   "old": "raise StorageObjectNotFoundError(\"object not found\") from exc",
+   "new": "raise StorageObjectNotFoundError(full_key) from exc",
+   "tests": "S3"
+  },
+  {
+   "id": "scanner-down-accepts",
+   "file": "app/services/attachment.py",
+   "old": "            return [], UploadError(\"upload.error.scan_unavailable\", name=name)",
+   "new": "            pass",
+   "tests": "C"
+  },
+  {
+   "id": "infected-accepted",
+   "file": "app/services/attachment.py",
+   "old": "            if (await scan_bytes(data)) is not None:",
+   "new": "            if False:",
+   "tests": "C"
+  },
+  {
+   "id": "scan-when-unconfigured",
+   "file": "app/services/virus_scan.py",
+   "old": "    if not settings.clamav_host:\n        return None\n",
+   "new": "",
+   "tests": "C"
+  },
+  {
+   "id": "unknown-reply-is-clean",
+   "file": "app/services/virus_scan.py",
+   "old": "    raise ScanUnavailableError(text)",
+   "new": "    return None",
+   "tests": "C"
+  },
+  {
+   "id": "truncated-reply-escapes",
+   "file": "app/services/virus_scan.py",
+   "old": "        asyncio.IncompleteReadError,\n",
+   "new": "",
+   "tests": "C"
+  },
+  {
+   "id": "overlong-reply-escapes",
+   "file": "app/services/virus_scan.py",
+   "old": "        asyncio.LimitOverrunError,\n",
+   "new": "",
+   "tests": "C"
+  },
+  {
+   "id": "reply-buffer-unbounded",
+   "file": "app/services/virus_scan.py",
+   "old": "settings.clamav_host, settings.clamav_port, limit=_MAX_REPLY_BYTES",
+   "new": "settings.clamav_host, settings.clamav_port",
+   "tests": "C"
+  },
+  {
+   "id": "blank-signature-is-clean",
+   "file": "app/services/virus_scan.py",
+   "old": "        return text.removesuffix(\" FOUND\").strip() or \"unknown\"",
+   "new": "        return None",
+   "tests": "C"
+  },
+  {
+   "id": "onion-header-never-sent",
+   "file": "app/middleware.py",
+   "old": "                    settings.onion_location\n                    and not is_onion",
+   "new": "                    False\n                    and not is_onion",
+   "tests": "O"
+  },
+  {
+   "id": "onion-header-on-onion",
+   "file": "app/middleware.py",
+   "old": "                    and not is_onion\n                    and content_type",
+   "new": "                    and content_type",
+   "tests": "O"
+  },
+  {
+   "id": "onion-header-on-assets",
+   "file": "app/middleware.py",
+   "old": "                    and content_type.lower().startswith(\"text/html\")",
+   "new": "                    and True",
+   "tests": "O"
+  },
+  {
+   "id": "hsts-on-onion",
+   "file": "app/middleware.py",
+   "old": "                if not is_onion:\n                    mutable[\"Strict-Transport-Security\"] = _HSTS",
+   "new": "                if True:\n                    mutable[\"Strict-Transport-Security\"] = _HSTS",
+   "tests": "O"
+  },
+  {
+   "id": "hsts-never",
+   "file": "app/middleware.py",
+   "old": "                if not is_onion:\n                    mutable[\"Strict-Transport-Security\"] = _HSTS",
+   "new": "                if False:\n                    mutable[\"Strict-Transport-Security\"] = _HSTS",
+   "tests": "O"
+  },
+  {
+   "id": "csrf-cookie-secure-on-onion",
+   "file": "app/csrf.py",
+   "old": "secure = \"; Secure\" if (settings.secure_cookies and not is_onion) else \"\"",
+   "new": "secure = \"; Secure\" if settings.secure_cookies else \"\"",
+   "tests": "O"
+  },
+  {
+   "id": "cookies-secure-on-onion",
+   "file": "app/onion.py",
+   "old": "    return settings.secure_cookies and not request.state.is_onion",
+   "new": "    return settings.secure_cookies",
+   "tests": "O"
+  },
+  {
+   "id": "cookie-secure-guesses",
+   "file": "app/onion.py",
+   "old": "    return settings.secure_cookies and not request.state.is_onion",
+   "new": "    return settings.secure_cookies and not getattr(request.state, \"is_onion\", False)",
+   "tests": "O"
+  },
+  {
+   "id": "onion-trusts-host",
+   "file": "app/onion.py",
+   "old": "raw_header(_ONION_HEADER, headers) == \"1\"",
+   "new": "raw_header(_ONION_HEADER, headers) == \"1\" or raw_header(\"host\", headers).endswith(\".onion\")",
+   "tests": "O"
+  },
+  {
+   "id": "onion-any-header-value",
+   "file": "app/onion.py",
+   "old": "raw_header(_ONION_HEADER, headers) == \"1\"",
+   "new": "raw_header(_ONION_HEADER, headers) != \"\"",
+   "tests": "O"
+  },
+  {
+   "id": "onion-location-unvalidated",
+   "file": "app/config.py",
+   "old": "        if v and not _ONION_LOCATION_RE.match(v):",
+   "new": "        if False:",
+   "tests": "O"
+  },
+  {
+   "id": "onion-note-always-shown",
+   "file": "app/templates/submit.html",
+   "old": "        {% if onion_location() %}",
+   "new": "        {% if true %}",
+   "tests": "O"
+  }
+ ]
+}

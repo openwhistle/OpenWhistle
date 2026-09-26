@@ -1,5 +1,7 @@
-{% extends "base.html" %}
+{% extends "admin/_layout.html" %}
+{% import "_icons.html" as icons %}
 {% import "admin/_audit.html" as audit with context %}
+{% import "_field.html" as field with context %}
 
 {% block styles %}<style nonce="{{ request.state.csp_nonce }}">
 /* Header */
@@ -13,6 +15,7 @@
 .report-audit-action,.report-audit-detail{overflow-wrap:anywhere;min-width:0}
 /* Report body + shared text roles */
 .report-description{white-space:pre-wrap;font-size:var(--text-body);color:var(--body-text);line-height:1.7}
+.report-attachments{border-top:1px solid var(--hairline);margin-top:var(--space-5);padding-top:var(--space-5)}
 .report-thread{margin-bottom:var(--space-6)}
 .report-empty-note{color:var(--muted);font-size:var(--text-body-sm);margin-bottom:var(--space-4)}
 .report-value-strong{font-size:var(--text-body-sm);font-weight:600}
@@ -25,62 +28,43 @@
 .report-note-body{font-size:var(--text-body-sm);white-space:pre-wrap;color:var(--body-text)}
 /* Linked cases */
 .report-link-list{list-style:none;padding:0;margin:0 0 var(--space-4);display:flex;flex-direction:column;gap:var(--space-2)}
-.report-link-row{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-2) var(--space-3);background:var(--bg-code);border-radius:var(--radius-sm)}
+.report-link-row{display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-3);padding:var(--space-2) var(--space-3);background:var(--bg-code);border-radius:var(--radius-sm)}
 .report-link-badge{font-size:var(--text-eyebrow)}
 .report-link-category{font-size:var(--text-label);color:var(--muted);flex:1}
 .report-link-add{display:flex;gap:var(--space-2);align-items:flex-start}
 .report-btn-xs{font-size:var(--text-hint);padding:.2rem .5rem}
 /* Audit trail */
+.report-audit>summary{cursor:pointer;min-height:44px}
 .report-audit-list{display:flex;flex-direction:column;gap:var(--space-1)}
 .report-audit-row{display:flex;flex-wrap:wrap;column-gap:var(--space-3);row-gap:0;align-items:baseline;padding:.35rem 0;border-bottom:1px solid var(--hairline);font-size:var(--text-label)}
 .report-audit-time{color:var(--muted);white-space:nowrap;flex-shrink:0}
 .report-audit-user{color:var(--body-text);font-weight:600;flex-shrink:0}
 .report-audit-action{color:var(--ink)}
 .report-audit-detail{color:var(--muted);font-size:var(--text-hint)}
-/* Details column */
-.report-detail-list{display:flex;flex-direction:column;gap:var(--space-4);font-size:var(--text-body-sm)}
+/* Facts column */
 .report-detail-value{font-size:var(--text-body-sm)}
 .report-detail-sub{font-size:var(--text-hint);color:var(--muted);margin-left:var(--space-1)}
 .report-confidential{padding:var(--space-3);background:var(--accent-subtle);border:1px solid var(--border-strong);border-radius:var(--radius-sm)}
 .report-confidential-label{font-size:var(--text-hint);color:var(--muted);display:block}
 .report-confidential-value{font-size:var(--text-body-sm);font-weight:600}
 .report-email-note{font-size:var(--text-label);color:var(--muted);font-style:italic}
-/* Action panels */
+/* Actions */
 .report-action-body{font-size:var(--text-body-sm);margin-bottom:var(--space-4)}
 .report-action-note{font-size:var(--text-label);color:var(--muted);margin-bottom:var(--space-3)}
-.report-delete-header{color:var(--danger)}
 .report-delete-time{font-size:var(--text-hint);margin-top:var(--space-1)}
-.report-danger-panel{border-color:var(--danger)}
 </style>{% endblock %}
 
 {% block title %}{{ t('admin.report.eyebrow') }} {{ report.case_number }} | OpenWhistle{% endblock %}
 
-{% block nav_links %}
-<li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
-<li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
-<li><a href="/admin/categories">{{ t('admin.nav.categories') }}</a></li>
-<li><a href="/admin/locations">{{ t('admin.nav.locations') }}</a></li>
-<li><a href="/admin/users">{{ t('admin.nav.users') }}</a></li>
-<li><a href="/admin/audit-log">{{ t('admin.nav.audit_log') }}</a></li>
-<li><a href="/admin/telephone-channel">{{ t('admin.nav.telephone_channel') }}</a></li>
-<li><a href="/admin/retention">{{ t('admin.nav.retention') }}</a></li>
-<li><a href="/admin/organisations">{{ t('admin.nav.organisations') }}</a></li>
-<li><a href="/admin/system">{{ t('admin.nav.system') }}</a></li>
-<li><form method="post" action="/admin/logout"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button type="submit" class="nav-link-button">{{ t('admin.nav.logout') }}</button></form></li>
-{% endblock %}
-
-{% block content %}
+{% block admin_content %}
 <div class="container">
     <div class="page-header">
         <div class="report-topbar">
             <a href="/admin/dashboard" class="btn btn-secondary btn-sm">{{ t('admin.back_dashboard') }}</a>
             <span class="badge badge-{{ report.status.value }}">{{ t('status.label.' + report.status.value) }}</span>
             {% if report.assigned_to %}
-            <span class="report-assignee">&#128100; {{ report.assigned_to.username }}</span>
+            <span class="report-assignee">{{ icons.icon('user') }} {{ report.assigned_to.username }}</span>
             {% endif %}
-            <a href="/admin/reports/{{ report.id }}/export.pdf" class="btn btn-secondary btn-sm ml-auto" download>
-                &#128196; {{ t('admin.report.export_pdf') }}
-            </a>
         </div>
         <div class="page-eyebrow">{{ t('admin.report.eyebrow') }}</div>
         <h1 class="report-case-number">
@@ -90,22 +74,40 @@
 
     <div class="report-layout">
 
-        {# ── Left column: report + thread + reply + notes + links ── #}
+        {# ── Main column: report, messages, notes, history ── #}
         <div>
 
-            {# Initial report #}
-            <div class="panel">
-                <div class="panel-header">
+            {# Report: the description and its attachments #}
+            <div class="panel panel-primary">
+                <h2 class="panel-header">
                     {{ t('admin.report.initial') }}
                     &nbsp;&nbsp;
-                    <span class="badge badge-received">{{ report.category | replace('_', ' ') | title }}</span>
-                </div>
+                    <span class="badge badge-received">{{ report.category | category_label(category_labels) }}</span>
+                </h2>
                 <p class="report-description">{{ decrypted_description }}</p>
+
+                {% if report.attachments %}
+                <section class="report-attachments">
+                    <h3 class="action-title">{{ t('admin.report.attachments.header') }}</h3>
+                    <ul class="attachment-items">
+                        {% for att in report.attachments %}
+                        <li class="attachment-item">
+                            <span class="attachment-icon">{{ icons.icon('paperclip') }}</span>
+                            <span class="attachment-name" title="{{ attachment_names[loop.index0] }}">{{ attachment_names[loop.index0] }}</span>
+                            <span class="attachment-size">{{ att.size | format_size }}</span>
+                            <a href="/admin/reports/{{ report.id }}/attachments/{{ att.id }}"
+                               class="btn btn-secondary btn-sm"
+                               download="{{ attachment_names[loop.index0] }}">{{ t('admin.report.attachments.download') }}</a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </section>
+                {% endif %}
             </div>
 
             {# Communication thread + reply #}
             <div class="panel delay-05">
-                <div class="panel-header">{{ t('admin.report.thread') }}</div>
+                <h2 class="panel-header">{{ t('admin.report.thread') }}</h2>
 
                 {% if report.messages %}
                 <div class="thread report-thread">
@@ -114,7 +116,7 @@
                         <div class="message-meta">
                             <span class="message-meta-icon">{{ 'M' if msg.sender.value == 'admin' else 'W' }}</span>
                             {{ t('admin.sender.admin') if msg.sender.value == 'admin' else t('admin.whistleblower') }}
-                            &middot; <span class="mono"><time data-utc="{{ msg.sent_at.isoformat() }}">{{ msg.sent_at.strftime('%Y-%m-%d %H:%M UTC') }}</time></span>
+                            &middot; <span class="mono">{% if whistleblower_caused(msg, loop.index0) %}<time data-utc="{{ msg.sent_at.isoformat() }}" data-date-only>{{ msg.sent_at|day }}</time>{% else %}<time data-utc="{{ msg.sent_at.isoformat() }}">{{ msg.sent_at.strftime('%Y-%m-%d %H:%M UTC') }}</time>{% endif %}</span>
                         </div>
                         <div class="message-content">{{ decrypted_messages[loop.index0] if decrypted_messages and loop.index0 < decrypted_messages|length else msg.content }}</div>
                     </div>
@@ -146,10 +148,10 @@
 
             {# Internal notes (admin-only) #}
             <div class="panel delay-08" id="notes">
-                <div class="panel-header">
+                <h2 class="panel-header">
                     {{ t('admin.report.notes.header') }}
                     <span class="report-internal-badge">{{ t('admin.report.internal_badge') }}</span>
-                </div>
+                </h2>
 
                 {% if report.notes %}
                 <div class="report-note-list">
@@ -179,290 +181,298 @@
                 </form>
             </div>
 
-            {# Linked cases #}
+            {# History: linked cases, then the audit trail (collapsed) #}
             <div class="panel delay-10" id="links">
-                <div class="panel-header">{{ t('admin.report.links.header') }}</div>
+                <h2 class="panel-header">{{ t('admin.report.history.header') }}</h2>
 
-                {% if linked_reports %}
-                <ul class="report-link-list">
-                    {% for lr in linked_reports %}
-                    <li class="report-link-row">
-                        <a href="/admin/reports/{{ lr.id }}" class="mono report-value-strong">{{ lr.case_number }}</a>
-                        <span class="badge badge-{{ lr.status }} report-link-badge">{{ t('status.label.' + lr.status) }}</span>
-                        <span class="report-link-category">{{ lr.category | replace('_', ' ') | title }}</span>
-                        <form method="post" action="/admin/reports/{{ report.id }}/links/{{ lr.link_id }}/delete" class="m-0" data-confirm="Remove link with {{ lr.case_number }}?">
-                            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                            <button type="submit" class="btn btn-secondary btn-sm report-btn-xs">
-                                {{ t('admin.report.links.remove') }}
-                            </button>
-                        </form>
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <p class="report-empty-note">{{ t('admin.report.links.none') }}</p>
-                {% endif %}
+                <section class="action-section">
+                    <h3 class="action-title">{{ t('admin.report.links.header') }}</h3>
+                    {% if linked_reports %}
+                    <ul class="report-link-list">
+                        {% for lr in linked_reports %}
+                        <li class="report-link-row">
+                            <a href="/admin/reports/{{ lr.id }}" class="mono report-value-strong">{{ lr.case_number }}</a>
+                            <span class="badge badge-{{ lr.status }} report-link-badge">{{ t('status.label.' + lr.status) }}</span>
+                            <span class="report-link-category">{{ lr.category | category_label(category_labels) }}</span>
+                            <form method="post" action="/admin/reports/{{ report.id }}/links/{{ lr.link_id }}/delete" class="m-0" data-confirm="{{ t('admin.report.links.remove_confirm', case=lr.case_number) }}">
+                                <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                                <button type="submit" class="btn btn-secondary btn-sm report-btn-xs">
+                                    {{ t('admin.report.links.remove') }}
+                                </button>
+                            </form>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="report-empty-note">{{ t('admin.report.links.none') }}</p>
+                    {% endif %}
 
-                <form method="post" action="/admin/reports/{{ report.id }}/links" class="report-link-add">
-                    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                    <input type="text" class="form-control flex-1" name="case_number"
-                        aria-label="{{ t('admin.report.links.header') }}"
-                        placeholder="{{ t('admin.report.links.placeholder') }}"
-                        pattern="OW-\d{4}-\d{5}" title="Format: OW-YYYY-NNNNN"
-                        required>
-                    <button type="submit" class="btn btn-secondary btn-sm whitespace-nowrap">{{ t('admin.report.links.button') }}</button>
-                </form>
-            </div>
+                    <form method="post" action="/admin/reports/{{ report.id }}/links" class="report-link-add">
+                        <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                        <input type="text" class="form-control flex-1" name="case_number"
+                            aria-label="{{ t('admin.report.links.header') }}"
+                            placeholder="{{ t('admin.report.links.placeholder') }}"
+                            pattern="OW-\d{4}-\d{5}" title="{{ t('admin.report.links.format_hint') }}"
+                            required>
+                        <button type="submit" class="btn btn-secondary btn-sm whitespace-nowrap">{{ t('admin.report.links.button') }}</button>
+                    </form>
+                </section>
 
-            {# Audit log timeline #}
-            <div class="panel delay-12" id="audit">
-                <div class="panel-header">{{ t('admin.report.audit.header') }}</div>
-                {% if audit_entries %}
-                <div class="report-audit-list">
-                    {% for entry in audit_entries %}
-                    <div class="report-audit-row">
-                        <span class="mono report-audit-time"><time data-utc="{{ entry.created_at.isoformat() }}">{{ entry.created_at.strftime('%m-%d %H:%M') }}</time></span>
-                        <span class="report-audit-user">{{ entry.admin_username or '—' }}</span>
-                        <span class="report-audit-action">{{ audit.label(entry.action) }}</span>
-                        {% if entry.detail %}
-                        <span class="report-audit-detail">{{ audit.detail(entry.detail) }}</span>
-                        {% endif %}
+                <details class="action-section report-audit" id="audit">
+                    <summary class="action-title">{{ t('admin.report.audit.header') }}</summary>
+                    {% if audit_entries %}
+                    <div class="report-audit-list">
+                        {% for entry in audit_entries %}
+                        <div class="report-audit-row">
+                            <span class="mono report-audit-time"><time data-utc="{{ entry.created_at.isoformat() }}">{{ entry.created_at.strftime('%m-%d %H:%M') }}</time></span>
+                            <span class="report-audit-user">{{ entry.admin_username or '—' }}</span>
+                            <span class="report-audit-action">{{ audit.label(entry.action) }}</span>
+                            {% if entry.detail %}
+                            <span class="report-audit-detail">{{ audit.detail(entry.detail, redact_reason=true) }}</span>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
-                </div>
-                <div class="mt-3">
-                    <a href="/admin/audit-log?report_id={{ report.id }}" class="btn btn-secondary btn-sm">{{ t('admin.report.audit.full_trail') }}</a>
-                </div>
-                {% else %}
-                <p class="report-empty-note">{{ t('admin.report.audit.none') }}</p>
-                {% endif %}
+                    <div class="mt-3">
+                        <a href="/admin/audit-log?report_id={{ report.id }}" class="btn btn-secondary btn-sm">{{ t('admin.report.audit.full_trail') }}</a>
+                    </div>
+                    {% else %}
+                    <p class="report-empty-note">{{ t('admin.report.audit.none') }}</p>
+                    {% endif %}
+                </details>
             </div>
 
         </div>
 
-        {# ── Right column: metadata + actions ── #}
+        {# ── Side column: facts, then every action ── #}
         <div>
 
-            {# Report details #}
-            <div class="panel">
-                <div class="panel-header">{{ t('admin.report.details') }}</div>
+            <h2 class="sr-only">{{ t('admin.report.details') }}</h2>
+            <dl class="report-facts">
+                <div>
+                    <dt class="detail-label">{{ t('admin.report.detail.submitted') }}</dt>
+                    <dd class="mono report-detail-value"><time data-utc="{{ report.submitted_at.isoformat() }}" data-date-only>{{ report.submitted_at|day }}</time></dd>
+                </div>
 
-                <div class="report-detail-list">
-                    <div>
-                        <div class="detail-label">{{ t('admin.report.detail.submitted') }}</div>
-                        <span class="mono report-detail-value"><time data-utc="{{ report.submitted_at.isoformat() }}">{{ report.submitted_at.strftime('%Y-%m-%d %H:%M UTC') }}</time></span>
-                    </div>
+                <div>
+                    <dt class="detail-label">{{ t('admin.report.detail.mode') }}</dt>
+                    <dd class="report-detail-value">
+                        {% if report.submission_mode.value == 'confidential' %}
+                        <span class="badge badge-in_review">{{ t('submit.step.mode.confidential.label') }}</span>
+                        {% else %}
+                        <span class="badge">{{ t('submit.step.mode.anonymous.label') }}</span>
+                        {% endif %}
+                    </dd>
+                </div>
 
-                    <div>
-                        <div class="detail-label">{{ t('admin.report.detail.mode') }}</div>
-                        <span class="report-detail-value">
-                            {% if report.submission_mode.value == 'confidential' %}
-                            <span class="badge badge-in_review">{{ t('submit.step.mode.confidential.label') }}</span>
-                            {% else %}
-                            <span class="badge">{{ t('submit.step.mode.anonymous.label') }}</span>
-                            {% endif %}
-                        </span>
-                    </div>
-
-                    {% if report.location %}
-                    <div>
-                        <div class="detail-label">{{ t('admin.report.detail.location') }}</div>
+                {% if report.location %}
+                <div>
+                    <dt class="detail-label">{{ t('admin.report.detail.location') }}</dt>
+                    <dd>
                         <span class="report-value-strong">{{ report.location.name }}</span>
                         <span class="mono report-detail-sub">{{ report.location.code }}</span>
-                    </div>
-                    {% endif %}
-
-                    {% if (is_admin or report.assigned_to_id == user.id) and (confidential_name or confidential_contact) %}
-                    <div class="report-confidential">
-                        <div class="detail-label mb-2">{{ t('admin.report.confidential.header') }}</div>
-                        {% if confidential_name %}
-                        <div class="mb-2">
-                            <span class="report-confidential-label">{{ t('admin.report.confidential.name') }}</span>
-                            <span class="report-confidential-value">{{ confidential_name }}</span>
-                        </div>
-                        {% endif %}
-                        {% if confidential_contact %}
-                        <div>
-                            <span class="report-confidential-label">{{ t('admin.report.confidential.contact') }}</span>
-                            <span class="report-confidential-value">{{ confidential_contact }}</span>
-                        </div>
-                        {% endif %}
-                        {% if has_secure_email %}
-                        <div class="mt-2">
-                            <span class="report-confidential-label">{{ t('admin.report.confidential.secure_email_set') }}</span>
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% elif has_secure_email %}
-                    <div>
-                        <div class="detail-label">{{ t('admin.report.confidential.secure_email_set') }}</div>
-                        <span class="report-email-note">{{ t('admin.report.confidential.email_note') }}</span>
-                    </div>
-                    {% endif %}
-
-                    <div>
-                        <div class="detail-label">{{ t('admin.report.detail.sla7') }}</div>
-                        {% if report.acknowledged_at %}
-                            <span class="sla-ok mono report-detail-value">&#10003; {{ report.acknowledged_at.strftime('%Y-%m-%d') }}</span>
-                        {% else %}
-                            {% set days = (now - report.submitted_at).days %}
-                            <span class="{{ 'sla-overdue' if days >= 7 else ('sla-warning' if days >= 5 else 'sla-ok') }} mono report-detail-value">
-                                {{ t('admin.report.sla.day') }} {{ days }}/7: {{ t('admin.report.sla.not_ack') }}
-                            </span>
-                        {% endif %}
-                    </div>
-
-                    {% if report.feedback_due_at %}
-                    <div>
-                        <div class="detail-label">{{ t('admin.report.detail.sla3m') }}</div>
-                        {% set days_left = (report.feedback_due_at - now).days %}
-                        <span class="{{ 'sla-overdue' if days_left < 0 else ('sla-warning' if days_left < 14 else 'sla-ok') }} mono report-detail-value">
-                            {{ report.feedback_due_at.strftime('%Y-%m-%d') }}
-                            {% if days_left >= 0 %}({{ days_left }} {{ t('admin.report.sla.days_remaining') }}){% else %}({{ t('admin.report.sla.overdue') }}){% endif %}
-                        </span>
-                    </div>
-                    {% endif %}
+                    </dd>
                 </div>
-            </div>
-
-            {# Attachments #}
-            {% if report.attachments %}
-            <div class="panel delay-04">
-                <div class="panel-header">{{ t('admin.report.attachments.header') }}</div>
-                <ul class="attachment-items">
-                    {% for att in report.attachments %}
-                    <li class="attachment-item">
-                        <span class="attachment-icon">&#128206;</span>
-                        <span class="attachment-name" title="{{ attachment_names[loop.index0] }}">{{ attachment_names[loop.index0] }}</span>
-                        <span class="attachment-size">{{ att.size | format_size }}</span>
-                        <a href="/admin/reports/{{ report.id }}/attachments/{{ att.id }}"
-                           class="btn btn-secondary btn-sm"
-                           download="{{ attachment_names[loop.index0] }}">{{ t('admin.report.attachments.download') }}</a>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-            {% endif %}
-
-            {# Acknowledge action #}
-            {% if not report.acknowledged_at %}
-            <div class="panel delay-05">
-                <div class="panel-header">{{ t('admin.report.ack.header') }}</div>
-                <p class="report-action-body">{{ t('admin.report.ack.body') }}</p>
-                <form method="post" action="/admin/reports/{{ report.id }}/acknowledge">
-                    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                    <button type="submit" class="btn btn-primary btn-block">
-                        {{ t('admin.report.ack.button') }}
-                    </button>
-                </form>
-            </div>
-            {% endif %}
-
-            {# Case assignment (admin only) #}
-            {% if is_admin %}
-            <div class="panel delay-06">
-                <div class="panel-header">{{ t('admin.report.assign.header') }}</div>
-                <form method="post" action="/admin/reports/{{ report.id }}/assign">
-                    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                    <div class="form-group">
-                        <label class="form-label" for="assign-admin">{{ t('admin.report.assign.label') }}</label>
-                        <select class="form-control" id="assign-admin" name="admin_id">
-                            <option value="">{{ t('admin.report.assign.unassigned') }}</option>
-                            {% for admin in all_admins %}
-                            {% if admin.is_active %}
-                            <option value="{{ admin.id }}" {{ 'selected' if report.assigned_to_id == admin.id else '' }}>
-                                {{ admin.username }} ({{ t('role.label.' + admin.role.value) }})
-                            </option>
-                            {% endif %}
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-secondary btn-block">{{ t('admin.report.assign.button') }}</button>
-                </form>
-            </div>
-            {% endif %}
-
-            {# Status update - only valid transitions #}
-            <div class="panel delay-08">
-                <div class="panel-header">{{ t('admin.report.status.header') }}</div>
-                {% if allowed_transitions %}
-                <form method="post" action="/admin/reports/{{ report.id }}/status" id="status-form">
-                    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                    <div class="form-group">
-                        <label class="form-label" for="new-status">{{ t('admin.report.status.label') }}</label>
-                        <select class="form-control" id="new-status" name="new_status">
-                            <option value="{{ report.status.value }}" disabled selected>{{ t('status.label.' + report.status.value) }} (current)</option>
-                            {% for sv in allowed_transitions %}
-                            <option value="{{ sv }}">{{ t('status.label.' + sv) }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <button type="submit" id="status-btn" class="btn btn-secondary btn-block">
-                        {{ t('admin.report.status.button') }}
-                    </button>
-                </form>
-                {% else %}
-                <p class="report-empty-note">No further status transitions available.</p>
                 {% endif %}
-            </div>
 
-            {# 4-eyes deletion (admin only) #}
-            {% if is_admin %}
-            <div class="panel delay-10 report-danger-panel">
-                <div class="panel-header report-delete-header">{{ t('admin.report.delete.header') }}</div>
+                {% if has_secure_email %}
+                <div>
+                    <dt class="detail-label">{{ t('admin.report.confidential.secure_email_set') }}</dt>
+                    <dd class="report-email-note">{{ t('admin.report.confidential.email_note') }}</dd>
+                </div>
+                {% endif %}
 
-                {% if report.deletion_request %}
-                    {# Pending deletion request exists #}
-                    <div class="alert alert-error">
-                        <div class="alert-title">{{ t('admin.report.delete.pending.title') }}</div>
-                        {{ t('admin.report.delete.pending.body', username=report.deletion_request.requested_by_username) }}
-                        <div class="mono report-delete-time"><time data-utc="{{ report.deletion_request.requested_at.isoformat() }}">{{ report.deletion_request.requested_at.strftime('%Y-%m-%d %H:%M UTC') }}</time></div>
-                    </div>
+                <div>
+                    <dt class="detail-label">{{ t('admin.report.detail.sla7') }}</dt>
+                    <dd>
+                    {% if report.acknowledged_at %}
+                        <span class="sla-ok mono report-detail-value">{{ icons.icon('check') }} <span class="sr-only">{{ t('admin.report.sla.acknowledged') }}</span> {{ report.acknowledged_at.strftime('%Y-%m-%d') }}</span>
+                    {% else %}
+                        {% set days = (now - report.submitted_at).days %}
+                        <span class="{{ 'sla-overdue' if days >= 7 else ('sla-warning' if days >= 5 else 'sla-ok') }} mono report-detail-value">
+                            {{ t('admin.report.sla.day') }} {{ days }}/7: {{ t('admin.report.sla.not_ack') }}
+                        </span>
+                    {% endif %}
+                    </dd>
+                </div>
 
-                    {% if report.deletion_request.requested_by_id == user.id %}
-                    {# Current user requested - can only cancel #}
-                    <p class="report-action-note">{{ t('admin.report.delete.cannot_self') }}</p>
-                    <form method="post" action="/admin/reports/{{ report.id }}/cancel-delete">
+                {% if report.feedback_due_at %}
+                <div>
+                    <dt class="detail-label">{{ t('admin.report.detail.sla3m') }}</dt>
+                    {% set days_left = (report.feedback_due_at - now).days %}
+                    <dd class="{{ 'sla-overdue' if days_left < 0 else ('sla-warning' if days_left < 14 else 'sla-ok') }} mono report-detail-value">
+                        {{ report.feedback_due_at.strftime('%Y-%m-%d') }}
+                        {% if days_left >= 0 %}({{ days_left }} {{ t('admin.report.sla.days_remaining') }}){% else %}({{ t('admin.report.sla.overdue') }}){% endif %}
+                    </dd>
+                </div>
+                {% endif %}
+            </dl>
+
+            <div class="panel delay-05">
+                <h2 class="panel-header">{{ t('admin.report.actions.header') }}</h2>
+
+                {% if not report.acknowledged_at %}
+                <section class="action-section">
+                    <h3 class="action-title">{{ t('admin.report.ack.header') }}</h3>
+                    <p class="report-action-body">{{ t('admin.report.ack.body') }}</p>
+                    <form method="post" action="/admin/reports/{{ report.id }}/acknowledge">
                         <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                        <button type="submit" class="btn btn-secondary btn-block">{{ t('admin.report.delete.cancel_request') }}</button>
+                        <button type="submit" class="btn btn-primary btn-block">
+                            {{ t('admin.report.ack.button') }}
+                        </button>
+                    </form>
+                </section>
+                {% endif %}
+
+                {% if is_admin %}
+                <section class="action-section">
+                    <h3 class="action-title">{{ t('admin.report.assign.header') }}</h3>
+                    <form method="post" action="/admin/reports/{{ report.id }}/assign">
+                        <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                        <div class="form-group">
+                            <label class="form-label" for="assign-admin">{{ t('admin.report.assign.label') }}</label>
+                            <select class="form-control" id="assign-admin" name="admin_id">
+                                <option value="">{{ t('admin.report.assign.unassigned') }}</option>
+                                {% for admin in all_admins %}
+                                {% if admin.is_active %}
+                                <option value="{{ admin.id }}" {{ 'selected' if report.assigned_to_id == admin.id else '' }}>
+                                    {{ admin.username }} ({{ t('role.label.' + admin.role.value) }})
+                                </option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-secondary btn-block">{{ t('admin.report.assign.button') }}</button>
+                    </form>
+                </section>
+                {% endif %}
+
+                {# Status update - only valid transitions #}
+                <section class="action-section">
+                    <h3 class="action-title">{{ t('admin.report.status.header') }}</h3>
+                    {% if allowed_transitions %}
+                    <form method="post" action="/admin/reports/{{ report.id }}/status" id="status-form">
+                        <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                        <div class="form-group">
+                            <label class="form-label" for="new-status">{{ t('admin.report.status.label') }}</label>
+                            <select class="form-control" id="new-status" name="new_status">
+                                <option value="{{ report.status.value }}" disabled selected>{{ t('admin.report.status.current', status=t('status.label.' + report.status.value)) }}</option>
+                                {% for sv in allowed_transitions %}
+                                <option value="{{ sv }}">{{ t('status.label.' + sv) }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" id="status-btn" class="btn btn-secondary btn-block">
+                            {{ t('admin.report.status.button') }}
+                        </button>
                     </form>
                     {% else %}
-                    {# Different admin - can confirm #}
-                    <form method="post" action="/admin/reports/{{ report.id }}/confirm-delete"
-                          data-confirm="Permanently delete this report? This cannot be undone.">
-                        <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                        <button type="submit" class="btn btn-danger btn-block">{{ t('admin.report.delete.confirm_4eyes') }}</button>
-                    </form>
+                    <p class="report-empty-note">{{ t('admin.report.status.none') }}</p>
                     {% endif %}
+                </section>
 
-                {% else %}
-                    {# No pending request - show request button #}
-                    <p class="report-action-body">{{ t('admin.report.delete.body') }}</p>
-                    <div id="delete-step-1">
-                        <button type="button" id="delete-step-1-btn" class="btn btn-secondary btn-block">
-                            {{ t('admin.report.delete.request') }}
-                        </button>
-                    </div>
-                    <div id="delete-step-2" class="hidden">
-                        <div class="alert alert-error">
-                            <div class="alert-title">{{ t('admin.report.delete.confirm.title') }}</div>
-                            {{ t('admin.report.delete.confirm.body') }}
-                        </div>
-                        <form method="post" action="/admin/reports/{{ report.id }}/request-delete">
-                            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                            <div class="flex gap-2">
-                                <button type="button" id="delete-step-2-cancel-btn" class="btn btn-secondary flex-1">
-                                    {{ t('admin.report.delete.cancel') }}
-                                </button>
-                                <button type="submit" class="btn btn-danger flex-1">
-                                    {{ t('admin.report.delete.request') }}
-                                </button>
+                {% if has_identity %}
+                <section class="action-section">
+                    <h3 class="action-title">{{ t('admin.report.confidential.header') }}</h3>
+                    <div class="report-confidential">
+                        {% if identity %}
+                            {% if identity.name %}
+                            <div class="mb-2">
+                                <span class="report-confidential-label">{{ t('admin.report.confidential.name') }}</span>
+                                <span class="report-confidential-value">{{ identity.name }}</span>
                             </div>
-                        </form>
+                            {% endif %}
+                            {% if identity.contact %}
+                            <div class="mb-2">
+                                <span class="report-confidential-label">{{ t('admin.report.confidential.contact') }}</span>
+                                <span class="report-confidential-value">{{ identity.contact }}</span>
+                            </div>
+                            {% endif %}
+                            <p class="form-hint">{{ t('admin.report.identity.shown_once') }}</p>
+                        {% elif can_reveal %}
+                            <form method="post" action="/admin/reports/{{ report.id }}/identity">
+                                <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                                <label class="form-label" for="identity-reason">{{ t('admin.report.identity.reason') }}</label>
+                                <textarea class="form-control" id="identity-reason" name="reason" rows="2"
+                                          minlength="10" maxlength="500" required{{ field.attrs('reason', 'identity-reason-hint') }}>{{ reason_draft }}</textarea>
+                                {{ field.error('reason') }}
+                                <p class="form-hint" id="identity-reason-hint">{{ t('admin.report.identity.reason_hint') }}</p>
+                                <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.report.identity.reveal') }}</button>
+                                <button type="submit" formaction="/admin/reports/{{ report.id }}/export.pdf" class="btn btn-ghost btn-sm">{{ t('admin.report.identity.export') }}</button>
+                                <p class="form-hint">{{ t('admin.report.identity.export_hint') }}</p>
+                            </form>
+                        {% else %}
+                            <p class="form-hint">{{ t('admin.report.identity.handler_only') }}</p>
+                        {% endif %}
                     </div>
+                </section>
+                {% endif %}
+
+                <section class="action-section">
+                    <h3 class="action-title">{{ t('admin.report.export.header') }}</h3>
+                    <a href="/admin/reports/{{ report.id }}/export.pdf" class="btn btn-secondary btn-block" download>
+                        {{ icons.icon('file') }} {{ t('admin.report.export_pdf') }}
+                    </a>
+                </section>
+
+                {# 4-eyes deletion (admin only); open while a request is pending #}
+                {% if is_admin %}
+                <details class="danger-zone"{% if report.deletion_request %} open{% endif %}>
+                    <summary>{{ t('admin.report.delete.header') }}</summary>
+
+                    {% if report.deletion_request %}
+                        {# Pending deletion request exists #}
+                        <div class="alert alert-error">
+                            <div class="alert-title">{{ t('admin.report.delete.pending.title') }}</div>
+                            {{ t('admin.report.delete.pending.body', username=report.deletion_request.requested_by_username) }}
+                            <div class="mono report-delete-time"><time data-utc="{{ report.deletion_request.requested_at.isoformat() }}">{{ report.deletion_request.requested_at.strftime('%Y-%m-%d %H:%M UTC') }}</time></div>
+                        </div>
+
+                        {% if report.deletion_request.requested_by_id == user.id %}
+                        {# Current user requested - can only cancel #}
+                        <p class="report-action-note">{{ t('admin.report.delete.cannot_self') }}</p>
+                        <form method="post" action="/admin/reports/{{ report.id }}/cancel-delete">
+                            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                            <button type="submit" class="btn btn-secondary btn-block">{{ t('admin.report.delete.cancel_request') }}</button>
+                        </form>
+                        {% else %}
+                        {# Different admin - can confirm #}
+                        <form method="post" action="/admin/reports/{{ report.id }}/confirm-delete"
+                              data-confirm="{{ t('admin.report.delete.confirm_dialog') }}">
+                            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                            <button type="submit" class="btn btn-danger btn-block">{{ t('admin.report.delete.confirm_4eyes') }}</button>
+                        </form>
+                        {% endif %}
+
+                    {% else %}
+                        {# No pending request - show request button #}
+                        <p class="report-action-body">{{ t('admin.report.delete.body') }}</p>
+                        <div id="delete-step-1">
+                            <button type="button" id="delete-step-1-btn" class="btn btn-secondary btn-block">
+                                {{ t('admin.report.delete.request') }}
+                            </button>
+                        </div>
+                        <div id="delete-step-2" class="hidden">
+                            <div class="alert alert-error">
+                                <div class="alert-title">{{ t('admin.report.delete.confirm.title') }}</div>
+                                {{ t('admin.report.delete.confirm.body') }}
+                            </div>
+                            <form method="post" action="/admin/reports/{{ report.id }}/request-delete">
+                                <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                                <div class="flex gap-2">
+                                    <button type="button" id="delete-step-2-cancel-btn" class="btn btn-secondary flex-1">
+                                        {{ t('admin.report.delete.cancel') }}
+                                    </button>
+                                    <button type="submit" class="btn btn-danger flex-1">
+                                        {{ t('admin.report.delete.request') }}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    {% endif %}
+                </details>
                 {% endif %}
             </div>
-            {% endif %}
 
         </div>
     </div>
@@ -474,11 +484,11 @@
 function confirmStatusChange(newStatus, currentStatus) {
     if (newStatus === currentStatus) return false;
     if (newStatus === 'closed') {
-        return confirm('{{ t("admin.report.status.confirm_close") }}');
+        return confirm({{ t("admin.report.status.confirm_close") | tojson }});
     }
     const order = ['received', 'in_review', 'pending_feedback', 'closed'];
     if (order.indexOf(newStatus) < order.indexOf(currentStatus)) {
-        return confirm('{{ t("admin.report.status.confirm_downgrade") }}');
+        return confirm({{ t("admin.report.status.confirm_downgrade") | tojson }});
     }
     return true;
 }

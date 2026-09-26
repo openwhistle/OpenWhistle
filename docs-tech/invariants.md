@@ -94,12 +94,473 @@ outcome.
 | Case-number search: LIKE wildcards escaped, case-manager scope kept, links keep `q` | `test_search_escapes_like_wildcards`, `test_search_keeps_the_case_manager_restriction`, `test_dashboard_search_form_and_links_keep_the_query` |
 | Audit entries: every action labelled in 4 languages, detail escaped, CSV keeps codes | `test_every_audit_action_has_a_label_in_every_language`, `test_audit_log_shows_labels_and_readable_detail` |
 
+## v2.0.0 hardening
+
+Mutations: `docs-tech/mutations/v2.0.0-{security,privacy,wizard,timeouts,platform,review,site}.json`
+(281, all red). One row per guard; the test is the first one that fired.
+
+**Found by the v2.0.0 audit.** The first run left 26 of 205 green. Six
+had a test that the spec did not run (the S3 key tests live in
+`tests/test_issue_45_s3_missing.py`, the case-manager counts in
+`tests/test_v160_design.py`); twenty had none: eighteen got one, two are
+recorded below. The new tests pin, among others, the setup token surviving a
+page reload, a session token without `exp` (401, not a 500), the downgrade of
+migration 004 naming an unreadable secret, a deactivated user's TOTP setup
+page, the organisation bound of the content search, a lost commit reply with
+an attachment, and the 4 KiB bound on a clamd reply (an over-long `FOUND` reply is refused as
+*unavailable*, never parsed as a signature).
+
+The three ClamAV timeouts were added after that run: removing one hangs its
+test, so `v2.0.0-timeouts.json` sets `timeout_seconds: 120` and the script
+counts a hang as red.
+
+`v2.0.0-review.json` (the local review login) first left 4 of 27 green: the
+disabled-route and hidden-button tests failed the Host barrier before they
+reached the flag, a missing demo admin and the `app-setup` profile had no
+test. Each got one; the release.md test now reads the numbered step, not the
+diagram.
+Re-running the other five after merging it: `inactive-reaches-totp` was
+stale (`_login_ctx` gained `request`), and `search-order-unstable` was red
+only by luck (without the tiebreaker, which of two tied rows wins is a coin
+flip on random uuids); its test now also checks the statement's `ORDER BY`.
+
+**Not mutations.**
+
+- The role check for an *unassigned* case in `can_reveal_identity`: only
+  admins and superadmins can open an unassigned case at all
+  (`_can_access_report`), so removing it changes nothing a request can see.
+  It stays as the explicit statement of the rule.
+- `_save_submission` fixing `report_id` at the first save: an id-less draft
+  gets one on its first load anyway (`_ASSIGN_REPORT_ID`, one `SET NX` per
+  draft), so removing it only moves where the id is first written.
+- `submit_get` recovered a claimed draft before asking `_submit_outcome`,
+  which recovers it again once `pending` has expired. The first call was
+  redundant and is deleted; `test_worker_dying_after_the_claim_gives_the_draft_back_when_pending_expires`
+  covers the path.
+
+### Setup, sessions, roles, keys, audit scope
+
+`docs-tech/mutations/v2.0.0-security.json`
+
+| Mutation | File | Test that fires |
+| --- | --- | --- |
+| `setup-token-unchecked` | `app/api/wizard.py` | `test_setup_without_the_right_token_is_refused` |
+| `setup-token-kept-after-setup` | `app/api/wizard.py` | `test_setup_with_the_token_creates_the_admin_and_deletes_the_token` |
+| `setup-get-no-token` | `app/api/wizard.py` | `test_get_setup_recreates_a_lost_token` |
+| `setup-token-absent-key-crashes` | `app/services/setup_token.py` | `test_setup_post_refused_when_the_redis_key_is_absent` |
+| `configured-token-loses-to-stale` | `app/services/setup_token.py` | `test_configured_setup_token_overrides_a_stale_stored_token` |
+| `random-token-overwritten` | `app/services/setup_token.py` | `test_get_setup_keeps_the_token_it_already_created` |
+| `setup-token-short-accepted` | `app/config.py` | `test_setup_token_validator` |
+| `lifespan-no-setup-token` | `app/main.py` | `test_startup_creates_the_setup_token_only_while_setup_is_open` |
+| `totp-plaintext` | `app/models/user.py` | `test_totp_secret_is_stored_encrypted` |
+| `migration-004-encrypts-twice` | `migrations/versions/004_encrypt_totp_secrets.py` | `test_migration_004_round_trip_encrypts_and_stays_idempotent` |
+| `migration-004-downgrade-narrows-garbage` | `migrations/versions/004_encrypt_totp_secrets.py` | `test_migration_004_downgrade_names_an_unreadable_secret` |
+| `refresh-no-csrf` | `app/api/auth.py` | `test_session_refresh_without_csrf_header_is_refused` |
+| `session-age-unchecked` | `app/api/deps.py` | `test_session_older_than_the_absolute_limit_is_rejected` |
+| `exp-not-capped` | `app/services/auth.py` | `test_refresh_never_extends_past_the_absolute_limit` |
+| `refresh-resets-auth-time` | `app/api/auth.py` | `test_refresh_never_extends_past_the_absolute_limit` |
+| `refresh-without-claims` | `app/api/auth.py` | `test_session_refresh_never_restarts_the_clock_when_claims_are_missing` |
+| `auth-time-ignored` | `app/services/auth.py` | `test_session_older_than_the_absolute_limit_is_rejected` |
+| `session-too-old-never` | `app/services/auth.py` | `test_session_older_than_the_absolute_limit_is_rejected` |
+| `redis-session-outlives-jwt` | `app/services/auth.py` | `test_refresh_never_extends_past_the_absolute_limit` |
+| `cookie-outlives-jwt` | `app/api/auth.py` | `test_refresh_never_extends_past_the_absolute_limit` |
+| `jwt-exp-not-required` | `app/services/auth.py` | `test_a_session_token_without_exp_or_sub_is_refused` |
+| `inactive-reaches-totp` | `app/api/auth.py` | `test_deactivated_user_never_reaches_the_totp_step` |
+| `inactive-gets-session` | `app/api/auth.py` | `test_user_deactivated_between_password_and_totp_gets_no_session` |
+| `inactive-mfa-setup-post` | `app/api/auth.py` | `test_deactivated_user_mfa_setup_makes_no_state_change` |
+| `inactive-mfa-setup-get` | `app/api/auth.py` | `test_deactivated_user_gets_no_mfa_setup_page` |
+| `unknown-role-admin` | `app/api/admin.py` | `test_unknown_role_creates_no_user` |
+| `unknown-role-change-400` | `app/api/admin.py` | `test_unknown_role_change_is_422_and_changes_nothing` |
+| `new-user-defaults-to-admin` | `app/api/admin.py` | `test_a_new_user_without_a_role_is_a_case_manager` |
+| `ip-dismiss-any-role` | `app/api/admin.py` | `test_case_manager_cannot_dismiss_the_ip_warning` |
+| `audit-row-without-report-org` | `app/services/audit.py` | `test_audit_rows_carry_the_report_org_and_else_the_actor_org` |
+| `audit-row-without-actor-org` | `app/services/audit.py` | `test_audit_rows_carry_the_report_org_and_else_the_actor_org` |
+| `orgless-admin-sees-all-orgless-rows` | `app/services/audit.py` | `test_org_less_admin_sees_only_their_own_org_less_audit_rows` |
+| `migration-005-no-backfill` | `migrations/versions/005_audit_org_backfill.py` | `test_migration_005_backfills_audit_org_from_report_or_actor` |
+| `key-is-secret-key` | `app/services/encryption.py` | `test_encryption_does_not_depend_on_secret_key` |
+| `previous-keys-ignored` | `app/services/encryption.py` | `test_without_encryption_key_secret_key_still_decrypts` |
+| `field-crypto-current-key-only` | `app/services/crypto.py` | `test_without_encryption_key_secret_key_still_decrypts` |
+| `short-encryption-key` | `app/config.py` | `test_short_encryption_key_is_refused` |
+| `short-previous-key` | `app/config.py` | `test_short_previous_key_is_refused` |
+| `rotation-runs-without-both-keys` | `scripts/rotate_encryption_key.py` | `test_rotation_script_refuses_without_both_keys` |
+| `rotation-writes-despite-failures` | `scripts/rotate_encryption_key.py` | `test_rotation_script_names_unreadable_rows_and_writes_nothing` |
+| `rotation-lost-update` | `scripts/rotate_encryption_key.py` | `test_rotation_script_flags_a_row_changed_during_the_run` |
+| `rotation-touches-plain-reasons` | `scripts/rotate_encryption_key.py` | `test_rotation_script_moves_every_value_to_the_new_key` |
+| `collision-full-rollback` | `app/services/report.py` | `test_case_number_collision_keeps_the_callers_objects_loaded` |
+| `retry-any-integrity-error` | `app/services/report.py` | `test_create_report_does_not_retry_other_integrity_errors` |
+| `flush-any-redis` | `tests/conftest.py` | `test_refuses_db_0` |
+
+### Identity, audit trail, search, day-only times, notifications, uploads, onion
+
+`docs-tech/mutations/v2.0.0-privacy.json`
+
+| Mutation | File | Test that fires |
+| --- | --- | --- |
+| `case-manager-counts-all` | `app/api/admin.py` | `test_case_manager_pill_counts_only_their_cases` |
+| `identity-always-shown` | `app/api/admin.py` | `test_case_page_hides_identity_and_records_the_view` |
+| `view-not-audited` | `app/api/admin.py` | `test_case_page_hides_identity_and_records_the_view` |
+| `pdf-view-not-audited` | `app/api/admin.py` | `test_pdf_export_omits_identity_by_default` |
+| `refused-reveal-not-audited` | `app/api/admin.py` | `test_reveal_without_a_reason_is_refused` |
+| `reveal-without-reason` | `app/api/admin.py` | `test_reveal_without_a_reason_is_refused` |
+| `reason-unbounded` | `app/api/admin.py` | `test_reveal_without_a_reason_is_refused` |
+| `reason-too-short-accepted` | `app/api/admin.py` | `test_reveal_without_a_reason_is_refused` |
+| `reason-not-stripped` | `app/api/admin.py` | `test_reveal_without_a_reason_is_refused` |
+| `reveal-gate-open` | `app/api/admin.py` | `test_multi_tenant_unassigned_reveal_is_for_the_case_org_only` |
+| `reveal-no-csrf` | `app/api/admin.py` | `test_reveal_without_csrf_token_is_refused` |
+| `pdf-identity-no-csrf` | `app/api/admin.py` | `test_pdf_export_csrf_is_required_for_the_identity_export` |
+| `reason-stored-plain` | `app/api/admin.py` | `test_handler_reveal_shows_identity_once_and_audits_the_reason` |
+| `pdf-reason-stored-plain` | `app/api/admin.py` | `test_pdf_with_identity_needs_a_reason_and_is_audited` |
+| `pdf-reveal-not-audited` | `app/api/admin.py` | `test_audit_csv_translates_the_via_label_for_a_pdf_export` |
+| `pdf-reveal-skips-the-gate` | `app/api/admin.py` | `test_pdf_export_with_identity_is_refused_to_a_non_handler` |
+| `any-assigned-admin-reveals` | `app/api/admin.py` | `test_admin_who_is_not_the_handler_cannot_reveal` |
+| `reveal-across-orgs` | `app/api/admin.py` | `test_multi_tenant_unassigned_reveal_is_for_the_case_org_only` |
+| `orgless-report-never-revealed` | `app/api/admin.py` | `test_multi_tenant_unassigned_reveal_is_for_the_case_org_only` |
+| `reveal-form-for-everyone` | `app/templates/admin/report.html` | `test_admin_who_is_not_the_handler_cannot_reveal` |
+| `case-page-shows-the-reason` | `app/templates/admin/_audit.html` | `test_case_page_says_a_reason_was_recorded_but_not_what` |
+| `reason-not-decrypted-for-the-log` | `app/templating.py` | `test_audit_detail_decrypts_a_reveal_reason_and_keeps_a_plain_one` |
+| `case-views-always-listed` | `app/api/admin.py` | `test_audit_trail_hides_case_views_unless_asked` |
+| `csv-formula-kept` | `app/api/admin.py` | `test_audit_csv_neutralises_formulas` |
+| `csv-detail-forgeable` | `app/api/admin.py` | `test_audit_csv_detail_cannot_be_forged_by_a_reason` |
+| `csv-unreadable-reason-unmarked` | `app/api/admin.py` | `test_audit_csv_marks_an_unreadable_reason` |
+| `search-matches-the-identity` | `app/services/report.py` | `test_dashboard_search_never_matches_the_confidential_name` |
+| `search-unlimited` | `app/services/report.py` | `test_content_search_limit_caps_how_many_reports_are_decrypted` |
+| `search-order-unstable` | `app/services/report.py` | `test_content_search_limit_tiebreaks_deterministically_on_equal_timestamp` |
+| `search-not-nfc` | `app/services/report.py` | `test_content_search_normalizes_unicode_composition_before_matching` |
+| `search-lowercase-only` | `app/services/report.py` | `test_content_search_matches_strasse_case_folded` |
+| `search-ignores-assignment` | `app/services/report.py` | `test_content_search_limit_caps_how_many_reports_are_decrypted` |
+| `search-ignores-view-filters` | `app/services/report.py` | `test_content_search_respects_the_active_status_and_location_filter` |
+| `search-ignores-org` | `app/services/report.py` | `test_content_search_stays_inside_the_callers_organisation` |
+| `content-hits-dropped` | `app/services/report.py` | `test_dashboard_search_finds_words_inside_reports` |
+| `list-order-unstable` | `app/services/report.py` | `test_equal_submission_days_page_in_a_stable_id_order` |
+| `counts-ignore-assignment` | `app/services/report.py` | `test_case_manager_pill_counts_only_their_cases` |
+| `counts-ignore-location` | `app/services/report.py` | `test_status_pills_keep_and_count_within_the_location_and_search` |
+| `stats-ignore-assignment` | `app/services/report.py` | `test_case_manager_statistics_cover_only_their_cases` |
+| `exact-times` | `app/services/report.py` | `test_submission_and_receipt_carry_only_the_day` |
+| `submission-exact-time` | `app/services/report.py` | `test_submission_and_receipt_carry_only_the_day` |
+| `upload-exact-time` | `app/services/attachment.py` | `test_attachment_upload_time_is_the_day` |
+| `reply-exact-time` | `app/services/report.py` | `test_whistleblower_reply_on_a_new_day_is_that_midnight` |
+| `thread-order-lost` | `app/services/report.py` | `test_same_day_whistleblower_reply_stays_after_the_admin_reply` |
+| `thread-time-race` | `app/services/report.py` | `test_concurrent_whistleblower_replies_get_distinct_ordered_times` |
+| `receipt-shown-exact` | `app/services/report.py` | `test_case_page_and_pdf_show_whistleblower_times_as_the_day_only` |
+| `wb-message-shown-exact` | `app/services/report.py` | `test_case_page_and_pdf_show_whistleblower_times_as_the_day_only` |
+| `pdf-submitted-exact` | `app/services/pdf.py` | `test_case_page_and_pdf_show_whistleblower_times_as_the_day_only` |
+| `pdf-message-exact` | `app/services/pdf.py` | `test_case_page_and_pdf_show_whistleblower_times_as_the_day_only` |
+| `migration-006-receipt-exact` | `migrations/versions/006_whistleblower_times_by_day.py` | `test_migration_006_rounds_existing_rows_keeps_order_and_round_trips` |
+| `migration-006-order-lost` | `migrations/versions/006_whistleblower_times_by_day.py` | `test_migration_006_rounds_existing_rows_keeps_order_and_round_trips` |
+| `local-time-shifts-the-day` | `app/templates/base.html` | `test_local_time_script_shows_date_only_values_as_the_utc_day` |
+| `demo-seed-exact-times` | `app/services/demo_seed.py` | `test_demo_seed_stores_reporter_times_as_the_day` |
+| `pdf-identity-default` | `app/services/pdf.py` | `test_pdf_export_omits_identity_by_default` |
+| `webhook-lists-cases` | `app/services/notifications.py` | `test_digest_webhook_body_has_no_case_number` |
+| `reminder-webhook-dropped` | `app/services/reminders.py` | `test_reminder_run_sends_one_webhook_with_counts` |
+| `reminder-ack-not-counted` | `app/services/reminders.py` | `test_reminder_run_sends_one_webhook_with_counts` |
+| `legacy-office-accepted-message` | `app/services/attachment.py` | `test_legacy_office_files_are_refused_with_a_way_out` |
+| `xlsx-author-label-kept` | `app/services/attachment.py` | `test_xlsx_comment_author_label_is_removed_but_the_comment_is_kept` |
+| `xlsx-label-replaced-everywhere` | `app/services/attachment.py` | `test_xlsx_comment_only_first_run_label_is_replaced` |
+| `rekey-without-copy` | `app/services/attachment.py` | `test_legacy_s3_keys_are_moved_to_bare_uuids` |
+| `rekey-repoints-after-failed-copy` | `app/services/attachment.py` | `test_failed_copy_leaves_the_row_untouched` |
+| `rekey-on-every-replica` | `app/services/attachment.py` | `test_run_s3_rekey_noop_when_another_replica_holds_the_lock` |
+| `rekey-failure-logs-message` | `app/main.py` | `test_log_rekey_task_result_logs_exception_type_not_message` |
+| `legacy-key-in-lookup-error` | `app/services/attachment.py` | `test_read_attachment_lookup_error_has_no_filename` |
+| `legacy-key-in-delete-log` | `app/services/attachment.py` | `test_failed_object_delete_logs_no_key` |
+| `legacy-key-in-s3-put-log` | `app/services/storage.py` | `test_s3_put_logs_no_filename` |
+| `legacy-key-in-s3-delete-log` | `app/services/storage.py` | `test_s3_delete_logs_no_filename` |
+| `legacy-key-in-s3-not-found` | `app/services/storage.py` | `test_s3_get_missing_object_message_has_no_filename` |
+| `scanner-down-accepts` | `app/services/attachment.py` | `test_upload_is_refused_when_the_scanner_is_unreachable` |
+| `infected-accepted` | `app/services/attachment.py` | `test_upload_is_refused_when_the_scanner_is_unreachable` |
+| `scan-when-unconfigured` | `app/services/virus_scan.py` | `test_scanning_off_by_default_never_connects` |
+| `unknown-reply-is-clean` | `app/services/virus_scan.py` | `test_scan_unavailable_on_non_ok_non_found_reply` |
+| `truncated-reply-escapes` | `app/services/virus_scan.py` | `test_scan_unavailable_when_reply_has_no_terminator` |
+| `overlong-reply-escapes` | `app/services/virus_scan.py` | `test_a_reply_longer_than_the_bound_is_not_trusted` |
+| `reply-buffer-unbounded` | `app/services/virus_scan.py` | `test_a_reply_longer_than_the_bound_is_not_trusted` |
+| `blank-signature-is-clean` | `app/services/virus_scan.py` | `test_scan_reports_clean_and_infected` |
+| `onion-header-never-sent` | `app/middleware.py` | `test_onion_location_header_points_to_the_same_page` |
+| `onion-header-on-onion` | `app/middleware.py` | `test_onion_location_header_not_sent_on_the_onion_service_itself` |
+| `onion-header-on-assets` | `app/middleware.py` | `test_onion_location_header_absent_for_static_assets` |
+| `hsts-on-onion` | `app/middleware.py` | `test_hsts_absent_over_the_onion_listener` |
+| `hsts-never` | `app/middleware.py` | `test_hsts_present_on_a_normal_host` |
+| `csrf-cookie-secure-on-onion` | `app/csrf.py` | `test_cookies_have_no_secure_flag_over_the_onion_listener` |
+| `cookies-secure-on-onion` | `app/onion.py` | `test_cookies_have_no_secure_flag_over_the_onion_listener` |
+| `cookie-secure-guesses` | `app/onion.py` | `test_cookie_secure_fails_loudly_when_security_middleware_never_ran` |
+| `onion-trusts-host` | `app/onion.py` | `test_onion_location_header_still_sent_when_host_is_onion_but_nginx_never_marked_it` |
+| `onion-any-header-value` | `app/onion.py` | `test_is_onion_request_trusts_only_the_exact_nginx_header` |
+| `onion-location-unvalidated` | `app/config.py` | `test_onion_location_refuses_invalid_values` |
+| `onion-note-always-shown` | `app/templates/submit.html` | `test_submit_page_hides_onion_note_when_unset` |
+
+### Submission wizard (#94 port)
+
+`docs-tech/mutations/v2.0.0-wizard.json`
+
+| Mutation | File | Test that fires |
+| --- | --- | --- |
+| `any-action-processed` | `app/api/reports.py` | `test_unknown_action_on_a_fresh_session_stores_no_file` |
+| `stale-step-processed` | `app/api/reports.py` | `test_stale_earlier_step_is_not_reprocessed` |
+| `step-renders-post-result` | `app/api/reports.py` | `test_every_step_transition_redirects_to_get` |
+| `flash-sticks` | `app/api/reports.py` | `test_validation_error_is_a_one_shot_flash` |
+| `back-drops-attachments` | `app/api/reports.py` | `test_back_then_next_without_files_keeps_attachments` |
+| `rejected-description-lost` | `app/api/reports.py` | `test_too_short_description_is_kept_in_the_textarea` |
+| `remove-outside-attachments-step` | `app/api/reports.py` | `test_remove_is_refused_outside_the_attachments_step` |
+| `remove-negative-index` | `app/api/reports.py` | `test_remove_out_of_range_index_changes_nothing` |
+| `remove-no-csrf` | `app/api/reports.py` | `test_remove_requires_csrf` |
+| `report-id-not-used` | `app/services/report.py` | `test_commit_whose_reply_is_lost_counts_as_done` |
+| `legacy-draft-ids-race` | `app/api/reports.py` | `test_a_stale_save_of_a_pre_v1_6_draft_yields_one_report` |
+| `legacy-draft-id-for-a-spent-draft` | `app/api/reports.py` | `test_a_pre_v1_6_draft_spent_while_loading_is_not_given_an_id` |
+| `legacy-draft-load-unbounded` | `app/api/reports.py` | `test_a_draft_re_saved_without_an_id_on_every_load_is_given_up_after_3_attempts` |
+| `claim-overwrites-a-claim` | `app/api/reports.py` | `test_a_second_claim_never_takes_over_a_claimed_draft` |
+| `waiting-click-holds-a-transaction` | `app/api/reports.py` | `test_waiting_click_holds_no_database_transaction` |
+| `no-final-revalidation` | `app/api/reports.py` | `test_review_revalidates_the_draft_before_creating_a_report` |
+| `final-check-ignores-location` | `app/api/reports.py` | `test_location_deactivated_after_its_step_returns_to_the_location_step` |
+| `final-check-ignores-mode` | `app/api/reports.py` | `test_review_revalidates_the_draft_before_creating_a_report` |
+| `description-minimum-dropped` | `app/api/reports.py` | `test_too_short_description_is_kept_in_the_textarea` |
+| `report-committed-alone` | `app/api/reports.py` | `test_failed_attachment_store_leaves_no_report_and_restores_the_draft` |
+| `attachments-committed-alone` | `app/api/reports.py` | `test_commit_whose_reply_is_lost_counts_as_done` |
+| `submit-unbounded` | `app/api/reports.py` | `test_claim_to_commit_is_bounded_well_under_pending` |
+| `statement-unbounded` | `app/api/reports.py` | `test_claim_to_commit_is_bounded_well_under_pending` |
+| `failed-submit-keeps-the-draft-claimed` | `app/api/reports.py` | `test_slow_winner_that_fails_leaves_the_draft_reachable` |
+| `issued-commit-says-not-sent` | `app/api/reports.py` | `test_a_commit_failing_without_a_report_is_pending_not_not_sent` |
+| `second-click-gets-no-pin` | `app/api/reports.py` | `test_concurrent_final_submits_create_one_report_and_both_show_the_pin` |
+| `result-kept-briefly` | `app/api/reports.py` | `test_the_result_is_kept_120_seconds_for_a_second_click` |
+| `finish-clears-a-newer-claim` | `app/api/reports.py` | `test_a_late_submit_never_touches_a_newer_claim` |
+| `give-back-over-a-newer-claim` | `app/api/reports.py` | `test_a_late_submit_never_touches_a_newer_claim` |
+| `recover-over-a-changed-claim` | `app/api/reports.py` | `test_recovery_never_acts_on_a_claim_that_changed_since_it_was_read` |
+| `recover-gives-back-a-committed-draft` | `app/api/reports.py` | `test_a_lost_result_write_after_the_commit_never_reopens_the_draft` |
+| `start-over-keeps-report-id` | `app/api/reports.py` | `test_start_over_deletes_a_pre_v1_6_drafts_report_id_too` |
+
+### Timeouts (spec bounds a hang at 120 s)
+
+`docs-tech/mutations/v2.0.0-timeouts.json`
+
+| Mutation | File | Test that fires |
+| --- | --- | --- |
+| `clamav-connect-unbounded` | `app/services/virus_scan.py` | `test_scan_unavailable_when_connecting_hangs` (hangs) |
+| `clamav-drain-unbounded` | `app/services/virus_scan.py` | `test_scan_unavailable_on_drain_timeout` (hangs) |
+| `clamav-reply-unbounded` | `app/services/virus_scan.py` | `test_scan_unavailable_on_timeout` (hangs) |
+
+### Build, deployment, LDAP, locales, design
+
+`docs-tech/mutations/v2.0.0-platform.json`
+
+| Mutation | File | Test that fires |
+| --- | --- | --- |
+| `http-proxied` | `nginx/nginx.conf` | `test_nginx_redirects_http_and_strips_ip_headers_on_https` |
+| `old-tls-protocols` | `nginx/nginx.conf` | `test_nginx_tls_listener_offers_only_tls_1_2_and_1_3` |
+| `ip-header-forwarded` | `nginx/snippets/proxy-headers.conf` | `test_nginx_redirects_http_and_strips_ip_headers_on_https` |
+| `client-onion-header-forwarded` | `nginx/snippets/proxy-headers.conf` | `test_x_ow_onion_is_cleared_by_default_and_set_only_on_the_onion_listener` |
+| `onion-listener-unmarked` | `nginx/nginx.conf` | `test_x_ow_onion_is_cleared_by_default_and_set_only_on_the_onion_listener` |
+| `onion-shares-the-rate-budget` | `nginx/nginx.conf` | `test_onion_listener_has_its_own_higher_budget_rate_limit_zone` |
+| `ansible-nginx-forwards-onion-header` | `ansible/roles/openwhistle/templates/nginx.conf.j2` | `test_ansible_nginx_template_includes_the_shared_snippets_not_a_second_copy` |
+| `compose-writable-root` | `docker-compose.prod.yml` | `test_compose_app_is_read_only_without_capabilities` |
+| `compose-image-latest` | `docker-compose.prod.yml` | `test_prod_compose_pins_the_image_version` |
+| `onion-port-public` | `docker-compose.prod.yml` | `test_docker_compose_publishes_the_onion_port_on_localhost_only` |
+| `bind-mount-without-selinux-label` | `docker-compose.prod.yml` | `test_compose_host_bind_mounts_carry_the_selinux_label` |
+| `clamav-on-the-proxy-network` | `docker-compose.prod.yml` | `test_clamav_service_is_identical_and_hardened_in_both_compose_files` |
+| `base-image-unpinned` | `Dockerfile` | `test_base_images_are_pinned_by_digest` |
+| `curl-in-the-image` | `Dockerfile` | `test_runtime_image_has_no_curl_and_a_python_healthcheck` |
+| `helm-writable-root` | `charts/openwhistle/templates/deployment.yaml` | `test_helm_container_security_context` |
+| `helm-ingress-unlimited` | `charts/openwhistle/values.yaml` | `test_every_public_route_is_rate_limited_in_both_deployments` |
+| `helm-notes-without-crit` | `charts/openwhistle/templates/NOTES.txt` | `test_the_chart_requires_crit_error_logging_where_the_operator_reads` |
+| `tls-key-world-readable` | `scripts/ensure_tls_cert.py` | `test_operator_certificate_wins` |
+| `tls-cert-regenerated` | `scripts/ensure_tls_cert.py` | `test_self_signed_certificate_is_created_once` |
+| `action-pinned-by-tag` | `.github/workflows/ci.yml` | `test_every_workflow_action_is_pinned_by_commit_sha` |
+| `env-j2-incomplete` | `ansible/roles/openwhistle/templates/env.j2` | `test_every_config_field_appears_in_ansible_env_j2` |
+| `ldap-empty-password` | `app/services/ldap_auth.py` | `test_empty_password_never_binds` |
+| `ldap-cert-not-demanded` | `app/services/ldap_auth.py` | `test_ldaps_demands_a_valid_certificate` |
+| `ldap-filter-unescaped` | `app/services/ldap_auth.py` | `test_filter_escapes_the_username` |
+| `ldap-start-tls-skipped` | `app/services/ldap_auth.py` | `test_start_tls_happens_before_any_bind` |
+| `ldap-connection-left-open` | `app/services/ldap_auth.py` | `test_wrong_password_still_closes_both_connections` |
+| `ldap-tls-floor-dropped` | `app/services/ldap_auth.py` | `test_ldaps_demands_a_valid_certificate` |
+| `ldap-private-ca-ignored` | `app/services/ldap_auth.py` | `test_ldaps_accepts_the_right_name_signed_by_ldaptls_cacert` |
+| `ldap-follows-referrals` | `app/services/ldap_auth.py` | `test_options_bound_referrals_and_timeout` |
+| `ldap-referral-as-user` | `app/services/ldap_auth.py` | `test_unknown_user_is_refused` |
+| `fr-key-missing` | `app/locales/fr.json` | `test_locale_has_exactly_the_keys_of_en` |
+| `pyproject-version-drift` | `pyproject.toml` | `TestConfigV100Defaults::test_every_published_version_string_matches` |
+| `tls-init-version-drift` | `docker-compose.prod.yml` | `TestConfigV100Defaults::test_every_published_version_string_matches` |
+| `nav-ignores-role` | `app/templating.py` | `test_case_manager_sees_only_pages_they_may_open` |
+| `brand-secondary-back` | `app/config.py` | `test_brand_secondary_colour_is_gone` |
+| `panel-header-shouted` | `app/static/css/site.css` | `test_panel_headers_and_labels_are_not_shouted` |
+| `eyebrows-everywhere` | `app/templates/admin/users.html` | `test_eyebrows_are_the_exception` |
+
+### Local review login (maintainer tooling)
+
+`docs-tech/mutations/v2.0.0-review.json`
+
+| Mutation | File | Test that fires |
+| --- | --- | --- |
+| `review-login-without-demo-mode` | `app/config.py` | `test_local_review_login_requires_demo_mode` |
+| `review-startup-warning-dropped` | `app/main.py` | `test_lifespan_warns_loudly_when_local_review_login_is_enabled` |
+| `review-route-ignores-flag` | `app/api/auth.py` | `test_local_review_login_route_404_when_disabled` |
+| `review-route-any-method` | `app/api/auth.py` | `test_local_review_login_route_404_for_every_method_when_enabled` |
+| `review-route-ignores-barrier` | `app/api/auth.py` | `test_local_review_login_404_with_any_proxy_header` |
+| `review-route-405-for-other-methods` | `app/api/auth.py` | `test_local_review_login_route_404_for_every_method_when_disabled` |
+| `review-barrier-trusts-proxy` | `app/api/auth.py` | `test_local_review_reachable_rejects_any_proxy_header` |
+| `review-barrier-any-host` | `app/api/auth.py` | `test_local_review_reachable_rejects_non_loopback_host` |
+| `review-barrier-crashes-on-bad-host` | `app/api/auth.py` | `test_local_review_reachable_treats_malformed_bracketed_host_as_unreachable` |
+| `review-button-ignores-barrier` | `app/api/auth.py` | `test_login_page_does_not_crash_with_malformed_host` |
+| `review-button-ignores-flag` | `app/api/auth.py` | `test_login_page_shows_the_button_only_when_flag_and_barrier_pass` |
+| `review-login-skips-csrf` | `app/api/auth.py` | `test_local_review_login_route_rejects_bad_csrf_before_signing_in` |
+| `review-login-no-demo-admin-500` | `app/api/auth.py` | `test_local_review_login_404_when_no_demo_admin_exists` |
+| `review-login-audits-deactivated` | `app/api/auth.py` | `test_local_review_login_deactivated_admin_redirects_without_audit_row` |
+| `review-login-unaudited` | `app/api/auth.py` | `test_local_review_login_signs_in_with_full_session_and_audit_row` |
+| `review-button-always-shown` | `app/templates/login.html` | `test_login_page_does_not_crash_with_malformed_host` |
+| `review-button-primary-class` | `app/templates/login.html` | `test_review_override_button_has_a_distinct_id_and_non_primary_class` |
+| `review-port-merged-not-replaced` | `docker-compose.review.yml` | `test_review_override_binds_the_app_port_to_loopback_only` |
+| `review-flag-missing-from-override` | `docker-compose.review.yml` | `test_local_review_login_true_only_in_review_override` |
+| `review-flag-in-ci-e2e` | `docker-compose.e2e.yml` | `test_local_review_login_literal_false_or_absent_everywhere_except_allowlist` |
+| `review-flag-in-prod-compose` | `docker-compose.prod.yml` | `test_local_review_login_literal_false_or_absent_everywhere_except_allowlist` |
+| `review-flag-live-in-ansible` | `ansible/roles/openwhistle/templates/env.j2` | `test_local_review_login_literal_false_or_absent_everywhere_except_allowlist` |
+| `review-setup-stack-demo-seeded` | `docker-compose.review.yml` | `test_review_setup_profile_is_a_fresh_install_without_the_review_login` |
+| `review-setup-stack-always-on` | `docker-compose.review.yml` | `test_review_setup_profile_is_a_fresh_install_without_the_review_login` |
+| `review-matrix-drops-a-page` | `docs-tech/local-review.md` | `test_local_review_page_matrix_covers_every_app_page` |
+| `review-matrix-drops-a-site-page` | `docs-tech/local-review.md` | `test_local_review_page_matrix_covers_every_docs_site_page` |
+| `review-release-step-dropped` | `docs-tech/release.md` | `test_release_md_names_the_chrome_check_before_the_release_pr` |
+| `docs-link-into-docs-tech` | `docs/docs.html` | `test_no_published_page_links_docs_tech` |
+
+### Admin UI fixes and website
+
+`docs-tech/mutations/v2.0.0-site.json`. The docs mutations run
+`tests/e2e/test_layout.py -k docs_page` (every `docs/**/*.html` at 390 and
+1024 px, served from a local HTTP server, no app).
+
+The first run left 8 of 48 green. Five category-label paths had no test (the
+linked-report list, `/admin/stats` by language and by organisation, both PDF
+routes); the nginx snippet's own `Cache-Control` had none; the superadmin
+badge test matched the dark override. Each got one. The German landing
+page's `min-width: 0` grid children changed nothing at either width and were
+deleted, as were the merge's second overflow fix for the deadline table and
+the cost grid.
+Re-running the other six after the merge: `pdf-view-not-audited` and
+`pdf-identity-no-csrf` (privacy) were stale, because both PDF routes now
+fetch category labels; the snippets are updated and red.
+
+| Mutation | File | Test that fires |
+| --- | --- | --- |
+| `icon-block` | `app/static/css/site.css` | `test_icon_class_overrides_svg_reset_to_inline` |
+| `static-url-no-version` | `app/templating.py` | `test_static_url_appends_version_query` |
+| `base-css-hand-typed` | `app/templates/base.html` | `test_stylesheet_and_script_links_use_static_url_helper` |
+| `static-cache-dropped` | `app/middleware.py` | `test_pages_are_never_cached_but_static_files_are` |
+| `nginx-static-immutable` | `nginx/snippets/static-location.conf` | `test_nginx_static_location_is_a_shared_snippet_too` |
+| `login-card-flush` | `app/static/css/site.css` | `test_panel_before_demo_credentials_has_spacing` |
+| `superadmin-label-missing` | `app/locales/en.json` | `test_every_dynamic_locale_key_exists` |
+| `role-default-unselected` | `app/templates/admin/users.html` | `test_new_user_role_select_defaults_to_the_least_privileged_role` |
+| `role-enum-superadmin-first` | `app/models/user.py` | `test_new_user_role_select_defaults_to_the_least_privileged_role` |
+| `badge-superadmin-missing` | `app/static/css/site.css` | `test_every_admin_role_has_a_badge_color` |
+| `category-label-ignores-lang` | `app/models/category.py` | `test_dashboard_and_case_page_show_the_category_in_german` |
+| `category-filter-ignores-map` | `app/templating.py` | `test_dashboard_and_case_page_show_the_category_in_german` |
+| `category-labels-unscoped` | `app/services/categories.py` | `test_category_labels_do_not_leak_across_orgs_with_a_colliding_slug` |
+| `dashboard-category-raw` | `app/templates/admin/dashboard.html` | `test_dashboard_and_case_page_show_the_category_in_german` |
+| `case-page-category-raw` | `app/templates/admin/report.html` | `test_dashboard_and_case_page_show_the_category_in_german` |
+| `linked-report-category-raw` | `app/templates/admin/report.html` | `test_linked_reports_and_stats_show_the_category_in_german` |
+| `stats-category-english` | `app/api/admin.py` | `test_linked_reports_and_stats_show_the_category_in_german` |
+| `stats-category-unscoped` | `app/api/admin.py` | `test_stats_page_category_label_is_the_own_orgs` |
+| `pdf-category-slug` | `app/services/pdf.py` | `test_generate_pdf_prints_the_localised_category_label` |
+| `pdf-route-no-label` | `app/api/admin.py` | `test_both_pdf_exports_print_the_category_in_german` |
+| `pdf-identity-route-no-label` | `app/api/admin.py` | `test_both_pdf_exports_print_the_category_in_german` |
+| `sticky-action-static` | `app/static/css/site.css` | `test_dashboard_table_action_column_is_pinned_and_status_badge_wraps` |
+| `status-badge-nowrap` | `app/static/css/site.css` | `test_dashboard_table_action_column_is_pinned_and_status_badge_wraps` |
+| `dashboard-header-unpinned` | `app/templates/admin/dashboard.html` | `test_table_stack_sticky_action_column_is_paired_header_and_data` |
+| `docs-env-table-unscrolled` | `docs/docs.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `de-token-drift` | `docs/de/index.html` | `test_de_landing_page_shares_design_tokens_with_english` |
+| `de-faq-jsonld-drift` | `docs/de/index.html` | `test_faqpage_jsonld_matches_visible_faq_one_to_one` |
+| `en-hreflang-de-dropped` | `docs/index.html` | `test_landing_pages_link_each_other_via_hreflang` |
+| `de-hreflang-default-dropped` | `docs/de/index.html` | `test_landing_pages_link_each_other_via_hreflang` |
+| `de-comparison-table-auto` | `docs/de/index.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `de-btn-nowrap` | `docs/de/index.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `docs-nav-blog-missing` | `docs/docs.html` | `test_every_docs_page_nav_has_the_same_item_set` |
+| `roadmap-nav-current-unmarked` | `docs/roadmap.html` | `test_current_nav_item_is_marked` |
+| `roadmap-footer-issues-missing` | `docs/roadmap.html` | `test_every_page_footer_has_the_same_link_set_as_its_landing_page` |
+| `blog-token-drift` | `docs/blog/index.html` | `test_blog_pages_share_design_tokens_with_english_landing` |
+| `nav-collapse-768-en` | `docs/index.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `nav-collapse-768-de` | `docs/de/index.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `nav-collapse-768-docs` | `docs/docs.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `nav-collapse-768-roadmap` | `docs/roadmap.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `nav-collapse-768-blog` | `docs/blog/index.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `nav-collapse-768-hinschg-compliance-leitfaden` | `docs/blog/hinschg-compliance-leitfaden.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `nav-collapse-768-interne-meldestelle-einrichten` | `docs/blog/interne-meldestelle-einrichten.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `nav-collapse-768-was-ist-neu-in-2-0` | `docs/blog/was-ist-neu-in-2-0.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `nav-collapse-768-whistleblower-software-vergleich` | `docs/blog/whistleblower-software-vergleich.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `docs-mono-500-face-missing` | `docs/docs.html` | `test_every_docs_page_font_usage_has_a_matching_font_face` |
+| `roadmap-mono-500-face-missing` | `docs/roadmap.html` | `test_every_docs_page_font_usage_has_a_matching_font_face` |
+| `blog-deadline-table-auto` | `docs/blog/hinschg-compliance-leitfaden.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `pin-token-nowrap` | `app/static/css/site.css` | `test_token_class_wraps_only_at_the_explicit_hyphen_breaks` |
+| `pin-wbr-filter-not-applied` | `app/templates/submit_success.html` | `test_case_number_and_pin_wrap_only_at_hyphens` |
+| `review-label-fixed-width` | `app/static/css/site.css` | `test_review_label_stacks_over_its_value` |
+| `char-counter-not-localized` | `app/i18n.py` | `test_char_counter_uses_locale_number_format` |
+| `stats-grid-panel-margin` | `app/templates/admin/stats.html` | `test_stats_grid_panels_drop_the_stacking_margin` |
+| `http-exception-always-json` | `app/main.py` | `test_stale_report_id_returns_styled_html_for_a_browser` |
+| `eyebrow-restates-confidential` | `app/locales/de.json` | `test_submit_eyebrow_is_neutral_across_locales` |
+| `blog-2-0-date-off-by-one` | `docs/blog/was-ist-neu-in-2-0.html` | `test_blog_1_6_release_date_is_2026_09_26` |
+
+**Not a mutation.** The e2e tests that measure the running app
+(`tests/e2e/test_admin_table_layout.py`,
+`test_review_step_label_and_value_do_not_overlap_in_german`,
+`test_stats_panels_share_the_same_top`) run against a built image, so the
+script's working-tree edit never reaches them: they stay GREEN whatever it
+changes. Each rule is pinned in source instead: `sticky-action-static`,
+`status-badge-nowrap`, `dashboard-header-unpinned`, `review-label-fixed-width`
+and `stats-grid-panel-margin`.
+
+**Doubly redundant on purpose (PIN/case-number overflow).** The
+fix has two independent parts: `.token` no longer forces `white-space:
+nowrap`, and the case number/PIN are rendered through `wbr_after_hyphens`
+(`app/templating.py`), which inserts a `<wbr>` after each hyphen. In Chromium,
+either change alone already prevents the overflow: with `nowrap` removed, the
+browser's default line breaking already wraps after a plain hyphen (no
+`<wbr>` needed); and a `<wbr>` is honoured as a break opportunity even when
+`white-space: nowrap` is reinstated. So a single-property mutation of either
+piece against the rendered page (`tests/e2e/test_wb_submission.py::
+test_pin_and_case_number_fit_without_scrolling`) stays GREEN — not because
+the guard is weak, but because the other half of the fix silently covers for
+it. Reverting *both* together (confirmed manually, not via
+`mutation_audit.py`, which mutates one file at a time) reproduces the
+original overflow exactly (`.token`'s own `scrollWidth` exceeds its
+`clientWidth`). Each half is instead pinned by its own reliable, browser-free
+source check (`pin-token-nowrap`, `pin-wbr-filter-not-applied`, both group
+`D`); the rendered e2e test stays as additional, valuable coverage of the
+real behaviour without a dedicated mutation of its own.
+
+### Deployment and upgrade (final review)
+
+`docs-tech/mutations/v2.0.0-ops.json`: 23 mutations, 23 red.
+The CI job `nginx-onion-trust` holds three more guards that no pytest can:
+nginx started as the demo host runs it (the role's file modes, a non-root
+owner, the rendered compose file's `cap_drop`), and header checks written as
+`if grep …; then exit 1; fi`, since `set -e` ignores a `!`-negated command.
+Each was proven red locally with podman: files written `0640` (nginx:
+`Permission denied`), and `X-Forwarded-For` or `X-Real-IP` no longer stripped.
+
+| Mutation | File | Test that fires |
+| --- | --- | --- |
+| `ansible-nginx-conf-0640` | `ansible/roles/openwhistle/tasks/deploy.yml` | `test_ansible_writes_every_nginx_bind_mount_world_readable` |
+| `ansible-snippets-0640` | `ansible/roles/openwhistle/tasks/deploy.yml` | `test_ansible_writes_every_nginx_bind_mount_world_readable` |
+| `ansible-snippets-dir-0640` | `ansible/roles/openwhistle/tasks/deploy.yml` | `test_ansible_writes_every_nginx_bind_mount_world_readable` |
+| `ansible-snippets-playbook-dir` | `ansible/roles/openwhistle/tasks/deploy.yml` | `test_ansible_deploy_copies_the_real_snippet_files_not_a_retyped_copy` |
+| `tls-init-dangling-falls-back` | `scripts/ensure_tls_cert.py` | `test_a_dangling_certificate_symlink_fails_loudly` |
+| `tls-init-unreadable-raw` | `scripts/ensure_tls_cert.py` | `test_an_unreadable_operator_key_fails_loudly` |
+| `behind-proxy-drifts` | `nginx/nginx.behind-proxy.conf` | `test_the_behind_proxy_nginx_differs_from_nginx_conf_only_in_its_listeners` |
+| `behind-proxy-no-strip` | `nginx/nginx.behind-proxy.conf` | `test_the_behind_proxy_nginx_differs_from_nginx_conf_only_in_its_listeners` |
+| `behind-proxy-keeps-443` | `docker-compose.behind-proxy.yml` | `test_the_behind_proxy_override_swaps_the_config_and_drops_443` |
+| `migration-004-offline` | `migrations/versions/004_encrypt_totp_secrets.py` | `test_migration_004_refuses_offline_sql` |
+| `brand-secondary-refused` | `app/config.py` | `test_a_stale_brand_secondary_color_in_env_is_ignored_with_a_warning` |
+| `onion-header-always-trusted` | `app/onion.py` | `test_x_ow_onion_is_ignored_without_an_onion_address` |
+| `helm-extra-env-dropped` | `charts/openwhistle/templates/configmap.yaml` | `test_helm_extra_env_reaches_the_configmap` |
+| `helm-onion-clear-undocumented` | `charts/openwhistle/values.yaml` | `test_the_chart_says_to_clear_x_ow_onion_when_an_onion_address_is_set` |
+| `rollback-pins-old-image` | `docs/docs.html` | `test_the_documented_rollback_downgrades_to_the_last_1_5_revision` |
+| `docs-python-m-app` | `docs/docs.html` | `test_the_docs_run_no_module_that_does_not_exist` |
+| `machine-path-committed` | `docs-tech/plans/2026-09-24-v1.6-hardening.md` | `test_no_tracked_file_holds_a_machine_local_path` |
+| `image-ships-unused-font` | `Dockerfile` | `test_the_image_ships_exactly_the_font_files_the_app_css_uses` |
+| `process-note-in-comment` | `app/services/storage.py` | `test_shipped_files_explain_the_code_not_the_review_history` |
+| `build-context-has-superpowers` | `.dockerignore` | `test_local_tooling_and_maintainer_docs_stay_out_of_the_build_context` |
+| `serena-tracked` | `.gitignore` | `test_local_tooling_and_maintainer_docs_stay_out_of_the_build_context` |
+| `docs-link-docs-tech` | `docs/docs.html` | `test_no_published_page_links_docs_tech` |
+| `roadmap-test-chore` | `docs/roadmap.html` | `test_the_public_roadmap_holds_no_test_chores` |
+
 ## Repository and release
 
 | Guard | Test |
 | --- | --- |
 | `docs-tech/` is never published | `test_the_technical_docs_are_not_published` |
-| Every published version string equals `app_version` | `test_every_published_version_string_matches` |
+| Every published version string equals `app_version`, every image default in the prod compose file too | `test_every_published_version_string_matches` |
+| A setting added since the previous release has a CHANGELOG entry | `test_every_new_setting_is_in_the_changelog` |
+| Every setting has a docs env-table row and a `docker-compose.prod.yml` line (except `APP_VERSION` and `LOCAL_REVIEW_LOGIN`) | `tests/test_config_documented.py` |
 | uv pinned identically in the image and all workflows | `test_uv_version_is_the_same_in_the_image_and_every_workflow` |
 | `uv.lock` matches `pyproject.toml` | CI step `uv lock --check` |
 | Every tag and platform manifest pullable after publish | the publish workflow's verify loop |

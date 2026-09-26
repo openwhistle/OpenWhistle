@@ -1,15 +1,33 @@
 services:
   app:
-    image: ghcr.io/openwhistle/openwhistle:latest
+    image: ghcr.io/openwhistle/openwhistle:${OPENWHISTLE_VERSION:-2.0.0}
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     environment:
       DATABASE_URL: "${DATABASE_URL}"
       REDIS_URL: "${REDIS_URL}"
       SECRET_KEY: "${SECRET_KEY}"
+      ENCRYPTION_KEY: "${ENCRYPTION_KEY:-}"
+      ENCRYPTION_KEY_PREVIOUS: "${ENCRYPTION_KEY_PREVIOUS:-}"
+      SETUP_TOKEN: "${SETUP_TOKEN:-}"
       DEMO_MODE: "${DEMO_MODE:-false}"
       SECURE_COOKIES: "${SECURE_COOKIES:-true}"
+      SESSION_MAX_HOURS: "${SESSION_MAX_HOURS:-12}"
+      ACCESS_TOKEN_EXPIRE_MINUTES: "${ACCESS_TOKEN_EXPIRE_MINUTES:-60}"
+      ALGORITHM: "${ALGORITHM:-HS256}"
+      MAX_ACCESS_ATTEMPTS: "${MAX_ACCESS_ATTEMPTS:-5}"
+      ACCESS_LOCKOUT_MINUTES: "${ACCESS_LOCKOUT_MINUTES:-15}"
+      MAX_LOGIN_ATTEMPTS: "${MAX_LOGIN_ATTEMPTS:-10}"
+      LOGIN_LOCKOUT_MINUTES: "${LOGIN_LOCKOUT_MINUTES:-30}"
       ADMIN_FAILED_LOGIN_ALERT_THRESHOLD: "${ADMIN_FAILED_LOGIN_ALERT_THRESHOLD:-50}"
       ADMIN_FAILED_LOGIN_ALERT_WINDOW_MINUTES: "${ADMIN_FAILED_LOGIN_ALERT_WINDOW_MINUTES:-15}"
       SUBMISSION_MODE_ENABLED: "${SUBMISSION_MODE_ENABLED:-true}"
+      APP_NAME: "${APP_NAME:-OpenWhistle}"
       LOG_LEVEL: "${LOG_LEVEL:-INFO}"
       LOG_FORMAT: "${LOG_FORMAT:-json}"
       OIDC_ENABLED: "${OIDC_ENABLED:-false}"
@@ -39,9 +57,9 @@ services:
       REMINDER_ACK_WARN_DAYS: "${REMINDER_ACK_WARN_DAYS:-2}"
       REMINDER_FEEDBACK_WARN_DAYS: "${REMINDER_FEEDBACK_WARN_DAYS:-30}"
       BRAND_PRIMARY_COLOR: "${BRAND_PRIMARY_COLOR:-#0c7253}"
-      BRAND_SECONDARY_COLOR: "${BRAND_SECONDARY_COLOR:-#b07230}"
       BRAND_LOGO_URL: "${BRAND_LOGO_URL:-}"
       APP_PUBLIC_URL: "${APP_PUBLIC_URL:-http://localhost}"
+      ONION_LOCATION: "${ONION_LOCATION:-}"
       NOTIFY_EMAIL_ENABLED: "${NOTIFY_EMAIL_ENABLED:-false}"
       NOTIFY_EMAIL_TO: "${NOTIFY_EMAIL_TO:-}"
       NOTIFY_EMAIL_FROM: "${NOTIFY_EMAIL_FROM:-openwhistle@localhost}"
@@ -55,13 +73,19 @@ services:
       NOTIFY_WEBHOOK_URL: "${NOTIFY_WEBHOOK_URL:-}"
       NOTIFY_WEBHOOK_SECRET: "${NOTIFY_WEBHOOK_SECRET:-}"
       NOTIFY_WEBHOOK_TYPE: "${NOTIFY_WEBHOOK_TYPE:-generic}"
-      NOTIFICATION_BATCH_MINUTES: "${NOTIFICATION_BATCH_MINUTES:-60}"
+      NOTIFICATION_BATCH_MINUTES: "${NOTIFICATION_BATCH_MINUTES:-1440}"
       DRAFT_REDIS_MEMORY_PERCENT: "${DRAFT_REDIS_MEMORY_PERCENT:-80}"
       RETENTION_ENABLED: "${RETENTION_ENABLED:-true}"
       RETENTION_DAYS: "${RETENTION_DAYS:-1095}"
       MULTI_TENANCY_ENABLED: "${MULTI_TENANCY_ENABLED:-false}"
       DEFAULT_ORG_SLUG: "${DEFAULT_ORG_SLUG:-default}"
       UPDATE_CHECK_ENABLED: "${UPDATE_CHECK_ENABLED:-false}"
+      # Installation count: empty = the in-app switch decides (off until an admin
+      # agrees); false = always off; true = always on. See docs "Counting installations".
+      TELEMETRY_ENABLED: "${TELEMETRY_ENABLED:-}"
+      CLAMAV_HOST: "${CLAMAV_HOST:-}"
+      CLAMAV_PORT: "${CLAMAV_PORT:-3310}"
+      CLAMAV_TIMEOUT_SECONDS: "${CLAMAV_TIMEOUT_SECONDS:-30}"
     depends_on:
       db:
         condition: service_healthy
@@ -72,22 +96,61 @@ services:
       - internal
       - proxy
 
+  tls-init:
+    image: ghcr.io/openwhistle/openwhistle:${OPENWHISTLE_VERSION:-2.0.0}
+    command: ["python", "scripts/ensure_tls_cert.py", "/certs-in", "/tls", "${TLS_HOSTNAME:-localhost}"]
+    user: "0:0"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      # :z relabels for SELinux hosts (shared label; a no-op elsewhere).
+      - ./nginx/certs:/certs-in:ro,z
+      - tls:/tls
+    restart: "no"
+    network_mode: none
+
   nginx:
     image: nginx:alpine
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m
+      - /var/cache/nginx:size=128m
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
     ports:
       - "80:80"
       - "443:443"
+      # Onion service entry point — reachable only from the host running tor
+      # (see docs/docs.html "Offering an onion address"); never exposed publicly.
+      - "127.0.0.1:8080:8080"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/certs:/etc/nginx/certs:ro
+      # :z relabels for SELinux hosts (shared label; a no-op elsewhere).
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro,z
+      - ./nginx/snippets:/etc/nginx/snippets:ro,z
+      - tls:/etc/nginx/tls:ro
     depends_on:
-      - app
+      tls-init:
+        condition: service_completed_successfully
+      app:
+        condition: service_started
     restart: always
     networks:
       - proxy
 
   db:
     image: postgres:18-alpine
+    security_opt:
+      - no-new-privileges:true
     environment:
       POSTGRES_USER: "${POSTGRES_USER}"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
@@ -108,6 +171,8 @@ services:
 
   redis:
     image: redis:8-alpine
+    security_opt:
+      - no-new-privileges:true
     # noeviction: sessions and rate-limit counters are never dropped; drafts
     # stop taking attachments at DRAFT_REDIS_MEMORY_PERCENT of maxmemory.
     command: redis-server --save "" --appendonly no --maxmemory 1gb --maxmemory-policy noeviction --requirepass "${REDIS_PASSWORD}"
@@ -120,12 +185,55 @@ services:
     networks:
       - internal
 
+  # Optional upload virus scan. Off unless CLAMAV_HOST is set and
+  # this profile is enabled: `COMPOSE_PROFILES=clamav`. Not reachable from the
+  # host, and not on `proxy` — nginx has no business reaching clamd, so it
+  # shares only `internal` with `app`. `internal` has no internet access, but
+  # freshclam (signature updates) needs one to reach database.clamav.net,
+  # hence its own `clamav-egress` network instead of the shared `proxy` one.
+  clamav:
+    image: clamav/clamav:1.4@sha256:a5f03c12a79dbe9f6d8a527b6bb1ea053fa8dd061d3738a26897f055ee2d9303
+    profiles: ["clamav"]
+    restart: always
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+      - /run:size=16m
+      - /var/log/clamav:size=16m
+    volumes:
+      - clamav_data:/var/lib/clamav
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - FOWNER
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "clamdcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 6m
+    networks:
+      - internal
+      - clamav-egress
+
 volumes:
   postgres_data:
+  tls:
+  clamav_data:
 
 networks:
   internal:
     driver: bridge
     internal: true
+  # clamd's only route to the internet (freshclam signature updates). Used by
+  # no other service — in particular, not shared with nginx's `proxy` network.
+  clamav-egress:
+    driver: bridge
   proxy:
     driver: bridge

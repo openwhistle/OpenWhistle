@@ -22,15 +22,30 @@ ingress:
   # Whistleblower privacy: the ingress controller sees every client address.
   # - ingress-nginx logs it in its access log by default; the annotation below
   #   turns that log off for this host (or set `disable-access-log: "true"` in
-  #   the controller ConfigMap). Its error log still names the client on
-  #   errors — keep `error-log-level` at `crit` or ship it nowhere.
+  #   the controller ConfigMap). Its error log names the client on every
+  #   rate-limited request and upstream error: `error-log-level: crit` in the
+  #   controller ConfigMap is REQUIRED for a whistleblower platform.
   # - ingress-nginx always sends X-Forwarded-For / X-Real-IP upstream and has
   #   no per-Ingress switch to stop it. OpenWhistle drops these headers and the
   #   peer address in its first middleware; nothing in the app sees or logs them.
   # - Traefik keeps access logs off unless enabled. Other controllers: check.
+  # Rate limit, like the bundled nginx (10 r/s, burst 30 per client address,
+  # in controller memory only): ingress-nginx's burst is rps x multiplier.
+  # It rejects with 503 (429 needs `limit-req-status-code: "429"` in the
+  # controller ConfigMap) and keys on the peer address, so behind a load
+  # balancer all reporters share one budget unless the controller sees the client:
+  # - L4 (TCP, SNAT): `use-proxy-protocol: "true"` in the controller ConfigMap
+  #   (and on the load balancer), or `externalTrafficPolicy: Local` on the
+  #   controller Service.
+  # - L7 (HTTP): `use-forwarded-headers: "true"` only with `proxy-real-ip-cidr`
+  #   set to the load balancer's range; otherwise clients spoof X-Forwarded-For
+  #   and escape the limit.
+  # Other controllers: set an equivalent limit.
   # Your own annotations are merged with this default (Helm merges maps).
   annotations:
     nginx.ingress.kubernetes.io/enable-access-log: "false"
+    nginx.ingress.kubernetes.io/limit-rps: "10"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "3"
   hosts:
     - host: whistleblower.example.com
       paths:
@@ -61,13 +76,23 @@ config:
   appPublicUrl: "https://whistleblower.example.com"
   submissionModeEnabled: "true"
 
+  # Tor onion address for reporters on a monitored network (Onion-Location
+  # header + a note on the submit page). Empty disables both, and the app then
+  # ignores X-OW-Onion. When set, the ingress must clear a client-sent copy:
+  #   nginx.ingress.kubernetes.io/configuration-snippet: |
+  #     proxy_set_header X-OW-Onion "";
+  # (ingress-nginx needs allow-snippet-annotations in its ConfigMap.)
+  onionLocation: ""
+
+  # Absolute admin session lifetime in hours, counted from login (never extended)
+  sessionMaxHours: "12"
+
   # Password-spraying alert: failed admin logins, instance-wide (0 disables)
   adminFailedLoginAlertThreshold: "50"
   adminFailedLoginAlertWindowMinutes: "15"
 
   # Branding
   brandPrimaryColor: "#0f4c81"
-  brandSecondaryColor: "#b07230"
   brandLogoUrl: ""
 
   # SLA reminders
@@ -117,7 +142,7 @@ config:
   notifyWebhookType: "generic"
   # New reports / whistleblower messages are sent as one digest every N minutes,
   # so their timing reveals nothing. 0 = send each at once.
-  notificationBatchMinutes: "60"
+  notificationBatchMinutes: "1440"
 
   # Refuse new draft attachments above this share of Redis maxmemory.
   draftRedisMemoryPercent: "80"
@@ -131,6 +156,26 @@ config:
   multiTenancyEnabled: "false"
   defaultOrgSlug: "default"
 
+  # Virus scanning of uploads through clamd (INSTREAM). Empty host = off. When
+  # set, an upload is refused if clamd cannot be reached (fail closed). This
+  # chart does not deploy a clamav pod — point clamavHost at a clamd you run
+  # and reach from the cluster yourself (your own Deployment/Service, or an
+  # external instance). Setting it without a reachable clamd behind it fails
+  # every upload closed, not open.
+  clamavHost: ""
+  clamavPort: "3310"
+  clamavTimeoutSeconds: "30"
+
+  # Installation count (a random id and the version, once a day, to
+  # telemetry.wdkro.de). Empty: the in-app switch decides, off until an admin
+  # agrees. "false": always off. "true": always on.
+  telemetryEnabled: ""
+
+# Any other (non-secret) setting from the configuration table, as NAME: value,
+# e.g. SECURE_COOKIES, ACCESS_TOKEN_EXPIRE_MINUTES, UPDATE_CHECK_ENABLED or the
+# lockout settings. Added to the ConfigMap; never repeat a key set above.
+extraEnv: {}
+
 # Secrets — these must be provided; they are not defaulted.
 # Create a Kubernetes Secret and reference it, or use an external secrets operator.
 secrets:
@@ -138,8 +183,11 @@ secrets:
   # Leave blank to let the chart create a Secret from the values below (not recommended for prod).
   existingSecret: ""
   secretKey: ""         # required — generate with: openssl rand -hex 32
+  encryptionKey: ""     # recommended — root of at-rest encryption; unset: secretKey is used
+  encryptionKeyPrevious: ""  # optional — comma-separated old keys during a rotation
   databaseUrl: ""       # required — postgresql+asyncpg://user:pass@host:5432/db
   redisUrl: ""          # required — redis://host:6379/0
+  setupToken: ""        # optional, 32+ characters — unset: a random token is created at startup and logged once
   smtpPassword: ""
   webhookSecret: ""
   s3SecretAccessKey: ""

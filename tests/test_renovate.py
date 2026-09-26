@@ -47,6 +47,18 @@ def test_every_match_string_matches_somewhere() -> None:
             assert re.search(pattern.replace("(?<", "(?P<"), text), f"dead pattern: {pattern}"
 
 
+def test_python_runtime_rule_does_not_override_digest_automerge() -> None:
+    """The Python runtime packageRule is later in the array than the general digest
+    rule, so if it matched digest updates it would silently win and base-image
+    digest refreshes would never auto-merge (a later matching rule overrides an
+    earlier one for the same field in Renovate)."""
+    rules = [r for r in CONFIG["packageRules"] if r.get("groupName") == "Python runtime"]
+    assert rules, "no 'Python runtime' packageRule found"
+    for rule in rules:
+        assert "matchUpdateTypes" in rule, "rule must scope its update types"
+        assert "digest" not in rule["matchUpdateTypes"]
+
+
 def test_no_managed_file_is_ignored() -> None:
     """config:recommended ignores tests/ by default (:ignoreModulesAndTests),
     which silently hid the axe-core pin in tests/e2e/conftest.py. ignorePaths
@@ -59,3 +71,13 @@ def test_no_managed_file_is_ignored() -> None:
             rel = f.relative_to(ROOT).as_posix()
             hit = [g for g in CONFIG["ignorePaths"] if fnmatch(rel, g) or fnmatch("/" + rel, g)]
             assert not hit, f"{rel} is managed but ignored by {hit}"
+
+
+def test_axe_core_is_fetched_from_the_registry_renovate_checks() -> None:
+    """The axe manager's datasource is npm. cdnjs publishes later than npm, so a
+    Renovate bump pointed at a cdnjs URL that 404ed (#93) — and a 404 used to
+    skip every axe check instead of failing."""
+    (manager,) = [m for m in CONFIG["customManagers"] if m.get("depNameTemplate") == "axe-core"]
+    assert manager["datasourceTemplate"] == "npm"
+    conftest = (ROOT / "tests/e2e/conftest.py").read_text()
+    assert re.search(r'AXE_CDN = "https://cdn\.jsdelivr\.net/npm/axe-core@\d+\.\d+\.\d+/', conftest)

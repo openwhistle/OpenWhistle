@@ -1,43 +1,28 @@
-{% extends "base.html" %}
+{% extends "admin/_layout.html" %}
 
-{% block title %}Data Retention Policy | OpenWhistle{% endblock %}
+{% block title %}{{ t('admin.retention.title') }} | OpenWhistle{% endblock %}
 
-{% block nav_links %}
-<li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
-<li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
-<li><a href="/admin/categories">{{ t('admin.nav.categories') }}</a></li>
-<li><a href="/admin/locations">{{ t('admin.nav.locations') }}</a></li>
-<li><a href="/admin/users">{{ t('admin.nav.users') }}</a></li>
-<li><a href="/admin/audit-log">{{ t('admin.nav.audit_log') }}</a></li>
-<li><a href="/admin/retention" class="active" aria-current="page">{{ t('admin.nav.retention') }}</a></li>
-<li><a href="/admin/telephone-channel">{{ t('admin.nav.telephone_channel') }}</a></li>
-<li><a href="/admin/organisations">{{ t('admin.nav.organisations') }}</a></li>
-<li><a href="/admin/system">{{ t('admin.nav.system') }}</a></li>
-<li><form method="post" action="/admin/logout"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button type="submit" class="nav-link-button">{{ t('admin.nav.logout') }}</button></form></li>
-{% endblock %}
-
-{% block content %}
+{% block admin_content %}
 <div class="container">
     <div class="page-header">
-        <div class="page-eyebrow">{{ t('admin.retention.eyebrow') }}</div>
         <h1>{{ t('admin.retention.title') }}</h1>
         <p class="page-subtitle">{{ t('admin.retention.subtitle') }}</p>
     </div>
 
-    <div class="stats-grid" role="list">
+    <div class="stats-row" role="list">
         <div class="stat-card {% if retention_enabled %}stat-card--active{% else %}stat-card--inactive{% endif %}" role="listitem">
             <div class="stat-card__label">{{ t('admin.retention.stat.status') }}</div>
             <div class="stat-card__value">
                 {% if retention_enabled %}
-                    <span class="badge badge--green" aria-label="{{ t('admin.retention.stat.enabled') }}">{{ t('admin.retention.stat.enabled') }}</span>
+                    <span class="badge badge-closed" aria-label="{{ t('admin.retention.stat.enabled') }}">{{ t('admin.retention.stat.enabled') }}</span>
                 {% else %}
-                    <span class="badge badge--grey" aria-label="{{ t('admin.retention.stat.disabled') }}">{{ t('admin.retention.stat.disabled') }}</span>
+                    <span class="badge" aria-label="{{ t('admin.retention.stat.disabled') }}">{{ t('admin.retention.stat.disabled') }}</span>
                 {% endif %}
             </div>
         </div>
         <div class="stat-card" role="listitem">
             <div class="stat-card__label">{{ t('admin.retention.stat.period') }}</div>
-            <div class="stat-card__value">{{ retention_days }} days
+            <div class="stat-card__value">{{ t('admin.retention.stat.period.value', days=retention_days) }}
                 <span class="stat-card__sub">{{ t('admin.retention.stat.period.sub', years=(retention_days / 365)|round(1)) }}</span>
             </div>
         </div>
@@ -47,7 +32,7 @@
                 {% if retention_enabled %}
                     <time data-utc="{{ next_run.isoformat() }}">{{ next_run.strftime('%Y-%m-%d 03:00 UTC') }}</time>
                 {% else %}
-                    N/A
+                    &mdash;
                 {% endif %}
             </div>
         </div>
@@ -123,8 +108,8 @@
     </section>
 
     <div class="page-actions">
-        <a href="/admin/dashboard" class="btn btn--secondary">{{ t('admin.back_dashboard') }}</a>
-        <a href="/admin/audit-log?action=report.auto_deleted" class="btn btn--outline">
+        <a href="/admin/dashboard" class="btn btn-secondary">{{ t('admin.back_dashboard') }}</a>
+        <a href="/admin/audit-log?action=report.auto_deleted" class="btn btn-secondary">
             {{ t('admin.retention.audit_link') }}
         </a>
     </div>

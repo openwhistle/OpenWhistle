@@ -1,11 +1,14 @@
 """Tests for service-layer functions."""
 
+import uuid
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.location import Location
 from app.models.report import ReportStatus
 from app.services.auth import (
     create_access_token,
-    decode_access_token,
+    decode_access_token_claims,
     hash_password,
     hash_pin,
     verify_password,
@@ -68,17 +71,18 @@ def test_totp_verify_invalid_code() -> None:
 def test_create_access_token_and_decode() -> None:
     token = create_access_token("test-user-id-123")
     assert isinstance(token, str)
-    user_id = decode_access_token(token)
-    assert user_id == "test-user-id-123"
+    claims = decode_access_token_claims(token)
+    assert claims is not None
+    assert claims["sub"] == "test-user-id-123"
 
 
 def test_decode_invalid_access_token() -> None:
-    result = decode_access_token("not-a-valid-jwt-token")
+    result = decode_access_token_claims("not-a-valid-jwt-token")
     assert result is None
 
 
 def test_decode_malformed_token() -> None:
-    result = decode_access_token("")
+    result = decode_access_token_claims("")
     assert result is None
 
 
@@ -162,22 +166,20 @@ async def test_get_report_wrong_case_number(db_session: AsyncSession) -> None:
 
 
 async def test_add_whistleblower_message(db_session: AsyncSession) -> None:
-    from app.config import settings as cfg
     from app.services.encryption import decrypt_field_safe, make_report_fernet
 
     report, _ = await create_report(db_session, "financial_fraud", "Description long enough here!")
     msg = await add_whistleblower_message(db_session, report, "Additional info from whistleblower.")
-    fernet = make_report_fernet(report.encrypted_dek, cfg.secret_key)
+    fernet = make_report_fernet(report.encrypted_dek)
     assert decrypt_field_safe(fernet, msg.content) == "Additional info from whistleblower."
 
 
 async def test_add_admin_message(db_session: AsyncSession) -> None:
-    from app.config import settings as cfg
     from app.services.encryption import decrypt_field_safe, make_report_fernet
 
     report, _ = await create_report(db_session, "corruption", "Corruption description here pls!")
     msg = await add_admin_message(db_session, report, "Admin response to this report.")
-    fernet = make_report_fernet(report.encrypted_dek, cfg.secret_key)
+    fernet = make_report_fernet(report.encrypted_dek)
     assert decrypt_field_safe(fernet, msg.content) == "Admin response to this report."
 
 
@@ -227,11 +229,74 @@ async def test_delete_report(db_session: AsyncSession) -> None:
 
 
 async def test_paginated_returns_all_on_first_page(db_session: AsyncSession) -> None:
-    for i in range(3):
-        await create_report(db_session, "corruption", f"Pagination test report number {i} ok!")
-    reports, total = await get_reports_paginated(db_session, page=1, per_page=100)
-    assert total >= 3
-    assert len(reports) == total
+    """Filtered to a location of its own, so other tests' reports never interfere."""
+    loc = Location(
+        id=uuid.uuid4(), name="Pagination site", code=f"G{uuid.uuid4().hex[:5]}",
+        is_active=False,  # an active location would add a wizard step to later tests
+    )
+    db_session.add(loc)
+    await db_session.commit()
+    created = [
+        (
+            await create_report(
+                db_session, "corruption", f"Pagination test report number {i} ok!",
+                location_id=loc.id,
+            )
+        )[0]
+        for i in range(3)
+    ]
+    reports, total = await get_reports_paginated(
+        db_session, page=1, per_page=100, location_id=loc.id
+    )
+    assert total == 3
+    assert {r.id for r in reports} == {r.id for r in created}
+
+
+async def test_paginated_order_is_total_across_same_day_reports(db_session: AsyncSession) -> None:
+    """submitted_at is the day, so every report of today ties: the id breaks the tie,
+    and one-per-page walks every report exactly once, newest id first."""
+    loc = Location(
+        id=uuid.uuid4(), name="Tie site", code=f"T{uuid.uuid4().hex[:5]}",
+        is_active=False,  # an active location would add a wizard step to later tests
+    )
+    db_session.add(loc)
+    await db_session.commit()
+    created = [
+        (
+            await create_report(
+                db_session, "corruption", f"Same-day tie report number {i} ok!", location_id=loc.id
+            )
+        )[0]
+        for i in range(4)
+    ]
+    assert len({r.submitted_at for r in created}) == 1
+    walked = []
+    for page in range(1, 5):
+        rows, _ = await get_reports_paginated(
+            db_session, page=page, per_page=1, location_id=loc.id
+        )
+        walked += [r.id for r in rows]
+    assert walked == sorted((r.id for r in created), reverse=True)
+
+
+async def test_audit_log_order_is_total_when_times_tie(db_session: AsyncSession) -> None:
+    from datetime import UTC, datetime
+
+    from app.models.audit import AuditLog
+    from app.services.audit import get_audit_log
+
+    same = datetime(2026, 1, 1, tzinfo=UTC)
+    action = f"tie-{uuid.uuid4().hex[:8]}"
+    ids = [uuid.uuid4() for _ in range(4)]
+    db_session.add_all(
+        AuditLog(id=i, admin_username="x", action=action, created_at=same) for i in ids
+    )
+    await db_session.commit()
+    walked = []
+    for page in range(1, 5):
+        rows, _ = await get_audit_log(db_session, action=action, page=page, per_page=1)
+        walked += [r.id for r in rows]
+    assert walked == sorted(ids, reverse=True)
 
 
 async def test_paginated_page_size_is_respected(db_session: AsyncSession) -> None:

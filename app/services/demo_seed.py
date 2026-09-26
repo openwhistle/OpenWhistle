@@ -31,6 +31,7 @@ from app.models.setup import SetupStatus
 from app.models.user import AdminRole, AdminUser
 from app.services.auth import hash_password, hash_pin
 from app.services.encryption import encrypt_dek, encrypt_field, generate_dek, make_report_fernet
+from app.services.report import day_floor
 
 # Stable demo credentials — published intentionally for the demo instance
 DEMO_ADMIN_USERNAME = "demo"
@@ -158,6 +159,11 @@ async def _seed(db: AsyncSession) -> None:
         )
         db.add(case_mgr)
         await db.flush()
+    # The default org, like setup's first admin; also for accounts seeded before
+    # they had one (a database that outlived a reset).
+    for account in (admin, case_mgr):
+        if account.org_id is None:
+            account.org_id = org_row
 
     # Create demo locations if not exist
     result_loc = await db.execute(select(Location).where(Location.code == "HQ"))
@@ -218,6 +224,12 @@ async def _seed(db: AsyncSession) -> None:
             feedback_due_at = acknowledged_at + timedelta(days=90)
         if demo.get("closed"):
             closed_at = now - timedelta(days=3)
+        # Reporter times are whole UTC days, as create_report stores them, and
+        # every message has its own time so the receipt is always first.
+        submitted_at = day_floor(
+            acknowledged_at - timedelta(days=2) if acknowledged_at else now
+        )
+        reply_day = day_floor(acknowledged_at + timedelta(days=1)) if acknowledged_at else None
 
         idx = DEMO_REPORTS.index(demo)
         location_obj: Location | None = demo_location if idx % 2 == 0 else demo_location2
@@ -232,8 +244,8 @@ async def _seed(db: AsyncSession) -> None:
 
         from app.config import settings as cfg
         dek_raw = generate_dek()
-        enc_dek = encrypt_dek(dek_raw, cfg.secret_key)
-        report_fernet = make_report_fernet(enc_dek, cfg.secret_key)
+        enc_dek = encrypt_dek(dek_raw)
+        report_fernet = make_report_fernet(enc_dek)
         enc_description = encrypt_field(report_fernet, demo["description"])
 
         report = Report(
@@ -252,6 +264,7 @@ async def _seed(db: AsyncSession) -> None:
             confidential_name=conf_name_enc,
             confidential_contact=conf_contact_enc,
             org_id=org_row,
+            submitted_at=submitted_at,
         )
         db.add(report)
         await db.flush()
@@ -267,6 +280,7 @@ async def _seed(db: AsyncSession) -> None:
                     "Your report has been received. You will receive an acknowledgement "
                     "within 7 days as required by §17 HinSchG."
                 ),
+                sent_at=submitted_at,
             )
         )
 
@@ -284,6 +298,7 @@ async def _seed(db: AsyncSession) -> None:
                         "We have acknowledged your report and have begun our internal review. "
                         "We will provide a full update within 3 months."
                     ),
+                    sent_at=acknowledged_at,
                 )
             )
 
@@ -296,6 +311,7 @@ async def _seed(db: AsyncSession) -> None:
                     content=(
                         "Thank you. I have additional documentation I can provide if needed."
                     ),
+                    sent_at=reply_day,
                 )
             )
             db.add(
@@ -307,6 +323,7 @@ async def _seed(db: AsyncSession) -> None:
                         "Our investigation is progressing. We will reach out with further "
                         "questions if needed. An interim update will follow shortly."
                     ),
+                    sent_at=reply_day + timedelta(hours=3) if reply_day else None,
                 )
             )
 
@@ -321,6 +338,7 @@ async def _seed(db: AsyncSession) -> None:
                         "and appropriate corrective measures have been implemented. Thank you for "
                         "your report — your identity remains fully protected."
                     ),
+                    sent_at=closed_at,
                 )
             )
 

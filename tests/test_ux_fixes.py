@@ -209,7 +209,7 @@ async def test_delete_report_removes_redis_session(
 
     redis = await get_redis()
     session_key = f"status-session:test-session-{uuid.uuid4().hex}"
-    await redis.setex(session_key, 7200, str(report.id))
+    await redis.set(session_key, str(report.id), ex=7200)
     assert await redis.exists(session_key)
 
     await _delete_report_4eyes(client, db_session, str(report.id), "dr1a", "dr1b")
@@ -231,8 +231,8 @@ async def test_delete_report_only_removes_matching_sessions(
     redis = await get_redis()
     key_a = f"status-session:iso-a-{uuid.uuid4().hex}"
     key_b = f"status-session:iso-b-{uuid.uuid4().hex}"
-    await redis.setex(key_a, 7200, str(report_a.id))
-    await redis.setex(key_b, 7200, str(report_b.id))
+    await redis.set(key_a, str(report_a.id), ex=7200)
+    await redis.set(key_b, str(report_b.id), ex=7200)
 
     await _delete_report_4eyes(client, db_session, str(report_a.id), "dr2a", "dr2b")
 
@@ -268,7 +268,7 @@ async def test_deleted_report_session_falls_back_to_login(
 
     redis = await get_redis()
     session_key = uuid.uuid4().hex
-    await redis.setex(f"status-session:{session_key}", 7200, str(report.id))
+    await redis.set(f"status-session:{session_key}", str(report.id), ex=7200)
 
     await _delete_report_4eyes(client, db_session, str(report.id), "dr4a", "dr4b")
 

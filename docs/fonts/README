@@ -1,0 +1,53 @@
+Sora and JetBrains Mono (self-hosted web fonts)
+==========================================================
+
+Used by every page under docs/ (the landing pages, docs.html, roadmap.html
+and the blog) for --font-display/--font-body (Sora) and --font-mono
+(JetBrains Mono). Self-hosted so the pages load no font from an external
+CDN.
+
+Source
+------
+
+Every file is byte-identical (`cmp`) to the file of the same weight and
+style in these packages; the sha512 is the npm registry's dist.integrity:
+
+  @fontsource/sora@5.3.0
+    https://registry.npmjs.org/@fontsource/sora/-/sora-5.3.0.tgz
+    sha512-SqW3OpKxxfKvxDLPlbdrWf2KooPfbd+W3jaYn483o+Y/JrmU87vjFPNptDqwP428c3vY+gnranLhjcbRaXB0Jw==
+
+  @fontsource/jetbrains-mono@5.3.0
+    https://registry.npmjs.org/@fontsource/jetbrains-mono/-/jetbrains-mono-5.3.0.tgz
+    sha512-fqDfB5I9f1p1TV486aUgB9t8zP84P0O1FtQR5Ol9vjwPy+S+EIGlVYm1cvj2W5shcZMTg2nZFdVMoH5wFu8a1A==
+
+Files
+-----
+
+  sora-latin-{300,400,500,600,700}-normal.woff2
+  JetBrainsMono-Regular.woff2  (weight 400 normal)
+  JetBrainsMono-Bold.woff2     (weight 700 normal)
+  JetBrainsMono-Medium.woff2   (weight 500 normal)
+  JetBrainsMono-Italic.woff2   (weight 400 italic)
+
+Latin subset only, no `unicode-range`: every use of JetBrains Mono is plain
+ASCII (case numbers, PINs, timestamps, code, the wordmark), and a narrow
+range without a second face would only lose coverage.
+
+Sora has no italic face upstream, so no page asks for italic Sora; emphasis
+uses weight or colour instead. `test_every_docs_page_font_usage_has_a_matching_font_face`
+checks that every (family, weight, style) a docs page uses has a shipped
+`@font-face`, with no exceptions.
+
+The application
+---------------
+
+`app/static/fonts/` is not in the repository: the Dockerfile copies the six
+faces `app/static/css/fonts.css` declares (Sora 400/500/600/700, JetBrains
+Mono Regular/Bold) from this directory into the image. One copy serves both
+the site and the app.
+
+License
+-------
+
+SIL Open Font License 1.1 for both families: `sora-LICENSE`,
+`jetbrains-mono-LICENSE`, unmodified as shipped by their packages.

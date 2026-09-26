@@ -7,6 +7,8 @@ informational message only — a correct case number and PIN always succeed (see
 For admin login: rate limits are tracked per username.
 """
 
+import hashlib
+import hmac
 import time
 
 from redis.asyncio import Redis
@@ -17,11 +19,19 @@ _WB_PREFIX = "openwhistle:wb_ratelimit:"
 _ADMIN_PREFIX = "openwhistle:admin_ratelimit:"
 _SPRAY_PREFIX = "openwhistle:admin_failed_logins:"  # + minute number
 _SPRAY_ALERTED = "openwhistle:admin_spray_alerted"
+_SETUP_TOKEN_FAILURES = "openwhistle:setup_token_failures"  # noqa: S105 — Redis key name
+
+
+def _wb_key(case_key: str) -> str:
+    """The Redis key for a case's failure counter: an HMAC, never the case number,
+    so a Redis dump does not list which cases someone tried to open."""
+    digest = hmac.new(settings.secret_key.encode(), case_key.encode(), hashlib.sha256)
+    return f"{_WB_PREFIX}{digest.hexdigest()}"
 
 
 async def record_whistleblower_failure(redis: Redis, case_key: str) -> int:
     """Record a failed access attempt. Returns total failure count."""
-    key = f"{_WB_PREFIX}{case_key}"
+    key = _wb_key(case_key)
     count = await redis.incr(key)
     if count == 1:
         await redis.expire(key, settings.access_lockout_minutes * 60)
@@ -30,13 +40,13 @@ async def record_whistleblower_failure(redis: Redis, case_key: str) -> int:
 
 async def reset_whistleblower_attempts(redis: Redis, case_key: str) -> None:
     """Clear the failure counter after a successful access."""
-    key = f"{_WB_PREFIX}{case_key}"
+    key = _wb_key(case_key)
     await redis.delete(key)
 
 
 async def get_whistleblower_lockout_ttl(redis: Redis, case_key: str) -> int:
     """Returns seconds remaining in the lockout window, or 0 if not locked."""
-    key = f"{_WB_PREFIX}{case_key}"
+    key = _wb_key(case_key)
     ttl = await redis.ttl(key)
     return max(0, int(ttl))
 
@@ -88,3 +98,23 @@ async def record_instance_login_failure(redis: Redis) -> bool:
     if sum(int(c) for c in counts if c) < threshold:
         return False
     return bool(await redis.set(_SPRAY_ALERTED, "1", nx=True, ex=minutes * 60))
+
+
+async def setup_token_locked(redis: Redis) -> bool:
+    """True once MAX_LOGIN_ATTEMPTS wrong setup tokens were tried in the lockout window.
+
+    Counted for the whole instance (there is no account yet, and no IP is read).
+    """
+    count = await redis.get(_SETUP_TOKEN_FAILURES)
+    return count is not None and int(count) >= settings.max_login_attempts
+
+
+async def record_setup_token_failure(redis: Redis) -> None:
+    count = await redis.incr(_SETUP_TOKEN_FAILURES)
+    if count == 1:
+        await redis.expire(_SETUP_TOKEN_FAILURES, settings.login_lockout_minutes * 60)
+
+
+async def reset_setup_token_failures(redis: Redis) -> None:
+    """Clear the count after a right token (only reachable while not locked)."""
+    await redis.delete(_SETUP_TOKEN_FAILURES)

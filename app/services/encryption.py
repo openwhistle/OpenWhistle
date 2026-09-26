@@ -1,8 +1,11 @@
 """Envelope encryption for report fields.
 
 Architecture (at-rest encryption):
-  MEK  — Master Encryption Key. Derived via HKDF-SHA256 from the SECRET_KEY
-          environment variable. Never stored anywhere — re-derived on every call.
+  MEK  — Master Encryption Key. Derived via HKDF-SHA256 from ENCRYPTION_KEY
+          (falling back to SECRET_KEY when unset). Never stored anywhere —
+          re-derived on every call. Keys in ENCRYPTION_KEY_PREVIOUS stay
+          accepted for decryption (MultiFernet), so the MEK can be rotated:
+          scripts/rotate_encryption_key.py re-wraps every DEK under the current one.
   DEK  — Data Encryption Key. 32 random bytes generated per report, then
           wrapped (encrypted) with the MEK-derived Fernet key.
           Stored in reports.encrypted_dek as a Fernet token string.
@@ -10,8 +13,8 @@ Architecture (at-rest encryption):
           Fernet key derived from the per-report DEK.
 
 Why envelope encryption?
-  Compromising the database alone (without SECRET_KEY) yields only ciphertext.
-  DEK rotation is possible per-report without re-keying everything.
+  Compromising the database alone (without ENCRYPTION_KEY) yields only ciphertext.
+  Rotating the MEK re-wraps the DEKs only; report data is never re-encrypted.
 """
 
 from __future__ import annotations
@@ -20,7 +23,7 @@ import base64
 import logging
 import os
 
-from cryptography.fernet import Fernet, InvalidToken
+from cryptography.fernet import Fernet, InvalidToken, MultiFernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
@@ -34,7 +37,7 @@ _FERNET_PREFIX = "gAAAA"
 
 
 def derive_mek(secret_key: str) -> bytes:
-    """Derive the 32-byte Master Encryption Key from SECRET_KEY via HKDF-SHA256."""
+    """Derive the 32-byte Master Encryption Key from a root key via HKDF-SHA256."""
     hkdf = HKDF(
         algorithm=hashes.SHA256(),
         length=32,
@@ -44,10 +47,20 @@ def derive_mek(secret_key: str) -> bytes:
     return hkdf.derive(secret_key.encode("utf-8"))
 
 
-def make_mek_fernet(secret_key: str) -> Fernet:
-    """Return a Fernet instance keyed with the MEK derived from secret_key."""
-    raw = derive_mek(secret_key)
-    return Fernet(base64.urlsafe_b64encode(raw))
+def encryption_keys() -> list[str]:
+    """Current key first, then every key still accepted for decryption."""
+    from app.config import settings  # noqa: PLC0415
+
+    current = settings.encryption_key or settings.secret_key
+    previous = [k for k in settings.encryption_key_previous.split(",") if k]
+    return [current, *previous]
+
+
+def make_mek_fernet() -> MultiFernet:
+    """Encrypts with the current MEK, decrypts with any configured one."""
+    return MultiFernet(
+        [Fernet(base64.urlsafe_b64encode(derive_mek(k))) for k in encryption_keys()]
+    )
 
 
 def generate_dek() -> bytes:
@@ -55,22 +68,24 @@ def generate_dek() -> bytes:
     return os.urandom(32)
 
 
-def encrypt_dek(dek_raw: bytes, secret_key: str) -> str:
-    """Encrypt a raw DEK with the MEK Fernet. Returns the Fernet token as a string."""
-    mek_fernet = make_mek_fernet(secret_key)
-    return mek_fernet.encrypt(dek_raw).decode("utf-8")
+def encrypt_dek(dek_raw: bytes) -> str:
+    """Wrap a raw DEK with the current MEK. Returns the Fernet token as a string."""
+    return make_mek_fernet().encrypt(dek_raw).decode("utf-8")
 
 
-def decrypt_dek(encrypted_dek: str, secret_key: str) -> bytes:
-    """Decrypt an MEK-wrapped DEK token. Returns the raw 32-byte DEK."""
-    mek_fernet = make_mek_fernet(secret_key)
-    return mek_fernet.decrypt(encrypted_dek.encode("utf-8"))
+def decrypt_dek(encrypted_dek: str) -> bytes:
+    """Unwrap an MEK-wrapped DEK token. Returns the raw 32-byte DEK."""
+    return make_mek_fernet().decrypt(encrypted_dek.encode("utf-8"))
 
 
-def make_report_fernet(encrypted_dek: str, secret_key: str) -> Fernet:
+def rotate_dek(encrypted_dek: str) -> str:
+    """Re-wrap a DEK under the current MEK. The data it protects is untouched."""
+    return make_mek_fernet().rotate(encrypted_dek.encode("utf-8")).decode("utf-8")
+
+
+def make_report_fernet(encrypted_dek: str) -> Fernet:
     """Build a Fernet instance from the stored encrypted DEK for a specific report."""
-    dek_raw = decrypt_dek(encrypted_dek, secret_key)
-    return Fernet(base64.urlsafe_b64encode(dek_raw))
+    return Fernet(base64.urlsafe_b64encode(decrypt_dek(encrypted_dek)))
 
 
 def encrypt_field(fernet: Fernet, plaintext: str) -> str:
@@ -89,7 +104,7 @@ def decrypt_field_safe(fernet: Fernet, ciphertext: str | None) -> str | None:
     Two failure modes are handled differently:
     - Pre-encryption plaintext (value does not look like a Fernet token):
       returned as-is for backward compatibility with rows written before migration 013.
-    - Fernet token that fails to decrypt (wrong key, e.g. SECRET_KEY was rotated):
+    - Fernet token that fails to decrypt (wrong key, e.g. ENCRYPTION_KEY was rotated):
       logs a warning and returns an error sentinel so the UI shows an actionable
       message rather than raw ciphertext.
     """
@@ -102,10 +117,60 @@ def decrypt_field_safe(fernet: Fernet, ciphertext: str | None) -> str | None:
             # This looks like a real Fernet token — decryption key mismatch
             log.warning(
                 "Fernet decryption failed for an encrypted field. "
-                "SECRET_KEY may have been rotated without re-encrypting stored DEKs."
+                "ENCRYPTION_KEY/SECRET_KEY may have been rotated without re-encrypting stored DEKs."
             )
-            return "[DECRYPTION FAILED — check SECRET_KEY]"
+            return "[DECRYPTION FAILED — check ENCRYPTION_KEY/SECRET_KEY]"
         # Does not look like a Fernet token — treat as pre-encryption plaintext
         return ciphertext
     except Exception:  # noqa: BLE001
         return ciphertext
+
+
+UNREADABLE_DATA_MESSAGE = (
+    "Existing data does not decrypt under ENCRYPTION_KEY or any key in ENCRYPTION_KEY_PREVIOUS. "
+    "If ENCRYPTION_KEY was just set on an existing install, set ENCRYPTION_KEY_PREVIOUS to the "
+    "old SECRET_KEY, then run scripts/rotate_encryption_key.py. If ENCRYPTION_KEY was just "
+    "removed or changed, put the old value back (or into ENCRYPTION_KEY_PREVIOUS)."
+)
+
+
+async def configured_keys_read_existing_data() -> bool:
+    """Unwrap one stored DEK and one encrypted TOTP secret with the configured keys.
+
+    Setting ENCRYPTION_KEY on an existing install without ENCRYPTION_KEY_PREVIOUS (or
+    dropping it again) would leave every report unreadable and lock every admin out of
+    TOTP. Run before migrations, so migration 004 never encrypts under the wrong key.
+    A fresh database (no tables yet) has nothing to check.
+    """
+    from sqlalchemy import text  # noqa: PLC0415
+    from sqlalchemy.ext.asyncio import create_async_engine  # noqa: PLC0415
+    from sqlalchemy.pool import NullPool  # noqa: PLC0415
+
+    from app.config import settings  # noqa: PLC0415
+    from app.services.crypto import decrypt  # noqa: PLC0415
+
+    engine = create_async_engine(settings.database_url, poolclass=NullPool, hide_parameters=True)
+    try:
+        async with engine.connect() as conn:
+            dek = totp = None
+            if await conn.scalar(text("SELECT to_regclass('reports')")):
+                dek = await conn.scalar(text(
+                    "SELECT encrypted_dek FROM reports WHERE encrypted_dek IS NOT NULL LIMIT 1"
+                ))
+            # A plaintext base32 TOTP secret (before migration 004) never starts with the
+            # lowercase Fernet prefix, so only encrypted secrets are sampled.
+            if await conn.scalar(text("SELECT to_regclass('admin_users')")):
+                totp = await conn.scalar(
+                    text("SELECT totp_secret FROM admin_users WHERE totp_secret LIKE :p LIMIT 1"),
+                    {"p": f"{_FERNET_PREFIX}%"},
+                )
+    finally:
+        await engine.dispose()
+    try:
+        if dek:
+            decrypt_dek(dek)
+        if totp:
+            decrypt(totp)
+    except InvalidToken:
+        return False
+    return True

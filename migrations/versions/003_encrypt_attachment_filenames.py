@@ -9,7 +9,7 @@ as well as the content does. The column becomes Text (a Fernet token is longer
 than the name) and existing plaintext names are encrypted in place.
 
 Idempotent: a name that already decrypts with its report key is left alone.
-A row whose report key cannot be unwrapped (SECRET_KEY changed) keeps its
+A row whose report key cannot be unwrapped (encryption key changed) keeps its
 plaintext name and is logged by id; the application still reads it.
 """
 
@@ -36,11 +36,10 @@ def _rows() -> list[tuple[object, str, str]]:
 
 
 def _fernet(dek: str) -> Fernet | None:
-    from app.config import settings
     from app.services.encryption import make_report_fernet
 
     try:
-        return make_report_fernet(dek, settings.secret_key)
+        return make_report_fernet(dek)
     except (InvalidToken, ValueError):
         return None
 

@@ -49,11 +49,14 @@
 
   <style>
     /* Self-hosted fonts — no external CDN calls */
+    @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-300-normal.woff2') format('woff2'); font-weight: 300; font-style: normal; font-display: swap; }
     @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
     @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-500-normal.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
     @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
     @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
     @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+    @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
     @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
   </style>
 
@@ -63,71 +66,70 @@
        ================================================================ */
 
     :root {
-      --bg-base:       #ffffff;
-      --bg-surface:    #f6f6f5;
-      --bg-raised:     #efefee;
-      --bg-overlay:    #e9e9e8;
-      --nav-bg:        #ffffff;
-      --footer-bg:     #0a0a0b;
-      --sidebar-bg:    #f6f6f5;
-      --text-primary:  #0a0a0b;
-      --text-secondary:#3d3d40;
-      --text-muted:    #6a6a6e;
+      --bg-base: #ffffff;
+      --bg-surface: #f6f6f5;
+      --bg-raised: #efefee;
+      --bg-overlay: #e9e9e8;
+      --nav-bg: #ffffff;
+      --footer-bg: #0a0a0b;
+      --sidebar-bg: #f6f6f5;
+      --text-primary: #0a0a0b;
+      --text-secondary: #3d3d40;
+      --text-muted: #6a6a6e;
       --border-subtle: #e6e6e4;
-      --border-default:#d8d8d6;
+      --border-default: #d8d8d6;
       --border-strong: #c9c9c6;
-      --seal-green:    #0c7253;
-      --seal-green-mid:#0b6249;
-      --seal-green-dim:rgba(12,114,83,0.15);
-      --seal-green-fog:rgba(12,114,83,0.08);
-      --gold:          #0c7253;
-      --gold-mid:      #0b6249;
-      --gold-dim:      rgba(12,114,83,0.15);
-      --gold-fog:      rgba(12,114,83,0.08);
-      --red-alert:     #bf3529;
-      --code-bg:       #0a0a0b;
-      --code-text:     #e9e9e8;
-
-      --font-serif:    'Sora', system-ui, sans-serif;
-      --font-body:     'Sora', system-ui, sans-serif;
-      --font-mono:     'JetBrains Mono', ui-monospace, monospace;
-
-      --space-1: 0.25rem; --space-2: 0.5rem;  --space-3: 0.75rem;
-      --space-4: 1rem;    --space-5: 1.25rem; --space-6: 1.5rem;
-      --space-8: 2rem;    --space-10: 2.5rem; --space-12: 3rem;
+      --accent: #0c7253;
+      --accent-strong: #0b6249;
+      --accent-dim: rgba(12,114,83,0.15);
+      --accent-fog: rgba(12,114,83,0.08);
+      --warning: #8a5a12;
+      --warning-fog: rgba(138,90,18,0.08);
+      --red-alert: #bf3529;
+      --code-bg: #0a0a0b;
+      --code-text: #e9e9e8;
+      --font-display: 'Sora', system-ui, sans-serif;
+      --font-body: 'Sora', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+      --space-1: 0.25rem;
+      --space-2: 0.5rem;
+      --space-3: 0.75rem;
+      --space-4: 1rem;
+      --space-5: 1.25rem;
+      --space-6: 1.5rem;
+      --space-8: 2rem;
+      --space-10: 2.5rem;
+      --space-12: 3rem;
       --space-16: 4rem;
-
       --max-width: 1200px;
       --sidebar-width: 260px;
       --ease-stiff: cubic-bezier(0.16, 1, 0.3, 1);
       --duration-fast: 140ms;
-      --duration-mid:  280ms;
+      --duration-mid: 280ms;
     }
 
     [data-theme="dark"] {
-      --bg-base:       #08080a;
-      --bg-surface:    #131315;
-      --bg-raised:     #1b1b1e;
-      --bg-overlay:    #232327;
-      --nav-bg:        #08080a;
-      --footer-bg:     #050506;
-      --sidebar-bg:    #131315;
-      --text-primary:  #fafafa;
-      --text-secondary:#bcbcc0;
-      --text-muted:    #8e8e93;
+      --bg-base: #08080a;
+      --bg-surface: #131315;
+      --bg-raised: #1b1b1e;
+      --bg-overlay: #232327;
+      --nav-bg: #08080a;
+      --footer-bg: #050506;
+      --sidebar-bg: #131315;
+      --text-primary: #fafafa;
+      --text-secondary: #bcbcc0;
+      --text-muted: #8e8e93;
       --border-subtle: #262629;
-      --border-default:#34343a;
+      --border-default: #34343a;
       --border-strong: #43434a;
-      --seal-green:    #23c088;
-      --seal-green-mid:#1fa878;
-      --seal-green-dim:rgba(35,192,136,0.15);
-      --seal-green-fog:rgba(35,192,136,0.08);
-      --gold:          #23c088;
-      --gold-mid:      #1fa878;
-      --gold-dim:      rgba(35,192,136,0.15);
-      --gold-fog:      rgba(35,192,136,0.08);
-      --code-bg:       #050506;
-      --code-text:     #fafafa;
+      --accent: #23c088;
+      --accent-strong: #1fa878;
+      --accent-dim: rgba(35,192,136,0.15);
+      --accent-fog: rgba(35,192,136,0.08);
+      --warning: #d6a13c;
+      --warning-fog: rgba(214,161,60,0.1);
+      --code-bg: #050506;
+      --code-text: #fafafa;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -152,7 +154,7 @@
       position: absolute;
       top: -100%;
       left: var(--space-4);
-      background: var(--seal-green);
+      background: var(--accent);
       color: #fff;
       padding: var(--space-2) var(--space-4);
       font-family: var(--font-mono);
@@ -196,7 +198,7 @@
       display: flex;
       align-items: center;
       gap: var(--space-3);
-      font-family: var(--font-serif);
+      font-family: var(--font-display);
       font-size: 0.9rem;
       font-weight: 600;
       letter-spacing: 0.04em;
@@ -206,7 +208,7 @@
     }
     .nav-logo:hover { color: #fff; }
     .nav-logo svg { flex-shrink: 0; }
-    .nav-logo svg path, .nav-logo svg circle { stroke: var(--gold); }
+    .nav-logo svg path, .nav-logo svg circle { stroke: var(--accent); }
     .nav-links {
       display: flex;
       align-items: center;
@@ -221,14 +223,14 @@
       white-space: nowrap;
     }
     .nav-links a:hover { color: #e2dcd2; }
-    .nav-links a.active { color: var(--gold); }
+    .nav-links a.active { color: var(--accent); }
     .nav-cta {
       padding: var(--space-2) var(--space-4) !important;
       border: 1px solid rgba(12, 114, 83, 0.5) !important;
-      color: var(--gold) !important;
+      color: var(--accent) !important;
       border-radius: 2px;
     }
-    .nav-cta:hover { background: rgba(12, 114, 83, 0.15) !important; color: var(--gold-mid) !important; }
+    .nav-cta:hover { background: rgba(12, 114, 83, 0.15) !important; color: var(--accent-strong) !important; }
     .nav-actions { display: flex; align-items: center; gap: var(--space-4); flex-shrink: 0; }
     .theme-toggle {
       display: flex;
@@ -311,9 +313,9 @@
       background: var(--bg-raised);
     }
     .sidebar-links a.active {
-      color: var(--seal-green);
-      background: var(--seal-green-fog);
-      border-left-color: var(--seal-green);
+      color: var(--accent);
+      background: var(--accent-fog);
+      border-left-color: var(--accent);
     }
 
     /* ── Content ─────────────────────────────────────────────────── */
@@ -332,13 +334,13 @@
       align-items: center;
       gap: var(--space-2);
     }
-    .docs-breadcrumb a { color: var(--seal-green); transition: color var(--duration-fast) ease; }
-    .docs-breadcrumb a:hover { color: var(--seal-green-mid); }
+    .docs-breadcrumb a { color: var(--accent); transition: color var(--duration-fast) ease; }
+    .docs-breadcrumb a:hover { color: var(--accent-strong); }
     .docs-breadcrumb span { color: var(--text-muted); }
 
     /* Content typography */
     .docs-content h1 {
-      font-family: var(--font-serif);
+      font-family: var(--font-display);
       font-size: clamp(2rem, 3.5vw, 2.8rem);
       font-weight: 700;
       letter-spacing: -0.035em;
@@ -371,7 +373,7 @@
     }
 
     .docs-section h2 {
-      font-family: var(--font-serif);
+      font-family: var(--font-display);
       font-size: clamp(1.4rem, 2.5vw, 1.9rem);
       font-weight: 700;
       letter-spacing: -0.025em;
@@ -381,7 +383,7 @@
     }
 
     .docs-section h3 {
-      font-family: var(--font-serif);
+      font-family: var(--font-display);
       font-size: 1.1rem;
       font-weight: 600;
       color: var(--text-primary);
@@ -397,11 +399,11 @@
     }
 
     .docs-section a {
-      color: var(--seal-green);
-      border-bottom: 1px solid var(--seal-green-dim);
+      color: var(--accent);
+      border-bottom: 1px solid var(--accent-dim);
       transition: all var(--duration-fast) ease;
     }
-    .docs-section a:hover { border-bottom-color: var(--seal-green); }
+    .docs-section a:hover { border-bottom-color: var(--accent); }
 
     .docs-section ul, .docs-section ol {
       padding-left: var(--space-6);
@@ -481,12 +483,12 @@
       border-radius: 0 2px 2px 0;
     }
     .callout-note {
-      background: var(--seal-green-fog);
-      border-color: var(--seal-green);
+      background: var(--accent-fog);
+      border-color: var(--accent);
     }
     .callout-warn {
-      background: var(--gold-fog);
-      border-color: var(--gold);
+      background: var(--warning-fog);
+      border-color: var(--warning);
     }
     .callout-title {
       font-family: var(--font-mono);
@@ -495,8 +497,8 @@
       text-transform: uppercase;
       margin-bottom: var(--space-2);
     }
-    .callout-note .callout-title { color: var(--seal-green); }
-    .callout-warn .callout-title { color: var(--gold); }
+    .callout-note .callout-title { color: var(--accent); }
+    .callout-warn .callout-title { color: var(--warning); }
     .callout p {
       font-size: 0.9rem;
       color: var(--text-secondary);
@@ -505,12 +507,16 @@
       margin-bottom: 0;
     }
 
+    /* Table scrolls horizontally inside its column at narrow widths instead
+       of widening the page (390px layout check). */
+    .table-scroll { overflow-x: auto; }
+    .table-scroll .env-table { margin: var(--space-5) 0; }
+
     /* Env var table */
     .env-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.875rem;
-      margin: var(--space-5) 0;
     }
     .env-table thead th {
       font-family: var(--font-mono);
@@ -566,17 +572,17 @@
     }
     .security-layer:last-child { border-bottom: none; }
     .security-layer-num {
-      font-family: var(--font-serif);
+      font-family: var(--font-display);
       font-size: 1.6rem;
       font-weight: 700;
-      color: var(--seal-green);
+      color: var(--accent);
       opacity: 0.4;
       letter-spacing: -0.05em;
       line-height: 1;
       padding-top: 4px;
     }
     .security-layer-title {
-      font-family: var(--font-serif);
+      font-family: var(--font-display);
       font-size: 1rem;
       font-weight: 600;
       color: var(--text-primary);
@@ -606,25 +612,71 @@
     .step-list li:last-child { border-bottom: none; }
     .step-list li::before {
       content: counter(step);
-      font-family: var(--font-serif);
+      font-family: var(--font-display);
       font-size: 1.1rem;
       font-weight: 700;
-      color: var(--seal-green);
+      color: var(--accent);
       opacity: 0.5;
       line-height: 1.5;
     }
 
     /* ── Footer ──────────────────────────────────────────────────── */
+/* ── Footer ──────────────────────────────────────────────────── */
     .site-footer {
       background: var(--footer-bg);
       color: rgba(226, 220, 210, 0.7);
-      padding: var(--space-10) var(--space-8) var(--space-6);
-      border-top: 1px solid rgba(255,255,255,0.04);
+      padding: var(--space-16) var(--space-8) var(--space-8);
     }
     .footer-inner {
       max-width: var(--max-width);
       margin: 0 auto;
     }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.8fr 1fr 1fr;
+      gap: var(--space-12);
+      margin-bottom: var(--space-12);
+      padding-bottom: var(--space-10);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #e2dcd2;
+      margin-bottom: var(--space-4);
+    }
+    .footer-tagline {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: rgba(226, 220, 210, 0.5);
+      line-height: 1.6;
+      max-width: 32ch;
+    }
+    .footer-col-title {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(226, 220, 210, 0.4);
+      margin-bottom: var(--space-5);
+    }
+    .footer-links {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+    .footer-links a {
+      font-size: 0.875rem;
+      color: rgba(226, 220, 210, 0.6);
+      transition: color var(--duration-fast) ease;
+    }
+    .footer-links a:hover { color: #e2dcd2; }
     .footer-bottom {
       display: flex;
       align-items: center;
@@ -636,9 +688,13 @@
       gap: var(--space-4);
       flex-wrap: wrap;
     }
-    .footer-bottom a { color: rgba(226, 220, 210, 0.4); transition: color var(--duration-fast) ease; }
+    .footer-bottom a {
+      color: rgba(226, 220, 210, 0.4);
+      transition: color var(--duration-fast) ease;
+    }
     .footer-bottom a:hover { color: rgba(226, 220, 210, 0.7); }
 
+    
     /* ── Animations ─────────────────────────────────────────────── */
     @keyframes rise {
       from { opacity: 0; transform: translateY(12px); }
@@ -646,7 +702,10 @@
     }
 
     /* ── Responsive ─────────────────────────────────────────────── */
-    @media (max-width: 768px) {
+    /* Nav collapses at 1080px, not 768px: at 1024px the full item list no
+       longer fits the nav-inner row and overflows the viewport
+       horizontally. */
+    @media (max-width: 1080px) {
       .nav-links { display: none; }
       .nav-links.open {
         display: flex;
@@ -662,6 +721,9 @@
         z-index: 201;
       }
       .nav-toggle { display: flex; }
+    }
+
+    @media (max-width: 768px) {
       .docs-layout { grid-template-columns: 1fr; }
       .docs-sidebar {
         position: static;
@@ -671,6 +733,7 @@
       }
       .docs-content { padding: var(--space-8) var(--space-5) var(--space-12); }
       .env-table { font-size: 0.8rem; }
+      .footer-grid { grid-template-columns: 1fr; gap: var(--space-8); }
       .footer-bottom { flex-direction: column; align-items: flex-start; }
     }
 
@@ -704,7 +767,11 @@
       <ul class="nav-links" id="nav-links" role="list">
         <li><a href="index.html#features">Features</a></li>
         <li><a href="index.html#how-it-works">How it Works</a></li>
-        <li><a href="docs.html" class="active">Documentation</a></li>
+        <li><a href="index.html#compliance">Compliance</a></li>
+        <li><a href="docs.html" class="active" aria-current="page">Documentation</a></li>
+        <li><a href="roadmap.html">Roadmap</a></li>
+        <li><a href="blog/">Blog</a></li>
+        <li><a href="de/">Auf Deutsch</a></li>
         <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
         <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank" class="nav-cta">Try Demo</a></li>
       </ul>
@@ -755,6 +822,7 @@
           <a href="#security">Security Architecture</a>
           <a href="#demo-mode">Demo Mode</a>
           <a href="#upgrading">Upgrading</a>
+          <a href="#key-rotation">Rotating the Encryption Key</a>
         </nav>
       </div>
 
@@ -817,7 +885,7 @@
 
         <h3>Current version</h3>
         <p>
-          <strong>v1.5.0</strong> — A whistleblower can never be locked out of their own case; filenames, drafts and notification times no longer identify anyone; OIDC with PKCE and a verified ID token; errors tied to their fields, case-number search and a readable audit log. See the
+          <strong>v2.0.0</strong> — The confidential identity is shown only to the handler, with an audited reason; the first-run setup needs a one-time token; whistleblower times are stored as the day only; an optional Tor onion address and ClamAV upload scan; TLS by default in the Compose stack; an opt-in, off-by-default installation count; words inside reports are searchable without an index. See the
           <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG</a>
           for a full list of changes.
         </p>
@@ -885,7 +953,8 @@
         </div>
 
         <h3>Image tags</h3>
-        <table class="env-table">
+        <div class="table-scroll">
+<table class="env-table">
           <thead>
             <tr>
               <th>Tag</th>
@@ -916,6 +985,7 @@
             </tr>
           </tbody>
         </table>
+</div>
 
         <div class="callout callout-note">
           <div class="callout-title">Pinning in production</div>
@@ -972,6 +1042,9 @@
           <pre><code><span class="t-prompt">$ </span><span class="t-cmd">cp .env.example .env</span>
 <span class="t-prompt">$ </span><span class="t-cmd">nano .env</span>
 
+<span class="t-comment"># The production stack (TLS, nginx); every docker compose command below uses it:</span>
+<span class="t-str">COMPOSE_FILE</span>=docker-compose.prod.yml
+
 <span class="t-comment"># Minimum required values:</span>
 <span class="t-str">SECRET_KEY</span>=your-long-random-secret-key-here
 <span class="t-str">DATABASE_URL</span>=postgresql+asyncpg://openwhistle:password@db:5432/openwhistle
@@ -991,11 +1064,55 @@
 <span class="t-out">&#x25BA; Container openwhistle-nginx-1     Started</span></code></pre>
         </div>
 
+        <div class="callout callout-note">
+          <div class="callout-title">TLS is on by default</div>
+          <p>
+            The bundled nginx serves HTTPS on port 443 and redirects plain HTTP on port 80.
+            Put your own <code>fullchain.pem</code> and <code>privkey.pem</code> (e.g. from
+            certbot) in <code>nginx/certs/</code> and restart. Copy them there, do not symlink
+            (a link into <code>/etc/letsencrypt/live</code> dangles inside the container), and
+            keep the key root-owned <code>0600</code>, or <code>0644</code>; otherwise
+            <code>tls-init</code> stops with the path and the reason. Without them, the one-shot
+            <code>tls-init</code> service generates a self-signed certificate for
+            <code>TLS_HOSTNAME</code> (a <code>.env</code> variable read only by
+            <code>docker-compose.prod.yml</code>, default <code>localhost</code>) before nginx
+            starts.
+          </p>
+          <p>
+            To renew: drop the new certificate into <code>nginx/certs/</code> and run
+            <code>docker compose up -d tls-init nginx</code>. <code>tls-init</code> is a
+            one-shot service — restarting <code>nginx</code> alone leaves the old certificate in
+            place, since nginx never re-reads <code>nginx/certs/</code> itself.
+          </p>
+        </div>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">Self-signed is for first boot only</div>
+          <p>
+            The generated self-signed certificate lets the stack come up before you have a real
+            one; it is not meant to serve real users. A browser that clicks through the
+            certificate warning gets an HSTS pin (<code>Strict-Transport-Security:
+            max-age=31536000; includeSubDomains; preload</code>) for that hostname — install a
+            real certificate (see <a href="#requirements">Requirements</a>, "HTTPS required")
+            before anyone but you visits the instance.
+          </p>
+        </div>
+
         <h3>Step 4 — Run the setup wizard</h3>
         <p>
+          Unless you set <code>SETUP_TOKEN</code> yourself, read the one-time setup token from the
+          application log before opening the wizard:
+        </p>
+        <div class="code-block" role="region" aria-label="Read the setup token from the log">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+          </div>
+          <pre><code><span class="t-prompt">$ </span><span class="t-cmd">docker compose logs app | grep "Setup token"</span></code></pre>
+        </div>
+        <p>
           Open <code>http://localhost:4009/setup</code> (or your domain if nginx is configured)
-          in a browser. Follow the wizard to create your first admin account and configure TOTP.
-          The wizard disables itself permanently after completion.
+          in a browser. Enter the setup token, then follow the wizard to create your first admin
+          account and configure TOTP. The wizard disables itself permanently after completion.
         </p>
 
         <div class="callout callout-note">
@@ -1012,18 +1129,102 @@
       <section class="docs-section" id="deployment-privacy" aria-labelledby="deployment-privacy-h2">
         <h2 id="deployment-privacy-h2">Deployment privacy</h2>
 
+        <h3 id="outbound-requests">Every request that leaves the host</h3>
+        <p>
+          This is the whole list, and nothing on it is on until you switch it on. Three
+          destinations are fixed &mdash; <code>api.github.com</code>, <code>telemetry.wdkro.de</code>
+          and ClamAV's mirrors; every other one is a server you name.
+        </p>
+        <div class="table-scroll">
+<table class="env-table">
+          <thead><tr><th>Request</th><th>Switched on by</th><th>Destination</th><th>How often</th><th>Carries</th></tr></thead>
+          <tbody>
+            <tr><td>Update check</td><td><code>UPDATE_CHECK_ENABLED=true</code></td><td><code>api.github.com</code> &mdash; fixed</td><td>at every start, then daily at 04:00 UTC</td><td>a GET for the latest release; the User-Agent names the version</td></tr>
+            <tr><td>Installation count</td><td>the setup wizard or <strong>Admin &rarr; System</strong>, or <code>TELEMETRY_ENABLED=true</code></td><td><code>telemetry.wdkro.de</code> &mdash; fixed</td><td>once a day</td><td>a random identifier and the version, <a href="#counting-installations">in full below</a></td></tr>
+            <tr><td>Email</td><td><code>NOTIFY_EMAIL_ENABLED=true</code></td><td><code>NOTIFY_SMTP_HOST</code> &mdash; yours</td><td>a digest every <code>NOTIFICATION_BATCH_MINUTES</code>; SLA reminders (<code>REMINDER_ENABLED</code>, checked every 30 min); a security alert at once on suspected password spraying; a reply notice when a case manager answers</td><td>counts and case numbers to your admins; a bare "you have a reply" to a whistleblower's own address</td></tr>
+            <tr><td>Webhook</td><td><code>NOTIFY_WEBHOOK_ENABLED=true</code></td><td><code>NOTIFY_WEBHOOK_URL</code> &mdash; yours</td><td>the digest, SLA reminders and the security alert, as for email</td><td>counts only, never a case number (<a href="#notifications">Notifications</a>)</td></tr>
+            <tr><td>Virus signatures</td><td><code>COMPOSE_PROFILES=clamav</code></td><td>ClamAV's mirrors &mdash; fixed, from the <code>clamav</code> container's freshclam, not the app</td><td>freshclam's schedule</td><td>nothing from OpenWhistle</td></tr>
+            <tr><td>Tor network</td><td><code>ONION_LOCATION</code> and the Tor daemon you run (<a href="#onion-address">Offering an onion address</a>)</td><td>Tor relays, from that daemon, not the app</td><td>continuously while it runs</td><td>the hidden service's own circuits; nothing from OpenWhistle</td></tr>
+            <tr><td>Attachment storage</td><td><code>STORAGE_BACKEND=s3</code></td><td><code>S3_ENDPOINT_URL</code> &mdash; yours</td><td>on upload and download</td><td>encrypted attachments under random keys</td></tr>
+            <tr><td>Sign-in</td><td><code>OIDC_ENABLED</code> / <code>LDAP_ENABLED</code></td><td><code>OIDC_SERVER_METADATA_URL</code> / <code>LDAP_SERVER</code> &mdash; yours</td><td>at an admin sign-in</td><td>the admin's credentials, to your identity provider</td></tr>
+          </tbody>
+        </table>
+</div>
+        <p>
+          None carries a whistleblower's words or files in readable form: attachments reach S3
+          encrypted, and notifications never include report content.
+        </p>
+        <p>
+          <strong>Through a proxy:</strong> the update check, the installation count, webhooks,
+          OIDC and S3 honour <code>HTTPS_PROXY</code>, <code>ALL_PROXY</code> and
+          <code>NO_PROXY</code> in the app container's environment (and <code>SSL_CERT_FILE</code>
+          for a proxy's CA). SMTP and LDAP connect directly.
+        </p>
+
+        <h3 id="counting-installations">Counting installations</h3>
+        <p>
+          The setup wizard asks, with the box unchecked; an installation upgraded to 2.0.0 was
+          never asked and stays off. Switch it on or off under <strong>Admin &rarr; System</strong>
+          at any time; the next attempt reads the answer, no restart. A security fix matters
+          differently at ten installations than at ten thousand, and this count is the only way
+          to know which.
+        </p>
+        <p>What is sent, in full, once a day and nothing else:</p>
+        <div class="code-block" role="region" aria-label="Telemetry request" tabindex="0">
+          <div class="code-block-header">
+            <span class="code-block-lang">http</span>
+          </div>
+          <pre><code>GET /v1/openwhistle/count?id=&lt;32 hex characters&gt;&amp;v=&lt;version&gt; HTTP/1.1
+Host: telemetry.wdkro.de
+Accept: */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+User-Agent: openwhistle/&lt;version&gt;</code></pre>
+        </div>
+        <p>
+          Over HTTPS; no cookie, no body. The last four headers are what the HTTP library sends
+          with every request (<code>Accept-Encoding</code> grows if a brotli or zstd package is ever installed).
+        </p>
+        <div class="table-scroll">
+<table class="env-table">
+          <tbody>
+            <tr><td><strong>Not</strong> sent</td><td>the hostname, any address, <code>APP_PUBLIC_URL</code>, any count of reports, users or organisations, any setting</td></tr>
+            <tr><td>The identifier</td><td>16 random bytes made on your server when you first agree, and kept in the database. <strong>Admin &rarr; System</strong> shows it and <em>Reset identifier</em> replaces it: the next report is then a new installation as far as anyone can tell</td></tr>
+            <tr><td>Why random</td><td>a value derived from the hostname or a machine id could be recomputed by anyone who knows the host, which turns a count into a lookup</td></tr>
+            <tr><td>At the far end</td><td>one line: timestamp, identifier, version. <strong>Your address is not recorded.</strong> Lines are kept 35 days, then only the rolled-up number</td></tr>
+            <tr><td>When</td><td>checked every hour, sent when 24 hours passed since the last success; the first attempt waits a random part of an hour after start. With several replicas only one sends (Redis lock)</td></tr>
+            <tr><td>A failure</td><td>10 seconds for the whole request, redirects refused, one debug log line; retried at the next hourly check, never in a loop, never shown on a page</td></tr>
+            <tr><td>Never counted</td><td><code>DEMO_MODE</code> (the public demo) and <code>LOCAL_REVIEW_LOGIN</code> instances</td></tr>
+          </tbody>
+        </table>
+</div>
+        <p>
+          <code>TELEMETRY_ENABLED</code> overrides the switch: <code>false</code> keeps it off,
+          <code>true</code> on, and <strong>Admin &rarr; System</strong> then shows it as set by
+          the environment. Unset or empty (the Compose default), the switch decides.
+        </p>
+        <div class="callout callout-note">
+          <p>
+            The number is a lower bound and cannot be made tamper-proof: the endpoint is open, so
+            anyone can invent identifiers. It is good enough to tell ten installations from ten
+            thousand and to see whether a fix has spread, and it is not claimed to be more.
+          </p>
+        </div>
+
         <h3 id="redis-sizing">Redis sizing</h3>
         <p>
           A submission draft lives in Redis for up to 2 hours, Fernet-encrypted with a key that
           exists only in the whistleblower's cookie. Its attachments make it large:
         </p>
-        <table class="env-table">
+        <div class="table-scroll">
+<table class="env-table">
           <thead><tr><th>Draft</th><th>Redis memory</th></tr></thead>
           <tbody>
             <tr><td>Text only</td><td>&lt; 30 KB</td></tr>
             <tr><td>5 × 10 MB attachments (maximum)</td><td>about 90 MB</td></tr>
           </tbody>
         </table>
+</div>
         <p>
           Set <code>maxmemory</code> with <code>maxmemory-policy noeviction</code>
           (<code>docker-compose.prod.yml</code> uses 1 GB): an evicting policy could drop
@@ -1031,22 +1232,165 @@
           draft attachments are refused, so the rest of Redis keeps working.
         </p>
 
+        <h3 id="behind-proxy">Behind a TLS-terminating proxy</h3>
+        <p>
+          When Cloudflare, Traefik or a host nginx terminates TLS in front of the stack, either
+          point it at <code>https://…:443</code> (with the bundled nginx's certificate), or
+          switch the bundled nginx to plain HTTP on port 80 with the shipped override. Port 80
+          then proxies instead of redirecting, and 443 is not published:
+        </p>
+        <div class="code-block" role="region" aria-label="Plain-HTTP override">
+          <div class="code-block-header">
+            <span class="code-block-lang">.env</span>
+          </div>
+          <pre><code><span class="t-str">COMPOSE_FILE</span>=docker-compose.prod.yml:docker-compose.behind-proxy.yml</code></pre>
+        </div>
+        <ul>
+          <li>Keep port 80 reachable only from the terminator: nothing on it is encrypted.</li>
+          <li><code>SECURE_COOKIES</code> stays <code>true</code>; the browser still talks HTTPS.</li>
+          <li>The client-IP headers the terminator adds are still stripped, so nginx rate-limits the terminator's address, not each client: rate-limit per client at the terminator.</li>
+        </ul>
+
+        <h3 id="selinux">SELinux hosts</h3>
+        <p>
+          On a host with SELinux enforcing (Fedora, RHEL, CentOS and derivatives), the
+          bind-mounted files in <code>docker-compose.prod.yml</code> and the Ansible template
+          (<code>nginx.conf</code>, <code>nginx/certs</code>, <code>/etc/letsencrypt</code>)
+          carry the <code>:z</code> relabel option, so the container can read them. This is
+          required on SELinux hosts and a no-op everywhere else — nothing to configure.
+        </p>
+
+        <h3 id="onion-address">Offering an onion address</h3>
+        <p>
+          A reporter on a monitored network (a workplace, a school) can be seen visiting
+          OpenWhistle even though the report itself stays private — Tor Browser hides that too.
+          Run a Tor hidden service on the same host pointing at the onion-only nginx entry on
+          <code>127.0.0.1:8080</code> (published there only — see the <code>ports:</code> entry
+          in <code>docker-compose.prod.yml</code>), then set <code>ONION_LOCATION</code> to the
+          address it gives you:
+        </p>
+        <div class="code-block" role="region" aria-label="Set up a Tor hidden service">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+          </div>
+          <pre><code><span class="t-comment"># 1. Install tor on the host, then add to /etc/tor/torrc:</span>
+<span class="t-str">HiddenServiceDir</span> /var/lib/tor/openwhistle/
+<span class="t-str">HiddenServicePort</span> 80 127.0.0.1:8080
+
+<span class="t-comment"># 2. Restart tor, then read the generated address:</span>
+<span class="t-prompt">$ </span><span class="t-cmd">systemctl restart tor</span>
+<span class="t-prompt">$ </span><span class="t-cmd">cat /var/lib/tor/openwhistle/hostname</span>
+<span class="t-out">abc...xyz.onion</span>
+
+<span class="t-comment"># 3. Set ONION_LOCATION in .env and restart the app:</span>
+<span class="t-str">ONION_LOCATION</span>=http://abc...xyz.onion
+<span class="t-prompt">$ </span><span class="t-cmd">docker compose up -d app</span></code></pre>
+        </div>
+        <p>
+          Every HTML response then carries an <code>Onion-Location</code> header (Tor Browser
+          offers to switch) and the submit page shows the address — except to a visitor already
+          on the onion service, who would just be pointed back at the same page. Cookies and
+          <code>Strict-Transport-Security</code> also adapt automatically: the app drops the
+          <code>Secure</code> cookie flag and HSTS for a request that arrived through the onion
+          listener, since that connection was never TLS (Tor encrypts it instead) and a browser
+          can refuse a <code>Secure</code> cookie sent over plain HTTP.
+        </p>
+        <div class="callout callout-note">
+          <div class="callout-title">The app trusts nginx, not the client, to say "this is the onion listener"</div>
+          <p>
+            A request's <code>Host</code> header is never used for this — any client on the
+            regular HTTPS listener could send <code>Host: &lt;anything&gt;.onion</code> and would
+            otherwise get treated as already-on-Tor. Instead the bundled <code>nginx/nginx.conf</code>
+            sets a request header, <code>X-OW-Onion: 1</code>, only inside the onion (port 8080)
+            server block, and clears it inside the regular (443) one — the same pattern already
+            used to strip incoming IP-forwarding headers. This means <strong>the app's own port
+            (<code>4009</code>) must stay reachable only through this nginx</strong>, exactly as
+            already required for IP-address stripping to hold: a deployment that exposes the app
+            directly, or proxies it through something else, must set or clear
+            <code>X-OW-Onion</code> itself or this protection (and the IP-stripping one) does
+            nothing.
+          </p>
+          <p>
+            Without <code>ONION_LOCATION</code> the app ignores <code>X-OW-Onion</code>, so a
+            path that forwards it from the client, such as the Helm chart's ingress, is safe. If
+            you set <code>ONION_LOCATION</code> behind ingress-nginx, clear the header there:
+            annotation <code>nginx.ingress.kubernetes.io/configuration-snippet: proxy_set_header
+            X-OW-Onion "";</code> (the controller needs <code>allow-snippet-annotations</code>).
+          </p>
+        </div>
+        <div class="callout callout-warn">
+          <div class="callout-title"><code>/var/lib/tor/openwhistle/</code> holds the address's private key</div>
+          <p>
+            <code>hs_ed25519_secret_key</code> inside that directory <em>is</em> the onion address
+            — losing it changes the address permanently, breaking every link already given to a
+            reporter, and anyone who obtains it can stand up a service that impersonates it.
+            Back the directory up before any host migration or volume change, keep it root/tor-only
+            (Tor sets <code>0700</code> on creation; a bind-mount or backup step can widen that —
+            check it), and never commit it or publish it anywhere the how-to above is shared.
+          </p>
+        </div>
+        <div class="callout callout-note">
+          <div class="callout-title">Rate limiting on the onion listener</div>
+          <p>
+            <code>HiddenServicePort</code> forwards every Tor visitor to nginx from
+            <code>127.0.0.1</code> — the real, distinct visitor is never visible to nginx, so
+            per-IP rate limiting cannot distinguish them. The onion server block therefore uses
+            its own zone, sized for several concurrent legitimate reporters instead of one
+            visitor, rather than the public listener's per-IP zone. A burst of onion traffic
+            still shares that one budget: expect occasional 429s under heavy concurrent use, and
+            raise the zone's <code>rate</code>/<code>burst</code> in <code>nginx/nginx.conf</code>
+            if that happens in practice.
+          </p>
+        </div>
+
         <h3 id="helm">Kubernetes (Helm)</h3>
         <p>
           The ingress controller sees every whistleblower's IP address. The chart
           (<code>charts/openwhistle/</code>) ships with
-          <code>nginx.ingress.kubernetes.io/enable-access-log: "false"</code> on its Ingress.
+          <code>nginx.ingress.kubernetes.io/enable-access-log: "false"</code> on its Ingress,
+          and with the bundled nginx's rate limit (<code>limit-rps: "10"</code>,
+          <code>limit-burst-multiplier: "3"</code>, so a burst of 30).
         </p>
         <ul>
           <li>Your own <code>ingress.annotations</code> are merged with it; do not set it to
             <code>null</code>.</li>
-          <li>ingress-nginx still names the client in its error log; set
-            <code>error-log-level: crit</code> in the controller ConfigMap.</li>
+          <li><strong>Required:</strong> <code>error-log-level: crit</code> in the controller
+            ConfigMap. Below <code>crit</code>, ingress-nginx logs every rate-limited request
+            and every upstream error with the client's IP address.</li>
+          <li>A rate-limited request gets <code>503</code>, not the bundled nginx's
+            <code>429</code>, unless the controller ConfigMap sets
+            <code>limit-req-status-code: "429"</code> (controller-wide).</li>
+          <li>The limit is per peer address, so behind a load balancer the controller must see
+            the real client, or every reporter shares one budget:
+            <ul>
+              <li>L4 (TCP, SNAT): proxy protocol (<code>use-proxy-protocol: "true"</code> in the
+                controller ConfigMap, and enabled on the load balancer) or
+                <code>externalTrafficPolicy: Local</code> on the controller Service.</li>
+              <li>L7 (HTTP): <code>use-forwarded-headers: "true"</code> together with
+                <code>proxy-real-ip-cidr</code> set to the load balancer's range. Without that
+                range any client can send its own <code>X-Forwarded-For</code> and escape the
+                limit.</li>
+            </ul>
+          </li>
           <li>ingress-nginx always forwards <code>X-Forwarded-For</code> and
             <code>X-Real-IP</code>. OpenWhistle drops them, and the peer address, in its first
             middleware; the admin dashboard still warns that the proxy knows the addresses.</li>
           <li>Other controllers (Traefik: access log off unless enabled): check their logging.</li>
         </ul>
+        <p>
+          With more than one replica, only the pod that wins the race to create the setup token
+          writes it to its own log — find it with
+          <code>kubectl logs -l app.kubernetes.io/name=openwhistle | grep "Setup token"</code>
+          instead of checking pods one by one. Setting <code>secrets.setupToken</code> (chart) /
+          <code>SETUP_TOKEN</code> avoids that hunt entirely: every replica uses the same
+          configured value.
+        </p>
+        <p>
+          A setting from the <a href="#configuration">configuration table</a> that
+          <code>values.yaml</code> has no key for goes into <code>extraEnv</code>, as
+          <code>NAME: value</code> (for example <code>SECURE_COOKIES: "false"</code>). Secrets
+          belong in <code>secrets</code>.
+        </p>
       </section>
 
       <!-- Configuration -->
@@ -1058,7 +1402,8 @@
           (except admin preferences managed through the UI).
         </p>
 
-        <table class="env-table" aria-label="Environment variables">
+        <div class="table-scroll">
+<table class="env-table" aria-label="Environment variables">
           <thead>
             <tr>
               <th scope="col">Variable</th>
@@ -1071,8 +1416,26 @@
             <tr>
               <td><code class="env-key">SECRET_KEY</code></td>
               <td><span class="env-required env-req-yes">Required</span></td>
-              <td>Cryptographic key for session signing, CSRF tokens, and confidential-identity encryption. <strong>Minimum 32 characters</strong> (the app refuses to start otherwise). Generate with <code>openssl rand -hex 32</code>.</td>
+              <td>Signs admin sessions (and encrypts data when <code>ENCRYPTION_KEY</code> is unset). <strong>Minimum 32 characters</strong> (the app refuses to start otherwise). Generate with <code>openssl rand -hex 32</code>.</td>
               <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">ENCRYPTION_KEY</code></td>
+              <td><span class="env-required env-req-no">Recommended</span></td>
+              <td>Root key for all encryption at rest, ≥ 32 characters. Unset: <code>SECRET_KEY</code> is used for encryption too. <strong>On an existing install, do not just set it:</strong> follow <a href="#key-rotation">Rotating the encryption key</a> — the current key must go into <code>ENCRYPTION_KEY_PREVIOUS</code>.</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">ENCRYPTION_KEY_PREVIOUS</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Keys still accepted for decryption during a rotation: comma-separated, no spaces, each ≥ 32 characters.</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">SETUP_TOKEN</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Token the first-run wizard at <code>/setup</code> asks for, at least 32 characters (the app refuses to start with a shorter one; <code>openssl rand -hex 16</code>). After <code>MAX_LOGIN_ATTEMPTS</code> wrong tokens, <code>/setup</code> refuses every token for <code>LOGIN_LOCKOUT_MINUTES</code>. Unset: a random token is created at startup and written once to the log (<code>docker compose logs app | grep "Setup token"</code>).</td>
+              <td>random</td>
             </tr>
             <tr>
               <td><code class="env-key">DATABASE_URL</code></td>
@@ -1105,10 +1468,69 @@
               <td><code>false</code></td>
             </tr>
             <tr>
+              <td><code class="env-key">LOCAL_REVIEW_LOGIN</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Local review only — never in production. Requires <code>DEMO_MODE=true</code>,
+                <code>SECURE_COOKIES=false</code> and a loopback <code>APP_PUBLIC_URL</code> (the app refuses to
+                start otherwise). Shows a one-click "Enter the local review" button on <code>/admin/login</code> that
+                signs in as the seeded demo admin with no password or MFA check, so an agent can review every admin
+                page without a human typing credentials. Maintainer tooling for the release review: an
+                operator never sets it.</td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
               <td><code class="env-key">SECURE_COOKIES</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
               <td>Set to <code>false</code> when the app is served over plain HTTP (e.g. local network without TLS). Must be <code>true</code> behind HTTPS. Browsers block <code>Secure</code> cookies over HTTP, causing session failures when accessed from other devices.</td>
               <td><code>true</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">SESSION_MAX_HOURS</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Absolute admin session lifetime in hours, counted from login; extending a session never passes it.</td>
+              <td><code>12</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">ACCESS_TOKEN_EXPIRE_MINUTES</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Lifetime of one admin session token; <em>Stay signed in</em> renews it, up to <code>SESSION_MAX_HOURS</code>.</td>
+              <td><code>60</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">ALGORITHM</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>JWT signing algorithm of admin sessions. Leave it.</td>
+              <td><code>HS256</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">MAX_ACCESS_ATTEMPTS</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Wrong PINs for one case number before the status page asks the reporter to wait. A correct PIN always works.</td>
+              <td><code>5</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">ACCESS_LOCKOUT_MINUTES</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>How long that wait notice lasts.</td>
+              <td><code>15</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">MAX_LOGIN_ATTEMPTS</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Wrong admin passwords for one username before that username is locked.</td>
+              <td><code>10</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">LOGIN_LOCKOUT_MINUTES</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>How long an admin username stays locked.</td>
+              <td><code>30</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">APP_VERSION</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Informational; set by the image. Do not override.</td>
+              <td>the image's version</td>
             </tr>
             <tr>
               <td><code class="env-key">ADMIN_FAILED_LOGIN_ALERT_THRESHOLD</code></td>
@@ -1165,12 +1587,6 @@
               <td><code>#0c7253</code></td>
             </tr>
             <tr>
-              <td><code class="env-key">BRAND_SECONDARY_COLOR</code></td>
-              <td><span class="env-required env-req-no">Optional</span></td>
-              <td>Secondary/accent colour as a hex value. Used for highlights and the submit-page sidebar.</td>
-              <td><code>#b07230</code></td>
-            </tr>
-            <tr>
               <td><code class="env-key">BRAND_LOGO_URL</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
               <td>URL to a company logo image. When set, the logo is shown in the navigation bar instead of the default OpenWhistle shield icon.</td>
@@ -1181,6 +1597,12 @@
               <td><span class="env-required env-req-no">Optional</span></td>
               <td>Public base URL of the application. Used to build dashboard links inside notification emails and webhooks. Set to your domain (e.g. <code>https://whistleblower.example.com</code>).</td>
               <td><code>http://localhost</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">ONION_LOCATION</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Tor onion (v3) address of this instance, e.g. <code>http://&lt;56 chars&gt;.onion</code>, no path or query string. When set, every response carries an <code>Onion-Location</code> header (Tor Browser offers to switch) and the submit page shows the address to reporters on a monitored network. Never sent to a visitor already on the onion service itself. See <a href="#onion-address">Offering an onion address</a>.</td>
+              <td>—</td>
             </tr>
             <tr>
               <td><code class="env-key">LOG_LEVEL</code></td>
@@ -1196,6 +1618,7 @@
             </tr>
           </tbody>
         </table>
+</div>
 
         <h3 id="notifications">Notifications</h3>
         <p>
@@ -1204,35 +1627,42 @@
           Both channels are disabled by default and can be configured independently.
         </p>
         <p>
-          A notification carries only counts and <strong>case numbers</strong> — never the
-          report description, category or submission time.
+          Webhooks go to third parties (Slack, Teams, a generic endpoint) and carry
+          <strong>counts only</strong> — never a case number or a deadline date. Email goes to
+          your own admins and keeps the case number, since only they can act on a specific case.
+          Neither channel ever carries the report description, category or submission time.
         </p>
         <div class="callout callout-note">
           <div class="callout-title">Why notifications are batched</div>
           <p>
             A notice sent the second a report arrives tells the employer when it was written —
             and who was at their desk then. Notices are therefore collected and sent as one
-            digest every <code>NOTIFICATION_BATCH_MINUTES</code> (default 60). The trade-off:
-            case managers learn of a report up to that long after it arrives, well inside the
-            7-day acknowledgement deadline. <code>0</code> sends each notice immediately — only
+            digest every <code>NOTIFICATION_BATCH_MINUTES</code> (default 1440, once a day at 00:00 UTC).
+            Report times are stored as the day only, and the digest interval bounds how precisely a
+            notice dates a report: an hourly digest would say which hour. The trade-off: case
+            managers learn of a report up to a day after it arrives, well inside the 7-day
+            acknowledgement deadline. <code>0</code> sends each notice immediately — only
             if you accept the timing risk.
           </p>
         </div>
 
-        <table class="env-table">
+        <div class="table-scroll">
+<table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
             <tr>
               <td><code class="env-key">NOTIFICATION_BATCH_MINUTES</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
               <td>Minutes between digests of new reports and whistleblower messages. All replicas fire at the same wall-clock moments; exactly one sends. <code>0</code> sends each event at once.</td>
-              <td><code>60</code></td>
+              <td><code>1440</code></td>
             </tr>
           </tbody>
         </table>
+</div>
 
         <h4>Email (SMTP)</h4>
-        <table class="env-table">
+        <div class="table-scroll">
+<table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
             <tr>
@@ -1291,6 +1721,7 @@
             </tr>
           </tbody>
         </table>
+</div>
 
         <h4>Webhook</h4>
         <p>
@@ -1300,11 +1731,13 @@
           can verify authenticity using HMAC-SHA256.
         </p>
         <pre><code>{
-  "event": "new_report",
-  "case_number": "OW-2026-00001",
-  "timestamp": "2026-04-25T12:00:00+00:00"
+  "event": "new_activity",
+  "new_reports": 2,
+  "new_messages": 1,
+  "message": "2 new reports, 1 new message"
 }</code></pre>
-        <table class="env-table">
+        <div class="table-scroll">
+<table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
             <tr>
@@ -1328,19 +1761,24 @@
             <tr>
               <td><code class="env-key">NOTIFY_WEBHOOK_TYPE</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
-              <td>Payload format for webhook notifications. <code>generic</code> sends <code>{"event": "new_activity", "new_reports": [...], "new_messages": [...]}</code>; <code>slack</code> sends a Slack Block Kit message; <code>teams</code> sends a Microsoft Teams Adaptive Card (v1.4).</td>
+              <td>Payload format for webhook notifications. <code>generic</code> sends <code>{"event": "new_activity", "new_reports": 2, "new_messages": 1, "message": "..."}</code> (counts, never case numbers); <code>slack</code> sends a Slack Block Kit message; <code>teams</code> sends a Microsoft Teams Adaptive Card (v1.4). The SLA reminder webhook uses the same three formats with <code>{"event": "sla_reminder", "ack_due": ..., "feedback_due": ..., "message": "..."}</code> for <code>generic</code>.</td>
               <td><code>generic</code></td>
             </tr>
           </tbody>
         </table>
+</div>
 
         <h3 id="sla-reminders">SLA Reminders</h3>
         <p>
           OpenWhistle can automatically send reminders when HinSchG deadlines are approaching.
           The background scheduler checks all open reports every 30 minutes. Redis dedup keys
-          prevent duplicate notifications during each warning window.
+          prevent duplicate notifications during each warning window. The reminder email (to your
+          own admins) is sent per case and carries its case number; the reminder webhook is sent
+          once per run and carries only the number of cases due — never a case number or a
+          deadline date.
         </p>
-        <table class="env-table">
+        <div class="table-scroll">
+<table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
             <tr>
@@ -1363,6 +1801,7 @@
             </tr>
           </tbody>
         </table>
+</div>
 
         <h3 id="retention">Data Retention (GDPR / HinSchG)</h3>
         <p>
@@ -1379,7 +1818,8 @@
           installation holds a report closed three years ago: turning retention on deletes nothing
           today.
         </p>
-        <table class="env-table">
+        <div class="table-scroll">
+<table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
             <tr>
@@ -1396,6 +1836,7 @@
             </tr>
           </tbody>
         </table>
+</div>
 
         <h3 id="multi-tenancy">Multi-Tenancy</h3>
         <p>
@@ -1404,7 +1845,17 @@
           admin users. The <code>superadmin</code> role manages organisations at
           <code>/admin/organisations</code>.
         </p>
-        <table class="env-table">
+        <p>Each organisation has its own reporting link, <code>/submit/&lt;slug&gt;</code> — the one to give its employees:</p>
+        <ul>
+          <li>The wizard there offers only that organisation's categories and locations, and files the report under it.</li>
+          <li>The link, with a copy button, is on <code>/admin/organisations</code> (superadmin) and on an organisation admin's dashboard.</li>
+          <li><code>/submit</code> is the default organisation's (<code>DEFAULT_ORG_SLUG</code>). If that names no active organisation, <code>/submit</code> answers 503 and logs the setting, and a set-up instance refuses to start.</li>
+          <li>An unknown or deactivated slug is a 404. There is no list of the instance's organisations, but a slug is part of a public link: anyone can test whether a guessed one exists.</li>
+          <li>A draft stays with the organisation it was started for. Another organisation's link shows a fresh wizard; its first step replaces the draft, and the earlier one is no longer reachable from that browser.</li>
+          <li>With multi-tenancy off there is one wizard, at <code>/submit</code>: <code>/submit/&lt;default slug&gt;</code> redirects there, any other slug is a 404.</li>
+        </ul>
+        <div class="table-scroll">
+<table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
             <tr>
@@ -1425,8 +1876,15 @@
               <td>Set to <code>true</code> to let OpenWhistle check GitHub once a day for a newer release, shown on the <strong>Admin → System</strong> page. Off by default (no external calls); sends no instance data to GitHub — only a standard request.</td>
               <td><code>false</code></td>
             </tr>
+            <tr>
+              <td><code class="env-key">TELEMETRY_ENABLED</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>The daily <a href="#counting-installations">installation count</a>. Unset or empty: the answer from the setup wizard / <strong>Admin → System</strong> decides, off until given. <code>false</code>: always off. <code>true</code>: always on. The switch is locked either way. <code>DEMO_MODE</code> is never counted.</td>
+              <td>(empty)</td>
+            </tr>
           </tbody>
         </table>
+</div>
 
         <h3 id="ldap">LDAP / Active Directory Login</h3>
         <p>
@@ -1435,7 +1893,13 @@
           (no local password) with the <strong>Case Manager</strong> role — an admin promotes
           it if needed. TOTP enrollment is still required after the first login.
         </p>
-        <table class="env-table">
+        <p>
+          LDAP uses python-ldap (the OpenLDAP client), S3 storage uses boto3; both are optional
+          extras. The container image includes both. Installing from source needs
+          <code>libldap2-dev libsasl2-dev</code> and <code>pip install '.[ldap,s3]'</code>.
+        </p>
+        <div class="table-scroll">
+<table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
             <tr>
@@ -1459,7 +1923,7 @@
             <tr>
               <td><code class="env-key">LDAP_USE_SSL</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
-              <td>Set to <code>true</code> to use LDAPS (TLS from the start). Set port to <code>636</code>. The server certificate is verified against the system CA store; for a private CA, mount its PEM file and set <code>SSL_CERT_FILE</code> to its path.</td>
+              <td>Set to <code>true</code> to use LDAPS (TLS from the start). Set port to <code>636</code>. The server certificate is verified against the system CA store; for a private CA, mount its PEM file and set <code>LDAPTLS_CACERT</code> to its path.</td>
               <td><code>false</code></td>
             </tr>
             <tr>
@@ -1506,6 +1970,7 @@
             </tr>
           </tbody>
         </table>
+</div>
 
         <h3 id="s3-storage">S3-Compatible Attachment Storage</h3>
         <p>
@@ -1514,7 +1979,8 @@
           <code>STORAGE_BACKEND=s3</code> to store new attachments in an S3-compatible
           bucket. Existing DB-backed attachments are not migrated and continue to work.
         </p>
-        <table class="env-table">
+        <div class="table-scroll">
+<table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
             <tr>
@@ -1561,6 +2027,7 @@
             </tr>
           </tbody>
         </table>
+</div>
       </section>
 
       <!-- File attachments -->
@@ -1572,11 +2039,70 @@
           is required.
         </p>
 
+        <h3 id="virus-scanning">Scanning uploads for viruses</h3>
+        <p>
+          Attachments can be scanned by a
+          <a href="https://www.clamav.net/" rel="noopener noreferrer" target="_blank">ClamAV</a>
+          <code>clamd</code> daemon before they are stored. Off by default. To turn it on:
+        </p>
+        <pre><code>COMPOSE_PROFILES=clamav
+CLAMAV_HOST=clamav</code></pre>
+        <p>
+          <code>docker-compose.prod.yml</code> ships a <code>clamav</code> service behind the
+          <code>clamav</code> profile; it is never reachable from the host, and shares only the
+          internal Docker network with <code>app</code> — not the <code>proxy</code> network nginx
+          uses, so nginx cannot reach it either. Signature updates need outbound internet access,
+          unlike the rest of the stack, so <code>clamav</code> gets its own dedicated egress network
+          instead of sharing one with another service. It needs roughly 1.5 GB RAM for the loaded
+          signature database.
+        </p>
+        <p>
+          Scanning is <strong>fail-closed</strong>: with <code>CLAMAV_HOST</code> set, an upload is
+          refused whenever <code>clamd</code> cannot be reached or times out, exactly as if it were
+          infected — nothing is ever stored unscanned. The whistleblower sees a generic
+          "try again in a few minutes" message; no file name, size or content reaches the log.
+        </p>
+        <p>
+          The Helm chart ships <strong>no clamav pod</strong> — <code>docker-compose.prod.yml</code>'s
+          profile-gated service has no Kubernetes equivalent. Setting <code>config.clamavHost</code>
+          in <code>values.yaml</code> without a real, reachable <code>clamd</code> behind it turns on
+          the fail-closed behaviour above for every upload: unreachable means refused, not skipped.
+          Point it at a <code>clamd</code> you run and reach from the cluster yourself — as its own
+          Deployment and Service, or an external instance — and leave it empty to keep scanning off.
+        </p>
+        <div class="table-scroll">
+<table class="env-table">
+          <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code class="env-key">CLAMAV_HOST</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Hostname of the <code>clamd</code> daemon. Empty disables scanning entirely — no connection is ever made.</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code class="env-key">CLAMAV_PORT</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td><code>clamd</code>'s TCP port.</td>
+              <td><code>3310</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">CLAMAV_TIMEOUT_SECONDS</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Connect and reply timeout for one scan. Exceeding it refuses the upload (fail closed).</td>
+              <td><code>30</code></td>
+            </tr>
+          </tbody>
+        </table>
+</div>
+
         <h3>Limits and allowed types</h3>
         <ul>
           <li><strong>Maximum file size:</strong> 10 MB per attachment</li>
           <li><strong>Maximum number of attachments:</strong> 5 per report</li>
-          <li><strong>Allowed formats:</strong> PDF, JPEG, PNG, GIF, WebP, TXT, CSV, DOCX (.docx / .doc), XLSX (.xlsx / .xls)</li>
+          <li><strong>Allowed formats:</strong> PDF, JPEG, PNG, GIF, WebP, TXT, CSV, DOCX, XLSX. Legacy
+            <code>.doc</code>/<code>.xls</code> files are refused — their author cannot be removed;
+            save them as <code>.docx</code>/<code>.xlsx</code> and attach again.</li>
         </ul>
         <p>
           File type is validated by both MIME type and file extension. SVG, executable files,
@@ -1590,6 +2116,8 @@
             <code>/status/attachments/{id}</code> and require an active
             <code>ow-status-session</code> cookie. The session must be tied to the same
             report that owns the attachment — a whistleblower cannot access another report's files.
+            It ends 2 hours after the login and is not extended by viewing, so its remaining
+            lifetime does not tell when the case was last opened.
           </li>
           <li>
             <strong>Admin:</strong> downloads are available at
@@ -1605,10 +2133,11 @@
         <h3>Privacy and deletion</h3>
         <ul>
           <li><strong>Metadata removed on upload:</strong> EXIF/GPS and camera data in JPEG, PNG,
-            WebP and GIF; document info and XMP in PDF; author, company and custom properties in
-            DOCX/XLSX. A file that cannot be parsed for cleaning is refused. Legacy
-            <code>.doc</code>/<code>.xls</code> and plain text are stored as uploaded, and the
-            upload page says so.</li>
+            WebP and GIF, also in photos inside DOCX/XLSX; document info, XMP, comment authors and
+            times, the EXIF of embedded JPEG photos and the file identifier in PDF; author, company
+            and custom properties in DOCX/XLSX. A file that cannot be parsed for cleaning is refused. Plain text is stored
+            as uploaded. Legacy <code>.doc</code>/<code>.xls</code> files are refused outright —
+            their author cannot be removed.</li>
           <li><strong>Office authors anonymised:</strong> comment and tracked-change authors,
             initials and account ids in DOCX/XLSX are replaced with <code>Author</code>;
             embedded thumbnails, zip timestamps and zip extra fields are removed. The text of a
@@ -1650,6 +2179,14 @@
               correctly registered. TOTP is mandatory and cannot be skipped.
             </div>
           </li>
+          <li>
+            <div>
+              <strong>Installation count</strong><br>
+              Optional, unchecked by default: whether this installation may be counted once a day
+              (<a href="#counting-installations">what is sent</a>). Changeable later under
+              <strong>Admin → System</strong>.
+            </div>
+          </li>
         </ol>
 
         <div class="callout callout-warn">
@@ -1673,7 +2210,8 @@
         <h3>Dashboard overview</h3>
         <p>
           The dashboard shows all reports with sortable columns, pagination, and filters for status,
-          assignee, and location. Each row displays:
+          assignee, and location. Each status filter shows its case count within the chosen location;
+          a case manager's counts cover only the cases assigned to them. Each row displays:
         </p>
         <ul>
           <li>Unique case number in <code>OW-YYYY-NNNNN</code> format (sequential per year)</li>
@@ -1696,14 +2234,23 @@
         </ul>
         <p>
           Manage admin accounts at <code>/admin/users</code>. The last active admin account cannot
-          be deactivated to prevent lockout.
+          be deactivated to prevent lockout. A new account is a case manager unless another role is
+          chosen; an unknown role is refused. The sidebar shows each role only the pages it may open
+          (a case manager: dashboard, statistics, telephone channel); only admins may dismiss the
+          IP-header warning.
         </p>
 
         <h3>Managing reports</h3>
         <p>
-          To find a case, type any part of its case number (for example <code>00042</code>) into the
-          search field on <code>/admin/dashboard</code>. Report content is encrypted per report and
-          cannot be searched.
+          To find a case, type any part of its case number (for example <code>00042</code>), or a word
+          from the report, into the search field on <code>/admin/dashboard</code>. A word search decrypts
+          the description and messages of the reports you may already see, in memory, for that request
+          only — nothing searchable is ever stored. The confidential name is never matched: a hit there
+          would confirm an identity guess without an audited reveal. The search is sent as a form
+          (POST), so the term never appears in a URL, the browser history or a proxy's access log;
+          paging through the results keeps it the same way. Every word search is recorded in the
+          audit log (<code>report.content_searched</code>) with the term, stored encrypted, and the
+          number of matching reports.
         </p>
         <p>
           Click any report to open the case view. From here you can:
@@ -1715,15 +2262,33 @@
           <li>Send a message to the whistleblower via the anonymous channel</li>
           <li>Add internal notes (never shown to the whistleblower)</li>
           <li>Link related cases together</li>
-          <li>Export the full case as a PDF (includes SLA compliance section per HinSchG §17)</li>
-          <li>Request hard deletion — a second admin must confirm (4-eyes principle); triggers GDPR Art. 17 erasure</li>
+          <li>Export the case as a PDF (includes SLA compliance section per HinSchG §17) — the confidential
+          identity is left out by default, the same as the case page. Text prints in Latin (any diacritic),
+          Greek or Cyrillic script; CJK and right-to-left scripts (Arabic, Hebrew) are not supported</li>
+          <li>Request hard deletion (<em>Delete report</em>, collapsed at the end of <em>Actions</em>) — a second admin must confirm (4-eyes principle); triggers GDPR Art. 17 erasure</li>
         </ul>
+        <p>
+          <strong>Confidential identity.</strong> A confidential reporter's name and contact are hidden by default.
+          The case handler — or, while the case is unassigned, an admin of the case's organisation — clicks
+          <em>Show identity</em> (<code>POST /admin/reports/{id}/identity</code>) and gives a reason
+          (10–500 characters; do not write the reporter's name into it).
+          The identity is shown on that page only; the audit log records who, when and why. The case page says only
+          that a reason was recorded; the reason itself is on <code>/admin/audit-log</code> and in the CSV export.
+          Opening a case is logged as <em>Report opened</em>. The same rule applies to the PDF export: the
+          <em>Export PDF with identity</em> button (<code>POST /admin/reports/{id}/export.pdf</code>) asks for
+          the same audited reason and is recorded the same way;
+          the plain <em>Export PDF</em> download never includes it.
+        </p>
 
         <h3>Audit log</h3>
         <p>
           Every admin action is recorded in an immutable audit log (required by HinSchG §11 Abs. 5).
           View and filter the log at <code>/admin/audit-log</code>; actions and details are shown as readable
-          labels. Export as CSV at any time — the export keeps the machine action codes and adds a label column.
+          labels. Export as CSV at any time — the export keeps the machine action codes and adds a label column,
+          and the detail column is a JSON object. Case views (<em>Report opened</em>) are hidden from the log and
+          the export unless you tick <em>Show case views</em> (<code>?views=1</code>).
+          With multi-tenancy on, each organisation sees only its own entries, while instance-wide security
+          events (such as a password-spraying alert) are shown to superadmins only.
         </p>
 
         <h3>Categories and locations</h3>
@@ -1736,7 +2301,8 @@
         <h3>Dashboard statistics</h3>
         <p>
           <code>/admin/stats</code> shows the total report count, status distribution bar chart,
-          category breakdown, and the 7-day SLA compliance rate.
+          category breakdown, and the 7-day SLA compliance rate (acknowledged within 7 days of
+          00:00 UTC on the submission day). A case manager's figures cover only their own cases.
         </p>
 
         <h3>System &amp; updates</h3>
@@ -1745,6 +2311,12 @@
           <code>UPDATE_CHECK_ENABLED=true</code>, it also reports whether a newer release is
           available on GitHub (checked once a day, cached; no instance data is sent). The check
           is opt-in and off by default.
+        </p>
+        <p>
+          Its <strong>Installation count</strong> card shows whether this installation is counted,
+          the exact request, its identifier and the last successful report. An admin can switch
+          it on or off (one audit entry per change) and reset the identifier; see
+          <a href="#counting-installations">Counting installations</a>.
         </p>
         <p>
           The same page includes a <strong>file integrity check</strong>: it verifies the
@@ -1759,7 +2331,7 @@
           The dashboard enforces the statutory timelines from §17 HinSchG:
         </p>
         <ul>
-          <li><strong>7-day acknowledgement:</strong> The countdown starts from report submission. The dashboard shows a yellow warning at 3 days, red at 24 hours.</li>
+          <li><strong>7-day acknowledgement:</strong> The countdown starts at the start (00:00 UTC) of the submission day — submission times are stored as the day only, so the deadline can only fall earlier, never later. The dashboard shows a yellow warning at 3 days, red at 24 hours.</li>
           <li><strong>3-month feedback:</strong> The countdown starts from the date of acknowledgement (§17 Abs. 2). A feedback response must be sent via the message channel before the deadline.</li>
         </ul>
 
@@ -1785,6 +2357,11 @@
           installation (e.g. <code>https://your-domain.example.com/</code>). No account,
           email address, or personal information is required.
         </p>
+        <p>
+          If several organisations share one installation, use the link your organisation gave you
+          (<code>/submit/&lt;organisation&gt;</code>): a report sent through another link goes to
+          another organisation.
+        </p>
 
         <h3>Submitting a report</h3>
         <p>
@@ -1803,7 +2380,7 @@
             <div>
               <strong>Choose submission mode.</strong> Select <em>Anonymous</em> (no personal data
               ever stored) or <em>Confidential</em> (name, contact details, and optional secure
-              email stored encrypted — only decryptable by the assigned admin). Both modes are
+              email stored encrypted — shown only to the case handler, who must record a reason). Both modes are
               fully compliant with HinSchG.
             </div>
           </li>
@@ -1827,15 +2404,22 @@
           </li>
           <li>
             <div>
-              <strong>Attach evidence</strong> (optional). Supported formats: PDF, images, Word,
-              Excel, CSV, TXT — up to 10 MB each, 5 files per report.
+              <strong>Attach evidence</strong> (optional). Supported formats: PDF, images, Word
+              (<code>.docx</code>), Excel (<code>.xlsx</code>), CSV, TXT — up to 10 MB each, 5 files per
+              report. Legacy <code>.doc</code>/<code>.xls</code> files are refused (their author cannot be
+              removed): save them as <code>.docx</code>/<code>.xlsx</code>. Metadata is removed, and where the
+              operator turned on virus scanning, an infected file is refused. Going back keeps attached
+              files; choosing new ones replaces them, and <strong>Remove</strong> drops one.
             </div>
           </li>
           <li>
             <div>
               <strong>Review and submit.</strong> <strong>Immediately note down the case number and PIN displayed
               on the confirmation screen.</strong> These are shown only once and cannot be
-              recovered if lost.
+              recovered if lost. A second click on <em>Submit</em> never creates a second report: it
+              shows the same case number and PIN, or, while the first click is still running, a
+              <em>still being processed</em> page with <em>Check again</em>. If the operator offers an
+              onion address, the submit page shows it for use with Tor Browser.
             </div>
           </li>
         </ol>
@@ -1856,6 +2440,14 @@
           work. After several wrong attempts on a case number the page asks you to wait, but
           that is a notice, not a lock. Use <em>Look up a different report</em> to end the session
           on a shared device.
+        </p>
+
+        <h3>What is stored about when you acted</h3>
+        <p>
+          Only the <strong>day</strong> (UTC), never the time, of your report, your messages and
+          your files. An exact time could be matched to who was at their desk. The reporting
+          office's own replies keep their time. A message you send is stored as its day, but
+          its place among the office's replies is kept, so the conversation reads in order.
         </p>
 
         <h3>Security recommendations for whistleblowers</h3>
@@ -1886,7 +2478,10 @@
                 <code>X-Forwarded-For</code>, <code>X-Real-IP</code>, and all
                 <code>X-Client-*</code> headers before forwarding requests to the
                 application. Even if a CDN or upstream proxy adds these headers,
-                they are removed at the nginx layer.
+                they are removed at the nginx layer. <code>access_log off</code> also means
+                request URIs are never written to disk; an operator's own reverse proxy in
+                front of OpenWhistle must not log them either. Dashboard search terms are
+                sent by POST and never appear in a URL.
               </div>
             </div>
           </div>
@@ -1934,6 +2529,13 @@
           token is invalidated and a new one must be obtained. The whistleblower's IP address
           is never used as a rate-limiting key.
         </p>
+        <p>
+          In front of that, the bundled nginx limits every route, the submission wizard
+          (<code>POST /submit</code>) included: 10 requests/s with a burst of 30 per client
+          address, held in nginx memory only and never logged; the onion listener has its own
+          shared zone. The Helm chart sets the same limit on its ingress-nginx Ingress; with
+          another ingress controller, set an equivalent one.
+        </p>
 
         <h3>Security headers</h3>
         <p>
@@ -1947,6 +2549,20 @@
           <li><code>Referrer-Policy: no-referrer</code></li>
           <li><code>Permissions-Policy</code> disabling geolocation, camera, microphone</li>
         </ul>
+
+        <h3>Onion listener trust boundary</h3>
+        <p>
+          When <code>ONION_LOCATION</code> is set, the app must know whether a request arrived
+          through the onion (Tor) listener or the regular HTTPS one, to decide whether to send
+          <code>Secure</code> cookies, HSTS, and the <code>Onion-Location</code> header itself
+          (see <a href="#onion-address">Offering an onion address</a>). That decision is never
+          made from the client-supplied <code>Host</code> header — a request on the real HTTPS
+          listener could claim <code>Host: &lt;anything&gt;.onion</code>. Instead nginx sets an
+          <code>X-OW-Onion: 1</code> request header only inside the onion server block and clears
+          it inside the regular one, the same trust model already used for stripping
+          IP-forwarding headers (layer 1 above): it depends on the application port never being
+          reachable except through this nginx.
+        </p>
 
         <h3>OIDC integration</h3>
         <p>
@@ -2009,29 +2625,54 @@
           <div class="code-block-header">
             <span class="code-block-lang">bash</span>
           </div>
-          <pre><code><span class="t-comment"># Pull the latest image</span>
-<span class="t-prompt">$ </span><span class="t-cmd">docker compose pull</span>
+          <pre><code><span class="t-comment"># Back up first: a rollback needs it</span>
+<span class="t-prompt">$ </span><span class="t-cmd">docker compose exec db pg_dump -U openwhistle openwhistle &gt; backup.sql</span>
 
-<span class="t-comment"># Restart containers with the new image</span>
+<span class="t-comment"># The compose file and nginx config change between releases</span>
+<span class="t-prompt">$ </span><span class="t-cmd">git pull</span>
+
+<span class="t-comment"># Set OPENWHISTLE_VERSION in .env to the new version, then</span>
+<span class="t-prompt">$ </span><span class="t-cmd">docker compose pull</span>
 <span class="t-prompt">$ </span><span class="t-cmd">docker compose up -d</span>
 
-<span class="t-comment"># Database migrations are applied automatically on startup</span>
-<span class="t-prompt">$ </span><span class="t-cmd">docker compose logs app | grep migration</span></code></pre>
+<span class="t-comment"># Migrations run at startup; the version is in the health check</span>
+<span class="t-prompt">$ </span><span class="t-cmd">curl -sk https://localhost/health</span></code></pre>
         </div>
 
         <h3>Before upgrading</h3>
         <ul>
-          <li>Read the CHANGELOG for the target version</li>
-          <li>Back up your PostgreSQL database: <code>docker compose exec db pg_dump -U openwhistle openwhistle &gt; backup.sql</code></li>
-          <li>Note your current version with <code>docker compose exec app python -m app --version</code></li>
+          <li>Read the CHANGELOG for the target version.</li>
+          <li>v2.0.0 adds <code>ENCRYPTION_KEY</code>, a key for encryption separate from <code>SECRET_KEY</code>: see <a href="#key-rotation">Rotating the encryption key</a>.</li>
+        </ul>
+
+        <h3 id="upgrading-2-0">Upgrading to 2.0.0 with Docker Compose</h3>
+        <ul>
+          <li><code>git pull</code> is required, not only <code>docker compose pull</code>: the stack needs the new <code>nginx/snippets/</code> and the <code>tls-init</code> service.</li>
+          <li>A customised <code>nginx/nginx.conf</code> makes <code>git pull</code> conflict: replace it with the shipped one (<code>git checkout -- nginx/nginx.conf</code>).</li>
+          <li>Certificates move from the old <code>./nginx/certs:/etc/nginx/certs</code> mount to <code>nginx/certs/</code> as <code>fullchain.pem</code> and <code>privkey.pem</code>, copied, not symlinked. Without them, a self-signed certificate is served.</li>
+          <li>Port 80 now only redirects to 443. Behind an external TLS terminator, see <a href="#behind-proxy">Behind a TLS-terminating proxy</a>.</li>
+          <li>nginx also publishes <code>127.0.0.1:8080</code> (the onion listener). If another service on the host uses 8080, <code>up</code> fails: free the port first.</li>
         </ul>
 
         <h3>Rollback</h3>
         <p>
-          To roll back to a specific version, pin the image tag in
-          <code>docker-compose.yml</code> and re-run <code>docker compose up -d</code>.
-          Database migrations cannot be automatically rolled back — restore from backup
-          if a migration causes issues.
+          The previous image refuses to start on a migrated database. Either restore the backup
+          into an empty database and pin the old <code>OPENWHISTLE_VERSION</code>, or, from 2.0.0
+          to 1.5.x, downgrade the schema with the <strong>2.0.0</strong> image first, then pin the
+          old version:
+        </p>
+        <div class="code-block" role="region" aria-label="Rollback commands">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+          </div>
+          <pre><code><span class="t-prompt">$ </span><span class="t-cmd">docker compose run --rm app alembic downgrade 7d4e2b9c1a05</span>
+<span class="t-comment"># then set OPENWHISTLE_VERSION=1.5.0 in .env</span>
+<span class="t-prompt">$ </span><span class="t-cmd">docker compose up -d</span></code></pre>
+        </div>
+        <p>
+          The downgrade decrypts the TOTP secrets again and needs the same encryption keys.
+          Migration 006 rounded whistleblower times to the day; the downgrade keeps them
+          rounded, the exact times are gone by design.
         </p>
 
         <div class="callout callout-note">
@@ -2043,18 +2684,93 @@
         </div>
       </section>
 
+      <section class="docs-section" id="key-rotation" aria-labelledby="key-rotation-h2">
+        <h2 id="key-rotation-h2">Rotating the encryption key</h2>
+        <p>
+          Re-encrypted: the per-report key wrappers, confidential identity and contact, secure
+          e-mail, TOTP secrets, identity-reveal reasons. Report content and attachments are not
+          touched. Back up the database first.
+        </p>
+        <ol class="step-list">
+          <li><div>Set <code>ENCRYPTION_KEY_PREVIOUS</code> to the key in use: the old <code>ENCRYPTION_KEY</code>, or <code>SECRET_KEY</code> on an install that never set one.</div></li>
+          <li><div>Set <code>ENCRYPTION_KEY</code> to a new value (<code>openssl rand -hex 32</code>) and recreate the container: <code>docker compose up -d</code> (a restart keeps the old environment).</div></li>
+          <li><div>Run <code>docker compose exec app python scripts/rotate_encryption_key.py</code>. It writes nothing unless every value can be re-encrypted; otherwise it lists the rows by id. Safe to run twice.</div></li>
+          <li><div>Empty <code>ENCRYPTION_KEY_PREVIOUS</code> and recreate the container again: <code>docker compose up -d</code>.</div></li>
+        </ol>
+        <p>
+          The app checks one stored report key and one TOTP secret at every start, before
+          migrating. If neither <code>ENCRYPTION_KEY</code> nor a key in
+          <code>ENCRYPTION_KEY_PREVIOUS</code> opens them — for example <code>ENCRYPTION_KEY</code>
+          set on an existing install without step 1, or removed again — it refuses to start and
+          writes nothing. The log line names <code>ENCRYPTION_KEY_PREVIOUS</code>.
+        </p>
+        <p>
+          <strong>Helm:</strong> before step 3, wait until every pod runs with the new environment
+          (<code>kubectl rollout status</code>). During the rolling update, old pods cannot read data
+          that new pods write.
+        </p>
+        <div class="callout callout-warn">
+          <div class="callout-title">Keep the old key</div>
+          <p>
+            Until step 3 has succeeded, removing it leaves data unreadable. Afterwards, keep it stored
+            safely for as long as any backup made before the rotation is retained: to restore such a
+            backup, put the old key back into <code>ENCRYPTION_KEY_PREVIOUS</code> and run the script.
+          </p>
+        </div>
+      </section>
+
     </main>
   </div>
 
   <!-- Footer -->
   <footer class="site-footer" role="contentinfo">
     <div class="footer-inner">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-logo">
+            <svg width="20" height="24" viewBox="0 0 22 26" fill="none" aria-hidden="true">
+              <path d="M11 1 L20 5 L20 14 C20 20 17 24 11 25.5 C5 24 2 20 2 14 L2 5 Z"
+                    stroke="rgba(226,220,210,0.5)" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+              <circle cx="11" cy="18" r="1.1" fill="rgba(226,220,210,0.5)"/>
+              <path d="M8.5,16 A3,3 0 0,1 13.5,16" stroke="rgba(226,220,210,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M7,14.5 A5.5,5.5 0 0,1 15,14.5" stroke="rgba(226,220,210,0.5)" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+              <path d="M5,13 A8,8 0 0,1 17,13" stroke="rgba(226,220,210,0.5)" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
+            </svg>
+            OpenWhistle
+          </div>
+          <p class="footer-tagline">Protecting those who speak up.</p>
+        </div>
+
+        <nav aria-label="Footer links">
+          <div class="footer-col-title">Resources</div>
+          <ul class="footer-links">
+            <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
+            <li><a href="docs.html">Documentation</a></li>
+            <li><a href="blog/">Blog</a></li>
+            <li><a href="de/">Auf Deutsch</a></li>
+            <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Live Demo</a></li>
+            <li><a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank">Issues</a></li>
+            <li><a href="https://github.com/openwhistle/OpenWhistle/blob/main/LICENSE" rel="noopener noreferrer" target="_blank">License (GPL-3.0)</a></li>
+          </ul>
+        </nav>
+
+        <div>
+          <div class="footer-col-title">Legal</div>
+          <p style="font-size: 0.85rem; color: rgba(226,220,210,0.45); line-height: 1.7;">
+            Licensed under GPL-3.0. Built with &#10084;&#65039; for transparency.
+          </p>
+          <p style="font-size: 0.82rem; color: rgba(226,220,210,0.35); line-height: 1.7; margin-top: 0.75rem;">
+            OpenWhistle does not provide legal advice. Please consult qualified counsel
+            regarding your specific HinSchG obligations.
+          </p>
+        </div>
+      </div>
+
       <div class="footer-bottom">
         <span>&copy; OpenWhistle Contributors — GNU General Public License v3.0</span>
         <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">
-          GitHub &rarr;
+          Contribute on GitHub &rarr;
         </a>
-        <a href="index.html">Back to homepage</a>
       </div>
     </div>
   </footer>

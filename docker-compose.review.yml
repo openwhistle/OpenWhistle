@@ -1,0 +1,72 @@
+services:
+  # Review-only override — NOT part of CI's E2E stack. Adds the local-review
+  # login on top of the plain e2e stack, and binds the app to loopback only:
+  #     podman compose -f docker-compose.e2e.yml -f docker-compose.review.yml up -d --build
+  # The plain `docker-compose.e2e.yml` (CI's file, unmodified by this override)
+  # never carries LOCAL_REVIEW_LOGIN, so CI's e2e suite keeps seeing the exact
+  # login page it ships.
+  app:
+    environment:
+      LOCAL_REVIEW_LOGIN: "true"
+      # Required with LOCAL_REVIEW_LOGIN: plain HTTP on a loopback APP_PUBLIC_URL.
+      SECURE_COOKIES: "false"
+    # !override, not a plain list: Compose *merges* (appends) a `ports` list
+    # across files by default, it does not replace it — a plain override
+    # here would leave the base file's "4009:4009" (every interface) active
+    # alongside this one, defeating the loopback-only intent entirely.
+    ports: !override
+      - "127.0.0.1:4009:4009"
+
+  # Second, independent instance for what the plain/review stack above cannot
+  # show: a fresh (non-seeded) install. Opt-in via a compose profile, since it
+  # is not needed for most of the page matrix:
+  #     podman compose -f docker-compose.e2e.yml -f docker-compose.review.yml --profile setup up -d --build app-setup
+  # Own DB/Redis, no volumes (same as the main stack — a plain `down` already
+  # clears them). DEMO_MODE=false and no LOCAL_REVIEW_LOGIN: this instance is
+  # walked through /setup itself, and the login page it shows is the one an
+  # operator without LOCAL_REVIEW_LOGIN actually sees.
+  app-setup:
+    build: .
+    image: openwhistle:e2e
+    profiles: ["setup"]
+    environment:
+      DATABASE_URL: "postgresql+asyncpg://openwhistle:openwhistle@db-setup:5432/openwhistle"
+      REDIS_URL: "redis://redis-setup:6379/0"
+      SECRET_KEY: "e2e-review-setup-secret-key-not-for-production-use"
+      DEMO_MODE: "false"
+      # Pinned so the wizard is reachable without reading a startup log —
+      # 32+ chars (the minimum), this compose file's own value, never a production secret.
+      SETUP_TOKEN: "review-setup-token-not-for-production"
+      SECURE_COOKIES: "false"
+      MULTI_TENANCY_ENABLED: "true"
+      # A review stack is not an installation: never counted, whatever is ticked.
+      TELEMETRY_ENABLED: "false"
+    ports:
+      - "127.0.0.1:4010:4009"
+    depends_on:
+      db-setup:
+        condition: service_healthy
+      redis-setup:
+        condition: service_healthy
+
+  db-setup:
+    image: postgres:18-alpine
+    profiles: ["setup"]
+    environment:
+      POSTGRES_USER: openwhistle
+      POSTGRES_PASSWORD: openwhistle
+      POSTGRES_DB: openwhistle
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openwhistle -d openwhistle"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis-setup:
+    image: redis:8-alpine
+    profiles: ["setup"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10

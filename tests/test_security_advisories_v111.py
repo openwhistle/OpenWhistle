@@ -154,7 +154,7 @@ async def test_case_manager_cannot_open_unassigned_report(
 
 @pytest.mark.asyncio
 async def test_case_manager_sees_identity_only_when_assigned(
-    db_session: AsyncSession, as_admin
+    db_session: AsyncSession, as_admin, no_csrf
 ) -> None:
     client, set_user = as_admin
     from app.services.users import create_user
@@ -167,6 +167,12 @@ async def test_case_manager_sees_identity_only_when_assigned(
 
     set_user(cm)
     resp = await client.get(f"/admin/reports/{report.id}", follow_redirects=False)
+    assert resp.status_code == 200
+    # v1.6.0: hidden until the handler asks for it with a reason.
+    assert "REALNAME-CANARY" not in resp.text
+    resp = await client.post(
+        f"/admin/reports/{report.id}/identity", data={"reason": "Arrange the interview."}
+    )
     assert resp.status_code == 200
     assert "REALNAME-CANARY" in resp.text
 
@@ -337,6 +343,11 @@ async def test_security_headers_single_and_consistent(client: AsyncClient) -> No
         ("post", "/reply", {"content": "sneaky reply"}),
         ("post", "/notes", {"content": "sneaky note"}),
         ("get", "/export.pdf", None),
+        # export_pdf_with_identity's _reveal_gate must 404 before it ever
+        # reaches can_reveal_identity (403) or _validated_reason (422) — a
+        # valid-looking reason here, so a wrong check order would surface as
+        # a 422 or 200, not accidentally pass by coincidence.
+        ("post", "/export.pdf", {"reason": "A long enough reason to pass validation."}),
     ],
 )
 @pytest.mark.asyncio
@@ -377,15 +388,26 @@ async def test_assigned_case_manager_can_acknowledge(
 
 @pytest.mark.asyncio
 async def test_admin_may_read_unassigned_report_single_tenant(
-    db_session: AsyncSession, as_admin
+    db_session: AsyncSession, as_admin, no_csrf
 ) -> None:
     """Regression: single-tenant admins are NOT restricted to assigned reports."""
     client, set_user = as_admin
+    from app.services.users import create_user
+
+    # A real row: opening the case writes an audit entry (FK on audit_log.admin_id).
+    admin, _ = await create_user(
+        db_session, f"a-{uuid.uuid4().hex[:8]}", "TestPassword123!", AdminRole.admin
+    )
     report = await _make_confidential_report(db_session, assigned_to_id=None)
-    set_user(_user(AdminRole.admin))
+    set_user(admin)
     resp = await client.get(f"/admin/reports/{report.id}", follow_redirects=False)
     assert resp.status_code == 200
-    # An admin legitimately sees the confidential identity even when unassigned.
+    assert "REALNAME-CANARY" not in resp.text
+    # An admin may reveal the identity of an unassigned case, with a reason.
+    resp = await client.post(
+        f"/admin/reports/{report.id}/identity", data={"reason": "Triage before assigning."}
+    )
+    assert resp.status_code == 200
     assert "REALNAME-CANARY" in resp.text
 
 
@@ -519,10 +541,11 @@ async def test_cannot_demote_last_privileged_admin(
 
 
 @pytest.mark.asyncio
-async def test_create_user_invalid_role_falls_back_to_admin_not_superadmin(
+async def test_create_user_invalid_role_rejected_never_becomes_superadmin(
     db_session: AsyncSession, as_admin, no_csrf
 ) -> None:
-    """A garbage role value must never silently become superadmin."""
+    """A garbage role value must be refused outright, never silently become
+    any role — least of all superadmin."""
     client, set_user = as_admin
     from app.services.auth import get_user_by_username
     from app.services.users import create_user
@@ -538,10 +561,9 @@ async def test_create_user_invalid_role_falls_back_to_admin_not_superadmin(
         data={"username": uname, "password": "TestPassword123!", "role": "root"},
         follow_redirects=False,
     )
-    assert resp.status_code == 302
+    assert resp.status_code == 422
     created = await get_user_by_username(db_session, uname)
-    assert created is not None
-    assert created.role == AdminRole.admin
+    assert created is None
 
 
 # ── GHSA-24hg: username validation — boundaries and injection payloads ─────

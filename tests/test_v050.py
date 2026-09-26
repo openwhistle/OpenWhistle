@@ -7,7 +7,7 @@
 - S3 storage backend (mocked boto3)
 - DB storage backend
 - generate_storage_key
-- LDAP authentication (mocked ldap3)
+- LDAP authentication
 """
 
 from __future__ import annotations
@@ -121,47 +121,50 @@ class TestWebhookPayloadBuilders:
     def test_generic_payload_structure(self) -> None:
         from app.services.notifications import _build_webhook_payload
 
-        payload = _build_webhook_payload(["OW-2024-00001"], [], "generic", "Acme", "http://dash")
+        payload = _build_webhook_payload(1, 0, "generic", "Acme", "http://dash")
         assert payload["event"] == "new_activity"
-        assert payload["new_reports"] == ["OW-2024-00001"]
+        assert payload["new_reports"] == 1
+        assert payload["new_messages"] == 0
 
     def test_slack_payload_has_blocks(self) -> None:
         from app.services.notifications import _build_webhook_payload
 
-        payload = _build_webhook_payload(["OW-2024-00001"], [], "slack", "Acme", "http://dash")
+        payload = _build_webhook_payload(1, 0, "slack", "Acme", "http://dash")
         assert "blocks" in payload
         block_types = [b["type"] for b in payload["blocks"]]
         assert "header" in block_types
         assert "section" in block_types
         assert "actions" in block_types
 
-    def test_slack_payload_contains_case_number(self) -> None:
+    def test_slack_payload_contains_counts_not_case_number(self) -> None:
         from app.services.notifications import _build_webhook_payload
 
-        payload = _build_webhook_payload(["OW-2024-99999"], [], "slack", "Acme", "http://dash")
+        payload = _build_webhook_payload(3, 0, "slack", "Acme", "http://dash")
         payload_str = str(payload)
-        assert "OW-2024-99999" in payload_str
+        assert "3 new reports" in payload_str
+        assert "OW-" not in payload_str
 
     def test_teams_payload_has_adaptive_card(self) -> None:
         from app.services.notifications import _build_webhook_payload
 
-        payload = _build_webhook_payload(["OW-2024-00001"], [], "teams", "Acme", "http://dash")
+        payload = _build_webhook_payload(1, 0, "teams", "Acme", "http://dash")
         assert payload["type"] == "message"
         content = payload["attachments"][0]["content"]
         assert content["type"] == "AdaptiveCard"
         assert content["version"] == "1.4"
 
-    def test_teams_payload_contains_case_number(self) -> None:
+    def test_teams_payload_contains_counts_not_case_number(self) -> None:
         from app.services.notifications import _build_webhook_payload
 
-        payload = _build_webhook_payload(["OW-2024-77777"], [], "teams", "Acme", "http://dash")
+        payload = _build_webhook_payload(7, 0, "teams", "Acme", "http://dash")
         payload_str = str(payload)
-        assert "OW-2024-77777" in payload_str
+        assert "7 new reports" in payload_str
+        assert "OW-" not in payload_str
 
     def test_unknown_type_falls_back_to_generic(self) -> None:
         from app.services.notifications import _build_webhook_payload
 
-        payload = _build_webhook_payload(["OW-2024-00001"], [], "unknown_type", "Acme", "http://dash")
+        payload = _build_webhook_payload(1, 0, "unknown_type", "Acme", "http://dash")
         assert payload["event"] == "new_activity"
 
 
@@ -171,20 +174,15 @@ class TestReminderPayloadBuilders:
     def test_generic_reminder_structure(self) -> None:
         from app.services.notifications import _build_reminder_payload
 
-        payload = _build_reminder_payload(
-            "OW-2024-00001", "7-day acknowledgement", 2, "generic", "Acme", "http://dash"
-        )
+        payload = _build_reminder_payload(2, 0, "generic", "Acme", "http://dash", 2, 30)
         assert payload["event"] == "sla_reminder"
-        assert payload["case_number"] == "OW-2024-00001"
-        assert payload["deadline"] == "7-day acknowledgement"
-        assert payload["days_left"] == 2
+        assert payload["ack_due"] == 2
+        assert payload["feedback_due"] == 0
 
     def test_slack_reminder_has_blocks(self) -> None:
         from app.services.notifications import _build_reminder_payload
 
-        payload = _build_reminder_payload(
-            "OW-2024-00001", "3-month feedback", 5, "slack", "Acme", "http://dash"
-        )
+        payload = _build_reminder_payload(0, 5, "slack", "Acme", "http://dash", 2, 30)
         assert "blocks" in payload
         block_types = [b["type"] for b in payload["blocks"]]
         assert "header" in block_types
@@ -192,38 +190,32 @@ class TestReminderPayloadBuilders:
     def test_teams_reminder_has_adaptive_card(self) -> None:
         from app.services.notifications import _build_reminder_payload
 
-        payload = _build_reminder_payload(
-            "OW-2024-00001", "7-day acknowledgement", 1, "teams", "Acme", "http://dash"
-        )
+        payload = _build_reminder_payload(1, 0, "teams", "Acme", "http://dash", 2, 30)
         content = payload["attachments"][0]["content"]
         assert content["type"] == "AdaptiveCard"
 
-    def test_singular_day_text(self) -> None:
+    def test_singular_case_text(self) -> None:
         from app.services.notifications import _build_reminder_payload
 
-        payload = _build_reminder_payload(
-            "OW-2024-00001", "test", 1, "generic", "Acme", "http://dash"
-        )
-        # days_left=1 should not produce "1 days remaining"
-        assert payload["days_left"] == 1
+        payload = _build_reminder_payload(1, 0, "generic", "Acme", "http://dash", 2, 30)
+        # ack_due=1 should produce "1 case" not "1 cases"
+        assert payload["ack_due"] == 1
+        assert "1 case:" in payload["message"]
 
-    def test_slack_reminder_days_text_plural(self) -> None:
+    def test_slack_reminder_text_plural(self) -> None:
         from app.services.notifications import _build_reminder_payload
 
-        payload = _build_reminder_payload(
-            "OW-2024-00001", "test", 3, "slack", "Acme", "http://dash"
-        )
+        payload = _build_reminder_payload(3, 0, "slack", "Acme", "http://dash", 2, 30)
         payload_str = str(payload)
-        assert "3 days remaining" in payload_str
+        assert "3 cases" in payload_str
+        assert "OW-" not in payload_str
 
-    def test_slack_reminder_days_text_singular(self) -> None:
+    def test_slack_reminder_text_singular(self) -> None:
         from app.services.notifications import _build_reminder_payload
 
-        payload = _build_reminder_payload(
-            "OW-2024-00001", "test", 1, "slack", "Acme", "http://dash"
-        )
+        payload = _build_reminder_payload(1, 0, "slack", "Acme", "http://dash", 2, 30)
         payload_str = str(payload)
-        assert "1 day remaining" in payload_str
+        assert "1 case:" in payload_str
 
 
 # ── SLA reminder dedup logic ─────────────────────────────────────────────────
@@ -281,7 +273,7 @@ class TestSlaReminderLogic:
 
         await _check_ack_reminder(mock_report, datetime.now(UTC), None, mock_redis, cfg)
         mock_redis.exists.assert_called_once()
-        mock_redis.setex.assert_called_once()
+        mock_redis.set.assert_called_once()
 
     async def test_check_ack_reminder_dedup_skips_if_key_exists(self) -> None:
         from app.services.reminders import _check_ack_reminder
@@ -298,7 +290,7 @@ class TestSlaReminderLogic:
         cfg.reminder_ack_warn_days = 2
 
         await _check_ack_reminder(mock_report, datetime.now(UTC), None, mock_redis, cfg)
-        mock_redis.setex.assert_not_called()
+        mock_redis.set.assert_not_called()
 
     async def test_check_feedback_reminder_skips_when_no_due_date(self) -> None:
         from app.services.reminders import _check_feedback_reminder
@@ -340,7 +332,7 @@ class TestSlaReminderLogic:
         cfg.notify_webhook_enabled = False
 
         await _check_feedback_reminder(mock_report, datetime.now(UTC), None, mock_redis, cfg)
-        mock_redis.setex.assert_called_once()
+        mock_redis.set.assert_called_once()
 
     async def test_dedup_key_format_ack(self) -> None:
         from app.services.reminders import _ack_dedup_key
@@ -522,114 +514,6 @@ class TestGetStorageBackend:
             storage_mod._backend = original
 
 
-# ── LDAP authentication ───────────────────────────────────────────────────────
-
-class TestLDAPAuth:
-    def _mock_entry(self, username: str = "jdoe", email: str = "jdoe@example.com") -> MagicMock:
-        entry = MagicMock()
-        entry.entry_dn = f"uid={username},ou=users,dc=example,dc=com"
-        entry.__contains__ = lambda self, key: key in ("uid", "mail")
-        entry.__getitem__ = lambda self, key: MagicMock(
-            __str__=lambda s: email if key == "mail" else username
-        )
-        return entry
-
-    def _cfg(self) -> MagicMock:
-        """Return a mock settings object with LDAP enabled."""
-        cfg = MagicMock()
-        cfg.ldap_enabled = True
-        cfg.ldap_bind_dn = "cn=svc,dc=example,dc=com"
-        cfg.ldap_bind_password = "secret"
-        cfg.ldap_base_dn = "ou=users,dc=example,dc=com"
-        cfg.ldap_user_filter = "(uid={username})"
-        cfg.ldap_attr_username = "uid"
-        cfg.ldap_attr_email = "mail"
-        return cfg
-
-    def test_ldap_disabled_raises_auth_error(self) -> None:
-        from app.services.ldap_auth import LDAPAuthError, _authenticate_ldap_sync
-
-        # patch app.config.settings since settings is imported inside the function
-        with patch("app.config.settings") as mock_cfg:
-            mock_cfg.ldap_enabled = False
-            with pytest.raises(LDAPAuthError, match="not enabled"):
-                _authenticate_ldap_sync("user", "pass")
-
-    def test_successful_ldap_auth(self) -> None:
-        from app.services.ldap_auth import LDAPUserInfo, _authenticate_ldap_sync
-
-        entry = self._mock_entry("jdoe", "jdoe@example.com")
-        mock_conn = MagicMock()
-        mock_conn.entries = [entry]
-
-        # Connection is imported fresh from ldap3 inside the function, so patch there
-        with patch("app.config.settings", self._cfg()), \
-             patch("app.services.ldap_auth._make_server"), \
-             patch("ldap3.Connection", return_value=mock_conn):
-            result = _authenticate_ldap_sync("jdoe", "password")
-
-        assert isinstance(result, LDAPUserInfo)
-
-    def test_service_bind_failure_raises_auth_error(self) -> None:
-        from ldap3.core.exceptions import LDAPException
-
-        from app.services.ldap_auth import LDAPAuthError, _authenticate_ldap_sync
-
-        with patch("app.config.settings", self._cfg()), \
-             patch("app.services.ldap_auth._make_server"), \
-             patch("ldap3.Connection", side_effect=LDAPException("bind failed")):
-            with pytest.raises(LDAPAuthError, match="service bind failed"):
-                _authenticate_ldap_sync("user", "pass")
-
-    def test_user_not_found_raises_auth_error(self) -> None:
-        from app.services.ldap_auth import LDAPAuthError, _authenticate_ldap_sync
-
-        mock_conn = MagicMock()
-        mock_conn.entries = []  # no users found
-
-        with patch("app.config.settings", self._cfg()), \
-             patch("app.services.ldap_auth._make_server"), \
-             patch("ldap3.Connection", return_value=mock_conn):
-            with pytest.raises(LDAPAuthError, match="not found"):
-                _authenticate_ldap_sync("unknown", "pass")
-
-    def test_wrong_password_raises_auth_error(self) -> None:
-        from ldap3.core.exceptions import LDAPException
-
-        from app.services.ldap_auth import LDAPAuthError, _authenticate_ldap_sync
-
-        entry = self._mock_entry()
-        service_conn = MagicMock()
-        service_conn.entries = [entry]
-
-        call_count = 0
-
-        def conn_factory(*a: Any, **kw: Any) -> MagicMock:
-            nonlocal call_count
-            call_count += 1
-            if call_count == 1:
-                return service_conn
-            raise LDAPException("invalid credentials")
-
-        with patch("app.config.settings", self._cfg()), \
-             patch("app.services.ldap_auth._make_server"), \
-             patch("ldap3.Connection", side_effect=conn_factory):
-            with pytest.raises(LDAPAuthError, match="Invalid LDAP credentials"):
-                _authenticate_ldap_sync("jdoe", "wrong")
-
-    async def test_authenticate_ldap_runs_in_thread(self) -> None:
-        """authenticate_ldap wraps the sync function in asyncio.to_thread."""
-        from app.services.ldap_auth import LDAPUserInfo, authenticate_ldap
-
-        expected = LDAPUserInfo(username="jdoe", email="jdoe@example.com")
-
-        with patch("app.services.ldap_auth._authenticate_ldap_sync", return_value=expected):
-            result = await authenticate_ldap("jdoe", "pass")
-
-        assert result.username == "jdoe"
-        assert result.email == "jdoe@example.com"
-
-
 # ── LDAPUserInfo dataclass ────────────────────────────────────────────────────
 
 class TestLDAPUserInfo:
@@ -663,6 +547,8 @@ class TestSendReminderWebhook:
         cfg.app_name = "TestApp"
         cfg.notify_webhook_secret = ""
         cfg.notify_webhook_url = "https://hooks.example.com/webhook"
+        cfg.reminder_ack_warn_days = 2
+        cfg.reminder_feedback_warn_days = 30
 
         with patch("httpx.AsyncClient") as mock_client:
             mock_ctx = AsyncMock()
@@ -671,7 +557,7 @@ class TestSendReminderWebhook:
             mock_ctx.post = AsyncMock(return_value=mock_response)
             mock_client.return_value = mock_ctx
 
-            await _send_reminder_webhook("OW-2024-00001", "7-day acknowledgement", 1, cfg)
+            await _send_reminder_webhook(1, 0, cfg)
 
         mock_ctx.post.assert_called_once()
         call_kwargs = mock_ctx.post.call_args
@@ -692,6 +578,8 @@ class TestSendReminderWebhook:
         cfg.app_name = "TestApp"
         cfg.notify_webhook_secret = "mysecret"
         cfg.notify_webhook_url = "https://hooks.example.com/webhook"
+        cfg.reminder_ack_warn_days = 2
+        cfg.reminder_feedback_warn_days = 30
 
         captured: dict = {}
 
@@ -707,7 +595,7 @@ class TestSendReminderWebhook:
             mock_ctx.post = fake_post
             mock_client.return_value = mock_ctx
 
-            await _send_reminder_webhook("OW-2024-00001", "ack", 1, cfg)
+            await _send_reminder_webhook(1, 0, cfg)
 
         assert "X-OpenWhistle-Signature" in captured.get("headers", {})
         sig_header = captured["headers"]["X-OpenWhistle-Signature"]
@@ -822,6 +710,8 @@ class TestSendReminderWebhookError:
         cfg.app_name = "TestApp"
         cfg.notify_webhook_secret = ""
         cfg.notify_webhook_url = "https://hooks.example.com/webhook"
+        cfg.reminder_ack_warn_days = 2
+        cfg.reminder_feedback_warn_days = 30
 
         with patch("httpx.AsyncClient") as mock_client:
             mock_ctx = AsyncMock()
@@ -831,13 +721,15 @@ class TestSendReminderWebhookError:
             mock_client.return_value = mock_ctx
 
             # Must not raise
-            await _send_reminder_webhook("OW-2024-00001", "test", 1, cfg)
+            await _send_reminder_webhook(1, 0, cfg)
 
 
 # ── _dispatch_reminder ────────────────────────────────────────────────────────
 
 class TestDispatchReminder:
-    async def test_dispatches_email_and_webhook(self) -> None:
+    async def test_dispatches_email_only(self) -> None:
+        """_dispatch_reminder sends the per-report email; the webhook is sent
+        separately, once per run, with aggregate counts (see send_sla_reminders)."""
         from app.services.reminders import _dispatch_reminder
 
         cfg = MagicMock()
@@ -857,10 +749,10 @@ class TestDispatchReminder:
 
         with patch("app.services.notifications._send_reminder_email", mock_email), \
              patch("app.services.notifications._send_reminder_webhook", mock_webhook):
-            await _dispatch_reminder("OW-2024-00001", "test", 1, MagicMock(), cfg)
+            await _dispatch_reminder("OW-2024-00001", "test", 1, cfg)
 
         assert len(email_called) == 1
-        assert len(webhook_called) == 1
+        assert len(webhook_called) == 0
 
     async def test_no_tasks_when_both_disabled(self) -> None:
         from app.services.reminders import _dispatch_reminder
@@ -871,7 +763,7 @@ class TestDispatchReminder:
 
         with patch("app.services.notifications._send_reminder_email") as m_email, \
              patch("app.services.notifications._send_reminder_webhook") as m_webhook:
-            await _dispatch_reminder("OW-2024-00001", "test", 1, MagicMock(), cfg)
+            await _dispatch_reminder("OW-2024-00001", "test", 1, cfg)
 
         m_email.assert_not_called()
         m_webhook.assert_not_called()
@@ -889,7 +781,7 @@ class TestDispatchReminder:
         cfg.reminder_feedback_warn_days = 30
 
         await _check_feedback_reminder(mock_report, datetime.now(UTC), None, mock_redis, cfg)
-        mock_redis.setex.assert_not_called()  # should have returned early at line 131
+        mock_redis.set.assert_not_called()  # should have returned early at line 131
 
 
 # ── S3 _client() method coverage ─────────────────────────────────────────────

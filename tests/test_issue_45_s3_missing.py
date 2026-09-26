@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
 from unittest.mock import MagicMock, patch
 
@@ -38,6 +39,85 @@ async def test_s3_get_other_error_propagates() -> None:
     client.get_object.side_effect = ClientError({"Error": {"Code": "InternalError"}}, "GetObject")
     with patch("boto3.client", return_value=client), pytest.raises(ClientError):
         await _s3_backend().get("some/key")
+
+
+def test_s3_without_the_extra_names_it() -> None:
+    with patch.dict("sys.modules", {"boto3": None}), \
+         pytest.raises(RuntimeError, match="'s3' extra"):
+        _s3_backend()._client()
+
+
+# ── A legacy (filename-bearing) key must never reach a log line or an
+# exception message ─────────────────────────────────────────────────────────
+
+_FILENAME_KEY = "Max_Mustermann_evidence.pdf"
+
+
+@pytest.mark.asyncio
+async def test_s3_get_missing_object_message_has_no_filename(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """The raised exception's message — which can end up in logs via str(exc)
+    — must not carry the legacy key, even though it names a person.
+    """
+    client = MagicMock()
+    client.get_object.side_effect = ClientError({"Error": {"Code": "NoSuchKey"}}, "GetObject")
+    with (
+        caplog.at_level(logging.INFO, logger="app.services.storage"),
+        patch("boto3.client", return_value=client),
+        pytest.raises(StorageObjectNotFoundError) as exc_info,
+    ):
+        await _s3_backend().get(_FILENAME_KEY)
+
+    assert "Max_Mustermann" not in str(exc_info.value)
+    assert "Max_Mustermann" not in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_s3_delete_logs_no_filename(caplog: pytest.LogCaptureFixture) -> None:
+    """delete() must log that an object was deleted, without the key itself:
+    a re-key deletes the *old* (filename-bearing) key once the copy succeeds.
+    """
+    client = MagicMock()
+    with (
+        caplog.at_level(logging.INFO, logger="app.services.storage"),
+        patch("boto3.client", return_value=client),
+    ):
+        await _s3_backend().delete(_FILENAME_KEY)
+
+    assert "Max_Mustermann" not in caplog.text
+    assert any("Deleted attachment from S3" in record.message for record in caplog.records)
+
+
+@pytest.mark.asyncio
+async def test_s3_put_logs_no_filename(caplog: pytest.LogCaptureFixture) -> None:
+    with (
+        caplog.at_level(logging.INFO, logger="app.services.storage"),
+        patch("boto3.client", return_value=MagicMock()),
+    ):
+        await _s3_backend().put(_FILENAME_KEY, b"data", "application/pdf")
+
+    assert "Max_Mustermann" not in caplog.text
+    assert any("Stored attachment in S3" in record.message for record in caplog.records)
+
+
+@pytest.mark.asyncio
+async def test_failed_object_delete_logs_no_key(
+    caplog: pytest.LogCaptureFixture, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.services import storage
+    from app.services.attachment import delete_stored_objects
+
+    class _FailingBackend:
+        async def delete(self, key: str) -> None:
+            raise RuntimeError("backend unavailable")
+
+    monkeypatch.setattr(storage, "get_storage_backend", lambda: _FailingBackend())
+    with caplog.at_level(logging.INFO, logger="app.services.attachment"):
+        await delete_stored_objects([_FILENAME_KEY])
+
+    assert "Max_Mustermann" not in caplog.text
+    assert any("Failed to delete a stored object" in r.message for r in caplog.records)
 
 
 # ── Handler maps the missing-object error to 404 ───────────────────────────
@@ -89,3 +169,42 @@ async def test_admin_download_missing_s3_object_returns_404(
         f"/admin/reports/{report.id}/attachments/{att.id}", follow_redirects=False
     )
     assert resp.status_code == 404
+
+
+# ── read_attachment()'s LookupError must not carry a
+# not-yet-rekeyed legacy row's storage_key, which is the original filename ──
+
+
+@pytest.mark.asyncio
+async def test_read_attachment_lookup_error_has_no_filename(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.models.attachment import Attachment
+    from app.services import storage
+    from app.services.attachment import read_attachment
+    from app.services.report import create_report
+
+    report, _ = await create_report(db_session, "financial_fraud", "Legacy S3 lookup test.")
+    # A per-test-unique key: this row is committed to the shared test DB, and
+    # rekey_legacy_objects() elsewhere scans the *whole* attachments table, so
+    # reusing the exact literal _FILENAME_KEY here would collide with that
+    # test's own row of the same key once both are committed in one session.
+    legacy_key = f"Max_Mustermann_evidence-{uuid.uuid4().hex}.pdf"
+    att = Attachment(
+        id=uuid.uuid4(),
+        report_id=report.id,
+        filename="x",
+        content_type="application/pdf",
+        size=3,
+        data=None,
+        storage_key=legacy_key,
+    )
+    db_session.add(att)
+    await db_session.commit()
+
+    monkeypatch.setattr(storage, "get_storage_backend", lambda: _RaisingBackend())
+    with pytest.raises(LookupError) as exc_info:
+        await read_attachment(db_session, att)
+
+    assert "Max_Mustermann" not in str(exc_info.value)
+    assert str(exc_info.value) == str(att.id)

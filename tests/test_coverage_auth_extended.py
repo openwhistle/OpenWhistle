@@ -5,28 +5,30 @@ Covers:
 - login_mfa_post: wrong TOTP code → re-rendered MFA form with new temp token (lines 119-130)
 - session/ttl GET: returns JSON with ttl_seconds (lines 177-185)
 - session/refresh POST: revokes old session, issues new token, sets cookie (lines 188-215)
-- services/auth: decode_access_token invalid JWT (returns None), validate_session paths,
-  revoke_session, consume_totp_pending, get_user_by_id with bad UUID
+- services/auth: validate_session paths, revoke_session, consume_totp_pending,
+  get_user_by_id with bad UUID
 """
 
 from __future__ import annotations
 
 import re
 import uuid
+from unittest.mock import AsyncMock, patch
 
 import pyotp
 import pytest
-from httpx import AsyncClient
+from httpx import AsyncClient, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.models.user import AdminUser
 from app.services.auth import (
     create_access_token,
-    decode_access_token,
     hash_password,
     revoke_session,
     store_session,
     store_totp_pending,
+    store_totp_setup_pending,
     validate_session,
 )
 
@@ -64,6 +66,13 @@ async def _full_login(client: AsyncClient, admin: AdminUser, totp_secret: str) -
             "temp_token": temp_m.group(1) if temp_m else "",
             "totp_code": totp_code,
         },
+    )
+
+
+async def _refresh(client: AsyncClient) -> Response:
+    return await client.post(
+        "/admin/session/refresh",
+        headers={"X-CSRF-Token": client.cookies.get("ow_csrf") or ""},
     )
 
 
@@ -169,7 +178,7 @@ async def test_session_refresh_extends_session_and_rotates_cookie(
     old_session = client.cookies.get("ow_session")
     assert old_session is not None
 
-    resp = await client.post("/admin/session/refresh")
+    resp = await _refresh(client)
     assert resp.status_code == 200
     data = resp.json()
     assert data["ttl_seconds"] > 0
@@ -193,26 +202,10 @@ async def test_session_refresh_old_session_is_revoked(
     old_session = client.cookies.get("ow_session")
     assert old_session is not None
 
-    await client.post("/admin/session/refresh")
+    await _refresh(client)
 
     redis = await get_redis()
     assert await validate_session(redis, old_session) is False
-
-
-# ─── services/auth: decode_access_token (invalid JWT) ────────────────────────
-
-
-def test_decode_access_token_invalid_jwt_returns_none() -> None:
-    """decode_access_token must return None for a garbage token string."""
-    result = decode_access_token("not.a.valid.jwt")
-    assert result is None
-
-
-def test_decode_access_token_valid_returns_user_id() -> None:
-    user_id = str(uuid.uuid4())
-    token = create_access_token(user_id)
-    result = decode_access_token(token)
-    assert result == user_id
 
 
 # ─── services/auth: validate_session ─────────────────────────────────────────
@@ -311,3 +304,181 @@ async def test_get_user_by_username_not_found_returns_none(
 
     result = await get_user_by_username(db_session, "this_user_does_not_exist_xyz")
     assert result is None
+
+
+@pytest.mark.asyncio
+async def test_ldap_login_rejects_deactivated_account(
+    client: AsyncClient, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.services.ldap_auth import LDAPUserInfo
+
+    username = f"ldap_deact_{uuid.uuid4().hex[:8]}"
+    db_session.add(
+        AdminUser(
+            id=uuid.uuid4(),
+            username=username,
+            ldap_username=username,
+            totp_secret="JBSWY3DPEHPK3PXP",
+            totp_enabled=True,
+            is_active=False,
+        )
+    )
+    await db_session.commit()
+
+    monkeypatch.setattr(settings, "ldap_enabled", True)
+    info = LDAPUserInfo(username=username, email=None)
+    csrf = (await client.get("/admin/login")).cookies.get("ow_csrf")
+    with patch("app.services.ldap_auth.authenticate_ldap", AsyncMock(return_value=info)):
+        resp = await client.post(
+            "/admin/login",
+            data={"username": username, "password": "x", "csrf_token": csrf},
+        )
+
+    assert resp.status_code == 401
+    assert "deactivated" in resp.text.lower()
+
+
+@pytest.mark.asyncio
+async def test_login_mfa_post_redirects_when_user_deleted(client: AsyncClient) -> None:
+    """A consumed temp_token whose user was deleted in the meantime → back to login."""
+    from app.redis_client import get_redis
+
+    redis = await get_redis()
+    temp_token = "temp-token-for-deleted-user"
+    await store_totp_pending(redis, temp_token, str(uuid.uuid4()))
+
+    get_resp = await client.get("/admin/login")
+    csrf = get_resp.cookies.get("ow_csrf")
+    resp = await client.post(
+        "/admin/login/mfa",
+        data={"csrf_token": csrf, "temp_token": temp_token, "totp_code": "000000"},
+        follow_redirects=False,
+    )
+    assert resp.status_code == 302
+    assert resp.headers["location"].endswith("/admin/login")
+
+
+@pytest.mark.asyncio
+async def test_login_mfa_post_locked_out_shows_error(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """Rate-limited MFA attempts must render the locked-out MFA form (429)."""
+    from app.redis_client import get_redis
+    from app.services.rate_limit import record_admin_login_failure
+
+    admin, _ = await _create_admin(db_session)
+    redis = await get_redis()
+    temp_token = "temp-token-for-locked-mfa"
+    await store_totp_pending(redis, temp_token, str(admin.id))
+    for _ in range(settings.max_login_attempts):
+        await record_admin_login_failure(redis, admin.username)
+
+    get_resp = await client.get("/admin/login")
+    csrf = get_resp.cookies.get("ow_csrf")
+    resp = await client.post(
+        "/admin/login/mfa",
+        data={"csrf_token": csrf, "temp_token": temp_token, "totp_code": "000000"},
+    )
+    assert resp.status_code == 429
+    assert "too many" in resp.text.lower() or "paused" in resp.text.lower()
+
+
+@pytest.mark.asyncio
+async def test_mfa_setup_get_redirects_when_user_deleted(client: AsyncClient) -> None:
+    from app.redis_client import get_redis
+
+    redis = await get_redis()
+    setup_token = "setup-token-for-deleted-user"
+    await store_totp_setup_pending(redis, setup_token, str(uuid.uuid4()))
+
+    resp = await client.get(f"/admin/mfa/setup?token={setup_token}", follow_redirects=False)
+    assert resp.status_code == 302
+    assert resp.headers["location"].endswith("/admin/login")
+
+
+@pytest.mark.asyncio
+async def test_mfa_setup_post_redirects_when_user_deleted(client: AsyncClient) -> None:
+    from app.redis_client import get_redis
+
+    redis = await get_redis()
+    setup_token = "setup-post-token-for-deleted-user"
+    await store_totp_setup_pending(redis, setup_token, str(uuid.uuid4()))
+
+    get_resp = await client.get("/admin/login")
+    csrf = get_resp.cookies.get("ow_csrf")
+    resp = await client.post(
+        "/admin/mfa/setup",
+        data={"csrf_token": csrf, "temp_token": setup_token, "totp_code": "000000"},
+        follow_redirects=False,
+    )
+    assert resp.status_code == 302
+    assert resp.headers["location"].endswith("/admin/login")
+
+
+@pytest.mark.asyncio
+async def test_oidc_authorize_redirects_to_provider_when_enabled(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "oidc_enabled", True)
+    with patch(
+        "app.services.oidc.create_authorization_url",
+        AsyncMock(return_value="https://idp.example.com/auth?state=abc"),
+    ):
+        resp = await client.get("/admin/oidc/authorize", follow_redirects=False)
+
+    assert resp.status_code == 302
+    assert resp.headers["location"] == "https://idp.example.com/auth?state=abc"
+
+
+@pytest.mark.asyncio
+async def test_oidc_callback_error_param_shows_sso_failed(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "oidc_enabled", True)
+    resp = await client.get("/admin/oidc/callback?error=access_denied")
+    assert resp.status_code == 200
+    assert "sso" in resp.text.lower() or "failed" in resp.text.lower()
+
+
+@pytest.mark.asyncio
+async def test_oidc_callback_exchange_raises_shows_sso_failed(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "oidc_enabled", True)
+    with patch("app.services.oidc.exchange_code", AsyncMock(side_effect=RuntimeError("idp down"))):
+        resp = await client.get("/admin/oidc/callback?code=c&state=s")
+    assert resp.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_oidc_callback_no_claims_shows_sso_expired(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "oidc_enabled", True)
+    with patch("app.services.oidc.exchange_code", AsyncMock(return_value=None)):
+        resp = await client.get("/admin/oidc/callback?code=c&state=s")
+    assert resp.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_oidc_callback_missing_sub_shows_sso_identity_error(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "oidc_enabled", True)
+    with patch(
+        "app.services.oidc.exchange_code",
+        AsyncMock(return_value={"iss": "https://idp.example.com"}),  # no "sub"
+    ):
+        resp = await client.get("/admin/oidc/callback?code=c&state=s")
+    assert resp.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_oidc_callback_unlinked_identity_shows_sso_unlinked(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "oidc_enabled", True)
+    userinfo = {"sub": f"unlinked-{uuid.uuid4().hex}", "iss": "https://idp.example.com"}
+    with patch("app.services.oidc.exchange_code", AsyncMock(return_value=userinfo)):
+        resp = await client.get("/admin/oidc/callback?code=c&state=s")
+    assert resp.status_code == 200

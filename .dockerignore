@@ -19,3 +19,8 @@ docker-compose*.yml
 docs
 !docs/fonts
 nginx
+ansible
+.serena
+.superpowers
+.claude
+docs-tech

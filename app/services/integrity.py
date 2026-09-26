@@ -189,7 +189,7 @@ async def get_integrity_status(redis: Redis, recheck: bool = False) -> dict[str,
 
     result = await asyncio.to_thread(verify_integrity)
     try:
-        await redis.setex(_CACHE_KEY, _CACHE_TTL, json.dumps(result))
+        await redis.set(_CACHE_KEY, json.dumps(result), ex=_CACHE_TTL)
     except Exception:  # noqa: BLE001, S110
         pass
     return dict(result)

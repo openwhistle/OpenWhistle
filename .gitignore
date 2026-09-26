@@ -43,13 +43,14 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# Fonts (downloaded at build time, not committed)
+# Fonts (copied from docs/fonts at image build, not committed)
 app/static/fonts/*.woff
 app/static/fonts/*.woff2
 app/static/fonts/*.ttf
 
 # Docker
 docker-compose.override.yml
+nginx/certs/*.pem
 
 # Alembic
 migrations/versions/__pycache__/
@@ -59,3 +60,6 @@ migrations/versions/__pycache__/
 
 # Generated at Docker build time (see scripts/generate_integrity_manifest.py)
 integrity-manifest.json
+
+# Local agent tooling
+.serena/

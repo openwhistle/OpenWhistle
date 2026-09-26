@@ -12,23 +12,27 @@
 <span title="{{ action }}">{{ translated('audit.action.', action) }}</span>
 {%- endmacro %}
 
-{#- Status and role values read as their labels; anything else verbatim (escaped). -#}
-{% macro _value(v) -%}
+{#- Status, role and via values read as their labels; anything else verbatim (escaped). -#}
+{% macro _value(k, v) -%}
 {%- set status_label = t('status.label.' ~ v) -%}
 {%- set role_label = t('role.label.' ~ v) -%}
-{%- if status_label != 'status.label.' ~ v -%}{{ status_label }}
+{%- set via_label = t('audit.detail.via.' ~ v) -%}
+{%- if v == REASON_UNREADABLE -%}{{ t(v) }}
+{%- elif k == 'via' and via_label != 'audit.detail.via.' ~ v -%}{{ via_label }}
+{%- elif status_label != 'status.label.' ~ v -%}{{ status_label }}
 {%- elif role_label != 'role.label.' ~ v -%}{{ role_label }}
 {%- else -%}{{ v }}{%- endif -%}
 {%- endmacro %}
 
-{% macro detail(raw) -%}
-{%- set pairs = raw | audit_detail -%}
+{#- `redact_reason`: the case page says a reason was recorded; only the audit log shows it. -#}
+{% macro detail(raw, redact_reason=false) -%}
+{%- set pairs = raw | audit_detail(not redact_reason) -%}
 {%- if pairs and not pairs[0][0] -%}
 <span class="audit-detail">{{ pairs[0][1] }}</span>
 {%- elif pairs -%}
 <dl class="audit-detail">
     {%- for k, v in pairs %}
-    <div><dt>{{ translated('audit.detail.', k) }}</dt><dd>{{ _value(v) }}</dd></div>
+    <div><dt>{{ translated('audit.detail.', k) }}</dt><dd>{% if redact_reason and k == 'reason' %}{{ t('audit.detail.reason_recorded') }}{% else %}{{ _value(k, v) }}{% endif %}</dd></div>
     {%- endfor %}
 </dl>
 {%- endif -%}

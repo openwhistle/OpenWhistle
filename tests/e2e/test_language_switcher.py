@@ -194,3 +194,31 @@ def test_language_persists_across_pages(page: Page, base_url: str) -> None:
         term in body
         for term in ["de", "Meldung", "Status", "Anonym", "lang=\"de\""]
     ), "Language preference did not persist across page navigation"
+
+
+def test_character_counter_uses_locale_number_format(page: Page, base_url: str) -> None:
+    """The description step's live character counter must group digits per
+    locale (German "10.000"), not always the browser's own locale via a bare
+    `.toLocaleString()` with no lang argument."""
+    from tests.e2e.test_wb_submission import (
+        _advance_step,
+        _fill_category_step,
+        _fill_mode_step,
+        _skip_location_if_present,
+    )
+
+    page.context.add_cookies([{"name": "ow-lang", "value": "de", "url": base_url}])
+    page.goto(f"{base_url}/submit")
+    page.wait_for_load_state("networkidle")
+    _fill_mode_step(page)
+    _advance_step(page)
+    _skip_location_if_present(page)
+    page.wait_for_load_state("networkidle")
+    _fill_category_step(page)
+    _advance_step(page)
+    page.wait_for_load_state("networkidle")
+
+    counter = page.locator("#char-counter")
+    assert counter.inner_text() == "0 / 10.000"
+    page.locator("textarea#description").fill("a" * 1234)
+    assert counter.inner_text() == "1.234 / 10.000"

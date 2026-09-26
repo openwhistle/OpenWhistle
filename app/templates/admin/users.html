@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "admin/_layout.html" %}
 
 {% block title %}{{ t('admin.users.title') }} | OpenWhistle{% endblock %}
 
@@ -17,24 +17,9 @@
 </style>
 {% endblock %}
 
-{% block nav_links %}
-<li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
-<li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
-<li><a href="/admin/categories">{{ t('admin.nav.categories') }}</a></li>
-<li><a href="/admin/locations">{{ t('admin.nav.locations') }}</a></li>
-<li><a href="/admin/users" class="active" aria-current="page">{{ t('admin.nav.users') }}</a></li>
-<li><a href="/admin/audit-log">{{ t('admin.nav.audit_log') }}</a></li>
-<li><a href="/admin/telephone-channel">{{ t('admin.nav.telephone_channel') }}</a></li>
-<li><a href="/admin/retention">{{ t('admin.nav.retention') }}</a></li>
-<li><a href="/admin/organisations">{{ t('admin.nav.organisations') }}</a></li>
-<li><a href="/admin/system">{{ t('admin.nav.system') }}</a></li>
-<li><form method="post" action="/admin/logout"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button type="submit" class="nav-link-button">{{ t('admin.nav.logout') }}</button></form></li>
-{% endblock %}
-
-{% block content %}
+{% block admin_content %}
 <div class="container">
     <div class="page-header">
-        <div class="page-eyebrow">{{ t('admin.users.eyebrow') }}</div>
         <h1>{{ t('admin.users.title') }}</h1>
     </div>
 
@@ -42,14 +27,14 @@
 
         {# Add new user form #}
         <div class="panel">
-            <div class="panel-header">{{ t('admin.users.add.header') }}</div>
+            <h2 class="panel-header">{{ t('admin.users.add.header') }}</h2>
             <form method="post" action="/admin/users">
                 <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                 <div class="form-group">
                     <label class="form-label" for="new-username">{{ t('admin.users.add.username') }}</label>
                     <input type="text" class="form-control" id="new-username" name="username" required
                         minlength="3" maxlength="64"
-                        pattern="[A-Za-z0-9_-]+" title="Letters, numbers, hyphens and underscores only">
+                        pattern="[A-Za-z0-9_-]+" title="{{ t('admin.users.add.username.title') }}">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="new-password">{{ t('admin.users.add.password') }}</label>
@@ -60,7 +45,7 @@
                     <label class="form-label" for="new-role">{{ t('admin.users.add.role') }}</label>
                     <select class="form-control" id="new-role" name="role">
                         {% for role in roles %}
-                        <option value="{{ role.value }}">{{ t('role.label.' + role.value) }}</option>
+                        <option value="{{ role.value }}" {{ 'selected' if role.value == 'case_manager' else '' }}>{{ t('role.label.' + role.value) }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -73,38 +58,38 @@
 
         {# Users list #}
         <div class="panel">
-            <div class="panel-header">{{ t('admin.users.list.header') }}</div>
+            <h2 class="panel-header">{{ t('admin.users.list.header') }}</h2>
 
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Username</th>
-                            <th>Role</th>
-                            <th>Status</th>
-                            <th>Actions</th>
+            <div class="table-wrapper" tabindex="0" role="region" aria-label="{{ t('admin.users.list.header') }}">
+                <table class="table-stack" role="table">
+                    <thead role="rowgroup">
+                        <tr role="row">
+                            <th role="columnheader">{{ t('admin.users.table.username') }}</th>
+                            <th role="columnheader">{{ t('admin.users.table.role') }}</th>
+                            <th role="columnheader">{{ t('admin.users.table.status') }}</th>
+                            <th role="columnheader" class="stack-action-header">{{ t('admin.users.table.actions') }}</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody role="rowgroup">
                         {% for u in users %}
-                        <tr class="{% if not u.is_active %}usr-row-inactive{% endif %}">
-                            <td>
+                        <tr role="row" class="{% if not u.is_active %}usr-row-inactive{% endif %}">
+                            <td role="cell" class="stack-primary" data-label="{{ t('admin.users.table.username') }}">
                                 <span class="usr-username{% if u.id == user.id %} usr-username-self{% endif %}">
                                     {{ u.username }}
                                 </span>
-                                {% if u.id == user.id %}<span class="usr-you-tag"> (you)</span>{% endif %}
+                                {% if u.id == user.id %}<span class="usr-you-tag"> {{ t('admin.users.you_tag') }}</span>{% endif %}
                             </td>
-                            <td>
+                            <td role="cell" data-label="{{ t('admin.users.table.role') }}">
                                 <span class="badge badge-{{ u.role.value }}">{{ t('role.label.' + u.role.value) }}</span>
                             </td>
-                            <td>
+                            <td role="cell" class="stack-status" data-label="{{ t('admin.users.table.status') }}">
                                 {% if u.is_active %}
                                 <span class="badge badge-closed usr-status-badge">{{ t('admin.users.active') }}</span>
                                 {% else %}
                                 <span class="badge usr-status-badge">{{ t('admin.users.inactive') }}</span>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td role="cell" class="stack-action">
                                 <div class="usr-actions">
                                     {# Role change #}
                                     {% if u.id != user.id %}
@@ -112,7 +97,7 @@
                                         <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                                         <select name="role" class="form-control usr-role-select" aria-label="{{ t('admin.users.role_for', username=u.username) }}">
                                             {% for role in roles %}
-                                            <option value="{{ role.value }}" {{ 'selected' if u.role == role else '' }}>{{ role.value }}</option>
+                                            <option value="{{ role.value }}" {{ 'selected' if u.role == role else '' }}>{{ t('role.label.' + role.value) }}</option>
                                             {% endfor %}
                                         </select>
                                         <button type="submit" class="btn btn-secondary btn-sm usr-role-btn">
@@ -125,7 +110,7 @@
                                     {% if u.id != user.id %}
                                     {% if u.is_active %}
                                     <form method="post" action="/admin/users/{{ u.id }}/deactivate"
-                                          data-confirm="Deactivate {{ u.username }}?">
+                                          data-confirm="{{ t('admin.users.deactivate_confirm', username=u.username) }}">
                                         <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                                         <button type="submit" class="btn btn-secondary btn-sm">
                                             {{ t('admin.users.deactivate') }}

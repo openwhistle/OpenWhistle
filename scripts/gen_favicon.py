@@ -12,7 +12,6 @@ matching the nav logo in base.html (viewBox 0 0 28 33).
 """
 
 import io
-import math
 import struct
 from pathlib import Path
 

@@ -157,6 +157,81 @@ async def test_create_report_retries_on_case_number_collision(
     assert report.case_number == fresh_number
 
 
+@pytest.mark.asyncio
+async def test_case_number_collision_keeps_the_callers_objects_loaded(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A retried collision must not expire objects the caller already holds.
+
+    A full-session rollback expires every object in the session; the caller's
+    next plain attribute access (``taken.id``) then lazy-loads outside the
+    async context and raises MissingGreenlet.
+    """
+    from app.services import report as report_svc
+
+    taken = await _mk_report(db_session)
+    seq = iter([taken.case_number, f"OW-9999-{uuid.uuid4().int % 100000:05d}"])
+    monkeypatch.setattr(report_svc, "generate_case_number", lambda: next(seq))
+    await report_svc.create_report(db_session, "financial_fraud", "Collision test.")
+
+    assert taken.id is not None  # synchronous access: must not need IO
+
+
+@pytest.mark.asyncio
+async def test_create_report_does_not_retry_other_integrity_errors(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Only a case-number collision is retried; a foreign-key violation is a
+    real fault and must surface at once, not after five identical attempts."""
+    from sqlalchemy.exc import IntegrityError
+
+    from app.services import report as report_svc
+    from app.services.pin import generate_case_number
+
+    calls: list[str] = []
+
+    def counting_gen() -> str:
+        calls.append(number := generate_case_number())
+        return number
+
+    monkeypatch.setattr(report_svc, "generate_case_number", counting_gen)
+    with pytest.raises(IntegrityError):
+        await report_svc.create_report(
+            db_session, "financial_fraud", "FK test.", location_id=uuid.uuid4()
+        )
+    assert len(calls) == 1
+    await db_session.rollback()
+
+
+@pytest.mark.asyncio
+async def test_create_report_does_not_retry_a_unique_violation_on_another_constraint(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A 23505 is retried only on the case-number index: a duplicate primary
+    key (reports_pkey) is a real fault, not a case-number collision."""
+    from types import SimpleNamespace
+
+    from sqlalchemy.exc import IntegrityError
+
+    from app.services import report as report_svc
+    from app.services.pin import generate_case_number
+
+    taken_id = (await _mk_report(db_session)).id
+    db_session.expunge_all()  # the clash is the database's, not the identity map's
+    calls: list[str] = []
+
+    def counting_gen() -> str:
+        calls.append(number := generate_case_number())
+        return number
+
+    monkeypatch.setattr(report_svc, "generate_case_number", counting_gen)
+    monkeypatch.setattr(report_svc, "uuid", SimpleNamespace(uuid4=lambda: taken_id))
+    with pytest.raises(IntegrityError, match="reports_pkey"):
+        await report_svc.create_report(db_session, "financial_fraud", "PK test.")
+    assert len(calls) == 1
+    await db_session.rollback()
+
+
 # ══════════════════════════════════════════════════════════════════════════
 # HIGH: reminder dedup TTL must cover the warn window
 # ══════════════════════════════════════════════════════════════════════════

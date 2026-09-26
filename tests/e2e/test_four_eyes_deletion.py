@@ -20,6 +20,13 @@ _NEXT_BTN = 'button[type="submit"][name="action"][value="next"]'
 _CASE_RE = re.compile(r"OW-[A-Z0-9]+-\d{5}")
 
 
+def _open_danger_zone(page: Page) -> None:
+    """The delete controls sit in a collapsed <details class="danger-zone">."""
+    zone = page.locator("details.danger-zone")
+    if zone.count():
+        zone.evaluate("d => { d.open = true; }")
+
+
 def _create_throwaway_report(page: Page, base_url: str) -> str:
     """Submit a new report via the wizard and return its case number."""
     page.goto(f"{base_url}/submit")
@@ -112,6 +119,7 @@ def test_same_admin_cannot_confirm_own_deletion_request(
     admin_page.wait_for_load_state("networkidle")
 
     # Click "Request Deletion" button (step-1 button that reveals the confirm form)
+    _open_danger_zone(admin_page)
     request_btn = admin_page.locator("#delete-step-1 button")
     if request_btn.count() == 0:
         pytest.skip("Delete request button not found — user may lack admin role")
@@ -133,6 +141,7 @@ def test_same_admin_cannot_confirm_own_deletion_request(
     ), f"Expected pending deletion state or self-conflict message, got: {body[:500]}"
 
     # Admin A tries to confirm — the "Confirm" button should NOT appear for the same user
+    _open_danger_zone(admin_page)
     _confirm_re = re.compile(r"[Cc]onfirm")
     confirm_4eyes = admin_page.locator('button.btn-danger').filter(has_text=_confirm_re)
     # Either no confirm button, or if present it should lead to an error (self-conflict)
@@ -176,6 +185,7 @@ def test_second_admin_can_confirm_deletion(
     admin_page.goto(detail_url)
     admin_page.wait_for_load_state("networkidle")
 
+    _open_danger_zone(admin_page)
     request_btn = admin_page.locator("#delete-step-1 button")
     if request_btn.count() == 0:
         pytest.skip("Delete request button not found")
@@ -200,6 +210,7 @@ def test_second_admin_can_confirm_deletion(
     admin_page2.wait_for_load_state("networkidle")
 
     # Admin B should see the "Confirm Deletion" button (4-eyes)
+    _open_danger_zone(admin_page2)
     _confirm_re = re.compile(r"[Cc]onfirm")
     confirm_btn = admin_page2.locator('button.btn-danger').filter(has_text=_confirm_re)
     if confirm_btn.count() == 0:

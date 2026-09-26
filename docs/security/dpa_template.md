@@ -1,6 +1,6 @@
 # Data Processing Agreement (DPA) Template
 
-**GDPR Art. 28 — Controller–Processor Agreement**
+## GDPR Art. 28 — Controller–Processor Agreement
 
 **Version**: 1.0.0
 **Classification**: Template — Seek legal advice before use in production

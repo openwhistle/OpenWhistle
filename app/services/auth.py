@@ -1,7 +1,9 @@
 """Authentication service: passwords, JWT sessions, OIDC."""
 
+import time
 import uuid
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import bcrypt
 import jwt
@@ -67,26 +69,44 @@ def verify_pin(plain: str, hashed: str) -> bool:
 TIMING_DUMMY_HASH = hash_password("timing-equalizer-not-a-real-secret")
 
 
-def create_access_token(user_id: str, role: str = "admin") -> str:
-    expire = datetime.now(UTC) + timedelta(minutes=settings.access_token_expire_minutes)
+def create_access_token(user_id: str, role: str = "admin", auth_time: int | None = None) -> str:
+    """A session JWT. ``auth_time`` (login time, epoch seconds) survives refreshes,
+    so ``exp`` never passes auth_time + SESSION_MAX_HOURS."""
+    now = datetime.now(UTC)
+    started = auth_time if auth_time is not None else int(now.timestamp())
+    expire = min(
+        now + timedelta(minutes=settings.access_token_expire_minutes),
+        datetime.fromtimestamp(started, tz=UTC) + timedelta(hours=settings.session_max_hours),
+    )
     payload = {
         "sub": user_id,
         "role": role,
         "exp": expire,
-        "iat": datetime.now(UTC),
+        "iat": now,
+        "auth_time": started,
         "jti": str(uuid.uuid4()),
     }
     return str(jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm))
 
 
-def decode_access_token(token: str) -> str | None:
-    """Decode a JWT and return the subject (user_id), or None if invalid."""
+def decode_access_token_claims(token: str) -> dict[str, Any] | None:
     try:
-        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
-        sub: str | None = payload.get("sub")
-        return sub
+        claims: dict[str, Any] = jwt.decode(
+            token, settings.secret_key, algorithms=[settings.algorithm],
+            options={"require": ["exp", "sub"]},
+        )
     except jwt.PyJWTError:
         return None
+    return claims
+
+
+def session_started_at(claims: dict[str, Any]) -> int:
+    """Login time; tokens issued before v2.0.0 carry only ``iat``."""
+    return int(claims.get("auth_time", claims.get("iat", 0)))
+
+
+def session_too_old(claims: dict[str, Any]) -> bool:
+    return time.time() - session_started_at(claims) > settings.session_max_hours * 3600
 
 
 def decode_access_token_exp(token: str) -> datetime | None:
@@ -101,6 +121,14 @@ def decode_access_token_exp(token: str) -> datetime | None:
         return None
 
 
+def seconds_left(token: str) -> int:
+    """Seconds remaining until the token's ``exp``; 0 if invalid or already expired."""
+    exp = decode_access_token_exp(token)
+    if exp is None:
+        return 0
+    return max(0, int((exp - datetime.now(UTC)).total_seconds()))
+
+
 async def get_session_ttl(redis: Redis, token: str) -> int:
     """Return remaining TTL in seconds for a session token (0 if not found)."""
     key = f"{_SESSION_PREFIX}{token}"
@@ -109,9 +137,8 @@ async def get_session_ttl(redis: Redis, token: str) -> int:
 
 
 async def store_session(redis: Redis, user_id: str, token: str) -> None:
-    """Store session token in Redis for quick validation and revocation."""
-    key = f"{_SESSION_PREFIX}{token}"
-    await redis.setex(key, settings.access_token_expire_minutes * 60, user_id)
+    """Store session token in Redis; it lives exactly as long as the JWT."""
+    await redis.set(f"{_SESSION_PREFIX}{token}", user_id, ex=max(1, seconds_left(token)))
 
 
 async def validate_session(redis: Redis, token: str) -> bool:
@@ -129,7 +156,7 @@ async def revoke_session(redis: Redis, token: str) -> None:
 async def store_totp_pending(redis: Redis, temp_token: str, user_id: str) -> None:
     """Store a temporary token awaiting TOTP verification (5 min expiry)."""
     key = f"{_TOTP_PENDING_PREFIX}{temp_token}"
-    await redis.setex(key, 300, user_id)
+    await redis.set(key, user_id, ex=300)
 
 
 async def consume_totp_pending(redis: Redis, temp_token: str) -> str | None:
@@ -143,7 +170,7 @@ async def consume_totp_pending(redis: Redis, temp_token: str) -> str | None:
 async def store_totp_setup_pending(redis: Redis, temp_token: str, user_id: str) -> None:
     """Store a temporary token for first-time TOTP setup (10 min expiry)."""
     key = f"{_TOTP_SETUP_PREFIX}{temp_token}"
-    await redis.setex(key, 600, user_id)
+    await redis.set(key, user_id, ex=600)
 
 
 async def peek_totp_setup_pending(redis: Redis, temp_token: str) -> str | None:

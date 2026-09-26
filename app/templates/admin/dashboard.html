@@ -1,4 +1,5 @@
-{% extends "base.html" %}
+{% extends "admin/_layout.html" %}
+{% import "_icons.html" as icons %}
 
 {% block styles %}
 <style nonce="{{ request.state.csp_nonce }}">
@@ -21,28 +22,36 @@
 .dash-empty-body { font-size:0.85rem;color:var(--muted); }
 .dash-mt-btn { margin-top:1rem; }
 .dash-mt-btn-lg { margin-top:1.25rem; }
+.dash-nav-form { display:inline; }
+.dash-nav-form button { background:none;border:none;cursor:pointer;font:inherit; }
 </style>
 {% endblock %}
 
 {% block title %}{{ t('admin.dashboard.title') }} | OpenWhistle{% endblock %}
 
-{% block nav_links %}
-<li><a href="/admin/dashboard" class="active" aria-current="page">{{ t('admin.dashboard.title') }}</a></li>
-<li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
-<li><a href="/admin/categories">{{ t('admin.nav.categories') }}</a></li>
-<li><a href="/admin/locations">{{ t('admin.nav.locations') }}</a></li>
-<li><a href="/admin/users">{{ t('admin.nav.users') }}</a></li>
-<li><a href="/admin/audit-log">{{ t('admin.nav.audit_log') }}</a></li>
-<li><a href="/admin/telephone-channel">{{ t('admin.nav.telephone_channel') }}</a></li>
-<li><a href="/admin/retention">{{ t('admin.nav.retention') }}</a></li>
-<li><a href="/admin/organisations">{{ t('admin.nav.organisations') }}</a></li>
-<li><a href="/admin/system">{{ t('admin.nav.system') }}</a></li>
-<li><form method="post" action="/admin/logout"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button type="submit" class="nav-link-button">{{ t('admin.nav.logout') }}</button></form></li>
-{% endblock %}
+{#- A link to the dashboard with `params` (`view`, the current one, with overrides). During a search it is a POST form instead,
+    so the search term stays out of the URL and the browser history. -#}
+{% macro nav(params, cls, current=false) -%}
+{%- set pairs = params.items() | selectattr('1') | list -%}
+{%- if case_query -%}
+<form method="post" action="/admin/dashboard" class="dash-nav-form">
+<input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+<input type="hidden" name="q" value="{{ case_query }}">
+{%- for k, v in pairs %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor -%}
+<button type="submit" class="{{ cls }}"{% if current %} aria-current="true"{% endif %}>{{ caller() }}</button>
+</form>
+{%- else -%}
+<a href="/admin/dashboard?{{ pairs | urlencode | safe }}" class="{{ cls }}"{% if current %} aria-current="true"{% endif %}>{{ caller() }}</a>
+{%- endif -%}
+{%- endmacro %}
 
-{% macro sort_url(field) %}
+{% macro sort_header(field, label_key) -%}
 {%- set new_dir = 'asc' if (sort_by == field and sort_dir == 'desc') else 'desc' -%}
-/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ field }}&dir={{ new_dir }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if my_cases %}&my_cases=1{% endif %}{% if case_query %}&q={{ case_query | urlencode }}{% endif %}
+{%- call nav(dict(view, sort=field, dir=new_dir), 'sort-link') %}{{ t(label_key) }}{{ sort_icon(field) }}{% endcall -%}
+{%- endmacro %}
+
+{% macro page_link(p, cls, label) -%}
+{%- call nav(dict(view, page=p), cls) %}{{ label }}{% endcall -%}
 {%- endmacro %}
 
 {% macro sort_icon(field) %}
@@ -53,22 +62,27 @@
 {%- endif %}
 {%- endmacro %}
 
-{% macro page_url(p) %}
-/admin/dashboard?page={{ p }}&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if my_cases %}&my_cases=1{% endif %}{% if case_query %}&q={{ case_query | urlencode }}{% endif %}
-{%- endmacro %}
 
-{% block content %}
+{% block admin_content %}
 <div class="container">
     <div class="page-header dash-page-header">
         <div>
-            <div class="page-eyebrow">{{ t('admin.eyebrow') }}</div>
             <h1>{{ t('admin.dashboard.title') }}</h1>
             <p class="dash-logged-in-as">
                 {{ t('admin.logged_in_as') }} <strong class="dash-username">{{ user.username }}</strong>
                 <span class="badge badge-{{ user.role.value }} dash-role-badge">{{ t('role.label.' + user.role.value) }}</span>
             </p>
+            {% if reporting_link %}
+            <p class="dash-logged-in-as">
+                {{ t('admin.dashboard.reporting_link') }} <span class="mono">{{ reporting_link }}</span>
+                <button type="button" class="copy-btn" data-action="copy" data-copy="{{ reporting_link }}"
+                        title="{{ t('admin.organisations.copy_link') }}"
+                        aria-label="{{ t('admin.organisations.copy_link') }}"
+                        data-copied="{{ t('success.copied') }}">{{ icons.icon('copy') }}</button>
+            </p>
+            {% endif %}
         </div>
-        <a href="/submit" class="btn btn-secondary btn-sm" title="{{ t('admin.view_submit.title') }}">{{ t('admin.view_submit') }}</a>
+        <a href="{{ reporting_path }}" class="btn btn-secondary btn-sm" title="{{ t('admin.view_submit.title') }}">{{ t('admin.view_submit') }}</a>
     </div>
 
     {# Deletion success flash #}
@@ -81,7 +95,7 @@
     {# IP leakage warning banner #}
     {% if ip_warning %}
     <div class="ip-warning-banner" id="ip-warning-banner" role="alert">
-        <div class="ip-warning-icon">&#9888;</div>
+        <div class="ip-warning-icon">{{ icons.icon('warning') }}</div>
         <div class="ip-warning-text">
             <strong>{{ t('admin.ip_warning.title') }}</strong>
             {{ t('admin.ip_warning.body') }}
@@ -89,71 +103,52 @@
             <br><br>
             {{ t('admin.ip_warning.hint') }}
         </div>
+        {% if user.role.value in ('admin', 'superadmin') %}
         <button class="btn btn-danger btn-sm dash-shrink0" data-action="dismiss-ip-warning">
             {{ t('admin.ip_warning.dismiss') }}
         </button>
+        {% endif %}
     </div>
     {% endif %}
-
-    {# Summary stats cards - clickable filters #}
-    <div class="stats-row">
-        {% for label_key, status_val, cls in [
-            ('admin.stats.received',          'received',          'badge-received'),
-            ('admin.stats.in_review',         'in_review',         'badge-in_review'),
-            ('admin.stats.pending_feedback',  'pending_feedback',  'badge-pending_feedback'),
-            ('admin.stats.closed',            'closed',            'badge-closed')
-        ] %}
-        {% set count = stats.get(status_val, 0) %}
-        <a href="/admin/dashboard?status={{ status_val }}&sort={{ sort_by }}&dir={{ sort_dir }}&per_page={{ per_page }}"
-           class="stat-card stat-card-link {% if status_filter == status_val %}stat-card-active{% endif %}"
-           data-delay="{{ loop.index0 * 0.05 }}"
-           aria-label="{{ t('admin.stats.filter_by', status=t(label_key)) }}">
-            <div class="stat-number">{{ count }}</div>
-            <span class="badge {{ cls }}">{{ t(label_key) }}</span>
-        </a>
-        {% endfor %}
-    </div>
 
     <div class="panel">
         {# Panel header with filter bar and row count #}
         <div class="panel-header dashboard-panel-header">
-            <span>{{ t('admin.table.header') }}</span>
+            <h2 class="panel-header-title">{{ t('admin.table.header') }}</h2>
             <div class="dashboard-toolbar">
                 {# Status filter pill row #}
                 <div class="filter-pills">
-                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}{% if case_query %}&q={{ case_query | urlencode }}{% endif %}"
-                       class="filter-pill {% if not status_filter and not my_cases %}filter-pill-active{% endif %}">
+                    {% set active = not status_filter and not my_cases %}
+                    {% call nav(dict(view, status='', my_cases=''), 'filter-pill' ~ (' filter-pill-active' if active else ''), active) %}
                         {{ t('admin.filter.all_statuses') }}
-                    </a>
+                    {% endcall %}
                     {% for sv, label_key in [
                         ('received',          'status.label.received'),
                         ('in_review',         'status.label.in_review'),
                         ('pending_feedback',  'status.label.pending_feedback'),
                         ('closed',            'status.label.closed')
                     ] %}
-                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}&status={{ sv }}{% if case_query %}&q={{ case_query | urlencode }}{% endif %}"
-                       class="filter-pill {% if status_filter == sv and not my_cases %}filter-pill-active{% endif %}">
-                        {{ t(label_key) }}
-                    </a>
+                    {% set active = status_filter == sv and not my_cases %}
+                    {% call nav(dict(view, status=sv, my_cases=''), 'filter-pill' ~ (' filter-pill-active' if active else ''), active) %}
+                        {{ t(label_key) }} <span class="filter-pill-count">{{ stats.get(sv, 0) }}</span>
+                    {% endcall %}
                     {% endfor %}
-                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}&my_cases=1{% if case_query %}&q={{ case_query | urlencode }}{% endif %}"
-                       class="filter-pill {% if my_cases %}filter-pill-active{% endif %}">
+                    {% call nav(dict(view, status='', my_cases='1'), 'filter-pill' ~ (' filter-pill-active' if my_cases else ''), my_cases) %}
                         {{ t('admin.filter.my_cases') }}
-                    </a>
+                    {% endcall %}
                 </div>
 
                 {# Location filter #}
                 {% if all_locations %}
                 <div class="filter-pills">
-                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if my_cases %}&my_cases=1{% endif %}{% if case_query %}&q={{ case_query | urlencode }}{% endif %}"
-                       class="filter-pill {% if not location_filter %}filter-pill-active{% endif %}">
+                    {% call nav(dict(view, location_id=''), 'filter-pill' ~ ('' if location_filter else ' filter-pill-active'), not location_filter) %}
                         {{ t('admin.filter.all_locations') }}
-                    </a>
+                    {% endcall %}
                     {% for loc in all_locations %}
-                    <a href="/admin/dashboard?page=1&per_page={{ per_page }}&sort={{ sort_by }}&dir={{ sort_dir }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if my_cases %}&my_cases=1{% endif %}&location_id={{ loc.id }}{% if case_query %}&q={{ case_query | urlencode }}{% endif %}"
-                       class="filter-pill {% if location_filter == loc.id|string %}filter-pill-active{% endif %}">
+                    {% set active = location_filter == loc.id|string %}
+                    {% call nav(dict(view, location_id=loc.id|string), 'filter-pill' ~ (' filter-pill-active' if active else ''), active) %}
                         {{ loc.name }}
-                    </a>
+                    {% endcall %}
                     {% endfor %}
                 </div>
                 {% endif %}
@@ -170,8 +165,9 @@
             </div>
         </div>
 
-        {# Case-number search: a plain GET form, works without JavaScript. #}
-        <form method="get" action="/admin/dashboard" class="dash-search" role="search">
+        {# Search: POST, so the term stays out of the URL and the history; works without JavaScript. #}
+        <form method="post" action="/admin/dashboard" class="dash-search" role="search">
+            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <div class="form-group">
                 <label class="form-label" for="dash-search-q">{{ t('admin.search.label') }}</label>
                 <input type="search" class="form-control mono" id="dash-search-q" name="q"
@@ -202,21 +198,21 @@
             {% endif %}
         </div>
 
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th><a href="{{ sort_url('case_number') }}" class="sort-link">{{ t('admin.table.case_number') }}{{ sort_icon('case_number') }}</a></th>
-                        <th><a href="{{ sort_url('category') }}" class="sort-link">{{ t('admin.table.category') }}{{ sort_icon('category') }}</a></th>
-                        <th><a href="{{ sort_url('status') }}" class="sort-link">{{ t('admin.table.status') }}{{ sort_icon('status') }}</a></th>
-                        <th><a href="{{ sort_url('submitted_at') }}" class="sort-link">{{ t('admin.table.submitted') }}{{ sort_icon('submitted_at') }}</a></th>
-                        <th>{{ t('admin.table.assignee') }}</th>
-                        <th>{{ t('admin.table.sla7') }}</th>
-                        <th>{{ t('admin.table.sla3m') }}</th>
-                        <th></th>
+        <div class="table-wrapper" tabindex="0" role="region" aria-label="{{ t('admin.table.header') }}">
+            <table class="table-stack" role="table">
+                <thead role="rowgroup">
+                    <tr role="row">
+                        <th role="columnheader">{{ sort_header('case_number', 'admin.table.case_number') }}</th>
+                        <th role="columnheader">{{ sort_header('category', 'admin.table.category') }}</th>
+                        <th role="columnheader">{{ sort_header('status', 'admin.table.status') }}</th>
+                        <th role="columnheader">{{ sort_header('submitted_at', 'admin.table.submitted') }}</th>
+                        <th role="columnheader">{{ t('admin.table.assignee') }}</th>
+                        <th role="columnheader">{{ t('admin.table.sla7') }}</th>
+                        <th role="columnheader">{{ t('admin.table.sla3m') }}</th>
+                        <th role="columnheader" class="stack-action-header"></th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody role="rowgroup">
                     {% for report in reports %}
                     {% set days_since_submit = (now - report.submitted_at).days %}
                     {% set ack_sla_class = 'sla-ok' if report.acknowledged_at else ('sla-ok' if days_since_submit < 5 else ('sla-warning' if days_since_submit < 7 else 'sla-overdue')) %}
@@ -225,26 +221,26 @@
                         {% set days_to_fb = (report.feedback_due_at - now).days %}
                         {% set fb_sla_class = 'sla-ok' if days_to_fb > 14 else ('sla-warning' if days_to_fb > 0 else 'sla-overdue') %}
                     {% endif %}
-                    <tr>
-                        <td><span class="mono dash-nowrap">{{ report.case_number }}</span></td>
-                        <td class="dash-category-cell">{{ report.category | replace('_', ' ') | title }}</td>
-                        <td><span class="badge badge-{{ report.status.value }}">{{ t('status.label.' + report.status.value) }}</span></td>
-                        <td class="mono dash-date-cell">{{ report.submitted_at.strftime('%Y-%m-%d') }}</td>
-                        <td class="dash-assignee-cell">
+                    <tr role="row">
+                        <td role="cell" class="stack-primary" data-label="{{ t('admin.table.case_number') }}"><span class="mono dash-nowrap">{{ report.case_number }}</span></td>
+                        <td role="cell" class="dash-category-cell" data-label="{{ t('admin.table.category') }}">{{ report.category | category_label(category_labels) }}</td>
+                        <td role="cell" class="stack-status" data-label="{{ t('admin.table.status') }}"><span class="badge badge-{{ report.status.value }}">{{ t('status.label.' + report.status.value) }}</span></td>
+                        <td role="cell" class="mono dash-date-cell" data-label="{{ t('admin.table.submitted') }}">{{ report.submitted_at|day }}</td>
+                        <td role="cell" class="dash-assignee-cell" data-label="{{ t('admin.table.assignee') }}">
                             {% if report.assigned_to %}
                                 <span class="dash-assignee-name">{{ report.assigned_to.username }}</span>
                             {% else %}
                                 {{ t('admin.table.unassigned') }}
                             {% endif %}
                         </td>
-                        <td class="{{ ack_sla_class }} dash-sla-cell">
+                        <td role="cell" class="{{ ack_sla_class }} dash-sla-cell" data-label="{{ t('admin.table.sla7') }}">
                             {% if report.acknowledged_at %}
                                 {{ t('admin.sla.done') }}
                             {% else %}
                                 {{ t('admin.report.sla.day') }} {{ days_since_submit }}/7
                             {% endif %}
                         </td>
-                        <td class="{{ fb_sla_class }} dash-sla-cell">
+                        <td role="cell" class="{{ fb_sla_class }} dash-sla-cell" data-label="{{ t('admin.table.sla3m') }}">
                             {% if report.feedback_due_at %}
                                 {% set days_to_fb = (report.feedback_due_at - now).days %}
                                 {% if days_to_fb > 0 %}{{ days_to_fb }} {{ t('admin.report.sla.days_remaining') }}{% else %}{{ t('admin.report.sla.overdue') }}{% endif %}
@@ -252,7 +248,7 @@
                                 {{ t('admin.report.sla.not_ack') }}
                             {% endif %}
                         </td>
-                        <td>
+                        <td role="cell" class="stack-action">
                             <a href="/admin/reports/{{ report.id }}" class="btn btn-secondary btn-sm">{{ t('admin.table.view') }}</a>
                         </td>
                     </tr>
@@ -269,7 +265,7 @@
             </div>
             <div class="pagination-controls">
                 {% if page > 1 %}
-                <a href="{{ page_url(page - 1) }}" class="btn btn-secondary btn-sm pagination-btn">{{ t('admin.pagination.prev') }}</a>
+                {{ page_link(page - 1, 'btn btn-secondary btn-sm pagination-btn', t('admin.pagination.prev')) }}
                 {% else %}
                 <span class="btn btn-secondary btn-sm pagination-btn pagination-disabled">{{ t('admin.pagination.prev') }}</span>
                 {% endif %}
@@ -279,7 +275,7 @@
                 {% set pg_end   = [total_pages, page + win] | min %}
 
                 {% if pg_start > 1 %}
-                <a href="{{ page_url(1) }}" class="pagination-page">1</a>
+                {{ page_link(1, 'pagination-page', 1) }}
                 {% if pg_start > 2 %}<span class="pagination-ellipsis">…</span>{% endif %}
                 {% endif %}
 
@@ -287,17 +283,17 @@
                 {% if p == page %}
                 <span class="pagination-page pagination-page-current" aria-current="page">{{ p }}</span>
                 {% else %}
-                <a href="{{ page_url(p) }}" class="pagination-page">{{ p }}</a>
+                {{ page_link(p, 'pagination-page', p) }}
                 {% endif %}
                 {% endfor %}
 
                 {% if pg_end < total_pages %}
                 {% if pg_end < total_pages - 1 %}<span class="pagination-ellipsis">…</span>{% endif %}
-                <a href="{{ page_url(total_pages) }}" class="pagination-page">{{ total_pages }}</a>
+                {{ page_link(total_pages, 'pagination-page', total_pages) }}
                 {% endif %}
 
                 {% if page < total_pages %}
-                <a href="{{ page_url(page + 1) }}" class="btn btn-secondary btn-sm pagination-btn">{{ t('admin.pagination.next') }}</a>
+                {{ page_link(page + 1, 'btn btn-secondary btn-sm pagination-btn', t('admin.pagination.next')) }}
                 {% else %}
                 <span class="btn btn-secondary btn-sm pagination-btn pagination-disabled">{{ t('admin.pagination.next') }}</span>
                 {% endif %}
@@ -308,7 +304,7 @@
         {% elif status_filter or my_cases or case_query or location_filter %}
         {# Filtered empty state #}
         <div class="dash-empty-wrap">
-            <div class="dash-empty-icon" aria-hidden="true">&#128269;</div>
+            <div class="dash-empty-icon" aria-hidden="true">{{ icons.icon('search') }}</div>
             <p class="dash-empty-title">{% if case_query %}{{ t('admin.search.no_results', query=case_query) }}{% else %}{{ t('admin.filter.no_results') }}{% endif %}</p>
             <a href="/admin/dashboard" class="btn btn-secondary btn-sm dash-mt-btn">{{ t('admin.filter.all_statuses') }}</a>
         </div>
@@ -316,7 +312,7 @@
         {% else %}
         {# Truly empty - no reports at all #}
         <div class="dash-empty-wrap-lg">
-            <div class="dash-empty-icon">&#128274;</div>
+            <div class="dash-empty-icon">{{ icons.icon('lock') }}</div>
             <p class="dash-empty-title">{{ t('admin.empty.title') }}</p>
             <p class="dash-empty-body">{{ t('admin.empty.body') }}</p>
             <a href="/submit" class="btn btn-secondary btn-sm dash-mt-btn-lg">{{ t('admin.view_submit') }}</a>
@@ -329,6 +325,12 @@
 {% block scripts %}
 <script nonce="{{ request.state.csp_nonce }}">
 function goPerPage(val) {
+    var search = document.querySelector('.dash-search');
+    if (search && search.elements.q.value) {  // keep the search, and keep it out of the URL
+        search.elements.per_page.value = val;
+        search.submit();
+        return;
+    }
     const u = new URL(window.location.href);
     u.searchParams.set('per_page', val);
     u.searchParams.set('page', '1');
@@ -336,10 +338,6 @@ function goPerPage(val) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('.stat-card-link[data-delay]').forEach(function (el) {
-        el.style.animationDelay = el.dataset.delay + 's';
-    });
-
     var perPageSelect = document.getElementById('dash-per-page-select');
     if (perPageSelect) {
         perPageSelect.addEventListener('change', function () {

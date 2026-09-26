@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_icons.html" as icons %}
 
 {% block styles %}<style nonce="{{ request.state.csp_nonce }}">
 .st-demo-credentials-margin { margin-bottom: 1.5rem; }
@@ -28,7 +29,6 @@
 <div class="container-sm">
     {% if not report %}
     <div class="page-header">
-        <div class="page-eyebrow">{{ t('status.form.eyebrow') }}</div>
         <h1>{{ t('status.form.title') }}</h1>
         <p>{{ t('status.form.subtitle') }}</p>
     </div>
@@ -36,7 +36,7 @@
     {% if is_demo %}
     <div class="demo-credentials st-demo-credentials-margin" role="note">
         <div class="demo-credentials-header">
-            <span class="demo-badge">DEMO</span>
+            <span class="demo-badge">{{ t('demo.badge') }}</span>
             <span>{{ t('demo.status.hint') }}</span>
         </div>
         <div class="demo-reports-list">
@@ -93,7 +93,7 @@
     {% endif %}
     {# Always offered, also after too many attempts: a correct PIN always works. #}
     <div class="panel">
-        <div class="panel-header">{{ t('status.panel.header') }}</div>
+        <h2 class="panel-header">{{ t('status.panel.header') }}</h2>
         <form method="post" action="/status">
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
 
@@ -145,7 +145,6 @@
 
     {# Report found - show status and thread #}
     <div class="page-header">
-        <div class="page-eyebrow">{{ t('status.report.eyebrow') }}</div>
         <h1>{{ t('status.report.title') }}</h1>
     </div>
 
@@ -155,16 +154,16 @@
 
     {# Metadata panel #}
     <div class="panel">
-        <div class="panel-header">
-            <span class="mono">{{ report.case_number }}</span>
+        <h2 class="panel-header">
+            <span class="mono token">{{ report.case_number }}</span>
             &nbsp;&nbsp;
             <span class="badge badge-{{ report.status.value }}">{{ t('status.label.' + report.status.value) }}</span>
-        </div>
+        </h2>
 
         <div class="st-meta-grid">
             <div>
                 <div class="detail-label">{{ t('status.meta.submitted') }}</div>
-                <span class="mono st-mono-primary"><time data-utc="{{ report.submitted_at.isoformat() }}">{{ report.submitted_at.strftime('%Y-%m-%d %H:%M UTC') }}</time></span>
+                <span class="mono st-mono-primary"><time data-utc="{{ report.submitted_at.isoformat() }}" data-date-only>{{ report.submitted_at|day }}</time></span>
             </div>
             {% if report.acknowledged_at %}
             <div>
@@ -187,7 +186,7 @@
                 <div>
                     <div class="st-deadline-label">{{ t('status.deadlines.ack') }}</div>
                     {% if report.acknowledged_at %}
-                    <span class="st-success-text">✓ {{ t('status.deadlines.ack_done', date=report.acknowledged_at.strftime('%Y-%m-%d')) }}</span>
+                    <span class="st-success-text">{{ icons.icon('check') }} {{ t('status.deadlines.ack_done', date=report.acknowledged_at.strftime('%Y-%m-%d')) }}</span>
                     {% elif ack_days_remaining is defined and ack_days_remaining >= 0 %}
                     <span class="st-accent-text">{{ t('status.deadlines.ack_remaining', days=ack_days_remaining) }}</span>
                     {% else %}
@@ -200,7 +199,7 @@
                         {% if now is defined %}
                             {% set days_left = ((report.feedback_due_at - now).days) %}
                             {% if report.status.value == 'closed' %}
-                            <span class="st-success-text">✓ {{ t('status.deadlines.feedback_done') }}</span>
+                            <span class="st-success-text">{{ icons.icon('check') }} {{ t('status.deadlines.feedback_done') }}</span>
                             {% elif days_left >= 0 %}
                             <span class="st-fw600">{{ t('status.deadlines.feedback_remaining', days=days_left, date=report.feedback_due_at.strftime('%Y-%m-%d')) }}</span>
                             {% else %}
@@ -216,17 +215,18 @@
     </div>
 
     {# Progress indicator #}
-    <div class="panel status-progress-panel delay-03">
-        <div class="panel-header">{{ t('status.progress.title') }}</div>
-        <div class="progress-steps">
+    <div class="panel delay-03">
+        <h2 class="panel-header">{{ t('status.progress.title') }}</h2>
+        <div class="stepper" aria-hidden="true">
             {% set steps = ['received', 'in_review', 'pending_feedback', 'closed'] %}
             {% set current_idx = steps.index(report.status.value) if report.status.value in steps else 0 %}
             {% for step in steps %}
-            {% set step_idx = loop.index0 %}
-            <div class="progress-step {{ 'done' if step_idx < current_idx else ('active' if step_idx == current_idx else 'pending') }}">
-                <div class="progress-step-dot"></div>
-                <div class="progress-step-label">{{ t('status.label.' + step) }}</div>
+            {% set state = 'done' if loop.index0 < current_idx else ('active' if loop.index0 == current_idx else 'pending') %}
+            <div class="stepper-step {{ state }}">
+                <div class="stepper-dot">{% if state == 'done' %}{{ icons.icon('check') }}{% else %}{{ loop.index }}{% endif %}</div>
+                <div class="stepper-label">{{ t('status.label.' + step) }}</div>
             </div>
+            {% if not loop.last %}<div class="stepper-line {{ 'done' if loop.index0 < current_idx else '' }}" aria-hidden="true"></div>{% endif %}
             {% endfor %}
         </div>
         <div class="progress-desc">
@@ -241,11 +241,11 @@
     {# Attachments #}
     {% if report.attachments %}
     <div class="panel delay-04">
-        <div class="panel-header">{{ t('status.attachments.title') }}</div>
+        <h2 class="panel-header">{{ t('status.attachments.title') }}</h2>
         <ul class="attachment-items">
             {% for att in report.attachments %}
             <li class="attachment-item">
-                <span class="attachment-icon">&#128206;</span>
+                <span class="attachment-icon">{{ icons.icon('paperclip') }}</span>
                 <a href="/status/attachments/{{ att.id }}" class="attachment-name" download>{{ attachment_names[loop.index0] }}</a>
                 <span class="attachment-size">{{ att.size | format_size }}</span>
                 <a href="/status/attachments/{{ att.id }}" class="btn btn-secondary btn-sm" download>{{ t('status.attachments.download') }}</a>
@@ -265,7 +265,7 @@
 
     {# Communication thread #}
     <div class="panel delay-05">
-        <div class="panel-header">{{ t('status.thread.title') }}</div>
+        <h2 class="panel-header">{{ t('status.thread.title') }}</h2>
 
         {% if report.messages %}
         <div class="thread">
@@ -274,7 +274,7 @@
                 <div class="message-meta">
                     <span class="message-meta-icon">{{ 'M' if msg.sender.value == 'admin' else 'W' }}</span>
                     {{ t('status.sender.admin') if msg.sender.value == 'admin' else t('status.sender.user') }}
-                    &middot; <time data-utc="{{ msg.sent_at.isoformat() }}">{{ msg.sent_at.strftime('%Y-%m-%d %H:%M UTC') }}</time>
+                    &middot; {% if whistleblower_caused(msg, loop.index0) %}<time data-utc="{{ msg.sent_at.isoformat() }}" data-date-only>{{ msg.sent_at|day }}</time>{% else %}<time data-utc="{{ msg.sent_at.isoformat() }}">{{ msg.sent_at.strftime('%Y-%m-%d %H:%M UTC') }}</time>{% endif %}
                 </div>
                 <div class="message-content">{{ decrypted_messages[loop.index0] if decrypted_messages and loop.index0 < decrypted_messages|length else msg.content }}</div>
             </div>
@@ -287,7 +287,7 @@
 
     {% if report.status.value != 'closed' %}
     <div class="panel delay-10">
-        <div class="panel-header">{{ t('status.reply.title') }}</div>
+        <h2 class="panel-header">{{ t('status.reply.title') }}</h2>
         <form method="post" action="/reply">
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <input type="hidden" name="case_number" value="{{ case_number or '' }}">

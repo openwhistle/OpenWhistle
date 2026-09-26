@@ -14,7 +14,24 @@
     dest: "{{ openwhistle_deploy_dir }}/nginx/nginx.conf"
     owner: "{{ openwhistle_user }}"
     group: "{{ openwhistle_group }}"
-    mode: "0640"
+    # World-readable: nginx runs with cap_drop ALL (no CAP_DAC_OVERRIDE), so
+    # its root master cannot open a 0640 file owned by another uid. The nginx
+    # config holds no secret.
+    mode: "0644"
+  notify: restart openwhistle
+
+- name: Copy the shared nginx snippets (proxy-headers.conf, static-location.conf)
+  # Same files nginx.conf.j2's `include` directives reference, and the same
+  # files docker-compose.prod.yml's nginx bind-mounts directly — copied
+  # verbatim from the repo, never retyped into this role, so the two
+  # deployment paths cannot drift apart on IP-header / X-OW-Onion stripping.
+  ansible.builtin.copy:
+    src: "{{ role_path }}/../../../nginx/snippets/"
+    dest: "{{ openwhistle_deploy_dir }}/nginx/snippets/"
+    owner: "{{ openwhistle_user }}"
+    group: "{{ openwhistle_group }}"
+    mode: "0644"            # see nginx.conf above
+    directory_mode: "0755"
   notify: restart openwhistle
 
 - name: Render docker-compose.yml

@@ -23,20 +23,37 @@ jobs:
       - name: Install uv
         run: pip install uv==0.12.19
 
+      - name: OpenLDAP headers (python-ldap builds from source)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libldap2-dev libsasl2-dev
+
       - name: Install dependencies
         # Exactly the versions in uv.lock, so CI tests what the image ships.
         run: |
-          uv export --frozen --extra dev --no-emit-project -o /tmp/requirements.txt
+          uv export --frozen --extra dev --extra ldap --extra s3 --no-emit-project -o /tmp/requirements.txt
           uv pip install --system -r /tmp/requirements.txt
 
       - name: uv.lock matches pyproject.toml
         run: uv lock --check
 
       - name: Run ruff (linting)
-        run: ruff check app/ tests/
+        run: ruff check .
+
+      - name: Spelling (codespell)
+        run: uvx codespell==2.4.3
 
       - name: Run mypy (type checking)
         run: mypy app/ --strict
+
+      - name: Markdown lint
+        uses: DavidAnson/markdownlint-cli2-action@21c1be1b93ad9ed58fa840aacc3f279cde2a72ff # v24.2.0
+        with:
+          globs: |
+            **/*.md
+            !.venv
+            !node_modules
+            !.superpowers
+            !.claude
+            !.serena
 
   test:
     name: Tests
@@ -76,19 +93,28 @@ jobs:
         with:
           python-version: "3.14"
 
+      # tests/test_v160_privacy.py runs base.html's time formatter in Node.
+      - name: Set up Node 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+
       - name: Install uv
         run: pip install uv==0.12.19
 
+      - name: OpenLDAP headers (python-ldap builds from source)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libldap2-dev libsasl2-dev
+
       - name: Install dependencies
         run: |
-          uv export --frozen --extra dev --no-emit-project -o /tmp/requirements.txt
+          uv export --frozen --extra dev --extra ldap --extra s3 --no-emit-project -o /tmp/requirements.txt
           uv pip install --system -r /tmp/requirements.txt
           uv pip install --system --no-deps -e .
 
       - name: Run tests
         env:
           DATABASE_URL: "postgresql+asyncpg://openwhistle:openwhistle@localhost:5432/openwhistle_test"
-          REDIS_URL: "redis://localhost:6379/0"
+          REDIS_URL: "redis://localhost:6379/1"
           SECRET_KEY: "ci-test-secret-key-not-for-production"
           DEMO_MODE: "true"
           COVERAGE_CORE: "sysmon"
@@ -134,6 +160,7 @@ jobs:
                 REDIS_URL: "redis://redis:6379/0"
                 SECRET_KEY: "ci-smoke-test-secret-not-for-production"
                 DEMO_MODE: "false"
+                TELEMETRY_ENABLED: "false"
               ports:
                 - "4009:4009"
               depends_on:
@@ -185,3 +212,244 @@ jobs:
           [ "$setup_status" = "200" ]
 
           docker compose -f docker-compose.ci.yml down -v
+
+  nginx-onion-trust:
+    # Runs the SHIPPED nginx image against the repo's real nginx.conf +
+    # snippets/*.conf (not a copy, not a string match) with a tiny
+    # header-echoing backend standing in for the app, and asserts with real
+    # HTTP requests that the client can never forge the X-OW-Onion /
+    # IP-forwarding trust headers the app relies on (see app/onion.py,
+    # nginx/snippets/proxy-headers.conf, docs/docs.html "Onion listener
+    # trust boundary"). A CI job, not a pytest, so it always runs on GitHub's
+    # Docker-equipped runners rather than skipping when a contributor's
+    # machine lacks docker/podman.
+    #
+    # Also renders ansible/roles/openwhistle/templates/nginx.conf.j2 with the
+    # role's own defaults (a tiny Jinja2 render, no Ansible install needed)
+    # and re-runs the TLS-listener assertion against it, over the SAME
+    # nginx/snippets/*.conf files — the Ansible deployment (the live demo)
+    # has no onion listener, but must still clear X-OW-Onion so a client
+    # can't spoof onion-listener behaviour against it (non-Secure cookies,
+    # no HSTS) — see "single source" in deploy.yml's "Copy the shared nginx
+    # snippets" task.
+    name: nginx onion-listener trust boundary
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        run: pip install uv==0.12.19
+
+      - name: Set up a throwaway TLS cert and a header-echoing backend
+        run: |
+          mkdir -p /tmp/ow-nginx-test/tls /tmp/ow-nginx-test/echo
+          openssl req -x509 -newkey rsa:2048 \
+            -keyout /tmp/ow-nginx-test/tls/privkey.pem \
+            -out /tmp/ow-nginx-test/tls/fullchain.pem \
+            -days 1 -nodes -subj "/CN=test"
+          cat > /tmp/ow-nginx-test/echo/server.py <<'PY'
+          import http.server
+
+          class H(http.server.BaseHTTPRequestHandler):
+              def do_GET(self):
+                  self.send_response(200)
+                  self.send_header("Content-Type", "text/plain")
+                  self.end_headers()
+                  for k, v in self.headers.items():
+                      self.wfile.write(f"{k}: {v}\n".encode())
+
+          http.server.HTTPServer(("0.0.0.0", 4009), H).serve_forever()
+          PY
+
+      - name: Start the backend and the shipped nginx image
+        run: |
+          docker network create ow-onion-test
+
+          # python:3-alpine
+          docker run -d --name ow-onion-test-app --network ow-onion-test \
+            --network-alias app \
+            -v /tmp/ow-nginx-test/echo/server.py:/server.py:ro \
+            python@sha256:9e9fde4d32eedce0b661d9ab91e826b62dddf28e928c230ec55f1866cac66b01 \
+            python /server.py
+
+          # nginx:alpine — the exact image docker-compose.prod.yml ships
+          docker run -d --name ow-onion-test-nginx --network ow-onion-test \
+            -p 18443:443 -p 18080:8080 \
+            -v "$PWD/nginx/nginx.conf:/etc/nginx/nginx.conf:ro" \
+            -v "$PWD/nginx/snippets:/etc/nginx/snippets:ro" \
+            -v /tmp/ow-nginx-test/tls:/etc/nginx/tls:ro \
+            nginx@sha256:1ed1b0e1d7652937d6cbdaf4018c7b6fc009a7dd6c3047351e2eddda745de43f
+
+          for i in $(seq 1 15); do
+            curl -skf https://localhost:18443/ -o /dev/null && break
+            sleep 1
+          done
+
+      - name: TLS (443) never forwards a client-forged trust header
+        run: |
+          out=$(curl -skf https://localhost:18443/ \
+            -H "X-OW-Onion: 1" -H "x-ow-onion: 1" \
+            -H "X-Forwarded-For: 1.2.3.4" -H "X-Real-IP: 1.2.3.4" \
+            -H "X_OW_Onion: 1")
+          echo "$out"
+          # `set -e` ignores a `!`-negated command, so each check is an if.
+          grep -qi '^host:' <<< "$out"
+          if grep -qiE '^(x.ow.onion|x-forwarded-for|x-real-ip):' <<< "$out"; then exit 1; fi
+
+      - name: Onion (8080) forces X-OW-Onion to exactly "1", strips IP headers
+        run: |
+          out=$(curl -sf http://localhost:18080/ \
+            -H "X-OW-Onion: 0" -H "X-OW-Onion: 0" \
+            -H "X-Forwarded-For: 1.2.3.4" -H "X-Real-IP: 1.2.3.4")
+          echo "$out"
+          grep -qx 'X-OW-Onion: 1' <<< "$out"
+          [ "$(grep -ci '^x.ow.onion:' <<< "$out")" = 1 ]
+          if grep -qiE '^(x-forwarded-for|x-real-ip):' <<< "$out"; then exit 1; fi
+
+      - name: Behind-proxy config (plain 80) proxies and strips client trust headers
+        # nginx/nginx.behind-proxy.conf, mounted by docker-compose.behind-proxy.yml.
+        run: |
+          docker run -d --name ow-onion-test-nginx-behind --network ow-onion-test \
+            -p 18081:80 \
+            -v "$PWD/nginx/nginx.behind-proxy.conf:/etc/nginx/nginx.conf:ro" \
+            -v "$PWD/nginx/snippets:/etc/nginx/snippets:ro" \
+            nginx@sha256:1ed1b0e1d7652937d6cbdaf4018c7b6fc009a7dd6c3047351e2eddda745de43f
+          for i in $(seq 1 15); do
+            curl -sf http://localhost:18081/ -o /dev/null && break
+            sleep 1
+          done
+          out=$(curl -sf http://localhost:18081/ \
+            -H "X-OW-Onion: 1" -H "X-Forwarded-For: 1.2.3.4" -H "X-Real-IP: 1.2.3.4")
+          echo "$out"
+          grep -qi '^host:' <<< "$out"
+          if grep -qiE '^(x.ow.onion|x-forwarded-for|x-real-ip):' <<< "$out"; then exit 1; fi
+
+      - name: Render the Ansible role's nginx files and compose with its own defaults and modes
+        # jinja2 (direct dependency) and pyyaml (via uvicorn[standard]) are
+        # both already resolved in uv.lock, so `uv run --frozen` gives an
+        # exactly-locked environment for the render — no bare/unpinned `pip
+        # install`, consistent with every other dependency install in this
+        # repo (see test_build_pins.py::test_no_bare_pip_install_in_any_workflow).
+        #
+        # Reproduces the demo host, not a friendlier copy of it: the files get
+        # the modes deploy.yml writes them with and a non-root owner (the role
+        # writes them as openwhistle:openwhistle), and nginx runs with the
+        # rendered compose file's own cap_drop/cap_add/read_only. Without
+        # CAP_DAC_OVERRIDE, nginx's root master cannot open a 0640 file owned
+        # by another uid; this step is what catches that.
+        run: |
+          cat > /tmp/render_ansible_nginx.py <<'PY'
+          import os
+          import shutil
+
+          import yaml
+          from jinja2 import Environment
+
+          out = "/tmp/ow-nginx-test/ansible"
+          role = "ansible/roles/openwhistle"
+          with open(f"{role}/defaults/main.yml") as f:
+              data = yaml.safe_load(f)
+          # openwhistle_domain defaults to "" (documented as required); the
+          # only override, everything else is the role's own default.
+          data["openwhistle_domain"] = "ow-ansible-test.example.com"
+
+          # Ansible's `bool` filter, just enough for these templates.
+          def _bool(v):
+              if isinstance(v, bool):
+                  return v
+              return str(v).strip().lower() in ("true", "yes", "1", "on")
+
+          env = Environment()
+          env.filters["bool"] = _bool
+
+          def render(name):
+              with open(f"{role}/templates/{name}") as f:
+                  return env.from_string(f.read()).render(**data)
+
+          os.makedirs(f"{out}/nginx", exist_ok=True)
+          with open(f"{out}/nginx/nginx.conf", "w") as f:
+              f.write(render("nginx.conf.j2"))
+          shutil.copytree("nginx/snippets", f"{out}/nginx/snippets")
+
+          # The modes deploy.yml writes nginx's files with.
+          with open(f"{role}/tasks/deploy.yml") as f:
+              tasks = yaml.safe_load(f)
+          for task in tasks:
+              args = task.get("ansible.builtin.template") or task.get("ansible.builtin.copy") or {}
+              dest = args.get("dest", "").replace("{{ openwhistle_deploy_dir }}", out)
+              if not dest.startswith(f"{out}/nginx/"):
+                  continue
+              files = [os.path.join(dest, n) for n in os.listdir(dest)] if os.path.isdir(dest) else [dest]
+              for path in files:
+                  os.chmod(path, int(args["mode"], 8))
+              print(f"{dest}: {args['mode']}")
+
+          # The nginx service's hardening, from the rendered compose file.
+          nginx = yaml.safe_load(render("docker-compose.yml.j2"))["services"]["nginx"]
+          run = [f"--cap-drop={c}" for c in nginx.get("cap_drop", [])]
+          run += [f"--cap-add={c}" for c in nginx.get("cap_add", [])]
+          run += [f"--security-opt={o}" for o in nginx.get("security_opt", [])]
+          run += [f"--tmpfs={t}" for t in nginx.get("tmpfs", [])]
+          run += ["--read-only"] if nginx.get("read_only") else []
+          with open(f"{out}/nginx-run.args", "w") as f:
+              f.write("\n".join(run) + "\n")
+          print(" ".join(run))
+          PY
+          uv run --frozen python3 /tmp/render_ansible_nginx.py
+          cat /tmp/ow-nginx-test/ansible/nginx/nginx.conf
+
+      - name: Start nginx as the demo host runs it (same snippets, same backend)
+        run: |
+          d=/tmp/ow-nginx-test/ansible
+          mkdir -p "$d/letsencrypt/live/ow-ansible-test.example.com"
+          openssl req -x509 -newkey rsa:2048 \
+            -keyout "$d/letsencrypt/live/ow-ansible-test.example.com/privkey.pem" \
+            -out "$d/letsencrypt/live/ow-ansible-test.example.com/fullchain.pem" \
+            -days 1 -nodes -subj "/CN=ow-ansible-test.example.com"
+          # certbot's files are root-owned; the role's are owned by the
+          # openwhistle user — any non-root uid.
+          sudo chown -R 0:0 "$d/letsencrypt"
+          sudo chown -R 10001:10001 "$d/nginx"
+          ls -lnR "$d/nginx"
+
+          # Same nginx:alpine image, same nginx/snippets/*.conf, same "app"
+          # backend on ow-onion-test — only nginx.conf itself differs.
+          # shellcheck disable=SC2046
+          docker run -d --name ow-onion-test-nginx-ansible --network ow-onion-test \
+            -p 28443:443 $(cat "$d/nginx-run.args") \
+            -v "$d/nginx/nginx.conf:/etc/nginx/nginx.conf:ro" \
+            -v "$d/nginx/snippets:/etc/nginx/snippets:ro" \
+            -v "$d/letsencrypt:/etc/letsencrypt:ro" \
+            nginx@sha256:1ed1b0e1d7652937d6cbdaf4018c7b6fc009a7dd6c3047351e2eddda745de43f
+
+          for i in $(seq 1 15); do
+            curl -skf https://localhost:28443/ -o /dev/null && break
+            sleep 1
+          done
+          docker logs ow-onion-test-nginx-ansible
+
+      - name: Ansible-rendered TLS (443) never forwards a client-forged trust header
+        run: |
+          out=$(curl -skf https://localhost:28443/ \
+            -H "X-OW-Onion: 1" -H "x-ow-onion: 1" \
+            -H "X-Forwarded-For: 1.2.3.4" -H "X-Real-IP: 1.2.3.4" \
+            -H "X_OW_Onion: 1")
+          echo "$out"
+          # `set -e` ignores a `!`-negated command, so each check is an if.
+          grep -qi '^host:' <<< "$out"
+          if grep -qiE '^(x.ow.onion|x-forwarded-for|x-real-ip):' <<< "$out"; then exit 1; fi
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker rm -f ow-onion-test-app ow-onion-test-nginx ow-onion-test-nginx-behind \
+            ow-onion-test-nginx-ansible || true
+          docker network rm ow-onion-test || true

@@ -73,7 +73,7 @@ async def test_oidc_exchange_code_invalid_state() -> None:
 async def test_oidc_create_authorization_url_format() -> None:
     """create_authorization_url returns a URL with required OAuth parameters."""
     mock_redis = AsyncMock()
-    mock_redis.setex = AsyncMock(return_value=True)
+    mock_redis.set = AsyncMock(return_value=True)
 
     with patch("app.services.oidc._get_metadata", new=AsyncMock(return_value=_FAKE_METADATA)):
         url = await oidc_service.create_authorization_url(mock_redis)
@@ -83,7 +83,7 @@ async def test_oidc_create_authorization_url_format() -> None:
     assert "scope=openid" in url
     assert "state=" in url
     assert "nonce=" in url
-    mock_redis.setex.assert_called_once()
+    mock_redis.set.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -131,7 +131,7 @@ class _FakeRedis:
     def __init__(self) -> None:
         self.data: dict[str, str] = {}
 
-    async def setex(self, key: str, _ttl: int, value: str) -> None:
+    async def set(self, key: str, value: str, ex: int | None = None) -> None:
         self.data[key] = value
 
     async def get(self, key: str) -> str | None:

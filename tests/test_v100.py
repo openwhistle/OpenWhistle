@@ -65,23 +65,23 @@ class TestEncryptionService:
         from app.services.encryption import decrypt_dek, encrypt_dek, generate_dek
 
         dek_raw = generate_dek()
-        token = encrypt_dek(dek_raw, self._SECRET)
-        recovered = decrypt_dek(token, self._SECRET)
+        token = encrypt_dek(dek_raw)
+        recovered = decrypt_dek(token)
         assert recovered == dek_raw
 
     def test_encrypt_dek_returns_string(self) -> None:
         from app.services.encryption import encrypt_dek, generate_dek
 
-        token = encrypt_dek(generate_dek(), self._SECRET)
+        token = encrypt_dek(generate_dek())
         assert isinstance(token, str)
 
     def test_make_mek_fernet_is_valid_fernet(self) -> None:
-        from cryptography.fernet import Fernet
+        from cryptography.fernet import MultiFernet
 
         from app.services.encryption import make_mek_fernet
 
-        f = make_mek_fernet(self._SECRET)
-        assert isinstance(f, Fernet)
+        f = make_mek_fernet()
+        assert isinstance(f, MultiFernet)
 
     def test_make_report_fernet_roundtrip(self) -> None:
         from app.services.encryption import (
@@ -91,8 +91,8 @@ class TestEncryptionService:
         )
 
         dek_raw = generate_dek()
-        enc_dek = encrypt_dek(dek_raw, self._SECRET)
-        fernet = make_report_fernet(enc_dek, self._SECRET)
+        enc_dek = encrypt_dek(dek_raw)
+        fernet = make_report_fernet(enc_dek)
         plaintext = "hello encrypted world"
         token = fernet.encrypt(plaintext.encode()).decode()
         assert fernet.decrypt(token.encode()).decode() == plaintext
@@ -107,8 +107,8 @@ class TestEncryptionService:
         )
 
         dek_raw = generate_dek()
-        enc_dek = encrypt_dek(dek_raw, self._SECRET)
-        fernet = make_report_fernet(enc_dek, self._SECRET)
+        enc_dek = encrypt_dek(dek_raw)
+        fernet = make_report_fernet(enc_dek)
         original = "Serious whistleblower report text."
         encrypted = encrypt_field(fernet, original)
         assert encrypted != original
@@ -122,8 +122,8 @@ class TestEncryptionService:
             make_report_fernet,
         )
 
-        enc_dek = encrypt_dek(generate_dek(), self._SECRET)
-        fernet = make_report_fernet(enc_dek, self._SECRET)
+        enc_dek = encrypt_dek(generate_dek())
+        fernet = make_report_fernet(enc_dek)
         assert decrypt_field_safe(fernet, None) is None
 
     def test_decrypt_field_safe_invalid_token_returns_raw(self) -> None:
@@ -134,14 +134,17 @@ class TestEncryptionService:
             make_report_fernet,
         )
 
-        enc_dek = encrypt_dek(generate_dek(), self._SECRET)
-        fernet = make_report_fernet(enc_dek, self._SECRET)
+        enc_dek = encrypt_dek(generate_dek())
+        fernet = make_report_fernet(enc_dek)
         plaintext_legacy = "this is pre-encryption plaintext"
         result = decrypt_field_safe(fernet, plaintext_legacy)
         assert result == plaintext_legacy
 
-    def test_decrypt_field_safe_rotated_key_returns_error_marker(self) -> None:
+    def test_decrypt_field_safe_rotated_key_returns_error_marker(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """A real Fernet token decrypted with the wrong key returns the error marker."""
+        from app.config import settings
         from app.services.encryption import (
             decrypt_field_safe,
             encrypt_dek,
@@ -150,17 +153,17 @@ class TestEncryptionService:
             make_report_fernet,
         )
 
-        secret_a = "a" * 32
-        secret_b = "b" * 32
-        enc_dek = encrypt_dek(generate_dek(), secret_a)
-        fernet_enc = make_report_fernet(enc_dek, secret_a)
+        monkeypatch.setattr(settings, "encryption_key", "a" * 32)
+        enc_dek = encrypt_dek(generate_dek())
+        fernet_enc = make_report_fernet(enc_dek)
         ciphertext = encrypt_field(fernet_enc, "secret text")
 
         # decrypt with a *different* key — InvalidToken but starts with gAAAA
-        enc_dek2 = encrypt_dek(generate_dek(), secret_b)
-        fernet_dec = make_report_fernet(enc_dek2, secret_b)
+        monkeypatch.setattr(settings, "encryption_key", "b" * 32)
+        enc_dek2 = encrypt_dek(generate_dek())
+        fernet_dec = make_report_fernet(enc_dek2)
         result = decrypt_field_safe(fernet_dec, ciphertext)
-        assert result == "[DECRYPTION FAILED — check SECRET_KEY]"
+        assert result == "[DECRYPTION FAILED — check ENCRYPTION_KEY/SECRET_KEY]"
 
     def test_decrypt_field_safe_generic_exception_returns_raw(self) -> None:
         """A non-InvalidToken exception returns the ciphertext unchanged."""
@@ -173,9 +176,12 @@ class TestEncryptionService:
         result = decrypt_field_safe(fernet, "some_value")
         assert result == "some_value"
 
-    def test_mek_fernet_different_key_cannot_decrypt(self) -> None:
+    def test_mek_fernet_different_key_cannot_decrypt(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         from cryptography.fernet import InvalidToken
 
+        from app.config import settings
         from app.services.encryption import (
             decrypt_dek,
             encrypt_dek,
@@ -183,9 +189,11 @@ class TestEncryptionService:
         )
 
         dek_raw = generate_dek()
-        token = encrypt_dek(dek_raw, "key-a")
+        monkeypatch.setattr(settings, "encryption_key", "a" * 32)
+        token = encrypt_dek(dek_raw)
+        monkeypatch.setattr(settings, "encryption_key", "b" * 32)
         with pytest.raises(InvalidToken):
-            decrypt_dek(token, "key-b")
+            decrypt_dek(token)
 
 
 # ---------------------------------------------------------------------------
@@ -205,11 +213,9 @@ class TestEncryptedReportStorage:
         from app.models.report import Report
         from app.services.report import create_report
 
-        _, _ = await create_report(db_session, "fraud", "Very sensitive report content here.")
+        created, _ = await create_report(db_session, "fraud", "Very sensitive report content here.")
 
-        result = await db_session.execute(
-            select(Report).order_by(Report.submitted_at.desc()).limit(1)
-        )
+        result = await db_session.execute(select(Report).where(Report.id == created.id))
         report = result.scalar_one_or_none()
         assert report is not None
         assert report.description != "Very sensitive report content here."
@@ -226,15 +232,15 @@ class TestEncryptedReportStorage:
         from app.services.report import create_report, decrypt_report_fields
 
         original_text = "Confidential whistleblower description."
-        _, _ = await create_report(db_session, "fraud", original_text)
+        created, _ = await create_report(db_session, "fraud", original_text)
 
         from sqlalchemy.orm import selectinload
 
+        # By id: submission times are whole days, so "newest" is not unique.
         result = await db_session.execute(
             select(Report)
             .options(selectinload(Report.messages))
-            .order_by(Report.submitted_at.desc())
-            .limit(1)
+            .where(Report.id == created.id)
         )
         report = result.scalar_one()
         description, msg_contents = decrypt_report_fields(report)
@@ -581,11 +587,6 @@ class TestConfigV100Defaults:
 
         assert settings.default_org_slug == "default"
 
-    def test_app_version_current(self) -> None:
-        from app.config import settings
-
-        assert settings.app_version == "1.5.0"
-
     def test_every_published_version_string_matches(self) -> None:
         """One version, written in several places. A release that bumps only
         some of them ships a Helm chart deploying an old image (it happened:
@@ -607,11 +608,40 @@ class TestConfigV100Defaults:
             "Chart appVersion": grab(chart, r'^appVersion:\s*"?([^"\s]+)'),
             "docs.html": grab("docs/docs.html", r"<strong>v([0-9.]+)</strong>"),
             "index.html": grab("docs/index.html", r'"softwareVersion":\s*"([^"]+)"'),
+            "de/index.html": grab("docs/de/index.html", r'"softwareVersion":\s*"([^"]+)"'),
             "CHANGELOG": grab("CHANGELOG.md", r"^## \[(\d+\.\d+\.\d+)\]"),
+            "pyproject": grab("pyproject.toml", r'^version = "([^"]+)"'),
+            "compose image": grab("docker-compose.prod.yml", r"OPENWHISTLE_VERSION:-([0-9.]+)\}"),
         }
         v = settings.app_version
         assert found == dict.fromkeys(found, v)
+        # Every image default, not only the first: tls-init runs the same image
+        # and once pointed at a different version than the app service.
+        compose = (root / "docker-compose.prod.yml").read_text()
+        defaults = re.findall(r"OPENWHISTLE_VERSION:-([0-9.]+)\}", compose)
+        assert len(defaults) >= 2 and set(defaults) == {v}, defaults
         assert f"[{v}]: " in (root / "CHANGELOG.md").read_text(), "CHANGELOG compare link missing"
+
+        # Every visible "Version X.Y.Z" string on both landing pages (hero
+        # badge and footer) must also match — the structured-data check above
+        # only covers the invisible JSON-LD softwareVersion.
+        for page in ("docs/index.html", "docs/de/index.html"):
+            visible = re.findall(r">Version ([0-9.]+)<", (root / page).read_text())
+            assert visible, f"{page}: no visible 'Version X.Y.Z' string found"
+            assert visible == [v] * len(visible), (page, visible, v)
+
+        # Regression guard: a blanket find-replace of the
+        # three "current version" spots above once swept in a fourth,
+        # unrelated occurrence -- a *historical* claim ("multi-tenancy has
+        # existed since 1.0.0") that must never move with app_version. The
+        # loop above can't catch it (the sentence doesn't end in "<"), so
+        # pin the historical fact directly against CHANGELOG's own [1.0.0]
+        # section.
+        de_text = (root / "docs/de/index.html").read_text()
+        assert "Ab Version 1.0.0 unterstützt OpenWhistle Multi-Tenancy" in de_text
+        changelog = (root / "CHANGELOG.md").read_text()
+        v100_section = changelog.split("## [1.0.0]", 1)[1].split("\n## [", 1)[0]
+        assert "Multi-tenancy" in v100_section, "multi-tenancy no longer documented under [1.0.0]"
 
 
 # ---------------------------------------------------------------------------
@@ -742,10 +772,9 @@ class TestDecryptReportFields:
         )
         from app.services.report import decrypt_report_fields
 
-        secret = "test-secret-key-not-for-production"
         dek_raw = generate_dek()
-        enc_dek = encrypt_dek(dek_raw, secret)
-        fernet = make_report_fernet(enc_dek, secret)
+        enc_dek = encrypt_dek(dek_raw)
+        fernet = make_report_fernet(enc_dek)
 
         desc = "Sensitive description"
         enc_desc = encrypt_field(fernet, desc)
@@ -760,9 +789,7 @@ class TestDecryptReportFields:
         report.description = enc_desc
         report.messages = [msg1, msg2]
 
-        with patch("app.config.settings") as mock_cfg:
-            mock_cfg.secret_key = secret
-            out_desc, out_msgs = decrypt_report_fields(report)
+        out_desc, out_msgs = decrypt_report_fields(report)
 
         assert out_desc == desc
         assert out_msgs == ["Message one", "Message two"]
@@ -801,6 +828,8 @@ async def _get_admin_session(client: AsyncClient) -> bool:
     try:
         import pyotp
 
+        from tests.conftest import setup_token
+
         setup_resp = await client.get("/setup")
         if setup_resp.status_code == 302:
             # Setup already done — try to log in with demo creds
@@ -820,6 +849,7 @@ async def _get_admin_session(client: AsyncClient) -> bool:
             "totp_secret": totp_secret,
             "totp_code": totp_code,
             "csrf_token": csrf,
+            "setup_token": await setup_token(),
         })
 
         login_resp = await client.get("/admin/login")

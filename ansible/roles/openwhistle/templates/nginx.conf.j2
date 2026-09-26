@@ -42,7 +42,8 @@ http {
     }
 
     server {
-        listen 443 ssl http2;
+        listen 443 ssl;
+        http2 on;
         server_name {{ openwhistle_domain }};
 
         ssl_certificate     /etc/letsencrypt/live/{{ openwhistle_domain }}/fullchain.pem;
@@ -59,19 +60,16 @@ http {
         # replaces upstream headers, so duplicating them produced conflicting,
         # unrecognised headers (GHSA-gh23-4h5j-cqj8).
 
-        # Strip ALL IP-forwarding headers for whistleblower anonymity
-        proxy_set_header X-Forwarded-For     "";
-        proxy_set_header X-Real-IP           "";
-        proxy_set_header Forwarded           "";
-        proxy_set_header X-Client-IP         "";
-        proxy_set_header X-Cluster-Client-IP "";
-        proxy_set_header True-Client-IP      "";
-        proxy_set_header CF-Connecting-IP    "";
-
-        proxy_set_header Host              $host;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_http_version 1.1;
-        proxy_set_header Connection "";
+        # IP-forwarding headers, X-OW-Onion, and standard proxy headers: one
+        # source shared with docker-compose.prod.yml's nginx, never a second
+        # hand-maintained copy — see nginx/snippets/proxy-headers.conf and
+        # deploy.yml's "Copy the shared nginx snippets" task. X-OW-Onion is
+        # cleared here like every other client-forged trust header, even
+        # though this deployment has no onion listener of its own: the app
+        # trusts that header globally (see app/onion.py), so ANY deployment
+        # path that forwards the app's traffic must clear it or a client can
+        # spoof onion-listener behaviour (non-Secure cookies, no HSTS) here.
+        include /etc/nginx/snippets/proxy-headers.conf;
 
         location / {
             # Generous burst so the multi-step submission wizard and normal
@@ -83,30 +81,14 @@ http {
             proxy_send_timeout 60s;
         }
 
-        location /static/ {
-            proxy_pass http://openwhistle;
-            expires 30d;
-            add_header Cache-Control "public, immutable";
-        }
+        include /etc/nginx/snippets/static-location.conf;
     }
 {% else %}
     server {
         listen 80;
         server_name {{ openwhistle_domain }};
 
-        # Strip ALL IP-forwarding headers for whistleblower anonymity
-        proxy_set_header X-Forwarded-For     "";
-        proxy_set_header X-Real-IP           "";
-        proxy_set_header Forwarded           "";
-        proxy_set_header X-Client-IP         "";
-        proxy_set_header X-Cluster-Client-IP "";
-        proxy_set_header True-Client-IP      "";
-        proxy_set_header CF-Connecting-IP    "";
-
-        proxy_set_header Host              $host;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_http_version 1.1;
-        proxy_set_header Connection "";
+        include /etc/nginx/snippets/proxy-headers.conf;
 
         location / {
             # Generous burst so the multi-step submission wizard and normal
@@ -118,11 +100,7 @@ http {
             proxy_send_timeout 60s;
         }
 
-        location /static/ {
-            proxy_pass http://openwhistle;
-            expires 30d;
-            add_header Cache-Control "public, immutable";
-        }
+        include /etc/nginx/snippets/static-location.conf;
     }
 {% endif %}
 }

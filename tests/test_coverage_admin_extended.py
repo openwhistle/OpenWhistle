@@ -140,10 +140,14 @@ async def _create_and_find_report(
     case_m = re.search(r"OW-\d{4}-\d{5}", resp.text)
     case_number = case_m.group(0) if case_m else ""
 
-    dash = await client.get("/admin/dashboard")
-    id_m = re.search(r'/admin/reports/([0-9a-f-]{36})"', dash.text)
-    report_id = id_m.group(1) if id_m else ""
-    return report_id, case_number
+    # By case number: submission times are whole days, so the dashboard's
+    # first row is not necessarily the report just submitted.
+    from sqlalchemy import select
+
+    from app.models.report import Report
+
+    found = await db_session.scalar(select(Report.id).where(Report.case_number == case_number))
+    return (str(found) if found else ""), case_number
 
 
 # ─── dashboard: query parameters ─────────────────────────────────────────────
@@ -409,7 +413,7 @@ async def test_delete_report_cleans_up_whistleblower_sessions(
 
     redis = await get_redis()
     fake_session_key = f"status-session:cleanup-test-{uuid.uuid4().hex}"
-    await redis.setex(fake_session_key, 7200, report_id)
+    await redis.set(fake_session_key, report_id, ex=7200)
     assert await redis.exists(fake_session_key) == 1
 
     csrf = await _get_csrf(client, f"/admin/reports/{report_id}")

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% import "_icons.html" as icons %}
+
+{# Admin pages keep only language and theme in the header; navigation is the sidebar. #}
+{% block nav_links %}{% endblock %}
+
+{% block content %}
+<div class="admin-shell">
+    <details class="admin-menu" id="admin-menu" open>
+        <summary class="admin-menu-toggle">{{ icons.icon('menu') }} {{ t('admin.nav.menu') }}</summary>
+        <nav class="admin-nav" aria-label="{{ t('admin.nav.aria_label') }}">
+            {% for group in admin_nav(user) %}
+            <p class="admin-nav-group">{{ t(group.label) }}</p>
+            <ul role="list">
+                {% for item in group['items'] %}
+                <li><a href="{{ item.href }}"{% if request.url.path == item.href or (item.href == '/admin/dashboard' and request.url.path.startswith('/admin/reports/')) %} class="active" aria-current="page"{% endif %}>{{ t(item.label) }}</a></li>
+                {% endfor %}
+            </ul>
+            {% endfor %}
+            <form method="post" action="/admin/logout" class="admin-nav-logout">
+                <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                <button type="submit" class="nav-link-button">{{ t('admin.nav.logout') }}</button>
+            </form>
+        </nav>
+    </details>
+    <script nonce="{{ request.state.csp_nonce }}">
+        // Closed on narrow screens; open (and the toggle hidden by CSS) on wide ones.
+        (function () {
+            var menu = document.getElementById('admin-menu');
+            if (menu && window.matchMedia('(max-width: 1023px)').matches) menu.open = false;
+        })();
+    </script>
+    <div class="admin-main">
+        {% block admin_content %}{% endblock %}
+    </div>
+</div>
+{% endblock %}

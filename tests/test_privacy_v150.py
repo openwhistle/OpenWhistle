@@ -317,13 +317,19 @@ def _alembic(*args: str) -> None:
 async def test_migration_encrypts_existing_filenames_idempotently(
     db_session: AsyncSession,
 ) -> None:
-    from app.config import settings
     from app.services.encryption import make_report_fernet
     from app.services.report import create_report
 
     report, _ = await create_report(db_session, "financial_fraud", "Migration filename test.")
     assert report.encrypted_dek
-    fernet = make_report_fernet(report.encrypted_dek, settings.secret_key)
+    # create_report() ends with db.refresh(report), whose SELECT LEFT OUTER JOINs
+    # admin_users (Report.assigned_to is lazy="joined"). That leaves this session's
+    # transaction open, holding a lock on admin_users, until the next commit. The
+    # alembic downgrade below now also rewrites admin_users (migration 004), so
+    # that lock must be released first or the subprocess's ALTER TABLE deadlocks
+    # against this very session.
+    await db_session.commit()
+    fernet = make_report_fernet(report.encrypted_dek)
     already = fernet.encrypt(b"done.txt").decode()
     legacy_id, done_id = uuid.uuid4(), uuid.uuid4()
     _alembic("downgrade", "3c1f0a7e9b42")
@@ -339,7 +345,7 @@ async def test_migration_encrypts_existing_filenames_idempotently(
 
     rows = dict((await db_session.execute(text(
         "SELECT id, filename FROM attachments WHERE id IN (:a, :b)"
-    ), {"a": legacy_id, "b": done_id})).tuples().all())
+    ), {"a": legacy_id, "b": done_id})).all())
     assert fernet.decrypt(rows[legacy_id].encode()) == _NAME.encode()
     assert rows[done_id] == already  # not encrypted twice
 
@@ -538,7 +544,9 @@ def test_batching_needs_an_interval_and_a_channel(monkeypatch: pytest.MonkeyPatc
 
 
 @pytest.mark.asyncio
-async def test_digest_carries_counts_and_case_numbers_only() -> None:
+async def test_digest_email_carries_case_numbers_webhook_carries_counts_only() -> None:
+    import json
+
     from app.config import settings
     from app.services.notifications import _build_webhook_payload, _send_email
 
@@ -550,9 +558,12 @@ async def test_digest_carries_counts_and_case_numbers_only() -> None:
     assert "2 (OW-2026-00001, OW-2026-00002)" in body
     assert "1 (OW-2026-00003)" in body
     assert "UTC" not in body and "Received" not in body  # no per-event time
-    assert _build_webhook_payload(["OW-2026-00001"], [], "generic", "OW", "https://x") == {
-        "event": "new_activity", "new_reports": ["OW-2026-00001"], "new_messages": [],
+    payload = _build_webhook_payload(1, 0, "generic", "OW", "https://x")
+    assert payload == {
+        "event": "new_activity", "new_reports": 1, "new_messages": 0,
+        "message": "1 new report, 0 new messages",
     }
+    assert "OW-" not in json.dumps(payload)
 
 
 # ── Retention is on by default ────────────────────────────────────────────────
@@ -603,9 +614,19 @@ async def test_ip_headers_and_peer_address_never_reach_the_app() -> None:
 async def test_pages_are_never_cached_but_static_files_are(client: AsyncClient) -> None:
     for path in ("/submit", "/status", "/health"):
         assert (await client.get(path)).headers["cache-control"] == "no-store", path
-    static = await client.get("/static/css/fonts.css")
-    assert static.status_code == 200
-    assert static.headers.get("cache-control") != "no-store"
+    css = await client.get("/static/css/fonts.css")
+    assert css.status_code == 200
+    assert css.headers.get("cache-control") == "no-cache"
+    # fonts.css's own @font-face src: url('/static/fonts/...') values are
+    # plain, unversioned paths (static_url()'s ?v={app_version} only reaches
+    # <link>/<script> tags a template renders, not another CSS file's url()s)
+    # — no-cache forces a conditional GET on every request instead of trusting
+    # a stale cached font. The header is applied by request path alone
+    # (SecurityMiddleware), not by whether the file resolves, so this holds
+    # even though real font files land in app/static/fonts/ only via the
+    # Docker build's COPY step (see Dockerfile) and 404 in a bare dev tree.
+    font = await client.get("/static/fonts/JetBrainsMono-Regular.woff2")
+    assert font.headers.get("cache-control") == "no-cache"
 
 
 def test_helm_ingress_turns_the_nginx_access_log_off() -> None:

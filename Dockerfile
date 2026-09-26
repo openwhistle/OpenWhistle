@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1.27
 
 # ─── Stage 1: dependency builder ─────────────────────────────────────────────
-FROM python:3.14-alpine AS builder
+# Digest from `skopeo inspect --format '{{.Digest}}' docker://docker.io/library/python:3.14-alpine` (multi-arch index digest); Renovate's pinDigests rule keeps it current.
+FROM python:3.14-alpine@sha256:9e9fde4d32eedce0b661d9ab91e826b62dddf28e928c230ec55f1866cac66b01 AS builder
 
 WORKDIR /build
 
@@ -9,7 +10,9 @@ RUN apk add --no-cache \
     gcc \
     musl-dev \
     libffi-dev \
-    postgresql-dev
+    postgresql-dev \
+    openldap-dev \
+    cyrus-sasl-dev
 
 # uv from its official image, pinned. Keep it in step with the uv pin in
 # .github/workflows/*.yml.
@@ -19,21 +22,31 @@ COPY pyproject.toml uv.lock ./
 
 # Runtime dependencies only, exactly as locked. Build the venv at /venv so the
 # shebangs are correct in the final image. The app itself is copied, not installed.
-RUN UV_PROJECT_ENVIRONMENT=/venv UV_PYTHON_DOWNLOADS=never uv sync --frozen --no-dev --no-install-project --no-cache
+RUN UV_PROJECT_ENVIRONMENT=/venv UV_PYTHON_DOWNLOADS=never uv sync --frozen --no-dev --no-install-project --no-cache --extra ldap --extra s3 \
+    # python-ldap ships its test-server helper with private keys (slapdtest/certs);
+    # nothing imports it at runtime, and a key in the image is a finding.
+    && rm -rf /venv/lib/python3.*/site-packages/slapdtest
 
 # ─── Stage 2: production image ────────────────────────────────────────────────
-FROM python:3.14-alpine AS final
+# Same digest and provenance as the builder stage above.
+FROM python:3.14-alpine@sha256:9e9fde4d32eedce0b661d9ab91e826b62dddf28e928c230ec55f1866cac66b01 AS final
 
 WORKDIR /app
 
-# Runtime dependencies only
+# Runtime dependencies only. pip is removed: nothing installs packages at
+# runtime (the builder uses uv), and its vendored copies (msgpack, …) only add
+# scanner findings and attack surface.
 RUN apk add --no-cache \
     libpq \
     libffi \
-    curl
+    libldap \
+    libsasl \
+    && rm -rf /usr/local/lib/python3.*/site-packages/pip /usr/local/lib/python3.*/site-packages/pip-*.dist-info \
+        /usr/local/bin/pip /usr/local/bin/pip3*
 
-# Non-root user for security
-RUN addgroup -S openwhistle && adduser -S openwhistle -G openwhistle
+# Non-root user for security, uid/gid 1000 to match the Helm chart's
+# securityContext (runAsUser/fsGroup: 1000).
+RUN addgroup -S -g 1000 openwhistle && adduser -S -u 1000 -G openwhistle openwhistle
 
 # Copy virtualenv from builder — shebangs point to /venv (same path)
 COPY --from=builder /venv /venv
@@ -42,8 +55,13 @@ COPY --from=builder /venv /venv
 COPY --chown=openwhistle:openwhistle . .
 
 # Self-hosted fonts (Sora + JetBrains Mono, OFL), committed once in docs/fonts
-# and shared with the public site — no download at build time.
-COPY --chown=openwhistle:openwhistle docs/fonts/*.woff2 /app/app/static/fonts/
+# and shared with the public site — no download at build time. Only the faces
+# app/static/css/fonts.css uses.
+COPY --chown=openwhistle:openwhistle \
+    docs/fonts/sora-latin-400-normal.woff2 docs/fonts/sora-latin-500-normal.woff2 \
+    docs/fonts/sora-latin-600-normal.woff2 docs/fonts/sora-latin-700-normal.woff2 \
+    docs/fonts/JetBrainsMono-Regular.woff2 docs/fonts/JetBrainsMono-Bold.woff2 \
+    /app/app/static/fonts/
 
 # Generate the file-integrity manifest over the exact shipped bytes (after fonts
 # are in place). -B avoids writing .pyc during the walk (PYTHONDONTWRITEBYTECODE
@@ -60,6 +78,6 @@ ENV PATH="/venv/bin:$PATH" \
 EXPOSE 4009
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:4009/health || exit 1
+    CMD ["python", "-c", "import sys, urllib.request; sys.exit(urllib.request.urlopen('http://127.0.0.1:4009/health', timeout=5).status != 200)"]
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "4009", "--no-access-log"]

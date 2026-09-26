@@ -25,9 +25,12 @@ jobs:
       - name: Install uv
         run: pip install uv==0.12.19
 
+      - name: OpenLDAP headers (python-ldap builds from source)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libldap2-dev libsasl2-dev
+
       - name: Install E2E dependencies
         run: |
-          uv export --frozen --extra dev --extra e2e --no-emit-project -o /tmp/requirements.txt
+          uv export --frozen --extra dev --extra ldap --extra s3 --extra e2e --no-emit-project -o /tmp/requirements.txt
           uv pip install --system -r /tmp/requirements.txt
           uv pip install --system --no-deps -e .
           playwright install chromium --with-deps
@@ -47,42 +50,6 @@ jobs:
 
       - name: Start full stack with demo data
         run: |
-          cat > docker-compose.e2e.yml <<'EOF'
-          services:
-            app:
-              image: openwhistle:e2e
-              environment:
-                DATABASE_URL: "postgresql+asyncpg://openwhistle:openwhistle@db:5432/openwhistle"
-                REDIS_URL: "redis://redis:6379/0"
-                SECRET_KEY: "e2e-test-secret-key-not-for-production-use"
-                DEMO_MODE: "true"
-              ports:
-                - "4009:4009"
-              depends_on:
-                db:
-                  condition: service_healthy
-                redis:
-                  condition: service_healthy
-            db:
-              image: postgres:18-alpine
-              environment:
-                POSTGRES_USER: openwhistle
-                POSTGRES_PASSWORD: openwhistle
-                POSTGRES_DB: openwhistle
-              healthcheck:
-                test: ["CMD-SHELL", "pg_isready -U openwhistle -d openwhistle"]
-                interval: 5s
-                timeout: 5s
-                retries: 10
-            redis:
-              image: redis:8-alpine
-              healthcheck:
-                test: ["CMD", "redis-cli", "ping"]
-                interval: 5s
-                timeout: 5s
-                retries: 10
-          EOF
-
           docker compose -f docker-compose.e2e.yml up -d
 
           echo "Waiting for app to be healthy..."

@@ -1,0 +1,177 @@
+{
+ "timeout_seconds": 300,
+ "test_groups": {
+  "T": [
+   "tests/test_tls.py"
+  ],
+  "O": [
+   "tests/test_v160_ops.py"
+  ],
+  "B": [
+   "tests/test_docs_boundary.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "ansible-nginx-conf-0640",
+   "file": "ansible/roles/openwhistle/tasks/deploy.yml",
+   "old": "    # config holds no secret.\n    mode: \"0644\"",
+   "new": "    # config holds no secret.\n    mode: \"0640\"",
+   "tests": "T"
+  },
+  {
+   "id": "ansible-snippets-0640",
+   "file": "ansible/roles/openwhistle/tasks/deploy.yml",
+   "old": "    mode: \"0644\"            # see nginx.conf above",
+   "new": "    mode: \"0640\"            # see nginx.conf above",
+   "tests": "T"
+  },
+  {
+   "id": "ansible-snippets-dir-0640",
+   "file": "ansible/roles/openwhistle/tasks/deploy.yml",
+   "old": "    directory_mode: \"0755\"",
+   "new": "    directory_mode: \"0640\"",
+   "tests": "T"
+  },
+  {
+   "id": "ansible-snippets-playbook-dir",
+   "file": "ansible/roles/openwhistle/tasks/deploy.yml",
+   "old": "src: \"{{ role_path }}/../../../nginx/snippets/\"",
+   "new": "src: \"{{ playbook_dir }}/../nginx/snippets/\"",
+   "tests": "T"
+  },
+  {
+   "id": "tls-init-dangling-falls-back",
+   "file": "scripts/ensure_tls_cert.py",
+   "old": "    if not any(p.is_symlink() or p.exists() for p in paths):",
+   "new": "    if not all(p.is_file() for p in paths):",
+   "tests": "T"
+  },
+  {
+   "id": "tls-init-unreadable-raw",
+   "file": "scripts/ensure_tls_cert.py",
+   "old": "    except OSError as exc:",
+   "new": "    except FileNotFoundError as exc:",
+   "tests": "T"
+  },
+  {
+   "id": "behind-proxy-drifts",
+   "file": "nginx/nginx.behind-proxy.conf",
+   "old": "limit_req zone=ow_req burst=30 nodelay;",
+   "new": "limit_req zone=ow_req burst=300 nodelay;",
+   "tests": "T"
+  },
+  {
+   "id": "behind-proxy-no-strip",
+   "file": "nginx/nginx.behind-proxy.conf",
+   "old": "        listen 80;\n        server_name _;\n\n        include /etc/nginx/snippets/proxy-headers.conf;\n",
+   "new": "        listen 80;\n        server_name _;\n\n",
+   "tests": "T"
+  },
+  {
+   "id": "behind-proxy-keeps-443",
+   "file": "docker-compose.behind-proxy.yml",
+   "old": "    ports: !override\n",
+   "new": "    ports:\n",
+   "tests": "T"
+  },
+  {
+   "id": "migration-004-offline",
+   "file": "migrations/versions/004_encrypt_totp_secrets.py",
+   "old": "    if context.is_offline_mode():\n        # Only the ALTER",
+   "new": "    if False:\n        # Only the ALTER",
+   "tests": "O"
+  },
+  {
+   "id": "brand-secondary-refused",
+   "file": "app/config.py",
+   "old": "data.pop(\"brand_secondary_color\", None) is not None",
+   "new": "data.get(\"brand_secondary_color\") is None",
+   "tests": "O"
+  },
+  {
+   "id": "onion-header-always-trusted",
+   "file": "app/onion.py",
+   "old": "    return bool(settings.onion_location) and raw_header(",
+   "new": "    return bool(settings.onion_location or True) and raw_header(",
+   "tests": "O"
+  },
+  {
+   "id": "helm-extra-env-dropped",
+   "file": "charts/openwhistle/templates/configmap.yaml",
+   "old": "  {{- range $name, $value := .Values.extraEnv }}\n  {{ $name }}: {{ $value | quote }}\n  {{- end }}\n",
+   "new": "",
+   "tests": "O"
+  },
+  {
+   "id": "helm-onion-clear-undocumented",
+   "file": "charts/openwhistle/values.yaml",
+   "old": "  #     proxy_set_header X-OW-Onion \"\";\n",
+   "new": "  #     proxy_set_header X-OW-Onion \"0\";\n",
+   "tests": "O"
+  },
+  {
+   "id": "rollback-pins-old-image",
+   "file": "docs/docs.html",
+   "old": "app alembic downgrade 7d4e2b9c1a05</span>",
+   "new": "app alembic downgrade base</span>",
+   "tests": "O"
+  },
+  {
+   "id": "docs-python-m-app",
+   "file": "docs/docs.html",
+   "old": "curl -sk https://localhost/health</span>",
+   "new": "docker compose exec app python -m app --version</span>",
+   "tests": "O"
+  },
+  {
+   "id": "machine-path-committed",
+   "file": "docs-tech/plans/2026-09-24-v1.6-hardening.md",
+   "old": "S=$(mktemp -d)\n",
+   "new": "S=\u002ftmp/claude-1000/x/scratchpad\n",
+   "tests": "O"
+  },
+  {
+   "id": "image-ships-unused-font",
+   "file": "Dockerfile",
+   "old": "docs/fonts/JetBrainsMono-Bold.woff2 \\\n",
+   "new": "docs/fonts/JetBrainsMono-Bold.woff2 docs/fonts/JetBrainsMono-Italic.woff2 \\\n",
+   "tests": "O"
+  },
+  {
+   "id": "build-context-has-superpowers",
+   "file": ".dockerignore",
+   "old": ".superpowers\n",
+   "new": "",
+   "tests": "O"
+  },
+  {
+   "id": "serena-tracked",
+   "file": ".gitignore",
+   "old": ".serena/\n",
+   "new": "",
+   "tests": "O"
+  },
+  {
+   "id": "docs-link-docs-tech",
+   "file": "docs/docs.html",
+   "old": "Maintainer tooling for the release review: an",
+   "new": "See <a href=\"https://github.com/openwhistle/OpenWhistle/blob/main/docs-tech/local-review.md\">local-review.md</a>. Maintainer tooling for the release review: an",
+   "tests": "B"
+  },
+  {
+   "id": "roadmap-test-chore",
+   "file": "docs/roadmap.html",
+   "old": "        <h3>Design system</h3>",
+   "new": "        <h3>Quality</h3>\n        <ul><li>Delete <code>tests/test_v100.py</code></li></ul>\n\n        <h3>Design system</h3>",
+   "tests": "B"
+  },
+  {
+   "id": "process-note-in-comment",
+   "file": "app/services/storage.py",
+   "old": "a re-keyed object's *old* key is a filename,",
+   "new": "a re-keyed object's *old* key is a filename (task 17),",
+   "tests": "O"
+  }
+ ]
+}

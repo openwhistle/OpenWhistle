@@ -21,6 +21,8 @@ ROOT = Path(__file__).resolve().parents[1]
 def main() -> int:
     spec = json.loads(Path(sys.argv[1]).read_text())
     only = set(sys.argv[2:])
+    # A mutation that removes a timeout hangs its test; a spec can bound the wait.
+    limit = spec.get("timeout_seconds", 900)
     green = 0
     for m in spec["mutations"]:
         if only and m["id"] not in only:
@@ -36,12 +38,16 @@ def main() -> int:
             run = subprocess.run(  # noqa: S603 — pytest on test paths from a repo file
                 [sys.executable, "-m", "pytest", "-x", "-q", "--no-cov", "-p", "no:cacheprovider",
                  *spec["test_groups"][m["tests"]]],
-                cwd=ROOT, capture_output=True, text=True, timeout=900,
+                cwd=ROOT, capture_output=True, text=True, timeout=limit,
             )
+        except subprocess.TimeoutExpired:
+            # A mutation that hangs the tests is caught: CI would time out too.
+            print(f"{m['id']:28} RED    TIMEOUT after {limit} s", flush=True)
+            continue
         finally:
             path.write_text(original)
         fired = next((line.split(" - ")[0] for line in run.stdout.splitlines()
-                      if line.startswith(("FAILED", "ERROR"))), "")
+                      if line.startswith(("FAILED ", "ERROR tests"))), "")
         verdict = "RED" if run.returncode else "GREEN"
         green += verdict == "GREEN"
         print(f"{m['id']:28} {verdict:6} {fired}", flush=True)

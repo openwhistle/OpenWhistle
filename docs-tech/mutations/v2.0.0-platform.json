@@ -1,0 +1,282 @@
+{
+ "test_groups": {
+  "B": [
+   "tests/test_build_pins.py",
+   "tests/test_tls.py"
+  ],
+  "L": [
+   "tests/test_ldap.py"
+  ],
+  "I": [
+   "tests/test_locales.py",
+   "tests/test_v100.py"
+  ],
+  "D": [
+   "tests/test_v160_design.py"
+  ],
+  "O": [
+   "tests/test_v160_onion.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "http-proxied",
+   "file": "nginx/nginx.conf",
+   "old": "        return 301 https://$host$request_uri;",
+   "new": "        location / { proxy_pass http://openwhistle; }",
+   "tests": "B"
+  },
+  {
+   "id": "old-tls-protocols",
+   "file": "nginx/nginx.conf",
+   "old": "        ssl_protocols TLSv1.2 TLSv1.3;",
+   "new": "        ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;",
+   "tests": "B"
+  },
+  {
+   "id": "ip-header-forwarded",
+   "file": "nginx/snippets/proxy-headers.conf",
+   "old": "proxy_set_header X-Forwarded-For     \"\";\n",
+   "new": "",
+   "tests": "B"
+  },
+  {
+   "id": "client-onion-header-forwarded",
+   "file": "nginx/snippets/proxy-headers.conf",
+   "old": "proxy_set_header X-OW-Onion \"\";",
+   "new": "",
+   "tests": "B"
+  },
+  {
+   "id": "onion-listener-unmarked",
+   "file": "nginx/nginx.conf",
+   "old": "        proxy_set_header X-OW-Onion \"1\";",
+   "new": "",
+   "tests": "B"
+  },
+  {
+   "id": "onion-shares-the-rate-budget",
+   "file": "nginx/nginx.conf",
+   "old": "limit_req zone=ow_req_onion burst=90 nodelay;",
+   "new": "limit_req zone=ow_req burst=30 nodelay;",
+   "tests": "B"
+  },
+  {
+   "id": "ansible-nginx-forwards-onion-header",
+   "file": "ansible/roles/openwhistle/templates/nginx.conf.j2",
+   "old": "        # spoof onion-listener behaviour (non-Secure cookies, no HSTS) here.\n        include /etc/nginx/snippets/proxy-headers.conf;\n",
+   "new": "        # spoof onion-listener behaviour (non-Secure cookies, no HSTS) here.\n",
+   "tests": "B"
+  },
+  {
+   "id": "compose-writable-root",
+   "file": "docker-compose.prod.yml",
+   "old": "    read_only: true\n    tmpfs:\n      - /tmp:size=128m\n    cap_drop:\n      - ALL\n    security_opt:\n      - no-new-privileges:true\n    environment:",
+   "new": "    environment:",
+   "tests": "B"
+  },
+  {
+   "id": "compose-image-latest",
+   "file": "docker-compose.prod.yml",
+   "old": "    image: ghcr.io/openwhistle/openwhistle:${OPENWHISTLE_VERSION:-2.0.0}\n    read_only: true",
+   "new": "    image: ghcr.io/openwhistle/openwhistle:latest\n    read_only: true",
+   "tests": "B"
+  },
+  {
+   "id": "onion-port-public",
+   "file": "docker-compose.prod.yml",
+   "old": "      - \"127.0.0.1:8080:8080\"",
+   "new": "      - \"8080:8080\"",
+   "tests": "O"
+  },
+  {
+   "id": "bind-mount-without-selinux-label",
+   "file": "docker-compose.prod.yml",
+   "old": "      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro,z",
+   "new": "      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro",
+   "tests": "B"
+  },
+  {
+   "id": "clamav-on-the-proxy-network",
+   "file": "docker-compose.prod.yml",
+   "old": "      - internal\n      - clamav-egress\n",
+   "new": "      - internal\n      - proxy\n",
+   "tests": "B"
+  },
+  {
+   "id": "base-image-unpinned",
+   "file": "Dockerfile",
+   "old": "FROM python:3.14-alpine@sha256:9e9fde4d32eedce0b661d9ab91e826b62dddf28e928c230ec55f1866cac66b01 AS final",
+   "new": "FROM python:3.14-alpine AS final",
+   "tests": "B"
+  },
+  {
+   "id": "curl-in-the-image",
+   "file": "Dockerfile",
+   "old": "    libsasl \\\n    && rm -rf /usr/local/lib/python3.*/site-packages/pip",
+   "new": "    libsasl \\\n    curl \\\n    && rm -rf /usr/local/lib/python3.*/site-packages/pip",
+   "tests": "B"
+  },
+  {
+   "id": "helm-writable-root",
+   "file": "charts/openwhistle/templates/deployment.yaml",
+   "old": "            readOnlyRootFilesystem: true",
+   "new": "            readOnlyRootFilesystem: false",
+   "tests": "B"
+  },
+  {
+   "id": "helm-ingress-unlimited",
+   "file": "charts/openwhistle/values.yaml",
+   "old": "    nginx.ingress.kubernetes.io/limit-rps: \"10\"\n",
+   "new": "",
+   "tests": "B"
+  },
+  {
+   "id": "helm-notes-without-crit",
+   "file": "charts/openwhistle/templates/NOTES.txt",
+   "old": "REQUIRED with ingress-nginx: set `error-log-level: crit` in the controller",
+   "new": "Consider setting the error log level in the controller",
+   "tests": "B"
+  },
+  {
+   "id": "tls-key-world-readable",
+   "file": "scripts/ensure_tls_cert.py",
+   "old": "        (dst / _KEY).chmod(0o600)\n        return \"provided\"",
+   "new": "        pass\n        return \"provided\"",
+   "tests": "B"
+  },
+  {
+   "id": "tls-cert-regenerated",
+   "file": "scripts/ensure_tls_cert.py",
+   "old": "    if (dst / _CERT).is_file() and (dst / _KEY).is_file():\n        return \"kept\"",
+   "new": "    if False:\n        return \"kept\"",
+   "tests": "B"
+  },
+  {
+   "id": "action-pinned-by-tag",
+   "file": ".github/workflows/ci.yml",
+   "old": "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0",
+   "new": "actions/setup-node@v7",
+   "tests": "B"
+  },
+  {
+   "id": "env-j2-incomplete",
+   "file": "ansible/roles/openwhistle/templates/env.j2",
+   "old": "# CLAMAV_PORT=3310\n",
+   "new": "",
+   "tests": "O"
+  },
+  {
+   "id": "ldap-empty-password",
+   "file": "app/services/ldap_auth.py",
+   "old": "    if not password:\n        # A simple bind",
+   "new": "    if False:\n        # A simple bind",
+   "tests": "L"
+  },
+  {
+   "id": "ldap-cert-not-demanded",
+   "file": "app/services/ldap_auth.py",
+   "old": "ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_DEMAND)",
+   "new": "ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)",
+   "tests": "L"
+  },
+  {
+   "id": "ldap-filter-unescaped",
+   "file": "app/services/ldap_auth.py",
+   "old": "escape_filter_chars(username)",
+   "new": "username",
+   "tests": "L"
+  },
+  {
+   "id": "ldap-start-tls-skipped",
+   "file": "app/services/ldap_auth.py",
+   "old": "        if cfg.ldap_start_tls and not cfg.ldap_use_ssl:\n            conn.start_tls_s()",
+   "new": "        if False:\n            conn.start_tls_s()",
+   "tests": "L"
+  },
+  {
+   "id": "ldap-connection-left-open",
+   "file": "app/services/ldap_auth.py",
+   "old": "        try:\n            conn.unbind_s()\n        except ldap.LDAPError:\n            pass  # closing a connection that already failed",
+   "new": "        pass",
+   "tests": "L"
+  },
+  {
+   "id": "ldap-tls-floor-dropped",
+   "file": "app/services/ldap_auth.py",
+   "old": "ldap.OPT_X_TLS_PROTOCOL_MIN, ldap.OPT_X_TLS_PROTOCOL_TLS1_2)",
+   "new": "ldap.OPT_X_TLS_PROTOCOL_MIN, ldap.OPT_X_TLS_PROTOCOL_TLS1_0)",
+   "tests": "L"
+  },
+  {
+   "id": "ldap-private-ca-ignored",
+   "file": "app/services/ldap_auth.py",
+   "old": "                if path := ldap.get_option(option):\n                    conn.set_option(option, path)",
+   "new": "                pass",
+   "tests": "L"
+  },
+  {
+   "id": "ldap-follows-referrals",
+   "file": "app/services/ldap_auth.py",
+   "old": "        conn.set_option(ldap.OPT_REFERRALS, 0)\n",
+   "new": "",
+   "tests": "L"
+  },
+  {
+   "id": "ldap-referral-as-user",
+   "file": "app/services/ldap_auth.py",
+   "old": "    entries = [(dn, attrs) for dn, attrs in found if dn]",
+   "new": "    entries = list(found)",
+   "tests": "L"
+  },
+  {
+   "id": "fr-key-missing",
+   "file": "app/locales/fr.json",
+   "old": "  \"nav.submit_report\": \"Soumettre un signalement\",\n",
+   "new": "",
+   "tests": "I"
+  },
+  {
+   "id": "pyproject-version-drift",
+   "file": "pyproject.toml",
+   "old": "version = \"2.0.0\"",
+   "new": "version = \"0.1.0\"",
+   "tests": "I"
+  },
+  {
+   "id": "tls-init-version-drift",
+   "file": "docker-compose.prod.yml",
+   "old": "    image: ghcr.io/openwhistle/openwhistle:${OPENWHISTLE_VERSION:-2.0.0}\n    command:",
+   "new": "    image: ghcr.io/openwhistle/openwhistle:${OPENWHISTLE_VERSION:-1.5.0}\n    command:",
+   "tests": "I"
+  },
+  {
+   "id": "nav-ignores-role",
+   "file": "app/templating.py",
+   "old": "            if minimum is None or rank >= _RANK[minimum]",
+   "new": "            if True",
+   "tests": "D"
+  },
+  {
+   "id": "brand-secondary-back",
+   "file": "app/config.py",
+   "old": "    brand_primary_color: str = \"#0c7253\"\n",
+   "new": "    brand_primary_color: str = \"#0c7253\"\n    brand_secondary_color: str = \"#b07230\"\n",
+   "tests": "D"
+  },
+  {
+   "id": "panel-header-shouted",
+   "file": "app/static/css/site.css",
+   "old": ".panel-header {\n  align-items: center;",
+   "new": ".panel-header {\n  text-transform: uppercase;\n  align-items: center;",
+   "tests": "D"
+  },
+  {
+   "id": "eyebrows-everywhere",
+   "file": "app/templates/admin/users.html",
+   "old": "        <h1>{{ t('admin.users.title') }}</h1>",
+   "new": "        <div class=\"page-eyebrow\">a</div><div class=\"page-eyebrow\">b</div>\n        <h1>{{ t('admin.users.title') }}</h1>",
+   "tests": "D"
+  }
+ ]
+}

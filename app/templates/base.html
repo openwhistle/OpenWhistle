@@ -1,3 +1,4 @@
+{% import "_icons.html" as icons %}
 <!DOCTYPE html>
 <html lang="{{ lang }}" data-theme="light">
 <head>
@@ -12,15 +13,14 @@
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
-    <link rel="stylesheet" href="/static/css/fonts.css">
-    <link rel="stylesheet" href="/static/css/site.css">
+    <link rel="stylesheet" href="{{ static_url('css/fonts.css') }}">
+    <link rel="stylesheet" href="{{ static_url('css/site.css') }}">
 
     {# Inject brand colours as CSS custom properties + shared base utilities.
        Nonce'd so it is allowed under the strict CSP (no 'unsafe-inline'). #}
     <style nonce="{{ request.state.csp_nonce }}">
         :root {
             --brand-primary:   {{ brand.primary_color }};
-            --brand-secondary: {{ brand.secondary_color }};
         }
         .u-hidden { display: none; }
         .u-m0 { margin: 0; }
@@ -41,15 +41,14 @@
     {% block head %}{% endblock %}
     {% block styles %}{% endblock %}
 </head>
-<body>
+<body data-wait-label="{{ t('form.please_wait') }}" data-copied-label="{{ t('success.copied') }}">
     <a href="#main-content" class="skip-link">{{ t('a11y.skip_to_content') }}</a>
 
     {% if is_demo %}
     <div class="demo-banner" role="note" aria-label="{{ t('demo.banner.label') }}">
-        <span class="demo-banner-badge">DEMO</span>
-        {{ t('demo.banner.text') }}
-        <a href="https://github.com/openwhistle/OpenWhistle" target="_blank" rel="noopener noreferrer" class="demo-banner-link">GitHub</a>
-        &middot;
+        <span class="demo-banner-badge">{{ t('demo.badge') }}</span>
+        <span class="demo-banner-text">{{ t('demo.banner.text') }}</span>
+        <span class="demo-banner-short">{{ t('demo.banner.short') }}</span>
         <a href="https://openwhistle.net" target="_blank" rel="noopener noreferrer" class="demo-banner-link">openwhistle.net</a>
     </div>
     {% endif %}
@@ -59,7 +58,7 @@
             {% if brand.logo_url %}
                 <img src="{{ brand.logo_url }}" alt="{{ brand.name }}" class="nav-logo-img">
             {% else %}
-                <svg class="nav-logo-svg" width="26" height="30" viewBox="0 0 28 33" fill="none"
+                <svg width="26" height="30" viewBox="0 0 28 33" fill="none"
                      xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
                     <path d="M14 2 L25 6.5 L25 18 C25 26 20 31 14 32 C8 31 3 26 3 18 L3 6.5 Z"
                           stroke="var(--accent)" stroke-width="1.5" fill="var(--accent-subtle)"
@@ -78,20 +77,26 @@
 
         <ul class="nav-links" role="list">
             {% block nav_links %}
-            <li><a href="/submit" {% if request.url.path == '/submit' %}class="active" aria-current="page"{% endif %}>{{ t('nav.submit_report') }}</a></li>
+            {#- On an organisation's wizard, its own link: /submit is another organisation's. -#}
+            {% set nav_submit = submit_path | default('/submit') %}
+            <li><a href="{{ nav_submit }}" {% if request.url.path == nav_submit %}class="active" aria-current="page"{% endif %}>{{ t('nav.submit_report') }}</a></li>
             <li><a href="/status" {% if request.url.path == '/status' %}class="active" aria-current="page"{% endif %}>{{ t('nav.check_status') }}</a></li>
             {% endblock %}
+        </ul>
+
+        <ul class="nav-tools" role="list">
             <li>
                 <details class="lang-picker" id="lang-picker">
                     <summary class="lang-picker-btn">
                         <span class="sr-only">{{ t('nav.lang_picker_label') }}:</span>
                         {{ lang | upper }}
-                        <span aria-hidden="true" class="u-caret">▾</span>
+                        {{ icons.icon('chevron-down', 'u-caret') }}
                     </summary>
                     <ul class="lang-picker-menu" role="list">
                         {% for code, label in [('en', 'English'), ('de', 'Deutsch'), ('fr', 'Français'), ('pt-br', 'Português (BR)')] %}
                         <li>
                             <form method="post" action="/set-language" class="u-m0">
+                                <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                                 <input type="hidden" name="next" value="{{ request.url.path }}{% if request.url.query %}?{{ request.url.query }}{% endif %}">
                                 <input type="hidden" name="lang" value="{{ code }}">
                                 <button type="submit" class="lang-picker-option {{ 'active' if lang == code else '' }}" lang="{{ code }}"{% if lang == code %} aria-current="true"{% endif %}>
@@ -104,13 +109,9 @@
                 </details>
             </li>
             <li>
-                <button
-                    class="theme-toggle"
-                    id="theme-toggle"
-                    type="button"
-                    aria-label="{{ t('nav.toggle_theme') }}"
-                    title="{{ t('nav.toggle_theme') }}">
-                    ◑
+                <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false"
+                        aria-label="{{ t('nav.toggle_theme') }}" title="{{ t('nav.toggle_theme') }}">
+                    {{ icons.icon('moon', 'theme-icon-moon') }}{{ icons.icon('sun', 'theme-icon-sun') }}
                 </button>
             </li>
         </ul>
@@ -127,14 +128,14 @@
          data-text-expired-body="{{ t('session.expiry.expired_body') }}"
          role="alert"
          aria-live="polite">
-        <div class="session-expiry-icon" aria-hidden="true">&#9201;</div>
+        <div class="session-expiry-icon" aria-hidden="true">{{ icons.icon('clock') }}</div>
         <div class="session-expiry-body">
-            <span class="session-expiry-warning-text">{{ t('session.expiry.warning') }}</span>
+            <span>{{ t('session.expiry.warning') }}</span>
             <strong id="session-expiry-countdown" class="session-expiry-countdown">5:00</strong>
         </div>
         <div class="session-expiry-actions">
             <button type="button" class="btn btn-sm session-expiry-extend" data-action="session-extend">{{ t('session.expiry.extend') }}</button>
-            <button type="button" class="session-expiry-dismiss" data-action="session-dismiss" aria-label="{{ t('session.expiry.dismiss') }}">&#10005;</button>
+            <button type="button" class="session-expiry-dismiss" data-action="session-dismiss" aria-label="{{ t('session.expiry.dismiss') }}">{{ icons.icon('x') }}</button>
         </div>
     </div>
     {% endif %}
@@ -145,16 +146,18 @@
     </main>
 
     <footer class="footer" role="contentinfo">
-        <p>
-            {{ brand.name }} &middot; {{ t('footer.tagline') }} &middot;
-            <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener">{{ t('footer.open_source') }}</a>
-            &middot; <a href="https://www.gesetze-im-internet.de/hinschg/" rel="noopener">HinSchG</a>
-            &middot; <a href="/admin" class="u-dim" title="{{ t('footer.admin_title') }}">{{ t('footer.admin') }}</a>
-            &middot; <span class="u-dim">v{{ app_version }}</span>
-        </p>
+        <div class="footer-inner">
+            <p class="footer-brand">{{ brand.name }} <span class="footer-tagline">{{ t('footer.tagline') }}</span></p>
+            <ul class="footer-links" role="list">
+                <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener">{{ t('footer.open_source') }}</a></li>
+                <li><a href="https://www.gesetze-im-internet.de/hinschg/" rel="noopener">HinSchG</a></li>
+                <li><a href="/admin" title="{{ t('footer.admin_title') }}">{{ t('footer.admin') }}</a></li>
+                <li class="footer-version">v{{ app_version }}</li>
+            </ul>
+        </div>
     </footer>
 
-    <script src="/static/js/site.js" nonce="{{ request.state.csp_nonce }}"></script>
+    <script src="{{ static_url('js/site.js') }}" nonce="{{ request.state.csp_nonce }}"></script>
     <script nonce="{{ request.state.csp_nonce }}">
     (function() {
         function pad(n) { return n < 10 ? '0' + n : '' + n; }
@@ -169,6 +172,12 @@
             try {
                 var d = new Date(el.getAttribute('data-utc'));
                 if (isNaN(d)) return;
+                if (el.hasAttribute('data-date-only')) {
+                    // A whistleblower's time is stored as its UTC day; shown in a
+                    // zone west of UTC, midnight would read as the day before.
+                    el.textContent = d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate());
+                    return;
+                }
                 var tz = tzLabel(d);
                 el.textContent = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
                                  ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) +

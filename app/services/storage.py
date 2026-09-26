@@ -37,6 +37,9 @@ class StorageBackend:
     async def delete(self, key: str) -> None:
         raise NotImplementedError
 
+    async def copy(self, src: str, dst: str) -> None:
+        raise NotImplementedError
+
 
 class DBStorageBackend(StorageBackend):
     """No-op backend: data is stored directly in the Attachment.data column."""
@@ -49,6 +52,9 @@ class DBStorageBackend(StorageBackend):
 
     async def delete(self, key: str) -> None:
         pass  # cascade delete handles cleanup
+
+    async def copy(self, src: str, dst: str) -> None:
+        pass  # nothing to copy: data lives in the row, not under a key
 
 
 class S3StorageBackend(StorageBackend):
@@ -71,7 +77,10 @@ class S3StorageBackend(StorageBackend):
         self._endpoint_url = endpoint_url or None
 
     def _client(self) -> Any:
-        import boto3  # noqa: PLC0415
+        try:
+            import boto3  # noqa: PLC0415
+        except ImportError as exc:
+            raise RuntimeError("STORAGE_BACKEND=s3 needs the 's3' extra (boto3).") from exc
 
         kwargs: dict[str, Any] = {
             "region_name": self._region,
@@ -95,7 +104,9 @@ class S3StorageBackend(StorageBackend):
             Body=data,
             ContentType=content_type,
         )
-        log.info("Stored attachment in S3: %s", full_key)
+        # No key in the log line: a re-keyed object's *old* key is a filename,
+        # and put()/delete()/get() share this backend either way.
+        log.info("Stored attachment in S3")
 
     async def get(self, key: str) -> bytes:
         from botocore.exceptions import ClientError  # noqa: PLC0415
@@ -109,7 +120,9 @@ class S3StorageBackend(StorageBackend):
         except ClientError as exc:
             code = str(exc.response.get("Error", {}).get("Code", ""))
             if code in {"NoSuchKey", "NoSuchBucket", "404", "AccessDenied"}:
-                raise StorageObjectNotFoundError(full_key) from exc
+                # No key in the exception message: it can propagate into logs
+                # (str(exc) on a caught error), and a legacy key is a filename.
+                raise StorageObjectNotFoundError("object not found") from exc
             raise  # a genuine backend/connectivity error stays a 5xx
         body: bytes = await asyncio.to_thread(response["Body"].read)
         return body
@@ -120,7 +133,20 @@ class S3StorageBackend(StorageBackend):
         await asyncio.to_thread(
             client.delete_object, Bucket=self._bucket, Key=full_key
         )
-        log.info("Deleted attachment from S3: %s", full_key)
+        log.info("Deleted attachment from S3")
+
+    async def copy(self, src: str, dst: str) -> None:
+        # Not interruptible: boto3's copy_object is a single blocking call run
+        # in a thread. A shutdown mid-copy just leaves the old object in
+        # place (the row is only repointed after copy() returns), so the
+        # next run's rekey_legacy_objects() re-copies it — safe, if wasteful.
+        client = self._client()
+        await asyncio.to_thread(
+            client.copy_object,
+            Bucket=self._bucket,
+            Key=self._full_key(dst),
+            CopySource={"Bucket": self._bucket, "Key": self._full_key(src)},
+        )
 
 
 _backend: StorageBackend | None = None

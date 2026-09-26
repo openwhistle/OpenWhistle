@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import re
 import uuid
-import zlib
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -28,6 +27,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import AdminRole, AdminUser
 from app.services.auth import create_access_token, hash_password, store_session
 from app.services.mfa import generate_totp_secret, get_totp
+from tests.conftest import setup_token
 
 # ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -80,14 +80,20 @@ async def _csrf(client: AsyncClient, path: str = "/admin/dashboard") -> str:
 
 
 def _pdf_text(pdf_bytes: bytes) -> str:
-    """Decompress FlateDecode content streams and return plain text."""
-    parts: list[str] = []
-    for m in re.finditer(rb"stream\r?\n(.+?)\r?\nendstream", pdf_bytes, re.DOTALL):
-        try:
-            parts.append(zlib.decompress(m.group(1)).decode("latin-1", errors="ignore"))
-        except Exception:  # noqa: BLE001
-            pass
-    return "".join(parts)
+    """Extract page text via pypdf.
+
+    The PDF text is now set in an embedded Unicode TrueType font (DejaVu,
+    app/services/pdf.py), shown with 2-byte CID glyph indices rather than
+    single-byte WinAnsi character codes — a raw FlateDecode-and-latin-1-decode
+    of the content stream (this helper's previous implementation) no longer
+    recovers readable text; only a real PDF text extractor that follows the
+    font's ToUnicode CMap does.
+    """
+    import io
+
+    from pypdf import PdfReader
+
+    return "\n".join(p.extract_text() or "" for p in PdfReader(io.BytesIO(pdf_bytes)).pages)
 
 
 # ── app/api/wizard.py ──────────────────────────────────────────────────────────
@@ -118,6 +124,7 @@ async def test_wizard_post_validation_username_too_short(
             "totp_secret": totp_secret,
             "totp_code": get_totp(totp_secret).now(),
             "csrf_token": csrf,
+            "setup_token": await setup_token(),
         },
     )
     assert resp.status_code == 200
@@ -147,6 +154,7 @@ async def test_wizard_post_validation_password_mismatch(
             "totp_secret": totp_secret,
             "totp_code": get_totp(totp_secret).now(),
             "csrf_token": csrf,
+            "setup_token": await setup_token(),
         },
     )
     assert resp.status_code == 200
@@ -176,6 +184,7 @@ async def test_wizard_post_validation_bad_totp(
             "totp_secret": totp_secret,
             "totp_code": "000000",
             "csrf_token": csrf,
+            "setup_token": await setup_token(),
         },
     )
     assert resp.status_code == 200
@@ -201,6 +210,43 @@ async def test_validation_error_handler_returns_422_html(client: AsyncClient) ->
         # POST /setup with CSRF but no username/password (triggers RequestValidationError)
         resp = await client.post("/setup", data={"csrf_token": csrf})
         assert resp.status_code == 422
+
+
+# ── app/main.py — StarletteHTTPException handler (HTML vs JSON) ──────────────
+
+
+@pytest.mark.asyncio
+async def test_stale_report_id_returns_json_for_an_api_style_request(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """A client that never asked for HTML (no Accept header, as every plain
+    httpx/fetch caller in this suite is) keeps the plain JSON body."""
+    admin, secret = await _make_admin(db_session)
+    await _login(client, admin, secret)
+    r = await client.get(f"/admin/reports/{uuid.uuid4()}")
+    assert r.status_code == 404
+    assert r.headers["content-type"].startswith("application/json")
+    assert "detail" in r.json()
+
+
+@pytest.mark.asyncio
+async def test_stale_report_id_returns_styled_html_for_a_browser(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """A logged-in admin opening a stale /admin/reports/<id> (deleted, or
+    from another organisation) used to get raw JSON `{"detail":"Not
+    Found"}`. A browser navigation (Accept: text/html) now gets the same
+    styled, localised error.html every other error page uses."""
+    admin, secret = await _make_admin(db_session)
+    await _login(client, admin, secret)
+    r = await client.get(
+        f"/admin/reports/{uuid.uuid4()}", headers={"accept": "text/html,*/*"}
+    )
+    assert r.status_code == 404
+    assert r.headers["content-type"].startswith("text/html")
+    assert '"detail"' not in r.text
+    assert "OpenWhistle" in r.text
+    assert "doesn&#39;t exist" in r.text or "doesn't exist" in r.text
 
 
 @pytest.mark.asyncio
@@ -290,7 +336,8 @@ async def test_inactive_user_gets_401(
     token = create_access_token(str(admin.id), role=admin.role.value)
     await store_session(redis, str(admin.id), token)
 
-    resp = await client.get("/admin/dashboard", cookies={"ow_session": token})
+    client.cookies.set("ow_session", token)
+    resp = await client.get("/admin/dashboard")
     assert resp.status_code in (401, 302)
 
 
@@ -453,7 +500,7 @@ async def test_change_user_role_404_unknown(
 
 
 @pytest.mark.asyncio
-async def test_change_user_role_400_invalid_role(
+async def test_change_user_role_422_invalid_role(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
     admin, secret = await _make_admin(db_session)
@@ -464,7 +511,9 @@ async def test_change_user_role_400_invalid_role(
         f"/admin/users/{target.id}/role",
         data={"csrf_token": csrf, "role": "not_a_real_role"},
     )
-    assert r.status_code == 400
+    assert r.status_code == 422
+    await db_session.refresh(target)
+    assert target.role == AdminRole.admin
 
 
 @pytest.mark.asyncio
@@ -965,6 +1014,7 @@ async def test_lifespan_demo_mode_calls_seed() -> None:
         seed_called.append(True)
 
     mock_settings = MagicMock()
+    mock_settings.multi_tenancy_enabled = False
     mock_settings.demo_mode = True
 
     with (

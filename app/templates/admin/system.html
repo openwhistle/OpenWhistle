@@ -1,30 +1,16 @@
-{% extends "base.html" %}
+{% extends "admin/_layout.html" %}
+{% import "_icons.html" as icons %}
 
 {% block title %}{{ t('admin.system.title') }} | OpenWhistle{% endblock %}
 
-{% block nav_links %}
-<li><a href="/admin/dashboard">{{ t('admin.dashboard.title') }}</a></li>
-<li><a href="/admin/stats">{{ t('admin.nav.stats') }}</a></li>
-<li><a href="/admin/categories">{{ t('admin.nav.categories') }}</a></li>
-<li><a href="/admin/locations">{{ t('admin.nav.locations') }}</a></li>
-<li><a href="/admin/users">{{ t('admin.nav.users') }}</a></li>
-<li><a href="/admin/audit-log">{{ t('admin.nav.audit_log') }}</a></li>
-<li><a href="/admin/retention">{{ t('admin.nav.retention') }}</a></li>
-<li><a href="/admin/telephone-channel">{{ t('admin.nav.telephone_channel') }}</a></li>
-<li><a href="/admin/organisations">{{ t('admin.nav.organisations') }}</a></li>
-<li><a href="/admin/system" class="active" aria-current="page">{{ t('admin.nav.system') }}</a></li>
-<li><form method="post" action="/admin/logout"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button type="submit" class="nav-link-button">{{ t('admin.nav.logout') }}</button></form></li>
-{% endblock %}
-
-{% block content %}
+{% block admin_content %}
 <div class="container">
     <div class="page-header">
-        <div class="page-eyebrow">{{ t('admin.system.eyebrow') }}</div>
         <h1>{{ t('admin.system.title') }}</h1>
         <p class="page-subtitle">{{ t('admin.system.subtitle') }}</p>
     </div>
 
-    <div class="stats-grid" role="list">
+    <div class="stats-row" role="list">
         <div class="stat-card" role="listitem">
             <div class="stat-card__label">{{ t('admin.system.stat.current') }}</div>
             <div class="stat-card__value"><code>v{{ update.current }}</code></div>
@@ -36,15 +22,15 @@
             <div class="stat-card__label">{{ t('admin.system.stat.status') }}</div>
             <div class="stat-card__value">
                 {% if not update.enabled %}
-                    <span class="badge badge--grey">{{ t('admin.system.status.disabled') }}</span>
+                    <span class="badge">{{ t('admin.system.status.disabled') }}</span>
                 {% elif not update.latest %}
-                    <span class="badge badge--grey">{{ t('admin.system.status.never_checked') }}</span>
+                    <span class="badge">{{ t('admin.system.status.never_checked') }}</span>
                 {% elif update.status == 'update_available' %}
-                    <span class="badge badge--amber">{{ t('admin.system.status.update_available') }}</span>
+                    <span class="badge badge-pending_feedback">{{ t('admin.system.status.update_available') }}</span>
                 {% elif update.status == 'ahead' %}
-                    <span class="badge badge--grey">{{ t('admin.system.status.ahead') }}</span>
+                    <span class="badge">{{ t('admin.system.status.ahead') }}</span>
                 {% else %}
-                    <span class="badge badge--green">&#10003; {{ t('admin.system.status.up_to_date') }}</span>
+                    <span class="badge badge-closed">{{ icons.icon('check') }} {{ t('admin.system.status.up_to_date') }}</span>
                 {% endif %}
             </div>
         </div>
@@ -85,11 +71,11 @@
         <div class="detail-row">
             <div class="detail-label">{{ t('admin.system.integrity.status') }}</div>
             {% if not integrity.available %}
-                <span class="badge badge--grey">{{ t('admin.system.integrity.unavailable') }}</span>
+                <span class="badge">{{ t('admin.system.integrity.unavailable') }}</span>
             {% elif integrity.ok %}
-                <span class="badge badge--green">&#10003; {{ t('admin.system.integrity.ok') }}</span>
+                <span class="badge badge-closed">{{ icons.icon('check') }} {{ t('admin.system.integrity.ok') }}</span>
             {% else %}
-                <span class="badge badge--amber">{{ t('admin.system.integrity.issues') }}</span>
+                <span class="badge badge-pending_feedback">{{ t('admin.system.integrity.issues') }}</span>
             {% endif %}
         </div>
 
@@ -134,6 +120,61 @@
         <p>{{ t('admin.system.privacy.body.html') }}</p>
     </section>
 
+    <section class="card" aria-labelledby="heading-telemetry">
+        <h2 id="heading-telemetry">{{ t('admin.system.telemetry.title') }}</h2>
+
+        <div class="detail-row">
+            <div class="detail-label">{{ t('admin.system.telemetry.state') }}</div>
+            {% if telemetry.enabled %}
+                <span class="badge badge-closed">{{ icons.icon('check') }} {{ t('admin.system.telemetry.on') }}</span>
+            {% else %}
+                <span class="badge">{{ t('admin.system.telemetry.off') }}</span>
+            {% endif %}
+        </div>
+
+        <p>{{ t('admin.system.telemetry.body.html') }}</p>
+        <pre><code>GET {{ telemetry.url or (telemetry.endpoint ~ '?id=<' ~ t('admin.system.telemetry.id_placeholder') ~ '>&v=' ~ telemetry.version) }}
+User-Agent: openwhistle/{{ telemetry.version }}</code></pre>
+
+        <div class="detail-row">
+            <div class="detail-label">{{ t('admin.system.telemetry.id') }}</div>
+            {% if telemetry.installation_id %}
+                <code>{{ telemetry.installation_id }}</code>
+            {% else %}
+                <span>{{ t('admin.system.telemetry.id_placeholder') }}</span>
+            {% endif %}
+        </div>
+        <div class="detail-row">
+            <div class="detail-label">{{ t('admin.system.telemetry.last_sent') }}</div>
+            {% if telemetry.last_sent_at %}
+                <time data-utc="{{ telemetry.last_sent_at.isoformat() }}">{{ telemetry.last_sent_at.isoformat() }}</time>
+            {% else %}
+                <span>{{ t('admin.system.telemetry.never') }}</span>
+            {% endif %}
+        </div>
+
+        {% if telemetry.locked_by %}
+        <p class="note">{{ t('admin.system.telemetry.locked.' ~ telemetry.locked_by) }}</p>
+        {% else %}
+        <form method="post" action="/admin/system/telemetry">
+            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+            <input type="hidden" name="enabled" value="{{ '0' if telemetry.enabled else '1' }}">
+            <button type="submit" class="btn {{ 'btn-secondary' if telemetry.enabled else 'btn-primary' }}">
+                {{ t('admin.system.telemetry.turn_off' if telemetry.enabled else 'admin.system.telemetry.turn_on') }}
+            </button>
+        </form>
+        {% endif %}
+
+        {% if telemetry.installation_id %}
+        <form method="post" action="/admin/system/telemetry/reset-id"
+              data-confirm="{{ t('admin.system.telemetry.reset_confirm') }}">
+            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+            <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.system.telemetry.reset') }}</button>
+        </form>
+        <p class="note">{{ t('admin.system.telemetry.reset_note') }}</p>
+        {% endif %}
+    </section>
+
     <section class="card" aria-labelledby="heading-config">
         <h2 id="heading-config">{{ t('admin.system.config.title') }}</h2>
         <div class="table-wrapper" tabindex="0" role="region" aria-label="{{ t('admin.system.config.title') }}">
@@ -153,14 +194,20 @@
                     <td><code>{{ update.enabled | string | lower }}</code></td>
                     <td>{{ t('admin.system.config.enabled.desc') }}</td>
                 </tr>
+                <tr>
+                    <td><code>TELEMETRY_ENABLED</code></td>
+                    <td><code>(empty)</code></td>
+                    <td><code>{{ '(empty)' if telemetry.env is none else telemetry.env | string | lower }}</code></td>
+                    <td>{{ t('admin.system.config.telemetry.desc') }}</td>
+                </tr>
             </tbody>
         </table>
         </div>
     </section>
 
     <div class="page-actions">
-        <a href="/admin/dashboard" class="btn btn--secondary">{{ t('admin.back_dashboard') }}</a>
-        <a href="https://github.com/openwhistle/OpenWhistle/releases" rel="noopener noreferrer" target="_blank" class="btn btn--outline">
+        <a href="/admin/dashboard" class="btn btn-secondary">{{ t('admin.back_dashboard') }}</a>
+        <a href="https://github.com/openwhistle/OpenWhistle/releases" rel="noopener noreferrer" target="_blank" class="btn btn-secondary">
             {{ t('admin.system.all_releases') }}
         </a>
     </div>

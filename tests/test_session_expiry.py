@@ -7,7 +7,7 @@ import uuid
 
 import pyotp
 import pytest
-from httpx import AsyncClient
+from httpx import AsyncClient, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import AdminUser
@@ -57,6 +57,13 @@ async def _login_admin(ac: AsyncClient, admin: AdminUser, totp_secret: str) -> N
     await ac.post(
         "/admin/login/mfa",
         data={"csrf_token": mfa_csrf, "temp_token": temp_token, "totp_code": totp_code},
+    )
+
+
+async def _refresh(client: AsyncClient) -> Response:
+    return await client.post(
+        "/admin/session/refresh",
+        headers={"X-CSRF-Token": client.cookies.get("ow_csrf") or ""},
     )
 
 
@@ -157,7 +164,7 @@ async def test_session_refresh_returns_new_ttl(
     admin, totp_secret = await _create_admin(db_session, "ref1")
     await _login_admin(client, admin, totp_secret)
 
-    resp = await client.post("/admin/session/refresh")
+    resp = await _refresh(client)
     assert resp.status_code == 200
 
     data = resp.json()
@@ -176,7 +183,7 @@ async def test_session_refresh_sets_new_cookie(
     await _login_admin(client, admin, totp_secret)
 
     old_cookie = client.cookies.get("ow_session")
-    resp = await client.post("/admin/session/refresh")
+    resp = await _refresh(client)
     assert resp.status_code == 200
 
     new_cookie = client.cookies.get("ow_session")
@@ -194,7 +201,7 @@ async def test_session_refresh_new_session_is_still_valid(
     admin, totp_secret = await _create_admin(db_session, "ref3")
     await _login_admin(client, admin, totp_secret)
 
-    await client.post("/admin/session/refresh")
+    await _refresh(client)
 
     # The refreshed session must still grant dashboard access
     resp = await client.get("/admin/dashboard")
@@ -212,7 +219,7 @@ async def test_session_refresh_extends_ttl_to_full_duration(
     admin, totp_secret = await _create_admin(db_session, "ref4")
     await _login_admin(client, admin, totp_secret)
 
-    resp = await client.post("/admin/session/refresh")
+    resp = await _refresh(client)
     data = resp.json()
 
     max_ttl = settings.access_token_expire_minutes * 60

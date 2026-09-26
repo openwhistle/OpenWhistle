@@ -4,11 +4,14 @@ import os
 import re
 import subprocess
 from collections.abc import AsyncGenerator
+from urllib.parse import urlparse
 
+import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
+    AsyncConnection,
     AsyncEngine,
     AsyncSession,
     async_sessionmaker,
@@ -24,6 +27,9 @@ os.environ.setdefault(
 )
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/1")  # DB 1 for tests
 os.environ.setdefault("DEMO_MODE", "false")
+# The installation count never leaves a test run, whatever the shell exports;
+# tests that need it patch the setting (and _telemetry_endpoint_is_local below).
+os.environ["TELEMETRY_ENABLED"] = "false"
 
 from app.database import Base, get_db  # noqa: E402
 from app.main import app  # noqa: E402
@@ -38,6 +44,71 @@ os.environ.setdefault("MULTI_TENANCY_ENABLED", "false")
 _STEP_LOCATION = 2
 
 
+def _is_safe_to_flush(redis_url: str) -> bool:
+    """True only for a local Redis URL on a non-default DB index.
+
+    Guards ``_flush_test_redis`` below: DB 0 (what a misconfigured/missing
+    REDIS_URL falls back to) and any non-local host are refused, so a bad
+    env can never flush a real Redis instance.
+    """
+    parsed = urlparse(redis_url)
+    host = parsed.hostname or ""
+    try:
+        db_index = int((parsed.path or "").lstrip("/") or "0")
+    except ValueError:
+        db_index = 0
+    return host in ("localhost", "127.0.0.1") and db_index != 0
+
+
+@pytest.fixture(autouse=True)
+def _telemetry_endpoint_is_local(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Second belt: even a test that switches the count on reaches nothing real
+    unless it points the endpoint at its own server."""
+    from app.services import telemetry
+
+    monkeypatch.setattr(telemetry, "TELEMETRY_ENDPOINT", "http://127.0.0.1:9/v1/openwhistle/count")
+
+
+@pytest_asyncio.fixture(scope="session", loop_scope="session", autouse=True)
+async def _flush_test_redis() -> None:
+    """Flush the test Redis DB once per session.
+
+    A long-lived test Redis keeps rate-limit/lockout keys between runs;
+    without this, a second run in a row sees stale counters and gets 429s
+    that cascade into unrelated failures.
+    """
+    from app.config import settings
+
+    if not _is_safe_to_flush(settings.redis_url):
+        return
+    from redis.asyncio import from_url
+    from redis.exceptions import ConnectionError as RedisConnectionError
+
+    redis = await from_url(settings.redis_url, decode_responses=True)
+    try:
+        await redis.flushdb()
+    except (RedisConnectionError, OSError):
+        # No local test Redis (the e2e job talks to the app over HTTP only):
+        # there is nothing to flush, and tests that need Redis fail on their own.
+        return
+    finally:
+        await redis.aclose()
+
+
+async def _drop_test_schema(conn: AsyncConnection) -> None:
+    """Drop every app table, raw enum type, and the alembic tracking table.
+
+    Shared by ``db_engine``'s setup (clean slate before migrating) and
+    teardown (clean slate after the session) so both halves stay in sync --
+    see ``test_drop_test_schema_leaves_no_tables_and_no_alembic_version``
+    for the behavioural guard on this.
+    """
+    await conn.run_sync(Base.metadata.drop_all)
+    for enum_type in _ENUM_TYPES:
+        await conn.execute(text(f"DROP TYPE IF EXISTS {enum_type} CASCADE"))
+    await conn.execute(text("DROP TABLE IF EXISTS alembic_version CASCADE"))
+
+
 @pytest_asyncio.fixture(scope="session", loop_scope="session")
 async def db_engine() -> AsyncGenerator[AsyncEngine]:
     """Session-scoped: runs alembic migrations once for the entire test session."""
@@ -45,12 +116,8 @@ async def db_engine() -> AsyncGenerator[AsyncEngine]:
 
     engine = create_async_engine(settings.database_url, echo=False)
 
-    # Full clean slate: drop tables + raw enum types + alembic tracking table
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        for enum_type in _ENUM_TYPES:
-            await conn.execute(text(f"DROP TYPE IF EXISTS {enum_type} CASCADE"))
-        await conn.execute(text("DROP TABLE IF EXISTS alembic_version CASCADE"))
+        await _drop_test_schema(conn)
 
     # Apply migrations once for the whole session
     result = subprocess.run(  # noqa: S603
@@ -64,10 +131,11 @@ async def db_engine() -> AsyncGenerator[AsyncEngine]:
 
     yield engine
 
+    # Leaving alembic_version at head with no tables underneath it breaks a
+    # later `alembic downgrade` run against this same database (it thinks
+    # the schema is already migrated) -- so the teardown must drop it too.
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        for enum_type in _ENUM_TYPES:
-            await conn.execute(text(f"DROP TYPE IF EXISTS {enum_type} CASCADE"))
+        await _drop_test_schema(conn)
     await engine.dispose()
 
 
@@ -231,3 +299,70 @@ async def wizard_submit(
     )
     pin = pin_m.group(1) if pin_m else ""
     return case_number, pin
+
+
+async def setup_token() -> str:
+    """The current one-time setup token, created if missing (as GET /setup does)."""
+    from app.redis_client import get_redis
+    from app.services.setup_token import SETUP_TOKEN_KEY, ensure_setup_token
+
+    redis = await get_redis()
+    await ensure_setup_token(redis)
+    raw = await redis.get(SETUP_TOKEN_KEY)
+    return raw.decode() if isinstance(raw, bytes) else str(raw)
+
+
+@pytest_asyncio.fixture(loop_scope="function")
+async def throwaway_db(monkeypatch: pytest.MonkeyPatch):  # type: ignore[no-untyped-def]
+    """An isolated Postgres database for a test that touches *every* row — a
+    key-rotation script, an alembic downgrade/upgrade — so the shared test DB
+    and every other test's rows are never rewritten.
+
+    Creates a uniquely named database on the same server, migrates it with
+    alembic (subprocess, DATABASE_URL overridden), points settings.database_url
+    at it (so a subprocess given ``settings.database_url`` uses it too), yields
+    an AsyncSession on it, and drops the database in a finally.
+    """
+    import uuid
+
+    from sqlalchemy.engine import make_url
+
+    from app.config import settings
+
+    base_url = make_url(settings.database_url)
+    db_name = f"openwhistle_tmp_{uuid.uuid4().hex[:12]}"
+    admin_url = base_url.set(database="postgres")
+
+    admin_engine = create_async_engine(admin_url, poolclass=NullPool, isolation_level="AUTOCOMMIT")
+    async with admin_engine.connect() as conn:
+        await conn.execute(text(f'CREATE DATABASE "{db_name}"'))
+    await admin_engine.dispose()
+
+    tmp_url = base_url.set(database=db_name)
+    engine = None
+    try:  # everything after CREATE DATABASE: a failing migration must not leak it
+        result = subprocess.run(  # noqa: S603
+            ["alembic", "upgrade", "head"],  # noqa: S607
+            capture_output=True,
+            text=True,
+            check=False,
+            env={**os.environ, "DATABASE_URL": tmp_url.render_as_string(hide_password=False)},
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"Failed to migrate throwaway DB {db_name}:\n{result.stderr}")
+
+        monkeypatch.setattr(settings, "database_url", tmp_url.render_as_string(hide_password=False))
+
+        engine = create_async_engine(tmp_url, poolclass=NullPool)
+        session_factory = async_sessionmaker(engine, expire_on_commit=False)
+        async with session_factory() as session:
+            yield session
+    finally:
+        if engine is not None:
+            await engine.dispose()
+        admin_engine = create_async_engine(
+            admin_url, poolclass=NullPool, isolation_level="AUTOCOMMIT"
+        )
+        async with admin_engine.connect() as conn:
+            await conn.execute(text(f'DROP DATABASE IF EXISTS "{db_name}" WITH (FORCE)'))
+        await admin_engine.dispose()

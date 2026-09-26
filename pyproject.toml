@@ -1,6 +1,6 @@
 [project]
 name = "openwhistle"
-version = "0.1.0"
+version = "2.0.0"
 description = "Open source whistleblower reporting platform (HinSchG / EU 2019/1937)"
 license = { text = "GPL-3.0-only" }
 readme = "README.md"
@@ -53,12 +53,6 @@ dependencies = [
 
     # Background task scheduling (SLA reminders)
     "apscheduler>=3.11.3",
-
-    # S3-compatible object storage (optional backend for attachments)
-    "boto3>=1.43.0",
-
-    # LDAP / Active Directory authentication (optional)
-    "ldap3>=2.9.1",
 ]
 
 [project.optional-dependencies]
@@ -77,6 +71,15 @@ e2e = [
 perf = [
     "locust>=2.45.0",
 ]
+# LDAP / Active Directory authentication. python-ldap builds against the
+# OpenLDAP client: needs libldap2-dev libsasl2-dev (Debian) to install.
+ldap = [
+    "python-ldap>=3.4.8",
+]
+# S3-compatible object storage (optional backend for attachments)
+s3 = [
+    "boto3>=1.43.0",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -93,7 +96,6 @@ strict = true
 warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = false
-plugins = ["sqlalchemy.ext.mypy.plugin"]
 
 [[tool.mypy.overrides]]
 module = [
@@ -103,7 +105,8 @@ module = [
     "aiosmtplib.*",
     "boto3.*",
     "botocore.*",
-    "ldap3.*",
+    "ldap",
+    "ldap.*",
     "apscheduler.*",
     "pythonjsonlogger.*",
 ]
@@ -143,6 +146,8 @@ ignore = [
 "tests/*" = ["S101", "S105", "S106", "S107", "S110"]
 "tests/e2e/*" = ["S101", "S105", "S106", "S107", "S110"]
 "tests/perf/*" = ["S101", "S105", "S106", "S107", "S110"]
+# Generated schema: wide column lists and seed rows; the only f-string is a fixed UUID constant.
+"migrations/versions/001_initial_schema.py" = ["E501", "S608"]
 
 # ─── pytest ──────────────────────────────────────────────────────────────────
 
@@ -156,6 +161,15 @@ markers = [
     "integration: marks tests that require a live database and Redis",
     "e2e: marks end-to-end browser tests that require a running app instance",
     "perf: marks performance tests (run manually, not in standard CI)",
+]
+
+filterwarnings = [
+    # asyncpg's own internal connection-candidate cleanup task
+    # (asyncpg.connect_utils._connect._close_candidates) can be garbage-collected
+    # before the event loop gets to run it when a short-lived test engine is
+    # disposed right after connecting. Upstream internal, not a coroutine we create.
+    # https://github.com/MagicStack/asyncpg/blob/master/asyncpg/connect_utils.py
+    "ignore:coroutine '_connect.<locals>._close_candidates' was never awaited:RuntimeWarning:asyncpg(\\..*)?$",
 ]
 
 [tool.coverage.run]

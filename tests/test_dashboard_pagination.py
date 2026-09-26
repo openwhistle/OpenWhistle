@@ -184,7 +184,7 @@ async def test_dashboard_per_page_selector_present(
 
 @pytest.mark.asyncio
 @pytest.mark.integration
-async def test_dashboard_stat_cards_show_counts(
+async def test_dashboard_filter_pills_show_counts(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
     admin, totp_secret = await _create_admin(db_session, "stats1")
@@ -194,4 +194,4 @@ async def test_dashboard_stat_cards_show_counts(
 
     resp = await client.get("/admin/dashboard")
     assert resp.status_code == 200
-    assert "stat-card" in resp.text
+    assert 'class="filter-pill-count"' in resp.text

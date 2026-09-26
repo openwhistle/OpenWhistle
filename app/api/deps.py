@@ -25,7 +25,10 @@ async def get_current_admin(
     if not await auth_service.validate_session(redis, session_token):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-    user_id = auth_service.decode_access_token(session_token)
+    claims = auth_service.decode_access_token_claims(session_token)
+    if not claims or auth_service.session_too_old(claims):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    user_id = claims.get("sub")
     if not user_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
@@ -36,9 +39,8 @@ async def get_current_admin(
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-    exp = auth_service.decode_access_token_exp(session_token)
-    if exp is not None:
-        request.state.session_expires_at = int(exp.timestamp())
+    request.state.session_expires_at = int(claims["exp"])
+    request.state.session_claims = claims
 
     return user
 

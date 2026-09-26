@@ -1,0 +1,336 @@
+{
+ "test_groups": {
+  "S": [
+   "tests/test_v160_security.py"
+  ],
+  "K": [
+   "tests/test_v160_keys.py"
+  ],
+  "M": [
+   "tests/test_multitenancy_scoping.py"
+  ],
+  "R": [
+   "tests/test_bug_bounty_v111.py"
+  ],
+  "X": [
+   "tests/test_conftest_redis_guard.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "setup-token-unchecked",
+   "file": "app/api/wizard.py",
+   "old": "    if locked or not await check_setup_token(redis, setup_token.strip()):",
+   "new": "    if locked:",
+   "tests": "S"
+  },
+  {
+   "id": "setup-token-kept-after-setup",
+   "file": "app/api/wizard.py",
+   "old": "    if await create_initial_admin(\n        db, username, password, totp_secret, telemetry=telemetry == \"1\"\n    ):\n        await delete_setup_token(redis)",
+   "new": "    await create_initial_admin(\n        db, username, password, totp_secret, telemetry=telemetry == \"1\"\n    )",
+   "tests": "S"
+  },
+  {
+   "id": "setup-get-no-token",
+   "file": "app/api/wizard.py",
+   "old": "    await ensure_setup_token(redis)\n",
+   "new": "",
+   "tests": "S"
+  },
+  {
+   "id": "setup-token-absent-key-crashes",
+   "file": "app/services/setup_token.py",
+   "old": "    if not stored or not supplied:\n        return False",
+   "new": "    if False:\n        return False",
+   "tests": "S"
+  },
+  {
+   "id": "configured-token-loses-to-stale",
+   "file": "app/services/setup_token.py",
+   "old": "await redis.set(SETUP_TOKEN_KEY, settings.setup_token, get=True)",
+   "new": "await redis.set(SETUP_TOKEN_KEY, settings.setup_token, nx=True)",
+   "tests": "S"
+  },
+  {
+   "id": "random-token-overwritten",
+   "file": "app/services/setup_token.py",
+   "old": "    if await redis.set(SETUP_TOKEN_KEY, token, nx=True):",
+   "new": "    if await redis.set(SETUP_TOKEN_KEY, token):",
+   "tests": "S"
+  },
+  {
+   "id": "setup-token-short-accepted",
+   "file": "app/config.py",
+   "old": "        if not v or len(v) < _MIN_SETUP_TOKEN_LEN:",
+   "new": "        if not v:",
+   "tests": "S"
+  },
+  {
+   "id": "lifespan-no-setup-token",
+   "file": "app/main.py",
+   "old": "                await ensure_setup_token(await get_redis())",
+   "new": "                pass",
+   "tests": "S"
+  },
+  {
+   "id": "totp-plaintext",
+   "file": "app/models/user.py",
+   "old": "mapped_column(EncryptedText, nullable=False)",
+   "new": "mapped_column(String(32), nullable=False)",
+   "tests": "S"
+  },
+  {
+   "id": "migration-004-encrypts-twice",
+   "file": "migrations/versions/004_encrypt_totp_secrets.py",
+   "old": "        if not _is_token(secret):\n            _set(user_id, encrypt(secret))",
+   "new": "        _set(user_id, encrypt(secret))",
+   "tests": "S"
+  },
+  {
+   "id": "migration-004-downgrade-narrows-garbage",
+   "file": "migrations/versions/004_encrypt_totp_secrets.py",
+   "old": "    if stuck:",
+   "new": "    if False:",
+   "tests": "S"
+  },
+  {
+   "id": "refresh-no-csrf",
+   "file": "app/api/auth.py",
+   "old": "    _csrf: None = Depends(validate_csrf_header),\n) -> JSONResponse:",
+   "new": "    _csrf: None = None,\n) -> JSONResponse:",
+   "tests": "S"
+  },
+  {
+   "id": "session-age-unchecked",
+   "file": "app/api/deps.py",
+   "old": "    if not claims or auth_service.session_too_old(claims):",
+   "new": "    if not claims:",
+   "tests": "S"
+  },
+  {
+   "id": "exp-not-capped",
+   "file": "app/services/auth.py",
+   "old": "datetime.fromtimestamp(started, tz=UTC) + timedelta(hours=settings.session_max_hours),",
+   "new": "datetime.fromtimestamp(started, tz=UTC) + timedelta(days=3650),",
+   "tests": "S"
+  },
+  {
+   "id": "refresh-resets-auth-time",
+   "file": "app/api/auth.py",
+   "old": "role=current_user.role.value, auth_time=started_at,",
+   "new": "role=current_user.role.value, auth_time=None,",
+   "tests": "S"
+  },
+  {
+   "id": "refresh-without-claims",
+   "file": "app/api/auth.py",
+   "old": "    if not started_at:\n        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)",
+   "new": "    if False:\n        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)",
+   "tests": "S"
+  },
+  {
+   "id": "auth-time-ignored",
+   "file": "app/services/auth.py",
+   "old": "return int(claims.get(\"auth_time\", claims.get(\"iat\", 0)))",
+   "new": "return int(claims.get(\"iat\", 0))",
+   "tests": "S"
+  },
+  {
+   "id": "session-too-old-never",
+   "file": "app/services/auth.py",
+   "old": "    return time.time() - session_started_at(claims) > settings.session_max_hours * 3600",
+   "new": "    return False",
+   "tests": "S"
+  },
+  {
+   "id": "redis-session-outlives-jwt",
+   "file": "app/services/auth.py",
+   "old": "ex=max(1, seconds_left(token)))",
+   "new": "ex=settings.access_token_expire_minutes * 60)",
+   "tests": "S"
+  },
+  {
+   "id": "cookie-outlives-jwt",
+   "file": "app/api/auth.py",
+   "old": "    max_age = max(1, auth_service.seconds_left(token))",
+   "new": "    max_age = settings.access_token_expire_minutes * 60",
+   "tests": "S"
+  },
+  {
+   "id": "jwt-exp-not-required",
+   "file": "app/services/auth.py",
+   "old": "            options={\"require\": [\"exp\", \"sub\"]},\n",
+   "new": "",
+   "tests": "S"
+  },
+  {
+   "id": "inactive-reaches-totp",
+   "file": "app/api/auth.py",
+   "old": "    if not user.is_active:\n        return render(request, \"login.html\", _login_ctx(request, {\n            \"error\": \"login.error.deactivated\",",
+   "new": "    if False:\n        return render(request, \"login.html\", _login_ctx(request, {\n            \"error\": \"login.error.deactivated\",",
+   "tests": "S"
+  },
+  {
+   "id": "inactive-gets-session",
+   "file": "app/api/auth.py",
+   "old": "    if not user.is_active:\n        return RedirectResponse(\"/admin/login\", status_code=302)\n\n    token",
+   "new": "    if False:\n        return RedirectResponse(\"/admin/login\", status_code=302)\n\n    token",
+   "tests": "S"
+  },
+  {
+   "id": "inactive-mfa-setup-post",
+   "file": "app/api/auth.py",
+   "old": "    if not user or not user.is_active:\n        return RedirectResponse(\"/admin/login\", status_code=302)\n\n    if not verify_totp",
+   "new": "    if not user:\n        return RedirectResponse(\"/admin/login\", status_code=302)\n\n    if not verify_totp",
+   "tests": "S"
+  },
+  {
+   "id": "inactive-mfa-setup-get",
+   "file": "app/api/auth.py",
+   "old": "    if not user or not user.is_active:\n        return RedirectResponse(\"/admin/login\", status_code=302)\n\n    qr_b64",
+   "new": "    if not user:\n        return RedirectResponse(\"/admin/login\", status_code=302)\n\n    qr_b64",
+   "tests": "S"
+  },
+  {
+   "id": "unknown-role-admin",
+   "file": "app/api/admin.py",
+   "old": "        raise HTTPException(status_code=422, detail=\"Unknown role.\") from exc\n\n    # Privilege-tier",
+   "new": "        role_enum = AdminRole.admin\n\n    # Privilege-tier",
+   "tests": "S"
+  },
+  {
+   "id": "unknown-role-change-400",
+   "file": "app/api/admin.py",
+   "old": "        raise HTTPException(status_code=422, detail=\"Unknown role.\") from exc\n\n    # Prevent self-escalation",
+   "new": "        raise HTTPException(status_code=400) from exc\n\n    # Prevent self-escalation",
+   "tests": "S"
+  },
+  {
+   "id": "new-user-defaults-to-admin",
+   "file": "app/api/admin.py",
+   "old": "    role: str = Form(default=AdminRole.case_manager.value),",
+   "new": "    role: str = Form(default=\"admin\"),",
+   "tests": "S"
+  },
+  {
+   "id": "ip-dismiss-any-role",
+   "file": "app/api/admin.py",
+   "old": "async def dismiss_ip_warning(\n    current_user: AdminUser = Depends(require_admin),",
+   "new": "async def dismiss_ip_warning(\n    current_user: AdminUser = Depends(get_current_admin),",
+   "tests": "S"
+  },
+  {
+   "id": "audit-row-without-report-org",
+   "file": "app/services/audit.py",
+   "old": "    if report_id is not None:\n        org_id = await db.scalar",
+   "new": "    if False:\n        org_id = await db.scalar",
+   "tests": "M"
+  },
+  {
+   "id": "audit-row-without-actor-org",
+   "file": "app/services/audit.py",
+   "old": "    org_id = actor.org_id if isinstance(target_org, EllipsisType) else target_org\n",
+   "new": "    org_id = None if isinstance(target_org, EllipsisType) else target_org\n",
+   "tests": "M"
+  },
+  {
+   "id": "orgless-admin-sees-all-orgless-rows",
+   "file": "app/services/audit.py",
+   "old": "            q = q.where(AuditLog.org_id.is_(None), AuditLog.admin_id == viewer_id)",
+   "new": "            q = q.where(AuditLog.org_id.is_(None))",
+   "tests": "M"
+  },
+  {
+   "id": "migration-005-no-backfill",
+   "file": "migrations/versions/005_audit_org_backfill.py",
+   "old": "\"WHERE a.report_id = r.id AND a.org_id IS NULL\"",
+   "new": "\"WHERE a.report_id = r.id AND a.org_id IS NULL AND false\"",
+   "tests": "S"
+  },
+  {
+   "id": "key-is-secret-key",
+   "file": "app/services/encryption.py",
+   "old": "    current = settings.encryption_key or settings.secret_key",
+   "new": "    current = settings.secret_key",
+   "tests": "K"
+  },
+  {
+   "id": "previous-keys-ignored",
+   "file": "app/services/encryption.py",
+   "old": "    return [current, *previous]",
+   "new": "    return [current]",
+   "tests": "K"
+  },
+  {
+   "id": "field-crypto-current-key-only",
+   "file": "app/services/crypto.py",
+   "old": "        for k in encryption_keys()\n    ])",
+   "new": "        for k in encryption_keys()[:1]\n    ])",
+   "tests": "K"
+  },
+  {
+   "id": "short-encryption-key",
+   "file": "app/config.py",
+   "old": "        if v and len(v) < _MIN_SECRET_KEY_LEN:\n            raise ValueError(f\"ENCRYPTION_KEY",
+   "new": "        if False:\n            raise ValueError(f\"ENCRYPTION_KEY",
+   "tests": "K"
+  },
+  {
+   "id": "short-previous-key",
+   "file": "app/config.py",
+   "old": "        if any(len(k) < _MIN_SECRET_KEY_LEN for k in v.split(\",\") if k):",
+   "new": "        if False:",
+   "tests": "K"
+  },
+  {
+   "id": "rotation-runs-without-both-keys",
+   "file": "scripts/rotate_encryption_key.py",
+   "old": "    if not settings.encryption_key or not previous:",
+   "new": "    if False:",
+   "tests": "K"
+  },
+  {
+   "id": "rotation-writes-despite-failures",
+   "file": "scripts/rotate_encryption_key.py",
+   "old": "        if failed:\n            for entry in failed:",
+   "new": "        if False:\n            for entry in failed:",
+   "tests": "K"
+  },
+  {
+   "id": "rotation-lost-update",
+   "file": "scripts/rotate_encryption_key.py",
+   "old": "f\"WHERE id = :i AND {column} = :old\"",
+   "new": "f\"WHERE id = :i AND :old = :old\"",
+   "tests": "K"
+  },
+  {
+   "id": "rotation-touches-plain-reasons",
+   "file": "scripts/rotate_encryption_key.py",
+   "old": "            f\"action = '{action}' AND detail LIKE '%\\\"{key}\\\"%'\",",
+   "new": "            f\"detail LIKE '%\\\"{key}\\\"%'\",",
+   "tests": "K"
+  },
+  {
+   "id": "collision-full-rollback",
+   "file": "app/services/report.py",
+   "old": "            last_exc = exc\n            continue",
+   "new": "            last_exc = exc\n            await db.rollback()\n            continue",
+   "tests": "R"
+  },
+  {
+   "id": "retry-any-integrity-error",
+   "file": "app/services/report.py",
+   "old": "            if not _is_case_number_collision(exc):\n                raise\n",
+   "new": "",
+   "tests": "R"
+  },
+  {
+   "id": "flush-any-redis",
+   "file": "tests/conftest.py",
+   "old": "    return host in (\"localhost\", \"127.0.0.1\") and db_index != 0",
+   "new": "    return True",
+   "tests": "X"
+  }
+ ]
+}

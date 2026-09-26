@@ -11,6 +11,9 @@
   <meta name="author" content="OpenWhistle Contributors">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://openwhistle.net/">
+  <link rel="alternate" hreflang="en" href="https://openwhistle.net/">
+  <link rel="alternate" hreflang="de" href="https://openwhistle.net/de/">
+  <link rel="alternate" hreflang="x-default" href="https://openwhistle.net/">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
@@ -46,7 +49,7 @@
       "priceCurrency": "EUR"
     },
     "license": "https://www.gnu.org/licenses/gpl-3.0.html",
-    "softwareVersion": "1.5.0",
+    "softwareVersion": "2.0.0",
     "keywords": "whistleblower, HinSchG, Hinweisgeberschutz, interne Meldestelle, DSGVO, GDPR, open source, self-hosted, Hinweisgebersystem kostenlos",
     "author": {
       "@type": "Organization",
@@ -151,11 +154,14 @@
 
   <style>
     /* Self-hosted fonts — no external CDN calls */
+    @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-300-normal.woff2') format('woff2'); font-weight: 300; font-style: normal; font-display: swap; }
     @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
     @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-500-normal.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
     @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
     @font-face { font-family: 'Sora'; src: url('fonts/sora-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
     @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+    @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
     @font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
   </style>
 
@@ -168,69 +174,66 @@
 
     /* ── Tokens ──────────────────────────────────────────────────── */
     :root {
-      --bg-base:       #ffffff;
-      --bg-surface:    #f6f6f5;
-      --bg-raised:     #efefee;
-      --bg-overlay:    #e9e9e8;
-      --nav-bg:        #ffffff;
-      --footer-bg:     #0a0a0b;
-      --text-primary:  #0a0a0b;
-      --text-secondary:#3d3d40;
-      --text-muted:    #6a6a6e;
+      --bg-base: #ffffff;
+      --bg-surface: #f6f6f5;
+      --bg-raised: #efefee;
+      --bg-overlay: #e9e9e8;
+      --nav-bg: #ffffff;
+      --footer-bg: #0a0a0b;
+      --text-primary: #0a0a0b;
+      --text-secondary: #3d3d40;
+      --text-muted: #6a6a6e;
       --border-subtle: #e6e6e4;
-      --border-default:#d8d8d6;
+      --border-default: #d8d8d6;
       --border-strong: #c9c9c6;
-      --seal-green:    #0c7253;
-      --seal-green-mid:#0b6249;
-      --seal-green-dim:rgba(12,114,83,0.15);
-      --seal-green-fog:rgba(12,114,83,0.08);
-      --gold:          #0c7253;
-      --gold-mid:      #0b6249;
-      --gold-dim:      rgba(12,114,83,0.15);
-      --gold-fog:      rgba(12,114,83,0.08);
-      --red-alert:     #bf3529;
-      --code-bg:       #0a0a0b;
-      --code-text:     #e9e9e8;
-
-      --font-serif:    'Sora', system-ui, sans-serif;
-      --font-body:     'Sora', system-ui, sans-serif;
-      --font-mono:     'JetBrains Mono', ui-monospace, monospace;
-
-      --space-1: 0.25rem; --space-2: 0.5rem;  --space-3: 0.75rem;
-      --space-4: 1rem;    --space-5: 1.25rem; --space-6: 1.5rem;
-      --space-8: 2rem;    --space-10: 2.5rem; --space-12: 3rem;
-      --space-16: 4rem;   --space-20: 5rem;   --space-24: 6rem;
-
+      --accent: #0c7253;
+      --accent-strong: #0b6249;
+      --accent-dim: rgba(12,114,83,0.15);
+      --accent-fog: rgba(12,114,83,0.08);
+      --red-alert: #bf3529;
+      --code-bg: #0a0a0b;
+      --code-text: #e9e9e8;
+      --font-display: 'Sora', system-ui, sans-serif;
+      --font-body: 'Sora', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+      --space-1: 0.25rem;
+      --space-2: 0.5rem;
+      --space-3: 0.75rem;
+      --space-4: 1rem;
+      --space-5: 1.25rem;
+      --space-6: 1.5rem;
+      --space-8: 2rem;
+      --space-10: 2.5rem;
+      --space-12: 3rem;
+      --space-16: 4rem;
+      --space-20: 5rem;
+      --space-24: 6rem;
       --max-width: 1200px;
       --ease-stiff: cubic-bezier(0.16, 1, 0.3, 1);
       --duration-fast: 140ms;
-      --duration-mid:  280ms;
+      --duration-mid: 280ms;
     }
 
     /* Dark mode */
     [data-theme="dark"] {
-      --bg-base:       #08080a;
-      --bg-surface:    #131315;
-      --bg-raised:     #1b1b1e;
-      --bg-overlay:    #232327;
-      --nav-bg:        #08080a;
-      --footer-bg:     #050506;
-      --text-primary:  #fafafa;
-      --text-secondary:#bcbcc0;
-      --text-muted:    #8e8e93;
+      --bg-base: #08080a;
+      --bg-surface: #131315;
+      --bg-raised: #1b1b1e;
+      --bg-overlay: #232327;
+      --nav-bg: #08080a;
+      --footer-bg: #050506;
+      --text-primary: #fafafa;
+      --text-secondary: #bcbcc0;
+      --text-muted: #8e8e93;
       --border-subtle: #262629;
-      --border-default:#34343a;
+      --border-default: #34343a;
       --border-strong: #43434a;
-      --seal-green:    #23c088;
-      --seal-green-mid:#1fa878;
-      --seal-green-dim:rgba(35,192,136,0.15);
-      --seal-green-fog:rgba(35,192,136,0.08);
-      --gold:          #23c088;
-      --gold-mid:      #1fa878;
-      --gold-dim:      rgba(35,192,136,0.15);
-      --gold-fog:      rgba(35,192,136,0.08);
-      --code-bg:       #050506;
-      --code-text:     #fafafa;
+      --accent: #23c088;
+      --accent-strong: #1fa878;
+      --accent-dim: rgba(35,192,136,0.15);
+      --accent-fog: rgba(35,192,136,0.08);
+      --code-bg: #050506;
+      --code-text: #fafafa;
     }
 
     /* ── Reset ───────────────────────────────────────────────────── */
@@ -257,7 +260,7 @@
       position: absolute;
       top: -100%;
       left: var(--space-4);
-      background: var(--seal-green);
+      background: var(--accent);
       color: #fff;
       padding: var(--space-2) var(--space-4);
       font-family: var(--font-mono);
@@ -304,7 +307,7 @@
       display: flex;
       align-items: center;
       gap: var(--space-3);
-      font-family: var(--font-serif);
+      font-family: var(--font-display);
       font-size: 0.9rem;
       font-weight: 600;
       letter-spacing: 0.04em;
@@ -314,7 +317,7 @@
     }
     .nav-logo:hover { color: #fff; }
     .nav-logo svg { flex-shrink: 0; }
-    .nav-logo svg path, .nav-logo svg circle { stroke: var(--gold); }
+    .nav-logo svg path, .nav-logo svg circle { stroke: var(--accent); }
 
     .nav-links {
       display: flex;
@@ -330,16 +333,16 @@
       white-space: nowrap;
     }
     .nav-links a:hover { color: #e2dcd2; }
-    .nav-links a.active { color: var(--gold); }
+    .nav-links a.active { color: var(--accent); }
 
     .nav-cta {
       padding: var(--space-2) var(--space-4) !important;
       border: 1px solid rgba(12, 114, 83, 0.5) !important;
-      color: var(--gold) !important;
+      color: var(--accent) !important;
       border-radius: 2px;
       transition: background var(--duration-fast) ease !important;
     }
-    .nav-cta:hover { background: rgba(12, 114, 83, 0.15) !important; color: var(--gold-mid) !important; }
+    .nav-cta:hover { background: rgba(12, 114, 83, 0.15) !important; color: var(--accent-strong) !important; }
 
     .nav-actions {
       display: flex;
@@ -476,7 +479,7 @@
       font-size: 0.7rem;
       letter-spacing: 0.16em;
       text-transform: uppercase;
-      color: var(--seal-green);
+      color: var(--accent);
       margin-bottom: var(--space-6);
       animation: rise 0.6s var(--ease-stiff) 0.1s both;
     }
@@ -485,12 +488,12 @@
       content: '';
       width: 2rem;
       height: 1px;
-      background: var(--seal-green);
+      background: var(--accent);
       opacity: 0.5;
     }
 
     .hero-headline {
-      font-family: var(--font-serif);
+      font-family: var(--font-display);
       font-size: clamp(2.6rem, 6vw, 4.8rem);
       font-weight: 700;
       line-height: 1.08;
@@ -499,8 +502,8 @@
       margin-bottom: var(--space-6);
       animation: rise 0.6s var(--ease-stiff) 0.2s both;
     }
-    .hero-headline .accent-green { color: var(--seal-green); }
-    .hero-headline .accent-gold  { color: var(--gold); font-style: italic; }
+    .hero-headline .accent-green { color: var(--accent); }
+    .hero-headline .accent-emphasis  { color: var(--accent); }
 
     .hero-subline {
       font-family: var(--font-body);
@@ -512,7 +515,7 @@
       line-height: 1.7;
       animation: rise 0.6s var(--ease-stiff) 0.3s both;
     }
-    .hero-subline em { font-style: italic; color: var(--text-primary); }
+    .hero-subline em { font-style: normal; font-weight: 600; color: var(--text-primary); }
 
     .hero-actions {
       display: flex;
@@ -564,13 +567,13 @@
       white-space: nowrap;
     }
     .btn-primary {
-      background: var(--seal-green);
+      background: var(--accent);
       color: #fff;
-      border: 1px solid var(--seal-green);
+      border: 1px solid var(--accent);
     }
     .btn-primary:hover {
-      background: var(--seal-green-mid);
-      border-color: var(--seal-green-mid);
+      background: var(--accent-strong);
+      border-color: var(--accent-strong);
       color: #fff;
       transform: translateY(-1px);
       box-shadow: 0 4px 20px rgba(12, 114, 83, 0.3);
@@ -581,18 +584,18 @@
       border: 1px solid var(--border-default);
     }
     .btn-outline:hover {
-      border-color: var(--seal-green);
-      color: var(--seal-green);
+      border-color: var(--accent);
+      color: var(--accent);
       transform: translateY(-1px);
     }
-    .btn-gold {
+    .btn-accent {
       background: transparent;
-      color: var(--gold);
-      border: 1px solid var(--gold-dim);
+      color: var(--accent);
+      border: 1px solid var(--accent-dim);
     }
-    .btn-gold:hover {
-      background: var(--gold-fog);
-      border-color: var(--gold);
+    .btn-accent:hover {
+      background: var(--accent-fog);
+      border-color: var(--accent);
     }
     [data-theme="dark"] .btn-primary {
       background: #23c088;
@@ -635,8 +638,8 @@
       width: 16px;
       height: 16px;
       border-radius: 50%;
-      background: var(--seal-green-fog);
-      border: 1px solid var(--seal-green-dim);
+      background: var(--accent-fog);
+      border: 1px solid var(--accent-dim);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -676,7 +679,7 @@
       background: var(--border-default);
     }
     .section-heading {
-      font-family: var(--font-serif);
+      font-family: var(--font-display);
       font-size: clamp(1.8rem, 3.5vw, 2.8rem);
       font-weight: 700;
       letter-spacing: -0.03em;
@@ -697,7 +700,7 @@
     .section-divider {
       width: 4rem;
       height: 2px;
-      background: linear-gradient(90deg, var(--seal-green), var(--gold));
+      background: var(--accent);
       margin-bottom: var(--space-10);
     }
 
@@ -735,7 +738,7 @@
       width: 40%;
     }
     .comparison-table thead th.col-ow {
-      color: var(--seal-green);
+      color: var(--accent);
     }
     .comparison-table tbody td {
       padding: var(--space-3) var(--space-4);
@@ -745,7 +748,7 @@
     }
     .comparison-table tbody tr:last-child td { border-bottom: none; }
     .comparison-table .val-good {
-      color: var(--seal-green);
+      color: var(--accent);
       font-family: var(--font-body);
       font-size: 0.85rem;
       font-weight: 600;
@@ -765,13 +768,13 @@
     .feature-card {
       background: var(--bg-base);
       border: 1px solid var(--border-subtle);
-      border-left: 4px solid var(--seal-green-dim);
+      border-left: 4px solid var(--accent-dim);
       padding: var(--space-6);
       transition: border-left-color var(--duration-mid) ease, transform var(--duration-mid) ease, box-shadow var(--duration-mid) ease;
       animation: rise 0.5s var(--ease-stiff) both;
     }
     .feature-card:hover {
-      border-left-color: var(--seal-green);
+      border-left-color: var(--accent);
       transform: translateY(-2px);
       box-shadow: 0 8px 32px rgba(0,0,0,0.08);
     }
@@ -791,8 +794,8 @@
     .feature-icon-wrap {
       width: 40px;
       height: 40px;
-      background: var(--seal-green-fog);
-      border: 1px solid var(--seal-green-dim);
+      background: var(--accent-fog);
+      border: 1px solid var(--accent-dim);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -803,7 +806,7 @@
       height: 18px;
     }
     .feature-title {
-      font-family: var(--font-serif);
+      font-family: var(--font-display);
       font-size: 1rem;
       font-weight: 600;
       color: var(--text-primary);
@@ -845,17 +848,17 @@
       border: 1px solid;
     }
     .flow-header-badge-wb {
-      color: var(--seal-green);
-      border-color: var(--seal-green-dim);
-      background: var(--seal-green-fog);
+      color: var(--accent);
+      border-color: var(--accent-dim);
+      background: var(--accent-fog);
     }
     .flow-header-badge-admin {
-      color: var(--gold);
-      border-color: var(--gold-dim);
-      background: var(--gold-fog);
+      color: var(--accent);
+      border-color: var(--accent-dim);
+      background: var(--accent-fog);
     }
     .flow-header-title {
-      font-family: var(--font-serif);
+      font-family: var(--font-display);
       font-size: 0.95rem;
       font-weight: 600;
       color: var(--text-primary);
@@ -874,7 +877,7 @@
     }
     .flow-step:last-child { border-bottom: none; }
     .flow-step-num {
-      font-family: var(--font-serif);
+      font-family: var(--font-display);
       font-size: 1.8rem;
       font-weight: 700;
       line-height: 1;
@@ -884,7 +887,7 @@
       width: 2rem;
     }
     .flow-step-title {
-      font-family: var(--font-serif);
+      font-family: var(--font-display);
       font-size: 0.95rem;
       font-weight: 600;
       color: var(--text-primary);
@@ -916,14 +919,14 @@
       font-size: 0.62rem;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: var(--gold);
-      background: var(--gold-fog);
-      border: 1px solid var(--gold-dim);
+      color: var(--accent);
+      background: var(--accent-fog);
+      border: 1px solid var(--accent-dim);
       padding: var(--space-1) var(--space-3);
       margin-bottom: var(--space-4);
     }
     .compliance-card h3 {
-      font-family: var(--font-serif);
+      font-family: var(--font-display);
       font-size: 1.05rem;
       font-weight: 600;
       color: var(--text-primary);
@@ -949,7 +952,7 @@
     }
     .compliance-list li::before {
       content: '—';
-      color: var(--seal-green);
+      color: var(--accent);
       font-family: var(--font-mono);
       font-size: 0.75rem;
       flex-shrink: 0;
@@ -1041,7 +1044,7 @@
       line-height: 1.9;
       overflow-x: auto;
     }
-    .t-prompt { color: var(--gold); user-select: none; }
+    .t-prompt { color: var(--accent); user-select: none; }
     .t-cmd { color: #e2dcd2; }
     .t-comment { color: #5a6d5a; font-style: italic; }
     .t-out { color: #4a7a6a; font-size: 0.78rem; }
@@ -1064,7 +1067,7 @@
     }
     details.faq-item summary {
       padding: var(--space-5) var(--space-6);
-      font-family: var(--font-serif);
+      font-family: var(--font-display);
       font-size: 0.97rem;
       font-weight: 600;
       color: var(--text-primary);
@@ -1077,7 +1080,7 @@
       transition: color var(--duration-fast) ease;
     }
     details.faq-item summary::-webkit-details-marker { display: none; }
-    details.faq-item summary:hover { color: var(--seal-green); }
+    details.faq-item summary:hover { color: var(--accent); }
     details.faq-item summary::after {
       content: '+';
       font-family: var(--font-mono);
@@ -1088,7 +1091,7 @@
     }
     details.faq-item[open] summary::after {
       content: '−';
-      color: var(--seal-green);
+      color: var(--accent);
     }
     .faq-answer {
       padding: 0 var(--space-6) var(--space-5);
@@ -1132,7 +1135,7 @@
     }
     .footer-tagline {
       font-size: 0.875rem;
-      font-style: italic;
+      font-weight: 500;
       color: rgba(226, 220, 210, 0.5);
       line-height: 1.6;
       max-width: 32ch;
@@ -1180,7 +1183,11 @@
     }
 
     /* ── Responsive ─────────────────────────────────────────────── */
-    @media (max-width: 768px) {
+    /* Nav collapses at 1080px, not 768px: at 1024px the full item list
+       (Features/How it Works/Documentation/Roadmap/Blog/language switch/
+       GitHub/Try Demo) no longer fits the nav-inner row and overflows the
+       viewport horizontally. */
+    @media (max-width: 1080px) {
       .nav-links { display: none; }
       .nav-links.open {
         display: flex;
@@ -1196,6 +1203,9 @@
         z-index: 201;
       }
       .nav-toggle { display: flex; }
+    }
+
+    @media (max-width: 768px) {
       .hero-rule-left, .hero-rule-right { display: none; }
       .problem-layout,
       .flows-grid,
@@ -1244,6 +1254,7 @@
         <li><a href="#how-it-works">How it Works</a></li>
         <li><a href="#compliance">Compliance</a></li>
         <li><a href="docs.html">Documentation</a></li>
+        <li><a href="roadmap.html">Roadmap</a></li>
         <li><a href="blog/">Blog</a></li>
         <li><a href="de/">Auf Deutsch</a></li>
         <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
@@ -1281,7 +1292,7 @@
         <h1 class="hero-headline" id="hero-heading">
           The Open Source<br>
           <span class="accent-green">Whistleblower</span><br>
-          <span class="accent-gold">Platform</span>
+          <span class="accent-emphasis">Platform</span>
         </h1>
 
         <p class="hero-subline">
@@ -1300,7 +1311,7 @@
         </div>
 
         <div class="hero-meta" role="list">
-          <span class="hero-meta-item" role="listitem">Version 1.5.0</span>
+          <span class="hero-meta-item" role="listitem">Version 2.0.0</span>
           <span class="hero-meta-item" role="listitem">GPL-3.0</span>
           <span class="hero-meta-item" role="listitem">Python 3.14</span>
           <span class="hero-meta-item" role="listitem">Docker</span>
@@ -1536,6 +1547,146 @@
             <p class="feature-desc">
               Redis-based rate limiting on all report access attempts. Session-token based,
               never IP-based — anonymity is preserved even during abuse mitigation.
+            </p>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- What's new in 2.0 -->
+    <section class="section" id="whats-new" aria-labelledby="whats-new-heading">
+      <div class="section-inner">
+        <span class="section-eyebrow">Release 2.0</span>
+        <h2 class="section-heading" id="whats-new-heading">
+          What's new in 2.0
+        </h2>
+        <p class="section-subheading">
+          Eight changes from this release. Full details in the
+          <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG</a>.
+        </p>
+
+        <div class="features-grid" role="list">
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 18 18" fill="none">
+                <path d="M2 9s2.8-4.5 7-4.5 7 4.5 7 4.5-2.8 4.5-7 4.5-7-4.5-7-4.5z" stroke="#0c7253" stroke-width="1.4" stroke-linejoin="round"/>
+                <circle cx="9" cy="9" r="2" stroke="#0c7253" stroke-width="1.4"/>
+                <path d="M3 3l12 12" stroke="#0c7253" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h3 class="feature-title">Confidential Identity, Revealed Only on Request</h3>
+            <p class="feature-desc">
+              The whistleblower's confidential identity stays hidden from the case handler
+              until they give an audited reason. The PDF export leaves it out too, unless
+              the same audited reason is given for that export.
+            </p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 18 18" fill="none">
+                <circle cx="9" cy="9" r="6.5" stroke="#0c7253" stroke-width="1.4"/>
+                <circle cx="9" cy="9" r="4" stroke="#0c7253" stroke-width="1.4"/>
+                <circle cx="9" cy="9" r="1.3" fill="#0c7253"/>
+              </svg>
+            </div>
+            <h3 class="feature-title">Optional Tor Onion Address</h3>
+            <p class="feature-desc">
+              Set <code>ONION_LOCATION</code> and every response carries an
+              Onion-Location header, so Tor Browser offers the switch to
+              reporters on a watched network — the submit page shows the address too.
+            </p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 18 18" fill="none">
+                <path d="M9 1.5L2.5 4.5v5c0 4 2.9 7.5 6.5 8.5 3.6-1 6.5-4.5 6.5-8.5v-5L9 1.5z" stroke="#0c7253" stroke-width="1.4" stroke-linejoin="round"/>
+                <path d="M6.5 9l1.7 1.7L12 7" stroke="#0c7253" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3 class="feature-title">Virus-Scanned Uploads, Fail-Closed</h3>
+            <p class="feature-desc">
+              Point <code>CLAMAV_HOST</code> at a clamd instance and every attachment
+              is scanned before it is stored. If clamd cannot be reached, the upload
+              is refused — never stored unscanned.
+            </p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 18 18" fill="none">
+                <circle cx="9" cy="9" r="7" stroke="#0c7253" stroke-width="1.4"/>
+                <path d="M9 5v4l3 2" stroke="#0c7253" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3 class="feature-title">Whistleblower Times, Day Only</h3>
+            <p class="feature-desc">
+              Submission, receipt, and every whistleblower message or attachment
+              upload are stored and shown to the day (UTC), not the minute. Admin
+              actions keep their exact time.
+            </p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 18 18" fill="none">
+                <circle cx="7.5" cy="7.5" r="5" stroke="#0c7253" stroke-width="1.4"/>
+                <path d="M11.5 11.5L16 16" stroke="#0c7253" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h3 class="feature-title">Search Inside Report Content</h3>
+            <p class="feature-desc">
+              The dashboard search field also matches a word in a report's
+              description or messages — decrypted in memory for that request
+              only. Nothing searchable is ever stored, and the confidential name
+              is never matched.
+            </p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 18 18" fill="none">
+                <rect x="4" y="8" width="10" height="7" rx="1.2" stroke="#0c7253" stroke-width="1.4"/>
+                <path d="M6.5 8V5.5a2.5 2.5 0 015 0V8" stroke="#0c7253" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h3 class="feature-title">TLS by Default</h3>
+            <p class="feature-desc">
+              The shipped Docker Compose stack serves HTTPS out of the box: a
+              self-signed certificate on first boot, your own certificate the
+              moment you drop one in.
+            </p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 18 18" fill="none">
+                <path d="M4 14V8M9 14V4M14 14v-6" stroke="#0c7253" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h3 class="feature-title">Webhooks Carry Counts, Not Cases</h3>
+            <p class="feature-desc">
+              The digest and reminder webhooks now send how many reports or
+              messages are new — never a case number or a deadline. Case numbers
+              still reach your own admins by email.
+            </p>
+          </article>
+
+          <article class="feature-card" role="listitem">
+            <div class="feature-icon-wrap" aria-hidden="true">
+              <svg viewBox="0 0 18 18" fill="none">
+                <path d="M6 5L2 9l4 4" stroke="#0c7253" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 9h8a5 5 0 015 5v1" stroke="#0c7253" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h3 class="feature-title">Wizard Back Keeps What You Entered</h3>
+            <p class="feature-desc">
+              The submission wizard's Back button no longer clears attached
+              files or a half-finished report. Reported and fixed by
+              Zachary Bridges (#94).
             </p>
           </article>
 
@@ -1825,7 +1976,7 @@
             <summary>Is there commercial support available?</summary>
             <div class="faq-answer">
               Community support is available via
-              <a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank" style="color: var(--seal-green);">GitHub Issues</a>.
+              <a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank" style="color: var(--accent);">GitHub Issues</a>.
               The project welcomes contributions, bug reports, and feature requests.
               There is currently no paid support tier. Contributions to the project are
               welcome and appreciated.

@@ -254,11 +254,13 @@ async def test_send_webhook_posts_json_payload() -> None:
 
     assert url == "https://hooks.example.com/notify"
     assert payload == {
-        "event": "new_activity", "new_reports": ["OW-2026-00001"], "new_messages": [],
+        "event": "new_activity", "new_reports": 1, "new_messages": 0,
+        "message": "1 new report, 0 new messages",
     }
-    # Privacy: no report description or category in payload
+    # Privacy: no report description, category or case number in payload
     assert "description" not in payload
     assert "category" not in payload
+    assert "OW-2026-00001" not in body_bytes.decode()
 
 
 @pytest.mark.asyncio

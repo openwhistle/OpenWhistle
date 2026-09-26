@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('success.pending.title') }} | OpenWhistle{% endblock %}
+
+{% block content %}
+<div class="container-sm success-wrapper">
+    <div class="success-header">
+        <h1>{{ t('success.pending.title') }}</h1>
+    </div>
+    <div class="alert alert-info" role="status">
+        {{ t('success.pending.body') }}{% if answers_kept %} {{ t('success.pending.kept') }}{% endif %}
+    </div>
+    <a href="{{ submit_path }}" class="btn btn-primary btn-block">{{ t('success.pending.check_again') }}</a>
+</div>
+{% endblock %}

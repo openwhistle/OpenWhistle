@@ -5,7 +5,9 @@ from __future__ import annotations
 import io
 import re
 import uuid
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 from urllib.parse import quote
 
 from fastapi import UploadFile
@@ -14,6 +16,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.attachment import Attachment
 from app.models.report import Report
+
+if TYPE_CHECKING:
+    from app.services.storage import StorageBackend
 
 MAX_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB
 MAX_ATTACHMENTS: int = 5
@@ -31,8 +36,6 @@ ALLOWED_MIME_TYPES: frozenset[str] = frozenset({
     "text/csv",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "application/msword",
-    "application/vnd.ms-excel",
 })
 
 ALLOWED_EXTENSIONS: frozenset[str] = frozenset({
@@ -40,8 +43,8 @@ ALLOWED_EXTENSIONS: frozenset[str] = frozenset({
     ".jpg", ".jpeg",
     ".png", ".gif", ".webp",
     ".txt", ".csv",
-    ".docx", ".doc",
-    ".xlsx", ".xls",
+    ".docx",
+    ".xlsx",
 })
 
 
@@ -87,8 +90,6 @@ _MAGIC_BY_EXT: dict[str, tuple[bytes, ...]] = {
     ".webp": (b"RIFF",),  # RIFF container; the WEBP marker is checked separately
     ".docx": (b"PK\x03\x04",),  # OOXML = zip
     ".xlsx": (b"PK\x03\x04",),
-    ".doc": (b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1",),  # legacy OLE/CFB
-    ".xls": (b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1",),
 }
 
 
@@ -152,13 +153,48 @@ def _strip_image(data: bytes) -> bytes:
             clean.save(out, format="PNG", optimize=True)
         elif fmt == "WEBP":
             clean.save(out, format="WEBP", quality=95)
+        elif fmt == "TIFF":
+            clean.save(out, format="TIFF", compression="tiff_lzw")
         else:
             raise MetadataError(f"unsupported image format {fmt}")
     return out.getvalue()
 
 
+# JPEG markers that carry no metadata: APP0 (JFIF) and APP14 (Adobe colour transform).
+_JPEG_KEEP_APP = {0xE0, 0xEE}
+
+
+def _strip_jpeg_segments(data: bytes) -> bytes:
+    """Drop the APPn (EXIF, XMP, IPTC, ICC) and COM segments of a JPEG, pixels untouched.
+
+    A PDF embeds a JPEG as-is (/DCTDecode), so a photo keeps its GPS inside the PDF.
+    Re-encoding would change the image; cutting the header segments does not.
+    """
+    if data[:2] != b"\xff\xd8":
+        return data
+    out, i = bytearray(data[:2]), 2
+    while i + 4 <= len(data) and data[i] == 0xFF:
+        marker = data[i + 1]
+        if marker == 0xDA:  # start of scan: the rest is image data
+            break
+        end = i + 2 + int.from_bytes(data[i + 2:i + 4], "big")
+        if not ((0xE0 <= marker <= 0xEF and marker not in _JPEG_KEEP_APP) or marker == 0xFE):
+            out += data[i:end]
+        i = end
+    return bytes(out + data[i:])
+
+
 def _strip_pdf(data: bytes) -> bytes:
+    import os  # noqa: PLC0415
+
     from pypdf import PdfReader, PdfWriter  # noqa: PLC0415
+    from pypdf.generic import (  # noqa: PLC0415
+        ArrayObject,
+        ByteStringObject,
+        NameObject,
+        StreamObject,
+        TextStringObject,
+    )
 
     # An owner-password-only PDF opens without a password and is written back
     # unencrypted and cleaned; one that needs a user password cannot be read
@@ -166,9 +202,24 @@ def _strip_pdf(data: bytes) -> bytes:
     writer = PdfWriter(clone_from=PdfReader(io.BytesIO(data)))
     writer.metadata = None  # document info: author, creator tool, dates
     writer._root_object.pop("/Metadata", None)  # XMP packet
+    for page in writer.pages:
+        for ref in page.get("/Annots") or []:
+            annot = ref.get_object()
+            if "/T" in annot:  # the commenter's name
+                annot[NameObject("/T")] = TextStringObject("Author")
+            for key in ("/M", "/CreationDate"):  # when they commented
+                annot.pop(key, None)
+    for obj in writer._objects:
+        # A JPEG alone in its stream is the file as-is; set the raw bytes (pypdf
+        # cannot re-encode DCT). A JPEG behind a second filter is left alone.
+        if isinstance(obj, StreamObject) and obj.get("/Filter") in ("/DCTDecode", ["/DCTDecode"]):
+            obj._data = _strip_jpeg_segments(obj._data)
     # Unlinking is not removing: the XMP stream would still be written as an
     # orphaned object that any forensic tool can read.
-    writer.compress_identical_objects(remove_identicals=False, remove_orphans=True)
+    writer.compress_identical_objects(remove_duplicates=False, remove_unreferenced=True)
+    # The file identifier is carried over from the original and links the two files.
+    fresh_id = ByteStringObject(os.urandom(16))
+    writer._ID = ArrayObject([fresh_id, fresh_id])
     out = io.BytesIO()
     writer.write(out)
     return out.getvalue()
@@ -195,6 +246,20 @@ def _anonymise_ooxml_part(name: str, body: bytes) -> bytes:
         return _neutral_attrs(body, _WORD_AUTHOR)
     if re.fullmatch(r"xl/comments\d*\.xml", name):
         # "tc={person id}" links a legacy comment to its thread: not a name, kept.
+        authors = set(re.findall(rb"<author>(?!tc=)([^<]+)</author>", body))
+        for author in authors:
+            # Excel's own "Name:" label opens the first run of each comment; the
+            # rest of the comment (including any mentions of the author) is what
+            # the whistleblower wrote and stays untouched.
+            # Only replace in the first <t> inside each <comment>…<text> block.
+            body = re.sub(
+                rb"(<comment\b[^>]*>\s*<text>\s*<r>(?:\s*<rPr>.*?</rPr>)?\s*<t(?:\s[^>]*)?>)"
+                + re.escape(author)
+                + rb":",
+                rb"\1Author:",
+                body,
+                flags=re.DOTALL,
+            )
         return re.sub(rb"<author>(?!tc=)[^<]*</author>", b"<author>Author</author>", body)
     if name.startswith("xl/persons/"):
         return _neutral_attrs(body, _XL_PERSON)
@@ -208,6 +273,9 @@ def _anonymise_ooxml_part(name: str, body: bytes) -> bytes:
     if name == "[Content_Types].xml":
         return re.sub(rb"<Override\b[^>]*docProps/thumbnail[^>]*/>", b"", body)
     return body
+
+
+_OOXML_MEDIA = re.compile(r"(?:word|xl|ppt)/media/[^/]+\.(?:jpe?g|png|gif|webp|tiff?)", re.I)
 
 
 def _strip_ooxml(data: bytes) -> bytes:
@@ -224,6 +292,9 @@ def _strip_ooxml(data: bytes) -> bytes:
             if info.filename.startswith("docProps/thumbnail."):
                 continue
             body = _OOXML_EMPTY_PARTS.get(info.filename) or src.read(info)
+            # A photo pasted into a document keeps its EXIF (GPS, camera) inside the package.
+            if _OOXML_MEDIA.fullmatch(info.filename):
+                body = _strip_image(body)
             # A fresh entry: no original timestamps, no extra fields (Unix
             # uid/gid, NTFS times) from the whistleblower's machine.
             clean = zipfile.ZipInfo(info.filename, date_time=(1980, 1, 1, 0, 0, 0))
@@ -242,8 +313,7 @@ _STRIPPERS = {
 def strip_metadata(filename: str, data: bytes) -> bytes:
     """Remove identifying metadata (EXIF/GPS, PDF author, Office properties).
 
-    Plain text has none; legacy .doc/.xls cannot be cleaned and the upload page
-    says so. Anything else that fails to clean raises MetadataError.
+    Plain text has none. Anything else that fails to clean raises MetadataError.
     """
     stripper = _STRIPPERS.get(Path(filename).suffix.lower())
     if stripper is None:
@@ -283,10 +353,14 @@ def validate_file(filename: str, content_type: str, size: int, head: bytes = b""
     number must match the extension (declared type/extension alone are
     attacker-controlled).
     """
+    ext = Path(filename).suffix.lower()
+    if ext in {".doc", ".xls"}:
+        # Legacy OLE files keep the author in places no parser here can clean.
+        return UploadError("upload.error.legacy_office", name=filename)
+
     if size > MAX_SIZE_BYTES:
         return UploadError("upload.error.too_large", name=filename, size=format_size(size))
 
-    ext = Path(filename).suffix.lower()
     if ext not in ALLOWED_EXTENSIONS:
         return UploadError("upload.error.bad_extension", name=filename)
 
@@ -332,6 +406,17 @@ async def read_upload_files(
         if error:
             return [], error
 
+        from app.services.virus_scan import ScanUnavailableError, scan_bytes  # noqa: PLC0415
+
+        try:
+            # str | None: only None means clean. Never `if await scan_bytes(...)`
+            # — an (unexpected) empty-string signature would be falsy and read
+            # as clean, storing an infected file unscanned in all but name.
+            if (await scan_bytes(data)) is not None:
+                return [], UploadError("upload.error.malware", name=name)
+        except ScanUnavailableError:
+            return [], UploadError("upload.error.scan_unavailable", name=name)
+
         try:
             data = strip_metadata(name, data)
         except MetadataError:
@@ -346,6 +431,8 @@ async def create_attachments(
     db: AsyncSession,
     report: Report,
     file_tuples: list[tuple[str, str, bytes]],
+    *,
+    commit: bool = True,
 ) -> list[Attachment]:
     """Persist (filename, content_type, data) tuples as encrypted Attachment rows.
 
@@ -360,7 +447,10 @@ async def create_attachments(
 
     backend = get_storage_backend()
     use_s3 = settings.storage_backend == "s3"
-    fernet = make_report_fernet(report.encrypted_dek, settings.secret_key)
+    from app.services.report import day_floor  # noqa: PLC0415
+
+    fernet = make_report_fernet(report.encrypted_dek)
+    today = day_floor(datetime.now(UTC))
 
     attachments = []
     for filename, content_type, data in file_tuples:
@@ -383,10 +473,11 @@ async def create_attachments(
             data=db_data,
             storage_key=storage_key,
             encrypted=True,
+            uploaded_at=today,  # the day only: the exact time could name the uploader
         )
         db.add(att)
         attachments.append(att)
-    if attachments:
+    if attachments and commit:
         await db.commit()
     return attachments
 
@@ -397,7 +488,6 @@ async def read_attachment(db: AsyncSession, attachment: Attachment) -> bytes:
     Raises LookupError when the bytes are gone (e.g. S3 object deleted).
     Rows written before encryption was introduced are returned as stored.
     """
-    from app.config import settings  # noqa: PLC0415
     from app.services.encryption import make_report_fernet  # noqa: PLC0415
     from app.services.storage import (  # noqa: PLC0415
         StorageObjectNotFoundError,
@@ -408,7 +498,9 @@ async def read_attachment(db: AsyncSession, attachment: Attachment) -> bytes:
         try:
             data = await get_storage_backend().get(attachment.storage_key)
         except StorageObjectNotFoundError as exc:
-            raise LookupError(attachment.storage_key) from exc
+            # The attachment id, never storage_key: a not-yet-rekeyed legacy
+            # row's storage_key is the original filename.
+            raise LookupError(str(attachment.id)) from exc
     elif attachment.data is None:
         raise LookupError(str(attachment.id))
     else:
@@ -419,18 +511,17 @@ async def read_attachment(db: AsyncSession, attachment: Attachment) -> bytes:
     dek = await db.scalar(select(Report.encrypted_dek).where(Report.id == attachment.report_id))
     if dek is None:
         raise LookupError(str(attachment.report_id))
-    return make_report_fernet(dek, settings.secret_key).decrypt(data)
+    return make_report_fernet(dek).decrypt(data)
 
 
 async def attachment_filename(db: AsyncSession, attachment: Attachment) -> str:
     """Return the attachment's plaintext name; names stored before v1.5.0 as stored."""
-    from app.config import settings  # noqa: PLC0415
     from app.services.encryption import decrypt_field_safe, make_report_fernet  # noqa: PLC0415
 
     dek = await db.scalar(select(Report.encrypted_dek).where(Report.id == attachment.report_id))
     if dek is None:
         return attachment.filename
-    fernet = make_report_fernet(dek, settings.secret_key)
+    fernet = make_report_fernet(dek)
     return decrypt_field_safe(fernet, attachment.filename) or attachment.filename
 
 
@@ -478,4 +569,67 @@ async def delete_stored_objects(keys: list[str]) -> None:
         try:
             await backend.delete(key)
         except Exception:  # noqa: BLE001
-            logging.getLogger(__name__).exception("Failed to delete stored object %s", key)
+            # No key in the log line: a not-yet-rekeyed legacy row's key is
+            # the original filename.
+            logging.getLogger(__name__).exception("Failed to delete a stored object")
+
+
+_UUID_KEY = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
+
+
+def _storage() -> StorageBackend:
+    from app.services.storage import get_storage_backend  # noqa: PLC0415
+
+    return get_storage_backend()
+
+
+async def rekey_legacy_objects(db: AsyncSession) -> int:
+    """Move objects stored before v1.5.0 (keys carrying the filename) to bare UUIDs.
+
+    Copy first, then point the row at the copy, then delete the old object, so
+    no step can lose a file. A failure leaves that row as it was for the next run.
+    """
+    import logging  # noqa: PLC0415
+
+    from app.services.storage import generate_storage_key  # noqa: PLC0415
+
+    log = logging.getLogger(__name__)
+    backend = _storage()
+    rows = await db.execute(select(Attachment).where(Attachment.storage_key.isnot(None)))
+    moved = 0
+    for att in rows.scalars().all():
+        old = att.storage_key or ""
+        if _UUID_KEY.fullmatch(old):
+            continue
+        new = generate_storage_key()
+        try:
+            await backend.copy(old, new)
+        except Exception:  # noqa: BLE001
+            log.warning("Could not re-key attachment %s; retried at next start", att.id)
+            continue
+        att.storage_key = new
+        await db.commit()
+        try:
+            await backend.delete(old)
+        except Exception:  # noqa: BLE001
+            log.warning("Re-keyed attachment %s; its old object could not be deleted", att.id)
+        moved += 1
+    return moved
+
+
+async def run_s3_rekey() -> None:
+    """Startup job: once across replicas (Redis lock), own DB session.
+
+    The lock's 1h TTL is only a crash safety-net, not a correctness
+    requirement: rekey_legacy_objects() is idempotent (it skips rows already
+    holding a UUID key), so a replica that starts after the lock has expired
+    just finds nothing left to move.
+    """
+    from app.database import AsyncSessionLocal  # noqa: PLC0415
+    from app.redis_client import get_redis  # noqa: PLC0415
+
+    redis = await get_redis()
+    if not await redis.set("openwhistle:job_lock:s3_rekey", "1", nx=True, ex=3600):
+        return
+    async with AsyncSessionLocal() as db:
+        await rekey_legacy_objects(db)

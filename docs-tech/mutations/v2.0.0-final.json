@@ -1,0 +1,605 @@
+{
+ "test_groups": {
+  "F": [
+   "tests/test_v160_final.py"
+  ],
+  "MT": [
+   "tests/test_multitenancy_scoping.py"
+  ],
+  "LR": [
+   "tests/test_local_review.py"
+  ],
+  "S": [
+   "tests/test_v160_security.py"
+  ],
+  "MW": [
+   "tests/test_multitenancy_wizard.py"
+  ],
+  "DS": [
+   "tests/test_services_demo_seed.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "db-error-shows-parameters",
+   "file": "app/database.py",
+   "old": "    hide_parameters=True,\n    pool_pre_ping=True,",
+   "new": "    pool_pre_ping=True,",
+   "tests": "F"
+  },
+  {
+   "id": "migrations-show-parameters",
+   "file": "migrations/env.py",
+   "old": "        hide_parameters=True,\n",
+   "new": "",
+   "tests": "F"
+  },
+  {
+   "id": "rotation-script-shows-parameters",
+   "file": "scripts/rotate_encryption_key.py",
+   "old": "create_async_engine(settings.database_url, hide_parameters=True)",
+   "new": "create_async_engine(settings.database_url)",
+   "tests": "F"
+  },
+  {
+   "id": "digest-hourly",
+   "file": "app/config.py",
+   "old": "    notification_batch_minutes: int = 1440",
+   "new": "    notification_batch_minutes: int = 60",
+   "tests": "F"
+  },
+  {
+   "id": "key-check-accepts-unreadable",
+   "file": "app/services/encryption.py",
+   "old": "    except InvalidToken:\n        return False\n    return True",
+   "new": "    except InvalidToken:\n        return True\n    return True",
+   "tests": "F"
+  },
+  {
+   "id": "key-check-skips-totp",
+   "file": "app/services/encryption.py",
+   "old": "        if totp:\n            decrypt(totp)\n",
+   "new": "",
+   "tests": "F"
+  },
+  {
+   "id": "key-check-skips-deks",
+   "file": "app/services/encryption.py",
+   "old": "        if dek:\n            decrypt_dek(dek)\n",
+   "new": "",
+   "tests": "F"
+  },
+  {
+   "id": "startup-skips-key-check",
+   "file": "app/main.py",
+   "old": "    if not await configured_keys_read_existing_data():",
+   "new": "    if False:",
+   "tests": "F"
+  },
+  {
+   "id": "rotation-script-no-key-hint",
+   "file": "scripts/rotate_encryption_key.py",
+   "old": "        print(UNREADABLE_DATA_MESSAGE)\n",
+   "new": "        pass\n",
+   "tests": "F"
+  },
+  {
+   "id": "search-not-audited",
+   "file": "app/api/admin.py",
+   "old": "    if content_ids is not None:\n        # Reading report text",
+   "new": "    if False:\n        # Reading report text",
+   "tests": "F"
+  },
+  {
+   "id": "search-term-stored-plain",
+   "file": "app/api/admin.py",
+   "old": "detail={\"term\": encrypt(case_query), \"hits\": len(content_ids)},",
+   "new": "detail={\"term\": case_query, \"hits\": len(content_ids)},",
+   "tests": "F"
+  },
+  {
+   "id": "search-term-from-url",
+   "file": "app/api/admin.py",
+   "old": "    params = {k: v for k, v in request.query_params.items() if k != \"q\"}",
+   "new": "    params = dict(request.query_params)",
+   "tests": "F"
+  },
+  {
+   "id": "search-post-without-csrf",
+   "file": "app/api/admin.py",
+   "old": "    current_user: AdminUser = Depends(get_current_admin),\n    _csrf: None = Depends(validate_csrf),\n) -> HTMLResponse:\n    form = await request.form()",
+   "new": "    current_user: AdminUser = Depends(get_current_admin),\n) -> HTMLResponse:\n    form = await request.form()",
+   "tests": "F"
+  },
+  {
+   "id": "search-links-carry-term",
+   "file": "app/templates/admin/dashboard.html",
+   "old": "{%- if case_query -%}\n<form method=\"post\"",
+   "new": "{%- if false -%}\n<form method=\"post\"",
+   "tests": "F"
+  },
+  {
+   "id": "rotation-skips-search-terms",
+   "file": "scripts/rotate_encryption_key.py",
+   "old": "        (AuditAction.CONTENT_SEARCHED, \"term\"),\n",
+   "new": "",
+   "tests": "F"
+  },
+  {
+   "id": "audit-log-shows-term-encrypted",
+   "file": "app/templating.py",
+   "old": "ENCRYPTED_DETAIL_KEYS = (\"reason\", \"term\")",
+   "new": "ENCRYPTED_DETAIL_KEYS = (\"reason\",)",
+   "tests": "F"
+  },
+  {
+   "id": "categories-page-unscoped",
+   "file": "app/api/admin.py",
+   "old": "    cats = await get_all_categories(db, **_org_scope(current_user))",
+   "new": "    cats = await get_all_categories(db)",
+   "tests": "MT"
+  },
+  {
+   "id": "locations-page-unscoped",
+   "file": "app/api/admin.py",
+   "old": "    locs = await get_all_locations(db, **_org_scope(current_user))",
+   "new": "    locs = await get_all_locations(db)",
+   "tests": "MT"
+  },
+  {
+   "id": "dashboard-locations-unscoped",
+   "file": "app/api/admin.py",
+   "old": "    all_locations = await get_all_locations(db, **_org_scope(current_user))",
+   "new": "    all_locations = await get_all_locations(db)",
+   "tests": "MT"
+  },
+  {
+   "id": "category-deactivate-cross-org",
+   "file": "app/api/admin.py",
+   "old": "    _require_same_org(current_user, cat.org_id)\n    if cat.is_default:",
+   "new": "    if cat.is_default:",
+   "tests": "MT"
+  },
+  {
+   "id": "category-reactivate-cross-org",
+   "file": "app/api/admin.py",
+   "old": "    _require_same_org(current_user, cat.org_id)\n    await svc_react(db, cat)",
+   "new": "    await svc_react(db, cat)",
+   "tests": "MT"
+  },
+  {
+   "id": "location-deactivate-cross-org",
+   "file": "app/api/admin.py",
+   "old": "    _require_same_org(current_user, loc.org_id)\n    await svc_deact(db, loc)",
+   "new": "    await svc_deact(db, loc)",
+   "tests": "MT"
+  },
+  {
+   "id": "location-reactivate-cross-org",
+   "file": "app/api/admin.py",
+   "old": "    _require_same_org(current_user, loc.org_id)\n    await svc_react(db, loc)",
+   "new": "    await svc_react(db, loc)",
+   "tests": "MT"
+  },
+  {
+   "id": "category-slug-global",
+   "file": "app/services/categories.py",
+   "old": "        ReportCategory.slug == slug, ReportCategory.org_id.is_not_distinct_from(org_id)",
+   "new": "        ReportCategory.slug == slug",
+   "tests": "MT"
+  },
+  {
+   "id": "location-code-global",
+   "file": "app/services/locations.py",
+   "old": "        Location.code == code, Location.org_id.is_not_distinct_from(org_id)",
+   "new": "        Location.code == code",
+   "tests": "MT"
+  },
+  {
+   "id": "category-created-in-default-org",
+   "file": "app/api/admin.py",
+   "old": "            db, slug_clean, label_en.strip(), label_de.strip(), sort_order,\n            org_id=current_user.org_id,",
+   "new": "            db, slug_clean, label_en.strip(), label_de.strip(), sort_order,",
+   "tests": "MT"
+  },
+  {
+   "id": "location-created-in-default-org",
+   "file": "app/api/admin.py",
+   "old": "            sort_order=sort_order,\n            org_id=current_user.org_id,\n        )\n    except DuplicateCodeError:",
+   "new": "            sort_order=sort_order,\n        )\n    except DuplicateCodeError:",
+   "tests": "MT"
+  },
+  {
+   "id": "location-deactivate-unaudited",
+   "file": "app/api/admin.py",
+   "old": "    await audit_service.log(\n        db, current_user, AuditAction.LOCATION_DEACTIVATED,",
+   "new": "    await audit_service.log(\n        db, current_user, AuditAction.LOCATION_CREATED,",
+   "tests": "MT"
+  },
+  {
+   "id": "location-reactivate-unaudited",
+   "file": "app/api/admin.py",
+   "old": "    await audit_service.log(\n        db, current_user, AuditAction.LOCATION_REACTIVATED,",
+   "new": "    await audit_service.log(\n        db, current_user, AuditAction.LOCATION_CREATED,",
+   "tests": "MT"
+  },
+  {
+   "id": "category-create-commits-alone",
+   "file": "app/services/categories.py",
+   "old": "    db.add(cat)\n    await db.flush()  # the caller commits together with its audit row",
+   "new": "    db.add(cat)\n    await db.commit()",
+   "tests": "MT"
+  },
+  {
+   "id": "location-create-commits-alone",
+   "file": "app/services/locations.py",
+   "old": "    db.add(loc)\n    await db.flush()  # the caller commits together with its audit row",
+   "new": "    db.add(loc)\n    await db.commit()",
+   "tests": "MT"
+  },
+  {
+   "id": "audit-ignores-target-org",
+   "file": "app/services/audit.py",
+   "old": "    org_id = actor.org_id if isinstance(target_org, EllipsisType) else target_org\n",
+   "new": "    org_id = actor.org_id\n",
+   "tests": "MT"
+  },
+  {
+   "id": "office-media-keeps-exif",
+   "file": "app/services/attachment.py",
+   "old": "            if _OOXML_MEDIA.fullmatch(info.filename):\n                body = _strip_image(body)\n",
+   "new": "",
+   "tests": "F"
+  },
+  {
+   "id": "pdf-annotation-author-kept",
+   "file": "app/services/attachment.py",
+   "old": "                annot[NameObject(\"/T\")] = TextStringObject(\"Author\")",
+   "new": "                pass",
+   "tests": "F"
+  },
+  {
+   "id": "pdf-annotation-time-kept",
+   "file": "app/services/attachment.py",
+   "old": "            for key in (\"/M\", \"/CreationDate\"):  # when they commented\n                annot.pop(key, None)\n",
+   "new": "",
+   "tests": "F"
+  },
+  {
+   "id": "pdf-jpeg-exif-kept",
+   "file": "app/services/attachment.py",
+   "old": "            obj._data = _strip_jpeg_segments(obj._data)",
+   "new": "            pass",
+   "tests": "F"
+  },
+  {
+   "id": "pdf-file-id-kept",
+   "file": "app/services/attachment.py",
+   "old": "    writer._ID = ArrayObject([fresh_id, fresh_id])\n",
+   "new": "",
+   "tests": "F"
+  },
+  {
+   "id": "review-login-any-url",
+   "file": "app/config.py",
+   "old": "            host not in {\"localhost\", \"127.0.0.1\", \"::1\"} or self.secure_cookies",
+   "new": "            self.secure_cookies",
+   "tests": "LR"
+  },
+  {
+   "id": "review-login-secure-cookies",
+   "file": "app/config.py",
+   "old": "            host not in {\"localhost\", \"127.0.0.1\", \"::1\"} or self.secure_cookies",
+   "new": "            host not in {\"localhost\", \"127.0.0.1\", \"::1\"}",
+   "tests": "LR"
+  },
+  {
+   "id": "review-proxy-headers-short-list",
+   "file": "app/api/auth.py",
+   "old": "_PROXY_HEADERS = _IP_REVEAL_HEADERS | {\"x-forwarded-proto\", \"via\"}",
+   "new": "_PROXY_HEADERS = {\"x-forwarded-proto\", \"x-forwarded-for\", \"x-real-ip\", \"forwarded\", \"via\"}",
+   "tests": "LR"
+  },
+  {
+   "id": "setup-token-no-lockout",
+   "file": "app/services/rate_limit.py",
+   "old": "    return count is not None and int(count) >= settings.max_login_attempts",
+   "new": "    return False",
+   "tests": "F"
+  },
+  {
+   "id": "setup-token-failure-not-counted",
+   "file": "app/api/wizard.py",
+   "old": "        if not locked:\n            await rl.record_setup_token_failure(redis)\n",
+   "new": "",
+   "tests": "F"
+  },
+  {
+   "id": "setup-token-16-chars",
+   "file": "app/config.py",
+   "old": "_MIN_SETUP_TOKEN_LEN = 32",
+   "new": "_MIN_SETUP_TOKEN_LEN = 16",
+   "tests": "S"
+  },
+  {
+   "id": "set-language-no-csrf",
+   "file": "app/api/reports.py",
+   "old": "    next_url: str = Form(\"/submit\", alias=\"next\"),\n    _csrf: None = Depends(validate_csrf),\n",
+   "new": "    next_url: str = Form(\"/submit\", alias=\"next\"),\n",
+   "tests": "F"
+  },
+  {
+   "id": "status-view-extends-session",
+   "file": "app/api/reports.py",
+   "old": "                # No TTL refresh on view: the session ends 2 h after login, so its\n",
+   "new": "                await redis.expire(f\"status-session:{session_key}\", 7200)\n",
+   "tests": "F"
+  },
+  {
+   "id": "attempt-counter-plain-case",
+   "file": "app/services/rate_limit.py",
+   "old": "    return f\"{_WB_PREFIX}{digest.hexdigest()}\"",
+   "new": "    return f\"{_WB_PREFIX}{case_key}\"",
+   "tests": "F"
+  },
+  {
+   "id": "reply-extends-session",
+   "file": "app/api/reports.py",
+   "old": "        remaining = max(1, int(await redis.ttl(f\"status-session:{status_session_key}\")))",
+   "new": "        remaining = 7200",
+   "tests": "F"
+  },
+  {
+   "id": "stats-raw-slug",
+   "file": "app/templates/admin/stats.html",
+   "old": "{{ slug | category_label(cat_map) }}",
+   "new": "{{ cat_map.get(slug, slug) }}",
+   "tests": "F"
+  },
+  {
+   "id": "pdf-raw-slug",
+   "file": "app/services/pdf.py",
+   "old": "category_label or label_for_slug(report.category, {})",
+   "new": "category_label or report.category",
+   "tests": "F"
+  },
+  {
+   "id": "dashboard-strftime",
+   "file": "app/templates/admin/dashboard.html",
+   "old": "{{ report.submitted_at|day }}",
+   "new": "{{ report.submitted_at.strftime('%Y-%m-%d') }}",
+   "tests": "F"
+  },
+  {
+   "id": "wizard-get-categories-unscoped",
+   "file": "app/api/reports.py",
+   "old": "    categories = await get_active_categories(db, **tenant.scope)\n    flash_error",
+   "new": "    categories = await get_active_categories(db)\n    flash_error",
+   "tests": "MW"
+  },
+  {
+   "id": "wizard-get-locations-unscoped",
+   "file": "app/api/reports.py",
+   "old": "    locations = await get_active_locations(db, **tenant.scope)\n    has_locations = len(locations) > 0\n    total_steps",
+   "new": "    locations = await get_active_locations(db)\n    has_locations = len(locations) > 0\n    total_steps",
+   "tests": "MW"
+  },
+  {
+   "id": "wizard-post-categories-unscoped",
+   "file": "app/api/reports.py",
+   "old": "    categories = await get_active_categories(db, **tenant.scope)\n    valid_cat_slugs",
+   "new": "    categories = await get_active_categories(db)\n    valid_cat_slugs",
+   "tests": "MW"
+  },
+  {
+   "id": "wizard-location-any-org",
+   "file": "app/api/reports.py",
+   "old": " or (tenant.scoped and loc.org_id != tenant.org_id)",
+   "new": "",
+   "tests": "MW"
+  },
+  {
+   "id": "report-filed-under-default-org",
+   "file": "app/api/reports.py",
+   "old": "                    org_id=tenant.org_id,\n",
+   "new": "",
+   "tests": "MW"
+  },
+  {
+   "id": "draft-moves-between-orgs",
+   "file": "app/api/reports.py",
+   "old": "    if tenant.scoped and state.get(\"org_id\", tenant.draft_org) != tenant.draft_org:",
+   "new": "    if False:",
+   "tests": "MW"
+  },
+  {
+   "id": "draft-org-not-pinned",
+   "file": "app/api/reports.py",
+   "old": "        state.setdefault(\"org_id\", tenant.draft_org)  # fixed from here on",
+   "new": "        pass",
+   "tests": "MW"
+  },
+  {
+   "id": "unknown-slug-served",
+   "file": "app/api/reports.py",
+   "old": "    if org_id is None:\n        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)\n    return _Tenant(scoped=True",
+   "new": "    return _Tenant(scoped=True",
+   "tests": "MW"
+  },
+  {
+   "id": "inactive-org-served",
+   "file": "app/api/reports.py",
+   "old": "            Organisation.slug == org_slug, Organisation.is_active.is_(True)\n",
+   "new": "            Organisation.slug == org_slug\n",
+   "tests": "MW"
+  },
+  {
+   "id": "single-tenant-slug-served",
+   "file": "app/api/reports.py",
+   "old": "            return RedirectResponse(\"/submit\", status_code=303)\n        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)",
+   "new": "            return RedirectResponse(\"/submit\", status_code=303)\n        return _Tenant(scoped=False, org_id=None, path=\"/submit\")",
+   "tests": "MW"
+  },
+  {
+   "id": "single-tenant-default-slug-404",
+   "file": "app/api/reports.py",
+   "old": "        if org_slug == settings.default_org_slug:",
+   "new": "        if False:",
+   "tests": "MW"
+  },
+  {
+   "id": "prg-back-to-default-org",
+   "file": "app/api/reports.py",
+   "old": "        resp = RedirectResponse(tenant.path, status_code=303)",
+   "new": "        resp = RedirectResponse(\"/submit\", status_code=303)",
+   "tests": "MW"
+  },
+  {
+   "id": "check-again-default-org",
+   "file": "app/api/reports.py",
+   "old": "    return _pending_page(request, path, kept=kept)",
+   "new": "    return _pending_page(request, \"/submit\", kept=kept)",
+   "tests": "MW"
+  },
+  {
+   "id": "language-switch-drops-org",
+   "file": "app/api/reports.py",
+   "old": "    if safe_path is None and (org_path :=",
+   "new": "    if False and (org_path :=",
+   "tests": "MW"
+  },
+  {
+   "id": "restart-to-default-org",
+   "file": "app/api/reports.py",
+   "old": "    response = RedirectResponse(tenant.path, status_code=303)\n    _clear_submission_cookie",
+   "new": "    response = RedirectResponse(\"/submit\", status_code=303)\n    _clear_submission_cookie",
+   "tests": "MW"
+  },
+  {
+   "id": "remove-to-default-org",
+   "file": "app/api/reports.py",
+   "old": "            await _save_submission(redis, raw, state)\n    return RedirectResponse(tenant.path, status_code=303)",
+   "new": "            await _save_submission(redis, raw, state)\n    return RedirectResponse(\"/submit\", status_code=303)",
+   "tests": "MW"
+  },
+  {
+   "id": "nav-link-default-org",
+   "file": "app/templates/base.html",
+   "old": "{% set nav_submit = submit_path | default('/submit') %}",
+   "new": "{% set nav_submit = '/submit' %}",
+   "tests": "MW"
+  },
+  {
+   "id": "create-report-ignores-org",
+   "file": "app/services/report.py",
+   "old": "    if org_id is None:\n        org_id = await _get_default_org_id(db)\n",
+   "new": "    org_id = await _get_default_org_id(db)\n",
+   "tests": "MW"
+  },
+  {
+   "id": "active-categories-unscoped",
+   "file": "app/services/categories.py",
+   "old": "        q = q.where(ReportCategory.org_id.is_not_distinct_from(org_id))\n",
+   "new": "        pass\n",
+   "tests": "MW"
+  },
+  {
+   "id": "active-locations-unscoped",
+   "file": "app/services/locations.py",
+   "old": "        q = q.where(Location.org_id.is_not_distinct_from(org_id))\n",
+   "new": "        pass\n",
+   "tests": "MW"
+  },
+  {
+   "id": "org-slug-restart-allowed",
+   "file": "app/api/admin.py",
+   "old": "    if not slug_clean or slug_clean == \"restart\":",
+   "new": "    if not slug_clean:",
+   "tests": "MW"
+  },
+  {
+   "id": "default-org-deactivatable",
+   "file": "app/api/admin.py",
+   "old": "    if org.slug == settings.default_org_slug:",
+   "new": "    if org.slug == \"default\":",
+   "tests": "MW"
+  },
+  {
+   "id": "setup-ignores-default-slug",
+   "file": "app/api/wizard.py",
+   "old": "        select(Organisation).where(Organisation.slug == settings.default_org_slug)",
+   "new": "        select(Organisation).where(Organisation.slug == \"default\")",
+   "tests": "MW"
+  },
+  {
+   "id": "dashboard-no-reporting-link",
+   "file": "app/api/admin.py",
+   "old": "        if org is not None and org.is_active:\n            reporting_path",
+   "new": "        if False:\n            reporting_path",
+   "tests": "MW"
+  },
+  {
+   "id": "orgs-page-links-inactive",
+   "file": "app/templates/admin/organisations.html",
+   "old": "                                {% if org.is_active %}\n                                {% set link",
+   "new": "                                {% if true %}\n                                {% set link",
+   "tests": "MW"
+  },
+  {
+   "id": "orgs-page-links-without-tenancy",
+   "file": "app/api/admin.py",
+   "old": "            if settings.multi_tenancy_enabled\n            else None,",
+   "new": "            if True\n            else None,",
+   "tests": "MW"
+  },
+  {
+   "id": "demo-admin-org-less",
+   "file": "app/services/demo_seed.py",
+   "old": "        if account.org_id is None:\n            account.org_id = org_row\n",
+   "new": "        pass\n",
+   "tests": "DS"
+  },
+  {
+   "id": "default-org-missing-served",
+   "file": "app/api/reports.py",
+   "old": "        if default_id is None:\n            _log.error",
+   "new": "        if False:\n            _log.error",
+   "tests": "MW"
+  },
+  {
+   "id": "default-org-inactive-served",
+   "file": "app/services/report.py",
+   "old": "Organisation.slug == settings.default_org_slug, Organisation.is_active.is_(True)",
+   "new": "Organisation.slug == settings.default_org_slug",
+   "tests": "MW"
+  },
+  {
+   "id": "startup-ignores-default-org",
+   "file": "app/main.py",
+   "old": "            if await _is_setup_complete(db) and await active_default_org_id(db) is None:",
+   "new": "            if False:",
+   "tests": "MW"
+  },
+  {
+   "id": "startup-refuses-fresh-install",
+   "file": "app/main.py",
+   "old": "            if await _is_setup_complete(db) and await active_default_org_id(db) is None:",
+   "new": "            if await active_default_org_id(db) is None:",
+   "tests": "MW"
+  },
+  {
+   "id": "other-orgs-link-replaces-cookie",
+   "file": "app/api/reports.py",
+   "old": "    if not other_orgs_draft:\n        _set_submission_cookie",
+   "new": "    if True:\n        _set_submission_cookie",
+   "tests": "MW"
+  },
+  {
+   "id": "slug-hint-no-probe-warning",
+   "file": "app/locales/en.json",
+   "old": "which is public: anyone can check whether a slug exists, so choose one you are fine with being known. ",
+   "new": "",
+   "tests": "MW"
+  }
+ ]
+}

@@ -28,15 +28,25 @@
     <div class="lg-card-width">
 
         <div class="lg-header">
-            <div class="page-eyebrow">{{ t('login.eyebrow') }}</div>
             <h1 class="lg-h1">{{ t('login.title') }}</h1>
             <p class="lg-subtitle">{{ t('login.subtitle') }}</p>
         </div>
 
+        {% if local_review_login %}
+        <div class="panel anim-in delay-08">
+            <form method="post" action="/admin/local-review-login">
+                <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                <button type="submit" id="local-review-login-btn" class="btn btn-secondary btn-block">
+                    {{ t('login.local_review.button') }}
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
         {% if is_demo %}
         <div class="demo-credentials" role="note">
             <div class="demo-credentials-header">
-                <span class="demo-badge">DEMO</span>
+                <span class="demo-badge">{{ t('demo.badge') }}</span>
                 <span>{{ t('demo.login.hint') }}</span>
             </div>
             <div class="demo-credentials-grid">
@@ -68,7 +78,7 @@
         {% endif %}
 
         <div class="panel anim-in delay-08">
-            <div class="panel-header">{{ t('login.panel.header') }}</div>
+            <h2 class="panel-header">{{ t('login.panel.header') }}</h2>
 
             <form method="post" action="/admin/login" novalidate>
                 <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">

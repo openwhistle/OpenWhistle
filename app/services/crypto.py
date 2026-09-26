@@ -1,9 +1,9 @@
 """Fernet symmetric encryption for confidential report fields.
 
-Key derivation: SHA-256 of SECRET_KEY → 32 bytes → url-safe base64 → Fernet key.
-This means the same SECRET_KEY always produces the same encryption key; rotating
-SECRET_KEY will make previously encrypted data unreadable (intended behaviour —
-treat SECRET_KEY as the root secret).
+Key derivation: SHA-256 of ENCRYPTION_KEY (falling back to SECRET_KEY when unset)
+→ 32 bytes → url-safe base64 → Fernet key. Keys listed in ENCRYPTION_KEY_PREVIOUS
+remain accepted for decryption; rotate() re-encrypts a token under the current key
+(see scripts/rotate_encryption_key.py).
 """
 
 from __future__ import annotations
@@ -12,17 +12,18 @@ import base64
 import hashlib
 import logging
 
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, MultiFernet
 
 log = logging.getLogger(__name__)
 
 
-def _make_fernet() -> Fernet:
-    from app.config import settings
+def _make_fernet() -> MultiFernet:
+    from app.services.encryption import encryption_keys  # noqa: PLC0415
 
-    raw = hashlib.sha256(settings.secret_key.encode()).digest()
-    key = base64.urlsafe_b64encode(raw)
-    return Fernet(key)
+    return MultiFernet([
+        Fernet(base64.urlsafe_b64encode(hashlib.sha256(k.encode()).digest()))
+        for k in encryption_keys()
+    ])
 
 
 def encrypt(plaintext: str) -> str:
@@ -44,10 +45,15 @@ def decrypt_or_none(token: str | None) -> str | None:
         return decrypt(token)
     except Exception:
         # A non-empty token that fails to decrypt is NOT the same as an absent
-        # field: it means corruption, a rotated SECRET_KEY, or tampering. Log it
+        # field: it means corruption, a rotated encryption key, or tampering. Log it
         # so an operator can investigate rather than silently showing "blank".
         log.warning(
             "Failed to decrypt a confidential field; showing it as empty. "
-            "This indicates data corruption or a rotated SECRET_KEY."
+            "This indicates data corruption or a rotated ENCRYPTION_KEY."
         )
         return None
+
+
+def rotate(token: str) -> str:
+    """Re-encrypt a token under the current key."""
+    return _make_fernet().rotate(token.encode()).decode()

@@ -39,7 +39,7 @@ async def _list_users() -> None:
     from app.config import settings
     from app.models.user import AdminUser
 
-    engine = create_async_engine(settings.database_url, echo=False)
+    engine = create_async_engine(settings.database_url, echo=False, hide_parameters=True)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
     async with session_factory() as session:
@@ -70,7 +70,7 @@ async def _reset_password(username: str, new_password: str) -> bool:
     from app.models.user import AdminUser
     from app.services.auth import hash_password
 
-    engine = create_async_engine(settings.database_url, echo=False)
+    engine = create_async_engine(settings.database_url, echo=False, hide_parameters=True)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
     async with session_factory() as session:

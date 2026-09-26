@@ -18,7 +18,40 @@ Branch protection still decides — auto-merge only fires once the required
 checks pass.
 Minor and major updates, the Python runtime, and security-relevant libraries
 (crypto, JWT, bcrypt, TOTP, FastAPI/Starlette, multipart, the attachment
-parsers pypdf and Pillow, ldap3) always wait for a person.
+parsers pypdf and Pillow, python-ldap) always wait for a person.
+
+LDAP uses python-ldap, a wrapper around the maintained OpenLDAP client
+library. It replaced ldap3 in v2.0.0: ldap3 has had no release since 2021.
+python-ldap builds from source against `libldap`/`libsasl` headers, so it and
+boto3 are optional extras (`ldap`, `s3`): the image and CI install both.
+
+## Development setup
+
+The suite imports both extras, so `uv sync --extra dev` alone no longer runs it:
+
+```bash
+uv sync --extra dev --extra ldap --extra s3
+```
+
+python-ldap compiles against OpenLDAP and SASL headers:
+
+| OS | Packages |
+| --- | --- |
+| Debian / Ubuntu | `libldap2-dev libsasl2-dev` |
+| Fedora | `openldap-devel cyrus-sasl-devel python3-devel` |
+| Alpine | `openldap-dev cyrus-sasl-dev` |
+
+Immutable host (Bazzite, Silverblue): build the wheel in a toolbox and install
+it into the host venv. The toolbox and host share `libldap.so.2` and
+`libsasl2.so.3`, so the wheel runs on the host.
+
+```bash
+toolbox run sudo dnf install -y openldap-devel cyrus-sasl-devel python3.14-devel gcc
+toolbox run uv tool run --python /usr/bin/python3.14 --from pip \
+  pip wheel --no-deps "python-ldap==<locked version>" -w /tmp/wheels
+uv sync --extra dev --extra s3
+uv pip install --no-deps /tmp/wheels/python_ldap-*.whl
+```
 
 ## Guards
 
@@ -30,6 +63,10 @@ parsers pypdf and Pillow, ldap3) always wait for a person.
 - `tests/test_renovate.py::test_no_managed_file_is_ignored`: `ignorePaths` is
   explicit. The `config:recommended` preset ignores `tests/`, which hid the
   axe-core pin on Renovate's first run while every other check was green.
+- `tests/test_renovate.py::test_axe_core_is_fetched_from_the_registry_renovate_checks`:
+  axe-core loads from jsDelivr's npm mirror. The 4.13.0 bump pointed at cdnjs,
+  which did not have it yet; the fixture read the 404 as "offline" and every axe
+  check skipped. An HTTP error now fails the e2e run.
 - CI: `uv lock --check`.
 
 ## Writing a version down somewhere new

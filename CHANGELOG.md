@@ -7,6 +7,373 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.0.0] — 2026-09-26
+
+A major version, not a feature release: the webhook payload, the Compose TLS/port
+layout and the first-run setup flow all break compatibility with 1.5.x — see
+Changed (breaking) below and the upgrade notes before deploying.
+
+### Upgrade notes
+
+- **LDAP with a private CA reads `LDAPTLS_CACERT`** (or `LDAPTLS_CACERTDIR`).
+  `SSL_CERT_FILE` is ignored for LDAPS and StartTLS: point `LDAPTLS_CACERT`
+  at the CA's PEM file.
+- **LDAP uses python-ldap** (the OpenLDAP client) instead of ldap3, which has
+  had no release since 2021.
+- **LDAP and S3 are optional extras** (`ldap`, `s3`). The container image
+  includes both; installing from source needs `pip install '.[ldap,s3]'` and
+  `libldap2-dev libsasl2-dev`.
+- **A fresh install needs the setup token.** `/setup` asks for a one-time token: set
+  `SETUP_TOKEN` (32+ characters; the app refuses to start with a shorter one), or read the
+  random one the app logs once at WARNING on its first start. After `MAX_LOGIN_ATTEMPTS` wrong
+  tokens, `/setup` refuses every token for `LOGIN_LOCKOUT_MINUTES`. An existing installation
+  is not affected.
+- **Setting `ENCRYPTION_KEY` on an existing install needs `ENCRYPTION_KEY_PREVIOUS`.**
+  Existing data is under `SECRET_KEY`: set `ENCRYPTION_KEY=<new>` together with
+  `ENCRYPTION_KEY_PREVIOUS=<your SECRET_KEY>`, recreate the container, then run
+  `scripts/rotate_encryption_key.py`. The app now refuses to start, before migrating, when
+  neither key opens a stored report key or TOTP secret (also when `ENCRYPTION_KEY` is
+  removed again).
+- **New-report and reply notices arrive once a day** (00:00 UTC) unless
+  `NOTIFICATION_BATCH_MINUTES` is set; the default was 60.
+- **Admin sessions end 12 hours after login** (`SESSION_MAX_HOURS`), however often "Stay
+  signed in" is used; then password and TOTP again.
+- **Upgrading the Compose stack needs `git pull`**, not only `docker compose pull`: it needs
+  the new `nginx/snippets/` and the `tls-init` service. A customised `nginx/nginx.conf` makes
+  the pull conflict; replace it with the shipped one.
+- **The Compose stack listens on 443** and only redirects on 80 (see Added). Copy your
+  certificate into `nginx/certs/` (`fullchain.pem`, `privkey.pem`; no symlinks, key root-owned
+  0600 or 0644): the old `./nginx/certs:/etc/nginx/certs` mount is gone. Without one, a
+  self-signed certificate is served.
+- **Behind an external TLS terminator** (Cloudflare, Traefik, a host nginx), point it at
+  `https://…:443`, or add `docker-compose.behind-proxy.yml`, which proxies plain HTTP on 80 and
+  publishes no 443. Aimed at the new port 80, the terminator loops on the redirect.
+- **nginx publishes `127.0.0.1:8080`** (the onion listener). If the host already uses 8080,
+  `docker compose up` fails: free the port first.
+- **Back up before upgrading; the rollback changed.** The 1.5.0 image refuses the migrated
+  schema. Restore the backup, or run `alembic downgrade 7d4e2b9c1a05` with the 2.0.0 image
+  (`docker compose run --rm app alembic downgrade 7d4e2b9c1a05`) before pinning 1.5.0. The
+  downgrade keeps the day-rounded times of migration 006: the exact times are gone by design.
+- **`BRAND_SECONDARY_COLOR` is ignored** with a warning at startup; delete it from `.env`.
+- **Webhooks carry counts only, never case numbers or deadlines**; update receivers that parsed
+  the old fields. The SLA reminder is one webhook per scheduler run, not one per case.
+  - Generic reminder: `case_number`, `deadline`, `days_left` and `timestamp` are gone;
+    `ack_due`, `feedback_due` and `message` are new.
+  - Generic digest: `new_reports`/`new_messages` are counts, not arrays of case numbers, plus
+    `message`.
+  - Slack: the `fields` block is one `text` block. Teams: the reminder's `FactSet` is a
+    `TextBlock`, and the digest has one "Activity" fact instead of case numbers.
+  - The reminder email is unchanged: it still carries the case number, since only your own
+    admins receive it.
+- **`docker-compose.prod.yml` pins the image** to `${OPENWHISTLE_VERSION:-2.0.0}` instead of
+  `:latest`; set `OPENWHISTLE_VERSION` to upgrade.
+- Migrations 004–006 run at start: TOTP secrets are encrypted, audit rows get their
+  organisation, whistleblower times are rounded to the day (not reversible).
+
+### Security
+
+- **Switching the language needs the CSRF token** (`POST /set-language`), like every other
+  form: another site can no longer change a visitor's language cookie.
+- **Categories and locations stay inside their organisation.** With multi-tenancy on, an org
+  admin saw every organisation's categories and locations and could deactivate or reactivate
+  them by id; now the lists are scoped and another organisation's id answers 404. A slug or
+  code is unique per organisation (a shared slug no longer caused a 500), new ones are created
+  in the admin's own organisation, and deactivating or reactivating a location is audited.
+  Creating a category or location commits in one transaction with its audit row.
+- **The first-run setup page belonged to whoever opened it first.** `/setup` now needs a
+  one-time setup token (`SETUP_TOKEN`, or a random token logged once at start), deleted when
+  the first admin exists. Wrong tokens are rate-limited (`MAX_LOGIN_ATTEMPTS` per
+  `LOGIN_LOCKOUT_MINUTES`, counted per instance), and an operator-set token needs 32
+  characters.
+- **TOTP secrets are encrypted at rest** (migration 004): a database dump no longer yields the
+  second factor of every account.
+- **Admin sessions have an absolute lifetime** (`SESSION_MAX_HOURS`, default 12). "Stay signed
+  in" renews the token up to that limit, never past it, and the renewal needs the CSRF header.
+- **A deactivated account gets neither the TOTP step nor a session**, on every login path
+  (password, LDAP, OIDC, first TOTP setup).
+- **An unknown role is refused with 422** when creating a user or changing a role (it used to
+  create an *admin*); the role picker defaults to case manager.
+- Only admins may dismiss the IP-header warning.
+- **Audit entries carry their organisation** (migration 005 backfills existing rows), so an
+  organisation's audit log shows its own entries and no one else's; an admin without an
+  organisation sees only entries they wrote. A superadmin's action on a user, organisation,
+  category or location is filed under the target's organisation, so its admins see it.
+- **Containers are hardened**: read-only root file system, all capabilities dropped,
+  `no-new-privileges`, base images pinned by digest, no `curl` in the image, uid 1000 to match
+  the Helm chart's `securityContext` (`readOnlyRootFilesystem`, no privilege escalation).
+- **LDAP refuses an empty password** (a simple bind with an empty password is an anonymous bind
+  and succeeds), escapes the username in the search filter, demands a valid certificate with
+  TLS 1.2 or later, and always closes its connections.
+- CI runs `pip-audit` and Trivy on every pull request and weekly.
+
+### Added
+
+- **Per-organisation reporting link** (multi-tenancy). Each organisation's wizard is at
+  `/submit/<org-slug>`: it offers only that organisation's categories and locations and files
+  the report under it. `/submit` is the default organisation's; an unknown or deactivated slug
+  is a 404, and there is no public list of organisations. With multi-tenancy on and
+  `DEFAULT_ORG_SLUG` naming no active organisation, `/submit` answers 503 and a set-up instance
+  refuses to start. The link, with a copy button, is on `/admin/organisations` and on an
+  organisation admin's dashboard. With multi-tenancy off, nothing changes:
+  `/submit/<default slug>` redirects to `/submit`, any other slug is a 404.
+- **Tor onion address** (`ONION_LOCATION`, optional). Sends an `Onion-Location` header, so Tor
+  Browser offers the switch, and shows the address on the submit page for reporters on a
+  monitored network. nginx sets `X-OW-Onion` only on the onion listener and strips any
+  client-sent copy; without `ONION_LOCATION` the app ignores the header.
+- **Virus scan of uploads with ClamAV** (`CLAMAV_HOST`, `CLAMAV_PORT`,
+  `CLAMAV_TIMEOUT_SECONDS`; optional `clamav` compose profile). Fail-closed: if `clamd` cannot
+  be reached, the upload is refused, never stored unscanned.
+- **Remove an attached file before submitting.** Attachments now stay attached when going
+  back (see Fixed), so the attachments step has a Remove button for each file.
+- **TLS by default in the shipped Compose stack.** The bundled nginx now serves HTTPS on 443 and
+  redirects plain HTTP on 80 — nothing is proxied without TLS. A one-shot `tls-init` service
+  generates a self-signed certificate for `TLS_HOSTNAME` (`.env`, default `localhost`) before
+  nginx starts, so the stack comes up without any manual certificate step; drop your own
+  `fullchain.pem`/`privkey.pem` into `nginx/certs/` and restart to use a real one instead. A
+  certificate there that cannot be read, or is a symlink, stops `tls-init` with the path and
+  the reason instead of falling back to self-signed.
+- **`docker-compose.behind-proxy.yml`** for an install behind an external TLS terminator: nginx
+  proxies plain HTTP on 80 and publishes no 443.
+- **Voluntary installation count** (`TELEMETRY_ENABLED`, off by default). Only if an admin
+  agrees — in the setup wizard (unchecked by default) or on `/admin/system`, no restart — one
+  request a day: `GET https://telemetry.wdkro.de/v1/openwhistle/count?id=<32 hex>&v=<version>`,
+  nothing else. The identifier is 16 random bytes made on the server and kept in the new
+  `telemetry_state` table (migration 007); the System page shows the exact request and the
+  identifier, the last success, a switch (one audit entry per change) and *Reset identifier*.
+  An installation upgraded to 2.0.0 stays off until an admin switches it on. The first attempt
+  waits a random part of an hour, a Redis lock lets one replica send, a failure is a debug
+  line retried at the next hourly check, redirects are refused, the timeout is 10 s.
+  `TELEMETRY_ENABLED=false` locks it off, `true` on; `DEMO_MODE` is never counted. The far end
+  keeps timestamp, identifier and version, not the address, for 35 days. Every request the
+  application can make is now listed in the docs under "Every request that leaves the host".
+- **Helm `extraEnv`** sets any non-secret setting that `values.yaml` has no key for.
+- **Separate, rotatable encryption key** (`ENCRYPTION_KEY`, optional). At-rest encryption is
+  now rooted in `ENCRYPTION_KEY` instead of `SECRET_KEY`; unset falls back to `SECRET_KEY`
+  (pre-v2.0.0 behaviour, warned at startup). `ENCRYPTION_KEY_PREVIOUS` keeps old keys readable
+  during rotation, and `scripts/rotate_encryption_key.py` re-encrypts every DEK, confidential
+  identity and contact, secure e-mail, TOTP secret and identity-reveal reason under the new key.
+- **Maintainer tooling: local review login** (`LOCAL_REVIEW_LOGIN`, requires `DEMO_MODE=true`,
+  `SECURE_COOKIES=false` and a loopback `APP_PUBLIC_URL`; set only by the
+  `docker-compose.review.yml` override, never in a deployment). A one-click button on
+  `/admin/login` signs a browser agent in as the seeded demo admin for the release's
+  Chrome check. The route answers 404 for every method unless the flag is on, the request
+  carries no proxy header and the `Host` is loopback. See `docs-tech/local-review.md`.
+
+### Changed (breaking)
+
+- `BRAND_SECONDARY_COLOR` is gone (see Removed); a `.env` that still sets it gets a warning.
+- **Existing whistleblower times are rounded to the day** by migration 006, irreversibly (see
+  Changed).
+- `.doc` and `.xls` uploads are refused; their author field cannot be removed. The message tells
+  the reporter to save as `.docx`/`.xlsx`.
+
+### Privacy
+
+- **The whistleblower's status session is no longer extended on every view**, so its remaining
+  lifetime in Redis does not reveal the last visit; it ends 2 hours after login. Failed-attempt
+  counters are keyed by an HMAC of the case number, not the case number itself.
+- **Photos inside Word and Excel files lose their EXIF** (GPS, camera) on upload, like a photo
+  uploaded on its own. **PDFs lose their comment authors and times**, the EXIF of embedded
+  JPEG photos, and the file identifier that linked the upload to the original file.
+- **Database errors no longer log their bound values.** Every engine (app, migrations, scripts)
+  sets `hide_parameters`, so a failed query on `/status` or a reply no longer writes the case
+  number or report id into the error log next to an exact time.
+- **Notification digests are daily by default** (`NOTIFICATION_BATCH_MINUTES=1440`, was 60).
+  Report times are stored as the day, and an hourly digest said which hour a report or reply
+  arrived. Set a smaller value to hear sooner, at that precision.
+- **The confidential identity is shown only to the handler, with an audited reason.** The case
+  page no longer prints the reporter's name and contact: the assigned handler (for an
+  unassigned case, an admin of the case's organisation) enters a 10–500 character reason, sees
+  the identity once, and the reason is stored encrypted in the audit log. Every case view is
+  audited too; the audit log hides views unless *Show case views* is ticked.
+- **Search inside reports.** The dashboard search also finds words in descriptions and
+  messages (three characters or more), decrypted in memory for that request only — no index is
+  stored, the confidential name never matches, and at most the 5,000 newest cases in the
+  current view are searched. The search is a POST form, so the term stays out of URLs and the
+  browser history, and each word search is audited (`report.content_searched`, term encrypted,
+  hit count).
+- **The audit CSV export neutralises spreadsheet formulas** and writes each detail as one JSON
+  cell, so a reason cannot forge extra fields.
+- **Excel's own "Name:" label is removed from comment text** in `.xlsx` uploads, not only the
+  comment's author field.
+- **S3 objects stored before v1.5.0 are moved to keys without the filename** at start (once
+  across replicas), and no log line or error message names a storage key.
+- **PDF export leaves the confidential identity out** unless the handler gives an audited reason.
+  The default export prints "Identity: [on file — not included]"; a new "Export PDF with identity"
+  button asks for the same 10–500 character reason as the on-screen reveal and writes the same
+  `IDENTITY_REVEALED` audit entry.
+- **PDF export prints Latin, Greek and Cyrillic text intact.** DejaVu LGC Sans (bundled under
+  `app/fonts/`) replaces fpdf2's core Helvetica, which silently turned anything outside latin-1
+  into "?" — a report or message written in Polish, Greek or Cyrillic used to lose its own text in
+  the printed record. CJK and right-to-left scripts are still unsupported (missing-glyph boxes).
+- **A case manager's counts cover only their own cases.** The dashboard's status counts and the
+  `/admin/stats` figures counted every case in the organisation, though the list showed only the
+  cases assigned to them.
+
+### Changed
+
+- Dependencies refreshed (SQLAlchemy 2.1, uvicorn 0.54, boto3 1.43.103, ruff 0.16.9, uv 0.12.19);
+  the SQLAlchemy mypy plugin, removed in 2.1, is no longer configured.
+- **Helm: the Ingress rate-limits every route** like the bundled nginx (`limit-rps: "10"`,
+  burst 30). Before, a Kubernetes deployment had no limit on `POST /submit` or any other
+  public route. ingress-nginx answers a rejected request with 503 and keys on the peer address; the
+  chart and its install notes now state that `error-log-level: crit` is required, since below
+  it the controller logs each rejected reporter's IP address.
+- **Times the whistleblower causes are stored and shown as the day only** (UTC): submission, the
+  receipt message, whistleblower messages and attachment uploads. Migration 006 rounds existing
+  rows; the exact times are gone for good (downgrade leaves the rounded values). Thread order is
+  kept. Admin replies, notes, acknowledgement and closure keep their time, on screen and in the PDF.
+  The 7-day acknowledgement deadline and the stats page's on-time rate now count from 00:00 UTC
+  of the submission day. A same-day message keeps its place in the thread, one microsecond after
+  the message before it. Demo data follows the same rule.
+- The dashboard orders reports with equal submission days by id, so a page boundary is stable.
+- **The dashboard has no KPI tiles**; each status filter pill carries its count, within the
+  chosen location. The pills keep the location and search when switching status.
+- **The case page has five panels**: Report (with its attachments), Communication thread,
+  Notes, History (linked cases and the collapsed activity log) and Actions (acknowledge,
+  assign, status, confidential identity, PDF export, and deletion collapsed under
+  *Delete report*). The facts sit above Actions without panel chrome.
+
+- **Website**: the German landing page and the blog are on the current design; every page
+  shares one nav (collapsing below 1080 px) and one footer. The landing pages link each other
+  with `hreflang`, and the German FAQ's structured data matches its visible questions.
+  The unused Spectral and Source Serif fonts are removed.
+
+### Fixed
+
+- **A category deleted outright read differently on the PDF** (its raw slug) than on the
+  pages (title-cased). One fallback now serves the templates, the stats page and the PDF.
+- **Paging and sorting the dashboard dropped the location filter.** Every dashboard link now
+  keeps the whole current view.
+- **A case-number collision expired every object the caller held** (a full rollback), so the
+  next attribute access failed with `MissingGreenlet`; each attempt now uses its own
+  SAVEPOINT.
+- Report creation retried on any database integrity error; it now retries only a case-number
+  collision and raises any other error at once.
+- Two messages posted to one case at the same moment could get the same time and an arbitrary
+  order; the case row is now locked while a message's time is chosen.
+- The case page's confirmation prompts, "(current)" status label and "no further transitions"
+  note were English in every language; a French prompt showed `&#39;` for each apostrophe.
+- **Organisations and admin-users pages were hardcoded English**, with button/badge classes
+  (`btn--danger`, `badge--green`, ...) that don't exist in `site.css`. A sweep of every template
+  found the same two problems on the retention, system, telephone-channel and category pages too
+  (BEM-style classes that were never styled, a couple of untranslated titles and hints, a broken
+  `field-error` CSS selector missing its leading dot). All now use real locale keys and the
+  actual button/badge/grid class names.
+- **Creating and deactivating organisations failed with a CSRF error.** The page posted
+  `{{ csrf_token }}`, a context variable the route never sets, instead of
+  `{{ request.state.csrf_token }}` — every real submission sent an empty token and got a 403.
+- The dashboard's active filter pills all carried `aria-current="page"`, but two independent
+  pill groups (status/my-cases and location) can each have an active pill at once — "page"
+  implies a single current page. Filter pills now use `aria-current="true"`; pagination and
+  navigation keep `"page"`.
+- **The browser's own Back button broke the submission wizard halfway through** (a "Confirm Form
+  Resubmission" dialog, or a stale step that rewound progress when resent). Every wizard step
+  now answers its POST with a redirect to `GET /submit`, and a step that does not match the
+  session's progress is ignored instead of processed. Found and fixed by Zachary Bridges; his
+  #94 fix is ported into this release with him as co-author.
+- **The wizard's Back button silently dropped uploaded attachments**: a file input is always
+  empty on revisit, so Next from there cleared them. Files now stay attached unless new ones are
+  chosen, and the attachments step lists what is already attached. Found and fixed by Zachary
+  Bridges; his #94 fix is ported into this release with him as co-author.
+- A description that failed validation (too short or too long) was discarded, and the step
+  showed an empty field or the previous text. It now keeps what was typed (a too-long one cut at
+  10,000 characters). Found and fixed by Zachary Bridges; his #94 fix is ported into this
+  release with him as co-author.
+- **A double final submit created two reports**: two concurrent POSTs of the review form
+  (a double click with JavaScript off, e.g. Tor Browser "Safest") both read the draft before
+  either deleted it, and the PIN of one report was never shown. Now the draft is claimed
+  atomically, exactly one report is created, and both responses show its case number and PIN.
+  A click that finds the first one still running says so and offers "Check again", never a
+  receipt without a case number. The report and its attachments are committed together: a
+  failure before the commit, or a worker that dies before it, gives the draft back; a commit
+  whose reply was lost is looked up, never repeated. Each draft carries its report's id, so
+  the database refuses a second report of the same draft whatever the timing or fault; a draft
+  whose report exists is never given back, and the page then shows its case number. The race
+  predates the #94 port: v1.5.0 has the same load → create → delete sequence.
+- The final submit re-checks each step the way the step itself does: a location or category
+  switched off, or confidential mode disabled, after the reporter chose it returns them to
+  that step with a message instead of failing.
+- The audit log sorted only by time, so entries with the same time could repeat or go missing
+  between pages; ties are now broken by id, as the report list already does.
+- **The wizard processed any posted step when `action` was neither `next` nor `back`**, so a
+  crafted request could skip ahead (store a file on a fresh draft) or submit a rejected
+  description. Unknown actions are now ignored, and the final submit re-checks every field
+  before the report is created. The skip-ahead was already possible in v1.5.0.
+- **Categories showed in English** on the dashboard, case page, stats and PDF export (the PDF
+  printed the raw slug). They now use the admin's language, falling back to English, and a
+  label comes only from the admin's own organisation.
+- **A new admin user defaulted to `superadmin`**; the role picker now defaults to
+  `case_manager`. `role.label.superadmin` had no translation and showed as the raw key.
+- An icon next to text (SLA value, assignee, filename) rendered on its own line.
+- Stylesheet and script URLs carried no version, and `/static/` had no `Cache-Control`, so a
+  browser kept stale files after an upgrade. Links now carry `?v={app_version}`, and every
+  `/static/` response is `no-cache` (the nginx snippet's conflicting `immutable` is gone).
+- A long German status badge pushed the dashboard's "Ansehen" button out of view; the badge
+  wraps and the action column stays pinned. The pinned header is chosen by class, so the audit
+  log's last column no longer detaches from its data.
+- `docs.html` and two blog articles overflowed horizontally on a phone (up to 519 px).
+- The local-review login button sat flush against the demo-credentials box.
+- **The PIN on the success screen was cut off.** A 36-character PIN or case number scrolled
+  behind the copy button instead of fitting its box; it now wraps only after a hyphen (never
+  inside a group) and is always fully visible, at every width, without scrolling.
+- The review step's German label "EINREICHUNGSMODUS" overlapped its value "Anonym" (a fixed
+  7rem label column, too narrow for the longest label in some locales); the review list now
+  stacks each label over its value instead of sizing one column for every language.
+- The description step's character counter always showed "10,000" regardless of language; a
+  shared `format_count` helper (Python and JavaScript) now groups digits per locale
+  ("10.000" in German and Portuguese, "10 000" in French).
+- The wizard eyebrow said "CONFIDENTIAL REPORT" even in anonymous mode, clashing with
+  "Anonymous" right below it; it is now a neutral "Secure report" in all four languages.
+- `/admin/stats`'s two-column grid pushed "nach Kategorie" 23px below "nach Status": a
+  stacking margin meant for panels in normal vertical flow was also firing inside the grid,
+  on top of its own `gap`.
+- A logged-in admin opening a stale `/admin/reports/<id>` got a raw JSON `{"detail":"Not
+  Found"}` page. A browser request (`Accept: text/html`) to an HTML route now gets the
+  styled, localised error page; an API/JSON client is unaffected.
+- The "Was ist neu in 2.0" blog article was dated 25 September; the release is the 26th
+  (visible date, meta tags, JSON-LD `datePublished`/`dateModified`, sitemap `lastmod`).
+- **With multi-tenancy on, the wizard offered every organisation's categories and locations**,
+  and every report was filed under the default organisation (since v1.4). A category or
+  location of another organisation is now refused at its step and again at the final submit.
+- The demo accounts belonged to no organisation, so with multi-tenancy on they saw none of the
+  default organisation's demo reports; the seed now gives them the default organisation, also on
+  an existing database.
+- **`DEFAULT_ORG_SLUG` was ignored by setup and by the organisations page**: setup always
+  created `default`, and only `default` was protected from deactivation. Both now use the
+  configured slug.
+
+### Design
+
+- **Signal design across the app**: one admin shell with a role-aware sidebar (a case manager
+  sees only the pages they may open) and a phone menu; SVG icons instead of emoji; an icon
+  theme toggle; footer as a list; eyebrows only where they carry information; panel headers
+  are real headings.
+- **Phones**: the report form comes first, a case number or PIN never breaks across lines, and
+  tables stack into labelled rows that keep their table semantics.
+- The website describes 2.0 (English and German landing pages, the "Was ist neu in 2.0"
+  article), serves every font it uses itself, and the roadmap moved from `ROADMAP.md` to
+  [openwhistle.net/roadmap.html](https://openwhistle.net/roadmap.html).
+
+### Process
+
+- CI runs codespell, markdownlint and ruff over the whole repository, a runtime check of the
+  nginx onion-listener trust boundary, and every GitHub Action is pinned by commit SHA.
+- A test fails when a setting added since the previous release is missing from this
+  changelog, or any setting from the documentation's environment table or
+  `docker-compose.prod.yml` (seven were: `ACCESS_TOKEN_EXPIRE_MINUTES`, `ALGORITHM`, the four
+  lockout settings and `APP_VERSION`/`APP_NAME`).
+- Every new guard of this release is pinned by a mutation that turns its test red
+  (`scripts/mutation_audit.py`).
+- The docs pages' horizontal-overflow check ran in the light theme only; it now runs in dark
+  too.
+
+### Removed
+
+- The PayPal link in `.github/FUNDING.yml`: the sponsor options are GitHub Sponsors and Ko-fi
+  (`jp1337`), like the other projects; a test keeps personal payment handles out of the repository.
+- `BRAND_SECONDARY_COLOR` — it styled nothing; Signal has one accent.
+
 ## [1.5.0] — 2026-09-24
 
 Every finding carried forward from the 2026-09-23 audit is closed. The
@@ -148,7 +515,7 @@ single-use for every account.
   axe violations, console errors or sideways scrolling. Every guard of the
   release is mutation-tested (`scripts/mutation_audit.py`).
 - **Maintainer documentation moved to `docs-tech/`** (release procedure,
-  invariants, carried-forward findings, performance baseline); a test keeps it
+  invariants, performance baseline); a test keeps it
   out of the published site.
 - **Images are built once and published identically to all three
   registries.** Each platform builds on a native runner (arm64 no longer under
@@ -556,7 +923,7 @@ Remaining lower-severity findings are tracked in GitHub issues #42–#46.
   directory authentication for admin accounts; two-phase bind (service account
   → user DN re-bind to verify password); `ldap3` runs synchronously in a thread
   pool; first LDAP login auto-provisions an `AdminUser` record; subsequent logins
-  re-use the existing record; `TOTP` enrollment still required after first login;
+  reuse the existing record; `TOTP` enrollment still required after first login;
   `LDAP_SERVER`, `LDAP_PORT`, `LDAP_USE_SSL`, `LDAP_BIND_DN`,
   `LDAP_BIND_PASSWORD`, `LDAP_BASE_DN`, `LDAP_USER_FILTER`,
   `LDAP_ATTR_USERNAME`, `LDAP_ATTR_EMAIL` configure the connection
@@ -862,7 +1229,8 @@ Remaining lower-severity findings are tracked in GitHub issues #42–#46.
 - **Rate limiting by session token** (not IP) to maintain full anonymity
 - **alembic upgrade head** on every startup to guarantee migration consistency
 
-[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.5.0...v2.0.0
 [1.5.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.3.1...v1.4.0
 [1.3.1]: https://github.com/openwhistle/OpenWhistle/compare/v1.3.0...v1.3.1

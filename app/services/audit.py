@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import json
 import uuid
+from types import EllipsisType
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.audit import AuditLog
+from app.models.report import Report
 from app.models.user import AdminUser
 
 
@@ -27,19 +29,27 @@ class AuditAction:
     REPORT_LINK_REMOVED     = "report.link_removed"
     REPORT_AUTO_DELETED     = "report.auto_deleted"
     REPORT_VIEWED           = "report.viewed"
+    IDENTITY_REVEALED       = "report.identity_revealed"
+    CONTENT_SEARCHED        = "report.content_searched"
     CATEGORY_CREATED        = "category.created"
     CATEGORY_UPDATED        = "category.updated"
     CATEGORY_DEACTIVATED    = "category.deactivated"
     LOCATION_CREATED        = "location.created"
+    LOCATION_DEACTIVATED    = "location.deactivated"
+    LOCATION_REACTIVATED    = "location.reactivated"
     ADMIN_CREATED           = "admin.created"
     ADMIN_ROLE_CHANGED      = "admin.role_changed"
     ADMIN_DEACTIVATED       = "admin.deactivated"
     ADMIN_REACTIVATED       = "admin.reactivated"
     AUTH_LOGIN              = "auth.login"
+    AUTH_LOCAL_REVIEW_LOGIN = "auth.local_review_login"
     AUTH_TOTP_SETUP         = "auth.totp_setup"
     AUTH_SPRAYING_SUSPECTED = "auth.password_spraying_suspected"
     ORG_CREATED             = "org.created"
     ORG_DEACTIVATED         = "org.deactivated"
+    TELEMETRY_ENABLED       = "telemetry.enabled"
+    TELEMETRY_DISABLED      = "telemetry.disabled"
+    TELEMETRY_ID_RESET      = "telemetry.id_reset"
 
 
 # Every action code, for the audit-log filter and the label-completeness test.
@@ -54,7 +64,15 @@ async def log(
     action: str,
     report_id: uuid.UUID | None = None,
     detail: dict[str, Any] | None = None,
+    target_org: uuid.UUID | None | EllipsisType = ...,
 ) -> AuditLog:
+    """Record an admin action, visible to the admins of the organisation it concerns:
+    the report's, else ``target_org`` (the user, organisation, category or location
+    acted on — a superadmin's action belongs to the target's org), else the actor's."""
+    org_id = actor.org_id if isinstance(target_org, EllipsisType) else target_org
+    if report_id is not None:
+        org_id = await db.scalar(select(Report.org_id).where(Report.id == report_id))
+
     entry = AuditLog(
         id=uuid.uuid4(),
         admin_id=actor.id,
@@ -62,6 +80,7 @@ async def log(
         action=action,
         report_id=report_id,
         detail=json.dumps(detail) if detail else None,
+        org_id=org_id,
     )
     db.add(entry)
     # Flush only — caller commits as part of their own transaction
@@ -95,18 +114,33 @@ async def get_audit_log(
     per_page: int = 50,
     scope_org: bool = False,
     org_id: uuid.UUID | None = None,
+    viewer_id: uuid.UUID | None = None,
+    exclude_action: str | None = None,
 ) -> tuple[list[AuditLog], int]:
+    """`scope_org`/`org_id` are `_org_scope(user)` — untouched, org-scoped semantics.
+
+    An org-less non-superadmin (`scope_org=True, org_id=None`) is the one case
+    `_org_scope` can't distinguish from "no scoping": here it must NOT see every
+    org-less row (system alerts, other org-less admins' actions) — only rows they
+    authored themselves. `viewer_id` (the caller's own admin id) carries that.
+    """
     from sqlalchemy import func
 
-    q = select(AuditLog).order_by(AuditLog.created_at.desc())
+    # created_at ties (same instant, or a day-floored row) need the id for a stable page.
+    q = select(AuditLog).order_by(AuditLog.created_at.desc(), AuditLog.id.desc())
     if report_id is not None:
         q = q.where(AuditLog.report_id == report_id)
     if action:
         q = q.where(AuditLog.action == action)
+    if exclude_action:
+        q = q.where(AuditLog.action != exclude_action)
     if admin_id is not None:
         q = q.where(AuditLog.admin_id == admin_id)
     if scope_org:
-        q = q.where(AuditLog.org_id == org_id)
+        if org_id is not None:
+            q = q.where(AuditLog.org_id == org_id)
+        else:
+            q = q.where(AuditLog.org_id.is_(None), AuditLog.admin_id == viewer_id)
 
     count_result = await db.execute(select(func.count()).select_from(q.subquery()))
     total: int = count_result.scalar_one()

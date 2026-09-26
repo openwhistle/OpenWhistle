@@ -25,6 +25,7 @@ PUBLIC = ["/submit", "/status", "/admin/login"]
 ADMIN = [
     "/admin/dashboard", "/admin/users", "/admin/stats", "/admin/audit-log",
     "/admin/categories", "/admin/locations", "/admin/retention", "/admin/system",
+    "/admin/telephone-channel",
 ]
 
 
@@ -45,24 +46,26 @@ def _check(page: Page, errors: list[str], path: str, axe_source: str, label: str
     return problems
 
 
+@pytest.mark.parametrize("lang", ["en", "de"])
 @pytest.mark.parametrize("scheme", ["light", "dark"])
-@pytest.mark.parametrize("width", [390, 1440])
+@pytest.mark.parametrize("width", [390, 900, 1440])
 def test_ui_check(
-    browser: Browser, base_url: str, axe_source: str, scheme: str, width: int
+    browser: Browser, base_url: str, axe_source: str, scheme: str, width: int, lang: str
 ) -> None:
     context = browser.new_context(
         color_scheme=scheme, viewport={"width": width, "height": 900}, base_url=base_url
     )
+    context.add_cookies([{"name": "ow-lang", "value": lang, "url": base_url}])
     page = context.new_page()
     errors: list[str] = []
     page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
     page.on("pageerror", lambda e: errors.append(str(e)))
     problems: list[str] = []
     for path in PUBLIC:
-        problems += _check(page, errors, path, axe_source, f"{scheme} {width}px {path}")
+        problems += _check(page, errors, path, axe_source, f"{scheme} {width}px {lang} {path}")
     _admin_login(page, base_url, DEMO_ADMIN_USERNAME, DEMO_ADMIN_PASSWORD, DEMO_ADMIN_TOTP_SECRET)
     report = page.locator('a[href^="/admin/reports/"]').first.get_attribute("href")
     for path in [*ADMIN, report or "/admin/dashboard"]:
-        problems += _check(page, errors, path, axe_source, f"{scheme} {width}px {path}")
+        problems += _check(page, errors, path, axe_source, f"{scheme} {width}px {lang} {path}")
     context.close()
     assert not problems, "\n".join(problems)

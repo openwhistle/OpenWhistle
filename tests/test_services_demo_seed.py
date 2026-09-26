@@ -40,6 +40,56 @@ async def test_seed_creates_demo_admin(db_session: AsyncSession) -> None:
 
 
 @pytest.mark.asyncio
+async def test_demo_accounts_belong_to_the_default_org(db_session: AsyncSession) -> None:
+    """Like setup's first admin: with multi-tenancy on, an org-less admin sees
+    none of the default org's demo reports and has no reporting link."""
+    from app.config import settings
+    from app.models.organisation import Organisation
+    from app.services.demo_seed import DEMO_CM_USERNAME
+
+    await _seed(db_session)
+    default_id = (
+        await db_session.execute(
+            select(Organisation.id).where(Organisation.slug == settings.default_org_slug)
+        )
+    ).scalar_one()
+    orgs = (
+        await db_session.execute(
+            select(AdminUser.org_id).where(
+                AdminUser.username.in_([DEMO_ADMIN_USERNAME, DEMO_CM_USERNAME])
+            )
+        )
+    ).scalars().all()
+    assert list(orgs) == [default_id, default_id]
+
+
+@pytest.mark.asyncio
+async def test_seed_gives_existing_org_less_demo_accounts_the_default_org(
+    db_session: AsyncSession,
+) -> None:
+    from sqlalchemy import update
+
+    from app.services.demo_seed import DEMO_CM_USERNAME
+
+    names = [DEMO_ADMIN_USERNAME, DEMO_CM_USERNAME]
+    await _seed(db_session)
+    await db_session.execute(
+        update(AdminUser).where(AdminUser.username.in_(names)).values(org_id=None)
+    )
+    await db_session.commit()
+
+    await _seed(db_session)
+    orgs = (
+        await db_session.execute(
+            select(AdminUser.org_id)
+            .where(AdminUser.username.in_(names))
+            .execution_options(populate_existing=True)
+        )
+    ).scalars().all()
+    assert len(orgs) == 2 and None not in orgs
+
+
+@pytest.mark.asyncio
 async def test_seed_admin_idempotent(db_session: AsyncSession) -> None:
     """Calling _seed twice must not duplicate the admin user."""
     from app.models.user import AdminUser

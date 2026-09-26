@@ -1,0 +1,233 @@
+{
+ "test_groups": {
+  "W": [
+   "tests/test_submit_prg.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "any-action-processed",
+   "file": "app/api/reports.py",
+   "old": "    if action not in (\"next\", \"back\") or (",
+   "new": "    if (",
+   "tests": "W"
+  },
+  {
+   "id": "stale-step-processed",
+   "file": "app/api/reports.py",
+   "old": "        action == \"next\" and step != state.get(\"step\", _STEP_MODE)",
+   "new": "        action == \"next\" and step > state.get(\"step\", _STEP_MODE)",
+   "tests": "W"
+  },
+  {
+   "id": "step-renders-post-result",
+   "file": "app/api/reports.py",
+   "old": "        resp = RedirectResponse(tenant.path, status_code=303)\n        _set_submission_cookie(resp, session_id, request)\n        return resp\n\n    async def _fail",
+   "new": "        resp = RedirectResponse(tenant.path, status_code=302)\n        _set_submission_cookie(resp, session_id, request)\n        return resp\n\n    async def _fail",
+   "tests": "W"
+  },
+  {
+   "id": "flash-sticks",
+   "file": "app/api/reports.py",
+   "old": "    flash_error = state.pop(\"_flash_error\", None)",
+   "new": "    flash_error = state.get(\"_flash_error\")",
+   "tests": "W"
+  },
+  {
+   "id": "back-drops-attachments",
+   "file": "app/api/reports.py",
+   "old": "        if file_tuples:\n            import base64 as _b64",
+   "new": "        if True:\n            import base64 as _b64",
+   "tests": "W"
+  },
+  {
+   "id": "rejected-description-lost",
+   "file": "app/api/reports.py",
+   "old": "        state[\"description\"] = desc_stripped[:10000]\n",
+   "new": "",
+   "tests": "W"
+  },
+  {
+   "id": "remove-outside-attachments-step",
+   "file": "app/api/reports.py",
+   "old": "        if state.get(\"step\") == _STEP_ATTACHMENTS and 0 <= index < len(files):",
+   "new": "        if 0 <= index < len(files):",
+   "tests": "W"
+  },
+  {
+   "id": "remove-negative-index",
+   "file": "app/api/reports.py",
+   "old": "        if state.get(\"step\") == _STEP_ATTACHMENTS and 0 <= index < len(files):",
+   "new": "        if state.get(\"step\") == _STEP_ATTACHMENTS and index < len(files):",
+   "tests": "W"
+  },
+  {
+   "id": "remove-no-csrf",
+   "file": "app/api/reports.py",
+   "old": "    _csrf: None = Depends(validate_csrf),\n) -> Response:\n    \"\"\"Remove one",
+   "new": "    _csrf: None = None,\n) -> Response:\n    \"\"\"Remove one",
+   "tests": "W"
+  },
+  {
+   "id": "report-id-not-used",
+   "file": "app/services/report.py",
+   "old": "    fixed_id = report_id or uuid.uuid4()",
+   "new": "    fixed_id = uuid.uuid4()",
+   "tests": "W"
+  },
+  {
+   "id": "legacy-draft-ids-race",
+   "file": "app/api/reports.py",
+   "old": "redis.call('SET', KEYS[2], ARGV[2], 'NX', 'EX', ARGV[3])",
+   "new": "redis.call('SET', KEYS[2], ARGV[2], 'EX', ARGV[3])",
+   "tests": "W"
+  },
+  {
+   "id": "legacy-draft-id-for-a-spent-draft",
+   "file": "app/api/reports.py",
+   "old": "if redis.call('GET', KEYS[1]) ~= ARGV[1] then\n  return false\nend\nredis.call('SET', KEYS[2]",
+   "new": "redis.call('SET', KEYS[2]",
+   "tests": "W"
+  },
+  {
+   "id": "legacy-draft-load-unbounded",
+   "file": "app/api/reports.py",
+   "old": "    for _ in range(3):",
+   "new": "    for _ in range(50):",
+   "tests": "W"
+  },
+  {
+   "id": "claim-overwrites-a-claim",
+   "file": "app/api/reports.py",
+   "old": "if redis.call('EXISTS', KEYS[1]) == 0 or redis.call('EXISTS', KEYS[2]) == 1 then",
+   "new": "if redis.call('EXISTS', KEYS[1]) == 0 then",
+   "tests": "W"
+  },
+  {
+   "id": "waiting-click-holds-a-transaction",
+   "file": "app/api/reports.py",
+   "old": "            await db.rollback()  # do not hold a pooled connection while waiting\n",
+   "new": "",
+   "tests": "W"
+  },
+  {
+   "id": "no-final-revalidation",
+   "file": "app/api/reports.py",
+   "old": "                if draft_error := await _draft_error(\n                    db, state, valid_cat_slugs, has_locations, tenant\n                ):",
+   "new": "                if draft_error := None:",
+   "tests": "W"
+  },
+  {
+   "id": "final-check-ignores-location",
+   "file": "app/api/reports.py",
+   "old": "            await _location_error(db, state.get(\"location_id\"), tenant)\n            if has_locations\n            else None,",
+   "new": "            None,",
+   "tests": "W"
+  },
+  {
+   "id": "final-check-ignores-mode",
+   "file": "app/api/reports.py",
+   "old": "        (_STEP_MODE, _mode_error(state.get(\"submission_mode\"))),",
+   "new": "        (_STEP_MODE, None),",
+   "tests": "W"
+  },
+  {
+   "id": "description-minimum-dropped",
+   "file": "app/api/reports.py",
+   "old": "    if length < 10:\n        return \"description_too_short\"",
+   "new": "    if length < 1:\n        return \"description_too_short\"",
+   "tests": "W"
+  },
+  {
+   "id": "report-committed-alone",
+   "file": "app/api/reports.py",
+   "old": "                    commit=False,\n                    report_id=uuid.UUID(report_id),",
+   "new": "                    commit=True,\n                    report_id=uuid.UUID(report_id),",
+   "tests": "W"
+  },
+  {
+   "id": "attachments-committed-alone",
+   "file": "app/api/reports.py",
+   "old": "                await create_attachments(db, report, file_tuples_restored, commit=False)",
+   "new": "                await create_attachments(db, report, file_tuples_restored, commit=True)",
+   "tests": "W"
+  },
+  {
+   "id": "submit-unbounded",
+   "file": "app/api/reports.py",
+   "old": "            async with asyncio.timeout(_SUBMIT_TIMEOUT_SECONDS):",
+   "new": "            async with asyncio.timeout(None):",
+   "tests": "W"
+  },
+  {
+   "id": "statement-unbounded",
+   "file": "app/api/reports.py",
+   "old": "text(f\"SET LOCAL statement_timeout = {_SUBMIT_TIMEOUT_SECONDS * 1000}\")",
+   "new": "text(\"SELECT 1\")",
+   "tests": "W"
+  },
+  {
+   "id": "failed-submit-keeps-the-draft-claimed",
+   "file": "app/api/reports.py",
+   "old": "                given_back = await _give_back_draft(redis, session_id, claimed, nonce)",
+   "new": "                given_back = True",
+   "tests": "W"
+  },
+  {
+   "id": "issued-commit-says-not-sent",
+   "file": "app/api/reports.py",
+   "old": "                if our_case is not None:  # the COMMIT was issued and may still land",
+   "new": "                if False:  # the COMMIT was issued and may still land",
+   "tests": "W"
+  },
+  {
+   "id": "second-click-gets-no-pin",
+   "file": "app/api/reports.py",
+   "old": "            await _finish_claim(redis, session_id, nonce, result)\n        except Exception:",
+   "new": "            await _finish_claim(redis, session_id, nonce, None)\n        except Exception:",
+   "tests": "W"
+  },
+  {
+   "id": "result-kept-briefly",
+   "file": "app/api/reports.py",
+   "old": "_RESULT_TTL = 120\n",
+   "new": "_RESULT_TTL = 1\n",
+   "tests": "W"
+  },
+  {
+   "id": "finish-clears-a-newer-claim",
+   "file": "app/api/reports.py",
+   "old": "if not pending or pending == ARGV[1] then\n  redis.call('DEL', KEYS[1], KEYS[2], KEYS[3], KEYS[5])",
+   "new": "if true then\n  redis.call('DEL', KEYS[1], KEYS[2], KEYS[3], KEYS[5])",
+   "tests": "W"
+  },
+  {
+   "id": "give-back-over-a-newer-claim",
+   "file": "app/api/reports.py",
+   "old": "if pending and pending ~= ARGV[3] then\n  return 0",
+   "new": "if false then\n  return 0",
+   "tests": "W"
+  },
+  {
+   "id": "recover-over-a-changed-claim",
+   "file": "app/api/reports.py",
+   "old": "   or redis.call('GET', KEYS[2]) ~= ARGV[1] then",
+   "new": "   then",
+   "tests": "W"
+  },
+  {
+   "id": "recover-gives-back-a-committed-draft",
+   "file": "app/api/reports.py",
+   "old": "    result = \"\" if case_number is None else _encrypt_result(session_id, _received(case_number))",
+   "new": "    result = \"\"",
+   "tests": "W"
+  },
+  {
+   "id": "start-over-keeps-report-id",
+   "file": "app/api/reports.py",
+   "old": "        await redis.delete(_submission_key(raw), _report_id_key(raw))",
+   "new": "        await redis.delete(_submission_key(raw))",
+   "tests": "W"
+  }
+ ]
+}

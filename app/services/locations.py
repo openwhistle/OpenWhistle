@@ -20,19 +20,33 @@ async def _default_org_id(db: AsyncSession) -> uuid.UUID | None:
     return r.scalar_one_or_none()
 
 
-async def get_active_locations(db: AsyncSession) -> list[Location]:
-    result = await db.execute(
+async def get_active_locations(
+    db: AsyncSession,
+    *,
+    scope_org: bool = False,
+    org_id: uuid.UUID | None = None,
+) -> list[Location]:
+    q = (
         select(Location)
         .where(Location.is_active.is_(True))
         .order_by(Location.sort_order, Location.name)
     )
+    if scope_org:
+        q = q.where(Location.org_id.is_not_distinct_from(org_id))
+    result = await db.execute(q)
     return list(result.scalars().all())
 
 
-async def get_all_locations(db: AsyncSession) -> list[Location]:
-    result = await db.execute(
-        select(Location).order_by(Location.sort_order, Location.name)
-    )
+async def get_all_locations(
+    db: AsyncSession,
+    *,
+    scope_org: bool = False,
+    org_id: uuid.UUID | None = None,
+) -> list[Location]:
+    q = select(Location).order_by(Location.sort_order, Location.name)
+    if scope_org:
+        q = q.where(Location.org_id == org_id)
+    result = await db.execute(q)
     return list(result.scalars().all())
 
 
@@ -41,9 +55,18 @@ async def get_location_by_id(db: AsyncSession, loc_id: uuid.UUID) -> Location | 
     return result.scalar_one_or_none()
 
 
-async def get_location_by_code(db: AsyncSession, code: str) -> Location | None:
-    result = await db.execute(select(Location).where(Location.code == code))
+async def get_location_by_code(
+    db: AsyncSession, code: str, org_id: uuid.UUID | None
+) -> Location | None:
+    """A code is unique per organisation only: look it up within one."""
+    result = await db.execute(select(Location).where(
+        Location.code == code, Location.org_id.is_not_distinct_from(org_id)
+    ))
     return result.scalar_one_or_none()
+
+
+class DuplicateCodeError(ValueError):
+    """The organisation already has a location with this code."""
 
 
 async def create_location(
@@ -56,18 +79,20 @@ async def create_location(
 ) -> Location:
     if org_id is None:
         org_id = await _default_org_id(db)
+    code = code.strip().upper()
+    if await get_location_by_code(db, code, org_id):
+        raise DuplicateCodeError(code)
     loc = Location(
         id=uuid.uuid4(),
         name=name,
-        code=code.strip().upper(),
+        code=code,
         description=description or None,
         is_active=True,
         sort_order=sort_order,
         org_id=org_id,
     )
     db.add(loc)
-    await db.commit()
-    await db.refresh(loc)
+    await db.flush()  # the caller commits together with its audit row
     return loc
 
 

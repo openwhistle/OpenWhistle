@@ -63,7 +63,7 @@ async def run_retention_cleanup() -> None:
         except Exception:  # noqa: BLE001
             log.warning("Retention job lock unavailable; proceeding without it")
 
-        engine = create_async_engine(settings.database_url, echo=False)
+        engine = create_async_engine(settings.database_url, echo=False, hide_parameters=True)
         cutoff = datetime.now(UTC) - timedelta(days=settings.retention_days)
         session_factory = async_sessionmaker(engine, expire_on_commit=False)
         async with session_factory() as db:
