@@ -316,3 +316,33 @@ async def test_dashboard_statistics_are_scoped(
     stats_a = await get_dashboard_stats(db_session, scope_org=True, org_id=org_a)
     assert stats_a["total_reports"] == 0
     assert stats_a["by_category"] == {}
+
+
+@pytest.mark.asyncio
+async def test_category_labels_do_not_leak_across_orgs_with_a_colliding_slug(
+    db_session: AsyncSession, two_orgs: dict[str, AdminUser]
+) -> None:
+    """ReportCategory.slug is unique per org, not globally (two orgs may each
+    define their own category under the same slug) — get_category_labels()
+    must scope by org like every sibling query, or one org's label silently
+    wins the shared slug key and leaks into the other org's page."""
+    from app.models.category import ReportCategory
+    from app.services.categories import get_category_labels
+
+    org_a, org_b = two_orgs["admin_a"].org_id, two_orgs["user_b"].org_id
+    db_session.add_all([
+        ReportCategory(
+            id=uuid.uuid4(), slug="custom", label_en="Org A label", label_de="Org A label",
+            org_id=org_a,
+        ),
+        ReportCategory(
+            id=uuid.uuid4(), slug="custom", label_en="Org B label", label_de="Org B label",
+            org_id=org_b,
+        ),
+    ])
+    await db_session.commit()
+
+    labels_a = await get_category_labels(db_session, "en", scope_org=True, org_id=org_a)
+    labels_b = await get_category_labels(db_session, "en", scope_org=True, org_id=org_b)
+    assert labels_a["custom"] == "Org A label"
+    assert labels_b["custom"] == "Org B label"

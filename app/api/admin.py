@@ -231,7 +231,9 @@ async def dashboard(
     from app.services.locations import get_all_locations
 
     all_locations = await get_all_locations(db)
-    category_labels = await get_category_labels(db, get_lang(request))
+    category_labels = await get_category_labels(
+        db, get_lang(request), **_org_scope(current_user)
+    )
 
     return render(
         request,
@@ -347,7 +349,9 @@ async def _render_report(
     from app.services.categories import get_category_labels
     from app.services.users import get_all_users
 
-    category_labels = await get_category_labels(db, get_lang(request))
+    category_labels = await get_category_labels(
+        db, get_lang(request), **_org_scope(current_user)
+    )
 
     all_admins = [
         u for u in await get_all_users(db)
@@ -706,17 +710,24 @@ async def cancel_delete(
 
 @router.get("/reports/{report_id}/export.pdf")
 async def export_pdf(
+    request: Request,
     report_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(get_current_admin),
 ) -> Response:
+    from app.services.categories import get_category_labels
     from app.services.pdf import generate_report_pdf
 
     report = await _get_authorized_report(db, report_id, current_user)
     await audit_service.log(db, current_user, AuditAction.REPORT_VIEWED, report_id=report.id)
     await db.commit()
 
-    pdf_bytes = generate_report_pdf(report)
+    category_labels = await get_category_labels(
+        db, get_lang(request), **_org_scope(current_user)
+    )
+    pdf_bytes = generate_report_pdf(
+        report, category_label=category_labels.get(report.category, report.category)
+    )
     safe_name = f"{report.case_number}_export.pdf"
     return Response(
         content=pdf_bytes,
@@ -734,6 +745,7 @@ async def export_pdf_with_identity(
     current_user: AdminUser = Depends(get_current_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> Response:
+    from app.services.categories import get_category_labels
     from app.services.crypto import encrypt
     from app.services.pdf import generate_report_pdf
 
@@ -746,8 +758,15 @@ async def export_pdf_with_identity(
         report_id=report.id, detail={"reason": encrypt(valid), "via": "pdf"},
     )
     await db.commit()
+    category_labels = await get_category_labels(
+        db, get_lang(request), **_org_scope(current_user)
+    )
     return Response(
-        content=generate_report_pdf(report, include_identity=True),
+        content=generate_report_pdf(
+            report,
+            include_identity=True,
+            category_label=category_labels.get(report.category, report.category),
+        ),
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{report.case_number}_export.pdf"'},
     )
@@ -1219,7 +1238,7 @@ async def stats_page(
         db, assigned_to_id=_own_cases_only(current_user), **_org_scope(current_user)
     )
     from app.services.categories import get_category_labels
-    cat_map = await get_category_labels(db, get_lang(request))
+    cat_map = await get_category_labels(db, get_lang(request), **_org_scope(current_user))
     return render(request, "admin/stats.html", {
         "user": current_user,
         "stats": stats,

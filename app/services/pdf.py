@@ -37,7 +37,9 @@ def _register_font(pdf: FPDF) -> None:
     pdf.add_font(_FONT, "B", str(_FONT_DIR / "DejaVuLGCSans-Bold.ttf"))
 
 
-def generate_report_pdf(report: Report, include_identity: bool = False) -> bytes:
+def generate_report_pdf(
+    report: Report, include_identity: bool = False, category_label: str | None = None
+) -> bytes:
     description, msg_contents = decrypt_report_fields(report)
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
@@ -69,7 +71,10 @@ def generate_report_pdf(report: Report, include_identity: bool = False) -> bytes
 
     pdf.set_font(_FONT, "", 10)
     _meta_row(pdf, "Case Number", report.case_number)
-    _meta_row(pdf, "Category", report.category)
+    # The exporting admin's language, org-scoped label (get_category_labels) —
+    # falls back to the raw slug if the caller has none (e.g. a category
+    # deleted outright since), same as the case page's category_label filter.
+    _meta_row(pdf, "Category", category_label or report.category)
     _meta_row(pdf, "Status", report.status.value.replace("_", " ").title())
     _meta_row(pdf, "Submission Mode", report.submission_mode.value.title())
     if report.location:
