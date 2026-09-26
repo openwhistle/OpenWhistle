@@ -206,10 +206,10 @@ Fix every finding before the release PR — nothing here is carried forward.
 podman compose -f docker-compose.e2e.yml -f docker-compose.review.yml down -v
 ```
 
-Neither this file nor `docker-compose.e2e.yml` declares a named volume, and a
-plain `down` (no `-v`) already removes the containers' anonymous ones too —
-verified directly (wrote a row to Postgres and a key to Redis, `down` with no
-`-v`, `up` again, both gone). `-v` here is a habit, not a requirement; it is
-included above only for the profile stack's own `down`, since a stray
-anonymous volume left by an interrupted run is otherwise a one-command clean
-slate anyway.
+Neither this file nor `docker-compose.e2e.yml` declares a named volume, so
+every `db`/`redis` container gets a fresh anonymous one on `up`, regardless
+of `-v` — a plain `down` (no `-v`) does not delete the previous one, only
+orphans it on disk (checked directly: `podman volume ls`/`inspect` after a
+plain `down` still lists it). So `-v` is not what gives the next `up` a
+clean slate — that already happens either way — it only matters for not
+leaving an orphaned volume behind on every cycle.

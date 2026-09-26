@@ -63,7 +63,16 @@ _LOOPBACK_HOSTNAMES = {"localhost", "127.0.0.1", "::1"}
 def _local_review_reachable(request: Request) -> bool:
     if any(h in request.headers for h in _PROXY_HEADERS):
         return False
-    hostname = urlsplit(f"//{request.headers.get('host', '')}").hostname or ""
+    host_header = request.headers.get("host", "")
+    try:
+        # A malformed bracketed Host (e.g. "[::1].evil.com", "[::1") makes
+        # urlsplit raise ValueError instead of returning an unparsed/empty
+        # hostname — unparsable is not loopback, so treat it as unreachable
+        # rather than let the exception escape as an uncaught 500 (fix
+        # round 2 finding).
+        hostname = urlsplit(f"//{host_header}").hostname or ""
+    except ValueError:
+        return False
     return hostname.lower() in _LOOPBACK_HOSTNAMES
 
 
@@ -259,20 +268,23 @@ async def login_post(
     return await _second_factor(request, redis, user)
 
 
-@router.get("/local-review-login", include_in_schema=False)
-@router.head("/local-review-login", include_in_schema=False)
-async def local_review_login_get_or_head() -> None:
-    """No GET/HEAD ever existed for this path. Explicit here so a bare method
-    probe gets the same 404 the POST gives when disabled, instead of the
-    405 FastAPI would otherwise answer for a path that has *some* handler —
-    which would itself reveal that the path exists."""
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+# Every method FastAPI/Starlette route matching supports, registered on ONE
+# api_route (fix round 2, controller ruling): a per-method decorator for only
+# GET/HEAD/POST still left PUT/DELETE/PATCH/OPTIONS answering Starlette's
+# default 405 — which, like the 405 this whole route exists to avoid for
+# GET/HEAD, still confirms to a probe that *some* handler lives at this path.
+# A single handler for every method, 404 for anything but an allowed POST,
+# closes that regardless of which method is tried.
+_LOCAL_REVIEW_LOGIN_METHODS = ["GET", "HEAD", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
 
 
-@router.post(
-    "/local-review-login", response_class=HTMLResponse, response_model=None, include_in_schema=False
+@router.api_route(
+    "/local-review-login",
+    methods=_LOCAL_REVIEW_LOGIN_METHODS,
+    response_model=None,
+    include_in_schema=False,
 )
-async def local_review_login_post(
+async def local_review_login(
     request: Request,
     csrf_token: str = Form(""),
     ow_csrf: str | None = Cookie(None),
@@ -284,15 +296,20 @@ async def local_review_login_post(
     page without a human typing credentials. Every check below runs before
     any state changes, in this order, so a disabled/unreachable/deactivated
     outcome never writes an audit row for a login that did not really happen:
-      1. the setting, and the request-shape barrier (`_local_review_reachable`)
-         — both 404 (it does not exist), never 403, when either fails;
+      1. the method (only POST is ever allowed), the setting, and the
+         request-shape barrier (`_local_review_reachable`) — all 404 (it does
+         not exist), never 403 or 405, when any of them fails;
       2. CSRF, called directly rather than via Depends(validate_csrf), which
          would run before step 1 and turn a disabled route into a 403;
       3. the seeded demo admin exists and is active.
     Not rate-limited: `_local_review_reachable` already confines it to a
     loopback request with no proxy header in front of it.
     """
-    if not settings.local_review_login or not _local_review_reachable(request):
+    if (
+        request.method != "POST"
+        or not settings.local_review_login
+        or not _local_review_reachable(request)
+    ):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
     await validate_csrf(csrf_token, ow_csrf)

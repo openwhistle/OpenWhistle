@@ -3,11 +3,16 @@
 Security-sensitive — this is an admin login with no password and no MFA
 check. Fix round 1 (task-X9-review.md): the flag alone was the only barrier,
 the flag lived in CI's own E2E stack, and the page-list completeness test
-could pass on an empty walk. Every guard below has a test that fails
-without it:
+could pass on an empty walk. Fix round 2 (task-X9-rereview-1.md):
+PUT/DELETE/PATCH/OPTIONS still answered 405 (a per-method decorator only
+covered GET/HEAD/POST), and a malformed bracketed Host header crashed
+`_local_review_reachable` with an uncaught `ValueError` instead of 404.
+Every guard below has a test that fails without it:
   - refuses to start (DEMO_MODE=false + LOCAL_REVIEW_LOGIN=true)
-  - the route (every method) is 404, not 403 or 405, when the flag is off
-  - a second barrier independent of the flag: no proxy header, loopback Host
+  - the route is 404, not 403 or 405, for every HTTP method, when the flag
+    is off or the second barrier fails
+  - a second barrier independent of the flag: no proxy header, loopback
+    Host — including a malformed one, which must not crash the check
   - a successful local-review login writes an audit row and a real session,
     but only after the demo admin's is_active is checked
   - a bad CSRF token leaves no session and no audit row
@@ -124,7 +129,16 @@ def _request_with_headers(headers: dict[str, str]) -> StarletteRequest:
 
 
 @pytest.mark.parametrize(
-    "host", ["localhost", "localhost:4009", "127.0.0.1", "127.0.0.1:4009", "[::1]", "[::1]:4009"]
+    "host",
+    [
+        "localhost",
+        "LOCALHOST",  # case-insensitive
+        "localhost:4009",
+        "127.0.0.1",
+        "127.0.0.1:4009",
+        "[::1]",
+        "[::1]:4009",
+    ],
 )
 def test_local_review_reachable_accepts_every_loopback_host_form(host: str) -> None:
     from app.api.auth import _local_review_reachable
@@ -134,6 +148,17 @@ def test_local_review_reachable_accepts_every_loopback_host_form(host: str) -> N
 
 @pytest.mark.parametrize("host", ["example.com", "demo.openwhistle.net", "127.0.0.1.evil.com", ""])
 def test_local_review_reachable_rejects_non_loopback_host(host: str) -> None:
+    from app.api.auth import _local_review_reachable
+
+    assert _local_review_reachable(_request_with_headers({"host": host})) is False
+
+
+@pytest.mark.parametrize("host", ["[::1].evil.com", "[::1", "[", "not[valid]host", "[::1]]"])
+def test_local_review_reachable_treats_malformed_bracketed_host_as_unreachable(host: str) -> None:
+    """Fix round 2: `urlsplit` raises `ValueError` for an unmatched/misplaced
+    IPv6 bracket instead of returning an unparsed hostname — unparsable is
+    not loopback, so this must return False, not propagate the exception
+    (which reached a real client as an uncaught 500 before this fix)."""
     from app.api.auth import _local_review_reachable
 
     assert _local_review_reachable(_request_with_headers({"host": host})) is False
@@ -158,21 +183,28 @@ async def test_local_review_login_route_404_when_disabled(client: AsyncClient) -
     assert resp.status_code == 404
 
 
-@pytest.mark.parametrize("method", ["GET", "HEAD"])
-async def test_local_review_login_route_404_for_get_and_head_when_disabled(
+_NON_POST_METHODS = ["GET", "HEAD", "PUT", "DELETE", "PATCH", "OPTIONS"]
+
+
+@pytest.mark.parametrize("method", _NON_POST_METHODS)
+async def test_local_review_login_route_404_for_every_method_when_disabled(
     client: AsyncClient, method: str
 ) -> None:
     resp = await client.request(method, "/admin/local-review-login", follow_redirects=False)
     assert resp.status_code == 404
 
 
-@pytest.mark.parametrize("method", ["GET", "HEAD"])
-async def test_local_review_login_route_404_for_get_and_head_when_enabled(
+@pytest.mark.parametrize("method", _NON_POST_METHODS)
+async def test_local_review_login_route_404_for_every_method_when_enabled(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch, method: str
 ) -> None:
-    """Even enabled and reachable, GET/HEAD never had a handler here before
-    this route existed — a probe must not get FastAPI's default 405 for a
-    path with only a POST handler, which would itself reveal a route exists."""
+    """Fix round 2, controller ruling: every method but POST is 404, not the
+    405 Starlette's default route matching gives a path that has *some*
+    handler for a different method — a per-method decorator for only
+    GET/HEAD/POST (fix round 1) still left PUT/DELETE/PATCH/OPTIONS
+    answering 405, reproduced live against the running container. One
+    `api_route` registered for every method, 404 for anything but an
+    allowed POST, closes it regardless of which method is tried."""
     monkeypatch.setattr(settings, "demo_mode", True)
     monkeypatch.setattr(settings, "local_review_login", True)
     resp = await client.request(
@@ -211,6 +243,36 @@ async def test_local_review_login_404_with_non_loopback_host(
         "/admin/local-review-login", headers={"host": host}, follow_redirects=False
     )
     assert resp.status_code == 404
+
+
+@pytest.mark.parametrize("host", ["[::1].evil.com", "[::1", "not[valid]host"])
+async def test_local_review_login_404_not_500_with_malformed_host(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch, host: str
+) -> None:
+    """Fix round 2: reproduced live as an uncaught 500 before the fix — the
+    setting check alone doesn't short-circuit this (`or` only skips
+    `_local_review_reachable` when the setting itself is already off), so
+    the malformed Host must reach the barrier here to prove the crash is
+    actually fixed, not just that a disabled route still 404s regardless."""
+    monkeypatch.setattr(settings, "demo_mode", True)
+    monkeypatch.setattr(settings, "local_review_login", True)
+    resp = await client.post(
+        "/admin/local-review-login", headers={"host": host}, follow_redirects=False
+    )
+    assert resp.status_code == 404
+
+
+@pytest.mark.parametrize("host", ["[::1].evil.com", "[::1"])
+async def test_login_page_does_not_crash_with_malformed_host(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch, host: str
+) -> None:
+    """Same crash, reached through the button's own visibility check
+    (`_login_ctx` → `_local_review_reachable`) rather than the route."""
+    monkeypatch.setattr(settings, "demo_mode", True)
+    monkeypatch.setattr(settings, "local_review_login", True)
+    resp = await client.get("/admin/login", headers={"host": host})
+    assert resp.status_code == 200
+    assert "local-review-login" not in resp.text
 
 
 async def test_local_review_login_signs_in_with_full_session_and_audit_row(
