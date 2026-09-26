@@ -4,7 +4,7 @@
 
 {% block styles %}
 <style nonce="{{ request.state.csp_nonce }}">
-    .sub-alert-spaced { margin: 1rem 0; }
+    .sub-alert-spaced { margin: 0.75rem 0; }
     .sub-fieldset-reset { border: none; padding: 0; margin: 0; }
     .sub-mb1 { margin-bottom: 1rem; }
     .sub-confidential-fields { display: none; margin-top: 1.5rem; }
@@ -23,7 +23,7 @@
 {% block title %}{{ t('submit.title') }} | OpenWhistle{% endblock %}
 
 {% block content %}
-<div class="split-layout">
+<div class="split-layout page-fill">
     <div class="split-main">
         <p class="mobile-reassure">{{ icons.icon('lock') }} {{ t('submit.sidebar.short') }}</p>
         <div class="page-eyebrow">{{ t('submit.eyebrow') }}</div>
@@ -381,7 +381,7 @@
         {% endif %}
     </div>
 
-    <aside class="split-sidebar" aria-label="{{ t('submit.sidebar.eyebrow') }}">
+    <aside class="split-sidebar" aria-label="{{ t('submit.sidebar.eyebrow') }}" tabindex="0">
         <div class="sidebar-eyebrow">{{ t('submit.sidebar.eyebrow') }}</div>
         <h2 class="sidebar-title">{{ t('submit.sidebar.title') }}</h2>
 

@@ -267,7 +267,7 @@
                 {% if page > 1 %}
                 {{ page_link(page - 1, 'btn btn-secondary btn-sm pagination-btn', t('admin.pagination.prev')) }}
                 {% else %}
-                <span class="btn btn-secondary btn-sm pagination-btn pagination-disabled">{{ t('admin.pagination.prev') }}</span>
+                <span class="btn btn-secondary btn-sm pagination-btn pagination-disabled" aria-disabled="true">{{ t('admin.pagination.prev') }}</span>
                 {% endif %}
 
                 {% set win = 3 %}
@@ -295,7 +295,7 @@
                 {% if page < total_pages %}
                 {{ page_link(page + 1, 'btn btn-secondary btn-sm pagination-btn', t('admin.pagination.next')) }}
                 {% else %}
-                <span class="btn btn-secondary btn-sm pagination-btn pagination-disabled">{{ t('admin.pagination.next') }}</span>
+                <span class="btn btn-secondary btn-sm pagination-btn pagination-disabled" aria-disabled="true">{{ t('admin.pagination.next') }}</span>
                 {% endif %}
             </div>
         </div>

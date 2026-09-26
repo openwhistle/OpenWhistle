@@ -7,6 +7,23 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Pages that fit the window scrolled anyway, with the footer below the fold.** The submission
+  wizard and the login and MFA screens sized themselves as the viewport minus a guessed nav and
+  footer height (144 or 112 px, against a real 151 px, plus the 36 px demo banner). They now
+  fill the space between nav and footer by flexbox, whatever those measure.
+- **The wizard's sidebar made the page as tall as its own text.** In German it runs to about
+  1,000 px, so the wizard scrolled on a Full HD window with the footer out of sight. In the
+  two-column layout it now takes the form's height and scrolls inside itself.
+- **The demo login did not fit a Full HD window.** From 1024 px on, the demo credentials sit
+  beside the login form instead of above it.
+- **The wizard's first step still scrolled on a Full HD window.** Its form column was capped at
+  680 px on a 1920 px screen, so every text wrapped to more lines than needed. It now takes up to
+  860 px with tighter spacing, and fits 1920 × 890 with the demo banner, in English and German.
+- **Disabled pagination buttons failed text contrast.** At 38 % opacity they fell below 4.5:1;
+  they now use the muted text colour and carry `aria-disabled`.
+
 ## [2.0.0] — 2026-09-26
 
 A major version: the webhook payload, the Compose TLS/port

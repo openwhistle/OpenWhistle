@@ -5,7 +5,7 @@
 
 {% block styles %}
 <style nonce="{{ request.state.csp_nonce }}">
-    .mfas-center-page { min-height: calc(100vh - 56px - 56px); display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+    .mfas-center-page { display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
     .mfas-card { width: 100%; max-width: 480px; }
     .mfas-header { margin-bottom: 2rem; animation: fadeSlideIn 0.5s ease both; }
     .mfas-title { font-size: clamp(1.5rem, 4vw, 2.25rem); }
@@ -26,7 +26,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="mfas-center-page">
+<div class="mfas-center-page page-fill">
     <div class="mfas-card">
 
         <div class="mfas-header">

@@ -1485,8 +1485,12 @@ tr:hover td {
   padding-right: 0.75rem;
 }
 .pagination-disabled {
+  /* Muted colour, not opacity: 38 % opacity fell below the 4.5:1 contrast
+     axe asks of text, which showed once the dashboard had a second page. */
+  background: transparent;
+  border-style: dashed;
+  color: var(--muted);
   cursor: default;
-  opacity: 0.38;
   pointer-events: none;
 }
 .pagination-page {
@@ -1533,10 +1537,23 @@ tr:hover td {
   -moz-user-select: none;
   user-select: none;
 }
+/* A page that fills the space between the nav and the footer (the wizard,
+   the login and MFA screens) is marked .page-fill. Each used to take
+   a min-height of the viewport minus a guess at nav plus footer: 144 px for the
+   wizard, 112 px for the login screens, against a real 151 px, plus the
+   36 px demo banner. Every one of those pages scrolled, with the footer
+   below the fold. main already flexes to the leftover height; a .page-fill
+   child follows it, whatever the chrome above and below measures. */
+main:has(> .page-fill) {
+  display: flex;
+  flex-direction: column;
+}
+.page-fill {
+  flex: 1 1 auto;
+}
 .split-layout {
   display: grid;
   grid-template-columns: 300px 1fr;
-  min-height: calc(100vh - 144px);
 }
 .split-sidebar {
   background: #111;
@@ -1567,8 +1584,10 @@ tr:hover td {
   background: var(--canvas);
   grid-column: 2;
   grid-row: 1;
-  max-width: 680px;
-  padding: 2.5rem 3rem;
+  /* 860 px and this padding keep the wizard's first step inside a Full HD
+     window (1920 x 890 with browser chrome), demo banner included. */
+  max-width: 860px;
+  padding: 1.75rem 3rem;
 }
 .sidebar-eyebrow {
   color: hsla(0, 0%, 100%, 0.55);
@@ -1650,7 +1669,7 @@ tr:hover td {
   display: flex;
   gap: 0;
   margin-bottom: 0.5rem;
-  margin-top: 1.5rem;
+  margin-top: 1rem;
   overflow: hidden;
 }
 .stepper-step {
@@ -3481,6 +3500,13 @@ a.attachment-name:hover {
   }
 }
 .mobile-reassure { display: none; }
+/* Two columns: the sidebar must not make the page taller than the form. With
+   contain: size it adds no height of its own, stretches to the row the form
+   and the leftover window height set, and scrolls inside itself when its
+   text is longer (German: 1,023 px in a 300 px column). */
+@media (min-width: 901px) {
+  .split-sidebar { contain: size; overflow-y: auto; }
+}
 @media (max-width: 900px) {
   .split-layout { display: flex; flex-direction: column; }
   .split-main { max-width: none; padding: var(--space-6) var(--space-4); }
