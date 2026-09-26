@@ -168,7 +168,8 @@ zero vendor lock-in, and privacy-first by design.
   certificate is for first boot/testing only — install a real one before real users arrive, since
   the app's HSTS header pins a browser that clicked through the warning. To renew, drop the new
   certificate into `nginx/certs/` and run `docker compose up -d tls-init nginx` (`tls-init` is
-  one-shot; restarting `nginx` alone keeps the old certificate).
+  one-shot; restarting `nginx` alone keeps the old certificate). Behind an external TLS
+  terminator, `docker-compose.behind-proxy.yml` makes nginx proxy plain HTTP on port 80.
 - **Tor onion address** — `ONION_LOCATION` adds an `Onion-Location` header (Tor Browser offers to
   switch) and a note on the submit page for reporters on a monitored network; see
   [docs/docs.html](https://openwhistle.net/docs.html#onion-address) "Offering an onion address".
