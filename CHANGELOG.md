@@ -91,9 +91,10 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (pre-v1.6.0 behaviour, warned at startup). `ENCRYPTION_KEY_PREVIOUS` keeps old keys readable
   during rotation, and `scripts/rotate_encryption_key.py` re-encrypts every DEK, confidential
   identity and contact, secure e-mail, TOTP secret and identity-reveal reason under the new key.
-- **Maintainer tooling: local review login** (`LOCAL_REVIEW_LOGIN`, requires `DEMO_MODE=true`;
-  set only by the `docker-compose.review.yml` override, never in a deployment). A one-click
-  button on `/admin/login` signs a browser agent in as the seeded demo admin for the release's
+- **Maintainer tooling: local review login** (`LOCAL_REVIEW_LOGIN`, requires `DEMO_MODE=true`,
+  `SECURE_COOKIES=false` and a loopback `APP_PUBLIC_URL`; set only by the
+  `docker-compose.review.yml` override, never in a deployment). A one-click button on
+  `/admin/login` signs a browser agent in as the seeded demo admin for the release's
   Chrome check. The route answers 404 for every method unless the flag is on, the request
   carries no proxy header and the `Host` is loopback. See `docs-tech/local-review.md`.
 

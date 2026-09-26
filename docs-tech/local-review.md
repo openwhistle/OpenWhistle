@@ -33,13 +33,15 @@ it.
 
 ## Why the flag alone is not the only gate
 
-`LOCAL_REVIEW_LOGIN` requires `DEMO_MODE=true` (the app refuses to start
-otherwise) — but `DEMO_MODE` is also what the public demo runs with, and
-nothing except a test *stops* a hand-added `LOCAL_REVIEW_LOGIN=true` in that
-host's `.env` from passing the validator. So both the route and the button
+`LOCAL_REVIEW_LOGIN` requires `DEMO_MODE=true`, `SECURE_COOKIES=false` and an
+`APP_PUBLIC_URL` whose host is loopback (the app refuses to start otherwise;
+the review override sets `SECURE_COOKIES=false`). `DEMO_MODE` alone would not
+do: the public demo runs with it. So both the route and the button
 check a second, independent condition, `_local_review_reachable()` in
 `app/api/auth.py`: no header only a reverse proxy adds
-(`X-Forwarded-Proto`/`-For`, `X-Real-IP`, `Forwarded`, `Via` — nginx and every
+(every header the IP middleware strips — `X-Forwarded-For`, `X-Real-IP`,
+`Forwarded`, `X-Client-IP`, `CF-Connecting-IP`, … — plus `X-Forwarded-Proto` and
+`Via`, one list in the code; nginx and every
 ingress controller always set `X-Forwarded-Proto` in front of this app, and a
 client cannot strip a header the proxy adds after it) **and** the `Host` the
 request addressed is a loopback name (`localhost`, `127.0.0.1`, `[::1]`, with
@@ -50,8 +52,10 @@ A client-*address* check does not work here: the app's `uvicorn` runs without
 reaching the container through podman/docker's NAT, shows up as the
 container's gateway IP — never as `127.0.0.1`. Either half of the header/Host
 check alone can be spoofed (a stray client header; nginx's default server
-echoing back whatever `Host` it was given); together they hold, and the
-loopback-only port binding above is a third, independent layer.
+echoing back whatever `Host` it was given). Together they still pass a peer
+that reaches the app port directly with `Host: localhost` (another pod, a LAN
+host on a published port) — which is what the loopback-only port binding
+above and the settings check are for.
 
 Fails either check → 404, same as the flag being off. This also means: on
 the public demo host, even a hand-edited `LOCAL_REVIEW_LOGIN=true` gets no

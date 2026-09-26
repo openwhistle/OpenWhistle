@@ -8,6 +8,8 @@ services:
   app:
     environment:
       LOCAL_REVIEW_LOGIN: "true"
+      # Required with LOCAL_REVIEW_LOGIN: plain HTTP on a loopback APP_PUBLIC_URL.
+      SECURE_COOKIES: "false"
     # !override, not a plain list: Compose *merges* (appends) a `ports` list
     # across files by default, it does not replace it — a plain override
     # here would leave the base file's "4009:4009" (every interface) active

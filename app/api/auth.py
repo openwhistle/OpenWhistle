@@ -23,6 +23,7 @@ from app.api.deps import get_current_admin
 from app.config import settings
 from app.csrf import validate_csrf, validate_csrf_header
 from app.database import get_db
+from app.middleware import _IP_REVEAL_HEADERS
 from app.models.user import AdminRole, AdminUser
 from app.onion import cookie_secure
 from app.redis_client import get_redis
@@ -55,8 +56,12 @@ async def admin_root(request: Request) -> RedirectResponse:
 #     cannot strip a header the proxy adds after it); or
 #   - the Host it addressed is not a loopback name.
 # Either check alone can be spoofed (a stray client-sent header; nginx's
-# default server echoing whatever Host it was given); together they hold.
-_PROXY_HEADERS = ("x-forwarded-proto", "x-forwarded-for", "x-real-ip", "forwarded", "via")
+# default server echoing whatever Host it was given). Together they still do
+# not stop a peer that reaches the app port directly and sends "Host:
+# localhost" (another pod, a LAN host on a published port), which is why the
+# settings also refuse LOCAL_REVIEW_LOGIN unless APP_PUBLIC_URL is loopback and
+# SECURE_COOKIES is off, and the review stack binds the port to 127.0.0.1.
+_PROXY_HEADERS = _IP_REVEAL_HEADERS | {"x-forwarded-proto", "via"}
 _LOOPBACK_HOSTNAMES = {"localhost", "127.0.0.1", "::1"}
 
 

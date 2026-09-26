@@ -82,8 +82,24 @@ def test_local_review_login_requires_demo_mode() -> None:
 
 
 def test_local_review_login_allowed_with_demo_mode() -> None:
-    s = Settings(secret_key="x" * 32, local_review_login=True, demo_mode=True)
+    s = Settings(
+        secret_key="x" * 32, local_review_login=True, demo_mode=True, secure_cookies=False
+    )
     assert s.local_review_login is True
+
+
+@pytest.mark.parametrize(
+    ("url", "secure"),
+    [("https://demo.openwhistle.net", False), ("http://localhost", True),
+     ("http://10.0.0.5:4009", False)],
+)
+def test_local_review_login_refused_outside_a_plain_loopback_stack(url: str, secure: bool) -> None:
+    """The public demo has DEMO_MODE too: only a loopback, plain-HTTP stack may enable it."""
+    with pytest.raises(ValidationError, match="loopback"):
+        Settings(
+            secret_key="x" * 32, local_review_login=True, demo_mode=True,
+            app_public_url=url, secure_cookies=secure,
+        )
 
 
 # ── Loud startup warning — runs the real lifespan, not a source regex ───────
@@ -636,3 +652,19 @@ def test_release_md_names_the_chrome_check_before_the_release_pr() -> None:
     assert steps.index("Chrome check") < steps.index("Release PR"), steps
     section = next(s for s in text.split("\n## ") if re.match(r"\d+\. Chrome check\n", s))
     assert "docs-tech/local-review.md" in section
+
+
+@pytest.mark.parametrize(
+    "header",
+    ["x-client-ip", "x-cluster-client-ip", "true-client-ip", "cf-connecting-ip",
+     "x-forwarded-for", "x-real-ip", "forwarded", "x-forwarded-proto", "via"],
+)
+def test_every_proxy_header_the_middleware_knows_makes_local_review_unreachable(
+    header: str,
+) -> None:
+    """One list for both places: a header the IP middleware treats as proxy-added
+    must also hide the one-click login."""
+    from app.api.auth import _local_review_reachable
+
+    request = _request_with_headers({"host": "localhost", header: "203.0.113.7"})
+    assert _local_review_reachable(request) is False

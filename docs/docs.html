@@ -1350,7 +1350,8 @@
             <tr>
               <td><code class="env-key">LOCAL_REVIEW_LOGIN</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
-              <td>Local review only — never in production. Requires <code>DEMO_MODE=true</code> (the app refuses to
+              <td>Local review only — never in production. Requires <code>DEMO_MODE=true</code>,
+                <code>SECURE_COOKIES=false</code> and a loopback <code>APP_PUBLIC_URL</code> (the app refuses to
                 start otherwise). Shows a one-click "Enter the local review" button on <code>/admin/login</code> that
                 signs in as the seeded demo admin with no password or MFA check, so an agent can review every admin
                 page without a human typing credentials. See

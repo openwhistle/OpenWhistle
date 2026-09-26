@@ -1,4 +1,5 @@
 import re
+from urllib.parse import urlsplit
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -248,6 +249,17 @@ class Settings(BaseSettings):
                 "LOCAL_REVIEW_LOGIN requires DEMO_MODE=true: it signs in as the seeded "
                 "demo admin with no password or MFA check, so it must never be reachable "
                 "against a real database. Refusing to start."
+            )
+        # DEMO_MODE alone is not enough: the public demo runs with it. A local review
+        # stack is plain HTTP on a loopback URL; anything else is a reachable server.
+        host = (urlsplit(self.app_public_url).hostname or "").lower()
+        if self.local_review_login and (
+            host not in {"localhost", "127.0.0.1", "::1"} or self.secure_cookies
+        ):
+            raise ValueError(
+                "LOCAL_REVIEW_LOGIN requires a loopback APP_PUBLIC_URL and "
+                "SECURE_COOKIES=false: it is for a review stack on this machine only. "
+                "Refusing to start."
             )
         return self
 
