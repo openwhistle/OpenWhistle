@@ -245,7 +245,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install uv
-        run: pip install uv==0.12.18
+        run: pip install uv==0.12.19
 
       - name: Set up a throwaway TLS cert and a header-echoing backend
         run: |
