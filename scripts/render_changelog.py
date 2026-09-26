@@ -609,6 +609,8 @@ SHELL_HEAD = """<!DOCTYPE html>
       padding: 1px 5px;
       border-radius: 2px;
       color: var(--text-primary);
+      /* A long test or setting name must wrap at 390 px, not widen the page. */
+      overflow-wrap: anywhere;
     }
     [data-theme="dark"] .docs-section code {
       background: var(--bg-overlay);
