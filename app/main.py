@@ -100,6 +100,21 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         raise RuntimeError(msg)
     _run_alembic_upgrade()
 
+    if settings.multi_tenancy_enabled:
+        # Only once set up: a fresh install creates the default org in the setup wizard.
+        from app.api.wizard import _is_setup_complete  # noqa: PLC0415
+        from app.database import AsyncSessionLocal  # noqa: PLC0415
+        from app.services.report import (  # noqa: PLC0415
+            active_default_org_id,
+            default_org_missing_message,
+        )
+
+        async with AsyncSessionLocal() as db:
+            if await _is_setup_complete(db) and await active_default_org_id(db) is None:
+                msg = f"Refusing to start. {default_org_missing_message()}"
+                logger.error(msg)
+                raise RuntimeError(msg)
+
     if not settings.demo_mode:
         from app.api.wizard import _is_setup_complete  # noqa: PLC0415
         from app.database import AsyncSessionLocal  # noqa: PLC0415

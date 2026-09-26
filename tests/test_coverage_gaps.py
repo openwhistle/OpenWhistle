@@ -1014,6 +1014,7 @@ async def test_lifespan_demo_mode_calls_seed() -> None:
         seed_called.append(True)
 
     mock_settings = MagicMock()
+    mock_settings.multi_tenancy_enabled = False
     mock_settings.demo_mode = True
 
     with (

@@ -107,6 +107,7 @@ async def test_lifespan_warns_loudly_when_local_review_login_is_enabled(
     from app.main import lifespan
 
     mock_settings = MagicMock()
+    mock_settings.multi_tenancy_enabled = False
     mock_settings.demo_mode = True
     mock_settings.local_review_login = True
 
