@@ -168,13 +168,11 @@ def test_ansible_compose_mounts_the_nginx_snippets_directory() -> None:
     assert "./nginx/snippets:/etc/nginx/snippets:ro" in compose
 
 
-def test_ansible_nginx_template_renders_with_the_roles_own_defaults_and_clears_x_ow_onion() -> None:
-    """Fast, no-docker guard for the CI job's own render step: renders
-    nginx.conf.j2 with defaults/main.yml's actual values (only overriding the
-    empty, documented-as-required openwhistle_domain) and confirms the
-    output both includes the snippet and never hand-sets X-OW-Onion itself."""
-    yaml = pytest.importorskip("yaml")
-    jinja2 = pytest.importorskip("jinja2")
+def _render_role_template(name: str) -> str:
+    """Render one of the role's templates with defaults/main.yml's own values
+    (only the empty, documented-as-required openwhistle_domain is set)."""
+    import jinja2
+    import yaml
 
     defaults = yaml.safe_load(
         (ROOT / "ansible/roles/openwhistle/defaults/main.yml").read_text()
@@ -188,10 +186,43 @@ def test_ansible_nginx_template_renders_with_the_roles_own_defaults_and_clears_x
 
     env = jinja2.Environment()
     env.filters["bool"] = _bool
-    tmpl = env.from_string(
-        (ROOT / "ansible/roles/openwhistle/templates/nginx.conf.j2").read_text()
-    )
-    rendered = tmpl.render(**defaults)
+    return env.from_string(
+        (ROOT / "ansible/roles/openwhistle/templates" / name).read_text()
+    ).render(**defaults)
+
+
+def test_ansible_writes_every_nginx_bind_mount_world_readable() -> None:
+    """nginx runs with cap_drop ALL, so its root master has no CAP_DAC_OVERRIDE
+    and cannot open a 0640 file owned by the deploy user: nginx would not start."""
+    import yaml
+
+    compose = yaml.safe_load(_render_role_template("docker-compose.yml.j2"))
+    assert "DAC_OVERRIDE" not in compose["services"]["nginx"].get("cap_add", [])
+    sources = [
+        v.split(":")[0].removeprefix("./").rstrip("/")
+        for v in compose["services"]["nginx"]["volumes"]
+        if v.startswith("./")
+    ]
+    assert sources
+    tasks = yaml.safe_load((ROOT / "ansible/roles/openwhistle/tasks/deploy.yml").read_text())
+    modes = {}
+    for task in tasks:
+        args = task.get("ansible.builtin.template") or task.get("ansible.builtin.copy") or {}
+        dest = args.get("dest", "").removeprefix("{{ openwhistle_deploy_dir }}/").rstrip("/")
+        modes[dest] = (args.get("mode"), args.get("directory_mode"))
+    for source in sources:
+        assert source in modes, f"{source} is mounted into nginx but no task writes it"
+        mode, directory_mode = modes[source]
+        assert mode == "0644", f"{source} is written {mode}; nginx cannot read it"
+        assert directory_mode in (None, "0755"), source
+
+
+def test_ansible_nginx_template_renders_with_the_roles_own_defaults_and_clears_x_ow_onion() -> None:
+    """Fast, no-docker guard for the CI job's own render step: renders
+    nginx.conf.j2 with defaults/main.yml's actual values (only overriding the
+    empty, documented-as-required openwhistle_domain) and confirms the
+    output both includes the snippet and never hand-sets X-OW-Onion itself."""
+    rendered = _render_role_template("nginx.conf.j2")
 
     assert "proxy_set_header X-OW-Onion" not in rendered
     assert rendered.count("include /etc/nginx/snippets/proxy-headers.conf;") == 1
