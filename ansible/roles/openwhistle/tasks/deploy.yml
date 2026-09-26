@@ -26,7 +26,7 @@
   # verbatim from the repo, never retyped into this role, so the two
   # deployment paths cannot drift apart on IP-header / X-OW-Onion stripping.
   ansible.builtin.copy:
-    src: "{{ playbook_dir }}/../nginx/snippets/"
+    src: "{{ role_path }}/../../../nginx/snippets/"
     dest: "{{ openwhistle_deploy_dir }}/nginx/snippets/"
     owner: "{{ openwhistle_user }}"
     group: "{{ openwhistle_group }}"

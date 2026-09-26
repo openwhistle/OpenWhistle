@@ -161,6 +161,10 @@ def test_ansible_deploy_copies_the_real_snippet_files_not_a_retyped_copy() -> No
     deploy = (ROOT / "ansible/roles/openwhistle/tasks/deploy.yml").read_text()
     assert "nginx/snippets/" in deploy
     assert "openwhistle_deploy_dir }}/nginx/snippets/" in deploy
+    # role_path, not playbook_dir: the role must work from any playbook.
+    src = re.search(r'src: "\{\{ role_path \}\}/([^"]+)"', deploy)
+    assert src, "snippets src is not relative to role_path"
+    assert (ROOT / "ansible/roles/openwhistle" / src.group(1)).resolve() == ROOT / "nginx/snippets"
 
 
 def test_ansible_compose_mounts_the_nginx_snippets_directory() -> None:
