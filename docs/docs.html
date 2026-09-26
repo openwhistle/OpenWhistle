@@ -798,7 +798,7 @@
       <div class="sidebar-section">
         <div class="sidebar-section-title">Getting Started</div>
         <nav class="sidebar-links" aria-label="Getting started">
-          <a href="#overview" class="active">Overview</a>
+          <a href="#overview" class="active" aria-current="location">Overview</a>
           <a href="#requirements">Requirements</a>
           <a href="#container-images">Container Images</a>
           <a href="#installation">Installation</a>
@@ -2823,8 +2823,10 @@ CLAMAV_HOST=clamav</code></pre>
         var href = a.getAttribute('href');
         if (href === '#' + active) {
           a.classList.add('active');
+          a.setAttribute('aria-current', 'location');
         } else {
           a.classList.remove('active');
+          a.removeAttribute('aria-current');
         }
       });
     }
