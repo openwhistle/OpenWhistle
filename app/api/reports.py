@@ -1120,8 +1120,13 @@ async def reply_post(
 
     await report_service.add_whistleblower_message(db, report, stripped)
 
+    # A fresh key, but the old one's remaining lifetime: a reply must not extend
+    # the session either (see status_get).
+    remaining = 7200
+    if status_session_key:
+        remaining = max(1, int(await redis.ttl(f"status-session:{status_session_key}")))
     fresh_key = secrets.token_urlsafe(32)
-    await redis.set(f"status-session:{fresh_key}", str(report.id), ex=7200)
+    await redis.set(f"status-session:{fresh_key}", str(report.id), ex=remaining)
     if status_session_key:
         await redis.delete(f"status-session:{status_session_key}")
 
@@ -1129,7 +1134,7 @@ async def reply_post(
     response.set_cookie(
         "ow-status-session",
         fresh_key,
-        max_age=7200,
+        max_age=remaining,
         httponly=True,
         samesite="lax",
         secure=cookie_secure(request),

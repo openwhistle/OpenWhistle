@@ -470,3 +470,24 @@ async def test_attempt_counter_key_holds_no_case_number(client) -> None:  # type
     keys = [k.decode() if isinstance(k, bytes) else k
             async for k in redis.scan_iter("openwhistle:wb_ratelimit:*")]
     assert keys and not any(case in k for k in keys)
+
+
+async def test_reply_rotates_the_session_without_extending_it(client, db_session) -> None:  # type: ignore[no-untyped-def]
+    from app.redis_client import get_redis
+    from app.services.report import create_report
+
+    report, pin = await create_report(db_session, "corruption", "Reply TTL test.")
+    await client.get("/status")
+    await client.post("/status", data={
+        "case_number": report.case_number, "pin": pin,
+        "csrf_token": client.cookies.get("ow_csrf")}, follow_redirects=False)
+    old = client.cookies.get("ow-status-session")
+    redis = await get_redis()
+    await redis.expire(f"status-session:{old}", 100)
+    reply = await client.post("/reply", data={
+        "content": "One more detail.", "csrf_token": client.cookies.get("ow_csrf")},
+        follow_redirects=False)
+    assert reply.status_code == 303
+    new = client.cookies.get("ow-status-session")
+    assert new != old
+    assert 0 < await redis.ttl(f"status-session:{new}") <= 100
