@@ -28,13 +28,20 @@ _DOCS_TECH_HREF = re.compile(r'(?:href|src)=["\']([^"\']*docs-tech/[^"\']*)["\']
 
 
 def test_no_published_page_links_docs_tech() -> None:
-    """A *relative* link into docs-tech/ from a published page 404s once the
-    site ships (docs-tech/ is never uploaded — see the test above). Naming a
-    docs-tech/ file in running text (a citation, a `<code>` mention), or a
-    full URL to it on GitHub, is fine — only a same-site href/src is not."""
-    offenders = []
-    for p in (ROOT / "docs").rglob("*.html"):
-        for m in _DOCS_TECH_HREF.finditer(p.read_text()):
-            if not m.group(1).startswith(("http://", "https://")):
-                offenders.append(f"{p.relative_to(ROOT)}: {m.group(1)}")
-    assert not offenders, f"published page(s) link docs-tech/ relatively: {offenders}"
+    """docs-tech/ is never uploaded, so a relative link 404s; and a GitHub URL
+    sends an operator to a maintainer page. Naming a docs-tech/ file in
+    running text is fine, a link is not."""
+    offenders = [
+        f"{p.relative_to(ROOT)}: {m.group(1)}"
+        for p in (ROOT / "docs").rglob("*.html")
+        for m in _DOCS_TECH_HREF.finditer(p.read_text())
+    ]
+    assert not offenders, f"published page(s) link docs-tech/: {offenders}"
+
+
+def test_the_public_roadmap_holds_no_test_chores() -> None:
+    """Test infrastructure changes nothing a user sees; it is planned in
+    docs-tech/test-infrastructure.md, not on the published roadmap."""
+    roadmap = (ROOT / "docs/roadmap.html").read_text()
+    assert not re.search(r"\btests/|\btest_\w+", roadmap)
+    assert (ROOT / "docs-tech/test-infrastructure.md").exists()

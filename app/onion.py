@@ -40,8 +40,12 @@ _ONION_HEADER = "x-ow-onion"
 
 
 def is_onion_request(headers: list[tuple[bytes, bytes]]) -> bool:
-    """True when nginx marked this request as arriving via the onion listener."""
-    return raw_header(_ONION_HEADER, headers) == "1"
+    """True when nginx marked this request as arriving via the onion listener.
+
+    Without ONION_LOCATION there is no onion listener, so the header is
+    ignored: a path that forwards it from the client unchanged (the Helm
+    chart's ingress) cannot switch off Secure cookies and HSTS."""
+    return bool(settings.onion_location) and raw_header(_ONION_HEADER, headers) == "1"
 
 
 def raw_header(name: str, headers: list[tuple[bytes, bytes]]) -> str:

@@ -90,8 +90,8 @@
   {
    "id": "migration-004-downgrade-narrows-garbage",
    "file": "migrations/versions/004_encrypt_totp_secrets.py",
-   "old": "        if stuck:",
-   "new": "        if False:",
+   "old": "    if stuck:",
+   "new": "    if False:",
    "tests": "S"
   },
   {

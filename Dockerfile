@@ -48,8 +48,13 @@ COPY --from=builder /venv /venv
 COPY --chown=openwhistle:openwhistle . .
 
 # Self-hosted fonts (Sora + JetBrains Mono, OFL), committed once in docs/fonts
-# and shared with the public site — no download at build time.
-COPY --chown=openwhistle:openwhistle docs/fonts/*.woff2 /app/app/static/fonts/
+# and shared with the public site — no download at build time. Only the faces
+# app/static/css/fonts.css uses.
+COPY --chown=openwhistle:openwhistle \
+    docs/fonts/sora-latin-400-normal.woff2 docs/fonts/sora-latin-500-normal.woff2 \
+    docs/fonts/sora-latin-600-normal.woff2 docs/fonts/sora-latin-700-normal.woff2 \
+    docs/fonts/JetBrainsMono-Regular.woff2 docs/fonts/JetBrainsMono-Bold.woff2 \
+    /app/app/static/fonts/
 
 # Generate the file-integrity manifest over the exact shipped bytes (after fonts
 # are in place). -B avoids writing .pyc during the walk (PYTHONDONTWRITEBYTECODE

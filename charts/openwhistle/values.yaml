@@ -77,7 +77,11 @@ config:
   submissionModeEnabled: "true"
 
   # Tor onion address for reporters on a monitored network (Onion-Location
-  # header + a note on the submit page). Empty disables both.
+  # header + a note on the submit page). Empty disables both, and the app then
+  # ignores X-OW-Onion. When set, the ingress must clear a client-sent copy:
+  #   nginx.ingress.kubernetes.io/configuration-snippet: |
+  #     proxy_set_header X-OW-Onion "";
+  # (ingress-nginx needs allow-snippet-annotations in its ConfigMap.)
   onionLocation: ""
 
   # Absolute admin session lifetime in hours, counted from login (never extended)
@@ -161,6 +165,11 @@ config:
   clamavHost: ""
   clamavPort: "3310"
   clamavTimeoutSeconds: "30"
+
+# Any other (non-secret) setting from the configuration table, as NAME: value,
+# e.g. SECURE_COOKIES, ACCESS_TOKEN_EXPIRE_MINUTES, UPDATE_CHECK_ENABLED or the
+# lockout settings. Added to the ConfigMap; never repeat a key set above.
+extraEnv: {}
 
 # Secrets — these must be provided; they are not defaulted.
 # Create a Kubernetes Secret and reference it, or use an external secrets operator.

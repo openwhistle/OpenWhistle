@@ -513,6 +513,41 @@ source check (`pin-token-nowrap`, `pin-wbr-filter-not-applied`, both group
 `D`); the rendered e2e test stays as additional, valuable coverage of the
 real behaviour without a dedicated mutation of its own.
 
+### Deployment and upgrade (final review)
+
+`docs-tech/mutations/v1.6.0-ops.json`: 22 mutations, 22 red.
+The CI job `nginx-onion-trust` holds three more guards that no pytest can:
+nginx started as the demo host runs it (the role's file modes, a non-root
+owner, the rendered compose file's `cap_drop`), and header checks written as
+`if grep …; then exit 1; fi`, since `set -e` ignores a `!`-negated command.
+Each was proven red locally with podman: files written `0640` (nginx:
+`Permission denied`), and `X-Forwarded-For` or `X-Real-IP` no longer stripped.
+
+| Mutation | File | Test that fires |
+| --- | --- | --- |
+| `ansible-nginx-conf-0640` | `ansible/roles/openwhistle/tasks/deploy.yml` | `test_ansible_writes_every_nginx_bind_mount_world_readable` |
+| `ansible-snippets-0640` | `ansible/roles/openwhistle/tasks/deploy.yml` | `test_ansible_writes_every_nginx_bind_mount_world_readable` |
+| `ansible-snippets-dir-0640` | `ansible/roles/openwhistle/tasks/deploy.yml` | `test_ansible_writes_every_nginx_bind_mount_world_readable` |
+| `ansible-snippets-playbook-dir` | `ansible/roles/openwhistle/tasks/deploy.yml` | `test_ansible_deploy_copies_the_real_snippet_files_not_a_retyped_copy` |
+| `tls-init-dangling-falls-back` | `scripts/ensure_tls_cert.py` | `test_a_dangling_certificate_symlink_fails_loudly` |
+| `tls-init-unreadable-raw` | `scripts/ensure_tls_cert.py` | `test_an_unreadable_operator_key_fails_loudly` |
+| `behind-proxy-drifts` | `nginx/nginx.behind-proxy.conf` | `test_the_behind_proxy_nginx_differs_from_nginx_conf_only_in_its_listeners` |
+| `behind-proxy-no-strip` | `nginx/nginx.behind-proxy.conf` | `test_the_behind_proxy_nginx_differs_from_nginx_conf_only_in_its_listeners` |
+| `behind-proxy-keeps-443` | `docker-compose.behind-proxy.yml` | `test_the_behind_proxy_override_swaps_the_config_and_drops_443` |
+| `migration-004-offline` | `migrations/versions/004_encrypt_totp_secrets.py` | `test_migration_004_refuses_offline_sql` |
+| `brand-secondary-refused` | `app/config.py` | `test_a_stale_brand_secondary_color_in_env_is_ignored_with_a_warning` |
+| `onion-header-always-trusted` | `app/onion.py` | `test_x_ow_onion_is_ignored_without_an_onion_address` |
+| `helm-extra-env-dropped` | `charts/openwhistle/templates/configmap.yaml` | `test_helm_extra_env_reaches_the_configmap` |
+| `helm-onion-clear-undocumented` | `charts/openwhistle/values.yaml` | `test_the_chart_says_to_clear_x_ow_onion_when_an_onion_address_is_set` |
+| `rollback-pins-old-image` | `docs/docs.html` | `test_the_documented_rollback_downgrades_to_the_last_1_5_revision` |
+| `docs-python-m-app` | `docs/docs.html` | `test_the_docs_run_no_module_that_does_not_exist` |
+| `machine-path-committed` | `docs-tech/plans/2026-09-24-v1.6-hardening.md` | `test_no_tracked_file_holds_a_machine_local_path` |
+| `image-ships-unused-font` | `Dockerfile` | `test_the_image_ships_exactly_the_font_files_the_app_css_uses` |
+| `build-context-has-superpowers` | `.dockerignore` | `test_local_tooling_and_maintainer_docs_stay_out_of_the_build_context` |
+| `serena-tracked` | `.gitignore` | `test_local_tooling_and_maintainer_docs_stay_out_of_the_build_context` |
+| `docs-link-docs-tech` | `docs/docs.html` | `test_no_published_page_links_docs_tech` |
+| `roadmap-test-chore` | `docs/roadmap.html` | `test_the_public_roadmap_holds_no_test_chores` |
+
 ## Repository and release
 
 | Guard | Test |

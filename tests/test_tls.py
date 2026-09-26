@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import re
 import stat
 from pathlib import Path
@@ -42,6 +43,37 @@ def test_operator_certificate_wins(tmp_path: Path) -> None:
     assert mode == 0o600, oct(mode)
 
 
+def test_a_dangling_certificate_symlink_fails_loudly(tmp_path: Path) -> None:
+    """A certbot symlink dangles inside the container; it must not quietly
+    turn into a self-signed certificate."""
+    src = tmp_path / "certs"
+    src.mkdir()
+    (src / "fullchain.pem").write_text("CERT")
+    (src / "privkey.pem").symlink_to(tmp_path / "live/privkey.pem")
+    with pytest.raises(SystemExit, match="privkey.pem.*do not symlink"):
+        _ensure()(src, tmp_path / "tls", "x")
+    assert not (tmp_path / "tls/fullchain.pem").exists()
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="root reads any file")
+def test_an_unreadable_operator_key_fails_loudly(tmp_path: Path) -> None:
+    src = tmp_path / "certs"
+    src.mkdir()
+    (src / "fullchain.pem").write_text("CERT")
+    (src / "privkey.pem").write_text("KEY")
+    (src / "privkey.pem").chmod(0)
+    with pytest.raises(SystemExit, match="privkey.pem: Permission denied.*root-owned 0600"):
+        _ensure()(src, tmp_path / "tls", "x")
+
+
+def test_a_certificate_without_its_key_fails_loudly(tmp_path: Path) -> None:
+    src = tmp_path / "certs"
+    src.mkdir()
+    (src / "fullchain.pem").write_text("CERT")
+    with pytest.raises(SystemExit, match="privkey.pem"):
+        _ensure()(src, tmp_path / "tls", "x")
+
+
 def test_nginx_redirects_http_and_strips_ip_headers_on_https() -> None:
     conf = (ROOT / "nginx/nginx.conf").read_text()
     servers = re.findall(r"\n    server \{.*?\n    \}", conf, re.S)
@@ -63,6 +95,41 @@ def test_nginx_redirects_http_and_strips_ip_headers_on_https() -> None:
         assert f"proxy_set_header {header}" not in onion, "duplicated instead of included"
     assert "include /etc/nginx/snippets/proxy-headers.conf;" in tls
     assert "include /etc/nginx/snippets/proxy-headers.conf;" in onion
+
+
+def _servers(conf: str) -> list[str]:
+    return re.findall(r"\n    server \{.*?\n    \}", conf, re.S)
+
+
+def test_the_behind_proxy_nginx_differs_from_nginx_conf_only_in_its_listeners() -> None:
+    """The plain-HTTP config for an external TLS terminator is a second file;
+    everything but its port-80 block must stay identical to nginx.conf."""
+    conf = (ROOT / "nginx/nginx.conf").read_text()
+    behind = (ROOT / "nginx/nginx.behind-proxy.conf").read_text()
+
+    def preamble(text: str) -> str:
+        text = text[text.index("worker_processes"):]
+        return text[: text.index("\n    }\n", text.index("upstream openwhistle"))]
+
+    assert preamble(behind) == preamble(conf)
+    tls = next(s for s in _servers(conf) if "listen 443 ssl" in s)
+    onion = next(s for s in _servers(conf) if "listen 8080;" in s)
+    assert onion in _servers(behind)
+    assert "listen 443" not in behind
+    plain = next(s for s in _servers(behind) if "listen 80;" in s)
+    assert "return 301" not in plain
+    location = re.search(r"\n        location / \{.*?\n        \}", tls, re.S)
+    assert location and location.group(0) in plain
+    for snippet in ("proxy-headers.conf", "static-location.conf"):
+        assert f"include /etc/nginx/snippets/{snippet};" in plain
+
+
+def test_the_behind_proxy_override_swaps_the_config_and_drops_443() -> None:
+    override = (ROOT / "docker-compose.behind-proxy.yml").read_text()
+    assert "./nginx/nginx.behind-proxy.conf:/etc/nginx/nginx.conf:ro" in override
+    # !override replaces the port list; a plain list would be merged with 443.
+    assert "ports: !override" in override
+    assert '"443:443"' not in override
 
 
 def test_nginx_tls_listener_offers_only_tls_1_2_and_1_3() -> None:
@@ -161,6 +228,10 @@ def test_ansible_deploy_copies_the_real_snippet_files_not_a_retyped_copy() -> No
     deploy = (ROOT / "ansible/roles/openwhistle/tasks/deploy.yml").read_text()
     assert "nginx/snippets/" in deploy
     assert "openwhistle_deploy_dir }}/nginx/snippets/" in deploy
+    # role_path, not playbook_dir: the role must work from any playbook.
+    src = re.search(r'src: "\{\{ role_path \}\}/([^"]+)"', deploy)
+    assert src, "snippets src is not relative to role_path"
+    assert (ROOT / "ansible/roles/openwhistle" / src.group(1)).resolve() == ROOT / "nginx/snippets"
 
 
 def test_ansible_compose_mounts_the_nginx_snippets_directory() -> None:
@@ -168,13 +239,11 @@ def test_ansible_compose_mounts_the_nginx_snippets_directory() -> None:
     assert "./nginx/snippets:/etc/nginx/snippets:ro" in compose
 
 
-def test_ansible_nginx_template_renders_with_the_roles_own_defaults_and_clears_x_ow_onion() -> None:
-    """Fast, no-docker guard for the CI job's own render step: renders
-    nginx.conf.j2 with defaults/main.yml's actual values (only overriding the
-    empty, documented-as-required openwhistle_domain) and confirms the
-    output both includes the snippet and never hand-sets X-OW-Onion itself."""
-    yaml = pytest.importorskip("yaml")
-    jinja2 = pytest.importorskip("jinja2")
+def _render_role_template(name: str) -> str:
+    """Render one of the role's templates with defaults/main.yml's own values
+    (only the empty, documented-as-required openwhistle_domain is set)."""
+    import jinja2
+    import yaml
 
     defaults = yaml.safe_load(
         (ROOT / "ansible/roles/openwhistle/defaults/main.yml").read_text()
@@ -186,12 +255,45 @@ def test_ansible_nginx_template_renders_with_the_roles_own_defaults_and_clears_x
             return v
         return str(v).strip().lower() in ("true", "yes", "1", "on")
 
-    env = jinja2.Environment()
+    env = jinja2.Environment()  # noqa: S701 — renders nginx/compose config, not HTML
     env.filters["bool"] = _bool
-    tmpl = env.from_string(
-        (ROOT / "ansible/roles/openwhistle/templates/nginx.conf.j2").read_text()
-    )
-    rendered = tmpl.render(**defaults)
+    return env.from_string(
+        (ROOT / "ansible/roles/openwhistle/templates" / name).read_text()
+    ).render(**defaults)
+
+
+def test_ansible_writes_every_nginx_bind_mount_world_readable() -> None:
+    """nginx runs with cap_drop ALL, so its root master has no CAP_DAC_OVERRIDE
+    and cannot open a 0640 file owned by the deploy user: nginx would not start."""
+    import yaml
+
+    compose = yaml.safe_load(_render_role_template("docker-compose.yml.j2"))
+    assert "DAC_OVERRIDE" not in compose["services"]["nginx"].get("cap_add", [])
+    sources = [
+        v.split(":")[0].removeprefix("./").rstrip("/")
+        for v in compose["services"]["nginx"]["volumes"]
+        if v.startswith("./")
+    ]
+    assert sources
+    tasks = yaml.safe_load((ROOT / "ansible/roles/openwhistle/tasks/deploy.yml").read_text())
+    modes = {}
+    for task in tasks:
+        args = task.get("ansible.builtin.template") or task.get("ansible.builtin.copy") or {}
+        dest = args.get("dest", "").removeprefix("{{ openwhistle_deploy_dir }}/").rstrip("/")
+        modes[dest] = (args.get("mode"), args.get("directory_mode"))
+    for source in sources:
+        assert source in modes, f"{source} is mounted into nginx but no task writes it"
+        mode, directory_mode = modes[source]
+        assert mode == "0644", f"{source} is written {mode}; nginx cannot read it"
+        assert directory_mode in (None, "0755"), source
+
+
+def test_ansible_nginx_template_renders_with_the_roles_own_defaults_and_clears_x_ow_onion() -> None:
+    """Fast, no-docker guard for the CI job's own render step: renders
+    nginx.conf.j2 with defaults/main.yml's actual values (only overriding the
+    empty, documented-as-required openwhistle_domain) and confirms the
+    output both includes the snippet and never hand-sets X-OW-Onion itself."""
+    rendered = _render_role_template("nginx.conf.j2")
 
     assert "proxy_set_header X-OW-Onion" not in rendered
     assert rendered.count("include /etc/nginx/snippets/proxy-headers.conf;") == 1

@@ -472,7 +472,11 @@ def test_design_fix_list_is_closed() -> None:
 
 
 def test_brand_secondary_colour_is_gone() -> None:
-    for path in ("app/config.py", "app/templating.py", "app/templates/base.html",
+    from app.config import Settings
+
+    # config.py names it only to ignore a stale .env entry (test_v160_ops.py).
+    assert "brand_secondary_color" not in Settings.model_fields
+    for path in ("app/templating.py", "app/templates/base.html",
                  "docker-compose.yml", "docker-compose.e2e.yml", "docker-compose.prod.yml",
                  "docs/docs.html", "README.md", ".env.example",
                  "charts/openwhistle/values.yaml", "charts/openwhistle/templates/configmap.yaml",

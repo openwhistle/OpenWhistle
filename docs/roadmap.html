@@ -667,7 +667,8 @@
       <h1>Roadmap</h1>
       <p class="docs-lead">
         What's planned next for OpenWhistle — future releases only. Everything already
-        released is covered below.
+        released is in the
+        <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG</a>.
       </p>
 
       <div class="callout callout-note">
@@ -744,46 +745,6 @@
             receive 403; empty/unset means no restriction (backward-compatible default);
             implemented as FastAPI middleware before route resolution; respects
             <code>TRUSTED_PROXY_DEPTH</code> for correct IP extraction behind load balancers</li>
-        </ul>
-
-        <h3>Quality</h3>
-        <p>
-          Planned test-infrastructure work from the v1.1.0 test-quality review, each item checked
-          against the tree. Two of the original nine were already done and are not repeated
-          here — axe-core injects once and color-contrast already fails the build, both in
-          <code>tests/e2e/conftest.py</code>.
-        </p>
-        <ul>
-          <li><strong>Firefox smoke-test</strong> — run the critical-path E2E subset (login,
-            submission, status, session expiry) against Firefox via a second
-            <code>pytest-playwright</code> job in <code>e2e.yml</code>; only Chromium runs today</li>
-          <li><strong>Isolate reply tests from demo seed data</strong> — <code>test_admin_reply_appears_in_thread</code>
-            still mutates the shared demo report <code>OW-DEMO-00002</code> directly; refactor to
-            create a throwaway report first, the way <code>test_four_eyes_deletion.py</code>
-            already does, so a leftover reply from one run can't affect the next</li>
-          <li><strong>Replace silent skips with explicit failures</strong> — tests across
-            <code>tests/e2e/</code> still <code>pytest.skip</code> when demo data is missing (e.g.
-            "OW-DEMO-00002 not found on dashboard"); a broken demo seed should fail the run, not
-            pass it quietly as "skipped"</li>
-          <li><strong>Automatic performance regression gate</strong> — <code>perf.yml</code> already
-            runs Locust with <code>--csv</code> and uploads the results, but nothing reads that CSV
-            back; add a post-run script that fails the workflow when p95 exceeds the thresholds in
-            <code>docs-tech/performance-baseline.md</code></li>
-          <li><strong>Complete wizard flow in <code>WhistleblowerUser</code></strong> — the Locust
-            user class in <code>tests/perf/locustfile.py</code> still issues simplified GET/POST
-            calls to <code>/status</code>, <code>/submit</code> and <code>/health</code>; replace
-            with a full 6-step submission session to measure realistic end-to-end latency,
-            Redis session reads included</li>
-          <li><strong>Remove the stale version-string unit test</strong> — <code>test_app_version_current</code>
-            in <code>tests/test_v100.py</code> still hardcodes the current version and breaks at
-            every release; the <code>/health</code> endpoint test already covers a valid semver
-            string, so this one adds no safety net</li>
-          <li><strong>OpenAPI contract via an OpenAPI-enabled test client</strong> — <code>tests/test_openapi_contract.py</code>
-            exists, but tests real routes directly because <code>openapi_url</code> is disabled in
-            production; it never asserts against the schema itself. Add a <code>conftest.py</code>
-            fixture with a second <code>TestClient</code> that re-enables OpenAPI for the test app
-            only, and assert every expected route <code>operationId</code> is present — catching an
-            accidental route rename without exposing the schema in production</li>
         </ul>
 
         <h3>Design system</h3>
@@ -912,7 +873,7 @@
       <section class="docs-section" id="released" aria-labelledby="released-h2">
         <h2 id="released-h2">Already released</h2>
         <p>
-          Every shipped release, newest first, each with what it was for:
+          Every shipped release, newest first, is in the
           <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG</a>.
         </p>
       </section>
