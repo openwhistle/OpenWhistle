@@ -8,6 +8,7 @@ The column becomes Text (a Fernet token is longer than 32 characters) and every
 plaintext secret is encrypted in place. Idempotent: a value that already
 decrypts is left alone. Downgrade decrypts and narrows the column again.
 Downgrade refuses if a secret does not decrypt with the current key.
+Online only: offline SQL (``--sql``) cannot encrypt the existing rows.
 """
 
 import logging
@@ -45,10 +46,17 @@ def _set(user_id: object, value: str) -> None:
     )
 
 
-def upgrade() -> None:
-    op.alter_column("admin_users", "totp_secret", type_=sa.Text(), existing_nullable=False)
+def _refuse_offline() -> None:
     if context.is_offline_mode():
-        return
+        # Only the ALTER would be emitted: the secrets would stay plaintext
+        # (or ciphertext, going down), and every login would then fail.
+        msg = "Migration 004 must run online: offline SQL cannot re-encrypt the TOTP secrets"
+        raise RuntimeError(msg)
+
+
+def upgrade() -> None:
+    _refuse_offline()
+    op.alter_column("admin_users", "totp_secret", type_=sa.Text(), existing_nullable=False)
     from app.services.crypto import encrypt
 
     for user_id, secret in _rows():
@@ -57,32 +65,32 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    if not context.is_offline_mode():
-        from app.services.crypto import decrypt
+    _refuse_offline()
+    from app.services.crypto import decrypt
 
-        rows = _rows()
-        # A value longer than the target VARCHAR(32) that does not decrypt is not
-        # a legacy plaintext secret — it cannot be narrowed safely (wrong/rotated
-        # ENCRYPTION_KEY/SECRET_KEY, corruption). Refuse before touching the column.
-        stuck = [
-            user_id for user_id, secret in rows if len(secret) > 32 and not _is_token(secret)
-        ]
-        if stuck:
-            for user_id in stuck:
-                log.warning(
-                    "Migration 004 downgrade: totp_secret for admin_users.id=%s does not "
-                    "decrypt with the current ENCRYPTION_KEY/SECRET_KEY",
-                    user_id,
-                )
-            msg = (
-                f"{len(stuck)} totp_secret value(s) do not decrypt with the current "
-                "ENCRYPTION_KEY/SECRET_KEY; refusing to downgrade"
+    rows = _rows()
+    # A value longer than the target VARCHAR(32) that does not decrypt is not
+    # a legacy plaintext secret — it cannot be narrowed safely (wrong/rotated
+    # ENCRYPTION_KEY/SECRET_KEY, corruption). Refuse before touching the column.
+    stuck = [
+        user_id for user_id, secret in rows if len(secret) > 32 and not _is_token(secret)
+    ]
+    if stuck:
+        for user_id in stuck:
+            log.warning(
+                "Migration 004 downgrade: totp_secret for admin_users.id=%s does not "
+                "decrypt with the current ENCRYPTION_KEY/SECRET_KEY",
+                user_id,
             )
-            raise RuntimeError(msg)
+        msg = (
+            f"{len(stuck)} totp_secret value(s) do not decrypt with the current "
+            "ENCRYPTION_KEY/SECRET_KEY; refusing to downgrade"
+        )
+        raise RuntimeError(msg)
 
-        for user_id, secret in rows:
-            if _is_token(secret):
-                _set(user_id, decrypt(secret))
+    for user_id, secret in rows:
+        if _is_token(secret):
+            _set(user_id, decrypt(secret))
     op.alter_column(
         "admin_users", "totp_secret", type_=sa.String(32), existing_nullable=False
     )
