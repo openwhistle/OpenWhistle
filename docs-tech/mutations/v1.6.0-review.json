@@ -1,0 +1,208 @@
+{
+ "test_groups": {
+  "R": [
+   "tests/test_local_review.py"
+  ],
+  "D": [
+   "tests/test_docs_boundary.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "review-login-without-demo-mode",
+   "file": "app/config.py",
+   "old": "        if self.local_review_login and not self.demo_mode:",
+   "new": "        if False:",
+   "tests": "R"
+  },
+  {
+   "id": "review-startup-warning-dropped",
+   "file": "app/main.py",
+   "old": "    if settings.local_review_login:\n        logger.warning(",
+   "new": "    if False:\n        logger.warning(",
+   "tests": "R"
+  },
+  {
+   "id": "review-route-ignores-flag",
+   "file": "app/api/auth.py",
+   "old": "        or not settings.local_review_login\n        or not _local_review_reachable(request)",
+   "new": "        or not _local_review_reachable(request)",
+   "tests": "R"
+  },
+  {
+   "id": "review-route-any-method",
+   "file": "app/api/auth.py",
+   "old": "        request.method != \"POST\"\n        or not settings.local_review_login",
+   "new": "        not settings.local_review_login",
+   "tests": "R"
+  },
+  {
+   "id": "review-route-ignores-barrier",
+   "file": "app/api/auth.py",
+   "old": "        or not settings.local_review_login\n        or not _local_review_reachable(request)\n    ):",
+   "new": "        or not settings.local_review_login\n    ):",
+   "tests": "R"
+  },
+  {
+   "id": "review-route-405-for-other-methods",
+   "file": "app/api/auth.py",
+   "old": "_LOCAL_REVIEW_LOGIN_METHODS = [\"GET\", \"HEAD\", \"POST\", \"PUT\", \"DELETE\", \"PATCH\", \"OPTIONS\"]",
+   "new": "_LOCAL_REVIEW_LOGIN_METHODS = [\"GET\", \"HEAD\", \"POST\"]",
+   "tests": "R"
+  },
+  {
+   "id": "review-barrier-trusts-proxy",
+   "file": "app/api/auth.py",
+   "old": "    if any(h in request.headers for h in _PROXY_HEADERS):\n        return False\n",
+   "new": "",
+   "tests": "R"
+  },
+  {
+   "id": "review-barrier-any-host",
+   "file": "app/api/auth.py",
+   "old": "    return hostname.lower() in _LOOPBACK_HOSTNAMES",
+   "new": "    return True",
+   "tests": "R"
+  },
+  {
+   "id": "review-barrier-crashes-on-bad-host",
+   "file": "app/api/auth.py",
+   "old": "    except ValueError:\n        return False\n    return hostname",
+   "new": "    except TypeError:\n        return False\n    return hostname",
+   "tests": "R"
+  },
+  {
+   "id": "review-button-ignores-barrier",
+   "file": "app/api/auth.py",
+   "old": "\"local_review_login\": settings.local_review_login and _local_review_reachable(request),",
+   "new": "\"local_review_login\": settings.local_review_login,",
+   "tests": "R"
+  },
+  {
+   "id": "review-button-ignores-flag",
+   "file": "app/api/auth.py",
+   "old": "\"local_review_login\": settings.local_review_login and _local_review_reachable(request),",
+   "new": "\"local_review_login\": _local_review_reachable(request),",
+   "tests": "R"
+  },
+  {
+   "id": "review-login-skips-csrf",
+   "file": "app/api/auth.py",
+   "old": "    await validate_csrf(csrf_token, ow_csrf)\n\n    from app.services.demo_seed",
+   "new": "    from app.services.demo_seed",
+   "tests": "R"
+  },
+  {
+   "id": "review-login-no-demo-admin-500",
+   "file": "app/api/auth.py",
+   "old": "    if user is None:\n        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)\n    if not user.is_active:",
+   "new": "    if not user.is_active:",
+   "tests": "R"
+  },
+  {
+   "id": "review-login-audits-deactivated",
+   "file": "app/api/auth.py",
+   "old": "    if not user.is_active:\n        # Same outcome",
+   "new": "    if False:\n        # Same outcome",
+   "tests": "R"
+  },
+  {
+   "id": "review-login-unaudited",
+   "file": "app/api/auth.py",
+   "old": "    await audit_service.log(db, user, audit_service.AuditAction.AUTH_LOCAL_REVIEW_LOGIN)\n",
+   "new": "",
+   "tests": "R"
+  },
+  {
+   "id": "review-button-always-shown",
+   "file": "app/templates/login.html",
+   "old": "        {% if local_review_login %}",
+   "new": "        {% if true %}",
+   "tests": "R"
+  },
+  {
+   "id": "review-button-primary-class",
+   "file": "app/templates/login.html",
+   "old": "id=\"local-review-login-btn\" class=\"btn btn-secondary btn-block\"",
+   "new": "id=\"local-review-login-btn\" class=\"btn btn-primary btn-block\"",
+   "tests": "R"
+  },
+  {
+   "id": "review-port-merged-not-replaced",
+   "file": "docker-compose.review.yml",
+   "old": "    ports: !override\n",
+   "new": "    ports:\n",
+   "tests": "R"
+  },
+  {
+   "id": "review-flag-missing-from-override",
+   "file": "docker-compose.review.yml",
+   "old": "      LOCAL_REVIEW_LOGIN: \"true\"",
+   "new": "      LOCAL_REVIEW_LOGIN: \"false\"",
+   "tests": "R"
+  },
+  {
+   "id": "review-flag-in-ci-e2e",
+   "file": "docker-compose.e2e.yml",
+   "old": "      DEMO_MODE: \"true\"",
+   "new": "      DEMO_MODE: \"true\"\n      LOCAL_REVIEW_LOGIN: \"true\"",
+   "tests": "R"
+  },
+  {
+   "id": "review-flag-in-prod-compose",
+   "file": "docker-compose.prod.yml",
+   "old": "      DEMO_MODE: \"${DEMO_MODE:-false}\"",
+   "new": "      DEMO_MODE: \"${DEMO_MODE:-false}\"\n      LOCAL_REVIEW_LOGIN: \"${LOCAL_REVIEW_LOGIN:-false}\"",
+   "tests": "R"
+  },
+  {
+   "id": "review-flag-live-in-ansible",
+   "file": "ansible/roles/openwhistle/templates/env.j2",
+   "old": "# LOCAL_REVIEW_LOGIN=false ",
+   "new": "LOCAL_REVIEW_LOGIN=true ",
+   "tests": "R"
+  },
+  {
+   "id": "review-setup-stack-demo-seeded",
+   "file": "docker-compose.review.yml",
+   "old": "      DEMO_MODE: \"false\"",
+   "new": "      DEMO_MODE: \"true\"",
+   "tests": "R"
+  },
+  {
+   "id": "review-setup-stack-always-on",
+   "file": "docker-compose.review.yml",
+   "old": "    image: openwhistle:e2e\n    profiles: [\"setup\"]\n",
+   "new": "    image: openwhistle:e2e\n",
+   "tests": "R"
+  },
+  {
+   "id": "review-matrix-drops-a-page",
+   "file": "docs-tech/local-review.md",
+   "old": "| `/admin/dashboard` | `admin/dashboard.html` |",
+   "new": "| (dashboard) | (dashboard) |",
+   "tests": "R"
+  },
+  {
+   "id": "review-matrix-drops-a-site-page",
+   "file": "docs-tech/local-review.md",
+   "old": "| `docs/index.html` | Landing page, English. |",
+   "new": "| (index) | Landing page, English. |",
+   "tests": "R"
+  },
+  {
+   "id": "review-release-step-dropped",
+   "file": "docs-tech/release.md",
+   "old": "## 3. Chrome check\n",
+   "new": "### Chrome check\n",
+   "tests": "R"
+  },
+  {
+   "id": "docs-link-into-docs-tech",
+   "file": "docs/docs.html",
+   "old": "<a href=\"https://github.com/openwhistle/OpenWhistle/blob/main/docs-tech/local-review.md\"",
+   "new": "<a href=\"../docs-tech/local-review.md\"",
+   "tests": "D"
+  }
+ ]
+}

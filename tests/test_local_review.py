@@ -177,10 +177,36 @@ def test_local_review_reachable_rejects_any_proxy_header(header: str) -> None:
 # ── The route: 404 for every method when off, second barrier when on ───────
 
 
-async def test_local_review_login_route_404_when_disabled(client: AsyncClient) -> None:
+async def test_local_review_login_route_404_when_disabled(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The flag alone: demo mode on and a loopback Host (the barrier passes),
+    so only the setting check stands between this POST and the CSRF check."""
     assert settings.local_review_login is False  # test default (conftest sets DEMO_MODE=false)
-    resp = await client.post("/admin/local-review-login", follow_redirects=False)
+    monkeypatch.setattr(settings, "demo_mode", True)
+    resp = await client.post(
+        "/admin/local-review-login", headers=_LOCALHOST, follow_redirects=False
+    )
     assert resp.status_code == 404
+
+
+async def test_local_review_login_404_when_no_demo_admin_exists(
+    client: AsyncClient, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Flag on, barrier passes, CSRF valid, but nothing was seeded: 404, not
+    an AttributeError 500 on a missing user."""
+    monkeypatch.setattr(settings, "demo_mode", True)
+    monkeypatch.setattr(settings, "local_review_login", True)
+    await _delete_demo_admin(db_session)
+    csrf = (await client.get("/admin/login", headers=_LOCALHOST)).cookies.get("ow_csrf")
+    resp = await client.post(
+        "/admin/local-review-login",
+        data={"csrf_token": csrf},
+        headers=_LOCALHOST,
+        follow_redirects=False,
+    )
+    assert resp.status_code == 404
+    assert "ow_session" not in resp.cookies
 
 
 _NON_POST_METHODS = ["GET", "HEAD", "PUT", "DELETE", "PATCH", "OPTIONS"]
@@ -383,7 +409,11 @@ async def test_login_page_shows_the_button_only_when_flag_and_barrier_pass(
     resp = await client.get("/admin/login")
     assert "local-review-login" not in resp.text
 
+    # Barrier passes, flag off: still hidden.
     monkeypatch.setattr(settings, "demo_mode", True)
+    resp_flag_off = await client.get("/admin/login", headers=_LOCALHOST)
+    assert "local-review-login" not in resp_flag_off.text
+
     monkeypatch.setattr(settings, "local_review_login", True)
 
     # Default test Host ("test", from the client's base_url) is not loopback:
@@ -479,6 +509,18 @@ def test_review_override_binds_the_app_port_to_loopback_only() -> None:
     # would stay active too. `!override` is required for this to actually be
     # loopback-only once merged with docker-compose.e2e.yml.
     assert re.search(r"ports:\s*!override", text)
+
+
+def test_review_setup_profile_is_a_fresh_install_without_the_review_login() -> None:
+    """The app-setup profile exists to show /setup and the login page an
+    operator sees: demo seeding would complete setup and hide both."""
+    text = (ROOT / "docker-compose.review.yml").read_text()
+    block = text.split("\n  app-setup:\n", 1)[1].split("\n  db-setup:\n", 1)[0]
+    assert 'profiles: ["setup"]' in block
+    assert 'DEMO_MODE: "false"' in block
+    assert "LOCAL_REVIEW_LOGIN" not in block
+    assert re.search(r'SETUP_TOKEN: "[^"]{16,}"', block)
+    assert '"127.0.0.1:4010:4009"' in block
 
 
 def test_review_override_button_has_a_distinct_id_and_non_primary_class() -> None:
@@ -586,8 +628,11 @@ def test_local_review_page_matrix_covers_every_app_template() -> None:
 
 
 def test_release_md_names_the_chrome_check_before_the_release_pr() -> None:
+    """The numbered step itself, not just the diagram: dropping the section
+    while the mermaid box still says "Chrome check" must fail."""
     text = (ROOT / "docs-tech/release.md").read_text()
-    chrome_at = text.index("Chrome check")
-    pr_at = text.index("Release PR")
-    assert chrome_at < pr_at
-    assert "local-review.md" in text
+    steps = re.findall(r"^## \d+\. (.+)$", text, re.M)
+    assert "Chrome check" in steps and "Release PR" in steps, steps
+    assert steps.index("Chrome check") < steps.index("Release PR"), steps
+    section = next(s for s in text.split("\n## ") if re.match(r"\d+\. Chrome check\n", s))
+    assert "docs-tech/local-review.md" in section

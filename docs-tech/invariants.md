@@ -96,8 +96,8 @@ outcome.
 
 ## v1.6.0 hardening
 
-Mutations: `docs-tech/mutations/v1.6.0-{security,privacy,wizard,timeouts,platform}.json`
-(206, all red). One row per guard; the test is the first one that fired.
+Mutations: `docs-tech/mutations/v1.6.0-{security,privacy,wizard,timeouts,platform,review}.json`
+(234, all red). One row per guard; the test is the first one that fired.
 
 **Found by the v1.6.0 audit.** The first run left 26 of 205 green. Six
 had a test that the spec did not run (the S3 key tests live in
@@ -113,6 +113,16 @@ an attachment, and the 4 KiB bound on a clamd reply (an over-long `FOUND` reply 
 The three ClamAV timeouts were added after that run: removing one hangs its
 test, so `v1.6.0-timeouts.json` sets `timeout_seconds: 120` and the script
 counts a hang as red.
+
+`v1.6.0-review.json` (the local review login) first left 4 of 27 green: the
+disabled-route and hidden-button tests failed the Host barrier before they
+reached the flag, a missing demo admin and the `app-setup` profile had no
+test. Each got one; the release.md test now reads the numbered step, not the
+diagram.
+Re-running the other five after merging it: `inactive-reaches-totp` was
+stale (`_login_ctx` gained `request`), and `search-order-unstable` was red
+only by luck (without the tiebreaker, which of two tied rows wins is a coin
+flip on random uuids); its test now also checks the statement's `ORDER BY`.
 
 **Not mutations.**
 
@@ -369,6 +379,41 @@ counts a hang as red.
 | `panel-header-shouted` | `app/static/css/site.css` | `test_panel_headers_and_labels_are_not_shouted` |
 | `eyebrows-everywhere` | `app/templates/admin/users.html` | `test_eyebrows_are_the_exception` |
 
+### Local review login (maintainer tooling)
+
+`docs-tech/mutations/v1.6.0-review.json`
+
+| Mutation | File | Test that fires |
+| --- | --- | --- |
+| `review-login-without-demo-mode` | `app/config.py` | `test_local_review_login_requires_demo_mode` |
+| `review-startup-warning-dropped` | `app/main.py` | `test_lifespan_warns_loudly_when_local_review_login_is_enabled` |
+| `review-route-ignores-flag` | `app/api/auth.py` | `test_local_review_login_route_404_when_disabled` |
+| `review-route-any-method` | `app/api/auth.py` | `test_local_review_login_route_404_for_every_method_when_enabled` |
+| `review-route-ignores-barrier` | `app/api/auth.py` | `test_local_review_login_404_with_any_proxy_header` |
+| `review-route-405-for-other-methods` | `app/api/auth.py` | `test_local_review_login_route_404_for_every_method_when_disabled` |
+| `review-barrier-trusts-proxy` | `app/api/auth.py` | `test_local_review_reachable_rejects_any_proxy_header` |
+| `review-barrier-any-host` | `app/api/auth.py` | `test_local_review_reachable_rejects_non_loopback_host` |
+| `review-barrier-crashes-on-bad-host` | `app/api/auth.py` | `test_local_review_reachable_treats_malformed_bracketed_host_as_unreachable` |
+| `review-button-ignores-barrier` | `app/api/auth.py` | `test_login_page_does_not_crash_with_malformed_host` |
+| `review-button-ignores-flag` | `app/api/auth.py` | `test_login_page_shows_the_button_only_when_flag_and_barrier_pass` |
+| `review-login-skips-csrf` | `app/api/auth.py` | `test_local_review_login_route_rejects_bad_csrf_before_signing_in` |
+| `review-login-no-demo-admin-500` | `app/api/auth.py` | `test_local_review_login_404_when_no_demo_admin_exists` |
+| `review-login-audits-deactivated` | `app/api/auth.py` | `test_local_review_login_deactivated_admin_redirects_without_audit_row` |
+| `review-login-unaudited` | `app/api/auth.py` | `test_local_review_login_signs_in_with_full_session_and_audit_row` |
+| `review-button-always-shown` | `app/templates/login.html` | `test_login_page_does_not_crash_with_malformed_host` |
+| `review-button-primary-class` | `app/templates/login.html` | `test_review_override_button_has_a_distinct_id_and_non_primary_class` |
+| `review-port-merged-not-replaced` | `docker-compose.review.yml` | `test_review_override_binds_the_app_port_to_loopback_only` |
+| `review-flag-missing-from-override` | `docker-compose.review.yml` | `test_local_review_login_true_only_in_review_override` |
+| `review-flag-in-ci-e2e` | `docker-compose.e2e.yml` | `test_local_review_login_literal_false_or_absent_everywhere_except_allowlist` |
+| `review-flag-in-prod-compose` | `docker-compose.prod.yml` | `test_local_review_login_literal_false_or_absent_everywhere_except_allowlist` |
+| `review-flag-live-in-ansible` | `ansible/roles/openwhistle/templates/env.j2` | `test_local_review_login_literal_false_or_absent_everywhere_except_allowlist` |
+| `review-setup-stack-demo-seeded` | `docker-compose.review.yml` | `test_review_setup_profile_is_a_fresh_install_without_the_review_login` |
+| `review-setup-stack-always-on` | `docker-compose.review.yml` | `test_review_setup_profile_is_a_fresh_install_without_the_review_login` |
+| `review-matrix-drops-a-page` | `docs-tech/local-review.md` | `test_local_review_page_matrix_covers_every_app_page` |
+| `review-matrix-drops-a-site-page` | `docs-tech/local-review.md` | `test_local_review_page_matrix_covers_every_docs_site_page` |
+| `review-release-step-dropped` | `docs-tech/release.md` | `test_release_md_names_the_chrome_check_before_the_release_pr` |
+| `docs-link-into-docs-tech` | `docs/docs.html` | `test_no_published_page_links_docs_tech` |
+
 ## Repository and release
 
 | Guard | Test |
@@ -376,7 +421,7 @@ counts a hang as red.
 | `docs-tech/` is never published | `test_the_technical_docs_are_not_published` |
 | Every published version string equals `app_version`, every image default in the prod compose file too | `test_every_published_version_string_matches` |
 | A setting added since the previous release has a CHANGELOG entry | `test_every_new_setting_is_in_the_changelog` |
-| Every setting has a docs env-table row and a `docker-compose.prod.yml` line | `tests/test_config_documented.py` |
+| Every setting has a docs env-table row and a `docker-compose.prod.yml` line (except `APP_VERSION` and `LOCAL_REVIEW_LOGIN`) | `tests/test_config_documented.py` |
 | uv pinned identically in the image and all workflows | `test_uv_version_is_the_same_in_the_image_and_every_workflow` |
 | `uv.lock` matches `pyproject.toml` | CI step `uv lock --check` |
 | Every tag and platform manifest pullable after publish | the publish workflow's verify loop |
