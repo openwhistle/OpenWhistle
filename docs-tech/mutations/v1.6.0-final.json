@@ -555,8 +555,8 @@
   {
    "id": "demo-admin-org-less",
    "file": "app/services/demo_seed.py",
-   "old": "            role=AdminRole.admin,\n            is_active=True,\n            org_id=org_row,  # the default org, like setup's first admin\n",
-   "new": "            role=AdminRole.admin,\n            is_active=True,\n",
+   "old": "        if account.org_id is None:\n            account.org_id = org_row\n",
+   "new": "        pass\n",
    "tests": "DS"
   }
  ]
