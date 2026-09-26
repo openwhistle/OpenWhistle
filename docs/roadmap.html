@@ -495,7 +495,10 @@
     }
 
     /* ── Responsive ─────────────────────────────────────────────── */
-    @media (max-width: 768px) {
+    /* Nav collapses at 1080px, not 768px: at 1024px the full item list no
+       longer fits the nav-inner row and overflows the viewport
+       horizontally (Task X12 Chrome-check finding). */
+    @media (max-width: 1080px) {
       .nav-links { display: none; }
       .nav-links.open {
         display: flex;
@@ -511,6 +514,9 @@
         z-index: 201;
       }
       .nav-toggle { display: flex; }
+    }
+
+    @media (max-width: 768px) {
       .docs-layout { grid-template-columns: 1fr; }
       .docs-sidebar {
         position: static;
@@ -548,8 +554,11 @@
       <ul class="nav-links" id="nav-links" role="list">
         <li><a href="index.html#features">Features</a></li>
         <li><a href="index.html#how-it-works">How it Works</a></li>
+        <li><a href="index.html#compliance">Compliance</a></li>
         <li><a href="docs.html">Documentation</a></li>
-        <li><a href="roadmap.html" class="active">Roadmap</a></li>
+        <li><a href="roadmap.html" class="active" aria-current="page">Roadmap</a></li>
+        <li><a href="blog/">Blog</a></li>
+        <li><a href="de/">Auf Deutsch</a></li>
         <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
         <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank" class="nav-cta">Try Demo</a></li>
       </ul>

@@ -1183,7 +1183,11 @@
     }
 
     /* ── Responsive ─────────────────────────────────────────────── */
-    @media (max-width: 768px) {
+    /* Nav collapses at 1080px, not 768px: at 1024px the full item list
+       (Features/How it Works/Documentation/Roadmap/Blog/language switch/
+       GitHub/Try Demo) no longer fits the nav-inner row and overflows the
+       viewport horizontally (Task X12 Chrome-check finding). */
+    @media (max-width: 1080px) {
       .nav-links { display: none; }
       .nav-links.open {
         display: flex;
@@ -1199,6 +1203,9 @@
         z-index: 201;
       }
       .nav-toggle { display: flex; }
+    }
+
+    @media (max-width: 768px) {
       .hero-rule-left, .hero-rule-right { display: none; }
       .problem-layout,
       .flows-grid,

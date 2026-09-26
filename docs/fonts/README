@@ -1,104 +1,17 @@
-Spectral and Source Serif 4 (self-hosted web fonts)
-====================================================
-
-Used by the @font-face rules in docs/blog/*.html (the four blog articles
-and the blog index) and in docs/de/index.html for --font-display
-(Spectral) and --font-body (Source Serif 4). Self-hosted so the pages
-carry no external font CDN (Google Fonts or otherwise) — see CLAUDE.md's
-font policy.
-
-These two families were fetched once before (commit fc47183) but removed
-again by a later, unrelated redesign (commit 241e926) that moved
-docs.html and docs/index.html (EN) to Sora + JetBrains Mono and never
-touched docs/de/index.html or the older blog scaffold, both of which kept
-declaring Spectral/Source Serif 4 by path — docs/de/index.html was never
-migrated to the newer design at all (it is also still on version 1.0.0 in
-several places; a separate, larger gap than fonts). Every @font-face rule
-on both pointed at files that no longer existed for months; the browser
-fell back to the declared Georgia fallback, so nothing visibly broke, but
-nothing was actually self-hosted either. Refetched here and pinned with
-this file so it can't happen again silently; tests/test_v160_design.py's
-`test_every_docs_font_face_url_resolves_to_a_real_file` now asserts every
-@font-face url() under docs/ resolves to a real file.
-
-Source
-------
-
-Both fetched from their official @fontsource npm packages (the same
-distribution method the DejaVu font in app/fonts/ documents, and the one
-Sora/JetBrains Mono in this same directory already use):
-
-  @fontsource/spectral@5.3.0
-    https://registry.npmjs.org/@fontsource/spectral/-/spectral-5.3.0.tgz
-    sha512-2TL5WWGOZj4SIsBmPFEzKeA60tXXd1Qp1OqaaVEWkJL8IfSGLk6YmiusmC441iFkdJDIuFelu1r8lhCmQUU3mw==
-
-  @fontsource/source-serif-4@5.3.0
-    https://registry.npmjs.org/@fontsource/source-serif-4/-/source-serif-4-5.3.0.tgz
-    sha512-yQz8xmIgMzks8zQbpuca3UYtjxK798XCyQAGdDXmzBgvV7sdoK6d0YvE9F9kiYxORCEMRBgGZDZsSYcXj5KvwA==
-
-Both integrity values were checked against the `dist.integrity` field the
-npm registry publishes for that exact version (`npm view <pkg>@<version>
-dist.integrity`) before any file was copied out of the tarball.
-
-Files taken, unmodified, from each package's files/ directory — only the
-weights/styles some page actually declares, nothing extra:
-
-  spectral-latin-400-normal.woff2       blog + de/index.html
-  spectral-latin-400-italic.woff2       de/index.html only
-  spectral-latin-500-normal.woff2       de/index.html only
-  spectral-latin-600-normal.woff2       de/index.html only
-  spectral-latin-600-italic.woff2       de/index.html only
-  spectral-latin-700-normal.woff2       blog + de/index.html
-  spectral-latin-700-italic.woff2       de/index.html only (round 2)
-  spectral-latin-ext-400-normal.woff2   blog only
-  spectral-latin-ext-600-normal.woff2   blog only (round 2)
-  spectral-latin-ext-700-normal.woff2   blog only
-  source-serif-4-latin-300-normal.woff2      blog + de/index.html
-  source-serif-4-latin-300-italic.woff2      de/index.html only (round 2)
-  source-serif-4-latin-400-normal.woff2      blog + de/index.html
-  source-serif-4-latin-400-italic.woff2      de/index.html only
-  source-serif-4-latin-600-normal.woff2      blog + de/index.html
-  source-serif-4-latin-700-normal.woff2      de/index.html only
-  source-serif-4-latin-ext-300-normal.woff2  blog only
-  source-serif-4-latin-ext-400-normal.woff2  blog only
-  source-serif-4-latin-ext-600-normal.woff2  blog only
-
-Round 2 additions: the blog scaffold's own CSS asks for Spectral weight 600
-(`.nav-logo`, `.article-body h3`, and blog index's `.footer-logo`), and
-docs/de/index.html's CSS asks for Spectral 700 italic
-(`.hero-headline .accent-emphasis`, which inherits `.hero-headline`'s
-weight 700) and Source Serif 4 300 italic (`.hero-subline em`, which
-inherits `.hero-subline`'s weight 300) — none of these were shipped, so the
-browser was synthesizing a faux-bold or faux-italic instead of using the
-real face. `tests/test_v160_design.py::test_every_docs_page_font_usage_has_a_matching_font_face`
-now catches this class of gap (a shipped family missing a specific
-weight/style the page's own CSS actually uses), not just "the declared
-@font-face url() resolves" (round 1's narrower guard).
-
-Only the blog pages split `latin`/`latin-ext` into separate @font-face
-rules with a `unicode-range` each (the exact ranges fontsource publishes
-for those subsets) — `latin` alone (U+0000-00FF plus general punctuation)
-already covers every character the current German/English blog text uses,
-including German umlauts and the „…" quotes, but `latin-ext` (Latin
-Extended-A/B, e.g. Polish/Czech/Hungarian diacritics) is shipped and wired
-in too, so a future article naming a person or place with those characters
-renders in the real typeface instead of silently falling back to Georgia.
-docs/de/index.html predates that split; it declares one `latin`-only rule
-per weight/style, unchanged here — only the missing files it already
-referenced (or, round 2, actually uses) were added, not a redesign of its
-CSS.
-
-License
--------
-
-SIL Open Font License, Version 1.1 — full text as shipped by each
-package, unmodified: spectral-LICENSE (Spectral, copyright 2017 The
-Spectral Project Authors) and source-serif-4-LICENSE (Source Serif 4).
-Permissive, attribution-preserving, explicitly allows embedding and
-redistribution; compatible with this project's GPLv3.
-
-Sora and JetBrains Mono (docs.html + docs/index.html EN)
+Sora and JetBrains Mono (self-hosted web fonts)
 ==========================================================
+
+Used by every page under docs/ (the landing pages, docs.html, roadmap.html
+and the blog) for --font-display/--font-body (Sora) and --font-mono
+(JetBrains Mono). Self-hosted so the pages carry no external font CDN
+(Google Fonts or otherwise) — see CLAUDE.md's font policy.
+
+Task X12 rebuilt docs/blog/*.html onto this same design (they used to run
+their own Spectral/Source Serif 4 + navy design, disconnected from the
+rest of the site); with docs/de/index.html already migrated in an earlier
+task, nothing under docs/ referenced Spectral or Source Serif 4 any more,
+so both families' `.woff2` files and LICENSE files were deleted from this
+directory rather than kept unreferenced.
 
 Round 1 called `sora-latin-*.woff2`/`JetBrainsMono-*.woff2` "unrelated,
 not covered by this fix" — round 2's broader coverage test found the same
@@ -108,7 +21,7 @@ shipped), and `.t-comment` (inside a code block, so it inherits
 `font-family: var(--font-mono)` from its ancestor, not body's Sora) and
 docs/index.html's `.footer-logo` ask for JetBrains Mono weight 500 and
 weight 400 italic (only 400/700 normal were shipped). Fixed the same way
-as Spectral/Source Serif 4:
+as any other missing-weight gap:
 
   @fontsource/sora@5.3.0
     https://registry.npmjs.org/@fontsource/sora/-/sora-5.3.0.tgz
@@ -149,9 +62,8 @@ now `cmp`-identical to this one package:
   JetBrainsMono-Medium.woff2   (weight 500 normal — docs/index.html `.footer-logo`)
   JetBrainsMono-Italic.woff2   (weight 400 italic — docs.html + docs/index.html `.t-comment`)
 
-No `unicode-range` was added: none of these four rules ever declared one
-(unlike the blog's Spectral/Source Serif 4 latin/latin-ext split), every
-use of this family on every page is plain ASCII (case numbers, PINs,
+No `unicode-range` was added: none of these four rules ever declared one,
+and every use of this family on every page is plain ASCII (case numbers, PINs,
 timestamps, code-comment prose, the "OpenWhistle" wordmark), and adding a
 narrow range without a second face to cover what it excludes would only
 ever *lose* coverage, never gain any — nothing to "update" that wasn't
@@ -169,7 +81,7 @@ running app in one step; `app/static/css/fonts.css` needed no edit since
 the filenames it references didn't change.
 
 License: SIL Open Font License 1.1 for both Sora and JetBrains Mono (same
-license family as Spectral/Source Serif 4/DejaVu). Round 2 left both
+license family as DejaVu, in app/fonts/). Round 2 left both
 without a LICENSE file in this directory, flagged as a pre-existing gap;
 closed here alongside the JetBrains Mono re-sourcing since the packages
 were already being verified anyway: `sora-LICENSE`, `jetbrains-mono-LICENSE`

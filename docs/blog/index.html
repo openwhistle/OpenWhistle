@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Apply theme before first paint to avoid flash -->
   <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
   <title>Blog — OpenWhistle | HinSchG, Hinweisgeberschutz &amp; Compliance</title>
   <meta name="description" content="Der OpenWhistle Blog: Praxisartikel zu HinSchG-Compliance, Hinweisgeberschutz, interner Meldestelle einrichten und Vergleiche mit kommerziellen Whistleblower-Tools.">
@@ -21,150 +22,490 @@
   <meta property="og:image" content="https://openwhistle.net/og-image.png">
 
   <style>
-    @font-face { font-family: 'Spectral'; src: url('../fonts/spectral-latin-ext-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; font-display: swap; }
-    @font-face { font-family: 'Spectral'; src: url('../fonts/spectral-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; font-display: swap; }
-    @font-face { font-family: 'Spectral'; src: url('../fonts/spectral-latin-ext-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; font-display: swap; }
-    @font-face { font-family: 'Spectral'; src: url('../fonts/spectral-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; font-display: swap; }
-    @font-face { font-family: 'Spectral'; src: url('../fonts/spectral-latin-ext-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; font-display: swap; }
-    @font-face { font-family: 'Spectral'; src: url('../fonts/spectral-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; font-display: swap; }
-    @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-ext-300-normal.woff2') format('woff2'); font-weight: 300; font-style: normal; unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; font-display: swap; }
-    @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-300-normal.woff2') format('woff2'); font-weight: 300; font-style: normal; unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; font-display: swap; }
-    @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-ext-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; font-display: swap; }
-    @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; font-display: swap; }
-    @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-ext-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; font-display: swap; }
-    @font-face { font-family: 'Source Serif 4'; src: url('../fonts/source-serif-4-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; font-display: swap; }
+    /* Self-hosted fonts — no external CDN calls */
+    @font-face { font-family: 'Sora'; src: url('../fonts/sora-latin-300-normal.woff2') format('woff2'); font-weight: 300; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Sora'; src: url('../fonts/sora-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Sora'; src: url('../fonts/sora-latin-500-normal.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Sora'; src: url('../fonts/sora-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Sora'; src: url('../fonts/sora-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'JetBrains Mono'; src: url('../fonts/JetBrainsMono-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'JetBrains Mono'; src: url('../fonts/JetBrainsMono-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+    @font-face { font-family: 'JetBrains Mono'; src: url('../fonts/JetBrainsMono-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'JetBrains Mono'; src: url('../fonts/JetBrainsMono-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+  </style>
+
+  <style>
+    /* ================================================================
+       OpenWhistle Blog — shares docs/index.html's design tokens
+       (Task X12: the blog scaffold used to run its own Spectral/Source
+       Serif 4 + navy design, disconnected from the rest of the site)
+       ================================================================ */
 
     :root {
-      --bg-base: #fafaf7;
-      --bg-surface: #f4f2ed;
+      --bg-base: #ffffff;
+      --bg-surface: #f6f6f5;
+      --bg-raised: #efefee;
+      --bg-overlay: #e9e9e8;
       --nav-bg: #ffffff;
-      --footer-bg: #1a2744;
-      --text-primary: #1e293b;
-      --text-secondary: #3d4f6b;
-      --text-muted: #6b7a96;
-      --border-subtle: #e2d9c8;
-      --border-default: #c9bfaa;
-      --accent: #2d7d46;
-      --accent-dim: rgba(45,125,70,0.15);
-      --accent-fog: rgba(45,125,70,0.08);
-      --font-display: 'Spectral', Georgia, serif;
-      --font-body: 'Source Serif 4', Georgia, serif;
-      --font-mono: 'Courier New', Courier, monospace;
-      --max-width: 1100px;
-      --ease-stiff: cubic-bezier(0.16,1,0.3,1);
+      --footer-bg: #0a0a0b;
+      --text-primary: #0a0a0b;
+      --text-secondary: #3d3d40;
+      --text-muted: #6a6a6e;
+      --border-subtle: #e6e6e4;
+      --border-default: #d8d8d6;
+      --border-strong: #c9c9c6;
+      --accent: #0c7253;
+      --accent-strong: #0b6249;
+      --accent-dim: rgba(12,114,83,0.15);
+      --accent-fog: rgba(12,114,83,0.08);
+      --warning: #8a5a12;
+      --warning-fog: rgba(138,90,18,0.08);
+      --red-alert: #bf3529;
+      --code-bg: #0a0a0b;
+      --code-text: #e9e9e8;
+      --font-display: 'Sora', system-ui, sans-serif;
+      --font-body: 'Sora', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+      --space-1: 0.25rem;
+      --space-2: 0.5rem;
+      --space-3: 0.75rem;
+      --space-4: 1rem;
+      --space-5: 1.25rem;
+      --space-6: 1.5rem;
+      --space-8: 2rem;
+      --space-10: 2.5rem;
+      --space-12: 3rem;
+      --space-16: 4rem;
+      --space-20: 5rem;
+      --space-24: 6rem;
+      --max-width: 1200px;
+      --ease-stiff: cubic-bezier(0.16, 1, 0.3, 1);
+      --duration-fast: 140ms;
+      --duration-mid: 280ms;
     }
+
     [data-theme="dark"] {
-      --bg-base: #0b1525;
-      --bg-surface: #132035;
-      --nav-bg: #0a1220;
-      --footer-bg: #070d1e;
-      --text-primary: #dde6f2;
-      --text-secondary: #9db4cc;
-      --text-muted: #5c7a96;
-      --border-subtle: #1a2e48;
-      --border-default: #243d5a;
-      --accent: #5a9070;
-      --accent-dim: rgba(90,144,112,0.15);
-      --accent-fog: rgba(90,144,112,0.08);
+      --bg-base: #08080a;
+      --bg-surface: #131315;
+      --bg-raised: #1b1b1e;
+      --bg-overlay: #232327;
+      --nav-bg: #08080a;
+      --footer-bg: #050506;
+      --text-primary: #fafafa;
+      --text-secondary: #bcbcc0;
+      --text-muted: #8e8e93;
+      --border-subtle: #262629;
+      --border-default: #34343a;
+      --border-strong: #43434a;
+      --accent: #23c088;
+      --accent-strong: #1fa878;
+      --accent-dim: rgba(35,192,136,0.15);
+      --accent-fog: rgba(35,192,136,0.08);
+      --warning: #d6a13c;
+      --warning-fog: rgba(214,161,60,0.1);
+      --code-bg: #050506;
+      --code-text: #fafafa;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    body { background: var(--bg-base); color: var(--text-primary); font-family: var(--font-body); line-height: 1.7; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    html { scroll-behavior: smooth; font-size: 16px; -webkit-text-size-adjust: 100%; }
+    img, svg { display: block; max-width: 100%; }
     a { color: inherit; text-decoration: none; }
     button { cursor: pointer; border: none; background: none; font: inherit; }
-    ul { list-style: none; }
+    ul, ol { list-style: none; }
 
-    .skip-link { position: absolute; top: -100%; left: 1rem; background: var(--accent); color: #fff; padding: 0.5rem 1rem; font-size: 0.75rem; z-index: 9999; }
-    .skip-link:focus { top: 1rem; }
+    body {
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 1rem;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      transition: background var(--duration-mid) ease, color var(--duration-mid) ease;
+    }
 
-    /* Nav */
-    .site-nav { position: sticky; top: 0; z-index: 200; background: var(--nav-bg); border-bottom: 1px solid var(--border-subtle); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-    .nav-inner { max-width: var(--max-width); margin: 0 auto; padding: 0 2rem; height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; }
-    .nav-logo { display: flex; align-items: center; gap: 0.75rem; font-family: var(--font-display); font-size: 0.9rem; font-weight: 600; letter-spacing: 0.04em; color: var(--text-primary); }
+    /* ── Skip link ───────────────────────────────────────────────── */
+    .skip-link {
+      position: absolute;
+      top: -100%;
+      left: var(--space-4);
+      background: var(--accent);
+      color: #fff;
+      padding: var(--space-2) var(--space-4);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      z-index: 9999;
+    }
+    .skip-link:focus { top: var(--space-4); }
+
+    /* ── Navigation ──────────────────────────────────────────────── */
+    .site-nav {
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      background: var(--nav-bg);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    /* Light-mode nav overrides — nav-bg is white, so text must be dark */
+    [data-theme="light"] .site-nav { border-bottom-color: #e2e8f0; }
+    [data-theme="light"] .nav-logo { color: #1e293b; }
+    [data-theme="light"] .nav-logo:hover { color: #0c7253; }
+    [data-theme="light"] .nav-logo svg path,
+    [data-theme="light"] .nav-logo svg circle { stroke: #0c7253; }
+    [data-theme="light"] .nav-links a { color: rgba(55,65,81,0.75); }
+    [data-theme="light"] .nav-links a:hover { color: #1e293b; }
+    [data-theme="light"] .nav-cta { color: #0c7253 !important; border-color: rgba(12,114,83,0.4) !important; }
+    [data-theme="light"] .nav-cta:hover { background: rgba(12,114,83,0.08) !important; color: #0c7253 !important; }
+    [data-theme="light"] .theme-toggle { border-color: #cbd5e1; color: #718096; }
+    [data-theme="light"] .theme-toggle:hover { border-color: #0c7253; color: #0c7253; }
+    [data-theme="light"] .nav-toggle { color: #374151; }
+
+    .nav-inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 var(--space-8);
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-6);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: #e2dcd2;
+      flex-shrink: 0;
+      transition: color var(--duration-fast) ease;
+    }
+    .nav-logo:hover { color: #fff; }
+    .nav-logo svg { flex-shrink: 0; }
     .nav-logo svg path, .nav-logo svg circle { stroke: var(--accent); }
-    .nav-links { display: flex; align-items: center; gap: 1.5rem; }
-    .nav-links a { font-size: 0.8rem; letter-spacing: 0.02em; color: var(--text-secondary); transition: color 140ms ease; }
-    .nav-links a:hover { color: var(--text-primary); }
-    .nav-links a.active { color: var(--accent); font-weight: 600; }
-    .nav-cta { font-size: 0.78rem; padding: 0.35rem 1rem; border: 1px solid rgba(200,151,46,0.5); border-radius: 2px; color: var(--accent); transition: background 140ms ease; }
-    .nav-cta:hover { background: rgba(200,151,46,0.08); }
-    .theme-toggle { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border: 1px solid var(--border-default); border-radius: 2px; color: var(--text-muted); transition: color 140ms ease, border-color 140ms ease; }
-    .theme-toggle:hover { color: var(--text-primary); border-color: var(--accent); }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: var(--space-6);
+    }
+    .nav-links a {
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      letter-spacing: 0.02em;
+      color: rgba(226, 220, 210, 0.65);
+      transition: color var(--duration-fast) ease;
+      white-space: nowrap;
+    }
+    .nav-links a:hover { color: #e2dcd2; }
+    .nav-links a.active { color: var(--accent); }
+
+    .nav-cta {
+      padding: var(--space-2) var(--space-4) !important;
+      border: 1px solid rgba(12, 114, 83, 0.5) !important;
+      color: var(--accent) !important;
+      border-radius: 2px;
+      transition: background var(--duration-fast) ease !important;
+    }
+    .nav-cta:hover { background: rgba(12, 114, 83, 0.15) !important; color: var(--accent-strong) !important; }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      flex-shrink: 0;
+    }
+
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 2px;
+      color: rgba(226, 220, 210, 0.65);
+      transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease;
+    }
+    .theme-toggle:hover { color: #e2dcd2; border-color: rgba(255,255,255,0.25); }
     .theme-toggle svg { width: 16px; height: 16px; }
     .icon-sun { display: none; }
     [data-theme="dark"] .icon-moon { display: none; }
     [data-theme="dark"] .icon-sun { display: block; }
 
-    /* Page header */
-    .page-header { padding: 5rem 2rem 3rem; background: var(--bg-surface); border-bottom: 1px solid var(--border-subtle); text-align: center; }
-    .page-header-eyebrow { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem; }
-    .page-header h1 { font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; letter-spacing: -0.03em; color: var(--text-primary); margin-bottom: 1rem; }
-    .page-header p { font-size: 1.05rem; font-weight: 300; color: var(--text-secondary); max-width: 50ch; margin: 0 auto; }
+    .nav-toggle {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      padding: var(--space-2);
+      color: rgba(226, 220, 210, 0.65);
+    }
+    .nav-toggle span {
+      display: block;
+      width: 20px;
+      height: 1.5px;
+      background: currentColor;
+    }
 
-    /* Blog grid */
-    .blog-section { padding: 4rem 2rem; }
+    /* ── Page header ─────────────────────────────────────────────── */
+    .page-header {
+      padding: var(--space-24) var(--space-8) var(--space-16);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      text-align: center;
+    }
+    .page-header-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: var(--space-4);
+    }
+    .page-header h1 {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+      margin-bottom: var(--space-4);
+    }
+    .page-header p {
+      font-size: 1.05rem;
+      font-weight: 300;
+      color: var(--text-secondary);
+      max-width: 50ch;
+      margin: 0 auto;
+    }
+
+    /* ── Blog grid ───────────────────────────────────────────────── */
+    .blog-section { padding: var(--space-16) var(--space-8); }
     .blog-inner { max-width: var(--max-width); margin: 0 auto; }
-    .blog-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+    .blog-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-6); }
 
-    /* Article card */
-    .article-card { background: var(--bg-base); border: 1px solid var(--border-subtle); border-top: 4px solid var(--accent-dim); padding: 1.75rem; display: flex; flex-direction: column; transition: border-top-color 280ms ease, transform 280ms ease, box-shadow 280ms ease; }
-    .article-card:hover { border-top-color: var(--accent); transform: translateY(-3px); box-shadow: 0 8px 32px rgba(0,0,0,0.07); }
+    .article-card {
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      border-top: 4px solid var(--accent-dim);
+      padding: var(--space-6);
+      display: flex;
+      flex-direction: column;
+      transition: border-top-color var(--duration-mid) ease, transform var(--duration-mid) ease, box-shadow var(--duration-mid) ease;
+    }
+    .article-card:hover {
+      border-top-color: var(--accent);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+    }
     [data-theme="dark"] .article-card { background: var(--bg-surface); }
-    .article-tag { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem; }
-    .article-title { font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; line-height: 1.3; color: var(--text-primary); margin-bottom: 0.75rem; flex-grow: 1; }
-    .article-excerpt { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.65; margin-bottom: 1.25rem; }
-    .article-meta { display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1.25rem; }
-    .article-read-more { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; font-weight: 600; color: var(--accent); letter-spacing: 0.02em; transition: gap 140ms ease; }
-    .article-read-more:hover { gap: 0.7rem; }
+    [data-theme="dark"] .article-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+    .article-tag {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: var(--space-3);
+    }
+    .article-title {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 700;
+      line-height: 1.3;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+      margin-bottom: var(--space-3);
+      flex-grow: 1;
+    }
+    .article-excerpt {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      margin-bottom: var(--space-5);
+    }
+    .article-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: var(--space-5);
+    }
+    .article-read-more {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 0.02em;
+      transition: gap var(--duration-fast) ease;
+    }
+    .article-read-more:hover { gap: var(--space-3); }
 
-    /* Footer */
-    .site-footer { background: var(--footer-bg); color: rgba(226,220,210,0.6); padding: 3rem 2rem; }
-    .footer-inner { max-width: var(--max-width); margin: 0 auto; }
-    .footer-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3rem; padding-bottom: 2rem; border-bottom: 1px solid rgba(226,220,210,0.1); }
-    .footer-logo { display: flex; align-items: center; gap: 0.75rem; font-family: var(--font-display); font-size: 0.9rem; font-weight: 600; color: rgba(226,220,210,0.8); margin-bottom: 0.75rem; }
-    .footer-tagline { font-size: 0.82rem; color: rgba(226,220,210,0.4); }
-    .footer-col-title { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(226,220,210,0.35); margin-bottom: 1rem; }
-    .footer-links li { margin-bottom: 0.5rem; }
-    .footer-links a { font-size: 0.85rem; color: rgba(226,220,210,0.5); transition: color 140ms ease; }
-    .footer-links a:hover { color: rgba(226,220,210,0.9); }
-    .footer-bottom { padding-top: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
-    .footer-bottom p { font-size: 0.78rem; color: rgba(226,220,210,0.3); }
+    /* ── Footer ──────────────────────────────────────────────────── */
+    .site-footer {
+      background: var(--footer-bg);
+      color: rgba(226, 220, 210, 0.7);
+      padding: var(--space-16) var(--space-8) var(--space-8);
+    }
+    .footer-inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+    }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.8fr 1fr 1fr;
+      gap: var(--space-12);
+      margin-bottom: var(--space-12);
+      padding-bottom: var(--space-10);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #e2dcd2;
+      margin-bottom: var(--space-4);
+    }
+    .footer-tagline {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: rgba(226, 220, 210, 0.5);
+      line-height: 1.6;
+      max-width: 32ch;
+    }
+    .footer-col-title {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(226, 220, 210, 0.4);
+      margin-bottom: var(--space-5);
+    }
+    .footer-links {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+    .footer-links a {
+      font-size: 0.875rem;
+      color: rgba(226, 220, 210, 0.6);
+      transition: color var(--duration-fast) ease;
+    }
+    .footer-links a:hover { color: #e2dcd2; }
+    .footer-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.06em;
+      color: rgba(226, 220, 210, 0.3);
+      gap: var(--space-4);
+      flex-wrap: wrap;
+    }
+    .footer-bottom a {
+      color: rgba(226, 220, 210, 0.4);
+      transition: color var(--duration-fast) ease;
+    }
+    .footer-bottom a:hover { color: rgba(226, 220, 210, 0.7); }
 
-    @media (max-width: 900px) { .blog-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 600px) { .blog-grid { grid-template-columns: 1fr; } .footer-grid { grid-template-columns: 1fr; } .nav-links { display: none; } }
+    /* ── Responsive ─────────────────────────────────────────────── */
+    /* Nav collapses at 1080px, not 768px: at 1024px the full item list
+       no longer fits the nav-inner row and overflows the viewport
+       horizontally (Task X12 Chrome-check finding). */
+    @media (max-width: 1080px) {
+      .nav-links { display: none; }
+      .nav-links.open {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: var(--nav-bg);
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        padding: var(--space-5) var(--space-6);
+        gap: var(--space-4);
+        z-index: 201;
+      }
+      .nav-toggle { display: flex; }
+    }
+
+    @media (max-width: 768px) {
+      .blog-grid { grid-template-columns: 1fr 1fr; }
+      .footer-grid { grid-template-columns: 1fr; gap: var(--space-8); }
+      .footer-bottom { flex-direction: column; align-items: flex-start; }
+      .page-header { padding: var(--space-16) var(--space-5); }
+    }
+
+    @media (max-width: 540px) {
+      .blog-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-  <a class="skip-link" href="#main">Zum Inhalt springen</a>
+  <a href="#main-content" class="skip-link">Zum Inhalt springen</a>
 
+  <!-- Navigation -->
   <nav class="site-nav" role="navigation" aria-label="Hauptnavigation">
     <div class="nav-inner">
-      <a href="../" class="nav-logo" aria-label="OpenWhistle Startseite">
+      <a href="../index.html" class="nav-logo" aria-label="OpenWhistle Startseite">
         <svg width="22" height="26" viewBox="0 0 22 26" fill="none" aria-hidden="true">
-          <path d="M11 1 L20 5 L20 14 C20 20 17 24 11 25.5 C5 24 2 20 2 14 L2 5 Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
-          <circle cx="11" cy="18" r="1.1" fill="currentColor"/>
-          <path d="M8.5,16 A3,3 0 0,1 13.5,16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M7,14.5 A5.5,5.5 0 0,1 15,14.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+          <path d="M11 1 L20 5 L20 14 C20 20 17 24 11 25.5 C5 24 2 20 2 14 L2 5 Z"
+                stroke="#5ecb7a" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+          <circle cx="11" cy="18" r="1.1" fill="#5ecb7a"/>
+          <path d="M8.5,16 A3,3 0 0,1 13.5,16" stroke="#5ecb7a" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M7,14.5 A5.5,5.5 0 0,1 15,14.5" stroke="#5ecb7a" stroke-width="1.2" stroke-linecap="round" opacity="0.72"/>
+          <path d="M5,13 A8,8 0 0,1 17,13" stroke="#5ecb7a" stroke-width="1" stroke-linecap="round" opacity="0.42"/>
         </svg>
         OpenWhistle
       </a>
+
+      <button class="nav-toggle" aria-controls="nav-links" aria-expanded="false" aria-label="Navigation umschalten">
+        <span></span><span></span><span></span>
+      </button>
+
       <ul class="nav-links" id="nav-links" role="list">
+        <li><a href="../de/#features">Funktionen</a></li>
+        <li><a href="../de/#how-it-works">Ablauf</a></li>
+        <li><a href="../de/#compliance">Compliance</a></li>
         <li><a href="../docs.html">Dokumentation</a></li>
         <li><a href="../roadmap.html">Roadmap</a></li>
-        <li><a href="./" class="active" aria-current="page">Blog</a></li>
-        <li><a href="../de/">Auf Deutsch</a></li>
+        <li><a href="index.html" class="active" aria-current="page">Blog</a></li>
+        <li><a href="../index.html" hreflang="en">English</a></li>
         <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
         <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank" class="nav-cta">Demo testen</a></li>
       </ul>
-      <button class="theme-toggle" id="theme-btn" aria-label="Farbschema wechseln">
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
-        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-      </button>
+
+      <div class="nav-actions">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Dunkelmodus umschalten">
+          <!-- Moon icon -->
+          <svg class="icon-moon" viewBox="0 0 16 16" fill="none">
+            <path d="M13.5 9.5A6 6 0 016 2a6 6 0 100 12 6 6 0 007.5-4.5z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+          <!-- Sun icon -->
+          <svg class="icon-sun" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.3"/>
+            <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M11.54 4.46l-1.41 1.41M4.95 11.54l-1.41 1.41" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
     </div>
   </nav>
 
-  <main id="main">
+  <main id="main-content">
     <header class="page-header">
       <p class="page-header-eyebrow">Wissen &amp; Praxis</p>
       <h1>OpenWhistle Blog</h1>
@@ -246,43 +587,83 @@
         <div>
           <div class="footer-logo">
             <svg width="20" height="24" viewBox="0 0 22 26" fill="none" aria-hidden="true">
-              <path d="M11 1 L20 5 L20 14 C20 20 17 24 11 25.5 C5 24 2 20 2 14 L2 5 Z" stroke="rgba(226,220,210,0.5)" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+              <path d="M11 1 L20 5 L20 14 C20 20 17 24 11 25.5 C5 24 2 20 2 14 L2 5 Z"
+                    stroke="rgba(226,220,210,0.5)" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
               <circle cx="11" cy="18" r="1.1" fill="rgba(226,220,210,0.5)"/>
+              <path d="M8.5,16 A3,3 0 0,1 13.5,16" stroke="rgba(226,220,210,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M7,14.5 A5.5,5.5 0 0,1 15,14.5" stroke="rgba(226,220,210,0.5)" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
+              <path d="M5,13 A8,8 0 0,1 17,13" stroke="rgba(226,220,210,0.5)" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
             </svg>
             OpenWhistle
           </div>
           <p class="footer-tagline">Schutz für alle, die den Mut haben zu sprechen.</p>
         </div>
+
         <nav aria-label="Footer-Links">
           <div class="footer-col-title">Ressourcen</div>
           <ul class="footer-links">
-            <li><a href="../">Startseite</a></li>
-            <li><a href="../de/">Deutsch</a></li>
-            <li><a href="../docs.html">Dokumentation</a></li>
-            <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Live-Demo</a></li>
             <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
+            <li><a href="../docs.html">Dokumentation</a></li>
+            <li><a href="../de/">Startseite (Deutsch)</a></li>
+            <li><a href="../index.html" hreflang="en">English</a></li>
+            <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Live-Demo</a></li>
+            <li><a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank">Issues</a></li>
+            <li><a href="https://github.com/openwhistle/OpenWhistle/blob/main/LICENSE" rel="noopener noreferrer" target="_blank">Lizenz (GPL-3.0)</a></li>
           </ul>
         </nav>
+
         <div>
           <div class="footer-col-title">Rechtliches</div>
-          <p style="font-size:0.85rem;color:rgba(226,220,210,0.45);line-height:1.7;">Lizenziert unter GPL-3.0.</p>
-          <p style="font-size:0.82rem;color:rgba(226,220,210,0.35);line-height:1.7;margin-top:0.75rem;">OpenWhistle bietet keine Rechtsberatung. Bitte konsultieren Sie qualifizierte Rechtsexperten.</p>
+          <p style="font-size: 0.85rem; color: rgba(226,220,210,0.45); line-height: 1.7;">
+            Lizenziert unter GPL-3.0. Mit &#10084;&#65039; für Transparenz entwickelt.
+          </p>
+          <p style="font-size: 0.82rem; color: rgba(226,220,210,0.35); line-height: 1.7; margin-top: 0.75rem;">
+            OpenWhistle bietet keine Rechtsberatung. Bitte konsultieren Sie qualifizierte
+            Rechtsexperten bezüglich Ihrer spezifischen HinSchG-Pflichten.
+          </p>
         </div>
       </div>
+
       <div class="footer-bottom">
-        <p>&copy; 2025 OpenWhistle Contributors. GNU General Public License v3.0.</p>
-        <p>Version 1.0.0</p>
+        <span>&copy; OpenWhistle Contributors — GNU General Public License v3.0</span>
+        <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">
+          Auf GitHub mitwirken &rarr;
+        </a>
       </div>
     </div>
   </footer>
 
   <script>
-    const btn = document.getElementById('theme-btn');
-    if (btn) btn.addEventListener('click', () => {
-      const n = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', n);
-      try { localStorage.setItem('ow-theme', n); } catch(e) {}
+    // Theme toggle — detection already handled by inline head script
+    var toggle = document.getElementById('theme-toggle');
+    if (toggle) {
+      toggle.addEventListener('click', function() {
+        var current = document.documentElement.getAttribute('data-theme');
+        var next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        try { localStorage.setItem('ow-theme', next); } catch(e) {}
+      });
+    }
+
+    // Follow system preference changes when user hasn't overridden manually
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+      var stored;
+      try { stored = localStorage.getItem('ow-theme'); } catch(e2) {}
+      if (!stored) {
+        document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+      }
     });
+
+    // Mobile nav toggle
+    var navToggle = document.querySelector('.nav-toggle');
+    var navLinks = document.getElementById('nav-links');
+    if (navToggle && navLinks) {
+      navToggle.addEventListener('click', function() {
+        var isOpen = navToggle.getAttribute('aria-expanded') === 'true';
+        navToggle.setAttribute('aria-expanded', String(!isOpen));
+        navLinks.classList.toggle('open', !isOpen);
+      });
+    }
   </script>
 </body>
 </html>

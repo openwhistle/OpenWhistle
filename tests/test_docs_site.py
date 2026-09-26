@@ -172,6 +172,137 @@ def test_faqpage_jsonld_matches_visible_faq_one_to_one() -> None:
             assert _word_overlap(ja, va) >= 0.6, (page, i, "answer", ja, va)
 
 
+def _resolve_nav_target(page: Path, href: str) -> str:
+    """Resolve a nav ``href`` to a canonical, page-independent target string.
+
+    An absolute URL (GitHub, the demo) is returned unchanged -- every page
+    that links to it uses the identical string, so no resolution is needed.
+    A relative href is resolved against ``page``'s own directory; a target
+    that resolves to a directory is treated as that directory's
+    ``index.html`` (a trailing-slash link and an explicit ``index.html``
+    link are the same page). Finally, ``docs/de/index.html`` is folded onto
+    ``docs/index.html`` -- the two are each page's own language mirror of
+    "home", so e.g. Features/How-it-works anchors on the German page and
+    the English-tree pages point at the same conceptual target, and the
+    language-switch link (which always targets the *other* language's home)
+    resolves to the same bucket from either direction. The fragment (if any)
+    is preserved, since Features and How-it-works are otherwise
+    indistinguishable from the language switch.
+    """
+    if href.startswith(("http://", "https://")):
+        return href
+    path_part, _, frag = href.partition("#")
+    resolved = page if path_part in ("", "./") else (page.parent / path_part).resolve()
+    if resolved.is_dir():
+        resolved = resolved / "index.html"
+    rel = str(resolved.relative_to(ROOT))
+    if rel == "docs/de/index.html":
+        rel = "docs/index.html"
+    return rel + (f"#{frag}" if frag else "")
+
+
+def _nav_targets(page: Path) -> set[str]:
+    html = page.read_text()
+    m = re.search(r'<ul class="nav-links"[^>]*>(.*?)</ul>', html, re.DOTALL)
+    assert m, f"{page}: no <ul class=\"nav-links\"> found"
+    return {
+        _resolve_nav_target(page, href)
+        for href in re.findall(r'<a\s+href="([^"]+)"', m.group(1))
+    }
+
+
+def test_every_docs_page_nav_has_the_same_item_set() -> None:
+    """Regression guard (Task X12): docs.html and roadmap.html's nav lacked
+    a Blog link and a language-switch link that every other docs/ page
+    carried, and the blog scaffold's nav lacked Features/How-it-works and
+    GitHub entirely. Every docs/**/*.html page's top nav must resolve to the
+    exact same set of targets (see `_resolve_nav_target` for what "same"
+    means across the English/German split), by href target rather than by
+    label text (labels are legitimately localised on German-language pages,
+    see `test_current_nav_item_is_marked`)."""
+    pages = sorted((ROOT / "docs").rglob("*.html"))
+    assert pages
+    canonical_page = ROOT / "docs/index.html"
+    canonical = _nav_targets(canonical_page)
+    assert canonical, "docs/index.html nav resolved to no targets at all"
+    mismatches = {}
+    for page in pages:
+        targets = _nav_targets(page)
+        if targets != canonical:
+            mismatches[str(page.relative_to(ROOT))] = {
+                "missing": sorted(canonical - targets),
+                "extra": sorted(targets - canonical),
+            }
+    assert not mismatches, mismatches
+
+
+# Pages whose nav marks one specific item as the current page (by the
+# resolved target from `_resolve_nav_target`); docs/index.html and
+# docs/de/index.html are home pages with no single discrete nav item to
+# mark (Features/How-it-works are anchors into the same page, not a
+# separate "home" entry) and so carry none.
+_CURRENT_NAV_TARGET = {
+    "docs/docs.html": "docs/docs.html",
+    "docs/roadmap.html": "docs/roadmap.html",
+    **{
+        f"docs/blog/{p.name}": "docs/blog/index.html"
+        for p in sorted((ROOT / "docs" / "blog").glob("*.html"))
+    },
+}
+
+
+def test_current_nav_item_is_marked() -> None:
+    """Every page in `_CURRENT_NAV_TARGET` marks its own nav item
+    `aria-current="page"`, on the anchor whose resolved target is that
+    page's own target -- and no other nav item on that page is marked."""
+    for page_str, own_target in _CURRENT_NAV_TARGET.items():
+        page = ROOT / page_str
+        html = page.read_text()
+        m = re.search(r'<ul class="nav-links"[^>]*>(.*?)</ul>', html, re.DOTALL)
+        assert m, page_str
+        anchors = re.findall(r'<a\s+([^>]*href="[^"]+"[^>]*)>', m.group(1))
+        marked = [a for a in anchors if 'aria-current="page"' in a]
+        assert len(marked) == 1, (page_str, marked)
+        href_m = re.search(r'href="([^"]+)"', marked[0])
+        assert href_m
+        assert _resolve_nav_target(page, href_m.group(1)) == own_target, (
+            page_str, href_m.group(1)
+        )
+
+
+def _root_tokens_dict(html: str) -> dict[str, str]:
+    m = re.search(r":root\s*\{([^}]*)\}", html, re.DOTALL)
+    assert m, ":root token block not found"
+    return dict(re.findall(r"(--[\w-]+):\s*([^;]+);", m.group(1)))
+
+
+def test_blog_pages_share_design_tokens_with_english_landing() -> None:
+    """Extends `test_de_landing_page_shares_design_tokens_with_english`
+    (Task X11) to the blog (Task X12): the blog scaffold used to run its own
+    Spectral/Source Serif 4 + navy design, disconnected from the rest of the
+    site. Unlike the strict de/index.html <-> index.html guard, this is not
+    byte-identical -- the blog (like docs.html before it) legitimately
+    extends the shared token set with its own `--warning`/`--warning-fog`
+    (needed for `.callout-warn`/`.val-warn`, see
+    test_docs_warn_callouts_do_not_converge_on_the_accent) that
+    docs/index.html itself has no use for. What must hold is that every
+    token blog *does* share by name with docs/index.html has the identical
+    value -- no silent drift on the tokens that are supposed to be shared."""
+    en_tokens = _root_tokens_dict((ROOT / "docs/index.html").read_text())
+    for page in sorted((ROOT / "docs/blog").glob("*.html")):
+        blog_tokens = _root_tokens_dict(page.read_text())
+        shared = set(en_tokens) & set(blog_tokens)
+        assert shared, page.name
+        mismatches = {
+            k: (en_tokens[k], blog_tokens[k])
+            for k in shared
+            if en_tokens[k].strip() != blog_tokens[k].strip()
+        }
+        assert not mismatches, (page.name, mismatches)
+        for var in ("--font-display", "--font-body", "--font-mono"):
+            assert var in blog_tokens, (page.name, var)
+
+
 def test_landing_pages_link_each_other_via_hreflang() -> None:
     """Regression guard (Task X11 fix round 1): neither page declared
     hreflang alternates for the other before this. Every one of the two
