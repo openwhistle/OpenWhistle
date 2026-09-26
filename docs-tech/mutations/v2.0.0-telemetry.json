@@ -1,0 +1,297 @@
+{
+ "test_groups": {
+  "T": [
+   "tests/test_v200_telemetry.py"
+  ]
+ },
+ "timeout_seconds": 300,
+ "mutations": [
+  {
+   "id": "redirect-followed",
+   "file": "app/services/telemetry.py",
+   "old": "follow_redirects=False) as client",
+   "new": "follow_redirects=True) as client",
+   "tests": "T"
+  },
+  {
+   "id": "no-timeout",
+   "file": "app/services/telemetry.py",
+   "old": "httpx.AsyncClient(timeout=TIMEOUT_SECONDS,",
+   "new": "httpx.AsyncClient(timeout=None,",
+   "tests": "T"
+  },
+  {
+   "id": "timeout-not-10s",
+   "file": "app/services/telemetry.py",
+   "old": "TIMEOUT_SECONDS: float = 10\n",
+   "new": "TIMEOUT_SECONDS: float = 30\n",
+   "tests": "T"
+  },
+  {
+   "id": "extra-parameter",
+   "file": "app/services/telemetry.py",
+   "old": "params={\"id\": installation_id, \"v\": settings.app_version},",
+   "new": "params={\"id\": installation_id, \"v\": settings.app_version, \"u\": settings.app_public_url},",
+   "tests": "T"
+  },
+  {
+   "id": "no-user-agent",
+   "file": "app/services/telemetry.py",
+   "old": "                headers={\"User-Agent\": f\"openwhistle/{settings.app_version}\"},\n",
+   "new": "",
+   "tests": "T"
+  },
+  {
+   "id": "endpoint-changed",
+   "file": "app/services/telemetry.py",
+   "old": "TELEMETRY_ENDPOINT = \"https://telemetry.wdkro.de/v1/openwhistle/count\"",
+   "new": "TELEMETRY_ENDPOINT = \"https://telemetry.wdkro.de/v1/count\"",
+   "tests": "T"
+  },
+  {
+   "id": "error-status-accepted",
+   "file": "app/services/telemetry.py",
+   "old": "    if not resp.is_success:\n",
+   "new": "    if False:\n",
+   "tests": "T"
+  },
+  {
+   "id": "id-not-random",
+   "file": "app/services/telemetry.py",
+   "old": "    return secrets.token_hex(16)",
+   "new": "    return \"0\" * 32",
+   "tests": "T"
+  },
+  {
+   "id": "demo-counted",
+   "file": "app/services/telemetry.py",
+   "old": "    if settings.demo_mode or settings.local_review_login:\n",
+   "new": "    if settings.local_review_login:\n",
+   "tests": "T"
+  },
+  {
+   "id": "review-counted",
+   "file": "app/services/telemetry.py",
+   "old": "    if settings.demo_mode or settings.local_review_login:\n",
+   "new": "    if settings.demo_mode:\n",
+   "tests": "T"
+  },
+  {
+   "id": "env-off-ignored",
+   "file": "app/services/telemetry.py",
+   "old": "    if settings.telemetry_enabled is False:\n        return \"env_off\"\n",
+   "new": "",
+   "tests": "T"
+  },
+  {
+   "id": "env-on-ignored",
+   "file": "app/services/telemetry.py",
+   "old": "    if settings.telemetry_enabled is True:\n        return \"env_on\"\n",
+   "new": "",
+   "tests": "T"
+  },
+  {
+   "id": "consent-ignored",
+   "file": "app/services/telemetry.py",
+   "old": "    return state is not None and state.enabled",
+   "new": "    return state is not None",
+   "tests": "T"
+  },
+  {
+   "id": "not-daily",
+   "file": "app/services/telemetry.py",
+   "old": "now - state.last_sent_at >= INTERVAL",
+   "new": "now - state.last_sent_at >= timedelta(0)",
+   "tests": "T"
+  },
+  {
+   "id": "failure-recorded",
+   "file": "app/services/telemetry.py",
+   "old": "    if not await send_report(state.installation_id):\n        # Not recorded: a host offline for a week reports on the day it is back.\n        return False\n",
+   "new": "    await send_report(state.installation_id)\n",
+   "tests": "T"
+  },
+  {
+   "id": "success-not-recorded",
+   "file": "app/services/telemetry.py",
+   "old": "    state.last_sent_at = datetime.now(UTC)\n    await db.commit()\n    return True",
+   "new": "    return True",
+   "tests": "T"
+  },
+  {
+   "id": "no-replica-lock",
+   "file": "app/services/telemetry.py",
+   "old": "        if not await redis.set(LOCK_KEY, \"1\", nx=True, ex=_LOCK_TTL_SECONDS):",
+   "new": "        if not True:",
+   "tests": "T"
+  },
+  {
+   "id": "redis-outage-sends",
+   "file": "app/services/telemetry.py",
+   "old": "        log.debug(\"Installation count skipped, no lock: %s\", type(exc).__name__)\n        return False",
+   "new": "        log.debug(\"Installation count skipped, no lock: %s\", type(exc).__name__)",
+   "tests": "T"
+  },
+  {
+   "id": "job-raises",
+   "file": "app/services/telemetry.py",
+   "old": "    except Exception as exc:  # noqa: BLE001\n        log.debug(\"Installation count skipped: %s\", type(exc).__name__)",
+   "new": "    except ValueError as exc:\n        log.debug(\"Installation count skipped: %s\", type(exc).__name__)",
+   "tests": "T"
+  },
+  {
+   "id": "hard-off-scheduled",
+   "file": "app/services/telemetry.py",
+   "old": "    if locked_by() in (\"demo\", \"env_off\"):\n        return False\n    first",
+   "new": "    first",
+   "tests": "T"
+  },
+  {
+   "id": "no-spread",
+   "file": "app/services/telemetry.py",
+   "old": "timedelta(seconds=secrets.randbelow(MAX_SPREAD_SECONDS))",
+   "new": "timedelta(seconds=0)",
+   "tests": "T"
+  },
+  {
+   "id": "not-hourly",
+   "file": "app/services/telemetry.py",
+   "old": "TICK_HOURS = 1\n",
+   "new": "TICK_HOURS = 24\n",
+   "tests": "T"
+  },
+  {
+   "id": "empty-env-not-unset",
+   "file": "app/config.py",
+   "old": "        return None if isinstance(v, str) and not v.strip() else v",
+   "new": "        return v",
+   "tests": "T"
+  },
+  {
+   "id": "startup-no-job",
+   "file": "app/main.py",
+   "old": "        if schedule_telemetry(scheduler):",
+   "new": "        if False:",
+   "tests": "T"
+  },
+  {
+   "id": "startup-no-scheduler",
+   "file": "app/main.py",
+   "old": "        or telemetry_locked_by() not in (\"demo\", \"env_off\")\n",
+   "new": "",
+   "tests": "T"
+  },
+  {
+   "id": "toggle-no-csrf",
+   "file": "app/api/admin.py",
+   "old": "    enabled: str = Form(\"\"),\n    db: AsyncSession = Depends(get_db),\n    current_user: AdminUser = Depends(require_admin),\n    _csrf: None = Depends(validate_csrf),\n",
+   "new": "    enabled: str = Form(\"\"),\n    db: AsyncSession = Depends(get_db),\n    current_user: AdminUser = Depends(require_admin),\n",
+   "tests": "T"
+  },
+  {
+   "id": "toggle-any-role",
+   "file": "app/api/admin.py",
+   "old": "    enabled: str = Form(\"\"),\n    db: AsyncSession = Depends(get_db),\n    current_user: AdminUser = Depends(require_admin),",
+   "new": "    enabled: str = Form(\"\"),\n    db: AsyncSession = Depends(get_db),\n    current_user: AdminUser = Depends(get_current_admin),",
+   "tests": "T"
+  },
+  {
+   "id": "toggle-ignores-env-lock",
+   "file": "app/api/admin.py",
+   "old": "    if telemetry.locked_by() is not None:\n        raise HTTPException",
+   "new": "    if False:\n        raise HTTPException",
+   "tests": "T"
+  },
+  {
+   "id": "audit-without-change",
+   "file": "app/api/admin.py",
+   "old": "    if state.enabled != wanted:\n",
+   "new": "    if True:\n",
+   "tests": "T"
+  },
+  {
+   "id": "toggle-no-audit",
+   "file": "app/api/admin.py",
+   "old": "            AuditAction.TELEMETRY_ENABLED if wanted else AuditAction.TELEMETRY_DISABLED,",
+   "new": "            AuditAction.TELEMETRY_ID_RESET,",
+   "tests": "T"
+  },
+  {
+   "id": "reset-no-csrf",
+   "file": "app/api/admin.py",
+   "old": "async def system_telemetry_reset_id(\n    db: AsyncSession = Depends(get_db),\n    current_user: AdminUser = Depends(require_admin),\n    _csrf: None = Depends(validate_csrf),\n",
+   "new": "async def system_telemetry_reset_id(\n    db: AsyncSession = Depends(get_db),\n    current_user: AdminUser = Depends(require_admin),\n",
+   "tests": "T"
+  },
+  {
+   "id": "reset-any-role",
+   "file": "app/api/admin.py",
+   "old": "async def system_telemetry_reset_id(\n    db: AsyncSession = Depends(get_db),\n    current_user: AdminUser = Depends(require_admin),",
+   "new": "async def system_telemetry_reset_id(\n    db: AsyncSession = Depends(get_db),\n    current_user: AdminUser = Depends(get_current_admin),",
+   "tests": "T"
+  },
+  {
+   "id": "reset-keeps-id",
+   "file": "app/api/admin.py",
+   "old": "    state.installation_id = telemetry.new_installation_id()\n",
+   "new": "",
+   "tests": "T"
+  },
+  {
+   "id": "reset-keeps-last-sent",
+   "file": "app/api/admin.py",
+   "old": "    state.last_sent_at = None  # a new installation, as far as the far end can tell\n",
+   "new": "",
+   "tests": "T"
+  },
+  {
+   "id": "reset-no-audit",
+   "file": "app/api/admin.py",
+   "old": "    await audit_service.log(db, current_user, AuditAction.TELEMETRY_ID_RESET)\n",
+   "new": "",
+   "tests": "T"
+  },
+  {
+   "id": "page-no-id-commit",
+   "file": "app/api/admin.py",
+   "old": "    await db.commit()  # the identifier, if this was its first use\n",
+   "new": "",
+   "tests": "T"
+  },
+  {
+   "id": "wizard-box-checked",
+   "file": "app/templates/wizard/setup.html",
+   "old": "aria-describedby=\"telemetry-hint\"{% if telemetry %} checked{% endif %}>",
+   "new": "aria-describedby=\"telemetry-hint\" checked>",
+   "tests": "T"
+  },
+  {
+   "id": "wizard-answer-ignored",
+   "file": "app/api/wizard.py",
+   "old": "        db, username, password, totp_secret, telemetry=telemetry == \"1\"",
+   "new": "        db, username, password, totp_secret, telemetry=True",
+   "tests": "T"
+  },
+  {
+   "id": "wizard-answer-not-stored",
+   "file": "app/api/wizard.py",
+   "old": "    else:\n        state.enabled = telemetry\n",
+   "new": "    else:\n        pass\n",
+   "tests": "T"
+  },
+  {
+   "id": "locked-switch-offered",
+   "file": "app/templates/admin/system.html",
+   "old": "        {% if telemetry.locked_by %}\n        <p class=\"note\">",
+   "new": "        {% if false %}\n        <p class=\"note\">",
+   "tests": "T"
+  },
+  {
+   "id": "migration-downgrade-noop",
+   "file": "migrations/versions/007_telemetry_state.py",
+   "old": "    op.drop_table(\"telemetry_state\")",
+   "new": "    pass",
+   "tests": "T"
+  }
+ ]
+}
