@@ -77,7 +77,9 @@
 
         <ul class="nav-links" role="list">
             {% block nav_links %}
-            <li><a href="/submit" {% if request.url.path == '/submit' %}class="active" aria-current="page"{% endif %}>{{ t('nav.submit_report') }}</a></li>
+            {#- On an organisation's wizard, its own link: /submit is another organisation's. -#}
+            {% set nav_submit = submit_path | default('/submit') %}
+            <li><a href="{{ nav_submit }}" {% if request.url.path == nav_submit %}class="active" aria-current="page"{% endif %}>{{ t('nav.submit_report') }}</a></li>
             <li><a href="/status" {% if request.url.path == '/status' %}class="active" aria-current="page"{% endif %}>{{ t('nav.check_status') }}</a></li>
             {% endblock %}
         </ul>

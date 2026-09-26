@@ -1509,7 +1509,8 @@ async def create_organisation(
     from app.models.organisation import Organisation
 
     slug_clean = re.sub(r"[^a-z0-9-]", "-", slug.strip().lower())
-    if not slug_clean:
+    # /submit/restart is the wizard's own: that org's link would never reach its wizard.
+    if not slug_clean or slug_clean == "restart":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid slug.")
 
     existing = await db.execute(

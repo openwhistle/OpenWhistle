@@ -111,8 +111,12 @@ async def create_report(
     *,
     commit: bool = True,
     report_id: uuid.UUID | None = None,
+    org_id: uuid.UUID | None = None,
 ) -> tuple[Report, str]:
     """Create a new whistleblower report. Returns (report, plain_pin).
+
+    Filed under ``org_id`` (the organisation whose link the report came
+    through), else under the default organisation.
 
     ``commit=False`` only flushes, for a caller that commits the report
     together with its attachments. ``report_id`` fixes the primary key, so a
@@ -136,7 +140,8 @@ async def create_report(
     report_fernet = make_report_fernet(encrypted_dek)
     enc_description = encrypt_field(report_fernet, description)
 
-    default_org_id = await _get_default_org_id(db)
+    if org_id is None:
+        org_id = await _get_default_org_id(db)
 
     strings = _load(lang)
     fallback = _load(_DEFAULT)
@@ -153,7 +158,7 @@ async def create_report(
             id=fixed_id,
             case_number=generate_case_number(),
             pin_hash=pin_hash,
-            org_id=default_org_id,
+            org_id=org_id,
             category=category,
             description=enc_description,
             encrypted_dek=encrypted_dek,

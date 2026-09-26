@@ -20,12 +20,20 @@ async def _default_org_id(db: AsyncSession) -> uuid.UUID | None:
     return r.scalar_one_or_none()
 
 
-async def get_active_locations(db: AsyncSession) -> list[Location]:
-    result = await db.execute(
+async def get_active_locations(
+    db: AsyncSession,
+    *,
+    scope_org: bool = False,
+    org_id: uuid.UUID | None = None,
+) -> list[Location]:
+    q = (
         select(Location)
         .where(Location.is_active.is_(True))
         .order_by(Location.sort_order, Location.name)
     )
+    if scope_org:
+        q = q.where(Location.org_id.is_not_distinct_from(org_id))
+    result = await db.execute(q)
     return list(result.scalars().all())
 
 
