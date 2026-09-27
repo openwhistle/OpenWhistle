@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Apply theme before first paint to avoid flash -->
   <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
-  <title>OpenWhistle — Free Open Source Whistleblower Platform | HinSchG Compliant</title>
-  <meta name="description" content="OpenWhistle ist eine kostenlose, selbst gehostete Hinweisgebersystem-Software. Konform mit HinSchG und EU-Richtlinie 2019/1937. Keine IP-Protokollierung. Open Source unter GPL-3.0. Hinweisgeberschutz Software kostenlos.">
-  <meta name="keywords" content="Hinweisgebersystem kostenlos, Hinweisgeberschutz Software, interne Meldestelle kostenlos, Hinweisgeber Software open source, HinSchG Software, whistleblower software open source, whistleblower platform self-hosted, anonymous whistleblower tool, HinSchG compliant software, Meldestelle Software, Hinweisgeberschutzgesetz, DSGVO konform, whistleblower system free">
-  <meta name="author" content="OpenWhistle Contributors">
+  <title>Free Open Source Whistleblower Software | OpenWhistle</title>
+  <meta name="description" content="Free, open source whistleblower software for HinSchG and EU Directive 2019/1937 reporting channels. Self-hosted with Docker, no IP logs, GPL-3.0.">
   <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#08080a" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="https://openwhistle.net/">
   <link rel="alternate" hreflang="en" href="https://openwhistle.net/">
   <link rel="alternate" hreflang="de" href="https://openwhistle.net/de/">
@@ -17,32 +17,39 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="preload" href="fonts/sora-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/sora-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
 
-  <!-- Open Graph -->
+  <!-- Open Graph / Twitter -->
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="OpenWhistle">
   <meta property="og:url" content="https://openwhistle.net/">
-  <meta property="og:title" content="OpenWhistle — Free Open Source Whistleblower Platform">
-  <meta property="og:description" content="Kostenlose, selbst gehostete Hinweisgebersystem-Software. Konform mit HinSchG § 17 und EU-Richtlinie 2019/1937. Kein IP-Logging. GPL-3.0.">
+  <meta property="og:title" content="Free Open Source Whistleblower Software | OpenWhistle">
+  <meta property="og:description" content="Free, open source whistleblower software for HinSchG and EU Directive 2019/1937 reporting channels. Self-hosted with Docker, no IP logs, GPL-3.0.">
   <meta property="og:image" content="https://openwhistle.net/og-image.png">
-  <meta property="og:locale" content="de_DE">
-  <meta property="og:locale:alternate" content="en_US">
-
-  <!-- Twitter Card -->
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="OpenWhistle: secure whistleblower reporting">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="de_DE">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="OpenWhistle — Free Open Source Whistleblower Platform">
-  <meta name="twitter:description" content="Kostenlose, selbst gehostete Hinweisgebersystem-Software konform mit HinSchG und EU-Richtlinie 2019/1937. Kein IP-Logging. GPL-3.0.">
+  <meta name="twitter:title" content="Free Open Source Whistleblower Software | OpenWhistle">
+  <meta name="twitter:description" content="Free, open source whistleblower software for HinSchG and EU Directive 2019/1937 reporting channels. Self-hosted with Docker, no IP logs, GPL-3.0.">
   <meta name="twitter:image" content="https://openwhistle.net/og-image.png">
+  <meta name="twitter:image:alt" content="OpenWhistle: secure whistleblower reporting">
 
-  <!-- JSON-LD Structured Data -->
+  <!-- Structured data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
+    "@id": "https://openwhistle.net/#software",
     "name": "OpenWhistle",
-    "url": "https://openwhistle.net",
-    "description": "Free, self-hosted whistleblower reporting platform compliant with the German Hinweisgeberschutzgesetz (HinSchG) and EU Directive 2019/1937. No IP logging, mandatory MFA, bidirectional communication.",
-    "applicationCategory": "BusinessApplication",
-    "operatingSystem": "Docker (Linux, macOS, Windows)",
+    "url": "https://openwhistle.net/",
+    "description": "Free, open source whistleblower software for HinSchG and EU Directive 2019/1937 reporting channels. Self-hosted with Docker, no IP logs, GPL-3.0.",
+    "applicationCategory": "SecurityApplication",
+    "applicationSubCategory": "Whistleblowing software",
+    "operatingSystem": "Linux (Docker)",
     "offers": {
       "@type": "Offer",
       "price": "0",
@@ -50,35 +57,84 @@
     },
     "license": "https://www.gnu.org/licenses/gpl-3.0.html",
     "softwareVersion": "2.0.1",
-    "keywords": "whistleblower, HinSchG, Hinweisgeberschutz, interne Meldestelle, DSGVO, GDPR, open source, self-hosted, Hinweisgebersystem kostenlos",
+    "downloadUrl": "https://github.com/openwhistle/OpenWhistle/releases/latest",
+    "installUrl": "https://openwhistle.net/docs.html#installation",
+    "softwareHelp": {
+      "@type": "CreativeWork",
+      "url": "https://openwhistle.net/docs.html"
+    },
+    "image": "https://openwhistle.net/og-image.png",
+    "inLanguage": "en",
     "author": {
       "@type": "Organization",
       "name": "OpenWhistle Contributors",
       "url": "https://github.com/openwhistle"
     },
-    "downloadUrl": "https://github.com/openwhistle/OpenWhistle",
+    "publisher": {
+      "@type": "Organization",
+      "name": "OpenWhistle",
+      "url": "https://openwhistle.net/",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://openwhistle.net/apple-touch-icon.png"
+      }
+    },
+    "sameAs": [
+      "https://github.com/openwhistle/OpenWhistle",
+      "https://hub.docker.com/r/kermit1337/openwhistle",
+      "https://quay.io/repository/jp1337/openwhistle",
+      "https://github.com/openwhistle/OpenWhistle/pkgs/container/openwhistle"
+    ],
     "featureList": [
-      "HinSchG § 17 compliance with deadline tracking",
+      "HinSchG § 17 deadline tracking (7-day acknowledgement, 3-month feedback)",
       "No IP address logging at any layer",
-      "UUID4 PIN-based anonymous report access",
-      "Bidirectional secure communication",
-      "Mandatory TOTP multi-factor authentication",
-      "OIDC / SSO login support",
-      "Self-hosted Docker deployment",
-      "GDPR / DSGVO compliant data minimization",
-      "Envelope encryption at rest — per-report Fernet DEK wrapped with HKDF-SHA256",
-      "Automatic GDPR data retention with configurable deletion schedule",
-      "Multi-tenancy support for multi-organisation deployments",
-      "Superadmin role for cross-organisation management",
-      "Telephone channel compliance guide (HinSchG § 16)",
-      "Multi-language UI: English, German, French",
-      "S3-compatible attachment storage",
-      "Helm chart and Ansible role for Kubernetes and VM deployments"
+      "Anonymous report access by a random UUID PIN",
+      "Two-way messages between reporter and case handler",
+      "Mandatory TOTP multi-factor authentication for every account",
+      "Login by local database, OIDC or LDAP",
+      "Per-report envelope encryption at rest",
+      "Multi-tenancy for several organisations in one deployment",
+      "Optional Tor onion address",
+      "Interface in English, German, French and Brazilian Portuguese",
+      "Docker Compose, Helm chart and Ansible role"
     ]
   }
   </script>
-
-  <!-- FAQ JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": "https://openwhistle.net/#website",
+    "name": "OpenWhistle",
+    "url": "https://openwhistle.net/",
+    "inLanguage": [
+      "en",
+      "de"
+    ],
+    "publisher": {
+      "@type": "Organization",
+      "name": "OpenWhistle",
+      "url": "https://openwhistle.net/",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://openwhistle.net/apple-touch-icon.png"
+      }
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": "https://openwhistle.net/#organization",
+    "name": "OpenWhistle",
+    "url": "https://openwhistle.net/",
+    "logo": "https://openwhistle.net/apple-touch-icon.png",
+    "sameAs": [
+      "https://github.com/openwhistle"
+    ]
+  }
+  </script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",

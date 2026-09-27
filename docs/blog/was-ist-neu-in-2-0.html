@@ -4,37 +4,94 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
-  <title>Was ist neu in OpenWhistle 2.0? Sechs Funde aus einem Härtungs-Release | OpenWhistle Blog</title>
-  <meta name="description" content="Sechs Funde aus OpenWhistle 2.0: ein PDF, das fremde Schriften verschluckte, ein Header, dem zu sehr vertraut wurde, und ein Rollback, der halbe Sitzungen zum Absturz brachte.">
-  <meta name="keywords" content="OpenWhistle 2.0, OpenWhistle Changelog, Hinweisgebersystem Update, HinSchG Software Update, Tor Onion Adresse, PDF Unicode Fehler, Whistleblower Software Sicherheitslücke">
+  <title>OpenWhistle 2.0: sechs Funde aus dem Härtungs-Release</title>
+  <meta name="description" content="OpenWhistle 2.0 in sechs Funden: ein PDF, das fremde Schriften verschluckte, ein Header, dem zu sehr vertraut wurde, und ein Rollback mit Absturz.">
   <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#08080a" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="https://openwhistle.net/blog/was-ist-neu-in-2-0.html">
   <link rel="icon" type="image/svg+xml" href="../favicon.svg">
   <link rel="icon" type="image/x-icon" href="../favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+  <link rel="preload" href="../fonts/sora-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="../fonts/sora-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
 
-  <!-- Open Graph -->
+  <!-- Open Graph / Twitter -->
   <meta property="og:type" content="article">
+  <meta property="og:site_name" content="OpenWhistle">
   <meta property="og:url" content="https://openwhistle.net/blog/was-ist-neu-in-2-0.html">
-  <meta property="og:title" content="Was ist neu in OpenWhistle 2.0? Sechs Funde aus einem Härtungs-Release">
-  <meta property="og:description" content="Ein PDF, das fremde Schriften verschluckte. Ein Header, dem zu sehr vertraut wurde. Und ein Rollback, der halbe Sitzungen zum Absturz brachte — sechs Funde aus Release 2.0.">
+  <meta property="og:title" content="OpenWhistle 2.0: sechs Funde aus dem Härtungs-Release">
+  <meta property="og:description" content="OpenWhistle 2.0 in sechs Funden: ein PDF, das fremde Schriften verschluckte, ein Header, dem zu sehr vertraut wurde, und ein Rollback mit Absturz.">
   <meta property="og:image" content="https://openwhistle.net/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="OpenWhistle: sichere Hinweisgeber-Meldungen">
+  <meta property="og:locale" content="de_DE">
   <meta property="article:published_time" content="2026-09-26">
   <meta property="article:modified_time" content="2026-09-26">
   <meta property="article:section" content="Release">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="OpenWhistle 2.0: sechs Funde aus dem Härtungs-Release">
+  <meta name="twitter:description" content="OpenWhistle 2.0 in sechs Funden: ein PDF, das fremde Schriften verschluckte, ein Header, dem zu sehr vertraut wurde, und ein Rollback mit Absturz.">
+  <meta name="twitter:image" content="https://openwhistle.net/og-image.png">
+  <meta name="twitter:image:alt" content="OpenWhistle: sichere Hinweisgeber-Meldungen">
 
-  <!-- JSON-LD Article -->
+  <!-- Structured data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "Article",
+    "@type": "BlogPosting",
     "headline": "Was ist neu in OpenWhistle 2.0? Sechs Funde aus einem Härtungs-Release",
-    "description": "Sechs Funde aus OpenWhistle 2.0, erzählt als Geschichten: ein PDF, das fremde Schriften verschluckte, ein zu vertrauensseliger Header, und ein Rollback, der halbe Sitzungen zum Absturz brachte.",
+    "description": "OpenWhistle 2.0 in sechs Funden: ein PDF, das fremde Schriften verschluckte, ein Header, dem zu sehr vertraut wurde, und ein Rollback mit Absturz.",
     "url": "https://openwhistle.net/blog/was-ist-neu-in-2-0.html",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://openwhistle.net/blog/was-ist-neu-in-2-0.html"
+    },
     "datePublished": "2026-09-26",
     "dateModified": "2026-09-26",
-    "author": { "@type": "Organization", "name": "OpenWhistle Contributors" },
-    "publisher": { "@type": "Organization", "name": "OpenWhistle", "url": "https://openwhistle.net" },
+    "author": {
+      "@type": "Organization",
+      "name": "OpenWhistle Contributors",
+      "url": "https://github.com/openwhistle"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "OpenWhistle",
+      "url": "https://openwhistle.net/",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://openwhistle.net/apple-touch-icon.png"
+      }
+    },
+    "image": "https://openwhistle.net/og-image.png",
     "inLanguage": "de"
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "OpenWhistle",
+        "item": "https://openwhistle.net/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Blog",
+        "item": "https://openwhistle.net/blog/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Was ist neu in OpenWhistle 2.0? Sechs Funde aus einem Härtungs-Release",
+        "item": "https://openwhistle.net/blog/was-ist-neu-in-2-0.html"
+      }
+    ]
   }
   </script>
 

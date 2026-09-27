@@ -4,46 +4,93 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
-  <title>Interne Meldestelle einrichten mit OpenWhistle — Schritt-für-Schritt-Anleitung 2025 | OpenWhistle Blog</title>
-  <meta name="description" content="Schritt-für-Schritt-Anleitung: Interne Meldestelle nach HinSchG mit OpenWhistle einrichten. Serverauswahl, Docker-Installation, HTTPS-Zertifikat, Admin-Setup und erste Konfiguration — in unter einer Stunde.">
-  <meta name="keywords" content="interne Meldestelle einrichten Anleitung, OpenWhistle installieren, Hinweisgebersystem installieren Docker, HinSchG Meldestelle selbst hosten, Whistleblower Software einrichten Anleitung, OpenWhistle Setup">
+  <title>Interne Meldestelle einrichten: Anleitung | OpenWhistle</title>
+  <meta name="description" content="Interne Meldestelle einrichten mit OpenWhistle: Server, Docker Compose, HTTPS, Admin-Konto mit MFA und erste Konfiguration, Schritt für Schritt erklärt.">
   <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#08080a" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="https://openwhistle.net/blog/interne-meldestelle-einrichten.html">
   <link rel="icon" type="image/svg+xml" href="../favicon.svg">
   <link rel="icon" type="image/x-icon" href="../favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+  <link rel="preload" href="../fonts/sora-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="../fonts/sora-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
 
-  <!-- Open Graph -->
+  <!-- Open Graph / Twitter -->
   <meta property="og:type" content="article">
+  <meta property="og:site_name" content="OpenWhistle">
   <meta property="og:url" content="https://openwhistle.net/blog/interne-meldestelle-einrichten.html">
-  <meta property="og:title" content="Interne Meldestelle einrichten mit OpenWhistle — Schritt-für-Schritt 2025">
-  <meta property="og:description" content="Von der Serverauswahl bis zur ersten Meldung: vollständige Anleitung für die Installation und Einrichtung von OpenWhistle.">
+  <meta property="og:title" content="Interne Meldestelle einrichten: Anleitung | OpenWhistle">
+  <meta property="og:description" content="Interne Meldestelle einrichten mit OpenWhistle: Server, Docker Compose, HTTPS, Admin-Konto mit MFA und erste Konfiguration, Schritt für Schritt erklärt.">
   <meta property="og:image" content="https://openwhistle.net/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="OpenWhistle: sichere Hinweisgeber-Meldungen">
+  <meta property="og:locale" content="de_DE">
   <meta property="article:published_time" content="2025-04-27">
+  <meta property="article:modified_time" content="2026-09-26">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Interne Meldestelle einrichten: Anleitung | OpenWhistle">
+  <meta name="twitter:description" content="Interne Meldestelle einrichten mit OpenWhistle: Server, Docker Compose, HTTPS, Admin-Konto mit MFA und erste Konfiguration, Schritt für Schritt erklärt.">
+  <meta name="twitter:image" content="https://openwhistle.net/og-image.png">
+  <meta name="twitter:image:alt" content="OpenWhistle: sichere Hinweisgeber-Meldungen">
 
+  <!-- Structured data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "HowTo",
-    "name": "Interne Meldestelle einrichten mit OpenWhistle",
-    "description": "Schritt-für-Schritt-Anleitung zur Installation und Einrichtung von OpenWhistle als HinSchG-konforme interne Meldestelle.",
+    "@type": "BlogPosting",
+    "headline": "Interne Meldestelle einrichten: Schritt-für-Schritt-Anleitung mit OpenWhistle",
+    "description": "Interne Meldestelle einrichten mit OpenWhistle: Server, Docker Compose, HTTPS, Admin-Konto mit MFA und erste Konfiguration, Schritt für Schritt erklärt.",
     "url": "https://openwhistle.net/blog/interne-meldestelle-einrichten.html",
-    "totalTime": "PT60M",
-    "estimatedCost": { "@type": "MonetaryAmount", "currency": "EUR", "value": "0" },
-    "tool": [
-      { "@type": "HowToTool", "name": "Docker Compose" },
-      { "@type": "HowToTool", "name": "VPS oder Server (Linux)" },
-      { "@type": "HowToTool", "name": "Domain mit HTTPS" }
-    ],
-    "step": [
-      { "@type": "HowToStep", "name": "Server bereitstellen", "position": 1 },
-      { "@type": "HowToStep", "name": "Docker installieren", "position": 2 },
-      { "@type": "HowToStep", "name": "OpenWhistle konfigurieren", "position": 3 },
-      { "@type": "HowToStep", "name": "Docker Compose starten", "position": 4 },
-      { "@type": "HowToStep", "name": "Admin-Account erstellen", "position": 5 },
-      { "@type": "HowToStep", "name": "Meldestelle testen", "position": 6 }
-    ],
-    "inLanguage": "de",
-    "author": { "@type": "Organization", "name": "OpenWhistle Contributors" }
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://openwhistle.net/blog/interne-meldestelle-einrichten.html"
+    },
+    "datePublished": "2025-04-27",
+    "dateModified": "2026-09-26",
+    "author": {
+      "@type": "Organization",
+      "name": "OpenWhistle Contributors",
+      "url": "https://github.com/openwhistle"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "OpenWhistle",
+      "url": "https://openwhistle.net/",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://openwhistle.net/apple-touch-icon.png"
+      }
+    },
+    "image": "https://openwhistle.net/og-image.png",
+    "inLanguage": "de"
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "OpenWhistle",
+        "item": "https://openwhistle.net/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Blog",
+        "item": "https://openwhistle.net/blog/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Interne Meldestelle einrichten: Schritt-für-Schritt-Anleitung mit OpenWhistle",
+        "item": "https://openwhistle.net/blog/interne-meldestelle-einrichten.html"
+      }
+    ]
   }
   </script>
 

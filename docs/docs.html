@@ -5,45 +5,81 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Apply theme before first paint to avoid flash -->
   <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
-  <title>Documentation — OpenWhistle | Self-Hosted Whistleblower Platform</title>
-  <meta name="description" content="Complete documentation for OpenWhistle: installation, configuration, environment variables, admin guide, whistleblower guide, security architecture, and HinSchG compliance details.">
-  <meta name="keywords" content="OpenWhistle documentation, whistleblower platform setup, HinSchG software installation, Docker whistleblower system, Hinweisgebersystem Dokumentation, interne Meldestelle einrichten">
-  <meta name="author" content="OpenWhistle Contributors">
+  <title>Self-Hosted Whistleblowing: Documentation | OpenWhistle</title>
+  <meta name="description" content="Self-hosted whistleblowing with OpenWhistle: install it with Docker Compose, set every option, and run the admin and reporter flows to HinSchG deadlines.">
   <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#08080a" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="https://openwhistle.net/docs.html">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="preload" href="fonts/sora-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/sora-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
 
-  <!-- Open Graph -->
+  <!-- Open Graph / Twitter -->
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="OpenWhistle">
   <meta property="og:url" content="https://openwhistle.net/docs.html">
-  <meta property="og:title" content="Documentation — OpenWhistle">
-  <meta property="og:description" content="Complete installation, configuration, and security documentation for OpenWhistle — the free, self-hosted HinSchG-compliant whistleblower platform.">
+  <meta property="og:title" content="Self-Hosted Whistleblowing: Documentation | OpenWhistle">
+  <meta property="og:description" content="Self-hosted whistleblowing with OpenWhistle: install it with Docker Compose, set every option, and run the admin and reporter flows to HinSchG deadlines.">
   <meta property="og:image" content="https://openwhistle.net/og-image.png">
-
-  <!-- Twitter Card -->
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="OpenWhistle: secure whistleblower reporting">
+  <meta property="og:locale" content="en_US">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Documentation — OpenWhistle">
-  <meta name="twitter:description" content="Installation, configuration, and security documentation for OpenWhistle.">
+  <meta name="twitter:title" content="Self-Hosted Whistleblowing: Documentation | OpenWhistle">
+  <meta name="twitter:description" content="Self-hosted whistleblowing with OpenWhistle: install it with Docker Compose, set every option, and run the admin and reporter flows to HinSchG deadlines.">
+  <meta name="twitter:image" content="https://openwhistle.net/og-image.png">
+  <meta name="twitter:image:alt" content="OpenWhistle: secure whistleblower reporting">
 
-  <!-- JSON-LD -->
+  <!-- Structured data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "TechArticle",
     "headline": "OpenWhistle Documentation",
-    "description": "Complete technical documentation for OpenWhistle, the free self-hosted whistleblower reporting platform compliant with HinSchG and EU Directive 2019/1937.",
     "url": "https://openwhistle.net/docs.html",
+    "inLanguage": "en",
     "author": {
       "@type": "Organization",
       "name": "OpenWhistle Contributors",
       "url": "https://github.com/openwhistle"
     },
+    "publisher": {
+      "@type": "Organization",
+      "name": "OpenWhistle",
+      "url": "https://openwhistle.net/",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://openwhistle.net/apple-touch-icon.png"
+      }
+    },
     "mainEntityOfPage": {
       "@type": "WebPage",
       "@id": "https://openwhistle.net/docs.html"
     }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "OpenWhistle",
+        "item": "https://openwhistle.net/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Documentation",
+        "item": "https://openwhistle.net/docs.html"
+      }
+    ]
   }
   </script>
 
