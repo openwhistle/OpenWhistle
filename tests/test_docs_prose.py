@@ -4,9 +4,10 @@ scripts/prose-check.mjs; this file is the tiebreak, not the authority on style.
 
 Two gates, per file: no prose sentence over 30 words, and an average under 18.
 
-Scope is an exact list, not a walk of docs/: the landing pages and the blog are
-marketing and articles, not documentation (plan 2026-09-26, ruling "Prose
-scope"). A later page joins by being added to ``SCOPE``.
+Scope is an exact list, not a walk of docs/. The English landing page and the
+comparison page joined it with the website plan of 2026-09-27 (ruling "Prose
+limits extend to the landing pages and the blog"). A later page joins by being
+added to ``SCOPE``.
 
 What is NOT prose, and why: code and pre blocks, table rows, headings,
 script/style, and page chrome (nav, aside, header, footer). Those carry the
@@ -33,6 +34,8 @@ MAX_AVERAGE = 18
 SCOPE = sorted(
     [
         ROOT / "docs/docs.html",
+        ROOT / "docs/index.html",
+        ROOT / "docs/open-source-whistleblowing-software.html",
         ROOT / "docs/roadmap.html",
         ROOT / "docs/hinschg_reference.md",
         *(ROOT / "docs/security").glob("*.md"),

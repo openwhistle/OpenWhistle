@@ -43,7 +43,8 @@ description of a screen. A thorough page nobody finishes is worth less than a sh
 | Every page of the interface is named in `docs/docs.html` | `tests/test_every_page_is_documented.py` |
 | Every setting has a row in the configuration table | `tests/test_config_documented.py` |
 
-The prose rules cover `docs/docs.html`, `docs/roadmap.html`, `docs/security/*.md` and
+The prose rules cover `docs/docs.html`, `docs/index.html`, `docs/open-source-whistleblowing-software.html`,
+`docs/roadmap.html`, `docs/security/*.md` and
 `docs/hinschg_reference.md`. Code, tables and headings are not counted; inline code is one word.
 
 **Diagrams** are Mermaid sources in `docs/_diagrams/<name>.mmd`, rendered to committed
