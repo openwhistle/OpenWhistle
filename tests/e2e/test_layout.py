@@ -54,6 +54,33 @@ def test_docs_page_has_no_horizontal_overflow(
     )
 
 
+_WIDE_TABLE_PAGES = [p for p in _DOCS_PAGES if "comp-wrap" in (_DOCS_DIR / p).read_text()]
+
+
+@pytest.mark.parametrize("width", [1440, 1920])
+@pytest.mark.parametrize("docs_page", _WIDE_TABLE_PAGES)
+def test_a_wide_table_is_centred_on_the_text_column(
+    browser: Browser, docs_server_url: str, docs_page: str, width: int
+) -> None:
+    """A table that breaks out of the 70ch prose column stays centred on it.
+    Its width was capped at 100ch while its left edge was computed from the
+    full window, so on a wide screen it sat flush with the window's left edge."""
+    ctx, page = _page(browser, docs_server_url, width)
+    page.goto(f"{docs_server_url}/{docs_page}")
+    offsets = page.evaluate(
+        """() => {
+            const prose = [...document.querySelectorAll('article p, main p')]
+                .find(p => p.getBoundingClientRect().width > 300).getBoundingClientRect();
+            const centre = r => (r.left + r.right) / 2;
+            return [...document.querySelectorAll('.comp-wrap')]
+                .map(w => Math.round(centre(w.getBoundingClientRect()) - centre(prose)));
+        }"""
+    )
+    ctx.close()
+    assert offsets, f"{docs_page}: no wide table"
+    assert all(abs(o) <= 2 for o in offsets), f"{docs_page}@{width}px: off centre by {offsets}px"
+
+
 def _page(browser: Browser, base_url: str, width: int, color_scheme: str = "light"):  # type: ignore[no-untyped-def]
     # The docs pages' own inline script falls back to `prefers-color-scheme`
     # when no `ow-theme` was ever saved in this (fresh) context's localStorage,

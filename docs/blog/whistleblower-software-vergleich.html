@@ -293,7 +293,8 @@
     .article-body li { margin-bottom: var(--space-2); color: var(--text-secondary); }
 
     /* Comparison table — breaks out wider than the 70ch prose column */
-    .comp-wrap { overflow-x: auto; margin: var(--space-8) 0; max-width: 100ch; width: calc(100vw - 2 * var(--space-8)); margin-left: calc(50% - 50vw + var(--space-8)); margin-right: calc(50% - 50vw + var(--space-8)); }
+    /* Centred on the prose column: the capped width used to start at the window's left edge. */
+    .comp-wrap { --comp-w: min(100ch, 100vw - 2 * var(--space-8)); overflow-x: auto; margin: var(--space-8) 0; width: var(--comp-w); margin-left: calc(50% - var(--comp-w) / 2); }
     .comp-table { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 0.88rem; }
     .comp-table thead th { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); padding: var(--space-3) var(--space-4); text-align: left; border-bottom: 2px solid var(--border-subtle); white-space: nowrap; }
     .comp-table thead th.col-ow { color: var(--accent); background: var(--accent-fog); }
