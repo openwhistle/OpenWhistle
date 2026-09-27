@@ -255,7 +255,7 @@ async def test_send_webhook_posts_json_payload() -> None:
     assert url == "https://hooks.example.com/notify"
     assert payload == {
         "event": "new_activity", "new_reports": 1, "new_messages": 0,
-        "message": "1 new report, 0 new messages",
+        "message": "1 new report, 0 cases with new messages",
     }
     # Privacy: no report description, category or case number in payload
     assert "description" not in payload

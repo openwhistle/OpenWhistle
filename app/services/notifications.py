@@ -398,9 +398,11 @@ async def _send_email(new_reports: list[str], new_messages: list[str], settings:
 
 
 def _activity_text(new_reports: int, new_messages: int) -> str:
+    # ``new_messages`` counts cases, not messages: the queue is a set of case
+    # numbers, so three replies on one case used to read "1 new message".
     return (
         f"{_plural(new_reports, 'new report', 'new reports')}, "
-        f"{_plural(new_messages, 'new message', 'new messages')}"
+        f"{_plural(new_messages, 'case with new messages', 'cases with new messages')}"
     )
 
 

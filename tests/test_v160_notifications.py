@@ -25,7 +25,7 @@ def test_webhook_payloads_carry_no_case_number(kind: str) -> None:
     )
     for payload in (digest, reminder):
         assert "OW-" not in payload
-    assert "2 new reports" in digest and "1 new message" in digest
+    assert "2 new reports" in digest and "1 case with new messages" in digest
     assert "1 case" in reminder
 
 

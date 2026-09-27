@@ -724,3 +724,32 @@ async def test_retention_ends_the_status_sessions_of_what_it_deletes(
     await run_retention_cleanup()
 
     assert await redis.get("status-session:probe-retention") is None
+
+
+@pytest.mark.asyncio
+async def test_the_digest_says_cases_where_it_counts_cases(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Three replies on one case were announced as '1 new message': the queue
+    is a set of case numbers."""
+    from unittest.mock import AsyncMock
+
+    from app.config import settings
+    from app.redis_client import get_redis
+    from app.services import notifications
+
+    monkeypatch.setattr(settings, "notification_batch_minutes", 15)
+    monkeypatch.setattr(settings, "notify_webhook_enabled", True)
+    monkeypatch.setattr(settings, "notify_webhook_url", "https://hooks.example.org/x")
+    await (await get_redis()).delete(*notifications._QUEUE_KEYS.values())
+    for _ in range(3):
+        await notifications.notify_whistleblower_message("OW-2026-00042")
+    sent = AsyncMock()
+    monkeypatch.setattr(notifications, "_send_webhook", sent)
+    monkeypatch.setattr(notifications, "_send_email", AsyncMock())
+
+    await notifications.deliver_notification_digest()
+
+    _, messages, cfg = sent.call_args.args
+    text = notifications._activity_text(0, len(messages))
+    assert text == "0 new reports, 1 case with new messages"
