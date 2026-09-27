@@ -5,49 +5,95 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Apply theme before first paint to avoid flash -->
   <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
-  <title>Page not found | OpenWhistle</title>
-  <meta name="description" content="This page does not exist on openwhistle.net. The home page, the documentation and the blog of OpenWhistle, the open source whistleblower tool, do.">
-  <meta name="robots" content="noindex, follow">
+  <title>HinSchG Blog: Internal Reporting in Practice | OpenWhistle</title>
+  <meta name="description" content="The OpenWhistle blog on the HinSchG: duties and deadlines, setting up an internal reporting channel, whistleblowing systems compared, and each release.">
+  <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#08080a" media="(prefers-color-scheme: dark)">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-  <link rel="preload" href="/fonts/sora-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="/fonts/sora-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="canonical" href="https://openwhistle.net/blog/en.html">
+  <link rel="alternate" hreflang="en" href="https://openwhistle.net/blog/en.html">
+  <link rel="alternate" hreflang="de" href="https://openwhistle.net/blog/">
+  <link rel="alternate" hreflang="x-default" href="https://openwhistle.net/blog/en.html">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <link rel="icon" type="image/x-icon" href="../favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+  <link rel="preload" href="../fonts/sora-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="../fonts/sora-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
 
   <!-- Open Graph / Twitter -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="OpenWhistle">
-  <meta property="og:title" content="Page not found | OpenWhistle">
-  <meta property="og:description" content="This page does not exist on openwhistle.net. The home page, the documentation and the blog of OpenWhistle, the open source whistleblower tool, do.">
+  <meta property="og:url" content="https://openwhistle.net/blog/en.html">
+  <meta property="og:title" content="HinSchG Blog: Internal Reporting in Practice | OpenWhistle">
+  <meta property="og:description" content="The OpenWhistle blog on the HinSchG: duties and deadlines, setting up an internal reporting channel, whistleblowing systems compared, and each release.">
   <meta property="og:image" content="https://openwhistle.net/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="OpenWhistle: secure whistleblower reporting">
   <meta property="og:locale" content="en_US">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Page not found | OpenWhistle">
-  <meta name="twitter:description" content="This page does not exist on openwhistle.net. The home page, the documentation and the blog of OpenWhistle, the open source whistleblower tool, do.">
+  <meta name="twitter:title" content="HinSchG Blog: Internal Reporting in Practice | OpenWhistle">
+  <meta name="twitter:description" content="The OpenWhistle blog on the HinSchG: duties and deadlines, setting up an internal reporting channel, whistleblowing systems compared, and each release.">
   <meta name="twitter:image" content="https://openwhistle.net/og-image.png">
   <meta name="twitter:image:alt" content="OpenWhistle: secure whistleblower reporting">
 
+  <!-- Structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    "name": "OpenWhistle Blog",
+    "url": "https://openwhistle.net/blog/en.html",
+    "inLanguage": "en",
+    "publisher": {
+      "@type": "Organization",
+      "name": "OpenWhistle",
+      "url": "https://openwhistle.net/",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://openwhistle.net/apple-touch-icon.png"
+      }
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "OpenWhistle",
+        "item": "https://openwhistle.net/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Blog",
+        "item": "https://openwhistle.net/blog/en.html"
+      }
+    ]
+  }
+  </script>
+
   <style>
     /* Self-hosted fonts — no external CDN calls */
-    @font-face { font-family: 'Sora'; src: url('/fonts/sora-latin-300-normal.woff2') format('woff2'); font-weight: 300; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Sora'; src: url('/fonts/sora-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Sora'; src: url('/fonts/sora-latin-500-normal.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Sora'; src: url('/fonts/sora-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Sora'; src: url('/fonts/sora-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'JetBrains Mono'; src: url('/fonts/JetBrainsMono-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'JetBrains Mono'; src: url('/fonts/JetBrainsMono-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
-    @font-face { font-family: 'JetBrains Mono'; src: url('/fonts/JetBrainsMono-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'JetBrains Mono'; src: url('/fonts/JetBrainsMono-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Sora'; src: url('../fonts/sora-latin-300-normal.woff2') format('woff2'); font-weight: 300; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Sora'; src: url('../fonts/sora-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Sora'; src: url('../fonts/sora-latin-500-normal.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Sora'; src: url('../fonts/sora-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Sora'; src: url('../fonts/sora-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'JetBrains Mono'; src: url('../fonts/JetBrainsMono-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'JetBrains Mono'; src: url('../fonts/JetBrainsMono-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+    @font-face { font-family: 'JetBrains Mono'; src: url('../fonts/JetBrainsMono-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'JetBrains Mono'; src: url('../fonts/JetBrainsMono-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
   </style>
 
   <style>
     /* ================================================================
-       OpenWhistle Documentation — Shared + Docs-specific styles
+       OpenWhistle Blog — shares docs/index.html's design tokens, so the
+       blog looks like the rest of the site
        ================================================================ */
 
     :root {
@@ -57,7 +103,6 @@
       --bg-overlay: #e9e9e8;
       --nav-bg: #ffffff;
       --footer-bg: #0a0a0b;
-      --sidebar-bg: #f6f6f5;
       --text-primary: #0a0a0b;
       --text-secondary: #3d3d40;
       --text-muted: #6a6a6e;
@@ -86,8 +131,9 @@
       --space-10: 2.5rem;
       --space-12: 3rem;
       --space-16: 4rem;
+      --space-20: 5rem;
+      --space-24: 6rem;
       --max-width: 1200px;
-      --sidebar-width: 260px;
       --ease-stiff: cubic-bezier(0.16, 1, 0.3, 1);
       --duration-fast: 140ms;
       --duration-mid: 280ms;
@@ -100,7 +146,6 @@
       --bg-overlay: #232327;
       --nav-bg: #08080a;
       --footer-bg: #050506;
-      --sidebar-bg: #131315;
       --text-primary: #fafafa;
       --text-secondary: #bcbcc0;
       --text-muted: #8e8e93;
@@ -135,6 +180,7 @@
       transition: background var(--duration-mid) ease, color var(--duration-mid) ease;
     }
 
+    /* ── Skip link ───────────────────────────────────────────────── */
     .skip-link {
       position: absolute;
       top: -100%;
@@ -157,6 +203,7 @@
       border-bottom: 1px solid rgba(255,255,255,0.08);
       box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
+    /* Light-mode nav overrides — nav-bg is white, so text must be dark */
     [data-theme="light"] .site-nav { border-bottom-color: #e2e8f0; }
     [data-theme="light"] .nav-logo { color: #1e293b; }
     [data-theme="light"] .nav-logo:hover { color: #0c7253; }
@@ -169,6 +216,7 @@
     [data-theme="light"] .theme-toggle { border-color: #cbd5e1; color: #718096; }
     [data-theme="light"] .theme-toggle:hover { border-color: #0c7253; color: #0c7253; }
     [data-theme="light"] .nav-toggle { color: #374151; }
+
     .nav-inner {
       max-width: var(--max-width);
       margin: 0 auto;
@@ -179,6 +227,7 @@
       justify-content: space-between;
       gap: var(--space-6);
     }
+
     .nav-logo {
       display: flex;
       align-items: center;
@@ -194,6 +243,7 @@
     .nav-logo:hover { color: #fff; }
     .nav-logo svg { flex-shrink: 0; }
     .nav-logo svg path, .nav-logo svg circle { stroke: var(--accent); }
+
     .nav-links {
       display: flex;
       align-items: center;
@@ -209,14 +259,23 @@
     }
     .nav-links a:hover { color: #e2dcd2; }
     .nav-links a.active { color: var(--accent); }
+
     .nav-cta {
       padding: var(--space-2) var(--space-4) !important;
       border: 1px solid rgba(12, 114, 83, 0.5) !important;
       color: var(--accent) !important;
       border-radius: 2px;
+      transition: background var(--duration-fast) ease !important;
     }
     .nav-cta:hover { background: rgba(12, 114, 83, 0.15) !important; color: var(--accent-strong) !important; }
-    .nav-actions { display: flex; align-items: center; gap: var(--space-4); flex-shrink: 0; }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      flex-shrink: 0;
+    }
+
     .theme-toggle {
       display: flex;
       align-items: center;
@@ -233,6 +292,7 @@
     .icon-sun { display: none; }
     [data-theme="dark"] .icon-moon { display: none; }
     [data-theme="dark"] .icon-sun { display: block; }
+
     .nav-toggle {
       display: none;
       flex-direction: column;
@@ -240,217 +300,110 @@
       padding: var(--space-2);
       color: rgba(226, 220, 210, 0.65);
     }
-    .nav-toggle span { display: block; width: 20px; height: 1.5px; background: currentColor; }
-
-    /* ── Docs layout ─────────────────────────────────────────────── */
-    .docs-layout {
-      display: grid;
-      grid-template-columns: var(--sidebar-width) 1fr;
-      min-height: calc(100vh - 60px);
-      max-width: var(--max-width);
-      margin: 0 auto;
+    .nav-toggle span {
+      display: block;
+      width: 20px;
+      height: 1.5px;
+      background: currentColor;
     }
 
-    /* ── Sidebar ─────────────────────────────────────────────────── */
-    .docs-sidebar {
-      position: sticky;
-      top: 60px;
-      height: calc(100vh - 60px);
-      overflow-y: auto;
-      background: var(--sidebar-bg);
-      border-right: 1px solid var(--border-subtle);
-      padding: var(--space-8) var(--space-5);
-      scrollbar-width: thin;
-      scrollbar-color: var(--border-default) transparent;
+    /* ── Page header ─────────────────────────────────────────────── */
+    .page-header {
+      padding: var(--space-24) var(--space-8) var(--space-16);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-subtle);
+      text-align: center;
     }
-    .docs-sidebar::-webkit-scrollbar { width: 4px; }
-    .docs-sidebar::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 2px; }
-
-    .sidebar-section {
-      margin-bottom: var(--space-8);
-    }
-    .sidebar-section-title {
-      font-family: var(--font-body);
-      font-size: 0.62rem;
-      letter-spacing: 0.12em;
+    .page-header-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
       color: var(--text-muted);
-      margin-bottom: var(--space-3);
-      padding-left: var(--space-3);
+      margin-bottom: var(--space-4);
     }
-    .sidebar-links {
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-    }
-    .sidebar-links a {
-      display: block;
-      padding: var(--space-2) var(--space-3);
-      font-family: var(--font-body);
-      font-size: 0.82rem;
-      color: var(--text-secondary);
-      border-left: 2px solid transparent;
-      border-radius: 0 2px 2px 0;
-      transition: color var(--duration-fast) ease, background var(--duration-fast) ease, border-left-color var(--duration-fast) ease;
-    }
-    .sidebar-links a:hover {
-      color: var(--text-primary);
-      background: var(--bg-raised);
-    }
-    .sidebar-links a.active {
-      color: var(--accent);
-      background: var(--accent-fog);
-      border-left-color: var(--accent);
-    }
-
-    /* ── Content ─────────────────────────────────────────────────── */
-    .docs-content {
-      padding: var(--space-12) var(--space-12) var(--space-16);
-      min-width: 0;
-    }
-
-    .docs-breadcrumb {
-      font-family: var(--font-body);
-      font-size: 0.72rem;
-      letter-spacing: 0.04em;
-      color: var(--text-muted);
-      margin-bottom: var(--space-8);
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-    }
-    .docs-breadcrumb a { color: var(--accent); transition: color var(--duration-fast) ease; }
-    .docs-breadcrumb a:hover { color: var(--accent-strong); }
-    .docs-breadcrumb span { color: var(--text-muted); }
-
-    /* Content typography */
-    .docs-content h1 {
+    .page-header h1 {
       font-family: var(--font-display);
-      font-size: clamp(2rem, 3.5vw, 2.8rem);
+      font-size: clamp(2rem, 4vw, 3rem);
       font-weight: 700;
-      letter-spacing: -0.035em;
-      line-height: 1.12;
+      letter-spacing: -0.03em;
       color: var(--text-primary);
-      margin-bottom: var(--space-5);
-      animation: rise 0.5s var(--ease-stiff) both;
+      margin-bottom: var(--space-4);
     }
-
-    .docs-lead {
+    .page-header p {
       font-size: 1.05rem;
       font-weight: 300;
       color: var(--text-secondary);
-      line-height: 1.75;
-      max-width: 60ch;
-      margin-bottom: var(--space-10);
-      border-bottom: 1px solid var(--border-subtle);
-      padding-bottom: var(--space-8);
-      animation: rise 0.5s var(--ease-stiff) 0.1s both;
+      max-width: 50ch;
+      margin: 0 auto;
     }
 
-    .docs-section {
-      margin-bottom: var(--space-12);
-      padding-bottom: var(--space-12);
-      border-bottom: 1px solid var(--border-subtle);
-      scroll-margin-top: 80px;
-    }
-    .docs-section:last-child {
-      border-bottom: none;
-    }
+    /* ── Blog grid ───────────────────────────────────────────────── */
+    .blog-section { padding: var(--space-16) var(--space-8); }
+    .blog-inner { max-width: var(--max-width); margin: 0 auto; }
+    .blog-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-6); }
 
-    .docs-section h2 {
-      font-family: var(--font-display);
-      font-size: clamp(1.4rem, 2.5vw, 1.9rem);
-      font-weight: 700;
-      letter-spacing: -0.025em;
-      color: var(--text-primary);
-      margin-bottom: var(--space-5);
-      line-height: 1.2;
-    }
-
-    .docs-section h3 {
-      font-family: var(--font-display);
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin: var(--space-8) 0 var(--space-3);
-    }
-
-    .docs-section p {
-      color: var(--text-secondary);
-      font-size: 0.95rem;
-      line-height: 1.8;
-      margin-bottom: var(--space-4);
-      max-width: 70ch;
-    }
-
-    .docs-section a {
-      color: var(--accent);
-      border-bottom: 1px solid var(--accent-dim);
-      transition: all var(--duration-fast) ease;
-    }
-    .docs-section a:hover { border-bottom-color: var(--accent); }
-
-    .docs-section ul, .docs-section ol {
-      padding-left: var(--space-6);
-      margin-bottom: var(--space-5);
-    }
-    .docs-section ul { list-style: disc; }
-    .docs-section ol { list-style: decimal; }
-    .docs-section li {
-      color: var(--text-secondary);
-      font-size: 0.95rem;
-      line-height: 1.75;
-      margin-bottom: var(--space-2);
-      max-width: 68ch;
-    }
-
-    .docs-section code {
-      font-family: var(--font-mono);
-      font-size: 0.82em;
-      background: var(--bg-raised);
+    .article-card {
+      background: var(--bg-base);
       border: 1px solid var(--border-subtle);
-      padding: 1px 5px;
-      border-radius: 2px;
-      color: var(--text-primary);
+      border-top: 4px solid var(--accent-dim);
+      padding: var(--space-6);
+      display: flex;
+      flex-direction: column;
+      transition: border-top-color var(--duration-mid) ease, transform var(--duration-mid) ease, box-shadow var(--duration-mid) ease;
     }
-    [data-theme="dark"] .docs-section code {
-      background: var(--bg-overlay);
+    .article-card:hover {
+      border-top-color: var(--accent);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.08);
     }
-
-    /* Callout boxes */
-    .callout {
-      padding: var(--space-4) var(--space-6);
-      margin: var(--space-6) 0;
-      border-left: 3px solid;
-      border-radius: 0 2px 2px 0;
-    }
-    .callout-note {
-      background: var(--accent-fog);
-      border-color: var(--accent);
-    }
-    .callout-warn {
-      background: var(--warning-fog);
-      border-color: var(--warning);
-    }
-    .callout-title {
+    [data-theme="dark"] .article-card { background: var(--bg-surface); }
+    [data-theme="dark"] .article-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+    .article-tag {
       font-family: var(--font-mono);
-      font-size: 0.65rem;
-      letter-spacing: 0.12em;
+      font-size: 0.6rem;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
-      margin-bottom: var(--space-2);
+      color: var(--accent);
+      margin-bottom: var(--space-3);
     }
-    .callout-note .callout-title { color: var(--accent); }
-    .callout-warn .callout-title { color: var(--warning); }
-    .callout p {
-      font-size: 0.9rem;
+    .article-title {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 700;
+      line-height: 1.3;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+      margin-bottom: var(--space-3);
+      flex-grow: 1;
+    }
+    .article-excerpt {
+      font-size: 0.88rem;
       color: var(--text-secondary);
-      line-height: 1.7;
-      max-width: none;
-      margin-bottom: 0;
+      line-height: 1.65;
+      margin-bottom: var(--space-5);
     }
+    .article-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: var(--space-5);
+    }
+    .article-read-more {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 0.02em;
+      transition: gap var(--duration-fast) ease;
+    }
+    .article-read-more:hover { gap: var(--space-3); }
 
     /* ── Footer ──────────────────────────────────────────────────── */
-/* ── Footer ──────────────────────────────────────────────────── */
     .site-footer {
       background: var(--footer-bg);
       color: rgba(226, 220, 210, 0.7);
@@ -523,16 +476,9 @@
     }
     .footer-bottom a:hover { color: rgba(226, 220, 210, 0.7); }
 
-    
-    /* ── Animations ─────────────────────────────────────────────── */
-    @keyframes rise {
-      from { opacity: 0; transform: translateY(12px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
     /* ── Responsive ─────────────────────────────────────────────── */
-    /* Nav collapses at 1080px, not 768px: at 1024px the full item list no
-       longer fits the nav-inner row and overflows the viewport
+    /* Nav collapses at 1080px, not 768px: at 1024px the full item list
+       no longer fits the nav-inner row and overflows the viewport
        horizontally. */
     @media (max-width: 1080px) {
       .nav-links { display: none; }
@@ -553,16 +499,14 @@
     }
 
     @media (max-width: 768px) {
-      .docs-layout { grid-template-columns: 1fr; }
-      .docs-sidebar {
-        position: static;
-        height: auto;
-        border-right: none;
-        border-bottom: 1px solid var(--border-subtle);
-      }
-      .docs-content { padding: var(--space-8) var(--space-5) var(--space-12); }
+      .blog-grid { grid-template-columns: 1fr 1fr; }
       .footer-grid { grid-template-columns: 1fr; gap: var(--space-8); }
       .footer-bottom { flex-direction: column; align-items: flex-start; }
+      .page-header { padding: var(--space-16) var(--space-5); }
+    }
+
+    @media (max-width: 540px) {
+      .blog-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -570,9 +514,9 @@
   <a href="#main-content" class="skip-link">Skip to main content</a>
 
   <!-- Navigation -->
-  <nav class="site-nav" role="navigation" aria-label="Primary navigation">
+  <nav class="site-nav" role="navigation" aria-label="Main navigation">
     <div class="nav-inner">
-      <a href="/index.html" class="nav-logo" aria-label="OpenWhistle home">
+      <a href="../index.html" class="nav-logo" aria-label="OpenWhistle home">
         <svg width="22" height="26" viewBox="0 0 22 26" fill="none" aria-hidden="true">
           <path d="M11 1 L20 5 L20 14 C20 20 17 24 11 25.5 C5 24 2 20 2 14 L2 5 Z"
                 stroke="#5ecb7a" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
@@ -589,23 +533,25 @@
       </button>
 
       <ul class="nav-links" id="nav-links" role="list">
-        <li><a href="/index.html#features">Features</a></li>
-        <li><a href="/index.html#how-it-works">How it Works</a></li>
-        <li><a href="/index.html#compliance">Compliance</a></li>
-        <li><a href="/docs.html">Documentation</a></li>
-        <li><a href="/roadmap.html">Roadmap</a></li>
-        <li><a href="/changelog.html">Changelog</a></li>
-        <li><a href="/blog/en.html">Blog</a></li>
-        <li><a href="/de/">Auf Deutsch</a></li>
+        <li><a href="../index.html#features">Features</a></li>
+        <li><a href="../index.html#how-it-works">How it Works</a></li>
+        <li><a href="../index.html#compliance">Compliance</a></li>
+        <li><a href="../docs.html">Documentation</a></li>
+        <li><a href="../roadmap.html">Roadmap</a></li>
+        <li><a href="../changelog.html">Changelog</a></li>
+        <li><a href="en.html" class="active" aria-current="page">Blog</a></li>
+        <li><a href="index.html" hreflang="de">Deutsch</a></li>
         <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
         <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank" class="nav-cta">Try Demo</a></li>
       </ul>
 
       <div class="nav-actions">
         <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+          <!-- Moon icon -->
           <svg class="icon-moon" viewBox="0 0 16 16" fill="none">
             <path d="M13.5 9.5A6 6 0 016 2a6 6 0 100 12 6 6 0 007.5-4.5z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
           </svg>
+          <!-- Sun icon -->
           <svg class="icon-sun" viewBox="0 0 16 16" fill="none">
             <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.3"/>
             <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M11.54 4.46l-1.41 1.41M4.95 11.54l-1.41 1.41" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
@@ -615,23 +561,127 @@
     </div>
   </nav>
 
-    <div class="docs-layout" style="grid-template-columns: 1fr;">
-    <main id="main-content" class="docs-content">
-      <h1>Page not found</h1>
-      <p class="docs-lead">
-        There is no page at this address. It may have moved, or the link had a typo.
-      </p>
-      <section class="docs-section" aria-label="Where to go instead">
-        <ul>
-          <li><a href="/">Home page</a>: what OpenWhistle is</li>
-          <li><a href="/docs.html">Documentation</a>: install, configure, run</li>
-          <li><a href="/blog/en.html">Blog</a>: HinSchG guides and release notes, in English and German</li>
-        </ul>
-      </section>
-    </main>
-  </div>
+  <main id="main-content">
+    <header class="page-header">
+      <p class="page-header-eyebrow">Guides &amp; practice</p>
+      <h1>OpenWhistle Blog</h1>
+      <p>HinSchG compliance, whistleblower protection and internal reporting channels, explained for practice. Every article is also available in German.</p>
+    </header>
 
-  <!-- Footer -->
+    <section class="blog-section">
+      <div class="blog-inner">
+        <div class="blog-grid" role="list">
+
+          <article class="article-card" role="listitem">
+            <p class="article-tag">GDPR · EU hosting · Security</p>
+            <h2 class="article-title">
+              <a href="whistleblowing-system-gdpr-eu-hosting.html">Whistleblowing system with EU hosting and GDPR: where the data lives and what is encrypted</a>
+            </h2>
+            <p class="article-excerpt">Whistleblowing system with EU hosting: self-hosted, reports stay on your server. What OpenWhistle encrypts, never stores, and what the GDPR requires.</p>
+            <div class="article-meta">
+              <span>September 2026</span>
+              <span>5 min read</span>
+            </div>
+            <a href="whistleblowing-system-gdpr-eu-hosting.html" class="article-read-more" aria-label="Read Whistleblowing system with EU hosting and GDPR: where the data lives and what is encrypted">
+              Read more &rarr;
+            </a>
+          </article>
+
+          <article class="article-card" role="listitem">
+            <p class="article-tag">Costs · Open Source · HinSchG</p>
+            <h2 class="article-title">
+              <a href="free-internal-reporting-channel.html">A free internal reporting channel: what "free" really costs</a>
+            </h2>
+            <p class="article-excerpt">Run an internal reporting channel for free: what is left in server, operations and work at a €0 licence, and which options come with published prices.</p>
+            <div class="article-meta">
+              <span>September 2026</span>
+              <span>6 min read</span>
+            </div>
+            <a href="free-internal-reporting-channel.html" class="article-read-more" aria-label="Read A free internal reporting channel: what &quot;free&quot; really costs">
+              Read more &rarr;
+            </a>
+          </article>
+
+          <article class="article-card" role="listitem">
+            <p class="article-tag">Privacy · Attachments · v2.1</p>
+            <h2 class="article-title">
+              <a href="removing-metadata-without-altering-evidence.html">Removing metadata without altering the evidence photo</a>
+            </h2>
+            <p class="article-excerpt">How OpenWhistle strips GPS data and Windows user names from attachments without changing a pixel, and why the old way turned evidence photos black.</p>
+            <div class="article-meta">
+              <span>September 2026</span>
+              <span>4 min read</span>
+            </div>
+            <a href="removing-metadata-without-altering-evidence.html" class="article-read-more" aria-label="Read Removing metadata without altering the evidence photo">
+              Read more &rarr;
+            </a>
+          </article>
+
+          <article class="article-card" role="listitem">
+            <p class="article-tag">Release · Security · v2.0</p>
+            <h2 class="article-title">
+              <a href="whats-new-in-2-0.html">What's new in OpenWhistle 2.0? Six findings from a hardening release</a>
+            </h2>
+            <p class="article-excerpt">OpenWhistle 2.0 in six findings: a PDF that swallowed non-Latin text, a header that was trusted too much, and a rollback that crashed sessions.</p>
+            <div class="article-meta">
+              <span>September 2026</span>
+              <span>6 min read</span>
+            </div>
+            <a href="whats-new-in-2-0.html" class="article-read-more" aria-label="Read What&#x27;s new in OpenWhistle 2.0? Six findings from a hardening release">
+              Read more &rarr;
+            </a>
+          </article>
+
+          <article class="article-card" role="listitem">
+            <p class="article-tag">HinSchG · Compliance · Guide</p>
+            <h2 class="article-title">
+              <a href="hinschg-compliance-guide.html">HinSchG Compliance Guide 2026: Duties, Deadlines and Checklist from 50 Employees</a>
+            </h2>
+            <p class="article-excerpt">HinSchG duties at a glance: which employers need an internal reporting channel, which deadlines § 17 sets, and what a compliance checklist covers.</p>
+            <div class="article-meta">
+              <span>September 2026</span>
+              <span>8 min read</span>
+            </div>
+            <a href="hinschg-compliance-guide.html" class="article-read-more" aria-label="Read HinSchG Compliance Guide 2026: Duties, Deadlines and Checklist from 50 Employees">
+              Read more &rarr;
+            </a>
+          </article>
+
+          <article class="article-card" role="listitem">
+            <p class="article-tag">Providers · Comparison · HinSchG</p>
+            <h2 class="article-title">
+              <a href="whistleblowing-software-comparison.html">Whistleblowing software providers compared 2026: open source, managed and SaaS</a>
+            </h2>
+            <p class="article-excerpt">Whistleblowing system providers compared: criteria for choosing one, plus licence, hosting, price and languages of five systems, each with a source.</p>
+            <div class="article-meta">
+              <span>September 2026</span>
+              <span>7 min read</span>
+            </div>
+            <a href="whistleblowing-software-comparison.html" class="article-read-more" aria-label="Read Whistleblowing software providers compared 2026: open source, managed and SaaS">
+              Read more &rarr;
+            </a>
+          </article>
+
+          <article class="article-card" role="listitem">
+            <p class="article-tag">Guide · Self-hosting · Docker</p>
+            <h2 class="article-title">
+              <a href="set-up-internal-reporting-channel.html">Set up an internal reporting channel: a step-by-step guide with OpenWhistle 2.0.1</a>
+            </h2>
+            <p class="article-excerpt">Set up an internal reporting channel with OpenWhistle: server, Docker Compose, HTTPS, an admin account with MFA and first configuration, step by step.</p>
+            <div class="article-meta">
+              <span>September 2026</span>
+              <span>10 min read</span>
+            </div>
+            <a href="set-up-internal-reporting-channel.html" class="article-read-more" aria-label="Read Set up an internal reporting channel: a step-by-step guide with OpenWhistle 2.0.1">
+              Read more &rarr;
+            </a>
+          </article>
+
+        </div>
+      </div>
+    </section>
+  </main>
+
   <footer class="site-footer" role="contentinfo">
     <div class="footer-inner">
       <div class="footer-grid">
@@ -654,13 +704,13 @@
           <div class="footer-col-title">Resources</div>
           <ul class="footer-links">
             <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
-            <li><a href="/docs.html">Documentation</a></li>
-            <li><a href="/changelog.html">Changelog</a></li>
-            <li><a href="/blog/en.html">Blog</a></li>
-            <li><a href="/de/">Auf Deutsch</a></li>
-            <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Live Demo</a></li>
+            <li><a href="../docs.html">Documentation</a></li>
+            <li><a href="../changelog.html">Changelog</a></li>
+            <li><a href="../index.html">Home</a></li>
+            <li><a href="index.html" hreflang="de">Deutsch</a></li>
+            <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Live demo</a></li>
             <li><a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank">Issues</a></li>
-            <li><a href="https://github.com/openwhistle/OpenWhistle/blob/main/LICENSE" rel="noopener noreferrer" target="_blank">License (GPL-3.0)</a></li>
+            <li><a href="https://github.com/openwhistle/OpenWhistle/blob/main/LICENSE" rel="noopener noreferrer" target="_blank">Licence (GPL-3.0)</a></li>
           </ul>
         </nav>
 
@@ -670,8 +720,8 @@
             Licensed under GPL-3.0. Built with &#10084;&#65039; for transparency.
           </p>
           <p style="font-size: 0.82rem; color: rgba(226,220,210,0.35); line-height: 1.7; margin-top: 0.75rem;">
-            OpenWhistle does not provide legal advice. Please consult qualified counsel
-            regarding your specific HinSchG obligations.
+            OpenWhistle does not give legal advice. Consult a qualified
+            lawyer about your own obligations under the HinSchG.
           </p>
         </div>
       </div>
@@ -706,7 +756,7 @@
       }
     });
 
-    // Mobile nav
+    // Mobile nav toggle
     var navToggle = document.querySelector('.nav-toggle');
     var navLinks = document.getElementById('nav-links');
     if (navToggle && navLinks) {
@@ -716,7 +766,6 @@
         navLinks.classList.toggle('open', !isOpen);
       });
     }
-
   </script>
 </body>
 </html>

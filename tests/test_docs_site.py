@@ -205,17 +205,32 @@ def _resolve_nav_target(page: Path, href: str) -> str:
     rel = str(resolved.relative_to(ROOT))
     if rel == "docs/de/index.html":
         rel = "docs/index.html"
+    # The English blog index is the blog's home in the other language.
+    if rel == "docs/blog/en.html":
+        rel = "docs/blog/index.html"
     return rel + (f"#{frag}" if frag else "")
+
+
+def _link_targets(page: Path, links_html: str) -> set[str]:
+    """Resolved targets of a link list. A link with ``hreflang`` is the
+    language switch: on a blog article it names the article's twin, on the
+    other pages the other language's home -- one bucket, as for de/."""
+    targets = set()
+    for attrs in re.findall(r"<a\s+([^>]*)>", links_html):
+        href = re.search(r'href="([^"]+)"', attrs)
+        if not href:
+            continue
+        targets.add(
+            "docs/index.html" if "hreflang=" in attrs else _resolve_nav_target(page, href.group(1))
+        )
+    return targets
 
 
 def _nav_targets(page: Path) -> set[str]:
     html = page.read_text()
     m = re.search(r'<ul class="nav-links"[^>]*>(.*?)</ul>', html, re.DOTALL)
     assert m, f"{page}: no <ul class=\"nav-links\"> found"
-    return {
-        _resolve_nav_target(page, href)
-        for href in re.findall(r'<a\s+href="([^"]+)"', m.group(1))
-    }
+    return _link_targets(page, m.group(1))
 
 
 def test_every_docs_page_nav_has_the_same_item_set() -> None:
@@ -281,10 +296,7 @@ def _footer_targets(page: Path) -> set[str]:
     html = page.read_text()
     m = re.search(r'<ul class="footer-links"[^>]*>(.*?)</ul>', html, re.DOTALL)
     assert m, f"{page}: no <ul class=\"footer-links\"> found"
-    return {
-        _resolve_nav_target(page, href)
-        for href in re.findall(r'<a\s+href="([^"]+)"', m.group(1))
-    }
+    return _link_targets(page, m.group(1))
 
 
 # Every page's footer link-list must resolve to the same target set as its
@@ -375,3 +387,17 @@ def test_landing_pages_link_each_other_via_hreflang() -> None:
         ):
             tag = f'<link rel="alternate" hreflang="{lang}" href="{href}">'
             assert tag in html, (own, lang, tag)
+
+
+def test_every_blog_page_exists_in_english_and_german() -> None:
+    """The blog was German only. Every page has its twin in the other
+    language, named by hreflang (tests/test_seo.py holds the pair reciprocal)."""
+    missing = []
+    for page in sorted((ROOT / "docs" / "blog").glob("*.html")):
+        html = page.read_text()
+        lang = re.search(r'<html lang="([a-z]+)"', html)
+        assert lang, page.name
+        other = "de" if lang.group(1) == "en" else "en"
+        if f'hreflang="{other}"' not in html.split("</head>")[0]:
+            missing.append(page.name)
+    assert not missing, missing

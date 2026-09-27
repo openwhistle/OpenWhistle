@@ -1,15 +1,15 @@
 <!DOCTYPE html>
-<html lang="de" data-theme="light">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
-  <title>Interne Meldestelle einrichten: Anleitung | OpenWhistle</title>
-  <meta name="description" content="Interne Meldestelle einrichten mit OpenWhistle: Server, Docker Compose, HTTPS, Admin-Konto mit MFA und erste Konfiguration, Schritt für Schritt erklärt.">
+  <title>Set Up an Internal Reporting Channel: Guide | OpenWhistle</title>
+  <meta name="description" content="Set up an internal reporting channel with OpenWhistle: server, Docker Compose, HTTPS, an admin account with MFA and first configuration, step by step.">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#08080a" media="(prefers-color-scheme: dark)">
-  <link rel="canonical" href="https://openwhistle.net/blog/interne-meldestelle-einrichten.html">
+  <link rel="canonical" href="https://openwhistle.net/blog/set-up-internal-reporting-channel.html">
   <link rel="alternate" hreflang="en" href="https://openwhistle.net/blog/set-up-internal-reporting-channel.html">
   <link rel="alternate" hreflang="de" href="https://openwhistle.net/blog/interne-meldestelle-einrichten.html">
   <link rel="alternate" hreflang="x-default" href="https://openwhistle.net/blog/set-up-internal-reporting-channel.html">
@@ -22,33 +22,33 @@
   <!-- Open Graph / Twitter -->
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="OpenWhistle">
-  <meta property="og:url" content="https://openwhistle.net/blog/interne-meldestelle-einrichten.html">
-  <meta property="og:title" content="Interne Meldestelle einrichten: Anleitung | OpenWhistle">
-  <meta property="og:description" content="Interne Meldestelle einrichten mit OpenWhistle: Server, Docker Compose, HTTPS, Admin-Konto mit MFA und erste Konfiguration, Schritt für Schritt erklärt.">
+  <meta property="og:url" content="https://openwhistle.net/blog/set-up-internal-reporting-channel.html">
+  <meta property="og:title" content="Set Up an Internal Reporting Channel: Guide | OpenWhistle">
+  <meta property="og:description" content="Set up an internal reporting channel with OpenWhistle: server, Docker Compose, HTTPS, an admin account with MFA and first configuration, step by step.">
   <meta property="og:image" content="https://openwhistle.net/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="OpenWhistle: sichere Hinweisgeber-Meldungen">
-  <meta property="og:locale" content="de_DE">
+  <meta property="og:image:alt" content="OpenWhistle: secure whistleblower reporting">
+  <meta property="og:locale" content="en_US">
   <meta property="article:published_time" content="2026-04-27">
   <meta property="article:modified_time" content="2026-09-27">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Interne Meldestelle einrichten: Anleitung | OpenWhistle">
-  <meta name="twitter:description" content="Interne Meldestelle einrichten mit OpenWhistle: Server, Docker Compose, HTTPS, Admin-Konto mit MFA und erste Konfiguration, Schritt für Schritt erklärt.">
+  <meta name="twitter:title" content="Set Up an Internal Reporting Channel: Guide | OpenWhistle">
+  <meta name="twitter:description" content="Set up an internal reporting channel with OpenWhistle: server, Docker Compose, HTTPS, an admin account with MFA and first configuration, step by step.">
   <meta name="twitter:image" content="https://openwhistle.net/og-image.png">
-  <meta name="twitter:image:alt" content="OpenWhistle: sichere Hinweisgeber-Meldungen">
+  <meta name="twitter:image:alt" content="OpenWhistle: secure whistleblower reporting">
 
   <!-- Structured data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
-    "headline": "Interne Meldestelle einrichten mit OpenWhistle 2.0.1",
-    "description": "Schritt-für-Schritt-Anleitung: OpenWhistle mit Docker Compose installieren, HTTPS-Zertifikat hinterlegen und den ersten Admin anlegen.",
-    "url": "https://openwhistle.net/blog/interne-meldestelle-einrichten.html",
+    "headline": "Set up an internal reporting channel with OpenWhistle 2.0.1",
+    "description": "Step-by-step guide: install OpenWhistle with Docker Compose, install the HTTPS certificate and create the first admin.",
+    "url": "https://openwhistle.net/blog/set-up-internal-reporting-channel.html",
     "mainEntityOfPage": {
       "@type": "WebPage",
-      "@id": "https://openwhistle.net/blog/interne-meldestelle-einrichten.html"
+      "@id": "https://openwhistle.net/blog/set-up-internal-reporting-channel.html"
     },
     "datePublished": "2026-04-27",
     "dateModified": "2026-09-27",
@@ -67,7 +67,7 @@
       }
     },
     "image": "https://openwhistle.net/og-image.png",
-    "inLanguage": "de"
+    "inLanguage": "en"
   }
   </script>
   <script type="application/ld+json">
@@ -90,8 +90,8 @@
       {
         "@type": "ListItem",
         "position": 3,
-        "name": "Interne Meldestelle einrichten: Schritt-für-Schritt-Anleitung mit OpenWhistle",
-        "item": "https://openwhistle.net/blog/interne-meldestelle-einrichten.html"
+        "name": "Set up an internal reporting channel with OpenWhistle 2.0.1",
+        "item": "https://openwhistle.net/blog/set-up-internal-reporting-channel.html"
       }
     ]
   }
@@ -372,11 +372,11 @@
   </style>
 </head>
 <body>
-  <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
 
-  <nav class="site-nav" role="navigation" aria-label="Hauptnavigation">
+  <nav class="site-nav" role="navigation" aria-label="Main navigation">
     <div class="nav-inner">
-      <a href="../index.html" class="nav-logo" aria-label="OpenWhistle Startseite">
+      <a href="../index.html" class="nav-logo" aria-label="OpenWhistle home">
         <svg width="22" height="26" viewBox="0 0 22 26" fill="none" aria-hidden="true">
           <path d="M11 1 L20 5 L20 14 C20 20 17 24 11 25.5 C5 24 2 20 2 14 L2 5 Z"
                 stroke="#5ecb7a" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
@@ -388,25 +388,25 @@
         OpenWhistle
       </a>
 
-      <button class="nav-toggle" aria-controls="nav-links" aria-expanded="false" aria-label="Navigation umschalten">
+      <button class="nav-toggle" aria-controls="nav-links" aria-expanded="false" aria-label="Toggle navigation">
         <span></span><span></span><span></span>
       </button>
 
       <ul class="nav-links" id="nav-links" role="list">
-        <li><a href="../de/#features">Funktionen</a></li>
-        <li><a href="../de/#how-it-works">Ablauf</a></li>
-        <li><a href="../de/#compliance">Compliance</a></li>
-        <li><a href="../docs.html">Dokumentation</a></li>
+        <li><a href="../index.html#features">Features</a></li>
+        <li><a href="../index.html#how-it-works">How it Works</a></li>
+        <li><a href="../index.html#compliance">Compliance</a></li>
+        <li><a href="../docs.html">Documentation</a></li>
         <li><a href="../roadmap.html">Roadmap</a></li>
-        <li><a href="../changelog.html">Änderungsprotokoll</a></li>
-        <li><a href="index.html" class="active" aria-current="page">Blog</a></li>
-        <li><a href="set-up-internal-reporting-channel.html" hreflang="en">English</a></li>
+        <li><a href="../changelog.html">Changelog</a></li>
+        <li><a href="en.html" class="active" aria-current="page">Blog</a></li>
+        <li><a href="interne-meldestelle-einrichten.html" hreflang="de">Deutsch</a></li>
         <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
-        <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank" class="nav-cta">Demo testen</a></li>
+        <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank" class="nav-cta">Try Demo</a></li>
       </ul>
 
       <div class="nav-actions">
-        <button class="theme-toggle" id="theme-toggle" aria-label="Dunkelmodus umschalten">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
           <svg class="icon-moon" viewBox="0 0 16 16" fill="none">
             <path d="M13.5 9.5A6 6 0 016 2a6 6 0 100 12 6 6 0 007.5-4.5z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
           </svg>
@@ -423,67 +423,67 @@
     <div class="article-wrap">
       <article>
         <header class="article-header">
-          <p class="article-tag">Anleitung · Self-Hosting · Docker</p>
-          <h1 class="article-title">Interne Meldestelle einrichten: Schritt-für-Schritt-Anleitung mit OpenWhistle 2.0.1</h1>
-          <p class="article-subtitle">Vom leeren Linux-Server bis zur ersten Testmeldung: Docker, Konfiguration, HTTPS-Zertifikat, Einrichtungsassistent und erste Schritte im Admin-Bereich.</p>
+          <p class="article-tag">Guide · Self-hosting · Docker</p>
+          <h1 class="article-title">Set up an internal reporting channel: a step-by-step guide with OpenWhistle 2.0.1</h1>
+          <p class="article-subtitle">From an empty Linux server to the first test report: Docker, configuration, HTTPS certificate, setup wizard and first steps in the admin area.</p>
           <div class="article-meta">
-            <span>27. April 2026</span>
-            <span>Aktualisiert am 27. September 2026</span>
-            <span>10 Min. Lesezeit</span>
+            <span>27 April 2026</span>
+            <span>Updated 27 September 2026</span>
+            <span>10 min read</span>
             <span>OpenWhistle Contributors</span>
           </div>
         </header>
 
         <div class="article-body">
 
-          <p>Diese Anleitung richtet OpenWhistle mit Docker Compose ein. Am Ende läuft der digitale Meldekanal Ihrer internen Meldestelle auf Ihrem eigenen Server. Die maßgebliche Referenz bleibt die <a href="../docs.html#installation">Installationsanleitung in der Dokumentation</a>.</p>
+          <p>This guide sets up OpenWhistle with Docker Compose. At the end, the digital channel of your internal reporting office (interne Meldestelle) runs on your own server. The authoritative reference remains the <a href="../docs.html#installation">installation guide in the documentation</a>.</p>
 
-          <h2>Voraussetzungen</h2>
+          <h2>Prerequisites</h2>
 
           <ul>
-            <li>Ein Linux-Server mit 1 vCPU, mindestens 512 MB RAM (1 GB empfohlen) und 5 GB Speicher</li>
-            <li>Docker 24 oder neuer mit dem Plugin <code>docker compose</code> (v2)</li>
-            <li>Eine Domain, die auf den Server zeigt, etwa <code>meldestelle.ihr-unternehmen.de</code></li>
-            <li>Offene Ports 80 und 443</li>
-            <li>Root- oder sudo-Zugriff und etwas Übung im Terminal</li>
+            <li>A Linux server with 1 vCPU, at least 512 MB RAM (1 GB recommended) and 5 GB of storage</li>
+            <li>Docker 24 or newer with the <code>docker compose</code> plugin (v2)</li>
+            <li>A domain that points to the server, such as <code>meldestelle.ihr-unternehmen.de</code></li>
+            <li>Ports 80 and 443 open</li>
+            <li>Root or sudo access and some practice in the terminal</li>
           </ul>
 
           <div class="callout callout-info">
-            <p class="callout-title">Automatisch statt von Hand</p>
-            <p>Das Repository enthält eine Ansible-Rolle unter <code>ansible/</code>. Sie installiert Docker, legt einen Systemdienst an und holt ein Let's-Encrypt-Zertifikat. Diese Anleitung zeigt den Weg von Hand.</p>
+            <p class="callout-title">Automated instead of by hand</p>
+            <p>The repository contains an Ansible role under <code>ansible/</code>. It installs Docker, creates a system service and fetches a Let's Encrypt certificate. This guide shows the manual route.</p>
           </div>
 
-          <h2>Schritt 1: Server bereitstellen</h2>
+          <h2>Step 1: Provision the server</h2>
 
           <div class="step-block">
             <div class="step-num" aria-hidden="true">1</div>
             <div class="step-content">
-              <h3>VPS auswählen</h3>
-              <p>Ein kleiner VPS genügt. Wählen Sie einen Anbieter mit Rechenzentrum in der EU, der einen Auftragsverarbeitungsvertrag nach Art. 28 DSGVO anbietet.</p>
-              <p>Legen Sie einen Benutzer mit sudo-Rechten an und melden Sie sich per SSH-Schlüssel an.</p>
+              <h3>Choose a VPS</h3>
+              <p>A small VPS is enough. Choose a provider with a data centre in the EU that offers a data processing agreement under Art. 28 GDPR.</p>
+              <p>Create a user with sudo rights and log in with an SSH key.</p>
             </div>
           </div>
 
-          <h2>Schritt 2: Docker installieren</h2>
+          <h2>Step 2: Install Docker</h2>
 
           <div class="step-block">
             <div class="step-num" aria-hidden="true">2</div>
             <div class="step-content">
-              <h3>Docker Engine und Compose-Plugin</h3>
-              <p>Folgen Sie der offiziellen <a href="https://docs.docker.com/engine/install/" rel="noopener noreferrer" target="_blank">Installationsanleitung von Docker</a> für Ihre Distribution. Prüfen Sie danach beide Versionen:</p>
+              <h3>Docker Engine and the Compose plugin</h3>
+              <p>Follow Docker's official <a href="https://docs.docker.com/engine/install/" rel="noopener noreferrer" target="_blank">installation guide</a> for your distribution. Then check both versions:</p>
             </div>
           </div>
 
-<pre><code>docker --version          # 24.0 oder neuer
+<pre><code>docker --version          # 24.0 or newer
 docker compose version    # v2.x</code></pre>
 
-          <h2>Schritt 3: OpenWhistle konfigurieren</h2>
+          <h2>Step 3: Configure OpenWhistle</h2>
 
           <div class="step-block">
             <div class="step-num" aria-hidden="true">3</div>
             <div class="step-content">
-              <h3>Repository klonen und <code>.env</code> anlegen</h3>
-              <p>Klonen Sie das Repository und kopieren Sie die Beispielkonfiguration:</p>
+              <h3>Clone the repository and create <code>.env</code></h3>
+              <p>Clone the repository and copy the example configuration:</p>
             </div>
           </div>
 
@@ -491,27 +491,27 @@ docker compose version    # v2.x</code></pre>
 cd OpenWhistle
 cp .env.example .env</code></pre>
 
-          <p>Tragen Sie in <code>.env</code> mindestens diese Werte ein. Zufällige Schlüssel erzeugt <code>openssl rand -hex 32</code>.</p>
+          <p>Enter at least these values in <code>.env</code>. <code>openssl rand -hex 32</code> generates random keys.</p>
 
-<pre><code># Produktions-Stack mit nginx und TLS für jeden docker-compose-Befehl
+<pre><code># Production stack with nginx and TLS for every docker-compose command
 COMPOSE_FILE=docker-compose.prod.yml
 
-# Mindestens 32 Zeichen
+# At least 32 characters
 SECRET_KEY=&lt;openssl rand -hex 32&gt;
-# Empfohlen: eigener Schlüssel für die Verschlüsselung der Meldungen
+# Recommended: a separate key for encrypting the reports
 ENCRYPTION_KEY=&lt;openssl rand -hex 32&gt;
 
-# Passwörter für Datenbank und Redis, dieselben in den URLs
+# Passwords for the database and Redis, the same ones in the URLs
 POSTGRES_PASSWORD=starkes-passwort
 REDIS_PASSWORD=zweites-starkes-passwort
 DATABASE_URL=postgresql+asyncpg://openwhistle:starkes-passwort@db:5432/openwhistle
 REDIS_URL=redis://:zweites-starkes-passwort@redis:6379/0
 
-# Ihre Domain, für Links in E-Mails und das Ersatzzertifikat
+# Your domain, for links in emails and the fallback certificate
 APP_PUBLIC_URL=https://meldestelle.ihr-unternehmen.de
 TLS_HOSTNAME=meldestelle.ihr-unternehmen.de
 
-# Optional: E-Mail an die Meldestelle und Fristerinnerungen
+# Optional: email to the reporting office and deadline reminders
 # NOTIFY_EMAIL_ENABLED=true
 # NOTIFY_EMAIL_TO=meldestelle@ihr-unternehmen.de
 # NOTIFY_SMTP_HOST=smtp.ihr-mailserver.de
@@ -521,20 +521,20 @@ TLS_HOSTNAME=meldestelle.ihr-unternehmen.de
 # REMINDER_ENABLED=true</code></pre>
 
           <div class="callout callout-warn">
-            <p class="callout-title">Schlüssel sichern</p>
-            <p>Mit <code>ENCRYPTION_KEY</code> werden die Meldungen verschlüsselt, ohne ihn mit <code>SECRET_KEY</code>. Geht der Schlüssel verloren, sind die Meldungen nicht mehr lesbar. Bewahren Sie ihn in einem Passwortmanager oder Secret-Store auf.</p>
+            <p class="callout-title">Back up the key</p>
+            <p><code>ENCRYPTION_KEY</code> encrypts the reports; without it, <code>SECRET_KEY</code> does. If the key is lost, the reports can no longer be read. Keep it in a password manager or a secret store.</p>
           </div>
 
-          <p>Alle weiteren Einstellungen stehen in der <a href="../docs.html#configuration">Konfigurationstabelle</a>.</p>
+          <p>All other settings are in the <a href="../docs.html#configuration">configuration table</a>.</p>
 
-          <h2>Schritt 4: HTTPS-Zertifikat hinterlegen</h2>
+          <h2>Step 4: Install the HTTPS certificate</h2>
 
           <div class="step-block">
             <div class="step-num" aria-hidden="true">4</div>
             <div class="step-content">
-              <h3>Let's-Encrypt-Zertifikat nach <code>nginx/certs/</code></h3>
-              <p>Der Stack liefert HTTPS von Anfang an. Ohne eigenes Zertifikat erzeugt der Dienst <code>tls-init</code> ein selbstsigniertes für <code>TLS_HOSTNAME</code>. Das genügt zum Testen, nicht für den Betrieb.</p>
-              <p>Holen Sie ein Zertifikat, solange Port 80 noch frei ist, und <strong>kopieren</strong> Sie es. Ein Symlink nach <code>/etc/letsencrypt/live</code> zeigt im Container ins Leere.</p>
+              <h3>A Let's Encrypt certificate in <code>nginx/certs/</code></h3>
+              <p>The stack serves HTTPS from the start. Without your own certificate, the <code>tls-init</code> service creates a self-signed one for <code>TLS_HOSTNAME</code>. That is enough for testing, not for production.</p>
+              <p>Fetch a certificate while port 80 is still free, and <strong>copy</strong> it. A symlink to <code>/etc/letsencrypt/live</code> points to nothing inside the container.</p>
             </div>
           </div>
 
@@ -543,138 +543,138 @@ sudo cp /etc/letsencrypt/live/meldestelle.ihr-unternehmen.de/fullchain.pem nginx
 sudo cp /etc/letsencrypt/live/meldestelle.ihr-unternehmen.de/privkey.pem nginx/certs/
 sudo chmod 600 nginx/certs/privkey.pem</code></pre>
 
-          <p>Zum Erneuern kopieren Sie die neuen Dateien und starten <code>docker compose up -d tls-init nginx</code>. Ein Neustart von nginx allein behält das alte Zertifikat.</p>
+          <p>To renew, copy the new files and run <code>docker compose up -d tls-init nginx</code>. Restarting nginx alone keeps the old certificate.</p>
 
-          <h2>Schritt 5: OpenWhistle starten</h2>
+          <h2>Step 5: Start OpenWhistle</h2>
 
           <div class="step-block">
             <div class="step-num" aria-hidden="true">5</div>
             <div class="step-content">
-              <h3>Alle Dienste starten</h3>
-              <p>Ein Befehl startet App, PostgreSQL, Redis und nginx. Die Datenbankmigrationen laufen beim Start automatisch.</p>
+              <h3>Start all services</h3>
+              <p>One command starts the app, PostgreSQL, Redis and nginx. The database migrations run automatically at startup.</p>
             </div>
           </div>
 
 <pre><code>docker compose up -d
 docker compose ps
 
-# Health-Check
+# Health check
 curl -s https://meldestelle.ihr-unternehmen.de/health
 # {"status":"ok","version":"2.0.1","components":{"database":"ok","redis":"ok"}}</code></pre>
 
-          <h2>Schritt 6: Den ersten Admin anlegen</h2>
+          <h2>Step 6: Create the first admin</h2>
 
           <div class="step-block">
             <div class="step-num" aria-hidden="true">6</div>
             <div class="step-content">
-              <h3>Einrichtungsassistent mit Einmal-Token</h3>
-              <p>Der Assistent verlangt ein Einmal-Token. Ohne eigenes <code>SETUP_TOKEN</code> steht es im Log:</p>
+              <h3>The setup wizard with a one-time token</h3>
+              <p>The wizard asks for a one-time token. Without your own <code>SETUP_TOKEN</code>, it is in the log:</p>
             </div>
           </div>
 
 <pre><code>docker compose logs app | grep "Setup token"</code></pre>
 
-          <p>Öffnen Sie dann <code>https://meldestelle.ihr-unternehmen.de/setup</code>:</p>
+          <p>Then open <code>https://meldestelle.ihr-unternehmen.de/setup</code>:</p>
 
           <ol>
-            <li>Token eingeben.</li>
-            <li>Benutzername mit 3 bis 64 Zeichen und ein Passwort mit mindestens 12 Zeichen wählen.</li>
-            <li>QR-Code mit einer Authenticator-App scannen und den sechsstelligen Code eingeben. Dieser Schritt ist Pflicht.</li>
-            <li>Optional zustimmen, dass die Installation einmal täglich gezählt wird. Vorgabe ist nein.</li>
+            <li>Enter the token.</li>
+            <li>Choose a user name of 3 to 64 characters and a password of at least 12 characters.</li>
+            <li>Scan the QR code with an authenticator app and enter the six-digit code. This step is mandatory.</li>
+            <li>Optionally agree that the installation is counted once a day. The default is no.</li>
           </ol>
 
-          <p>Das erste Konto ist ein Superadmin. Notieren Sie das TOTP-Geheimnis offline: Backup-Codes gibt es nicht.</p>
+          <p>The first account is a superadmin. Write down the TOTP secret offline: there are no backup codes.</p>
 
-          <h2>Schritt 7: Grundkonfiguration im Admin-Bereich</h2>
+          <h2>Step 7: Basic configuration in the admin area</h2>
 
-          <p>Melden Sie sich unter <code>/admin/login</code> an. Diese Seiten richten Sie zuerst ein:</p>
+          <p>Log in at <code>/admin/login</code>. Set up these pages first:</p>
 
           <table class="deadline-table">
             <thead>
               <tr>
-                <th scope="col">Seite</th>
-                <th scope="col">Wofür</th>
+                <th scope="col">Page</th>
+                <th scope="col">What for</th>
               </tr>
             </thead>
             <tbody>
-              <tr><td><code>/admin/categories</code></td><td>Kategorien der Meldungen, etwa Finanzen, Arbeitssicherheit, Diskriminierung</td></tr>
-              <tr><td><code>/admin/locations</code></td><td>Standorte; sind welche aktiv, fragt der Assistent danach</td></tr>
-              <tr><td><code>/admin/users</code></td><td>weitere Konten; neue Konten sind Fallbearbeiter, jedes braucht TOTP</td></tr>
-              <tr><td><code>/admin/telephone-channel</code></td><td>Leitfaden für den mündlichen Kanal nach § 16 Abs. 3 HinSchG</td></tr>
-              <tr><td><code>/admin/system</code></td><td>installierte Version und Dateiprüfung</td></tr>
+              <tr><td><code>/admin/categories</code></td><td>Report categories, such as finance, workplace safety, discrimination</td></tr>
+              <tr><td><code>/admin/locations</code></td><td>Locations; if any are active, the wizard asks for one</td></tr>
+              <tr><td><code>/admin/users</code></td><td>more accounts; new accounts are case handlers, each needs TOTP</td></tr>
+              <tr><td><code>/admin/telephone-channel</code></td><td>Guide for the oral channel under § 16 Abs. 3 of the Whistleblower Protection Act (HinSchG)</td></tr>
+              <tr><td><code>/admin/system</code></td><td>installed version and file check</td></tr>
             </tbody>
           </table>
 
-          <p>Schicken Sie danach eine Testmeldung über das Formular. Prüfen Sie, ob sie im Dashboard erscheint und die E-Mail ankommt.</p>
+          <p>Then send a test report through the form. Check that it appears in the dashboard and that the email arrives.</p>
 
           <div class="callout callout-info">
-            <p class="callout-title">Fristerinnerungen</p>
-            <p>Mit <code>REMINDER_ENABLED=true</code> erinnert OpenWhistle per E-Mail, bevor die 7-Tage- oder die 3-Monats-Frist nach § 17 HinSchG abläuft. Die Prüfung läuft alle 30 Minuten.</p>
+            <p class="callout-title">Deadline reminders</p>
+            <p>With <code>REMINDER_ENABLED=true</code>, OpenWhistle sends an email before the 7-day or the 3-month deadline under § 17 HinSchG runs out. The check runs every 30 minutes.</p>
           </div>
 
-          <h2>Schritt 8: Die Meldestelle bekannt machen</h2>
+          <h2>Step 8: Make the reporting channel known</h2>
 
-          <p>Beschäftigte brauchen klare Informationen über das interne Verfahren und über externe Meldestellen (§ 7 Abs. 3, § 13 Abs. 2 HinSchG). Bewährte Wege:</p>
+          <p>Employees need clear information about the internal procedure and about external reporting channels (§ 7 Abs. 3, § 13 Abs. 2 HinSchG). Proven ways:</p>
 
           <ul>
-            <li>Rundmail mit dem Link zum Meldeformular</li>
-            <li>Eintrag im Intranet oder Wiki</li>
-            <li>Hinweis im Verhaltenskodex</li>
-            <li>Aushang für Beschäftigte ohne Computerarbeitsplatz, mit Telefonnummer</li>
+            <li>A circular email with the link to the reporting form</li>
+            <li>An entry in the intranet or wiki</li>
+            <li>A note in the code of conduct</li>
+            <li>A notice for employees without a computer workstation, with a phone number</li>
           </ul>
 
-          <h2>Updates einspielen</h2>
+          <h2>Installing updates</h2>
 
-          <p>Das Image ist über <code>OPENWHISTLE_VERSION</code> in <code>.env</code> auf eine Version festgelegt. So aktualisieren Sie:</p>
+          <p>The image is pinned to a version through <code>OPENWHISTLE_VERSION</code> in <code>.env</code>. This is how you update:</p>
 
-<pre><code># Zuerst sichern: ein Rollback braucht das Backup
+<pre><code># Back up first: a rollback needs the backup
 docker compose exec db pg_dump -U openwhistle openwhistle &gt; backup.sql
-# Compose-Datei und nginx-Konfiguration ändern sich mit den Releases
+# The compose file and nginx configuration change with the releases
 git pull
-# OPENWHISTLE_VERSION in .env auf die neue Version setzen, dann
+# Set OPENWHISTLE_VERSION in .env to the new version, then
 docker compose pull
 docker compose up -d</code></pre>
 
-          <p>Lesen Sie vorher den Eintrag im <a href="../changelog.html">Änderungsprotokoll</a>. Sicherheitskorrekturen erscheinen als Patch-Versionen; auf GitHub können Sie die Releases abonnieren.</p>
+          <p>Read the entry in the <a href="../changelog.html">changelog</a> first. Security fixes ship as patch versions; you can subscribe to the releases on GitHub.</p>
 
-          <h2>Was Sie sichern müssen</h2>
+          <h2>What you need to back up</h2>
 
           <table class="deadline-table">
             <thead>
               <tr>
-                <th scope="col">Was</th>
-                <th scope="col">Warum</th>
+                <th scope="col">What</th>
+                <th scope="col">Why</th>
               </tr>
             </thead>
             <tbody>
-              <tr><td>Datenbank (<code>pg_dump</code>)</td><td>Meldungen, Nachrichten und standardmäßig auch die Anhänge</td></tr>
-              <tr><td><code>.env</code></td><td>enthält die Schlüssel; ohne sie ist das Backup nicht lesbar</td></tr>
-              <tr><td>S3-Bucket</td><td>nur wenn Anhänge dort liegen (<code>STORAGE_BACKEND=s3</code>)</td></tr>
+              <tr><td>Database (<code>pg_dump</code>)</td><td>Reports, messages and, by default, the attachments too</td></tr>
+              <tr><td><code>.env</code></td><td>holds the keys; without them the backup cannot be read</td></tr>
+              <tr><td>S3 bucket</td><td>only if attachments are stored there (<code>STORAGE_BACKEND=s3</code>)</td></tr>
             </tbody>
           </table>
 
           <div class="article-cta">
-            <h3>Erst ansehen, dann installieren</h3>
-            <p>Die Live-Demo zeigt Meldeformular und Admin-Bereich. Kein Konto nötig, Zurücksetzen alle 6 Stunden.</p>
-            <a href="https://demo.openwhistle.net" class="btn-cta" rel="noopener noreferrer" target="_blank">Live-Demo öffnen &rarr;</a>
+            <h3>Look first, then install</h3>
+            <p>The live demo shows the reporting form and the admin area. No account needed, reset every 6 hours.</p>
+            <a href="https://demo.openwhistle.net" class="btn-cta" rel="noopener noreferrer" target="_blank">Open the live demo &rarr;</a>
           </div>
 
-          <h2>Häufige Probleme</h2>
+          <h2>Common problems</h2>
 
-          <h3>„port is already allocated“ beim Start</h3>
-          <p>Port 80, 443 oder 8080 ist belegt. Den Onion-Zugang auf <code>127.0.0.1:8080</code> veröffentlicht nginx immer. <code>sudo ss -tlnp</code> zeigt, welcher Prozess den Port hält.</p>
+          <h3>"port is already allocated" at startup</h3>
+          <p>Port 80, 443 or 8080 is in use. nginx always publishes the onion access on <code>127.0.0.1:8080</code>. <code>sudo ss -tlnp</code> shows which process holds the port.</p>
 
-          <h3>nginx startet nicht, <code>tls-init</code> meldet einen Fehler</h3>
-          <p>Meist ist der Schlüssel falsch berechtigt oder ein Symlink. Kopieren Sie die Dateien, und geben Sie <code>privkey.pem</code> root mit <code>0600</code> oder <code>0644</code>. Die Meldung von <code>tls-init</code> nennt Pfad und Grund.</p>
+          <h3>nginx does not start, <code>tls-init</code> reports an error</h3>
+          <p>Usually the key has the wrong permissions or is a symlink. Copy the files, and give <code>privkey.pem</code> to root with <code>0600</code> or <code>0644</code>. The message from <code>tls-init</code> names the path and the reason.</p>
 
-          <h3>Der Einrichtungsassistent lehnt das Token ab</h3>
-          <p>Nehmen Sie das jüngste Token aus dem Log. Redis speichert es nur im Arbeitsspeicher: startet Redis neu, entsteht ein neues. Ein selbst gesetztes <code>SETUP_TOKEN</code> gilt immer.</p>
+          <h3>The setup wizard rejects the token</h3>
+          <p>Take the most recent token from the log. Redis keeps it only in memory: if Redis restarts, a new one is created. A <code>SETUP_TOKEN</code> you set yourself always works.</p>
 
           <p style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle); font-size: 0.82rem; color: var(--text-muted);">
-            <strong>Weitere Ressourcen:</strong>
-            <a href="../docs.html">Vollständige Dokumentation</a> ·
-            <a href="hinschg-compliance-leitfaden.html">HinSchG-Compliance-Leitfaden</a> ·
-            <a href="interne-meldestelle-kostenlos.html">Was ein kostenloses Hinweisgebersystem kostet</a> ·
+            <strong>More resources:</strong>
+            <a href="../docs.html">Full documentation</a> ·
+            <a href="hinschg-compliance-guide.html">HinSchG compliance guide</a> ·
+            <a href="free-internal-reporting-channel.html">What a free whistleblowing system costs</a> ·
             <a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank">GitHub Issues</a>
           </p>
         </div>
@@ -697,31 +697,31 @@ docker compose up -d</code></pre>
             </svg>
             OpenWhistle
           </div>
-          <p class="footer-tagline">Schutz für alle, die den Mut haben zu sprechen.</p>
+          <p class="footer-tagline">Protecting those who speak up.</p>
         </div>
 
-        <nav aria-label="Footer-Links">
-          <div class="footer-col-title">Ressourcen</div>
+        <nav aria-label="Footer links">
+          <div class="footer-col-title">Resources</div>
           <ul class="footer-links">
             <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
-            <li><a href="../docs.html">Dokumentation</a></li>
-            <li><a href="../changelog.html">Änderungsprotokoll</a></li>
-            <li><a href="../de/">Startseite (Deutsch)</a></li>
-            <li><a href="set-up-internal-reporting-channel.html" hreflang="en">English</a></li>
-            <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Live-Demo</a></li>
+            <li><a href="../docs.html">Documentation</a></li>
+            <li><a href="../changelog.html">Changelog</a></li>
+            <li><a href="../index.html">Home</a></li>
+            <li><a href="interne-meldestelle-einrichten.html" hreflang="de">Deutsch</a></li>
+            <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Live demo</a></li>
             <li><a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank">Issues</a></li>
-            <li><a href="https://github.com/openwhistle/OpenWhistle/blob/main/LICENSE" rel="noopener noreferrer" target="_blank">Lizenz (GPL-3.0)</a></li>
+            <li><a href="https://github.com/openwhistle/OpenWhistle/blob/main/LICENSE" rel="noopener noreferrer" target="_blank">Licence (GPL-3.0)</a></li>
           </ul>
         </nav>
 
         <div>
-          <div class="footer-col-title">Rechtliches</div>
+          <div class="footer-col-title">Legal</div>
           <p style="font-size: 0.85rem; color: rgba(226,220,210,0.45); line-height: 1.7;">
-            Lizenziert unter GPL-3.0. Mit &#10084;&#65039; für Transparenz entwickelt.
+            Licensed under GPL-3.0. Built with &#10084;&#65039; for transparency.
           </p>
           <p style="font-size: 0.82rem; color: rgba(226,220,210,0.35); line-height: 1.7; margin-top: 0.75rem;">
-            OpenWhistle bietet keine Rechtsberatung. Bitte konsultieren Sie qualifizierte
-            Rechtsexperten bezüglich Ihrer spezifischen HinSchG-Pflichten.
+            OpenWhistle does not give legal advice. Consult a qualified
+            lawyer about your own obligations under the HinSchG.
           </p>
         </div>
       </div>
@@ -729,7 +729,7 @@ docker compose up -d</code></pre>
       <div class="footer-bottom">
         <span>&copy; OpenWhistle Contributors — GNU General Public License v3.0</span>
         <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">
-          Auf GitHub mitwirken &rarr;
+          Contribute on GitHub &rarr;
         </a>
       </div>
     </div>

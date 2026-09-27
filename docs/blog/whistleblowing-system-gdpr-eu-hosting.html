@@ -1,18 +1,18 @@
 <!DOCTYPE html>
-<html lang="de" data-theme="light">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
-  <title>Interne Meldestelle einrichten: Anleitung | OpenWhistle</title>
-  <meta name="description" content="Interne Meldestelle einrichten mit OpenWhistle: Server, Docker Compose, HTTPS, Admin-Konto mit MFA und erste Konfiguration, Schritt für Schritt erklärt.">
+  <title>Whistleblowing System with EU Hosting and GDPR | OpenWhistle</title>
+  <meta name="description" content="Whistleblowing system with EU hosting: self-hosted, reports stay on your server. What OpenWhistle encrypts, never stores, and what the GDPR requires.">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#08080a" media="(prefers-color-scheme: dark)">
-  <link rel="canonical" href="https://openwhistle.net/blog/interne-meldestelle-einrichten.html">
-  <link rel="alternate" hreflang="en" href="https://openwhistle.net/blog/set-up-internal-reporting-channel.html">
-  <link rel="alternate" hreflang="de" href="https://openwhistle.net/blog/interne-meldestelle-einrichten.html">
-  <link rel="alternate" hreflang="x-default" href="https://openwhistle.net/blog/set-up-internal-reporting-channel.html">
+  <link rel="canonical" href="https://openwhistle.net/blog/whistleblowing-system-gdpr-eu-hosting.html">
+  <link rel="alternate" hreflang="en" href="https://openwhistle.net/blog/whistleblowing-system-gdpr-eu-hosting.html">
+  <link rel="alternate" hreflang="de" href="https://openwhistle.net/blog/hinweisgebersystem-dsgvo-eu-hosting.html">
+  <link rel="alternate" hreflang="x-default" href="https://openwhistle.net/blog/whistleblowing-system-gdpr-eu-hosting.html">
   <link rel="icon" type="image/svg+xml" href="../favicon.svg">
   <link rel="icon" type="image/x-icon" href="../favicon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
@@ -22,35 +22,35 @@
   <!-- Open Graph / Twitter -->
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="OpenWhistle">
-  <meta property="og:url" content="https://openwhistle.net/blog/interne-meldestelle-einrichten.html">
-  <meta property="og:title" content="Interne Meldestelle einrichten: Anleitung | OpenWhistle">
-  <meta property="og:description" content="Interne Meldestelle einrichten mit OpenWhistle: Server, Docker Compose, HTTPS, Admin-Konto mit MFA und erste Konfiguration, Schritt für Schritt erklärt.">
+  <meta property="og:url" content="https://openwhistle.net/blog/whistleblowing-system-gdpr-eu-hosting.html">
+  <meta property="og:title" content="Whistleblowing System with EU Hosting and GDPR | OpenWhistle">
+  <meta property="og:description" content="Whistleblowing system with EU hosting: self-hosted, reports stay on your server. What OpenWhistle encrypts, never stores, and what the GDPR requires.">
   <meta property="og:image" content="https://openwhistle.net/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="OpenWhistle: sichere Hinweisgeber-Meldungen">
-  <meta property="og:locale" content="de_DE">
-  <meta property="article:published_time" content="2026-04-27">
+  <meta property="og:image:alt" content="OpenWhistle: secure whistleblower reporting">
+  <meta property="og:locale" content="en_US">
+  <meta property="article:published_time" content="2026-09-27">
   <meta property="article:modified_time" content="2026-09-27">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Interne Meldestelle einrichten: Anleitung | OpenWhistle">
-  <meta name="twitter:description" content="Interne Meldestelle einrichten mit OpenWhistle: Server, Docker Compose, HTTPS, Admin-Konto mit MFA und erste Konfiguration, Schritt für Schritt erklärt.">
+  <meta name="twitter:title" content="Whistleblowing System with EU Hosting and GDPR | OpenWhistle">
+  <meta name="twitter:description" content="Whistleblowing system with EU hosting: self-hosted, reports stay on your server. What OpenWhistle encrypts, never stores, and what the GDPR requires.">
   <meta name="twitter:image" content="https://openwhistle.net/og-image.png">
-  <meta name="twitter:image:alt" content="OpenWhistle: sichere Hinweisgeber-Meldungen">
+  <meta name="twitter:image:alt" content="OpenWhistle: secure whistleblower reporting">
 
   <!-- Structured data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
-    "headline": "Interne Meldestelle einrichten mit OpenWhistle 2.0.1",
-    "description": "Schritt-für-Schritt-Anleitung: OpenWhistle mit Docker Compose installieren, HTTPS-Zertifikat hinterlegen und den ersten Admin anlegen.",
-    "url": "https://openwhistle.net/blog/interne-meldestelle-einrichten.html",
+    "headline": "Whistleblowing system with EU hosting and GDPR: where the data lives and what is encrypted",
+    "description": "Who offers whistleblowing systems with EU hosting, what OpenWhistle encrypts and never stores, and which GDPR duties stay with the operator.",
+    "url": "https://openwhistle.net/blog/whistleblowing-system-gdpr-eu-hosting.html",
     "mainEntityOfPage": {
       "@type": "WebPage",
-      "@id": "https://openwhistle.net/blog/interne-meldestelle-einrichten.html"
+      "@id": "https://openwhistle.net/blog/whistleblowing-system-gdpr-eu-hosting.html"
     },
-    "datePublished": "2026-04-27",
+    "datePublished": "2026-09-27",
     "dateModified": "2026-09-27",
     "author": {
       "@type": "Organization",
@@ -67,7 +67,7 @@
       }
     },
     "image": "https://openwhistle.net/og-image.png",
-    "inLanguage": "de"
+    "inLanguage": "en"
   }
   </script>
   <script type="application/ld+json">
@@ -90,8 +90,8 @@
       {
         "@type": "ListItem",
         "position": 3,
-        "name": "Interne Meldestelle einrichten: Schritt-für-Schritt-Anleitung mit OpenWhistle",
-        "item": "https://openwhistle.net/blog/interne-meldestelle-einrichten.html"
+        "name": "Whistleblowing system with EU hosting and GDPR: where the data lives and what is encrypted",
+        "item": "https://openwhistle.net/blog/whistleblowing-system-gdpr-eu-hosting.html"
       }
     ]
   }
@@ -277,6 +277,8 @@
 
     /* ── Article layout ──────────────────────────────────────────── */
     .article-wrap { max-width: 70ch; margin: 0 auto; padding: var(--space-24) var(--space-8) var(--space-16); }
+    /* The comparison table needs more room than the 70ch prose measure —
+       it gets its own wider breakout below via negative margins. */
 
     .article-header { margin-bottom: var(--space-12); padding-bottom: var(--space-8); border-bottom: 1px solid var(--border-subtle); }
     .article-tag { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: var(--space-4); }
@@ -291,28 +293,33 @@
     .article-body strong { color: var(--text-primary); font-weight: 600; }
     .article-body ul, .article-body ol { margin: var(--space-4) 0 var(--space-6) var(--space-6); }
     .article-body ul { list-style: disc; }
-    .article-body ol { list-style: decimal; }
     .article-body li { margin-bottom: var(--space-2); color: var(--text-secondary); }
 
-    /* Steps */
-    .step-block { display: flex; gap: var(--space-6); margin: var(--space-6) 0; padding: var(--space-6); background: var(--bg-surface); border: 1px solid var(--border-subtle); border-left: 4px solid var(--accent); }
-    .step-num { font-family: var(--font-display); font-size: 2.5rem; font-weight: 700; color: var(--border-default); line-height: 1; flex-shrink: 0; width: 2.5rem; }
-    .step-content { flex: 1; }
-    .step-content h3 { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-2); }
-    .step-content p { font-size: 0.92rem; color: var(--text-secondary); margin-bottom: var(--space-3); }
-    .step-content p:last-child { margin-bottom: 0; }
+    /* Comparison table — breaks out wider than the 70ch prose column */
+    /* Centred on the prose column: the capped width used to start at the window's left edge. */
+    .comp-wrap { --comp-w: min(100ch, 100vw - 2 * var(--space-8)); overflow-x: auto; margin: var(--space-8) 0; width: var(--comp-w); margin-left: calc(50% - var(--comp-w) / 2); }
+    .comp-table { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 0.88rem; }
+    .comp-table thead th { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); padding: var(--space-3) var(--space-4); text-align: left; border-bottom: 2px solid var(--border-subtle); white-space: nowrap; }
+    .comp-table thead th.col-ow { color: var(--accent); background: var(--accent-fog); }
+    .comp-table tbody td { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); vertical-align: top; }
+    .comp-table tbody td.col-ow { background: var(--accent-fog); }
+    .comp-table tbody tr:last-child td { border-bottom: none; }
+    .val-good { color: var(--accent); font-weight: 600; }
+    .val-bad { color: var(--text-muted); }
+    .val-warn { color: var(--warning); }
 
-    /* Code blocks */
-    pre { background: var(--code-bg); color: var(--code-text); padding: var(--space-5) var(--space-6); border-radius: 4px; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; overflow-x: auto; margin: var(--space-4) 0; }
-    code { font-family: var(--font-mono); font-size: 0.88em; background: var(--bg-surface); padding: 0.15em 0.4em; border-radius: 3px; color: var(--accent); border: 1px solid var(--border-subtle); }
-    pre code { background: none; padding: 0; border: none; color: inherit; font-size: inherit; }
-
-    .callout { padding: var(--space-5) var(--space-6); margin: var(--space-6) 0; border-left: 4px solid; border-radius: 0 4px 4px 0; }
+    .callout { padding: var(--space-5) var(--space-6); margin: var(--space-8) 0; border-left: 4px solid; border-radius: 0 4px 4px 0; }
     .callout-info { background: var(--accent-fog); border-color: var(--accent); }
     .callout-warn { background: var(--warning-fog); border-color: var(--warning); }
     .callout-title { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: var(--space-2); }
     .callout-warn .callout-title { color: var(--warning); }
     .callout p { margin-bottom: 0; font-size: 0.92rem; }
+
+    .cost-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: var(--space-6); margin: var(--space-6) 0; }
+    .cost-card-title { font-family: var(--font-display); font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-2); }
+    .cost-price { font-size: 1.6rem; font-weight: 700; color: var(--accent); font-family: var(--font-display); }
+    .cost-desc { font-size: 0.88rem; color: var(--text-muted); margin-top: var(--space-1); }
+    .cost-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-4); margin: var(--space-6) 0; }
 
     .article-cta { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-top: 4px solid var(--accent); padding: var(--space-8); margin: var(--space-10) 0; text-align: center; }
     .article-cta h3 { font-family: var(--font-display); font-size: 1.3rem; font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-3); }
@@ -324,6 +331,9 @@
       text-decoration: none; transition: background var(--duration-fast) ease;
     }
     .btn-cta:hover { background: var(--accent-strong); color: #fff; text-decoration: none; }
+
+    .cost-breakdown { background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: var(--space-6); margin: var(--space-6) 0; }
+    .cost-breakdown ul { margin-left: var(--space-6); }
 
     /* ── Footer ──────────────────────────────────────────────────── */
     .site-footer { background: var(--footer-bg); color: rgba(226, 220, 210, 0.7); padding: var(--space-16) var(--space-8) var(--space-8); }
@@ -352,31 +362,29 @@
 
     @media (max-width: 768px) {
       .article-wrap { padding: var(--space-12) var(--space-5) var(--space-10); }
-      .step-block { flex-direction: column; gap: var(--space-3); }
-      .step-num { font-size: 1.8rem; }
+      .cost-grid { grid-template-columns: 1fr; }
       .footer-grid { grid-template-columns: 1fr; gap: var(--space-8); }
       .footer-bottom { flex-direction: column; align-items: flex-start; }
     }
   </style>
   <style>
-    .deadline-table { width: 100%; border-collapse: collapse; margin: var(--space-6) 0; font-size: 0.9rem; }
-    .deadline-table th { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); padding: var(--space-3) var(--space-4); text-align: left; border-bottom: 2px solid var(--border-subtle); }
-    .deadline-table td { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); vertical-align: top; }
-    .deadline-table tr:last-child td { border-bottom: none; }
-    .deadline-table td:first-child { white-space: nowrap; }
     @media (max-width: 540px) {
-      .deadline-table thead { display: none; }
-      .deadline-table tr { display: block; padding: var(--space-3) 0; border-bottom: 1px solid var(--border-subtle); }
-      .deadline-table td { display: block; border: none; padding: var(--space-1) var(--space-2); white-space: normal; }
+      .comp-wrap { width: auto; margin-left: 0; margin-right: 0; overflow-x: visible; }
+      .comp-table { min-width: 0; }
+      .comp-table thead { display: none; }
+      .comp-table tr { display: block; padding: var(--space-3) 0; border-bottom: 1px solid var(--border-subtle); }
+      .comp-table tbody td { display: block; border: none; padding: var(--space-1) var(--space-2); background: none; }
+      .comp-table tbody td:first-child { color: var(--text-primary); font-weight: 600; }
+      .comp-table tbody td[data-label]::before { content: attr(data-label) ": "; color: var(--text-muted); font-weight: 400; }
     }
   </style>
 </head>
 <body>
-  <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
 
-  <nav class="site-nav" role="navigation" aria-label="Hauptnavigation">
+  <nav class="site-nav" role="navigation" aria-label="Main navigation">
     <div class="nav-inner">
-      <a href="../index.html" class="nav-logo" aria-label="OpenWhistle Startseite">
+      <a href="../index.html" class="nav-logo" aria-label="OpenWhistle home">
         <svg width="22" height="26" viewBox="0 0 22 26" fill="none" aria-hidden="true">
           <path d="M11 1 L20 5 L20 14 C20 20 17 24 11 25.5 C5 24 2 20 2 14 L2 5 Z"
                 stroke="#5ecb7a" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
@@ -388,25 +396,25 @@
         OpenWhistle
       </a>
 
-      <button class="nav-toggle" aria-controls="nav-links" aria-expanded="false" aria-label="Navigation umschalten">
+      <button class="nav-toggle" aria-controls="nav-links" aria-expanded="false" aria-label="Toggle navigation">
         <span></span><span></span><span></span>
       </button>
 
       <ul class="nav-links" id="nav-links" role="list">
-        <li><a href="../de/#features">Funktionen</a></li>
-        <li><a href="../de/#how-it-works">Ablauf</a></li>
-        <li><a href="../de/#compliance">Compliance</a></li>
-        <li><a href="../docs.html">Dokumentation</a></li>
+        <li><a href="../index.html#features">Features</a></li>
+        <li><a href="../index.html#how-it-works">How it Works</a></li>
+        <li><a href="../index.html#compliance">Compliance</a></li>
+        <li><a href="../docs.html">Documentation</a></li>
         <li><a href="../roadmap.html">Roadmap</a></li>
-        <li><a href="../changelog.html">Änderungsprotokoll</a></li>
-        <li><a href="index.html" class="active" aria-current="page">Blog</a></li>
-        <li><a href="set-up-internal-reporting-channel.html" hreflang="en">English</a></li>
+        <li><a href="../changelog.html">Changelog</a></li>
+        <li><a href="en.html" class="active" aria-current="page">Blog</a></li>
+        <li><a href="hinweisgebersystem-dsgvo-eu-hosting.html" hreflang="de">Deutsch</a></li>
         <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
-        <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank" class="nav-cta">Demo testen</a></li>
+        <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank" class="nav-cta">Try Demo</a></li>
       </ul>
 
       <div class="nav-actions">
-        <button class="theme-toggle" id="theme-toggle" aria-label="Dunkelmodus umschalten">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
           <svg class="icon-moon" viewBox="0 0 16 16" fill="none">
             <path d="M13.5 9.5A6 6 0 016 2a6 6 0 100 12 6 6 0 007.5-4.5z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
           </svg>
@@ -423,259 +431,118 @@
     <div class="article-wrap">
       <article>
         <header class="article-header">
-          <p class="article-tag">Anleitung · Self-Hosting · Docker</p>
-          <h1 class="article-title">Interne Meldestelle einrichten: Schritt-für-Schritt-Anleitung mit OpenWhistle 2.0.1</h1>
-          <p class="article-subtitle">Vom leeren Linux-Server bis zur ersten Testmeldung: Docker, Konfiguration, HTTPS-Zertifikat, Einrichtungsassistent und erste Schritte im Admin-Bereich.</p>
+          <p class="article-tag">GDPR · EU hosting · Security</p>
+          <h1 class="article-title">Whistleblowing system with EU hosting and GDPR: where the data lives and what is encrypted</h1>
+          <p class="article-subtitle">Self-hosted, all reports sit on the operator's server, in the EU if the operator runs it there. What OpenWhistle encrypts, what it never stores and what the GDPR leaves with the operator.</p>
           <div class="article-meta">
-            <span>27. April 2026</span>
-            <span>Aktualisiert am 27. September 2026</span>
-            <span>10 Min. Lesezeit</span>
+            <span>27 September 2026</span>
+            <span>5 min read</span>
             <span>OpenWhistle Contributors</span>
           </div>
         </header>
 
         <div class="article-body">
 
-          <p>Diese Anleitung richtet OpenWhistle mit Docker Compose ein. Am Ende läuft der digitale Meldekanal Ihrer internen Meldestelle auf Ihrem eigenen Server. Die maßgebliche Referenz bleibt die <a href="../docs.html#installation">Installationsanleitung in der Dokumentation</a>.</p>
-
-          <h2>Voraussetzungen</h2>
-
-          <ul>
-            <li>Ein Linux-Server mit 1 vCPU, mindestens 512 MB RAM (1 GB empfohlen) und 5 GB Speicher</li>
-            <li>Docker 24 oder neuer mit dem Plugin <code>docker compose</code> (v2)</li>
-            <li>Eine Domain, die auf den Server zeigt, etwa <code>meldestelle.ihr-unternehmen.de</code></li>
-            <li>Offene Ports 80 und 443</li>
-            <li>Root- oder sudo-Zugriff und etwas Übung im Terminal</li>
-          </ul>
-
-          <div class="callout callout-info">
-            <p class="callout-title">Automatisch statt von Hand</p>
-            <p>Das Repository enthält eine Ansible-Rolle unter <code>ansible/</code>. Sie installiert Docker, legt einen Systemdienst an und holt ein Let's-Encrypt-Zertifikat. Diese Anleitung zeigt den Weg von Hand.</p>
-          </div>
-
-          <h2>Schritt 1: Server bereitstellen</h2>
-
-          <div class="step-block">
-            <div class="step-num" aria-hidden="true">1</div>
-            <div class="step-content">
-              <h3>VPS auswählen</h3>
-              <p>Ein kleiner VPS genügt. Wählen Sie einen Anbieter mit Rechenzentrum in der EU, der einen Auftragsverarbeitungsvertrag nach Art. 28 DSGVO anbietet.</p>
-              <p>Legen Sie einen Benutzer mit sudo-Rechten an und melden Sie sich per SSH-Schlüssel an.</p>
-            </div>
-          </div>
-
-          <h2>Schritt 2: Docker installieren</h2>
-
-          <div class="step-block">
-            <div class="step-num" aria-hidden="true">2</div>
-            <div class="step-content">
-              <h3>Docker Engine und Compose-Plugin</h3>
-              <p>Folgen Sie der offiziellen <a href="https://docs.docker.com/engine/install/" rel="noopener noreferrer" target="_blank">Installationsanleitung von Docker</a> für Ihre Distribution. Prüfen Sie danach beide Versionen:</p>
-            </div>
-          </div>
-
-<pre><code>docker --version          # 24.0 oder neuer
-docker compose version    # v2.x</code></pre>
-
-          <h2>Schritt 3: OpenWhistle konfigurieren</h2>
-
-          <div class="step-block">
-            <div class="step-num" aria-hidden="true">3</div>
-            <div class="step-content">
-              <h3>Repository klonen und <code>.env</code> anlegen</h3>
-              <p>Klonen Sie das Repository und kopieren Sie die Beispielkonfiguration:</p>
-            </div>
-          </div>
-
-<pre><code>git clone https://github.com/openwhistle/OpenWhistle.git
-cd OpenWhistle
-cp .env.example .env</code></pre>
-
-          <p>Tragen Sie in <code>.env</code> mindestens diese Werte ein. Zufällige Schlüssel erzeugt <code>openssl rand -hex 32</code>.</p>
-
-<pre><code># Produktions-Stack mit nginx und TLS für jeden docker-compose-Befehl
-COMPOSE_FILE=docker-compose.prod.yml
-
-# Mindestens 32 Zeichen
-SECRET_KEY=&lt;openssl rand -hex 32&gt;
-# Empfohlen: eigener Schlüssel für die Verschlüsselung der Meldungen
-ENCRYPTION_KEY=&lt;openssl rand -hex 32&gt;
-
-# Passwörter für Datenbank und Redis, dieselben in den URLs
-POSTGRES_PASSWORD=starkes-passwort
-REDIS_PASSWORD=zweites-starkes-passwort
-DATABASE_URL=postgresql+asyncpg://openwhistle:starkes-passwort@db:5432/openwhistle
-REDIS_URL=redis://:zweites-starkes-passwort@redis:6379/0
-
-# Ihre Domain, für Links in E-Mails und das Ersatzzertifikat
-APP_PUBLIC_URL=https://meldestelle.ihr-unternehmen.de
-TLS_HOSTNAME=meldestelle.ihr-unternehmen.de
-
-# Optional: E-Mail an die Meldestelle und Fristerinnerungen
-# NOTIFY_EMAIL_ENABLED=true
-# NOTIFY_EMAIL_TO=meldestelle@ihr-unternehmen.de
-# NOTIFY_SMTP_HOST=smtp.ihr-mailserver.de
-# NOTIFY_SMTP_PORT=587
-# NOTIFY_SMTP_USER=meldestelle@ihr-unternehmen.de
-# NOTIFY_SMTP_PASSWORD=mail-passwort
-# REMINDER_ENABLED=true</code></pre>
+          <p>You can get a whistleblowing system (Hinweisgebersystem) with EU hosting in two ways. One is self-hosted software on a server in the EU, the other a service with a data centre in the EU. OpenWhistle is self-hosted software. All reports sit on the operator's server, and if that server is in the EU, the data stays in the EU.</p>
 
           <div class="callout callout-warn">
-            <p class="callout-title">Schlüssel sichern</p>
-            <p>Mit <code>ENCRYPTION_KEY</code> werden die Meldungen verschlüsselt, ohne ihn mit <code>SECRET_KEY</code>. Geht der Schlüssel verloren, sind die Meldungen nicht mehr lesbar. Bewahren Sie ihn in einem Passwortmanager oder Secret-Store auf.</p>
+            <p class="callout-title">Transparency note</p>
+            <p>This article is written by the developers of OpenWhistle. Information on other offerings comes from their own websites, retrieved on 27 September 2026. Not legal advice.</p>
           </div>
 
-          <p>Alle weiteren Einstellungen stehen in der <a href="../docs.html#configuration">Konfigurationstabelle</a>.</p>
+          <h2>Who offers whistleblowing systems with EU hosting?</h2>
 
-          <h2>Schritt 4: HTTPS-Zertifikat hinterlegen</h2>
-
-          <div class="step-block">
-            <div class="step-num" aria-hidden="true">4</div>
-            <div class="step-content">
-              <h3>Let's-Encrypt-Zertifikat nach <code>nginx/certs/</code></h3>
-              <p>Der Stack liefert HTTPS von Anfang an. Ohne eigenes Zertifikat erzeugt der Dienst <code>tls-init</code> ein selbstsigniertes für <code>TLS_HOSTNAME</code>. Das genügt zum Testen, nicht für den Betrieb.</p>
-              <p>Holen Sie ein Zertifikat, solange Port 80 noch frei ist, und <strong>kopieren</strong> Sie es. Ein Symlink nach <code>/etc/letsencrypt/live</code> zeigt im Container ins Leere.</p>
-            </div>
+          <div class="comp-wrap">
+            <table class="comp-table" aria-label="Whistleblowing systems and where their data lives, as of 27 September 2026">
+              <thead>
+                <tr>
+                  <th scope="col">Offering</th>
+                  <th scope="col">Model</th>
+                  <th scope="col">Where the data lives</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>OpenWhistle</strong></td><td data-label="Model">Software, GPL-3.0</td><td data-label="Where the data lives">on your server; you choose the location</td></tr>
+                <tr><td><strong>GlobaLeaks</strong></td><td data-label="Model">Software, AGPL-3.0</td><td data-label="Where the data lives">on your server; you choose the location</td></tr>
+                <tr><td><strong>Hinweisgeberportal OpenSource</strong></td><td data-label="Model">managed GlobaLeaks</td><td data-label="Where the data lives">data centres in Germany</td></tr>
+                <tr><td><strong>WhistlePort</strong></td><td data-label="Model">SaaS</td><td data-label="Where the data lives">Germany, ISO/IEC&nbsp;27001</td></tr>
+              </tbody>
+            </table>
           </div>
 
-<pre><code>sudo certbot certonly --standalone -d meldestelle.ihr-unternehmen.de
-sudo cp /etc/letsencrypt/live/meldestelle.ihr-unternehmen.de/fullchain.pem nginx/certs/
-sudo cp /etc/letsencrypt/live/meldestelle.ihr-unternehmen.de/privkey.pem nginx/certs/
-sudo chmod 600 nginx/certs/privkey.pem</code></pre>
+          <p>Sources, prices and further offerings are listed in <a href="whistleblowing-software-comparison.html">Whistleblowing software providers compared</a>. With a service, the provider is your processor. Self-hosted, that is at most your hosting provider.</p>
 
-          <p>Zum Erneuern kopieren Sie die neuen Dateien und starten <code>docker compose up -d tls-init nginx</code>. Ein Neustart von nginx allein behält das alte Zertifikat.</p>
+          <h2>What OpenWhistle encrypts</h2>
 
-          <h2>Schritt 5: OpenWhistle starten</h2>
-
-          <div class="step-block">
-            <div class="step-num" aria-hidden="true">5</div>
-            <div class="step-content">
-              <h3>Alle Dienste starten</h3>
-              <p>Ein Befehl startet App, PostgreSQL, Redis und nginx. Die Datenbankmigrationen laufen beim Start automatisch.</p>
-            </div>
+          <div class="comp-wrap">
+            <table class="comp-table" aria-label="What OpenWhistle encrypts and how">
+              <thead>
+                <tr>
+                  <th scope="col">Data</th>
+                  <th scope="col" class="col-ow">Protection</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Report text and messages</td><td class="col-ow" data-label="Protection">a data key of its own per report (Fernet: AES-128-CBC with HMAC-SHA256)</td></tr>
+                <tr><td>Attachments: content and file name</td><td class="col-ow" data-label="Protection">the same key as the report, in S3 storage too</td></tr>
+                <tr><td>Name and contact in confidential reports</td><td class="col-ow" data-label="Protection">encrypted; visible only after a logged reason</td></tr>
+                <tr><td>TOTP secrets of the accounts</td><td class="col-ow" data-label="Protection">encrypted</td></tr>
+                <tr><td>Master key</td><td class="col-ow" data-label="Protection">derived from <code>ENCRYPTION_KEY</code>, otherwise <code>SECRET_KEY</code> (HKDF-SHA256); never in the database</td></tr>
+                <tr><td>Draft while reporting</td><td class="col-ow" data-label="Protection">in Redis, 2 hours at most; the key lives only in the reporting person's cookie</td></tr>
+                <tr><td>Transport</td><td class="col-ow" data-label="Protection">TLS 1.2 and 1.3 via nginx, from the first start</td></tr>
+              </tbody>
+            </table>
           </div>
 
-<pre><code>docker compose up -d
-docker compose ps
+          <p>Whoever steals only the database gets ciphertext. The details are in the <a href="../docs.html#key-rotation">documentation on key rotation</a>.</p>
 
-# Health-Check
-curl -s https://meldestelle.ihr-unternehmen.de/health
-# {"status":"ok","version":"2.0.1","components":{"database":"ok","redis":"ok"}}</code></pre>
-
-          <h2>Schritt 6: Den ersten Admin anlegen</h2>
-
-          <div class="step-block">
-            <div class="step-num" aria-hidden="true">6</div>
-            <div class="step-content">
-              <h3>Einrichtungsassistent mit Einmal-Token</h3>
-              <p>Der Assistent verlangt ein Einmal-Token. Ohne eigenes <code>SETUP_TOKEN</code> steht es im Log:</p>
-            </div>
-          </div>
-
-<pre><code>docker compose logs app | grep "Setup token"</code></pre>
-
-          <p>Öffnen Sie dann <code>https://meldestelle.ihr-unternehmen.de/setup</code>:</p>
-
-          <ol>
-            <li>Token eingeben.</li>
-            <li>Benutzername mit 3 bis 64 Zeichen und ein Passwort mit mindestens 12 Zeichen wählen.</li>
-            <li>QR-Code mit einer Authenticator-App scannen und den sechsstelligen Code eingeben. Dieser Schritt ist Pflicht.</li>
-            <li>Optional zustimmen, dass die Installation einmal täglich gezählt wird. Vorgabe ist nein.</li>
-          </ol>
-
-          <p>Das erste Konto ist ein Superadmin. Notieren Sie das TOTP-Geheimnis offline: Backup-Codes gibt es nicht.</p>
-
-          <h2>Schritt 7: Grundkonfiguration im Admin-Bereich</h2>
-
-          <p>Melden Sie sich unter <code>/admin/login</code> an. Diese Seiten richten Sie zuerst ein:</p>
-
-          <table class="deadline-table">
-            <thead>
-              <tr>
-                <th scope="col">Seite</th>
-                <th scope="col">Wofür</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td><code>/admin/categories</code></td><td>Kategorien der Meldungen, etwa Finanzen, Arbeitssicherheit, Diskriminierung</td></tr>
-              <tr><td><code>/admin/locations</code></td><td>Standorte; sind welche aktiv, fragt der Assistent danach</td></tr>
-              <tr><td><code>/admin/users</code></td><td>weitere Konten; neue Konten sind Fallbearbeiter, jedes braucht TOTP</td></tr>
-              <tr><td><code>/admin/telephone-channel</code></td><td>Leitfaden für den mündlichen Kanal nach § 16 Abs. 3 HinSchG</td></tr>
-              <tr><td><code>/admin/system</code></td><td>installierte Version und Dateiprüfung</td></tr>
-            </tbody>
-          </table>
-
-          <p>Schicken Sie danach eine Testmeldung über das Formular. Prüfen Sie, ob sie im Dashboard erscheint und die E-Mail ankommt.</p>
-
-          <div class="callout callout-info">
-            <p class="callout-title">Fristerinnerungen</p>
-            <p>Mit <code>REMINDER_ENABLED=true</code> erinnert OpenWhistle per E-Mail, bevor die 7-Tage- oder die 3-Monats-Frist nach § 17 HinSchG abläuft. Die Prüfung läuft alle 30 Minuten.</p>
-          </div>
-
-          <h2>Schritt 8: Die Meldestelle bekannt machen</h2>
-
-          <p>Beschäftigte brauchen klare Informationen über das interne Verfahren und über externe Meldestellen (§ 7 Abs. 3, § 13 Abs. 2 HinSchG). Bewährte Wege:</p>
-
+          <h2>What OpenWhistle never stores</h2>
           <ul>
-            <li>Rundmail mit dem Link zum Meldeformular</li>
-            <li>Eintrag im Intranet oder Wiki</li>
-            <li>Hinweis im Verhaltenskodex</li>
-            <li>Aushang für Beschäftigte ohne Computerarbeitsplatz, mit Telefonnummer</li>
+            <li><strong>IP addresses.</strong> nginx removes the IP headers and writes no access log. The app discards the address, and the database has no IP column.</li>
+            <li><strong>Times of the reporting person.</strong> The report, messages and attachments carry only the date.</li>
+            <li><strong>Data for third parties.</strong> Every outbound request is optional and <a href="../docs.html#outbound-requests">listed in the documentation</a>. The update check and the installation count stay off until you switch them on.</li>
           </ul>
 
-          <h2>Updates einspielen</h2>
+          <h2>Is a whistleblowing system GDPR-compliant?</h2>
+          <p>Compliance belongs to the operation, not the software. OpenWhistle supports GDPR-compliant operation; the operator bears the responsibility.</p>
 
-          <p>Das Image ist über <code>OPENWHISTLE_VERSION</code> in <code>.env</code> auf eine Version festgelegt. So aktualisieren Sie:</p>
-
-<pre><code># Zuerst sichern: ein Rollback braucht das Backup
-docker compose exec db pg_dump -U openwhistle openwhistle &gt; backup.sql
-# Compose-Datei und nginx-Konfiguration ändern sich mit den Releases
-git pull
-# OPENWHISTLE_VERSION in .env auf die neue Version setzen, dann
-docker compose pull
-docker compose up -d</code></pre>
-
-          <p>Lesen Sie vorher den Eintrag im <a href="../changelog.html">Änderungsprotokoll</a>. Sicherheitskorrekturen erscheinen als Patch-Versionen; auf GitHub können Sie die Releases abonnieren.</p>
-
-          <h2>Was Sie sichern müssen</h2>
-
-          <table class="deadline-table">
-            <thead>
-              <tr>
-                <th scope="col">Was</th>
-                <th scope="col">Warum</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td>Datenbank (<code>pg_dump</code>)</td><td>Meldungen, Nachrichten und standardmäßig auch die Anhänge</td></tr>
-              <tr><td><code>.env</code></td><td>enthält die Schlüssel; ohne sie ist das Backup nicht lesbar</td></tr>
-              <tr><td>S3-Bucket</td><td>nur wenn Anhänge dort liegen (<code>STORAGE_BACKEND=s3</code>)</td></tr>
-            </tbody>
-          </table>
-
-          <div class="article-cta">
-            <h3>Erst ansehen, dann installieren</h3>
-            <p>Die Live-Demo zeigt Meldeformular und Admin-Bereich. Kein Konto nötig, Zurücksetzen alle 6 Stunden.</p>
-            <a href="https://demo.openwhistle.net" class="btn-cta" rel="noopener noreferrer" target="_blank">Live-Demo öffnen &rarr;</a>
+          <div class="comp-wrap">
+            <table class="comp-table" aria-label="GDPR duties: what OpenWhistle contributes and what stays with the operator">
+              <thead>
+                <tr>
+                  <th scope="col">GDPR</th>
+                  <th scope="col" class="col-ow">OpenWhistle</th>
+                  <th scope="col">Your part</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Data minimisation, Art.&nbsp;5</td><td class="col-ow" data-label="OpenWhistle">anonymous mode, no IP, date only</td><td data-label="Your part">the form's categories and texts</td></tr>
+                <tr><td>Storage limitation, Art.&nbsp;5</td><td class="col-ow" data-label="OpenWhistle">automatic deletion, by default 1095 days after closure</td><td data-label="Your part">set the period</td></tr>
+                <tr><td>Erasure, Art.&nbsp;17</td><td class="col-ow" data-label="OpenWhistle">deletion only after confirmation by a second admin account</td><td data-label="Your part">review requests</td></tr>
+                <tr><td>Security, Art.&nbsp;32</td><td class="col-ow" data-label="OpenWhistle">encryption, TOTP for every account, roles, audit log</td><td data-label="Your part">server, updates, backups</td></tr>
+                <tr><td>Processing on behalf, Art.&nbsp;28</td><td class="col-ow" data-label="OpenWhistle">no service run by the project; without opt-in, no connection to the project</td><td data-label="Your part">contract with your hosting provider</td></tr>
+                <tr><td>Records, Art.&nbsp;30; impact assessment, Art.&nbsp;35</td><td class="col-ow" data-label="OpenWhistle">not part of the software</td><td data-label="Your part">create where required</td></tr>
+              </tbody>
+            </table>
           </div>
 
-          <h2>Häufige Probleme</h2>
+          <h2>Reports in several languages</h2>
+          <p>The interface is available in German, English, French and Portuguese (Brazil). It follows the browser's language until the person chooses one. They can write the report text in any language.</p>
 
-          <h3>„port is already allocated“ beim Start</h3>
-          <p>Port 80, 443 oder 8080 ist belegt. Den Onion-Zugang auf <code>127.0.0.1:8080</code> veröffentlicht nginx immer. <code>sudo ss -tlnp</code> zeigt, welcher Prozess den Port hält.</p>
+          <h2>Open source: verifiable instead of promised</h2>
+          <p>OpenWhistle is licensed under the GPL-3.0, and the entire source code is on <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a>. You can verify every statement in this article there. OpenWhistle has not had an external audit yet.</p>
 
-          <h3>nginx startet nicht, <code>tls-init</code> meldet einen Fehler</h3>
-          <p>Meist ist der Schlüssel falsch berechtigt oder ein Symlink. Kopieren Sie die Dateien, und geben Sie <code>privkey.pem</code> root mit <code>0600</code> oder <code>0644</code>. Die Meldung von <code>tls-init</code> nennt Pfad und Grund.</p>
+          <div class="article-cta">
+            <h3>Try OpenWhistle without installing it</h3>
+            <p>The live demo shows the reporting wizard and the admin area with sample data. It is reset every 6 hours.</p>
+            <a href="https://demo.openwhistle.net" class="btn-cta" rel="noopener noreferrer" target="_blank">Open the live demo &rarr;</a>
+          </div>
 
-          <h3>Der Einrichtungsassistent lehnt das Token ab</h3>
-          <p>Nehmen Sie das jüngste Token aus dem Log. Redis speichert es nur im Arbeitsspeicher: startet Redis neu, entsteht ein neues. Ein selbst gesetztes <code>SETUP_TOKEN</code> gilt immer.</p>
-
-          <p style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle); font-size: 0.82rem; color: var(--text-muted);">
-            <strong>Weitere Ressourcen:</strong>
-            <a href="../docs.html">Vollständige Dokumentation</a> ·
-            <a href="hinschg-compliance-leitfaden.html">HinSchG-Compliance-Leitfaden</a> ·
-            <a href="interne-meldestelle-kostenlos.html">Was ein kostenloses Hinweisgebersystem kostet</a> ·
-            <a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank">GitHub Issues</a>
+          <p style="margin-top: var(--space-10); font-size: 0.88rem; color: var(--text-muted);">
+            <strong>More resources:</strong>
+            <a href="../index.html">OpenWhistle whistleblowing software</a> ·
+            <a href="hinschg-compliance-guide.html">HinSchG compliance guide</a> ·
+            <a href="set-up-internal-reporting-channel.html">Step-by-step installation guide</a>
           </p>
         </div>
       </article>
@@ -697,31 +564,31 @@ docker compose up -d</code></pre>
             </svg>
             OpenWhistle
           </div>
-          <p class="footer-tagline">Schutz für alle, die den Mut haben zu sprechen.</p>
+          <p class="footer-tagline">Protecting those who speak up.</p>
         </div>
 
-        <nav aria-label="Footer-Links">
-          <div class="footer-col-title">Ressourcen</div>
+        <nav aria-label="Footer links">
+          <div class="footer-col-title">Resources</div>
           <ul class="footer-links">
             <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
-            <li><a href="../docs.html">Dokumentation</a></li>
-            <li><a href="../changelog.html">Änderungsprotokoll</a></li>
-            <li><a href="../de/">Startseite (Deutsch)</a></li>
-            <li><a href="set-up-internal-reporting-channel.html" hreflang="en">English</a></li>
-            <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Live-Demo</a></li>
+            <li><a href="../docs.html">Documentation</a></li>
+            <li><a href="../changelog.html">Changelog</a></li>
+            <li><a href="../index.html">Home</a></li>
+            <li><a href="hinweisgebersystem-dsgvo-eu-hosting.html" hreflang="de">Deutsch</a></li>
+            <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Live demo</a></li>
             <li><a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank">Issues</a></li>
-            <li><a href="https://github.com/openwhistle/OpenWhistle/blob/main/LICENSE" rel="noopener noreferrer" target="_blank">Lizenz (GPL-3.0)</a></li>
+            <li><a href="https://github.com/openwhistle/OpenWhistle/blob/main/LICENSE" rel="noopener noreferrer" target="_blank">Licence (GPL-3.0)</a></li>
           </ul>
         </nav>
 
         <div>
-          <div class="footer-col-title">Rechtliches</div>
+          <div class="footer-col-title">Legal</div>
           <p style="font-size: 0.85rem; color: rgba(226,220,210,0.45); line-height: 1.7;">
-            Lizenziert unter GPL-3.0. Mit &#10084;&#65039; für Transparenz entwickelt.
+            Licensed under GPL-3.0. Built with &#10084;&#65039; for transparency.
           </p>
           <p style="font-size: 0.82rem; color: rgba(226,220,210,0.35); line-height: 1.7; margin-top: 0.75rem;">
-            OpenWhistle bietet keine Rechtsberatung. Bitte konsultieren Sie qualifizierte
-            Rechtsexperten bezüglich Ihrer spezifischen HinSchG-Pflichten.
+            OpenWhistle does not give legal advice. Consult a qualified
+            lawyer about your own obligations under the HinSchG.
           </p>
         </div>
       </div>
@@ -729,7 +596,7 @@ docker compose up -d</code></pre>
       <div class="footer-bottom">
         <span>&copy; OpenWhistle Contributors — GNU General Public License v3.0</span>
         <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">
-          Auf GitHub mitwirken &rarr;
+          Contribute on GitHub &rarr;
         </a>
       </div>
     </div>

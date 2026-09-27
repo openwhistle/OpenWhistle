@@ -50,6 +50,13 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Documentation
 
+- **The blog is in English and German.** Every article has its twin in the other language,
+  linked both ways by `hreflang` and a language switch; the English index is `/blog/en.html`,
+  and the English pages link their Blog item there. The German URLs are unchanged.
+  `test_every_blog_page_exists_in_english_and_german` holds it for new articles.
+- **New article: removing metadata without altering the evidence photo**, in English and
+  German: what the bug bounty measured, and why no test noticed.
+
 - **A changelog page on the website**, rendered from this file (`docs/changelog.html`, checked by
   `tests/test_changelog_page.py`).
 - **Diagrams and screenshots in the documentation**, in the reader's theme: architecture,

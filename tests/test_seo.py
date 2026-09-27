@@ -237,7 +237,8 @@ def test_software_version_is_the_app_version() -> None:
 
 @pytest.mark.parametrize(
     "page",
-    [p for p in PAGES if p.parent.name == "blog" and p.name != "index.html"],
+    # index.html and en.html are the German and English blog indexes.
+    [p for p in PAGES if p.parent.name == "blog" and p.name not in ("index.html", "en.html")],
     ids=lambda p: p.name,
 )
 def test_blog_posts_carry_dated_blogposting(page: Path) -> None:
