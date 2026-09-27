@@ -26,10 +26,11 @@
   {
     "@context": "https://schema.org",
     "@type": "Article",
-    "headline": "HinSchG-Compliance-Leitfaden 2025 — Pflichten, Fristen und Checklisten",
-    "description": "Vollständiger HinSchG-Compliance-Leitfaden für Unternehmen ab 50 Mitarbeitern.",
+    "headline": "HinSchG-Compliance-Leitfaden 2026: Pflichten, Fristen und Checkliste ab 50 Beschäftigten",
+    "description": "Wer eine interne Meldestelle braucht, welche Fristen und Bußgelder gelten und was Software davon abdeckt, mit Paragrafen.",
     "url": "https://openwhistle.net/blog/hinschg-compliance-leitfaden.html",
-    "datePublished": "2025-04-27",
+    "datePublished": "2026-04-27",
+    "dateModified": "2026-09-27",
     "author": { "@type": "Organization", "name": "OpenWhistle Contributors" },
     "publisher": { "@type": "Organization", "name": "OpenWhistle", "url": "https://openwhistle.net" },
     "inLanguage": "de"
@@ -354,217 +355,267 @@
       <article>
         <header class="article-header">
           <p class="article-tag">HinSchG · Compliance · Leitfaden</p>
-          <h1 class="article-title">HinSchG-Compliance-Leitfaden 2025: Was Unternehmen ab 50 Mitarbeitern wissen müssen</h1>
-          <p class="article-subtitle">Alle Pflichten, Fristen und technischen Anforderungen des Hinweisgeberschutzgesetzes — mit konkreten Checklisten für Ihr Compliance-Team.</p>
+          <h1 class="article-title">HinSchG-Compliance-Leitfaden 2026: Pflichten, Fristen und Checkliste ab 50 Beschäftigten</h1>
+          <p class="article-subtitle">Wer eine interne Meldestelle braucht, welche Fristen gelten und was Software davon abdeckt. Jede Aussage mit Paragraf, geprüft am Gesetzestext.</p>
           <div class="article-meta">
-            <span>27. April 2025</span>
-            <span>10 Min. Lesezeit</span>
+            <span>27. April 2026</span>
+            <span>Aktualisiert am 27. September 2026</span>
+            <span>8 Min. Lesezeit</span>
             <span>OpenWhistle Contributors</span>
           </div>
         </header>
 
         <div class="article-body">
+          <!-- Table layout for this article. Kept in the body, not in <head>:
+               the head belongs to the SEO lane (plan 2026-09-27). -->
+          <style>
+            .deadline-table { table-layout: auto; }
+            .deadline-table .td-law { white-space: nowrap; }
+            @media (max-width: 540px) {
+              .deadline-table thead { display: none; }
+              .deadline-table tr { display: block; padding: var(--space-3) 0; border-bottom: 1px solid var(--border-subtle); }
+              .deadline-table td { display: block; border: none; padding: var(--space-1) var(--space-2); }
+              .deadline-table td:first-child { color: var(--text-primary); font-weight: 600; }
+              .deadline-table td[data-label]::before { content: attr(data-label) ": "; color: var(--text-muted); font-weight: 400; font-family: var(--font-body); }
+            }
+          </style>
 
-          <p>Das <strong>Hinweisgeberschutzgesetz (HinSchG)</strong> trat am 2. Juli 2023 in Kraft und setzt die EU-Richtlinie 2019/1937 (Whistleblower-Richtlinie) in deutsches Recht um. Für Unternehmen ab 50 Mitarbeitern ist die Einrichtung einer internen Meldestelle <strong>gesetzlich verpflichtend</strong>. Wer dies versäumt, riskiert Bußgelder bis zu 50.000 €.</p>
+          <p>Das <strong>Hinweisgeberschutzgesetz (HinSchG)</strong> gilt seit dem 2. Juli 2023. Es setzt die EU-Richtlinie 2019/1937 in deutsches Recht um. Beschäftigungsgeber mit in der Regel mindestens 50 Beschäftigten müssen eine <strong>interne Meldestelle</strong> einrichten und betreiben.</p>
 
           <div class="callout callout-warn">
-            <p class="callout-title">Wichtiger Hinweis</p>
-            <p>Dieser Leitfaden dient der allgemeinen Information und stellt keine Rechtsberatung dar. Für Ihre spezifische Situation konsultieren Sie bitte qualifizierte Rechtsexperten.</p>
+            <p class="callout-title">Keine Rechtsberatung</p>
+            <p>Dieser Leitfaden informiert allgemein. Stand ist der Gesetzestext auf <a href="https://www.gesetze-im-internet.de/hinschg/" rel="noopener noreferrer" target="_blank">gesetze-im-internet.de</a>, abgerufen am 27. September 2026. Für Ihren Fall fragen Sie eine Rechtsanwältin oder einen Rechtsanwalt.</p>
           </div>
 
-          <h2>Wer ist zur Einrichtung einer internen Meldestelle verpflichtet?</h2>
+          <h2>Wer ist verpflichtet?</h2>
 
-          <p>§ 12 HinSchG definiert den Anwendungsbereich. Verpflichtet sind:</p>
+          <table class="deadline-table">
+            <thead>
+              <tr>
+                <th scope="col">Wer</th>
+                <th scope="col">Norm</th>
+                <th scope="col">Pflicht seit</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Beschäftigungsgeber mit in der Regel mindestens 250 Beschäftigten</td><td class="td-law" data-label="Norm">§ 12 Abs. 1, 2</td><td data-label="Pflicht seit">2. Juli 2023</td></tr>
+              <tr><td>Private Beschäftigungsgeber mit 50 bis 249 Beschäftigten</td><td class="td-law" data-label="Norm">§ 42 Abs. 1</td><td data-label="Pflicht seit">17. Dezember 2023</td></tr>
+              <tr><td>Bestimmte Finanzunternehmen, etwa Kreditinstitute und Versicherer, jeder Größe</td><td class="td-law" data-label="Norm">§ 12 Abs. 3</td><td data-label="Pflicht seit">2. Juli 2023</td></tr>
+              <tr><td>Bund und Länder: Organisationseinheiten, die die obersten Behörden bestimmen</td><td class="td-law" data-label="Norm">§ 12 Abs. 1</td><td data-label="Pflicht seit">2. Juli 2023</td></tr>
+              <tr><td>Gemeinden und ihre Unternehmen</td><td class="td-law" data-label="Norm">§ 12 Abs. 1</td><td data-label="Pflicht seit">nach Landesrecht</td></tr>
+            </tbody>
+          </table>
 
-          <ul>
-            <li><strong>Private Unternehmen ab 50 Mitarbeitern</strong> (Vollzeitäquivalente, Jahresschnitt)</li>
-            <li><strong>Alle Behörden des Bundes und der Länder</strong> — unabhängig von der Mitarbeiterzahl</li>
-            <li><strong>Kommunen ab 10.000 Einwohnern</strong></li>
-            <li><strong>Unternehmen des Finanzsektors</strong> — auch unter 50 Mitarbeitern (§ 12 Abs. 3)</li>
-          </ul>
+          <p>Das Gesetz zählt Beschäftigte „in der Regel“ (§ 12 Abs. 2); von Vollzeitäquivalenten spricht es nicht. Zu den Beschäftigten gehören auch Auszubildende und arbeitnehmerähnliche Personen (§ 3 Abs. 8).</p>
 
-          <div class="callout callout-info">
-            <p class="callout-title">Übergangsfristen</p>
-            <p>Unternehmen mit 50–249 Mitarbeitern hatten bis zum <strong>17. Dezember 2023</strong> Zeit, die Meldestelle einzurichten. Alle anderen Pflichtigen mussten bereits ab dem 2. Juli 2023 compliant sein.</p>
-          </div>
-
-          <h2>Was muss eine interne Meldestelle leisten?</h2>
-
-          <p>§ 16 HinSchG definiert die Mindestanforderungen an den internen Meldekanal. Die Meldestelle muss:</p>
+          <h2>Was die interne Meldestelle leisten muss</h2>
 
           <ul class="checklist" role="list">
             <li>
               <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
               <div class="check-label">
-                <strong>Vertrauliche Meldungen ermöglichen (§ 16 Abs. 1)</strong>
-                <span>Hinweisgeber müssen in der Lage sein, Meldungen vertraulich oder anonym abzugeben. Die Identität darf ohne Einwilligung nicht offenbart werden.</span>
+                <strong>Meldungen in Textform und mündlich (§ 16 Abs. 3)</strong>
+                <span>Mündlich heißt per Telefon oder anderer Sprachübermittlung. Auf Wunsch ist ein persönliches Treffen zu ermöglichen.</span>
               </div>
             </li>
             <li>
               <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
               <div class="check-label">
-                <strong>Eingangsbestätigung innerhalb von 7 Tagen (§ 17 Abs. 1)</strong>
-                <span>Der Eingang der Meldung muss dem Hinweisgeber innerhalb von 7 Tagen bestätigt werden.</span>
+                <strong>Nur Zuständige haben Zugriff (§ 16 Abs. 2)</strong>
+                <span>Eingehende Meldungen sehen nur die Personen, die sie entgegennehmen und bearbeiten, und ihre Unterstützer.</span>
               </div>
             </li>
             <li>
               <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
               <div class="check-label">
-                <strong>Rückmeldung innerhalb von 3 Monaten (§ 17 Abs. 2)</strong>
-                <span>Der Hinweisgeber muss innerhalb von 3 Monaten über die ergriffenen Maßnahmen informiert werden.</span>
+                <strong>Vertraulichkeit der Identität (§ 8)</strong>
+                <span>Das gilt für die hinweisgebende Person, für Beschuldigte und für weitere genannte Personen.</span>
               </div>
             </li>
             <li>
               <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
               <div class="check-label">
-                <strong>Bidirektionale Kommunikation ermöglichen (§ 17 Abs. 3)</strong>
-                <span>Rückfragen an den Hinweisgeber müssen möglich sein — auch wenn er anonym bleiben möchte.</span>
+                <strong>Anonyme Meldungen bearbeiten, soweit möglich (§ 16 Abs. 1)</strong>
+                <span>Die Meldestelle „sollte“ anonyme Meldungen bearbeiten. Einen anonymen Kanal verlangt das Gesetz nicht.</span>
               </div>
             </li>
             <li>
               <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
               <div class="check-label">
-                <strong>Schriftliche und mündliche Meldungen akzeptieren (§ 16 Abs. 3)</strong>
-                <span>Neben schriftlichen müssen auch mündliche Meldungen (Telefon, persönliches Gespräch) möglich sein. Bei mündlichen Meldungen gelten besondere Dokumentationspflichten.</span>
+                <strong>Kontakt halten und nachfragen (§ 17 Abs. 1 Nr. 3, 5)</strong>
+                <span>Rückfragen an die hinweisgebende Person müssen möglich sein.</span>
               </div>
             </li>
             <li>
               <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
               <div class="check-label">
-                <strong>Unabhängigkeit der meldungsbearbeitenden Person sicherstellen (§ 15)</strong>
-                <span>Die Personen, die Meldungen entgegennehmen und bearbeiten, müssen in ihrer Funktion unabhängig sein und Interessenkonflikte vermeiden.</span>
+                <strong>Unabhängig und fachkundig (§ 15)</strong>
+                <span>Die beauftragten Personen dürfen andere Aufgaben haben, aber keine Interessenkonflikte.</span>
+              </div>
+            </li>
+            <li>
+              <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              <div class="check-label">
+                <strong>Informieren (§ 7 Abs. 3, § 13 Abs. 2)</strong>
+                <span>Beschäftigte erhalten klare Informationen über das interne Verfahren und über externe Meldestellen.</span>
               </div>
             </li>
           </ul>
 
           <h2>Die Fristen im Überblick</h2>
 
-          <table class="deadline-table" role="table" aria-label="HinSchG Fristen">
+          <table class="deadline-table">
             <thead>
               <tr>
                 <th scope="col">Frist</th>
-                <th scope="col">Rechtsgrundlage</th>
+                <th scope="col">Norm</th>
                 <th scope="col">Inhalt</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td><strong>7 Tage</strong></td>
-                <td class="td-law">§ 17 Abs. 1</td>
-                <td>Eingangsbestätigung der Meldung gegenüber dem Hinweisgeber</td>
+                <td class="td-law" data-label="Norm">§ 17 Abs. 1 Nr. 1</td>
+                <td data-label="Inhalt">Eingang der Meldung bestätigen, spätestens nach sieben Tagen</td>
               </tr>
               <tr>
                 <td><strong>3 Monate</strong></td>
-                <td class="td-law">§ 17 Abs. 2</td>
-                <td>Rückmeldung über geplante und ergriffene Folgemaßnahmen</td>
-              </tr>
-              <tr>
-                <td><strong>Unverzüglich</strong></td>
-                <td class="td-law">§ 16 Abs. 1</td>
-                <td>Prüfung der Stichhaltigkeit der Meldung</td>
+                <td class="td-law" data-label="Norm">§ 17 Abs. 2</td>
+                <td data-label="Inhalt">Rückmeldung ab Eingangsbestätigung; ohne Bestätigung spätestens 3 Monate und 7 Tage nach Eingang</td>
               </tr>
               <tr>
                 <td><strong>3 Jahre</strong></td>
-                <td class="td-law">§ 11 Abs. 5 / DSGVO</td>
-                <td>Aufbewahrungspflicht für Meldungen; danach DSGVO-konforme Löschung</td>
+                <td class="td-law" data-label="Norm">§ 11 Abs. 5</td>
+                <td data-label="Inhalt">Dokumentation wird drei Jahre nach Abschluss des Verfahrens gelöscht; länger nur, wenn erforderlich und verhältnismäßig</td>
               </tr>
             </tbody>
           </table>
 
-          <h2>Was darf und was muss gemeldet werden?</h2>
+          <p>Für die Prüfung der Stichhaltigkeit nennt das Gesetz keine eigene Frist (§ 17 Abs. 1 Nr. 4).</p>
 
-          <p>§ 2 HinSchG definiert den sachlichen Anwendungsbereich. Meldungen sind geschützt, wenn sie Verstöße gegen:</p>
+          <h2>Bußgelder nach § 40</h2>
+
+          <table class="deadline-table">
+            <thead>
+              <tr>
+                <th scope="col">Verstoß</th>
+                <th scope="col">Norm</th>
+                <th scope="col">Bis zu</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Keine interne Meldestelle eingerichtet oder betrieben</td><td class="td-law" data-label="Norm">§ 40 Abs. 2 Nr. 2</td><td data-label="Bis zu">20.000 €</td></tr>
+              <tr><td>Meldung oder Kommunikation behindert</td><td class="td-law" data-label="Norm">§ 40 Abs. 2 Nr. 1</td><td data-label="Bis zu">50.000 €</td></tr>
+              <tr><td>Repressalie gegen die hinweisgebende Person</td><td class="td-law" data-label="Norm">§ 40 Abs. 2 Nr. 3</td><td data-label="Bis zu">50.000 €</td></tr>
+              <tr><td>Vertraulichkeit vorsätzlich oder leichtfertig verletzt</td><td class="td-law" data-label="Norm">§ 40 Abs. 3</td><td data-label="Bis zu">50.000 €</td></tr>
+              <tr><td>Vertraulichkeit fahrlässig verletzt</td><td class="td-law" data-label="Norm">§ 40 Abs. 4</td><td data-label="Bis zu">10.000 €</td></tr>
+            </tbody>
+          </table>
+
+          <p>Das Bußgeld für eine fehlende Meldestelle gilt seit dem 1. Dezember 2023 (§ 42 Abs. 2). Bei Behinderung, Repressalie und Verletzung der Vertraulichkeit verweist § 40 Abs. 6 auf § 30 Abs. 2 Satz 3 OWiG. Gegen ein Unternehmen kann das Höchstmaß dann das Zehnfache betragen.</p>
+
+          <h2>Was gemeldet werden kann</h2>
+
+          <p>Der sachliche Anwendungsbereich steht in § 2. Geschützt sind vor allem Meldungen über:</p>
 
           <ul>
-            <li>EU-Recht (Finanzdienstleistungen, Verbraucherschutz, Produktsicherheit, Umweltschutz, Lebensmittelsicherheit, öffentliche Gesundheit, Datenschutz, Netzwerk- und Informationssicherheit, Wettbewerb, Unternehmensbesteuerung)</li>
-            <li>Deutsches Strafrecht (Straftaten)</li>
-            <li>Deutsches Ordnungswidrigkeitenrecht, wenn die Zuwiderhandlung bußgeldbewehrt ist und dem Schutz des Lebens, der Gesundheit oder der Rechte von Personen dient</li>
+            <li>Straftaten (§ 2 Abs. 1 Nr. 1)</li>
+            <li>Ordnungswidrigkeiten, soweit die Vorschrift Leben, Leib oder Gesundheit schützt oder die Rechte von Beschäftigten und ihren Vertretungsorganen (§ 2 Abs. 1 Nr. 2)</li>
+            <li>Verstöße gegen bestimmte Vorschriften des Bundes, der Länder und der EU, etwa zu Geldwäsche, Produktsicherheit, Umweltschutz und Datenschutz (§ 2 Abs. 1 Nr. 3 ff.)</li>
           </ul>
 
-          <p>Nicht umfasst sind rein interne Streitigkeiten (z. B. Arbeitszeiten, Urlaub), es sei denn, es liegt ein Verstoß gegen eine der o. g. Normen vor.</p>
+          <p>Ein bloßer Streit über Urlaub oder Arbeitszeit fällt nicht darunter, solange er keinen solchen Verstoß betrifft.</p>
 
-          <h2>Technische Anforderungen an die Software</h2>
+          <h2>Was Software abdeckt und was nicht</h2>
 
-          <p>Das HinSchG macht keine direkten Vorgaben zu technischen Details, aber aus dem Zusammenspiel von § 8 (Vertraulichkeit), § 16 (Kanalgestaltung) und der DSGVO ergeben sich folgende Anforderungen an eine Softwarelösung:</p>
+          <p>Das Gesetz schreibt keine Technik vor. Software kann den Kanal in Textform, die Fristen und die Dokumentation tragen. So verteilt es sich bei OpenWhistle:</p>
 
-          <h3>Vertraulichkeit und Anonymität</h3>
-          <p>Die Software darf <strong>keine personenidentifizierenden Daten ohne Einwilligung erheben</strong>. Das bedeutet: keine IP-Adressen, keine Browser-Fingerprints, keine erzwungene E-Mail-Eingabe. OpenWhistle speichert keine IP-Adressen an keiner Stelle im System — weder in der Datenbank, noch in Logs.</p>
+          <table class="deadline-table">
+            <thead>
+              <tr>
+                <th scope="col">Pflicht</th>
+                <th scope="col">Norm</th>
+                <th scope="col">OpenWhistle</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Kanal in Textform</td><td class="td-law" data-label="Norm">§ 16 Abs. 3</td><td data-label="OpenWhistle">Webformular, optional über Tor</td></tr>
+              <tr><td>Mündlicher Kanal</td><td class="td-law" data-label="Norm">§ 16 Abs. 3</td><td data-label="OpenWhistle">nicht in der Software; Leitfaden im Admin-Bereich</td></tr>
+              <tr><td>Zugriff nur für Zuständige</td><td class="td-law" data-label="Norm">§ 16 Abs. 2</td><td data-label="OpenWhistle">Rollen; Fallbearbeiter sehen nur ihre Fälle</td></tr>
+              <tr><td>Vertraulichkeit</td><td class="td-law" data-label="Norm">§ 8</td><td data-label="OpenWhistle">keine IP-Speicherung; Identität erst nach protokolliertem Grund sichtbar</td></tr>
+              <tr><td>7 Tage, 3 Monate</td><td class="td-law" data-label="Norm">§ 17</td><td data-label="OpenWhistle">Zähler im Dashboard, E-Mail-Erinnerung</td></tr>
+              <tr><td>Dokumentation, Löschung</td><td class="td-law" data-label="Norm">§ 11</td><td data-label="OpenWhistle">verschlüsselte Fallakte, Audit-Log; Löschung nach 1095 Tagen</td></tr>
+              <tr><td>Unabhängigkeit, Fachkunde</td><td class="td-law" data-label="Norm">§ 15</td><td data-label="OpenWhistle">Ihre Aufgabe</td></tr>
+            </tbody>
+          </table>
 
-          <h3>Datensparsamkeit und Löschpflicht</h3>
-          <p>Art. 5 DSGVO und § 26 HinSchG verpflichten zur Datenlöschung. Nach Abschluss eines Falls und Ablauf der gesetzlichen Aufbewahrungsfristen müssen alle Daten gelöscht werden. OpenWhistle bietet ein konfigurierbares Retention-System, das dies automatisch umsetzt.</p>
-
-          <h3>Zugriffsschutz</h3>
-          <p>Nur befugte Personen dürfen auf Meldungen zugreifen. Mehrstufige Authentifizierung für Admin-Konten ist Pflicht — OpenWhistle erzwingt TOTP für jeden Admin-Account ohne Ausnahme.</p>
-
-          <h3>Datenverschlüsselung</h3>
-          <p>Meldungsinhalte sollten at-rest verschlüsselt gespeichert werden. OpenWhistle implementiert Envelope Encryption: Jede Meldung erhält einen eigenen Datenverschlüsselungsschlüssel (DEK), der selbst verschlüsselt in der Datenbank liegt. Der Master-Schlüssel ist nie in der Datenbank.</p>
-
-          <h2>Checkliste: HinSchG-Compliance in 10 Schritten</h2>
+          <h2>Checkliste in zehn Schritten</h2>
 
           <ul class="checklist" role="list">
             <li>
               <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-              <div class="check-label"><strong>Pflicht prüfen</strong><span>Sind Sie ein Unternehmen ab 50 Mitarbeitern oder eine Behörde? Finanzsektor-Unternehmen auch darunter.</span></div>
+              <div class="check-label"><strong>Pflicht prüfen.</strong><span>In der Regel mindestens 50 Beschäftigte, oder ein Finanzunternehmen nach § 12 Abs. 3?</span></div>
             </li>
             <li>
               <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-              <div class="check-label"><strong>Verantwortliche Person benennen</strong><span>Wer bearbeitet Meldungen? Diese Person muss unabhängig und zur Verschwiegenheit verpflichtet sein (§ 15).</span></div>
+              <div class="check-label"><strong>Organisationsform wählen.</strong><span>Eigene Beschäftigte oder ein Dritter wie eine Ombudsperson (§ 14 Abs. 1). Bei 50 bis 249 Beschäftigten geht auch eine gemeinsame Stelle (§ 14 Abs. 2).</span></div>
             </li>
             <li>
               <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-              <div class="check-label"><strong>Software auswählen und installieren</strong><span>OpenWhistle bietet eine vollständige, DSGVO-konforme Lösung für den schriftlichen Kanal (§ 16 Abs. 3).</span></div>
+              <div class="check-label"><strong>Personen benennen.</strong><span>Unabhängig, ohne Interessenkonflikt, fachkundig (§ 15).</span></div>
             </li>
             <li>
               <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-              <div class="check-label"><strong>Telefonischen Kanal einrichten</strong><span>§ 16 Abs. 3 Nr. 2 verlangt auch die Möglichkeit mündlicher Meldungen. Klären Sie, ob Telefon oder persönliches Gespräch umgesetzt wird. OpenWhistle bietet einen Compliance-Guide für telefonische Kanäle.</span></div>
+              <div class="check-label"><strong>Textkanal einrichten.</strong><span>Etwa mit OpenWhistle; die <a href="interne-meldestelle-einrichten.html">Anleitung</a> zeigt die Installation.</span></div>
             </li>
             <li>
               <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-              <div class="check-label"><strong>Mitarbeiter informieren</strong><span>§ 13 HinSchG verpflichtet zur Information der Beschäftigten über die Existenz der Meldestelle und deren Nutzung.</span></div>
+              <div class="check-label"><strong>Telefon einrichten.</strong><span>Eine Nummer, die nur die Meldestelle erreicht. Aufzeichnen nur mit Einwilligung (§ 11 Abs. 2).</span></div>
             </li>
             <li>
               <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-              <div class="check-label"><strong>Prozesse für Fristenüberwachung definieren</strong><span>7-Tage- und 3-Monats-Fristen müssen zuverlässig überwacht werden. OpenWhistle berechnet diese automatisch und zeigt verbleibende Tage im Dashboard.</span></div>
+              <div class="check-label"><strong>Fristen überwachen.</strong><span>Sieben Tage für die Bestätigung, drei Monate für die Rückmeldung.</span></div>
             </li>
             <li>
               <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-              <div class="check-label"><strong>Datenschutzerklärung aktualisieren</strong><span>Die Datenverarbeitung im Rahmen des Hinweisgeberschutzes muss in der Datenschutzerklärung dokumentiert werden.</span></div>
+              <div class="check-label"><strong>Löschkonzept festlegen.</strong><span>Drei Jahre nach Abschluss wird gelöscht (§ 11 Abs. 5). In OpenWhistle ist das der Standard.</span></div>
             </li>
             <li>
               <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-              <div class="check-label"><strong>Betriebsrat einbinden (falls vorhanden)</strong><span>Bei der Einführung einer Überwachungssoftware für Arbeitnehmer hat der Betriebsrat Mitbestimmungsrecht (§ 87 Abs. 1 Nr. 6 BetrVG). Dies gilt ggf. auch für Hinweisgebersysteme.</span></div>
+              <div class="check-label"><strong>Datenschutz dokumentieren.</strong><span>Verarbeitungsverzeichnis, Datenschutzhinweise und, bei jedem Dienstleister, ein Vertrag nach Art. 28 DSGVO.</span></div>
             </li>
             <li>
               <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-              <div class="check-label"><strong>Aufbewahrungsfristen und Löschkonzept festlegen</strong><span>Definieren Sie, wie lange Meldungen aufbewahrt werden (mindestens bis Abschluss + angemessene Frist; max. 3 Jahre nach gängiger Auslegung). Konfigurieren Sie OpenWhistles Retention-System entsprechend.</span></div>
+              <div class="check-label"><strong>Betriebsrat beteiligen, falls vorhanden.</strong><span>Mitbestimmungsrechte nach § 87 Abs. 1 BetrVG können berührt sein.</span></div>
             </li>
             <li>
               <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-              <div class="check-label"><strong>Regelmäßige Überprüfung</strong><span>Überprüfen Sie jährlich, ob alle Prozesse noch den aktuellen gesetzlichen Anforderungen entsprechen. Das HinSchG kann durch EU-Initiativen weiterentwickelt werden.</span></div>
+              <div class="check-label"><strong>Beschäftigte informieren.</strong><span>Über den internen Weg und über externe Meldestellen (§ 7 Abs. 3, § 13 Abs. 2).</span></div>
             </li>
           </ul>
 
           <div class="article-cta">
-            <h3>OpenWhistle: Die kostenlose HinSchG-Lösung</h3>
-            <p>Alle Anforderungen des HinSchG §§ 16–18 — implementiert, getestet, dokumentiert. Selbst gehostet, DSGVO-konform, kein Anbieter-Lock-in.</p>
+            <h3>Den Textkanal kostenlos einrichten</h3>
+            <p>OpenWhistle ist Open Source unter GPL-3.0 und zählt die Fristen nach § 17 mit. Die Live-Demo zeigt beide Seiten.</p>
             <a href="https://demo.openwhistle.net" class="btn-cta" rel="noopener noreferrer" target="_blank">Live-Demo testen &rarr;</a>
           </div>
 
           <h2>Häufige Fragen</h2>
 
           <h3>Was passiert, wenn wir keine Meldestelle einrichten?</h3>
-          <p>§ 40 HinSchG sieht Bußgelder von bis zu <strong>50.000 €</strong> für vorsätzliche und fahrlässige Verstöße gegen zentrale Pflichten des Gesetzes vor. Darüber hinaus riskieren Sie Reputationsschäden und mögliche zivilrechtliche Haftung gegenüber Hinweisgebern, deren Meldungen nicht ordnungsgemäß bearbeitet wurden.</p>
+          <p>Das ist eine Ordnungswidrigkeit mit einem Bußgeld bis 20.000 € (§ 40 Abs. 2 Nr. 2, Abs. 6). Hinweisgeber können sich ohnehin jederzeit an eine externe Meldestelle wenden (§ 7 Abs. 1).</p>
 
           <h3>Können wir einen externen Anbieter beauftragen?</h3>
-          <p>Ja, § 14 HinSchG erlaubt die Einschaltung Dritter (z. B. Rechtsanwälte, spezialisierte Dienstleister) für die Einrichtung und den Betrieb der Meldestelle. Bei SaaS-Lösungen ist jedoch zu prüfen, ob ein Datentransfer in Drittländer (außerhalb EU/EWR) erfolgt und welche DSGVO-Rechtsgrundlage gilt.</p>
+          <p>Ja. Ein Dritter kann die Aufgaben der internen Meldestelle übernehmen (§ 14 Abs. 1). Die Pflicht, einen Verstoß abzustellen, bleibt aber beim Beschäftigungsgeber. Mit dem Dienstleister brauchen Sie einen Vertrag nach Art. 28 DSGVO.</p>
 
-          <h3>Gilt das HinSchG für Konzerngesellschaften?</h3>
-          <p>Jede rechtlich eigenständige Gesellschaft ab 50 Mitarbeitern muss eine eigene Meldestelle einrichten oder einem Konzernmeldesystem beitreten. Unternehmen mit 50–249 Mitarbeitern können sich eine gemeinsame Meldestelle teilen (§ 14 Abs. 2 HinSchG). OpenWhistles Multi-Tenancy-Feature unterstützt genau diesen Anwendungsfall.</p>
+          <h3>Gilt das HinSchG für jede Konzerngesellschaft?</h3>
+          <p>Die Pflicht trifft jeden Beschäftigungsgeber einzeln (§ 12 Abs. 1). Mehrere private Beschäftigungsgeber mit 50 bis 249 Beschäftigten dürfen eine gemeinsame Stelle betreiben (§ 14 Abs. 2). Rückmeldung und Abhilfe bleiben bei jedem einzelnen. In OpenWhistle bekommt dafür jede Organisation einen eigenen Meldelink.</p>
 
           <p style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle); font-size: 0.82rem; color: var(--text-muted);">
             <strong>Weitere Ressourcen:</strong>
             <a href="interne-meldestelle-einrichten.html">Schritt-für-Schritt-Anleitung zur Installation</a> ·
-            <a href="whistleblower-software-vergleich.html">Software-Vergleich: OpenWhistle vs. kommerzielle Tools</a> ·
+            <a href="kostenloses-hinweisgebersystem.html">Kostenloses Hinweisgebersystem: was es wirklich kostet</a> ·
+            <a href="whistleblower-software-vergleich.html">Whistleblower-Software im Vergleich 2026</a> ·
             <a href="https://www.gesetze-im-internet.de/hinschg/" rel="noopener noreferrer" target="_blank">HinSchG Volltext (gesetze-im-internet.de)</a>
           </p>
         </div>
