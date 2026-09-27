@@ -170,8 +170,8 @@ zero vendor lock-in, and privacy-first by design.
 - **Superadmin role** — New `superadmin` role above `admin` for managing organisations
   in multi-tenant deployments; existing admin permissions are unchanged.
 - **Telephone channel compliance guide** — Admin page (`/admin/telephone-channel`) provides
-  a HinSchG §16 compliance checklist, implementation options, and the §10 recording
-  prohibition notice for operators setting up a verbal reporting channel.
+  a HinSchG § 16 Abs. 3 checklist (oral and text form), implementation options, and the
+  § 11 Abs. 2 rule that a call is recorded only with consent.
 - **TLS on by default** — the bundled nginx in `docker-compose.prod.yml` serves HTTPS out of
   the box: copy `fullchain.pem`/`privkey.pem` into `nginx/certs/` (no symlinks; key root-owned
   0600 or 0644), or a self-signed certificate
