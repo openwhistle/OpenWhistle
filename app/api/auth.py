@@ -529,12 +529,17 @@ async def session_refresh(
     if not started_at:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-    if session_token:
-        await auth_service.revoke_session(redis, session_token)
     new_token = auth_service.create_access_token(
         str(current_user.id), role=current_user.role.value, auth_time=started_at,
     )
+    # New first, then the old one: if the old session is already gone, it was
+    # revoked while this request ran (a password change's sweep, a logout),
+    # and the new one goes too. Deleting first and storing after let a sweep
+    # pass in between and miss the new session.
     await auth_service.store_session(redis, str(current_user.id), new_token)
+    if not session_token or not await auth_service.revoke_session(redis, session_token):
+        await auth_service.revoke_session(redis, new_token)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
     new_exp = auth_service.decode_access_token_exp(new_token)
     expires_at = int(new_exp.timestamp()) if new_exp else 0
     ttl = auth_service.seconds_left(new_token)
