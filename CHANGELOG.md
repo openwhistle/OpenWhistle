@@ -36,12 +36,25 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **`CONTRIBUTING.md`** carries the documentation rules; guard tests hold them.
 - **The installation example now puts the Redis password into `REDIS_URL`.** The production Redis
   runs with `--requirepass "${REDIS_PASSWORD}"`, so the documented `redis://redis:6379/0` could not
-  connect. `.env.example` and the docs now name `OPENWHISTLE_VERSION` 2.0.1, and the retention
-  section says what HinSchG §11 Abs. 5 says: deletion three years after the procedure ends, not a
-  three-year minimum.
-- **The German website is corrected to the code and the statute** (HinSchG text of 2026-09-27): the
-  landing page, the blog articles and a new article on what a free whistleblowing system costs.
-  The comparison with other systems states only vendor-published facts, each sourced and dated.
+  connect. `.env.example` now pins `OPENWHISTLE_VERSION` 2.0.1; `docs.html` no longer names the
+  default, which had gone stale at 2.0.0. The retention section says what HinSchG §11 Abs. 5 says:
+  deletion three years after the procedure ends, not a three-year minimum.
+- **Both landing pages are rewritten** for "open source whistleblower software" and "kostenloses
+  Hinweisgebersystem". Claims the code or the statute contradict are gone: "100 % HinSchG-konform",
+  rate limits "never IP-based", "OIDC or TOTP", and competitor prices without a source.
+- **A comparison page**, `open-source-whistleblowing-software.html`: OpenWhistle, GlobaLeaks,
+  SecureDrop and Hush Line on licence, hosting, deadlines, Tor, languages and audits, each sourced.
+- **A new German article**, `blog/kostenloses-hinweisgebersystem.html`: what a free system still
+  costs. The German comparison article keeps only vendor-published facts, each sourced and dated;
+  the three older articles carried 2025 as publication date, they were published 2026-04-27.
+- **Every page has a search head**: title of at most 60 characters, unique description, canonical,
+  hreflang, Open Graph, JSON-LD. `docs/sitemap.xml` is rendered from the heads by
+  `scripts/render_sitemap.py`; missing paths get `404.html`. `tests/test_seo.py` holds all of it.
+- **The share image is real.** `og-image.png` was a blank navy rectangle, so every shared link
+  showed an empty card. The touch icon is now 180×180.
+- **HinSchG citations are corrected** and checked by `tests/test_hinschg_citations.py`: the pages
+  cited a third Absatz of § 17 and a seventh of § 16, which do not exist; deletion is § 11 Abs. 5,
+  not § 26; a missing reporting office costs up to 20,000 € (§ 40 Abs. 2 Nr. 2, Abs. 6), not 50,000 €.
 
 ### Fixed
 
