@@ -10,6 +10,7 @@
 openwhistle_secret_key: ""        # 32+ characters: openssl rand -hex 32
 openwhistle_db_password: ""       # openssl rand -hex 24
 openwhistle_redis_password: ""    # openssl rand -hex 24
+openwhistle_encryption_key: ""    # recommended, 32+ characters: openssl rand -hex 32
 
 # Optional: OIDC client secret
 # openwhistle_oidc_client_secret: ""
