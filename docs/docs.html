@@ -2460,9 +2460,9 @@ CLAMAV_HOST=clamav</code></pre>
         </figure>
         <ol class="step-list">
           <li><div><strong>Mode.</strong> <em>Anonymous</em>: no personal data ever stored. <em>Confidential</em>: name, contact details and an optional secure email, stored encrypted. The case handler sees them only after recording a reason. Both comply with HinSchG.</div></li>
-          <li><div><strong>Location</strong>, only when the operator has configured branches or offices.</div></li>
-          <li><div><strong>Category</strong> from the operator's list (e.g. financial fraud, safety violation, discrimination).</div></li>
-          <li><div><strong>Description</strong>, the only mandatory field. Be as specific as possible without naming yourself.</div></li>
+          <li><div><strong>Location</strong> (optional), only when the operator has configured branches or offices.</div></li>
+          <li><div><strong>Category</strong> (required) from the operator's list (e.g. financial fraud, safety violation, discrimination).</div></li>
+          <li><div><strong>Description</strong> (required), 10 to 10&nbsp;000 characters. Be as specific as possible without naming yourself.</div></li>
           <li><div><strong>Files</strong> (optional): PDF, images, Word (<code>.docx</code>), Excel (<code>.xlsx</code>), CSV, TXT, up to 10 MB each and 5 per report. Legacy <code>.doc</code>/<code>.xls</code> are refused; save them as <code>.docx</code>/<code>.xlsx</code>. Metadata is removed, and with virus scanning on, an infected file is refused. Going back keeps attached files; choosing new ones replaces them, and <strong>Remove</strong> drops one.</div></li>
           <li><div><strong>Review and submit.</strong></div></li>
         </ol>
