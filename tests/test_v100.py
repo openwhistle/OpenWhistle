@@ -612,6 +612,14 @@ class TestConfigV100Defaults:
             "CHANGELOG": grab("CHANGELOG.md", r"^## \[(\d+\.\d+\.\d+)\]"),
             "pyproject": grab("pyproject.toml", r'^version = "([^"]+)"'),
             "compose image": grab("docker-compose.prod.yml", r"OPENWHISTLE_VERSION:-([0-9.]+)\}"),
+            # The pin a new install copies, and the docs sentence naming it:
+            # both still said 2.0.0 after 2.0.1 had shipped.
+            ".env.example": grab(".env.example", r"^OPENWHISTLE_VERSION=([0-9.]+)$"),
+            "docs.html pin": grab(
+                "docs/docs.html",
+                r"<code>OPENWHISTLE_VERSION</code>\s+in <code>\.env</code>"
+                r" \(default <code>([0-9.]+)</code>\)",
+            ),
         }
         v = settings.app_version
         assert found == dict.fromkeys(found, v)
