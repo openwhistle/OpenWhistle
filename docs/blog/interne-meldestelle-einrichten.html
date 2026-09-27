@@ -27,8 +27,8 @@
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="OpenWhistle: sichere Hinweisgeber-Meldungen">
   <meta property="og:locale" content="de_DE">
-  <meta property="article:published_time" content="2025-04-27">
-  <meta property="article:modified_time" content="2026-09-26">
+  <meta property="article:published_time" content="2026-04-27">
+  <meta property="article:modified_time" content="2026-09-27">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Interne Meldestelle einrichten: Anleitung | OpenWhistle">
   <meta name="twitter:description" content="Interne Meldestelle einrichten mit OpenWhistle: Server, Docker Compose, HTTPS, Admin-Konto mit MFA und erste Konfiguration, Schritt für Schritt erklärt.">
@@ -355,6 +355,18 @@
       .footer-bottom { flex-direction: column; align-items: flex-start; }
     }
   </style>
+  <style>
+    .deadline-table { width: 100%; border-collapse: collapse; margin: var(--space-6) 0; font-size: 0.9rem; }
+    .deadline-table th { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); padding: var(--space-3) var(--space-4); text-align: left; border-bottom: 2px solid var(--border-subtle); }
+    .deadline-table td { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); vertical-align: top; }
+    .deadline-table tr:last-child td { border-bottom: none; }
+    .deadline-table td:first-child { white-space: nowrap; }
+    @media (max-width: 540px) {
+      .deadline-table thead { display: none; }
+      .deadline-table tr { display: block; padding: var(--space-3) 0; border-bottom: 1px solid var(--border-subtle); }
+      .deadline-table td { display: block; border: none; padding: var(--space-1) var(--space-2); white-space: normal; }
+    }
+  </style>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Zum Inhalt springen</a>
@@ -420,20 +432,6 @@
         </header>
 
         <div class="article-body">
-          <!-- Table layout for this article. Kept in the body, not in <head>:
-               the head belongs to the SEO lane (plan 2026-09-27). -->
-          <style>
-            .deadline-table { width: 100%; border-collapse: collapse; margin: var(--space-6) 0; font-size: 0.9rem; }
-            .deadline-table th { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); padding: var(--space-3) var(--space-4); text-align: left; border-bottom: 2px solid var(--border-subtle); }
-            .deadline-table td { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); vertical-align: top; }
-            .deadline-table tr:last-child td { border-bottom: none; }
-            .deadline-table td:first-child { white-space: nowrap; }
-            @media (max-width: 540px) {
-              .deadline-table thead { display: none; }
-              .deadline-table tr { display: block; padding: var(--space-3) 0; border-bottom: 1px solid var(--border-subtle); }
-              .deadline-table td { display: block; border: none; padding: var(--space-1) var(--space-2); white-space: normal; }
-            }
-          </style>
 
           <p>Diese Anleitung richtet OpenWhistle mit Docker Compose ein. Am Ende läuft der digitale Meldekanal Ihrer internen Meldestelle auf Ihrem eigenen Server. Die maßgebliche Referenz bleibt die <a href="../docs.html#installation">Installationsanleitung in der Dokumentation</a>.</p>
 

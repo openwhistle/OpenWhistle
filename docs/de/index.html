@@ -1253,6 +1253,35 @@
       .trust-strip-inner { gap: var(--space-5); }
     }
   </style>
+  <style>
+    .diagram-dark, .shot-dark { display: none; }
+    [data-theme="dark"] .diagram-light, [data-theme="dark"] .shot-light { display: none; }
+    [data-theme="dark"] .diagram-dark, [data-theme="dark"] .shot-dark { display: block; }
+    .doc-shot { margin: 0; }
+    .doc-shot img { width: 100%; height: auto; border: 1px solid var(--border-subtle); border-radius: 4px; }
+    .doc-shot figcaption { font-size: 0.8rem; color: var(--text-muted); margin-top: var(--space-2); line-height: 1.5; }
+    .shots-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-8); margin-top: var(--space-10); }
+    .table-wide { width: 100%; margin-top: var(--space-8); }
+    .comparison-table.duties thead th:first-child { width: 34%; }
+    .comparison-table.duties td { vertical-align: top; }
+    .comparison-table td code { font-family: var(--font-mono); font-size: 0.8em; }
+    .note-muted { font-size: 0.85rem; color: var(--text-muted); margin-top: var(--space-4); line-height: 1.6; }
+    .note-muted a, .problem-text a { color: var(--accent); }
+    .comparison-table.duties.cols-norm th:nth-child(2) { width: 18%; }
+    .comparison-table.duties.cols-version th:nth-child(3) { width: 10%; }
+    .nowrap { white-space: nowrap; }
+    @media (max-width: 768px) { .shots-grid { grid-template-columns: 1fr; } }
+    /* A phone has no room for three columns of German compounds: each row
+       becomes a small card, the header row is announced per cell instead. */
+    @media (max-width: 540px) {
+      .hero-headline { font-size: clamp(1.9rem, 8.2vw, 2.6rem); }
+      .comparison-table.stack thead { display: none; }
+      .comparison-table.stack tr { display: block; padding: var(--space-3) 0; border-bottom: 1px solid var(--border-subtle); }
+      .comparison-table.stack tbody td { display: block; border: none; padding: var(--space-1) var(--space-2); }
+      .comparison-table.stack tbody td:first-child { color: var(--text-primary); font-weight: 600; }
+      .comparison-table.stack tbody td[data-label]::before { content: attr(data-label) ": "; color: var(--text-muted); font-weight: 400; }
+    }
+  </style>
 </head>
 <body>
   <a href="#main-content" class="skip-link">Zum Inhalt springen</a>
@@ -1306,38 +1335,6 @@
   </nav>
 
   <main id="main-content">
-    <!-- Figure and table helpers for this page's body. Kept here, not in
-         <head>, because the head belongs to the SEO lane (plan 2026-09-27,
-         "File ownership"); the rules match docs/docs.html "Themed figures". -->
-    <style>
-      .diagram-dark, .shot-dark { display: none; }
-      [data-theme="dark"] .diagram-light, [data-theme="dark"] .shot-light { display: none; }
-      [data-theme="dark"] .diagram-dark, [data-theme="dark"] .shot-dark { display: block; }
-      .doc-shot { margin: 0; }
-      .doc-shot img { width: 100%; height: auto; border: 1px solid var(--border-subtle); border-radius: 4px; }
-      .doc-shot figcaption { font-size: 0.8rem; color: var(--text-muted); margin-top: var(--space-2); line-height: 1.5; }
-      .shots-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-8); margin-top: var(--space-10); }
-      .table-wide { width: 100%; margin-top: var(--space-8); }
-      .comparison-table.duties thead th:first-child { width: 34%; }
-      .comparison-table.duties td { vertical-align: top; }
-      .comparison-table td code { font-family: var(--font-mono); font-size: 0.8em; }
-      .note-muted { font-size: 0.85rem; color: var(--text-muted); margin-top: var(--space-4); line-height: 1.6; }
-      .note-muted a, .problem-text a { color: var(--accent); }
-      .comparison-table.duties.cols-norm th:nth-child(2) { width: 18%; }
-      .comparison-table.duties.cols-version th:nth-child(3) { width: 10%; }
-      .nowrap { white-space: nowrap; }
-      @media (max-width: 768px) { .shots-grid { grid-template-columns: 1fr; } }
-      /* A phone has no room for three columns of German compounds: each row
-         becomes a small card, the header row is announced per cell instead. */
-      @media (max-width: 540px) {
-        .hero-headline { font-size: clamp(1.9rem, 8.2vw, 2.6rem); }
-        .comparison-table.stack thead { display: none; }
-        .comparison-table.stack tr { display: block; padding: var(--space-3) 0; border-bottom: 1px solid var(--border-subtle); }
-        .comparison-table.stack tbody td { display: block; border: none; padding: var(--space-1) var(--space-2); }
-        .comparison-table.stack tbody td:first-child { color: var(--text-primary); font-weight: 600; }
-        .comparison-table.stack tbody td[data-label]::before { content: attr(data-label) ": "; color: var(--text-muted); font-weight: 400; }
-      }
-    </style>
 
     <!-- Hero -->
     <section class="hero" aria-labelledby="hero-heading">
