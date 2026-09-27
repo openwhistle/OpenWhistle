@@ -12,10 +12,11 @@ from fastapi.exception_handlers import (
     http_exception_handler as _default_http_exception_handler,
 )
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.api.deps import PasswordChangeRequired
 from app.config import settings
 from app.csrf import CSRFMiddleware
 from app.i18n import get_lang, make_translator
@@ -244,6 +245,12 @@ def create_app() -> FastAPI:
             {"status_code": 422, "detail": "The submitted form data was invalid."},
             status_code=422,
         )
+
+    @application.exception_handler(PasswordChangeRequired)
+    async def password_change_required_handler(
+        request: Request, exc: PasswordChangeRequired
+    ) -> Response:
+        return RedirectResponse("/admin/account", status_code=303)
 
     @application.exception_handler(StarletteHTTPException)
     async def http_exception_handler(

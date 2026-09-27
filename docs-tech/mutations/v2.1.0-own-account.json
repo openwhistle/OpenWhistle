@@ -1,0 +1,247 @@
+{
+ "test_groups": {
+  "A": [
+   "tests/test_v210_own_account.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "reauth-totp-unchecked",
+   "file": "app/api/auth.py",
+   "old": "    if not code_ok:\n",
+   "new": "    if False:\n",
+   "tests": "A"
+  },
+  {
+   "id": "reauth-totp-reusable",
+   "file": "app/api/auth.py",
+   "old": "    code_ok = verify_totp(current_user.totp_secret, totp_code) and bool(await redis.set(\n",
+   "new": "    code_ok = verify_totp(current_user.totp_secret, totp_code) and (True or await redis.set(\n",
+   "tests": "A"
+  },
+  {
+   "id": "reauth-totp-failure-uncounted",
+   "file": "app/api/auth.py",
+   "old": "    if not code_ok:\n        await rl.record_admin_login_failure(redis, current_user.username)\n",
+   "new": "    if not code_ok:\n",
+   "tests": "A"
+  },
+  {
+   "id": "current-password-unchecked",
+   "file": "app/api/auth.py",
+   "old": "    if not auth_service.verify_password(current_password, current_user.password_hash):\n",
+   "new": "    if False:\n",
+   "tests": "A"
+  },
+  {
+   "id": "current-password-failure-uncounted",
+   "file": "app/api/auth.py",
+   "old": "        await rl.record_admin_login_failure(redis, current_user.username)\n        return await refuse({\"current_password\": \"account.password.error.current\"}, 401)\n",
+   "new": "        return await refuse({\"current_password\": \"account.password.error.current\"}, 401)\n",
+   "tests": "A"
+  },
+  {
+   "id": "lockout-unchecked",
+   "file": "app/api/auth.py",
+   "old": "    if not await rl.check_admin_login_attempts(redis, current_user.username):\n        return await refuse(",
+   "new": "    if False:\n        return await refuse(",
+   "tests": "A"
+  },
+  {
+   "id": "policy-unchecked",
+   "file": "app/api/auth.py",
+   "old": "        auth_service.validate_password(new)\n",
+   "new": "        pass\n",
+   "tests": "A"
+  },
+  {
+   "id": "mismatch-unchecked",
+   "file": "app/api/auth.py",
+   "old": "    if new != confirm:\n",
+   "new": "    if False:\n",
+   "tests": "A"
+  },
+  {
+   "id": "same-password-allowed",
+   "file": "app/api/auth.py",
+   "old": "    if new == current:\n",
+   "new": "    if False:\n",
+   "tests": "A"
+  },
+  {
+   "id": "form-errors-ignored",
+   "file": "app/api/auth.py",
+   "old": "    form_errors = _new_password_error(current_password, new_password, confirm_password)\n    if form_errors:\n",
+   "new": "    form_errors = _new_password_error(current_password, new_password, confirm_password)\n    if form_errors and False:\n",
+   "tests": "A"
+  },
+  {
+   "id": "change-no-csrf",
+   "file": "app/api/auth.py",
+   "old": "    session_token: str = Cookie(alias=\"ow_session\"),\n    _csrf: None = Depends(validate_csrf),\n) -> HTMLResponse | RedirectResponse:\n",
+   "new": "    session_token: str = Cookie(alias=\"ow_session\"),\n) -> HTMLResponse | RedirectResponse:\n",
+   "tests": "A"
+  },
+  {
+   "id": "sessions-not-revoked",
+   "file": "app/api/auth.py",
+   "old": "    await auth_service.revoke_user_sessions(redis, str(current_user.id), keep=session_token)\n",
+   "new": "",
+   "tests": "A"
+  },
+  {
+   "id": "current-session-revoked",
+   "file": "app/api/auth.py",
+   "old": "    await auth_service.revoke_user_sessions(redis, str(current_user.id), keep=session_token)\n",
+   "new": "    await auth_service.revoke_user_sessions(redis, str(current_user.id))\n",
+   "tests": "A"
+  },
+  {
+   "id": "keep-ignored",
+   "file": "app/services/auth.py",
+   "old": "            if name == kept:\n",
+   "new": "            if False:\n",
+   "tests": "A"
+  },
+  {
+   "id": "flag-not-cleared",
+   "file": "app/api/auth.py",
+   "old": "    current_user.must_change_password = False\n",
+   "new": "",
+   "tests": "A"
+  },
+  {
+   "id": "flag-cleared-by-enrolment",
+   "file": "app/api/auth.py",
+   "old": "    user.totp_enabled = True\n    await audit_service.log(db, user, audit_service.AuditAction.AUTH_TOTP_SETUP)\n",
+   "new": "    user.totp_enabled = True\n    user.must_change_password = False\n    await audit_service.log(db, user, audit_service.AuditAction.AUTH_TOTP_SETUP)\n",
+   "tests": "A"
+  },
+  {
+   "id": "forced-redirect-missing",
+   "file": "app/api/deps.py",
+   "old": "    if user.must_change_password:\n",
+   "new": "    if False:\n",
+   "tests": "A"
+  },
+  {
+   "id": "forced-redirect-elsewhere",
+   "file": "app/main.py",
+   "old": "        return RedirectResponse(\"/admin/account\", status_code=303)\n",
+   "new": "        return RedirectResponse(\"/admin/dashboard\", status_code=303)\n",
+   "tests": "A"
+  },
+  {
+   "id": "exempt-account-page-lost",
+   "file": "app/api/auth.py",
+   "old": "async def account_page(\n    request: Request,\n    db: AsyncSession = Depends(get_db),\n    current_user: AdminUser = Depends(get_signed_in_admin),\n",
+   "new": "async def account_page(\n    request: Request,\n    db: AsyncSession = Depends(get_db),\n    current_user: AdminUser = Depends(get_current_admin),\n",
+   "tests": "A"
+  },
+  {
+   "id": "exempt-password-form-lost",
+   "file": "app/api/auth.py",
+   "old": "    db: AsyncSession = Depends(get_db),\n    current_user: AdminUser = Depends(get_signed_in_admin),\n    session_token: str = Cookie(alias=\"ow_session\"),\n",
+   "new": "    db: AsyncSession = Depends(get_db),\n    current_user: AdminUser = Depends(get_current_admin),\n    session_token: str = Cookie(alias=\"ow_session\"),\n",
+   "tests": "A"
+  },
+  {
+   "id": "exempt-session-timer-lost",
+   "file": "app/api/auth.py",
+   "old": "    _user: AdminUser = Depends(get_signed_in_admin),\n",
+   "new": "    _user: AdminUser = Depends(get_current_admin),\n",
+   "tests": "A"
+  },
+  {
+   "id": "exempt-session-refresh-lost",
+   "file": "app/api/auth.py",
+   "old": "    current_user: AdminUser = Depends(get_signed_in_admin),\n    session_token: str | None = Cookie(default=None, alias=\"ow_session\"),\n",
+   "new": "    current_user: AdminUser = Depends(get_current_admin),\n    session_token: str | None = Cookie(default=None, alias=\"ow_session\"),\n",
+   "tests": "A"
+  },
+  {
+   "id": "landing-ignores-flag",
+   "file": "app/api/auth.py",
+   "old": "    landing = \"/admin/account\" if user.must_change_password else \"/admin/dashboard\"\n",
+   "new": "    landing = \"/admin/dashboard\"\n",
+   "tests": "A"
+  },
+  {
+   "id": "new-account-not-flagged",
+   "file": "app/services/users.py",
+   "old": "        must_change_password=True,\n",
+   "new": "        must_change_password=False,\n",
+   "tests": "A"
+  },
+  {
+   "id": "reset-not-flagged",
+   "file": "app/api/admin.py",
+   "old": "        target.must_change_password = True\n",
+   "new": "",
+   "tests": "A"
+  },
+  {
+   "id": "cli-reset-not-flagged",
+   "file": "scripts/reset_admin_password.py",
+   "old": "        user.must_change_password = True\n",
+   "new": "",
+   "tests": "A"
+  },
+  {
+   "id": "cli-reset-keeps-sessions",
+   "file": "scripts/reset_admin_password.py",
+   "old": "    await _end_sessions(user_id)\n    return True\n",
+   "new": "    return True\n",
+   "tests": "A"
+  },
+  {
+   "id": "cli-reset-unaudited",
+   "file": "scripts/reset_admin_password.py",
+   "old": "        await audit.log_system(\n            session, audit.AuditAction.ADMIN_PASSWORD_RESET,\n",
+   "new": "        None and await audit.log_system(\n            session, audit.AuditAction.ADMIN_PASSWORD_RESET,\n",
+   "tests": "A"
+  },
+  {
+   "id": "change-unaudited",
+   "file": "app/api/auth.py",
+   "old": "    await audit_service.log(\n        db, current_user, audit_service.AuditAction.AUTH_PASSWORD_CHANGED,\n",
+   "new": "    None and await audit_service.log(\n        db, current_user, audit_service.AuditAction.AUTH_PASSWORD_CHANGED,\n",
+   "tests": "A"
+  },
+  {
+   "id": "demo-guard-missing",
+   "file": "app/api/auth.py",
+   "old": "    if _demo_account(current_user):\n",
+   "new": "    if False:\n",
+   "tests": "A"
+  },
+  {
+   "id": "demo-guard-any-mode",
+   "file": "app/api/auth.py",
+   "old": "    return settings.demo_mode and user.username in DEMO_USERNAMES\n",
+   "new": "    return user.username in DEMO_USERNAMES\n",
+   "tests": "A"
+  },
+  {
+   "id": "no-password-post-accepted",
+   "file": "app/api/auth.py",
+   "old": "    if not current_user.password_hash:\n        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)\n",
+   "new": "",
+   "tests": "A"
+  },
+  {
+   "id": "nav-shown-while-forced",
+   "file": "app/templates/admin/_layout.html",
+   "old": "            {% if not user.must_change_password %}\n            {% for group in admin_nav(user) %}\n",
+   "new": "            {% if true %}\n            {% for group in admin_nav(user) %}\n",
+   "tests": "A"
+  },
+  {
+   "id": "sso-shown-while-forced",
+   "file": "app/templates/admin/account.html",
+   "old": "            {% if oidc_enabled() and not user.must_change_password %}\n",
+   "new": "            {% if oidc_enabled() %}\n",
+   "tests": "A"
+  }
+ ]
+}

@@ -25,7 +25,7 @@ PUBLIC = ["/submit", "/status", "/admin/login"]
 ADMIN = [
     "/admin/dashboard", "/admin/users", "/admin/stats", "/admin/audit-log",
     "/admin/categories", "/admin/locations", "/admin/retention", "/admin/system",
-    "/admin/telephone-channel",
+    "/admin/telephone-channel", "/admin/account",
 ]
 
 

@@ -24,6 +24,8 @@ Type: explanation. What OpenWhistle defends, against whom, and what it deliberat
 | Password sprayer, TOTP guesser | an admin session | lockout, spraying alert, single-use TOTP | `tests/test_v150_auth.py` |
 | Stolen admin session cookie | lasting access | 60 min TTL, 12 h absolute limit, CSRF on refresh | `test_session_older_than_the_absolute_limit_is_rejected` |
 | Admin who links SSO, or someone luring them | an identity on another account | link state bound to purpose and session; `oidc_sub` unique | `test_a_link_started_by_one_session_cannot_land_on_another` |
+| Admin who set someone else's password (new account, reset, host script) | that account, later | the holder must replace it before any other admin page opens; only the holder's own change clears the flag | `test_forced_change_redirects_every_admin_route` |
+| Someone at an unattended, signed-in desk | the account for good | a password change needs the current password and a fresh TOTP code | `test_a_session_alone_cannot_change_the_password` |
 | Thief of a lost or stolen phone | the second factor | superadmin or host resets it; old secret gone, sessions ended | `test_superadmin_resets_an_authenticator` |
 | Slack/Teams provider | case volume and timing | webhooks carry counts only | `test_webhook_payloads_carry_no_case_number` |
 | Whoever runs or watches `telemetry.wdkro.de` | which organisations run OpenWhistle | off unless an admin agrees; only a random id and the version, no host, URL or counts; no redirect followed; the far end keeps no address | `test_a_report_is_one_get_with_the_id_and_the_version_and_nothing_else`, `test_nothing_is_sent_without_consent_or_under_a_hard_off` |
@@ -115,6 +117,27 @@ meant editing the database. Each rule below is a trust decision; the tests are i
 | After the commit, every session, TOTP-pending and TOTP-setup key of the user is deleted | a session minted from the old secret must not outlive re-enrolment |
 | The CLI prints the new secret once and enrols it; it works for any account | it is the way back when the last superadmin lost their phone; whoever runs the host holds the keys anyway |
 | `DEMO_MODE` refuses resetting the demo accounts | the public demo must keep its static code |
+
+## Changing one's own password (v2.1.0)
+
+Until v2.1.0 no page let an admin change their own password, so whoever set it for someone else
+(an admin on `/admin/users`, a superadmin reset) knew it for good. Tests:
+`tests/test_v210_own_account.py`; mutations: `docs-tech/mutations/v2.1.0-own-account.json`.
+
+| Rule | Why |
+| --- | --- |
+| A change needs the current password **and** a current, single-use TOTP code | a session alone is a cookie; whoever sits at an open desk or holds a stolen cookie must not turn it into the account for good |
+| Wrong passwords and codes count on the sign-in counter of the account (`admin_ratelimit`) | the form is a second guessing oracle for both factors; one counter keeps the lockout the same wherever the guess comes from |
+| Form errors (mismatch, policy, same as current) are answered before any credential check | a typo must not burn the TOTP code or count as a failed guess |
+| The new password must differ from the current one | otherwise the forced change could keep the password someone else knows |
+| After the change, every other session and pending login of the account ends; the current one stays | whoever knew the old password may hold a session; the holder must not be signed out mid-change |
+| `must_change_password` is set by an admin creating the account, a superadmin reset with a temporary password, and the host's `--username` reset | each one has seen the password |
+| The host's reset sets it too, even for the operator's own account | the script cannot tell who the holder is; one extra change is cheaper than a password two people know |
+| While set, `get_current_admin` refuses every admin route with a redirect to `/admin/account`; only the account page, its form and the session timer use `get_signed_in_admin` | the rule lives in the one dependency every route already passes through, so a new route cannot forget it |
+| A new or reset account enrols its authenticator first, then changes the password | the change needs a TOTP code; logout and `/admin/mfa/setup` need no session and stay open |
+| Only the holder's own change clears the flag | a reset or a role change must never release it |
+| Accounts without a local password (LDAP, SSO) get no form, and a POST is 404 | their directory or provider owns the password |
+| `DEMO_MODE` refuses changing the demo accounts' password (403), and the page says so | the public demo must stay open to every visitor |
 
 ## Not defended
 

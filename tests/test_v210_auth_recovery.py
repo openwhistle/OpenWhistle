@@ -131,7 +131,7 @@ async def test_link_stores_sub_and_issuer_on_the_signed_in_account(
     resp = await _callback(client, started["state"], started["nonce"], sub)
 
     assert resp.status_code == 303  # type: ignore[attr-defined]
-    assert resp.headers["location"] == "/admin/dashboard?sso=linked"  # type: ignore[attr-defined]
+    assert resp.headers["location"] == "/admin/account?sso=linked"  # type: ignore[attr-defined]
     linked = await _fresh(db_session, user)
     assert (linked.oidc_sub, linked.oidc_issuer) == (sub, _ISSUER)
     entries = [e for e in await _audit(db_session, AuditAction.AUTH_SSO_LINKED)
@@ -139,7 +139,7 @@ async def test_link_stores_sub_and_issuer_on_the_signed_in_account(
     assert len(entries) == 1
     assert json.loads(entries[0].detail or "{}") == {"issuer": _ISSUER}
 
-    page = await client.get("/admin/dashboard?sso=linked")
+    page = await client.get("/admin/account?sso=linked")
     assert "Single sign-on is linked" in page.text
     assert 'action="/admin/oidc/unlink"' in page.text
 
@@ -156,7 +156,7 @@ async def test_link_is_refused_when_the_identity_belongs_to_another_account(
 
     resp = await _callback(client, started["state"], started["nonce"], sub)
 
-    assert resp.headers["location"] == "/admin/dashboard?sso=taken"  # type: ignore[attr-defined]
+    assert resp.headers["location"] == "/admin/account?sso=taken"  # type: ignore[attr-defined]
     assert (await _fresh(db_session, user)).oidc_sub is None
     assert (await _fresh(db_session, owner)).oidc_sub == sub
 
@@ -189,7 +189,7 @@ async def test_a_link_started_by_one_session_cannot_land_on_another(
 
     resp = await _callback(client, started["state"], started["nonce"], f"s-{uuid.uuid4().hex}")
 
-    assert resp.headers["location"] == "/admin/dashboard?sso=failed"  # type: ignore[attr-defined]
+    assert resp.headers["location"] == "/admin/account?sso=failed"  # type: ignore[attr-defined]
     assert (await _fresh(db_session, victim)).oidc_sub is None
     assert (await _fresh(db_session, attacker)).oidc_sub is None
 
@@ -259,7 +259,7 @@ async def test_link_and_unlink_are_gone_when_oidc_is_off(
     monkeypatch.setattr(settings, "oidc_enabled", False)
     for path in ("/admin/oidc/link", "/admin/oidc/unlink"):
         assert (await client.post(path, data={"csrf_token": csrf})).status_code == 404
-    assert "/admin/oidc/link" not in (await client.get("/admin/dashboard")).text
+    assert "/admin/oidc/link" not in (await client.get("/admin/account")).text
 
 
 @pytest.mark.asyncio
@@ -270,10 +270,10 @@ async def test_link_callback_errors_go_back_to_the_menu(
     resp = await client.get(
         "/admin/oidc/callback?error=access_denied&state=link.x", follow_redirects=False
     )
-    assert resp.headers["location"] == "/admin/dashboard?sso=failed"
+    assert resp.headers["location"] == "/admin/account?sso=failed"
     with patch.object(oidc_service, "exchange_code", AsyncMock(side_effect=RuntimeError)):
         resp = await client.get("/admin/oidc/callback?code=c&state=link.x", follow_redirects=False)
-    assert resp.headers["location"] == "/admin/dashboard?sso=failed"
+    assert resp.headers["location"] == "/admin/account?sso=failed"
 
 
 @pytest.mark.asyncio
@@ -288,7 +288,7 @@ async def test_unlink_clears_the_identity_and_is_audited(
         "/admin/oidc/unlink", data={"csrf_token": csrf}, follow_redirects=False
     )
 
-    assert resp.headers["location"] == "/admin/dashboard?sso=unlinked"
+    assert resp.headers["location"] == "/admin/account?sso=unlinked"
     fresh = await _fresh(db_session, user)
     assert (fresh.oidc_sub, fresh.oidc_issuer) == (None, None)
     unlinked = await _audit(db_session, AuditAction.AUTH_SSO_UNLINKED)
@@ -296,7 +296,7 @@ async def test_unlink_clears_the_identity_and_is_audited(
     again = await client.post(
         "/admin/oidc/unlink", data={"csrf_token": csrf}, follow_redirects=False
     )
-    assert again.headers["location"] == "/admin/dashboard?sso=unlinked"
+    assert again.headers["location"] == "/admin/account?sso=unlinked"
 
 
 @pytest.mark.asyncio
@@ -313,7 +313,7 @@ async def test_unlink_is_refused_when_sso_is_the_only_way_in(
         "/admin/oidc/unlink", data={"csrf_token": csrf}, follow_redirects=False
     )
 
-    assert resp.headers["location"] == "/admin/dashboard?sso=only_way_in"
+    assert resp.headers["location"] == "/admin/account?sso=only_way_in"
     assert (await _fresh(db_session, user)).oidc_sub == sub
 
 
@@ -402,9 +402,11 @@ async def test_superadmin_resets_an_authenticator(
         "csrf_token": csrf, "temp_token": setup_token,
         "totp_code": pyotp.TOTP(new_secret).now(),
     }, follow_redirects=False)
-    assert done.headers["location"] == "/admin/dashboard"
+    # The superadmin saw the temporary password: its change comes next.
+    assert done.headers["location"] == "/admin/account"
     assert "ow_session" in done.cookies
-    assert (await _fresh(db_session, target)).totp_enabled is True
+    fresh = await _fresh(db_session, target)
+    assert (fresh.totp_enabled, fresh.must_change_password) == (True, True)
 
 
 async def _password_login(

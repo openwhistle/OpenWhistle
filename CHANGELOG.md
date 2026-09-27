@@ -7,10 +7,23 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Upgrade notes
+
+- **Migration 009 adds `must_change_password` to every account**, `false` for existing ones:
+  nothing records who set their password.
+
 ### Added
 
+- **Every admin changes their own password, and must when someone else set it.** **My account**
+  in the sidebar opens `/admin/account` for every role: username, role, organisation, login
+  methods. A password change (`POST /admin/account/password`) needs the current password, the new
+  one twice and a current TOTP code, counts wrong guesses towards the sign-in lockout, ends every
+  other session of the account and is audited (`auth.password_changed`). An account whose password
+  an admin chose on `/admin/users`, a superadmin reset or the host's reset script set must change
+  it before any other admin page opens; a new or reset account enrols its authenticator first.
+  LDAP and SSO accounts see where to change theirs. In `DEMO_MODE` the demo accounts keep theirs.
 - **Admins link their own single sign-on identity.** Signed in with password and TOTP, choose
-  **Link single sign-on** in the sidebar (`POST /admin/oidc/link`); **Unlink single sign-on**
+  **Link single sign-on** on `/admin/account` (`POST /admin/oidc/link`); **Unlink single sign-on**
   removes it. The link request is bound to that session and to the purpose "link" in Redis, so a
   login state never links and a link state never signs in. An identity linked to another account
   is refused. Both are audited (`auth.sso_linked`, `auth.sso_unlinked`).
@@ -43,10 +56,18 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and the docs said to edit the database. See Added.
 - **No session is accepted for an account whose authenticator awaits enrolment.** A reset takes
   effect in the same commit, before its sessions are swept from Redis.
+- **Whoever set a password for someone else knew it for good.** No page let an admin change their
+  own password, so the admin who created an account, or the superadmin who reset it, kept knowing
+  it. See Added.
+- **The host's password reset left the account's sessions running and the audit log empty.**
+  `reset_admin_password.py --username` now ends every session of the account and records
+  `admin.password_reset`, never the password.
 - **Four form fields skipped their format check in Chrome.** Browsers compile `pattern` with the
   `v` flag, where a bare `-` closing a character class is a syntax error; the new-user, location,
   organisation and setup forms logged it and checked nothing. Now escaped, held by
   `tests/test_pattern_attributes.py`.
+- **The sidebar's Log out sat 12 px left of the links above it**, and the second panel of a
+  two-column admin page (users, categories, locations) started 20 px below the first.
 
 ## [2.0.1] — 2026-09-27
 
