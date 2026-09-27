@@ -2121,7 +2121,8 @@ CLAMAV_HOST=clamav</code></pre>
         <div class="table-scroll">
 <table class="env-table">
           <tbody>
-            <tr><td>Size</td><td>10 MB per attachment</td></tr>
+            <tr><td>Size</td><td>10 MB per attachment, before and after cleaning</td></tr>
+            <tr><td>GIF size</td><td>50 megapixels, all frames together</td></tr>
             <tr><td>Number</td><td>5 per report</td></tr>
             <tr><td>Allowed</td><td>PDF, JPEG, PNG, GIF, WebP, TXT, CSV, DOCX, XLSX, checked by both MIME type and file extension</td></tr>
             <tr><td>Refused</td><td>SVG, executables, archives and every other type. Legacy <code>.doc</code>/<code>.xls</code> too: their author cannot be removed, so save them as <code>.docx</code>/<code>.xlsx</code> and attach again</td></tr>
@@ -2151,9 +2152,10 @@ CLAMAV_HOST=clamav</code></pre>
         <ul>
           <li><strong>Metadata removed on upload:</strong>
             <ul>
-              <li>JPEG, PNG, WebP and GIF, also photos inside DOCX/XLSX: EXIF/GPS and camera data.</li>
-              <li>PDF: document info, XMP, comment authors and times, the EXIF of embedded JPEG photos, the file identifier.</li>
-              <li>DOCX/XLSX: author, company and custom properties.</li>
+              <li>JPEG, PNG, WebP and GIF, also photos inside DOCX/XLSX: EXIF/GPS, camera data, XMP, ICC profiles and text chunks. Only the orientation tag stays.</li>
+              <li>JPEG, PNG and WebP are not re-encoded: pixels, colours and animation frames stay exactly as uploaded. Data after a JPEG's end (a motion-photo video) is removed.</li>
+              <li>PDF: document info, XMP on the document, its pages and images, comment authors and times, the EXIF of embedded JPEG photos, the file identifier. A PDF with files embedded in it is refused.</li>
+              <li>DOCX/XLSX: author, company and custom properties, SharePoint columns, the folder a workbook was saved in, the account name in template and link paths, revision-session ids and document variables.</li>
               <li>A file that cannot be parsed for cleaning is refused. Plain text is stored as uploaded.</li>
             </ul>
           </li>
