@@ -5,45 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Apply theme before first paint to avoid flash -->
   <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
-  <title>Roadmap — OpenWhistle | Self-Hosted Whistleblower Platform</title>
-  <meta name="description" content="What's planned next for OpenWhistle: multi-channel intake and integration hooks in v2.1.0, then compliance expansion (LkSG, KWG, CSRD) in v2.2.0.">
-  <meta name="keywords" content="OpenWhistle roadmap, whistleblower platform roadmap, HinSchG software roadmap">
-  <meta name="author" content="OpenWhistle Contributors">
+  <title>Roadmap: What Comes Next | OpenWhistle</title>
+  <meta name="description" content="What is planned next for OpenWhistle, the open source whistleblower platform: the coming releases in order, and why. Everything shipped is in the changelog.">
   <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#08080a" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="https://openwhistle.net/roadmap.html">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="preload" href="fonts/sora-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/sora-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
 
-  <!-- Open Graph -->
+  <!-- Open Graph / Twitter -->
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="OpenWhistle">
   <meta property="og:url" content="https://openwhistle.net/roadmap.html">
-  <meta property="og:title" content="Roadmap — OpenWhistle">
-  <meta property="og:description" content="What's planned next for OpenWhistle, in the order it's planned — not promised.">
+  <meta property="og:title" content="Roadmap: What Comes Next | OpenWhistle">
+  <meta property="og:description" content="What is planned next for OpenWhistle, the open source whistleblower platform: the coming releases in order, and why. Everything shipped is in the changelog.">
   <meta property="og:image" content="https://openwhistle.net/og-image.png">
-
-  <!-- Twitter Card -->
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="OpenWhistle: secure whistleblower reporting">
+  <meta property="og:locale" content="en_US">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Roadmap — OpenWhistle">
-  <meta name="twitter:description" content="What's planned next for OpenWhistle, in the order it's planned — not promised.">
+  <meta name="twitter:title" content="Roadmap: What Comes Next | OpenWhistle">
+  <meta name="twitter:description" content="What is planned next for OpenWhistle, the open source whistleblower platform: the coming releases in order, and why. Everything shipped is in the changelog.">
+  <meta name="twitter:image" content="https://openwhistle.net/og-image.png">
+  <meta name="twitter:image:alt" content="OpenWhistle: secure whistleblower reporting">
 
-  <!-- JSON-LD -->
+  <!-- Structured data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "WebPage",
-    "headline": "OpenWhistle Roadmap",
-    "description": "What's planned next for OpenWhistle, in the order it's planned — not promised. Everything already released is in the CHANGELOG.",
-    "url": "https://openwhistle.net/roadmap.html",
-    "author": {
-      "@type": "Organization",
-      "name": "OpenWhistle Contributors",
-      "url": "https://github.com/openwhistle"
-    },
-    "mainEntityOfPage": {
-      "@type": "WebPage",
-      "@id": "https://openwhistle.net/roadmap.html"
-    }
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "OpenWhistle",
+        "item": "https://openwhistle.net/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Roadmap",
+        "item": "https://openwhistle.net/roadmap.html"
+      }
+    ]
   }
   </script>
 

@@ -1,52 +1,222 @@
-# SEO & Marketing (ongoing, all versions)
+# SEO and backlinks
 
-> Goal: rank for "Whistleblower Tool kostenlos", "Whistleblower Tool Open Source",
-> "Meldestelle HinSchG kostenlos", "interne Meldestelle Software" and equivalents
-> in other EU languages. The `openwhistle.net` domain has been registered for
-> ~1 year, which gives a head start on domain authority.
+Maintainer page, never published. What each page ranks for, what every `<head>` must carry, and every place
+OpenWhistle can be listed, with the text to paste. Nothing here is submitted until the maintainer does it.
 
-## Technical SEO
+## Keyword map
 
-- [x] **GitHub Pages website overhaul** — `docs/index.html` is a full landing
-  page with hero section, feature comparison table (vs. paid tools), FAQ,
-  installation guide, and a "live demo" CTA
-- [x] **Structured data (JSON-LD)** — `SoftwareApplication` and `FAQPage`
-  schema markup on the landing page; `Article` and `HowTo` schema on blog posts
-- [x] **German-language landing page** — `docs/de/index.html` with fully German
-  content targeting HinSchG-specific long-tail keywords (`interne Meldestelle
-  HinSchG`, `Hinweisgebersystem kostenlos`, `Meldestelle Software Open Source`)
-- [x] **Open Graph & Twitter Card meta tags** — `og:title`, `og:description`,
-  `og:image` on `index.html`, `de/index.html`, and all blog articles
-- [x] **Sitemap** — `docs/sitemap.xml` updated with all pages including
-  `de/`, `blog/`, and all blog articles; `robots.txt` already present
-- [x] **Canonical URLs** — `<link rel="canonical">` on all pages;
-  CNAME file sets `openwhistle.net` as the canonical domain for GitHub Pages
-- [x] **hreflang alternate links** — `en`/`de` alternate links in `index.html`
-  and `de/index.html` sitemap entries for language-based ranking
+One primary keyword per page; no two pages share one. The title starts with it, the description carries it.
 
-## Content SEO
+| Page | Primary | Secondary |
+| --- | --- | --- |
+| `index.html` | open source whistleblower software | free whistleblowing software, open source whistleblower tool, HinSchG software |
+| `docs.html` | self-hosted whistleblowing | whistleblowing Docker Compose, whistleblower platform configuration |
+| `roadmap.html` | OpenWhistle roadmap | whistleblowing software roadmap |
+| `changelog.html` | OpenWhistle changelog | OpenWhistle release notes |
+| `open-source-whistleblowing-software.html` (planned, lane EN) | GlobaLeaks alternative | SecureDrop alternative, open source whistleblowing software compared, Hush Line |
+| `de/index.html` | kostenloses Hinweisgebersystem | Hinweisgebersystem Open Source, Whistleblower Tool kostenlos |
+| `blog/index.html` | HinSchG Blog | Hinweisgeberschutz Praxis |
+| `blog/hinschg-compliance-leitfaden.html` | HinSchG Pflichten | interne Meldestelle Pflicht, HinSchG Fristen |
+| `blog/interne-meldestelle-einrichten.html` | interne Meldestelle einrichten | interne Meldestelle Software, Hinweisgebersystem Docker |
+| `blog/whistleblower-software-vergleich.html` | Hinweisgebersystem Vergleich | Whistleblower Software Vergleich, EQS Alternative, GlobaLeaks |
+| `blog/was-ist-neu-in-2-0.html` | OpenWhistle 2.0 | Hinweisgebersystem Update |
+| new DE article on the free channel (planned, lane DE) | interne Meldestelle kostenlos | HinSchG Meldekanal kostenlos |
 
-- [x] **Blog / news section** — `docs/blog/` with three articles:
-  - `hinschg-compliance-leitfaden.html` — HinSchG compliance guide (10 min read)
-  - `whistleblower-software-vergleich.html` — comparison vs. EQS, BKMS, WhistlePort
-  - `interne-meldestelle-einrichten.html` — step-by-step installation guide
-- [ ] **Additional "vs. competitors" pages** — dedicated comparison pages
-  targeting navigational searches ("OpenWhistle vs. EQS", etc.)
-- [ ] **Keyword research & tracking** — document target keywords, current
-  rankings, and monthly search volume in a spreadsheet; track progress
-- [ ] **Backlink outreach** — submit to open-source directories (AlternativeTo,
-  SourceForge, LibreHunt), legal-tech directories, and HinSchG resource lists
-  maintained by German law firms and compliance associations
-- [x] **GitHub README keywords** — README contains keywords `whistleblower`,
-  `HinSchG`, `Hinweisgeberschutz`, `Meldestelle`, `compliance`, `open-source`
-  that GitHub search indexes; alpha warning removed for v1.0.0
+The comparison page's slug carries the category term, but its primary is the comparison query: `index.html`
+already owns "open source whistleblower software", and two pages on one query split its ranking.
 
-## Community & Distribution
+## The head contract
 
-- [ ] **Producthunt launch** — prepare a Product Hunt launch post; coordinate
-  with the community for upvotes on launch day
-- [ ] **Hacker News "Show HN"** — post once v1.0 is reached
-- [ ] **German compliance / legal community** — share in DACH-focused compliance
-  Slack/Discord servers, LinkedIn groups for compliance officers and legal teams
-- [ ] **"Powered by OpenWhistle" badge** — optional badge operators can put on
-  their reporting portal, linking back to openwhistle.net (backlink building)
+`tests/test_seo.py` holds every `docs/**/*.html` page, found by glob, so a new page is covered the day it lands.
+
+| Rule | The incident behind it |
+| --- | --- |
+| One `<title>` of at most 60 characters, primary keyword first | Titles ran past 100 characters and were cut in results |
+| A description of 120-160 characters, unique on the site | The English home page's description was German |
+| `<html lang>` is `en` or `de`; `og:locale` matches | The English home page declared `og:locale` `de_DE` |
+| Canonical = the address Pages serves the file at: `/`, `/de/`, `/blog/`, otherwise `name.html` | Sitemap, canonical and nav must name one URL |
+| hreflang `en`/`de`/`x-default` only where a translation exists, reciprocal | The German blog index named the English home page its `en` version |
+| `og:image` is `og-image.png`, 1200×630, with width, height and alt | It was a blank navy rectangle: every shared link showed an empty card |
+| JSON-LD parses; no `aggregateRating` or `review` | OpenWhistle has no ratings; invented ones break Google's policy |
+| `SoftwareApplication.softwareVersion` = `app_version` on both landing pages | A release that forgets it advertises the old version |
+| Every article carries `BlogPosting` with `datePublished`, `dateModified`, `inLanguage` | Articles had no `dateModified`; one carried `HowTo`, which Google no longer shows |
+| `FAQPage` only where the FAQ is visible, entry for entry | Held by `test_faqpage_jsonld_matches_visible_faq_one_to_one` |
+| Nothing in a head loads from another host; fonts come from `docs/fonts/` | A visit must not reach a third party |
+| `404.html` is `noindex`, has no canonical, links root-relative | Pages serves it at every missing path |
+
+When a page changes:
+
+1. A body edit to an article bumps `dateModified` and `article:modified_time`, together.
+2. Run `uv run python scripts/render_sitemap.py`: it rebuilds `docs/sitemap.xml` from the heads, `lastmod` from git.
+   Run it again after merging branches that touched pages.
+3. The changelog head lives in `scripts/render_changelog.py`; re-render, never edit `docs/changelog.html`.
+
+`meta keywords` is not used: Google ignores it, Bing reads it as a spam signal.
+
+### Head for the planned comparison page
+
+`docs/open-source-whistleblowing-software.html` did not exist when this contract was written. Its head copies
+`docs/roadmap.html`'s head, with:
+
+| Field | Value |
+| --- | --- |
+| `<title>` | `GlobaLeaks Alternatives: Open Source Compared \| OpenWhistle` (59 characters) |
+| description | 120-160 characters naming GlobaLeaks, SecureDrop and Hush Line, facts only |
+| canonical, `og:url` | `https://openwhistle.net/open-source-whistleblowing-software.html` |
+| hreflang | none, unless a German translation exists; then en/de/x-default on both |
+| JSON-LD | `BreadcrumbList` (OpenWhistle, then the page); `FAQPage` only if the page shows an FAQ |
+| sitemap | re-run `scripts/render_sitemap.py`; the test fails until the page is listed |
+
+## Backlink targets
+
+Status as of 2026-09-27. "Verified" means the page was fetched or found in search that day.
+
+| Target | URL | What it needs | Status | Verified |
+| --- | --- | --- | --- | --- |
+| awesome-selfhosted | github.com/awesome-selfhosted/awesome-selfhosted-data | PR adding `software/openwhistle.yml`, human-written | not submitted | yes: rules, template, GlobaLeaks entry |
+| AlternativeTo | alternativeto.net/software/globaleaks/about/ | account, "Suggest new application", then "alternative to" | not submitted | yes: GlobaLeaks page, 8 alternatives, OpenWhistle absent |
+| PrivacyTools.io | privacytools.io/secure-whistleblower/open-source | no form; ask via r/PrivacySoftware or their social channels | not submitted | page yes; submission route not documented |
+| ownware.io guide | ownware.io/guides/best-self-hosted-whistleblowing-tools | contact the site; the guide shows no route | not submitted | page yes (GlobaLeaks, SecureDrop, Whistlelink, Confida); contact no |
+| SourceForge | sourceforge.net/p/forge/documentation/GitHub%20Importer/ | project via GitHub Importer, release sync | not submitted | yes: importer docs |
+| SourceForge / Slashdot directory | sourceforge.net/software/vendors/ | free basic vendor listing, shared with slashdot.org/software | not submitted | yes: vendor page in search |
+| G2 | sell.g2.com/create-a-profile | free profile, 3-5 days review, category "Whistleblowing" | not submitted | yes: free profile, category criteria |
+| Capterra / GetApp | capterra.com/vendors/ | free vendor form; the network belongs to G2 since 2026 | not submitted | yes: vendor page; Capterra lists GlobaLeaks as free |
+| OMR Reviews (DE) | omr.com/en/reviews/category/whistleblowing | free basic profile via form | not submitted | yes: category and free profile |
+| trusted.de (DE) | trusted.de/beste-hinweisgebersysteme | no public listing route; contact the editors | not submitted | no: page answers 403 to the fetcher |
+| die-hinweisgeber-meldestelle.de | die-hinweisgeber-meldestelle.de/vergleich/ | none: the operator is a provider comparing commercial services only | skip | yes: no open source entry, no suggestion route |
+| EU OSOR | interoperable-europe.ec.europa.eu/collection/open-source-observatory-osor | EU Login account; signed-in users create news and solutions | not submitted | yes: "signed-in user can create content" |
+| Product Hunt | producthunt.com | maker account, launch post | not submitted | no: not fetched |
+| Hacker News Show HN | news.ycombinator.com/showhn.html | something people can try: the demo; title "Show HN: ..." | not submitted | yes: rules |
+| German compliance blogs | dmk-ebusiness.de, tech-support.koeln (HinSchG articles) | a pitch to the author | not submitted | articles yes; interest unknown |
+
+### awesome-selfhosted
+
+Criteria checked: free licence (GPL-3.0), tagged releases, first release v0.1.0 on 2026-04-22 (older than four
+months), active, installation documented. GlobaLeaks sits in **Communication - Custom Communication Systems**.
+
+The checklist requires a *human* submission, not machine-written: write the PR description yourself. The file
+is data:
+
+```yaml
+name: OpenWhistle
+website_url: https://openwhistle.net/
+source_code_url: https://github.com/openwhistle/OpenWhistle
+description: Whistleblowing platform for internal reporting channels under EU Directive 2019/1937, with anonymous PIN access and no IP logging.
+licenses:
+  - GPL-3.0
+platforms:
+  - Python
+  - Docker
+tags:
+  - Communication - Custom Communication Systems
+demo_url: https://demo.openwhistle.net/
+```
+
+Rendered, the list line reads:
+
+```markdown
+- [OpenWhistle](https://openwhistle.net/) - Whistleblowing platform for internal reporting channels under EU Directive 2019/1937, with anonymous PIN access and no IP logging. ([Demo](https://demo.openwhistle.net/), [Source Code](https://github.com/openwhistle/OpenWhistle)) `GPL-3.0` `Python/Docker`
+```
+
+Commit message the repository asks for: `add OpenWhistle`. Facts for the PR text: one item; not in awesome-sysadmin;
+first release 2026-04-22; installation at `https://openwhistle.net/docs.html#installation`; merging takes a week or
+more.
+
+### AlternativeTo
+
+Suggest as an alternative to GlobaLeaks (page verified). `alternativeto.net/software/eqs-integrity-line/` answers
+404: find EQS and BKMS in the site search before naming them.
+
+- **Name**: OpenWhistle
+- **Licence / price**: Open Source (GPL-3.0), Free
+- **Platforms**: Self-Hosted, Linux, Docker
+- **Tags**: whistleblowing, anonymous-reporting, compliance, self-hosted, privacy
+- **Description**:
+
+  > OpenWhistle is a self-hosted whistleblowing platform for internal reporting channels under EU Directive
+  > 2019/1937 and the German HinSchG. Reporters get a random PIN instead of an account, no layer logs IP
+  > addresses, and every staff account needs multi-factor login. Case handlers see the 7-day and 3-month
+  > deadlines. Runs with Docker, PostgreSQL and Redis; GPL-3.0.
+
+### PrivacyTools.io, ownware.io, compliance blogs
+
+> Hello, I maintain OpenWhistle (<https://openwhistle.net>), a GPL-3.0 whistleblowing platform for internal
+> reporting channels under EU Directive 2019/1937. Your page on open source whistleblowing tools lists
+> GlobaLeaks and SecureDrop. OpenWhistle differs in two facts: it is built around the German HinSchG
+> deadlines, and it stores no IP address at any layer. Source: <https://github.com/openwhistle/OpenWhistle>,
+> demo: <https://demo.openwhistle.net>. Would it fit your list?
+
+German version for DACH blogs:
+
+> Hallo, ich betreue OpenWhistle (<https://openwhistle.net/de/>), ein kostenloses Hinweisgebersystem unter
+> GPL-3.0 für interne Meldestellen nach HinSchG. Es läuft auf dem eigenen Server, speichert keine IP-Adressen
+> und zeigt die Fristen nach § 17 HinSchG. Falls Sie über Hinweisgebersysteme schreiben: Quellcode und Demo
+> sind frei zugänglich.
+
+### Directories: SourceForge, Slashdot, G2, Capterra, GetApp, OMR Reviews
+
+One text for every profile form. Category: Whistleblowing. Pricing: free, open source. Deployment: on-premise,
+self-hosted. Do not tick "cloud/SaaS": there is no hosted offering.
+
+> OpenWhistle is a free, open source whistleblowing platform (GPL-3.0) for internal reporting channels under EU
+> Directive 2019/1937 and the German HinSchG. Organisations host it themselves with Docker. Reporters submit
+> without an account and return with a random PIN; no IP address is stored. Case handlers work with mandatory
+> MFA, two-way messages and deadline tracking. Interface in English, German, French and Brazilian Portuguese.
+
+### EU OSOR news item
+
+> **OpenWhistle 2.0: an open source internal reporting channel for the Whistleblowing Directive.**
+> Directive (EU) 2019/1937 requires internal reporting channels in organisations with 50 or more employees.
+> OpenWhistle is a GPL-3.0 platform that an organisation hosts itself. It stores no reporter IP address, gives
+> reporters a random PIN instead of an account, and tracks the 7-day acknowledgement and 3-month feedback
+> deadlines. Source code: <https://github.com/openwhistle/OpenWhistle>.
+
+### Show HN
+
+Title: `Show HN: OpenWhistle – self-hosted whistleblowing that stores no IP addresses`. Link the demo, not the
+landing page. First comment: why it exists, what the no-IP rule costs, what is missing. Never ask anyone to
+upvote: the rules forbid it.
+
+### Product Hunt
+
+Tagline, 60 characters at most: `Self-hosted whistleblowing, no IP logs, free under GPL-3.0`. Launch a release,
+not a patch version.
+
+## Own channels
+
+Prepared commands, not run. On 2026-09-27 the repository had no homepage and no topics.
+
+```bash
+gh repo edit openwhistle/OpenWhistle \
+  --homepage https://openwhistle.net \
+  --description "Free, open source whistleblowing software for internal reporting channels (HinSchG, EU Directive 2019/1937). Self-hosted, no IP logs."
+gh repo edit openwhistle/OpenWhistle \
+  --add-topic whistleblowing --add-topic whistleblower --add-topic whistleblowing-software \
+  --add-topic hinschg --add-topic hinweisgeberschutzgesetz --add-topic hinweisgebersystem \
+  --add-topic eu-whistleblowing-directive --add-topic compliance --add-topic gdpr \
+  --add-topic self-hosted --add-topic open-source --add-topic privacy --add-topic anonymity \
+  --add-topic security --add-topic tor --add-topic python --add-topic fastapi \
+  --add-topic docker --add-topic postgresql --add-topic redis
+```
+
+That is 20 topics, GitHub's maximum.
+
+README badges, next to the existing ones:
+
+```markdown
+[![Website](https://img.shields.io/badge/website-openwhistle.net-0c7253)](https://openwhistle.net)
+[![Live demo](https://img.shields.io/badge/demo-demo.openwhistle.net-0c7253)](https://demo.openwhistle.net)
+```
+
+Registry short description (Docker Hub `kermit1337/openwhistle`, Quay `jp1337/openwhistle`), 100 characters
+at most:
+
+```text
+Self-hosted whistleblowing platform (HinSchG, EU 2019/1937). No IP logs. Docs: openwhistle.net
+```
+
+The full description on both starts with a link to `https://openwhistle.net/docs.html#installation`, then the
+image tags.
+
+Operators who want to credit the project can add `<a href="https://openwhistle.net/">Powered by OpenWhistle</a>`
+to their portal's footer. It stays opt-in: a portal that names its software tells attackers what to study.

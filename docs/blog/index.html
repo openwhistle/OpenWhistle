@@ -5,21 +5,74 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Apply theme before first paint to avoid flash -->
   <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
-  <title>Blog — OpenWhistle | HinSchG, Hinweisgeberschutz &amp; Compliance</title>
-  <meta name="description" content="Der OpenWhistle Blog: Praxisartikel zu HinSchG-Compliance, Hinweisgeberschutz, interner Meldestelle einrichten und Vergleiche mit kommerziellen Whistleblower-Tools.">
-  <meta name="keywords" content="HinSchG Blog, Hinweisgeberschutz Artikel, interne Meldestelle einrichten, HinSchG Compliance, Whistleblower Software Vergleich, OpenWhistle Blog">
+  <title>HinSchG-Blog: Praxis für interne Meldestellen | OpenWhistle</title>
+  <meta name="description" content="Der OpenWhistle-Blog zum HinSchG: Pflichten und Fristen, interne Meldestelle einrichten, Hinweisgebersysteme im Vergleich und was jede Version ändert.">
   <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#08080a" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="https://openwhistle.net/blog/">
-  <link rel="alternate" hreflang="en" href="https://openwhistle.net/">
   <link rel="icon" type="image/svg+xml" href="../favicon.svg">
   <link rel="icon" type="image/x-icon" href="../favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+  <link rel="preload" href="../fonts/sora-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="../fonts/sora-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
 
-  <!-- Open Graph -->
+  <!-- Open Graph / Twitter -->
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="OpenWhistle">
   <meta property="og:url" content="https://openwhistle.net/blog/">
-  <meta property="og:title" content="OpenWhistle Blog — HinSchG, Hinweisgeberschutz &amp; Compliance">
-  <meta property="og:description" content="Praxisartikel zu HinSchG-Compliance, Hinweisgeberschutz und interner Meldestelle einrichten.">
+  <meta property="og:title" content="HinSchG-Blog: Praxis für interne Meldestellen | OpenWhistle">
+  <meta property="og:description" content="Der OpenWhistle-Blog zum HinSchG: Pflichten und Fristen, interne Meldestelle einrichten, Hinweisgebersysteme im Vergleich und was jede Version ändert.">
   <meta property="og:image" content="https://openwhistle.net/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="OpenWhistle: sichere Hinweisgeber-Meldungen">
+  <meta property="og:locale" content="de_DE">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="HinSchG-Blog: Praxis für interne Meldestellen | OpenWhistle">
+  <meta name="twitter:description" content="Der OpenWhistle-Blog zum HinSchG: Pflichten und Fristen, interne Meldestelle einrichten, Hinweisgebersysteme im Vergleich und was jede Version ändert.">
+  <meta name="twitter:image" content="https://openwhistle.net/og-image.png">
+  <meta name="twitter:image:alt" content="OpenWhistle: sichere Hinweisgeber-Meldungen">
+
+  <!-- Structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    "name": "OpenWhistle Blog",
+    "url": "https://openwhistle.net/blog/",
+    "inLanguage": "de",
+    "publisher": {
+      "@type": "Organization",
+      "name": "OpenWhistle",
+      "url": "https://openwhistle.net/",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://openwhistle.net/apple-touch-icon.png"
+      }
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "OpenWhistle",
+        "item": "https://openwhistle.net/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Blog",
+        "item": "https://openwhistle.net/blog/"
+      }
+    ]
+  }
+  </script>
 
   <style>
     /* Self-hosted fonts — no external CDN calls */
