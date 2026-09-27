@@ -2259,7 +2259,9 @@ CLAMAV_HOST=clamav</code></pre>
         <p>
           Accounts are managed at <code>/admin/users</code>. A new account is a case manager unless
           another role is chosen; an unknown role is refused. The last active admin cannot be
-          deactivated, so nobody is locked out. Only admins may dismiss the IP-header warning.
+          deactivated, so nobody is locked out. Only a superadmin creates, changes, deactivates or
+          reactivates a superadmin. In <code>DEMO_MODE</code> the demo accounts cannot be changed.
+          Only admins may dismiss the IP-header warning.
         </p>
 
         <h3 id="own-account">Your account</h3>

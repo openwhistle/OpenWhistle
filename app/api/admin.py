@@ -99,6 +99,30 @@ def _require_same_org(user: AdminUser, target_org_id: uuid.UUID | None) -> None:
         raise HTTPException(status_code=404)
 
 
+def _require_may_manage(user: AdminUser, target: AdminUser) -> None:
+    """The checks every change to another account needs, in one place.
+
+    Organisation, the superadmin tier, and — in DEMO_MODE — the demo
+    accounts. Reactivation used to check the organisation only, so an admin
+    could re-enable a superadmin another superadmin had disabled; and a demo
+    visitor could deactivate or demote a demo account and lock out everyone
+    after them until the next reset.
+    """
+    from app.services.demo_seed import DEMO_USERNAMES
+
+    _require_same_org(user, target.org_id)
+    if target.role == AdminRole.superadmin and user.role != AdminRole.superadmin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only a superadmin can change a superadmin account.",
+        )
+    if settings.demo_mode and target.username in DEMO_USERNAMES:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The demo accounts cannot be changed.",
+        )
+
+
 async def _get_authorized_report(
     db: AsyncSession, report_id: uuid.UUID, user: AdminUser
 ) -> Report:
@@ -1044,7 +1068,7 @@ async def change_user_role(
     target = await get_user_by_id(db, user_id)
     if not target:
         raise HTTPException(status_code=404)
-    _require_same_org(current_user, target.org_id)
+    _require_may_manage(current_user, target)
     try:
         role_enum = AdminRole(role)
     except ValueError as exc:
@@ -1056,12 +1080,9 @@ async def change_user_role(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You cannot change your own role.",
         )
-    # Privilege-tier check: only a superadmin may grant the superadmin role or
-    # modify an existing superadmin (an admin cannot promote itself/others to,
-    # or demote, the top tier).
-    if (
-        role_enum == AdminRole.superadmin or target.role == AdminRole.superadmin
-    ) and current_user.role != AdminRole.superadmin:
+    # Privilege-tier check: only a superadmin may grant the superadmin role
+    # (changing an existing superadmin is refused by _require_may_manage).
+    if role_enum == AdminRole.superadmin and current_user.role != AdminRole.superadmin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only a superadmin can assign or change the superadmin role.",
@@ -1104,22 +1125,16 @@ async def deactivate_user(
     target = await get_user_by_id(db, user_id)
     if not target:
         raise HTTPException(status_code=404)
-    _require_same_org(current_user, target.org_id)
     if target.id == current_user.id:
         raise HTTPException(status_code=400, detail="You cannot deactivate your own account.")
-
-    # Only a superadmin may deactivate a superadmin (a plain admin cannot disable
-    # a higher-privileged account).
-    if target.role == AdminRole.superadmin and current_user.role != AdminRole.superadmin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only a superadmin can deactivate a superadmin account.",
-        )
+    _require_may_manage(current_user, target)
 
     # Availability invariant: never deactivate the last account able to
-    # administer the instance (admin OR superadmin).
+    # administer the instance (admin OR superadmin). An inactive target
+    # changes nothing and is not counted.
     if (
         target.role in (AdminRole.admin, AdminRole.superadmin)
+        and target.is_active
         and await count_active_privileged_admins(db) <= 1
     ):
         raise HTTPException(
@@ -1150,7 +1165,7 @@ async def reactivate_user(
     target = await get_user_by_id(db, user_id)
     if not target:
         raise HTTPException(status_code=404)
-    _require_same_org(current_user, target.org_id)
+    _require_may_manage(current_user, target)
 
     await svc_react(db, target)
     await audit_service.log(

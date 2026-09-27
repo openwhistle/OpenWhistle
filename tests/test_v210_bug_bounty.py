@@ -233,3 +233,64 @@ async def test_the_page_token_matches_the_cookie_the_server_checks() -> None:
             follow_redirects=False,
         )
     assert resp.status_code != 403
+
+
+# ── Account management: who may act on whom ─────────────────────────────────
+
+
+@pytest_asyncio.fixture(loop_scope="function")
+async def acting_as(client: AsyncClient, no_csrf):  # type: ignore[no-untyped-def]
+    from app.api.deps import get_current_admin
+    from app.main import app
+
+    def _set(user):  # type: ignore[no-untyped-def]
+        app.dependency_overrides[get_current_admin] = lambda: user
+
+    yield client, _set
+    app.dependency_overrides.pop(get_current_admin, None)
+
+
+@pytest.mark.asyncio
+async def test_an_admin_cannot_reactivate_a_superadmin_another_superadmin_disabled(
+    acting_as, db_session: AsyncSession
+) -> None:
+    from app.models.user import AdminRole
+
+    client, act = acting_as
+    target = await _totp_user(db_session, AdminRole.superadmin)
+    target.is_active = False
+    admin = await _totp_user(db_session, AdminRole.admin)
+    await db_session.commit()
+
+    act(admin)
+    resp = await client.post(f"/admin/users/{target.id}/reactivate", follow_redirects=False)
+    assert resp.status_code == 403
+    await db_session.refresh(target)
+    assert target.is_active is False
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("action", ["deactivate", "role"])
+async def test_a_demo_visitor_cannot_lock_the_next_visitor_out(
+    acting_as, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch, action: str
+) -> None:
+    from sqlalchemy import select
+
+    from app.config import settings
+    from app.models.user import AdminRole, AdminUser
+    from app.services.demo_seed import DEMO_CM_USERNAME
+
+    monkeypatch.setattr(settings, "demo_mode", True)
+    client, act = acting_as
+    demo_cm = await db_session.scalar(select(AdminUser).where(AdminUser.username == DEMO_CM_USERNAME))
+    if demo_cm is None:
+        demo_cm = await _totp_user(db_session, AdminRole.case_manager)
+        demo_cm.username = DEMO_CM_USERNAME
+        await db_session.commit()
+    act(await _totp_user(db_session, AdminRole.superadmin))
+
+    data = {"role": AdminRole.admin.value} if action == "role" else {}
+    resp = await client.post(
+        f"/admin/users/{demo_cm.id}/{action}", data=data, follow_redirects=False
+    )
+    assert resp.status_code == 403
