@@ -1,19 +1,52 @@
 ---
-- name: Install Certbot and nginx plugin
+# The standalone authenticator binds :80, which the nginx container holds
+# whenever the stack runs. So the stack is stopped around every certbot run:
+# the renewal-hooks/pre and /post scripts run on each `certbot renew`, and the
+# first certificate passes the same scripts as --pre-hook/--post-hook (certbot
+# runs a hook given both ways once). This file runs before systemd.yml: nginx
+# refuses to start without the certificate it is configured to serve.
+- name: Install Certbot
   ansible.builtin.apt:
-    name:
-      - certbot
-      - python3-certbot-nginx
+    name: certbot
     state: present
     update_cache: true
   when: ansible_os_family == "Debian"
+
+- name: Create the Certbot renewal hook directories
+  ansible.builtin.file:
+    path: "/etc/letsencrypt/renewal-hooks/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop: [pre, post]
+
+- name: Stop the stack before, start it after every certbot run
+  ansible.builtin.copy:
+    dest: "/etc/letsencrypt/renewal-hooks/{{ item.dir }}/{{ item.action }}-openwhistle.sh"
+    content: |
+      #!/bin/sh
+      # Frees :80 for certbot --standalone. No unit yet: the first certificate.
+      systemctl cat openwhistle.service > /dev/null 2>&1 || exit 0
+      exec systemctl {{ item.action }} openwhistle
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - { dir: pre, action: stop }
+    - { dir: post, action: start }
+
+- name: Remove the old deploy hook (the post hook restarts the stack)
+  ansible.builtin.file:
+    path: /etc/letsencrypt/renewal-hooks/deploy/restart-openwhistle.sh
+    state: absent
 
 - name: Check if certificate already exists
   ansible.builtin.stat:
     path: /etc/letsencrypt/live/{{ openwhistle_domain }}/fullchain.pem
   register: _cert_stat
 
-- name: Obtain initial certificate (standalone, before nginx runs)
+- name: Obtain initial certificate (standalone, stack stopped)
   ansible.builtin.command:
     cmd: >-
       certbot certonly
@@ -22,21 +55,14 @@
       --agree-tos
       --email {{ openwhistle_certbot_email }}
       --domain {{ openwhistle_domain }}
+      --pre-hook /etc/letsencrypt/renewal-hooks/pre/stop-openwhistle.sh
+      --post-hook /etc/letsencrypt/renewal-hooks/post/start-openwhistle.sh
       {% if openwhistle_certbot_staging | bool %}--staging{% endif %}
   when: not _cert_stat.stat.exists
   notify: restart openwhistle
 
-- name: Install Certbot renewal systemd timer
-  ansible.builtin.command:
-    cmd: systemctl enable --now certbot.timer
-  changed_when: false
-
-- name: Configure Certbot renewal deploy hook to restart openwhistle
-  ansible.builtin.copy:
-    dest: /etc/letsencrypt/renewal-hooks/deploy/restart-openwhistle.sh
-    content: |
-      #!/bin/sh
-      systemctl restart openwhistle
-    owner: root
-    group: root
-    mode: "0755"
+- name: Enable the Certbot renewal timer
+  ansible.builtin.systemd:
+    name: certbot.timer
+    enabled: true
+    state: started

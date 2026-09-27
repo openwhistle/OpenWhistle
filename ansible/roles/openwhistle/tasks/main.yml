@@ -24,11 +24,12 @@
   ansible.builtin.import_tasks: deploy.yml
   tags: deploy
 
-- name: Configure systemd service
-  ansible.builtin.import_tasks: systemd.yml
-  tags: systemd
-
+# Before systemd.yml: nginx does not start without its certificate.
 - name: Configure TLS with Certbot
   ansible.builtin.import_tasks: certbot.yml
   tags: certbot
   when: openwhistle_tls_enabled | bool
+
+- name: Configure systemd service
+  ansible.builtin.import_tasks: systemd.yml
+  tags: systemd
