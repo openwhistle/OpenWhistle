@@ -285,24 +285,24 @@
                 <div>
                     <dt class="detail-label">{{ t('admin.report.detail.sla7') }}</dt>
                     <dd>
-                    {% if report.acknowledged_at %}
+                    {% set ack = ack_status(report.submitted_at, report.acknowledged_at, now) %}
+                    {% if ack.state == 'done' %}
                         <span class="sla-ok mono report-detail-value">{{ icons.icon('check') }} <span class="sr-only">{{ t('admin.report.sla.acknowledged') }}</span> {{ report.acknowledged_at.strftime('%Y-%m-%d') }}</span>
                     {% else %}
-                        {% set days = (now - report.submitted_at).days %}
-                        <span class="{{ 'sla-overdue' if days >= 7 else ('sla-warning' if days >= 5 else 'sla-ok') }} mono report-detail-value">
-                            {{ t('admin.report.sla.day') }} {{ days }}/7: {{ t('admin.report.sla.not_ack') }}
+                        <span class="sla-{{ ack.state }} mono report-detail-value">
+                            {{ t('admin.report.sla.day') }} {{ ack.days }}/7: {{ t('admin.report.sla.not_ack') }}
                         </span>
                     {% endif %}
                     </dd>
                 </div>
 
-                {% if report.feedback_due_at %}
+                {% set fb = feedback_status(report.feedback_due_at, report.status.value == 'closed', now) %}
+                {% if fb %}
                 <div>
                     <dt class="detail-label">{{ t('admin.report.detail.sla3m') }}</dt>
-                    {% set days_left = (report.feedback_due_at - now).days %}
-                    <dd class="{{ 'sla-overdue' if days_left < 0 else ('sla-warning' if days_left < 14 else 'sla-ok') }} mono report-detail-value">
-                        {{ report.feedback_due_at.strftime('%Y-%m-%d') }}
-                        {% if days_left >= 0 %}({{ days_left }} {{ t('admin.report.sla.days_remaining') }}){% else %}({{ t('admin.report.sla.overdue') }}){% endif %}
+                    <dd class="{{ 'sla-ok' if fb.state == 'done' else 'sla-' ~ fb.state }} mono report-detail-value">
+                        {{ fb.due.strftime('%Y-%m-%d') }}
+                        {% if fb.state == 'done' %}({{ t('admin.sla.done') }}){% elif fb.state == 'overdue' %}({{ t('admin.report.sla.overdue') }}){% else %}({{ fb.days }} {{ t('admin.report.sla.days_remaining') }}){% endif %}
                     </dd>
                 </div>
                 {% endif %}

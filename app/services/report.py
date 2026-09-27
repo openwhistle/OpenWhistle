@@ -28,6 +28,7 @@ from app.models.report import (
     SubmissionMode,
 )
 from app.models.user import AdminUser
+from app.services import deadlines
 from app.services import rate_limit as rl
 from app.services.attachment import delete_stored_objects, stored_object_keys
 from app.services.auth import TIMING_DUMMY_HASH, hash_pin, verify_pin
@@ -192,6 +193,8 @@ async def create_report(
             confidential_contact=confidential_contact_enc,
             secure_email=secure_email_enc,
             submitted_at=today,
+            # §17 Abs. 2 runs from receipt, acknowledged or not.
+            feedback_due_at=deadlines.feedback_due(today),
         )
         # A SAVEPOINT per attempt: a collision rolls back only this attempt.
         # A full db.rollback() would expire every object the caller holds in
@@ -466,7 +469,7 @@ async def acknowledge_report(db: AsyncSession, report: Report) -> Report:
     if report.acknowledged_at is None:
         now = datetime.now(UTC)
         report.acknowledged_at = now
-        report.feedback_due_at = now + timedelta(days=90)
+        report.feedback_due_at = deadlines.feedback_due(report.submitted_at, now)
     if report.status == ReportStatus.received:
         report.status = ReportStatus.in_review
     await db.commit()
@@ -787,8 +790,6 @@ async def get_dashboard_stats(
     assigned_to_id: uuid.UUID | None = None,
 ) -> dict[str, Any]:
     """Aggregate statistics for the dashboard stats view."""
-    from sqlalchemy import case as sa_case
-
     status_counts = await get_report_stats(
         db, scope_org=scope_org, org_id=org_id, assigned_to_id=assigned_to_id
     )
@@ -801,29 +802,27 @@ async def get_dashboard_stats(
     )
     by_category = {row[0]: row[1] for row in cat_result.all()}
 
-    # SLA compliance: % of reports acknowledged within 7 days
+    # SLA compliance: % acknowledged within 7 days, of the reports whose
+    # seven days are decided — acknowledged, or past the deadline. A report
+    # received today used to count as missed and pull the rate down.
+    ack_window = timedelta(days=deadlines.ACK_DAYS)
+    decided = Report.acknowledged_at.isnot(None) | (
+        Report.submitted_at + ack_window < datetime.now(UTC)
+    )
     ack_result = await db.execute(
         select(
             func.count(Report.id).label("total"),
-            func.sum(
-                sa_case(
-                    (
-                        Report.acknowledged_at.isnot(None) &
-                        (
-                            func.extract("epoch", Report.acknowledged_at - Report.submitted_at)
-                            <= 7 * 86400
-                        ),
-                        1,
-                    ),
-                    else_=0,
-                )
+            func.count(Report.id).filter(decided).label("decided"),
+            func.count(Report.id).filter(
+                Report.acknowledged_at <= Report.submitted_at + ack_window
             ).label("on_time"),
         ).where(*org_filter)
     )
     ack_row = ack_result.one()
     total_reports = ack_row.total or 0
+    decided_reports = int(ack_row.decided or 0)
     on_time = int(ack_row.on_time or 0)
-    sla_rate = round(on_time / total_reports * 100) if total_reports else 0
+    sla_rate = round(on_time / decided_reports * 100) if decided_reports else 0
 
     return {
         "status_counts": status_counts,

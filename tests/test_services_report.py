@@ -14,6 +14,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.report import Report, ReportSender, ReportStatus
+from app.services import deadlines
 from app.services.report import (
     acknowledge_report,
     add_admin_message,
@@ -158,7 +159,8 @@ async def test_add_admin_message_persisted(db_session: AsyncSession) -> None:
 async def test_acknowledge_report_sets_timestamps(db_session: AsyncSession) -> None:
     report, _ = await _make_report(db_session)
     assert report.acknowledged_at is None
-    assert report.feedback_due_at is None
+    # §17 Abs. 2 runs from receipt: three months and seven days.
+    assert report.feedback_due_at == deadlines.feedback_due(report.submitted_at)
 
     updated = await acknowledge_report(db_session, report)
     assert updated.acknowledged_at is not None
@@ -166,14 +168,14 @@ async def test_acknowledge_report_sets_timestamps(db_session: AsyncSession) -> N
 
 
 @pytest.mark.asyncio
-async def test_acknowledge_report_feedback_due_is_90_days_after_ack(
+async def test_acknowledge_report_feedback_due_is_three_months_after_ack(
     db_session: AsyncSession,
 ) -> None:
 
     report, _ = await _make_report(db_session)
     updated = await acknowledge_report(db_session, report)
-    delta = updated.feedback_due_at - updated.acknowledged_at  # type: ignore[operator]
-    assert abs(delta.total_seconds() - 90 * 86400) < 5
+    assert updated.acknowledged_at is not None
+    assert updated.feedback_due_at == deadlines.add_months(updated.acknowledged_at, 3)
 
 
 @pytest.mark.asyncio
@@ -430,10 +432,16 @@ async def test_add_admin_message_triggers_notification_branch(
         secure_email_enc=secure_email_enc,
     )
 
-    with patch("asyncio.create_task"):
+    # schedule_background, not asyncio.create_task: a mocked create_task left
+    # its MagicMock in notifications._background (the done callback never
+    # fires), and later tests that gather that set failed with a TypeError.
+    with patch(
+        "app.services.notifications.schedule_background", side_effect=lambda coro: coro.close()
+    ) as scheduled:
         await add_admin_message(
             db_session, report, "Admin reply with notification.", notify_whistleblower=True
         )
+    scheduled.assert_called_once()
 
 
 # ─── get_reports_paginated: location_id filter ────────────────────────────────

@@ -10,6 +10,7 @@ from fpdf import FPDF
 from fpdf.enums import XPos, YPos
 
 from app.models.report import Report
+from app.services import deadlines
 from app.services.categories import category_label as label_for_slug
 from app.services.report import (
     decrypt_attachment_names,
@@ -113,31 +114,14 @@ def generate_report_pdf(
     pdf.ln(3)
     pdf.set_font(_FONT, "", 10)
 
-    submitted = report.submitted_at
     now = datetime.now(UTC)
-    if submitted.tzinfo is None:
-        submitted = submitted.replace(tzinfo=UTC)
-
-    days_since = (now - submitted).days
-    if report.acknowledged_at:
-        ack_tz = report.acknowledged_at.tzinfo or UTC
-        ack_normalized = report.acknowledged_at.replace(tzinfo=ack_tz)
-        ack_days = (ack_normalized - submitted).days
-        ack_status = "OK Compliant" if ack_days <= 7 else "OK Acknowledged (late)"
-    else:
-        ack_status = f"Pending - Day {days_since}/7"
-    _meta_row(pdf, "7-Day Acknowledgement", ack_status)
-
-    if report.feedback_due_at:
-        fdt = report.feedback_due_at
-        if fdt.tzinfo is None:
-            fdt = fdt.replace(tzinfo=UTC)
-        days_left = (fdt - now).days
-        if report.closed_at:
-            feedback_status = "OK Delivered"
-        else:
-            feedback_status = f"{max(0, days_left)} days remaining"
-        _meta_row(pdf, "3-Month Feedback Deadline", feedback_status)
+    _meta_row(pdf, "7-Day Acknowledgement", _ack_label(report, now))
+    feedback = deadlines.feedback_status(report.feedback_due_at, bool(report.closed_at), now)
+    if feedback:
+        label = "OK Delivered" if feedback.state == "done" else (
+            "Overdue" if feedback.state == "overdue" else f"{feedback.days} days remaining"
+        )
+        _meta_row(pdf, "3-Month Feedback Deadline", label)
     pdf.ln(5)
 
     # ── Description ───────────────────────────────────────────────
@@ -219,6 +203,16 @@ def generate_report_pdf(
     pdf.cell(0, 5, footer_text, align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     return bytes(pdf.output())
+
+
+def _ack_label(report: Report, now: datetime) -> str:
+    # Compared as times: ``timedelta.days`` truncates, and 7 days 12 hours
+    # used to read as 7, "Compliant".
+    ack = deadlines.ack_status(report.submitted_at, report.acknowledged_at, now)
+    if ack.state != "done":
+        return f"Pending - Day {ack.days}/7"
+    on_time = deadlines.ack_on_time(report.submitted_at, report.acknowledged_at)
+    return "OK Compliant" if on_time else "OK Acknowledged (late)"
 
 
 def _meta_row(pdf: FPDF, label: str, value: str) -> None:

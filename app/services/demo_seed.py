@@ -29,6 +29,7 @@ from app.models.report import (
 )
 from app.models.setup import SetupStatus
 from app.models.user import AdminRole, AdminUser
+from app.services import deadlines
 from app.services.auth import hash_password, hash_pin
 from app.services.encryption import encrypt_dek, encrypt_field, generate_dek, make_report_fernet
 from app.services.report import day_floor
@@ -217,11 +218,9 @@ async def _seed(db: AsyncSession) -> None:
 
         now = datetime.now(UTC)
         acknowledged_at = None
-        feedback_due_at = None
         closed_at = None
         if "acknowledged_offset_days" in demo:
             acknowledged_at = now + timedelta(days=demo["acknowledged_offset_days"])
-            feedback_due_at = acknowledged_at + timedelta(days=90)
         if demo.get("closed"):
             closed_at = now - timedelta(days=3)
         # Reporter times are whole UTC days, as create_report stores them, and
@@ -230,6 +229,7 @@ async def _seed(db: AsyncSession) -> None:
             acknowledged_at - timedelta(days=2) if acknowledged_at else now
         )
         reply_day = day_floor(acknowledged_at + timedelta(days=1)) if acknowledged_at else None
+        feedback_due_at = deadlines.feedback_due(submitted_at, acknowledged_at)
 
         idx = DEMO_REPORTS.index(demo)
         location_obj: Location | None = demo_location if idx % 2 == 0 else demo_location2

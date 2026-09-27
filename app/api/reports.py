@@ -1123,15 +1123,9 @@ async def status_get(
                 replied = request.query_params.get("replied") == "1"
                 success = "status.reply.sent" if replied else None
 
-                from datetime import UTC, datetime, timedelta
+                from datetime import UTC, datetime
 
                 now = datetime.now(UTC)
-                submitted = report.submitted_at
-                if submitted.tzinfo is None:
-                    submitted = submitted.replace(tzinfo=UTC)
-
-                ack_deadline = submitted + timedelta(days=7)
-                ack_days_remaining = (ack_deadline - now).days
 
                 from app.services.report import decrypt_attachment_names, decrypt_report_fields
 
@@ -1145,8 +1139,6 @@ async def status_get(
                     "pin": None,
                     "from_session": True,
                     "success": success,
-                    "ack_deadline": ack_deadline,
-                    "ack_days_remaining": ack_days_remaining,
                     "now": now,
                 })
 

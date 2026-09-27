@@ -214,13 +214,10 @@
                 </thead>
                 <tbody role="rowgroup">
                     {% for report in reports %}
-                    {% set days_since_submit = (now - report.submitted_at).days %}
-                    {% set ack_sla_class = 'sla-ok' if report.acknowledged_at else ('sla-ok' if days_since_submit < 5 else ('sla-warning' if days_since_submit < 7 else 'sla-overdue')) %}
-                    {% set fb_sla_class = '' %}
-                    {% if report.feedback_due_at %}
-                        {% set days_to_fb = (report.feedback_due_at - now).days %}
-                        {% set fb_sla_class = 'sla-ok' if days_to_fb > 14 else ('sla-warning' if days_to_fb > 0 else 'sla-overdue') %}
-                    {% endif %}
+                    {% set ack = ack_status(report.submitted_at, report.acknowledged_at, now) %}
+                    {% set fb = feedback_status(report.feedback_due_at, report.status.value == 'closed', now) %}
+                    {% set ack_sla_class = 'sla-ok' if ack.state == 'done' else 'sla-' ~ ack.state %}
+                    {% set fb_sla_class = ('sla-ok' if fb.state == 'done' else 'sla-' ~ fb.state) if fb else '' %}
                     <tr role="row">
                         <td role="cell" class="stack-primary" data-label="{{ t('admin.table.case_number') }}"><span class="mono dash-nowrap">{{ report.case_number }}</span></td>
                         <td role="cell" class="dash-category-cell" data-label="{{ t('admin.table.category') }}">{{ report.category | category_label(category_labels) }}</td>
@@ -234,18 +231,21 @@
                             {% endif %}
                         </td>
                         <td role="cell" class="{{ ack_sla_class }} dash-sla-cell" data-label="{{ t('admin.table.sla7') }}">
-                            {% if report.acknowledged_at %}
+                            {% if ack.state == 'done' %}
                                 {{ t('admin.sla.done') }}
                             {% else %}
-                                {{ t('admin.report.sla.day') }} {{ days_since_submit }}/7
+                                {{ t('admin.report.sla.day') }} {{ ack.days }}/7
                             {% endif %}
                         </td>
                         <td role="cell" class="{{ fb_sla_class }} dash-sla-cell" data-label="{{ t('admin.table.sla3m') }}">
-                            {% if report.feedback_due_at %}
-                                {% set days_to_fb = (report.feedback_due_at - now).days %}
-                                {% if days_to_fb > 0 %}{{ days_to_fb }} {{ t('admin.report.sla.days_remaining') }}{% else %}{{ t('admin.report.sla.overdue') }}{% endif %}
-                            {% else %}
+                            {% if not fb %}
                                 {{ t('admin.report.sla.not_ack') }}
+                            {% elif fb.state == 'done' %}
+                                {{ t('admin.sla.done') }}
+                            {% elif fb.state == 'overdue' %}
+                                {{ t('admin.report.sla.overdue') }}
+                            {% else %}
+                                {{ fb.days }} {{ t('admin.report.sla.days_remaining') }}
                             {% endif %}
                         </td>
                         <td role="cell" class="stack-action">

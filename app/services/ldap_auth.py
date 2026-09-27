@@ -129,6 +129,8 @@ def _authenticate_ldap_sync(username: str, password: str) -> LDAPUserInfo:
     # second account next to "alice", with no second factor enrolled yet.
     directory_name = _first(attrs, settings.ldap_attr_username)
     if not directory_name:
-        log.error("LDAP entry has no %s attribute; set LDAP_ATTR_USERNAME", settings.ldap_attr_username)
+        log.error(
+            "LDAP entry has no %s attribute; set LDAP_ATTR_USERNAME", settings.ldap_attr_username
+        )
         raise LDAPAuthError("LDAP entry has no username attribute")
     return LDAPUserInfo(username=directory_name, email=_first(attrs, settings.ldap_attr_email))

@@ -2245,7 +2245,7 @@ CLAMAV_HOST=clamav</code></pre>
             <tr><td>Case number</td><td><code>OW-YYYY-NNNNN</code>: the year and five random digits</td></tr>
             <tr><td>Submitted</td><td>the day only (UTC), never the time</td></tr>
             <tr><td>7-day SLA</td><td><em>Day N/7</em> until acknowledged: warning from day 5, overdue from day 7</td></tr>
-            <tr><td>3-month SLA</td><td>days left to feedback: warning at 14 or fewer, overdue at 0</td></tr>
+            <tr><td>3-month SLA</td><td>days left to feedback: warning at 14 or fewer, overdue once the date has passed</td></tr>
           </tbody>
         </table>
 </div>
@@ -2404,10 +2404,12 @@ CLAMAV_HOST=clamav</code></pre>
         </p>
 
         <h3>HinSchG deadline tracking</h3>
-        <p>The statutory timelines of §17 HinSchG, shown on the dashboard and the case page:</p>
+        <p>The statutory timelines of §17 HinSchG, shown on the dashboard, the case page, the whistleblower's status page and the PDF:</p>
         <ul>
           <li><strong>7-day acknowledgement:</strong> counted from 00:00 UTC of the submission day. Times are stored as the day only, so the deadline can fall earlier, never later.</li>
-          <li><strong>3-month feedback:</strong> 90 days from the acknowledgement (§17 Abs. 2). Feedback goes to the whistleblower through the message channel before it runs out.</li>
+          <li><strong>3-month feedback:</strong> three calendar months from the acknowledgement; without one, three months and seven days from receipt (§17 Abs. 2). Every report has this deadline from the day it arrives, and an acknowledgement never moves it later. Feedback goes to the whistleblower through the message channel before it runs out.</li>
+          <li>A deadline is overdue once it has passed. On its last day it reads <em>0 days remaining</em>.</li>
+          <li>The statistics' 7-day rate counts only the reports whose seven days are over or that were acknowledged.</li>
         </ul>
 
         <h3>Telephone reporting channel guide</h3>

@@ -282,7 +282,9 @@ async def test_a_demo_visitor_cannot_lock_the_next_visitor_out(
 
     monkeypatch.setattr(settings, "demo_mode", True)
     client, act = acting_as
-    demo_cm = await db_session.scalar(select(AdminUser).where(AdminUser.username == DEMO_CM_USERNAME))
+    demo_cm = await db_session.scalar(
+        select(AdminUser).where(AdminUser.username == DEMO_CM_USERNAME)
+    )
     if demo_cm is None:
         demo_cm = await _totp_user(db_session, AdminRole.case_manager)
         demo_cm.username = DEMO_CM_USERNAME
@@ -313,7 +315,7 @@ async def test_a_confirmed_deletion_is_in_the_audit_log(
     from app.services.report import create_report
 
     client, act = acting_as
-    report, _ = await create_report(db_session, "financial_fraud", "A report to delete, twice agreed.")
+    report, _ = await create_report(db_session, "financial_fraud", "A report to delete, agreed.")
     requester = await _totp_user(db_session, AdminRole.admin)
     confirmer = await _totp_user(db_session, AdminRole.admin)
     case = report.case_number
@@ -445,3 +447,115 @@ async def test_the_lock_lasts_lockout_minutes_from_the_last_failure(client: Asyn
     for _ in range(settings.max_login_attempts - 1):
         await rl.record_admin_login_failure(redis, name)
     assert await redis.ttl(key) > settings.login_lockout_minutes * 60 - 5
+
+
+# ── §17 HinSchG deadlines: one computation ──────────────────────────────────
+
+
+def _frozen_datetime(at):  # type: ignore[no-untyped-def]
+    from datetime import datetime as real
+
+    class Frozen(real):
+        @classmethod
+        def now(cls, tz=None):  # type: ignore[no-untyped-def]
+            return at if tz else at.replace(tzinfo=None)
+
+    return Frozen
+
+
+@pytest.mark.asyncio
+async def test_every_report_has_a_feedback_deadline_from_receipt(
+    db_session: AsyncSession,
+) -> None:
+    """Without an acknowledgement §17 Abs. 2 still runs: three months and
+    seven days after receipt. A case moved straight to 'in review' had no
+    deadline and never triggered a reminder."""
+    from datetime import timedelta
+
+    from app.services.report import create_report
+
+    report, _ = await create_report(db_session, "financial_fraud", "Deadline from receipt, please.")
+    assert report.feedback_due_at is not None
+    lower = report.submitted_at + timedelta(days=7 + 89)
+    upper = report.submitted_at + timedelta(days=7 + 92)
+    assert lower <= report.feedback_due_at <= upper
+
+
+@pytest.mark.asyncio
+async def test_three_months_are_calendar_months(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Acknowledged on 1 February 2027: feedback by 1 May, not 2 May (+90 days)."""
+    from datetime import UTC, datetime
+
+    from app.services import report as report_service
+
+    report, _ = await report_service.create_report(
+        db_session, "financial_fraud", "Acknowledged on the first of February."
+    )
+    report.submitted_at = datetime(2027, 1, 30, tzinfo=UTC)
+    await db_session.commit()
+    frozen = _frozen_datetime(datetime(2027, 2, 1, 9, tzinfo=UTC))
+    monkeypatch.setattr(report_service, "datetime", frozen)
+    await report_service.acknowledge_report(db_session, report)
+    assert report.feedback_due_at == datetime(2027, 5, 1, 9, tzinfo=UTC)
+
+
+def test_the_pdf_calls_seven_days_and_twelve_hours_late() -> None:
+    """``timedelta.days`` truncates: 7 d 12 h was 7, so 'Compliant'."""
+    from datetime import UTC, datetime, timedelta
+    from types import SimpleNamespace
+
+    from app.services import pdf
+
+    submitted = datetime(2027, 3, 1, tzinfo=UTC)
+    report = SimpleNamespace(
+        submitted_at=submitted, acknowledged_at=submitted + timedelta(days=7, hours=12),
+        feedback_due_at=None, closed_at=None,
+    )
+    assert pdf._ack_label(report, datetime(2027, 3, 20, tzinfo=UTC)) == "OK Acknowledged (late)"
+
+
+@pytest.mark.asyncio
+async def test_the_ack_rate_counts_only_reports_whose_week_is_over(
+    db_session: AsyncSession, throwaway_db: AsyncSession
+) -> None:
+    """One on time, one received today: 100 %, not 50 %."""
+    from datetime import UTC, datetime, timedelta
+
+    from app.services import report as report_service
+
+    on_time, _ = await report_service.create_report(
+        throwaway_db, "financial_fraud", "Acknowledged in time."
+    )
+    on_time.submitted_at = datetime.now(UTC) - timedelta(days=20)
+    on_time.acknowledged_at = on_time.submitted_at + timedelta(days=2)
+    await report_service.create_report(throwaway_db, "financial_fraud", "Received a moment ago.")
+    await throwaway_db.commit()
+    stats = await report_service.get_dashboard_stats(throwaway_db)
+    assert stats["sla_7day_rate"] == 100
+
+
+@pytest.mark.asyncio
+async def test_the_dashboard_and_the_case_page_agree_on_the_last_day(
+    acting_as, db_session: AsyncSession
+) -> None:
+    """Twelve hours before the deadline the dashboard said 'overdue' and the
+    case page '0 days remaining'."""
+    from datetime import UTC, datetime, timedelta
+
+    from app.models.user import AdminRole
+    from app.services.report import create_report
+
+    client, act = acting_as
+    report, _ = await create_report(db_session, "financial_fraud", "Twelve hours left on this one.")
+    report.acknowledged_at = datetime.now(UTC) - timedelta(days=80)
+    report.feedback_due_at = datetime.now(UTC) + timedelta(hours=12)
+    await db_session.commit()
+    act(await _totp_user(db_session, AdminRole.admin))
+
+    dash = (await client.post("/admin/dashboard", data={"q": report.case_number})).text
+    case = (await client.get(f"/admin/reports/{report.id}")).text
+    row = dash[dash.index(f'<span class="mono dash-nowrap">{report.case_number}'):]
+    row = row[:row.index("</tr>")]
+    assert "sla-overdue" not in row and "sla-overdue" not in case.split("detail.sla3m")[-1][:600]

@@ -12,7 +12,7 @@ deadline date.
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
 log = logging.getLogger(__name__)
 
@@ -122,8 +122,9 @@ async def _check_ack_reminder(
     if r.acknowledged_at is not None:
         return False  # already acknowledged
 
-    ack_deadline = r.submitted_at + timedelta(days=7)
-    days_left = (ack_deadline - now).days
+    from app.services.deadlines import ack_due
+
+    days_left = (ack_due(r.submitted_at) - now).days
     if days_left > cfg.reminder_ack_warn_days:
         return False
 

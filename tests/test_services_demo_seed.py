@@ -13,6 +13,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import AdminUser
+from app.services import deadlines
 from app.services.demo_seed import (
     DEMO_ADMIN_USERNAME,
     DEMO_REPORTS,
@@ -198,9 +199,9 @@ async def test_seed_in_review_report_has_timestamps(db_session: AsyncSession) ->
     report = result.scalar_one_or_none()
     assert report is not None
     assert report.acknowledged_at is not None
-    assert report.feedback_due_at is not None
-    delta = report.feedback_due_at - report.acknowledged_at
-    assert abs(delta.total_seconds() - 90 * 86400) < 5
+    assert report.feedback_due_at == deadlines.feedback_due(
+        report.submitted_at, report.acknowledged_at
+    )
 
 
 @pytest.mark.asyncio
@@ -215,7 +216,7 @@ async def test_seed_received_report_has_no_timestamps(db_session: AsyncSession) 
     report = result.scalar_one_or_none()
     assert report is not None
     assert report.acknowledged_at is None
-    assert report.feedback_due_at is None
+    assert report.feedback_due_at == deadlines.feedback_due(report.submitted_at)
 
 
 # ─── messages ─────────────────────────────────────────────────────────────────

@@ -309,8 +309,6 @@ async def _dashboard(
             "reporting_path": reporting_path,
             "reporting_link": reporting_link,
             "category_labels": category_labels,
-            "ack_deadline_days": 7,
-            "feedback_deadline_days": 90,
             "deleted_case": request.query_params.get("deleted"),
             "stats": stats,
             "page": page,
