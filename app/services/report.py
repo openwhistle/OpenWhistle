@@ -35,7 +35,7 @@ from app.services.auth import TIMING_DUMMY_HASH, hash_pin, verify_pin
 from app.services.pin import generate_case_number, generate_pin
 
 
-async def _get_default_org_id(db: AsyncSession) -> uuid.UUID | None:
+async def default_org_id(db: AsyncSession) -> uuid.UUID | None:
     """Return the ID of the default organisation, or None if not found."""
     from app.config import settings
 
@@ -165,7 +165,7 @@ async def create_report(
     enc_description = encrypt_field(report_fernet, description)
 
     if org_id is None:
-        org_id = await _get_default_org_id(db)
+        org_id = await default_org_id(db)
 
     strings = _load(lang)
     fallback = _load(_DEFAULT)

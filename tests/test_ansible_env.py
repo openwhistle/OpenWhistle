@@ -42,7 +42,8 @@ def test_every_setting_can_be_set_through_the_role() -> None:
     keys = set(re.findall(r"^#? ?([A-Z0-9_]+)=", text, re.M))
     missing = [n.upper() for n in Settings.model_fields if n.upper() not in keys]
     assert not missing, missing
-    assert re.search(r"^# APP_VERSION=\s", text, re.M), "set by the image; a version here goes stale"
+    # Set by the image; a version written here goes stale.
+    assert re.search(r"^# APP_VERSION=\s", text, re.M)
 
 
 @pytest.mark.skipif(shutil.which("docker") is None, reason="needs docker compose")

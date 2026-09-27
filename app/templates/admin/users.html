@@ -62,6 +62,16 @@
                         {% endfor %}
                     </select>
                 </div>
+                {% if organisations %}
+                <div class="form-group">
+                    <label class="form-label" for="new-org">{{ t('admin.users.add.organisation') }}</label>
+                    <select class="form-control" id="new-org" name="org_id">
+                        {% for org in organisations if org.is_active %}
+                        <option value="{{ org.id }}" {{ 'selected' if org.id == user.org_id else '' }}>{{ org.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
                 <div class="alert alert-info usr-note">
                     {{ t('admin.users.add.totp_note') }}
                 </div>
@@ -79,6 +89,7 @@
                         <tr role="row">
                             <th role="columnheader">{{ t('admin.users.table.username') }}</th>
                             <th role="columnheader">{{ t('admin.users.table.role') }}</th>
+                            {% if organisations %}<th role="columnheader">{{ t('admin.users.table.organisation') }}</th>{% endif %}
                             <th role="columnheader">{{ t('admin.users.table.status') }}</th>
                             <th role="columnheader" class="stack-action-header">{{ t('admin.users.table.actions') }}</th>
                         </tr>
@@ -95,6 +106,9 @@
                             <td role="cell" data-label="{{ t('admin.users.table.role') }}">
                                 <span class="badge badge-{{ u.role.value }}">{{ t('role.label.' + u.role.value) }}</span>
                             </td>
+                            {% if organisations %}
+                            <td role="cell" data-label="{{ t('admin.users.table.organisation') }}">{% for org in organisations if org.id == u.org_id %}{{ org.name }}{% endfor %}</td>
+                            {% endif %}
                             <td role="cell" class="stack-status" data-label="{{ t('admin.users.table.status') }}">
                                 {% if u.is_active %}
                                 <span class="badge badge-closed usr-status-badge">{{ t('admin.users.active') }}</span>

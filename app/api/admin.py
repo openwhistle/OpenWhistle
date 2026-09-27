@@ -979,12 +979,46 @@ async def _users_page(
         u for u in await get_all_users(db)
         if not scope["scope_org"] or u.org_id == scope["org_id"]
     ]
+    organisations = None
+    if settings.multi_tenancy_enabled and current_user.role == AdminRole.superadmin:
+        from sqlalchemy import select
+
+        from app.models.organisation import Organisation
+
+        organisations = (await db.execute(
+            select(Organisation).order_by(Organisation.name)
+        )).scalars().all()
     return render(request, "admin/users.html", {
         "user": current_user,
         "users": users,
         "roles": list(AdminRole),
+        "organisations": organisations,
         **(extra or {}),
     })
+
+
+async def _new_account_org(
+    db: AsyncSession, creator: AdminUser, chosen: str
+) -> uuid.UUID | None:
+    """The organisation a new account belongs to.
+
+    A superadmin with multi-tenancy on chooses it; everyone else creates in
+    their own. It used to be the creator's organisation, and only with
+    multi-tenancy on: a superadmin (in the default organisation) could give
+    no other organisation an admin, and an account made before multi-tenancy
+    was switched on had none and, once it was, saw no case at all.
+    """
+    if chosen and settings.multi_tenancy_enabled and creator.role == AdminRole.superadmin:
+        from app.models.organisation import Organisation
+
+        try:
+            org = await db.get(Organisation, uuid.UUID(chosen))
+        except ValueError:
+            org = None
+        if org is None or not org.is_active:
+            raise HTTPException(status_code=422, detail="Unknown organisation.")
+        return org.id
+    return creator.org_id or await report_service.default_org_id(db)
 
 
 @router.post("/users")
@@ -993,6 +1027,7 @@ async def create_user(
     username: str = Form(...),
     password: str = Form(...),
     role: str = Form(default=AdminRole.case_manager.value),
+    org_id: str = Form(default=""),
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf),
@@ -1016,12 +1051,12 @@ async def create_user(
             detail="Only a superadmin can create superadmin accounts.",
         )
 
+    target_org = await _new_account_org(db, current_user, org_id)
     try:
         new_user, _totp_secret = await svc_create(db, username.strip(), password, role_enum)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
-    if settings.multi_tenancy_enabled:
-        new_user.org_id = current_user.org_id
+    new_user.org_id = target_org
     await audit_service.log(
         db, current_user, AuditAction.ADMIN_CREATED,
         detail={"username": new_user.username, "role": role_enum.value},

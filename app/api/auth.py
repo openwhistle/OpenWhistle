@@ -33,6 +33,7 @@ from app.services import audit as audit_service
 from app.services import auth as auth_service
 from app.services import oidc as oidc_service
 from app.services import rate_limit as rl
+from app.services import report as report_service
 from app.services.mfa import consume_totp, generate_qr_code_base64, verify_demo_totp
 from app.services.notifications import notify_security_alert
 from app.templating import render
@@ -257,6 +258,8 @@ async def login_post(
                     # Least privilege: every directory user can reach this point,
                     # so never inherit the model's admin default. An admin promotes.
                     role=AdminRole.case_manager,
+                    # An organisation, or multi-tenancy would show it no case.
+                    org_id=await report_service.default_org_id(db),
                 )
                 db.add(user)
                 await db.commit()

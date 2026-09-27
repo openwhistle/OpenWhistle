@@ -753,3 +753,112 @@ async def test_the_digest_says_cases_where_it_counts_cases(
     _, messages, cfg = sent.call_args.args
     text = notifications._activity_text(0, len(messages))
     assert text == "0 new reports, 1 case with new messages"
+
+
+# ── Multi-tenancy: accounts belong to an organisation ────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_an_account_made_before_multi_tenancy_keeps_its_cases(
+    acting_as, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Made on /admin/users with multi-tenancy off, an admin had no
+    organisation; switching multi-tenancy on scoped it to org-less reports,
+    and every report has one."""
+    import uuid
+
+    from app.config import settings
+    from app.models.user import AdminRole
+    from app.services.auth import get_user_by_username
+    from app.services.report import create_report
+
+    client, act = acting_as
+    monkeypatch.setattr(settings, "multi_tenancy_enabled", False)
+    act(await _totp_user(db_session, AdminRole.superadmin))
+    name = f"pre-mt-{uuid.uuid4().hex[:6]}"
+    await client.post("/admin/users", data={
+        "username": name, "password": "A-Long-Enough-Password-1", "role": "admin",
+    })
+    made = await get_user_by_username(db_session, name)
+    report, _ = await create_report(db_session, "financial_fraud", "Filed under the default org.")
+    assert made is not None and made.org_id == report.org_id
+
+
+@pytest.mark.asyncio
+async def test_a_superadmin_gives_another_organisation_its_admin(
+    acting_as, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """There was no way to: a new account took its creator's organisation."""
+    import uuid
+
+    from app.config import settings
+    from app.models.organisation import Organisation
+    from app.models.user import AdminRole
+    from app.services.auth import get_user_by_username
+
+    client, act = acting_as
+    monkeypatch.setattr(settings, "multi_tenancy_enabled", True)
+    org = Organisation(id=uuid.uuid4(), name="Branch B", slug=f"b-{uuid.uuid4().hex[:6]}")
+    db_session.add(org)
+    await db_session.commit()
+    act(await _totp_user(db_session, AdminRole.superadmin))
+
+    page = await client.get("/admin/users")
+    assert f'value="{org.id}"' in page.text
+    name = f"b-admin-{uuid.uuid4().hex[:6]}"
+    await client.post("/admin/users", data={
+        "username": name, "password": "A-Long-Enough-Password-1", "role": "admin",
+        "org_id": str(org.id),
+    })
+    made = await get_user_by_username(db_session, name)
+    assert made is not None and made.org_id == org.id
+
+
+@pytest.mark.asyncio
+async def test_an_admin_cannot_place_an_account_in_another_organisation(
+    acting_as, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import uuid
+
+    from app.config import settings
+    from app.models.organisation import Organisation
+    from app.models.user import AdminRole
+    from app.services.auth import get_user_by_username
+    from app.services.report import default_org_id
+
+    client, act = acting_as
+    monkeypatch.setattr(settings, "multi_tenancy_enabled", True)
+    org = Organisation(id=uuid.uuid4(), name="Branch C", slug=f"c-{uuid.uuid4().hex[:6]}")
+    db_session.add(org)
+    admin = await _totp_user(db_session, AdminRole.admin)
+    admin.org_id = await default_org_id(db_session)
+    await db_session.commit()
+    act(admin)
+    name = f"c-cm-{uuid.uuid4().hex[:6]}"
+    await client.post("/admin/users", data={
+        "username": name, "password": "A-Long-Enough-Password-1", "org_id": str(org.id),
+    })
+    made = await get_user_by_username(db_session, name)
+    assert made is not None and made.org_id == admin.org_id
+
+
+@pytest.mark.asyncio
+async def test_an_ldap_account_gets_the_default_organisation(
+    client: AsyncClient, db_session: AsyncSession, no_csrf, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import uuid
+    from unittest.mock import AsyncMock
+
+    from app.config import settings
+    from app.services import ldap_auth
+    from app.services.auth import get_user_by_username
+    from app.services.report import default_org_id
+
+    name = f"dir-{uuid.uuid4().hex[:6]}"
+    monkeypatch.setattr(settings, "ldap_enabled", True)
+    monkeypatch.setattr(ldap_auth, "authenticate_ldap", AsyncMock(
+        return_value=ldap_auth.LDAPUserInfo(username=name, email=None)
+    ))
+    await client.post("/admin/login", data={"username": name, "password": "pw"})
+    made = await get_user_by_username(db_session, name)
+    assert made is not None and made.org_id == await default_org_id(db_session)
