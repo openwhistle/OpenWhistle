@@ -47,7 +47,7 @@ def _ansible() -> dict[str, str]:
     text = (ROOT / "ansible/roles/openwhistle/templates/env.j2").read_text()
     return {
         key: defaults[var]
-        for key, var in re.findall(r"^([A-Z0-9_]+)=\"?\{\{ (\w+)", text, re.M)
+        for key, var in re.findall(r"^([A-Z0-9_]+)=\{\{ q\((\w+)\) \}\}$", text, re.M)
         if var in defaults
     }
 
