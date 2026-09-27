@@ -697,3 +697,30 @@ async def test_a_case_number_typed_in_lower_case_opens_the_case(
         db_session, await get_redis(), f" {report.case_number.lower()} ", pin
     )
     assert found is not None and found.id == report.id
+
+
+@pytest.mark.asyncio
+async def test_retention_ends_the_status_sessions_of_what_it_deletes(
+    client: AsyncClient, throwaway_db: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Deleting a case on /admin ended its status sessions; retention did not.
+    README: 'permanently deleted including ... Redis session data'."""
+    from datetime import UTC, datetime, timedelta
+
+    from app.config import settings
+    from app.models.report import ReportStatus
+    from app.redis_client import get_redis
+    from app.services.report import create_report
+    from app.services.retention import run_retention_cleanup
+
+    report, _ = await create_report(throwaway_db, "financial_fraud", "Past its retention period.")
+    report.status = ReportStatus.closed
+    report.closed_at = datetime.now(UTC) - timedelta(days=settings.retention_days + 1)
+    await throwaway_db.commit()
+    redis = await get_redis()
+    await redis.set("status-session:probe-retention", str(report.id), ex=600)
+
+    monkeypatch.setattr(settings, "retention_enabled", True)
+    await run_retention_cleanup()
+
+    assert await redis.get("status-session:probe-retention") is None

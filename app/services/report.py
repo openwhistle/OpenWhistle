@@ -358,6 +358,30 @@ async def get_report_by_credentials(
     return report
 
 
+async def end_status_sessions(redis: Redis, report_ids: set[uuid.UUID]) -> None:
+    """Delete every whistleblower status session of these reports.
+
+    Sessions are keyed by a random token, the value is the report id, so this
+    scans. Both deletion paths call it: the four-eyes deletion always did,
+    retention did not, and a session opened shortly before the nightly run
+    outlived its case.
+    """
+    targets = {str(rid) for rid in report_ids}
+    cursor = 0
+    while True:
+        cursor, keys = await redis.scan(cursor, match="status-session:*", count=100)
+        if keys:
+            values = await redis.mget(*keys)
+            doomed = [
+                key for key, val in zip(keys, values, strict=False)
+                if val is not None and (val.decode() if isinstance(val, bytes) else val) in targets
+            ]
+            if doomed:
+                await redis.delete(*doomed)
+        if cursor == 0:
+            break
+
+
 async def authenticate_whistleblower(
     db: AsyncSession, redis: Redis, case_number: str, pin: str
 ) -> tuple[Report | None, int]:

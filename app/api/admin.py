@@ -27,24 +27,6 @@ from app.templating import REASON_UNREADABLE, audit_detail, render
 router = APIRouter(prefix="/admin")
 
 
-async def _cleanup_report_sessions(redis: Redis, report_id: uuid.UUID) -> None:
-    target = str(report_id)
-    cursor = 0
-    while True:
-        cursor, keys = await redis.scan(cursor, match="status-session:*", count=100)
-        if keys:
-            values = await redis.mget(*keys)
-            to_delete = [
-                key for key, val in zip(keys, values, strict=False)
-                if val is not None
-                and (val.decode() if isinstance(val, bytes) else val) == target
-            ]
-            if to_delete:
-                await redis.delete(*to_delete)
-        if cursor == 0:
-            break
-
-
 _ALLOWED_SORT = frozenset({"submitted_at", "case_number", "category", "status"})
 _ALLOWED_PER_PAGE = frozenset({10, 25, 50, 100})
 
@@ -744,7 +726,7 @@ async def confirm_delete(
 
     case_number = report.case_number
     await report_service.confirm_deletion(db, report, dr, current_user)
-    await _cleanup_report_sessions(redis, report_id)
+    await report_service.end_status_sessions(redis, {report_id})
     safe_case = quote(case_number, safe="")
     return RedirectResponse(f"/admin/dashboard?deleted={safe_case}", status_code=302)
 
