@@ -932,3 +932,34 @@ async def test_migration_012_finds_the_maker_in_the_audit_log(throwaway_db: Asyn
         text("SELECT created_by_id FROM admin_users WHERE id = :i"), {"i": made}
     )
     assert got == maker
+
+
+# ── Scheduled jobs run at the UTC times the docs give ───────────────────────
+
+
+def test_the_scheduler_keeps_utc_whatever_tz_says() -> None:
+    """AsyncIOScheduler() takes the host's zone: with TZ=Europe/Berlin the
+    '03:00 UTC' retention run fired at 01:00 UTC."""
+    probe = (
+        "import asyncio\n"
+        "from app.main import new_scheduler\n"
+        "async def m():\n"
+        "    s = new_scheduler(); s.add_job(print, 'cron', hour=3, minute=0, id='r'); s.start()\n"
+        "    print('OFFSET', s.get_job('r').next_run_time.utcoffset()); s.shutdown()\n"
+        "asyncio.run(m())\n"
+    )
+    out = subprocess.run(  # noqa: S603
+        ["python", "-c", probe], cwd=ROOT, capture_output=True, text=True, check=True,  # noqa: S607
+        env={**os.environ, "TZ": "Europe/Berlin"},
+    )
+    assert "OFFSET 0:00:00" in out.stdout.splitlines()
+
+
+def test_the_retention_page_names_the_next_run() -> None:
+    """Between 00:00 and 03:00 UTC the page said tomorrow; the run is today."""
+    from datetime import UTC, datetime
+
+    from app.services.retention import next_run
+
+    assert next_run(datetime(2027, 3, 4, 1, 30, tzinfo=UTC)) == datetime(2027, 3, 4, 3, tzinfo=UTC)
+    assert next_run(datetime(2027, 3, 4, 3, 30, tzinfo=UTC)) == datetime(2027, 3, 5, 3, tzinfo=UTC)

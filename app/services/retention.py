@@ -22,6 +22,22 @@ from datetime import UTC, datetime, timedelta
 log = logging.getLogger(__name__)
 
 
+RETENTION_HOUR_UTC = 3
+
+
+def next_run(now: datetime) -> datetime:
+    """When the daily run fires next, as the scheduler computes it.
+
+    The retention page used to add a day and set 03:00, so between 00:00 and
+    03:00 UTC it named tomorrow for tonight's run.
+    """
+    from apscheduler.triggers.cron import CronTrigger  # noqa: PLC0415
+
+    trigger = CronTrigger(hour=RETENTION_HOUR_UTC, minute=0, timezone=UTC)
+    fire: datetime = trigger.get_next_fire_time(None, now)
+    return fire
+
+
 async def run_retention_cleanup() -> None:
     """Hard-delete closed reports that have exceeded the configured retention window.
 

@@ -30,7 +30,7 @@
             <div class="stat-card__label">{{ t('admin.retention.stat.next_run') }}</div>
             <div class="stat-card__value">
                 {% if retention_enabled %}
-                    <time data-utc="{{ next_run.isoformat() }}">{{ next_run.strftime('%Y-%m-%d 03:00 UTC') }}</time>
+                    <time data-utc="{{ next_run.isoformat() }}">{{ next_run.strftime('%Y-%m-%d %H:%M UTC') }}</time>
                 {% else %}
                     &mdash;
                 {% endif %}

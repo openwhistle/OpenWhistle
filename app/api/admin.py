@@ -1572,10 +1572,11 @@ async def retention_page(
     request: Request,
     current_user: AdminUser = Depends(require_admin),
 ) -> HTMLResponse:
-    from datetime import UTC, datetime, timedelta
+    from datetime import UTC, datetime
 
-    now = datetime.now(UTC)
-    next_run = (now + timedelta(days=1)).replace(hour=3, minute=0, second=0, microsecond=0)
+    from app.services.retention import next_run as next_retention_run
+
+    next_run = next_retention_run(datetime.now(UTC))
     return render(
         request,
         "admin/retention.html",
