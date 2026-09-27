@@ -1027,12 +1027,12 @@
           <tbody>
             <tr>
               <td><code>latest</code></td>
-              <td>Release tag pushed (<code>v*.*.*</code>)</td>
+              <td>The highest stable release tag is pushed; never a pre-release (<code>v2.1.0-rc1</code>)</td>
               <td>Production — always points to the current stable release</td>
             </tr>
             <tr>
               <td><code>1.2.3</code> / <code>1.2</code> / <code>1</code></td>
-              <td>Release tag pushed</td>
+              <td>Release tag pushed; <code>1.2</code> and <code>1</code> move only to the highest release in their line</td>
               <td>Pinning to a specific version or minor series</td>
             </tr>
             <tr>
@@ -1042,7 +1042,7 @@
             </tr>
             <tr>
               <td><code>sha-abc1234</code></td>
-              <td>Every push (tags and branches)</td>
+              <td>Every push to <code>main</code> and every release tag</td>
               <td>Reproducing an exact build — useful for debugging and rollback</td>
             </tr>
           </tbody>
