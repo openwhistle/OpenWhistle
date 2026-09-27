@@ -15,7 +15,22 @@ import time
 import urllib.request
 from pathlib import Path
 
+import pytest
+import pytest_asyncio
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
+
 ROOT = Path(__file__).resolve().parent.parent
+
+
+@pytest_asyncio.fixture(loop_scope="function")
+async def no_csrf():  # type: ignore[no-untyped-def]
+    from app.csrf import validate_csrf
+    from app.main import app
+
+    app.dependency_overrides[validate_csrf] = lambda: None
+    yield
+    app.dependency_overrides.pop(validate_csrf, None)
 
 
 def _dockerfile_cmd() -> list[str]:
@@ -69,3 +84,121 @@ def test_the_image_command_writes_no_request_line() -> None:
         output, _ = proc.communicate(timeout=20)
     assert "PROBE-SECRET-TOKEN" not in output
     assert not re.search(r'"GET /health', output), output[-2000:]
+
+
+# ── TOTP: one code, one action ────────────────────────────────────────────────
+
+
+def _fullwidth(code: str) -> str:
+    return "".join(chr(ord(d) - ord("0") + 0xFF10) for d in code)
+
+
+async def _totp_user(db_session, role=None):  # type: ignore[no-untyped-def]
+    import uuid
+
+    import pyotp
+
+    from app.models.user import AdminRole
+    from app.services.users import create_user
+
+    user, _ = await create_user(
+        db_session, f"totp-{uuid.uuid4().hex[:6]}", "TestPassword123!", role or AdminRole.admin
+    )
+    user.totp_secret = pyotp.random_base32()
+    user.totp_enabled = True
+    await db_session.commit()
+    return user
+
+
+@pytest.mark.asyncio
+async def test_a_fullwidth_copy_of_a_used_code_opens_no_second_session(
+    client: AsyncClient, db_session: AsyncSession, no_csrf, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import uuid
+
+    import pyotp
+
+    from app.config import settings
+    from app.redis_client import get_redis
+    from app.services import auth as auth_service
+
+    monkeypatch.setattr(settings, "demo_mode", False)
+    user = await _totp_user(db_session)
+    redis = await get_redis()
+    code = pyotp.TOTP(user.totp_secret).now()
+
+    results = []
+    for submitted in (code, _fullwidth(code)):
+        temp = uuid.uuid4().hex
+        await auth_service.store_totp_pending(redis, temp, str(user.id))
+        r = await client.post(
+            "/admin/login/mfa",
+            data={"totp_code": submitted, "temp_token": temp},
+            follow_redirects=False,
+        )
+        results.append(r.status_code)
+    assert results == [302, 200]
+
+
+@pytest.mark.asyncio
+async def test_the_enrolment_code_cannot_sign_in_a_second_session(
+    client: AsyncClient, db_session: AsyncSession, no_csrf, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import uuid
+
+    import pyotp
+
+    from app.config import settings
+    from app.redis_client import get_redis
+    from app.services import auth as auth_service
+
+    monkeypatch.setattr(settings, "demo_mode", False)
+    user = await _totp_user(db_session)
+    user.totp_enabled = False
+    await db_session.commit()
+    redis = await get_redis()
+    code = pyotp.TOTP(user.totp_secret).now()
+
+    setup = uuid.uuid4().hex
+    await auth_service.store_totp_setup_pending(redis, setup, str(user.id))
+    r1 = await client.post(
+        "/admin/mfa/setup", data={"totp_code": code, "temp_token": setup}, follow_redirects=False
+    )
+    assert r1.status_code == 302
+
+    temp = uuid.uuid4().hex
+    await auth_service.store_totp_pending(redis, temp, str(user.id))
+    r2 = await client.post(
+        "/admin/login/mfa", data={"totp_code": code, "temp_token": temp}, follow_redirects=False
+    )
+    assert r2.status_code != 302
+
+
+# ── Setup wizard: the TOTP secret from the hidden field ──────────────────────
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("secret", ["", "AAAA", "!!!!"])
+async def test_the_wizard_refuses_a_secret_it_did_not_issue(
+    throwaway_db: AsyncSession, client: AsyncClient, secret: str
+) -> None:
+    import pyotp
+    from sqlalchemy import func, select
+
+    from app.models.user import AdminUser
+    from tests.conftest import setup_token
+
+    get_resp = await client.get("/setup", follow_redirects=False)
+    assert get_resp.status_code == 200
+    try:
+        code = pyotp.TOTP(secret).now()
+    except Exception:  # noqa: BLE001 - "!!!!" has no code; any will do
+        code = "123456"
+    resp = await client.post("/setup", data={
+        "username": "owner210", "password": "SecureTestPassword123!",
+        "password_confirm": "SecureTestPassword123!", "totp_secret": secret,
+        "totp_code": code, "csrf_token": get_resp.cookies.get("ow_csrf"),
+        "setup_token": await setup_token(),
+    }, follow_redirects=False)
+    assert resp.status_code in (200, 422)  # "" is refused by FastAPI already
+    assert await throwaway_db.scalar(select(func.count()).select_from(AdminUser)) == 0

@@ -1,5 +1,6 @@
 """First-run setup wizard: creates the initial admin account."""
 
+import re
 import uuid
 from datetime import UTC, datetime
 
@@ -24,6 +25,9 @@ from app.services.users import validate_username
 from app.templating import render
 
 router = APIRouter()
+
+# What generate_totp_secret() issues: 32 base32 characters, 160 bits.
+_TOTP_SECRET = re.compile(r"[A-Z2-7]{32}")
 
 # pg_advisory_xact_lock key serialising setup completion across requests and
 # replicas. Arbitrary, but must not collide with other advisory lock users.
@@ -145,6 +149,15 @@ async def setup_post(
     if await _is_setup_complete(db):
         return RedirectResponse("/admin/login", status_code=302)
 
+    # The secret comes back from a hidden field. Only the shape GET /setup
+    # issues is accepted, and anything else is replaced before it is used: an
+    # empty or short secret used to be stored as is and verified its own code
+    # (pyotp.TOTP("") works), giving the first superadmin a second factor
+    # anyone can compute; a non-base32 one was a 500.
+    secret_ok = bool(_TOTP_SECRET.fullmatch(totp_secret))
+    if not secret_ok:
+        totp_secret = generate_totp_secret()
+
     locked = await rl.setup_token_locked(redis)
     if locked or not await check_setup_token(redis, setup_token.strip()):
         if not locked:
@@ -180,7 +193,7 @@ async def setup_post(
     if password != password_confirm:
         errors["password_confirm"] = "wizard.error.password_confirm"  # noqa: S105
 
-    if not verify_totp(totp_secret, totp_code):
+    if not secret_ok or not verify_totp(totp_secret, totp_code):
         errors["totp_code"] = "wizard.error.totp_code"
 
     if errors:

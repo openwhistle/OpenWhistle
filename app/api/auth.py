@@ -32,7 +32,7 @@ from app.services import audit as audit_service
 from app.services import auth as auth_service
 from app.services import oidc as oidc_service
 from app.services import rate_limit as rl
-from app.services.mfa import generate_qr_code_base64, verify_demo_totp, verify_totp
+from app.services.mfa import consume_totp, generate_qr_code_base64, verify_demo_totp
 from app.services.notifications import notify_security_alert
 from app.templating import render
 
@@ -368,19 +368,12 @@ async def login_mfa_post(
             status_code=429,
         )
 
+    # One-time use (consume_totp), except for the demo accounts, whose static
+    # code is intentionally reusable.
     demo_code = settings.demo_mode and verify_demo_totp(totp_code, user.username)
-    code_valid = demo_code or verify_totp(
-        user.totp_secret, totp_code
+    code_valid = demo_code or await consume_totp(
+        redis, user.id, user.totp_secret, totp_code
     )
-
-    # One-time use: a valid code may authenticate exactly one session within its
-    # ~90s validity window. Prevents an intercepted/relayed code from logging in
-    # a second, attacker-controlled session (AiTM replay). Skipped for the demo
-    # accounts, whose static code is intentionally reusable.
-    if code_valid and not demo_code:
-        used_key = f"openwhistle:totp_used:{user.id}:{totp_code}"
-        if not await redis.set(used_key, "1", nx=True, ex=90):
-            code_valid = False
 
     if not code_valid:
         await rl.record_admin_login_failure(redis, user.username)
@@ -445,7 +438,8 @@ async def mfa_setup_post(
     if not user or not user.is_active:
         return RedirectResponse("/admin/login", status_code=302)
 
-    if not verify_totp(user.totp_secret, totp_code):
+    # Consumed, so the enrolment code cannot sign in a second session.
+    if not await consume_totp(redis, user.id, user.totp_secret, totp_code):
         new_setup_token = secrets.token_urlsafe(32)
         await auth_service.store_totp_setup_pending(redis, new_setup_token, user_id)
         qr_b64 = generate_qr_code_base64(user.totp_secret, user.username)
@@ -827,9 +821,7 @@ async def account_password(
         return await refuse({"current_password": "account.password.error.current"}, 401)
 
     # Single use, like the sign-in code: a code seen over a shoulder opens nothing twice.
-    code_ok = verify_totp(current_user.totp_secret, totp_code) and bool(await redis.set(
-        f"openwhistle:totp_used:{current_user.id}:{totp_code}", "1", nx=True, ex=90
-    ))
+    code_ok = await consume_totp(redis, current_user.id, current_user.totp_secret, totp_code)
     if not code_ok:
         await rl.record_admin_login_failure(redis, current_user.username)
         return await refuse({"totp_code": "mfa.error.invalid"}, 401)

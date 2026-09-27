@@ -2,9 +2,11 @@
 
 import base64
 import io
+import re
 
 import pyotp
 import qrcode
+from redis.asyncio import Redis
 
 from app.config import settings
 
@@ -18,10 +20,30 @@ def get_totp(secret: str) -> pyotp.TOTP:
     return pyotp.TOTP(secret)
 
 
+# Six ASCII digits and nothing else. pyotp NFKC-normalises before comparing,
+# so "１２３４５６" (fullwidth) used to match "123456" while the single-use key
+# below held the raw string: one code opened a second session.
+_TOTP_CODE = re.compile(r"[0-9]{6}")
+
+
 def verify_totp(secret: str, code: str) -> bool:
     """Verify a TOTP code with a ±1 step window to handle clock drift."""
+    if not _TOTP_CODE.fullmatch(code):
+        return False
     totp = get_totp(secret)
     return totp.verify(code, valid_window=1)
+
+
+async def consume_totp(redis: Redis, user_id: object, secret: str, code: str) -> bool:
+    """Verify a code and mark it used: it authenticates one action in its ~90 s window.
+
+    Prevents an intercepted or relayed code (AiTM, a glance over a shoulder)
+    from being used a second time — for a second session, a password change,
+    or a sign-in right after enrolment.
+    """
+    return verify_totp(secret, code) and bool(
+        await redis.set(f"openwhistle:totp_used:{user_id}:{code}", "1", nx=True, ex=90)
+    )
 
 
 def verify_demo_totp(code: str, username: str) -> bool:

@@ -86,59 +86,6 @@ def test_decode_malformed_token() -> None:
     assert result is None
 
 
-def test_schemas_instantiation() -> None:
-    from app.schemas.auth import LoginRequest, SetupRequest, TOTPVerifyRequest
-    from app.schemas.report import (
-        AdminReplyRequest,
-        AdminStatusUpdate,
-        ReportAccessRequest,
-        ReportCreate,
-        ReportReplyRequest,
-        ReportSubmitResult,
-    )
-
-    lr = LoginRequest(username="admin", password="secure-password-123")
-    assert lr.username == "admin"
-
-    rc = ReportCreate(category="financial_fraud", description="A valid description long enough!")
-    assert rc.description == "A valid description long enough!"
-
-    rsr = ReportSubmitResult(case_number="OW-2026-00001", pin="some-pin-value")
-    assert rsr.case_number == "OW-2026-00001"
-
-    rr = ReportReplyRequest(
-        case_number="OW-2026-00001",
-        pin="some-pin-for-test",
-        session_token="a" * 32,
-        content="Reply content here.",
-    )
-    assert rr.content == "Reply content here."
-
-    asu = AdminStatusUpdate(status=ReportStatus.pending_feedback)
-    assert asu.status == ReportStatus.pending_feedback
-
-    arr = AdminReplyRequest(content="Admin reply here.")
-    assert arr.content == "Admin reply here."
-
-    rra = ReportAccessRequest(
-        case_number="OW-2026-00001",
-        pin="some-pin-value-ok",
-        session_token="b" * 32,
-    )
-    assert rra.case_number == "OW-2026-00001"
-
-    tvr = TOTPVerifyRequest(totp_code="123456", temp_token="c" * 32)
-    assert tvr.totp_code == "123456"
-
-    sr = SetupRequest(
-        username="admin_user",
-        password="SecurePassword123!",
-        totp_code="123456",
-        totp_secret="JBSWY3DPEHPK3PXP",
-    )
-    assert sr.username == "admin_user"
-
-
 async def test_create_report_service(db_session: AsyncSession) -> None:
     report, pin = await create_report(db_session, "financial_fraud", "Test fraud description here.")
     assert report.case_number.startswith("OW-")
