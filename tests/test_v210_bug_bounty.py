@@ -862,3 +862,73 @@ async def test_an_ldap_account_gets_the_default_organisation(
     await client.post("/admin/login", data={"username": name, "password": "pw"})
     made = await get_user_by_username(db_session, name)
     assert made is not None and made.org_id == await default_org_id(db_session)
+
+
+# ── Four eyes: two people, not two accounts ─────────────────────────────────
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("who_requests", ["creator", "created"])
+async def test_an_account_and_the_account_it_made_are_not_four_eyes(
+    acting_as, db_session: AsyncSession, who_requests: str
+) -> None:
+    """An admin could make a second admin on /admin/users, sign in with the
+    password they had just chosen before its owner did, and confirm their
+    own deletion request."""
+    import uuid
+
+    from app.models.user import AdminRole
+    from app.services.auth import get_user_by_username
+    from app.services.report import create_report
+
+    client, act = acting_as
+    creator = await _totp_user(db_session, AdminRole.admin)
+    act(creator)
+    name = f"puppet-{uuid.uuid4().hex[:6]}"
+    await client.post("/admin/users", data={
+        "username": name, "password": "A-Long-Enough-Password-1", "role": "admin",
+    })
+    made = await get_user_by_username(db_session, name)
+    assert made is not None
+    report, _ = await create_report(db_session, "financial_fraud", "Delete with one pair of eyes.")
+
+    first, second = (creator, made) if who_requests == "creator" else (made, creator)
+    act(first)
+    await client.post(f"/admin/reports/{report.id}/request-delete")
+    act(second)
+    resp = await client.post(f"/admin/reports/{report.id}/confirm-delete", follow_redirects=False)
+    assert resp.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_migration_012_finds_the_maker_in_the_audit_log(throwaway_db: AsyncSession) -> None:
+    import uuid
+
+    from sqlalchemy import text
+
+    from app.config import settings
+
+    def alembic(*args: str) -> None:
+        run = subprocess.run(  # noqa: S603
+            ["alembic", *args], capture_output=True, text=True, check=False,  # noqa: S607
+            env={**os.environ, "DATABASE_URL": settings.database_url},
+        )
+        assert run.returncode == 0, run.stderr
+
+    alembic("downgrade", "b8d3f7a1c908")
+    maker, made = uuid.uuid4(), uuid.uuid4()
+    for uid, name in ((maker, "maker"), (made, "Made.One")):
+        await throwaway_db.execute(text(
+            "INSERT INTO admin_users (id, username, password_hash, totp_secret, totp_enabled,"
+            " role, is_active) VALUES (:i, :u, 'x', 'x', true, 'admin', true)"
+        ), {"i": uid, "u": name})
+    await throwaway_db.execute(text(
+        "INSERT INTO audit_log (id, admin_id, admin_username, action, detail)"
+        " VALUES (:i, :a, 'maker', 'admin.created', :d)"
+    ), {"i": uuid.uuid4(), "a": maker, "d": '{"username": "made.one", "role": "admin"}'})
+    await throwaway_db.commit()
+    alembic("upgrade", "head")
+    got = await throwaway_db.scalar(
+        text("SELECT created_by_id FROM admin_users WHERE id = :i"), {"i": made}
+    )
+    assert got == maker

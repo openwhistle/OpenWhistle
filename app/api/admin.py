@@ -702,6 +702,29 @@ async def request_delete(
     return RedirectResponse(f"/admin/reports/{report.id}", status_code=302)
 
 
+async def _one_made_the_other(
+    db: AsyncSession, a: uuid.UUID | None, b: uuid.UUID
+) -> bool:
+    """True if ``a`` made ``b`` or ``b`` made ``a``, directly or through others.
+
+    The maker chose the first password, so they are one pair of eyes. Walked
+    through ``created_by_id``; ``seen`` stops a cycle a manual edit could make.
+    """
+    from sqlalchemy import select
+
+    from app.models.user import AdminUser as _User
+
+    async def makers(start: uuid.UUID | None) -> set[uuid.UUID]:
+        seen: set[uuid.UUID] = set()
+        current = start
+        while current is not None and current not in seen:
+            seen.add(current)
+            current = await db.scalar(select(_User.created_by_id).where(_User.id == current))
+        return seen
+
+    return a is not None and (a in await makers(b) or b in await makers(a))
+
+
 @router.post("/reports/{report_id}/confirm-delete")
 async def confirm_delete(
     request: Request,
@@ -718,10 +741,13 @@ async def confirm_delete(
     dr = await report_service.get_active_deletion_request(db, report.id, for_update=True)
     if not dr:
         raise HTTPException(status_code=400, detail="No pending deletion request.")
-    if dr.requested_by_id == current_user.id:
+    if dr.requested_by_id == current_user.id or await _one_made_the_other(
+        db, dr.requested_by_id, current_user.id
+    ):
         raise HTTPException(
             status_code=409,
-            detail="The same admin who requested deletion cannot confirm it.",
+            detail="The admin who requested deletion, or an account one of them made, "
+            "cannot confirm it.",
         )
 
     case_number = report.case_number
@@ -1057,6 +1083,7 @@ async def create_user(
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     new_user.org_id = target_org
+    new_user.created_by_id = current_user.id
     await audit_service.log(
         db, current_user, AuditAction.ADMIN_CREATED,
         detail={"username": new_user.username, "role": role_enum.value},

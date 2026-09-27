@@ -2360,7 +2360,12 @@ CLAMAV_HOST=clamav</code></pre>
           <li>Move the status, assign the case to an admin or case manager, link related cases.</li>
           <li>Reply to the whistleblower through the anonymous channel; add internal notes they never see.</li>
           <li>Export a PDF with an SLA compliance section (HinSchG §17), the confidential identity left out. It prints Latin (any diacritic), Greek and Cyrillic text; CJK and right-to-left scripts (Arabic, Hebrew) are not supported.</li>
-          <li><em>Delete report</em>, collapsed at the end of <em>Actions</em>: a second admin must confirm (4-eyes principle). It is the GDPR Art. 17 erasure.</li>
+          <li><em>Delete report</em>, collapsed at the end of <em>Actions</em>: a second admin must confirm (4-eyes principle). It is the GDPR Art. 17 erasure.
+            <ul>
+              <li>Neither the requester nor an account the requester made (on <code>/admin/users</code>, directly or through others) may confirm, and the reverse: whoever made an account chose its first password.</li>
+              <li>A superadmin can reset another account's authenticator and act as it, so the rule holds between admins, not against a superadmin.</li>
+            </ul>
+          </li>
         </ul>
         <figure class="diagram">
           <img class="diagram-light" src="img/diagrams/case-lifecycle-light.svg" alt="Case statuses: a submitted report is received. From received it goes to in_review or closed; from in_review to pending_feedback, closed or back to received; from pending_feedback to closed or in_review; a closed case can reopen to in_review. Received carries the 7-day acknowledgement deadline, pending_feedback the 3-month feedback deadline." width="622" height="571" loading="lazy">

@@ -63,7 +63,7 @@ zero vendor lock-in, and privacy-first by design.
 - **Status workflow** — `received → in_review → pending_feedback → closed`; only valid
   transitions allowed server-side.
 - **4-eyes deletion** — Hard deletion requires two different admins (request + confirm);
-  same-admin confirm returns HTTP 409. GDPR Art. 17 compliant.
+  the same admin, or an account one of them made, gets HTTP 409. GDPR Art. 17 compliant.
 - **Immutable audit log** — Every admin action recorded with timestamp and username, shown as
   readable labels in all four languages; CSV export keeps the machine codes; required by HinSchG §11 Abs. 5.
 - **Search by case number or content** — Find a case by any part of its number or by a word
