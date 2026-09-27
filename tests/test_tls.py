@@ -326,7 +326,8 @@ def test_ansible_nginx_template_renders_with_the_roles_own_defaults_and_clears_x
 
     assert "proxy_set_header X-OW-Onion" not in rendered
     assert rendered.count("include /etc/nginx/snippets/proxy-headers.conf;") == 1
-    assert "ow-test.example.com" in rendered
+    # The domain as a server_name, not anywhere in the text (CodeQL #305).
+    assert re.search(r"^\s*server_name\s+ow-test\.example\.com\s*;", rendered, re.M), rendered
 
 
 def test_every_public_route_is_rate_limited_in_both_deployments() -> None:

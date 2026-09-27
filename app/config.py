@@ -7,7 +7,9 @@ from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # A v3 onion address is 56 base32 characters (RFC 4648, lowercase a-z2-7).
-_ONION_LOCATION_RE = re.compile(r"^https?://[a-z2-7]{56}\.onion$", re.IGNORECASE)
+# fullmatch: "$" with match also accepts a trailing newline, and the value
+# becomes a response header.
+_ONION_LOCATION_RE = re.compile(r"https?://[a-z2-7]{56}\.onion", re.IGNORECASE)
 
 # Minimum SECRET_KEY / ENCRYPTION_KEY length. SECRET_KEY signs admin JWTs;
 # ENCRYPTION_KEY (falling back to SECRET_KEY when unset) is the root of all
@@ -195,7 +197,7 @@ class Settings(BaseSettings):
     @classmethod
     def _validate_onion_location(cls, v: str) -> str:
         v = v.strip()
-        if v and not _ONION_LOCATION_RE.match(v):
+        if v and not _ONION_LOCATION_RE.fullmatch(v):
             raise ValueError(
                 "ONION_LOCATION must be empty or http(s)://<56-character-onion-address>.onion "
                 "with no path or query string, e.g. http://" + "a" * 56 + ".onion."

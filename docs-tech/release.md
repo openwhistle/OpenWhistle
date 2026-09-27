@@ -5,7 +5,7 @@ admins), so the release commit goes through a pull request like everything else.
 
 ```mermaid
 flowchart LR
-    A[Mutation audit] --> B[UI check] --> F[Chrome check] --> C[Release PR] --> D[Tag vX.Y.Z] --> E[Verify images]
+    A[Mutation audit] --> B[UI check] --> F[Chrome check] --> C[Release PR] --> G[No open alert] --> D[Tag vX.Y.Z] --> E[Verify images]
 ```
 
 ## 1. Mutation audit — before the release PR
@@ -76,7 +76,20 @@ On `release/vX.Y.Z`:
 
 Merge once the checks are green.
 
-## 5. Tag and verify
+## 5. No open code-scanning alert
+
+Before the tag, the repository has **no** open code-scanning alert, not only none
+in the release PR's diff:
+
+```bash
+gh api "repos/openwhistle/OpenWhistle/code-scanning/alerts?state=open" -q length   # must print 0
+```
+
+An alert is fixed, or dismissed with its reason and the test that shows it cannot
+be exploited. v2.1.0 was tagged with three open ones, found only after the tag:
+the PR's CodeQL check reports the alerts in the diff, and these were older.
+
+## 6. Tag and verify
 
 Tag `vX.Y.Z` on the merge commit and push it. The publish workflow refuses a
 tag that is not on `main`, runs CI, E2E and the security scans on that exact

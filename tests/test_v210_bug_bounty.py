@@ -1174,3 +1174,62 @@ async def test_a_superadmin_cannot_place_an_account_in_an_unknown_organisation(
         "org_id": org_id,
     }, follow_redirects=False)
     assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_a_draft_cookie_with_a_smuggled_newline_is_a_fresh_draft_not_a_500(
+    client: AsyncClient,
+) -> None:
+    """``^…$`` with ``re.match`` lets a trailing newline through, and
+    Starlette unquotes ``"…\\012"`` into one: the id passed the check and
+    ``set_cookie`` raised CookieError on the way back out (CodeQL #306)."""
+    from httpx import ASGITransport
+
+    from app.main import app
+
+    value = '"' + "a" * 43 + "." + "b" * 43 + '\\012"'
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="https://test") as c:
+        page = await c.get("/submit")
+        csrf = re.search(r'name="csrf_token" value="([^"]+)"', page.text)
+        assert csrf
+        cookies = f"ow_csrf={csrf.group(1)}; ow-submission-session={value}"
+        resp = await c.post(
+            "/submit", headers={"cookie": cookies}, follow_redirects=False,
+            data={"csrf_token": csrf.group(1), "step": "1", "action": "next",
+                  "submission_mode": "anonymous"},
+        )
+    assert resp.status_code in (200, 303)
+    assert "\n" not in resp.headers.get("set-cookie", "")
+
+
+def test_an_onion_location_never_reaches_the_header_with_a_newline() -> None:
+    """The value becomes the Onion-Location response header."""
+    from app.config import Settings
+
+    onion = "http://" + "a" * 56 + ".onion"
+    assert Settings(onion_location=onion + "\n").onion_location == onion  # type: ignore[call-arg]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("next_url", [
+    "//evil.example/submit/x", "https://evil.example/status", "/\\evil.example",
+    "/status?x=1%0d%0aSet-Cookie:%20a=b", "/status?next=https://evil.example",
+    "/submit/a\r\nX-Evil: 1", "javascript:alert(1)", "/admin/../../evil",
+])
+async def test_the_language_switch_redirects_only_within_the_site(
+    client: AsyncClient, next_url: str
+) -> None:
+    """CodeQL #297: the redirect depends on ``next``. Only its path decides the
+    target (an allow-list, or an organisation's /submit/<slug>); the query is
+    carried as data. No host, scheme or header ever comes from it."""
+    page = await client.get("/submit")
+    csrf = re.search(r'name="csrf_token" value="([^"]+)"', page.text)
+    assert csrf
+    resp = await client.post("/set-language", data={
+        "csrf_token": csrf.group(1), "lang": "de", "next": next_url,
+    }, follow_redirects=False)
+    location = resp.headers["location"]
+    assert resp.status_code == 303
+    assert location.startswith("/") and not location.startswith(("//", "/\\"))
+    assert "\r" not in location and "\n" not in location
+    assert "evil.example" not in location.split("?")[0]

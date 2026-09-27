@@ -46,14 +46,15 @@ router = APIRouter()
 _log = logging.getLogger(__name__)
 
 # Allowlist pattern for whistleblower session keys (URL-safe base64, 1–86 chars).
-_SESSION_KEY_RE = re.compile(r"^[A-Za-z0-9_-]{1,86}$")
+# fullmatch, never match with ^…$: "$" also matches before a trailing newline.
+_SESSION_KEY_RE = re.compile(r"[A-Za-z0-9_-]{1,86}")
 
 # Submission session TTL — 2 hours
 _SUBMISSION_TTL = 7200
 
 # Draft cookie "<id>.<key>": the key encrypts the draft and exists only in the
 # whistleblower's browser, so Redis (or a dump of it) holds nothing readable.
-_DRAFT_COOKIE_RE = re.compile(r"^[A-Za-z0-9_-]{43}\.[A-Za-z0-9_-]{43}$")
+_DRAFT_COOKIE_RE = re.compile(r"[A-Za-z0-9_-]{43}\.[A-Za-z0-9_-]{43}")
 
 _NEXT_ALLOWLIST: dict[str, str] = {
     "/submit": "/submit",
@@ -476,7 +477,7 @@ async def _get_or_create_submission_session(
     request: Request, redis: Redis, tenant: _Tenant
 ) -> tuple[str, dict[str, Any]]:
     raw = request.cookies.get("ow-submission-session")
-    session_id: str | None = raw if raw and _DRAFT_COOKIE_RE.match(raw) else None
+    session_id: str | None = raw if raw and _DRAFT_COOKIE_RE.fullmatch(raw) else None
     if session_id:
         state = await _load_draft(redis, session_id, tenant)
         if state:
@@ -605,7 +606,7 @@ async def submit_get(
     if isinstance(tenant, Response):
         return tenant
     raw_cookie = request.cookies.get("ow-submission-session")
-    if raw_cookie and _DRAFT_COOKIE_RE.match(raw_cookie):
+    if raw_cookie and _DRAFT_COOKIE_RE.fullmatch(raw_cookie):
         if not await _load_submission(redis, raw_cookie) and await _submit_in_flight(
             redis, raw_cookie
         ):
@@ -619,7 +620,7 @@ async def submit_get(
     # POST replaces the cookie, so merely opening this link loses nothing.
     other_orgs_draft = (
         raw_cookie != session_id
-        and bool(raw_cookie and _DRAFT_COOKIE_RE.match(raw_cookie))
+        and bool(raw_cookie and _DRAFT_COOKIE_RE.fullmatch(raw_cookie))
         and bool(await _load_submission(redis, str(raw_cookie)))
     )
 
@@ -690,7 +691,7 @@ async def submit_post(
     raw_cookie = request.cookies.get("ow-submission-session")
     session_id: str = (
         raw_cookie
-        if raw_cookie and _DRAFT_COOKIE_RE.match(raw_cookie)
+        if raw_cookie and _DRAFT_COOKIE_RE.fullmatch(raw_cookie)
         else _new_draft_id()
     )
     state = await _load_draft(redis, session_id, tenant)
@@ -1080,7 +1081,7 @@ async def submit_remove_attachment(
     if isinstance(tenant, Response):
         return tenant
     raw = request.cookies.get("ow-submission-session")
-    if raw and _DRAFT_COOKIE_RE.match(raw):
+    if raw and _DRAFT_COOKIE_RE.fullmatch(raw):
         state = await _load_draft(redis, raw, tenant)
         files = state.get("file_data", [])
         if state.get("step") == _STEP_ATTACHMENTS and 0 <= index < len(files):
@@ -1101,7 +1102,7 @@ async def submit_restart(
     if isinstance(tenant, Response):
         return tenant
     raw = request.cookies.get("ow-submission-session")
-    if raw and _DRAFT_COOKIE_RE.match(raw):
+    if raw and _DRAFT_COOKIE_RE.fullmatch(raw):
         await redis.delete(_submission_key(raw), _report_id_key(raw))
     response = RedirectResponse(tenant.path, status_code=303)
     _clear_submission_cookie(response, request)
@@ -1132,7 +1133,7 @@ async def status_get(
     db: AsyncSession = Depends(get_db),
 ) -> HTMLResponse:
     _raw = request.cookies.get("ow-status-session")
-    session_key: str | None = _raw if _raw and _SESSION_KEY_RE.match(_raw) else None
+    session_key: str | None = _raw if _raw and _SESSION_KEY_RE.fullmatch(_raw) else None
     if session_key:
         report_id_str = await redis.get(f"status-session:{session_key}")
         if report_id_str:
@@ -1224,7 +1225,7 @@ async def reply_post(
 ) -> Response:
     _raw_key = request.cookies.get("ow-status-session")
     status_session_key: str | None = (
-        _raw_key if _raw_key and _SESSION_KEY_RE.match(_raw_key) else None
+        _raw_key if _raw_key and _SESSION_KEY_RE.fullmatch(_raw_key) else None
     )
     report = None
 
@@ -1297,7 +1298,7 @@ async def status_logout(
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
     _raw = request.cookies.get("ow-status-session")
-    session_key: str | None = _raw if _raw and _SESSION_KEY_RE.match(_raw) else None
+    session_key: str | None = _raw if _raw and _SESSION_KEY_RE.fullmatch(_raw) else None
     if session_key:
         await redis.delete(f"status-session:{session_key}")
     response = RedirectResponse("/status", status_code=303)
