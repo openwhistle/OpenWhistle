@@ -12,4 +12,7 @@ flowchart TD
     totpSet -- no --> setup["Enroll TOTP<br/>mandatory for every account"]
     totpSet -- yes --> totp["Enter TOTP code"]
     setup --> totp
-    totp --> session(["Admin session"])
+    totp --> forced{"Password set by<br/>someone else?"}
+    forced -- no --> session(["Admin area"])
+    forced -- yes --> change["Choose own password<br/>at /admin/account;<br/>nothing else opens"]
+    change --> session

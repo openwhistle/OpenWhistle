@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -49,6 +49,12 @@ class AdminUser(Base):
         Enum(AdminRole, name="adminrole"), nullable=False, default=AdminRole.admin
     )
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    # Set when someone else chose the password (an admin creating the account,
+    # a superadmin reset, the host's reset script); cleared only by the holder's
+    # own change on /admin/account. While set, no other admin page opens.
+    must_change_password: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false")
+    )
 
     # OIDC (optional). Set by the account holder (POST /admin/oidc/link) while
     # signed in; a second way past the first factor, never past TOTP. The

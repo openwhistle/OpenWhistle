@@ -3649,6 +3649,10 @@ a.attachment-name:hover {
 .admin-split-grid > * {
   min-width: 0;
 }
+/* The grid gap spaces its columns; `.panel + .panel` would push the second one down. */
+.admin-split-grid > .panel + .panel {
+  margin-top: 0;
+}
 /* A list too wide for two thirds of the page (organisations: six columns,
    one of them a URL) goes under its form, across the full width. */
 .admin-stack {
@@ -3787,16 +3791,36 @@ a.attachment-name:hover {
   margin: 0;
   padding-top: var(--space-3);
 }
-.admin-nav-sso {
+.admin-nav .admin-nav-account {
   border-top: 1px solid var(--hairline);
+  margin-bottom: 0;
   padding-top: var(--space-3);
 }
-.admin-nav-sso + .admin-nav-logout {
+/* Alone in the menu during a forced password change: no rule above it. */
+.admin-nav .admin-nav-account:first-child {
   border-top: 0;
+  padding-top: 0;
 }
-.admin-nav-sso-status {
-  font-size: var(--text-hint);
-  margin: 0 0 var(--space-2);
+.admin-nav-account + .admin-nav-logout {
+  border-top: 0;
+  padding-top: 0;
+}
+/* Log out is a form button, not a link: same box as the links above it. */
+.admin-nav .nav-link-button {
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--body-text);
+  cursor: pointer;
+  display: block;
+  font: inherit;
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  width: 100%;
+}
+.admin-nav .nav-link-button:hover {
+  background: var(--surface-card);
+  color: var(--ink);
 }
 .admin-main {
   min-width: 0;

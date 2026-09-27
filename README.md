@@ -78,6 +78,11 @@ zero vendor lock-in, and privacy-first by design.
 - **"Signal" design system** — documented, token-driven identity ([`DESIGN.md`](DESIGN.md)); app + site, light + dark.
 - **Mandatory MFA** — TOTP (compatible with any authenticator app) required for every admin account.
   No exceptions, no bypass.
+- **Own password, own account** — every admin changes their password on `/admin/account` with the
+  current password and a TOTP code; every other session ends. A password an admin, a superadmin
+  reset or the host set must be replaced before any other admin page opens.
+- **Self-service recovery** — admins link their own single sign-on identity; a superadmin resets a
+  lost authenticator, and the host's script resets any account, the last superadmin included.
 - **Lockout-proof whistleblower login** — a correct case number and PIN always open the case;
   wrong guesses are counted but can never lock the rightful whistleblower out.
 - **Password-spraying alarm** — failed admin logins are counted instance-wide (no username, no IP);

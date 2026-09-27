@@ -2213,19 +2213,20 @@ CLAMAV_HOST=clamav</code></pre>
           the second is always a TOTP code.
         </p>
         <figure class="diagram">
-          <img class="diagram-light" src="img/diagrams/admin-login-light.svg" alt="Admin login: the first factor is a username and password checked against the database, LDAP, or an external OIDC identity provider. Then TOTP: an account without it enrolls first, which is mandatory. The TOTP code opens the admin session." width="645" height="1077" loading="lazy">
-          <img class="diagram-dark" src="img/diagrams/admin-login-dark.svg" alt="Admin login: the first factor is a username and password checked against the database, LDAP, or an external OIDC identity provider. Then TOTP: an account without it enrolls first, which is mandatory. The TOTP code opens the admin session." width="645" height="1077" loading="lazy">
+          <img class="diagram-light" src="img/diagrams/admin-login-light.svg" alt="Admin login: the first factor is a username and password checked against the database, LDAP, or an external OIDC identity provider. Then TOTP: an account without it enrolls first, which is mandatory. After the TOTP code, an account whose password someone else set chooses its own at /admin/account before the admin area opens." width="645" height="1504" loading="lazy">
+          <img class="diagram-dark" src="img/diagrams/admin-login-dark.svg" alt="Admin login: the first factor is a username and password checked against the database, LDAP, or an external OIDC identity provider. Then TOTP: an account without it enrolls first, which is mandatory. After the TOTP code, an account whose password someone else set chooses its own at /admin/account before the admin area opens." width="645" height="1504" loading="lazy">
         </figure>
         <ul>
           <li>An account without TOTP yet (new from <code>/admin/users</code>, or first provisioned by LDAP) goes to <code>/admin/mfa/setup</code> after its first factor. Scan the QR code, confirm one code, and the session starts.</li>
+          <li>A password someone else set is replaced next, at <code>/admin/account</code> (<a href="#own-account">Your account</a>).</li>
           <li>After <code>MAX_LOGIN_ATTEMPTS</code> wrong passwords, the username is locked for <code>LOGIN_LOCKOUT_MINUTES</code>.</li>
           <li>A session lasts <code>ACCESS_TOKEN_EXPIRE_MINUTES</code>; <em>Stay signed in</em> renews it, up to <code>SESSION_MAX_HOURS</code> after login.</li>
         </ul>
 
         <h3>Dashboard overview</h3>
         <figure class="doc-shot">
-          <img class="shot-light" src="img/screens/admin-dashboard-light.png" alt="The reports dashboard: status and location filters, a search field, and the report table with case number, category, status, submitted day, assignee, 7-day SLA and 3-month SLA." width="1440" height="1108" loading="lazy">
-          <img class="shot-dark" src="img/screens/admin-dashboard-dark.png" alt="The reports dashboard: status and location filters, a search field, and the report table with case number, category, status, submitted day, assignee, 7-day SLA and 3-month SLA." width="1440" height="1108" loading="lazy">
+          <img class="shot-light" src="img/screens/admin-dashboard-light.png" alt="The reports dashboard: status and location filters, a search field, and the report table with case number, category, status, submitted day, assignee, 7-day SLA and 3-month SLA." width="1440" height="1043" loading="lazy">
+          <img class="shot-dark" src="img/screens/admin-dashboard-dark.png" alt="The reports dashboard: status and location filters, a search field, and the report table with case number, category, status, submitted day, assignee, 7-day SLA and 3-month SLA." width="1440" height="1043" loading="lazy">
         </figure>
         <p>
           <code>/admin/dashboard</code> lists every report you may see, with sortable columns,
@@ -2261,6 +2262,37 @@ CLAMAV_HOST=clamav</code></pre>
           deactivated, so nobody is locked out. Only admins may dismiss the IP-header warning.
         </p>
 
+        <h3 id="own-account">Your account</h3>
+        <p>
+          <strong>My account</strong> in the sidebar opens <code>/admin/account</code>, for every role.
+          It shows the username, role, organisation and the ways the account signs in.
+        </p>
+        <ul>
+          <li>A password change needs the current password, the new one twice, and a current TOTP code. An open session alone is not enough.</li>
+          <li>The new password has 12 characters to 72 bytes and differs from the current one.</li>
+          <li>Wrong passwords and codes here count towards the sign-in lockout of the account.</li>
+          <li>After the change, every other session of the account ends. The one in use stays.</li>
+          <li>The audit log records <code>auth.password_changed</code>, never the password.</li>
+          <li>An LDAP or single sign-on account has no password here. It changes it in the directory or at the provider.</li>
+          <li><strong>Link single sign-on</strong> and <strong>Unlink single sign-on</strong> are on this page (<a href="#oidc-integration">OIDC integration</a>).</li>
+          <li>With <code>DEMO_MODE</code>, the demo accounts keep their password, so every visitor can sign in.</li>
+        </ul>
+        <p>Whoever sets a password for someone else knows it. So its holder must replace it:</p>
+        <div class="table-scroll">
+<table class="env-table">
+          <thead><tr><th>Password set by</th><th>Holder's next login</th></tr></thead>
+          <tbody>
+            <tr><td>an admin creating the account on <code>/admin/users</code></td><td>enrol the authenticator at <code>/admin/mfa/setup</code>, then change the password</td></tr>
+            <tr><td>a superadmin's <strong>Reset authenticator</strong></td><td>the same, with the temporary password</td></tr>
+            <tr><td>the host's <code>reset_admin_password.py --username</code></td><td>change the password</td></tr>
+          </tbody>
+        </table>
+</div>
+        <p>
+          Until then, every other admin page leads back to <code>/admin/account</code>. Sign-out still works.
+          The script cannot tell whether its operator is the holder, so it always asks for the change.
+        </p>
+
         <h3 id="lost-access">Lost password or authenticator</h3>
         <div class="table-scroll">
 <table class="env-table">
@@ -2274,10 +2306,11 @@ CLAMAV_HOST=clamav</code></pre>
 </div>
         <ul>
           <li>Run the script inside the container: <code>docker exec -it openwhistle python scripts/reset_admin_password.py …</code>.</li>
-          <li>Either reset ends every session of the account at once. The old app stops working.</li>
+          <li>Every reset ends every session of the account at once. After an authenticator reset, the old app stops working.</li>
+          <li>A password reset by the script is in the audit log as <code>admin.password_reset</code>. The next login must change it.</li>
           <li>A reset in <code>/admin/users</code> makes the account new again: new authenticator, and a new temporary password in place of the old one.</li>
           <li>The temporary password is shown once, to the superadmin. It is in no log and no audit entry. Hand it over in person.</li>
-          <li>With it, the next login goes to <code>/admin/mfa/setup</code> to enrol a new app, as for a new account.</li>
+          <li>With it, the next login goes to <code>/admin/mfa/setup</code> to enrol a new app, as for a new account. Then the holder chooses a new password (<a href="#own-account">Your account</a>).</li>
           <li>An LDAP or single sign-on account has no local password. It keeps its directory or provider login and enrols a new app.</li>
           <li>The script prints the new secret and its <code>otpauth://</code> URI once. Hand them over in person.</li>
           <li>A superadmin cannot reset their own authenticator in the browser: it would end their session and leave the account behind a password. Another superadmin or the script does it.</li>
@@ -2298,8 +2331,8 @@ CLAMAV_HOST=clamav</code></pre>
         </ul>
         <p>Click a report to open its case page, <code>/admin/reports/{report_id}</code>:</p>
         <figure class="doc-shot">
-          <img class="shot-light" src="img/screens/admin-report-light.png" alt="A case page: the report, the communication thread, a reply box and internal notes; beside them the submission details and the actions acknowledge, assign, update status, export PDF and delete." width="1440" height="1836" loading="lazy">
-          <img class="shot-dark" src="img/screens/admin-report-dark.png" alt="A case page: the report, the communication thread, a reply box and internal notes; beside them the submission details and the actions acknowledge, assign, update status, export PDF and delete." width="1440" height="1836" loading="lazy">
+          <img class="shot-light" src="img/screens/admin-report-light.png" alt="A case page: the report, the communication thread, a reply box and internal notes; beside them the submission details and the actions acknowledge, assign, update status, export PDF and delete." width="1440" height="1888" loading="lazy">
+          <img class="shot-dark" src="img/screens/admin-report-dark.png" alt="A case page: the report, the communication thread, a reply box and internal notes; beside them the submission details and the actions acknowledge, assign, update status, export PDF and delete." width="1440" height="1888" loading="lazy">
         </figure>
         <ul>
           <li>Read the report and its submission mode (anonymous / confidential).</li>
@@ -2573,11 +2606,11 @@ CLAMAV_HOST=clamav</code></pre>
           (<a href="#onion-address">Offering an onion address</a>).
         </p>
 
-        <h3>OIDC integration</h3>
+        <h3 id="oidc-integration">OIDC integration</h3>
         <p>With OIDC on, the identity provider is a second way past the first factor. It never replaces the second factor.</p>
         <ul>
           <li>Login uses PKCE; the app checks the provider's signed ID token (see <code>OIDC_SERVER_METADATA_URL</code> in the <a href="#configuration">configuration table</a>).</li>
-          <li>Each person links their own account. Sign in with password and TOTP, then choose <strong>Link single sign-on</strong> in the sidebar.</li>
+          <li>Each person links their own account. Sign in with password and TOTP, then choose <strong>Link single sign-on</strong> on <code>/admin/account</code>.</li>
           <li>The provider's <code>sub</code> and issuer are stored on the signed-in account, and nowhere else. The audit log records <code>auth.sso_linked</code>.</li>
           <li>The link request is bound to that session. Finished in another browser or after sign-out, it links nothing.</li>
           <li>An identity already linked to another account is refused. An unlinked identity cannot sign in.</li>
@@ -2608,6 +2641,7 @@ CLAMAV_HOST=clamav</code></pre>
           <li>Prefilled admin credentials: username <code>demo</code>, password <code>demo</code>, TOTP code <code>000000</code></li>
           <li>The static TOTP code <code>000000</code> is always accepted — no authenticator app needed</li>
           <li>All reports and messages are visible to the demo admin</li>
+          <li>The password of the demo accounts cannot be changed, and their authenticator cannot be reset</li>
           <li>A banner on every page says this is a demo instance</li>
           <li><code>demo.openwhistle.net</code> is wiped and restarted every 6 hours</li>
         </ul>

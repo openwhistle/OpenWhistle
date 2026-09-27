@@ -65,12 +65,35 @@ async def _list_users() -> None:
     print()
 
 
+async def _end_sessions(user_id: str) -> None:
+    """Every session and pending login of the account; after the commit."""
+    from redis.asyncio import from_url
+
+    from app.config import settings
+    from app.services.auth import revoke_user_sessions
+
+    redis = await from_url(settings.redis_url, decode_responses=True)
+    try:
+        await revoke_user_sessions(redis, user_id)
+    finally:
+        await redis.aclose()
+
+
 async def _reset_password(username: str, new_password: str) -> bool:
+    """Set ``username``'s password; the holder must change it at the next sign-in.
+
+    Whoever runs this knows the password, and the script cannot tell whether
+    that is the account holder: even the operator's own account pays one
+    change for that. Every session and pending login of the account ends
+    (a reset often follows a suspected compromise), and the audit log
+    records it, never the password.
+    """
     from sqlalchemy import select
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
     from app.config import settings
     from app.models.user import AdminUser
+    from app.services import audit
     from app.services.auth import hash_password
 
     engine = create_async_engine(settings.database_url, echo=False, hide_parameters=True)
@@ -99,9 +122,17 @@ async def _reset_password(username: str, new_password: str) -> bool:
             )
 
         user.password_hash = hash_password(new_password)
+        user.must_change_password = True
+        await audit.log_system(
+            session, audit.AuditAction.ADMIN_PASSWORD_RESET,
+            detail={"username": user.username, "via": "command line"}, org_id=user.org_id,
+        )
         await session.commit()
+        user_id = str(user.id)
 
     await engine.dispose()
+
+    await _end_sessions(user_id)
     return True
 
 
@@ -113,14 +144,12 @@ async def _reset_totp(username: str) -> tuple[str, str] | None:
     ends, and the audit log records it. Works for any role, the last
     superadmin included: this is the way back in when no one else can help.
     """
-    from redis.asyncio import from_url
     from sqlalchemy import select
     from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
     from app.config import settings
     from app.models.user import AdminUser
     from app.services import audit
-    from app.services.auth import revoke_user_sessions
     from app.services.mfa import get_provisioning_uri
     from app.services.users import require_new_authenticator
 
@@ -147,11 +176,7 @@ async def _reset_totp(username: str) -> tuple[str, str] | None:
 
     await engine.dispose()
 
-    redis = await from_url(settings.redis_url, decode_responses=True)
-    try:
-        await revoke_user_sessions(redis, user_id)
-    finally:
-        await redis.aclose()
+    await _end_sessions(user_id)
     return secret, get_provisioning_uri(secret, username)
 
 
@@ -244,6 +269,7 @@ def main() -> None:
 
     if success:
         print(f"  ✓ Password for '{username}' updated successfully.")
+        print("  It must be changed at the next sign-in; every session of this account has ended.")
         print("  The TOTP secret is unchanged — your authenticator app still works.")
         print("  Lost the authenticator? Run with --reset-totp USERNAME.\n")
         sys.exit(0)
