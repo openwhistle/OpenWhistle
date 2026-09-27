@@ -307,13 +307,29 @@ def test_every_public_route_is_rate_limited_in_both_deployments() -> None:
     import yaml
 
     conf = (ROOT / "nginx/nginx.conf").read_text()
-    servers = re.findall(r"\n    server \{.*?\n    \}", conf, re.S)
-    proxied = [s for s in servers if "proxy_pass" in s]
-    assert proxied
-    for server in proxied:
-        for location in re.findall(r"location [^{]*\{[^}]*\}", server):
-            if "proxy_pass" in location:
-                assert "limit_req zone=" in location, location
+
+    def inline(text: str) -> str:
+        # /static/ lives in an included snippet and was never limited.
+        return re.sub(
+            r"include /etc/nginx/(snippets/\S+);",
+            lambda m: (ROOT / "nginx" / m.group(1)).read_text(), text,
+        )
+
+    configs = {
+        "nginx.conf": conf,
+        "nginx.behind-proxy.conf": (ROOT / "nginx/nginx.behind-proxy.conf").read_text(),
+        "ansible nginx.conf.j2": _render_role_template("nginx.conf.j2"),
+    }
+    for name, text in configs.items():
+        servers = re.findall(r"\n    server \{.*?\n    \}", inline(text), re.S)
+        proxied = [s for s in servers if "proxy_pass" in s]
+        assert proxied, name
+        for server in proxied:
+            loc = r"(?m)^\s*location [^{\n]*\{[^}]*\}"
+            server_level = re.sub(loc, "", server)
+            for location in re.findall(loc, server):
+                if "proxy_pass" in location:
+                    assert "limit_req zone=" in location + server_level, (name, location)
     rate = int(re.search(r"\bow_req:\w+ rate=(\d+)r/s", conf).group(1))  # type: ignore[union-attr]
     burst = int(re.search(r"ow_req burst=(\d+)", conf).group(1))  # type: ignore[union-attr]
 
