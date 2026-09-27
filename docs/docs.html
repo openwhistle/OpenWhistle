@@ -1399,7 +1399,14 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
           (<code>charts/openwhistle/</code>) sets
           <code>nginx.ingress.kubernetes.io/enable-access-log: "false"</code> on its Ingress. It also
           sets the bundled nginx's rate limit: <code>limit-rps: "10"</code>,
-          <code>limit-burst-multiplier: "3"</code>, a burst of 30.
+          <code>limit-burst-multiplier: "3"</code>, a burst of 30. It raises
+          <code>proxy-body-size</code> to <code>55m</code>, like the bundled nginx; ingress-nginx
+          otherwise refuses any upload over 1 MB.
+        </p>
+        <p>
+          The chart bundles no PostgreSQL and no Redis: set <code>secrets.databaseUrl</code> and
+          <code>secrets.redisUrl</code> to your own. A <code>helm upgrade</code> that changes a value
+          restarts the pods; with <code>autoscaling.enabled</code> the HPA alone sets the replica count.
         </p>
         <ul>
           <li>Your own <code>ingress.annotations</code> are merged with it; do not set it to <code>null</code>.</li>
