@@ -722,7 +722,9 @@ async def oidc_unlink(
     if not current_user.oidc_sub:
         return _sso_result("unlinked")
     # Without a password or a directory login, the link is the only way in.
-    if not current_user.password_hash and not current_user.ldap_username:
+    # A directory name counts only while LDAP is on.
+    directory_login = bool(current_user.ldap_username) and settings.ldap_enabled
+    if not current_user.password_hash and not directory_login:
         return _sso_result("only_way_in")
 
     issuer = current_user.oidc_issuer
