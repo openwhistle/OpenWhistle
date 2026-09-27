@@ -60,6 +60,13 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **A new German article**, `blog/interne-meldestelle-kostenlos.html`: what a free system still
   costs. The German comparison article keeps only vendor-published facts, each sourced and dated;
   the three older articles carried 2025 as publication date, they were published 2026-04-27.
+- **The German pages are re-targeted to the queries Search Console shows.** "Hinweisgebersystem
+  Software", "Hinweisgebersystem Anbieter (Vergleich)" and "HinSchG Software" had about 1,300
+  impressions and no click in three months, at positions 15 to 29. `de/index.html` now leads with
+  "Hinweisgebersystem Software", the comparison article with "Hinweisgebersystem Anbieter
+  Vergleich" and seven selection criteria. A new article, `blog/hinweisgebersystem-dsgvo-eu-hosting.html`,
+  answers the EU-hosting, encryption and GDPR questions (positions 9 to 10) in its first sentence.
+  Both landing FAQs add the question-style queries.
 - **Every page has a search head**: title of at most 60 characters, unique description, canonical,
   hreflang, Open Graph, JSON-LD. `docs/sitemap.xml` is rendered from the heads by
   `scripts/render_sitemap.py`; missing paths get `404.html`. `tests/test_seo.py` holds all of it.

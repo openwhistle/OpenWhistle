@@ -179,6 +179,7 @@ against the repo root), and every root-absolute link (`/docs.html`,
 | `docs/changelog.html` | Changelog, rendered from `CHANGELOG.md` — check the version nav in the sidebar. |
 | `docs/blog/index.html` | Blog index. |
 | `docs/blog/hinschg-compliance-leitfaden.html` | Article. |
+| `docs/blog/hinweisgebersystem-dsgvo-eu-hosting.html` | Article. |
 | `docs/blog/interne-meldestelle-einrichten.html` | Article. |
 | `docs/blog/interne-meldestelle-kostenlos.html` | Article. |
 | `docs/blog/was-ist-neu-in-2-0.html` | Article. |
