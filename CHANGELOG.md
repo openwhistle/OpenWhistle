@@ -99,6 +99,10 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Security
 
+- **Three code-scanning alerts closed before this release.** Draft and status-session ids were
+  checked with `^…$` and `re.match`, and `$` also matches before a trailing newline; every such
+  check is `fullmatch` now (#107). The language switch and draft-cookie alerts were shown not
+  exploitable by tests and dismissed with that evidence.
 - **Every request path and query string reached the container's stdout**, the setup token and OIDC
   codes included. `--no-access-log` empties uvicorn's access handlers; importing the app gave them
   back. Measured with the Dockerfile's own command: `"GET /setup?token=… HTTP/1.1" 200`.
