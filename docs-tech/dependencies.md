@@ -51,8 +51,13 @@ toolbox run sudo dnf install -y openldap-devel cyrus-sasl-devel "python$PY-devel
 toolbox run uv tool run --python "/usr/bin/python$PY" --from pip \
   pip wheel --no-deps "python-ldap==<locked version>" -w /tmp/wheels
 uv sync --extra dev --extra s3
-uv pip install --no-deps /tmp/wheels/python_ldap-*.whl
+# python-ldap needs pyasn1 and pyasn1-modules; the lock pins all three.
+uv export --extra ldap --no-hashes --no-emit-project -q > /tmp/ldap-constraints.txt
+uv pip install -c /tmp/ldap-constraints.txt /tmp/wheels/python_ldap-*.whl
 ```
+
+`--no-deps` used to stand here: `import ldap` then failed with
+`ModuleNotFoundError: No module named 'pyasn1'`, and every LDAP test errored.
 
 ## Guards
 

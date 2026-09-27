@@ -14,9 +14,9 @@
   },
   {
    "id": "reauth-totp-reusable",
-   "file": "app/api/auth.py",
-   "old": "    code_ok = verify_totp(current_user.totp_secret, totp_code) and bool(await redis.set(\n",
-   "new": "    code_ok = verify_totp(current_user.totp_secret, totp_code) and (True or await redis.set(\n",
+   "file": "app/services/mfa.py",
+   "old": "        await redis.set(f\"openwhistle:totp_used:{user_id}:{code}\", \"1\", nx=True, ex=90)\n",
+   "new": "        True or await redis.set(f\"openwhistle:totp_used:{user_id}:{code}\", \"1\", nx=True, ex=90)\n",
    "tests": "A"
   },
   {

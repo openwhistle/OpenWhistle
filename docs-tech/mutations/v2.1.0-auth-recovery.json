@@ -71,7 +71,7 @@
   {
    "id": "unlink-removes-only-way-in",
    "file": "app/api/auth.py",
-   "old": "    if not current_user.password_hash and not current_user.ldap_username:\n",
+   "old": "    if not current_user.password_hash and not directory_login:\n",
    "new": "    if False:\n",
    "tests": "A"
   },
@@ -99,8 +99,8 @@
   {
    "id": "reset-demo-account",
    "file": "app/api/admin.py",
-   "old": "    if settings.demo_mode and target.username in DEMO_USERNAMES:\n",
-   "new": "    if False:\n",
+   "old": "    if settings.demo_mode and target.username in DEMO_USERNAMES:\n        raise HTTPException(\n            status_code=status.HTTP_403_FORBIDDEN,\n            detail=\"The demo accounts keep their authenticator.\",\n",
+   "new": "    if False:\n        raise HTTPException(\n            status_code=status.HTTP_403_FORBIDDEN,\n            detail=\"The demo accounts keep their authenticator.\",\n",
    "tests": "A"
   },
   {

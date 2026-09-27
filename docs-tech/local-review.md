@@ -47,8 +47,9 @@ client cannot strip a header the proxy adds after it) **and** the `Host` the
 request addressed is a loopback name (`localhost`, `127.0.0.1`, `[::1]`, with
 or without a port).
 
-A client-*address* check does not work here: the app's `uvicorn` runs without
-`--proxy-headers` (see `Dockerfile`), so a browser on the same machine,
+A client-*address* check does not work here: the app's `uvicorn` takes
+`X-Forwarded-For` only from `127.0.0.1` (its default `forwarded_allow_ips`), so a
+browser on the same machine,
 reaching the container through podman/docker's NAT, shows up as the
 container's gateway IP — never as `127.0.0.1`. Either half of the header/Host
 check alone can be spoofed (a stray client header; nginx's default server

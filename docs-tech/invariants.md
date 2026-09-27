@@ -599,6 +599,80 @@ The constraint is the guard; the mutation breaks the `except` around the audit f
 **Found by the audit.** `exempt-session-refresh-lost` first stayed green: the test client followed
 the redirect to `/admin/account` and got a 200 there. The test now refuses redirects and reads the TTL.
 
+## Bug bounty (v2.1.0)
+
+Mutations: `docs-tech/mutations/v2.1.0-bug-bounty.json` (app),
+`v2.1.0-attachments.json` (uploads). The deployment and CI guards were each
+broken by hand and watched fail; their tests run the real step, filter or
+config (jq, bash, `docker compose config`, `helm template`, `nginx -t`).
+
+### App
+
+| Guard | Test that fires |
+| --- | --- |
+| The image's own CMD writes no request line | `test_the_image_command_writes_no_request_line` |
+| A TOTP code is six ASCII digits and authenticates one action, enrolment included | `test_a_fullwidth_copy_of_a_used_code_opens_no_second_session`, `test_the_enrolment_code_cannot_sign_in_a_second_session` |
+| The wizard stores only a secret shaped as it issues | `test_the_wizard_refuses_a_secret_it_did_not_issue` |
+| A non-ASCII CSRF token is a 403; the page token is the cookie the check reads | `test_a_non_ascii_csrf_token_is_a_403_not_a_500`, `test_the_page_token_matches_the_cookie_the_server_checks` |
+| Changing another account: organisation, superadmin tier, demo accounts | `test_an_admin_cannot_reactivate_a_superadmin_another_superadmin_disabled`, `test_a_demo_visitor_cannot_lock_the_next_visitor_out` |
+| A confirmed deletion leaves one entry with case number, requester, confirmer | `test_a_confirmed_deletion_is_in_the_audit_log` |
+| Four eyes: not an account and one it made | `test_an_account_and_the_account_it_made_are_not_four_eyes`, `test_migration_012_finds_the_maker_in_the_audit_log` |
+| LDAP on: local accounts still sign in; a name clash is a 401; the directory's name only | `test_a_local_account_signs_in_while_ldap_is_on`, `test_a_directory_user_named_like_a_local_account_is_refused_not_a_500`, `test_a_directory_entry_without_the_username_attribute_is_refused` |
+| One lockout per case-folded username, from the last failure | `test_case_variants_of_a_username_share_one_lockout`, `test_the_lock_lasts_lockout_minutes_from_the_last_failure` |
+| A refresh racing a revocation leaves no session | `test_a_refresh_racing_a_revocation_leaves_no_session` |
+| Unlink: a directory name counts only with LDAP on | `test_a_directory_name_is_no_way_in_while_ldap_is_off` |
+| §17 deadlines: from receipt, calendar months, one computation | `test_every_report_has_a_feedback_deadline_from_receipt`, `test_three_months_are_calendar_months`, `test_the_pdf_calls_seven_days_and_twelve_hours_late`, `test_the_ack_rate_counts_only_reports_whose_week_is_over`, `test_the_dashboard_and_the_case_page_agree_on_the_last_day` |
+| Text fields: line breaks count once; the server holds the page's limits | `test_line_breaks_count_once_as_in_the_browser`, `test_an_admin_reply_has_the_limit_its_form_shows`, `test_an_oversized_admin_field_is_refused_not_a_500` |
+| A mistyped notification address stays on the form | `test_a_mistyped_notification_address_is_caught_on_the_form` |
+| A closed case takes no reply | `test_a_closed_case_takes_no_reply_and_says_so` |
+| Case number in any case | `test_a_case_number_typed_in_lower_case_opens_the_case` |
+| Retention ends the status sessions of what it deletes | `test_retention_ends_the_status_sessions_of_what_it_deletes` |
+| The digest counts cases and says so | `test_the_digest_says_cases_where_it_counts_cases` |
+| Every account has an organisation; a superadmin chooses it | `test_an_account_made_before_multi_tenancy_keeps_its_cases`, `test_a_superadmin_gives_another_organisation_its_admin`, `test_an_ldap_account_gets_the_default_organisation` |
+| The scheduler runs in UTC whatever `TZ` says | `test_the_scheduler_keeps_utc_whatever_tz_says` |
+| The audit export: the page's filters, every row, itself recorded; downloads recorded | `test_the_export_holds_what_the_filtered_page_shows_and_all_of_it`, `test_exporting_the_log_and_downloading_evidence_are_recorded` |
+| A search is recorded in every organisation it read | `test_a_search_across_organisations_is_in_each_one_s_log` |
+| Unassigning is written as unassigning | `test_unassigning_is_recorded_as_unassigning` |
+| The username fields accept what the server accepts | `test_the_username_field_accepts_what_the_server_accepts` |
+| No published page calls Fernet AES-256 | `test_no_published_page_calls_fernet_aes_256` |
+
+All in `tests/test_v210_bug_bounty.py`, except the refresh race
+(`test_coverage_auth_extended.py`) and unlink (`test_v210_auth_recovery.py`).
+
+### Uploads
+
+| Guard | Test that fires |
+| --- | --- |
+| Palette survives cleaning (PNG and TIFF) | `test_palette_png_keeps_its_colours_and_transparency`, `test_palette_tiff_inside_office_files_keeps_its_colours` |
+| Every animation frame survives | `test_animated_png_and_webp_keep_every_frame` |
+| JPEG/PNG/WebP pixels never decoded; JPEG never grows | `test_pixels_are_not_decoded`, `test_jpeg_pixels_are_untouched_and_the_file_does_not_grow` |
+| Only orientation left of EXIF | `test_only_the_orientation_is_left_of_the_exif` |
+| WebP ICC/XMP dropped, flags cleared; truncated PNG refused | `test_webp_icc_profile_and_xmp_are_removed`, `test_webp_without_orientation_clears_the_exif_flag`, `test_a_truncated_png_is_refused` |
+| Nothing after a JPEG's end-of-image; no JFIF APP0 | `test_jpeg_trailer_after_the_image_is_dropped`, `test_jfif_segment_and_its_thumbnail_are_dropped` |
+| MPO accepted; GIF/TIFF pixel cap; cleaning off the event loop | `test_mpo_photo_is_accepted_as_its_first_picture`, `test_gif_over_the_pixel_cap_is_refused`, `test_cleaning_runs_off_the_event_loop` |
+| The size limit holds after cleaning | `test_a_file_that_grows_past_the_limit_when_cleaned_is_refused` |
+| XMP removed from every PDF object; embedded files refused | `test_pdf_page_xmp_is_removed`, `test_pdf_with_an_embedded_file_is_refused` |
+| Office: absPath, fileSharing, profile paths, SharePoint, rsids, docVars | `test_office_paths_sharepoint_columns_and_session_ids_are_removed` |
+
+In `tests/test_v210_attachment_fidelity.py`.
+
+### Deployment and CI
+
+| Guard | Test that fires |
+| --- | --- |
+| Quay cleanup never deletes a digest a kept tag uses | `test_a_digest_shared_with_a_release_tag_is_never_deleted` |
+| An uninspectable tag fails the publish | `test_an_uninspectable_tag_fails_the_step` |
+| Floating tags go only to the highest stable release | `test_floating_tags_move_only_to_the_highest_stable_release` |
+| Publish needs CI, E2E, security and a tag on main | `test_publishing_waits_for_every_check_on_the_same_commit`, `test_a_tag_off_main_is_refused` |
+| No example key passes the length check | `test_no_example_key_passes_the_length_check` |
+| Restated defaults equal `config.py` | `test_restated_defaults_match_config_py` |
+| The certificate before the stack; certbot stops the stack | `tests/test_ansible_certbot.py` |
+| Ansible `.env` values pass through Compose unchanged | `test_compose_passes_every_value_through_unchanged` |
+| Helm rolls pods on a changed value; no replicas with the HPA; ingress body size | `tests/test_helm_chart.py` |
+| Every digest-pinned workflow image is reached by Renovate | `test_every_digest_pinned_image_in_a_workflow_is_managed` |
+| Every proxied location, snippets included, is rate-limited | `test_every_public_route_is_rate_limited_in_both_deployments` |
+| The TLS key is 0600 from its first byte | `test_the_key_is_never_written_readable_by_others` |
+
 ## Repository and release
 
 | Guard | Test |

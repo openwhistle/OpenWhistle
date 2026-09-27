@@ -11,6 +11,18 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - **Migration 009 adds `must_change_password` to every account**, `false` for existing ones:
   nothing records who set their password.
+- **Migration 010 recomputes every feedback deadline** by §17 Abs. 2 HinSchG: three calendar
+  months from the acknowledgement or, without one, three months and seven days from receipt.
+  Unacknowledged reports get a deadline for the first time, and their reminders start.
+- **Migration 011 gives every account an organisation**, the default one where it had none.
+- **Migration 012 records who made each account** (`created_by_id`), from the audit log.
+- **An unedited `docker-compose.yml` or `.env.example` install no longer starts.** Compose now
+  reads `.env`, and no example key passes the 32-character check. Set `SECRET_KEY` and
+  `ENCRYPTION_KEY`.
+- **Images are published only after CI, E2E and the security scans pass on the tagged commit**,
+  and only for a tag on `main`. A release tag without `DOCKERHUB_TOKEN` now fails.
+- **`latest`, `X` and `X.Y` move only to the highest stable release** in their line: never to a
+  pre-release, never back to an old tag being re-published.
 
 ### Added
 
@@ -76,7 +88,85 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   cited a third Absatz of § 17 and a seventh of § 16, which do not exist; deletion is § 11 Abs. 5,
   not § 26; a missing reporting office costs up to 20,000 € (§ 40 Abs. 2 Nr. 2, Abs. 6), not 50,000 €.
 
+### Security
+
+- **Every request path and query string reached the container's stdout**, the setup token and OIDC
+  codes included. `--no-access-log` empties uvicorn's access handlers; importing the app gave them
+  back. Measured with the Dockerfile's own command: `"GET /setup?token=… HTTP/1.1" 200`.
+- **One TOTP code opened two sessions.** pyotp compares after Unicode normalisation, so `５７５２０３`
+  (fullwidth) matched a used `575203` while the single-use key held the raw string. Codes are six
+  ASCII digits; one code authenticates one action, sign-in after enrolment included.
+- **The setup wizard stored any TOTP secret the hidden field sent**: `AAAA` became the first
+  superadmin's second factor, `!!!!` was a 500.
+- **A plain admin could re-enable a superadmin** another superadmin had disabled; in `DEMO_MODE`
+  any visitor could deactivate or demote a demo account and lock out everyone after them.
+- **Four eyes were two accounts.** An admin could make a second admin, sign in with the password
+  they had just chosen, and confirm their own deletion request. An account and the accounts it
+  made, directly or through others, no longer confirm each other.
+- **A confirmed deletion left no trace.** `report.delete_confirmed` had labels in every locale and
+  was never written, and the report's own entries go with it. It is written now, with case
+  number, requester and confirmer.
+- **Office files kept the Windows account name** in the saved-folder path (`absPath`), template
+  and link paths (`C:\Users\<name>\…`), `fileSharing`, SharePoint columns, revision-session ids
+  and document variables. **PDF XMP on pages, images and fonts** (`dc:creator`) and editor
+  `PieceInfo` survived; a PDF with embedded files is now refused. **A JPEG's motion-photo video
+  or JFIF thumbnail** rode along after the image.
+- **A session refreshed during a password change survived it**: the refresh stored its new token
+  after the sweep had passed.
+- **The TLS private key was 0644 until its chmod**; it is 0600 from the first byte.
+- **Quay lost releases 1.3.1, 1.4.0 and 1.5.0.** The weekly cleanup deleted old `sha-` tags by
+  digest, which deletes every tag on that digest; 2.0.0 was three pushes from the same fate. It
+  now deletes only digests no kept tag uses.
+
 ### Fixed
+
+- **Switching LDAP on locked out every local account**, the setup wizard's superadmin included.
+  A directory user named like a local account was a 500; an entry without `LDAP_ATTR_USERNAME`
+  provisioned `ALICE` next to `alice`. The lockout counted `alice`, `Alice` and `ALICE`
+  separately and expired from the first wrong password: ten spread over 29 minutes locked for one.
+- **The §17 HinSchG deadlines were computed five ways.** `+90 days` is a day late for an
+  acknowledgement on 31 January or 1 February; a case moved to "in review" without acknowledging
+  had no feedback deadline and no reminder; 12 hours before the deadline the dashboard said
+  overdue and the case page 0 days left; the PDF called 7 days 12 hours compliant; the 7-day rate
+  counted a report received today as missed. One module computes them now.
+- **Photos and screenshots are stored as taken.** A palette PNG came out black, an animated PNG or
+  WebP kept one frame, a 5.5 MB JPEG grew to 14.4 MB, past the limit. JPEG, PNG and WebP are
+  cleaned by dropping metadata segments, pixels untouched; iPhone MPO photos are accepted.
+- **One upload could stall the server**: a 450 KB PNG cost 1.1 GB of RAM, a 518 KB GIF 26 s of CPU.
+  PNG, JPEG and WebP are no longer decoded, GIF and TIFF are capped at 50 megapixels, and cleaning
+  runs off the event loop. A file over 10 MB after cleaning is refused.
+- **Multi-tenancy could not give an organisation its own admin**: a new account took its
+  creator's organisation. Accounts made before multi-tenancy was switched on, or by LDAP, had none
+  and then saw no case. A superadmin chooses the organisation on `/admin/users`.
+- **Text at its `maxlength` was refused or cut for its line breaks.** Browsers send CRLF;
+  `maxlength` counts one (Chromium: 20 characters sent as 24). An admin reply took any length; a
+  long category slug, location code or organisation name, or a large sort order, was a 500.
+- **A mistyped notification address was stored**: the form is `novalidate`, so `type=email`
+  checked nothing, and the mail never came. **A reply to a closed case was stored** from a page
+  left open; it is refused and the whistleblower told. **A lower-case case number** was refused.
+- **The audit export ignored the page's filters and stopped at 10 000 rows.** Taking it,
+  downloading an attachment and unassigning are now recorded; a superadmin's search is recorded
+  in every organisation whose reports it read.
+- **`TZ` moved the "03:00 UTC" jobs**: with `TZ=Europe/Berlin` retention ran at 01:00 UTC. The
+  retention page named tomorrow for tonight's run between 00:00 and 03:00.
+- **The digest said "1 new message" for three replies on one case**; it counts cases and now says so.
+- **A non-ASCII CSRF token was a 500**, and two `ow_csrf` cookies refused every form.
+- **The username fields refused `.`, `@` and spaces** the server accepts.
+- **Retention left the status sessions of the cases it deleted** in Redis.
+- **Unlinking SSO was allowed when LDAP had been switched off** and the link was the only way in.
+- **The Quick Start ignored `.env`**: `docker-compose.yml` hard-coded `SECRET_KEY` and set no
+  `ENCRYPTION_KEY`.
+- **The publish job could call a tag it could not read "verified"**: a failure inside
+  `for x in $(…)` does not trip `set -e`.
+- **The Ansible role could not finish a TLS install or renew its certificate** (nginx held port 80
+  before the certificate existed), and its `.env` changed values containing `$`.
+- **`helm upgrade` with changed values restarted no pods**, reset the HPA's replicas, and the
+  ingress refused uploads over 1 MB.
+- **`/static/` was not rate-limited**: 80 parallel requests, 80 × 200; now 49 get 429, as on `/`.
+- **Helm, Ansible and `.env.example` shipped the old brand colour** `#0f4c81`.
+- **CI's nginx pin could never be updated**: Renovate matched none of the three `docker run` pins.
+- **A test patched `asyncio.create_task`** and left a `MagicMock` in the notification queue,
+  failing later tests depending on order.
 
 - **Admin lists hid their actions behind a sideways scrollbar.** Users, categories and locations sat in
   two thirds of the page, as organisations did in 2.0.1: the role select read "Falll" and the categories'
@@ -100,6 +190,12 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `tests/test_pattern_attributes.py`.
 - **The sidebar's Log out sat 12 px left of the links above it**, and the second panel of a
   two-column admin page (users, categories, locations) started 20 px below the first.
+
+### Removed
+
+- **`/admin/demo/reset`.** It reset nothing (the seed only adds what is missing) and no page
+  linked to it.
+- **`app/schemas`.** No route used it; it looked like the validation the wizard was missing.
 
 ## [2.0.1] — 2026-09-27
 
