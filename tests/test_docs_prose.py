@@ -4,9 +4,11 @@ scripts/prose-check.mjs; this file is the tiebreak, not the authority on style.
 
 Two gates, per file: no prose sentence over 30 words, and an average under 18.
 
-Scope is an exact list, not a walk of docs/: the landing pages and the blog are
-marketing and articles, not documentation (plan 2026-09-26, ruling "Prose
-scope"). A later page joins by being added to ``SCOPE``.
+Scope is an exact list, not a walk of docs/: a later page joins by being added
+to ``SCOPE``. The German landing page and the blog joined on 2026-09-27 (plan
+2026-09-27-website-seo, "Prose limits extend to the landing pages and the
+blog"): readability is a ranking signal, and the reader is the same one. The
+blog is globbed, so a new article is measured from its first commit.
 
 What is NOT prose, and why: code and pre blocks, table rows, headings,
 script/style, and page chrome (nav, aside, header, footer). Those carry the
@@ -36,6 +38,8 @@ SCOPE = sorted(
         ROOT / "docs/roadmap.html",
         ROOT / "docs/hinschg_reference.md",
         *(ROOT / "docs/security").glob("*.md"),
+        ROOT / "docs/de/index.html",
+        *(ROOT / "docs/blog").glob("*.html"),
     ]
 )
 
@@ -46,15 +50,33 @@ SCOPE = sorted(
 # lowercase word, which the splitter below never splits on anyway. `Art`,
 # `Abs` and `Nr` are the legal citations (Art. 5 GDPR, §17 Abs. 1 HinSchG).
 _ABBREVIATION = re.compile(r"\b(e\.g|i\.e|vs|cf|approx|Art|Abs|Nr)\.", re.IGNORECASE)
+# German pages: "z. B. Sie" would otherwise split before the capital "B" and
+# again before "Sie". Multi-part abbreviations collapse to one token (one
+# word, as a reader takes them in); single ones lose their dot. Case matters
+# here: "ca." or "vgl." are lowercase, and "Mai." or "Str." never end a
+# sentence on these pages, while an IGNORECASE "s." would swallow real ends.
+_GERMAN_MULTI = re.compile(r"\b(z|d|u|o|s|i)\.\s?(B|h|a|g|o|U|S)\.(?:\s?(d)\.)?")
+_GERMAN_SINGLE = re.compile(
+    r"\b(bzw|ggf|gem|vgl|ca|inkl|zzgl|bspw|evtl|sog|lit|Mio|Mrd|Tel|Min|Std)\."
+)
+# "am 2. Juli 2023": a day before a month name is an ordinal, not an ending.
+_GERMAN_DATE = re.compile(
+    r"(\d)\.(?=\s(?:Januar|Februar|März|April|Mai|Juni|Juli|August|September"
+    r"|Oktober|November|Dezember)\b)"
+)
 # A sentence ends at . ! ? (optionally closed by a quote, bracket or emphasis
 # marker) followed by whitespace and something that can open a sentence. A
 # version number or a path has no whitespace after its dots, so it never splits.
-_SENTENCE_END = re.compile(r"(?<=[.!?])[\"')\]*]*\s+(?=[A-Z0-9(\"'`*§])")
+# German sentences may open with an umlaut or a German opening quote.
+_SENTENCE_END = re.compile(r"(?<=[.!?])[\"')\]*“]*\s+(?=[A-ZÄÖÜ0-9(\"'`*§„])")
 _WORD = re.compile(r"\w")
 
 
 def sentences(text: str) -> list[str]:
     text = _ABBREVIATION.sub(r"\1", " ".join(text.split()))
+    text = _GERMAN_MULTI.sub(lambda m: "".join(g for g in m.groups() if g), text)
+    text = _GERMAN_SINGLE.sub(r"\1", text)
+    text = _GERMAN_DATE.sub(r"\1", text)
     return [s.strip() for s in _SENTENCE_END.split(text) if s.strip()]
 
 
@@ -232,6 +254,30 @@ def test_the_splitter_and_counter_are_pinned() -> None:
     ]
     # The dash is not a word; inline code is one.
     assert [word_count(s) for s in sentences(text)] == [6, 9, 3, 1]
+
+
+def test_the_splitter_knows_german_abbreviations_dates_and_citations() -> None:
+    text = (
+        "Das gilt z. B. für Sie, d. h. für jede Stelle i. S. d. Gesetzes. "
+        "Seit dem 2. Juli 2023 gilt § 17 Abs. 1 Nr. 1 bzw. ggf. Abs. 2 gem. HinSchG. "
+        "Ältere Fassungen, vgl. ca. 2019, u. a. die Richtlinie. „Kurz.“ Ende."
+    )
+    assert sentences(text) == [
+        "Das gilt zB für Sie, dh für jede Stelle iSd Gesetzes.",
+        "Seit dem 2 Juli 2023 gilt § 17 Abs 1 Nr 1 bzw ggf Abs 2 gem HinSchG.",
+        "Ältere Fassungen, vgl ca 2019, ua die Richtlinie.",
+        "„Kurz.",
+        "Ende.",
+    ]
+    # "zB", "dh" and "iSd" are one word each, as a reader takes them in. A
+    # closing quote after the full stop belongs to the break, as in English.
+    assert word_count(sentences(text)[0]) == 11
+    # A real ending before a number or a paragraph sign still splits.
+    assert sentences("Es gilt Abs. 3. § 16 regelt den Kanal. 50 Beschäftigte.") == [
+        "Es gilt Abs 3.",
+        "§ 16 regelt den Kanal.",
+        "50 Beschäftigte.",
+    ]
 
 
 def test_html_prose_skips_code_tables_headings_and_chrome() -> None:
