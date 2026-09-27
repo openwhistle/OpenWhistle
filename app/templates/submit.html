@@ -136,8 +136,9 @@
                     <input type="email" class="form-control" id="secure_email" name="secure_email"
                            value="{{ state.get('secure_email', '') }}"
                            placeholder="{{ t('submit.step.mode.secure_email.placeholder') }}"
-                           aria-describedby="secure-email-hint"
+                           {{ field.attrs('secure_email', 'secure-email-hint') }}
                            autocomplete="off" maxlength="320">
+                    {{ field.error('secure_email') }}
                     <div class="form-hint" id="secure-email-hint">{{ t('submit.step.mode.secure_email.hint') }}</div>
                 </div>
             </div>

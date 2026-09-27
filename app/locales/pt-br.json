@@ -405,6 +405,7 @@
   "submit.error.category_required": "Selecione uma categoria.",
   "submit.error.description_too_short": "A descrição deve ter pelo menos 10 caracteres.",
   "submit.error.description_too_long": "A descrição não deve exceder 10.000 caracteres.",
+  "submit.error.email_invalid": "Verifique o endereço de e-mail: ele precisa de um nome, um @ e um domínio como proton.me.",
   "submit.error.invalid_location": "O local selecionado não é válido.",
   "submit.error.session_incomplete": "Sua sessão está incompleta. Comece novamente.",
   "submit.error.submit_failed": "Sua denúncia NÃO foi enviada. Suas respostas foram mantidas: confira-as e envie novamente.",

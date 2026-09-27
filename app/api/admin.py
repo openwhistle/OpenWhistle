@@ -13,6 +13,7 @@ from app.api.deps import get_current_admin, require_admin, require_superadmin
 from app.config import settings
 from app.csrf import validate_csrf, validate_csrf_header
 from app.database import get_db
+from app.forms import Multiline, SortOrder, Text32, Text64, Text128, Text512, Text5000
 from app.i18n import get_lang, make_translator
 from app.middleware import check_ip_warning, clear_ip_warning
 from app.models.report import STATUS_TRANSITIONS, Report, ReportStatus
@@ -379,7 +380,7 @@ async def _reveal_gate(
 async def reveal_identity(
     request: Request,
     report_id: uuid.UUID,
-    reason: str = Form(""),
+    reason: Multiline = "",
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(get_current_admin),
     _csrf: None = Depends(validate_csrf),
@@ -549,7 +550,7 @@ async def update_status(
 async def admin_reply(
     request: Request,
     report_id: uuid.UUID,
-    content: str = Form(...),
+    content: Text5000,
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(get_current_admin),
     _csrf: None = Depends(validate_csrf),
@@ -622,7 +623,7 @@ async def assign_report(
 async def add_note(
     request: Request,
     report_id: uuid.UUID,
-    content: str = Form(...),
+    content: Text5000,
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(get_current_admin),
     _csrf: None = Depends(validate_csrf),
@@ -808,7 +809,7 @@ async def export_pdf(
 async def export_pdf_with_identity(
     request: Request,
     report_id: uuid.UUID,
-    reason: str = Form(""),
+    reason: Multiline = "",
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(get_current_admin),
     _csrf: None = Depends(validate_csrf),
@@ -896,10 +897,10 @@ async def categories_page(
 @router.post("/categories")
 async def create_category(
     request: Request,
-    slug: str = Form(...),
-    label_en: str = Form(...),
-    label_de: str = Form(...),
-    sort_order: int = Form(default=50),
+    slug: Text64,
+    label_en: Text128,
+    label_de: Text128,
+    sort_order: SortOrder = 50,
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf),
@@ -1402,10 +1403,10 @@ async def locations_page(
 @router.post("/locations")
 async def create_location(
     request: Request,
-    name: str = Form(...),
-    code: str = Form(...),
-    description: str = Form(default=""),
-    sort_order: int = Form(default=0),
+    name: Text128,
+    code: Text32,
+    description: Text512 = "",
+    sort_order: SortOrder = 0,
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf),
@@ -1658,10 +1659,10 @@ async def organisations_page(
 @router.post("/organisations", response_class=HTMLResponse)
 async def create_organisation(
     request: Request,
+    name: Text128,
+    slug: Text64,
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(require_superadmin),
-    name: str = Form(...),
-    slug: str = Form(...),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
     import re

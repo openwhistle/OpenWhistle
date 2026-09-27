@@ -393,6 +393,7 @@
   "submit.error.category_required": "Bitte wählen Sie eine Kategorie.",
   "submit.error.description_too_short": "Die Beschreibung muss mindestens 10 Zeichen lang sein.",
   "submit.error.description_too_long": "Die Beschreibung darf 10.000 Zeichen nicht überschreiten.",
+  "submit.error.email_invalid": "Prüfen Sie die E-Mail-Adresse: Sie braucht einen Namen, ein @ und eine Domain wie proton.me.",
   "submit.error.invalid_location": "Der ausgewählte Standort ist nicht gültig.",
   "submit.error.session_incomplete": "Ihre Sitzung ist unvollständig. Bitte beginnen Sie von vorne.",
   "submit.error.submit_failed": "Ihre Meldung wurde NICHT gesendet. Ihre Angaben bleiben erhalten: Prüfen Sie sie und senden Sie erneut.",

@@ -559,3 +559,94 @@ async def test_the_dashboard_and_the_case_page_agree_on_the_last_day(
     row = dash[dash.index(f'<span class="mono dash-nowrap">{report.case_number}'):]
     row = row[:row.index("</tr>")]
     assert "sla-overdue" not in row and "sla-overdue" not in case.split("detail.sla3m")[-1][:600]
+
+
+# ── Form input: what the browser allows, the server accepts; the rest is a 4xx ─
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(("path", "data"), [
+    ("/admin/categories", {"slug": "s" * 65, "label_en": "x", "label_de": "x"}),
+    ("/admin/categories", {"slug": "ok", "label_en": "x" * 129, "label_de": "x"}),
+    ("/admin/categories", {"slug": "big", "label_en": "x", "label_de": "x",
+                           "sort_order": "99999999999"}),
+    ("/admin/locations", {"name": "n", "code": "C" * 33}),
+    ("/admin/locations", {"name": "n" * 129, "code": "C1"}),
+    ("/admin/locations", {"name": "n", "code": "C2", "description": "d" * 513}),
+    ("/admin/organisations", {"name": "n" * 129, "slug": "org-long-name"}),
+])
+async def test_an_oversized_admin_field_is_refused_not_a_500(
+    acting_as, db_session: AsyncSession, path: str, data: dict[str, str]
+) -> None:
+    from app.models.user import AdminRole
+
+    client, act = acting_as
+    act(await _totp_user(db_session, AdminRole.superadmin))
+    resp = await client.post(path, data=data, follow_redirects=False)
+    assert 400 <= resp.status_code < 500
+
+
+@pytest.mark.asyncio
+async def test_an_admin_reply_has_the_limit_its_form_shows(
+    acting_as, db_session: AsyncSession
+) -> None:
+    from app.models.user import AdminRole
+    from app.services.report import create_report
+
+    client, act = acting_as
+    report, _ = await create_report(db_session, "financial_fraud", "Unbounded replies, anyone?")
+    act(await _totp_user(db_session, AdminRole.admin))
+    for path in ("reply", "notes"):
+        resp = await client.post(
+            f"/admin/reports/{report.id}/{path}", data={"content": "x" * 5001},
+            follow_redirects=False,
+        )
+        assert resp.status_code == 422, path
+
+
+@pytest.mark.asyncio
+async def test_line_breaks_count_once_as_in_the_browser(
+    acting_as, db_session: AsyncSession
+) -> None:
+    """A browser submits a textarea's line breaks as CRLF; maxlength counts
+    each as one. 500 characters with a line break, as typed: accepted."""
+    from app.models.report import SubmissionMode
+    from app.models.user import AdminRole
+    from app.services.crypto import encrypt
+    from app.services.report import create_report
+
+    client, act = acting_as
+    report, _ = await create_report(
+        db_session, "financial_fraud", "Identity reveal with a long reason.",
+        submission_mode=SubmissionMode.confidential, confidential_name_enc=encrypt("Jane"),
+    )
+    act(await _totp_user(db_session, AdminRole.admin))
+    reason = "r" * 250 + "\r\n" + "r" * 249  # 500 in the page (maxlength), 501 on the wire
+    resp = await client.post(
+        f"/admin/reports/{report.id}/identity", data={"reason": reason},
+        follow_redirects=False,
+    )
+    assert resp.status_code == 200, resp.text[:300]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("email", ["jane.example.com", "jane@", "jane@proton", "a b@c.de"])
+async def test_a_mistyped_notification_address_is_caught_on_the_form(
+    client: AsyncClient, email: str
+) -> None:
+    """The form is novalidate, so type=email checks nothing: the address was
+    stored as typed and the whistleblower waited for mail that never came."""
+    from tests.test_submit_prg import _post, _step
+
+    await _post(client, submission_mode="confidential", confidential_name="Jane", secure_email=email)
+    page = (await client.get("/submit")).text
+    assert _step(page) == 1
+    assert 'value="Jane"' in page
+
+
+@pytest.mark.asyncio
+async def test_a_real_notification_address_passes(client: AsyncClient) -> None:
+    from tests.test_submit_prg import _post, _step
+
+    await _post(client, submission_mode="confidential", secure_email="jane.doe+ow@proton.me")
+    assert _step((await client.get("/submit")).text) != 1

@@ -31,6 +31,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.csrf import validate_csrf
 from app.database import get_db
+from app.forms import Multiline, Text256, Text320, Text512
 from app.i18n import get_lang, make_translator
 from app.models.organisation import Organisation
 from app.models.report import SubmissionMode
@@ -76,12 +77,20 @@ _STEP_REVIEW = 6
 # Which form field a wizard error code belongs to, so the template can mark that
 # field aria-invalid and point it at an inline message. Codes absent here (e.g.
 # session_incomplete) concern no single field and show only in the banner.
+# The HTML "valid e-mail address" (what type=email accepts), with a dot in the
+# domain: mail to "jane@proton" goes nowhere on the internet.
+_EMAIL = re.compile(
+    r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
+    r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+"
+)
+
 _ERROR_FIELD: dict[str, str] = {
     "mode_required": "submission_mode",
     "invalid_location": "location_id",
     "category_required": "category",
     "description_too_short": "description",
     "description_too_long": "description",
+    "email_invalid": "secure_email",
     "attachments_too_large": "files",
     "attachments_no_room": "files",
 }
@@ -651,15 +660,15 @@ async def submit_post(
     step: int = Form(1),
     # Step 1 — mode
     submission_mode: str = Form(""),
-    confidential_name: str = Form(""),
-    confidential_contact: str = Form(""),
-    secure_email: str = Form(""),
+    confidential_name: Text256 = "",
+    confidential_contact: Text512 = "",
+    secure_email: Text320 = "",
     # Step 2 — location
     location_id: str = Form(""),
     # Step 3 — category
     category: str = Form(""),
     # Step 4 — description
-    description: str = Form(""),
+    description: Multiline = "",
     # Step 5 — attachments handled separately below
     files: list[UploadFile] = File(default=[]),
     redis: Redis = Depends(get_redis),
@@ -759,6 +768,11 @@ async def submit_post(
             state["confidential_name"] = name_stripped
             state["confidential_contact"] = contact_stripped
             state["secure_email"] = email_stripped
+            # The form is novalidate, so type=email checks nothing in the
+            # browser: a mistyped address used to be stored as is, and the
+            # notifications it was given for never arrived.
+            if email_stripped and not _EMAIL.fullmatch(email_stripped):
+                return await _fail(_STEP_MODE, "email_invalid")
         else:
             # Purge any identifying fields entered on a previous confidential
             # pass — they must not linger in the Redis session for an anonymous
@@ -1190,9 +1204,9 @@ async def status_post(
 @router.post("/reply", response_class=HTMLResponse)
 async def reply_post(
     request: Request,
+    content: Multiline,
     case_number: str = Form(""),
     pin: str = Form(""),
-    content: str = Form(...),
     redis: Redis = Depends(get_redis),
     db: AsyncSession = Depends(get_db),
     _csrf: None = Depends(validate_csrf),
