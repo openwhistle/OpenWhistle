@@ -27,7 +27,7 @@ def test_self_signed_certificate_is_created_once(tmp_path: Path) -> None:
     assert ensure(tmp_path / "none", tmp_path / "tls", "whistle.example.org") == "self-signed"
     cert = x509.load_pem_x509_certificate((tmp_path / "tls/fullchain.pem").read_bytes())
     san = cert.extensions.get_extension_for_class(x509.SubjectAlternativeName).value
-    assert "whistle.example.org" in san.get_values_for_type(x509.DNSName)
+    assert san.get_values_for_type(x509.DNSName) == ["whistle.example.org", "localhost"]
     assert ensure(tmp_path / "none", tmp_path / "tls", "whistle.example.org") == "kept"
 
 
@@ -37,7 +37,7 @@ def test_a_changed_tls_hostname_replaces_the_self_signed_certificate(tmp_path: P
     assert ensure(tmp_path / "none", tmp_path / "tls", "new.example.org") == "self-signed"
     cert = x509.load_pem_x509_certificate((tmp_path / "tls/fullchain.pem").read_bytes())
     san = cert.extensions.get_extension_for_class(x509.SubjectAlternativeName).value
-    assert "new.example.org" in san.get_values_for_type(x509.DNSName)
+    assert san.get_values_for_type(x509.DNSName) == ["new.example.org", "localhost"]
 
 
 @pytest.mark.parametrize("operator", [False, True])

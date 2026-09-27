@@ -168,7 +168,7 @@
   {
    "id": "email-unchecked",
    "file": "app/api/reports.py",
-   "old": "            if email_stripped and not _EMAIL.fullmatch(email_stripped):\n",
+   "old": "            if email_stripped and not _valid_email(email_stripped):\n",
    "new": "            if False:\n",
    "tests": "A"
   },

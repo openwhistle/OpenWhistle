@@ -78,11 +78,20 @@ _STEP_REVIEW = 6
 # field aria-invalid and point it at an inline message. Codes absent here (e.g.
 # session_incomplete) concern no single field and show only in the banner.
 # The HTML "valid e-mail address" (what type=email accepts), with a dot in the
-# domain: mail to "jane@proton" goes nowhere on the internet.
-_EMAIL = re.compile(
-    r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
-    r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+"
-)
+# domain: mail to "jane@proton" goes nowhere on the internet. Checked part by
+# part: one regex with nested repetition backtracked badly on long input.
+_EMAIL_LOCAL = re.compile(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+")
+_EMAIL_LABEL = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?")
+
+
+def _valid_email(address: str) -> bool:
+    local, at, domain = address.partition("@")
+    labels = domain.split(".")
+    return (
+        bool(at) and bool(_EMAIL_LOCAL.fullmatch(local)) and len(labels) >= 2
+        and all(_EMAIL_LABEL.fullmatch(label) for label in labels)
+    )
+
 
 _ERROR_FIELD: dict[str, str] = {
     "mode_required": "submission_mode",
@@ -771,7 +780,7 @@ async def submit_post(
             # The form is novalidate, so type=email checks nothing in the
             # browser: a mistyped address used to be stored as is, and the
             # notifications it was given for never arrived.
-            if email_stripped and not _EMAIL.fullmatch(email_stripped):
+            if email_stripped and not _valid_email(email_stripped):
                 return await _fail(_STEP_MODE, "email_invalid")
         else:
             # Purge any identifying fields entered on a previous confidential
