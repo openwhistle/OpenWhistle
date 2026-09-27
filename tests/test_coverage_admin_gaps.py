@@ -10,7 +10,6 @@ Covers:
 - audit_log_page: invalid page number falls back to page 1
 - location create: required code / duplicate code errors
 - location deactivate/reactivate: success paths
-- demo_reset: success path when DEMO_MODE is true
 - telephone_channel_page: renders
 - organisations_page / create_organisation / deactivate_organisation (superadmin)
 """
@@ -25,7 +24,6 @@ from httpx import AsyncClient
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import settings
 from app.models.organisation import Organisation
 from app.models.report import Report
 from app.models.user import AdminRole, AdminUser
@@ -346,41 +344,6 @@ async def test_reactivate_location_not_found_returns_404(
         data={"csrf_token": csrf},
     )
     assert resp.status_code == 404
-
-
-# ─── demo_reset: success ───────────────────────────────────────────────────────
-
-
-@pytest.mark.asyncio
-async def test_demo_reset_success_when_demo_mode(
-    client: AsyncClient, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    from unittest.mock import AsyncMock, patch
-
-    admin, totp_secret = await _create_admin(db_session)
-    await _login_admin(client, admin, totp_secret)
-    monkeypatch.setattr(settings, "demo_mode", True)
-
-    csrf = client.cookies.get("ow_csrf")
-    with patch("app.services.demo_seed.seed_demo_data", AsyncMock()) as mock_seed:
-        resp = await client.post("/admin/demo/reset", headers={"X-CSRF-Token": csrf or ""})
-
-    assert resp.status_code == 200
-    assert resp.json() == {"reset": True}
-    mock_seed.assert_awaited_once()
-
-
-@pytest.mark.asyncio
-async def test_demo_reset_forbidden_when_not_demo_mode(
-    client: AsyncClient, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    admin, totp_secret = await _create_admin(db_session)
-    await _login_admin(client, admin, totp_secret)
-    monkeypatch.setattr(settings, "demo_mode", False)
-
-    csrf = client.cookies.get("ow_csrf")
-    resp = await client.post("/admin/demo/reset", headers={"X-CSRF-Token": csrf or ""})
-    assert resp.status_code == 403
 
 
 # ─── telephone_channel_page ────────────────────────────────────────────────────

@@ -1066,3 +1066,30 @@ async def test_a_search_across_organisations_is_in_each_one_s_log(
         )
     )).scalars().all())
     assert org.id in orgs
+
+
+@pytest.mark.asyncio
+async def test_unassigning_is_recorded_as_unassigning(
+    acting_as, db_session: AsyncSession
+) -> None:
+    """The audit filter offered 'unassigned' and nothing ever wrote it."""
+    from sqlalchemy import select
+
+    from app.models.audit import AuditLog
+    from app.models.user import AdminRole
+    from app.services.audit import AuditAction
+    from app.services.report import create_report
+
+    client, act = acting_as
+    admin = await _totp_user(db_session, AdminRole.admin)
+    report, _ = await create_report(db_session, "financial_fraud", "Assigned, then not.")
+    act(admin)
+    await client.post(f"/admin/reports/{report.id}/assign", data={"admin_id": str(admin.id)})
+    await client.post(f"/admin/reports/{report.id}/assign", data={"admin_id": ""})
+    actions = (await db_session.execute(
+        select(AuditLog.action).where(AuditLog.report_id == report.id)
+        .order_by(AuditLog.created_at)
+    )).scalars().all()
+    assert [a for a in actions if a.startswith("report.") and "assign" in a] == [
+        AuditAction.REPORT_ASSIGNED, AuditAction.REPORT_UNASSIGNED,
+    ]

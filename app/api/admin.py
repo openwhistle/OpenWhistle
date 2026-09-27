@@ -30,13 +30,6 @@ router = APIRouter(prefix="/admin")
 _ALLOWED_SORT = frozenset({"submitted_at", "case_number", "category", "status"})
 _ALLOWED_PER_PAGE = frozenset({10, 25, 50, 100})
 
-# Role privilege ranking — used for tier checks in user management.
-_ROLE_RANK: dict[AdminRole, int] = {
-    AdminRole.case_manager: 0,
-    AdminRole.admin: 1,
-    AdminRole.superadmin: 2,
-}
-
 
 def _can_access_report(user: AdminUser, report: Report) -> bool:
     """Object-level authorization for a single report.
@@ -594,8 +587,12 @@ async def assign_report(
 
     old_assignee = report.assigned_to.username if report.assigned_to else None
     await report_service.assign_report(db, report, assignee)
+    # Unassigning used to be written as "assigned" to nobody, so the audit
+    # filter's "unassigned" never matched a row.
     await audit_service.log(
-        db, current_user, AuditAction.REPORT_ASSIGNED, report_id=report.id,
+        db, current_user,
+        AuditAction.REPORT_ASSIGNED if assignee else AuditAction.REPORT_UNASSIGNED,
+        report_id=report.id,
         detail={"from": old_assignee, "to": assignee.username if assignee else None},
     )
     await db.commit()
@@ -1567,18 +1564,6 @@ async def dismiss_ip_warning(
 ) -> JSONResponse:
     await clear_ip_warning()
     return JSONResponse({"cleared": True})
-
-
-@router.post("/demo/reset")
-async def demo_reset(
-    current_user: AdminUser = Depends(get_current_admin),
-    _csrf: None = Depends(validate_csrf_header),
-) -> JSONResponse:
-    if not settings.demo_mode:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-    from app.services.demo_seed import seed_demo_data
-    await seed_demo_data()
-    return JSONResponse({"reset": True})
 
 
 # ── Telephone channel stub (HinSchG §16) ─────────────────────────────────────
