@@ -36,10 +36,10 @@
     </div>
     {% endif %}
 
-    <div class="admin-split-grid">
+    <div class="admin-stack">
 
         {# Add new user form #}
-        <div class="panel">
+        <div class="panel panel-narrow">
             <h2 class="panel-header">{{ t('admin.users.add.header') }}</h2>
             <form method="post" action="/admin/users">
                 <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">

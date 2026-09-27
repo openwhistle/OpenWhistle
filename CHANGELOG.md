@@ -71,6 +71,10 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Admin lists hid their actions behind a sideways scrollbar.** Users, categories and locations sat in
+  two thirds of the page, as organisations did in 2.0.1: the role select read "Falll" and the categories'
+  actions were out of view at 1920 px. Every list now runs under its form, across the full width, and
+  table cells are 0.75 rem a side, so the German dashboard's eight columns fit 1,064 px.
 - **OIDC login could never succeed.** Nothing ever wrote an account's OIDC `sub` and issuer, so
   every SSO login ended in "no account is linked". Linking now exists (see Added).
 - **A lost authenticator locked its admin out for good.** The reset script kept the TOTP secret,

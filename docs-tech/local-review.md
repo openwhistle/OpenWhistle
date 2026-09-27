@@ -174,10 +174,13 @@ against the repo root), and every root-absolute link (`/docs.html`,
 | `docs/de/index.html` | Landing page, German — the longest strings; check nothing overflows or truncates. |
 | `docs/docs.html` | Full documentation — long page, check the anchor nav and the "Current version" line. |
 | `docs/roadmap.html` | Roadmap. |
+| `docs/open-source-whistleblowing-software.html` | Comparison with GlobaLeaks, SecureDrop, Hush Line — the table scrolls inside its box at 390 px. |
+| `docs/404.html` | Not-found page (noindex); open any missing path on the served site. |
 | `docs/changelog.html` | Changelog, rendered from `CHANGELOG.md` — check the version nav in the sidebar. |
 | `docs/blog/index.html` | Blog index. |
 | `docs/blog/hinschg-compliance-leitfaden.html` | Article. |
 | `docs/blog/interne-meldestelle-einrichten.html` | Article. |
+| `docs/blog/interne-meldestelle-kostenlos.html` | Article. |
 | `docs/blog/was-ist-neu-in-2-0.html` | Article. |
 | `docs/blog/whistleblower-software-vergleich.html` | Article. |
 

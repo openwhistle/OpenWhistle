@@ -18,9 +18,9 @@
         <h1>{{ t('admin.locations.title') }}</h1>
     </div>
 
-    <div class="admin-split-grid">
+    <div class="admin-stack">
 
-        <div class="panel">
+        <div class="panel panel-narrow">
             <h2 class="panel-header">{{ t('admin.locations.add.header') }}</h2>
             <form method="post" action="/admin/locations" novalidate>
                 <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
