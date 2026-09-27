@@ -33,7 +33,7 @@
                 <div class="form-group">
                     <label class="form-label" for="loc-code">{{ t('admin.locations.add.code') }}</label>
                     <input type="text" class="form-control" id="loc-code" name="code" required
-                           maxlength="32" pattern="[A-Za-z0-9_-]+"
+                           maxlength="32" pattern="[A-Za-z0-9_\-]+"
                            placeholder="{{ t('admin.locations.add.code.placeholder') }}"
                            aria-describedby="loc-code-hint" aria-required="true">
                     <div class="form-hint" id="loc-code-hint">{{ t('admin.locations.add.code.hint') }}</div>

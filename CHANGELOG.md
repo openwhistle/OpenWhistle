@@ -43,6 +43,10 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and the docs said to edit the database. See Added.
 - **No session is accepted for an account whose authenticator awaits enrolment.** A reset takes
   effect in the same commit, before its sessions are swept from Redis.
+- **Four form fields skipped their format check in Chrome.** Browsers compile `pattern` with the
+  `v` flag, where a bare `-` closing a character class is a syntax error; the new-user, location,
+  organisation and setup forms logged it and checked nothing. Now escaped, held by
+  `tests/test_pattern_attributes.py`.
 
 ## [2.0.1] — 2026-09-27
 
