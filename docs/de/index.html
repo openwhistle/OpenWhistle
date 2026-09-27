@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Apply theme before first paint to avoid flash -->
   <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
-  <title>Kostenloses Hinweisgebersystem, Open Source | OpenWhistle</title>
-  <meta name="description" content="OpenWhistle ist ein kostenloses Hinweisgebersystem, Open Source unter GPL-3.0: interne Meldestelle nach HinSchG, selbst gehostet, ohne IP-Protokolle.">
+  <title>Hinweisgebersystem Software – kostenlos &amp; Open Source</title>
+  <meta name="description" content="Hinweisgebersystem-Software für das HinSchG: kostenlos, Open Source unter GPL-3.0, selbst gehostet. Interne Meldestelle mit Fristen, ohne IP-Protokolle.">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#08080a" media="(prefers-color-scheme: dark)">
@@ -24,8 +24,8 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="OpenWhistle">
   <meta property="og:url" content="https://openwhistle.net/de/">
-  <meta property="og:title" content="Kostenloses Hinweisgebersystem, Open Source | OpenWhistle">
-  <meta property="og:description" content="OpenWhistle ist ein kostenloses Hinweisgebersystem, Open Source unter GPL-3.0: interne Meldestelle nach HinSchG, selbst gehostet, ohne IP-Protokolle.">
+  <meta property="og:title" content="Hinweisgebersystem Software – kostenlos &amp; Open Source">
+  <meta property="og:description" content="Hinweisgebersystem-Software für das HinSchG: kostenlos, Open Source unter GPL-3.0, selbst gehostet. Interne Meldestelle mit Fristen, ohne IP-Protokolle.">
   <meta property="og:image" content="https://openwhistle.net/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -33,8 +33,8 @@
   <meta property="og:locale" content="de_DE">
   <meta property="og:locale:alternate" content="en_US">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Kostenloses Hinweisgebersystem, Open Source | OpenWhistle">
-  <meta name="twitter:description" content="OpenWhistle ist ein kostenloses Hinweisgebersystem, Open Source unter GPL-3.0: interne Meldestelle nach HinSchG, selbst gehostet, ohne IP-Protokolle.">
+  <meta name="twitter:title" content="Hinweisgebersystem Software – kostenlos &amp; Open Source">
+  <meta name="twitter:description" content="Hinweisgebersystem-Software für das HinSchG: kostenlos, Open Source unter GPL-3.0, selbst gehostet. Interne Meldestelle mit Fristen, ohne IP-Protokolle.">
   <meta name="twitter:image" content="https://openwhistle.net/og-image.png">
   <meta name="twitter:image:alt" content="OpenWhistle: sichere Hinweisgeber-Meldungen">
 
@@ -46,7 +46,7 @@
     "@id": "https://openwhistle.net/de/#software",
     "name": "OpenWhistle",
     "url": "https://openwhistle.net/de/",
-    "description": "OpenWhistle ist ein kostenloses Hinweisgebersystem, Open Source unter GPL-3.0: interne Meldestelle nach HinSchG, selbst gehostet, ohne IP-Protokolle.",
+    "description": "Hinweisgebersystem-Software für das HinSchG: kostenlos, Open Source unter GPL-3.0, selbst gehostet. Interne Meldestelle mit Fristen, ohne IP-Protokolle.",
     "applicationCategory": "SecurityApplication",
     "applicationSubCategory": "Hinweisgebersystem",
     "operatingSystem": "Linux (Docker)",
@@ -92,6 +92,62 @@
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Welche Hinweisgebersystem-Software ist kostenlos?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ohne Lizenzkosten sind zum Beispiel die Open-Source-Systeme OpenWhistle (GPL-3.0) und GlobaLeaks (AGPL-3.0). Beide betreiben Sie auf Ihrem eigenen Server. Den Vergleich mit Quellen bietet der Artikel „Hinweisgebersystem-Anbieter im Vergleich 2026“."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Ist OpenWhistle Open Source?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ja, OpenWhistle ist Open Source unter der GNU General Public License v3.0. Der gesamte Quellcode liegt öffentlich auf GitHub. Sie dürfen ihn prüfen, ändern und kommerziell einsetzen."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kann ich das Hinweisgebersystem selbst hosten?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ja, OpenWhistle gibt es nur selbst gehostet: Sie betreiben es mit Docker Compose oder Helm auf Ihrem Server. Einen gehosteten Dienst des Projekts gibt es nicht. Die Installation beschreibt die Dokumentation."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Welche Hinweisgebersysteme bieten EU-Hosting?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Jedes selbst gehostete System läuft dort, wo Ihr Server steht, also auch in der EU. Das gilt für OpenWhistle und GlobaLeaks. Unter den Diensten nennen etwa das Hinweisgeberportal OpenSource und WhistlePort Rechenzentren in Deutschland, Stand 27. September 2026."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Ist OpenWhistle DSGVO-konform?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Die Software unterstützt einen DSGVO-konformen Betrieb; ob der Betrieb konform ist, verantworten Sie als Betreiber. OpenWhistle speichert keine IP-Adressen, verschlüsselt Meldungen und löscht abgeschlossene Fälle automatisch. Verarbeitungsverzeichnis, Vertrag mit dem Hoster und gegebenenfalls eine Datenschutz-Folgenabschätzung bleiben Ihre Aufgabe."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Verschlüsselt OpenWhistle die Meldungen?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ja. Jede Meldung hat einen eigenen Datenschlüssel, mit dem Text, Nachrichten und Anhänge verschlüsselt gespeichert werden. Der Hauptschlüssel liegt nie in der Datenbank. Zum Browser läuft die Verbindung über TLS."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "In welchen Sprachen gibt es OpenWhistle?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Die Oberfläche gibt es auf Deutsch, Englisch, Französisch und Portugiesisch (Brasilien). Sie folgt der Sprache des Browsers, bis die Person selbst eine wählt."
+        }
+      },
       {
         "@type": "Question",
         "name": "Ist OpenWhistle wirklich kostenlos?",
@@ -153,7 +209,7 @@
         "name": "Wie unterscheidet sich OpenWhistle von anderen Hinweisgebersystemen?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "OpenWhistle läuft nur selbst gehostet und kostet keine Lizenz. Der Quellcode ist öffentlich. Einen Vergleich mit GlobaLeaks und kommerziellen Anbietern, mit Quellen und Datum, bietet der Artikel „Whistleblower-Software im Vergleich 2026“."
+          "text": "OpenWhistle läuft nur selbst gehostet und kostet keine Lizenz. Der Quellcode ist öffentlich. Einen Vergleich mit GlobaLeaks und kommerziellen Anbietern, mit Quellen und Datum, bietet der Artikel „Hinweisgebersystem-Anbieter im Vergleich 2026“."
         }
       },
       {
@@ -519,7 +575,8 @@
 
     .hero-headline {
       font-family: var(--font-display);
-      font-size: clamp(2.6rem, 6vw, 4.8rem);
+      /* "Hinweisgebersystem-Software" is one line at 3.5rem in the 860px column. */
+      font-size: clamp(2.2rem, 5.6vw, 3.5rem);
       font-weight: 700;
       line-height: 1.08;
       letter-spacing: -0.04em;
@@ -1274,7 +1331,7 @@
     /* A phone has no room for three columns of German compounds: each row
        becomes a small card, the header row is announced per cell instead. */
     @media (max-width: 540px) {
-      .hero-headline { font-size: clamp(1.9rem, 8.2vw, 2.6rem); }
+      .hero-headline { font-size: clamp(1.7rem, 7.4vw, 2.6rem); }
       .comparison-table.stack thead { display: none; }
       .comparison-table.stack tr { display: block; padding: var(--space-3) 0; border-bottom: 1px solid var(--border-subtle); }
       .comparison-table.stack tbody td { display: block; border: none; padding: var(--space-1) var(--space-2); }
@@ -1347,15 +1404,14 @@
         </p>
 
         <h1 class="hero-headline" id="hero-heading">
-          Kostenloses<br>
-          <span class="accent-green">Hinweisgebersystem</span><br>
-          <span class="accent-emphasis">Open Source</span>
+          Hinweisgebersystem-Software<br>
+          <span class="accent-green">für das HinSchG</span>
         </h1>
 
         <p class="hero-subline">
-          OpenWhistle ist ein kostenloses Hinweisgebersystem für Ihre interne Meldestelle.
-          Es ist Open Source unter der <em>GPL-3.0</em> und läuft selbst gehostet auf Ihrem Server.
-          Es setzt die Fristen des HinSchG und der EU-Richtlinie 2019/1937 um.
+          OpenWhistle ist eine kostenlose Hinweisgebersystem-Software für das HinSchG und Ihre interne Meldestelle.
+          Sie ist Open Source unter der <em>GPL-3.0</em> und läuft selbst gehostet auf Ihrem Server.
+          Sie setzt die Fristen des HinSchG und der EU-Richtlinie 2019/1937 um.
           Keine Lizenzgebühr, keine IP-Protokollierung, Zwei-Faktor-Anmeldung für jedes Konto.
         </p>
 
@@ -1487,8 +1543,10 @@
             <p>
               Was das in Euro und Stunden bedeutet, zeigt der Artikel
               <a href="../blog/interne-meldestelle-kostenlos.html">Kostenloses Hinweisgebersystem: was es wirklich kostet</a>.
-              Andere Lösungen mit Quellen vergleicht
-              <a href="../blog/whistleblower-software-vergleich.html">Whistleblower-Software im Vergleich 2026</a>.
+              Andere Lösungen mit Quellen zeigt
+              <a href="../blog/whistleblower-software-vergleich.html">Hinweisgebersystem-Anbieter im Vergleich</a>.
+              Wo die Daten liegen, erklärt
+              <a href="../blog/hinweisgebersystem-dsgvo-eu-hosting.html">Hinweisgebersystem mit EU-Hosting und DSGVO</a>.
             </p>
           </div>
         </div>
@@ -1870,6 +1928,55 @@
         <div class="faq-grid">
 
           <details class="faq-item">
+            <summary>Welche Hinweisgebersystem-Software ist kostenlos?</summary>
+            <div class="faq-answer">
+              Ohne Lizenzkosten sind zum Beispiel die Open-Source-Systeme OpenWhistle (GPL-3.0) und GlobaLeaks (AGPL-3.0). Beide betreiben Sie auf Ihrem eigenen Server. Den Vergleich mit Quellen bietet der Artikel <a href="../blog/whistleblower-software-vergleich.html" style="color: var(--accent);">Hinweisgebersystem-Anbieter im Vergleich 2026</a>.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>Ist OpenWhistle Open Source?</summary>
+            <div class="faq-answer">
+              Ja, OpenWhistle ist Open Source unter der GNU General Public License v3.0. Der gesamte Quellcode liegt öffentlich auf <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank" style="color: var(--accent);">GitHub</a>. Sie dürfen ihn prüfen, ändern und kommerziell einsetzen.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>Kann ich das Hinweisgebersystem selbst hosten?</summary>
+            <div class="faq-answer">
+              Ja, OpenWhistle gibt es nur selbst gehostet: Sie betreiben es mit Docker Compose oder Helm auf Ihrem Server. Einen gehosteten Dienst des Projekts gibt es nicht. Die Installation beschreibt die <a href="../docs.html#installation" style="color: var(--accent);">Dokumentation</a>.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>Welche Hinweisgebersysteme bieten EU-Hosting?</summary>
+            <div class="faq-answer">
+              Jedes selbst gehostete System läuft dort, wo Ihr Server steht, also auch in der EU. Das gilt für OpenWhistle und GlobaLeaks. Unter den Diensten nennen etwa das Hinweisgeberportal OpenSource und WhistlePort Rechenzentren in Deutschland, Stand 27.&nbsp;September 2026 (<a href="../blog/hinweisgebersystem-dsgvo-eu-hosting.html" style="color: var(--accent);">Hinweisgebersystem mit EU-Hosting</a>).
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>Ist OpenWhistle DSGVO-konform?</summary>
+            <div class="faq-answer">
+              Die Software unterstützt einen DSGVO-konformen Betrieb; ob der Betrieb konform ist, verantworten Sie als Betreiber. OpenWhistle speichert keine IP-Adressen, verschlüsselt Meldungen und löscht abgeschlossene Fälle automatisch. Verarbeitungsverzeichnis, Vertrag mit dem Hoster und gegebenenfalls eine Datenschutz-Folgenabschätzung bleiben Ihre Aufgabe.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>Verschlüsselt OpenWhistle die Meldungen?</summary>
+            <div class="faq-answer">
+              Ja. Jede Meldung hat einen eigenen Datenschlüssel, mit dem Text, Nachrichten und Anhänge verschlüsselt gespeichert werden. Der Hauptschlüssel liegt nie in der Datenbank. Zum Browser läuft die Verbindung über TLS.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>In welchen Sprachen gibt es OpenWhistle?</summary>
+            <div class="faq-answer">
+              Die Oberfläche gibt es auf Deutsch, Englisch, Französisch und Portugiesisch (Brasilien). Sie folgt der Sprache des Browsers, bis die Person selbst eine wählt.
+            </div>
+          </details>
+
+          <details class="faq-item">
             <summary>Ist OpenWhistle wirklich kostenlos?</summary>
             <div class="faq-answer">
               Ja. Die Software steht unter der GNU General Public License v3.0. Es gibt keine
@@ -1939,7 +2046,7 @@
             <div class="faq-answer">
               OpenWhistle läuft nur selbst gehostet und kostet keine Lizenz. Der Quellcode ist
               öffentlich. Einen Vergleich mit GlobaLeaks und kommerziellen Anbietern, mit Quellen
-              und Datum, bietet der Artikel „Whistleblower-Software im Vergleich 2026“.
+              und Datum, bietet der Artikel „Hinweisgebersystem-Anbieter im Vergleich 2026“.
             </div>
           </details>
 

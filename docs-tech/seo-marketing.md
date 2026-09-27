@@ -14,16 +14,73 @@ One primary keyword per page; no two pages share one. The title starts with it, 
 | `roadmap.html` | OpenWhistle roadmap | whistleblowing software roadmap |
 | `changelog.html` | OpenWhistle changelog | OpenWhistle release notes |
 | `open-source-whistleblowing-software.html` (planned, lane EN) | GlobaLeaks alternative | SecureDrop alternative, open source whistleblowing software compared, Hush Line |
-| `de/index.html` | kostenloses Hinweisgebersystem | Hinweisgebersystem Open Source, Whistleblower Tool kostenlos |
+| `de/index.html` | Hinweisgebersystem Software | HinSchG Software, Hinweisgeberschutzgesetz Software, interne Meldestelle Software, Hinweisgeber Software; kostenloses Hinweisgebersystem, Hinweisgebersystem Open Source as differentiator |
 | `blog/index.html` | HinSchG Blog | Hinweisgeberschutz Praxis |
 | `blog/hinschg-compliance-leitfaden.html` | HinSchG Pflichten | interne Meldestelle Pflicht, HinSchG Fristen |
-| `blog/interne-meldestelle-einrichten.html` | interne Meldestelle einrichten | interne Meldestelle Software, Hinweisgebersystem Docker |
-| `blog/whistleblower-software-vergleich.html` | Hinweisgebersystem Vergleich | Whistleblower Software Vergleich, EQS Alternative, GlobaLeaks |
+| `blog/interne-meldestelle-einrichten.html` | interne Meldestelle einrichten | Hinweisgebersystem Docker, interne Meldestelle Anleitung |
+| `blog/whistleblower-software-vergleich.html` | Hinweisgebersystem Anbieter Vergleich | Hinweisgeberschutzgesetz Software Vergleich, Anbieter Hinweisgebersystem, Hinweisgebersystem Anbieter, GlobaLeaks |
+| `blog/hinweisgebersystem-dsgvo-eu-hosting.html` | Hinweisgebersystem EU-Hosting | DSGVO-konformes Hinweisgebersystem, Hinweisgebersystem Verschlüsselung, Hinweisgebersystem mehrsprachig |
 | `blog/was-ist-neu-in-2-0.html` | OpenWhistle 2.0 | Hinweisgebersystem Update |
-| new DE article on the free channel (planned, lane DE) | interne Meldestelle kostenlos | HinSchG Meldekanal kostenlos |
+| `blog/interne-meldestelle-kostenlos.html` | interne Meldestelle kostenlos | HinSchG Meldekanal kostenlos |
 
 The comparison page's slug carries the category term, but its primary is the comparison query: `index.html`
 already owns "open source whistleblower software", and two pages on one query split its ranking.
+
+The German map was re-cut on 2026-09-27 against Search Console (below). "kostenlos" and "Open Source" carry almost
+no volume: they stay in the title and description of `de/index.html` as the differentiator, not as its primary.
+"interne Meldestelle Software" moved from the set-up guide to the landing page, whose intent it matches.
+The EU-hosting article is its own page, not a landing section: the question queries have their own intent, and
+a section would have put a second primary on `de/index.html`.
+
+### Search Console evidence
+
+Maintainer export, openwhistle.net, the three months up to 2026-09-27. Position before the re-cut.
+
+| Query | Clicks | Impressions | Position | Page now targeting it |
+| --- | --- | --- | --- | --- |
+| openwhistle | 15 | 46 | 3.2 | brand, see below |
+| open whistle | 2 | 19 | 4.2 | brand |
+| hinweisgebersystem software | 0 | 540 | 25.8 | `de/index.html` |
+| hinweisgebersystem anbieter | 0 | 315 | 18.1 | comparison article |
+| anbieter hinweisgebersystem | 0 | 180 | 17.7 | comparison article |
+| hinweisgeberschutzgesetz software | 0 | 135 | 20.7 | `de/index.html` |
+| hinweisgebersystem anbieter vergleich | 0 | 131 | 18.5 | comparison article |
+| hinweisgeber software | 0 | 115 | 29.1 | `de/index.html` |
+| hinschg software | 0 | 98 | 19.4 | `de/index.html` |
+| hinweisgeberschutzgesetz software vergleich | 0 | 60 | 15.5 | comparison article |
+| whistleblowing system anbieter | 0 | 47 | 74.2 | none (English term on German pages) |
+| wer bietet dsgvo-konforme hinweisgebersysteme mit eu-hosting an? | 0 | 31 | 10.2 | EU-hosting article, DE FAQ |
+| welche anbieter sind auf richtlinienkonformes hosting … in der eu spezialisiert? | 0 | 29 | 9.3 | EU-hosting article |
+| interne meldestelle software | 0 | 18 | 19.7 | `de/index.html` |
+| wer bietet hinweisgebersysteme … mit sicherem hosting innerhalb der eu? | 0 | 9 | 9.4 | EU-hosting article |
+| wer verkauft hinweisgeber-tools mit eingebauter verschlüsselung und dsgvo-konformität? | 0 | 6 | 9.7 | EU-hosting article, DE FAQ |
+| whistleblower software open source | 0 | 6 | 13.7 | `index.html` |
+| hinweisgeberschutzgesetz checkliste | 0 | 6 | 22.8 | `blog/hinschg-compliance-leitfaden.html` |
+| beste kostenlose whistleblowing tools | 0 | 6 | 3.7 | `index.html` |
+| hinweisgebersystem kostenlos | 0 | 2 | 2.0 | `de/index.html` |
+
+About 1,300 impressions at positions 15-29 brought no click: page two and three. The question queries sit at 9-10 with
+no click, answered by AI Overviews; each now has an answer whose first sentence can be quoted. Queries of five
+impressions or fewer (English "is it open source?", "i want to host it myself") are answered by the two new
+questions in the `index.html` FAQ. The portals ranking for "Hinweisgebersystem Anbieter Vergleich" are trusted.de,
+OMR Reviews, die-hinweisgeber-meldestelle.de and Capterra, all in the backlink table below.
+
+Re-check the positions in Search Console four weeks after the merge; a query that has not moved is a signal for
+the page, not for more keywords.
+
+### Brand query
+
+"openwhistle" ranks 3.2. Above openwhistle.net stand GitHub forks and old paths (`openwhistle-dev/OpenWhistle`,
+`jp1337/OpenWhistle`, `zbridges-valid8/OpenWhistle`) and unrelated products of the same name (openwhistle.pt,
+openwhistle.pro, `Artaeon/openwhistle`). Maintainer actions, prepared, not run:
+
+| Action | Command or text |
+| --- | --- |
+| Repository homepage field | `gh repo edit openwhistle/OpenWhistle --homepage https://openwhistle.net` |
+| README first line under the title links the site | `**[openwhistle.net](https://openwhistle.net)**: free, open source whistleblowing software (HinSchG, EU 2019/1937).` |
+| `jp1337/OpenWhistle` | the old path of this repository: the API redirects it to `openwhistle/OpenWhistle` (checked 2026-09-27). Never create a new repository under that name: it would break the redirect |
+| `openwhistle-dev/OpenWhistle` | a separate, unrelated repository (not a fork, no admin rights; checked 2026-09-27): no action |
+| `zbridges-valid8/OpenWhistle`, same-name products | a fork, and products that are not the maintainer's: no action; the homepage field and backlinks are the answer |
 
 ## The head contract
 
