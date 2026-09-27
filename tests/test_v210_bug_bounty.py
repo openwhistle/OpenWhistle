@@ -683,3 +683,17 @@ async def test_a_closed_case_takes_no_reply_and_says_so(
     assert after == before
     page = await client.get(resp.headers["location"])
     assert "was not sent" in page.text
+
+
+@pytest.mark.asyncio
+async def test_a_case_number_typed_in_lower_case_opens_the_case(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    from app.redis_client import get_redis
+    from app.services.report import authenticate_whistleblower, create_report
+
+    report, pin = await create_report(db_session, "financial_fraud", "Typed on a phone keyboard.")
+    found, _ = await authenticate_whistleblower(
+        db_session, await get_redis(), f" {report.case_number.lower()} ", pin
+    )
+    assert found is not None and found.id == report.id

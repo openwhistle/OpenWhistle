@@ -372,8 +372,9 @@ async def authenticate_whistleblower(
     """
     from app.config import settings
 
-    case_number = case_number.strip()
-    rl_key = case_number.upper()
+    # Case numbers are issued in upper case. The lookup used to be exact while
+    # the failure counter was not: "ow-2026-12345" was refused and counted.
+    rl_key = case_number = case_number.strip().upper()
     report = await get_report_by_credentials(db, case_number, pin.strip())
     if report is not None:
         await rl.reset_whistleblower_attempts(redis, rl_key)
