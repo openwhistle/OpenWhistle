@@ -5,21 +5,74 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Apply theme before first paint to avoid flash -->
   <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
-  <title>Blog — OpenWhistle | HinSchG, Hinweisgeberschutz &amp; Compliance</title>
-  <meta name="description" content="Der OpenWhistle Blog: Praxisartikel zu HinSchG-Compliance, Hinweisgeberschutz, interner Meldestelle einrichten und Vergleiche mit kommerziellen Whistleblower-Tools.">
-  <meta name="keywords" content="HinSchG Blog, Hinweisgeberschutz Artikel, interne Meldestelle einrichten, HinSchG Compliance, Whistleblower Software Vergleich, OpenWhistle Blog">
+  <title>HinSchG-Blog: Praxis für interne Meldestellen | OpenWhistle</title>
+  <meta name="description" content="Der OpenWhistle-Blog zum HinSchG: Pflichten und Fristen, interne Meldestelle einrichten, Hinweisgebersysteme im Vergleich und was jede Version ändert.">
   <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#08080a" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="https://openwhistle.net/blog/">
-  <link rel="alternate" hreflang="en" href="https://openwhistle.net/">
   <link rel="icon" type="image/svg+xml" href="../favicon.svg">
   <link rel="icon" type="image/x-icon" href="../favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+  <link rel="preload" href="../fonts/sora-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="../fonts/sora-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
 
-  <!-- Open Graph -->
+  <!-- Open Graph / Twitter -->
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="OpenWhistle">
   <meta property="og:url" content="https://openwhistle.net/blog/">
-  <meta property="og:title" content="OpenWhistle Blog — HinSchG, Hinweisgeberschutz &amp; Compliance">
-  <meta property="og:description" content="Praxisartikel zu HinSchG-Compliance, Hinweisgeberschutz und interner Meldestelle einrichten.">
+  <meta property="og:title" content="HinSchG-Blog: Praxis für interne Meldestellen | OpenWhistle">
+  <meta property="og:description" content="Der OpenWhistle-Blog zum HinSchG: Pflichten und Fristen, interne Meldestelle einrichten, Hinweisgebersysteme im Vergleich und was jede Version ändert.">
   <meta property="og:image" content="https://openwhistle.net/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="OpenWhistle: sichere Hinweisgeber-Meldungen">
+  <meta property="og:locale" content="de_DE">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="HinSchG-Blog: Praxis für interne Meldestellen | OpenWhistle">
+  <meta name="twitter:description" content="Der OpenWhistle-Blog zum HinSchG: Pflichten und Fristen, interne Meldestelle einrichten, Hinweisgebersysteme im Vergleich und was jede Version ändert.">
+  <meta name="twitter:image" content="https://openwhistle.net/og-image.png">
+  <meta name="twitter:image:alt" content="OpenWhistle: sichere Hinweisgeber-Meldungen">
+
+  <!-- Structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    "name": "OpenWhistle Blog",
+    "url": "https://openwhistle.net/blog/",
+    "inLanguage": "de",
+    "publisher": {
+      "@type": "Organization",
+      "name": "OpenWhistle",
+      "url": "https://openwhistle.net/",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://openwhistle.net/apple-touch-icon.png"
+      }
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "OpenWhistle",
+        "item": "https://openwhistle.net/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Blog",
+        "item": "https://openwhistle.net/blog/"
+      }
+    ]
+  }
+  </script>
 
   <style>
     /* Self-hosted fonts — no external CDN calls */
@@ -482,6 +535,7 @@
         <li><a href="../de/#compliance">Compliance</a></li>
         <li><a href="../docs.html">Dokumentation</a></li>
         <li><a href="../roadmap.html">Roadmap</a></li>
+        <li><a href="../changelog.html">Änderungsprotokoll</a></li>
         <li><a href="index.html" class="active" aria-current="page">Blog</a></li>
         <li><a href="../index.html" hreflang="en">English</a></li>
         <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
@@ -516,6 +570,21 @@
         <div class="blog-grid" role="list">
 
           <article class="article-card" role="listitem">
+            <p class="article-tag">Kosten · Open Source · HinSchG</p>
+            <h2 class="article-title">
+              <a href="interne-meldestelle-kostenlos.html">Kostenloses Hinweisgebersystem: was „kostenlos“ wirklich kostet</a>
+            </h2>
+            <p class="article-excerpt">Die Lizenz kostet 0 €, die Pflichten des HinSchG bleiben. Was an Server, Betrieb und Arbeit übrig bleibt, welche Optionen es gibt, mit veröffentlichten Preisen.</p>
+            <div class="article-meta">
+              <span>September 2026</span>
+              <span>6 Min. Lesezeit</span>
+            </div>
+            <a href="interne-meldestelle-kostenlos.html" class="article-read-more" aria-label="Kostenloses Hinweisgebersystem lesen">
+              Weiterlesen &rarr;
+            </a>
+          </article>
+
+          <article class="article-card" role="listitem">
             <p class="article-tag">Release · Sicherheit · v2.0</p>
             <h2 class="article-title">
               <a href="was-ist-neu-in-2-0.html">Was ist neu in OpenWhistle 2.0? Sechs Funde aus einem Härtungs-Release</a>
@@ -533,12 +602,12 @@
           <article class="article-card" role="listitem">
             <p class="article-tag">HinSchG · Compliance</p>
             <h2 class="article-title">
-              <a href="hinschg-compliance-leitfaden.html">HinSchG-Compliance-Leitfaden: Was Unternehmen ab 50 Mitarbeitern wissen müssen</a>
+              <a href="hinschg-compliance-leitfaden.html">HinSchG-Compliance-Leitfaden 2026: Pflichten, Fristen und Checkliste ab 50 Beschäftigten</a>
             </h2>
-            <p class="article-excerpt">Das Hinweisgeberschutzgesetz ist seit Juli 2023 in Kraft. Dieser Leitfaden erklärt alle Pflichten, Fristen und technischen Anforderungen — mit konkreten Checklisten für Ihr Compliance-Team.</p>
+            <p class="article-excerpt">Wer eine interne Meldestelle braucht, welche Fristen und Bußgelder gelten und was Software davon abdeckt. Jede Aussage mit Paragraf, geprüft am Gesetzestext.</p>
             <div class="article-meta">
-              <span>April 2025</span>
-              <span>10 Min. Lesezeit</span>
+              <span>Aktualisiert September 2026</span>
+              <span>8 Min. Lesezeit</span>
             </div>
             <a href="hinschg-compliance-leitfaden.html" class="article-read-more" aria-label="HinSchG-Compliance-Leitfaden lesen">
               Weiterlesen &rarr;
@@ -548,12 +617,12 @@
           <article class="article-card" role="listitem">
             <p class="article-tag">Vergleich · Kosten</p>
             <h2 class="article-title">
-              <a href="whistleblower-software-vergleich.html">Whistleblower-Software im Vergleich: OpenWhistle vs. EQS, BKMS und WhistlePort</a>
+              <a href="whistleblower-software-vergleich.html">Whistleblower-Software im Vergleich 2026: OpenWhistle, GlobaLeaks und verwaltete Angebote</a>
             </h2>
-            <p class="article-excerpt">Wer zahlt 100 €/Monat für ein HinSchG-Tool, wenn es eine vollwertige Open-Source-Alternative gibt? Wir vergleichen Funktionen, Kosten, DSGVO-Risiken und Datensouveränität.</p>
+            <p class="article-excerpt">Lizenz, Hosting, veröffentlichter Preis und Sprachen von fünf Hinweisgebersystemen. Nur prüfbare Angaben, jede mit Quelle und Abrufdatum.</p>
             <div class="article-meta">
-              <span>April 2025</span>
-              <span>8 Min. Lesezeit</span>
+              <span>Aktualisiert September 2026</span>
+              <span>6 Min. Lesezeit</span>
             </div>
             <a href="whistleblower-software-vergleich.html" class="article-read-more" aria-label="Whistleblower-Software-Vergleich lesen">
               Weiterlesen &rarr;
@@ -563,12 +632,12 @@
           <article class="article-card" role="listitem">
             <p class="article-tag">Anleitung · Self-Hosting</p>
             <h2 class="article-title">
-              <a href="interne-meldestelle-einrichten.html">Interne Meldestelle einrichten: Schritt-für-Schritt-Anleitung mit OpenWhistle</a>
+              <a href="interne-meldestelle-einrichten.html">Interne Meldestelle einrichten: Schritt-für-Schritt-Anleitung mit OpenWhistle 2.0.1</a>
             </h2>
-            <p class="article-excerpt">Von der Serverauswahl über die Docker-Installation bis zur ersten Meldung — diese Anleitung führt Sie durch den gesamten Prozess, inklusive HTTPS-Zertifikat und Admin-Einrichtung.</p>
+            <p class="article-excerpt">Vom leeren Linux-Server bis zur ersten Testmeldung: Docker, Konfiguration, HTTPS-Zertifikat, Einrichtungsassistent und erste Schritte im Admin-Bereich.</p>
             <div class="article-meta">
-              <span>April 2025</span>
-              <span>12 Min. Lesezeit</span>
+              <span>Aktualisiert September 2026</span>
+              <span>10 Min. Lesezeit</span>
             </div>
             <a href="interne-meldestelle-einrichten.html" class="article-read-more" aria-label="Interne Meldestelle einrichten - Anleitung lesen">
               Weiterlesen &rarr;
@@ -603,6 +672,7 @@
           <ul class="footer-links">
             <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
             <li><a href="../docs.html">Dokumentation</a></li>
+            <li><a href="../changelog.html">Änderungsprotokoll</a></li>
             <li><a href="../de/">Startseite (Deutsch)</a></li>
             <li><a href="../index.html" hreflang="en">English</a></li>
             <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Live-Demo</a></li>

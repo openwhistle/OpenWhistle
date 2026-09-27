@@ -24,7 +24,7 @@
                 <div class="form-group">
                     <label class="form-label" for="org-slug">{{ t('admin.organisations.add.slug') }}</label>
                     <input type="text" class="form-control" id="org-slug" name="slug" required
-                           maxlength="64" pattern="[a-z0-9-]+"
+                           maxlength="64" pattern="[a-z0-9\-]+"
                            placeholder="{{ t('admin.organisations.add.slug.placeholder') }}"
                            aria-describedby="org-slug-hint">
                     <div class="form-hint" id="org-slug-hint">{{ t('admin.organisations.add.slug.hint') }}</div>

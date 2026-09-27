@@ -22,6 +22,17 @@ from app.config import settings
 _STATE_PREFIX = "openwhistle:oidc_state:"
 _STATE_TTL = 300  # 5 minutes
 
+# A state is issued for one purpose and redeemed only for that purpose: a login
+# state can never link an identity, a link state can never sign anybody in.
+# The prefix on the state value only tells the callback which mode to expect;
+# the purpose and session binding stored in Redis are what is checked.
+PURPOSE_LOGIN = "login"
+PURPOSE_LINK = "link"
+LINK_STATE_PREFIX = "link."
+
+# Outcomes of linking, shown on /admin/account after the redirect (?sso=…).
+SSO_RESULTS = frozenset({"linked", "unlinked", "failed", "taken", "only_way_in"})
+
 # Asymmetric algorithms only: the key must come from the provider's JWKS.
 # HS* would turn the (shared) client secret into a signing key and "none"
 # would disable the check entirely.
@@ -44,17 +55,35 @@ def _pkce_challenge(verifier: str) -> str:
     return base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
 
 
-async def create_authorization_url(redis: Redis) -> str:
-    """Generate the OIDC authorization URL; store state, nonce and PKCE verifier."""
+def session_binding(user_id: str, session_token: str) -> str:
+    """What ties a link state to the admin session that started it.
+
+    A hash, so Redis never holds a second copy of a live session token.
+    """
+    return hashlib.sha256(f"{user_id}:{session_token}".encode()).hexdigest()
+
+
+async def create_authorization_url(
+    redis: Redis, purpose: str = PURPOSE_LOGIN, binding: str = ""
+) -> str:
+    """Generate the OIDC authorization URL; store state, nonce and PKCE verifier.
+
+    ``binding`` (from ``session_binding``) is required for a link state.
+    """
     metadata = await _get_metadata()
     authorization_endpoint: str = metadata["authorization_endpoint"]
 
     state = secrets.token_urlsafe(32)
+    if purpose == PURPOSE_LINK:
+        state = LINK_STATE_PREFIX + state
     nonce = secrets.token_urlsafe(32)
     code_verifier = secrets.token_urlsafe(64)  # 86 chars, within RFC 7636's 43-128
     await redis.set(
         f"{_STATE_PREFIX}{state}",
-        json.dumps({"nonce": nonce, "code_verifier": code_verifier}),
+        json.dumps({
+            "nonce": nonce, "code_verifier": code_verifier,
+            "purpose": purpose, "binding": binding,
+        }),
         ex=_STATE_TTL,
     )
 
@@ -100,16 +129,24 @@ def _verify_id_token(
     return claims
 
 
-async def exchange_code(redis: Redis, code: str, state: str) -> dict[str, Any] | None:
+async def exchange_code(
+    redis: Redis, code: str, state: str, purpose: str = PURPOSE_LOGIN, binding: str = ""
+) -> dict[str, Any] | None:
     """Exchange the authorization code; return the verified ID token claims.
 
-    None when the state is unknown or already used, or the ID token does not
-    verify. State, nonce and PKCE verifier are single use (GETDEL).
+    None when the state is unknown or already used, was issued for another
+    purpose or another session, or the ID token does not verify. State, nonce
+    and PKCE verifier are single use (GETDEL), whatever the outcome.
     """
     raw = await redis.getdel(f"{_STATE_PREFIX}{state}")
     if not raw:
         return None
     stored: dict[str, str] = json.loads(raw)
+    # States stored before v2.1.0 carry no purpose: they were login states.
+    if stored.get("purpose", PURPOSE_LOGIN) != purpose:
+        return None
+    if not secrets.compare_digest(stored.get("binding", ""), binding):
+        return None
 
     metadata = await _get_metadata()
 

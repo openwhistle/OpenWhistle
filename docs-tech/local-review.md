@@ -138,6 +138,7 @@ marketing/documentation site under `docs/`.
 | `/admin/dashboard` | `admin/dashboard.html` | Filters, search, status pills, the case list. |
 | `/admin/reports/{report_id}` | `admin/report.html` | One representative report detail page (any seeded `OW-DEMO-000xx`) — exercise the identity-reveal form, internal notes, status change, and the four-eyes deletion flow. |
 | `/admin/users` | `admin/users.html` | User management. |
+| `/admin/account` | `admin/account.html` | Own account, reached from "My account" in the sidebar. The demo admin sees the demo notice instead of the password form; the forced change needs a new account (setup stack). |
 | `/admin/organisations` | `admin/organisations.html` | Setup stack only — needs `MULTI_TENANCY_ENABLED=true`. |
 | `/admin/categories` | `admin/categories.html` | Category management. |
 | `/admin/locations` | `admin/locations.html` | Location management. |
@@ -173,9 +174,13 @@ against the repo root), and every root-absolute link (`/docs.html`,
 | `docs/de/index.html` | Landing page, German — the longest strings; check nothing overflows or truncates. |
 | `docs/docs.html` | Full documentation — long page, check the anchor nav and the "Current version" line. |
 | `docs/roadmap.html` | Roadmap. |
+| `docs/open-source-whistleblowing-software.html` | Comparison with GlobaLeaks, SecureDrop, Hush Line — the table scrolls inside its box at 390 px. |
+| `docs/404.html` | Not-found page (noindex); open any missing path on the served site. |
+| `docs/changelog.html` | Changelog, rendered from `CHANGELOG.md` — check the version nav in the sidebar. |
 | `docs/blog/index.html` | Blog index. |
 | `docs/blog/hinschg-compliance-leitfaden.html` | Article. |
 | `docs/blog/interne-meldestelle-einrichten.html` | Article. |
+| `docs/blog/interne-meldestelle-kostenlos.html` | Article. |
 | `docs/blog/was-ist-neu-in-2-0.html` | Article. |
 | `docs/blog/whistleblower-software-vergleich.html` | Article. |
 
@@ -204,6 +209,27 @@ Fix every finding before the release PR — nothing here is carried forward.
 | `/setup` and `/admin/mfa/setup` redirect away on the plain/review stack | `DEMO_MODE` seeding completes setup and enrols the demo admin's TOTP before either page is ever requested. Use the setup stack (above) for both. |
 | Serving `docs/` from the wrong directory | `docs/`-relative links assume the server root is `docs/` itself, matching how GitHub Pages roots the site there via `docs/CNAME`. |
 | A stack kept up across two review sessions | The four seeded demo reports (`OW-DEMO-00001`..`00004`) are always the same rows — nothing accumulates, so this one has no gotcha, unlike a counting assertion in an automated test. |
+
+## Re-taking the documentation screenshots
+
+`scripts/take_screenshots.py` renders `docs/img/screens/*-{light,dark}.png` against
+this same review stack — the login button above is how it signs in, with no
+password ever typed:
+
+```bash
+podman compose -f docker-compose.e2e.yml -f docker-compose.review.yml up -d --build
+uv run python scripts/take_screenshots.py
+podman compose -f docker-compose.e2e.yml -f docker-compose.review.yml down -v
+```
+
+Look at every written PNG before committing — `tests/test_screenshots.py` checks
+that both themes exist and that the viewport is still above the admin layout's
+two-column breakpoint, not that a page's content is still accurate.
+
+Re-run it in the change that alters the interface a screenshot documents — a
+template, `site.css`, or the theme/demo-banner behaviour in `app/static/js/site.js`
+— never on an unrelated release. A screenshot nobody looked at since is still
+correct; one nobody re-took after the page changed underneath it is not.
 
 ## Tearing down
 

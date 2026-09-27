@@ -7,6 +7,93 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Upgrade notes
+
+- **Migration 009 adds `must_change_password` to every account**, `false` for existing ones:
+  nothing records who set their password.
+
+### Added
+
+- **Every admin changes their own password, and must when someone else set it.** **My account**
+  in the sidebar opens `/admin/account` for every role: username, role, organisation, login
+  methods. A password change (`POST /admin/account/password`) needs the current password, the new
+  one twice and a current TOTP code, counts wrong guesses towards the sign-in lockout, ends every
+  other session of the account and is audited (`auth.password_changed`). An account whose password
+  an admin chose on `/admin/users`, a superadmin reset or the host's reset script set must change
+  it before any other admin page opens; a new or reset account enrols its authenticator first.
+  LDAP and SSO accounts see where to change theirs. In `DEMO_MODE` the demo accounts keep theirs.
+- **Admins link their own single sign-on identity.** Signed in with password and TOTP, choose
+  **Link single sign-on** on `/admin/account` (`POST /admin/oidc/link`); **Unlink single sign-on**
+  removes it. The link request is bound to that session and to the purpose "link" in Redis, so a
+  login state never links and a link state never signs in. An identity linked to another account
+  is refused. Both are audited (`auth.sso_linked`, `auth.sso_unlinked`).
+- **A lost authenticator can be reset.** A superadmin clicks **Reset authenticator** on
+  `/admin/users` (`POST /admin/users/{id}/reset-totp`): the account becomes new again. The old
+  app and the old password stop working, the user's sessions end, and the superadmin sees a
+  random temporary password once, to hand over; with it, the next login enrols a new app at
+  `/admin/mfa/setup`. The password is in no log and no audit entry. LDAP and SSO accounts keep
+  their first factor. Not for one's own account, and not for the demo accounts in `DEMO_MODE`. On the host,
+  `scripts/reset_admin_password.py --reset-totp <username>` prints a new secret and `otpauth://`
+  URI once, for any account including the last superadmin. Both are audited (`admin.totp_reset`).
+
+### Documentation
+
+- **A changelog page on the website**, rendered from this file (`docs/changelog.html`, checked by
+  `tests/test_changelog_page.py`).
+- **Diagrams and screenshots in the documentation**, in the reader's theme: architecture,
+  submission flow, case lifecycle and login as Mermaid sources rendered to SVG, and the main pages
+  as screenshots re-taken by `scripts/take_screenshots.py`.
+- **The user documentation is rewritten to measured prose limits** (no sentence over 30 words,
+  average under 18) and corrected where it contradicted the code: OIDC logins also need TOTP, a
+  correct PIN always opens its report, the app sets the security headers, case numbers are random.
+- **`CONTRIBUTING.md`** carries the documentation rules; guard tests hold them.
+- **The installation example now puts the Redis password into `REDIS_URL`.** The production Redis
+  runs with `--requirepass "${REDIS_PASSWORD}"`, so the documented `redis://redis:6379/0` could not
+  connect. `.env.example` now pins `OPENWHISTLE_VERSION` 2.0.1; `docs.html` no longer names the
+  default, which had gone stale at 2.0.0. The retention section says what HinSchG §11 Abs. 5 says:
+  deletion three years after the procedure ends, not a three-year minimum.
+- **Both landing pages are rewritten** for "open source whistleblower software" and "kostenloses
+  Hinweisgebersystem". Claims the code or the statute contradict are gone: "100 % HinSchG-konform",
+  rate limits "never IP-based", "OIDC or TOTP", and competitor prices without a source.
+- **A comparison page**, `open-source-whistleblowing-software.html`: OpenWhistle, GlobaLeaks,
+  SecureDrop and Hush Line on licence, hosting, deadlines, Tor, languages and audits, each sourced.
+- **A new German article**, `blog/interne-meldestelle-kostenlos.html`: what a free system still
+  costs. The German comparison article keeps only vendor-published facts, each sourced and dated;
+  the three older articles carried 2025 as publication date, they were published 2026-04-27.
+- **Every page has a search head**: title of at most 60 characters, unique description, canonical,
+  hreflang, Open Graph, JSON-LD. `docs/sitemap.xml` is rendered from the heads by
+  `scripts/render_sitemap.py`; missing paths get `404.html`. `tests/test_seo.py` holds all of it.
+- **The share image is real.** `og-image.png` was a blank navy rectangle, so every shared link
+  showed an empty card. The touch icon is now 180×180.
+- **HinSchG citations are corrected** and checked by `tests/test_hinschg_citations.py`: the pages
+  cited a third Absatz of § 17 and a seventh of § 16, which do not exist; deletion is § 11 Abs. 5,
+  not § 26; a missing reporting office costs up to 20,000 € (§ 40 Abs. 2 Nr. 2, Abs. 6), not 50,000 €.
+
+### Fixed
+
+- **Admin lists hid their actions behind a sideways scrollbar.** Users, categories and locations sat in
+  two thirds of the page, as organisations did in 2.0.1: the role select read "Falll" and the categories'
+  actions were out of view at 1920 px. Every list now runs under its form, across the full width, and
+  table cells are 0.75 rem a side, so the German dashboard's eight columns fit 1,064 px.
+- **OIDC login could never succeed.** Nothing ever wrote an account's OIDC `sub` and issuer, so
+  every SSO login ended in "no account is linked". Linking now exists (see Added).
+- **A lost authenticator locked its admin out for good.** The reset script kept the TOTP secret,
+  and the docs said to edit the database. See Added.
+- **No session is accepted for an account whose authenticator awaits enrolment.** A reset takes
+  effect in the same commit, before its sessions are swept from Redis.
+- **Whoever set a password for someone else knew it for good.** No page let an admin change their
+  own password, so the admin who created an account, or the superadmin who reset it, kept knowing
+  it. See Added.
+- **The host's password reset left the account's sessions running and the audit log empty.**
+  `reset_admin_password.py --username` now ends every session of the account and records
+  `admin.password_reset`, never the password.
+- **Four form fields skipped their format check in Chrome.** Browsers compile `pattern` with the
+  `v` flag, where a bare `-` closing a character class is a syntax error; the new-user, location,
+  organisation and setup forms logged it and checked nothing. Now escaped, held by
+  `tests/test_pattern_attributes.py`.
+- **The sidebar's Log out sat 12 px left of the links above it**, and the second panel of a
+  two-column admin page (users, categories, locations) started 20 px below the first.
+
 ## [2.0.1] — 2026-09-27
 
 ### Upgrade notes

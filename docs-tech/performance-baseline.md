@@ -5,15 +5,15 @@ Future versions are measured against these thresholds.
 
 ## Test environment
 
-- **Stack**: Docker Compose (app + PostgreSQL 18 + Redis 8)
-- **Tool**: Locust 2.27+
+- **Stack**: Docker Compose (app + PostgreSQL + Redis; images pinned in `docker-compose.yml`)
+- **Tool**: Locust (the `perf` extra in `pyproject.toml`)
 - **Machine**: Standard GitHub Actions runner (2 vCPU, 7 GB RAM)
 - **Load**: 50 concurrent users, 5 users/s ramp-up, 60 second duration
 
 ## Target thresholds
 
-These thresholds are enforced in CI via `--html` report inspection.
-A regression is flagged if p95 exceeds the listed value.
+Not enforced yet: `perf.yml` uploads the Locust report and nothing reads it. The gate that fails on a p95
+over the listed value is planned in [test-infrastructure](test-infrastructure.md).
 
 | Endpoint | p50 target | p95 target | p99 target |
 |---|---|---|---|
@@ -37,13 +37,13 @@ A regression is flagged if p95 exceeds the listed value.
 ## Running locally
 
 ```bash
-pip install ".[perf]"
+uv sync --extra perf
 docker compose up -d
 
-locust -f tests/perf/locustfile.py \
-       --headless -u 50 -r 5 --run-time 60s \
-       --host http://localhost:4009 \
-       --html tests/perf/report.html
+uv run locust -f tests/perf/locustfile.py \
+              --headless -u 50 -r 5 --run-time 60s \
+              --host http://localhost:4009 \
+              --html tests/perf/report.html
 ```
 
 ## Notes

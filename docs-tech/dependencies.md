@@ -46,8 +46,9 @@ it into the host venv. The toolbox and host share `libldap.so.2` and
 `libsasl2.so.3`, so the wheel runs on the host.
 
 ```bash
-toolbox run sudo dnf install -y openldap-devel cyrus-sasl-devel python3.14-devel gcc
-toolbox run uv tool run --python /usr/bin/python3.14 --from pip \
+PY=$(sed -n 's/^requires-python = ">=\(.*\)"/\1/p' pyproject.toml)  # one Python everywhere, see Guards
+toolbox run sudo dnf install -y openldap-devel cyrus-sasl-devel "python$PY-devel" gcc
+toolbox run uv tool run --python "/usr/bin/python$PY" --from pip \
   pip wheel --no-deps "python-ldap==<locked version>" -w /tmp/wheels
 uv sync --extra dev --extra s3
 uv pip install --no-deps /tmp/wheels/python_ldap-*.whl
@@ -64,7 +65,7 @@ uv pip install --no-deps /tmp/wheels/python_ldap-*.whl
   explicit. The `config:recommended` preset ignores `tests/`, which hid the
   axe-core pin on Renovate's first run while every other check was green.
 - `tests/test_renovate.py::test_axe_core_is_fetched_from_the_registry_renovate_checks`:
-  axe-core loads from jsDelivr's npm mirror. The 4.13.0 bump pointed at cdnjs,
+  axe-core loads from jsDelivr's npm mirror. An axe-core bump pointed at cdnjs,
   which did not have it yet; the fixture read the 404 as "offline" and every axe
   check skipped. An HTTP error now fails the e2e run.
 - CI: `uv lock --check`.

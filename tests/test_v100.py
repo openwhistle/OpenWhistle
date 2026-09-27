@@ -612,9 +612,16 @@ class TestConfigV100Defaults:
             "CHANGELOG": grab("CHANGELOG.md", r"^## \[(\d+\.\d+\.\d+)\]"),
             "pyproject": grab("pyproject.toml", r'^version = "([^"]+)"'),
             "compose image": grab("docker-compose.prod.yml", r"OPENWHISTLE_VERSION:-([0-9.]+)\}"),
+            # The pin a new install copies: it still said 2.0.0 after 2.0.1
+            # had shipped.
+            ".env.example": grab(".env.example", r"^OPENWHISTLE_VERSION=([0-9.]+)$"),
         }
         v = settings.app_version
         assert found == dict.fromkeys(found, v)
+        # docs.html once named the pin's default in prose and went stale with
+        # it; it now says "the release the file shipped with". Keep it so.
+        docs = (root / "docs/docs.html").read_text()
+        assert not re.search(r"OPENWHISTLE_VERSION</code>[^.]*default <code>[0-9.]+", docs)
         # Every image default, not only the first: tls-init runs the same image
         # and once pointed at a different version than the app service.
         compose = (root / "docker-compose.prod.yml").read_text()

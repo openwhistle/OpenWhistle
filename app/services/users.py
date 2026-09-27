@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import secrets
 import uuid
 
 import pyotp
@@ -79,6 +80,8 @@ async def create_user(
 ) -> tuple[AdminUser, str]:
     """Create a new admin user. Returns (user, totp_secret).
 
+    The creating admin chose the password, so the holder must replace it
+    after enrolling the authenticator (``must_change_password``).
     Raises ValueError if the username or the password is not allowed.
     """
     username = validate_username(username)
@@ -92,6 +95,7 @@ async def create_user(
         totp_enabled=False,
         role=role,
         is_active=True,
+        must_change_password=True,
     )
     db.add(user)
     await db.commit()
@@ -122,3 +126,23 @@ async def reactivate_user(db: AsyncSession, user: AdminUser) -> AdminUser:
     await db.commit()
     await db.refresh(user)
     return user
+
+
+def require_new_authenticator(user: AdminUser) -> str:
+    """Replace the TOTP secret and make the next login enrol it.
+
+    The old authenticator stops working at once (its secret is gone), and with
+    ``totp_enabled`` off the next login goes to /admin/mfa/setup, the same
+    flow a new account takes. The caller audits, commits, then ends the
+    user's sessions (``auth.revoke_user_sessions``) — after the commit, so a
+    login racing the reset cannot leave a session behind. Returns the secret.
+    """
+    user.totp_secret = pyotp.random_base32()
+    user.totp_enabled = False
+    return user.totp_secret
+
+
+def new_temporary_password() -> str:
+    """A random password for an account reset by a superadmin: 24 URL-safe
+    characters (144 bits), within the policy's 12 characters and 72 bytes."""
+    return validate_password(secrets.token_urlsafe(18))

@@ -1445,7 +1445,9 @@ th {
   font-weight: 600;
   letter-spacing: 0.07em;
   line-height: 1rem;
-  padding: 0.625rem 1rem;
+  /* 0.75rem a side, not 1rem: eight dashboard columns in German need 1,093 px
+     at 1rem and the admin content is 1,064 px wide. */
+  padding: 0.625rem 0.75rem;
   text-align: left;
   text-transform: uppercase;
 }
@@ -1453,7 +1455,7 @@ td {
   border-bottom-width: 1px;
   border-color: var(--hairline);
   color: var(--body-text);
-  padding: 0.75rem 1rem;
+  padding: 0.75rem;
   vertical-align: middle;
 }
 tr:last-child td {
@@ -3649,8 +3651,14 @@ a.attachment-name:hover {
 .admin-split-grid > * {
   min-width: 0;
 }
-/* A list too wide for two thirds of the page (organisations: six columns,
-   one of them a URL) goes under its form, across the full width. */
+/* The grid gap spaces its columns; `.panel + .panel` would push the second one down. */
+.admin-split-grid > .panel + .panel {
+  margin-top: 0;
+}
+/* An admin list goes under its form, across the full width. In two thirds of
+   the page the organisations (six columns, one a URL), users (a role select
+   and up to three buttons), categories and locations lists all pushed their
+   actions past a sideways scrollbar at 1920 px. */
 .admin-stack {
   display: grid;
   gap: 1.25rem;
@@ -3786,6 +3794,37 @@ a.attachment-name:hover {
   border-top: 1px solid var(--hairline);
   margin: 0;
   padding-top: var(--space-3);
+}
+.admin-nav .admin-nav-account {
+  border-top: 1px solid var(--hairline);
+  margin-bottom: 0;
+  padding-top: var(--space-3);
+}
+/* Alone in the menu during a forced password change: no rule above it. */
+.admin-nav .admin-nav-account:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.admin-nav-account + .admin-nav-logout {
+  border-top: 0;
+  padding-top: 0;
+}
+/* Log out is a form button, not a link: same box as the links above it. */
+.admin-nav .nav-link-button {
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--body-text);
+  cursor: pointer;
+  display: block;
+  font: inherit;
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  width: 100%;
+}
+.admin-nav .nav-link-button:hover {
+  background: var(--surface-card);
+  color: var(--ink);
 }
 .admin-main {
   min-width: 0;

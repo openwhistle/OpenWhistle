@@ -66,6 +66,18 @@ templates.env.globals["static_url"] = static_url
 # A callable (not the value) so templates re-read it at render time — tests
 # that monkeypatch settings.onion_location must see the new value.
 templates.env.globals["onion_location"] = lambda: settings.onion_location
+templates.env.globals["oidc_enabled"] = lambda: settings.oidc_enabled
+
+
+def sso_result(request: Request) -> str | None:
+    """The linking outcome to show on the account page, only from the known set."""
+    from app.services.oidc import SSO_RESULTS  # noqa: PLC0415
+
+    value = request.query_params.get("sso")
+    return value if value in SSO_RESULTS else None
+
+
+templates.env.globals["sso_result"] = sso_result
 
 
 def template_translator(lang: str) -> Callable[..., str | Markup]:

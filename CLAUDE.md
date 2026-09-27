@@ -44,6 +44,7 @@ Folgende Fakten sind festgelegt:
 - Beim erstellen von Commit Messages erwähnst du bitte nicht Claude Code
 - Du hast Zugriff auf GitHub über die GitHub CLI
 - Markdown Dokumente müssen nach markdownlint Vorgaben erstellt werden
+- `CONTRIBUTING.md`, section "Documentation", is binding for every documentation change.
 - Documentation in `docs/docs.html`, `README.md`, and `docker-compose.prod.yml` must always be kept in
   sync. When adding or renaming environment variables, update ALL locations in the same commit.
 - The demo at <https://demo.openwhistle.net> is live and hosted on Hetzner via

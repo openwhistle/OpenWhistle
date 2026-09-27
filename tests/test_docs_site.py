@@ -192,7 +192,14 @@ def _resolve_nav_target(page: Path, href: str) -> str:
     if href.startswith(("http://", "https://")):
         return href
     path_part, _, frag = href.partition("#")
-    resolved = page if path_part in ("", "./") else (page.parent / path_part).resolve()
+    if path_part.startswith("/"):
+        # Root-relative: docs/404.html is served at any missing path, so it
+        # cannot link relative to its own location.
+        resolved = (ROOT / "docs" / path_part.lstrip("/")).resolve()
+    elif path_part in ("", "./"):
+        resolved = page
+    else:
+        resolved = (page.parent / path_part).resolve()
     if resolved.is_dir():
         resolved = resolved / "index.html"
     rel = str(resolved.relative_to(ROOT))

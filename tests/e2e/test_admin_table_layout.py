@@ -78,3 +78,33 @@ def test_admin_tables_last_column_stays_inside_the_panel_in_german(
                 f"({info['cell_right']}) exceeds its panel ({info['panel_right']})"
             )
     ctx.close()
+
+
+# The last-cell check above passes while a table scrolls sideways inside its
+# own .table-wrapper, which is how the categories list hid its actions behind
+# a scrollbar at 1920 px in two thirds of the page. The lists now run under
+# their forms, across the full width; this holds them there.
+_LIST_PAGES = (*_TABLE_PAGES, "/admin/categories", "/admin/locations")
+
+
+def test_admin_lists_need_no_sideways_scroll_in_german(browser: Browser, base_url: str) -> None:
+    ctx = browser.new_context(viewport={"width": 1440, "height": 1000})
+    page = ctx.new_page()
+    _admin_login(page, base_url, DEMO_ADMIN_USERNAME, DEMO_ADMIN_PASSWORD, DEMO_ADMIN_TOTP_SECRET)
+    ctx.add_cookies([{"name": "ow-lang", "value": "de", "url": base_url}])
+
+    for path in _LIST_PAGES:
+        page.goto(f"{base_url}{path}")
+        page.wait_for_load_state("networkidle")
+        for width in (1440, 1920):
+            page.set_viewport_size({"width": width, "height": 1000})
+            wrappers = page.evaluate(
+                "[...document.querySelectorAll('.table-wrapper')]"
+                ".map(w => [w.scrollWidth, w.clientWidth])"
+            )
+            assert wrappers, f"{path}: no table found"
+            for scroll, client in wrappers:
+                assert scroll <= client + 1, (
+                    f"{path}@{width}px: list scrolls sideways ({scroll} > {client})"
+                )
+    ctx.close()

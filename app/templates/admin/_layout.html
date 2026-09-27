@@ -9,6 +9,8 @@
     <details class="admin-menu" id="admin-menu" open>
         <summary class="admin-menu-toggle">{{ icons.icon('menu') }} {{ t('admin.nav.menu') }}</summary>
         <nav class="admin-nav" aria-label="{{ t('admin.nav.aria_label') }}">
+            {# While a password someone else set awaits its change, only the account page opens. #}
+            {% if not user.must_change_password %}
             {% for group in admin_nav(user) %}
             <p class="admin-nav-group">{{ t(group.label) }}</p>
             <ul role="list">
@@ -17,6 +19,10 @@
                 {% endfor %}
             </ul>
             {% endfor %}
+            {% endif %}
+            <ul role="list" class="admin-nav-account">
+                <li><a href="/admin/account"{% if request.url.path == '/admin/account' %} class="active" aria-current="page"{% endif %}>{{ t('admin.nav.account') }}</a></li>
+            </ul>
             <form method="post" action="/admin/logout" class="admin-nav-logout">
                 <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                 <button type="submit" class="nav-link-button">{{ t('admin.nav.logout') }}</button>

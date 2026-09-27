@@ -5,45 +5,81 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Apply theme before first paint to avoid flash -->
   <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
-  <title>Documentation — OpenWhistle | Self-Hosted Whistleblower Platform</title>
-  <meta name="description" content="Complete documentation for OpenWhistle: installation, configuration, environment variables, admin guide, whistleblower guide, security architecture, and HinSchG compliance details.">
-  <meta name="keywords" content="OpenWhistle documentation, whistleblower platform setup, HinSchG software installation, Docker whistleblower system, Hinweisgebersystem Dokumentation, interne Meldestelle einrichten">
-  <meta name="author" content="OpenWhistle Contributors">
+  <title>Self-Hosted Whistleblowing: Documentation | OpenWhistle</title>
+  <meta name="description" content="Self-hosted whistleblowing with OpenWhistle: install it with Docker Compose, set every option, and run the admin and reporter flows to HinSchG deadlines.">
   <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#08080a" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="https://openwhistle.net/docs.html">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="preload" href="fonts/sora-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/sora-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
 
-  <!-- Open Graph -->
+  <!-- Open Graph / Twitter -->
   <meta property="og:type" content="website">
+  <meta property="og:site_name" content="OpenWhistle">
   <meta property="og:url" content="https://openwhistle.net/docs.html">
-  <meta property="og:title" content="Documentation — OpenWhistle">
-  <meta property="og:description" content="Complete installation, configuration, and security documentation for OpenWhistle — the free, self-hosted HinSchG-compliant whistleblower platform.">
+  <meta property="og:title" content="Self-Hosted Whistleblowing: Documentation | OpenWhistle">
+  <meta property="og:description" content="Self-hosted whistleblowing with OpenWhistle: install it with Docker Compose, set every option, and run the admin and reporter flows to HinSchG deadlines.">
   <meta property="og:image" content="https://openwhistle.net/og-image.png">
-
-  <!-- Twitter Card -->
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="OpenWhistle: secure whistleblower reporting">
+  <meta property="og:locale" content="en_US">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Documentation — OpenWhistle">
-  <meta name="twitter:description" content="Installation, configuration, and security documentation for OpenWhistle.">
+  <meta name="twitter:title" content="Self-Hosted Whistleblowing: Documentation | OpenWhistle">
+  <meta name="twitter:description" content="Self-hosted whistleblowing with OpenWhistle: install it with Docker Compose, set every option, and run the admin and reporter flows to HinSchG deadlines.">
+  <meta name="twitter:image" content="https://openwhistle.net/og-image.png">
+  <meta name="twitter:image:alt" content="OpenWhistle: secure whistleblower reporting">
 
-  <!-- JSON-LD -->
+  <!-- Structured data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "TechArticle",
     "headline": "OpenWhistle Documentation",
-    "description": "Complete technical documentation for OpenWhistle, the free self-hosted whistleblower reporting platform compliant with HinSchG and EU Directive 2019/1937.",
     "url": "https://openwhistle.net/docs.html",
+    "inLanguage": "en",
     "author": {
       "@type": "Organization",
       "name": "OpenWhistle Contributors",
       "url": "https://github.com/openwhistle"
     },
+    "publisher": {
+      "@type": "Organization",
+      "name": "OpenWhistle",
+      "url": "https://openwhistle.net/",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://openwhistle.net/apple-touch-icon.png"
+      }
+    },
     "mainEntityOfPage": {
       "@type": "WebPage",
       "@id": "https://openwhistle.net/docs.html"
     }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "OpenWhistle",
+        "item": "https://openwhistle.net/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Documentation",
+        "item": "https://openwhistle.net/docs.html"
+      }
+    ]
   }
   </script>
 
@@ -701,6 +737,27 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
+    /* ── Themed figures ─────────────────────────────────────────── */
+    /* Every diagram and screenshot exists light and dark. CSS picks one from
+       data-theme, the attribute the toggle sets; a <picture> media query
+       would follow the OS instead (docs/_diagrams/README.md). */
+    .diagram, .doc-shot { margin: var(--space-6) 0; }
+    .diagram img { max-width: 100%; height: auto; margin: 0 auto; }
+    .doc-shot img {
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+    }
+    .diagram-dark, .shot-dark { display: none; }
+    [data-theme="dark"] .diagram-light, [data-theme="dark"] .shot-light { display: none; }
+    [data-theme="dark"] .diagram-dark, [data-theme="dark"] .shot-dark { display: block; }
+    /* The submission flow beside its steps: one scroll instead of two. */
+    @media (min-width: 1081px) {
+      .flow-steps { display: grid; grid-template-columns: 220px 1fr; gap: var(--space-8); align-items: start; }
+      .flow-steps .diagram { margin: 0; }
+    }
+
     /* ── Responsive ─────────────────────────────────────────────── */
     /* Nav collapses at 1080px, not 768px: at 1024px the full item list no
        longer fits the nav-inner row and overflows the viewport
@@ -770,6 +827,7 @@
         <li><a href="index.html#compliance">Compliance</a></li>
         <li><a href="docs.html" class="active" aria-current="page">Documentation</a></li>
         <li><a href="roadmap.html">Roadmap</a></li>
+        <li><a href="changelog.html">Changelog</a></li>
         <li><a href="blog/">Blog</a></li>
         <li><a href="de/">Auf Deutsch</a></li>
         <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
@@ -798,12 +856,13 @@
       <div class="sidebar-section">
         <div class="sidebar-section-title">Getting Started</div>
         <nav class="sidebar-links" aria-label="Getting started">
-          <a href="#overview" class="active">Overview</a>
+          <a href="#overview" class="active" aria-current="location">Overview</a>
           <a href="#requirements">Requirements</a>
           <a href="#container-images">Container Images</a>
           <a href="#installation">Installation</a>
           <a href="#deployment-privacy">Deployment Privacy</a>
           <a href="#configuration">Configuration</a>
+          <a href="#attachments">File Attachments</a>
           <a href="#first-run">First-Run Wizard</a>
         </nav>
       </div>
@@ -848,83 +907,86 @@
 
       <h1>Documentation</h1>
       <p class="docs-lead">
-        Complete reference for installing, configuring, and operating OpenWhistle —
-        the free, self-hosted whistleblower reporting platform compliant with
-        <em>HinSchG</em> and EU Directive 2019/1937.
+        Installing, configuring and running OpenWhistle, the free, self-hosted whistleblower
+        platform for <em>HinSchG</em> and EU Directive 2019/1937.
       </p>
 
       <!-- Overview -->
       <section class="docs-section" id="overview" aria-labelledby="overview-h2">
         <h2 id="overview-h2">Overview</h2>
         <p>
-          OpenWhistle is a stateless, self-hosted web application that provides a secure internal
-          reporting channel as required by the German <em>Hinweisgeberschutzgesetz</em> (HinSchG)
-          and EU Directive 2019/1937. It is released under the GNU General Public License v3.0.
+          A stateless, self-hosted web application: the secure internal reporting channel that the
+          German <em>Hinweisgeberschutzgesetz</em> (HinSchG) and EU Directive 2019/1937 require.
+          Licensed under the GNU General Public License v3.0.
         </p>
         <p>
-          The application is built with Python and FastAPI, backed by PostgreSQL 18 and Redis 8,
-          and distributed as a Docker image. It has no external dependencies at runtime —
-          no CDN calls, no telemetry, no third-party services.
+          Python and FastAPI, PostgreSQL 18 and Redis 8, shipped as a Docker image. No CDN and no
+          third-party service; every outbound request is opt-in and
+          <a href="#outbound-requests">listed in full</a>.
+        </p>
+        <p>
+          Beside GlobaLeaks, SecureDrop and Hush Line:
+          <a href="open-source-whistleblowing-software.html">open source whistleblowing software compared</a>.
         </p>
 
         <h3>Key design principles</h3>
         <ul>
-          <li><strong>Anonymity first:</strong> No IP addresses are stored at any layer. The database schema contains no IP column. Redis session keys carry no identifying metadata.</li>
-          <li><strong>Stateless application:</strong> All session state lives in Redis. The application container is horizontally scalable and disposable.</li>
-          <li><strong>Compliance by design:</strong> §17 HinSchG deadline tracking is built into the data model, not bolted on as a feature.</li>
-          <li><strong>No vendor lock-in:</strong> Standard Docker Compose deployment. Export your data at any time using standard PostgreSQL tools.</li>
+          <li><strong>Anonymity first:</strong> no IP address is stored at any layer (<a href="#security">four layers</a>).</li>
+          <li><strong>Stateless:</strong> all session state lives in Redis; the app container is disposable and scales horizontally.</li>
+          <li><strong>Compliance by design:</strong> the §17 HinSchG deadlines are part of the data model.</li>
+          <li><strong>No lock-in:</strong> standard Docker Compose; your data is plain PostgreSQL.</li>
         </ul>
 
         <h3>Supported platforms</h3>
         <ul>
           <li>Any Linux host with Docker 24+ and Docker Compose v2</li>
-          <li>x86_64 and ARM64 (Apple Silicon) architectures</li>
-          <li>Container registries: GitHub Container Registry (ghcr.io), Docker Hub, Quay.io —
-            images for linux/amd64 and linux/arm64</li>
+          <li>x86_64 and ARM64 (Apple Silicon): images for linux/amd64 and linux/arm64</li>
+          <li>Registries: GitHub Container Registry (ghcr.io), Docker Hub, Quay.io</li>
         </ul>
 
         <h3>Current version</h3>
-        <p>
-          <strong>v2.0.1</strong> — The first account is now a superadmin, so organisations can be managed; the wizard and login pages no longer scroll past the window. v2.0.0: the confidential identity is shown only to the handler, with an audited reason; the first-run setup needs a one-time token; whistleblower times are stored as the day only; an optional Tor onion address and ClamAV upload scan; TLS by default in the Compose stack; an opt-in, off-by-default installation count; words inside reports are searchable without an index. See the
-          <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG</a>
-          for a full list of changes.
-        </p>
+        <p><strong>v2.0.1</strong>. What it changed:</p>
+        <ul>
+          <li>The first account is a superadmin, so organisations can be managed.</li>
+          <li>Pages that fit the window no longer scroll past it.</li>
+        </ul>
+        <p>What v2.0.0 changed:</p>
+        <ul>
+          <li>The confidential identity is shown only to the handler, with an audited reason.</li>
+          <li>The first-run setup needs a one-time token.</li>
+          <li>Whistleblower times are stored as the day only.</li>
+          <li>An optional Tor onion address and ClamAV upload scan.</li>
+          <li>TLS by default in the Compose stack.</li>
+          <li>An opt-in installation count, off by default.</li>
+          <li>Words inside reports are searchable without an index.</li>
+        </ul>
+        <p>Every change: <a href="changelog.html">Changelog</a>.</p>
       </section>
 
       <!-- Requirements -->
       <section class="docs-section" id="requirements" aria-labelledby="requirements-h2">
         <h2 id="requirements-h2">Requirements</h2>
-        <p>
-          OpenWhistle is designed to run on minimal infrastructure. A shared VPS with 1&nbsp;vCPU
-          and 1&nbsp;GB RAM is sufficient for most organisations.
-        </p>
-
-        <h3>Software</h3>
-        <ul>
-          <li><strong>Docker</strong> 24.0 or newer</li>
-          <li><strong>Docker Compose</strong> v2.0 or newer (the <code>docker compose</code> plugin, not the legacy <code>docker-compose</code> binary)</li>
-          <li>PostgreSQL 18 and Redis 8 are bundled in the Docker Compose configuration — no separate installation needed</li>
-        </ul>
-
-        <h3>Hardware</h3>
-        <ul>
-          <li>512&nbsp;MB RAM minimum (1&nbsp;GB recommended)</li>
-          <li>1&nbsp;vCPU minimum</li>
-          <li>5&nbsp;GB disk space (for application, database, and logs)</li>
-        </ul>
-
-        <h3>Network</h3>
-        <ul>
-          <li>A domain name pointing to your server</li>
-          <li>A valid HTTPS certificate (Let's Encrypt recommended)</li>
-          <li>Port 80 and 443 open inbound (for nginx)</li>
-        </ul>
+        <p>A shared VPS with 1&nbsp;vCPU and 1&nbsp;GB RAM is enough for most organisations.</p>
+        <div class="table-scroll">
+<table class="env-table">
+          <thead><tr><th>Need</th><th>Minimum</th></tr></thead>
+          <tbody>
+            <tr><td>Docker</td><td>24.0 or newer</td></tr>
+            <tr><td>Docker Compose</td><td>v2.0 or newer: the <code>docker compose</code> plugin, not the legacy <code>docker-compose</code> binary</td></tr>
+            <tr><td>PostgreSQL 18, Redis 8</td><td>bundled in the Compose stack, nothing to install</td></tr>
+            <tr><td>RAM</td><td>512&nbsp;MB (1&nbsp;GB recommended)</td></tr>
+            <tr><td>CPU</td><td>1&nbsp;vCPU</td></tr>
+            <tr><td>Disk</td><td>5&nbsp;GB for application, database and logs</td></tr>
+            <tr><td>Network</td><td>a domain name, a valid HTTPS certificate (Let's Encrypt recommended), ports 80 and 443 open inbound for nginx</td></tr>
+          </tbody>
+        </table>
+</div>
 
         <div class="callout callout-warn">
           <div class="callout-title">Important — HTTPS required</div>
           <p>
-            Operating a whistleblower reporting system over plain HTTP violates the confidentiality
-            obligations of §8 HinSchG and GDPR. HTTPS is non-negotiable in production deployments.
+            A reporting channel over plain HTTP breaks the confidentiality duty of §8 HinSchG and
+            GDPR. In production, HTTPS is not optional.
           </p>
         </div>
       </section>
@@ -933,8 +995,8 @@
       <section class="docs-section" id="container-images" aria-labelledby="container-images-h2">
         <h2 id="container-images-h2">Container Images</h2>
         <p>
-          Pre-built multi-arch images (linux/amd64, linux/arm64) are published automatically
-          to three registries on every release and on every commit to <code>main</code>.
+          Multi-arch images (linux/amd64, linux/arm64) go to three registries on every release and
+          every commit to <code>main</code>.
         </p>
 
         <h3>Registries</h3>
@@ -953,7 +1015,7 @@
         </div>
 
         <h3>Image tags</h3>
-        <div class="table-scroll">
+<div class="table-scroll">
 <table class="env-table">
           <thead>
             <tr>
@@ -990,17 +1052,17 @@
         <div class="callout callout-note">
           <div class="callout-title">Pinning in production</div>
           <p>
-            Replace <code>:latest</code> with a specific version tag (e.g. <code>:0.1.0</code>)
-            in <code>docker-compose.prod.yml</code> for deterministic deployments. The
-            <code>sha-</code> tags are ideal for immutable infrastructure pipelines.
+            <code>docker-compose.prod.yml</code> pins the image with <code>OPENWHISTLE_VERSION</code>
+            in <code>.env</code>; its default is the release the file shipped with. The <code>sha-</code> tags suit
+            immutable infrastructure pipelines.
           </p>
         </div>
 
         <h3>Image signatures</h3>
         <p>
-          All GHCR images are signed with
+          Every GHCR image is signed with
           <a href="https://docs.sigstore.dev/cosign/overview/" rel="noopener noreferrer" target="_blank">Cosign</a>
-          (keyless, Sigstore). Verify before pulling in security-sensitive environments:
+          (keyless, Sigstore). Verify it before pulling in a security-sensitive environment:
         </p>
         <div class="code-block" role="region" aria-label="Cosign verify command">
           <div class="code-block-header">
@@ -1016,8 +1078,8 @@
       <section class="docs-section" id="installation" aria-labelledby="installation-h2">
         <h2 id="installation-h2">Installation</h2>
         <p>
-          The recommended installation method uses Docker Compose. This starts all services
-          (application, PostgreSQL, Redis, nginx) with a single command.
+          Docker Compose starts everything with one command: application, PostgreSQL, Redis and
+          nginx.
         </p>
 
         <h3>Step 1 — Clone the repository</h3>
@@ -1031,9 +1093,9 @@
 
         <h3>Step 2 — Configure environment</h3>
         <p>
-          Copy the example environment file and edit it with your settings.
-          At minimum you must set <code>SECRET_KEY</code>, <code>DATABASE_URL</code>,
-          and <code>REDIS_URL</code>.
+          At minimum set <code>SECRET_KEY</code>, <code>DATABASE_URL</code> and
+          <code>REDIS_URL</code>; every other setting is in the
+          <a href="#configuration">configuration table</a>.
         </p>
         <div class="code-block" role="region" aria-label="Environment configuration">
           <div class="code-block-header">
@@ -1045,10 +1107,13 @@
 <span class="t-comment"># The production stack (TLS, nginx); every docker compose command below uses it:</span>
 <span class="t-str">COMPOSE_FILE</span>=docker-compose.prod.yml
 
-<span class="t-comment"># Minimum required values:</span>
+<span class="t-comment"># Minimum required values. The production Redis requires REDIS_PASSWORD,</span>
+<span class="t-comment"># so it goes into REDIS_URL too, as POSTGRES_PASSWORD goes into DATABASE_URL:</span>
 <span class="t-str">SECRET_KEY</span>=your-long-random-secret-key-here
-<span class="t-str">DATABASE_URL</span>=postgresql+asyncpg://openwhistle:password@db:5432/openwhistle
-<span class="t-str">REDIS_URL</span>=redis://redis:6379/0</code></pre>
+<span class="t-str">POSTGRES_PASSWORD</span>=db-password
+<span class="t-str">REDIS_PASSWORD</span>=redis-password
+<span class="t-str">DATABASE_URL</span>=postgresql+asyncpg://openwhistle:db-password@db:5432/openwhistle
+<span class="t-str">REDIS_URL</span>=redis://:redis-password@redis:6379/0</code></pre>
         </div>
 
         <h3>Step 3 — Start services</h3>
@@ -1067,41 +1132,32 @@
         <div class="callout callout-note">
           <div class="callout-title">TLS is on by default</div>
           <p>
-            The bundled nginx serves HTTPS on port 443 and redirects plain HTTP on port 80.
-            Put your own <code>fullchain.pem</code> and <code>privkey.pem</code> (e.g. from
-            certbot) in <code>nginx/certs/</code> and restart. Copy them there, do not symlink
-            (a link into <code>/etc/letsencrypt/live</code> dangles inside the container), and
-            keep the key root-owned <code>0600</code>, or <code>0644</code>; otherwise
-            <code>tls-init</code> stops with the path and the reason. Without them, the one-shot
-            <code>tls-init</code> service generates a self-signed certificate for
-            <code>TLS_HOSTNAME</code> (a <code>.env</code> variable read only by
-            <code>docker-compose.prod.yml</code>, default <code>localhost</code>) before nginx
-            starts.
+            nginx serves HTTPS on 443 and redirects plain HTTP on 80. Put your
+            <code>fullchain.pem</code> and <code>privkey.pem</code> (e.g. from certbot) into
+            <code>nginx/certs/</code> and restart.
           </p>
-          <p>
-            To renew: drop the new certificate into <code>nginx/certs/</code> and run
-            <code>docker compose up -d tls-init nginx</code>. <code>tls-init</code> is a
-            one-shot service — restarting <code>nginx</code> alone leaves the old certificate in
-            place, since nginx never re-reads <code>nginx/certs/</code> itself.
-          </p>
+          <ul>
+            <li>Copy them, do not symlink: a link into <code>/etc/letsencrypt/live</code> dangles inside the container.</li>
+            <li>Keep the key root-owned <code>0600</code>, or <code>0644</code>. Otherwise <code>tls-init</code> stops and names the path and the reason.</li>
+            <li>Without them, the one-shot <code>tls-init</code> service generates a self-signed certificate before nginx starts. It is for <code>TLS_HOSTNAME</code> (default <code>localhost</code>), a <code>.env</code> variable only <code>docker-compose.prod.yml</code> reads.</li>
+            <li>To renew, drop the new certificate into <code>nginx/certs/</code> and run <code>docker compose up -d tls-init nginx</code>. Restarting <code>nginx</code> alone keeps the old one: nginx never re-reads <code>nginx/certs/</code> itself.</li>
+          </ul>
         </div>
 
         <div class="callout callout-warn">
           <div class="callout-title">Self-signed is for first boot only</div>
           <p>
-            The generated self-signed certificate lets the stack come up before you have a real
-            one; it is not meant to serve real users. A browser that clicks through the
-            certificate warning gets an HSTS pin (<code>Strict-Transport-Security:
-            max-age=31536000; includeSubDomains; preload</code>) for that hostname — install a
-            real certificate (see <a href="#requirements">Requirements</a>, "HTTPS required")
-            before anyone but you visits the instance.
+            It lets the stack come up before you have a real certificate, not to serve users. A
+            browser that clicks through its warning gets an HSTS pin
+            (<code>Strict-Transport-Security: max-age=31536000; includeSubDomains; preload</code>) for
+            that hostname. Install a real certificate before anyone but you visits.
           </p>
         </div>
 
         <h3>Step 4 — Run the setup wizard</h3>
         <p>
           Unless you set <code>SETUP_TOKEN</code> yourself, read the one-time setup token from the
-          application log before opening the wizard:
+          log:
         </p>
         <div class="code-block" role="region" aria-label="Read the setup token from the log">
           <div class="code-block-header">
@@ -1110,18 +1166,16 @@
           <pre><code><span class="t-prompt">$ </span><span class="t-cmd">docker compose logs app | grep "Setup token"</span></code></pre>
         </div>
         <p>
-          Open <code>http://localhost:4009/setup</code> (or your domain if nginx is configured)
-          in a browser. Enter the setup token, then follow the wizard to create your first admin
-          account and configure TOTP. That account is a superadmin: it can manage organisations and
-          grant every role. The wizard disables itself permanently after completion.
+          Then open <code>https://&lt;TLS_HOSTNAME&gt;/setup</code> (<code>https://localhost/setup</code>
+          by default) and follow the <a href="#first-run">First-Run Wizard</a>. The account
+          it creates is a superadmin: it manages organisations and grants every role.
         </p>
 
         <div class="callout callout-note">
           <div class="callout-title">Database migrations</div>
           <p>
-            OpenWhistle applies Alembic migrations automatically on startup. The application
-            checks for pending migrations at boot and will not serve traffic until all
-            migrations are applied successfully.
+            Alembic migrations run automatically at startup. The app serves no traffic until every
+            one has been applied.
           </p>
         </div>
       </section>
@@ -1132,11 +1186,11 @@
 
         <h3 id="outbound-requests">Every request that leaves the host</h3>
         <p>
-          This is the whole list, and nothing on it is on until you switch it on. Three
-          destinations are fixed &mdash; <code>api.github.com</code>, <code>telemetry.wdkro.de</code>
-          and ClamAV's mirrors; every other one is a server you name.
+          The whole list; nothing on it is on until you switch it on. Three destinations are fixed
+          &mdash; <code>api.github.com</code>, <code>telemetry.wdkro.de</code> and ClamAV's mirrors.
+          Every other one is a server you name.
         </p>
-        <div class="table-scroll">
+<div class="table-scroll">
 <table class="env-table">
           <thead><tr><th>Request</th><th>Switched on by</th><th>Destination</th><th>How often</th><th>Carries</th></tr></thead>
           <tbody>
@@ -1158,17 +1212,16 @@
         <p>
           <strong>Through a proxy:</strong> the update check, the installation count, webhooks,
           OIDC and S3 honour <code>HTTPS_PROXY</code>, <code>ALL_PROXY</code> and
-          <code>NO_PROXY</code> in the app container's environment (and <code>SSL_CERT_FILE</code>
-          for a proxy's CA). SMTP and LDAP connect directly.
+          <code>NO_PROXY</code> in the app container (<code>SSL_CERT_FILE</code> for a proxy's CA).
+          SMTP and LDAP connect directly.
         </p>
 
         <h3 id="counting-installations">Counting installations</h3>
         <p>
-          The setup wizard asks, with the box unchecked; an installation upgraded to 2.0.0 was
-          never asked and stays off. Switch it on or off under <strong>Admin &rarr; System</strong>
-          at any time; the next attempt reads the answer, no restart. A security fix matters
-          differently at ten installations than at ten thousand, and this count is the only way
-          to know which.
+          A security fix matters differently at ten installations than at ten thousand; this count
+          is the only way to know which. The setup wizard asks, with the box unchecked. An
+          installation upgraded to 2.0.0 was never asked and stays off. Switch it under
+          <strong>Admin &rarr; System</strong> at any time, no restart.
         </p>
         <p>What is sent, in full, once a day and nothing else:</p>
         <div class="code-block" role="region" aria-label="Telemetry request" tabindex="0">
@@ -1183,10 +1236,10 @@ Connection: keep-alive
 User-Agent: openwhistle/&lt;version&gt;</code></pre>
         </div>
         <p>
-          Over HTTPS; no cookie, no body. The last four headers are what the HTTP library sends
-          with every request (<code>Accept-Encoding</code> grows if a brotli or zstd package is ever installed).
+          Over HTTPS; no cookie, no body. The last four headers are what the HTTP library sends with
+          every request (<code>Accept-Encoding</code> grows if a brotli or zstd package is ever installed).
         </p>
-        <div class="table-scroll">
+<div class="table-scroll">
 <table class="env-table">
           <tbody>
             <tr><td><strong>Not</strong> sent</td><td>the hostname, any address, <code>APP_PUBLIC_URL</code>, any count of reports, users or organisations, any setting</td></tr>
@@ -1201,23 +1254,23 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
 </div>
         <p>
           <code>TELEMETRY_ENABLED</code> overrides the switch: <code>false</code> keeps it off,
-          <code>true</code> on, and <strong>Admin &rarr; System</strong> then shows it as set by
-          the environment. Unset or empty (the Compose default), the switch decides.
+          <code>true</code> on, and <strong>Admin &rarr; System</strong> shows it as set by the
+          environment. Unset or empty (the Compose default), the switch decides.
         </p>
         <div class="callout callout-note">
           <p>
             The number is a lower bound and cannot be made tamper-proof: the endpoint is open, so
-            anyone can invent identifiers. It is good enough to tell ten installations from ten
-            thousand and to see whether a fix has spread, and it is not claimed to be more.
+            anyone can invent identifiers. It tells ten installations from ten thousand, and shows
+            whether a fix has spread; no more is claimed.
           </p>
         </div>
 
         <h3 id="redis-sizing">Redis sizing</h3>
         <p>
           A submission draft lives in Redis for up to 2 hours, Fernet-encrypted with a key that
-          exists only in the whistleblower's cookie. Its attachments make it large:
+          exists only in the whistleblower's cookie. Attachments make it large:
         </p>
-        <div class="table-scroll">
+<div class="table-scroll">
 <table class="env-table">
           <thead><tr><th>Draft</th><th>Redis memory</th></tr></thead>
           <tbody>
@@ -1228,18 +1281,19 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
 </div>
         <p>
           Set <code>maxmemory</code> with <code>maxmemory-policy noeviction</code>
-          (<code>docker-compose.prod.yml</code> uses 1 GB): an evicting policy could drop
-          sessions and rate-limit counters. Past <code>DRAFT_REDIS_MEMORY_PERCENT</code> new
-          draft attachments are refused, so the rest of Redis keeps working.
+          (<code>docker-compose.prod.yml</code> uses 1 GB): an evicting policy could drop sessions
+          and rate-limit counters. Past <code>DRAFT_REDIS_MEMORY_PERCENT</code>, new draft
+          attachments are refused so the rest of Redis keeps working.
         </p>
 
         <h3 id="behind-proxy">Behind a TLS-terminating proxy</h3>
         <p>
-          When Cloudflare, Traefik or a host nginx terminates TLS in front of the stack, either
-          point it at <code>https://…:443</code> (with the bundled nginx's certificate), or
-          switch the bundled nginx to plain HTTP on port 80 with the shipped override. Port 80
-          then proxies instead of redirecting, and 443 is not published:
+          With Cloudflare, Traefik or a host nginx terminating TLS in front, choose one:
         </p>
+        <ul>
+          <li>point it at <code>https://…:443</code>, with the bundled nginx's certificate, or</li>
+          <li>switch the bundled nginx to plain HTTP on port 80 with the shipped override. Port 80 then proxies instead of redirecting, and 443 is not published:</li>
+        </ul>
         <div class="code-block" role="region" aria-label="Plain-HTTP override">
           <div class="code-block-header">
             <span class="code-block-lang">.env</span>
@@ -1249,26 +1303,24 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
         <ul>
           <li>Keep port 80 reachable only from the terminator: nothing on it is encrypted.</li>
           <li><code>SECURE_COOKIES</code> stays <code>true</code>; the browser still talks HTTPS.</li>
-          <li>The client-IP headers the terminator adds are still stripped, so nginx rate-limits the terminator's address, not each client: rate-limit per client at the terminator.</li>
+          <li>nginx still strips the client-IP headers the terminator adds, so it rate-limits the terminator's address. Rate-limit per client at the terminator.</li>
         </ul>
 
         <h3 id="selinux">SELinux hosts</h3>
         <p>
-          On a host with SELinux enforcing (Fedora, RHEL, CentOS and derivatives), the
-          bind-mounted files in <code>docker-compose.prod.yml</code> and the Ansible template
-          (<code>nginx.conf</code>, <code>nginx/certs</code>, <code>/etc/letsencrypt</code>)
-          carry the <code>:z</code> relabel option, so the container can read them. This is
-          required on SELinux hosts and a no-op everywhere else — nothing to configure.
+          Nothing to configure. With SELinux enforcing (Fedora, RHEL, CentOS and derivatives), the
+          container must be allowed to read its bind-mounted files. So the mounts in
+          <code>docker-compose.prod.yml</code> and the Ansible template (<code>nginx.conf</code>,
+          <code>nginx/certs</code>, <code>/etc/letsencrypt</code>) carry the <code>:z</code> relabel
+          option, a no-op elsewhere.
         </p>
 
         <h3 id="onion-address">Offering an onion address</h3>
         <p>
-          A reporter on a monitored network (a workplace, a school) can be seen visiting
-          OpenWhistle even though the report itself stays private — Tor Browser hides that too.
-          Run a Tor hidden service on the same host pointing at the onion-only nginx entry on
-          <code>127.0.0.1:8080</code> (published there only — see the <code>ports:</code> entry
-          in <code>docker-compose.prod.yml</code>), then set <code>ONION_LOCATION</code> to the
-          address it gives you:
+          On a monitored network (a workplace, a school), a visit to OpenWhistle can be seen even
+          though the report stays private. Tor Browser hides the visit too. Run a Tor hidden service
+          on the same host, aimed at the onion-only nginx entry on <code>127.0.0.1:8080</code>. It is
+          published there only (the <code>ports:</code> entry in <code>docker-compose.prod.yml</code>).
         </p>
         <div class="code-block" role="region" aria-label="Set up a Tor hidden service">
           <div class="code-block-header">
@@ -1287,110 +1339,89 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
 <span class="t-str">ONION_LOCATION</span>=http://abc...xyz.onion
 <span class="t-prompt">$ </span><span class="t-cmd">docker compose up -d app</span></code></pre>
         </div>
-        <p>
-          Every HTML response then carries an <code>Onion-Location</code> header (Tor Browser
-          offers to switch) and the submit page shows the address — except to a visitor already
-          on the onion service, who would just be pointed back at the same page. Cookies and
-          <code>Strict-Transport-Security</code> also adapt automatically: the app drops the
-          <code>Secure</code> cookie flag and HSTS for a request that arrived through the onion
-          listener, since that connection was never TLS (Tor encrypts it instead) and a browser
-          can refuse a <code>Secure</code> cookie sent over plain HTTP.
-        </p>
+        <p>With <code>ONION_LOCATION</code> set:</p>
+        <ul>
+          <li>Every HTML response carries an <code>Onion-Location</code> header; Tor Browser offers to switch.</li>
+          <li>The submit page shows the address, except to a visitor already on the onion service.</li>
+          <li>A request through the onion listener gets no HSTS and no <code>Secure</code> cookie flag. That connection was never TLS (Tor encrypts it), and a browser can refuse a <code>Secure</code> cookie over plain HTTP.</li>
+        </ul>
         <div class="callout callout-note">
           <div class="callout-title">The app trusts nginx, not the client, to say "this is the onion listener"</div>
           <p>
-            A request's <code>Host</code> header is never used for this — any client on the
-            regular HTTPS listener could send <code>Host: &lt;anything&gt;.onion</code> and would
-            otherwise get treated as already-on-Tor. Instead the bundled <code>nginx/nginx.conf</code>
-            sets a request header, <code>X-OW-Onion: 1</code>, only inside the onion (port 8080)
-            server block, and clears it inside the regular (443) one — the same pattern already
-            used to strip incoming IP-forwarding headers. This means <strong>the app's own port
-            (<code>4009</code>) must stay reachable only through this nginx</strong>, exactly as
-            already required for IP-address stripping to hold: a deployment that exposes the app
-            directly, or proxies it through something else, must set or clear
-            <code>X-OW-Onion</code> itself or this protection (and the IP-stripping one) does
-            nothing.
+            Never the <code>Host</code> header: any client on the HTTPS listener could send
+            <code>Host: &lt;anything&gt;.onion</code>. Instead the bundled <code>nginx/nginx.conf</code>
+            sets <code>X-OW-Onion: 1</code> only in the onion (port 8080) server block and clears it in
+            the regular (443) one. It strips incoming IP-forwarding headers the same way.
           </p>
           <p>
-            Without <code>ONION_LOCATION</code> the app ignores <code>X-OW-Onion</code>, so a
-            path that forwards it from the client, such as the Helm chart's ingress, is safe. If
-            you set <code>ONION_LOCATION</code> behind ingress-nginx, clear the header there:
-            annotation <code>nginx.ingress.kubernetes.io/configuration-snippet: proxy_set_header
-            X-OW-Onion "";</code> (the controller needs <code>allow-snippet-annotations</code>).
+            So <strong>the app's own port (<code>4009</code>) must stay reachable only through this
+            nginx</strong>, as IP stripping already requires. A deployment that exposes the app
+            directly, or through another proxy, must set or clear <code>X-OW-Onion</code> itself.
+            Otherwise neither protection holds.
+          </p>
+          <p>
+            Without <code>ONION_LOCATION</code> the app ignores <code>X-OW-Onion</code>, so a path
+            that forwards it from the client, such as the Helm chart's ingress, is safe. With
+            <code>ONION_LOCATION</code> behind ingress-nginx, clear it there with the annotation
+            <code>nginx.ingress.kubernetes.io/configuration-snippet: proxy_set_header X-OW-Onion "";</code>
+            (the controller needs <code>allow-snippet-annotations</code>).
           </p>
         </div>
         <div class="callout callout-warn">
           <div class="callout-title"><code>/var/lib/tor/openwhistle/</code> holds the address's private key</div>
           <p>
-            <code>hs_ed25519_secret_key</code> inside that directory <em>is</em> the onion address
-            — losing it changes the address permanently, breaking every link already given to a
-            reporter, and anyone who obtains it can stand up a service that impersonates it.
-            Back the directory up before any host migration or volume change, keep it root/tor-only
-            (Tor sets <code>0700</code> on creation; a bind-mount or backup step can widen that —
-            check it), and never commit it or publish it anywhere the how-to above is shared.
+            <code>hs_ed25519_secret_key</code> in that directory <em>is</em> the onion address. Lose it
+            and the address changes for good, breaking every link a reporter was given. Whoever holds
+            it can impersonate the service.
           </p>
+          <ul>
+            <li>Back the directory up before any host migration or volume change.</li>
+            <li>Keep it root/tor-only: Tor sets <code>0700</code> on creation, but a bind-mount or a backup step can widen that. Check it.</li>
+            <li>Never commit or publish it, least of all wherever this how-to is shared.</li>
+          </ul>
         </div>
         <div class="callout callout-note">
           <div class="callout-title">Rate limiting on the onion listener</div>
           <p>
             <code>HiddenServicePort</code> forwards every Tor visitor to nginx from
-            <code>127.0.0.1</code> — the real, distinct visitor is never visible to nginx, so
-            per-IP rate limiting cannot distinguish them. The onion server block therefore uses
-            its own zone, sized for several concurrent legitimate reporters instead of one
-            visitor, rather than the public listener's per-IP zone. A burst of onion traffic
-            still shares that one budget: expect occasional 429s under heavy concurrent use, and
-            raise the zone's <code>rate</code>/<code>burst</code> in <code>nginx/nginx.conf</code>
-            if that happens in practice.
+            <code>127.0.0.1</code>, so per-IP limits cannot tell visitors apart. The onion server
+            block therefore has its own zone, sized for several concurrent reporters. Heavy
+            concurrent use still shares that one budget and can see a 429. If that happens, raise the
+            zone's <code>rate</code>/<code>burst</code> in <code>nginx/nginx.conf</code>.
           </p>
         </div>
 
         <h3 id="helm">Kubernetes (Helm)</h3>
         <p>
           The ingress controller sees every whistleblower's IP address. The chart
-          (<code>charts/openwhistle/</code>) ships with
-          <code>nginx.ingress.kubernetes.io/enable-access-log: "false"</code> on its Ingress,
-          and with the bundled nginx's rate limit (<code>limit-rps: "10"</code>,
-          <code>limit-burst-multiplier: "3"</code>, so a burst of 30).
+          (<code>charts/openwhistle/</code>) sets
+          <code>nginx.ingress.kubernetes.io/enable-access-log: "false"</code> on its Ingress. It also
+          sets the bundled nginx's rate limit: <code>limit-rps: "10"</code>,
+          <code>limit-burst-multiplier: "3"</code>, a burst of 30.
         </p>
         <ul>
-          <li>Your own <code>ingress.annotations</code> are merged with it; do not set it to
-            <code>null</code>.</li>
-          <li><strong>Required:</strong> <code>error-log-level: crit</code> in the controller
-            ConfigMap. Below <code>crit</code>, ingress-nginx logs every rate-limited request
-            and every upstream error with the client's IP address.</li>
-          <li>A rate-limited request gets <code>503</code>, not the bundled nginx's
-            <code>429</code>, unless the controller ConfigMap sets
-            <code>limit-req-status-code: "429"</code> (controller-wide).</li>
-          <li>The limit is per peer address, so behind a load balancer the controller must see
-            the real client, or every reporter shares one budget:
+          <li>Your own <code>ingress.annotations</code> are merged with it; do not set it to <code>null</code>.</li>
+          <li><strong>Required:</strong> <code>error-log-level: crit</code> in the controller ConfigMap. Below <code>crit</code>, ingress-nginx logs every rate-limited request and upstream error with the client's IP address.</li>
+          <li>A rate-limited request gets <code>503</code>, not <code>429</code>, unless the controller ConfigMap sets <code>limit-req-status-code: "429"</code> (controller-wide).</li>
+          <li>The limit is per peer address. Behind a load balancer the controller must see the real client, or every reporter shares one budget:
             <ul>
-              <li>L4 (TCP, SNAT): proxy protocol (<code>use-proxy-protocol: "true"</code> in the
-                controller ConfigMap, and enabled on the load balancer) or
-                <code>externalTrafficPolicy: Local</code> on the controller Service.</li>
-              <li>L7 (HTTP): <code>use-forwarded-headers: "true"</code> together with
-                <code>proxy-real-ip-cidr</code> set to the load balancer's range. Without that
-                range any client can send its own <code>X-Forwarded-For</code> and escape the
-                limit.</li>
+              <li>L4 (TCP, SNAT): proxy protocol (<code>use-proxy-protocol: "true"</code> in the controller ConfigMap, and on the load balancer), or <code>externalTrafficPolicy: Local</code> on the controller Service.</li>
+              <li>L7 (HTTP): <code>use-forwarded-headers: "true"</code> together with <code>proxy-real-ip-cidr</code> set to the load balancer's range. Without that range, any client sends its own <code>X-Forwarded-For</code> and escapes the limit.</li>
             </ul>
           </li>
-          <li>ingress-nginx always forwards <code>X-Forwarded-For</code> and
-            <code>X-Real-IP</code>. OpenWhistle drops them, and the peer address, in its first
-            middleware; the admin dashboard still warns that the proxy knows the addresses.</li>
+          <li>ingress-nginx always forwards <code>X-Forwarded-For</code> and <code>X-Real-IP</code>. OpenWhistle drops them, and the peer address, in its first middleware. The admin dashboard still warns that the proxy knows the addresses.</li>
           <li>Other controllers (Traefik: access log off unless enabled): check their logging.</li>
         </ul>
         <p>
-          With more than one replica, only the pod that wins the race to create the setup token
-          writes it to its own log — find it with
-          <code>kubectl logs -l app.kubernetes.io/name=openwhistle | grep "Setup token"</code>
-          instead of checking pods one by one. Setting <code>secrets.setupToken</code> (chart) /
-          <code>SETUP_TOKEN</code> avoids that hunt entirely: every replica uses the same
-          configured value.
+          With several replicas, only the pod that wins the race to create the setup token logs it:
+          <code>kubectl logs -l app.kubernetes.io/name=openwhistle | grep "Setup token"</code> finds
+          it. Setting <code>secrets.setupToken</code> (chart) / <code>SETUP_TOKEN</code> avoids the
+          hunt: every replica uses that value.
         </p>
         <p>
-          A setting from the <a href="#configuration">configuration table</a> that
-          <code>values.yaml</code> has no key for goes into <code>extraEnv</code>, as
-          <code>NAME: value</code> (for example <code>SECURE_COOKIES: "false"</code>). Secrets
-          belong in <code>secrets</code>.
+          A setting from the <a href="#configuration">configuration table</a> without a
+          <code>values.yaml</code> key goes into <code>extraEnv</code> as <code>NAME: value</code>
+          (for example <code>SECURE_COOKIES: "false"</code>). Secrets belong in <code>secrets</code>.
         </p>
       </section>
 
@@ -1398,12 +1429,11 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
       <section class="docs-section" id="configuration" aria-labelledby="configuration-h2">
         <h2 id="configuration-h2">Configuration</h2>
         <p>
-          All configuration is done via environment variables in the <code>.env</code> file.
-          There are no YAML configuration files or database-stored settings
-          (except admin preferences managed through the UI).
+          Everything is an environment variable in <code>.env</code>. No YAML files and no settings in
+          the database, except the admin preferences managed in the UI.
         </p>
 
-        <div class="table-scroll">
+<div class="table-scroll">
 <table class="env-table" aria-label="Environment variables">
           <thead>
             <tr>
@@ -1447,7 +1477,7 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
             <tr>
               <td><code class="env-key">REDIS_URL</code></td>
               <td><span class="env-required env-req-yes">Required</span></td>
-              <td>Redis connection string. Format: <code>redis://host:port/db</code></td>
+              <td>Redis connection string. Format: <code>redis://host:port/db</code>, with a password <code>redis://:password@host:port/db</code></td>
               <td>—</td>
             </tr>
             <tr>
@@ -1617,37 +1647,51 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
               <td>Log output format. Use <code>json</code> for structured JSON (recommended for log aggregation pipelines) or <code>text</code> for human-readable output.</td>
               <td><code>json</code></td>
             </tr>
+            <tr>
+              <td><code class="env-key">UPDATE_CHECK_ENABLED</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>Set to <code>true</code> to let OpenWhistle check GitHub once a day for a newer release, shown on the <strong>Admin → System</strong> page. Off by default (no external calls); sends no instance data to GitHub — only a standard request.</td>
+              <td><code>false</code></td>
+            </tr>
+            <tr>
+              <td><code class="env-key">TELEMETRY_ENABLED</code></td>
+              <td><span class="env-required env-req-no">Optional</span></td>
+              <td>The daily <a href="#counting-installations">installation count</a>. Unset or empty: the answer from the setup wizard / <strong>Admin → System</strong> decides, off until given. <code>false</code>: always off. <code>true</code>: always on. The switch is locked either way. <code>DEMO_MODE</code> is never counted.</td>
+              <td>(empty)</td>
+            </tr>
           </tbody>
         </table>
 </div>
 
         <h3 id="notifications">Notifications</h3>
         <p>
-          OpenWhistle can notify administrators via <strong>email (SMTP)</strong> or a
-          <strong>webhook (HTTP POST)</strong> about new reports and new whistleblower messages.
-          Both channels are disabled by default and can be configured independently.
+          Email (SMTP) and webhook (HTTP POST) notices about new reports and whistleblower messages.
+          Both are off by default and independent of each other.
         </p>
-        <p>
-          Webhooks go to third parties (Slack, Teams, a generic endpoint) and carry
-          <strong>counts only</strong> — never a case number or a deadline date. Email goes to
-          your own admins and keeps the case number, since only they can act on a specific case.
-          Neither channel ever carries the report description, category or submission time.
-        </p>
+        <div class="table-scroll">
+<table class="env-table">
+          <thead><tr><th>Channel</th><th>Goes to</th><th>Carries</th></tr></thead>
+          <tbody>
+            <tr><td>Email</td><td>your own admins</td><td>the case number: only they can act on a specific case</td></tr>
+            <tr><td>Webhook</td><td>third parties (Slack, Teams, a generic endpoint)</td><td><strong>counts only</strong>, never a case number or a deadline date</td></tr>
+          </tbody>
+        </table>
+</div>
+        <p>Neither ever carries the report description, category or submission time.</p>
         <div class="callout callout-note">
           <div class="callout-title">Why notifications are batched</div>
           <p>
-            A notice sent the second a report arrives tells the employer when it was written —
-            and who was at their desk then. Notices are therefore collected and sent as one
-            digest every <code>NOTIFICATION_BATCH_MINUTES</code> (default 1440, once a day at 00:00 UTC).
-            Report times are stored as the day only, and the digest interval bounds how precisely a
-            notice dates a report: an hourly digest would say which hour. The trade-off: case
-            managers learn of a report up to a day after it arrives, well inside the 7-day
-            acknowledgement deadline. <code>0</code> sends each notice immediately — only
-            if you accept the timing risk.
+            A notice sent the second a report arrives tells the employer when it was written, and who
+            was at their desk then. So notices go out as one digest every
+            <code>NOTIFICATION_BATCH_MINUTES</code> (default 1440, once a day at 00:00 UTC). Report
+            times are stored as the day only; the digest interval bounds how precisely a notice dates
+            a report. An hourly digest would say which hour. The trade-off: case managers learn of a
+            report up to a day late, well inside the 7-day acknowledgement deadline.
+            <code>0</code> sends each notice at once, only if you accept the timing risk.
           </p>
         </div>
 
-        <div class="table-scroll">
+<div class="table-scroll">
 <table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
@@ -1662,7 +1706,7 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
 </div>
 
         <h4>Email (SMTP)</h4>
-        <div class="table-scroll">
+<div class="table-scroll">
 <table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
@@ -1726,10 +1770,9 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
 
         <h4>Webhook</h4>
         <p>
-          When enabled, OpenWhistle sends a <code>POST</code> request with a JSON body to the
-          configured URL. If a <code>NOTIFY_WEBHOOK_SECRET</code> is set, the request includes an
-          <code>X-OpenWhistle-Signature: sha256=&lt;hex&gt;</code> header so the receiving endpoint
-          can verify authenticity using HMAC-SHA256.
+          A <code>POST</code> with a JSON body. With <code>NOTIFY_WEBHOOK_SECRET</code> set, an
+          <code>X-OpenWhistle-Signature: sha256=&lt;hex&gt;</code> header lets the receiver verify it
+          (HMAC-SHA256).
         </p>
         <pre><code>{
   "event": "new_activity",
@@ -1737,7 +1780,7 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
   "new_messages": 1,
   "message": "2 new reports, 1 new message"
 }</code></pre>
-        <div class="table-scroll">
+<div class="table-scroll">
 <table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
@@ -1771,14 +1814,14 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
 
         <h3 id="sla-reminders">SLA Reminders</h3>
         <p>
-          OpenWhistle can automatically send reminders when HinSchG deadlines are approaching.
-          The background scheduler checks all open reports every 30 minutes. Redis dedup keys
-          prevent duplicate notifications during each warning window. The reminder email (to your
-          own admins) is sent per case and carries its case number; the reminder webhook is sent
-          once per run and carries only the number of cases due — never a case number or a
-          deadline date.
+          Reminders before a HinSchG deadline runs out. The scheduler checks every open report every
+          30 minutes; Redis dedup keys send each warning once per window.
         </p>
-        <div class="table-scroll">
+        <ul>
+          <li><strong>Email</strong> (your own admins): one per case, with its case number.</li>
+          <li><strong>Webhook</strong>: one per run, with only the number of cases due. Never a case number or a deadline date.</li>
+        </ul>
+<div class="table-scroll">
 <table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
@@ -1806,20 +1849,16 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
 
         <h3 id="retention">Data Retention (GDPR / HinSchG)</h3>
         <p>
-          Closed reports can be automatically deleted after a configurable retention period.
-          This satisfies GDPR Art. 5(1)(e) (storage limitation) and HinSchG §11 Abs. 5
-          (3-year minimum documentation requirement). Each deletion writes an immutable
-          audit log entry (<code>report.auto_deleted</code>) recording the case number and legal basis.
-          The admin UI at <code>/admin/retention</code> shows the current configuration and next
-          scheduled run.
+          Closed reports are deleted automatically after a retention period. This satisfies GDPR
+          Art. 5(1)(e) (storage limitation) and HinSchG §11 Abs. 5 (documentation is deleted three
+          years after the procedure ends).
         </p>
-        <p>
-          <strong>On by default since v1.5.0.</strong> A report is deleted
-          <code>RETENTION_DAYS</code> after it is closed. OpenWhistle was released in 2026, so no
-          installation holds a report closed three years ago: turning retention on deletes nothing
-          today.
-        </p>
-        <div class="table-scroll">
+        <ul>
+          <li>Each deletion writes an immutable audit entry (<code>report.auto_deleted</code>) with the case number and legal basis.</li>
+          <li><code>/admin/retention</code> shows the configuration and the next scheduled run.</li>
+          <li><strong>On by default since v1.5.0.</strong> A report is deleted <code>RETENTION_DAYS</code> after it is closed. OpenWhistle was released in 2026, so no installation holds a report closed three years ago: turning retention on deletes nothing today.</li>
+        </ul>
+<div class="table-scroll">
 <table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
@@ -1841,21 +1880,20 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
 
         <h3 id="multi-tenancy">Multi-Tenancy</h3>
         <p>
-          A single OpenWhistle deployment can serve multiple independent organisations
-          (tenants). Each organisation has its own reports, categories, locations, and
-          admin users. The <code>superadmin</code> role manages organisations at
-          <code>/admin/organisations</code>.
+          One deployment can serve several independent organisations (tenants), each with its own
+          reports, categories, locations and admin users. The <code>superadmin</code> role manages
+          them at <code>/admin/organisations</code>.
         </p>
         <p>Each organisation has its own reporting link, <code>/submit/&lt;slug&gt;</code> — the one to give its employees:</p>
         <ul>
           <li>The wizard there offers only that organisation's categories and locations, and files the report under it.</li>
           <li>The link, with a copy button, is on <code>/admin/organisations</code> (superadmin) and on an organisation admin's dashboard.</li>
           <li><code>/submit</code> is the default organisation's (<code>DEFAULT_ORG_SLUG</code>). If that names no active organisation, <code>/submit</code> answers 503 and logs the setting, and a set-up instance refuses to start.</li>
-          <li>An unknown or deactivated slug is a 404. There is no list of the instance's organisations, but a slug is part of a public link: anyone can test whether a guessed one exists.</li>
-          <li>A draft stays with the organisation it was started for. Another organisation's link shows a fresh wizard; its first step replaces the draft, and the earlier one is no longer reachable from that browser.</li>
+          <li>An unknown or deactivated slug is a 404. There is no list of organisations, but a slug is part of a public link: anyone can test whether a guessed one exists.</li>
+          <li>A draft stays with the organisation it was started for. Another organisation's link shows a fresh wizard; its first step replaces the draft, and the earlier one is lost to that browser.</li>
           <li>With multi-tenancy off there is one wizard, at <code>/submit</code>: <code>/submit/&lt;default slug&gt;</code> redirects there, any other slug is a 404.</li>
         </ul>
-        <div class="table-scroll">
+<div class="table-scroll">
 <table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
@@ -1871,35 +1909,23 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
               <td>Slug of the default organisation auto-created during setup. Used for single-tenant deployments and as the fallback for legacy data.</td>
               <td><code>default</code></td>
             </tr>
-            <tr>
-              <td><code class="env-key">UPDATE_CHECK_ENABLED</code></td>
-              <td><span class="env-required env-req-no">Optional</span></td>
-              <td>Set to <code>true</code> to let OpenWhistle check GitHub once a day for a newer release, shown on the <strong>Admin → System</strong> page. Off by default (no external calls); sends no instance data to GitHub — only a standard request.</td>
-              <td><code>false</code></td>
-            </tr>
-            <tr>
-              <td><code class="env-key">TELEMETRY_ENABLED</code></td>
-              <td><span class="env-required env-req-no">Optional</span></td>
-              <td>The daily <a href="#counting-installations">installation count</a>. Unset or empty: the answer from the setup wizard / <strong>Admin → System</strong> decides, off until given. <code>false</code>: always off. <code>true</code>: always on. The switch is locked either way. <code>DEMO_MODE</code> is never counted.</td>
-              <td>(empty)</td>
-            </tr>
           </tbody>
         </table>
 </div>
 
         <h3 id="ldap">LDAP / Active Directory Login</h3>
         <p>
-          Admin accounts can authenticate via corporate LDAP in addition to local credentials
-          and OIDC. On first login, an <code>AdminUser</code> record is auto-provisioned
-          (no local password) with the <strong>Case Manager</strong> role — an admin promotes
-          it if needed. TOTP enrollment is still required after the first login.
+          Admins can also sign in with corporate LDAP. The first login creates an
+          <code>AdminUser</code> (no local password) with the <strong>Case Manager</strong> role; an
+          admin promotes it if needed. TOTP enrollment still follows, as for
+          <a href="#admin-login">every account</a>.
         </p>
         <p>
-          LDAP uses python-ldap (the OpenLDAP client), S3 storage uses boto3; both are optional
-          extras. The container image includes both. Installing from source needs
-          <code>libldap2-dev libsasl2-dev</code> and <code>pip install '.[ldap,s3]'</code>.
+          LDAP uses python-ldap (the OpenLDAP client) and S3 storage uses boto3: optional extras,
+          both in the container image. From source, install <code>libldap2-dev libsasl2-dev</code>,
+          then <code>pip install '.[ldap,s3]'</code>.
         </p>
-        <div class="table-scroll">
+<div class="table-scroll">
 <table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
@@ -1975,12 +2001,11 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
 
         <h3 id="s3-storage">S3-Compatible Attachment Storage</h3>
         <p>
-          By default, file attachments are stored as binary data in PostgreSQL
-          (<code>STORAGE_BACKEND=db</code>). For large-scale deployments, set
-          <code>STORAGE_BACKEND=s3</code> to store new attachments in an S3-compatible
-          bucket. Existing DB-backed attachments are not migrated and continue to work.
+          Attachments are stored in PostgreSQL by default (<code>STORAGE_BACKEND=db</code>).
+          <code>STORAGE_BACKEND=s3</code> stores new ones in an S3-compatible bucket. Existing ones stay
+          in the database and keep working.
         </p>
-        <div class="table-scroll">
+<div class="table-scroll">
 <table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
@@ -2035,43 +2060,38 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
       <section class="docs-section" id="attachments" aria-labelledby="attachments-h2">
         <h2 id="attachments-h2">File Attachments</h2>
         <p>
-          Whistleblowers can attach evidence files when submitting a report. Files are stored
-          as binary data in PostgreSQL alongside the report — no additional storage infrastructure
-          is required.
+          Whistleblowers can attach evidence to a report. Files are stored with it, in PostgreSQL or
+          in <a href="#s3-storage">S3</a>.
         </p>
 
         <h3 id="virus-scanning">Scanning uploads for viruses</h3>
         <p>
-          Attachments can be scanned by a
-          <a href="https://www.clamav.net/" rel="noopener noreferrer" target="_blank">ClamAV</a>
-          <code>clamd</code> daemon before they are stored. Off by default. To turn it on:
+          A <a href="https://www.clamav.net/" rel="noopener noreferrer" target="_blank">ClamAV</a>
+          <code>clamd</code> daemon can scan attachments before they are stored. Off by default; to
+          turn it on:
         </p>
         <pre><code>COMPOSE_PROFILES=clamav
 CLAMAV_HOST=clamav</code></pre>
+        <ul>
+          <li><code>docker-compose.prod.yml</code> ships a <code>clamav</code> service behind the <code>clamav</code> profile, never reachable from the host.</li>
+          <li>It shares only the internal Docker network with <code>app</code>, not the <code>proxy</code> network, so nginx cannot reach it either.</li>
+          <li>Signature updates need outbound internet access, unlike the rest of the stack, so <code>clamav</code> gets its own egress network.</li>
+          <li>It needs roughly 1.5 GB RAM for the loaded signature database.</li>
+        </ul>
         <p>
-          <code>docker-compose.prod.yml</code> ships a <code>clamav</code> service behind the
-          <code>clamav</code> profile; it is never reachable from the host, and shares only the
-          internal Docker network with <code>app</code> — not the <code>proxy</code> network nginx
-          uses, so nginx cannot reach it either. Signature updates need outbound internet access,
-          unlike the rest of the stack, so <code>clamav</code> gets its own dedicated egress network
-          instead of sharing one with another service. It needs roughly 1.5 GB RAM for the loaded
-          signature database.
+          Scanning is <strong>fail-closed</strong>. With <code>CLAMAV_HOST</code> set, an upload is
+          refused whenever <code>clamd</code> is unreachable or times out, exactly as if it were
+          infected: nothing is ever stored unscanned. The whistleblower sees a generic "try again in a
+          few minutes"; no file name, size or content reaches the log.
         </p>
         <p>
-          Scanning is <strong>fail-closed</strong>: with <code>CLAMAV_HOST</code> set, an upload is
-          refused whenever <code>clamd</code> cannot be reached or times out, exactly as if it were
-          infected — nothing is ever stored unscanned. The whistleblower sees a generic
-          "try again in a few minutes" message; no file name, size or content reaches the log.
+          The Helm chart ships <strong>no clamav pod</strong>; the Compose profile has no Kubernetes
+          equivalent. Setting <code>config.clamavHost</code> in <code>values.yaml</code> turns on the
+          fail-closed behaviour for every upload: an unreachable <code>clamd</code> means refused, not
+          skipped. Point it at a <code>clamd</code> you run and reach from the cluster, as its own
+          Deployment and Service or an external instance. Leave it empty to keep scanning off.
         </p>
-        <p>
-          The Helm chart ships <strong>no clamav pod</strong> — <code>docker-compose.prod.yml</code>'s
-          profile-gated service has no Kubernetes equivalent. Setting <code>config.clamavHost</code>
-          in <code>values.yaml</code> without a real, reachable <code>clamd</code> behind it turns on
-          the fail-closed behaviour above for every upload: unreachable means refused, not skipped.
-          Point it at a <code>clamd</code> you run and reach from the cluster yourself — as its own
-          Deployment and Service, or an external instance — and leave it empty to keep scanning off.
-        </p>
-        <div class="table-scroll">
+<div class="table-scroll">
 <table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
           <tbody>
@@ -2098,61 +2118,57 @@ CLAMAV_HOST=clamav</code></pre>
 </div>
 
         <h3>Limits and allowed types</h3>
-        <ul>
-          <li><strong>Maximum file size:</strong> 10 MB per attachment</li>
-          <li><strong>Maximum number of attachments:</strong> 5 per report</li>
-          <li><strong>Allowed formats:</strong> PDF, JPEG, PNG, GIF, WebP, TXT, CSV, DOCX, XLSX. Legacy
-            <code>.doc</code>/<code>.xls</code> files are refused — their author cannot be removed;
-            save them as <code>.docx</code>/<code>.xlsx</code> and attach again.</li>
-        </ul>
-        <p>
-          File type is validated by both MIME type and file extension. SVG, executable files,
-          archives, and all other types are rejected.
-        </p>
+        <div class="table-scroll">
+<table class="env-table">
+          <tbody>
+            <tr><td>Size</td><td>10 MB per attachment</td></tr>
+            <tr><td>Number</td><td>5 per report</td></tr>
+            <tr><td>Allowed</td><td>PDF, JPEG, PNG, GIF, WebP, TXT, CSV, DOCX, XLSX, checked by both MIME type and file extension</td></tr>
+            <tr><td>Refused</td><td>SVG, executables, archives and every other type. Legacy <code>.doc</code>/<code>.xls</code> too: their author cannot be removed, so save them as <code>.docx</code>/<code>.xlsx</code> and attach again</td></tr>
+          </tbody>
+        </table>
+</div>
 
         <h3>Access control</h3>
         <ul>
           <li>
-            <strong>Whistleblower:</strong> downloads are available at
-            <code>/status/attachments/{id}</code> and require an active
-            <code>ow-status-session</code> cookie. The session must be tied to the same
-            report that owns the attachment — a whistleblower cannot access another report's files.
-            It ends 2 hours after the login and is not extended by viewing, so its remaining
-            lifetime does not tell when the case was last opened.
+            <strong>Whistleblower:</strong> <code>/status/attachments/{id}</code>, with an
+            <code>ow-status-session</code> cookie tied to the report that owns the file. No other
+            report's files are reachable. The session ends 2 hours after login and viewing does not
+            extend it, so its remaining lifetime does not tell when the case was last opened.
           </li>
           <li>
-            <strong>Admin:</strong> downloads are available at
-            <code>/admin/reports/{report_id}/attachments/{id}</code> and require an active
-            admin session. The attachment must belong to the specified report.
+            <strong>Admin:</strong> <code>/admin/reports/{report_id}/attachments/{id}</code>, with an
+            admin session; the file must belong to that report.
           </li>
         </ul>
         <p>
-          All downloads use <code>Content-Disposition: attachment</code> to prevent the browser
-          from rendering files inline. This eliminates MIME-sniffing and script-injection risks.
+          Every download carries <code>Content-Disposition: attachment</code>, so the browser never
+          renders a file inline: no MIME sniffing, no script injection.
         </p>
 
         <h3>Privacy and deletion</h3>
         <ul>
-          <li><strong>Metadata removed on upload:</strong> EXIF/GPS and camera data in JPEG, PNG,
-            WebP and GIF, also in photos inside DOCX/XLSX; document info, XMP, comment authors and
-            times, the EXIF of embedded JPEG photos and the file identifier in PDF; author, company
-            and custom properties in DOCX/XLSX. A file that cannot be parsed for cleaning is refused. Plain text is stored
-            as uploaded. Legacy <code>.doc</code>/<code>.xls</code> files are refused outright —
-            their author cannot be removed.</li>
+          <li><strong>Metadata removed on upload:</strong>
+            <ul>
+              <li>JPEG, PNG, WebP and GIF, also photos inside DOCX/XLSX: EXIF/GPS and camera data.</li>
+              <li>PDF: document info, XMP, comment authors and times, the EXIF of embedded JPEG photos, the file identifier.</li>
+              <li>DOCX/XLSX: author, company and custom properties.</li>
+              <li>A file that cannot be parsed for cleaning is refused. Plain text is stored as uploaded.</li>
+            </ul>
+          </li>
           <li><strong>Office authors anonymised:</strong> comment and tracked-change authors,
-            initials and account ids in DOCX/XLSX are replaced with <code>Author</code>;
-            embedded thumbnails, zip timestamps and zip extra fields are removed. The text of a
-            comment is content and stays — Excel writes the author's name into it.</li>
-          <li><strong>Filenames encrypted:</strong> the original filename is encrypted with the
-            report's data key (existing names are encrypted by migration 003). S3 object keys are
-            random ids and never contain the filename; objects stored before v1.5.0 keep their
-            old key.</li>
-          <li><strong>Encrypted at rest:</strong> file bytes are encrypted with the report's data
-            key before they reach PostgreSQL or the S3 bucket. Attachments uploaded before v1.4.0
-            stay unencrypted and remain readable.</li>
-          <li><strong>Deletion:</strong> when a report is hard-deleted (DSGVO Art. 17), its
-            attachment rows are removed by <code>CASCADE DELETE</code> and its S3 objects are
-            deleted as well.</li>
+            initials and account ids in DOCX/XLSX become <code>Author</code>. Embedded thumbnails, zip
+            timestamps and zip extra fields are removed. A comment's text is content and stays, and
+            Excel writes the author's name into it.</li>
+          <li><strong>Filenames encrypted</strong> with the report's data key (older names by
+            migration 003). S3 object keys are random ids, never the filename; objects stored before
+            v1.5.0 keep their old key.</li>
+          <li><strong>Encrypted at rest:</strong> file bytes are encrypted with the report's data key
+            before they reach PostgreSQL or the S3 bucket. Attachments uploaded before v1.4.0 stay
+            unencrypted and readable.</li>
+          <li><strong>Deletion:</strong> a hard-deleted report (DSGVO Art. 17) loses its attachment
+            rows by <code>CASCADE DELETE</code>, and its S3 objects are deleted too.</li>
         </ul>
       </section>
 
@@ -2160,42 +2176,24 @@ CLAMAV_HOST=clamav</code></pre>
       <section class="docs-section" id="first-run" aria-labelledby="first-run-h2">
         <h2 id="first-run-h2">First-Run Wizard</h2>
         <p>
-          On first boot, the <code>/setup</code> route serves a multi-step browser-based wizard.
-          The wizard is automatically disabled once an admin account exists in the database.
+          On first boot, <code>/setup</code> serves the wizard: one page, four parts. Once an admin
+          account exists it redirects to <code>/admin/login</code> for good.
         </p>
 
         <h3>Wizard steps</h3>
         <ol class="step-list">
-          <li>
-            <div>
-              <strong>Create admin account</strong><br>
-              Enter a username (3–64 characters) and a strong password (minimum 12 characters).
-            </div>
-          </li>
-          <li>
-            <div>
-              <strong>Configure TOTP</strong><br>
-              Scan the displayed QR code with an authenticator app (Google Authenticator,
-              Authy, Bitwarden, etc.). Enter the 6-digit code to confirm the secret is
-              correctly registered. TOTP is mandatory and cannot be skipped.
-            </div>
-          </li>
-          <li>
-            <div>
-              <strong>Installation count</strong><br>
-              Optional, unchecked by default: whether this installation may be counted once a day
-              (<a href="#counting-installations">what is sent</a>). Changeable later under
-              <strong>Admin → System</strong>.
-            </div>
-          </li>
+          <li><div><strong>Setup token</strong><br>From <code>SETUP_TOKEN</code> or the log (<a href="#installation">Installation</a>, step 4).</div></li>
+          <li><div><strong>Admin account</strong><br>A username of 3–64 characters (letters, digits, spaces and <code>. _ @ -</code>). A password of at least 12 characters and at most 72 bytes.</div></li>
+          <li><div><strong>TOTP</strong><br>Scan the QR code with an authenticator app (Google Authenticator, Authy, Bitwarden, etc.) and enter its 6-digit code. Mandatory; it cannot be skipped.</div></li>
+          <li><div><strong>Installation count</strong><br>Optional and unchecked: may this installation be counted once a day (<a href="#counting-installations">what is sent</a>)? Changeable under <strong>Admin → System</strong>.</div></li>
         </ol>
 
         <div class="callout callout-warn">
           <div class="callout-title">Save your TOTP secret</div>
           <p>
-            Write down the TOTP secret key displayed during setup and store it securely offline.
-            There are no backup codes. If you lose access to your authenticator app, you will
-            need to reset the TOTP secret directly in the database.
+            Write down the TOTP secret shown during setup and keep it offline. There are no backup
+            codes. A lost authenticator is reset by a superadmin or on the host
+            (<a href="#lost-access">Lost password or authenticator</a>).
           </p>
         </div>
       </section>
@@ -2203,148 +2201,216 @@ CLAMAV_HOST=clamav</code></pre>
       <!-- Admin guide -->
       <section class="docs-section" id="admin-guide" aria-labelledby="admin-guide-h2">
         <h2 id="admin-guide-h2">Admin Guide</h2>
+        <p>The admin portal is at <code>/admin</code>, which leads to <code>/admin/login</code>.</p>
+
+        <h3 id="admin-login">Signing in</h3>
+        <figure class="doc-shot">
+          <img class="shot-light" src="img/screens/admin-login-light.png" alt="The reporting office sign-in: username, password and Continue." width="1440" height="939" loading="lazy">
+          <img class="shot-dark" src="img/screens/admin-login-dark.png" alt="The reporting office sign-in: username, password and Continue." width="1440" height="939" loading="lazy">
+        </figure>
         <p>
-          The admin portal is accessible at <code>/admin</code>. Login requires your username,
-          password, and a current TOTP code (or OIDC if configured).
+          Every account signs in with two factors. The first is a password (local or LDAP) or OIDC;
+          the second is always a TOTP code.
         </p>
+        <figure class="diagram">
+          <img class="diagram-light" src="img/diagrams/admin-login-light.svg" alt="Admin login: the first factor is a username and password checked against the database, LDAP, or an external OIDC identity provider. Then TOTP: an account without it enrolls first, which is mandatory. After the TOTP code, an account whose password someone else set chooses its own at /admin/account before the admin area opens." width="645" height="1504" loading="lazy">
+          <img class="diagram-dark" src="img/diagrams/admin-login-dark.svg" alt="Admin login: the first factor is a username and password checked against the database, LDAP, or an external OIDC identity provider. Then TOTP: an account without it enrolls first, which is mandatory. After the TOTP code, an account whose password someone else set chooses its own at /admin/account before the admin area opens." width="645" height="1504" loading="lazy">
+        </figure>
+        <ul>
+          <li>An account without TOTP yet (new from <code>/admin/users</code>, or first provisioned by LDAP) goes to <code>/admin/mfa/setup</code> after its first factor. Scan the QR code, confirm one code, and the session starts.</li>
+          <li>A password someone else set is replaced next, at <code>/admin/account</code> (<a href="#own-account">Your account</a>).</li>
+          <li>After <code>MAX_LOGIN_ATTEMPTS</code> wrong passwords, the username is locked for <code>LOGIN_LOCKOUT_MINUTES</code>.</li>
+          <li>A session lasts <code>ACCESS_TOKEN_EXPIRE_MINUTES</code>; <em>Stay signed in</em> renews it, up to <code>SESSION_MAX_HOURS</code> after login.</li>
+        </ul>
 
         <h3>Dashboard overview</h3>
+        <figure class="doc-shot">
+          <img class="shot-light" src="img/screens/admin-dashboard-light.png" alt="The reports dashboard: status and location filters, a search field, and the report table with case number, category, status, submitted day, assignee, 7-day SLA and 3-month SLA." width="1440" height="1043" loading="lazy">
+          <img class="shot-dark" src="img/screens/admin-dashboard-dark.png" alt="The reports dashboard: status and location filters, a search field, and the report table with case number, category, status, submitted day, assignee, 7-day SLA and 3-month SLA." width="1440" height="1043" loading="lazy">
+        </figure>
         <p>
-          The dashboard shows all reports with sortable columns, pagination, and filters for status,
-          assignee, and location. Each status filter shows its case count within the chosen location;
-          a case manager's counts cover only the cases assigned to them. Each row displays:
+          <code>/admin/dashboard</code> lists every report you may see, with sortable columns,
+          pagination and filters for status, assignee and location. Each status filter shows its case
+          count within the chosen location; a case manager's counts cover only their own cases.
         </p>
-        <ul>
-          <li>Unique case number in <code>OW-YYYY-NNNNN</code> format (sequential per year)</li>
-          <li>Submission date and time</li>
-          <li>Report category</li>
-          <li>Assignee (admin or case manager)</li>
-          <li>§17 acknowledgement deadline countdown (red when under 24 hours)</li>
-          <li>§17 feedback deadline countdown</li>
-          <li>Unread message indicator</li>
-        </ul>
+        <div class="table-scroll">
+<table class="env-table">
+          <thead><tr><th>Column</th><th>Shows</th></tr></thead>
+          <tbody>
+            <tr><td>Case number</td><td><code>OW-YYYY-NNNNN</code>: the year and five random digits</td></tr>
+            <tr><td>Submitted</td><td>the day only (UTC), never the time</td></tr>
+            <tr><td>7-day SLA</td><td><em>Day N/7</em> until acknowledged: warning from day 5, overdue from day 7</td></tr>
+            <tr><td>3-month SLA</td><td>days left to feedback: warning at 14 or fewer, overdue at 0</td></tr>
+          </tbody>
+        </table>
+</div>
 
         <h3>Roles</h3>
+        <div class="table-scroll">
+<table class="env-table">
+          <thead><tr><th>Role</th><th>May</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Superadmin</strong></td><td>everything an admin may, plus organisations (<code>/admin/organisations</code>). Sees every organisation, whatever its own <code>org_id</code>. The setup wizard creates one.</td></tr>
+            <tr><td><strong>Admin</strong></td><td>everything, including users, categories, locations, the audit log and report deletion</td></tr>
+            <tr><td><strong>Case Manager</strong></td><td>view, comment on and advance the reports assigned to them. The sidebar shows dashboard, statistics and telephone channel; no users, no deletion</td></tr>
+          </tbody>
+        </table>
+</div>
         <p>
-          Every admin account has one of three roles:
+          Accounts are managed at <code>/admin/users</code>. A new account is a case manager unless
+          another role is chosen; an unknown role is refused. The last active admin cannot be
+          deactivated, so nobody is locked out. Only admins may dismiss the IP-header warning.
+        </p>
+
+        <h3 id="own-account">Your account</h3>
+        <p>
+          <strong>My account</strong> in the sidebar opens <code>/admin/account</code>, for every role.
+          It shows the username, role, organisation and the ways the account signs in.
         </p>
         <ul>
-          <li><strong>Superadmin</strong> — all admin capabilities plus organisation management (<code>/admin/organisations</code>). Sees every organisation, whatever its own <code>org_id</code>. The account the setup wizard creates is a superadmin in the default organisation.</li>
-          <li><strong>Admin</strong> — full access including user management, categories, locations, audit log, and report deletion.</li>
-          <li><strong>Case Manager</strong> — can view, comment on, and advance reports assigned to them; cannot manage users or delete reports.</li>
+          <li>A password change needs the current password, the new one twice, and a current TOTP code. An open session alone is not enough.</li>
+          <li>The new password has 12 characters to 72 bytes and differs from the current one.</li>
+          <li>Wrong passwords and codes here count towards the sign-in lockout of the account.</li>
+          <li>After the change, every other session of the account ends. The one in use stays.</li>
+          <li>The audit log records <code>auth.password_changed</code>, never the password.</li>
+          <li>An LDAP or single sign-on account has no password here. It changes it in the directory or at the provider.</li>
+          <li><strong>Link single sign-on</strong> and <strong>Unlink single sign-on</strong> are on this page (<a href="#oidc-integration">OIDC integration</a>).</li>
+          <li>With <code>DEMO_MODE</code>, the demo accounts keep their password, so every visitor can sign in.</li>
         </ul>
+        <p>Whoever sets a password for someone else knows it. So its holder must replace it:</p>
+        <div class="table-scroll">
+<table class="env-table">
+          <thead><tr><th>Password set by</th><th>Holder's next login</th></tr></thead>
+          <tbody>
+            <tr><td>an admin creating the account on <code>/admin/users</code></td><td>enrol the authenticator at <code>/admin/mfa/setup</code>, then change the password</td></tr>
+            <tr><td>a superadmin's <strong>Reset authenticator</strong></td><td>the same, with the temporary password</td></tr>
+            <tr><td>the host's <code>reset_admin_password.py --username</code></td><td>change the password</td></tr>
+          </tbody>
+        </table>
+</div>
         <p>
-          Manage admin accounts at <code>/admin/users</code>. The last active admin account cannot
-          be deactivated to prevent lockout. A new account is a case manager unless another role is
-          chosen; an unknown role is refused. The sidebar shows each role only the pages it may open
-          (a case manager: dashboard, statistics, telephone channel); only admins may dismiss the
-          IP-header warning.
+          Until then, every other admin page leads back to <code>/admin/account</code>. Sign-out still works.
+          The script cannot tell whether its operator is the holder, so it always asks for the change.
         </p>
+
+        <h3 id="lost-access">Lost password or authenticator</h3>
+        <div class="table-scroll">
+<table class="env-table">
+          <thead><tr><th>Lost</th><th>Who resets it</th><th>How</th></tr></thead>
+          <tbody>
+            <tr><td>Authenticator</td><td>a superadmin</td><td><strong>Reset authenticator</strong> on <code>/admin/users</code></td></tr>
+            <tr><td>Authenticator</td><td>whoever runs the host</td><td><code>python scripts/reset_admin_password.py --reset-totp &lt;username&gt;</code></td></tr>
+            <tr><td>Password</td><td>whoever runs the host</td><td><code>python scripts/reset_admin_password.py --username &lt;username&gt;</code></td></tr>
+          </tbody>
+        </table>
+</div>
+        <ul>
+          <li>Run the script inside the container: <code>docker exec -it openwhistle python scripts/reset_admin_password.py …</code>.</li>
+          <li>Every reset ends every session of the account at once. After an authenticator reset, the old app stops working.</li>
+          <li>A password reset by the script is in the audit log as <code>admin.password_reset</code>. The next login must change it.</li>
+          <li>A reset in <code>/admin/users</code> makes the account new again: new authenticator, and a new temporary password in place of the old one.</li>
+          <li>The temporary password is shown once, to the superadmin. It is in no log and no audit entry. Hand it over in person.</li>
+          <li>With it, the next login goes to <code>/admin/mfa/setup</code> to enrol a new app, as for a new account. Then the holder chooses a new password (<a href="#own-account">Your account</a>).</li>
+          <li>An LDAP or single sign-on account has no local password. It keeps its directory or provider login and enrols a new app.</li>
+          <li>The script prints the new secret and its <code>otpauth://</code> URI once. Hand them over in person.</li>
+          <li>A superadmin cannot reset their own authenticator in the browser: it would end their session and leave the account behind a password. Another superadmin or the script does it.</li>
+          <li>The script works for any account, the last superadmin included.</li>
+          <li>Every reset is in the audit log as <code>admin.totp_reset</code>. With <code>DEMO_MODE</code>, the demo accounts cannot be reset.</li>
+        </ul>
 
         <h3>Managing reports</h3>
         <p>
-          To find a case, type any part of its case number (for example <code>00042</code>), or a word
-          from the report, into the search field on <code>/admin/dashboard</code>. A word search decrypts
-          the description and messages of the reports you may already see, in memory, for that request
-          only — nothing searchable is ever stored. The confidential name is never matched: a hit there
-          would confirm an identity guess without an audited reveal. The search is sent as a form
-          (POST), so the term never appears in a URL, the browser history or a proxy's access log;
-          paging through the results keeps it the same way. Every word search is recorded in the
-          audit log (<code>report.content_searched</code>) with the term, stored encrypted, and the
-          number of matching reports.
-        </p>
-        <p>
-          Click any report to open the case view. From here you can:
+          The search field on <code>/admin/dashboard</code> takes any part of a case number (for
+          example <code>00042</code>) or a word from the report.
         </p>
         <ul>
-          <li>Read the full report content and submission mode (anonymous / confidential)</li>
-          <li>Advance the case status through the workflow: <code>received → in_review → pending_feedback → closed</code></li>
-          <li>Assign the case to a specific admin or case manager</li>
-          <li>Send a message to the whistleblower via the anonymous channel</li>
-          <li>Add internal notes (never shown to the whistleblower)</li>
-          <li>Link related cases together</li>
-          <li>Export the case as a PDF (includes SLA compliance section per HinSchG §17) — the confidential
-          identity is left out by default, the same as the case page. Text prints in Latin (any diacritic),
-          Greek or Cyrillic script; CJK and right-to-left scripts (Arabic, Hebrew) are not supported</li>
-          <li>Request hard deletion (<em>Delete report</em>, collapsed at the end of <em>Actions</em>) — a second admin must confirm (4-eyes principle); triggers GDPR Art. 17 erasure</li>
+          <li>A word search decrypts the description and messages of the reports you may see, in memory, for that request only. Nothing searchable is ever stored.</li>
+          <li>The confidential name is never matched: a hit would confirm an identity guess without an audited reveal.</li>
+          <li>The search is sent as a form (POST), so the term never appears in a URL, the browser history or a proxy's access log. Paging keeps it that way.</li>
+          <li>Every word search is audited (<code>report.content_searched</code>): the term, stored encrypted, and the number of matching reports.</li>
         </ul>
+        <p>Click a report to open its case page, <code>/admin/reports/{report_id}</code>:</p>
+        <figure class="doc-shot">
+          <img class="shot-light" src="img/screens/admin-report-light.png" alt="A case page: the report, the communication thread, a reply box and internal notes; beside them the submission details and the actions acknowledge, assign, update status, export PDF and delete." width="1440" height="1888" loading="lazy">
+          <img class="shot-dark" src="img/screens/admin-report-dark.png" alt="A case page: the report, the communication thread, a reply box and internal notes; beside them the submission details and the actions acknowledge, assign, update status, export PDF and delete." width="1440" height="1888" loading="lazy">
+        </figure>
+        <ul>
+          <li>Read the report and its submission mode (anonymous / confidential).</li>
+          <li><em>Acknowledge report</em>: tells the whistleblower and starts the 3-month feedback clock.</li>
+          <li>Move the status, assign the case to an admin or case manager, link related cases.</li>
+          <li>Reply to the whistleblower through the anonymous channel; add internal notes they never see.</li>
+          <li>Export a PDF with an SLA compliance section (HinSchG §17), the confidential identity left out. It prints Latin (any diacritic), Greek and Cyrillic text; CJK and right-to-left scripts (Arabic, Hebrew) are not supported.</li>
+          <li><em>Delete report</em>, collapsed at the end of <em>Actions</em>: a second admin must confirm (4-eyes principle). It is the GDPR Art. 17 erasure.</li>
+        </ul>
+        <figure class="diagram">
+          <img class="diagram-light" src="img/diagrams/case-lifecycle-light.svg" alt="Case statuses: a submitted report is received. From received it goes to in_review or closed; from in_review to pending_feedback, closed or back to received; from pending_feedback to closed or in_review; a closed case can reopen to in_review. Received carries the 7-day acknowledgement deadline, pending_feedback the 3-month feedback deadline." width="622" height="571" loading="lazy">
+          <img class="diagram-dark" src="img/diagrams/case-lifecycle-dark.svg" alt="Case statuses: a submitted report is received. From received it goes to in_review or closed; from in_review to pending_feedback, closed or back to received; from pending_feedback to closed or in_review; a closed case can reopen to in_review. Received carries the 7-day acknowledgement deadline, pending_feedback the 3-month feedback deadline." width="622" height="571" loading="lazy">
+        </figure>
         <p>
-          <strong>Confidential identity.</strong> A confidential reporter's name and contact are hidden by default.
-          The case handler — or, while the case is unassigned, an admin of the case's organisation — clicks
-          <em>Show identity</em> (<code>POST /admin/reports/{id}/identity</code>) and gives a reason
-          (10–500 characters; do not write the reporter's name into it).
-          The identity is shown on that page only; the audit log records who, when and why. The case page says only
-          that a reason was recorded; the reason itself is on <code>/admin/audit-log</code> and in the CSV export.
-          Opening a case is logged as <em>Report opened</em>. The same rule applies to the PDF export: the
-          <em>Export PDF with identity</em> button (<code>POST /admin/reports/{id}/export.pdf</code>) asks for
-          the same audited reason and is recorded the same way;
-          the plain <em>Export PDF</em> download never includes it.
+          <strong>Confidential identity.</strong> A confidential reporter's name and contact are
+          hidden by default.
         </p>
+        <ul>
+          <li>The case handler (while unassigned, an admin of the case's organisation) clicks <em>Show identity</em> (<code>POST /admin/reports/{id}/identity</code>). A reason is required: 10–500 characters, without the reporter's name.</li>
+          <li>The identity shows on that page only; the audit log records who, when and why.</li>
+          <li>The case page says only that a reason was recorded. The reason is on <code>/admin/audit-log</code> and in the CSV export.</li>
+          <li><em>Export PDF with identity</em> (<code>POST /admin/reports/{id}/export.pdf</code>) asks for the same audited reason. The plain <em>Export PDF</em> never includes it.</li>
+          <li>Opening a case is logged as <em>Report opened</em>.</li>
+        </ul>
 
         <h3>Audit log</h3>
-        <p>
-          Every admin action is recorded in an immutable audit log (required by HinSchG §11 Abs. 5).
-          View and filter the log at <code>/admin/audit-log</code>; actions and details are shown as readable
-          labels. Export as CSV at any time — the export keeps the machine action codes and adds a label column,
-          and the detail column is a JSON object. Case views (<em>Report opened</em>) are hidden from the log and
-          the export unless you tick <em>Show case views</em> (<code>?views=1</code>).
-          With multi-tenancy on, each organisation sees only its own entries, while instance-wide security
-          events (such as a password-spraying alert) are shown to superadmins only.
-        </p>
+        <ul>
+          <li><code>/admin/audit-log</code>: every admin action, immutable (HinSchG §11 Abs. 5), filterable, shown as readable labels.</li>
+          <li>CSV export at any time: the machine action codes plus a label column; the detail column is a JSON object.</li>
+          <li>Case views (<em>Report opened</em>) are hidden in the log and the export unless you tick <em>Show case views</em> (<code>?views=1</code>).</li>
+          <li>With multi-tenancy on, each organisation sees only its own entries. Instance-wide security events, such as a password-spraying alert, go to superadmins only.</li>
+        </ul>
 
         <h3>Categories and locations</h3>
         <p>
-          Report categories are database-driven and fully configurable at <code>/admin/categories</code>.
-          Multiple branches or office locations can be managed at <code>/admin/locations</code>;
-          when active locations exist, the whistleblower wizard shows a location selector at step 2.
+          <code>/admin/categories</code> holds the report categories, all configurable.
+          <code>/admin/locations</code> holds branches or offices; while any is active, the
+          whistleblower wizard asks for one at step 2.
         </p>
 
         <h3>Dashboard statistics</h3>
         <p>
-          <code>/admin/stats</code> shows the total report count, status distribution bar chart,
-          category breakdown, and the 7-day SLA compliance rate (acknowledged within 7 days of
-          00:00 UTC on the submission day). A case manager's figures cover only their own cases.
+          <code>/admin/stats</code>: total reports, status distribution, category breakdown and the
+          7-day SLA compliance rate (acknowledged within 7 days of 00:00 UTC on the submission day).
+          A case manager's figures cover only their own cases.
         </p>
 
         <h3>System &amp; updates</h3>
+        <figure class="doc-shot">
+          <img class="shot-light" src="img/screens/admin-system-light.png" alt="System and updates: installed version and update status, the file integrity check, the installation count card and the two settings behind them." width="1440" height="1784" loading="lazy">
+          <img class="shot-dark" src="img/screens/admin-system-dark.png" alt="System and updates: installed version and update status, the file integrity check, the installation count card and the two settings behind them." width="1440" height="1784" loading="lazy">
+        </figure>
+        <ul>
+          <li><code>/admin/system</code> shows the installed version. With <code>UPDATE_CHECK_ENABLED=true</code> (opt-in, off by default) it also says whether GitHub has a newer release: checked once a day, cached, no instance data sent.</li>
+          <li><strong>Installation count</strong>: whether this installation is counted, the exact request, its identifier and the last successful report. An admin switches it (one audit entry per change) and resets the identifier; see <a href="#counting-installations">Counting installations</a>.</li>
+          <li><strong>File integrity</strong>: the application files against a SHA-256 manifest baked into the image at build time. It reports missing, modified or unexpected files, which catches accidental changes, incomplete deployments and corruption. <em>Re-check now</em> refreshes it.</li>
+        </ul>
         <p>
-          <code>/admin/system</code> shows the installed OpenWhistle version. When
-          <code>UPDATE_CHECK_ENABLED=true</code>, it also reports whether a newer release is
-          available on GitHub (checked once a day, cached; no instance data is sent). The check
-          is opt-in and off by default.
-        </p>
-        <p>
-          Its <strong>Installation count</strong> card shows whether this installation is counted,
-          the exact request, its identifier and the last successful report. An admin can switch
-          it on or off (one audit entry per change) and reset the identifier; see
-          <a href="#counting-installations">Counting installations</a>.
-        </p>
-        <p>
-          The same page includes a <strong>file integrity check</strong>: it verifies the
-          application files against a SHA-256 manifest baked into the image at build time and
-          reports any missing, modified, or unexpected files. This detects accidental
-          modification, incomplete deployments, and corruption; it is not tamper-proof against an
-          attacker who can also rewrite the manifest. Use the "Re-check now" link to refresh.
+          The integrity check is not tamper-proof: an attacker who can rewrite the files can rewrite
+          the manifest too.
         </p>
 
         <h3>HinSchG deadline tracking</h3>
-        <p>
-          The dashboard enforces the statutory timelines from §17 HinSchG:
-        </p>
+        <p>The statutory timelines of §17 HinSchG, shown on the dashboard and the case page:</p>
         <ul>
-          <li><strong>7-day acknowledgement:</strong> The countdown starts at the start (00:00 UTC) of the submission day — submission times are stored as the day only, so the deadline can only fall earlier, never later. The dashboard shows a yellow warning at 3 days, red at 24 hours.</li>
-          <li><strong>3-month feedback:</strong> The countdown starts from the date of acknowledgement (§17 Abs. 2). A feedback response must be sent via the message channel before the deadline.</li>
+          <li><strong>7-day acknowledgement:</strong> counted from 00:00 UTC of the submission day. Times are stored as the day only, so the deadline can fall earlier, never later.</li>
+          <li><strong>3-month feedback:</strong> 90 days from the acknowledgement (§17 Abs. 2). Feedback goes to the whistleblower through the message channel before it runs out.</li>
         </ul>
 
         <h3>Telephone reporting channel guide</h3>
         <p>
-          The page at <code>/admin/telephone-channel</code> provides a compliance reference for
-          operating an oral reporting channel alongside the digital channel. It covers:
+          <code>/admin/telephone-channel</code> is a compliance reference for an oral reporting
+          channel beside the digital one:
         </p>
         <ul>
-          <li>HinSchG §16 requirements (dedicated number, confidentiality, impartial staff)</li>
+          <li>HinSchG § 16 Abs. 3: reports orally and in text form; a dedicated number, confidentiality (§ 8), impartial staff</li>
           <li>Implementation options: internal hotline vs. external ombudsman</li>
-          <li>§10 HinSchG recording prohibition — calls may not be recorded without consent</li>
+          <li>§ 11 Abs. 2 HinSchG: a call is recorded only with consent, otherwise documented as a summary</li>
           <li>Integration workflow: how telephone reports enter the OpenWhistle case system</li>
           <li>Legal references with links to the official statute text</li>
         </ul>
@@ -2354,82 +2420,64 @@ CLAMAV_HOST=clamav</code></pre>
       <section class="docs-section" id="whistleblower-guide" aria-labelledby="wb-guide-h2">
         <h2 id="wb-guide-h2">Whistleblower Guide</h2>
         <p>
-          The whistleblower submission form is accessible at the root URL of your OpenWhistle
-          installation (e.g. <code>https://your-domain.example.com/</code>). No account,
-          email address, or personal information is required.
+          The form is at the installation's root URL (e.g.
+          <code>https://your-domain.example.com/</code>). No account, email address or personal
+          information is needed.
         </p>
         <p>
-          If several organisations share one installation, use the link your organisation gave you
-          (<code>/submit/&lt;organisation&gt;</code>): a report sent through another link goes to
-          another organisation.
+          Where several organisations share one installation, use the link your organisation gave
+          you (<code>/submit/&lt;organisation&gt;</code>). Another link files the report with another
+          organisation.
         </p>
 
         <h3>Submitting a report</h3>
         <p>
-          Submission uses a guided multi-step wizard. You can navigate back and forward at any step;
-          your partial progress is saved in a temporary session (valid for 2 hours).
+          Use a private browsing window and, where possible, a network not traceable to you (public
+          Wi-Fi, Tor). The wizard keeps your progress in a temporary session for 2 hours; you can go
+          back and forward at any step.
         </p>
+        <figure class="doc-shot">
+          <img class="shot-light" src="img/screens/submit-step1-light.png" alt="Step 1 of 6 of the submission wizard: a choice between Anonymous and Confidential, under the steps mode, location, category, details, files and review." width="1440" height="973" loading="lazy">
+          <img class="shot-dark" src="img/screens/submit-step1-dark.png" alt="Step 1 of 6 of the submission wizard: a choice between Anonymous and Confidential, under the steps mode, location, category, details, files and review." width="1440" height="973" loading="lazy">
+        </figure>
+        <div class="flow-steps">
+        <figure class="diagram">
+          <img class="diagram-light" src="img/diagrams/submission-flow-light.svg" alt="Submission wizard: 1 mode, anonymous or confidential; 2 location, only if locations are configured; 3 category; 4 details; 5 files, optional; 6 review; then submit, which issues the case number and PIN once." width="276" height="1235" loading="lazy">
+          <img class="diagram-dark" src="img/diagrams/submission-flow-dark.svg" alt="Submission wizard: 1 mode, anonymous or confidential; 2 location, only if locations are configured; 3 category; 4 details; 5 files, optional; 6 review; then submit, which issues the case number and PIN once." width="276" height="1235" loading="lazy">
+        </figure>
         <ol class="step-list">
-          <li>
-            <div>
-              Navigate to the submission URL. Use a private browsing window and, where
-              possible, a network that is not traceable to you (public Wi-Fi, Tor, etc.)
-              for maximum protection.
-            </div>
-          </li>
-          <li>
-            <div>
-              <strong>Choose submission mode.</strong> Select <em>Anonymous</em> (no personal data
-              ever stored) or <em>Confidential</em> (name, contact details, and optional secure
-              email stored encrypted — shown only to the case handler, who must record a reason). Both modes are
-              fully compliant with HinSchG.
-            </div>
-          </li>
-          <li>
-            <div>
-              <strong>Select location</strong> (if the operator has configured multiple branches or
-              offices). This step only appears when locations are active.
-            </div>
-          </li>
-          <li>
-            <div>
-              <strong>Choose a category</strong> from the operator's configured list (e.g. financial
-              fraud, safety violation, discrimination).
-            </div>
-          </li>
-          <li>
-            <div>
-              <strong>Write the description.</strong> This is the only mandatory field. Be as
-              specific as possible without naming yourself.
-            </div>
-          </li>
-          <li>
-            <div>
-              <strong>Attach evidence</strong> (optional). Supported formats: PDF, images, Word
-              (<code>.docx</code>), Excel (<code>.xlsx</code>), CSV, TXT — up to 10 MB each, 5 files per
-              report. Legacy <code>.doc</code>/<code>.xls</code> files are refused (their author cannot be
-              removed): save them as <code>.docx</code>/<code>.xlsx</code>. Metadata is removed, and where the
-              operator turned on virus scanning, an infected file is refused. Going back keeps attached
-              files; choosing new ones replaces them, and <strong>Remove</strong> drops one.
-            </div>
-          </li>
-          <li>
-            <div>
-              <strong>Review and submit.</strong> <strong>Immediately note down the case number and PIN displayed
-              on the confirmation screen.</strong> These are shown only once and cannot be
-              recovered if lost. A second click on <em>Submit</em> never creates a second report: it
-              shows the same case number and PIN, or, while the first click is still running, a
-              <em>still being processed</em> page with <em>Check again</em>. If the operator offers an
-              onion address, the submit page shows it for use with Tor Browser.
-            </div>
-          </li>
+          <li><div><strong>Mode.</strong> <em>Anonymous</em>: no personal data ever stored. <em>Confidential</em>: name, contact details and an optional secure email, stored encrypted. The case handler sees them only after recording a reason. Both comply with HinSchG.</div></li>
+          <li><div><strong>Location</strong>, only when the operator has configured branches or offices.</div></li>
+          <li><div><strong>Category</strong> from the operator's list (e.g. financial fraud, safety violation, discrimination).</div></li>
+          <li><div><strong>Description</strong>, the only mandatory field. Be as specific as possible without naming yourself.</div></li>
+          <li><div><strong>Files</strong> (optional): PDF, images, Word (<code>.docx</code>), Excel (<code>.xlsx</code>), CSV, TXT, up to 10 MB each and 5 per report. Legacy <code>.doc</code>/<code>.xls</code> are refused; save them as <code>.docx</code>/<code>.xlsx</code>. Metadata is removed, and with virus scanning on, an infected file is refused. Going back keeps attached files; choosing new ones replaces them, and <strong>Remove</strong> drops one.</div></li>
+          <li><div><strong>Review and submit.</strong></div></li>
         </ol>
+        </div>
+        <figure class="doc-shot">
+          <img class="shot-light" src="img/screens/submit-review-light.png" alt="Step 6, the review: submission mode, location, category and description, with Back and Submit report securely." width="1440" height="1007" loading="lazy">
+          <img class="shot-dark" src="img/screens/submit-review-dark.png" alt="Step 6, the review: submission mode, location, category and description, with Back and Submit report securely." width="1440" height="1007" loading="lazy">
+        </figure>
+        <p>
+          <strong>Note down the case number and PIN at once.</strong> They are shown only once and
+          cannot be recovered. <em>Continue to report status</em> unlocks only after you tick that you
+          saved them.
+        </p>
+        <figure class="doc-shot">
+          <img class="shot-light" src="img/screens/submit-success-light.png" alt="Report submitted: the case number and the secret PIN, each with a copy button, a checkbox confirming they are saved, and Continue to report status." width="1440" height="1227" loading="lazy">
+          <img class="shot-dark" src="img/screens/submit-success-dark.png" alt="Report submitted: the case number and the secret PIN, each with a copy button, a checkbox confirming they are saved, and Continue to report status." width="1440" height="1227" loading="lazy">
+        </figure>
+        <ul>
+          <li>A second click on <em>Submit</em> never creates a second report. It shows the same case number and PIN, or, while the first click still runs, a <em>still being processed</em> page with <em>Check again</em>.</li>
+          <li>If the operator offers an onion address, the submit page shows it for use with Tor Browser.</li>
+        </ul>
 
         <h3>Checking report status</h3>
-        <p>
-          Navigate to <code>/status</code> on the same installation. Enter your case number
-          and PIN. You will see:
-        </p>
+        <figure class="doc-shot">
+          <img class="shot-light" src="img/screens/status-light.png" alt="The status page: case number and secret PIN fields and a View report status button." width="1440" height="900" loading="lazy">
+          <img class="shot-dark" src="img/screens/status-dark.png" alt="The status page: case number and secret PIN fields and a View report status button." width="1440" height="900" loading="lazy">
+        </figure>
+        <p>At <code>/status</code>, your case number and PIN show:</p>
         <ul>
           <li>Current case status</li>
           <li>Admin responses (if any)</li>
@@ -2437,18 +2485,17 @@ CLAMAV_HOST=clamav</code></pre>
           <li>A form to send a follow-up message</li>
         </ul>
         <p>
-          Nobody can lock you out of your own case: the correct case number and PIN always
-          work. After several wrong attempts on a case number the page asks you to wait, but
-          that is a notice, not a lock. Use <em>Look up a different report</em> to end the session
-          on a shared device.
+          Nobody can lock you out of your own case: the correct case number and PIN always work.
+          After several wrong attempts on a case number the page asks you to wait, a notice, not a
+          lock. <em>Look up a different report</em> ends the session on a shared device.
         </p>
 
         <h3>What is stored about when you acted</h3>
         <p>
-          Only the <strong>day</strong> (UTC), never the time, of your report, your messages and
-          your files. An exact time could be matched to who was at their desk. The reporting
-          office's own replies keep their time. A message you send is stored as its day, but
-          its place among the office's replies is kept, so the conversation reads in order.
+          Only the <strong>day</strong> (UTC), never the time, of your report, your messages and your
+          files. An exact time could be matched to who was at their desk. The reporting office's own
+          replies keep their time. A message you send is stored as its day, but keeps its place among
+          the office's replies, so the conversation reads in order.
         </p>
 
         <h3>Security recommendations for whistleblowers</h3>
@@ -2463,9 +2510,13 @@ CLAMAV_HOST=clamav</code></pre>
       <!-- Security architecture -->
       <section class="docs-section" id="security" aria-labelledby="security-h2">
         <h2 id="security-h2">Security Architecture</h2>
+        <figure class="diagram">
+          <img class="diagram-light" src="img/diagrams/architecture-light.svg" alt="Architecture: a browser reaches nginx over TLS on 443 (80 redirects), Tor Browser reaches the onion listener on 8080, bound to 127.0.0.1. Both lead to the stateless FastAPI app, which needs PostgreSQL and Redis, can use ClamAV and S3, and makes two opt-in outbound requests: the GitHub update check and the telemetry.wdkro.de count." width="774" height="761" loading="lazy">
+          <img class="diagram-dark" src="img/diagrams/architecture-dark.svg" alt="Architecture: a browser reaches nginx over TLS on 443 (80 redirects), Tor Browser reaches the onion listener on 8080, bound to 127.0.0.1. Both lead to the stateless FastAPI app, which needs PostgreSQL and Redis, can use ClamAV and S3, and makes two opt-in outbound requests: the GitHub update check and the telemetry.wdkro.de count." width="774" height="761" loading="lazy">
+        </figure>
         <p>
-          OpenWhistle is designed with a defence-in-depth approach to anonymity. There are
-          four independent layers that prevent IP addresses from reaching persistent storage.
+          Defence in depth for anonymity: four independent layers keep IP addresses out of
+          persistent storage.
         </p>
 
         <h3>The four anonymity layers</h3>
@@ -2473,16 +2524,13 @@ CLAMAV_HOST=clamav</code></pre>
           <div class="security-layer" role="listitem">
             <div class="security-layer-num" aria-hidden="true">1</div>
             <div>
-              <div class="security-layer-title">nginx — Strip X-Forwarded-For</div>
+              <div class="security-layer-title">nginx — Strip the client-IP headers</div>
               <div class="security-layer-desc">
-                The nginx reverse proxy configuration explicitly strips the
-                <code>X-Forwarded-For</code>, <code>X-Real-IP</code>, and all
-                <code>X-Client-*</code> headers before forwarding requests to the
-                application. Even if a CDN or upstream proxy adds these headers,
-                they are removed at the nginx layer. <code>access_log off</code> also means
-                request URIs are never written to disk; an operator's own reverse proxy in
-                front of OpenWhistle must not log them either. Dashboard search terms are
-                sent by POST and never appear in a URL.
+                <code>X-Forwarded-For</code>, <code>X-Real-IP</code>, <code>Forwarded</code>,
+                <code>X-Client-IP</code>, <code>X-Cluster-Client-IP</code>, <code>True-Client-IP</code>
+                and <code>CF-Connecting-IP</code> are cleared before a request reaches the app, even
+                when a CDN added them. <code>access_log off</code>: request URIs never reach the disk.
+                A reverse proxy of your own in front must not log them either.
               </div>
             </div>
           </div>
@@ -2491,10 +2539,10 @@ CLAMAV_HOST=clamav</code></pre>
             <div>
               <div class="security-layer-title">Application middleware — Drop remote address</div>
               <div class="security-layer-desc">
-                A FastAPI middleware intercepts every request before it reaches any
-                route handler and replaces the <code>client.host</code> with
-                <code>0.0.0.0</code>. No route handler can access the real remote address
-                even if it tried.
+                The first middleware removes those headers again and clears the peer address, before
+                any route handler runs. No handler can read the real address, even if it tried. If
+                such a header arrives anyway, the admin dashboard warns that a proxy in front knows the
+                addresses.
               </div>
             </div>
           </div>
@@ -2503,9 +2551,9 @@ CLAMAV_HOST=clamav</code></pre>
             <div>
               <div class="security-layer-title">Database schema — No IP column</div>
               <div class="security-layer-desc">
-                The <code>reports</code>, <code>messages</code>, and <code>sessions</code>
-                tables have no <code>ip_address</code> column. It is structurally impossible
-                for the ORM to persist an IP address — not just a matter of policy.
+                No table has an IP address column: not <code>reports</code>,
+                <code>report_messages</code>, <code>audit_log</code> or <code>admin_users</code>. The
+                ORM cannot persist an address; that is structure, not policy.
               </div>
             </div>
           </div>
@@ -2514,74 +2562,70 @@ CLAMAV_HOST=clamav</code></pre>
             <div>
               <div class="security-layer-title">Redis sessions — No identifying metadata</div>
               <div class="security-layer-desc">
-                Session tokens in Redis are UUID4 values. The session data structure
-                contains only the case number (not the PIN) and an expiry timestamp.
-                No IP, no User-Agent, no browser fingerprint is stored in session data.
+                A whistleblower's status session is a random 256-bit token. Its Redis value is only
+                the report's id, and it expires after 2 hours. No IP, no User-Agent, no browser
+                fingerprint.
               </div>
             </div>
           </div>
         </div>
 
         <h3>Rate limiting without IP tracking</h3>
-        <p>
-          Brute-force protection on the report access endpoint uses Redis-based rate limiting
-          keyed on the session token, not the IP address. A fixed-window counter increments
-          on each failed PIN attempt. After 5 failed attempts within 15 minutes, the session
-          token is invalidated and a new one must be obtained. The whistleblower's IP address
-          is never used as a rate-limiting key.
-        </p>
-        <p>
-          In front of that, the bundled nginx limits every route, the submission wizard
-          (<code>POST /submit</code>) included: 10 requests/s with a burst of 30 per client
-          address, held in nginx memory only and never logged; the onion listener has its own
-          shared zone. The Helm chart sets the same limit on its ingress-nginx Ingress; with
-          another ingress controller, set an equivalent one.
-        </p>
+        <ul>
+          <li><strong>Wrong PINs</strong> are counted per case number, under an HMAC of it, so a Redis dump does not list which cases someone tried. After <code>MAX_ACCESS_ATTEMPTS</code> (5) within <code>ACCESS_LOCKOUT_MINUTES</code> (15), the status page asks to wait. A correct PIN always works.</li>
+          <li><strong>Admin passwords</strong> are counted per username (<code>MAX_LOGIN_ATTEMPTS</code>) and across all accounts, against password spraying (<code>ADMIN_FAILED_LOGIN_ALERT_THRESHOLD</code>).</li>
+          <li><strong>nginx</strong> limits every route, the submission wizard (<code>POST /submit</code>) included: 10 requests/s with a burst of 30 per client address. The counters live in nginx memory only and are never logged. The onion listener has its own shared zone.</li>
+          <li><strong>Helm:</strong> the chart sets the same limit on its ingress-nginx Ingress. With another ingress controller, set an equivalent one.</li>
+        </ul>
 
         <h3>Security headers</h3>
-        <p>
-          The nginx configuration applies a strict set of HTTP security headers to all responses:
-        </p>
-        <ul>
-          <li><code>Strict-Transport-Security</code> with <code>max-age=31536000; includeSubDomains</code></li>
-          <li><code>Content-Security-Policy</code> restricting scripts, styles, and frames to self</li>
-          <li><code>X-Content-Type-Options: nosniff</code></li>
-          <li><code>X-Frame-Options: DENY</code></li>
-          <li><code>Referrer-Policy: no-referrer</code></li>
-          <li><code>Permissions-Policy</code> disabling geolocation, camera, microphone</li>
-        </ul>
+        <p>The app sets them on every response, so they hold behind any proxy:</p>
+        <div class="table-scroll">
+<table class="env-table">
+          <thead><tr><th>Header</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td><code>Strict-Transport-Security</code></td><td><code>max-age=31536000; includeSubDomains; preload</code>, except on the onion listener</td></tr>
+            <tr><td><code>Content-Security-Policy</code></td><td><code>default-src 'self'</code>; scripts and styles only from self or with a per-response nonce, no <code>'unsafe-inline'</code></td></tr>
+            <tr><td><code>X-Content-Type-Options</code></td><td><code>nosniff</code></td></tr>
+            <tr><td><code>X-Frame-Options</code></td><td><code>DENY</code></td></tr>
+            <tr><td><code>Referrer-Policy</code></td><td><code>no-referrer</code></td></tr>
+            <tr><td><code>Permissions-Policy</code></td><td><code>camera=(), microphone=(), geolocation=(), payment=()</code></td></tr>
+          </tbody>
+        </table>
+</div>
 
         <h3>Onion listener trust boundary</h3>
         <p>
-          When <code>ONION_LOCATION</code> is set, the app must know whether a request arrived
-          through the onion (Tor) listener or the regular HTTPS one, to decide whether to send
-          <code>Secure</code> cookies, HSTS, and the <code>Onion-Location</code> header itself
-          (see <a href="#onion-address">Offering an onion address</a>). That decision is never
-          made from the client-supplied <code>Host</code> header — a request on the real HTTPS
-          listener could claim <code>Host: &lt;anything&gt;.onion</code>. Instead nginx sets an
-          <code>X-OW-Onion: 1</code> request header only inside the onion server block and clears
-          it inside the regular one, the same trust model already used for stripping
-          IP-forwarding headers (layer 1 above): it depends on the application port never being
-          reachable except through this nginx.
+          With <code>ONION_LOCATION</code> set, the app decides per request whether it came through
+          the onion (Tor) listener. That decides <code>Secure</code> cookies, HSTS and the
+          <code>Onion-Location</code> header. The client-supplied <code>Host</code> header never
+          decides it: a request on the HTTPS listener could claim
+          <code>Host: &lt;anything&gt;.onion</code>. Instead, nginx sets <code>X-OW-Onion: 1</code> only in the
+          onion server block and clears it in the regular one, like the IP headers of layer 1. Both
+          hold only while the app port is reachable through this nginx alone
+          (<a href="#onion-address">Offering an onion address</a>).
         </p>
 
-        <h3>OIDC integration</h3>
-        <p>
-          When OIDC is configured, admin login can be completed entirely via the external
-          provider. The application validates the authorization code, fetches the userinfo
-          endpoint, extracts the <code>sub</code> claim, and maps it to a local admin account.
-          A session is created directly — no separate TOTP step is required for OIDC logins.
-          The admin account must be pre-linked to an OIDC identity by a system administrator.
-        </p>
+        <h3 id="oidc-integration">OIDC integration</h3>
+        <p>With OIDC on, the identity provider is a second way past the first factor. It never replaces the second factor.</p>
+        <ul>
+          <li>Login uses PKCE; the app checks the provider's signed ID token (see <code>OIDC_SERVER_METADATA_URL</code> in the <a href="#configuration">configuration table</a>).</li>
+          <li>Each person links their own account. Sign in with password and TOTP, then choose <strong>Link single sign-on</strong> on <code>/admin/account</code>.</li>
+          <li>The provider's <code>sub</code> and issuer are stored on the signed-in account, and nowhere else. The audit log records <code>auth.sso_linked</code>.</li>
+          <li>The link request is bound to that session. Finished in another browser or after sign-out, it links nothing.</li>
+          <li>An identity already linked to another account is refused. An unlinked identity cannot sign in.</li>
+          <li><strong>Unlink single sign-on</strong> removes the link (<code>auth.sso_unlinked</code>). An account without a password cannot unlink its only way in.</li>
+          <li>The password keeps working. Every login still ends with TOTP, as for <a href="#admin-login">every account</a>.</li>
+        </ul>
       </section>
 
       <!-- Demo mode -->
       <section class="docs-section" id="demo-mode" aria-labelledby="demo-mode-h2">
         <h2 id="demo-mode-h2">Demo Mode</h2>
         <p>
-          Demo mode is intended for the public demo instance at
-          <a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">demo.openwhistle.net</a>.
-          It should not be used for production deployments.
+          For the public demo at
+          <a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">demo.openwhistle.net</a>,
+          never for production.
         </p>
 
         <h3>Enabling demo mode</h3>
@@ -2597,16 +2641,16 @@ CLAMAV_HOST=clamav</code></pre>
           <li>Prefilled admin credentials: username <code>demo</code>, password <code>demo</code>, TOTP code <code>000000</code></li>
           <li>The static TOTP code <code>000000</code> is always accepted — no authenticator app needed</li>
           <li>All reports and messages are visible to the demo admin</li>
-          <li>A banner is displayed on all pages indicating this is a demo instance</li>
-          <li>The demo instance at <code>demo.openwhistle.net</code> is automatically wiped and restarted every 6 hours</li>
+          <li>The password of the demo accounts cannot be changed, and their authenticator cannot be reset</li>
+          <li>A banner on every page says this is a demo instance</li>
+          <li><code>demo.openwhistle.net</code> is wiped and restarted every 6 hours</li>
         </ul>
 
         <div class="callout callout-warn">
           <div class="callout-title">Never submit real reports to the demo</div>
           <p>
-            The demo instance is public and accessible to anyone. Demo data is wiped every 6 hours
-            but may be readable by other users in the interim. Never submit real or sensitive
-            information to the demo instance.
+            The demo is public. Its data is wiped every 6 hours but readable by anyone until then.
+            Never submit real or sensitive information to it.
           </p>
         </div>
       </section>
@@ -2615,10 +2659,9 @@ CLAMAV_HOST=clamav</code></pre>
       <section class="docs-section" id="upgrading" aria-labelledby="upgrading-h2">
         <h2 id="upgrading-h2">Upgrading</h2>
         <p>
-          OpenWhistle follows <a href="https://semver.org" rel="noopener noreferrer" target="_blank">semantic versioning</a>.
-          Minor and patch releases are backward-compatible. Major releases may include
-          breaking changes documented in the
-          <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG</a>.
+          <a href="https://semver.org" rel="noopener noreferrer" target="_blank">Semantic versioning</a>:
+          minor and patch releases are backward-compatible. A major release may break things; its
+          <a href="changelog.html">Changelog</a> entry says what.
         </p>
 
         <h3>Standard upgrade procedure</h3>
@@ -2642,7 +2685,7 @@ CLAMAV_HOST=clamav</code></pre>
 
         <h3>Before upgrading</h3>
         <ul>
-          <li>Read the CHANGELOG for the target version.</li>
+          <li>Read the Changelog for the target version.</li>
           <li>v2.0.0 adds <code>ENCRYPTION_KEY</code>, a key for encryption separate from <code>SECRET_KEY</code>: see <a href="#key-rotation">Rotating the encryption key</a>.</li>
         </ul>
 
@@ -2656,12 +2699,11 @@ CLAMAV_HOST=clamav</code></pre>
         </ul>
 
         <h3>Rollback</h3>
-        <p>
-          The previous image refuses to start on a migrated database. Either restore the backup
-          into an empty database and pin the old <code>OPENWHISTLE_VERSION</code>, or, from 2.0.0
-          to 1.5.x, downgrade the schema with the <strong>2.0.0</strong> image first, then pin the
-          old version:
-        </p>
+        <p>The previous image refuses to start on a migrated database. Two ways back:</p>
+        <ul>
+          <li>Restore the backup into an empty database and pin the old <code>OPENWHISTLE_VERSION</code>.</li>
+          <li>From 2.0.0 to 1.5.x: downgrade the schema with the <strong>2.0.0</strong> image first, then pin the old version:</li>
+        </ul>
         <div class="code-block" role="region" aria-label="Rollback commands">
           <div class="code-block-header">
             <span class="code-block-lang">bash</span>
@@ -2672,15 +2714,15 @@ CLAMAV_HOST=clamav</code></pre>
         </div>
         <p>
           The downgrade decrypts the TOTP secrets again and needs the same encryption keys.
-          Migration 006 rounded whistleblower times to the day; the downgrade keeps them
-          rounded, the exact times are gone by design.
+          Migration 006 rounded whistleblower times to the day; the downgrade keeps them rounded, the
+          exact times are gone by design.
         </p>
 
         <div class="callout callout-note">
           <div class="callout-title">Stay up to date</div>
           <p>
-            Security fixes are released as patch versions. To hear about them, watch the
-            repository's releases (GitHub: Watch → Custom → Releases).
+            Security fixes are released as patch versions. To hear about them, watch the repository's
+            releases (GitHub: Watch → Custom → Releases).
           </p>
         </div>
       </section>
@@ -2699,11 +2741,10 @@ CLAMAV_HOST=clamav</code></pre>
           <li><div>Empty <code>ENCRYPTION_KEY_PREVIOUS</code> and recreate the container again: <code>docker compose up -d</code>.</div></li>
         </ol>
         <p>
-          The app checks one stored report key and one TOTP secret at every start, before
-          migrating. If neither <code>ENCRYPTION_KEY</code> nor a key in
-          <code>ENCRYPTION_KEY_PREVIOUS</code> opens them — for example <code>ENCRYPTION_KEY</code>
-          set on an existing install without step 1, or removed again — it refuses to start and
-          writes nothing. The log line names <code>ENCRYPTION_KEY_PREVIOUS</code>.
+          At every start, before migrating, the app checks one stored report key and one TOTP
+          secret. If no key opens them, it refuses to start and writes nothing; the log line names
+          <code>ENCRYPTION_KEY_PREVIOUS</code>. That happens, for example, when
+          <code>ENCRYPTION_KEY</code> is set on an existing install without step 1, or removed again.
         </p>
         <p>
           <strong>Helm:</strong> before step 3, wait until every pod runs with the new environment
@@ -2713,9 +2754,9 @@ CLAMAV_HOST=clamav</code></pre>
         <div class="callout callout-warn">
           <div class="callout-title">Keep the old key</div>
           <p>
-            Until step 3 has succeeded, removing it leaves data unreadable. Afterwards, keep it stored
-            safely for as long as any backup made before the rotation is retained: to restore such a
-            backup, put the old key back into <code>ENCRYPTION_KEY_PREVIOUS</code> and run the script.
+            Until step 3 has succeeded, removing it leaves data unreadable. Afterwards, keep it safe
+            as long as any backup from before the rotation is kept. To restore such a backup, put the
+            old key back into <code>ENCRYPTION_KEY_PREVIOUS</code> and run the script.
           </p>
         </div>
       </section>
@@ -2747,6 +2788,7 @@ CLAMAV_HOST=clamav</code></pre>
           <ul class="footer-links">
             <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
             <li><a href="docs.html">Documentation</a></li>
+            <li><a href="changelog.html">Changelog</a></li>
             <li><a href="blog/">Blog</a></li>
             <li><a href="de/">Auf Deutsch</a></li>
             <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Live Demo</a></li>
@@ -2824,8 +2866,10 @@ CLAMAV_HOST=clamav</code></pre>
         var href = a.getAttribute('href');
         if (href === '#' + active) {
           a.classList.add('active');
+          a.setAttribute('aria-current', 'location');
         } else {
           a.classList.remove('active');
+          a.removeAttribute('aria-current');
         }
       });
     }

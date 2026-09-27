@@ -553,6 +553,52 @@ Each was proven red locally with podman: files written `0640` (nginx:
 | `docs-link-docs-tech` | `docs/docs.html` | `test_no_published_page_links_docs_tech` |
 | `roadmap-test-chore` | `docs/roadmap.html` | `test_the_public_roadmap_holds_no_test_chores` |
 
+## SSO linking and authenticator reset (v2.1.0)
+
+`docs-tech/mutations/v2.1.0-auth-recovery.json`: 28 mutations, 28 red, all in
+`tests/test_v210_auth_recovery.py`. The rules and why: [threat model](threat-model.md).
+
+| Guard | Test that fires |
+| --- | --- |
+| A state redeems only for its own purpose | `test_a_login_state_cannot_link_and_a_link_state_cannot_log_in` |
+| A link state redeems only for the session that started it | `test_a_link_started_by_one_session_cannot_land_on_another` |
+| A link callback without a session is an error page, never a login | `test_link_callback_without_a_session_links_nothing_and_signs_nobody_in` |
+| An identity on another account is refused (unique `oidc_sub`) | `test_link_is_refused_when_the_identity_belongs_to_another_account` |
+| No unlink of the only way in | `test_unlink_is_refused_when_sso_is_the_only_way_in` |
+| Reset: superadmin only, not self, CSRF, not the demo accounts | `test_only_a_superadmin_resets_an_authenticator`, `test_a_superadmin_cannot_reset_their_own_authenticator`, `test_reset_needs_csrf`, `test_demo_accounts_keep_their_authenticator` |
+| Reset: new secret, enrolment forced, sessions of that user (only) swept | `test_superadmin_resets_an_authenticator` |
+| No session while `totp_enabled` is off | `test_no_session_is_accepted_while_the_authenticator_awaits_enrolment` |
+| Browser reset replaces a local password; the old one fails, the new one leads to TOTP setup | `test_superadmin_resets_an_authenticator` |
+| The temporary password is in no log, header or audit row | `test_the_temporary_password_leaks_nowhere` |
+| An LDAP/SSO account gets no password | `test_an_account_without_a_password_keeps_its_directory_login` |
+
+**Not a guard, so not kept.** A select-then-refuse check for an already linked identity could
+never turn a test red: the unique constraint refuses the same link, caught as `IntegrityError`.
+The constraint is the guard; the mutation breaks the `except` around the audit flush and commit.
+
+**Not a mutation.** `link-without-session` first stayed green: without the `except`, the
+`HTTPException` still answers 401. The test now asserts the error page, not only the status.
+
+## Own password and forced change (v2.1.0)
+
+`docs-tech/mutations/v2.1.0-own-account.json`: 34 mutations, 34 red, all in
+`tests/test_v210_own_account.py`. The rules and why: [threat model](threat-model.md).
+
+| Guard | Test that fires |
+| --- | --- |
+| A change needs a current, unused TOTP code; a wrong one counts | `test_a_session_alone_cannot_change_the_password`, `test_a_totp_code_already_used_is_refused` |
+| A change needs the current password; a wrong one counts | `test_a_wrong_current_password_changes_nothing_and_counts` |
+| A locked account cannot change, and the lock is the sign-in lock | `test_a_locked_account_cannot_change_even_with_the_right_credentials` |
+| Policy, confirmation and "differs from the current one" are checked first | `test_a_form_error_is_answered_before_any_credential_check` |
+| CSRF | `test_the_change_needs_csrf` |
+| Other sessions end, the current one stays | `test_every_other_session_ends_and_the_current_one_stays`, `test_change_with_the_current_password_and_a_totp_code` |
+| Every admin route redirects while forced; the account page, its form and the session timer do not | `test_forced_change_redirects_every_admin_route`, `test_the_session_timer_renews_during_a_forced_change` |
+| New account, superadmin reset and host reset set the flag; only the holder's change clears it | `test_a_new_account_enrols_then_must_change_its_password`, `test_a_reset_account_enrols_then_must_change_its_password`, `test_cli_password_reset_forces_a_change_ends_sessions_and_is_audited` |
+| No form and no POST without a local password; demo accounts keep theirs | `test_an_account_without_a_password_gets_no_form_and_cannot_post_one`, `test_the_demo_accounts_keep_their_password` |
+
+**Found by the audit.** `exempt-session-refresh-lost` first stayed green: the test client followed
+the redirect to `/admin/account` and got a 200 there. The test now refuses redirects and reads the TTL.
+
 ## Repository and release
 
 | Guard | Test |

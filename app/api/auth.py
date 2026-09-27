@@ -17,9 +17,10 @@ from fastapi import (
 )
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from redis.asyncio import Redis
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_admin
+from app.api.deps import get_current_admin, get_signed_in_admin
 from app.config import settings
 from app.csrf import validate_csrf, validate_csrf_header
 from app.database import get_db
@@ -165,7 +166,9 @@ async def _start_session(
     await auth_service.store_session(redis, str(user.id), token)
     user.last_login_at = datetime.now(UTC)
     await db.commit()
-    response = RedirectResponse("/admin/dashboard", status_code=302)
+    # A password someone else set is replaced before anything else opens.
+    landing = "/admin/account" if user.must_change_password else "/admin/dashboard"
+    response = RedirectResponse(landing, status_code=302)
     _set_session_cookie(response, token, request)
     return response
 
@@ -487,7 +490,7 @@ async def logout(
 @router.get("/session/ttl")
 async def session_ttl(
     request: Request,
-    _user: AdminUser = Depends(get_current_admin),
+    _user: AdminUser = Depends(get_signed_in_admin),
 ) -> JSONResponse:
     """Return remaining TTL for the current admin session."""
     expires_at: int = getattr(request.state, "session_expires_at", 0)
@@ -499,7 +502,8 @@ async def session_ttl(
 async def session_refresh(
     request: Request,
     redis: Redis = Depends(get_redis),
-    current_user: AdminUser = Depends(get_current_admin),
+    # The timer of the account page keeps a forced password change alive.
+    current_user: AdminUser = Depends(get_signed_in_admin),
     session_token: str | None = Cookie(default=None, alias="ow_session"),
     _csrf: None = Depends(validate_csrf_header),
 ) -> JSONResponse:
@@ -554,6 +558,9 @@ async def oidc_callback(
 ) -> HTMLResponse | RedirectResponse:
     if not settings.oidc_enabled:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    if state and state.startswith(oidc_service.LINK_STATE_PREFIX):
+        return await _oidc_link_callback(request, code, state, error, redis, db)
 
     if error or not code or not state:
         return render(
@@ -613,3 +620,229 @@ async def oidc_callback(
         )
 
     return await _second_factor(request, redis, user)
+
+
+# ── OIDC account linking (self-service) ──────────────────────────────────────
+#
+# An admin already signed in with password (or LDAP) and TOTP links their own
+# account to their identity at the provider. The state is bound to that
+# session and to the "link" purpose (oidc_service.exchange_code checks both),
+# so a link can only ever land on the account whose session started it.
+# Linking adds a way to pass the first factor; TOTP stays mandatory
+# (_second_factor), and the password keeps working.
+
+def _sso_result(result: str) -> RedirectResponse:
+    """Back to the account page, which shows the result (oidc.SSO_RESULTS)."""
+    return RedirectResponse(f"/admin/account?sso={result}", status_code=303)
+
+
+@router.post("/oidc/link", response_model=None)
+async def oidc_link(
+    redis: Redis = Depends(get_redis),
+    current_user: AdminUser = Depends(get_current_admin),
+    session_token: str = Cookie(alias="ow_session"),
+    _csrf: None = Depends(validate_csrf),
+) -> RedirectResponse:
+    if not settings.oidc_enabled:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    binding = oidc_service.session_binding(str(current_user.id), session_token)
+    url = await oidc_service.create_authorization_url(
+        redis, purpose=oidc_service.PURPOSE_LINK, binding=binding
+    )
+    return RedirectResponse(url, status_code=303)
+
+
+async def _oidc_link_callback(
+    request: Request,
+    code: str | None,
+    state: str,
+    error: str | None,
+    redis: Redis,
+    db: AsyncSession,
+) -> HTMLResponse | RedirectResponse:
+    session_token = request.cookies.get("ow_session")
+    try:
+        user = await get_current_admin(request, db, redis, session_token)
+    except HTTPException:
+        # No live session: this is never a login, and never links anything.
+        return render(request, "login.html", _login_ctx(request, {
+            "error": "login.error.sso_link_session",
+        }), status_code=401)
+    assert session_token is not None  # get_current_admin refuses a missing cookie
+
+    if error or not code:
+        return _sso_result("failed")
+    try:
+        claims = await oidc_service.exchange_code(
+            redis, code, state,
+            purpose=oidc_service.PURPOSE_LINK,
+            binding=oidc_service.session_binding(str(user.id), session_token),
+        )
+    except Exception:  # noqa: BLE001
+        return _sso_result("failed")
+    sub = claims.get("sub") if claims else None
+    issuer = claims.get("iss") if claims else None
+    if not sub or not issuer:
+        return _sso_result("failed")
+
+    # oidc_sub is unique on its own (not per issuer): an identity already on
+    # another account fails the constraint, and is never moved across.
+    user.oidc_sub = sub
+    user.oidc_issuer = issuer
+    try:
+        await audit_service.log(
+            db, user, audit_service.AuditAction.AUTH_SSO_LINKED, detail={"issuer": issuer}
+        )
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        return _sso_result("taken")
+    return _sso_result("linked")
+
+
+@router.post("/oidc/unlink", response_model=None)
+async def oidc_unlink(
+    db: AsyncSession = Depends(get_db),
+    current_user: AdminUser = Depends(get_current_admin),
+    _csrf: None = Depends(validate_csrf),
+) -> RedirectResponse:
+    if not settings.oidc_enabled:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    if not current_user.oidc_sub:
+        return _sso_result("unlinked")
+    # Without a password or a directory login, the link is the only way in.
+    if not current_user.password_hash and not current_user.ldap_username:
+        return _sso_result("only_way_in")
+
+    issuer = current_user.oidc_issuer
+    current_user.oidc_sub = None
+    current_user.oidc_issuer = None
+    await audit_service.log(
+        db, current_user, audit_service.AuditAction.AUTH_SSO_UNLINKED,
+        detail={"issuer": issuer},
+    )
+    await db.commit()
+    return _sso_result("unlinked")
+
+
+# ── Own account: overview and password change ────────────────────────────────
+#
+# Whoever set a password for someone else (a new account, a superadmin reset,
+# the host's reset script) knows it; `must_change_password` sends the holder
+# here before anything else opens (deps.get_current_admin). The change needs
+# the current password and a fresh TOTP code: a session alone, left open on a
+# desk, must not be enough to take the account over.
+
+_PASSWORD_CHANGED = "changed"  # noqa: S105 — a query value, not a secret
+
+
+def _demo_account(user: AdminUser) -> bool:
+    from app.services.demo_seed import DEMO_USERNAMES  # noqa: PLC0415
+
+    return settings.demo_mode and user.username in DEMO_USERNAMES
+
+
+async def _account_page(
+    request: Request,
+    db: AsyncSession,
+    user: AdminUser,
+    extra: dict[str, Any] | None = None,
+    status_code: int = 200,
+) -> HTMLResponse:
+    from app.models.organisation import Organisation  # noqa: PLC0415
+
+    org = await db.get(Organisation, user.org_id) if user.org_id else None
+    return render(request, "admin/account.html", {
+        "user": user,
+        "org_name": org.name if org else None,
+        "ldap_enabled": settings.ldap_enabled,
+        "demo_locked": _demo_account(user),
+        "password_changed": request.query_params.get("password") == _PASSWORD_CHANGED,
+        **(extra or {}),
+    }, status_code=status_code)
+
+
+@router.get("/account", response_class=HTMLResponse)
+async def account_page(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: AdminUser = Depends(get_signed_in_admin),
+) -> HTMLResponse:
+    return await _account_page(request, db, current_user)
+
+
+def _new_password_error(current: str, new: str, confirm: str) -> dict[str, str]:
+    """Form errors that need no credential check, so a typo never burns a code."""
+    if not current:
+        return {"current_password": "account.password.error.current_required"}
+    if new != confirm:
+        return {"confirm_password": "account.password.error.mismatch"}
+    try:
+        auth_service.validate_password(new)
+    except ValueError:
+        return {"new_password": "account.password.error.policy"}
+    if new == current:
+        return {"new_password": "account.password.error.unchanged"}
+    return {}
+
+
+@router.post("/account/password", response_class=HTMLResponse, response_model=None)
+async def account_password(
+    request: Request,
+    current_password: str = Form(""),
+    new_password: str = Form(""),
+    confirm_password: str = Form(""),
+    totp_code: str = Form(""),
+    redis: Redis = Depends(get_redis),
+    db: AsyncSession = Depends(get_db),
+    current_user: AdminUser = Depends(get_signed_in_admin),
+    session_token: str = Cookie(alias="ow_session"),
+    _csrf: None = Depends(validate_csrf),
+) -> HTMLResponse | RedirectResponse:
+    # LDAP and SSO-only accounts have no password here to change.
+    if not current_user.password_hash:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    if _demo_account(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The demo accounts keep their password.",
+        )
+
+    async def refuse(errors: dict[str, str], code: int) -> HTMLResponse:
+        return await _account_page(request, db, current_user, {
+            "error": next(iter(errors.values())), "field_errors": errors,
+        }, status_code=code)
+
+    # The same per-account counter as the sign-in form: guesses here and there add up.
+    if not await rl.check_admin_login_attempts(redis, current_user.username):
+        return await refuse({"current_password": "login.error.locked"}, 429)
+
+    form_errors = _new_password_error(current_password, new_password, confirm_password)
+    if form_errors:
+        return await refuse(form_errors, 400)
+
+    if not auth_service.verify_password(current_password, current_user.password_hash):
+        await rl.record_admin_login_failure(redis, current_user.username)
+        return await refuse({"current_password": "account.password.error.current"}, 401)
+
+    # Single use, like the sign-in code: a code seen over a shoulder opens nothing twice.
+    code_ok = verify_totp(current_user.totp_secret, totp_code) and bool(await redis.set(
+        f"openwhistle:totp_used:{current_user.id}:{totp_code}", "1", nx=True, ex=90
+    ))
+    if not code_ok:
+        await rl.record_admin_login_failure(redis, current_user.username)
+        return await refuse({"totp_code": "mfa.error.invalid"}, 401)
+
+    required = current_user.must_change_password
+    current_user.password_hash = auth_service.hash_password(new_password)
+    current_user.must_change_password = False
+    await audit_service.log(
+        db, current_user, audit_service.AuditAction.AUTH_PASSWORD_CHANGED,
+        detail={"required": required},
+    )
+    await db.commit()
+    await rl.reset_admin_login_attempts(redis, current_user.username)
+    # Every other session ends: whoever knew the old password may hold one.
+    await auth_service.revoke_user_sessions(redis, str(current_user.id), keep=session_token)
+    return RedirectResponse(f"/admin/account?password={_PASSWORD_CHANGED}", status_code=303)

@@ -1,171 +1,54 @@
-# HinSchG — Key Paragraphs Reference
+# HinSchG duties and what OpenWhistle covers
 
-> **Official source:** <https://www.gesetze-im-internet.de/hinschg/>
-> **EU Directive:** <https://eur-lex.europa.eu/legal-content/en/TXT/?uri=CELEX%3A32019L1937>
-> **In force:** 2 July 2023
+Reference for whoever runs an internal reporting office with OpenWhistle. It is a summary, not legal advice.
+The binding text is at <https://www.gesetze-im-internet.de/hinschg/> (in force since 2 July 2023). The EU
+directive behind it is [2019/1937](https://eur-lex.europa.eu/legal-content/en/TXT/?uri=CELEX%3A32019L1937).
 
-This document summarizes the paragraphs most relevant to OpenWhistle development.
-For legally binding text, always consult the official source above.
+## Who must run a reporting office
 
----
+| Section | Rule |
+| --- | --- |
+| § 12 Abs. 1 | Employers set up at least one internal reporting office. Municipalities follow their state law. |
+| § 12 Abs. 2 | The duty applies from 50 employees. |
+| § 12 Abs. 3 | Some financial-sector firms need one at any size, for example banks and insurers. |
+| § 12 Abs. 4 | The office must have the powers to examine reports and take follow-up measures. |
 
-## §8 Confidentiality (Vertraulichkeit)
+## Duty by duty
 
-The identity of the whistleblower **must be kept confidential** at all times. Information that directly or
-indirectly allows identification of the whistleblower may only be disclosed:
+| Section | Duty | OpenWhistle | The organisation |
+| --- | --- | --- | --- |
+| § 8 | Keep the identity of the reporter and of named persons confidential | No IP address is stored; access by role; confidential identity shown only with an audited reason | Who may see reports, and their training |
+| § 9 | Exceptions to confidentiality, e.g. criminal proceedings or the reporter's written consent | Identity reveals are audited | Deciding each exception |
+| § 10 | Processing personal data as far as the office's tasks need it | Only the fields a report needs | Record of processing, data-protection notice |
+| § 11 Abs. 1 | Document every report | Every report and message is stored, encrypted | — |
+| § 11 Abs. 2 | Record a telephone report only with consent; otherwise write a summary | Telephone guide on `/admin/telephone-channel` | Running the telephone channel |
+| § 11 Abs. 5 | Delete the documentation three years after the procedure ends | Retention settings on `/admin/retention` | Keeping it longer only where a law requires it |
+| § 16 Abs. 1 | Channels for employees; anonymous reports should be processed | Anonymous and confidential submission | Who else may report |
+| § 16 Abs. 2 | Only the responsible persons access reports | Roles and per-organisation scope | Assigning the roles |
+| § 16 Abs. 3 | Reports orally and in text form; a personal meeting on request | The text channel | The oral channel and meetings |
+| § 17 Abs. 1 Nr. 1 | Confirm receipt within seven days | 7-day deadline on every case | Confirming in time |
+| § 17 Abs. 1 Nr. 3 | Stay in contact with the reporter | Two-way messages via case number and PIN | Answering |
+| § 17 Abs. 2 | Feedback within three months of the confirmation | 3-month deadline on every case | The feedback itself |
 
-- With the explicit consent of the whistleblower, or
-- When required by law (e.g., criminal prosecution requires it)
+## Deadlines
 
-**Implementation implication:** No IP addresses, no browser fingerprints, no metadata that could identify
-the whistleblower must be stored anywhere. The system must be designed so that even the system operator
-cannot identify the whistleblower without their cooperation.
+| Event | Deadline | Section |
+| --- | --- | --- |
+| Confirmation of receipt | 7 days after the report | § 17 Abs. 1 Nr. 1 |
+| Feedback to the reporter | 3 months after the confirmation | § 17 Abs. 2 |
+| Deletion of the documentation | 3 years after the procedure ends | § 11 Abs. 5 |
 
----
+## GDPR alongside the HinSchG
 
-## §12 Obligation to Establish Internal Reporting Channels
+| Requirement | Article | OpenWhistle |
+| --- | --- | --- |
+| Data minimisation | Art. 5(1)(c) | No IP logging, no fields a report does not need |
+| Privacy by design | Art. 25 | Self-hosted; no third-party requests from the reporter's pages |
+| Lawful basis | Art. 6(1)(c) | The legal duty of § 12 HinSchG, with § 10 HinSchG |
+| Erasure | Art. 17 | Reports can be deleted for good; § 11 Abs. 5 sets the regular deadline |
+| Security of processing | Art. 32 | Encryption at rest and TLS in transit |
+| Breach notification | Art. 33 | Organisational: 72 hours to the authority |
 
-Companies with **50 or more employees** and all public authorities must establish internal reporting channels.
-
-The reporting channel must:
-
-- Allow reports in writing or verbally (or both)
-- Guarantee the confidentiality of the whistleblower's identity
-- Be accessible to employees of the organization
-
-**Implementation implication:** OpenWhistle provides the technical reporting channel. The organization
-deploying it must ensure it meets the organizational requirements.
-
----
-
-## §16 Internal Reporting Office (Interne Meldestelle)
-
-### §16 Abs. 1 — Operation
-
-The internal reporting office must be operated by:
-
-- An internal employee designated for this purpose, or
-- A third party (e.g., an external provider)
-
-Multiple organizations may share a single reporting channel.
-
-### §16 Abs. 3 — Secure Channel
-
-Reports must be receivable via a **secure channel** that ensures confidentiality. The whistleblower must be
-identifiable by the reporting office (via their case reference) to enable follow-up, but
-**not identifiable to anyone else**.
-
-### §16 Abs. 7 — Oral Reports
-
-If the whistleblower requests an oral report, the reporting office must provide the opportunity
-(telephone, video conference). A record must be made and provided to the whistleblower for approval.
-
-**Implementation implication:** The PIN + case number system satisfies the "identifiable by reporting
-office" requirement while maintaining full anonymity. The written-form digital submission satisfies the
-written reporting requirement.
-
----
-
-## §17 Follow-Up by the Internal Reporting Office (Rückmeldungen)
-
-This is the most critical paragraph for bidirectional communication.
-
-### §17 Abs. 1 — Acknowledgement of Receipt
-
-The reporting office must **acknowledge receipt within 7 days** of receiving the report.
-
-Exception: The 7-day deadline may be waived only if:
-
-- The whistleblower explicitly requests no acknowledgement, AND
-- Sending an acknowledgement would compromise the whistleblower's anonymity
-
-**Implementation implication:**
-
-- System must track `submitted_at` and `acknowledged_at` timestamps
-- Dashboard must show a warning when the 7-day SLA is approaching or exceeded
-- Acknowledgement is either automatic (on submission) or manual (admin action)
-
-### §17 Abs. 2 — Feedback within 3 Months
-
-The reporting office must provide **feedback within 3 months** of the acknowledgement. The feedback must include:
-
-- What measures have been taken or are planned
-- The reasons for those measures (or why no measures will be taken)
-
-**Implementation implication:**
-
-- System must track `feedback_due_at` (= `acknowledged_at` + 90 days)
-- Dashboard must show a "3-month SLA" warning
-- The admin must be able to send a feedback message to the whistleblower
-
-### §17 Abs. 3 — Communication Channel
-
-The follow-up communication must be done via the **same secure channel** through which the report was
-submitted. This means the whistleblower must be able to receive messages back through the OpenWhistle
-interface.
-
-**Implementation implication:**
-
-- Bidirectional thread (WhistleblowerMessage table) is required by law
-- The whistleblower must be able to read admin replies using their PIN + case number
-- The whistleblower must also be able to send follow-up messages
-
----
-
-## §26 Data Protection (Datenschutz)
-
-### §26 Abs. 1 — Legal Basis
-
-The processing of personal data in connection with internal reporting channels is lawful under DSGVO
-Art. 6(1)(c) (legal obligation) and Art. 6(1)(e) (public interest task), as far as required for
-compliance with HinSchG.
-
-### §26 Abs. 2 — Confidentiality of Third Parties
-
-If a report contains information about third parties (e.g., the person being reported), their identity
-must also be treated confidentially until the report has been investigated to a sufficient degree.
-
-### §26 Abs. 3 — Data Retention
-
-Personal data must be **deleted after 3 years** following the completion of a case, unless:
-
-- Longer retention is required for ongoing proceedings
-- The whistleblower consents to longer retention
-
-**Implementation implication:**
-
-- Reports must have a `closed_at` timestamp
-- A scheduled cleanup job (or at minimum, a manual delete function) must be available
-- The system must support hard deletion of reports and all associated messages
-
----
-
-## DSGVO Requirements for Whistleblower Systems
-
-| Requirement | Article | Implementation |
-|---|---|---|
-| Data minimization | Art. 5(1)(c) | No IP logging, no unnecessary fields |
-| Privacy by design | Art. 25 | Self-hosted, anonymized from the start |
-| Lawful basis | Art. 6(1)(c) | HinSchG §26 provides the legal basis |
-| Right to erasure | Art. 17 | Reports must be hard-deletable |
-| Security of processing | Art. 32 | Encryption at rest and in transit |
-| Data breach notification | Art. 33 | 72-hour notification requirement (organizational) |
-| No international transfer | Art. 44ff | Self-hosted, data stays on-premises |
-
-### External Resources and DSGVO
-
-Loading resources from external CDNs (Google Fonts, Cloudflare CDN, etc.) causes the user's IP address to
-be transmitted to a third party. A German court (LG München, January 2022) ruled that loading Google
-Fonts without explicit consent violates DSGVO Art. 6(1)(a).
-
-**For OpenWhistle:** All fonts, CSS, and JavaScript must be self-hosted. No external CDN calls permitted.
-
----
-
-## SLA Summary Table
-
-| Event | Deadline | Source |
-|---|---|---|
-| Acknowledgement of receipt | 7 days after `submitted_at` | §17 Abs. 1 |
-| Feedback to whistleblower | 3 months after `acknowledged_at` | §17 Abs. 2 |
-| Data deletion after case closure | 3 years after `closed_at` | §26 Abs. 3 |
+Fonts, styles and scripts are served by the instance itself. A German court (LG München I, January 2022)
+held that loading Google Fonts without consent breached the GDPR, because it sends the visitor's address
+to a third party.

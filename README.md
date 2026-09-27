@@ -78,6 +78,11 @@ zero vendor lock-in, and privacy-first by design.
 - **"Signal" design system** — documented, token-driven identity ([`DESIGN.md`](DESIGN.md)); app + site, light + dark.
 - **Mandatory MFA** — TOTP (compatible with any authenticator app) required for every admin account.
   No exceptions, no bypass.
+- **Own password, own account** — every admin changes their password on `/admin/account` with the
+  current password and a TOTP code; every other session ends. A password an admin, a superadmin
+  reset or the host set must be replaced before any other admin page opens.
+- **Self-service recovery** — admins link their own single sign-on identity; a superadmin resets a
+  lost authenticator, and the host's script resets any account, the last superadmin included.
 - **Lockout-proof whistleblower login** — a correct case number and PIN always open the case;
   wrong guesses are counted but can never lock the rightful whistleblower out.
 - **Password-spraying alarm** — failed admin logins are counted instance-wide (no username, no IP);
@@ -94,7 +99,11 @@ zero vendor lock-in, and privacy-first by design.
   CSRF token, not just a valid cookie.
 - **OIDC / SSO support** — Optional single sign-on via any OpenID Connect provider (Keycloak,
   Authentik, Azure AD, Google, …), with PKCE and a verified ID token (signature, issuer,
-  audience, expiry, nonce). LDAP supports LDAPS and StartTLS (`LDAP_START_TLS`).
+  audience, expiry, nonce). Each admin links their own account while signed in; TOTP is still
+  required. LDAP supports LDAPS and StartTLS (`LDAP_START_TLS`).
+- **Authenticator recovery** — a superadmin resets a lost authenticator on `/admin/users` (the
+  account gets a new temporary password and enrols a new app at the next login), or the operator runs
+  `scripts/reset_admin_password.py --reset-totp <username>`. Both end the account's sessions.
 - **File attachments** — Whistleblowers can attach evidence files (PDF, images, `.docx`, `.xlsx`,
   CSV, TXT — up to 10 MB each, 5 per report; legacy `.doc`/`.xls` are refused, since their author
   cannot be removed). Identifying metadata (photo GPS/EXIF, PDF and Office
@@ -166,8 +175,8 @@ zero vendor lock-in, and privacy-first by design.
 - **Superadmin role** — New `superadmin` role above `admin` for managing organisations
   in multi-tenant deployments; existing admin permissions are unchanged.
 - **Telephone channel compliance guide** — Admin page (`/admin/telephone-channel`) provides
-  a HinSchG §16 compliance checklist, implementation options, and the §10 recording
-  prohibition notice for operators setting up a verbal reporting channel.
+  a HinSchG § 16 Abs. 3 checklist (oral and text form), implementation options, and the
+  § 11 Abs. 2 rule that a call is recorded only with consent.
 - **TLS on by default** — the bundled nginx in `docker-compose.prod.yml` serves HTTPS out of
   the box: copy `fullchain.pem`/`privkey.pem` into `nginx/certs/` (no symlinks; key root-owned
   0600 or 0644), or a self-signed certificate
@@ -246,7 +255,8 @@ OpenWhistle is designed to comply with:
 
 ## 🤝 Contributing
 
-Contributions are welcome. Please open an issue before submitting a pull request.
+Contributions are welcome. Please open an issue before submitting a pull request, and read
+[CONTRIBUTING.md](CONTRIBUTING.md) first.
 
 ---
 

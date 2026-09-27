@@ -1,0 +1,120 @@
+{% extends "admin/_layout.html" %}
+{% import "_field.html" as field with context %}
+
+{% block title %}{{ t('account.title') }} | OpenWhistle{% endblock %}
+
+{% block styles %}
+<style nonce="{{ request.state.csp_nonce }}">
+    .acct-facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.5rem 1.5rem; margin: 0 0 1rem; }
+    .acct-facts dt { color: var(--muted); font-weight: 500; }
+    .acct-facts dd { margin: 0; overflow-wrap: anywhere; }
+    .acct-sso-form { margin-top: 0.75rem; }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<div class="container">
+    <div class="page-header">
+        <h1>{{ t('account.title') }}</h1>
+    </div>
+
+    {% if user.must_change_password %}
+    <div class="alert alert-warning" role="alert">
+        <div class="alert-title">{{ t('account.forced.title') }}</div>
+        {{ t('account.forced.body') }}
+    </div>
+    {% endif %}
+    {% if password_changed %}
+    <div class="alert alert-success" role="status">{{ t('account.password.changed') }}</div>
+    {% endif %}
+    {% set sso = sso_result(request) %}
+    {% if sso %}
+    <div class="alert alert-info" role="status">{{ t('admin.sso.result.' + sso) }}</div>
+    {% endif %}
+
+    <div class="admin-split-grid">
+        <section class="panel" aria-labelledby="acct-details">
+            <h2 class="panel-header" id="acct-details">{{ t('account.details.header') }}</h2>
+            <dl class="acct-facts">
+                <dt>{{ t('account.details.username') }}</dt>
+                <dd>{{ user.username }}</dd>
+                <dt>{{ t('account.details.role') }}</dt>
+                <dd><span class="badge badge-{{ user.role.value }}">{{ t('role.label.' + user.role.value) }}</span></dd>
+                {% if org_name %}
+                <dt>{{ t('account.details.organisation') }}</dt>
+                <dd>{{ org_name }}</dd>
+                {% endif %}
+                <dt>{{ t('account.method.password') }}</dt>
+                <dd>{{ t('account.method.set') if user.password_hash else t('account.method.not_set') }}</dd>
+                {% if user.ldap_username %}
+                <dt>{{ t('account.method.ldap') }}</dt>
+                <dd>{{ user.ldap_username }}</dd>
+                {% endif %}
+                {% if oidc_enabled() %}
+                <dt>{{ t('account.method.sso') }}</dt>
+                <dd>{{ t('account.method.linked') if user.oidc_sub else t('account.method.not_linked') }}</dd>
+                {% endif %}
+                <dt>{{ t('account.method.totp') }}</dt>
+                <dd>{{ t('account.method.always') }}</dd>
+            </dl>
+
+            {% if oidc_enabled() and not user.must_change_password %}
+            {# Self-service single sign-on link (POST /admin/oidc/link, /admin/oidc/unlink). #}
+            {% if user.oidc_sub %}
+            <form method="post" action="/admin/oidc/unlink" class="acct-sso-form" data-confirm="{{ t('admin.sso.unlink_confirm') }}">
+                <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                <button type="submit" class="btn btn-secondary">{{ t('admin.sso.unlink') }}</button>
+            </form>
+            {% else %}
+            <form method="post" action="/admin/oidc/link" class="acct-sso-form">
+                <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                <button type="submit" class="btn btn-secondary">{{ t('admin.sso.link') }}</button>
+            </form>
+            {% endif %}
+            {% endif %}
+        </section>
+
+        <section class="panel" aria-labelledby="acct-password">
+            <h2 class="panel-header" id="acct-password">{{ t('account.password.header') }}</h2>
+            {% if not user.password_hash %}
+            <p>{{ t('account.password.none_ldap') if user.ldap_username else t('account.password.none_sso') }}</p>
+            {% elif demo_locked %}
+            <div class="alert alert-info" role="note">{{ t('account.password.demo') }}</div>
+            {% else %}
+            {% if error %}<div class="alert alert-error" role="alert">{{ t(error) }}</div>{% endif %}
+            <form method="post" action="/admin/account/password" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                <div class="form-group">
+                    <label class="form-label" for="current_password">{{ t('account.password.current') }}</label>
+                    <input type="password" class="form-control" id="current_password" name="current_password"
+                        autocomplete="current-password" required{{ field.attrs('current_password') }}>
+                    {{ field.error('current_password') }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="new_password">{{ t('account.password.new') }}</label>
+                    <input type="password" class="form-control" id="new_password" name="new_password"
+                        autocomplete="new-password" minlength="12" required{{ field.attrs('new_password', 'new-password-hint') }}>
+                    {{ field.error('new_password') }}
+                    <div class="form-hint" id="new-password-hint">{{ t('account.password.hint') }}</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="confirm_password">{{ t('account.password.confirm') }}</label>
+                    <input type="password" class="form-control" id="confirm_password" name="confirm_password"
+                        autocomplete="new-password" required{{ field.attrs('confirm_password') }}>
+                    {{ field.error('confirm_password') }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="totp_code">{{ t('mfa.code.label') }}</label>
+                    <input type="text" class="form-control mono" id="totp_code" name="totp_code"
+                        inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code"
+                        required{{ field.attrs('totp_code', 'totp-hint') }}>
+                    {{ field.error('totp_code') }}
+                    <div class="form-hint" id="totp-hint">{{ t('account.password.totp_hint') }}</div>
+                </div>
+                <button type="submit" class="btn btn-primary">{{ t('account.password.submit') }}</button>
+            </form>
+            {% endif %}
+        </section>
+    </div>
+</div>
+{% endblock %}

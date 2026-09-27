@@ -1051,7 +1051,9 @@ def test_every_docs_font_face_url_resolves_to_a_real_file() -> None:
                 src = m.group(1)
                 if src.startswith(("http://", "https://", "data:")):
                     continue
-                resolved = (page.parent / src).resolve()
+                # 404.html is served at every missing path, so it links root-relative.
+                base = ROOT / "docs" if src.startswith("/") else page.parent
+                resolved = (base / src.lstrip("/")).resolve()
                 assert resolved.is_file(), f"{page.relative_to(ROOT)}: {src} does not exist"
                 checked += 1
     assert checked, "no @font-face url() found under docs/ -- test target moved?"
@@ -1426,8 +1428,7 @@ def test_blog_1_6_release_date_is_2026_09_26() -> None:
     assert "25. September 2026" not in text
     assert "2026-09-25" not in text
     assert "26. September 2026" in text
-    assert text.count('"2026-09-26"') >= 2  # datePublished and dateModified
-    assert 'content="2026-09-26"' in text  # article:published_time / modified_time
+    assert text.count('"2026-09-26"') >= 2  # datePublished, article:published_time
 
     sitemap = (ROOT / "docs/sitemap.xml").read_text()
     article_block = re.search(
@@ -1436,7 +1437,9 @@ def test_blog_1_6_release_date_is_2026_09_26() -> None:
         re.DOTALL,
     )
     assert article_block, "sitemap entry for the 2.0 blog article not found"
-    assert "<lastmod>2026-09-26</lastmod>" in article_block.group(0)
+    # lastmod comes from git: the release day, or a later edit (the 2.0.1 note).
+    lastmod = re.search(r"<lastmod>([0-9-]+)</lastmod>", article_block.group(0))
+    assert lastmod and lastmod.group(1) >= "2026-09-26", article_block.group(0)
 
 
 def test_review_label_stacks_over_its_value() -> None:
