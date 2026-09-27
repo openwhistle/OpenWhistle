@@ -6,9 +6,13 @@ name: Publish Docker Images
 # that every tag and every platform manifest behind it can be pulled.
 #
 #   push to main  -> :edge, :sha-<sha>
-#   tag vX.Y.Z    -> :X.Y.Z, :X.Y, :X, :latest, :sha-<sha>
+#   tag vX.Y.Z    -> :X.Y.Z, :sha-<sha>, plus :X.Y, :X and :latest when it is
+#                    the highest stable tag in that line (never a pre-release)
 #
-# Re-publishing an old release: `gh workflow run docker-publish.yml --ref vX.Y.Z`.
+# Re-publishing a release: `gh workflow run docker-publish.yml --ref vX.Y.Z`
+# runs the workflow file as it was at that tag, old bugs included. To restore
+# a tag one registry lost, copy it from GHCR instead:
+#   docker buildx imagetools create -t quay.io/<ns>/openwhistle:X.Y.Z ghcr.io/openwhistle/openwhistle:X.Y.Z
 on:
   push:
     tags:
@@ -31,11 +35,37 @@ permissions:
   contents: read
 
 jobs:
+  # ── Nothing is published that has not passed the checks ─────────────────
+  # main's branch protection does not require the PR to be up to date, and a
+  # tag can name any commit: so the exact commit is tested here, and a tag
+  # must be on main.
+  ci:
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+  e2e:
+    uses: ./.github/workflows/e2e.yml
+  security:
+    uses: ./.github/workflows/security.yml
+  on-main:
+    name: Tagged commit is on main
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - name: Refuse a tag that main does not contain
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]] && ! git merge-base --is-ancestor "${GITHUB_SHA}" origin/main; then
+            echo "::error::${GITHUB_REF_NAME} is not on main; only reviewed commits are published"
+            exit 1
+          fi
+
   # ── Build each platform on a native runner, push by digest only ──────────
   # Emulating arm64 with QEMU inside one buildx run is several times slower;
   # arm64 runners are free for public repositories.
   build:
     name: Build ${{ matrix.platform }}
+    needs: [ci, e2e, security, on-main]
     strategy:
       fail-fast: true
       matrix:
@@ -126,6 +156,33 @@ jobs:
       - name: Install Cosign
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
 
+      # metadata-action moves `latest`, `X` and `X.Y` to whichever tag is being
+      # built, so re-publishing v1.3.1 would point `latest` back at it, and the
+      # forced `latest` also caught pre-releases (v2.1.0-rc1). A floating tag
+      # moves only when this ref is the highest stable tag in its line.
+      # tests/test_docker_publish.py runs this step.
+      - name: Floating tags this ref owns
+        id: line
+        run: |
+          set -euo pipefail
+          ref="${GITHUB_REF_NAME}"
+          stable=$(git ls-remote --tags --refs "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
+            | sed 's|.*refs/tags/||' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V)
+          owns() {
+            if [[ "$(grep -E "^v$1" <<< "${stable}" | tail -n1)" == "${ref}" ]]; then echo true; else echo false; fi
+          }
+          if [[ "${ref}" =~ ^v([0-9]+)\.([0-9]+)\.[0-9]+$ ]]; then
+            major="${BASH_REMATCH[1]}"
+            minor="${BASH_REMATCH[2]}"
+            {
+              echo "latest=$(owns '')"
+              echo "major=$(owns "${major}\\.")"
+              echo "minor=$(owns "${major}\\.${minor}\\.")"
+            } >> "${GITHUB_OUTPUT}"
+          else
+            printf 'latest=false\nmajor=false\nminor=false\n' >> "${GITHUB_OUTPUT}"
+          fi
+
       - name: Tags for all registries
         id: meta
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
@@ -134,11 +191,12 @@ jobs:
             ${{ env.GHCR_IMAGE }}
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
             quay.io/${{ secrets.QUAY_NAMESPACE }}/${{ env.IMAGE_NAME }}
+          flavor: latest=false
           tags: |
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ steps.line.outputs.minor }}
+            type=semver,pattern={{major}},enable=${{ steps.line.outputs.major }}
+            type=raw,value=latest,enable=${{ steps.line.outputs.latest }}
             type=edge,branch=main
             type=sha,prefix=sha-
 
@@ -174,7 +232,7 @@ jobs:
           publish() {
             local registry="$1" tags first repo digest
             tags=$(jq -r --arg r "$registry" '.tags[] | select(startswith($r))' <<< "$DOCKER_METADATA_OUTPUT_JSON")
-            [[ -z "$tags" ]] && return 0
+            [[ -n "$tags" ]] || { echo "::error::no ${registry} tags in the metadata output"; return 1; }
             first=$(head -n1 <<< "$tags")
             repo="${first%:*}"
             # shellcheck disable=SC2046,SC2086
@@ -184,8 +242,12 @@ jobs:
 
             # A 200 on the index proves nothing: v1.3.0's tags answered 200
             # while every platform manifest behind them had been deleted.
+            # A failing command inside `for x in $(...)` does not trip set -e:
+            # capture first, so an uninspectable tag fails instead of "verified".
             for tag in $tags; do
-              for child in $(docker buildx imagetools inspect --raw "$tag" | jq -r '.manifests[].digest'); do
+              children=$(docker buildx imagetools inspect --raw "$tag" | jq -er '.manifests[].digest') \
+                || { echo "::error::${tag} is not pullable as a multi-arch index"; return 1; }
+              for child in $children; do
                 docker buildx imagetools inspect --raw "${repo}@${child}" > /dev/null \
                   || { echo "::error::${tag}: platform manifest ${child} is not pullable"; return 1; }
               done
@@ -194,7 +256,16 @@ jobs:
           }
 
           publish "ghcr.io"
-          if [[ -n "${DOCKERHUB_TOKEN:-}" ]]; then publish "docker.io"; fi
+          # A release that skips Docker Hub is a lost release; an edge build is not.
+          if [[ -n "${DOCKERHUB_TOKEN:-}" ]]; then
+            publish "docker.io"
+          elif [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "::error::DOCKERHUB_TOKEN is not set; a release must reach Docker Hub"; exit 1
+          else
+            echo "::warning title=Docker Hub skipped::DOCKERHUB_TOKEN is not set"
+          fi
           if [[ -n "${QUAY_TOKEN:-}" ]]; then
             publish "quay.io" || echo "::warning title=Quay.io not updated::GHCR and Docker Hub are published and verified; rerun this job once quay.io is reachable."
+          else
+            echo "::warning title=Quay.io skipped::QUAY_TOKEN is not set"
           fi

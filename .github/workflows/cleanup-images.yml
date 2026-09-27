@@ -1,8 +1,8 @@
 name: Cleanup Old Images
 
 # Runs weekly to prevent unbounded growth of sha- tagged images on Docker Hub
-# and Quay.io. Keeps the 10 most recent sha- tags; semver tags and `latest` are
-# never deleted.
+# and Quay.io. Keeps the 10 most recent sha- tags; semver tags, `latest` and the
+# manifests they point to are never deleted.
 on:
   schedule:
     - cron: '0 3 * * 0'  # Weekly, Sunday 03:00 UTC
@@ -71,6 +71,20 @@ jobs:
 
       - name: Delete old sha- tags from Quay.io
         if: env.QUAY_TOKEN != ''
+        env:
+          # skopeo deletes a manifest, not a tag: every tag on that digest dies
+          # with it. v1.3.1, v1.4.0 and v1.5.0 were lost on Quay this way,
+          # because each release's sha- tag and semver tags share one digest.
+          # So delete only digests that no kept tag points to. Input: every
+          # tag from the Quay API; output: one digest per line.
+          # tests/test_cleanup_images.py runs this filter.
+          QUAY_DOOMED_DIGESTS: |
+            sort_by(-.start_ts)
+            | ([.[] | select(.name | startswith("sha-"))] | .[$keep:]) as $old
+            | ($old | map(.name)) as $gone
+            | (map(select(.name as $n | $gone | index($n) | not)) | map(.manifest_digest)) as $kept
+            | $old | map(.manifest_digest) | unique
+            | map(select(. as $d | $kept | index($d) | not)) | .[]
         run: |
           set -euo pipefail
           KEEP=10
@@ -79,29 +93,27 @@ jobs:
           # Use skopeo (registry protocol) for deletion — works with robot credentials.
           QUAY_BASIC=$(echo -n "${QUAY_USERNAME}:${QUAY_TOKEN}" | base64 -w 0)
 
-          SHA_TAGS=()
+          TAGS='[]'
           PAGE=1
           while true; do
             RESP=$(curl -sf \
               "https://quay.io/api/v1/repository/${QUAY_NAMESPACE}/openwhistle/tag/?limit=100&page=${PAGE}&onlyActiveTags=true" \
               -H "Authorization: Basic ${QUAY_BASIC}")
-            mapfile -t PAGE_TAGS < <(echo "${RESP}" | jq -r '.tags[].name | select(startswith("sha-"))')
-            SHA_TAGS+=("${PAGE_TAGS[@]}")
-            [[ $(echo "${RESP}" | jq -r '.has_additional') != "true" ]] && break
+            TAGS=$(jq -c --argjson acc "${TAGS}" '$acc + .tags' <<< "${RESP}")
+            [[ $(jq -r '.has_additional' <<< "${RESP}") != "true" ]] && break
             PAGE=$((PAGE + 1))
           done
 
+          DOOMED=$(jq -r --argjson keep "${KEEP}" "${QUAY_DOOMED_DIGESTS}" <<< "${TAGS}")
           DELETED=0
-          for i in "${!SHA_TAGS[@]}"; do
-            [[ $i -lt $KEEP ]] && continue
-            tag="${SHA_TAGS[$i]}"
+          for digest in ${DOOMED}; do
             if skopeo delete \
               --creds "${QUAY_USERNAME}:${QUAY_TOKEN}" \
-              "docker://quay.io/${QUAY_NAMESPACE}/openwhistle:${tag}"; then
-              echo "Deleted Quay.io: ${tag}"
+              "docker://quay.io/${QUAY_NAMESPACE}/openwhistle@${digest}"; then
+              echo "Deleted Quay.io: ${digest}"
               DELETED=$((DELETED + 1))
             else
-              echo "Failed to delete Quay.io: ${tag}" >&2
+              echo "Failed to delete Quay.io: ${digest}" >&2
             fi
           done
-          echo "Quay.io: kept ${KEEP}, deleted ${DELETED} sha- tag(s)."
+          echo "Quay.io: kept ${KEEP} sha- tags and every digest a semver tag uses, deleted ${DELETED} manifest(s)."

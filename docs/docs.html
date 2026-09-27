@@ -1027,12 +1027,12 @@
           <tbody>
             <tr>
               <td><code>latest</code></td>
-              <td>Release tag pushed (<code>v*.*.*</code>)</td>
+              <td>The highest stable release tag is pushed; never a pre-release (<code>v2.1.0-rc1</code>)</td>
               <td>Production — always points to the current stable release</td>
             </tr>
             <tr>
               <td><code>1.2.3</code> / <code>1.2</code> / <code>1</code></td>
-              <td>Release tag pushed</td>
+              <td>Release tag pushed; <code>1.2</code> and <code>1</code> move only to the highest release in their line</td>
               <td>Pinning to a specific version or minor series</td>
             </tr>
             <tr>
@@ -1042,7 +1042,7 @@
             </tr>
             <tr>
               <td><code>sha-abc1234</code></td>
-              <td>Every push (tags and branches)</td>
+              <td>Every push to <code>main</code> and every release tag</td>
               <td>Reproducing an exact build — useful for debugging and rollback</td>
             </tr>
           </tbody>
@@ -1109,7 +1109,9 @@
 
 <span class="t-comment"># Minimum required values. The production Redis requires REDIS_PASSWORD,</span>
 <span class="t-comment"># so it goes into REDIS_URL too, as POSTGRES_PASSWORD goes into DATABASE_URL:</span>
-<span class="t-str">SECRET_KEY</span>=your-long-random-secret-key-here
+<span class="t-comment"># openssl rand -hex 32 — a new value for each key:</span>
+<span class="t-str">SECRET_KEY</span>=&lt;64 hex characters&gt;
+<span class="t-str">ENCRYPTION_KEY</span>=&lt;64 hex characters&gt;
 <span class="t-str">POSTGRES_PASSWORD</span>=db-password
 <span class="t-str">REDIS_PASSWORD</span>=redis-password
 <span class="t-str">DATABASE_URL</span>=postgresql+asyncpg://openwhistle:db-password@db:5432/openwhistle
@@ -1139,7 +1141,7 @@
           <ul>
             <li>Copy them, do not symlink: a link into <code>/etc/letsencrypt/live</code> dangles inside the container.</li>
             <li>Keep the key root-owned <code>0600</code>, or <code>0644</code>. Otherwise <code>tls-init</code> stops and names the path and the reason.</li>
-            <li>Without them, the one-shot <code>tls-init</code> service generates a self-signed certificate before nginx starts. It is for <code>TLS_HOSTNAME</code> (default <code>localhost</code>), a <code>.env</code> variable only <code>docker-compose.prod.yml</code> reads.</li>
+            <li>Without them, the one-shot <code>tls-init</code> service generates a self-signed certificate before nginx starts. It is for <code>TLS_HOSTNAME</code> (default <code>localhost</code>), a <code>.env</code> variable only <code>docker-compose.prod.yml</code> reads. After a change, <code>docker compose up -d tls-init nginx</code> issues and serves a new one.</li>
             <li>To renew, drop the new certificate into <code>nginx/certs/</code> and run <code>docker compose up -d tls-init nginx</code>. Restarting <code>nginx</code> alone keeps the old one: nginx never re-reads <code>nginx/certs/</code> itself.</li>
           </ul>
         </div>
@@ -1397,7 +1399,14 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
           (<code>charts/openwhistle/</code>) sets
           <code>nginx.ingress.kubernetes.io/enable-access-log: "false"</code> on its Ingress. It also
           sets the bundled nginx's rate limit: <code>limit-rps: "10"</code>,
-          <code>limit-burst-multiplier: "3"</code>, a burst of 30.
+          <code>limit-burst-multiplier: "3"</code>, a burst of 30. It raises
+          <code>proxy-body-size</code> to <code>55m</code>, like the bundled nginx; ingress-nginx
+          otherwise refuses any upload over 1 MB.
+        </p>
+        <p>
+          The chart bundles no PostgreSQL and no Redis: set <code>secrets.databaseUrl</code> and
+          <code>secrets.redisUrl</code> to your own. A <code>helm upgrade</code> that changes a value
+          restarts the pods; with <code>autoscaling.enabled</code> the HPA alone sets the replica count.
         </p>
         <ul>
           <li>Your own <code>ingress.annotations</code> are merged with it; do not set it to <code>null</code>.</li>

@@ -4,7 +4,7 @@
 # Usage:
 #   ansible-playbook -i inventory.ini deploy.yml
 #   ansible-playbook -i inventory.ini deploy.yml --tags deploy   # redeploy only
-#   ansible-playbook -i inventory.ini deploy.yml --tags certbot  # renew TLS cert
+#   ansible-playbook -i inventory.ini deploy.yml --tags certbot  # first TLS cert (renewal: certbot.timer)
 #
 # Secrets should be stored in an Ansible Vault file and loaded via
 #   ansible-playbook ... --vault-password-file .vault-pass

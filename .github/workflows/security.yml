@@ -6,6 +6,8 @@ on:
   schedule:
     - cron: "17 5 * * 1"  # Mondays: new CVEs appear without a code change
   workflow_dispatch:
+  # docker-publish.yml runs this on the exact commit it publishes.
+  workflow_call:
 
 permissions:
   contents: read

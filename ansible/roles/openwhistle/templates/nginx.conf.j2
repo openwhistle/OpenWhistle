@@ -71,10 +71,13 @@ http {
         # spoof onion-listener behaviour (non-Secure cookies, no HSTS) here.
         include /etc/nginx/snippets/proxy-headers.conf;
 
+        # Server level, so every location inherits it: /static/ (the shared
+        # snippet) was proxied to the app with no limit at all.
+        # Generous burst so the multi-step submission wizard and normal
+        # admin use are unaffected; blocks rapid automated floods.
+        limit_req zone=ow_req burst=30 nodelay;
+
         location / {
-            # Generous burst so the multi-step submission wizard and normal
-            # admin use are unaffected; blocks rapid automated floods.
-            limit_req zone=ow_req burst=30 nodelay;
             proxy_pass http://openwhistle;
             proxy_read_timeout 60s;
             proxy_connect_timeout 10s;
@@ -90,10 +93,13 @@ http {
 
         include /etc/nginx/snippets/proxy-headers.conf;
 
+        # Server level, so every location inherits it: /static/ (the shared
+        # snippet) was proxied to the app with no limit at all.
+        # Generous burst so the multi-step submission wizard and normal
+        # admin use are unaffected; blocks rapid automated floods.
+        limit_req zone=ow_req burst=30 nodelay;
+
         location / {
-            # Generous burst so the multi-step submission wizard and normal
-            # admin use are unaffected; blocks rapid automated floods.
-            limit_req zone=ow_req burst=30 nodelay;
             proxy_pass http://openwhistle;
             proxy_read_timeout 60s;
             proxy_connect_timeout 10s;

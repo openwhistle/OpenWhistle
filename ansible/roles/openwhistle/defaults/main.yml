@@ -16,6 +16,7 @@ openwhistle_certbot_staging: false         # set true to test without rate limit
 
 # ── Core application secrets (MUST be overridden in vault) ───────────────────
 openwhistle_secret_key: ""                 # random 64-char hex string
+openwhistle_encryption_key: ""             # recommended: openssl rand -hex 32; empty = secret_key
 openwhistle_db_user: openwhistle
 openwhistle_db_password: ""               # override in vault
 openwhistle_db_name: openwhistle
@@ -64,7 +65,7 @@ openwhistle_reminder_ack_warn_days: 2
 openwhistle_reminder_feedback_warn_days: 30
 
 # ── Branding (optional) ───────────────────────────────────────────────────────
-openwhistle_brand_primary_color: "#0f4c81"
+openwhistle_brand_primary_color: "#0c7253"
 openwhistle_brand_logo_url: ""
 
 # ── Email notifications (optional) ───────────────────────────────────────────
@@ -83,6 +84,11 @@ openwhistle_notify_webhook_enabled: "false"
 openwhistle_notify_webhook_url: ""
 openwhistle_notify_webhook_secret: ""
 openwhistle_notify_webhook_type: generic   # "generic", "slack", or "teams"
+
+# ── Any other app setting ────────────────────────────────────────────────────
+# Rendered verbatim into .env, e.g. { CLAMAV_HOST: clamav, SETUP_TOKEN: "..." }.
+# Only for keys env.j2 has no variable of its own for.
+openwhistle_env: {}
 
 # ── Docker Compose pull policy ────────────────────────────────────────────────
 openwhistle_compose_pull: true             # pull latest image on each deploy
