@@ -82,7 +82,7 @@
                     value="{{ username or '' }}"
                     minlength="3"
                     maxlength="64"
-                    pattern="[a-zA-Z0-9_\-]+"
+                    pattern="[A-Za-z0-9._@ \-]{3,64}"
                     required
                     autocomplete="username"{{ field.attrs('username', 'username-hint') }}>
                 {{ field.error('username') }}

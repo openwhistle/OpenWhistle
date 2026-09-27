@@ -1093,3 +1093,24 @@ async def test_unassigning_is_recorded_as_unassigning(
     assert [a for a in actions if a.startswith("report.") and "assign" in a] == [
         AuditAction.REPORT_ASSIGNED, AuditAction.REPORT_UNASSIGNED,
     ]
+
+
+@pytest.mark.parametrize("template", ["admin/users.html", "wizard/setup.html"])
+@pytest.mark.parametrize(
+    "name", ["jane.doe", "j@corp.example", "jane doe", "ab_c-1", "ab", "x" * 65, "jane!", "é-user"]
+)
+def test_the_username_field_accepts_what_the_server_accepts(template: str, name: str) -> None:
+    """The forms allowed letters, digits, _ and - only; the server and the
+    error message also . @ and spaces: 'jane.doe' was blocked in the browser."""
+    from app.services.users import validate_username
+
+    html = (ROOT / "app/templates" / template).read_text()
+    field = re.search(r'name="username"[^>]*?pattern="([^"]+)"', html, re.S)
+    assert field, template
+    pattern = field.group(1).replace("\\-", "-").replace("-]", "\\-]")
+    try:
+        validate_username(name)
+        server = True
+    except ValueError:
+        server = False
+    assert bool(re.fullmatch(pattern, name)) == server
