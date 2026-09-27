@@ -9,6 +9,7 @@ settings, so it needs no SECRET_KEY.
 from __future__ import annotations
 
 import datetime
+import os
 import sys
 from pathlib import Path
 
@@ -61,19 +62,37 @@ def _operator_pair(src: Path) -> tuple[bytes, bytes] | None:
         ) from exc
 
 
+def _write_key(path: Path, data: bytes) -> None:
+    """0600 from the first byte: write_bytes() then chmod() left the key at the
+    umask's 0644 until the chmod."""
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "wb") as f:
+        os.fchmod(f.fileno(), 0o600)  # an existing file keeps its old mode otherwise
+        f.write(data)
+
+
+def _stale_self_signed(cert_pem: bytes, hostname: str) -> bool:
+    """A kept certificate of our own that no longer names TLS_HOSTNAME."""
+    try:
+        cert = x509.load_pem_x509_certificate(cert_pem)
+        san = cert.extensions.get_extension_for_class(x509.SubjectAlternativeName).value
+    except (ValueError, x509.ExtensionNotFound):
+        return False  # not ours to judge: keep it
+    return cert.issuer == cert.subject and hostname not in san.get_values_for_type(x509.DNSName)
+
+
 def ensure(src: Path, dst: Path, hostname: str) -> str:
     dst.mkdir(parents=True, exist_ok=True)
     pair = _operator_pair(src)
     if pair:
         (dst / _CERT).write_bytes(pair[0])
-        (dst / _KEY).write_bytes(pair[1])
-        (dst / _KEY).chmod(0o600)
+        _write_key(dst / _KEY, pair[1])
         return "provided"
     if (dst / _CERT).is_file() and (dst / _KEY).is_file():
-        return "kept"
+        if not _stale_self_signed((dst / _CERT).read_bytes(), hostname):
+            return "kept"
     cert, key = _self_signed(hostname)
-    (dst / _KEY).write_bytes(key)
-    (dst / _KEY).chmod(0o600)
+    _write_key(dst / _KEY, key)
     (dst / _CERT).write_bytes(cert)
     return "self-signed"
 

@@ -31,6 +31,35 @@ def test_self_signed_certificate_is_created_once(tmp_path: Path) -> None:
     assert ensure(tmp_path / "none", tmp_path / "tls", "whistle.example.org") == "kept"
 
 
+def test_a_changed_tls_hostname_replaces_the_self_signed_certificate(tmp_path: Path) -> None:
+    ensure = _ensure()
+    ensure(tmp_path / "none", tmp_path / "tls", "old.example.org")
+    assert ensure(tmp_path / "none", tmp_path / "tls", "new.example.org") == "self-signed"
+    cert = x509.load_pem_x509_certificate((tmp_path / "tls/fullchain.pem").read_bytes())
+    san = cert.extensions.get_extension_for_class(x509.SubjectAlternativeName).value
+    assert "new.example.org" in san.get_values_for_type(x509.DNSName)
+
+
+@pytest.mark.parametrize("operator", [False, True])
+def test_the_key_is_never_written_readable_by_others(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, operator: bool,
+) -> None:
+    """Without the chmod that followed it, write_bytes() left the key 0644."""
+    src = tmp_path / "certs"
+    if operator:
+        src.mkdir()
+        (src / "fullchain.pem").write_text("CERT")
+        (src / "privkey.pem").write_text("KEY")
+    monkeypatch.setattr(Path, "chmod", lambda *a, **k: None)
+    old = os.umask(0o022)
+    try:
+        _ensure()(src, tmp_path / "tls", "x")
+    finally:
+        os.umask(old)
+    mode = stat.S_IMODE((tmp_path / "tls/privkey.pem").stat().st_mode)
+    assert mode == 0o600, oct(mode)
+
+
 def test_operator_certificate_wins(tmp_path: Path) -> None:
     ensure = _ensure()
     src = tmp_path / "certs"

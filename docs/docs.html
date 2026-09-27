@@ -1141,7 +1141,7 @@
           <ul>
             <li>Copy them, do not symlink: a link into <code>/etc/letsencrypt/live</code> dangles inside the container.</li>
             <li>Keep the key root-owned <code>0600</code>, or <code>0644</code>. Otherwise <code>tls-init</code> stops and names the path and the reason.</li>
-            <li>Without them, the one-shot <code>tls-init</code> service generates a self-signed certificate before nginx starts. It is for <code>TLS_HOSTNAME</code> (default <code>localhost</code>), a <code>.env</code> variable only <code>docker-compose.prod.yml</code> reads.</li>
+            <li>Without them, the one-shot <code>tls-init</code> service generates a self-signed certificate before nginx starts. It is for <code>TLS_HOSTNAME</code> (default <code>localhost</code>), a <code>.env</code> variable only <code>docker-compose.prod.yml</code> reads. After a change, <code>docker compose up -d tls-init nginx</code> issues and serves a new one.</li>
             <li>To renew, drop the new certificate into <code>nginx/certs/</code> and run <code>docker compose up -d tls-init nginx</code>. Restarting <code>nginx</code> alone keeps the old one: nginx never re-reads <code>nginx/certs/</code> itself.</li>
           </ul>
         </div>
