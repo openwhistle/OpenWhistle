@@ -1013,7 +1013,7 @@
           <div class="callout-title">Pinning in production</div>
           <p>
             <code>docker-compose.prod.yml</code> pins the image with <code>OPENWHISTLE_VERSION</code>
-            in <code>.env</code> (default <code>2.0.0</code>). The <code>sha-</code> tags suit
+            in <code>.env</code> (default <code>2.0.1</code>). The <code>sha-</code> tags suit
             immutable infrastructure pipelines.
           </p>
         </div>
@@ -1067,10 +1067,13 @@
 <span class="t-comment"># The production stack (TLS, nginx); every docker compose command below uses it:</span>
 <span class="t-str">COMPOSE_FILE</span>=docker-compose.prod.yml
 
-<span class="t-comment"># Minimum required values:</span>
+<span class="t-comment"># Minimum required values. The production Redis requires REDIS_PASSWORD,</span>
+<span class="t-comment"># so it goes into REDIS_URL too, as POSTGRES_PASSWORD goes into DATABASE_URL:</span>
 <span class="t-str">SECRET_KEY</span>=your-long-random-secret-key-here
-<span class="t-str">DATABASE_URL</span>=postgresql+asyncpg://openwhistle:password@db:5432/openwhistle
-<span class="t-str">REDIS_URL</span>=redis://redis:6379/0</code></pre>
+<span class="t-str">POSTGRES_PASSWORD</span>=db-password
+<span class="t-str">REDIS_PASSWORD</span>=redis-password
+<span class="t-str">DATABASE_URL</span>=postgresql+asyncpg://openwhistle:db-password@db:5432/openwhistle
+<span class="t-str">REDIS_URL</span>=redis://:redis-password@redis:6379/0</code></pre>
         </div>
 
         <h3>Step 3 — Start services</h3>
@@ -1434,7 +1437,7 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
             <tr>
               <td><code class="env-key">REDIS_URL</code></td>
               <td><span class="env-required env-req-yes">Required</span></td>
-              <td>Redis connection string. Format: <code>redis://host:port/db</code></td>
+              <td>Redis connection string. Format: <code>redis://host:port/db</code>, with a password <code>redis://:password@host:port/db</code></td>
               <td>—</td>
             </tr>
             <tr>
@@ -1807,8 +1810,8 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
         <h3 id="retention">Data Retention (GDPR / HinSchG)</h3>
         <p>
           Closed reports are deleted automatically after a retention period. This satisfies GDPR
-          Art. 5(1)(e) (storage limitation) and HinSchG §11 Abs. 5 (3-year minimum documentation
-          requirement).
+          Art. 5(1)(e) (storage limitation) and HinSchG §11 Abs. 5 (documentation is deleted three
+          years after the procedure ends).
         </p>
         <ul>
           <li>Each deletion writes an immutable audit entry (<code>report.auto_deleted</code>) with the case number and legal basis.</li>

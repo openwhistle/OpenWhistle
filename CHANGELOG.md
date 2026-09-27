@@ -34,6 +34,14 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   average under 18) and corrected where it contradicted the code: OIDC logins also need TOTP, a
   correct PIN always opens its report, the app sets the security headers, case numbers are random.
 - **`CONTRIBUTING.md`** carries the documentation rules; guard tests hold them.
+- **The installation example now puts the Redis password into `REDIS_URL`.** The production Redis
+  runs with `--requirepass "${REDIS_PASSWORD}"`, so the documented `redis://redis:6379/0` could not
+  connect. `.env.example` and the docs now name `OPENWHISTLE_VERSION` 2.0.1, and the retention
+  section says what HinSchG §11 Abs. 5 says: deletion three years after the procedure ends, not a
+  three-year minimum.
+- **The German website is corrected to the code and the statute** (HinSchG text of 2026-09-27): the
+  landing page, the blog articles and a new article on what a free whistleblowing system costs.
+  The comparison with other systems states only vendor-published facts, each sourced and dated.
 
 ### Fixed
 
