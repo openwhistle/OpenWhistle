@@ -64,7 +64,7 @@ openwhistle_reminder_ack_warn_days: 2
 openwhistle_reminder_feedback_warn_days: 30
 
 # ── Branding (optional) ───────────────────────────────────────────────────────
-openwhistle_brand_primary_color: "#0f4c81"
+openwhistle_brand_primary_color: "#0c7253"
 openwhistle_brand_logo_url: ""
 
 # ── Email notifications (optional) ───────────────────────────────────────────

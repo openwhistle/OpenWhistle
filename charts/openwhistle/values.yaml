@@ -92,7 +92,7 @@ config:
   adminFailedLoginAlertWindowMinutes: "15"
 
   # Branding
-  brandPrimaryColor: "#0f4c81"
+  brandPrimaryColor: "#0c7253"
   brandLogoUrl: ""
 
   # SLA reminders
