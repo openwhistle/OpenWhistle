@@ -1128,3 +1128,49 @@ def test_no_published_page_calls_fernet_aes_256() -> None:
         if p.name != "changelog.html" and re.search(r"AES-?256", p.read_text())
     ]
     assert not offenders
+
+
+def test_every_deadline_state_is_reached() -> None:
+    from datetime import UTC, datetime, timedelta
+
+    from app.services import deadlines
+
+    submitted = datetime(2027, 3, 1, tzinfo=UTC)
+    later = submitted + timedelta(days=30)
+    assert deadlines.ack_status(submitted, submitted + timedelta(days=2), later).state == "done"
+    due = deadlines.feedback_due(submitted)
+    assert deadlines.feedback_status(due, True, due + timedelta(days=1)).state == "done"
+    assert deadlines.feedback_status(None, False, later) is None
+    late = submitted + timedelta(days=7, seconds=1)
+    assert deadlines.ack_status(submitted, None, late).state == "overdue"
+    assert deadlines.feedback_status(due, False, due + timedelta(seconds=1)).state == "overdue"
+    assert deadlines.feedback_status(due, False, due - timedelta(hours=12)).state == "warning"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("org_id", ["not-a-uuid", "missing", "inactive"])
+async def test_a_superadmin_cannot_place_an_account_in_an_unknown_organisation(
+    acting_as, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch, org_id: str
+) -> None:
+    import uuid
+
+    from app.config import settings
+    from app.models.organisation import Organisation
+    from app.models.user import AdminRole
+
+    client, act = acting_as
+    monkeypatch.setattr(settings, "multi_tenancy_enabled", True)
+    if org_id == "missing":
+        org_id = str(uuid.uuid4())
+    elif org_id == "inactive":
+        org = Organisation(id=uuid.uuid4(), name="Closed", slug=f"x-{uuid.uuid4().hex[:6]}",
+                           is_active=False)
+        db_session.add(org)
+        await db_session.commit()
+        org_id = str(org.id)
+    act(await _totp_user(db_session, AdminRole.superadmin))
+    resp = await client.post("/admin/users", data={
+        "username": f"u-{uuid.uuid4().hex[:6]}", "password": "A-Long-Enough-Password-1",
+        "org_id": org_id,
+    }, follow_redirects=False)
+    assert resp.status_code == 422

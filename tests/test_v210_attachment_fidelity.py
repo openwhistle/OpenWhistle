@@ -238,3 +238,32 @@ async def test_a_file_that_grows_past_the_limit_when_cleaned_is_refused(
     )
     assert files == []
     assert error and error.key == "upload.error.too_large"  # type: ignore[union-attr]
+
+
+def test_an_image_format_that_is_not_allowed_is_refused() -> None:
+    buf = io.BytesIO()
+    Image.new("RGB", (4, 4), (1, 2, 3)).save(buf, format="BMP")
+    with pytest.raises(MetadataError):
+        attachment._strip_image(buf.getvalue())
+
+
+def _jpeg(quality: int = 90) -> bytes:
+    buf = io.BytesIO()
+    Image.new("RGB", (8, 8), (200, 10, 30)).save(buf, format="JPEG", quality=quality)
+    return buf.getvalue()
+
+
+def test_a_jpeg_cut_off_inside_its_image_data_keeps_what_it_has() -> None:
+    """No end-of-image marker: the scan runs to the end of the data, and
+    nothing is appended or invented."""
+    data = _jpeg()
+    cut = data[: data.rindex(b"\xff\xd9") - 4]
+    out = attachment._strip_jpeg_segments(cut)
+    assert out.startswith(b"\xff\xd8") and not out.endswith(b"\xff\xd9")
+    assert out.endswith(cut[-64:])  # the image data kept to its last byte
+
+
+def test_fill_bytes_between_jpeg_segments_are_skipped() -> None:
+    data = _jpeg()
+    padded = data[:2] + b"\xff\xff" + data[2:]  # fill bytes before the first marker
+    assert attachment._strip_jpeg_segments(padded) == attachment._strip_jpeg_segments(data)
