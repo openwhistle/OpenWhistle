@@ -52,9 +52,10 @@ async def admin_root(request: Request) -> RedirectResponse:
 # Second barrier for LOCAL_REVIEW_LOGIN, beyond the config flag: the button
 # and the route both disappear unless the request looks like it came straight
 # from a browser on the local machine. A client-*address* check does not work
-# here — uvicorn runs without --proxy-headers (see Dockerfile), so a browser
-# on the operator's own machine, reaching the container through podman/
-# docker's NAT, shows up as the container's gateway IP, never as 127.0.0.1.
+# here — uvicorn takes X-Forwarded-For only from 127.0.0.1 (its default
+# forwarded_allow_ips), so a browser on the operator's own machine, reaching
+# the container through podman/docker's NAT, shows up as the container's
+# gateway IP, never as 127.0.0.1.
 # Instead, reject the request if either:
 #   - it carries a header only a reverse proxy adds (nginx and every ingress
 #     controller always set X-Forwarded-Proto in front of this app; a client
