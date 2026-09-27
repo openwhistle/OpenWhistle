@@ -36,7 +36,9 @@ async def get_current_admin(
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-    if not user.is_active:
+    # A reset authenticator (totp_enabled off) ends every session at once,
+    # in the same commit as the reset; the Redis sweep afterwards removes them.
+    if not user.is_active or not user.totp_enabled:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
     request.state.session_expires_at = int(claims["exp"])

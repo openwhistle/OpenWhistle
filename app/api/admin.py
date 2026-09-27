@@ -961,6 +961,13 @@ async def users_page(
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(require_admin),
 ) -> HTMLResponse:
+    return await _users_page(request, db, current_user)
+
+
+async def _users_page(
+    request: Request, db: AsyncSession, current_user: AdminUser,
+    extra: dict[str, Any] | None = None,
+) -> HTMLResponse:
     from app.services.users import get_all_users
     scope = _org_scope(current_user)
     users = [
@@ -971,6 +978,7 @@ async def users_page(
         "user": current_user,
         "users": users,
         "roles": list(AdminRole),
+        **(extra or {}),
     })
 
 
@@ -1151,6 +1159,69 @@ async def reactivate_user(
     )
     await db.commit()
     return RedirectResponse("/admin/users", status_code=302)
+
+
+@router.post("/users/{user_id}/reset-totp", response_class=HTMLResponse)
+async def reset_user_totp(
+    request: Request,
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis),
+    current_user: AdminUser = Depends(require_superadmin),
+    _csrf: None = Depends(validate_csrf),
+) -> HTMLResponse:
+    """A lost authenticator: the account goes back to the state of a new one.
+
+    New TOTP secret, enrolment at the next login, and — for an account with a
+    local password — a new temporary password, shown once in this response
+    only. A reset often follows a suspected compromise, so the old password
+    must not be what reaches /admin/mfa/setup. LDAP/SSO accounts keep their
+    directory or provider as first factor.
+
+    Not for one's own account: it would end the caller's session. A
+    superadmin who lost their own authenticator uses the CLI on the host, or
+    another superadmin. The demo accounts are never reset, so the public
+    demo keeps its static code.
+    """
+    from app.services import auth as auth_service
+    from app.services.demo_seed import DEMO_USERNAMES
+    from app.services.users import (
+        get_user_by_id,
+        new_temporary_password,
+        require_new_authenticator,
+    )
+
+    target = await get_user_by_id(db, user_id)
+    if not target:
+        raise HTTPException(status_code=404)
+    _require_same_org(current_user, target.org_id)
+    if target.id == current_user.id:
+        raise HTTPException(
+            status_code=400, detail="You cannot reset your own authenticator here."
+        )
+    if settings.demo_mode and target.username in DEMO_USERNAMES:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The demo accounts keep their authenticator.",
+        )
+
+    require_new_authenticator(target)
+    temporary_password = None
+    if target.password_hash:
+        temporary_password = new_temporary_password()
+        target.password_hash = auth_service.hash_password(temporary_password)
+    # Only the fact, never the password.
+    await audit_service.log(
+        db, current_user, AuditAction.ADMIN_TOTP_RESET,
+        detail={"username": target.username, "password_reset": temporary_password is not None},
+        target_org=target.org_id,
+    )
+    await db.commit()
+    await auth_service.revoke_user_sessions(redis, str(target.id))
+    # Rendered, not redirected: the password must never travel in a URL.
+    return await _users_page(request, db, current_user, {"reset_result": {
+        "username": target.username, "password": temporary_password,
+    }})
 
 
 # ── Audit log ──────────────────────────────────────────────────────

@@ -3770,6 +3770,17 @@ a.attachment-name:hover {
   margin: 0;
   padding-top: var(--space-3);
 }
+.admin-nav-sso {
+  border-top: 1px solid var(--hairline);
+  padding-top: var(--space-3);
+}
+.admin-nav-sso + .admin-nav-logout {
+  border-top: 0;
+}
+.admin-nav-sso-status {
+  font-size: var(--text-hint);
+  margin: 0 0 var(--space-2);
+}
 .admin-main {
   min-width: 0;
 }

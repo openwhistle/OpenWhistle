@@ -14,6 +14,7 @@
     .usr-role-form { display:flex;gap:0.25rem; }
     .usr-role-select { font-size:0.78rem;padding:0.2rem 0.4rem;height:auto; }
     .usr-role-btn { font-size:0.75rem;padding:0.2rem 0.5rem; }
+    .usr-temp-password { font-size:1rem;user-select:all;overflow-wrap:anywhere; }
 </style>
 {% endblock %}
 
@@ -22,6 +23,18 @@
     <div class="page-header">
         <h1>{{ t('admin.users.title') }}</h1>
     </div>
+
+    {% if reset_result %}
+    <div class="alert alert-warning" role="status">
+        <strong>{{ t('admin.users.reset_done.title', username=reset_result.username) }}</strong>
+        {% if reset_result.password %}
+        <p>{{ t('admin.users.reset_done.password') }}</p>
+        <p><code class="usr-temp-password">{{ reset_result.password }}</code></p>
+        {% else %}
+        <p>{{ t('admin.users.reset_done.no_password') }}</p>
+        {% endif %}
+    </div>
+    {% endif %}
 
     <div class="admin-split-grid">
 
@@ -88,6 +101,9 @@
                                 {% else %}
                                 <span class="badge usr-status-badge">{{ t('admin.users.inactive') }}</span>
                                 {% endif %}
+                                {% if not u.totp_enabled %}
+                                <span class="badge usr-status-badge">{{ t('admin.users.totp_pending') }}</span>
+                                {% endif %}
                             </td>
                             <td role="cell" class="stack-action">
                                 <div class="usr-actions">
@@ -122,6 +138,15 @@
                                         <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.users.reactivate') }}</button>
                                     </form>
                                     {% endif %}
+                                    {% endif %}
+
+                                    {# Lost authenticator: superadmin only, never one's own account. #}
+                                    {% if user.role.value == 'superadmin' and u.id != user.id and u.totp_enabled %}
+                                    <form method="post" action="/admin/users/{{ u.id }}/reset-totp"
+                                          data-confirm="{{ t('admin.users.reset_totp_confirm', username=u.username) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                                        <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.users.reset_totp') }}</button>
+                                    </form>
                                     {% endif %}
                                 </div>
                             </td>

@@ -17,6 +17,24 @@
                 {% endfor %}
             </ul>
             {% endfor %}
+            {% if oidc_enabled() %}
+            {# Self-service single sign-on link for the signed-in account (POST /admin/oidc/link, /admin/oidc/unlink). #}
+            <div class="admin-nav-sso">
+                {% set sso = sso_result(request) %}
+                {% if sso %}<p class="admin-nav-sso-status" role="status">{{ t('admin.sso.result.' + sso) }}</p>{% endif %}
+                {% if user.oidc_sub %}
+                <form method="post" action="/admin/oidc/unlink" data-confirm="{{ t('admin.sso.unlink_confirm') }}">
+                    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                    <button type="submit" class="nav-link-button">{{ t('admin.sso.unlink') }}</button>
+                </form>
+                {% else %}
+                <form method="post" action="/admin/oidc/link">
+                    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                    <button type="submit" class="nav-link-button">{{ t('admin.sso.link') }}</button>
+                </form>
+                {% endif %}
+            </div>
+            {% endif %}
             <form method="post" action="/admin/logout" class="admin-nav-logout">
                 <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                 <button type="submit" class="nav-link-button">{{ t('admin.nav.logout') }}</button>

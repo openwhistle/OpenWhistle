@@ -17,6 +17,7 @@ from fastapi import (
 )
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from redis.asyncio import Redis
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_admin
@@ -555,6 +556,9 @@ async def oidc_callback(
     if not settings.oidc_enabled:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
+    if state and state.startswith(oidc_service.LINK_STATE_PREFIX):
+        return await _oidc_link_callback(request, code, state, error, redis, db)
+
     if error or not code or not state:
         return render(
             request,
@@ -613,3 +617,107 @@ async def oidc_callback(
         )
 
     return await _second_factor(request, redis, user)
+
+
+# ── OIDC account linking (self-service) ──────────────────────────────────────
+#
+# An admin already signed in with password (or LDAP) and TOTP links their own
+# account to their identity at the provider. The state is bound to that
+# session and to the "link" purpose (oidc_service.exchange_code checks both),
+# so a link can only ever land on the account whose session started it.
+# Linking adds a way to pass the first factor; TOTP stays mandatory
+# (_second_factor), and the password keeps working.
+
+def _sso_result(result: str) -> RedirectResponse:
+    """Back to the dashboard; the admin menu shows the result (oidc.SSO_RESULTS)."""
+    return RedirectResponse(f"/admin/dashboard?sso={result}", status_code=303)
+
+
+@router.post("/oidc/link", response_model=None)
+async def oidc_link(
+    redis: Redis = Depends(get_redis),
+    current_user: AdminUser = Depends(get_current_admin),
+    session_token: str = Cookie(alias="ow_session"),
+    _csrf: None = Depends(validate_csrf),
+) -> RedirectResponse:
+    if not settings.oidc_enabled:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    binding = oidc_service.session_binding(str(current_user.id), session_token)
+    url = await oidc_service.create_authorization_url(
+        redis, purpose=oidc_service.PURPOSE_LINK, binding=binding
+    )
+    return RedirectResponse(url, status_code=303)
+
+
+async def _oidc_link_callback(
+    request: Request,
+    code: str | None,
+    state: str,
+    error: str | None,
+    redis: Redis,
+    db: AsyncSession,
+) -> HTMLResponse | RedirectResponse:
+    session_token = request.cookies.get("ow_session")
+    try:
+        user = await get_current_admin(request, db, redis, session_token)
+    except HTTPException:
+        # No live session: this is never a login, and never links anything.
+        return render(request, "login.html", _login_ctx(request, {
+            "error": "login.error.sso_link_session",
+        }), status_code=401)
+    assert session_token is not None  # get_current_admin refuses a missing cookie
+
+    if error or not code:
+        return _sso_result("failed")
+    try:
+        claims = await oidc_service.exchange_code(
+            redis, code, state,
+            purpose=oidc_service.PURPOSE_LINK,
+            binding=oidc_service.session_binding(str(user.id), session_token),
+        )
+    except Exception:  # noqa: BLE001
+        return _sso_result("failed")
+    sub = claims.get("sub") if claims else None
+    issuer = claims.get("iss") if claims else None
+    if not sub or not issuer:
+        return _sso_result("failed")
+
+    # oidc_sub is unique on its own (not per issuer): an identity already on
+    # another account fails the constraint, and is never moved across.
+    user.oidc_sub = sub
+    user.oidc_issuer = issuer
+    try:
+        await audit_service.log(
+            db, user, audit_service.AuditAction.AUTH_SSO_LINKED, detail={"issuer": issuer}
+        )
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        return _sso_result("taken")
+    return _sso_result("linked")
+
+
+@router.post("/oidc/unlink", response_model=None)
+async def oidc_unlink(
+    db: AsyncSession = Depends(get_db),
+    current_user: AdminUser = Depends(get_current_admin),
+    _csrf: None = Depends(validate_csrf),
+) -> RedirectResponse:
+    if not settings.oidc_enabled:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    if not current_user.oidc_sub:
+        return _sso_result("unlinked")
+    # Without a password or a directory login, the link is the only way in.
+    if not current_user.password_hash and not current_user.ldap_username:
+        return _sso_result("only_way_in")
+
+    issuer = current_user.oidc_issuer
+    current_user.oidc_sub = None
+    current_user.oidc_issuer = None
+    await audit_service.log(
+        db, current_user, audit_service.AuditAction.AUTH_SSO_UNLINKED,
+        detail={"issuer": issuer},
+    )
+    await db.commit()
+    return _sso_result("unlinked")
