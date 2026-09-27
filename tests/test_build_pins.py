@@ -42,8 +42,9 @@ def test_postgres_and_redis_majors_are_the_same_everywhere() -> None:
 def test_nginx_is_one_digest_pinned_image_in_every_deployment_and_ci() -> None:
     """CI said it tested "the exact image docker-compose.prod.yml ships" while
     it pinned a digest and both compose files floated on nginx:alpine."""
-    found = _all(r"(?m)^(?:\s+image:)?\s+(nginx[:@][^\s\\]+)\s*\\?$", "docker-compose.prod.yml",
-                 ".github/workflows/*.yml", "ansible/roles/openwhistle/templates/docker-compose.yml.j2")
+    found = _all(r"(?m)^(?:\s+image:)?\s+(nginx[:@][^\s\\]+)\s*\\?$",
+                 "docker-compose.prod.yml", ".github/workflows/*.yml",
+                 "ansible/roles/openwhistle/templates/docker-compose.yml.j2")
     assert len(found) == 1, f"nginx images disagree: {found}"
     assert re.fullmatch(r"nginx:[\w.\-]+@sha256:[0-9a-f]{64}", found.pop())
 

@@ -27,7 +27,7 @@ def _doomed(tags: list[dict], keep: int) -> list[str]:
     jq = shutil.which("jq")
     if jq is None:
         pytest.fail("jq is required: the workflow runs this filter with it")
-    out = subprocess.run(
+    out = subprocess.run(  # noqa: S603
         [jq, "-r", "--argjson", "keep", str(keep), _quay_step()["env"]["QUAY_DOOMED_DIGESTS"]],
         input=json.dumps(tags), capture_output=True, text=True, check=True,
     )

@@ -53,8 +53,8 @@ def _run(tmp_path: Path, *, bad: str = "none", ref: str = "refs/heads/main",
         "GITHUB_REF": ref,
         "STUB_BAD": bad,
     }
-    return subprocess.run(
-        ["bash", "-c", _merge_step()["run"]], cwd=digests, env=env,
+    return subprocess.run(  # noqa: S603
+        ["bash", "-c", _merge_step()["run"]], cwd=digests, env=env,  # noqa: S607
         capture_output=True, text=True, check=False,
     )
 
@@ -84,7 +84,7 @@ def _floating(tmp_path: Path, ref: str) -> dict[str, str]:
     out = tmp_path / "out"
     env = {**os.environ, "PATH": f"{bin_dir}:{os.environ['PATH']}", "GITHUB_REF_NAME": ref,
            "GITHUB_OUTPUT": str(out), "GITHUB_SERVER_URL": "x", "GITHUB_REPOSITORY": "y"}
-    subprocess.run(["bash", "-c", step["run"]], env=env, check=True)
+    subprocess.run(["bash", "-c", step["run"]], env=env, check=True)  # noqa: S603, S607
     return dict(line.split("=") for line in out.read_text().split())
 
 
@@ -146,5 +146,5 @@ def test_a_tag_off_main_is_refused(tmp_path: Path, ref: str, on_main: bool, ok: 
     stub.chmod(stub.stat().st_mode | stat.S_IEXEC)
     env = {**os.environ, "PATH": f"{tmp_path}:{os.environ['PATH']}", "GITHUB_REF": ref,
            "GITHUB_REF_NAME": ref.rsplit("/", 1)[-1], "GITHUB_SHA": "abc"}
-    result = subprocess.run(["bash", "-c", step["run"]], env=env, check=False)
+    result = subprocess.run(["bash", "-c", step["run"]], env=env, check=False)  # noqa: S603, S607
     assert (result.returncode == 0) is ok

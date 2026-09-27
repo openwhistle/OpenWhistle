@@ -40,10 +40,9 @@ def test_every_setting_can_be_set_through_the_role() -> None:
     rendered = _render(openwhistle_env={"CLAMAV_HOST": "clamav"})
     assert "\nCLAMAV_HOST='clamav'\n" in rendered
     keys = set(re.findall(r"^#? ?([A-Z0-9_]+)=", text, re.M))
-    missing = [n.upper() for n in Settings.model_fields
-               if n.upper() not in keys and n.upper() != "APP_VERSION"]
+    missing = [n.upper() for n in Settings.model_fields if n.upper() not in keys]
     assert not missing, missing
-    assert "APP_VERSION" not in text, "set by the image; a pinned comment goes stale"
+    assert re.search(r"^# APP_VERSION=\s", text, re.M), "set by the image; a version here goes stale"
 
 
 @pytest.mark.skipif(shutil.which("docker") is None, reason="needs docker compose")
@@ -58,7 +57,7 @@ def test_compose_passes_every_value_through_unchanged(tmp_path: Path) -> None:
         '    command: ["${REDIS_PASSWORD}"]\n'
     )
     out = subprocess.run(
-        ["docker", "compose", "config", "--format", "json"], cwd=tmp_path,
+        ["docker", "compose", "config", "--format", "json"], cwd=tmp_path,  # noqa: S607
         capture_output=True, text=True, check=True,
     )
     # `config` re-escapes each literal $ as $$ in its output.

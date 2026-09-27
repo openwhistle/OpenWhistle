@@ -64,7 +64,7 @@ def test_the_hook_skips_a_unit_that_is_not_installed_yet(
     )
     stub.chmod(stub.stat().st_mode | stat.S_IEXEC)
     env = {**os.environ, "PATH": f"{tmp_path}:{os.environ['PATH']}"}
-    subprocess.run(["sh", "-c", script], env=env, check=True)
+    subprocess.run(["sh", "-c", script], env=env, check=True)  # noqa: S603, S607
     assert (log.read_text().strip() if log.exists() else "") == expected
 
 

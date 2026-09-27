@@ -34,7 +34,8 @@ def _chart() -> dict[str, str]:
     values = yaml.safe_load((ROOT / "charts/openwhistle/values.yaml").read_text())
     text = (ROOT / "charts/openwhistle/templates/configmap.yaml").read_text()
     out = {}
-    for key, path in re.findall(r"^\s+([A-Z0-9_]+): \{\{ \.Values\.([\w.]+) \| quote \}\}", text, re.M):
+    line = r"^\s+([A-Z0-9_]+): \{\{ \.Values\.([\w.]+) \| quote \}\}"
+    for key, path in re.findall(line, text, re.M):
         node = values
         for part in path.split("."):
             node = node[part]

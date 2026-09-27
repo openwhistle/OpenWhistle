@@ -40,10 +40,8 @@ def test_the_deployment_template_carries_both_guards() -> None:
     """The same checks as the helm-rendered tests below, for runners without helm."""
     deploy = (CHART / "templates/deployment.yaml").read_text()
     for name in ("configmap", "secret"):
-        assert re.search(
-            rf'checksum/\w+: \{{\{{ include \(print \$\.Template\.BasePath "/{name}\.yaml"\) \. \| sha256sum \}}\}}',
-            deploy,
-        ), name
+        include = rf'include \(print \$\.Template\.BasePath "/{name}\.yaml"\) \.'
+        assert re.search(rf"checksum/\w+: \{{\{{ {include} \| sha256sum \}}\}}", deploy), name
     assert re.search(r"if not \.Values\.autoscaling\.enabled \}\}\n.*\n\s*replicas:", deploy)
 
 
@@ -52,8 +50,8 @@ def _render(*sets: str) -> dict:
             "--set", "secrets.redisUrl=r"]
     for s in sets:
         args += ["--set", s]
-    out = subprocess.run(
-        ["helm", "template", "ow", str(CHART), "--show-only", "templates/deployment.yaml", *args],
+    out = subprocess.run(  # noqa: S603
+        ["helm", "template", "ow", str(CHART), "--show-only", "templates/deployment.yaml", *args],  # noqa: S607
         capture_output=True, text=True, check=True,
     )
     return yaml.safe_load(out.stdout)
