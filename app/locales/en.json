@@ -481,7 +481,7 @@
   "admin.telephone.checklist.1": "A dedicated telephone number is published internally and accessible to all employees.",
   "admin.telephone.checklist.2": "The channel is confidential — calls are handled by trained, impartial staff or an external ombudsman.",
   "admin.telephone.checklist.3": "The person answering keeps the whistleblower's identity confidential (§ 8 HinSchG).",
-  "admin.telephone.checklist.4": "A verbal report can be transcribed and submitted to OpenWhistle under a case number by staff — with the whistleblower’s consent (§17 Abs. 1 HinSchG).",
+  "admin.telephone.checklist.4": "Staff enter a telephone report into OpenWhistle under a case number: word for word only with the whistleblower’s consent, otherwise as a summary of its content (§ 11 Abs. 2 HinSchG).",
   "admin.telephone.checklist.5": "The whistleblower is informed about the channel via internal communications, intranet, and/or poster.",
   "admin.telephone.checklist.6": "Calls are recorded only with consent (§ 11 Abs. 2 HinSchG), and any recording is handled under the GDPR.",
   "admin.telephone.checklist.7": "The channel is operational during normal business hours (or 24/7 for critical industries).",

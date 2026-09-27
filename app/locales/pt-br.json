@@ -493,7 +493,7 @@
   "admin.telephone.checklist.1": "Um número de telefone dedicado é publicado internamente e acessível a todos os funcionários.",
   "admin.telephone.checklist.2": "O canal é confidencial — as chamadas são atendidas por pessoal treinado e imparcial ou por ombudsman externo.",
   "admin.telephone.checklist.3": "A pessoa que atende mantém a confidencialidade da identidade do denunciante (§ 8 HinSchG).",
-  "admin.telephone.checklist.4": "Uma denúncia verbal pode ser transcrita e enviada com o consentimento do denunciante (§17 Abs. 1 HinSchG).",
+  "admin.telephone.checklist.4": "A equipe registra uma denúncia telefônica no OpenWhistle com um número de caso: palavra por palavra somente com o consentimento do denunciante, caso contrário como um resumo do conteúdo (§ 11 Abs. 2 HinSchG).",
   "admin.telephone.checklist.5": "O denunciante é informado sobre o canal por comunicações internas, intranet e/ou cartazes.",
   "admin.telephone.checklist.6": "As chamadas só são gravadas com consentimento (§ 11 Abs. 2 HinSchG), e qualquer gravação é tratada conforme a LGPD/GDPR aplicável.",
   "admin.telephone.checklist.7": "O canal está operacional no horário comercial normal (ou 24/7 para setores críticos).",

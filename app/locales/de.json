@@ -481,7 +481,7 @@
   "admin.telephone.checklist.1": "Eine dedizierte Telefonnummer ist intern veröffentlicht und für alle Mitarbeitenden zugänglich.",
   "admin.telephone.checklist.2": "Der Kanal ist vertraulich — Anrufe werden von geschultem, unparteiischem Personal oder einem externen Ombudsmann entgegengenommen.",
   "admin.telephone.checklist.3": "Die annehmende Person wahrt die Vertraulichkeit der Identität der hinweisgebenden Person (§ 8 HinSchG).",
-  "admin.telephone.checklist.4": "Eine mündliche Meldung kann mit Einwilligung des Hinweisgebers von Personal transkribiert und unter einer Fallnummer in OpenWhistle eingegeben werden (§17 Abs. 1 HinSchG).",
+  "admin.telephone.checklist.4": "Das Personal erfasst eine telefonische Meldung unter einer Fallnummer in OpenWhistle: als Wortprotokoll nur mit Einwilligung der hinweisgebenden Person, sonst als Inhaltsprotokoll (§ 11 Abs. 2 HinSchG).",
   "admin.telephone.checklist.5": "Der Hinweisgeber wird über den Kanal durch interne Kommunikation, Intranet und/oder Aushang informiert.",
   "admin.telephone.checklist.6": "Gespräche werden nur mit Einwilligung aufgezeichnet (§ 11 Abs. 2 HinSchG), und jede Aufzeichnung wird DSGVO-konform behandelt.",
   "admin.telephone.checklist.7": "Der Kanal ist während der normalen Geschäftszeiten (oder 24/7 für kritische Branchen) betrieben.",

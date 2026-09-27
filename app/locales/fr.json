@@ -481,7 +481,7 @@
   "admin.telephone.checklist.1": "Un numéro dédié est publié en interne et accessible à tous les employés.",
   "admin.telephone.checklist.2": "Le canal est confidentiel — les appels sont gérés par du personnel formé ou un médiateur externe.",
   "admin.telephone.checklist.3": "La personne qui répond préserve la confidentialité de l’identité du lanceur d’alerte (§ 8 HinSchG).",
-  "admin.telephone.checklist.4": "Un signalement verbal peut être transcrit avec le consentement du lanceur d’alerte (§17 Abs. 1 HinSchG).",
+  "admin.telephone.checklist.4": "Le personnel saisit un signalement téléphonique dans OpenWhistle sous un numéro de dossier : mot pour mot uniquement avec le consentement du lanceur d’alerte, sinon sous forme de résumé (§ 11 al. 2 HinSchG).",
   "admin.telephone.checklist.5": "Le lanceur d’alerte est informé du canal via les communications internes.",
   "admin.telephone.checklist.6": "Les appels ne sont enregistrés qu’avec consentement (§ 11 al. 2 HinSchG), et tout enregistrement est traité conformément au RGPD.",
   "admin.telephone.checklist.7": "Le canal est opérationnel pendant les heures d’ouverture normales.",
