@@ -905,7 +905,12 @@
         </ul>
 
         <h3>Current version</h3>
-        <p><strong>v2.0.0</strong>. What it changed:</p>
+        <p><strong>v2.0.1</strong>. What it changed:</p>
+        <ul>
+          <li>The first account is a superadmin, so organisations can be managed.</li>
+          <li>Pages that fit the window no longer scroll past it.</li>
+        </ul>
+        <p>What v2.0.0 changed:</p>
         <ul>
           <li>The confidential identity is shown only to the handler, with an audited reason.</li>
           <li>The first-run setup needs a one-time token.</li>
@@ -1119,7 +1124,8 @@
         </div>
         <p>
           Then open <code>https://&lt;TLS_HOSTNAME&gt;/setup</code> (<code>https://localhost/setup</code>
-          by default) and follow the <a href="#first-run">First-Run Wizard</a>.
+          by default) and follow the <a href="#first-run">First-Run Wizard</a>. The account
+          it creates is a superadmin: it manages organisations and grants every role.
         </p>
 
         <div class="callout callout-note">
@@ -2200,7 +2206,7 @@ CLAMAV_HOST=clamav</code></pre>
 <table class="env-table">
           <thead><tr><th>Role</th><th>May</th></tr></thead>
           <tbody>
-            <tr><td><strong>Superadmin</strong></td><td>everything an admin may, plus organisations (<code>/admin/organisations</code>). Required for multi-tenant deployments; <code>org_id = NULL</code> (cross-organisation scope)</td></tr>
+            <tr><td><strong>Superadmin</strong></td><td>everything an admin may, plus organisations (<code>/admin/organisations</code>). Sees every organisation, whatever its own <code>org_id</code>. The setup wizard creates one.</td></tr>
             <tr><td><strong>Admin</strong></td><td>everything, including users, categories, locations, the audit log and report deletion</td></tr>
             <tr><td><strong>Case Manager</strong></td><td>view, comment on and advance the reports assigned to them. The sidebar shows dashboard, statistics and telephone channel; no users, no deletion</td></tr>
           </tbody>

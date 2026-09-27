@@ -23,6 +23,18 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `scripts/reset_admin_password.py --reset-totp <username>` prints a new secret and `otpauth://`
   URI once, for any account including the last superadmin. Both are audited (`admin.totp_reset`).
 
+### Documentation
+
+- **A changelog page on the website**, rendered from this file (`docs/changelog.html`, checked by
+  `tests/test_changelog_page.py`).
+- **Diagrams and screenshots in the documentation**, in the reader's theme: architecture,
+  submission flow, case lifecycle and login as Mermaid sources rendered to SVG, and the main pages
+  as screenshots re-taken by `scripts/take_screenshots.py`.
+- **The user documentation is rewritten to measured prose limits** (no sentence over 30 words,
+  average under 18) and corrected where it contradicted the code: OIDC logins also need TOTP, a
+  correct PIN always opens its report, the app sets the security headers, case numbers are random.
+- **`CONTRIBUTING.md`** carries the documentation rules; guard tests hold them.
+
 ### Fixed
 
 - **OIDC login could never succeed.** Nothing ever wrote an account's OIDC `sub` and issuer, so
@@ -32,6 +44,23 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **No session is accepted for an account whose authenticator awaits enrolment.** A reset takes
   effect in the same commit, before its sessions are swept from Redis.
 
+## [2.0.1] — 2026-09-27
+
+### Upgrade notes
+
+- **An installation without a superadmin gets one.** Migration 008 promotes the earliest active
+  admin, normally the account the setup wizard created, when no superadmin exists yet. An
+  installation that already has a superadmin is left alone. Check `/admin/users` after upgrading.
+
+### Fixed
+
+- **No installation had a superadmin, so organisations could not be managed.** The setup wizard
+  created the first account as a plain admin, and only a superadmin may grant superadmin:
+  `/admin/organisations` and multi-tenancy were unreachable on every installation. The wizard now
+  creates a superadmin, and migration 008 promotes the first account of an existing installation.
+- **The organisations list cut off its own actions.** Six columns, one a full reporting URL, in
+  two thirds of the page: the Deactivate button sat past a sideways scrollbar even at 1920 px.
+  The list now runs under the form, across the full width. Nobody could reach the page before.
 - **Pages that fit the window scrolled anyway, with the footer below the fold.** The submission
   wizard and the login and MFA screens sized themselves as the viewport minus a guessed nav and
   footer height (144 or 112 px, against a real 151 px, plus the 36 px demo banner). They now
@@ -1269,7 +1298,8 @@ Remaining lower-severity findings are tracked in GitHub issues #42–#46.
 - **Rate limiting by session token** (not IP) to maintain full anonymity
 - **alembic upgrade head** on every startup to guarantee migration consistency
 
-[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.0.1...HEAD
+[2.0.1]: https://github.com/openwhistle/OpenWhistle/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.5.0...v2.0.0
 [1.5.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.3.1...v1.4.0
