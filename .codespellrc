@@ -8,4 +8,6 @@ check-hidden = false
 # unter — German text in meta description, docs/index.html:9
 # oder — German text in meta content, docs/index.html:145
 # garantie — German test data in test fixture, tests/test_v150_ux.py:494
-ignore-words-list = covert,Tage,Titel,ist,unter,oder,garantie
+# Sie, Ende, German month names — German test sentences and quoted German texts,
+#   tests/test_docs_prose.py, CONTRIBUTING.md, docs-tech/seo-marketing.md
+ignore-words-list = covert,Tage,Titel,ist,unter,oder,garantie,Sie,Ende,Januar,Februar,Juni,Juli,Oktober,Dezember

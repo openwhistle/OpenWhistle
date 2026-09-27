@@ -12,15 +12,20 @@ ROOT = Path(__file__).parents[1]
 
 # Section -> number of Absätze; per Absatz, the number of Nr. where cited.
 SHAPE: dict[int, tuple[int, dict[int, int]]] = {
-    2: (3, {}),
+    2: (3, {1: 11}),
     3: (8, {}),
+    7: (3, {}),
     8: (2, {}),
     9: (4, {}),
     11: (5, {}),
     12: (4, {}),
+    13: (2, {}),
+    14: (2, {}),
     16: (3, {}),
     17: (2, {1: 6}),
     26: (3, {}),
+    40: (6, {2: 3}),
+    42: (2, {}),
 }
 
 _OTHER_LAW = re.compile(
