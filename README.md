@@ -121,7 +121,8 @@ zero vendor lock-in, and privacy-first by design.
 - **Encrypted second factor** — TOTP secrets are stored encrypted; a database dump alone yields
   no account's second factor.
 - **Hardened containers** — read-only root file system, no capabilities, `no-new-privileges`,
-  base images pinned by digest, no `curl` in the image; the Helm chart sets the same.
+  the image's base images and the bundled nginx and ClamAV pinned by digest (PostgreSQL and Redis
+  by tag), no `curl` in the image; the Helm chart sets the same.
 - **IP leakage detection** — The admin dashboard warns when upstream proxies forward IP headers.
 - **Hard deletion** — Reports can be permanently deleted including all messages, attachments, and
   Redis session data. DSGVO-compliant.

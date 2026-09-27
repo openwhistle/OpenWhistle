@@ -132,6 +132,13 @@
       "automerge": false
     },
     {
+      "description": "nginx is pinned by digest in docker-compose.prod.yml (docker-compose manager), the Ansible template and the CI docker run lines (regex manager). One pull request, or tests/test_build_pins.py fails on the half that moved.",
+      "groupName": "nginx",
+      "matchPackageNames": [
+        "nginx"
+      ]
+    },
+    {
       "groupName": "Redis",
       "matchPackageNames": [
         "redis"
@@ -191,13 +198,14 @@
     },
     {
       "customType": "regex",
-      "description": "Images in files no built-in manager reads: the compose files written inline inside workflow run: steps, and the Ansible compose template. A digest after the tag is updated with it; without currentDigest Renovate would move the tag and leave the old digest behind.",
+      "description": "Images in files no built-in manager reads: the compose files written inline inside workflow run: steps, the image argument of their docker run lines, and the Ansible compose template. A digest after the tag is updated with it; without currentDigest Renovate would move the tag and leave the old digest behind.",
       "managerFilePatterns": [
         "/^\\.github/workflows/[^/]+\\.yml$/",
         "/^ansible/roles/openwhistle/templates/docker-compose\\.yml\\.j2$/"
       ],
       "matchStrings": [
-        "image: (?<depName>postgres|redis|nginx|clamav/clamav):(?<currentValue>[0-9a-z.\\-]+)(?:@(?<currentDigest>sha256:[0-9a-f]{64}))?"
+        "image: (?<depName>postgres|redis|nginx|clamav/clamav):(?<currentValue>[0-9a-z.\\-]+)(?:@(?<currentDigest>sha256:[0-9a-f]{64}))?",
+        "\\n\\s+(?<depName>nginx|python):(?<currentValue>[0-9a-z.\\-]+)@(?<currentDigest>sha256:[0-9a-f]{64})"
       ],
       "datasourceTemplate": "docker"
     },
