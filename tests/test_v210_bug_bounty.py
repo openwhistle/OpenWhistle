@@ -202,3 +202,34 @@ async def test_the_wizard_refuses_a_secret_it_did_not_issue(
     }, follow_redirects=False)
     assert resp.status_code in (200, 422)  # "" is refused by FastAPI already
     assert await throwaway_db.scalar(select(func.count()).select_from(AdminUser)) == 0
+
+
+# ── CSRF ──────────────────────────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_a_non_ascii_csrf_token_is_a_403_not_a_500(client: AsyncClient) -> None:
+    client.cookies.set("ow_csrf", "abc")
+    resp = await client.post("/status/logout", data={"csrf_token": "é"})
+    assert resp.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_the_page_token_matches_the_cookie_the_server_checks() -> None:
+    """Two ow_csrf cookies (a sibling subdomain can set one): the token put
+    into the page came from the first, the check read the last — every form
+    was refused until the cookies were cleared by hand."""
+    from httpx import ASGITransport
+
+    from app.main import app
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="https://test") as c:
+        headers = {"cookie": "ow_csrf=first-value; ow_csrf=second-value"}
+        page = await c.get("/status", headers=headers)
+        token = re.search(r'name="csrf_token" value="([^"]+)"', page.text)
+        assert token
+        resp = await c.post(
+            "/status/logout", data={"csrf_token": token.group(1)}, headers=headers,
+            follow_redirects=False,
+        )
+    assert resp.status_code != 403
