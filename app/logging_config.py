@@ -47,9 +47,12 @@ def configure_logging(log_level: str = "INFO", log_format: str = "json") -> None
             "uvicorn.error": {
                 "handlers": ["console"], "level": log_level.upper(), "propagate": False
             },
-            "uvicorn.access": {
-                "handlers": ["console"], "level": log_level.upper(), "propagate": False
-            },
+            # No handler and no propagation: uvicorn writes a request line only
+            # when this logger ``hasHandlers()``. It used to get the console
+            # handler here, which re-enabled the access log that the image's
+            # ``--no-access-log`` had switched off, and put every path and
+            # query string (setup token, OIDC code, case pages) into stdout.
+            "uvicorn.access": {"handlers": [], "propagate": False},
         },
     }
     logging.config.dictConfig(config)
