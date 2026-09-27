@@ -4,94 +4,34 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
-  <title>OpenWhistle 2.0: sechs Funde aus dem Härtungs-Release</title>
-  <meta name="description" content="OpenWhistle 2.0 in sechs Funden: ein PDF, das fremde Schriften verschluckte, ein Header, dem zu sehr vertraut wurde, und ein Rollback mit Absturz.">
+  <title>Kostenloses Hinweisgebersystem: was „kostenlos“ wirklich kostet | OpenWhistle Blog</title>
+  <meta name="description" content="Kostenloses Hinweisgebersystem nach HinSchG: Was bei 0 € Lizenz an Server, Betrieb und Arbeit bleibt, welche Optionen es gibt, mit veröffentlichten Preisen, und wie Sie mit OpenWhistle starten.">
+  <meta name="keywords" content="kostenloses Hinweisgebersystem, Whistleblower Tool kostenlos, Hinweisgebersystem Open Source, interne Meldestelle Software, Hinweisgebersystem Kosten, HinSchG kostenlos">
   <meta name="robots" content="index, follow">
-  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#08080a" media="(prefers-color-scheme: dark)">
-  <link rel="canonical" href="https://openwhistle.net/blog/was-ist-neu-in-2-0.html">
+  <link rel="canonical" href="https://openwhistle.net/blog/kostenloses-hinweisgebersystem.html">
   <link rel="icon" type="image/svg+xml" href="../favicon.svg">
   <link rel="icon" type="image/x-icon" href="../favicon.ico">
-  <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
-  <link rel="preload" href="../fonts/sora-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="../fonts/sora-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
 
-  <!-- Open Graph / Twitter -->
+  <!-- Open Graph -->
   <meta property="og:type" content="article">
-  <meta property="og:site_name" content="OpenWhistle">
-  <meta property="og:url" content="https://openwhistle.net/blog/was-ist-neu-in-2-0.html">
-  <meta property="og:title" content="OpenWhistle 2.0: sechs Funde aus dem Härtungs-Release">
-  <meta property="og:description" content="OpenWhistle 2.0 in sechs Funden: ein PDF, das fremde Schriften verschluckte, ein Header, dem zu sehr vertraut wurde, und ein Rollback mit Absturz.">
+  <meta property="og:url" content="https://openwhistle.net/blog/kostenloses-hinweisgebersystem.html">
+  <meta property="og:title" content="Kostenloses Hinweisgebersystem: was „kostenlos“ wirklich kostet">
+  <meta property="og:description" content="Die Lizenz kostet 0 €, die Pflichten des HinSchG bleiben. Was an Server, Betrieb und Arbeit übrig bleibt, und die Optionen mit veröffentlichten Preisen.">
   <meta property="og:image" content="https://openwhistle.net/og-image.png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="OpenWhistle: sichere Hinweisgeber-Meldungen">
-  <meta property="og:locale" content="de_DE">
-  <meta property="article:published_time" content="2026-09-26">
-  <meta property="article:modified_time" content="2026-09-26">
-  <meta property="article:section" content="Release">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="OpenWhistle 2.0: sechs Funde aus dem Härtungs-Release">
-  <meta name="twitter:description" content="OpenWhistle 2.0 in sechs Funden: ein PDF, das fremde Schriften verschluckte, ein Header, dem zu sehr vertraut wurde, und ein Rollback mit Absturz.">
-  <meta name="twitter:image" content="https://openwhistle.net/og-image.png">
-  <meta name="twitter:image:alt" content="OpenWhistle: sichere Hinweisgeber-Meldungen">
+  <meta property="article:published_time" content="2026-09-27">
 
-  <!-- Structured data -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    "headline": "Was ist neu in OpenWhistle 2.0? Sechs Funde aus einem Härtungs-Release",
-    "description": "OpenWhistle 2.0 in sechs Funden: ein PDF, das fremde Schriften verschluckte, ein Header, dem zu sehr vertraut wurde, und ein Rollback mit Absturz.",
-    "url": "https://openwhistle.net/blog/was-ist-neu-in-2-0.html",
-    "mainEntityOfPage": {
-      "@type": "WebPage",
-      "@id": "https://openwhistle.net/blog/was-ist-neu-in-2-0.html"
-    },
-    "datePublished": "2026-09-26",
+    "@type": "Article",
+    "headline": "Kostenloses Hinweisgebersystem: was „kostenlos“ wirklich kostet",
+    "description": "Was bei 0 € Lizenz an Server, Betrieb und Arbeit bleibt, welche Optionen es gibt, mit veröffentlichten Preisen, und wie Sie mit OpenWhistle starten.",
+    "url": "https://openwhistle.net/blog/kostenloses-hinweisgebersystem.html",
+    "datePublished": "2026-09-27",
     "dateModified": "2026-09-27",
-    "author": {
-      "@type": "Organization",
-      "name": "OpenWhistle Contributors",
-      "url": "https://github.com/openwhistle"
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": "OpenWhistle",
-      "url": "https://openwhistle.net/",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://openwhistle.net/apple-touch-icon.png"
-      }
-    },
-    "image": "https://openwhistle.net/og-image.png",
+    "author": { "@type": "Organization", "name": "OpenWhistle Contributors" },
+    "publisher": { "@type": "Organization", "name": "OpenWhistle", "url": "https://openwhistle.net" },
     "inLanguage": "de"
-  }
-  </script>
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      {
-        "@type": "ListItem",
-        "position": 1,
-        "name": "OpenWhistle",
-        "item": "https://openwhistle.net/"
-      },
-      {
-        "@type": "ListItem",
-        "position": 2,
-        "name": "Blog",
-        "item": "https://openwhistle.net/blog/"
-      },
-      {
-        "@type": "ListItem",
-        "position": 3,
-        "name": "Was ist neu in OpenWhistle 2.0? Sechs Funde aus einem Härtungs-Release",
-        "item": "https://openwhistle.net/blog/was-ist-neu-in-2-0.html"
-      }
-    ]
   }
   </script>
 
@@ -275,24 +215,48 @@
 
     /* ── Article layout ──────────────────────────────────────────── */
     .article-wrap { max-width: 70ch; margin: 0 auto; padding: var(--space-24) var(--space-8) var(--space-16); }
+    /* The comparison table needs more room than the 70ch prose measure —
+       it gets its own wider breakout below via negative margins. */
 
     .article-header { margin-bottom: var(--space-12); padding-bottom: var(--space-8); border-bottom: 1px solid var(--border-subtle); }
     .article-tag { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: var(--space-4); }
-    .article-title { font-family: var(--font-display); font-size: clamp(1.8rem, 3.5vw, 2.8rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; color: var(--text-primary); margin-bottom: var(--space-4); }
+    .article-title { font-family: var(--font-display); font-size: clamp(1.8rem, 3.5vw, 2.6rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; color: var(--text-primary); margin-bottom: var(--space-4); }
     .article-subtitle { font-size: 1.1rem; font-weight: 300; color: var(--text-secondary); line-height: 1.6; margin-bottom: var(--space-6); }
     .article-meta { font-size: 0.8rem; color: var(--text-muted); display: flex; gap: var(--space-6); flex-wrap: wrap; }
 
     /* ── Article body ─────────────────────────────────────────────── */
-    .article-body h2 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text-primary); margin: var(--space-10) 0 var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-subtle); }
-    .article-body h3 { font-family: var(--font-display); font-size: 1.15rem; font-weight: 600; color: var(--text-primary); margin: var(--space-8) 0 var(--space-3); }
+    .article-body h2 { font-family: var(--font-display); font-size: 1.45rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text-primary); margin: var(--space-10) 0 var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-subtle); }
+    .article-body h3 { font-family: var(--font-display); font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin: var(--space-8) 0 var(--space-3); }
     .article-body p { margin-bottom: var(--space-5); color: var(--text-secondary); line-height: 1.75; }
     .article-body strong { color: var(--text-primary); font-weight: 600; }
     .article-body ul, .article-body ol { margin: var(--space-4) 0 var(--space-6) var(--space-6); }
     .article-body ul { list-style: disc; }
-    .article-body ol { list-style: decimal; }
     .article-body li { margin-bottom: var(--space-2); color: var(--text-secondary); }
 
-    code { font-family: var(--font-mono); font-size: 0.88em; background: var(--bg-surface); padding: 0.15em 0.4em; border-radius: 3px; color: var(--accent); border: 1px solid var(--border-subtle); }
+    /* Comparison table — breaks out wider than the 70ch prose column */
+    .comp-wrap { overflow-x: auto; margin: var(--space-8) 0; max-width: 100ch; width: calc(100vw - 2 * var(--space-8)); margin-left: calc(50% - 50vw + var(--space-8)); margin-right: calc(50% - 50vw + var(--space-8)); }
+    .comp-table { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 0.88rem; }
+    .comp-table thead th { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); padding: var(--space-3) var(--space-4); text-align: left; border-bottom: 2px solid var(--border-subtle); white-space: nowrap; }
+    .comp-table thead th.col-ow { color: var(--accent); background: var(--accent-fog); }
+    .comp-table tbody td { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); vertical-align: top; }
+    .comp-table tbody td.col-ow { background: var(--accent-fog); }
+    .comp-table tbody tr:last-child td { border-bottom: none; }
+    .val-good { color: var(--accent); font-weight: 600; }
+    .val-bad { color: var(--text-muted); }
+    .val-warn { color: var(--warning); }
+
+    .callout { padding: var(--space-5) var(--space-6); margin: var(--space-8) 0; border-left: 4px solid; border-radius: 0 4px 4px 0; }
+    .callout-info { background: var(--accent-fog); border-color: var(--accent); }
+    .callout-warn { background: var(--warning-fog); border-color: var(--warning); }
+    .callout-title { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: var(--space-2); }
+    .callout-warn .callout-title { color: var(--warning); }
+    .callout p { margin-bottom: 0; font-size: 0.92rem; }
+
+    .cost-card { background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: var(--space-6); margin: var(--space-6) 0; }
+    .cost-card-title { font-family: var(--font-display); font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-2); }
+    .cost-price { font-size: 1.6rem; font-weight: 700; color: var(--accent); font-family: var(--font-display); }
+    .cost-desc { font-size: 0.88rem; color: var(--text-muted); margin-top: var(--space-1); }
+    .cost-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-4); margin: var(--space-6) 0; }
 
     .article-cta { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-top: 4px solid var(--accent); padding: var(--space-8); margin: var(--space-10) 0; text-align: center; }
     .article-cta h3 { font-family: var(--font-display); font-size: 1.3rem; font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-3); }
@@ -304,6 +268,17 @@
       text-decoration: none; transition: background var(--duration-fast) ease;
     }
     .btn-cta:hover { background: var(--accent-strong); color: #fff; text-decoration: none; }
+
+    .cost-breakdown { background: var(--bg-surface); border: 1px solid var(--border-subtle); padding: var(--space-6); margin: var(--space-6) 0; }
+    .cost-breakdown ul { margin-left: var(--space-6); }
+
+    /* Themed figures, as in docs/docs.html: CSS picks the twin from data-theme. */
+    .diagram { margin: var(--space-8) 0; }
+    .diagram img { max-width: 100%; height: auto; margin: 0 auto; }
+    .diagram figcaption { font-size: 0.82rem; color: var(--text-muted); text-align: center; margin-top: var(--space-3); }
+    .diagram-dark { display: none; }
+    [data-theme="dark"] .diagram-light { display: none; }
+    [data-theme="dark"] .diagram-dark { display: block; }
 
     /* ── Footer ──────────────────────────────────────────────────── */
     .site-footer { background: var(--footer-bg); color: rgba(226, 220, 210, 0.7); padding: var(--space-16) var(--space-8) var(--space-8); }
@@ -332,6 +307,7 @@
 
     @media (max-width: 768px) {
       .article-wrap { padding: var(--space-12) var(--space-5) var(--space-10); }
+      .cost-grid { grid-template-columns: 1fr; }
       .footer-grid { grid-template-columns: 1fr; gap: var(--space-8); }
       .footer-bottom { flex-direction: column; align-items: flex-start; }
     }
@@ -389,51 +365,142 @@
     <div class="article-wrap">
       <article>
         <header class="article-header">
-          <p class="article-tag">Release · Sicherheit · v2.0</p>
-          <h1 class="article-title">Was ist neu in OpenWhistle 2.0? Sechs Funde aus einem Härtungs-Release</h1>
-          <p class="article-subtitle">Ein PDF, das die Worte des Hinweisgebers verschluckte. Ein Header, dem zu sehr vertraut wurde. Und ein Rollback, der halbe Sitzungen zum Absturz brachte — sechs Funde aus Release 2.0, erzählt so, wie sie gefunden wurden.</p>
+          <p class="article-tag">Kosten · Open Source · HinSchG</p>
+          <h1 class="article-title">Kostenloses Hinweisgebersystem: was „kostenlos“ wirklich kostet</h1>
+          <p class="article-subtitle">Ein Whistleblower-Tool kostenlos zu bekommen ist leicht. Die Pflichten des HinSchG bleiben trotzdem. Was an Server, Betrieb und Arbeit übrig bleibt, welche Optionen es gibt und wie Sie mit OpenWhistle anfangen.</p>
           <div class="article-meta">
-            <span>26. September 2026</span>
+            <span>27. September 2026</span>
             <span>6 Min. Lesezeit</span>
             <span>OpenWhistle Contributors</span>
           </div>
         </header>
 
         <div class="article-body">
+          <!-- Phone layout for the comparison tables. Kept in the body, not in
+               <head>: the head belongs to the SEO lane (plan 2026-09-27). -->
+          <style>
+            @media (max-width: 540px) {
+              .comp-wrap { width: auto; margin-left: 0; margin-right: 0; overflow-x: visible; }
+              .comp-table { min-width: 0; }
+              .comp-table thead { display: none; }
+              .comp-table tr { display: block; padding: var(--space-3) 0; border-bottom: 1px solid var(--border-subtle); }
+              .comp-table tbody td { display: block; border: none; padding: var(--space-1) var(--space-2); background: none; }
+              .comp-table tbody td:first-child { color: var(--text-primary); font-weight: 600; }
+              .comp-table tbody td[data-label]::before { content: attr(data-label) ": "; color: var(--text-muted); font-weight: 400; }
+            }
+          </style>
 
-          <p>Release 2.0 ist vor allem das Ergebnis eines Härtungs-Audits: sechs Stellen, an denen OpenWhistle mehr preisgab, als nötig war, oder nicht hielt, was es versprach. Alle Details im <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG</a>.</p>
+          <p>Ein <strong>kostenloses Hinweisgebersystem</strong> spart die Lizenz. Es spart nicht die interne Meldestelle. Beschäftigungsgeber mit in der Regel mindestens 50 Beschäftigten müssen sie einrichten und betreiben (§ 12 HinSchG). Das Gesetz fragt nicht, was die Software gekostet hat.</p>
 
-          <p style="border-left: 4px solid var(--accent); padding-left: var(--space-4);"><strong>Nachtrag vom 27. September 2026:</strong> Aktualisieren Sie auf <strong>2.0.1</strong>. Bis dahin legte der Einrichtungsassistent das erste Konto als einfachen Admin an. Superadmin kann aber nur ein Superadmin vergeben, also hatte keine Installation einen. Organisationen und Multi-Tenancy waren deshalb nicht erreichbar. Migration 008 befördert beim Update das erste Konto; prüfen Sie danach <code>/admin/users</code>. Details im <a href="../changelog.html">Änderungsprotokoll</a>.</p>
-
-          <h2>Das PDF, das die eigenen Worte verschluckte</h2>
-          <p>Ein Fallbericht auf Polnisch, Griechisch oder Kyrillisch ließ sich als PDF exportieren — nur stand der Text der meldenden Person danach nicht mehr darin. Jedes Zeichen außerhalb des lateinischen Alphabets und jedes typografische Anführungszeichen „wie dieses" wurde beim Export zu einem einzelnen <code>?</code>. Ursache: Die eingebaute PDF-Schriftart kennt nur Latin-1. Der Fix behebt die Ursache: eine echte Unicode-Schriftart (DejaVu LGC Sans, Latin/Griechisch/Kyrillisch) ist jetzt eingebettet. Chinesisch, Japanisch, Koreanisch und rechts-nach-links-Schriften bleiben eine offene Baustelle — mit einem sichtbaren Ersatzkästchen statt eines stillen „?".</p>
-
-          <h2>Die Identität kommt nur noch auf Anfrage ans Licht</h2>
-          <p>Bislang standen Name und Kontakt einer vertraulichen Meldung offen auf der Fallseite. Ab 2.0 bleiben beide verborgen, auf der Fallseite wie im PDF-Export, bis jemand auf <em>Identität anzeigen</em> klickt und einen protokollierten Grund von 10 bis 500 Zeichen angibt. Der Grund landet verschlüsselt im Audit-Log. Und weil bislang nicht einmal das bloße Öffnen eines Falls vermerkt wurde, schreibt jetzt jeder Aufruf einer Fallseite einen eigenen Log-Eintrag. Details im <a href="../docs.html#admin-guide">Admin-Handbuch</a>.</p>
-
-          <h2>Die Onion-Adresse vertraute dem falschen Header</h2>
-          <p>Wer OpenWhistle über einen Tor-Hidden-Service anbietet, tut das für Hinweisgeber in einem überwachten Netzwerk. Die erste Fassung entschied „bin ich der Onion-Dienst?" anhand des <code>Host</code>-Headers — den aber der Client mitschickt, nicht der Server. Eine gefälschte <code>Host: irgendwas.onion</code>-Anfrage hätte sich so als Tor-Besucher ausgegeben, mit Cookies ohne <code>Secure</code>-Flag und ganz ohne HSTS. Jetzt entscheidet nginx: Es setzt einen eigenen Header nur im Onion-Listener und löscht jeden Client-Wert überall sonst — ein CI-Job prüft das bei jedem Push gegen einen echten Container. Details in der Anleitung <a href="../docs.html#onion-address">Eine Onion-Adresse anbieten</a>.</p>
-
-          <h2>Webhooks verraten nur noch Zahlen</h2>
-          <p>Der Sammel-Webhook für neue Meldungen schickte bislang Fallnummern selbst mit, als Array in der Payload. Er sendet jetzt nur noch Zählwerte: wie viele Meldungen, wie viele Nachrichten, plus einen daraus gebauten Satz. Die Erinnerungs-Mail an die eigenen Admins nennt weiterhin die Fallnummer; nur der Weg nach außen wurde beschnitten. Siehe <a href="../docs.html#notifications">Benachrichtigungen</a>.</p>
-
-          <h2>Ein Kollisionsfall legte halbe Sitzungen lahm</h2>
-          <p>Fallnummern erhalten einen zufälligen fünfstelligen Zusatz, der gelegentlich kollidiert — dann versucht die Anwendung es erneut. Der Retry rief dafür ein volles <code>rollback()</code> der Datenbank-Sitzung auf, das jedes bereits geladene Objekt ungültig macht, nicht nur den fehlgeschlagenen Datensatz. Der nächste Lesezugriff auf ein solches Objekt stürzte dann mit <code>MissingGreenlet</code> ab — unberechenbar, weil er erst bei einer schon vollen Datenbank auftrat. Die Lösung: ein <em>SAVEPOINT</em> pro Versuch, das nur den kollidierenden Versuch zurückrollt.</p>
-
-          <h2>Der Zurück-Button, der nichts mehr vergisst</h2>
-          <p>Ein Dateiupload-Feld zeigt beim Zurücknavigieren immer einen leeren Zustand — klickte man im Melde-Assistenten auf <em>Zurück</em> und dann auf <em>Weiter</em>, löschte die Anwendung bereits hochgeladene Dateien. Jeder Schritt antwortet jetzt auf ein Absenden mit einer Weiterleitung, ein nicht passender Schritt wird ignoriert, und Anhänge bleiben erhalten, bis neue gewählt werden. Gemeldet und behoben von <strong>Zachary Bridges</strong> (<a href="https://github.com/openwhistle/OpenWhistle/issues/94" rel="noopener noreferrer" target="_blank">#94</a>) — vielen Dank dafür.</p>
-
-          <div class="article-cta">
-            <h3>Alle sechs Funde im Detail</h3>
-            <p>Der vollständige technische Verlauf steht im CHANGELOG; die Live-Demo zeigt Release 2.0 in Aktion.</p>
-            <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank" class="btn-cta">CHANGELOG lesen &rarr;</a>
+          <div class="callout callout-warn">
+            <p class="callout-title">Transparenzhinweis</p>
+            <p>Diesen Artikel schreiben die Entwickler von OpenWhistle. Preise anderer Anbieter stehen so da, wie die Anbieter sie veröffentlichen, abgerufen am 27. September 2026. Keine Rechtsberatung.</p>
           </div>
 
-          <p style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle); font-size: 0.82rem; color: var(--text-muted);">
+          <h2>Was bleibt, wenn die Lizenz 0 € kostet</h2>
+
+          <div class="comp-wrap">
+            <table class="comp-table" aria-label="Kostenposten einer internen Meldestelle">
+              <thead>
+                <tr>
+                  <th scope="col">Posten</th>
+                  <th scope="col">Bei Open Source selbst gehostet</th>
+                  <th scope="col">Grund</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Softwarelizenz</td><td class="val-good" data-label="Bei Open Source selbst gehostet">0 €</td><td data-label="Grund">GPL-3.0 oder AGPL-3.0</td></tr>
+                <tr><td>Server</td><td data-label="Bei Open Source selbst gehostet">ein kleiner VPS nach Tarif Ihres Hosters</td><td data-label="Grund">1 vCPU und 1 GB RAM reichen OpenWhistle meist</td></tr>
+                <tr><td>Betrieb</td><td data-label="Bei Open Source selbst gehostet">Updates, Backups, Zertifikat</td><td data-label="Grund">Sicherheitskorrekturen kommen als Patch-Versionen</td></tr>
+                <tr><td>Menschen</td><td data-label="Bei Open Source selbst gehostet">Arbeitszeit der Meldestelle, Schulung</td><td data-label="Grund">Unabhängigkeit und Fachkunde (§ 15)</td></tr>
+                <tr><td>Telefon</td><td data-label="Bei Open Source selbst gehostet">eine Nummer für die Meldestelle</td><td data-label="Grund">Mündliche Meldungen sind Pflicht (§ 16 Abs. 3)</td></tr>
+                <tr><td>Datenschutz</td><td data-label="Bei Open Source selbst gehostet">Vertrag mit dem Hoster, Verzeichnis</td><td data-label="Grund">Art. 28 und Art. 30 DSGVO</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>Die Software ist der kleinste Posten. Auch mit einem bezahlten Dienst bleiben die Menschen, das Telefon und die Folgemaßnahmen bei Ihnen.</p>
+
+          <h2>Was Sie selbst betreiben</h2>
+
+          <p>So sieht der Stack aus, den OpenWhistle mit Docker Compose startet. Pflicht sind App, PostgreSQL und Redis hinter nginx. ClamAV und S3 sind optional.</p>
+
+          <figure class="diagram">
+            <img class="diagram-light" src="../img/diagrams/architecture-light.svg" alt="Aufbau: Ein Browser erreicht nginx über TLS auf Port 443, Port 80 leitet um. Tor Browser erreicht den Onion-Zugang auf 8080, nur an 127.0.0.1 gebunden. Beide führen zur zustandslosen FastAPI-App. Sie braucht PostgreSQL und Redis, kann ClamAV und S3 nutzen und stellt zwei abschaltbare Anfragen nach außen: die GitHub-Update-Prüfung und die Installationszählung." width="774" height="761" loading="lazy">
+            <img class="diagram-dark" src="../img/diagrams/architecture-dark.svg" alt="Aufbau: Ein Browser erreicht nginx über TLS auf Port 443, Port 80 leitet um. Tor Browser erreicht den Onion-Zugang auf 8080, nur an 127.0.0.1 gebunden. Beide führen zur zustandslosen FastAPI-App. Sie braucht PostgreSQL und Redis, kann ClamAV und S3 nutzen und stellt zwei abschaltbare Anfragen nach außen: die GitHub-Update-Prüfung und die Installationszählung." width="774" height="761" loading="lazy">
+            <figcaption>Der OpenWhistle-Stack. Beide Anfragen nach außen sind aus, bis Sie sie einschalten.</figcaption>
+          </figure>
+
+          <h2>Die Optionen und ihre veröffentlichten Preise</h2>
+
+          <div class="comp-wrap">
+            <table class="comp-table" aria-label="Optionen für eine interne Meldestelle, Preise laut Anbieter am 27. September 2026">
+              <thead>
+                <tr>
+                  <th scope="col">Option</th>
+                  <th scope="col">Beispiel</th>
+                  <th scope="col">Preis laut Anbieter</th>
+                  <th scope="col">Betrieb durch</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Open Source, selbst gehostet</td><td data-label="Beispiel">OpenWhistle</td><td class="val-good" data-label="Preis laut Anbieter">0 € Lizenz</td><td data-label="Betrieb durch">Sie</td></tr>
+                <tr><td>Open Source, selbst gehostet</td><td data-label="Beispiel">GlobaLeaks</td><td class="val-good" data-label="Preis laut Anbieter">0 € Lizenz</td><td data-label="Betrieb durch">Sie</td></tr>
+                <tr><td>Open Source, verwaltet</td><td data-label="Beispiel"><a href="https://opensource-hinweisgeberportal.de/preise" rel="noopener noreferrer" target="_blank">Hinweisgeberportal OpenSource</a></td><td data-label="Preis laut Anbieter">ab 39 €/Monat bei jährlicher, 49 € bei monatlicher Zahlung, zzgl. MwSt.</td><td data-label="Betrieb durch">Anbieter</td></tr>
+                <tr><td>SaaS</td><td data-label="Beispiel"><a href="https://www.whistleport.de/preise/" rel="noopener noreferrer" target="_blank">WhistlePort</a></td><td data-label="Preis laut Anbieter">69 €/Monat zzgl. MwSt.</td><td data-label="Betrieb durch">Anbieter</td></tr>
+                <tr><td>SaaS</td><td data-label="Beispiel"><a href="https://www.hintbox.de/preise/" rel="noopener noreferrer" target="_blank">Hintbox</a></td><td data-label="Preis laut Anbieter">ab 99 €/Monat zzgl. USt.</td><td data-label="Betrieb durch">Anbieter</td></tr>
+                <tr><td>SaaS</td><td data-label="Beispiel"><a href="https://www.integrityline.com/de/produkt/pakete/" rel="noopener noreferrer" target="_blank">EQS Integrity Line</a></td><td data-label="Preis laut Anbieter">nicht angegeben</td><td data-label="Betrieb durch">Anbieter</td></tr>
+                <tr><td>Externe Ombudsperson</td><td data-label="Beispiel">WhistlePort Paket 3, mit Rechtsanwälten</td><td data-label="Preis laut Anbieter">69 € plus 79 €/Monat zzgl. MwSt.</td><td data-label="Betrieb durch">Anbieter</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>Einen dauerhaft kostenlosen Tarif fanden wir bei keinem dieser SaaS-Anbieter. Sie bieten eine kostenlose Testversion oder Demo an. Weitere Merkmale vergleicht der Artikel <a href="whistleblower-software-vergleich.html">Whistleblower-Software im Vergleich 2026</a>.</p>
+
+          <h2>Welche Option zu Ihnen passt</h2>
+
+          <div class="comp-wrap">
+            <table class="comp-table" aria-label="Entscheidungshilfe">
+              <thead>
+                <tr>
+                  <th scope="col">Wenn Sie</th>
+                  <th scope="col">Dann</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>eine IT-Abteilung oder einen IT-Dienstleister haben</td><td data-label="Dann">Open Source selbst hosten: OpenWhistle oder GlobaLeaks</td></tr>
+                <tr><td>Fristen nach § 17 HinSchG im Dashboard mitzählen wollen</td><td data-label="Dann">OpenWhistle</td></tr>
+                <tr><td>über 70 Sprachen oder ein seit 2011 erprobtes System brauchen</td><td data-label="Dann">GlobaLeaks</td></tr>
+                <tr><td>offenen Code wollen, aber keinen Server betreiben</td><td data-label="Dann">verwaltetes GlobaLeaks</td></tr>
+                <tr><td>niemanden für Betrieb und Updates haben</td><td data-label="Dann">SaaS</td></tr>
+                <tr><td>niemanden für die Bearbeitung der Meldungen haben</td><td data-label="Dann">externe Ombudsperson (§ 14 Abs. 1)</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2>So starten Sie mit OpenWhistle</h2>
+
+          <ol>
+            <li>Die <a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Live-Demo</a> ausprobieren, als Hinweisgeber und als Meldestelle.</li>
+            <li>Einen Linux-Server mit Docker 24 oder neuer bereitstellen.</li>
+            <li>Der <a href="../docs.html#installation">Installationsanleitung</a> folgen: klonen, <code>.env</code> ausfüllen, <code>docker compose up -d</code>.</li>
+            <li>Im Assistenten unter <code>/setup</code> das erste Konto mit Pflicht-TOTP anlegen.</li>
+            <li>Kategorien, Standorte und Konten einrichten, dann eine Testmeldung schicken.</li>
+          </ol>
+
+          <p>Jeden Schritt mit Befehlen zeigt die <a href="interne-meldestelle-einrichten.html">Schritt-für-Schritt-Anleitung</a>. Welche Pflichten danach bleiben, fasst der <a href="hinschg-compliance-leitfaden.html">HinSchG-Compliance-Leitfaden</a> zusammen.</p>
+
+          <div class="article-cta">
+            <h3>Kostenlos, Open Source, selbst gehostet</h3>
+            <p>OpenWhistle steht unter GPL-3.0. Es gibt keine bezahlte Ausgabe und kein Abonnement.</p>
+            <a href="https://demo.openwhistle.net" class="btn-cta" rel="noopener noreferrer" target="_blank">Live-Demo öffnen &rarr;</a>
+          </div>
+
+          <p style="margin-top: var(--space-10); font-size: 0.88rem; color: var(--text-muted);">
             <strong>Weitere Ressourcen:</strong>
-            <a href="../docs.html">Vollständige Dokumentation</a> ·
+            <a href="whistleblower-software-vergleich.html">Whistleblower-Software im Vergleich 2026</a> ·
             <a href="hinschg-compliance-leitfaden.html">HinSchG-Compliance-Leitfaden</a> ·
-            <a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank">GitHub Issues</a>
+            <a href="https://www.gesetze-im-internet.de/hinschg/" rel="noopener noreferrer" target="_blank">HinSchG Volltext</a>
           </p>
         </div>
       </article>
