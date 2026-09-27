@@ -963,3 +963,106 @@ def test_the_retention_page_names_the_next_run() -> None:
 
     assert next_run(datetime(2027, 3, 4, 1, 30, tzinfo=UTC)) == datetime(2027, 3, 4, 3, tzinfo=UTC)
     assert next_run(datetime(2027, 3, 4, 3, 30, tzinfo=UTC)) == datetime(2027, 3, 5, 3, tzinfo=UTC)
+
+
+# ── Audit log: the export is the page, whole; reading evidence is recorded ──
+
+
+@pytest.mark.asyncio
+async def test_the_export_holds_what_the_filtered_page_shows_and_all_of_it(
+    throwaway_db: AsyncSession, acting_as
+) -> None:
+    """The export link carried only ?views, so a filtered page exported
+    everything; and it stopped at 10 000 rows without saying so."""
+    import csv
+    import io
+
+    from sqlalchemy import text
+
+    from app.models.user import AdminRole
+
+    client, act = acting_as
+    await throwaway_db.execute(text(
+        "INSERT INTO audit_log (id, admin_username, action, created_at)"
+        " SELECT gen_random_uuid(), 'bulk', 'report.note_added', now() - n * interval '1 second'"
+        " FROM generate_series(1, 10001) n"
+    ))
+    await throwaway_db.execute(text(
+        "INSERT INTO audit_log (id, admin_username, action) VALUES"
+        " (gen_random_uuid(), 'other', 'report.assigned')"
+    ))
+    await throwaway_db.commit()
+    act(await _totp_user(throwaway_db, AdminRole.superadmin))
+
+    page = (await client.get("/admin/audit-log?action=report.note_added")).text
+    link = re.search(r'href="(/admin/audit-log/export\.csv[^"]*)"', page)
+    assert link
+    body = (await client.get(link.group(1).replace("&amp;", "&"))).text
+    rows = list(csv.DictReader(io.StringIO(body)))
+    assert {r["action"] for r in rows} == {"report.note_added"}
+    assert len(rows) == 10001
+
+
+@pytest.mark.asyncio
+async def test_exporting_the_log_and_downloading_evidence_are_recorded(
+    acting_as, db_session: AsyncSession
+) -> None:
+    from sqlalchemy import select
+
+    from app.models.audit import AuditLog
+    from app.models.user import AdminRole
+    from app.services.attachment import create_attachments
+    from app.services.audit import AuditAction
+    from app.services.report import create_report
+
+    client, act = acting_as
+    admin = await _totp_user(db_session, AdminRole.admin)
+    act(admin)
+    await client.get("/admin/audit-log/export.csv")
+
+    report, _ = await create_report(db_session, "financial_fraud", "Has a piece of evidence.")
+    [att] = await create_attachments(db_session, report, [("n.txt", "text/plain", b"evidence")])
+    assert (await client.get(f"/admin/reports/{report.id}/attachments/{att.id}")).status_code == 200
+
+    actions = set((await db_session.execute(
+        select(AuditLog.action).where(AuditLog.admin_id == admin.id)
+    )).scalars().all())
+    assert {AuditAction.AUDIT_EXPORTED, AuditAction.ATTACHMENT_DOWNLOADED} <= actions
+
+
+@pytest.mark.asyncio
+async def test_a_search_across_organisations_is_in_each_one_s_log(
+    acting_as, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A superadmin's search decrypted every organisation's reports, and was
+    recorded under the superadmin's own: the others' admins never saw it."""
+    import uuid
+
+    from sqlalchemy import select
+
+    from app.config import settings
+    from app.models.audit import AuditLog
+    from app.models.organisation import Organisation
+    from app.models.user import AdminRole
+    from app.services.audit import AuditAction
+    from app.services.report import create_report, default_org_id
+
+    client, act = acting_as
+    monkeypatch.setattr(settings, "multi_tenancy_enabled", True)
+    org = Organisation(id=uuid.uuid4(), name="Branch S", slug=f"s-{uuid.uuid4().hex[:6]}")
+    db_session.add(org)
+    await db_session.commit()
+    word = f"zebra{uuid.uuid4().hex[:6]}"
+    await create_report(db_session, "financial_fraud", f"Seen a {word} here.", org_id=org.id)
+    superadmin = await _totp_user(db_session, AdminRole.superadmin)
+    superadmin.org_id = await default_org_id(db_session)
+    await db_session.commit()
+    act(superadmin)
+
+    await client.post("/admin/dashboard", data={"q": word})
+    orgs = set((await db_session.execute(
+        select(AuditLog.org_id).where(
+            AuditLog.admin_id == superadmin.id, AuditLog.action == AuditAction.CONTENT_SEARCHED
+        )
+    )).scalars().all())
+    assert org.id in orgs

@@ -649,6 +649,8 @@
   "audit.action.report.message_sent": "Réponse envoyée au lanceur d'alerte",
   "audit.action.report.delete_requested": "Suppression demandée",
   "audit.action.report.delete_confirmed": "Suppression confirmée",
+  "audit.action.report.attachment_downloaded": "Pièce jointe téléchargée",
+  "audit.action.audit.exported": "Journal d'audit exporté",
   "audit.action.report.delete_cancelled": "Demande de suppression annulée",
   "audit.action.report.acknowledged": "Réception confirmée",
   "audit.action.report.link_added": "Dossier lié",

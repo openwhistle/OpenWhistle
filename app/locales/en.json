@@ -649,6 +649,8 @@
   "audit.action.report.message_sent": "Reply sent to whistleblower",
   "audit.action.report.delete_requested": "Deletion requested",
   "audit.action.report.delete_confirmed": "Deletion confirmed",
+  "audit.action.report.attachment_downloaded": "Attachment downloaded",
+  "audit.action.audit.exported": "Audit log exported",
   "audit.action.report.delete_cancelled": "Deletion request cancelled",
   "audit.action.report.acknowledged": "Receipt acknowledged",
   "audit.action.report.link_added": "Case linked",

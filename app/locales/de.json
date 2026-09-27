@@ -649,6 +649,8 @@
   "audit.action.report.message_sent": "Antwort an hinweisgebende Person gesendet",
   "audit.action.report.delete_requested": "Löschung beantragt",
   "audit.action.report.delete_confirmed": "Löschung bestätigt",
+  "audit.action.report.attachment_downloaded": "Anhang heruntergeladen",
+  "audit.action.audit.exported": "Audit-Log exportiert",
   "audit.action.report.delete_cancelled": "Löschantrag zurückgezogen",
   "audit.action.report.acknowledged": "Eingang bestätigt",
   "audit.action.report.link_added": "Fall verknüpft",

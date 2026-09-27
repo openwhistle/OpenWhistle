@@ -661,6 +661,8 @@
   "audit.action.report.message_sent": "Resposta enviada ao denunciante",
   "audit.action.report.delete_requested": "Exclusão solicitada",
   "audit.action.report.delete_confirmed": "Exclusão confirmada",
+  "audit.action.report.attachment_downloaded": "Anexo baixado",
+  "audit.action.audit.exported": "Log de auditoria exportado",
   "audit.action.report.delete_cancelled": "Solicitação de exclusão cancelada",
   "audit.action.report.acknowledged": "Recebimento confirmado",
   "audit.action.report.link_added": "Caso vinculado",

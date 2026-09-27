@@ -2,7 +2,7 @@
 
 import uuid
 from typing import Any
-from urllib.parse import quote
+from urllib.parse import quote, urlencode
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
@@ -223,10 +223,11 @@ async def _dashboard(
     # decrypts a report outside what this caller may already see, and the
     # CONTENT_SEARCH_LIMIT budget is spent on the caller's current view rather
     # than every status/location outside it.
+    read_orgs: set[uuid.UUID | None] = set()
     content_ids = (
         await report_service.content_match_ids(
             db, case_query, assigned_to_id=assigned_filter, location_id=location_filter,
-            status_filter=status_filter, **_org_scope(current_user)
+            status_filter=status_filter, read_orgs=read_orgs, **_org_scope(current_user)
         )
         if len(case_query) >= 3 else None
     )
@@ -235,10 +236,13 @@ async def _dashboard(
         # like an identity-reveal reason (scripts/rotate_encryption_key.py rotates both).
         from app.services.crypto import encrypt  # noqa: PLC0415
 
-        await audit_service.log(
-            db, current_user, AuditAction.CONTENT_SEARCHED,
-            detail={"term": encrypt(case_query), "hits": len(content_ids)},
-        )
+        # One entry per organisation whose reports were read: a superadmin's
+        # search spans them all, and used to be recorded under its own only.
+        for read_org in read_orgs or {current_user.org_id}:
+            await audit_service.log(
+                db, current_user, AuditAction.CONTENT_SEARCHED, target_org=read_org,
+                detail={"term": encrypt(case_query), "hits": len(content_ids)},
+            )
         await db.commit()
     reports, total = await report_service.get_reports_paginated(
         db,
@@ -881,6 +885,13 @@ async def admin_download_attachment(
         raise HTTPException(status_code=404) from exc
 
     name = await attachment_filename(db, attachment)
+    # Opening the case and exporting its PDF were recorded; reading the
+    # evidence itself was not.
+    await audit_service.log(
+        db, current_user, AuditAction.ATTACHMENT_DOWNLOADED, report_id=report_id,
+        detail={"attachment_id": str(attachment_id)},
+    )
+    await db.commit()
     return Response(
         content=data,
         media_type=attachment.content_type,
@@ -1302,22 +1313,9 @@ async def audit_log_page(
     action_filter = qp.get("action", "")
     show_views = qp.get("views") == "1"
 
-    report_id = None
-    if report_id_str:
-        try:
-            report_id = uuid.UUID(report_id_str)
-        except ValueError:
-            pass
-
     entries, total = await audit_service.get_audit_log(
-        db,
-        report_id=report_id,
-        action=action_filter or None,
-        exclude_action=_views_excluded(show_views or action_filter == AuditAction.REPORT_VIEWED),
-        page=page,
-        per_page=50,
-        viewer_id=current_user.id,
-        **_org_scope(current_user),
+        db, **_audit_filters(qp), page=page, per_page=50,
+        viewer_id=current_user.id, **_org_scope(current_user),
     )
     total_pages = max(1, (total + 49) // 50)
 
@@ -1331,7 +1329,30 @@ async def audit_log_page(
         "report_id_filter": report_id_str,
         "show_views": show_views,
         "audit_actions": audit_service.ALL_ACTIONS,
+        # The export carries the page's filters: it used to carry ?views only,
+        # so a filtered page exported the whole log.
+        "export_query": urlencode({
+            k: v for k, v in (("action", action_filter), ("report_id", report_id_str),
+                              ("views", "1" if show_views else "")) if v
+        }),
     })
+
+
+def _audit_filters(qp: Any) -> dict[str, Any]:
+    """The audit-log filters of a query string: the page and its export read the same."""
+    action_filter = qp.get("action", "")
+    report_id = None
+    if qp.get("report_id"):
+        try:
+            report_id = uuid.UUID(qp["report_id"])
+        except ValueError:
+            pass
+    show_views = qp.get("views") == "1" or action_filter == AuditAction.REPORT_VIEWED
+    return {
+        "report_id": report_id,
+        "action": action_filter or None,
+        "exclude_action": _views_excluded(show_views),
+    }
 
 
 def _views_excluded(show_views: bool) -> str | None:
@@ -1379,11 +1400,18 @@ async def audit_log_csv(
     import csv
     import io
 
+    # Every row: this used to stop at 10 000 without saying so.
+    filters = _audit_filters(request.query_params)
     entries, _ = await audit_service.get_audit_log(
-        db, per_page=10000, viewer_id=current_user.id,
-        exclude_action=_views_excluded(request.query_params.get("views") == "1"),
-        **_org_scope(current_user),
+        db, **filters, per_page=None, viewer_id=current_user.id, **_org_scope(current_user),
     )
+    # The export holds decrypted reveal reasons and search terms: who took it is recorded.
+    await audit_service.log(db, current_user, AuditAction.AUDIT_EXPORTED, detail={
+        "rows": len(entries),
+        **{k: str(v) for k, v in (("action", filters["action"]),
+                                  ("report_id", filters["report_id"])) if v},
+    })
+    await db.commit()
     output = io.StringIO()
     writer = csv.writer(output)
     # "action" keeps the machine code for tooling; "action_label" is for people.

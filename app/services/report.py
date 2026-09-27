@@ -277,8 +277,12 @@ async def content_match_ids(
     status_filter: str | None = None,
     org_id: uuid.UUID | None = None,
     scope_org: bool = False,
+    read_orgs: set[uuid.UUID | None] | None = None,
 ) -> list[uuid.UUID]:
     """Ids of in-scope reports whose description or messages contain ``needle``.
+
+    ``read_orgs``, if given, receives the organisation of every report
+    decrypted, so the search is recorded where each one's admins look.
 
     Decrypted in memory for this request only; no searchable copy is stored.
     Never matches the confidential name/contact fields — those stay hidden
@@ -304,6 +308,8 @@ async def content_match_ids(
     folded = _fold(needle)
     hits = []
     for report in rows.scalars().all():
+        if read_orgs is not None:
+            read_orgs.add(report.org_id)
         description, messages = decrypt_report_fields(report)
         if any(folded in _fold(text) for text in (description, *messages)):
             hits.append(report.id)
