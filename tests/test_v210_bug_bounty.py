@@ -294,3 +294,46 @@ async def test_a_demo_visitor_cannot_lock_the_next_visitor_out(
         f"/admin/users/{demo_cm.id}/{action}", data=data, follow_redirects=False
     )
     assert resp.status_code == 403
+
+
+# ── Four-eyes deletion leaves a record ──────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_a_confirmed_deletion_is_in_the_audit_log(
+    acting_as, db_session: AsyncSession
+) -> None:
+    import json as _json
+
+    from sqlalchemy import select
+
+    from app.models.audit import AuditLog
+    from app.models.user import AdminRole
+    from app.services.audit import AuditAction
+    from app.services.report import create_report
+
+    client, act = acting_as
+    report, _ = await create_report(db_session, "financial_fraud", "A report to delete, twice agreed.")
+    requester = await _totp_user(db_session, AdminRole.admin)
+    confirmer = await _totp_user(db_session, AdminRole.admin)
+    case = report.case_number
+
+    act(requester)
+    assert (await client.post(
+        f"/admin/reports/{report.id}/request-delete", follow_redirects=False
+    )).status_code == 302
+    act(confirmer)
+    resp = await client.post(f"/admin/reports/{report.id}/confirm-delete", follow_redirects=False)
+    assert resp.status_code == 302
+
+    rows = (await db_session.execute(
+        select(AuditLog).where(AuditLog.action == AuditAction.REPORT_DELETE_CONFIRMED)
+        .execution_options(populate_existing=True)
+    )).scalars().all()
+    details = [_json.loads(r.detail or "{}") for r in rows]
+    mine = [d for d in details if d.get("case_number") == case]
+    assert mine == [{
+        "case_number": case,
+        "requested_by": requester.username,
+        "confirmed_by": confirmer.username,
+    }]

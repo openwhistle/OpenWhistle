@@ -668,11 +668,29 @@ async def confirm_deletion(
     deletion_request: DeletionRequest,
     confirmer: AdminUser,
 ) -> None:
-    """Confirm and immediately execute the deletion."""
+    """Confirm and immediately execute the deletion.
+
+    The report's own audit entries go with it (ON DELETE CASCADE, as in
+    retention). One entry outlives it, with ``report_id`` unset and the case
+    number in the detail: before, nothing recorded that a report had been
+    deleted, or by whom.
+    """
     from datetime import UTC, datetime
+
+    from app.services import audit as audit_service
+
     deletion_request.confirmed_by_id = confirmer.id
     deletion_request.confirmed_by_username = confirmer.username
     deletion_request.confirmed_at = datetime.now(UTC)
+    await audit_service.log(
+        db, confirmer, audit_service.AuditAction.REPORT_DELETE_CONFIRMED,
+        detail={
+            "case_number": report.case_number,
+            "requested_by": deletion_request.requested_by_username,
+            "confirmed_by": confirmer.username,
+        },
+        target_org=report.org_id,
+    )
     await db.flush()
     keys = await stored_object_keys(db, [report.id])
     await db.delete(report)

@@ -2363,6 +2363,7 @@ CLAMAV_HOST=clamav</code></pre>
         <h3>Audit log</h3>
         <ul>
           <li><code>/admin/audit-log</code>: every admin action, immutable (HinSchG §11 Abs. 5), filterable, shown as readable labels.</li>
+          <li>Deleting a report deletes its entries with it. One entry stays, with the case number: <em>Deletion confirmed</em> (who requested, who confirmed) or <code>report.auto_deleted</code>.</li>
           <li>CSV export at any time: the machine action codes plus a label column; the detail column is a JSON object.</li>
           <li>Case views (<em>Report opened</em>) are hidden in the log and the export unless you tick <em>Show case views</em> (<code>?views=1</code>).</li>
           <li>With multi-tenancy on, each organisation sees only its own entries. Instance-wide security events, such as a password-spraying alert, go to superadmins only.</li>
