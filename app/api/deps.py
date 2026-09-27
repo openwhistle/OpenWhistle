@@ -13,7 +13,15 @@ from app.redis_client import get_redis
 from app.services import auth as auth_service
 
 
-async def get_current_admin(
+class PasswordChangeRequired(Exception):  # noqa: N818 — a redirect, not an error
+    """The signed-in account must replace a password someone else set.
+
+    Raised by ``get_current_admin``; the app answers it with a redirect to
+    /admin/account (app.main), so every admin route leads there.
+    """
+
+
+async def get_signed_in_admin(
     request: Request,
     db: AsyncSession = Depends(get_db),
     redis: Redis = Depends(get_redis),
@@ -44,6 +52,21 @@ async def get_current_admin(
     request.state.session_expires_at = int(claims["exp"])
     request.state.session_claims = claims
 
+    return user
+
+
+async def get_current_admin(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis),
+    session_token: str | None = Cookie(default=None, alias="ow_session"),
+) -> AdminUser:
+    """The signed-in admin, for every admin route but the few a forced password
+    change needs (the account page, its form, the session timer), which use
+    ``get_signed_in_admin``: while the flag is set, nothing else opens."""
+    user = await get_signed_in_admin(request, db, redis, session_token)
+    if user.must_change_password:
+        raise PasswordChangeRequired
     return user
 
 

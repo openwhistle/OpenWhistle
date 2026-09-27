@@ -50,8 +50,8 @@
   {
    "id": "link-no-csrf",
    "file": "app/api/auth.py",
-   "old": "    session_token: str = Cookie(alias=\"ow_session\"),\n    _csrf: None = Depends(validate_csrf),\n",
-   "new": "    session_token: str = Cookie(alias=\"ow_session\"),\n",
+   "old": "    current_user: AdminUser = Depends(get_current_admin),\n    session_token: str = Cookie(alias=\"ow_session\"),\n    _csrf: None = Depends(validate_csrf),\n",
+   "new": "    current_user: AdminUser = Depends(get_current_admin),\n    session_token: str = Cookie(alias=\"ow_session\"),\n",
    "tests": "A"
   },
   {
@@ -162,8 +162,8 @@
   {
    "id": "cli-unaudited",
    "file": "scripts/reset_admin_password.py",
-   "old": "        await audit.log_system(\n",
-   "new": "        None and await audit.log_system(\n",
+   "old": "        await audit.log_system(\n            session, audit.AuditAction.ADMIN_TOTP_RESET,\n",
+   "new": "        None and await audit.log_system(\n            session, audit.AuditAction.ADMIN_TOTP_RESET,\n",
    "tests": "A"
   },
   {

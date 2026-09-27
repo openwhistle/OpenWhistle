@@ -42,11 +42,13 @@ class AuditAction:
     ADMIN_DEACTIVATED       = "admin.deactivated"
     ADMIN_REACTIVATED       = "admin.reactivated"
     ADMIN_TOTP_RESET        = "admin.totp_reset"
+    ADMIN_PASSWORD_RESET    = "admin.password_reset"  # noqa: S105 — an action code
     AUTH_LOGIN              = "auth.login"
     AUTH_LOCAL_REVIEW_LOGIN = "auth.local_review_login"
     AUTH_TOTP_SETUP         = "auth.totp_setup"
     AUTH_SSO_LINKED         = "auth.sso_linked"
     AUTH_SSO_UNLINKED       = "auth.sso_unlinked"
+    AUTH_PASSWORD_CHANGED   = "auth.password_changed"  # noqa: S105 — an action code
     AUTH_SPRAYING_SUSPECTED = "auth.password_spraying_suspected"
     ORG_CREATED             = "org.created"
     ORG_DEACTIVATED         = "org.deactivated"

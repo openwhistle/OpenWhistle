@@ -80,6 +80,8 @@ async def create_user(
 ) -> tuple[AdminUser, str]:
     """Create a new admin user. Returns (user, totp_secret).
 
+    The creating admin chose the password, so the holder must replace it
+    after enrolling the authenticator (``must_change_password``).
     Raises ValueError if the username or the password is not allowed.
     """
     username = validate_username(username)
@@ -93,6 +95,7 @@ async def create_user(
         totp_enabled=False,
         role=role,
         is_active=True,
+        must_change_password=True,
     )
     db.add(user)
     await db.commit()

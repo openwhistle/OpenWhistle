@@ -30,7 +30,7 @@ PURPOSE_LOGIN = "login"
 PURPOSE_LINK = "link"
 LINK_STATE_PREFIX = "link."
 
-# Outcomes of linking, shown in the admin menu after the redirect (?sso=…).
+# Outcomes of linking, shown on /admin/account after the redirect (?sso=…).
 SSO_RESULTS = frozenset({"linked", "unlinked", "failed", "taken", "only_way_in"})
 
 # Asymmetric algorithms only: the key must come from the provider's JWKS.

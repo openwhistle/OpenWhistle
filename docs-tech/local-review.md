@@ -138,6 +138,7 @@ marketing/documentation site under `docs/`.
 | `/admin/dashboard` | `admin/dashboard.html` | Filters, search, status pills, the case list. |
 | `/admin/reports/{report_id}` | `admin/report.html` | One representative report detail page (any seeded `OW-DEMO-000xx`) — exercise the identity-reveal form, internal notes, status change, and the four-eyes deletion flow. |
 | `/admin/users` | `admin/users.html` | User management. |
+| `/admin/account` | `admin/account.html` | Own account, reached from "My account" in the sidebar. The demo admin sees the demo notice instead of the password form; the forced change needs a new account (setup stack). |
 | `/admin/organisations` | `admin/organisations.html` | Setup stack only — needs `MULTI_TENANCY_ENABLED=true`. |
 | `/admin/categories` | `admin/categories.html` | Category management. |
 | `/admin/locations` | `admin/locations.html` | Location management. |

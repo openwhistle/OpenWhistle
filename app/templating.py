@@ -70,7 +70,7 @@ templates.env.globals["oidc_enabled"] = lambda: settings.oidc_enabled
 
 
 def sso_result(request: Request) -> str | None:
-    """The linking outcome to show in the admin menu, only from the known set."""
+    """The linking outcome to show on the account page, only from the known set."""
     from app.services.oidc import SSO_RESULTS  # noqa: PLC0415
 
     value = request.query_params.get("sso")

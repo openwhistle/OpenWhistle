@@ -77,6 +77,14 @@ For every row, ask: does the translation assert the same fact, in the same direc
 | `admin.retention.how.note.html` | A report in any other status is never deleted automatically |
 | `admin.retention.legal.hinschg.body.html` | HinSchG requires deletion 3 years after the procedure ends; longer only while necessary |
 
+## A password someone else set
+
+| Key | What it must claim |
+| --- | --- |
+| `account.forced.body` | Someone else set the password and knows it; nothing else opens until it is changed |
+| `account.password.changed` | The password is changed **and** every other session has ended |
+| `account.password.totp_hint` | The session alone does not change the password; the current code is needed |
+
 ## Telemetry is off by default; the demo is not real
 
 | Key | What it must claim |
