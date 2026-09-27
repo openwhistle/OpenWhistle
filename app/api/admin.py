@@ -231,7 +231,9 @@ async def _dashboard(
 
         # One entry per organisation whose reports were read: a superadmin's
         # search spans them all, and used to be recorded under its own only.
-        for read_org in read_orgs or {current_user.org_id}:
+        # Without multi-tenancy the log is not scoped: one entry.
+        split = settings.multi_tenancy_enabled and read_orgs
+        for read_org in read_orgs if split else {current_user.org_id}:
             await audit_service.log(
                 db, current_user, AuditAction.CONTENT_SEARCHED, target_org=read_org,
                 detail={"term": encrypt(case_query), "hits": len(content_ids)},

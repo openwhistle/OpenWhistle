@@ -245,7 +245,7 @@
   {
    "id": "search-own-org-only",
    "file": "app/api/admin.py",
-   "old": "        for read_org in read_orgs or {current_user.org_id}:\n",
+   "old": "        for read_org in read_orgs if split else {current_user.org_id}:\n",
    "new": "        for read_org in {current_user.org_id}:\n",
    "tests": "A"
   },

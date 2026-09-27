@@ -493,7 +493,11 @@ async def test_download_non_latin1_filename_does_not_500(
     db_session.add(att)
     await db_session.commit()
 
-    set_user(_user(AdminRole.admin))
+    # Saved: the download is audited, and the entry references the admin.
+    admin = _user(AdminRole.admin)
+    db_session.add(admin)
+    await db_session.commit()
+    set_user(admin)
     resp = await client.get(
         f"/admin/reports/{report.id}/attachments/{att.id}", follow_redirects=False
     )
