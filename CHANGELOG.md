@@ -7,6 +7,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.1.0] — 2026-09-27
+
 ### Upgrade notes
 
 - **Migration 009 adds `must_change_password` to every account**, `false` for existing ones:
@@ -1458,7 +1460,8 @@ Remaining lower-severity findings are tracked in GitHub issues #42–#46.
 - **Rate limiting by session token** (not IP) to maintain full anonymity
 - **alembic upgrade head** on every startup to guarantee migration consistency
 
-[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.0.1...HEAD
+[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/openwhistle/OpenWhistle/compare/v2.0.1...v2.1.0
 [2.0.1]: https://github.com/openwhistle/OpenWhistle/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.5.0...v2.0.0
 [1.5.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.4.0...v1.5.0

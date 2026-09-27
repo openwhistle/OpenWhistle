@@ -1671,18 +1671,23 @@ main:has(> .page-fill) {
   margin-top: 1.5rem;
   padding-top: 1.5rem;
 }
+/* Labels wrap and steps shrink: German's long labels used to run into one
+   another and the last was cut, since nowrap labels squeezed the lines to
+   nothing and overflow: hidden clipped the rest. Lines align on the dots'
+   centre, so a two-line label does not move them. */
 .stepper {
-  align-items: center;
+  align-items: flex-start;
   display: flex;
-  gap: 0;
+  gap: 0.25rem;
   margin-bottom: 0.5rem;
   margin-top: 1rem;
   overflow: hidden;
 }
 .stepper-step {
-  flex: none;
+  flex: 0 1 auto;
   flex-direction: column;
   gap: 0.375rem;
+  min-width: 0;
 }
 .stepper-dot,
 .stepper-step {
@@ -1723,9 +1728,19 @@ main:has(> .page-fill) {
   font-family: var(--font-body);
   font-size: 0.68rem;
   font-weight: 600;
+  hyphens: auto;
   letter-spacing: 0.06em;
+  max-width: 6.5rem;
+  overflow-wrap: anywhere;
+  text-align: center;
   text-transform: uppercase;
-  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .stepper-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.02em;
+    max-width: 4.75rem;
+  }
 }
 .stepper-step.active .stepper-label {
   color: var(--accent);
@@ -1734,7 +1749,8 @@ main:has(> .page-fill) {
   background: var(--hairline);
   flex: 1 1 0%;
   height: 0.125rem;
-  margin-bottom: 1.3rem;
+  margin-top: 0.9375rem;
+  min-width: 0.5rem;
   transition-duration: 0.2s;
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);

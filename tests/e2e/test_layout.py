@@ -248,3 +248,35 @@ def test_the_wizard_first_step_fits_a_full_hd_window(
     heights = page.evaluate("[document.documentElement.scrollHeight, innerHeight]")
     ctx.close()
     assert heights[0] == heights[1], heights
+
+
+@pytest.mark.parametrize("lang", ["de", "en"])
+@pytest.mark.parametrize("width", [390, 1440])
+def test_status_steps_neither_touch_nor_get_cut(
+    browser: Browser, base_url: str, width: int, lang: str
+) -> None:
+    """German has the longest step labels. They ran into one another with no
+    gap ("EINGEGANGENIN PRÜFUNG…") and the last was cut: labels never wrapped,
+    so the lines between them shrank to nothing and overflow: hidden clipped."""
+    from tests.e2e.conftest import DEMO_CASE_RECEIVED
+
+    ctx = browser.new_context(
+        viewport={"width": width, "height": 900}, base_url=base_url,
+        extra_http_headers={"Accept-Language": lang},
+    )
+    page = ctx.new_page()
+    page.goto("/status")
+    page.fill('input[name="case_number"]', DEMO_CASE_RECEIVED["case_number"])
+    page.fill('input[name="pin"]', DEMO_CASE_RECEIVED["pin"])
+    page.click("button.btn-primary[type='submit']")
+    boxes = page.eval_on_selector_all(
+        ".stepper-label",
+        "els => els.map(e => { const r = e.getBoundingClientRect(); return [r.left, r.right]; })",
+    )
+    stepper = page.locator(".stepper").bounding_box()
+    ctx.close()
+    assert len(boxes) == 4 and stepper, boxes
+    for (_, right), (left, _) in zip(boxes, boxes[1:], strict=False):
+        assert left - right >= 4, boxes
+    assert boxes[0][0] >= stepper["x"] - 0.5, (boxes, stepper)
+    assert boxes[-1][1] <= stepper["x"] + stepper["width"] + 0.5, (boxes, stepper)

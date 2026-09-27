@@ -652,7 +652,7 @@
       <div class="sidebar-section">
         <div class="sidebar-section-title">Versions</div>
         <nav class="sidebar-links" aria-label="On this page">
-          <a href="#unreleased">Unreleased</a>
+          <a href="#v2-1-0">2.1.0</a>
           <a href="#v2-0-1">2.0.1</a>
           <a href="#v2-0-0">2.0.0</a>
           <a href="#v1-5-0">1.5.0</a>
@@ -703,8 +703,8 @@
         the file GitHub and the release tooling read.
       </p>
 
-      <section class="docs-section" id="unreleased" aria-labelledby="unreleased-h2">
-        <h2 id="unreleased-h2">Unreleased</h2>
+      <section class="docs-section" id="v2-1-0" aria-labelledby="v2-1-0-h2">
+        <h2 id="v2-1-0-h2">2.1.0 — 2026-09-27</h2>
         <h3>Upgrade notes</h3>
         <ul><li><strong>Migration 009 adds <code>must_change_password</code> to every account</strong>, <code>false</code> for existing ones: nothing records who set their password.</li><li><strong>Migration 010 recomputes every feedback deadline</strong> by §17 Abs. 2 HinSchG: three calendar months from the acknowledgement or, without one, three months and seven days from receipt. Unacknowledged reports get a deadline for the first time, and their reminders start.</li><li><strong>Migration 011 gives every account an organisation</strong>, the default one where it had none.</li><li><strong>Migration 012 records who made each account</strong> (<code>created_by_id</code>), from the audit log.</li><li><strong>An unedited <code>docker-compose.yml</code> or <code>.env.example</code> install no longer starts.</strong> Compose now reads <code>.env</code>, and no example key passes the 32-character check. Set <code>SECRET_KEY</code> and <code>ENCRYPTION_KEY</code>.</li><li><strong>Images are published only after CI, E2E and the security scans pass on the tagged commit</strong>, and only for a tag on <code>main</code>. A release tag without <code>DOCKERHUB_TOKEN</code> now fails.</li><li><strong><code>latest</code>, <code>X</code> and <code>X.Y</code> move only to the highest stable release</strong> in their line: never to a pre-release, never back to an old tag being re-published.</li></ul>
         <h3>Added</h3>
@@ -719,7 +719,7 @@
         <ul><li><strong>Admin lists hid their actions behind a sideways scrollbar.</strong> Users, categories and locations sat in two thirds of the page, as organisations did in 2.0.1: the role select read "Falll" and the categories' actions were out of view at 1920 px. Every list now runs under its form, across the full width, and table cells are 0.75 rem a side, so the German dashboard's eight columns fit 1,064 px.</li><li><strong>OIDC login could never succeed.</strong> Nothing ever wrote an account's OIDC <code>sub</code> and issuer, so every SSO login ended in "no account is linked". Linking now exists (see Added).</li><li><strong>A lost authenticator locked its admin out for good.</strong> The reset script kept the TOTP secret, and the docs said to edit the database. See Added.</li><li><strong>No session is accepted for an account whose authenticator awaits enrolment.</strong> A reset takes effect in the same commit, before its sessions are swept from Redis.</li><li><strong>Whoever set a password for someone else knew it for good.</strong> No page let an admin change their own password, so the admin who created an account, or the superadmin who reset it, kept knowing it. See Added.</li><li><strong>The host's password reset left the account's sessions running and the audit log empty.</strong> <code>reset_admin_password.py --username</code> now ends every session of the account and records <code>admin.password_reset</code>, never the password.</li><li><strong>Four form fields skipped their format check in Chrome.</strong> Browsers compile <code>pattern</code> with the <code>v</code> flag, where a bare <code>-</code> closing a character class is a syntax error; the new-user, location, organisation and setup forms logged it and checked nothing. Now escaped, held by <code>tests/test_pattern_attributes.py</code>.</li><li><strong>The sidebar's Log out sat 12 px left of the links above it</strong>, and the second panel of a two-column admin page (users, categories, locations) started 20 px below the first.</li></ul>
         <h3>Removed</h3>
         <ul><li><strong><code>/admin/demo/reset</code>.</strong> It reset nothing (the seed only adds what is missing) and no page linked to it.</li><li><strong><code>app/schemas</code>.</strong> No route used it; it looked like the validation the wizard was missing.</li></ul>
-        <p><a href="https://github.com/openwhistle/OpenWhistle/compare/v2.0.1...HEAD">See everything changed since the last release</a></p>
+        <p><a href="https://github.com/openwhistle/OpenWhistle/compare/v2.0.1...v2.1.0">See the code changes between 2.0.1 and 2.1.0</a></p>
       </section>
 
       <section class="docs-section" id="v2-0-1" aria-labelledby="v2-0-1-h2">

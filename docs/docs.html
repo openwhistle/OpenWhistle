@@ -496,6 +496,9 @@
       overflow-x: auto;
       margin: 0;
     }
+    /* A bare <pre> scrolls inside itself too: the webhook example's longer
+       message line pushed the whole page sideways at 390 px. */
+    pre { max-width: 100%; overflow-x: auto; }
     .code-block pre code {
       font-family: var(--font-mono);
       font-size: 0.82rem;
@@ -945,7 +948,15 @@
         </ul>
 
         <h3>Current version</h3>
-        <p><strong>v2.0.1</strong>. What it changed:</p>
+        <p><strong>v2.1.0</strong>. What it changed:</p>
+        <ul>
+          <li>Every admin changes their own password and links their own single sign-on; a lost authenticator can be reset.</li>
+          <li>The §17 HinSchG deadlines follow the statute, from receipt, in calendar months.</li>
+          <li>Attachments lose their metadata without a pixel changing.</li>
+          <li>A superadmin gives each organisation its own admins.</li>
+          <li>Over forty fixes from a bug bounty, listed in the changelog.</li>
+        </ul>
+        <p>What v2.0.1 changed:</p>
         <ul>
           <li>The first account is a superadmin, so organisations can be managed.</li>
           <li>Pages that fit the window no longer scroll past it.</li>

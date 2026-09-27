@@ -185,6 +185,15 @@ against the repo root), and every root-absolute link (`/docs.html`,
 | `docs/blog/interne-meldestelle-kostenlos.html` | Article. |
 | `docs/blog/was-ist-neu-in-2-0.html` | Article. |
 | `docs/blog/whistleblower-software-vergleich.html` | Article. |
+| `docs/blog/metadaten-entfernen-ohne-beweise-zu-veraendern.html` | Article. |
+| `docs/blog/en.html` | Blog index, English. Every article below is the English twin of a German one; check the language switch both ways. |
+| `docs/blog/hinschg-compliance-guide.html` | Article, English. |
+| `docs/blog/whistleblowing-system-gdpr-eu-hosting.html` | Article, English. |
+| `docs/blog/set-up-internal-reporting-channel.html` | Article, English. |
+| `docs/blog/free-internal-reporting-channel.html` | Article, English. |
+| `docs/blog/whats-new-in-2-0.html` | Article, English. |
+| `docs/blog/whistleblowing-software-comparison.html` | Article, English. |
+| `docs/blog/removing-metadata-without-altering-evidence.html` | Article, English. |
 
 ## What to check, on every page
 
