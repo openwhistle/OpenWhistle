@@ -31,7 +31,7 @@
     "description": "Sechs Funde aus OpenWhistle 2.0, erzählt als Geschichten: ein PDF, das fremde Schriften verschluckte, ein zu vertrauensseliger Header, und ein Rollback, der halbe Sitzungen zum Absturz brachte.",
     "url": "https://openwhistle.net/blog/was-ist-neu-in-2-0.html",
     "datePublished": "2026-09-26",
-    "dateModified": "2026-09-26",
+    "dateModified": "2026-09-27",
     "author": { "@type": "Organization", "name": "OpenWhistle Contributors" },
     "publisher": { "@type": "Organization", "name": "OpenWhistle", "url": "https://openwhistle.net" },
     "inLanguage": "de"
@@ -345,6 +345,8 @@
         <div class="article-body">
 
           <p>Release 2.0 ist vor allem das Ergebnis eines Härtungs-Audits: sechs Stellen, an denen OpenWhistle mehr preisgab, als nötig war, oder nicht hielt, was es versprach. Alle Details im <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG</a>.</p>
+
+          <p style="border-left: 4px solid var(--accent); padding-left: var(--space-4);"><strong>Nachtrag vom 27. September 2026:</strong> Aktualisieren Sie auf <strong>2.0.1</strong>. Bis dahin legte der Einrichtungsassistent das erste Konto als einfachen Admin an. Superadmin kann aber nur ein Superadmin vergeben, also hatte keine Installation einen. Organisationen und Multi-Tenancy waren deshalb nicht erreichbar. Migration 008 befördert beim Update das erste Konto; prüfen Sie danach <code>/admin/users</code>. Details im <a href="../changelog.html">Änderungsprotokoll</a>.</p>
 
           <h2>Das PDF, das die eigenen Worte verschluckte</h2>
           <p>Ein Fallbericht auf Polnisch, Griechisch oder Kyrillisch ließ sich als PDF exportieren — nur stand der Text der meldenden Person danach nicht mehr darin. Jedes Zeichen außerhalb des lateinischen Alphabets und jedes typografische Anführungszeichen „wie dieses" wurde beim Export zu einem einzelnen <code>?</code>. Ursache: Die eingebaute PDF-Schriftart kennt nur Latin-1. Der Fix behebt die Ursache: eine echte Unicode-Schriftart (DejaVu LGC Sans, Latin/Griechisch/Kyrillisch) ist jetzt eingebettet. Chinesisch, Japanisch, Koreanisch und rechts-nach-links-Schriften bleiben eine offene Baustelle — mit einem sichtbaren Ersatzkästchen statt eines stillen „?".</p>
