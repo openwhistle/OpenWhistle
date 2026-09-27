@@ -1393,6 +1393,11 @@ input[type="file"].form-control::file-selector-button {
 .table-wrapper {
   overflow-x: auto;
 }
+/* A URL in a table cell may break anywhere: unbroken, the organisations list's
+   reporting links pushed the row's actions out of view at 1920 px. */
+.link-wrap {
+  overflow-wrap: anywhere;
+}
 /* The telemetry request line is one unbroken URL; at phone width it would
    widen the whole page. Wrap it instead, anywhere. */
 pre {
@@ -3643,6 +3648,18 @@ a.attachment-name:hover {
 }
 .admin-split-grid > * {
   min-width: 0;
+}
+/* A list too wide for two thirds of the page (organisations: six columns,
+   one of them a URL) goes under its form, across the full width. */
+.admin-stack {
+  display: grid;
+  gap: 1.25rem;
+}
+.admin-stack > * {
+  min-width: 0;
+}
+.panel-narrow {
+  max-width: 32rem;
 }
 @media (max-width: 900px) {
   .admin-split-grid {

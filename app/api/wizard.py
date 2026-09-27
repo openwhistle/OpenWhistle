@@ -13,7 +13,7 @@ from app.config import settings
 from app.csrf import validate_csrf
 from app.database import get_db
 from app.models.setup import SetupStatus
-from app.models.user import AdminUser
+from app.models.user import AdminRole, AdminUser
 from app.redis_client import get_redis
 from app.services import rate_limit as rl
 from app.services.auth import hash_password, validate_password
@@ -78,6 +78,10 @@ async def create_initial_admin(
         totp_secret=totp_secret,
         totp_enabled=True,
         org_id=default_org.id,
+        # Whoever installs the instance owns it. As a plain admin the first
+        # account could never reach organisations, and only a superadmin may
+        # grant superadmin, so no installation ever had one.
+        role=AdminRole.superadmin,
     )
     db.add(admin)
 

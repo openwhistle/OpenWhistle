@@ -885,7 +885,7 @@
 
         <h3>Current version</h3>
         <p>
-          <strong>v2.0.0</strong> — The confidential identity is shown only to the handler, with an audited reason; the first-run setup needs a one-time token; whistleblower times are stored as the day only; an optional Tor onion address and ClamAV upload scan; TLS by default in the Compose stack; an opt-in, off-by-default installation count; words inside reports are searchable without an index. See the
+          <strong>v2.0.1</strong> — The first account is now a superadmin, so organisations can be managed; the wizard and login pages no longer scroll past the window. v2.0.0: the confidential identity is shown only to the handler, with an audited reason; the first-run setup needs a one-time token; whistleblower times are stored as the day only; an optional Tor onion address and ClamAV upload scan; TLS by default in the Compose stack; an opt-in, off-by-default installation count; words inside reports are searchable without an index. See the
           <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG</a>
           for a full list of changes.
         </p>
@@ -1112,7 +1112,8 @@
         <p>
           Open <code>http://localhost:4009/setup</code> (or your domain if nginx is configured)
           in a browser. Enter the setup token, then follow the wizard to create your first admin
-          account and configure TOTP. The wizard disables itself permanently after completion.
+          account and configure TOTP. That account is a superadmin: it can manage organisations and
+          grant every role. The wizard disables itself permanently after completion.
         </p>
 
         <div class="callout callout-note">
@@ -2228,7 +2229,7 @@ CLAMAV_HOST=clamav</code></pre>
           Every admin account has one of three roles:
         </p>
         <ul>
-          <li><strong>Superadmin</strong> — all admin capabilities plus organisation management (<code>/admin/organisations</code>). Required for multi-tenant deployments. Superadmin accounts have <code>org_id = NULL</code> (cross-organisation scope).</li>
+          <li><strong>Superadmin</strong> — all admin capabilities plus organisation management (<code>/admin/organisations</code>). Sees every organisation, whatever its own <code>org_id</code>. The account the setup wizard creates is a superadmin in the default organisation.</li>
           <li><strong>Admin</strong> — full access including user management, categories, locations, audit log, and report deletion.</li>
           <li><strong>Case Manager</strong> — can view, comment on, and advance reports assigned to them; cannot manage users or delete reports.</li>
         </ul>

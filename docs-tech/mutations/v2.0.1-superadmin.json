@@ -1,0 +1,63 @@
+{
+ "test_groups": {
+  "S": [
+   "tests/test_v201_superadmin.py"
+  ],
+  "L": [
+   "tests/test_no_viewport_arithmetic.py",
+   "tests/test_pagination_style.py"
+  ]
+ },
+ "timeout_seconds": 300,
+ "mutations": [
+  {
+   "id": "wizard-plain-admin",
+   "file": "app/api/wizard.py",
+   "old": "        role=AdminRole.superadmin,\n",
+   "new": "",
+   "tests": "S"
+  },
+  {
+   "id": "migration-promotes-despite-existing-superadmin",
+   "file": "migrations/versions/008_first_admin_superadmin.py",
+   "old": "\"AND NOT EXISTS (SELECT 1 FROM admin_users WHERE role = 'superadmin')\"",
+   "new": "\"AND true\"",
+   "tests": "S"
+  },
+  {
+   "id": "migration-promotes-a-deactivated-account",
+   "file": "migrations/versions/008_first_admin_superadmin.py",
+   "old": "WHERE role = 'admin' AND is_active ",
+   "new": "WHERE role = 'admin' ",
+   "tests": "S"
+  },
+  {
+   "id": "migration-promotes-the-newest",
+   "file": "migrations/versions/008_first_admin_superadmin.py",
+   "old": "\"ORDER BY created_at, id LIMIT 1) \"",
+   "new": "\"ORDER BY created_at DESC, id LIMIT 1) \"",
+   "tests": "S"
+  },
+  {
+   "id": "migration-does-nothing",
+   "file": "migrations/versions/008_first_admin_superadmin.py",
+   "old": "\"UPDATE admin_users SET role = 'superadmin' \"",
+   "new": "\"UPDATE admin_users SET role = role \"",
+   "tests": "S"
+  },
+  {
+   "id": "viewport-arithmetic-back",
+   "file": "app/templates/login.html",
+   "old": ".lg-page-center { display: flex;",
+   "new": ".lg-page-center { min-height: calc(100vh - 112px); display: flex;",
+   "tests": "L"
+  },
+  {
+   "id": "pagination-transparent",
+   "file": "app/static/css/site.css",
+   "old": "  border-style: dashed;\n  color: var(--muted);\n  cursor: default;",
+   "new": "  border-style: dashed;\n  opacity: 0.38;\n  cursor: default;",
+   "tests": "L"
+  }
+ ]
+}

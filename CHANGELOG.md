@@ -7,8 +7,23 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.0.1] — 2026-09-27
+
+### Upgrade notes
+
+- **An installation without a superadmin gets one.** Migration 008 promotes the earliest active
+  admin, normally the account the setup wizard created, when no superadmin exists yet. An
+  installation that already has a superadmin is left alone. Check `/admin/users` after upgrading.
+
 ### Fixed
 
+- **No installation had a superadmin, so organisations could not be managed.** The setup wizard
+  created the first account as a plain admin, and only a superadmin may grant superadmin:
+  `/admin/organisations` and multi-tenancy were unreachable on every installation. The wizard now
+  creates a superadmin, and migration 008 promotes the first account of an existing installation.
+- **The organisations list cut off its own actions.** Six columns, one a full reporting URL, in
+  two thirds of the page: the Deactivate button sat past a sideways scrollbar even at 1920 px.
+  The list now runs under the form, across the full width. Nobody could reach the page before.
 - **Pages that fit the window scrolled anyway, with the footer below the fold.** The submission
   wizard and the login and MFA screens sized themselves as the viewport minus a guessed nav and
   footer height (144 or 112 px, against a real 151 px, plus the 36 px demo banner). They now
@@ -1246,7 +1261,8 @@ Remaining lower-severity findings are tracked in GitHub issues #42–#46.
 - **Rate limiting by session token** (not IP) to maintain full anonymity
 - **alembic upgrade head** on every startup to guarantee migration consistency
 
-[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.0.1...HEAD
+[2.0.1]: https://github.com/openwhistle/OpenWhistle/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.5.0...v2.0.0
 [1.5.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.3.1...v1.4.0
