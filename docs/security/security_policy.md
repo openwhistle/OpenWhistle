@@ -44,19 +44,22 @@ All report data is **Restricted** and subject to the controls in section 4.
 ### 4.1 Encryption at Rest
 
 - All report descriptions and messages are encrypted at-rest using envelope
-  encryption (AES-256 via Fernet, per-report DEK wrapped with HKDF-SHA256 MEK).
-- The Master Encryption Key (MEK) is derived from `SECRET_KEY` using HKDF-SHA256
-  and is **never stored**. It exists only in memory during request processing.
+  encryption (Fernet: AES-128-CBC with HMAC-SHA256; a per-report DEK wrapped
+  with an HKDF-SHA256 MEK).
+- The Master Encryption Key (MEK) is derived from `ENCRYPTION_KEY` (or
+  `SECRET_KEY` while that is unset) using HKDF-SHA256 and is **never stored**.
+  It exists only in memory during request processing.
 - Per-report Data Encryption Keys (DEKs) are stored encrypted alongside the
-  report. Without `SECRET_KEY`, DEKs cannot be decrypted.
+  report. Without `ENCRYPTION_KEY`, DEKs cannot be decrypted.
 - Confidential whistleblower identity (name, contact) is encrypted separately
-  with Fernet using a key derived from the platform secret.
+  with Fernet using a key derived from the same root.
 
 ### 4.2 Encryption in Transit
 
-- All HTTP traffic must be served over TLS 1.2+. The provided Ansible role and
-  Docker Compose configuration include Certbot/Let's Encrypt integration.
-- The `SECRET_KEY` environment variable must be passed via a secrets manager or
+- All HTTP traffic must be served over TLS 1.2+. The Ansible role obtains and
+  renews a Let's Encrypt certificate; the Docker Compose stack creates a
+  self-signed one (`tls-init`) until you mount your own.
+- `SECRET_KEY` and `ENCRYPTION_KEY` must be passed via a secrets manager or
   Docker/Kubernetes secret — never in a plain-text `.env` file in production.
 
 ### 4.3 Authentication and Access Control
@@ -64,8 +67,8 @@ All report data is **Restricted** and subject to the controls in section 4.
 - All admin accounts require TOTP multi-factor authentication (no exceptions,
   no bypass). TOTP enrollment is enforced at first login.
 - Passwords are hashed with bcrypt (cost factor ≥ 12).
-- Login attempts are rate-limited (10 failures → temporary lockout, stored in
-  Redis with a configurable TTL).
+- Login attempts are rate-limited (`MAX_LOGIN_ATTEMPTS`, default 10, failures
+  lock the username for `LOGIN_LOCKOUT_MINUTES` after the last one; kept in Redis).
 - Role-based access control (`superadmin` > `admin` > `case_manager`) is
   enforced at the FastAPI dependency layer on every protected endpoint.
 
@@ -74,14 +77,17 @@ All report data is **Restricted** and subject to the controls in section 4.
 - No IP addresses are logged at any layer (Nginx, application, or database).
   This is a core design constraint — do not add IP logging middleware.
 - Whistleblower sessions use a Redis key tied to a random session token.
-  The session token is bound to the case number and is invalidated on logout
-  or after a configurable TTL.
+  The token names one report and ends on logout, when the report is deleted,
+  or two hours after sign-in; viewing the page does not extend it.
 
 ### 4.5 Data Deletion
 
-- Hard deletion of a report requires approval by two different admin accounts
-  (4-eyes principle, HTTP 409 if the same admin confirms).
-- All deletion events are recorded in the immutable audit log.
+- Hard deletion of a report requires approval by two different admins
+  (4-eyes principle, HTTP 409 if the same admin, or an account one of them
+  made, confirms). A superadmin can reset another account and act as it.
+- Every deletion leaves one audit entry with the case number
+  (`report.delete_confirmed`, `report.auto_deleted`); the report's own entries
+  are deleted with it.
 - The data retention scheduler permanently deletes closed reports older than
   `RETENTION_DAYS` days and writes an `report.auto_deleted` audit entry.
 
@@ -91,9 +97,10 @@ All report data is **Restricted** and subject to the controls in section 4.
 
 1. **Detection** — Monitor the structured JSON logs for authentication failures,
    unexpected 5xx errors, or anomalous access patterns.
-2. **Containment** — Rotate `SECRET_KEY` immediately if a breach is suspected.
-   Note: rotating `SECRET_KEY` invalidates all existing encrypted DEKs —
-   coordinate a data re-encryption operation before rotation in production.
+2. **Containment** — Rotate `ENCRYPTION_KEY` if a breach is suspected: set the
+   new key, move the old one to `ENCRYPTION_KEY_PREVIOUS`, then run
+   `scripts/rotate_encryption_key.py`, which re-wraps every DEK. Rotate
+   `SECRET_KEY` too: it signs sessions, so every admin signs in again.
 3. **Notification** — If personal data is involved, notify the supervisory
    authority within 72 hours (GDPR Art. 33).
 4. **Post-mortem** — Document root cause and remediation in the audit log.
@@ -106,8 +113,8 @@ All report data is **Restricted** and subject to the controls in section 4.
   recovery (WAL archiving) enabled.
 - Redis contains ephemeral session data only. Redis persistence (`appendonly yes`)
   is optional; sessions will be invalidated on restart without it.
-- `SECRET_KEY` must be stored in a separate, offline location. Loss of
-  `SECRET_KEY` makes encrypted report content irrecoverable.
+- `ENCRYPTION_KEY` must be stored in a separate, offline location. Its loss
+  makes encrypted report content irrecoverable.
 - Recovery Time Objective (RTO): define based on your organisation's requirements.
 - Recovery Point Objective (RPO): define based on your organisation's requirements.
 
@@ -144,7 +151,7 @@ All report data is **Restricted** and subject to the controls in section 4.
 | GDPR Art. 17 | Right to erasure | 4-eyes deletion, retention scheduler |
 | GDPR Art. 25 | Data protection by design | No IP logging, anonymity-first architecture |
 | GDPR Art. 32 | Security of processing | Encryption at rest and in transit, MFA |
-| HinSchG §9 | Confidentiality obligation | Role-based access, TOTP MFA |
+| HinSchG §8 | Confidentiality obligation | Role-based access, TOTP MFA |
 | HinSchG §11 Abs. 5 | Deletion 3 years after the procedure ends | Default `RETENTION_DAYS=1095` |
 | HinSchG §16 | Telephone channel requirement | Admin guidance at `/admin/telephone-channel` |
 

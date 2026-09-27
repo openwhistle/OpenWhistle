@@ -1114,3 +1114,15 @@ def test_the_username_field_accepts_what_the_server_accepts(template: str, name:
     except ValueError:
         server = False
     assert bool(re.fullmatch(pattern, name)) == server
+
+
+def test_no_published_page_calls_fernet_aes_256() -> None:
+    """Fernet is AES-128-CBC with HMAC-SHA256. The security policy and the
+    DPA template promised AES-256 and a SECRET_KEY-derived master key."""
+    pages = [*(ROOT / "docs").rglob("*.md"), *(ROOT / "docs").rglob("*.html"), ROOT / "README.md"]
+    # changelog.html renders past releases' notes as written; not rewritten.
+    offenders = [
+        p.name for p in pages
+        if p.name != "changelog.html" and re.search(r"AES-?256", p.read_text())
+    ]
+    assert not offenders
