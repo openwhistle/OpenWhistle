@@ -5,6 +5,8 @@ on:
     branches: ["main"]
   pull_request:
     branches: ["main"]
+  # docker-publish.yml runs this on the exact commit it publishes.
+  workflow_call:
 
 jobs:
   lint:

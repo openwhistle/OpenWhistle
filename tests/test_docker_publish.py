@@ -116,3 +116,35 @@ def test_a_release_without_docker_hub_credentials_fails(tmp_path: Path) -> None:
     result = _run(tmp_path, ref="refs/tags/v9.9.9", dockerhub="")
     assert result.returncode != 0
     assert "must reach Docker Hub" in result.stdout
+
+
+def test_publishing_waits_for_every_check_on_the_same_commit() -> None:
+    """Nothing gated the publish: a tag on any commit, or a main commit whose
+    pull request was tested against an older main, went straight out."""
+    jobs = yaml.safe_load((ROOT / ".github/workflows/docker-publish.yml").read_text())["jobs"]
+    called = {name: job["uses"] for name, job in jobs.items() if "uses" in job}
+    assert set(called.values()) == {
+        "./.github/workflows/ci.yml", "./.github/workflows/e2e.yml",
+        "./.github/workflows/security.yml",
+    }
+    assert set(jobs["build"]["needs"]) == {*called, "on-main"}
+    for path in called.values():
+        triggers = yaml.safe_load((ROOT / path.removeprefix("./")).read_text())[True]  # `on:`
+        assert "workflow_call" in triggers, path
+
+
+@pytest.mark.parametrize(("ref", "on_main", "ok"), [
+    ("refs/tags/v9.9.9", False, False),
+    ("refs/tags/v9.9.9", True, True),
+    ("refs/heads/main", False, True),
+])
+def test_a_tag_off_main_is_refused(tmp_path: Path, ref: str, on_main: bool, ok: bool) -> None:
+    jobs = yaml.safe_load((ROOT / ".github/workflows/docker-publish.yml").read_text())["jobs"]
+    (step,) = [s for s in jobs["on-main"]["steps"] if "run" in s]
+    stub = tmp_path / "git"
+    stub.write_text(f"#!/bin/bash\nexit {0 if on_main else 1}\n")
+    stub.chmod(stub.stat().st_mode | stat.S_IEXEC)
+    env = {**os.environ, "PATH": f"{tmp_path}:{os.environ['PATH']}", "GITHUB_REF": ref,
+           "GITHUB_REF_NAME": ref.rsplit("/", 1)[-1], "GITHUB_SHA": "abc"}
+    result = subprocess.run(["bash", "-c", step["run"]], env=env, check=False)
+    assert (result.returncode == 0) is ok

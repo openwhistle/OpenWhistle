@@ -78,8 +78,10 @@ Merge once the checks are green.
 
 ## 5. Tag and verify
 
-Tag `vX.Y.Z` on the merge commit and push it. The publish workflow builds once
-and writes one signed index to GHCR, Docker Hub and Quay.io. It fails unless
+Tag `vX.Y.Z` on the merge commit and push it. The publish workflow refuses a
+tag that is not on `main`, runs CI, E2E and the security scans on that exact
+commit, then builds once and writes one signed index to GHCR, Docker Hub and
+Quay.io. It fails unless
 every GHCR and Docker Hub tag, and every platform manifest behind it, is
 pullable; a release without `DOCKERHUB_TOKEN` fails. Quay is best-effort: a
 failure there is a `::warning` in the run summary, so read the log. Then check

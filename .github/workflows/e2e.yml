@@ -6,6 +6,8 @@ on:
   pull_request:
     branches: ["main"]
   workflow_dispatch:
+  # docker-publish.yml runs this on the exact commit it publishes.
+  workflow_call:
 
 jobs:
   e2e:

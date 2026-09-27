@@ -9,7 +9,10 @@ name: Publish Docker Images
 #   tag vX.Y.Z    -> :X.Y.Z, :sha-<sha>, plus :X.Y, :X and :latest when it is
 #                    the highest stable tag in that line (never a pre-release)
 #
-# Re-publishing an old release: `gh workflow run docker-publish.yml --ref vX.Y.Z`.
+# Re-publishing a release: `gh workflow run docker-publish.yml --ref vX.Y.Z`
+# runs the workflow file as it was at that tag, old bugs included. To restore
+# a tag one registry lost, copy it from GHCR instead:
+#   docker buildx imagetools create -t quay.io/<ns>/openwhistle:X.Y.Z ghcr.io/openwhistle/openwhistle:X.Y.Z
 on:
   push:
     tags:
@@ -32,11 +35,37 @@ permissions:
   contents: read
 
 jobs:
+  # ── Nothing is published that has not passed the checks ─────────────────
+  # main's branch protection does not require the PR to be up to date, and a
+  # tag can name any commit: so the exact commit is tested here, and a tag
+  # must be on main.
+  ci:
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+  e2e:
+    uses: ./.github/workflows/e2e.yml
+  security:
+    uses: ./.github/workflows/security.yml
+  on-main:
+    name: Tagged commit is on main
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - name: Refuse a tag that main does not contain
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]] && ! git merge-base --is-ancestor "${GITHUB_SHA}" origin/main; then
+            echo "::error::${GITHUB_REF_NAME} is not on main; only reviewed commits are published"
+            exit 1
+          fi
+
   # ── Build each platform on a native runner, push by digest only ──────────
   # Emulating arm64 with QEMU inside one buildx run is several times slower;
   # arm64 runners are free for public repositories.
   build:
     name: Build ${{ matrix.platform }}
+    needs: [ci, e2e, security, on-main]
     strategy:
       fail-fast: true
       matrix:
