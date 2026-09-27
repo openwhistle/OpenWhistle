@@ -496,6 +496,9 @@
       overflow-x: auto;
       margin: 0;
     }
+    /* A bare <pre> scrolls inside itself too: the webhook example's longer
+       message line pushed the whole page sideways at 390 px. */
+    pre { max-width: 100%; overflow-x: auto; }
     .code-block pre code {
       font-family: var(--font-mono);
       font-size: 0.82rem;
@@ -828,7 +831,7 @@
         <li><a href="docs.html" class="active" aria-current="page">Documentation</a></li>
         <li><a href="roadmap.html">Roadmap</a></li>
         <li><a href="changelog.html">Changelog</a></li>
-        <li><a href="blog/">Blog</a></li>
+        <li><a href="blog/en.html">Blog</a></li>
         <li><a href="de/">Auf Deutsch</a></li>
         <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
         <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank" class="nav-cta">Try Demo</a></li>
@@ -945,7 +948,15 @@
         </ul>
 
         <h3>Current version</h3>
-        <p><strong>v2.0.1</strong>. What it changed:</p>
+        <p><strong>v2.1.0</strong>. What it changed:</p>
+        <ul>
+          <li>Every admin changes their own password and links their own single sign-on; a lost authenticator can be reset.</li>
+          <li>The §17 HinSchG deadlines follow the statute, from receipt, in calendar months.</li>
+          <li>Attachments lose their metadata without a pixel changing.</li>
+          <li>A superadmin gives each organisation its own admins.</li>
+          <li>Over forty fixes from a bug bounty, listed in the changelog.</li>
+        </ul>
+        <p>What v2.0.1 changed:</p>
         <ul>
           <li>The first account is a superadmin, so organisations can be managed.</li>
           <li>Pages that fit the window no longer scroll past it.</li>
@@ -1027,12 +1038,12 @@
           <tbody>
             <tr>
               <td><code>latest</code></td>
-              <td>Release tag pushed (<code>v*.*.*</code>)</td>
+              <td>The highest stable release tag is pushed; never a pre-release (<code>v2.1.0-rc1</code>)</td>
               <td>Production — always points to the current stable release</td>
             </tr>
             <tr>
               <td><code>1.2.3</code> / <code>1.2</code> / <code>1</code></td>
-              <td>Release tag pushed</td>
+              <td>Release tag pushed; <code>1.2</code> and <code>1</code> move only to the highest release in their line</td>
               <td>Pinning to a specific version or minor series</td>
             </tr>
             <tr>
@@ -1042,7 +1053,7 @@
             </tr>
             <tr>
               <td><code>sha-abc1234</code></td>
-              <td>Every push (tags and branches)</td>
+              <td>Every push to <code>main</code> and every release tag</td>
               <td>Reproducing an exact build — useful for debugging and rollback</td>
             </tr>
           </tbody>
@@ -1109,7 +1120,9 @@
 
 <span class="t-comment"># Minimum required values. The production Redis requires REDIS_PASSWORD,</span>
 <span class="t-comment"># so it goes into REDIS_URL too, as POSTGRES_PASSWORD goes into DATABASE_URL:</span>
-<span class="t-str">SECRET_KEY</span>=your-long-random-secret-key-here
+<span class="t-comment"># openssl rand -hex 32 — a new value for each key:</span>
+<span class="t-str">SECRET_KEY</span>=&lt;64 hex characters&gt;
+<span class="t-str">ENCRYPTION_KEY</span>=&lt;64 hex characters&gt;
 <span class="t-str">POSTGRES_PASSWORD</span>=db-password
 <span class="t-str">REDIS_PASSWORD</span>=redis-password
 <span class="t-str">DATABASE_URL</span>=postgresql+asyncpg://openwhistle:db-password@db:5432/openwhistle
@@ -1139,7 +1152,7 @@
           <ul>
             <li>Copy them, do not symlink: a link into <code>/etc/letsencrypt/live</code> dangles inside the container.</li>
             <li>Keep the key root-owned <code>0600</code>, or <code>0644</code>. Otherwise <code>tls-init</code> stops and names the path and the reason.</li>
-            <li>Without them, the one-shot <code>tls-init</code> service generates a self-signed certificate before nginx starts. It is for <code>TLS_HOSTNAME</code> (default <code>localhost</code>), a <code>.env</code> variable only <code>docker-compose.prod.yml</code> reads.</li>
+            <li>Without them, the one-shot <code>tls-init</code> service generates a self-signed certificate before nginx starts. It is for <code>TLS_HOSTNAME</code> (default <code>localhost</code>), a <code>.env</code> variable only <code>docker-compose.prod.yml</code> reads. After a change, <code>docker compose up -d tls-init nginx</code> issues and serves a new one.</li>
             <li>To renew, drop the new certificate into <code>nginx/certs/</code> and run <code>docker compose up -d tls-init nginx</code>. Restarting <code>nginx</code> alone keeps the old one: nginx never re-reads <code>nginx/certs/</code> itself.</li>
           </ul>
         </div>
@@ -1397,7 +1410,14 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
           (<code>charts/openwhistle/</code>) sets
           <code>nginx.ingress.kubernetes.io/enable-access-log: "false"</code> on its Ingress. It also
           sets the bundled nginx's rate limit: <code>limit-rps: "10"</code>,
-          <code>limit-burst-multiplier: "3"</code>, a burst of 30.
+          <code>limit-burst-multiplier: "3"</code>, a burst of 30. It raises
+          <code>proxy-body-size</code> to <code>55m</code>, like the bundled nginx; ingress-nginx
+          otherwise refuses any upload over 1 MB.
+        </p>
+        <p>
+          The chart bundles no PostgreSQL and no Redis: set <code>secrets.databaseUrl</code> and
+          <code>secrets.redisUrl</code> to your own. A <code>helm upgrade</code> that changes a value
+          restarts the pods; with <code>autoscaling.enabled</code> the HPA alone sets the replica count.
         </p>
         <ul>
           <li>Your own <code>ingress.annotations</code> are merged with it; do not set it to <code>null</code>.</li>
@@ -1778,8 +1798,9 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
   "event": "new_activity",
   "new_reports": 2,
   "new_messages": 1,
-  "message": "2 new reports, 1 new message"
+  "message": "2 new reports, 1 case with new messages"
 }</code></pre>
+        <p><code>new_messages</code> counts cases with new whistleblower messages, not the messages.</p>
 <div class="table-scroll">
 <table class="env-table">
           <thead><tr><th>Variable</th><th>Required</th><th>Description</th><th>Default</th></tr></thead>
@@ -1805,7 +1826,7 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
             <tr>
               <td><code class="env-key">NOTIFY_WEBHOOK_TYPE</code></td>
               <td><span class="env-required env-req-no">Optional</span></td>
-              <td>Payload format for webhook notifications. <code>generic</code> sends <code>{"event": "new_activity", "new_reports": 2, "new_messages": 1, "message": "..."}</code> (counts, never case numbers); <code>slack</code> sends a Slack Block Kit message; <code>teams</code> sends a Microsoft Teams Adaptive Card (v1.4). The SLA reminder webhook uses the same three formats with <code>{"event": "sla_reminder", "ack_due": ..., "feedback_due": ..., "message": "..."}</code> for <code>generic</code>.</td>
+              <td>Payload format for webhook notifications. <code>generic</code> sends <code>{"event": "new_activity", "new_reports": 2, "new_messages": 1, "message": "..."}</code> (<code>new_messages</code>: cases with new messages) (counts, never case numbers); <code>slack</code> sends a Slack Block Kit message; <code>teams</code> sends a Microsoft Teams Adaptive Card (v1.4). The SLA reminder webhook uses the same three formats with <code>{"event": "sla_reminder", "ack_due": ..., "feedback_due": ..., "message": "..."}</code> for <code>generic</code>.</td>
               <td><code>generic</code></td>
             </tr>
           </tbody>
@@ -1892,6 +1913,7 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
           <li>An unknown or deactivated slug is a 404. There is no list of organisations, but a slug is part of a public link: anyone can test whether a guessed one exists.</li>
           <li>A draft stays with the organisation it was started for. Another organisation's link shows a fresh wizard; its first step replaces the draft, and the earlier one is lost to that browser.</li>
           <li>With multi-tenancy off there is one wizard, at <code>/submit</code>: <code>/submit/&lt;default slug&gt;</code> redirects there, any other slug is a 404.</li>
+          <li>Every account belongs to an organisation. On <code>/admin/users</code> a superadmin chooses it for a new account; an admin creates accounts in their own. Accounts LDAP provisions, and those made before multi-tenancy was switched on, belong to the default organisation.</li>
         </ul>
 <div class="table-scroll">
 <table class="env-table">
@@ -1920,6 +1942,11 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
           admin promotes it if needed. TOTP enrollment still follows, as for
           <a href="#admin-login">every account</a>.
         </p>
+        <ul>
+          <li>Accounts with a local password, such as the one the setup wizard created, keep signing in with it.</li>
+          <li>A directory user whose name a local account already has is refused, never merged into it.</li>
+          <li>The username comes from <code>LDAP_ATTR_USERNAME</code>. An entry without it is refused.</li>
+        </ul>
         <p>
           LDAP uses python-ldap (the OpenLDAP client) and S3 storage uses boto3: optional extras,
           both in the container image. From source, install <code>libldap2-dev libsasl2-dev</code>,
@@ -2121,7 +2148,8 @@ CLAMAV_HOST=clamav</code></pre>
         <div class="table-scroll">
 <table class="env-table">
           <tbody>
-            <tr><td>Size</td><td>10 MB per attachment</td></tr>
+            <tr><td>Size</td><td>10 MB per attachment, before and after cleaning</td></tr>
+            <tr><td>GIF size</td><td>50 megapixels, all frames together</td></tr>
             <tr><td>Number</td><td>5 per report</td></tr>
             <tr><td>Allowed</td><td>PDF, JPEG, PNG, GIF, WebP, TXT, CSV, DOCX, XLSX, checked by both MIME type and file extension</td></tr>
             <tr><td>Refused</td><td>SVG, executables, archives and every other type. Legacy <code>.doc</code>/<code>.xls</code> too: their author cannot be removed, so save them as <code>.docx</code>/<code>.xlsx</code> and attach again</td></tr>
@@ -2151,9 +2179,10 @@ CLAMAV_HOST=clamav</code></pre>
         <ul>
           <li><strong>Metadata removed on upload:</strong>
             <ul>
-              <li>JPEG, PNG, WebP and GIF, also photos inside DOCX/XLSX: EXIF/GPS and camera data.</li>
-              <li>PDF: document info, XMP, comment authors and times, the EXIF of embedded JPEG photos, the file identifier.</li>
-              <li>DOCX/XLSX: author, company and custom properties.</li>
+              <li>JPEG, PNG, WebP and GIF, also photos inside DOCX/XLSX: EXIF/GPS, camera data, XMP, ICC profiles and text chunks. Only the orientation tag stays.</li>
+              <li>JPEG, PNG and WebP are not re-encoded: pixels, colours and animation frames stay exactly as uploaded. Data after a JPEG's end (a motion-photo video) is removed.</li>
+              <li>PDF: document info, XMP on the document, its pages and images, comment authors and times, the EXIF of embedded JPEG photos, the file identifier. A PDF with files embedded in it is refused.</li>
+              <li>DOCX/XLSX: author, company and custom properties, SharePoint columns, the folder a workbook was saved in, the account name in template and link paths, revision-session ids and document variables.</li>
               <li>A file that cannot be parsed for cleaning is refused. Plain text is stored as uploaded.</li>
             </ul>
           </li>
@@ -2219,7 +2248,7 @@ CLAMAV_HOST=clamav</code></pre>
         <ul>
           <li>An account without TOTP yet (new from <code>/admin/users</code>, or first provisioned by LDAP) goes to <code>/admin/mfa/setup</code> after its first factor. Scan the QR code, confirm one code, and the session starts.</li>
           <li>A password someone else set is replaced next, at <code>/admin/account</code> (<a href="#own-account">Your account</a>).</li>
-          <li>After <code>MAX_LOGIN_ATTEMPTS</code> wrong passwords, the username is locked for <code>LOGIN_LOCKOUT_MINUTES</code>.</li>
+          <li>After <code>MAX_LOGIN_ATTEMPTS</code> wrong passwords, the username is locked for <code>LOGIN_LOCKOUT_MINUTES</code> from the last one. Upper and lower case count as one username.</li>
           <li>A session lasts <code>ACCESS_TOKEN_EXPIRE_MINUTES</code>; <em>Stay signed in</em> renews it, up to <code>SESSION_MAX_HOURS</code> after login.</li>
         </ul>
 
@@ -2240,7 +2269,7 @@ CLAMAV_HOST=clamav</code></pre>
             <tr><td>Case number</td><td><code>OW-YYYY-NNNNN</code>: the year and five random digits</td></tr>
             <tr><td>Submitted</td><td>the day only (UTC), never the time</td></tr>
             <tr><td>7-day SLA</td><td><em>Day N/7</em> until acknowledged: warning from day 5, overdue from day 7</td></tr>
-            <tr><td>3-month SLA</td><td>days left to feedback: warning at 14 or fewer, overdue at 0</td></tr>
+            <tr><td>3-month SLA</td><td>days left to feedback: warning at 14 or fewer, overdue once the date has passed</td></tr>
           </tbody>
         </table>
 </div>
@@ -2259,7 +2288,9 @@ CLAMAV_HOST=clamav</code></pre>
         <p>
           Accounts are managed at <code>/admin/users</code>. A new account is a case manager unless
           another role is chosen; an unknown role is refused. The last active admin cannot be
-          deactivated, so nobody is locked out. Only admins may dismiss the IP-header warning.
+          deactivated, so nobody is locked out. Only a superadmin creates, changes, deactivates or
+          reactivates a superadmin. In <code>DEMO_MODE</code> the demo accounts cannot be changed.
+          Only admins may dismiss the IP-header warning.
         </p>
 
         <h3 id="own-account">Your account</h3>
@@ -2340,7 +2371,12 @@ CLAMAV_HOST=clamav</code></pre>
           <li>Move the status, assign the case to an admin or case manager, link related cases.</li>
           <li>Reply to the whistleblower through the anonymous channel; add internal notes they never see.</li>
           <li>Export a PDF with an SLA compliance section (HinSchG §17), the confidential identity left out. It prints Latin (any diacritic), Greek and Cyrillic text; CJK and right-to-left scripts (Arabic, Hebrew) are not supported.</li>
-          <li><em>Delete report</em>, collapsed at the end of <em>Actions</em>: a second admin must confirm (4-eyes principle). It is the GDPR Art. 17 erasure.</li>
+          <li><em>Delete report</em>, collapsed at the end of <em>Actions</em>: a second admin must confirm (4-eyes principle). It is the GDPR Art. 17 erasure.
+            <ul>
+              <li>Neither the requester nor an account the requester made (on <code>/admin/users</code>, directly or through others) may confirm, and the reverse: whoever made an account chose its first password.</li>
+              <li>A superadmin can reset another account's authenticator and act as it, so the rule holds between admins, not against a superadmin.</li>
+            </ul>
+          </li>
         </ul>
         <figure class="diagram">
           <img class="diagram-light" src="img/diagrams/case-lifecycle-light.svg" alt="Case statuses: a submitted report is received. From received it goes to in_review or closed; from in_review to pending_feedback, closed or back to received; from pending_feedback to closed or in_review; a closed case can reopen to in_review. Received carries the 7-day acknowledgement deadline, pending_feedback the 3-month feedback deadline." width="622" height="571" loading="lazy">
@@ -2361,7 +2397,9 @@ CLAMAV_HOST=clamav</code></pre>
         <h3>Audit log</h3>
         <ul>
           <li><code>/admin/audit-log</code>: every admin action, immutable (HinSchG §11 Abs. 5), filterable, shown as readable labels.</li>
-          <li>CSV export at any time: the machine action codes plus a label column; the detail column is a JSON object.</li>
+          <li>Deleting a report deletes its entries with it. One entry stays, with the case number: <em>Deletion confirmed</em> (who requested, who confirmed) or <code>report.auto_deleted</code>.</li>
+          <li>CSV export at any time: the machine action codes plus a label column; the detail column is a JSON object. It holds every row the page's filters select, and taking it is itself recorded.</li>
+          <li>Downloading an attachment is recorded, as opening the case and exporting its PDF are.</li>
           <li>Case views (<em>Report opened</em>) are hidden in the log and the export unless you tick <em>Show case views</em> (<code>?views=1</code>).</li>
           <li>With multi-tenancy on, each organisation sees only its own entries. Instance-wide security events, such as a password-spraying alert, go to superadmins only.</li>
         </ul>
@@ -2396,10 +2434,12 @@ CLAMAV_HOST=clamav</code></pre>
         </p>
 
         <h3>HinSchG deadline tracking</h3>
-        <p>The statutory timelines of §17 HinSchG, shown on the dashboard and the case page:</p>
+        <p>The statutory timelines of §17 HinSchG, shown on the dashboard, the case page, the whistleblower's status page and the PDF:</p>
         <ul>
           <li><strong>7-day acknowledgement:</strong> counted from 00:00 UTC of the submission day. Times are stored as the day only, so the deadline can fall earlier, never later.</li>
-          <li><strong>3-month feedback:</strong> 90 days from the acknowledgement (§17 Abs. 2). Feedback goes to the whistleblower through the message channel before it runs out.</li>
+          <li><strong>3-month feedback:</strong> three calendar months from the acknowledgement; without one, three months and seven days from receipt (§17 Abs. 2). Every report has this deadline from the day it arrives, and an acknowledgement never moves it later. Feedback goes to the whistleblower through the message channel before it runs out.</li>
+          <li>A deadline is overdue once it has passed. On its last day it reads <em>0 days remaining</em>.</li>
+          <li>The statistics' 7-day rate counts only the reports whose seven days are over or that were acknowledged.</li>
         </ul>
 
         <h3>Telephone reporting channel guide</h3>
@@ -2447,9 +2487,9 @@ CLAMAV_HOST=clamav</code></pre>
         </figure>
         <ol class="step-list">
           <li><div><strong>Mode.</strong> <em>Anonymous</em>: no personal data ever stored. <em>Confidential</em>: name, contact details and an optional secure email, stored encrypted. The case handler sees them only after recording a reason. Both comply with HinSchG.</div></li>
-          <li><div><strong>Location</strong>, only when the operator has configured branches or offices.</div></li>
-          <li><div><strong>Category</strong> from the operator's list (e.g. financial fraud, safety violation, discrimination).</div></li>
-          <li><div><strong>Description</strong>, the only mandatory field. Be as specific as possible without naming yourself.</div></li>
+          <li><div><strong>Location</strong> (optional), only when the operator has configured branches or offices.</div></li>
+          <li><div><strong>Category</strong> (required) from the operator's list (e.g. financial fraud, safety violation, discrimination).</div></li>
+          <li><div><strong>Description</strong> (required), 10 to 10&nbsp;000 characters. Be as specific as possible without naming yourself.</div></li>
           <li><div><strong>Files</strong> (optional): PDF, images, Word (<code>.docx</code>), Excel (<code>.xlsx</code>), CSV, TXT, up to 10 MB each and 5 per report. Legacy <code>.doc</code>/<code>.xls</code> are refused; save them as <code>.docx</code>/<code>.xlsx</code>. Metadata is removed, and with virus scanning on, an infected file is refused. Going back keeps attached files; choosing new ones replaces them, and <strong>Remove</strong> drops one.</div></li>
           <li><div><strong>Review and submit.</strong></div></li>
         </ol>
@@ -2789,7 +2829,7 @@ CLAMAV_HOST=clamav</code></pre>
             <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
             <li><a href="docs.html">Documentation</a></li>
             <li><a href="changelog.html">Changelog</a></li>
-            <li><a href="blog/">Blog</a></li>
+            <li><a href="blog/en.html">Blog</a></li>
             <li><a href="de/">Auf Deutsch</a></li>
             <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Live Demo</a></li>
             <li><a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank">Issues</a></li>

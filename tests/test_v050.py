@@ -57,9 +57,11 @@ class TestConfigureLogging:
         from app.logging_config import configure_logging
 
         configure_logging(log_level="INFO", log_format="json")
-        for name in ("uvicorn", "uvicorn.error", "uvicorn.access"):
+        for name in ("uvicorn", "uvicorn.error"):
             logger = logging.getLogger(name)
             assert logger.handlers, f"{name} should have a handler"
+        # uvicorn logs a request only when the access logger hasHandlers().
+        assert not logging.getLogger("uvicorn.access").hasHandlers()
 
 
 # ── Health endpoint ──────────────────────────────────────────────────────────

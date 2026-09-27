@@ -1,0 +1,172 @@
+{
+ "test_groups": {
+  "a": [
+   "tests/test_v210_attachment_fidelity.py",
+   "tests/test_attachment_privacy.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "tiff_palette",
+   "file": "app/services/attachment.py",
+   "tests": "a",
+   "old": "clean.putpalette(upright.palette)",
+   "new": "pass"
+  },
+  {
+   "id": "pixel_cap",
+   "file": "app/services/attachment.py",
+   "tests": "a",
+   "old": "> MAX_IMAGE_PIXELS:",
+   "new": "> MAX_IMAGE_PIXELS * 10**9:"
+  },
+  {
+   "id": "jpeg_eoi_trailer",
+   "file": "app/services/attachment.py",
+   "tests": "a",
+   "old": "return bytes(out + b\"\\xff\\xd9\")",
+   "new": "return bytes(out + data[i:])"
+  },
+  {
+   "id": "jpeg_app0",
+   "file": "app/services/attachment.py",
+   "tests": "a",
+   "old": "_JPEG_KEEP_APP = {0xEE}",
+   "new": "_JPEG_KEEP_APP = {0xE0, 0xEE}"
+  },
+  {
+   "id": "mpo",
+   "file": "app/services/attachment.py",
+   "tests": "a",
+   "old": "if fmt in (\"JPEG\", \"MPO\"):",
+   "new": "if fmt == \"JPEG\":"
+  },
+  {
+   "id": "jpeg_orientation",
+   "file": "app/services/attachment.py",
+   "tests": "a",
+   "old": "    if orientation == 1:\n        return body",
+   "new": "    if True:\n        return body"
+  },
+  {
+   "id": "png_orientation",
+   "file": "app/services/attachment.py",
+   "tests": "a",
+   "old": "            if orientation != 1:\n                exif = b\"eXIf\"",
+   "new": "            if False:\n                exif = b\"eXIf\""
+  },
+  {
+   "id": "png_whitelist",
+   "file": "app/services/attachment.py",
+   "tests": "a",
+   "old": "        elif kind in _PNG_KEEP:",
+   "new": "        else:"
+  },
+  {
+   "id": "webp_whitelist",
+   "file": "app/services/attachment.py",
+   "tests": "a",
+   "old": "        elif kind in _WEBP_KEEP:",
+   "new": "        else:"
+  },
+  {
+   "id": "webp_flags",
+   "file": "app/services/attachment.py",
+   "tests": "a",
+   "old": "flags = out[8] & ~0x2C",
+   "new": "flags = out[8]"
+  },
+  {
+   "id": "pdf_embedded",
+   "file": "app/services/attachment.py",
+   "tests": "a",
+   "old": "if \"/EF\" in obj or obj.get(\"/Type\") == \"/EmbeddedFile\":",
+   "new": "if False:"
+  },
+  {
+   "id": "pdf_every_xmp",
+   "file": "app/services/attachment.py",
+   "tests": "a",
+   "old": "        obj.pop(\"/Metadata\", None)\n",
+   "new": "        writer._root_object.pop(\"/Metadata\", None)\n"
+  },
+  {
+   "id": "rsid_attrs",
+   "file": "app/services/attachment.py",
+   "tests": "a",
+   "old": "body = re.sub(rb'\\s(?:\\w+:)?rsid\\w*=\"[^\"]*\"', b\"\", body)",
+   "new": "pass"
+  },
+  {
+   "id": "rsids_docvars",
+   "file": "app/services/attachment.py",
+   "tests": "a",
+   "old": "(rsids|docVars)",
+   "new": "(rsidsX|docVarsX)"
+  },
+  {
+   "id": "abspath",
+   "file": "app/services/attachment.py",
+   "tests": "a",
+   "old": "body = re.sub(rb\"<(?:\\w+:)?absPath\\b[^>]*/>\", b\"\", body)",
+   "new": "pass"
+  },
+  {
+   "id": "filesharing",
+   "file": "app/services/attachment.py",
+   "tests": "a",
+   "old": "return _neutral_attrs(body, {b\"userName\": b\"Author\"})",
+   "new": "return body"
+  },
+  {
+   "id": "sharepoint",
+   "file": "app/services/attachment.py",
+   "tests": "a",
+   "old": "and _SP_PROPERTIES in body:",
+   "new": "and False:"
+  },
+  {
+   "id": "profile_paths",
+   "file": "app/services/attachment.py",
+   "tests": "a",
+   "old": "        body = _scrub_profile_paths(body)",
+   "new": "        pass"
+  },
+  {
+   "id": "mac_attr_path",
+   "file": "app/services/attachment.py",
+   "tests": "a",
+   "old": "|(?<==\\\")/(?:users|home)/)",
+   "new": ")"
+  },
+  {
+   "id": "text_untouched",
+   "file": "app/services/attachment.py",
+   "tests": "a",
+   "old": "return re.sub(rb'=\"[^\"]*\"', lambda m: _PROFILE_PATH.sub(rb\"\\1User\", m.group()), body)",
+   "new": "return _PROFILE_PATH.sub(rb\"\\1User\", body)"
+  },
+  {
+   "id": "to_thread",
+   "file": "app/services/attachment.py",
+   "tests": "a",
+   "old": "await asyncio.to_thread(strip_metadata, name, data)",
+   "new": "strip_metadata(name, data)"
+  },
+  {
+   "id": "stored_size",
+   "file": "app/services/attachment.py",
+   "tests": "a",
+   "old": "        if len(data) > MAX_SIZE_BYTES:\n",
+   "new": "        if False:\n"
+  },
+  {
+   "id": "png_truncated",
+   "file": "app/services/attachment.py",
+   "tests": "a",
+   "old": "raise MetadataError(\"truncated PNG\")",
+   "new": "pass"
+  }
+ ],
+ "timeout_seconds": 60
+}

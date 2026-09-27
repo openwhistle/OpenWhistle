@@ -10,6 +10,9 @@
   <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#08080a" media="(prefers-color-scheme: dark)">
   <link rel="canonical" href="https://openwhistle.net/blog/interne-meldestelle-einrichten.html">
+  <link rel="alternate" hreflang="en" href="https://openwhistle.net/blog/set-up-internal-reporting-channel.html">
+  <link rel="alternate" hreflang="de" href="https://openwhistle.net/blog/interne-meldestelle-einrichten.html">
+  <link rel="alternate" hreflang="x-default" href="https://openwhistle.net/blog/set-up-internal-reporting-channel.html">
   <link rel="icon" type="image/svg+xml" href="../favicon.svg">
   <link rel="icon" type="image/x-icon" href="../favicon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
@@ -40,7 +43,7 @@
   {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
-    "headline": "Interne Meldestelle einrichten mit OpenWhistle 2.0.1",
+    "headline": "Interne Meldestelle einrichten mit OpenWhistle 2.1.0",
     "description": "Schritt-für-Schritt-Anleitung: OpenWhistle mit Docker Compose installieren, HTTPS-Zertifikat hinterlegen und den ersten Admin anlegen.",
     "url": "https://openwhistle.net/blog/interne-meldestelle-einrichten.html",
     "mainEntityOfPage": {
@@ -397,7 +400,7 @@
         <li><a href="../roadmap.html">Roadmap</a></li>
         <li><a href="../changelog.html">Änderungsprotokoll</a></li>
         <li><a href="index.html" class="active" aria-current="page">Blog</a></li>
-        <li><a href="../index.html" hreflang="en">English</a></li>
+        <li><a href="set-up-internal-reporting-channel.html" hreflang="en">English</a></li>
         <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
         <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank" class="nav-cta">Demo testen</a></li>
       </ul>
@@ -421,7 +424,7 @@
       <article>
         <header class="article-header">
           <p class="article-tag">Anleitung · Self-Hosting · Docker</p>
-          <h1 class="article-title">Interne Meldestelle einrichten: Schritt-für-Schritt-Anleitung mit OpenWhistle 2.0.1</h1>
+          <h1 class="article-title">Interne Meldestelle einrichten: Schritt-für-Schritt-Anleitung mit OpenWhistle 2.1.0</h1>
           <p class="article-subtitle">Vom leeren Linux-Server bis zur ersten Testmeldung: Docker, Konfiguration, HTTPS-Zertifikat, Einrichtungsassistent und erste Schritte im Admin-Bereich.</p>
           <div class="article-meta">
             <span>27. April 2026</span>
@@ -494,9 +497,9 @@ cp .env.example .env</code></pre>
 COMPOSE_FILE=docker-compose.prod.yml
 
 # Mindestens 32 Zeichen
-SECRET_KEY=ersetzen-durch-openssl-rand-hex-32
+SECRET_KEY=&lt;openssl rand -hex 32&gt;
 # Empfohlen: eigener Schlüssel für die Verschlüsselung der Meldungen
-ENCRYPTION_KEY=ersetzen-durch-openssl-rand-hex-32
+ENCRYPTION_KEY=&lt;openssl rand -hex 32&gt;
 
 # Passwörter für Datenbank und Redis, dieselben in den URLs
 POSTGRES_PASSWORD=starkes-passwort
@@ -557,7 +560,7 @@ docker compose ps
 
 # Health-Check
 curl -s https://meldestelle.ihr-unternehmen.de/health
-# {"status":"ok","version":"2.0.1","components":{"database":"ok","redis":"ok"}}</code></pre>
+# {"status":"ok","version":"2.1.0","components":{"database":"ok","redis":"ok"}}</code></pre>
 
           <h2>Schritt 6: Den ersten Admin anlegen</h2>
 
@@ -704,7 +707,7 @@ docker compose up -d</code></pre>
             <li><a href="../docs.html">Dokumentation</a></li>
             <li><a href="../changelog.html">Änderungsprotokoll</a></li>
             <li><a href="../de/">Startseite (Deutsch)</a></li>
-            <li><a href="../index.html" hreflang="en">English</a></li>
+            <li><a href="set-up-internal-reporting-channel.html" hreflang="en">English</a></li>
             <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Live-Demo</a></li>
             <li><a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank">Issues</a></li>
             <li><a href="https://github.com/openwhistle/OpenWhistle/blob/main/LICENSE" rel="noopener noreferrer" target="_blank">Lizenz (GPL-3.0)</a></li>

@@ -3,12 +3,18 @@ services:
     build: .
     ports:
       - "4009:4009"
+    # SECRET_KEY, ENCRYPTION_KEY and every other setting come from .env
+    # (cp .env.example .env). No key is written here: a key in this file is
+    # the same key on every Quick Start install.
+    env_file:
+      - path: .env
+        required: false
     environment:
+      # Service names; override the localhost that .env.example shows.
       DATABASE_URL: "postgresql+asyncpg://openwhistle:openwhistle@db:5432/openwhistle"
       REDIS_URL: "redis://redis:6379/0"
-      SECRET_KEY: "change-me-in-production-use-a-long-random-string"
-      DEMO_MODE: "false"
-      SECURE_COOKIES: "false"
+      # Quick Start serves plain HTTP on :4009.
+      SECURE_COOKIES: "${SECURE_COOKIES:-false}"
     volumes:
       - ./app/static:/app/app/static
     depends_on:

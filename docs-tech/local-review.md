@@ -47,8 +47,9 @@ client cannot strip a header the proxy adds after it) **and** the `Host` the
 request addressed is a loopback name (`localhost`, `127.0.0.1`, `[::1]`, with
 or without a port).
 
-A client-*address* check does not work here: the app's `uvicorn` runs without
-`--proxy-headers` (see `Dockerfile`), so a browser on the same machine,
+A client-*address* check does not work here: the app's `uvicorn` takes
+`X-Forwarded-For` only from `127.0.0.1` (its default `forwarded_allow_ips`), so a
+browser on the same machine,
 reaching the container through podman/docker's NAT, shows up as the
 container's gateway IP — never as `127.0.0.1`. Either half of the header/Host
 check alone can be spoofed (a stray client header; nginx's default server
@@ -184,6 +185,15 @@ against the repo root), and every root-absolute link (`/docs.html`,
 | `docs/blog/interne-meldestelle-kostenlos.html` | Article. |
 | `docs/blog/was-ist-neu-in-2-0.html` | Article. |
 | `docs/blog/whistleblower-software-vergleich.html` | Article. |
+| `docs/blog/metadaten-entfernen-ohne-beweise-zu-veraendern.html` | Article. |
+| `docs/blog/en.html` | Blog index, English. Every article below is the English twin of a German one; check the language switch both ways. |
+| `docs/blog/hinschg-compliance-guide.html` | Article, English. |
+| `docs/blog/whistleblowing-system-gdpr-eu-hosting.html` | Article, English. |
+| `docs/blog/set-up-internal-reporting-channel.html` | Article, English. |
+| `docs/blog/free-internal-reporting-channel.html` | Article, English. |
+| `docs/blog/whats-new-in-2-0.html` | Article, English. |
+| `docs/blog/whistleblowing-software-comparison.html` | Article, English. |
+| `docs/blog/removing-metadata-without-altering-evidence.html` | Article, English. |
 
 ## What to check, on every page
 

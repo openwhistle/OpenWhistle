@@ -81,3 +81,25 @@ def test_axe_core_is_fetched_from_the_registry_renovate_checks() -> None:
     assert manager["datasourceTemplate"] == "npm"
     conftest = (ROOT / "tests/e2e/conftest.py").read_text()
     assert re.search(r'AXE_CDN = "https://cdn\.jsdelivr\.net/npm/axe-core@\d+\.\d+\.\d+/', conftest)
+
+
+def test_every_digest_pinned_image_in_a_workflow_is_managed() -> None:
+    """The CI nginx pins sat in `docker run` lines no matchString reached, so
+    Renovate never moved them and nothing said so."""
+    captured = {
+        hit.group("currentDigest")
+        for manager in CONFIG["customManagers"]
+        for rx in (re.compile(m.replace("(?<", "(?P<")) for m in manager["matchStrings"])
+        if "currentDigest" in rx.groupindex
+        for f in _files(manager)
+        for hit in rx.finditer(f.read_text())
+    }
+    pinned = {
+        digest
+        for wf in (ROOT / ".github/workflows").glob("*.yml")
+        for line in wf.read_text().splitlines()
+        if "uses:" not in line
+        for digest in re.findall(r"\S+@(sha256:[0-9a-f]{64})", line)
+    }
+    assert pinned, "no pinned image found — the check reaches nothing"
+    assert pinned <= captured, pinned - captured

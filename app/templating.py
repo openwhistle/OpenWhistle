@@ -11,6 +11,7 @@ from markupsafe import Markup, escape
 
 from app.config import settings
 from app.i18n import format_count, get_lang, make_translator
+from app.services import deadlines
 from app.services.attachment import format_size
 from app.services.categories import category_label
 from app.services.report import format_day, whistleblower_caused
@@ -21,6 +22,10 @@ templates.env.filters["format_size"] = format_size
 templates.env.filters["day"] = format_day
 templates.env.filters["format_count"] = format_count
 templates.env.globals["whistleblower_caused"] = whistleblower_caused
+# §17 HinSchG deadlines: the dashboard, the case page and the status page read
+# the same computation (app/services/deadlines.py).
+templates.env.globals["ack_status"] = deadlines.ack_status
+templates.env.globals["feedback_status"] = deadlines.feedback_status
 
 
 def wbr_after_hyphens(value: str) -> Markup:

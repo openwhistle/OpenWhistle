@@ -2,7 +2,7 @@
 
 import uuid
 from typing import Any
-from urllib.parse import quote
+from urllib.parse import quote, urlencode
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
@@ -13,6 +13,7 @@ from app.api.deps import get_current_admin, require_admin, require_superadmin
 from app.config import settings
 from app.csrf import validate_csrf, validate_csrf_header
 from app.database import get_db
+from app.forms import Multiline, SortOrder, Text32, Text64, Text128, Text512, Text5000
 from app.i18n import get_lang, make_translator
 from app.middleware import check_ip_warning, clear_ip_warning
 from app.models.report import STATUS_TRANSITIONS, Report, ReportStatus
@@ -26,33 +27,8 @@ from app.templating import REASON_UNREADABLE, audit_detail, render
 router = APIRouter(prefix="/admin")
 
 
-async def _cleanup_report_sessions(redis: Redis, report_id: uuid.UUID) -> None:
-    target = str(report_id)
-    cursor = 0
-    while True:
-        cursor, keys = await redis.scan(cursor, match="status-session:*", count=100)
-        if keys:
-            values = await redis.mget(*keys)
-            to_delete = [
-                key for key, val in zip(keys, values, strict=False)
-                if val is not None
-                and (val.decode() if isinstance(val, bytes) else val) == target
-            ]
-            if to_delete:
-                await redis.delete(*to_delete)
-        if cursor == 0:
-            break
-
-
 _ALLOWED_SORT = frozenset({"submitted_at", "case_number", "category", "status"})
 _ALLOWED_PER_PAGE = frozenset({10, 25, 50, 100})
-
-# Role privilege ranking — used for tier checks in user management.
-_ROLE_RANK: dict[AdminRole, int] = {
-    AdminRole.case_manager: 0,
-    AdminRole.admin: 1,
-    AdminRole.superadmin: 2,
-}
 
 
 def _can_access_report(user: AdminUser, report: Report) -> bool:
@@ -97,6 +73,30 @@ def _require_same_org(user: AdminUser, target_org_id: uuid.UUID | None) -> None:
     scope = _org_scope(user)
     if scope["scope_org"] and target_org_id != scope["org_id"]:
         raise HTTPException(status_code=404)
+
+
+def _require_may_manage(user: AdminUser, target: AdminUser) -> None:
+    """The checks every change to another account needs, in one place.
+
+    Organisation, the superadmin tier, and — in DEMO_MODE — the demo
+    accounts. Reactivation used to check the organisation only, so an admin
+    could re-enable a superadmin another superadmin had disabled; and a demo
+    visitor could deactivate or demote a demo account and lock out everyone
+    after them until the next reset.
+    """
+    from app.services.demo_seed import DEMO_USERNAMES
+
+    _require_same_org(user, target.org_id)
+    if target.role == AdminRole.superadmin and user.role != AdminRole.superadmin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only a superadmin can change a superadmin account.",
+        )
+    if settings.demo_mode and target.username in DEMO_USERNAMES:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The demo accounts cannot be changed.",
+        )
 
 
 async def _get_authorized_report(
@@ -216,10 +216,11 @@ async def _dashboard(
     # decrypts a report outside what this caller may already see, and the
     # CONTENT_SEARCH_LIMIT budget is spent on the caller's current view rather
     # than every status/location outside it.
+    read_orgs: set[uuid.UUID | None] = set()
     content_ids = (
         await report_service.content_match_ids(
             db, case_query, assigned_to_id=assigned_filter, location_id=location_filter,
-            status_filter=status_filter, **_org_scope(current_user)
+            status_filter=status_filter, read_orgs=read_orgs, **_org_scope(current_user)
         )
         if len(case_query) >= 3 else None
     )
@@ -228,10 +229,15 @@ async def _dashboard(
         # like an identity-reveal reason (scripts/rotate_encryption_key.py rotates both).
         from app.services.crypto import encrypt  # noqa: PLC0415
 
-        await audit_service.log(
-            db, current_user, AuditAction.CONTENT_SEARCHED,
-            detail={"term": encrypt(case_query), "hits": len(content_ids)},
-        )
+        # One entry per organisation whose reports were read: a superadmin's
+        # search spans them all, and used to be recorded under its own only.
+        # Without multi-tenancy the log is not scoped: one entry.
+        split = settings.multi_tenancy_enabled and read_orgs
+        for read_org in read_orgs if split else {current_user.org_id}:
+            await audit_service.log(
+                db, current_user, AuditAction.CONTENT_SEARCHED, target_org=read_org,
+                detail={"term": encrypt(case_query), "hits": len(content_ids)},
+            )
         await db.commit()
     reports, total = await report_service.get_reports_paginated(
         db,
@@ -285,8 +291,6 @@ async def _dashboard(
             "reporting_path": reporting_path,
             "reporting_link": reporting_link,
             "category_labels": category_labels,
-            "ack_deadline_days": 7,
-            "feedback_deadline_days": 90,
             "deleted_case": request.query_params.get("deleted"),
             "stats": stats,
             "page": page,
@@ -357,7 +361,7 @@ async def _reveal_gate(
 async def reveal_identity(
     request: Request,
     report_id: uuid.UUID,
-    reason: str = Form(""),
+    reason: Multiline = "",
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(get_current_admin),
     _csrf: None = Depends(validate_csrf),
@@ -527,7 +531,7 @@ async def update_status(
 async def admin_reply(
     request: Request,
     report_id: uuid.UUID,
-    content: str = Form(...),
+    content: Text5000,
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(get_current_admin),
     _csrf: None = Depends(validate_csrf),
@@ -585,8 +589,12 @@ async def assign_report(
 
     old_assignee = report.assigned_to.username if report.assigned_to else None
     await report_service.assign_report(db, report, assignee)
+    # Unassigning used to be written as "assigned" to nobody, so the audit
+    # filter's "unassigned" never matched a row.
     await audit_service.log(
-        db, current_user, AuditAction.REPORT_ASSIGNED, report_id=report.id,
+        db, current_user,
+        AuditAction.REPORT_ASSIGNED if assignee else AuditAction.REPORT_UNASSIGNED,
+        report_id=report.id,
         detail={"from": old_assignee, "to": assignee.username if assignee else None},
     )
     await db.commit()
@@ -600,7 +608,7 @@ async def assign_report(
 async def add_note(
     request: Request,
     report_id: uuid.UUID,
-    content: str = Form(...),
+    content: Text5000,
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(get_current_admin),
     _csrf: None = Depends(validate_csrf),
@@ -697,6 +705,29 @@ async def request_delete(
     return RedirectResponse(f"/admin/reports/{report.id}", status_code=302)
 
 
+async def _one_made_the_other(
+    db: AsyncSession, a: uuid.UUID | None, b: uuid.UUID
+) -> bool:
+    """True if ``a`` made ``b`` or ``b`` made ``a``, directly or through others.
+
+    The maker chose the first password, so they are one pair of eyes. Walked
+    through ``created_by_id``; ``seen`` stops a cycle a manual edit could make.
+    """
+    from sqlalchemy import select
+
+    from app.models.user import AdminUser as _User
+
+    async def makers(start: uuid.UUID | None) -> set[uuid.UUID]:
+        seen: set[uuid.UUID] = set()
+        current = start
+        while current is not None and current not in seen:
+            seen.add(current)
+            current = await db.scalar(select(_User.created_by_id).where(_User.id == current))
+        return seen
+
+    return a is not None and (a in await makers(b) or b in await makers(a))
+
+
 @router.post("/reports/{report_id}/confirm-delete")
 async def confirm_delete(
     request: Request,
@@ -713,15 +744,18 @@ async def confirm_delete(
     dr = await report_service.get_active_deletion_request(db, report.id, for_update=True)
     if not dr:
         raise HTTPException(status_code=400, detail="No pending deletion request.")
-    if dr.requested_by_id == current_user.id:
+    if dr.requested_by_id == current_user.id or await _one_made_the_other(
+        db, dr.requested_by_id, current_user.id
+    ):
         raise HTTPException(
             status_code=409,
-            detail="The same admin who requested deletion cannot confirm it.",
+            detail="The admin who requested deletion, or an account one of them made, "
+            "cannot confirm it.",
         )
 
     case_number = report.case_number
     await report_service.confirm_deletion(db, report, dr, current_user)
-    await _cleanup_report_sessions(redis, report_id)
+    await report_service.end_status_sessions(redis, {report_id})
     safe_case = quote(case_number, safe="")
     return RedirectResponse(f"/admin/dashboard?deleted={safe_case}", status_code=302)
 
@@ -786,7 +820,7 @@ async def export_pdf(
 async def export_pdf_with_identity(
     request: Request,
     report_id: uuid.UUID,
-    reason: str = Form(""),
+    reason: Multiline = "",
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(get_current_admin),
     _csrf: None = Depends(validate_csrf),
@@ -850,6 +884,13 @@ async def admin_download_attachment(
         raise HTTPException(status_code=404) from exc
 
     name = await attachment_filename(db, attachment)
+    # Opening the case and exporting its PDF were recorded; reading the
+    # evidence itself was not.
+    await audit_service.log(
+        db, current_user, AuditAction.ATTACHMENT_DOWNLOADED, report_id=report_id,
+        detail={"attachment_id": str(attachment_id)},
+    )
+    await db.commit()
     return Response(
         content=data,
         media_type=attachment.content_type,
@@ -874,10 +915,10 @@ async def categories_page(
 @router.post("/categories")
 async def create_category(
     request: Request,
-    slug: str = Form(...),
-    label_en: str = Form(...),
-    label_de: str = Form(...),
-    sort_order: int = Form(default=50),
+    slug: Text64,
+    label_en: Text128,
+    label_de: Text128,
+    sort_order: SortOrder = 50,
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf),
@@ -974,12 +1015,46 @@ async def _users_page(
         u for u in await get_all_users(db)
         if not scope["scope_org"] or u.org_id == scope["org_id"]
     ]
+    organisations = None
+    if settings.multi_tenancy_enabled and current_user.role == AdminRole.superadmin:
+        from sqlalchemy import select
+
+        from app.models.organisation import Organisation
+
+        organisations = (await db.execute(
+            select(Organisation).order_by(Organisation.name)
+        )).scalars().all()
     return render(request, "admin/users.html", {
         "user": current_user,
         "users": users,
         "roles": list(AdminRole),
+        "organisations": organisations,
         **(extra or {}),
     })
+
+
+async def _new_account_org(
+    db: AsyncSession, creator: AdminUser, chosen: str
+) -> uuid.UUID | None:
+    """The organisation a new account belongs to.
+
+    A superadmin with multi-tenancy on chooses it; everyone else creates in
+    their own. It used to be the creator's organisation, and only with
+    multi-tenancy on: a superadmin (in the default organisation) could give
+    no other organisation an admin, and an account made before multi-tenancy
+    was switched on had none and, once it was, saw no case at all.
+    """
+    if chosen and settings.multi_tenancy_enabled and creator.role == AdminRole.superadmin:
+        from app.models.organisation import Organisation
+
+        try:
+            org = await db.get(Organisation, uuid.UUID(chosen))
+        except ValueError:
+            org = None
+        if org is None or not org.is_active:
+            raise HTTPException(status_code=422, detail="Unknown organisation.")
+        return org.id
+    return creator.org_id or await report_service.default_org_id(db)
 
 
 @router.post("/users")
@@ -988,6 +1063,7 @@ async def create_user(
     username: str = Form(...),
     password: str = Form(...),
     role: str = Form(default=AdminRole.case_manager.value),
+    org_id: str = Form(default=""),
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf),
@@ -1011,12 +1087,13 @@ async def create_user(
             detail="Only a superadmin can create superadmin accounts.",
         )
 
+    target_org = await _new_account_org(db, current_user, org_id)
     try:
         new_user, _totp_secret = await svc_create(db, username.strip(), password, role_enum)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
-    if settings.multi_tenancy_enabled:
-        new_user.org_id = current_user.org_id
+    new_user.org_id = target_org
+    new_user.created_by_id = current_user.id
     await audit_service.log(
         db, current_user, AuditAction.ADMIN_CREATED,
         detail={"username": new_user.username, "role": role_enum.value},
@@ -1044,7 +1121,7 @@ async def change_user_role(
     target = await get_user_by_id(db, user_id)
     if not target:
         raise HTTPException(status_code=404)
-    _require_same_org(current_user, target.org_id)
+    _require_may_manage(current_user, target)
     try:
         role_enum = AdminRole(role)
     except ValueError as exc:
@@ -1056,12 +1133,9 @@ async def change_user_role(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You cannot change your own role.",
         )
-    # Privilege-tier check: only a superadmin may grant the superadmin role or
-    # modify an existing superadmin (an admin cannot promote itself/others to,
-    # or demote, the top tier).
-    if (
-        role_enum == AdminRole.superadmin or target.role == AdminRole.superadmin
-    ) and current_user.role != AdminRole.superadmin:
+    # Privilege-tier check: only a superadmin may grant the superadmin role
+    # (changing an existing superadmin is refused by _require_may_manage).
+    if role_enum == AdminRole.superadmin and current_user.role != AdminRole.superadmin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only a superadmin can assign or change the superadmin role.",
@@ -1104,22 +1178,16 @@ async def deactivate_user(
     target = await get_user_by_id(db, user_id)
     if not target:
         raise HTTPException(status_code=404)
-    _require_same_org(current_user, target.org_id)
     if target.id == current_user.id:
         raise HTTPException(status_code=400, detail="You cannot deactivate your own account.")
-
-    # Only a superadmin may deactivate a superadmin (a plain admin cannot disable
-    # a higher-privileged account).
-    if target.role == AdminRole.superadmin and current_user.role != AdminRole.superadmin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only a superadmin can deactivate a superadmin account.",
-        )
+    _require_may_manage(current_user, target)
 
     # Availability invariant: never deactivate the last account able to
-    # administer the instance (admin OR superadmin).
+    # administer the instance (admin OR superadmin). An inactive target
+    # changes nothing and is not counted.
     if (
         target.role in (AdminRole.admin, AdminRole.superadmin)
+        and target.is_active
         and await count_active_privileged_admins(db) <= 1
     ):
         raise HTTPException(
@@ -1150,7 +1218,7 @@ async def reactivate_user(
     target = await get_user_by_id(db, user_id)
     if not target:
         raise HTTPException(status_code=404)
-    _require_same_org(current_user, target.org_id)
+    _require_may_manage(current_user, target)
 
     await svc_react(db, target)
     await audit_service.log(
@@ -1244,22 +1312,9 @@ async def audit_log_page(
     action_filter = qp.get("action", "")
     show_views = qp.get("views") == "1"
 
-    report_id = None
-    if report_id_str:
-        try:
-            report_id = uuid.UUID(report_id_str)
-        except ValueError:
-            pass
-
     entries, total = await audit_service.get_audit_log(
-        db,
-        report_id=report_id,
-        action=action_filter or None,
-        exclude_action=_views_excluded(show_views or action_filter == AuditAction.REPORT_VIEWED),
-        page=page,
-        per_page=50,
-        viewer_id=current_user.id,
-        **_org_scope(current_user),
+        db, **_audit_filters(qp), page=page, per_page=50,
+        viewer_id=current_user.id, **_org_scope(current_user),
     )
     total_pages = max(1, (total + 49) // 50)
 
@@ -1273,7 +1328,30 @@ async def audit_log_page(
         "report_id_filter": report_id_str,
         "show_views": show_views,
         "audit_actions": audit_service.ALL_ACTIONS,
+        # The export carries the page's filters: it used to carry ?views only,
+        # so a filtered page exported the whole log.
+        "export_query": urlencode({
+            k: v for k, v in (("action", action_filter), ("report_id", report_id_str),
+                              ("views", "1" if show_views else "")) if v
+        }),
     })
+
+
+def _audit_filters(qp: Any) -> dict[str, Any]:
+    """The audit-log filters of a query string: the page and its export read the same."""
+    action_filter = qp.get("action", "")
+    report_id = None
+    if qp.get("report_id"):
+        try:
+            report_id = uuid.UUID(qp["report_id"])
+        except ValueError:
+            pass
+    show_views = qp.get("views") == "1" or action_filter == AuditAction.REPORT_VIEWED
+    return {
+        "report_id": report_id,
+        "action": action_filter or None,
+        "exclude_action": _views_excluded(show_views),
+    }
 
 
 def _views_excluded(show_views: bool) -> str | None:
@@ -1321,11 +1399,18 @@ async def audit_log_csv(
     import csv
     import io
 
+    # Every row: this used to stop at 10 000 without saying so.
+    filters = _audit_filters(request.query_params)
     entries, _ = await audit_service.get_audit_log(
-        db, per_page=10000, viewer_id=current_user.id,
-        exclude_action=_views_excluded(request.query_params.get("views") == "1"),
-        **_org_scope(current_user),
+        db, **filters, per_page=None, viewer_id=current_user.id, **_org_scope(current_user),
     )
+    # The export holds decrypted reveal reasons and search terms: who took it is recorded.
+    await audit_service.log(db, current_user, AuditAction.AUDIT_EXPORTED, detail={
+        "rows": len(entries),
+        **{k: str(v) for k, v in (("action", filters["action"]),
+                                  ("report_id", filters["report_id"])) if v},
+    })
+    await db.commit()
     output = io.StringIO()
     writer = csv.writer(output)
     # "action" keeps the machine code for tooling; "action_label" is for people.
@@ -1389,10 +1474,10 @@ async def locations_page(
 @router.post("/locations")
 async def create_location(
     request: Request,
-    name: str = Form(...),
-    code: str = Form(...),
-    description: str = Form(default=""),
-    sort_order: int = Form(default=0),
+    name: Text128,
+    code: Text32,
+    description: Text512 = "",
+    sort_order: SortOrder = 0,
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf),
@@ -1483,18 +1568,6 @@ async def dismiss_ip_warning(
     return JSONResponse({"cleared": True})
 
 
-@router.post("/demo/reset")
-async def demo_reset(
-    current_user: AdminUser = Depends(get_current_admin),
-    _csrf: None = Depends(validate_csrf_header),
-) -> JSONResponse:
-    if not settings.demo_mode:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
-    from app.services.demo_seed import seed_demo_data
-    await seed_demo_data()
-    return JSONResponse({"reset": True})
-
-
 # ── Telephone channel stub (HinSchG §16) ─────────────────────────────────────
 
 
@@ -1514,10 +1587,11 @@ async def retention_page(
     request: Request,
     current_user: AdminUser = Depends(require_admin),
 ) -> HTMLResponse:
-    from datetime import UTC, datetime, timedelta
+    from datetime import UTC, datetime
 
-    now = datetime.now(UTC)
-    next_run = (now + timedelta(days=1)).replace(hour=3, minute=0, second=0, microsecond=0)
+    from app.services.retention import next_run as next_retention_run
+
+    next_run = next_retention_run(datetime.now(UTC))
     return render(
         request,
         "admin/retention.html",
@@ -1645,10 +1719,10 @@ async def organisations_page(
 @router.post("/organisations", response_class=HTMLResponse)
 async def create_organisation(
     request: Request,
+    name: Text128,
+    slug: Text64,
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(require_superadmin),
-    name: str = Form(...),
-    slug: str = Form(...),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
     import re

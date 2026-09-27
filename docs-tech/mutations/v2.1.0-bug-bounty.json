@@ -1,0 +1,274 @@
+{
+ "test_groups": {
+  "A": [
+   "tests/test_v210_bug_bounty.py"
+  ],
+  "B": [
+   "tests/test_coverage_auth_extended.py"
+  ],
+  "C": [
+   "tests/test_v210_auth_recovery.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "access-log-handler",
+   "file": "app/logging_config.py",
+   "old": "            \"uvicorn.access\": {\"handlers\": [], \"propagate\": False},\n",
+   "new": "            \"uvicorn.access\": {\"handlers\": [\"console\"], \"propagate\": False},\n",
+   "tests": "A"
+  },
+  {
+   "id": "totp-unicode-digits",
+   "file": "app/services/mfa.py",
+   "old": "    if not _TOTP_CODE.fullmatch(code):\n        return False\n",
+   "new": "",
+   "tests": "A"
+  },
+  {
+   "id": "totp-enrolment-reusable",
+   "file": "app/api/auth.py",
+   "old": "    if not await consume_totp(redis, user.id, user.totp_secret, totp_code):\n        new_setup_token",
+   "new": "    if not verify_totp(user.totp_secret, totp_code):\n        new_setup_token",
+   "tests": "A"
+  },
+  {
+   "id": "wizard-any-secret",
+   "file": "app/api/wizard.py",
+   "old": "    secret_ok = bool(_TOTP_SECRET.fullmatch(totp_secret))\n",
+   "new": "    secret_ok = True\n",
+   "tests": "A"
+  },
+  {
+   "id": "csrf-str-compare",
+   "file": "app/csrf.py",
+   "old": "    return secrets.compare_digest(submitted.encode(), cookie.encode())\n",
+   "new": "    return secrets.compare_digest(submitted, cookie)\n",
+   "tests": "A"
+  },
+  {
+   "id": "csrf-first-cookie",
+   "file": "app/csrf.py",
+   "old": "        token = cookie_parser(cookie_header.decode(\"latin-1\")).get(_CSRF_COOKIE)\n",
+   "new": "        token = next((p.strip()[8:] for p in cookie_header.decode(\"latin-1\").split(\";\") if p.strip().startswith(\"ow_csrf=\")), None)\n",
+   "tests": "A"
+  },
+  {
+   "id": "manage-superadmin-tier",
+   "file": "app/api/admin.py",
+   "old": "    if target.role == AdminRole.superadmin and user.role != AdminRole.superadmin:\n        raise HTTPException(\n            status_code=status.HTTP_403_FORBIDDEN,\n            detail=\"Only a superadmin can change a superadmin account.\",\n",
+   "new": "    if False:\n        raise HTTPException(\n            status_code=status.HTTP_403_FORBIDDEN,\n            detail=\"Only a superadmin can change a superadmin account.\",\n",
+   "tests": "A"
+  },
+  {
+   "id": "manage-demo-accounts",
+   "file": "app/api/admin.py",
+   "old": "    if settings.demo_mode and target.username in DEMO_USERNAMES:\n        raise HTTPException(\n            status_code=status.HTTP_403_FORBIDDEN,\n            detail=\"The demo accounts cannot be changed.\",\n",
+   "new": "    if False:\n        raise HTTPException(\n            status_code=status.HTTP_403_FORBIDDEN,\n            detail=\"The demo accounts cannot be changed.\",\n",
+   "tests": "A"
+  },
+  {
+   "id": "delete-unaudited",
+   "file": "app/services/report.py",
+   "old": "    await audit_service.log(\n        db, confirmer, audit_service.AuditAction.REPORT_DELETE_CONFIRMED,",
+   "new": "    None and audit_service.log(\n        db, confirmer, audit_service.AuditAction.REPORT_DELETE_CONFIRMED,",
+   "tests": "A"
+  },
+  {
+   "id": "ldap-no-local-fallback",
+   "file": "app/api/auth.py",
+   "old": "        except LDAPAuthError:\n            ldap_info = None\n",
+   "new": "        except LDAPAuthError:\n            return render(request, \"login.html\", _login_ctx(request, {\"error\": \"login.error.invalid\"}), status_code=401)\n",
+   "tests": "A"
+  },
+  {
+   "id": "ldap-name-collision",
+   "file": "app/api/auth.py",
+   "old": "                if taken is not None:\n",
+   "new": "                if False:\n",
+   "tests": "A"
+  },
+  {
+   "id": "ldap-typed-name",
+   "file": "app/services/ldap_auth.py",
+   "old": "    if not directory_name:\n",
+   "new": "    if not (directory_name := directory_name or username):\n",
+   "tests": "A"
+  },
+  {
+   "id": "lockout-case-sensitive",
+   "file": "app/services/rate_limit.py",
+   "old": "    return f\"{_ADMIN_PREFIX}{username.strip().casefold()}\"\n",
+   "new": "    return f\"{_ADMIN_PREFIX}{username}\"\n",
+   "tests": "A"
+  },
+  {
+   "id": "lockout-from-first",
+   "file": "app/services/rate_limit.py",
+   "old": "    count = await redis.incr(key)\n    await redis.expire(key, seconds)\n",
+   "new": "    count = await redis.incr(key)\n    if count == 1:\n        await redis.expire(key, seconds)\n",
+   "tests": "A"
+  },
+  {
+   "id": "refresh-stores-after-sweep",
+   "file": "app/api/auth.py",
+   "old": "    if not session_token or not await auth_service.revoke_session(redis, session_token):\n",
+   "new": "    if not session_token or (await auth_service.revoke_session(redis, session_token), False)[1]:\n",
+   "tests": "B"
+  },
+  {
+   "id": "feedback-without-ack",
+   "file": "app/services/report.py",
+   "old": "            feedback_due_at=deadlines.feedback_due(today),\n",
+   "new": "",
+   "tests": "A"
+  },
+  {
+   "id": "feedback-90-days",
+   "file": "app/services/deadlines.py",
+   "old": "    return min(add_months(_aware(acknowledged_at), FEEDBACK_MONTHS), without_ack)\n",
+   "new": "    return _aware(acknowledged_at) + timedelta(days=90)\n",
+   "tests": "A"
+  },
+  {
+   "id": "ack-rate-counts-fresh",
+   "file": "app/services/report.py",
+   "old": "    sla_rate = round(on_time / decided_reports * 100) if decided_reports else 0\n",
+   "new": "    sla_rate = round(on_time / total_reports * 100) if total_reports else 0\n",
+   "tests": "A"
+  },
+  {
+   "id": "pdf-days-truncate",
+   "file": "app/services/deadlines.py",
+   "old": "    return acknowledged_at is not None and _aware(acknowledged_at) <= ack_due(submitted_at)\n",
+   "new": "    return acknowledged_at is not None and (_aware(acknowledged_at) - _aware(submitted_at)).days <= ACK_DAYS\n",
+   "tests": "A"
+  },
+  {
+   "id": "overdue-on-last-day",
+   "file": "app/services/deadlines.py",
+   "old": "    if _aware(now) > due:\n        return Deadline(\"overdue\", due, left)\n",
+   "new": "    if left <= 0:\n        return Deadline(\"overdue\", due, left)\n",
+   "tests": "A"
+  },
+  {
+   "id": "form-crlf",
+   "file": "app/forms.py",
+   "old": "    return value.replace(\"\\r\\n\", \"\\n\").replace(\"\\r\", \"\\n\") if isinstance(value, str) else value\n",
+   "new": "    return value\n",
+   "tests": "A"
+  },
+  {
+   "id": "form-reply-unbounded",
+   "file": "app/forms.py",
+   "old": "Text5000 = Annotated[str, BeforeValidator(_lf), Form(max_length=5000)]\n",
+   "new": "Text5000 = Annotated[str, BeforeValidator(_lf), Form()]\n",
+   "tests": "A"
+  },
+  {
+   "id": "email-unchecked",
+   "file": "app/api/reports.py",
+   "old": "            if email_stripped and not _valid_email(email_stripped):\n",
+   "new": "            if False:\n",
+   "tests": "A"
+  },
+  {
+   "id": "closed-case-reply",
+   "file": "app/api/reports.py",
+   "old": "    closed = report.status == ReportStatus.closed\n",
+   "new": "    closed = False\n",
+   "tests": "A"
+  },
+  {
+   "id": "case-number-case",
+   "file": "app/services/report.py",
+   "old": "    rl_key = case_number = case_number.strip().upper()\n",
+   "new": "    case_number = case_number.strip()\n    rl_key = case_number.upper()\n",
+   "tests": "A"
+  },
+  {
+   "id": "retention-keeps-sessions",
+   "file": "app/services/retention.py",
+   "old": "            if reports and lock_redis is not None:\n",
+   "new": "            if False:\n",
+   "tests": "A"
+  },
+  {
+   "id": "digest-says-messages",
+   "file": "app/services/notifications.py",
+   "old": "        f\"{_plural(new_messages, 'case with new messages', 'cases with new messages')}\"\n",
+   "new": "        f\"{_plural(new_messages, 'new message', 'new messages')}\"\n",
+   "tests": "A"
+  },
+  {
+   "id": "account-org-creator",
+   "file": "app/api/admin.py",
+   "old": "    new_user.org_id = target_org\n",
+   "new": "",
+   "tests": "A"
+  },
+  {
+   "id": "four-eyes-accounts",
+   "file": "app/api/admin.py",
+   "old": "    if dr.requested_by_id == current_user.id or await _one_made_the_other(\n        db, dr.requested_by_id, current_user.id\n    ):\n",
+   "new": "    if dr.requested_by_id == current_user.id:\n",
+   "tests": "A"
+  },
+  {
+   "id": "scheduler-local-tz",
+   "file": "app/main.py",
+   "old": "    return AsyncIOScheduler(timezone=UTC)\n",
+   "new": "    return AsyncIOScheduler()\n",
+   "tests": "A"
+  },
+  {
+   "id": "audit-export-unfiltered",
+   "file": "app/api/admin.py",
+   "old": "    filters = _audit_filters(request.query_params)\n",
+   "new": "    filters = {\"report_id\": None, \"action\": None, \"exclude_action\": None}\n",
+   "tests": "A"
+  },
+  {
+   "id": "audit-export-capped",
+   "file": "app/api/admin.py",
+   "old": "        db, **filters, per_page=None, viewer_id=current_user.id, **_org_scope(current_user),\n",
+   "new": "        db, **filters, per_page=10000, viewer_id=current_user.id, **_org_scope(current_user),\n",
+   "tests": "A"
+  },
+  {
+   "id": "attachment-download-unaudited",
+   "file": "app/api/admin.py",
+   "old": "        db, current_user, AuditAction.ATTACHMENT_DOWNLOADED, report_id=report_id,\n",
+   "new": "        db, current_user, AuditAction.REPORT_VIEWED, report_id=report_id,\n",
+   "tests": "A"
+  },
+  {
+   "id": "search-own-org-only",
+   "file": "app/api/admin.py",
+   "old": "        for read_org in read_orgs if split else {current_user.org_id}:\n",
+   "new": "        for read_org in {current_user.org_id}:\n",
+   "tests": "A"
+  },
+  {
+   "id": "unassign-as-assign",
+   "file": "app/api/admin.py",
+   "old": "        AuditAction.REPORT_ASSIGNED if assignee else AuditAction.REPORT_UNASSIGNED,\n",
+   "new": "        AuditAction.REPORT_ASSIGNED,\n",
+   "tests": "A"
+  },
+  {
+   "id": "unlink-ldap-off",
+   "file": "app/api/auth.py",
+   "old": "    directory_login = bool(current_user.ldap_username) and settings.ldap_enabled\n",
+   "new": "    directory_login = bool(current_user.ldap_username)\n",
+   "tests": "C"
+  },
+  {
+   "id": "username-pattern",
+   "file": "app/templates/admin/users.html",
+   "old": "pattern=\"[A-Za-z0-9._@ \\-]{3,64}\"",
+   "new": "pattern=\"[A-Za-z0-9_\\-]+\"",
+   "tests": "A"
+  }
+ ]
+}

@@ -9,7 +9,7 @@ import zipfile
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from PIL import Image, PngImagePlugin
+from PIL import Image, ImageOps, PngImagePlugin
 from pypdf import PdfWriter
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -30,9 +30,9 @@ def _exif_jpeg() -> bytes:
 def test_jpeg_loses_exif_and_gps_but_keeps_orientation() -> None:
     out = strip_metadata("photo.jpg", _exif_jpeg())
     img = Image.open(io.BytesIO(out))
-    assert len(img.getexif()) == 0
+    assert dict(img.getexif()) == {0x0112: 6}  # the orientation tag alone, pixels untouched
     assert b"SecretCam" not in out
-    assert img.size == (20, 40)  # orientation baked into the pixels
+    assert ImageOps.exif_transpose(img).size == (20, 40)
 
 
 def test_png_text_chunks_are_removed() -> None:

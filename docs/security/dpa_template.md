@@ -30,7 +30,7 @@ The Processor hosts and operates the OpenWhistle application, which:
 
 - Receives and stores whistleblowing reports submitted by the Controller's
   employees or third parties.
-- Stores report content encrypted at rest (AES-256 envelope encryption).
+- Stores report content encrypted at rest (envelope encryption: Fernet, AES-128-CBC with HMAC-SHA256).
 - Provides an administrative interface for the Controller's staff to review
   and process reports.
 - Deletes reports automatically after the configured retention period
@@ -100,7 +100,7 @@ The Processor implements the following technical and organisational measures:
 
 | Category | Measure |
 |----------|---------|
-| Pseudonymisation / encryption | Report content encrypted at rest (AES-256 envelope encryption); TLS 1.2+ in transit |
+| Pseudonymisation / encryption | Report content encrypted at rest (envelope encryption: Fernet, AES-128-CBC with HMAC-SHA256); TLS 1.2+ in transit |
 | Access control | Role-based access (superadmin / admin / case manager); mandatory TOTP MFA |
 | Anonymity | No IP addresses logged at any layer |
 | Data minimisation | Anonymous submissions require no personal data |

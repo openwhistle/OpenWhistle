@@ -63,7 +63,7 @@ zero vendor lock-in, and privacy-first by design.
 - **Status workflow** — `received → in_review → pending_feedback → closed`; only valid
   transitions allowed server-side.
 - **4-eyes deletion** — Hard deletion requires two different admins (request + confirm);
-  same-admin confirm returns HTTP 409. GDPR Art. 17 compliant.
+  the same admin, or an account one of them made, gets HTTP 409. GDPR Art. 17 compliant.
 - **Immutable audit log** — Every admin action recorded with timestamp and username, shown as
   readable labels in all four languages; CSV export keeps the machine codes; required by HinSchG §11 Abs. 5.
 - **Search by case number or content** — Find a case by any part of its number or by a word
@@ -121,7 +121,8 @@ zero vendor lock-in, and privacy-first by design.
 - **Encrypted second factor** — TOTP secrets are stored encrypted; a database dump alone yields
   no account's second factor.
 - **Hardened containers** — read-only root file system, no capabilities, `no-new-privileges`,
-  base images pinned by digest, no `curl` in the image; the Helm chart sets the same.
+  the image's base images and the bundled nginx and ClamAV pinned by digest (PostgreSQL and Redis
+  by tag), no `curl` in the image; the Helm chart sets the same.
 - **IP leakage detection** — The admin dashboard warns when upstream proxies forward IP headers.
 - **Hard deletion** — Reports can be permanently deleted including all messages, attachments, and
   Redis session data. DSGVO-compliant.
@@ -210,7 +211,7 @@ The demo resets automatically every 6 hours.
 ```bash
 git clone https://github.com/openwhistle/OpenWhistle.git
 cd OpenWhistle
-cp .env.example .env        # Set a strong SECRET_KEY and ENCRYPTION_KEY (fresh install only)
+cp .env.example .env        # SECRET_KEY, ENCRYPTION_KEY: openssl rand -hex 32 each (fresh install)
 docker compose up -d
 docker compose logs app | grep "Setup token"  # read the one-time setup token
 # Open http://localhost:4009/setup to create the first admin account

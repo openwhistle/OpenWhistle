@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import io
 import re
 import uuid
@@ -131,37 +132,146 @@ _OOXML_EMPTY_PARTS: dict[str, bytes] = {
 }
 
 
+# Width × height × frames of a GIF or TIFF, the only images still decoded. A
+# 518 KB GIF of 40 frames at 4000×4000 cost 26 s of CPU; decoding a 450 KB PNG
+# of 12000×12000 took 1.1 GB of RAM. 50 MP holds a 48 MP phone photo.
+MAX_IMAGE_PIXELS: int = 50_000_000
+
+_ORIENTATION = 0x0112
+
+
+def _orientation(exif: bytes) -> int:
+    """The EXIF orientation (2–8) held in a TIFF/EXIF block, or 1 (upright)."""
+    from PIL import Image  # noqa: PLC0415
+
+    parsed = Image.Exif()
+    parsed.load(exif)
+    value = parsed.get(_ORIENTATION, 1)
+    return value if value in range(2, 9) else 1
+
+
+def _orientation_exif(value: int) -> bytes:
+    """A big-endian TIFF/EXIF block holding the orientation tag and nothing else."""
+    import struct  # noqa: PLC0415
+
+    header = b"MM\x00*\x00\x00\x00\x08\x00\x01"  # big-endian, one IFD entry
+    return header + struct.pack(">HHIHHI", _ORIENTATION, 3, 1, value, 0, 0)
+
+
 def _strip_image(data: bytes) -> bytes:
-    from PIL import Image, ImageOps  # noqa: PLC0415
+    # JPEG, PNG and WebP are cleaned by dropping their metadata segments, not by
+    # re-encoding. The re-encode this replaced turned palette PNGs black, kept
+    # one frame of an animated PNG or WebP, altered every pixel of a JPEG and
+    # grew a 5.5 MB JPEG to 14.4 MB, past the 10 MB limit it had passed.
+    from PIL import Image  # noqa: PLC0415
 
     with Image.open(io.BytesIO(data)) as img:
         fmt = img.format
+        if fmt in ("JPEG", "MPO"):  # MPO: a JPEG with more pictures after it
+            return _strip_jpeg(data, img.info.get("exif", b""))
+        if fmt == "PNG":
+            return _strip_png(data)
+        if fmt == "WEBP":
+            return _strip_webp(data)
+        if fmt not in ("GIF", "TIFF"):
+            raise MetadataError(f"unsupported image format {fmt}")
+        if img.width * img.height * getattr(img, "n_frames", 1) > MAX_IMAGE_PIXELS:
+            raise MetadataError("image too large to clean")
         out = io.BytesIO()
         if fmt == "GIF":
             # Keep animation; frames carry no EXIF, only an optional comment.
             img.info.pop("comment", None)
             img.save(out, format="GIF", save_all=True)
             return out.getvalue()
-        # Bake the EXIF orientation into the pixels, then copy the pixels alone:
-        # EXIF (GPS, camera serial), XMP, ICC and text chunks stay behind.
+        # Bake the EXIF orientation into the pixels, then copy the pixels alone.
+        from PIL import ImageOps  # noqa: PLC0415
+
         upright = ImageOps.exif_transpose(img)
         clean = Image.new(upright.mode, upright.size)
         clean.paste(upright)
-        if fmt == "JPEG":
-            clean.save(out, format="JPEG", quality=95)
-        elif fmt == "PNG":
-            clean.save(out, format="PNG", optimize=True)
-        elif fmt == "WEBP":
-            clean.save(out, format="WEBP", quality=95)
-        elif fmt == "TIFF":
-            clean.save(out, format="TIFF", compression="tiff_lzw")
-        else:
-            raise MetadataError(f"unsupported image format {fmt}")
+        if upright.palette is not None:  # Image.new starts with an empty palette
+            clean.putpalette(upright.palette)
+        clean.save(out, format="TIFF", compression="tiff_lzw")
     return out.getvalue()
 
 
-# JPEG markers that carry no metadata: APP0 (JFIF) and APP14 (Adobe colour transform).
-_JPEG_KEEP_APP = {0xE0, 0xEE}
+def _strip_jpeg(data: bytes, exif: bytes) -> bytes:
+    body = _strip_jpeg_segments(data)
+    orientation = _orientation(exif) if exif else 1
+    if orientation == 1:
+        return body
+    payload = b"Exif\x00\x00" + _orientation_exif(orientation)
+    return body[:2] + b"\xff\xe1" + (len(payload) + 2).to_bytes(2, "big") + payload + body[2:]
+
+
+# PNG chunks that describe pixels. Everything else goes: tEXt/zTXt/iTXt (author,
+# software), eXIf, iCCP (can name the device), tIME and private chunks.
+_PNG_KEEP = {
+    b"IHDR", b"PLTE", b"tRNS", b"IDAT", b"IEND", b"acTL", b"fcTL", b"fdAT",
+    b"gAMA", b"cHRM", b"sRGB", b"cICP", b"sBIT", b"bKGD", b"pHYs",
+}
+
+
+def _strip_png(data: bytes) -> bytes:
+    import zlib  # noqa: PLC0415
+
+    out, i, orientation = bytearray(data[:8]), 8, 1
+    while True:
+        length = int.from_bytes(data[i:i + 4], "big")
+        kind, end = data[i + 4:i + 8], i + 12 + length
+        if end > len(data):
+            raise MetadataError("truncated PNG")
+        if kind == b"eXIf":
+            orientation = _orientation(data[i + 8:end - 4])
+        elif kind == b"IEND":  # anything after IEND is not part of the image
+            if orientation != 1:
+                exif = b"eXIf" + _orientation_exif(orientation)
+                out += (len(exif) - 4).to_bytes(4, "big") + exif
+                out += zlib.crc32(exif).to_bytes(4, "big")
+            return bytes(out + data[i:end])
+        elif kind in _PNG_KEEP:
+            out += data[i:end]
+        i = end
+
+
+# WebP chunks kept. ICCP, EXIF, "XMP " and unknown chunks go.
+_WEBP_KEEP = {b"VP8X", b"VP8 ", b"VP8L", b"ALPH", b"ANIM", b"ANMF"}
+
+
+def _strip_webp(data: bytes) -> bytes:
+    body = data[12:8 + int.from_bytes(data[4:8], "little")]
+    out, i, orientation = bytearray(), 0, 1
+    while i < len(body):
+        kind, size = body[i:i + 4], int.from_bytes(body[i + 4:i + 8], "little")
+        end = i + 8 + size + (size & 1)  # libwebp has checked the sizes at open
+        if kind == b"EXIF":
+            orientation = _orientation(body[i + 8:i + 8 + size])
+        elif kind in _WEBP_KEEP:
+            out += body[i:end]
+        i = end
+    if out[:4] == b"VP8X":
+        flags = out[8] & ~0x2C  # ICC 0x20, EXIF 0x08, XMP 0x04
+        if orientation != 1:
+            exif = _orientation_exif(orientation)
+            out += b"EXIF" + len(exif).to_bytes(4, "little") + exif
+            flags |= 0x08
+        out[8] = flags
+    return b"RIFF" + (len(out) + 4).to_bytes(4, "little") + b"WEBP" + bytes(out)
+
+
+# APP14 (Adobe colour transform) is the only APPn segment a decoder needs. APP0
+# (JFIF) used to be kept too; its optional thumbnail can show a picture before
+# it was cropped.
+_JPEG_KEEP_APP = {0xEE}
+
+
+def _scan_end(data: bytes, i: int) -> int:
+    """Index of the first marker after entropy-coded data starting at ``i``."""
+    while (i := data.find(b"\xff", i)) != -1 and i + 1 < len(data):
+        if data[i + 1] != 0 and not 0xD0 <= data[i + 1] <= 0xD7:  # stuffing, restarts
+            return i
+        i += 2
+    return len(data)
 
 
 def _strip_jpeg_segments(data: bytes) -> bytes:
@@ -169,19 +279,27 @@ def _strip_jpeg_segments(data: bytes) -> bytes:
 
     A PDF embeds a JPEG as-is (/DCTDecode), so a photo keeps its GPS inside the PDF.
     Re-encoding would change the image; cutting the header segments does not.
+    Everything after the end-of-image marker goes too: a phone's motion-photo
+    video, a vendor trailer, the further pictures of an MPO. This used to stop at
+    the first scan and keep the rest of the file as it was.
     """
     if data[:2] != b"\xff\xd8":
         return data
     out, i = bytearray(data[:2]), 2
-    while i + 4 <= len(data) and data[i] == 0xFF:
+    while i + 1 < len(data) and data[i] == 0xFF:
         marker = data[i + 1]
-        if marker == 0xDA:  # start of scan: the rest is image data
-            break
+        if marker == 0xFF:  # fill byte
+            i += 1
+            continue
+        if marker == 0xD9:
+            return bytes(out + b"\xff\xd9")
         end = i + 2 + int.from_bytes(data[i + 2:i + 4], "big")
+        if marker == 0xDA:  # start of scan: its header, then the image data
+            end = _scan_end(data, end)
         if not ((0xE0 <= marker <= 0xEF and marker not in _JPEG_KEEP_APP) or marker == 0xFE):
             out += data[i:end]
         i = end
-    return bytes(out + data[i:])
+    return bytes(out)
 
 
 def _strip_pdf(data: bytes) -> bytes:
@@ -191,6 +309,7 @@ def _strip_pdf(data: bytes) -> bytes:
     from pypdf.generic import (  # noqa: PLC0415
         ArrayObject,
         ByteStringObject,
+        DictionaryObject,
         NameObject,
         StreamObject,
         TextStringObject,
@@ -201,7 +320,16 @@ def _strip_pdf(data: bytes) -> bytes:
     # and fails here, which strip_metadata turns into a refusal.
     writer = PdfWriter(clone_from=PdfReader(io.BytesIO(data)))
     writer.metadata = None  # document info: author, creator tool, dates
-    writer._root_object.pop("/Metadata", None)  # XMP packet
+    for obj in writer._objects:
+        if not isinstance(obj, DictionaryObject):
+            continue
+        # A file inside the PDF (a Word file, a photo) is a file nobody cleaned.
+        if "/EF" in obj or obj.get("/Type") == "/EmbeddedFile":
+            raise MetadataError("PDF carries embedded files")
+        # XMP sits on the catalog and on any page, image or font; only the
+        # catalog's used to be removed. PieceInfo is an editor's private data.
+        obj.pop("/Metadata", None)
+        obj.pop("/PieceInfo", None)
     for page in writer.pages:
         for ref in page.get("/Annots") or []:
             annot = ref.get_object()
@@ -240,10 +368,41 @@ _WORD_AUTHOR = {b"author": b"Author", b"initials": b"A", b"userId": b"", b"provi
 _XL_PERSON = {b"displayName": b"Author", b"userId": b"", b"providerId": b"None"}
 
 
+# A path inside the user's profile names the account: C:\Users\<name>\…,
+# file:///Users/<name>/…, or /Users/<name>/ as Mac Excel writes it.
+_PROFILE_PATH = re.compile(
+    rb"(?i)([a-z]:[\\/]+(?:users|documents and settings)[\\/]+"
+    rb"|file://(?:localhost)?/(?:users|home)/|(?<==\")/(?:users|home)/)[^\\/\"<>]+"
+)
+_SP_PROPERTIES = b"http://schemas.microsoft.com/office/2006/metadata/properties"
+
+
+def _scrub_profile_paths(body: bytes) -> bytes:
+    """Replace the account name in profile paths inside attribute values; text is content."""
+    if not _PROFILE_PATH.search(body):
+        return body
+    return re.sub(rb'="[^"]*"', lambda m: _PROFILE_PATH.sub(rb"\1User", m.group()), body)
+
+
 def _anonymise_ooxml_part(name: str, body: bytes) -> bytes:
+    # The template path (word/_rels/settings.xml.rels), links to other files and
+    # data connections all keep the Windows account name.
+    if name.endswith((".xml", ".rels")):
+        body = _scrub_profile_paths(body)
     if name.startswith("word/") and name.endswith(".xml"):
+        # Revision-session ids link documents edited in one session; document
+        # variables are what macros and DMS add-ins stored (often the user name).
+        body = re.sub(rb'\s(?:\w+:)?rsid\w*="[^"]*"', b"", body)
+        body = re.sub(rb"<(\w+:|)(rsids|docVars)\b.*?</\1\2>", b"", body, flags=re.DOTALL)
         # comments, w:ins/w:del/…Change in every story part, people.xml
         return _neutral_attrs(body, _WORD_AUTHOR)
+    if name == "xl/workbook.xml":
+        # absPath: the folder the workbook was saved in; fileSharing: who protected it.
+        body = re.sub(rb"<(?:\w+:)?absPath\b[^>]*/>", b"", body)
+        return _neutral_attrs(body, {b"userName": b"Author"})
+    if re.fullmatch(r"customXml/item\d+\.xml", name) and _SP_PROPERTIES in body:
+        # SharePoint columns: author, editor, owner as display names and account ids.
+        return b'<p:properties xmlns:p="' + _SP_PROPERTIES + b'"/>'
     if re.fullmatch(r"xl/comments\d*\.xml", name):
         # "tc={person id}" links a legacy comment to its thread: not a name, kept.
         authors = set(re.findall(rb"<author>(?!tc=)([^<]+)</author>", body))
@@ -418,9 +577,14 @@ async def read_upload_files(
             return [], UploadError("upload.error.scan_unavailable", name=name)
 
         try:
-            data = strip_metadata(name, data)
+            # Parsing a PDF or an animation takes seconds of CPU; in a thread,
+            # other requests are served meanwhile.
+            data = await asyncio.to_thread(strip_metadata, name, data)
         except MetadataError:
             return [], UploadError("upload.error.metadata", name=name)
+        # The limit is on what is stored: a re-encoded GIF or rewritten PDF can grow.
+        if len(data) > MAX_SIZE_BYTES:
+            return [], UploadError("upload.error.too_large", name=name, size=format_size(len(data)))
 
         result.append((name, content_type, data))
 

@@ -5,12 +5,19 @@ metadata:
   labels:
     {{- include "openwhistle.labels" . | nindent 4 }}
 spec:
+  {{- if not .Values.autoscaling.enabled }}
+  # With the HPA on, a rendered count would reset its scaling on every upgrade.
   replicas: {{ .Values.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "openwhistle.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      # envFrom is read only at pod start: a changed value must roll the pods.
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
       labels:
         {{- include "openwhistle.selectorLabels" . | nindent 8 }}
     spec:

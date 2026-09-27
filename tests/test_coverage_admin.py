@@ -3,7 +3,6 @@
 Covers:
 - report_detail: 404 for non-existent report (line 127)
 - admin_reply: 422 for empty content (line 195)
-- demo_reset: 403 when DEMO_MODE is false (line 257)
 """
 
 from __future__ import annotations
@@ -130,21 +129,3 @@ async def test_admin_reply_empty_content_returns_422(
     )
     assert resp.status_code == 422
 
-
-# ─── demo_reset: forbidden outside demo mode ─────────────────────────────────
-
-
-@pytest.mark.asyncio
-@pytest.mark.skipif(
-    __import__("app.config", fromlist=["settings"]).settings.demo_mode,
-    reason="Only testable with DEMO_MODE=false",
-)
-async def test_demo_reset_forbidden_in_non_demo_mode(
-    client: AsyncClient, db_session: AsyncSession
-) -> None:
-    """POST /admin/demo/reset must return 403 when DEMO_MODE is false."""
-    admin, totp_secret = await _create_admin(db_session)
-    await _login_admin(client, admin, totp_secret)
-
-    resp = await client.post("/admin/demo/reset", follow_redirects=False)
-    assert resp.status_code == 403

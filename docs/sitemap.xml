@@ -2,31 +2,115 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
+    <loc>https://openwhistle.net/blog/en.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://openwhistle.net/blog/en.html"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://openwhistle.net/blog/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://openwhistle.net/blog/en.html"/>
+    <lastmod>2026-09-27</lastmod>
+  </url>
+  <url>
+    <loc>https://openwhistle.net/blog/free-internal-reporting-channel.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://openwhistle.net/blog/free-internal-reporting-channel.html"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://openwhistle.net/blog/interne-meldestelle-kostenlos.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://openwhistle.net/blog/free-internal-reporting-channel.html"/>
+    <lastmod>2026-09-27</lastmod>
+  </url>
+  <url>
+    <loc>https://openwhistle.net/blog/hinschg-compliance-guide.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://openwhistle.net/blog/hinschg-compliance-guide.html"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://openwhistle.net/blog/hinschg-compliance-leitfaden.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://openwhistle.net/blog/hinschg-compliance-guide.html"/>
+    <lastmod>2026-09-27</lastmod>
+  </url>
+  <url>
     <loc>https://openwhistle.net/blog/hinschg-compliance-leitfaden.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://openwhistle.net/blog/hinschg-compliance-guide.html"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://openwhistle.net/blog/hinschg-compliance-leitfaden.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://openwhistle.net/blog/hinschg-compliance-guide.html"/>
     <lastmod>2026-09-27</lastmod>
   </url>
   <url>
     <loc>https://openwhistle.net/blog/hinweisgebersystem-dsgvo-eu-hosting.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://openwhistle.net/blog/whistleblowing-system-gdpr-eu-hosting.html"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://openwhistle.net/blog/hinweisgebersystem-dsgvo-eu-hosting.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://openwhistle.net/blog/whistleblowing-system-gdpr-eu-hosting.html"/>
     <lastmod>2026-09-27</lastmod>
   </url>
   <url>
     <loc>https://openwhistle.net/blog/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://openwhistle.net/blog/en.html"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://openwhistle.net/blog/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://openwhistle.net/blog/en.html"/>
     <lastmod>2026-09-27</lastmod>
   </url>
   <url>
     <loc>https://openwhistle.net/blog/interne-meldestelle-einrichten.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://openwhistle.net/blog/set-up-internal-reporting-channel.html"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://openwhistle.net/blog/interne-meldestelle-einrichten.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://openwhistle.net/blog/set-up-internal-reporting-channel.html"/>
     <lastmod>2026-09-27</lastmod>
   </url>
   <url>
     <loc>https://openwhistle.net/blog/interne-meldestelle-kostenlos.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://openwhistle.net/blog/free-internal-reporting-channel.html"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://openwhistle.net/blog/interne-meldestelle-kostenlos.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://openwhistle.net/blog/free-internal-reporting-channel.html"/>
+    <lastmod>2026-09-27</lastmod>
+  </url>
+  <url>
+    <loc>https://openwhistle.net/blog/metadaten-entfernen-ohne-beweise-zu-veraendern.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://openwhistle.net/blog/removing-metadata-without-altering-evidence.html"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://openwhistle.net/blog/metadaten-entfernen-ohne-beweise-zu-veraendern.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://openwhistle.net/blog/removing-metadata-without-altering-evidence.html"/>
+    <lastmod>2026-09-27</lastmod>
+  </url>
+  <url>
+    <loc>https://openwhistle.net/blog/removing-metadata-without-altering-evidence.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://openwhistle.net/blog/removing-metadata-without-altering-evidence.html"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://openwhistle.net/blog/metadaten-entfernen-ohne-beweise-zu-veraendern.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://openwhistle.net/blog/removing-metadata-without-altering-evidence.html"/>
+    <lastmod>2026-09-27</lastmod>
+  </url>
+  <url>
+    <loc>https://openwhistle.net/blog/set-up-internal-reporting-channel.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://openwhistle.net/blog/set-up-internal-reporting-channel.html"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://openwhistle.net/blog/interne-meldestelle-einrichten.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://openwhistle.net/blog/set-up-internal-reporting-channel.html"/>
     <lastmod>2026-09-27</lastmod>
   </url>
   <url>
     <loc>https://openwhistle.net/blog/was-ist-neu-in-2-0.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://openwhistle.net/blog/whats-new-in-2-0.html"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://openwhistle.net/blog/was-ist-neu-in-2-0.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://openwhistle.net/blog/whats-new-in-2-0.html"/>
+    <lastmod>2026-09-27</lastmod>
+  </url>
+  <url>
+    <loc>https://openwhistle.net/blog/whats-new-in-2-0.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://openwhistle.net/blog/whats-new-in-2-0.html"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://openwhistle.net/blog/was-ist-neu-in-2-0.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://openwhistle.net/blog/whats-new-in-2-0.html"/>
     <lastmod>2026-09-27</lastmod>
   </url>
   <url>
     <loc>https://openwhistle.net/blog/whistleblower-software-vergleich.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://openwhistle.net/blog/whistleblowing-software-comparison.html"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://openwhistle.net/blog/whistleblower-software-vergleich.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://openwhistle.net/blog/whistleblowing-software-comparison.html"/>
+    <lastmod>2026-09-27</lastmod>
+  </url>
+  <url>
+    <loc>https://openwhistle.net/blog/whistleblowing-software-comparison.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://openwhistle.net/blog/whistleblowing-software-comparison.html"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://openwhistle.net/blog/whistleblower-software-vergleich.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://openwhistle.net/blog/whistleblowing-software-comparison.html"/>
+    <lastmod>2026-09-27</lastmod>
+  </url>
+  <url>
+    <loc>https://openwhistle.net/blog/whistleblowing-system-gdpr-eu-hosting.html</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://openwhistle.net/blog/whistleblowing-system-gdpr-eu-hosting.html"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://openwhistle.net/blog/hinweisgebersystem-dsgvo-eu-hosting.html"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://openwhistle.net/blog/whistleblowing-system-gdpr-eu-hosting.html"/>
     <lastmod>2026-09-27</lastmod>
   </url>
   <url>

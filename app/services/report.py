@@ -28,13 +28,14 @@ from app.models.report import (
     SubmissionMode,
 )
 from app.models.user import AdminUser
+from app.services import deadlines
 from app.services import rate_limit as rl
 from app.services.attachment import delete_stored_objects, stored_object_keys
 from app.services.auth import TIMING_DUMMY_HASH, hash_pin, verify_pin
 from app.services.pin import generate_case_number, generate_pin
 
 
-async def _get_default_org_id(db: AsyncSession) -> uuid.UUID | None:
+async def default_org_id(db: AsyncSession) -> uuid.UUID | None:
     """Return the ID of the default organisation, or None if not found."""
     from app.config import settings
 
@@ -164,7 +165,7 @@ async def create_report(
     enc_description = encrypt_field(report_fernet, description)
 
     if org_id is None:
-        org_id = await _get_default_org_id(db)
+        org_id = await default_org_id(db)
 
     strings = _load(lang)
     fallback = _load(_DEFAULT)
@@ -192,6 +193,8 @@ async def create_report(
             confidential_contact=confidential_contact_enc,
             secure_email=secure_email_enc,
             submitted_at=today,
+            # §17 Abs. 2 runs from receipt, acknowledged or not.
+            feedback_due_at=deadlines.feedback_due(today),
         )
         # A SAVEPOINT per attempt: a collision rolls back only this attempt.
         # A full db.rollback() would expire every object the caller holds in
@@ -274,8 +277,12 @@ async def content_match_ids(
     status_filter: str | None = None,
     org_id: uuid.UUID | None = None,
     scope_org: bool = False,
+    read_orgs: set[uuid.UUID | None] | None = None,
 ) -> list[uuid.UUID]:
     """Ids of in-scope reports whose description or messages contain ``needle``.
+
+    ``read_orgs``, if given, receives the organisation of every report
+    decrypted, so the search is recorded where each one's admins look.
 
     Decrypted in memory for this request only; no searchable copy is stored.
     Never matches the confidential name/contact fields — those stay hidden
@@ -301,6 +308,8 @@ async def content_match_ids(
     folded = _fold(needle)
     hits = []
     for report in rows.scalars().all():
+        if read_orgs is not None:
+            read_orgs.add(report.org_id)
         description, messages = decrypt_report_fields(report)
         if any(folded in _fold(text) for text in (description, *messages)):
             hits.append(report.id)
@@ -355,6 +364,30 @@ async def get_report_by_credentials(
     return report
 
 
+async def end_status_sessions(redis: Redis, report_ids: set[uuid.UUID]) -> None:
+    """Delete every whistleblower status session of these reports.
+
+    Sessions are keyed by a random token, the value is the report id, so this
+    scans. Both deletion paths call it: the four-eyes deletion always did,
+    retention did not, and a session opened shortly before the nightly run
+    outlived its case.
+    """
+    targets = {str(rid) for rid in report_ids}
+    cursor = 0
+    while True:
+        cursor, keys = await redis.scan(cursor, match="status-session:*", count=100)
+        if keys:
+            values = await redis.mget(*keys)
+            doomed = [
+                key for key, val in zip(keys, values, strict=False)
+                if val is not None and (val.decode() if isinstance(val, bytes) else val) in targets
+            ]
+            if doomed:
+                await redis.delete(*doomed)
+        if cursor == 0:
+            break
+
+
 async def authenticate_whistleblower(
     db: AsyncSession, redis: Redis, case_number: str, pin: str
 ) -> tuple[Report | None, int]:
@@ -369,8 +402,9 @@ async def authenticate_whistleblower(
     """
     from app.config import settings
 
-    case_number = case_number.strip()
-    rl_key = case_number.upper()
+    # Case numbers are issued in upper case. The lookup used to be exact while
+    # the failure counter was not: "ow-2026-12345" was refused and counted.
+    rl_key = case_number = case_number.strip().upper()
     report = await get_report_by_credentials(db, case_number, pin.strip())
     if report is not None:
         await rl.reset_whistleblower_attempts(redis, rl_key)
@@ -466,7 +500,7 @@ async def acknowledge_report(db: AsyncSession, report: Report) -> Report:
     if report.acknowledged_at is None:
         now = datetime.now(UTC)
         report.acknowledged_at = now
-        report.feedback_due_at = now + timedelta(days=90)
+        report.feedback_due_at = deadlines.feedback_due(report.submitted_at, now)
     if report.status == ReportStatus.received:
         report.status = ReportStatus.in_review
     await db.commit()
@@ -668,11 +702,29 @@ async def confirm_deletion(
     deletion_request: DeletionRequest,
     confirmer: AdminUser,
 ) -> None:
-    """Confirm and immediately execute the deletion."""
+    """Confirm and immediately execute the deletion.
+
+    The report's own audit entries go with it (ON DELETE CASCADE, as in
+    retention). One entry outlives it, with ``report_id`` unset and the case
+    number in the detail: before, nothing recorded that a report had been
+    deleted, or by whom.
+    """
     from datetime import UTC, datetime
+
+    from app.services import audit as audit_service
+
     deletion_request.confirmed_by_id = confirmer.id
     deletion_request.confirmed_by_username = confirmer.username
     deletion_request.confirmed_at = datetime.now(UTC)
+    await audit_service.log(
+        db, confirmer, audit_service.AuditAction.REPORT_DELETE_CONFIRMED,
+        detail={
+            "case_number": report.case_number,
+            "requested_by": deletion_request.requested_by_username,
+            "confirmed_by": confirmer.username,
+        },
+        target_org=report.org_id,
+    )
     await db.flush()
     keys = await stored_object_keys(db, [report.id])
     await db.delete(report)
@@ -769,8 +821,6 @@ async def get_dashboard_stats(
     assigned_to_id: uuid.UUID | None = None,
 ) -> dict[str, Any]:
     """Aggregate statistics for the dashboard stats view."""
-    from sqlalchemy import case as sa_case
-
     status_counts = await get_report_stats(
         db, scope_org=scope_org, org_id=org_id, assigned_to_id=assigned_to_id
     )
@@ -783,29 +833,27 @@ async def get_dashboard_stats(
     )
     by_category = {row[0]: row[1] for row in cat_result.all()}
 
-    # SLA compliance: % of reports acknowledged within 7 days
+    # SLA compliance: % acknowledged within 7 days, of the reports whose
+    # seven days are decided — acknowledged, or past the deadline. A report
+    # received today used to count as missed and pull the rate down.
+    ack_window = timedelta(days=deadlines.ACK_DAYS)
+    decided = Report.acknowledged_at.isnot(None) | (
+        Report.submitted_at + ack_window < datetime.now(UTC)
+    )
     ack_result = await db.execute(
         select(
             func.count(Report.id).label("total"),
-            func.sum(
-                sa_case(
-                    (
-                        Report.acknowledged_at.isnot(None) &
-                        (
-                            func.extract("epoch", Report.acknowledged_at - Report.submitted_at)
-                            <= 7 * 86400
-                        ),
-                        1,
-                    ),
-                    else_=0,
-                )
+            func.count(Report.id).filter(decided).label("decided"),
+            func.count(Report.id).filter(
+                Report.acknowledged_at <= Report.submitted_at + ack_window
             ).label("on_time"),
         ).where(*org_filter)
     )
     ack_row = ack_result.one()
     total_reports = ack_row.total or 0
+    decided_reports = int(ack_row.decided or 0)
     on_time = int(ack_row.on_time or 0)
-    sla_rate = round(on_time / total_reports * 100) if total_reports else 0
+    sla_rate = round(on_time / decided_reports * 100) if decided_reports else 0
 
     return {
         "status_counts": status_counts,

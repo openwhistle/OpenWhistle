@@ -56,7 +56,7 @@
       "priceCurrency": "EUR"
     },
     "license": "https://www.gnu.org/licenses/gpl-3.0.html",
-    "softwareVersion": "2.0.1",
+    "softwareVersion": "2.1.0",
     "downloadUrl": "https://github.com/openwhistle/OpenWhistle/releases/latest",
     "installUrl": "https://openwhistle.net/docs.html#installation",
     "softwareHelp": {
@@ -217,7 +217,7 @@
         "name": "Unterstützt OpenWhistle Single Sign-on und LDAP?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja. Der erste Faktor kann ein Passwort, LDAP beziehungsweise Active Directory oder ein OIDC-Anbieter sein. Der TOTP-Code bleibt immer Pflicht. In 2.0.1 scheitert die OIDC-Anmeldung noch; die nächste Version lässt jede Person ihr Konto selbst verknüpfen."
+          "text": "Ja. Der erste Faktor kann ein Passwort, LDAP beziehungsweise Active Directory oder ein OIDC-Anbieter sein. Der TOTP-Code bleibt immer Pflicht. Seit 2.1 verknüpft jede Person ihr Konto unter „Mein Konto“ selbst mit dem Anbieter."
         }
       },
       {
@@ -225,7 +225,7 @@
         "name": "Kann ich OpenWhistle für mehrere Standorte oder Gesellschaften nutzen?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja. Ab Version 1.0.0 unterstützt OpenWhistle Multi-Tenancy. Verwaltbar ist sie seit 2.0.1, weil erst dort das erste Konto Superadmin wird. Jede Organisation hat eigene Meldungen, Kategorien, Standorte, Konten und einen eigenen Meldelink."
+          "text": "Ja. Ab Version 1.0.0 unterstützt OpenWhistle Multi-Tenancy. Verwaltbar ist sie seit 2.0.1, weil erst dort das erste Konto Superadmin wird; seit 2.1 wählt der Superadmin für jedes neue Konto die Organisation. Jede Organisation hat eigene Meldungen, Kategorien, Standorte, Konten und einen eigenen Meldelink."
         }
       }
     ]
@@ -1425,7 +1425,7 @@
         </div>
 
         <div class="hero-meta" role="list">
-          <span class="hero-meta-item" role="listitem">Version 2.0.1</span>
+          <span class="hero-meta-item" role="listitem">Version 2.1.0</span>
           <span class="hero-meta-item" role="listitem">GPL-3.0</span>
           <span class="hero-meta-item" role="listitem">Python 3.14</span>
           <span class="hero-meta-item" role="listitem">Docker</span>
@@ -1673,17 +1673,18 @@
     <!-- What's new -->
     <section class="section" id="whats-new" aria-labelledby="whats-new-heading">
       <div class="section-inner">
-        <span class="section-eyebrow">Release 2.0.1</span>
+        <span class="section-eyebrow">Release 2.1.0</span>
         <h2 class="section-heading" id="whats-new-heading">
-          Neu in 2.0 und 2.0.1
+          Neu in 2.0 und 2.1
         </h2>
         <p class="section-subheading">
           Die wichtigsten Änderungen. Alles Weitere steht im
           <a href="../changelog.html">Änderungsprotokoll</a> und im Artikel
-          <a href="../blog/was-ist-neu-in-2-0.html">Was ist neu in 2.0</a>.
+          <a href="../blog/was-ist-neu-in-2-0.html">Was ist neu in 2.0</a> und
+          <a href="../blog/metadaten-entfernen-ohne-beweise-zu-veraendern.html">Metadaten entfernen, ohne das Beweisfoto zu verändern</a>.
         </p>
 
-        <table class="comparison-table duties table-wide stack cols-version" aria-label="Änderungen in 2.0 und 2.0.1">
+        <table class="comparison-table duties table-wide stack cols-version" aria-label="Änderungen in 2.0 und 2.1">
           <thead>
             <tr>
               <th scope="col">Änderung</th>
@@ -1692,6 +1693,10 @@
             </tr>
           </thead>
           <tbody>
+            <tr><td>HinSchG-Fristen nach Gesetz</td><td>Rückmeldung drei Monate nach Bestätigung, ohne sie drei Monate und sieben Tage nach Eingang</td><td data-label="Version">2.1</td></tr>
+            <tr><td>Anhänge unverändert gesäubert</td><td>Metadaten raus, Pixel Bit für Bit gleich; Windows-Benutzername aus Office-Dateien entfernt</td><td data-label="Version">2.1</td></tr>
+            <tr><td>Eigenes Konto und SSO-Verknüpfung</td><td>Passwort selbst ändern, Anbieter selbst verknüpfen, verlorenen Authenticator zurücksetzen</td><td data-label="Version">2.1</td></tr>
+            <tr><td>Vier Augen sind zwei Personen</td><td>Ein Konto und die Konten, die es angelegt hat, bestätigen keine Löschung füreinander</td><td data-label="Version">2.1</td></tr>
             <tr><td>Erstes Konto ist Superadmin</td><td>Organisationen und Mandanten sind erstmals verwaltbar</td><td data-label="Version">2.0.1</td></tr>
             <tr><td>Vertrauliche Identität nur mit Grund</td><td>Name und Kontakt erst nach protokollierter Begründung sichtbar</td><td data-label="Version">2.0</td></tr>
             <tr><td>Einmal-Token für die Einrichtung</td><td>Nur wer Zugang zum Server hat, legt das erste Konto an</td><td data-label="Version">2.0</td></tr>
@@ -2054,8 +2059,8 @@
             <summary>Unterstützt OpenWhistle Single Sign-on und LDAP?</summary>
             <div class="faq-answer">
               Ja. Der erste Faktor kann ein Passwort, LDAP beziehungsweise Active Directory oder ein
-              OIDC-Anbieter sein. Der TOTP-Code bleibt immer Pflicht. In 2.0.1 scheitert die
-              OIDC-Anmeldung noch; die nächste Version lässt jede Person ihr Konto selbst verknüpfen.
+              OIDC-Anbieter sein. Der TOTP-Code bleibt immer Pflicht. Seit 2.1 verknüpft jede Person
+              ihr Konto unter „Mein Konto“ selbst mit dem Anbieter.
             </div>
           </details>
 
@@ -2063,7 +2068,8 @@
             <summary>Kann ich OpenWhistle für mehrere Standorte oder Gesellschaften nutzen?</summary>
             <div class="faq-answer">
               Ja. Ab Version 1.0.0 unterstützt OpenWhistle Multi-Tenancy. Verwaltbar ist sie seit
-              2.0.1, weil erst dort das erste Konto Superadmin wird. Jede Organisation hat eigene
+              2.0.1, weil erst dort das erste Konto Superadmin wird; seit 2.1 wählt der Superadmin
+              für jedes neue Konto die Organisation. Jede Organisation hat eigene
               Meldungen, Kategorien, Standorte, Konten und einen eigenen Meldelink.
             </div>
           </details>
@@ -2120,7 +2126,7 @@
       </div>
 
       <div class="footer-bottom">
-        <span>&copy; OpenWhistle Contributors — GNU General Public License v3.0 — Version 2.0.1</span>
+        <span>&copy; OpenWhistle Contributors — GNU General Public License v3.0 — Version 2.1.0</span>
         <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">
           Auf GitHub mitwirken &rarr;
         </a>

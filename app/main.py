@@ -6,6 +6,7 @@ import subprocess
 import sys
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.exception_handlers import (
@@ -77,6 +78,20 @@ def _log_rekey_task_result(task: asyncio.Task[None]) -> None:
     exc = task.exception()
     if exc is not None:
         logger.error("Background S3 re-key task failed: %s", type(exc).__name__)
+
+
+def new_scheduler() -> Any:
+    """The job scheduler, in UTC.
+
+    Every job time the docs give is UTC. ``AsyncIOScheduler()`` takes the
+    host's zone, so with ``TZ=Europe/Berlin`` the "03:00 UTC" retention run
+    fired at 01:00 UTC, the update check at 02:00.
+    """
+    from datetime import UTC  # noqa: PLC0415
+
+    from apscheduler.schedulers.asyncio import AsyncIOScheduler  # noqa: PLC0415
+
+    return AsyncIOScheduler(timezone=UTC)
 
 
 @asynccontextmanager
@@ -154,9 +169,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         or batching_enabled()
         or not telemetry_hard_off()
     ):
-        from apscheduler.schedulers.asyncio import AsyncIOScheduler  # noqa: PLC0415
-
-        scheduler = AsyncIOScheduler()
+        scheduler = new_scheduler()
 
         if settings.reminder_enabled:
             from app.services.reminders import send_sla_reminders  # noqa: PLC0415
@@ -167,10 +180,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
             logger.info("SLA reminder scheduler registered (interval: 30 min).")
 
         if settings.retention_enabled:
-            from app.services.retention import run_retention_cleanup  # noqa: PLC0415
+            from app.services.retention import (
+                RETENTION_HOUR_UTC,  # noqa: PLC0415
+                run_retention_cleanup,  # noqa: PLC0415
+            )
 
             scheduler.add_job(
-                run_retention_cleanup, "cron", hour=3, minute=0, id="retention_cleanup"
+                run_retention_cleanup, "cron", hour=RETENTION_HOUR_UTC, minute=0,
+                id="retention_cleanup",
             )
             logger.info("Data retention scheduler registered (daily at 03:00 UTC).")
 

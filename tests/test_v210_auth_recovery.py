@@ -318,6 +318,29 @@ async def test_unlink_is_refused_when_sso_is_the_only_way_in(
 
 
 @pytest.mark.asyncio
+async def test_a_directory_name_is_no_way_in_while_ldap_is_off(
+    client: AsyncClient, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An account LDAP provisioned before LDAP was switched off: the link is
+    its only way in, and unlinking used to be allowed."""
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "ldap_enabled", False)
+    sub = f"s-{uuid.uuid4().hex}"
+    user = await _user(db_session, oidc_sub=sub, oidc_issuer=_ISSUER)
+    user.password_hash = None
+    user.ldap_username = user.username
+    await db_session.commit()
+    csrf = await _sign_in(client, user)
+
+    resp = await client.post(
+        "/admin/oidc/unlink", data={"csrf_token": csrf}, follow_redirects=False
+    )
+
+    assert resp.headers["location"] == "/admin/account?sso=only_way_in"
+
+
+@pytest.mark.asyncio
 async def test_after_linking_sso_login_works_and_still_asks_for_totp(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:

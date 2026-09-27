@@ -4,6 +4,7 @@ import secrets
 
 from fastapi import Cookie, Form, Header, HTTPException, status
 from starlette.datastructures import MutableHeaders
+from starlette.requests import cookie_parser
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.config import settings
@@ -31,7 +32,10 @@ class CSRFMiddleware:
                 cookie_header = value
                 break
 
-        token = _parse_cookie(cookie_header.decode("latin-1"), _CSRF_COOKIE)
+        # Starlette's parser, the one Cookie() below reads through: with two
+        # ow_csrf cookies this used to take the first and the check the last,
+        # so every form on the page was refused.
+        token = cookie_parser(cookie_header.decode("latin-1")).get(_CSRF_COOKIE)
         if not token:
             token = secrets.token_urlsafe(_TOKEN_BYTES)
 
@@ -62,12 +66,12 @@ class CSRFMiddleware:
         await self.app(scope, receive, send_with_csrf)
 
 
-def _parse_cookie(header: str, name: str) -> str | None:
-    for part in header.split(";"):
-        stripped = part.strip()
-        if stripped.startswith(f"{name}="):
-            return stripped[len(f"{name}="):]
-    return None
+def _same_token(submitted: str | None, cookie: str | None) -> bool:
+    # Bytes: compare_digest raises TypeError on non-ASCII str, which made a
+    # forged token a 500 instead of a 403.
+    if not submitted or not cookie:
+        return False
+    return secrets.compare_digest(submitted.encode(), cookie.encode())
 
 
 async def validate_csrf(
@@ -75,7 +79,7 @@ async def validate_csrf(
     ow_csrf: str | None = Cookie(None),
 ) -> None:
     """Dependency: validates CSRF double-submit token on state-changing form submissions."""
-    if not ow_csrf or not secrets.compare_digest(csrf_token, ow_csrf):
+    if not _same_token(csrf_token, ow_csrf):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="CSRF validation failed.",
@@ -92,7 +96,7 @@ async def validate_csrf_header(
     the ``<meta name="csrf-token">`` tag since the double-submit cookie is
     HttpOnly. Same double-submit comparison against the ``ow_csrf`` cookie.
     """
-    if not ow_csrf or not x_csrf_token or not secrets.compare_digest(x_csrf_token, ow_csrf):
+    if not _same_token(x_csrf_token, ow_csrf):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="CSRF validation failed.",

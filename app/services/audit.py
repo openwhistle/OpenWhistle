@@ -28,6 +28,8 @@ class AuditAction:
     REPORT_LINK_ADDED       = "report.link_added"
     REPORT_LINK_REMOVED     = "report.link_removed"
     REPORT_AUTO_DELETED     = "report.auto_deleted"
+    ATTACHMENT_DOWNLOADED   = "report.attachment_downloaded"
+    AUDIT_EXPORTED          = "audit.exported"
     REPORT_VIEWED           = "report.viewed"
     IDENTITY_REVEALED       = "report.identity_revealed"
     CONTENT_SEARCHED        = "report.content_searched"
@@ -121,7 +123,7 @@ async def get_audit_log(
     action: str | None = None,
     admin_id: uuid.UUID | None = None,
     page: int = 1,
-    per_page: int = 50,
+    per_page: int | None = 50,
     scope_org: bool = False,
     org_id: uuid.UUID | None = None,
     viewer_id: uuid.UUID | None = None,
@@ -155,5 +157,7 @@ async def get_audit_log(
     count_result = await db.execute(select(func.count()).select_from(q.subquery()))
     total: int = count_result.scalar_one()
 
-    rows = await db.execute(q.offset((page - 1) * per_page).limit(per_page))
+    if per_page is not None:  # None: every row (the CSV export)
+        q = q.offset((page - 1) * per_page).limit(per_page)
+    rows = await db.execute(q)
     return list(rows.scalars().all()), total

@@ -393,7 +393,8 @@ async def test_audit_trail_hides_case_views_unless_asked(
     assert viewed not in page.text
     page = await client.get(f"/admin/audit-log?report_id={report.id}&views=1")
     assert viewed in page.text
-    assert 'href="/admin/audit-log/export.csv?views=1"' in page.text
+    # The export carries the page's filters (v2.1.0 bug bounty).
+    assert f'href="/admin/audit-log/export.csv?report_id={report.id}&amp;views=1"' in page.text
 
     def views(rows: list[dict[str, str]]) -> int:
         return sum(r["action"] == AuditAction.REPORT_VIEWED and r["report_id"] == str(report.id)

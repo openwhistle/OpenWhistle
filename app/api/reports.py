@@ -31,9 +31,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.csrf import validate_csrf
 from app.database import get_db
+from app.forms import Multiline, Text256, Text320, Text512
 from app.i18n import get_lang, make_translator
 from app.models.organisation import Organisation
-from app.models.report import SubmissionMode
+from app.models.report import ReportStatus, SubmissionMode
 from app.onion import cookie_secure
 from app.redis_client import get_redis
 from app.services import report as report_service
@@ -76,12 +77,29 @@ _STEP_REVIEW = 6
 # Which form field a wizard error code belongs to, so the template can mark that
 # field aria-invalid and point it at an inline message. Codes absent here (e.g.
 # session_incomplete) concern no single field and show only in the banner.
+# The HTML "valid e-mail address" (what type=email accepts), with a dot in the
+# domain: mail to "jane@proton" goes nowhere on the internet. Checked part by
+# part: one regex with nested repetition backtracked badly on long input.
+_EMAIL_LOCAL = re.compile(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+")
+_EMAIL_LABEL = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?")
+
+
+def _valid_email(address: str) -> bool:
+    local, at, domain = address.partition("@")
+    labels = domain.split(".")
+    return (
+        bool(at) and bool(_EMAIL_LOCAL.fullmatch(local)) and len(labels) >= 2
+        and all(_EMAIL_LABEL.fullmatch(label) for label in labels)
+    )
+
+
 _ERROR_FIELD: dict[str, str] = {
     "mode_required": "submission_mode",
     "invalid_location": "location_id",
     "category_required": "category",
     "description_too_short": "description",
     "description_too_long": "description",
+    "email_invalid": "secure_email",
     "attachments_too_large": "files",
     "attachments_no_room": "files",
 }
@@ -651,15 +669,15 @@ async def submit_post(
     step: int = Form(1),
     # Step 1 — mode
     submission_mode: str = Form(""),
-    confidential_name: str = Form(""),
-    confidential_contact: str = Form(""),
-    secure_email: str = Form(""),
+    confidential_name: Text256 = "",
+    confidential_contact: Text512 = "",
+    secure_email: Text320 = "",
     # Step 2 — location
     location_id: str = Form(""),
     # Step 3 — category
     category: str = Form(""),
     # Step 4 — description
-    description: str = Form(""),
+    description: Multiline = "",
     # Step 5 — attachments handled separately below
     files: list[UploadFile] = File(default=[]),
     redis: Redis = Depends(get_redis),
@@ -759,6 +777,11 @@ async def submit_post(
             state["confidential_name"] = name_stripped
             state["confidential_contact"] = contact_stripped
             state["secure_email"] = email_stripped
+            # The form is novalidate, so type=email checks nothing in the
+            # browser: a mistyped address used to be stored as is, and the
+            # notifications it was given for never arrived.
+            if email_stripped and not _valid_email(email_stripped):
+                return await _fail(_STEP_MODE, "email_invalid")
         else:
             # Purge any identifying fields entered on a previous confidential
             # pass — they must not linger in the Redis session for an anonymous
@@ -1120,18 +1143,13 @@ async def status_get(
             if report:
                 # No TTL refresh on view: the session ends 2 h after login, so its
                 # remaining lifetime does not reveal when the page was last opened.
-                replied = request.query_params.get("replied") == "1"
-                success = "status.reply.sent" if replied else None
+                replied = request.query_params.get("replied")
+                success = "status.reply.sent" if replied == "1" else None
+                notice = "status.reply.closed" if replied == "closed" else None
 
-                from datetime import UTC, datetime, timedelta
+                from datetime import UTC, datetime
 
                 now = datetime.now(UTC)
-                submitted = report.submitted_at
-                if submitted.tzinfo is None:
-                    submitted = submitted.replace(tzinfo=UTC)
-
-                ack_deadline = submitted + timedelta(days=7)
-                ack_days_remaining = (ack_deadline - now).days
 
                 from app.services.report import decrypt_attachment_names, decrypt_report_fields
 
@@ -1145,8 +1163,7 @@ async def status_get(
                     "pin": None,
                     "from_session": True,
                     "success": success,
-                    "ack_deadline": ack_deadline,
-                    "ack_days_remaining": ack_days_remaining,
+                    "notice": notice,
                     "now": now,
                 })
 
@@ -1198,9 +1215,9 @@ async def status_post(
 @router.post("/reply", response_class=HTMLResponse)
 async def reply_post(
     request: Request,
+    content: Multiline,
     case_number: str = Form(""),
     pin: str = Form(""),
-    content: str = Form(...),
     redis: Redis = Depends(get_redis),
     db: AsyncSession = Depends(get_db),
     _csrf: None = Depends(validate_csrf),
@@ -1242,7 +1259,12 @@ async def reply_post(
     if len(stripped) > 5000:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT)
 
-    await report_service.add_whistleblower_message(db, report, stripped)
+    # The status page hides the reply form of a closed case. The server used to
+    # take the reply anyway: stored on a case nobody works on any more, deleted
+    # with it by retention. A page left open while the case was closed lands here.
+    closed = report.status == ReportStatus.closed
+    if not closed:
+        await report_service.add_whistleblower_message(db, report, stripped)
 
     # A fresh key, but the old one's remaining lifetime: a reply must not extend
     # the session either (see status_get).
@@ -1254,7 +1276,9 @@ async def reply_post(
     if status_session_key:
         await redis.delete(f"status-session:{status_session_key}")
 
-    response = RedirectResponse("/status?replied=1", status_code=303)
+    response = RedirectResponse(
+        "/status?replied=closed" if closed else "/status?replied=1", status_code=303
+    )
     response.set_cookie(
         "ow-status-session",
         fresh_key,

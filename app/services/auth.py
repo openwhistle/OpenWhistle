@@ -147,10 +147,10 @@ async def validate_session(redis: Redis, token: str) -> bool:
     return bool(await redis.exists(key) == 1)
 
 
-async def revoke_session(redis: Redis, token: str) -> None:
-    """Invalidate a session (logout)."""
+async def revoke_session(redis: Redis, token: str) -> bool:
+    """Invalidate a session (logout). True if it still existed."""
     key = f"{_SESSION_PREFIX}{token}"
-    await redis.delete(key)
+    return bool(await redis.delete(key))
 
 
 async def revoke_user_sessions(redis: Redis, user_id: str, keep: str | None = None) -> int:

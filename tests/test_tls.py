@@ -27,8 +27,37 @@ def test_self_signed_certificate_is_created_once(tmp_path: Path) -> None:
     assert ensure(tmp_path / "none", tmp_path / "tls", "whistle.example.org") == "self-signed"
     cert = x509.load_pem_x509_certificate((tmp_path / "tls/fullchain.pem").read_bytes())
     san = cert.extensions.get_extension_for_class(x509.SubjectAlternativeName).value
-    assert "whistle.example.org" in san.get_values_for_type(x509.DNSName)
+    assert san.get_values_for_type(x509.DNSName) == ["whistle.example.org", "localhost"]
     assert ensure(tmp_path / "none", tmp_path / "tls", "whistle.example.org") == "kept"
+
+
+def test_a_changed_tls_hostname_replaces_the_self_signed_certificate(tmp_path: Path) -> None:
+    ensure = _ensure()
+    ensure(tmp_path / "none", tmp_path / "tls", "old.example.org")
+    assert ensure(tmp_path / "none", tmp_path / "tls", "new.example.org") == "self-signed"
+    cert = x509.load_pem_x509_certificate((tmp_path / "tls/fullchain.pem").read_bytes())
+    san = cert.extensions.get_extension_for_class(x509.SubjectAlternativeName).value
+    assert san.get_values_for_type(x509.DNSName) == ["new.example.org", "localhost"]
+
+
+@pytest.mark.parametrize("operator", [False, True])
+def test_the_key_is_never_written_readable_by_others(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, operator: bool,
+) -> None:
+    """Without the chmod that followed it, write_bytes() left the key 0644."""
+    src = tmp_path / "certs"
+    if operator:
+        src.mkdir()
+        (src / "fullchain.pem").write_text("CERT")
+        (src / "privkey.pem").write_text("KEY")
+    monkeypatch.setattr(Path, "chmod", lambda *a, **k: None)
+    old = os.umask(0o022)
+    try:
+        _ensure()(src, tmp_path / "tls", "x")
+    finally:
+        os.umask(old)
+    mode = stat.S_IMODE((tmp_path / "tls/privkey.pem").stat().st_mode)
+    assert mode == 0o600, oct(mode)
 
 
 def test_operator_certificate_wins(tmp_path: Path) -> None:
@@ -307,13 +336,29 @@ def test_every_public_route_is_rate_limited_in_both_deployments() -> None:
     import yaml
 
     conf = (ROOT / "nginx/nginx.conf").read_text()
-    servers = re.findall(r"\n    server \{.*?\n    \}", conf, re.S)
-    proxied = [s for s in servers if "proxy_pass" in s]
-    assert proxied
-    for server in proxied:
-        for location in re.findall(r"location [^{]*\{[^}]*\}", server):
-            if "proxy_pass" in location:
-                assert "limit_req zone=" in location, location
+
+    def inline(text: str) -> str:
+        # /static/ lives in an included snippet and was never limited.
+        return re.sub(
+            r"include /etc/nginx/(snippets/\S+);",
+            lambda m: (ROOT / "nginx" / m.group(1)).read_text(), text,
+        )
+
+    configs = {
+        "nginx.conf": conf,
+        "nginx.behind-proxy.conf": (ROOT / "nginx/nginx.behind-proxy.conf").read_text(),
+        "ansible nginx.conf.j2": _render_role_template("nginx.conf.j2"),
+    }
+    for name, text in configs.items():
+        servers = re.findall(r"\n    server \{.*?\n    \}", inline(text), re.S)
+        proxied = [s for s in servers if "proxy_pass" in s]
+        assert proxied, name
+        for server in proxied:
+            loc = r"(?m)^\s*location [^{\n]*\{[^}]*\}"
+            server_level = re.sub(loc, "", server)
+            for location in re.findall(loc, server):
+                if "proxy_pass" in location:
+                    assert "limit_req zone=" in location + server_level, (name, location)
     rate = int(re.search(r"\bow_req:\w+ rate=(\d+)r/s", conf).group(1))  # type: ignore[union-attr]
     burst = int(re.search(r"ow_req burst=(\d+)", conf).group(1))  # type: ignore[union-attr]
 

@@ -148,6 +148,9 @@
         <h1>{{ t('status.report.title') }}</h1>
     </div>
 
+    {% if notice %}
+    <div class="alert alert-warning" role="alert">{{ t(notice) }}</div>
+    {% endif %}
     {% if success %}
     <div class="alert alert-success" role="alert">{{ t(success) }}</div>
     {% endif %}
@@ -183,31 +186,28 @@
         <div class="st-deadlines-section">
             <div class="detail-label st-deadlines-title">{{ t('status.deadlines.title') }}</div>
             <div class="st-deadlines-grid">
+                {% set ack = ack_status(report.submitted_at, report.acknowledged_at, now) %}
+                {% set fb = feedback_status(report.feedback_due_at, report.status.value == 'closed', now) %}
                 <div>
                     <div class="st-deadline-label">{{ t('status.deadlines.ack') }}</div>
-                    {% if report.acknowledged_at %}
+                    {% if ack.state == 'done' %}
                     <span class="st-success-text">{{ icons.icon('check') }} {{ t('status.deadlines.ack_done', date=report.acknowledged_at.strftime('%Y-%m-%d')) }}</span>
-                    {% elif ack_days_remaining is defined and ack_days_remaining >= 0 %}
-                    <span class="st-accent-text">{{ t('status.deadlines.ack_remaining', days=ack_days_remaining) }}</span>
+                    {% elif ack.state != 'overdue' %}
+                    <span class="st-accent-text">{{ t('status.deadlines.ack_remaining', days=(ack.due - now).days) }}</span>
                     {% else %}
                     <span class="st-danger-text">{{ t('status.deadlines.ack_overdue') }}</span>
                     {% endif %}
                 </div>
                 <div>
                     <div class="st-deadline-label">{{ t('status.deadlines.feedback') }}</div>
-                    {% if report.acknowledged_at and report.feedback_due_at %}
-                        {% if now is defined %}
-                            {% set days_left = ((report.feedback_due_at - now).days) %}
-                            {% if report.status.value == 'closed' %}
-                            <span class="st-success-text">{{ icons.icon('check') }} {{ t('status.deadlines.feedback_done') }}</span>
-                            {% elif days_left >= 0 %}
-                            <span class="st-fw600">{{ t('status.deadlines.feedback_remaining', days=days_left, date=report.feedback_due_at.strftime('%Y-%m-%d')) }}</span>
-                            {% else %}
-                            <span class="st-danger-text">{{ t('status.deadlines.feedback_overdue') }}</span>
-                            {% endif %}
-                        {% endif %}
+                    {% if not fb %}
+                    <span class="st-muted-italic">—</span>
+                    {% elif fb.state == 'done' %}
+                    <span class="st-success-text">{{ icons.icon('check') }} {{ t('status.deadlines.feedback_done') }}</span>
+                    {% elif fb.state == 'overdue' %}
+                    <span class="st-danger-text">{{ t('status.deadlines.feedback_overdue') }}</span>
                     {% else %}
-                    <span class="st-muted-italic">{{ t('status.deadlines.feedback_pending') }}</span>
+                    <span class="st-fw600">{{ t('status.deadlines.feedback_remaining', days=fb.days, date=fb.due.strftime('%Y-%m-%d')) }}</span>
                     {% endif %}
                 </div>
             </div>

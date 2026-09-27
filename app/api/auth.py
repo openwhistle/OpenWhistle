@@ -1,5 +1,6 @@
 """Admin authentication: password + TOTP, OIDC, logout."""
 
+import logging
 import secrets
 from datetime import UTC, datetime
 from typing import Any
@@ -32,9 +33,12 @@ from app.services import audit as audit_service
 from app.services import auth as auth_service
 from app.services import oidc as oidc_service
 from app.services import rate_limit as rl
-from app.services.mfa import generate_qr_code_base64, verify_demo_totp, verify_totp
+from app.services import report as report_service
+from app.services.mfa import consume_totp, generate_qr_code_base64, verify_demo_totp
 from app.services.notifications import notify_security_alert
 from app.templating import render
+
+log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin")
 
@@ -48,9 +52,10 @@ async def admin_root(request: Request) -> RedirectResponse:
 # Second barrier for LOCAL_REVIEW_LOGIN, beyond the config flag: the button
 # and the route both disappear unless the request looks like it came straight
 # from a browser on the local machine. A client-*address* check does not work
-# here — uvicorn runs without --proxy-headers (see Dockerfile), so a browser
-# on the operator's own machine, reaching the container through podman/
-# docker's NAT, shows up as the container's gateway IP, never as 127.0.0.1.
+# here — uvicorn takes X-Forwarded-For only from 127.0.0.1 (its default
+# forwarded_allow_ips), so a browser on the operator's own machine, reaching
+# the container through podman/docker's NAT, shows up as the container's
+# gateway IP, never as 127.0.0.1.
 # Instead, reject the request if either:
 #   - it carries a header only a reverse proxy adds (nginx and every ingress
 #     controller always set X-Forwarded-Proto in front of this app; a client
@@ -207,8 +212,11 @@ async def login_post(
         }))
 
     # ── LDAP authentication path ────────────────────────────────────
+    # A directory bind that fails falls through to the local check below:
+    # the wizard's superadmin (and any account made on /admin/users) has a
+    # local password, and switching LDAP on used to lock all of them out.
     if settings.ldap_enabled:
-        from sqlalchemy import select  # noqa: PLC0415
+        from sqlalchemy import func, select  # noqa: PLC0415
 
         from app.services.ldap_auth import LDAPAuthError, authenticate_ldap  # noqa: PLC0415
         from app.services.mfa import generate_totp_secret  # noqa: PLC0415
@@ -216,37 +224,49 @@ async def login_post(
         try:
             ldap_info = await authenticate_ldap(username, password)
         except LDAPAuthError:
-            await _password_failed(redis, db, username, background_tasks)
-            return render(request, "login.html", _login_ctx(request, {
-                "error": "login.error.invalid",
-                "credentials_invalid": True,
-            }), status_code=401)
+            ldap_info = None
 
-        # Find or provision the local admin user for this LDAP identity
-        result = await db.execute(
-            select(AdminUser).where(AdminUser.ldap_username == ldap_info.username)
-        )
-        user: AdminUser | None = result.scalar_one_or_none()
-
-        if user is None:
-            # First LDAP login — auto-provision with a temporary TOTP secret.
-            # The user must set up TOTP on their first login via /admin/mfa/setup.
-            user = AdminUser(
-                id=__import__("uuid").uuid4(),
-                username=ldap_info.username,
-                password_hash=None,
-                ldap_username=ldap_info.username,
-                totp_secret=generate_totp_secret(),
-                totp_enabled=False,
-                # Least privilege: every directory user can reach this point,
-                # so never inherit the model's admin default. An admin promotes.
-                role=AdminRole.case_manager,
+        if ldap_info is not None:
+            # Find or provision the local admin user for this LDAP identity
+            result = await db.execute(
+                select(AdminUser).where(AdminUser.ldap_username == ldap_info.username)
             )
-            db.add(user)
-            await db.commit()
-            await db.refresh(user)
+            user: AdminUser | None = result.scalar_one_or_none()
 
-        return await _second_factor(request, redis, user)
+            if user is None:
+                taken = await db.scalar(select(AdminUser.id).where(
+                    func.lower(AdminUser.username) == ldap_info.username.lower()
+                ))
+                if taken is not None:
+                    # Never merged into the local account of the same name:
+                    # the directory would take it over. This used to be an
+                    # IntegrityError, a 500.
+                    log.warning("LDAP user matches a local account name; not provisioned")
+                    await _password_failed(redis, db, username, background_tasks)
+                    return render(request, "login.html", _login_ctx(request, {
+                        "error": "login.error.invalid",
+                        "credentials_invalid": True,
+                    }), status_code=401)
+                # First LDAP login — auto-provision with a temporary TOTP secret.
+                # The user must set up TOTP on their first login via /admin/mfa/setup.
+                user = AdminUser(
+                    id=__import__("uuid").uuid4(),
+                    username=ldap_info.username,
+                    password_hash=None,
+                    ldap_username=ldap_info.username,
+                    totp_secret=generate_totp_secret(),
+                    totp_enabled=False,
+                    # Least privilege: every directory user can reach this point,
+                    # so never inherit the model's admin default. An admin promotes.
+                    role=AdminRole.case_manager,
+                    # An organisation, or multi-tenancy would show it no case.
+                    org_id=await report_service.default_org_id(db),
+                )
+                db.add(user)
+                await db.commit()
+                await db.refresh(user)
+
+            return await _second_factor(request, redis, user)
 
     # ── Local password authentication path ─────────────────────────
     user = await auth_service.get_user_by_username(db, username)
@@ -368,19 +388,12 @@ async def login_mfa_post(
             status_code=429,
         )
 
+    # One-time use (consume_totp), except for the demo accounts, whose static
+    # code is intentionally reusable.
     demo_code = settings.demo_mode and verify_demo_totp(totp_code, user.username)
-    code_valid = demo_code or verify_totp(
-        user.totp_secret, totp_code
+    code_valid = demo_code or await consume_totp(
+        redis, user.id, user.totp_secret, totp_code
     )
-
-    # One-time use: a valid code may authenticate exactly one session within its
-    # ~90s validity window. Prevents an intercepted/relayed code from logging in
-    # a second, attacker-controlled session (AiTM replay). Skipped for the demo
-    # accounts, whose static code is intentionally reusable.
-    if code_valid and not demo_code:
-        used_key = f"openwhistle:totp_used:{user.id}:{totp_code}"
-        if not await redis.set(used_key, "1", nx=True, ex=90):
-            code_valid = False
 
     if not code_valid:
         await rl.record_admin_login_failure(redis, user.username)
@@ -445,7 +458,8 @@ async def mfa_setup_post(
     if not user or not user.is_active:
         return RedirectResponse("/admin/login", status_code=302)
 
-    if not verify_totp(user.totp_secret, totp_code):
+    # Consumed, so the enrolment code cannot sign in a second session.
+    if not await consume_totp(redis, user.id, user.totp_secret, totp_code):
         new_setup_token = secrets.token_urlsafe(32)
         await auth_service.store_totp_setup_pending(redis, new_setup_token, user_id)
         qr_b64 = generate_qr_code_base64(user.totp_secret, user.username)
@@ -519,12 +533,17 @@ async def session_refresh(
     if not started_at:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-    if session_token:
-        await auth_service.revoke_session(redis, session_token)
     new_token = auth_service.create_access_token(
         str(current_user.id), role=current_user.role.value, auth_time=started_at,
     )
+    # New first, then the old one: if the old session is already gone, it was
+    # revoked while this request ran (a password change's sweep, a logout),
+    # and the new one goes too. Deleting first and storing after let a sweep
+    # pass in between and miss the new session.
     await auth_service.store_session(redis, str(current_user.id), new_token)
+    if not session_token or not await auth_service.revoke_session(redis, session_token):
+        await auth_service.revoke_session(redis, new_token)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
     new_exp = auth_service.decode_access_token_exp(new_token)
     expires_at = int(new_exp.timestamp()) if new_exp else 0
     ttl = auth_service.seconds_left(new_token)
@@ -712,7 +731,9 @@ async def oidc_unlink(
     if not current_user.oidc_sub:
         return _sso_result("unlinked")
     # Without a password or a directory login, the link is the only way in.
-    if not current_user.password_hash and not current_user.ldap_username:
+    # A directory name counts only while LDAP is on.
+    directory_login = bool(current_user.ldap_username) and settings.ldap_enabled
+    if not current_user.password_hash and not directory_login:
         return _sso_result("only_way_in")
 
     issuer = current_user.oidc_issuer
@@ -827,9 +848,7 @@ async def account_password(
         return await refuse({"current_password": "account.password.error.current"}, 401)
 
     # Single use, like the sign-in code: a code seen over a shoulder opens nothing twice.
-    code_ok = verify_totp(current_user.totp_secret, totp_code) and bool(await redis.set(
-        f"openwhistle:totp_used:{current_user.id}:{totp_code}", "1", nx=True, ex=90
-    ))
+    code_ok = await consume_totp(redis, current_user.id, current_user.totp_secret, totp_code)
     if not code_ok:
         await rl.record_admin_login_failure(redis, current_user.username)
         return await refuse({"totp_code": "mfa.error.invalid"}, 401)

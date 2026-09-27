@@ -22,6 +22,12 @@ One primary keyword per page; no two pages share one. The title starts with it, 
 | `blog/hinweisgebersystem-dsgvo-eu-hosting.html` | Hinweisgebersystem EU-Hosting | DSGVO-konformes Hinweisgebersystem, Hinweisgebersystem Verschlüsselung, Hinweisgebersystem mehrsprachig |
 | `blog/was-ist-neu-in-2-0.html` | OpenWhistle 2.0 | Hinweisgebersystem Update |
 | `blog/interne-meldestelle-kostenlos.html` | interne Meldestelle kostenlos | HinSchG Meldekanal kostenlos |
+| `blog/metadaten-entfernen-ohne-beweise-zu-veraendern.html` | Metadaten entfernen Hinweisgebersystem | Foto Metadaten anonyme Meldung |
+| `blog/en.html` and the seven English twins | the German page's primary, in English | none yet: no Search Console data for the English blog |
+
+The blog is bilingual since 2026-09-27: every German article has an English twin (hreflang, x-default English;
+`test_every_blog_page_exists_in_english_and_german`). The German URLs were kept because Pages cannot redirect with
+a 301; the English slugs are the English keyword. Re-cut the English rows once Search Console shows their queries.
 
 The comparison page's slug carries the category term, but its primary is the comparison query: `index.html`
 already owns "open source whistleblower software", and two pages on one query split its ranking.

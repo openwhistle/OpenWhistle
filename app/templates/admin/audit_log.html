@@ -28,7 +28,7 @@
         <div>
             <h1>{{ t('admin.audit.title') }}</h1>
         </div>
-        <a href="/admin/audit-log/export.csv{% if show_views %}?views=1{% endif %}" class="btn btn-secondary btn-sm" download>
+        <a href="/admin/audit-log/export.csv{% if export_query %}?{{ export_query }}{% endif %}" class="btn btn-secondary btn-sm" download>
             {{ icons.icon('file') }} {{ t('admin.audit.export_csv') }}
         </a>
     </div>

@@ -42,8 +42,11 @@ ingress:
   #   and escape the limit.
   # Other controllers: set an equivalent limit.
   # Your own annotations are merged with this default (Helm merges maps).
+  # proxy-body-size: ingress-nginx refuses bodies over 1m by default; this
+  # matches the bundled nginx (5 attachments x 10 MB plus form overhead).
   annotations:
     nginx.ingress.kubernetes.io/enable-access-log: "false"
+    nginx.ingress.kubernetes.io/proxy-body-size: "55m"
     nginx.ingress.kubernetes.io/limit-rps: "10"
     nginx.ingress.kubernetes.io/limit-burst-multiplier: "3"
   hosts:
@@ -92,7 +95,7 @@ config:
   adminFailedLoginAlertWindowMinutes: "15"
 
   # Branding
-  brandPrimaryColor: "#0f4c81"
+  brandPrimaryColor: "#0c7253"
   brandLogoUrl: ""
 
   # SLA reminders
@@ -185,6 +188,7 @@ secrets:
   secretKey: ""         # required — generate with: openssl rand -hex 32
   encryptionKey: ""     # recommended — root of at-rest encryption; unset: secretKey is used
   encryptionKeyPrevious: ""  # optional — comma-separated old keys during a rotation
+  # The chart bundles no database and no Redis: point these at your own.
   databaseUrl: ""       # required — postgresql+asyncpg://user:pass@host:5432/db
   redisUrl: ""          # required — redis://host:6379/0
   setupToken: ""        # optional, 32+ characters — unset: a random token is created at startup and logged once
@@ -193,19 +197,6 @@ secrets:
   s3SecretAccessKey: ""
   ldapBindPassword: ""
   oidcClientSecret: ""
-
-# External PostgreSQL (required — chart does not bundle a DB)
-postgresql:
-  host: ""
-  port: 5432
-  database: openwhistle
-  username: openwhistle
-
-# External Redis (required — chart does not bundle Redis)
-redis:
-  host: ""
-  port: 6379
-  database: 0
 
 nodeSelector: {}
 tolerations: []

@@ -482,3 +482,34 @@ async def test_oidc_callback_unlinked_identity_shows_sso_unlinked(
     with patch("app.services.oidc.exchange_code", AsyncMock(return_value=userinfo)):
         resp = await client.get("/admin/oidc/callback?code=c&state=s")
     assert resp.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_a_refresh_racing_a_revocation_leaves_no_session(
+    client: AsyncClient, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A password change ends every other session by a SCAN. A refresh that
+    had already validated its session used to delete it and store the new
+    token after the sweep had passed — the new session survived."""
+    from app.api import auth as auth_api
+    from app.redis_client import get_redis
+    from app.services import auth as auth_service
+
+    admin, totp_secret = await _create_admin(db_session)
+    await _full_login(client, admin, totp_secret)
+    redis = await get_redis()
+    real_store = auth_service.store_session
+    minted: list[str] = []
+
+    async def sweep_then_store(r, user_id: str, token: str) -> None:  # type: ignore[no-untyped-def]
+        # The sweep lands between the handler's check and its write.
+        await auth_service.revoke_user_sessions(redis, str(admin.id))
+        minted.append(token)
+        await real_store(r, user_id, token)
+
+    monkeypatch.setattr(auth_api.auth_service, "store_session", sweep_then_store)
+    resp = await _refresh(client)
+
+    assert minted
+    assert resp.status_code == 401
+    assert not await validate_session(redis, minted[0])

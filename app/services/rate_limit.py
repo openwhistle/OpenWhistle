@@ -22,6 +22,26 @@ _SPRAY_ALERTED = "openwhistle:admin_spray_alerted"
 _SETUP_TOKEN_FAILURES = "openwhistle:setup_token_failures"  # noqa: S105 — Redis key name
 
 
+def _admin_key(username: str) -> str:
+    # Case-folded: usernames are unique regardless of case, and a directory
+    # matches uid case-insensitively. "alice", "Alice" and " alice" used to
+    # get ten tries each against the same LDAP account.
+    return f"{_ADMIN_PREFIX}{username.strip().casefold()}"
+
+
+async def _count_failure(redis: Redis, key: str, seconds: int) -> int:
+    """Count one failure; the window runs from the latest one.
+
+    The expiry used to be set on the first failure only, so the lock ended
+    LOCKOUT minutes after the first wrong attempt — ten spread over 29
+    minutes locked for one. Set on every failure, a crash between INCR and
+    EXPIRE also leaves the previous failure's expiry in place.
+    """
+    count = await redis.incr(key)
+    await redis.expire(key, seconds)
+    return int(count)
+
+
 def _wb_key(case_key: str) -> str:
     """The Redis key for a case's failure counter: an HMAC, never the case number,
     so a Redis dump does not list which cases someone tried to open."""
@@ -31,11 +51,7 @@ def _wb_key(case_key: str) -> str:
 
 async def record_whistleblower_failure(redis: Redis, case_key: str) -> int:
     """Record a failed access attempt. Returns total failure count."""
-    key = _wb_key(case_key)
-    count = await redis.incr(key)
-    if count == 1:
-        await redis.expire(key, settings.access_lockout_minutes * 60)
-    return int(count)
+    return await _count_failure(redis, _wb_key(case_key), settings.access_lockout_minutes * 60)
 
 
 async def reset_whistleblower_attempts(redis: Redis, case_key: str) -> None:
@@ -53,8 +69,7 @@ async def get_whistleblower_lockout_ttl(redis: Redis, case_key: str) -> int:
 
 async def check_admin_login_attempts(redis: Redis, username: str) -> bool:
     """Returns True if the username is allowed to attempt login."""
-    key = f"{_ADMIN_PREFIX}{username}"
-    count = await redis.get(key)
+    count = await redis.get(_admin_key(username))
     if count is None:
         return True
     return int(count) < settings.max_login_attempts
@@ -62,17 +77,14 @@ async def check_admin_login_attempts(redis: Redis, username: str) -> bool:
 
 async def record_admin_login_failure(redis: Redis, username: str) -> int:
     """Record a failed admin login attempt."""
-    key = f"{_ADMIN_PREFIX}{username}"
-    count = await redis.incr(key)
-    if count == 1:
-        await redis.expire(key, settings.login_lockout_minutes * 60)
-    return int(count)
+    return await _count_failure(
+        redis, _admin_key(username), settings.login_lockout_minutes * 60
+    )
 
 
 async def reset_admin_login_attempts(redis: Redis, username: str) -> None:
     """Clear admin login failures after successful authentication."""
-    key = f"{_ADMIN_PREFIX}{username}"
-    await redis.delete(key)
+    await redis.delete(_admin_key(username))
 
 
 async def record_instance_login_failure(redis: Redis) -> bool:
@@ -110,9 +122,7 @@ async def setup_token_locked(redis: Redis) -> bool:
 
 
 async def record_setup_token_failure(redis: Redis) -> None:
-    count = await redis.incr(_SETUP_TOKEN_FAILURES)
-    if count == 1:
-        await redis.expire(_SETUP_TOKEN_FAILURES, settings.login_lockout_minutes * 60)
+    await _count_failure(redis, _SETUP_TOKEN_FAILURES, settings.login_lockout_minutes * 60)
 
 
 async def reset_setup_token_failures(redis: Redis) -> None:

@@ -561,7 +561,7 @@ async def test_digest_email_carries_case_numbers_webhook_carries_counts_only() -
     payload = _build_webhook_payload(1, 0, "generic", "OW", "https://x")
     assert payload == {
         "event": "new_activity", "new_reports": 1, "new_messages": 0,
-        "message": "1 new report, 0 new messages",
+        "message": "1 new report, 0 cases with new messages",
     }
     assert "OW-" not in json.dumps(payload)
 

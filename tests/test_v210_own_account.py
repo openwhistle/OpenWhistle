@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import time
 import uuid
 from typing import Any
 from urllib.parse import parse_qs, urlsplit
@@ -406,7 +407,8 @@ async def _enrol_and_change(
 
     changed = await client.post("/admin/account/password", data={
         "csrf_token": csrf, "current_password": password, "new_password": _NEW,
-        "confirm_password": _NEW, "totp_code": pyotp.TOTP(secret).now(),
+        # The next step's code: the enrolment code is used up (one code, one action).
+        "confirm_password": _NEW, "totp_code": pyotp.TOTP(secret).at(time.time() + 30),
     }, follow_redirects=False)
     assert changed.status_code == 303, changed.text
     assert (await _fresh(db_session, user)).must_change_password is False
