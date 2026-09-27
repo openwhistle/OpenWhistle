@@ -606,6 +606,7 @@
   "status.error.invalid": "Nenhuma denúncia corresponde a este número de caso e PIN. Verifique os dois e tente novamente.",
   "status.error.inline": "Verifique o número do caso e o PIN — ambos devem corresponder exatamente à sua denúncia.",
   "status.reply.sent": "Sua resposta foi enviada.",
+  "status.reply.closed": "O caso foi encerrado antes de sua mensagem chegar, por isso ela não foi enviada. Se você tiver algo novo a relatar, envie uma nova denúncia.",
   "demo.status.hint": "Experimente estas denúncias de exemplo. Selecione uma linha para preencher o número do caso e o PIN.",
   "demo.login.hint": "Experimente agora com estas credenciais.",
   "demo.login.click_to_fill": "Preencher",

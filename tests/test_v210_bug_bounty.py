@@ -638,7 +638,9 @@ async def test_a_mistyped_notification_address_is_caught_on_the_form(
     stored as typed and the whistleblower waited for mail that never came."""
     from tests.test_submit_prg import _post, _step
 
-    await _post(client, submission_mode="confidential", confidential_name="Jane", secure_email=email)
+    await _post(
+        client, submission_mode="confidential", confidential_name="Jane", secure_email=email
+    )
     page = (await client.get("/submit")).text
     assert _step(page) == 1
     assert 'value="Jane"' in page
@@ -650,3 +652,34 @@ async def test_a_real_notification_address_passes(client: AsyncClient) -> None:
 
     await _post(client, submission_mode="confidential", secure_email="jane.doe+ow@proton.me")
     assert _step((await client.get("/submit")).text) != 1
+
+
+@pytest.mark.asyncio
+async def test_a_closed_case_takes_no_reply_and_says_so(
+    client: AsyncClient, db_session: AsyncSession, no_csrf
+) -> None:
+    """The status page hides the reply form of a closed case; the server took
+    the reply anyway, onto a case retention will delete."""
+    from sqlalchemy import func, select
+
+    from app.models.report import ReportMessage as Message
+    from app.models.report import ReportStatus
+    from app.services.report import create_report
+
+    report, pin = await create_report(db_session, "financial_fraud", "Closed before the reply.")
+    report.status = ReportStatus.closed
+    await db_session.commit()
+    before = await db_session.scalar(
+        select(func.count()).select_from(Message).where(Message.report_id == report.id)
+    )
+
+    resp = await client.post("/reply", data={
+        "case_number": report.case_number, "pin": pin, "content": "Late addition.",
+    }, follow_redirects=False)
+
+    after = await db_session.scalar(
+        select(func.count()).select_from(Message).where(Message.report_id == report.id)
+    )
+    assert after == before
+    page = await client.get(resp.headers["location"])
+    assert "was not sent" in page.text

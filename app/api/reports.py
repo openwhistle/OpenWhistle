@@ -34,7 +34,7 @@ from app.database import get_db
 from app.forms import Multiline, Text256, Text320, Text512
 from app.i18n import get_lang, make_translator
 from app.models.organisation import Organisation
-from app.models.report import SubmissionMode
+from app.models.report import ReportStatus, SubmissionMode
 from app.onion import cookie_secure
 from app.redis_client import get_redis
 from app.services import report as report_service
@@ -1134,8 +1134,9 @@ async def status_get(
             if report:
                 # No TTL refresh on view: the session ends 2 h after login, so its
                 # remaining lifetime does not reveal when the page was last opened.
-                replied = request.query_params.get("replied") == "1"
-                success = "status.reply.sent" if replied else None
+                replied = request.query_params.get("replied")
+                success = "status.reply.sent" if replied == "1" else None
+                notice = "status.reply.closed" if replied == "closed" else None
 
                 from datetime import UTC, datetime
 
@@ -1153,6 +1154,7 @@ async def status_get(
                     "pin": None,
                     "from_session": True,
                     "success": success,
+                    "notice": notice,
                     "now": now,
                 })
 
@@ -1248,7 +1250,12 @@ async def reply_post(
     if len(stripped) > 5000:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT)
 
-    await report_service.add_whistleblower_message(db, report, stripped)
+    # The status page hides the reply form of a closed case. The server used to
+    # take the reply anyway: stored on a case nobody works on any more, deleted
+    # with it by retention. A page left open while the case was closed lands here.
+    closed = report.status == ReportStatus.closed
+    if not closed:
+        await report_service.add_whistleblower_message(db, report, stripped)
 
     # A fresh key, but the old one's remaining lifetime: a reply must not extend
     # the session either (see status_get).
@@ -1260,7 +1267,9 @@ async def reply_post(
     if status_session_key:
         await redis.delete(f"status-session:{status_session_key}")
 
-    response = RedirectResponse("/status?replied=1", status_code=303)
+    response = RedirectResponse(
+        "/status?replied=closed" if closed else "/status?replied=1", status_code=303
+    )
     response.set_cookie(
         "ow-status-session",
         fresh_key,

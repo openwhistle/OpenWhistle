@@ -594,6 +594,7 @@
   "status.error.invalid": "No report matches this case number and PIN. Check both and try again.",
   "status.error.inline": "Check the case number and the PIN — both must match your report exactly.",
   "status.reply.sent": "Your reply has been sent.",
+  "status.reply.closed": "The case was closed before your message arrived, so it was not sent. If you have something new to report, submit a new report.",
   "demo.status.hint": "Try these example reports. Select a row to fill in its case number and PIN.",
   "demo.login.hint": "Try it now with these credentials.",
   "demo.login.click_to_fill": "Fill in",

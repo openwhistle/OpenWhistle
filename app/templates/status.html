@@ -148,6 +148,9 @@
         <h1>{{ t('status.report.title') }}</h1>
     </div>
 
+    {% if notice %}
+    <div class="alert alert-warning" role="alert">{{ t(notice) }}</div>
+    {% endif %}
     {% if success %}
     <div class="alert alert-success" role="alert">{{ t(success) }}</div>
     {% endif %}

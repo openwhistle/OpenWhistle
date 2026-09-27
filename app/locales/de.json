@@ -594,6 +594,7 @@
   "status.error.invalid": "Zu dieser Vorgangsnummer und PIN gibt es keine Meldung. Prüfen Sie beide Angaben und versuchen Sie es erneut.",
   "status.error.inline": "Prüfen Sie Vorgangsnummer und PIN – beide müssen genau mit Ihrer Meldung übereinstimmen.",
   "status.reply.sent": "Ihre Antwort wurde gesendet.",
+  "status.reply.closed": "Der Vorgang wurde abgeschlossen, bevor Ihre Nachricht ankam; sie wurde nicht gesendet. Wenn Sie etwas Neues zu melden haben, geben Sie eine neue Meldung ab.",
   "demo.status.hint": "Probieren Sie diese Beispielmeldungen aus. Wählen Sie eine Zeile, um Vorgangsnummer und PIN einzutragen.",
   "demo.login.hint": "Jetzt ausprobieren – mit diesen Zugangsdaten.",
   "demo.login.click_to_fill": "Eintragen",

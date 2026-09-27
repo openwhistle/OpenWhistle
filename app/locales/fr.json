@@ -594,6 +594,7 @@
   "status.error.invalid": "Aucun signalement ne correspond à ce numéro de dossier et à ce code PIN. Vérifiez les deux et réessayez.",
   "status.error.inline": "Vérifiez le numéro de dossier et le code PIN : les deux doivent correspondre exactement à votre signalement.",
   "status.reply.sent": "Votre réponse a été envoyée.",
+  "status.reply.closed": "Le dossier a été clôturé avant l'arrivée de votre message ; il n'a pas été envoyé. Si vous avez quelque chose de nouveau à signaler, faites un nouveau signalement.",
   "demo.status.hint": "Essayez ces signalements d'exemple. Sélectionnez une ligne pour remplir son numéro de dossier et son code PIN.",
   "demo.login.hint": "Essayez maintenant avec ces identifiants.",
   "demo.login.click_to_fill": "Remplir",
