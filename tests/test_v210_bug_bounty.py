@@ -644,6 +644,8 @@ async def test_a_mistyped_notification_address_is_caught_on_the_form(
     page = (await client.get("/submit")).text
     assert _step(page) == 1
     assert 'value="Jane"' in page
+    # The summary banner too: it had its own list of codes and showed "email_invalid".
+    assert page.count("Check the email address") == 2
 
 
 @pytest.mark.asyncio

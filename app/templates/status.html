@@ -201,7 +201,7 @@
                 <div>
                     <div class="st-deadline-label">{{ t('status.deadlines.feedback') }}</div>
                     {% if not fb %}
-                    <span class="st-muted-italic">{{ t('status.deadlines.feedback_pending') }}</span>
+                    <span class="st-muted-italic">—</span>
                     {% elif fb.state == 'done' %}
                     <span class="st-success-text">{{ icons.icon('check') }} {{ t('status.deadlines.feedback_done') }}</span>
                     {% elif fb.state == 'overdue' %}
