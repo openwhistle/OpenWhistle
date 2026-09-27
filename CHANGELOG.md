@@ -44,7 +44,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   rate limits "never IP-based", "OIDC or TOTP", and competitor prices without a source.
 - **A comparison page**, `open-source-whistleblowing-software.html`: OpenWhistle, GlobaLeaks,
   SecureDrop and Hush Line on licence, hosting, deadlines, Tor, languages and audits, each sourced.
-- **A new German article**, `blog/kostenloses-hinweisgebersystem.html`: what a free system still
+- **A new German article**, `blog/interne-meldestelle-kostenlos.html`: what a free system still
   costs. The German comparison article keeps only vendor-published facts, each sourced and dated;
   the three older articles carried 2025 as publication date, they were published 2026-04-27.
 - **Every page has a search head**: title of at most 60 characters, unique description, canonical,
