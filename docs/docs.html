@@ -1920,6 +1920,11 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
           admin promotes it if needed. TOTP enrollment still follows, as for
           <a href="#admin-login">every account</a>.
         </p>
+        <ul>
+          <li>Accounts with a local password, such as the one the setup wizard created, keep signing in with it.</li>
+          <li>A directory user whose name a local account already has is refused, never merged into it.</li>
+          <li>The username comes from <code>LDAP_ATTR_USERNAME</code>. An entry without it is refused.</li>
+        </ul>
         <p>
           LDAP uses python-ldap (the OpenLDAP client) and S3 storage uses boto3: optional extras,
           both in the container image. From source, install <code>libldap2-dev libsasl2-dev</code>,
@@ -2219,7 +2224,7 @@ CLAMAV_HOST=clamav</code></pre>
         <ul>
           <li>An account without TOTP yet (new from <code>/admin/users</code>, or first provisioned by LDAP) goes to <code>/admin/mfa/setup</code> after its first factor. Scan the QR code, confirm one code, and the session starts.</li>
           <li>A password someone else set is replaced next, at <code>/admin/account</code> (<a href="#own-account">Your account</a>).</li>
-          <li>After <code>MAX_LOGIN_ATTEMPTS</code> wrong passwords, the username is locked for <code>LOGIN_LOCKOUT_MINUTES</code>.</li>
+          <li>After <code>MAX_LOGIN_ATTEMPTS</code> wrong passwords, the username is locked for <code>LOGIN_LOCKOUT_MINUTES</code> from the last one. Upper and lower case count as one username.</li>
           <li>A session lasts <code>ACCESS_TOKEN_EXPIRE_MINUTES</code>; <em>Stay signed in</em> renews it, up to <code>SESSION_MAX_HOURS</code> after login.</li>
         </ul>
 

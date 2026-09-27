@@ -1,5 +1,6 @@
 """Admin authentication: password + TOTP, OIDC, logout."""
 
+import logging
 import secrets
 from datetime import UTC, datetime
 from typing import Any
@@ -35,6 +36,8 @@ from app.services import rate_limit as rl
 from app.services.mfa import consume_totp, generate_qr_code_base64, verify_demo_totp
 from app.services.notifications import notify_security_alert
 from app.templating import render
+
+log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin")
 
@@ -207,8 +210,11 @@ async def login_post(
         }))
 
     # ── LDAP authentication path ────────────────────────────────────
+    # A directory bind that fails falls through to the local check below:
+    # the wizard's superadmin (and any account made on /admin/users) has a
+    # local password, and switching LDAP on used to lock all of them out.
     if settings.ldap_enabled:
-        from sqlalchemy import select  # noqa: PLC0415
+        from sqlalchemy import func, select  # noqa: PLC0415
 
         from app.services.ldap_auth import LDAPAuthError, authenticate_ldap  # noqa: PLC0415
         from app.services.mfa import generate_totp_secret  # noqa: PLC0415
@@ -216,37 +222,47 @@ async def login_post(
         try:
             ldap_info = await authenticate_ldap(username, password)
         except LDAPAuthError:
-            await _password_failed(redis, db, username, background_tasks)
-            return render(request, "login.html", _login_ctx(request, {
-                "error": "login.error.invalid",
-                "credentials_invalid": True,
-            }), status_code=401)
+            ldap_info = None
 
-        # Find or provision the local admin user for this LDAP identity
-        result = await db.execute(
-            select(AdminUser).where(AdminUser.ldap_username == ldap_info.username)
-        )
-        user: AdminUser | None = result.scalar_one_or_none()
-
-        if user is None:
-            # First LDAP login — auto-provision with a temporary TOTP secret.
-            # The user must set up TOTP on their first login via /admin/mfa/setup.
-            user = AdminUser(
-                id=__import__("uuid").uuid4(),
-                username=ldap_info.username,
-                password_hash=None,
-                ldap_username=ldap_info.username,
-                totp_secret=generate_totp_secret(),
-                totp_enabled=False,
-                # Least privilege: every directory user can reach this point,
-                # so never inherit the model's admin default. An admin promotes.
-                role=AdminRole.case_manager,
+        if ldap_info is not None:
+            # Find or provision the local admin user for this LDAP identity
+            result = await db.execute(
+                select(AdminUser).where(AdminUser.ldap_username == ldap_info.username)
             )
-            db.add(user)
-            await db.commit()
-            await db.refresh(user)
+            user: AdminUser | None = result.scalar_one_or_none()
 
-        return await _second_factor(request, redis, user)
+            if user is None:
+                taken = await db.scalar(select(AdminUser.id).where(
+                    func.lower(AdminUser.username) == ldap_info.username.lower()
+                ))
+                if taken is not None:
+                    # Never merged into the local account of the same name:
+                    # the directory would take it over. This used to be an
+                    # IntegrityError, a 500.
+                    log.warning("LDAP user matches a local account name; not provisioned")
+                    await _password_failed(redis, db, username, background_tasks)
+                    return render(request, "login.html", _login_ctx(request, {
+                        "error": "login.error.invalid",
+                        "credentials_invalid": True,
+                    }), status_code=401)
+                # First LDAP login — auto-provision with a temporary TOTP secret.
+                # The user must set up TOTP on their first login via /admin/mfa/setup.
+                user = AdminUser(
+                    id=__import__("uuid").uuid4(),
+                    username=ldap_info.username,
+                    password_hash=None,
+                    ldap_username=ldap_info.username,
+                    totp_secret=generate_totp_secret(),
+                    totp_enabled=False,
+                    # Least privilege: every directory user can reach this point,
+                    # so never inherit the model's admin default. An admin promotes.
+                    role=AdminRole.case_manager,
+                )
+                db.add(user)
+                await db.commit()
+                await db.refresh(user)
+
+            return await _second_factor(request, redis, user)
 
     # ── Local password authentication path ─────────────────────────
     user = await auth_service.get_user_by_username(db, username)

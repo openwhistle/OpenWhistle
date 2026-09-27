@@ -337,3 +337,111 @@ async def test_a_confirmed_deletion_is_in_the_audit_log(
         "requested_by": requester.username,
         "confirmed_by": confirmer.username,
     }]
+
+
+# ── Sign-in: LDAP next to local accounts, and the lockout counter ────────────
+
+
+@pytest.mark.asyncio
+async def test_a_local_account_signs_in_while_ldap_is_on(
+    client: AsyncClient, db_session: AsyncSession, no_csrf, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The wizard's superadmin has a local password. Switching LDAP on used
+    to send every sign-in to the directory only: the owner was locked out."""
+    from unittest.mock import AsyncMock
+
+    from app.config import settings
+    from app.services import ldap_auth
+
+    monkeypatch.setattr(settings, "ldap_enabled", True)
+    monkeypatch.setattr(
+        ldap_auth, "authenticate_ldap",
+        AsyncMock(side_effect=ldap_auth.LDAPAuthError("LDAP user not found")),
+    )
+    user = await _totp_user(db_session)
+    resp = await client.post(
+        "/admin/login", data={"username": user.username, "password": "TestPassword123!"},
+        follow_redirects=False,
+    )
+    assert resp.status_code == 200 and 'name="temp_token"' in resp.text
+
+
+@pytest.mark.asyncio
+async def test_a_directory_user_named_like_a_local_account_is_refused_not_a_500(
+    client: AsyncClient, db_session: AsyncSession, no_csrf, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from unittest.mock import AsyncMock
+
+    from app.config import settings
+    from app.services import ldap_auth
+
+    user = await _totp_user(db_session)
+    monkeypatch.setattr(settings, "ldap_enabled", True)
+    monkeypatch.setattr(
+        ldap_auth, "authenticate_ldap",
+        AsyncMock(return_value=ldap_auth.LDAPUserInfo(username=user.username, email=None)),
+    )
+    resp = await client.post(
+        "/admin/login", data={"username": user.username, "password": "directory-password"},
+        follow_redirects=False,
+    )
+    assert resp.status_code == 401
+
+
+def test_a_directory_entry_without_the_username_attribute_is_refused(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The typed string used to stand in: 'ALICE' provisioned a second
+    account next to 'alice', with no second factor enrolled yet."""
+    from unittest.mock import MagicMock, patch
+
+    from app.config import settings
+    from app.services import ldap_auth
+
+    for name, value in {
+        "ldap_enabled": True, "ldap_server": "dir.example.org", "ldap_port": 389,
+        "ldap_use_ssl": False, "ldap_start_tls": False, "ldap_bind_dn": "cn=svc",
+        "ldap_bind_password": "svc-pw", "ldap_base_dn": "dc=example,dc=org",
+        "ldap_user_filter": "(uid={username})", "ldap_attr_username": "uid",
+        "ldap_attr_email": "mail",
+    }.items():
+        monkeypatch.setattr(settings, name, value)
+    conn = MagicMock()
+    conn.search_s.return_value = [("uid=alice,dc=example,dc=org", {"mail": [b"a@example.org"]})]
+    with patch("ldap.initialize", return_value=conn), pytest.raises(ldap_auth.LDAPAuthError):
+        ldap_auth._authenticate_ldap_sync("ALICE", "pw")
+
+
+@pytest.mark.asyncio
+async def test_case_variants_of_a_username_share_one_lockout(client: AsyncClient) -> None:
+    import uuid
+
+    from app.config import settings
+    from app.redis_client import get_redis
+    from app.services import rate_limit as rl
+
+    redis = await get_redis()
+    name = f"alice{uuid.uuid4().hex[:6]}"
+    for _ in range(settings.max_login_attempts):
+        await rl.record_admin_login_failure(redis, name)
+    assert not await rl.check_admin_login_attempts(redis, f" {name.upper()}")
+
+
+@pytest.mark.asyncio
+async def test_the_lock_lasts_lockout_minutes_from_the_last_failure(client: AsyncClient) -> None:
+    """The window used to start at the first failure: ten wrong passwords
+    spread over 29 minutes gave a one-minute lock."""
+    import uuid
+
+    from app.config import settings
+    from app.redis_client import get_redis
+    from app.services import rate_limit as rl
+
+    redis = await get_redis()
+    name = f"bob{uuid.uuid4().hex[:6]}"
+    await rl.record_admin_login_failure(redis, name)
+    key = f"openwhistle:admin_ratelimit:{name}"
+    await redis.expire(key, 60)  # the first failure was long ago
+    for _ in range(settings.max_login_attempts - 1):
+        await rl.record_admin_login_failure(redis, name)
+    assert await redis.ttl(key) > settings.login_lockout_minutes * 60 - 5

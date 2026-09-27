@@ -124,7 +124,11 @@ def _authenticate_ldap_sync(username: str, password: str) -> LDAPUserInfo:
     except ldap.LDAPError as exc:
         raise LDAPAuthError("Invalid LDAP credentials") from exc
 
-    return LDAPUserInfo(
-        username=_first(attrs, settings.ldap_attr_username) or username,
-        email=_first(attrs, settings.ldap_attr_email),
-    )
+    # The directory's own spelling, never the typed one: the typed string used
+    # to stand in when the attribute was missing, so "ALICE" provisioned a
+    # second account next to "alice", with no second factor enrolled yet.
+    directory_name = _first(attrs, settings.ldap_attr_username)
+    if not directory_name:
+        log.error("LDAP entry has no %s attribute; set LDAP_ATTR_USERNAME", settings.ldap_attr_username)
+        raise LDAPAuthError("LDAP entry has no username attribute")
+    return LDAPUserInfo(username=directory_name, email=_first(attrs, settings.ldap_attr_email))
