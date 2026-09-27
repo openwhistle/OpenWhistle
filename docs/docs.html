@@ -1109,7 +1109,9 @@
 
 <span class="t-comment"># Minimum required values. The production Redis requires REDIS_PASSWORD,</span>
 <span class="t-comment"># so it goes into REDIS_URL too, as POSTGRES_PASSWORD goes into DATABASE_URL:</span>
-<span class="t-str">SECRET_KEY</span>=your-long-random-secret-key-here
+<span class="t-comment"># openssl rand -hex 32 — a new value for each key:</span>
+<span class="t-str">SECRET_KEY</span>=&lt;64 hex characters&gt;
+<span class="t-str">ENCRYPTION_KEY</span>=&lt;64 hex characters&gt;
 <span class="t-str">POSTGRES_PASSWORD</span>=db-password
 <span class="t-str">REDIS_PASSWORD</span>=redis-password
 <span class="t-str">DATABASE_URL</span>=postgresql+asyncpg://openwhistle:db-password@db:5432/openwhistle

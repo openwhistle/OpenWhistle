@@ -5,9 +5,11 @@
 # Generate a strong secret_key with:
 #   openssl rand -hex 32
 
-openwhistle_secret_key: "CHANGE_ME_generate_with_openssl_rand_hex_32"
-openwhistle_db_password: "CHANGE_ME_strong_database_password"
-openwhistle_redis_password: "CHANGE_ME_strong_redis_password"
+# Empty until you set them: the role refuses to deploy. A placeholder here
+# would deploy as the same key on every install.
+openwhistle_secret_key: ""        # 32+ characters: openssl rand -hex 32
+openwhistle_db_password: ""       # openssl rand -hex 24
+openwhistle_redis_password: ""    # openssl rand -hex 24
 
 # Optional: OIDC client secret
 # openwhistle_oidc_client_secret: ""

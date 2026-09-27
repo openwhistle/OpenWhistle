@@ -210,7 +210,7 @@ The demo resets automatically every 6 hours.
 ```bash
 git clone https://github.com/openwhistle/OpenWhistle.git
 cd OpenWhistle
-cp .env.example .env        # Set a strong SECRET_KEY and ENCRYPTION_KEY (fresh install only)
+cp .env.example .env        # SECRET_KEY, ENCRYPTION_KEY: openssl rand -hex 32 each (fresh install)
 docker compose up -d
 docker compose logs app | grep "Setup token"  # read the one-time setup token
 # Open http://localhost:4009/setup to create the first admin account

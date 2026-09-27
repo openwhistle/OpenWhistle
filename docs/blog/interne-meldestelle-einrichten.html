@@ -494,9 +494,9 @@ cp .env.example .env</code></pre>
 COMPOSE_FILE=docker-compose.prod.yml
 
 # Mindestens 32 Zeichen
-SECRET_KEY=ersetzen-durch-openssl-rand-hex-32
+SECRET_KEY=&lt;openssl rand -hex 32&gt;
 # Empfohlen: eigener Schlüssel für die Verschlüsselung der Meldungen
-ENCRYPTION_KEY=ersetzen-durch-openssl-rand-hex-32
+ENCRYPTION_KEY=&lt;openssl rand -hex 32&gt;
 
 # Passwörter für Datenbank und Redis, dieselben in den URLs
 POSTGRES_PASSWORD=starkes-passwort

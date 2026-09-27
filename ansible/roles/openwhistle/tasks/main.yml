@@ -3,12 +3,12 @@
   ansible.builtin.assert:
     that:
       - openwhistle_domain | length > 0
-      - openwhistle_secret_key | length > 0
+      - openwhistle_secret_key | length >= 32
       - openwhistle_db_password | length > 0
       - openwhistle_redis_password | length > 0
       - not openwhistle_tls_enabled or openwhistle_certbot_email | length > 0
     fail_msg: >
-      Required variables missing. Set openwhistle_domain, openwhistle_secret_key,
+      Required variables missing. Set openwhistle_domain, openwhistle_secret_key (32+ characters),
       openwhistle_db_password, openwhistle_redis_password, and (if TLS enabled)
       openwhistle_certbot_email.
 

@@ -11,9 +11,9 @@ openwhistle_app_name: "ACME Corp Whistleblower System"
 openwhistle_app_public_url: "https://whistle.example.com"
 
 # Secrets — move to vault.yml and encrypt
-# openwhistle_secret_key: "changeme-generate-with-openssl-rand-hex-32"
-# openwhistle_db_password: "changeme"
-# openwhistle_redis_password: "changeme"
+# openwhistle_secret_key: ""        # openssl rand -hex 32
+# openwhistle_db_password: ""
+# openwhistle_redis_password: ""
 
 # Notifications
 openwhistle_notify_email_enabled: "true"
