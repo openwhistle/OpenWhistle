@@ -5,7 +5,7 @@ admins), so the release commit goes through a pull request like everything else.
 
 ```mermaid
 flowchart LR
-    A[Mutation audit] --> B[UI check] --> F[Chrome check] --> C[Release PR] --> G[No open alert] --> D[Tag vX.Y.Z] --> E[Verify images]
+    A[Mutation audit] --> B[UI check] --> F[Chrome check] --> C[Release PR] --> G[No open security alert] --> D[Tag vX.Y.Z] --> E[Verify images]
 ```
 
 ## 1. Mutation audit — before the release PR
@@ -76,13 +76,15 @@ On `release/vX.Y.Z`:
 
 Merge once the checks are green.
 
-## 5. No open code-scanning alert
+## 5. No open security alert
 
-Before the tag, the repository has **no** open code-scanning alert, not only none
-in the release PR's diff:
+Before the tag, the repository has **no** open code-scanning, Dependabot or
+secret-scanning alert, not only none in the release PR's diff:
 
 ```bash
-gh api "repos/openwhistle/OpenWhistle/code-scanning/alerts?state=open" -q length   # must print 0
+for kind in code-scanning dependabot secret-scanning; do
+  echo "$kind: $(gh api "repos/openwhistle/OpenWhistle/$kind/alerts?state=open" -q length)"   # each 0
+done
 ```
 
 An alert is fixed, or dismissed with its reason and the test that shows it cannot
