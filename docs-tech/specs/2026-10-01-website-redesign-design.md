@@ -178,6 +178,9 @@ The single page `docs/docs.html` (162 KB) is split by reader type. Content is mo
 - Different from easywall: Pagefind from PyPI (`pagefind`, hash-locked) instead of `npx`; own small UI on
   `pagefind.js` instead of `pagefind-ui` (120 KB); "on this page" built at build time, not by JS. Added: skip
   link, 404, previous/next, "Edit on GitHub".
+- P0 (2026-10-02): `pagefind` 1.5.2 from PyPI (`python -m pagefind`) searches under the docs CSP with no violation, so
+  no further directive is needed; with WASM blocked Chromium throws a CompileError and fires no
+  `securitypolicyviolation` event.
 
 ### Diagrams
 
@@ -194,8 +197,11 @@ flowchart LR
 - The page shows the variant matching `data-theme` (two `<img loading="lazy">`), not a media query, which would
   disagree with the theme toggle.
 - Redrawn: architecture, submission flow, case lifecycle, admin login, plus the home-page flow.
-- Unknown until the P0 spike: whether the export yields real SVG text (`html=0`, no `foreignObject`) with the
-  font embedded. An SVG loaded by `<img>` cannot see the page's fonts.
+- P0 (2026-10-02): the draw.io CLI (31.5.3, `rlespinasse/drawio-desktop-headless@sha256:49018905afd4a309bacdab351982965c9d970536c5091bef98efa5725a76f2c9`)
+  still emits `foreignObject` labels despite `html=0` (`--embed-svg-fonts` changes nothing, output byte-identical) and
+  the text falls back to a serif in an `<img>`. **Open decision for the maintainer: D11 reopens** (draw.io CLI cannot
+  yield real SVG text; alternatives: post-process labels to `<text>` or another diagram source). A fonttools Sora
+  subset for a post-processed SVG would be about 1.6 KB per diagram.
 
 ## SEO and blog
 
