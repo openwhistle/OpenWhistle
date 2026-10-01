@@ -304,7 +304,11 @@ def check_links(out: Path, host: str) -> None:
         here = "/" + file.relative_to(out).as_posix()
         for ref in parser.refs:
             parts = urlsplit(urljoin(here, ref))
-            if parts.scheme in {"mailto", "tel", "data"} or (parts.netloc and parts.netloc != host):
+            # Skip non-http(s) schemes (mailto:, ftp:, javascript:, etc.)
+            if parts.scheme and parts.scheme not in ("http", "https"):
+                continue
+            # Skip external hosts (case-insensitive comparison)
+            if parts.netloc and parts.netloc.lower() != host.lower():
                 continue
             # / is the language choice: a stub on Pages, nginx from P4
             if parts.path in ("/", "/index.html"):
@@ -312,10 +316,25 @@ def check_links(out: Path, host: str) -> None:
             target = out / unquote(parts.path).lstrip("/")
             if parts.path.endswith("/"):
                 target = target / "index.html"
+            # Prevent path traversal outside out/
+            try:
+                target.resolve().relative_to(out.resolve())
+            except ValueError:
+                errors.append(
+                    f"{here}: {ref} -> traversal outside output at {parts.path}"
+                )
+                continue
             if not target.is_file():
                 errors.append(f"{here}: {ref} -> nothing at {parts.path}")
-            elif parts.fragment and target in parsed and parts.fragment not in parsed[target].ids:
-                errors.append(f"{here}: {ref} -> {parts.path} has no id {parts.fragment!r}")
+            elif (
+                parts.fragment
+                and target in parsed
+                and unquote(parts.fragment) not in parsed[target].ids
+            ):
+                errors.append(
+                    f"{here}: {ref} -> {parts.path} "
+                    f"has no id {unquote(parts.fragment)!r}"
+                )
     if errors:
         raise BuildError("broken internal links:\n  " + "\n  ".join(errors))
 
@@ -323,7 +342,7 @@ def check_links(out: Path, host: str) -> None:
 def _refuse_dangerous_out(src: Path, out: Path) -> None:
     """build() empties `out`; it must never be the sources, above them, or inside them."""
     out, src = out.resolve(), src.resolve()
-    if out == src or out in src.parents or src in out.parents:
+    if out == src or out.is_relative_to(src) or src.is_relative_to(out):
         raise BuildError(f"--out {out} would overwrite the sources in {src}")
 
 

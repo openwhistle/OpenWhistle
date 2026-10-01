@@ -322,10 +322,11 @@ def test_the_footer_shows_the_app_version(src: Path, tmp_path: Path) -> None:
 def test_title_and_description_are_html_escaped_and_utf8_stays_literal(
     src: Path, tmp_path: Path
 ) -> None:
-    (src / "en" / "docs" / "esc.md").write_text(
-        "---\ntitle: 'A & B \"q\" <x>'\ndescription: 'd ❤️ →'\ntranslation_key: esc\n---\n<main id=\"main-content\">x</main>\n",
-        encoding="utf-8",
+    esc_text = (
+        "---\ntitle: 'A & B \"q\" <x>'\ndescription: 'd ❤️ →'\n"
+        "translation_key: esc\n---\n<main id=\"main-content\">x</main>\n"
     )
+    (src / "en" / "docs" / "esc.md").write_text(esc_text, encoding="utf-8")
     path = tmp_path / "out" / "en" / "docs" / "esc" / "index.html"
     _build(src, tmp_path)
     html = path.read_text(encoding="utf-8")
@@ -335,10 +336,21 @@ def test_title_and_description_are_html_escaped_and_utf8_stays_literal(
 
 def _add_link(src: Path, href: str) -> None:
     page = src / "en" / "index.html"
-    page.write_text(page.read_text().replace("</main>", f'<a href="{href}">x</a></main>'), encoding="utf-8")
+    content = page.read_text().replace(
+        "</main>", f'<a href="{href}">x</a></main>'
+    )
+    page.write_text(content, encoding="utf-8")
 
 
-@pytest.mark.parametrize("href", ["/en/missing/", "../nowhere.html", "/img/missing.png", "https://example.test/en/gone/"])
+@pytest.mark.parametrize(
+    "href",
+    [
+        "/en/missing/",
+        "../nowhere.html",
+        "/img/missing.png",
+        "https://example.test/en/gone/",
+    ],
+)
 def test_a_link_to_nothing_fails(src: Path, tmp_path: Path, href: str) -> None:
     _add_link(src, href)
     with pytest.raises(B.BuildError, match="broken internal links"):
@@ -351,8 +363,16 @@ def test_a_link_to_a_missing_fragment_fails(src: Path, tmp_path: Path) -> None:
         _build(src, tmp_path)
 
 
-@pytest.mark.parametrize("href", ["#main-content", "/de/#main-content", "mailto:info@openwhistle.net",
-                                  "https://github.com/openwhistle/OpenWhistle", "//cdn.example.org/x.js"])
+@pytest.mark.parametrize(
+    "href",
+    [
+        "#main-content",
+        "/de/#main-content",
+        "mailto:info@openwhistle.net",
+        "https://github.com/openwhistle/OpenWhistle",
+        "//cdn.example.org/x.js",
+    ],
+)
 def test_valid_and_external_links_pass(src: Path, tmp_path: Path, href: str) -> None:
     _add_link(src, href)
     _build(src, tmp_path)
@@ -378,3 +398,63 @@ def test_the_root_is_the_language_choice_not_a_page(src: Path, tmp_path: Path) -
 def test_a_link_to_root_fragment_passes(src: Path, tmp_path: Path) -> None:
     _add_link(src, "/#something")
     _build(src, tmp_path)  # Passes: fragment on root is ignored
+
+
+def test_path_traversal_outside_out_fails(src: Path, tmp_path: Path) -> None:
+    _add_link(src, "../../../../etc/passwd")
+    with pytest.raises(B.BuildError, match="broken internal links"):
+        _build(src, tmp_path)
+
+
+def test_percent_encoded_path_traversal_fails(src: Path, tmp_path: Path) -> None:
+    _add_link(src, "%2e%2e/%2e%2e/etc/passwd")
+    with pytest.raises(B.BuildError, match="broken internal links"):
+        _build(src, tmp_path)
+
+
+def test_percent_encoded_path_to_existing_file_passes(src: Path, tmp_path: Path) -> None:
+    _add_link(src, "/img/%70ixel.png")  # %70 = 'p'
+    _build(src, tmp_path)
+
+
+def test_fragment_with_percent_encoding_matches_id(src: Path, tmp_path: Path) -> None:
+    _add_link(src, "/en/docs/#caf%C3%A9")  # café in percent-encoded
+    page = src / "en" / "docs" / "index.md"
+    # Add café ID to the docs page
+    page.write_text(
+        page.read_text().replace("</main>", '<span id="café">test</span></main>'),
+        encoding="utf-8",
+    )
+    _build(src, tmp_path)
+
+
+def test_same_page_missing_fragment_fails(src: Path, tmp_path: Path) -> None:
+    _add_link(src, "#nope")
+    with pytest.raises(B.BuildError, match="no id 'nope'"):
+        _build(src, tmp_path)
+
+
+def test_link_with_query_string_passes(src: Path, tmp_path: Path) -> None:
+    _add_link(src, "/en/docs/?x=1")
+    _build(src, tmp_path)
+
+
+def test_unknown_scheme_is_skipped(src: Path, tmp_path: Path) -> None:
+    _add_link(src, "javascript:alert('xss')")
+    _build(src, tmp_path)  # javascript: is skipped, no error
+
+
+def test_ftp_scheme_is_skipped(src: Path, tmp_path: Path) -> None:
+    _add_link(src, "ftp://example.com/file.txt")
+    _build(src, tmp_path)  # ftp: is skipped
+
+
+def test_netloc_case_insensitive(src: Path, tmp_path: Path) -> None:
+    _add_link(src, "https://EXAMPLE.TEST/en/")
+    _build(src, tmp_path)  # Same host, case-insensitive match
+
+
+def test_out_inside_src_is_refused(src: Path, tmp_path: Path) -> None:
+    out = src / "_site"
+    with pytest.raises(B.BuildError, match="would overwrite the sources"):
+        B.build(src, out)
