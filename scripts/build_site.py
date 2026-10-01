@@ -182,6 +182,20 @@ def load_pages(src: Path, site: dict) -> list[Page]:
     return pages
 
 
+def hreflang(page: Page, site: dict) -> list[tuple[str, str]]:
+    """The <link rel=alternate> set, shared by the head and the sitemap."""
+    if len(page.alternates) < 2:
+        return []
+    base = site["base_url"]
+    links = [(lang, base + url) for lang, url in sorted(page.alternates.items())]
+    language_roots = {f"/{lang}/" for lang in site["languages"]}
+    if page.url in language_roots:
+        links.append(("x-default", base + "/"))  # "/" chooses the language
+    elif site["default_language"] in page.alternates:
+        links.append(("x-default", base + page.alternates[site["default_language"]]))
+    return links
+
+
 def environment(src: Path) -> Environment:
     return Environment(
         loader=FileSystemLoader([src / "_layouts", src / "_includes"]),

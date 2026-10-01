@@ -170,3 +170,49 @@ def test_out_that_is_a_file_fails(src: Path, tmp_path: Path) -> None:
     out.write_text("x", encoding="utf-8")
     with pytest.raises(B.BuildError, match="is a file"):
         B.build(src, out)
+
+
+def _pages(src: Path, tmp_path: Path) -> dict[str, object]:
+    return {p.url: p for p in B.build(src, tmp_path / "out")}
+
+
+def test_translations_point_at_each_other(src: Path, tmp_path: Path) -> None:
+    pages = _pages(src, tmp_path)
+    assert pages["/en/"].alternates == {"en": "/en/", "de": "/de/"}
+    assert pages["/de/"].alternates == pages["/en/"].alternates
+
+
+def test_the_home_x_default_is_the_root_and_others_the_default_language(src: Path, tmp_path: Path) -> None:
+    site = B.load_data(src)["site"]
+    pages = _pages(src, tmp_path)
+    assert ("x-default", "https://example.test/") in B.hreflang(pages["/de/"], site)
+    assert B.hreflang(pages["/en/docs/"], site) == []  # no translation, no hreflang
+
+
+def test_a_missing_translation_string_fails(src: Path, tmp_path: Path) -> None:
+    (src / "_data" / "i18n" / "de.yml").write_text("{}\n", encoding="utf-8")
+    with pytest.raises(B.BuildError, match=r"de\.yml: missing \['skip_link'"):
+        _build(src, tmp_path)
+
+
+def test_one_language_twice_in_a_translation_group_fails(src: Path, tmp_path: Path) -> None:
+    extra = src / "en" / "home-copy.html"
+    extra.write_text((src / "en" / "index.html").read_text(), encoding="utf-8")
+    with pytest.raises(B.BuildError, match="translation_key 'home' twice in en"):
+        _build(src, tmp_path)
+
+
+def test_a_third_language_needs_data_only(src: Path, tmp_path: Path) -> None:
+    """D7: a language is config + translations, never a template change."""
+    site = src / "_data" / "site.yml"
+    site.write_text(site.read_text() + "  fr: {name: Français, locale: fr_FR}\n", encoding="utf-8")
+    shutil.copy(src / "_data" / "i18n" / "en.yml", src / "_data" / "i18n" / "fr.yml")
+    (src / "fr").mkdir()
+    (src / "fr" / "index.html").write_text(
+        "---\ntitle: Accueil\ndescription: La page d'accueil.\ntranslation_key: home\n---\n"
+        '<main id="main-content"><h1>Accueil</h1></main>\n',
+        encoding="utf-8",
+    )
+    pages = _pages(src, tmp_path)
+    assert pages["/fr/"].alternates == {"en": "/en/", "de": "/de/", "fr": "/fr/"}
+    assert 'lang="fr"' in (tmp_path / "out" / "fr" / "index.html").read_text(encoding="utf-8")
