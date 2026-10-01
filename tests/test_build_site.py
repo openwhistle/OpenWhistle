@@ -6,6 +6,7 @@ import importlib.util
 import re
 import shutil
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from types import ModuleType
 
@@ -456,3 +457,44 @@ def test_out_inside_src_is_refused(src: Path, tmp_path: Path) -> None:
     out = src / "_site"
     with pytest.raises(B.BuildError, match="would overwrite the sources"):
         B.build(src, out)
+
+
+NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9", "x": "http://www.w3.org/1999/xhtml"}
+
+
+def test_the_sitemap_lists_indexable_pages_with_alternates(src: Path, tmp_path: Path) -> None:
+    root = ET.parse(_build(src, tmp_path) / "sitemap.xml").getroot()  # noqa: S314 - our own generated file
+    locs = {u.find("s:loc", NS).text: u for u in root.findall("s:url", NS)}
+    assert set(locs) == {"https://example.test/en/", "https://example.test/de/", "https://example.test/en/docs/"}
+    alts = {a.get("hreflang") for a in locs["https://example.test/de/"].findall("x:link", NS)}
+    assert alts == {"en", "de", "x-default"}
+
+
+def test_a_redirect_to_no_page_fails(src: Path, tmp_path: Path) -> None:
+    (src / "_data" / "redirects.yml").write_text("/old.html: /en/gone/\n")
+    with pytest.raises(B.BuildError, match="/old.html -> /en/gone/, which is no page"):
+        _build(src, tmp_path)
+
+
+def test_a_stub_keeps_the_fragment_and_is_not_indexed(src: Path, tmp_path: Path) -> None:
+    redirects = "/docs.html: /en/docs/\n/blog/: /de/\n/x.md: /en/\n"
+    (src / "_data" / "redirects.yml").write_text(redirects)
+    out = _build(src, tmp_path, redirect_stubs=True)
+    stub = (out / "docs.html").read_text(encoding="utf-8")
+    assert 'location.replace("/en/docs/"+location.hash)' in stub
+    assert '<meta name="robots" content="noindex">' in stub
+    assert (out / "blog" / "index.html").is_file()
+    assert not (out / "x.md").exists()  # only nginx can redirect a non-HTML URL
+    assert "/en/" in (out / "index.html").read_text(encoding="utf-8")  # "/" on Pages
+
+
+def test_no_stubs_without_the_flag(src: Path, tmp_path: Path) -> None:
+    (src / "_data" / "redirects.yml").write_text("/docs.html: /en/docs/\n")
+    out = _build(src, tmp_path)
+    assert not (out / "docs.html").exists() and not (out / "index.html").exists()
+
+
+def test_a_stub_never_overwrites_a_page(src: Path, tmp_path: Path) -> None:
+    (src / "_data" / "redirects.yml").write_text("/de/index.html: /en/\n")
+    with pytest.raises(B.BuildError, match="would overwrite de/index.html"):
+        _build(src, tmp_path, redirect_stubs=True)

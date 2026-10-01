@@ -21,8 +21,12 @@ The rules, each pinned by tests/test_build_site.py:
 from __future__ import annotations
 
 import argparse
+import datetime
+import html
+import json
 import re
 import shutil
+import subprocess
 import sys
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
@@ -339,6 +343,103 @@ def check_links(out: Path, host: str) -> None:
         raise BuildError("broken internal links:\n  " + "\n  ".join(errors))
 
 
+def check_redirects(redirects: dict, pages: list[Page]) -> None:
+    urls = {page.url for page in pages}
+    for old, new in redirects.items():
+        if new not in urls:
+            raise BuildError(f"_data/redirects.yml: {old} -> {new}, which is no page")
+        if old in urls:
+            raise BuildError(f"_data/redirects.yml: {old} is a page itself")
+
+
+STUB = """<!DOCTYPE html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Moved</title>
+<meta name="robots" content="noindex">
+<link rel="canonical" href="{absolute}">
+<script>location.replace({target}+location.hash)</script>
+<meta http-equiv="refresh" content="0; url={href}">
+<p><a href="{href}">{href}</a></p>
+"""
+
+
+def write_stubs(out: Path, redirects: dict, site: dict) -> None:
+    """GitHub Pages cannot send a 301; until P5 a stub stands in for each one.
+
+    The script keeps the #fragment, which a meta refresh would drop. "/" is a
+    stub to the default language on Pages; from P4 on nginx negotiates it.
+    """
+    stubs = {"/": f"/{site['default_language']}/", **redirects}
+    for old, new in stubs.items():
+        if not old.endswith(("/", ".html")):
+            continue  # Pages serves e.g. a .md as a file; only nginx can redirect it
+        dest = output_file(out, old)
+        if dest.exists():
+            raise BuildError(
+                f"_data/redirects.yml: the stub for {old} would overwrite {dest.relative_to(out)}"
+            )
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(
+            STUB.format(
+                absolute=html.escape(site["base_url"] + new),
+                target=json.dumps(new),
+                href=html.escape(new),
+            ),
+            encoding="utf-8",
+        )
+
+
+def _git(*args: str) -> str:
+    # fixed git argv; the path comes from the repository itself
+    run = subprocess.run(  # noqa: S603
+        ["git", *args],  # noqa: S607
+        cwd=ROOT, capture_output=True, text=True, check=True,
+    )
+    return run.stdout.strip()
+
+
+def lastmod(path: Path) -> str:
+    today = datetime.date.today().isoformat()
+    try:
+        rel = str(path.resolve().relative_to(ROOT))
+    except ValueError:
+        return today  # a source tree outside the repository, e.g. a test fixture
+    committed = _git("log", "-1", "--format=%cs", "--", rel)
+    return committed if committed and not _git("status", "--porcelain", "--", rel) else today
+
+
+def write_sitemap(out: Path, src: Path, pages: list[Page], site: dict) -> None:
+    entries = []
+    for page in sorted(pages, key=lambda p: p.url):
+        if page.meta.get("noindex"):
+            continue
+        generated = page.meta.get("generated") == "changelog"
+        source = ROOT / "CHANGELOG.md" if generated else src / page.source
+        lines = [f"    <loc>{html.escape(site['base_url'] + page.url)}</loc>"]
+        lines += [
+            f'    <xhtml:link rel="alternate" hreflang="{lang}" href="{html.escape(href)}"/>'
+            for lang, href in hreflang(page, site)
+        ]
+        lines.append(f"    <lastmod>{lastmod(source)}</lastmod>")
+        entries.append("  <url>\n" + "\n".join(lines) + "\n  </url>")
+    (out / "sitemap.xml").write_text(
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n'
+        '        xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'
+        + "\n".join(entries)
+        + "\n</urlset>\n",
+        encoding="utf-8",
+    )
+
+
+def _refuse_dangerous_out(src: Path, out: Path) -> None:
+    """build() empties `out`; it must never be the sources, above them, or inside them."""
+    out, src = out.resolve(), src.resolve()
+    if out == src or out in src.parents or src in out.parents:
+        raise BuildError(f"--out {out} would overwrite the sources in {src}")
+
+
 def _refuse_dangerous_out(src: Path, out: Path) -> None:
     """build() empties `out`; it must never be the sources, above them, or inside them."""
     out, src = out.resolve(), src.resolve()
@@ -352,6 +453,7 @@ def build(src: Path, out: Path, *, redirect_stubs: bool = False) -> list[Page]:
     site = data["site"]
     pages = load_pages(src, site)
     check_nav(data["nav"], pages, site)
+    check_redirects(data["redirects"], pages)
 
     if out.is_file():
         raise BuildError(f"--out {out} is a file")
@@ -368,6 +470,9 @@ def build(src: Path, out: Path, *, redirect_stubs: bool = False) -> list[Page]:
         dest = output_file(out, page.url)
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(render_page(env, page, data, pages), encoding="utf-8")
+    write_sitemap(out, src, pages, site)
+    if redirect_stubs:
+        write_stubs(out, data["redirects"], site)
     check_links(out, urlsplit(site["base_url"]).netloc)
     return pages
 
