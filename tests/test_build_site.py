@@ -326,6 +326,8 @@ def test_title_and_description_are_html_escaped_and_utf8_stays_literal(
         "---\ntitle: 'A & B \"q\" <x>'\ndescription: 'd ❤️ →'\ntranslation_key: esc\n---\nx\n",
         encoding="utf-8",
     )
-    html = (_build(src, tmp_path) / "en" / "docs" / "esc" / "index.html").read_text(encoding="utf-8")
+    path = tmp_path / "out" / "en" / "docs" / "esc" / "index.html"
+    _build(src, tmp_path)
+    html = path.read_text(encoding="utf-8")
     assert "<title>A &amp; B &#34;q&#34; &lt;x&gt;</title>" in html
     assert '<meta name="description" content="d ❤️ →">' in html
