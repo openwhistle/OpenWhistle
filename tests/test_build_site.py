@@ -124,3 +124,49 @@ def test_main_reports_a_build_error_as_exit_1(
     (src / "en" / "bare.html").write_text("<p>x</p>", encoding="utf-8")
     assert B.main(["--src", str(src), "--out", str(tmp_path / "out")]) == 1
     assert "build failed" in capsys.readouterr().err
+
+
+def _write(src: Path, text: str) -> None:
+    (src / "en" / "index.html").write_bytes(text.encode("utf-8"))
+
+
+def test_empty_front_matter_names_the_missing_keys(src: Path, tmp_path: Path) -> None:
+    _write(src, "---\n---\n<p>x</p>")
+    with pytest.raises(B.BuildError, match="lacks"):
+        _build(src, tmp_path)
+
+
+def test_front_matter_closed_on_the_last_line_has_an_empty_body() -> None:
+    meta, body = B.split_front_matter(Path("x.html"), "---\ntitle: t\n---")
+    assert meta == {"title": "t"}
+    assert body == ""
+
+
+def test_a_rule_line_in_the_body_stays_in_the_body() -> None:
+    _, body = B.split_front_matter(Path("x.md"), "---\ntitle: t\n---\na\n---\nb\n")
+    assert body == "a\n---\nb\n"
+
+
+def test_invalid_yaml_front_matter_is_a_build_error(src: Path, tmp_path: Path) -> None:
+    _write(src, "---\ntitle: [unclosed\n---\nx\n")
+    with pytest.raises(B.BuildError, match=r"en/index\.html.*not valid YAML"):
+        _build(src, tmp_path)
+
+
+def test_non_mapping_front_matter_is_a_build_error(src: Path, tmp_path: Path) -> None:
+    _write(src, "---\n- a\n- b\n---\nx\n")
+    with pytest.raises(B.BuildError, match=r"en/index\.html.*must be a mapping"):
+        _build(src, tmp_path)
+
+
+def test_crlf_pages_build(src: Path, tmp_path: Path) -> None:
+    page = src / "en" / "index.html"
+    page.write_bytes(page.read_text(encoding="utf-8").replace("\n", "\r\n").encode("utf-8"))
+    assert (_build(src, tmp_path) / "en" / "index.html").is_file()
+
+
+def test_out_that_is_a_file_fails(src: Path, tmp_path: Path) -> None:
+    out = tmp_path / "out"
+    out.write_text("x", encoding="utf-8")
+    with pytest.raises(B.BuildError, match="is a file"):
+        B.build(src, out)

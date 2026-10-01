@@ -41,6 +41,7 @@ PAGE_KEYS = {
     "published", "modified", "section", "jsonld", "noindex", "generated",
 }
 REQUIRED_KEYS = {"title", "description", "translation_key"}
+_FRONT_MATTER = re.compile(r"\A---\n(?:(.*?)\n)?---(?:\n|\Z)", re.DOTALL)
 MARKDOWN = MarkdownIt("commonmark", {"html": True}).enable("table")
 
 
@@ -75,10 +76,16 @@ def output_file(out: Path, url: str) -> Path:
 def split_front_matter(rel: Path, text: str) -> tuple[dict, str]:
     if not text.startswith("---\n"):
         raise BuildError(f"{rel}: a page must open with '---' front matter")
-    end = text.find("\n---\n", 4)
-    if end < 0:
+    closed = _FRONT_MATTER.match(text)
+    if not closed:
         raise BuildError(f"{rel}: the front matter is never closed with '---'")
-    return yaml.safe_load(text[4:end]) or {}, text[end + 5 :]
+    try:
+        meta = yaml.safe_load(closed.group(1) or "") or {}
+    except yaml.YAMLError as error:
+        raise BuildError(f"{rel}: front matter is not valid YAML: {error}") from error
+    if not isinstance(meta, dict):
+        raise BuildError(f"{rel}: front matter must be a mapping")
+    return meta, text[closed.end() :]
 
 
 def _flatten(tree: dict, prefix: str = "") -> Iterator[str]:
@@ -203,6 +210,8 @@ def build(src: Path, out: Path, *, redirect_stubs: bool = False) -> list[Page]:
     site = data["site"]
     pages = load_pages(src, site)
 
+    if out.is_file():
+        raise BuildError(f"--out {out} is a file")
     if out.exists():
         shutil.rmtree(out)
     for path in sorted(p for p in src.rglob("*") if p.is_file()):
