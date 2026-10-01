@@ -371,10 +371,13 @@ def write_stubs(out: Path, redirects: dict, site: dict) -> None:
     stub to the default language on Pages; from P4 on nginx negotiates it.
     """
     stubs = {"/": f"/{site['default_language']}/", **redirects}
+    written: dict[Path, str] = {}
     for old, new in stubs.items():
         if not old.endswith(("/", ".html")):
             continue  # Pages serves e.g. a .md as a file; only nginx can redirect it
         dest = output_file(out, old)
+        if written.get(dest) == new:
+            continue  # /blog/ and /blog/index.html are one file, so one stub
         if dest.exists():
             raise BuildError(
                 f"_data/redirects.yml: the stub for {old} would overwrite {dest.relative_to(out)}"
@@ -388,6 +391,7 @@ def write_stubs(out: Path, redirects: dict, site: dict) -> None:
             ),
             encoding="utf-8",
         )
+        written[dest] = new
 
 
 def _git(*args: str) -> str:
@@ -464,9 +468,10 @@ def build(src: Path, out: Path, *, redirect_stubs: bool = False) -> list[Page]:
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(render_page(env, page, data, pages), encoding="utf-8")
     write_sitemap(out, src, pages, site)
+    # Before the stubs: a link to an old URL must fail even where a stub would catch it.
+    check_links(out, urlsplit(site["base_url"]).netloc)
     if redirect_stubs:
         write_stubs(out, data["redirects"], site)
-    check_links(out, urlsplit(site["base_url"]).netloc)
     return pages
 
 

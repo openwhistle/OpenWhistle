@@ -500,9 +500,28 @@ def test_a_stub_never_overwrites_a_page(src: Path, tmp_path: Path) -> None:
         _build(src, tmp_path, redirect_stubs=True)
 
 
+def test_a_link_to_an_old_url_fails_although_a_stub_would_serve_it(
+    src: Path, tmp_path: Path
+) -> None:
+    (src / "_data" / "redirects.yml").write_text("/docs.html: /en/docs/\n")
+    home = src / "en" / "index.html"
+    home.write_text(home.read_text().replace('href="/en/docs/"', 'href="/docs.html"'))
+    with pytest.raises(B.BuildError, match="nothing at /docs.html"):
+        _build(src, tmp_path, redirect_stubs=True)
+
+
+def test_two_urls_of_one_file_share_one_stub(tmp_path: Path) -> None:
+    site = {"default_language": "en", "base_url": "https://e.test"}
+    B.write_stubs(tmp_path, {"/blog/": "/de/blog/", "/blog/index.html": "/de/blog/"}, site)
+    assert '"/de/blog/"' in (tmp_path / "blog" / "index.html").read_text()
+    with pytest.raises(B.BuildError, match="would overwrite blog/index.html"):
+        B.write_stubs(tmp_path / "2", {"/blog/": "/de/blog/", "/blog/index.html": "/en/"}, site)
+
+
 def test_a_stub_target_cannot_close_the_script(tmp_path: Path) -> None:
     site = {"default_language": "en", "base_url": "https://e.test"}
     B.write_stubs(tmp_path, {"/a.html": "/x</script>/"}, site)
     lines = (tmp_path / "a.html").read_text().splitlines()
     script = next(ln for ln in lines if ln.startswith("<script>"))
     assert "</script>" not in script.removesuffix("</script>")
+
