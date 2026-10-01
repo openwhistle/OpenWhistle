@@ -400,15 +400,13 @@ def test_a_link_to_root_fragment_passes(src: Path, tmp_path: Path) -> None:
     _build(src, tmp_path)  # Passes: fragment on root is ignored
 
 
-def test_path_traversal_outside_out_fails(src: Path, tmp_path: Path) -> None:
-    _add_link(src, "../../../../etc/passwd")
-    with pytest.raises(B.BuildError, match="broken internal links"):
-        _build(src, tmp_path)
-
-
 def test_percent_encoded_path_traversal_fails(src: Path, tmp_path: Path) -> None:
+    # urljoin leaves %2e%2e alone, so only the guard stops out/en/../../etc/passwd,
+    # which is a real file next to out/ (a raw ../ is normalised by urljoin and cannot escape).
+    (tmp_path / "etc").mkdir()
+    (tmp_path / "etc" / "passwd").write_text("root", encoding="utf-8")
     _add_link(src, "%2e%2e/%2e%2e/etc/passwd")
-    with pytest.raises(B.BuildError, match="broken internal links"):
+    with pytest.raises(B.BuildError, match="traversal outside output"):
         _build(src, tmp_path)
 
 
