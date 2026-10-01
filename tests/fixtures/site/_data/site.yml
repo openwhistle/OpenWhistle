@@ -1,0 +1,7 @@
+base_url: https://example.test
+default_language: en
+github_url: https://github.com/openwhistle/OpenWhistle
+demo_url: https://demo.openwhistle.net
+languages:  # last, so a test can append a language
+  en: {name: English, locale: en_US}
+  de: {name: Deutsch, locale: de_DE}
