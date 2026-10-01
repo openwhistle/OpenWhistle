@@ -317,3 +317,15 @@ def test_the_footer_shows_the_app_version(src: Path, tmp_path: Path) -> None:
     version = re.search(r'app_version: str = "([^"]+)"', config).group(1)
     html = (_build(src, tmp_path) / "en" / "index.html").read_text(encoding="utf-8")
     assert f"Version {version}</span>" in html
+
+
+def test_title_and_description_are_html_escaped_and_utf8_stays_literal(
+    src: Path, tmp_path: Path
+) -> None:
+    (src / "en" / "docs" / "esc.md").write_text(
+        "---\ntitle: 'A & B \"q\" <x>'\ndescription: 'd ❤️ →'\ntranslation_key: esc\n---\nx\n",
+        encoding="utf-8",
+    )
+    html = (_build(src, tmp_path) / "en" / "docs" / "esc" / "index.html").read_text(encoding="utf-8")
+    assert "<title>A &amp; B &#34;q&#34; &lt;x&gt;</title>" in html
+    assert '<meta name="description" content="d ❤️ →">' in html
