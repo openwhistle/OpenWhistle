@@ -383,7 +383,7 @@ def write_stubs(out: Path, redirects: dict, site: dict) -> None:
         dest.write_text(
             STUB.format(
                 absolute=html.escape(site["base_url"] + new),
-                target=json.dumps(new),
+                target=json.dumps(new).replace("</", "<\\/"),
                 href=html.escape(new),
             ),
             encoding="utf-8",
@@ -431,13 +431,6 @@ def write_sitemap(out: Path, src: Path, pages: list[Page], site: dict) -> None:
         + "\n</urlset>\n",
         encoding="utf-8",
     )
-
-
-def _refuse_dangerous_out(src: Path, out: Path) -> None:
-    """build() empties `out`; it must never be the sources, above them, or inside them."""
-    out, src = out.resolve(), src.resolve()
-    if out == src or out in src.parents or src in out.parents:
-        raise BuildError(f"--out {out} would overwrite the sources in {src}")
 
 
 def _refuse_dangerous_out(src: Path, out: Path) -> None:

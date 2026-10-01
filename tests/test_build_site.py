@@ -498,3 +498,11 @@ def test_a_stub_never_overwrites_a_page(src: Path, tmp_path: Path) -> None:
     (src / "_data" / "redirects.yml").write_text("/de/index.html: /en/\n")
     with pytest.raises(B.BuildError, match="would overwrite de/index.html"):
         _build(src, tmp_path, redirect_stubs=True)
+
+
+def test_a_stub_target_cannot_close_the_script(tmp_path: Path) -> None:
+    site = {"default_language": "en", "base_url": "https://e.test"}
+    B.write_stubs(tmp_path, {"/a.html": "/x</script>/"}, site)
+    lines = (tmp_path / "a.html").read_text().splitlines()
+    script = next(ln for ln in lines if ln.startswith("<script>"))
+    assert "</script>" not in script.removesuffix("</script>")
