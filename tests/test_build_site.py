@@ -257,7 +257,7 @@ def test_a_third_language_needs_data_only(src: Path, tmp_path: Path) -> None:
     (src / "fr").mkdir()
     (src / "fr" / "index.html").write_text(
         "---\ntitle: Accueil\ndescription: La page d'accueil.\ntranslation_key: home\n---\n"
-        '<main id="main-content"><h1>Accueil</h1></main>\n',
+        '<main id="main-content"><section id="features"></section><h1>Accueil</h1></main>\n',
         encoding="utf-8",
     )
     pages = _pages(src, tmp_path)
@@ -323,7 +323,7 @@ def test_title_and_description_are_html_escaped_and_utf8_stays_literal(
     src: Path, tmp_path: Path
 ) -> None:
     (src / "en" / "docs" / "esc.md").write_text(
-        "---\ntitle: 'A & B \"q\" <x>'\ndescription: 'd ❤️ →'\ntranslation_key: esc\n---\nx\n",
+        "---\ntitle: 'A & B \"q\" <x>'\ndescription: 'd ❤️ →'\ntranslation_key: esc\n---\n<main id=\"main-content\">x</main>\n",
         encoding="utf-8",
     )
     path = tmp_path / "out" / "en" / "docs" / "esc" / "index.html"
@@ -331,3 +331,36 @@ def test_title_and_description_are_html_escaped_and_utf8_stays_literal(
     html = path.read_text(encoding="utf-8")
     assert "<title>A &amp; B &#34;q&#34; &lt;x&gt;</title>" in html
     assert '<meta name="description" content="d ❤️ →">' in html
+
+
+def _add_link(src: Path, href: str) -> None:
+    page = src / "en" / "index.html"
+    page.write_text(page.read_text().replace("</main>", f'<a href="{href}">x</a></main>'), encoding="utf-8")
+
+
+@pytest.mark.parametrize("href", ["/en/missing/", "../nowhere.html", "/img/missing.png", "https://example.test/en/gone/"])
+def test_a_link_to_nothing_fails(src: Path, tmp_path: Path, href: str) -> None:
+    _add_link(src, href)
+    with pytest.raises(B.BuildError, match="broken internal links"):
+        _build(src, tmp_path)
+
+
+def test_a_link_to_a_missing_fragment_fails(src: Path, tmp_path: Path) -> None:
+    _add_link(src, "/de/#nope")
+    with pytest.raises(B.BuildError, match="no id 'nope'"):
+        _build(src, tmp_path)
+
+
+@pytest.mark.parametrize("href", ["#main-content", "/de/#main-content", "mailto:info@openwhistle.net",
+                                  "https://github.com/openwhistle/OpenWhistle", "//cdn.example.org/x.js"])
+def test_valid_and_external_links_pass(src: Path, tmp_path: Path, href: str) -> None:
+    _add_link(src, href)
+    _build(src, tmp_path)
+
+
+@pytest.mark.parametrize("out", ["src", "parent"])
+def test_out_may_not_be_the_sources_or_above_them(src: Path, tmp_path: Path, out: str) -> None:
+    target = src if out == "src" else src.parent
+    with pytest.raises(B.BuildError, match="would overwrite the sources"):
+        B.build(src, target)
+    assert (src / "en" / "index.html").is_file()

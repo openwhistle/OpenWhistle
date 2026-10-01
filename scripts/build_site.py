@@ -26,8 +26,9 @@ import shutil
 import sys
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
+from html.parser import HTMLParser
 from pathlib import Path
-from urllib.parse import unquote
+from urllib.parse import unquote, urljoin, urlsplit
 
 import yaml
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
@@ -275,6 +276,47 @@ def render_page(env: Environment, page: Page, data: dict, pages: list[Page]) -> 
     )
 
 
+class _Refs(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.ids: set[str] = set()
+        self.refs: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        a = {k: v for k, v in attrs if v is not None}
+        if "id" in a:
+            self.ids.add(a["id"])
+        if tag == "a" and "name" in a:
+            self.ids.add(a["name"])
+        self.refs += [a[k] for k in ("href", "src") if k in a]
+        if "srcset" in a:
+            self.refs += [part.split()[0] for part in a["srcset"].split(",") if part.strip()]
+
+
+def check_links(out: Path, host: str) -> None:
+    parsed: dict[Path, _Refs] = {}
+    for file in sorted(out.rglob("*.html")):
+        parser = _Refs()
+        parser.feed(file.read_text(encoding="utf-8"))
+        parsed[file] = parser
+    errors = []
+    for file, parser in parsed.items():
+        here = "/" + file.relative_to(out).as_posix()
+        for ref in parser.refs:
+            parts = urlsplit(urljoin(here, ref))
+            if parts.scheme in {"mailto", "tel", "data"} or (parts.netloc and parts.netloc != host):
+                continue
+            target = out / unquote(parts.path).lstrip("/")
+            if parts.path.endswith("/"):
+                target = target / "index.html"
+            if not target.is_file():
+                errors.append(f"{here}: {ref} -> nothing at {parts.path}")
+            elif parts.fragment and target in parsed and parts.fragment not in parsed[target].ids:
+                errors.append(f"{here}: {ref} -> {parts.path} has no id {parts.fragment!r}")
+    if errors:
+        raise BuildError("broken internal links:\n  " + "\n  ".join(errors))
+
+
 def _refuse_dangerous_out(src: Path, out: Path) -> None:
     """build() empties `out`; it must never be the sources, above them, or inside them."""
     out, src = out.resolve(), src.resolve()
@@ -304,6 +346,7 @@ def build(src: Path, out: Path, *, redirect_stubs: bool = False) -> list[Page]:
         dest = output_file(out, page.url)
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(render_page(env, page, data, pages), encoding="utf-8")
+    check_links(out, urlsplit(site["base_url"]).netloc)
     return pages
 
 
