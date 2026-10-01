@@ -182,10 +182,55 @@ def test_translations_point_at_each_other(src: Path, tmp_path: Path) -> None:
     assert pages["/de/"].alternates == pages["/en/"].alternates
 
 
-def test_the_home_x_default_is_the_root_and_others_the_default_language(src: Path, tmp_path: Path) -> None:
+def test_the_home_x_default_is_the_root_for_language_roots(src: Path, tmp_path: Path) -> None:
     site = B.load_data(src)["site"]
     pages = _pages(src, tmp_path)
-    assert ("x-default", "https://example.test/") in B.hreflang(pages["/de/"], site)
+    # Home page: x-default is the root, which is language-agnostic
+    assert B.hreflang(pages["/de/"], site) == [
+        ("de", "https://example.test/de/"),
+        ("en", "https://example.test/en/"),
+        ("x-default", "https://example.test/"),
+    ]
+
+
+def test_non_root_translated_page_x_default_is_default_language(src: Path, tmp_path: Path) -> None:
+    site = B.load_data(src)["site"]
+    # Construct a non-root page with translations in both languages
+    page = B.Page(
+        source=Path("en/x.html"),
+        url="/en/x/",
+        lang="en",
+        meta={},
+        content="",
+        alternates={"en": "/en/x/", "de": "/de/x/"},
+    )
+    assert B.hreflang(page, site) == [
+        ("de", "https://example.test/de/x/"),
+        ("en", "https://example.test/en/x/"),
+        ("x-default", "https://example.test/en/x/"),
+    ]
+
+
+def test_a_group_without_default_language_gets_no_x_default(src: Path, tmp_path: Path) -> None:
+    site = B.load_data(src)["site"]
+    # Page with only non-default languages
+    page = B.Page(
+        source=Path("de/x.html"),
+        url="/de/x/",
+        lang="de",
+        meta={},
+        content="",
+        alternates={"de": "/de/x/", "fr": "/fr/x/"},
+    )
+    assert B.hreflang(page, site) == [
+        ("de", "https://example.test/de/x/"),
+        ("fr", "https://example.test/fr/x/"),
+    ]
+
+
+def test_no_translation_no_hreflang(src: Path, tmp_path: Path) -> None:
+    site = B.load_data(src)["site"]
+    pages = _pages(src, tmp_path)
     assert B.hreflang(pages["/en/docs/"], site) == []  # no translation, no hreflang
 
 
@@ -204,8 +249,9 @@ def test_one_language_twice_in_a_translation_group_fails(src: Path, tmp_path: Pa
 
 def test_a_third_language_needs_data_only(src: Path, tmp_path: Path) -> None:
     """D7: a language is config + translations, never a template change."""
-    site = src / "_data" / "site.yml"
-    site.write_text(site.read_text() + "  fr: {name: Français, locale: fr_FR}\n", encoding="utf-8")
+    site_file = src / "_data" / "site.yml"
+    site_text = site_file.read_text() + "  fr: {name: Français, locale: fr_FR}\n"
+    site_file.write_text(site_text, encoding="utf-8")
     shutil.copy(src / "_data" / "i18n" / "en.yml", src / "_data" / "i18n" / "fr.yml")
     (src / "fr").mkdir()
     (src / "fr" / "index.html").write_text(
@@ -214,5 +260,12 @@ def test_a_third_language_needs_data_only(src: Path, tmp_path: Path) -> None:
         encoding="utf-8",
     )
     pages = _pages(src, tmp_path)
+    site_after = B.load_data(src)["site"]
     assert pages["/fr/"].alternates == {"en": "/en/", "de": "/de/", "fr": "/fr/"}
     assert 'lang="fr"' in (tmp_path / "out" / "fr" / "index.html").read_text(encoding="utf-8")
+    assert B.hreflang(pages["/fr/"], site_after) == [
+        ("de", "https://example.test/de/"),
+        ("en", "https://example.test/en/"),
+        ("fr", "https://example.test/fr/"),
+        ("x-default", "https://example.test/"),
+    ]
