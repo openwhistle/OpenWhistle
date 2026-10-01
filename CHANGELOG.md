@@ -588,7 +588,7 @@ Changed (breaking) below and the upgrade notes before deploying.
   tables stack into labelled rows that keep their table semantics.
 - The website describes 2.0 (English and German landing pages, the "Was ist neu in 2.0"
   article), serves every font it uses itself, and the roadmap moved from `ROADMAP.md` to
-  [openwhistle.net/roadmap.html](https://openwhistle.net/roadmap.html).
+  [openwhistle.net/roadmap.html](https://openwhistle.net/en/roadmap/).
 
 ### Process
 

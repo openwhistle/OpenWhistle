@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import datetime
 import html
+import importlib.util
 import json
 import re
 import shutil
@@ -32,6 +33,7 @@ from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
 from pathlib import Path
+from types import ModuleType
 from urllib.parse import unquote, urljoin, urlsplit
 
 import yaml
@@ -134,7 +136,22 @@ def load_data(src: Path) -> dict:
     }
 
 
-GENERATORS: dict[str, Callable[[], str]] = {}
+def _load_script(name: str) -> ModuleType:
+    spec = importlib.util.spec_from_file_location(name, ROOT / "scripts" / f"{name}.py")
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module  # @dataclass looks its module up here
+    spec.loader.exec_module(module)
+    return module
+
+
+def _changelog() -> str:
+    changelog = _load_script("render_changelog")
+    source = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    return changelog.render_content(*changelog.parse(source))
+
+
+GENERATORS: dict[str, Callable[[], str]] = {"changelog": _changelog}
 
 
 def _is_skipped(rel: Path) -> bool:

@@ -1,7 +1,6 @@
-"""docs/changelog.html is generated from CHANGELOG.md by
-scripts/render_changelog.py and committed, like docs/roadmap.html: the site
-is static HTML with no build step in CI. These guards keep the committed
-page in sync with its source, keep CHANGELOG.md's version headings and link
+"""/en/changelog/ is rendered from CHANGELOG.md at build time by
+scripts/render_changelog.py (scripts/build_site.py calls it). These guards
+keep the built page the render of its source, keep CHANGELOG.md's version headings and link
 definitions in agreement with each other (deliberately re-checked here with
 independent regexes, not by importing the renderer's own — a heading neither
 one parses would otherwise be invisible to both, see easywall's
@@ -14,9 +13,14 @@ import re
 from pathlib import Path
 from types import ModuleType
 
+from tests.built_site import built
+
 ROOT = Path(__file__).parents[1]
 CHANGELOG = ROOT / "CHANGELOG.md"
-PAGE = ROOT / "docs" / "changelog.html"
+
+
+def _page() -> Path:
+    return built() / "en/changelog/index.html"
 
 
 def _load_renderer() -> ModuleType:
@@ -32,14 +36,15 @@ def _load_renderer() -> ModuleType:
 RENDER_CHANGELOG = _load_renderer()
 
 
-def test_committed_page_matches_a_fresh_render() -> None:
+def test_the_built_page_is_the_changelog() -> None:
     versions, link_defs = RENDER_CHANGELOG.parse(CHANGELOG.read_text())
-    want = RENDER_CHANGELOG.render(versions, link_defs)
-    have = PAGE.read_text()
-    assert have == want, (
-        "docs/changelog.html does not match CHANGELOG.md. "
-        "Run `uv run python scripts/render_changelog.py` and commit the result."
-    )
+    content = RENDER_CHANGELOG.render_content(versions, link_defs)
+    assert content in _page().read_text(encoding="utf-8")
+
+
+def test_render_content_holds_no_site_chrome() -> None:
+    content = RENDER_CHANGELOG.render_content(*RENDER_CHANGELOG.parse(_FIXTURE))
+    assert "<footer" not in content and "site-nav" not in content and "<head" not in content
 
 
 # Deliberately independent of RENDER_CHANGELOG.HEADING_RE / LINK_DEF_RE: a
@@ -81,13 +86,13 @@ _ALLOWED_DOMAINS = ("github.com", "openwhistle.net")
 
 
 def test_page_links_only_to_github_and_its_own_domain() -> None:
-    html = PAGE.read_text()
+    html = _page().read_text(encoding="utf-8")
     offenders = []
     for url in _HREF_URL_RE.findall(html):
         host = re.sub(r"^https?://", "", url).split("/")[0]
         if not any(host == d or host.endswith("." + d) for d in _ALLOWED_DOMAINS):
             offenders.append(url)
-    assert not offenders, f"docs/changelog.html links outside github.com/openwhistle.net: " \
+    assert not offenders, f"/en/changelog/ links outside github.com/openwhistle.net: " \
         f"{offenders}"
 
 
@@ -112,7 +117,7 @@ A paragraph with a [link](https://example.com/x?a=1&b=2) and `inline code`.
 def test_renderer_escapes_and_nests_correctly_on_a_fixture() -> None:
     versions, link_defs = RENDER_CHANGELOG.parse(_FIXTURE)
     assert [v.name for v in versions] == ["9.9.9"]
-    html = RENDER_CHANGELOG.render(versions, link_defs)
+    html = RENDER_CHANGELOG.render_content(versions, link_defs)
 
     # The literal <script> tag from the source must never appear unescaped.
     assert "<script>alert(1)</script>" not in html
