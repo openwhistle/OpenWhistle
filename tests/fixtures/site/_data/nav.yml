@@ -1,1 +1,4 @@
-{primary: [], footer: []}
+primary:
+  - {label: nav.features, page: home, fragment: features}
+  - {label: nav.docs, page: docs}
+footer: []

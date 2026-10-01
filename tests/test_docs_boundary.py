@@ -34,6 +34,7 @@ def test_no_published_page_links_docs_tech() -> None:
     offenders = [
         f"{p.relative_to(ROOT)}: {m.group(1)}"
         for p in (ROOT / "docs").rglob("*.html")
+        if "/docs/_" not in p.as_posix()
         for m in _DOCS_TECH_HREF.finditer(p.read_text())
     ]
     assert not offenders, f"published page(s) link docs-tech/: {offenders}"

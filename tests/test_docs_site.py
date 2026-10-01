@@ -242,7 +242,7 @@ def test_every_docs_page_nav_has_the_same_item_set() -> None:
     means across the English/German split), by href target rather than by
     label text (labels are legitimately localised on German-language pages,
     see `test_current_nav_item_is_marked`)."""
-    pages = sorted((ROOT / "docs").rglob("*.html"))
+    pages = sorted(p for p in (ROOT / "docs").rglob("*.html") if "/docs/_" not in p.as_posix())
     assert pages
     canonical_page = ROOT / "docs/index.html"
     canonical = _nav_targets(canonical_page)
@@ -323,7 +323,7 @@ def test_every_page_footer_has_the_same_link_set_as_its_landing_page() -> None:
     footer (no `.footer-links` list at all). Every docs/**/*.html page must
     resolve to the exact same footer link-target set as its landing page
     (see `_footer_landing_page`); no page is exempt."""
-    pages = sorted((ROOT / "docs").rglob("*.html"))
+    pages = sorted(p for p in (ROOT / "docs").rglob("*.html") if "/docs/_" not in p.as_posix())
     assert pages
     mismatches = {}
     for page in pages:

@@ -488,7 +488,7 @@ def test_brand_secondary_colour_is_gone() -> None:
 
 
 def test_public_site_uses_the_app_token_names() -> None:
-    for page in [*(ROOT / "docs").glob("*.html"), *(ROOT / "docs").glob("*/*.html")]:
+    for page in [*(ROOT / "docs").glob("*.html"), *(ROOT / "docs").glob("[!_]*/*.html")]:
         text = page.read_text()
         for legacy in ("--gold", "--seal-green", "--font-serif"):
             assert legacy not in text, (page.name, legacy)
@@ -1044,7 +1044,7 @@ def test_every_docs_font_face_url_resolves_to_a_real_file() -> None:
     url_re = re.compile(r"url\(\s*['\"]?([^'\")\s]+)['\"]?\s*\)")
     font_face_re = re.compile(r"@font-face\s*\{[^}]*\}", re.DOTALL)
     checked = 0
-    for page in (ROOT / "docs").rglob("*.html"):
+    for page in (p for p in (ROOT / "docs").rglob("*.html") if "/docs/_" not in p.as_posix()):
         text = page.read_text(encoding="utf-8")
         for block in font_face_re.findall(text):
             for m in url_re.finditer(block):
@@ -1146,7 +1146,7 @@ def test_every_docs_page_font_usage_has_a_matching_font_face() -> None:
     rule_re = re.compile(r"([^{}]+)\{([^{}]*)\}", re.DOTALL)
 
     checked_pages = 0
-    for page in sorted((ROOT / "docs").rglob("*.html")):
+    for page in sorted(p for p in (ROOT / "docs").rglob("*.html") if "/docs/_" not in p.as_posix()):
         rel = str(page.relative_to(ROOT))
         html = page.read_text(encoding="utf-8")
         style = "\n".join(re.findall(r"<style[^>]*>(.*?)</style>", html, re.DOTALL))

@@ -196,6 +196,61 @@ def hreflang(page: Page, site: dict) -> list[tuple[str, str]]:
     return links
 
 
+def nav_context(page: Page, nav: dict, pages: list[Page], site: dict, t: dict) -> dict:
+    by_key: dict[str, dict[str, Page]] = {}
+    for other in pages:
+        by_key.setdefault(str(other.meta["translation_key"]), {})[other.lang] = other
+    language_roots = {f"/{lang}/" for lang in site["languages"]}
+
+    def items(section: str) -> list[dict]:
+        out = []
+        for entry in nav.get(section, []):
+            group = by_key[entry["page"]]
+            # A page that exists only in the default language is linked there.
+            target = group.get(page.lang) or group[site["default_language"]]
+            fragment = entry.get("fragment")
+            current = not fragment and (
+                page.url == target.url
+                or (target.url not in language_roots and page.url.startswith(target.url))
+            )
+            out.append({
+                "label": lookup(t, entry["label"]),
+                "href": target.url + (f"#{fragment}" if fragment else ""),
+                "current": current,
+            })
+        return out
+
+    languages = [
+        {
+            "lang": lang,
+            "name": spec["name"],
+            "href": page.alternates.get(lang, f"/{lang}/"),
+        }
+        for lang, spec in site["languages"].items()
+        if lang != page.lang
+    ]
+    return {"primary": items("primary"), "footer": items("footer"), "languages": languages}
+
+
+def check_nav(nav: dict, pages: list[Page], site: dict) -> None:
+    keys = {str(p.meta["translation_key"]) for p in pages}
+    named: set[str] = set()
+    for section in ("primary", "footer"):
+        for entry in nav.get(section, []):
+            if entry["page"] not in keys:
+                raise BuildError(
+                    f"_data/nav.yml: {section} names {entry['page']!r}, which no page has"
+                )
+            named.add(entry["page"])
+    targets = {p.url for p in pages if p.meta["translation_key"] in named}
+    prefixes = targets - {f"/{lang}/" for lang in site["languages"]}
+    for page in pages:
+        if page.meta.get("noindex") or page.url in targets:
+            continue
+        if not any(page.url.startswith(prefix) for prefix in prefixes):
+            raise BuildError(f"{page.source}: no entry of _data/nav.yml leads to {page.url}")
+
+
 def environment(src: Path) -> Environment:
     return Environment(
         loader=FileSystemLoader([src / "_layouts", src / "_includes"]),
@@ -205,9 +260,18 @@ def environment(src: Path) -> Environment:
     )
 
 
-def render_page(env: Environment, page: Page, data: dict) -> str:
+def render_page(env: Environment, page: Page, data: dict, pages: list[Page]) -> str:
+    site, t = data["site"], data["i18n"][page.lang]
     return env.get_template("base.html").render(
-        page=page, site=data["site"], t=data["i18n"][page.lang]
+        page=page,
+        site=site,
+        t=t,
+        locale=site["languages"][page.lang]["locale"],
+        alternate_locales=[
+            site["languages"][lang]["locale"] for lang in page.alternates if lang != page.lang
+        ],
+        hreflang=hreflang(page, site),
+        nav=nav_context(page, data["nav"], pages, site, t),
     )
 
 
@@ -223,6 +287,7 @@ def build(src: Path, out: Path, *, redirect_stubs: bool = False) -> list[Page]:
     data = load_data(src)
     site = data["site"]
     pages = load_pages(src, site)
+    check_nav(data["nav"], pages, site)
 
     if out.is_file():
         raise BuildError(f"--out {out} is a file")
@@ -238,7 +303,7 @@ def build(src: Path, out: Path, *, redirect_stubs: bool = False) -> list[Page]:
     for page in pages:
         dest = output_file(out, page.url)
         dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(render_page(env, page, data), encoding="utf-8")
+        dest.write_text(render_page(env, page, data, pages), encoding="utf-8")
     return pages
 
 

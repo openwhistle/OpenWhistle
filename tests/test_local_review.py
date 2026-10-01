@@ -585,6 +585,7 @@ def _app_html_pages() -> set[str]:
 def _docs_html_pages() -> set[str]:
     return {
         str(p.relative_to(ROOT)).replace("\\", "/") for p in (ROOT / "docs").rglob("*.html")
+        if "/docs/_" not in p.as_posix()
     }
 
 

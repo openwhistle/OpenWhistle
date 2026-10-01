@@ -37,7 +37,7 @@ def _images(page: Path) -> list[dict[str, str | None]]:
 
 
 def _pages() -> list[Path]:
-    return sorted(DOCS.rglob("*.html"))
+    return sorted(p for p in DOCS.rglob("*.html") if "/docs/_" not in p.as_posix())
 
 
 def _srcs() -> set[str]:

@@ -15,7 +15,11 @@ from tests.e2e.conftest import (
 
 pytestmark = pytest.mark.e2e
 
-_DOCS_PAGES = sorted(str(p.relative_to(_DOCS_DIR)) for p in _DOCS_DIR.rglob("*.html"))
+_DOCS_PAGES = sorted(
+    str(p.relative_to(_DOCS_DIR))
+    for p in _DOCS_DIR.rglob("*.html")
+    if "/docs/_" not in p.as_posix()
+)
 
 # Every page of the published site, found by glob so a new page is covered
 # the day it is added. Nine pages exist today; a glob that suddenly finds

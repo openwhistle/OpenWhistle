@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -236,7 +237,7 @@ def test_no_translation_no_hreflang(src: Path, tmp_path: Path) -> None:
 
 def test_a_missing_translation_string_fails(src: Path, tmp_path: Path) -> None:
     (src / "_data" / "i18n" / "de.yml").write_text("{}\n", encoding="utf-8")
-    with pytest.raises(B.BuildError, match=r"de\.yml: missing \['skip_link'"):
+    with pytest.raises(B.BuildError, match=r"de\.yml: missing \[.*'skip_link'"):
         _build(src, tmp_path)
 
 
@@ -269,3 +270,50 @@ def test_a_third_language_needs_data_only(src: Path, tmp_path: Path) -> None:
         ("fr", "https://example.test/fr/"),
         ("x-default", "https://example.test/"),
     ]
+
+
+def test_the_fixture_uses_the_real_templates() -> None:
+    for sub in ("_layouts", "_includes", "_data/i18n"):
+        real = sorted((ROOT / "docs" / sub).rglob("*"))
+        for path in real:
+            if path.is_file():
+                rel = path.relative_to(ROOT / "docs")
+                assert (FIXTURE / rel).read_bytes() == path.read_bytes(), f"fixture {rel} drifted"
+
+
+def test_a_german_reader_is_sent_to_the_english_docs(src: Path, tmp_path: Path) -> None:
+    html = (_build(src, tmp_path) / "de" / "index.html").read_text(encoding="utf-8")
+    assert '<a href="/en/docs/">Dokumentation</a>' in html
+
+
+def test_the_current_section_is_marked(src: Path, tmp_path: Path) -> None:
+    html = (_build(src, tmp_path) / "en" / "docs" / "index.html").read_text(encoding="utf-8")
+    assert 'href="/en/docs/" class="active" aria-current="page"' in html
+
+
+def test_the_language_switch_goes_to_the_translation(src: Path, tmp_path: Path) -> None:
+    html = (_build(src, tmp_path) / "en" / "index.html").read_text(encoding="utf-8")
+    assert '<a href="/de/" hreflang="de" lang="de">Deutsch</a>' in html
+
+
+def test_a_nav_entry_naming_no_page_fails(src: Path, tmp_path: Path) -> None:
+    (src / "_data" / "nav.yml").write_text(
+        "primary: [{label: nav.docs, page: nope}]\nfooter: []\n"
+    )
+    with pytest.raises(B.BuildError, match="nav.yml: primary names 'nope'"):
+        _build(src, tmp_path)
+
+
+def test_a_page_no_nav_entry_leads_to_fails(src: Path, tmp_path: Path) -> None:
+    (src / "en" / "orphan.md").write_text(
+        "---\ntitle: o\ndescription: d\ntranslation_key: orphan\n---\nx\n"
+    )
+    with pytest.raises(B.BuildError, match="no entry of _data/nav.yml leads to /en/orphan/"):
+        _build(src, tmp_path)
+
+
+def test_the_footer_shows_the_app_version(src: Path, tmp_path: Path) -> None:
+    config = (ROOT / "app/config.py").read_text()
+    version = re.search(r'app_version: str = "([^"]+)"', config).group(1)
+    html = (_build(src, tmp_path) / "en" / "index.html").read_text(encoding="utf-8")
+    assert f"Version {version}</span>" in html

@@ -21,7 +21,7 @@ import pytest
 ROOT = Path(__file__).parents[1]
 DOCS = ROOT / "docs"
 SITE = "https://openwhistle.net/"
-PAGES = sorted(DOCS.rglob("*.html"))
+PAGES = sorted(p for p in DOCS.rglob("*.html") if "/docs/_" not in p.as_posix())
 IDS = [str(p.relative_to(DOCS)) for p in PAGES]
 LANDING = (DOCS / "index.html", DOCS / "de" / "index.html")
 # The landing pair's exact en/de/x-default set is held by
