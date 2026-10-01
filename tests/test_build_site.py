@@ -364,3 +364,17 @@ def test_out_may_not_be_the_sources_or_above_them(src: Path, tmp_path: Path, out
     with pytest.raises(B.BuildError, match="would overwrite the sources"):
         B.build(src, target)
     assert (src / "en" / "index.html").is_file()
+
+
+def test_the_root_is_the_language_choice_not_a_page(src: Path, tmp_path: Path) -> None:
+    out = _build(src, tmp_path)
+    # The fixture builds without a root index.html (served by stub/nginx language choice)
+    assert not (out / "index.html").exists()
+    # But hreflang x-default links to the root pass validation
+    html = (out / "en" / "index.html").read_text(encoding="utf-8")
+    assert '<link rel="alternate" hreflang="x-default" href="https://example.test/">' in html
+
+
+def test_a_link_to_root_fragment_passes(src: Path, tmp_path: Path) -> None:
+    _add_link(src, "/#something")
+    _build(src, tmp_path)  # Passes: fragment on root is ignored
