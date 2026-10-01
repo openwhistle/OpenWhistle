@@ -3,7 +3,8 @@
 P0 spike of docs-tech/specs/2026-10-01-website-redesign-design.md. The site
 loads no third-party code, so search runs on Pagefind's own pagefind.js, and
 its WebAssembly needs 'wasm-unsafe-eval': the one relaxation the spec allows,
-on docs pages only. The second test proves the first one can see a violation.
+on docs pages only. The second test proves the first one can see a block: without the
+directive, the WebAssembly compile fails.
 """
 
 from __future__ import annotations
@@ -58,9 +59,15 @@ def site(tmp_path_factory: pytest.TempPathFactory) -> Path:
             f"</head><body><main>{body}</main></body></html>",
             encoding="utf-8",
         )
-    subprocess.run(  # noqa: S603 — fixed argv, the module of a locked package
-        [sys.executable, "-m", "pagefind", "--site", str(root)], check=True, capture_output=True
-    )
+    try:
+        subprocess.run(  # noqa: S603 — fixed argv, the module of a locked package
+            [sys.executable, "-m", "pagefind", "--site", str(root)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except subprocess.CalledProcessError as e:
+        pytest.fail(f"pagefind failed ({e.returncode}): {e.stderr}")
     return root
 
 
