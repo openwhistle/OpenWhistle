@@ -197,11 +197,10 @@ flowchart LR
 - The page shows the variant matching `data-theme` (two `<img loading="lazy">`), not a media query, which would
   disagree with the theme toggle.
 - Redrawn: architecture, submission flow, case lifecycle, admin login, plus the home-page flow.
-- P0 (2026-10-02): the draw.io CLI (31.5.3, `rlespinasse/drawio-desktop-headless@sha256:49018905afd4a309bacdab351982965c9d970536c5091bef98efa5725a76f2c9`)
-  still emits `foreignObject` labels despite `html=0` (`--embed-svg-fonts` changes nothing, output byte-identical) and
-  the text falls back to a serif in an `<img>`. **Open decision for the maintainer: D11 reopens** (draw.io CLI cannot
-  yield real SVG text; alternatives: post-process labels to `<text>` or another diagram source). A fonttools Sora
-  subset for a post-processed SVG would be about 1.6 KB per diagram.
+- P0 (2026-10-02): with `html=0` and no `whiteSpace=wrap` (it forces `foreignObject`; break lines by hand) the export
+  yields `<text>`, no `foreignObject`; Sora is not embedded, so `render_diagrams.py` injects a fonttools subset as a
+  `data:font/woff2` `@font-face` (1568 bytes for the probe; verified in an `<img>`; needs `brotli` in the `site` group).
+  CLI image pinned at `rlespinasse/drawio-desktop-headless@sha256:49018905afd4a309bacdab351982965c9d970536c5091bef98efa5725a76f2c9`.
 
 ## SEO and blog
 
