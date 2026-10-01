@@ -1,0 +1,109 @@
+---
+title: 'OpenWhistle 2.0: sechs Funde aus dem Härtungs-Release'
+description: 'OpenWhistle 2.0 in sechs Funden: ein PDF, das fremde Schriften verschluckte, ein Header, dem zu sehr vertraut wurde, und ein Rollback mit Absturz.'
+translation_key: whats-new-in-2-0
+og_type: article
+published: '2026-09-26'
+modified: '2026-09-27'
+section: Release
+css:
+- fonts
+- removing-metadata-without-altering-evidence
+js:
+- site
+jsonld:
+- '@context': https://schema.org
+  '@type': BlogPosting
+  headline: Was ist neu in OpenWhistle 2.0? Sechs Funde aus einem Härtungs-Release
+  description: 'OpenWhistle 2.0 in sechs Funden: ein PDF, das fremde Schriften verschluckte, ein Header, dem zu sehr vertraut wurde, und ein Rollback mit Absturz.'
+  url: https://openwhistle.net/de/blog/was-ist-neu-in-2-0/
+  mainEntityOfPage:
+    '@type': WebPage
+    '@id': https://openwhistle.net/de/blog/was-ist-neu-in-2-0/
+  datePublished: '2026-09-26'
+  dateModified: '2026-09-27'
+  author:
+    '@type': Organization
+    name: OpenWhistle Contributors
+    url: https://github.com/openwhistle
+  publisher:
+    '@type': Organization
+    name: OpenWhistle
+    url: https://openwhistle.net/en/
+    logo:
+      '@type': ImageObject
+      url: https://openwhistle.net/apple-touch-icon.png
+  image: https://openwhistle.net/og-image.png
+  inLanguage: de
+- '@context': https://schema.org
+  '@type': BreadcrumbList
+  itemListElement:
+  - '@type': ListItem
+    position: 1
+    name: OpenWhistle
+    item: https://openwhistle.net/en/
+  - '@type': ListItem
+    position: 2
+    name: Blog
+    item: https://openwhistle.net/de/blog/
+  - '@type': ListItem
+    position: 3
+    name: Was ist neu in OpenWhistle 2.0? Sechs Funde aus einem Härtungs-Release
+    item: https://openwhistle.net/de/blog/was-ist-neu-in-2-0/
+---
+  <main id="main-content">
+    <div class="article-wrap">
+      <article>
+        <header class="article-header">
+          <p class="article-tag">Release · Sicherheit · v2.0</p>
+          <h1 class="article-title">Was ist neu in OpenWhistle 2.0? Sechs Funde aus einem Härtungs-Release</h1>
+          <p class="article-subtitle">Ein PDF, das die Worte des Hinweisgebers verschluckte. Ein Header, dem zu sehr vertraut wurde. Und ein Rollback, der halbe Sitzungen zum Absturz brachte — sechs Funde aus Release 2.0, erzählt so, wie sie gefunden wurden.</p>
+          <div class="article-meta">
+            <span>26. September 2026</span>
+            <span>6 Min. Lesezeit</span>
+            <span>OpenWhistle Contributors</span>
+          </div>
+        </header>
+
+        <div class="article-body">
+
+          <p>Release 2.0 ist vor allem das Ergebnis eines Härtungs-Audits: sechs Stellen, an denen OpenWhistle mehr preisgab, als nötig war, oder nicht hielt, was es versprach. Alle Details im <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG</a>.</p>
+
+          <p class="post-update"><strong>Nachtrag vom 27. September 2026:</strong> Aktualisieren Sie auf <strong>2.0.1</strong>. Bis dahin legte der Einrichtungsassistent das erste Konto als einfachen Admin an. Superadmin kann aber nur ein Superadmin vergeben, also hatte keine Installation einen. Organisationen und Multi-Tenancy waren deshalb nicht erreichbar. Migration 008 befördert beim Update das erste Konto; prüfen Sie danach <code>/admin/users</code>. Details im <a href="/en/changelog/">Änderungsprotokoll</a>.</p>
+
+          <h2>Das PDF, das die eigenen Worte verschluckte</h2>
+          <p>Ein Fallbericht auf Polnisch, Griechisch oder Kyrillisch ließ sich als PDF exportieren — nur stand der Text der meldenden Person danach nicht mehr darin. Jedes Zeichen außerhalb des lateinischen Alphabets und jedes typografische Anführungszeichen „wie dieses" wurde beim Export zu einem einzelnen <code>?</code>. Ursache: Die eingebaute PDF-Schriftart kennt nur Latin-1. Der Fix behebt die Ursache: eine echte Unicode-Schriftart (DejaVu LGC Sans, Latin/Griechisch/Kyrillisch) ist jetzt eingebettet. Chinesisch, Japanisch, Koreanisch und rechts-nach-links-Schriften bleiben eine offene Baustelle — mit einem sichtbaren Ersatzkästchen statt eines stillen „?".</p>
+
+          <h2>Die Identität kommt nur noch auf Anfrage ans Licht</h2>
+          <p>Bislang standen Name und Kontakt einer vertraulichen Meldung offen auf der Fallseite. Ab 2.0 bleiben beide verborgen, auf der Fallseite wie im PDF-Export, bis jemand auf <em>Identität anzeigen</em> klickt und einen protokollierten Grund von 10 bis 500 Zeichen angibt. Der Grund landet verschlüsselt im Audit-Log. Und weil bislang nicht einmal das bloße Öffnen eines Falls vermerkt wurde, schreibt jetzt jeder Aufruf einer Fallseite einen eigenen Log-Eintrag. Details im <a href="/en/docs/#admin-guide">Admin-Handbuch</a>.</p>
+
+          <h2>Die Onion-Adresse vertraute dem falschen Header</h2>
+          <p>Wer OpenWhistle über einen Tor-Hidden-Service anbietet, tut das für Hinweisgeber in einem überwachten Netzwerk. Die erste Fassung entschied „bin ich der Onion-Dienst?" anhand des <code>Host</code>-Headers — den aber der Client mitschickt, nicht der Server. Eine gefälschte <code>Host: irgendwas.onion</code>-Anfrage hätte sich so als Tor-Besucher ausgegeben, mit Cookies ohne <code>Secure</code>-Flag und ganz ohne HSTS. Jetzt entscheidet nginx: Es setzt einen eigenen Header nur im Onion-Listener und löscht jeden Client-Wert überall sonst — ein CI-Job prüft das bei jedem Push gegen einen echten Container. Details in der Anleitung <a href="/en/docs/#onion-address">Eine Onion-Adresse anbieten</a>.</p>
+
+          <h2>Webhooks verraten nur noch Zahlen</h2>
+          <p>Der Sammel-Webhook für neue Meldungen schickte bislang Fallnummern selbst mit, als Array in der Payload. Er sendet jetzt nur noch Zählwerte: wie viele Meldungen, wie viele Nachrichten, plus einen daraus gebauten Satz. Die Erinnerungs-Mail an die eigenen Admins nennt weiterhin die Fallnummer; nur der Weg nach außen wurde beschnitten. Siehe <a href="/en/docs/#notifications">Benachrichtigungen</a>.</p>
+
+          <h2>Ein Kollisionsfall legte halbe Sitzungen lahm</h2>
+          <p>Fallnummern erhalten einen zufälligen fünfstelligen Zusatz, der gelegentlich kollidiert — dann versucht die Anwendung es erneut. Der Retry rief dafür ein volles <code>rollback()</code> der Datenbank-Sitzung auf, das jedes bereits geladene Objekt ungültig macht, nicht nur den fehlgeschlagenen Datensatz. Der nächste Lesezugriff auf ein solches Objekt stürzte dann mit <code>MissingGreenlet</code> ab — unberechenbar, weil er erst bei einer schon vollen Datenbank auftrat. Die Lösung: ein <em>SAVEPOINT</em> pro Versuch, das nur den kollidierenden Versuch zurückrollt.</p>
+
+          <h2>Der Zurück-Button, der nichts mehr vergisst</h2>
+          <p>Ein Dateiupload-Feld zeigt beim Zurücknavigieren immer einen leeren Zustand — klickte man im Melde-Assistenten auf <em>Zurück</em> und dann auf <em>Weiter</em>, löschte die Anwendung bereits hochgeladene Dateien. Jeder Schritt antwortet jetzt auf ein Absenden mit einer Weiterleitung, ein nicht passender Schritt wird ignoriert, und Anhänge bleiben erhalten, bis neue gewählt werden. Gemeldet und behoben von <strong>Zachary Bridges</strong> (<a href="https://github.com/openwhistle/OpenWhistle/issues/94" rel="noopener noreferrer" target="_blank">#94</a>) — vielen Dank dafür.</p>
+
+          <div class="article-cta">
+            <h3>Alle sechs Funde im Detail</h3>
+            <p>Der vollständige technische Verlauf steht im CHANGELOG; die Live-Demo zeigt Release 2.0 in Aktion.</p>
+            <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank" class="btn-cta">CHANGELOG lesen &rarr;</a>
+          </div>
+
+          <p class="post-footnote">
+            <strong>Weitere Ressourcen:</strong>
+            <a href="/en/docs/">Vollständige Dokumentation</a> ·
+            <a href="/de/blog/hinschg-compliance-leitfaden/">HinSchG-Compliance-Leitfaden</a> ·
+            <a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank">GitHub Issues</a>
+          </p>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  

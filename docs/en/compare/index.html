@@ -1,0 +1,263 @@
+---
+title: 'GlobaLeaks Alternatives: Open Source Compared | OpenWhistle'
+description: 'GlobaLeaks alternatives compared on facts: licence, hosting, HinSchG deadlines, Tor and languages of OpenWhistle, SecureDrop and Hush Line, with sources.'
+translation_key: compare
+css:
+- fonts
+- compare
+js:
+- site
+- sidebar-roadmap
+jsonld:
+- '@context': https://schema.org
+  '@type': BreadcrumbList
+  itemListElement:
+  - '@type': ListItem
+    position: 1
+    name: OpenWhistle
+    item: https://openwhistle.net/en/
+  - '@type': ListItem
+    position: 2
+    name: Open source whistleblowing software compared
+    item: https://openwhistle.net/en/compare/
+---
+  <div class="docs-layout">
+
+    <!-- Sidebar -->
+    <aside class="docs-sidebar" role="complementary" aria-label="Comparison navigation">
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">On This Page</div>
+        <nav class="sidebar-links" aria-label="On this page">
+          <a href="#facts" class="active">Facts side by side</a>
+          <a href="#which-fits">Which one fits</a>
+          <a href="#managed">Managed GlobaLeaks</a>
+          <a href="#sources">Sources</a>
+        </nav>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Links</div>
+        <nav class="sidebar-links">
+          <a href="/en/">&#8592; Landing Page</a>
+          <a href="/en/docs/">Documentation</a>
+          <a href="/en/changelog/">Changelog</a>
+          <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub Repository</a>
+        </nav>
+      </div>
+
+    </aside>
+
+    <!-- Main content -->
+    <main id="main-content" class="docs-content">
+
+      <nav class="docs-breadcrumb" aria-label="Breadcrumb">
+        <a href="/en/">OpenWhistle</a>
+        <span>/</span>
+        <span>Open source whistleblowing software compared</span>
+      </nav>
+
+      <h1>Open source whistleblowing software compared</h1>
+      <p class="docs-lead">
+        Four open source projects, side by side. Every fact comes from the project's own site
+        or repository, as of 2026-09. Where a source says nothing, the cell says
+        <em>not stated</em>.
+      </p>
+
+      <!-- Facts -->
+      <section class="docs-section" id="facts" aria-labelledby="facts-h2">
+        <h2 id="facts-h2">Facts side by side</h2>
+        <div class="table-scroll">
+          <table class="cmp-table">
+            <thead>
+              <tr>
+                <th scope="col">As of 2026-09</th>
+                <th scope="col">OpenWhistle</th>
+                <th scope="col">GlobaLeaks</th>
+                <th scope="col">SecureDrop</th>
+                <th scope="col">Hush Line</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Licence</th>
+                <td>GPL-3.0 <a href="#src-ow">[1]</a></td>
+                <td>AGPL-3.0 <a href="#src-gl">[2]</a></td>
+                <td>AGPL-3.0 <a href="#src-sd">[3]</a></td>
+                <td>AGPL-3.0 <a href="#src-hl">[4]</a></td>
+              </tr>
+              <tr>
+                <th scope="row">Stack</th>
+                <td>Python, FastAPI, PostgreSQL, Redis</td>
+                <td>Python (Twisted), Angular, SQLite</td>
+                <td>Python</td>
+                <td>Python</td>
+              </tr>
+              <tr>
+                <th scope="row">Hosting</th>
+                <td>Self-hosted: Docker Compose or Helm</td>
+                <td>Self-hosted on Debian or Ubuntu, package or Docker</td>
+                <td>Self-hosted on dedicated physical servers; virtualisation not supported</td>
+                <td>Managed service at tips.hushline.app; self-hosting not stated</td>
+              </tr>
+              <tr>
+                <th scope="row">Built for</th>
+                <td>Companies and public bodies under EU Directive 2019/1937 and HinSchG</td>
+                <td>Media, activists, public agencies, corporations</td>
+                <td>Media organisations and NGOs</td>
+                <td>Journalists, lawyers, employers and boards, educators, organisers</td>
+              </tr>
+              <tr>
+                <th scope="row">HinSchG 7-day / 3-month deadlines</th>
+                <td>Built in, per case, with opt-in reminders</td>
+                <td>Not stated; per-report reminders and expiration dates</td>
+                <td>Not stated</td>
+                <td>Not stated</td>
+              </tr>
+              <tr>
+                <th scope="row">Case management</th>
+                <td>Statuses, assignment, notes, linked cases, audit log</td>
+                <td>Custom statuses and sub-statuses, labels, audit log</td>
+                <td>Not stated</td>
+                <td>Message status management</td>
+              </tr>
+              <tr>
+                <th scope="row">Several organisations, one installation</th>
+                <td>Yes, a reporting link per organisation</td>
+                <td>Yes, multiple sites</td>
+                <td>Not stated</td>
+                <td>Not stated</td>
+              </tr>
+              <tr>
+                <th scope="row">Tor onion service</th>
+                <td>Optional; you run the Tor daemon</td>
+                <td>Set up automatically (v3)</td>
+                <td>Yes</td>
+                <td>Yes</td>
+              </tr>
+              <tr>
+                <th scope="row">Interface languages</th>
+                <td>4</td>
+                <td>70+, including right-to-left</td>
+                <td>22</td>
+                <td>Not stated</td>
+              </tr>
+              <tr>
+                <th scope="row">Staff two-factor login</th>
+                <td>TOTP, mandatory</td>
+                <td>TOTP (RFC 6238)</td>
+                <td>Two-factor code</td>
+                <td>Optional TOTP</td>
+              </tr>
+              <tr>
+                <th scope="row">Published security audits</th>
+                <td>None yet</td>
+                <td>Six firms, reports published</td>
+                <td>Five audits, 2013–2018, reports published</td>
+                <td>Not stated</td>
+              </tr>
+              <tr>
+                <th scope="row">Since</th>
+                <td>2026 (first release 0.1.0)</td>
+                <td>2011; used by more than 30,000 organisations, per its site</td>
+                <td>2013; a project of Freedom of the Press Foundation</td>
+                <td>2023; Science &amp; Design, Inc.</td>
+              </tr>
+              <tr>
+                <th scope="row">Latest release</th>
+                <td>2.1.0 (2026-09-27)</td>
+                <td>5.0.99 (2026-07-26)</td>
+                <td>2.16.1 (2026-07-08)</td>
+                <td>0.7.25 (2026-09-24)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Which fits -->
+      <section class="docs-section" id="which-fits" aria-labelledby="which-fits-h2">
+        <h2 id="which-fits-h2">Which one fits</h2>
+        <p>
+          GlobaLeaks is the mature reference among open source whistleblowing platforms.
+          The other three answer narrower questions.
+        </p>
+        <div class="table-scroll">
+          <table class="cmp-table">
+            <thead>
+              <tr><th scope="col">Pick</th><th scope="col">When</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">GlobaLeaks</th>
+                <td>You need many languages or right-to-left scripts, a questionnaire builder, or several channels per site.
+                  You want years of track record and published audits, or a managed service instead of your own server.</td>
+              </tr>
+              <tr>
+                <th scope="row">OpenWhistle</th>
+                <td>You are a German employer or authority and want the HinSchG case workflow built in: both deadlines per case, reminders, audit log, 3-year deletion.
+                  You already run Docker Compose or Kubernetes with PostgreSQL.</td>
+              </tr>
+              <tr>
+                <th scope="row">SecureDrop</th>
+                <td>You are a newsroom or NGO receiving documents from sources, and can run dedicated hardware with an air-gapped viewing station.</td>
+              </tr>
+              <tr>
+                <th scope="row">Hush Line</th>
+                <td>You are a person or small team who wants an encrypted tip line without running a server.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Managed -->
+      <section class="docs-section" id="managed" aria-labelledby="managed-h2">
+        <h2 id="managed-h2">Managed GlobaLeaks</h2>
+        <p>
+          Some companies run GlobaLeaks for you. One example is
+          <a href="https://opensource-hinweisgeberportal.de/" rel="noopener noreferrer" target="_blank">opensource-hinweisgeberportal.de</a>
+          by splice digital GmbH <a href="#src-ohp">[5]</a>.
+        </p>
+        <ul>
+          <li>The software is GlobaLeaks; the provider operates the server.</li>
+          <li>Hosting is in German data centres, on request on dedicated hardware.</li>
+          <li>Packages come with a 30-day money-back guarantee; the home page names no price.</li>
+        </ul>
+        <p>
+          The trade is the same for any managed service: someone else runs the server and processes the reports for you.
+        </p>
+      </section>
+
+      <!-- Sources -->
+      <section class="docs-section" id="sources" aria-labelledby="sources-h2">
+        <h2 id="sources-h2">Sources</h2>
+        <p>All read on 2026-09-27. A correction is welcome as an issue on GitHub.</p>
+        <ol class="sources">
+          <li id="src-ow">OpenWhistle:
+            <a href="/en/docs/">Documentation</a>,
+            <a href="/en/changelog/">Changelog</a>,
+            <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">github.com/openwhistle/OpenWhistle</a>.</li>
+          <li id="src-gl">GlobaLeaks:
+            <a href="https://www.globaleaks.org/" rel="noopener noreferrer" target="_blank">globaleaks.org</a> (organisations, languages, audits);
+            <a href="https://github.com/globaleaks/globaleaks-whistleblowing-software/blob/stable/documentation/technical/features.rst" rel="noopener noreferrer" target="_blank">features.rst</a> (stack, sites, statuses, Tor, TOTP);
+            <a href="https://github.com/globaleaks/globaleaks-whistleblowing-software/blob/stable/documentation/user/recipient/index.rst" rel="noopener noreferrer" target="_blank">recipient guide</a> (reminders, expiration);
+            <a href="https://github.com/globaleaks/globaleaks-whistleblowing-software/releases" rel="noopener noreferrer" target="_blank">releases</a>.</li>
+          <li id="src-sd">SecureDrop:
+            <a href="https://securedrop.org/" rel="noopener noreferrer" target="_blank">securedrop.org</a> (purpose, languages);
+            <a href="https://docs.securedrop.org/en/stable/admin/installation/hardware.html" rel="noopener noreferrer" target="_blank">hardware guide</a>;
+            <a href="https://docs.securedrop.org/en/stable/what_is_securedrop.html" rel="noopener noreferrer" target="_blank">What is SecureDrop?</a> (audits);
+            <a href="https://github.com/freedomofpress/securedrop" rel="noopener noreferrer" target="_blank">github.com/freedomofpress/securedrop</a> (licence, stack, releases).</li>
+          <li id="src-hl">Hush Line:
+            <a href="https://hushline.app/" rel="noopener noreferrer" target="_blank">hushline.app</a> (audience, hosting, onion);
+            <a href="https://github.com/scidsg/hushline" rel="noopener noreferrer" target="_blank">github.com/scidsg/hushline</a> (licence, stack, TOTP, releases).</li>
+          <li id="src-ohp">splice digital GmbH:
+            <a href="https://opensource-hinweisgeberportal.de/" rel="noopener noreferrer" target="_blank">opensource-hinweisgeberportal.de</a>.</li>
+        </ol>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Footer -->
+  

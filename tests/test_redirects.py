@@ -5,8 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-pytest.importorskip("tests.built_site", reason="built in Task 10")
-from tests.built_site import built  # noqa: E402
+from tests.built_site import built
 
 ROOT = Path(__file__).parents[1]
 OLD = (ROOT / "tests/data/sitemap-2026-10-01.txt").read_text().split()

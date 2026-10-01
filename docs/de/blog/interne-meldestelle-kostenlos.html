@@ -1,0 +1,188 @@
+---
+title: 'Interne Meldestelle kostenlos: was bleibt | OpenWhistle'
+description: 'Interne Meldestelle kostenlos betreiben: was bei 0 € Lizenz an Server, Betrieb und Arbeit bleibt, und welche Optionen es mit veröffentlichten Preisen gibt.'
+translation_key: free-internal-reporting-channel
+og_type: article
+published: '2026-09-27'
+modified: '2026-09-27'
+section: Praxis
+css:
+- fonts
+- free-internal-reporting-channel
+- comparison-table-mobile
+js:
+- site
+jsonld:
+- '@context': https://schema.org
+  '@type': BlogPosting
+  headline: 'Kostenloses Hinweisgebersystem: was „kostenlos“ wirklich kostet'
+  description: 'Interne Meldestelle kostenlos betreiben: was bei 0 € Lizenz an Server, Betrieb und Arbeit bleibt, und welche Optionen es mit veröffentlichten Preisen gibt.'
+  url: https://openwhistle.net/de/blog/interne-meldestelle-kostenlos/
+  mainEntityOfPage:
+    '@type': WebPage
+    '@id': https://openwhistle.net/de/blog/interne-meldestelle-kostenlos/
+  datePublished: '2026-09-27'
+  dateModified: '2026-09-27'
+  author:
+    '@type': Organization
+    name: OpenWhistle Contributors
+    url: https://github.com/openwhistle
+  publisher:
+    '@type': Organization
+    name: OpenWhistle
+    url: https://openwhistle.net/en/
+    logo:
+      '@type': ImageObject
+      url: https://openwhistle.net/apple-touch-icon.png
+  image: https://openwhistle.net/og-image.png
+  inLanguage: de
+- '@context': https://schema.org
+  '@type': BreadcrumbList
+  itemListElement:
+  - '@type': ListItem
+    position: 1
+    name: OpenWhistle
+    item: https://openwhistle.net/en/
+  - '@type': ListItem
+    position: 2
+    name: Blog
+    item: https://openwhistle.net/de/blog/
+  - '@type': ListItem
+    position: 3
+    name: 'Kostenloses Hinweisgebersystem: was „kostenlos“ wirklich kostet'
+    item: https://openwhistle.net/de/blog/interne-meldestelle-kostenlos/
+---
+  <main id="main-content">
+    <div class="article-wrap">
+      <article>
+        <header class="article-header">
+          <p class="article-tag">Kosten · Open Source · HinSchG</p>
+          <h1 class="article-title">Interne Meldestelle kostenlos: was „kostenlos“ wirklich kostet</h1>
+          <p class="article-subtitle">Ein Whistleblower-Tool kostenlos zu bekommen ist leicht. Die Pflichten des HinSchG bleiben trotzdem. Was an Server, Betrieb und Arbeit übrig bleibt, welche Optionen es gibt und wie Sie mit OpenWhistle anfangen.</p>
+          <div class="article-meta">
+            <span>27. September 2026</span>
+            <span>6 Min. Lesezeit</span>
+            <span>OpenWhistle Contributors</span>
+          </div>
+        </header>
+
+        <div class="article-body">
+
+          <p>Ein <strong>kostenloses Hinweisgebersystem</strong> spart die Lizenz. Es spart nicht die interne Meldestelle. Beschäftigungsgeber mit in der Regel mindestens 50 Beschäftigten müssen sie einrichten und betreiben (§ 12 HinSchG). Das Gesetz fragt nicht, was die Software gekostet hat.</p>
+
+          <div class="callout callout-warn">
+            <p class="callout-title">Transparenzhinweis</p>
+            <p>Diesen Artikel schreiben die Entwickler von OpenWhistle. Preise anderer Anbieter stehen so da, wie die Anbieter sie veröffentlichen, abgerufen am 27. September 2026. Keine Rechtsberatung.</p>
+          </div>
+
+          <h2>Was bleibt, wenn die Lizenz 0 € kostet</h2>
+
+          <div class="comp-wrap">
+            <table class="comp-table" aria-label="Kostenposten einer internen Meldestelle">
+              <thead>
+                <tr>
+                  <th scope="col">Posten</th>
+                  <th scope="col">Bei Open Source selbst gehostet</th>
+                  <th scope="col">Grund</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Softwarelizenz</td><td class="val-good" data-label="Bei Open Source selbst gehostet">0 €</td><td data-label="Grund">GPL-3.0 oder AGPL-3.0</td></tr>
+                <tr><td>Server</td><td data-label="Bei Open Source selbst gehostet">ein kleiner VPS nach Tarif Ihres Hosters</td><td data-label="Grund">1 vCPU und 1 GB RAM reichen OpenWhistle meist</td></tr>
+                <tr><td>Betrieb</td><td data-label="Bei Open Source selbst gehostet">Updates, Backups, Zertifikat</td><td data-label="Grund">Sicherheitskorrekturen kommen als Patch-Versionen</td></tr>
+                <tr><td>Menschen</td><td data-label="Bei Open Source selbst gehostet">Arbeitszeit der Meldestelle, Schulung</td><td data-label="Grund">Unabhängigkeit und Fachkunde (§ 15)</td></tr>
+                <tr><td>Telefon</td><td data-label="Bei Open Source selbst gehostet">eine Nummer für die Meldestelle</td><td data-label="Grund">Mündliche Meldungen sind Pflicht (§ 16 Abs. 3)</td></tr>
+                <tr><td>Datenschutz</td><td data-label="Bei Open Source selbst gehostet">Vertrag mit dem Hoster, Verzeichnis</td><td data-label="Grund">Art. 28 und Art. 30 DSGVO</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>Die Software ist der kleinste Posten. Auch mit einem bezahlten Dienst bleiben die Menschen, das Telefon und die Folgemaßnahmen bei Ihnen.</p>
+
+          <h2>Was Sie selbst betreiben</h2>
+
+          <p>So sieht der Stack aus, den OpenWhistle mit Docker Compose startet. Pflicht sind App, PostgreSQL und Redis hinter nginx. ClamAV und S3 sind optional.</p>
+
+          <figure class="diagram">
+            <img class="diagram-light" src="/img/diagrams/architecture-light.svg" alt="Aufbau: Ein Browser erreicht nginx über TLS auf Port 443, Port 80 leitet um. Tor Browser erreicht den Onion-Zugang auf 8080, nur an 127.0.0.1 gebunden. Beide führen zur zustandslosen FastAPI-App. Sie braucht PostgreSQL und Redis, kann ClamAV und S3 nutzen und stellt zwei abschaltbare Anfragen nach außen: die GitHub-Update-Prüfung und die Installationszählung." width="774" height="761" loading="lazy">
+            <img class="diagram-dark" src="/img/diagrams/architecture-dark.svg" alt="Aufbau: Ein Browser erreicht nginx über TLS auf Port 443, Port 80 leitet um. Tor Browser erreicht den Onion-Zugang auf 8080, nur an 127.0.0.1 gebunden. Beide führen zur zustandslosen FastAPI-App. Sie braucht PostgreSQL und Redis, kann ClamAV und S3 nutzen und stellt zwei abschaltbare Anfragen nach außen: die GitHub-Update-Prüfung und die Installationszählung." width="774" height="761" loading="lazy">
+            <figcaption>Der OpenWhistle-Stack. Beide Anfragen nach außen sind aus, bis Sie sie einschalten.</figcaption>
+          </figure>
+
+          <h2>Die Optionen und ihre veröffentlichten Preise</h2>
+
+          <div class="comp-wrap">
+            <table class="comp-table" aria-label="Optionen für eine interne Meldestelle, Preise laut Anbieter am 27. September 2026">
+              <thead>
+                <tr>
+                  <th scope="col">Option</th>
+                  <th scope="col">Beispiel</th>
+                  <th scope="col">Preis laut Anbieter</th>
+                  <th scope="col">Betrieb durch</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Open Source, selbst gehostet</td><td data-label="Beispiel">OpenWhistle</td><td class="val-good" data-label="Preis laut Anbieter">0 € Lizenz</td><td data-label="Betrieb durch">Sie</td></tr>
+                <tr><td>Open Source, selbst gehostet</td><td data-label="Beispiel">GlobaLeaks</td><td class="val-good" data-label="Preis laut Anbieter">0 € Lizenz</td><td data-label="Betrieb durch">Sie</td></tr>
+                <tr><td>Open Source, verwaltet</td><td data-label="Beispiel"><a href="https://opensource-hinweisgeberportal.de/preise" rel="noopener noreferrer" target="_blank">Hinweisgeberportal OpenSource</a></td><td data-label="Preis laut Anbieter">ab 39 €/Monat bei jährlicher, 49 € bei monatlicher Zahlung, zzgl. MwSt.</td><td data-label="Betrieb durch">Anbieter</td></tr>
+                <tr><td>SaaS</td><td data-label="Beispiel"><a href="https://www.whistleport.de/preise/" rel="noopener noreferrer" target="_blank">WhistlePort</a></td><td data-label="Preis laut Anbieter">69 €/Monat zzgl. MwSt.</td><td data-label="Betrieb durch">Anbieter</td></tr>
+                <tr><td>SaaS</td><td data-label="Beispiel"><a href="https://www.hintbox.de/preise/" rel="noopener noreferrer" target="_blank">Hintbox</a></td><td data-label="Preis laut Anbieter">ab 99 €/Monat zzgl. USt.</td><td data-label="Betrieb durch">Anbieter</td></tr>
+                <tr><td>SaaS</td><td data-label="Beispiel"><a href="https://www.integrityline.com/de/produkt/pakete/" rel="noopener noreferrer" target="_blank">EQS Integrity Line</a></td><td data-label="Preis laut Anbieter">nicht angegeben</td><td data-label="Betrieb durch">Anbieter</td></tr>
+                <tr><td>Externe Ombudsperson</td><td data-label="Beispiel">WhistlePort Paket 3, mit Rechtsanwälten</td><td data-label="Preis laut Anbieter">69 € plus 79 €/Monat zzgl. MwSt.</td><td data-label="Betrieb durch">Anbieter</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>Einen dauerhaft kostenlosen Tarif fanden wir bei keinem dieser SaaS-Anbieter. Sie bieten eine kostenlose Testversion oder Demo an. Weitere Merkmale vergleicht der Artikel <a href="/de/blog/whistleblower-software-vergleich/">Hinweisgebersystem-Anbieter im Vergleich 2026</a>.</p>
+
+          <h2>Welche Option zu Ihnen passt</h2>
+
+          <div class="comp-wrap">
+            <table class="comp-table" aria-label="Entscheidungshilfe">
+              <thead>
+                <tr>
+                  <th scope="col">Wenn Sie</th>
+                  <th scope="col">Dann</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>eine IT-Abteilung oder einen IT-Dienstleister haben</td><td data-label="Dann">Open Source selbst hosten: OpenWhistle oder GlobaLeaks</td></tr>
+                <tr><td>Fristen nach § 17 HinSchG im Dashboard mitzählen wollen</td><td data-label="Dann">OpenWhistle</td></tr>
+                <tr><td>über 70 Sprachen oder ein seit 2011 erprobtes System brauchen</td><td data-label="Dann">GlobaLeaks</td></tr>
+                <tr><td>offenen Code wollen, aber keinen Server betreiben</td><td data-label="Dann">verwaltetes GlobaLeaks</td></tr>
+                <tr><td>niemanden für Betrieb und Updates haben</td><td data-label="Dann">SaaS</td></tr>
+                <tr><td>niemanden für die Bearbeitung der Meldungen haben</td><td data-label="Dann">externe Ombudsperson (§ 14 Abs. 1)</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2>So starten Sie mit OpenWhistle</h2>
+
+          <ol>
+            <li>Die <a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Live-Demo</a> ausprobieren, als Hinweisgeber und als Meldestelle.</li>
+            <li>Einen Linux-Server mit Docker 24 oder neuer bereitstellen.</li>
+            <li>Der <a href="/en/docs/#installation">Installationsanleitung</a> folgen: klonen, <code>.env</code> ausfüllen, <code>docker compose up -d</code>.</li>
+            <li>Im Assistenten unter <code>/setup</code> das erste Konto mit Pflicht-TOTP anlegen.</li>
+            <li>Kategorien, Standorte und Konten einrichten, dann eine Testmeldung schicken.</li>
+          </ol>
+
+          <p>Jeden Schritt mit Befehlen zeigt die <a href="/de/blog/interne-meldestelle-einrichten/">Schritt-für-Schritt-Anleitung</a>. Welche Pflichten danach bleiben, fasst der <a href="/de/blog/hinschg-compliance-leitfaden/">HinSchG-Compliance-Leitfaden</a> zusammen.</p>
+
+          <div class="article-cta">
+            <h3>Kostenlos, Open Source, selbst gehostet</h3>
+            <p>OpenWhistle steht unter GPL-3.0. Es gibt keine bezahlte Ausgabe und kein Abonnement.</p>
+            <a href="https://demo.openwhistle.net" class="btn-cta" rel="noopener noreferrer" target="_blank">Live-Demo öffnen &rarr;</a>
+          </div>
+
+          <p class="post-note">
+            <strong>Weitere Ressourcen:</strong>
+            <a href="/de/blog/whistleblower-software-vergleich/">Hinweisgebersystem-Anbieter im Vergleich 2026</a> ·
+            <a href="/de/blog/hinschg-compliance-leitfaden/">HinSchG-Compliance-Leitfaden</a> ·
+            <a href="https://www.gesetze-im-internet.de/hinschg/" rel="noopener noreferrer" target="_blank">HinSchG Volltext</a>
+          </p>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  

@@ -525,3 +525,13 @@ def test_a_stub_target_cannot_close_the_script(tmp_path: Path) -> None:
     script = next(ln for ln in lines if ln.startswith("<script>"))
     assert "</script>" not in script.removesuffix("</script>")
 
+
+def test_no_built_page_carries_an_inline_style() -> None:
+    from tests.built_site import built
+
+    offenders = [
+        str(p.relative_to(built())) for p in built().rglob("*.html") if ' style="' in p.read_text()
+    ]
+    assert not offenders, (
+        f"inline style= breaks the P4 CSP (style-src without 'unsafe-inline'): {offenders}"
+    )

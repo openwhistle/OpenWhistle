@@ -1,0 +1,317 @@
+---
+title: 'Interne Meldestelle einrichten: Anleitung | OpenWhistle'
+description: 'Interne Meldestelle einrichten mit OpenWhistle: Server, Docker Compose, HTTPS, Admin-Konto mit MFA und erste Konfiguration, Schritt für Schritt erklärt.'
+translation_key: set-up-internal-reporting-channel
+og_type: article
+published: '2026-04-27'
+modified: '2026-09-27'
+css:
+- fonts
+- set-up-internal-reporting-channel
+- deadline-table
+js:
+- site
+jsonld:
+- '@context': https://schema.org
+  '@type': BlogPosting
+  headline: Interne Meldestelle einrichten mit OpenWhistle 2.1.0
+  description: 'Schritt-für-Schritt-Anleitung: OpenWhistle mit Docker Compose installieren, HTTPS-Zertifikat hinterlegen und den ersten Admin anlegen.'
+  url: https://openwhistle.net/de/blog/interne-meldestelle-einrichten/
+  mainEntityOfPage:
+    '@type': WebPage
+    '@id': https://openwhistle.net/de/blog/interne-meldestelle-einrichten/
+  datePublished: '2026-04-27'
+  dateModified: '2026-09-27'
+  author:
+    '@type': Organization
+    name: OpenWhistle Contributors
+    url: https://github.com/openwhistle
+  publisher:
+    '@type': Organization
+    name: OpenWhistle
+    url: https://openwhistle.net/en/
+    logo:
+      '@type': ImageObject
+      url: https://openwhistle.net/apple-touch-icon.png
+  image: https://openwhistle.net/og-image.png
+  inLanguage: de
+- '@context': https://schema.org
+  '@type': BreadcrumbList
+  itemListElement:
+  - '@type': ListItem
+    position: 1
+    name: OpenWhistle
+    item: https://openwhistle.net/en/
+  - '@type': ListItem
+    position: 2
+    name: Blog
+    item: https://openwhistle.net/de/blog/
+  - '@type': ListItem
+    position: 3
+    name: 'Interne Meldestelle einrichten: Schritt-für-Schritt-Anleitung mit OpenWhistle'
+    item: https://openwhistle.net/de/blog/interne-meldestelle-einrichten/
+---
+  <main id="main-content">
+    <div class="article-wrap">
+      <article>
+        <header class="article-header">
+          <p class="article-tag">Anleitung · Self-Hosting · Docker</p>
+          <h1 class="article-title">Interne Meldestelle einrichten: Schritt-für-Schritt-Anleitung mit OpenWhistle 2.1.0</h1>
+          <p class="article-subtitle">Vom leeren Linux-Server bis zur ersten Testmeldung: Docker, Konfiguration, HTTPS-Zertifikat, Einrichtungsassistent und erste Schritte im Admin-Bereich.</p>
+          <div class="article-meta">
+            <span>27. April 2026</span>
+            <span>Aktualisiert am 27. September 2026</span>
+            <span>10 Min. Lesezeit</span>
+            <span>OpenWhistle Contributors</span>
+          </div>
+        </header>
+
+        <div class="article-body">
+
+          <p>Diese Anleitung richtet OpenWhistle mit Docker Compose ein. Am Ende läuft der digitale Meldekanal Ihrer internen Meldestelle auf Ihrem eigenen Server. Die maßgebliche Referenz bleibt die <a href="/en/docs/#installation">Installationsanleitung in der Dokumentation</a>.</p>
+
+          <h2>Voraussetzungen</h2>
+
+          <ul>
+            <li>Ein Linux-Server mit 1 vCPU, mindestens 512 MB RAM (1 GB empfohlen) und 5 GB Speicher</li>
+            <li>Docker 24 oder neuer mit dem Plugin <code>docker compose</code> (v2)</li>
+            <li>Eine Domain, die auf den Server zeigt, etwa <code>meldestelle.ihr-unternehmen.de</code></li>
+            <li>Offene Ports 80 und 443</li>
+            <li>Root- oder sudo-Zugriff und etwas Übung im Terminal</li>
+          </ul>
+
+          <div class="callout callout-info">
+            <p class="callout-title">Automatisch statt von Hand</p>
+            <p>Das Repository enthält eine Ansible-Rolle unter <code>ansible/</code>. Sie installiert Docker, legt einen Systemdienst an und holt ein Let's-Encrypt-Zertifikat. Diese Anleitung zeigt den Weg von Hand.</p>
+          </div>
+
+          <h2>Schritt 1: Server bereitstellen</h2>
+
+          <div class="step-block">
+            <div class="step-num" aria-hidden="true">1</div>
+            <div class="step-content">
+              <h3>VPS auswählen</h3>
+              <p>Ein kleiner VPS genügt. Wählen Sie einen Anbieter mit Rechenzentrum in der EU, der einen Auftragsverarbeitungsvertrag nach Art. 28 DSGVO anbietet.</p>
+              <p>Legen Sie einen Benutzer mit sudo-Rechten an und melden Sie sich per SSH-Schlüssel an.</p>
+            </div>
+          </div>
+
+          <h2>Schritt 2: Docker installieren</h2>
+
+          <div class="step-block">
+            <div class="step-num" aria-hidden="true">2</div>
+            <div class="step-content">
+              <h3>Docker Engine und Compose-Plugin</h3>
+              <p>Folgen Sie der offiziellen <a href="https://docs.docker.com/engine/install/" rel="noopener noreferrer" target="_blank">Installationsanleitung von Docker</a> für Ihre Distribution. Prüfen Sie danach beide Versionen:</p>
+            </div>
+          </div>
+
+<pre><code>docker --version          # 24.0 oder neuer
+docker compose version    # v2.x</code></pre>
+
+          <h2>Schritt 3: OpenWhistle konfigurieren</h2>
+
+          <div class="step-block">
+            <div class="step-num" aria-hidden="true">3</div>
+            <div class="step-content">
+              <h3>Repository klonen und <code>.env</code> anlegen</h3>
+              <p>Klonen Sie das Repository und kopieren Sie die Beispielkonfiguration:</p>
+            </div>
+          </div>
+
+<pre><code>git clone https://github.com/openwhistle/OpenWhistle.git
+cd OpenWhistle
+cp .env.example .env</code></pre>
+
+          <p>Tragen Sie in <code>.env</code> mindestens diese Werte ein. Zufällige Schlüssel erzeugt <code>openssl rand -hex 32</code>.</p>
+
+<pre><code># Produktions-Stack mit nginx und TLS für jeden docker-compose-Befehl
+COMPOSE_FILE=docker-compose.prod.yml
+
+# Mindestens 32 Zeichen
+SECRET_KEY=&lt;openssl rand -hex 32&gt;
+# Empfohlen: eigener Schlüssel für die Verschlüsselung der Meldungen
+ENCRYPTION_KEY=&lt;openssl rand -hex 32&gt;
+
+# Passwörter für Datenbank und Redis, dieselben in den URLs
+POSTGRES_PASSWORD=starkes-passwort
+REDIS_PASSWORD=zweites-starkes-passwort
+DATABASE_URL=postgresql+asyncpg://openwhistle:starkes-passwort@db:5432/openwhistle
+REDIS_URL=redis://:zweites-starkes-passwort@redis:6379/0
+
+# Ihre Domain, für Links in E-Mails und das Ersatzzertifikat
+APP_PUBLIC_URL=https://meldestelle.ihr-unternehmen.de
+TLS_HOSTNAME=meldestelle.ihr-unternehmen.de
+
+# Optional: E-Mail an die Meldestelle und Fristerinnerungen
+# NOTIFY_EMAIL_ENABLED=true
+# NOTIFY_EMAIL_TO=meldestelle@ihr-unternehmen.de
+# NOTIFY_SMTP_HOST=smtp.ihr-mailserver.de
+# NOTIFY_SMTP_PORT=587
+# NOTIFY_SMTP_USER=meldestelle@ihr-unternehmen.de
+# NOTIFY_SMTP_PASSWORD=mail-passwort
+# REMINDER_ENABLED=true</code></pre>
+
+          <div class="callout callout-warn">
+            <p class="callout-title">Schlüssel sichern</p>
+            <p>Mit <code>ENCRYPTION_KEY</code> werden die Meldungen verschlüsselt, ohne ihn mit <code>SECRET_KEY</code>. Geht der Schlüssel verloren, sind die Meldungen nicht mehr lesbar. Bewahren Sie ihn in einem Passwortmanager oder Secret-Store auf.</p>
+          </div>
+
+          <p>Alle weiteren Einstellungen stehen in der <a href="/en/docs/#configuration">Konfigurationstabelle</a>.</p>
+
+          <h2>Schritt 4: HTTPS-Zertifikat hinterlegen</h2>
+
+          <div class="step-block">
+            <div class="step-num" aria-hidden="true">4</div>
+            <div class="step-content">
+              <h3>Let's-Encrypt-Zertifikat nach <code>nginx/certs/</code></h3>
+              <p>Der Stack liefert HTTPS von Anfang an. Ohne eigenes Zertifikat erzeugt der Dienst <code>tls-init</code> ein selbstsigniertes für <code>TLS_HOSTNAME</code>. Das genügt zum Testen, nicht für den Betrieb.</p>
+              <p>Holen Sie ein Zertifikat, solange Port 80 noch frei ist, und <strong>kopieren</strong> Sie es. Ein Symlink nach <code>/etc/letsencrypt/live</code> zeigt im Container ins Leere.</p>
+            </div>
+          </div>
+
+<pre><code>sudo certbot certonly --standalone -d meldestelle.ihr-unternehmen.de
+sudo cp /etc/letsencrypt/live/meldestelle.ihr-unternehmen.de/fullchain.pem nginx/certs/
+sudo cp /etc/letsencrypt/live/meldestelle.ihr-unternehmen.de/privkey.pem nginx/certs/
+sudo chmod 600 nginx/certs/privkey.pem</code></pre>
+
+          <p>Zum Erneuern kopieren Sie die neuen Dateien und starten <code>docker compose up -d tls-init nginx</code>. Ein Neustart von nginx allein behält das alte Zertifikat.</p>
+
+          <h2>Schritt 5: OpenWhistle starten</h2>
+
+          <div class="step-block">
+            <div class="step-num" aria-hidden="true">5</div>
+            <div class="step-content">
+              <h3>Alle Dienste starten</h3>
+              <p>Ein Befehl startet App, PostgreSQL, Redis und nginx. Die Datenbankmigrationen laufen beim Start automatisch.</p>
+            </div>
+          </div>
+
+<pre><code>docker compose up -d
+docker compose ps
+
+# Health-Check
+curl -s https://meldestelle.ihr-unternehmen.de/health
+# {"status":"ok","version":"2.1.0","components":{"database":"ok","redis":"ok"}}</code></pre>
+
+          <h2>Schritt 6: Den ersten Admin anlegen</h2>
+
+          <div class="step-block">
+            <div class="step-num" aria-hidden="true">6</div>
+            <div class="step-content">
+              <h3>Einrichtungsassistent mit Einmal-Token</h3>
+              <p>Der Assistent verlangt ein Einmal-Token. Ohne eigenes <code>SETUP_TOKEN</code> steht es im Log:</p>
+            </div>
+          </div>
+
+<pre><code>docker compose logs app | grep "Setup token"</code></pre>
+
+          <p>Öffnen Sie dann <code>https://meldestelle.ihr-unternehmen.de/setup</code>:</p>
+
+          <ol>
+            <li>Token eingeben.</li>
+            <li>Benutzername mit 3 bis 64 Zeichen und ein Passwort mit mindestens 12 Zeichen wählen.</li>
+            <li>QR-Code mit einer Authenticator-App scannen und den sechsstelligen Code eingeben. Dieser Schritt ist Pflicht.</li>
+            <li>Optional zustimmen, dass die Installation einmal täglich gezählt wird. Vorgabe ist nein.</li>
+          </ol>
+
+          <p>Das erste Konto ist ein Superadmin. Notieren Sie das TOTP-Geheimnis offline: Backup-Codes gibt es nicht.</p>
+
+          <h2>Schritt 7: Grundkonfiguration im Admin-Bereich</h2>
+
+          <p>Melden Sie sich unter <code>/admin/login</code> an. Diese Seiten richten Sie zuerst ein:</p>
+
+          <table class="deadline-table">
+            <thead>
+              <tr>
+                <th scope="col">Seite</th>
+                <th scope="col">Wofür</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><code>/admin/categories</code></td><td>Kategorien der Meldungen, etwa Finanzen, Arbeitssicherheit, Diskriminierung</td></tr>
+              <tr><td><code>/admin/locations</code></td><td>Standorte; sind welche aktiv, fragt der Assistent danach</td></tr>
+              <tr><td><code>/admin/users</code></td><td>weitere Konten; neue Konten sind Fallbearbeiter, jedes braucht TOTP</td></tr>
+              <tr><td><code>/admin/telephone-channel</code></td><td>Leitfaden für den mündlichen Kanal nach § 16 Abs. 3 HinSchG</td></tr>
+              <tr><td><code>/admin/system</code></td><td>installierte Version und Dateiprüfung</td></tr>
+            </tbody>
+          </table>
+
+          <p>Schicken Sie danach eine Testmeldung über das Formular. Prüfen Sie, ob sie im Dashboard erscheint und die E-Mail ankommt.</p>
+
+          <div class="callout callout-info">
+            <p class="callout-title">Fristerinnerungen</p>
+            <p>Mit <code>REMINDER_ENABLED=true</code> erinnert OpenWhistle per E-Mail, bevor die 7-Tage- oder die 3-Monats-Frist nach § 17 HinSchG abläuft. Die Prüfung läuft alle 30 Minuten.</p>
+          </div>
+
+          <h2>Schritt 8: Die Meldestelle bekannt machen</h2>
+
+          <p>Beschäftigte brauchen klare Informationen über das interne Verfahren und über externe Meldestellen (§ 7 Abs. 3, § 13 Abs. 2 HinSchG). Bewährte Wege:</p>
+
+          <ul>
+            <li>Rundmail mit dem Link zum Meldeformular</li>
+            <li>Eintrag im Intranet oder Wiki</li>
+            <li>Hinweis im Verhaltenskodex</li>
+            <li>Aushang für Beschäftigte ohne Computerarbeitsplatz, mit Telefonnummer</li>
+          </ul>
+
+          <h2>Updates einspielen</h2>
+
+          <p>Das Image ist über <code>OPENWHISTLE_VERSION</code> in <code>.env</code> auf eine Version festgelegt. So aktualisieren Sie:</p>
+
+<pre><code># Zuerst sichern: ein Rollback braucht das Backup
+docker compose exec db pg_dump -U openwhistle openwhistle &gt; backup.sql
+# Compose-Datei und nginx-Konfiguration ändern sich mit den Releases
+git pull
+# OPENWHISTLE_VERSION in .env auf die neue Version setzen, dann
+docker compose pull
+docker compose up -d</code></pre>
+
+          <p>Lesen Sie vorher den Eintrag im <a href="/en/changelog/">Änderungsprotokoll</a>. Sicherheitskorrekturen erscheinen als Patch-Versionen; auf GitHub können Sie die Releases abonnieren.</p>
+
+          <h2>Was Sie sichern müssen</h2>
+
+          <table class="deadline-table">
+            <thead>
+              <tr>
+                <th scope="col">Was</th>
+                <th scope="col">Warum</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Datenbank (<code>pg_dump</code>)</td><td>Meldungen, Nachrichten und standardmäßig auch die Anhänge</td></tr>
+              <tr><td><code>.env</code></td><td>enthält die Schlüssel; ohne sie ist das Backup nicht lesbar</td></tr>
+              <tr><td>S3-Bucket</td><td>nur wenn Anhänge dort liegen (<code>STORAGE_BACKEND=s3</code>)</td></tr>
+            </tbody>
+          </table>
+
+          <div class="article-cta">
+            <h3>Erst ansehen, dann installieren</h3>
+            <p>Die Live-Demo zeigt Meldeformular und Admin-Bereich. Kein Konto nötig, Zurücksetzen alle 6 Stunden.</p>
+            <a href="https://demo.openwhistle.net" class="btn-cta" rel="noopener noreferrer" target="_blank">Live-Demo öffnen &rarr;</a>
+          </div>
+
+          <h2>Häufige Probleme</h2>
+
+          <h3>„port is already allocated“ beim Start</h3>
+          <p>Port 80, 443 oder 8080 ist belegt. Den Onion-Zugang auf <code>127.0.0.1:8080</code> veröffentlicht nginx immer. <code>sudo ss -tlnp</code> zeigt, welcher Prozess den Port hält.</p>
+
+          <h3>nginx startet nicht, <code>tls-init</code> meldet einen Fehler</h3>
+          <p>Meist ist der Schlüssel falsch berechtigt oder ein Symlink. Kopieren Sie die Dateien, und geben Sie <code>privkey.pem</code> root mit <code>0600</code> oder <code>0644</code>. Die Meldung von <code>tls-init</code> nennt Pfad und Grund.</p>
+
+          <h3>Der Einrichtungsassistent lehnt das Token ab</h3>
+          <p>Nehmen Sie das jüngste Token aus dem Log. Redis speichert es nur im Arbeitsspeicher: startet Redis neu, entsteht ein neues. Ein selbst gesetztes <code>SETUP_TOKEN</code> gilt immer.</p>
+
+          <p class="post-footnote">
+            <strong>Weitere Ressourcen:</strong>
+            <a href="/en/docs/">Vollständige Dokumentation</a> ·
+            <a href="/de/blog/hinschg-compliance-leitfaden/">HinSchG-Compliance-Leitfaden</a> ·
+            <a href="/de/blog/interne-meldestelle-kostenlos/">Was ein kostenloses Hinweisgebersystem kostet</a> ·
+            <a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank">GitHub Issues</a>
+          </p>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  

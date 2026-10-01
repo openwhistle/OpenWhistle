@@ -1,0 +1,644 @@
+---
+title: Free Open Source Whistleblower Software | OpenWhistle
+description: Free, open source whistleblower software for HinSchG and EU Directive 2019/1937 reporting channels. Self-hosted with Docker, no IP logs, GPL-3.0.
+translation_key: home
+css:
+- fonts
+- home
+- figures
+js:
+- site
+jsonld:
+- '@context': https://schema.org
+  '@type': SoftwareApplication
+  '@id': https://openwhistle.net/en/#software
+  name: OpenWhistle
+  url: https://openwhistle.net/en/
+  description: Free, open source whistleblower software for HinSchG and EU Directive 2019/1937 reporting channels. Self-hosted with Docker, no IP logs, GPL-3.0.
+  applicationCategory: SecurityApplication
+  applicationSubCategory: Whistleblowing software
+  operatingSystem: Linux (Docker)
+  offers:
+    '@type': Offer
+    price: '0'
+    priceCurrency: EUR
+  license: https://www.gnu.org/licenses/gpl-3.0.html
+  softwareVersion: 2.1.0
+  downloadUrl: https://github.com/openwhistle/OpenWhistle/releases/latest
+  installUrl: https://openwhistle.net/en/docs/#installation
+  softwareHelp:
+    '@type': CreativeWork
+    url: https://openwhistle.net/en/docs/
+  image: https://openwhistle.net/og-image.png
+  inLanguage: en
+  author:
+    '@type': Organization
+    name: OpenWhistle Contributors
+    url: https://github.com/openwhistle
+  publisher:
+    '@type': Organization
+    name: OpenWhistle
+    url: https://openwhistle.net/en/
+    logo:
+      '@type': ImageObject
+      url: https://openwhistle.net/apple-touch-icon.png
+  sameAs:
+  - https://github.com/openwhistle/OpenWhistle
+  - https://hub.docker.com/r/kermit1337/openwhistle
+  - https://quay.io/repository/jp1337/openwhistle
+  - https://github.com/openwhistle/OpenWhistle/pkgs/container/openwhistle
+  featureList:
+  - HinSchG § 17 deadline tracking (7-day acknowledgement, 3-month feedback)
+  - No IP address logging at any layer
+  - Anonymous report access by a random UUID PIN
+  - Two-way messages between reporter and case handler
+  - Mandatory TOTP multi-factor authentication for every account
+  - Login by local database, OIDC or LDAP
+  - Per-report envelope encryption at rest
+  - Multi-tenancy for several organisations in one deployment
+  - Optional Tor onion address
+  - Interface in English, German, French and Brazilian Portuguese
+  - Docker Compose, Helm chart and Ansible role
+- '@context': https://schema.org
+  '@type': WebSite
+  '@id': https://openwhistle.net/en/#website
+  name: OpenWhistle
+  url: https://openwhistle.net/en/
+  inLanguage:
+  - en
+  - de
+  publisher:
+    '@type': Organization
+    name: OpenWhistle
+    url: https://openwhistle.net/en/
+    logo:
+      '@type': ImageObject
+      url: https://openwhistle.net/apple-touch-icon.png
+- '@context': https://schema.org
+  '@type': Organization
+  '@id': https://openwhistle.net/en/#organization
+  name: OpenWhistle
+  url: https://openwhistle.net/en/
+  logo: https://openwhistle.net/apple-touch-icon.png
+  sameAs:
+  - https://github.com/openwhistle
+- '@context': https://schema.org
+  '@type': FAQPage
+  mainEntity:
+  - '@type': Question
+    name: Is OpenWhistle really free?
+    acceptedAnswer:
+      '@type': Answer
+      text: Yes. It is licensed under the GNU General Public License v3.0. There is no paid tier, no paid feature and no subscription. You pay only for the server you run it on.
+  - '@type': Question
+    name: Is OpenWhistle open source?
+    acceptedAnswer:
+      '@type': Answer
+      text: Yes, OpenWhistle is open source under the GNU General Public License v3.0. The full source code is public on GitHub. You may audit it, change it and use it commercially.
+  - '@type': Question
+    name: Can I host it myself?
+    acceptedAnswer:
+      '@type': Answer
+      text: 'Yes, and only that way: you run OpenWhistle on your own server with Docker Compose or Helm. The project offers no hosted service. Reports stay on that server, in the EU if you put it there.'
+  - '@type': Question
+    name: Does it meet the HinSchG?
+    acceptedAnswer:
+      '@type': Answer
+      text: 'It builds in what software can: the 7-day acknowledgement (§17 Abs. 1 Nr. 1), the 3-month feedback (§17 Abs. 2), contact with the reporter (§17 Abs. 1 Nr. 3), identity confidentiality (§8), documentation and its deletion after 3 years (§11). The organisation still needs an impartial reporting office and an oral channel.'
+  - '@type': Question
+    name: Is the whistleblower anonymous?
+    acceptedAnswer:
+      '@type': Answer
+      text: 'No IP address is stored at any layer. nginx clears the client-IP headers and writes no access log, the middleware drops the peer address, no table has an IP column, and a Redis session holds only a random token. The reporter''s own device and network still matter: a private window or Tor Browser helps.'
+  - '@type': Question
+    name: Can I use OpenWhistle for my company?
+    acceptedAnswer:
+      '@type': Answer
+      text: Yes. The GPL-3.0 permits commercial self-hosted use. One installation can serve several organisations, each with its own reporting link. It suits companies from 50 employees, public bodies and financial firms.
+  - '@type': Question
+    name: What are the technical requirements?
+    acceptedAnswer:
+      '@type': Answer
+      text: Docker 24 or newer, Docker Compose v2, 1 vCPU, 512 MB RAM (1 GB recommended), 5 GB disk, a domain and an HTTPS certificate. PostgreSQL 18 and Redis 8 are bundled in the Compose stack.
+  - '@type': Question
+    name: Is there commercial support available?
+    acceptedAnswer:
+      '@type': Answer
+      text: No, there is no paid support tier. Community support is on GitHub Issues, where bug reports, feature requests and contributions are welcome.
+  - '@type': Question
+    name: How does it compare with GlobaLeaks, SecureDrop or Hush Line?
+    acceptedAnswer:
+      '@type': Answer
+      text: GlobaLeaks is the mature general-purpose platform, SecureDrop serves newsrooms, and Hush Line is a hosted tip line. OpenWhistle is built around the HinSchG case workflow. The comparison lists the facts, each with its source.
+  - '@type': Question
+    name: Which languages does it support?
+    acceptedAnswer:
+      '@type': Answer
+      text: The interface is in English, German, French and Brazilian Portuguese. It follows the browser's language until the reader picks one; that choice is kept in a cookie.
+---
+  <main id="main-content">
+
+    <!-- Hero -->
+    <section class="hero" aria-labelledby="hero-heading">
+      <span class="hero-rule hero-rule-left" aria-hidden="true"></span>
+      <span class="hero-rule hero-rule-right" aria-hidden="true"></span>
+
+      <div class="hero-content">
+        <p class="hero-eyebrow">
+          EU Directive 2019/1937 &amp; HinSchG
+        </p>
+
+        <h1 class="hero-headline" id="hero-heading">
+          Free, open source<br>
+          <span class="accent-green">whistleblowing</span><br>
+          <span class="accent-emphasis">software</span>
+        </h1>
+
+        <p class="hero-subline">
+          OpenWhistle is free, open source (GPL-3.0), self-hosted whistleblowing software.
+          It is the internal reporting channel that EU Directive 2019/1937 and
+          Germany's <em>HinSchG</em> require, run on your own server.
+        </p>
+
+        <div class="hero-actions">
+          <a href="https://demo.openwhistle.net" class="btn btn-primary" rel="noopener noreferrer" target="_blank">
+            Try Demo &rarr;
+          </a>
+          <a href="/en/docs/" class="btn btn-outline">
+            Read Documentation
+          </a>
+        </div>
+
+        <div class="hero-meta" role="list">
+          <span class="hero-meta-item" role="listitem">Version 2.1.0</span>
+          <span class="hero-meta-item" role="listitem">GPL-3.0</span>
+          <span class="hero-meta-item" role="listitem">Python 3.14</span>
+          <span class="hero-meta-item" role="listitem">Docker</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Trust badges -->
+    <div class="trust-strip" role="region" aria-label="Key facts">
+      <div class="trust-strip-inner">
+        <div class="trust-item">
+          <div class="trust-item-check" aria-hidden="true">
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0c7253" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          No IP address stored
+        </div>
+        <div class="trust-item">
+          <div class="trust-item-check" aria-hidden="true">
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0c7253" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          TOTP on every admin login
+        </div>
+        <div class="trust-item">
+          <div class="trust-item-check" aria-hidden="true">
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0c7253" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          7-day / 3-month deadlines
+        </div>
+        <div class="trust-item">
+          <div class="trust-item-check" aria-hidden="true">
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0c7253" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          Self-hosted
+        </div>
+        <div class="trust-item">
+          <div class="trust-item-check" aria-hidden="true">
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0c7253" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          Outbound requests opt-in
+        </div>
+        <div class="trust-item">
+          <div class="trust-item-check" aria-hidden="true">
+            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="#0c7253" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          4 languages
+        </div>
+      </div>
+    </div>
+
+    <!-- At a glance -->
+    <section class="section" id="at-a-glance" aria-labelledby="glance-heading">
+      <div class="section-inner">
+        <span class="section-eyebrow">At a Glance</span>
+        <h2 class="section-heading" id="glance-heading">
+          A reporting channel you run yourself
+        </h2>
+        <div class="section-divider" aria-hidden="true"></div>
+
+        <div class="figure-row">
+          <div class="table-scroll">
+            <table class="comparison-table">
+              <thead>
+                <tr><th scope="col">Question</th><th scope="col" class="col-ow">OpenWhistle</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Price</td><td>Free. No paid tier, no subscription; you pay for your own server.</td></tr>
+                <tr><td>Licence</td><td><a href="https://github.com/openwhistle/OpenWhistle/blob/main/LICENSE" rel="noopener noreferrer" target="_blank">GPL-3.0</a>, source on GitHub</td></tr>
+                <tr><td>Hosting</td><td>Self-hosted: Docker Compose or a Helm chart. No SaaS.</td></tr>
+                <tr><td>Stack</td><td>Python, FastAPI, PostgreSQL 18, Redis 8, nginx</td></tr>
+                <tr><td>Images</td><td>GHCR, Docker Hub, Quay.io; linux/amd64 and linux/arm64</td></tr>
+                <tr><td>For</td><td>Companies and public bodies under EU Directive 2019/1937 and HinSchG</td></tr>
+                <tr><td>Organisations</td><td>One or many per installation, each with its own reporting link</td></tr>
+                <tr><td>UI languages</td><td>English, German, French, Brazilian Portuguese</td></tr>
+                <tr><td>Tor</td><td>Optional onion address, with a Tor daemon you run</td></tr>
+                <tr><td>Current release</td><td>2.1.0 &middot; <a href="/en/changelog/">Changelog</a></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <figure class="doc-shot">
+            <img class="shot-light" src="/img/screens/submit-step1-light.png" alt="Step 1 of 6 of the submission wizard: a choice between Anonymous and Confidential, under the steps mode, location, category, details, files and review." width="1440" height="973" loading="lazy">
+            <img class="shot-dark" src="/img/screens/submit-step1-dark.png" alt="Step 1 of 6 of the submission wizard: a choice between Anonymous and Confidential, under the steps mode, location, category, details, files and review." width="1440" height="973" loading="lazy">
+            <figcaption>The reporting form, step 1 of 6. No account and no email address.</figcaption>
+          </figure>
+        </div>
+
+        <p class="section-note">
+          Other open source options exist.
+          <a href="/en/compare/">Compared with GlobaLeaks, SecureDrop, Hush Line</a>:
+          licence, hosting, deadlines and languages, each with its source.
+        </p>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="section section-alt" id="features" aria-labelledby="features-heading">
+      <div class="section-inner">
+        <span class="section-eyebrow">Features</span>
+        <h2 class="section-heading" id="features-heading">
+          What each side gets
+        </h2>
+        <div class="section-divider" aria-hidden="true"></div>
+
+        <div class="figure-row">
+          <div>
+            <div class="table-scroll">
+              <table class="comparison-table">
+                <caption>For the whistleblower</caption>
+                <tbody>
+                  <tr><td>Access</td><td>Case number and a UUID4 PIN, shown once. No account, no email address.</td></tr>
+                  <tr><td>Mode</td><td>Anonymous, or confidential: name and contact encrypted, shown to the case handler only after an audited reason</td></tr>
+                  <tr><td>Follow-up</td><td>Read replies and send messages at <code>/status</code> with case number and PIN</td></tr>
+                  <tr><td>Lock-out</td><td>None: the correct PIN always works; wrong guesses only slow down</td></tr>
+                  <tr><td>Timestamps</td><td>The day only (UTC) for the report, messages and files</td></tr>
+                  <tr><td>Files</td><td>PDF, images, DOCX, XLSX, CSV, TXT; 5 &times; 10 MB; metadata removed; optional ClamAV scan that refuses when clamd is down</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="table-scroll">
+              <table class="comparison-table">
+                <caption>For the reporting office</caption>
+                <tbody>
+                  <tr><td>Deadlines</td><td>7-day acknowledgement and 3-month feedback, per case, on dashboard and case page</td></tr>
+                  <tr><td>Case work</td><td>Statuses, assignment, internal notes, linked cases, PDF export</td></tr>
+                  <tr><td>Search</td><td>Case number or a word in the report; decrypted in memory, no index stored</td></tr>
+                  <tr><td>Roles</td><td>Superadmin, admin, case manager (sees assigned cases only)</td></tr>
+                  <tr><td>Audit</td><td>Immutable audit log with CSV export; deletion needs a second admin</td></tr>
+                  <tr><td>Alerts</td><td>Opt-in email and webhook digests and deadline reminders; webhooks carry counts, never case numbers</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <figure class="doc-shot">
+            <img class="shot-light" src="/img/screens/admin-dashboard-light.png" alt="The reports dashboard: status and location filters, a search field, and the report table with case number, category, status, submitted day, assignee, 7-day SLA and 3-month SLA." width="1440" height="1108" loading="lazy">
+            <img class="shot-dark" src="/img/screens/admin-dashboard-dark.png" alt="The reports dashboard: status and location filters, a search field, and the report table with case number, category, status, submitted day, assignee, 7-day SLA and 3-month SLA." width="1440" height="1108" loading="lazy">
+            <figcaption>The dashboard: one row per case, with both deadlines.</figcaption>
+          </figure>
+        </div>
+
+        <div class="figure-row">
+          <div class="table-scroll">
+            <table class="comparison-table">
+              <caption>For whoever runs it</caption>
+              <tbody>
+                <tr><td>Sign-in</td><td>Password, LDAP or OIDC, then always TOTP. Enrolment is mandatory.</td></tr>
+                <tr><td>Organisations</td><td>Optional multi-tenancy: each organisation gets <code>/submit/&lt;slug&gt;</code></td></tr>
+                <tr><td>TLS</td><td>On by default: self-signed on first boot, your certificate once you add it</td></tr>
+                <tr><td>Outbound</td><td>Nothing until you switch it on. Update check and installation count are off by default.</td></tr>
+                <tr><td>Retention</td><td>Closed reports deleted after 1,095 days (HinSchG §11 Abs. 5), on by default</td></tr>
+                <tr><td>Images</td><td>Signed with Cosign on GHCR; also on Docker Hub and Quay.io</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <figure class="diagram">
+            <img class="diagram-light" src="/img/diagrams/admin-login-light.svg" alt="Admin login: the first factor is a username and password checked against the database, LDAP, or an external OIDC identity provider. Then TOTP: an account without it enrolls first, which is mandatory. The TOTP code opens the admin session." width="645" height="1077" loading="lazy">
+            <img class="diagram-dark" src="/img/diagrams/admin-login-dark.svg" alt="Admin login: the first factor is a username and password checked against the database, LDAP, or an external OIDC identity provider. Then TOTP: an account without it enrolls first, which is mandatory. The TOTP code opens the admin session." width="645" height="1077" loading="lazy">
+            <figcaption>Every login path ends with TOTP.</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="section" id="how-it-works" aria-labelledby="how-it-works-heading">
+      <div class="section-inner">
+        <span class="section-eyebrow">How it Works</span>
+        <h2 class="section-heading" id="how-it-works-heading">
+          From report to closed case
+        </h2>
+        <div class="section-divider" aria-hidden="true"></div>
+
+        <div class="flows-grid">
+          <div class="flow-column" role="region" aria-label="Whistleblower flow">
+            <div class="flow-header">
+              <span class="flow-header-badge flow-header-badge-wb">Whistleblower</span>
+              <span class="flow-header-title">Report and follow up</span>
+            </div>
+            <div class="flow-steps">
+              <div class="flow-step">
+                <div class="flow-step-num" aria-hidden="true">1</div>
+                <div>
+                  <div class="flow-step-title">Open the organisation's link</div>
+                  <div class="flow-step-desc">Six steps: mode, location, category, details, files, review. Category and description are required.</div>
+                </div>
+              </div>
+              <div class="flow-step">
+                <div class="flow-step-num" aria-hidden="true">2</div>
+                <div>
+                  <div class="flow-step-title">Save case number and PIN</div>
+                  <div class="flow-step-desc">Shown once, never recoverable. The page continues only after ticking that both are saved.</div>
+                </div>
+              </div>
+              <div class="flow-step">
+                <div class="flow-step-num" aria-hidden="true">3</div>
+                <div>
+                  <div class="flow-step-title">Check status and reply</div>
+                  <div class="flow-step-desc">At <code>/status</code>: the case status, replies, both deadlines, and a form to answer.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-column" role="region" aria-label="Reporting office flow">
+            <div class="flow-header">
+              <span class="flow-header-badge flow-header-badge-admin">Reporting office</span>
+              <span class="flow-header-title">Case statuses and deadlines</span>
+            </div>
+            <div class="flow-steps">
+              <figure class="diagram">
+                <img class="diagram-light" src="/img/diagrams/case-lifecycle-light.svg" alt="Case statuses: a submitted report is received. From received it goes to in_review or closed; from in_review to pending_feedback, closed or back to received; from pending_feedback to closed or in_review; a closed case can reopen to in_review. Received carries the 7-day acknowledgement deadline, pending_feedback the 3-month feedback deadline." width="622" height="571" loading="lazy">
+                <img class="diagram-dark" src="/img/diagrams/case-lifecycle-dark.svg" alt="Case statuses: a submitted report is received. From received it goes to in_review or closed; from in_review to pending_feedback, closed or back to received; from pending_feedback to closed or in_review; a closed case can reopen to in_review. Received carries the 7-day acknowledgement deadline, pending_feedback the 3-month feedback deadline." width="622" height="571" loading="lazy">
+                <figcaption>Acknowledging a case starts the 3-month feedback clock.</figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Privacy -->
+    <section class="section section-alt" id="privacy" aria-labelledby="privacy-heading">
+      <div class="section-inner">
+        <span class="section-eyebrow">Anonymity</span>
+        <h2 class="section-heading" id="privacy-heading">
+          No IP address is stored, by design
+        </h2>
+        <div class="section-divider" aria-hidden="true"></div>
+
+        <div class="figure-row">
+          <div class="table-scroll">
+            <table class="comparison-table">
+              <thead>
+                <tr><th scope="col">Layer</th><th scope="col" class="col-ow">What it does</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>1. nginx</td><td>Clears <code>X-Forwarded-For</code> and six other client-IP headers; writes no access log</td></tr>
+                <tr><td>2. Middleware</td><td>Drops those headers and the peer address before any route runs</td></tr>
+                <tr><td>3. Database</td><td>No table has an IP column</td></tr>
+                <tr><td>4. Redis</td><td>A status session is a random 256-bit token holding only the report id; 2 hours</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <figure class="diagram">
+            <img class="diagram-light" src="/img/diagrams/architecture-light.svg" alt="Architecture: a browser reaches nginx over TLS on 443 (80 redirects), Tor Browser reaches the onion listener on 8080, bound to 127.0.0.1. Both lead to the stateless FastAPI app, which needs PostgreSQL and Redis, can use ClamAV and S3, and makes two opt-in outbound requests: the GitHub update check and the telemetry.wdkro.de count." width="774" height="761" loading="lazy">
+            <img class="diagram-dark" src="/img/diagrams/architecture-dark.svg" alt="Architecture: a browser reaches nginx over TLS on 443 (80 redirects), Tor Browser reaches the onion listener on 8080, bound to 127.0.0.1. Both lead to the stateless FastAPI app, which needs PostgreSQL and Redis, can use ClamAV and S3, and makes two opt-in outbound requests: the GitHub update check and the telemetry.wdkro.de count." width="774" height="761" loading="lazy">
+            <figcaption>The optional onion listener and both outbound requests are off until switched on.</figcaption>
+          </figure>
+        </div>
+
+        <p class="section-note">
+          Rate limits count wrong PINs per case number, not per address.
+          nginx limits requests per client address in memory only, never logged.
+          Details: <a href="/en/docs/#security">Security Architecture</a>.
+        </p>
+      </div>
+    </section>
+
+    <!-- Compliance -->
+    <section class="section" id="compliance" aria-labelledby="compliance-heading">
+      <div class="section-inner">
+        <span class="section-eyebrow">Legal Framework</span>
+        <h2 class="section-heading" id="compliance-heading">
+          What the law asks, and where it is in the software
+        </h2>
+        <div class="section-divider" aria-hidden="true"></div>
+
+        <div class="table-scroll">
+          <table class="comparison-table stack-table">
+            <thead>
+              <tr><th scope="col">Requirement</th><th scope="col">Source</th><th scope="col" class="col-ow">In OpenWhistle</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>An internal reporting channel from 50 employees</td><td>§12 HinSchG; Art. 8 Directive</td><td>The reporting link, one per organisation</td></tr>
+              <tr><td>Acknowledge receipt within 7 days</td><td>§17 Abs. 1 Nr. 1</td><td><em>Day N/7</em> column; warning from day 5</td></tr>
+              <tr><td>Keep in contact with the reporter</td><td>§17 Abs. 1 Nr. 3</td><td>Message thread, opened with case number and PIN</td></tr>
+              <tr><td>Feedback within 3 months of acknowledgement</td><td>§17 Abs. 2</td><td>Days-left column; opt-in reminders</td></tr>
+              <tr><td>Keep the reporter's identity confidential</td><td>§8</td><td>Anonymous mode; confidential identity behind an audited reason</td></tr>
+              <tr><td>Access only for the responsible staff</td><td>§16 Abs. 2</td><td>Roles; case managers see their own cases</td></tr>
+              <tr><td>Document every report</td><td>§11</td><td>Immutable audit log</td></tr>
+              <tr><td>Delete the documentation 3 years after the procedure</td><td>§11 Abs. 5</td><td><code>RETENTION_DAYS=1095</code>, on by default</td></tr>
+              <tr><td>Accept oral reports too</td><td>§16 Abs. 3</td><td>Not a software channel; <code>/admin/telephone-channel</code> is a guide for one</td></tr>
+              <tr><td>Collect only necessary data</td><td>Art. 5(1)(c) GDPR</td><td>No IP address, no fingerprint, day-only timestamps</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="section-note">
+          The Directive covers private employers from 50 workers and financial services at any size.
+          The public sector is covered too; states may exempt municipalities under 10,000 residents.
+          Software does not make an organisation compliant: it still needs an impartial reporting office.
+        </p>
+      </div>
+    </section>
+
+    <!-- Quick install -->
+    <section class="section section-alt" id="install" aria-labelledby="install-heading">
+      <div class="section-inner">
+        <span class="section-eyebrow">Quick Start</span>
+        <h2 class="section-heading" id="install-heading">
+          Self-hosted with Docker Compose
+        </h2>
+        <div class="section-divider" aria-hidden="true"></div>
+
+        <div class="install-layout">
+          <div class="install-text">
+            <p>
+              One <strong>docker compose up -d</strong> starts the app, PostgreSQL, Redis and nginx.
+              Migrations run at startup.
+            </p>
+            <p>
+              The <strong>/setup</strong> wizard asks for the one-time setup token from the log.
+              It then creates the first account, a superadmin, and enrols its TOTP.
+            </p>
+
+            <div class="install-reqs">
+              <div class="install-reqs-title">Minimum</div>
+              <ul>
+                <li>Docker 24 and Docker Compose v2</li>
+                <li>1 vCPU, 512 MB RAM (1 GB recommended), 5 GB disk</li>
+                <li>A domain, an HTTPS certificate, ports 80 and 443</li>
+                <li>PostgreSQL 18 and Redis 8: bundled</li>
+              </ul>
+            </div>
+
+            <a href="/en/docs/#installation" class="btn btn-outline btn-spaced">
+              Full installation guide &rarr;
+            </a>
+          </div>
+
+          <div class="terminal-window" role="region" aria-label="Installation terminal example">
+            <div class="terminal-bar">
+              <div class="terminal-dots" aria-hidden="true">
+                <span class="terminal-dot dot-r"></span>
+                <span class="terminal-dot dot-y"></span>
+                <span class="terminal-dot dot-g"></span>
+              </div>
+              <span class="terminal-file">bash — openwhistle setup</span>
+            </div>
+            <div class="terminal-body">
+              <span class="t-prompt">$ </span><span class="t-cmd">git clone https://github.com/openwhistle/OpenWhistle.git</span><br>
+              <span class="t-prompt">$ </span><span class="t-cmd">cd OpenWhistle &amp;&amp; cp .env.example .env</span><br>
+              <br>
+              <span class="t-comment"># .env: COMPOSE_FILE=docker-compose.prod.yml,</span><br>
+              <span class="t-comment"># SECRET_KEY, DATABASE_URL, REDIS_URL</span><br>
+              <span class="t-prompt">$ </span><span class="t-cmd">nano .env</span><br>
+              <br>
+              <span class="t-prompt">$ </span><span class="t-cmd">docker compose up -d</span><br>
+              <span class="t-out">&#x25BA; Container openwhistle-db-1        Started</span><br>
+              <span class="t-out">&#x25BA; Container openwhistle-redis-1     Started</span><br>
+              <span class="t-out">&#x25BA; Container openwhistle-app-1       Started</span><br>
+              <span class="t-out">&#x25BA; Container openwhistle-nginx-1     Started</span><br>
+              <br>
+              <span class="t-comment"># One-time token for the setup wizard</span><br>
+              <span class="t-prompt">$ </span><span class="t-cmd">docker compose logs app | grep "Setup token"</span><br>
+              <br>
+              <span class="t-comment"># Then open https://localhost/setup</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq" aria-labelledby="faq-heading">
+      <div class="section-inner">
+        <span class="section-eyebrow">FAQ</span>
+        <h2 class="section-heading" id="faq-heading">
+          Frequently asked questions
+        </h2>
+        <div class="section-divider" aria-hidden="true"></div>
+
+        <div class="faq-grid">
+
+          <details class="faq-item">
+            <summary>Is OpenWhistle really free?</summary>
+            <div class="faq-answer">
+              Yes. It is licensed under the GNU General Public License v3.0. There is no paid tier,
+              no paid feature and no subscription. You pay only for the server you run it on.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>Is OpenWhistle open source?</summary>
+            <div class="faq-answer">
+              Yes, OpenWhistle is open source under the GNU General Public License v3.0. The full source code is public on <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank" class="link-accent">GitHub</a>. You may audit it, change it and use it commercially.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>Can I host it myself?</summary>
+            <div class="faq-answer">
+              Yes, and only that way: you run OpenWhistle on your own server with <a href="/en/docs/#installation" class="link-accent">Docker Compose or Helm</a>. The project offers no hosted service. Reports stay on that server, in the EU if you put it there.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>Does it meet the HinSchG?</summary>
+            <div class="faq-answer">
+              It builds in what software can: the 7-day acknowledgement (§17 Abs. 1 Nr. 1),
+              the 3-month feedback (§17 Abs. 2), contact with the reporter (§17 Abs. 1 Nr. 3),
+              identity confidentiality (§8), documentation and its deletion after 3 years (§11).
+              The organisation still needs an impartial reporting office and an oral channel.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>Is the whistleblower anonymous?</summary>
+            <div class="faq-answer">
+              No IP address is stored at any layer. nginx clears the client-IP headers and writes
+              no access log, the middleware drops the peer address, no table has an IP column,
+              and a Redis session holds only a random token. The reporter's own device and network
+              still matter: a private window or Tor Browser helps.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>Can I use OpenWhistle for my company?</summary>
+            <div class="faq-answer">
+              Yes. The GPL-3.0 permits commercial self-hosted use. One installation can serve
+              several organisations, each with its own reporting link. It suits companies from
+              50 employees, public bodies and financial firms.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>What are the technical requirements?</summary>
+            <div class="faq-answer">
+              Docker 24 or newer, Docker Compose v2, 1 vCPU, 512&nbsp;MB RAM (1&nbsp;GB recommended),
+              5&nbsp;GB disk, a domain and an HTTPS certificate. PostgreSQL 18 and Redis 8 are
+              bundled in the Compose stack.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>Is there commercial support available?</summary>
+            <div class="faq-answer">
+              No, there is no paid support tier. Community support is on
+              <a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank" class="link-accent">GitHub Issues</a>,
+              where bug reports, feature requests and contributions are welcome.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>How does it compare with GlobaLeaks, SecureDrop or Hush Line?</summary>
+            <div class="faq-answer">
+              GlobaLeaks is the mature general-purpose platform, SecureDrop serves newsrooms, and
+              Hush Line is a hosted tip line. OpenWhistle is built around the HinSchG case workflow.
+              The <a href="/en/compare/" class="link-accent">comparison</a>
+              lists the facts, each with its source.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary>Which languages does it support?</summary>
+            <div class="faq-answer">
+              The interface is in English, German, French and Brazilian Portuguese. It follows
+              the browser's language until the reader picks one; that choice is kept in a cookie.
+            </div>
+          </details>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  
