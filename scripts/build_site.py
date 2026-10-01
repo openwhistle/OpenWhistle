@@ -306,6 +306,9 @@ def check_links(out: Path, host: str) -> None:
             parts = urlsplit(urljoin(here, ref))
             if parts.scheme in {"mailto", "tel", "data"} or (parts.netloc and parts.netloc != host):
                 continue
+            # / is the language choice: a stub on Pages, nginx from P4
+            if parts.path in ("/", "/index.html"):
+                continue
             target = out / unquote(parts.path).lstrip("/")
             if parts.path.endswith("/"):
                 target = target / "index.html"
