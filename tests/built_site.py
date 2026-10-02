@@ -43,21 +43,32 @@ def built() -> Path:
 
 
 def page(url: str) -> str:
-    return builder().output_file(built(), url).read_text(encoding="utf-8")
+    return Path(builder().output_file(built(), url)).read_text(encoding="utf-8")
 
 
 def pages() -> list[Path]:
-    return sorted(built().rglob("*.html"))
+    found = sorted(built().rglob("*.html"))
+    # The 23 pages ported in P1: fewer means the build moved, not that the site shrank.
+    assert len(found) >= 23, f"only {len(found)} built pages: {found}"
+    return found
 
 
 def source(url: str) -> Path:
     return _build()[1][url]
 
 
+def stylesheets(html: str) -> list[Path]:
+    """Every stylesheet the page links, as a built file. A link this cannot read fails."""
+    tags = [t for t in re.findall(r"<link\b[^>]*>", html) if re.search(r'rel="stylesheet"', t)]
+    sheets = []
+    for tag in tags:
+        m = re.fullmatch(r'<link rel="stylesheet" href="(/assets/css/[^"]+)">', tag)
+        assert m, f"stylesheet link not of the form /assets/css/...: {tag}"
+        sheets.append(built() / m.group(1).lstrip("/"))
+    return sheets
+
+
 def css_of(html: str) -> str:
     inline = re.findall(r"<style[^>]*>(.*?)</style>", html, re.S)
-    linked = [
-        (built() / href.lstrip("/")).read_text(encoding="utf-8")
-        for href in re.findall(r'<link rel="stylesheet" href="(/assets/css/[^"]+)"', html)
-    ]
+    linked = [sheet.read_text(encoding="utf-8") for sheet in stylesheets(html)]
     return "\n".join(inline + linked)

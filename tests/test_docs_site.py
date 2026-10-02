@@ -269,6 +269,20 @@ def test_every_docs_page_nav_has_the_same_item_set() -> None:
     assert not mismatches, mismatches
 
 
+def _fold_language(targets: set[str]) -> set[str]:
+    """/de/... onto /en/...: the German twin of a page counts as that page.
+    English-only pages are linked at /en/ from both homes already."""
+    return {"en/" + t.removeprefix("de/") if t.startswith("de/") else t for t in targets}
+
+
+def test_the_german_home_links_what_the_english_home_links() -> None:
+    """Per-language comparison alone would let the two languages drift apart;
+    the German home's nav and footer, language folded, must equal the English."""
+    en, de = built() / "en/index.html", built() / "de/index.html"
+    assert _fold_language(_nav_targets(de)) == _nav_targets(en)
+    assert _fold_language(_footer_targets(de)) == _footer_targets(en)
+
+
 # Pages whose nav marks one specific item as the current page (by the
 # resolved target from `_resolve_nav_target`); /en/ and /de/ are home pages
 # with no single discrete nav item to mark (Features/How-it-works are anchors

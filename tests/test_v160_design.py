@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import AdminRole, AdminUser
 from app.services.auth import hash_password
-from tests.built_site import built, css_of, page, pages
+from tests.built_site import built, css_of, page, pages, stylesheets
 
 
 async def _search(client: AsyncClient, q: str, **form: str):  # type: ignore[no-untyped-def]
@@ -1050,9 +1050,7 @@ def test_every_docs_font_face_url_resolves_to_a_real_file() -> None:
         # Inline CSS resolves against its page, a stylesheet's url() against the sheet.
         inline = re.findall(r"<style[^>]*>(.*?)</style>", html, re.S)
         styles = [(css, path.parent) for css in inline]
-        for href in re.findall(r'<link rel="stylesheet" href="(/assets/css/[^"]+)"', html):
-            sheet = site / href.lstrip("/")
-            styles.append((sheet.read_text(encoding="utf-8"), sheet.parent))
+        styles += [(sheet.read_text(encoding="utf-8"), sheet.parent) for sheet in stylesheets(html)]
         for text, here in styles:
             for block in font_face_re.findall(text):
                 for m in url_re.finditer(block):
