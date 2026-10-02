@@ -16,7 +16,7 @@ import pytest
 from fontTools.ttLib import TTFont
 
 from app.models.report import ReportStatus
-from tests.built_site import built, pages
+from tests.built_site import built, page, pages
 from tests.diagram_tools import geometry, renderer
 
 ROOT = Path(__file__).parents[1]
@@ -221,13 +221,13 @@ def _diagram_srcs(html: str) -> set[str]:
 
 def test_pages_show_diagrams_in_their_own_language() -> None:
     wrong = []
-    for page in pages():
-        html = page.read_text(encoding="utf-8")
+    for path in pages():
+        html = path.read_text(encoding="utf-8")
         lang = re.search(r'<html[^>]*\blang="([a-z]{2})', html)
         for name in _diagram_srcs(html):
             german = name.endswith(".de")
             if lang and (lang.group(1) == "de") != german:
-                wrong.append(f"{page.relative_to(built())} (lang={lang.group(1)}) shows {name}")
+                wrong.append(f"{path.relative_to(built())} (lang={lang.group(1)}) shows {name}")
     assert not wrong, "\n  ".join(["diagram in the wrong language:", *wrong])
 
 
@@ -237,3 +237,10 @@ def test_the_case_lifecycle_names_exactly_the_report_statuses() -> None:
     labels = dict(re.findall(r'<mxCell id="([^"]+)" value="([^"]*)"', source))
     steps = {labels[cid] for cid, role in roles.items() if role == "ow:step"}
     assert steps == {s.value for s in ReportStatus}
+
+
+@pytest.mark.parametrize(("url", "name"), [("/en/", "home-flow"), ("/de/", "home-flow.de")])
+def test_the_home_page_shows_the_reporting_flow_as_a_diagram(url: str, name: str) -> None:
+    html = page(url)
+    assert name in _diagram_srcs(html), f"{url} does not show {name}"
+    assert "flows-grid" not in html, f"{url} still carries the HTML flow next to the diagram"

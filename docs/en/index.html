@@ -344,51 +344,11 @@ jsonld:
         </h2>
         <div class="section-divider" aria-hidden="true"></div>
 
-        <div class="flows-grid">
-          <div class="flow-column" role="region" aria-label="Whistleblower flow">
-            <div class="flow-header">
-              <span class="flow-header-badge flow-header-badge-wb">Whistleblower</span>
-              <span class="flow-header-title">Report and follow up</span>
-            </div>
-            <div class="flow-steps">
-              <div class="flow-step">
-                <div class="flow-step-num" aria-hidden="true">1</div>
-                <div>
-                  <div class="flow-step-title">Open the organisation's link</div>
-                  <div class="flow-step-desc">Six steps: mode, location, category, details, files, review. Category and description are required.</div>
-                </div>
-              </div>
-              <div class="flow-step">
-                <div class="flow-step-num" aria-hidden="true">2</div>
-                <div>
-                  <div class="flow-step-title">Save case number and PIN</div>
-                  <div class="flow-step-desc">Shown once, never recoverable. The page continues only after ticking that both are saved.</div>
-                </div>
-              </div>
-              <div class="flow-step">
-                <div class="flow-step-num" aria-hidden="true">3</div>
-                <div>
-                  <div class="flow-step-title">Check status and reply</div>
-                  <div class="flow-step-desc">At <code>/status</code>: the case status, replies, both deadlines, and a form to answer.</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="flow-column" role="region" aria-label="Reporting office flow">
-            <div class="flow-header">
-              <span class="flow-header-badge flow-header-badge-admin">Reporting office</span>
-              <span class="flow-header-title">Case statuses and deadlines</span>
-            </div>
-            <div class="flow-steps">
-              <figure class="diagram">
-                <img class="diagram-light" src="/img/diagrams/case-lifecycle-light.svg" alt="Case statuses: a submitted report is received. From received it goes to in_review or closed; from in_review to pending_feedback, closed or back to received; from pending_feedback to closed or in_review; a closed case can reopen to in_review. Received carries the 7-day acknowledgement deadline, pending_feedback the 3-month feedback deadline." width="725" height="381" loading="lazy">
-                <img class="diagram-dark" src="/img/diagrams/case-lifecycle-dark.svg" alt="Case statuses: a submitted report is received. From received it goes to in_review or closed; from in_review to pending_feedback, closed or back to received; from pending_feedback to closed or in_review; a closed case can reopen to in_review. Received carries the 7-day acknowledgement deadline, pending_feedback the 3-month feedback deadline." width="725" height="381" loading="lazy">
-                <figcaption>Acknowledging a case starts the 3-month feedback clock.</figcaption>
-              </figure>
-            </div>
-          </div>
-        </div>
+        <figure class="diagram diagram-centered">
+          <img class="diagram-light" src="/img/diagrams/home-flow-light.svg" alt="Two lanes. Whistleblower: fill in the form, anonymous or confidential, with no account and no e-mail; note the case number and PIN, shown exactly once; check status and reply at /status. Reporting office: log in with password, LDAP or OIDC, then always TOTP; acknowledge receipt within 7 days; review and give feedback within 3 months. The report goes from the form to the acknowledgement, the feedback back to the status page." width="785" height="365" loading="lazy">
+          <img class="diagram-dark" src="/img/diagrams/home-flow-dark.svg" alt="Two lanes. Whistleblower: fill in the form, anonymous or confidential, with no account and no e-mail; note the case number and PIN, shown exactly once; check status and reply at /status. Reporting office: log in with password, LDAP or OIDC, then always TOTP; acknowledge receipt within 7 days; review and give feedback within 3 months. The report goes from the form to the acknowledgement, the feedback back to the status page." width="785" height="365" loading="lazy">
+          <figcaption>Acknowledging a report starts the three-month feedback clock.</figcaption>
+        </figure>
       </div>
     </section>
 

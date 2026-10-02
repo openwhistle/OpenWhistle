@@ -464,67 +464,11 @@ jsonld:
         </h2>
         <div class="section-divider" aria-hidden="true"></div>
 
-        <div class="flows-grid">
-          <div class="flow-column" role="region" aria-label="Ablauf für Hinweisgeber">
-            <div class="flow-header">
-              <span class="flow-header-badge flow-header-badge-wb">Hinweisgeber</span>
-              <span class="flow-header-title">Melden und nachverfolgen</span>
-            </div>
-            <div class="flow-steps">
-              <div class="flow-step">
-                <div class="flow-step-num" aria-hidden="true">1</div>
-                <div>
-                  <div class="flow-step-title">Formular ausfüllen</div>
-                  <div class="flow-step-desc">Anonym oder vertraulich wählen, dann Kategorie, Beschreibung und optional Dateien. Kein Konto, keine E-Mail-Adresse.</div>
-                </div>
-              </div>
-              <div class="flow-step">
-                <div class="flow-step-num" aria-hidden="true">2</div>
-                <div>
-                  <div class="flow-step-title">Fallnummer und PIN notieren</div>
-                  <div class="flow-step-desc">Beides erscheint genau einmal. Verloren heißt verloren: es gibt keine Wiederherstellung.</div>
-                </div>
-              </div>
-              <div class="flow-step">
-                <div class="flow-step-num" aria-hidden="true">3</div>
-                <div>
-                  <div class="flow-step-title">Status prüfen und antworten</div>
-                  <div class="flow-step-desc">Unter <code>/status</code> zeigen Fallnummer und PIN Status, Fristen und Antworten der Meldestelle.</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="flow-column" role="region" aria-label="Ablauf für die Meldestelle">
-            <div class="flow-header">
-              <span class="flow-header-badge flow-header-badge-admin">Meldestelle</span>
-              <span class="flow-header-title">Innerhalb der Fristen bearbeiten</span>
-            </div>
-            <div class="flow-steps">
-              <div class="flow-step">
-                <div class="flow-step-num" aria-hidden="true">1</div>
-                <div>
-                  <div class="flow-step-title">Anmelden</div>
-                  <div class="flow-step-desc">Passwort, LDAP oder OIDC, danach immer TOTP. Neue Meldungen stehen im Dashboard, auf Wunsch auch per E-Mail.</div>
-                </div>
-              </div>
-              <div class="flow-step">
-                <div class="flow-step-num" aria-hidden="true">2</div>
-                <div>
-                  <div class="flow-step-title">Eingang bestätigen</div>
-                  <div class="flow-step-desc">Innerhalb von 7 Tagen (§&nbsp;17 Abs.&nbsp;1 Nr.&nbsp;1). Die Bestätigung startet die Rückmeldefrist.</div>
-                </div>
-              </div>
-              <div class="flow-step">
-                <div class="flow-step-num" aria-hidden="true">3</div>
-                <div>
-                  <div class="flow-step-title">Prüfen und zurückmelden</div>
-                  <div class="flow-step-desc">Rückfragen über den Nachrichtenkanal, Rückmeldung innerhalb von drei Monaten (§&nbsp;17 Abs.&nbsp;2).</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <figure class="diagram diagram-centered">
+          <img class="diagram-light" src="/img/diagrams/home-flow.de-light.svg" alt="Zwei Bahnen. Hinweisgeber: Formular ausfüllen, anonym oder vertraulich, ohne Konto und ohne E-Mail; Fallnummer und PIN notieren, die genau einmal erscheinen; unter /status Status prüfen und antworten. Meldestelle: anmelden mit Passwort, LDAP oder OIDC, danach immer TOTP; den Eingang innerhalb von 7 Tagen bestätigen; prüfen und innerhalb von drei Monaten zurückmelden. Die Meldung geht vom Formular zur Eingangsbestätigung, die Rückmeldung zurück zur Statusseite." width="785" height="365" loading="lazy">
+          <img class="diagram-dark" src="/img/diagrams/home-flow.de-dark.svg" alt="Zwei Bahnen. Hinweisgeber: Formular ausfüllen, anonym oder vertraulich, ohne Konto und ohne E-Mail; Fallnummer und PIN notieren, die genau einmal erscheinen; unter /status Status prüfen und antworten. Meldestelle: anmelden mit Passwort, LDAP oder OIDC, danach immer TOTP; den Eingang innerhalb von 7 Tagen bestätigen; prüfen und innerhalb von drei Monaten zurückmelden. Die Meldung geht vom Formular zur Eingangsbestätigung, die Rückmeldung zurück zur Statusseite." width="785" height="365" loading="lazy">
+          <figcaption>Die Eingangsbestätigung startet die Rückmeldefrist von drei Monaten.</figcaption>
+        </figure>
       </div>
     </section>
 
