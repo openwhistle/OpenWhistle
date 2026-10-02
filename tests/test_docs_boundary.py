@@ -1,12 +1,13 @@
 """Two documentations, one boundary: docs/ is published for whoever runs
 OpenWhistle, docs-tech/ is for whoever maintains the repository and never is."""
 
+import hashlib
 import re
 from pathlib import Path
 
 import yaml
 
-from tests.built_site import built, page, pages
+from tests.built_site import builder, built, page, pages
 
 ROOT = Path(__file__).parents[1]
 
@@ -63,7 +64,23 @@ def test_pages_checks_out_the_full_history() -> None:
     assert checkout.get("with", {}).get("fetch-depth") == 0
 
 
-def test_no_built_file_comes_from_docs_tech() -> None:
-    tech = {p.name for p in (ROOT / "docs-tech").rglob("*") if p.is_file()}
-    leaked = sorted(p.name for p in built().rglob("*") if p.name in tech and p.suffix == ".md")
+def test_no_built_file_comes_from_docs_tech(tmp_path: Path) -> None:
+    """Neither by name nor by content, in the plain build or the stubbed one."""
+    tech_files = [p for p in (ROOT / "docs-tech").rglob("*") if p.is_file()]
+    tech_names = {p.name for p in tech_files}
+    tech_hashes = {hashlib.sha256(p.read_bytes()).hexdigest() for p in tech_files}
+
+    stubbed = tmp_path / "stubbed"
+    builder().build(ROOT / "docs", stubbed, redirect_stubs=True)
+
+    leaked = sorted(
+        str(p)
+        for root in (built(), stubbed)
+        for p in root.rglob("*")
+        if p.is_file()
+        and (
+            (p.suffix == ".md" and p.name in tech_names)
+            or hashlib.sha256(p.read_bytes()).hexdigest() in tech_hashes
+        )
+    )
     assert not leaked, leaked
