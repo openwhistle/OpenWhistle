@@ -644,7 +644,7 @@ def test_local_review_page_matrix_covers_every_app_template() -> None:
 
 def test_release_md_names_the_chrome_check_before_the_release_pr() -> None:
     """The numbered step itself, not just the diagram: dropping the section
-    while the mermaid box still says "Chrome check" must fail."""
+    while the release-gates diagram still says "Chrome check" must fail."""
     text = (ROOT / "docs-tech/release.md").read_text()
     steps = re.findall(r"^## \d+\. (.+)$", text, re.M)
     assert "Chrome check" in steps and "Release PR" in steps, steps

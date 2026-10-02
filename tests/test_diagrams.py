@@ -9,6 +9,7 @@ from __future__ import annotations
 import base64
 import io
 import re
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -122,6 +123,46 @@ def test_every_drawn_glyph_is_in_the_embedded_font(source: Path, out: Path) -> N
         assert not missing, (
             f"{source.name}: {t.text!r} draws {sorted(missing)} without an embedded glyph"
         )
+
+
+DOCS_TECH = ROOT / "docs-tech"
+_FENCE = re.compile(r"^```mermaid", re.M)
+
+
+def _tracked() -> list[Path]:
+    out = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=True).stdout
+    return [ROOT / line for line in out.splitlines()]
+
+
+def test_no_mermaid_anywhere() -> None:
+    found = []
+    for path in _tracked():
+        if path.suffix == ".mmd":
+            found.append(f"{path.relative_to(ROOT)}: a Mermaid source")
+        if path.suffix in {".md", ".html"} and path.is_file() and _FENCE.search(path.read_text(encoding="utf-8")):
+            found.append(f"{path.relative_to(ROOT)}: a fenced Mermaid block")
+    tooling = [ROOT / "renovate.json", ROOT / "pyproject.toml", *ROOT.glob("scripts/*"), *ROOT.glob(".github/**/*.yml")]
+    for path in tooling:
+        if path.is_file() and re.search(r"mermaid-cli|@mermaid-js", path.read_text(encoding="utf-8")):
+            found.append(f"{path.relative_to(ROOT)}: a mermaid-cli reference")
+    assert not found, "\n  ".join(["Mermaid is gone (maintainer's decision, 2026-10-02):", *found])
+
+
+DOCS_TECH_DIAGRAMS = [(s, o) for s, o in ALL if o == DOCS_TECH / "img" / "diagrams"]
+
+
+@pytest.mark.parametrize(("source", "out"), DOCS_TECH_DIAGRAMS, ids=[s.name for s, _ in DOCS_TECH_DIAGRAMS])
+def test_every_maintainer_diagram_is_embedded_as_a_picture(source: Path, out: Path) -> None:
+    name = source.name.removesuffix(".drawio")
+    pattern = re.compile(
+        rf'<picture>\s*<source media="\(prefers-color-scheme: dark\)" srcset="[./]*img/diagrams/{re.escape(name)}-dark\.svg">'
+        rf'\s*<img src="[./]*img/diagrams/{re.escape(name)}-light\.svg" alt="[^"]+">\s*</picture>'
+    )
+    hits = [p for p in DOCS_TECH.rglob("*.md") if pattern.search(p.read_text(encoding="utf-8"))]
+    assert hits, f"no page in docs-tech/ shows {name} as a <picture> with both themes and alt text"
+    for page_file in hits:
+        target = page_file.parent / re.search(rf'src="([^"]*{re.escape(name)}-light\.svg)"', page_file.read_text()).group(1)
+        assert target.resolve() == (out / f"{name}-light.svg").resolve(), f"{page_file}: wrong relative path"
 
 
 def _diagram_srcs(html: str) -> set[str]:
