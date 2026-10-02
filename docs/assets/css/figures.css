@@ -1,6 +1,6 @@
 /* Themed figures and scrolling tables for docs/en/index.html and
    docs/en/compare/index.html. The same rules live in
-   docs.css; see docs/_diagrams/README.md for the markup.
+   docs.css; see docs-tech/diagrams.md for the markup.
    CSS picks the twin from data-theme, the attribute the toggle sets. */
 .diagram, .doc-shot { margin: 0; }
 .diagram img { max-width: 100%; height: auto; margin: 0 auto; }

@@ -643,7 +643,7 @@
     /* ── Themed figures ─────────────────────────────────────────── */
     /* Every diagram and screenshot exists light and dark. CSS picks one from
        data-theme, the attribute the toggle sets; a <picture> media query
-       would follow the OS instead (docs/_diagrams/README.md). */
+       would follow the OS instead (docs-tech/diagrams.md). */
     .diagram, .doc-shot { margin: var(--space-6) 0; }
     .diagram img { max-width: 100%; height: auto; margin: 0 auto; }
     .doc-shot img {
