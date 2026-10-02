@@ -1,9 +1,19 @@
-"""What every rendered diagram must hold: text fits its shape, and no text touches a line."""
+"""What every rendered diagram must hold: text fits its shape, and no text touches a line.
+
+problems() reads the SVG draw.io exported, where every cell is a <g data-cell-id="...">
+holding its own shape, lines and text, with child cells nested inside. Pure functions:
+tests/test_diagrams.py runs them on every committed SVG, scripts/render_diagrams.py right
+after a render. Text is measured with Sora's own metrics, because the headless exporter
+measures with whatever fallback font its container has.
+"""
 
 from __future__ import annotations
 
+import re
+from dataclasses import dataclass, field
 from functools import cache
 from pathlib import Path
+from xml.etree import ElementTree as ET
 
 from fontTools.ttLib import TTFont
 
@@ -12,6 +22,20 @@ FONTS = {
     400: ROOT / "docs" / "fonts" / "sora-latin-400-normal.woff2",
     700: ROOT / "docs" / "fonts" / "sora-latin-700-normal.woff2",
 }
+EDGES = {"ow:edge", "ow:edge-optional", "ow:message"}
+LINES = EDGES | {"ow:lifeline"}                     # their unfilled paths are lines text must clear
+CONTAINERS = {"ow:group", "ow:lane", "ow:lifeline"}  # boxes that hold other cells
+PAD_X = 6.0  # room between a text line and the side of its shape
+PAD_Y = 2.0
+CLEAR = 3.0  # gap between any text and any line, arrowhead or foreign node
+
+_INHERITED = ("font-size", "font-weight", "text-anchor", "fill", "stroke")
+_NUMBER = r"-?(?:\d+\.?\d*|\.\d+)(?:[eE]-?\d+)?"
+_PATH_TOKEN = re.compile(rf"[MLQCZ]|{_NUMBER}")
+_ARGS = {"M": 2, "L": 2, "Q": 4, "C": 6}
+
+Point = tuple[float, float]
+Segment = tuple[Point, Point]
 
 
 @cache
@@ -22,3 +46,210 @@ def font(weight: int) -> TTFont:
 def missing_glyphs(text: str, weight: int) -> list[str]:
     cmap = font(weight).getBestCmap()
     return sorted({ch for ch in text if ord(ch) not in cmap})
+
+
+@dataclass(frozen=True)
+class Box:
+    x0: float
+    y0: float
+    x1: float
+    y1: float
+
+    def grow(self, dx: float, dy: float | None = None) -> Box:
+        dy = dx if dy is None else dy
+        return Box(self.x0 - dx, self.y0 - dy, self.x1 + dx, self.y1 + dy)
+
+    def overlaps(self, o: Box) -> bool:
+        return self.x0 < o.x1 and o.x0 < self.x1 and self.y0 < o.y1 and o.y0 < self.y1
+
+    def within(self, o: Box) -> bool:
+        return o.x0 <= self.x0 and self.x1 <= o.x1 and o.y0 <= self.y0 and self.y1 <= o.y1
+
+    def corners(self) -> list[Point]:
+        return [(self.x0, self.y0), (self.x1, self.y0), (self.x1, self.y1), (self.x0, self.y1)]
+
+
+@dataclass(frozen=True)
+class Text:
+    text: str
+    box: Box
+    weight: int
+
+
+@dataclass
+class Cell:
+    id: str
+    rects: list[Box] = field(default_factory=list)
+    filled: list[list[Point]] = field(default_factory=list)
+    unfilled: list[list[Point]] = field(default_factory=list)
+    texts: list[Text] = field(default_factory=list)
+
+
+def _bounds(points: list[Point]) -> Box:
+    xs, ys = [p[0] for p in points], [p[1] for p in points]
+    return Box(min(xs), min(ys), max(xs), max(ys))
+
+
+def _union(boxes: list[Box]) -> Box | None:
+    if not boxes:
+        return None
+    return Box(min(b.x0 for b in boxes), min(b.y0 for b in boxes),
+               max(b.x1 for b in boxes), max(b.y1 for b in boxes))
+
+
+def _num(value: str | None) -> float:
+    m = re.match(_NUMBER, value or "0")
+    return float(m.group(0)) if m else 0.0
+
+
+def _subpaths(d: str) -> list[list[Point]]:
+    """A draw.io path as point lists; a curve counts by its end point (corner radii are small)."""
+    if leftover := _PATH_TOKEN.sub("", d).replace(",", "").strip():
+        raise ValueError(f"path command not understood: {leftover!r} in {d!r}")
+    tokens = _PATH_TOKEN.findall(d)
+    out: list[list[Point]] = []
+    cmd, i = "", 0
+    while i < len(tokens):
+        if tokens[i] in "MLQCZ":
+            cmd, i = tokens[i], i + 1
+            if cmd == "Z":
+                if out and out[-1]:
+                    out[-1].append(out[-1][0])
+                continue
+        if not cmd or cmd == "Z":
+            raise ValueError(f"path command not understood: numbers without a command in {d!r}")
+        args = [float(t) for t in tokens[i : i + _ARGS[cmd]]]
+        i += _ARGS[cmd]
+        point = (args[-2], args[-1])
+        if cmd == "M":
+            out.append([point])
+            cmd = "L"  # numbers after a moveto are linetos
+        else:
+            out[-1].append(point)
+    return out
+
+
+def text_box(text: str, x: float, y: float, size: float, weight: int, anchor: str) -> Box:
+    """The inked box of one line: advance widths across, glyph outlines up and down."""
+    f = font(weight)
+    cmap, hmtx, glyf = f.getBestCmap(), f["hmtx"], f["glyf"]
+    scale = size / f["head"].unitsPerEm
+    names = [cmap[ord(ch)] for ch in text if ord(ch) in cmap]
+    width = sum(hmtx[n][0] for n in names) * scale
+    tops = [getattr(glyf[n], "yMax", 0) for n in names] or [0]
+    bottoms = [getattr(glyf[n], "yMin", 0) for n in names] or [0]
+    x0 = {"middle": x - width / 2, "end": x - width}.get(anchor, x)
+    return Box(x0, y - max(tops) * scale, x0 + width, y - min(bottoms) * scale)
+
+
+def _local(tag: str) -> str:
+    return tag.rsplit("}", 1)[-1]
+
+
+def _cells(svg: str) -> dict[str, Cell]:
+    found: dict[str, Cell] = {}
+
+    def walk(el: ET.Element, inherited: dict[str, str], cell: Cell | None) -> None:
+        attrs = {**inherited, **{k: v for k in _INHERITED if (v := el.get(k)) is not None}}
+        if (cid := el.get("data-cell-id")) is not None:
+            cell = found.setdefault(cid, Cell(cid))
+        tag = _local(el.tag)
+        if cell is not None and tag == "rect":
+            x, y = _num(el.get("x")), _num(el.get("y"))
+            cell.rects.append(Box(x, y, x + _num(el.get("width")), y + _num(el.get("height"))))
+        elif cell is not None and tag == "ellipse":
+            cx, cy, rx, ry = (_num(el.get(k)) for k in ("cx", "cy", "rx", "ry"))
+            cell.rects.append(Box(cx - rx, cy - ry, cx + rx, cy + ry))
+        elif cell is not None and tag == "path":
+            target = cell.unfilled if attrs.get("fill", "black") == "none" else cell.filled
+            target.extend(p for p in _subpaths(el.get("d", "")) if len(p) > 1)
+        elif cell is not None and tag == "text":
+            weight = 700 if attrs.get("font-weight") in ("bold", "700") else 400
+            line = "".join(el.itertext())
+            box = text_box(line, _num(el.get("x")), _num(el.get("y")), _num(attrs.get("font-size", "12")),
+                           weight, attrs.get("text-anchor", "start"))
+            cell.texts.append(Text(line, box, weight))
+            return
+        for child in el:
+            walk(child, attrs, cell)
+
+    walk(ET.fromstring(svg), {}, None)
+    return found
+
+
+def texts(svg: str) -> list[Text]:
+    return [t for cell in _cells(svg).values() for t in cell.texts]
+
+
+def _hits(box: Box, seg: Segment) -> bool:
+    """Liang-Barsky: does the segment cross the box?"""
+    (x0, y0), (x1, y1) = seg
+    dx, dy = x1 - x0, y1 - y0
+    t0, t1 = 0.0, 1.0
+    for p, q in ((-dx, x0 - box.x0), (dx, box.x1 - x0), (-dy, y0 - box.y0), (dy, box.y1 - y0)):
+        if p == 0:
+            if q < 0:
+                return False
+            continue
+        t = q / p
+        if p < 0:
+            t0 = max(t0, t)
+        else:
+            t1 = min(t1, t)
+        if t0 > t1:
+            return False
+    return True
+
+
+def _inside(point: Point, polygon: list[Point]) -> bool:
+    x, y = point
+    inside = False
+    for (xa, ya), (xb, yb) in zip(polygon, polygon[1:] + polygon[:1], strict=True):
+        if (ya > y) != (yb > y) and x < (xb - xa) * (y - ya) / (yb - ya) + xa:
+            inside = not inside
+    return inside
+
+
+def _segments(paths: list[list[Point]]) -> list[Segment]:
+    return [(a, b) for pts in paths for a, b in zip(pts, pts[1:], strict=False)]
+
+
+def _outline(cell: Cell) -> Box | None:
+    return _union(cell.rects + [_bounds(p) for p in cell.filled + cell.unfilled])
+
+
+def _fits(t: Text, cell: Cell, role: str) -> bool:
+    if role == "ow:decision" and cell.filled:
+        diamond = cell.filled[0]
+        return all(_inside(c, diamond) for c in t.box.grow(PAD_X / 2, PAD_Y).corners())
+    outline = _outline(cell)
+    return outline is not None and t.box.grow(PAD_X, PAD_Y).within(outline)
+
+
+def problems(svg: str, roles: dict[str, str]) -> list[str]:
+    """Everything that makes a label unreadable; an empty list means the diagram is legible."""
+    found = _cells(svg)
+    lines = [(cid, s) for cid, c in found.items() if roles.get(cid) in LINES for s in _segments(c.unfilled)]
+    heads = [(cid, _bounds(p)) for cid, c in found.items() if roles.get(cid) in EDGES for p in c.filled]
+    solid = {
+        cid: box
+        for cid, c in found.items()
+        if cid in roles and roles[cid] not in EDGES | CONTAINERS and (box := _outline(c)) is not None
+    }
+    out: list[str] = []
+    for cid, cell in found.items():
+        role = roles.get(cid, "")
+        for t in cell.texts:
+            if missing := missing_glyphs(t.text, t.weight):
+                out.append(f"{cid}: Sora has no glyph for {missing} in {t.text!r}")
+            if role and role not in EDGES and not _fits(t, cell, role):
+                out.append(f"{cid}: text {t.text!r} does not fit its shape")
+            near = t.box.grow(CLEAR)
+            out += [f"{cid}: text {t.text!r} touches a line of {lid}" for lid, s in lines if _hits(near, s)]
+            if role in EDGES:
+                out += [f"{cid}: label {t.text!r} touches an arrowhead of {hid}"
+                        for hid, b in heads if near.overlaps(b)]
+                out += [f"{cid}: label {t.text!r} overlaps {nid}" for nid, b in solid.items() if near.overlaps(b)]
+    ids = sorted(solid)
+    out += [f"{a} and {b} overlap" for i, a in enumerate(ids) for b in ids[i + 1 :] if solid[a].overlaps(solid[b])]
+    return out
