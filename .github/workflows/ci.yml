@@ -23,7 +23,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install uv
-        run: pip install uv==0.12.19
+        run: pip install uv==0.12.22
 
       - name: OpenLDAP headers (python-ldap builds from source)
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libldap2-dev libsasl2-dev
@@ -104,7 +104,7 @@ jobs:
           node-version: "24"
 
       - name: Install uv
-        run: pip install uv==0.12.19
+        run: pip install uv==0.12.22
 
       - name: OpenLDAP headers (python-ldap builds from source)
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libldap2-dev libsasl2-dev
@@ -250,7 +250,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install uv
-        run: pip install uv==0.12.19
+        run: pip install uv==0.12.22
 
       - name: Set up a throwaway TLS cert and a header-echoing backend
         run: |
@@ -281,7 +281,7 @@ jobs:
           docker run -d --name ow-onion-test-app --network ow-onion-test \
             --network-alias app \
             -v /tmp/ow-nginx-test/echo/server.py:/server.py:ro \
-            python:3.14-alpine@sha256:9e9fde4d32eedce0b661d9ab91e826b62dddf28e928c230ec55f1866cac66b01 \
+            python:3.14-alpine@sha256:2e740b2c28a426e74f11396c05e38afb3191acced75045b8d62df573c1dc8ce8 \
             python /server.py
 
           # The nginx image docker-compose.prod.yml and the Ansible template ship,

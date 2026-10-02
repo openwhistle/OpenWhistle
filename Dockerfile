@@ -1,8 +1,8 @@
-# syntax=docker/dockerfile:1.27@sha256:bde3983e9c939224420ddaf6b784cc30e09b035a4dea01f581230c50809f372e
+# syntax=docker/dockerfile:1.27@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
 
 # ─── Stage 1: dependency builder ─────────────────────────────────────────────
 # Digest from `skopeo inspect --format '{{.Digest}}' docker://docker.io/library/python:3.14-alpine` (multi-arch index digest); Renovate's pinDigests rule keeps it current.
-FROM python:3.14-alpine@sha256:9e9fde4d32eedce0b661d9ab91e826b62dddf28e928c230ec55f1866cac66b01 AS builder
+FROM python:3.14-alpine@sha256:2e740b2c28a426e74f11396c05e38afb3191acced75045b8d62df573c1dc8ce8 AS builder
 
 WORKDIR /build
 
@@ -16,7 +16,7 @@ RUN apk add --no-cache \
 
 # uv from its official image, pinned. Keep it in step with the uv pin in
 # .github/workflows/*.yml.
-COPY --from=ghcr.io/astral-sh/uv:0.12.19@sha256:04d046b13e60d6bcec73cbc5e1cad25d680dea90c8573340950a0ac2d1aef424 /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.12.22@sha256:f513a91fc62fe7c17567eee97230dd198e43edb8a9fbecca843714a4358fe1bc /uv /usr/local/bin/uv
 
 COPY pyproject.toml uv.lock ./
 
@@ -29,7 +29,7 @@ RUN UV_PROJECT_ENVIRONMENT=/venv UV_PYTHON_DOWNLOADS=never uv sync --frozen --no
 
 # ─── Stage 2: production image ────────────────────────────────────────────────
 # Same digest and provenance as the builder stage above.
-FROM python:3.14-alpine@sha256:9e9fde4d32eedce0b661d9ab91e826b62dddf28e928c230ec55f1866cac66b01 AS final
+FROM python:3.14-alpine@sha256:2e740b2c28a426e74f11396c05e38afb3191acced75045b8d62df573c1dc8ce8 AS final
 
 WORKDIR /app
 
