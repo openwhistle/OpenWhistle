@@ -39,10 +39,9 @@ def _check(page: Page, errors: list[str], path: str, axe_source: str, label: str
     )
     if overflow > 0:
         problems.append(f"{label}: scrolls sideways by {overflow}px")
-    if axe_source:
-        for v in run_axe(page, axe_source):
-            where = "; ".join(" ".join(n["target"]) for n in v["nodes"][:3])
-            problems.append(f"{label}: axe {v['impact']} {v['id']} at {where}")
+    for v in run_axe(page, axe_source):
+        where = "; ".join(" ".join(n["target"]) for n in v["nodes"][:3])
+        problems.append(f"{label}: axe {v['impact']} {v['id']} at {where}")
     return problems
 
 

@@ -20,8 +20,6 @@ pytestmark = pytest.mark.e2e
 
 def _check_axe(page: Page, axe_source: str, context: str) -> None:
     """Run axe and fail on critical violations; report serious ones as warnings."""
-    if not axe_source:
-        pytest.skip("axe-core unavailable — network required")
     critical = run_axe(page, axe_source)
     serious = run_axe_warnings(page, axe_source)
     if serious:

@@ -126,8 +126,6 @@ def run_axe(page: Page, axe_source: str) -> list[dict]:  # type: ignore[type-arg
     Serious includes color-contrast and link-in-text-block. It used to be a
     warning only, and every contrast failure on the site shipped green.
     """
-    if not axe_source:
-        return []
     # Inject axe via page.evaluate (CDP Runtime.evaluate), NOT add_script_tag:
     # a <script> element is subject to the page's strict CSP (no 'unsafe-inline'),
     # whereas evaluate runs through the debugger protocol and is CSP-exempt.
@@ -147,8 +145,6 @@ def run_axe(page: Page, axe_source: str) -> list[dict]:  # type: ignore[type-arg
 
 def run_axe_warnings(page: Page, axe_source: str) -> list[dict]:  # type: ignore[type-arg]
     """Return serious (non-critical) axe violations for informational reporting."""
-    if not axe_source:
-        return []
     violations: list[dict] = page.evaluate(  # type: ignore[type-arg]
         """
         async () => {
