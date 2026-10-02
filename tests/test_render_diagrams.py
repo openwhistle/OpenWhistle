@@ -115,6 +115,9 @@ def test_the_stamp_covers_source_theme_roles_image_and_fonts(
     monkeypatch.setitem(r.ROLES, "ow:step", r.ROLES["ow:step"] + "shadow=1;")
     assert r.stamp(SOURCE, "light") != base
     monkeypatch.undo()
+    monkeypatch.setattr(r, "palette", lambda: {t: {"ink": "#123456"} for t in r.THEMES})
+    assert r.stamp(SOURCE, "light") != base
+    monkeypatch.undo()
     monkeypatch.setattr(r, "IMAGE", r.IMAGE.replace("v1.", "v9."))
     assert r.stamp(SOURCE, "light") != base
 
@@ -123,6 +126,7 @@ def test_the_stamp_covers_both_scripts_whole(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     r = renderer()
+    assert {p.name for p in r.SCRIPTS} == {"render_diagrams.py", "diagram_geometry.py"}
     copies = []
     for n, script in enumerate(r.SCRIPTS):
         copy = tmp_path / f"{n}.py"

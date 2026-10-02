@@ -91,8 +91,8 @@ def test_text_wider_than_its_box_is_found() -> None:
 
 def test_text_in_a_decision_corner_is_found() -> None:
     """The bounding box would hold it; the diamond does not."""
-    picture = svg(decision("d", 150, 100, 160, 50, "Password set by someone"))
-    assert "d: text 'Password set by someone' does not fit its shape" in geometry().problems(
+    picture = svg(decision("d", 150, 100, 160, 50, "Password set by some"))
+    assert "d: text 'Password set by some' does not fit its shape" in geometry().problems(
         picture, ROLES
     )
 
@@ -154,10 +154,12 @@ def test_an_unknown_path_command_fails_loudly() -> None:
 # --- what draw.io writes: a group is an unfilled rect, a lane three unfilled paths ---
 
 
-def group(cid: str, x: float, y: float, w: float, h: float, label: str, inner: str = "") -> str:
+def group(
+    cid: str, x: float, y: float, w: float, h: float, label: str, inner: str = "", dy: float = 23
+) -> str:
     return (
         f'<g data-cell-id="{cid}"><g><rect x="{x}" y="{y}" width="{w}" height="{h}" rx="7" ry="7" '
-        f'fill="none" stroke="#e6e6e4"/></g>{_text(x + 14, y + 23, label, 11, True, "start")}'
+        f'fill="none" stroke="#e6e6e4"/></g>{_text(x + 14, y + dy, label, 11, True, "start")}'
         f"{inner}</g>"
     )
 
@@ -191,6 +193,12 @@ def test_groups_and_lanes_with_their_content_are_clean() -> None:
         lane("l", 20, 220, 300, 160, "Lane", node("b", 40, 270, 120, 40, "In lane")),
     )
     assert geometry().problems(picture, ROLES | {"b": "ow:step"}) == []
+
+
+def test_a_container_header_may_sit_close_to_its_own_border() -> None:
+    """Only the container's own text is exempt from its border; a header is always inside it."""
+    picture = svg(group("g", 20, 20, 300, 100, "Group", dy=10.6))
+    assert geometry().problems(picture, ROLES) == []
 
 
 def test_a_label_on_a_group_border_is_found() -> None:

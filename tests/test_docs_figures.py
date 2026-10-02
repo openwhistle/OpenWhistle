@@ -148,5 +148,9 @@ def test_a_diagram_scrolls_inside_its_figure_on_a_phone(url: str) -> None:
     hrefs = re.findall(r'<link[^>]+href="(/assets/css/[^"]+\.css)"', page(url))
     assert "/assets/css/layout.css" in hrefs, f"{url} does not load layout.css"
     css = (built() / "assets/css/layout.css").read_text(encoding="utf-8")
-    narrow = r"@media \(max-width: 6\d\dpx\) \{[^{}]*\.diagram \{[^}]*overflow-x: auto"
-    assert re.search(narrow, css), "layout.css has no narrow-width .diagram overflow-x: auto"
+    phone = re.search(r"@media \(max-width: 6\d\dpx\) \{(.*?)\n\}", css, re.DOTALL)
+    assert phone, "layout.css has no narrow-width media block"
+    # a diagram scrolls inside its figure and keeps its designed size: the pages' own
+    # `.diagram img { max-width: 100% }` must lose
+    assert re.search(r"\.diagram \{[^}]*overflow-x: auto", phone.group(1)), "no .diagram scroll"
+    assert re.search(r"figure\.diagram img \{[^}]*max-width: none", phone.group(1)), "img shrinks"
