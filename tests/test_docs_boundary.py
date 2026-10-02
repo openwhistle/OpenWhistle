@@ -68,7 +68,10 @@ def test_no_built_file_comes_from_docs_tech(tmp_path: Path) -> None:
     """Neither by name nor by content, in the plain build or the stubbed one."""
     tech_files = [p for p in (ROOT / "docs-tech").rglob("*") if p.is_file()]
     tech_names = {p.name for p in tech_files}
-    tech_hashes = {hashlib.sha256(p.read_bytes()).hexdigest() for p in tech_files}
+    # An empty file says nothing; it would only collide with the empty built .nojekyll.
+    tech_hashes = {
+        hashlib.sha256(p.read_bytes()).hexdigest() for p in tech_files if p.stat().st_size
+    }
 
     stubbed = tmp_path / "stubbed"
     builder().build(ROOT / "docs", stubbed, redirect_stubs=True)
