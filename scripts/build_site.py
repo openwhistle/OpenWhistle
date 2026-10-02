@@ -51,7 +51,9 @@ REQUIRED_KEYS = {"title", "description", "translation_key"}
 _FRONT_MATTER = re.compile(r"\A---\n(?:(.*?)\n)?---(?:\n|\Z)", re.DOTALL)
 MARKDOWN = MarkdownIt("commonmark", {"html": True}).enable("table")
 # A table scrolls inside its own box (.table-scroll), so a wide one never widens a phone page.
-MARKDOWN.add_render_rule("table_open", lambda *_: '<div class="table-scroll"><table>\n')
+MARKDOWN.add_render_rule(
+    "table_open", lambda *_: '<div class="table-scroll"><table class="env-table">\n'
+)
 MARKDOWN.add_render_rule("table_close", lambda *_: "</table></div>\n")
 
 

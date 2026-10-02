@@ -703,3 +703,6 @@
 
 /* The Markdown pages under /en/docs/ have no sidebar: one column of the width the docs content has beside it. */
 .docs-standalone { max-width: calc(var(--max-width) - var(--sidebar-width)); margin: 0 auto; }
+/* Their Markdown gets the .docs-section type: lists, paragraphs, headings; tables are .env-table. */
+.docs-standalone.docs-section { border-bottom: none; }
+.docs-standalone hr { border: none; border-top: 1px solid var(--border-subtle); margin: var(--space-8) 0; }
