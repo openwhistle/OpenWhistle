@@ -171,29 +171,32 @@ against the repo root), and every root-absolute link (`/docs.html`,
 
 | Page | Notes |
 |---|---|
-| `docs/index.html` | Landing page, English. |
-| `docs/de/index.html` | Landing page, German — the longest strings; check nothing overflows or truncates. |
-| `docs/docs.html` | Full documentation — long page, check the anchor nav and the "Current version" line. |
-| `docs/roadmap.html` | Roadmap. |
-| `docs/open-source-whistleblowing-software.html` | Comparison with GlobaLeaks, SecureDrop, Hush Line — the table scrolls inside its box at 390 px. |
-| `docs/404.html` | Not-found page (noindex); open any missing path on the served site. |
-| `docs/changelog.html` | Changelog, rendered from `CHANGELOG.md` — check the version nav in the sidebar. |
-| `docs/blog/index.html` | Blog index. |
-| `docs/blog/hinschg-compliance-leitfaden.html` | Article. |
-| `docs/blog/hinweisgebersystem-dsgvo-eu-hosting.html` | Article. |
-| `docs/blog/interne-meldestelle-einrichten.html` | Article. |
-| `docs/blog/interne-meldestelle-kostenlos.html` | Article. |
-| `docs/blog/was-ist-neu-in-2-0.html` | Article. |
-| `docs/blog/whistleblower-software-vergleich.html` | Article. |
-| `docs/blog/metadaten-entfernen-ohne-beweise-zu-veraendern.html` | Article. |
-| `docs/blog/en.html` | Blog index, English. Every article below is the English twin of a German one; check the language switch both ways. |
-| `docs/blog/hinschg-compliance-guide.html` | Article, English. |
-| `docs/blog/whistleblowing-system-gdpr-eu-hosting.html` | Article, English. |
-| `docs/blog/set-up-internal-reporting-channel.html` | Article, English. |
-| `docs/blog/free-internal-reporting-channel.html` | Article, English. |
-| `docs/blog/whats-new-in-2-0.html` | Article, English. |
-| `docs/blog/whistleblowing-software-comparison.html` | Article, English. |
-| `docs/blog/removing-metadata-without-altering-evidence.html` | Article, English. |
+| `/en/` | Landing page, English. |
+| `/de/` | Landing page, German — the longest strings; check nothing overflows or truncates. |
+| `/en/docs/` | Full documentation — long page, check the anchor nav and the "Current version" line. |
+| `/en/docs/hinschg-reference/` | HinSchG reference, rendered from Markdown. |
+| `/en/docs/security-policy/` | Security policy template, rendered from Markdown. |
+| `/en/docs/dpa-template/` | DPA template, rendered from Markdown. |
+| `/en/roadmap/` | Roadmap. |
+| `/en/compare/` | Comparison with GlobaLeaks, SecureDrop, Hush Line — the table scrolls inside its box at 390 px. |
+| `/404.html` | Not-found page (noindex); open any missing path on the served site. |
+| `/en/changelog/` | Changelog, rendered from `CHANGELOG.md` — check the version nav in the sidebar. |
+| `/de/blog/` | Blog index. |
+| `/de/blog/hinschg-compliance-leitfaden/` | Article. |
+| `/de/blog/hinweisgebersystem-dsgvo-eu-hosting/` | Article. |
+| `/de/blog/interne-meldestelle-einrichten/` | Article. |
+| `/de/blog/interne-meldestelle-kostenlos/` | Article. |
+| `/de/blog/was-ist-neu-in-2-0/` | Article. |
+| `/de/blog/whistleblower-software-vergleich/` | Article. |
+| `/de/blog/metadaten-entfernen-ohne-beweise-zu-veraendern/` | Article. |
+| `/en/blog/` | Blog index, English. Every article below is the English twin of a German one; check the language switch both ways. |
+| `/en/blog/hinschg-compliance-guide/` | Article, English. |
+| `/en/blog/whistleblowing-system-gdpr-eu-hosting/` | Article, English. |
+| `/en/blog/set-up-internal-reporting-channel/` | Article, English. |
+| `/en/blog/free-internal-reporting-channel/` | Article, English. |
+| `/en/blog/whats-new-in-2-0/` | Article, English. |
+| `/en/blog/whistleblowing-software-comparison/` | Article, English. |
+| `/en/blog/removing-metadata-without-altering-evidence/` | Article, English. |
 
 ## What to check, on every page
 
