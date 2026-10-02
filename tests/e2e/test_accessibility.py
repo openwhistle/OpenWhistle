@@ -1,7 +1,6 @@
 """Accessibility tests using axe-core injection.
 
-axe-core is downloaded once per session via the axe_source fixture in conftest.py.
-If network is unavailable, tests are skipped gracefully.
+axe-core is read from tests/e2e/vendor/ (hash-checked) by the axe_source fixture in conftest.py.
 """
 from __future__ import annotations
 

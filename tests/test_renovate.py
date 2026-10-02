@@ -5,6 +5,7 @@ indistinguishable from one that works: Renovate reports it at debug level
 only, and the pin silently falls behind (easywall lost seven Go pins that way).
 """
 
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -73,14 +74,25 @@ def test_no_managed_file_is_ignored() -> None:
             assert not hit, f"{rel} is managed but ignored by {hit}"
 
 
-def test_axe_core_is_fetched_from_the_registry_renovate_checks() -> None:
-    """The axe manager's datasource is npm. cdnjs publishes later than npm, so a
-    Renovate bump pointed at a cdnjs URL that 404ed (#93) — and a 404 used to
-    skip every axe check instead of failing."""
+def test_axe_core_manager_reads_the_registry_and_the_version_constant() -> None:
     (manager,) = [m for m in CONFIG["customManagers"] if m.get("depNameTemplate") == "axe-core"]
     assert manager["datasourceTemplate"] == "npm"
+    assert re.search(
+        manager["matchStrings"][0].replace("(?<", "(?P<"),
+        (ROOT / "tests/e2e/conftest.py").read_text(),
+        re.M,
+    )
+
+
+def test_the_vendored_axe_is_the_pinned_version_and_hash() -> None:
     conftest = (ROOT / "tests/e2e/conftest.py").read_text()
-    assert re.search(r'AXE_CDN = "https://cdn\.jsdelivr\.net/npm/axe-core@\d+\.\d+\.\d+/', conftest)
+    version = re.search(r'^AXE_VERSION = "([\d.]+)"', conftest, re.M).group(1)  # type: ignore[union-attr]
+    digest = re.search(r'^AXE_SHA256 = "([0-9a-f]{64})"', conftest, re.M).group(1)  # type: ignore[union-attr]
+    data = (ROOT / "tests/e2e/vendor/axe.min.js").read_bytes()
+    assert data.startswith(f"/*! axe v{version}".encode()), (
+        "run scripts/vendor_axe.py after a version bump"
+    )
+    assert hashlib.sha256(data).hexdigest() == digest
 
 
 def test_every_digest_pinned_image_in_a_workflow_is_managed() -> None:

@@ -7,11 +7,9 @@ Override with: pytest --base-url=http://your-host:port
 """
 from __future__ import annotations
 
+import hashlib
 import http.server
-import os
 import threading
-import urllib.error
-import urllib.request
 from collections.abc import Generator
 from functools import partial
 from pathlib import Path
@@ -59,9 +57,11 @@ DEMO_CASE_IN_REVIEW = {"case_number": "OW-DEMO-00002", "pin": "demo-pin-inreview
 DEMO_CASE_PENDING = {"case_number": "OW-DEMO-00003", "pin": "demo-pin-pending-00003"}
 DEMO_CASE_CLOSED = {"case_number": "OW-DEMO-00004", "pin": "demo-pin-closed-00004"}
 
-# jsDelivr serves npm, the datasource Renovate checks; cdnjs lags npm and
-# 404ed on the 4.13.0 bump (#93).
-AXE_CDN = "https://cdn.jsdelivr.net/npm/axe-core@4.13.0/axe.min.js"
+# axe-core is vendored (tests/e2e/vendor/axe.min.js), never fetched. Renovate bumps
+# AXE_VERSION; scripts/vendor_axe.py then writes the file and AXE_SHA256.
+AXE_VERSION = "4.13.0"
+AXE_SHA256 = "c24f097bd2f451d4f933e8bc7d8d539f8672a2ebcb5cc9f9f3eec8ca9470a0c1"
+_AXE = Path(__file__).parent / "vendor" / "axe.min.js"
 
 
 def _totp_now(secret: str = DEMO_ADMIN_TOTP_SECRET) -> str:
@@ -90,16 +90,10 @@ def base_url(request: pytest.FixtureRequest) -> str:  # type: ignore[override]
 
 @pytest.fixture(scope="session")
 def axe_source() -> str:
-    """Download axe-core once per session and cache the source."""
-    try:
-        with urllib.request.urlopen(AXE_CDN, timeout=10) as resp:  # noqa: S310
-            return resp.read().decode("utf-8")
-    except urllib.error.HTTPError:
-        raise  # a wrong URL or version must fail, not skip every axe check
-    except Exception:
-        if os.environ.get("CI"):
-            raise  # CI is never "offline": a skipped axe check would pass green
-        return ""  # local offline run: skip the axe checks
+    """The vendored axe-core source, after checking it against AXE_SHA256."""
+    data = _AXE.read_bytes()
+    assert hashlib.sha256(data).hexdigest() == AXE_SHA256, "axe.min.js does not match AXE_SHA256"
+    return data.decode("utf-8")
 
 
 @pytest.fixture

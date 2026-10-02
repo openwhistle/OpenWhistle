@@ -9,7 +9,7 @@ Reference: how versions are pinned and who moves them.
 | uv | `Dockerfile` (`COPY --from=ghcr.io/astral-sh/uv`), every workflow | Renovate group "uv" |
 | PostgreSQL, Redis, nginx | both compose files, the Ansible template, compose written inline in workflows | Renovate groups; PostgreSQL majors never auto-merged (dump and restore) |
 | GitHub Actions | workflows, pinned to commit digests | Renovate |
-| axe-core | `tests/e2e/conftest.py` | Renovate custom manager |
+| axe-core | `AXE_VERSION` in `tests/e2e/conftest.py` + `tests/e2e/vendor/axe.min.js` | Renovate bumps the version; `scripts/vendor_axe.py` refreshes file and hash |
 | Website build (Jinja2, markdown-it-py, PyYAML, Pagefind) | `pyproject.toml` dependency group `site` + `uv.lock` | Renovate (pep621 + uv lock) |
 
 Patch, pin and digest updates merge themselves once the required checks pass.
@@ -70,10 +70,10 @@ uv pip install -c /tmp/ldap-constraints.txt /tmp/wheels/python_ldap-*.whl
 - `tests/test_renovate.py::test_no_managed_file_is_ignored`: `ignorePaths` is
   explicit. The `config:recommended` preset ignores `tests/`, which hid the
   axe-core pin on Renovate's first run while every other check was green.
-- `tests/test_renovate.py::test_axe_core_is_fetched_from_the_registry_renovate_checks`:
-  axe-core loads from jsDelivr's npm mirror. An axe-core bump pointed at cdnjs,
-  which did not have it yet; the fixture read the 404 as "offline" and every axe
-  check skipped. An HTTP error now fails the e2e run.
+- `tests/test_renovate.py::test_the_vendored_axe_is_the_pinned_version_and_hash`:
+  axe-core is vendored, not fetched. An axe-core bump pointed at cdnjs, which
+  did not have it yet; the fixture read the 404 as "offline" and every axe check
+  skipped. The file and its SHA-256 now sit in the repository.
 - CI: `uv lock --check`.
 
 ## Writing a version down somewhere new
