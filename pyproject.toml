@@ -151,6 +151,13 @@ ignore = [
 # The page shell is copied verbatim from docs/en/roadmap/index.html as a template string;
 # its CSS/HTML lines are not code and keep that page's own line lengths.
 "scripts/render_changelog.py" = ["E501"]
+# Diagram tooling: draw.io style strings and pinned image digests are single lines, and the only
+# XML parsed is the repository's own sources and the SVGs the pinned image wrote from them (expat
+# resolves no external entities), so the defusedxml hint does not apply.
+"scripts/render_diagrams.py" = ["E501", "S314"]
+"scripts/diagram_geometry.py" = ["E501", "S314"]
+"tests/test_render_diagrams.py" = ["E501", "S314"]
+"tests/test_diagram_geometry.py" = ["E501", "S314"]
 
 # ─── pytest ──────────────────────────────────────────────────────────────────
 
@@ -189,6 +196,7 @@ exclude_lines = [
 
 [dependency-groups]
 site = [
+    "fonttools[woff]>=4.66.0",
     "jinja2>=3.1.6",
     "markdown-it-py>=4.2.0",
     "pagefind[extended]>=1.5.2",
