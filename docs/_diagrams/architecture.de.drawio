@@ -38,13 +38,13 @@
           <mxGeometry x="124" y="38" width="90" height="60" as="geometry"/>
         </mxCell>
         <mxCell id="outbound" value="ausgehend" style="ow:group" vertex="1" parent="1">
-          <mxGeometry x="500" y="350" width="360" height="112" as="geometry"/>
+          <mxGeometry x="500" y="350" width="380" height="112" as="geometry"/>
         </mxCell>
         <mxCell id="github" value="GitHub-API&#xa;Update-Prüfung, opt-in" style="ow:step" vertex="1" parent="outbound">
-          <mxGeometry x="16" y="42" width="170" height="52" as="geometry"/>
+          <mxGeometry x="16" y="42" width="190" height="52" as="geometry"/>
         </mxCell>
         <mxCell id="telemetry" value="telemetry.wdkro.de&#xa;opt-in" style="ow:step" vertex="1" parent="outbound">
-          <mxGeometry x="196" y="42" width="150" height="52" as="geometry"/>
+          <mxGeometry x="216" y="42" width="150" height="52" as="geometry"/>
         </mxCell>
         <mxCell id="e-tls" style="ow:edge;exitX=0.1;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="client" target="tls">
           <mxGeometry relative="1" as="geometry"/>
@@ -63,7 +63,7 @@
         <mxCell id="e-required" style="ow:edge;exitX=0.2;exitY=1;entryX=0.5;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="app" target="required">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="e-optional" style="ow:edge-optional;exitX=0.5;exitY=1;entryX=0.5;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="app" target="optional">
+        <mxCell id="e-optional" style="ow:edge-optional;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.7826;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="app" target="optional">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
         <mxCell id="e-outbound" style="ow:edge-optional;exitX=0.8;exitY=1;entryX=0.5;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="app" target="outbound">

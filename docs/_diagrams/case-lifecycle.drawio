@@ -48,7 +48,7 @@
         </mxCell>
         <mxCell id="e-reopen" value="reopen" style="ow:edge;exitX=1;exitY=0.3;entryX=0;entryY=0.3;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="closed" target="in_review">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint as="offset" x="0" y="-10"/>
+            <mxPoint as="offset" x="0" y="-12"/>
           </mxGeometry>
         </mxCell>
         <mxCell id="e-close-pending" style="ow:edge;exitX=0;exitY=0.5;entryX=0.5;entryY=1;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pending_feedback" target="closed">
