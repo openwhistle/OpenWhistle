@@ -119,18 +119,22 @@ def test_the_stamp_covers_source_theme_roles_image_and_fonts(
     assert r.stamp(SOURCE, "light") != base
 
 
-@pytest.mark.parametrize("step", ["export", "postprocess", "font_faces"])
-def test_the_stamp_covers_the_export_and_its_post_processing(
-    monkeypatch: pytest.MonkeyPatch, step: str
+def test_the_stamp_covers_both_scripts_whole(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     r = renderer()
+    copies = []
+    for n, script in enumerate(r.SCRIPTS):
+        copy = tmp_path / f"{n}.py"
+        copy.write_bytes(script.read_bytes())
+        copies.append(copy)
+    monkeypatch.setattr(r, "SCRIPTS", tuple(copies))
     base = r.stamp(SOURCE, "light")
-
-    def changed(*_args: object) -> None:
-        """Stands in for a step whose flags or output handling were edited."""
-
-    monkeypatch.setattr(r, step, changed)
-    assert r.stamp(SOURCE, "light") != base
+    for copy in copies:  # a change anywhere in either script, even in a helper
+        copy.write_text(copy.read_text() + "# edited\n")
+        assert r.stamp(SOURCE, "light") != base
+        copy.write_bytes(copy.read_bytes().removesuffix(b"# edited\n"))
+        assert r.stamp(SOURCE, "light") == base
 
 
 def test_a_missing_export_names_the_source_and_the_file(

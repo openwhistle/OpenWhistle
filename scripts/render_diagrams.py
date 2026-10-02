@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import base64
 import hashlib
-import inspect
 import io
 import json
 import math
@@ -47,6 +46,8 @@ DIRS = {
     ROOT / "docs" / "_diagrams": ROOT / "docs" / "img" / "diagrams",
     ROOT / "docs-tech" / "_diagrams": ROOT / "docs-tech" / "img" / "diagrams",
 }
+# The stamp hashes both scripts whole: any edit to the pipeline or the geometry it calls re-renders.
+SCRIPTS = (Path(__file__).resolve(), Path(geometry.__file__).resolve())
 THEMES = ("light", "dark")
 FONTS = geometry.FONTS
 
@@ -172,10 +173,7 @@ def stamp(source: str, theme: str) -> str:
     payload = json.dumps(
         {"source": source, "theme": theme, "common": COMMON, "roles": ROLES, "aliases": ALIASES,
          "palette": palette()[theme], "image": IMAGE, "fonts": fonts,
-         "pipeline": [
-             inspect.getsource(f)
-             for f in (export, postprocess, font_faces, _framed, geometry.content_box)
-         ]},
+         "scripts": [hashlib.sha256(p.read_bytes()).hexdigest() for p in SCRIPTS]},
         sort_keys=True,
     )
     return hashlib.sha256(payload.encode()).hexdigest()[:16]
