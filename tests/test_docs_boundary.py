@@ -56,6 +56,7 @@ def test_pages_publishes_the_built_site_and_nothing_else() -> None:
     assert [u["with"]["path"] for u in uploads] == ["_site"]
     build = next(s for s in steps if "build_site.py" in s.get("run", ""))
     assert "--src" not in build["run"], "the build must read docs/ and nothing else"
+    assert "--redirect-stubs" in build["run"], "without the stubs every old URL 404s on Pages"
 
 
 def test_pages_checks_out_the_full_history() -> None:

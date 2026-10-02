@@ -88,7 +88,32 @@ def test_a_body_is_never_evaluated_as_jinja(src: Path, tmp_path: Path) -> None:
 
 def test_a_page_without_front_matter_fails(src: Path, tmp_path: Path) -> None:
     (src / "en" / "bare.html").write_text("<p>no front matter</p>", encoding="utf-8")
-    with pytest.raises(B.BuildError, match=r"en/bare\.html.*front matter"):
+    with pytest.raises(B.BuildError, match=r"en/bare\.html: a page must open with '---'"):
+        _build(src, tmp_path)
+
+
+def test_unclosed_front_matter_is_a_build_error(src: Path, tmp_path: Path) -> None:
+    (src / "en" / "open.html").write_text("---\ntitle: t\n<p>x</p>\n", encoding="utf-8")
+    with pytest.raises(B.BuildError, match=r"en/open\.html: the front matter is never closed"):
+        _build(src, tmp_path)
+
+
+def test_an_unknown_generator_fails(src: Path, tmp_path: Path) -> None:
+    (src / "en" / "docs" / "gen.md").write_text(
+        "---\ntitle: t\ndescription: d\ntranslation_key: gen\ngenerated: nope\n---\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(B.BuildError, match="unknown generator 'nope'"):
+        _build(src, tmp_path)
+
+
+def test_an_undefined_template_name_fails(src: Path, tmp_path: Path) -> None:
+    """StrictUndefined: a typo in a template is a build error, not an empty string."""
+    import jinja2
+
+    base = src / "_layouts" / "base.html"
+    base.write_text(base.read_text().replace("{{ t.skip_link }}", "{{ t.skip_lnik }}"))
+    with pytest.raises(jinja2.UndefinedError, match="skip_lnik"):
         _build(src, tmp_path)
 
 
@@ -213,6 +238,9 @@ def test_non_root_translated_page_x_default_is_default_language(src: Path, tmp_p
         ("en", "https://example.test/en/x/"),
         ("x-default", "https://example.test/en/x/"),
     ]
+    # The German twin names the same x-default: the default language, not itself.
+    page.url, page.lang = "/de/x/", "de"
+    assert B.hreflang(page, site)[-1] == ("x-default", "https://example.test/en/x/")
 
 
 def test_a_group_without_default_language_gets_no_x_default(src: Path, tmp_path: Path) -> None:
@@ -266,7 +294,7 @@ def test_a_third_language_needs_data_only(src: Path, tmp_path: Path) -> None:
     pages = _pages(src, tmp_path)
     site_after = B.load_data(src)["site"]
     assert pages["/fr/"].alternates == {"en": "/en/", "de": "/de/", "fr": "/fr/"}
-    assert 'lang="fr"' in (tmp_path / "out" / "fr" / "index.html").read_text(encoding="utf-8")
+    assert '<html lang="fr"' in (tmp_path / "out" / "fr" / "index.html").read_text(encoding="utf-8")
     assert B.hreflang(pages["/fr/"], site_after) == [
         ("de", "https://example.test/de/"),
         ("en", "https://example.test/en/"),
@@ -297,6 +325,38 @@ def test_the_current_section_is_marked(src: Path, tmp_path: Path) -> None:
 def test_the_language_switch_goes_to_the_translation(src: Path, tmp_path: Path) -> None:
     html = (_build(src, tmp_path) / "en" / "index.html").read_text(encoding="utf-8")
     assert '<a href="/de/" hreflang="de" lang="de">Deutsch</a>' in html
+
+
+def test_a_home_entry_is_current_only_on_the_home(src: Path, tmp_path: Path) -> None:
+    """Every URL starts with /en/: the home entry must not light up on every page,
+    and a #fragment entry (features) marks nothing, not even on the home."""
+    (src / "_data" / "nav.yml").write_text(
+        "primary:\n  - {label: nav.home, page: home}\n"
+        "  - {label: nav.features, page: home, fragment: features}\n"
+        "  - {label: nav.docs, page: docs}\nfooter: []\n"
+    )
+    out = _build(src, tmp_path)
+    docs = (out / "en" / "docs" / "index.html").read_text(encoding="utf-8")
+    assert docs.count('aria-current="page"') == 1
+    home = (out / "en" / "index.html").read_text(encoding="utf-8")
+    assert home.count('aria-current="page"') == 1
+    assert 'href="/en/" class="active"' in home
+
+
+def test_a_fragment_entry_marks_nothing(src: Path, tmp_path: Path) -> None:
+    home = (_build(src, tmp_path) / "en" / "index.html").read_text(encoding="utf-8")
+    assert 'aria-current="page"' not in home
+
+
+def test_the_language_switch_of_a_translated_page_goes_to_its_twin(
+    src: Path, tmp_path: Path
+) -> None:
+    (src / "de" / "docs").mkdir()
+    (src / "de" / "docs" / "index.md").write_text(
+        "---\ntitle: Doku\ndescription: d\ntranslation_key: docs\n---\n# Doku\n", encoding="utf-8"
+    )
+    html = (_build(src, tmp_path) / "en" / "docs" / "index.html").read_text(encoding="utf-8")
+    assert '<a href="/de/docs/" hreflang="de" lang="de">Deutsch</a>' in html
 
 
 def test_a_nav_entry_naming_no_page_fails(src: Path, tmp_path: Path) -> None:
@@ -381,6 +441,24 @@ def test_valid_and_external_links_pass(src: Path, tmp_path: Path, href: str) -> 
     _build(src, tmp_path)
 
 
+@pytest.mark.parametrize("tag", ['<img src="/img/missing.png" alt="">',
+                                 '<img srcset="/img/missing.png 2x" alt="">'])
+def test_a_missing_image_fails(src: Path, tmp_path: Path, tag: str) -> None:
+    page = src / "en" / "index.html"
+    page.write_text(page.read_text().replace("</main>", f"{tag}</main>"), encoding="utf-8")
+    with pytest.raises(B.BuildError, match="nothing at /img/missing.png"):
+        _build(src, tmp_path)
+
+
+def test_a_named_anchor_is_a_fragment_target(src: Path, tmp_path: Path) -> None:
+    page = src / "en" / "index.html"
+    page.write_text(
+        page.read_text().replace("</main>", '<a name="legacy"></a><a href="#legacy">x</a></main>'),
+        encoding="utf-8",
+    )
+    _build(src, tmp_path)
+
+
 @pytest.mark.parametrize("out", ["src", "parent"])
 def test_out_may_not_be_the_sources_or_above_them(src: Path, tmp_path: Path, out: str) -> None:
     target = src if out == "src" else src.parent
@@ -455,6 +533,12 @@ def test_netloc_case_insensitive(src: Path, tmp_path: Path) -> None:
     _build(src, tmp_path)  # Same host, case-insensitive match
 
 
+def test_a_broken_link_on_the_own_host_in_capitals_fails(src: Path, tmp_path: Path) -> None:
+    _add_link(src, "https://EXAMPLE.TEST/en/gone/")
+    with pytest.raises(B.BuildError, match="nothing at /en/gone/"):
+        _build(src, tmp_path)
+
+
 def test_out_inside_src_is_refused(src: Path, tmp_path: Path) -> None:
     out = src / "_site"
     with pytest.raises(B.BuildError, match="would overwrite the sources"):
@@ -470,6 +554,32 @@ def test_the_sitemap_lists_indexable_pages_with_alternates(src: Path, tmp_path: 
     assert set(locs) == {"https://example.test/en/", "https://example.test/de/", "https://example.test/en/docs/"}
     alts = {a.get("hreflang") for a in locs["https://example.test/de/"].findall("x:link", NS)}
     assert alts == {"en", "de", "x-default"}
+
+
+def test_lastmod_is_the_last_commit_of_the_source() -> None:
+    if B._git("status", "--porcelain", "--", "LICENSE"):
+        pytest.skip("LICENSE has uncommitted changes")
+    assert B.lastmod(ROOT / "LICENSE") == B._git("log", "-1", "--format=%cs", "--", "LICENSE")
+
+
+def test_the_changelog_page_is_dated_by_changelog_md(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(B, "lastmod", lambda path: path.name)
+    site = {"base_url": "https://e.test", "languages": {"en": {}}, "default_language": "en"}
+    generated = {"generated": "changelog"}
+    changelog = B.Page(Path("en/changelog.html"), "/en/changelog/", "en", generated, "")
+    roadmap = B.Page(Path("en/roadmap.html"), "/en/roadmap/", "en", {}, "")
+    B.write_sitemap(tmp_path, tmp_path, [changelog, roadmap], site)
+    sitemap = (tmp_path / "sitemap.xml").read_text(encoding="utf-8")
+    assert "/en/changelog/</loc>\n    <lastmod>CHANGELOG.md</lastmod>" in sitemap
+    assert "/en/roadmap/</loc>\n    <lastmod>roadmap.html</lastmod>" in sitemap
+
+
+def test_a_redirect_from_a_page_fails(src: Path, tmp_path: Path) -> None:
+    (src / "_data" / "redirects.yml").write_text("/en/docs/: /en/\n")
+    with pytest.raises(B.BuildError, match="/en/docs/ is a page itself"):
+        _build(src, tmp_path)
 
 
 def test_a_redirect_to_no_page_fails(src: Path, tmp_path: Path) -> None:
@@ -503,6 +613,12 @@ def test_an_old_non_html_url_must_lead_to_a_page_with_a_source(tmp_path: Path) -
     site = {"default_language": "en", "base_url": "https://e.test"}
     with pytest.raises(B.BuildError, match="/x.md -> /en/, a page with no source"):
         B.write_stubs(tmp_path, {"/x.md": "/en/"}, site)
+
+
+def test_an_old_non_html_url_never_overwrites_a_file(src: Path, tmp_path: Path) -> None:
+    (src / "_data" / "redirects.yml").write_text("/img/pixel.png: /en/docs/\n")
+    with pytest.raises(B.BuildError, match="/img/pixel.png would overwrite img/pixel.png"):
+        _build(src, tmp_path, redirect_stubs=True)
 
 
 def test_no_stubs_without_the_flag(src: Path, tmp_path: Path) -> None:

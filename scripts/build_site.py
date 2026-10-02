@@ -476,7 +476,7 @@ def write_sitemap(out: Path, src: Path, pages: list[Page], site: dict) -> None:
 def _refuse_dangerous_out(src: Path, out: Path) -> None:
     """build() empties `out`; it must never be the sources, above them, or inside them."""
     out, src = out.resolve(), src.resolve()
-    if out == src or out.is_relative_to(src) or src.is_relative_to(out):
+    if out.is_relative_to(src) or src.is_relative_to(out):  # equal counts as both
         raise BuildError(f"--out {out} would overwrite the sources in {src}")
 
 
