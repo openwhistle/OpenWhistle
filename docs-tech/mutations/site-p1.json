@@ -239,6 +239,18 @@
   ],
   "AXE-RENOVATE": [
    "tests/test_renovate.py::test_axe_core_manager_reads_the_registry_and_the_version_constant"
+  ],
+  "DEEP-LINK": [
+   "-o",
+   "addopts=",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium",
+   "tests/e2e/test_docs_behaviour.py::test_a_deep_link_target_is_not_under_the_sticky_nav"
+  ],
+  "IMG-SHAPE": [
+   "tests/test_docs_figures.py::test_every_image_reserves_its_real_shape"
   ]
  },
  "mutations": [
@@ -386,8 +398,22 @@
    "id": "md-table-scroll",
    "file": "scripts/build_site.py",
    "tests": "MD",
-   "old": "MARKDOWN.add_render_rule(\"table_open\", lambda *_: '<div class=\"table-scroll\"><table>\\n')\n",
-   "new": ""
+   "old": "lambda *_: '<div class=\"table-scroll\"><table class=\"env-table\">\\n'",
+   "new": "lambda *_: '<table class=\"env-table\">\\n'"
+  },
+  {
+   "id": "md-table-class",
+   "file": "scripts/build_site.py",
+   "tests": "MD",
+   "old": "<table class=\"env-table\">",
+   "new": "<table>"
+  },
+  {
+   "id": "md-docs-section",
+   "file": "tests/fixtures/site/_layouts/base.html",
+   "tests": "MD",
+   "old": "class=\"docs-content docs-section docs-standalone\"",
+   "new": "class=\"docs-content docs-standalone\""
   },
   {
    "id": "md-raw-html",
@@ -913,6 +939,20 @@
    "tests": "AXE-RENOVATE",
    "old": "AXE_VERSION = \"4.13.0\"",
    "new": "AXE_VERSION: str = \"4.13.0\""
+  },
+  {
+   "id": "scroll-padding",
+   "file": "docs/assets/css/layout.css",
+   "tests": "DEEP-LINK",
+   "old": "html { scroll-padding-top: 80px; }\n",
+   "new": ""
+  },
+  {
+   "id": "image-shape",
+   "file": "docs/en/docs/index.html",
+   "tests": "IMG-SHAPE",
+   "old": "alt=\"The reporting office sign-in: username, password and Continue.\" width=\"1440\" height=\"900\" loading=\"lazy\">\n          <img class=\"shot-dark\"",
+   "new": "alt=\"The reporting office sign-in: username, password and Continue.\" width=\"1440\" height=\"939\" loading=\"lazy\">\n          <img class=\"shot-dark\""
   }
  ]
 }
