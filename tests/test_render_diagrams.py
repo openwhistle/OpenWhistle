@@ -186,7 +186,7 @@ def _faces(svg: str) -> dict[int, TTFont]:
 def test_postprocess_drops_the_doctype_and_the_px_units_and_stamps() -> None:
     out = renderer().postprocess(EXPORTED, "0123456789abcdef")
     assert "<!DOCTYPE" not in out and "svg11.dtd" not in out
-    assert 'width="498"' in out and 'height="745"' in out
+    assert "px" not in re.search(r"<svg\b[^>]*>", out)[0]
     assert 'data-ow-stamp="0123456789abcdef"' in out
 
 
@@ -249,3 +249,19 @@ def test_renovate_moves_the_image_tag_and_digest_together() -> None:
     assert m, "Renovate's regex does not match the IMAGE line"
     assert renderer().IMAGE.endswith(f"{m['depName']}:{m['currentValue']}@{m['currentDigest']}")
     assert manager["datasourceTemplate"] == "docker"
+
+
+def test_postprocess_gives_every_side_the_same_margin() -> None:
+    """draw.io leaves 12 px before the content and 25 after; the box is rebuilt around it."""
+    export = (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="237px" height="169px" '
+        'viewBox="0 0 237 169">'
+        '<g data-cell-id="a"><g transform="translate(0.5,0.5)">'
+        '<rect x="30" y="40" width="100" height="50" fill="#fff"/></g></g></svg>'
+    )
+    out = renderer().postprocess(export, "0" * 16)
+    root = ET.fromstring(out)  # noqa: S314
+    x, y, w, h = (int(v) for v in root.get("viewBox").split())
+    assert (root.get("width"), root.get("height")) == (str(w), str(h))
+    # content spans 30.5..130.5 x 40.5..90.5, so whole pixels 30..131 x 40..91
+    assert (30 - x, 40 - y, x + w - 131, y + h - 91) == (12, 12, 12, 12)

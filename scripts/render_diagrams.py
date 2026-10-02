@@ -16,6 +16,7 @@ import hashlib
 import inspect
 import io
 import json
+import math
 import re
 import shutil
 import subprocess
@@ -171,7 +172,10 @@ def stamp(source: str, theme: str) -> str:
     payload = json.dumps(
         {"source": source, "theme": theme, "common": COMMON, "roles": ROLES, "aliases": ALIASES,
          "palette": palette()[theme], "image": IMAGE, "fonts": fonts,
-         "pipeline": [inspect.getsource(f) for f in (export, postprocess, font_faces)]},
+         "pipeline": [
+             inspect.getsource(f)
+             for f in (export, postprocess, font_faces, _framed, geometry.content_box)
+         ]},
         sort_keys=True,
     )
     return hashlib.sha256(payload.encode()).hexdigest()[:16]
@@ -231,13 +235,31 @@ def font_faces(svg: str) -> str:
     return "".join(rules)
 
 
+MARGIN = 12  # equal on all four sides
+
+
+def _framed(tag: str, svg: str) -> str:
+    """The root tag sized to the content plus MARGIN on every side, in whole pixels.
+
+    draw.io's -b puts the margin before the content but the canvas ends 2*b + 1 after it
+    (12 px left/top, 25 px right/bottom), so the box is rebuilt from what the picture draws.
+    """
+    box = geometry.content_box(svg)
+    if box is None:
+        raise DiagramError("the export draws nothing")
+    x, y = math.floor(box.x0) - MARGIN, math.floor(box.y0) - MARGIN
+    w, h = math.ceil(box.x1) + MARGIN - x, math.ceil(box.y1) + MARGIN - y
+    tag = re.sub(r'\s(?:width|height|viewBox)="[^"]*"', "", tag)
+    return tag[:-1] + f' width="{w}" height="{h}" viewBox="{x} {y} {w} {h}">'
+
+
 def postprocess(svg: str, stamp_value: str) -> str:
     """The exported SVG made self-contained: no DTD URL, unitless size, Sora inside, stamped."""
     svg = re.sub(r"<!DOCTYPE[^>]*>\s*", "", svg)
     root = re.search(r"<svg\b[^>]*>", svg)
     if not root:
         raise DiagramError("the export has no <svg> element")
-    tag = re.sub(r'\b(width|height)="([\d.]+)px"', r'\1="\2"', root.group(0))
+    tag = _framed(root.group(0), svg)
     tag = tag.replace("<svg ", f'<svg data-ow-stamp="{stamp_value}" ', 1)
     style = f"<defs><style>{font_faces(svg)}</style></defs>"
     return svg[: root.start()] + tag + style + svg[root.end() :]
