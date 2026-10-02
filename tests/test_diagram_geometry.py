@@ -282,3 +282,20 @@ def test_the_end_anchor_measures_leftwards() -> None:
     end = g.text_box("abc", 100, 0, 13, 400, "end")
     start = g.text_box("abc", 0, 0, 13, 400, "start")
     assert round(end.x1, 6) == 100 and round(end.x1 - end.x0, 6) == round(start.x1, 6)
+
+
+def test_a_translate_shifts_the_shapes_inside_it() -> None:
+    inner = '<rect x="10" y="20" width="100" height="40" fill="#fff"/>'
+    shifted = (
+        '<svg xmlns="http://www.w3.org/2000/svg"><g data-cell-id="a">'
+        f'<g transform="translate(0.5,0.5)">{inner}</g></g></svg>'
+    )
+    assert geometry().content_box(shifted) == geometry().Box(10.5, 20.5, 110.5, 60.5)
+
+
+def test_content_box_unites_shapes_lines_and_text_ink() -> None:
+    g = geometry()
+    picture = svg(node("a", 10, 10, 100, 40, "Hi"), edge("e", [(60, 50), (60, 120)]))
+    box = g.content_box(picture)
+    assert (box.x0, box.y0, box.x1) == (10, 10, 110) and box.y1 == 120
+    assert g.content_box(svg()) is None

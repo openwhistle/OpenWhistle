@@ -31,6 +31,7 @@ CLEAR = 3.0  # gap between any text and any line, arrowhead or foreign node
 
 _INHERITED = ("font-size", "font-weight", "text-anchor", "fill", "stroke")
 _NUMBER = r"-?(?:\d+\.?\d*|\.\d+)(?:[eE]-?\d+)?"
+_TRANSLATE = re.compile(rf"translate\(\s*({_NUMBER})\s*[, ]?\s*({_NUMBER})?\s*\)")
 _PATH_TOKEN = re.compile(rf"[MLQCZ]|{_NUMBER}")
 _ARGS = {"M": 2, "L": 2, "Q": 4, "C": 6}
 CURVE_STEPS = 8  # points a rounded elbow is sampled at; a label grazing the curve is still found
@@ -171,20 +172,27 @@ def _local(tag: str) -> str:
 def _cells(svg: str) -> dict[str, Cell]:
     found: dict[str, Cell] = {}
 
-    def walk(el: ET.Element, inherited: dict[str, str], cell: Cell | None) -> None:
+    def walk(
+        el: ET.Element, inherited: dict[str, str], cell: Cell | None, off: Point = (0.0, 0.0)
+    ) -> None:
         attrs = {**inherited, **{k: v for k in _INHERITED if (v := el.get(k)) is not None}}
         if (cid := el.get("data-cell-id")) is not None:
             cell = found.setdefault(cid, Cell(cid, parent=cell.id if cell else None))
         tag = _local(el.tag)
+        if m := _TRANSLATE.search(el.get("transform", "")):  # draw.io shifts shapes by 0.5
+            off = (off[0] + float(m.group(1)), off[1] + float(m.group(2) or 0))
+        ox, oy = off
         if cell is not None and tag == "rect":
-            x, y = _num(el.get("x")), _num(el.get("y"))
+            x, y = _num(el.get("x")) + ox, _num(el.get("y")) + oy
             cell.rects.append(Box(x, y, x + _num(el.get("width")), y + _num(el.get("height"))))
         elif cell is not None and tag == "ellipse":
             cx, cy, rx, ry = (_num(el.get(k)) for k in ("cx", "cy", "rx", "ry"))
+            cx, cy = cx + ox, cy + oy
             cell.rects.append(Box(cx - rx, cy - ry, cx + rx, cy + ry))
         elif cell is not None and tag == "path":
             target = cell.unfilled if attrs.get("fill", "black") == "none" else cell.filled
-            target.extend(p for p in _subpaths(el.get("d", "")) if len(p) > 1)
+            shifted = [[(px + ox, py + oy) for px, py in sub] for sub in _subpaths(el.get("d", ""))]
+            target.extend(sub for sub in shifted if len(sub) > 1)
         elif cell is not None and tag == "text":
             for span in el:
                 if _local(span.tag) == "tspan" and {"x", "y", "dx", "dy"} & set(span.attrib):
@@ -192,12 +200,12 @@ def _cells(svg: str) -> dict[str, Cell]:
             weight = 700 if attrs.get("font-weight") in ("bold", "700") else 400
             line = "".join(el.itertext())
             size = _num(attrs.get("font-size", "12"))
-            box = text_box(line, _num(el.get("x")), _num(el.get("y")), size, weight,
+            box = text_box(line, _num(el.get("x")) + ox, _num(el.get("y")) + oy, size, weight,
                            attrs.get("text-anchor", "start"))
             cell.texts.append(Text(line, box, weight))
             return
         for child in el:
-            walk(child, attrs, cell)
+            walk(child, attrs, cell, off)
 
     walk(ET.fromstring(svg), {}, None)  # noqa: S314
     return found
@@ -205,6 +213,12 @@ def _cells(svg: str) -> dict[str, Cell]:
 
 def texts(svg: str) -> list[Text]:
     return [t for cell in _cells(svg).values() for t in cell.texts]
+
+
+def content_box(svg: str) -> Box | None:
+    """Everything the picture draws (shapes, lines, text ink), or None for an empty picture."""
+    cells = _cells(svg).values()
+    return _union([b for c in cells for b in [_outline(c), *(t.box for t in c.texts)] if b])
 
 
 def _hits(box: Box, seg: Segment) -> bool:
@@ -277,16 +291,31 @@ def _lines(found: dict[str, Cell], roles: dict[str, str]) -> list[tuple[str, Seg
     return lines
 
 
-def _text_problems(
-    cid: str, cell: Cell, role: str, found: dict[str, Cell], roles: dict[str, str]
-) -> list[str]:
-    lines = _lines(found, roles)
-    heads = [(h, _bounds(p)) for h, c in found.items() if roles.get(h) in EDGES for p in c.filled]
-    solid = {
-        n: b
-        for n, c in found.items()
-        if roles.get(n) and roles[n] not in EDGES | CONTAINERS and (b := _outline(c)) is not None
-    }
+@dataclass
+class _Context:
+    """What every text is checked against; built once per problems() call."""
+
+    found: dict[str, Cell]
+    lines: list[tuple[str, Segment]]
+    heads: list[tuple[str, Box]]
+    solid: dict[str, Box]
+
+
+def _context(found: dict[str, Cell], roles: dict[str, str]) -> _Context:
+    return _Context(
+        found,
+        _lines(found, roles),
+        [(h, _bounds(p)) for h, c in found.items() if roles.get(h) in EDGES for p in c.filled],
+        {
+            n: b
+            for n, c in found.items()
+            if roles.get(n) and roles[n] not in EDGES | CONTAINERS and (b := _outline(c))
+        },
+    )
+
+
+def _text_problems(cid: str, cell: Cell, role: str, ctx: _Context) -> list[str]:
+    lines, heads, solid, found = ctx.lines, ctx.heads, ctx.solid, ctx.found
     out: list[str] = []
     for t in cell.texts:
         if missing := missing_glyphs(t.text, t.weight):
@@ -327,9 +356,9 @@ def problems(svg: str, roles: dict[str, str]) -> list[str]:
         if cid not in roles and (cell.texts or _outline(cell)):
             raise ValueError(f"cell {cid!r} has shapes or text but no role in the source")
     out: list[str] = []
+    ctx = _context(found, roles)
     for cid, cell in found.items():
-        if cid in roles:
-            out += _text_problems(cid, cell, roles[cid], found, roles)
+        out += _text_problems(cid, cell, roles[cid], ctx) if cid in roles else []
     shapes = {
         cid: box
         for cid, c in found.items()
