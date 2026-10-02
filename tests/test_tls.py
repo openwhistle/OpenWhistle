@@ -11,6 +11,8 @@ from pathlib import Path
 import pytest
 from cryptography import x509
 
+from tests.built_site import page
+
 ROOT = Path(__file__).parents[1]
 
 
@@ -375,7 +377,7 @@ def test_the_chart_requires_crit_error_logging_where_the_operator_reads() -> Non
     for path in ("values.yaml", "templates/NOTES.txt"):
         text = (ROOT / "charts/openwhistle" / path).read_text()
         assert "REQUIRED" in text and "error-log-level: crit" in text, path
-    docs = (ROOT / "docs/docs.html").read_text()
+    docs = page("/en/docs/")
     assert "limit-req-status-code" in docs
     values = (ROOT / "charts/openwhistle/values.yaml").read_text()
     for text in (docs, values):

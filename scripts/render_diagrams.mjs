@@ -50,9 +50,9 @@ const FONT_FAMILY = 'system-ui, sans-serif';
 const MERMAID_CLI_VERSION = '11.9.0';
 
 // Both themes, because the docs site follows the reader's `data-theme`. Values
-// are the CSS custom properties from docs/docs.html — keep them in step with
+// are the CSS custom properties from docs/assets/css/docs.css — keep them in step with
 // that file's `:root` (light) and `[data-theme="dark"]` blocks. Checked against
-// docs.html by tests/test_diagrams.py::test_palette_matches_docs_site so a
+// docs.css by tests/test_diagrams.py::test_palette_matches_docs_site so a
 // stylesheet redesign that forgets this file fails loudly instead of leaving
 // four committed pictures in the old colours.
 const THEMES = {

@@ -24,6 +24,8 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from tests.built_site import page as built_page
+
 # ---------------------------------------------------------------------------
 # Encryption service — unit tests (no DB required)
 # ---------------------------------------------------------------------------
@@ -606,9 +608,9 @@ class TestConfigV100Defaults:
         found = {
             "Chart version": grab(chart, r'^version:\s*"?([^"\s]+)'),
             "Chart appVersion": grab(chart, r'^appVersion:\s*"?([^"\s]+)'),
-            "docs.html": grab("docs/docs.html", r"<strong>v([0-9.]+)</strong>"),
-            "index.html": grab("docs/index.html", r'"softwareVersion":\s*"([^"]+)"'),
-            "de/index.html": grab("docs/de/index.html", r'"softwareVersion":\s*"([^"]+)"'),
+            "docs.html": grab("docs/en/docs/index.html", r"<strong>v([0-9.]+)</strong>"),
+            "index.html": grab("docs/en/index.html", r"softwareVersion: '?([0-9.]+)"),
+            "de/index.html": grab("docs/de/index.html", r"softwareVersion: '?([0-9.]+)"),
             "CHANGELOG": grab("CHANGELOG.md", r"^## \[(\d+\.\d+\.\d+)\]"),
             "pyproject": grab("pyproject.toml", r'^version = "([^"]+)"'),
             "compose image": grab("docker-compose.prod.yml", r"OPENWHISTLE_VERSION:-([0-9.]+)\}"),
@@ -620,7 +622,7 @@ class TestConfigV100Defaults:
         assert found == dict.fromkeys(found, v)
         # docs.html once named the pin's default in prose and went stale with
         # it; it now says "the release the file shipped with". Keep it so.
-        docs = (root / "docs/docs.html").read_text()
+        docs = (root / "docs/en/docs/index.html").read_text()
         assert not re.search(r"OPENWHISTLE_VERSION</code>[^.]*default <code>[0-9.]+", docs)
         # Every image default, not only the first: tls-init runs the same image
         # and once pointed at a different version than the app service.
@@ -632,10 +634,10 @@ class TestConfigV100Defaults:
         # Every visible "Version X.Y.Z" string on both landing pages (hero
         # badge and footer) must also match — the structured-data check above
         # only covers the invisible JSON-LD softwareVersion.
-        for page in ("docs/index.html", "docs/de/index.html"):
-            visible = re.findall(r">Version ([0-9.]+)<", (root / page).read_text())
-            assert visible, f"{page}: no visible 'Version X.Y.Z' string found"
-            assert visible == [v] * len(visible), (page, visible, v)
+        for url in ("/en/", "/de/"):
+            visible = re.findall(r">Version ([0-9.]+)<", built_page(url))
+            assert visible, f"{url}: no visible 'Version X.Y.Z' string found"
+            assert visible == [v] * len(visible), (url, visible, v)
 
         # Regression guard: a blanket find-replace of the
         # three "current version" spots above once swept in a fourth,

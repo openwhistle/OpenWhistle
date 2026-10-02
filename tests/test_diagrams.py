@@ -9,7 +9,7 @@ source it is supposed to be a picture of:
   precisely — the digest also folds in the mermaid-cli version, so a renderer
   upgrade without a re-render is caught too);
 * the colours in each SVG are a subset of the docs site's own palette, so a
-  ``docs.html`` redesign that forgets these diagrams fails here instead of
+  ``docs.css`` redesign that forgets these diagrams fails here instead of
   shipping stale colours (this file's version of easywall's
   ``TestTheDiagramPaletteIsTheDocumentationPalette``);
 * no SVG makes a network reference or carries a ``<script>``, so embedding one
@@ -22,11 +22,12 @@ from pathlib import Path
 
 import pytest
 
+from tests.built_site import css_of, page
+
 ROOT = Path(__file__).parents[1]
 DIAGRAMS_DIR = ROOT / "docs" / "_diagrams"
 RENDERED_DIR = ROOT / "docs" / "img" / "diagrams"
 RENDER_SCRIPT = ROOT / "scripts" / "render_diagrams.mjs"
-DOCS_HTML = ROOT / "docs" / "docs.html"
 
 THEMES = ("light", "dark")
 
@@ -84,10 +85,10 @@ def test_no_diagram_is_stale(name: str, theme: str) -> None:
 
 
 def _css_tokens(css: str, opener: str) -> dict[str, str]:
-    """Reads the `--name: value;` pairs of one block of docs/docs.html."""
+    """Reads the `--name: value;` pairs of one block of the docs stylesheet."""
     start = css.index(opener)
     open_brace = css.index("{", start)
-    end = css.index("\n    }", start)  # docs.html indents rule bodies at 6 spaces
+    end = css.index("\n    }", start)  # docs.css indents rule bodies at 6 spaces
     body = css[open_brace:end]
     return dict(re.findall(r"(--[a-z0-9-]+)\s*:\s*([^;]+);", body))
 
@@ -106,9 +107,9 @@ def _harmless_boilerplate_colors(js: str) -> set[str]:
     return set(re.findall(r"'([^']*)'", m.group(1)))
 
 
-# Which CSS custom property (docs/docs.html) each mermaid themeVariable takes, in
+# Which CSS custom property (docs/assets/css/docs.css) each mermaid themeVariable takes, in
 # both themes. Kept here as a comparison rather than making the render script read
-# docs.html, for the same reason as easywall's version of this test: this one
+# docs.css, for the same reason as easywall's version of this test: this one
 # fails immediately and names the token that moved; a script that reads the
 # stylesheet needs a rebuild to reveal a mismatch, and rendering is not
 # byte-reproducible, so a rebuild is not a free way to answer a question about
@@ -128,7 +129,7 @@ _TOKENS = {
 
 @pytest.mark.parametrize("theme,opener", [("light", ":root"), ("dark", '[data-theme="dark"]')])
 def test_palette_matches_docs_site(theme: str, opener: str) -> None:
-    css = DOCS_HTML.read_text()
+    css = css_of(page("/en/docs/"))
     js = RENDER_SCRIPT.read_text()
 
     want = _css_tokens(css, opener)
@@ -136,13 +137,13 @@ def test_palette_matches_docs_site(theme: str, opener: str) -> None:
     assert got, f"render_diagrams.mjs has no {theme} theme (or the file changed shape)"
 
     for mermaid_var, token in _TOKENS.items():
-        assert token in want, f"docs.html defines no {token}, which {theme} {mermaid_var} takes"
+        assert token in want, f"docs.css defines no {token}, which {theme} {mermaid_var} takes"
         assert mermaid_var in got, (
             f"render_diagrams.mjs {theme} theme has no {mermaid_var}"
         )
         assert got[mermaid_var].lower() == want[token].lower(), (
             f"{theme} {mermaid_var} is {got[mermaid_var]}, "
-            f"but docs.html {token} is {want[token]} — "
+            f"but docs.css {token} is {want[token]} — "
             "the committed diagrams would be drawn in a colour the documentation site no longer "
             "uses, and the staleness check cannot see it: the digest covers the .mmd source, the "
             "mermaid-cli version and the font, not the palette"
@@ -156,7 +157,7 @@ _BASE64_RE = re.compile(r"base64,[A-Za-z0-9+/=]+")
 @pytest.mark.parametrize("name", _MMD_NAMES)
 @pytest.mark.parametrize("theme,opener", [("light", ":root"), ("dark", '[data-theme="dark"]')])
 def test_svg_colors_are_a_subset_of_the_docs_palette(name: str, theme: str, opener: str) -> None:
-    css = DOCS_HTML.read_text()
+    css = css_of(page("/en/docs/"))
     js = RENDER_SCRIPT.read_text()
     palette = set(_css_tokens(css, opener).values())
     allowed = {c.lower() for c in palette} | {
@@ -172,7 +173,7 @@ def test_svg_colors_are_a_subset_of_the_docs_palette(name: str, theme: str, open
     stray = used - allowed
     assert not stray, (
         f"{name}-{theme}.svg uses colour(s) not in the docs palette: {sorted(stray)} — "
-        "either docs.html's tokens moved and scripts/render_diagrams.mjs needs updating, "
+        "either docs.css's tokens moved and scripts/render_diagrams.mjs needs updating, "
         "or a new mermaid-cli version emits new boilerplate that belongs in "
         "HARMLESS_MERMAID_BOILERPLATE_COLORS"
     )
