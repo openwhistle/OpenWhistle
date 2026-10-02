@@ -29,7 +29,7 @@ PAD_X = 6.0  # room between a text line and the side of its shape
 PAD_Y = 2.0
 CLEAR = 3.0  # gap between any text and any line, arrowhead or foreign node
 
-_INHERITED = ("font-size", "font-weight", "text-anchor", "fill", "stroke")
+_INHERITED = ("font-size", "font-weight", "text-anchor", "fill", "stroke", "stroke-width")
 _NUMBER = r"-?(?:\d+\.?\d*|\.\d+)(?:[eE]-?\d+)?"
 _TRANSLATE = re.compile(rf"translate\(\s*({_NUMBER})\s*[, ]?\s*({_NUMBER})?\s*\)")
 _PATH_TOKEN = re.compile(rf"[MLQCZ]|{_NUMBER}")
@@ -88,6 +88,7 @@ class Cell:
     parent: str | None = None
     unfilled: list[list[Point]] = field(default_factory=list)
     texts: list[Text] = field(default_factory=list)
+    ink: list[Box] = field(default_factory=list)  # shapes and lines with half their stroke
 
 
 def _bounds(points: list[Point]) -> Box:
@@ -182,17 +183,22 @@ def _cells(svg: str) -> dict[str, Cell]:
         if m := _TRANSLATE.search(el.get("transform", "")):  # draw.io shifts shapes by 0.5
             off = (off[0] + float(m.group(1)), off[1] + float(m.group(2) or 0))
         ox, oy = off
+        stroked = attrs.get("stroke", "none") != "none"
+        half = _num(attrs.get("stroke-width", "1")) / 2 if stroked else 0.0
         if cell is not None and tag == "rect":
             x, y = _num(el.get("x")) + ox, _num(el.get("y")) + oy
             cell.rects.append(Box(x, y, x + _num(el.get("width")), y + _num(el.get("height"))))
+            cell.ink.append(cell.rects[-1].grow(half))
         elif cell is not None and tag == "ellipse":
             cx, cy, rx, ry = (_num(el.get(k)) for k in ("cx", "cy", "rx", "ry"))
             cx, cy = cx + ox, cy + oy
             cell.rects.append(Box(cx - rx, cy - ry, cx + rx, cy + ry))
+            cell.ink.append(cell.rects[-1].grow(half))
         elif cell is not None and tag == "path":
             target = cell.unfilled if attrs.get("fill", "black") == "none" else cell.filled
             shifted = [[(px + ox, py + oy) for px, py in sub] for sub in _subpaths(el.get("d", ""))]
             target.extend(sub for sub in shifted if len(sub) > 1)
+            cell.ink += [_bounds(sub).grow(half) for sub in shifted if len(sub) > 1]
         elif cell is not None and tag == "text":
             for span in el:
                 if _local(span.tag) == "tspan" and {"x", "y", "dx", "dy"} & set(span.attrib):
@@ -216,9 +222,9 @@ def texts(svg: str) -> list[Text]:
 
 
 def content_box(svg: str) -> Box | None:
-    """Everything the picture draws (shapes, lines, text ink), or None for an empty picture."""
+    """Everything the picture draws (shapes, lines with their stroke, text ink); None if empty."""
     cells = _cells(svg).values()
-    return _union([b for c in cells for b in [_outline(c), *(t.box for t in c.texts)] if b])
+    return _union([b for c in cells for b in [*c.ink, *(t.box for t in c.texts)]])
 
 
 def _hits(box: Box, seg: Segment) -> bool:

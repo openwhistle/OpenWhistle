@@ -297,5 +297,19 @@ def test_content_box_unites_shapes_lines_and_text_ink() -> None:
     g = geometry()
     picture = svg(node("a", 10, 10, 100, 40, "Hi"), edge("e", [(60, 50), (60, 120)]))
     box = g.content_box(picture)
-    assert (box.x0, box.y0, box.x1) == (10, 10, 110) and box.y1 == 120
+    assert (box.x0, box.y0, box.x1) == (10, 10, 110) and box.y1 == 120.5  # edge stroke
     assert g.content_box(svg()) is None
+
+
+def test_content_box_includes_half_the_stroke_width() -> None:
+    def picture(attrs: str) -> str:
+        return (
+            '<svg xmlns="http://www.w3.org/2000/svg"><g data-cell-id="a"><g>'
+            f'<rect x="10" y="10" width="100" height="40" {attrs}/></g></g></svg>'
+        )
+
+    g = geometry()
+    assert g.content_box(picture('fill="#fff" stroke="none"')) == g.Box(10, 10, 110, 50)
+    assert g.content_box(picture('fill="none" stroke="#000"')) == g.Box(9.5, 9.5, 110.5, 50.5)
+    wide = picture('fill="none" stroke="#000" stroke-width="2"')
+    assert g.content_box(wide) == g.Box(9, 9, 111, 51)
