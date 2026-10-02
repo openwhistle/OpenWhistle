@@ -288,8 +288,8 @@
    "id": "fm-yaml-error",
    "file": "scripts/build_site.py",
    "tests": "FM-YAML",
-   "old": "except yaml.YAMLError as error:",
-   "new": "except ZeroDivisionError as error:"
+   "old": "    except yaml.YAMLError as error:\n        raise BuildError(f\"{rel}: front",
+   "new": "    except ZeroDivisionError as error:\n        raise BuildError(f\"{rel}: front"
   },
   {
    "id": "fm-non-mapping",
@@ -372,8 +372,8 @@
    "id": "changelog-render",
    "file": "scripts/build_site.py",
    "tests": "CHANGELOG",
-   "old": "            content = GENERATORS[meta[\"generated\"]]()\n",
-   "new": "            content = body\n"
+   "old": "GENERATORS[meta[\"generated\"]][0]()",
+   "new": "body"
   },
   {
    "id": "i18n-complete",
@@ -554,7 +554,7 @@
    "id": "nav-current-root",
    "file": "scripts/build_site.py",
    "tests": "NAV-HOME",
-   "old": "(target.url not in language_roots and page.url.startswith(target.url))",
+   "old": "(target.url not in roots and page.url.startswith(target.url))",
    "new": "page.url.startswith(target.url)"
   },
   {
@@ -589,7 +589,7 @@
    "id": "nav-orphan-root-prefix",
    "file": "scripts/build_site.py",
    "tests": "NAV-ORPHAN",
-   "old": "    prefixes = targets - {f\"/{lang}/\" for lang in site[\"languages\"]}",
+   "old": "    prefixes = targets - language_roots(site)",
    "new": "    prefixes = targets"
   },
   {
@@ -736,8 +736,8 @@
    "id": "sitemap-noindex",
    "file": "scripts/build_site.py",
    "tests": "SITEMAP",
-   "old": "        if page.meta.get(\"noindex\"):\n            continue\n        generated",
-   "new": "        generated"
+   "old": "        if page.meta.get(\"noindex\"):\n            continue\n        generator",
+   "new": "        generator"
   },
   {
    "id": "sitemap-alternates",
@@ -757,7 +757,7 @@
    "id": "lastmod-changelog",
    "file": "scripts/build_site.py",
    "tests": "LASTMOD-CHANGELOG",
-   "old": "source = ROOT / \"CHANGELOG.md\" if generated else src / page.source",
+   "old": "source = GENERATORS[generator][1] if generator else src / page.source",
    "new": "source = src / page.source"
   },
   {
