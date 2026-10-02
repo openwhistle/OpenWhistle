@@ -5,8 +5,8 @@ from __future__ import annotations
 import pytest
 from playwright.sync_api import Browser
 
+from tests.built_site import built, pages
 from tests.e2e.conftest import (
-    _DOCS_DIR,
     DEMO_ADMIN_PASSWORD,
     DEMO_ADMIN_TOTP_SECRET,
     DEMO_ADMIN_USERNAME,
@@ -15,15 +15,14 @@ from tests.e2e.conftest import (
 
 pytestmark = pytest.mark.e2e
 
-_DOCS_PAGES = sorted(
-    str(p.relative_to(_DOCS_DIR))
-    for p in _DOCS_DIR.rglob("*.html")
-    if "/docs/_" not in p.as_posix()
-)
-
-# Every page of the published site, found by glob so a new page is covered
-# the day it is added. Nine pages exist today; a glob that suddenly finds
-# fewer means the directory moved, not that the site shrank.
+# Every page of the built site (no redirect stubs: a stub is not a page), as
+# the URL it is served at, so a new page is covered the day it is added.
+# A build that suddenly finds fewer means the sources moved, not that the
+# site shrank.
+_DOCS_FILES = {
+    "/" + p.relative_to(built()).as_posix().removesuffix("index.html"): p for p in pages()
+}
+_DOCS_PAGES = sorted(_DOCS_FILES)
 _DOCS_PAGE_FLOOR = 9
 
 
@@ -31,7 +30,7 @@ def test_docs_page_glob_finds_every_page() -> None:
     assert len(_DOCS_PAGES) >= _DOCS_PAGE_FLOOR, _DOCS_PAGES
 
 
-# `docs_server_url` (module-scoped: serves docs/ over HTTP) lives in
+# `docs_server_url` (module-scoped: builds docs/ and serves the build over HTTP) lives in
 # tests/e2e/conftest.py, shared with test_docs_behaviour.py.
 
 
@@ -47,7 +46,7 @@ def test_docs_page_has_no_horizontal_overflow(
     browser: Browser, docs_server_url: str, docs_page: str, width: int, color_scheme: str
 ) -> None:
     ctx, page = _page(browser, docs_server_url, width, color_scheme=color_scheme)
-    page.goto(f"{docs_server_url}/{docs_page}")
+    page.goto(f"{docs_server_url}{docs_page}")
     page.wait_for_load_state("networkidle")
     overflow = page.evaluate(
         "document.documentElement.scrollWidth - document.documentElement.clientWidth"
@@ -58,7 +57,7 @@ def test_docs_page_has_no_horizontal_overflow(
     )
 
 
-_WIDE_TABLE_PAGES = [p for p in _DOCS_PAGES if "comp-wrap" in (_DOCS_DIR / p).read_text()]
+_WIDE_TABLE_PAGES = [u for u in _DOCS_PAGES if "comp-wrap" in _DOCS_FILES[u].read_text()]
 
 
 @pytest.mark.parametrize("width", [1440, 1920])
@@ -70,7 +69,7 @@ def test_a_wide_table_is_centred_on_the_text_column(
     Its width was capped at 100ch while its left edge was computed from the
     full window, so on a wide screen it sat flush with the window's left edge."""
     ctx, page = _page(browser, docs_server_url, width)
-    page.goto(f"{docs_server_url}/{docs_page}")
+    page.goto(f"{docs_server_url}{docs_page}")
     offsets = page.evaluate(
         """() => {
             const prose = [...document.querySelectorAll('article p, main p')]
