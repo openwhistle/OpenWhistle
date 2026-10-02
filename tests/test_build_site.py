@@ -421,7 +421,7 @@ def test_fragment_with_percent_encoding_matches_id(src: Path, tmp_path: Path) ->
     page = src / "en" / "docs" / "index.md"
     # Add café ID to the docs page
     page.write_text(
-        page.read_text().replace("</main>", '<span id="café">test</span></main>'),
+        page.read_text() + '\n<span id="café">test</span>\n',
         encoding="utf-8",
     )
     _build(src, tmp_path)
@@ -477,15 +477,30 @@ def test_a_redirect_to_no_page_fails(src: Path, tmp_path: Path) -> None:
 
 
 def test_a_stub_keeps_the_fragment_and_is_not_indexed(src: Path, tmp_path: Path) -> None:
-    redirects = "/docs.html: /en/docs/\n/blog/: /de/\n/x.md: /en/\n"
+    redirects = "/docs.html: /en/docs/\n/blog/: /de/\n"
     (src / "_data" / "redirects.yml").write_text(redirects)
     out = _build(src, tmp_path, redirect_stubs=True)
     stub = (out / "docs.html").read_text(encoding="utf-8")
     assert 'location.replace("/en/docs/"+location.hash)' in stub
     assert '<meta name="robots" content="noindex">' in stub
     assert (out / "blog" / "index.html").is_file()
-    assert not (out / "x.md").exists()  # only nginx can redirect a non-HTML URL
     assert "/en/" in (out / "index.html").read_text(encoding="utf-8")  # "/" on Pages
+
+
+def test_an_old_non_html_url_serves_the_source_body(src: Path, tmp_path: Path) -> None:
+    """A .md URL runs no script: it keeps serving the text, front matter stripped."""
+    (src / "_data" / "redirects.yml").write_text("/old/notes.md: /en/docs/\n")
+    out = _build(src, tmp_path, redirect_stubs=True)
+    source = (src / "en" / "docs" / "index.md").read_text(encoding="utf-8")
+    body = (out / "old" / "notes.md").read_text(encoding="utf-8")
+    assert body == source.split("---\n", 2)[2]
+    assert body.startswith("# Änderungsprotokoll")
+
+
+def test_an_old_non_html_url_must_lead_to_a_page_with_a_source(tmp_path: Path) -> None:
+    site = {"default_language": "en", "base_url": "https://e.test"}
+    with pytest.raises(B.BuildError, match="/x.md -> /en/, a page with no source"):
+        B.write_stubs(tmp_path, {"/x.md": "/en/"}, site)
 
 
 def test_no_stubs_without_the_flag(src: Path, tmp_path: Path) -> None:

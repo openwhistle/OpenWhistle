@@ -9,8 +9,6 @@ css:
 js:
 - site
 ---
-<main id="main-content" class="docs-content docs-standalone">
-
 # Data Processing Agreement (DPA) Template
 
 ## GDPR Art. 28 — Controller–Processor Agreement
@@ -161,5 +159,3 @@ This agreement is governed by the laws of [Germany / your jurisdiction].
 *This document is a template. It does not constitute legal advice. Consult a
 qualified data protection lawyer before using this template in a production
 environment.*
-
-</main>

@@ -381,17 +381,33 @@ STUB = """<!DOCTYPE html>
 """
 
 
-def write_stubs(out: Path, redirects: dict, site: dict) -> None:
+def write_stubs(
+    out: Path, redirects: dict, site: dict, sources: dict[str, Path] | None = None
+) -> None:
     """GitHub Pages cannot send a 301; until P5 a stub stands in for each one.
 
     The script keeps the #fragment, which a meta refresh would drop. "/" is a
     stub to the default language on Pages; from P4 on nginx negotiates it.
+    An old URL that is not HTML (e.g. /hinschg_reference.md) cannot run a
+    script, so it keeps serving what it served: the body of the new page's
+    source, front matter stripped. `sources` maps a page URL to that file.
     """
     stubs = {"/": f"/{site['default_language']}/", **redirects}
     written: dict[Path, str] = {}
     for old, new in stubs.items():
         if not old.endswith(("/", ".html")):
-            continue  # Pages serves e.g. a .md as a file; only nginx can redirect it
+            source = (sources or {}).get(new)
+            if source is None:
+                raise BuildError(f"_data/redirects.yml: {old} -> {new}, a page with no source")
+            dest = out / unquote(old).lstrip("/")
+            if dest.exists():
+                raise BuildError(
+                    f"_data/redirects.yml: {old} would overwrite {dest.relative_to(out)}"
+                )
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            text = source.read_text(encoding="utf-8")
+            dest.write_text(split_front_matter(source, text)[1], encoding="utf-8")
+            continue
         dest = output_file(out, old)
         if written.get(dest) == new:
             continue  # /blog/ and /blog/index.html are one file, so one stub
@@ -488,7 +504,7 @@ def build(src: Path, out: Path, *, redirect_stubs: bool = False) -> list[Page]:
     # Before the stubs: a link to an old URL must fail even where a stub would catch it.
     check_links(out, urlsplit(site["base_url"]).netloc)
     if redirect_stubs:
-        write_stubs(out, data["redirects"], site)
+        write_stubs(out, data["redirects"], site, {p.url: src / p.source for p in pages})
     return pages
 
 

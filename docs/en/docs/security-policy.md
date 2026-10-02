@@ -9,8 +9,6 @@ css:
 js:
 - site
 ---
-<main id="main-content" class="docs-content docs-standalone">
-
 # OpenWhistle Information Security Policy Template
 
 **Version**: 1.0.0
@@ -172,5 +170,3 @@ All report data is **Restricted** and subject to the controls in section 4.
 
 *This document is a template. Replace bracketed placeholders with your
 organisation's specific values before use.*
-
-</main>

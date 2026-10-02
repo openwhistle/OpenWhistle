@@ -9,8 +9,6 @@ css:
 js:
 - site
 ---
-<main id="main-content" class="docs-content docs-standalone">
-
 # HinSchG duties and what OpenWhistle covers
 
 Reference for whoever runs an internal reporting office with OpenWhistle. It is a summary, not legal advice.
@@ -65,5 +63,3 @@ directive behind it is [2019/1937](https://eur-lex.europa.eu/legal-content/en/TX
 Fonts, styles and scripts are served by the instance itself. A German court (LG München I, January 2022)
 held that loading Google Fonts without consent breached the GDPR, because it sends the visitor's address
 to a third party.
-
-</main>
