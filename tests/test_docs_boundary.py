@@ -4,6 +4,8 @@ OpenWhistle, docs-tech/ is for whoever maintains the repository and never is."""
 import re
 from pathlib import Path
 
+import yaml
+
 from tests.built_site import built, page, pages
 
 ROOT = Path(__file__).parents[1]
@@ -17,13 +19,6 @@ def test_the_technical_docs_are_not_published() -> None:
         assert not (ROOT / "docs" / name).exists(), (
             f"docs/{name} exists — everything under docs/ is published by pages.yml"
         )
-
-    # The Pages build uploads exactly docs/. Any other path, or a second
-    # upload, is a change of scope that has to be noticed here.
-    workflow = (ROOT / ".github/workflows/pages.yml").read_text()
-    upload = r"upload-pages-artifact@\S+(?:[ \t]+#[^\n]*)?\s+with:\s+path:\s*\"?([^\"\s]+)"
-    uploads = re.findall(upload, workflow)
-    assert uploads == ["docs"], f"pages.yml publishes {uploads}; only docs/ may be published"
 
 
 _DOCS_TECH_HREF = re.compile(r'(?:href|src)=["\']([^"\']*docs-tech/[^"\']*)["\']')
@@ -47,3 +42,28 @@ def test_the_public_roadmap_holds_no_test_chores() -> None:
     roadmap = page("/en/roadmap/")
     assert not re.search(r"\btests/|\btest_\w+", roadmap)
     assert (ROOT / "docs-tech/test-infrastructure.md").exists()
+
+
+def _pages_steps() -> list[dict]:
+    workflow = yaml.safe_load((ROOT / ".github/workflows/pages.yml").read_text())
+    return workflow["jobs"]["deploy"]["steps"]
+
+
+def test_pages_publishes_the_built_site_and_nothing_else() -> None:
+    steps = _pages_steps()
+    uploads = [s for s in steps if "upload-pages-artifact" in s.get("uses", "")]
+    assert [u["with"]["path"] for u in uploads] == ["_site"]
+    build = next(s for s in steps if "build_site.py" in s.get("run", ""))
+    assert "--src" not in build["run"], "the build must read docs/ and nothing else"
+
+
+def test_pages_checks_out_the_full_history() -> None:
+    """Shallow history makes every sitemap lastmod the deploy date, silently."""
+    checkout = next(s for s in _pages_steps() if "actions/checkout" in s.get("uses", ""))
+    assert checkout.get("with", {}).get("fetch-depth") == 0
+
+
+def test_no_built_file_comes_from_docs_tech() -> None:
+    tech = {p.name for p in (ROOT / "docs-tech").rglob("*") if p.is_file()}
+    leaked = sorted(p.name for p in built().rglob("*") if p.name in tech and p.suffix == ".md")
+    assert not leaked, leaked
