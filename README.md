@@ -32,7 +32,7 @@ an internal reporting channel. OpenWhistle provides a fully open source solution
 zero vendor lock-in, and privacy-first by design.
 
 🌐 **Live demo:** [demo.openwhistle.net](https://demo.openwhistle.net)
-📖 **Documentation:** [openwhistle.net/docs.html](https://openwhistle.net/docs.html)
+📖 **Documentation:** [openwhistle.net/en/docs/](https://openwhistle.net/en/docs/)
 
 ---
 
@@ -189,7 +189,7 @@ zero vendor lock-in, and privacy-first by design.
   terminator, `docker-compose.behind-proxy.yml` makes nginx proxy plain HTTP on port 80.
 - **Tor onion address** — `ONION_LOCATION` adds an `Onion-Location` header (Tor Browser offers to
   switch) and a note on the submit page for reporters on a monitored network; see
-  [docs/docs.html](https://openwhistle.net/docs.html#onion-address) "Offering an onion address".
+  [the documentation](https://openwhistle.net/en/docs/#onion-address) "Offering an onion address".
 
 ---
 
@@ -223,7 +223,7 @@ docker compose logs app | grep "Setup token"  # read the one-time setup token
 > remote devices. Always keep `SECURE_COOKIES=true` (the default) behind HTTPS in production.
 
 For full installation instructions, environment variable reference, reverse proxy configuration,
-and administration guide, see **[openwhistle.net/docs.html](https://openwhistle.net/docs.html)**.
+and administration guide, see **[openwhistle.net/en/docs/](https://openwhistle.net/en/docs/)**.
 
 ---
 

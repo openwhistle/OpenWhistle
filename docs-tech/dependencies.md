@@ -31,7 +31,7 @@ boto3 are optional extras (`ldap`, `s3`): the image and CI install both.
 The suite imports both extras, so `uv sync --extra dev` alone no longer runs it:
 
 ```bash
-uv sync --extra dev --extra ldap --extra s3
+uv sync --extra dev --extra ldap --extra s3 --group site
 ```
 
 python-ldap compiles against OpenLDAP and SASL headers:

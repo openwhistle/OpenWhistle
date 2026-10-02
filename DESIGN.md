@@ -456,7 +456,7 @@ Restraint. Motion confirms, it does not entertain.
 - **Verify both themes and the accent budget** on every screen touched: is emerald
   used more than once (plus the block)? If so, cut back.
 - **Keep the three sources of truth in sync** — the app CSS (`app/static/css/`), the
-  docs pages (`docs/index.html` and `docs/docs.html`), and `docker-compose.prod.yml`
+  docs pages (`docs/en/index.html` and `docs/en/docs/index.html`), and `docker-compose.prod.yml`
   — in the same change (see the project design-sync rule).
 - **`site.css` is hand-edited source; keep one rule per block.** The CSS is formatted for
   readability (not minified) and maintained by hand as the source of truth; the minified

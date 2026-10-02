@@ -102,7 +102,7 @@ def _root_tokens_block(html: str) -> str:
 
 
 def test_de_landing_page_shares_design_tokens_with_english() -> None:
-    """Regression guard: docs/index.html was rebuilt onto the
+    """Regression guard: docs/en/index.html was rebuilt onto the
     "Signal" design (Sora + JetBrains Mono, ink/green tokens) while
     docs/de/index.html kept an older serif/navy design, so the two pages
     drifted apart. Pin the :root tokens and font-family variables identical
@@ -166,7 +166,7 @@ def test_faqpage_jsonld_matches_visible_faq_one_to_one() -> None:
     visible). Search engines index the JSON-LD, so a mismatch there is
     effectively lying to search results. Pin same count, same order, and a
     substantial word overlap per question/answer pair (not byte-for-byte:
-    docs/index.html's own JSON-LD already paraphrases its visible answers
+    docs/en/index.html's own JSON-LD already paraphrases its visible answers
     slightly, e.g. "Does OpenWhistle comply" vs. "Does it comply" -- this
     guard would otherwise be RED on the English page too)."""
     for url in ("/en/", "/de/"):
@@ -336,7 +336,7 @@ def _footer_landing_page(page: Path) -> Path:
 def test_every_page_footer_has_the_same_link_set_as_its_landing_page() -> None:
     """Regression guard: the four blog articles kept their old, smaller
     footer link-list (6 targets, missing Issues and License) after
-    docs/blog/index.html was rebuilt with the full one (7 targets), and
+    docs/de/blog/index.html was rebuilt with the full one (7 targets), and
     docs.html/roadmap.html carried an entirely different, much smaller
     footer (no `.footer-links` list at all). Every built page must resolve
     to the exact same footer link-target set as its landing page (see
@@ -371,8 +371,8 @@ def test_blog_pages_share_design_tokens_with_english_landing() -> None:
     extends the shared token set with its own `--warning`/`--warning-fog`
     (needed for `.callout-warn`/`.val-warn`, see
     test_docs_warn_callouts_do_not_converge_on_the_accent) that
-    docs/index.html itself has no use for. What must hold is that every
-    token blog *does* share by name with docs/index.html has the identical
+    docs/en/index.html itself has no use for. What must hold is that every
+    token blog *does* share by name with docs/en/index.html has the identical
     value -- no silent drift on the tokens that are supposed to be shared."""
     en_tokens = _root_tokens_dict(css_of(page("/en/")))
     for url in BLOG_PAGES:

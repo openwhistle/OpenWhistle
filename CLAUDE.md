@@ -45,7 +45,7 @@ Folgende Fakten sind festgelegt:
 - Du hast Zugriff auf GitHub über die GitHub CLI
 - Markdown Dokumente müssen nach markdownlint Vorgaben erstellt werden
 - `CONTRIBUTING.md`, section "Documentation", is binding for every documentation change.
-- Documentation in `docs/docs.html`, `README.md`, and `docker-compose.prod.yml` must always be kept in
+- Documentation in `docs/en/docs/index.html`, `README.md`, and `docker-compose.prod.yml` must always be kept in
   sync. When adding or renaming environment variables, update ALL locations in the same commit.
 - The demo at <https://demo.openwhistle.net> is live and hosted on Hetzner via
   Ansible. It runs `ghcr.io/openwhistle/openwhistle:edge` and is reset every 6 hours by a Semaphore job
@@ -62,7 +62,7 @@ Folgende Fakten sind festgelegt:
   and will fail CI if coverage drops below the threshold.
 - When adding new features, always add corresponding tests so coverage stays at or above 90 %.
 - Run the full suite against a real PostgreSQL and Redis (e.g. two throwaway containers) with
-  `uv sync --extra dev --extra ldap --extra s3` (python-ldap needs OS headers, see
+  `uv sync --extra dev --extra ldap --extra s3 --group site` (python-ldap needs OS headers, see
   `docs-tech/dependencies.md` "Development setup") and `DATABASE_URL`/`REDIS_URL`/`SECRET_KEY`
   set, as CI does. Without a DB the DB-backed tests error and coverage undercounts. The
   production image carries no test dependencies, so tests cannot run inside it.
@@ -71,10 +71,10 @@ Folgende Fakten sind festgelegt:
 
 ## Release documentation checklist
 
-Before marking a version as released (the roadmap page at `docs/roadmap.html`, CHANGELOG.md, git tag), verify ALL of the
+Before marking a version as released (roadmap `docs/en/roadmap/index.html`, CHANGELOG.md, git tag), verify ALL of the
 following. These checks caught v0.3.0 and v0.4.0 gaps retroactively — run them proactively.
 
-### `docs/docs.html`
+### `docs/en/docs/index.html`
 
 - **Version number**: the "Current version" paragraph in the Overview section must match
   `app_version` in `app/config.py`.

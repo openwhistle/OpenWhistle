@@ -1,7 +1,7 @@
 # Planned test-infrastructure work
 
 Maintainer-only work from the v1.1.0 test-quality review, checked against the tree. It
-changes no behaviour a user sees, so it is not on the public roadmap (`docs/roadmap.html`).
+changes no behaviour a user sees, so it is not on the public roadmap (`docs/en/roadmap/index.html`).
 
 | Item | Now | Change |
 | --- | --- | --- |

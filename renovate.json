@@ -124,7 +124,7 @@
       ]
     },
     {
-      "description": "PostgreSQL and Redis images appear in both compose files, the Ansible template and three workflows. Each moves as one pull request. A PostgreSQL major needs a dump and restore (docs/docs.html upgrade section), so majors are never auto-merged.",
+      "description": "PostgreSQL and Redis images appear in both compose files, the Ansible template and three workflows. Each moves as one pull request. A PostgreSQL major needs a dump and restore (docs/en/docs/index.html upgrade section), so majors are never auto-merged.",
       "groupName": "PostgreSQL",
       "matchPackageNames": [
         "postgres"

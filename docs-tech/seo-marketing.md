@@ -9,20 +9,20 @@ One primary keyword per page; no two pages share one. The title starts with it, 
 
 | Page | Primary | Secondary |
 | --- | --- | --- |
-| `index.html` | open source whistleblower software | free whistleblowing software, open source whistleblower tool, HinSchG software |
-| `docs.html` | self-hosted whistleblowing | whistleblowing Docker Compose, whistleblower platform configuration |
-| `roadmap.html` | OpenWhistle roadmap | whistleblowing software roadmap |
-| `changelog.html` | OpenWhistle changelog | OpenWhistle release notes |
-| `open-source-whistleblowing-software.html` (planned, lane EN) | GlobaLeaks alternative | SecureDrop alternative, open source whistleblowing software compared, Hush Line |
-| `de/index.html` | Hinweisgebersystem Software | HinSchG Software, Hinweisgeberschutzgesetz Software, interne Meldestelle Software, Hinweisgeber Software; kostenloses Hinweisgebersystem, Hinweisgebersystem Open Source as differentiator |
-| `blog/index.html` | HinSchG Blog | Hinweisgeberschutz Praxis |
-| `blog/hinschg-compliance-leitfaden.html` | HinSchG Pflichten | interne Meldestelle Pflicht, HinSchG Fristen |
-| `blog/interne-meldestelle-einrichten.html` | interne Meldestelle einrichten | Hinweisgebersystem Docker, interne Meldestelle Anleitung |
-| `blog/whistleblower-software-vergleich.html` | Hinweisgebersystem Anbieter Vergleich | Hinweisgeberschutzgesetz Software Vergleich, Anbieter Hinweisgebersystem, Hinweisgebersystem Anbieter, GlobaLeaks |
-| `blog/hinweisgebersystem-dsgvo-eu-hosting.html` | Hinweisgebersystem EU-Hosting | DSGVO-konformes Hinweisgebersystem, Hinweisgebersystem Verschlüsselung, Hinweisgebersystem mehrsprachig |
-| `blog/was-ist-neu-in-2-0.html` | OpenWhistle 2.0 | Hinweisgebersystem Update |
-| `blog/interne-meldestelle-kostenlos.html` | interne Meldestelle kostenlos | HinSchG Meldekanal kostenlos |
-| `blog/metadaten-entfernen-ohne-beweise-zu-veraendern.html` | Metadaten entfernen Hinweisgebersystem | Foto Metadaten anonyme Meldung |
+| `/en/` | open source whistleblower software | free whistleblowing software, open source whistleblower tool, HinSchG software |
+| `/en/docs/` | self-hosted whistleblowing | whistleblowing Docker Compose, whistleblower platform configuration |
+| `/en/roadmap/` | OpenWhistle roadmap | whistleblowing software roadmap |
+| `/en/changelog/` | OpenWhistle changelog | OpenWhistle release notes |
+| `/en/compare/` | GlobaLeaks alternative | SecureDrop alternative, open source whistleblowing software compared, Hush Line |
+| `/de/` | Hinweisgebersystem Software | HinSchG Software, Hinweisgeberschutzgesetz Software, interne Meldestelle Software, Hinweisgeber Software; kostenloses Hinweisgebersystem, Hinweisgebersystem Open Source as differentiator |
+| `/de/blog/` | HinSchG Blog | Hinweisgeberschutz Praxis |
+| `/de/blog/hinschg-compliance-leitfaden/` | HinSchG Pflichten | interne Meldestelle Pflicht, HinSchG Fristen |
+| `/de/blog/interne-meldestelle-einrichten/` | interne Meldestelle einrichten | Hinweisgebersystem Docker, interne Meldestelle Anleitung |
+| `/de/blog/whistleblower-software-vergleich/` | Hinweisgebersystem Anbieter Vergleich | Hinweisgeberschutzgesetz Software Vergleich, Anbieter Hinweisgebersystem, Hinweisgebersystem Anbieter, GlobaLeaks |
+| `/de/blog/hinweisgebersystem-dsgvo-eu-hosting/` | Hinweisgebersystem EU-Hosting | DSGVO-konformes Hinweisgebersystem, Hinweisgebersystem Verschlüsselung, Hinweisgebersystem mehrsprachig |
+| `/de/blog/was-ist-neu-in-2-0/` | OpenWhistle 2.0 | Hinweisgebersystem Update |
+| `/de/blog/interne-meldestelle-kostenlos/` | interne Meldestelle kostenlos | HinSchG Meldekanal kostenlos |
+| `/de/blog/metadaten-entfernen-ohne-beweise-zu-veraendern/` | Metadaten entfernen Hinweisgebersystem | Foto Metadaten anonyme Meldung |
 | `blog/en.html` and the seven English twins | the German page's primary, in English | none yet: no Search Console data for the English blog |
 
 The blog is bilingual since 2026-09-27: every German article has an English twin (hreflang, x-default English;
@@ -46,24 +46,24 @@ Maintainer export, openwhistle.net, the three months up to 2026-09-27. Position 
 | --- | --- | --- | --- | --- |
 | openwhistle | 15 | 46 | 3.2 | brand, see below |
 | open whistle | 2 | 19 | 4.2 | brand |
-| hinweisgebersystem software | 0 | 540 | 25.8 | `de/index.html` |
+| hinweisgebersystem software | 0 | 540 | 25.8 | `/de/` |
 | hinweisgebersystem anbieter | 0 | 315 | 18.1 | comparison article |
 | anbieter hinweisgebersystem | 0 | 180 | 17.7 | comparison article |
-| hinweisgeberschutzgesetz software | 0 | 135 | 20.7 | `de/index.html` |
+| hinweisgeberschutzgesetz software | 0 | 135 | 20.7 | `/de/` |
 | hinweisgebersystem anbieter vergleich | 0 | 131 | 18.5 | comparison article |
-| hinweisgeber software | 0 | 115 | 29.1 | `de/index.html` |
-| hinschg software | 0 | 98 | 19.4 | `de/index.html` |
+| hinweisgeber software | 0 | 115 | 29.1 | `/de/` |
+| hinschg software | 0 | 98 | 19.4 | `/de/` |
 | hinweisgeberschutzgesetz software vergleich | 0 | 60 | 15.5 | comparison article |
 | whistleblowing system anbieter | 0 | 47 | 74.2 | none (English term on German pages) |
 | wer bietet dsgvo-konforme hinweisgebersysteme mit eu-hosting an? | 0 | 31 | 10.2 | EU-hosting article, DE FAQ |
 | welche anbieter sind auf richtlinienkonformes hosting … in der eu spezialisiert? | 0 | 29 | 9.3 | EU-hosting article |
-| interne meldestelle software | 0 | 18 | 19.7 | `de/index.html` |
+| interne meldestelle software | 0 | 18 | 19.7 | `/de/` |
 | wer bietet hinweisgebersysteme … mit sicherem hosting innerhalb der eu? | 0 | 9 | 9.4 | EU-hosting article |
 | wer verkauft hinweisgeber-tools mit eingebauter verschlüsselung und dsgvo-konformität? | 0 | 6 | 9.7 | EU-hosting article, DE FAQ |
 | whistleblower software open source | 0 | 6 | 13.7 | `index.html` |
-| hinweisgeberschutzgesetz checkliste | 0 | 6 | 22.8 | `blog/hinschg-compliance-leitfaden.html` |
+| hinweisgeberschutzgesetz checkliste | 0 | 6 | 22.8 | `/de/blog/hinschg-compliance-leitfaden/` |
 | beste kostenlose whistleblowing tools | 0 | 6 | 3.7 | `index.html` |
-| hinweisgebersystem kostenlos | 0 | 2 | 2.0 | `de/index.html` |
+| hinweisgebersystem kostenlos | 0 | 2 | 2.0 | `/de/` |
 
 About 1,300 impressions at positions 15-29 brought no click: page two and three. The question queries sit at 9-10 with
 no click, answered by AI Overviews; each now has an answer whose first sentence can be quoted. Queries of five
@@ -97,7 +97,7 @@ openwhistle.pro, `Artaeon/openwhistle`). Maintainer actions, prepared, not run:
 | One `<title>` of at most 60 characters, primary keyword first | Titles ran past 100 characters and were cut in results |
 | A description of 120-160 characters, unique on the site | The English home page's description was German |
 | `<html lang>` is `en` or `de`; `og:locale` matches | The English home page declared `og:locale` `de_DE` |
-| Canonical = the address Pages serves the file at: `/`, `/de/`, `/blog/`, otherwise `name.html` | Sitemap, canonical and nav must name one URL |
+| Canonical = the address Pages serves the file at: `/en/`, `/de/`, `/<lang>/<page>/` | Sitemap, canonical and nav must name one URL |
 | hreflang `en`/`de`/`x-default` only where a translation exists, reciprocal | The German blog index named the English home page its `en` version |
 | `og:image` is `og-image.png`, 1200×630, with width, height and alt | It was a blank navy rectangle: every shared link showed an empty card |
 | JSON-LD parses; no `aggregateRating` or `review` | OpenWhistle has no ratings; invented ones break Google's policy |
@@ -110,25 +110,24 @@ openwhistle.pro, `Artaeon/openwhistle`). Maintainer actions, prepared, not run:
 When a page changes:
 
 1. A body edit to an article bumps `dateModified` and `article:modified_time`, together.
-2. Run `uv run python scripts/render_sitemap.py`: it rebuilds `docs/sitemap.xml` from the heads, `lastmod` from git.
-   Run it again after merging branches that touched pages.
-3. The changelog head lives in `scripts/render_changelog.py`; re-render, never edit `docs/changelog.html`.
+2. `scripts/build_site.py` writes `sitemap.xml`; `lastmod` from git.
+3. The changelog body is built from `CHANGELOG.md`; never edit the built page.
 
 `meta keywords` is not used: Google ignores it, Bing reads it as a spam signal.
 
 ### Head for the planned comparison page
 
-`docs/open-source-whistleblowing-software.html` did not exist when this contract was written. Its head copies
-`docs/roadmap.html`'s head, with:
+`docs/en/compare/index.html` did not exist when this contract was written. Its head copies
+`docs/en/roadmap/index.html`'s head, with:
 
 | Field | Value |
 | --- | --- |
 | `<title>` | `GlobaLeaks Alternatives: Open Source Compared \| OpenWhistle` (59 characters) |
 | description | 120-160 characters naming GlobaLeaks, SecureDrop and Hush Line, facts only |
-| canonical, `og:url` | `https://openwhistle.net/open-source-whistleblowing-software.html` |
+| canonical, `og:url` | `https://openwhistle.net/en/compare/` |
 | hreflang | none, unless a German translation exists; then en/de/x-default on both |
 | JSON-LD | `BreadcrumbList` (OpenWhistle, then the page); `FAQPage` only if the page shows an FAQ |
-| sitemap | re-run `scripts/render_sitemap.py`; the test fails until the page is listed |
+| sitemap | `scripts/build_site.py` writes it; the test fails until the page is listed |
 
 ## Backlink targets
 
@@ -182,7 +181,7 @@ Rendered, the list line reads:
 ```
 
 Commit message the repository asks for: `add OpenWhistle`. Facts for the PR text: one item; not in awesome-sysadmin;
-first release 2026-04-22; installation at `https://openwhistle.net/docs.html#installation`; merging takes a week or
+first release 2026-04-22; installation at `https://openwhistle.net/en/docs/#installation`; merging takes a week or
 more.
 
 ### AlternativeTo
@@ -278,7 +277,7 @@ at most:
 Self-hosted whistleblowing platform (HinSchG, EU 2019/1937). No IP logs. Docs: openwhistle.net
 ```
 
-The full description on both starts with a link to `https://openwhistle.net/docs.html#installation`, then the
+The full description on both starts with a link to `https://openwhistle.net/en/docs/#installation`, then the
 image tags.
 
 Operators who want to credit the project can add `<a href="https://openwhistle.net/">Powered by OpenWhistle</a>`

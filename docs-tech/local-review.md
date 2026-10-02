@@ -154,20 +154,15 @@ route renders it standalone) and every partial starting with `_`
 (`_field.html`, `_icons.html`, `admin/_audit.html`, `admin/_layout.html` —
 included by another template, never rendered on their own).
 
-### The website (`docs/`, static — GitHub Pages)
+### The website (`docs/` sources, built to `_site/`)
 
-Serve it from inside the directory, so `docs/`-relative links resolve the way
-they do once GitHub Pages roots the site at `docs/` via the `docs/CNAME` file
-(`openwhistle.net`):
+Build, then serve the output (GitHub Pages publishes `_site/`, not `docs/`):
 
 ```bash
-python3 -m http.server -d docs 8000
+uv run --group site python scripts/build_site.py && python -m http.server -d _site 8901
 ```
 
-Serving from the repository root instead breaks every `../`-relative link on
-`docs/de/index.html` and `docs/blog/*.html` (they resolve against `docs/`, not
-against the repo root), and every root-absolute link (`/docs.html`,
-`/roadmap.html`) 404s because there is no `docs/docs.html` at the server root.
+Rebuild after every edit to `docs/`; the server serves what was built.
 
 | Page | Notes |
 |---|---|
@@ -221,7 +216,7 @@ Fix every finding before the release PR — nothing here is carried forward.
 |---|---|
 | The admin login rate limiter | `MAX_LOGIN_ATTEMPTS` failed attempts within `LOGIN_LOCKOUT_MINUTES` locks a username. The one-click button never touches this limiter — it has no password or code to get wrong. The regular username/password + TOTP form (the demo-credentials autofill on the same page) still goes through it, so a sweep that signs in that way instead can trip it. |
 | `/setup` and `/admin/mfa/setup` redirect away on the plain/review stack | `DEMO_MODE` seeding completes setup and enrols the demo admin's TOTP before either page is ever requested. Use the setup stack (above) for both. |
-| Serving `docs/` from the wrong directory | `docs/`-relative links assume the server root is `docs/` itself, matching how GitHub Pages roots the site there via `docs/CNAME`. |
+| Serving `docs/` instead of `_site/` | `docs/` holds sources (templates, `.md`), not pages. Build first, serve `_site/`; the root-absolute links resolve there. |
 | A stack kept up across two review sessions | The four seeded demo reports (`OW-DEMO-00001`..`00004`) are always the same rows — nothing accumulates, so this one has no gotcha, unlike a counting assertion in an automated test. |
 
 ## Re-taking the documentation screenshots

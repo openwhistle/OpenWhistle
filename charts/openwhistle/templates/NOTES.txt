@@ -19,4 +19,4 @@ First-time setup:
   1. Open /setup to create the initial admin account with TOTP.
   2. The setup wizard disables itself permanently after completion.
 
-Documentation: https://openwhistle.net/docs.html
+Documentation: https://openwhistle.net/en/docs/

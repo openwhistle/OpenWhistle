@@ -1,7 +1,7 @@
 Sora and JetBrains Mono (self-hosted web fonts)
 ==========================================================
 
-Used by every page under docs/ (the landing pages, docs.html, roadmap.html
+Used by every page under docs/ (the landing pages, the docs, the roadmap
 and the blog) for --font-display/--font-body (Sora) and --font-mono
 (JetBrains Mono). Self-hosted so the pages load no font from an external
 CDN.

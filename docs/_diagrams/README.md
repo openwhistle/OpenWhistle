@@ -3,7 +3,7 @@
 One `.mmd` file per picture. `node scripts/render_diagrams.mjs` renders each to two
 SVGs — `<name>-light.svg` and `<name>-dark.svg` — under `docs/img/diagrams/`, via
 `npx @mermaid-js/mermaid-cli` pinned to an exact version, in the palette read from
-`docs/docs.html`. Both are committed; `node scripts/render_diagrams.mjs --check`
+`docs/assets/css/docs.css`. Both are committed; `node scripts/render_diagrams.mjs --check`
 fails if a source changed without a re-render. That check, and everything else
 that must hold about a committed diagram, runs as a pytest test in
 `tests/test_diagrams.py` — CI needs no node at all for it.
@@ -32,7 +32,7 @@ one-time step before a commit; nothing at request time or in CI runs node.
 
 Both variants go in the markup; CSS shows the one matching the page's
 `data-theme`, the same attribute the theme toggle already sets on `<html>` (see
-"Why not `<picture>`" below). The CSS lives once in `docs/docs.html`'s `<style>`;
+"Why not `<picture>`" below). The CSS lives once in `docs/assets/css/docs.css`;
 screenshots use the same pattern with `doc-shot`, `shot-light` and `shot-dark`.
 `tests/test_docs_figures.py` fails when a diagram or screenshot is on disk but not
 embedded with both twins, or an image has no alt text.
@@ -74,7 +74,7 @@ wire, since it never enters the viewport.
 
 ## Palette and fonts
 
-Colours are the CSS custom properties from `docs/docs.html`'s `:root` (light) and
+Colours are the CSS custom properties from `docs/assets/css/docs.css`'s `:root` (light) and
 `[data-theme="dark"]` blocks, copied into `scripts/render_diagrams.mjs`'s `THEMES`
 object rather than read from the stylesheet at render time — a design change
 that misses this file fails `tests/test_diagrams.py::test_palette_matches_docs_site`
