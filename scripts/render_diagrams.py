@@ -11,15 +11,22 @@ so CI needs neither. How to add a diagram: docs-tech/diagrams.md.
 
 from __future__ import annotations
 
+import base64
 import hashlib
+import io
 import json
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
 from collections.abc import Sequence
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
 import yaml
+from fontTools import subset
+from fontTools.ttLib import TTFont
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import diagram_geometry as geometry  # noqa: E402
@@ -165,3 +172,88 @@ def sources(names: Sequence[str] = ()) -> list[tuple[Path, Path]]:
 
 def svg_path(source: Path, out_dir: Path, theme: str) -> Path:
     return out_dir / f"{source.name.removesuffix('.drawio')}-{theme}.svg"
+
+
+def engine() -> str:
+    for name in ("podman", "docker"):
+        if shutil.which(name):
+            return name
+    raise SystemExit("render_diagrams.py needs podman or docker on PATH")
+
+
+def export(src_dir: Path, out_dir: Path) -> None:
+    """Every .drawio in src_dir to an SVG of the same stem in out_dir, offline, light, no font fetch."""
+    subprocess.run(
+        [engine(), "run", "--rm", "--network=none",
+         "-v", f"{src_dir}:/in:ro,Z", "-v", f"{out_dir}:/out:Z", IMAGE,
+         "-x", "-f", "svg", "--theme", "light", "--embed-svg-fonts", "false", "-b", "12",
+         "-o", "/out/", "/in/"],
+        check=True,
+    )
+
+
+def font_faces(svg: str) -> str:
+    """@font-face rules carrying exactly the Sora glyphs the picture draws, per weight."""
+    chars: dict[int, set[str]] = {}
+    for t in geometry.texts(svg):
+        chars.setdefault(t.weight, set()).update(t.text)
+    rules = []
+    for weight in sorted(chars):
+        font = TTFont(FONTS[weight], recalcTimestamp=False)
+        subsetter = subset.Subsetter(subset.Options())
+        subsetter.populate(text="".join(sorted(chars[weight])))
+        subsetter.subset(font)
+        font.flavor = "woff2"
+        buf = io.BytesIO()
+        font.save(buf)
+        data = base64.b64encode(buf.getvalue()).decode()
+        rules.append(
+            f'@font-face{{font-family:"Sora";font-weight:{weight};'
+            f'src:url(data:font/woff2;base64,{data}) format("woff2")}}'
+        )
+    return "".join(rules)
+
+
+def postprocess(svg: str, stamp_value: str) -> str:
+    """The exported SVG made self-contained: no DTD URL, unitless size, Sora inside, stamped."""
+    svg = re.sub(r"<!DOCTYPE[^>]*>\s*", "", svg)
+    root = re.search(r"<svg\b[^>]*>", svg)
+    if not root:
+        raise DiagramError("the export has no <svg> element")
+    tag = re.sub(r'\b(width|height)="([\d.]+)px"', r'\1="\2"', root.group(0))
+    tag = tag.replace("<svg ", f'<svg data-ow-stamp="{stamp_value}" ', 1)
+    style = f"<defs><style>{font_faces(svg)}</style></defs>"
+    return svg[: root.start()] + tag + style + svg[root.end() :]
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    todo = sources(sys.argv[1:] if argv is None else argv)
+    colors = palette()
+    failed = False
+    # Docker writes the exports as root; leaving them in /tmp beats crashing on cleanup.
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+        src_dir, out_dir = Path(tmp, "in"), Path(tmp, "out")
+        src_dir.mkdir()
+        out_dir.mkdir()
+        for source, _ in todo:
+            text = source.read_text(encoding="utf-8")
+            for theme in THEMES:
+                name = svg_path(source, src_dir, theme).with_suffix(".drawio")
+                name.write_text(expand(text, theme, colors), encoding="utf-8")
+        export(src_dir, out_dir)
+        for source, dest in todo:
+            text = source.read_text(encoding="utf-8")
+            for theme in THEMES:
+                target = svg_path(source, dest, theme)
+                exported = (out_dir / target.name).read_text(encoding="utf-8")
+                svg = postprocess(exported, stamp(text, theme))
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text(svg, encoding="utf-8")
+                for problem in geometry.problems(svg, roles_by_id(text)):
+                    failed = True
+                    print(f"{target}: {problem}", file=sys.stderr)
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

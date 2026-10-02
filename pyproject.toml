@@ -154,7 +154,7 @@ ignore = [
 # Diagram tooling: draw.io style strings and pinned image digests are single lines, and the only
 # XML parsed is the repository's own sources and the SVGs the pinned image wrote from them (expat
 # resolves no external entities), so the defusedxml hint does not apply.
-"scripts/render_diagrams.py" = ["E501", "S314"]
+"scripts/render_diagrams.py" = ["E501", "S314", "S603"]  # S603: fixed argv, pinned image
 "scripts/diagram_geometry.py" = ["E501", "S314"]
 "tests/test_render_diagrams.py" = ["E501", "S314"]
 "tests/test_diagram_geometry.py" = ["E501", "S314"]
