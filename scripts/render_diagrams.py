@@ -1,7 +1,7 @@
 """Render every draw.io diagram to a committed light and a dark SVG.
 
     uv run python scripts/render_diagrams.py              render every source
-    uv run python scripts/render_diagrams.py NAME ...     render the named ones (stem, e.g. home-flow.de)
+    uv run python scripts/render_diagrams.py NAME ...     render the named ones (stem: home-flow.de)
 
 A source names roles (style="ow:step"), never colours; ROLES is the one place style C
 lives, and DESIGN.md's front matter is the one place a colour lives. Rendering needs
@@ -21,6 +21,7 @@ import subprocess
 import sys
 import tempfile
 from collections.abc import Sequence
+from functools import cache
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
@@ -30,6 +31,9 @@ from fontTools.ttLib import TTFont
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import diagram_geometry as geometry  # noqa: E402
+
+# ET parses only the repository's own sources and the SVGs the pinned image wrote from them;
+# expat resolves no external entities, so the S314 (defusedxml) and S603 noqa marks below are safe.
 
 ROOT = Path(__file__).resolve().parents[1]
 DESIGN = ROOT / "DESIGN.md"
@@ -54,7 +58,10 @@ _EDGE = (
     "edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;endSize=6;"
     "strokeColor={ink};fontColor={ink};fontSize=11;labelBackgroundColor=none;"
 )
-_PILL = "rounded=1;arcSize=50;fillColor={accent};strokeColor=none;fontColor={accent-ink};fontStyle=1;"
+_PILL = (
+    "rounded=1;arcSize=50;fillColor={accent};strokeColor=none;"
+    "fontColor={accent-ink};fontStyle=1;"
+)
 
 # Style C, chosen by the maintainer on 2026-10-02 from three rendered variants.
 ROLES = {
@@ -63,10 +70,15 @@ ROLES = {
     "ow:step": _BOX + "fillColor={node};strokeColor=none;fontColor={ink};",
     "ow:result": _BOX + "fillColor={ink};strokeColor=none;fontColor={canvas};fontStyle=1;",
     "ow:decision": (
-        "rhombus;perimeter=rhombusPerimeter;fillColor={canvas};strokeColor={ink};fontColor={ink};fontSize=12;"
+        "rhombus;perimeter=rhombusPerimeter;fillColor={canvas};strokeColor={ink};"
+        "fontColor={ink};fontSize=12;"
     ),
-    "ow:store": "shape=cylinder3;boundedLbl=1;size=8;fillColor={node};strokeColor={ink};fontColor={ink};",
-    "ow:note": _BOX + "fillColor=none;strokeColor={muted};dashed=1;dashPattern=4 3;fontColor={muted};fontSize=12;",
+    "ow:store": (
+        "shape=cylinder3;boundedLbl=1;size=8;fillColor={node};strokeColor={ink};fontColor={ink};"
+    ),
+    "ow:note": _BOX
+    + "fillColor=none;strokeColor={muted};dashed=1;dashPattern=4 3;"
+    "fontColor={muted};fontSize=12;",
     "ow:group": _BOX + (
         "container=1;fillColor=none;strokeColor={hairline};verticalAlign=top;align=left;"
         "spacingLeft=12;spacingTop=6;fontColor={muted};fontSize=11;fontStyle=1;"
@@ -74,8 +86,10 @@ ROLES = {
     "ow:lane": "swimlane;startSize=32;" + _BOX + (
         "fillColor=none;swimlaneFillColor=none;strokeColor={hairline};fontColor={ink};fontStyle=1;"
     ),
-    "ow:lifeline": "shape=umlLifeline;perimeter=lifelinePerimeter;size=40;fillColor={node};strokeColor={muted};"
-    "fontColor={ink};",
+    "ow:lifeline": (
+        "shape=umlLifeline;perimeter=lifelinePerimeter;size=40;fillColor={node};"
+        "strokeColor={muted};fontColor={ink};"
+    ),
     "ow:edge": _EDGE,
     "ow:edge-optional": _EDGE + "dashed=1;dashPattern=4 3;",
     "ow:message": "endArrow=classic;endSize=6;strokeColor={ink};fontColor={ink};fontSize=11;"
@@ -90,6 +104,7 @@ class DiagramError(Exception):
     """A source the renderer refuses: it would not be style C in both themes."""
 
 
+@cache
 def palette(design: Path = DESIGN) -> dict[str, dict[str, str]]:
     """Theme -> token -> colour, from DESIGN.md's front matter, aliases included."""
     front = design.read_text(encoding="utf-8").split("---\n", 2)[1]
@@ -126,9 +141,9 @@ def _drawable(cell: ET.Element) -> bool:
 
 
 def expand(source: str, theme: str, colors: dict[str, dict[str, str]] | None = None) -> str:
-    """The source with every role replaced by its style in one theme; refuses what Sora cannot draw."""
-    theme_colors = (colors or palette())[theme]
-    root = ET.fromstring(source)
+    """The source with every role replaced by its style in one theme; refuses what Sora lacks."""
+    theme_colors = (colors if colors is not None else palette())[theme]
+    root = ET.fromstring(source)  # noqa: S314
     for cell in root.iter("mxCell"):
         if not _drawable(cell):
             continue
@@ -144,7 +159,7 @@ def expand(source: str, theme: str, colors: dict[str, dict[str, str]] | None = N
 def roles_by_id(source: str) -> dict[str, str]:
     return {
         cell.get("id", ""): cell.get("style", "").partition(";")[0]
-        for cell in ET.fromstring(source).iter("mxCell")
+        for cell in ET.fromstring(source).iter("mxCell")  # noqa: S314
         if _drawable(cell)
     }
 
@@ -182,8 +197,8 @@ def engine() -> str:
 
 
 def export(src_dir: Path, out_dir: Path) -> None:
-    """Every .drawio in src_dir to an SVG of the same stem in out_dir, offline, light, no font fetch."""
-    subprocess.run(
+    """Every .drawio in src_dir to an SVG of the same stem in out_dir: offline, light, no fonts."""
+    subprocess.run(  # noqa: S603
         [engine(), "run", "--rm", "--network=none",
          "-v", f"{src_dir}:/in:ro,Z", "-v", f"{out_dir}:/out:Z", IMAGE,
          "-x", "-f", "svg", "--theme", "light", "--embed-svg-fonts", "false", "-b", "12",

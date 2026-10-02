@@ -26,7 +26,8 @@ SOURCE = """<mxfile><diagram name="t"><mxGraphModel><root>
 
 
 def _styles(xml: str) -> dict[str, str]:
-    return {c.get("id"): c.get("style") for c in ET.fromstring(xml).iter("mxCell") if c.get("style")}
+    cells = ET.fromstring(xml).iter("mxCell")  # noqa: S314 (the test's own constant)
+    return {c.get("id"): c.get("style") for c in cells if c.get("style")}
 
 
 def test_palette_reads_both_themes_from_design_md() -> None:
@@ -103,7 +104,9 @@ def test_roles_by_id_maps_every_vertex_and_edge() -> None:
     assert renderer().roles_by_id(SOURCE) == {"a": "ow:start", "b": "ow:result", "e": "ow:edge"}
 
 
-def test_the_stamp_covers_source_theme_roles_image_and_fonts(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_the_stamp_covers_source_theme_roles_image_and_fonts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     r = renderer()
     base = r.stamp(SOURCE, "light")
     assert len(base) == 16
@@ -132,19 +135,23 @@ def test_sources_and_output_names(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
 
 EXPORTED = (
     '<?xml version="1.0" encoding="UTF-8"?>\n'
-    '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n'
+    '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" '
+    '"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n'
     '<svg xmlns="http://www.w3.org/2000/svg" style="color-scheme: light;" version="1.1" '
     'width="498px" height="745px" viewBox="0 0 498 745"><defs/><g>'
-    '<g data-cell-id="a"><g fill="#ffffff" font-family="Sora" font-weight="bold" text-anchor="middle" '
+    '<g data-cell-id="a"><g fill="#ffffff" font-family="Sora" font-weight="bold" '
+    'text-anchor="middle" '
     'font-size="13px"><text x="60" y="25">Submit</text></g></g>'
-    '<g data-cell-id="b"><g fill="#0a0a0b" font-family="Sora" text-anchor="middle" font-size="13px">'
+    '<g data-cell-id="b"><g fill="#0a0a0b" font-family="Sora" text-anchor="middle" '
+    'font-size="13px">'
     '<text x="60" y="105">Größe § 1</text></g></g></g></svg>'
 )
 
 
 def _faces(svg: str) -> dict[int, TTFont]:
     out = {}
-    for weight, data in re.findall(r"font-weight:(\d+);src:url\(data:font/woff2;base64,([^)]+)\)", svg):
+    pattern = r"font-weight:(\d+);src:url\(data:font/woff2;base64,([^)]+)\)"
+    for weight, data in re.findall(pattern, svg):
         out[int(weight)] = TTFont(io.BytesIO(base64.b64decode(data)))
     return out
 
@@ -176,7 +183,8 @@ def test_engine_prefers_podman(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_engine_falls_back_to_docker(monkeypatch: pytest.MonkeyPatch) -> None:
     r = renderer()
-    monkeypatch.setattr(r.shutil, "which", lambda name: "/usr/bin/docker" if name == "docker" else None)
+    only_docker = {"docker": "/usr/bin/docker"}
+    monkeypatch.setattr(r.shutil, "which", only_docker.get)
     assert r.engine() == "docker"
 
 
@@ -187,7 +195,9 @@ def test_engine_names_what_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
         r.engine()
 
 
-def test_export_runs_the_pinned_image_offline_in_light(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_export_runs_the_pinned_image_offline_in_light(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     r = renderer()
     calls: list[list[str]] = []
     monkeypatch.setattr(r, "engine", lambda: "podman")
@@ -202,7 +212,9 @@ def test_export_runs_the_pinned_image_offline_in_light(monkeypatch: pytest.Monke
 def test_renovate_moves_the_image_tag_and_digest_together() -> None:
     config = json.loads((Path(__file__).parents[1] / "renovate.json").read_text())
     manager = next(
-        m for m in config["customManagers"] if any("render_diagrams" in p for p in m["managerFilePatterns"])
+        m
+        for m in config["customManagers"]
+        if any("render_diagrams" in p for p in m["managerFilePatterns"])
     )
     script = (Path(__file__).parents[1] / "scripts" / "render_diagrams.py").read_text()
     pattern = manager["matchStrings"][0].replace("(?<", "(?P<")
