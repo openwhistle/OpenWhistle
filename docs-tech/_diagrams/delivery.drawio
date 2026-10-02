@@ -4,7 +4,7 @@
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
-        <mxCell id="p0" value="P0 spike&#xa;draw.io, Pagefind, CSP" style="ow:step" vertex="1" parent="1">
+        <mxCell id="p0" value="P0 spike&#xa;draw.io, Pagefind, CSP" style="ow:start" vertex="1" parent="1">
           <mxGeometry x="170" y="0" width="210" height="52" as="geometry"/>
         </mxCell>
         <mxCell id="p1" value="P1 build system&#xa;layouts, nav, i18n, redirects" style="ow:step" vertex="1" parent="1">
