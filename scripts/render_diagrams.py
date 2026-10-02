@@ -101,6 +101,8 @@ ROLES = {
 
 _TOKEN = re.compile(r"\{([a-z0-9-]+)\}")
 _COLOR_KEY = re.compile(r"(?:^|;)([A-Za-z]*Color)=")
+# COMMON's keys: the geometry measures Sora drawn as plain, unwrapped SVG text, nothing else.
+_COMMON_KEY = re.compile(r"(?:^|;)(fontFamily|html|whiteSpace)=")
 
 
 class DiagramError(Exception):
@@ -130,6 +132,8 @@ def expand_style(style: str, colors: dict[str, str]) -> str:
         raise DiagramError(f"unknown role {role!r}; a style starts with one of {sorted(ROLES)}")
     if m := _COLOR_KEY.search(rest):
         raise DiagramError(f"{m.group(1)} in a source: colours come from the role, not the cell")
+    if m := _COMMON_KEY.search(rest):
+        raise DiagramError(f"{m.group(1)} in a source: COMMON sets it, the geometry measures it")
 
     def token(m: re.Match[str]) -> str:
         if m.group(1) not in colors:
@@ -181,6 +185,10 @@ def stamp(source: str, theme: str) -> str:
 
 def sources(names: Sequence[str] = ()) -> list[tuple[Path, Path]]:
     found = [(p, out) for src, out in DIRS.items() for p in sorted(src.glob("*.drawio"))]
+    seen: dict[str, Path] = {}
+    for p, _ in found:  # main() expands every source into one directory, by name
+        if (first := seen.setdefault(p.name, p)) != p:
+            raise DiagramError(f"{p.name} exists twice: {first} and {p}; rename one")
     if names:
         found = [f for f in found if f[0].name.removesuffix(".drawio") in names]
         unknown = set(names) - {f[0].name.removesuffix(".drawio") for f in found}
@@ -201,9 +209,15 @@ def engine() -> str:
 
 
 def export(src_dir: Path, out_dir: Path) -> None:
-    """Every .drawio in src_dir to an SVG of the same stem in out_dir: offline, light, no fonts."""
+    """Every .drawio in src_dir to an SVG of the same stem in out_dir: offline, light, no fonts.
+
+    The image stops after DRAWIO_DESKTOP_COMMAND_TIMEOUT, 10 s by default: too short for all
+    34 exports in one run (exit 124), so the limit grows with the number of files.
+    """
+    limit = 10 + 5 * len(list(src_dir.glob("*.drawio")))
     subprocess.run(  # noqa: S603
         [engine(), "run", "--rm", "--network=none",
+         "-e", f"DRAWIO_DESKTOP_COMMAND_TIMEOUT={limit}s",
          "-v", f"{src_dir}:/in:ro,Z", "-v", f"{out_dir}:/out:Z", IMAGE,
          "-x", "-f", "svg", "--theme", "light", "--embed-svg-fonts", "false", "-b", "12",
          "-o", "/out/", "/in/"],

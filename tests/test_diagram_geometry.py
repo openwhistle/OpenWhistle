@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from tests.diagram_tools import geometry
 
 HEAD = '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400"><g>'
@@ -36,7 +38,10 @@ def decision(cid: str, cx: float, cy: float, w: float, h: float, label: str) -> 
 
 
 def edge(
-    cid: str, points: list[tuple[float, float]], label: str = "", at: tuple[float, float] = (0, 0)
+    cid: str,
+    points: Sequence[tuple[float, float]],
+    label: str = "",
+    at: tuple[float, float] = (0, 0),
 ) -> str:
     d = "M " + " L ".join(f"{x} {y}" for x, y in points)
     (x1, y1) = points[-1]
@@ -99,7 +104,14 @@ def test_text_in_a_decision_corner_is_found() -> None:
 
 def test_a_label_on_an_arrowhead_is_found() -> None:
     picture = svg(edge("e", [(100, 0), (100, 100)], "x", at=(108, 97)))
-    assert "e: label 'x' touches an arrowhead of e" in geometry().problems(picture, ROLES)
+    assert "e: text 'x' touches an arrowhead of e" in geometry().problems(picture, ROLES)
+
+
+def test_node_text_beside_an_arrowhead_is_found() -> None:
+    """The arrowhead is 8 px wide; the line it ends clears the text, the head does not."""
+    text = _text(145, 14, "Start", anchor="end")
+    picture = svg(node("a", 0, 0, 200, 40, inner=text), edge("e", [(150, -60), (150, 10)]))
+    assert geometry().problems(picture, ROLES) == ["a: text 'Start' touches an arrowhead of e"]
 
 
 def test_a_label_over_a_node_is_found() -> None:
@@ -133,6 +145,18 @@ def test_a_glyph_sora_lacks_is_found() -> None:
     assert "a: Sora has no glyph for ['→'] in '80 → 443'" in geometry().problems(picture, ROLES)
 
 
+def test_text_in_another_font_is_refused() -> None:
+    """Only Sora is measured: a text drawn in any other font would make every check fiction."""
+    sora = svg(node("a", 0, 0, 200, 40, "Start"))
+    picture = sora.replace('font-family="Sora"', 'font-family="Arial"')
+    try:
+        geometry().problems(picture, ROLES)
+    except ValueError as err:
+        assert "'Arial'" in str(err) and "not Sora" in str(err)
+    else:
+        raise AssertionError("a text in Arial was measured as Sora")
+
+
 def test_bold_is_measured_wider() -> None:
     g = geometry()
     regular = g.text_box("Submit", 0, 0, 13, 400, "start")
@@ -164,7 +188,9 @@ def group(
     )
 
 
-def lane(cid: str, x: float, y: float, w: float, h: float, label: str, inner: str = "") -> str:
+def lane(
+    cid: str, x: float, y: float, w: float, h: float, label: str, inner: str = "", ty: float = 21
+) -> str:
     r, b, head = x + w, y + h, y + 32  # right edge, bottom edge, header separator
     outline = (
         f"M {r} {head} L {r} {y + 7} Q {r} {y} {r - 7} {y} L {x + 7} {y} Q {x} {y} {x} {y + 7} "
@@ -180,7 +206,7 @@ def lane(cid: str, x: float, y: float, w: float, h: float, label: str, inner: st
     )
     return (
         f'<g data-cell-id="{cid}"><g>{paths}</g>'
-        f"{_text(x + w / 2, y + 21, label, 12, True)}{inner}</g>"
+        f"{_text(x + w / 2, y + ty, label, 12, True)}{inner}</g>"
     )
 
 
@@ -199,6 +225,12 @@ def test_a_container_header_may_sit_close_to_its_own_border() -> None:
     """Only the container's own text is exempt from its border; a header is always inside it."""
     picture = svg(group("g", 20, 20, 300, 100, "Group", dy=10.6))
     assert geometry().problems(picture, ROLES) == []
+
+
+def test_a_lane_title_on_its_own_header_separator_is_found() -> None:
+    """Only the outer border is exempt; the separator runs through the lane, under its title."""
+    picture = svg(lane("l", 20, 20, 400, 200, "Lane", ty=36))
+    assert "l: text 'Lane' touches a line of l" in geometry().problems(picture, ROLES)
 
 
 def test_a_label_on_a_group_border_is_found() -> None:

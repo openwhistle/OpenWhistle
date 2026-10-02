@@ -29,7 +29,9 @@ PAD_X = 6.0  # room between a text line and the side of its shape
 PAD_Y = 2.0
 CLEAR = 3.0  # gap between any text and any line, arrowhead or foreign node
 
-_INHERITED = ("font-size", "font-weight", "text-anchor", "fill", "stroke", "stroke-width")
+_INHERITED = (
+    "font-family", "font-size", "font-weight", "text-anchor", "fill", "stroke", "stroke-width"
+)
 _NUMBER = r"-?(?:\d+\.?\d*|\.\d+)(?:[eE]-?\d+)?"
 _TRANSLATE = re.compile(rf"translate\(\s*({_NUMBER})\s*[, ]?\s*({_NUMBER})?\s*\)")
 _PATH_TOKEN = re.compile(rf"[MLQCZ]|{_NUMBER}")
@@ -205,6 +207,8 @@ def _cells(svg: str) -> dict[str, Cell]:
                     raise ValueError(f"cell {cell.id}: a positioned <tspan> is not measured")
             weight = 700 if attrs.get("font-weight") in ("bold", "700") else 400
             line = "".join(el.itertext())
+            if (family := attrs.get("font-family")) != "Sora":
+                raise ValueError(f"cell {cell.id}: {line!r} is drawn in {family!r}, not Sora")
             size = _num(attrs.get("font-size", "12"))
             box = text_box(line, _num(el.get("x")) + ox, _num(el.get("y")) + oy, size, weight,
                            attrs.get("text-anchor", "start"))
@@ -285,6 +289,12 @@ def _ancestors(found: dict[str, Cell], cid: str) -> list[str]:
     return out
 
 
+def _on_border(seg: Segment, box: Box) -> bool:
+    """A side or a rounded corner of the box, not a line across it (a lane's header separator)."""
+    mx, my = (seg[0][0] + seg[1][0]) / 2, (seg[0][1] + seg[1][1]) / 2
+    return min(mx - box.x0, box.x1 - mx, my - box.y0, box.y1 - my) <= CLEAR  # corner: ~2 px in
+
+
 def _lines(found: dict[str, Cell], roles: dict[str, str]) -> list[tuple[str, Segment]]:
     """Every line a text must clear: edges, lifelines, and the borders of groups and lanes."""
     lines = []
@@ -329,17 +339,15 @@ def _text_problems(cid: str, cell: Cell, role: str, ctx: _Context) -> list[str]:
         if role not in EDGES and not _fits(t, cell, role):
             out.append(f"{cid}: text {t.text!r} does not fit its shape")
         near = t.box.grow(CLEAR)
+        outline = _outline(cell)
         for lid, seg in lines:
-            if lid == cid and role in CONTAINERS:
-                continue  # a container's own header sits inside its own border
+            if lid == cid and role in CONTAINERS and outline and _on_border(seg, outline):
+                continue  # a container's own header sits inside its own outer border
             if _hits(near, seg):
                 out.append(f"{cid}: text {t.text!r} touches a line of {lid}")
+        out += [f"{cid}: text {t.text!r} touches an arrowhead of {hid}" for hid, b in heads
+                if near.overlaps(b)]
         if role in EDGES:
-            out += [
-                f"{cid}: label {t.text!r} touches an arrowhead of {hid}"
-                for hid, b in heads
-                if near.overlaps(b)
-            ]
             out += [
                 f"{cid}: label {t.text!r} overlaps {nid}"
                 for nid, b in solid.items()
@@ -371,7 +379,7 @@ def problems(svg: str, roles: dict[str, str]) -> list[str]:
         if roles.get(cid) not in EDGES and (box := _outline(c)) is not None
     }
     for cid, box in shapes.items():
-        parent = found[cid].parent
+        parent = found[cid].parent or ""
         if roles.get(parent) in CONTAINERS and parent in shapes and not box.within(shapes[parent]):
             out.append(f"{cid} sticks out of {parent}")
     ids = sorted(shapes)

@@ -27,7 +27,7 @@ SOURCE = """<mxfile><diagram name="t"><mxGraphModel><root>
 
 def _styles(xml: str) -> dict[str, str]:
     cells = ET.fromstring(xml).iter("mxCell")  # noqa: S314 (the test's own constant)
-    return {c.get("id"): c.get("style") for c in cells if c.get("style")}
+    return {c.get("id", ""): c.get("style", "") for c in cells if c.get("style")}
 
 
 def test_palette_reads_both_themes_from_design_md() -> None:
@@ -76,6 +76,15 @@ def test_a_colour_in_a_source_is_refused(key: str) -> None:
     r = renderer()
     with pytest.raises(r.DiagramError, match="colours come from the role"):
         r.expand_style(f"ow:step;{key}=#ff0000", r.palette()["light"])
+
+
+@pytest.mark.parametrize("override", ["fontFamily=Comic Sans MS", "html=1", "whiteSpace=wrap"])
+def test_a_font_or_text_mode_in_a_source_is_refused(override: str) -> None:
+    """The geometry measures Sora drawn as plain SVG text; COMMON sets all three."""
+    r = renderer()
+    key = override.partition("=")[0]
+    with pytest.raises(r.DiagramError, match=rf"{key} in a source"):
+        r.expand_style(f"ow:step;exitX=1;{override}", r.palette()["light"])
 
 
 def test_expand_gives_every_cell_its_theme() -> None:
@@ -168,6 +177,20 @@ def test_sources_and_output_names(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
         r.sources(["nope"])
 
 
+def test_one_stem_in_both_source_dirs_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Both directories expand into one temporary directory: the second would overwrite."""
+    r = renderer()
+    a, b = tmp_path / "a", tmp_path / "b"
+    for d in (a, b):
+        d.mkdir()
+        (d / "flow.drawio").write_text(SOURCE)
+    monkeypatch.setattr(r, "DIRS", {a: tmp_path / "out-a", b: tmp_path / "out-b"})
+    with pytest.raises(r.DiagramError, match=r"flow\.drawio.*a/flow\.drawio.*b/flow\.drawio"):
+        r.sources()
+
+
 EXPORTED = (
     '<?xml version="1.0" encoding="UTF-8"?>\n'
     '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" '
@@ -194,7 +217,8 @@ def _faces(svg: str) -> dict[int, TTFont]:
 def test_postprocess_drops_the_doctype_and_the_px_units_and_stamps() -> None:
     out = renderer().postprocess(EXPORTED, "0123456789abcdef")
     assert "<!DOCTYPE" not in out and "svg11.dtd" not in out
-    assert "px" not in re.search(r"<svg\b[^>]*>", out)[0]
+    root = re.search(r"<svg\b[^>]*>", out)
+    assert root and "px" not in root[0]
     assert 'data-ow-stamp="0123456789abcdef"' in out
 
 
@@ -237,8 +261,12 @@ def test_export_runs_the_pinned_image_offline_in_light(
     calls: list[list[str]] = []
     monkeypatch.setattr(r, "engine", lambda: "podman")
     monkeypatch.setattr(r.subprocess, "run", lambda args, check: calls.append(args))
+    (tmp_path / "in").mkdir()
+    for n in range(3):
+        (tmp_path / "in" / f"{n}.drawio").write_text(SOURCE)
     r.export(tmp_path / "in", tmp_path / "out")
     args = calls[0]
+    assert args[args.index("-e") + 1] == "DRAWIO_DESKTOP_COMMAND_TIMEOUT=25s"  # 10 s + 5 per file
     assert args[:2] == ["podman", "run"] and "--network=none" in args and r.IMAGE in args
     assert args[args.index("--theme") + 1] == "light"
     assert args[args.index("--embed-svg-fonts") + 1] == "false"
@@ -269,7 +297,7 @@ def test_postprocess_gives_every_side_the_same_margin() -> None:
     )
     out = renderer().postprocess(export, "0" * 16)
     root = ET.fromstring(out)  # noqa: S314
-    x, y, w, h = (int(v) for v in root.get("viewBox").split())
+    x, y, w, h = (int(v) for v in root.get("viewBox", "").split())
     assert (root.get("width"), root.get("height")) == (str(w), str(h))
     # content spans 30.5..130.5 x 40.5..90.5, so whole pixels 30..131 x 40..91
     assert (30 - x, 40 - y, x + w - 131, y + h - 91) == (12, 12, 12, 12)

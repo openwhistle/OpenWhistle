@@ -8,6 +8,7 @@ new page with a diagram is checked without anyone adding it here.
 from __future__ import annotations
 
 import re
+from typing import Literal
 
 import pytest
 from playwright.sync_api import Browser, Page
@@ -33,7 +34,10 @@ _LOAD_ALL = """() => Promise.all([...document.querySelectorAll('figure.diagram i
 }))"""
 
 
-def _open(browser: Browser, url: str, width: int, scheme: str = "dark") -> Page:
+Theme = Literal["dark", "light"]
+
+
+def _open(browser: Browser, url: str, width: int, scheme: Theme = "dark") -> Page:
     ctx = browser.new_context(viewport={"width": width, "height": 900}, color_scheme=scheme)
     page = ctx.new_page()
     page.goto(url)
@@ -50,7 +54,7 @@ def test_diagram_pages_are_found() -> None:
 @pytest.mark.parametrize("theme", ["dark", "light"])
 @pytest.mark.parametrize("url", URLS)
 def test_each_figure_shows_exactly_its_themes_twin(
-    browser: Browser, docs_server_url: str, url: str, theme: str
+    browser: Browser, docs_server_url: str, url: str, theme: Theme
 ) -> None:
     page = _open(browser, docs_server_url + url, 1440, theme)
     assert page.evaluate("document.documentElement.dataset.theme") == theme
@@ -63,7 +67,7 @@ def test_each_figure_shows_exactly_its_themes_twin(
 @pytest.mark.parametrize("theme", ["dark", "light"])
 @pytest.mark.parametrize("url", URLS)
 def test_each_diagram_sits_on_the_canvas(
-    browser: Browser, docs_server_url: str, url: str, theme: str
+    browser: Browser, docs_server_url: str, url: str, theme: Theme
 ) -> None:
     """A diagram's cards are surface; on a surface section without the canvas they vanish."""
     page = _open(browser, docs_server_url + url, 1440, theme)

@@ -16,14 +16,16 @@
         <mxCell id="dark" value="*-dark.svg" style="ow:result" vertex="1" parent="1">
           <mxGeometry x="260" y="188" width="110" height="40" as="geometry"/>
         </mxCell>
-        <mxCell id="stamp" value="stamp: hash of source, roles,&#xa;palette, image, fonts" style="ow:note" vertex="1" parent="1">
-          <mxGeometry x="420" y="188" width="210" height="52" as="geometry"/>
+        <mxCell id="stamp" value="stamp: hash of source, theme,&#xa;roles, palette, image, fonts&#xa;and both scripts" style="ow:note" vertex="1" parent="1">
+          <mxGeometry x="420" y="188" width="210" height="68" as="geometry"/>
         </mxCell>
         <mxCell id="e-sources" style="ow:edge" edge="1" parent="1" source="sources" target="renderer">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
-        <mxCell id="e-light" style="ow:edge;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="renderer" target="light">
-          <mxGeometry relative="1" as="geometry"/>
+        <mxCell id="e-light" value="light palette" style="ow:edge;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="renderer" target="light">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="6" y="44"/>
+          </mxGeometry>
         </mxCell>
         <mxCell id="e-dark" value="dark palette" style="ow:edge;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="renderer" target="dark">
           <mxGeometry relative="1" as="geometry">

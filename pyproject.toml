@@ -109,6 +109,8 @@ module = [
     "ldap.*",
     "apscheduler.*",
     "pythonjsonlogger.*",
+    "fontTools.*",
+    "yaml.*",
 ]
 ignore_missing_imports = true
 
