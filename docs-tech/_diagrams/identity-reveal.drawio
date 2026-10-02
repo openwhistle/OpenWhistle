@@ -22,9 +22,9 @@
         <mxCell id="identity" value="Identity in this response&#xa;only, no cache" style="ow:end" vertex="1" parent="1">
           <mxGeometry x="0" y="352" width="210" height="52" as="geometry"/>
         </mxCell>
-        <mxCell id="e-open" value="name and contact&#xa;not decrypted" style="ow:edge" edge="1" parent="1" source="open-case" target="button">
+        <mxCell id="e-open" value="name and contact&#xa;not decrypted" style="ow:edge;align=left;" edge="1" parent="1" source="open-case" target="button">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint as="offset" x="58" y="0"/>
+            <mxPoint as="offset" x="7" y="0"/>
           </mxGeometry>
         </mxCell>
         <mxCell id="e-post" value="POST + CSRF + reason" style="ow:edge;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="button" target="may-view">
