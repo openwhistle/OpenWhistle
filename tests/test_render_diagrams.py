@@ -119,6 +119,33 @@ def test_the_stamp_covers_source_theme_roles_image_and_fonts(
     assert r.stamp(SOURCE, "light") != base
 
 
+@pytest.mark.parametrize("step", ["export", "postprocess", "font_faces"])
+def test_the_stamp_covers_the_export_and_its_post_processing(
+    monkeypatch: pytest.MonkeyPatch, step: str
+) -> None:
+    r = renderer()
+    base = r.stamp(SOURCE, "light")
+
+    def changed(*_args: object) -> None:
+        """Stands in for a step whose flags or output handling were edited."""
+
+    monkeypatch.setattr(r, step, changed)
+    assert r.stamp(SOURCE, "light") != base
+
+
+def test_a_missing_export_names_the_source_and_the_file(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    r = renderer()
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "flow.drawio").write_text(SOURCE)
+    monkeypatch.setattr(r, "DIRS", {src: tmp_path / "out"})
+    monkeypatch.setattr(r, "export", lambda *_: None)  # writes nothing
+    with pytest.raises(r.DiagramError, match=r"flow\.drawio: the export wrote no flow-light\.svg"):
+        r.main([])
+
+
 def test_sources_and_output_names(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     r = renderer()
     src, out = tmp_path / "src", tmp_path / "out"

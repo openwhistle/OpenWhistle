@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import inspect
 import io
 import json
 import re
@@ -169,7 +170,8 @@ def stamp(source: str, theme: str) -> str:
     fonts = {str(w): hashlib.sha256(p.read_bytes()).hexdigest() for w, p in FONTS.items()}
     payload = json.dumps(
         {"source": source, "theme": theme, "common": COMMON, "roles": ROLES, "aliases": ALIASES,
-         "palette": palette()[theme], "image": IMAGE, "fonts": fonts},
+         "palette": palette()[theme], "image": IMAGE, "fonts": fonts,
+         "pipeline": [inspect.getsource(f) for f in (export, postprocess, font_faces)]},
         sort_keys=True,
     )
     return hashlib.sha256(payload.encode()).hexdigest()[:16]
@@ -260,7 +262,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             text = source.read_text(encoding="utf-8")
             for theme in THEMES:
                 target = svg_path(source, dest, theme)
-                exported = (out_dir / target.name).read_text(encoding="utf-8")
+                produced = out_dir / target.name
+                if not produced.is_file():
+                    raise DiagramError(f"{source.name}: the export wrote no {produced.name}")
+                exported = produced.read_text(encoding="utf-8")
                 svg = postprocess(exported, stamp(text, theme))
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_text(svg, encoding="utf-8")
