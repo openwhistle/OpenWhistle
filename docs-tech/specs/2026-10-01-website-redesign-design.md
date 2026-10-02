@@ -20,7 +20,7 @@ The law is a profile, not the foundation:
 flowchart TB
   K["Core: ISO 37002"] --> EU["EU Directive 2019/1937"]
   EU --> DE["HinSchG (deepest)"]
-  K --> OT["Further jurisdictions: one nav.yml entry each (UK PIDA, US SOX §301, FR Sapin II, BR Lei 12.846)"]
+  K --> OTHER["Further jurisdictions: one nav.yml entry each (UK PIDA, US SOX §301, FR Sapin II, BR Lei 12.846)"]
 ```
 
 What the product is and why it is trustworthy is written law-agnostic. Each jurisdiction page states concretely

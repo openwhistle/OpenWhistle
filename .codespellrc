@@ -13,7 +13,6 @@ check-hidden = false
 # produkt — German URL path segment of a linked vendor page, docs/en/blog/*.html
 # alle — German UI string, docs/_data/i18n/de.yml
 # titel, caf — German test data and a percent-encoded "café", tests/test_build_site.py
-# OT — a Mermaid node id, docs-tech/specs/2026-10-01-website-redesign-design.md
 # Sie, Ende, German month names — German test sentences and quoted German texts,
 #   tests/test_docs_prose.py, CONTRIBUTING.md, docs-tech/seo-marketing.md
-ignore-words-list = produkt,alle,titel,caf,ot,alph,foto,covert,Tage,Titel,ist,unter,oder,garantie,Sie,Ende,Januar,Februar,Juni,Juli,Oktober,Dezember
+ignore-words-list = produkt,alle,titel,caf,alph,foto,covert,Tage,Titel,ist,unter,oder,garantie,Sie,Ende,Januar,Februar,Juni,Juli,Oktober,Dezember
