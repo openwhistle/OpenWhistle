@@ -1,12 +1,12 @@
 # Diagrams
 
-How-to and reference for the maintainer. Every diagram is a draw.io XML source rendered to a committed light
+How-to for the maintainer, with its lookup tables. Every diagram is a draw.io XML source rendered to a committed light
 and dark SVG; CI checks the SVGs and never runs draw.io.
 
 | Source | Rendered to | Shown by |
 | --- | --- | --- |
-| `docs/_diagrams/<name>.drawio`, German pages `<name>.de.drawio` | `docs/img/diagrams/<name>-{light,dark}.svg` | two `<img>`, CSS picks one from `data-theme` |
-| `docs-tech/_diagrams/<name>.drawio` | `docs-tech/img/diagrams/<name>-{light,dark}.svg` | `<picture>` with `prefers-color-scheme`, as GitHub renders it |
+| `docs/_diagrams/<name>.drawio`, German pages `<name>.de.drawio` | `docs/img/diagrams/<name>-{light,dark}.svg` | two `<img>`; `layout.css` picks one from `data-theme`, the site's toggle |
+| `docs-tech/_diagrams/<name>.drawio` | `docs-tech/img/diagrams/<name>-{light,dark}.svg` | `<picture>` with `prefers-color-scheme`: GitHub has no toggle |
 
 ## Add or change a diagram
 
@@ -31,8 +31,10 @@ and dark SVG; CI checks the SVGs and never runs draw.io.
 | `ow:lifeline`, `ow:message` | sequence diagram |
 | `ow:edge`, `ow:edge-optional` | arrow, solid or dashed |
 
-Style C was chosen by the maintainer from three rendered variants. Start and end in emerald make two accents per
-diagram, an exception to "one accent per screen" that DESIGN.md records.
+A role, not a hex: `#ffffff` is canvas, surface-2 and accent-ink in light, each with its own dark value, so a
+colour map would be ambiguous. Colours live in DESIGN.md's front matter; the renderer reads them. Style C was
+chosen by the maintainer from three rendered variants; its two accents (start and end) are an exception DESIGN.md
+records under "One accent, mostly withheld".
 
 ## Rules the tests hold
 
@@ -40,18 +42,10 @@ diagram, an exception to "one accent per screen" that DESIGN.md records.
 | --- | --- |
 | An edge label has `<mxPoint as="offset" …/>` beside its line | "yes" on the arrow is a production defect; `problems()` measures it |
 | A decision uses explicit `exitX/exitY` ports | Without them edges start inside the diamond and cross its label |
-| Line breaks by hand (`&#xa;`); never `whiteSpace=wrap` | `wrap` exports `foreignObject`, which an `<img>` does not render reliably |
+| Line breaks by hand (`&#xa;`); no `fontFamily`, `html` or `whiteSpace` in a source | The geometry measures Sora as plain SVG text; `wrap` exports `foreignObject`, which an `<img>` does not render reliably. The renderer refuses all three |
 | Only glyphs Sora has: no `→`, `✓` | A fallback font breaks the measured layout |
 | A German page shows `.de` diagrams, an English page none | `test_pages_show_diagrams_in_their_own_language` |
 | `--theme light` on every export | `auto` writes `light-dark()`, which follows the OS, not the site's toggle |
-
-## Why
-
-- **Roles, not hex.** `#ffffff` is canvas, surface-2 and accent-ink in light, with three different dark values,
-  so a colour map is ambiguous. Colours live in DESIGN.md's front matter; the renderer reads them.
-- **Two `<img>`, not `<picture>`, on the site.** The site's theme is the `data-theme` toggle. A
-  `prefers-color-scheme` source follows the OS and disagrees as soon as someone toggles. GitHub has no toggle,
-  so `docs-tech/` uses `<picture>`.
-- **Stamp.** `data-ow-stamp` hashes source, roles, palette, image and fonts; any change makes the SVG stale.
-- **Image bump.** Renovate moves tag and digest of the draw.io image together; every stamp goes stale and the PR
-  stays red until re-rendered.
+| Commit both SVGs with their source | `data-ow-stamp` hashes source, theme, roles, palette, image, fonts and both scripts: any change makes the SVG stale |
+| Renovate moves tag and digest of the draw.io image together | Every stamp goes stale; the PR stays red until re-rendered |
+| A site diagram renders at ≥ 0.85 of its width at 1280–1920 px | A narrow column shrinks 13 px labels below 11 px; `tests/e2e/test_docs_diagrams.py` measures it |
