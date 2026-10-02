@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import AdminRole, AdminUser
 from app.services.auth import hash_password
+from tests.built_site import built, css_of, page, pages
 
 
 async def _search(client: AsyncClient, q: str, **form: str):  # type: ignore[no-untyped-def]
@@ -478,7 +479,7 @@ def test_brand_secondary_colour_is_gone() -> None:
     assert "brand_secondary_color" not in Settings.model_fields
     for path in ("app/templating.py", "app/templates/base.html",
                  "docker-compose.yml", "docker-compose.e2e.yml", "docker-compose.prod.yml",
-                 "docs/docs.html", "README.md", ".env.example",
+                 "docs/en/docs/index.html", "README.md", ".env.example",
                  "charts/openwhistle/values.yaml", "charts/openwhistle/templates/configmap.yaml",
                  "charts/openwhistle/templates/secret.yaml",
                  "ansible/roles/openwhistle/templates/env.j2",
@@ -488,10 +489,20 @@ def test_brand_secondary_colour_is_gone() -> None:
 
 
 def test_public_site_uses_the_app_token_names() -> None:
-    for page in [*(ROOT / "docs").glob("*.html"), *(ROOT / "docs").glob("[!_]*/*.html")]:
-        text = page.read_text()
+    for path in pages():
+        html = path.read_text()
+        text = html + css_of(html)
         for legacy in ("--gold", "--seal-green", "--font-serif"):
-            assert legacy not in text, (page.name, legacy)
+            assert legacy not in text, (path.relative_to(built()).as_posix(), legacy)
+
+
+_WARNING_PAGES = (
+    "/en/docs/",
+    "/de/blog/hinschg-compliance-leitfaden/",
+    "/de/blog/interne-meldestelle-einrichten/",
+    "/de/blog/whistleblower-software-vergleich/",
+    "/de/blog/was-ist-neu-in-2-0/",
+)
 
 
 def test_docs_warn_callouts_do_not_converge_on_the_accent() -> None:
@@ -499,14 +510,8 @@ def test_docs_warn_callouts_do_not_converge_on_the_accent() -> None:
     token must not leave a "warning" callout coloured identically to the
     brand accent (or to a "note"/"info" callout). .callout-warn and
     .val-warn must use their own --warning token."""
-    for name in (
-        "docs.html",
-        "blog/hinschg-compliance-leitfaden.html",
-        "blog/interne-meldestelle-einrichten.html",
-        "blog/whistleblower-software-vergleich.html",
-        "blog/was-ist-neu-in-2-0.html",
-    ):
-        text = (ROOT / "docs" / name).read_text()
+    for name in _WARNING_PAGES:
+        text = css_of(page(name))
         assert "--warning" in text, name
         for selector in (".callout-warn", ".val-warn"):
             for body in re.findall(re.escape(selector) + r"[^{]*\{([^}]*)\}", text):
@@ -536,14 +541,8 @@ def test_docs_warning_colour_meets_contrast() -> None:
     (WCAG AA, normal text) in both themes — a warning colour nobody can read
     is not a fix (the former gold light value #c8972e was ~2.5:1 on the blog
     pages)."""
-    for name in (
-        "docs.html",
-        "blog/hinschg-compliance-leitfaden.html",
-        "blog/interne-meldestelle-einrichten.html",
-        "blog/whistleblower-software-vergleich.html",
-        "blog/was-ist-neu-in-2-0.html",
-    ):
-        text = (ROOT / "docs" / name).read_text()
+    for name in _WARNING_PAGES:
+        text = css_of(page(name))
         light_block = re.search(r":root\s*\{([^}]*)\}", text)
         dark_block = re.search(r'\[data-theme="dark"\]\s*\{([^}]*)\}', text)
         assert light_block and dark_block, name
@@ -1039,24 +1038,32 @@ def test_every_docs_font_face_url_resolves_to_a_real_file() -> None:
     deleted by an unrelated redesign, commit 241e926, that never touched the
     older blog scaffold) -- every browser silently fell back to the declared
     Georgia/serif fallback, so nothing visibly broke, but nothing was
-    actually self-hosted either. This scans every @font-face in every HTML
-    file under docs/ and asserts its url()'s local path exists on disk."""
+    actually self-hosted either. This scans every @font-face in the CSS of
+    every built page (inline and linked) and asserts its url()'s local path
+    exists in the built site."""
     url_re = re.compile(r"url\(\s*['\"]?([^'\")\s]+)['\"]?\s*\)")
     font_face_re = re.compile(r"@font-face\s*\{[^}]*\}", re.DOTALL)
     checked = 0
-    for page in (p for p in (ROOT / "docs").rglob("*.html") if "/docs/_" not in p.as_posix()):
-        text = page.read_text(encoding="utf-8")
-        for block in font_face_re.findall(text):
-            for m in url_re.finditer(block):
-                src = m.group(1)
-                if src.startswith(("http://", "https://", "data:")):
-                    continue
-                # 404.html is served at every missing path, so it links root-relative.
-                base = ROOT / "docs" if src.startswith("/") else page.parent
-                resolved = (base / src.lstrip("/")).resolve()
-                assert resolved.is_file(), f"{page.relative_to(ROOT)}: {src} does not exist"
-                checked += 1
-    assert checked, "no @font-face url() found under docs/ -- test target moved?"
+    site = built()
+    for path in pages():
+        html = path.read_text(encoding="utf-8")
+        # Inline CSS resolves against its page, a stylesheet's url() against the sheet.
+        inline = re.findall(r"<style[^>]*>(.*?)</style>", html, re.S)
+        styles = [(css, path.parent) for css in inline]
+        for href in re.findall(r'<link rel="stylesheet" href="(/assets/css/[^"]+)"', html):
+            sheet = site / href.lstrip("/")
+            styles.append((sheet.read_text(encoding="utf-8"), sheet.parent))
+        for text, here in styles:
+            for block in font_face_re.findall(text):
+                for m in url_re.finditer(block):
+                    src = m.group(1)
+                    if src.startswith(("http://", "https://", "data:")):
+                        continue
+                    base = site if src.startswith("/") else here
+                    resolved = (base / src.lstrip("/")).resolve()
+                    assert resolved.is_file(), f"{path.relative_to(site)}: {src} does not exist"
+                    checked += 1
+    assert checked, "no @font-face url() found in the built site -- test target moved?"
 
 
 def _unwrap_at_rules(css: str) -> str:
@@ -1112,28 +1119,33 @@ def _resolve_family(famval: str, varmap: dict[str, str]) -> str | None:
 # paragraph that itself sets an explicit weight, or a code-comment span
 # inside a code block whose ancestor overrides font-family to the mono
 # stack) -- keyed by the exact relative page path, since the same class name
-# can sit under a different real ancestor on a different page.
+# can sit under a different real ancestor on a different page -- keyed by URL.
+_DOCS_CSS_ANCESTORS = {
+    ".t-comment": ".code-block pre code",  # ancestor sets font-family: var(--font-mono)
+}
 _ANCESTOR_OVERRIDES: dict[str, dict[str, str]] = {
-    "docs/index.html": {
+    "/en/": {
         ".hero-subline em": ".hero-subline",  # inherits its weight (300), not body's default
         ".hero-headline .accent-emphasis": ".hero-headline",  # inherits its weight (700)
         ".t-comment": ".terminal-body",  # ancestor sets font-family: var(--font-mono)
     },
-    "docs/de/index.html": {
+    "/de/": {
         ".hero-subline em": ".hero-subline",
         ".hero-headline .accent-emphasis": ".hero-headline",
         ".t-comment": ".terminal-body",
     },
-    "docs/docs.html": {
-        ".t-comment": ".code-block pre code",  # ancestor sets font-family: var(--font-mono)
-    },
+    "/en/docs/": _DOCS_CSS_ANCESTORS,
+    # The Markdown docs pages share the docs stylesheet, and with it its rules.
+    "/en/docs/dpa-template/": _DOCS_CSS_ANCESTORS,
+    "/en/docs/hinschg-reference/": _DOCS_CSS_ANCESTORS,
+    "/en/docs/security-policy/": _DOCS_CSS_ANCESTORS,
 }
 
 
 def test_every_docs_page_font_usage_has_a_matching_font_face() -> None:
     """A page that asks for a weight or style its self-hosted family does
     not ship gets a synthesized faux face from the browser. For every
-    docs/ page, every (font-family, font-weight, font-style) its CSS
+    built page, every (font-family, font-weight, font-style) its CSS
     declares (in the same rule, or inherited from body/an explicit ancestor
     override above) for a family the page self-hosts at all must have a
     matching @font-face -- not just "the url resolves", but "the exact face
@@ -1146,10 +1158,9 @@ def test_every_docs_page_font_usage_has_a_matching_font_face() -> None:
     rule_re = re.compile(r"([^{}]+)\{([^{}]*)\}", re.DOTALL)
 
     checked_pages = 0
-    for page in sorted(p for p in (ROOT / "docs").rglob("*.html") if "/docs/_" not in p.as_posix()):
-        rel = str(page.relative_to(ROOT))
-        html = page.read_text(encoding="utf-8")
-        style = "\n".join(re.findall(r"<style[^>]*>(.*?)</style>", html, re.DOTALL))
+    for path in pages():
+        rel = "/" + path.relative_to(built()).as_posix().removesuffix("index.html")
+        style = css_of(path.read_text(encoding="utf-8"))
         if not style.strip():
             continue
         style = _unwrap_at_rules(style)
@@ -1214,7 +1225,10 @@ def test_every_docs_page_font_usage_has_a_matching_font_face() -> None:
                 f"{rel}: {sel!r} uses {fam} weight={w} style={s}, "
                 f"but no matching @font-face exists (has: {sorted(faces)})"
             )
-    assert checked_pages, "no docs/ page with @font-face declarations found -- test target moved?"
+    assert checked_pages, "no built page with @font-face declarations found -- test target moved?"
+    assert set(_ANCESTOR_OVERRIDES) <= {
+        "/" + p.relative_to(built()).as_posix().removesuffix("index.html") for p in pages()
+    }, "an _ANCESTOR_OVERRIDES key names no built page"
 
 
 @pytest.mark.asyncio
@@ -1424,15 +1438,15 @@ def test_blog_1_6_release_date_is_2026_09_26() -> None:
     """The article was dated 25 September while the
     actual release is the 26th — every date on the page, the sitemap and the
     JSON-LD must agree with the real release date."""
-    text = (ROOT / "docs/blog/was-ist-neu-in-2-0.html").read_text()
+    text = page("/de/blog/was-ist-neu-in-2-0/")
     assert "25. September 2026" not in text
     assert "2026-09-25" not in text
     assert "26. September 2026" in text
     assert text.count('"2026-09-26"') >= 2  # datePublished, article:published_time
 
-    sitemap = (ROOT / "docs/sitemap.xml").read_text()
+    sitemap = (built() / "sitemap.xml").read_text()
     article_block = re.search(
-        r"<loc>https://openwhistle\.net/blog/was-ist-neu-in-2-0\.html</loc>.*?</url>",
+        r"<loc>https://openwhistle\.net/de/blog/was-ist-neu-in-2-0/</loc>.*?</url>",
         sitemap,
         re.DOTALL,
     )
