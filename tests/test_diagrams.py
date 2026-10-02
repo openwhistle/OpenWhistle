@@ -126,11 +126,42 @@ def test_every_drawn_glyph_is_in_the_embedded_font(source: Path, out: Path) -> N
 
 
 DOCS_TECH = ROOT / "docs-tech"
-_FENCE = re.compile(r"^```mermaid", re.M)
+_OPEN = re.compile(r"^\s*(`{3,}|~{3,})\s*(\S*)")
+
+
+def _split_fences(text: str) -> tuple[str, list[str]]:
+    """Return (text outside fenced code, info string of every fence). CommonMark: a fence closes on
+    a line of the same character, at least as long as the opening one."""
+    prose, infos, fence = [], [], None
+    for line in text.splitlines():
+        if fence is None:
+            m = _OPEN.match(line)
+            if m:
+                fence = m.group(1)
+                infos.append(m.group(2))
+            else:
+                prose.append(line)
+        elif re.fullmatch(rf"\s*{re.escape(fence[0])}{{{len(fence)},}}\s*", line):
+            fence = None
+    return "\n".join(prose), infos
+
+
+def test_fences_are_split_by_commonmark_rules() -> None:
+    text = (
+        "a\n```text\n<picture>\n```\nb\n"
+        "````md\n```mermaid\n<picture>\n```\n<picture>\n````\n"
+        "  ```mermaid\nx\n  ```\nc"
+    )
+    prose, infos = _split_fences(text)
+    assert prose == "a\nb\nc"
+    assert infos == ["text", "md", "mermaid"]
 
 
 def _tracked() -> list[Path]:
-    out = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=True).stdout
+    out = subprocess.run(  # noqa: S603
+        ["git", "ls-files"],  # noqa: S607
+        cwd=ROOT, capture_output=True, text=True, check=True,
+    ).stdout
     return [ROOT / line for line in out.splitlines()]
 
 
@@ -139,30 +170,49 @@ def test_no_mermaid_anywhere() -> None:
     for path in _tracked():
         if path.suffix == ".mmd":
             found.append(f"{path.relative_to(ROOT)}: a Mermaid source")
-        if path.suffix in {".md", ".html"} and path.is_file() and _FENCE.search(path.read_text(encoding="utf-8")):
+        if path.suffix in {".md", ".html"} and path.is_file() and any(
+            i.lower() == "mermaid" for i in _split_fences(path.read_text(encoding="utf-8"))[1]
+        ):
             found.append(f"{path.relative_to(ROOT)}: a fenced Mermaid block")
-    tooling = [ROOT / "renovate.json", ROOT / "pyproject.toml", *ROOT.glob("scripts/*"), *ROOT.glob(".github/**/*.yml")]
+    tooling = [
+        ROOT / "renovate.json", ROOT / "pyproject.toml",
+        *ROOT.glob("scripts/*"), *ROOT.glob(".github/**/*.yml"),
+    ]
     for path in tooling:
-        if path.is_file() and re.search(r"mermaid-cli|@mermaid-js", path.read_text(encoding="utf-8")):
+        if path.is_file() and re.search(
+            r"mermaid-cli|@mermaid-js", path.read_text(encoding="utf-8")
+        ):
             found.append(f"{path.relative_to(ROOT)}: a mermaid-cli reference")
-    assert not found, "\n  ".join(["Mermaid is gone (maintainer's decision, 2026-10-02):", *found])
+    head = "Mermaid is gone (maintainer's decision, 2026-10-02):"
+    assert not found, "\n  ".join([head, *found])
 
 
 DOCS_TECH_DIAGRAMS = [(s, o) for s, o in ALL if o == DOCS_TECH / "img" / "diagrams"]
 
 
-@pytest.mark.parametrize(("source", "out"), DOCS_TECH_DIAGRAMS, ids=[s.name for s, _ in DOCS_TECH_DIAGRAMS])
+@pytest.mark.parametrize(
+    ("source", "out"), DOCS_TECH_DIAGRAMS, ids=[s.name for s, _ in DOCS_TECH_DIAGRAMS]
+)
 def test_every_maintainer_diagram_is_embedded_as_a_picture(source: Path, out: Path) -> None:
     name = source.name.removesuffix(".drawio")
     pattern = re.compile(
-        rf'<picture>\s*<source media="\(prefers-color-scheme: dark\)" srcset="[./]*img/diagrams/{re.escape(name)}-dark\.svg">'
-        rf'\s*<img src="[./]*img/diagrams/{re.escape(name)}-light\.svg" alt="[^"]+">\s*</picture>'
+        rf'<picture>\s*<source media="\(prefers-color-scheme: dark\)"'
+        rf' srcset="[./]*img/diagrams/{re.escape(name)}-dark\.svg">'
+        rf'\s*<img src="[./]*img/diagrams/{re.escape(name)}-light\.svg" alt="[^"]+">'
+        r"\s*</picture>"
     )
-    hits = [p for p in DOCS_TECH.rglob("*.md") if pattern.search(p.read_text(encoding="utf-8"))]
+    hits = [
+        p for p in DOCS_TECH.rglob("*.md")
+        if pattern.search(_split_fences(p.read_text(encoding="utf-8"))[0])
+    ]
     assert hits, f"no page in docs-tech/ shows {name} as a <picture> with both themes and alt text"
     for page_file in hits:
-        target = page_file.parent / re.search(rf'src="([^"]*{re.escape(name)}-light\.svg)"', page_file.read_text()).group(1)
-        assert target.resolve() == (out / f"{name}-light.svg").resolve(), f"{page_file}: wrong relative path"
+        prose = _split_fences(page_file.read_text(encoding="utf-8"))[0]
+        found = re.search(rf'src="([^"]*{re.escape(name)}-light\.svg)"', prose)
+        assert found, f"{page_file}: no src for {name}-light.svg outside code blocks"
+        target = page_file.parent / found.group(1)
+        want = (out / f"{name}-light.svg").resolve()
+        assert target.resolve() == want, f"{page_file}: wrong relative path"
 
 
 def _diagram_srcs(html: str) -> set[str]:
