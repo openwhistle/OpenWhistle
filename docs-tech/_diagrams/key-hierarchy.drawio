@@ -1,0 +1,56 @@
+<mxfile>
+  <diagram name="key-hierarchy">
+    <mxGraphModel>
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="key" value="ENCRYPTION_KEY" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="250" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="key-previous" value="ENCRYPTION_KEY_PREVIOUS …" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="0" y="72" width="250" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="multifernet" value="MultiFernet&#xa;current key first" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="310" y="30" width="140" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="dek" value="per-report DEK" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="520" y="36" width="140" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="report-data" value="description, messages,&#xa;notes, attachments" style="ow:result" vertex="1" parent="1">
+          <mxGeometry x="710" y="30" width="190" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="direct-fields" value="confidential name, contact, e-mail,&#xa;TOTP secret, reveal reasons" style="ow:result" vertex="1" parent="1">
+          <mxGeometry x="310" y="126" width="270" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="secret-key" value="SECRET_KEY" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="0" y="210" width="250" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="jwt" value="JWT only" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="310" y="210" width="140" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-key" style="ow:edge;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" edge="1" parent="1" source="key" target="multifernet">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-key-previous" style="ow:edge;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.7;entryDx=0;entryDy=0;" edge="1" parent="1" source="key-previous" target="multifernet">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-wraps" value="wraps" style="ow:edge;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="multifernet" target="dek">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="0" y="-11"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-dek" style="ow:edge;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="dek" target="report-data">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-encrypt" value="crypto.encrypt" style="ow:edge;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.2593;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="multifernet" target="direct-fields">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="52" y="0"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-secret" style="ow:edge;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="secret-key" target="jwt">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,53 @@
+<mxfile>
+  <diagram name="admin-layout">
+    <mxGraphModel>
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="pages" value="11 admin pages" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="140" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="admin-nav" value="admin_nav(user)" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="230" y="0" width="150" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="layout" value="admin/_layout.html" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="0" y="72" width="480" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="base" value="base.html" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="0" y="144" width="100" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="sidebar" value="Sidebar" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="160" y="144" width="90" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="menu" value="details menu, closed" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="300" y="144" width="180" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-extend" value="extend" style="ow:edge;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.1458;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pages" target="layout">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="30" y="0"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-nav" value="groups filtered by role" style="ow:edge;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.6354;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="admin-nav" target="layout">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="72" y="0"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-extends" value="extends" style="ow:edge;exitX=0.1042;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="layout" target="base">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="33" y="0"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-wide" value="1024 px and wider" style="ow:edge;exitX=0.4271;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="layout" target="sidebar">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="60" y="0"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-narrow" value="below 1024 px" style="ow:edge;exitX=0.8125;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="layout" target="menu">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="50" y="0"/>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
