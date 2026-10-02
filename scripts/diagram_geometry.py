@@ -33,6 +33,9 @@ _INHERITED = ("font-size", "font-weight", "text-anchor", "fill", "stroke")
 _NUMBER = r"-?(?:\d+\.?\d*|\.\d+)(?:[eE]-?\d+)?"
 _PATH_TOKEN = re.compile(rf"[MLQCZ]|{_NUMBER}")
 _ARGS = {"M": 2, "L": 2, "Q": 4, "C": 6}
+CURVE_STEPS = 8  # points a rounded elbow is sampled at; a label grazing the curve is still found
+# ElementTree parses only the repository's own exports; expat resolves no external entities
+# (so no defusedxml, see global constraints).
 
 Point = tuple[float, float]
 Segment = tuple[Point, Point]
@@ -81,6 +84,7 @@ class Cell:
     id: str
     rects: list[Box] = field(default_factory=list)
     filled: list[list[Point]] = field(default_factory=list)
+    parent: str | None = None
     unfilled: list[list[Point]] = field(default_factory=list)
     texts: list[Text] = field(default_factory=list)
 
@@ -102,8 +106,24 @@ def _num(value: str | None) -> float:
     return float(m.group(0)) if m else 0.0
 
 
+def _curve(start: Point, args: list[float]) -> list[Point]:
+    """CURVE_STEPS points along a quadratic (4 args) or cubic (6 args) Bezier, end point last."""
+    pts = [start, *zip(args[0::2], args[1::2], strict=True)]
+    out: list[Point] = []
+    for i in range(1, CURVE_STEPS + 1):
+        t = i / CURVE_STEPS
+        level = pts
+        while len(level) > 1:  # de Casteljau
+            level = [
+                (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
+                for a, b in zip(level, level[1:], strict=False)
+            ]
+        out.append(level[0])
+    return out
+
+
 def _subpaths(d: str) -> list[list[Point]]:
-    """A draw.io path as point lists; a curve counts by its end point (corner radii are small)."""
+    """A draw.io path as point lists; curves are sampled, so a rounded elbow is not its chord."""
     if leftover := _PATH_TOKEN.sub("", d).replace(",", "").strip():
         raise ValueError(f"path command not understood: {leftover!r} in {d!r}")
     tokens = _PATH_TOKEN.findall(d)
@@ -124,6 +144,8 @@ def _subpaths(d: str) -> list[list[Point]]:
         if cmd == "M":
             out.append([point])
             cmd = "L"  # numbers after a moveto are linetos
+        elif cmd in "QC":
+            out[-1].extend(_curve(out[-1][-1], args))
         else:
             out[-1].append(point)
     return out
@@ -152,7 +174,7 @@ def _cells(svg: str) -> dict[str, Cell]:
     def walk(el: ET.Element, inherited: dict[str, str], cell: Cell | None) -> None:
         attrs = {**inherited, **{k: v for k in _INHERITED if (v := el.get(k)) is not None}}
         if (cid := el.get("data-cell-id")) is not None:
-            cell = found.setdefault(cid, Cell(cid))
+            cell = found.setdefault(cid, Cell(cid, parent=cell.id if cell else None))
         tag = _local(el.tag)
         if cell is not None and tag == "rect":
             x, y = _num(el.get("x")), _num(el.get("y"))
@@ -164,16 +186,20 @@ def _cells(svg: str) -> dict[str, Cell]:
             target = cell.unfilled if attrs.get("fill", "black") == "none" else cell.filled
             target.extend(p for p in _subpaths(el.get("d", "")) if len(p) > 1)
         elif cell is not None and tag == "text":
+            for span in el:
+                if _local(span.tag) == "tspan" and {"x", "y", "dx", "dy"} & set(span.attrib):
+                    raise ValueError(f"cell {cell.id}: a positioned <tspan> is not measured")
             weight = 700 if attrs.get("font-weight") in ("bold", "700") else 400
             line = "".join(el.itertext())
-            box = text_box(line, _num(el.get("x")), _num(el.get("y")), _num(attrs.get("font-size", "12")),
-                           weight, attrs.get("text-anchor", "start"))
+            size = _num(attrs.get("font-size", "12"))
+            box = text_box(line, _num(el.get("x")), _num(el.get("y")), size, weight,
+                           attrs.get("text-anchor", "start"))
             cell.texts.append(Text(line, box, weight))
             return
         for child in el:
             walk(child, attrs, cell)
 
-    walk(ET.fromstring(svg), {}, None)
+    walk(ET.fromstring(svg), {}, None)  # noqa: S314
     return found
 
 
@@ -226,30 +252,100 @@ def _fits(t: Text, cell: Cell, role: str) -> bool:
     return outline is not None and t.box.grow(PAD_X, PAD_Y).within(outline)
 
 
+def _edges_of(box: Box) -> list[Segment]:
+    c = box.corners()
+    return list(zip(c, c[1:] + c[:1], strict=True))
+
+
+def _ancestors(found: dict[str, Cell], cid: str) -> list[str]:
+    out, parent = [], found[cid].parent
+    while parent is not None:
+        out.append(parent)
+        parent = found[parent].parent
+    return out
+
+
+def _lines(found: dict[str, Cell], roles: dict[str, str]) -> list[tuple[str, Segment]]:
+    """Every line a text must clear: edges, lifelines, and the borders of groups and lanes."""
+    lines = []
+    for cid, c in found.items():
+        role = roles.get(cid)
+        if role in LINES or role in CONTAINERS:
+            lines += [(cid, s) for s in _segments(c.unfilled)]
+        if role in CONTAINERS:  # a group's border is an unfilled rect
+            lines += [(cid, s) for r in c.rects for s in _edges_of(r)]
+    return lines
+
+
+def _text_problems(
+    cid: str, cell: Cell, role: str, found: dict[str, Cell], roles: dict[str, str]
+) -> list[str]:
+    lines = _lines(found, roles)
+    heads = [(h, _bounds(p)) for h, c in found.items() if roles.get(h) in EDGES for p in c.filled]
+    solid = {
+        n: b
+        for n, c in found.items()
+        if roles.get(n) and roles[n] not in EDGES | CONTAINERS and (b := _outline(c)) is not None
+    }
+    out: list[str] = []
+    for t in cell.texts:
+        if missing := missing_glyphs(t.text, t.weight):
+            out.append(f"{cid}: Sora has no glyph for {missing} in {t.text!r}")
+        if role not in EDGES and not _fits(t, cell, role):
+            out.append(f"{cid}: text {t.text!r} does not fit its shape")
+        near = t.box.grow(CLEAR)
+        for lid, seg in lines:
+            if lid == cid and role in CONTAINERS:
+                continue  # a container's own header sits inside its own border
+            if _hits(near, seg):
+                out.append(f"{cid}: text {t.text!r} touches a line of {lid}")
+        if role in EDGES:
+            out += [
+                f"{cid}: label {t.text!r} touches an arrowhead of {hid}"
+                for hid, b in heads
+                if near.overlaps(b)
+            ]
+            out += [
+                f"{cid}: label {t.text!r} overlaps {nid}"
+                for nid, b in solid.items()
+                if near.overlaps(b)
+            ]
+        for oid, other in found.items():
+            if oid > cid:  # each pair once
+                out += [
+                    f"{cid}: label {t.text!r} overlaps text of {oid}"
+                    for o in other.texts
+                    if t.box.grow(CLEAR / 2).overlaps(o.box.grow(CLEAR / 2))
+                ]
+    return out
+
+
 def problems(svg: str, roles: dict[str, str]) -> list[str]:
     """Everything that makes a label unreadable; an empty list means the diagram is legible."""
     found = _cells(svg)
-    lines = [(cid, s) for cid, c in found.items() if roles.get(cid) in LINES for s in _segments(c.unfilled)]
-    heads = [(cid, _bounds(p)) for cid, c in found.items() if roles.get(cid) in EDGES for p in c.filled]
-    solid = {
-        cid: box
-        for cid, c in found.items()
-        if cid in roles and roles[cid] not in EDGES | CONTAINERS and (box := _outline(c)) is not None
-    }
+    for cid, cell in found.items():
+        if cid not in roles and (cell.texts or _outline(cell)):
+            raise ValueError(f"cell {cid!r} has shapes or text but no role in the source")
     out: list[str] = []
     for cid, cell in found.items():
-        role = roles.get(cid, "")
-        for t in cell.texts:
-            if missing := missing_glyphs(t.text, t.weight):
-                out.append(f"{cid}: Sora has no glyph for {missing} in {t.text!r}")
-            if role and role not in EDGES and not _fits(t, cell, role):
-                out.append(f"{cid}: text {t.text!r} does not fit its shape")
-            near = t.box.grow(CLEAR)
-            out += [f"{cid}: text {t.text!r} touches a line of {lid}" for lid, s in lines if _hits(near, s)]
-            if role in EDGES:
-                out += [f"{cid}: label {t.text!r} touches an arrowhead of {hid}"
-                        for hid, b in heads if near.overlaps(b)]
-                out += [f"{cid}: label {t.text!r} overlaps {nid}" for nid, b in solid.items() if near.overlaps(b)]
-    ids = sorted(solid)
-    out += [f"{a} and {b} overlap" for i, a in enumerate(ids) for b in ids[i + 1 :] if solid[a].overlaps(solid[b])]
-    return out
+        if cid in roles:
+            out += _text_problems(cid, cell, roles[cid], found, roles)
+    shapes = {
+        cid: box
+        for cid, c in found.items()
+        if roles.get(cid) not in EDGES and (box := _outline(c)) is not None
+    }
+    for cid, box in shapes.items():
+        parent = found[cid].parent
+        if roles.get(parent) in CONTAINERS and parent in shapes and not box.within(shapes[parent]):
+            out.append(f"{cid} sticks out of {parent}")
+    ids = sorted(shapes)
+    out += [
+        f"{a} and {b} overlap"
+        for i, a in enumerate(ids)
+        for b in ids[i + 1 :]
+        if shapes[a].overlaps(shapes[b])
+        and a not in _ancestors(found, b)
+        and b not in _ancestors(found, a)
+    ]
+    return list(dict.fromkeys(out))

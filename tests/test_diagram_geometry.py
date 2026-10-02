@@ -8,10 +8,13 @@ HEAD = '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox
 TAIL = "</g></svg>"
 
 
-def _text(x: float, y: float, text: str, size: int = 13, bold: bool = False, anchor: str = "middle") -> str:
+def _text(
+    x: float, y: float, text: str, size: int = 13, bold: bool = False, anchor: str = "middle"
+) -> str:
     weight = ' font-weight="bold"' if bold else ""
     return (
-        f'<g><g fill="#0a0a0b" font-family="Sora"{weight} text-anchor="{anchor}" font-size="{size}px">'
+        f'<g><g fill="#0a0a0b" font-family="Sora"{weight} text-anchor="{anchor}" '
+        f'font-size="{size}px">'
         f'<text x="{x}" y="{y}">{text}</text></g></g>'
     )
 
@@ -32,7 +35,9 @@ def decision(cid: str, cx: float, cy: float, w: float, h: float, label: str) -> 
     )
 
 
-def edge(cid: str, points: list[tuple[float, float]], label: str = "", at: tuple[float, float] = (0, 0)) -> str:
+def edge(
+    cid: str, points: list[tuple[float, float]], label: str = "", at: tuple[float, float] = (0, 0)
+) -> str:
     d = "M " + " L ".join(f"{x} {y}" for x, y in points)
     (x1, y1) = points[-1]
     head = f"M {x1} {y1} L {x1 - 4} {y1 - 7} L {x1 + 4} {y1 - 7} Z"
@@ -61,7 +66,7 @@ def test_a_clean_diagram_has_no_problem() -> None:
 
 def test_a_label_on_its_own_line_is_found() -> None:
     picture = svg(edge("e", [(0, 100), (300, 100)], "yes", at=(150, 104)))
-    assert any("touches a line of e" in p for p in geometry().problems(picture, ROLES))
+    assert "e: text 'yes' touches a line of e" in geometry().problems(picture, ROLES)
 
 
 def test_a_label_beside_its_line_is_fine() -> None:
@@ -74,23 +79,27 @@ def test_a_line_through_a_decision_label_is_found() -> None:
         decision("d", 150, 100, 230, 80, "Locations"),
         edge("e", [(150, 100), (400, 100)]),
     )
-    assert any(p.startswith("d: ") and "touches a line" in p for p in geometry().problems(picture, ROLES))
+    assert "d: text 'Locations' touches a line of e" in geometry().problems(picture, ROLES)
 
 
 def test_text_wider_than_its_box_is_found() -> None:
     picture = svg(node("a", 0, 0, 60, 40, "Choose own password"))
-    assert any("does not fit" in p for p in geometry().problems(picture, ROLES))
+    assert geometry().problems(picture, ROLES) == [
+        "a: text 'Choose own password' does not fit its shape"
+    ]
 
 
 def test_text_in_a_decision_corner_is_found() -> None:
     """The bounding box would hold it; the diamond does not."""
     picture = svg(decision("d", 150, 100, 160, 50, "Password set by someone"))
-    assert any("does not fit" in p for p in geometry().problems(picture, ROLES))
+    assert "d: text 'Password set by someone' does not fit its shape" in geometry().problems(
+        picture, ROLES
+    )
 
 
 def test_a_label_on_an_arrowhead_is_found() -> None:
     picture = svg(edge("e", [(100, 0), (100, 100)], "x", at=(108, 97)))
-    assert any("arrowhead" in p for p in geometry().problems(picture, ROLES))
+    assert "e: label 'x' touches an arrowhead of e" in geometry().problems(picture, ROLES)
 
 
 def test_a_label_over_a_node_is_found() -> None:
@@ -98,12 +107,12 @@ def test_a_label_over_a_node_is_found() -> None:
         node("a", 0, 0, 200, 40, "Start"),
         edge("e", [(250, 0), (250, 100)], "username", at=(205, 20)),
     )
-    assert any("overlaps a" in p for p in geometry().problems(picture, ROLES))
+    assert "e: label 'username' overlaps a" in geometry().problems(picture, ROLES)
 
 
 def test_overlapping_nodes_are_found() -> None:
     picture = svg(node("a", 0, 0, 200, 40, "One"), node("b", 150, 20, 200, 40, "Two"))
-    assert any("a and b overlap" in p for p in geometry().problems(picture, ROLES))
+    assert geometry().problems(picture, ROLES) == ["a and b overlap"]
 
 
 def test_a_container_may_hold_nodes() -> None:
@@ -121,7 +130,7 @@ def test_a_child_text_is_not_measured_against_its_container() -> None:
 
 def test_a_glyph_sora_lacks_is_found() -> None:
     picture = svg(node("a", 0, 0, 200, 40, "80 → 443"))
-    assert any("no glyph" in p for p in geometry().problems(picture, ROLES))
+    assert "a: Sora has no glyph for ['→'] in '80 → 443'" in geometry().problems(picture, ROLES)
 
 
 def test_bold_is_measured_wider() -> None:
@@ -132,10 +141,144 @@ def test_bold_is_measured_wider() -> None:
 
 
 def test_an_unknown_path_command_fails_loudly() -> None:
-    picture = svg('<g data-cell-id="e"><g><path d="m 0 0 l 10 10" fill="none" stroke="#000"/></g></g>')
+    path = '<path d="m 0 0 l 10 10" fill="none" stroke="#000"/>'
+    picture = svg(f'<g data-cell-id="e"><g>{path}</g></g>')
     try:
         geometry().problems(picture, ROLES)
     except ValueError as err:
         assert "path command" in str(err)
     else:
         raise AssertionError("a relative path command was silently ignored")
+
+
+# --- what draw.io writes: a group is an unfilled rect, a lane three unfilled paths ---
+
+
+def group(cid: str, x: float, y: float, w: float, h: float, label: str, inner: str = "") -> str:
+    return (
+        f'<g data-cell-id="{cid}"><g><rect x="{x}" y="{y}" width="{w}" height="{h}" rx="7" ry="7" '
+        f'fill="none" stroke="#e6e6e4"/></g>{_text(x + 14, y + 23, label, 11, True, "start")}'
+        f"{inner}</g>"
+    )
+
+
+def lane(cid: str, x: float, y: float, w: float, h: float, label: str, inner: str = "") -> str:
+    r, b, head = x + w, y + h, y + 32  # right edge, bottom edge, header separator
+    outline = (
+        f"M {r} {head} L {r} {y + 7} Q {r} {y} {r - 7} {y} L {x + 7} {y} Q {x} {y} {x} {y + 7} "
+        f"L {x} {head}"
+    )
+    rest = (
+        f"M {x} {head} L {x} {b - 7} Q {x} {b} {x + 7} {b} L {r - 7} {b} Q {r} {b} {r} {b - 7} "
+        f"L {r} {head}"
+    )
+    paths = "".join(
+        f'<path d="{d}" fill="none" stroke="#e6e6e4"/>'
+        for d in (outline, rest, f"M {x} {head} L {r} {head}")
+    )
+    return (
+        f'<g data-cell-id="{cid}"><g>{paths}</g>'
+        f"{_text(x + w / 2, y + 21, label, 12, True)}{inner}</g>"
+    )
+
+
+ROLES |= {"l": "ow:lane", "g2": "ow:group", "e2": "ow:edge", "z": "ow:step"}
+
+
+def test_groups_and_lanes_with_their_content_are_clean() -> None:
+    picture = svg(
+        group("g", 20, 20, 300, 160, "Group", node("a", 40, 60, 120, 40, "Inside")),
+        lane("l", 20, 220, 300, 160, "Lane", node("b", 40, 270, 120, 40, "In lane")),
+    )
+    assert geometry().problems(picture, ROLES | {"b": "ow:step"}) == []
+
+
+def test_a_label_on_a_group_border_is_found() -> None:
+    picture = svg(
+        group("g", 20, 20, 400, 200, "Group"), edge("e", [(500, 0), (500, 90)], "x", at=(220, 22))
+    )
+    assert "e: text 'x' touches a line of g" in geometry().problems(picture, ROLES)
+
+
+def test_a_label_on_a_lane_separator_or_border_is_found() -> None:
+    g = geometry()
+    far = [(500, 0), (500, 90)]
+    on_separator = svg(lane("l", 20, 20, 400, 200, "Lane"), edge("e", far, "x", at=(220, 54)))
+    assert "e: text 'x' touches a line of l" in g.problems(on_separator, ROLES)
+    on_border = svg(lane("l", 20, 20, 400, 200, "Lane"), edge("e", far, "x", at=(21, 120)))
+    assert "e: text 'x' touches a line of l" in g.problems(on_border, ROLES)
+
+
+def test_a_node_sticking_out_of_its_group_is_found() -> None:
+    picture = svg(group("g", 20, 20, 200, 100, "Group", node("a", 150, 50, 120, 40, "Inside")))
+    assert "a sticks out of g" in geometry().problems(picture, ROLES)
+
+
+def test_sibling_groups_overlapping_are_found() -> None:
+    picture = svg(group("g", 0, 0, 200, 100, "One"), group("g2", 150, 50, 200, 100, "Two"))
+    assert geometry().problems(picture, ROLES) == ["g and g2 overlap"]
+
+
+def test_a_cell_without_a_role_is_refused() -> None:
+    try:
+        geometry().problems(svg(node("nope", 0, 0, 200, 40, "Start")), ROLES)
+    except ValueError as err:
+        assert "'nope'" in str(err)
+    else:
+        raise AssertionError("a cell missing from roles was silently skipped")
+
+
+def test_a_label_over_another_label_is_found() -> None:
+    picture = svg(
+        edge("e", [(0, 100), (300, 100)], "yes", at=(150, 88)),
+        edge("e2", [(0, 200), (300, 200)], "no", at=(152, 90)),
+    )
+    assert "e: label 'yes' overlaps text of e2" in geometry().problems(picture, ROLES)
+
+
+def test_a_positioned_tspan_is_refused() -> None:
+    tspan = (
+        '<g data-cell-id="a"><g><rect x="0" y="0" width="200" height="40"/></g>'
+        '<text x="5" y="5"><tspan x="9" y="9">hi</tspan></text></g>'
+    )
+    try:
+        geometry().problems(svg(tspan), ROLES)
+    except ValueError as err:
+        assert "tspan" in str(err)
+    else:
+        raise AssertionError("a positioned tspan was measured as one line")
+
+
+def test_one_problem_is_reported_once_however_many_segments_it_touches() -> None:
+    long_label = "yes yes yes yes"
+    points = [(0, 100), (130, 100), (150, 100), (170, 100), (300, 100)]
+    picture = svg(edge("e", points, long_label, at=(150, 104)))
+    found = geometry().problems(picture, ROLES)
+    assert found.count(f"e: text '{long_label}' touches a line of e") == 1
+
+
+def test_curves_are_sampled_not_reduced_to_their_end_points() -> None:
+    g = geometry()
+    quad = g._subpaths("M 0 0 Q 10 0 10 10")[0]
+    assert len(quad) == 1 + g.CURVE_STEPS and quad[-1] == (10, 10)
+    assert quad[g.CURVE_STEPS // 2] == (7.5, 2.5)  # t = 1/2
+    cubic = g._subpaths("M 0 0 C 0 10 10 10 10 0")[0]
+    assert len(cubic) == 1 + g.CURVE_STEPS and cubic[-1] == (10, 0)
+    assert cubic[g.CURVE_STEPS // 2] == (5, 7.5)
+
+
+def test_a_label_grazing_a_rounded_elbow_is_found() -> None:
+    """The chord of the corner passes the label; the curve itself does not."""
+    d = "M 0 100 L 90 100 Q 100 100 100 90 L 100 0"
+    picture = svg(
+        f'<g data-cell-id="e"><g><path d="{d}" fill="none" stroke="#0a0a0b"/></g>'
+        f"{_text(104, 101, 'x', 11)}</g>"
+    )
+    assert "e: text 'x' touches a line of e" in geometry().problems(picture, ROLES)
+
+
+def test_the_end_anchor_measures_leftwards() -> None:
+    g = geometry()
+    end = g.text_box("abc", 100, 0, 13, 400, "end")
+    start = g.text_box("abc", 0, 0, 13, 400, "start")
+    assert round(end.x1, 6) == 100 and round(end.x1 - end.x0, 6) == round(start.x1, 6)
