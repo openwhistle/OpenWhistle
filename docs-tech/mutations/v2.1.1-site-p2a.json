@@ -12,6 +12,13 @@
   ],
   "FIGURES": [
    "tests/test_docs_figures.py"
+  ],
+  "E2E": [
+   "tests/e2e/test_docs_diagrams.py",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
   ]
  },
  "mutations": [
@@ -159,7 +166,7 @@
    "id": "CONTAINER-HEADER-EXEMPT",
    "file": "scripts/diagram_geometry.py",
    "tests": "GEOMETRY",
-   "old": "            if lid == cid and role in CONTAINERS:",
+   "old": "            if lid == cid and role in CONTAINERS and outline and _on_border(seg, outline):",
    "new": "            if False:"
   },
   {
@@ -194,8 +201,8 @@
    "id": "ARROWHEAD",
    "file": "scripts/diagram_geometry.py",
    "tests": "GEOMETRY",
-   "old": "                for hid, b in heads\n                if near.overlaps(b)",
-   "new": "                for hid, b in heads\n                if False"
+   "old": "                if near.overlaps(b)]",
+   "new": "                if False]"
   },
   {
    "id": "LABEL-NODE",
@@ -334,8 +341,8 @@
    "id": "HOME-NO-DIAGRAM",
    "file": "docs/en/index.html",
    "tests": "COMMITTED",
-   "old": "<img class=\"diagram-light\" src=\"/img/diagrams/home-flow-light.svg\" alt=\"Two lanes. Whistleblower: fill in the form, anonymous or confidential, with no account and no e-mail; note the case number and PIN, shown exactly once; check status and reply at /status. Reporting office: log in with password, LDAP or OIDC, then always TOTP; acknowledge receipt within 7 days; review and give feedback within 3 months. The report goes from the form to the acknowledgement, the feedback back to the status page.\" width=\"785\" height=\"365\" loading=\"lazy\">\n          <img class=\"diagram-dark\" src=\"/img/diagrams/home-flow-dark.svg\"",
-   "new": "<img class=\"diagram-light\"  alt=\"Two lanes. Whistleblower: fill in the form, anonymous or confidential, with no account and no e-mail; note the case number and PIN, shown exactly once; check status and reply at /status. Reporting office: log in with password, LDAP or OIDC, then always TOTP; acknowledge receipt within 7 days; review and give feedback within 3 months. The report goes from the form to the acknowledgement, the feedback back to the status page.\" width=\"785\" height=\"365\" loading=\"lazy\">\n          <img class=\"diagram-dark\" "
+   "old": "<img class=\"diagram-light\" src=\"/img/diagrams/home-flow-light.svg\" alt=\"Two lanes. Whistleblower: fill in the form, anonymous or confidential, with no account and no e-mail; note the case number and PIN, shown exactly once; check status and reply at /status. The form has six steps. Category and description are required. The page continues only after ticking that the case number and PIN are saved. Reporting office: log in with password, LDAP or OIDC, then always TOTP; acknowledge receipt within 7 days; review and give feedback within 3 months. The report goes from the form to the acknowledgement, the feedback back to the status page.\" width=\"785\" height=\"365\" loading=\"lazy\">\n          <img class=\"diagram-dark\" src=\"/img/diagrams/home-flow-dark.svg\"",
+   "new": "<img class=\"diagram-light\"  alt=\"Two lanes. Whistleblower: fill in the form, anonymous or confidential, with no account and no e-mail; note the case number and PIN, shown exactly once; check status and reply at /status. The form has six steps. Category and description are required. The page continues only after ticking that the case number and PIN are saved. Reporting office: log in with password, LDAP or OIDC, then always TOTP; acknowledge receipt within 7 days; review and give feedback within 3 months. The report goes from the form to the acknowledgement, the feedback back to the status page.\" width=\"785\" height=\"365\" loading=\"lazy\">\n          <img class=\"diagram-dark\" "
   },
   {
    "id": "HOME-GRID-BACK",
@@ -364,6 +371,118 @@
    "tests": "FIGURES",
    "old": "@media (max-width: 640px) {\n  .diagram",
    "new": "@media (min-width: 640px) {\n  .diagram"
+  },
+  {
+   "id": "COMMON-KEY",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "    if m := _COMMON_KEY.search(rest):",
+   "new": "    if m := None:"
+  },
+  {
+   "id": "FONT-FAMILY",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "            if (family := attrs.get(\"font-family\")) != \"Sora\":",
+   "new": "            if (family := attrs.get(\"font-family\")) == \"never\":"
+  },
+  {
+   "id": "DUPLICATE-STEM",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "        if (first := seen.setdefault(p.name, p)) != p:",
+   "new": "        if (first := seen.setdefault(p.name, p)) != first:"
+  },
+  {
+   "id": "EXPORT-TIMEOUT",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "    limit = 10 + 5 * len(list(src_dir.glob(\"*.drawio\")))",
+   "new": "    limit = 10"
+  },
+  {
+   "id": "LANE-SEPARATOR",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "and role in CONTAINERS and outline and _on_border(seg, outline):",
+   "new": "and role in CONTAINERS and outline is not None:"
+  },
+  {
+   "id": "NODE-ARROWHEAD",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "                if near.overlaps(b)]",
+   "new": "                if near.overlaps(b) and role in EDGES]"
+  },
+  {
+   "id": "MERMAID-TRACKED",
+   "file": "docs-tech/diagrams.md",
+   "tests": "COMMITTED",
+   "old": "Every diagram is a draw.io XML source",
+   "new": "Every diagram is a mermaid-cli source"
+  },
+  {
+   "id": "NAMED-COLOUR",
+   "file": "tests/test_diagrams.py",
+   "tests": "COMMITTED",
+   "old": "            found.add(value)",
+   "new": "            pass"
+  },
+  {
+   "id": "RELEASE-STEPS",
+   "file": "docs-tech/release.md",
+   "tests": "COMMITTED",
+   "old": "## 2. UI check",
+   "new": "## 2. UI review"
+  },
+  {
+   "id": "LIFECYCLE-EDGES",
+   "file": "app/models/report.py",
+   "tests": "COMMITTED",
+   "old": "    \"closed\":           {\"in_review\"},",
+   "new": "    \"closed\":           {\"in_review\", \"received\"},"
+  },
+  {
+   "id": "E2E-TWIN",
+   "file": "docs/assets/css/layout.css",
+   "tests": "E2E",
+   "old": ":root:not([data-theme=\"dark\"]) .diagram-dark, [data-theme=\"dark\"] .diagram-light { display: none; }",
+   "new": ".diagram-dark, [data-theme=\"dark\"] .diagram-light { display: none; }"
+  },
+  {
+   "id": "E2E-CANVAS",
+   "file": "docs/assets/css/layout.css",
+   "tests": "E2E",
+   "old": "figure.diagram img { background: var(--bg-base); border-radius: 8px; }",
+   "new": "figure.diagram img { border-radius: 8px; }"
+  },
+  {
+   "id": "E2E-SCALE-ROW",
+   "file": "docs/assets/css/figures.css",
+   "tests": "E2E",
+   "old": ".figure-row:has(> .diagram) { grid-template-columns: 1fr; }",
+   "new": ".figure-row:has(> .nothing) { grid-template-columns: 1fr; }"
+  },
+  {
+   "id": "E2E-SCALE-UPPER",
+   "file": "docs/assets/css/figures.css",
+   "tests": "E2E",
+   "old": ".diagram img { max-width: 100%; height: auto;",
+   "new": ".diagram img { width: 100%; height: auto;"
+  },
+  {
+   "id": "E2E-PHONE-SIZE",
+   "file": "docs/assets/css/layout.css",
+   "tests": "E2E",
+   "old": "  figure.diagram img { max-width: none; }",
+   "new": "  figure.diagram img { max-width: 100%; }"
+  },
+  {
+   "id": "E2E-PHONE-SCROLL",
+   "file": "docs/assets/css/layout.css",
+   "tests": "E2E",
+   "old": "  .diagram { overflow-x: auto; }",
+   "new": "  .diagram { overflow-x: visible; }"
   }
  ]
 }
