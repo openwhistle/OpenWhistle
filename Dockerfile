@@ -16,7 +16,7 @@ RUN apk add --no-cache \
 
 # uv from its official image, pinned. Keep it in step with the uv pin in
 # .github/workflows/*.yml.
-COPY --from=ghcr.io/astral-sh/uv:0.12.20@sha256:100047e74f30778ab704942321a09750d6158739573ff58bf3924085cc6cd2d8 /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.12.22@sha256:f513a91fc62fe7c17567eee97230dd198e43edb8a9fbecca843714a4358fe1bc /uv /usr/local/bin/uv
 
 COPY pyproject.toml uv.lock ./
 
