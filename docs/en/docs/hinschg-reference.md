@@ -1,6 +1,6 @@
 ---
-title: HinSchG duties and what OpenWhistle covers | OpenWhistle
-description: HinSchG duties and what OpenWhistle covers
+title: 'HinSchG duties and what OpenWhistle covers | OpenWhistle'
+description: 'The duties of the German HinSchG section by section: which of them OpenWhistle covers, and which stay with the organisation. A summary, not legal advice.'
 translation_key: hinschg-reference
 noindex: true
 css:

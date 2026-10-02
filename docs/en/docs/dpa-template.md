@@ -1,6 +1,6 @@
 ---
-title: Data Processing Agreement (DPA) Template | OpenWhistle
-description: Data Processing Agreement (DPA) Template
+title: 'Data Processing Agreement (DPA) Template | OpenWhistle'
+description: 'A GDPR Art. 28 data processing agreement template for running OpenWhistle: subject matter, data categories, safeguards. Seek legal advice before use.'
 translation_key: dpa-template
 noindex: true
 css:
