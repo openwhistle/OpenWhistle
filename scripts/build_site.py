@@ -115,7 +115,10 @@ def lookup(tree: dict, dotted: str) -> str:
 
 
 def _yaml(path: Path) -> dict:
-    return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    try:
+        return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError as error:
+        raise BuildError(f"{path.name}: not valid YAML: {error}") from error
 
 
 def load_data(src: Path) -> dict:
@@ -156,7 +159,10 @@ def _changelog() -> str:
     return changelog.render_content(*changelog.parse(source))
 
 
-GENERATORS: dict[str, Callable[[], str]] = {"changelog": _changelog}
+# generator name -> (function, the file its output comes from)
+GENERATORS: dict[str, tuple[Callable[[], str], Path]] = {
+    "changelog": (_changelog, ROOT / "CHANGELOG.md")
+}
 
 
 def _is_skipped(rel: Path) -> bool:
@@ -181,7 +187,9 @@ def load_pages(src: Path, site: dict) -> list[Page]:
         if "generated" in meta:
             if meta["generated"] not in GENERATORS:
                 raise BuildError(f"{rel}: unknown generator {meta['generated']!r}")
-            content = GENERATORS[meta["generated"]]()
+            if body.strip():
+                raise BuildError(f"{rel}: a generated page has a body, which would be dropped")
+            content = GENERATORS[meta["generated"]][0]()
         else:
             content = MARKDOWN.render(body) if path.suffix == ".md" else body
         for key in ("css", "js", "jsonld"):
@@ -209,25 +217,27 @@ def load_pages(src: Path, site: dict) -> list[Page]:
     return pages
 
 
+def language_roots(site: dict) -> set[str]:
+    return {f"/{lang}/" for lang in site["languages"]}
+
+
 def hreflang(page: Page, site: dict) -> list[tuple[str, str]]:
     """The <link rel=alternate> set, shared by the head and the sitemap."""
     if len(page.alternates) < 2:
         return []
     base = site["base_url"]
     links = [(lang, base + url) for lang, url in sorted(page.alternates.items())]
-    language_roots = {f"/{lang}/" for lang in site["languages"]}
-    if page.url in language_roots:
+    if page.url in language_roots(site):
         links.append(("x-default", base + "/"))  # "/" chooses the language
     elif site["default_language"] in page.alternates:
         links.append(("x-default", base + page.alternates[site["default_language"]]))
     return links
 
 
-def nav_context(page: Page, nav: dict, pages: list[Page], site: dict, t: dict) -> dict:
-    by_key: dict[str, dict[str, Page]] = {}
-    for other in pages:
-        by_key.setdefault(str(other.meta["translation_key"]), {})[other.lang] = other
-    language_roots = {f"/{lang}/" for lang in site["languages"]}
+def nav_context(
+    page: Page, nav: dict, by_key: dict[str, dict[str, Page]], site: dict, t: dict
+) -> dict:
+    roots = language_roots(site)
 
     def items(section: str) -> list[dict]:
         out = []
@@ -238,7 +248,7 @@ def nav_context(page: Page, nav: dict, pages: list[Page], site: dict, t: dict) -
             fragment = entry.get("fragment")
             current = not fragment and (
                 page.url == target.url
-                or (target.url not in language_roots and page.url.startswith(target.url))
+                or (target.url not in roots and page.url.startswith(target.url))
             )
             out.append({
                 "label": lookup(t, entry["label"]),
@@ -270,7 +280,7 @@ def check_nav(nav: dict, pages: list[Page], site: dict) -> None:
                 )
             named.add(entry["page"])
     targets = {p.url for p in pages if p.meta["translation_key"] in named}
-    prefixes = targets - {f"/{lang}/" for lang in site["languages"]}
+    prefixes = targets - language_roots(site)
     for page in pages:
         if page.meta.get("noindex") or page.url in targets:
             continue
@@ -287,7 +297,9 @@ def environment(src: Path) -> Environment:
     )
 
 
-def render_page(env: Environment, page: Page, data: dict, pages: list[Page]) -> str:
+def render_page(
+    env: Environment, page: Page, data: dict, by_key: dict[str, dict[str, Page]]
+) -> str:
     site, t = data["site"], data["i18n"][page.lang]
     return env.get_template("base.html").render(
         page=page,
@@ -298,7 +310,7 @@ def render_page(env: Environment, page: Page, data: dict, pages: list[Page]) -> 
             site["languages"][lang]["locale"] for lang in page.alternates if lang != page.lang
         ],
         hreflang=hreflang(page, site),
-        nav=nav_context(page, data["nav"], pages, site, t),
+        nav=nav_context(page, data["nav"], by_key, site, t),
     )
 
 
@@ -330,10 +342,8 @@ def check_links(out: Path, host: str) -> None:
         here = "/" + file.relative_to(out).as_posix()
         for ref in parser.refs:
             parts = urlsplit(urljoin(here, ref))
-            # Skip non-http(s) schemes (mailto:, ftp:, javascript:, etc.)
             if parts.scheme and parts.scheme not in ("http", "https"):
                 continue
-            # Skip external hosts (case-insensitive comparison)
             if parts.netloc and parts.netloc.lower() != host.lower():
                 continue
             # / is the language choice: a stub on Pages, nginx from P4
@@ -342,7 +352,6 @@ def check_links(out: Path, host: str) -> None:
             target = out / unquote(parts.path).lstrip("/")
             if parts.path.endswith("/"):
                 target = target / "index.html"
-            # Prevent path traversal outside out/
             try:
                 target.resolve().relative_to(out.resolve())
             except ValueError:
@@ -456,8 +465,8 @@ def write_sitemap(out: Path, src: Path, pages: list[Page], site: dict) -> None:
     for page in sorted(pages, key=lambda p: p.url):
         if page.meta.get("noindex"):
             continue
-        generated = page.meta.get("generated") == "changelog"
-        source = ROOT / "CHANGELOG.md" if generated else src / page.source
+        generator = page.meta.get("generated")
+        source = GENERATORS[generator][1] if generator else src / page.source
         lines = [f"    <loc>{html.escape(site['base_url'] + page.url)}</loc>"]
         lines += [
             f'    <xhtml:link rel="alternate" hreflang="{lang}" href="{html.escape(href)}"/>'
@@ -480,6 +489,11 @@ def _refuse_dangerous_out(src: Path, out: Path) -> None:
     out, src = out.resolve(), src.resolve()
     if out.is_relative_to(src) or src.is_relative_to(out):  # equal counts as both
         raise BuildError(f"--out {out} would overwrite the sources in {src}")
+    if out.is_relative_to(ROOT) or ROOT.is_relative_to(out):
+        if not out.is_relative_to(ROOT / "_site"):
+            raise BuildError(f"--out {out} is inside the repository; only _site/ may be emptied")
+    elif out.is_dir() and any(out.iterdir()) and not (out / "sitemap.xml").is_file():
+        raise BuildError(f"--out {out} is not empty and not a previous build (no sitemap.xml)")
 
 
 def build(src: Path, out: Path, *, redirect_stubs: bool = False) -> list[Page]:
@@ -501,10 +515,13 @@ def build(src: Path, out: Path, *, redirect_stubs: bool = False) -> list[Page]:
             shutil.copy2(path, out / rel)
 
     env = environment(src)
+    by_key: dict[str, dict[str, Page]] = {}
+    for page in pages:
+        by_key.setdefault(str(page.meta["translation_key"]), {})[page.lang] = page
     for page in pages:
         dest = output_file(out, page.url)
         dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(render_page(env, page, data, pages), encoding="utf-8")
+        dest.write_text(render_page(env, page, data, by_key), encoding="utf-8")
     write_sitemap(out, src, pages, site)
     # Before the stubs: a link to an old URL must fail even where a stub would catch it.
     check_links(out, urlsplit(site["base_url"]).netloc)

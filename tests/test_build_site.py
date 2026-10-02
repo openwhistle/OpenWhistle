@@ -670,3 +670,66 @@ def test_no_built_page_carries_an_inline_style() -> None:
     assert not offenders, (
         f"inline style= breaks the P4 CSP (style-src without 'unsafe-inline'): {offenders}"
     )
+
+
+@pytest.fixture
+def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """A stand-in repository, so a guard that fails deletes nothing real."""
+    root = tmp_path / "outer" / "repo"
+    for name in ("app", ".git", "scripts"):
+        (root / name).mkdir(parents=True)
+        (root / name / "keep.txt").write_text("keep", encoding="utf-8")
+    monkeypatch.setattr(B, "ROOT", root)
+    return root
+
+
+@pytest.mark.parametrize("name", ["app", ".git", "scripts"])
+def test_out_inside_the_repository_is_refused_except_site(
+    src: Path, repo: Path, name: str
+) -> None:
+    with pytest.raises(B.BuildError, match="inside the repository"):
+        B.build(src, repo / name)
+    assert (repo / name / "keep.txt").is_file()
+
+
+def test_out_above_the_repository_is_refused(src: Path, repo: Path) -> None:
+    with pytest.raises(B.BuildError, match="inside the repository"):
+        B.build(src, repo.parent)
+    assert (repo / "app" / "keep.txt").is_file()
+
+
+def test_the_repository_build_directory_is_allowed(src: Path, repo: Path) -> None:
+    B._refuse_dangerous_out(src, repo / "_site")
+    B._refuse_dangerous_out(src, repo / "_site" / "nested")
+
+
+def test_out_outside_the_repository_must_be_empty_or_a_previous_build(
+    src: Path, tmp_path: Path
+) -> None:
+    out = tmp_path / "out"
+    out.mkdir()
+    B._refuse_dangerous_out(src, out)  # empty
+    (out / "precious.txt").write_text("keep", encoding="utf-8")
+    with pytest.raises(B.BuildError, match="not a previous build"):
+        B.build(src, out)
+    assert (out / "precious.txt").read_text(encoding="utf-8") == "keep"
+    (out / "sitemap.xml").write_text("<urlset/>", encoding="utf-8")
+    B.build(src, out)  # a previous build is replaced
+    assert not (out / "precious.txt").exists()
+
+
+def test_a_broken_data_file_names_itself(src: Path, tmp_path: Path) -> None:
+    (src / "_data" / "nav.yml").write_text("primary: [unclosed\n", encoding="utf-8")
+    with pytest.raises(B.BuildError, match=r"nav\.yml.*not valid YAML"):
+        _build(src, tmp_path)
+
+
+def test_a_generated_page_with_a_body_fails(src: Path, tmp_path: Path) -> None:
+    page = src / "en" / "changelog.html"
+    page.write_text(
+        "---\ntitle: C\ndescription: d\ntranslation_key: cl\ngenerated: changelog\n---\n"
+        "<p>lost</p>\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(B.BuildError, match="generated page has a body"):
+        _build(src, tmp_path)
