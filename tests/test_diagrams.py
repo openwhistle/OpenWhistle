@@ -11,11 +11,12 @@ import io
 import re
 import subprocess
 from pathlib import Path
+from xml.etree import ElementTree as ET
 
 import pytest
 from fontTools.ttLib import TTFont
 
-from app.models.report import ReportStatus
+from app.models.report import STATUS_TRANSITIONS, ReportStatus
 from tests.built_site import built, page, pages
 from tests.diagram_tools import geometry, renderer
 
@@ -26,7 +27,8 @@ IDS = [source.name for source, _ in ALL]
 
 
 def _svg(source: Path, out: Path, theme: str) -> str:
-    return renderer().svg_path(source, out, theme).read_text(encoding="utf-8")
+    path: Path = renderer().svg_path(source, out, theme)
+    return path.read_text(encoding="utf-8")
 
 
 def test_there_are_diagrams() -> None:
@@ -67,16 +69,34 @@ def test_every_diagram_is_legible(source: Path, out: Path, theme: str) -> None:
 _HEX = re.compile(r"#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b")
 _RGB = re.compile(r"rgb\(\s*(\d+),\s*(\d+),\s*(\d+)\s*\)")
 _BLOB = re.compile(r"base64,[A-Za-z0-9+/=]+")
+_PAINT = r"(?<![-\w])(?:fill|stroke|stop-color|color)"
+_PAINT_VALUE = re.compile(rf'{_PAINT}="([^"]*)"|{_PAINT}\s*:\s*([^;"]+)')
+_NO_PAINT = {"none", "transparent", "currentcolor"}
 
 
 def _colours(svg: str) -> set[str]:
+    """Every colour the SVG paints with: hex and rgb() normalised, any other notation as written."""
     svg = _BLOB.sub("", svg)
     found = set()
     for h in _HEX.findall(svg):
         h = h.lower()
         found.add("#" + "".join(c * 2 for c in h[1:]) if len(h) == 4 else h)
     found |= {"#{:02x}{:02x}{:02x}".format(*map(int, m)) for m in _RGB.findall(svg)}
+    for m in _PAINT_VALUE.finditer(svg):
+        value = (m.group(1) or m.group(2)).strip()
+        if value.lower() not in _NO_PAINT and not (_HEX.fullmatch(value) or _RGB.fullmatch(value)):
+            found.add(value)
     return found
+
+
+def test_a_colour_in_any_notation_is_seen() -> None:
+    """A name, hsl() or rgba() would otherwise pass the palette check unseen."""
+    svg = (
+        '<rect fill="white" stroke="none" style="stroke: hsl(0, 0%, 0%); fill: #FFF"/>'
+        '<stop stop-color="rgba(0,0,0,.5)"/><g color="currentColor" stroke-width="2"/>'
+        '<text style="color: transparent; color-scheme: light">x</text>'
+    )
+    assert _colours(svg) == {"white", "hsl(0, 0%, 0%)", "#ffffff", "rgba(0,0,0,.5)"}
 
 
 @pytest.mark.parametrize(("source", "out"), ALL, ids=IDS)
@@ -165,6 +185,13 @@ def _tracked() -> list[Path]:
     return [ROOT / line for line in out.splitlines()]
 
 
+# History records quote what was removed; the guard's own test names what it looks for.
+_MERMAID_HISTORY = (
+    "CHANGELOG.md", "docs-tech/plans/", "docs-tech/specs/", "docs-tech/mutations/",
+    "tests/test_diagrams.py",
+)
+
+
 def test_no_mermaid_anywhere() -> None:
     found = []
     for path in _tracked():
@@ -174,15 +201,11 @@ def test_no_mermaid_anywhere() -> None:
             i.lower() == "mermaid" for i in _split_fences(path.read_text(encoding="utf-8"))[1]
         ):
             found.append(f"{path.relative_to(ROOT)}: a fenced Mermaid block")
-    tooling = [
-        ROOT / "renovate.json", ROOT / "pyproject.toml",
-        *ROOT.glob("scripts/*"), *ROOT.glob(".github/**/*.yml"),
-    ]
-    for path in tooling:
-        if path.is_file() and re.search(
-            r"mermaid-cli|@mermaid-js", path.read_text(encoding="utf-8")
+        rel = path.relative_to(ROOT).as_posix()
+        if path.is_file() and not rel.startswith(_MERMAID_HISTORY) and re.search(
+            rb"mermaid-cli|@mermaid-js", path.read_bytes()
         ):
-            found.append(f"{path.relative_to(ROOT)}: a mermaid-cli reference")
+            found.append(f"{rel}: a mermaid-cli reference")
     head = "Mermaid is gone (maintainer's decision, 2026-10-02):"
     assert not found, "\n  ".join([head, *found])
 
@@ -229,6 +252,55 @@ def test_pages_show_diagrams_in_their_own_language() -> None:
             if lang and (lang.group(1) == "de") != german:
                 wrong.append(f"{path.relative_to(built())} (lang={lang.group(1)}) shows {name}")
     assert not wrong, "\n  ".join(["diagram in the wrong language:", *wrong])
+
+
+def _graph(name: str) -> tuple[dict[str, str], dict[str, str], list[tuple[str, str]]]:
+    """(id -> label, id -> role, [(source id, target id)]) of a committed source."""
+    source = next(s for s, _ in ALL if s.name == f"{name}.drawio").read_text(encoding="utf-8")
+    cells = list(ET.fromstring(source).iter("mxCell"))  # noqa: S314 (the repository's own source)
+    labels = {c.get("id", ""): c.get("value", "") for c in cells}
+    edges = [(c.get("source", ""), c.get("target", "")) for c in cells if c.get("edge") == "1"]
+    return labels, renderer().roles_by_id(source), edges
+
+
+def test_the_case_lifecycle_draws_exactly_the_status_transitions() -> None:
+    labels, roles, edges = _graph("case-lifecycle")
+    status = {cid: labels[cid] for cid, role in roles.items() if role == "ow:step"}
+    drawn = {(status[a], status[b]) for a, b in edges if a in status and b in status}
+    allowed = {(a, b) for a, targets in STATUS_TRANSITIONS.items() for b in targets}
+    assert drawn == allowed, (
+        f"drawn, not allowed: {drawn - allowed}; allowed, not drawn: {allowed - drawn}"
+    )
+
+
+def _step_key(text: str) -> str:
+    return text.split(" — ")[0].strip().lower()
+
+
+def test_the_release_gates_follow_the_steps_of_release_md() -> None:
+    """Node labels in flow order against the `## N.` headings of docs-tech/release.md.
+
+    The key is the lowercased text before any " — " qualifier. A heading "A and B" is two
+    steps, and a node may name the step's object after its key: "Tag and verify" is drawn as
+    "Tag vX.Y.Z" and "Verify images".
+    """
+    labels, roles, edges = _graph("release-gates")
+    following = dict(edges)
+    node = next(cid for cid, role in roles.items() if role == "ow:start")
+    flow = [labels[node]]
+    while node in following:
+        node = following[node]
+        flow.append(labels[node])
+    release = (DOCS_TECH / "release.md").read_text(encoding="utf-8")
+    steps = [
+        part
+        for heading in re.findall(r"^## \d+\. (.+)$", release, re.M)
+        for part in _step_key(heading).split(" and ")
+    ]
+    keys = [label.lower() for label in flow]
+    assert len(keys) == len(steps) and all(
+        k == s or k.startswith(f"{s} ") for k, s in zip(keys, steps, strict=True)
+    ), f"release-gates draws {flow}; release.md has the steps {steps}"
 
 
 def test_the_case_lifecycle_names_exactly_the_report_statuses() -> None:
