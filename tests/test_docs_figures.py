@@ -132,3 +132,23 @@ def test_every_image_reserves_its_real_shape() -> None:
                     f"{page.relative_to(site)}: {src} is {width}x{height}, the file {nw:g}x{nh:g}"
                 )
     assert not wrong, "\n  ".join(["width/height disagree with the file:", *sorted(set(wrong))])
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "/en/",
+        "/de/",
+        "/en/docs/",
+        "/en/blog/free-internal-reporting-channel/",
+        "/de/blog/interne-meldestelle-kostenlos/",
+    ],
+)
+def test_a_diagram_scrolls_inside_its_figure_on_a_phone(url: str) -> None:
+    from tests.built_site import page
+
+    hrefs = re.findall(r'<link[^>]+href="(/assets/css/[^"]+\.css)"', page(url))
+    css = "".join((built() / h.lstrip("/")).read_text(encoding="utf-8") for h in hrefs)
+    narrow = r"@media \(max-width: 6\d\dpx\) \{[^{}]*\.diagram \{[^}]*overflow-x: auto"
+    rule = re.search(narrow, css)
+    assert rule, f"{url}: no narrow-width rule gives .diagram overflow-x: auto"

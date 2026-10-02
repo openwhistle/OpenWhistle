@@ -706,3 +706,5 @@
 /* Their Markdown gets the .docs-section type: lists, paragraphs, headings; tables are .env-table. */
 .docs-standalone.docs-section { border-bottom: none; }
 .docs-standalone hr { border: none; border-top: 1px solid var(--border-subtle); margin: var(--space-8) 0; }
+
+    @media (max-width: 640px) { .diagram { overflow-x: auto; } .diagram img { max-width: none; } }

@@ -29,3 +29,5 @@
       .comparison-table.stack tbody td:first-child { color: var(--text-primary); font-weight: 600; }
       .comparison-table.stack tbody td[data-label]::before { content: attr(data-label) ": "; color: var(--text-muted); font-weight: 400; }
     }
+
+    @media (max-width: 640px) { .diagram { overflow-x: auto; } .diagram img { max-width: none; } }
