@@ -27,6 +27,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.built_site import builder
+
 ROOT = Path(__file__).parents[1]
 
 MAX_WORDS = 30
@@ -34,14 +36,14 @@ MAX_AVERAGE = 18
 
 SCOPE = sorted(
     [
-        ROOT / "docs/docs.html",
-        ROOT / "docs/index.html",
-        ROOT / "docs/open-source-whistleblowing-software.html",
-        ROOT / "docs/roadmap.html",
-        ROOT / "docs/hinschg_reference.md",
-        *(ROOT / "docs/security").glob("*.md"),
+        ROOT / "docs/en/docs/index.html",
+        ROOT / "docs/en/index.html",
+        ROOT / "docs/en/compare/index.html",
+        ROOT / "docs/en/roadmap/index.html",
         ROOT / "docs/de/index.html",
-        *(ROOT / "docs/blog").glob("*.html"),
+        *(ROOT / "docs/en/blog").glob("*.html"),
+        *(ROOT / "docs/de/blog").glob("*.html"),
+        *(ROOT / "docs/en/docs").glob("*.md"),
     ]
 )
 
@@ -193,15 +195,21 @@ def md_prose(md: str) -> list[str]:
     return out
 
 
+def _body(path: Path) -> str:
+    """The page as written, without its front matter (a source's metadata, not prose)."""
+    text = path.read_text(encoding="utf-8")
+    return builder().split_front_matter(path, text)[1] if text.startswith("---\n") else text
+
+
 def measure(path: Path) -> list[int]:
     """Word count of every prose sentence on the page, in order."""
-    text = path.read_text(encoding="utf-8")
+    text = _body(path)
     blocks = html_prose(text) if path.suffix == ".html" else md_prose(text)
     return [word_count(s) for b in blocks for s in sentences(b)]
 
 
 def breaches(path: Path) -> list[str]:
-    text = path.read_text(encoding="utf-8")
+    text = _body(path)
     blocks = html_prose(text) if path.suffix == ".html" else md_prose(text)
     return [
         f"{word_count(s)} words: {' '.join(s.split()[:12])} ..."
@@ -217,7 +225,7 @@ def breaches(path: Path) -> list[str]:
 def test_the_scope_exists() -> None:
     missing = [p for p in SCOPE if not p.is_file()]
     assert not missing, f"scoped page(s) gone — update SCOPE: {missing}"
-    assert any(p.parent.name == "security" for p in SCOPE), "docs/security/*.md matched nothing"
+    assert ROOT / "docs/en/docs/security-policy.md" in SCOPE, "docs/en/docs/*.md matched nothing"
 
 
 @pytest.mark.parametrize("path", SCOPE, ids=lambda p: str(p.relative_to(ROOT)))

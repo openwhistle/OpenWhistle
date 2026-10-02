@@ -15,6 +15,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.built_site import built, pages
+
 ROOT = Path(__file__).parents[1]
 DOCS = ROOT / "docs"
 FIGURE_DIRS = ("img/screens", "img/diagrams")
@@ -36,18 +38,16 @@ def _images(page: Path) -> list[dict[str, str | None]]:
     return parser.images
 
 
-def _pages() -> list[Path]:
-    return sorted(p for p in DOCS.rglob("*.html") if "/docs/_" not in p.as_posix())
-
-
 def _srcs() -> set[str]:
-    """Every <img src> of every published page, resolved relative to docs/."""
+    """Every <img src> of every built page, resolved relative to the site root."""
+    site = built().resolve()
     found: set[str] = set()
-    for page in _pages():
+    for page in pages():
         for img in _images(page):
             src = img.get("src") or ""
             if src and "://" not in src and not src.startswith("data:"):
-                found.add((page.parent / src).resolve().relative_to(DOCS.resolve()).as_posix())
+                target = site / src.lstrip("/") if src.startswith("/") else page.parent / src
+                found.add(target.resolve().relative_to(site).as_posix())
     return found
 
 
@@ -70,14 +70,14 @@ def test_there_are_figures_to_check() -> None:
 def test_every_figure_is_embedded_with_its_dark_twin(light: str) -> None:
     srcs = _srcs()
     dark = light.replace("-light.", "-dark.")
-    assert light in srcs, f"{light} is on disk but no page under docs/ shows it"
+    assert light in srcs, f"{light} is on disk but no built page shows it"
     assert (DOCS / dark).is_file(), f"{light} has no dark twin {dark}"
     assert dark in srcs, f"{light} is embedded without its dark twin {dark}"
 
 
 def test_every_embedded_image_exists() -> None:
-    missing = sorted(src for src in _srcs() if not (DOCS / src).is_file())
-    assert not missing, f"page(s) under docs/ point at image(s) that do not exist: {missing}"
+    missing = sorted(src for src in _srcs() if not (built() / src).is_file())
+    assert not missing, f"built page(s) point at image(s) that do not exist: {missing}"
 
 
 def _unlabelled(page: Path) -> list[str]:
@@ -89,7 +89,7 @@ def _unlabelled(page: Path) -> list[str]:
 
 
 def test_every_image_has_alt_text_unless_hidden() -> None:
-    bare = [f"{page.relative_to(ROOT)}: {src}" for page in _pages() for src in _unlabelled(page)]
+    bare = [f"{page.relative_to(built())}: {src}" for page in pages() for src in _unlabelled(page)]
     assert not bare, "image(s) without alt text:\n  " + "\n  ".join(bare)
 
 

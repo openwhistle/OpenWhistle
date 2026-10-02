@@ -4,6 +4,8 @@ OpenWhistle, docs-tech/ is for whoever maintains the repository and never is."""
 import re
 from pathlib import Path
 
+from tests.built_site import built, page, pages
+
 ROOT = Path(__file__).parents[1]
 
 
@@ -32,9 +34,8 @@ def test_no_published_page_links_docs_tech() -> None:
     sends an operator to a maintainer page. Naming a docs-tech/ file in
     running text is fine, a link is not."""
     offenders = [
-        f"{p.relative_to(ROOT)}: {m.group(1)}"
-        for p in (ROOT / "docs").rglob("*.html")
-        if "/docs/_" not in p.as_posix()
+        f"{p.relative_to(built())}: {m.group(1)}"
+        for p in pages()
         for m in _DOCS_TECH_HREF.finditer(p.read_text())
     ]
     assert not offenders, f"published page(s) link docs-tech/: {offenders}"
@@ -43,6 +44,6 @@ def test_no_published_page_links_docs_tech() -> None:
 def test_the_public_roadmap_holds_no_test_chores() -> None:
     """Test infrastructure changes nothing a user sees; it is planned in
     docs-tech/test-infrastructure.md, not on the published roadmap."""
-    roadmap = (ROOT / "docs/roadmap.html").read_text()
+    roadmap = page("/en/roadmap/")
     assert not re.search(r"\btests/|\btest_\w+", roadmap)
     assert (ROOT / "docs-tech/test-infrastructure.md").exists()
