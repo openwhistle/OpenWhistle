@@ -1,6 +1,6 @@
-.diagram-dark, .shot-dark { display: none; }
-    [data-theme="dark"] .diagram-light, [data-theme="dark"] .shot-light { display: none; }
-    [data-theme="dark"] .diagram-dark, [data-theme="dark"] .shot-dark { display: block; }
+.shot-dark { display: none; }
+    [data-theme="dark"] .shot-light { display: none; }
+    [data-theme="dark"] .shot-dark { display: block; }
     .diagram { margin: 0; }
     .diagram img { max-width: 100%; height: auto; margin: 0 auto; display: block; }
     .diagram figcaption { font-size: 0.82rem; color: var(--text-muted); text-align: center; margin-top: var(--space-3); }

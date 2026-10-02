@@ -48,6 +48,8 @@ page matrix, traps, and start/stop commands: `docs-tech/local-review.md`.
 `tests/test_local_review.py::test_local_review_page_matrix_covers_every_app_page`
 and `..._covers_every_docs_site_page` fail when a page exists that the matrix
 does not list, so a new route or `docs/` page cannot be skipped by accident.
+`tests/e2e/test_docs_diagrams.py` measures every site diagram in a browser, without the app:
+one twin per theme, on the canvas, at ≥ 0.85 of its size at 1280–1920 px and at its size at 390 px.
 
 For each page: light and dark theme, 1440px and 390px, `en` and `de`; the
 interactive paths (wizard steps, identity-reveal form, filters, theme

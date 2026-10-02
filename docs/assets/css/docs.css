@@ -652,14 +652,9 @@
       border: 1px solid var(--border-subtle);
       border-radius: 4px;
     }
-    .diagram-dark, .shot-dark { display: none; }
-    [data-theme="dark"] .diagram-light, [data-theme="dark"] .shot-light { display: none; }
-    [data-theme="dark"] .diagram-dark, [data-theme="dark"] .shot-dark { display: block; }
-    /* The submission flow beside its steps: one scroll instead of two. */
-    @media (min-width: 1081px) {
-      .flow-steps { display: grid; grid-template-columns: 220px 1fr; gap: var(--space-8); align-items: start; }
-      .flow-steps .diagram { margin: 0; }
-    }
+    .shot-dark { display: none; }
+    [data-theme="dark"] .shot-light { display: none; }
+    [data-theme="dark"] .shot-dark { display: block; }
 
     /* ── Responsive ─────────────────────────────────────────────── */
     /* Nav collapses at 1080px, not 768px: at 1024px the full item list no
