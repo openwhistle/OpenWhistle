@@ -1,0 +1,918 @@
+{
+ "test_groups": {
+  "FM-OPEN": [
+   "tests/test_build_site.py::test_a_page_without_front_matter_fails"
+  ],
+  "FM-CLOSE": [
+   "tests/test_build_site.py::test_unclosed_front_matter_is_a_build_error"
+  ],
+  "FM-YAML": [
+   "tests/test_build_site.py::test_invalid_yaml_front_matter_is_a_build_error"
+  ],
+  "FM-MAP": [
+   "tests/test_build_site.py::test_non_mapping_front_matter_is_a_build_error"
+  ],
+  "FM-EMPTY": [
+   "tests/test_build_site.py::test_empty_front_matter_names_the_missing_keys"
+  ],
+  "FM-EOF": [
+   "tests/test_build_site.py::test_front_matter_closed_on_the_last_line_has_an_empty_body"
+  ],
+  "FM-RULE": [
+   "tests/test_build_site.py::test_a_rule_line_in_the_body_stays_in_the_body"
+  ],
+  "FM-CRLF": [
+   "tests/test_build_site.py::test_crlf_pages_build"
+  ],
+  "KEYS-UNKNOWN": [
+   "tests/test_build_site.py::test_an_unknown_front_matter_key_fails"
+  ],
+  "KEYS-REQUIRED": [
+   "tests/test_build_site.py::test_a_missing_required_key_fails"
+  ],
+  "URL-DUP": [
+   "tests/test_build_site.py::test_two_sources_for_one_url_fail"
+  ],
+  "LANG-NEEDED": [
+   "tests/test_build_site.py::test_a_page_outside_a_language_directory_needs_lang"
+  ],
+  "TK-TWICE": [
+   "tests/test_build_site.py::test_one_language_twice_in_a_translation_group_fails"
+  ],
+  "GEN-UNKNOWN": [
+   "tests/test_build_site.py::test_an_unknown_generator_fails"
+  ],
+  "CHANGELOG": [
+   "tests/test_changelog_page.py::test_the_built_page_is_the_changelog"
+  ],
+  "I18N": [
+   "tests/test_build_site.py::test_a_missing_translation_string_fails"
+  ],
+  "VERSION": [
+   "tests/test_build_site.py::test_the_footer_shows_the_app_version"
+  ],
+  "SKIP": [
+   "tests/test_build_site.py::test_underscore_paths_never_reach_the_output"
+  ],
+  "STATIC": [
+   "tests/test_build_site.py::test_pages_land_at_their_url_and_statics_are_copied"
+  ],
+  "URLFOR": [
+   "tests/test_build_site.py::test_url_for"
+  ],
+  "MD": [
+   "tests/test_build_site.py::test_markdown_renders_tables_and_keeps_raw_html_and_utf8"
+  ],
+  "JINJA": [
+   "tests/test_build_site.py::test_a_body_is_never_evaluated_as_jinja"
+  ],
+  "ESCAPE": [
+   "tests/test_build_site.py::test_title_and_description_are_html_escaped_and_utf8_stays_literal"
+  ],
+  "STRICT": [
+   "tests/test_build_site.py::test_an_undefined_template_name_fails"
+  ],
+  "THIRD-LANG": [
+   "tests/test_build_site.py::test_a_third_language_needs_data_only"
+  ],
+  "PIN": [
+   "tests/test_build_site.py::test_the_fixture_uses_the_real_templates"
+  ],
+  "INLINE-STYLE": [
+   "tests/test_build_site.py::test_no_built_page_carries_an_inline_style"
+  ],
+  "HL-NONE": [
+   "tests/test_build_site.py::test_no_translation_no_hreflang"
+  ],
+  "HL-ROOT": [
+   "tests/test_build_site.py::test_the_home_x_default_is_the_root_for_language_roots"
+  ],
+  "HL-DEFAULT": [
+   "tests/test_build_site.py::test_non_root_translated_page_x_default_is_default_language"
+  ],
+  "HL-NODEFAULT": [
+   "tests/test_build_site.py::test_a_group_without_default_language_gets_no_x_default"
+  ],
+  "HL-RECIPROCAL": [
+   "tests/test_seo.py::test_hreflang_is_reciprocal"
+  ],
+  "NAV-OWN": [
+   "tests/test_build_site.py::test_a_german_reader_is_sent_to_the_english_docs"
+  ],
+  "NAV-CURRENT-BUILT": [
+   "tests/test_docs_site.py::test_current_nav_item_is_marked"
+  ],
+  "NAV-CURRENT": [
+   "tests/test_build_site.py::test_the_current_section_is_marked"
+  ],
+  "NAV-HOME": [
+   "tests/test_build_site.py::test_a_home_entry_is_current_only_on_the_home"
+  ],
+  "NAV-FRAGMENT": [
+   "tests/test_build_site.py::test_a_fragment_entry_marks_nothing"
+  ],
+  "NAV-SWITCH": [
+   "tests/test_build_site.py::test_the_language_switch_goes_to_the_translation",
+   "tests/test_build_site.py::test_the_language_switch_of_a_translated_page_goes_to_its_twin"
+  ],
+  "NAV-UNKNOWN": [
+   "tests/test_build_site.py::test_a_nav_entry_naming_no_page_fails"
+  ],
+  "NAV-ORPHAN": [
+   "tests/test_build_site.py::test_a_page_no_nav_entry_leads_to_fails"
+  ],
+  "NAV-PARITY": [
+   "tests/test_docs_site.py::test_the_german_home_links_what_the_english_home_links"
+  ],
+  "LINK-NOTHING": [
+   "tests/test_build_site.py::test_a_link_to_nothing_fails"
+  ],
+  "LINK-FRAG": [
+   "tests/test_build_site.py::test_a_link_to_a_missing_fragment_fails",
+   "tests/test_build_site.py::test_same_page_missing_fragment_fails"
+  ],
+  "LINK-FRAG-PCT": [
+   "tests/test_build_site.py::test_fragment_with_percent_encoding_matches_id"
+  ],
+  "LINK-VALID": [
+   "tests/test_build_site.py::test_valid_and_external_links_pass"
+  ],
+  "LINK-SCHEME": [
+   "tests/test_build_site.py::test_unknown_scheme_is_skipped",
+   "tests/test_build_site.py::test_ftp_scheme_is_skipped"
+  ],
+  "LINK-CASE": [
+   "tests/test_build_site.py::test_netloc_case_insensitive",
+   "tests/test_build_site.py::test_a_broken_link_on_the_own_host_in_capitals_fails"
+  ],
+  "LINK-ROOT": [
+   "tests/test_build_site.py::test_the_root_is_the_language_choice_not_a_page",
+   "tests/test_build_site.py::test_a_link_to_root_fragment_passes"
+  ],
+  "LINK-TRAVERSAL": [
+   "tests/test_build_site.py::test_percent_encoded_path_traversal_fails"
+  ],
+  "LINK-PCT": [
+   "tests/test_build_site.py::test_percent_encoded_path_to_existing_file_passes"
+  ],
+  "LINK-REFS": [
+   "tests/test_build_site.py::test_a_missing_image_fails",
+   "tests/test_build_site.py::test_a_named_anchor_is_a_fragment_target"
+  ],
+  "OUT": [
+   "tests/test_build_site.py::test_out_may_not_be_the_sources_or_above_them"
+  ],
+  "OUT-INSIDE": [
+   "tests/test_build_site.py::test_out_inside_src_is_refused"
+  ],
+  "OUT-FILE": [
+   "tests/test_build_site.py::test_out_that_is_a_file_fails"
+  ],
+  "SITEMAP": [
+   "tests/test_build_site.py::test_the_sitemap_lists_indexable_pages_with_alternates"
+  ],
+  "LASTMOD": [
+   "tests/test_build_site.py::test_lastmod_is_the_last_commit_of_the_source"
+  ],
+  "LASTMOD-CHANGELOG": [
+   "tests/test_build_site.py::test_the_changelog_page_is_dated_by_changelog_md"
+  ],
+  "REDIR-TARGET": [
+   "tests/test_build_site.py::test_a_redirect_to_no_page_fails"
+  ],
+  "REDIR-PAGE": [
+   "tests/test_build_site.py::test_a_redirect_from_a_page_fails"
+  ],
+  "STUB": [
+   "tests/test_build_site.py::test_a_stub_keeps_the_fragment_and_is_not_indexed"
+  ],
+  "STUB-FLAG": [
+   "tests/test_build_site.py::test_no_stubs_without_the_flag"
+  ],
+  "STUB-OVERWRITE": [
+   "tests/test_build_site.py::test_a_stub_never_overwrites_a_page"
+  ],
+  "STUB-SHARED": [
+   "tests/test_build_site.py::test_two_urls_of_one_file_share_one_stub"
+  ],
+  "STUB-SCRIPT": [
+   "tests/test_build_site.py::test_a_stub_target_cannot_close_the_script"
+  ],
+  "MD-PASS": [
+   "tests/test_build_site.py::test_an_old_non_html_url_serves_the_source_body"
+  ],
+  "MD-SOURCE": [
+   "tests/test_build_site.py::test_an_old_non_html_url_must_lead_to_a_page_with_a_source"
+  ],
+  "MD-OVERWRITE": [
+   "tests/test_build_site.py::test_an_old_non_html_url_never_overwrites_a_file"
+  ],
+  "LINKS-FIRST": [
+   "tests/test_build_site.py::test_a_link_to_an_old_url_fails_although_a_stub_would_serve_it"
+  ],
+  "R-SERVED": [
+   "tests/test_redirects.py::test_every_old_url_reaches_a_page"
+  ],
+  "R-PAGES": [
+   "tests/test_redirects.py::test_github_pages_serves_every_old_url"
+  ],
+  "R-MD": [
+   "tests/test_redirects.py::test_an_old_markdown_url_serves_its_text_unchanged"
+  ],
+  "FLOOR": [
+   "tests/test_docs_boundary.py::test_no_published_page_links_docs_tech"
+  ],
+  "SHEETS": [
+   "tests/test_v160_design.py::test_every_docs_font_face_url_resolves_to_a_real_file"
+  ],
+  "W-UPLOAD": [
+   "tests/test_docs_boundary.py::test_pages_publishes_the_built_site_and_nothing_else"
+  ],
+  "W-DEPTH": [
+   "tests/test_docs_boundary.py::test_pages_checks_out_the_full_history"
+  ],
+  "W-LEAK": [
+   "tests/test_docs_boundary.py::test_no_built_file_comes_from_docs_tech"
+  ],
+  "AXE": [
+   "tests/test_renovate.py::test_the_vendored_axe_is_the_pinned_version_and_hash"
+  ],
+  "AXE-RENOVATE": [
+   "tests/test_renovate.py::test_axe_core_manager_reads_the_registry_and_the_version_constant"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "fm-must-open",
+   "file": "scripts/build_site.py",
+   "tests": "FM-OPEN",
+   "old": "    if not text.startswith(\"---\\n\"):\n",
+   "new": "    if False:\n"
+  },
+  {
+   "id": "fm-unclosed",
+   "file": "scripts/build_site.py",
+   "tests": "FM-CLOSE",
+   "old": "    if not closed:\n",
+   "new": "    if False:\n"
+  },
+  {
+   "id": "fm-yaml-error",
+   "file": "scripts/build_site.py",
+   "tests": "FM-YAML",
+   "old": "except yaml.YAMLError as error:",
+   "new": "except ZeroDivisionError as error:"
+  },
+  {
+   "id": "fm-non-mapping",
+   "file": "scripts/build_site.py",
+   "tests": "FM-MAP",
+   "old": "    if not isinstance(meta, dict):\n",
+   "new": "    if False:\n"
+  },
+  {
+   "id": "fm-empty",
+   "file": "scripts/build_site.py",
+   "tests": "FM-EMPTY",
+   "old": "yaml.safe_load(closed.group(1) or \"\") or {}",
+   "new": "yaml.safe_load(closed.group(1) or \"\")"
+  },
+  {
+   "id": "fm-close-at-eof",
+   "file": "scripts/build_site.py",
+   "tests": "FM-EOF",
+   "old": "---(?:\\n|\\Z)\"",
+   "new": "---\\n\""
+  },
+  {
+   "id": "fm-greedy",
+   "file": "scripts/build_site.py",
+   "tests": "FM-RULE",
+   "old": "(?:(.*?)\\n)?",
+   "new": "(?:(.*)\\n)?"
+  },
+  {
+   "id": "fm-crlf-dropped",
+   "file": "scripts/build_site.py",
+   "tests": "FM-CRLF",
+   "old": "        meta, body = split_front_matter(rel, path.read_text(encoding=\"utf-8\"))",
+   "new": "        meta, body = split_front_matter(rel, path.read_bytes().decode(\"utf-8\"))"
+  },
+  {
+   "id": "unknown-key",
+   "file": "scripts/build_site.py",
+   "tests": "KEYS-UNKNOWN",
+   "old": "if unknown := set(meta) - PAGE_KEYS:",
+   "new": "if unknown := set():"
+  },
+  {
+   "id": "required-key",
+   "file": "scripts/build_site.py",
+   "tests": "KEYS-REQUIRED",
+   "old": "if missing := REQUIRED_KEYS - set(meta):",
+   "new": "if missing := set():"
+  },
+  {
+   "id": "duplicate-url",
+   "file": "scripts/build_site.py",
+   "tests": "URL-DUP",
+   "old": "        if page.url in seen:\n",
+   "new": "        if False:\n"
+  },
+  {
+   "id": "lang-required",
+   "file": "scripts/build_site.py",
+   "tests": "LANG-NEEDED",
+   "old": "        if lang not in site[\"languages\"]:\n",
+   "new": "        if False:\n"
+  },
+  {
+   "id": "translation-twice",
+   "file": "scripts/build_site.py",
+   "tests": "TK-TWICE",
+   "old": "        if page.lang in group:\n",
+   "new": "        if False:\n"
+  },
+  {
+   "id": "generator-unknown",
+   "file": "scripts/build_site.py",
+   "tests": "GEN-UNKNOWN",
+   "old": "            if meta[\"generated\"] not in GENERATORS:\n",
+   "new": "            if False:\n"
+  },
+  {
+   "id": "changelog-render",
+   "file": "scripts/build_site.py",
+   "tests": "CHANGELOG",
+   "old": "            content = GENERATORS[meta[\"generated\"]]()\n",
+   "new": "            content = body\n"
+  },
+  {
+   "id": "i18n-complete",
+   "file": "scripts/build_site.py",
+   "tests": "I18N",
+   "old": "        if have != want:\n",
+   "new": "        if False:\n"
+  },
+  {
+   "id": "version-from-config",
+   "file": "scripts/build_site.py",
+   "tests": "VERSION",
+   "old": "r'app_version: str = \"([^\"]+)\"', (ROOT",
+   "new": "r'app_version: str = \"([^\"]+)\\.[^\"]+\"', (ROOT"
+  },
+  {
+   "id": "skip-underscore",
+   "file": "scripts/build_site.py",
+   "tests": "SKIP",
+   "old": "return any(part.startswith(\"_\") for part in rel.parts)",
+   "new": "return False"
+  },
+  {
+   "id": "static-bytes",
+   "file": "scripts/build_site.py",
+   "tests": "STATIC",
+   "old": "            shutil.copy2(path, out / rel)\n",
+   "new": "            (out / rel).write_bytes(b\"\")\n"
+  },
+  {
+   "id": "url-404",
+   "file": "scripts/build_site.py",
+   "tests": "URLFOR",
+   "old": "    if rel.as_posix() == \"404.html\":\n        return \"/404.html\"\n",
+   "new": ""
+  },
+  {
+   "id": "md-table-scroll",
+   "file": "scripts/build_site.py",
+   "tests": "MD",
+   "old": "MARKDOWN.add_render_rule(\"table_open\", lambda *_: '<div class=\"table-scroll\"><table>\\n')\n",
+   "new": ""
+  },
+  {
+   "id": "md-raw-html",
+   "file": "scripts/build_site.py",
+   "tests": "MD",
+   "old": "{\"html\": True}",
+   "new": "{\"html\": False}"
+  },
+  {
+   "id": "md-body-escaped",
+   "file": "tests/fixtures/site/_layouts/base.html",
+   "tests": "MD",
+   "old": "docs-standalone\">\n{{ page.content|safe }}",
+   "new": "docs-standalone\">\n{{ page.content }}"
+  },
+  {
+   "id": "html-body-escaped",
+   "file": "tests/fixtures/site/_layouts/base.html",
+   "tests": "JINJA",
+   "old": "{% else %}\n{{ page.content|safe }}",
+   "new": "{% else %}\n{{ page.content }}"
+  },
+  {
+   "id": "body-evaluated",
+   "file": "scripts/build_site.py",
+   "tests": "JINJA",
+   "old": "            content = MARKDOWN.render(body) if path.suffix == \".md\" else body\n",
+   "new": "            content = MARKDOWN.render(body) if path.suffix == \".md\" else Environment().from_string(body).render()\n"
+  },
+  {
+   "id": "autoescape-off",
+   "file": "scripts/build_site.py",
+   "tests": "ESCAPE",
+   "old": "        autoescape=True,\n",
+   "new": "        autoescape=False,\n"
+  },
+  {
+   "id": "strict-undefined",
+   "file": "scripts/build_site.py",
+   "tests": "STRICT",
+   "old": "        undefined=StrictUndefined,\n",
+   "new": ""
+  },
+  {
+   "id": "third-language",
+   "file": "tests/fixtures/site/_layouts/base.html",
+   "tests": "THIRD-LANG",
+   "old": "<html lang=\"{{ page.lang }}\"",
+   "new": "<html lang=\"en\""
+  },
+  {
+   "id": "fixture-template-pin",
+   "file": "tests/fixtures/site/_includes/footer.html",
+   "tests": "PIN",
+   "old": "<p class=\"footer-note\">",
+   "new": "<p class=\"footer-note\" data-drift=\"1\">"
+  },
+  {
+   "id": "inline-style",
+   "file": "docs/_includes/footer.html",
+   "tests": "INLINE-STYLE",
+   "old": "<p class=\"footer-note\">",
+   "new": "<p class=\"footer-note\" style=\"color:red\">"
+  },
+  {
+   "id": "hreflang-single",
+   "file": "scripts/build_site.py",
+   "tests": "HL-NONE",
+   "old": "    if len(page.alternates) < 2:\n",
+   "new": "    if len(page.alternates) < 1:\n"
+  },
+  {
+   "id": "x-default-root",
+   "file": "scripts/build_site.py",
+   "tests": "HL-ROOT",
+   "old": "        links.append((\"x-default\", base + \"/\"))",
+   "new": "        links.append((\"x-default\", base + page.url))"
+  },
+  {
+   "id": "x-default-default-lang",
+   "file": "scripts/build_site.py",
+   "tests": "HL-DEFAULT",
+   "old": "links.append((\"x-default\", base + page.alternates[site[\"default_language\"]]))",
+   "new": "links.append((\"x-default\", base + page.url))"
+  },
+  {
+   "id": "x-default-without-default",
+   "file": "scripts/build_site.py",
+   "tests": "HL-NODEFAULT",
+   "old": "    elif site[\"default_language\"] in page.alternates:\n",
+   "new": "    else:\n"
+  },
+  {
+   "id": "hreflang-head",
+   "file": "docs/_includes/head.html",
+   "tests": "HL-RECIPROCAL",
+   "old": "{% for lang, href in hreflang %}",
+   "new": "{% for lang, href in hreflang[:-1] %}"
+  },
+  {
+   "id": "nav-fallback",
+   "file": "scripts/build_site.py",
+   "tests": "NAV-OWN",
+   "old": "target = group.get(page.lang) or group[site[\"default_language\"]]",
+   "new": "target = group[page.lang]"
+  },
+  {
+   "id": "nav-own-language-first",
+   "file": "scripts/build_site.py",
+   "tests": "NAV-CURRENT-BUILT",
+   "old": "target = group.get(page.lang) or group[site[\"default_language\"]]",
+   "new": "target = group[site[\"default_language\"]]"
+  },
+  {
+   "id": "nav-current",
+   "file": "scripts/build_site.py",
+   "tests": "NAV-CURRENT",
+   "old": "            current = not fragment and (\n",
+   "new": "            current = False and (\n"
+  },
+  {
+   "id": "nav-current-root",
+   "file": "scripts/build_site.py",
+   "tests": "NAV-HOME",
+   "old": "(target.url not in language_roots and page.url.startswith(target.url))",
+   "new": "page.url.startswith(target.url)"
+  },
+  {
+   "id": "nav-current-fragment",
+   "file": "scripts/build_site.py",
+   "tests": "NAV-FRAGMENT",
+   "old": "            current = not fragment and (\n",
+   "new": "            current = (\n"
+  },
+  {
+   "id": "language-switch",
+   "file": "scripts/build_site.py",
+   "tests": "NAV-SWITCH",
+   "old": "\"href\": page.alternates.get(lang, f\"/{lang}/\"),",
+   "new": "\"href\": f\"/{lang}/\","
+  },
+  {
+   "id": "nav-names-no-page",
+   "file": "scripts/build_site.py",
+   "tests": "NAV-UNKNOWN",
+   "old": "            if entry[\"page\"] not in keys:\n",
+   "new": "            if False:\n"
+  },
+  {
+   "id": "nav-orphan",
+   "file": "scripts/build_site.py",
+   "tests": "NAV-ORPHAN",
+   "old": "            raise BuildError(f\"{page.source}: no entry of _data/nav.yml leads to {page.url}\")",
+   "new": "            pass"
+  },
+  {
+   "id": "nav-orphan-root-prefix",
+   "file": "scripts/build_site.py",
+   "tests": "NAV-ORPHAN",
+   "old": "    prefixes = targets - {f\"/{lang}/\" for lang in site[\"languages\"]}",
+   "new": "    prefixes = targets"
+  },
+  {
+   "id": "nav-orphan-noindex",
+   "file": "scripts/build_site.py",
+   "tests": "STATIC",
+   "old": "        if page.meta.get(\"noindex\") or page.url in targets:",
+   "new": "        if page.url in targets:"
+  },
+  {
+   "id": "de-en-nav-parity",
+   "file": "scripts/build_site.py",
+   "tests": "NAV-PARITY",
+   "old": "            out.append({\n",
+   "new": "            (page.lang == \"de\" and entry is nav[section][-1]) or out.append({\n"
+  },
+  {
+   "id": "link-check",
+   "file": "scripts/build_site.py",
+   "tests": "LINK-NOTHING",
+   "old": "                errors.append(f\"{here}: {ref} -> nothing at {parts.path}\")",
+   "new": "                pass"
+  },
+  {
+   "id": "fragment-check",
+   "file": "scripts/build_site.py",
+   "tests": "LINK-FRAG",
+   "old": "and unquote(parts.fragment) not in parsed[target].ids",
+   "new": "and False"
+  },
+  {
+   "id": "fragment-unquote",
+   "file": "scripts/build_site.py",
+   "tests": "LINK-FRAG-PCT",
+   "old": "and unquote(parts.fragment) not in parsed[target].ids",
+   "new": "and parts.fragment not in parsed[target].ids"
+  },
+  {
+   "id": "scheme-skip",
+   "file": "scripts/build_site.py",
+   "tests": "LINK-VALID",
+   "old": "            if parts.scheme and parts.scheme not in (\"http\", \"https\"):\n",
+   "new": "            if False:\n"
+  },
+  {
+   "id": "external-skip",
+   "file": "scripts/build_site.py",
+   "tests": "LINK-VALID",
+   "old": "            if parts.netloc and parts.netloc.lower() != host.lower():\n",
+   "new": "            if False:\n"
+  },
+  {
+   "id": "trailing-slash-index",
+   "file": "scripts/build_site.py",
+   "tests": "LINK-VALID",
+   "old": "                target = target / \"index.html\"\n",
+   "new": "                pass\n"
+  },
+  {
+   "id": "scheme-allow-list",
+   "file": "scripts/build_site.py",
+   "tests": "LINK-SCHEME",
+   "old": "parts.scheme not in (\"http\", \"https\")",
+   "new": "parts.scheme == \"mailto\""
+  },
+  {
+   "id": "netloc-case",
+   "file": "scripts/build_site.py",
+   "tests": "LINK-CASE",
+   "old": "parts.netloc.lower() != host.lower()",
+   "new": "parts.netloc != host"
+  },
+  {
+   "id": "root-exemption",
+   "file": "scripts/build_site.py",
+   "tests": "LINK-ROOT",
+   "old": "            if parts.path in (\"/\", \"/index.html\"):\n",
+   "new": "            if False:\n"
+  },
+  {
+   "id": "traversal",
+   "file": "scripts/build_site.py",
+   "tests": "LINK-TRAVERSAL",
+   "old": "                target.resolve().relative_to(out.resolve())\n",
+   "new": "                target.resolve()\n"
+  },
+  {
+   "id": "path-unquote",
+   "file": "scripts/build_site.py",
+   "tests": "LINK-PCT",
+   "old": "            target = out / unquote(parts.path).lstrip(\"/\")\n",
+   "new": "            target = out / parts.path.lstrip(\"/\")\n"
+  },
+  {
+   "id": "refs-src",
+   "file": "scripts/build_site.py",
+   "tests": "LINK-REFS",
+   "old": "for k in (\"href\", \"src\") if k in a]",
+   "new": "for k in (\"href\",) if k in a]"
+  },
+  {
+   "id": "refs-srcset",
+   "file": "scripts/build_site.py",
+   "tests": "LINK-REFS",
+   "old": "        if \"srcset\" in a:\n",
+   "new": "        if False:\n"
+  },
+  {
+   "id": "refs-name",
+   "file": "scripts/build_site.py",
+   "tests": "LINK-REFS",
+   "old": "        if tag == \"a\" and \"name\" in a:\n",
+   "new": "        if False:\n"
+  },
+  {
+   "id": "out-guard",
+   "file": "scripts/build_site.py",
+   "tests": "OUT",
+   "old": "    _refuse_dangerous_out(src, out)\n",
+   "new": "\n"
+  },
+  {
+   "id": "out-src-inside-out",
+   "file": "scripts/build_site.py",
+   "tests": "OUT",
+   "old": " or src.is_relative_to(out):",
+   "new": ":"
+  },
+  {
+   "id": "out-inside-src",
+   "file": "scripts/build_site.py",
+   "tests": "OUT-INSIDE",
+   "old": "    if out.is_relative_to(src) or ",
+   "new": "    if "
+  },
+  {
+   "id": "out-is-file",
+   "file": "scripts/build_site.py",
+   "tests": "OUT-FILE",
+   "old": "    if out.is_file():\n",
+   "new": "    if False:\n"
+  },
+  {
+   "id": "sitemap-noindex",
+   "file": "scripts/build_site.py",
+   "tests": "SITEMAP",
+   "old": "        if page.meta.get(\"noindex\"):\n            continue\n        generated",
+   "new": "        generated"
+  },
+  {
+   "id": "sitemap-alternates",
+   "file": "scripts/build_site.py",
+   "tests": "SITEMAP",
+   "old": "            for lang, href in hreflang(page, site)\n",
+   "new": "            for lang, href in []\n"
+  },
+  {
+   "id": "lastmod-git",
+   "file": "scripts/build_site.py",
+   "tests": "LASTMOD",
+   "old": "    return committed if committed and not _git(",
+   "new": "    return today if committed and not _git("
+  },
+  {
+   "id": "lastmod-changelog",
+   "file": "scripts/build_site.py",
+   "tests": "LASTMOD-CHANGELOG",
+   "old": "source = ROOT / \"CHANGELOG.md\" if generated else src / page.source",
+   "new": "source = src / page.source"
+  },
+  {
+   "id": "redirect-target",
+   "file": "scripts/build_site.py",
+   "tests": "REDIR-TARGET",
+   "old": "        if new not in urls:\n",
+   "new": "        if False:\n"
+  },
+  {
+   "id": "redirect-from-page",
+   "file": "scripts/build_site.py",
+   "tests": "REDIR-PAGE",
+   "old": "        if old in urls:\n",
+   "new": "        if False:\n"
+  },
+  {
+   "id": "stub-hash",
+   "file": "scripts/build_site.py",
+   "tests": "STUB",
+   "old": "+location.hash)",
+   "new": ")"
+  },
+  {
+   "id": "stub-noindex",
+   "file": "scripts/build_site.py",
+   "tests": "STUB",
+   "old": "<meta name=\"robots\" content=\"noindex\">\n<link rel=\"canonical\"",
+   "new": "<link rel=\"canonical\""
+  },
+  {
+   "id": "stub-root",
+   "file": "scripts/build_site.py",
+   "tests": "STUB",
+   "old": "    stubs = {\"/\": f\"/{site['default_language']}/\", **redirects}",
+   "new": "    stubs = dict(redirects)"
+  },
+  {
+   "id": "stubs-only-with-flag",
+   "file": "scripts/build_site.py",
+   "tests": "STUB-FLAG",
+   "old": "    if redirect_stubs:\n",
+   "new": "    if True:\n"
+  },
+  {
+   "id": "stub-no-overwrite",
+   "file": "scripts/build_site.py",
+   "tests": "STUB-OVERWRITE",
+   "old": "        if dest.exists():\n            raise BuildError(\n                f\"_data/redirects.yml: the stub for",
+   "new": "        if False:\n            raise BuildError(\n                f\"_data/redirects.yml: the stub for"
+  },
+  {
+   "id": "shared-stub",
+   "file": "scripts/build_site.py",
+   "tests": "STUB-SHARED",
+   "old": "        if written.get(dest) == new:\n",
+   "new": "        if False:\n"
+  },
+  {
+   "id": "stub-script-escape",
+   "file": "scripts/build_site.py",
+   "tests": "STUB-SCRIPT",
+   "old": ".replace(\"</\", \"<\\\\/\")",
+   "new": ""
+  },
+  {
+   "id": "md-passthrough",
+   "file": "scripts/build_site.py",
+   "tests": "MD-PASS",
+   "old": "            dest.write_text(split_front_matter(source, text)[1], encoding=\"utf-8\")",
+   "new": "            dest.write_text(text, encoding=\"utf-8\")"
+  },
+  {
+   "id": "md-needs-source",
+   "file": "scripts/build_site.py",
+   "tests": "MD-SOURCE",
+   "old": "            if source is None:\n",
+   "new": "            if False:\n"
+  },
+  {
+   "id": "md-no-overwrite",
+   "file": "scripts/build_site.py",
+   "tests": "MD-OVERWRITE",
+   "old": "            if dest.exists():\n                raise BuildError(\n                    f\"_data/redirects.yml: {old} would overwrite",
+   "new": "            if False:\n                raise BuildError(\n                    f\"_data/redirects.yml: {old} would overwrite"
+  },
+  {
+   "id": "links-before-stubs",
+   "file": "scripts/build_site.py",
+   "tests": "LINKS-FIRST",
+   "old": "    check_links(out, urlsplit(site[\"base_url\"]).netloc)\n    if redirect_stubs:\n        write_stubs(out, data[\"redirects\"], site, {p.url: src / p.source for p in pages})\n",
+   "new": "    if redirect_stubs:\n        write_stubs(out, data[\"redirects\"], site, {p.url: src / p.source for p in pages})\n    check_links(out, urlsplit(site[\"base_url\"]).netloc)\n"
+  },
+  {
+   "id": "old-url-dropped",
+   "file": "docs/_data/redirects.yml",
+   "tests": "R-SERVED",
+   "old": "/docs.html: /en/docs/\n",
+   "new": ""
+  },
+  {
+   "id": "old-url-no-stub",
+   "file": "docs/_data/redirects.yml",
+   "tests": "R-PAGES",
+   "old": "/roadmap.html: /en/roadmap/\n",
+   "new": ""
+  },
+  {
+   "id": "old-markdown-changed",
+   "file": "scripts/build_site.py",
+   "tests": "R-MD",
+   "old": "            dest.write_text(split_front_matter(source, text)[1], encoding=\"utf-8\")",
+   "new": "            dest.write_text(split_front_matter(source, text)[1].rstrip(), encoding=\"utf-8\")"
+  },
+  {
+   "id": "pages-floor",
+   "file": "tests/built_site.py",
+   "tests": "FLOOR",
+   "old": "    found = sorted(built().rglob(\"*.html\"))",
+   "new": "    found = sorted(built().glob(\"*.html\"))"
+  },
+  {
+   "id": "stylesheets-complete",
+   "file": "docs/_includes/head.html",
+   "tests": "SHEETS",
+   "old": "<link rel=\"stylesheet\" href=\"/assets/css/{{ name }}.css\">",
+   "new": "<link href=\"/assets/css/{{ name }}.css\" rel=\"stylesheet\">"
+  },
+  {
+   "id": "upload-path",
+   "file": ".github/workflows/pages.yml",
+   "tests": "W-UPLOAD",
+   "old": "path: \"_site\"",
+   "new": "path: \"docs\""
+  },
+  {
+   "id": "single-upload",
+   "file": ".github/workflows/pages.yml",
+   "tests": "W-UPLOAD",
+   "old": "          path: \"_site\"\n",
+   "new": "          path: \"_site\"\n\n      - name: Upload again\n        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5\n        with:\n          path: \"docs\"\n"
+  },
+  {
+   "id": "build-reads-src",
+   "file": ".github/workflows/pages.yml",
+   "tests": "W-UPLOAD",
+   "old": "run: python scripts/build_site.py --redirect-stubs",
+   "new": "run: python scripts/build_site.py --redirect-stubs --src ."
+  },
+  {
+   "id": "pages-stubs",
+   "file": ".github/workflows/pages.yml",
+   "tests": "W-UPLOAD",
+   "old": "run: python scripts/build_site.py --redirect-stubs",
+   "new": "run: python scripts/build_site.py"
+  },
+  {
+   "id": "fetch-depth",
+   "file": ".github/workflows/pages.yml",
+   "tests": "W-DEPTH",
+   "old": "          fetch-depth: 0",
+   "new": "          fetch-depth: 1"
+  },
+  {
+   "id": "docs-tech-content-leak",
+   "file": "docs/CNAME",
+   "tests": "W-LEAK",
+   "old": "openwhistle.net",
+   "new": "{\n \"timeout_seconds\": 120,\n \"test_groups\": {\n  \"D\": [\n   \"tests/test_diagrams.py\"\n  ]\n },\n \"mutations\": [\n  {\n   \"id\": \"mmd-edited-without-rerender\",\n   \"file\": \"docs/_diagrams/architecture.mmd\",\n   \"old\": \"    client[\\\"Browser / Tor Browser\\\"]\",\n   \"new\": \"    client[\\\"Browser or Tor Browser\\\"]\",\n   \"tests\": \"D\"\n  },\n  {\n   \"id\": \"svg-foreign-color\",\n   \"file\": \"docs/img/diagrams/architecture-light.svg\",\n   \"old\": \"<svg data-source-digest=\\\"\",\n   \"new\": \"<svg fill=\\\"#ff00ff\\\" data-source-digest=\\\"\",\n   \"tests\": \"D\"\n  },\n  {\n   \"id\": \"svg-external-href\",\n   \"file\": \"docs/img/diagrams/architecture-dark.svg\",\n   \"old\": \"<svg data-source-digest=\\\"\",\n   \"new\": \"<svg xlink:href=\\\"https://evil.example/pixel.png\\\" data-source-digest=\\\"\",\n   \"tests\": \"D\"\n  }\n ]\n}\n"
+  },
+  {
+   "id": "docs-tech-name-leak",
+   "file": "docs/_data/redirects.yml",
+   "tests": "W-LEAK",
+   "old": "/security/dpa_template.md: ",
+   "new": "/security/release.md: "
+  },
+  {
+   "id": "axe-hash",
+   "file": "tests/e2e/conftest.py",
+   "tests": "AXE",
+   "old": "AXE_SHA256 = \"c24f097b",
+   "new": "AXE_SHA256 = \"d24f097b"
+  },
+  {
+   "id": "axe-version",
+   "file": "tests/e2e/conftest.py",
+   "tests": "AXE",
+   "old": "AXE_VERSION = \"4.13.0\"",
+   "new": "AXE_VERSION = \"4.12.0\""
+  },
+  {
+   "id": "axe-renovate-constant",
+   "file": "tests/e2e/conftest.py",
+   "tests": "AXE-RENOVATE",
+   "old": "AXE_VERSION = \"4.13.0\"",
+   "new": "AXE_VERSION: str = \"4.13.0\""
+  }
+ ]
+}
