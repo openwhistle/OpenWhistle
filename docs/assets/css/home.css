@@ -651,10 +651,6 @@
       line-height: 1.65;
     }
 
-    /* ── How it works ────────────────────────────────────────────── */
-
-    .diagram-centered { text-align: center; }
-
     /* ── Compliance ──────────────────────────────────────────────── */
     .compliance-grid {
       display: grid;

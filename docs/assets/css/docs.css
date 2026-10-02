@@ -645,7 +645,7 @@
        data-theme, the attribute the toggle sets; a <picture> media query
        would follow the OS instead (docs-tech/diagrams.md). */
     .diagram, .doc-shot { margin: var(--space-6) 0; }
-    .diagram img { max-width: 100%; height: auto; margin: 0 auto; }
+    .diagram img { max-width: 100%; height: auto; margin: 0 auto; display: block; }
     .doc-shot img {
       width: 100%;
       height: auto;
@@ -706,5 +706,3 @@
 /* Their Markdown gets the .docs-section type: lists, paragraphs, headings; tables are .env-table. */
 .docs-standalone.docs-section { border-bottom: none; }
 .docs-standalone hr { border: none; border-top: 1px solid var(--border-subtle); margin: var(--space-8) 0; }
-
-    @media (max-width: 640px) { .diagram { overflow-x: auto; } .diagram img { max-width: none; } }

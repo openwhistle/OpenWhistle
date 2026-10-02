@@ -3,7 +3,7 @@
    docs.css; see docs-tech/diagrams.md for the markup.
    CSS picks the twin from data-theme, the attribute the toggle sets. */
 .diagram, .doc-shot { margin: 0; }
-.diagram img { max-width: 100%; height: auto; margin: 0 auto; }
+.diagram img { max-width: 100%; height: auto; margin: 0 auto; display: block; }
 .doc-shot img {
   width: 100%;
   height: auto;
@@ -68,5 +68,3 @@
   .figure-row .comparison-table tbody td:first-child { width: 6.5rem; }
   .figure-row .comparison-table tbody td { padding-left: var(--space-2); padding-right: var(--space-2); }
 }
-
-    @media (max-width: 640px) { .diagram { overflow-x: auto; } .diagram img { max-width: none; } }

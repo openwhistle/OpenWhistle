@@ -3,3 +3,10 @@
 .footer-disclaimer { font-size: 0.82rem; color: rgba(226,220,210,0.35); line-height: 1.7; margin-top: 0.75rem; }
 /* Owned by docs/_includes/nav.html: the sticky nav must not cover a #fragment target. */
 html { scroll-padding-top: 80px; }
+/* Every page loads layout.css, so it owns the phone rule for diagrams: a diagram keeps its
+   designed size and scrolls inside its figure. figure.diagram outranks the pages' own
+   .diagram img { max-width: 100% }, which loads later. */
+@media (max-width: 640px) {
+  .diagram { overflow-x: auto; }
+  figure.diagram img { max-width: none; }
+}

@@ -224,7 +224,7 @@
 
     /* Themed figures, as in docs/en/docs/index.html: CSS picks the twin from data-theme. */
     .diagram { margin: var(--space-8) 0; }
-    .diagram img { max-width: 100%; height: auto; margin: 0 auto; }
+    .diagram img { max-width: 100%; height: auto; margin: 0 auto; display: block; }
     .diagram figcaption { font-size: 0.82rem; color: var(--text-muted); text-align: center; margin-top: var(--space-3); }
     .diagram-dark { display: none; }
     [data-theme="dark"] .diagram-light { display: none; }
@@ -264,5 +264,3 @@
 
 /* Formerly inline style= attributes: the P4 CSP (style-src without 'unsafe-inline') allows none. */
 .article-body .post-note { margin-top: var(--space-10); font-size: 0.88rem; color: var(--text-muted); }
-
-    @media (max-width: 640px) { .diagram { overflow-x: auto; } .diagram img { max-width: none; } }
