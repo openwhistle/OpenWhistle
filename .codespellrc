@@ -1,5 +1,5 @@
 [codespell]
-skip = .git,.venv,.ruff_cache,.mypy_cache,.pytest_cache,uv.lock,htmlcov,*.woff2,*.png,*.ico,*.svg,.superpowers,.serena,.claude,CLAUDE.md,app/static/css/site.css,./app/locales/de.json,./app/locales/fr.json,./app/locales/pt-br.json,./docs/de,./docs/blog,./docs/hinschg_reference.md,./docs-tech/plans
+skip = .git,.venv,.ruff_cache,.mypy_cache,.pytest_cache,uv.lock,htmlcov,*.woff2,*.png,*.ico,*.svg,.superpowers,.serena,.claude,CLAUDE.md,app/static/css/site.css,./app/locales/de.json,./app/locales/fr.json,./app/locales/pt-br.json,./docs/de,./docs/blog,./docs/hinschg_reference.md,./docs-tech/plans,./docs-tech/legal
 check-hidden = false
 # covert — correct English legal term (secret recording), app/locales/en.json:431
 # Tage — German text in changelog example, CHANGELOG.md:809

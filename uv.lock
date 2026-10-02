@@ -1073,6 +1073,18 @@ wheels = [
 ]
 
 [[package]]
+name = "markdown-it-py"
+version = "4.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "mdurl" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/06/ff/7841249c247aa650a76b9ee4bbaeae59370dc8bfd2f6c01f3630c35eb134/markdown_it_py-4.2.0.tar.gz", hash = "sha256:04a21681d6fbb623de53f6f364d352309d4094dd4194040a10fd51833e418d49", size = 82454, upload-time = "2026-05-07T12:08:28.36Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b3/81/4da04ced5a082363ecfa159c010d200ecbd959ae410c10c0264a38cac0f5/markdown_it_py-4.2.0-py3-none-any.whl", hash = "sha256:9f7ebbcd14fe59494226453aed97c1070d83f8d24b6fc3a3bcf9a38092641c4a", size = 91687, upload-time = "2026-05-07T12:08:27.182Z" },
+]
+
+[[package]]
 name = "markupsafe"
 version = "3.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1100,6 +1112,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/fb/df/5bd7a48c256faecd1d36edc13133e51397e41b73bb77e1a69deab746ebac/markupsafe-3.0.3-cp314-cp314t-win32.whl", hash = "sha256:915c04ba3851909ce68ccc2b8e2cd691618c4dc4c4232fb7982bca3f41fd8c3d", size = 14819, upload-time = "2025-09-27T18:37:26.285Z" },
     { url = "https://files.pythonhosted.org/packages/1a/8a/0402ba61a2f16038b48b39bccca271134be00c5c9f0f623208399333c448/markupsafe-3.0.3-cp314-cp314t-win_amd64.whl", hash = "sha256:4faffd047e07c38848ce017e8725090413cd80cbc23d86e55c587bf979e579c9", size = 15426, upload-time = "2025-09-27T18:37:27.316Z" },
     { url = "https://files.pythonhosted.org/packages/70/bc/6f1c2f612465f5fa89b95bead1f44dcb607670fd42891d8fdcd5d039f4f4/markupsafe-3.0.3-cp314-cp314t-win_arm64.whl", hash = "sha256:32001d6a8fc98c8cb5c947787c5d08b0a50663d139f1305bac5885d98d9b40fa", size = 14146, upload-time = "2025-09-27T18:37:28.327Z" },
+]
+
+[[package]]
+name = "mdurl"
+version = "0.1.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d6/54/cfe61301667036ec958cb99bd3efefba235e65cdeb9c84d24a8293ba1d90/mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba", size = 8729, upload-time = "2022-08-14T12:40:10.846Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8", size = 9979, upload-time = "2022-08-14T12:40:09.779Z" },
 ]
 
 [[package]]
@@ -1256,6 +1277,14 @@ s3 = [
     { name = "boto3" },
 ]
 
+[package.dev-dependencies]
+site = [
+    { name = "jinja2" },
+    { name = "markdown-it-py" },
+    { name = "pagefind", extra = ["extended"] },
+    { name = "pyyaml" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "aiosmtplib", specifier = ">=5.1.0" },
@@ -1293,6 +1322,14 @@ requires-dist = [
 ]
 provides-extras = ["dev", "e2e", "perf", "ldap", "s3"]
 
+[package.metadata.requires-dev]
+site = [
+    { name = "jinja2", specifier = ">=3.1.6" },
+    { name = "markdown-it-py", specifier = ">=4.2.0" },
+    { name = "pagefind", extras = ["extended"], specifier = ">=1.5.2" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
+]
+
 [[package]]
 name = "packaging"
 version = "26.3"
@@ -1300,6 +1337,33 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/7d/fa/3944b40b07da9ce895c0e6303a5ab7d53da063554f534556b134a54d6093/packaging-26.3.tar.gz", hash = "sha256:94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79", size = 313412, upload-time = "2026-08-04T18:15:28.737Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/63/34/ba1c580383c9eada3711951fef0795c80b829a078d72188184bcab9dd527/packaging-26.3-py3-none-any.whl", hash = "sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c", size = 129956, upload-time = "2026-08-04T18:15:27.159Z" },
+]
+
+[[package]]
+name = "pagefind"
+version = "1.5.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/50/cc/efc080eb3191d1afc75dc58c336676c0847fc4610b1d9e7d58b4083836b6/pagefind-1.5.2.tar.gz", hash = "sha256:fffddd6e2016b06bdca83b83d4ac4bef379cf0559f05ecdb6908a8729a27dbf3", size = 52521, upload-time = "2026-04-12T12:51:59.814Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0a/a7/414e1df2749f647784e32da78ce3081a9fedf1ae8d5b3bb8d4c5643f06cd/pagefind-1.5.2-py3-none-any.whl", hash = "sha256:6c4086ad9eaa7e8f863085652f6b1093549b1737848d946daa0706ee57f778d1", size = 10104, upload-time = "2026-04-12T12:51:27.563Z" },
+]
+
+[package.optional-dependencies]
+extended = [
+    { name = "pagefind-bin-extended" },
+]
+
+[[package]]
+name = "pagefind-bin-extended"
+version = "1.5.2"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/36/5e/06ac224460edfea99cca6708b25f7a604a2eec0c5db8d8b1a3b7246426cc/pagefind_bin_extended-1.5.2-py3-none-macosx_12_0_arm64.whl", hash = "sha256:9c4e2d7e0def5ba3a7814594e1d91cb6876030c5e05ccec53cc778b94d8af6e6", size = 52590084, upload-time = "2026-04-12T12:51:40.083Z" },
+    { url = "https://files.pythonhosted.org/packages/a6/31/39ebf3ccfd440f377f4507d6232a5b27e6a55ba3296b6f63f766937727ef/pagefind_bin_extended-1.5.2-py3-none-macosx_12_0_x86_64.whl", hash = "sha256:c4db4b46e5aa42c6641cee257b0767895a1d9471c2332717763116e295bd7340", size = 52335482, upload-time = "2026-04-12T12:51:43.674Z" },
+    { url = "https://files.pythonhosted.org/packages/c1/33/66cc2d32a8bfaa3dc4109a7a5f557a0df61aecee9fce827bd8ca9dbb051c/pagefind_bin_extended-1.5.2-py3-none-manylinux_2_12_x86_64.manylinux2010_x86_64.musllinux_1_1_x86_64.whl", hash = "sha256:1762f4a8c2137ca07261b0fec1b441df1ba421a0f124a86e33c43c09ca2d1d6c", size = 52658197, upload-time = "2026-04-12T12:51:46.937Z" },
+    { url = "https://files.pythonhosted.org/packages/1c/a4/bdf91a227c0c7dcb394c4e47db1db046cd42e56d1881f61d8efbbadfd6e2/pagefind_bin_extended-1.5.2-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64.whl", hash = "sha256:bcf47caa731c423c6ba355f593cf41febde986a296e8dd3a47620c72aa7a18e1", size = 52374465, upload-time = "2026-04-12T12:51:50.532Z" },
+    { url = "https://files.pythonhosted.org/packages/ce/a7/fa14455f45f8b0ba7f99d9f51d7cbaeee26b187d8da3b457103977c6fd88/pagefind_bin_extended-1.5.2-py3-none-win_amd64.whl", hash = "sha256:2bf653ca30062b50e461887b14cd97be8e44dce6a28b9949b02db4b7f7ca694f", size = 52435085, upload-time = "2026-04-12T12:51:53.967Z" },
+    { url = "https://files.pythonhosted.org/packages/3a/79/ea7a5edd10df47549fd2795d3e4183c08bd1ece96acc6445dd0b21b33f0e/pagefind_bin_extended-1.5.2-py3-none-win_arm64.whl", hash = "sha256:2a59c73b19857f84d7f3482c781897bd20d9409ab4b4e146d54c7b67713dd7cb", size = 52297865, upload-time = "2026-04-12T12:51:57.496Z" },
 ]
 
 [[package]]

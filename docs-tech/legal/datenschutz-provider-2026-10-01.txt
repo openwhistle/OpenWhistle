@@ -1,0 +1,119 @@
+Source text as delivered by Impressum-Privatschutz on 2026-10-01, unedited.
+It is NOT the published privacy policy: sections 4 (IP address, browser,
+operating system, provider, contact form, cookies, consent tool), 6 and the
+telephone placeholder contradict the setup in
+docs-tech/specs/2026-10-01-website-redesign-design.md and are rewritten in P3.
+Kept so the published text can be diffed against what the provider supplied.
+
+----------------------------------------------------------------------------
+
+Datenschutzerklärung
+
+Informationen über die Verarbeitung Ihrer Daten gemäß Art. 13 und Art. 14 der Datenschutz-Grundverordnung (DS-GVO)
+
+ Inhalt
+
+1. Allgemeine Informationen
+2. Kontaktdaten des Verantwortlichen und bei Fragen zum Datenschutz
+3. Datenverarbeitung in Zusammenhang mit unseren Online-Auftritten
+ 3.1 Auftritte auf sozialen Medien
+ 3.2 Verwendung von Zahlungsdienstleistern
+4. Datenverarbeitung bei Nutzung unserer Website
+5. Datenweitergabe an Dritte und externe Empfänger
+6. Verwendung von Daten für Kommunikation und Marketing
+7. Verwendung von Impressum-Privatschutz (IP-Management)
+8. Speicherdauer der Daten
+9. Datensicherheit
+10. Ihre Rechte als betroffene Person
+
+1. Allgemeine Informationen
+Nachfolgend möchten wir Sie informieren, wie wir personenbezogene Daten verwenden und speichern. Sofern Sie bestimmte Leistungen abrufen (z. B. uns eine E-Mail senden), können personenbezogene Daten erhoben werden. Wir beachten dabei die geltenden europäischen Bestimmungen zum Datenschutz.
+
+2. Kontaktdaten des Verantwortlichen und bei Fragen zum Datenschutz
+Verantwortlich für den mit dieser Datenschutzerklärung verbundenen Online-Auftritt ist
+
+Jochen Pylypiw
+c/o IP-Management #12226
+Ludwig-Erhard-Straße 18
+20459 Hamburg
+
+E-Mail: info@openwhistle.net
+Telefon: Platzhalter
+
+3. Datenverarbeitung in Zusammenhang mit unseren Online-Auftritten
+
+3.1 Auftritte auf sozialen Medien
+
+Wir legen großen Wert auf den Schutz Ihrer Daten und eine verantwortungsvolle Kommunikation. Derzeit betreiben wir keine eigenen Auftritte in sozialen Netzwerken. Sollten wir in Zukunft eine Präsenz auf Plattformen wie Facebook, Instagram oder ähnlichen Netzwerken einrichten, werden wir Sie darüber transparent informieren und dabei sicherstellen, dass Ihre durch uns verarbeiteten personenbezogenen Daten gemäß den geltenden Datenschutzbestimmungen geschützt werden.
+
+Bis dahin können Sie unsere Inhalte über diese Webseite abrufen.
+
+3.2 Verwendung von Zahlungsdienstleistern
+
+Derzeit setzen wir keine Zahlungsdienstleister ein. Sollte sich dies zukünftig ändern, werden wir Sie selbstverständlich transparent informieren und sicherstellen, dass Ihre personenbezogenen Daten auch hierbei den geltenden Datenschutzbestimmungen entsprechend geschützt werden.
+
+4. Datenverarbeitung bei Nutzung unserer Website
+
+Wenn Sie auf unsere Website zugreifen, übermittelt Ihr Internetbrowser aus technischen Gründen automatisch die nachfolgenden Daten an unseren Webserver:
+
+• IP-Adresse
+• Datum und Uhrzeit der Serveranfrage
+• URL der abgerufenen Datei
+• Übertragene Datenmenge
+• Betriebssystem
+• Informationen über den Browsertyp und die verwendete Version
+• Bezeichnung des Internet-Providers
+• Website, von der aus diese Website aufgerufen wurde
+• Besuchte Seite auf unserer Website
+
+Die Erhebung, Verarbeitung und Nutzung der oben genannten Daten erfolgt zu dem Zweck, die Nutzung und Auslieferung unserer Website zu ermöglichen. Weitere Zwecke sind die Sicherheit unserer IT-Systeme sowie die technische Administration. Rechtsgrundlage der Verarbeitung ist Art. 6 Abs. 1 lit. f DS-GVO, wobei sich unser berechtigtes Interesse aus den oben genannten Zwecken ergibt.
+
+Wenn Sie sich zur Nutzung unseres Kontaktformulars entscheiden, werden Ihre Angaben ausschließlich zu Zwecken der Abwicklung Ihrer Anfrage und zur Ausführung der von Ihnen möglicherweise hierüber angeforderten Leistungen verwendet. Weitere bzw. sonstige personenbezogene Daten erheben und verarbeiten wir nur dann, wenn Sie bestimmte Dienstleistungen in Anspruch nehmen und wir hierfür Ihre Daten benötigen oder wenn Sie uns Ihre ausdrückliche Zustimmung erteilt haben. Beispielsweise indem Sie ein entsprechendes Formular ausfüllen, uns eine E-Mail senden, Dienstleistungen beauftragen oder Anfragen an uns richten. Rechtsgrundlagen der Verarbeitung sind Art. 6 Abs. 1 lit. b DS-GVO und Art. 6 Abs. 1 lit. f DS-GVO.
+
+Essenzielle Cookies und Dienste für den Webseitenbetrieb
+Essenzielle Cookies sind erforderlich, um grundlegende Funktionen unserer Website sicherzustellen und ihren Betrieb zu ermöglichen. Die Verarbeitung erfolgt auf Grundlage unseres berechtigten Interesses an der grundlegenden Bereitstellung unserer Website. Rechtsgrundlage ist Art. 6 Abs. 1 f DS-GVO. Ohne diese Cookies ist die Funktion unserer Website nicht gegeben. Diese Cookies können nur in den Browsereinstellungen deaktiviert werden.
+
+Datenverarbeitung in Zusammenhang mit dem Cookie-Management-Tool
+Diese Website verwendet ein Cookie-Consent-Management-System. Dieses System dient der Einholung und Dokumentation der gesetzlich erforderlichen Einwilligungen für den Einsatz technisch nicht erforderlicher Cookies sowie vergleichbarer Technologien.
+
+Beim Aufruf der Website wird ein entsprechendes Consent-Cookie im Browser des Nutzers gespeichert, in dem die jeweils erteilten Einwilligungen oder deren Widerruf hinterlegt werden. Die auf diese Weise erhobenen Informationen werden ausschließlich lokal im Browser verarbeitet und nicht an den Anbieter des Consent-Tools oder Dritte übermittelt.
+
+Die Verarbeitung erfolgt auf Grundlage unseres berechtigten Interesses an einer rechtskonformen Gestaltung unserer Website sowie der Erfüllung gesetzlicher Verpflichtungen zur Nachweispflicht gemäß Art. 6 Abs. 1 lit. f DS-GVO i. V. m. Art. 6 Abs. 1 lit. c DS-GVO
+
+5. Datenweitergabe an Dritte und externe Empfänger
+In bestimmten Fällen sind wir gesetzlich verpflichtet, Daten an eine anfragende staatliche Stelle zu übermitteln, z.B. im Rahmen nationaler Rechtsvorschriften. Rechtsgrundlage der Verarbeitung ist Art. 6 Abs. 1 lit. c DS-GVO. Bei Einbindung von Dienstleistern im Rahmen einer Datenverarbeitung im Auftrag halten wir die datenschutzrechtlichen Bestimmungen gem. Art. 28 DS-GVO und Art. 44 ff. DS-GVO ein.
+
+Darüber hinaus geben wir nur dann Daten an Dritte weiter, wenn Sie hierzu ausdrücklich eingewilligt haben, die Übermittlung zur Durchführung einer von Ihnen angeforderten Leistung erkennbar notwendig (z. B. Einbindung eines Versanddienstleisters) oder die Übermittlung gesetzlich vorgesehen ist.
+
+Wir unternehmen im Falle einer Übermittlung von personenbezogenen Daten in Länder außerhalb der EU bzw. des EWR alle notwendigen Schritte, um sicherzustellen, dass angemessene Maßnahmen zum Schutz Ihrer personenbezogenen Daten gemäß den Datenschutzbestimmungen ergriffen wurden, z.B. Anwendung der von der EU-Kommission genehmigten Standardvertragsklauseln.
+
+6. Verwendung von Daten für Kommunikation und Marketing
+
+Umfragen und Werbung für ähnliche Produkte
+Um sicherzustellen, dass unser Service Ihren Wünschen entspricht, können wir Ihre E-Mail-Adresse, welche Sie im Rahmen einer Anfrage, Bestellung oder in Zusammenhang mit der Nutzung unserer kostenlosen Angebote übermitteln, für Umfragen zur Kundenzufriedenheit verwenden. Als Kunde können wir Ihnen – auch ohne vorherige Einwilligung – Werbung per E-Mail für ähnliche Produkte zusenden, wie für in der Vergangenheit bei uns in Auftrag gegebene bzw. in Anspruch genommene Dienstleistungen. Rechtsgrundlage der Verarbeitung ist unser berechtigtes Interesse an einer Verbesserung unserer Leistungen (Art. 6 Abs. 1 lit. f DS-GVO).
+
+Sie können der zukünftigen Nutzung durch eine Nachricht an die oben genannten Kontaktdaten widersprechen oder im Falle eines Newsletters den darin befindlichen Abmeldelink verwenden.
+
+7. Verwendung von Impressum-Privatschutz (IP-Management)
+Wir verwenden für die Verwaltung der an uns gesendeten Post die Dienstleistungen der IMPRESSUM- PRIVATSCHUTZ GmbH, Ludwig-Erhard-Str. 18, 20459 Hamburg. Dieser Dienstleister bietet eine sichere und zuverlässige Postanschrift für unser Projekt (z.B. Impressum, Datenschutzerklärung, Widerrufsbelehrung und ggf. weitere Bereiche). Dies stellt auch unser berechtigtes Interesse im Sinne des Art. 6 Abs. 1 lit. f DS-GVO dar. Wir haben mit Impressum-Privatschutz einen Vertrag zur Auftragsverarbeitung abgeschlossen und setzen die strengen Vorgaben der deutschen Datenschutzbehörden bei der Nutzung dieser Dienstleistung vollständig um. Weitere Informationen über Datenschutz bei Impressum-Privatschutz GmbH finden Sie hier: https://impressum-privatschutz.de/datenschutzerklaerung/
+
+8. Speicherdauer der Daten
+Wir speichern personenbezogene Daten solange, bis Sie Ihre Einwilligung widerrufen oder die Daten zur Erfüllung unserer Geschäftsinteressen bzw. zur Erbringung der von Ihnen angeforderten Dienstleistung nicht mehr erforderlich sind oder dies gesetzlich notwendig ist.
+
+9. Datensicherheit
+Wir legen großen Wert auf den Schutz Ihrer personenbezogenen Daten und haben deshalb technische und organisatorische Maßnahmen (TOMs) implementiert, um ein angemessenes Schutzniveau gemäß den gesetzlichen Anforderungen, insbesondere der Datenschutz-Grundverordnung (DSGVO), zu gewährleisten. Diese Maßnahmen dienen dazu, die Vertraulichkeit, Integrität und Verfügbarkeit der von uns verarbeiteten Daten sicherzustellen und diese vor unbefugtem Zugriff, Verlust, Zerstörung oder Manipulation zu schützen.
+
+Die technischen und organisatorischen Maßnahmen werden, soweit erforderlich, an den Stand der Technik angepasst, um den Schutz Ihrer Daten weiterhin zu gewährleisten.
+
+10. Ihre Rechte als betroffene Person
+Sie haben jederzeit das Recht, unentgeltlich Auskunft über den Zweck, den Umfang, die Herkunft und die Empfänger der von Ihnen gespeicherten personenbezogenen Daten zu verlangen (Art. 15 DS-GVO). Zusätzlich haben Sie das Recht, die Berichtigung unrichtiger oder unvollständiger Daten zu verlangen (Art. 16 DS-GVO).
+
+Gemäß den datenschutzrechtlichen Bestimmungen steht Ihnen weiterhin das Recht auf Löschung Ihrer personenbezogenen Daten zu, sofern die Voraussetzungen des Art. 17 DS-GVO vorliegen (Recht auf Vergessenwerden), sowie das Recht auf Einschränkung der Verarbeitung Ihrer personenbezogenen Daten gemäß Art. 18 DS-GVO. Zudem haben Sie das Recht, der Verarbeitung Ihrer personenbezogenen Daten jederzeit zu widersprechen (Art. 21 DS-GVO), wenn diese auf Grundlage von Art. 6 Abs. 1 lit. e oder f DS-GVO erfolgt. Dies gilt insbesondere für die Verarbeitung Ihrer Daten zu Zwecken der Direktwerbung.
+
+Ferner steht Ihnen das Recht auf Datenübertragbarkeit zu, d.h. Sie können die personenbezogenen Daten, die Sie uns bereitgestellt haben, in einem strukturierten, gängigen und maschinenlesbaren Format erhalten oder die Übermittlung dieser Daten an einen anderen Verantwortlichen verlangen, sofern die Voraussetzungen des Art. 20 DS-GVO vorliegen.
+
+Sollten Sie der Auffassung sein, dass die Verarbeitung Ihrer personenbezogenen Daten gegen datenschutzrechtliche Bestimmungen verstößt oder Ihre Rechte auf sonstige Weise verletzt worden sind, haben Sie das Recht, Beschwerde bei der zuständigen Aufsichtsbehörde gemäß Art. 77 DS-GVO einzureichen.
+
+Darüber hinaus haben Sie das Recht, Ihre erteilte Einwilligung zur Verarbeitung Ihrer personenbezogenen Daten jederzeit mit Wirkung für die Zukunft zu widerrufen, beispielsweise durch eine formlose Mitteilung per E-Mail oder schriftlich an die oben genannten Kontaktdaten (Art. 7 Abs. 3 DS-GVO). Die Rechtmäßigkeit der bis zum Zeitpunkt des Widerrufs erfolgten Verarbeitung auf Grundlage Ihrer Einwilligung bleibt hiervon unberührt.
+
+Quelle: Impressum-Privatschutz

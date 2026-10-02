@@ -10,6 +10,7 @@ Reference: how versions are pinned and who moves them.
 | PostgreSQL, Redis, nginx | both compose files, the Ansible template, compose written inline in workflows | Renovate groups; PostgreSQL majors never auto-merged (dump and restore) |
 | GitHub Actions | workflows, pinned to commit digests | Renovate |
 | axe-core | `tests/e2e/conftest.py` | Renovate custom manager |
+| Website build (Jinja2, markdown-it-py, PyYAML, Pagefind) | `pyproject.toml` dependency group `site` + `uv.lock` | Renovate (pep621 + uv lock) |
 
 Patch, pin and digest updates merge themselves once the required checks pass.
 They use GitHub's native auto-merge, so the repository setting "Allow
