@@ -7,11 +7,9 @@ Override with: pytest --base-url=http://your-host:port
 """
 from __future__ import annotations
 
+import hashlib
 import http.server
-import os
 import threading
-import urllib.error
-import urllib.request
 from collections.abc import Generator
 from functools import partial
 from pathlib import Path
@@ -19,17 +17,22 @@ from pathlib import Path
 import pytest
 from playwright.sync_api import Browser, BrowserContext, Page
 
-# The static marketing/docs site (docs/) ships no server of its own — it is
-# published as GitHub Pages. Serve it locally so browser tests against it
-# (layout, theme/nav/scroll-spy behaviour) run standalone, without the
-# FastAPI app or the review stack. Shared by every test module that needs
-# it, so each one does not spin up its own copy of the same fixture.
-_DOCS_DIR = Path(__file__).resolve().parent.parent.parent / "docs"
+from tests.built_site import builder
+
+# The static marketing/docs site ships no server of its own — it is
+# published as GitHub Pages. Build it and serve the build locally so browser
+# tests against it (layout, theme/nav/scroll-spy behaviour) run standalone,
+# without the FastAPI app or the review stack. Shared by every test module
+# that needs it, so each one does not spin up its own copy of the same fixture.
+_ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.fixture(scope="module")
-def docs_server_url() -> Generator[str]:
-    handler = partial(http.server.SimpleHTTPRequestHandler, directory=str(_DOCS_DIR))
+def docs_server_url(tmp_path_factory: pytest.TempPathFactory) -> Generator[str]:
+    site = tmp_path_factory.mktemp("site") / "out"
+    # With the stubs: old deep links are tested too.
+    builder().build(_ROOT / "docs", site, redirect_stubs=True)
+    handler = partial(http.server.SimpleHTTPRequestHandler, directory=str(site))
     server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -54,9 +57,11 @@ DEMO_CASE_IN_REVIEW = {"case_number": "OW-DEMO-00002", "pin": "demo-pin-inreview
 DEMO_CASE_PENDING = {"case_number": "OW-DEMO-00003", "pin": "demo-pin-pending-00003"}
 DEMO_CASE_CLOSED = {"case_number": "OW-DEMO-00004", "pin": "demo-pin-closed-00004"}
 
-# jsDelivr serves npm, the datasource Renovate checks; cdnjs lags npm and
-# 404ed on the 4.13.0 bump (#93).
-AXE_CDN = "https://cdn.jsdelivr.net/npm/axe-core@4.13.0/axe.min.js"
+# axe-core is vendored (tests/e2e/vendor/axe.min.js), never fetched. Renovate bumps
+# AXE_VERSION; scripts/vendor_axe.py then writes the file and AXE_SHA256.
+AXE_VERSION = "4.13.0"
+AXE_SHA256 = "c24f097bd2f451d4f933e8bc7d8d539f8672a2ebcb5cc9f9f3eec8ca9470a0c1"
+_AXE = Path(__file__).parent / "vendor" / "axe.min.js"
 
 
 def _totp_now(secret: str = DEMO_ADMIN_TOTP_SECRET) -> str:
@@ -85,16 +90,10 @@ def base_url(request: pytest.FixtureRequest) -> str:  # type: ignore[override]
 
 @pytest.fixture(scope="session")
 def axe_source() -> str:
-    """Download axe-core once per session and cache the source."""
-    try:
-        with urllib.request.urlopen(AXE_CDN, timeout=10) as resp:  # noqa: S310
-            return resp.read().decode("utf-8")
-    except urllib.error.HTTPError:
-        raise  # a wrong URL or version must fail, not skip every axe check
-    except Exception:
-        if os.environ.get("CI"):
-            raise  # CI is never "offline": a skipped axe check would pass green
-        return ""  # local offline run: skip the axe checks
+    """The vendored axe-core source, after checking it against AXE_SHA256."""
+    data = _AXE.read_bytes()
+    assert hashlib.sha256(data).hexdigest() == AXE_SHA256, "axe.min.js does not match AXE_SHA256"
+    return data.decode("utf-8")
 
 
 @pytest.fixture
@@ -127,8 +126,6 @@ def run_axe(page: Page, axe_source: str) -> list[dict]:  # type: ignore[type-arg
     Serious includes color-contrast and link-in-text-block. It used to be a
     warning only, and every contrast failure on the site shipped green.
     """
-    if not axe_source:
-        return []
     # Inject axe via page.evaluate (CDP Runtime.evaluate), NOT add_script_tag:
     # a <script> element is subject to the page's strict CSP (no 'unsafe-inline'),
     # whereas evaluate runs through the debugger protocol and is CSP-exempt.
@@ -148,8 +145,6 @@ def run_axe(page: Page, axe_source: str) -> list[dict]:  # type: ignore[type-arg
 
 def run_axe_warnings(page: Page, axe_source: str) -> list[dict]:  # type: ignore[type-arg]
     """Return serious (non-critical) axe violations for informational reporting."""
-    if not axe_source:
-        return []
     violations: list[dict] = page.evaluate(  # type: ignore[type-arg]
         """
         async () => {

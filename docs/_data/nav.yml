@@ -1,0 +1,18 @@
+# Header and footer links. `page` is a translation_key; the link goes to that
+# page in the reader's language, or in the default language when it has no
+# translation. Every page is either named here or sits under a page that is
+# (blog posts under the blog): scripts/build_site.py check_nav refuses the rest.
+# P3 replaces `primary` with Compliance · Security · Docs · Blog.
+primary:
+  - {label: nav.features, page: home, fragment: features}
+  - {label: nav.how, page: home, fragment: how-it-works}
+  - {label: nav.compliance, page: home, fragment: compliance}
+  - {label: nav.docs, page: docs}
+  - {label: nav.roadmap, page: roadmap}
+  - {label: nav.changelog, page: changelog}
+  - {label: nav.blog, page: blog}
+footer:
+  - {label: nav.docs, page: docs}
+  - {label: nav.changelog, page: changelog}
+  - {label: nav.blog, page: blog}
+  - {label: nav.compare, page: compare}

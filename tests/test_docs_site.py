@@ -8,21 +8,29 @@ import json
 import re
 from pathlib import Path
 
+from tests.built_site import builder, built, css_of, page, pages
+
 ROOT = Path(__file__).parents[1]
 
-# Every page whose top nav must carry a "Roadmap" link, and the relative
-# path from that page to docs/roadmap.html.
-NAV_PAGES = {
-    "docs/index.html": "roadmap.html",
-    "docs/de/index.html": "../roadmap.html",
-    "docs/docs.html": "roadmap.html",
-    "docs/roadmap.html": "roadmap.html",
-    # Every blog page, discovered — a new article cannot miss the link unnoticed.
-    **{
-        f"docs/blog/{p.name}": "../roadmap.html"
-        for p in sorted((ROOT / "docs" / "blog").glob("*.html"))
-    },
-}
+
+def _url(path: Path) -> str:
+    """The URL a built file is served at: a folder's index.html at the folder."""
+    return "/" + path.relative_to(built()).as_posix().removesuffix("index.html")
+
+
+# Every blog page, discovered from the build: both indexes and every article,
+# so a new article cannot miss a guard unnoticed.
+BLOG_PAGES = [
+    "/en/blog/",
+    "/de/blog/",
+    *(_url(p) for p in sorted((built() / "en/blog").glob("*/index.html"))),
+    *(_url(p) for p in sorted((built() / "de/blog").glob("*/index.html"))),
+]
+
+# Every page whose top nav must carry a "Roadmap" link. The roadmap is English
+# only, so the German pages link the English one.
+NAV_PAGES = ["/en/", "/de/", "/en/docs/", "/en/roadmap/", *BLOG_PAGES]
+ROADMAP = "/en/roadmap/"
 
 
 def _app_version() -> tuple[int, ...]:
@@ -35,30 +43,32 @@ def _app_version() -> tuple[int, ...]:
 
 def test_roadmap_md_does_not_exist() -> None:
     assert not (ROOT / "ROADMAP.md").exists(), (
-        "ROADMAP.md must be gone — the roadmap lives at docs/roadmap.html now"
+        "ROADMAP.md must be gone — the roadmap lives at /en/roadmap/ now"
     )
 
 
 def test_roadmap_page_exists() -> None:
-    assert (ROOT / "docs/roadmap.html").is_file()
+    assert (ROOT / "docs/en/roadmap/index.html").is_file()
+    assert builder().output_file(built(), ROADMAP).is_file()
 
 
 def test_every_nav_page_links_to_roadmap() -> None:
+    assert len(BLOG_PAGES) > 2, "no blog article found in the build"
     missing = []
-    for page, href in NAV_PAGES.items():
-        html = (ROOT / page).read_text()
+    for url in NAV_PAGES:
+        html = page(url)
         nav_match = re.search(r'<ul class="nav-links"[^>]*>.*?</ul>', html, re.DOTALL)
-        assert nav_match, f"{page}: no <ul class=\"nav-links\"> found"
-        if f'href="{href}"' not in nav_match.group(0):
-            missing.append(page)
-    assert not missing, f"pages whose nav does not link to roadmap.html: {missing}"
+        assert nav_match, f"{url}: no <ul class=\"nav-links\"> found"
+        if f'href="{ROADMAP}"' not in nav_match.group(0):
+            missing.append(url)
+    assert not missing, f"pages whose nav does not link to {ROADMAP}: {missing}"
 
 
 def test_roadmap_has_no_released_version_as_planned_heading() -> None:
-    html = (ROOT / "docs/roadmap.html").read_text()
+    html = page(ROADMAP)
     current = _app_version()
     headings = re.findall(r"<h2[^>]*>\s*v(\d+\.\d+\.\d+)\b", html)
-    assert headings, "docs/roadmap.html has no version headings to check"
+    assert headings, f"{ROADMAP} has no version headings to check"
     released = [
         v for v in headings if tuple(int(p) for p in v.split(".")) <= current
     ]
@@ -69,16 +79,17 @@ def test_roadmap_has_no_released_version_as_planned_heading() -> None:
 
 
 def test_roadmap_uses_only_self_hosted_fonts() -> None:
-    html = (ROOT / "docs/roadmap.html").read_text()
-    assert "fonts.googleapis.com" not in html
-    assert "fonts.gstatic.com" not in html
-    assert re.search(r"@font-face\s*\{[^}]*url\(['\"]?fonts/", html), (
-        "docs/roadmap.html must declare its fonts from docs/fonts/, like docs/docs.html does"
+    html = page(ROADMAP)
+    text = html + css_of(html)
+    assert "fonts.googleapis.com" not in text
+    assert "fonts.gstatic.com" not in text
+    assert re.search(r"@font-face\s*\{[^}]*url\(['\"]?/fonts/", css_of(html)), (
+        f"{ROADMAP} must declare its fonts from /fonts/, like /en/docs/ does"
     )
 
 
 def test_roadmap_points_to_changelog_for_everything_released() -> None:
-    html = (ROOT / "docs/roadmap.html").read_text()
+    html = page(ROADMAP)
     assert "CHANGELOG.md" in html
 
 
@@ -91,13 +102,13 @@ def _root_tokens_block(html: str) -> str:
 
 
 def test_de_landing_page_shares_design_tokens_with_english() -> None:
-    """Regression guard: docs/index.html was rebuilt onto the
+    """Regression guard: docs/en/index.html was rebuilt onto the
     "Signal" design (Sora + JetBrains Mono, ink/green tokens) while
     docs/de/index.html kept an older serif/navy design, so the two pages
     drifted apart. Pin the :root tokens and font-family variables identical
     so a future edit to one page can't silently un-sync the other."""
-    en = (ROOT / "docs/index.html").read_text()
-    de = (ROOT / "docs/de/index.html").read_text()
+    en = css_of(page("/en/"))
+    de = css_of(page("/de/"))
     assert _root_tokens_block(en) == _root_tokens_block(de)
     for var in ("--font-display", "--font-body", "--font-mono"):
         pattern = re.escape(var) + r":\s*([^;]+);"
@@ -155,73 +166,68 @@ def test_faqpage_jsonld_matches_visible_faq_one_to_one() -> None:
     visible). Search engines index the JSON-LD, so a mismatch there is
     effectively lying to search results. Pin same count, same order, and a
     substantial word overlap per question/answer pair (not byte-for-byte:
-    docs/index.html's own JSON-LD already paraphrases its visible answers
+    docs/en/index.html's own JSON-LD already paraphrases its visible answers
     slightly, e.g. "Does OpenWhistle comply" vs. "Does it comply" -- this
     guard would otherwise be RED on the English page too)."""
-    for page in ("docs/index.html", "docs/de/index.html"):
-        html = (ROOT / page).read_text()
+    for url in ("/en/", "/de/"):
+        html = page(url)
         jsonld_pairs = _faqpage_jsonld(html)
         visible_pairs = _visible_faq(html)
         assert len(jsonld_pairs) == len(visible_pairs), (
-            page, len(jsonld_pairs), len(visible_pairs)
+            url, len(jsonld_pairs), len(visible_pairs)
         )
         for i, ((jq, ja), (vq, va)) in enumerate(
             zip(jsonld_pairs, visible_pairs, strict=True)
         ):
-            assert _word_overlap(jq, vq) >= 0.6, (page, i, "question", jq, vq)
-            assert _word_overlap(ja, va) >= 0.6, (page, i, "answer", ja, va)
+            assert _word_overlap(jq, vq) >= 0.6, (url, i, "question", jq, vq)
+            assert _word_overlap(ja, va) >= 0.6, (url, i, "answer", ja, va)
 
 
 def _resolve_nav_target(page: Path, href: str) -> str:
-    """Resolve a nav ``href`` to a canonical, page-independent target string.
+    """Resolve a nav ``href`` (on the built file ``page``) to a canonical,
+    page-independent target string: the target's path relative to the built
+    site.
 
     An absolute URL (GitHub, the demo) is returned unchanged -- every page
     that links to it uses the identical string, so no resolution is needed.
-    A relative href is resolved against ``page``'s own directory; a target
-    that resolves to a directory is treated as that directory's
-    ``index.html`` (a trailing-slash link and an explicit ``index.html``
-    link are the same page). Finally, ``docs/de/index.html`` is folded onto
-    ``docs/index.html`` -- the two are each page's own language mirror of
-    "home", so e.g. Features/How-it-works anchors on the German page and
-    the English-tree pages point at the same conceptual target, and the
-    language-switch link (which always targets the *other* language's home)
-    resolves to the same bucket from either direction. The fragment (if any)
+    A root-relative href resolves against the site root, a relative one
+    against ``page``'s own directory; a target that resolves to a directory
+    is treated as that directory's ``index.html`` (a trailing-slash link and
+    an explicit ``index.html`` link are the same page). The fragment (if any)
     is preserved, since Features and How-it-works are otherwise
-    indistinguishable from the language switch.
+    indistinguishable from home.
     """
     if href.startswith(("http://", "https://")):
         return href
     path_part, _, frag = href.partition("#")
+    site = built().resolve()
     if path_part.startswith("/"):
-        # Root-relative: docs/404.html is served at any missing path, so it
-        # cannot link relative to its own location.
-        resolved = (ROOT / "docs" / path_part.lstrip("/")).resolve()
+        resolved = (site / path_part.lstrip("/")).resolve()
     elif path_part in ("", "./"):
-        resolved = page
+        resolved = page.resolve()
     else:
         resolved = (page.parent / path_part).resolve()
     if resolved.is_dir():
         resolved = resolved / "index.html"
-    rel = str(resolved.relative_to(ROOT))
-    if rel == "docs/de/index.html":
-        rel = "docs/index.html"
-    # The English blog index is the blog's home in the other language.
-    if rel == "docs/blog/en.html":
-        rel = "docs/blog/index.html"
+    rel = resolved.relative_to(site).as_posix()
     return rel + (f"#{frag}" if frag else "")
 
 
+# A link with ``hreflang`` is the language switch: on a blog article it names
+# the article's twin, on the other pages the other language's home -- one
+# bucket, whatever its target.
+_LANGUAGE_SWITCH = "<language switch>"
+
+
 def _link_targets(page: Path, links_html: str) -> set[str]:
-    """Resolved targets of a link list. A link with ``hreflang`` is the
-    language switch: on a blog article it names the article's twin, on the
-    other pages the other language's home -- one bucket, as for de/."""
+    """Resolved targets of a link list."""
     targets = set()
     for attrs in re.findall(r"<a\s+([^>]*)>", links_html):
         href = re.search(r'href="([^"]+)"', attrs)
         if not href:
             continue
         targets.add(
-            "docs/index.html" if "hreflang=" in attrs else _resolve_nav_target(page, href.group(1))
+            _LANGUAGE_SWITCH if "hreflang=" in attrs else _resolve_nav_target(page, href.group(1))
         )
     return targets
 
@@ -233,43 +239,59 @@ def _nav_targets(page: Path) -> set[str]:
     return _link_targets(page, m.group(1))
 
 
+def _lang(page: Path) -> str:
+    m = re.search(r'<html lang="([a-z]+)"', page.read_text())
+    assert m, f"{page}: no <html lang>"
+    return m.group(1)
+
+
 def test_every_docs_page_nav_has_the_same_item_set() -> None:
     """Regression guard: docs.html and roadmap.html's nav lacked
-    a Blog link and a language-switch link that every other docs/ page
-    carried, and the blog scaffold's nav lacked Features/How-it-works and
-    GitHub entirely. Every docs/**/*.html page's top nav must resolve to the
-    exact same set of targets (see `_resolve_nav_target` for what "same"
-    means across the English/German split), by href target rather than by
+    a Blog link and a language-switch link that every other page carried,
+    and the blog scaffold's nav lacked Features/How-it-works and GitHub
+    entirely. Every built page's top nav must resolve to the exact same set
+    of targets as its own language's home, by href target rather than by
     label text (labels are legitimately localised on German-language pages,
     see `test_current_nav_item_is_marked`)."""
-    pages = sorted((ROOT / "docs").rglob("*.html"))
-    assert pages
-    canonical_page = ROOT / "docs/index.html"
-    canonical = _nav_targets(canonical_page)
-    assert canonical, "docs/index.html nav resolved to no targets at all"
+    built_pages = pages()
+    assert built_pages
+    home = {lang: _nav_targets(built() / lang / "index.html") for lang in ("en", "de")}
+    assert all(home.values()), "a home page's nav resolved to no targets at all"
     mismatches = {}
-    for page in pages:
-        targets = _nav_targets(page)
+    for path in built_pages:
+        targets = _nav_targets(path)
+        canonical = home[_lang(path)]
         if targets != canonical:
-            mismatches[str(page.relative_to(ROOT))] = {
+            mismatches[_url(path)] = {
                 "missing": sorted(canonical - targets),
                 "extra": sorted(targets - canonical),
             }
     assert not mismatches, mismatches
 
 
+def _fold_language(targets: set[str]) -> set[str]:
+    """/de/... onto /en/...: the German twin of a page counts as that page.
+    English-only pages are linked at /en/ from both homes already."""
+    return {"en/" + t.removeprefix("de/") if t.startswith("de/") else t for t in targets}
+
+
+def test_the_german_home_links_what_the_english_home_links() -> None:
+    """Per-language comparison alone would let the two languages drift apart;
+    the German home's nav and footer, language folded, must equal the English."""
+    en, de = built() / "en/index.html", built() / "de/index.html"
+    assert _fold_language(_nav_targets(de)) == _nav_targets(en)
+    assert _fold_language(_footer_targets(de)) == _footer_targets(en)
+
+
 # Pages whose nav marks one specific item as the current page (by the
-# resolved target from `_resolve_nav_target`); docs/index.html and
-# docs/de/index.html are home pages with no single discrete nav item to
-# mark (Features/How-it-works are anchors into the same page, not a
-# separate "home" entry) and so carry none.
+# resolved target from `_resolve_nav_target`); /en/ and /de/ are home pages
+# with no single discrete nav item to mark (Features/How-it-works are anchors
+# into the same page, not a separate "home" entry) and so carry none.
 _CURRENT_NAV_TARGET = {
-    "docs/docs.html": "docs/docs.html",
-    "docs/roadmap.html": "docs/roadmap.html",
-    **{
-        f"docs/blog/{p.name}": "docs/blog/index.html"
-        for p in sorted((ROOT / "docs" / "blog").glob("*.html"))
-    },
+    "/en/docs/": "en/docs/index.html",
+    "/en/roadmap/": "en/roadmap/index.html",
+    "/en/changelog/": "en/changelog/index.html",
+    **{url: f"{url.split('/')[1]}/blog/index.html" for url in BLOG_PAGES},
 }
 
 
@@ -278,8 +300,8 @@ def test_current_nav_item_is_marked() -> None:
     `aria-current="page"`, on the anchor whose resolved target is that
     page's own target -- and no other nav item on that page is marked."""
     for page_str, own_target in _CURRENT_NAV_TARGET.items():
-        page = ROOT / page_str
-        html = page.read_text()
+        path = builder().output_file(built(), page_str)
+        html = path.read_text()
         m = re.search(r'<ul class="nav-links"[^>]*>(.*?)</ul>', html, re.DOTALL)
         assert m, page_str
         anchors = re.findall(r'<a\s+([^>]*href="[^"]+"[^>]*)>', m.group(1))
@@ -287,7 +309,7 @@ def test_current_nav_item_is_marked() -> None:
         assert len(marked) == 1, (page_str, marked)
         href_m = re.search(r'href="([^"]+)"', marked[0])
         assert href_m
-        assert _resolve_nav_target(page, href_m.group(1)) == own_target, (
+        assert _resolve_nav_target(path, href_m.group(1)) == own_target, (
             page_str, href_m.group(1)
         )
 
@@ -300,38 +322,34 @@ def _footer_targets(page: Path) -> set[str]:
 
 
 # Every page's footer link-list must resolve to the same target set as its
-# landing page: docs/blog/index.html for the blog section (not
-# docs/de/index.html -- that page's footer links *out* to the blog section as
-# a "Blog" entry, which a page already inside that section has no reason to
-# link back to itself, so the two can never share an identical set regardless
-# of maintenance), docs/de/index.html for itself, and docs/index.html for
-# every other page -- no page is exempt (docs.html and roadmap.html carry
-# the same footer as docs/index.html).
+# landing page, in the page's own language: <lang>/blog/index.html for the
+# blog section (the home's footer links *out* to the blog section as a "Blog"
+# entry, which a page already inside that section has no reason to link back
+# to itself), and <lang>/index.html for every other page -- no page is exempt.
 def _footer_landing_page(page: Path) -> Path:
-    if page.parent.name == "blog":
-        return ROOT / "docs/blog/index.html"
-    if page == ROOT / "docs/de/index.html":
-        return page
-    return ROOT / "docs/index.html"
+    lang = _lang(page)
+    if "blog" in page.relative_to(built()).parts:
+        return built() / lang / "blog" / "index.html"
+    return built() / lang / "index.html"
 
 
 def test_every_page_footer_has_the_same_link_set_as_its_landing_page() -> None:
     """Regression guard: the four blog articles kept their old, smaller
     footer link-list (6 targets, missing Issues and License) after
-    docs/blog/index.html was rebuilt with the full one (7 targets), and
+    docs/de/blog/index.html was rebuilt with the full one (7 targets), and
     docs.html/roadmap.html carried an entirely different, much smaller
-    footer (no `.footer-links` list at all). Every docs/**/*.html page must
-    resolve to the exact same footer link-target set as its landing page
-    (see `_footer_landing_page`); no page is exempt."""
-    pages = sorted((ROOT / "docs").rglob("*.html"))
-    assert pages
+    footer (no `.footer-links` list at all). Every built page must resolve
+    to the exact same footer link-target set as its landing page (see
+    `_footer_landing_page`); no page is exempt."""
+    built_pages = pages()
+    assert built_pages
     mismatches = {}
-    for page in pages:
-        landing = _footer_landing_page(page)
-        targets = _footer_targets(page)
+    for path in built_pages:
+        landing = _footer_landing_page(path)
+        targets = _footer_targets(path)
         canonical = _footer_targets(landing)
         if targets != canonical:
-            mismatches[str(page.relative_to(ROOT))] = {
+            mismatches[_url(path)] = {
                 "missing": sorted(canonical - targets),
                 "extra": sorted(targets - canonical),
             }
@@ -353,22 +371,22 @@ def test_blog_pages_share_design_tokens_with_english_landing() -> None:
     extends the shared token set with its own `--warning`/`--warning-fog`
     (needed for `.callout-warn`/`.val-warn`, see
     test_docs_warn_callouts_do_not_converge_on_the_accent) that
-    docs/index.html itself has no use for. What must hold is that every
-    token blog *does* share by name with docs/index.html has the identical
+    docs/en/index.html itself has no use for. What must hold is that every
+    token blog *does* share by name with docs/en/index.html has the identical
     value -- no silent drift on the tokens that are supposed to be shared."""
-    en_tokens = _root_tokens_dict((ROOT / "docs/index.html").read_text())
-    for page in sorted((ROOT / "docs/blog").glob("*.html")):
-        blog_tokens = _root_tokens_dict(page.read_text())
+    en_tokens = _root_tokens_dict(css_of(page("/en/")))
+    for url in BLOG_PAGES:
+        blog_tokens = _root_tokens_dict(css_of(page(url)))
         shared = set(en_tokens) & set(blog_tokens)
-        assert shared, page.name
+        assert shared, url
         mismatches = {
             k: (en_tokens[k], blog_tokens[k])
             for k in shared
             if en_tokens[k].strip() != blog_tokens[k].strip()
         }
-        assert not mismatches, (page.name, mismatches)
+        assert not mismatches, (url, mismatches)
         for var in ("--font-display", "--font-body", "--font-mono"):
-            assert var in blog_tokens, (page.name, var)
+            assert var in blog_tokens, (url, var)
 
 
 def test_landing_pages_link_each_other_via_hreflang() -> None:
@@ -376,12 +394,12 @@ def test_landing_pages_link_each_other_via_hreflang() -> None:
     hreflang alternates for the other before this. Every one of the two
     pages must declare itself, the other language, and an x-default,
     pointing at absolute URLs."""
-    en = (ROOT / "docs/index.html").read_text()
-    de = (ROOT / "docs/de/index.html").read_text()
+    en = page("/en/")
+    de = page("/de/")
 
     for html, own in ((en, "en"), (de, "de")):
         for lang, href in (
-            ("en", "https://openwhistle.net/"),
+            ("en", "https://openwhistle.net/en/"),
             ("de", "https://openwhistle.net/de/"),
             ("x-default", "https://openwhistle.net/"),
         ):
@@ -393,11 +411,12 @@ def test_every_blog_page_exists_in_english_and_german() -> None:
     """The blog was German only. Every page has its twin in the other
     language, named by hreflang (tests/test_seo.py holds the pair reciprocal)."""
     missing = []
-    for page in sorted((ROOT / "docs" / "blog").glob("*.html")):
-        html = page.read_text()
+    assert len(BLOG_PAGES) > 2, "no blog article found in the build"
+    for url in BLOG_PAGES:
+        html = page(url)
         lang = re.search(r'<html lang="([a-z]+)"', html)
-        assert lang, page.name
+        assert lang, url
         other = "de" if lang.group(1) == "en" else "en"
         if f'hreflang="{other}"' not in html.split("</head>")[0]:
-            missing.append(page.name)
+            missing.append(url)
     assert not missing, missing

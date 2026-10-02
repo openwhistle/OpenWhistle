@@ -36,7 +36,11 @@ _CITE = re.compile(r"§\s?(\d+)\s?(?:Abs\.|Absatz|al\.)\s?(\d+)(?:\s?(?:Nr\.|Sat
 
 
 def _files() -> list[Path]:
-    docs = [p for p in (ROOT / "docs").rglob("*") if p.suffix in {".html", ".md"}]
+    docs = [
+        p
+        for p in (ROOT / "docs").rglob("*")
+        if p.suffix in {".html", ".md"} and "/docs/_" not in p.as_posix()
+    ]
     return [*docs, ROOT / "README.md", *(ROOT / "app" / "locales").glob("*.json")]
 
 

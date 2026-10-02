@@ -28,7 +28,15 @@ There are two kinds, and they are kept apart on purpose.
 | **User documentation** | whoever runs OpenWhistle | `docs/`, published as openwhistle.net |
 | **Technical documentation** | whoever maintains this repository | `docs-tech/` and `CLAUDE.md`, **never** published |
 
-The Pages build uploads exactly `docs/`, so nothing outside it can reach the site.
+`docs/` holds the sources; `scripts/build_site.py` builds them, and nothing outside `docs/` reaches the site.
+
+| What | Where |
+| --- | --- |
+| A page | `docs/<lang>/…` (`.md` for new pages) |
+| Strings | `docs/_data/i18n/` |
+| Navigation | `docs/_data/nav.yml` |
+
+Build: `uv run --group site python scripts/build_site.py` (output in `_site/`).
 `test_the_technical_docs_are_not_published` holds that boundary. A page in doubt: would a stranger running
 OpenWhistle need it? Yes → `docs/`. Only the next maintainer → `docs-tech/`.
 
@@ -40,12 +48,12 @@ description of a screen. A thorough page nobody finishes is worth less than a sh
 | Rule | Held by |
 | --- | --- |
 | No sentence over 30 words, average under 18 per page | `tests/test_docs_prose.py` |
-| Every page of the interface is named in `docs/docs.html` | `tests/test_every_page_is_documented.py` |
+| Every page of the interface is named in `docs/en/docs/index.html` | `tests/test_every_page_is_documented.py` |
 | Every setting has a row in the configuration table | `tests/test_config_documented.py` |
 
-The prose rules cover `docs/docs.html`, `docs/index.html`, `docs/de/index.html`,
-`docs/open-source-whistleblowing-software.html`, `docs/roadmap.html`, `docs/blog/*.html`, `docs/security/*.md` and
-`docs/hinschg_reference.md`. Code, tables and headings are not counted; inline code is one word. German
+The prose rules cover `docs/en/docs/index.html`, `docs/en/index.html`, `docs/de/index.html`,
+`docs/en/compare/index.html`, `docs/en/roadmap/index.html`, `docs/{en,de}/blog/*.html` and
+`docs/en/docs/*.md`. Code, tables and headings are not counted; inline code is one word. German
 abbreviations (`z. B.`, `d. h.`, `bzw.`, `Abs.`) and dates (`2. Juli`) do not end a sentence.
 
 **Diagrams** are Mermaid sources in `docs/_diagrams/<name>.mmd`, rendered to committed
@@ -67,7 +75,7 @@ A change that renames a setting, a label or a behaviour updates, in the same com
 
 - all four locales in `app/locales/` (`en`, `de`, `fr`, `pt-br`), checked against
   [`docs-tech/i18n-review.md`](docs-tech/i18n-review.md);
-- `docs/docs.html`, `README.md` and `docker-compose.prod.yml`;
+- `docs/en/docs/index.html`, `README.md` and `docker-compose.prod.yml`;
 - the Helm chart (`charts/openwhistle/`) and `ansible/roles/openwhistle/templates/env.j2`.
 
 Otherwise the next audit finds the mismatch the change created.

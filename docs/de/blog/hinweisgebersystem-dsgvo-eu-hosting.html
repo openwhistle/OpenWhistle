@@ -1,0 +1,176 @@
+---
+title: Hinweisgebersystem mit EU-Hosting und DSGVO | OpenWhistle
+description: 'Hinweisgebersystem mit EU-Hosting: Selbst gehostet bleiben Meldungen auf Ihrem Server. Was OpenWhistle verschlüsselt, nie speichert und was die DSGVO verlangt.'
+translation_key: whistleblowing-system-gdpr-eu-hosting
+og_type: article
+published: '2026-09-27'
+modified: '2026-09-27'
+css:
+- fonts
+- post-comparison
+- comparison-table-mobile
+js:
+- site
+jsonld:
+- '@context': https://schema.org
+  '@type': BlogPosting
+  headline: 'Hinweisgebersystem mit EU-Hosting und DSGVO: wo die Daten liegen und was verschlüsselt ist'
+  description: Wer Hinweisgebersysteme mit EU-Hosting anbietet, was OpenWhistle verschlüsselt und nie speichert, und welche DSGVO-Pflichten beim Betreiber bleiben.
+  url: https://openwhistle.net/de/blog/hinweisgebersystem-dsgvo-eu-hosting/
+  mainEntityOfPage:
+    '@type': WebPage
+    '@id': https://openwhistle.net/de/blog/hinweisgebersystem-dsgvo-eu-hosting/
+  datePublished: '2026-09-27'
+  dateModified: '2026-09-27'
+  author:
+    '@type': Organization
+    name: OpenWhistle Contributors
+    url: https://github.com/openwhistle
+  publisher:
+    '@type': Organization
+    name: OpenWhistle
+    url: https://openwhistle.net/en/
+    logo:
+      '@type': ImageObject
+      url: https://openwhistle.net/apple-touch-icon.png
+  image: https://openwhistle.net/og-image.png
+  inLanguage: de
+- '@context': https://schema.org
+  '@type': BreadcrumbList
+  itemListElement:
+  - '@type': ListItem
+    position: 1
+    name: OpenWhistle
+    item: https://openwhistle.net/en/
+  - '@type': ListItem
+    position: 2
+    name: Blog
+    item: https://openwhistle.net/de/blog/
+  - '@type': ListItem
+    position: 3
+    name: Hinweisgebersystem mit EU-Hosting und DSGVO
+    item: https://openwhistle.net/de/blog/hinweisgebersystem-dsgvo-eu-hosting/
+---
+  <main id="main-content">
+    <div class="article-wrap">
+      <article>
+        <header class="article-header">
+          <p class="article-tag">DSGVO · EU-Hosting · Sicherheit</p>
+          <h1 class="article-title">Hinweisgebersystem mit EU-Hosting und DSGVO: wo die Daten liegen und was verschlüsselt ist</h1>
+          <p class="article-subtitle">Selbst gehostet liegen alle Meldungen auf dem Server des Betreibers, in der EU, wenn er sie dort betreibt. Was OpenWhistle verschlüsselt, was es nie speichert und was die DSGVO beim Betreiber lässt.</p>
+          <div class="article-meta">
+            <span>27. September 2026</span>
+            <span>5 Min. Lesezeit</span>
+            <span>OpenWhistle Contributors</span>
+          </div>
+        </header>
+
+        <div class="article-body">
+
+          <p>Ein Hinweisgebersystem mit EU-Hosting bekommen Sie auf zwei Wegen: als selbst gehostete Software auf einem Server in der EU oder als Dienst mit Rechenzentrum in der EU. OpenWhistle ist selbst gehostete Software. Alle Meldungen liegen auf dem Server des Betreibers, und steht er in der EU, bleiben die Daten in der EU.</p>
+
+          <div class="callout callout-warn">
+            <p class="callout-title">Transparenzhinweis</p>
+            <p>Diesen Artikel schreiben die Entwickler von OpenWhistle. Angaben zu anderen Angeboten stammen von deren eigenen Seiten, abgerufen am 27. September 2026. Keine Rechtsberatung.</p>
+          </div>
+
+          <h2>Wer bietet Hinweisgebersysteme mit EU-Hosting an?</h2>
+
+          <div class="comp-wrap">
+            <table class="comp-table" aria-label="Hinweisgebersysteme und wo ihre Daten liegen, Stand 27. September 2026">
+              <thead>
+                <tr>
+                  <th scope="col">Angebot</th>
+                  <th scope="col">Modell</th>
+                  <th scope="col">Wo die Daten liegen</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><strong>OpenWhistle</strong></td><td data-label="Modell">Software, GPL-3.0</td><td data-label="Wo die Daten liegen">auf Ihrem Server; den Standort wählen Sie</td></tr>
+                <tr><td><strong>GlobaLeaks</strong></td><td data-label="Modell">Software, AGPL-3.0</td><td data-label="Wo die Daten liegen">auf Ihrem Server; den Standort wählen Sie</td></tr>
+                <tr><td><strong>Hinweisgeberportal OpenSource</strong></td><td data-label="Modell">verwaltetes GlobaLeaks</td><td data-label="Wo die Daten liegen">Rechenzentren in Deutschland</td></tr>
+                <tr><td><strong>WhistlePort</strong></td><td data-label="Modell">SaaS</td><td data-label="Wo die Daten liegen">Deutschland, ISO/IEC&nbsp;27001</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>Quellen, Preise und weitere Angebote nennt <a href="/de/blog/whistleblower-software-vergleich/">Hinweisgebersystem-Anbieter im Vergleich</a>. Bei einem Dienst ist der Anbieter Ihr Auftragsverarbeiter. Selbst gehostet ist es höchstens Ihr Hoster.</p>
+
+          <h2>Was OpenWhistle verschlüsselt</h2>
+
+          <div class="comp-wrap">
+            <table class="comp-table" aria-label="Was OpenWhistle verschlüsselt und womit">
+              <thead>
+                <tr>
+                  <th scope="col">Daten</th>
+                  <th scope="col" class="col-ow">Schutz</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Meldungstext und Nachrichten</td><td class="col-ow" data-label="Schutz">eigener Datenschlüssel je Meldung (Fernet: AES-128-CBC mit HMAC-SHA256)</td></tr>
+                <tr><td>Anhänge: Inhalt und Dateiname</td><td class="col-ow" data-label="Schutz">derselbe Schlüssel der Meldung, auch im S3-Speicher</td></tr>
+                <tr><td>Name und Kontakt bei vertraulichen Meldungen</td><td class="col-ow" data-label="Schutz">verschlüsselt; sichtbar erst nach protokolliertem Grund</td></tr>
+                <tr><td>TOTP-Geheimnisse der Konten</td><td class="col-ow" data-label="Schutz">verschlüsselt</td></tr>
+                <tr><td>Hauptschlüssel</td><td class="col-ow" data-label="Schutz">abgeleitet aus <code>ENCRYPTION_KEY</code>, sonst <code>SECRET_KEY</code> (HKDF-SHA256); nie in der Datenbank</td></tr>
+                <tr><td>Entwurf während der Meldung</td><td class="col-ow" data-label="Schutz">in Redis, höchstens 2 Stunden; der Schlüssel liegt nur im Cookie der meldenden Person</td></tr>
+                <tr><td>Übertragung</td><td class="col-ow" data-label="Schutz">TLS 1.2 und 1.3 über nginx, ab dem ersten Start</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>Wer nur die Datenbank erbeutet, erhält Chiffretext. Die Einzelheiten stehen in der <a href="/en/docs/#key-rotation">Dokumentation zur Schlüsselrotation</a>.</p>
+
+          <h2>Was OpenWhistle nie speichert</h2>
+          <ul>
+            <li><strong>IP-Adressen.</strong> nginx entfernt die IP-Header und schreibt kein Zugriffsprotokoll. Die App verwirft die Adresse, die Datenbank hat keine IP-Spalte.</li>
+            <li><strong>Uhrzeiten der meldenden Person.</strong> Meldung, Nachrichten und Anhänge tragen nur das Datum.</li>
+            <li><strong>Daten für Dritte.</strong> Jede Anfrage nach außen ist optional und <a href="/en/docs/#outbound-requests">in der Dokumentation aufgelistet</a>. Update-Prüfung und Installationszählung sind aus, bis Sie sie einschalten.</li>
+          </ul>
+
+          <h2>Ist ein Hinweisgebersystem DSGVO-konform?</h2>
+          <p>Konform ist der Betrieb, nicht die Software. OpenWhistle unterstützt einen DSGVO-konformen Betrieb; die Verantwortung trägt der Betreiber.</p>
+
+          <div class="comp-wrap">
+            <table class="comp-table" aria-label="DSGVO-Pflichten: was OpenWhistle beiträgt und was beim Betreiber bleibt">
+              <thead>
+                <tr>
+                  <th scope="col">DSGVO</th>
+                  <th scope="col" class="col-ow">OpenWhistle</th>
+                  <th scope="col">Bei Ihnen</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Datenminimierung, Art.&nbsp;5</td><td class="col-ow" data-label="OpenWhistle">anonymer Modus, keine IP, nur Datum</td><td data-label="Bei Ihnen">Kategorien und Texte des Formulars</td></tr>
+                <tr><td>Speicherbegrenzung, Art.&nbsp;5</td><td class="col-ow" data-label="OpenWhistle">automatische Löschung, Standard 1095 Tage nach Abschluss</td><td data-label="Bei Ihnen">Frist festlegen</td></tr>
+                <tr><td>Löschung, Art.&nbsp;17</td><td class="col-ow" data-label="OpenWhistle">Löschen erst nach Bestätigung durch ein zweites Admin-Konto</td><td data-label="Bei Ihnen">Anträge prüfen</td></tr>
+                <tr><td>Sicherheit, Art.&nbsp;32</td><td class="col-ow" data-label="OpenWhistle">Verschlüsselung, TOTP für jedes Konto, Rollen, Audit-Log</td><td data-label="Bei Ihnen">Server, Updates, Backups</td></tr>
+                <tr><td>Auftragsverarbeitung, Art.&nbsp;28</td><td class="col-ow" data-label="OpenWhistle">kein Dienst des Projekts; ohne Opt-in keine Verbindung zum Projekt</td><td data-label="Bei Ihnen">Vertrag mit Ihrem Hoster</td></tr>
+                <tr><td>Verzeichnis, Art.&nbsp;30; Folgenabschätzung, Art.&nbsp;35</td><td class="col-ow" data-label="OpenWhistle">nicht Teil der Software</td><td data-label="Bei Ihnen">erstellen, wo erforderlich</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2>Mehrsprachige Meldungen</h2>
+          <p>Die Oberfläche gibt es auf Deutsch, Englisch, Französisch und Portugiesisch (Brasilien). Sie folgt der Sprache des Browsers, bis die Person selbst eine wählt. Den Meldungstext kann sie in jeder Sprache schreiben.</p>
+
+          <h2>Open Source: prüfbar statt versprochen</h2>
+          <p>OpenWhistle steht unter der GPL-3.0, der gesamte Quellcode liegt auf <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a>. Jede Aussage in diesem Artikel können Sie dort nachprüfen. Ein externes Audit hat OpenWhistle noch nicht.</p>
+
+          <div class="article-cta">
+            <h3>OpenWhistle ausprobieren, ohne Installation</h3>
+            <p>Die Live-Demo zeigt Melde-Assistent und Admin-Bereich mit Beispieldaten. Sie wird alle 6 Stunden zurückgesetzt.</p>
+            <a href="https://demo.openwhistle.net" class="btn-cta" rel="noopener noreferrer" target="_blank">Live-Demo öffnen &rarr;</a>
+          </div>
+
+          <p class="post-note">
+            <strong>Weitere Ressourcen:</strong>
+            <a href="/de/">Hinweisgebersystem-Software OpenWhistle</a> ·
+            <a href="/de/blog/hinschg-compliance-leitfaden/">HinSchG-Compliance-Leitfaden</a> ·
+            <a href="/de/blog/interne-meldestelle-einrichten/">Schritt-für-Schritt-Anleitung zur Installation</a>
+          </p>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  

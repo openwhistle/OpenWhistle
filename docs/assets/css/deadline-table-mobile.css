@@ -1,0 +1,9 @@
+.deadline-table { table-layout: auto; }
+    .deadline-table .td-law { white-space: nowrap; }
+    @media (max-width: 540px) {
+      .deadline-table thead { display: none; }
+      .deadline-table tr { display: block; padding: var(--space-3) 0; border-bottom: 1px solid var(--border-subtle); }
+      .deadline-table td { display: block; border: none; padding: var(--space-1) var(--space-2); }
+      .deadline-table td:first-child { color: var(--text-primary); font-weight: 600; }
+      .deadline-table td[data-label]::before { content: attr(data-label) ": "; color: var(--text-muted); font-weight: 400; font-family: var(--font-body); }
+    }

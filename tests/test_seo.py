@@ -1,10 +1,10 @@
-"""Search-engine guards for the published site (docs/, served as openwhistle.net).
+"""Search-engine guards for the published site (built from docs/, served as openwhistle.net).
 
 Every page is found by glob, so a page added by anyone is held to the same
 head: one title of at most 60 characters, a unique description of 120-160,
 a canonical URL that is the address GitHub Pages serves the file at and the
 sitemap lists, Open Graph tags with an image that exists, and JSON-LD that
-parses. docs/sitemap.xml is written by scripts/render_sitemap.py.
+parses. The sitemap is the one in the built site.
 The docs-tech link ban lives in tests/test_docs_boundary.py.
 """
 
@@ -18,12 +18,13 @@ from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).parents[1]
-DOCS = ROOT / "docs"
+from tests.built_site import builder, built, pages
+
+DOCS = built()
 SITE = "https://openwhistle.net/"
-PAGES = sorted(DOCS.rglob("*.html"))
+PAGES = pages()
 IDS = [str(p.relative_to(DOCS)) for p in PAGES]
-LANDING = (DOCS / "index.html", DOCS / "de" / "index.html")
+LANDING = (DOCS / "en" / "index.html", DOCS / "de" / "index.html")
 # The landing pair's exact en/de/x-default set is held by
 # test_docs_site.py::test_landing_pages_link_each_other_via_hreflang.
 
@@ -101,7 +102,9 @@ def _file_for(url: str) -> Path:
     """The file GitHub Pages serves at `url`: a trailing slash is the folder's index.html."""
     assert url.startswith(SITE), url
     path = url.removeprefix(SITE)
-    return DOCS / (path + "index.html" if path == "" or path.endswith("/") else path)
+    if path == "" or path.endswith(("/", ".html")):
+        return builder().output_file(DOCS, "/" + path)
+    return DOCS / path
 
 
 def _png_size(path: Path) -> tuple[int, int]:
@@ -173,7 +176,7 @@ def test_canonical_is_the_address_the_file_is_served_at(page: Path) -> None:
 
 def _sitemap() -> dict[str, dict[str, str]]:
     ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9", "x": "http://www.w3.org/1999/xhtml"}
-    root = ET.parse(DOCS / "sitemap.xml").getroot()  # noqa: S314 — our own committed file
+    root = ET.parse(DOCS / "sitemap.xml").getroot()  # noqa: S314 — our own built file
     out = {}
     today = datetime.date.today()
     for url in root.findall("s:url", ns):
@@ -212,6 +215,11 @@ def test_hreflang_is_reciprocal(page: Path) -> None:
     assert alternates.get(h.lang or "") == own, "a page's own language must point at itself"
     assert "x-default" in alternates, alternates
     for lang, url in alternates.items():
+        if url == SITE:
+            # "/" is the language choice (a redirect, not a page), and only the
+            # two language homes name it as their x-default.
+            assert lang == "x-default" and own in (f"{SITE}en/", f"{SITE}de/"), (lang, own)
+            continue
         other = _head(_file_for(url))
         if lang != "x-default":
             assert other.lang == lang, (url, other.lang)
@@ -237,9 +245,9 @@ def test_software_version_is_the_app_version() -> None:
 
 @pytest.mark.parametrize(
     "page",
-    # index.html and en.html are the German and English blog indexes.
-    [p for p in PAGES if p.parent.name == "blog" and p.name not in ("index.html", "en.html")],
-    ids=lambda p: p.name,
+    # A post is <lang>/blog/<slug>/index.html; <lang>/blog/index.html is the index.
+    [p for p in PAGES if p.parent.parent.name == "blog"],
+    ids=lambda p: p.parent.name,
 )
 def test_blog_posts_carry_dated_blogposting(page: Path) -> None:
     h = _head(page)

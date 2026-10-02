@@ -1,0 +1,27 @@
+# Old URL -> new page. tests/test_redirects.py checks every URL served on 2026-10-01.
+# GitHub Pages gets HTML stubs (build_site.py --redirect-stubs); P4 turns this into the nginx 301 map.
+# Not listed: / and /index.html (the language choice) and /de/, /de/index.html (unchanged).
+/blog/: /de/blog/
+/blog/en.html: /en/blog/
+/blog/free-internal-reporting-channel.html: /en/blog/free-internal-reporting-channel/
+/blog/hinschg-compliance-guide.html: /en/blog/hinschg-compliance-guide/
+/blog/hinschg-compliance-leitfaden.html: /de/blog/hinschg-compliance-leitfaden/
+/blog/hinweisgebersystem-dsgvo-eu-hosting.html: /de/blog/hinweisgebersystem-dsgvo-eu-hosting/
+/blog/index.html: /de/blog/
+/blog/interne-meldestelle-einrichten.html: /de/blog/interne-meldestelle-einrichten/
+/blog/interne-meldestelle-kostenlos.html: /de/blog/interne-meldestelle-kostenlos/
+/blog/metadaten-entfernen-ohne-beweise-zu-veraendern.html: /de/blog/metadaten-entfernen-ohne-beweise-zu-veraendern/
+/blog/removing-metadata-without-altering-evidence.html: /en/blog/removing-metadata-without-altering-evidence/
+/blog/set-up-internal-reporting-channel.html: /en/blog/set-up-internal-reporting-channel/
+/blog/was-ist-neu-in-2-0.html: /de/blog/was-ist-neu-in-2-0/
+/blog/whats-new-in-2-0.html: /en/blog/whats-new-in-2-0/
+/blog/whistleblower-software-vergleich.html: /de/blog/whistleblower-software-vergleich/
+/blog/whistleblowing-software-comparison.html: /en/blog/whistleblowing-software-comparison/
+/blog/whistleblowing-system-gdpr-eu-hosting.html: /en/blog/whistleblowing-system-gdpr-eu-hosting/
+/changelog.html: /en/changelog/
+/docs.html: /en/docs/
+/hinschg_reference.md: /en/docs/hinschg-reference/
+/open-source-whistleblowing-software.html: /en/compare/
+/roadmap.html: /en/roadmap/
+/security/dpa_template.md: /en/docs/dpa-template/
+/security/security_policy.md: /en/docs/security-policy/

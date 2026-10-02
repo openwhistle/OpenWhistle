@@ -15,6 +15,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.built_site import built, pages
+
 ROOT = Path(__file__).parents[1]
 DOCS = ROOT / "docs"
 FIGURE_DIRS = ("img/screens", "img/diagrams")
@@ -36,18 +38,16 @@ def _images(page: Path) -> list[dict[str, str | None]]:
     return parser.images
 
 
-def _pages() -> list[Path]:
-    return sorted(DOCS.rglob("*.html"))
-
-
 def _srcs() -> set[str]:
-    """Every <img src> of every published page, resolved relative to docs/."""
+    """Every <img src> of every built page, resolved relative to the site root."""
+    site = built().resolve()
     found: set[str] = set()
-    for page in _pages():
+    for page in pages():
         for img in _images(page):
             src = img.get("src") or ""
             if src and "://" not in src and not src.startswith("data:"):
-                found.add((page.parent / src).resolve().relative_to(DOCS.resolve()).as_posix())
+                target = site / src.lstrip("/") if src.startswith("/") else page.parent / src
+                found.add(target.resolve().relative_to(site).as_posix())
     return found
 
 
@@ -70,14 +70,14 @@ def test_there_are_figures_to_check() -> None:
 def test_every_figure_is_embedded_with_its_dark_twin(light: str) -> None:
     srcs = _srcs()
     dark = light.replace("-light.", "-dark.")
-    assert light in srcs, f"{light} is on disk but no page under docs/ shows it"
+    assert light in srcs, f"{light} is on disk but no built page shows it"
     assert (DOCS / dark).is_file(), f"{light} has no dark twin {dark}"
     assert dark in srcs, f"{light} is embedded without its dark twin {dark}"
 
 
 def test_every_embedded_image_exists() -> None:
-    missing = sorted(src for src in _srcs() if not (DOCS / src).is_file())
-    assert not missing, f"page(s) under docs/ point at image(s) that do not exist: {missing}"
+    missing = sorted(src for src in _srcs() if not (built() / src).is_file())
+    assert not missing, f"built page(s) point at image(s) that do not exist: {missing}"
 
 
 def _unlabelled(page: Path) -> list[str]:
@@ -89,7 +89,7 @@ def _unlabelled(page: Path) -> list[str]:
 
 
 def test_every_image_has_alt_text_unless_hidden() -> None:
-    bare = [f"{page.relative_to(ROOT)}: {src}" for page in _pages() for src in _unlabelled(page)]
+    bare = [f"{page.relative_to(built())}: {src}" for page in pages() for src in _unlabelled(page)]
     assert not bare, "image(s) without alt text:\n  " + "\n  ".join(bare)
 
 
@@ -100,3 +100,35 @@ def test_the_alt_rule_is_pinned(tmp_path: Path) -> None:
         '<img src="d.png" aria-hidden="true" alt="">'
     )
     assert _unlabelled(page) == ["b.png", "c.png"]
+
+
+def _natural_size(path: Path) -> tuple[float, float]:
+    if path.suffix == ".svg":
+        root = re.search(r"<svg\b[^>]*>", path.read_text(encoding="utf-8"))
+        assert root, path
+        w, h = (re.search(rf'\b{a}="([\d.]+)"', root.group(0)) for a in ("width", "height"))
+        assert w and h, f"{path}: the <svg> has no width/height"
+        return float(w.group(1)), float(h.group(1))
+    from PIL import Image
+
+    with Image.open(path) as image:
+        return image.size
+
+
+def test_every_image_reserves_its_real_shape() -> None:
+    """width/height set the box before a lazy image loads; a wrong ratio shifts
+    everything below it when it arrives, and a #deep-link lands off its section."""
+    site = built().resolve()
+    wrong = []
+    for page in pages():
+        for img in _images(page):
+            src, width, height = img.get("src") or "", img.get("width"), img.get("height")
+            if not (width and height) or "://" in src or src.startswith("data:"):
+                continue
+            file = site / src.lstrip("/") if src.startswith("/") else page.parent / src
+            nw, nh = _natural_size(file)
+            if abs(int(width) / int(height) - nw / nh) > 0.01:
+                wrong.append(
+                    f"{page.relative_to(site)}: {src} is {width}x{height}, the file {nw:g}x{nh:g}"
+                )
+    assert not wrong, "\n  ".join(["width/height disagree with the file:", *sorted(set(wrong))])

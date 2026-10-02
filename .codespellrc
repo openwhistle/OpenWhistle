@@ -1,15 +1,18 @@
 [codespell]
-skip = .git,.venv,.ruff_cache,.mypy_cache,.pytest_cache,uv.lock,htmlcov,*.woff2,*.png,*.ico,*.svg,.superpowers,.serena,.claude,CLAUDE.md,app/static/css/site.css,./app/locales/de.json,./app/locales/fr.json,./app/locales/pt-br.json,./docs/de,./docs/blog,./docs/hinschg_reference.md,./docs-tech/plans,./docs-tech/legal
+skip = .git,./tests/e2e/vendor,.venv,.ruff_cache,.mypy_cache,.pytest_cache,uv.lock,htmlcov,*.woff2,*.png,*.ico,*.svg,.superpowers,.serena,.claude,CLAUDE.md,app/static/css/site.css,./app/locales/de.json,./app/locales/fr.json,./app/locales/pt-br.json,./docs/de,./docs/en/docs/hinschg-reference.md,./docs-tech/plans,./docs-tech/legal
 check-hidden = false
 # covert — correct English legal term (secret recording), app/locales/en.json:431
 # Tage — German text in changelog example, CHANGELOG.md:809
 # Titel — German test data in test fixture, tests/test_coverage_gaps.py:838
-# ist — German text in meta description, docs/index.html:9
-# unter — German text in meta description, docs/index.html:9
-# oder — German text in meta content, docs/index.html:145
+# ist — German text in meta description, docs/de/index.html
+# unter — German text in meta description, docs/de/index.html
+# oder — German text in meta content, docs/de/index.html
 # garantie — German test data in test fixture, tests/test_v150_ux.py:494
 # ALPH — WebP chunk name (alpha channel), app/services/attachment.py
 # Foto — German search keyword, docs-tech/seo-marketing.md
+# produkt — German URL path segment of a linked vendor page, docs/en/blog/*.html
+# alle — German UI string, docs/_data/i18n/de.yml
+# titel, caf — German test data and a percent-encoded "café", tests/test_build_site.py
 # Sie, Ende, German month names — German test sentences and quoted German texts,
 #   tests/test_docs_prose.py, CONTRIBUTING.md, docs-tech/seo-marketing.md
-ignore-words-list = alph,foto,covert,Tage,Titel,ist,unter,oder,garantie,Sie,Ende,Januar,Februar,Juni,Juli,Oktober,Dezember
+ignore-words-list = produkt,alle,titel,caf,alph,foto,covert,Tage,Titel,ist,unter,oder,garantie,Sie,Ende,Januar,Februar,Juni,Juli,Oktober,Dezember

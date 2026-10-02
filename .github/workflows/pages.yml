@@ -1,10 +1,19 @@
 name: GitHub Pages
 
+# Until P5 of docs-tech/specs/2026-10-01-website-redesign-design.md the site
+# still lives here. docs/ holds sources; scripts/build_site.py writes _site/,
+# with HTML stubs standing in for the 301s nginx sends from P4 on.
 on:
   push:
     branches: ["main"]
     paths:
       - "docs/**"
+      - "CHANGELOG.md"
+      - "app/config.py"
+      - "scripts/build_site.py"
+      - "scripts/render_changelog.py"
+      - "pyproject.toml"
+      - "uv.lock"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -26,6 +35,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0 # sitemap lastmod comes from each source's last commit
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        run: pip install uv==0.12.22
+
+      - name: Install the site build
+        run: |
+          uv export --frozen --only-group site --no-emit-project -o /tmp/requirements.txt
+          uv pip install --system -r /tmp/requirements.txt
+
+      - name: Build
+        run: python scripts/build_site.py --redirect-stubs
 
       - name: Setup Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
@@ -33,7 +60,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
-          path: "docs"
+          path: "_site"
 
       - name: Deploy to GitHub Pages
         id: deployment

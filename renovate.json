@@ -124,7 +124,7 @@
       ]
     },
     {
-      "description": "PostgreSQL and Redis images appear in both compose files, the Ansible template and three workflows. Each moves as one pull request. A PostgreSQL major needs a dump and restore (docs/docs.html upgrade section), so majors are never auto-merged.",
+      "description": "PostgreSQL and Redis images appear in both compose files, the Ansible template and three workflows. Each moves as one pull request. A PostgreSQL major needs a dump and restore (docs/en/docs/index.html upgrade section), so majors are never auto-merged.",
       "groupName": "PostgreSQL",
       "matchPackageNames": [
         "postgres"
@@ -226,12 +226,12 @@
     },
     {
       "customType": "regex",
-      "description": "The axe-core build the accessibility tests inject. A floating version would change what 'accessible' means between two CI runs.",
+      "description": "The axe-core build the accessibility tests inject. A floating version would change what 'accessible' means between two CI runs. The PR stays red until scripts/vendor_axe.py writes the file and its hash.",
       "managerFilePatterns": [
         "/^tests/e2e/conftest\\.py$/"
       ],
       "matchStrings": [
-        "npm/axe-core@(?<currentValue>\\d+\\.\\d+\\.\\d+)/axe\\.min\\.js"
+        "AXE_VERSION = \"(?<currentValue>\\d+\\.\\d+\\.\\d+)\""
       ],
       "datasourceTemplate": "npm",
       "depNameTemplate": "axe-core"

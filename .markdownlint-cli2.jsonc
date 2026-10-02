@@ -1,0 +1,4 @@
+{
+  // A test fixture is input for tests/test_build_site.py, not documentation.
+  "ignores": ["tests/fixtures/**"]
+}

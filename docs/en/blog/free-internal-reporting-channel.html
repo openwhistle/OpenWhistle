@@ -1,0 +1,188 @@
+---
+title: 'Free Internal Reporting Channel: What Remains | OpenWhistle'
+description: 'Run an internal reporting channel for free: what is left in server, operations and work at a €0 licence, and which options come with published prices.'
+translation_key: free-internal-reporting-channel
+og_type: article
+published: '2026-09-27'
+modified: '2026-09-27'
+section: Practice
+css:
+- fonts
+- post-comparison-diagram
+- comparison-table-mobile
+js:
+- site
+jsonld:
+- '@context': https://schema.org
+  '@type': BlogPosting
+  headline: 'Free whistleblowing system: what “free” really costs'
+  description: 'Run an internal reporting channel for free: what is left in server, operations and work at a €0 licence, and which options come with published prices.'
+  url: https://openwhistle.net/en/blog/free-internal-reporting-channel/
+  mainEntityOfPage:
+    '@type': WebPage
+    '@id': https://openwhistle.net/en/blog/free-internal-reporting-channel/
+  datePublished: '2026-09-27'
+  dateModified: '2026-09-27'
+  author:
+    '@type': Organization
+    name: OpenWhistle Contributors
+    url: https://github.com/openwhistle
+  publisher:
+    '@type': Organization
+    name: OpenWhistle
+    url: https://openwhistle.net/en/
+    logo:
+      '@type': ImageObject
+      url: https://openwhistle.net/apple-touch-icon.png
+  image: https://openwhistle.net/og-image.png
+  inLanguage: en
+- '@context': https://schema.org
+  '@type': BreadcrumbList
+  itemListElement:
+  - '@type': ListItem
+    position: 1
+    name: OpenWhistle
+    item: https://openwhistle.net/en/
+  - '@type': ListItem
+    position: 2
+    name: Blog
+    item: https://openwhistle.net/de/blog/
+  - '@type': ListItem
+    position: 3
+    name: 'Free whistleblowing system: what “free” really costs'
+    item: https://openwhistle.net/en/blog/free-internal-reporting-channel/
+---
+  <main id="main-content">
+    <div class="article-wrap">
+      <article>
+        <header class="article-header">
+          <p class="article-tag">Costs · Open Source · HinSchG</p>
+          <h1 class="article-title">A free internal reporting channel: what "free" really costs</h1>
+          <p class="article-subtitle">Getting a whistleblowing tool for free is easy. The duties under the Whistleblower Protection Act (HinSchG) remain all the same. What is left in server, operations and work, which options exist and how to start with OpenWhistle.</p>
+          <div class="article-meta">
+            <span>27 September 2026</span>
+            <span>6 min read</span>
+            <span>OpenWhistle Contributors</span>
+          </div>
+        </header>
+
+        <div class="article-body">
+
+          <p>A <strong>free whistleblowing system</strong> saves the licence. It does not save the internal reporting office (interne Meldestelle). Employers with, as a rule, at least 50 employees must set one up and run it (§ 12 HinSchG). The law does not ask what the software cost.</p>
+
+          <div class="callout callout-warn">
+            <p class="callout-title">Transparency notice</p>
+            <p>This article is written by the developers of OpenWhistle. Other providers' prices are shown as the providers publish them, retrieved on 27 September 2026. Not legal advice.</p>
+          </div>
+
+          <h2>What is left when the licence costs €0</h2>
+
+          <div class="comp-wrap">
+            <table class="comp-table" aria-label="Cost items of an internal reporting channel">
+              <thead>
+                <tr>
+                  <th scope="col">Item</th>
+                  <th scope="col">With self-hosted open source</th>
+                  <th scope="col">Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Software licence</td><td class="val-good" data-label="With self-hosted open source">€0</td><td data-label="Reason">GPL-3.0 or AGPL-3.0</td></tr>
+                <tr><td>Server</td><td data-label="With self-hosted open source">a small VPS at your host's rate</td><td data-label="Reason">1 vCPU and 1 GB RAM are usually enough for OpenWhistle</td></tr>
+                <tr><td>Operations</td><td data-label="With self-hosted open source">Updates, backups, certificate</td><td data-label="Reason">Security fixes ship as patch versions</td></tr>
+                <tr><td>People</td><td data-label="With self-hosted open source">Working time of the reporting office, training</td><td data-label="Reason">Independence and expertise (§ 15)</td></tr>
+                <tr><td>Telephone</td><td data-label="With self-hosted open source">a number for the reporting office</td><td data-label="Reason">Oral reports are mandatory (§ 16 Abs. 3)</td></tr>
+                <tr><td>Data protection</td><td data-label="With self-hosted open source">Contract with the host, record of processing</td><td data-label="Reason">Art. 28 and Art. 30 GDPR</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>The software is the smallest item. Even with a paid service, the people, the telephone and the follow-up stay with you.</p>
+
+          <h2>What you run yourself</h2>
+
+          <p>This is the stack that OpenWhistle starts with Docker Compose. The app, PostgreSQL and Redis behind nginx are required. ClamAV and S3 are optional.</p>
+
+          <figure class="diagram">
+            <img class="diagram-light" src="/img/diagrams/architecture-light.svg" alt="Architecture: a browser reaches nginx over TLS on port 443, port 80 redirects. Tor Browser reaches the onion access on 8080, bound only to 127.0.0.1. Both lead to the stateless FastAPI app. It needs PostgreSQL and Redis, can use ClamAV and S3, and makes two outbound requests that can be switched off: the GitHub update check and the installation count." width="774" height="735" loading="lazy">
+            <img class="diagram-dark" src="/img/diagrams/architecture-dark.svg" alt="Architecture: a browser reaches nginx over TLS on port 443, port 80 redirects. Tor Browser reaches the onion access on 8080, bound only to 127.0.0.1. Both lead to the stateless FastAPI app. It needs PostgreSQL and Redis, can use ClamAV and S3, and makes two outbound requests that can be switched off: the GitHub update check and the installation count." width="774" height="735" loading="lazy">
+            <figcaption>The OpenWhistle stack. Both outbound requests are off until you switch them on.</figcaption>
+          </figure>
+
+          <h2>The options and their published prices</h2>
+
+          <div class="comp-wrap">
+            <table class="comp-table" aria-label="Options for an internal reporting channel, prices as published by the providers on 27 September 2026">
+              <thead>
+                <tr>
+                  <th scope="col">Option</th>
+                  <th scope="col">Example</th>
+                  <th scope="col">Price per provider</th>
+                  <th scope="col">Run by</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Open source, self-hosted</td><td data-label="Example">OpenWhistle</td><td class="val-good" data-label="Price per provider">€0 licence</td><td data-label="Run by">You</td></tr>
+                <tr><td>Open source, self-hosted</td><td data-label="Example">GlobaLeaks</td><td class="val-good" data-label="Price per provider">€0 licence</td><td data-label="Run by">You</td></tr>
+                <tr><td>Open source, managed</td><td data-label="Example"><a href="https://opensource-hinweisgeberportal.de/preise" rel="noopener noreferrer" target="_blank">Hinweisgeberportal OpenSource</a></td><td data-label="Price per provider">from €39/month paid yearly, €49 paid monthly, plus VAT</td><td data-label="Run by">Provider</td></tr>
+                <tr><td>SaaS</td><td data-label="Example"><a href="https://www.whistleport.de/preise/" rel="noopener noreferrer" target="_blank">WhistlePort</a></td><td data-label="Price per provider">€69/month plus VAT</td><td data-label="Run by">Provider</td></tr>
+                <tr><td>SaaS</td><td data-label="Example"><a href="https://www.hintbox.de/preise/" rel="noopener noreferrer" target="_blank">Hintbox</a></td><td data-label="Price per provider">from €99/month plus VAT</td><td data-label="Run by">Provider</td></tr>
+                <tr><td>SaaS</td><td data-label="Example"><a href="https://www.integrityline.com/de/produkt/pakete/" rel="noopener noreferrer" target="_blank">EQS Integrity Line</a></td><td data-label="Price per provider">not stated</td><td data-label="Run by">Provider</td></tr>
+                <tr><td>External ombudsperson</td><td data-label="Example">WhistlePort package 3, with lawyers</td><td data-label="Price per provider">€69 plus €79/month plus VAT</td><td data-label="Run by">Provider</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>We found a permanently free plan with none of these SaaS providers. They offer a free trial or a demo. The article <a href="/en/blog/whistleblowing-software-comparison/">Whistleblowing software compared 2026</a> compares more features.</p>
+
+          <h2>Which option suits you</h2>
+
+          <div class="comp-wrap">
+            <table class="comp-table" aria-label="Decision guide">
+              <thead>
+                <tr>
+                  <th scope="col">If you</th>
+                  <th scope="col">Then</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>have an IT department or an IT service provider</td><td data-label="Then">Self-host open source: OpenWhistle or GlobaLeaks</td></tr>
+                <tr><td>want the dashboard to count the deadlines under § 17 HinSchG</td><td data-label="Then">OpenWhistle</td></tr>
+                <tr><td>need over 70 languages or a system proven since 2011</td><td data-label="Then">GlobaLeaks</td></tr>
+                <tr><td>want open code but not to run a server</td><td data-label="Then">managed GlobaLeaks</td></tr>
+                <tr><td>have nobody for operations and updates</td><td data-label="Then">SaaS</td></tr>
+                <tr><td>have nobody to handle the reports</td><td data-label="Then">external ombudsperson (§ 14 Abs. 1)</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2>How to start with OpenWhistle</h2>
+
+          <ol>
+            <li>Try the <a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">live demo</a>, as a whistleblower and as the reporting office.</li>
+            <li>Provision a Linux server with Docker 24 or newer.</li>
+            <li>Follow the <a href="/en/docs/#installation">installation guide</a>: clone, fill in <code>.env</code>, <code>docker compose up -d</code>.</li>
+            <li>In the wizard at <code>/setup</code>, create the first account with mandatory TOTP.</li>
+            <li>Set up categories, locations and accounts, then send a test report.</li>
+          </ol>
+
+          <p>The <a href="/en/blog/set-up-internal-reporting-channel/">step-by-step guide</a> shows every step with commands. The <a href="/en/blog/hinschg-compliance-guide/">HinSchG compliance guide</a> sums up which duties remain afterwards.</p>
+
+          <div class="article-cta">
+            <h3>Free, open source, self-hosted</h3>
+            <p>OpenWhistle is licensed under GPL-3.0. There is no paid edition and no subscription.</p>
+            <a href="https://demo.openwhistle.net" class="btn-cta" rel="noopener noreferrer" target="_blank">Open the live demo &rarr;</a>
+          </div>
+
+          <p class="post-note">
+            <strong>More resources:</strong>
+            <a href="/en/blog/whistleblowing-software-comparison/">Whistleblowing software compared 2026</a> ·
+            <a href="/en/blog/hinschg-compliance-guide/">HinSchG compliance guide</a> ·
+            <a href="https://www.gesetze-im-internet.de/hinschg/" rel="noopener noreferrer" target="_blank">HinSchG full text</a>
+          </p>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  

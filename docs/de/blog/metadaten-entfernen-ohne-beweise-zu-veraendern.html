@@ -1,0 +1,124 @@
+---
+title: Metadaten entfernen, ohne das Beweisfoto zu verändern
+description: Wie OpenWhistle GPS-Daten und Windows-Benutzernamen aus Anhängen entfernt, ohne ein Pixel zu ändern, und warum der alte Weg Beweisfotos schwarz färbte.
+translation_key: removing-metadata-without-altering-evidence
+og_type: article
+published: '2026-09-27'
+modified: '2026-09-27'
+section: Datenschutz
+css:
+- fonts
+- post
+js:
+- site
+jsonld:
+- '@context': https://schema.org
+  '@type': BlogPosting
+  headline: Metadaten entfernen, ohne das Beweisfoto zu verändern
+  description: Wie OpenWhistle GPS-Daten und Windows-Benutzernamen aus Anhängen entfernt, ohne ein Pixel zu ändern, und warum der alte Weg Beweisfotos schwarz färbte.
+  url: https://openwhistle.net/de/blog/metadaten-entfernen-ohne-beweise-zu-veraendern/
+  mainEntityOfPage:
+    '@type': WebPage
+    '@id': https://openwhistle.net/de/blog/metadaten-entfernen-ohne-beweise-zu-veraendern/
+  datePublished: '2026-09-27'
+  dateModified: '2026-09-27'
+  author:
+    '@type': Organization
+    name: OpenWhistle Contributors
+    url: https://github.com/openwhistle
+  publisher:
+    '@type': Organization
+    name: OpenWhistle
+    url: https://openwhistle.net/en/
+    logo:
+      '@type': ImageObject
+      url: https://openwhistle.net/apple-touch-icon.png
+  image: https://openwhistle.net/og-image.png
+  inLanguage: de
+- '@context': https://schema.org
+  '@type': BreadcrumbList
+  itemListElement:
+  - '@type': ListItem
+    position: 1
+    name: OpenWhistle
+    item: https://openwhistle.net/en/
+  - '@type': ListItem
+    position: 2
+    name: Blog
+    item: https://openwhistle.net/de/blog/
+  - '@type': ListItem
+    position: 3
+    name: Metadaten entfernen, ohne das Beweisfoto zu verändern
+    item: https://openwhistle.net/de/blog/metadaten-entfernen-ohne-beweise-zu-veraendern/
+---
+  <main id="main-content">
+    <div class="article-wrap">
+      <article>
+        <header class="article-header">
+          <p class="article-tag">Datenschutz · Anhänge · v2.1</p>
+          <h1 class="article-title">Metadaten entfernen, ohne das Beweisfoto zu verändern</h1>
+          <p class="article-subtitle">Ein Foto vom Diensthandy verrät, wo es entstand. Eine Excel-Datei nennt den Windows-Benutzernamen. OpenWhistle entfernt beides. Bis Version 2.0 veränderte es dabei auch das Beweisstück selbst.</p>
+          <div class="article-meta">
+            <span>27. September 2026</span>
+            <span>4 Min. Lesezeit</span>
+            <span>OpenWhistle Contributors</span>
+          </div>
+        </header>
+
+        <div class="article-body">
+
+          <p>Wer einen Missstand meldet, hängt oft einen Beleg an: ein Foto, einen Screenshot, eine Tabelle. Jede dieser Dateien trägt Daten, die niemand sieht. Ein Handyfoto enthält GPS-Koordinaten und die Seriennummer der Kamera. Eine Office-Datei enthält den Autor. Eine anonyme Meldung ist nur so anonym wie ihr Anhang.</p>
+
+          <p>OpenWhistle entfernt diese Daten deshalb beim Hochladen, bevor irgendetwas gespeichert wird. Eine Datei, die sich nicht säubern lässt, wird abgelehnt, nie ungesäubert abgelegt.</p>
+
+          <h2>Der alte Weg: das Bild neu malen</h2>
+          <p>Bis Version 2.0 las OpenWhistle ein Bild ein und schrieb nur die Pixel in eine neue Datei. Metadaten kamen so garantiert nicht mit. Die Pixel aber auch nicht immer. Ein Bug-Bounty-Durchlauf hat nachgemessen:</p>
+
+          <div class="table-scroll">
+          <table>
+            <thead><tr><th>Anhang</th><th>Vorher</th><th>Nach dem Säubern (bis 2.0)</th></tr></thead>
+            <tbody>
+              <tr><td>PNG mit Farbpalette, typisch für Screenshots</td><td>Rot (200, 10, 30)</td><td>Schwarz (0, 0, 0)</td></tr>
+              <tr><td>Animiertes PNG oder WebP</td><td>2 Einzelbilder</td><td>1 Einzelbild</td></tr>
+              <tr><td>JPEG-Foto</td><td>5,5 MB</td><td>14,4 MB, über der Grenze von 10 MB</td></tr>
+              <tr><td>PNG mit 12 000 × 12 000 Pixeln</td><td>450 KB Datei</td><td>1,1 GB Arbeitsspeicher</td></tr>
+            </tbody>
+          </table>
+          </div>
+
+          <p>Ein Beweisfoto, das nach dem Upload anders aussieht als vorher, ist ein schlechtes Beweisfoto. Und jedes JPEG wurde neu komprimiert: Kein einziges Pixel blieb, wie es war.</p>
+
+          <h2>Warum kein Test es merkte</h2>
+          <p>Die Tests fragten, ob die Metadaten weg sind. Das waren sie. Ob das Bild danach noch dasselbe zeigte, fragte keiner. Und die Testbilder waren gewöhnliche Farbfotos, ohne Palette und ohne Animation. Der Fehler lag genau dort, wo niemand hinsah.</p>
+
+          <h2>Der neue Weg: nur die Metadaten herausschneiden</h2>
+          <p>Seit Version 2.1 wird ein Bild nicht mehr neu geschrieben. JPEG, PNG und WebP bestehen aus einzelnen Abschnitten. OpenWhistle behält die Abschnitte, die das Bild beschreiben, und verwirft alle anderen. Die Pixel bleiben Bit für Bit gleich, die Datei wird nicht größer. Nur die Ausrichtung bleibt erhalten, damit ein Hochkantfoto hochkant bleibt.</p>
+
+          <p>Dabei fielen weitere Lücken auf, die jetzt geschlossen sind:</p>
+          <ul>
+            <li>Word und Excel speicherten den Windows-Benutzernamen in Ordnerpfaden wie <code>C:\Users\&lt;Name&gt;\…</code>.</li>
+            <li>PDFs trugen den Autor nicht nur im Dokument, sondern auch an einzelnen Seiten und Bildern.</li>
+            <li>Handyfotos mit bewegtem Foto hatten ein kurzes Video hinter dem Bild angehängt.</li>
+            <li>Eine eingebettete Vorschau im JPEG konnte das Bild vor dem Zuschneiden zeigen.</li>
+          </ul>
+
+          <p>Die gemessenen Zahlen und jeder einzelne Fix stehen im <a href="/en/changelog/">Änderungsprotokoll</a>. Welche Formate angenommen werden, erklärt das <a href="/en/docs/#whistleblower-guide">Handbuch für Hinweisgeber</a>.</p>
+
+          <div class="article-cta">
+            <h3>Selbst ausprobieren</h3>
+            <p>Die Live-Demo nimmt Anhänge an. Laden Sie ein Foto hoch und prüfen Sie die gespeicherte Datei mit einem EXIF-Werkzeug Ihrer Wahl.</p>
+            <a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank" class="btn-cta">Zur Demo &rarr;</a>
+          </div>
+
+          <p class="post-footnote">
+            <strong>Weitere Ressourcen:</strong>
+            <a href="/de/blog/hinweisgebersystem-dsgvo-eu-hosting/">DSGVO-konformes Hinweisgebersystem</a> ·
+            <a href="/de/blog/hinschg-compliance-leitfaden/">HinSchG-Compliance-Leitfaden</a> ·
+            <a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank">GitHub Issues</a>
+          </p>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  

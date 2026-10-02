@@ -40,6 +40,7 @@ from app.models.user import AdminUser
 from app.services.audit import AuditAction
 from app.services.auth import hash_password
 from app.services.demo_seed import DEMO_ADMIN_USERNAME
+from tests.built_site import built, pages
 
 ROOT = Path(__file__).parents[1]
 
@@ -583,8 +584,9 @@ def _app_html_pages() -> set[str]:
 
 
 def _docs_html_pages() -> set[str]:
+    """The URL of every built page: a folder's index.html is served at the folder."""
     return {
-        str(p.relative_to(ROOT)).replace("\\", "/") for p in (ROOT / "docs").rglob("*.html")
+        "/" + p.relative_to(built()).as_posix().removesuffix("index.html") for p in pages()
     }
 
 
@@ -626,9 +628,9 @@ def test_local_review_page_matrix_covers_every_app_page() -> None:
 
 def test_local_review_page_matrix_covers_every_docs_site_page() -> None:
     pages = _docs_html_pages()
-    assert len(pages) >= 9, f"only {len(pages)} docs/ pages found — the glob may be broken"
+    assert len(pages) >= 9, f"only {len(pages)} built pages found — the build may be broken"
     missing = pages - _matrix_table_tokens()
-    assert not missing, f"docs-tech/local-review.md is missing docs/ page(s): {sorted(missing)}"
+    assert not missing, f"docs-tech/local-review.md is missing site page(s): {sorted(missing)}"
 
 
 def test_local_review_page_matrix_covers_every_app_template() -> None:

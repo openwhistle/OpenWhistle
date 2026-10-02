@@ -154,46 +154,44 @@ route renders it standalone) and every partial starting with `_`
 (`_field.html`, `_icons.html`, `admin/_audit.html`, `admin/_layout.html` —
 included by another template, never rendered on their own).
 
-### The website (`docs/`, static — GitHub Pages)
+### The website (`docs/` sources, built to `_site/`)
 
-Serve it from inside the directory, so `docs/`-relative links resolve the way
-they do once GitHub Pages roots the site at `docs/` via the `docs/CNAME` file
-(`openwhistle.net`):
+Build, then serve the output (GitHub Pages publishes `_site/`, not `docs/`):
 
 ```bash
-python3 -m http.server -d docs 8000
+uv run --group site python scripts/build_site.py && python -m http.server -d _site 8901
 ```
 
-Serving from the repository root instead breaks every `../`-relative link on
-`docs/de/index.html` and `docs/blog/*.html` (they resolve against `docs/`, not
-against the repo root), and every root-absolute link (`/docs.html`,
-`/roadmap.html`) 404s because there is no `docs/docs.html` at the server root.
+Rebuild after every edit to `docs/`; the server serves what was built.
 
 | Page | Notes |
 |---|---|
-| `docs/index.html` | Landing page, English. |
-| `docs/de/index.html` | Landing page, German — the longest strings; check nothing overflows or truncates. |
-| `docs/docs.html` | Full documentation — long page, check the anchor nav and the "Current version" line. |
-| `docs/roadmap.html` | Roadmap. |
-| `docs/open-source-whistleblowing-software.html` | Comparison with GlobaLeaks, SecureDrop, Hush Line — the table scrolls inside its box at 390 px. |
-| `docs/404.html` | Not-found page (noindex); open any missing path on the served site. |
-| `docs/changelog.html` | Changelog, rendered from `CHANGELOG.md` — check the version nav in the sidebar. |
-| `docs/blog/index.html` | Blog index. |
-| `docs/blog/hinschg-compliance-leitfaden.html` | Article. |
-| `docs/blog/hinweisgebersystem-dsgvo-eu-hosting.html` | Article. |
-| `docs/blog/interne-meldestelle-einrichten.html` | Article. |
-| `docs/blog/interne-meldestelle-kostenlos.html` | Article. |
-| `docs/blog/was-ist-neu-in-2-0.html` | Article. |
-| `docs/blog/whistleblower-software-vergleich.html` | Article. |
-| `docs/blog/metadaten-entfernen-ohne-beweise-zu-veraendern.html` | Article. |
-| `docs/blog/en.html` | Blog index, English. Every article below is the English twin of a German one; check the language switch both ways. |
-| `docs/blog/hinschg-compliance-guide.html` | Article, English. |
-| `docs/blog/whistleblowing-system-gdpr-eu-hosting.html` | Article, English. |
-| `docs/blog/set-up-internal-reporting-channel.html` | Article, English. |
-| `docs/blog/free-internal-reporting-channel.html` | Article, English. |
-| `docs/blog/whats-new-in-2-0.html` | Article, English. |
-| `docs/blog/whistleblowing-software-comparison.html` | Article, English. |
-| `docs/blog/removing-metadata-without-altering-evidence.html` | Article, English. |
+| `/en/` | Landing page, English. |
+| `/de/` | Landing page, German — the longest strings; check nothing overflows or truncates. |
+| `/en/docs/` | Full documentation — long page, check the anchor nav and the "Current version" line. |
+| `/en/docs/hinschg-reference/` | HinSchG reference, rendered from Markdown. |
+| `/en/docs/security-policy/` | Security policy template, rendered from Markdown. |
+| `/en/docs/dpa-template/` | DPA template, rendered from Markdown. |
+| `/en/roadmap/` | Roadmap. |
+| `/en/compare/` | Comparison with GlobaLeaks, SecureDrop, Hush Line — the table scrolls inside its box at 390 px. |
+| `/404.html` | Not-found page (noindex); open any missing path on the served site. |
+| `/en/changelog/` | Changelog, rendered from `CHANGELOG.md` — check the version nav in the sidebar. |
+| `/de/blog/` | Blog index. |
+| `/de/blog/hinschg-compliance-leitfaden/` | Article. |
+| `/de/blog/hinweisgebersystem-dsgvo-eu-hosting/` | Article. |
+| `/de/blog/interne-meldestelle-einrichten/` | Article. |
+| `/de/blog/interne-meldestelle-kostenlos/` | Article. |
+| `/de/blog/was-ist-neu-in-2-0/` | Article. |
+| `/de/blog/whistleblower-software-vergleich/` | Article. |
+| `/de/blog/metadaten-entfernen-ohne-beweise-zu-veraendern/` | Article. |
+| `/en/blog/` | Blog index, English. Every article below is the English twin of a German one; check the language switch both ways. |
+| `/en/blog/hinschg-compliance-guide/` | Article, English. |
+| `/en/blog/whistleblowing-system-gdpr-eu-hosting/` | Article, English. |
+| `/en/blog/set-up-internal-reporting-channel/` | Article, English. |
+| `/en/blog/free-internal-reporting-channel/` | Article, English. |
+| `/en/blog/whats-new-in-2-0/` | Article, English. |
+| `/en/blog/whistleblowing-software-comparison/` | Article, English. |
+| `/en/blog/removing-metadata-without-altering-evidence/` | Article, English. |
 
 ## What to check, on every page
 
@@ -218,7 +216,7 @@ Fix every finding before the release PR — nothing here is carried forward.
 |---|---|
 | The admin login rate limiter | `MAX_LOGIN_ATTEMPTS` failed attempts within `LOGIN_LOCKOUT_MINUTES` locks a username. The one-click button never touches this limiter — it has no password or code to get wrong. The regular username/password + TOTP form (the demo-credentials autofill on the same page) still goes through it, so a sweep that signs in that way instead can trip it. |
 | `/setup` and `/admin/mfa/setup` redirect away on the plain/review stack | `DEMO_MODE` seeding completes setup and enrols the demo admin's TOTP before either page is ever requested. Use the setup stack (above) for both. |
-| Serving `docs/` from the wrong directory | `docs/`-relative links assume the server root is `docs/` itself, matching how GitHub Pages roots the site there via `docs/CNAME`. |
+| Serving `docs/` instead of `_site/` | `docs/` holds sources (templates, `.md`), not pages. Build first, serve `_site/`; the root-absolute links resolve there. |
 | A stack kept up across two review sessions | The four seeded demo reports (`OW-DEMO-00001`..`00004`) are always the same rows — nothing accumulates, so this one has no gotcha, unlike a counting assertion in an automated test. |
 
 ## Re-taking the documentation screenshots

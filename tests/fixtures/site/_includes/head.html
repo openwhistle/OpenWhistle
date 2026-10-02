@@ -1,0 +1,55 @@
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
+  <title>{{ page.meta.title }}</title>
+  <meta name="description" content="{{ page.meta.description }}">
+  <meta name="robots" content="{{ 'noindex, follow' if page.meta.get('noindex') else 'index, follow' }}">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#08080a" media="(prefers-color-scheme: dark)">
+{% if not page.meta.get('noindex') %}
+  <link rel="canonical" href="{{ site.base_url }}{{ page.url }}">
+{% endif %}
+{% for lang, href in hreflang %}
+  <link rel="alternate" hreflang="{{ lang }}" href="{{ href }}">
+{% endfor %}
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="preload" href="/fonts/sora-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/sora-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <meta property="og:type" content="{{ page.meta.get('og_type') or 'website' }}">
+  <meta property="og:site_name" content="OpenWhistle">
+{% if not page.meta.get('noindex') %}
+  <meta property="og:url" content="{{ site.base_url }}{{ page.url }}">
+{% endif %}
+  <meta property="og:title" content="{{ page.meta.title }}">
+  <meta property="og:description" content="{{ page.meta.description }}">
+  <meta property="og:image" content="{{ site.base_url }}/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="{{ t.og_image_alt }}">
+  <meta property="og:locale" content="{{ locale }}">
+{% for alt in alternate_locales %}
+  <meta property="og:locale:alternate" content="{{ alt }}">
+{% endfor %}
+{% if page.meta.get('published') %}
+  <meta property="article:published_time" content="{{ page.meta.get('published') }}">
+{% endif %}
+{% if page.meta.get('modified') %}
+  <meta property="article:modified_time" content="{{ page.meta.get('modified') }}">
+{% endif %}
+{% if page.meta.get('section') %}
+  <meta property="article:section" content="{{ page.meta.get('section') }}">
+{% endif %}
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ page.meta.title }}">
+  <meta name="twitter:description" content="{{ page.meta.description }}">
+  <meta name="twitter:image" content="{{ site.base_url }}/og-image.png">
+  <meta name="twitter:image:alt" content="{{ t.og_image_alt }}">
+{% for item in page.meta.jsonld %}
+  <script type="application/ld+json">{{ item|tojson }}</script>
+{% endfor %}
+  <link rel="stylesheet" href="/assets/css/layout.css">
+{% for name in page.meta.css %}
+  <link rel="stylesheet" href="/assets/css/{{ name }}.css">
+{% endfor %}

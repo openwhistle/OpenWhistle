@@ -1,7 +1,6 @@
 """Accessibility tests using axe-core injection.
 
-axe-core is downloaded once per session via the axe_source fixture in conftest.py.
-If network is unavailable, tests are skipped gracefully.
+axe-core is read from tests/e2e/vendor/ (hash-checked) by the axe_source fixture in conftest.py.
 """
 from __future__ import annotations
 
@@ -21,8 +20,6 @@ pytestmark = pytest.mark.e2e
 
 def _check_axe(page: Page, axe_source: str, context: str) -> None:
     """Run axe and fail on critical violations; report serious ones as warnings."""
-    if not axe_source:
-        pytest.skip("axe-core unavailable — network required")
     critical = run_axe(page, axe_source)
     serious = run_axe_warnings(page, axe_source)
     if serious:

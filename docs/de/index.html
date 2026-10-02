@@ -1,1396 +1,141 @@
-<!DOCTYPE html>
-<html lang="de" data-theme="light">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- Apply theme before first paint to avoid flash -->
-  <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
-  <title>Hinweisgebersystem Software – kostenlos &amp; Open Source</title>
-  <meta name="description" content="Hinweisgebersystem-Software für das HinSchG: kostenlos, Open Source unter GPL-3.0, selbst gehostet. Interne Meldestelle mit Fristen, ohne IP-Protokolle.">
-  <meta name="robots" content="index, follow">
-  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#08080a" media="(prefers-color-scheme: dark)">
-  <link rel="canonical" href="https://openwhistle.net/de/">
-  <link rel="alternate" hreflang="en" href="https://openwhistle.net/">
-  <link rel="alternate" hreflang="de" href="https://openwhistle.net/de/">
-  <link rel="alternate" hreflang="x-default" href="https://openwhistle.net/">
-  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
-  <link rel="icon" type="image/x-icon" href="../favicon.ico">
-  <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
-  <link rel="preload" href="../fonts/sora-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="../fonts/sora-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
-
-  <!-- Open Graph / Twitter -->
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="OpenWhistle">
-  <meta property="og:url" content="https://openwhistle.net/de/">
-  <meta property="og:title" content="Hinweisgebersystem Software – kostenlos &amp; Open Source">
-  <meta property="og:description" content="Hinweisgebersystem-Software für das HinSchG: kostenlos, Open Source unter GPL-3.0, selbst gehostet. Interne Meldestelle mit Fristen, ohne IP-Protokolle.">
-  <meta property="og:image" content="https://openwhistle.net/og-image.png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="OpenWhistle: sichere Hinweisgeber-Meldungen">
-  <meta property="og:locale" content="de_DE">
-  <meta property="og:locale:alternate" content="en_US">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Hinweisgebersystem Software – kostenlos &amp; Open Source">
-  <meta name="twitter:description" content="Hinweisgebersystem-Software für das HinSchG: kostenlos, Open Source unter GPL-3.0, selbst gehostet. Interne Meldestelle mit Fristen, ohne IP-Protokolle.">
-  <meta name="twitter:image" content="https://openwhistle.net/og-image.png">
-  <meta name="twitter:image:alt" content="OpenWhistle: sichere Hinweisgeber-Meldungen">
-
-  <!-- Structured data -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "@id": "https://openwhistle.net/de/#software",
-    "name": "OpenWhistle",
-    "url": "https://openwhistle.net/de/",
-    "description": "Hinweisgebersystem-Software für das HinSchG: kostenlos, Open Source unter GPL-3.0, selbst gehostet. Interne Meldestelle mit Fristen, ohne IP-Protokolle.",
-    "applicationCategory": "SecurityApplication",
-    "applicationSubCategory": "Hinweisgebersystem",
-    "operatingSystem": "Linux (Docker)",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "EUR"
-    },
-    "license": "https://www.gnu.org/licenses/gpl-3.0.html",
-    "softwareVersion": "2.1.0",
-    "downloadUrl": "https://github.com/openwhistle/OpenWhistle/releases/latest",
-    "installUrl": "https://openwhistle.net/docs.html#installation",
-    "softwareHelp": {
-      "@type": "CreativeWork",
-      "url": "https://openwhistle.net/docs.html"
-    },
-    "image": "https://openwhistle.net/og-image.png",
-    "inLanguage": "de",
-    "author": {
-      "@type": "Organization",
-      "name": "OpenWhistle Contributors",
-      "url": "https://github.com/openwhistle"
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": "OpenWhistle",
-      "url": "https://openwhistle.net/",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://openwhistle.net/apple-touch-icon.png"
-      }
-    },
-    "sameAs": [
-      "https://github.com/openwhistle/OpenWhistle",
-      "https://hub.docker.com/r/kermit1337/openwhistle",
-      "https://quay.io/repository/jp1337/openwhistle",
-      "https://github.com/openwhistle/OpenWhistle/pkgs/container/openwhistle"
-    ]
-  }
-  </script>
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "Welche Hinweisgebersystem-Software ist kostenlos?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Ohne Lizenzkosten sind zum Beispiel die Open-Source-Systeme OpenWhistle (GPL-3.0) und GlobaLeaks (AGPL-3.0). Beide betreiben Sie auf Ihrem eigenen Server. Den Vergleich mit Quellen bietet der Artikel „Hinweisgebersystem-Anbieter im Vergleich 2026“."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Ist OpenWhistle Open Source?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Ja, OpenWhistle ist Open Source unter der GNU General Public License v3.0. Der gesamte Quellcode liegt öffentlich auf GitHub. Sie dürfen ihn prüfen, ändern und kommerziell einsetzen."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Kann ich das Hinweisgebersystem selbst hosten?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Ja, OpenWhistle gibt es nur selbst gehostet: Sie betreiben es mit Docker Compose oder Helm auf Ihrem Server. Einen gehosteten Dienst des Projekts gibt es nicht. Die Installation beschreibt die Dokumentation."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Welche Hinweisgebersysteme bieten EU-Hosting?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Jedes selbst gehostete System läuft dort, wo Ihr Server steht, also auch in der EU. Das gilt für OpenWhistle und GlobaLeaks. Unter den Diensten nennen etwa das Hinweisgeberportal OpenSource und WhistlePort Rechenzentren in Deutschland, Stand 27. September 2026."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Ist OpenWhistle DSGVO-konform?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Die Software unterstützt einen DSGVO-konformen Betrieb; ob der Betrieb konform ist, verantworten Sie als Betreiber. OpenWhistle speichert keine IP-Adressen, verschlüsselt Meldungen und löscht abgeschlossene Fälle automatisch. Verarbeitungsverzeichnis, Vertrag mit dem Hoster und gegebenenfalls eine Datenschutz-Folgenabschätzung bleiben Ihre Aufgabe."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Verschlüsselt OpenWhistle die Meldungen?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Ja. Jede Meldung hat einen eigenen Datenschlüssel, mit dem Text, Nachrichten und Anhänge verschlüsselt gespeichert werden. Der Hauptschlüssel liegt nie in der Datenbank. Zum Browser läuft die Verbindung über TLS."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "In welchen Sprachen gibt es OpenWhistle?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Die Oberfläche gibt es auf Deutsch, Englisch, Französisch und Portugiesisch (Brasilien). Sie folgt der Sprache des Browsers, bis die Person selbst eine wählt."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Ist OpenWhistle wirklich kostenlos?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Ja. Die Software steht unter der GNU General Public License v3.0. Es gibt keine bezahlte Ausgabe, keine Funktion hinter einer Bezahlschranke und kein Abonnement. Kosten entstehen für Ihren Server und den Betrieb."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Was kostet ein kostenloses Hinweisgebersystem wirklich?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Die Lizenz kostet 0 €. Es bleiben ein Server, Zeit für Updates und Backups und die Arbeit der Meldestelle selbst. Das Gesetz verlangt zusätzlich einen mündlichen Kanal per Telefon (§ 16 Abs. 3 HinSchG)."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Erfüllt OpenWhistle das HinSchG?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "OpenWhistle deckt den Meldekanal in Textform ab: Eingangsbestätigung in 7 Tagen, Rückmeldung in drei Monaten, Kontakt zur hinweisgebenden Person, Vertraulichkeit und Löschung. Den telefonischen Kanal, die Besetzung und die Folgemaßnahmen organisieren Sie selbst."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Ist der Hinweisgeber wirklich anonym?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "OpenWhistle speichert keine IP-Adresse, weder in der Datenbank noch in Protokollen. nginx entfernt die IP-Header, die App verwirft die Adresse, das Schema hat keine IP-Spalte. Zeiten des Hinweisgebers werden nur auf den Tag genau gespeichert."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Für wen ist OpenWhistle gedacht?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Für Beschäftigungsgeber mit in der Regel mindestens 50 Beschäftigten, bestimmte Finanzunternehmen jeder Größe und öffentliche Stellen. Die GPL-3.0 erlaubt die kommerzielle Nutzung ausdrücklich."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Welche technischen Voraussetzungen gibt es?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Docker 24 oder neuer mit Compose v2, 1 vCPU, mindestens 512 MB RAM (1 GB empfohlen) und 5 GB Speicher. Dazu eine Domain mit HTTPS-Zertifikat. PostgreSQL 18 und Redis 8 sind im Compose-Stack enthalten."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Gibt es kommerziellen Support?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Nein. Hilfe gibt es über GitHub Issues. Das Projekt entsteht in der Freizeit. Wer Betrieb und Support einkaufen möchte, findet verwaltete Angebote im Vergleichsartikel."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Wie unterscheidet sich OpenWhistle von anderen Hinweisgebersystemen?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "OpenWhistle läuft nur selbst gehostet und kostet keine Lizenz. Der Quellcode ist öffentlich. Einen Vergleich mit GlobaLeaks und kommerziellen Anbietern, mit Quellen und Datum, bietet der Artikel „Hinweisgebersystem-Anbieter im Vergleich 2026“."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Unterstützt OpenWhistle Single Sign-on und LDAP?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Ja. Der erste Faktor kann ein Passwort, LDAP beziehungsweise Active Directory oder ein OIDC-Anbieter sein. Der TOTP-Code bleibt immer Pflicht. Seit 2.1 verknüpft jede Person ihr Konto unter „Mein Konto“ selbst mit dem Anbieter."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Kann ich OpenWhistle für mehrere Standorte oder Gesellschaften nutzen?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Ja. Ab Version 1.0.0 unterstützt OpenWhistle Multi-Tenancy. Verwaltbar ist sie seit 2.0.1, weil erst dort das erste Konto Superadmin wird; seit 2.1 wählt der Superadmin für jedes neue Konto die Organisation. Jede Organisation hat eigene Meldungen, Kategorien, Standorte, Konten und einen eigenen Meldelink."
-        }
-      }
-    ]
-  }
-  </script>
-
-  <style>
-    /* Self-hosted fonts — no external CDN calls */
-    @font-face { font-family: 'Sora'; src: url('../fonts/sora-latin-300-normal.woff2') format('woff2'); font-weight: 300; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Sora'; src: url('../fonts/sora-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Sora'; src: url('../fonts/sora-latin-500-normal.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Sora'; src: url('../fonts/sora-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'Sora'; src: url('../fonts/sora-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'JetBrains Mono'; src: url('../fonts/JetBrainsMono-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'JetBrains Mono'; src: url('../fonts/JetBrainsMono-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
-    @font-face { font-family: 'JetBrains Mono'; src: url('../fonts/JetBrainsMono-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
-    @font-face { font-family: 'JetBrains Mono'; src: url('../fonts/JetBrainsMono-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
-  </style>
-
-  <style>
-    /* ================================================================
-       OpenWhistle — GitHub Pages Design System
-       Aesthetic: Notary / Sealed Document — Legal authority, gravitas
-       NOT: SaaS startup, Bootstrap cards, purple gradients
-       Same tokens as docs/index.html — see test_de_landing_page_shares_design_tokens_with_english
-       ================================================================ */
-
-    /* ── Tokens ──────────────────────────────────────────────────── */
-    :root {
-      --bg-base: #ffffff;
-      --bg-surface: #f6f6f5;
-      --bg-raised: #efefee;
-      --bg-overlay: #e9e9e8;
-      --nav-bg: #ffffff;
-      --footer-bg: #0a0a0b;
-      --text-primary: #0a0a0b;
-      --text-secondary: #3d3d40;
-      --text-muted: #6a6a6e;
-      --border-subtle: #e6e6e4;
-      --border-default: #d8d8d6;
-      --border-strong: #c9c9c6;
-      --accent: #0c7253;
-      --accent-strong: #0b6249;
-      --accent-dim: rgba(12,114,83,0.15);
-      --accent-fog: rgba(12,114,83,0.08);
-      --red-alert: #bf3529;
-      --code-bg: #0a0a0b;
-      --code-text: #e9e9e8;
-      --font-display: 'Sora', system-ui, sans-serif;
-      --font-body: 'Sora', system-ui, sans-serif;
-      --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-      --space-1: 0.25rem;
-      --space-2: 0.5rem;
-      --space-3: 0.75rem;
-      --space-4: 1rem;
-      --space-5: 1.25rem;
-      --space-6: 1.5rem;
-      --space-8: 2rem;
-      --space-10: 2.5rem;
-      --space-12: 3rem;
-      --space-16: 4rem;
-      --space-20: 5rem;
-      --space-24: 6rem;
-      --max-width: 1200px;
-      --ease-stiff: cubic-bezier(0.16, 1, 0.3, 1);
-      --duration-fast: 140ms;
-      --duration-mid: 280ms;
-    }
-
-    /* Dark mode */
-    [data-theme="dark"] {
-      --bg-base: #08080a;
-      --bg-surface: #131315;
-      --bg-raised: #1b1b1e;
-      --bg-overlay: #232327;
-      --nav-bg: #08080a;
-      --footer-bg: #050506;
-      --text-primary: #fafafa;
-      --text-secondary: #bcbcc0;
-      --text-muted: #8e8e93;
-      --border-subtle: #262629;
-      --border-default: #34343a;
-      --border-strong: #43434a;
-      --accent: #23c088;
-      --accent-strong: #1fa878;
-      --accent-dim: rgba(35,192,136,0.15);
-      --accent-fog: rgba(35,192,136,0.08);
-      --code-bg: #050506;
-      --code-text: #fafafa;
-    }
-
-    /* ── Reset ───────────────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; font-size: 16px; -webkit-text-size-adjust: 100%; }
-    img, svg { display: block; max-width: 100%; }
-    a { color: inherit; text-decoration: none; }
-    button { cursor: pointer; border: none; background: none; font: inherit; }
-    ul, ol { list-style: none; }
-
-    body {
-      background: var(--bg-base);
-      color: var(--text-primary);
-      font-family: var(--font-body);
-      font-size: 1rem;
-      line-height: 1.7;
-      -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
-      transition: background var(--duration-mid) ease, color var(--duration-mid) ease;
-    }
-
-    /* ── Skip link ───────────────────────────────────────────────── */
-    .skip-link {
-      position: absolute;
-      top: -100%;
-      left: var(--space-4);
-      background: var(--accent);
-      color: #fff;
-      padding: var(--space-2) var(--space-4);
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      z-index: 9999;
-    }
-    .skip-link:focus { top: var(--space-4); }
-
-    /* ── Navigation ──────────────────────────────────────────────── */
-    .site-nav {
-      position: sticky;
-      top: 0;
-      z-index: 200;
-      background: var(--nav-bg);
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    }
-    /* Light-mode nav overrides — nav-bg is white, so text must be dark */
-    [data-theme="light"] .site-nav { border-bottom-color: #e2e8f0; }
-    [data-theme="light"] .nav-logo { color: #1e293b; }
-    [data-theme="light"] .nav-logo:hover { color: #0c7253; }
-    [data-theme="light"] .nav-logo svg path,
-    [data-theme="light"] .nav-logo svg circle { stroke: #0c7253; }
-    [data-theme="light"] .nav-links a { color: rgba(55,65,81,0.75); }
-    [data-theme="light"] .nav-links a:hover { color: #1e293b; }
-    [data-theme="light"] .nav-cta { color: #0c7253 !important; border-color: rgba(12,114,83,0.4) !important; }
-    [data-theme="light"] .nav-cta:hover { background: rgba(12,114,83,0.08) !important; color: #0c7253 !important; }
-    [data-theme="light"] .theme-toggle { border-color: #cbd5e1; color: #718096; }
-    [data-theme="light"] .theme-toggle:hover { border-color: #0c7253; color: #0c7253; }
-    [data-theme="light"] .nav-toggle { color: #374151; }
-
-    .nav-inner {
-      max-width: var(--max-width);
-      margin: 0 auto;
-      padding: 0 var(--space-8);
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--space-6);
-    }
-
-    .nav-logo {
-      display: flex;
-      align-items: center;
-      gap: var(--space-3);
-      font-family: var(--font-display);
-      font-size: 0.9rem;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      color: #e2dcd2;
-      flex-shrink: 0;
-      transition: color var(--duration-fast) ease;
-    }
-    .nav-logo:hover { color: #fff; }
-    .nav-logo svg { flex-shrink: 0; }
-    .nav-logo svg path, .nav-logo svg circle { stroke: var(--accent); }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: var(--space-6);
-    }
-    .nav-links a {
-      font-family: var(--font-body);
-      font-size: 0.8rem;
-      letter-spacing: 0.02em;
-      color: rgba(226, 220, 210, 0.65);
-      transition: color var(--duration-fast) ease;
-      white-space: nowrap;
-    }
-    .nav-links a:hover { color: #e2dcd2; }
-    .nav-links a.active { color: var(--accent); }
-
-    .nav-cta {
-      padding: var(--space-2) var(--space-4) !important;
-      border: 1px solid rgba(12, 114, 83, 0.5) !important;
-      color: var(--accent) !important;
-      border-radius: 2px;
-      transition: background var(--duration-fast) ease !important;
-    }
-    .nav-cta:hover { background: rgba(12, 114, 83, 0.15) !important; color: var(--accent-strong) !important; }
-
-    .nav-actions {
-      display: flex;
-      align-items: center;
-      gap: var(--space-4);
-      flex-shrink: 0;
-    }
-
-    .theme-toggle {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 34px;
-      height: 34px;
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 2px;
-      color: rgba(226, 220, 210, 0.65);
-      transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease;
-    }
-    .theme-toggle:hover { color: #e2dcd2; border-color: rgba(255,255,255,0.25); }
-    .theme-toggle svg { width: 16px; height: 16px; }
-    .icon-sun { display: none; }
-    [data-theme="dark"] .icon-moon { display: none; }
-    [data-theme="dark"] .icon-sun { display: block; }
-
-    .nav-toggle {
-      display: none;
-      flex-direction: column;
-      gap: 5px;
-      padding: var(--space-2);
-      color: rgba(226, 220, 210, 0.65);
-    }
-    .nav-toggle span {
-      display: block;
-      width: 20px;
-      height: 1.5px;
-      background: currentColor;
-    }
-
-    /* ── Hero ────────────────────────────────────────────────────── */
-    .hero {
-      position: relative;
-      min-height: 100svh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      padding: var(--space-24) var(--space-8);
-    }
-
-    /* Paper texture via CSS */
-    .hero::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image:
-        repeating-linear-gradient(
-          -45deg,
-          transparent,
-          transparent 6px,
-          rgba(0,0,0,0.012) 6px,
-          rgba(0,0,0,0.012) 7px
-        );
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* Official seal watermark */
-    .hero::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: min(600px, 80vw);
-      height: min(600px, 80vw);
-      border-radius: 50%;
-      background:
-        radial-gradient(circle at center, rgba(12, 114, 83, 0.04) 0%, transparent 60%),
-        radial-gradient(circle at center, transparent 62%, rgba(12, 114, 83, 0.025) 63%, rgba(12, 114, 83, 0.025) 65%, transparent 66%),
-        radial-gradient(circle at center, transparent 72%, rgba(12, 114, 83, 0.03) 73%, rgba(12, 114, 83, 0.03) 75%, transparent 76%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    [data-theme="dark"] .hero::before {
-      background-image:
-        repeating-linear-gradient(
-          -45deg,
-          transparent,
-          transparent 6px,
-          rgba(255,255,255,0.008) 6px,
-          rgba(255,255,255,0.008) 7px
-        );
-    }
-    [data-theme="dark"] .hero::after {
-      background:
-        radial-gradient(circle at center, rgba(35, 192, 136, 0.04) 0%, transparent 60%),
-        radial-gradient(circle at center, transparent 62%, rgba(35, 192, 136, 0.03) 63%, rgba(35, 192, 136, 0.03) 65%, transparent 66%),
-        radial-gradient(circle at center, transparent 72%, rgba(35, 192, 136, 0.025) 73%, rgba(35, 192, 136, 0.025) 75%, transparent 76%);
-    }
-
-    .hero-content {
-      position: relative;
-      z-index: 1;
-      text-align: center;
-      max-width: 860px;
-      width: 100%;
-    }
-
-    /* Decorative vertical rules */
-    .hero-rule {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 1px;
-      background: linear-gradient(
-        to bottom,
-        transparent,
-        var(--border-subtle) 20%,
-        var(--border-subtle) 80%,
-        transparent
-      );
-      z-index: 0;
-    }
-    .hero-rule-left  { left: 12%; }
-    .hero-rule-right { right: 12%; }
-
-    .hero-eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--space-3);
-      font-family: var(--font-body);
-      font-size: 0.7rem;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--accent);
-      margin-bottom: var(--space-6);
-      animation: rise 0.6s var(--ease-stiff) 0.1s both;
-    }
-    .hero-eyebrow::before,
-    .hero-eyebrow::after {
-      content: '';
-      width: 2rem;
-      height: 1px;
-      background: var(--accent);
-      opacity: 0.5;
-    }
-
-    .hero-headline {
-      font-family: var(--font-display);
-      /* "Hinweisgebersystem-Software" is one line at 3.5rem in the 860px column. */
-      font-size: clamp(2.2rem, 5.6vw, 3.5rem);
-      font-weight: 700;
-      line-height: 1.08;
-      letter-spacing: -0.04em;
-      color: var(--text-primary);
-      margin-bottom: var(--space-6);
-      animation: rise 0.6s var(--ease-stiff) 0.2s both;
-    }
-    .hero-headline .accent-green { color: var(--accent); }
-    .hero-headline .accent-emphasis  { color: var(--accent); }
-
-    .hero-subline {
-      font-family: var(--font-body);
-      font-size: clamp(1rem, 2vw, 1.2rem);
-      font-weight: 300;
-      color: var(--text-secondary);
-      max-width: 56ch;
-      margin: 0 auto var(--space-10);
-      line-height: 1.7;
-      animation: rise 0.6s var(--ease-stiff) 0.3s both;
-    }
-    .hero-subline em { font-style: normal; font-weight: 600; color: var(--text-primary); }
-
-    .hero-actions {
-      display: flex;
-      gap: var(--space-4);
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-bottom: var(--space-12);
-      animation: rise 0.6s var(--ease-stiff) 0.4s both;
-    }
-
-    .hero-meta {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: var(--space-6);
-      flex-wrap: wrap;
-      animation: rise 0.6s var(--ease-stiff) 0.5s both;
-    }
-    .hero-meta-item {
-      font-family: var(--font-body);
-      font-size: 0.72rem;
-      letter-spacing: 0.04em;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-    }
-    .hero-meta-item::before {
-      content: '';
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: var(--border-default);
-    }
-
-    /* ── Buttons ─────────────────────────────────────────────────── */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--space-2);
-      padding: var(--space-3) var(--space-6);
-      font-family: var(--font-body);
-      font-size: 0.82rem;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      border-radius: 2px;
-      transition: all var(--duration-fast) var(--ease-stiff);
-      white-space: nowrap;
-    }
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-      border: 1px solid var(--accent);
-    }
-    .btn-primary:hover {
-      background: var(--accent-strong);
-      border-color: var(--accent-strong);
-      color: #fff;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 20px rgba(12, 114, 83, 0.3);
-    }
-    .btn-outline {
-      background: transparent;
-      color: var(--text-primary);
-      border: 1px solid var(--border-default);
-    }
-    .btn-outline:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-      transform: translateY(-1px);
-    }
-    .btn-accent {
-      background: transparent;
-      color: var(--accent);
-      border: 1px solid var(--accent-dim);
-    }
-    .btn-accent:hover {
-      background: var(--accent-fog);
-      border-color: var(--accent);
-    }
-    [data-theme="dark"] .btn-primary {
-      background: #23c088;
-      border-color: #23c088;
-      color: #ffffff;
-    }
-    [data-theme="dark"] .btn-primary:hover {
-      background: #1fa878;
-      border-color: #1fa878;
-      color: #ffffff;
-    }
-
-    /* ── Trust strip ─────────────────────────────────────────────── */
-    .trust-strip {
-      background: var(--bg-surface);
-      border-top: 1px solid var(--border-subtle);
-      border-bottom: 1px solid var(--border-subtle);
-      padding: var(--space-5) var(--space-8);
-    }
-    .trust-strip-inner {
-      max-width: var(--max-width);
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: var(--space-8);
-      flex-wrap: wrap;
-    }
-    .trust-item {
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-      font-family: var(--font-body);
-      font-size: 0.72rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text-secondary);
-    }
-    .trust-item-check {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: var(--accent-fog);
-      border: 1px solid var(--accent-dim);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .trust-item-check svg {
-      width: 8px;
-      height: 8px;
-    }
-
-    /* ── Section ─────────────────────────────────────────────────── */
-    .section {
-      padding: var(--space-24) var(--space-8);
-    }
-    .section-alt {
-      background: var(--bg-surface);
-    }
-    .section-inner {
-      max-width: var(--max-width);
-      margin: 0 auto;
-    }
-    .section-eyebrow {
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: var(--space-3);
-      margin-bottom: var(--space-4);
-    }
-    .section-eyebrow::before {
-      content: '';
-      width: 2rem;
-      height: 1px;
-      background: var(--border-default);
-    }
-    .section-heading {
-      font-family: var(--font-display);
-      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
-      font-weight: 700;
-      letter-spacing: -0.03em;
-      line-height: 1.15;
-      color: var(--text-primary);
-      margin-bottom: var(--space-4);
-    }
-    .section-subheading {
-      font-size: 1.05rem;
-      font-weight: 300;
-      color: var(--text-secondary);
-      max-width: 56ch;
-      line-height: 1.7;
-      margin-bottom: var(--space-12);
-    }
-
-    /* Section divider */
-    .section-divider {
-      width: 4rem;
-      height: 2px;
-      background: var(--accent);
-      margin-bottom: var(--space-10);
-    }
-
-    /* ── Problem section ─────────────────────────────────────────── */
-    .problem-layout {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--space-16);
-      align-items: start;
-    }
-    .problem-text p {
-      color: var(--text-secondary);
-      font-size: 1rem;
-      line-height: 1.75;
-      margin-bottom: var(--space-5);
-    }
-    .problem-text strong { color: var(--text-primary); font-weight: 600; }
-
-    .comparison-table {
-      width: 100%;
-      table-layout: fixed;
-      border-collapse: collapse;
-      font-size: 0.88rem;
-    }
-    .comparison-table thead th {
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      padding: var(--space-3) var(--space-4);
-      text-align: left;
-      border-bottom: 2px solid var(--border-subtle);
-      overflow-wrap: break-word;
-    }
-    .comparison-table thead th:first-child {
-      width: 40%;
-    }
-    .comparison-table thead th.col-ow {
-      color: var(--accent);
-    }
-    .comparison-table tbody td {
-      padding: var(--space-3) var(--space-4);
-      border-bottom: 1px solid var(--border-subtle);
-      color: var(--text-secondary);
-      vertical-align: middle;
-      overflow-wrap: break-word;
-    }
-    .comparison-table tbody tr:last-child td { border-bottom: none; }
-    .comparison-table .val-good {
-      color: var(--accent);
-      font-family: var(--font-body);
-      font-size: 0.85rem;
-      font-weight: 600;
-    }
-    .comparison-table .val-bad {
-      color: var(--text-muted);
-      font-family: var(--font-body);
-      font-size: 0.85rem;
-    }
-
-    /* ── Features ────────────────────────────────────────────────── */
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: var(--space-5);
-    }
-    .feature-card {
-      background: var(--bg-base);
-      border: 1px solid var(--border-subtle);
-      border-left: 4px solid var(--accent-dim);
-      padding: var(--space-6);
-      transition: border-left-color var(--duration-mid) ease, transform var(--duration-mid) ease, box-shadow var(--duration-mid) ease;
-      animation: rise 0.5s var(--ease-stiff) both;
-    }
-    .feature-card:hover {
-      border-left-color: var(--accent);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.08);
-    }
-    [data-theme="dark"] .feature-card {
-      background: var(--bg-surface);
-    }
-    [data-theme="dark"] .feature-card:hover {
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-    }
-    .feature-card:nth-child(1) { animation-delay: 0.05s; }
-    .feature-card:nth-child(2) { animation-delay: 0.10s; }
-    .feature-card:nth-child(3) { animation-delay: 0.15s; }
-    .feature-card:nth-child(4) { animation-delay: 0.20s; }
-    .feature-card:nth-child(5) { animation-delay: 0.25s; }
-    .feature-card:nth-child(6) { animation-delay: 0.30s; }
-
-    .feature-icon-wrap {
-      width: 40px;
-      height: 40px;
-      background: var(--accent-fog);
-      border: 1px solid var(--accent-dim);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: var(--space-4);
-    }
-    .feature-icon-wrap svg {
-      width: 18px;
-      height: 18px;
-    }
-    .feature-title {
-      font-family: var(--font-display);
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: var(--space-2);
-      letter-spacing: -0.01em;
-    }
-    .feature-desc {
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-      line-height: 1.65;
-    }
-
-    /* ── How it works ────────────────────────────────────────────── */
-    .flows-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--space-12);
-    }
-    .flow-column {
-      background: var(--bg-base);
-      border: 1px solid var(--border-subtle);
-    }
-    [data-theme="dark"] .flow-column {
-      background: var(--bg-surface);
-    }
-    .flow-header {
-      padding: var(--space-5) var(--space-6);
-      border-bottom: 1px solid var(--border-subtle);
-      display: flex;
-      align-items: center;
-      gap: var(--space-3);
-    }
-    .flow-header-badge {
-      font-family: var(--font-body);
-      font-size: 0.65rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: var(--space-1) var(--space-3);
-      border: 1px solid;
-    }
-    .flow-header-badge-wb {
-      color: var(--accent);
-      border-color: var(--accent-dim);
-      background: var(--accent-fog);
-    }
-    .flow-header-badge-admin {
-      color: var(--accent);
-      border-color: var(--accent-dim);
-      background: var(--accent-fog);
-    }
-    .flow-header-title {
-      font-family: var(--font-display);
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-    .flow-steps {
-      padding: var(--space-6);
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-1);
-    }
-    .flow-step {
-      display: flex;
-      gap: var(--space-4);
-      padding: var(--space-4) 0;
-      border-bottom: 1px solid var(--border-subtle);
-    }
-    .flow-step:last-child { border-bottom: none; }
-    .flow-step-num {
-      font-family: var(--font-display);
-      font-size: 1.8rem;
-      font-weight: 700;
-      line-height: 1;
-      color: var(--border-default);
-      letter-spacing: -0.05em;
-      flex-shrink: 0;
-      width: 2rem;
-    }
-    .flow-step-title {
-      font-family: var(--font-display);
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: var(--space-1);
-    }
-    .flow-step-desc {
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-      line-height: 1.6;
-    }
-
-    /* ── Compliance ──────────────────────────────────────────────── */
-    .compliance-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: var(--space-6);
-    }
-    .compliance-card {
-      border: 1px solid var(--border-subtle);
-      padding: var(--space-6);
-      background: var(--bg-base);
-    }
-    [data-theme="dark"] .compliance-card {
-      background: var(--bg-surface);
-    }
-    .compliance-card-badge {
-      display: inline-block;
-      font-family: var(--font-mono);
-      font-size: 0.62rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--accent);
-      background: var(--accent-fog);
-      border: 1px solid var(--accent-dim);
-      padding: var(--space-1) var(--space-3);
-      margin-bottom: var(--space-4);
-    }
-    .compliance-card h3 {
-      font-family: var(--font-display);
-      font-size: 1.05rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: var(--space-3);
-    }
-    .compliance-card p {
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-      line-height: 1.7;
-    }
-    .compliance-list {
-      margin-top: var(--space-4);
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-2);
-    }
-    .compliance-list li {
-      font-size: 0.82rem;
-      color: var(--text-secondary);
-      display: flex;
-      align-items: flex-start;
-      gap: var(--space-2);
-    }
-    .compliance-list li::before {
-      content: '—';
-      color: var(--accent);
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      flex-shrink: 0;
-      margin-top: 3px;
-    }
-
-    /* ── Quick install ───────────────────────────────────────────── */
-    .install-layout {
-      display: grid;
-      grid-template-columns: 1fr 1.1fr;
-      gap: var(--space-16);
-      align-items: center;
-    }
-    .install-text p {
-      color: var(--text-secondary);
-      font-size: 0.95rem;
-      line-height: 1.75;
-      margin-bottom: var(--space-5);
-    }
-    .install-text strong { color: var(--text-primary); }
-    .install-reqs {
-      margin-top: var(--space-6);
-      padding: var(--space-4) var(--space-5);
-      background: var(--bg-raised);
-      border: 1px solid var(--border-subtle);
-    }
-    [data-theme="dark"] .install-reqs {
-      background: var(--bg-overlay);
-    }
-    .install-reqs-title {
-      font-family: var(--font-body);
-      font-size: 0.65rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: var(--space-3);
-    }
-    .install-reqs ul { list-style: none; }
-    .install-reqs li {
-      font-family: var(--font-body);
-      font-size: 0.82rem;
-      color: var(--text-secondary);
-      padding: var(--space-1) 0;
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-    }
-    .install-reqs li::before {
-      content: '';
-      width: 4px;
-      height: 4px;
-      border-radius: 50%;
-      background: var(--border-default);
-      flex-shrink: 0;
-    }
-
-    /* Terminal */
-    .terminal-window {
-      background: var(--code-bg);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 6px;
-      overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
-    }
-    [data-theme="dark"] .terminal-window {
-      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-    }
-    .terminal-bar {
-      background: rgba(255,255,255,0.04);
-      border-bottom: 1px solid rgba(255,255,255,0.07);
-      padding: var(--space-3) var(--space-5);
-      display: flex;
-      align-items: center;
-      gap: var(--space-3);
-    }
-    .terminal-dots { display: flex; gap: 6px; }
-    .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
-    .dot-r { background: #ff5f57; } .dot-y { background: #febc2e; } .dot-g { background: #28c840; }
-    .terminal-file {
-      font-family: var(--font-mono);
-      font-size: 0.68rem;
-      color: rgba(226,220,210,0.35);
-      letter-spacing: 0.04em;
-    }
-    .terminal-body {
-      padding: var(--space-6);
-      font-family: var(--font-mono);
-      font-size: 0.82rem;
-      line-height: 1.9;
-      overflow-x: auto;
-    }
-    .t-prompt { color: var(--accent); user-select: none; }
-    .t-cmd { color: #e2dcd2; }
-    .t-comment { color: #5a6d5a; font-style: italic; }
-    .t-out { color: #4a7a6a; font-size: 0.78rem; }
-
-    /* ── FAQ ─────────────────────────────────────────────────────── */
-    .faq-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--space-3);
-    }
-    details.faq-item {
-      border: 1px solid var(--border-subtle);
-      background: var(--bg-base);
-    }
-    [data-theme="dark"] details.faq-item {
-      background: var(--bg-surface);
-    }
-    details.faq-item[open] {
-      border-color: var(--border-default);
-    }
-    details.faq-item summary {
-      padding: var(--space-5) var(--space-6);
-      font-family: var(--font-display);
-      font-size: 0.97rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      cursor: pointer;
-      list-style: none;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--space-4);
-      transition: color var(--duration-fast) ease;
-    }
-    details.faq-item summary::-webkit-details-marker { display: none; }
-    details.faq-item summary:hover { color: var(--accent); }
-    details.faq-item summary::after {
-      content: '+';
-      font-family: var(--font-mono);
-      font-size: 1.2rem;
-      color: var(--text-muted);
-      flex-shrink: 0;
-      transition: transform var(--duration-mid) var(--ease-stiff), color var(--duration-fast) ease;
-    }
-    details.faq-item[open] summary::after {
-      content: '−';
-      color: var(--accent);
-    }
-    .faq-answer {
-      padding: 0 var(--space-6) var(--space-5);
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-      line-height: 1.75;
-      border-top: 1px solid var(--border-subtle);
-      margin-top: 0;
-      padding-top: var(--space-5);
-    }
-
-    /* ── Footer ──────────────────────────────────────────────────── */
-    .site-footer {
-      background: var(--footer-bg);
-      color: rgba(226, 220, 210, 0.7);
-      padding: var(--space-16) var(--space-8) var(--space-8);
-    }
-    .footer-inner {
-      max-width: var(--max-width);
-      margin: 0 auto;
-    }
-    .footer-grid {
-      display: grid;
-      grid-template-columns: 1.8fr 1fr 1fr;
-      gap: var(--space-12);
-      margin-bottom: var(--space-12);
-      padding-bottom: var(--space-10);
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-    }
-    .footer-logo {
-      display: flex;
-      align-items: center;
-      gap: var(--space-3);
-      font-family: var(--font-mono);
-      font-size: 0.78rem;
-      font-weight: 500;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: #e2dcd2;
-      margin-bottom: var(--space-4);
-    }
-    .footer-tagline {
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: rgba(226, 220, 210, 0.5);
-      line-height: 1.6;
-      max-width: 32ch;
-    }
-    .footer-col-title {
-      font-family: var(--font-mono);
-      font-size: 0.62rem;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: rgba(226, 220, 210, 0.4);
-      margin-bottom: var(--space-5);
-    }
-    .footer-links {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-3);
-    }
-    .footer-links a {
-      font-size: 0.875rem;
-      color: rgba(226, 220, 210, 0.6);
-      transition: color var(--duration-fast) ease;
-    }
-    .footer-links a:hover { color: #e2dcd2; }
-    .footer-bottom {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      letter-spacing: 0.06em;
-      color: rgba(226, 220, 210, 0.3);
-      gap: var(--space-4);
-      flex-wrap: wrap;
-    }
-    .footer-bottom a {
-      color: rgba(226, 220, 210, 0.4);
-      transition: color var(--duration-fast) ease;
-    }
-    .footer-bottom a:hover { color: rgba(226, 220, 210, 0.7); }
-
-    /* ── Animations ─────────────────────────────────────────────── */
-    @keyframes rise {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ── Responsive ─────────────────────────────────────────────── */
-    /* Nav collapses at 1080px, not 768px: at 1024px the full item list no
-       longer fits the nav-inner row and overflows the viewport
-       horizontally. */
-    @media (max-width: 1080px) {
-      .nav-links { display: none; }
-      .nav-links.open {
-        display: flex;
-        flex-direction: column;
-        position: absolute;
-        top: 60px;
-        left: 0;
-        right: 0;
-        background: var(--nav-bg);
-        border-bottom: 1px solid rgba(255,255,255,0.08);
-        padding: var(--space-5) var(--space-6);
-        gap: var(--space-4);
-        z-index: 201;
-      }
-      .nav-toggle { display: flex; }
-    }
-
-    @media (max-width: 768px) {
-      .hero-rule-left, .hero-rule-right { display: none; }
-      .problem-layout,
-      .flows-grid,
-      .install-layout { grid-template-columns: 1fr; }
-      .features-grid { grid-template-columns: 1fr 1fr; }
-      .compliance-grid { grid-template-columns: 1fr; }
-      .faq-grid { grid-template-columns: 1fr; }
-      .footer-grid { grid-template-columns: 1fr; gap: var(--space-8); }
-      .footer-bottom { flex-direction: column; align-items: flex-start; }
-      .section { padding: var(--space-16) var(--space-5); }
-      .trust-strip { padding: var(--space-5); }
-    }
-
-    @media (max-width: 540px) {
-      .features-grid { grid-template-columns: 1fr; }
-      .hero-actions { flex-direction: column; align-items: stretch; }
-      .btn { justify-content: center; white-space: normal; text-align: center; }
-      .trust-strip-inner { gap: var(--space-5); }
-    }
-  </style>
-  <style>
-    .diagram-dark, .shot-dark { display: none; }
-    [data-theme="dark"] .diagram-light, [data-theme="dark"] .shot-light { display: none; }
-    [data-theme="dark"] .diagram-dark, [data-theme="dark"] .shot-dark { display: block; }
-    .doc-shot { margin: 0; }
-    .doc-shot img { width: 100%; height: auto; border: 1px solid var(--border-subtle); border-radius: 4px; }
-    .doc-shot figcaption { font-size: 0.8rem; color: var(--text-muted); margin-top: var(--space-2); line-height: 1.5; }
-    .shots-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-8); margin-top: var(--space-10); }
-    .table-wide { width: 100%; margin-top: var(--space-8); }
-    .comparison-table.duties thead th:first-child { width: 34%; }
-    .comparison-table.duties td { vertical-align: top; }
-    .comparison-table td code { font-family: var(--font-mono); font-size: 0.8em; }
-    .note-muted { font-size: 0.85rem; color: var(--text-muted); margin-top: var(--space-4); line-height: 1.6; }
-    .note-muted a, .problem-text a { color: var(--accent); }
-    .comparison-table.duties.cols-norm th:nth-child(2) { width: 18%; }
-    .comparison-table.duties.cols-version th:nth-child(3) { width: 10%; }
-    .nowrap { white-space: nowrap; }
-    @media (max-width: 768px) { .shots-grid { grid-template-columns: 1fr; } }
-    /* A phone has no room for three columns of German compounds: each row
-       becomes a small card, the header row is announced per cell instead. */
-    @media (max-width: 540px) {
-      .hero-headline { font-size: clamp(1.7rem, 7.4vw, 2.6rem); }
-      .comparison-table.stack thead { display: none; }
-      .comparison-table.stack tr { display: block; padding: var(--space-3) 0; border-bottom: 1px solid var(--border-subtle); }
-      .comparison-table.stack tbody td { display: block; border: none; padding: var(--space-1) var(--space-2); }
-      .comparison-table.stack tbody td:first-child { color: var(--text-primary); font-weight: 600; }
-      .comparison-table.stack tbody td[data-label]::before { content: attr(data-label) ": "; color: var(--text-muted); font-weight: 400; }
-    }
-  </style>
-</head>
-<body>
-  <a href="#main-content" class="skip-link">Zum Inhalt springen</a>
-
-  <!-- Navigation -->
-  <nav class="site-nav" role="navigation" aria-label="Hauptnavigation">
-    <div class="nav-inner">
-      <a href="../index.html" class="nav-logo" aria-label="OpenWhistle Startseite">
-        <svg width="22" height="26" viewBox="0 0 22 26" fill="none" aria-hidden="true">
-          <path d="M11 1 L20 5 L20 14 C20 20 17 24 11 25.5 C5 24 2 20 2 14 L2 5 Z"
-                stroke="#5ecb7a" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
-          <circle cx="11" cy="18" r="1.1" fill="#5ecb7a"/>
-          <path d="M8.5,16 A3,3 0 0,1 13.5,16" stroke="#5ecb7a" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M7,14.5 A5.5,5.5 0 0,1 15,14.5" stroke="#5ecb7a" stroke-width="1.2" stroke-linecap="round" opacity="0.72"/>
-          <path d="M5,13 A8,8 0 0,1 17,13" stroke="#5ecb7a" stroke-width="1" stroke-linecap="round" opacity="0.42"/>
-        </svg>
-        OpenWhistle
-      </a>
-
-      <button class="nav-toggle" aria-controls="nav-links" aria-expanded="false" aria-label="Navigation umschalten">
-        <span></span><span></span><span></span>
-      </button>
-
-      <ul class="nav-links" id="nav-links" role="list">
-        <li><a href="#features">Funktionen</a></li>
-        <li><a href="#how-it-works">Ablauf</a></li>
-        <li><a href="#compliance">Compliance</a></li>
-        <li><a href="../docs.html">Dokumentation</a></li>
-        <li><a href="../roadmap.html">Roadmap</a></li>
-        <li><a href="../changelog.html">Änderungsprotokoll</a></li>
-        <li><a href="../blog/">Blog</a></li>
-        <li><a href="../index.html" hreflang="en">English</a></li>
-        <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
-        <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank" class="nav-cta">Demo testen</a></li>
-      </ul>
-
-      <div class="nav-actions">
-        <button class="theme-toggle" id="theme-toggle" aria-label="Dunkelmodus umschalten">
-          <!-- Moon icon -->
-          <svg class="icon-moon" viewBox="0 0 16 16" fill="none">
-            <path d="M13.5 9.5A6 6 0 016 2a6 6 0 100 12 6 6 0 007.5-4.5z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-          </svg>
-          <!-- Sun icon -->
-          <svg class="icon-sun" viewBox="0 0 16 16" fill="none">
-            <circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.3"/>
-            <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M11.54 4.46l-1.41 1.41M4.95 11.54l-1.41 1.41" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-  </nav>
-
+---
+title: Hinweisgebersystem Software – kostenlos & Open Source
+description: 'Hinweisgebersystem-Software für das HinSchG: kostenlos, Open Source unter GPL-3.0, selbst gehostet. Interne Meldestelle mit Fristen, ohne IP-Protokolle.'
+translation_key: home
+css:
+- fonts
+- home-de
+- home-de-figures
+js:
+- site
+jsonld:
+- '@context': https://schema.org
+  '@type': SoftwareApplication
+  '@id': https://openwhistle.net/de/#software
+  name: OpenWhistle
+  url: https://openwhistle.net/de/
+  description: 'Hinweisgebersystem-Software für das HinSchG: kostenlos, Open Source unter GPL-3.0, selbst gehostet. Interne Meldestelle mit Fristen, ohne IP-Protokolle.'
+  applicationCategory: SecurityApplication
+  applicationSubCategory: Hinweisgebersystem
+  operatingSystem: Linux (Docker)
+  offers:
+    '@type': Offer
+    price: '0'
+    priceCurrency: EUR
+  license: https://www.gnu.org/licenses/gpl-3.0.html
+  softwareVersion: 2.1.0
+  downloadUrl: https://github.com/openwhistle/OpenWhistle/releases/latest
+  installUrl: https://openwhistle.net/en/docs/#installation
+  softwareHelp:
+    '@type': CreativeWork
+    url: https://openwhistle.net/en/docs/
+  image: https://openwhistle.net/og-image.png
+  inLanguage: de
+  author:
+    '@type': Organization
+    name: OpenWhistle Contributors
+    url: https://github.com/openwhistle
+  publisher:
+    '@type': Organization
+    name: OpenWhistle
+    url: https://openwhistle.net/en/
+    logo:
+      '@type': ImageObject
+      url: https://openwhistle.net/apple-touch-icon.png
+  sameAs:
+  - https://github.com/openwhistle/OpenWhistle
+  - https://hub.docker.com/r/kermit1337/openwhistle
+  - https://quay.io/repository/jp1337/openwhistle
+  - https://github.com/openwhistle/OpenWhistle/pkgs/container/openwhistle
+- '@context': https://schema.org
+  '@type': FAQPage
+  mainEntity:
+  - '@type': Question
+    name: Welche Hinweisgebersystem-Software ist kostenlos?
+    acceptedAnswer:
+      '@type': Answer
+      text: Ohne Lizenzkosten sind zum Beispiel die Open-Source-Systeme OpenWhistle (GPL-3.0) und GlobaLeaks (AGPL-3.0). Beide betreiben Sie auf Ihrem eigenen Server. Den Vergleich mit Quellen bietet der Artikel „Hinweisgebersystem-Anbieter im Vergleich 2026“.
+  - '@type': Question
+    name: Ist OpenWhistle Open Source?
+    acceptedAnswer:
+      '@type': Answer
+      text: Ja, OpenWhistle ist Open Source unter der GNU General Public License v3.0. Der gesamte Quellcode liegt öffentlich auf GitHub. Sie dürfen ihn prüfen, ändern und kommerziell einsetzen.
+  - '@type': Question
+    name: Kann ich das Hinweisgebersystem selbst hosten?
+    acceptedAnswer:
+      '@type': Answer
+      text: 'Ja, OpenWhistle gibt es nur selbst gehostet: Sie betreiben es mit Docker Compose oder Helm auf Ihrem Server. Einen gehosteten Dienst des Projekts gibt es nicht. Die Installation beschreibt die Dokumentation.'
+  - '@type': Question
+    name: Welche Hinweisgebersysteme bieten EU-Hosting?
+    acceptedAnswer:
+      '@type': Answer
+      text: Jedes selbst gehostete System läuft dort, wo Ihr Server steht, also auch in der EU. Das gilt für OpenWhistle und GlobaLeaks. Unter den Diensten nennen etwa das Hinweisgeberportal OpenSource und WhistlePort Rechenzentren in Deutschland, Stand 27. September 2026.
+  - '@type': Question
+    name: Ist OpenWhistle DSGVO-konform?
+    acceptedAnswer:
+      '@type': Answer
+      text: Die Software unterstützt einen DSGVO-konformen Betrieb; ob der Betrieb konform ist, verantworten Sie als Betreiber. OpenWhistle speichert keine IP-Adressen, verschlüsselt Meldungen und löscht abgeschlossene Fälle automatisch. Verarbeitungsverzeichnis, Vertrag mit dem Hoster und gegebenenfalls eine Datenschutz-Folgenabschätzung bleiben Ihre Aufgabe.
+  - '@type': Question
+    name: Verschlüsselt OpenWhistle die Meldungen?
+    acceptedAnswer:
+      '@type': Answer
+      text: Ja. Jede Meldung hat einen eigenen Datenschlüssel, mit dem Text, Nachrichten und Anhänge verschlüsselt gespeichert werden. Der Hauptschlüssel liegt nie in der Datenbank. Zum Browser läuft die Verbindung über TLS.
+  - '@type': Question
+    name: In welchen Sprachen gibt es OpenWhistle?
+    acceptedAnswer:
+      '@type': Answer
+      text: Die Oberfläche gibt es auf Deutsch, Englisch, Französisch und Portugiesisch (Brasilien). Sie folgt der Sprache des Browsers, bis die Person selbst eine wählt.
+  - '@type': Question
+    name: Ist OpenWhistle wirklich kostenlos?
+    acceptedAnswer:
+      '@type': Answer
+      text: Ja. Die Software steht unter der GNU General Public License v3.0. Es gibt keine bezahlte Ausgabe, keine Funktion hinter einer Bezahlschranke und kein Abonnement. Kosten entstehen für Ihren Server und den Betrieb.
+  - '@type': Question
+    name: Was kostet ein kostenloses Hinweisgebersystem wirklich?
+    acceptedAnswer:
+      '@type': Answer
+      text: Die Lizenz kostet 0 €. Es bleiben ein Server, Zeit für Updates und Backups und die Arbeit der Meldestelle selbst. Das Gesetz verlangt zusätzlich einen mündlichen Kanal per Telefon (§ 16 Abs. 3 HinSchG).
+  - '@type': Question
+    name: Erfüllt OpenWhistle das HinSchG?
+    acceptedAnswer:
+      '@type': Answer
+      text: 'OpenWhistle deckt den Meldekanal in Textform ab: Eingangsbestätigung in 7 Tagen, Rückmeldung in drei Monaten, Kontakt zur hinweisgebenden Person, Vertraulichkeit und Löschung. Den telefonischen Kanal, die Besetzung und die Folgemaßnahmen organisieren Sie selbst.'
+  - '@type': Question
+    name: Ist der Hinweisgeber wirklich anonym?
+    acceptedAnswer:
+      '@type': Answer
+      text: OpenWhistle speichert keine IP-Adresse, weder in der Datenbank noch in Protokollen. nginx entfernt die IP-Header, die App verwirft die Adresse, das Schema hat keine IP-Spalte. Zeiten des Hinweisgebers werden nur auf den Tag genau gespeichert.
+  - '@type': Question
+    name: Für wen ist OpenWhistle gedacht?
+    acceptedAnswer:
+      '@type': Answer
+      text: Für Beschäftigungsgeber mit in der Regel mindestens 50 Beschäftigten, bestimmte Finanzunternehmen jeder Größe und öffentliche Stellen. Die GPL-3.0 erlaubt die kommerzielle Nutzung ausdrücklich.
+  - '@type': Question
+    name: Welche technischen Voraussetzungen gibt es?
+    acceptedAnswer:
+      '@type': Answer
+      text: Docker 24 oder neuer mit Compose v2, 1 vCPU, mindestens 512 MB RAM (1 GB empfohlen) und 5 GB Speicher. Dazu eine Domain mit HTTPS-Zertifikat. PostgreSQL 18 und Redis 8 sind im Compose-Stack enthalten.
+  - '@type': Question
+    name: Gibt es kommerziellen Support?
+    acceptedAnswer:
+      '@type': Answer
+      text: Nein. Hilfe gibt es über GitHub Issues. Das Projekt entsteht in der Freizeit. Wer Betrieb und Support einkaufen möchte, findet verwaltete Angebote im Vergleichsartikel.
+  - '@type': Question
+    name: Wie unterscheidet sich OpenWhistle von anderen Hinweisgebersystemen?
+    acceptedAnswer:
+      '@type': Answer
+      text: OpenWhistle läuft nur selbst gehostet und kostet keine Lizenz. Der Quellcode ist öffentlich. Einen Vergleich mit GlobaLeaks und kommerziellen Anbietern, mit Quellen und Datum, bietet der Artikel „Hinweisgebersystem-Anbieter im Vergleich 2026“.
+  - '@type': Question
+    name: Unterstützt OpenWhistle Single Sign-on und LDAP?
+    acceptedAnswer:
+      '@type': Answer
+      text: Ja. Der erste Faktor kann ein Passwort, LDAP beziehungsweise Active Directory oder ein OIDC-Anbieter sein. Der TOTP-Code bleibt immer Pflicht. Seit 2.1 verknüpft jede Person ihr Konto unter „Mein Konto“ selbst mit dem Anbieter.
+  - '@type': Question
+    name: Kann ich OpenWhistle für mehrere Standorte oder Gesellschaften nutzen?
+    acceptedAnswer:
+      '@type': Answer
+      text: Ja. Ab Version 1.0.0 unterstützt OpenWhistle Multi-Tenancy. Verwaltbar ist sie seit 2.0.1, weil erst dort das erste Konto Superadmin wird; seit 2.1 wählt der Superadmin für jedes neue Konto die Organisation. Jede Organisation hat eigene Meldungen, Kategorien, Standorte, Konten und einen eigenen Meldelink.
+---
   <main id="main-content">
 
     <!-- Hero -->
@@ -1419,7 +164,7 @@
           <a href="https://demo.openwhistle.net" class="btn btn-primary" rel="noopener noreferrer" target="_blank">
             Demo testen &rarr;
           </a>
-          <a href="../docs.html#installation" class="btn btn-outline">
+          <a href="/en/docs/#installation" class="btn btn-outline">
             Installieren
           </a>
         </div>
@@ -1542,11 +287,11 @@
             </p>
             <p>
               Was das in Euro und Stunden bedeutet, zeigt der Artikel
-              <a href="../blog/interne-meldestelle-kostenlos.html">Kostenloses Hinweisgebersystem: was es wirklich kostet</a>.
+              <a href="/de/blog/interne-meldestelle-kostenlos/">Kostenloses Hinweisgebersystem: was es wirklich kostet</a>.
               Andere Lösungen mit Quellen zeigt
-              <a href="../blog/whistleblower-software-vergleich.html">Hinweisgebersystem-Anbieter im Vergleich</a>.
+              <a href="/de/blog/whistleblower-software-vergleich/">Hinweisgebersystem-Anbieter im Vergleich</a>.
               Wo die Daten liegen, erklärt
-              <a href="../blog/hinweisgebersystem-dsgvo-eu-hosting.html">Hinweisgebersystem mit EU-Hosting und DSGVO</a>.
+              <a href="/de/blog/hinweisgebersystem-dsgvo-eu-hosting/">Hinweisgebersystem mit EU-Hosting und DSGVO</a>.
             </p>
           </div>
         </div>
@@ -1657,13 +402,13 @@
 
         <div class="shots-grid">
           <figure class="doc-shot">
-            <img class="shot-light" src="../img/screens/submit-success-light.png" alt="Meldung abgeschickt: Fallnummer und geheime PIN mit Kopier-Schaltflächen, ein Häkchen zur Bestätigung und der Weg zur Statusseite." width="1440" height="1227" loading="lazy">
-            <img class="shot-dark" src="../img/screens/submit-success-dark.png" alt="Meldung abgeschickt: Fallnummer und geheime PIN mit Kopier-Schaltflächen, ein Häkchen zur Bestätigung und der Weg zur Statusseite." width="1440" height="1227" loading="lazy">
+            <img class="shot-light" src="/img/screens/submit-success-light.png" alt="Meldung abgeschickt: Fallnummer und geheime PIN mit Kopier-Schaltflächen, ein Häkchen zur Bestätigung und der Weg zur Statusseite." width="1440" height="1227" loading="lazy">
+            <img class="shot-dark" src="/img/screens/submit-success-dark.png" alt="Meldung abgeschickt: Fallnummer und geheime PIN mit Kopier-Schaltflächen, ein Häkchen zur Bestätigung und der Weg zur Statusseite." width="1440" height="1227" loading="lazy">
             <figcaption>Nach dem Absenden: Fallnummer und PIN, einmal angezeigt.</figcaption>
           </figure>
           <figure class="doc-shot">
-            <img class="shot-light" src="../img/screens/admin-dashboard-light.png" alt="Das Dashboard der Meldestelle: Filter für Status und Standort, Suche und die Tabelle mit Fallnummer, Kategorie, Status, Eingangstag und den beiden Fristen." width="1440" height="1108" loading="lazy">
-            <img class="shot-dark" src="../img/screens/admin-dashboard-dark.png" alt="Das Dashboard der Meldestelle: Filter für Status und Standort, Suche und die Tabelle mit Fallnummer, Kategorie, Status, Eingangstag und den beiden Fristen." width="1440" height="1108" loading="lazy">
+            <img class="shot-light" src="/img/screens/admin-dashboard-light.png" alt="Das Dashboard der Meldestelle: Filter für Status und Standort, Suche und die Tabelle mit Fallnummer, Kategorie, Status, Eingangstag und den beiden Fristen." width="1440" height="1123" loading="lazy">
+            <img class="shot-dark" src="/img/screens/admin-dashboard-dark.png" alt="Das Dashboard der Meldestelle: Filter für Status und Standort, Suche und die Tabelle mit Fallnummer, Kategorie, Status, Eingangstag und den beiden Fristen." width="1440" height="1123" loading="lazy">
             <figcaption>Das Dashboard mit beiden Fristen je Fall. Die Oberfläche gibt es auf Deutsch, Englisch, Französisch und Portugiesisch.</figcaption>
           </figure>
         </div>
@@ -1679,9 +424,9 @@
         </h2>
         <p class="section-subheading">
           Die wichtigsten Änderungen. Alles Weitere steht im
-          <a href="../changelog.html">Änderungsprotokoll</a> und im Artikel
-          <a href="../blog/was-ist-neu-in-2-0.html">Was ist neu in 2.0</a> und
-          <a href="../blog/metadaten-entfernen-ohne-beweise-zu-veraendern.html">Metadaten entfernen, ohne das Beweisfoto zu verändern</a>.
+          <a href="/en/changelog/">Änderungsprotokoll</a> und im Artikel
+          <a href="/de/blog/was-ist-neu-in-2-0/">Was ist neu in 2.0</a> und
+          <a href="/de/blog/metadaten-entfernen-ohne-beweise-zu-veraendern/">Metadaten entfernen, ohne das Beweisfoto zu verändern</a>.
         </p>
 
         <table class="comparison-table duties table-wide stack cols-version" aria-label="Änderungen in 2.0 und 2.1">
@@ -1818,7 +563,7 @@
           </tbody>
         </table>
 
-        <div class="compliance-grid" style="margin-top: var(--space-10);">
+        <div class="compliance-grid compliance-grid-spaced">
           <div class="compliance-card">
             <span class="compliance-card-badge">§ 12, § 42 HinSchG</span>
             <h3>Wer verpflichtet ist</h3>
@@ -1886,7 +631,7 @@
               Er legt das erste Konto als Superadmin an, mit Pflicht-TOTP.
             </p>
 
-            <a href="../docs.html#installation" class="btn btn-outline" style="margin-top: var(--space-6);">
+            <a href="/en/docs/#installation" class="btn btn-outline btn-spaced">
               Vollständige Installationsanleitung &rarr;
             </a>
           </div>
@@ -1935,28 +680,28 @@
           <details class="faq-item">
             <summary>Welche Hinweisgebersystem-Software ist kostenlos?</summary>
             <div class="faq-answer">
-              Ohne Lizenzkosten sind zum Beispiel die Open-Source-Systeme OpenWhistle (GPL-3.0) und GlobaLeaks (AGPL-3.0). Beide betreiben Sie auf Ihrem eigenen Server. Den Vergleich mit Quellen bietet der Artikel <a href="../blog/whistleblower-software-vergleich.html" style="color: var(--accent);">Hinweisgebersystem-Anbieter im Vergleich 2026</a>.
+              Ohne Lizenzkosten sind zum Beispiel die Open-Source-Systeme OpenWhistle (GPL-3.0) und GlobaLeaks (AGPL-3.0). Beide betreiben Sie auf Ihrem eigenen Server. Den Vergleich mit Quellen bietet der Artikel <a href="/de/blog/whistleblower-software-vergleich/" class="link-accent">Hinweisgebersystem-Anbieter im Vergleich 2026</a>.
             </div>
           </details>
 
           <details class="faq-item">
             <summary>Ist OpenWhistle Open Source?</summary>
             <div class="faq-answer">
-              Ja, OpenWhistle ist Open Source unter der GNU General Public License v3.0. Der gesamte Quellcode liegt öffentlich auf <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank" style="color: var(--accent);">GitHub</a>. Sie dürfen ihn prüfen, ändern und kommerziell einsetzen.
+              Ja, OpenWhistle ist Open Source unter der GNU General Public License v3.0. Der gesamte Quellcode liegt öffentlich auf <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank" class="link-accent">GitHub</a>. Sie dürfen ihn prüfen, ändern und kommerziell einsetzen.
             </div>
           </details>
 
           <details class="faq-item">
             <summary>Kann ich das Hinweisgebersystem selbst hosten?</summary>
             <div class="faq-answer">
-              Ja, OpenWhistle gibt es nur selbst gehostet: Sie betreiben es mit Docker Compose oder Helm auf Ihrem Server. Einen gehosteten Dienst des Projekts gibt es nicht. Die Installation beschreibt die <a href="../docs.html#installation" style="color: var(--accent);">Dokumentation</a>.
+              Ja, OpenWhistle gibt es nur selbst gehostet: Sie betreiben es mit Docker Compose oder Helm auf Ihrem Server. Einen gehosteten Dienst des Projekts gibt es nicht. Die Installation beschreibt die <a href="/en/docs/#installation" class="link-accent">Dokumentation</a>.
             </div>
           </details>
 
           <details class="faq-item">
             <summary>Welche Hinweisgebersysteme bieten EU-Hosting?</summary>
             <div class="faq-answer">
-              Jedes selbst gehostete System läuft dort, wo Ihr Server steht, also auch in der EU. Das gilt für OpenWhistle und GlobaLeaks. Unter den Diensten nennen etwa das Hinweisgeberportal OpenSource und WhistlePort Rechenzentren in Deutschland, Stand 27.&nbsp;September 2026 (<a href="../blog/hinweisgebersystem-dsgvo-eu-hosting.html" style="color: var(--accent);">Hinweisgebersystem mit EU-Hosting</a>).
+              Jedes selbst gehostete System läuft dort, wo Ihr Server steht, also auch in der EU. Das gilt für OpenWhistle und GlobaLeaks. Unter den Diensten nennen etwa das Hinweisgeberportal OpenSource und WhistlePort Rechenzentren in Deutschland, Stand 27.&nbsp;September 2026 (<a href="/de/blog/hinweisgebersystem-dsgvo-eu-hosting/" class="link-accent">Hinweisgebersystem mit EU-Hosting</a>).
             </div>
           </details>
 
@@ -2040,7 +785,7 @@
             <summary>Gibt es kommerziellen Support?</summary>
             <div class="faq-answer">
               Nein. Hilfe gibt es über
-              <a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank" style="color: var(--accent);">GitHub Issues</a>.
+              <a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank" class="link-accent">GitHub Issues</a>.
               Das Projekt entsteht in der Freizeit. Wer Betrieb und Support einkaufen möchte,
               findet verwaltete Angebote im Vergleichsartikel.
             </div>
@@ -2081,90 +826,4 @@
   </main>
 
   <!-- Footer -->
-  <footer class="site-footer" role="contentinfo">
-    <div class="footer-inner">
-      <div class="footer-grid">
-        <div>
-          <div class="footer-logo">
-            <svg width="20" height="24" viewBox="0 0 22 26" fill="none" aria-hidden="true">
-              <path d="M11 1 L20 5 L20 14 C20 20 17 24 11 25.5 C5 24 2 20 2 14 L2 5 Z"
-                    stroke="rgba(226,220,210,0.5)" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
-              <circle cx="11" cy="18" r="1.1" fill="rgba(226,220,210,0.5)"/>
-              <path d="M8.5,16 A3,3 0 0,1 13.5,16" stroke="rgba(226,220,210,0.5)" stroke-width="1.5" stroke-linecap="round"/>
-              <path d="M7,14.5 A5.5,5.5 0 0,1 15,14.5" stroke="rgba(226,220,210,0.5)" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
-              <path d="M5,13 A8,8 0 0,1 17,13" stroke="rgba(226,220,210,0.5)" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
-            </svg>
-            OpenWhistle
-          </div>
-          <p class="footer-tagline">Schutz für alle, die den Mut haben zu sprechen.</p>
-        </div>
-
-        <nav aria-label="Footer-Links">
-          <div class="footer-col-title">Ressourcen</div>
-          <ul class="footer-links">
-            <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub</a></li>
-            <li><a href="../docs.html">Dokumentation</a></li>
-            <li><a href="../changelog.html">Änderungsprotokoll</a></li>
-            <li><a href="../blog/">Blog</a></li>
-            <li><a href="../index.html" hreflang="en">English</a></li>
-            <li><a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">Live-Demo</a></li>
-            <li><a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank">Issues</a></li>
-            <li><a href="https://github.com/openwhistle/OpenWhistle/blob/main/LICENSE" rel="noopener noreferrer" target="_blank">Lizenz (GPL-3.0)</a></li>
-          </ul>
-        </nav>
-
-        <div>
-          <div class="footer-col-title">Rechtliches</div>
-          <p style="font-size: 0.85rem; color: rgba(226,220,210,0.45); line-height: 1.7;">
-            Lizenziert unter GPL-3.0. Mit &#10084;&#65039; für Transparenz entwickelt.
-          </p>
-          <p style="font-size: 0.82rem; color: rgba(226,220,210,0.35); line-height: 1.7; margin-top: 0.75rem;">
-            OpenWhistle bietet keine Rechtsberatung. Bitte konsultieren Sie qualifizierte
-            Rechtsexperten bezüglich Ihrer spezifischen HinSchG-Pflichten.
-          </p>
-        </div>
-      </div>
-
-      <div class="footer-bottom">
-        <span>&copy; OpenWhistle Contributors — GNU General Public License v3.0 — Version 2.1.0</span>
-        <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">
-          Auf GitHub mitwirken &rarr;
-        </a>
-      </div>
-    </div>
-  </footer>
-
-  <script>
-    // Theme toggle — detection already handled by inline head script
-    var toggle = document.getElementById('theme-toggle');
-    if (toggle) {
-      toggle.addEventListener('click', function() {
-        var current = document.documentElement.getAttribute('data-theme');
-        var next = current === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', next);
-        try { localStorage.setItem('ow-theme', next); } catch(e) {}
-      });
-    }
-
-    // Follow system preference changes when user hasn't overridden manually
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
-      var stored;
-      try { stored = localStorage.getItem('ow-theme'); } catch(e2) {}
-      if (!stored) {
-        document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
-      }
-    });
-
-    // Mobile nav toggle
-    var navToggle = document.querySelector('.nav-toggle');
-    var navLinks = document.getElementById('nav-links');
-    if (navToggle && navLinks) {
-      navToggle.addEventListener('click', function() {
-        var isOpen = navToggle.getAttribute('aria-expanded') === 'true';
-        navToggle.setAttribute('aria-expanded', String(!isOpen));
-        navLinks.classList.toggle('open', !isOpen);
-      });
-    }
-  </script>
-</body>
-</html>
+  

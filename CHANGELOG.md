@@ -7,6 +7,12 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- **The website is built from its sources by `scripts/build_site.py`** and now lives at `/en/` and `/de/`;
+  the old addresses forward. The app's links (installation counting in the four locales, Helm
+  `NOTES.txt`) point to `/en/docs/`.
+
 ## [2.1.0] — 2026-09-27
 
 ### Upgrade notes
@@ -588,7 +594,7 @@ Changed (breaking) below and the upgrade notes before deploying.
   tables stack into labelled rows that keep their table semantics.
 - The website describes 2.0 (English and German landing pages, the "Was ist neu in 2.0"
   article), serves every font it uses itself, and the roadmap moved from `ROADMAP.md` to
-  [openwhistle.net/roadmap.html](https://openwhistle.net/roadmap.html).
+  [openwhistle.net/roadmap.html](https://openwhistle.net/en/roadmap/).
 
 ### Process
 

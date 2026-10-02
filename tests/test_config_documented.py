@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 
 from app.config import Settings
+from tests.built_site import page
 
 ROOT = Path(__file__).parents[1]
 
@@ -16,7 +17,7 @@ _NOT_IN_COMPOSE = {"APP_VERSION", "LOCAL_REVIEW_LOGIN"}
 
 
 def test_every_setting_has_a_row_in_the_docs_env_table() -> None:
-    docs = (ROOT / "docs/docs.html").read_text()
+    docs = page("/en/docs/")
     rows = set(re.findall(r'<code class="env-key">([A-Z0-9_]+)</code>', docs))
     missing = [n.upper() for n in Settings.model_fields if n.upper() not in rows]
     assert not missing, missing

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="{{ page.lang }}" data-theme="light">
+<head>
+{% include "head.html" %}
+</head>
+<body>
+  <a href="#main-content" class="skip-link">{{ t.skip_link }}</a>
+{% include "nav.html" %}
+{% if page.source.suffix == ".md" %}
+  {#- Markdown has no element for the skip link to land on; the old .md URLs serve the bare text (write_stubs). #}
+  <main id="main-content" class="docs-content docs-section docs-standalone">
+{{ page.content|safe }}
+  </main>
+{% else %}
+{{ page.content|safe }}
+{% endif %}
+{% include "footer.html" %}
+{% for name in page.meta.js %}
+  <script src="/assets/js/{{ name }}.js"></script>
+{% endfor %}
+</body>
+</html>

@@ -1,0 +1,109 @@
+---
+title: 'OpenWhistle 2.0: six findings from a hardening release'
+description: 'OpenWhistle 2.0 in six findings: a PDF that swallowed non-Latin text, a header that was trusted too much, and a rollback that crashed sessions.'
+translation_key: whats-new-in-2-0
+og_type: article
+published: '2026-09-26'
+modified: '2026-09-27'
+section: Release
+css:
+- fonts
+- post
+js:
+- site
+jsonld:
+- '@context': https://schema.org
+  '@type': BlogPosting
+  headline: What's new in OpenWhistle 2.0? Six findings from a hardening release
+  description: 'OpenWhistle 2.0 in six findings: a PDF that swallowed non-Latin text, a header that was trusted too much, and a rollback that crashed sessions.'
+  url: https://openwhistle.net/en/blog/whats-new-in-2-0/
+  mainEntityOfPage:
+    '@type': WebPage
+    '@id': https://openwhistle.net/en/blog/whats-new-in-2-0/
+  datePublished: '2026-09-26'
+  dateModified: '2026-09-27'
+  author:
+    '@type': Organization
+    name: OpenWhistle Contributors
+    url: https://github.com/openwhistle
+  publisher:
+    '@type': Organization
+    name: OpenWhistle
+    url: https://openwhistle.net/en/
+    logo:
+      '@type': ImageObject
+      url: https://openwhistle.net/apple-touch-icon.png
+  image: https://openwhistle.net/og-image.png
+  inLanguage: en
+- '@context': https://schema.org
+  '@type': BreadcrumbList
+  itemListElement:
+  - '@type': ListItem
+    position: 1
+    name: OpenWhistle
+    item: https://openwhistle.net/en/
+  - '@type': ListItem
+    position: 2
+    name: Blog
+    item: https://openwhistle.net/de/blog/
+  - '@type': ListItem
+    position: 3
+    name: What's new in OpenWhistle 2.0? Six findings from a hardening release
+    item: https://openwhistle.net/en/blog/whats-new-in-2-0/
+---
+  <main id="main-content">
+    <div class="article-wrap">
+      <article>
+        <header class="article-header">
+          <p class="article-tag">Release · Security · v2.0</p>
+          <h1 class="article-title">What's new in OpenWhistle 2.0? Six findings from a hardening release</h1>
+          <p class="article-subtitle">A PDF that swallowed the whistleblower's words. A header that was trusted too much. And a rollback that crashed half-finished sessions — six findings from release 2.0, told the way they were found.</p>
+          <div class="article-meta">
+            <span>26 September 2026</span>
+            <span>6 min read</span>
+            <span>OpenWhistle Contributors</span>
+          </div>
+        </header>
+
+        <div class="article-body">
+
+          <p>Release 2.0 is mainly the result of a hardening audit. It found six places where OpenWhistle revealed more than it needed to, or did not keep a promise. All details are in the <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG</a>.</p>
+
+          <p class="post-update"><strong>Update of 27 September 2026:</strong> Upgrade to <strong>2.0.1</strong>. Until then, the setup wizard created the first account as a plain admin. Only a superadmin can grant superadmin, though, so no installation had one. Organisations and multi-tenancy were therefore out of reach. Migration 008 promotes the first account during the update; check <code>/admin/users</code> afterwards. Details in the <a href="/en/changelog/">changelog</a>.</p>
+
+          <h2>The PDF that swallowed the reporter's own words</h2>
+          <p>A case report in Polish, Greek or Cyrillic could be exported as a PDF. But the reporting person's text was no longer in it. Every character outside the Latin alphabet, and every typographic quotation mark “like this one”, became a single <code>?</code> on export. The cause: the built-in PDF font only knows Latin-1. The fix removes the cause: a real Unicode font (DejaVu LGC Sans, Latin/Greek/Cyrillic) is now embedded. Chinese, Japanese, Korean and right-to-left scripts remain open work — with a visible replacement box instead of a silent “?”.</p>
+
+          <h2>The identity is only revealed on request</h2>
+          <p>Until now, the name and contact details of a confidential report were shown openly on the case page. From 2.0, both stay hidden, on the case page and in the PDF export. They appear only when someone clicks <em>Reveal identity</em> and gives a logged reason of 10 to 500 characters. The reason is stored encrypted in the audit log. Merely opening a case used to leave no trace at all. So every view of a case page now writes its own log entry. Details in the <a href="/en/docs/#admin-guide">admin guide</a>.</p>
+
+          <h2>The onion address trusted the wrong header</h2>
+          <p>Offering OpenWhistle through a Tor hidden service is done for whistleblowers on a monitored network. The first version decided “am I the onion service?” from the <code>Host</code> header. But the client sends that header, not the server. A forged <code>Host: anything.onion</code> request could have posed as a Tor visitor. It would have received cookies without the <code>Secure</code> flag and no HSTS at all. Now nginx decides. It sets its own header only in the onion listener and deletes any client value everywhere else. A CI job checks this on every push against a real container. Details in the guide <a href="/en/docs/#onion-address">Offering an onion address</a>.</p>
+
+          <h2>Webhooks now reveal only numbers</h2>
+          <p>The digest webhook for new reports used to send the case numbers themselves, as an array in the payload. It now sends only counts: how many reports, how many messages, plus a sentence built from them. The reminder email to your own admins still names the case number; only the path to the outside was cut back. See <a href="/en/docs/#notifications">Notifications</a>.</p>
+
+          <h2>A collision crashed half-finished sessions</h2>
+          <p>Case numbers get a random five-digit suffix, which occasionally collides — then the application tries again. For that retry it called a full <code>rollback()</code> of the database session. That invalidates every object already loaded, not just the failed record. The next read of such an object then crashed with <code>MissingGreenlet</code>. It was unpredictable, because it only occurred once the database was already full. The fix: one <em>SAVEPOINT</em> per attempt, which rolls back only the colliding attempt.</p>
+
+          <h2>The back button that no longer forgets</h2>
+          <p>A file upload field always shows an empty state when you navigate back. If you clicked <em>Back</em> and then <em>Next</em> in the reporting wizard, the application deleted files already uploaded. Every step now answers a submission with a redirect, and a step that does not match is ignored. Attachments are kept until new ones are chosen. Reported and fixed by <strong>Zachary Bridges</strong> (<a href="https://github.com/openwhistle/OpenWhistle/issues/94" rel="noopener noreferrer" target="_blank">#94</a>) — many thanks for that.</p>
+
+          <div class="article-cta">
+            <h3>All six findings in detail</h3>
+            <p>The full technical history is in the CHANGELOG; the live demo shows release 2.0 in action.</p>
+            <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank" class="btn-cta">Read the CHANGELOG &rarr;</a>
+          </div>
+
+          <p class="post-footnote">
+            <strong>More resources:</strong>
+            <a href="/en/docs/">Full documentation</a> ·
+            <a href="/en/blog/hinschg-compliance-guide/">HinSchG compliance guide</a> ·
+            <a href="https://github.com/openwhistle/OpenWhistle/issues" rel="noopener noreferrer" target="_blank">GitHub Issues</a>
+          </p>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  
