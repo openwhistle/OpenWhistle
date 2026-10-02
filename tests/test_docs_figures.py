@@ -100,3 +100,35 @@ def test_the_alt_rule_is_pinned(tmp_path: Path) -> None:
         '<img src="d.png" aria-hidden="true" alt="">'
     )
     assert _unlabelled(page) == ["b.png", "c.png"]
+
+
+def _natural_size(path: Path) -> tuple[float, float]:
+    if path.suffix == ".svg":
+        root = re.search(r"<svg\b[^>]*>", path.read_text(encoding="utf-8"))
+        assert root, path
+        w, h = (re.search(rf'\b{a}="([\d.]+)"', root.group(0)) for a in ("width", "height"))
+        assert w and h, f"{path}: the <svg> has no width/height"
+        return float(w.group(1)), float(h.group(1))
+    from PIL import Image
+
+    with Image.open(path) as image:
+        return image.size
+
+
+def test_every_image_reserves_its_real_shape() -> None:
+    """width/height set the box before a lazy image loads; a wrong ratio shifts
+    everything below it when it arrives, and a #deep-link lands off its section."""
+    site = built().resolve()
+    wrong = []
+    for page in pages():
+        for img in _images(page):
+            src, width, height = img.get("src") or "", img.get("width"), img.get("height")
+            if not (width and height) or "://" in src or src.startswith("data:"):
+                continue
+            file = site / src.lstrip("/") if src.startswith("/") else page.parent / src
+            nw, nh = _natural_size(file)
+            if abs(int(width) / int(height) - nw / nh) > 0.01:
+                wrong.append(
+                    f"{page.relative_to(site)}: {src} is {width}x{height}, the file {nw:g}x{nh:g}"
+                )
+    assert not wrong, "\n  ".join(["width/height disagree with the file:", *sorted(set(wrong))])

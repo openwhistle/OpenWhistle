@@ -137,3 +137,41 @@ def test_an_old_deep_link_lands_on_its_section(browser: Browser, docs_server_url
     page.goto("/docs.html#onion-address")
     page.wait_for_url("**/en/docs/#onion-address")
     ctx.close()
+
+
+_SETTLED = """() => new Promise(done => {
+  let y = scrollY, still = 0;
+  const tick = setInterval(() => {
+    if (scrollY !== y) { y = scrollY; still = 0; }
+    else if (++still > 5) { clearInterval(tick); done(true); }
+  }, 100);
+})"""
+
+
+@pytest.mark.parametrize("width", [1280, 390])
+@pytest.mark.parametrize(
+    "url",
+    [
+        "/en/docs/#onion-address",
+        "/en/docs/#installation",
+        "/en/docs/#demo-mode",
+        "/en/#how-it-works",
+        "/en/changelog/#v2-0-0",
+        "/en/blog/whats-new-in-2-0/#main-content",
+    ],
+)
+def test_a_deep_link_target_is_not_under_the_sticky_nav(
+    browser: Browser, docs_server_url: str, url: str, width: int
+) -> None:
+    """The nav is sticky; without scroll-padding a #target lands behind it, and an
+    image whose width/height lie shifts the target when it loads (#demo-mode)."""
+    ctx, page = _new_page(browser, docs_server_url, width=width)
+    page.goto(url)
+    page.wait_for_load_state("networkidle")
+    page.wait_for_function(_SETTLED)
+    target_top, nav_bottom = page.evaluate(
+        """() => [document.getElementById(location.hash.slice(1)).getBoundingClientRect().top,
+                  document.querySelector('.site-nav').getBoundingClientRect().bottom]"""
+    )
+    assert target_top >= nav_bottom, (url, width, target_top, nav_bottom)
+    ctx.close()

@@ -1423,8 +1423,8 @@ CLAMAV_HOST=clamav</code></pre>
 
         <h3 id="admin-login">Signing in</h3>
         <figure class="doc-shot">
-          <img class="shot-light" src="/img/screens/admin-login-light.png" alt="The reporting office sign-in: username, password and Continue." width="1440" height="939" loading="lazy">
-          <img class="shot-dark" src="/img/screens/admin-login-dark.png" alt="The reporting office sign-in: username, password and Continue." width="1440" height="939" loading="lazy">
+          <img class="shot-light" src="/img/screens/admin-login-light.png" alt="The reporting office sign-in: username, password and Continue." width="1440" height="900" loading="lazy">
+          <img class="shot-dark" src="/img/screens/admin-login-dark.png" alt="The reporting office sign-in: username, password and Continue." width="1440" height="900" loading="lazy">
         </figure>
         <p>
           Every account signs in with two factors. The first is a password (local or LDAP) or OIDC;
@@ -1443,8 +1443,8 @@ CLAMAV_HOST=clamav</code></pre>
 
         <h3>Dashboard overview</h3>
         <figure class="doc-shot">
-          <img class="shot-light" src="/img/screens/admin-dashboard-light.png" alt="The reports dashboard: status and location filters, a search field, and the report table with case number, category, status, submitted day, assignee, 7-day SLA and 3-month SLA." width="1440" height="1043" loading="lazy">
-          <img class="shot-dark" src="/img/screens/admin-dashboard-dark.png" alt="The reports dashboard: status and location filters, a search field, and the report table with case number, category, status, submitted day, assignee, 7-day SLA and 3-month SLA." width="1440" height="1043" loading="lazy">
+          <img class="shot-light" src="/img/screens/admin-dashboard-light.png" alt="The reports dashboard: status and location filters, a search field, and the report table with case number, category, status, submitted day, assignee, 7-day SLA and 3-month SLA." width="1440" height="1123" loading="lazy">
+          <img class="shot-dark" src="/img/screens/admin-dashboard-dark.png" alt="The reports dashboard: status and location filters, a search field, and the report table with case number, category, status, submitted day, assignee, 7-day SLA and 3-month SLA." width="1440" height="1123" loading="lazy">
         </figure>
         <p>
           <code>/admin/dashboard</code> lists every report you may see, with sortable columns,
@@ -1551,8 +1551,8 @@ CLAMAV_HOST=clamav</code></pre>
         </ul>
         <p>Click a report to open its case page, <code>/admin/reports/{report_id}</code>:</p>
         <figure class="doc-shot">
-          <img class="shot-light" src="/img/screens/admin-report-light.png" alt="A case page: the report, the communication thread, a reply box and internal notes; beside them the submission details and the actions acknowledge, assign, update status, export PDF and delete." width="1440" height="1888" loading="lazy">
-          <img class="shot-dark" src="/img/screens/admin-report-dark.png" alt="A case page: the report, the communication thread, a reply box and internal notes; beside them the submission details and the actions acknowledge, assign, update status, export PDF and delete." width="1440" height="1888" loading="lazy">
+          <img class="shot-light" src="/img/screens/admin-report-light.png" alt="A case page: the report, the communication thread, a reply box and internal notes; beside them the submission details and the actions acknowledge, assign, update status, export PDF and delete." width="1440" height="1836" loading="lazy">
+          <img class="shot-dark" src="/img/screens/admin-report-dark.png" alt="A case page: the report, the communication thread, a reply box and internal notes; beside them the submission details and the actions acknowledge, assign, update status, export PDF and delete." width="1440" height="1836" loading="lazy">
         </figure>
         <ul>
           <li>Read the report and its submission mode (anonymous / confidential).</li>
@@ -1666,8 +1666,8 @@ CLAMAV_HOST=clamav</code></pre>
           back and forward at any step.
         </p>
         <figure class="doc-shot">
-          <img class="shot-light" src="/img/screens/submit-step1-light.png" alt="Step 1 of 6 of the submission wizard: a choice between Anonymous and Confidential, under the steps mode, location, category, details, files and review." width="1440" height="973" loading="lazy">
-          <img class="shot-dark" src="/img/screens/submit-step1-dark.png" alt="Step 1 of 6 of the submission wizard: a choice between Anonymous and Confidential, under the steps mode, location, category, details, files and review." width="1440" height="973" loading="lazy">
+          <img class="shot-light" src="/img/screens/submit-step1-light.png" alt="Step 1 of 6 of the submission wizard: a choice between Anonymous and Confidential, under the steps mode, location, category, details, files and review." width="1440" height="900" loading="lazy">
+          <img class="shot-dark" src="/img/screens/submit-step1-dark.png" alt="Step 1 of 6 of the submission wizard: a choice between Anonymous and Confidential, under the steps mode, location, category, details, files and review." width="1440" height="900" loading="lazy">
         </figure>
         <div class="flow-steps">
         <figure class="diagram">
@@ -1684,8 +1684,8 @@ CLAMAV_HOST=clamav</code></pre>
         </ol>
         </div>
         <figure class="doc-shot">
-          <img class="shot-light" src="/img/screens/submit-review-light.png" alt="Step 6, the review: submission mode, location, category and description, with Back and Submit report securely." width="1440" height="1007" loading="lazy">
-          <img class="shot-dark" src="/img/screens/submit-review-dark.png" alt="Step 6, the review: submission mode, location, category and description, with Back and Submit report securely." width="1440" height="1007" loading="lazy">
+          <img class="shot-light" src="/img/screens/submit-review-light.png" alt="Step 6, the review: submission mode, location, category and description, with Back and Submit report securely." width="1440" height="953" loading="lazy">
+          <img class="shot-dark" src="/img/screens/submit-review-dark.png" alt="Step 6, the review: submission mode, location, category and description, with Back and Submit report securely." width="1440" height="953" loading="lazy">
         </figure>
         <p>
           <strong>Note down the case number and PIN at once.</strong> They are shown only once and
@@ -1740,8 +1740,8 @@ CLAMAV_HOST=clamav</code></pre>
       <section class="docs-section" id="security" aria-labelledby="security-h2">
         <h2 id="security-h2">Security Architecture</h2>
         <figure class="diagram">
-          <img class="diagram-light" src="/img/diagrams/architecture-light.svg" alt="Architecture: a browser reaches nginx over TLS on 443 (80 redirects), Tor Browser reaches the onion listener on 8080, bound to 127.0.0.1. Both lead to the stateless FastAPI app, which needs PostgreSQL and Redis, can use ClamAV and S3, and makes two opt-in outbound requests: the GitHub update check and the telemetry.wdkro.de count." width="774" height="761" loading="lazy">
-          <img class="diagram-dark" src="/img/diagrams/architecture-dark.svg" alt="Architecture: a browser reaches nginx over TLS on 443 (80 redirects), Tor Browser reaches the onion listener on 8080, bound to 127.0.0.1. Both lead to the stateless FastAPI app, which needs PostgreSQL and Redis, can use ClamAV and S3, and makes two opt-in outbound requests: the GitHub update check and the telemetry.wdkro.de count." width="774" height="761" loading="lazy">
+          <img class="diagram-light" src="/img/diagrams/architecture-light.svg" alt="Architecture: a browser reaches nginx over TLS on 443 (80 redirects), Tor Browser reaches the onion listener on 8080, bound to 127.0.0.1. Both lead to the stateless FastAPI app, which needs PostgreSQL and Redis, can use ClamAV and S3, and makes two opt-in outbound requests: the GitHub update check and the telemetry.wdkro.de count." width="774" height="735" loading="lazy">
+          <img class="diagram-dark" src="/img/diagrams/architecture-dark.svg" alt="Architecture: a browser reaches nginx over TLS on 443 (80 redirects), Tor Browser reaches the onion listener on 8080, bound to 127.0.0.1. Both lead to the stateless FastAPI app, which needs PostgreSQL and Redis, can use ClamAV and S3, and makes two opt-in outbound requests: the GitHub update check and the telemetry.wdkro.de count." width="774" height="735" loading="lazy">
         </figure>
         <p>
           Defence in depth for anonymity: four independent layers keep IP addresses out of

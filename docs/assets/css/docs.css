@@ -303,7 +303,6 @@
       margin-bottom: var(--space-12);
       padding-bottom: var(--space-12);
       border-bottom: 1px solid var(--border-subtle);
-      scroll-margin-top: 80px;
     }
     .docs-section:last-child {
       border-bottom: none;

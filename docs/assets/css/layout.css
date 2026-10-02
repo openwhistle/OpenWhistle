@@ -1,3 +1,5 @@
 /* Owned by docs/_includes/footer.html. Values are today's inline styles. */
 .footer-note { font-size: 0.85rem; color: rgba(226,220,210,0.45); line-height: 1.7; }
 .footer-disclaimer { font-size: 0.82rem; color: rgba(226,220,210,0.35); line-height: 1.7; margin-top: 0.75rem; }
+/* Owned by docs/_includes/nav.html: the sticky nav must not cover a #fragment target. */
+html { scroll-padding-top: 80px; }
