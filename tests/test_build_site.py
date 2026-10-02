@@ -75,7 +75,9 @@ def test_underscore_paths_never_reach_the_output(src: Path, tmp_path: Path) -> N
 def test_markdown_renders_tables_and_keeps_raw_html_and_utf8(src: Path, tmp_path: Path) -> None:
     html = (_build(src, tmp_path) / "en" / "docs" / "index.html").read_text(encoding="utf-8")
     assert "<h1>Änderungsprotokoll</h1>" in html
-    assert "<table>" in html
+    # A table scrolls inside its own box: a wide one must not widen a phone page.
+    assert '<div class="table-scroll"><table>' in html
+    assert "</table></div>" in html
     assert '<div class="note">raw HTML stays</div>' in html
 
 
