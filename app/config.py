@@ -189,7 +189,7 @@ class Settings(BaseSettings):
 
     # Tor onion address for reporters on a monitored network, e.g.
     # http://<56 base32 chars>.onion — Tor Browser offers it to visitors and the
-    # submit page shows it. Empty disables both. See docs/docs.html
+    # submit page shows it. Empty disables both. See /en/docs/
     # "Offering an onion address" for how to run the hidden service.
     onion_location: str = ""
 
