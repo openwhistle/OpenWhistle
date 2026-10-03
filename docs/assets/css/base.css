@@ -267,5 +267,7 @@ body {
 @media (forced-colors: active) {
   .theme-toggle, .btn-outline, .btn-accent, .nav-cta, .feature-card, .compliance-card, .install-reqs,
   details.faq-item, .article-card, .step-block, .cost-card, .cost-breakdown, .article-cta, .terminal-window,
-  .code-block, .doc-shot img { border: 1px solid CanvasText; }
+  .code-block, .doc-shot img, .btn-primary, .compliance-card-badge, .feature-icon-wrap, .trust-item-check,
+  .docs-section code, .env-req-yes, .env-req-no, code, details.faq-item[open] { border: 1px solid CanvasText; }
+  pre code, .docs-section pre code { border: none; }
 }

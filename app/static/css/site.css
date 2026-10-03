@@ -774,6 +774,7 @@ strong {
   list-style-type: none;
   margin: 0;
   min-width: 8rem;
+  width: max-content;
   padding-bottom: 0.25rem;
   padding-top: 0.25rem;
   position: absolute;
@@ -799,6 +800,7 @@ strong {
   transition-duration: 0.12s;
   transition-property: color, background-color, border-color, box-shadow, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
   width: 100%;
 }
 .lang-picker-option:focus-visible,
@@ -908,6 +910,10 @@ strong {
    budget belongs to the view's one primary action. */
 .panel-primary {
   box-shadow: inset 0 3px 0 var(--ink);
+}
+/* Dark panels draw a hairline ring (specificity 0,2,0), so the stripe is composed with it. */
+[data-theme="dark"] .panel-primary {
+  box-shadow: inset 0 3px 0 var(--ink), 0 0 0 1px var(--hairline);
 }
 /* Case page: facts without panel chrome, actions as sections of one panel. */
 .report-facts {
@@ -2391,7 +2397,7 @@ a.attachment-name:hover {
   background: var(--surface-card);
 }
 .session-expiry-banner.session-expiry-expired-state {
-  box-shadow: 0 0 0 1px var(--danger);
+  box-shadow: 0 0 0 1px var(--danger), 0 6px 24px rgba(0, 0, 0, 0.15);
 }
 .session-expiry-icon {
   color: var(--warning);
@@ -3439,7 +3445,7 @@ a.attachment-name:hover {
     filter,
     -webkit-backdrop-filter;
   transition-property:
-    color, background-color, border-color, box-shadow, text-decoration-color, fill, stroke, opacity, box-shadow,
+    color, background-color, border-color, box-shadow, text-decoration-color, fill, stroke, opacity,
     transform, filter, backdrop-filter;
   transition-property:
     color,
@@ -3941,7 +3947,10 @@ a.attachment-name:hover {
 
 /* Borders are drawn as box-shadow rings (DESIGN.md "Rules"); forced colours drop shadows, so the edges come back. */
 @media (forced-colors: active) {
-  .btn-secondary, .panel-outline, .panel, .badge-received, .credential-box, .attachment-item,
-  .qr-wrapper, .totp-secret-card, .demo-credentials, .session-expiry-banner, .theme-toggle,
-  .lang-picker-btn, .lang-picker-menu { border: 1px solid CanvasText; }
+  .btn, .btn-primary, .btn-danger, .btn-secondary, .panel-outline, .panel, .badge-received, .mode-card,
+  .credential-display, .credential-box, .attachment-item, .qr-wrapper, .totp-secret-card,
+  .saved-confirm-label, .demo-credentials, .demo-cred-value, .demo-cred-code, .demo-report-row,
+  .session-expiry-banner, .session-expiry-banner.session-expiry-expired-state, .card, .theme-toggle, .lang-picker-btn, .lang-picker-menu, .admin-menu {
+    border: 1px solid CanvasText;
+  }
 }
