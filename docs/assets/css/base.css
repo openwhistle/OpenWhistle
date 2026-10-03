@@ -62,10 +62,6 @@ body {
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 [data-theme="light"] .site-nav { border-bottom-color: #e2e8f0; }
-[data-theme="light"] .nav-logo { color: #1e293b; }
-[data-theme="light"] .nav-logo:hover { color: #0c7253; }
-[data-theme="light"] .nav-logo svg path,
-[data-theme="light"] .nav-logo svg circle { stroke: #0c7253; }
 [data-theme="light"] .nav-links a { color: rgba(55,65,81,0.75); }
 [data-theme="light"] .nav-links a:hover { color: #1e293b; }
 [data-theme="light"] .nav-cta { color: #0c7253 !important; border-color: rgba(12,114,83,0.4) !important; }
@@ -91,13 +87,11 @@ body {
   font-size: 0.9rem;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: #e2dcd2;
+  color: var(--ink);
   flex-shrink: 0;
-  transition: color var(--duration-fast) ease;
 }
-.nav-logo:hover { color: #fff; }
-.nav-logo svg { flex-shrink: 0; }
-.nav-logo svg path, .nav-logo svg circle { stroke: var(--accent); }
+/* K3, drawn inline by nav.html and footer.html; it takes the wordmark's colour. */
+.mark { fill: currentColor; flex: none; }
 .nav-links {
   display: flex;
   align-items: center;
@@ -177,6 +171,7 @@ body {
   color: #e2dcd2;
   margin-bottom: var(--space-4);
 }
+.footer-logo .mark { color: var(--inverse-ink); opacity: 0.5; }
 .footer-tagline {
   font-size: 0.875rem;
   font-weight: 500;

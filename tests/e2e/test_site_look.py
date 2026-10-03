@@ -127,3 +127,30 @@ def test_no_page_is_wider_than_a_small_phone(
     finally:
         ctx.close()
     assert width <= 360, f"{url} is {width} px wide at 360 px"
+
+
+@pytest.mark.parametrize("theme", ["light", "dark"])
+def test_the_nav_mark_reads_against_the_nav(
+    browser: Browser, docs_server_url: str, theme: str
+) -> None:
+    ctx = browser.new_context()
+    try:
+        ctx.add_init_script(f"localStorage.setItem('ow-theme','{theme}')")
+        page = ctx.new_page()
+        page.goto(f"{docs_server_url}/en/")
+        fill, ink, bg = page.evaluate(
+            """() => { const m = document.querySelector('.site-nav .mark path');
+                       const n = document.querySelector('.site-nav');
+                       return [getComputedStyle(m).fill,
+                               getComputedStyle(document.querySelector('.nav-logo')).color,
+                               getComputedStyle(n).backgroundColor]; }"""
+        )
+    finally:
+        ctx.close()
+    # The mark takes the wordmark's ink (currentColor), and that ink is not the nav's ground.
+    assert fill == ink and fill != bg and fill not in ("none", "rgba(0, 0, 0, 0)"), (
+        theme,
+        fill,
+        ink,
+        bg,
+    )

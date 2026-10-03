@@ -650,6 +650,11 @@ strong {
 .nav-brand strong {
   color: var(--accent);
 }
+.nav-brand .mark {
+  color: var(--ink);
+  fill: currentColor;
+  flex: none;
+}
 .nav-logo-img {
   height: 2rem;
   -o-object-fit: contain;

@@ -7,7 +7,10 @@ import re
 from pathlib import Path
 
 import pytest
+from httpx import AsyncClient
 from PIL import Image
+
+from app.templating import templates
 
 ROOT = Path(__file__).resolve().parents[1]
 _spec = importlib.util.spec_from_file_location("render_icons", ROOT / "scripts/render_icons.py")
@@ -15,9 +18,13 @@ assert _spec and _spec.loader
 icons = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(icons)
 
-# Task 5b extends this list with docs/_includes/nav.html, docs/_includes/footer.html
-# and app/templates/base.html.
-MARK_FILES = ["docs/favicon.svg", "app/static/favicon.svg"]
+MARK_FILES = [
+    "docs/favicon.svg",
+    "app/static/favicon.svg",
+    "docs/_includes/nav.html",
+    "docs/_includes/footer.html",
+    "app/templates/base.html",
+]
 _PATH = re.compile(r'<path fill-rule="evenodd" d="([^"]+)"')
 
 
@@ -25,6 +32,35 @@ _PATH = re.compile(r'<path fill-rule="evenodd" d="([^"]+)"')
 def test_every_copy_draws_the_one_geometry(rel: str) -> None:
     found = _PATH.findall((ROOT / rel).read_text(encoding="utf-8"))
     assert found == [icons.MARK], f"{rel}: {found}"
+
+
+def test_the_old_shield_is_gone_everywhere() -> None:
+    for rel in [*MARK_FILES, "docs/assets/css/base.css", "app/static/css/site.css"]:
+        text = (ROOT / rel).read_text(encoding="utf-8")
+        assert "M11 1 L20 5" not in text and "M14 2 L25 6.5" not in text, rel
+        assert ".nav-logo svg" not in text and ".footer-logo svg" not in text, rel
+
+
+async def test_an_operator_logo_replaces_the_mark(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setitem(templates.env.globals["brand"], "logo_url", "/static/operator.png")
+    html = (await client.get("/submit")).text
+    assert 'class="nav-logo-img"' in html and 'class="mark"' not in html
+
+
+async def test_without_an_operator_logo_the_nav_draws_k3(client: AsyncClient) -> None:
+    html = (await client.get("/submit")).text
+    assert 'class="nav-logo-img"' not in html
+    assert _PATH.findall(html) == [icons.MARK]
+
+
+def test_the_app_mark_takes_the_ink() -> None:
+    # Without it the path fills black: invisible on the dark nav. The site's rule is checked
+    # in a browser (tests/e2e/test_site_look.py); the app has no docs-server e2e.
+    css = (ROOT / "app/static/css/site.css").read_text(encoding="utf-8")
+    rule = re.search(r"\.nav-brand \.mark \{([^}]*)\}", css)
+    assert rule and "color: var(--ink);" in rule[1] and "fill: currentColor;" in rule[1]
 
 
 def test_both_favicons_are_the_same_file() -> None:

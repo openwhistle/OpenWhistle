@@ -1,0 +1,75 @@
+{
+ "timeout_seconds": 300,
+ "test_groups": {
+  "MARK": [
+   "tests/test_mark.py"
+  ],
+  "MARK_E2E": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "mark",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "NAV-MARK-GEOMETRY",
+   "file": "docs/_includes/nav.html",
+   "tests": "MARK",
+   "old": "d=\"M7,3 H17",
+   "new": "d=\"M7,3 H18"
+  },
+  {
+   "id": "FOOTER-MARK-GEOMETRY",
+   "file": "docs/_includes/footer.html",
+   "tests": "MARK",
+   "old": "d=\"M7,3 H17",
+   "new": "d=\"M7,3 H18"
+  },
+  {
+   "id": "APP-MARK-GEOMETRY",
+   "file": "app/templates/base.html",
+   "tests": "MARK",
+   "old": "d=\"M7,3 H17",
+   "new": "d=\"M7,3 H18"
+  },
+  {
+   "id": "SHIELD-BACK",
+   "file": "docs/_includes/footer.html",
+   "tests": "MARK",
+   "old": "<svg class=\"mark\" width=\"18\"",
+   "new": "<!-- M11 1 L20 5 --><svg class=\"mark\" width=\"18\""
+  },
+  {
+   "id": "OPERATOR-LOGO-IGNORED",
+   "file": "app/templates/base.html",
+   "tests": "MARK",
+   "old": "{% if brand.logo_url %}",
+   "new": "{% if false %}"
+  },
+  {
+   "id": "APP-MARK-NO-FILL",
+   "file": "app/static/css/site.css",
+   "tests": "MARK",
+   "old": "  color: var(--ink);\n  fill: currentColor;\n  flex: none;",
+   "new": "  color: var(--ink);\n  flex: none;"
+  },
+  {
+   "id": "SITE-MARK-NO-FILL",
+   "file": "docs/assets/css/base.css",
+   "tests": "MARK_E2E",
+   "old": ".mark { fill: currentColor; flex: none; }",
+   "new": ".mark { flex: none; }"
+  },
+  {
+   "id": "NAV-INK-IS-GROUND",
+   "file": "docs/assets/css/base.css",
+   "tests": "MARK_E2E",
+   "old": "  color: var(--ink);\n  flex-shrink: 0;",
+   "new": "  color: var(--canvas);\n  flex-shrink: 0;"
+  }
+ ]
+}
