@@ -12,6 +12,18 @@
    "e2e",
    "--browser",
    "chromium"
+  ],
+  "COLOURS": [
+   "tests/test_site_css.py"
+  ],
+  "CODE_E2E": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "code_pill",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
   ]
  },
  "mutations": [
@@ -77,6 +89,48 @@
    "tests": "MARK_E2E",
    "old": ".footer-logo .mark { color: var(--inverse-ink); opacity: 0.5; }\n",
    "new": ""
+  },
+  {
+   "id": "TOKEN-NOT-DESIGN-MD",
+   "file": "docs/assets/css/tokens.css",
+   "tests": "COLOURS",
+   "old": "  --surface-2: #ffffff;",
+   "new": "  --surface-2: #efefee;"
+  },
+  {
+   "id": "TOKEN-RGBA-TINT",
+   "file": "docs/assets/css/tokens.css",
+   "tests": "COLOURS",
+   "old": "  --warning-fog: color-mix(in srgb, var(--warning) 8%, transparent);",
+   "new": "  --warning-fog: rgba(138,90,18,0.08);"
+  },
+  {
+   "id": "SHEET-COLOUR-LITERAL",
+   "file": "docs/assets/css/base.css",
+   "tests": "COLOURS",
+   "old": ".footer-links a:hover { color: var(--inverse-ink); }",
+   "new": ".footer-links a:hover { color: #e2dcd2; }"
+  },
+  {
+   "id": "APP-SURFACE-OFF-DESIGN",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": "  --surface-card: #131315;",
+   "new": "  --surface-card: #161619;"
+  },
+  {
+   "id": "PAGE-PAINT-LITERAL",
+   "file": "docs/de/index.html",
+   "tests": "COLOURS",
+   "old": "<circle cx=\"9\" cy=\"11.5\" r=\"1.5\" fill=\"currentColor\"/>",
+   "new": "<circle cx=\"9\" cy=\"11.5\" r=\"1.5\" fill=\"#0c7253\"/>"
+  },
+  {
+   "id": "DARK-CODE-PILL-IN-BLOCK",
+   "file": "docs/assets/css/docs.css",
+   "tests": "CODE_E2E",
+   "old": "    pre { max-width: 100%; overflow-x: auto; }\n",
+   "new": "    pre { max-width: 100%; overflow-x: auto; }\n    [data-theme=\"dark\"] .docs-section code { background: var(--surface-3); }\n"
   }
  ]
 }
