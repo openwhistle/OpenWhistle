@@ -742,26 +742,21 @@
 .figure-row .comparison-table tbody td:first-child { color: var(--ink); font-weight: 500; }
 /* A diagram is too wide for the 2fr column: it goes under its table, at its own size. */
 .figure-row:has(> .diagram) { grid-template-columns: 1fr; }
-/* A three-column table stacks per row on a phone: requirement, source, answer. */
+/* A three-column table stacks per row on a phone: each row becomes a small card. A legal
+   source (.cite) is set small in mono; a cell with data-label announces its column. */
 @media (max-width: 600px) {
   .stack-table thead { display: none; }
   .stack-table tr { display: block; padding: var(--space-3) 0; border-bottom: 1px solid var(--hairline); }
   .stack-table tbody td { display: block; border: none; padding: var(--space-1) var(--space-2); }
   .stack-table tbody td:first-child { color: var(--ink); font-weight: 500; }
-  .stack-table tbody td:nth-child(2) { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
+  .stack-table tbody td.cite { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
+  .stack-table tbody td[data-label]::before { content: attr(data-label) ": "; color: var(--muted); font-weight: 400; }
 }
 @media (max-width: 600px) {
   .figure-row .comparison-table thead th:first-child,
   .figure-row .comparison-table tbody td:first-child { width: 6.5rem; }
   .figure-row .comparison-table tbody td { padding-left: var(--space-2); padding-right: var(--space-2); }
 }
-/* A phone has no room for three columns of German compounds: each row
-   becomes a small card, the header row is announced per cell instead. */
 @media (max-width: 540px) {
   .hero-headline:lang(de) { font-size: clamp(1.7rem, 7.4vw, 2.6rem); }
-  .comparison-table.stack thead { display: none; }
-  .comparison-table.stack tr { display: block; padding: var(--space-3) 0; border-bottom: 1px solid var(--hairline); }
-  .comparison-table.stack tbody td { display: block; border: none; padding: var(--space-1) var(--space-2); }
-  .comparison-table.stack tbody td:first-child { color: var(--ink); font-weight: 600; }
-  .comparison-table.stack tbody td[data-label]::before { content: attr(data-label) ": "; color: var(--muted); font-weight: 400; }
 }
