@@ -22,6 +22,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Website and maintainer docs: every diagram is a draw.io SVG in one style, light and dark, checked for labels on
   lines and clipped text; the German blog post shows German labels; the home page shows the reporting flow as one
   diagram; on a phone a diagram keeps its size and scrolls inside its figure. Mermaid is gone.
+- The site's corners follow `DESIGN.md`'s radius scale, as the app's do; they were 2 and 4 px.
 - **The website is built from its sources by `scripts/build_site.py`** and now lives at `/en/` and `/de/`;
   the old addresses forward. The app's links (installation counting in the four locales, Helm
   `NOTES.txt`) point to `/en/docs/`.
@@ -37,7 +38,6 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A blog step's title starts level with its numeral, and the numeral reads (it was 1.3:1).
 - The sidebar of the docs, roadmap and changelog marks the section whose heading tops the view, not the one
   before it.
-- The site's corners follow `DESIGN.md`'s radius scale, as the app's do; they were 2 and 4 px.
 - The language menu no longer wraps its names.
 
 ## [2.1.0] — 2026-09-27
