@@ -23,6 +23,7 @@ async def _search(client: AsyncClient, q: str, **form: str):  # type: ignore[no-
         "/admin/dashboard", data={"q": q, "csrf_token": client.cookies.get("ow_csrf"), **form}
     )
 
+
 ROOT = Path(__file__).parents[1]
 TEMPLATES = ROOT / "app/templates"
 _PASSWORD = "V160-Design-Password"  # noqa: S105
@@ -101,7 +102,7 @@ async def test_admin_sees_configuration_and_administration(
 @pytest.mark.asyncio
 async def test_footer_and_demo_banner_use_lists_not_middots(client: AsyncClient) -> None:
     html = (await client.get("/submit")).text
-    footer = html.split('<footer', 1)[1]
+    footer = html.split("<footer", 1)[1]
     assert "&middot;" not in footer and "·" not in footer
     assert 'class="footer-links"' in footer
 
@@ -271,8 +272,8 @@ def test_users_and_audit_tables_also_stack() -> None:
 
     audit_html = (TEMPLATES / "admin/audit_log.html").read_text()
     assert 'class="table-stack"' in audit_html
-    assert 'stack-primary' in audit_html
-    assert 'stack-status' in audit_html
+    assert "stack-primary" in audit_html
+    assert "stack-status" in audit_html
 
 
 def _media_768_blocks(css: str) -> list[str]:
@@ -347,10 +348,24 @@ def test_panel_headers_and_labels_are_not_shouted() -> None:
             assert "uppercase" not in body, selector
 
 
-_VOID_ELEMENTS = frozenset({
-    "area", "base", "br", "col", "embed", "hr", "img", "input",
-    "link", "meta", "param", "source", "track", "wbr",
-})
+_VOID_ELEMENTS = frozenset(
+    {
+        "area",
+        "base",
+        "br",
+        "col",
+        "embed",
+        "hr",
+        "img",
+        "input",
+        "link",
+        "meta",
+        "param",
+        "source",
+        "track",
+        "wbr",
+    }
+)
 
 
 class _PanelHeaderDivChecker(HTMLParser):
@@ -380,12 +395,14 @@ class _PanelHeaderDivChecker(HTMLParser):
                     frame["has_title"] = True
         if tag in _VOID_ELEMENTS:
             return
-        self.stack.append({
-            "tag": tag,
-            "is_ph_div": tag == "div" and "panel-header" in classes,
-            "has_title": False,
-            "bad_text": False,
-        })
+        self.stack.append(
+            {
+                "tag": tag,
+                "is_ph_div": tag == "div" and "panel-header" in classes,
+                "has_title": False,
+                "bad_text": False,
+            }
+        )
 
     def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         self.handle_starttag(tag, attrs)
@@ -450,9 +467,9 @@ def _strip_token_blocks(css: str) -> str:
 
 def test_token_block_exclusion_actually_strips_the_blocks() -> None:
     inside_only = (
-        ':root {\n  --muted-on-dark: #a1a1aa;\n}\n'
+        ":root {\n  --muted-on-dark: #a1a1aa;\n}\n"
         '[data-theme="dark"] {\n  --muted-on-dark: #a1a1aa;\n}\n'
-        '.thing { color: var(--muted-on-dark); }\n'
+        ".thing { color: var(--muted-on-dark); }\n"
     )
     # both raw hexes are inside a token block: nothing should leak "outside".
     assert "#a1a1aa" not in _strip_token_blocks(inside_only)
@@ -477,13 +494,21 @@ def test_brand_secondary_colour_is_gone() -> None:
 
     # config.py names it only to ignore a stale .env entry (test_v160_ops.py).
     assert "brand_secondary_color" not in Settings.model_fields
-    for path in ("app/templating.py", "app/templates/base.html",
-                 "docker-compose.yml", "docker-compose.e2e.yml", "docker-compose.prod.yml",
-                 "docs/en/docs/index.html", "README.md", ".env.example",
-                 "charts/openwhistle/values.yaml", "charts/openwhistle/templates/configmap.yaml",
-                 "charts/openwhistle/templates/secret.yaml",
-                 "ansible/roles/openwhistle/templates/env.j2",
-                 "ansible/roles/openwhistle/defaults/main.yml"):
+    for path in (
+        "app/templating.py",
+        "app/templates/base.html",
+        "docker-compose.yml",
+        "docker-compose.e2e.yml",
+        "docker-compose.prod.yml",
+        "docs/en/docs/index.html",
+        "README.md",
+        ".env.example",
+        "charts/openwhistle/values.yaml",
+        "charts/openwhistle/templates/configmap.yaml",
+        "charts/openwhistle/templates/secret.yaml",
+        "ansible/roles/openwhistle/templates/env.j2",
+        "ansible/roles/openwhistle/defaults/main.yml",
+    ):
         text = (ROOT / path).read_text().lower().replace("-", "_")
         assert "brand_secondary" not in text, path
 
@@ -670,9 +695,12 @@ async def test_case_page_has_at_most_five_panels(
 
     user = await _login(client, db_session, AdminRole.admin)
     report, _ = await create_report(
-        db_session, "corruption", "Panel count test report text.",
+        db_session,
+        "corruption",
+        "Panel count test report text.",
         submission_mode=SubmissionMode.confidential,
-        confidential_name_enc=encrypt("Panel Name"), confidential_contact_enc=encrypt("Panel"),
+        confidential_name_enc=encrypt("Panel Name"),
+        confidential_contact_enc=encrypt("Panel"),
     )
     report.assigned_to_id = user.id
     await db_session.commit()
@@ -708,7 +736,7 @@ async def test_case_page_strings_are_translated_and_script_safe(
     html = (await client.get(f"/admin/reports/{report.id}")).text
     script = html.split("function confirmStatusChange", 1)[1].split("</script>", 1)[0]
     # French prompts carry apostrophes; HTML-escaped inside JS they would show as "&#39;".
-    assert "&#39;" not in script and "confirm(\"" in script
+    assert "&#39;" not in script and 'confirm("' in script
     assert "(actuel)" in html and "(current)" not in html
 
 
@@ -1234,8 +1262,12 @@ async def test_case_manager_statistics_cover_only_their_cases(db_session: AsyncS
     from app.services.report import create_report, get_dashboard_stats
 
     manager = AdminUser(
-        id=uuid.uuid4(), username=f"stats_{uuid.uuid4().hex[:8]}", password_hash=None,
-        totp_secret=pyotp.random_base32(), totp_enabled=True, role=AdminRole.case_manager,
+        id=uuid.uuid4(),
+        username=f"stats_{uuid.uuid4().hex[:8]}",
+        password_hash=None,
+        totp_secret=pyotp.random_base32(),
+        totp_enabled=True,
+        role=AdminRole.case_manager,
     )
     db_session.add(manager)
     mine, _ = await create_report(db_session, "corruption", "A case assigned to the manager.")
@@ -1260,9 +1292,7 @@ async def test_new_user_role_select_defaults_to_the_least_privileged_role(
     await _login(client, db_session, AdminRole.admin)
     html = (await client.get("/admin/users")).text
     select_html = html.split('id="new-role"', 1)[1].split("</select>", 1)[0]
-    options = re.findall(
-        r'<option value="([a-z_]+)"\s*(selected)?[^>]*>', select_html
-    )
+    options = re.findall(r'<option value="([a-z_]+)"\s*(selected)?[^>]*>', select_html)
     assert [value for value, _ in options] == ["case_manager", "admin", "superadmin"]
     selected = [value for value, sel in options if sel]
     assert selected == ["case_manager"], options
