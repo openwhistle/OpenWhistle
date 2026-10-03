@@ -74,6 +74,207 @@
    "e2e",
    "--browser",
    "chromium"
+  ],
+  "SITE_CSS_K_UNDEFINED": [
+   "tests/test_site_css.py",
+   "-k",
+   "undefined_token"
+  ],
+  "SITE_CSS_K_REDEFINES": [
+   "tests/test_site_css.py",
+   "-k",
+   "redefines_no_docs"
+  ],
+  "SITE_CSS_K_PLANNED": [
+   "tests/test_site_css.py",
+   "-k",
+   "planned_sheets"
+  ],
+  "SITE_CSS_K_PAGE_SHEETS": [
+   "tests/test_site_css.py",
+   "-k",
+   "its_page_type_sheets"
+  ],
+  "SITE_CSS_K_FIRST": [
+   "tests/test_site_css.py",
+   "-k",
+   "tokens_fonts_and_base_first"
+  ],
+  "SITE_CSS_K_SAME_NAMES": [
+   "tests/test_site_css.py",
+   "-k",
+   "same_colour_names"
+  ],
+  "SITE_CSS_K_FONTS": [
+   "tests/test_site_css.py",
+   "-k",
+   "three_font_families"
+  ],
+  "SITE_CSS_K_RETIRED": [
+   "tests/test_site_css.py",
+   "-k",
+   "retired_token"
+  ],
+  "SITE_CSS_K_TEMPLATE_SCHEME": [
+   "tests/test_site_css.py",
+   "-k",
+   "no_template_declares"
+  ],
+  "SITE_CSS_K_DRIFT": [
+   "tests/test_site_css.py",
+   "-k",
+   "drifts"
+  ],
+  "SITE_CSS_K_RADII": [
+   "tests/test_site_css.py",
+   "-k",
+   "radii_are_design_md"
+  ],
+  "SITE_CSS_K_RADIUS_TOKENS": [
+   "tests/test_site_css.py",
+   "-k",
+   "radius_tokens"
+  ],
+  "SITE_CSS_K_HOVER_RING": [
+   "tests/test_site_css.py",
+   "-k",
+   "hover_that_changes_the_ring"
+  ],
+  "SITE_CSS_K_DEAD": [
+   "tests/test_site_css.py",
+   "-k",
+   "every_class_a_sheet"
+  ],
+  "SITE_CSS_K_SITE_BORDER": [
+   "tests/test_site_css.py",
+   "-k",
+   "no_site_component_draws"
+  ],
+  "SITE_CSS_K_SITE_RINGS": [
+   "tests/test_site_css.py",
+   "-k",
+   "every_ringed_site_component"
+  ],
+  "SITE_CSS_K_APP_RINGS": [
+   "tests/test_site_css.py",
+   "-k",
+   "every_ringed_app_component"
+  ],
+  "SITE_CSS_K_APP_BORDER": [
+   "tests/test_site_css.py",
+   "-k",
+   "no_app_component_draws"
+  ],
+  "PAGINATION": [
+   "tests/test_pagination_style.py"
+  ],
+  "LOOK_K_PHONE": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "small_phone",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "LOOK_K_MOTION": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "reduced_motion",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "LOOK_K_DATA_TABLE": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "data_table",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "LOOK_K_SCHEME": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "declares_its_scheme",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "LOOK_K_FORCED": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "forced_colours",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "LOOK_K_STEP": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "step_numeral",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "SPY": [
+   "tests/e2e/test_docs_behaviour.py",
+   "-k",
+   "heading_tops",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "MARK_K_INK": [
+   "tests/test_mark.py",
+   "-k",
+   "switches_ink"
+  ],
+  "MARK_K_LINKS": [
+   "tests/test_mark.py",
+   "-k",
+   "three_icons"
+  ],
+  "MARK_K_SAME": [
+   "tests/test_mark.py",
+   "-k",
+   "same_file"
+  ],
+  "FONTS_K_LATIN1": [
+   "tests/test_site_fonts.py",
+   "-k",
+   "latin1"
+  ],
+  "COMPARE_K_ONE_SIDE": [
+   "tests/test_compare_site_screens.py",
+   "-k",
+   "one_side_only"
+  ],
+  "COMPARE_K_OUT": [
+   "tests/test_compare_site_screens.py",
+   "-k",
+   "used_out_dir"
+  ],
+  "COMPARE_K_ONLY": [
+   "tests/test_compare_site_screens.py",
+   "-k",
+   "check_only"
+  ],
+  "DESIGN_MD_K_K3": [
+   "tests/test_design_md.py",
+   "-k",
+   "names_the_k3"
+  ],
+  "DESIGN_MD_K_BUILT": [
+   "tests/test_design_md.py",
+   "-k",
+   "read_as_built"
   ]
  },
  "mutations": [
@@ -496,6 +697,299 @@
    "tests": "LOOK",
    "old": "  <link rel=\"preload\" href=\"/fonts/sora-latin-700-normal.woff2\" as=\"font\" type=\"font/woff2\" crossorigin>\n",
    "new": "  <link rel=\"preload\" href=\"/fonts/sora-latin-700-normal.woff2\" as=\"font\" type=\"font/woff2\" crossorigin>\n  <link rel=\"preload\" href=\"/fonts/sora-latin-500-normal.woff2\" as=\"font\" type=\"font/woff2\" crossorigin>\n"
+  },
+  {
+   "id": "UNDEFINED-TOKEN",
+   "file": "docs/assets/css/base.css",
+   "tests": "SITE_CSS_K_UNDEFINED",
+   "old": ".callout-note { background: var(--accent-fog);",
+   "new": ".callout-note { background: var(--accent-fog-x);"
+  },
+  {
+   "id": "NINTH-SHEET",
+   "file": "docs/assets/css/extra.css",
+   "tests": "SITE_CSS_K_PLANNED",
+   "create": ".extra { color: var(--ink); }\n"
+  },
+  {
+   "id": "TEXT-PAGE-WITHOUT-DOCS-CSS",
+   "file": "docs/en/roadmap/index.html",
+   "tests": "SITE_CSS_K_PAGE_SHEETS",
+   "old": "css:\n- docs\n- page\n",
+   "new": "css:\n- page\n"
+  },
+  {
+   "id": "FONTS-LINKED-BEFORE-TOKENS",
+   "file": "docs/_includes/head.html",
+   "tests": "SITE_CSS_K_FIRST",
+   "old": "  <link rel=\"stylesheet\" href=\"/assets/css/tokens.css\">\n  <link rel=\"stylesheet\" href=\"/assets/css/fonts.css\">",
+   "new": "  <link rel=\"stylesheet\" href=\"/assets/css/fonts.css\">\n  <link rel=\"stylesheet\" href=\"/assets/css/tokens.css\">"
+  },
+  {
+   "id": "DARK-TOKEN-MISSING",
+   "file": "docs/assets/css/tokens.css",
+   "tests": "SITE_CSS_K_SAME_NAMES",
+   "old": "  --danger-weak: #2a1512;\n",
+   "new": ""
+  },
+  {
+   "id": "MONO-FAMILY-DROPPED",
+   "file": "docs/assets/css/tokens.css",
+   "tests": "SITE_CSS_K_FONTS",
+   "old": "  --font-mono: 'JetBrains Mono', ui-monospace, monospace;",
+   "new": "  --font-mono: ui-monospace, monospace;"
+  },
+  {
+   "id": "RETIRED-TOKEN-BACK",
+   "file": "docs/assets/css/docs.css",
+   "tests": "SITE_CSS_K_RETIRED",
+   "old": "    .t-cmd    { color: var(--inverse-ink); }",
+   "new": "    .t-cmd    { color: var(--code-text, var(--inverse-ink)); }"
+  },
+  {
+   "id": "TEMPLATE-COLOR-SCHEME",
+   "file": "app/templates/base.html",
+   "tests": "SITE_CSS_K_TEMPLATE_SCHEME",
+   "old": "    <style nonce=\"{{ request.state.csp_nonce }}\">\n        :root {\n",
+   "new": "    <style nonce=\"{{ request.state.csp_nonce }}\">\n        :root {\n            color-scheme: light;\n"
+  },
+  {
+   "id": "PAGE-TYPE-SHEETS-DRIFT",
+   "file": "docs/assets/css/home.css",
+   "tests": "SITE_CSS_K_DRIFT",
+   "old": ".shot-dark { display: none; }",
+   "new": ".shot-dark { display: none; opacity: 1; }"
+  },
+  {
+   "id": "PHONE-TABLE-UNSCROLLED",
+   "file": "docs/assets/css/docs.css",
+   "tests": "LOOK_K_PHONE",
+   "old": "    .table-scroll { overflow-x: auto; }\n",
+   "new": ""
+  },
+  {
+   "id": "REDUCED-MOTION-ANIMATES",
+   "file": "docs/assets/css/base.css",
+   "tests": "LOOK_K_MOTION",
+   "old": "    animation-duration: 0.01ms !important;\n",
+   "new": ""
+  },
+  {
+   "id": "DATA-TABLE-PATH-WRAPS",
+   "file": "docs/assets/css/post.css",
+   "tests": "LOOK_K_DATA_TABLE",
+   "old": "    .data-table code { white-space: nowrap; }\n",
+   "new": ""
+  },
+  {
+   "id": "SITE-SCHEME-UNDECLARED",
+   "file": "docs/assets/css/base.css",
+   "tests": "LOOK_K_SCHEME",
+   "old": "[data-theme=\"light\"] { color-scheme: only light; }",
+   "new": "[data-theme=\"light\"] { color-scheme: normal; }"
+  },
+  {
+   "id": "FAVICON-NO-DARK-INK",
+   "file": "docs/favicon.svg",
+   "tests": "MARK_K_INK",
+   "old": "@media (prefers-color-scheme:dark){path{fill:#fafafa}}",
+   "new": ""
+  },
+  {
+   "id": "ICON-LINKS-REORDERED",
+   "file": "docs/_includes/head.html",
+   "tests": "MARK_K_LINKS",
+   "old": "  <link rel=\"icon\" href=\"/favicon.ico\" sizes=\"32x32\">\n  <link rel=\"icon\" href=\"/favicon.svg\" type=\"image/svg+xml\">",
+   "new": "  <link rel=\"icon\" href=\"/favicon.svg\" type=\"image/svg+xml\">\n  <link rel=\"icon\" href=\"/favicon.ico\" sizes=\"32x32\">"
+  },
+  {
+   "id": "FAVICONS-DIVERGE",
+   "file": "app/static/favicon.svg",
+   "tests": "MARK_K_SAME",
+   "old": "path{fill:#0a0a0b}",
+   "new": "path{fill:#0a0a0c}"
+  },
+  {
+   "id": "FONTS-NO-LATIN1",
+   "file": "scripts/build_site.py",
+   "tests": "FONTS_K_LATIN1",
+   "old": "    + \"\".join(chr(c) for c in range(0xA0, 0x100))\n",
+   "new": ""
+  },
+  {
+   "id": "COMPARE-ONE-SIDE-IGNORED",
+   "file": "scripts/compare_site_screens.py",
+   "tests": "COMPARE_K_ONE_SIDE",
+   "old": "for name in sorted({p.name for p in base.glob(\"*.png\")} | {p.name for p in head.glob(\"*.png\")}):",
+   "new": "for name in sorted({p.name for p in base.glob(\"*.png\")} & {p.name for p in head.glob(\"*.png\")}):"
+  },
+  {
+   "id": "COMPARE-USED-OUT-ACCEPTED",
+   "file": "scripts/compare_site_screens.py",
+   "tests": "COMPARE_K_OUT",
+   "old": "    if out.exists() and any(out.iterdir()):",
+   "new": "    if False:"
+  },
+  {
+   "id": "COMPARE-UNKNOWN-ONLY-ACCEPTED",
+   "file": "scripts/compare_site_screens.py",
+   "tests": "COMPARE_K_ONLY",
+   "old": "    if unknown := sorted(set(only) - set(urls)):",
+   "new": "    if unknown := sorted(set(only) - set(urls) - set(only)):"
+  },
+  {
+   "id": "DESIGN-MD-K3-SOURCE-UNNAMED",
+   "file": "DESIGN.md",
+   "tests": "DESIGN_MD_K_K3",
+   "old": "- The geometry lives in `scripts/render_icons.py` (`MARK`)",
+   "new": "- The geometry lives in `scripts/icons.py` (`MARK`)"
+  },
+  {
+   "id": "FORCED-CODE-LINES-BOXED",
+   "file": "docs/assets/css/base.css",
+   "tests": "LOOK_K_FORCED",
+   "old": "  pre code, .docs-section pre code { border: none; }",
+   "new": "  pre code { border: none; }"
+  },
+  {
+   "id": "FORCED-POST-PRE-UNFRAMED",
+   "file": "docs/assets/css/base.css",
+   "tests": "LOOK_K_FORCED",
+   "old": ".code-block, .article-body pre, .doc-shot img,",
+   "new": ".code-block, .doc-shot img,"
+  },
+  {
+   "id": "PAGE-CSS-COPIES-DOCS",
+   "file": "docs/assets/css/page.css",
+   "tests": "SITE_CSS_K_REDEFINES",
+   "old": "    /* A nested list stays with its item",
+   "new": "    .docs-breadcrumb span { color: var(--muted); }\n    /* A nested list stays with its item"
+  },
+  {
+   "id": "DESIGN-MD-NAV-TRANSLUCENT",
+   "file": "DESIGN.md",
+   "tests": "DESIGN_MD_K_BUILT",
+   "old": "Sticky nav on an opaque `{colors.canvas}`",
+   "new": "Sticky nav on a translucent `{colors.canvas}`"
+  },
+  {
+   "id": "DESIGN-MD-PER-PAGE-UNNAMED",
+   "file": "DESIGN.md",
+   "tests": "DESIGN_MD_K_BUILT",
+   "old": "the admin tables'\nper-page select.",
+   "new": "the admin tables'\nrow-count select."
+  },
+  {
+   "id": "RADIUS-TOKEN-OFF-DESIGN",
+   "file": "docs/assets/css/tokens.css",
+   "tests": "SITE_CSS_K_RADII",
+   "old": "  --radius-md: 8px;",
+   "new": "  --radius-md: 10px;"
+  },
+  {
+   "id": "RADIUS-LITERAL-IN-SHEET",
+   "file": "docs/assets/css/post.css",
+   "tests": "SITE_CSS_K_RADIUS_TOKENS",
+   "old": "color: var(--accent-ink); border-radius: var(--radius-md);",
+   "new": "color: var(--accent-ink); border-radius: 2px;"
+  },
+  {
+   "id": "APP-TOGGLE-RING-SNAPS",
+   "file": "app/static/css/site.css",
+   "tests": "SITE_CSS_K_HOVER_RING",
+   "old": "transition-property: color, background-color, box-shadow;\n  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);\n  box-shadow: 0 0 0 1px var(--hairline);",
+   "new": "transition-property: color, background-color, border-color;\n  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);\n  box-shadow: 0 0 0 1px var(--hairline);"
+  },
+  {
+   "id": "SITE-DASHED-BORDER",
+   "file": "docs/assets/css/home.css",
+   "tests": "SITE_CSS_K_SITE_BORDER",
+   "old": "    .compliance-card {\n      box-shadow: 0 0 0 1px var(--hairline);",
+   "new": "    .compliance-card {\n      border: 1px dashed var(--hairline);"
+  },
+  {
+   "id": "SITE-BORDER-WIDTH",
+   "file": "docs/assets/css/docs.css",
+   "tests": "SITE_CSS_K_SITE_BORDER",
+   "old": "    .docs-breadcrumb span { color: var(--muted); }",
+   "new": "    .docs-breadcrumb span { color: var(--muted); border-width: 1px; }"
+  },
+  {
+   "id": "RING-FIRST-IN-MEDIA",
+   "file": "docs/assets/css/base.css",
+   "tests": "SITE_CSS_K_SITE_RINGS",
+   "old": "  .footer-grid { grid-template-columns: 1fr; gap: var(--space-8); }",
+   "new": "  .footer-grid { grid-template-columns: 1fr; gap: var(--space-8); box-shadow: 0 0 0 1px var(--hairline); }"
+  },
+  {
+   "id": "RING-INSET-UNLISTED",
+   "file": "docs/assets/css/docs.css",
+   "tests": "SITE_CSS_K_SITE_RINGS",
+   "old": "    .docs-breadcrumb span { color: var(--muted); }",
+   "new": "    .docs-breadcrumb span { color: var(--muted); box-shadow: inset 0 0 0 1px var(--hairline); }"
+  },
+  {
+   "id": "APP-COMPOSED-RING-UNLISTED",
+   "file": "app/static/css/site.css",
+   "tests": "SITE_CSS_K_APP_RINGS",
+   "old": "  .panel-primary, .pagination-page, .pagination-page-current {",
+   "new": "  .pagination-page, .pagination-page-current {"
+  },
+  {
+   "id": "PAGINATION-BORDER-BACK",
+   "file": "app/static/css/site.css",
+   "tests": "SITE_CSS_K_APP_BORDER",
+   "old": "  border-radius: 0.375rem;\n  box-shadow: 0 0 0 1px var(--hairline);\n  color: var(--body-text);",
+   "new": "  border-radius: 0.375rem;\n  border-color: var(--hairline);\n  border-width: 1px;\n  color: var(--body-text);"
+  },
+  {
+   "id": "PAGINATION-DISABLED-NO-EDGE",
+   "file": "app/static/css/site.css",
+   "tests": "PAGINATION",
+   "old": "  outline: 1px dashed var(--hairline);\n  outline-offset: -1px;\n",
+   "new": ""
+  },
+  {
+   "id": "PAGINATION-FORCED-SOLID",
+   "file": "app/static/css/site.css",
+   "tests": "PAGINATION",
+   "old": "  .pagination-disabled { border-style: dashed; outline: none; }\n",
+   "new": ""
+  },
+  {
+   "id": "STEP-TITLE-BELOW-NUMERAL",
+   "file": "docs/assets/css/post.css",
+   "tests": "LOOK_K_STEP",
+   "old": "color: var(--ink); margin: 0 0 var(--space-2); }",
+   "new": "color: var(--ink); margin-bottom: var(--space-2); }"
+  },
+  {
+   "id": "STEP-NUMERAL-SMUDGE",
+   "file": "docs/assets/css/post.css",
+   "tests": "LOOK_K_STEP",
+   "old": "font-weight: 700; color: var(--muted); line-height: 1; flex-shrink: 0;",
+   "new": "font-weight: 700; color: var(--hairline-strong); line-height: 1; flex-shrink: 0;"
+  },
+  {
+   "id": "SPY-DOCS-LINE-100PX",
+   "file": "docs/assets/js/sidebar-docs.js",
+   "tests": "SPY",
+   "old": "  var line = window.scrollY + window.innerHeight / 3;",
+   "new": "  var line = window.scrollY + 100;"
+  },
+  {
+   "id": "SPY-PAGES-LINE-100PX",
+   "file": "docs/assets/js/sidebar.js",
+   "tests": "SPY",
+   "old": "  var line = window.scrollY + window.innerHeight / 3;",
+   "new": "  var line = window.scrollY + 100;"
+  },
+  {
+   "id": "DEAD-CLASS-RULE",
+   "file": "docs/assets/css/post.css",
+   "tests": "SITE_CSS_K_DEAD",
+   "old": "    .val-bad { color: var(--muted); }\n",
+   "new": "    .val-bad { color: var(--muted); }\n    .val-warn { color: var(--warning); }\n"
   }
  ]
 }

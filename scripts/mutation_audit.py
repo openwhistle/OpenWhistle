@@ -2,7 +2,8 @@
 
     python scripts/mutation_audit.py docs-tech/mutations/v1.4.0.json [id ...]
 
-Each mutation is an exact text replacement that must match once. A mutation
+Each mutation is an exact text replacement that must match once, or, with
+"create", a file that must not exist yet (a guard against an extra file). A mutation
 the tests do not notice (GREEN) is a place where the code can be broken
 without a test failing; see docs-tech/release.md. Needs the test database
 environment (DATABASE_URL, REDIS_URL, SECRET_KEY) that the suite needs.
@@ -28,12 +29,16 @@ def main() -> int:
         if only and m["id"] not in only:
             continue
         path = ROOT / m["file"]
-        original = path.read_text()
-        if original.count(m["old"]) != 1:
+        original = None if "create" in m else path.read_text()
+        if original is None and path.exists():
+            print(f"{m['id']:28} STALE  {m['file']} already exists")
+            green += 1
+            continue
+        if original is not None and original.count(m["old"]) != 1:
             print(f"{m['id']:28} STALE  snippet matches {original.count(m['old'])}x in {m['file']}")
             green += 1
             continue
-        path.write_text(original.replace(m["old"], m["new"]))
+        path.write_text(m["create"] if original is None else original.replace(m["old"], m["new"]))
         try:
             run = subprocess.run(  # noqa: S603 — pytest on test paths from a repo file
                 [sys.executable, "-m", "pytest", "-x", "-q", "--no-cov", "-p", "no:cacheprovider",
@@ -45,7 +50,10 @@ def main() -> int:
             print(f"{m['id']:28} RED    TIMEOUT after {limit} s", flush=True)
             continue
         finally:
-            path.write_text(original)
+            if original is None:
+                path.unlink()
+            else:
+                path.write_text(original)
         fired = next((line.split(" - ")[0] for line in run.stdout.splitlines()
                       if line.startswith(("FAILED ", "ERROR tests"))), "")
         verdict = "RED" if run.returncode else "GREEN"
