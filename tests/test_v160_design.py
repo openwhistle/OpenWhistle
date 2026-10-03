@@ -1133,12 +1133,9 @@ _ANCESTOR_OVERRIDES: dict[str, dict[str, str]] = {
         ".hero-headline .accent-emphasis": ".hero-headline",
         ".t-comment": ".terminal-body",
     },
-    "/en/docs/": _DOCS_CSS_ANCESTORS,
-    # The Markdown docs pages share the docs stylesheet, and with it its rules.
-    "/en/docs/dpa-template/": _DOCS_CSS_ANCESTORS,
-    "/en/docs/hinschg-reference/": _DOCS_CSS_ANCESTORS,
-    "/en/docs/security-policy/": _DOCS_CSS_ANCESTORS,
 }
+# Every page that links docs.css (the docs, its Markdown pages, the text pages) takes its rules,
+# and with them _DOCS_CSS_ANCESTORS.
 
 
 def test_every_docs_page_font_usage_has_a_matching_font_face() -> None:
@@ -1185,7 +1182,8 @@ def test_every_docs_page_font_usage_has_a_matching_font_face() -> None:
             name: val.split(",")[0].strip().strip("'\"") for name, val in var_re.findall(style)
         }
         rest = font_face_re.sub("", style)
-        ancestors = _ANCESTOR_OVERRIDES.get(rel, {})
+        links_docs_css = any(s.name == "docs.css" for s in stylesheets(path.read_text("utf-8")))
+        ancestors = _ANCESTOR_OVERRIDES.get(rel) or (_DOCS_CSS_ANCESTORS if links_docs_css else {})
 
         rules: dict[str, dict[str, object]] = {}
         for sel, decl in rule_re.findall(rest):
