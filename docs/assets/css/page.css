@@ -1,5 +1,6 @@
 /* ================================================================
-       OpenWhistle Documentation — Shared + Docs-specific styles
+       Text pages: roadmap and 404, and the base sheet of the changelog,
+       the comparison page and the blog index
        ================================================================ */
 
     a { color: inherit; text-decoration: none; }
@@ -268,9 +269,6 @@
     }
 
     /* ── Responsive ─────────────────────────────────────────────── */
-    /* Nav collapses at 1080px, not 768px: at 1024px the full item list no
-       longer fits the nav-inner row and overflows the viewport
-       horizontally. */
 
     @media (max-width: 768px) {
       .docs-layout { grid-template-columns: 1fr; }

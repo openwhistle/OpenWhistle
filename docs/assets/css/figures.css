@@ -1,5 +1,5 @@
-/* Themed figures and scrolling tables for docs/en/index.html and
-   docs/en/compare/index.html. The same rules live in
+/* Themed figures and scrolling tables for docs/en/index.html (the German
+   home has its own, home-de-figures.css). The same rules live in
    docs.css; see docs-tech/diagrams.md for the markup.
    CSS picks the twin from data-theme, the attribute the toggle sets. */
 .diagram, .doc-shot { margin: 0; }

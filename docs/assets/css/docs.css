@@ -443,9 +443,6 @@
     [data-theme="dark"] .shot-dark { display: block; }
 
     /* ── Responsive ─────────────────────────────────────────────── */
-    /* Nav collapses at 1080px, not 768px: at 1024px the full item list no
-       longer fits the nav-inner row and overflows the viewport
-       horizontally. */
 
     @media (max-width: 768px) {
       .docs-layout { grid-template-columns: 1fr; }

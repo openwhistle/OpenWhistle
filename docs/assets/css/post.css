@@ -1,5 +1,6 @@
 /* ================================================================
-       OpenWhistle Blog article
+       OpenWhistle Blog article: the base sheet of every post but the
+       comparison posts, which use post-comparison.css on its own
        ================================================================ */
 
     a { color: var(--accent); text-decoration: underline; text-decoration-color: transparent; transition: text-decoration-color var(--duration-fast) ease; }
