@@ -70,6 +70,13 @@
    "tests": "MARK_E2E",
    "old": "  color: var(--ink);\n  flex-shrink: 0;",
    "new": "  color: var(--canvas);\n  flex-shrink: 0;"
+  },
+  {
+   "id": "FOOTER-MARK-FULL-EMPHASIS",
+   "file": "docs/assets/css/base.css",
+   "tests": "MARK_E2E",
+   "old": ".footer-logo .mark { color: var(--inverse-ink); opacity: 0.5; }\n",
+   "new": ""
   }
  ]
 }

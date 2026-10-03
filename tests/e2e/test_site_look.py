@@ -154,3 +154,26 @@ def test_the_nav_mark_reads_against_the_nav(
         ink,
         bg,
     )
+
+
+@pytest.mark.parametrize("theme", ["light", "dark"])
+def test_the_footer_mark_reads_at_half_emphasis(
+    browser: Browser, docs_server_url: str, theme: str
+) -> None:
+    ctx = browser.new_context()
+    try:
+        ctx.add_init_script(f"localStorage.setItem('ow-theme','{theme}')")
+        page = ctx.new_page()
+        page.goto(f"{docs_server_url}/en/")
+        fill, opacity, bg = page.evaluate(
+            """() => { const m = document.querySelector('.footer-logo .mark');
+                       return [getComputedStyle(m.querySelector('path')).fill,
+                               getComputedStyle(m).opacity,
+                               getComputedStyle(document.querySelector('.site-footer'))
+                                 .backgroundColor]; }"""
+        )
+    finally:
+        ctx.close()
+    # The old shield's look: footer ink at half emphasis (.footer-logo .mark in base.css).
+    assert fill != bg and fill not in ("none", "rgba(0, 0, 0, 0)"), (theme, fill, bg)
+    assert opacity == "0.5", (theme, opacity)
