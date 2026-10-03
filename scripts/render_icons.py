@@ -16,7 +16,6 @@ import shutil
 from pathlib import Path
 
 from PIL import Image
-from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 MARK = (
@@ -36,6 +35,8 @@ def _tile(size: int) -> str:
 
 
 def render(sizes: tuple[int, ...]) -> dict[int, Image.Image]:
+    from playwright.sync_api import sync_playwright  # CI's test job has no Playwright
+
     out: dict[int, Image.Image] = {}
     with sync_playwright() as p:
         browser = p.chromium.launch()

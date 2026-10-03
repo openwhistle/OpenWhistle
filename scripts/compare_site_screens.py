@@ -21,9 +21,12 @@ import threading
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from PIL import Image, ImageChops
-from playwright.sync_api import Page, sync_playwright
+
+if TYPE_CHECKING:
+    from playwright.sync_api import Page
 
 ROOT = Path(__file__).resolve().parents[1]
 Image.MAX_IMAGE_PIXELS = None  # our own full-page screenshots, not untrusted input
@@ -115,6 +118,8 @@ def _shoot(page: Page, url: str, path: Path) -> None:
 
 
 def _screens(base_url: str, urls: list[str], out: Path) -> None:
+    from playwright.sync_api import sync_playwright  # CI's test job has no Playwright
+
     with sync_playwright() as p:
         browser = p.chromium.launch()
         for theme, width in SHOTS:
