@@ -52,6 +52,15 @@
    "e2e",
    "--browser",
    "chromium"
+  ],
+  "CODE_PILL_E2E": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "inline_code_pill",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
   ]
  },
  "mutations": [
@@ -362,6 +371,62 @@
    "tests": "DESIGN_MD",
    "old": "### Brand mark (K3)\n",
    "new": "### Brand mark (K3)\n\nSee --bg-base.\n"
+  },
+  {
+   "id": "PANEL-PRIMARY-STRIPE-LOST",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": "box-shadow: inset 0 3px 0 var(--ink), 0 0 0 1px var(--hairline);",
+   "new": "box-shadow: 0 0 0 1px var(--hairline);"
+  },
+  {
+   "id": "BANNER-EXPIRED-SHADOWLESS",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": "box-shadow: 0 0 0 1px var(--danger), 0 6px 24px rgba(0, 0, 0, 0.15);",
+   "new": "box-shadow: 0 0 0 1px var(--danger);"
+  },
+  {
+   "id": "FORCED-APP-MODE-CARD-MISSING",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": ".badge-received, .mode-card,\n  .credential-display",
+   "new": ".badge-received,\n  .credential-display"
+  },
+  {
+   "id": "FORCED-SITE-ENV-PILL-MISSING",
+   "file": "docs/assets/css/base.css",
+   "tests": "COLOURS",
+   "old": ".env-req-yes, .env-req-no, code,",
+   "new": ".env-req-yes, code,"
+  },
+  {
+   "id": "LANG-MENU-NARROW",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": "  width: max-content;\n  padding-bottom: 0.25rem;",
+   "new": "  padding-bottom: 0.25rem;"
+  },
+  {
+   "id": "LANG-MENU-RADIUS-CHANGED",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": "border-radius: 0.5rem;\n  box-shadow: 0 0 0 1px var(--hairline), 0 4px 16px",
+   "new": "border-radius: 0.25rem;\n  box-shadow: 0 0 0 1px var(--hairline), 0 4px 16px"
+  },
+  {
+   "id": "TRANSITION-PROPERTY-TWICE",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": "transition-property: background-color, border-color, color;",
+   "new": "transition-property: background-color, border-color, color, color;"
+  },
+  {
+   "id": "PRE-CODE-WEARS-THE-PILL",
+   "file": "docs/assets/css/docs.css",
+   "tests": "CODE_PILL_E2E",
+   "old": "    .docs-section pre code {\n      background: none;",
+   "new": "    .docs-section pre code {\n      background: var(--surface-3);"
   }
  ]
 }

@@ -421,6 +421,7 @@ def test_nothing_transitions_all() -> None:
 
 def _rule_selectors(text: str) -> list[tuple[set[str], str]]:
     """Every top-level rule as (its comma-separated selectors, its body)."""
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
     return [
         ({s.strip() for s in head.split(",")}, body)
         for head, body in re.findall(r"(?:\A|(?<=\}))\s*([^{}@]+?)\s*\{([^{}]*)\}", text)
@@ -498,13 +499,100 @@ def _length(value: str) -> float:
     return float(m.group(1)) * (16 if m.group(2) == "rem" else 1)
 
 
-# (parent selector, its padding, child selector): inner radius = outer radius - padding.
+# (parent selector, child selector): inner radius = outer radius - the parent's padding.
 # The site's pairs are checked in a browser (tests/e2e/test_site_look.py).
-APP_NESTED = ((".lang-picker-menu", "0.25rem", ".lang-picker-option"),)
+APP_NESTED = ((".lang-picker-menu", ".lang-picker-option"),)
 
 
 def test_nested_app_radii_are_concentric() -> None:
-    for parent, padding, child in APP_NESTED:
-        outer = _length(re.search(r"border-radius:\s*([^;]+);", _app_rule(parent)).group(1))  # type: ignore[union-attr]
-        inner = _length(re.search(r"border-radius:\s*([^;]+);", _app_rule(child)).group(1))  # type: ignore[union-attr]
-        assert inner <= max(0.0, outer - _length(padding)), (parent, child, inner, outer)
+    for parent, child in APP_NESTED:
+        rule = _app_rule(parent)
+        outer = _length(_declared(rule, "border-radius"))
+        pads = [
+            _length(v)
+            for k, v in re.findall(r"(padding(?:-[a-z]+)?):\s*([^;]+);", rule)
+            if k in ("padding-top", "padding-bottom", "padding-left", "padding-right", "padding")
+            for v in v.split()[:1]
+        ]
+        inner = _length(_declared(_app_rule(child), "border-radius"))
+        assert pads and inner <= max(0.0, outer - min(pads)), (parent, child, inner, outer, pads)
+
+
+def _declared(rule: str, prop: str) -> str:
+    found = re.search(rf"(?<![-\w]){prop}:\s*([^;]+);", rule)
+    assert found, prop
+    return found.group(1)
+
+
+# Elements that carry a ring AND another shadow (an accent bar, an elevation): the more specific
+# ring rule would replace the other shadow, so the rule composes both.
+COMPOSED_SHADOWS = (
+    (
+        '[data-theme="dark"] .panel-primary',
+        ("inset 0 3px 0 var(--ink)", "0 0 0 1px var(--hairline)"),
+    ),
+    (".session-expiry-banner", ("0 0 0 1px var(--warning)", "0 6px 24px")),
+    (
+        ".session-expiry-banner.session-expiry-expired-state",
+        ("0 0 0 1px var(--danger)", "0 6px 24px"),
+    ),
+    (".lang-picker-menu", ("0 0 0 1px var(--hairline)", "0 4px 16px")),
+)
+
+
+def test_a_ring_never_replaces_another_shadow() -> None:
+    for selector, parts in COMPOSED_SHADOWS:
+        shadow = _declared(_app_rule(selector), "box-shadow")
+        for part in parts:
+            assert part in shadow, (selector, part, shadow)
+
+
+def _forced_colours(path: Path) -> str:
+    return "\n".join(
+        re.findall(r"@media \(forced-colors: active\) \{(.*?)\n\}", path.read_text("utf-8"), re.S)
+    )
+
+
+def _listed(block: str, selector: str) -> bool:
+    plain = selector.removeprefix('[data-theme="dark"] ')
+    return plain in {s.strip() for s in re.split(r"[,{}]", block)}
+
+
+def test_every_ringed_app_component_has_a_forced_colours_border() -> None:
+    block = _forced_colours(APP_CSS)
+    ringed = {
+        s
+        for sels, body in _rule_selectors(_stripped(APP_CSS))
+        if re.search(r"box-shadow:\s*0 0 0 1px", body)
+        for s in sels
+        if ":" not in s.removeprefix('[data-theme="dark"] ')
+    }
+    missing = {s for s in ringed | set(APP_RING_COMPONENTS) if not _listed(block, s)}
+    assert not missing, sorted(missing)
+
+
+def test_every_ringed_site_component_has_a_forced_colours_border() -> None:
+    block = _forced_colours(CSS / "base.css")
+    missing: set[str] = set()
+    for sheet in CSS.glob("*.css"):
+        text = _stripped(sheet)
+        text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+        for head, body in re.findall(r"(?:\A|(?<=\}))\s*([^{}@]+?)\s*\{([^{}]*)\}", text):
+            if not re.search(r"box-shadow:\s*0 0 0 1px", body):
+                continue
+            for s in (x.strip() for x in head.split(",")):
+                if ":" not in s.removeprefix('[data-theme="dark"] ') and not _listed(block, s):
+                    missing.add(f"{sheet.name}: {s}")
+    assert not missing, sorted(missing)
+
+
+def test_the_language_menu_sizes_to_its_longest_name() -> None:
+    assert "width: max-content" in _app_rule(".lang-picker-menu")
+    assert "white-space: nowrap" in _app_rule(".lang-picker-option")
+
+
+def test_a_transition_property_list_names_each_property_once() -> None:
+    for sheet in [*CSS.glob("*.css"), APP_CSS]:
+        for names in re.findall(r"transition-property:\s*([^;]+);", sheet.read_text("utf-8")):
+            parts = [n.strip() for n in names.split(",")]
+            assert len(parts) == len(set(parts)), (sheet.name, names)

@@ -179,23 +179,28 @@ def test_the_footer_mark_reads_at_half_emphasis(
     assert opacity == "0.5", (theme, opacity)
 
 
+@pytest.mark.parametrize("url", URLS)
 @pytest.mark.parametrize("theme", ["dark", "light"])
 def test_a_code_block_draws_no_inline_code_pill(
-    browser: Browser, docs_server_url: str, theme: str
+    browser: Browser, docs_server_url: str, theme: str, url: str
 ) -> None:
-    """The inline-code fill stops at a code block: dark mode once painted a grey box per line."""
+    """The inline-code pill stops at a code block, on every page: dark mode once painted a grey
+    box per line, and a bare <pre><code> in the docs still did."""
     ctx = browser.new_context()
     try:
         ctx.add_init_script(f"localStorage.setItem('ow-theme','{theme}')")
         page = ctx.new_page()
-        page.goto(f"{docs_server_url}/en/docs/")
-        fills = page.evaluate(
-            """() => [...document.querySelectorAll('.code-block pre code')]
-                     .map(c => getComputedStyle(c).backgroundColor)"""
+        page.goto(f"{docs_server_url}{url}")
+        pills = page.evaluate(
+            """() => [...document.querySelectorAll('pre code')]
+                     .map(c => getComputedStyle(c))
+                     .filter(s => s.backgroundColor !== 'rgba(0, 0, 0, 0)'
+                                  || s.boxShadow !== 'none' || s.paddingLeft !== '0px')
+                     .length"""
         )
     finally:
         ctx.close()
-    assert fills and set(fills) == {"rgba(0, 0, 0, 0)"}, (theme, sorted(set(fills)))
+    assert pills == 0, (theme, url, pills)
 
 
 PROSE_PAGES = ("/en/docs/", "/en/blog/hinschg-compliance-guide/", "/en/roadmap/")
