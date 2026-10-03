@@ -195,15 +195,6 @@
       color: var(--accent);
       transform: translateY(-1px);
     }
-    .btn-accent {
-      background: transparent;
-      color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent-dim);
-    }
-    .btn-accent:hover {
-      background: var(--accent-fog);
-      box-shadow: 0 0 0 1px var(--accent);
-    }
 
     /* ── Trust strip ─────────────────────────────────────────────── */
     .trust-strip {

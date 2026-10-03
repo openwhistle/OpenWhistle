@@ -71,15 +71,6 @@
     .comp-table tbody tr:last-child td { border-bottom: none; }
     .val-good { color: var(--accent); font-weight: 600; }
     .val-bad { color: var(--muted); }
-    .val-warn { color: var(--warning); }
-
-    .cost-card { background: var(--surface); box-shadow: 0 0 0 1px var(--hairline); border-radius: var(--radius-md); padding: var(--space-6); margin: var(--space-6) 0; }
-    .cost-card-title { font-family: var(--font-display); font-weight: 700; color: var(--ink); margin-bottom: var(--space-2); }
-    .cost-price { font-size: 1.6rem; font-weight: 700; color: var(--accent); font-family: var(--font-display); }
-    .cost-desc { font-size: 0.88rem; color: var(--muted); margin-top: var(--space-1); }
-    .cost-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-4); margin: var(--space-6) 0; }
-    .cost-breakdown { background: var(--surface); box-shadow: 0 0 0 1px var(--hairline); border-radius: var(--radius-md); padding: var(--space-6); margin: var(--space-6) 0; }
-    .cost-breakdown ul { margin-left: var(--space-6); }
 
     /* Diagram figures, as in docs/en/docs/index.html; base.css picks the twin. */
     .diagram { margin: var(--space-8) 0; }
@@ -103,7 +94,6 @@
       .article-wrap { padding: var(--space-12) var(--space-5) var(--space-10); }
       .step-block { flex-direction: column; gap: var(--space-3); }
       .step-num { font-size: 1.8rem; }
-      .cost-grid { grid-template-columns: 1fr; }
     }
 
     /* A phone has no room for a table: each row becomes a small card, and

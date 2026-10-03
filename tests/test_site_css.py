@@ -671,6 +671,23 @@ class _PreFinder(HTMLParser):
             self.stack.pop()
 
 
+def test_every_class_a_sheet_styles_is_on_some_page() -> None:
+    """A rule for a class no page or script uses is dead weight a reader still has to read."""
+    text = " ".join(p.read_text(encoding="utf-8") for p in pages())
+    text += " ".join(p.read_text(encoding="utf-8") for p in (ROOT / "docs/assets/js").glob("*.js"))
+    used = {c for m in re.findall(r'class="([^"]*)"', text) for c in m.split()}
+    used |= set(re.findall(r"classList\.\w+\('([\w-]+)'", text))
+    dead = {}
+    for sheet in CSS.glob("*.css"):
+        heads = re.findall(
+            r"([^{}]+)\{", re.sub(r"/\*.*?\*/", "", sheet.read_text("utf-8"), flags=re.S)
+        )
+        styled = set(re.findall(r"\.([a-zA-Z][\w-]*)", " ".join(h for h in heads if "@" not in h)))
+        if unused := sorted(styled - used):
+            dead[sheet.name] = unused
+    assert not dead, dead
+
+
 def test_every_pre_sits_in_a_framed_code_component() -> None:
     bare = {}
     for path in pages():
