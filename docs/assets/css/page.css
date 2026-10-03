@@ -2,187 +2,16 @@
        Text pages: roadmap, changelog, comparison page, blog index, 404
        ================================================================ */
 
-    /* ── Docs layout ─────────────────────────────────────────────── */
-    .docs-layout {
-      display: grid;
-      grid-template-columns: var(--sidebar-width) 1fr;
-      min-height: calc(100vh - 60px);
-      max-width: var(--max-width);
-      margin: 0 auto;
-    }
+    /* These pages link docs.css first: it owns the docs layout (sidebar, content, typography).
+       This sheet holds only what the text pages add to it. */
 
-    /* ── Sidebar ─────────────────────────────────────────────────── */
-    .docs-sidebar {
-      position: sticky;
-      top: 60px;
-      height: calc(100vh - 60px);
-      overflow-y: auto;
-      background: var(--surface);
-      border-right: 1px solid var(--hairline);
-      padding: var(--space-8) var(--space-5);
-      scrollbar-width: thin;
-      scrollbar-color: var(--hairline-strong) transparent;
-    }
-    .docs-sidebar::-webkit-scrollbar { width: 4px; }
-    .docs-sidebar::-webkit-scrollbar-thumb { background: var(--hairline-strong); border-radius: 2px; }
-
-    .sidebar-section {
-      margin-bottom: var(--space-8);
-    }
-    .sidebar-section-title {
-      font-family: var(--font-body);
-      font-size: 0.62rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: var(--space-3);
-      padding-left: var(--space-3);
-    }
-    .sidebar-links {
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-    }
-    .sidebar-links a {
-      display: block;
-      padding: var(--space-2) var(--space-3);
-      font-family: var(--font-body);
-      font-size: 0.82rem;
-      color: var(--body);
-      border-left: 2px solid transparent;
-      border-radius: 0 2px 2px 0;
-      transition: color var(--duration-fast) ease, background var(--duration-fast) ease, border-left-color var(--duration-fast) ease;
-    }
-    .sidebar-links a:hover {
-      color: var(--ink);
-      background: var(--surface-2);
-    }
-    .sidebar-links a.active {
-      color: var(--accent);
-      background: var(--accent-fog);
-      border-left-color: var(--accent);
-    }
-
-    /* ── Content ─────────────────────────────────────────────────── */
-    .docs-content {
-      padding: var(--space-12) var(--space-12) var(--space-16);
-      min-width: 0;
-    }
-
-    .docs-breadcrumb {
-      font-family: var(--font-body);
-      font-size: 0.72rem;
-      letter-spacing: 0.04em;
-      color: var(--muted);
-      margin-bottom: var(--space-8);
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-    }
-    .docs-breadcrumb a { color: var(--accent); transition: color var(--duration-fast) ease; }
-    .docs-breadcrumb a:hover { color: var(--accent-strong); }
-    .docs-breadcrumb span { color: var(--muted); }
-
-    /* Content typography */
-    .docs-content h1 {
-      font-family: var(--font-display);
-      font-size: clamp(2rem, 3.5vw, 2.8rem);
-      font-weight: 700;
-      letter-spacing: -0.035em;
-      line-height: 1.12;
-      color: var(--ink);
-      margin-bottom: var(--space-5);
-      animation: rise 0.5s var(--ease-stiff) both;
-    }
-
-    .docs-lead {
-      font-size: 1.05rem;
-      font-weight: 300;
-      color: var(--body);
-      line-height: 1.75;
-      max-width: 60ch;
-      margin-bottom: var(--space-10);
-      border-bottom: 1px solid var(--hairline);
-      padding-bottom: var(--space-8);
-      animation: rise 0.5s var(--ease-stiff) 0.1s both;
-    }
-
-    .docs-section {
-      margin-bottom: var(--space-12);
-      padding-bottom: var(--space-12);
-      border-bottom: 1px solid var(--hairline);
-    }
-    .docs-section:last-child {
-      border-bottom: none;
-    }
-
-    .docs-section h2 {
-      font-family: var(--font-display);
-      font-size: clamp(1.4rem, 2.5vw, 1.9rem);
-      font-weight: 700;
-      letter-spacing: -0.025em;
-      color: var(--ink);
-      margin-bottom: var(--space-5);
-      line-height: 1.2;
-    }
-
-    .docs-section h3 {
-      font-family: var(--font-display);
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: var(--ink);
-      margin: var(--space-8) 0 var(--space-3);
-    }
-
-    .docs-section p {
-      color: var(--body);
-      font-size: 0.95rem;
-      line-height: 1.8;
-      margin-bottom: var(--space-4);
-      max-width: 70ch;
-    }
-
-    .docs-section a {
-      color: var(--accent);
-      border-bottom: 1px solid var(--accent-dim);
-      transition: border-bottom-color var(--duration-fast) ease;
-    }
-    .docs-section a:hover { border-bottom-color: var(--accent); }
-
-    .docs-section ul, .docs-section ol {
-      padding-left: var(--space-6);
-      margin-bottom: var(--space-5);
-    }
-    .docs-section ul { list-style: disc; }
-    .docs-section ol { list-style: decimal; }
-    .docs-section li {
-      color: var(--body);
-      font-size: 0.95rem;
-      line-height: 1.75;
-      margin-bottom: var(--space-2);
-      max-width: 68ch;
-    }
     /* A nested list stays with its item and keeps a gap before the next group. */
     .docs-section li ul {
       margin-top: var(--space-1);
       margin-bottom: var(--space-3);
     }
 
-    .docs-section code {
-      font-family: var(--font-mono);
-      font-size: 0.82em;
-      background: var(--surface-3);
-      box-shadow: 0 0 0 1px var(--hairline);
-      padding: 1px 5px;
-      border-radius: 2px;
-      color: var(--ink);
-      /* A long path or setting name wraps on a phone instead of widening the page. */
-      overflow-wrap: break-word;
-    }
-
-
     /* Comparison tables: scroll inside the column on a phone. */
-    .table-scroll { overflow-x: auto; }
     .table-scroll .cmp-table { margin: var(--space-5) 0; }
     .cmp-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
     .cmp-table th, .cmp-table td {
@@ -309,14 +138,6 @@
     /* ── Responsive ─────────────────────────────────────────────── */
 
     @media (max-width: 768px) {
-      .docs-layout { grid-template-columns: 1fr; }
-      .docs-sidebar {
-        position: static;
-        height: auto;
-        border-right: none;
-        border-bottom: 1px solid var(--hairline);
-      }
-      .docs-content { padding: var(--space-8) var(--space-5) var(--space-12); }
       .blog-grid { grid-template-columns: 1fr 1fr; }
       .page-header { padding: var(--space-16) var(--space-5); }
     }

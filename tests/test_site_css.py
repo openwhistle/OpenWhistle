@@ -96,10 +96,15 @@ def test_the_site_has_exactly_the_planned_sheets() -> None:
     assert {p.name for p in CSS.glob("*.css")} == set(ALWAYS) | PAGE_TYPES
 
 
-def test_every_page_links_exactly_one_page_type_sheet() -> None:
+# What a page links after the three shared sheets: one page type, or the text pages' docs layout
+# plus their extras.
+PAGE_SHEETS = (["home.css"], ["docs.css"], ["post.css"], ["docs.css", "page.css"])
+
+
+def test_every_page_links_its_page_type_sheets() -> None:
     for path in pages():
         sheets = _sheets(path.read_text(encoding="utf-8"))
-        assert len(sheets) == 4 and sheets[3] in PAGE_TYPES, (path.relative_to(built()), sheets)
+        assert sheets[3:] in PAGE_SHEETS, (path.relative_to(built()), sheets)
 
 
 APP_CSS = ROOT / "app" / "static" / "css" / "site.css"
@@ -155,17 +160,12 @@ def _rules(text: str, media: str = "") -> dict[tuple[str, str], list[str]]:
     return out
 
 
-# Selectors docs.css and page.css may style differently, each with its reason. Expected empty.
-DOCS_PAGE_DIFFERENCES: set[tuple[str, str]] = set()
-
-
-def test_docs_and_page_style_their_shared_selectors_alike() -> None:
+def test_page_css_redefines_no_docs_selector() -> None:
+    """Text pages link docs.css and page.css: page.css adds to the docs layout, never copies it."""
     docs = _rules((CSS / "docs.css").read_text(encoding="utf-8"))
     page_ = _rules((CSS / "page.css").read_text(encoding="utf-8"))
-    shared = docs.keys() & page_.keys()
-    assert len(shared) > 30, sorted(shared)  # the docs layout both page types use
-    drifted = sorted(k for k in shared - DOCS_PAGE_DIFFERENCES if docs[k] != page_[k])
-    assert not drifted, drifted
+    assert len(docs) > 30 and page_
+    assert not sorted(docs.keys() & page_.keys())
 
 
 # The same selector, styled differently in two page-type sheets, on purpose. Each entry names why.
