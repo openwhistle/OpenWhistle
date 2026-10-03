@@ -19,6 +19,11 @@
    "e2e",
    "--browser",
    "chromium"
+  ],
+  "SITE": [
+   "tests/test_build_site.py",
+   "-k",
+   "lastmod"
   ]
  },
  "mutations": [
@@ -483,6 +488,13 @@
    "tests": "E2E",
    "old": "  .diagram { overflow-x: auto; }",
    "new": "  .diagram { overflow-x: visible; }"
+  },
+  {
+   "id": "LASTMOD-UTC",
+   "file": "scripts/build_site.py",
+   "tests": "SITE",
+   "old": "datetime.datetime.fromtimestamp(int(stamp), datetime.UTC).date().isoformat()",
+   "new": "datetime.date.fromtimestamp(int(stamp)).isoformat()"
   }
  ]
 }

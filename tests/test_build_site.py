@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime
 import importlib.util
 import re
 import shutil
@@ -561,7 +562,17 @@ def test_the_sitemap_lists_indexable_pages_with_alternates(src: Path, tmp_path: 
 def test_lastmod_is_the_last_commit_of_the_source() -> None:
     if B._git("status", "--porcelain", "--", "LICENSE"):
         pytest.skip("LICENSE has uncommitted changes")
-    assert B.lastmod(ROOT / "LICENSE") == B._git("log", "-1", "--format=%cs", "--", "LICENSE")
+    stamp = int(B._git("log", "-1", "--format=%ct", "--", "LICENSE"))
+    day = datetime.datetime.fromtimestamp(stamp, datetime.UTC).date().isoformat()
+    assert B.lastmod(ROOT / "LICENSE") == day
+
+
+def test_lastmod_is_a_utc_date_not_the_local_one(monkeypatch: pytest.MonkeyPatch) -> None:
+    # 2026-10-03 01:30 +0200 is still 2026-10-02 in UTC, where CI runs
+    zone = datetime.timezone(datetime.timedelta(hours=2))
+    local = datetime.datetime(2026, 10, 3, 1, 30, tzinfo=zone)
+    monkeypatch.setattr(B, "_git", lambda *a: str(int(local.timestamp())) if "log" in a else "")
+    assert B.lastmod(ROOT / "LICENSE") == "2026-10-02"
 
 
 def test_the_changelog_page_is_dated_by_changelog_md(

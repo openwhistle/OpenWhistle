@@ -178,7 +178,7 @@ def _sitemap() -> dict[str, dict[str, str]]:
     ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9", "x": "http://www.w3.org/1999/xhtml"}
     root = ET.parse(DOCS / "sitemap.xml").getroot()  # noqa: S314 — our own built file
     out = {}
-    today = datetime.date.today()
+    today = datetime.datetime.now(datetime.UTC).date()
     for url in root.findall("s:url", ns):
         loc = url.findtext("s:loc", namespaces=ns)
         lastmod = url.findtext("s:lastmod", namespaces=ns)
