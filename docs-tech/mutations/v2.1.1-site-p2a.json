@@ -458,8 +458,8 @@
    "id": "E2E-CANVAS",
    "file": "docs/assets/css/base.css",
    "tests": "E2E",
-   "old": "figure.diagram img { background: var(--canvas); border-radius: 8px; }",
-   "new": "figure.diagram img { border-radius: 8px; }"
+   "old": "figure.diagram img { background: var(--canvas); border-radius: var(--radius-md); }",
+   "new": "figure.diagram img { border-radius: var(--radius-md); }"
   },
   {
    "id": "E2E-SCALE-ROW",

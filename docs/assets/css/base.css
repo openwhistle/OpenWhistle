@@ -7,7 +7,7 @@ html { scroll-padding-top: 80px; }
    toggle sets. Both selectors outrank the pages' .diagram img { display: block }. */
 :root:not([data-theme="dark"]) .diagram-dark, [data-theme="dark"] .diagram-light { display: none; }
 /* A diagram is drawn on the canvas: on a surface section its surface cards would vanish. */
-figure.diagram img { background: var(--canvas); border-radius: 8px; }
+figure.diagram img { background: var(--canvas); border-radius: var(--radius-md); }
 /* It also owns the phone rule for diagrams: a diagram keeps its
    designed size and scrolls inside its figure. figure.diagram outranks the pages' own
    .diagram img { max-width: 100% }, which loads later. */
@@ -105,7 +105,7 @@ body {
   padding: var(--space-2) var(--space-4) !important;
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent) !important;
   color: var(--accent) !important;
-  border-radius: 2px;
+  border-radius: var(--radius-md);
   transition: background var(--duration-fast) ease !important;
 }
 .nav-cta:hover { background: var(--accent-dim) !important; color: var(--accent-strong) !important; }
@@ -117,7 +117,7 @@ body {
   width: 34px;
   height: 34px;
   box-shadow: 0 0 0 1px var(--hairline-strong);
-  border-radius: 2px;
+  border-radius: var(--radius-md);
   color: var(--muted);
   transition: color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
 }
@@ -210,7 +210,7 @@ body {
 .footer-bottom a:hover { color: var(--inverse-ink); }
 
 /* ── Callout: one component on every page type ──────────────── */
-.callout { padding: var(--space-4) var(--space-6); margin: var(--space-6) 0; border-left: 3px solid; border-radius: 0 2px 2px 0; }
+.callout { padding: var(--space-4) var(--space-6); margin: var(--space-6) 0; border-left: 3px solid; border-radius: 0 var(--radius-md) var(--radius-md) 0; }
 .callout-note { background: var(--accent-fog); border-color: var(--accent); }
 .callout-warn { background: var(--warning-fog); border-color: var(--warning); }
 /* Two classes deep: these outrank the page types' prose rules (.docs-section p, .article-body p). */

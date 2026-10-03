@@ -24,7 +24,7 @@
       scrollbar-color: var(--hairline-strong) transparent;
     }
     .docs-sidebar::-webkit-scrollbar { width: 4px; }
-    .docs-sidebar::-webkit-scrollbar-thumb { background: var(--hairline-strong); border-radius: 2px; }
+    .docs-sidebar::-webkit-scrollbar-thumb { background: var(--hairline-strong); border-radius: var(--radius-sm); }
 
     .sidebar-section {
       margin-bottom: var(--space-8);
@@ -50,7 +50,7 @@
       font-size: 0.82rem;
       color: var(--body);
       border-left: 2px solid transparent;
-      border-radius: 0 2px 2px 0;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
       transition: color var(--duration-fast) ease, background var(--duration-fast) ease, border-left-color var(--duration-fast) ease;
     }
     .sidebar-links a:hover {
@@ -169,7 +169,7 @@
       background: var(--surface-3);
       box-shadow: 0 0 0 1px var(--hairline);
       padding: 1px 5px;
-      border-radius: 2px;
+      border-radius: var(--radius-sm);
       color: var(--ink);
       /* A long path or setting name wraps on a phone instead of widening the page. */
       overflow-wrap: break-word;
@@ -179,7 +179,7 @@
     .code-block {
       background: var(--inverse);
       box-shadow: 0 0 0 1px color-mix(in srgb, var(--inverse-ink) 6%, transparent);
-      border-radius: 4px;
+      border-radius: var(--radius-md);
       overflow: hidden;
       margin: var(--space-5) 0;
     }
@@ -266,7 +266,7 @@
       font-size: 0.65rem;
       letter-spacing: 0.08em;
       padding: 2px 6px;
-      border-radius: 2px;
+      border-radius: var(--radius-sm);
     }
     .env-req-yes { background: var(--danger-weak); color: var(--danger); box-shadow: 0 0 0 1px color-mix(in srgb, var(--danger) 20%, transparent); }
     .env-req-no  { background: var(--surface); color: var(--muted); box-shadow: 0 0 0 1px var(--hairline); }
@@ -346,7 +346,7 @@
       width: 100%;
       height: auto;
       box-shadow: 0 0 0 1px var(--hairline);
-      border-radius: 4px;
+      border-radius: var(--radius-md);
     }
     .shot-dark { display: none; }
     [data-theme="dark"] .shot-light { display: none; }

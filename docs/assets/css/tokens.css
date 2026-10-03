@@ -39,6 +39,10 @@
   --space-16: 4rem;
   --space-20: 5rem;
   --space-24: 6rem;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
   --max-width: 1200px;
   --sidebar-width: 260px;
   --ease-stiff: cubic-bezier(0.16, 1, 0.3, 1);

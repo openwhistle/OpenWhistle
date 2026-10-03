@@ -41,7 +41,7 @@
       transform: translate(-50%, -50%);
       width: min(600px, 80vw);
       height: min(600px, 80vw);
-      border-radius: 50%;
+      border-radius: var(--radius-full);
       background:
         radial-gradient(circle at center, color-mix(in srgb, var(--accent) 4%, transparent) 0%, transparent 60%),
         radial-gradient(circle at center, transparent 62%, color-mix(in srgb, var(--accent) 3%, transparent) 63%, color-mix(in srgb, var(--accent) 3%, transparent) 65%, transparent 66%),
@@ -155,7 +155,7 @@
       content: '';
       width: 5px;
       height: 5px;
-      border-radius: 50%;
+      border-radius: var(--radius-full);
       background: var(--hairline-strong);
     }
 
@@ -170,7 +170,7 @@
       font-weight: 600;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      border-radius: 2px;
+      border-radius: var(--radius-md);
       transition: background var(--duration-fast) var(--ease-stiff), box-shadow var(--duration-fast) var(--ease-stiff), color var(--duration-fast) var(--ease-stiff), transform var(--duration-fast) var(--ease-stiff);
       white-space: nowrap;
     }
@@ -235,7 +235,7 @@
       color: var(--accent);
       width: 16px;
       height: 16px;
-      border-radius: 50%;
+      border-radius: var(--radius-full);
       background: var(--accent-fog);
       box-shadow: 0 0 0 1px var(--accent-dim);
       display: flex;
@@ -370,6 +370,7 @@
       background: var(--canvas);
       box-shadow: 0 0 0 1px var(--hairline);
       border-left: 4px solid var(--accent-dim);
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
       padding: var(--space-6);
       transition: border-left-color var(--duration-mid) ease, transform var(--duration-mid) ease, box-shadow var(--duration-mid) ease;
       animation: rise 0.5s var(--ease-stiff) both;
@@ -398,6 +399,7 @@
       height: 40px;
       background: var(--accent-fog);
       box-shadow: 0 0 0 1px var(--accent-dim);
+      border-radius: var(--radius-sm);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -429,6 +431,7 @@
     }
     .compliance-card {
       box-shadow: 0 0 0 1px var(--hairline);
+      border-radius: var(--radius-md);
       padding: var(--space-6);
       background: var(--canvas);
     }
@@ -444,6 +447,7 @@
       color: var(--accent);
       background: var(--accent-fog);
       box-shadow: 0 0 0 1px var(--accent-dim);
+      border-radius: var(--radius-sm);
       padding: var(--space-1) var(--space-3);
       margin-bottom: var(--space-4);
     }
@@ -500,6 +504,7 @@
       padding: var(--space-4) var(--space-5);
       background: var(--surface-2);
       box-shadow: 0 0 0 1px var(--hairline);
+      border-radius: var(--radius-md);
     }
     [data-theme="dark"] .install-reqs {
       background: var(--surface-3);
@@ -526,7 +531,7 @@
       content: '';
       width: 4px;
       height: 4px;
-      border-radius: 50%;
+      border-radius: var(--radius-full);
       background: var(--hairline-strong);
       flex-shrink: 0;
     }
@@ -534,7 +539,7 @@
     /* Terminal */
     .terminal-window {
       background: var(--inverse);
-      border-radius: 6px;
+      border-radius: var(--radius-md);
       overflow: hidden;
       box-shadow: 0 0 0 1px color-mix(in srgb, var(--inverse-ink) 8%, transparent), 0 20px 60px color-mix(in srgb, var(--inverse) 25%, transparent);
     }
@@ -550,7 +555,7 @@
       gap: var(--space-3);
     }
     .terminal-dots { display: flex; gap: 6px; }
-    .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .terminal-dot { width: 10px; height: 10px; border-radius: var(--radius-full); }
     .dot-r { background: #ff5f57; } .dot-y { background: #febc2e; } .dot-g { background: #28c840; }
     .terminal-file {
       font-family: var(--font-mono);
@@ -581,6 +586,7 @@
     }
     details.faq-item {
       box-shadow: 0 0 0 1px var(--hairline);
+      border-radius: var(--radius-md);
       background: var(--canvas);
     }
     [data-theme="dark"] details.faq-item {
@@ -662,7 +668,7 @@
   width: 100%;
   height: auto;
   box-shadow: 0 0 0 1px var(--hairline);
-  border-radius: 4px;
+  border-radius: var(--radius-md);
 }
 .shot-dark { display: none; }
 [data-theme="dark"] .shot-light { display: none; }

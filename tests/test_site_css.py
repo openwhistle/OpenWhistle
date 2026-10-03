@@ -285,6 +285,30 @@ def test_every_colour_value_in_tokens_css_is_a_design_md_colour() -> None:
                 )
 
 
+def _rounded() -> dict[str, str]:
+    """DESIGN.md's `rounded` scale from its front matter."""
+    front = (ROOT / "DESIGN.md").read_text(encoding="utf-8").split("---", 2)[1]
+    block = re.search(r"^rounded:\n((?:  .*\n)+)", front, re.M)
+    assert block
+    return dict(re.findall(r'^  ([\w-]+):\s*"([^"]+)"', block.group(1), re.M))
+
+
+def test_tokens_css_radii_are_design_md_rounded() -> None:
+    root = _block((CSS / "tokens.css").read_text(encoding="utf-8"), ":root")
+    radii = {k.removeprefix("--radius-"): v for k, v in root.items() if k.startswith("--radius-")}
+    assert radii == {k: v for k, v in _rounded().items() if k != "none"}
+
+
+def test_page_sheets_round_corners_only_with_the_radius_tokens() -> None:
+    """DESIGN.md "Shapes": one scale for site and app; a corner is a token or square."""
+    token = re.compile(r"var\(--radius-(?:sm|md|lg|full)\)|0")
+    for sheet in CSS.glob("*.css"):
+        for prop, value in _declarations(sheet.read_text(encoding="utf-8")):
+            if prop.startswith("border") and prop.endswith("radius"):
+                stray = [v for v in value.split() if not token.fullmatch(v)]
+                assert not stray, (sheet.name, prop, value)
+
+
 def test_no_page_sheet_writes_a_colour_literal() -> None:
     for sheet in CSS.glob("*.css"):
         if sheet.name == "tokens.css":

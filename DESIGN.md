@@ -97,7 +97,7 @@ rounded:
   sm:   "6px"      # inputs, chips, pills, small controls
   md:   "8px"      # buttons, cards, panels, the accent block
   lg:   "12px"     # frame / modal shells
-  full: "9999px"   # avatars & status dots ONLY — never a CTA
+  full: "9999px"   # circles only (dots, bullets, avatars) — never a CTA
 
 elevation:
   flat:   "none (1px {colors.hairline} ring, drawn as box-shadow)"
@@ -272,8 +272,11 @@ or a ladder step before reaching for shadow.
 - `{rounded.md}` (8px) — buttons, cards, panels, the accent block. The default.
 - `{rounded.sm}` (6px) — inputs, chips, status pills, small controls.
 - `{rounded.lg}` (12px) — frame and modal shells.
-- `{rounded.full}` — status dots and avatars **only**.
+- `{rounded.full}` — circles only: status dots, list bullets, avatars, round icon badges.
 - **No pill CTAs.** A pill-shaped button is off-system; buttons are `{rounded.md}`.
+- The site reads the same scale from `docs/assets/css/tokens.css` (`--radius-sm` …
+  `--radius-full`); its sheets write no other radius. A card or callout with an accent bar
+  rounds only the corners away from the bar.
 
 ## Components
 
