@@ -201,6 +201,27 @@
    "tests": "COLOURS",
    "old": "[data-theme=\"dark\"] {\n  --canvas: #08080a;",
    "new": ".nav [data-theme=\"dark\"] {\n  --canvas: #08080a;"
+  },
+  {
+   "id": "APP-DARK-ACCENT-DERIVED",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": "  --accent: var(--brand-accent-dark,color-mix(in srgb,var(--brand-primary) 72%,#fff));",
+   "new": "  --accent: color-mix(in srgb,var(--brand-primary) 72%,#fff);"
+  },
+  {
+   "id": "DEFAULT-BRAND-WRONG-WEAK",
+   "file": "app/templating.py",
+   "tests": "COLOURS",
+   "old": "    \"accent-weak-dark\": \"#0d211a\",",
+   "new": "    \"accent-weak-dark\": \"#0d2a1a\","
+  },
+  {
+   "id": "CUSTOM-BRAND-GETS-DESIGN",
+   "file": "app/templating.py",
+   "tests": "COLOURS",
+   "old": "    return _DESIGN_ACCENT if primary_color.strip().lower() == default else {}",
+   "new": "    return _DESIGN_ACCENT"
   }
  ]
 }

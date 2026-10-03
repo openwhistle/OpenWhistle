@@ -215,6 +215,8 @@
       border: none;
       padding: 0;
     }
+    /* Comment and output share --inverse-muted, the one secondary step DESIGN.md gives on inverse;
+       italic (comment) and the smaller size (output) tell them apart. */
     .t-prompt { color: var(--inverse-accent); user-select: none; }
     .t-cmd    { color: var(--inverse-ink); }
     .t-comment { color: var(--inverse-muted); font-style: italic; }
