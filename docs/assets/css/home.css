@@ -171,39 +171,38 @@
       letter-spacing: 0.06em;
       text-transform: uppercase;
       border-radius: 2px;
-      transition: background var(--duration-fast) var(--ease-stiff), border-color var(--duration-fast) var(--ease-stiff), color var(--duration-fast) var(--ease-stiff), transform var(--duration-fast) var(--ease-stiff);
+      transition: background var(--duration-fast) var(--ease-stiff), box-shadow var(--duration-fast) var(--ease-stiff), color var(--duration-fast) var(--ease-stiff), transform var(--duration-fast) var(--ease-stiff);
       white-space: nowrap;
     }
     .btn-primary {
       background: var(--accent);
       color: var(--accent-ink);
-      border: 1px solid var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
     }
     .btn-primary:hover {
       background: var(--accent-strong);
-      border-color: var(--accent-strong);
       color: var(--accent-ink);
       transform: translateY(-1px);
-      box-shadow: 0 4px 20px color-mix(in srgb, var(--accent) 30%, transparent);
+      box-shadow: 0 0 0 1px var(--accent-strong), 0 4px 20px color-mix(in srgb, var(--accent) 30%, transparent);
     }
     .btn-outline {
       background: transparent;
       color: var(--ink);
-      border: 1px solid var(--hairline-strong);
+      box-shadow: 0 0 0 1px var(--hairline-strong);
     }
     .btn-outline:hover {
-      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
       color: var(--accent);
       transform: translateY(-1px);
     }
     .btn-accent {
       background: transparent;
       color: var(--accent);
-      border: 1px solid var(--accent-dim);
+      box-shadow: 0 0 0 1px var(--accent-dim);
     }
     .btn-accent:hover {
       background: var(--accent-fog);
-      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
     }
 
     /* ── Trust strip ─────────────────────────────────────────────── */
@@ -238,7 +237,7 @@
       height: 16px;
       border-radius: 50%;
       background: var(--accent-fog);
-      border: 1px solid var(--accent-dim);
+      box-shadow: 0 0 0 1px var(--accent-dim);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -369,7 +368,7 @@
     }
     .feature-card {
       background: var(--canvas);
-      border: 1px solid var(--hairline);
+      box-shadow: 0 0 0 1px var(--hairline);
       border-left: 4px solid var(--accent-dim);
       padding: var(--space-6);
       transition: border-left-color var(--duration-mid) ease, transform var(--duration-mid) ease, box-shadow var(--duration-mid) ease;
@@ -378,13 +377,13 @@
     .feature-card:hover {
       border-left-color: var(--accent);
       transform: translateY(-2px);
-      box-shadow: 0 8px 32px color-mix(in srgb, var(--inverse) 8%, transparent);
+      box-shadow: 0 0 0 1px var(--hairline), 0 8px 32px color-mix(in srgb, var(--inverse) 8%, transparent);
     }
     [data-theme="dark"] .feature-card {
       background: var(--surface);
     }
     [data-theme="dark"] .feature-card:hover {
-      box-shadow: 0 8px 32px color-mix(in srgb, var(--inverse) 40%, transparent);
+      box-shadow: 0 0 0 1px var(--hairline), 0 8px 32px color-mix(in srgb, var(--inverse) 40%, transparent);
     }
     .feature-card:nth-child(1) { animation-delay: 0.05s; }
     .feature-card:nth-child(2) { animation-delay: 0.10s; }
@@ -398,7 +397,7 @@
       width: 40px;
       height: 40px;
       background: var(--accent-fog);
-      border: 1px solid var(--accent-dim);
+      box-shadow: 0 0 0 1px var(--accent-dim);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -429,7 +428,7 @@
       gap: var(--space-6);
     }
     .compliance-card {
-      border: 1px solid var(--hairline);
+      box-shadow: 0 0 0 1px var(--hairline);
       padding: var(--space-6);
       background: var(--canvas);
     }
@@ -444,7 +443,7 @@
       text-transform: uppercase;
       color: var(--accent);
       background: var(--accent-fog);
-      border: 1px solid var(--accent-dim);
+      box-shadow: 0 0 0 1px var(--accent-dim);
       padding: var(--space-1) var(--space-3);
       margin-bottom: var(--space-4);
     }
@@ -500,7 +499,7 @@
       margin-top: var(--space-6);
       padding: var(--space-4) var(--space-5);
       background: var(--surface-2);
-      border: 1px solid var(--hairline);
+      box-shadow: 0 0 0 1px var(--hairline);
     }
     [data-theme="dark"] .install-reqs {
       background: var(--surface-3);
@@ -535,13 +534,12 @@
     /* Terminal */
     .terminal-window {
       background: var(--inverse);
-      border: 1px solid color-mix(in srgb, var(--inverse-ink) 8%, transparent);
       border-radius: 6px;
       overflow: hidden;
-      box-shadow: 0 20px 60px color-mix(in srgb, var(--inverse) 25%, transparent);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--inverse-ink) 8%, transparent), 0 20px 60px color-mix(in srgb, var(--inverse) 25%, transparent);
     }
     [data-theme="dark"] .terminal-window {
-      box-shadow: 0 20px 60px color-mix(in srgb, var(--inverse) 60%, transparent);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--inverse-ink) 8%, transparent), 0 20px 60px color-mix(in srgb, var(--inverse) 60%, transparent);
     }
     .terminal-bar {
       background: color-mix(in srgb, var(--inverse-ink) 4%, transparent);
@@ -582,14 +580,14 @@
       gap: var(--space-3);
     }
     details.faq-item {
-      border: 1px solid var(--hairline);
+      box-shadow: 0 0 0 1px var(--hairline);
       background: var(--canvas);
     }
     [data-theme="dark"] details.faq-item {
       background: var(--surface);
     }
     details.faq-item[open] {
-      border-color: var(--hairline-strong);
+      box-shadow: 0 0 0 1px var(--hairline-strong);
     }
     details.faq-item summary {
       padding: var(--space-5) var(--space-6);
@@ -663,7 +661,7 @@
 .doc-shot img {
   width: 100%;
   height: auto;
-  border: 1px solid var(--hairline);
+  box-shadow: 0 0 0 1px var(--hairline);
   border-radius: 4px;
 }
 .shot-dark { display: none; }

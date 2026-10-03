@@ -172,7 +172,7 @@
       font-family: var(--font-mono);
       font-size: 0.82em;
       background: var(--surface-3);
-      border: 1px solid var(--hairline);
+      box-shadow: 0 0 0 1px var(--hairline);
       padding: 1px 5px;
       border-radius: 2px;
       color: var(--ink);
@@ -248,7 +248,7 @@
 
     .article-card {
       background: var(--canvas);
-      border: 1px solid var(--hairline);
+      box-shadow: 0 0 0 1px var(--hairline);
       border-top: 4px solid var(--accent-dim);
       padding: var(--space-6);
       display: flex;
@@ -258,10 +258,10 @@
     .article-card:hover {
       border-top-color: var(--accent);
       transform: translateY(-3px);
-      box-shadow: 0 8px 32px color-mix(in srgb, var(--inverse) 8%, transparent);
+      box-shadow: 0 0 0 1px var(--hairline), 0 8px 32px color-mix(in srgb, var(--inverse) 8%, transparent);
     }
     [data-theme="dark"] .article-card { background: var(--surface); }
-    [data-theme="dark"] .article-card:hover { box-shadow: 0 8px 32px color-mix(in srgb, var(--inverse) 40%, transparent); }
+    [data-theme="dark"] .article-card:hover { box-shadow: 0 0 0 1px var(--hairline), 0 8px 32px color-mix(in srgb, var(--inverse) 40%, transparent); }
     .article-tag {
       font-family: var(--font-mono);
       font-size: 0.6rem;

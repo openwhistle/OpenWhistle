@@ -27,14 +27,14 @@
     .article-body ol { list-style: decimal; }
     .article-body li { margin-bottom: var(--space-2); color: var(--body); }
 
-    code { font-family: var(--font-mono); font-size: 0.88em; background: var(--surface); padding: 0.15em 0.4em; border-radius: 3px; color: var(--accent); border: 1px solid var(--hairline); }
+    code { font-family: var(--font-mono); font-size: 0.88em; background: var(--surface); padding: 0.15em 0.4em; border-radius: 3px; color: var(--accent); box-shadow: 0 0 0 1px var(--hairline); }
 
     /* Code blocks */
     pre { background: var(--inverse); color: var(--inverse-ink); padding: var(--space-5) var(--space-6); border-radius: 4px; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; overflow-x: auto; margin: var(--space-4) 0; }
-    pre code { background: none; padding: 0; border: none; color: inherit; font-size: inherit; }
+    pre code { background: none; padding: 0; box-shadow: none; color: inherit; font-size: inherit; }
 
     /* Steps */
-    .step-block { display: flex; gap: var(--space-6); margin: var(--space-6) 0; padding: var(--space-6); background: var(--surface); border: 1px solid var(--hairline); border-left: 4px solid var(--accent); }
+    .step-block { display: flex; gap: var(--space-6); margin: var(--space-6) 0; padding: var(--space-6); background: var(--surface); box-shadow: 0 0 0 1px var(--hairline); border-left: 4px solid var(--accent); }
     .step-num { font-family: var(--font-display); font-size: 2.5rem; font-weight: 700; color: var(--hairline-strong); line-height: 1; flex-shrink: 0; width: 2.5rem; }
     .step-content { flex: 1; }
     .step-content h3 { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--ink); margin-bottom: var(--space-2); }
@@ -72,12 +72,12 @@
     .val-bad { color: var(--muted); }
     .val-warn { color: var(--warning); }
 
-    .cost-card { background: var(--surface); border: 1px solid var(--hairline); padding: var(--space-6); margin: var(--space-6) 0; }
+    .cost-card { background: var(--surface); box-shadow: 0 0 0 1px var(--hairline); padding: var(--space-6); margin: var(--space-6) 0; }
     .cost-card-title { font-family: var(--font-display); font-weight: 700; color: var(--ink); margin-bottom: var(--space-2); }
     .cost-price { font-size: 1.6rem; font-weight: 700; color: var(--accent); font-family: var(--font-display); }
     .cost-desc { font-size: 0.88rem; color: var(--muted); margin-top: var(--space-1); }
     .cost-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-4); margin: var(--space-6) 0; }
-    .cost-breakdown { background: var(--surface); border: 1px solid var(--hairline); padding: var(--space-6); margin: var(--space-6) 0; }
+    .cost-breakdown { background: var(--surface); box-shadow: 0 0 0 1px var(--hairline); padding: var(--space-6); margin: var(--space-6) 0; }
     .cost-breakdown ul { margin-left: var(--space-6); }
 
     /* Diagram figures, as in docs/en/docs/index.html; base.css picks the twin. */
@@ -85,7 +85,7 @@
     .diagram img { max-width: 100%; height: auto; margin: 0 auto; display: block; }
     .diagram figcaption { font-size: 0.82rem; color: var(--muted); line-height: 1.6; text-align: center; margin-top: var(--space-3); }
 
-    .article-cta { background: var(--surface); border: 1px solid var(--hairline); border-top: 4px solid var(--accent); padding: var(--space-8); margin: var(--space-10) 0; text-align: center; }
+    .article-cta { background: var(--surface); box-shadow: 0 0 0 1px var(--hairline); border-top: 4px solid var(--accent); padding: var(--space-8); margin: var(--space-10) 0; text-align: center; }
     .article-cta h3 { font-family: var(--font-display); font-size: 1.3rem; font-weight: 700; color: var(--ink); margin-bottom: var(--space-3); }
     .article-cta p { font-size: 0.92rem; color: var(--body); margin-bottom: var(--space-6); }
     .btn-cta {

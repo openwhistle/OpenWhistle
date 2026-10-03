@@ -428,7 +428,7 @@ body {
   line-height: 1.6;
   min-height: 100vh;
   transition-duration: 0.25s;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-property: color, background-color, border-color, box-shadow, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 [data-theme="dark"] body {
@@ -444,6 +444,9 @@ h3 {
 }
 code,
 table,
+.mono,
+.token,
+.credential-display,
 .stat-card__number,
 .stat-card__value,
 .guarantee-num,
@@ -634,7 +637,7 @@ strong {
   position: sticky;
   top: 0;
   transition-duration: 0.25s;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-property: color, background-color, border-color, box-shadow, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 100;
 }
@@ -693,7 +696,7 @@ strong {
   line-height: 1.25rem;
   padding: 0.375rem 0.75rem;
   transition-duration: 0.15s;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-property: color, background-color, border-color, box-shadow, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 .nav-links a,
@@ -711,9 +714,7 @@ strong {
 .theme-toggle {
   align-items: center;
   background: none;
-  border-color: var(--hairline);
   border-radius: 0.375rem;
-  border-width: 1px;
   color: var(--muted);
   cursor: pointer;
   display: flex;
@@ -726,11 +727,12 @@ strong {
   transition-duration: 0.15s;
   transition-property: color, background-color, border-color;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 0 1px var(--hairline);
 }
 .theme-toggle:hover {
   background: var(--accent-subtle);
-  border-color: var(--accent);
   color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
 }
 .lang-picker {
   display: inline-block;
@@ -739,9 +741,7 @@ strong {
 .lang-picker-btn {
   align-items: center;
   background: none;
-  border-color: var(--hairline);
   border-radius: 0.375rem;
-  border-width: 1px;
   color: var(--muted);
   cursor: pointer;
   display: flex;
@@ -756,22 +756,21 @@ strong {
   padding-right: 0.5rem;
   text-transform: uppercase;
   transition-duration: 0.15s;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-property: color, background-color, border-color, box-shadow, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 0 1px var(--hairline);
 }
 .lang-picker-btn:focus-visible,
 .lang-picker-btn:hover {
-  border-color: var(--accent);
   color: var(--accent);
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+  box-shadow: 0 0 0 1px var(--accent);
 }
 .lang-picker-menu {
   background: var(--canvas);
-  border-color: var(--hairline);
   border-radius: 0.5rem;
-  border-width: 1px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 0 1px var(--hairline), 0 4px 16px rgba(0, 0, 0, 0.1);
   list-style-type: none;
   margin: 0;
   min-width: 8rem;
@@ -786,6 +785,7 @@ strong {
   background: var(--surface-card);
 }
 .lang-picker-option {
+  border-radius: 0.25rem;
   background: none;
   border: none;
   color: var(--body-text);
@@ -797,7 +797,7 @@ strong {
   padding: 0.45rem 1rem;
   text-align: left;
   transition-duration: 0.12s;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-property: color, background-color, border-color, box-shadow, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
 }
@@ -854,8 +854,7 @@ strong {
 }
 [data-theme="dark"] .card,
 [data-theme="dark"] .panel {
-  border-color: var(--hairline);
-  border-width: 1px;
+  box-shadow: 0 0 0 1px var(--hairline);
 }
 .card + .card,
 .panel + .panel,
@@ -865,10 +864,9 @@ strong {
 .panel-outline {
   animation: fadeSlideIn 0.4s ease both;
   background: var(--canvas);
-  border-color: var(--hairline);
   border-radius: 12px;
-  border-width: 1px;
   padding: 1.5rem;
+  box-shadow: 0 0 0 1px var(--hairline);
 }
 .card-title,
 .panel-header {
@@ -991,9 +989,7 @@ strong {
 .\!btn,
 .btn {
   align-items: center;
-  border-color: transparent;
   border-radius: 8px;
-  border-width: 1px;
   cursor: pointer;
   display: inline-flex;
   font-size: 0.875rem;
@@ -1007,7 +1003,7 @@ strong {
   padding-right: 1.25rem;
   text-decoration-line: none;
   transition-duration: 0.15s;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-property: color, background-color, box-shadow, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
 }
@@ -1022,29 +1018,26 @@ strong {
 }
 .btn-primary {
   background: var(--cta-bg);
-  border-color: var(--cta-bg);
   color: var(--cta-text);
 }
 .btn-primary:hover {
   background: var(--cta-bg-hover);
-  border-color: var(--cta-bg-hover);
   color: var(--cta-text);
   text-decoration-line: none;
 }
 .btn-secondary {
   background: var(--canvas);
-  border-color: var(--hairline);
   color: var(--body-text);
+  box-shadow: 0 0 0 1px var(--hairline);
 }
 .btn-secondary:hover {
   background: var(--surface-card);
-  border-color: var(--border-strong);
   color: var(--ink);
   text-decoration-line: none;
+  box-shadow: 0 0 0 1px var(--border-strong);
 }
 .btn-ghost {
   background: transparent;
-  border-color: transparent;
   color: var(--muted);
 }
 .btn-ghost:hover {
@@ -1054,7 +1047,6 @@ strong {
 }
 .btn-danger {
   background: var(--danger);
-  border-color: var(--danger);
 }
 .btn-danger,
 .btn-danger:hover {
@@ -1063,7 +1055,6 @@ strong {
 }
 .btn-danger:hover {
   background: var(--danger-hover);
-  border-color: var(--danger-hover);
   text-decoration-line: none;
 }
 .btn-block {
@@ -1119,7 +1110,7 @@ strong {
   padding-left: 0.875rem;
   padding-right: 0.875rem;
   transition-duration: 0.15s;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-property: color, background-color, border-color, box-shadow, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
 }
@@ -1190,8 +1181,8 @@ input[type="file"].form-control::file-selector-button {
 }
 .badge-received {
   background: var(--surface-card);
-  border: 1px solid var(--hairline);
   color: var(--muted);
+  box-shadow: 0 0 0 1px var(--hairline);
 }
 .badge-in_review {
   background: var(--info-subtle);
@@ -1311,7 +1302,7 @@ input[type="file"].form-control::file-selector-button {
   font-weight: 500;
   padding: 0.25rem 0.75rem;
   transition-duration: 0.12s;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-property: color, background-color, border-color, box-shadow, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
 }
@@ -1535,7 +1526,7 @@ tr:hover td {
   padding-left: 0.375rem;
   padding-right: 0.375rem;
   transition-duration: 0.12s;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-property: color, background-color, border-color, box-shadow, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 .pagination-page,
@@ -1771,7 +1762,7 @@ main:has(> .page-fill) {
   margin-top: 0.9375rem;
   min-width: 0.5rem;
   transition-duration: 0.2s;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-property: color, background-color, border-color, box-shadow, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 .stepper-line.done {
@@ -1793,15 +1784,14 @@ main:has(> .page-fill) {
 }
 .mode-card {
   background: var(--canvas);
-  border-color: var(--hairline);
   border-radius: 12px;
-  border-width: 1px;
   cursor: pointer;
   display: block;
   padding: 0;
   transition-duration: 0.15s;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-property: color, background-color, border-color, box-shadow, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 0 1px var(--hairline);
 }
 .mode-card input[type="radio"] {
   height: 0;
@@ -1811,7 +1801,7 @@ main:has(> .page-fill) {
 }
 .mode-card:has(input:checked) {
   background: var(--accent-subtle);
-  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
 }
 .mode-card:has(input:focus-visible) {
   outline: 2px solid var(--accent);
@@ -1829,7 +1819,7 @@ main:has(> .page-fill) {
   }
 }
 .mode-card:hover {
-  border-color: var(--border-strong);
+  box-shadow: 0 0 0 1px var(--border-strong);
 }
 .mode-card-inner {
   padding: 1.25rem;
@@ -1951,9 +1941,7 @@ main:has(> .page-fill) {
 .credential-display {
   align-items: center;
   background: var(--surface-card);
-  border-color: var(--hairline);
   border-radius: 8px;
-  border-width: 1px;
   color: var(--ink);
   display: flex;
   font-family: var(--font-mono);
@@ -1963,6 +1951,7 @@ main:has(> .page-fill) {
   letter-spacing: 0.03em;
   margin-bottom: 0.75rem;
   padding: 1rem 1.25rem;
+  box-shadow: 0 0 0 1px var(--hairline);
 }
 .credential-display > span {
   min-width: 0;
@@ -1982,13 +1971,12 @@ main:has(> .page-fill) {
 }
 .credential-box {
   background: var(--surface-card);
-  border-color: var(--hairline);
   border-radius: 8px;
-  border-width: 1px;
   font-family: var(--font-mono);
   margin-bottom: 0.75rem;
   margin-top: 0.75rem;
   padding: 1rem 1.25rem;
+  box-shadow: 0 0 0 1px var(--hairline);
 }
 .copy-btn {
   background-color: transparent;
@@ -2001,7 +1989,7 @@ main:has(> .page-fill) {
   line-height: 1.5rem;
   padding: 0.25rem;
   transition-duration: 0.15s;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-property: color, background-color, border-color, box-shadow, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 .copy-btn:hover {
@@ -2021,14 +2009,13 @@ main:has(> .page-fill) {
 .attachment-item {
   align-items: center;
   background: var(--surface-card);
-  border-color: var(--hairline);
   border-radius: 0.375rem;
-  border-width: 1px;
   display: flex;
   font-size: 0.875rem;
   gap: 0.625rem;
   line-height: 1.25rem;
   padding: 0.5rem 0.75rem;
+  box-shadow: 0 0 0 1px var(--hairline);
 }
 .attachment-icon {
   flex-shrink: 0;
@@ -2059,14 +2046,13 @@ a.attachment-name:hover {
 }
 .qr-wrapper {
   background: #fff;
-  border-color: var(--hairline);
   border-radius: 12px;
-  border-width: 1px;
   display: flex;
   justify-content: center;
   margin-bottom: 1rem;
   margin-top: 1rem;
   padding: 1.5rem;
+  box-shadow: 0 0 0 1px var(--hairline);
 }
 .qr-wrapper img {
   max-width: 200px;
@@ -2074,12 +2060,12 @@ a.attachment-name:hover {
 .totp-secret-card {
   align-items: center;
   background: var(--surface-card);
-  border: 1px solid var(--hairline);
   border-radius: 12px;
   display: flex;
   gap: 0.75rem;
   margin-top: 0.25rem;
   padding: 0.75rem 1rem;
+  box-shadow: 0 0 0 1px var(--hairline);
 }
 .totp-secret-value {
   color: var(--ink);
@@ -2201,13 +2187,12 @@ a.attachment-name:hover {
 .saved-confirm-label {
   align-items: flex-start;
   background: var(--accent-subtle);
-  border-color: var(--border-strong);
   border-radius: 8px;
-  border-width: 1px;
   cursor: pointer;
   gap: 0.75rem;
   margin-top: 1.5rem;
   padding: 1rem;
+  box-shadow: 0 0 0 1px var(--border-strong);
 }
 .demo-banner,
 .saved-confirm-label {
@@ -2248,11 +2233,10 @@ a.attachment-name:hover {
 }
 .demo-credentials {
   background: color-mix(in srgb,var(--warning) 6%,var(--surface-card));
-  border-color: color-mix(in srgb,var(--warning) 28%,var(--hairline));
   border-radius: 12px;
-  border-width: 1px;
   margin-bottom: 1.25rem;
   padding: 1rem 1.1rem;
+  box-shadow: 0 0 0 1px color-mix(in srgb,var(--warning) 28%,var(--hairline));
 }
 .demo-credentials-header {
   align-items: center;
@@ -2302,9 +2286,7 @@ a.attachment-name:hover {
 }
 .demo-cred-value {
   background: var(--canvas);
-  border-color: var(--hairline);
   border-radius: 0.375rem;
-  border-width: 1px;
   color: var(--ink);
   cursor: pointer;
   font-family: var(--font-mono);
@@ -2313,18 +2295,17 @@ a.attachment-name:hover {
   padding: 0.375rem 0.625rem;
   text-align: left;
   transition-duration: 0.15s;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-property: color, background-color, border-color, box-shadow, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 0 1px var(--hairline);
 }
 .demo-cred-value:hover {
   background: color-mix(in srgb,var(--warning) 8%,var(--canvas));
-  border-color: var(--warning);
+  box-shadow: 0 0 0 1px var(--warning);
 }
 .demo-cred-code {
   background: var(--surface-card);
-  border-color: var(--hairline);
   border-radius: 0.375rem;
-  border-width: 1px;
   color: var(--accent);
   display: inline-block;
   font-family: var(--font-mono);
@@ -2333,6 +2314,7 @@ a.attachment-name:hover {
   letter-spacing: 0.25em;
   line-height: 1.5rem;
   padding: 0.375rem 0.625rem;
+  box-shadow: 0 0 0 1px var(--hairline);
 }
 .demo-fill-btn {
   --tw-text-opacity: 1;
@@ -2349,7 +2331,7 @@ a.attachment-name:hover {
   padding-left: 1rem;
   padding-right: 1rem;
   transition-duration: 0.15s;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-property: color, background-color, border-color, box-shadow, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
 }
@@ -2367,22 +2349,21 @@ a.attachment-name:hover {
 .demo-report-row {
   align-items: center;
   background: var(--surface-card);
-  border-color: var(--hairline);
   border-radius: 0.375rem;
-  border-width: 1px;
   cursor: pointer;
   font-size: 0.8125rem;
   gap: 0.75rem;
   padding: 0.45rem 0.75rem;
   text-align: left;
   transition-duration: 0.13s;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-property: color, background-color, border-color, box-shadow, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
+  box-shadow: 0 0 0 1px var(--hairline);
 }
 .demo-report-row:hover {
   background: color-mix(in srgb,var(--warning) 8%,var(--surface-card));
-  border-color: var(--warning);
+  box-shadow: 0 0 0 1px var(--warning);
 }
 .demo-report-status {
   font-size: 0.75rem;
@@ -2393,11 +2374,9 @@ a.attachment-name:hover {
   align-items: center;
   animation: slideInBanner 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   background: var(--canvas);
-  border-color: var(--warning);
   border-radius: 12px;
-  border-width: 1px;
   bottom: 1.5rem;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 0 1px var(--warning), 0 6px 24px rgba(0, 0, 0, 0.15);
   display: flex;
   font-size: 0.875rem;
   gap: 0.75rem;
@@ -2412,7 +2391,7 @@ a.attachment-name:hover {
   background: var(--surface-card);
 }
 .session-expiry-banner.session-expiry-expired-state {
-  border-color: var(--danger);
+  box-shadow: 0 0 0 1px var(--danger);
 }
 .session-expiry-icon {
   color: var(--warning);
@@ -2470,7 +2449,7 @@ a.attachment-name:hover {
   line-height: 1;
   padding: 0.2rem 0.3rem;
   transition-duration: 0.15s;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-property: color, background-color, border-color, box-shadow, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 .session-expiry-dismiss:hover {
@@ -3460,7 +3439,7 @@ a.attachment-name:hover {
     filter,
     -webkit-backdrop-filter;
   transition-property:
-    color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow,
+    color, background-color, border-color, box-shadow, text-decoration-color, fill, stroke, opacity, box-shadow,
     transform, filter, backdrop-filter;
   transition-property:
     color,
@@ -3484,7 +3463,7 @@ a.attachment-name:hover {
 }
 .transition-colors {
   transition-duration: 0.15s;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-property: color, background-color, border-color, box-shadow, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 .transition-opacity {
@@ -3871,7 +3850,7 @@ a.attachment-name:hover {
   }
   .admin-menu {
     position: static;
-    border: 1px solid var(--hairline);
+    box-shadow: 0 0 0 1px var(--hairline);
     border-radius: var(--radius-card);
   }
   .admin-menu-toggle {
@@ -3958,4 +3937,11 @@ a.attachment-name:hover {
   .table-stack .stack-action { grid-column: 1 / -1; }
   .table-stack .stack-action .btn { width: 100%; justify-content: center; }
   .table-stack td[colspan] { grid-column: 1 / -1; }
+}
+
+/* Borders are drawn as box-shadow rings (DESIGN.md "Rules"); forced colours drop shadows, so the edges come back. */
+@media (forced-colors: active) {
+  .btn-secondary, .panel-outline, .panel, .badge-received, .credential-box, .attachment-item,
+  .qr-wrapper, .totp-secret-card, .demo-credentials, .session-expiry-banner, .theme-toggle,
+  .lang-picker-btn, .lang-picker-menu { border: 1px solid CanvasText; }
 }

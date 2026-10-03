@@ -103,7 +103,7 @@ body {
 .nav-links a.active { color: var(--accent); }
 .nav-cta {
   padding: var(--space-2) var(--space-4) !important;
-  border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent) !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent) !important;
   color: var(--accent) !important;
   border-radius: 2px;
   transition: background var(--duration-fast) ease !important;
@@ -116,12 +116,12 @@ body {
   justify-content: center;
   width: 34px;
   height: 34px;
-  border: 1px solid var(--hairline-strong);
+  box-shadow: 0 0 0 1px var(--hairline-strong);
   border-radius: 2px;
   color: var(--muted);
-  transition: color var(--duration-fast) ease, border-color var(--duration-fast) ease;
+  transition: color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
 }
-.theme-toggle:hover { color: var(--ink); border-color: var(--muted); }
+.theme-toggle:hover { color: var(--ink); box-shadow: 0 0 0 1px var(--muted); }
 .theme-toggle svg { width: 16px; height: 16px; }
 .icon-sun { display: none; }
 [data-theme="dark"] .icon-moon { display: none; }
@@ -217,7 +217,7 @@ body {
 .callout .callout-title { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; line-height: 1.7; margin-bottom: var(--space-2); }
 .callout-note .callout-title { color: var(--accent); }
 .callout-warn .callout-title { color: var(--warning); }
-.callout p:not(.callout-title) { font-size: 0.9rem; color: var(--body); line-height: 1.7; max-width: none; margin-bottom: 0; }
+.callout p:not(.callout-title) { font-size: 0.9rem; color: var(--body); line-height: 1.7; max-width: 70ch; margin-bottom: 0; }
 
 /* ── Responsive ─────────────────────────────────────────────── */
 /* Nav collapses at 1080px, not 768px: at 1024px the full item list no
@@ -261,4 +261,11 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Borders are drawn as box-shadow rings (DESIGN.md "Rules"); forced colours drop shadows, so the edges come back. */
+@media (forced-colors: active) {
+  .theme-toggle, .btn-outline, .btn-accent, .nav-cta, .feature-card, .compliance-card, .install-reqs,
+  details.faq-item, .article-card, .step-block, .cost-card, .cost-breakdown, .article-cta, .terminal-window,
+  .code-block, .doc-shot img { border: 1px solid CanvasText; }
 }
