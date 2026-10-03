@@ -351,3 +351,58 @@ def test_no_page_paints_with_a_colour_literal() -> None:
         if found:
             offenders[str(path.relative_to(built()))] = sorted(found)
     assert not offenders, offenders
+
+
+# Brand-derived app tokens -> the DESIGN.md key the default brand must produce.
+BRAND_TOKENS = {
+    "--accent": "accent",
+    "--accent-subtle": "accent-weak",
+    "--cta-bg": "accent",
+    "--cta-bg-hover": "accent-strong",
+}
+
+
+def _head_vars(primary_color: str) -> dict[str, str]:
+    """The custom properties base.html's nonce'd style block sets for this brand colour."""
+    from types import SimpleNamespace
+
+    from app.templating import templates
+
+    source = (ROOT / "app" / "templates" / "base.html").read_text(encoding="utf-8")
+    style = re.search(r"<style nonce=.*?</style>", source, flags=re.S)
+    assert style
+    html = templates.env.from_string(style.group(0)).render(
+        request=SimpleNamespace(state=SimpleNamespace(csp_nonce="n")),
+        brand={**templates.env.globals["brand"], "primary_color": primary_color},
+    )
+    return dict(re.findall(r"(--brand-[\w-]+)\s*:\s*([^;]+);", html))
+
+
+def _resolve(value: str, scope: dict[str, str]) -> str:
+    """var(--x, fallback) as the browser resolves it against these custom properties."""
+    m = re.fullmatch(r"var\((--[\w-]+)(?:,(.*))?\)", value.strip(), flags=re.S)
+    if not m:
+        return value.strip()
+    name, fallback = m.groups()
+    if name in scope:
+        return _resolve(scope[name], scope)
+    return _resolve(fallback, scope) if fallback is not None else ""
+
+
+def _app_scopes(primary_color: str) -> dict[str, dict[str, str]]:
+    text = APP_CSS.read_text(encoding="utf-8")
+    light = {**_block(text, ':root,\n[data-theme="light"]'), **_head_vars(primary_color)}
+    return {"light": light, "dark": {**light, **_block(text, '[data-theme="dark"]')}}
+
+
+def test_the_default_brand_draws_the_design_md_accent_in_both_themes() -> None:
+    palette = renderer().palette()
+    for theme, scope in _app_scopes("#0c7253").items():
+        for token, key in BRAND_TOKENS.items():
+            assert _hex6(_resolve(scope[token], scope)) == palette[theme][key], (theme, token)
+
+
+def test_a_custom_brand_keeps_its_derived_accent() -> None:
+    assert set(_head_vars("#7b2cbf")) == {"--brand-primary"}
+    dark = _app_scopes("#7b2cbf")["dark"]
+    assert _resolve(dark["--accent"], dark).startswith("color-mix(in srgb,var(--brand-primary)")

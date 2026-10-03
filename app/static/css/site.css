@@ -334,9 +334,9 @@ video {
   --body-text: #3d3d40;
   --muted: #6a6a6e;
   --accent: var(--brand-primary);
-  --accent-subtle: color-mix(in srgb,var(--brand-primary) 12%,#fff);
+  --accent-subtle: var(--brand-accent-weak,color-mix(in srgb,var(--brand-primary) 12%,#fff));
   --cta-bg: var(--accent);
-  --cta-bg-hover: color-mix(in srgb,var(--accent) 85%,#000);
+  --cta-bg-hover: var(--brand-accent-strong,color-mix(in srgb,var(--accent) 85%,#000));
   --cta-text: #fff;
   --hairline: #e6e6e4;
   --border-strong: #d8d8d6;
@@ -388,10 +388,10 @@ video {
   --ink: #fafafa;
   --body-text: #bcbcc0;
   --muted: #8e8e93;
-  --accent: color-mix(in srgb,var(--brand-primary) 72%,#fff);
-  --accent-subtle: color-mix(in srgb,var(--brand-primary) 24%,#08080a);
+  --accent: var(--brand-accent-dark,color-mix(in srgb,var(--brand-primary) 72%,#fff));
+  --accent-subtle: var(--brand-accent-weak-dark,color-mix(in srgb,var(--brand-primary) 24%,#08080a));
   --cta-bg: var(--accent);
-  --cta-bg-hover: color-mix(in srgb,var(--accent) 88%,#fff);
+  --cta-bg-hover: var(--brand-accent-strong-dark,color-mix(in srgb,var(--accent) 88%,#fff));
   --cta-text: #06120d;
   --hairline: #262629;
   --border-strong: #34343a;

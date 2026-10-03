@@ -21,6 +21,9 @@
     <style nonce="{{ request.state.csp_nonce }}">
         :root {
             --brand-primary:   {{ brand.primary_color }};
+            {%- for name, value in brand_accent(brand.primary_color).items() %}
+            --brand-{{ name }}: {{ value }};
+            {%- endfor %}
         }
         .u-hidden { display: none; }
         .u-m0 { margin: 0; }
