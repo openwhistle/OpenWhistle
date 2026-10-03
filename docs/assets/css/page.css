@@ -145,7 +145,7 @@
     .docs-section a {
       color: var(--accent);
       border-bottom: 1px solid var(--accent-dim);
-      transition: all var(--duration-fast) ease;
+      transition: border-bottom-color var(--duration-fast) ease;
     }
     .docs-section a:hover { border-bottom-color: var(--accent); }
 

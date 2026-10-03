@@ -31,6 +31,9 @@
    "e2e",
    "--browser",
    "chromium"
+  ],
+  "DESIGN_MD": [
+   "tests/test_design_md.py"
   ]
  },
  "mutations": [
@@ -222,6 +225,62 @@
    "tests": "COLOURS",
    "old": "    return _DESIGN_ACCENT if primary_color.strip().lower() == default else {}",
    "new": "    return _DESIGN_ACCENT"
+  },
+  {
+   "id": "HEADINGS-NOT-BALANCED",
+   "file": "docs/assets/css/base.css",
+   "tests": "COLOURS",
+   "old": "h1, h2, h3 { text-wrap: balance; }",
+   "new": "h1, h2, h3 { text-wrap: wrap; }"
+  },
+  {
+   "id": "BTN-TRANSITIONS-ALL",
+   "file": "docs/assets/css/home.css",
+   "tests": "COLOURS",
+   "old": "transition: background var(--duration-fast) var(--ease-stiff), border-color",
+   "new": "transition: all var(--duration-fast) var(--ease-stiff), border-color"
+  },
+  {
+   "id": "APP-TOGGLE-TRANSITIONS-ALL",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": "transition-property: color, background-color, border-color;",
+   "new": "transition-property: all;"
+  },
+  {
+   "id": "FIGURES-NOT-TABULAR",
+   "file": "docs/assets/css/base.css",
+   "tests": "COLOURS",
+   "old": "table, code, pre { font-variant-numeric: tabular-nums; }",
+   "new": "table, code, pre { font-variant-numeric: normal; }"
+  },
+  {
+   "id": "DESIGN-MD-SEAL-BACK",
+   "file": "DESIGN.md",
+   "tests": "DESIGN_MD",
+   "old": "### Brand mark (K3)",
+   "new": "### Brand / seal mark"
+  },
+  {
+   "id": "DESIGN-MD-NO-DIAGRAMS",
+   "file": "DESIGN.md",
+   "tests": "DESIGN_MD",
+   "old": "## Diagrams",
+   "new": "## Pictures"
+  },
+  {
+   "id": "DESIGN-MD-COLOR-SCHEME-GONE",
+   "file": "DESIGN.md",
+   "tests": "DESIGN_MD",
+   "old": "`[data-theme=\"light\"] { color-scheme: only light }`",
+   "new": "`[data-theme=\"light\"] { color-scheme: light }`"
+  },
+  {
+   "id": "DESIGN-MD-KEY-UNNAMED",
+   "file": "DESIGN.md",
+   "tests": "DESIGN_MD",
+   "old": "- `{colors.surface-3}` \u2014 one step",
+   "new": "- `surface-3` \u2014 one step"
   }
  ]
 }

@@ -406,3 +406,20 @@ def test_a_custom_brand_keeps_its_derived_accent() -> None:
     assert set(_head_vars("#7b2cbf")) == {"--brand-primary"}
     dark = _app_scopes("#7b2cbf")["dark"]
     assert _resolve(dark["--accent"], dark).startswith("color-mix(in srgb,var(--brand-primary)")
+
+
+def test_headings_balance_their_lines() -> None:
+    text = (CSS / "base.css").read_text(encoding="utf-8")
+    assert re.search(r"h1,\s*h2,\s*h3[^{]*\{[^}]*text-wrap:\s*balance", text)
+
+
+def test_nothing_transitions_all() -> None:
+    for sheet in [*CSS.glob("*.css"), APP_CSS]:
+        css = sheet.read_text(encoding="utf-8")
+        assert not re.search(r"transition(-property)?\s*:\s*all\b", css), sheet.name
+
+
+def test_figures_are_tabular() -> None:
+    base = (CSS / "base.css").read_text(encoding="utf-8")
+    assert re.search(r"table[^{]*\{[^}]*tabular-nums", base)
+    assert "tabular-nums" in APP_CSS.read_text(encoding="utf-8")

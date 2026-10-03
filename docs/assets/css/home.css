@@ -171,7 +171,7 @@
       letter-spacing: 0.06em;
       text-transform: uppercase;
       border-radius: 2px;
-      transition: all var(--duration-fast) var(--ease-stiff);
+      transition: background var(--duration-fast) var(--ease-stiff), border-color var(--duration-fast) var(--ease-stiff), color var(--duration-fast) var(--ease-stiff), transform var(--duration-fast) var(--ease-stiff);
       white-space: nowrap;
     }
     .btn-primary {
