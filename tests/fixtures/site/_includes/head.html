@@ -12,10 +12,12 @@
 {% for lang, href in hreflang %}
   <link rel="alternate" hreflang="{{ lang }}" href="{{ href }}">
 {% endfor %}
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="icon" type="image/x-icon" href="/favicon.ico">
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" href="/favicon.ico" sizes="32x32">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+  <link rel="preload" href="/fonts/sora-latin-300-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/sora-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/sora-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/sora-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
   <meta property="og:type" content="{{ page.meta.get('og_type') or 'website' }}">
   <meta property="og:site_name" content="OpenWhistle">
@@ -49,7 +51,9 @@
 {% for item in page.meta.jsonld %}
   <script type="application/ld+json">{{ item|tojson }}</script>
 {% endfor %}
-  <link rel="stylesheet" href="/assets/css/layout.css">
+  <link rel="stylesheet" href="/assets/css/tokens.css">
+  <link rel="stylesheet" href="/assets/css/fonts.css">
+  <link rel="stylesheet" href="/assets/css/base.css">
 {% for name in page.meta.css %}
   <link rel="stylesheet" href="/assets/css/{{ name }}.css">
 {% endfor %}

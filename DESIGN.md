@@ -21,13 +21,23 @@ colors:
   canvas:        { light: "#ffffff", dark: "#08080a" }   # page background
   surface:       { light: "#f6f6f5", dark: "#131315" }   # raised panels, table headers, inputs
   surface-2:     { light: "#ffffff", dark: "#1b1b1e" }   # cards floated above surface
+  surface-3:     { light: "#e9e9e8", dark: "#232327" }   # one step above surface-2 (inline code, hover on a card)
   ink:           { light: "#0a0a0b", dark: "#fafafa" }   # headings, primary text
   body:          { light: "#3d3d40", dark: "#bcbcc0" }   # body copy
   muted:         { light: "#6a6a6e", dark: "#8e8e93" }   # secondary / metadata
   hairline:      { light: "#e6e6e4", dark: "#262629" }   # 1px borders & dividers
+  hairline-strong: { light: "#d8d8d6", dark: "#34343a" } # borders that must read (outline button, toggle)
+
+  # Inverse — a dark fill in BOTH themes: site footer, code blocks, terminal illustrations.
+  inverse:       { light: "#0a0a0b", dark: "#050506" }   # the fill
+  inverse-ink:   { light: "#fafafa", dark: "#fafafa" }   # text on inverse
+  inverse-muted: { light: "#a1a1aa", dark: "#a1a1aa" }   # secondary text on inverse
+  inverse-accent: { light: "#23c088", dark: "#23c088" }  # the dark-theme emerald, for marks on inverse (terminal prompt)
+  inverse-warning: { light: "#d6a13c", dark: "#d6a13c" } # the dark-theme warning, for highlights on inverse (terminal string)
 
   # Accent — emerald. The ONE brand colour. Scarce as a button, generous as a block.
-  accent:        { light: "#0c7253", dark: "#23c088" }   # seal mark, one primary CTA, focus
+  accent:        { light: "#0c7253", dark: "#23c088" }   # one primary CTA, focus, selected state
+  accent-strong: { light: "#0b6249", dark: "#1fa878" }   # accent hover
   accent-ink:    { light: "#ffffff", dark: "#06120d" }   # text/marks on an accent fill
   accent-weak:   { light: "#e5f3ee", dark: "#0d211a" }   # accent tint (selected chips, hover)
 
@@ -39,6 +49,7 @@ colors:
   warning:       { light: "#8a5a12", dark: "#d6a13c" }
   warning-weak:  { light: "#f6ecd9", dark: "#241c0d" }
   danger:        { light: "#bf3529", dark: "#f0776b" }
+  danger-strong: { light: "#a82e23", dark: "#e0604f" }   # danger hover
   danger-weak:   { light: "#f8e7e4", dark: "#2a1512" }
 
 typography:
@@ -86,10 +97,10 @@ rounded:
   sm:   "6px"      # inputs, chips, pills, small controls
   md:   "8px"      # buttons, cards, panels, the accent block
   lg:   "12px"     # frame / modal shells
-  full: "9999px"   # avatars & status dots ONLY — never a CTA
+  full: "9999px"   # circles only (dots, bullets, avatars) — never a CTA
 
 elevation:
-  flat:   "none (1px {colors.hairline} border)"
+  flat:   "none (1px {colors.hairline} ring, drawn as box-shadow)"
   card:   { light: "0 1px 2px rgba(0,0,0,.05)", dark: "0 1px 2px rgba(0,0,0,.40)" }
   block:  "none — an accent fill IS the depth"
   overlay: { light: "0 8px 24px rgba(0,0,0,.12)", dark: "0 8px 24px rgba(0,0,0,.55)" }
@@ -147,13 +158,30 @@ neutrals from the ladder by role, never by eye:
 - `{colors.surface-2}` — cards that float above a `surface` context.
 - `{colors.ink}` / `{colors.body}` / `{colors.muted}` — a three-step text ramp.
   Carry hierarchy with these plus **weight**, not with mid-greys invented per page.
-- `{colors.hairline}` — every 1px border and divider.
+- `{colors.surface-3}` — one step above `surface-2`: inline code, hover on a card.
+- `{colors.hairline}` — every 1px border and divider;
+  `{colors.hairline-strong}` where it must read (outline button, toggle).
+- `{colors.inverse}` — a dark fill in both themes (site footer, code, terminal);
+  text on it is `{colors.inverse-ink}` / `{colors.inverse-muted}`; marks on it use
+  `{colors.inverse-accent}` and `{colors.inverse-warning}` (the terminal illustration).
+- `{colors.accent-strong}` / `{colors.danger-strong}` — hover of the accent and of danger.
 
 **The accent is a budget, not a palette.** On any given screen the emerald appears,
 at most: once as the primary button, on focus rings, on the selected chip
 (`{colors.accent-weak}`), and — where the screen makes a promise — as one
 full-bleed block filled with `{colors.accent}` and text in `{colors.accent-ink}`.
 If a second emerald element wants to exist, remove one.
+
+**Themes.** `[data-theme="light"] { color-scheme: only light }` and
+`[data-theme="dark"] { color-scheme: dark }`: the toggle, not the OS, decides, so a
+dark-mode browser cannot auto-darken a light page (forced dark would invert the tokens
+above) and native controls and scrollbars follow the chosen theme.
+
+**The app.** `--accent` follows the operator's primary colour: with the default brand
+it equals `{colors.accent}` / `{colors.accent-strong}` / `{colors.accent-weak}` in both
+themes; a custom `primary_color` derives its own family with `color-mix`
+(`brand_accent()` in `app/templating.py`). Every other app token is a DESIGN.md value
+(`tests/test_site_css.py::APP_TOKENS`).
 
 **Semantic colours are not the accent.** Status and feedback use
 `{colors.info}` / `{colors.success}` / `{colors.warning}` / `{colors.danger}` and
@@ -229,7 +257,7 @@ A 4px base grid; compose with `{spacing.scale}`. Lay groups out with flex/grid a
 Depth is structural. In priority order:
 
 1. **Surface ladder** — `{colors.canvas}` → `{colors.surface}` → `{colors.surface-2}`.
-2. **Hairlines** — a 1px `{colors.hairline}` border defines most edges
+2. **Hairlines** — a 1px `{colors.hairline}` ring (`box-shadow`) defines most edges
    (`{elevation.flat}`).
 3. **Colour** — the accent block needs no shadow; the fill *is* the lift
    (`{elevation.block}`).
@@ -244,25 +272,39 @@ or a ladder step before reaching for shadow.
 - `{rounded.md}` (8px) — buttons, cards, panels, the accent block. The default.
 - `{rounded.sm}` (6px) — inputs, chips, status pills, small controls.
 - `{rounded.lg}` (12px) — frame and modal shells.
-- `{rounded.full}` — status dots and avatars **only**.
+- `{rounded.full}` — circles only: status dots, list bullets, avatars, round icon badges.
 - **No pill CTAs.** A pill-shaped button is off-system; buttons are `{rounded.md}`.
+- The site reads the same scale from `docs/assets/css/tokens.css` (`--radius-sm` …
+  `--radius-full`); its sheets write no other radius. A card or callout with an accent bar
+  rounds only the corners away from the bar.
 
 ## Components
 
-### Brand / seal mark
+### Brand mark (K3)
 
-A small emerald square (`{rounded.sm}`, `{colors.accent}`) with an inset outline in
-`{colors.accent-ink}` — a stylised wax seal — set beside the "OpenWhistle" wordmark
-in `display` weight 600. The mark is the one place the accent always appears.
+A speech bubble with a keyhole: one evenodd path on a 24-unit grid, drawn in ink
+(`currentColor`), never in the accent. It sits beside the "OpenWhistle" wordmark in
+`display` weight 600, at 22px in the site nav, 18px in the site footer
+(`{colors.inverse-ink}` at 50% opacity) and 24px in the app nav.
+
+- The geometry lives in `scripts/render_icons.py` (`MARK`), which also renders the
+  rasters (apple-touch 180px, `favicon.ico`, `github-avatar.png` 500px).
+- Copies in `app/templates/base.html`, `docs/_includes/nav.html`, `footer.html` and both
+  `favicon.svg` files are held identical by `tests/test_mark.py`.
+- Favicons are the three-file set: ICO (`sizes="32x32"`), SVG switching ink by
+  `prefers-color-scheme`, apple-touch.
+- An operator's `brand.logo_url` replaces the mark in the app.
+- Wordmark: OpenWhistle in ink, one weight, `translate="no"`.
 
 ### Buttons
 
 - **Primary** — `{colors.accent}` fill, `{colors.accent-ink}` text, `{rounded.md}`,
   ~`12px 20px` padding, weight 600. **One per view.**
-- **Secondary** — transparent fill, `{colors.hairline}` border, `{colors.ink}` text.
+- **Secondary** — `{colors.canvas}` fill, a 1px `{colors.hairline}` ring, `{colors.body}` text;
+  hover lifts to `{colors.surface}` and a `{colors.hairline-strong}` ring.
 - **Ghost** — transparent fill, transparent border, `{colors.muted}` text; a low-emphasis
   action beside a primary/secondary one (e.g. an export alongside a reveal).
-- **Danger** — `{colors.danger}` fill, white text; destructive actions only.
+- **Danger** — `{colors.danger}` fill, white text, `{colors.danger-weak}` tint for its banner; destructive actions only.
 - `:disabled` drops to `opacity: .4`. Focus is a 2px `{colors.accent}` outline,
   `2px` offset — always visible.
 
@@ -360,10 +402,10 @@ tracking pixels, no remote images.
 
 ### Navigation & footer
 
-Sticky nav on a translucent `{colors.canvas}` with a bottom hairline: seal +
+Sticky nav on an opaque `{colors.canvas}` with a bottom hairline: mark +
 wordmark left, utility controls (theme, language) right as equal-sized icon buttons
-(1px hairline, `{rounded.md}`). Footer sits on `{colors.surface}` with a top
-hairline; muted metadata; the version string in mono.
+(1px hairline ring, `{rounded.md}`). Footer sits on `{colors.inverse}` in both themes,
+text in `{colors.inverse-muted}`; the version string in mono.
 
 ### Printed case record
 
@@ -383,6 +425,18 @@ Text is set in DejaVu LGC Sans (Regular/Bold, bundled under `app/fonts/`, see it
 Greek or Cyrillic script prints intact. CJK and right-to-left scripts (Arabic, Hebrew)
 are outside this font and are not supported: those characters render as missing-glyph
 boxes, not as the report's own text.
+
+## Diagrams
+
+Diagrams are drawn in **style C**: filled `{colors.surface}` cards, `{colors.ink}` arrows,
+start and end in `{colors.accent}`, the result in `{colors.ink}`.
+
+- Labels sit **beside** a line, never on it.
+- Colours are **roles** (ink, surface, accent), never hex; each diagram ships a light and
+  a dark twin picked by `data-theme`.
+- Accent budget: the two accent nodes are the only exception to the one-accent rule.
+
+How to draw one: `docs-tech/diagrams.md`.
 
 ## Motion
 
@@ -419,6 +473,37 @@ Restraint. Motion confirms, it does not entertain.
 - Build depth from the surface ladder and hairlines first.
 - Keep the report-status pills mapped exactly to the enum.
 - Give dark mode the same care as light; verify the accent's contrast on both.
+
+### Rules
+
+| Rule | Status |
+| --- | --- |
+| `text-wrap: balance` on h1–h3 (site and app) | holds |
+| `tabular-nums` for figures: site tables, code and pre; app tables, code, stat cards, case numbers, counters | holds |
+| Never `transition: all`; name the properties | holds (tested) |
+| Prose at most ~70 characters wide (measured at 1920px on docs, a post, the roadmap) | holds (tested) |
+| Borders as shadows: a decorative edge is `box-shadow: 0 0 0 1px {colors.hairline}` | holds (tested) |
+| Concentric radii: inner = outer − padding while the padding is below the outer radius | holds (tested) |
+| `translate="no"` on the brand name and code | P3 |
+| Persistent docs sidebar on desktop, search on top | P3 |
+| At most three nav levels | P3 |
+| Icons always with a text label | P3 |
+| Copy: active voice, specific button labels, errors that name the way out | P3 (content work) |
+
+**Borders as shadows.** Cards, panels, buttons, pills, code and terminal blocks draw their
+edge as a ring (`box-shadow`), which takes no layout space and follows the radius. A
+**structural** border stays a border: table row separators, section rules, and a callout's
+or card's accent bar (`border-left` / `border-top`). Form controls keep a real 1px border too,
+because it carries their focus state: inputs, selects, textareas, and the admin tables'
+per-page select. Pagination pages are buttons and take the ring. Forced-colours mode drops shadows, so a
+`forced-colors` block gives the same components a real border there.
+
+**Concentric radii.** A rounded child in a rounded parent uses `outer − padding`. With a
+padding at or above the outer radius the child is independent: its corner no longer follows
+the parent's curve, so squaring every inner control would be wrong. Full pills nest as pills.
+
+"P3" is page and content work in `docs-tech/specs/2026-10-01-website-redesign-design.md`
+§ Delivery; the CSS-level rules above are kept by the stylesheets today.
 
 ### Don't
 

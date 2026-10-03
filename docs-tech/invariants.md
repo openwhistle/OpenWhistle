@@ -458,7 +458,7 @@ fetch category labels; the snippets are updated and red.
 | `status-badge-nowrap` | `app/static/css/site.css` | `test_dashboard_table_action_column_is_pinned_and_status_badge_wraps` |
 | `dashboard-header-unpinned` | `app/templates/admin/dashboard.html` | `test_table_stack_sticky_action_column_is_paired_header_and_data` |
 | `docs-env-table-unscrolled` | `docs/en/docs/index.html` | `test_docs_page_has_no_horizontal_overflow` |
-| `de-token-drift` | `docs/de/index.html` | `test_de_landing_page_shares_design_tokens_with_english` |
+| `de-token-drift` | `docs/de/index.html` | `test_only_tokens_css_defines_custom_properties` (since 2.1.1 the tokens exist once, in `tokens.css`) |
 | `de-faq-jsonld-drift` | `docs/de/index.html` | `test_faqpage_jsonld_matches_visible_faq_one_to_one` |
 | `en-hreflang-de-dropped` | `docs/en/index.html` | `test_landing_pages_link_each_other_via_hreflang` |
 | `de-hreflang-default-dropped` | `docs/de/index.html` | `test_landing_pages_link_each_other_via_hreflang` |
@@ -467,7 +467,7 @@ fetch category labels; the snippets are updated and red.
 | `docs-nav-blog-missing` | `docs/en/docs/index.html` | `test_every_docs_page_nav_has_the_same_item_set` |
 | `roadmap-nav-current-unmarked` | `docs/en/roadmap/index.html` | `test_current_nav_item_is_marked` |
 | `roadmap-footer-issues-missing` | `docs/en/roadmap/index.html` | `test_every_page_footer_has_the_same_link_set_as_its_landing_page` |
-| `blog-token-drift` | `docs/de/blog/index.html` | `test_blog_pages_share_design_tokens_with_english_landing` |
+| `blog-token-drift` | `docs/de/blog/index.html` | `test_only_tokens_css_defines_custom_properties` (since 2.1.1 the tokens exist once, in `tokens.css`) |
 | `nav-collapse-768-en` | `docs/en/index.html` | `test_docs_page_has_no_horizontal_overflow` |
 | `nav-collapse-768-de` | `docs/de/index.html` | `test_docs_page_has_no_horizontal_overflow` |
 | `nav-collapse-768-docs` | `docs/en/docs/index.html` | `test_docs_page_has_no_horizontal_overflow` |

@@ -14,3 +14,14 @@ def test_disabled_pagination_is_muted_not_transparent() -> None:
     assert rule, "no .pagination-disabled rule"
     assert "opacity" not in rule.group(1)
     assert "color: var(--muted)" in rule.group(1)
+
+
+def test_a_disabled_pagination_button_keeps_its_dashed_edge() -> None:
+    """The buttons draw rings, which cannot be dashed: the disabled one draws an inset dashed
+    outline instead of its ring, and gets a dashed border back in forced colours."""
+    rule = re.search(r"\.pagination-disabled \{([^}]*)\}", CSS)
+    assert rule
+    assert "outline: 1px dashed var(--hairline)" in rule.group(1)
+    assert "box-shadow: none" in rule.group(1)
+    forced = re.search(r"\.pagination-disabled \{ border-style: dashed; outline: none; \}", CSS)
+    assert forced

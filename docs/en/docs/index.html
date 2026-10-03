@@ -3,7 +3,6 @@ title: 'Self-Hosted Whistleblowing: Documentation | OpenWhistle'
 description: 'Self-hosted whistleblowing with OpenWhistle: install it with Docker Compose, set every option, and run the admin and reporter flows to HinSchG deadlines.'
 translation_key: docs
 css:
-- fonts
 - docs
 js:
 - site
@@ -137,7 +136,13 @@ jsonld:
         </ul>
 
         <h3>Current version</h3>
-        <p><strong>v2.1.0</strong>. What it changed:</p>
+        <p><strong>v2.1.1</strong>. What it changed:</p>
+        <ul>
+          <li>A new logo, and each theme tells the browser whether it is light or dark, so Chrome's Auto Dark Mode leaves the light theme alone.</li>
+          <li>Colours, code samples and the footer meet WCAG AA contrast in both themes.</li>
+          <li>No page is wider than a 360&nbsp;px phone.</li>
+        </ul>
+        <p>What v2.1.0 changed:</p>
         <ul>
           <li>Every admin changes their own password and links their own single sign-on; a lost authenticator can be reset.</li>
           <li>The §17 HinSchG deadlines follow the statute, from receipt, in calendar months.</li>
@@ -983,12 +988,17 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
           <code>X-OpenWhistle-Signature: sha256=&lt;hex&gt;</code> header lets the receiver verify it
           (HMAC-SHA256).
         </p>
-        <pre><code>{
+        <div class="code-block" role="region" aria-label="Webhook JSON payload">
+          <div class="code-block-header">
+            <span class="code-block-lang">json</span>
+          </div>
+          <pre><code>{
   "event": "new_activity",
   "new_reports": 2,
   "new_messages": 1,
   "message": "2 new reports, 1 case with new messages"
 }</code></pre>
+        </div>
         <p><code>new_messages</code> counts cases with new whistleblower messages, not the messages.</p>
 <div class="table-scroll">
 <table class="env-table">
@@ -1286,8 +1296,13 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
           <code>clamd</code> daemon can scan attachments before they are stored. Off by default; to
           turn it on:
         </p>
-        <pre><code>COMPOSE_PROFILES=clamav
+        <div class="code-block" role="region" aria-label="ClamAV compose profile settings">
+          <div class="code-block-header">
+            <span class="code-block-lang">.env</span>
+          </div>
+          <pre><code>COMPOSE_PROFILES=clamav
 CLAMAV_HOST=clamav</code></pre>
+        </div>
         <ul>
           <li><code>docker-compose.prod.yml</code> ships a <code>clamav</code> service behind the <code>clamav</code> profile, never reachable from the host.</li>
           <li>It shares only the internal Docker network with <code>app</code>, not the <code>proxy</code> network, so nginx cannot reach it either.</li>
@@ -1443,8 +1458,8 @@ CLAMAV_HOST=clamav</code></pre>
 
         <h3>Dashboard overview</h3>
         <figure class="doc-shot">
-          <img class="shot-light" src="/img/screens/admin-dashboard-light.png" alt="The reports dashboard: status and location filters, a search field, and the report table with case number, category, status, submitted day, assignee, 7-day SLA and 3-month SLA." width="1440" height="1123" loading="lazy">
-          <img class="shot-dark" src="/img/screens/admin-dashboard-dark.png" alt="The reports dashboard: status and location filters, a search field, and the report table with case number, category, status, submitted day, assignee, 7-day SLA and 3-month SLA." width="1440" height="1123" loading="lazy">
+          <img class="shot-light" src="/img/screens/admin-dashboard-light.png" alt="The reports dashboard: status and location filters, a search field, and the report table with case number, category, status, submitted day, assignee, 7-day SLA and 3-month SLA." width="1440" height="1009" loading="lazy">
+          <img class="shot-dark" src="/img/screens/admin-dashboard-dark.png" alt="The reports dashboard: status and location filters, a search field, and the report table with case number, category, status, submitted day, assignee, 7-day SLA and 3-month SLA." width="1440" height="1009" loading="lazy">
         </figure>
         <p>
           <code>/admin/dashboard</code> lists every report you may see, with sortable columns,
@@ -1551,8 +1566,8 @@ CLAMAV_HOST=clamav</code></pre>
         </ul>
         <p>Click a report to open its case page, <code>/admin/reports/{report_id}</code>:</p>
         <figure class="doc-shot">
-          <img class="shot-light" src="/img/screens/admin-report-light.png" alt="A case page: the report, the communication thread, a reply box and internal notes; beside them the submission details and the actions acknowledge, assign, update status, export PDF and delete." width="1440" height="1836" loading="lazy">
-          <img class="shot-dark" src="/img/screens/admin-report-dark.png" alt="A case page: the report, the communication thread, a reply box and internal notes; beside them the submission details and the actions acknowledge, assign, update status, export PDF and delete." width="1440" height="1836" loading="lazy">
+          <img class="shot-light" src="/img/screens/admin-report-light.png" alt="A case page: the report, the communication thread, a reply box and internal notes; beside them the submission details and the actions acknowledge, assign, update status, export PDF and delete." width="1440" height="1888" loading="lazy">
+          <img class="shot-dark" src="/img/screens/admin-report-dark.png" alt="A case page: the report, the communication thread, a reply box and internal notes; beside them the submission details and the actions acknowledge, assign, update status, export PDF and delete." width="1440" height="1888" loading="lazy">
         </figure>
         <ul>
           <li>Read the report and its submission mode (anonymous / confidential).</li>

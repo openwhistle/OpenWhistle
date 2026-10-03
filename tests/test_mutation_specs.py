@@ -51,7 +51,27 @@ def test_every_mutation_matches_its_file_exactly_once(spec: Path) -> None:
     stale = []
     for m in json.loads(spec.read_text())["mutations"]:
         target = ROOT / (m.get("file") or m["path"])
-        count = target.read_text().count(m["old"]) if target.exists() else 0
+        if "create" in m:  # the audit adds this file, so it must not exist yet
+            count = 0 if target.exists() else 1
+        else:
+            count = target.read_text().count(m["old"]) if target.exists() else 0
         if count != 1:
             stale.append(f"{m.get('id') or m.get('name')}: {target.relative_to(ROOT)} x{count}")
     assert not stale, stale
+
+
+def test_a_spec_cannot_name_a_file_outside_the_repo() -> None:
+    from scripts.mutation_audit import inside_root
+
+    assert inside_root("app/config.py")
+    for bad in ("/etc/passwd", "../outside.txt", "app/../../outside.txt"):
+        assert not inside_root(bad), bad
+
+
+@pytest.mark.parametrize("spec", ALL_SPECS, ids=lambda p: p.name)
+def test_every_spec_file_is_inside_the_repo(spec: Path) -> None:
+    from scripts.mutation_audit import inside_root
+
+    for m in json.loads(spec.read_text())["mutations"]:
+        name = m.get("file") or m["path"]
+        assert inside_root(name), f"{m.get('id') or m.get('name')}: {name}"

@@ -358,21 +358,21 @@
   },
   {
    "id": "PHONE-OVERFLOW",
-   "file": "docs/assets/css/layout.css",
+   "file": "docs/assets/css/base.css",
    "tests": "FIGURES",
    "old": "  .diagram { overflow-x: auto; }",
    "new": "  .diagram { overflow-x: visible; }"
   },
   {
    "id": "PHONE-MAXWIDTH",
-   "file": "docs/assets/css/layout.css",
+   "file": "docs/assets/css/base.css",
    "tests": "FIGURES",
    "old": "  figure.diagram img { max-width: none; }",
    "new": "  figure.diagram img { max-width: 100%; }"
   },
   {
    "id": "PHONE-MEDIA",
-   "file": "docs/assets/css/layout.css",
+   "file": "docs/assets/css/base.css",
    "tests": "FIGURES",
    "old": "@media (max-width: 640px) {\n  .diagram",
    "new": "@media (min-width: 640px) {\n  .diagram"
@@ -449,42 +449,42 @@
   },
   {
    "id": "E2E-TWIN",
-   "file": "docs/assets/css/layout.css",
+   "file": "docs/assets/css/base.css",
    "tests": "E2E",
    "old": ":root:not([data-theme=\"dark\"]) .diagram-dark, [data-theme=\"dark\"] .diagram-light { display: none; }",
    "new": ".diagram-dark, [data-theme=\"dark\"] .diagram-light { display: none; }"
   },
   {
    "id": "E2E-CANVAS",
-   "file": "docs/assets/css/layout.css",
+   "file": "docs/assets/css/base.css",
    "tests": "E2E",
-   "old": "figure.diagram img { background: var(--bg-base); border-radius: 8px; }",
-   "new": "figure.diagram img { border-radius: 8px; }"
+   "old": "figure.diagram img { background: var(--canvas); border-radius: var(--radius-md); }",
+   "new": "figure.diagram img { border-radius: var(--radius-md); }"
   },
   {
    "id": "E2E-SCALE-ROW",
-   "file": "docs/assets/css/figures.css",
+   "file": "docs/assets/css/home.css",
    "tests": "E2E",
    "old": ".figure-row:has(> .diagram) { grid-template-columns: 1fr; }",
    "new": ".figure-row:has(> .nothing) { grid-template-columns: 1fr; }"
   },
   {
    "id": "E2E-SCALE-UPPER",
-   "file": "docs/assets/css/figures.css",
+   "file": "docs/assets/css/home.css",
    "tests": "E2E",
    "old": ".diagram img { max-width: 100%; height: auto;",
    "new": ".diagram img { width: 100%; height: auto;"
   },
   {
    "id": "E2E-PHONE-SIZE",
-   "file": "docs/assets/css/layout.css",
+   "file": "docs/assets/css/base.css",
    "tests": "E2E",
    "old": "  figure.diagram img { max-width: none; }",
    "new": "  figure.diagram img { max-width: 100%; }"
   },
   {
    "id": "E2E-PHONE-SCROLL",
-   "file": "docs/assets/css/layout.css",
+   "file": "docs/assets/css/base.css",
    "tests": "E2E",
    "old": "  .diagram { overflow-x: auto; }",
    "new": "  .diagram { overflow-x: visible; }"

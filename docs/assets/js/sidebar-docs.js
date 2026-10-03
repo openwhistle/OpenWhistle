@@ -3,10 +3,13 @@ var sections = document.querySelectorAll('.docs-section[id]');
 var sidebarLinks = document.querySelectorAll('.sidebar-links a');
 
 function updateActive() {
-  var scrollY = window.scrollY + 100;
+  // The section being read is the last one whose top has passed a third of the window:
+  // 100 px from the top left 40 px under the 60 px nav, so a heading just below the nav
+  // still lit the section before it.
+  var line = window.scrollY + window.innerHeight / 3;
   var active = null;
   sections.forEach(function(s) {
-    if (s.offsetTop <= scrollY) {
+    if (s.offsetTop <= line) {
       active = s.getAttribute('id');
     }
   });

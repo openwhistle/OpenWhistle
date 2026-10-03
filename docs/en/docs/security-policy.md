@@ -4,7 +4,6 @@ description: 'An information security policy template for an OpenWhistle install
 translation_key: security-policy
 noindex: true
 css:
-- fonts
 - docs
 js:
 - site

@@ -848,8 +848,8 @@
    "id": "links-before-stubs",
    "file": "scripts/build_site.py",
    "tests": "LINKS-FIRST",
-   "old": "    check_links(out, urlsplit(site[\"base_url\"]).netloc)\n    if redirect_stubs:\n        write_stubs(out, data[\"redirects\"], site, {p.url: src / p.source for p in pages})\n",
-   "new": "    if redirect_stubs:\n        write_stubs(out, data[\"redirects\"], site, {p.url: src / p.source for p in pages})\n    check_links(out, urlsplit(site[\"base_url\"]).netloc)\n"
+   "old": "    check_links(out, urlsplit(site[\"base_url\"]).netloc)\n    subset_fonts(out)\n    if redirect_stubs:\n        write_stubs(out, data[\"redirects\"], site, {p.url: src / p.source for p in pages})\n",
+   "new": "    subset_fonts(out)\n    if redirect_stubs:\n        write_stubs(out, data[\"redirects\"], site, {p.url: src / p.source for p in pages})\n    check_links(out, urlsplit(site[\"base_url\"]).netloc)\n"
   },
   {
    "id": "old-url-dropped",
@@ -958,7 +958,7 @@
   },
   {
    "id": "scroll-padding",
-   "file": "docs/assets/css/layout.css",
+   "file": "docs/assets/css/base.css",
    "tests": "DEEP-LINK",
    "old": "html { scroll-padding-top: 80px; }\n",
    "new": ""

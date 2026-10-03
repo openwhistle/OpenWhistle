@@ -7,7 +7,6 @@ published: '2026-09-27'
 modified: '2026-09-27'
 section: Datenschutz
 css:
-- fonts
 - post
 js:
 - site
@@ -74,17 +73,15 @@ jsonld:
           <h2>Der alte Weg: das Bild neu malen</h2>
           <p>Bis Version 2.0 las OpenWhistle ein Bild ein und schrieb nur die Pixel in eine neue Datei. Metadaten kamen so garantiert nicht mit. Die Pixel aber auch nicht immer. Ein Bug-Bounty-Durchlauf hat nachgemessen:</p>
 
-          <div class="table-scroll">
-          <table>
-            <thead><tr><th>Anhang</th><th>Vorher</th><th>Nach dem Säubern (bis 2.0)</th></tr></thead>
+          <table class="data-table">
+            <thead><tr><th scope="col">Anhang</th><th scope="col">Vorher</th><th scope="col">Nach dem Säubern (bis 2.0)</th></tr></thead>
             <tbody>
-              <tr><td>PNG mit Farbpalette, typisch für Screenshots</td><td>Rot (200, 10, 30)</td><td>Schwarz (0, 0, 0)</td></tr>
-              <tr><td>Animiertes PNG oder WebP</td><td>2 Einzelbilder</td><td>1 Einzelbild</td></tr>
-              <tr><td>JPEG-Foto</td><td>5,5 MB</td><td>14,4 MB, über der Grenze von 10 MB</td></tr>
-              <tr><td>PNG mit 12 000 × 12 000 Pixeln</td><td>450 KB Datei</td><td>1,1 GB Arbeitsspeicher</td></tr>
+              <tr><td>PNG mit Farbpalette, typisch für Screenshots</td><td data-label="Vorher">Rot (200, 10, 30)</td><td data-label="Nach dem Säubern (bis 2.0)">Schwarz (0, 0, 0)</td></tr>
+              <tr><td>Animiertes PNG oder WebP</td><td data-label="Vorher">2 Einzelbilder</td><td data-label="Nach dem Säubern (bis 2.0)">1 Einzelbild</td></tr>
+              <tr><td>JPEG-Foto</td><td data-label="Vorher">5,5 MB</td><td data-label="Nach dem Säubern (bis 2.0)">14,4 MB, über der Grenze von 10 MB</td></tr>
+              <tr><td>PNG mit 12 000 × 12 000 Pixeln</td><td data-label="Vorher">450 KB Datei</td><td data-label="Nach dem Säubern (bis 2.0)">1,1 GB Arbeitsspeicher</td></tr>
             </tbody>
           </table>
-          </div>
 
           <p>Ein Beweisfoto, das nach dem Upload anders aussieht als vorher, ist ein schlechtes Beweisfoto. Und jedes JPEG wurde neu komprimiert: Kein einziges Pixel blieb, wie es war.</p>
 

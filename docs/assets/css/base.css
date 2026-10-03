@@ -1,0 +1,274 @@
+/* Owned by docs/_includes/footer.html: its two small print lines. */
+.footer-note { font-size: 0.85rem; color: var(--inverse-muted); line-height: 1.7; }
+.footer-disclaimer { font-size: 0.82rem; color: var(--inverse-muted); line-height: 1.7; margin-top: 0.75rem; }
+/* Owned by docs/_includes/nav.html: the sticky nav must not cover a #fragment target. */
+html { scroll-padding-top: 80px; }
+/* Every page loads base.css, so it picks a diagram's twin from data-theme, the attribute the
+   toggle sets. Both selectors outrank the pages' .diagram img { display: block }. */
+:root:not([data-theme="dark"]) .diagram-dark, [data-theme="dark"] .diagram-light { display: none; }
+/* A diagram is drawn on the canvas: on a surface section its surface cards would vanish. */
+figure.diagram img { background: var(--canvas); border-radius: var(--radius-md); }
+/* It also owns the phone rule for diagrams: a diagram keeps its
+   designed size and scrolls inside its figure. figure.diagram outranks the pages' own
+   .diagram img { max-width: 100% }, which loads later. */
+@media (max-width: 640px) {
+  .diagram { overflow-x: auto; }
+  figure.diagram img { max-width: none; }
+}
+
+/* ── Shared by every page: reset, nav, footer ───────────────── */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; -webkit-text-size-adjust: 100%; }
+img, svg { display: block; max-width: 100%; }
+button { cursor: pointer; border: none; background: none; font: inherit; }
+ul, ol { list-style: none; }
+[data-theme="light"] { color-scheme: only light; }
+[data-theme="dark"] { color-scheme: dark; }
+
+a { color: inherit; text-decoration: none; }
+h1, h2, h3 { text-wrap: balance; }
+table, code, pre { font-variant-numeric: tabular-nums; }
+
+body {
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  transition: background var(--duration-mid) ease, color var(--duration-mid) ease;
+}
+
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: var(--space-4);
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  z-index: 9999;
+}
+.skip-link:focus { top: var(--space-4); }
+
+/* ── Navigation ──────────────────────────────────────────────── */
+.site-nav {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: var(--canvas);
+  border-bottom: 1px solid var(--hairline);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--inverse) 8%, transparent);
+}
+.nav-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-8);
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+}
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  flex-shrink: 0;
+}
+/* K3, drawn inline by nav.html and footer.html; it takes the wordmark's colour. */
+.mark { fill: currentColor; flex: none; }
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+.nav-links a {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  transition: color var(--duration-fast) ease;
+  white-space: nowrap;
+}
+.nav-links a:hover { color: var(--ink); }
+.nav-links a.active { color: var(--accent); }
+.nav-cta {
+  padding: var(--space-2) var(--space-4) !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent) !important;
+  color: var(--accent) !important;
+  border-radius: var(--radius-md);
+  transition: background var(--duration-fast) ease !important;
+}
+.nav-cta:hover { background: var(--accent-dim) !important; color: var(--accent-strong) !important; }
+.nav-actions { display: flex; align-items: center; gap: var(--space-4); flex-shrink: 0; }
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  box-shadow: 0 0 0 1px var(--hairline-strong);
+  border-radius: var(--radius-md);
+  color: var(--muted);
+  transition: color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+}
+.theme-toggle:hover { color: var(--ink); box-shadow: 0 0 0 1px var(--muted); }
+.theme-toggle svg { width: 16px; height: 16px; }
+.icon-sun { display: none; }
+[data-theme="dark"] .icon-moon { display: none; }
+[data-theme="dark"] .icon-sun { display: block; }
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  padding: var(--space-2);
+  color: var(--body);
+}
+.nav-toggle span { display: block; width: 20px; height: 1.5px; background: currentColor; }
+
+/* ── Footer ──────────────────────────────────────────────────── */
+.site-footer {
+  background: var(--inverse);
+  color: var(--inverse-muted);
+  padding: var(--space-16) var(--space-8) var(--space-8);
+}
+.footer-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr 1fr;
+  gap: var(--space-12);
+  margin-bottom: var(--space-12);
+  padding-bottom: var(--space-10);
+  border-bottom: 1px solid color-mix(in srgb, var(--inverse-ink) 8%, transparent);
+}
+.footer-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--inverse-ink);
+  margin-bottom: var(--space-4);
+}
+.footer-logo .mark { color: var(--inverse-ink); opacity: 0.5; }
+.footer-tagline {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--inverse-muted);
+  line-height: 1.6;
+  max-width: 32ch;
+}
+.footer-col-title {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--inverse-muted);
+  margin-bottom: var(--space-5);
+}
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.footer-links a {
+  font-size: 0.875rem;
+  color: var(--inverse-muted);
+  transition: color var(--duration-fast) ease;
+}
+.footer-links a:hover { color: var(--inverse-ink); }
+.footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  color: var(--inverse-muted);
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+.footer-bottom a {
+  color: var(--inverse-muted);
+  transition: color var(--duration-fast) ease;
+}
+.footer-bottom a:hover { color: var(--inverse-ink); }
+
+/* ── Callout: one component on every page type ──────────────── */
+.callout { padding: var(--space-4) var(--space-6); margin: var(--space-6) 0; border-left: 3px solid; border-radius: 0 var(--radius-md) var(--radius-md) 0; }
+.callout-note { background: var(--accent-fog); border-color: var(--accent); }
+.callout-warn { background: var(--warning-fog); border-color: var(--warning); }
+/* Two classes deep: these outrank the page types' prose rules (.docs-section p, .article-body p). */
+.callout .callout-title { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; line-height: 1.7; margin-bottom: var(--space-2); }
+.callout-note .callout-title { color: var(--accent); }
+.callout-warn .callout-title { color: var(--warning); }
+.callout p:not(.callout-title) { font-size: 0.9rem; color: var(--body); line-height: 1.7; max-width: 70ch; margin-bottom: 0; }
+
+/* ── Responsive ─────────────────────────────────────────────── */
+/* Nav collapses at 1080px, not 768px: at 1024px the full item list no
+   longer fits the nav-inner row and overflows the viewport
+   horizontally. */
+@media (max-width: 1080px) {
+  .nav-links { display: none; }
+  .nav-links.open {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 60px;
+    left: 0;
+    right: 0;
+    background: var(--canvas);
+    border-bottom: 1px solid var(--hairline);
+    padding: var(--space-5) var(--space-6);
+    gap: var(--space-4);
+    z-index: 201;
+  }
+  .nav-toggle { display: flex; }
+}
+
+@media (max-width: 768px) {
+  .footer-grid { grid-template-columns: 1fr; gap: var(--space-8); }
+  .footer-bottom { flex-direction: column; align-items: flex-start; }
+}
+
+/* ── Motion ─────────────────────────────────────────────────── */
+/* The one page-load reveal (DESIGN.md "Motion": rise ~10px, fade ~0.5s). */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* With reduced motion, state changes are instant (DESIGN.md "Motion"); the app's rule. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Borders are drawn as box-shadow rings (DESIGN.md "Rules"); forced colours drop shadows, so the edges come back. */
+@media (forced-colors: active) {
+  .theme-toggle, .btn-outline, .nav-cta, .feature-card, .compliance-card, .install-reqs,
+  details.faq-item, .article-card, .step-block, .article-cta, .terminal-window,
+  .code-block, .article-body pre, .doc-shot img, .btn-primary, .compliance-card-badge, .feature-icon-wrap, .trust-item-check,
+  .docs-section code, .env-req-yes, .env-req-no, code, details.faq-item[open] { border: 1px solid CanvasText; }
+  /* A code block is framed once: its lines are not inline code, whatever the list above matches. */
+  pre code, .docs-section pre code { border: none; }
+}

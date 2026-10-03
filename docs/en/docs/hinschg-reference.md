@@ -4,7 +4,6 @@ description: 'The duties of the German HinSchG section by section: which of them
 translation_key: hinschg-reference
 noindex: true
 css:
-- fonts
 - docs
 js:
 - site

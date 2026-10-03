@@ -1,0 +1,1009 @@
+{
+ "timeout_seconds": 300,
+ "test_groups": {
+  "MARK": [
+   "tests/test_mark.py"
+  ],
+  "MARK_E2E": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "mark",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "COLOURS": [
+   "tests/test_site_css.py"
+  ],
+  "CODE_E2E": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "code_pill",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "SITE_AXE": [
+   "tests/e2e/test_site_contrast.py",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "DESIGN_MD": [
+   "tests/test_design_md.py"
+  ],
+  "PROSE_E2E": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "prose",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "CONCENTRIC_E2E": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "concentric",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "CODE_PILL_E2E": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "inline_code_pill",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "FONTS": [
+   "tests/test_site_fonts.py"
+  ],
+  "COMPARE": [
+   "tests/test_compare_site_screens.py"
+  ],
+  "LOOK": [
+   "tests/e2e/test_site_look.py",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "SITE_CSS_K_UNDEFINED": [
+   "tests/test_site_css.py",
+   "-k",
+   "undefined_token"
+  ],
+  "SITE_CSS_K_REDEFINES": [
+   "tests/test_site_css.py",
+   "-k",
+   "redefines_no_docs"
+  ],
+  "SITE_CSS_K_PLANNED": [
+   "tests/test_site_css.py",
+   "-k",
+   "planned_sheets"
+  ],
+  "SITE_CSS_K_PAGE_SHEETS": [
+   "tests/test_site_css.py",
+   "-k",
+   "its_page_type_sheets"
+  ],
+  "SITE_CSS_K_FIRST": [
+   "tests/test_site_css.py",
+   "-k",
+   "tokens_fonts_and_base_first"
+  ],
+  "SITE_CSS_K_SAME_NAMES": [
+   "tests/test_site_css.py",
+   "-k",
+   "same_colour_names"
+  ],
+  "SITE_CSS_K_FONTS": [
+   "tests/test_site_css.py",
+   "-k",
+   "three_font_families"
+  ],
+  "SITE_CSS_K_RETIRED": [
+   "tests/test_site_css.py",
+   "-k",
+   "retired_token"
+  ],
+  "SITE_CSS_K_TEMPLATE_SCHEME": [
+   "tests/test_site_css.py",
+   "-k",
+   "no_template_declares"
+  ],
+  "SITE_CSS_K_DRIFT": [
+   "tests/test_site_css.py",
+   "-k",
+   "drifts"
+  ],
+  "SITE_CSS_K_RADII": [
+   "tests/test_site_css.py",
+   "-k",
+   "radii_are_design_md"
+  ],
+  "SITE_CSS_K_RADIUS_TOKENS": [
+   "tests/test_site_css.py",
+   "-k",
+   "radius_tokens"
+  ],
+  "SITE_CSS_K_HOVER_RING": [
+   "tests/test_site_css.py",
+   "-k",
+   "hover_that_changes_the_ring"
+  ],
+  "SITE_CSS_K_DEAD": [
+   "tests/test_site_css.py",
+   "-k",
+   "every_class_a_sheet"
+  ],
+  "SITE_CSS_K_SITE_BORDER": [
+   "tests/test_site_css.py",
+   "-k",
+   "no_site_component_draws"
+  ],
+  "SITE_CSS_K_SITE_RINGS": [
+   "tests/test_site_css.py",
+   "-k",
+   "every_ringed_site_component"
+  ],
+  "SITE_CSS_K_APP_RINGS": [
+   "tests/test_site_css.py",
+   "-k",
+   "every_ringed_app_component"
+  ],
+  "SITE_CSS_K_APP_BORDER": [
+   "tests/test_site_css.py",
+   "-k",
+   "no_app_component_draws"
+  ],
+  "PAGINATION": [
+   "tests/test_pagination_style.py"
+  ],
+  "LOOK_K_PHONE": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "small_phone",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "LOOK_K_MOTION": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "reduced_motion",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "LOOK_K_DATA_TABLE": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "data_table",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "LOOK_K_SCHEME": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "declares_its_scheme",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "LOOK_K_FORCED": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "forced_colours",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "LOOK_K_STEP": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "step_numeral",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "SPY": [
+   "tests/e2e/test_docs_behaviour.py",
+   "-k",
+   "heading_tops",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "MARK_K_INK": [
+   "tests/test_mark.py",
+   "-k",
+   "switches_ink"
+  ],
+  "MARK_K_LINKS": [
+   "tests/test_mark.py",
+   "-k",
+   "three_icons"
+  ],
+  "MARK_K_SAME": [
+   "tests/test_mark.py",
+   "-k",
+   "same_file"
+  ],
+  "FONTS_K_LATIN1": [
+   "tests/test_site_fonts.py",
+   "-k",
+   "latin1"
+  ],
+  "COMPARE_K_ONE_SIDE": [
+   "tests/test_compare_site_screens.py",
+   "-k",
+   "one_side_only"
+  ],
+  "COMPARE_K_OUT": [
+   "tests/test_compare_site_screens.py",
+   "-k",
+   "used_out_dir"
+  ],
+  "COMPARE_K_ONLY": [
+   "tests/test_compare_site_screens.py",
+   "-k",
+   "check_only"
+  ],
+  "DESIGN_MD_K_K3": [
+   "tests/test_design_md.py",
+   "-k",
+   "names_the_k3"
+  ],
+  "DESIGN_MD_K_BUILT": [
+   "tests/test_design_md.py",
+   "-k",
+   "read_as_built"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "NAV-MARK-GEOMETRY",
+   "file": "docs/_includes/nav.html",
+   "tests": "MARK",
+   "old": "d=\"M7,3 H17",
+   "new": "d=\"M7,3 H18"
+  },
+  {
+   "id": "FOOTER-MARK-GEOMETRY",
+   "file": "docs/_includes/footer.html",
+   "tests": "MARK",
+   "old": "d=\"M7,3 H17",
+   "new": "d=\"M7,3 H18"
+  },
+  {
+   "id": "APP-MARK-GEOMETRY",
+   "file": "app/templates/base.html",
+   "tests": "MARK",
+   "old": "d=\"M7,3 H17",
+   "new": "d=\"M7,3 H18"
+  },
+  {
+   "id": "SHIELD-BACK",
+   "file": "docs/_includes/footer.html",
+   "tests": "MARK",
+   "old": "<svg class=\"mark\" width=\"18\"",
+   "new": "<!-- M11 1 L20 5 --><svg class=\"mark\" width=\"18\""
+  },
+  {
+   "id": "OPERATOR-LOGO-IGNORED",
+   "file": "app/templates/base.html",
+   "tests": "MARK",
+   "old": "{% if brand.logo_url %}",
+   "new": "{% if false %}"
+  },
+  {
+   "id": "APP-MARK-NO-FILL",
+   "file": "app/static/css/site.css",
+   "tests": "MARK",
+   "old": "  color: var(--ink);\n  fill: currentColor;\n  flex: none;",
+   "new": "  color: var(--ink);\n  flex: none;"
+  },
+  {
+   "id": "SITE-MARK-NO-FILL",
+   "file": "docs/assets/css/base.css",
+   "tests": "MARK_E2E",
+   "old": ".mark { fill: currentColor; flex: none; }",
+   "new": ".mark { flex: none; }"
+  },
+  {
+   "id": "NAV-INK-IS-GROUND",
+   "file": "docs/assets/css/base.css",
+   "tests": "MARK_E2E",
+   "old": "  color: var(--ink);\n  flex-shrink: 0;",
+   "new": "  color: var(--canvas);\n  flex-shrink: 0;"
+  },
+  {
+   "id": "FOOTER-MARK-FULL-EMPHASIS",
+   "file": "docs/assets/css/base.css",
+   "tests": "MARK_E2E",
+   "old": ".footer-logo .mark { color: var(--inverse-ink); opacity: 0.5; }\n",
+   "new": ""
+  },
+  {
+   "id": "TOKEN-NOT-DESIGN-MD",
+   "file": "docs/assets/css/tokens.css",
+   "tests": "COLOURS",
+   "old": "  --surface-2: #ffffff;",
+   "new": "  --surface-2: #efefee;"
+  },
+  {
+   "id": "TOKEN-RGBA-TINT",
+   "file": "docs/assets/css/tokens.css",
+   "tests": "COLOURS",
+   "old": "  --warning-fog: color-mix(in srgb, var(--warning) 8%, transparent);",
+   "new": "  --warning-fog: rgba(138,90,18,0.08);"
+  },
+  {
+   "id": "SHEET-COLOUR-LITERAL",
+   "file": "docs/assets/css/base.css",
+   "tests": "COLOURS",
+   "old": ".footer-links a:hover { color: var(--inverse-ink); }",
+   "new": ".footer-links a:hover { color: #e2dcd2; }"
+  },
+  {
+   "id": "APP-SURFACE-OFF-DESIGN",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": "  --surface-card: #131315;",
+   "new": "  --surface-card: #161619;"
+  },
+  {
+   "id": "PAGE-PAINT-LITERAL",
+   "file": "docs/de/index.html",
+   "tests": "COLOURS",
+   "old": "<circle cx=\"9\" cy=\"11.5\" r=\"1.5\" fill=\"currentColor\"/>",
+   "new": "<circle cx=\"9\" cy=\"11.5\" r=\"1.5\" fill=\"#0c7253\"/>"
+  },
+  {
+   "id": "DARK-CODE-PILL-IN-BLOCK",
+   "file": "docs/assets/css/docs.css",
+   "tests": "CODE_E2E",
+   "old": "    pre { max-width: 100%; overflow-x: auto; }\n",
+   "new": "    pre { max-width: 100%; overflow-x: auto; }\n    [data-theme=\"dark\"] .docs-section code { background: var(--surface-3); }\n"
+  },
+  {
+   "id": "RECOMMENDED-PILL-LOW-CONTRAST",
+   "file": "docs/assets/css/docs.css",
+   "tests": "SITE_AXE",
+   "old": "    .env-req-no  { background: var(--surface);",
+   "new": "    .env-req-no  { background: var(--surface-3);"
+  },
+  {
+   "id": "TOKEN-WRONG-KEY-VALUE",
+   "file": "docs/assets/css/tokens.css",
+   "tests": "COLOURS",
+   "old": "  --ink: #0a0a0b;",
+   "new": "  --ink: #6a6a6e;"
+  },
+  {
+   "id": "TOKEN-NAMED-MIX",
+   "file": "docs/assets/css/tokens.css",
+   "tests": "COLOURS",
+   "old": "  --warning-fog: color-mix(in srgb, var(--warning) 10%, transparent);",
+   "new": "  --warning-fog: color-mix(in srgb, var(--warning) 10%, white);"
+  },
+  {
+   "id": "SHEET-NAMED-COLOUR",
+   "file": "docs/assets/css/post.css",
+   "tests": "COLOURS",
+   "old": ".btn-cta:hover { background: var(--accent-strong); color: var(--accent-ink);",
+   "new": ".btn-cta:hover { background: var(--accent-strong); color: white;"
+  },
+  {
+   "id": "SHEET-MIX-WHITE",
+   "file": "docs/assets/css/home.css",
+   "tests": "COLOURS",
+   "old": "0 4px 20px color-mix(in srgb, var(--accent) 30%, transparent);",
+   "new": "0 4px 20px color-mix(in srgb, var(--accent) 30%, white);"
+  },
+  {
+   "id": "SHEET-HSL",
+   "file": "docs/assets/css/docs.css",
+   "tests": "COLOURS",
+   "old": "    .t-str    { color: var(--inverse-warning); }",
+   "new": "    .t-str    { color: hsl(45 60% 60%); }"
+  },
+  {
+   "id": "FOREIGN-DOT-OUTSIDE-HOME",
+   "file": "docs/assets/css/docs.css",
+   "tests": "COLOURS",
+   "old": "    .t-prompt { color: var(--inverse-accent); user-select: none; }",
+   "new": "    .t-prompt { color: #28c840; user-select: none; }"
+  },
+  {
+   "id": "PAINT-SINGLE-QUOTED",
+   "file": "docs/de/index.html",
+   "tests": "COLOURS",
+   "old": "<circle cx=\"9\" cy=\"11.5\" r=\"1.5\" fill=\"currentColor\"/>",
+   "new": "<circle cx=\"9\" cy=\"11.5\" r=\"1.5\" fill='#0c7253'/>"
+  },
+  {
+   "id": "APP-DARK-BLOCK-SCOPED",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": "[data-theme=\"dark\"] {\n  --canvas: #08080a;",
+   "new": ".nav [data-theme=\"dark\"] {\n  --canvas: #08080a;"
+  },
+  {
+   "id": "APP-DARK-ACCENT-DERIVED",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": "  --accent: var(--brand-accent-dark,color-mix(in srgb,var(--brand-primary) 72%,#fff));",
+   "new": "  --accent: color-mix(in srgb,var(--brand-primary) 72%,#fff);"
+  },
+  {
+   "id": "DEFAULT-BRAND-WRONG-WEAK",
+   "file": "app/templating.py",
+   "tests": "COLOURS",
+   "old": "    \"accent-weak-dark\": \"#0d211a\",",
+   "new": "    \"accent-weak-dark\": \"#0d2a1a\","
+  },
+  {
+   "id": "CUSTOM-BRAND-GETS-DESIGN",
+   "file": "app/templating.py",
+   "tests": "COLOURS",
+   "old": "    return _DESIGN_ACCENT if primary_color.strip().lower() == default else {}",
+   "new": "    return _DESIGN_ACCENT"
+  },
+  {
+   "id": "HEADINGS-NOT-BALANCED",
+   "file": "docs/assets/css/base.css",
+   "tests": "COLOURS",
+   "old": "h1, h2, h3 { text-wrap: balance; }",
+   "new": "h1, h2, h3 { text-wrap: wrap; }"
+  },
+  {
+   "id": "BTN-TRANSITIONS-ALL",
+   "file": "docs/assets/css/home.css",
+   "tests": "COLOURS",
+   "old": "transition: background var(--duration-fast) var(--ease-stiff), box-shadow",
+   "new": "transition: all var(--duration-fast) var(--ease-stiff), box-shadow"
+  },
+  {
+   "id": "APP-TOGGLE-TRANSITIONS-ALL",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": "transition-property: color, background-color, box-shadow;",
+   "new": "transition-property: all;"
+  },
+  {
+   "id": "FIGURES-NOT-TABULAR",
+   "file": "docs/assets/css/base.css",
+   "tests": "COLOURS",
+   "old": "table, code, pre { font-variant-numeric: tabular-nums; }",
+   "new": "table, code, pre { font-variant-numeric: normal; }"
+  },
+  {
+   "id": "DESIGN-MD-SEAL-BACK",
+   "file": "DESIGN.md",
+   "tests": "DESIGN_MD",
+   "old": "### Brand mark (K3)",
+   "new": "### Brand / seal mark"
+  },
+  {
+   "id": "DESIGN-MD-NO-DIAGRAMS",
+   "file": "DESIGN.md",
+   "tests": "DESIGN_MD",
+   "old": "## Diagrams",
+   "new": "## Pictures"
+  },
+  {
+   "id": "DESIGN-MD-COLOR-SCHEME-GONE",
+   "file": "DESIGN.md",
+   "tests": "DESIGN_MD",
+   "old": "`[data-theme=\"light\"] { color-scheme: only light }`",
+   "new": "`[data-theme=\"light\"] { color-scheme: light }`"
+  },
+  {
+   "id": "DESIGN-MD-KEY-UNNAMED",
+   "file": "DESIGN.md",
+   "tests": "DESIGN_MD",
+   "old": "- `{colors.surface-3}` \u2014 one step",
+   "new": "- `surface-3` \u2014 one step"
+  },
+  {
+   "id": "SITE-CARD-BORDER-BACK",
+   "file": "docs/assets/css/home.css",
+   "tests": "COLOURS",
+   "old": "    .compliance-card {\n      box-shadow: 0 0 0 1px var(--hairline);",
+   "new": "    .compliance-card {\n      border: 1px solid var(--hairline);"
+  },
+  {
+   "id": "SITE-CODE-BORDER-BACK",
+   "file": "docs/assets/css/post.css",
+   "tests": "COLOURS",
+   "old": "color: var(--accent); box-shadow: 0 0 0 1px var(--hairline); }",
+   "new": "color: var(--accent); border: 1px solid var(--hairline); }"
+  },
+  {
+   "id": "APP-PANEL-BORDER-BACK",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": ".panel-outline {\n  animation: fadeSlideIn 0.4s ease both;\n  background: var(--canvas);\n  border-radius: 12px;\n  padding: 1.5rem;\n  box-shadow: 0 0 0 1px var(--hairline);",
+   "new": ".panel-outline {\n  animation: fadeSlideIn 0.4s ease both;\n  background: var(--canvas);\n  border-radius: 12px;\n  padding: 1.5rem;\n  border-width: 1px;\n  border-color: var(--hairline);"
+  },
+  {
+   "id": "APP-STAT-NOT-TABULAR",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": ".credential-display,\n.stat-card__number,\n.stat-card__value,",
+   "new": ".credential-display,\n.stat-card__value,"
+  },
+  {
+   "id": "APP-LANG-OPTION-NOT-CONCENTRIC",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": ".lang-picker-option {\n  border-radius: 0.25rem;",
+   "new": ".lang-picker-option {\n  border-radius: 0.5rem;"
+  },
+  {
+   "id": "SITE-TERMINAL-BAR-NOT-CONCENTRIC",
+   "file": "docs/assets/css/home.css",
+   "tests": "CONCENTRIC_E2E",
+   "old": "      gap: var(--space-3);\n    }\n    .terminal-dots {",
+   "new": "      gap: var(--space-3);\n      border-radius: 12px;\n    }\n    .terminal-dots {"
+  },
+  {
+   "id": "CALLOUT-PROSE-UNCAPPED",
+   "file": "docs/assets/css/base.css",
+   "tests": "PROSE_E2E",
+   "old": "line-height: 1.7; max-width: 70ch; margin-bottom: 0; }",
+   "new": "line-height: 1.7; max-width: none; margin-bottom: 0; }"
+  },
+  {
+   "id": "DESIGN-MD-K3-SIZE-WRONG",
+   "file": "DESIGN.md",
+   "tests": "DESIGN_MD",
+   "old": "`display` weight 600, at 22px in the site nav",
+   "new": "`display` weight 600, at 20px in the site nav"
+  },
+  {
+   "id": "DESIGN-MD-RETIRED-TOKEN",
+   "file": "DESIGN.md",
+   "tests": "DESIGN_MD",
+   "old": "### Brand mark (K3)\n",
+   "new": "### Brand mark (K3)\n\nSee --bg-base.\n"
+  },
+  {
+   "id": "PANEL-PRIMARY-STRIPE-LOST",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": "box-shadow: inset 0 3px 0 var(--ink), 0 0 0 1px var(--hairline);",
+   "new": "box-shadow: 0 0 0 1px var(--hairline);"
+  },
+  {
+   "id": "BANNER-EXPIRED-SHADOWLESS",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": "box-shadow: 0 0 0 1px var(--danger), 0 6px 24px rgba(0, 0, 0, 0.15);",
+   "new": "box-shadow: 0 0 0 1px var(--danger);"
+  },
+  {
+   "id": "FORCED-APP-MODE-CARD-MISSING",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": ".badge-received, .mode-card,\n  .credential-display",
+   "new": ".badge-received,\n  .credential-display"
+  },
+  {
+   "id": "FORCED-SITE-ENV-PILL-MISSING",
+   "file": "docs/assets/css/base.css",
+   "tests": "COLOURS",
+   "old": ".env-req-yes, .env-req-no, code,",
+   "new": ".env-req-yes, code,"
+  },
+  {
+   "id": "LANG-MENU-NARROW",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": "  width: max-content;\n  padding-bottom: 0.25rem;",
+   "new": "  padding-bottom: 0.25rem;"
+  },
+  {
+   "id": "LANG-MENU-RADIUS-CHANGED",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": "border-radius: 0.5rem;\n  box-shadow: 0 0 0 1px var(--hairline), 0 4px 16px",
+   "new": "border-radius: 0.25rem;\n  box-shadow: 0 0 0 1px var(--hairline), 0 4px 16px"
+  },
+  {
+   "id": "TRANSITION-PROPERTY-TWICE",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": "transition-property: background-color, border-color, color;",
+   "new": "transition-property: background-color, border-color, color, color;"
+  },
+  {
+   "id": "WEBHOOK-PRE-UNFRAMED",
+   "file": "docs/en/docs/index.html",
+   "tests": "COLOURS",
+   "old": "<div class=\"code-block\" role=\"region\" aria-label=\"Webhook JSON payload\">",
+   "new": "<div role=\"region\" aria-label=\"Webhook JSON payload\">"
+  },
+  {
+   "id": "SITE-COLOR-SCHEME-LIGHT",
+   "file": "docs/assets/css/base.css",
+   "tests": "COLOURS",
+   "old": "[data-theme=\"light\"] { color-scheme: only light; }",
+   "new": "[data-theme=\"light\"] { color-scheme: light; }"
+  },
+  {
+   "id": "APP-COLOR-SCHEME-LIGHT",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": "[data-theme=\"light\"] { color-scheme: only light; }",
+   "new": "[data-theme=\"light\"] { color-scheme: light; }"
+  },
+  {
+   "id": "APP-COLOR-SCHEME-DARK-GONE",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": "[data-theme=\"dark\"] { color-scheme: dark; }\n",
+   "new": ""
+  },
+  {
+   "id": "FONTS-WITHOUT-EXTRA",
+   "file": "scripts/build_site.py",
+   "tests": "FONTS",
+   "old": "text = _drawn_text(out) + FONT_TEXT_EXTRA",
+   "new": "text = _drawn_text(out)"
+  },
+  {
+   "id": "FONTS-DEFAULT-LAYOUT-FEATURES",
+   "file": "scripts/build_site.py",
+   "tests": "FONTS",
+   "old": "        options.layout_features = [\"*\"]\n",
+   "new": ""
+  },
+  {
+   "id": "FONTS-NOT-SUBSET",
+   "file": "scripts/build_site.py",
+   "tests": "FONTS",
+   "old": "    subset_fonts(out)\n    if redirect_stubs:",
+   "new": "    if redirect_stubs:"
+  },
+  {
+   "id": "COMPARE-IGNORES-SIZE",
+   "file": "scripts/compare_site_screens.py",
+   "tests": "COMPARE",
+   "old": "        pa.paste(ia)\n        pb.paste(ib)\n",
+   "new": ""
+  },
+  {
+   "id": "FIRST-VIEW-THIRD-SORA-PRELOAD",
+   "file": "docs/_includes/head.html",
+   "tests": "LOOK",
+   "old": "  <link rel=\"preload\" href=\"/fonts/sora-latin-700-normal.woff2\" as=\"font\" type=\"font/woff2\" crossorigin>\n",
+   "new": "  <link rel=\"preload\" href=\"/fonts/sora-latin-700-normal.woff2\" as=\"font\" type=\"font/woff2\" crossorigin>\n  <link rel=\"preload\" href=\"/fonts/sora-latin-500-normal.woff2\" as=\"font\" type=\"font/woff2\" crossorigin>\n"
+  },
+  {
+   "id": "UNDEFINED-TOKEN",
+   "file": "docs/assets/css/base.css",
+   "tests": "SITE_CSS_K_UNDEFINED",
+   "old": ".callout-note { background: var(--accent-fog);",
+   "new": ".callout-note { background: var(--accent-fog-x);"
+  },
+  {
+   "id": "NINTH-SHEET",
+   "file": "docs/assets/css/extra.css",
+   "tests": "SITE_CSS_K_PLANNED",
+   "create": ".extra { color: var(--ink); }\n"
+  },
+  {
+   "id": "TEXT-PAGE-WITHOUT-DOCS-CSS",
+   "file": "docs/en/roadmap/index.html",
+   "tests": "SITE_CSS_K_PAGE_SHEETS",
+   "old": "css:\n- docs\n- page\n",
+   "new": "css:\n- page\n"
+  },
+  {
+   "id": "FONTS-LINKED-BEFORE-TOKENS",
+   "file": "docs/_includes/head.html",
+   "tests": "SITE_CSS_K_FIRST",
+   "old": "  <link rel=\"stylesheet\" href=\"/assets/css/tokens.css\">\n  <link rel=\"stylesheet\" href=\"/assets/css/fonts.css\">",
+   "new": "  <link rel=\"stylesheet\" href=\"/assets/css/fonts.css\">\n  <link rel=\"stylesheet\" href=\"/assets/css/tokens.css\">"
+  },
+  {
+   "id": "DARK-TOKEN-MISSING",
+   "file": "docs/assets/css/tokens.css",
+   "tests": "SITE_CSS_K_SAME_NAMES",
+   "old": "  --danger-weak: #2a1512;\n",
+   "new": ""
+  },
+  {
+   "id": "MONO-FAMILY-DROPPED",
+   "file": "docs/assets/css/tokens.css",
+   "tests": "SITE_CSS_K_FONTS",
+   "old": "  --font-mono: 'JetBrains Mono', ui-monospace, monospace;",
+   "new": "  --font-mono: ui-monospace, monospace;"
+  },
+  {
+   "id": "RETIRED-TOKEN-BACK",
+   "file": "docs/assets/css/docs.css",
+   "tests": "SITE_CSS_K_RETIRED",
+   "old": "    .t-cmd    { color: var(--inverse-ink); }",
+   "new": "    .t-cmd    { color: var(--code-text, var(--inverse-ink)); }"
+  },
+  {
+   "id": "TEMPLATE-COLOR-SCHEME",
+   "file": "app/templates/base.html",
+   "tests": "SITE_CSS_K_TEMPLATE_SCHEME",
+   "old": "    <style nonce=\"{{ request.state.csp_nonce }}\">\n        :root {\n",
+   "new": "    <style nonce=\"{{ request.state.csp_nonce }}\">\n        :root {\n            color-scheme: light;\n"
+  },
+  {
+   "id": "PAGE-TYPE-SHEETS-DRIFT",
+   "file": "docs/assets/css/home.css",
+   "tests": "SITE_CSS_K_DRIFT",
+   "old": ".shot-dark { display: none; }",
+   "new": ".shot-dark { display: none; opacity: 1; }"
+  },
+  {
+   "id": "PHONE-TABLE-UNSCROLLED",
+   "file": "docs/assets/css/docs.css",
+   "tests": "LOOK_K_PHONE",
+   "old": "    .table-scroll { overflow-x: auto; }\n",
+   "new": ""
+  },
+  {
+   "id": "REDUCED-MOTION-ANIMATES",
+   "file": "docs/assets/css/base.css",
+   "tests": "LOOK_K_MOTION",
+   "old": "    animation-duration: 0.01ms !important;\n",
+   "new": ""
+  },
+  {
+   "id": "DATA-TABLE-PATH-WRAPS",
+   "file": "docs/assets/css/post.css",
+   "tests": "LOOK_K_DATA_TABLE",
+   "old": "    .data-table code { white-space: nowrap; }\n",
+   "new": ""
+  },
+  {
+   "id": "SITE-SCHEME-UNDECLARED",
+   "file": "docs/assets/css/base.css",
+   "tests": "LOOK_K_SCHEME",
+   "old": "[data-theme=\"light\"] { color-scheme: only light; }",
+   "new": "[data-theme=\"light\"] { color-scheme: normal; }"
+  },
+  {
+   "id": "FAVICON-NO-DARK-INK",
+   "file": "docs/favicon.svg",
+   "tests": "MARK_K_INK",
+   "old": "@media (prefers-color-scheme:dark){path{fill:#fafafa}}",
+   "new": ""
+  },
+  {
+   "id": "ICON-LINKS-REORDERED",
+   "file": "docs/_includes/head.html",
+   "tests": "MARK_K_LINKS",
+   "old": "  <link rel=\"icon\" href=\"/favicon.ico\" sizes=\"32x32\">\n  <link rel=\"icon\" href=\"/favicon.svg\" type=\"image/svg+xml\">",
+   "new": "  <link rel=\"icon\" href=\"/favicon.svg\" type=\"image/svg+xml\">\n  <link rel=\"icon\" href=\"/favicon.ico\" sizes=\"32x32\">"
+  },
+  {
+   "id": "FAVICONS-DIVERGE",
+   "file": "app/static/favicon.svg",
+   "tests": "MARK_K_SAME",
+   "old": "path{fill:#0a0a0b}",
+   "new": "path{fill:#0a0a0c}"
+  },
+  {
+   "id": "FONTS-NO-LATIN1",
+   "file": "scripts/build_site.py",
+   "tests": "FONTS_K_LATIN1",
+   "old": "    + \"\".join(chr(c) for c in range(0xA0, 0x100))\n",
+   "new": ""
+  },
+  {
+   "id": "COMPARE-ONE-SIDE-IGNORED",
+   "file": "scripts/compare_site_screens.py",
+   "tests": "COMPARE_K_ONE_SIDE",
+   "old": "for name in sorted({p.name for p in base.glob(\"*.png\")} | {p.name for p in head.glob(\"*.png\")}):",
+   "new": "for name in sorted({p.name for p in base.glob(\"*.png\")} & {p.name for p in head.glob(\"*.png\")}):"
+  },
+  {
+   "id": "COMPARE-USED-OUT-ACCEPTED",
+   "file": "scripts/compare_site_screens.py",
+   "tests": "COMPARE_K_OUT",
+   "old": "    if out.exists() and any(out.iterdir()):",
+   "new": "    if False:"
+  },
+  {
+   "id": "COMPARE-UNKNOWN-ONLY-ACCEPTED",
+   "file": "scripts/compare_site_screens.py",
+   "tests": "COMPARE_K_ONLY",
+   "old": "    if unknown := sorted(set(only) - set(urls)):",
+   "new": "    if unknown := sorted(set(only) - set(urls) - set(only)):"
+  },
+  {
+   "id": "DESIGN-MD-K3-SOURCE-UNNAMED",
+   "file": "DESIGN.md",
+   "tests": "DESIGN_MD_K_K3",
+   "old": "- The geometry lives in `scripts/render_icons.py` (`MARK`)",
+   "new": "- The geometry lives in `scripts/icons.py` (`MARK`)"
+  },
+  {
+   "id": "FORCED-CODE-LINES-BOXED",
+   "file": "docs/assets/css/base.css",
+   "tests": "LOOK_K_FORCED",
+   "old": "  pre code, .docs-section pre code { border: none; }",
+   "new": "  pre code { border: none; }"
+  },
+  {
+   "id": "FORCED-POST-PRE-UNFRAMED",
+   "file": "docs/assets/css/base.css",
+   "tests": "LOOK_K_FORCED",
+   "old": ".code-block, .article-body pre, .doc-shot img,",
+   "new": ".code-block, .doc-shot img,"
+  },
+  {
+   "id": "PAGE-CSS-COPIES-DOCS",
+   "file": "docs/assets/css/page.css",
+   "tests": "SITE_CSS_K_REDEFINES",
+   "old": "    /* A nested list stays with its item",
+   "new": "    .docs-breadcrumb span { color: var(--muted); }\n    /* A nested list stays with its item"
+  },
+  {
+   "id": "DESIGN-MD-NAV-TRANSLUCENT",
+   "file": "DESIGN.md",
+   "tests": "DESIGN_MD_K_BUILT",
+   "old": "Sticky nav on an opaque `{colors.canvas}`",
+   "new": "Sticky nav on a translucent `{colors.canvas}`"
+  },
+  {
+   "id": "DESIGN-MD-PER-PAGE-UNNAMED",
+   "file": "DESIGN.md",
+   "tests": "DESIGN_MD_K_BUILT",
+   "old": "the admin tables'\nper-page select.",
+   "new": "the admin tables'\nrow-count select."
+  },
+  {
+   "id": "RADIUS-TOKEN-OFF-DESIGN",
+   "file": "docs/assets/css/tokens.css",
+   "tests": "SITE_CSS_K_RADII",
+   "old": "  --radius-md: 8px;",
+   "new": "  --radius-md: 10px;"
+  },
+  {
+   "id": "RADIUS-LITERAL-IN-SHEET",
+   "file": "docs/assets/css/post.css",
+   "tests": "SITE_CSS_K_RADIUS_TOKENS",
+   "old": "color: var(--accent-ink); border-radius: var(--radius-md);",
+   "new": "color: var(--accent-ink); border-radius: 2px;"
+  },
+  {
+   "id": "APP-TOGGLE-RING-SNAPS",
+   "file": "app/static/css/site.css",
+   "tests": "SITE_CSS_K_HOVER_RING",
+   "old": "transition-property: color, background-color, box-shadow;\n  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);\n  box-shadow: 0 0 0 1px var(--hairline);",
+   "new": "transition-property: color, background-color, border-color;\n  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);\n  box-shadow: 0 0 0 1px var(--hairline);"
+  },
+  {
+   "id": "SITE-DASHED-BORDER",
+   "file": "docs/assets/css/home.css",
+   "tests": "SITE_CSS_K_SITE_BORDER",
+   "old": "    .compliance-card {\n      box-shadow: 0 0 0 1px var(--hairline);",
+   "new": "    .compliance-card {\n      border: 1px dashed var(--hairline);"
+  },
+  {
+   "id": "SITE-BORDER-WIDTH",
+   "file": "docs/assets/css/docs.css",
+   "tests": "SITE_CSS_K_SITE_BORDER",
+   "old": "    .docs-breadcrumb span { color: var(--muted); }",
+   "new": "    .docs-breadcrumb span { color: var(--muted); border-width: 1px; }"
+  },
+  {
+   "id": "RING-FIRST-IN-MEDIA",
+   "file": "docs/assets/css/base.css",
+   "tests": "SITE_CSS_K_SITE_RINGS",
+   "old": "  .footer-grid { grid-template-columns: 1fr; gap: var(--space-8); }",
+   "new": "  .footer-grid { grid-template-columns: 1fr; gap: var(--space-8); box-shadow: 0 0 0 1px var(--hairline); }"
+  },
+  {
+   "id": "RING-INSET-UNLISTED",
+   "file": "docs/assets/css/docs.css",
+   "tests": "SITE_CSS_K_SITE_RINGS",
+   "old": "    .docs-breadcrumb span { color: var(--muted); }",
+   "new": "    .docs-breadcrumb span { color: var(--muted); box-shadow: inset 0 0 0 1px var(--hairline); }"
+  },
+  {
+   "id": "APP-COMPOSED-RING-UNLISTED",
+   "file": "app/static/css/site.css",
+   "tests": "SITE_CSS_K_APP_RINGS",
+   "old": "  .panel-primary, .pagination-page, .pagination-page-current {",
+   "new": "  .pagination-page, .pagination-page-current {"
+  },
+  {
+   "id": "PAGINATION-BORDER-BACK",
+   "file": "app/static/css/site.css",
+   "tests": "SITE_CSS_K_APP_BORDER",
+   "old": "  border-radius: 0.375rem;\n  box-shadow: 0 0 0 1px var(--hairline);\n  color: var(--body-text);",
+   "new": "  border-radius: 0.375rem;\n  border-color: var(--hairline);\n  border-width: 1px;\n  color: var(--body-text);"
+  },
+  {
+   "id": "PAGINATION-DISABLED-NO-EDGE",
+   "file": "app/static/css/site.css",
+   "tests": "PAGINATION",
+   "old": "  outline: 1px dashed var(--hairline);\n  outline-offset: -1px;\n",
+   "new": ""
+  },
+  {
+   "id": "PAGINATION-FORCED-SOLID",
+   "file": "app/static/css/site.css",
+   "tests": "PAGINATION",
+   "old": "  .pagination-disabled { border-style: dashed; outline: none; }\n",
+   "new": ""
+  },
+  {
+   "id": "STEP-TITLE-BELOW-NUMERAL",
+   "file": "docs/assets/css/post.css",
+   "tests": "LOOK_K_STEP",
+   "old": "color: var(--ink); margin: 0 0 var(--space-2); }",
+   "new": "color: var(--ink); margin-bottom: var(--space-2); }"
+  },
+  {
+   "id": "STEP-NUMERAL-SMUDGE",
+   "file": "docs/assets/css/post.css",
+   "tests": "LOOK_K_STEP",
+   "old": "font-weight: 700; color: var(--muted); line-height: 1; flex-shrink: 0;",
+   "new": "font-weight: 700; color: var(--hairline-strong); line-height: 1; flex-shrink: 0;"
+  },
+  {
+   "id": "SPY-DOCS-LINE-100PX",
+   "file": "docs/assets/js/sidebar-docs.js",
+   "tests": "SPY",
+   "old": "  var line = window.scrollY + window.innerHeight / 3;",
+   "new": "  var line = window.scrollY + 100;"
+  },
+  {
+   "id": "SPY-PAGES-LINE-100PX",
+   "file": "docs/assets/js/sidebar.js",
+   "tests": "SPY",
+   "old": "  var line = window.scrollY + window.innerHeight / 3;",
+   "new": "  var line = window.scrollY + 100;"
+  },
+  {
+   "id": "DEAD-CLASS-RULE",
+   "file": "docs/assets/css/post.css",
+   "tests": "SITE_CSS_K_DEAD",
+   "old": "    .val-bad { color: var(--muted); }\n",
+   "new": "    .val-bad { color: var(--muted); }\n    .val-warn { color: var(--warning); }\n"
+  },
+  {
+   "id": "APP-WORDMARK-NO-TRANSLATE",
+   "file": "app/templates/base.html",
+   "tests": "MARK",
+   "old": "<span translate=\"no\">{{ brand.name }}</span>\n        </a>",
+   "new": "<span>{{ brand.name }}</span>\n        </a>"
+  },
+  {
+   "id": "APP-WORDMARK-ACCENT-SPLIT",
+   "file": "app/templates/base.html",
+   "tests": "MARK",
+   "old": "<span translate=\"no\">{{ brand.name }}</span>\n        </a>",
+   "new": "<span translate=\"no\">Open<strong>Whistle</strong></span>\n        </a>"
+  }
+ ]
+}

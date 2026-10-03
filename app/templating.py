@@ -9,7 +9,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from markupsafe import Markup, escape
 
-from app.config import settings
+from app.config import Settings, settings
 from app.i18n import format_count, get_lang, make_translator
 from app.services import deadlines
 from app.services.attachment import format_size
@@ -42,6 +42,25 @@ templates.env.filters["wbr_after_hyphens"] = wbr_after_hyphens
 
 
 templates.env.filters["category_label"] = category_label
+
+# DESIGN.md's accent family, for the default brand only. A custom brand.primary_color keeps the
+# tints site.css derives from it; these hold exactly what DESIGN.md says the emerald looks like.
+_DESIGN_ACCENT = {
+    "accent-weak": "#e5f3ee",
+    "accent-strong": "#0b6249",
+    "accent-dark": "#23c088",
+    "accent-weak-dark": "#0d211a",
+    "accent-strong-dark": "#1fa878",
+}
+
+
+def brand_accent(primary_color: str) -> dict[str, str]:
+    """The `--brand-*` overrides base.html emits: DESIGN.md's for the default brand, else none."""
+    default = Settings.model_fields["brand_primary_color"].default
+    return _DESIGN_ACCENT if primary_color.strip().lower() == default else {}
+
+
+templates.env.globals["brand_accent"] = brand_accent
 
 templates.env.globals["brand"] = {
     "name": settings.app_name,

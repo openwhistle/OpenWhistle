@@ -10,9 +10,9 @@
     <title>{% block title %}{{ brand.name }}{% endblock %}</title>
 
     {# No external resources - DSGVO compliance #}
-    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
-    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+    <link rel="icon" href="/static/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/static/apple-touch-icon.png" sizes="180x180">
     <link rel="stylesheet" href="{{ static_url('css/fonts.css') }}">
     <link rel="stylesheet" href="{{ static_url('css/site.css') }}">
 
@@ -21,6 +21,9 @@
     <style nonce="{{ request.state.csp_nonce }}">
         :root {
             --brand-primary:   {{ brand.primary_color }};
+            {%- for name, value in brand_accent(brand.primary_color).items() %}
+            --brand-{{ name }}: {{ value }};
+            {%- endfor %}
         }
         .u-hidden { display: none; }
         .u-m0 { margin: 0; }
@@ -58,21 +61,9 @@
             {% if brand.logo_url %}
                 <img src="{{ brand.logo_url }}" alt="{{ brand.name }}" class="nav-logo-img">
             {% else %}
-                <svg width="26" height="30" viewBox="0 0 28 33" fill="none"
-                     xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-                    <path d="M14 2 L25 6.5 L25 18 C25 26 20 31 14 32 C8 31 3 26 3 18 L3 6.5 Z"
-                          stroke="var(--accent)" stroke-width="1.5" fill="var(--accent-subtle)"
-                          stroke-linejoin="round"/>
-                    <circle cx="14" cy="23" r="1.4" fill="var(--accent)"/>
-                    <path d="M11,20.5 A4,4 0 0,1 17,20.5"
-                          stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round"/>
-                    <path d="M8.5,18.5 A7,7 0 0,1 19.5,18.5"
-                          stroke="var(--accent)" stroke-width="1.3" stroke-linecap="round" opacity="0.72"/>
-                    <path d="M6.5,16.5 A10,10 0 0,1 21.5,16.5"
-                          stroke="var(--accent)" stroke-width="1" stroke-linecap="round" opacity="0.42"/>
-                </svg>
+                <svg class="mark" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill-rule="evenodd" d="M7,3 H17 A4,4 0 0 1 21,7 V13 A4,4 0 0 1 17,17 H11.5 L7,20.8 V17 A4,4 0 0 1 3,13 V7 A4,4 0 0 1 7,3 Z M10.60,11.81 A3.5,3.5 0 1 1 13.40,11.81 L14.50,15.4 H9.50 Z"/></svg>
             {% endif %}
-            <span>Open<strong>Whistle</strong></span>
+            <span translate="no">{{ brand.name }}</span>
         </a>
 
         <ul class="nav-links" role="list">
@@ -147,7 +138,7 @@
 
     <footer class="footer" role="contentinfo">
         <div class="footer-inner">
-            <p class="footer-brand">{{ brand.name }} <span class="footer-tagline">{{ t('footer.tagline') }}</span></p>
+            <p class="footer-brand"><span translate="no">{{ brand.name }}</span> <span class="footer-tagline">{{ t('footer.tagline') }}</span></p>
             <ul class="footer-links" role="list">
                 <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener">{{ t('footer.open_source') }}</a></li>
                 <li><a href="https://www.gesetze-im-internet.de/hinschg/" rel="noopener">HinSchG</a></li>

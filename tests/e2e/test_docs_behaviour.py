@@ -114,6 +114,28 @@ def test_scroll_spy_marks_exactly_one_current_sidebar_link(
     assert count == 1
 
 
+@pytest.mark.parametrize("url", ["/en/docs/", "/en/changelog/"])
+@pytest.mark.parametrize("below_nav", [0, 60, 200])
+def test_scroll_spy_marks_the_section_whose_heading_tops_the_view(
+    browser: Browser, docs_server_url: str, url: str, below_nav: int
+) -> None:
+    """A section's heading just under the sticky nav is the one being read, not the tail of
+    the previous section above it (Chrome check: "Container Images" lit over "Installation")."""
+    ctx, page = _new_page(browser, docs_server_url, width=1920, height=1080)
+    page.goto(url)
+    target = page.evaluate("[...document.querySelectorAll('.docs-section[id]')][3].id")
+    page.evaluate(
+        """([id, gap]) => { const nav = document.querySelector('.site-nav').offsetHeight;
+             const top = document.getElementById(id).getBoundingClientRect().top + scrollY;
+             window.scrollTo({top: top - nav - gap, behavior: 'instant'}); }""",
+        [target, below_nav],
+    )
+    page.wait_for_timeout(100)
+    active = page.evaluate("document.querySelector('.sidebar-links a.active')?.hash")
+    ctx.close()
+    assert active == f"#{target}", (url, below_nav, active)
+
+
 # ── No JavaScript ─────────────────────────────────────────────────────────
 
 
