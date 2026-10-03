@@ -94,6 +94,37 @@ def test_a_path_in_a_data_table_stays_on_one_line(
     assert broken == [], f"{url} at {width} px: code broken over lines: {broken}"
 
 
+@pytest.mark.parametrize("url", STEPS_POSTS)
+@pytest.mark.parametrize("theme", ["dark", "light"])
+def test_a_step_numeral_reads_and_shares_the_title_line(
+    browser: Browser, docs_server_url: str, url: str, theme: str
+) -> None:
+    """The numeral and the step title start on one line, and the numeral is not a smudge:
+    at least 3:1 against the block (large text, WCAG 1.4.11's floor for what carries meaning)."""
+    ctx = browser.new_context(viewport={"width": 1920, "height": 1080})
+    ctx.add_init_script(f"localStorage.setItem('ow-theme','{theme}')")
+    try:
+        page = ctx.new_page()
+        page.goto(f"{docs_server_url}{url}")
+        steps = page.evaluate(
+            """() => { const rgb = s => s.match(/[\\d.]+/g).slice(0, 3).map(Number);
+              const lum = c => { const [r, g, b] = c.map(v => { v /= 255;
+                  return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+                return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+              return [...document.querySelectorAll('.step-block')].map(b => {
+                const n = b.querySelector('.step-num'), h = b.querySelector('.step-content h3');
+                const [l1, l2] = [lum(rgb(getComputedStyle(n).color)),
+                                  lum(rgb(getComputedStyle(b).backgroundColor))];
+                return [Math.abs(n.getBoundingClientRect().top - h.getBoundingClientRect().top),
+                        (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05)]; }); }"""
+        )
+    finally:
+        ctx.close()
+    assert steps
+    for offset, contrast in steps:
+        assert offset <= 1 and contrast >= 3, (url, theme, offset, round(contrast, 2))
+
+
 def test_reduced_motion_stops_the_reveal_and_the_smooth_scroll(
     browser: Browser, docs_server_url: str
 ) -> None:

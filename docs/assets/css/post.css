@@ -35,9 +35,10 @@
 
     /* Steps */
     .step-block { display: flex; gap: var(--space-6); margin: var(--space-6) 0; padding: var(--space-6); background: var(--surface); box-shadow: 0 0 0 1px var(--hairline); border-left: 4px solid var(--accent); }
-    .step-num { font-family: var(--font-display); font-size: 2.5rem; font-weight: 700; color: var(--hairline-strong); line-height: 1; flex-shrink: 0; width: 2.5rem; }
+    .step-num { font-family: var(--font-display); font-size: 2.5rem; font-weight: 700; color: var(--muted); line-height: 1; flex-shrink: 0; width: 2.5rem; }
     .step-content { flex: 1; }
-    .step-content h3 { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--ink); margin-bottom: var(--space-2); }
+    /* margin, not margin-bottom: .article-body h3's top margin would push the title below the numeral. */
+    .step-content h3 { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--ink); margin: 0 0 var(--space-2); }
     .step-content p { font-size: 0.92rem; color: var(--body); margin-bottom: var(--space-3); }
     .step-content p:last-child { margin-bottom: 0; }
 
