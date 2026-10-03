@@ -284,7 +284,7 @@
    "id": "APP-TOGGLE-TRANSITIONS-ALL",
    "file": "app/static/css/site.css",
    "tests": "COLOURS",
-   "old": "transition-property: color, background-color, border-color;",
+   "old": "transition-property: color, background-color, box-shadow;",
    "new": "transition-property: all;"
   },
   {

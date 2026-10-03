@@ -420,13 +420,16 @@ def test_nothing_transitions_all() -> None:
         assert not re.search(r"transition(-property)?\s*:\s*all\b", css), sheet.name
 
 
+# A rule's selector starts after the previous rule's `}` or after an `@media {`.
+RULE = r"(?:\A|(?<=[{}]))\s*([^{}@]+?)\s*\{([^{}]*)\}"
+# A 1px ring anywhere in a box-shadow list, inset or not.
+RING = r"box-shadow:[^;]*?(?<![\w.-])0 0 0 1px"
+
+
 def _rule_selectors(text: str) -> list[tuple[set[str], str]]:
     """Every top-level rule as (its comma-separated selectors, its body)."""
     text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
-    return [
-        ({s.strip() for s in head.split(",")}, body)
-        for head, body in re.findall(r"(?:\A|(?<=\}))\s*([^{}@]+?)\s*\{([^{}]*)\}", text)
-    ]
+    return [({s.strip() for s in head.split(",")}, body) for head, body in re.findall(RULE, text)]
 
 
 def _app_rule(selector: str) -> str:
@@ -462,7 +465,8 @@ def test_no_site_component_draws_a_decorative_border() -> None:
     """DESIGN.md "Rules": a decorative edge is a box-shadow ring; only structural borders
     (row separators, accent bars: border-top/bottom/left) stay."""
     for sheet in CSS.glob("*.css"):
-        assert not re.search(r"(?<![-\w])border:\s*[\d.]+px solid", _stripped(sheet)), sheet.name
+        found = re.search(r"(?<![-\w])border(-width)?:\s*[\d.]+px", _stripped(sheet))
+        assert not found, (sheet.name, found and found.group(0))
 
 
 APP_RING_COMPONENTS = (
@@ -482,6 +486,8 @@ APP_RING_COMPONENTS = (
     ".theme-toggle",
     ".lang-picker-btn",
     ".lang-picker-menu",
+    ".pagination-page",
+    ".pagination-page-current",
 )
 
 
@@ -564,7 +570,7 @@ def test_every_ringed_app_component_has_a_forced_colours_border() -> None:
     ringed = {
         s
         for sels, body in _rule_selectors(_stripped(APP_CSS))
-        if re.search(r"box-shadow:\s*0 0 0 1px", body)
+        if re.search(RING, body)
         for s in sels
         if ":" not in s.removeprefix('[data-theme="dark"] ')
     }
@@ -578,13 +584,30 @@ def test_every_ringed_site_component_has_a_forced_colours_border() -> None:
     for sheet in CSS.glob("*.css"):
         text = _stripped(sheet)
         text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
-        for head, body in re.findall(r"(?:\A|(?<=\}))\s*([^{}@]+?)\s*\{([^{}]*)\}", text):
-            if not re.search(r"box-shadow:\s*0 0 0 1px", body):
+        for head, body in re.findall(RULE, text):
+            if not re.search(RING, body):
                 continue
             for s in (x.strip() for x in head.split(",")):
                 if ":" not in s.removeprefix('[data-theme="dark"] ') and not _listed(block, s):
                     missing.add(f"{sheet.name}: {s}")
     assert not missing, sorted(missing)
+
+
+def test_a_hover_that_changes_the_ring_transitions_it() -> None:
+    """A transition list without box-shadow makes the ring snap while the fill fades."""
+    for sheet in [*CSS.glob("*.css"), APP_CSS]:
+        rules = _rule_selectors(_stripped(sheet))
+        for sels, body in rules:
+            for hover in (s for s in sels if s.endswith(":hover") and "box-shadow" in body):
+                base = hover.removesuffix(":hover")
+                lists = [
+                    m.group(1)
+                    for bsels, bbody in rules
+                    if base in bsels
+                    for m in [re.search(r"transition(?:-property)?:\s*([^;]+);", bbody)]
+                    if m
+                ]
+                assert all("box-shadow" in x for x in lists), (sheet.name, base, lists)
 
 
 def test_the_language_menu_sizes_to_its_longest_name() -> None:

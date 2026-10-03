@@ -725,7 +725,7 @@ strong {
   padding-left: 0.625rem;
   padding-right: 0.625rem;
   transition-duration: 0.15s;
-  transition-property: color, background-color, border-color;
+  transition-property: color, background-color, box-shadow;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 0 0 1px var(--hairline);
 }
@@ -1511,16 +1511,17 @@ tr:hover td {
   /* Muted colour, not opacity: 38 % opacity fell below the 4.5:1 contrast
      axe asks of text, which showed once the dashboard had a second page. */
   background: transparent;
-  border-style: dashed;
+  box-shadow: none;
   color: var(--muted);
   cursor: default;
+  outline: 1px dashed var(--hairline);
+  outline-offset: -1px;
   pointer-events: none;
 }
 .pagination-page {
   align-items: center;
-  border-color: var(--hairline);
   border-radius: 0.375rem;
-  border-width: 1px;
+  box-shadow: 0 0 0 1px var(--hairline);
   color: var(--body-text);
   display: inline-flex;
   font-family: var(--font-body);
@@ -1532,7 +1533,7 @@ tr:hover td {
   padding-left: 0.375rem;
   padding-right: 0.375rem;
   transition-duration: 0.12s;
-  transition-property: color, background-color, border-color, box-shadow, text-decoration-color, fill, stroke;
+  transition-property: color, background-color, box-shadow, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 .pagination-page,
@@ -1541,12 +1542,12 @@ tr:hover td {
 }
 .pagination-page:hover {
   background: var(--surface-card);
-  border-color: var(--border-strong);
+  box-shadow: 0 0 0 1px var(--border-strong);
   color: var(--ink);
 }
 .pagination-page-current {
   background: var(--cta-bg);
-  border-color: var(--cta-bg);
+  box-shadow: 0 0 0 1px var(--cta-bg);
   color: var(--cta-text);
   cursor: default;
   pointer-events: none;
@@ -3950,7 +3951,10 @@ a.attachment-name:hover {
   .btn, .btn-primary, .btn-danger, .btn-secondary, .panel-outline, .panel, .badge-received, .mode-card,
   .credential-display, .credential-box, .attachment-item, .qr-wrapper, .totp-secret-card,
   .saved-confirm-label, .demo-credentials, .demo-cred-value, .demo-cred-code, .demo-report-row,
-  .session-expiry-banner, .session-expiry-banner.session-expiry-expired-state, .card, .theme-toggle, .lang-picker-btn, .lang-picker-menu, .admin-menu {
+  .session-expiry-banner, .session-expiry-banner.session-expiry-expired-state, .card, .theme-toggle, .lang-picker-btn, .lang-picker-menu, .admin-menu,
+  .panel-primary, .pagination-page, .pagination-page-current {
     border: 1px solid CanvasText;
   }
+  /* A disabled pagination button keeps its dashed edge as the border here. */
+  .pagination-disabled { border-style: dashed; outline: none; }
 }
