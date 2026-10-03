@@ -34,6 +34,7 @@ from dataclasses import dataclass, field
 from html.parser import HTMLParser
 from pathlib import Path
 from types import ModuleType
+from typing import Any
 from urllib.parse import unquote, urljoin, urlsplit
 
 import yaml
@@ -67,7 +68,7 @@ class Page:
     source: Path  # relative to the source root
     url: str  # site-absolute, e.g. "/en/docs/"
     lang: str
-    meta: dict
+    meta: dict[str, Any]
     content: str  # HTML between the navigation and the footer
     alternates: dict[str, str] = field(default_factory=dict)  # language -> url
 
@@ -86,7 +87,7 @@ def output_file(out: Path, url: str) -> Path:
     return path if url.endswith(".html") else path / "index.html"
 
 
-def split_front_matter(rel: Path, text: str) -> tuple[dict, str]:
+def split_front_matter(rel: Path, text: str) -> tuple[dict[str, Any], str]:
     if not text.startswith("---\n"):
         raise BuildError(f"{rel}: a page must open with '---' front matter")
     closed = _FRONT_MATTER.match(text)
@@ -101,7 +102,7 @@ def split_front_matter(rel: Path, text: str) -> tuple[dict, str]:
     return meta, text[closed.end() :]
 
 
-def _flatten(tree: dict, prefix: str = "") -> Iterator[str]:
+def _flatten(tree: dict[str, Any], prefix: str = "") -> Iterator[str]:
     for key, value in tree.items():
         if isinstance(value, dict):
             yield from _flatten(value, f"{prefix}{key}.")
@@ -109,26 +110,28 @@ def _flatten(tree: dict, prefix: str = "") -> Iterator[str]:
             yield prefix + key
 
 
-def lookup(tree: dict, dotted: str) -> str:
+def lookup(tree: dict[str, Any], dotted: str) -> str:
     for part in dotted.split("."):
         tree = tree[part]
     return str(tree)
 
 
-def _yaml(path: Path) -> dict:
+def _yaml(path: Path) -> dict[str, Any]:
     try:
         return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     except yaml.YAMLError as error:
         raise BuildError(f"{path.name}: not valid YAML: {error}") from error
 
 
-def load_data(src: Path) -> dict:
+def load_data(src: Path) -> dict[str, Any]:
     data = src / "_data"
     site = _yaml(data / "site.yml")
     # One version string: the app's. A footer that typed it by hand would go stale.
-    site["version"] = re.search(
+    found = re.search(
         r'app_version: str = "([^"]+)"', (ROOT / "app" / "config.py").read_text(encoding="utf-8")
-    ).group(1)
+    )
+    assert found
+    site["version"] = found.group(1)
     i18n = {lang: _yaml(data / "i18n" / f"{lang}.yml") for lang in site["languages"]}
     want = set(_flatten(i18n[site["default_language"]]))
     for lang, strings in i18n.items():
@@ -157,7 +160,7 @@ def _load_script(name: str) -> ModuleType:
 def _changelog() -> str:
     changelog = _load_script("render_changelog")
     source = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
-    return changelog.render_content(*changelog.parse(source))
+    return str(changelog.render_content(*changelog.parse(source)))
 
 
 # generator name -> (function, the file its output comes from)
@@ -170,7 +173,7 @@ def _is_skipped(rel: Path) -> bool:
     return any(part.startswith("_") for part in rel.parts)
 
 
-def load_pages(src: Path, site: dict) -> list[Page]:
+def load_pages(src: Path, site: dict[str, Any]) -> list[Page]:
     pages: list[Page] = []
     for path in sorted(p for p in src.rglob("*") if p.is_file()):
         rel = path.relative_to(src)
@@ -185,6 +188,7 @@ def load_pages(src: Path, site: dict) -> list[Page]:
         lang = rel.parts[0] if in_language_dir else meta.get("lang")
         if lang not in site["languages"]:
             raise BuildError(f"{rel}: no language; put it under /<lang>/ or set `lang`")
+        assert isinstance(lang, str)  # narrowed: a missing lang raised above
         if "generated" in meta:
             if meta["generated"] not in GENERATORS:
                 raise BuildError(f"{rel}: unknown generator {meta['generated']!r}")
@@ -218,11 +222,11 @@ def load_pages(src: Path, site: dict) -> list[Page]:
     return pages
 
 
-def language_roots(site: dict) -> set[str]:
+def language_roots(site: dict[str, Any]) -> set[str]:
     return {f"/{lang}/" for lang in site["languages"]}
 
 
-def hreflang(page: Page, site: dict) -> list[tuple[str, str]]:
+def hreflang(page: Page, site: dict[str, Any]) -> list[tuple[str, str]]:
     """The <link rel=alternate> set, shared by the head and the sitemap."""
     if len(page.alternates) < 2:
         return []
@@ -236,11 +240,15 @@ def hreflang(page: Page, site: dict) -> list[tuple[str, str]]:
 
 
 def nav_context(
-    page: Page, nav: dict, by_key: dict[str, dict[str, Page]], site: dict, t: dict
-) -> dict:
+    page: Page,
+    nav: dict[str, Any],
+    by_key: dict[str, dict[str, Page]],
+    site: dict[str, Any],
+    t: dict[str, Any],
+) -> dict[str, Any]:
     roots = language_roots(site)
 
-    def items(section: str) -> list[dict]:
+    def items(section: str) -> list[dict[str, Any]]:
         out = []
         for entry in nav.get(section, []):
             group = by_key[entry["page"]]
@@ -270,7 +278,7 @@ def nav_context(
     return {"primary": items("primary"), "footer": items("footer"), "languages": languages}
 
 
-def check_nav(nav: dict, pages: list[Page], site: dict) -> None:
+def check_nav(nav: dict[str, Any], pages: list[Page], site: dict[str, Any]) -> None:
     keys = {str(p.meta["translation_key"]) for p in pages}
     named: set[str] = set()
     for section in ("primary", "footer"):
@@ -299,7 +307,7 @@ def environment(src: Path) -> Environment:
 
 
 def render_page(
-    env: Environment, page: Page, data: dict, by_key: dict[str, dict[str, Page]]
+    env: Environment, page: Page, data: dict[str, Any], by_key: dict[str, dict[str, Page]]
 ) -> str:
     site, t = data["site"], data["i18n"][page.lang]
     return env.get_template("base.html").render(
@@ -375,7 +383,7 @@ def check_links(out: Path, host: str) -> None:
         raise BuildError("broken internal links:\n  " + "\n  ".join(errors))
 
 
-def check_redirects(redirects: dict, pages: list[Page]) -> None:
+def check_redirects(redirects: dict[str, Any], pages: list[Page]) -> None:
     urls = {page.url for page in pages}
     for old, new in redirects.items():
         if new not in urls:
@@ -397,7 +405,10 @@ STUB = """<!DOCTYPE html>
 
 
 def write_stubs(
-    out: Path, redirects: dict, site: dict, sources: dict[str, Path] | None = None
+    out: Path,
+    redirects: dict[str, Any],
+    site: dict[str, Any],
+    sources: dict[str, Path] | None = None,
 ) -> None:
     """GitHub Pages cannot send a 301; until P5 a stub stands in for each one.
 
@@ -465,7 +476,7 @@ def lastmod(path: Path) -> str:
     return committed if committed and not _git("status", "--porcelain", "--", rel) else today
 
 
-def write_sitemap(out: Path, src: Path, pages: list[Page], site: dict) -> None:
+def write_sitemap(out: Path, src: Path, pages: list[Page], site: dict[str, Any]) -> None:
     entries = []
     for page in sorted(pages, key=lambda p: p.url):
         if page.meta.get("noindex"):
