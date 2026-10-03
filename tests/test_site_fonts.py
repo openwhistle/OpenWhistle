@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import html as html_lib
 import re
+from html.parser import HTMLParser
 from pathlib import Path
 
 import pytest
@@ -15,13 +15,50 @@ ROOT = Path(__file__).resolve().parents[1]
 FACES = sorted(p.name for p in (ROOT / "docs" / "fonts").glob("*.woff2"))
 
 
-def _visible_text() -> set[str]:
+class _Text(HTMLParser):
+    """Text a browser may draw: text nodes, alt/title/aria-label/placeholder, not script/style."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.chars: set[str] = set()
+        self._skip = 0
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag in ("script", "style"):
+            self._skip += 1
+        for name, value in attrs:
+            if name in ("alt", "title", "aria-label", "placeholder") and value:
+                self.chars |= set(value)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in ("script", "style"):
+            self._skip -= 1
+
+    def handle_data(self, data: str) -> None:
+        if not self._skip:
+            self.chars |= set(data)
+
+
+def _unescape(m: re.Match[str]) -> str:
+    return chr(int(m.group(1), 16))
+
+
+def _css_content_text() -> set[str]:
     chars: set[str] = set()
+    for sheet in (built() / "assets" / "css").glob("*.css"):
+        css = sheet.read_text(encoding="utf-8")
+        for decl in re.findall(r"(?<![\w-])content\s*:([^;}]*)", css):
+            for _, string in re.findall(r"(['\"])((?:\\.|(?!\1).)*)\1", decl):
+                string = re.sub(r"\\([0-9a-fA-F]{1,6})\s?", _unescape, string)
+                chars |= set(string)
+    return chars
+
+
+def _visible_text() -> set[str]:
+    parser = _Text()
     for path in pages():
-        text = path.read_text(encoding="utf-8")
-        text = re.sub(r"<(script|style)\b.*?</\1>", "", text, flags=re.S)
-        chars |= set(html_lib.unescape(re.sub(r"<[^>]+>", "", text)))
-    return {c for c in chars if c.isprintable() and not c.isspace()}
+        parser.feed(path.read_text(encoding="utf-8"))
+    return {c for c in parser.chars | _css_content_text() if c.isprintable() and not c.isspace()}
 
 
 @pytest.mark.parametrize("face", FACES)
