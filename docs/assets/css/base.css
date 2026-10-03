@@ -1,4 +1,4 @@
-/* Owned by docs/_includes/footer.html. Values are today's inline styles. */
+/* Owned by docs/_includes/footer.html: its two small print lines. */
 .footer-note { font-size: 0.85rem; color: var(--inverse-muted); line-height: 1.7; }
 .footer-disclaimer { font-size: 0.82rem; color: var(--inverse-muted); line-height: 1.7; margin-top: 0.75rem; }
 /* Owned by docs/_includes/nav.html: the sticky nav must not cover a #fragment target. */
@@ -267,7 +267,8 @@ body {
 @media (forced-colors: active) {
   .theme-toggle, .btn-outline, .btn-accent, .nav-cta, .feature-card, .compliance-card, .install-reqs,
   details.faq-item, .article-card, .step-block, .cost-card, .cost-breakdown, .article-cta, .terminal-window,
-  .code-block, .doc-shot img, .btn-primary, .compliance-card-badge, .feature-icon-wrap, .trust-item-check,
+  .code-block, .article-body pre, .doc-shot img, .btn-primary, .compliance-card-badge, .feature-icon-wrap, .trust-item-check,
   .docs-section code, .env-req-yes, .env-req-no, code, details.faq-item[open] { border: 1px solid CanvasText; }
-  pre code { border: none; }
+  /* A code block is framed once: its lines are not inline code, whatever the list above matches. */
+  pre code, .docs-section pre code { border: none; }
 }

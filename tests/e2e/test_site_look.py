@@ -203,6 +203,35 @@ def test_a_code_block_draws_no_inline_code_pill(
     assert pills == 0, (theme, url, pills)
 
 
+CODE_PAGES = sorted(
+    "/" + p.relative_to(built()).as_posix().removesuffix("index.html")
+    for p in pages()
+    if "<pre" in p.read_text(encoding="utf-8")
+)
+
+
+@pytest.mark.parametrize("url", CODE_PAGES)
+def test_forced_colours_frame_each_code_block_once(
+    browser: Browser, docs_server_url: str, url: str
+) -> None:
+    """Forced colours drop the shadow and background that frame a code block, so base.css gives
+    it a real border; its lines must not each get one (the inline-code border)."""
+    ctx = browser.new_context(forced_colors="active")
+    try:
+        page = ctx.new_page()
+        page.goto(f"{docs_server_url}{url}")
+        boxed, unframed = page.evaluate(
+            """() => { const solid = el => el && getComputedStyle(el).borderTopStyle !== 'none';
+              const frame = p => p.closest('.code-block, .terminal-window');
+              return [[...document.querySelectorAll('pre code')].filter(solid).length,
+                      [...document.querySelectorAll('pre')]
+                        .filter(p => !solid(p) && !solid(frame(p))).length]; }"""
+        )
+    finally:
+        ctx.close()
+    assert (boxed, unframed) == (0, 0), (url, "boxed lines", boxed, "unframed blocks", unframed)
+
+
 PROSE_PAGES = ("/en/docs/", "/en/blog/hinschg-compliance-guide/", "/en/roadmap/")
 
 
