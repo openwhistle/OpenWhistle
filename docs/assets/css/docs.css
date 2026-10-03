@@ -267,7 +267,7 @@
       border-radius: 2px;
     }
     .env-req-yes { background: var(--danger-weak); color: var(--danger); border: 1px solid color-mix(in srgb, var(--danger) 20%, transparent); }
-    .env-req-no  { background: var(--surface-3); color: var(--muted); border: 1px solid var(--hairline); }
+    .env-req-no  { background: var(--surface); color: var(--muted); border: 1px solid var(--hairline); }
 
     /* Security layers */
     .security-layers {
