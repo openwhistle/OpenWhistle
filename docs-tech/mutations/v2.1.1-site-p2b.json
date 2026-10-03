@@ -422,13 +422,6 @@
    "new": "transition-property: background-color, border-color, color, color;"
   },
   {
-   "id": "PRE-CODE-WEARS-THE-PILL",
-   "file": "docs/assets/css/docs.css",
-   "tests": "CODE_PILL_E2E",
-   "old": "    .docs-section pre code {\n      background: none;",
-   "new": "    .docs-section pre code {\n      background: var(--surface-3);"
-  },
-  {
    "id": "WEBHOOK-PRE-UNFRAMED",
    "file": "docs/en/docs/index.html",
    "tests": "COLOURS",

@@ -180,16 +180,6 @@
       overflow-wrap: break-word;
     }
 
-    /* A block of code is not an inline code pill, whatever markup it carries. */
-    .docs-section pre code {
-      background: none;
-      box-shadow: none;
-      padding: 0;
-      border-radius: 0;
-      font-size: inherit;
-      color: inherit;
-    }
-
 
     /* Comparison tables: scroll inside the column on a phone. */
     .table-scroll { overflow-x: auto; }
