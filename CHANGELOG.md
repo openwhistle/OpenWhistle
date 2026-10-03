@@ -28,11 +28,16 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
-- The sitemap's `lastmod` compares commit and build dates in UTC.
 - No site page is wider than a 360 px phone; the German home stacks its tables like the English one.
 - Dark-mode code blocks drew a box around every line.
-- Contrast: footer text, the Recommended pill and the dark primary button now reach AA.
+- Contrast: footer text, code and terminal comments and labels, the Required pill and the posts' dark
+  call-to-action button now reach AA.
 - The two code samples on the docs page get the code-block frame and label.
+- With forced colours (Windows High Contrast), a blog post's code block has an edge.
+- A blog step's title starts level with its numeral, and the numeral reads (it was 1.3:1).
+- The sidebar of the docs, roadmap and changelog marks the section whose heading tops the view, not the one
+  before it.
+- The site's corners follow `DESIGN.md`'s radius scale, as the app's do; they were 2 and 4 px.
 - The language menu no longer wraps its names.
 
 ## [2.1.0] — 2026-09-27
