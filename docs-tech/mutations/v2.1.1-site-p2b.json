@@ -427,6 +427,13 @@
    "tests": "CODE_PILL_E2E",
    "old": "    .docs-section pre code {\n      background: none;",
    "new": "    .docs-section pre code {\n      background: var(--surface-3);"
+  },
+  {
+   "id": "WEBHOOK-PRE-UNFRAMED",
+   "file": "docs/en/docs/index.html",
+   "tests": "COLOURS",
+   "old": "<div class=\"code-block\" role=\"region\" aria-label=\"Webhook JSON payload\">",
+   "new": "<div role=\"region\" aria-label=\"Webhook JSON payload\">"
   }
  ]
 }

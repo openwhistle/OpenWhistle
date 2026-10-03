@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from html.parser import HTMLParser
 from pathlib import Path
 
 import pytest
@@ -596,3 +597,38 @@ def test_a_transition_property_list_names_each_property_once() -> None:
         for names in re.findall(r"transition-property:\s*([^;]+);", sheet.read_text("utf-8")):
             parts = [n.strip() for n in names.split(",")]
             assert len(parts) == len(set(parts)), (sheet.name, names)
+
+
+# Every code sample has one look: a framed, labelled .code-block. A post's <pre> is framed by
+# post.css (.article-body pre) and the home terminal by .terminal-window; nothing else may be bare.
+PRE_HOMES = ("code-block", "terminal-window", "article-body")
+_VOID = {"br", "img", "hr", "meta", "link", "input", "source", "wbr", "col", "area", "base"}
+
+
+class _PreFinder(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.stack: list[set[str]] = []
+        self.bare = 0
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag in _VOID:
+            return
+        classes = set(dict(attrs).get("class", "").split())
+        if tag == "pre" and not any(c in PRE_HOMES for s in self.stack for c in s):
+            self.bare += 1
+        self.stack.append(classes)
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag not in _VOID and self.stack:
+            self.stack.pop()
+
+
+def test_every_pre_sits_in_a_framed_code_component() -> None:
+    bare = {}
+    for path in pages():
+        finder = _PreFinder()
+        finder.feed(path.read_text(encoding="utf-8"))
+        if finder.bare:
+            bare[str(path.relative_to(built()))] = finder.bare
+    assert not bare, bare

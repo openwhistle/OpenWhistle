@@ -982,12 +982,17 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
           <code>X-OpenWhistle-Signature: sha256=&lt;hex&gt;</code> header lets the receiver verify it
           (HMAC-SHA256).
         </p>
-        <pre><code>{
+        <div class="code-block" role="region" aria-label="Webhook JSON payload">
+          <div class="code-block-header">
+            <span class="code-block-lang">json</span>
+          </div>
+          <pre><code>{
   "event": "new_activity",
   "new_reports": 2,
   "new_messages": 1,
   "message": "2 new reports, 1 case with new messages"
 }</code></pre>
+        </div>
         <p><code>new_messages</code> counts cases with new whistleblower messages, not the messages.</p>
 <div class="table-scroll">
 <table class="env-table">
@@ -1285,8 +1290,13 @@ User-Agent: openwhistle/&lt;version&gt;</code></pre>
           <code>clamd</code> daemon can scan attachments before they are stored. Off by default; to
           turn it on:
         </p>
-        <pre><code>COMPOSE_PROFILES=clamav
+        <div class="code-block" role="region" aria-label="ClamAV compose profile settings">
+          <div class="code-block-header">
+            <span class="code-block-lang">.env</span>
+          </div>
+          <pre><code>COMPOSE_PROFILES=clamav
 CLAMAV_HOST=clamav</code></pre>
+        </div>
         <ul>
           <li><code>docker-compose.prod.yml</code> ships a <code>clamav</code> service behind the <code>clamav</code> profile, never reachable from the host.</li>
           <li>It shares only the internal Docker network with <code>app</code>, not the <code>proxy</code> network, so nginx cannot reach it either.</li>
