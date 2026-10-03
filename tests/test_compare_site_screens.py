@@ -58,3 +58,30 @@ def test_every_built_html_page_is_a_url(tmp_path: Path) -> None:
 
 def test_the_shots_cover_both_themes_at_desktop_and_phone() -> None:
     assert set(cs.SHOTS) == {("light", 1920), ("dark", 1920), ("light", 390), ("dark", 390)}
+
+
+def test_a_shot_on_one_side_only_is_a_difference(tmp_path: Path) -> None:
+    for d in ("base", "head"):
+        (tmp_path / d).mkdir()
+    _png(tmp_path / "base/gone-dark-390.png", (4, 4), (0, 0, 0))
+    _png(tmp_path / "head/new-dark-390.png", (4, 4), (0, 0, 0))
+    _png(tmp_path / "base/same-dark-390.png", (4, 4), (0, 0, 0))
+    _png(tmp_path / "head/same-dark-390.png", (4, 4), (0, 0, 0))
+    lines = cs.compare_dirs(tmp_path / "base", tmp_path / "head", tmp_path)
+    assert lines == ["gone-dark-390.png: removed page", "new-dark-390.png: new page"]
+
+
+def test_an_unknown_only_url_fails_and_a_used_out_dir_is_refused(tmp_path: Path) -> None:
+    import pytest
+
+    (tmp_path / "stale.png").write_text("x")
+    with pytest.raises(SystemExit, match="not empty"):
+        cs.main(["--out", str(tmp_path)])
+
+
+def test_check_only_names_the_unknown_urls() -> None:
+    import pytest
+
+    cs.check_only(["/en/"], ["/en/", "/de/"])
+    with pytest.raises(SystemExit, match="/en$"):
+        cs.check_only(["/en/", "/en"], ["/en/"])

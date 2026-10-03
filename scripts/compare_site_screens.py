@@ -1,8 +1,8 @@
 """Prove a CSS change changes no pixel, or show exactly which pages it changes.
 
-    uv run python scripts/compare_site_screens.py [BASE_REF] [--out DIR] [--only URL ...]
+    uv run python scripts/compare_site_screens.py [--base REF] [--out DIR] [--only URL ...]
 
-Builds the site of BASE_REF (default: main) in a temporary git worktree and the site of
+Builds the site of REF (--base, default: main) in a temporary git worktree and the site of
 the working tree, serves both on localhost, screenshots every page in both themes at 1920
 and 390 px (full page, animations off, lazy images loaded), and compares pixel by pixel.
 Exit 1 lists every differing shot with a diff image. Used by the P2b CSS work: a pure
@@ -115,7 +115,7 @@ def _screens(base_url: str, urls: list[str], out: Path) -> None:
     with sync_playwright() as p:
         browser = p.chromium.launch()
         for theme, width in SHOTS:
-            ctx = browser.new_context(viewport={"width": width, "height": 1000}, color_scheme=theme)  # type: ignore[arg-type]
+            ctx = browser.new_context(viewport={"width": width, "height": 1000}, color_scheme=theme)  # type: ignore[arg-type]  # theme is a str; playwright wants a Literal
             ctx.add_init_script(f"try{{localStorage.setItem('ow-theme','{theme}')}}catch(e){{}}")
             page = ctx.new_page()
             for url in urls:
@@ -128,13 +128,34 @@ def _name(url: str) -> str:
     return url.strip("/").replace("/", "_").removesuffix(".html") or "root"
 
 
+def check_only(only: list[str], urls: list[str]) -> None:
+    if unknown := sorted(set(only) - set(urls)):
+        raise SystemExit(f"--only matches no page: {', '.join(unknown)}")
+
+
+def compare_dirs(base: Path, head: Path, out: Path) -> list[str]:
+    """One line per shot that differs, or exists on one side only; diff PNGs go to `out`."""
+    lines = []
+    for name in sorted({p.name for p in base.glob("*.png")} | {p.name for p in head.glob("*.png")}):
+        before, after = base / name, head / name
+        if not before.exists():
+            lines.append(f"{name}: new page")
+        elif not after.exists():
+            lines.append(f"{name}: removed page")
+        elif px := same_image(before, after, out / f"diff-{name}"):
+            lines.append(f"{name}: {px} px changed -> {out / f'diff-{name}'}")
+    return lines
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("base", nargs="?", default="main")
-    parser.add_argument("--out", type=Path)
+    parser.add_argument("--base", default="main", help="git ref of the site to compare against")
+    parser.add_argument("--out", type=Path, help="empty or new directory for the screenshots")
     parser.add_argument("--only", nargs="*", default=[])
     args = parser.parse_args(argv)
     out = args.out or Path(tempfile.mkdtemp(prefix="ow-screens-"))
+    if out.exists() and any(out.iterdir()):
+        raise SystemExit(f"--out {out} is not empty: stale screenshots would fake a result")
     with tempfile.TemporaryDirectory(prefix="ow-compare-") as tmp:
         tmp_path = Path(tmp)
         worktree = tmp_path / "base-src"
@@ -147,31 +168,24 @@ def main(argv: list[str] | None = None) -> int:
             _build(worktree, tmp_path / "base")
             _build(ROOT, tmp_path / "head")
         finally:
-            subprocess.run(  # noqa: S603
+            gone = subprocess.run(  # noqa: S603
                 ["git", "worktree", "remove", "--force", str(worktree)],  # noqa: S607
-                check=True,
+                check=False,
                 cwd=ROOT,
             )
-        urls = sorted(set(page_urls(tmp_path / "base")) | set(page_urls(tmp_path / "head")))
-        if args.only:
-            urls = [u for u in urls if u in args.only]
-        for side in ("base", "head"):
+            if gone.returncode:
+                print(f"warning: could not remove worktree {worktree}", file=sys.stderr)
+        sides = {side: page_urls(tmp_path / side) for side in ("base", "head")}
+        check_only(args.only, sides["base"] + sides["head"])
+        for side, urls in sides.items():
             (out / side).mkdir(parents=True, exist_ok=True)
             with _serve(tmp_path / side) as base_url:
-                _screens(base_url, urls, out / side)
-    changed = 0
-    for shot in sorted((out / "head").glob("*.png")):
-        before = out / "base" / shot.name
-        if not before.exists():
-            print(f"{shot.name}: new page")
-            changed += 1
-            continue
-        diff = out / f"diff-{shot.name}"
-        if (px := same_image(before, shot, diff)) > 0:
-            print(f"{shot.name}: {px} px changed -> {diff}")
-            changed += 1
-    print(f"{changed} differing shot(s); screenshots in {out}")
-    return 1 if changed else 0
+                _screens(base_url, [u for u in urls if not args.only or u in args.only], out / side)
+    lines = compare_dirs(out / "base", out / "head", out)
+    if lines:
+        print("\n".join(lines))
+    print(f"{len(lines)} differing shot(s); screenshots in {out}")
+    return 1 if lines else 0
 
 
 if __name__ == "__main__":
