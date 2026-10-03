@@ -171,16 +171,13 @@
     .docs-section code {
       font-family: var(--font-mono);
       font-size: 0.82em;
-      background: var(--surface-2);
+      background: var(--surface-3);
       border: 1px solid var(--hairline);
       padding: 1px 5px;
       border-radius: 2px;
       color: var(--ink);
       /* A long path or setting name wraps on a phone instead of widening the page. */
       overflow-wrap: break-word;
-    }
-    [data-theme="dark"] .docs-section code {
-      background: var(--surface-3);
     }
 
 
@@ -261,10 +258,10 @@
     .article-card:hover {
       border-top-color: var(--accent);
       transform: translateY(-3px);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+      box-shadow: 0 8px 32px color-mix(in srgb, var(--inverse) 8%, transparent);
     }
     [data-theme="dark"] .article-card { background: var(--surface); }
-    [data-theme="dark"] .article-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+    [data-theme="dark"] .article-card:hover { box-shadow: 0 8px 32px color-mix(in srgb, var(--inverse) 40%, transparent); }
     .article-tag {
       font-family: var(--font-mono);
       font-size: 0.6rem;

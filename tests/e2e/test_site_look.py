@@ -177,3 +177,22 @@ def test_the_footer_mark_reads_at_half_emphasis(
     # The old shield's look: footer ink at half emphasis (.footer-logo .mark in base.css).
     assert fill != bg and fill not in ("none", "rgba(0, 0, 0, 0)"), (theme, fill, bg)
     assert opacity == "0.5", (theme, opacity)
+
+
+@pytest.mark.parametrize("theme", ["dark", "light"])
+def test_a_code_block_draws_no_inline_code_pill(
+    browser: Browser, docs_server_url: str, theme: str
+) -> None:
+    """The inline-code fill stops at a code block: dark mode once painted a grey box per line."""
+    ctx = browser.new_context()
+    try:
+        ctx.add_init_script(f"localStorage.setItem('ow-theme','{theme}')")
+        page = ctx.new_page()
+        page.goto(f"{docs_server_url}/en/docs/")
+        fills = page.evaluate(
+            """() => [...document.querySelectorAll('.code-block pre code')]
+                     .map(c => getComputedStyle(c).backgroundColor)"""
+        )
+    finally:
+        ctx.close()
+    assert fills and set(fills) == {"rgba(0, 0, 0, 0)"}, (theme, sorted(set(fills)))

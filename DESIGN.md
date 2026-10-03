@@ -21,13 +21,23 @@ colors:
   canvas:        { light: "#ffffff", dark: "#08080a" }   # page background
   surface:       { light: "#f6f6f5", dark: "#131315" }   # raised panels, table headers, inputs
   surface-2:     { light: "#ffffff", dark: "#1b1b1e" }   # cards floated above surface
+  surface-3:     { light: "#e9e9e8", dark: "#232327" }   # one step above surface-2 (inline code, hover on a card)
   ink:           { light: "#0a0a0b", dark: "#fafafa" }   # headings, primary text
   body:          { light: "#3d3d40", dark: "#bcbcc0" }   # body copy
   muted:         { light: "#6a6a6e", dark: "#8e8e93" }   # secondary / metadata
   hairline:      { light: "#e6e6e4", dark: "#262629" }   # 1px borders & dividers
+  hairline-strong: { light: "#d8d8d6", dark: "#34343a" } # borders that must read (outline button, toggle)
+
+  # Inverse — a dark fill in BOTH themes: site footer, code blocks, terminal illustrations.
+  inverse:       { light: "#0a0a0b", dark: "#050506" }   # the fill
+  inverse-ink:   { light: "#fafafa", dark: "#fafafa" }   # text on inverse
+  inverse-muted: { light: "#a1a1aa", dark: "#a1a1aa" }   # secondary text on inverse
+  inverse-accent: { light: "#23c088", dark: "#23c088" }  # the dark-theme emerald, for marks on inverse (terminal prompt)
+  inverse-warning: { light: "#d6a13c", dark: "#d6a13c" } # the dark-theme warning, for highlights on inverse (terminal string)
 
   # Accent — emerald. The ONE brand colour. Scarce as a button, generous as a block.
   accent:        { light: "#0c7253", dark: "#23c088" }   # seal mark, one primary CTA, focus
+  accent-strong: { light: "#0b6249", dark: "#1fa878" }   # accent hover
   accent-ink:    { light: "#ffffff", dark: "#06120d" }   # text/marks on an accent fill
   accent-weak:   { light: "#e5f3ee", dark: "#0d211a" }   # accent tint (selected chips, hover)
 
@@ -39,6 +49,7 @@ colors:
   warning:       { light: "#8a5a12", dark: "#d6a13c" }
   warning-weak:  { light: "#f6ecd9", dark: "#241c0d" }
   danger:        { light: "#bf3529", dark: "#f0776b" }
+  danger-strong: { light: "#a82e23", dark: "#e0604f" }   # danger hover
   danger-weak:   { light: "#f8e7e4", dark: "#2a1512" }
 
 typography:
@@ -148,6 +159,8 @@ neutrals from the ladder by role, never by eye:
 - `{colors.ink}` / `{colors.body}` / `{colors.muted}` — a three-step text ramp.
   Carry hierarchy with these plus **weight**, not with mid-greys invented per page.
 - `{colors.hairline}` — every 1px border and divider.
+- `{colors.inverse}` — a dark fill in both themes (site footer, code, terminal);
+  text on it is `{colors.inverse-ink}` / `{colors.inverse-muted}`.
 
 **The accent is a budget, not a palette.** On any given screen the emerald appears,
 at most: once as the primary button, on focus rings, on the selected chip

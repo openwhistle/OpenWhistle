@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 
 from tests.built_site import built, page, pages, stylesheets
+from tests.diagram_tools import renderer
 
 ROOT = Path(__file__).resolve().parents[1]
 CSS = ROOT / "docs" / "assets" / "css"
@@ -194,3 +195,88 @@ def test_no_selector_drifts_between_two_page_type_sheets() -> None:
         if k not in sheets[a].keys() & sheets[b].keys()
     ]
     assert not stale, stale
+
+
+_HEX = re.compile(r"#[0-9a-fA-F]{3,8}\b")
+_RGB = re.compile(r"rgba?\([^)]*\)")
+# Illustrations of other software's chrome, not brand colour: the macOS window buttons
+# of the home page's terminal mockup.
+FOREIGN_COLOURS = {"#ff5f57", "#febc2e", "#28c840"}
+
+
+def _block(text: str, opener: str) -> dict[str, str]:
+    """Custom properties of every rule with exactly this selector; later rules win."""
+    bodies = re.findall(re.escape(opener) + r"\s*\{([^}]*)\}", text)
+    assert bodies, opener
+    return {
+        k: v.strip() for body in bodies for k, v in re.findall(r"(--[\w-]+)\s*:\s*([^;]+);", body)
+    }
+
+
+def test_every_colour_value_in_tokens_css_is_a_design_md_colour() -> None:
+    """Literal colours come from DESIGN.md; anything else is derived from a token (color-mix)."""
+    palette = renderer().palette()
+    text = (CSS / "tokens.css").read_text(encoding="utf-8")
+    for theme, opener in (("light", ":root"), ("dark", '[data-theme="dark"]')):
+        allowed = set(palette[theme].values())
+        for name, value in _block(text, opener).items():
+            for literal in _HEX.findall(value):
+                assert literal.lower() in allowed, (theme, name, literal)
+            assert not _RGB.search(value), (
+                theme,
+                name,
+                value,
+                "derive with color-mix(in srgb, var(--x) N%, transparent)",
+            )
+
+
+def test_no_page_sheet_writes_a_colour_literal() -> None:
+    for sheet in CSS.glob("*.css"):
+        if sheet.name == "tokens.css":
+            continue
+        text = re.sub(r"/\*.*?\*/", "", sheet.read_text(encoding="utf-8"), flags=re.S)
+        stray = {c.lower() for c in _HEX.findall(text)} - FOREIGN_COLOURS
+        stray |= set(_RGB.findall(text))
+        assert not stray, (sheet.name, sorted(stray))
+
+
+# App token -> DESIGN.md key. Brand-derived tokens (--brand-primary, --accent, --accent-subtle,
+# --cta-bg, --cta-bg-hover) are excluded: an operator re-brands them through brand.primary_color.
+APP_TOKENS = {
+    "--canvas": "canvas",
+    "--surface-card": "surface",
+    "--bg-code": "surface",
+    "--surface-dark": "inverse",
+    "--ink": "ink",
+    "--body-text": "body",
+    "--muted": "muted",
+    "--hairline": "hairline",
+    "--border-strong": "hairline-strong",
+    "--danger": "danger",
+    "--danger-subtle": "danger-weak",
+    "--danger-hover": "danger-strong",
+    "--warning": "warning",
+    "--warning-subtle": "warning-weak",
+    "--success": "success",
+    "--success-subtle": "success-weak",
+    "--info": "info",
+    "--info-subtle": "info-weak",
+    "--on-dark": "inverse-ink",
+    "--muted-on-dark": "inverse-muted",
+    "--cta-text": "accent-ink",
+}
+
+
+def _hex6(value: str) -> str:
+    v = value.strip().lower()
+    return "#" + "".join(c * 2 for c in v[1:]) if re.fullmatch(r"#[0-9a-f]{3}", v) else v
+
+
+def test_the_app_tokens_are_design_md_values() -> None:
+    palette = renderer().palette()
+    text = APP_CSS.read_text(encoding="utf-8")
+    light = _block(text, ':root,\n[data-theme="light"]')
+    dark = _block(text, '[data-theme="dark"]')
+    for token, key in APP_TOKENS.items():
+        assert _hex6(light[token]) == palette["light"][key], (token, "light", light[token])
+        assert _hex6(dark.get(token, light[token])) == palette["dark"][key], (token, "dark")

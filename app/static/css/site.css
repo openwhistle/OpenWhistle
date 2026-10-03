@@ -383,7 +383,7 @@ video {
 [data-theme="dark"] { color-scheme: dark; }
 [data-theme="dark"] {
   --canvas: #08080a;
-  --surface-card: #161619;
+  --surface-card: #131315;
   --surface-dark: #050506;
   --ink: #fafafa;
   --body-text: #bcbcc0;
@@ -404,7 +404,7 @@ video {
   --success-subtle: #0d211a;
   --info: #6d8dff;
   --info-subtle: #171b2e;
-  --bg-code: #161619;
+  --bg-code: #131315;
   --on-dark: #fafafa;
   --muted-on-dark: #a1a1aa;
 }
