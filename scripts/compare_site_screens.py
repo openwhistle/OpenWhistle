@@ -103,8 +103,11 @@ def _shoot(page: Page, url: str, path: Path) -> None:
     page.evaluate(
         """async () => {
             document.querySelectorAll('img[loading=lazy]').forEach(i => { i.loading = 'eager'; });
-            await Promise.all([...document.images].map(i => i.complete ? null
-                : new Promise(r => { i.onload = i.onerror = r; })));
+            // loaded is not decoded: a capture that races an image decode fails at random
+            await Promise.all([...document.images].map(async i => {
+                if (!i.complete) await new Promise(r => { i.onload = i.onerror = r; });
+                await i.decode().catch(() => {});
+            }));
             await document.fonts.ready;
         }"""
     )
