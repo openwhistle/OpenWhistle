@@ -233,6 +233,7 @@
       color: var(--body);
     }
     .trust-item-check {
+      color: var(--accent);
       width: 16px;
       height: 16px;
       border-radius: 50%;
@@ -393,6 +394,7 @@
     .feature-card:nth-child(6) { animation-delay: 0.30s; }
 
     .feature-icon-wrap {
+      color: var(--accent);
       width: 40px;
       height: 40px;
       background: var(--accent-fog);

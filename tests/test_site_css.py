@@ -280,3 +280,16 @@ def test_the_app_tokens_are_design_md_values() -> None:
     for token, key in APP_TOKENS.items():
         assert _hex6(light[token]) == palette["light"][key], (token, "light", light[token])
         assert _hex6(dark.get(token, light[token])) == palette["dark"][key], (token, "dark")
+
+
+_PAINT = re.compile(r'\b(?:fill|stroke|stop-color|color|style)="[^"]*(#[0-9a-fA-F]{3,8}\b|rgba?\()')
+
+
+def test_no_page_paints_with_a_colour_literal() -> None:
+    """Inline SVG takes currentColor and a sheet colours it: a literal skips the theme."""
+    offenders = {
+        str(path.relative_to(built())): sorted(set(_PAINT.findall(text)))
+        for path in pages()
+        if _PAINT.search(text := path.read_text(encoding="utf-8"))
+    }
+    assert not offenders, offenders
