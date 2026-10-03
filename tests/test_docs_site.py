@@ -93,32 +93,6 @@ def test_roadmap_points_to_changelog_for_everything_released() -> None:
     assert "CHANGELOG.md" in html
 
 
-def _root_tokens_block(html: str) -> str:
-    """The first top-level `:root { ... }` block (the light-mode design
-    tokens), whitespace-normalised so formatting differences don't matter."""
-    m = re.search(r":root\s*\{([^}]*)\}", html, re.DOTALL)
-    assert m, ":root token block not found"
-    return re.sub(r"\s+", " ", m.group(1)).strip()
-
-
-def test_de_landing_page_shares_design_tokens_with_english() -> None:
-    """Regression guard: docs/en/index.html was rebuilt onto the
-    "Signal" design (Sora + JetBrains Mono, ink/green tokens) while
-    docs/de/index.html kept an older serif/navy design, so the two pages
-    drifted apart. Pin the :root tokens and font-family variables identical
-    so a future edit to one page can't silently un-sync the other."""
-    en = css_of(page("/en/"))
-    de = css_of(page("/de/"))
-    assert _root_tokens_block(en) == _root_tokens_block(de)
-    for var in ("--font-display", "--font-body", "--font-mono"):
-        pattern = re.escape(var) + r":\s*([^;]+);"
-        en_m, de_m = re.search(pattern, en), re.search(pattern, de)
-        assert en_m and de_m, var
-        assert en_m.group(1).strip() == de_m.group(1).strip(), (
-            var, en_m.group(1), de_m.group(1)
-        )
-
-
 def _clean_text(s: str) -> str:
     """Strip tags, unescape entities (so a visible `&nbsp;` matches a JSON-LD
     plain space), collapse whitespace."""
@@ -354,39 +328,6 @@ def test_every_page_footer_has_the_same_link_set_as_its_landing_page() -> None:
                 "extra": sorted(targets - canonical),
             }
     assert not mismatches, mismatches
-
-
-def _root_tokens_dict(html: str) -> dict[str, str]:
-    m = re.search(r":root\s*\{([^}]*)\}", html, re.DOTALL)
-    assert m, ":root token block not found"
-    return dict(re.findall(r"(--[\w-]+):\s*([^;]+);", m.group(1)))
-
-
-def test_blog_pages_share_design_tokens_with_english_landing() -> None:
-    """Extends `test_de_landing_page_shares_design_tokens_with_english`
-    to the blog: the blog scaffold used to run its own
-    Spectral/Source Serif 4 + navy design, disconnected from the rest of the
-    site. Unlike the strict de/index.html <-> index.html guard, this is not
-    byte-identical -- the blog (like docs.html before it) legitimately
-    extends the shared token set with its own `--warning`/`--warning-fog`
-    (needed for `.callout-warn`/`.val-warn`, see
-    test_docs_warn_callouts_do_not_converge_on_the_accent) that
-    docs/en/index.html itself has no use for. What must hold is that every
-    token blog *does* share by name with docs/en/index.html has the identical
-    value -- no silent drift on the tokens that are supposed to be shared."""
-    en_tokens = _root_tokens_dict(css_of(page("/en/")))
-    for url in BLOG_PAGES:
-        blog_tokens = _root_tokens_dict(css_of(page(url)))
-        shared = set(en_tokens) & set(blog_tokens)
-        assert shared, url
-        mismatches = {
-            k: (en_tokens[k], blog_tokens[k])
-            for k in shared
-            if en_tokens[k].strip() != blog_tokens[k].strip()
-        }
-        assert not mismatches, (url, mismatches)
-        for var in ("--font-display", "--font-body", "--font-mono"):
-            assert var in blog_tokens, (url, var)
 
 
 def test_landing_pages_link_each_other_via_hreflang() -> None:

@@ -4,7 +4,6 @@ description: 'A GDPR Art. 28 data processing agreement template for running Open
 translation_key: dpa-template
 noindex: true
 css:
-- fonts
 - docs
 js:
 - site

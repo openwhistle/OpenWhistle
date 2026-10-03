@@ -51,7 +51,9 @@
 {% for item in page.meta.jsonld %}
   <script type="application/ld+json">{{ item|tojson }}</script>
 {% endfor %}
-  <link rel="stylesheet" href="/assets/css/layout.css">
+  <link rel="stylesheet" href="/assets/css/tokens.css">
+  <link rel="stylesheet" href="/assets/css/fonts.css">
+  <link rel="stylesheet" href="/assets/css/base.css">
 {% for name in page.meta.css %}
   <link rel="stylesheet" href="/assets/css/{{ name }}.css">
 {% endfor %}

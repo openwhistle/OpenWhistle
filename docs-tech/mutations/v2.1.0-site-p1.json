@@ -958,7 +958,7 @@
   },
   {
    "id": "scroll-padding",
-   "file": "docs/assets/css/layout.css",
+   "file": "docs/assets/css/base.css",
    "tests": "DEEP-LINK",
    "old": "html { scroll-padding-top: 80px; }\n",
    "new": ""

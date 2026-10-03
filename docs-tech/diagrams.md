@@ -5,7 +5,7 @@ and dark SVG; CI checks the SVGs and never runs draw.io.
 
 | Source | Rendered to | Shown by |
 | --- | --- | --- |
-| `docs/_diagrams/<name>.drawio`, German pages `<name>.de.drawio` | `docs/img/diagrams/<name>-{light,dark}.svg` | two `<img>`; `layout.css` picks one from `data-theme`, the site's toggle |
+| `docs/_diagrams/<name>.drawio`, German pages `<name>.de.drawio` | `docs/img/diagrams/<name>-{light,dark}.svg` | two `<img>`; `base.css` picks one from `data-theme`, the site's toggle |
 | `docs-tech/_diagrams/<name>.drawio` | `docs-tech/img/diagrams/<name>-{light,dark}.svg` | `<picture>` with `prefers-color-scheme`: GitHub has no toggle |
 
 ## Add or change a diagram

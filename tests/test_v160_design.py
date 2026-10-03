@@ -537,21 +537,22 @@ def _contrast_ratio(hex_a: str, hex_b: str) -> float:
 
 
 def test_docs_warning_colour_meets_contrast() -> None:
-    """Each docs page's --warning must read against its --bg-base at >= 4.5:1
-    (WCAG AA, normal text) in both themes — a warning colour nobody can read
-    is not a fix (the former gold light value #c8972e was ~2.5:1 on the blog
-    pages)."""
+    """The site's --warning must read against its --canvas at >= 4.5:1 (WCAG AA,
+    normal text) in both themes — a warning colour nobody can read is not a fix
+    (the former gold light value #c8972e was ~2.5:1 on the blog pages). The
+    tokens exist once, in tokens.css, which every warning page links."""
+    tokens = (ROOT / "docs" / "assets" / "css" / "tokens.css").read_text(encoding="utf-8")
     for name in _WARNING_PAGES:
-        text = css_of(page(name))
-        light_block = re.search(r":root\s*\{([^}]*)\}", text)
-        dark_block = re.search(r'\[data-theme="dark"\]\s*\{([^}]*)\}', text)
-        assert light_block and dark_block, name
-        for theme, block in (("light", light_block), ("dark", dark_block)):
-            warning = re.search(r"--warning:\s*(#[0-9a-fA-F]{6})", block.group(1))
-            bg_base = re.search(r"--bg-base:\s*(#[0-9a-fA-F]{6})", block.group(1))
-            assert warning and bg_base, (name, theme)
-            ratio = _contrast_ratio(warning.group(1), bg_base.group(1))
-            assert ratio >= 4.5, (name, theme, warning.group(1), bg_base.group(1), ratio)
+        assert "/assets/css/tokens.css" in page(name), name
+    light_block = re.search(r":root\s*\{([^}]*)\}", tokens)
+    dark_block = re.search(r'\[data-theme="dark"\]\s*\{([^}]*)\}', tokens)
+    assert light_block and dark_block
+    for theme, block in (("light", light_block), ("dark", dark_block)):
+        warning = re.search(r"--warning:\s*(#[0-9a-fA-F]{6})", block.group(1))
+        canvas = re.search(r"--canvas:\s*(#[0-9a-fA-F]{6})", block.group(1))
+        assert warning and canvas, theme
+        ratio = _contrast_ratio(warning.group(1), canvas.group(1))
+        assert ratio >= 4.5, (theme, warning.group(1), canvas.group(1), ratio)
 
 
 def _pill_counts(html: str) -> dict[str, int]:

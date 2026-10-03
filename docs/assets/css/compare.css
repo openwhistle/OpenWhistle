@@ -2,73 +2,6 @@
        OpenWhistle Documentation — Shared + Docs-specific styles
        ================================================================ */
 
-    :root {
-      --bg-base: #ffffff;
-      --bg-surface: #f6f6f5;
-      --bg-raised: #efefee;
-      --bg-overlay: #e9e9e8;
-      --nav-bg: #ffffff;
-      --footer-bg: #0a0a0b;
-      --sidebar-bg: #f6f6f5;
-      --text-primary: #0a0a0b;
-      --text-secondary: #3d3d40;
-      --text-muted: #6a6a6e;
-      --border-subtle: #e6e6e4;
-      --border-default: #d8d8d6;
-      --border-strong: #c9c9c6;
-      --accent: #0c7253;
-      --accent-strong: #0b6249;
-      --accent-dim: rgba(12,114,83,0.15);
-      --accent-fog: rgba(12,114,83,0.08);
-      --warning: #8a5a12;
-      --warning-fog: rgba(138,90,18,0.08);
-      --red-alert: #bf3529;
-      --code-bg: #0a0a0b;
-      --code-text: #e9e9e8;
-      --font-display: 'Sora', system-ui, sans-serif;
-      --font-body: 'Sora', system-ui, sans-serif;
-      --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-      --space-1: 0.25rem;
-      --space-2: 0.5rem;
-      --space-3: 0.75rem;
-      --space-4: 1rem;
-      --space-5: 1.25rem;
-      --space-6: 1.5rem;
-      --space-8: 2rem;
-      --space-10: 2.5rem;
-      --space-12: 3rem;
-      --space-16: 4rem;
-      --max-width: 1200px;
-      --sidebar-width: 260px;
-      --ease-stiff: cubic-bezier(0.16, 1, 0.3, 1);
-      --duration-fast: 140ms;
-      --duration-mid: 280ms;
-    }
-
-    [data-theme="dark"] {
-      --bg-base: #08080a;
-      --bg-surface: #131315;
-      --bg-raised: #1b1b1e;
-      --bg-overlay: #232327;
-      --nav-bg: #08080a;
-      --footer-bg: #050506;
-      --sidebar-bg: #131315;
-      --text-primary: #fafafa;
-      --text-secondary: #bcbcc0;
-      --text-muted: #8e8e93;
-      --border-subtle: #262629;
-      --border-default: #34343a;
-      --border-strong: #43434a;
-      --accent: #23c088;
-      --accent-strong: #1fa878;
-      --accent-dim: rgba(35,192,136,0.15);
-      --accent-fog: rgba(35,192,136,0.08);
-      --warning: #d6a13c;
-      --warning-fog: rgba(214,161,60,0.1);
-      --code-bg: #050506;
-      --code-text: #fafafa;
-    }
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; font-size: 16px; -webkit-text-size-adjust: 100%; }
     img, svg { display: block; max-width: 100%; }
@@ -77,8 +10,8 @@
     ul, ol { list-style: none; }
 
     body {
-      background: var(--bg-base);
-      color: var(--text-primary);
+      background: var(--canvas);
+      color: var(--ink);
       font-family: var(--font-body);
       font-size: 1rem;
       line-height: 1.7;
@@ -105,7 +38,7 @@
       position: sticky;
       top: 0;
       z-index: 200;
-      background: var(--nav-bg);
+      background: var(--canvas);
       border-bottom: 1px solid rgba(255,255,255,0.08);
       box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
@@ -209,14 +142,14 @@
       top: 60px;
       height: calc(100vh - 60px);
       overflow-y: auto;
-      background: var(--sidebar-bg);
-      border-right: 1px solid var(--border-subtle);
+      background: var(--surface);
+      border-right: 1px solid var(--hairline);
       padding: var(--space-8) var(--space-5);
       scrollbar-width: thin;
-      scrollbar-color: var(--border-default) transparent;
+      scrollbar-color: var(--hairline-strong) transparent;
     }
     .docs-sidebar::-webkit-scrollbar { width: 4px; }
-    .docs-sidebar::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 2px; }
+    .docs-sidebar::-webkit-scrollbar-thumb { background: var(--hairline-strong); border-radius: 2px; }
 
     .sidebar-section {
       margin-bottom: var(--space-8);
@@ -226,7 +159,7 @@
       font-size: 0.62rem;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: var(--text-muted);
+      color: var(--muted);
       margin-bottom: var(--space-3);
       padding-left: var(--space-3);
     }
@@ -240,14 +173,14 @@
       padding: var(--space-2) var(--space-3);
       font-family: var(--font-body);
       font-size: 0.82rem;
-      color: var(--text-secondary);
+      color: var(--body);
       border-left: 2px solid transparent;
       border-radius: 0 2px 2px 0;
       transition: color var(--duration-fast) ease, background var(--duration-fast) ease, border-left-color var(--duration-fast) ease;
     }
     .sidebar-links a:hover {
-      color: var(--text-primary);
-      background: var(--bg-raised);
+      color: var(--ink);
+      background: var(--surface-2);
     }
     .sidebar-links a.active {
       color: var(--accent);
@@ -265,7 +198,7 @@
       font-family: var(--font-body);
       font-size: 0.72rem;
       letter-spacing: 0.04em;
-      color: var(--text-muted);
+      color: var(--muted);
       margin-bottom: var(--space-8);
       display: flex;
       align-items: center;
@@ -273,7 +206,7 @@
     }
     .docs-breadcrumb a { color: var(--accent); transition: color var(--duration-fast) ease; }
     .docs-breadcrumb a:hover { color: var(--accent-strong); }
-    .docs-breadcrumb span { color: var(--text-muted); }
+    .docs-breadcrumb span { color: var(--muted); }
 
     /* Content typography */
     .docs-content h1 {
@@ -282,7 +215,7 @@
       font-weight: 700;
       letter-spacing: -0.035em;
       line-height: 1.12;
-      color: var(--text-primary);
+      color: var(--ink);
       margin-bottom: var(--space-5);
       animation: rise 0.5s var(--ease-stiff) both;
     }
@@ -290,11 +223,11 @@
     .docs-lead {
       font-size: 1.05rem;
       font-weight: 300;
-      color: var(--text-secondary);
+      color: var(--body);
       line-height: 1.75;
       max-width: 60ch;
       margin-bottom: var(--space-10);
-      border-bottom: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--hairline);
       padding-bottom: var(--space-8);
       animation: rise 0.5s var(--ease-stiff) 0.1s both;
     }
@@ -302,7 +235,7 @@
     .docs-section {
       margin-bottom: var(--space-12);
       padding-bottom: var(--space-12);
-      border-bottom: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--hairline);
     }
     .docs-section:last-child {
       border-bottom: none;
@@ -313,7 +246,7 @@
       font-size: clamp(1.4rem, 2.5vw, 1.9rem);
       font-weight: 700;
       letter-spacing: -0.025em;
-      color: var(--text-primary);
+      color: var(--ink);
       margin-bottom: var(--space-5);
       line-height: 1.2;
     }
@@ -322,12 +255,12 @@
       font-family: var(--font-display);
       font-size: 1.1rem;
       font-weight: 600;
-      color: var(--text-primary);
+      color: var(--ink);
       margin: var(--space-8) 0 var(--space-3);
     }
 
     .docs-section p {
-      color: var(--text-secondary);
+      color: var(--body);
       font-size: 0.95rem;
       line-height: 1.8;
       margin-bottom: var(--space-4);
@@ -348,7 +281,7 @@
     .docs-section ul { list-style: disc; }
     .docs-section ol { list-style: decimal; }
     .docs-section li {
-      color: var(--text-secondary);
+      color: var(--body);
       font-size: 0.95rem;
       line-height: 1.75;
       margin-bottom: var(--space-2);
@@ -358,14 +291,14 @@
     .docs-section code {
       font-family: var(--font-mono);
       font-size: 0.82em;
-      background: var(--bg-raised);
-      border: 1px solid var(--border-subtle);
+      background: var(--surface-2);
+      border: 1px solid var(--hairline);
       padding: 1px 5px;
       border-radius: 2px;
-      color: var(--text-primary);
+      color: var(--ink);
     }
     [data-theme="dark"] .docs-section code {
-      background: var(--bg-overlay);
+      background: var(--surface-3);
     }
 
     /* Callout boxes */
@@ -394,7 +327,7 @@
     .callout-warn .callout-title { color: var(--warning); }
     .callout p {
       font-size: 0.9rem;
-      color: var(--text-secondary);
+      color: var(--body);
       line-height: 1.7;
       max-width: none;
       margin-bottom: 0;
@@ -403,7 +336,7 @@
     /* ── Footer ──────────────────────────────────────────────────── */
 /* ── Footer ──────────────────────────────────────────────────── */
     .site-footer {
-      background: var(--footer-bg);
+      background: var(--inverse);
       color: rgba(226, 220, 210, 0.7);
       padding: var(--space-16) var(--space-8) var(--space-8);
     }
@@ -494,7 +427,7 @@
         top: 60px;
         left: 0;
         right: 0;
-        background: var(--nav-bg);
+        background: var(--canvas);
         border-bottom: 1px solid rgba(255,255,255,0.08);
         padding: var(--space-5) var(--space-6);
         gap: var(--space-4);
@@ -509,7 +442,7 @@
         position: static;
         height: auto;
         border-right: none;
-        border-bottom: 1px solid var(--border-subtle);
+        border-bottom: 1px solid var(--hairline);
       }
       .docs-content { padding: var(--space-8) var(--space-5) var(--space-12); }
       .footer-grid { grid-template-columns: 1fr; gap: var(--space-8); }
@@ -520,7 +453,7 @@
     .cmp-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
     .cmp-table th, .cmp-table td {
       padding: var(--space-3) var(--space-4);
-      border-bottom: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--hairline);
       text-align: left;
       vertical-align: top;
       line-height: 1.55;
@@ -530,15 +463,15 @@
       font-size: 0.62rem;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: var(--text-muted);
-      border-bottom: 2px solid var(--border-subtle);
+      color: var(--muted);
+      border-bottom: 2px solid var(--hairline);
       white-space: nowrap;
     }
-    .cmp-table tbody th { color: var(--text-primary); font-weight: 600; min-width: 9rem; }
+    .cmp-table tbody th { color: var(--ink); font-weight: 600; min-width: 9rem; }
     /* The row label stays in view while the columns scroll on a phone. */
-    .cmp-table tbody th, .cmp-table thead th:first-child { position: sticky; left: 0; background: var(--bg-base); }
-    .cmp-table tbody td { color: var(--text-secondary); min-width: 10rem; }
+    .cmp-table tbody th, .cmp-table thead th:first-child { position: sticky; left: 0; background: var(--canvas); }
+    .cmp-table tbody td { color: var(--body); min-width: 10rem; }
     .cmp-table tbody tr:last-child th, .cmp-table tbody tr:last-child td { border-bottom: none; }
     .cmp-table a, .sources a { color: var(--accent); }
     .sources { padding-left: var(--space-6); list-style: decimal; }
-    .sources li { margin-bottom: var(--space-3); color: var(--text-secondary); }
+    .sources li { margin-bottom: var(--space-3); color: var(--body); }
