@@ -235,6 +235,17 @@
       ],
       "datasourceTemplate": "npm",
       "depNameTemplate": "axe-core"
+    },
+    {
+      "customType": "regex",
+      "description": "The draw.io CLI image scripts/render_diagrams.py exports with, tag and digest on one line. A bump changes every diagram stamp, so the PR stays red until scripts/render_diagrams.py re-renders. The regex manager's default versioning (semver-coerced) reads the v prefix.",
+      "managerFilePatterns": [
+        "/^scripts/render_diagrams\\.py$/"
+      ],
+      "matchStrings": [
+        "IMAGE = \"docker\\.io/(?<depName>rlespinasse/drawio-desktop-headless):(?<currentValue>v\\d+\\.\\d+\\.\\d+)@(?<currentDigest>sha256:[0-9a-f]{64})\""
+      ],
+      "datasourceTemplate": "docker"
     }
   ]
 }

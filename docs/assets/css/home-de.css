@@ -657,84 +657,6 @@
     }
 
     /* ── How it works ────────────────────────────────────────────── */
-    .flows-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--space-12);
-    }
-    .flow-column {
-      background: var(--bg-base);
-      border: 1px solid var(--border-subtle);
-    }
-    [data-theme="dark"] .flow-column {
-      background: var(--bg-surface);
-    }
-    .flow-header {
-      padding: var(--space-5) var(--space-6);
-      border-bottom: 1px solid var(--border-subtle);
-      display: flex;
-      align-items: center;
-      gap: var(--space-3);
-    }
-    .flow-header-badge {
-      font-family: var(--font-body);
-      font-size: 0.65rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: var(--space-1) var(--space-3);
-      border: 1px solid;
-    }
-    .flow-header-badge-wb {
-      color: var(--accent);
-      border-color: var(--accent-dim);
-      background: var(--accent-fog);
-    }
-    .flow-header-badge-admin {
-      color: var(--accent);
-      border-color: var(--accent-dim);
-      background: var(--accent-fog);
-    }
-    .flow-header-title {
-      font-family: var(--font-display);
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-    .flow-steps {
-      padding: var(--space-6);
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-1);
-    }
-    .flow-step {
-      display: flex;
-      gap: var(--space-4);
-      padding: var(--space-4) 0;
-      border-bottom: 1px solid var(--border-subtle);
-    }
-    .flow-step:last-child { border-bottom: none; }
-    .flow-step-num {
-      font-family: var(--font-display);
-      font-size: 1.8rem;
-      font-weight: 700;
-      line-height: 1;
-      color: var(--border-default);
-      letter-spacing: -0.05em;
-      flex-shrink: 0;
-      width: 2rem;
-    }
-    .flow-step-title {
-      font-family: var(--font-display);
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: var(--space-1);
-    }
-    .flow-step-desc {
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-      line-height: 1.6;
-    }
 
     /* ── Compliance ──────────────────────────────────────────────── */
     .compliance-grid {
@@ -1044,7 +966,6 @@
     @media (max-width: 768px) {
       .hero-rule-left, .hero-rule-right { display: none; }
       .problem-layout,
-      .flows-grid,
       .install-layout { grid-template-columns: 1fr; }
       .features-grid { grid-template-columns: 1fr 1fr; }
       .compliance-grid { grid-template-columns: 1fr; }

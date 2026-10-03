@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.built_site import built, pages
+from tests.built_site import built, page, pages
 
 ROOT = Path(__file__).parents[1]
 DOCS = ROOT / "docs"
@@ -42,11 +42,11 @@ def _srcs() -> set[str]:
     """Every <img src> of every built page, resolved relative to the site root."""
     site = built().resolve()
     found: set[str] = set()
-    for page in pages():
-        for img in _images(page):
+    for path in pages():
+        for img in _images(path):
             src = img.get("src") or ""
             if src and "://" not in src and not src.startswith("data:"):
-                target = site / src.lstrip("/") if src.startswith("/") else page.parent / src
+                target = site / src.lstrip("/") if src.startswith("/") else path.parent / src
                 found.add(target.resolve().relative_to(site).as_posix())
     return found
 
@@ -120,15 +120,37 @@ def test_every_image_reserves_its_real_shape() -> None:
     everything below it when it arrives, and a #deep-link lands off its section."""
     site = built().resolve()
     wrong = []
-    for page in pages():
-        for img in _images(page):
+    for path in pages():
+        for img in _images(path):
             src, width, height = img.get("src") or "", img.get("width"), img.get("height")
             if not (width and height) or "://" in src or src.startswith("data:"):
                 continue
-            file = site / src.lstrip("/") if src.startswith("/") else page.parent / src
+            file = site / src.lstrip("/") if src.startswith("/") else path.parent / src
             nw, nh = _natural_size(file)
             if abs(int(width) / int(height) - nw / nh) > 0.01:
                 wrong.append(
-                    f"{page.relative_to(site)}: {src} is {width}x{height}, the file {nw:g}x{nh:g}"
+                    f"{path.relative_to(site)}: {src} is {width}x{height}, the file {nw:g}x{nh:g}"
                 )
     assert not wrong, "\n  ".join(["width/height disagree with the file:", *sorted(set(wrong))])
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "/en/",
+        "/de/",
+        "/en/docs/",
+        "/en/blog/free-internal-reporting-channel/",
+        "/de/blog/interne-meldestelle-kostenlos/",
+    ],
+)
+def test_a_diagram_scrolls_inside_its_figure_on_a_phone(url: str) -> None:
+    hrefs = re.findall(r'<link[^>]+href="(/assets/css/[^"]+\.css)"', page(url))
+    assert "/assets/css/layout.css" in hrefs, f"{url} does not load layout.css"
+    css = (built() / "assets/css/layout.css").read_text(encoding="utf-8")
+    phone = re.search(r"@media \(max-width: 6\d\dpx\) \{(.*?)\n\}", css, re.DOTALL)
+    assert phone, "layout.css has no narrow-width media block"
+    # a diagram scrolls inside its figure and keeps its designed size: the pages' own
+    # `.diagram img { max-width: 100% }` must lose
+    assert re.search(r"\.diagram \{[^}]*overflow-x: auto", phone.group(1)), "no .diagram scroll"
+    assert re.search(r"figure\.diagram img \{[^}]*max-width: none", phone.group(1)), "img shrinks"

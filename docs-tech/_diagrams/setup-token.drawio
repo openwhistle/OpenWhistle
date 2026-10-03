@@ -1,0 +1,69 @@
+<mxfile>
+  <diagram name="setup-token">
+    <mxGraphModel>
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="app" value="App (any replica)" style="ow:lifeline" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="160" height="372" as="geometry"/>
+        </mxCell>
+        <mxCell id="redis" value="Redis" style="ow:lifeline" vertex="1" parent="1">
+          <mxGeometry x="330" y="0" width="100" height="372" as="geometry"/>
+        </mxCell>
+        <mxCell id="operator" value="Operator" style="ow:lifeline" vertex="1" parent="1">
+          <mxGeometry x="550" y="0" width="100" height="372" as="geometry"/>
+        </mxCell>
+        <mxCell id="m-startup" value="startup: no admin exists?" style="ow:message" edge="1" parent="1" source="app" target="app">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="120" y="70"/>
+              <mxPoint x="120" y="100"/>
+            </Array>
+            <mxPoint as="offset" x="6" y="0"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m-set" value="SET openwhistle:setup-token NX&#xa;value: SETUP_TOKEN or 32 random bytes" style="ow:message" edge="1" parent="1" source="app" target="redis">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="230" y="156"/>
+            </Array>
+            <mxPoint as="offset" x="-114" y="-18"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m-log" value="log the token once&#xa;(the replica whose SET won)" style="ow:message" edge="1" parent="1" source="app" target="app">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="120" y="186"/>
+              <mxPoint x="120" y="222"/>
+            </Array>
+            <mxPoint as="offset" x="6" y="0"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m-post" value="POST /setup + token" style="ow:message" edge="1" parent="1" source="operator" target="app">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="340" y="266"/>
+            </Array>
+            <mxPoint as="offset" x="92" y="-11"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m-get" value="GET, compare_digest" style="ow:message" edge="1" parent="1" source="app" target="redis">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="230" y="304"/>
+            </Array>
+            <mxPoint as="offset" x="-61" y="-11"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m-del" value="DEL on success" style="ow:message" edge="1" parent="1" source="app" target="redis">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="230" y="342"/>
+            </Array>
+            <mxPoint as="offset" x="-44" y="-11"/>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

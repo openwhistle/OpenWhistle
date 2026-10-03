@@ -109,6 +109,8 @@ module = [
     "ldap.*",
     "apscheduler.*",
     "pythonjsonlogger.*",
+    "fontTools.*",
+    "yaml.*",
 ]
 ignore_missing_imports = true
 
@@ -189,6 +191,7 @@ exclude_lines = [
 
 [dependency-groups]
 site = [
+    "fonttools[woff]>=4.66.0",
     "jinja2>=3.1.6",
     "markdown-it-py>=4.2.0",
     "pagefind[extended]>=1.5.2",

@@ -119,6 +119,8 @@ prose the way a receipt separates a total from marketing.
 
 - **One accent, mostly withheld.** Emerald (`{colors.accent}`) is the only brand
   colour. Scarce as a button; generous as a reassurance block. Never decorative.
+  Exception: a style C diagram uses it twice, for start and end (maintainer's
+  choice, 2026-10-02, spec P2-4).
 - **Type-forward, weight-restrained.** Sora everywhere, tight negative tracking on
   display, weight ceiling **700 for the hero and 600 for everything else**. No
   italics for emphasis; no third typeface for "personality."

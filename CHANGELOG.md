@@ -9,6 +9,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- Website and maintainer docs: every diagram is a draw.io SVG in one style, light and dark, checked for labels on
+  lines and clipped text; the German blog post shows German labels; the home page shows the reporting flow as one
+  diagram; on a phone a diagram keeps its size and scrolls inside its figure. Mermaid is gone.
 - **The website is built from its sources by `scripts/build_site.py`** and now lives at `/en/` and `/de/`;
   the old addresses forward. The app's links (installation counting in the four locales, Helm
   `NOTES.txt`) point to `/en/docs/`.

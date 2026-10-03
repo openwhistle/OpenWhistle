@@ -1,0 +1,74 @@
+<mxfile>
+  <diagram name="submission-flow">
+    <mxGraphModel>
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="start" value="Start a report" style="ow:start" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="230" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="mode" value="1 · Mode&#xa;anonymous or confidential" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="0" y="72" width="230" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="has-locations" value="Locations&#xa;configured?" style="ow:decision" vertex="1" parent="1">
+          <mxGeometry x="0" y="156" width="230" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="location" value="2 · Location" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="290" y="176" width="170" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="category" value="3 · Category" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="0" y="272" width="230" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="details" value="4 · Details&#xa;description" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="0" y="344" width="230" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="files" value="5 · Files&#xa;attachments, optional" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="0" y="428" width="230" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="review" value="6 · Review" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="0" y="512" width="230" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="submit" value="Submit" style="ow:end" vertex="1" parent="1">
+          <mxGeometry x="0" y="584" width="230" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="receipt" value="Case number + PIN&#xa;issued once, shown once" style="ow:result" vertex="1" parent="1">
+          <mxGeometry x="0" y="656" width="230" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-start" style="ow:edge" edge="1" parent="1" source="start" target="mode">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-mode" style="ow:edge;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="mode" target="has-locations">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-yes" value="yes" style="ow:edge;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="has-locations" target="location">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="0" y="-11"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-no" value="no" style="ow:edge;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="has-locations" target="category">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="14" y="0"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-location" style="ow:edge;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="location" target="category">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-category" style="ow:edge" edge="1" parent="1" source="category" target="details">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-details" style="ow:edge" edge="1" parent="1" source="details" target="files">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-files" style="ow:edge" edge="1" parent="1" source="files" target="review">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-review" style="ow:edge" edge="1" parent="1" source="review" target="submit">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-submit" style="ow:edge" edge="1" parent="1" source="submit" target="receipt">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -643,23 +643,18 @@
     /* ── Themed figures ─────────────────────────────────────────── */
     /* Every diagram and screenshot exists light and dark. CSS picks one from
        data-theme, the attribute the toggle sets; a <picture> media query
-       would follow the OS instead (docs/_diagrams/README.md). */
+       would follow the OS instead (docs-tech/diagrams.md). */
     .diagram, .doc-shot { margin: var(--space-6) 0; }
-    .diagram img { max-width: 100%; height: auto; margin: 0 auto; }
+    .diagram img { max-width: 100%; height: auto; margin: 0 auto; display: block; }
     .doc-shot img {
       width: 100%;
       height: auto;
       border: 1px solid var(--border-subtle);
       border-radius: 4px;
     }
-    .diagram-dark, .shot-dark { display: none; }
-    [data-theme="dark"] .diagram-light, [data-theme="dark"] .shot-light { display: none; }
-    [data-theme="dark"] .diagram-dark, [data-theme="dark"] .shot-dark { display: block; }
-    /* The submission flow beside its steps: one scroll instead of two. */
-    @media (min-width: 1081px) {
-      .flow-steps { display: grid; grid-template-columns: 220px 1fr; gap: var(--space-8); align-items: start; }
-      .flow-steps .diagram { margin: 0; }
-    }
+    .shot-dark { display: none; }
+    [data-theme="dark"] .shot-light { display: none; }
+    [data-theme="dark"] .shot-dark { display: block; }
 
     /* ── Responsive ─────────────────────────────────────────────── */
     /* Nav collapses at 1080px, not 768px: at 1024px the full item list no

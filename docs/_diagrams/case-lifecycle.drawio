@@ -1,0 +1,66 @@
+<mxfile>
+  <diagram name="case-lifecycle">
+    <mxGraphModel>
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="submitted" value="Report submitted" style="ow:start" vertex="1" parent="1">
+          <mxGeometry x="240" y="0" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="received" value="received" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="240" y="90" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="in_review" value="in_review" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="240" y="200" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="pending_feedback" value="pending_feedback" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="240" y="310" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="closed" value="closed" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="0" y="200" width="160" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="ack" value="HinSchG: acknowledge&#xa;within 7 days" style="ow:note" vertex="1" parent="1">
+          <mxGeometry x="500" y="84" width="200" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="feedback" value="HinSchG: feedback&#xa;within 3 months" style="ow:note" vertex="1" parent="1">
+          <mxGeometry x="500" y="304" width="200" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-submitted" style="ow:edge" edge="1" parent="1" source="submitted" target="received">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-review" style="ow:edge;exitX=0.35;exitY=1;entryX=0.35;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="received" target="in_review">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-back-to-received" style="ow:edge;exitX=0.65;exitY=0;entryX=0.65;entryY=1;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="in_review" target="received">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-ask" style="ow:edge;exitX=0.35;exitY=1;entryX=0.35;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="in_review" target="pending_feedback">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-answered" style="ow:edge;exitX=0.65;exitY=0;entryX=0.65;entryY=1;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pending_feedback" target="in_review">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-close-received" style="ow:edge;exitX=0;exitY=0.5;entryX=0.5;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="received" target="closed">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-close-review" style="ow:edge;exitX=0;exitY=0.7;entryX=1;entryY=0.7;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="in_review" target="closed">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-reopen" value="reopen" style="ow:edge;exitX=1;exitY=0.3;entryX=0;entryY=0.3;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="closed" target="in_review">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="0" y="-12"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-close-pending" style="ow:edge;exitX=0;exitY=0.5;entryX=0.5;entryY=1;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pending_feedback" target="closed">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-ack" style="ow:edge-optional;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="received" target="ack">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-feedback" style="ow:edge-optional;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pending_feedback" target="feedback">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

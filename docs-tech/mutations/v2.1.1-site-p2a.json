@@ -1,0 +1,500 @@
+{
+ "timeout_seconds": 300,
+ "test_groups": {
+  "RENDER": [
+   "tests/test_render_diagrams.py"
+  ],
+  "GEOMETRY": [
+   "tests/test_diagram_geometry.py"
+  ],
+  "COMMITTED": [
+   "tests/test_diagrams.py"
+  ],
+  "FIGURES": [
+   "tests/test_docs_figures.py"
+  ],
+  "E2E": [
+   "tests/e2e/test_docs_diagrams.py",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "SITE": [
+   "tests/test_build_site.py",
+   "-k",
+   "lastmod"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "ROLE-UNKNOWN",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "    if role not in ROLES:\n        raise DiagramError",
+   "new": "    if False:\n        raise DiagramError"
+  },
+  {
+   "id": "COLOUR-KEY",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "    if m := _COLOR_KEY.search(rest):",
+   "new": "    if m := None:"
+  },
+  {
+   "id": "NO-ROLE",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "        if not cell.get(\"style\"):\n            raise",
+   "new": "        if False:\n            raise"
+  },
+  {
+   "id": "GLYPH-RENDER",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "        if missing := geometry.missing_glyphs(label, 400) or geometry.missing_glyphs(label, 700):",
+   "new": "        if missing := []:"
+  },
+  {
+   "id": "ALIAS-DARK",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "\"dark\": \"surface-2\"",
+   "new": "\"dark\": \"surface\""
+  },
+  {
+   "id": "STAMP-PALETTE",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "\"palette\": palette()[theme], ",
+   "new": ""
+  },
+  {
+   "id": "STAMP-ROLES",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "\"roles\": ROLES, ",
+   "new": ""
+  },
+  {
+   "id": "STAMP-SCRIPTS",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "SCRIPTS = (Path(__file__).resolve(), Path(geometry.__file__).resolve())",
+   "new": "SCRIPTS = (Path(__file__).resolve(),)"
+  },
+  {
+   "id": "STAMP-SCRIPTS-HASH",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "hashlib.sha256(p.read_bytes()).hexdigest() for p in SCRIPTS]",
+   "new": "p.name for p in SCRIPTS]"
+  },
+  {
+   "id": "DOCTYPE",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "    svg = re.sub(r\"<!DOCTYPE[^>]*>\\s*\", \"\", svg)\n",
+   "new": ""
+  },
+  {
+   "id": "FRAME-UNITLESS",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "    tag = re.sub(r'\\s(?:width|height|viewBox)=\"[^\"]*\"', \"\", tag)\n",
+   "new": ""
+  },
+  {
+   "id": "FRAME-RIGHT-MARGIN",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "math.ceil(box.x1) + MARGIN - x",
+   "new": "math.ceil(box.x1) + 2 * MARGIN + 1 - x"
+  },
+  {
+   "id": "FRAME-BOTTOM-MARGIN",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "math.ceil(box.y1) + MARGIN - y",
+   "new": "math.ceil(box.y1) + 2 * MARGIN + 1 - y"
+  },
+  {
+   "id": "FRAME-ORIGIN",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "x, y = math.floor(box.x0) - MARGIN, math.floor(box.y0) - MARGIN",
+   "new": "x, y = 0, 0"
+  },
+  {
+   "id": "EXPORT-MISSING",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "                if not produced.is_file():",
+   "new": "                if False:"
+  },
+  {
+   "id": "FONT-EMBED",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "    style = f\"<defs><style>{font_faces(svg)}</style></defs>\"",
+   "new": "    style = \"\""
+  },
+  {
+   "id": "OFFLINE",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "\"--network=none\",",
+   "new": ""
+  },
+  {
+   "id": "THEME-LIGHT",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "\"--theme\", \"light\"",
+   "new": "\"--theme\", \"auto\""
+  },
+  {
+   "id": "ENGINE-DOCKER",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "for name in (\"podman\", \"docker\"):",
+   "new": "for name in (\"podman\",):"
+  },
+  {
+   "id": "LINE-CLEAR",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "            if _hits(near, seg):",
+   "new": "            if False:"
+  },
+  {
+   "id": "CONTAINER-HEADER-EXEMPT",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "            if lid == cid and role in CONTAINERS and outline and _on_border(seg, outline):",
+   "new": "            if False:"
+  },
+  {
+   "id": "CONTAINER-PATHS",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "        if role in LINES or role in CONTAINERS:",
+   "new": "        if role in LINES:"
+  },
+  {
+   "id": "CONTAINER-RECT",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "        if role in CONTAINERS:  # a group's border is an unfilled rect",
+   "new": "        if False:"
+  },
+  {
+   "id": "FIT",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "        if role not in EDGES and not _fits(t, cell, role):",
+   "new": "        if False:"
+  },
+  {
+   "id": "DIAMOND",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "    if role == \"ow:decision\" and cell.filled:",
+   "new": "    if False:"
+  },
+  {
+   "id": "ARROWHEAD",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "                if near.overlaps(b)]",
+   "new": "                if False]"
+  },
+  {
+   "id": "LABEL-NODE",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "                for nid, b in solid.items()\n                if near.overlaps(b)",
+   "new": "                for nid, b in solid.items()\n                if False"
+  },
+  {
+   "id": "STICK-OUT",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "        if roles.get(parent) in CONTAINERS and parent in shapes and not box.within(shapes[parent]):",
+   "new": "        if False:"
+  },
+  {
+   "id": "NODE-OVERLAP",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "        if shapes[a].overlaps(shapes[b])\n",
+   "new": "        if False\n"
+  },
+  {
+   "id": "OVERLAP-ANCESTORS",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "        and a not in _ancestors(found, b)\n        and b not in _ancestors(found, a)\n",
+   "new": ""
+  },
+  {
+   "id": "OVERLAP-CONTAINERS",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "        if roles.get(cid) not in EDGES and (box := _outline(c)) is not None",
+   "new": "        if roles.get(cid) not in EDGES | CONTAINERS and (box := _outline(c)) is not None"
+  },
+  {
+   "id": "GLYPH-GEOMETRY",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "        if missing := missing_glyphs(t.text, t.weight):",
+   "new": "        if missing := []:"
+  },
+  {
+   "id": "NESTED-CELL",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "            cell = found.setdefault(cid, Cell(cid, parent=cell.id if cell else None))",
+   "new": "            cell = cell or found.setdefault(cid, Cell(cid, parent=cell.id if cell else None))"
+  },
+  {
+   "id": "NO-PARENT",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "Cell(cid, parent=cell.id if cell else None)",
+   "new": "Cell(cid)"
+  },
+  {
+   "id": "PATH-LOUD",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "        raise ValueError(f\"path command not understood: {leftover!r} in {d!r}\")",
+   "new": "        return []"
+  },
+  {
+   "id": "CELL-WITHOUT-ROLE",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "        if cid not in roles and (cell.texts or _outline(cell)):",
+   "new": "        if False:"
+  },
+  {
+   "id": "DEDUPE",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "    return list(dict.fromkeys(out))",
+   "new": "    return out"
+  },
+  {
+   "id": "CURVE-CHORD",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "            out[-1].extend(_curve(out[-1][-1], args))",
+   "new": "            out[-1].append(point)"
+  },
+  {
+   "id": "TEXT-TEXT",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "                    if t.box.grow(CLEAR / 2).overlaps(o.box.grow(CLEAR / 2))",
+   "new": "                    if False"
+  },
+  {
+   "id": "TSPAN",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "                if _local(span.tag) == \"tspan\" and {\"x\", \"y\", \"dx\", \"dy\"} & set(span.attrib):",
+   "new": "                if False:"
+  },
+  {
+   "id": "TRANSLATE",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "            off = (off[0] + float(m.group(1)), off[1] + float(m.group(2) or 0))",
+   "new": "            off = off"
+  },
+  {
+   "id": "STROKE-HALF",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "        half = _num(attrs.get(\"stroke-width\", \"1\")) / 2 if stroked else 0.0",
+   "new": "        half = 0.0"
+  },
+  {
+   "id": "LANGUAGE",
+   "file": "docs/de/blog/interne-meldestelle-kostenlos.html",
+   "tests": "COMMITTED",
+   "old": "src=\"/img/diagrams/architecture.de-light.svg\"",
+   "new": "src=\"/img/diagrams/architecture-light.svg\""
+  },
+  {
+   "id": "MERMAID-FENCE",
+   "file": "docs-tech/release.md",
+   "tests": "COMMITTED",
+   "old": "<picture>",
+   "new": "```mermaid\nflowchart LR\n  A --> B\n```\n\n<picture>"
+  },
+  {
+   "id": "FENCED-PICTURE",
+   "file": "docs-tech/specs/2026-10-01-website-redesign-design.md",
+   "tests": "COMMITTED",
+   "old": "<picture>\n  <source media=\"(prefers-color-scheme: dark)\" srcset=\"../img/diagrams/law-profiles-dark.svg\">",
+   "new": "```text\n<picture>\n  <source media=\"(prefers-color-scheme: dark)\" srcset=\"../img/diagrams/law-profiles-dark.svg\">"
+  },
+  {
+   "id": "HOME-NO-DIAGRAM",
+   "file": "docs/en/index.html",
+   "tests": "COMMITTED",
+   "old": "<img class=\"diagram-light\" src=\"/img/diagrams/home-flow-light.svg\" alt=\"Two lanes. Whistleblower: fill in the form, anonymous or confidential, with no account and no e-mail; note the case number and PIN, shown exactly once; check status and reply at /status. The form has six steps. Category and description are required. The page continues only after ticking that the case number and PIN are saved. Reporting office: log in with password, LDAP or OIDC, then always TOTP; acknowledge receipt within 7 days; review and give feedback within 3 months. The report goes from the form to the acknowledgement, the feedback back to the status page.\" width=\"785\" height=\"365\" loading=\"lazy\">\n          <img class=\"diagram-dark\" src=\"/img/diagrams/home-flow-dark.svg\"",
+   "new": "<img class=\"diagram-light\"  alt=\"Two lanes. Whistleblower: fill in the form, anonymous or confidential, with no account and no e-mail; note the case number and PIN, shown exactly once; check status and reply at /status. The form has six steps. Category and description are required. The page continues only after ticking that the case number and PIN are saved. Reporting office: log in with password, LDAP or OIDC, then always TOTP; acknowledge receipt within 7 days; review and give feedback within 3 months. The report goes from the form to the acknowledgement, the feedback back to the status page.\" width=\"785\" height=\"365\" loading=\"lazy\">\n          <img class=\"diagram-dark\" "
+  },
+  {
+   "id": "HOME-GRID-BACK",
+   "file": "docs/de/index.html",
+   "tests": "COMMITTED",
+   "old": "<img class=\"diagram-light\" src=\"/img/diagrams/home-flow.de-light.svg\"",
+   "new": "<div class=\"flows-grid\"></div><img class=\"diagram-light\" src=\"/img/diagrams/home-flow.de-light.svg\""
+  },
+  {
+   "id": "PHONE-OVERFLOW",
+   "file": "docs/assets/css/layout.css",
+   "tests": "FIGURES",
+   "old": "  .diagram { overflow-x: auto; }",
+   "new": "  .diagram { overflow-x: visible; }"
+  },
+  {
+   "id": "PHONE-MAXWIDTH",
+   "file": "docs/assets/css/layout.css",
+   "tests": "FIGURES",
+   "old": "  figure.diagram img { max-width: none; }",
+   "new": "  figure.diagram img { max-width: 100%; }"
+  },
+  {
+   "id": "PHONE-MEDIA",
+   "file": "docs/assets/css/layout.css",
+   "tests": "FIGURES",
+   "old": "@media (max-width: 640px) {\n  .diagram",
+   "new": "@media (min-width: 640px) {\n  .diagram"
+  },
+  {
+   "id": "COMMON-KEY",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "    if m := _COMMON_KEY.search(rest):",
+   "new": "    if m := None:"
+  },
+  {
+   "id": "FONT-FAMILY",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "            if (family := attrs.get(\"font-family\")) != \"Sora\":",
+   "new": "            if (family := attrs.get(\"font-family\")) == \"never\":"
+  },
+  {
+   "id": "DUPLICATE-STEM",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "        if (first := seen.setdefault(p.name, p)) != p:",
+   "new": "        if (first := seen.setdefault(p.name, p)) != first:"
+  },
+  {
+   "id": "EXPORT-TIMEOUT",
+   "file": "scripts/render_diagrams.py",
+   "tests": "RENDER",
+   "old": "    limit = 10 + 5 * len(list(src_dir.glob(\"*.drawio\")))",
+   "new": "    limit = 10"
+  },
+  {
+   "id": "LANE-SEPARATOR",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "and role in CONTAINERS and outline and _on_border(seg, outline):",
+   "new": "and role in CONTAINERS and outline is not None:"
+  },
+  {
+   "id": "NODE-ARROWHEAD",
+   "file": "scripts/diagram_geometry.py",
+   "tests": "GEOMETRY",
+   "old": "                if near.overlaps(b)]",
+   "new": "                if near.overlaps(b) and role in EDGES]"
+  },
+  {
+   "id": "MERMAID-TRACKED",
+   "file": "docs-tech/diagrams.md",
+   "tests": "COMMITTED",
+   "old": "Every diagram is a draw.io XML source",
+   "new": "Every diagram is a mermaid-cli source"
+  },
+  {
+   "id": "NAMED-COLOUR",
+   "file": "tests/test_diagrams.py",
+   "tests": "COMMITTED",
+   "old": "            found.add(value)",
+   "new": "            pass"
+  },
+  {
+   "id": "RELEASE-STEPS",
+   "file": "docs-tech/release.md",
+   "tests": "COMMITTED",
+   "old": "## 2. UI check",
+   "new": "## 2. UI review"
+  },
+  {
+   "id": "LIFECYCLE-EDGES",
+   "file": "app/models/report.py",
+   "tests": "COMMITTED",
+   "old": "    \"closed\":           {\"in_review\"},",
+   "new": "    \"closed\":           {\"in_review\", \"received\"},"
+  },
+  {
+   "id": "E2E-TWIN",
+   "file": "docs/assets/css/layout.css",
+   "tests": "E2E",
+   "old": ":root:not([data-theme=\"dark\"]) .diagram-dark, [data-theme=\"dark\"] .diagram-light { display: none; }",
+   "new": ".diagram-dark, [data-theme=\"dark\"] .diagram-light { display: none; }"
+  },
+  {
+   "id": "E2E-CANVAS",
+   "file": "docs/assets/css/layout.css",
+   "tests": "E2E",
+   "old": "figure.diagram img { background: var(--bg-base); border-radius: 8px; }",
+   "new": "figure.diagram img { border-radius: 8px; }"
+  },
+  {
+   "id": "E2E-SCALE-ROW",
+   "file": "docs/assets/css/figures.css",
+   "tests": "E2E",
+   "old": ".figure-row:has(> .diagram) { grid-template-columns: 1fr; }",
+   "new": ".figure-row:has(> .nothing) { grid-template-columns: 1fr; }"
+  },
+  {
+   "id": "E2E-SCALE-UPPER",
+   "file": "docs/assets/css/figures.css",
+   "tests": "E2E",
+   "old": ".diagram img { max-width: 100%; height: auto;",
+   "new": ".diagram img { width: 100%; height: auto;"
+  },
+  {
+   "id": "E2E-PHONE-SIZE",
+   "file": "docs/assets/css/layout.css",
+   "tests": "E2E",
+   "old": "  figure.diagram img { max-width: none; }",
+   "new": "  figure.diagram img { max-width: 100%; }"
+  },
+  {
+   "id": "E2E-PHONE-SCROLL",
+   "file": "docs/assets/css/layout.css",
+   "tests": "E2E",
+   "old": "  .diagram { overflow-x: auto; }",
+   "new": "  .diagram { overflow-x: visible; }"
+  },
+  {
+   "id": "LASTMOD-UTC",
+   "file": "scripts/build_site.py",
+   "tests": "SITE",
+   "old": "datetime.datetime.fromtimestamp(int(stamp), datetime.UTC).date().isoformat()",
+   "new": "datetime.date.fromtimestamp(int(stamp)).isoformat()"
+  }
+ ]
+}

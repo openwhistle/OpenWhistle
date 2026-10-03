@@ -16,12 +16,12 @@ that has to survive the next rewrite.
 
 The law is a profile, not the foundation:
 
-```mermaid
-flowchart TB
-  K["Core: ISO 37002"] --> EU["EU Directive 2019/1937"]
-  EU --> DE["HinSchG (deepest)"]
-  K --> OTHER["Further jurisdictions: one nav.yml entry each (UK PIDA, US SOX §301, FR Sapin II, BR Lei 12.846)"]
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../img/diagrams/law-profiles-dark.svg">
+  <img src="../img/diagrams/law-profiles-light.svg" alt="The law is a profile: a core built on ISO 37002, the EU
+  Directive 2019/1937 built on it and HinSchG as the deepest profile, with further jurisdictions (UK PIDA, US SOX
+  §301, FR Sapin II, BR Lei 12.846) added as one nav.yml entry each.">
+</picture>
 
 What the product is and why it is trustworthy is written law-agnostic. Each jurisdiction page states concretely
 what the software covers and what it does not. No page gives legal advice.
@@ -46,14 +46,13 @@ what the software covers and what it does not. No page gives legal advice.
 
 ## Architecture and deploy
 
-```mermaid
-flowchart LR
-  S["docs/: Markdown + Jinja2 layouts<br>+ _data/nav.yml, i18n, config.yml, redirects.yml"] --> B["scripts/build_site.py → _site/ (gitignored)"]
-  B --> T["tests + Pagefind index + page budget"]
-  T --> I["ghcr.io/openwhistle/website<br>nginx-unprivileged, digest-pinned, nginx.conf from the repo"]
-  I --> C["container on root01xvp, 127.0.0.1:port"]
-  H["host nginx :443<br>access_log off, error_log /dev/null"] --> C
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../img/diagrams/site-architecture-dark.svg">
+  <img src="../img/diagrams/site-architecture-light.svg" alt="Markdown sources and Jinja2 layouts in docs/ are built
+  by scripts/build_site.py into _site/, checked by tests, the Pagefind index and the page budget, packed into the
+  digest-pinned nginx-unprivileged image ghcr.io/openwhistle/website, and run as a container on root01xvp at
+  127.0.0.1, behind the host nginx on :443 that logs nothing.">
+</picture>
 
 - `docs/` stays the published directory; it now holds sources. Directories starting with `_` never reach the
   output. `docs-tech/` is never published; `test_the_technical_docs_are_not_published` keeps holding that.
@@ -184,13 +183,12 @@ The single page `docs/docs.html` (162 KB) is split by reader type. Content is mo
 
 ### Diagrams
 
-```mermaid
-flowchart LR
-  D["docs/_diagrams/*.drawio (light palette = Signal tokens)"] --> R["scripts/render_diagrams.py"]
-  R --> L["*-light.svg"]
-  R -->|"token map → dark palette"| K["*-dark.svg"]
-  R --> S["stamp: hash(source + palette + CLI image digest)"]
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../img/diagrams/diagram-pipeline-dark.svg">
+  <img src="../img/diagrams/diagram-pipeline-light.svg" alt="scripts/render_diagrams.py turns each draw.io source in
+  docs/_diagrams and docs-tech/_diagrams, which names roles instead of colours, into a light SVG, a dark SVG drawn in
+  the dark palette, and a stamp that hashes the source, roles, palette, image and fonts.">
+</picture>
 
 - Export with the draw.io CLI in a digest-pinned container; SVGs are committed, so CI needs no draw.io and a
   test checks the stamp.
@@ -250,15 +248,11 @@ The 15 test files that read `docs/docs.html` move to the built site. Updated in 
 
 One PR per phase. The old site stays on GitHub Pages until P5.
 
-```mermaid
-flowchart LR
-  P0["P0 spike: draw.io export, Pagefind from PyPI, CSP + wasm"] --> P1["P1 build system: layouts, nav, i18n, pages ported 1:1, redirects, tests moved"]
-  P1 --> P2["P2 design: K3 in app and site, DESIGN.md, fonts, diagrams"]
-  P1 --> P3["P3 content: docs split, compliance, security, contribute, legal, home"]
-  P2 --> P4["P4 container: Dockerfile, nginx.conf, image workflow, counter"]
-  P3 --> P4
-  P4 --> P5["P5 move (wdk-ansible): vhost verified → DNS → delete GitHub records → remove pages.yml and CNAME → HSTS preload → sitemap"]
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../img/diagrams/delivery-dark.svg">
+  <img src="../img/diagrams/delivery-light.svg" alt="Delivery order: P0 spike, then P1 build system; P2 design and P3
+  content both follow P1; P4 container follows both; P5 move comes last.">
+</picture>
 
 Before P5: Chrome check of every page at Full HD (`docs-tech/local-review.md`), zero open code-scanning alerts in
 the whole repository, mutation audit.

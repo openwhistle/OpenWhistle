@@ -56,8 +56,9 @@ The prose rules cover `docs/en/docs/index.html`, `docs/en/index.html`, `docs/de/
 `docs/en/docs/*.md`. Code, tables and headings are not counted; inline code is one word. German
 abbreviations (`z. B.`, `d. h.`, `bzw.`, `Abs.`) and dates (`2. Juli`) do not end a sentence.
 
-**Diagrams** are Mermaid sources in `docs/_diagrams/<name>.mmd`, rendered to committed
-`docs/img/diagrams/<name>-light.svg` and `-dark.svg`. The page shows the one matching `data-theme`.
+**Diagrams** are draw.io sources in `docs/_diagrams/` (German pages: `<name>.de.drawio`) and
+`docs-tech/_diagrams/`, rendered by `scripts/render_diagrams.py` to committed `-light.svg` and `-dark.svg`.
+Rules and roles: `docs-tech/diagrams.md`.
 
 **Screenshots are documentation.** They live in `docs/img/screens/<name>-light.png` and `-dark.png`,
 are taken by `scripts/take_screenshots.py`, and are re-taken in the change that alters the interface. A stale

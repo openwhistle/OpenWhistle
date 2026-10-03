@@ -451,12 +451,16 @@ def _git(*args: str) -> str:
 
 
 def lastmod(path: Path) -> str:
-    today = datetime.date.today().isoformat()
+    today = datetime.datetime.now(datetime.UTC).date().isoformat()
     try:
         rel = str(path.resolve().relative_to(ROOT))
     except ValueError:
         return today  # a source tree outside the repository, e.g. a test fixture
-    committed = _git("log", "-1", "--format=%cs", "--", rel)
+    # %ct, not %cs: %cs is the committer's own zone, CI's "today" is UTC
+    stamp = _git("log", "-1", "--format=%ct", "--", rel)
+    committed = ""
+    if stamp:
+        committed = datetime.datetime.fromtimestamp(int(stamp), datetime.UTC).date().isoformat()
     return committed if committed and not _git("status", "--porcelain", "--", rel) else today
 
 

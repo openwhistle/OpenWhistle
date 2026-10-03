@@ -1,0 +1,46 @@
+<mxfile>
+  <diagram name="delivery">
+    <mxGraphModel>
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="p0" value="P0 spike&#xa;draw.io, Pagefind, CSP" style="ow:start" vertex="1" parent="1">
+          <mxGeometry x="170" y="0" width="210" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1" value="P1 build system&#xa;layouts, nav, i18n, redirects" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="170" y="84" width="210" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="p2" value="P2 design&#xa;K3, DESIGN.md, fonts, diagrams" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="0" y="168" width="250" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="p3" value="P3 content&#xa;docs split, compliance, legal" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="310" y="168" width="220" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="p4" value="P4 container&#xa;nginx.conf, image, counter" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="170" y="252" width="210" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="p5" value="P5 move&#xa;vhost, DNS, HSTS preload" style="ow:end" vertex="1" parent="1">
+          <mxGeometry x="170" y="336" width="210" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-p0" style="ow:edge" edge="1" parent="1" source="p0" target="p1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-p1-p2" style="ow:edge;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="p1" target="p2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-p1-p3" style="ow:edge;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="p1" target="p3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-p2-p4" style="ow:edge;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="p2" target="p4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-p3-p4" style="ow:edge;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="p3" target="p4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-p4" style="ow:edge" edge="1" parent="1" source="p4" target="p5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

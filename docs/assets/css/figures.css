@@ -1,24 +1,25 @@
 /* Themed figures and scrolling tables for docs/en/index.html and
    docs/en/compare/index.html. The same rules live in
-   docs.css; see docs/_diagrams/README.md for the markup.
+   docs.css; see docs-tech/diagrams.md for the markup.
    CSS picks the twin from data-theme, the attribute the toggle sets. */
 .diagram, .doc-shot { margin: 0; }
-.diagram img { max-width: 100%; height: auto; margin: 0 auto; }
+.diagram img { max-width: 100%; height: auto; margin: 0 auto; display: block; }
 .doc-shot img {
   width: 100%;
   height: auto;
   border: 1px solid var(--border-subtle);
   border-radius: 4px;
 }
-.diagram-dark, .shot-dark { display: none; }
-[data-theme="dark"] .diagram-light, [data-theme="dark"] .shot-light { display: none; }
-[data-theme="dark"] .diagram-dark, [data-theme="dark"] .shot-dark { display: block; }
+.shot-dark { display: none; }
+[data-theme="dark"] .shot-light { display: none; }
+[data-theme="dark"] .shot-dark { display: block; }
 .diagram figcaption, .doc-shot figcaption {
   font-size: 0.82rem;
   color: var(--text-muted);
   line-height: 1.6;
   margin-top: var(--space-3);
 }
+.diagram figcaption { text-align: center; }
 
 /* A wide table scrolls inside its column instead of widening the page. */
 .table-scroll { overflow-x: auto; }
@@ -53,8 +54,8 @@
 .figure-row .comparison-table thead th:first-child,
 .figure-row .comparison-table tbody td:first-child { width: 9.5rem; }
 .figure-row .comparison-table tbody td:first-child { color: var(--text-primary); font-weight: 500; }
-/* A tall diagram beside a table stays within one screen. */
-.figure-row .diagram img { width: auto; max-height: 560px; }
+/* A diagram is too wide for the 2fr column: it goes under its table, at its own size. */
+.figure-row:has(> .diagram) { grid-template-columns: 1fr; }
 /* A three-column table stacks per row on a phone: requirement, source, answer. */
 @media (max-width: 600px) {
   .stack-table thead { display: none; }

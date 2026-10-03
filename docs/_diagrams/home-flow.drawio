@@ -1,0 +1,56 @@
+<mxfile>
+  <diagram name="home-flow">
+    <mxGraphModel>
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="wb" value="Whistleblower" style="ow:lane" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="300" height="340" as="geometry"/>
+        </mxCell>
+        <mxCell id="wb-form" value="Fill in the form&#xa;anonymous or confidential,&#xa;no account, no e-mail" style="ow:step" vertex="1" parent="wb">
+          <mxGeometry x="20" y="48" width="260" height="72" as="geometry"/>
+        </mxCell>
+        <mxCell id="wb-receipt" value="Note case number + PIN&#xa;shown exactly once,&#xa;lost means lost" style="ow:result" vertex="1" parent="wb">
+          <mxGeometry x="20" y="148" width="260" height="72" as="geometry"/>
+        </mxCell>
+        <mxCell id="wb-status" value="Check status and reply&#xa;at /status: status,&#xa;deadlines, answers" style="ow:step" vertex="1" parent="wb">
+          <mxGeometry x="20" y="248" width="260" height="72" as="geometry"/>
+        </mxCell>
+        <mxCell id="office" value="Reporting office" style="ow:lane" vertex="1" parent="1">
+          <mxGeometry x="460" y="0" width="300" height="340" as="geometry"/>
+        </mxCell>
+        <mxCell id="of-login" value="Log in&#xa;password, LDAP or OIDC,&#xa;then always TOTP" style="ow:step" vertex="1" parent="office">
+          <mxGeometry x="20" y="48" width="260" height="72" as="geometry"/>
+        </mxCell>
+        <mxCell id="of-ack" value="Acknowledge receipt&#xa;within 7 days&#xa;§ 17 (1) no. 1 HinSchG" style="ow:step" vertex="1" parent="office">
+          <mxGeometry x="20" y="148" width="260" height="72" as="geometry"/>
+        </mxCell>
+        <mxCell id="of-feedback" value="Review and give feedback&#xa;within 3 months&#xa;§ 17 (2) HinSchG" style="ow:step" vertex="1" parent="office">
+          <mxGeometry x="20" y="248" width="260" height="72" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-form" style="ow:edge" edge="1" parent="1" source="wb-form" target="wb-receipt">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-receipt" style="ow:edge" edge="1" parent="1" source="wb-receipt" target="wb-status">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-login" style="ow:edge" edge="1" parent="1" source="of-login" target="of-ack">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-ack" style="ow:edge" edge="1" parent="1" source="of-ack" target="of-feedback">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-report" value="report" style="ow:edge;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="wb-form" target="of-ack">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="34" y="0"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-feedback" value="feedback" style="ow:edge;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="of-feedback" target="wb-status">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="0" y="-14"/>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -3,10 +3,11 @@
 How-to for the maintainer. `main` is protected (required checks, enforced for
 admins), so the release commit goes through a pull request like everything else.
 
-```mermaid
-flowchart LR
-    A[Mutation audit] --> B[UI check] --> F[Chrome check] --> C[Release PR] --> G[No open security alert] --> D[Tag vX.Y.Z] --> E[Verify images]
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="img/diagrams/release-gates-dark.svg">
+  <img src="img/diagrams/release-gates-light.svg" alt="Release gates in order: mutation audit, UI check, Chrome check,
+  release PR, no open security alert, tag vX.Y.Z, then verify the published images.">
+</picture>
 
 ## 1. Mutation audit — before the release PR
 
@@ -47,6 +48,8 @@ page matrix, traps, and start/stop commands: `docs-tech/local-review.md`.
 `tests/test_local_review.py::test_local_review_page_matrix_covers_every_app_page`
 and `..._covers_every_docs_site_page` fail when a page exists that the matrix
 does not list, so a new route or `docs/` page cannot be skipped by accident.
+`tests/e2e/test_docs_diagrams.py` measures every site diagram in a browser, without the app:
+one twin per theme, on the canvas, at ≥ 0.85 of its size at 1280–1920 px and at its size at 390 px.
 
 For each page: light and dark theme, 1440px and 390px, `en` and `de`; the
 interactive paths (wizard steps, identity-reveal form, filters, theme
@@ -107,6 +110,14 @@ skopeo inspect --raw docker://ghcr.io/openwhistle/openwhistle:X.Y.Z
 cosign verify ghcr.io/openwhistle/openwhistle:X.Y.Z \
   --certificate-identity-regexp '^https://github.com/openwhistle/OpenWhistle/' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
+
+Until the site moves off GitHub Pages (website P5), Pages must build from the workflow, not from `main:/docs`:
+after P1 the legacy setting served the raw sources for 15 minutes.
+
+```bash
+gh api repos/openwhistle/OpenWhistle/pages -q .build_type     # workflow
+curl -s -o /dev/null -w '%{http_code}\n' https://openwhistle.net/en/   # 200
 ```
 
 Then create the GitHub release from the changelog section.

@@ -7,24 +7,24 @@
  },
  "mutations": [
   {
-   "id": "mmd-edited-without-rerender",
-   "file": "docs/_diagrams/architecture.mmd",
-   "old": "    client[\"Browser / Tor Browser\"]",
-   "new": "    client[\"Browser or Tor Browser\"]",
+   "id": "drawio-edited-without-rerender",
+   "file": "docs/_diagrams/architecture.drawio",
+   "old": "value=\"Browser / Tor Browser\"",
+   "new": "value=\"Browser or Tor Browser\"",
    "tests": "D"
   },
   {
    "id": "svg-foreign-color",
    "file": "docs/img/diagrams/architecture-light.svg",
-   "old": "<svg data-source-digest=\"",
-   "new": "<svg fill=\"#ff00ff\" data-source-digest=\"",
+   "old": "<svg data-ow-stamp=\"",
+   "new": "<svg fill=\"#ff00ff\" data-ow-stamp=\"",
    "tests": "D"
   },
   {
    "id": "svg-external-href",
    "file": "docs/img/diagrams/architecture-dark.svg",
-   "old": "<svg data-source-digest=\"",
-   "new": "<svg xlink:href=\"https://evil.example/pixel.png\" data-source-digest=\"",
+   "old": "<svg data-ow-stamp=\"",
+   "new": "<svg xlink:href=\"https://evil.example/pixel.png\" data-ow-stamp=\"",
    "tests": "D"
   }
  ]

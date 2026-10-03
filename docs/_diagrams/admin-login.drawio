@@ -1,0 +1,105 @@
+<mxfile>
+  <diagram name="admin-login">
+    <mxGraphModel>
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="start" value="Admin login" style="ow:start" vertex="1" parent="1">
+          <mxGeometry x="220" y="0" width="220" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="first-factor" value="First factor" style="ow:decision" vertex="1" parent="1">
+          <mxGeometry x="220" y="72" width="220" height="72" as="geometry"/>
+        </mxCell>
+        <mxCell id="database" value="Database" style="ow:store" vertex="1" parent="1">
+          <mxGeometry x="0" y="200" width="180" height="56" as="geometry"/>
+        </mxCell>
+        <mxCell id="ldap" value="LDAP server" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="240" y="200" width="180" height="56" as="geometry"/>
+        </mxCell>
+        <mxCell id="idp" value="External identity&#xa;provider" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="480" y="200" width="180" height="56" as="geometry"/>
+        </mxCell>
+        <mxCell id="verified" value="First factor verified" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="220" y="320" width="220" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="totp-enrolled" value="TOTP enrolled?" style="ow:decision" vertex="1" parent="1">
+          <mxGeometry x="220" y="392" width="220" height="72" as="geometry"/>
+        </mxCell>
+        <mxCell id="enroll" value="Enroll TOTP&#xa;mandatory for every account" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="500" y="400" width="230" height="56" as="geometry"/>
+        </mxCell>
+        <mxCell id="totp" value="Enter TOTP code" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="220" y="500" width="220" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="forced" value="Password set by&#xa;someone else?" style="ow:decision" vertex="1" parent="1">
+          <mxGeometry x="220" y="572" width="220" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="change" value="Choose own password&#xa;at /admin/account,&#xa;nothing else opens" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="500" y="578" width="230" height="68" as="geometry"/>
+        </mxCell>
+        <mxCell id="admin" value="Admin area" style="ow:end" vertex="1" parent="1">
+          <mxGeometry x="220" y="700" width="220" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-start" style="ow:edge;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="start" target="first-factor">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-password" value="username + password" style="ow:edge;exitX=0;exitY=0.5;entryX=0.5;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="first-factor" target="database">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="0" y="-11"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-ldap" value="LDAP" style="ow:edge;exitX=0.5;exitY=1;entryX=0.5;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="first-factor" target="ldap">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="22" y="0"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-oidc" value="OIDC" style="ow:edge;exitX=1;exitY=0.5;entryX=0.5;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="first-factor" target="idp">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="0" y="-11"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-database" style="ow:edge;exitX=0.5;exitY=1;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="database" target="verified">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-ldap-verified" style="ow:edge;exitX=0.5;exitY=1;entryX=0.5;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="ldap" target="verified">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-idp" style="ow:edge;exitX=0.5;exitY=1;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="idp" target="verified">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-verified" style="ow:edge;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="verified" target="totp-enrolled">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-not-enrolled" value="no" style="ow:edge;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="totp-enrolled" target="enroll">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="0" y="-11"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-enrolled" value="yes" style="ow:edge;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="totp-enrolled" target="totp">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="16" y="0"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-enroll" style="ow:edge;exitX=0.5;exitY=1;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="enroll" target="totp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-totp" style="ow:edge;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="totp" target="forced">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-own-password" value="no" style="ow:edge;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="forced" target="admin">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="14" y="0"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-forced" value="yes" style="ow:edge;exitX=1;exitY=0.5;entryX=0;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="forced" target="change">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="0" y="-11"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-change" style="ow:edge;exitX=0.5;exitY=1;entryX=1;entryY=0.5;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="change" target="admin">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

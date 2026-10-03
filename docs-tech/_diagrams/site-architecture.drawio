@@ -1,0 +1,43 @@
+<mxfile>
+  <diagram name="site-architecture">
+    <mxGraphModel>
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="sources" value="docs/: Markdown + Jinja2 layouts&#xa;_data/nav.yml, i18n, config.yml,&#xa;redirects.yml" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="270" height="68" as="geometry"/>
+        </mxCell>
+        <mxCell id="build" value="scripts/build_site.py&#xa;writes _site/ (gitignored)" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="0" y="100" width="270" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="tests" value="Tests, Pagefind index,&#xa;page budget" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="0" y="184" width="270" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="image" value="ghcr.io/openwhistle/website&#xa;nginx-unprivileged, digest-pinned,&#xa;nginx.conf from the repo" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="0" y="268" width="270" height="68" as="geometry"/>
+        </mxCell>
+        <mxCell id="container" value="Container on root01xvp&#xa;127.0.0.1:port" style="ow:result" vertex="1" parent="1">
+          <mxGeometry x="0" y="368" width="270" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="host" value="Host nginx :443&#xa;access_log off, error_log /dev/null" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="330" y="368" width="260" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-sources" style="ow:edge" edge="1" parent="1" source="sources" target="build">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-build" style="ow:edge" edge="1" parent="1" source="build" target="tests">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-tests" style="ow:edge" edge="1" parent="1" source="tests" target="image">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-image" style="ow:edge" edge="1" parent="1" source="image" target="container">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-host" style="ow:edge;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="host" target="container">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

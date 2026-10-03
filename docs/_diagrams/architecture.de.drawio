@@ -1,0 +1,75 @@
+<mxfile>
+  <diagram name="architecture.de">
+    <mxGraphModel>
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="client" value="Browser / Tor-Browser" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="280" y="0" width="300" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="edge" value="nginx" style="ow:group" vertex="1" parent="1">
+          <mxGeometry x="180" y="100" width="500" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="tls" value="TLS :443&#xa;:80 leitet um auf :443" style="ow:step" vertex="1" parent="edge">
+          <mxGeometry x="20" y="40" width="220" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="onion" value="Onion :8080&#xa;nur 127.0.0.1" style="ow:step" vertex="1" parent="edge">
+          <mxGeometry x="260" y="40" width="220" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="app" value="app (FastAPI)&#xa;zustandslos" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="280" y="250" width="300" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="required" value="erforderlich" style="ow:group" vertex="1" parent="1">
+          <mxGeometry x="0" y="350" width="230" height="112" as="geometry"/>
+        </mxCell>
+        <mxCell id="pg" value="PostgreSQL" style="ow:store" vertex="1" parent="required">
+          <mxGeometry x="16" y="38" width="104" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="redis" value="Redis" style="ow:store" vertex="1" parent="required">
+          <mxGeometry x="128" y="38" width="88" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="optional" value="optional" style="ow:group" vertex="1" parent="1">
+          <mxGeometry x="250" y="350" width="230" height="112" as="geometry"/>
+        </mxCell>
+        <mxCell id="clamav" value="ClamAV&#xa;Virenscan" style="ow:step" vertex="1" parent="optional">
+          <mxGeometry x="16" y="42" width="96" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="s3" value="S3&#xa;Speicher" style="ow:store" vertex="1" parent="optional">
+          <mxGeometry x="124" y="38" width="90" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="outbound" value="ausgehend" style="ow:group" vertex="1" parent="1">
+          <mxGeometry x="500" y="350" width="380" height="112" as="geometry"/>
+        </mxCell>
+        <mxCell id="github" value="GitHub-API&#xa;Update-Prüfung, opt-in" style="ow:step" vertex="1" parent="outbound">
+          <mxGeometry x="16" y="42" width="190" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="telemetry" value="telemetry.wdkro.de&#xa;opt-in" style="ow:step" vertex="1" parent="outbound">
+          <mxGeometry x="216" y="42" width="150" height="52" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-tls" style="ow:edge;exitX=0.1;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="client" target="tls">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-onion" value="Onion-Dienst" style="ow:edge-optional;exitX=0.9;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="client" target="onion">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="48" y="-30"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-tls-app" style="ow:edge;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.1;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="tls" target="app">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-onion-app" style="ow:edge;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.9;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="onion" target="app">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-required" style="ow:edge;exitX=0.2;exitY=1;entryX=0.5;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="app" target="required">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-optional" style="ow:edge-optional;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.7826;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="app" target="optional">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-outbound" style="ow:edge-optional;exitX=0.8;exitY=1;entryX=0.5;entryY=0;exitDx=0;exitDy=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="app" target="outbound">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

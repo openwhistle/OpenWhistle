@@ -1,0 +1,49 @@
+<mxfile>
+  <diagram name="release-gates">
+    <mxGraphModel>
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="audit" value="Mutation audit" style="ow:start" vertex="1" parent="1">
+          <mxGeometry x="0" y="0" width="180" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="ui" value="UI check" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="0" y="72" width="180" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="chrome" value="Chrome check" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="0" y="144" width="180" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="pr" value="Release PR" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="0" y="216" width="180" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="alerts" value="No open security alert" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="0" y="288" width="180" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="tag" value="Tag vX.Y.Z" style="ow:step" vertex="1" parent="1">
+          <mxGeometry x="0" y="360" width="180" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="verify" value="Verify images" style="ow:end" vertex="1" parent="1">
+          <mxGeometry x="0" y="432" width="180" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-audit" style="ow:edge" edge="1" parent="1" source="audit" target="ui">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-ui" style="ow:edge" edge="1" parent="1" source="ui" target="chrome">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-chrome" style="ow:edge" edge="1" parent="1" source="chrome" target="pr">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-pr" style="ow:edge" edge="1" parent="1" source="pr" target="alerts">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-alerts" style="ow:edge" edge="1" parent="1" source="alerts" target="tag">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e-tag" style="ow:edge" edge="1" parent="1" source="tag" target="verify">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

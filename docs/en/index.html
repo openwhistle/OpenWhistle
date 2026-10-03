@@ -327,8 +327,8 @@ jsonld:
           </div>
 
           <figure class="diagram">
-            <img class="diagram-light" src="/img/diagrams/admin-login-light.svg" alt="Admin login: the first factor is a username and password checked against the database, LDAP, or an external OIDC identity provider. Then TOTP: an account without it enrolls first, which is mandatory. The TOTP code opens the admin session." width="645" height="1504" loading="lazy">
-            <img class="diagram-dark" src="/img/diagrams/admin-login-dark.svg" alt="Admin login: the first factor is a username and password checked against the database, LDAP, or an external OIDC identity provider. Then TOTP: an account without it enrolls first, which is mandatory. The TOTP code opens the admin session." width="645" height="1504" loading="lazy">
+            <img class="diagram-light" src="/img/diagrams/admin-login-light.svg" alt="Admin login: the first factor is a username and password checked against the database, LDAP, or an external OIDC identity provider. Then TOTP: an account without it enrolls first, which is mandatory. The TOTP code opens the admin session." width="754" height="764" loading="lazy">
+            <img class="diagram-dark" src="/img/diagrams/admin-login-dark.svg" alt="Admin login: the first factor is a username and password checked against the database, LDAP, or an external OIDC identity provider. Then TOTP: an account without it enrolls first, which is mandatory. The TOTP code opens the admin session." width="754" height="764" loading="lazy">
             <figcaption>Every login path ends with TOTP.</figcaption>
           </figure>
         </div>
@@ -344,51 +344,11 @@ jsonld:
         </h2>
         <div class="section-divider" aria-hidden="true"></div>
 
-        <div class="flows-grid">
-          <div class="flow-column" role="region" aria-label="Whistleblower flow">
-            <div class="flow-header">
-              <span class="flow-header-badge flow-header-badge-wb">Whistleblower</span>
-              <span class="flow-header-title">Report and follow up</span>
-            </div>
-            <div class="flow-steps">
-              <div class="flow-step">
-                <div class="flow-step-num" aria-hidden="true">1</div>
-                <div>
-                  <div class="flow-step-title">Open the organisation's link</div>
-                  <div class="flow-step-desc">Six steps: mode, location, category, details, files, review. Category and description are required.</div>
-                </div>
-              </div>
-              <div class="flow-step">
-                <div class="flow-step-num" aria-hidden="true">2</div>
-                <div>
-                  <div class="flow-step-title">Save case number and PIN</div>
-                  <div class="flow-step-desc">Shown once, never recoverable. The page continues only after ticking that both are saved.</div>
-                </div>
-              </div>
-              <div class="flow-step">
-                <div class="flow-step-num" aria-hidden="true">3</div>
-                <div>
-                  <div class="flow-step-title">Check status and reply</div>
-                  <div class="flow-step-desc">At <code>/status</code>: the case status, replies, both deadlines, and a form to answer.</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="flow-column" role="region" aria-label="Reporting office flow">
-            <div class="flow-header">
-              <span class="flow-header-badge flow-header-badge-admin">Reporting office</span>
-              <span class="flow-header-title">Case statuses and deadlines</span>
-            </div>
-            <div class="flow-steps">
-              <figure class="diagram">
-                <img class="diagram-light" src="/img/diagrams/case-lifecycle-light.svg" alt="Case statuses: a submitted report is received. From received it goes to in_review or closed; from in_review to pending_feedback, closed or back to received; from pending_feedback to closed or in_review; a closed case can reopen to in_review. Received carries the 7-day acknowledgement deadline, pending_feedback the 3-month feedback deadline." width="622" height="571" loading="lazy">
-                <img class="diagram-dark" src="/img/diagrams/case-lifecycle-dark.svg" alt="Case statuses: a submitted report is received. From received it goes to in_review or closed; from in_review to pending_feedback, closed or back to received; from pending_feedback to closed or in_review; a closed case can reopen to in_review. Received carries the 7-day acknowledgement deadline, pending_feedback the 3-month feedback deadline." width="622" height="571" loading="lazy">
-                <figcaption>Acknowledging a case starts the 3-month feedback clock.</figcaption>
-              </figure>
-            </div>
-          </div>
-        </div>
+        <figure class="diagram">
+          <img class="diagram-light" src="/img/diagrams/home-flow-light.svg" alt="Two lanes. Whistleblower: fill in the form, anonymous or confidential, with no account and no e-mail; note the case number and PIN, shown exactly once; check status and reply at /status. The form has six steps. Category and description are required. The page continues only after ticking that the case number and PIN are saved. Reporting office: log in with password, LDAP or OIDC, then always TOTP; acknowledge receipt within 7 days; review and give feedback within 3 months. The report goes from the form to the acknowledgement, the feedback back to the status page." width="785" height="365" loading="lazy">
+          <img class="diagram-dark" src="/img/diagrams/home-flow-dark.svg" alt="Two lanes. Whistleblower: fill in the form, anonymous or confidential, with no account and no e-mail; note the case number and PIN, shown exactly once; check status and reply at /status. The form has six steps. Category and description are required. The page continues only after ticking that the case number and PIN are saved. Reporting office: log in with password, LDAP or OIDC, then always TOTP; acknowledge receipt within 7 days; review and give feedback within 3 months. The report goes from the form to the acknowledgement, the feedback back to the status page." width="785" height="365" loading="lazy">
+          <figcaption>Acknowledging a report starts the three-month feedback clock.</figcaption>
+        </figure>
       </div>
     </section>
 
@@ -417,8 +377,8 @@ jsonld:
           </div>
 
           <figure class="diagram">
-            <img class="diagram-light" src="/img/diagrams/architecture-light.svg" alt="Architecture: a browser reaches nginx over TLS on 443 (80 redirects), Tor Browser reaches the onion listener on 8080, bound to 127.0.0.1. Both lead to the stateless FastAPI app, which needs PostgreSQL and Redis, can use ClamAV and S3, and makes two opt-in outbound requests: the GitHub update check and the telemetry.wdkro.de count." width="774" height="735" loading="lazy">
-            <img class="diagram-dark" src="/img/diagrams/architecture-dark.svg" alt="Architecture: a browser reaches nginx over TLS on 443 (80 redirects), Tor Browser reaches the onion listener on 8080, bound to 127.0.0.1. Both lead to the stateless FastAPI app, which needs PostgreSQL and Redis, can use ClamAV and S3, and makes two opt-in outbound requests: the GitHub update check and the telemetry.wdkro.de count." width="774" height="735" loading="lazy">
+            <img class="diagram-light" src="/img/diagrams/architecture-light.svg" alt="Architecture: a browser reaches nginx over TLS on 443 (80 redirects), Tor Browser reaches the onion listener on 8080, bound to 127.0.0.1. Both lead to the stateless FastAPI app, which needs PostgreSQL and Redis, can use ClamAV and S3, and makes two opt-in outbound requests: the GitHub update check and the telemetry.wdkro.de count." width="905" height="487" loading="lazy">
+            <img class="diagram-dark" src="/img/diagrams/architecture-dark.svg" alt="Architecture: a browser reaches nginx over TLS on 443 (80 redirects), Tor Browser reaches the onion listener on 8080, bound to 127.0.0.1. Both lead to the stateless FastAPI app, which needs PostgreSQL and Redis, can use ClamAV and S3, and makes two opt-in outbound requests: the GitHub update check and the telemetry.wdkro.de count." width="905" height="487" loading="lazy">
             <figcaption>The optional onion listener and both outbound requests are off until switched on.</figcaption>
           </figure>
         </div>
