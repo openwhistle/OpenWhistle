@@ -37,6 +37,7 @@ from types import ModuleType
 from urllib.parse import unquote, urljoin, urlsplit
 
 import yaml
+from fontTools import subset as ft_subset
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from markdown_it import MarkdownIt
 
@@ -500,6 +501,44 @@ def _refuse_dangerous_out(src: Path, out: Path) -> None:
         raise BuildError(f"--out {out} is not empty and not a previous build (no sitemap.xml)")
 
 
+FONT_TEXT_EXTRA = (
+    "".join(chr(c) for c in range(0x20, 0x7F))
+    + "".join(chr(c) for c in range(0xA0, 0x100))
+    + "+—−–‘’“”„…€·§×"
+)
+
+
+def _drawn_text(out: Path) -> str:
+    chars: set[str] = set()
+    for page_file in out.rglob("*.html"):
+        raw = page_file.read_text(encoding="utf-8")
+        text = re.sub(r"<(script|style)\b.*?</\1>", "", raw, flags=re.S)
+        chars |= set(html.unescape(re.sub(r"<[^>]+>", "", text)))
+    return "".join(sorted(chars))
+
+
+def subset_fonts(out: Path) -> dict[str, int]:
+    """Cut every woff2 in out/fonts down to what the site draws (spec P2b step 5).
+
+    The text is the union over all pages plus FONT_TEXT_EXTRA (ASCII, Latin-1 for typed
+    search terms, the CSS content strings). One text for every face: per-weight text
+    would save a few hundred bytes and needs CSS cascade resolution to be right.
+    """
+    text = _drawn_text(out) + FONT_TEXT_EXTRA
+    sizes: dict[str, int] = {}
+    for font_file in sorted((out / "fonts").glob("*.woff2")):
+        options = ft_subset.Options()
+        options.flavor = "woff2"
+        options.layout_features = ["*"]
+        font = ft_subset.load_font(str(font_file), options)
+        subsetter = ft_subset.Subsetter(options)
+        subsetter.populate(text=text)
+        subsetter.subset(font)
+        ft_subset.save_font(font, str(font_file), options)
+        sizes[font_file.name] = font_file.stat().st_size
+    return sizes
+
+
 def build(src: Path, out: Path, *, redirect_stubs: bool = False) -> list[Page]:
     _refuse_dangerous_out(src, out)
     data = load_data(src)
@@ -529,6 +568,7 @@ def build(src: Path, out: Path, *, redirect_stubs: bool = False) -> list[Page]:
     write_sitemap(out, src, pages, site)
     # Before the stubs: a link to an old URL must fail even where a stub would catch it.
     check_links(out, urlsplit(site["base_url"]).netloc)
+    subset_fonts(out)
     if redirect_stubs:
         write_stubs(out, data["redirects"], site, {p.url: src / p.source for p in pages})
     return pages
