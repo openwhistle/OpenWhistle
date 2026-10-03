@@ -196,3 +196,64 @@ def test_a_code_block_draws_no_inline_code_pill(
     finally:
         ctx.close()
     assert fills and set(fills) == {"rgba(0, 0, 0, 0)"}, (theme, sorted(set(fills)))
+
+
+PROSE_PAGES = ("/en/docs/", "/en/blog/hinschg-compliance-guide/", "/en/roadmap/")
+
+
+@pytest.mark.parametrize("url", PROSE_PAGES)
+def test_prose_lines_stay_near_seventy_characters(
+    browser: Browser, docs_server_url: str, url: str
+) -> None:
+    """DESIGN.md "Rules": a paragraph is at most ~70 characters wide (width / width of "0")."""
+    ctx = browser.new_context(viewport={"width": 1920, "height": 1080})
+    try:
+        page = ctx.new_page()
+        page.goto(f"{docs_server_url}{url}")
+        page.evaluate("document.fonts.ready")
+        widest = page.evaluate(
+            """() => { let worst = [0, ''];
+              for (const p of document.querySelectorAll(
+                  'main p, .docs-section p, .article-body p, .docs-content p')) {
+                const cs = getComputedStyle(p);
+                if (parseFloat(cs.fontSize) < 14) continue; // eyebrows and tags are not prose
+                const probe = document.createElement('span');
+                probe.style.cssText = 'position:absolute;visibility:hidden;width:100ch';
+                p.appendChild(probe);
+                const ch = probe.getBoundingClientRect().width / 100;
+                probe.remove();
+                const w = p.getBoundingClientRect().width
+                  - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+                if (w / ch > worst[0]) worst = [w / ch, p.textContent.trim().slice(0, 40)];
+              }
+              return worst; }"""
+        )
+    finally:
+        ctx.close()
+    assert 0 < widest[0] <= 72, (url, widest)
+
+
+@pytest.mark.parametrize("url", ["/en/", "/en/docs/", "/en/compare/", "/en/roadmap/"])
+def test_a_rounded_child_in_a_tight_rounded_parent_is_concentric(
+    browser: Browser, docs_server_url: str, url: str
+) -> None:
+    """DESIGN.md "Rules": inner radius = outer radius - padding while the padding is below it."""
+    ctx = browser.new_context(viewport={"width": 1920, "height": 1080})
+    try:
+        page = ctx.new_page()
+        page.goto(f"{docs_server_url}{url}")
+        bad = page.evaluate(
+            """() => { const out = [], px = v => parseFloat(v) || 0;
+              for (const el of document.querySelectorAll('body *')) {
+                const p = el.parentElement, c = getComputedStyle(el), s = getComputedStyle(p);
+                const ro = px(s.borderTopLeftRadius), ri = px(c.borderTopLeftRadius);
+                if (!ro || !ri || ro > 500 || ri > 500) continue;
+                const gap = Math.min(px(s.paddingTop), px(s.paddingLeft));
+                if (gap < ro && ri > ro - gap + 0.5)
+                  out.push(`${el.tagName}.${el.className} ${ri} in ${p.className} ${ro}/${gap}`);
+              }
+              return out; }"""
+        )
+    finally:
+        ctx.close()
+    assert not bad, bad

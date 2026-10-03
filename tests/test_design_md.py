@@ -35,3 +35,15 @@ def test_every_colour_key_is_named_in_the_prose() -> None:
     body = TEXT.split("---", 2)[2]
     missing = [k for k in keys if f"colors.{k}}}" not in body and k != "primary"]
     assert not missing, missing
+
+
+def test_the_k3_sizes_are_named() -> None:
+    brand = TEXT.split("### Brand mark (K3)")[1].split("###")[0]
+    for size in ("22px", "18px", "24px"):
+        assert size in brand, size
+
+
+def test_no_retired_token_name_survives() -> None:
+    assert not re.search(r"--(bg-|text-|border-subtle|nav-bg|footer-bg|code-)[\w-]*", TEXT), (
+        "a retired custom-property name is back in DESIGN.md"
+    )

@@ -34,6 +34,24 @@
   ],
   "DESIGN_MD": [
    "tests/test_design_md.py"
+  ],
+  "PROSE_E2E": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "prose",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "CONCENTRIC_E2E": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "concentric",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
   ]
  },
  "mutations": [
@@ -174,8 +192,8 @@
    "id": "SHEET-MIX-WHITE",
    "file": "docs/assets/css/home.css",
    "tests": "COLOURS",
-   "old": "      box-shadow: 0 4px 20px color-mix(in srgb, var(--accent) 30%, transparent);",
-   "new": "      box-shadow: 0 4px 20px color-mix(in srgb, var(--accent) 30%, white);"
+   "old": "0 4px 20px color-mix(in srgb, var(--accent) 30%, transparent);",
+   "new": "0 4px 20px color-mix(in srgb, var(--accent) 30%, white);"
   },
   {
    "id": "SHEET-HSL",
@@ -237,8 +255,8 @@
    "id": "BTN-TRANSITIONS-ALL",
    "file": "docs/assets/css/home.css",
    "tests": "COLOURS",
-   "old": "transition: background var(--duration-fast) var(--ease-stiff), border-color",
-   "new": "transition: all var(--duration-fast) var(--ease-stiff), border-color"
+   "old": "transition: background var(--duration-fast) var(--ease-stiff), box-shadow",
+   "new": "transition: all var(--duration-fast) var(--ease-stiff), box-shadow"
   },
   {
    "id": "APP-TOGGLE-TRANSITIONS-ALL",
@@ -281,6 +299,69 @@
    "tests": "DESIGN_MD",
    "old": "- `{colors.surface-3}` \u2014 one step",
    "new": "- `surface-3` \u2014 one step"
+  },
+  {
+   "id": "SITE-CARD-BORDER-BACK",
+   "file": "docs/assets/css/home.css",
+   "tests": "COLOURS",
+   "old": "    .compliance-card {\n      box-shadow: 0 0 0 1px var(--hairline);",
+   "new": "    .compliance-card {\n      border: 1px solid var(--hairline);"
+  },
+  {
+   "id": "SITE-CODE-BORDER-BACK",
+   "file": "docs/assets/css/post.css",
+   "tests": "COLOURS",
+   "old": "color: var(--accent); box-shadow: 0 0 0 1px var(--hairline); }",
+   "new": "color: var(--accent); border: 1px solid var(--hairline); }"
+  },
+  {
+   "id": "APP-PANEL-BORDER-BACK",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": ".panel-outline {\n  animation: fadeSlideIn 0.4s ease both;\n  background: var(--canvas);\n  border-radius: 12px;\n  padding: 1.5rem;\n  box-shadow: 0 0 0 1px var(--hairline);",
+   "new": ".panel-outline {\n  animation: fadeSlideIn 0.4s ease both;\n  background: var(--canvas);\n  border-radius: 12px;\n  padding: 1.5rem;\n  border-width: 1px;\n  border-color: var(--hairline);"
+  },
+  {
+   "id": "APP-STAT-NOT-TABULAR",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": ".credential-display,\n.stat-card__number,\n.stat-card__value,",
+   "new": ".credential-display,\n.stat-card__value,"
+  },
+  {
+   "id": "APP-LANG-OPTION-NOT-CONCENTRIC",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": ".lang-picker-option {\n  border-radius: 0.25rem;",
+   "new": ".lang-picker-option {\n  border-radius: 0.5rem;"
+  },
+  {
+   "id": "SITE-TERMINAL-BAR-NOT-CONCENTRIC",
+   "file": "docs/assets/css/home.css",
+   "tests": "CONCENTRIC_E2E",
+   "old": "      gap: var(--space-3);\n    }\n    .terminal-dots {",
+   "new": "      gap: var(--space-3);\n      border-radius: 8px;\n    }\n    .terminal-dots {"
+  },
+  {
+   "id": "CALLOUT-PROSE-UNCAPPED",
+   "file": "docs/assets/css/base.css",
+   "tests": "PROSE_E2E",
+   "old": "line-height: 1.7; max-width: 70ch; margin-bottom: 0; }",
+   "new": "line-height: 1.7; max-width: none; margin-bottom: 0; }"
+  },
+  {
+   "id": "DESIGN-MD-K3-SIZE-WRONG",
+   "file": "DESIGN.md",
+   "tests": "DESIGN_MD",
+   "old": "`display` weight 600, at 22px in the site nav",
+   "new": "`display` weight 600, at 20px in the site nav"
+  },
+  {
+   "id": "DESIGN-MD-RETIRED-TOKEN",
+   "file": "DESIGN.md",
+   "tests": "DESIGN_MD",
+   "old": "### Brand mark (K3)\n",
+   "new": "### Brand mark (K3)\n\nSee --bg-base.\n"
   }
  ]
 }

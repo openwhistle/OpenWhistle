@@ -473,17 +473,27 @@ Restraint. Motion confirms, it does not entertain.
 
 | Rule | Status |
 | --- | --- |
-| `text-wrap: balance` on h1–h3 | holds |
-| `tabular-nums` for figures (tables, code, stat cards, counters) | holds |
+| `text-wrap: balance` on h1–h3 (site and app) | holds |
+| `tabular-nums` for figures: site tables, code and pre; app tables, code, stat cards, case numbers, counters | holds |
 | Never `transition: all`; name the properties | holds (tested) |
-| Prose at most ~70 characters wide | holds |
+| Prose at most ~70 characters wide (measured at 1920px on docs, a post, the roadmap) | holds (tested) |
+| Borders as shadows: a decorative edge is `box-shadow: 0 0 0 1px {colors.hairline}` | holds (tested) |
+| Concentric radii: inner = outer − padding while the padding is below the outer radius | holds (tested) |
 | `translate="no"` on the brand name and code | P3 |
-| Borders as shadows | P3 |
-| Concentric radii (inner = outer minus padding) | P3 |
 | Persistent docs sidebar on desktop, search on top | P3 |
 | At most three nav levels | P3 |
 | Icons always with a text label | P3 |
 | Copy: active voice, specific button labels, errors that name the way out | P3 (content work) |
+
+**Borders as shadows.** Cards, panels, buttons, pills, code and terminal blocks draw their
+edge as a ring (`box-shadow`), which takes no layout space and follows the radius. A
+**structural** border stays a border: table row separators, section rules, and a callout's
+or card's accent bar (`border-left` / `border-top`). Forced-colours mode drops shadows, so a
+`forced-colors` block gives the same components a real border there.
+
+**Concentric radii.** A rounded child in a rounded parent uses `outer − padding`. With a
+padding at or above the outer radius the child is independent: its corner no longer follows
+the parent's curve, so squaring every inner control would be wrong. Full pills nest as pills.
 
 "P3" is page and content work in `docs-tech/specs/2026-10-01-website-redesign-design.md`
 § Delivery; the CSS-level rules above are kept by the stylesheets today.

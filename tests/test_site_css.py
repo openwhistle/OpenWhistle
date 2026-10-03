@@ -419,7 +419,92 @@ def test_nothing_transitions_all() -> None:
         assert not re.search(r"transition(-property)?\s*:\s*all\b", css), sheet.name
 
 
+def _rule_selectors(text: str) -> list[tuple[set[str], str]]:
+    """Every top-level rule as (its comma-separated selectors, its body)."""
+    return [
+        ({s.strip() for s in head.split(",")}, body)
+        for head, body in re.findall(r"(?:\A|(?<=\}))\s*([^{}@]+?)\s*\{([^{}]*)\}", text)
+    ]
+
+
+def _app_rule(selector: str) -> str:
+    rules = _rule_selectors(APP_CSS.read_text(encoding="utf-8"))
+    return "\n".join(body for sels, body in rules if selector in sels)
+
+
 def test_figures_are_tabular() -> None:
     base = (CSS / "base.css").read_text(encoding="utf-8")
     assert re.search(r"table[^{]*\{[^}]*tabular-nums", base)
-    assert "tabular-nums" in APP_CSS.read_text(encoding="utf-8")
+    for selector in (
+        "table",
+        "code",
+        ".mono",
+        ".token",
+        ".credential-display",
+        ".stat-card__number",
+        ".stat-card__value",
+        ".guarantee-num",
+        ".session-expiry-countdown",
+    ):
+        assert "tabular-nums" in _app_rule(selector), selector
+
+
+def _stripped(path: Path) -> str:
+    """The sheet without its forced-colours block, which draws real borders on purpose."""
+    return re.sub(
+        r"@media \(forced-colors: active\) \{.*?\n\}", "", path.read_text("utf-8"), flags=re.S
+    )
+
+
+def test_no_site_component_draws_a_decorative_border() -> None:
+    """DESIGN.md "Rules": a decorative edge is a box-shadow ring; only structural borders
+    (row separators, accent bars: border-top/bottom/left) stay."""
+    for sheet in CSS.glob("*.css"):
+        assert not re.search(r"(?<![-\w])border:\s*[\d.]+px solid", _stripped(sheet)), sheet.name
+
+
+APP_RING_COMPONENTS = (
+    ".btn",
+    ".btn-secondary",
+    ".panel-outline",
+    '[data-theme="dark"] .panel',
+    ".badge-received",
+    ".mode-card",
+    ".credential-display",
+    ".credential-box",
+    ".attachment-item",
+    ".qr-wrapper",
+    ".totp-secret-card",
+    ".demo-credentials",
+    ".session-expiry-banner",
+    ".theme-toggle",
+    ".lang-picker-btn",
+    ".lang-picker-menu",
+)
+
+
+def test_no_app_component_draws_a_decorative_border() -> None:
+    rules = _rule_selectors(_stripped(APP_CSS))
+    for selector in APP_RING_COMPONENTS:
+        for sels, body in rules:
+            if selector in sels:
+                assert not re.search(r"border(-width)?:\s*[\d.]+px( solid)?\b", body), selector
+                assert not re.search(r"(?<![-\w])border-color:\s*(?!transparent)", body), selector
+
+
+def _length(value: str) -> float:
+    m = re.fullmatch(r"([\d.]+)(px|rem)", value.strip())
+    assert m, value
+    return float(m.group(1)) * (16 if m.group(2) == "rem" else 1)
+
+
+# (parent selector, its padding, child selector): inner radius = outer radius - padding.
+# The site's pairs are checked in a browser (tests/e2e/test_site_look.py).
+APP_NESTED = ((".lang-picker-menu", "0.25rem", ".lang-picker-option"),)
+
+
+def test_nested_app_radii_are_concentric() -> None:
+    for parent, padding, child in APP_NESTED:
+        outer = _length(re.search(r"border-radius:\s*([^;]+);", _app_rule(parent)).group(1))  # type: ignore[union-attr]
+        inner = _length(re.search(r"border-radius:\s*([^;]+);", _app_rule(child)).group(1))  # type: ignore[union-attr]
+        assert inner <= max(0.0, outer - _length(padding)), (parent, child, inner, outer)
