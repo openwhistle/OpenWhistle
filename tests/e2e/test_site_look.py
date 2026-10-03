@@ -18,33 +18,35 @@ def test_the_preloaded_fonts_are_the_ones_the_first_view_uses(
     for width in (1920, 390):
         for url in ("/en/", "/de/"):
             ctx = browser.new_context(viewport={"width": width, "height": 900})
-            page = ctx.new_page()
-            page.goto(f"{docs_server_url}{url}")
-            page.evaluate("document.fonts.ready")
-            used |= set(
-                page.evaluate(
-                    """() => { const out = new Set();
-                 for (const el of document.querySelectorAll('body *')) {
-                   const r = el.getBoundingClientRect();
-                   if (r.bottom <= 0 || r.top >= innerHeight || !el.childNodes.length) continue;
-                   if (![...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim()))
-                     continue;
-                   const cs = getComputedStyle(el);
-                   if (cs.visibility === 'hidden' || cs.display === 'none') continue;
-                   const fam = cs.fontFamily.split(',')[0].replace(/['"]/g, '').trim();
-                   const it = cs.fontStyle === 'italic' ? ' italic' : '';
-                   out.add(fam + ' ' + cs.fontWeight + it);
-                 }
-                 return [...out]; }"""
+            try:
+                page = ctx.new_page()
+                page.goto(f"{docs_server_url}{url}")
+                page.evaluate("document.fonts.ready")
+                used |= set(
+                    page.evaluate(
+                        """() => { const out = new Set();
+                     for (const el of document.querySelectorAll('body *')) {
+                       const r = el.getBoundingClientRect();
+                       if (r.bottom <= 0 || r.top >= innerHeight || !el.childNodes.length) continue;
+                       if (![...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim()))
+                         continue;
+                       const cs = getComputedStyle(el);
+                       if (cs.visibility === 'hidden' || cs.display === 'none') continue;
+                       const fam = cs.fontFamily.split(',')[0].replace(/['"]/g, '').trim();
+                       const it = cs.fontStyle === 'italic' ? ' italic' : '';
+                       out.add(fam + ' ' + cs.fontWeight + it);
+                     }
+                     return [...out]; }"""
+                    )
                 )
-            )
-            preloaded |= set(
-                page.evaluate(
-                    "() => [...document.querySelectorAll('link[rel=preload][as=font]')]"
-                    ".map(l => l.href.split('/').pop())"
+                preloaded |= set(
+                    page.evaluate(
+                        "() => [...document.querySelectorAll('link[rel=preload][as=font]')]"
+                        ".map(l => l.href.split('/').pop())"
+                    )
                 )
-            )
-            ctx.close()
+            finally:
+                ctx.close()
     sora = {u.split()[1] for u in used if u.startswith("Sora ") and "italic" not in u}
     matches = (re.search(r"sora-latin-(\d+)-normal", f) for f in preloaded)
     found = {m.group(1) for m in matches if m}
@@ -57,7 +59,9 @@ def test_the_page_declares_its_scheme(
 ) -> None:
     ctx = browser.new_context(color_scheme="dark")
     ctx.add_init_script(f"localStorage.setItem('ow-theme','{theme}')")
-    page = ctx.new_page()
-    page.goto(f"{docs_server_url}/en/")
-    assert page.evaluate("getComputedStyle(document.documentElement).colorScheme") == expected
-    ctx.close()
+    try:
+        page = ctx.new_page()
+        page.goto(f"{docs_server_url}/en/")
+        assert page.evaluate("getComputedStyle(document.documentElement).colorScheme") == expected
+    finally:
+        ctx.close()

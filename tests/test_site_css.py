@@ -115,3 +115,16 @@ def test_each_theme_declares_its_own_color_scheme_in_site_and_app() -> None:
     want = {'[data-theme="light"]': "only light", '[data-theme="dark"]': "dark"}
     for sheet in (CSS / "base.css", APP_CSS):
         assert _scheme_rules(sheet.read_text(encoding="utf-8")) == want, sheet
+
+
+def test_no_template_declares_a_color_scheme() -> None:
+    """Only the two theme rules may; an inline `<style>` or include would override them."""
+    decl = re.compile(r"(?<![\w-])color-scheme\s*:")
+    files = [
+        f
+        for d in ("app/templates", "docs/_includes", "docs/_layouts")
+        for f in (ROOT / d).rglob("*")
+        if f.is_file()
+    ]
+    assert files
+    assert [str(f) for f in files if decl.search(f.read_text(encoding="utf-8"))] == []
