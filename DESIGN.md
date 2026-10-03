@@ -36,7 +36,7 @@ colors:
   inverse-warning: { light: "#d6a13c", dark: "#d6a13c" } # the dark-theme warning, for highlights on inverse (terminal string)
 
   # Accent — emerald. The ONE brand colour. Scarce as a button, generous as a block.
-  accent:        { light: "#0c7253", dark: "#23c088" }   # brand mark accent, one primary CTA, focus
+  accent:        { light: "#0c7253", dark: "#23c088" }   # one primary CTA, focus, selected state
   accent-strong: { light: "#0b6249", dark: "#1fa878" }   # accent hover
   accent-ink:    { light: "#ffffff", dark: "#06120d" }   # text/marks on an accent fill
   accent-weak:   { light: "#e5f3ee", dark: "#0d211a" }   # accent tint (selected chips, hover)
@@ -100,7 +100,7 @@ rounded:
   full: "9999px"   # avatars & status dots ONLY — never a CTA
 
 elevation:
-  flat:   "none (1px {colors.hairline} border)"
+  flat:   "none (1px {colors.hairline} ring, drawn as box-shadow)"
   card:   { light: "0 1px 2px rgba(0,0,0,.05)", dark: "0 1px 2px rgba(0,0,0,.40)" }
   block:  "none — an accent fill IS the depth"
   overlay: { light: "0 8px 24px rgba(0,0,0,.12)", dark: "0 8px 24px rgba(0,0,0,.55)" }
@@ -257,7 +257,7 @@ A 4px base grid; compose with `{spacing.scale}`. Lay groups out with flex/grid a
 Depth is structural. In priority order:
 
 1. **Surface ladder** — `{colors.canvas}` → `{colors.surface}` → `{colors.surface-2}`.
-2. **Hairlines** — a 1px `{colors.hairline}` border defines most edges
+2. **Hairlines** — a 1px `{colors.hairline}` ring (`box-shadow`) defines most edges
    (`{elevation.flat}`).
 3. **Colour** — the accent block needs no shadow; the fill *is* the lift
    (`{elevation.block}`).
@@ -296,7 +296,8 @@ A speech bubble with a keyhole: one evenodd path on a 24-unit grid, drawn in ink
 
 - **Primary** — `{colors.accent}` fill, `{colors.accent-ink}` text, `{rounded.md}`,
   ~`12px 20px` padding, weight 600. **One per view.**
-- **Secondary** — transparent fill, `{colors.hairline}` border, `{colors.ink}` text.
+- **Secondary** — `{colors.canvas}` fill, a 1px `{colors.hairline}` ring, `{colors.body}` text;
+  hover lifts to `{colors.surface}` and a `{colors.hairline-strong}` ring.
 - **Ghost** — transparent fill, transparent border, `{colors.muted}` text; a low-emphasis
   action beside a primary/secondary one (e.g. an export alongside a reveal).
 - **Danger** — `{colors.danger}` fill, white text, `{colors.danger-weak}` tint for its banner; destructive actions only.
@@ -397,10 +398,10 @@ tracking pixels, no remote images.
 
 ### Navigation & footer
 
-Sticky nav on a translucent `{colors.canvas}` with a bottom hairline: mark +
+Sticky nav on an opaque `{colors.canvas}` with a bottom hairline: mark +
 wordmark left, utility controls (theme, language) right as equal-sized icon buttons
-(1px hairline, `{rounded.md}`). Footer sits on `{colors.surface}` with a top
-hairline; muted metadata; the version string in mono.
+(1px hairline ring, `{rounded.md}`). Footer sits on `{colors.inverse}` in both themes,
+text in `{colors.inverse-muted}`; the version string in mono.
 
 ### Printed case record
 
@@ -488,7 +489,9 @@ Restraint. Motion confirms, it does not entertain.
 **Borders as shadows.** Cards, panels, buttons, pills, code and terminal blocks draw their
 edge as a ring (`box-shadow`), which takes no layout space and follows the radius. A
 **structural** border stays a border: table row separators, section rules, and a callout's
-or card's accent bar (`border-left` / `border-top`). Forced-colours mode drops shadows, so a
+or card's accent bar (`border-left` / `border-top`). Form controls keep a real 1px border too,
+because it carries their focus state: inputs, selects, textareas, and the admin tables'
+per-page select. Pagination pages are buttons and take the ring. Forced-colours mode drops shadows, so a
 `forced-colors` block gives the same components a real border there.
 
 **Concentric radii.** A rounded child in a rounded parent uses `outer − padding`. With a

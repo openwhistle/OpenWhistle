@@ -47,3 +47,14 @@ def test_no_retired_token_name_survives() -> None:
     assert not re.search(r"--(bg-|text-|border-subtle|nav-bg|footer-bg|code-)[\w-]*", TEXT), (
         "a retired custom-property name is back in DESIGN.md"
     )
+
+
+def test_the_nav_footer_buttons_and_edges_read_as_built() -> None:
+    """Five statements the P2b review found contradicting the CSS (final review, Minor 1)."""
+    assert "translucent" not in TEXT  # both navs are an opaque canvas
+    assert "Footer sits on `{colors.inverse}`" in TEXT  # site and app footer
+    assert 'flat:   "none (1px {colors.hairline} ring' in TEXT  # borders as shadows
+    assert "**Secondary** — `{colors.canvas}` fill, a 1px `{colors.hairline}` ring" in TEXT
+    accent = re.search(r"^  accent: .*$", TEXT, re.M)
+    assert accent and "brand mark" not in accent.group(0)  # K3 is never in the accent
+    assert "per-page select" in TEXT  # the one button-like control that keeps a border
