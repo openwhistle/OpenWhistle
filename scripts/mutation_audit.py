@@ -19,6 +19,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def inside_root(name: str) -> bool:
+    """True when a spec's `file` resolves under the repository: no absolute path, no `../`."""
+    return (ROOT / name).resolve().is_relative_to(ROOT)
+
+
 def main() -> int:
     spec = json.loads(Path(sys.argv[1]).read_text())
     only = set(sys.argv[2:])
@@ -27,6 +32,10 @@ def main() -> int:
     green = 0
     for m in spec["mutations"]:
         if only and m["id"] not in only:
+            continue
+        if not inside_root(m["file"]):
+            print(f"{m['id']:28} STALE  {m['file']} is outside the repository")
+            green += 1
             continue
         path = ROOT / m["file"]
         original = None if "create" in m else path.read_text()
@@ -41,9 +50,21 @@ def main() -> int:
         path.write_text(m["create"] if original is None else original.replace(m["old"], m["new"]))
         try:
             run = subprocess.run(  # noqa: S603 — pytest on test paths from a repo file
-                [sys.executable, "-m", "pytest", "-x", "-q", "--no-cov", "-p", "no:cacheprovider",
-                 *spec["test_groups"][m["tests"]]],
-                cwd=ROOT, capture_output=True, text=True, timeout=limit,
+                [
+                    sys.executable,
+                    "-m",
+                    "pytest",
+                    "-x",
+                    "-q",
+                    "--no-cov",
+                    "-p",
+                    "no:cacheprovider",
+                    *spec["test_groups"][m["tests"]],
+                ],
+                cwd=ROOT,
+                capture_output=True,
+                text=True,
+                timeout=limit,
             )
         except subprocess.TimeoutExpired:
             # A mutation that hangs the tests is caught: CI would time out too.
@@ -54,8 +75,14 @@ def main() -> int:
                 path.unlink()
             else:
                 path.write_text(original)
-        fired = next((line.split(" - ")[0] for line in run.stdout.splitlines()
-                      if line.startswith(("FAILED ", "ERROR tests"))), "")
+        fired = next(
+            (
+                line.split(" - ")[0]
+                for line in run.stdout.splitlines()
+                if line.startswith(("FAILED ", "ERROR tests"))
+            ),
+            "",
+        )
         verdict = "RED" if run.returncode else "GREEN"
         green += verdict == "GREEN"
         print(f"{m['id']:28} {verdict:6} {fired}", flush=True)
