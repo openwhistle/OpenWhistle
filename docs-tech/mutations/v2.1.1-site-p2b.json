@@ -24,6 +24,13 @@
    "e2e",
    "--browser",
    "chromium"
+  ],
+  "SITE_AXE": [
+   "tests/e2e/test_site_contrast.py",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
   ]
  },
  "mutations": [
@@ -131,6 +138,69 @@
    "tests": "CODE_E2E",
    "old": "    pre { max-width: 100%; overflow-x: auto; }\n",
    "new": "    pre { max-width: 100%; overflow-x: auto; }\n    [data-theme=\"dark\"] .docs-section code { background: var(--surface-3); }\n"
+  },
+  {
+   "id": "RECOMMENDED-PILL-LOW-CONTRAST",
+   "file": "docs/assets/css/docs.css",
+   "tests": "SITE_AXE",
+   "old": "    .env-req-no  { background: var(--surface);",
+   "new": "    .env-req-no  { background: var(--surface-3);"
+  },
+  {
+   "id": "TOKEN-WRONG-KEY-VALUE",
+   "file": "docs/assets/css/tokens.css",
+   "tests": "COLOURS",
+   "old": "  --ink: #0a0a0b;",
+   "new": "  --ink: #6a6a6e;"
+  },
+  {
+   "id": "TOKEN-NAMED-MIX",
+   "file": "docs/assets/css/tokens.css",
+   "tests": "COLOURS",
+   "old": "  --warning-fog: color-mix(in srgb, var(--warning) 10%, transparent);",
+   "new": "  --warning-fog: color-mix(in srgb, var(--warning) 10%, white);"
+  },
+  {
+   "id": "SHEET-NAMED-COLOUR",
+   "file": "docs/assets/css/post.css",
+   "tests": "COLOURS",
+   "old": ".btn-cta:hover { background: var(--accent-strong); color: var(--accent-ink);",
+   "new": ".btn-cta:hover { background: var(--accent-strong); color: white;"
+  },
+  {
+   "id": "SHEET-MIX-WHITE",
+   "file": "docs/assets/css/home.css",
+   "tests": "COLOURS",
+   "old": "      box-shadow: 0 4px 20px color-mix(in srgb, var(--accent) 30%, transparent);",
+   "new": "      box-shadow: 0 4px 20px color-mix(in srgb, var(--accent) 30%, white);"
+  },
+  {
+   "id": "SHEET-HSL",
+   "file": "docs/assets/css/docs.css",
+   "tests": "COLOURS",
+   "old": "    .t-str    { color: var(--inverse-warning); }",
+   "new": "    .t-str    { color: hsl(45 60% 60%); }"
+  },
+  {
+   "id": "FOREIGN-DOT-OUTSIDE-HOME",
+   "file": "docs/assets/css/docs.css",
+   "tests": "COLOURS",
+   "old": "    .t-prompt { color: var(--inverse-accent); user-select: none; }",
+   "new": "    .t-prompt { color: #28c840; user-select: none; }"
+  },
+  {
+   "id": "PAINT-SINGLE-QUOTED",
+   "file": "docs/de/index.html",
+   "tests": "COLOURS",
+   "old": "<circle cx=\"9\" cy=\"11.5\" r=\"1.5\" fill=\"currentColor\"/>",
+   "new": "<circle cx=\"9\" cy=\"11.5\" r=\"1.5\" fill='#0c7253'/>"
+  },
+  {
+   "id": "APP-DARK-BLOCK-SCOPED",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": "[data-theme=\"dark\"] {\n  --canvas: #08080a;",
+   "new": ".nav [data-theme=\"dark\"] {\n  --canvas: #08080a;"
   }
  ]
 }

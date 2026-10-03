@@ -5,6 +5,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import pytest
+
 from tests.built_site import built, page, pages, stylesheets
 from tests.diagram_tools import renderer
 
@@ -198,15 +200,65 @@ def test_no_selector_drifts_between_two_page_type_sheets() -> None:
 
 
 _HEX = re.compile(r"#[0-9a-fA-F]{3,8}\b")
-_RGB = re.compile(r"rgba?\([^)]*\)")
+_COLOUR_FN = re.compile(r"(?<![\w-])(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\(", re.I)
+_WORD = re.compile(r"(?<![\w-])[a-zA-Z]+(?![\w-])")
+# CSS Color 4 named colours. transparent and currentColor are not a colour of their own.
+NAMED_COLOURS = frozenset(
+    """aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue
+    blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk crimson
+    cyan darkblue darkcyan darkgoldenrod darkgray darkgreen darkgrey darkkhaki darkmagenta
+    darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen darkslateblue darkslategray
+    darkslategrey darkturquoise darkviolet deeppink deepskyblue dimgray dimgrey dodgerblue firebrick
+    floralwhite forestgreen fuchsia gainsboro ghostwhite gold goldenrod gray green greenyellow grey
+    honeydew hotpink indianred indigo ivory khaki lavender lavenderblush lawngreen lemonchiffon
+    lightblue lightcoral lightcyan lightgoldenrodyellow lightgray lightgreen lightgrey lightpink
+    lightsalmon lightseagreen lightskyblue lightslategray lightslategrey lightsteelblue lightyellow
+    lime limegreen linen magenta maroon mediumaquamarine mediumblue mediumorchid mediumpurple
+    mediumseagreen mediumslateblue mediumspringgreen mediumturquoise mediumvioletred midnightblue
+    mintcream mistyrose moccasin navajowhite navy oldlace olive olivedrab orange orangered orchid
+    palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum
+    powderblue purple rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown seagreen
+    seashell sienna silver skyblue slateblue slategray slategrey snow springgreen steelblue tan teal
+    thistle tomato turquoise violet wheat white whitesmoke yellow yellowgreen""".split()
+)
 # Illustrations of other software's chrome, not brand colour: the macOS window buttons
-# of the home page's terminal mockup.
+# of the home page's terminal mockup. Allowed in home.css only.
 FOREIGN_COLOURS = {"#ff5f57", "#febc2e", "#28c840"}
 
 
+def colour_literals(value: str) -> set[str]:
+    """Every colour a CSS value writes itself: hex, a colour function, a named colour."""
+    found = {c.lower() for c in _HEX.findall(value)}
+    found |= {m.group(0).lower() for m in _COLOUR_FN.finditer(value)}
+    return found | ({w.lower() for w in _WORD.findall(value)} & NAMED_COLOURS)
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["#fff", "rgb(0 0 0)", "hsl(0 0% 100%)", "oklch(70% 0.1 160)", "lab(50 0 0)", "white",
+     "color-mix(in srgb, var(--accent) 50%, white)", "1px solid Black", "color(srgb 1 1 1)"],
+)  # fmt: skip
+def test_the_colour_scan_sees_every_kind_of_literal(value: str) -> None:
+    assert colour_literals(value), value
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["var(--accent)", "transparent", "currentColor", "nowrap", "1px solid var(--hairline)",
+     "color-mix(in srgb, var(--accent) 8%, transparent)", "'Sora', system-ui, sans-serif"],
+)  # fmt: skip
+def test_the_colour_scan_passes_tokens_and_keywords(value: str) -> None:
+    assert not colour_literals(value), value
+
+
+def _declarations(css: str) -> list[tuple[str, str]]:
+    return re.findall(r"([\w-]+)\s*:\s*([^;{}]+)[;}]", re.sub(r"/\*.*?\*/", "", css, flags=re.S))
+
+
 def _block(text: str, opener: str) -> dict[str, str]:
-    """Custom properties of every rule with exactly this selector; later rules win."""
-    bodies = re.findall(re.escape(opener) + r"\s*\{([^}]*)\}", text)
+    """Custom properties of every rule whose whole selector is `opener`; later rules win."""
+    rule = r"(?:\A|(?<=\}))(?:\s|/\*.*?\*/)*" + re.escape(opener) + r"\s*\{([^}]*)\}"
+    bodies = re.findall(rule, text, flags=re.S)
     assert bodies, opener
     return {
         k: v.strip() for body in bodies for k, v in re.findall(r"(--[\w-]+)\s*:\s*([^;]+);", body)
@@ -214,29 +266,32 @@ def _block(text: str, opener: str) -> dict[str, str]:
 
 
 def test_every_colour_value_in_tokens_css_is_a_design_md_colour() -> None:
-    """Literal colours come from DESIGN.md; anything else is derived from a token (color-mix)."""
+    """A token named after a DESIGN.md key carries that key's value; any other colour literal is a
+    DESIGN.md colour, and everything else is derived from a token (color-mix)."""
     palette = renderer().palette()
     text = (CSS / "tokens.css").read_text(encoding="utf-8")
     for theme, opener in (("light", ":root"), ("dark", '[data-theme="dark"]')):
-        allowed = set(palette[theme].values())
         for name, value in _block(text, opener).items():
-            for literal in _HEX.findall(value):
-                assert literal.lower() in allowed, (theme, name, literal)
-            assert not _RGB.search(value), (
-                theme,
-                name,
-                value,
-                "derive with color-mix(in srgb, var(--x) N%, transparent)",
-            )
+            if (key := name[2:]) in palette[theme]:
+                assert value.lower() == palette[theme][key], (theme, name, value)
+                continue
+            for literal in colour_literals(value):
+                assert literal in set(palette[theme].values()), (
+                    theme,
+                    name,
+                    literal,
+                    "derive with color-mix(in srgb, var(--x) N%, transparent)",
+                )
 
 
 def test_no_page_sheet_writes_a_colour_literal() -> None:
     for sheet in CSS.glob("*.css"):
         if sheet.name == "tokens.css":
             continue
-        text = re.sub(r"/\*.*?\*/", "", sheet.read_text(encoding="utf-8"), flags=re.S)
-        stray = {c.lower() for c in _HEX.findall(text)} - FOREIGN_COLOURS
-        stray |= set(_RGB.findall(text))
+        values = (v for _, v in _declarations(sheet.read_text(encoding="utf-8")))
+        stray = set().union(*map(colour_literals, values))
+        if sheet.name == "home.css":
+            stray -= FOREIGN_COLOURS
         assert not stray, (sheet.name, sorted(stray))
 
 
@@ -282,14 +337,17 @@ def test_the_app_tokens_are_design_md_values() -> None:
         assert _hex6(dark.get(token, light[token])) == palette["dark"][key], (token, "dark")
 
 
-_PAINT = re.compile(r'\b(?:fill|stroke|stop-color|color|style)="[^"]*(#[0-9a-fA-F]{3,8}\b|rgba?\()')
+_PAINT = re.compile(
+    r"""(?<![\w-])(?:fill|stroke|stop-color|color|style)\s*=\s*(["'])(.*?)\1""", re.S
+)
 
 
 def test_no_page_paints_with_a_colour_literal() -> None:
     """Inline SVG takes currentColor and a sheet colours it: a literal skips the theme."""
-    offenders = {
-        str(path.relative_to(built())): sorted(set(_PAINT.findall(text)))
-        for path in pages()
-        if _PAINT.search(text := path.read_text(encoding="utf-8"))
-    }
+    offenders = {}
+    for path in pages():
+        text = path.read_text(encoding="utf-8")
+        found = set().union(*(colour_literals(v) for _, v in _PAINT.findall(text)))
+        if found:
+            offenders[str(path.relative_to(built()))] = sorted(found)
     assert not offenders, offenders
