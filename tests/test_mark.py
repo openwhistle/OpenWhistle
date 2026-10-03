@@ -43,7 +43,6 @@ def test_the_favicon_switches_ink_with_the_colour_scheme() -> None:
     "rel,size",
     [
         ("docs/apple-touch-icon.png", (180, 180)),
-        ("docs/favicon-32.png", (32, 32)),
         ("docs/github-avatar.png", (500, 500)),
     ],
 )
@@ -66,15 +65,19 @@ def test_the_ico_holds_16_and_32() -> None:
         assert set(ico.info["sizes"]) == {(16, 16), (32, 32)}
 
 
-@pytest.mark.parametrize("name", ["favicon.ico", "favicon-32.png", "apple-touch-icon.png"])
+@pytest.mark.parametrize("name", ["favicon.ico", "apple-touch-icon.png"])
 def test_the_app_serves_the_same_rasters(name: str) -> None:
     assert (ROOT / "app/static" / name).read_bytes() == (ROOT / "docs" / name).read_bytes()
 
 
-def test_both_heads_link_the_32px_png() -> None:
-    assert '<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">' in (
-        ROOT / "docs/_includes/head.html"
-    ).read_text(encoding="utf-8")
-    assert '<link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32.png">' in (
-        ROOT / "app/templates/base.html"
-    ).read_text(encoding="utf-8")
+def test_both_heads_link_exactly_the_three_icons() -> None:
+    # ico first with sizes=32x32: without it Chrome prefers the ico over the theme-aware svg.
+    for rel, prefix in [("docs/_includes/head.html", "/"), ("app/templates/base.html", "/static/")]:
+        links = re.findall(
+            r"<link rel=\"[^\"]*icon\"[^>]*>", (ROOT / rel).read_text(encoding="utf-8")
+        )
+        assert links == [
+            f'<link rel="icon" href="{prefix}favicon.ico" sizes="32x32">',
+            f'<link rel="icon" href="{prefix}favicon.svg" type="image/svg+xml">',
+            f'<link rel="apple-touch-icon" href="{prefix}apple-touch-icon.png" sizes="180x180">',
+        ], rel
