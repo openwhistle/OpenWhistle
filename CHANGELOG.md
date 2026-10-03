@@ -7,14 +7,33 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.1.1] — 2026-10-03
+
 ### Changed
 
+- **K3 is the logo** in the app and on the site: a favicon set (ICO with 16 and 32 px, an SVG that switches ink with
+  the colour scheme, an apple-touch icon) renders from one geometry.
+- Each theme declares its own `color-scheme`, so Chrome's Auto Dark Mode no longer recolours the light theme.
+- Every colour comes from `DESIGN.md`: the app's dark surfaces, the default brand's emerald (now the same on site and
+  app), code text and the footer ink.
+- The site's stylesheets are consolidated into seven, on one token sheet, with one callout and one table component.
+- The site's fonts are subset to the characters it draws; the preloads are the weights the first view uses.
+- `DESIGN.md` is rewritten: K3, diagrams, `color-scheme`, and which rules hold where.
 - Website and maintainer docs: every diagram is a draw.io SVG in one style, light and dark, checked for labels on
   lines and clipped text; the German blog post shows German labels; the home page shows the reporting flow as one
   diagram; on a phone a diagram keeps its size and scrolls inside its figure. Mermaid is gone.
 - **The website is built from its sources by `scripts/build_site.py`** and now lives at `/en/` and `/de/`;
   the old addresses forward. The app's links (installation counting in the four locales, Helm
   `NOTES.txt`) point to `/en/docs/`.
+
+### Fixed
+
+- The sitemap's `lastmod` compares commit and build dates in UTC.
+- No site page is wider than a 360 px phone; the German home stacks its tables like the English one.
+- Dark-mode code blocks drew a box around every line.
+- Contrast: footer text, the Recommended pill and the dark primary button now reach AA.
+- The two code samples on the docs page get the code-block frame and label.
+- The language menu no longer wraps its names.
 
 ## [2.1.0] — 2026-09-27
 
@@ -1473,7 +1492,8 @@ Remaining lower-severity findings are tracked in GitHub issues #42–#46.
 - **Rate limiting by session token** (not IP) to maintain full anonymity
 - **alembic upgrade head** on every startup to guarantee migration consistency
 
-[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.1.1...HEAD
+[2.1.1]: https://github.com/openwhistle/OpenWhistle/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/openwhistle/OpenWhistle/compare/v2.0.1...v2.1.0
 [2.0.1]: https://github.com/openwhistle/OpenWhistle/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/openwhistle/OpenWhistle/compare/v1.5.0...v2.0.0

@@ -49,6 +49,12 @@ def test_a_different_height_is_a_difference(tmp_path: Path) -> None:
     assert cs.same_image(a, b, tmp_path / "d.png") > 0
 
 
+def test_a_size_change_counts_every_extra_pixel(tmp_path: Path) -> None:
+    a = _png(tmp_path / "a.png", (40, 30), (255, 255, 255))
+    b = _png(tmp_path / "b.png", (40, 32), (255, 255, 255))
+    assert cs.same_image(a, b, tmp_path / "d.png") == 80
+
+
 def test_every_built_html_page_is_a_url(tmp_path: Path) -> None:
     for rel in ("en/index.html", "de/blog/x/index.html", "404.html", "assets/css/a.css"):
         (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)

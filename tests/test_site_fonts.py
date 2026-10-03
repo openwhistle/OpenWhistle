@@ -88,3 +88,15 @@ def test_the_source_fonts_stay_full() -> None:
     """The app image and the diagram geometry use docs/fonts as they are."""
     for face in FACES:
         assert len(TTFont(ROOT / "docs" / "fonts" / face).getBestCmap()) > 220, face
+
+
+@pytest.mark.parametrize("face", FACES)
+def test_the_subset_keeps_tabular_figures(face: str) -> None:
+    """The site sets tabular-nums; the subsetter's default feature list drops `tnum`."""
+
+    def tags(path: Path) -> set[str]:
+        gsub = TTFont(path).get("GSUB")
+        return {r.FeatureTag for r in gsub.table.FeatureList.FeatureRecord} if gsub else set()
+
+    if "tnum" in tags(ROOT / "docs" / "fonts" / face):
+        assert "tnum" in tags(built() / "fonts" / face), face

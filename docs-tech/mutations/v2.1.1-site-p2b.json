@@ -61,6 +61,19 @@
    "e2e",
    "--browser",
    "chromium"
+  ],
+  "FONTS": [
+   "tests/test_site_fonts.py"
+  ],
+  "COMPARE": [
+   "tests/test_compare_site_screens.py"
+  ],
+  "LOOK": [
+   "tests/e2e/test_site_look.py",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
   ]
  },
  "mutations": [
@@ -306,8 +319,8 @@
    "id": "DESIGN-MD-KEY-UNNAMED",
    "file": "DESIGN.md",
    "tests": "DESIGN_MD",
-   "old": "- `{colors.surface-3}` \u2014 one step",
-   "new": "- `surface-3` \u2014 one step"
+   "old": "- `{colors.surface-3}` — one step",
+   "new": "- `surface-3` — one step"
   },
   {
    "id": "SITE-CARD-BORDER-BACK",
@@ -427,6 +440,62 @@
    "tests": "COLOURS",
    "old": "<div class=\"code-block\" role=\"region\" aria-label=\"Webhook JSON payload\">",
    "new": "<div role=\"region\" aria-label=\"Webhook JSON payload\">"
+  },
+  {
+   "id": "SITE-COLOR-SCHEME-LIGHT",
+   "file": "docs/assets/css/base.css",
+   "tests": "COLOURS",
+   "old": "[data-theme=\"light\"] { color-scheme: only light; }",
+   "new": "[data-theme=\"light\"] { color-scheme: light; }"
+  },
+  {
+   "id": "APP-COLOR-SCHEME-LIGHT",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": "[data-theme=\"light\"] { color-scheme: only light; }",
+   "new": "[data-theme=\"light\"] { color-scheme: light; }"
+  },
+  {
+   "id": "APP-COLOR-SCHEME-DARK-GONE",
+   "file": "app/static/css/site.css",
+   "tests": "COLOURS",
+   "old": "[data-theme=\"dark\"] { color-scheme: dark; }\n",
+   "new": ""
+  },
+  {
+   "id": "FONTS-WITHOUT-EXTRA",
+   "file": "scripts/build_site.py",
+   "tests": "FONTS",
+   "old": "text = _drawn_text(out) + FONT_TEXT_EXTRA",
+   "new": "text = _drawn_text(out)"
+  },
+  {
+   "id": "FONTS-DEFAULT-LAYOUT-FEATURES",
+   "file": "scripts/build_site.py",
+   "tests": "FONTS",
+   "old": "        options.layout_features = [\"*\"]\n",
+   "new": ""
+  },
+  {
+   "id": "FONTS-NOT-SUBSET",
+   "file": "scripts/build_site.py",
+   "tests": "FONTS",
+   "old": "    subset_fonts(out)\n    if redirect_stubs:",
+   "new": "    if redirect_stubs:"
+  },
+  {
+   "id": "COMPARE-IGNORES-SIZE",
+   "file": "scripts/compare_site_screens.py",
+   "tests": "COMPARE",
+   "old": "        pa.paste(ia)\n        pb.paste(ib)\n",
+   "new": ""
+  },
+  {
+   "id": "FIRST-VIEW-THIRD-SORA-PRELOAD",
+   "file": "docs/_includes/head.html",
+   "tests": "LOOK",
+   "old": "  <link rel=\"preload\" href=\"/fonts/sora-latin-700-normal.woff2\" as=\"font\" type=\"font/woff2\" crossorigin>\n",
+   "new": "  <link rel=\"preload\" href=\"/fonts/sora-latin-700-normal.woff2\" as=\"font\" type=\"font/woff2\" crossorigin>\n  <link rel=\"preload\" href=\"/fonts/sora-latin-500-normal.woff2\" as=\"font\" type=\"font/woff2\" crossorigin>\n"
   }
  ]
 }
