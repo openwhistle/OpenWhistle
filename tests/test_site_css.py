@@ -162,3 +162,35 @@ def test_docs_and_page_style_their_shared_selectors_alike() -> None:
     assert len(shared) > 30, sorted(shared)  # the docs layout both page types use
     drifted = sorted(k for k in shared - DOCS_PAGE_DIFFERENCES if docs[k] != page_[k])
     assert not drifted, drifted
+
+
+# The same selector, styled differently in two page-type sheets, on purpose. Each entry names why.
+PAGE_TYPE_DIFFERENCES = {
+    # Home figures sit in grid rows that space them; docs figures sit in running text.
+    ("home.css", "docs.css", ("", ".diagram, .doc-shot")),
+    # docs.css: a safety net for any bare <pre>; post.css: the posts' code block itself.
+    ("docs.css", "post.css", ("", "pre")),
+    # One class name, two components: the blog index card (page.css), the post header (post.css).
+    ("post.css", "page.css", ("", ".article-meta")),
+    ("post.css", "page.css", ("", ".article-tag")),
+    ("post.css", "page.css", ("", ".article-title")),
+}
+
+
+def test_no_selector_drifts_between_two_page_type_sheets() -> None:
+    names = ["home.css", "docs.css", "post.css", "page.css"]
+    sheets = {n: _rules((CSS / n).read_text(encoding="utf-8")) for n in names}
+    drifted = sorted(
+        (a, b, key)
+        for i, a in enumerate(names)
+        for b in names[i + 1 :]
+        for key in sheets[a].keys() & sheets[b].keys()
+        if sheets[a][key] != sheets[b][key] and (a, b, key) not in PAGE_TYPE_DIFFERENCES
+    )
+    assert not drifted, drifted
+    stale = [
+        (a, b, k)
+        for a, b, k in PAGE_TYPE_DIFFERENCES
+        if k not in sheets[a].keys() & sheets[b].keys()
+    ]
+    assert not stale, stale

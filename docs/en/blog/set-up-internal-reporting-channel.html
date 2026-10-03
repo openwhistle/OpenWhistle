@@ -78,7 +78,7 @@ jsonld:
             <li>Root or sudo access and some practice in the terminal</li>
           </ul>
 
-          <div class="callout callout-info">
+          <div class="callout callout-note">
             <p class="callout-title">Automated instead of by hand</p>
             <p>The repository contains an Ansible role under <code>ansible/</code>. It installs Docker, creates a system service and fetches a Let's Encrypt certificate. This guide shows the manual route.</p>
           </div>
@@ -219,7 +219,7 @@ curl -s https://meldestelle.ihr-unternehmen.de/health
 
           <p>Log in at <code>/admin/login</code>. Set up these pages first:</p>
 
-          <table class="deadline-table">
+          <table class="data-table">
             <thead>
               <tr>
                 <th scope="col">Page</th>
@@ -237,7 +237,7 @@ curl -s https://meldestelle.ihr-unternehmen.de/health
 
           <p>Then send a test report through the form. Check that it appears in the dashboard and that the email arrives.</p>
 
-          <div class="callout callout-info">
+          <div class="callout callout-note">
             <p class="callout-title">Deadline reminders</p>
             <p>With <code>REMINDER_ENABLED=true</code>, OpenWhistle sends an email before the 7-day or the 3-month deadline under § 17 HinSchG runs out. The check runs every 30 minutes.</p>
           </div>
@@ -269,7 +269,7 @@ docker compose up -d</code></pre>
 
           <h2>What you need to back up</h2>
 
-          <table class="deadline-table">
+          <table class="data-table">
             <thead>
               <tr>
                 <th scope="col">What</th>

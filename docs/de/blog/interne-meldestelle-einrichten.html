@@ -78,7 +78,7 @@ jsonld:
             <li>Root- oder sudo-Zugriff und etwas Übung im Terminal</li>
           </ul>
 
-          <div class="callout callout-info">
+          <div class="callout callout-note">
             <p class="callout-title">Automatisch statt von Hand</p>
             <p>Das Repository enthält eine Ansible-Rolle unter <code>ansible/</code>. Sie installiert Docker, legt einen Systemdienst an und holt ein Let's-Encrypt-Zertifikat. Diese Anleitung zeigt den Weg von Hand.</p>
           </div>
@@ -219,7 +219,7 @@ curl -s https://meldestelle.ihr-unternehmen.de/health
 
           <p>Melden Sie sich unter <code>/admin/login</code> an. Diese Seiten richten Sie zuerst ein:</p>
 
-          <table class="deadline-table">
+          <table class="data-table">
             <thead>
               <tr>
                 <th scope="col">Seite</th>
@@ -237,7 +237,7 @@ curl -s https://meldestelle.ihr-unternehmen.de/health
 
           <p>Schicken Sie danach eine Testmeldung über das Formular. Prüfen Sie, ob sie im Dashboard erscheint und die E-Mail ankommt.</p>
 
-          <div class="callout callout-info">
+          <div class="callout callout-note">
             <p class="callout-title">Fristerinnerungen</p>
             <p>Mit <code>REMINDER_ENABLED=true</code> erinnert OpenWhistle per E-Mail, bevor die 7-Tage- oder die 3-Monats-Frist nach § 17 HinSchG abläuft. Die Prüfung läuft alle 30 Minuten.</p>
           </div>
@@ -269,7 +269,7 @@ docker compose up -d</code></pre>
 
           <h2>Was Sie sichern müssen</h2>
 
-          <table class="deadline-table">
+          <table class="data-table">
             <thead>
               <tr>
                 <th scope="col">Was</th>

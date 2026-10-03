@@ -77,7 +77,7 @@ STEPS_POSTS = (
 
 @pytest.mark.parametrize("url", STEPS_POSTS)
 @pytest.mark.parametrize("width", [1920, 768])
-def test_a_path_in_a_deadline_table_stays_on_one_line(
+def test_a_path_in_a_data_table_stays_on_one_line(
     browser: Browser, docs_server_url: str, url: str, width: int
 ) -> None:
     ctx = browser.new_context(viewport={"width": width, "height": 900})
@@ -86,7 +86,7 @@ def test_a_path_in_a_deadline_table_stays_on_one_line(
         page.goto(f"{docs_server_url}{url}")
         page.evaluate("document.fonts.ready")
         broken = page.evaluate(
-            "() => [...document.querySelectorAll('.deadline-table code')]"
+            "() => [...document.querySelectorAll('.data-table code')]"
             ".filter(c => c.getClientRects().length !== 1).map(c => c.textContent)"
         )
     finally:

@@ -220,6 +220,16 @@ body {
 }
 .footer-bottom a:hover { color: rgba(226, 220, 210, 0.7); }
 
+/* ── Callout: one component on every page type ──────────────── */
+.callout { padding: var(--space-4) var(--space-6); margin: var(--space-6) 0; border-left: 3px solid; border-radius: 0 2px 2px 0; }
+.callout-note { background: var(--accent-fog); border-color: var(--accent); }
+.callout-warn { background: var(--warning-fog); border-color: var(--warning); }
+/* Two classes deep: these outrank the page types' prose rules (.docs-section p, .article-body p). */
+.callout .callout-title { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; line-height: 1.7; margin-bottom: var(--space-2); }
+.callout-note .callout-title { color: var(--accent); }
+.callout-warn .callout-title { color: var(--warning); }
+.callout p:not(.callout-title) { font-size: 0.9rem; color: var(--body); line-height: 1.7; max-width: none; margin-bottom: 0; }
+
 /* ── Responsive ─────────────────────────────────────────────── */
 /* Nav collapses at 1080px, not 768px: at 1024px the full item list no
    longer fits the nav-inner row and overflows the viewport

@@ -591,7 +591,8 @@
       line-height: 1.9;
       overflow-x: auto;
     }
-    .t-prompt { color: var(--accent); user-select: none; }
+    /* The terminal sits on --inverse in both themes: the light accent would be dark on dark. */
+    .t-prompt { color: #5ecb7a; user-select: none; }
     .t-cmd { color: #e2dcd2; }
     .t-comment { color: #5a6d5a; font-style: italic; }
     .t-out { color: #4a7a6a; font-size: 0.78rem; }
@@ -690,13 +691,8 @@
 .shot-dark { display: none; }
 [data-theme="dark"] .shot-light { display: none; }
 [data-theme="dark"] .shot-dark { display: block; }
-.diagram figcaption, .doc-shot figcaption {
-  font-size: 0.82rem;
-  color: var(--muted);
-  line-height: 1.6;
-  margin-top: var(--space-3);
-}
-.diagram figcaption { text-align: center; }
+.diagram figcaption { font-size: 0.82rem; color: var(--muted); line-height: 1.6; text-align: center; margin-top: var(--space-3); }
+.doc-shot figcaption { font-size: 0.82rem; color: var(--muted); line-height: 1.6; margin-top: var(--space-3); }
 .shots-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-8); margin-top: var(--space-10); }
 
 /* A wide table scrolls inside its column instead of widening the page. */

@@ -183,37 +183,6 @@
       background: var(--surface-3);
     }
 
-    /* Callout boxes */
-    .callout {
-      padding: var(--space-4) var(--space-6);
-      margin: var(--space-6) 0;
-      border-left: 3px solid;
-      border-radius: 0 2px 2px 0;
-    }
-    .callout-note {
-      background: var(--accent-fog);
-      border-color: var(--accent);
-    }
-    .callout-warn {
-      background: var(--warning-fog);
-      border-color: var(--warning);
-    }
-    .callout-title {
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      margin-bottom: var(--space-2);
-    }
-    .callout-note .callout-title { color: var(--accent); }
-    .callout-warn .callout-title { color: var(--warning); }
-    .callout p {
-      font-size: 0.9rem;
-      color: var(--body);
-      line-height: 1.7;
-      max-width: none;
-      margin-bottom: 0;
-    }
 
     /* Comparison tables: scroll inside the column on a phone. */
     .table-scroll { overflow-x: auto; }
