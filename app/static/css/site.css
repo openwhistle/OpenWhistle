@@ -379,6 +379,8 @@ video {
   --text-body-sm: 0.875rem;
   --text-body: 1rem;
 }
+[data-theme="light"] { color-scheme: only light; }
+[data-theme="dark"] { color-scheme: dark; }
 [data-theme="dark"] {
   --canvas: #08080a;
   --surface-card: #161619;
@@ -414,7 +416,6 @@ video {
   padding: 0;
 }
 html {
-  color-scheme: light dark;
   font-size: 16px;
   scroll-behavior: smooth;
 }

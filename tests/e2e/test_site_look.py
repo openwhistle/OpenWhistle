@@ -49,3 +49,15 @@ def test_the_preloaded_fonts_are_the_ones_the_first_view_uses(
     matches = (re.search(r"sora-latin-(\d+)-normal", f) for f in preloaded)
     found = {m.group(1) for m in matches if m}
     assert found == sora, (sorted(sora), sorted(found))
+
+
+@pytest.mark.parametrize("theme,expected", [("light", "light only"), ("dark", "dark")])
+def test_the_page_declares_its_scheme(
+    browser: Browser, docs_server_url: str, theme: str, expected: str
+) -> None:
+    ctx = browser.new_context(color_scheme="dark")
+    ctx.add_init_script(f"localStorage.setItem('ow-theme','{theme}')")
+    page = ctx.new_page()
+    page.goto(f"{docs_server_url}/en/")
+    assert page.evaluate("getComputedStyle(document.documentElement).colorScheme") == expected
+    ctx.close()

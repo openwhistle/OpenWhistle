@@ -96,3 +96,22 @@ def test_every_page_links_exactly_one_page_type_sheet() -> None:
     for path in pages():
         sheets = _sheets(path.read_text(encoding="utf-8"))
         assert len(sheets) == 4 and sheets[3] in PAGE_TYPES, (path.relative_to(built()), sheets)
+
+
+APP_CSS = ROOT / "app" / "static" / "css" / "site.css"
+
+
+def _scheme_rules(text: str) -> dict[str, str]:
+    out = {}
+    for selector, body in re.findall(r"([^{}]+)\{([^{}]*)\}", text):
+        if m := re.search(r"color-scheme\s*:\s*([^;]+);", body):
+            out[" ".join(selector.split())] = m.group(1).strip()
+    return out
+
+
+def test_each_theme_declares_its_own_color_scheme_in_site_and_app() -> None:
+    """Chrome's Auto Dark Mode recolours a page that does not declare dark support; `light` alone
+    does not opt out, `only light` does (https://developer.chrome.com/blog/auto-dark-theme)."""
+    want = {'[data-theme="light"]': "only light", '[data-theme="dark"]': "dark"}
+    for sheet in (CSS / "base.css", APP_CSS):
+        assert _scheme_rules(sheet.read_text(encoding="utf-8")) == want, sheet
