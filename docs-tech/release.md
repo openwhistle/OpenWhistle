@@ -66,7 +66,8 @@ On `release/vX.Y.Z`:
   repoint `[Unreleased]`.
 - Version in `app/config.py`, `pyproject.toml`, `charts/openwhistle/Chart.yaml`
   (`version` and `appVersion`), `docs/en/docs/index.html` ("Current version"),
-  `docs/en/index.html` (`softwareVersion` and hero), and the `OPENWHISTLE_VERSION`
+  `docs/en/index.html` (`softwareVersion` and hero), `docs/de/index.html` ("Aktuelles Release"),
+  `docs/en/compare/index.html` ("Latest release" cell), and the `OPENWHISTLE_VERSION`
   default in `docker-compose.prod.yml`. `test_every_published_version_string_matches`
   fails on any mismatch.
 - Move the released version off `docs/en/roadmap/index.html` (it holds only what's still ahead).
