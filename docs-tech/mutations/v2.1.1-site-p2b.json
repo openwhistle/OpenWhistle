@@ -520,8 +520,8 @@
    "id": "DESIGN-MD-KEY-UNNAMED",
    "file": "DESIGN.md",
    "tests": "DESIGN_MD",
-   "old": "- `{colors.surface-3}` — one step",
-   "new": "- `surface-3` — one step"
+   "old": "- `{colors.surface-3}` \u2014 one step",
+   "new": "- `surface-3` \u2014 one step"
   },
   {
    "id": "SITE-CARD-BORDER-BACK",
@@ -990,6 +990,20 @@
    "tests": "SITE_CSS_K_DEAD",
    "old": "    .val-bad { color: var(--muted); }\n",
    "new": "    .val-bad { color: var(--muted); }\n    .val-warn { color: var(--warning); }\n"
+  },
+  {
+   "id": "APP-WORDMARK-NO-TRANSLATE",
+   "file": "app/templates/base.html",
+   "tests": "MARK",
+   "old": "<span translate=\"no\">{{ brand.name }}</span>\n        </a>",
+   "new": "<span>{{ brand.name }}</span>\n        </a>"
+  },
+  {
+   "id": "APP-WORDMARK-ACCENT-SPLIT",
+   "file": "app/templates/base.html",
+   "tests": "MARK",
+   "old": "<span translate=\"no\">{{ brand.name }}</span>\n        </a>",
+   "new": "<span translate=\"no\">Open<strong>Whistle</strong></span>\n        </a>"
   }
  ]
 }

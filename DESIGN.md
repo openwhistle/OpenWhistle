@@ -294,6 +294,7 @@ A speech bubble with a keyhole: one evenodd path on a 24-unit grid, drawn in ink
 - Favicons are the three-file set: ICO (`sizes="32x32"`), SVG switching ink by
   `prefers-color-scheme`, apple-touch.
 - An operator's `brand.logo_url` replaces the mark in the app.
+- Wordmark: OpenWhistle in ink, one weight, `translate="no"`.
 
 ### Buttons
 

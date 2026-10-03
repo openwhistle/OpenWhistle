@@ -117,3 +117,27 @@ def test_both_heads_link_exactly_the_three_icons() -> None:
             f'<link rel="icon" href="{prefix}favicon.svg" type="image/svg+xml">',
             f'<link rel="apple-touch-icon" href="{prefix}apple-touch-icon.png" sizes="180x180">',
         ], rel
+
+
+_WORDMARK = re.compile(r'<a href="/" class="nav-brand".*?</a>', re.S)
+
+
+async def test_the_app_wordmark_is_one_ink_weight_and_untranslated(client: AsyncClient) -> None:
+    nav = _WORDMARK.search((await client.get("/submit")).text)
+    assert nav
+    assert '<span translate="no">OpenWhistle</span>' in nav[0]
+    assert "<strong" not in nav[0]
+
+
+async def test_a_custom_brand_name_is_the_wordmark(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setitem(templates.env.globals["brand"], "name", "Acme Speak-Up")
+    nav = _WORDMARK.search((await client.get("/submit")).text)
+    assert nav and '<span translate="no">Acme Speak-Up</span>' in nav[0]
+    assert "<strong" not in nav[0]
+
+
+def test_the_app_wordmark_has_no_accent_rule() -> None:
+    css = (ROOT / "app/static/css/site.css").read_text(encoding="utf-8")
+    assert ".nav-brand strong" not in css

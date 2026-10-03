@@ -663,9 +663,6 @@ strong {
   color: var(--ink);
   text-decoration-line: none;
 }
-.nav-brand strong {
-  color: var(--accent);
-}
 .nav-brand .mark {
   color: var(--ink);
   fill: currentColor;
