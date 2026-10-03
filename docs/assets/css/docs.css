@@ -171,6 +171,8 @@
       padding: 1px 5px;
       border-radius: 2px;
       color: var(--ink);
+      /* A long path or setting name wraps on a phone instead of widening the page. */
+      overflow-wrap: break-word;
     }
     [data-theme="dark"] .docs-section code {
       background: var(--surface-3);

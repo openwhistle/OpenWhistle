@@ -162,9 +162,10 @@
       margin-bottom: var(--space-2);
       max-width: 68ch;
     }
+    /* A nested list stays with its item and keeps a gap before the next group. */
     .docs-section li ul {
-      margin-top: var(--space-2);
-      margin-bottom: 0;
+      margin-top: var(--space-1);
+      margin-bottom: var(--space-3);
     }
 
     .docs-section code {
@@ -175,8 +176,8 @@
       padding: 1px 5px;
       border-radius: 2px;
       color: var(--ink);
-      /* A long test or setting name must wrap at 390 px, not widen the page. */
-      overflow-wrap: anywhere;
+      /* A long path or setting name wraps on a phone instead of widening the page. */
+      overflow-wrap: break-word;
     }
     [data-theme="dark"] .docs-section code {
       background: var(--surface-3);
@@ -215,7 +216,8 @@
     }
 
     /* Comparison tables: scroll inside the column on a phone. */
-    .table-scroll { overflow-x: auto; margin: var(--space-5) 0; }
+    .table-scroll { overflow-x: auto; }
+    .table-scroll .cmp-table { margin: var(--space-5) 0; }
     .cmp-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
     .cmp-table th, .cmp-table td {
       padding: var(--space-3) var(--space-4);

@@ -128,3 +128,37 @@ def test_no_template_declares_a_color_scheme() -> None:
     ]
     assert files
     assert [str(f) for f in files if decl.search(f.read_text(encoding="utf-8"))] == []
+
+
+def _rules(text: str, media: str = "") -> dict[tuple[str, str], list[str]]:
+    """(media, selector) -> sorted declarations, for flat sheets with @media one level deep."""
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+    out: dict[tuple[str, str], list[str]] = {}
+    i = 0
+    while (brace := text.find("{", i)) != -1:
+        head = " ".join(text[i:brace].split())
+        depth, end = 1, brace + 1
+        while depth:
+            depth += {"{": 1, "}": -1}.get(text[end], 0)
+            end += 1
+        body = text[brace + 1 : end - 1]
+        if head.startswith("@media"):
+            out.update(_rules(body, head))
+        elif not head.startswith("@"):
+            decls = sorted(" ".join(d.split()) for d in body.split(";") if d.strip())
+            out[(media, head)] = decls
+        i = end
+    return out
+
+
+# Selectors docs.css and page.css may style differently, each with its reason. Expected empty.
+DOCS_PAGE_DIFFERENCES: set[tuple[str, str]] = set()
+
+
+def test_docs_and_page_style_their_shared_selectors_alike() -> None:
+    docs = _rules((CSS / "docs.css").read_text(encoding="utf-8"))
+    page_ = _rules((CSS / "page.css").read_text(encoding="utf-8"))
+    shared = docs.keys() & page_.keys()
+    assert len(shared) > 30, sorted(shared)  # the docs layout both page types use
+    drifted = sorted(k for k in shared - DOCS_PAGE_DIFFERENCES if docs[k] != page_[k])
+    assert not drifted, drifted
