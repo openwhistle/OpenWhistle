@@ -73,17 +73,15 @@ jsonld:
           <h2>The old way: paint the picture again</h2>
           <p>Up to version 2.0, OpenWhistle read an image and wrote only its pixels into a new file. Metadata could not come along. Neither, always, could the pixels. A bug bounty run measured it:</p>
 
-          <div class="table-scroll">
-          <table>
-            <thead><tr><th>Attachment</th><th>Before</th><th>After cleaning (up to 2.0)</th></tr></thead>
+          <table class="deadline-table">
+            <thead><tr><th scope="col">Attachment</th><th scope="col">Before</th><th scope="col">After cleaning (up to 2.0)</th></tr></thead>
             <tbody>
-              <tr><td>PNG with a colour palette, typical for screenshots</td><td>Red (200, 10, 30)</td><td>Black (0, 0, 0)</td></tr>
-              <tr><td>Animated PNG or WebP</td><td>2 frames</td><td>1 frame</td></tr>
-              <tr><td>JPEG photo</td><td>5.5 MB</td><td>14.4 MB, over the 10 MB limit</td></tr>
-              <tr><td>PNG of 12,000 × 12,000 pixels</td><td>450 KB file</td><td>1.1 GB of memory</td></tr>
+              <tr><td>PNG with a colour palette, typical for screenshots</td><td data-label="Before">Red (200, 10, 30)</td><td data-label="After cleaning (up to 2.0)">Black (0, 0, 0)</td></tr>
+              <tr><td>Animated PNG or WebP</td><td data-label="Before">2 frames</td><td data-label="After cleaning (up to 2.0)">1 frame</td></tr>
+              <tr><td>JPEG photo</td><td data-label="Before">5.5 MB</td><td data-label="After cleaning (up to 2.0)">14.4 MB, over the 10 MB limit</td></tr>
+              <tr><td>PNG of 12,000 × 12,000 pixels</td><td data-label="Before">450 KB file</td><td data-label="After cleaning (up to 2.0)">1.1 GB of memory</td></tr>
             </tbody>
           </table>
-          </div>
 
           <p>An evidence photo that looks different after the upload is poor evidence. And every JPEG was compressed again: not a single pixel stayed as it was.</p>
 

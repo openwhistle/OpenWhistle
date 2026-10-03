@@ -7,6 +7,8 @@ import re
 import pytest
 from playwright.sync_api import Browser
 
+from tests.built_site import built, pages
+
 pytestmark = pytest.mark.e2e
 
 
@@ -107,3 +109,21 @@ def test_reduced_motion_stops_the_reveal_and_the_smooth_scroll(
         ctx.close()
     assert duration < 0.001, duration  # seconds
     assert scroll == "auto", scroll
+
+
+URLS = sorted("/" + p.relative_to(built()).as_posix().removesuffix("index.html") for p in pages())
+
+
+@pytest.mark.parametrize("url", URLS)
+def test_no_page_is_wider_than_a_small_phone(
+    browser: Browser, docs_server_url: str, url: str
+) -> None:
+    ctx = browser.new_context(viewport={"width": 360, "height": 800})
+    try:
+        page = ctx.new_page()
+        page.goto(f"{docs_server_url}{url}")
+        page.evaluate("document.fonts.ready")
+        width = page.evaluate("document.documentElement.scrollWidth")
+    finally:
+        ctx.close()
+    assert width <= 360, f"{url} is {width} px wide at 360 px"
