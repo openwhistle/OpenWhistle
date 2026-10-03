@@ -563,7 +563,7 @@
    "file": "docs/assets/css/home.css",
    "tests": "CONCENTRIC_E2E",
    "old": "      gap: var(--space-3);\n    }\n    .terminal-dots {",
-   "new": "      gap: var(--space-3);\n      border-radius: 8px;\n    }\n    .terminal-dots {"
+   "new": "      gap: var(--space-3);\n      border-radius: 12px;\n    }\n    .terminal-dots {"
   },
   {
    "id": "CALLOUT-PROSE-UNCAPPED",
