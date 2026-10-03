@@ -1,8 +1,0 @@
-/* Comparison posts with a diagram: loaded after post-comparison.css, this
-   sheet keeps only the rules it adds. */
-
-    /* Diagram figures, as in docs/en/docs/index.html; base.css picks the twin. */
-    .diagram { margin: var(--space-8) 0; }
-    .diagram img { max-width: 100%; height: auto; margin: 0 auto; display: block; }
-    .diagram figcaption { font-size: 0.82rem; color: var(--muted); text-align: center; margin-top: var(--space-3); }
-

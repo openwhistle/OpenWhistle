@@ -463,14 +463,14 @@
   },
   {
    "id": "E2E-SCALE-ROW",
-   "file": "docs/assets/css/figures.css",
+   "file": "docs/assets/css/home.css",
    "tests": "E2E",
    "old": ".figure-row:has(> .diagram) { grid-template-columns: 1fr; }",
    "new": ".figure-row:has(> .nothing) { grid-template-columns: 1fr; }"
   },
   {
    "id": "E2E-SCALE-UPPER",
-   "file": "docs/assets/css/figures.css",
+   "file": "docs/assets/css/home.css",
    "tests": "E2E",
    "old": ".diagram img { max-width: 100%; height: auto;",
    "new": ".diagram img { width: 100%; height: auto;"

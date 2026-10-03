@@ -1,9 +1,0 @@
-@media (max-width: 540px) {
-      .comp-wrap { width: auto; margin-left: 0; margin-right: 0; overflow-x: visible; }
-      .comp-table { min-width: 0; }
-      .comp-table thead { display: none; }
-      .comp-table tr { display: block; padding: var(--space-3) 0; border-bottom: 1px solid var(--hairline); }
-      .comp-table tbody td { display: block; border: none; padding: var(--space-1) var(--space-2); background: none; }
-      .comp-table tbody td:first-child { color: var(--ink); font-weight: 600; }
-      .comp-table tbody td[data-label]::before { content: attr(data-label) ": "; color: var(--muted); font-weight: 400; }
-    }

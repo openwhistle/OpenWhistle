@@ -83,3 +83,16 @@ def test_the_retired_token_names_are_gone() -> None:
 def test_the_landing_pages_and_posts_share_one_token_sheet() -> None:
     for url in ("/en/", "/de/", "/en/docs/", "/en/changelog/"):
         assert "tokens.css" in _sheets(page(url)), url
+
+
+PAGE_TYPES = {"home.css", "docs.css", "post.css", "page.css"}
+
+
+def test_the_site_has_exactly_the_planned_sheets() -> None:
+    assert {p.name for p in CSS.glob("*.css")} == set(ALWAYS) | PAGE_TYPES
+
+
+def test_every_page_links_exactly_one_page_type_sheet() -> None:
+    for path in pages():
+        sheets = _sheets(path.read_text(encoding="utf-8"))
+        assert len(sheets) == 4 and sheets[3] in PAGE_TYPES, (path.relative_to(built()), sheets)

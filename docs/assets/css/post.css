@@ -1,53 +1,25 @@
 /* ================================================================
-       OpenWhistle Blog article: the base sheet of every post but the
-       comparison posts, which use post-comparison.css on its own
+       OpenWhistle Blog article: every post, plain, with steps, with a
+       checklist, or with a comparison table
        ================================================================ */
 
-    a { color: var(--accent); text-decoration: underline; text-decoration-color: transparent; transition: text-decoration-color var(--duration-fast) ease; }
-    a:hover { text-decoration-color: currentColor; }
-
-    .skip-link {
-      position: absolute; top: -100%; left: var(--space-4);
-      background: var(--accent); color: #fff;
-      padding: var(--space-2) var(--space-4);
-      font-family: var(--font-mono); font-size: 0.75rem; z-index: 9999;
-      text-decoration: none;
-    }
-
-    /* ── Navigation ──────────────────────────────────────────────── */
-
-    .nav-logo {
-      display: flex; align-items: center; gap: var(--space-3);
-      font-family: var(--font-display); font-size: 0.9rem; font-weight: 600;
-      letter-spacing: 0.04em; color: #e2dcd2; flex-shrink: 0;
-      transition: color var(--duration-fast) ease; text-decoration: none;
-    }
-
-    .nav-links a {
-      font-family: var(--font-body); font-size: 0.8rem; letter-spacing: 0.02em;
-      color: rgba(226, 220, 210, 0.65); transition: color var(--duration-fast) ease;
-      white-space: nowrap; text-decoration: none;
-    }
-
-    .nav-cta {
-      padding: var(--space-2) var(--space-4) !important;
-      border: 1px solid rgba(12, 114, 83, 0.5) !important;
-      color: var(--accent) !important; border-radius: 2px;
-      transition: background var(--duration-fast) ease !important;
-    }
+    /* Prose links: accent, underlined on hover. :where() keeps the old
+       weight of a bare `a`, so .btn-cta still wins inside the body. */
+    :where(.article-body) a { color: var(--accent); text-decoration: underline; text-decoration-color: transparent; transition: text-decoration-color var(--duration-fast) ease; }
+    :where(.article-body) a:hover { text-decoration-color: currentColor; }
 
     /* ── Article layout ──────────────────────────────────────────── */
     .article-wrap { max-width: 70ch; margin: 0 auto; padding: var(--space-24) var(--space-8) var(--space-16); }
 
     .article-header { margin-bottom: var(--space-12); padding-bottom: var(--space-8); border-bottom: 1px solid var(--hairline); }
     .article-tag { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: var(--space-4); }
-    .article-title { font-family: var(--font-display); font-size: clamp(1.8rem, 3.5vw, 2.8rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; color: var(--ink); margin-bottom: var(--space-4); }
+    .article-title { font-family: var(--font-display); font-size: clamp(1.8rem, 3.5vw, 2.6rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.15; color: var(--ink); margin-bottom: var(--space-4); }
     .article-subtitle { font-size: 1.1rem; font-weight: 300; color: var(--body); line-height: 1.6; margin-bottom: var(--space-6); }
     .article-meta { font-size: 0.8rem; color: var(--muted); display: flex; gap: var(--space-6); flex-wrap: wrap; }
 
     /* ── Article body ─────────────────────────────────────────────── */
-    .article-body h2 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); margin: var(--space-10) 0 var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--hairline); }
-    .article-body h3 { font-family: var(--font-display); font-size: 1.15rem; font-weight: 600; color: var(--ink); margin: var(--space-8) 0 var(--space-3); }
+    .article-body h2 { font-family: var(--font-display); font-size: 1.45rem; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); margin: var(--space-10) 0 var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--hairline); }
+    .article-body h3 { font-family: var(--font-display); font-size: 1.1rem; font-weight: 600; color: var(--ink); margin: var(--space-8) 0 var(--space-3); }
     .article-body p { margin-bottom: var(--space-5); color: var(--body); line-height: 1.75; }
     .article-body strong { color: var(--ink); font-weight: 600; }
     .article-body ul, .article-body ol { margin: var(--space-4) 0 var(--space-6) var(--space-6); }
@@ -56,6 +28,69 @@
     .article-body li { margin-bottom: var(--space-2); color: var(--body); }
 
     code { font-family: var(--font-mono); font-size: 0.88em; background: var(--surface); padding: 0.15em 0.4em; border-radius: 3px; color: var(--accent); border: 1px solid var(--hairline); }
+
+    /* Code blocks */
+    pre { background: var(--inverse); color: var(--inverse-ink); padding: var(--space-5) var(--space-6); border-radius: 4px; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; overflow-x: auto; margin: var(--space-4) 0; }
+    pre code { background: none; padding: 0; border: none; color: inherit; font-size: inherit; }
+
+    /* Steps */
+    .step-block { display: flex; gap: var(--space-6); margin: var(--space-6) 0; padding: var(--space-6); background: var(--surface); border: 1px solid var(--hairline); border-left: 4px solid var(--accent); }
+    .step-num { font-family: var(--font-display); font-size: 2.5rem; font-weight: 700; color: var(--hairline-strong); line-height: 1; flex-shrink: 0; width: 2.5rem; }
+    .step-content { flex: 1; }
+    .step-content h3 { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--ink); margin-bottom: var(--space-2); }
+    .step-content p { font-size: 0.92rem; color: var(--body); margin-bottom: var(--space-3); }
+    .step-content p:last-child { margin-bottom: 0; }
+
+    /* Callout boxes */
+    .callout { padding: var(--space-5) var(--space-6); margin: var(--space-8) 0; border-left: 4px solid; border-radius: 0 4px 4px 0; }
+    .callout-info { background: var(--accent-fog); border-color: var(--accent); }
+    .callout-warn { background: var(--warning-fog); border-color: var(--warning); }
+    .callout-title { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: var(--space-2); }
+    .callout-warn .callout-title { color: var(--warning); }
+    .callout p { margin-bottom: 0; font-size: 0.92rem; }
+
+    /* Checklist */
+    .checklist { list-style: none !important; margin-left: 0 !important; }
+    .checklist li { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3) 0; border-bottom: 1px solid var(--hairline); }
+    .checklist li:last-child { border-bottom: none; }
+    .check-icon { width: 20px; height: 20px; flex-shrink: 0; color: var(--accent); margin-top: 2px; }
+    .check-label strong { color: var(--ink); display: block; margin-bottom: 0.2rem; }
+    .check-label span { font-size: 0.88rem; color: var(--body); }
+
+    /* Deadline table */
+    .deadline-table { width: 100%; border-collapse: collapse; margin: var(--space-6) 0; font-size: 0.9rem; }
+    .deadline-table th { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); padding: var(--space-3) var(--space-4); text-align: left; border-bottom: 2px solid var(--hairline); }
+    .deadline-table td { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--hairline); color: var(--body); vertical-align: top; overflow-wrap: break-word; }
+    .deadline-table tr:last-child td { border-bottom: none; }
+    /* A path or setting name never breaks at its hyphen; prose wraps. */
+    .deadline-table code { white-space: nowrap; }
+    .deadline-table .td-law { color: var(--accent); font-weight: 700; font-family: var(--font-mono); font-size: 0.85rem; white-space: nowrap; }
+
+    /* Comparison table — breaks out wider than the 70ch prose column */
+    /* Centred on the prose column: the capped width used to start at the window's left edge. */
+    .comp-wrap { overflow-x: auto; margin: var(--space-8) 0; width: min(100ch, 100vw - 2 * var(--space-8)); margin-left: calc(50% - min(100ch, 100vw - 2 * var(--space-8)) / 2); }
+    .comp-table { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 0.88rem; }
+    .comp-table thead th { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); padding: var(--space-3) var(--space-4); text-align: left; border-bottom: 2px solid var(--hairline); white-space: nowrap; }
+    .comp-table thead th.col-ow { color: var(--accent); background: var(--accent-fog); }
+    .comp-table tbody td { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--hairline); color: var(--body); vertical-align: top; }
+    .comp-table tbody td.col-ow { background: var(--accent-fog); }
+    .comp-table tbody tr:last-child td { border-bottom: none; }
+    .val-good { color: var(--accent); font-weight: 600; }
+    .val-bad { color: var(--muted); }
+    .val-warn { color: var(--warning); }
+
+    .cost-card { background: var(--surface); border: 1px solid var(--hairline); padding: var(--space-6); margin: var(--space-6) 0; }
+    .cost-card-title { font-family: var(--font-display); font-weight: 700; color: var(--ink); margin-bottom: var(--space-2); }
+    .cost-price { font-size: 1.6rem; font-weight: 700; color: var(--accent); font-family: var(--font-display); }
+    .cost-desc { font-size: 0.88rem; color: var(--muted); margin-top: var(--space-1); }
+    .cost-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-4); margin: var(--space-6) 0; }
+    .cost-breakdown { background: var(--surface); border: 1px solid var(--hairline); padding: var(--space-6); margin: var(--space-6) 0; }
+    .cost-breakdown ul { margin-left: var(--space-6); }
+
+    /* Diagram figures, as in docs/en/docs/index.html; base.css picks the twin. */
+    .diagram { margin: var(--space-8) 0; }
+    .diagram img { max-width: 100%; height: auto; margin: 0 auto; display: block; }
+    .diagram figcaption { font-size: 0.82rem; color: var(--muted); text-align: center; margin-top: var(--space-3); }
 
     .article-cta { background: var(--surface); border: 1px solid var(--hairline); border-top: 4px solid var(--accent); padding: var(--space-8); margin: var(--space-10) 0; text-align: center; }
     .article-cta h3 { font-family: var(--font-display); font-size: 1.3rem; font-weight: 700; color: var(--ink); margin-bottom: var(--space-3); }
@@ -68,16 +103,29 @@
     }
     .btn-cta:hover { background: var(--accent-strong); color: #fff; text-decoration: none; }
 
-    /* ── Footer ──────────────────────────────────────────────────── */
-    .footer-links a { font-size: 0.875rem; color: rgba(226, 220, 210, 0.6); transition: color var(--duration-fast) ease; text-decoration: none; }
-    .footer-bottom a { color: rgba(226, 220, 210, 0.4); transition: color var(--duration-fast) ease; text-decoration: none; }
-
     /* ── Responsive ─────────────────────────────────────────────── */
 
     @media (max-width: 768px) {
       .article-wrap { padding: var(--space-12) var(--space-5) var(--space-10); }
+      .step-block { flex-direction: column; gap: var(--space-3); }
+      .step-num { font-size: 1.8rem; }
+      .cost-grid { grid-template-columns: 1fr; }
+    }
+
+    /* A phone has no room for a table: each row becomes a small card, and
+       a cell with data-label announces its column. */
+    @media (max-width: 540px) {
+      .deadline-table thead, .comp-table thead { display: none; }
+      .deadline-table tr, .comp-table tr { display: block; padding: var(--space-3) 0; border-bottom: 1px solid var(--hairline); }
+      .deadline-table td, .comp-table tbody td { display: block; border: none; padding: var(--space-1) var(--space-2); }
+      .deadline-table td:first-child, .comp-table tbody td:first-child { color: var(--ink); font-weight: 600; }
+      .deadline-table td[data-label]::before, .comp-table tbody td[data-label]::before { content: attr(data-label) ": "; color: var(--muted); font-weight: 400; font-family: var(--font-body); }
+      .comp-wrap { width: auto; margin-left: 0; margin-right: 0; overflow-x: visible; }
+      .comp-table { min-width: 0; }
+      .comp-table tbody td { background: none; }
     }
 
 /* Formerly inline style= attributes: the P4 CSP (style-src without 'unsafe-inline') allows none. */
 .article-body .post-footnote { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--hairline); font-size: 0.82rem; color: var(--muted); }
+.article-body .post-note { margin-top: var(--space-10); font-size: 0.88rem; color: var(--muted); }
 .post-update { border-left: 4px solid var(--accent); padding-left: var(--space-4); }
