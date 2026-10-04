@@ -20,6 +20,18 @@ tests. Dependencies are locked in `uv.lock`: after editing `pyproject.toml`, run
 Commits follow [Conventional Commits](https://www.conventionalcommits.org/): `feat(admin): …`, `fix(csrf): …`,
 `docs(tech): …`. Code, comments and documentation are English only.
 
+## AI-assisted contributions
+
+Welcome, if they say so. An issue or pull request written by an AI agent begins with:
+
+```markdown
+> [!WARNING]
+> AI-generated
+```
+
+`AGENTS.md` and the templates ask agents for it; `.github/workflows/ai-disclosure.yml` labels what carries it
+`ai-generated`. The label is a signal for review, not a block: a bot that ignores instructions is not caught.
+
 ## Documentation
 
 There are two kinds, and they are kept apart on purpose.

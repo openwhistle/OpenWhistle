@@ -1,4 +1,5 @@
 {
   // A test fixture is input for tests/test_build_site.py, not documentation.
-  "ignores": ["tests/fixtures/**"]
+  // GitHub prefills the templates into a description, which starts with an h2, not an h1.
+  "ignores": ["tests/fixtures/**", ".github/ISSUE_TEMPLATE/**", ".github/pull_request_template.md"]
 }
