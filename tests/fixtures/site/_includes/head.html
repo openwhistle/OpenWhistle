@@ -48,7 +48,7 @@
   <meta name="twitter:description" content="{{ page.meta.description }}">
   <meta name="twitter:image" content="{{ site.base_url }}/og-image.png">
   <meta name="twitter:image:alt" content="{{ t.og_image_alt }}">
-{% for item in page.meta.jsonld %}
+{% for item in page.meta.jsonld + jsonld_extra %}
   <script type="application/ld+json">{{ item|tojson }}</script>
 {% endfor %}
   <link rel="stylesheet" href="/assets/css/tokens.css">

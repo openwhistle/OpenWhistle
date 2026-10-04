@@ -6,6 +6,7 @@
 <body>
   <a href="#main-content" class="skip-link">{{ t.skip_link }}</a>
 {% include "nav.html" %}
+{% block content %}
 {% if page.source.suffix == ".md" %}
   {#- Markdown has no element for the skip link to land on; the old .md URLs serve the bare text (write_stubs). #}
   <main id="main-content" class="docs-content docs-section docs-standalone">
@@ -14,6 +15,7 @@
 {% else %}
 {{ page.content|safe }}
 {% endif %}
+{% endblock %}
 {% include "footer.html" %}
 {% for name in page.meta.js %}
   <script src="/assets/js/{{ name }}.js"></script>

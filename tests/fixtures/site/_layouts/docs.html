@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+{% if docs.anchors %}
+  {#- An anchor never reaches the server: this sends a one-pager #id to its page (P3-3; CSP hash in P4). #}
+  <script>(function(){var m={{ docs.anchors|tojson }},h=location.hash.slice(1);if(m.hasOwnProperty(h))location.replace(m[h])})()</script>
+{% endif %}
+  <div class="docs-layout">
+    <aside class="docs-sidebar" aria-label="Documentation">
+      <details class="docs-menu" open>
+        <summary>Documentation menu</summary>
+{% for group in docs.sidebar %}
+        <details class="sidebar-group"{% if group.open or loop.first %} open{% endif %}>
+          <summary>{{ group.label }}</summary>
+          <ul class="sidebar-links" role="list">
+{% for item in group["items"] %}
+            <li><a href="{{ item.href }}"{% if item.current %} aria-current="page"{% endif %}>{{ item.label }}</a></li>
+{% endfor %}
+          </ul>
+        </details>
+{% endfor %}
+      </details>
+    </aside>
+
+    <main id="main-content" class="docs-content">
+      <nav class="docs-breadcrumb" aria-label="Breadcrumb">
+{% for crumb in docs.crumbs %}
+{% if crumb.href and not loop.last %}<a href="{{ crumb.href }}">{{ crumb.label }}</a><span aria-hidden="true">/</span>{% else %}<span>{{ crumb.label }}</span>{% if not loop.last %}<span aria-hidden="true">/</span>{% endif %}{% endif %}
+{% endfor %}
+      </nav>
+{% if docs.toc %}
+      <nav class="docs-toc" aria-label="On this page">
+        <p class="docs-toc-title">On this page</p>
+        <ul role="list">
+{% for anchor, text in docs.toc %}
+          <li><a href="#{{ anchor }}">{{ text }}</a></li>
+{% endfor %}
+        </ul>
+      </nav>
+{% endif %}
+      <article class="docs-article">
+{{ page.content|safe }}
+      </article>
+      <nav class="docs-pager" aria-label="Previous and next page">
+{% if docs.prev %}        <a rel="prev" href="{{ docs.prev.href }}"><span>Previous</span> {{ docs.prev.label }}</a>
+{% endif %}{% if docs.next %}        <a rel="next" href="{{ docs.next.href }}"><span>Next</span> {{ docs.next.label }}</a>
+{% endif %}      </nav>
+      <p class="docs-edit"><a href="{{ docs.edit_url }}" rel="noopener noreferrer" target="_blank">Edit this page on GitHub</a></p>
+    </main>
+  </div>
+{% endblock %}
