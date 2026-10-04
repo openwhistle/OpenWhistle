@@ -5,6 +5,8 @@
   "footer.tagline": "Secure whistleblower reporting",
   "footer.open_source": "Open source (GPLv3)",
   "footer.admin": "Admin",
+  "footer.imprint": "Legal notice",
+  "footer.privacy": "Privacy",
   "form.please_wait": "Please wait…",
   "error.eyebrow": "Error {code}",
   "error.go_back": "Go Back",

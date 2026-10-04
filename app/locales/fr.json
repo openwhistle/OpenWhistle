@@ -7,6 +7,8 @@
   "footer.tagline": "Signalement sécurisé des lanceurs d'alerte",
   "footer.open_source": "Open source (GPLv3)",
   "footer.admin": "Admin",
+  "footer.imprint": "Mentions légales",
+  "footer.privacy": "Confidentialité",
   "form.please_wait": "Veuillez patienter…",
   "error.eyebrow": "Erreur {code}",
   "error.go_back": "Retour",

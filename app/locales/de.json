@@ -5,6 +5,8 @@
   "footer.tagline": "Sicheres Hinweisgebersystem",
   "footer.open_source": "Open Source (GPLv3)",
   "footer.admin": "Admin",
+  "footer.imprint": "Impressum",
+  "footer.privacy": "Datenschutz",
   "form.please_wait": "Bitte warten…",
   "error.eyebrow": "Fehler {code}",
   "error.go_back": "Zurück",

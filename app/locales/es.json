@@ -5,6 +5,8 @@
   "footer.tagline": "Denuncias seguras de informantes",
   "footer.open_source": "Código abierto (GPLv3)",
   "footer.admin": "Administración",
+  "footer.imprint": "Aviso legal",
+  "footer.privacy": "Privacidad",
   "form.please_wait": "Espere…",
   "error.eyebrow": "Error {code}",
   "error.go_back": "Volver",
