@@ -20,8 +20,13 @@ from app.models.user import AdminRole, AdminUser
 
 def _user(org: uuid.UUID, role: AdminRole = AdminRole.admin) -> AdminUser:
     return AdminUser(
-        id=uuid.uuid4(), username=f"mt_{uuid.uuid4().hex[:8]}", role=role, org_id=org,
-        is_active=True, totp_secret="JBSWY3DPEHPK3PXP", totp_enabled=True,
+        id=uuid.uuid4(),
+        username=f"mt_{uuid.uuid4().hex[:8]}",
+        role=role,
+        org_id=org,
+        is_active=True,
+        totp_secret="JBSWY3DPEHPK3PXP",
+        totp_enabled=True,
     )
 
 
@@ -72,7 +77,8 @@ async def test_cannot_change_role_of_other_org_user(
     csrf = await _csrf(as_admin_a)
     resp = await as_admin_a.post(
         f"/admin/users/{two_orgs['user_b'].id}/role",
-        data={"role": "admin", "csrf_token": csrf}, follow_redirects=False,
+        data={"role": "admin", "csrf_token": csrf},
+        follow_redirects=False,
     )
     assert resp.status_code == 404
 
@@ -128,8 +134,12 @@ async def test_new_user_joins_the_creators_org(
     csrf = await _csrf(as_admin_a)
     resp = await as_admin_a.post(
         "/admin/users",
-        data={"username": name, "password": "a-long-password-123", "role": "case_manager",
-              "csrf_token": csrf},
+        data={
+            "username": name,
+            "password": "a-long-password-123",
+            "role": "case_manager",
+            "csrf_token": csrf,
+        },
         follow_redirects=False,
     )
     assert resp.status_code == 302
@@ -168,8 +178,12 @@ async def test_audit_rows_carry_the_report_org_and_else_the_actor_org(
     # The actor belongs to another organisation (e.g. an operator acting on a
     # tenant's case): a row about a report takes the report's org, not the actor's.
     actor = AdminUser(
-        id=uuid.uuid4(), username=f"aud_{uuid.uuid4().hex[:8]}", password_hash=None,
-        totp_secret="JBSWY3DPEHPK3PXP", totp_enabled=True, org_id=actor_org.id,
+        id=uuid.uuid4(),
+        username=f"aud_{uuid.uuid4().hex[:8]}",
+        password_hash=None,
+        totp_secret="JBSWY3DPEHPK3PXP",
+        totp_enabled=True,
+        org_id=actor_org.id,
     )
     db_session.add(actor)
     report, _ = await create_report(db_session, "corruption", "Audit org test report text.")
@@ -210,8 +224,13 @@ async def test_audit_log_page_is_scoped_per_org(
 
 def _org_less_admin() -> AdminUser:
     return AdminUser(
-        id=uuid.uuid4(), username=f"ol_{uuid.uuid4().hex[:8]}", role=AdminRole.admin,
-        is_active=True, totp_secret="JBSWY3DPEHPK3PXP", totp_enabled=True, org_id=None,
+        id=uuid.uuid4(),
+        username=f"ol_{uuid.uuid4().hex[:8]}",
+        role=AdminRole.admin,
+        is_active=True,
+        totp_secret="JBSWY3DPEHPK3PXP",
+        totp_enabled=True,
+        org_id=None,
     )
 
 
@@ -234,7 +253,10 @@ async def test_org_less_admin_sees_only_their_own_org_less_audit_rows(
     await db_session.commit()
 
     entries, total = await audit_service.get_audit_log(
-        db_session, scope_org=True, org_id=None, viewer_id=viewer.id,
+        db_session,
+        scope_org=True,
+        org_id=None,
+        viewer_id=viewer.id,
     )
     ids = {e.id for e in entries}
     assert own.id in ids
@@ -330,16 +352,24 @@ async def test_category_labels_do_not_leak_across_orgs_with_a_colliding_slug(
     from app.services.categories import get_category_labels
 
     org_a, org_b = two_orgs["admin_a"].org_id, two_orgs["user_b"].org_id
-    db_session.add_all([
-        ReportCategory(
-            id=uuid.uuid4(), slug="custom", label_en="Org A label", label_de="Org A label",
-            org_id=org_a,
-        ),
-        ReportCategory(
-            id=uuid.uuid4(), slug="custom", label_en="Org B label", label_de="Org B label",
-            org_id=org_b,
-        ),
-    ])
+    db_session.add_all(
+        [
+            ReportCategory(
+                id=uuid.uuid4(),
+                slug="custom",
+                label_en="Org A label",
+                label_de="Org A label",
+                org_id=org_a,
+            ),
+            ReportCategory(
+                id=uuid.uuid4(),
+                slug="custom",
+                label_en="Org B label",
+                label_de="Org B label",
+                org_id=org_b,
+            ),
+        ]
+    )
     await db_session.commit()
 
     labels_a = await get_category_labels(db_session, "en", scope_org=True, org_id=org_a)
@@ -358,12 +388,14 @@ async def test_stats_page_category_label_is_the_own_orgs(
     from app.services.report import create_report
 
     org_a, org_b = two_orgs["admin_a"].org_id, two_orgs["user_b"].org_id
-    db_session.add_all([
-        ReportCategory(
-            id=uuid.uuid4(), slug="custom", label_en=f"Org {n} label", label_de=n, org_id=org
-        )
-        for n, org in (("A", org_a), ("B", org_b))
-    ])
+    db_session.add_all(
+        [
+            ReportCategory(
+                id=uuid.uuid4(), slug="custom", label_en=f"Org {n} label", label_de=n, org_id=org
+            )
+            for n, org in (("A", org_a), ("B", org_b))
+        ]
+    )
     report, _ = await create_report(db_session, "custom", "Scoped stats label test.")
     report.org_id = org_a
     await db_session.commit()
@@ -403,7 +435,9 @@ async def test_category_and_location_pages_list_only_own_org(
 @pytest.mark.asyncio
 @pytest.mark.parametrize("action", ["deactivate", "reactivate"])
 async def test_cannot_toggle_another_orgs_category_or_location(
-    as_admin_a: AsyncClient, two_orgs: dict[str, AdminUser], db_session: AsyncSession,
+    as_admin_a: AsyncClient,
+    two_orgs: dict[str, AdminUser],
+    db_session: AsyncSession,
     action: str,
 ) -> None:
     cat, loc = await _other_org_rows(db_session, two_orgs["user_b"].org_id, uuid.uuid4().hex[:8])
@@ -437,10 +471,20 @@ async def test_a_slug_or_code_another_org_uses_is_free_and_a_duplicate_is_409(
 
     org_a = two_orgs["admin_a"].org_id
     mine = ReportCategory.slug == f"cat_{tag}"
-    assert await db_session.scalar(select(ReportCategory.org_id).where(
-        mine, ReportCategory.label_en == "Mine")) == org_a
-    assert await db_session.scalar(select(Location.org_id).where(
-        Location.code == f"LOC{tag}".upper(), Location.name == "Mine")) == org_a
+    assert (
+        await db_session.scalar(
+            select(ReportCategory.org_id).where(mine, ReportCategory.label_en == "Mine")
+        )
+        == org_a
+    )
+    assert (
+        await db_session.scalar(
+            select(Location.org_id).where(
+                Location.code == f"LOC{tag}".upper(), Location.name == "Mine"
+            )
+        )
+        == org_a
+    )
 
 
 @pytest.mark.asyncio
@@ -457,13 +501,16 @@ async def test_location_deactivate_and_reactivate_are_audited(
     csrf = await _csrf(as_admin_a)
     for action in ("deactivate", "reactivate"):
         resp = await as_admin_a.post(
-            f"/admin/locations/{loc.id}/{action}", data={"csrf_token": csrf},
+            f"/admin/locations/{loc.id}/{action}",
+            data={"csrf_token": csrf},
             follow_redirects=False,
         )
         assert resp.status_code == 302
-    rows = (await db_session.execute(
-        select(AuditLog.action, AuditLog.org_id).where(AuditLog.detail.contains(loc.code))
-    )).all()
+    rows = (
+        await db_session.execute(
+            select(AuditLog.action, AuditLog.org_id).where(AuditLog.detail.contains(loc.code))
+        )
+    ).all()
     assert (AuditAction.LOCATION_DEACTIVATED, org_a) in rows
     assert (AuditAction.LOCATION_REACTIVATED, org_a) in rows
 
@@ -486,21 +533,27 @@ async def test_superadmin_actions_on_users_and_orgs_carry_the_targets_org(
         csrf = await _csrf(client)
         target = two_orgs["user_b"]
         resp = await client.post(
-            f"/admin/users/{target.id}/role", data={"role": "admin", "csrf_token": csrf},
+            f"/admin/users/{target.id}/role",
+            data={"role": "admin", "csrf_token": csrf},
             follow_redirects=False,
         )
         assert resp.status_code == 302
         slug = f"org-{uuid.uuid4().hex[:6]}"
         resp = await client.post(
-            "/admin/organisations", data={"name": "New", "slug": slug, "csrf_token": csrf},
+            "/admin/organisations",
+            data={"name": "New", "slug": slug, "csrf_token": csrf},
             follow_redirects=False,
         )
         assert resp.status_code == 302
     finally:
         app.dependency_overrides.pop(get_current_admin, None)
-    rows = dict((await db_session.execute(
-        select(AuditLog.action, AuditLog.org_id).where(AuditLog.admin_id == boss.id)
-    )).all())
+    rows = dict(
+        (
+            await db_session.execute(
+                select(AuditLog.action, AuditLog.org_id).where(AuditLog.admin_id == boss.id)
+            )
+        ).all()
+    )
     new_org = await db_session.scalar(select(Organisation.id).where(Organisation.slug == slug))
     assert rows[AuditAction.ADMIN_ROLE_CHANGED] == target.org_id
     assert rows[AuditAction.ORG_CREATED] == new_org
@@ -509,7 +562,9 @@ async def test_superadmin_actions_on_users_and_orgs_carry_the_targets_org(
 @pytest.mark.asyncio
 @pytest.mark.parametrize("kind", ["categories", "locations"])
 async def test_a_category_or_location_is_not_kept_without_its_audit_row(
-    as_admin_a: AsyncClient, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch,
+    as_admin_a: AsyncClient,
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
     kind: str,
 ) -> None:
     """Created and audited in one transaction: a failing audit write keeps neither."""
@@ -524,8 +579,11 @@ async def test_a_category_or_location_is_not_kept_without_its_audit_row(
 
     monkeypatch.setattr(audit_service, "log", broken_log)
     tag = uuid.uuid4().hex[:8]
-    form = ({"slug": f"cat_{tag}", "label_en": "X", "label_de": "X"} if kind == "categories"
-            else {"name": "X", "code": f"LOC{tag}".upper()})
+    form = (
+        {"slug": f"cat_{tag}", "label_en": "X", "label_de": "X"}
+        if kind == "categories"
+        else {"name": "X", "code": f"LOC{tag}".upper()}
+    )
     csrf = await _csrf(as_admin_a)
     with pytest.raises(RuntimeError, match="audit write failed"):
         await as_admin_a.post(f"/admin/{kind}", data={**form, "csrf_token": csrf})

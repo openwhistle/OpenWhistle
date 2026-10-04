@@ -264,7 +264,8 @@ def test_status_steps_neither_touch_nor_get_cut(
     from tests.e2e.conftest import DEMO_CASE_RECEIVED
 
     ctx = browser.new_context(
-        viewport={"width": width, "height": 900}, base_url=base_url,
+        viewport={"width": width, "height": 900},
+        base_url=base_url,
         extra_http_headers={"Accept-Language": lang},
     )
     page = ctx.new_page()

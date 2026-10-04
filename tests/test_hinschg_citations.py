@@ -50,7 +50,7 @@ def test_every_cited_absatz_exists() -> None:
         text = path.read_text(encoding="utf-8")
         for m in _CITE.finditer(text):
             section, absatz = int(m.group(1)), int(m.group(2))
-            if _OTHER_LAW.match(text[m.end():m.end() + 16]):
+            if _OTHER_LAW.match(text[m.end() : m.end() + 16]):
                 continue  # § 87 BetrVG, § 201 StGB, § 30 OWiG ...
             shape = SHAPE.get(section)
             if shape is None:

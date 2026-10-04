@@ -14,14 +14,20 @@ from httpx import AsyncClient
 from tests.built_site import page
 
 
-@pytest.mark.parametrize("direction", [
-    ("upgrade", "7d4e2b9c1a05:a1c6e0f4b201"), ("downgrade", "a1c6e0f4b201:7d4e2b9c1a05"),
-])
+@pytest.mark.parametrize(
+    "direction",
+    [
+        ("upgrade", "7d4e2b9c1a05:a1c6e0f4b201"),
+        ("downgrade", "a1c6e0f4b201:7d4e2b9c1a05"),
+    ],
+)
 def test_migration_004_refuses_offline_sql(direction: tuple[str, str]) -> None:
     """--sql would emit only the ALTER and leave the TOTP secrets unencrypted."""
     run = subprocess.run(  # noqa: S603
         ["alembic", direction[0], direction[1], "--sql"],  # noqa: S607
-        capture_output=True, text=True, check=False,
+        capture_output=True,
+        text=True,
+        check=False,
     )
     assert run.returncode != 0
     assert "must run online" in run.stderr
@@ -82,23 +88,44 @@ def test_helm_extra_env_reaches_the_configmap() -> None:
     """Settings without a values.yaml key (SECURE_COOKIES, the lockout
     settings, ...) can still be set on Helm."""
     run = subprocess.run(  # noqa: S603
-        ["helm", "template", "t", str(ROOT / "charts/openwhistle"),  # noqa: S607
-         "--set", "secrets.existingSecret=x", "--set", "extraEnv.SECURE_COOKIES=false",
-         "-s", "templates/configmap.yaml"],
-        capture_output=True, text=True, check=True,
+        [  # noqa: S607
+            "helm",
+            "template",
+            "t",
+            str(ROOT / "charts/openwhistle"),  # noqa: S607
+            "--set",
+            "secrets.existingSecret=x",
+            "--set",
+            "extraEnv.SECURE_COOKIES=false",
+            "-s",
+            "templates/configmap.yaml",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
     )
     assert 'SECURE_COOKIES: "false"' in run.stdout
 
 
 def test_no_tracked_file_holds_a_machine_local_path() -> None:
     """A session scratchpad path (user, session id) once reached a public plan."""
-    files = subprocess.run(  # noqa: S603
-        ["git", "ls-files", "-z"], cwd=ROOT, capture_output=True, check=True,  # noqa: S607
-    ).stdout.decode().split("\0")
+    files = (
+        subprocess.run(  # noqa: S603
+            ["git", "ls-files", "-z"],  # noqa: S607
+            cwd=ROOT,
+            capture_output=True,
+            check=True,  # noqa: S607
+        )
+        .stdout.decode()
+        .split("\0")
+    )
     local = re.compile(r"/tmp/claude-\d+/|/var/home/\w+|/home/jpy\b")  # noqa: S108
     offenders = [
-        name for name in files
-        if name and name != "tests/test_v160_ops.py" and (ROOT / name).is_file()
+        name
+        for name in files
+        if name
+        and name != "tests/test_v160_ops.py"
+        and (ROOT / name).is_file()
         and local.search((ROOT / name).read_bytes().decode("utf-8", "ignore"))
     ]
     assert not offenders, offenders
@@ -116,9 +143,16 @@ def test_shipped_files_explain_the_code_not_the_review_history() -> None:
     """What ships or is published says why the code is like this; "fix round 2"
     or "Task 17" points at review notes the reader of the image or site does
     not have."""
-    files = subprocess.run(  # noqa: S603
-        ["git", "ls-files", "-z"], cwd=ROOT, capture_output=True, check=True,  # noqa: S607
-    ).stdout.decode().split("\0")
+    files = (
+        subprocess.run(  # noqa: S603
+            ["git", "ls-files", "-z"],  # noqa: S607
+            cwd=ROOT,
+            capture_output=True,
+            check=True,  # noqa: S607
+        )
+        .stdout.decode()
+        .split("\0")
+    )
     offenders = [
         f"{name}: {m.group(0)}"
         for name in files

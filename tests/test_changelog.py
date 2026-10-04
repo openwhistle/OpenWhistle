@@ -25,12 +25,14 @@ def _current_section() -> str:
 
 def test_every_new_setting_is_in_the_changelog() -> None:
     previous = {
-        line.strip() for line in PREVIOUS.read_text().splitlines()
+        line.strip()
+        for line in PREVIOUS.read_text().splitlines()
         if line.strip() and not line.startswith("#")
     }
     section = _current_section()
     missing = [
-        name.upper() for name in Settings.model_fields
+        name.upper()
+        for name in Settings.model_fields
         if name not in previous and name.upper() not in section
     ]
     assert not missing, f"new settings without a CHANGELOG entry: {missing}"

@@ -38,10 +38,13 @@ async def _fake_clamd(reply: bytes) -> asyncio.AbstractServer:
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(("reply", "expected"), [
-    (b"stream: OK\0", None),
-    (b"stream: Eicar-Test-Signature FOUND\0", "Eicar-Test-Signature"),
-])
+@pytest.mark.parametrize(
+    ("reply", "expected"),
+    [
+        (b"stream: OK\0", None),
+        (b"stream: Eicar-Test-Signature FOUND\0", "Eicar-Test-Signature"),
+    ],
+)
 async def test_scan_reports_clean_and_infected(
     monkeypatch: pytest.MonkeyPatch, reply: bytes, expected: str | None
 ) -> None:
@@ -58,8 +61,11 @@ async def test_upload_is_refused_when_the_scanner_is_unreachable(
 ) -> None:
     monkeypatch.setattr(settings, "clamav_host", "127.0.0.1")
     monkeypatch.setattr(settings, "clamav_port", 9)  # discard port: nothing listens
-    upload = UploadFile(io.BytesIO(b"plain text"), filename="note.txt",
-                        headers=Headers({"content-type": "text/plain"}))
+    upload = UploadFile(
+        io.BytesIO(b"plain text"),
+        filename="note.txt",
+        headers=Headers({"content-type": "text/plain"}),
+    )
     files, error = await read_upload_files([upload])
     assert files == [] and error is not None and error.key == "upload.error.scan_unavailable"
 
@@ -69,8 +75,11 @@ async def test_infected_upload_is_refused(monkeypatch: pytest.MonkeyPatch) -> No
     server = await _fake_clamd(b"stream: Eicar-Test-Signature FOUND\0")
     monkeypatch.setattr(settings, "clamav_host", "127.0.0.1")
     monkeypatch.setattr(settings, "clamav_port", server.sockets[0].getsockname()[1])
-    upload = UploadFile(io.BytesIO(b"plain text"), filename="note.txt",
-                        headers=Headers({"content-type": "text/plain"}))
+    upload = UploadFile(
+        io.BytesIO(b"plain text"),
+        filename="note.txt",
+        headers=Headers({"content-type": "text/plain"}),
+    )
     async with server:
         files, error = await read_upload_files([upload])
     assert files == [] and error is not None and error.key == "upload.error.malware"
@@ -83,11 +92,14 @@ async def test_scanning_off_by_default_never_connects(monkeypatch: pytest.Monkey
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("reply", [
-    b"INSTREAM size limit exceeded. ERROR\0",  # clamd's own StreamMaxLength rejection
-    b"stream: UNKNOWN COMMAND ERROR\0",  # any other clamd ERROR reply
-    b"\x00\x01\xffnonsense\xfe\x00",  # garbage: neither OK, FOUND, nor readable text
-])
+@pytest.mark.parametrize(
+    "reply",
+    [
+        b"INSTREAM size limit exceeded. ERROR\0",  # clamd's own StreamMaxLength rejection
+        b"stream: UNKNOWN COMMAND ERROR\0",  # any other clamd ERROR reply
+        b"\x00\x01\xffnonsense\xfe\x00",  # garbage: neither OK, FOUND, nor readable text
+    ],
+)
 async def test_scan_unavailable_on_non_ok_non_found_reply(
     monkeypatch: pytest.MonkeyPatch, reply: bytes
 ) -> None:
@@ -125,6 +137,7 @@ async def test_scan_unavailable_when_reply_has_no_terminator(
 ) -> None:
     """clamd closes the connection mid-reply, before the '\\0' terminator ever
     arrives — an incomplete reply, not a verdict."""
+
     async def handle(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         assert await reader.readexactly(10) == b"zINSTREAM\0"
         while True:
@@ -152,6 +165,7 @@ async def test_a_reply_longer_than_the_bound_is_not_trusted(
 ) -> None:
     """A terminated reply past _MAX_REPLY_BYTES is no answer clamd gives: the
     scan counts as unavailable instead of being parsed."""
+
     async def handle(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         assert await reader.readexactly(10) == b"zINSTREAM\0"
         while True:
@@ -178,6 +192,7 @@ async def test_scan_unavailable_on_over_long_reply(monkeypatch: pytest.MonkeyPat
     """A reply longer than the bounded receive buffer and still no '\\0' must
     raise promptly (asyncio.LimitOverrunError) rather than buffer without limit
     or hang — a compromised or badly broken clamd must not stall the request."""
+
     async def handle(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         assert await reader.readexactly(10) == b"zINSTREAM\0"
         while True:

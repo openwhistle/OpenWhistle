@@ -58,12 +58,14 @@ def _code(user: AdminUser) -> str:
     return pyotp.TOTP(user.totp_secret).now()
 
 
-async def _change(
-    client: AsyncClient, csrf: str, user: AdminUser, **overrides: str
-) -> Any:
+async def _change(client: AsyncClient, csrf: str, user: AdminUser, **overrides: str) -> Any:
     form = {
-        "csrf_token": csrf, "current_password": _PASSWORD, "new_password": _NEW,
-        "confirm_password": _NEW, "totp_code": _code(user), **overrides,
+        "csrf_token": csrf,
+        "current_password": _PASSWORD,
+        "new_password": _NEW,
+        "confirm_password": _NEW,
+        "totp_code": _code(user),
+        **overrides,
     }
     return await client.post("/admin/account/password", data=form, follow_redirects=False)
 
@@ -93,8 +95,11 @@ async def test_change_with_the_current_password_and_a_totp_code(
     assert resp.headers["location"] == "/admin/account?password=changed"
     fresh = await _fresh(db_session, user)
     assert fresh.password_hash and auth_service.verify_password(_NEW, fresh.password_hash)
-    entries = [e for e in await _audit(db_session, AuditAction.AUTH_PASSWORD_CHANGED)
-               if e.admin_id == user.id]
+    entries = [
+        e
+        for e in await _audit(db_session, AuditAction.AUTH_PASSWORD_CHANGED)
+        if e.admin_id == user.id
+    ]
     assert len(entries) == 1
     assert json.loads(entries[0].detail or "{}") == {"required": False}
     assert _NEW not in (entries[0].detail or "")
@@ -152,13 +157,16 @@ async def test_a_totp_code_already_used_is_refused(
     assert _unchanged(await _fresh(db_session, user))
 
 
-@pytest.mark.parametrize(("overrides", "field"), [
-    ({"new_password": "short", "confirm_password": "short"}, "new_password"),
-    ({"new_password": "x" * 73, "confirm_password": "x" * 73}, "new_password"),
-    ({"confirm_password": "Something-Else-789"}, "confirm_password"),
-    ({"new_password": _PASSWORD, "confirm_password": _PASSWORD}, "new_password"),
-    ({"current_password": ""}, "current_password"),
-])
+@pytest.mark.parametrize(
+    ("overrides", "field"),
+    [
+        ({"new_password": "short", "confirm_password": "short"}, "new_password"),
+        ({"new_password": "x" * 73, "confirm_password": "x" * 73}, "new_password"),
+        ({"confirm_password": "Something-Else-789"}, "confirm_password"),
+        ({"new_password": _PASSWORD, "confirm_password": _PASSWORD}, "new_password"),
+        ({"current_password": ""}, "current_password"),
+    ],
+)
 @pytest.mark.asyncio
 async def test_a_form_error_is_answered_before_any_credential_check(
     client: AsyncClient, db_session: AsyncSession, overrides: dict[str, str], field: str
@@ -287,7 +295,8 @@ async def test_an_account_without_a_password_gets_no_form_and_cannot_post_one(
     client: AsyncClient, db_session: AsyncSession, kind: str
 ) -> None:
     extra: dict[str, object] = (
-        {"ldap_username": f"ldap_{uuid.uuid4().hex[:8]}"} if kind == "ldap"
+        {"ldap_username": f"ldap_{uuid.uuid4().hex[:8]}"}
+        if kind == "ldap"
         else {"oidc_sub": f"s-{uuid.uuid4().hex}", "oidc_issuer": "https://idp.example"}
     )
     user = await _user(db_session, **extra)
@@ -336,16 +345,29 @@ async def test_forced_change_redirects_every_admin_route(
     user = await _user(db_session, role=role, must_change_password=True)
     csrf = await _sign_in(client, user)
 
-    for path in ("/admin/dashboard", f"/admin/reports/{uuid.uuid4()}", "/admin/users",
-                 "/admin/stats", "/admin/audit-log", "/admin/system"):
+    for path in (
+        "/admin/dashboard",
+        f"/admin/reports/{uuid.uuid4()}",
+        "/admin/users",
+        "/admin/stats",
+        "/admin/audit-log",
+        "/admin/system",
+    ):
         resp = await client.get(path, follow_redirects=False)
         assert (resp.status_code, resp.headers.get("location")) == (303, "/admin/account"), path
-    posted = await client.post("/admin/users", data={
-        "csrf_token": csrf, "username": f"x_{uuid.uuid4().hex[:6]}", "password": _NEW,
-    }, follow_redirects=False)
+    posted = await client.post(
+        "/admin/users",
+        data={
+            "csrf_token": csrf,
+            "username": f"x_{uuid.uuid4().hex[:6]}",
+            "password": _NEW,
+        },
+        follow_redirects=False,
+    )
     assert (posted.status_code, posted.headers.get("location")) == (303, "/admin/account")
-    linked = await client.post("/admin/oidc/link", data={"csrf_token": csrf},
-                               follow_redirects=False)
+    linked = await client.post(
+        "/admin/oidc/link", data={"csrf_token": csrf}, follow_redirects=False
+    )
     assert linked.headers.get("location") == "/admin/account"
 
     # Exempt: the account page, the session timer, sign-out.
@@ -383,8 +405,11 @@ async def test_the_forced_change_clears_the_flag_and_opens_the_admin_area(
 
     fresh = await _fresh(db_session, user)
     assert fresh.must_change_password is False
-    entry = [e for e in await _audit(db_session, AuditAction.AUTH_PASSWORD_CHANGED)
-             if e.admin_id == user.id]
+    entry = [
+        e
+        for e in await _audit(db_session, AuditAction.AUTH_PASSWORD_CHANGED)
+        if e.admin_id == user.id
+    ]
     assert json.loads(entry[0].detail or "{}") == {"required": True}
     assert (await client.get("/admin/dashboard", follow_redirects=False)).status_code == 200
 
@@ -397,19 +422,32 @@ async def _enrol_and_change(
     assert login.headers["location"].startswith("/admin/mfa/setup")
     token = parse_qs(urlsplit(login.headers["location"]).query)["token"][0]
     secret = (await _fresh(db_session, user)).totp_secret
-    done = await client.post("/admin/mfa/setup", data={
-        "csrf_token": csrf, "temp_token": token, "totp_code": pyotp.TOTP(secret).now(),
-    }, follow_redirects=False)
+    done = await client.post(
+        "/admin/mfa/setup",
+        data={
+            "csrf_token": csrf,
+            "temp_token": token,
+            "totp_code": pyotp.TOTP(secret).now(),
+        },
+        follow_redirects=False,
+    )
     assert done.headers["location"] == "/admin/account"
     # Enrolling the authenticator does not release the flag; only the change does.
     assert (await _fresh(db_session, user)).must_change_password is True
     assert (await client.get("/admin/dashboard", follow_redirects=False)).status_code == 303
 
-    changed = await client.post("/admin/account/password", data={
-        "csrf_token": csrf, "current_password": password, "new_password": _NEW,
-        # The next step's code: the enrolment code is used up (one code, one action).
-        "confirm_password": _NEW, "totp_code": pyotp.TOTP(secret).at(time.time() + 30),
-    }, follow_redirects=False)
+    changed = await client.post(
+        "/admin/account/password",
+        data={
+            "csrf_token": csrf,
+            "current_password": password,
+            "new_password": _NEW,
+            # The next step's code: the enrolment code is used up (one code, one action).
+            "confirm_password": _NEW,
+            "totp_code": pyotp.TOTP(secret).at(time.time() + 30),
+        },
+        follow_redirects=False,
+    )
     assert changed.status_code == 303, changed.text
     assert (await _fresh(db_session, user)).must_change_password is False
     assert (await client.get("/admin/dashboard", follow_redirects=False)).status_code == 200
@@ -421,9 +459,15 @@ async def test_a_new_account_enrols_then_must_change_its_password(
 ) -> None:
     csrf = await _sign_in(client, await _user(db_session))
     name = f"new_{uuid.uuid4().hex[:8]}"
-    created = await client.post("/admin/users", data={
-        "csrf_token": csrf, "username": name, "password": "Chosen-By-The-Admin-1",
-    }, follow_redirects=False)
+    created = await client.post(
+        "/admin/users",
+        data={
+            "csrf_token": csrf,
+            "username": name,
+            "password": "Chosen-By-The-Admin-1",
+        },
+        follow_redirects=False,
+    )
     assert created.status_code == 302
     new = await auth_service.get_user_by_username(db_session, name)
     assert new is not None and new.must_change_password is True
@@ -451,9 +495,13 @@ async def test_a_role_change_does_not_release_the_flag(
 ) -> None:
     target = await _user(db_session, role=AdminRole.case_manager, must_change_password=True)
     csrf = await _sign_in(client, await _user(db_session, role=AdminRole.superadmin))
-    await client.post(f"/admin/users/{target.id}/role", data={
-        "csrf_token": csrf, "role": "admin",
-    })
+    await client.post(
+        f"/admin/users/{target.id}/role",
+        data={
+            "csrf_token": csrf,
+            "role": "admin",
+        },
+    )
     assert (await _fresh(db_session, target)).must_change_password is True
 
 
@@ -476,10 +524,14 @@ async def test_cli_password_reset_forces_a_change_ends_sessions_and_is_audited(
     assert fresh.password_hash and auth_service.verify_password(_NEW, fresh.password_hash)
     assert fresh.must_change_password is True
     assert not session_left
-    entry = [e for e in await _audit(db_session, AuditAction.ADMIN_PASSWORD_RESET)
-             if user.username in (e.detail or "")]
+    entry = [
+        e
+        for e in await _audit(db_session, AuditAction.ADMIN_PASSWORD_RESET)
+        if user.username in (e.detail or "")
+    ]
     assert json.loads(entry[0].detail or "{}") == {
-        "username": user.username, "via": "command line",
+        "username": user.username,
+        "via": "command line",
     }
     assert not await _script()._reset_password(f"nobody_{uuid.uuid4().hex}", _NEW)  # noqa: SLF001
 
@@ -489,16 +541,19 @@ async def test_cli_password_reset_forces_a_change_ends_sessions_and_is_audited(
 
 def _alembic(*args: str) -> None:
     run = subprocess.run(  # noqa: S603
-        ["alembic", *args], capture_output=True, text=True, check=False,  # noqa: S607
+        ["alembic", *args],  # noqa: S607
+        capture_output=True,
+        text=True,
+        check=False,  # noqa: S607
         env={**os.environ, "DATABASE_URL": settings.database_url},
     )
     assert run.returncode == 0, run.stderr
 
 
 async def _columns(db: AsyncSession) -> set[str]:
-    rows = await db.execute(text(
-        "SELECT column_name FROM information_schema.columns WHERE table_name = 'admin_users'"
-    ))
+    rows = await db.execute(
+        text("SELECT column_name FROM information_schema.columns WHERE table_name = 'admin_users'")
+    )
     await db.commit()
     return {str(r[0]) for r in rows}
 
@@ -509,16 +564,19 @@ async def test_migration_009_leaves_existing_accounts_unforced_and_round_trips(
 ) -> None:
     _alembic("downgrade", "e5a0c4d8f605")
     assert "must_change_password" not in await _columns(throwaway_db)
-    await throwaway_db.execute(text(
-        "INSERT INTO admin_users (id, username, password_hash, totp_secret, totp_enabled, role,"
-        " is_active) VALUES (:i, 'existing', 'x', 'x', true, 'admin', true)"
-    ), {"i": uuid.uuid4()})
+    await throwaway_db.execute(
+        text(
+            "INSERT INTO admin_users (id, username, password_hash, totp_secret, totp_enabled, role,"
+            " is_active) VALUES (:i, 'existing', 'x', 'x', true, 'admin', true)"
+        ),
+        {"i": uuid.uuid4()},
+    )
     await throwaway_db.commit()
 
     _alembic("upgrade", "head")
-    flag = await throwaway_db.scalar(text(
-        "SELECT must_change_password FROM admin_users WHERE username = 'existing'"
-    ))
+    flag = await throwaway_db.scalar(
+        text("SELECT must_change_password FROM admin_users WHERE username = 'existing'")
+    )
     await throwaway_db.commit()
     assert flag is False
 

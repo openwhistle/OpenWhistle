@@ -19,9 +19,7 @@ def test_uv_version_is_the_same_in_the_image_and_every_workflow() -> None:
 
 
 def _all(pattern: str, *globs: str) -> set[str]:
-    return {
-        m for g in globs for f in ROOT.glob(g) for m in re.findall(pattern, f.read_text())
-    }
+    return {m for g in globs for f in ROOT.glob(g) for m in re.findall(pattern, f.read_text())}
 
 
 def test_python_version_is_the_same_everywhere() -> None:
@@ -32,8 +30,11 @@ def test_python_version_is_the_same_everywhere() -> None:
 
 
 def test_postgres_and_redis_majors_are_the_same_everywhere() -> None:
-    places = ("docker-compose*.yml", ".github/workflows/*.yml",
-              "ansible/roles/openwhistle/templates/*.j2")
+    places = (
+        "docker-compose*.yml",
+        ".github/workflows/*.yml",
+        "ansible/roles/openwhistle/templates/*.j2",
+    )
     for image in ("postgres", "redis"):
         found = _all(rf"image: {image}:([0-9a-z.\-]+)", *places)
         assert len(found) == 1, f"{image} tags disagree: {found}"
@@ -42,9 +43,12 @@ def test_postgres_and_redis_majors_are_the_same_everywhere() -> None:
 def test_nginx_is_one_digest_pinned_image_in_every_deployment_and_ci() -> None:
     """CI said it tested "the exact image docker-compose.prod.yml ships" while
     it pinned a digest and both compose files floated on nginx:alpine."""
-    found = _all(r"(?m)^(?:\s+image:)?\s+(nginx[:@][^\s\\]+)\s*\\?$",
-                 "docker-compose.prod.yml", ".github/workflows/*.yml",
-                 "ansible/roles/openwhistle/templates/docker-compose.yml.j2")
+    found = _all(
+        r"(?m)^(?:\s+image:)?\s+(nginx[:@][^\s\\]+)\s*\\?$",
+        "docker-compose.prod.yml",
+        ".github/workflows/*.yml",
+        "ansible/roles/openwhistle/templates/docker-compose.yml.j2",
+    )
     assert len(found) == 1, f"nginx images disagree: {found}"
     assert re.fullmatch(r"nginx:[\w.\-]+@sha256:[0-9a-f]{64}", found.pop())
 
@@ -135,8 +139,9 @@ def test_clamav_service_is_identical_and_hardened_in_both_compose_files() -> Non
         "clamav_data:/var/lib/clamav",
     ):
         assert needle in block, f"clamav service lacks {needle!r}"
-    assert re.search(r"image: clamav/clamav:[0-9.]+@sha256:[0-9a-f]{64}", block), \
+    assert re.search(r"image: clamav/clamav:[0-9.]+@sha256:[0-9a-f]{64}", block), (
         "clamav image is not pinned by digest"
+    )
 
     networks = re.search(r"networks:\n((?:\s+- \S+\n)+)", block)
     assert networks, "clamav service has no networks: block"
@@ -206,10 +211,13 @@ def test_no_bare_pip_install_in_any_workflow() -> None:
 def test_security_workflow_audits_dependencies_and_the_image() -> None:
     wf = (ROOT / ".github/workflows/security.yml").read_text()
     needles = (
-        "pull_request:", "schedule:", "pip-audit", "aquasecurity/trivy-action@", "--all-extras",
+        "pull_request:",
+        "schedule:",
+        "pip-audit",
+        "aquasecurity/trivy-action@",
+        "--all-extras",
     )
     for needle in needles:
         assert needle in wf, needle
     pinned = re.search(r"aquasecurity/trivy-action@[0-9a-f]{40}", wf)
     assert pinned, "trivy action not pinned by digest"
-

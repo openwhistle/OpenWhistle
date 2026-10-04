@@ -30,6 +30,7 @@ async def _search(client: AsyncClient, q: str, **form: str):  # type: ignore[no-
         "/admin/dashboard", data={"q": q, "csrf_token": client.cookies.get("ow_csrf"), **form}
     )
 
+
 _PASSWORD = "V160-Privacy-Password"  # noqa: S105
 _NAME = "Erika Musterfrau"
 _CONTACT = "+49 30 1234"
@@ -41,21 +42,35 @@ async def _login(
 ) -> AdminUser:
     secret = pyotp.random_base32()
     user = AdminUser(
-        id=uuid.uuid4(), username=f"priv_{uuid.uuid4().hex[:8]}",
-        password_hash=hash_password(_PASSWORD), totp_secret=secret, totp_enabled=True, role=role,
+        id=uuid.uuid4(),
+        username=f"priv_{uuid.uuid4().hex[:8]}",
+        password_hash=hash_password(_PASSWORD),
+        totp_secret=secret,
+        totp_enabled=True,
+        role=role,
         org_id=org_id,
     )
     db.add(user)
     await db.commit()
     await client.get("/admin/login")
-    r = await client.post("/admin/login", data={
-        "username": user.username, "password": _PASSWORD,
-        "csrf_token": client.cookies.get("ow_csrf")})
+    r = await client.post(
+        "/admin/login",
+        data={
+            "username": user.username,
+            "password": _PASSWORD,
+            "csrf_token": client.cookies.get("ow_csrf"),
+        },
+    )
     temp = re.search(r'name="temp_token" value="([^"]+)"', r.text)
     assert temp
-    await client.post("/admin/login/mfa", data={
-        "csrf_token": client.cookies.get("ow_csrf"), "temp_token": temp.group(1),
-        "totp_code": pyotp.TOTP(secret).now()})
+    await client.post(
+        "/admin/login/mfa",
+        data={
+            "csrf_token": client.cookies.get("ow_csrf"),
+            "temp_token": temp.group(1),
+            "totp_code": pyotp.TOTP(secret).now(),
+        },
+    )
     return user
 
 
@@ -63,8 +78,10 @@ async def _bare_admin(db: AsyncSession) -> AdminUser:
     """An admin row with no login, used only to isolate a report by assigned_to_id
     (a real foreign key) from every other report ever created in this test run."""
     user = AdminUser(
-        id=uuid.uuid4(), username=f"iso_{uuid.uuid4().hex[:8]}",
-        password_hash=hash_password(_PASSWORD), totp_secret=pyotp.random_base32(),
+        id=uuid.uuid4(),
+        username=f"iso_{uuid.uuid4().hex[:8]}",
+        password_hash=hash_password(_PASSWORD),
+        totp_secret=pyotp.random_base32(),
         totp_enabled=True,
     )
     db.add(user)
@@ -74,9 +91,12 @@ async def _bare_admin(db: AsyncSession) -> AdminUser:
 
 async def _confidential_report(db: AsyncSession, assigned: AdminUser | None = None) -> Report:
     report, _ = await create_report(
-        db, "corruption", "Confidential identity test report.",
+        db,
+        "corruption",
+        "Confidential identity test report.",
         submission_mode=SubmissionMode.confidential,
-        confidential_name_enc=encrypt(_NAME), confidential_contact_enc=encrypt(_CONTACT),
+        confidential_name_enc=encrypt(_NAME),
+        confidential_contact_enc=encrypt(_CONTACT),
     )
     report.assigned_to_id = assigned.id if assigned else None
     await db.commit()
@@ -84,10 +104,14 @@ async def _confidential_report(db: AsyncSession, assigned: AdminUser | None = No
 
 
 async def _audit_count(db: AsyncSession, report: Report, action: str) -> int:
-    return int(await db.scalar(
-        select(func.count()).select_from(AuditLog)
-        .where(AuditLog.report_id == report.id, AuditLog.action == action)
-    ) or 0)
+    return int(
+        await db.scalar(
+            select(func.count())
+            .select_from(AuditLog)
+            .where(AuditLog.report_id == report.id, AuditLog.action == action)
+        )
+        or 0
+    )
 
 
 @pytest.mark.asyncio
@@ -111,8 +135,10 @@ async def test_reveal_without_a_reason_is_refused(
 ) -> None:
     user = await _login(client, db_session, AdminRole.case_manager)
     report = await _confidential_report(db_session, assigned=user)
-    resp = await client.post(f"/admin/reports/{report.id}/identity", data={
-        "reason": reason, "csrf_token": client.cookies.get("ow_csrf")})
+    resp = await client.post(
+        f"/admin/reports/{report.id}/identity",
+        data={"reason": reason, "csrf_token": client.cookies.get("ow_csrf")},
+    )
     assert resp.status_code == 422
     assert _NAME not in resp.text
     assert await _audit_count(db_session, report, AuditAction.IDENTITY_REVEALED) == 0
@@ -128,8 +154,10 @@ async def test_reveal_without_csrf_token_is_refused(
 ) -> None:
     user = await _login(client, db_session, AdminRole.case_manager)
     report = await _confidential_report(db_session, assigned=user)
-    resp = await client.post(f"/admin/reports/{report.id}/identity", data={
-        "reason": _REASON, "csrf_token": "forged-token"})
+    resp = await client.post(
+        f"/admin/reports/{report.id}/identity",
+        data={"reason": _REASON, "csrf_token": "forged-token"},
+    )
     assert resp.status_code == 403
     assert _NAME not in resp.text
     assert await _audit_count(db_session, report, AuditAction.IDENTITY_REVEALED) == 0
@@ -141,22 +169,32 @@ async def test_superadmin_may_reveal_an_unassigned_case(
 ) -> None:
     await _login(client, db_session, AdminRole.superadmin)
     report = await _confidential_report(db_session, assigned=None)
-    resp = await client.post(f"/admin/reports/{report.id}/identity", data={
-        "reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")})
+    resp = await client.post(
+        f"/admin/reports/{report.id}/identity",
+        data={"reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")},
+    )
     assert resp.status_code == 200 and _NAME in resp.text
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(("role", "same_org", "org_less_report", "expected"), [
-    (AdminRole.admin, True, False, 200),
-    (AdminRole.superadmin, True, False, 200),
-    (AdminRole.superadmin, False, False, 403),
-    # A report with no organisation belongs to no tenant: any admin may handle it.
-    (AdminRole.admin, False, True, 200),
-])
+@pytest.mark.parametrize(
+    ("role", "same_org", "org_less_report", "expected"),
+    [
+        (AdminRole.admin, True, False, 200),
+        (AdminRole.superadmin, True, False, 200),
+        (AdminRole.superadmin, False, False, 403),
+        # A report with no organisation belongs to no tenant: any admin may handle it.
+        (AdminRole.admin, False, True, 200),
+    ],
+)
 async def test_multi_tenant_unassigned_reveal_is_for_the_case_org_only(
-    client: AsyncClient, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch,
-    role: AdminRole, same_org: bool, org_less_report: bool, expected: int,
+    client: AsyncClient,
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+    role: AdminRole,
+    same_org: bool,
+    org_less_report: bool,
+    expected: int,
 ) -> None:
     from app.config import settings
     from app.models.organisation import Organisation
@@ -169,8 +207,10 @@ async def test_multi_tenant_unassigned_reveal_is_for_the_case_org_only(
     report = await _confidential_report(db_session, assigned=None)
     report.org_id = None if org_less_report else orgs[0].id
     await db_session.commit()
-    resp = await client.post(f"/admin/reports/{report.id}/identity", data={
-        "reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")})
+    resp = await client.post(
+        f"/admin/reports/{report.id}/identity",
+        data={"reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")},
+    )
     assert resp.status_code == expected
     assert (_NAME in resp.text) == (expected == 200)
 
@@ -183,16 +223,22 @@ async def test_handler_reveal_shows_identity_once_and_audits_the_reason(
 
     user = await _login(client, db_session, AdminRole.case_manager)
     report = await _confidential_report(db_session, assigned=user)
-    resp = await client.post(f"/admin/reports/{report.id}/identity", data={
-        "reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")})
+    resp = await client.post(
+        f"/admin/reports/{report.id}/identity",
+        data={"reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")},
+    )
     assert resp.status_code == 200
     assert _NAME in resp.text
     assert resp.headers["cache-control"] == "no-store"
-    row = await db_session.scalar(select(AuditLog).where(
-        AuditLog.report_id == report.id, AuditLog.action == AuditAction.IDENTITY_REVEALED))
+    row = await db_session.scalar(
+        select(AuditLog).where(
+            AuditLog.report_id == report.id, AuditLog.action == AuditAction.IDENTITY_REVEALED
+        )
+    )
     assert row is not None and row.admin_id == user.id
     assert _REASON not in (row.detail or "")
     import json
+
     assert decrypt(json.loads(row.detail or "{}")["reason"]) == _REASON
     again = await client.get(f"/admin/reports/{report.id}")
     assert _NAME not in again.text
@@ -203,15 +249,21 @@ async def test_admin_who_is_not_the_handler_cannot_reveal(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
     other = AdminUser(
-        id=uuid.uuid4(), username=f"handler_{uuid.uuid4().hex[:8]}", password_hash=None,
-        totp_secret=pyotp.random_base32(), totp_enabled=True, role=AdminRole.case_manager,
+        id=uuid.uuid4(),
+        username=f"handler_{uuid.uuid4().hex[:8]}",
+        password_hash=None,
+        totp_secret=pyotp.random_base32(),
+        totp_enabled=True,
+        role=AdminRole.case_manager,
     )
     db_session.add(other)
     await db_session.commit()
     await _login(client, db_session, AdminRole.admin)
     report = await _confidential_report(db_session, assigned=other)
-    resp = await client.post(f"/admin/reports/{report.id}/identity", data={
-        "reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")})
+    resp = await client.post(
+        f"/admin/reports/{report.id}/identity",
+        data={"reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")},
+    )
     assert resp.status_code == 403
     assert _NAME not in resp.text
     # Nor is the form offered to them: the page says who may see the identity.
@@ -226,12 +278,16 @@ async def test_unassigned_case_admin_may_reveal_case_manager_may_not_see_it(
 ) -> None:
     await _login(client, db_session, AdminRole.admin)
     report = await _confidential_report(db_session, assigned=None)
-    resp = await client.post(f"/admin/reports/{report.id}/identity", data={
-        "reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")})
+    resp = await client.post(
+        f"/admin/reports/{report.id}/identity",
+        data={"reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")},
+    )
     assert resp.status_code == 200 and _NAME in resp.text
     await _login(client, db_session, AdminRole.case_manager)
-    resp = await client.post(f"/admin/reports/{report.id}/identity", data={
-        "reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")})
+    resp = await client.post(
+        f"/admin/reports/{report.id}/identity",
+        data={"reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")},
+    )
     assert resp.status_code == 404
     assert _NAME not in resp.text
     assert await _audit_count(db_session, report, AuditAction.IDENTITY_REVEALED) == 1
@@ -248,9 +304,7 @@ def test_audit_detail_decrypts_a_reveal_reason_and_keeps_a_plain_one() -> None:
         ("reason", "retention period exceeded")
     ]
     # A token that no longer decrypts is not the same as no reason.
-    assert audit_detail(json.dumps({"reason": "gAAAAAbroken"})) == [
-        ("reason", REASON_UNREADABLE)
-    ]
+    assert audit_detail(json.dumps({"reason": "gAAAAAbroken"})) == [("reason", REASON_UNREADABLE)]
 
 
 @pytest.mark.asyncio
@@ -259,8 +313,10 @@ async def test_audit_csv_carries_the_reason_decrypted(
 ) -> None:
     user = await _login(client, db_session, AdminRole.admin)
     report = await _confidential_report(db_session, assigned=user)
-    await client.post(f"/admin/reports/{report.id}/identity", data={
-        "reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")})
+    await client.post(
+        f"/admin/reports/{report.id}/identity",
+        data={"reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")},
+    )
     csv = await client.get("/admin/audit-log/export.csv")
     assert _REASON in csv.text
     assert _NAME not in csv.text
@@ -283,10 +339,15 @@ async def test_audit_csv_detail_cannot_be_forged_by_a_reason(
     user = await _login(client, db_session, AdminRole.admin)
     report = await _confidential_report(db_session, assigned=user)
     forged = "Needed for the call; via=forged"
-    await client.post(f"/admin/reports/{report.id}/identity", data={
-        "reason": forged, "csrf_token": client.cookies.get("ow_csrf")})
-    rows = [r for r in await _csv_rows(client) if r["action"] == AuditAction.IDENTITY_REVEALED
-            and r["report_id"] == str(report.id)]
+    await client.post(
+        f"/admin/reports/{report.id}/identity",
+        data={"reason": forged, "csrf_token": client.cookies.get("ow_csrf")},
+    )
+    rows = [
+        r
+        for r in await _csv_rows(client)
+        if r["action"] == AuditAction.IDENTITY_REVEALED and r["report_id"] == str(report.id)
+    ]
     assert [json.loads(r["detail"]) for r in rows] == [{"reason": forged}]
 
 
@@ -295,10 +356,15 @@ async def test_audit_csv_neutralises_formulas(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
     await _login(client, db_session, AdminRole.admin)
-    db_session.add(AuditLog(
-        id=uuid.uuid4(), admin_id=None, admin_username="=cmd|' /C calc'!A0",
-        action="legacy.entry", detail='=HYPERLINK("https://evil.test","x")',
-    ))
+    db_session.add(
+        AuditLog(
+            id=uuid.uuid4(),
+            admin_id=None,
+            admin_username="=cmd|' /C calc'!A0",
+            action="legacy.entry",
+            detail='=HYPERLINK("https://evil.test","x")',
+        )
+    )
     await db_session.commit()
     row = next(r for r in await _csv_rows(client) if r["action"] == "legacy.entry")
     assert row["admin"].startswith("'=")
@@ -312,10 +378,15 @@ async def test_audit_csv_keeps_every_key_of_a_detail(
     import json
 
     await _login(client, db_session, AdminRole.admin)
-    db_session.add(AuditLog(
-        id=uuid.uuid4(), admin_id=None, admin_username="system",
-        action="keys.entry", detail=json.dumps({"": "blank key", "via": "kept"}),
-    ))
+    db_session.add(
+        AuditLog(
+            id=uuid.uuid4(),
+            admin_id=None,
+            admin_username="system",
+            action="keys.entry",
+            detail=json.dumps({"": "blank key", "via": "kept"}),
+        )
+    )
     await db_session.commit()
     row = next(r for r in await _csv_rows(client) if r["action"] == "keys.entry")
     assert json.loads(row["detail"]) == {"": "blank key", "via": "kept"}
@@ -329,10 +400,16 @@ async def test_audit_csv_marks_an_unreadable_reason(
 
     user = await _login(client, db_session, AdminRole.admin)
     report = await _confidential_report(db_session, assigned=user)
-    db_session.add(AuditLog(
-        id=uuid.uuid4(), admin_id=user.id, admin_username=user.username, report_id=report.id,
-        action=AuditAction.IDENTITY_REVEALED, detail=json.dumps({"reason": "gAAAAAbroken"}),
-    ))
+    db_session.add(
+        AuditLog(
+            id=uuid.uuid4(),
+            admin_id=user.id,
+            admin_username=user.username,
+            report_id=report.id,
+            action=AuditAction.IDENTITY_REVEALED,
+            detail=json.dumps({"reason": "gAAAAAbroken"}),
+        )
+    )
     await db_session.commit()
     row = next(r for r in await _csv_rows(client) if r["report_id"] == str(report.id))
     assert json.loads(row["detail"]) == {"reason": "Reason unreadable (decryption failed)"}
@@ -346,10 +423,15 @@ async def test_audit_csv_translates_the_via_label_for_a_pdf_export(
 
     user = await _login(client, db_session, AdminRole.admin)
     report = await _confidential_report(db_session, assigned=user)
-    await client.post(f"/admin/reports/{report.id}/export.pdf", data={
-        "reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")})
-    rows = [r for r in await _csv_rows(client) if r["action"] == AuditAction.IDENTITY_REVEALED
-            and r["report_id"] == str(report.id)]
+    await client.post(
+        f"/admin/reports/{report.id}/export.pdf",
+        data={"reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")},
+    )
+    rows = [
+        r
+        for r in await _csv_rows(client)
+        if r["action"] == AuditAction.IDENTITY_REVEALED and r["report_id"] == str(report.id)
+    ]
     assert [json.loads(r["detail"])["via"] for r in rows] == ["PDF export"]
 
 
@@ -359,8 +441,10 @@ async def test_audit_trail_shows_a_localised_via_label_for_pdf(
 ) -> None:
     user = await _login(client, db_session, AdminRole.admin)
     report = await _confidential_report(db_session, assigned=user)
-    await client.post(f"/admin/reports/{report.id}/export.pdf", data={
-        "reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")})
+    await client.post(
+        f"/admin/reports/{report.id}/export.pdf",
+        data={"reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")},
+    )
     trail = await client.get(f"/admin/audit-log?report_id={report.id}")
     assert "PDF export" in trail.text
     assert ">pdf<" not in trail.text
@@ -372,8 +456,10 @@ async def test_case_page_says_a_reason_was_recorded_but_not_what(
 ) -> None:
     user = await _login(client, db_session, AdminRole.admin)
     report = await _confidential_report(db_session, assigned=user)
-    await client.post(f"/admin/reports/{report.id}/identity", data={
-        "reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")})
+    await client.post(
+        f"/admin/reports/{report.id}/identity",
+        data={"reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")},
+    )
     page = await client.get(f"/admin/reports/{report.id}")
     assert _REASON not in page.text
     assert "Reason recorded (see audit log)" in page.text
@@ -397,8 +483,10 @@ async def test_audit_trail_hides_case_views_unless_asked(
     assert f'href="/admin/audit-log/export.csv?report_id={report.id}&amp;views=1"' in page.text
 
     def views(rows: list[dict[str, str]]) -> int:
-        return sum(r["action"] == AuditAction.REPORT_VIEWED and r["report_id"] == str(report.id)
-                   for r in rows)
+        return sum(
+            r["action"] == AuditAction.REPORT_VIEWED and r["report_id"] == str(report.id)
+            for r in rows
+        )
 
     assert views(await _csv_rows(client)) == 0
     assert views(await _csv_rows(client, "?views=1")) == 1
@@ -500,9 +588,9 @@ async def test_content_search_limit_tiebreaks_deterministically_on_equal_timesta
     finally:
         event.remove(engine, "before_cursor_execute", _capture)
     assert hits == [winner]
-    assert any(
-        "ORDER BY reports.submitted_at DESC, reports.id DESC" in s for s in statements
-    ), statements
+    assert any("ORDER BY reports.submitted_at DESC, reports.id DESC" in s for s in statements), (
+        statements
+    )
 
 
 @pytest.mark.asyncio
@@ -605,8 +693,10 @@ async def test_pdf_export_csrf_is_required_for_the_identity_export(
 ) -> None:
     user = await _login(client, db_session, AdminRole.case_manager)
     report = await _confidential_report(db_session, assigned=user)
-    resp = await client.post(f"/admin/reports/{report.id}/export.pdf", data={
-        "reason": _REASON, "csrf_token": "forged-token"})
+    resp = await client.post(
+        f"/admin/reports/{report.id}/export.pdf",
+        data={"reason": _REASON, "csrf_token": "forged-token"},
+    )
     assert resp.status_code == 403
     assert await _audit_count(db_session, report, AuditAction.IDENTITY_REVEALED) == 0
 
@@ -616,8 +706,12 @@ async def test_pdf_export_with_identity_is_refused_to_a_non_handler(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
     other = AdminUser(
-        id=uuid.uuid4(), username=f"pdf_handler_{uuid.uuid4().hex[:8]}", password_hash=None,
-        totp_secret=pyotp.random_base32(), totp_enabled=True, role=AdminRole.case_manager,
+        id=uuid.uuid4(),
+        username=f"pdf_handler_{uuid.uuid4().hex[:8]}",
+        password_hash=None,
+        totp_secret=pyotp.random_base32(),
+        totp_enabled=True,
+        role=AdminRole.case_manager,
     )
     db_session.add(other)
     await db_session.commit()
@@ -626,8 +720,10 @@ async def test_pdf_export_with_identity_is_refused_to_a_non_handler(
     # for not being able to see the case at all.
     await _login(client, db_session, AdminRole.admin)
     report = await _confidential_report(db_session, assigned=other)
-    resp = await client.post(f"/admin/reports/{report.id}/export.pdf", data={
-        "reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")})
+    resp = await client.post(
+        f"/admin/reports/{report.id}/export.pdf",
+        data={"reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")},
+    )
     assert resp.status_code == 403
     assert _NAME not in resp.text
     assert await _audit_count(db_session, report, AuditAction.IDENTITY_REVEALED) == 0
@@ -639,8 +735,10 @@ async def test_pdf_with_identity_needs_a_reason_and_is_audited(
 ) -> None:
     user = await _login(client, db_session, AdminRole.case_manager)
     report = await _confidential_report(db_session, assigned=user)
-    refused = await client.post(f"/admin/reports/{report.id}/export.pdf", data={
-        "reason": "too short", "csrf_token": client.cookies.get("ow_csrf")})
+    refused = await client.post(
+        f"/admin/reports/{report.id}/export.pdf",
+        data={"reason": "too short", "csrf_token": client.cookies.get("ow_csrf")},
+    )
     assert refused.status_code == 422
     assert _NAME not in refused.text
     assert ">too short</textarea>" in refused.text
@@ -648,8 +746,10 @@ async def test_pdf_with_identity_needs_a_reason_and_is_audited(
     assert await _audit_count(db_session, report, AuditAction.REPORT_VIEWED) == 1
     assert await _audit_count(db_session, report, AuditAction.IDENTITY_REVEALED) == 0
 
-    resp = await client.post(f"/admin/reports/{report.id}/export.pdf", data={
-        "reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")})
+    resp = await client.post(
+        f"/admin/reports/{report.id}/export.pdf",
+        data={"reason": _REASON, "csrf_token": client.cookies.get("ow_csrf")},
+    )
     assert resp.headers["content-type"] == "application/pdf"
     assert resp.headers["cache-control"] == "no-store"
     text = _pdf_text(resp.content)
@@ -660,8 +760,11 @@ async def test_pdf_with_identity_needs_a_reason_and_is_audited(
 
     from app.services.crypto import decrypt
 
-    row = await db_session.scalar(select(AuditLog).where(
-        AuditLog.report_id == report.id, AuditLog.action == AuditAction.IDENTITY_REVEALED))
+    row = await db_session.scalar(
+        select(AuditLog).where(
+            AuditLog.report_id == report.id, AuditLog.action == AuditAction.IDENTITY_REVEALED
+        )
+    )
     assert row is not None
     detail = json.loads(row.detail or "{}")
     assert detail["via"] == "pdf"
@@ -750,9 +853,12 @@ async def test_whistleblower_reply_on_a_new_day_is_that_midnight(db_session: Asy
     from app.services.report import add_whistleblower_message
 
     report, _ = await create_report(db_session, "corruption", "New day reply test report text.")
-    await db_session.execute(text(
-        "UPDATE report_messages SET sent_at = sent_at - interval '3 days' WHERE report_id = :r"
-    ), {"r": report.id})
+    await db_session.execute(
+        text(
+            "UPDATE report_messages SET sent_at = sent_at - interval '3 days' WHERE report_id = :r"
+        ),
+        {"r": report.id},
+    )
     await db_session.commit()
     wb_msg = await add_whistleblower_message(db_session, report, "Next-day follow-up")
     assert _is_midnight(wb_msg.sent_at.astimezone(UTC))
@@ -776,7 +882,10 @@ def _alembic(*args: str) -> None:
     from app.config import settings
 
     run = subprocess.run(  # noqa: S603
-        ["alembic", *args], capture_output=True, text=True, check=False,  # noqa: S607
+        ["alembic", *args],  # noqa: S607
+        capture_output=True,
+        text=True,
+        check=False,  # noqa: S607
         env={**os.environ, "DATABASE_URL": settings.database_url},
     )
     assert run.returncode == 0, run.stderr
@@ -814,29 +923,48 @@ async def test_migration_006_rounds_existing_rows_keeps_order_and_round_trips(
     ]
     await create_attachments(db, a, [("m.txt", "text/plain", b"x")])
     receipt = {
-        r.id: await db.scalar(text(
-            "SELECT id FROM report_messages WHERE report_id = :r ORDER BY sent_at, id LIMIT 1"
-        ), {"r": r.id}) for r in (a, b)
+        r.id: await db.scalar(
+            text(
+                "SELECT id FROM report_messages WHERE report_id = :r ORDER BY sent_at, id LIMIT 1"
+            ),
+            {"r": r.id},
+        )
+        for r in (a, b)
     }
     exact = {
-        receipt[a.id]: at(1, 9, 5, 7), a_ids[0]: at(1, 14), a_ids[1]: at(1, 16, 30),
-        a_ids[2]: at(1, 17), receipt[b.id]: at(1, 11), b_ids[0]: at(2, 8),
+        receipt[a.id]: at(1, 9, 5, 7),
+        a_ids[0]: at(1, 14),
+        a_ids[1]: at(1, 16, 30),
+        a_ids[2]: at(1, 17),
+        receipt[b.id]: at(1, 11),
+        b_ids[0]: at(2, 8),
         b_ids[1]: at(3, 10, 15),
     }
     for msg_id, stamp in exact.items():
-        await db.execute(text("UPDATE report_messages SET sent_at = :t WHERE id = :i"),
-                         {"t": stamp, "i": msg_id})
+        await db.execute(
+            text("UPDATE report_messages SET sent_at = :t WHERE id = :i"), {"t": stamp, "i": msg_id}
+        )
     await db.execute(text("UPDATE reports SET submitted_at = :t"), {"t": at(1, 9, 5, 7)})
     await db.execute(text("UPDATE attachments SET uploaded_at = :t"), {"t": at(1, 9, 5, 7)})
     await db.commit()  # release locks before the alembic subprocess
 
     async def snapshot() -> tuple[object, ...]:
-        rows = (await db.execute(text(
-            "SELECT id, sent_at FROM report_messages ORDER BY report_id, sent_at"
-        ))).all()
-        days = (await db.execute(text(
-            "SELECT submitted_at FROM reports UNION ALL SELECT uploaded_at FROM attachments"
-        ))).scalars().all()
+        rows = (
+            await db.execute(
+                text("SELECT id, sent_at FROM report_messages ORDER BY report_id, sent_at")
+            )
+        ).all()
+        days = (
+            (
+                await db.execute(
+                    text(
+                        "SELECT submitted_at FROM reports UNION ALL SELECT uploaded_at FROM attachments"  # noqa: E501
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
         await db.commit()
         return dict(rows), sorted(days)
 
@@ -846,9 +974,13 @@ async def test_migration_006_rounds_existing_rows_keeps_order_and_round_trips(
     msgs, days = first
     assert days == [at(1, 0)] * 3
     assert msgs == {
-        receipt[a.id]: at(1, 0), a_ids[0]: at(1, 14),  # the office keeps its time
-        a_ids[1]: at(1, 14) + tick, a_ids[2]: at(1, 14) + 2 * tick,  # after it, in order
-        receipt[b.id]: at(1, 0), b_ids[0]: at(2, 0), b_ids[1]: at(3, 10, 15),
+        receipt[a.id]: at(1, 0),
+        a_ids[0]: at(1, 14),  # the office keeps its time
+        a_ids[1]: at(1, 14) + tick,
+        a_ids[2]: at(1, 14) + 2 * tick,  # after it, in order
+        receipt[b.id]: at(1, 0),
+        b_ids[0]: at(2, 0),
+        b_ids[1]: at(3, 10, 15),
     }
 
     _alembic("downgrade", "b2d7f1a5c302")  # a no-op on data: the rounding is lossy
@@ -862,7 +994,9 @@ def test_migration_006_runs_offline() -> None:
 
     run = subprocess.run(  # noqa: S603
         ["alembic", "upgrade", "b2d7f1a5c302:c3e8a2b6d403", "--sql"],  # noqa: S607
-        capture_output=True, text=True, check=False,
+        capture_output=True,
+        text=True,
+        check=False,
     )
     assert run.returncode == 0, run.stderr
     assert "UPDATE report_messages" in run.stdout  # the receipt is rounded offline too
@@ -883,9 +1017,10 @@ async def test_case_page_and_pdf_show_whistleblower_times_as_the_day_only(
     admin_msg = await add_admin_message(db_session, report, "Admin answer")
     # A distinct office minute on the submission day; the reply lands 1 µs after it.
     day = report.submitted_at.strftime("%Y-%m-%d")
-    await db_session.execute(text(
-        "UPDATE report_messages SET sent_at = :t WHERE id = :i"
-    ), {"t": report.submitted_at.replace(hour=13, minute=37), "i": admin_msg.id})
+    await db_session.execute(
+        text("UPDATE report_messages SET sent_at = :t WHERE id = :i"),
+        {"t": report.submitted_at.replace(hour=13, minute=37), "i": admin_msg.id},
+    )
     await db_session.commit()
     await add_whistleblower_message(db_session, report, "Whistleblower follow-up")
 
@@ -910,9 +1045,13 @@ async def test_equal_submission_days_page_in_a_stable_id_order(db_session: Async
         ids.append(report.id)
     await db_session.commit()
     paged = [
-        r.id for page in range(1, 7)
-        for r in (await get_reports_paginated(
-            db_session, page=page, per_page=1, assigned_to_id=isolate_to.id))[0]
+        r.id
+        for page in range(1, 7)
+        for r in (
+            await get_reports_paginated(
+                db_session, page=page, per_page=1, assigned_to_id=isolate_to.id
+            )
+        )[0]
     ]
     assert paged == sorted(ids, reverse=True)
 
@@ -933,6 +1072,7 @@ async def test_concurrent_whistleblower_replies_get_distinct_ordered_times(
     engine = create_async_engine(settings.database_url, poolclass=NullPool)
     sessions = async_sessionmaker(engine, expire_on_commit=False)
     try:
+
         async def post(text: str) -> datetime:
             async with sessions() as db:
                 loaded = await get_report_by_id(db, report.id)
@@ -962,10 +1102,17 @@ async def test_demo_seed_stores_reporter_times_as_the_day(
     # not this test's concern: it must seed whatever ran before it.
     monkeypatch.setattr(demo_seed, "_is_foreign_database", AsyncMock(return_value=False))
     await _seed(db_session)
-    reports = (await db_session.execute(
-        select(Report).options(selectinload(Report.messages))
-        .where(Report.case_number.in_([d["case_number"] for d in DEMO_REPORTS]))
-    )).scalars().all()
+    reports = (
+        (
+            await db_session.execute(
+                select(Report)
+                .options(selectinload(Report.messages))
+                .where(Report.case_number.in_([d["case_number"] for d in DEMO_REPORTS]))
+            )
+        )
+        .scalars()
+        .all()
+    )
     assert len(reports) == len(DEMO_REPORTS)
     for report in reports:
         assert _is_midnight(report.submitted_at.astimezone(UTC))
@@ -995,10 +1142,12 @@ def test_local_time_script_shows_date_only_values_as_the_utc_day() -> None:
         pytest.skip("node is not installed")
     html = Path("app/templates/base.html").read_text()
     script = next(
-        chunk.split("</script>")[0] for chunk in html.split("<script nonce=")[1:]
+        chunk.split("</script>")[0]
+        for chunk in html.split("<script nonce=")[1:]
         if "time[data-utc]" in chunk
     ).split(">", 1)[1]
-    harness = """
+    harness = (
+        """
     function el(utc, dateOnly) {
       return {attrs: {'data-utc': utc}, textContent: '', title: '',
         getAttribute(n) { return this.attrs[n]; },
@@ -1006,11 +1155,17 @@ def test_local_time_script_shows_date_only_values_as_the_utc_day() -> None:
     }
     const els = [el('2026-09-01T00:00:00+00:00', true), el('2026-09-01T00:00:00+00:00', false)];
     globalThis.document = {querySelectorAll: () => els};
-    """ + script + """
+    """
+        + script
+        + """
     console.log(JSON.stringify(els.map(e => [e.textContent, e.title])));
     """
+    )
     run = subprocess.run(  # noqa: S603
-        [node, "-e", harness], capture_output=True, text=True, check=True,
+        [node, "-e", harness],
+        capture_output=True,
+        text=True,
+        check=True,
         env={**os.environ, "TZ": "America/New_York"},
     )
     import json

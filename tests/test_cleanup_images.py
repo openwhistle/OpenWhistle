@@ -17,9 +17,7 @@ ROOT = Path(__file__).parents[1]
 
 def _quay_step() -> dict:
     wf = yaml.safe_load((ROOT / ".github/workflows/cleanup-images.yml").read_text())
-    (step,) = [
-        s for s in wf["jobs"]["cleanup-registries"]["steps"] if "Quay" in s["name"]
-    ]
+    (step,) = [s for s in wf["jobs"]["cleanup-registries"]["steps"] if "Quay" in s["name"]]
     return step
 
 
@@ -29,7 +27,10 @@ def _doomed(tags: list[dict], keep: int) -> list[str]:
         pytest.fail("jq is required: the workflow runs this filter with it")
     out = subprocess.run(  # noqa: S603
         [jq, "-r", "--argjson", "keep", str(keep), _quay_step()["env"]["QUAY_DOOMED_DIGESTS"]],
-        input=json.dumps(tags), capture_output=True, text=True, check=True,
+        input=json.dumps(tags),
+        capture_output=True,
+        text=True,
+        check=True,
     )
     return out.stdout.split()
 

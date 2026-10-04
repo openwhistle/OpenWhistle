@@ -43,11 +43,7 @@ _DYNAMIC_KEY_PATTERNS: tuple[tuple[str, tuple[str, ...], str], ...] = (
     ("audit.action.", tuple(ALL_ACTIONS), "admin/_audit.html"),
     (
         "status.progress.",
-        tuple(
-            s.value
-            for s in ReportStatus
-            if s.value not in ("in_review", "pending_feedback")
-        ),
+        tuple(s.value for s in ReportStatus if s.value not in ("in_review", "pending_feedback")),
         "status.html (progress description)",
     ),
 )

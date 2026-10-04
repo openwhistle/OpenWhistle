@@ -46,13 +46,21 @@ def test_the_deployment_template_carries_both_guards() -> None:
 
 
 def _render(*sets: str) -> dict:
-    args = ["--set", "secrets.secretKey=" + "x" * 40, "--set", "secrets.databaseUrl=d",
-            "--set", "secrets.redisUrl=r"]
+    args = [
+        "--set",
+        "secrets.secretKey=" + "x" * 40,
+        "--set",
+        "secrets.databaseUrl=d",
+        "--set",
+        "secrets.redisUrl=r",
+    ]
     for s in sets:
         args += ["--set", s]
     out = subprocess.run(  # noqa: S603
         ["helm", "template", "ow", str(CHART), "--show-only", "templates/deployment.yaml", *args],  # noqa: S607
-        capture_output=True, text=True, check=True,
+        capture_output=True,
+        text=True,
+        check=True,
     )
     return yaml.safe_load(out.stdout)
 

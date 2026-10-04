@@ -44,7 +44,9 @@ def test_a_changed_tls_hostname_replaces_the_self_signed_certificate(tmp_path: P
 
 @pytest.mark.parametrize("operator", [False, True])
 def test_the_key_is_never_written_readable_by_others(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, operator: bool,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    operator: bool,
 ) -> None:
     """Without the chmod that followed it, write_bytes() left the key 0644."""
     src = tmp_path / "certs"
@@ -119,7 +121,11 @@ def test_nginx_redirects_http_and_strips_ip_headers_on_https() -> None:
     # include it, and the snippet itself carries every header.
     snippet = (ROOT / "nginx/snippets/proxy-headers.conf").read_text()
     for header in (
-        "X-Forwarded-For", "X-Real-IP", "Forwarded", "CF-Connecting-IP", "True-Client-IP",
+        "X-Forwarded-For",
+        "X-Real-IP",
+        "Forwarded",
+        "CF-Connecting-IP",
+        "True-Client-IP",
     ):
         assert f"proxy_set_header {header}" in snippet
         assert f"proxy_set_header {header}" not in tls, "duplicated instead of included"
@@ -139,7 +145,7 @@ def test_the_behind_proxy_nginx_differs_from_nginx_conf_only_in_its_listeners() 
     behind = (ROOT / "nginx/nginx.behind-proxy.conf").read_text()
 
     def preamble(text: str) -> str:
-        text = text[text.index("worker_processes"):]
+        text = text[text.index("worker_processes") :]
         return text[: text.index("\n    }\n", text.index("upstream openwhistle"))]
 
     assert preamble(behind) == preamble(conf)
@@ -243,7 +249,11 @@ def test_x_ow_onion_is_cleared_by_default_and_set_only_on_the_onion_listener() -
 def test_ansible_nginx_template_includes_the_shared_snippets_not_a_second_copy() -> None:
     j2 = (ROOT / "ansible/roles/openwhistle/templates/nginx.conf.j2").read_text()
     for header in (
-        "X-Forwarded-For", "X-Real-IP", "Forwarded", "CF-Connecting-IP", "True-Client-IP",
+        "X-Forwarded-For",
+        "X-Real-IP",
+        "Forwarded",
+        "CF-Connecting-IP",
+        "True-Client-IP",
         "X-OW-Onion",
     ):
         assert f"proxy_set_header {header}" not in j2, (
@@ -276,9 +286,7 @@ def _render_role_template(name: str) -> str:
     import jinja2
     import yaml
 
-    defaults = yaml.safe_load(
-        (ROOT / "ansible/roles/openwhistle/defaults/main.yml").read_text()
-    )
+    defaults = yaml.safe_load((ROOT / "ansible/roles/openwhistle/defaults/main.yml").read_text())
     defaults["openwhistle_domain"] = "ow-test.example.com"
 
     def _bool(v: object) -> bool:
@@ -344,7 +352,8 @@ def test_every_public_route_is_rate_limited_in_both_deployments() -> None:
         # /static/ lives in an included snippet and was never limited.
         return re.sub(
             r"include /etc/nginx/(snippets/\S+);",
-            lambda m: (ROOT / "nginx" / m.group(1)).read_text(), text,
+            lambda m: (ROOT / "nginx" / m.group(1)).read_text(),
+            text,
         )
 
     configs = {

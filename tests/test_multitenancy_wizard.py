@@ -58,17 +58,31 @@ def _org(tag: str) -> _Org:
     return _Org(
         org=org,
         category=ReportCategory(
-            id=uuid.uuid4(), slug=f"cat_{tag}_{hex6}", label_en=f"Category {tag} {hex6}",
-            label_de=f"Kategorie {tag} {hex6}", is_default=False, is_active=True,
-            sort_order=1, org_id=org.id,
+            id=uuid.uuid4(),
+            slug=f"cat_{tag}_{hex6}",
+            label_en=f"Category {tag} {hex6}",
+            label_de=f"Kategorie {tag} {hex6}",
+            is_default=False,
+            is_active=True,
+            sort_order=1,
+            org_id=org.id,
         ),
         location=Location(
-            id=uuid.uuid4(), name=f"Site {tag} {hex6}", code=f"S{tag.upper()}{hex6}",
-            is_active=True, sort_order=0, org_id=org.id,
+            id=uuid.uuid4(),
+            name=f"Site {tag} {hex6}",
+            code=f"S{tag.upper()}{hex6}",
+            is_active=True,
+            sort_order=0,
+            org_id=org.id,
         ),
         admin=AdminUser(
-            id=uuid.uuid4(), username=f"mtw_{tag}_{hex6}", role=AdminRole.admin, org_id=org.id,
-            is_active=True, totp_secret="JBSWY3DPEHPK3PXP", totp_enabled=True,
+            id=uuid.uuid4(),
+            username=f"mtw_{tag}_{hex6}",
+            role=AdminRole.admin,
+            org_id=org.id,
+            is_active=True,
+            totp_secret="JBSWY3DPEHPK3PXP",
+            totp_enabled=True,
         ),
     )
 
@@ -96,9 +110,7 @@ async def orgs(
     await db_session.commit()
 
 
-async def _post(
-    client: AsyncClient, path: str, step: int | None = None, **fields: str
-) -> Response:
+async def _post(client: AsyncClient, path: str, step: int | None = None, **fields: str) -> Response:
     page = await client.get(path)
     data = {
         "csrf_token": _csrf(page.text),
@@ -110,7 +122,11 @@ async def _post(
 
 
 async def _walk_to_review(
-    client: AsyncClient, o: _Org, *, category: str | None = None, location_id: str = "",
+    client: AsyncClient,
+    o: _Org,
+    *,
+    category: str | None = None,
+    location_id: str = "",
     description: str = "A description long enough to pass.",
 ) -> None:
     await _post(client, o.path, submission_mode="anonymous")
@@ -192,9 +208,7 @@ async def test_a_report_through_org_bs_link_is_filed_under_org_b(
 
 
 @pytest.mark.asyncio
-async def test_another_orgs_location_is_refused(
-    client: AsyncClient, orgs: dict[str, _Org]
-) -> None:
+async def test_another_orgs_location_is_refused(client: AsyncClient, orgs: dict[str, _Org]) -> None:
     b = orgs["b"]
     await _post(client, b.path, submission_mode="anonymous")
     resp = await _post(client, b.path, location_id=str(orgs["a"].location.id))
@@ -205,9 +219,7 @@ async def test_another_orgs_location_is_refused(
 
 
 @pytest.mark.asyncio
-async def test_another_orgs_category_is_refused(
-    client: AsyncClient, orgs: dict[str, _Org]
-) -> None:
+async def test_another_orgs_category_is_refused(client: AsyncClient, orgs: dict[str, _Org]) -> None:
     b = orgs["b"]
     await _post(client, b.path, submission_mode="anonymous")
     await _post(client, b.path, location_id="")
@@ -232,9 +244,7 @@ async def test_the_final_submit_checks_the_draft_against_its_own_org(
     assert session_id
     redis = await get_redis()
     draft = await reports._load_submission(redis, session_id)
-    draft[field] = (
-        orgs["a"].category.slug if field == "category" else str(orgs["a"].location.id)
-    )
+    draft[field] = orgs["a"].category.slug if field == "category" else str(orgs["a"].location.id)
     await reports._save_submission(redis, session_id, draft)
     before = await _count(db_session)
 
@@ -266,7 +276,8 @@ async def test_a_draft_does_not_move_to_another_org(
     # A crafted final submit to org B's URL with org A's draft creates nothing.
     before = await _count(db_session)
     resp = await client.post(
-        b.path, data={"csrf_token": _csrf(page), "step": "6", "action": "next"},
+        b.path,
+        data={"csrf_token": _csrf(page), "step": "6", "action": "next"},
         follow_redirects=False,
     )
     assert resp.status_code == 303
@@ -308,8 +319,12 @@ async def test_submit_without_a_slug_is_the_default_org(
 @pytest.mark.asyncio
 @pytest.mark.parametrize("which", ["missing", "inactive"])
 async def test_submit_is_refused_without_an_active_default_org(
-    client: AsyncClient, orgs: dict[str, _Org], db_session: AsyncSession,
-    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture, which: str,
+    client: AsyncClient,
+    orgs: dict[str, _Org],
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    which: str,
 ) -> None:
     """A report filed under no organisation would reach no one."""
     csrf = _csrf((await client.get("/submit")).text)
@@ -319,7 +334,8 @@ async def test_submit_is_refused_without_an_active_default_org(
     with caplog.at_level("ERROR", logger="app.api.reports"):
         page = await client.get("/submit")
         post = await client.post(
-            "/submit", data={"csrf_token": csrf, "step": "1", "submission_mode": "anonymous"},
+            "/submit",
+            data={"csrf_token": csrf, "step": "1", "submission_mode": "anonymous"},
         )
     for resp in (page, post):
         assert resp.status_code == 503
@@ -346,9 +362,14 @@ async def test_startup_refuses_a_set_up_instance_without_its_default_org(
     from app.main import lifespan
 
     cfg = MagicMock(
-        demo_mode=False, reminder_enabled=False, retention_enabled=False,
-        update_check_enabled=False, storage_backend="db", encryption_key="k" * 32,
-        multi_tenancy_enabled=True, local_review_login=False,
+        demo_mode=False,
+        reminder_enabled=False,
+        retention_enabled=False,
+        update_check_enabled=False,
+        storage_backend="db",
+        encryption_key="k" * 32,
+        multi_tenancy_enabled=True,
+        local_review_login=False,
     )
     org_id = uuid.uuid4() if default_org else None
     with (
@@ -356,8 +377,9 @@ async def test_startup_refuses_a_set_up_instance_without_its_default_org(
         patch("app.main.close_redis", new_callable=AsyncMock),
         patch("app.main.settings", cfg),
         patch("app.api.wizard._is_setup_complete", new_callable=AsyncMock, return_value=set_up),
-        patch("app.services.report.active_default_org_id", new_callable=AsyncMock,
-              return_value=org_id),
+        patch(
+            "app.services.report.active_default_org_id", new_callable=AsyncMock, return_value=org_id
+        ),
         patch("app.redis_client.get_redis", new_callable=AsyncMock),
         patch("app.services.setup_token.ensure_setup_token", new_callable=AsyncMock),
         patch("app.services.notifications.batching_enabled", return_value=False),
@@ -410,7 +432,9 @@ async def test_with_multi_tenancy_off_only_the_default_slug_redirects(
 
 @pytest.mark.asyncio
 async def test_with_multi_tenancy_off_the_wizard_is_not_scoped(
-    client: AsyncClient, orgs: dict[str, _Org], db_session: AsyncSession,
+    client: AsyncClient,
+    orgs: dict[str, _Org],
+    db_session: AsyncSession,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Off means as before: every active category, and the default org files it."""
@@ -474,13 +498,15 @@ async def test_removing_an_attachment_on_an_org_link_returns_to_it(
     await _walk_to_review(client, b)
     page = (await client.get(b.path)).text
     await client.post(
-        b.path, data={"csrf_token": _csrf(page), "step": "6", "action": "back"},
+        b.path,
+        data={"csrf_token": _csrf(page), "step": "6", "action": "back"},
         follow_redirects=False,
     )
     page = (await client.get(b.path)).text
     assert _step(page) == 5
     resp = await client.post(
-        f"{b.path}/attachments/remove", data={"csrf_token": _csrf(page), "index": "0"},
+        f"{b.path}/attachments/remove",
+        data={"csrf_token": _csrf(page), "index": "0"},
         follow_redirects=False,
     )
     assert resp.status_code == 303
@@ -504,7 +530,9 @@ def _slow_create(monkeypatch: pytest.MonkeyPatch, delay: float) -> None:
 
 @pytest.mark.asyncio
 async def test_concurrent_final_submits_on_an_org_link_create_one_report(
-    client: AsyncClient, orgs: dict[str, _Org], db_session: AsyncSession,
+    client: AsyncClient,
+    orgs: dict[str, _Org],
+    db_session: AsyncSession,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     b = orgs["b"]
@@ -564,12 +592,13 @@ async def test_the_status_page_never_names_the_org(
     assert case and pin
     csrf = _csrf((await client.get("/status")).text)
     wrong = await client.post(
-        "/status", data={"case_number": case.group(0), "pin": str(uuid.uuid4()),
-                         "csrf_token": csrf},
+        "/status",
+        data={"case_number": case.group(0), "pin": str(uuid.uuid4()), "csrf_token": csrf},
     )
     assert wrong.status_code == 401
     right = await client.post(
-        "/status", data={"case_number": case.group(0), "pin": pin.group(0), "csrf_token": csrf},
+        "/status",
+        data={"case_number": case.group(0), "pin": pin.group(0), "csrf_token": csrf},
     )
     assert right.status_code == 200
     for page in (wrong.text, right.text):
@@ -582,8 +611,12 @@ async def test_the_organisations_page_shows_each_reporting_link(
     client: AsyncClient, orgs: dict[str, _Org]
 ) -> None:
     root = AdminUser(
-        id=uuid.uuid4(), username=f"root_{uuid.uuid4().hex[:6]}", role=AdminRole.superadmin,
-        is_active=True, totp_secret="JBSWY3DPEHPK3PXP", totp_enabled=True,
+        id=uuid.uuid4(),
+        username=f"root_{uuid.uuid4().hex[:6]}",
+        role=AdminRole.superadmin,
+        is_active=True,
+        totp_secret="JBSWY3DPEHPK3PXP",
+        totp_enabled=True,
     )
     app.dependency_overrides[get_current_admin] = lambda: root
     try:
@@ -607,8 +640,12 @@ async def test_without_multi_tenancy_the_organisations_page_lists_no_links(
     """/submit/<slug> is a 404 then: a link to it would mislead."""
     monkeypatch.setattr(settings, "multi_tenancy_enabled", False)
     root = AdminUser(
-        id=uuid.uuid4(), username=f"root_{uuid.uuid4().hex[:6]}", role=AdminRole.superadmin,
-        is_active=True, totp_secret="JBSWY3DPEHPK3PXP", totp_enabled=True,
+        id=uuid.uuid4(),
+        username=f"root_{uuid.uuid4().hex[:6]}",
+        role=AdminRole.superadmin,
+        is_active=True,
+        totp_secret="JBSWY3DPEHPK3PXP",
+        totp_enabled=True,
     )
     app.dependency_overrides[get_current_admin] = lambda: root
     try:
@@ -640,8 +677,12 @@ async def test_without_multi_tenancy_the_dashboard_shows_no_reporting_link(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
     admin = AdminUser(
-        id=uuid.uuid4(), username=f"solo_{uuid.uuid4().hex[:6]}", role=AdminRole.admin,
-        is_active=True, totp_secret="JBSWY3DPEHPK3PXP", totp_enabled=True,
+        id=uuid.uuid4(),
+        username=f"solo_{uuid.uuid4().hex[:6]}",
+        role=AdminRole.admin,
+        is_active=True,
+        totp_secret="JBSWY3DPEHPK3PXP",
+        totp_enabled=True,
     )
     db_session.add(admin)
     await db_session.commit()
@@ -658,14 +699,19 @@ async def test_without_multi_tenancy_the_dashboard_shows_no_reporting_link(
 async def test_the_slug_restart_is_refused(client: AsyncClient) -> None:
     """/submit/restart is the wizard's own route: that org's wizard would be unreachable."""
     root = AdminUser(
-        id=uuid.uuid4(), username=f"root_{uuid.uuid4().hex[:6]}", role=AdminRole.superadmin,
-        is_active=True, totp_secret="JBSWY3DPEHPK3PXP", totp_enabled=True,
+        id=uuid.uuid4(),
+        username=f"root_{uuid.uuid4().hex[:6]}",
+        role=AdminRole.superadmin,
+        is_active=True,
+        totp_secret="JBSWY3DPEHPK3PXP",
+        totp_enabled=True,
     )
     csrf = _csrf((await client.get("/submit")).text)
     app.dependency_overrides[get_current_admin] = lambda: root
     try:
         resp = await client.post(
-            "/admin/organisations", data={"name": "Clash", "slug": "restart", "csrf_token": csrf},
+            "/admin/organisations",
+            data={"name": "Clash", "slug": "restart", "csrf_token": csrf},
             follow_redirects=False,
         )
     finally:
@@ -682,15 +728,20 @@ async def test_the_configured_default_org_cannot_be_deactivated(
 ) -> None:
     monkeypatch.setattr(settings, "default_org_slug", orgs["a"].org.slug)
     root = AdminUser(
-        id=uuid.uuid4(), username=f"root_{uuid.uuid4().hex[:6]}", role=AdminRole.superadmin,
-        is_active=True, totp_secret="JBSWY3DPEHPK3PXP", totp_enabled=True,
+        id=uuid.uuid4(),
+        username=f"root_{uuid.uuid4().hex[:6]}",
+        role=AdminRole.superadmin,
+        is_active=True,
+        totp_secret="JBSWY3DPEHPK3PXP",
+        totp_enabled=True,
     )
     csrf = _csrf((await client.get("/submit")).text)
     app.dependency_overrides[get_current_admin] = lambda: root
     try:
         resp = await client.post(
             f"/admin/organisations/{orgs['a'].org.id}/deactivate",
-            data={"csrf_token": csrf}, follow_redirects=False,
+            data={"csrf_token": csrf},
+            follow_redirects=False,
         )
     finally:
         app.dependency_overrides.pop(get_current_admin, None)

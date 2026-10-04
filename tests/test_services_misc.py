@@ -164,9 +164,9 @@ def test_generate_pin_is_uuid_format() -> None:
     from app.services.pin import generate_pin
 
     pin = generate_pin()
-    assert re.match(
-        r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", pin
-    ), f"PIN does not look like a UUID: {pin}"
+    assert re.match(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", pin), (
+        f"PIN does not look like a UUID: {pin}"
+    )
 
 
 def test_generate_pin_unique_each_call() -> None:

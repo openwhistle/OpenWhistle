@@ -72,9 +72,7 @@ def downgrade() -> None:
     # A value longer than the target VARCHAR(32) that does not decrypt is not
     # a legacy plaintext secret — it cannot be narrowed safely (wrong/rotated
     # ENCRYPTION_KEY/SECRET_KEY, corruption). Refuse before touching the column.
-    stuck = [
-        user_id for user_id, secret in rows if len(secret) > 32 and not _is_token(secret)
-    ]
+    stuck = [user_id for user_id, secret in rows if len(secret) > 32 and not _is_token(secret)]
     if stuck:
         for user_id in stuck:
             log.warning(
@@ -91,6 +89,4 @@ def downgrade() -> None:
     for user_id, secret in rows:
         if _is_token(secret):
             _set(user_id, decrypt(secret))
-    op.alter_column(
-        "admin_users", "totp_secret", type_=sa.String(32), existing_nullable=False
-    )
+    op.alter_column("admin_users", "totp_secret", type_=sa.String(32), existing_nullable=False)

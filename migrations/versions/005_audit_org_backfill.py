@@ -21,14 +21,18 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.execute(sa.text(
-        "UPDATE audit_log a SET org_id = r.org_id FROM reports r "
-        "WHERE a.report_id = r.id AND a.org_id IS NULL"
-    ))
-    op.execute(sa.text(
-        "UPDATE audit_log a SET org_id = u.org_id FROM admin_users u "
-        "WHERE a.admin_id = u.id AND a.report_id IS NULL AND a.org_id IS NULL"
-    ))
+    op.execute(
+        sa.text(
+            "UPDATE audit_log a SET org_id = r.org_id FROM reports r "
+            "WHERE a.report_id = r.id AND a.org_id IS NULL"
+        )
+    )
+    op.execute(
+        sa.text(
+            "UPDATE audit_log a SET org_id = u.org_id FROM admin_users u "
+            "WHERE a.admin_id = u.id AND a.report_id IS NULL AND a.org_id IS NULL"
+        )
+    )
 
 
 def downgrade() -> None:

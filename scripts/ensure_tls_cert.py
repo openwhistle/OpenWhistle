@@ -27,7 +27,9 @@ def _self_signed(hostname: str) -> tuple[bytes, bytes]:
     now = datetime.datetime.now(datetime.UTC)
     cert = (
         x509.CertificateBuilder()
-        .subject_name(name).issuer_name(name).public_key(key.public_key())
+        .subject_name(name)
+        .issuer_name(name)
+        .public_key(key.public_key())
         .serial_number(x509.random_serial_number())
         .not_valid_before(now - datetime.timedelta(minutes=5))
         .not_valid_after(now + datetime.timedelta(days=825))
@@ -76,7 +78,7 @@ def _stale_self_signed(cert_pem: bytes, hostname: str) -> bool:
     try:
         cert = x509.load_pem_x509_certificate(cert_pem)
         san = cert.extensions.get_extension_for_class(x509.SubjectAlternativeName).value
-    except (ValueError, x509.ExtensionNotFound):
+    except ValueError, x509.ExtensionNotFound:
         return False  # not ours to judge: keep it
     return cert.issuer == cert.subject and hostname not in san.get_values_for_type(x509.DNSName)
 

@@ -25,12 +25,14 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.execute(sa.text(
-        "UPDATE admin_users SET role = 'superadmin' "
-        "WHERE id = (SELECT id FROM admin_users WHERE role = 'admin' AND is_active "
-        "ORDER BY created_at, id LIMIT 1) "
-        "AND NOT EXISTS (SELECT 1 FROM admin_users WHERE role = 'superadmin')"
-    ))
+    op.execute(
+        sa.text(
+            "UPDATE admin_users SET role = 'superadmin' "
+            "WHERE id = (SELECT id FROM admin_users WHERE role = 'admin' AND is_active "
+            "ORDER BY created_at, id LIMIT 1) "
+            "AND NOT EXISTS (SELECT 1 FROM admin_users WHERE role = 'superadmin')"
+        )
+    )
 
 
 def downgrade() -> None:

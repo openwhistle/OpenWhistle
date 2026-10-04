@@ -99,9 +99,7 @@ def _require_may_manage(user: AdminUser, target: AdminUser) -> None:
         )
 
 
-async def _get_authorized_report(
-    db: AsyncSession, report_id: uuid.UUID, user: AdminUser
-) -> Report:
+async def _get_authorized_report(db: AsyncSession, report_id: uuid.UUID, user: AdminUser) -> Report:
     """Fetch a report and enforce object-level authorization.
 
     Returns 404 (never 403) on both missing and unauthorized reports so that
@@ -125,9 +123,7 @@ def can_reveal_identity(user: AdminUser, report: Report) -> bool:
     if user.role not in {AdminRole.admin, AdminRole.superadmin}:
         return False
     return (
-        not settings.multi_tenancy_enabled
-        or report.org_id is None
-        or user.org_id == report.org_id
+        not settings.multi_tenancy_enabled or report.org_id is None or user.org_id == report.org_id
     )
 
 
@@ -219,10 +215,16 @@ async def _dashboard(
     read_orgs: set[uuid.UUID | None] = set()
     content_ids = (
         await report_service.content_match_ids(
-            db, case_query, assigned_to_id=assigned_filter, location_id=location_filter,
-            status_filter=status_filter, read_orgs=read_orgs, **_org_scope(current_user)
+            db,
+            case_query,
+            assigned_to_id=assigned_filter,
+            location_id=location_filter,
+            status_filter=status_filter,
+            read_orgs=read_orgs,
+            **_org_scope(current_user),
         )
-        if len(case_query) >= 3 else None
+        if len(case_query) >= 3
+        else None
     )
     if content_ids is not None:
         # Reading report text is audited like opening a case; the term is encrypted
@@ -235,7 +237,10 @@ async def _dashboard(
         split = settings.multi_tenancy_enabled and read_orgs
         for read_org in read_orgs if split else {current_user.org_id}:
             await audit_service.log(
-                db, current_user, AuditAction.CONTENT_SEARCHED, target_org=read_org,
+                db,
+                current_user,
+                AuditAction.CONTENT_SEARCHED,
+                target_org=read_org,
                 detail={"term": encrypt(case_query), "hits": len(content_ids)},
             )
         await db.commit()
@@ -255,7 +260,9 @@ async def _dashboard(
     # Pill counts are what each status pill's link would show: the caller's
     # visible cases (a case manager's own only), within the chosen location.
     stats = await report_service.get_report_stats(
-        db, assigned_to_id=_own_cases_only(current_user), location_id=location_filter,
+        db,
+        assigned_to_id=_own_cases_only(current_user),
+        location_id=location_filter,
         **_org_scope(current_user),
     )
     total_pages = max(1, (total + per_page - 1) // per_page)
@@ -276,9 +283,7 @@ async def _dashboard(
     from app.services.locations import get_all_locations
 
     all_locations = await get_all_locations(db, **_org_scope(current_user))
-    category_labels = await get_category_labels(
-        db, get_lang(request), **_org_scope(current_user)
-    )
+    category_labels = await get_category_labels(db, get_lang(request), **_org_scope(current_user))
 
     return render(
         request,
@@ -306,8 +311,12 @@ async def _dashboard(
             "all_locations": all_locations,
             "location_filter": str(location_filter) if location_filter else "",
             "view": {
-                "page": 1, "per_page": per_page, "sort": sort_by, "dir": sort_dir,
-                "status": status_filter or "", "my_cases": "1" if my_cases else "",
+                "page": 1,
+                "per_page": per_page,
+                "sort": sort_by,
+                "dir": sort_dir,
+                "status": status_filter or "",
+                "my_cases": "1" if my_cases else "",
                 "location_id": str(location_filter) if location_filter else "",
             },
         },
@@ -350,8 +359,12 @@ async def _reveal_gate(
         await audit_service.log(db, current_user, AuditAction.REPORT_VIEWED, report_id=report.id)
         await db.commit()
         return await _render_report(
-            request, db, report, current_user,
-            field_errors={"reason": "admin.report.identity.reason_error"}, status_code=422,
+            request,
+            db,
+            report,
+            current_user,
+            field_errors={"reason": "admin.report.identity.reason_error"},
+            status_code=422,
             reason_draft=reason,
         )
     return report, valid
@@ -373,14 +386,23 @@ async def reveal_identity(
         return gate
     report, valid = gate
     await audit_service.log(
-        db, current_user, AuditAction.IDENTITY_REVEALED,
-        report_id=report.id, detail={"reason": encrypt(valid)},
+        db,
+        current_user,
+        AuditAction.IDENTITY_REVEALED,
+        report_id=report.id,
+        detail={"reason": encrypt(valid)},
     )
     await db.commit()
-    return await _render_report(request, db, report, current_user, identity={
-        "name": decrypt_or_none(report.confidential_name),
-        "contact": decrypt_or_none(report.confidential_contact),
-    })
+    return await _render_report(
+        request,
+        db,
+        report,
+        current_user,
+        identity={
+            "name": decrypt_or_none(report.confidential_name),
+            "contact": decrypt_or_none(report.confidential_contact),
+        },
+    )
 
 
 async def _render_report(
@@ -399,12 +421,11 @@ async def _render_report(
     from app.services.categories import get_category_labels
     from app.services.users import get_all_users
 
-    category_labels = await get_category_labels(
-        db, get_lang(request), **_org_scope(current_user)
-    )
+    category_labels = await get_category_labels(db, get_lang(request), **_org_scope(current_user))
 
     all_admins = [
-        u for u in await get_all_users(db)
+        u
+        for u in await get_all_users(db)
         if not settings.multi_tenancy_enabled or report.org_id is None or u.org_id == report.org_id
     ]
 
@@ -416,17 +437,17 @@ async def _render_report(
         # authorized to see it — a link must not leak case data across the
         # assignment / organisation boundary.
         if linked_report and _can_access_report(current_user, linked_report):
-            linked.append({
-                "link_id": link_id,
-                "case_number": linked_report.case_number,
-                "category": linked_report.category,
-                "status": linked_report.status.value,
-                "id": str(linked_report.id),
-            })
+            linked.append(
+                {
+                    "link_id": link_id,
+                    "case_number": linked_report.case_number,
+                    "category": linked_report.category,
+                    "status": linked_report.status.value,
+                    "id": str(linked_report.id),
+                }
+            )
 
-    allowed_transitions = list(
-        STATUS_TRANSITIONS.get(report.status.value, set())
-    )
+    allowed_transitions = list(STATUS_TRANSITIONS.get(report.status.value, set()))
 
     # Fetch audit log for this report
     audit_entries, _ = await audit_service.get_audit_log(
@@ -488,7 +509,10 @@ async def acknowledge_report(
     old_status = report.status.value
     await report_service.acknowledge_report(db, report)
     await audit_service.log(
-        db, current_user, AuditAction.REPORT_ACKNOWLEDGED, report_id=report.id,
+        db,
+        current_user,
+        AuditAction.REPORT_ACKNOWLEDGED,
+        report_id=report.id,
         detail={"old_status": old_status, "new_status": report.status.value},
     )
     await db.commit()
@@ -520,7 +544,10 @@ async def update_status(
     old_status = report.status.value
     await report_service.update_report_status(db, report, s)
     await audit_service.log(
-        db, current_user, AuditAction.REPORT_STATUS_CHANGED, report_id=report.id,
+        db,
+        current_user,
+        AuditAction.REPORT_STATUS_CHANGED,
+        report_id=report.id,
         detail={"old": old_status, "new": s.value},
     )
     await db.commit()
@@ -540,11 +567,12 @@ async def admin_reply(
     if not content.strip():
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT)
 
-    await report_service.add_admin_message(
-        db, report, content.strip(), notify_whistleblower=True
-    )
+    await report_service.add_admin_message(db, report, content.strip(), notify_whistleblower=True)
     await audit_service.log(
-        db, current_user, AuditAction.REPORT_MESSAGE_SENT, report_id=report.id,
+        db,
+        current_user,
+        AuditAction.REPORT_MESSAGE_SENT,
+        report_id=report.id,
     )
     await db.commit()
     return RedirectResponse(f"/admin/reports/{report.id}", status_code=302)
@@ -592,7 +620,8 @@ async def assign_report(
     # Unassigning used to be written as "assigned" to nobody, so the audit
     # filter's "unassigned" never matched a row.
     await audit_service.log(
-        db, current_user,
+        db,
+        current_user,
         AuditAction.REPORT_ASSIGNED if assignee else AuditAction.REPORT_UNASSIGNED,
         report_id=report.id,
         detail={"from": old_assignee, "to": assignee.username if assignee else None},
@@ -619,7 +648,10 @@ async def add_note(
 
     await report_service.add_note(db, report, current_user, content.strip())
     await audit_service.log(
-        db, current_user, AuditAction.REPORT_NOTE_ADDED, report_id=report.id,
+        db,
+        current_user,
+        AuditAction.REPORT_NOTE_ADDED,
+        report_id=report.id,
     )
     await db.commit()
     return RedirectResponse(f"/admin/reports/{report.id}#notes", status_code=302)
@@ -649,7 +681,10 @@ async def link_report(
 
     await report_service.link_cases(db, report, other, current_user)
     await audit_service.log(
-        db, current_user, AuditAction.REPORT_LINK_ADDED, report_id=report.id,
+        db,
+        current_user,
+        AuditAction.REPORT_LINK_ADDED,
+        report_id=report.id,
         detail={"linked_with": other.case_number},
     )
     await db.commit()
@@ -674,7 +709,10 @@ async def unlink_report(
 
     await report_service.unlink_cases(db, link)
     await audit_service.log(
-        db, current_user, AuditAction.REPORT_LINK_REMOVED, report_id=report.id,
+        db,
+        current_user,
+        AuditAction.REPORT_LINK_REMOVED,
+        report_id=report.id,
     )
     await db.commit()
     # Use report.id (DB-sourced) for the redirect — not the user-supplied path parameter
@@ -699,15 +737,16 @@ async def request_delete(
 
     await report_service.request_deletion(db, report, current_user)
     await audit_service.log(
-        db, current_user, AuditAction.REPORT_DELETE_REQUESTED, report_id=report.id,
+        db,
+        current_user,
+        AuditAction.REPORT_DELETE_REQUESTED,
+        report_id=report.id,
     )
     await db.commit()
     return RedirectResponse(f"/admin/reports/{report.id}", status_code=302)
 
 
-async def _one_made_the_other(
-    db: AsyncSession, a: uuid.UUID | None, b: uuid.UUID
-) -> bool:
+async def _one_made_the_other(db: AsyncSession, a: uuid.UUID | None, b: uuid.UUID) -> bool:
     """True if ``a`` made ``b`` or ``b`` made ``a``, directly or through others.
 
     The maker chose the first password, so they are one pair of eyes. Walked
@@ -778,7 +817,10 @@ async def cancel_delete(
 
     await report_service.cancel_deletion_request(db, dr)
     await audit_service.log(
-        db, current_user, AuditAction.REPORT_DELETE_CANCELLED, report_id=report.id,
+        db,
+        current_user,
+        AuditAction.REPORT_DELETE_CANCELLED,
+        report_id=report.id,
     )
     await db.commit()
     # Use report.id (DB-sourced) for the redirect — not the user-supplied path parameter
@@ -802,9 +844,7 @@ async def export_pdf(
     await audit_service.log(db, current_user, AuditAction.REPORT_VIEWED, report_id=report.id)
     await db.commit()
 
-    category_labels = await get_category_labels(
-        db, get_lang(request), **_org_scope(current_user)
-    )
+    category_labels = await get_category_labels(db, get_lang(request), **_org_scope(current_user))
     pdf_bytes = generate_report_pdf(
         report, category_label=category_label(report.category, category_labels)
     )
@@ -834,13 +874,14 @@ async def export_pdf_with_identity(
         return gate
     report, valid = gate
     await audit_service.log(
-        db, current_user, AuditAction.IDENTITY_REVEALED,
-        report_id=report.id, detail={"reason": encrypt(valid), "via": "pdf"},
+        db,
+        current_user,
+        AuditAction.IDENTITY_REVEALED,
+        report_id=report.id,
+        detail={"reason": encrypt(valid), "via": "pdf"},
     )
     await db.commit()
-    category_labels = await get_category_labels(
-        db, get_lang(request), **_org_scope(current_user)
-    )
+    category_labels = await get_category_labels(db, get_lang(request), **_org_scope(current_user))
     return Response(
         content=generate_report_pdf(
             report,
@@ -887,7 +928,10 @@ async def admin_download_attachment(
     # Opening the case and exporting its PDF were recorded; reading the
     # evidence itself was not.
     await audit_service.log(
-        db, current_user, AuditAction.ATTACHMENT_DOWNLOADED, report_id=report_id,
+        db,
+        current_user,
+        AuditAction.ATTACHMENT_DOWNLOADED,
+        report_id=report_id,
         detail={"attachment_id": str(attachment_id)},
     )
     await db.commit()
@@ -908,6 +952,7 @@ async def categories_page(
     current_user: AdminUser = Depends(require_admin),
 ) -> HTMLResponse:
     from app.services.categories import get_all_categories
+
     cats = await get_all_categories(db, **_org_scope(current_user))
     return render(request, "admin/categories.html", {"user": current_user, "categories": cats})
 
@@ -929,14 +974,21 @@ async def create_category(
     slug_clean = slug.strip().lower().replace(" ", "_")
     try:
         cat = await svc_create(
-            db, slug_clean, label_en.strip(), label_de.strip(), sort_order,
+            db,
+            slug_clean,
+            label_en.strip(),
+            label_de.strip(),
+            sort_order,
             org_id=current_user.org_id,
         )
     except DuplicateSlugError:
         raise HTTPException(status_code=409, detail="Slug already exists") from None
     await audit_service.log(
-        db, current_user, AuditAction.CATEGORY_CREATED,
-        detail={"slug": cat.slug, "label_en": cat.label_en}, target_org=cat.org_id,
+        db,
+        current_user,
+        AuditAction.CATEGORY_CREATED,
+        detail={"slug": cat.slug, "label_en": cat.label_en},
+        target_org=cat.org_id,
     )
     await db.commit()
     return RedirectResponse("/admin/categories", status_code=302)
@@ -962,8 +1014,11 @@ async def deactivate_category(
 
     await svc_deact(db, cat)
     await audit_service.log(
-        db, current_user, AuditAction.CATEGORY_DEACTIVATED,
-        detail={"slug": cat.slug}, target_org=cat.org_id,
+        db,
+        current_user,
+        AuditAction.CATEGORY_DEACTIVATED,
+        detail={"slug": cat.slug},
+        target_org=cat.org_id,
     )
     await db.commit()
     return RedirectResponse("/admin/categories", status_code=302)
@@ -986,8 +1041,11 @@ async def reactivate_category(
     _require_same_org(current_user, cat.org_id)
     await svc_react(db, cat)
     await audit_service.log(
-        db, current_user, AuditAction.CATEGORY_UPDATED,
-        detail={"slug": cat.slug, "action": "reactivated"}, target_org=cat.org_id,
+        db,
+        current_user,
+        AuditAction.CATEGORY_UPDATED,
+        detail={"slug": cat.slug, "action": "reactivated"},
+        target_org=cat.org_id,
     )
     await db.commit()
     return RedirectResponse("/admin/categories", status_code=302)
@@ -1006,14 +1064,16 @@ async def users_page(
 
 
 async def _users_page(
-    request: Request, db: AsyncSession, current_user: AdminUser,
+    request: Request,
+    db: AsyncSession,
+    current_user: AdminUser,
     extra: dict[str, Any] | None = None,
 ) -> HTMLResponse:
     from app.services.users import get_all_users
+
     scope = _org_scope(current_user)
     users = [
-        u for u in await get_all_users(db)
-        if not scope["scope_org"] or u.org_id == scope["org_id"]
+        u for u in await get_all_users(db) if not scope["scope_org"] or u.org_id == scope["org_id"]
     ]
     organisations = None
     if settings.multi_tenancy_enabled and current_user.role == AdminRole.superadmin:
@@ -1021,21 +1081,23 @@ async def _users_page(
 
         from app.models.organisation import Organisation
 
-        organisations = (await db.execute(
-            select(Organisation).order_by(Organisation.name)
-        )).scalars().all()
-    return render(request, "admin/users.html", {
-        "user": current_user,
-        "users": users,
-        "roles": list(AdminRole),
-        "organisations": organisations,
-        **(extra or {}),
-    })
+        organisations = (
+            (await db.execute(select(Organisation).order_by(Organisation.name))).scalars().all()
+        )
+    return render(
+        request,
+        "admin/users.html",
+        {
+            "user": current_user,
+            "users": users,
+            "roles": list(AdminRole),
+            "organisations": organisations,
+            **(extra or {}),
+        },
+    )
 
 
-async def _new_account_org(
-    db: AsyncSession, creator: AdminUser, chosen: str
-) -> uuid.UUID | None:
+async def _new_account_org(db: AsyncSession, creator: AdminUser, chosen: str) -> uuid.UUID | None:
     """The organisation a new account belongs to.
 
     A superadmin with multi-tenancy on chooses it; everyone else creates in
@@ -1095,7 +1157,9 @@ async def create_user(
     new_user.org_id = target_org
     new_user.created_by_id = current_user.id
     await audit_service.log(
-        db, current_user, AuditAction.ADMIN_CREATED,
+        db,
+        current_user,
+        AuditAction.ADMIN_CREATED,
         detail={"username": new_user.username, "role": role_enum.value},
         target_org=new_user.org_id,
     )
@@ -1156,7 +1220,9 @@ async def change_user_role(
     old_role = target.role.value
     await update_user_role(db, target, role_enum)
     await audit_service.log(
-        db, current_user, AuditAction.ADMIN_ROLE_CHANGED,
+        db,
+        current_user,
+        AuditAction.ADMIN_ROLE_CHANGED,
         detail={"username": target.username, "old": old_role, "new": role_enum.value},
         target_org=target.org_id,
     )
@@ -1197,8 +1263,11 @@ async def deactivate_user(
 
     await svc_deact(db, target)
     await audit_service.log(
-        db, current_user, AuditAction.ADMIN_DEACTIVATED,
-        detail={"username": target.username}, target_org=target.org_id,
+        db,
+        current_user,
+        AuditAction.ADMIN_DEACTIVATED,
+        detail={"username": target.username},
+        target_org=target.org_id,
     )
     await db.commit()
     return RedirectResponse("/admin/users", status_code=302)
@@ -1222,8 +1291,11 @@ async def reactivate_user(
 
     await svc_react(db, target)
     await audit_service.log(
-        db, current_user, AuditAction.ADMIN_REACTIVATED,
-        detail={"username": target.username}, target_org=target.org_id,
+        db,
+        current_user,
+        AuditAction.ADMIN_REACTIVATED,
+        detail={"username": target.username},
+        target_org=target.org_id,
     )
     await db.commit()
     return RedirectResponse("/admin/users", status_code=302)
@@ -1264,9 +1336,7 @@ async def reset_user_totp(
         raise HTTPException(status_code=404)
     _require_same_org(current_user, target.org_id)
     if target.id == current_user.id:
-        raise HTTPException(
-            status_code=400, detail="You cannot reset your own authenticator here."
-        )
+        raise HTTPException(status_code=400, detail="You cannot reset your own authenticator here.")
     if settings.demo_mode and target.username in DEMO_USERNAMES:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -1282,16 +1352,26 @@ async def reset_user_totp(
         target.must_change_password = True
     # Only the fact, never the password.
     await audit_service.log(
-        db, current_user, AuditAction.ADMIN_TOTP_RESET,
+        db,
+        current_user,
+        AuditAction.ADMIN_TOTP_RESET,
         detail={"username": target.username, "password_reset": temporary_password is not None},
         target_org=target.org_id,
     )
     await db.commit()
     await auth_service.revoke_user_sessions(redis, str(target.id))
     # Rendered, not redirected: the password must never travel in a URL.
-    return await _users_page(request, db, current_user, {"reset_result": {
-        "username": target.username, "password": temporary_password,
-    }})
+    return await _users_page(
+        request,
+        db,
+        current_user,
+        {
+            "reset_result": {
+                "username": target.username,
+                "password": temporary_password,
+            }
+        },
+    )
 
 
 # ── Audit log ──────────────────────────────────────────────────────
@@ -1313,28 +1393,43 @@ async def audit_log_page(
     show_views = qp.get("views") == "1"
 
     entries, total = await audit_service.get_audit_log(
-        db, **_audit_filters(qp), page=page, per_page=50,
-        viewer_id=current_user.id, **_org_scope(current_user),
+        db,
+        **_audit_filters(qp),
+        page=page,
+        per_page=50,
+        viewer_id=current_user.id,
+        **_org_scope(current_user),
     )
     total_pages = max(1, (total + 49) // 50)
 
-    return render(request, "admin/audit_log.html", {
-        "user": current_user,
-        "entries": entries,
-        "total": total,
-        "page": page,
-        "total_pages": total_pages,
-        "action_filter": action_filter,
-        "report_id_filter": report_id_str,
-        "show_views": show_views,
-        "audit_actions": audit_service.ALL_ACTIONS,
-        # The export carries the page's filters: it used to carry ?views only,
-        # so a filtered page exported the whole log.
-        "export_query": urlencode({
-            k: v for k, v in (("action", action_filter), ("report_id", report_id_str),
-                              ("views", "1" if show_views else "")) if v
-        }),
-    })
+    return render(
+        request,
+        "admin/audit_log.html",
+        {
+            "user": current_user,
+            "entries": entries,
+            "total": total,
+            "page": page,
+            "total_pages": total_pages,
+            "action_filter": action_filter,
+            "report_id_filter": report_id_str,
+            "show_views": show_views,
+            "audit_actions": audit_service.ALL_ACTIONS,
+            # The export carries the page's filters: it used to carry ?views only,
+            # so a filtered page exported the whole log.
+            "export_query": urlencode(
+                {
+                    k: v
+                    for k, v in (
+                        ("action", action_filter),
+                        ("report_id", report_id_str),
+                        ("views", "1" if show_views else ""),
+                    )
+                    if v
+                }
+            ),
+        },
+    )
 
 
 def _audit_filters(qp: Any) -> dict[str, Any]:
@@ -1402,14 +1497,26 @@ async def audit_log_csv(
     # Every row: this used to stop at 10 000 without saying so.
     filters = _audit_filters(request.query_params)
     entries, _ = await audit_service.get_audit_log(
-        db, **filters, per_page=None, viewer_id=current_user.id, **_org_scope(current_user),
+        db,
+        **filters,
+        per_page=None,
+        viewer_id=current_user.id,
+        **_org_scope(current_user),
     )
     # The export holds decrypted reveal reasons and search terms: who took it is recorded.
-    await audit_service.log(db, current_user, AuditAction.AUDIT_EXPORTED, detail={
-        "rows": len(entries),
-        **{k: str(v) for k, v in (("action", filters["action"]),
-                                  ("report_id", filters["report_id"])) if v},
-    })
+    await audit_service.log(
+        db,
+        current_user,
+        AuditAction.AUDIT_EXPORTED,
+        detail={
+            "rows": len(entries),
+            **{
+                k: str(v)
+                for k, v in (("action", filters["action"]), ("report_id", filters["report_id"]))
+                if v
+            },
+        },
+    )
     await db.commit()
     output = io.StringIO()
     writer = csv.writer(output)
@@ -1419,14 +1526,19 @@ async def audit_log_csv(
     for e in entries:
         label_key = f"audit.action.{e.action}"
         label = t(label_key)
-        writer.writerow([_csv_cell(c) for c in (
-            e.created_at.isoformat(),
-            e.admin_username or "",
-            e.action,
-            e.action if label == label_key else label,
-            str(e.report_id) if e.report_id else "",
-            _csv_detail(e.detail, t),
-        )])
+        writer.writerow(
+            [
+                _csv_cell(c)
+                for c in (
+                    e.created_at.isoformat(),
+                    e.admin_username or "",
+                    e.action,
+                    e.action if label == label_key else label,
+                    str(e.report_id) if e.report_id else "",
+                    _csv_detail(e.detail, t),
+                )
+            ]
+        )
 
     return Response(
         content=output.getvalue().encode("utf-8"),
@@ -1448,12 +1560,17 @@ async def stats_page(
         db, assigned_to_id=_own_cases_only(current_user), **_org_scope(current_user)
     )
     from app.services.categories import get_category_labels
+
     cat_map = await get_category_labels(db, get_lang(request), **_org_scope(current_user))
-    return render(request, "admin/stats.html", {
-        "user": current_user,
-        "stats": stats,
-        "cat_map": cat_map,
-    })
+    return render(
+        request,
+        "admin/stats.html",
+        {
+            "user": current_user,
+            "stats": stats,
+            "cat_map": cat_map,
+        },
+    )
 
 
 # ── Locations ──────────────────────────────────────────────────────
@@ -1501,8 +1618,11 @@ async def create_location(
     except DuplicateCodeError:
         raise HTTPException(status_code=409, detail="Location code already exists") from None
     await audit_service.log(
-        db, current_user, AuditAction.LOCATION_CREATED,
-        detail={"location_code": code_clean, "name": name.strip()}, target_org=loc.org_id,
+        db,
+        current_user,
+        AuditAction.LOCATION_CREATED,
+        detail={"location_code": code_clean, "name": name.strip()},
+        target_org=loc.org_id,
     )
     await db.commit()
     return RedirectResponse("/admin/locations", status_code=302)
@@ -1525,7 +1645,10 @@ async def deactivate_location(
     _require_same_org(current_user, loc.org_id)
     await svc_deact(db, loc)
     await audit_service.log(
-        db, current_user, AuditAction.LOCATION_DEACTIVATED, detail={"location_code": loc.code},
+        db,
+        current_user,
+        AuditAction.LOCATION_DEACTIVATED,
+        detail={"location_code": loc.code},
         target_org=loc.org_id,
     )
     await db.commit()
@@ -1549,7 +1672,10 @@ async def reactivate_location(
     _require_same_org(current_user, loc.org_id)
     await svc_react(db, loc)
     await audit_service.log(
-        db, current_user, AuditAction.LOCATION_REACTIVATED, detail={"location_code": loc.code},
+        db,
+        current_user,
+        AuditAction.LOCATION_REACTIVATED,
+        detail={"location_code": loc.code},
         target_org=loc.org_id,
     )
     await db.commit()
@@ -1626,7 +1752,9 @@ async def system_page(
         request,
         "admin/system.html",
         {
-            "user": current_user, "update": update, "integrity": integrity,
+            "user": current_user,
+            "update": update,
+            "integrity": integrity,
             "telemetry": {
                 "enabled": telemetry.is_enabled(state),
                 "locked_by": telemetry.locked_by(),
@@ -1651,8 +1779,10 @@ async def system_telemetry_toggle(
     from app.services import telemetry
 
     if telemetry.locked_by() is not None:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
-                            detail="The installation count is set by the environment.")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="The installation count is set by the environment.",
+        )
     wanted = enabled == "1"
     state = await telemetry.get_state(db)
     if state is None and wanted:
@@ -1660,7 +1790,8 @@ async def system_telemetry_toggle(
     if state is not None and state.enabled != wanted:
         state.enabled = wanted
         await audit_service.log(
-            db, current_user,
+            db,
+            current_user,
             AuditAction.TELEMETRY_ENABLED if wanted else AuditAction.TELEMETRY_DISABLED,
         )
     await db.commit()
@@ -1736,19 +1867,18 @@ async def create_organisation(
     if not slug_clean or slug_clean == "restart":
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid slug.")
 
-    existing = await db.execute(
-        select(Organisation).where(Organisation.slug == slug_clean)
-    )
+    existing = await db.execute(select(Organisation).where(Organisation.slug == slug_clean))
     if existing.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="Slug already exists."
-        )
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Slug already exists.")
 
     org = Organisation(id=__import__("uuid").uuid4(), name=name.strip(), slug=slug_clean)
     db.add(org)
     await db.flush()  # the audit row references it
     await audit_service.log(
-        db, current_user, AuditAction.ORG_CREATED, detail={"name": name, "slug": slug_clean},
+        db,
+        current_user,
+        AuditAction.ORG_CREATED,
+        detail={"name": name, "slug": slug_clean},
         target_org=org.id,
     )
     await db.commit()
@@ -1777,7 +1907,10 @@ async def deactivate_organisation(
         )
     org.is_active = False
     await audit_service.log(
-        db, current_user, AuditAction.ORG_DEACTIVATED, detail={"org_id": str(org_id)},
+        db,
+        current_user,
+        AuditAction.ORG_DEACTIVATED,
+        detail={"org_id": str(org_id)},
         target_org=org.id,
     )
     await db.commit()

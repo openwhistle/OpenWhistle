@@ -41,11 +41,11 @@ def configure_logging(log_level: str = "INFO", log_format: str = "json") -> None
             "level": log_level.upper(),
         },
         "loggers": {
-            "uvicorn": {
-                "handlers": ["console"], "level": log_level.upper(), "propagate": False
-            },
+            "uvicorn": {"handlers": ["console"], "level": log_level.upper(), "propagate": False},
             "uvicorn.error": {
-                "handlers": ["console"], "level": log_level.upper(), "propagate": False
+                "handlers": ["console"],
+                "level": log_level.upper(),
+                "propagate": False,
             },
             # No handler and no propagation: uvicorn writes a request line only
             # when this logger ``hasHandlers()``. It used to get the console

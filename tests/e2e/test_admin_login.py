@@ -1,4 +1,5 @@
 """E2E tests for the admin login flow including TOTP verification."""
+
 from __future__ import annotations
 
 import pytest
@@ -96,9 +97,7 @@ def test_dashboard_shows_heading(page: Page, base_url: str) -> None:
     page.wait_for_url("**/admin/dashboard**")
     page.wait_for_load_state("networkidle")
     body_text = page.content()
-    assert any(
-        heading in body_text for heading in ["Dashboard", "dashboard", "OpenWhistle"]
-    )
+    assert any(heading in body_text for heading in ["Dashboard", "dashboard", "OpenWhistle"])
 
 
 def test_logout_redirects_to_login(page: Page, base_url: str) -> None:

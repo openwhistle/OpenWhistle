@@ -27,26 +27,34 @@ MAX_ATTACHMENTS: int = 5
 # encryption, which add about 78 %).
 MAX_DRAFT_ATTACHMENT_BYTES: int = MAX_ATTACHMENTS * MAX_SIZE_BYTES
 
-ALLOWED_MIME_TYPES: frozenset[str] = frozenset({
-    "application/pdf",
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-    "image/webp",
-    "text/plain",
-    "text/csv",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-})
+ALLOWED_MIME_TYPES: frozenset[str] = frozenset(
+    {
+        "application/pdf",
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "text/plain",
+        "text/csv",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    }
+)
 
-ALLOWED_EXTENSIONS: frozenset[str] = frozenset({
-    ".pdf",
-    ".jpg", ".jpeg",
-    ".png", ".gif", ".webp",
-    ".txt", ".csv",
-    ".docx",
-    ".xlsx",
-})
+ALLOWED_EXTENSIONS: frozenset[str] = frozenset(
+    {
+        ".pdf",
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".webp",
+        ".txt",
+        ".csv",
+        ".docx",
+        ".xlsx",
+    }
+)
 
 
 def sanitize_filename(filename: str) -> str:
@@ -207,8 +215,21 @@ def _strip_jpeg(data: bytes, exif: bytes) -> bytes:
 # PNG chunks that describe pixels. Everything else goes: tEXt/zTXt/iTXt (author,
 # software), eXIf, iCCP (can name the device), tIME and private chunks.
 _PNG_KEEP = {
-    b"IHDR", b"PLTE", b"tRNS", b"IDAT", b"IEND", b"acTL", b"fcTL", b"fdAT",
-    b"gAMA", b"cHRM", b"sRGB", b"cICP", b"sBIT", b"bKGD", b"pHYs",
+    b"IHDR",
+    b"PLTE",
+    b"tRNS",
+    b"IDAT",
+    b"IEND",
+    b"acTL",
+    b"fcTL",
+    b"fdAT",
+    b"gAMA",
+    b"cHRM",
+    b"sRGB",
+    b"cICP",
+    b"sBIT",
+    b"bKGD",
+    b"pHYs",
 }
 
 
@@ -217,12 +238,12 @@ def _strip_png(data: bytes) -> bytes:
 
     out, i, orientation = bytearray(data[:8]), 8, 1
     while True:
-        length = int.from_bytes(data[i:i + 4], "big")
-        kind, end = data[i + 4:i + 8], i + 12 + length
+        length = int.from_bytes(data[i : i + 4], "big")
+        kind, end = data[i + 4 : i + 8], i + 12 + length
         if end > len(data):
             raise MetadataError("truncated PNG")
         if kind == b"eXIf":
-            orientation = _orientation(data[i + 8:end - 4])
+            orientation = _orientation(data[i + 8 : end - 4])
         elif kind == b"IEND":  # anything after IEND is not part of the image
             if orientation != 1:
                 exif = b"eXIf" + _orientation_exif(orientation)
@@ -239,13 +260,13 @@ _WEBP_KEEP = {b"VP8X", b"VP8 ", b"VP8L", b"ALPH", b"ANIM", b"ANMF"}
 
 
 def _strip_webp(data: bytes) -> bytes:
-    body = data[12:8 + int.from_bytes(data[4:8], "little")]
+    body = data[12 : 8 + int.from_bytes(data[4:8], "little")]
     out, i, orientation = bytearray(), 0, 1
     while i < len(body):
-        kind, size = body[i:i + 4], int.from_bytes(body[i + 4:i + 8], "little")
+        kind, size = body[i : i + 4], int.from_bytes(body[i + 4 : i + 8], "little")
         end = i + 8 + size + (size & 1)  # libwebp has checked the sizes at open
         if kind == b"EXIF":
-            orientation = _orientation(body[i + 8:i + 8 + size])
+            orientation = _orientation(body[i + 8 : i + 8 + size])
         elif kind in _WEBP_KEEP:
             out += body[i:end]
         i = end
@@ -293,7 +314,7 @@ def _strip_jpeg_segments(data: bytes) -> bytes:
             continue
         if marker == 0xD9:
             return bytes(out + b"\xff\xd9")
-        end = i + 2 + int.from_bytes(data[i + 2:i + 4], "big")
+        end = i + 2 + int.from_bytes(data[i + 2 : i + 4], "big")
         if marker == 0xDA:  # start of scan: its header, then the image data
             end = _scan_end(data, end)
         if not ((0xE0 <= marker <= 0xEF and marker not in _JPEG_KEEP_APP) or marker == 0xFE):
@@ -462,10 +483,14 @@ def _strip_ooxml(data: bytes) -> bytes:
 
 
 _STRIPPERS = {
-    ".jpg": _strip_image, ".jpeg": _strip_image, ".png": _strip_image,
-    ".gif": _strip_image, ".webp": _strip_image,
+    ".jpg": _strip_image,
+    ".jpeg": _strip_image,
+    ".png": _strip_image,
+    ".gif": _strip_image,
+    ".webp": _strip_image,
     ".pdf": _strip_pdf,
-    ".docx": _strip_ooxml, ".xlsx": _strip_ooxml,
+    ".docx": _strip_ooxml,
+    ".xlsx": _strip_ooxml,
 }
 
 
@@ -689,12 +714,8 @@ async def attachment_filename(db: AsyncSession, attachment: Attachment) -> str:
     return decrypt_field_safe(fernet, attachment.filename) or attachment.filename
 
 
-async def get_attachment_by_id(
-    db: AsyncSession, attachment_id: uuid.UUID
-) -> Attachment | None:
-    result = await db.execute(
-        select(Attachment).where(Attachment.id == attachment_id)
-    )
+async def get_attachment_by_id(db: AsyncSession, attachment_id: uuid.UUID) -> Attachment | None:
+    result = await db.execute(select(Attachment).where(Attachment.id == attachment_id))
     return result.scalar_one_or_none()
 
 

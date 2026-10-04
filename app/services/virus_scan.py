@@ -39,7 +39,7 @@ async def scan_bytes(data: bytes) -> str | None:
     try:
         writer.write(b"zINSTREAM\0")
         for start in range(0, len(data), _CHUNK):
-            chunk = data[start:start + _CHUNK]
+            chunk = data[start : start + _CHUNK]
             writer.write(struct.pack("!I", len(chunk)) + chunk)
         writer.write(struct.pack("!I", 0))
         # Bounded like the connect and the reply read: a clamd that stops

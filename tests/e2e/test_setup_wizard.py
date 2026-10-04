@@ -1,4 +1,5 @@
 """E2E tests for the setup wizard — verifies redirect behaviour when setup is complete."""
+
 from __future__ import annotations
 
 import pytest

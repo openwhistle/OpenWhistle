@@ -62,8 +62,7 @@ _EDGE = (
     "strokeColor={ink};fontColor={ink};fontSize=11;labelBackgroundColor=none;"
 )
 _PILL = (
-    "rounded=1;arcSize=50;fillColor={accent};strokeColor=none;"
-    "fontColor={accent-ink};fontStyle=1;"
+    "rounded=1;arcSize=50;fillColor={accent};strokeColor=none;fontColor={accent-ink};fontStyle=1;"
 )
 
 # Style C, chosen by the maintainer on 2026-10-02 from three rendered variants.
@@ -79,16 +78,16 @@ ROLES = {
     "ow:store": (
         "shape=cylinder3;boundedLbl=1;size=8;fillColor={node};strokeColor={ink};fontColor={ink};"
     ),
-    "ow:note": _BOX
-    + "fillColor=none;strokeColor={muted};dashed=1;dashPattern=4 3;"
+    "ow:note": _BOX + "fillColor=none;strokeColor={muted};dashed=1;dashPattern=4 3;"
     "fontColor={muted};fontSize=12;",
-    "ow:group": _BOX + (
+    "ow:group": _BOX
+    + (
         "container=1;fillColor=none;strokeColor={hairline};verticalAlign=top;align=left;"
         "spacingLeft=12;spacingTop=6;fontColor={muted};fontSize=11;fontStyle=1;"
     ),
-    "ow:lane": "swimlane;startSize=32;" + _BOX + (
-        "fillColor=none;swimlaneFillColor=none;strokeColor={hairline};fontColor={ink};fontStyle=1;"
-    ),
+    "ow:lane": "swimlane;startSize=32;"
+    + _BOX
+    + ("fillColor=none;swimlaneFillColor=none;strokeColor={hairline};fontColor={ink};fontStyle=1;"),
     "ow:lifeline": (
         "shape=umlLifeline;perimeter=lifelinePerimeter;size=40;fillColor={node};"
         "strokeColor={muted};fontColor={ink};"
@@ -175,9 +174,17 @@ def stamp(source: str, theme: str) -> str:
     """Hash of everything that decides the picture: a change to any of it makes the SVG stale."""
     fonts = {str(w): hashlib.sha256(p.read_bytes()).hexdigest() for w, p in FONTS.items()}
     payload = json.dumps(
-        {"source": source, "theme": theme, "common": COMMON, "roles": ROLES, "aliases": ALIASES,
-         "palette": palette()[theme], "image": IMAGE, "fonts": fonts,
-         "scripts": [hashlib.sha256(p.read_bytes()).hexdigest() for p in SCRIPTS]},
+        {
+            "source": source,
+            "theme": theme,
+            "common": COMMON,
+            "roles": ROLES,
+            "aliases": ALIASES,
+            "palette": palette()[theme],
+            "image": IMAGE,
+            "fonts": fonts,
+            "scripts": [hashlib.sha256(p.read_bytes()).hexdigest() for p in SCRIPTS],
+        },
         sort_keys=True,
     )
     return hashlib.sha256(payload.encode()).hexdigest()[:16]
@@ -216,11 +223,31 @@ def export(src_dir: Path, out_dir: Path) -> None:
     """
     limit = 10 + 5 * len(list(src_dir.glob("*.drawio")))
     subprocess.run(  # noqa: S603
-        [engine(), "run", "--rm", "--network=none",
-         "-e", f"DRAWIO_DESKTOP_COMMAND_TIMEOUT={limit}s",
-         "-v", f"{src_dir}:/in:ro,Z", "-v", f"{out_dir}:/out:Z", IMAGE,
-         "-x", "-f", "svg", "--theme", "light", "--embed-svg-fonts", "false", "-b", "12",
-         "-o", "/out/", "/in/"],
+        [
+            engine(),
+            "run",
+            "--rm",
+            "--network=none",
+            "-e",
+            f"DRAWIO_DESKTOP_COMMAND_TIMEOUT={limit}s",
+            "-v",
+            f"{src_dir}:/in:ro,Z",
+            "-v",
+            f"{out_dir}:/out:Z",
+            IMAGE,
+            "-x",
+            "-f",
+            "svg",
+            "--theme",
+            "light",
+            "--embed-svg-fonts",
+            "false",
+            "-b",
+            "12",
+            "-o",
+            "/out/",
+            "/in/",
+        ],
         check=True,
     )
 

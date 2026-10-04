@@ -20,10 +20,12 @@ log = logging.getLogger(__name__)
 def _make_fernet() -> MultiFernet:
     from app.services.encryption import encryption_keys  # noqa: PLC0415
 
-    return MultiFernet([
-        Fernet(base64.urlsafe_b64encode(hashlib.sha256(k.encode()).digest()))
-        for k in encryption_keys()
-    ])
+    return MultiFernet(
+        [
+            Fernet(base64.urlsafe_b64encode(hashlib.sha256(k.encode()).digest()))
+            for k in encryption_keys()
+        ]
+    )
 
 
 def encrypt(plaintext: str) -> str:

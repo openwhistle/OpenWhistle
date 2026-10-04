@@ -178,7 +178,9 @@ async def test_delete_report(db_session: AsyncSession) -> None:
 async def test_paginated_returns_all_on_first_page(db_session: AsyncSession) -> None:
     """Filtered to a location of its own, so other tests' reports never interfere."""
     loc = Location(
-        id=uuid.uuid4(), name="Pagination site", code=f"G{uuid.uuid4().hex[:5]}",
+        id=uuid.uuid4(),
+        name="Pagination site",
+        code=f"G{uuid.uuid4().hex[:5]}",
         is_active=False,  # an active location would add a wizard step to later tests
     )
     db_session.add(loc)
@@ -186,7 +188,9 @@ async def test_paginated_returns_all_on_first_page(db_session: AsyncSession) -> 
     created = [
         (
             await create_report(
-                db_session, "corruption", f"Pagination test report number {i} ok!",
+                db_session,
+                "corruption",
+                f"Pagination test report number {i} ok!",
                 location_id=loc.id,
             )
         )[0]
@@ -203,7 +207,9 @@ async def test_paginated_order_is_total_across_same_day_reports(db_session: Asyn
     """submitted_at is the day, so every report of today ties: the id breaks the tie,
     and one-per-page walks every report exactly once, newest id first."""
     loc = Location(
-        id=uuid.uuid4(), name="Tie site", code=f"T{uuid.uuid4().hex[:5]}",
+        id=uuid.uuid4(),
+        name="Tie site",
+        code=f"T{uuid.uuid4().hex[:5]}",
         is_active=False,  # an active location would add a wizard step to later tests
     )
     db_session.add(loc)
@@ -219,9 +225,7 @@ async def test_paginated_order_is_total_across_same_day_reports(db_session: Asyn
     assert len({r.submitted_at for r in created}) == 1
     walked = []
     for page in range(1, 5):
-        rows, _ = await get_reports_paginated(
-            db_session, page=page, per_page=1, location_id=loc.id
-        )
+        rows, _ = await get_reports_paginated(db_session, page=page, per_page=1, location_id=loc.id)
         walked += [r.id for r in rows]
     assert walked == sorted((r.id for r in created), reverse=True)
 

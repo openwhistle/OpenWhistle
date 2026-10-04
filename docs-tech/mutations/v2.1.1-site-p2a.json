@@ -66,14 +66,14 @@
    "id": "STAMP-PALETTE",
    "file": "scripts/render_diagrams.py",
    "tests": "RENDER",
-   "old": "\"palette\": palette()[theme], ",
+   "old": "            \"palette\": palette()[theme],\n",
    "new": ""
   },
   {
    "id": "STAMP-ROLES",
    "file": "scripts/render_diagrams.py",
    "tests": "RENDER",
-   "old": "\"roles\": ROLES, ",
+   "old": "            \"roles\": ROLES,\n",
    "new": ""
   },
   {
@@ -150,8 +150,8 @@
    "id": "THEME-LIGHT",
    "file": "scripts/render_diagrams.py",
    "tests": "RENDER",
-   "old": "\"--theme\", \"light\"",
-   "new": "\"--theme\", \"auto\""
+   "old": "\"--theme\",\n            \"light\"",
+   "new": "\"--theme\",\n            \"auto\""
   },
   {
    "id": "ENGINE-DOCKER",
@@ -206,8 +206,8 @@
    "id": "ARROWHEAD",
    "file": "scripts/diagram_geometry.py",
    "tests": "GEOMETRY",
-   "old": "                if near.overlaps(b)]",
-   "new": "                if False]"
+   "old": "for hid, b in heads\n            if near.overlaps(b)\n",
+   "new": "for hid, b in heads\n            if False\n"
   },
   {
    "id": "LABEL-NODE",
@@ -416,8 +416,8 @@
    "id": "NODE-ARROWHEAD",
    "file": "scripts/diagram_geometry.py",
    "tests": "GEOMETRY",
-   "old": "                if near.overlaps(b)]",
-   "new": "                if near.overlaps(b) and role in EDGES]"
+   "old": "for hid, b in heads\n            if near.overlaps(b)\n",
+   "new": "for hid, b in heads\n            if near.overlaps(b) and role in EDGES\n"
   },
   {
    "id": "MERMAID-TRACKED",
@@ -444,8 +444,8 @@
    "id": "LIFECYCLE-EDGES",
    "file": "app/models/report.py",
    "tests": "COMMITTED",
-   "old": "    \"closed\":           {\"in_review\"},",
-   "new": "    \"closed\":           {\"in_review\", \"received\"},"
+   "old": "    \"closed\": {\"in_review\"},",
+   "new": "    \"closed\": {\"in_review\", \"received\"},"
   },
   {
    "id": "E2E-TWIN",

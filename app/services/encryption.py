@@ -58,9 +58,7 @@ def encryption_keys() -> list[str]:
 
 def make_mek_fernet() -> MultiFernet:
     """Encrypts with the current MEK, decrypts with any configured one."""
-    return MultiFernet(
-        [Fernet(base64.urlsafe_b64encode(derive_mek(k))) for k in encryption_keys()]
-    )
+    return MultiFernet([Fernet(base64.urlsafe_b64encode(derive_mek(k))) for k in encryption_keys()])
 
 
 def generate_dek() -> bytes:
@@ -154,9 +152,11 @@ async def configured_keys_read_existing_data() -> bool:
         async with engine.connect() as conn:
             dek = totp = None
             if await conn.scalar(text("SELECT to_regclass('reports')")):
-                dek = await conn.scalar(text(
-                    "SELECT encrypted_dek FROM reports WHERE encrypted_dek IS NOT NULL LIMIT 1"
-                ))
+                dek = await conn.scalar(
+                    text(
+                        "SELECT encrypted_dek FROM reports WHERE encrypted_dek IS NOT NULL LIMIT 1"
+                    )
+                )
             # A plaintext base32 TOTP secret (before migration 004) never starts with the
             # lowercase Fernet prefix, so only encrypted secrets are sampled.
             if await conn.scalar(text("SELECT to_regclass('admin_users')")):

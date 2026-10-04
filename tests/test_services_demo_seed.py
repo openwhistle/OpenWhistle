@@ -55,12 +55,16 @@ async def test_demo_accounts_belong_to_the_default_org(db_session: AsyncSession)
         )
     ).scalar_one()
     orgs = (
-        await db_session.execute(
-            select(AdminUser.org_id).where(
-                AdminUser.username.in_([DEMO_ADMIN_USERNAME, DEMO_CM_USERNAME])
+        (
+            await db_session.execute(
+                select(AdminUser.org_id).where(
+                    AdminUser.username.in_([DEMO_ADMIN_USERNAME, DEMO_CM_USERNAME])
+                )
             )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     assert list(orgs) == [default_id, default_id]
 
 
@@ -81,12 +85,16 @@ async def test_seed_gives_existing_org_less_demo_accounts_the_default_org(
 
     await _seed(db_session)
     orgs = (
-        await db_session.execute(
-            select(AdminUser.org_id)
-            .where(AdminUser.username.in_(names))
-            .execution_options(populate_existing=True)
+        (
+            await db_session.execute(
+                select(AdminUser.org_id)
+                .where(AdminUser.username.in_(names))
+                .execution_options(populate_existing=True)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     assert len(orgs) == 2 and None not in orgs
 
 
@@ -99,9 +107,7 @@ async def test_seed_admin_idempotent(db_session: AsyncSession) -> None:
     await _seed(db_session)
 
     result = await db_session.execute(
-        select(func.count()).select_from(AdminUser).where(
-            AdminUser.username == DEMO_ADMIN_USERNAME
-        )
+        select(func.count()).select_from(AdminUser).where(AdminUser.username == DEMO_ADMIN_USERNAME)
     )
     assert result.scalar_one() == 1
 
@@ -180,9 +186,9 @@ async def test_seed_reports_idempotent(db_session: AsyncSession) -> None:
 
     for demo in DEMO_REPORTS:
         result = await db_session.execute(
-            select(func.count()).select_from(Report).where(
-                Report.case_number == demo["case_number"]
-            )
+            select(func.count())
+            .select_from(Report)
+            .where(Report.case_number == demo["case_number"])
         )
         assert result.scalar_one() == 1, f"Duplicate report: {demo['case_number']}"
 
@@ -193,9 +199,7 @@ async def test_seed_in_review_report_has_timestamps(db_session: AsyncSession) ->
 
     await _seed(db_session)
 
-    result = await db_session.execute(
-        select(Report).where(Report.case_number == "OW-DEMO-00002")
-    )
+    result = await db_session.execute(select(Report).where(Report.case_number == "OW-DEMO-00002"))
     report = result.scalar_one_or_none()
     assert report is not None
     assert report.acknowledged_at is not None
@@ -210,9 +214,7 @@ async def test_seed_received_report_has_no_timestamps(db_session: AsyncSession) 
 
     await _seed(db_session)
 
-    result = await db_session.execute(
-        select(Report).where(Report.case_number == "OW-DEMO-00001")
-    )
+    result = await db_session.execute(select(Report).where(Report.case_number == "OW-DEMO-00001"))
     report = result.scalar_one_or_none()
     assert report is not None
     assert report.acknowledged_at is None
@@ -228,9 +230,7 @@ async def test_seed_received_report_has_one_message(db_session: AsyncSession) ->
 
     await _seed(db_session)
 
-    result = await db_session.execute(
-        select(Report).where(Report.case_number == "OW-DEMO-00001")
-    )
+    result = await db_session.execute(select(Report).where(Report.case_number == "OW-DEMO-00001"))
     report = result.scalar_one()
     await db_session.refresh(report, ["messages"])
     assert len(report.messages) == 1
@@ -242,9 +242,7 @@ async def test_seed_in_review_report_has_two_messages(db_session: AsyncSession) 
 
     await _seed(db_session)
 
-    result = await db_session.execute(
-        select(Report).where(Report.case_number == "OW-DEMO-00002")
-    )
+    result = await db_session.execute(select(Report).where(Report.case_number == "OW-DEMO-00002"))
     report = result.scalar_one()
     await db_session.refresh(report, ["messages"])
     assert len(report.messages) == 2
@@ -257,9 +255,7 @@ async def test_seed_pending_feedback_report_has_four_messages(db_session: AsyncS
 
     await _seed(db_session)
 
-    result = await db_session.execute(
-        select(Report).where(Report.case_number == "OW-DEMO-00003")
-    )
+    result = await db_session.execute(select(Report).where(Report.case_number == "OW-DEMO-00003"))
     report = result.scalar_one()
     await db_session.refresh(report, ["messages"])
     assert len(report.messages) == 4
@@ -303,9 +299,9 @@ async def test_seed_refuses_a_real_installation(
 @pytest.mark.parametrize(
     ("setup_done", "demo_admin_id", "foreign"),
     [
-        (True, None, True),     # real installation, DEMO_MODE on by mistake
-        (True, "id", False),    # seeded demo database
-        (None, None, False),    # fresh database, setup not run yet
+        (True, None, True),  # real installation, DEMO_MODE on by mistake
+        (True, "id", False),  # seeded demo database
+        (None, None, False),  # fresh database, setup not run yet
     ],
 )
 async def test_foreign_database_detection(

@@ -9,6 +9,7 @@ Run manually (NOT in standard CI):
 Or via Docker Compose:
     docker compose run --rm app locust ...
 """
+
 from __future__ import annotations
 
 import random

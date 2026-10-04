@@ -194,12 +194,19 @@ async def test_the_wizard_refuses_a_secret_it_did_not_issue(
         code = pyotp.TOTP(secret).now()
     except Exception:  # noqa: BLE001 - "!!!!" has no code; any will do
         code = "123456"
-    resp = await client.post("/setup", data={
-        "username": "owner210", "password": "SecureTestPassword123!",
-        "password_confirm": "SecureTestPassword123!", "totp_secret": secret,
-        "totp_code": code, "csrf_token": get_resp.cookies.get("ow_csrf"),
-        "setup_token": await setup_token(),
-    }, follow_redirects=False)
+    resp = await client.post(
+        "/setup",
+        data={
+            "username": "owner210",
+            "password": "SecureTestPassword123!",
+            "password_confirm": "SecureTestPassword123!",
+            "totp_secret": secret,
+            "totp_code": code,
+            "csrf_token": get_resp.cookies.get("ow_csrf"),
+            "setup_token": await setup_token(),
+        },
+        follow_redirects=False,
+    )
     assert resp.status_code in (200, 422)  # "" is refused by FastAPI already
     assert await throwaway_db.scalar(select(func.count()).select_from(AdminUser)) == 0
 
@@ -229,7 +236,9 @@ async def test_the_page_token_matches_the_cookie_the_server_checks() -> None:
         token = re.search(r'name="csrf_token" value="([^"]+)"', page.text)
         assert token
         resp = await c.post(
-            "/status/logout", data={"csrf_token": token.group(1)}, headers=headers,
+            "/status/logout",
+            data={"csrf_token": token.group(1)},
+            headers=headers,
             follow_redirects=False,
         )
     assert resp.status_code != 403
@@ -321,24 +330,33 @@ async def test_a_confirmed_deletion_is_in_the_audit_log(
     case = report.case_number
 
     act(requester)
-    assert (await client.post(
-        f"/admin/reports/{report.id}/request-delete", follow_redirects=False
-    )).status_code == 302
+    assert (
+        await client.post(f"/admin/reports/{report.id}/request-delete", follow_redirects=False)
+    ).status_code == 302
     act(confirmer)
     resp = await client.post(f"/admin/reports/{report.id}/confirm-delete", follow_redirects=False)
     assert resp.status_code == 302
 
-    rows = (await db_session.execute(
-        select(AuditLog).where(AuditLog.action == AuditAction.REPORT_DELETE_CONFIRMED)
-        .execution_options(populate_existing=True)
-    )).scalars().all()
+    rows = (
+        (
+            await db_session.execute(
+                select(AuditLog)
+                .where(AuditLog.action == AuditAction.REPORT_DELETE_CONFIRMED)
+                .execution_options(populate_existing=True)
+            )
+        )
+        .scalars()
+        .all()
+    )
     details = [_json.loads(r.detail or "{}") for r in rows]
     mine = [d for d in details if d.get("case_number") == case]
-    assert mine == [{
-        "case_number": case,
-        "requested_by": requester.username,
-        "confirmed_by": confirmer.username,
-    }]
+    assert mine == [
+        {
+            "case_number": case,
+            "requested_by": requester.username,
+            "confirmed_by": confirmer.username,
+        }
+    ]
 
 
 # ── Sign-in: LDAP next to local accounts, and the lockout counter ────────────
@@ -357,12 +375,14 @@ async def test_a_local_account_signs_in_while_ldap_is_on(
 
     monkeypatch.setattr(settings, "ldap_enabled", True)
     monkeypatch.setattr(
-        ldap_auth, "authenticate_ldap",
+        ldap_auth,
+        "authenticate_ldap",
         AsyncMock(side_effect=ldap_auth.LDAPAuthError("LDAP user not found")),
     )
     user = await _totp_user(db_session)
     resp = await client.post(
-        "/admin/login", data={"username": user.username, "password": "TestPassword123!"},
+        "/admin/login",
+        data={"username": user.username, "password": "TestPassword123!"},
         follow_redirects=False,
     )
     assert resp.status_code == 200 and 'name="temp_token"' in resp.text
@@ -380,11 +400,13 @@ async def test_a_directory_user_named_like_a_local_account_is_refused_not_a_500(
     user = await _totp_user(db_session)
     monkeypatch.setattr(settings, "ldap_enabled", True)
     monkeypatch.setattr(
-        ldap_auth, "authenticate_ldap",
+        ldap_auth,
+        "authenticate_ldap",
         AsyncMock(return_value=ldap_auth.LDAPUserInfo(username=user.username, email=None)),
     )
     resp = await client.post(
-        "/admin/login", data={"username": user.username, "password": "directory-password"},
+        "/admin/login",
+        data={"username": user.username, "password": "directory-password"},
         follow_redirects=False,
     )
     assert resp.status_code == 401
@@ -401,10 +423,16 @@ def test_a_directory_entry_without_the_username_attribute_is_refused(
     from app.services import ldap_auth
 
     for name, value in {
-        "ldap_enabled": True, "ldap_server": "dir.example.org", "ldap_port": 389,
-        "ldap_use_ssl": False, "ldap_start_tls": False, "ldap_bind_dn": "cn=svc",
-        "ldap_bind_password": "svc-pw", "ldap_base_dn": "dc=example,dc=org",
-        "ldap_user_filter": "(uid={username})", "ldap_attr_username": "uid",
+        "ldap_enabled": True,
+        "ldap_server": "dir.example.org",
+        "ldap_port": 389,
+        "ldap_use_ssl": False,
+        "ldap_start_tls": False,
+        "ldap_bind_dn": "cn=svc",
+        "ldap_bind_password": "svc-pw",
+        "ldap_base_dn": "dc=example,dc=org",
+        "ldap_user_filter": "(uid={username})",
+        "ldap_attr_username": "uid",
         "ldap_attr_email": "mail",
     }.items():
         monkeypatch.setattr(settings, name, value)
@@ -510,8 +538,10 @@ def test_the_pdf_calls_seven_days_and_twelve_hours_late() -> None:
 
     submitted = datetime(2027, 3, 1, tzinfo=UTC)
     report = SimpleNamespace(
-        submitted_at=submitted, acknowledged_at=submitted + timedelta(days=7, hours=12),
-        feedback_due_at=None, closed_at=None,
+        submitted_at=submitted,
+        acknowledged_at=submitted + timedelta(days=7, hours=12),
+        feedback_due_at=None,
+        closed_at=None,
     )
     assert pdf._ack_label(report, datetime(2027, 3, 20, tzinfo=UTC)) == "OK Acknowledged (late)"
 
@@ -556,8 +586,8 @@ async def test_the_dashboard_and_the_case_page_agree_on_the_last_day(
 
     dash = (await client.post("/admin/dashboard", data={"q": report.case_number})).text
     case = (await client.get(f"/admin/reports/{report.id}")).text
-    row = dash[dash.index(f'<span class="mono dash-nowrap">{report.case_number}'):]
-    row = row[:row.index("</tr>")]
+    row = dash[dash.index(f'<span class="mono dash-nowrap">{report.case_number}') :]
+    row = row[: row.index("</tr>")]
     assert "sla-overdue" not in row and "sla-overdue" not in case.split("detail.sla3m")[-1][:600]
 
 
@@ -565,16 +595,21 @@ async def test_the_dashboard_and_the_case_page_agree_on_the_last_day(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(("path", "data"), [
-    ("/admin/categories", {"slug": "s" * 65, "label_en": "x", "label_de": "x"}),
-    ("/admin/categories", {"slug": "ok", "label_en": "x" * 129, "label_de": "x"}),
-    ("/admin/categories", {"slug": "big", "label_en": "x", "label_de": "x",
-                           "sort_order": "99999999999"}),
-    ("/admin/locations", {"name": "n", "code": "C" * 33}),
-    ("/admin/locations", {"name": "n" * 129, "code": "C1"}),
-    ("/admin/locations", {"name": "n", "code": "C2", "description": "d" * 513}),
-    ("/admin/organisations", {"name": "n" * 129, "slug": "org-long-name"}),
-])
+@pytest.mark.parametrize(
+    ("path", "data"),
+    [
+        ("/admin/categories", {"slug": "s" * 65, "label_en": "x", "label_de": "x"}),
+        ("/admin/categories", {"slug": "ok", "label_en": "x" * 129, "label_de": "x"}),
+        (
+            "/admin/categories",
+            {"slug": "big", "label_en": "x", "label_de": "x", "sort_order": "99999999999"},
+        ),
+        ("/admin/locations", {"name": "n", "code": "C" * 33}),
+        ("/admin/locations", {"name": "n" * 129, "code": "C1"}),
+        ("/admin/locations", {"name": "n", "code": "C2", "description": "d" * 513}),
+        ("/admin/organisations", {"name": "n" * 129, "slug": "org-long-name"}),
+    ],
+)
 async def test_an_oversized_admin_field_is_refused_not_a_500(
     acting_as, db_session: AsyncSession, path: str, data: dict[str, str]
 ) -> None:
@@ -598,7 +633,8 @@ async def test_an_admin_reply_has_the_limit_its_form_shows(
     act(await _totp_user(db_session, AdminRole.admin))
     for path in ("reply", "notes"):
         resp = await client.post(
-            f"/admin/reports/{report.id}/{path}", data={"content": "x" * 5001},
+            f"/admin/reports/{report.id}/{path}",
+            data={"content": "x" * 5001},
             follow_redirects=False,
         )
         assert resp.status_code == 422, path
@@ -617,13 +653,17 @@ async def test_line_breaks_count_once_as_in_the_browser(
 
     client, act = acting_as
     report, _ = await create_report(
-        db_session, "financial_fraud", "Identity reveal with a long reason.",
-        submission_mode=SubmissionMode.confidential, confidential_name_enc=encrypt("Jane"),
+        db_session,
+        "financial_fraud",
+        "Identity reveal with a long reason.",
+        submission_mode=SubmissionMode.confidential,
+        confidential_name_enc=encrypt("Jane"),
     )
     act(await _totp_user(db_session, AdminRole.admin))
     reason = "r" * 250 + "\r\n" + "r" * 249  # 500 in the page (maxlength), 501 on the wire
     resp = await client.post(
-        f"/admin/reports/{report.id}/identity", data={"reason": reason},
+        f"/admin/reports/{report.id}/identity",
+        data={"reason": reason},
         follow_redirects=False,
     )
     assert resp.status_code == 200, resp.text[:300]
@@ -675,9 +715,15 @@ async def test_a_closed_case_takes_no_reply_and_says_so(
         select(func.count()).select_from(Message).where(Message.report_id == report.id)
     )
 
-    resp = await client.post("/reply", data={
-        "case_number": report.case_number, "pin": pin, "content": "Late addition.",
-    }, follow_redirects=False)
+    resp = await client.post(
+        "/reply",
+        data={
+            "case_number": report.case_number,
+            "pin": pin,
+            "content": "Late addition.",
+        },
+        follow_redirects=False,
+    )
 
     after = await db_session.scalar(
         select(func.count()).select_from(Message).where(Message.report_id == report.id)
@@ -778,9 +824,14 @@ async def test_an_account_made_before_multi_tenancy_keeps_its_cases(
     monkeypatch.setattr(settings, "multi_tenancy_enabled", False)
     act(await _totp_user(db_session, AdminRole.superadmin))
     name = f"pre-mt-{uuid.uuid4().hex[:6]}"
-    await client.post("/admin/users", data={
-        "username": name, "password": "A-Long-Enough-Password-1", "role": "admin",
-    })
+    await client.post(
+        "/admin/users",
+        data={
+            "username": name,
+            "password": "A-Long-Enough-Password-1",
+            "role": "admin",
+        },
+    )
     made = await get_user_by_username(db_session, name)
     report, _ = await create_report(db_session, "financial_fraud", "Filed under the default org.")
     assert made is not None and made.org_id == report.org_id
@@ -808,10 +859,15 @@ async def test_a_superadmin_gives_another_organisation_its_admin(
     page = await client.get("/admin/users")
     assert f'value="{org.id}"' in page.text
     name = f"b-admin-{uuid.uuid4().hex[:6]}"
-    await client.post("/admin/users", data={
-        "username": name, "password": "A-Long-Enough-Password-1", "role": "admin",
-        "org_id": str(org.id),
-    })
+    await client.post(
+        "/admin/users",
+        data={
+            "username": name,
+            "password": "A-Long-Enough-Password-1",
+            "role": "admin",
+            "org_id": str(org.id),
+        },
+    )
     made = await get_user_by_username(db_session, name)
     assert made is not None and made.org_id == org.id
 
@@ -837,9 +893,14 @@ async def test_an_admin_cannot_place_an_account_in_another_organisation(
     await db_session.commit()
     act(admin)
     name = f"c-cm-{uuid.uuid4().hex[:6]}"
-    await client.post("/admin/users", data={
-        "username": name, "password": "A-Long-Enough-Password-1", "org_id": str(org.id),
-    })
+    await client.post(
+        "/admin/users",
+        data={
+            "username": name,
+            "password": "A-Long-Enough-Password-1",
+            "org_id": str(org.id),
+        },
+    )
     made = await get_user_by_username(db_session, name)
     assert made is not None and made.org_id == admin.org_id
 
@@ -858,9 +919,11 @@ async def test_an_ldap_account_gets_the_default_organisation(
 
     name = f"dir-{uuid.uuid4().hex[:6]}"
     monkeypatch.setattr(settings, "ldap_enabled", True)
-    monkeypatch.setattr(ldap_auth, "authenticate_ldap", AsyncMock(
-        return_value=ldap_auth.LDAPUserInfo(username=name, email=None)
-    ))
+    monkeypatch.setattr(
+        ldap_auth,
+        "authenticate_ldap",
+        AsyncMock(return_value=ldap_auth.LDAPUserInfo(username=name, email=None)),
+    )
     await client.post("/admin/login", data={"username": name, "password": "pw"})
     made = await get_user_by_username(db_session, name)
     assert made is not None and made.org_id == await default_org_id(db_session)
@@ -887,9 +950,14 @@ async def test_an_account_and_the_account_it_made_are_not_four_eyes(
     creator = await _totp_user(db_session, AdminRole.admin)
     act(creator)
     name = f"puppet-{uuid.uuid4().hex[:6]}"
-    await client.post("/admin/users", data={
-        "username": name, "password": "A-Long-Enough-Password-1", "role": "admin",
-    })
+    await client.post(
+        "/admin/users",
+        data={
+            "username": name,
+            "password": "A-Long-Enough-Password-1",
+            "role": "admin",
+        },
+    )
     made = await get_user_by_username(db_session, name)
     assert made is not None
     report, _ = await create_report(db_session, "financial_fraud", "Delete with one pair of eyes.")
@@ -912,7 +980,10 @@ async def test_migration_012_finds_the_maker_in_the_audit_log(throwaway_db: Asyn
 
     def alembic(*args: str) -> None:
         run = subprocess.run(  # noqa: S603
-            ["alembic", *args], capture_output=True, text=True, check=False,  # noqa: S607
+            ["alembic", *args],  # noqa: S607
+            capture_output=True,
+            text=True,
+            check=False,  # noqa: S607
             env={**os.environ, "DATABASE_URL": settings.database_url},
         )
         assert run.returncode == 0, run.stderr
@@ -920,14 +991,20 @@ async def test_migration_012_finds_the_maker_in_the_audit_log(throwaway_db: Asyn
     alembic("downgrade", "b8d3f7a1c908")
     maker, made = uuid.uuid4(), uuid.uuid4()
     for uid, name in ((maker, "maker"), (made, "Made.One")):
-        await throwaway_db.execute(text(
-            "INSERT INTO admin_users (id, username, password_hash, totp_secret, totp_enabled,"
-            " role, is_active) VALUES (:i, :u, 'x', 'x', true, 'admin', true)"
-        ), {"i": uid, "u": name})
-    await throwaway_db.execute(text(
-        "INSERT INTO audit_log (id, admin_id, admin_username, action, detail)"
-        " VALUES (:i, :a, 'maker', 'admin.created', :d)"
-    ), {"i": uuid.uuid4(), "a": maker, "d": '{"username": "made.one", "role": "admin"}'})
+        await throwaway_db.execute(
+            text(
+                "INSERT INTO admin_users (id, username, password_hash, totp_secret, totp_enabled,"
+                " role, is_active) VALUES (:i, :u, 'x', 'x', true, 'admin', true)"
+            ),
+            {"i": uid, "u": name},
+        )
+    await throwaway_db.execute(
+        text(
+            "INSERT INTO audit_log (id, admin_id, admin_username, action, detail)"
+            " VALUES (:i, :a, 'maker', 'admin.created', :d)"
+        ),
+        {"i": uuid.uuid4(), "a": maker, "d": '{"username": "made.one", "role": "admin"}'},
+    )
     await throwaway_db.commit()
     alembic("upgrade", "head")
     got = await throwaway_db.scalar(
@@ -951,7 +1028,11 @@ def test_the_scheduler_keeps_utc_whatever_tz_says() -> None:
         "asyncio.run(m())\n"
     )
     out = subprocess.run(  # noqa: S603
-        ["python", "-c", probe], cwd=ROOT, capture_output=True, text=True, check=True,  # noqa: S607
+        ["python", "-c", probe],  # noqa: S607
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,  # noqa: S607
         env={**os.environ, "TZ": "Europe/Berlin"},
     )
     assert "OFFSET 0:00:00" in out.stdout.splitlines()
@@ -984,15 +1065,19 @@ async def test_the_export_holds_what_the_filtered_page_shows_and_all_of_it(
     from app.models.user import AdminRole
 
     client, act = acting_as
-    await throwaway_db.execute(text(
-        "INSERT INTO audit_log (id, admin_username, action, created_at)"
-        " SELECT gen_random_uuid(), 'bulk', 'report.note_added', now() - n * interval '1 second'"
-        " FROM generate_series(1, 10001) n"
-    ))
-    await throwaway_db.execute(text(
-        "INSERT INTO audit_log (id, admin_username, action) VALUES"
-        " (gen_random_uuid(), 'other', 'report.assigned')"
-    ))
+    await throwaway_db.execute(
+        text(
+            "INSERT INTO audit_log (id, admin_username, action, created_at)"
+            " SELECT gen_random_uuid(), 'bulk', 'report.note_added', now() - n * interval '1 second'"  # noqa: E501
+            " FROM generate_series(1, 10001) n"
+        )
+    )
+    await throwaway_db.execute(
+        text(
+            "INSERT INTO audit_log (id, admin_username, action) VALUES"
+            " (gen_random_uuid(), 'other', 'report.assigned')"
+        )
+    )
     await throwaway_db.commit()
     act(await _totp_user(throwaway_db, AdminRole.superadmin))
 
@@ -1026,9 +1111,11 @@ async def test_exporting_the_log_and_downloading_evidence_are_recorded(
     [att] = await create_attachments(db_session, report, [("n.txt", "text/plain", b"evidence")])
     assert (await client.get(f"/admin/reports/{report.id}/attachments/{att.id}")).status_code == 200
 
-    actions = set((await db_session.execute(
-        select(AuditLog.action).where(AuditLog.admin_id == admin.id)
-    )).scalars().all())
+    actions = set(
+        (await db_session.execute(select(AuditLog.action).where(AuditLog.admin_id == admin.id)))
+        .scalars()
+        .all()
+    )
     assert {AuditAction.AUDIT_EXPORTED, AuditAction.ATTACHMENT_DOWNLOADED} <= actions
 
 
@@ -1062,18 +1149,23 @@ async def test_a_search_across_organisations_is_in_each_one_s_log(
     act(superadmin)
 
     await client.post("/admin/dashboard", data={"q": word})
-    orgs = set((await db_session.execute(
-        select(AuditLog.org_id).where(
-            AuditLog.admin_id == superadmin.id, AuditLog.action == AuditAction.CONTENT_SEARCHED
+    orgs = set(
+        (
+            await db_session.execute(
+                select(AuditLog.org_id).where(
+                    AuditLog.admin_id == superadmin.id,
+                    AuditLog.action == AuditAction.CONTENT_SEARCHED,
+                )
+            )
         )
-    )).scalars().all())
+        .scalars()
+        .all()
+    )
     assert org.id in orgs
 
 
 @pytest.mark.asyncio
-async def test_unassigning_is_recorded_as_unassigning(
-    acting_as, db_session: AsyncSession
-) -> None:
+async def test_unassigning_is_recorded_as_unassigning(acting_as, db_session: AsyncSession) -> None:
     """The audit filter offered 'unassigned' and nothing ever wrote it."""
     from sqlalchemy import select
 
@@ -1088,12 +1180,20 @@ async def test_unassigning_is_recorded_as_unassigning(
     act(admin)
     await client.post(f"/admin/reports/{report.id}/assign", data={"admin_id": str(admin.id)})
     await client.post(f"/admin/reports/{report.id}/assign", data={"admin_id": ""})
-    actions = (await db_session.execute(
-        select(AuditLog.action).where(AuditLog.report_id == report.id)
-        .order_by(AuditLog.created_at)
-    )).scalars().all()
+    actions = (
+        (
+            await db_session.execute(
+                select(AuditLog.action)
+                .where(AuditLog.report_id == report.id)
+                .order_by(AuditLog.created_at)
+            )
+        )
+        .scalars()
+        .all()
+    )
     assert [a for a in actions if a.startswith("report.") and "assign" in a] == [
-        AuditAction.REPORT_ASSIGNED, AuditAction.REPORT_UNASSIGNED,
+        AuditAction.REPORT_ASSIGNED,
+        AuditAction.REPORT_UNASSIGNED,
     ]
 
 
@@ -1165,16 +1265,22 @@ async def test_a_superadmin_cannot_place_an_account_in_an_unknown_organisation(
     if org_id == "missing":
         org_id = str(uuid.uuid4())
     elif org_id == "inactive":
-        org = Organisation(id=uuid.uuid4(), name="Closed", slug=f"x-{uuid.uuid4().hex[:6]}",
-                           is_active=False)
+        org = Organisation(
+            id=uuid.uuid4(), name="Closed", slug=f"x-{uuid.uuid4().hex[:6]}", is_active=False
+        )
         db_session.add(org)
         await db_session.commit()
         org_id = str(org.id)
     act(await _totp_user(db_session, AdminRole.superadmin))
-    resp = await client.post("/admin/users", data={
-        "username": f"u-{uuid.uuid4().hex[:6]}", "password": "A-Long-Enough-Password-1",
-        "org_id": org_id,
-    }, follow_redirects=False)
+    resp = await client.post(
+        "/admin/users",
+        data={
+            "username": f"u-{uuid.uuid4().hex[:6]}",
+            "password": "A-Long-Enough-Password-1",
+            "org_id": org_id,
+        },
+        follow_redirects=False,
+    )
     assert resp.status_code == 422
 
 
@@ -1196,9 +1302,15 @@ async def test_a_draft_cookie_with_a_smuggled_newline_is_a_fresh_draft_not_a_500
         assert csrf
         cookies = f"ow_csrf={csrf.group(1)}; ow-submission-session={value}"
         resp = await c.post(
-            "/submit", headers={"cookie": cookies}, follow_redirects=False,
-            data={"csrf_token": csrf.group(1), "step": "1", "action": "next",
-                  "submission_mode": "anonymous"},
+            "/submit",
+            headers={"cookie": cookies},
+            follow_redirects=False,
+            data={
+                "csrf_token": csrf.group(1),
+                "step": "1",
+                "action": "next",
+                "submission_mode": "anonymous",
+            },
         )
     assert resp.status_code in (200, 303)
     assert "\n" not in resp.headers.get("set-cookie", "")
@@ -1213,11 +1325,19 @@ def test_an_onion_location_never_reaches_the_header_with_a_newline() -> None:
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("next_url", [
-    "//evil.example/submit/x", "https://evil.example/status", "/\\evil.example",
-    "/status?x=1%0d%0aSet-Cookie:%20a=b", "/status?next=https://evil.example",
-    "/submit/a\r\nX-Evil: 1", "javascript:alert(1)", "/admin/../../evil",
-])
+@pytest.mark.parametrize(
+    "next_url",
+    [
+        "//evil.example/submit/x",
+        "https://evil.example/status",
+        "/\\evil.example",
+        "/status?x=1%0d%0aSet-Cookie:%20a=b",
+        "/status?next=https://evil.example",
+        "/submit/a\r\nX-Evil: 1",
+        "javascript:alert(1)",
+        "/admin/../../evil",
+    ],
+)
 async def test_the_language_switch_redirects_only_within_the_site(
     client: AsyncClient, next_url: str
 ) -> None:
@@ -1227,9 +1347,15 @@ async def test_the_language_switch_redirects_only_within_the_site(
     page = await client.get("/submit")
     csrf = re.search(r'name="csrf_token" value="([^"]+)"', page.text)
     assert csrf
-    resp = await client.post("/set-language", data={
-        "csrf_token": csrf.group(1), "lang": "de", "next": next_url,
-    }, follow_redirects=False)
+    resp = await client.post(
+        "/set-language",
+        data={
+            "csrf_token": csrf.group(1),
+            "lang": "de",
+            "next": next_url,
+        },
+        follow_redirects=False,
+    )
     location = resp.headers["location"]
     assert resp.status_code == 303
     assert location.startswith("/") and not location.startswith(("//", "/\\"))

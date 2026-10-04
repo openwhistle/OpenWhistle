@@ -106,9 +106,17 @@ async def _second_factor(
     accounts, so no path may issue a session directly.
     """
     if not user.is_active:
-        return render(request, "login.html", _login_ctx(request, {
-            "error": "login.error.deactivated",
-        }), status_code=401)
+        return render(
+            request,
+            "login.html",
+            _login_ctx(
+                request,
+                {
+                    "error": "login.error.deactivated",
+                },
+            ),
+            status_code=401,
+        )
 
     if not user.totp_enabled:
         setup_token = secrets.token_urlsafe(32)
@@ -117,10 +125,14 @@ async def _second_factor(
 
     temp_token = secrets.token_urlsafe(32)
     await auth_service.store_totp_pending(redis, temp_token, str(user.id))
-    return render(request, "login_mfa.html", {
-        "temp_token": temp_token,
-        "is_demo": settings.demo_mode,
-    })
+    return render(
+        request,
+        "login_mfa.html",
+        {
+            "temp_token": temp_token,
+            "is_demo": settings.demo_mode,
+        },
+    )
 
 
 async def _password_failed(
@@ -155,8 +167,12 @@ async def _password_failed(
 def _set_session_cookie(response: Response, token: str, request: Request) -> None:
     max_age = max(1, auth_service.seconds_left(token))
     response.set_cookie(
-        key="ow_session", value=token, httponly=True, samesite="lax",
-        secure=cookie_secure(request), max_age=max_age,
+        key="ow_session",
+        value=token,
+        httponly=True,
+        samesite="lax",
+        secure=cookie_secure(request),
+        max_age=max_age,
     )
 
 
@@ -201,15 +217,30 @@ async def login_post(
     if not password:
         missing["password"] = "login.error.password_required"  # noqa: S105 — locale key
     if missing:
-        return render(request, "login.html", _login_ctx(request, {
-            "error": "login.error.required",
-            "field_errors": missing,
-        }), status_code=400)
+        return render(
+            request,
+            "login.html",
+            _login_ctx(
+                request,
+                {
+                    "error": "login.error.required",
+                    "field_errors": missing,
+                },
+            ),
+            status_code=400,
+        )
 
     if not await rl.check_admin_login_attempts(redis, username):
-        return render(request, "login.html", _login_ctx(request, {
-            "error": "login.error.locked",
-        }))
+        return render(
+            request,
+            "login.html",
+            _login_ctx(
+                request,
+                {
+                    "error": "login.error.locked",
+                },
+            ),
+        )
 
     # ── LDAP authentication path ────────────────────────────────────
     # A directory bind that fails falls through to the local check below:
@@ -234,19 +265,29 @@ async def login_post(
             user: AdminUser | None = result.scalar_one_or_none()
 
             if user is None:
-                taken = await db.scalar(select(AdminUser.id).where(
-                    func.lower(AdminUser.username) == ldap_info.username.lower()
-                ))
+                taken = await db.scalar(
+                    select(AdminUser.id).where(
+                        func.lower(AdminUser.username) == ldap_info.username.lower()
+                    )
+                )
                 if taken is not None:
                     # Never merged into the local account of the same name:
                     # the directory would take it over. This used to be an
                     # IntegrityError, a 500.
                     log.warning("LDAP user matches a local account name; not provisioned")
                     await _password_failed(redis, db, username, background_tasks)
-                    return render(request, "login.html", _login_ctx(request, {
-                        "error": "login.error.invalid",
-                        "credentials_invalid": True,
-                    }), status_code=401)
+                    return render(
+                        request,
+                        "login.html",
+                        _login_ctx(
+                            request,
+                            {
+                                "error": "login.error.invalid",
+                                "credentials_invalid": True,
+                            },
+                        ),
+                        status_code=401,
+                    )
                 # First LDAP login — auto-provision with a temporary TOTP secret.
                 # The user must set up TOTP on their first login via /admin/mfa/setup.
                 user = AdminUser(
@@ -281,10 +322,18 @@ async def login_post(
         pw_ok = False
     if not pw_ok:
         await _password_failed(redis, db, username, background_tasks)
-        return render(request, "login.html", _login_ctx(request, {
-            "error": "login.error.invalid",
-            "credentials_invalid": True,
-        }), status_code=401)
+        return render(
+            request,
+            "login.html",
+            _login_ctx(
+                request,
+                {
+                    "error": "login.error.invalid",
+                    "credentials_invalid": True,
+                },
+            ),
+            status_code=401,
+        )
 
     assert user is not None  # narrowed: pw_ok True implies user is not None
     # Note: SSO-only accounts (oidc_sub set, no password_hash) never reach here —
@@ -391,9 +440,7 @@ async def login_mfa_post(
     # One-time use (consume_totp), except for the demo accounts, whose static
     # code is intentionally reusable.
     demo_code = settings.demo_mode and verify_demo_totp(totp_code, user.username)
-    code_valid = demo_code or await consume_totp(
-        redis, user.id, user.totp_secret, totp_code
-    )
+    code_valid = demo_code or await consume_totp(redis, user.id, user.totp_secret, totp_code)
 
     if not code_valid:
         await rl.record_admin_login_failure(redis, user.username)
@@ -433,12 +480,16 @@ async def mfa_setup_get(
         return RedirectResponse("/admin/login", status_code=302)
 
     qr_b64 = generate_qr_code_base64(user.totp_secret, user.username)
-    return render(request, "login_mfa_setup.html", {
-        "temp_token": token,
-        "qr_b64": qr_b64,
-        "totp_secret": user.totp_secret,
-        "username": user.username,
-    })
+    return render(
+        request,
+        "login_mfa_setup.html",
+        {
+            "temp_token": token,
+            "qr_b64": qr_b64,
+            "totp_secret": user.totp_secret,
+            "username": user.username,
+        },
+    )
 
 
 @router.post("/mfa/setup", response_class=HTMLResponse, response_model=None)
@@ -463,14 +514,18 @@ async def mfa_setup_post(
         new_setup_token = secrets.token_urlsafe(32)
         await auth_service.store_totp_setup_pending(redis, new_setup_token, user_id)
         qr_b64 = generate_qr_code_base64(user.totp_secret, user.username)
-        return render(request, "login_mfa_setup.html", {
-            "temp_token": new_setup_token,
-            "qr_b64": qr_b64,
-            "totp_secret": user.totp_secret,
-            "username": user.username,
-            "error": "mfa.setup.error.invalid",
-            "field_errors": {"totp_code": "mfa.setup.error.invalid"},
-        })
+        return render(
+            request,
+            "login_mfa_setup.html",
+            {
+                "temp_token": new_setup_token,
+                "qr_b64": qr_b64,
+                "totp_secret": user.totp_secret,
+                "username": user.username,
+                "error": "mfa.setup.error.invalid",
+                "field_errors": {"totp_code": "mfa.setup.error.invalid"},
+            },
+        )
 
     user.totp_enabled = True
     await audit_service.log(db, user, audit_service.AuditAction.AUTH_TOTP_SETUP)
@@ -534,7 +589,9 @@ async def session_refresh(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
     new_token = auth_service.create_access_token(
-        str(current_user.id), role=current_user.role.value, auth_time=started_at,
+        str(current_user.id),
+        role=current_user.role.value,
+        auth_time=started_at,
     )
     # New first, then the old one: if the old session is already gone, it was
     # revoked while this request ran (a password change's sweep, a logout),
@@ -650,6 +707,7 @@ async def oidc_callback(
 # Linking adds a way to pass the first factor; TOTP stays mandatory
 # (_second_factor), and the password keeps working.
 
+
 def _sso_result(result: str) -> RedirectResponse:
     """Back to the account page, which shows the result (oidc.SSO_RESULTS)."""
     return RedirectResponse(f"/admin/account?sso={result}", status_code=303)
@@ -685,16 +743,26 @@ async def _oidc_link_callback(
         user = await get_current_admin(request, db, redis, session_token)
     except HTTPException:
         # No live session: this is never a login, and never links anything.
-        return render(request, "login.html", _login_ctx(request, {
-            "error": "login.error.sso_link_session",
-        }), status_code=401)
+        return render(
+            request,
+            "login.html",
+            _login_ctx(
+                request,
+                {
+                    "error": "login.error.sso_link_session",
+                },
+            ),
+            status_code=401,
+        )
     assert session_token is not None  # get_current_admin refuses a missing cookie
 
     if error or not code:
         return _sso_result("failed")
     try:
         claims = await oidc_service.exchange_code(
-            redis, code, state,
+            redis,
+            code,
+            state,
             purpose=oidc_service.PURPOSE_LINK,
             binding=oidc_service.session_binding(str(user.id), session_token),
         )
@@ -740,7 +808,9 @@ async def oidc_unlink(
     current_user.oidc_sub = None
     current_user.oidc_issuer = None
     await audit_service.log(
-        db, current_user, audit_service.AuditAction.AUTH_SSO_UNLINKED,
+        db,
+        current_user,
+        audit_service.AuditAction.AUTH_SSO_UNLINKED,
         detail={"issuer": issuer},
     )
     await db.commit()
@@ -774,14 +844,19 @@ async def _account_page(
     from app.models.organisation import Organisation  # noqa: PLC0415
 
     org = await db.get(Organisation, user.org_id) if user.org_id else None
-    return render(request, "admin/account.html", {
-        "user": user,
-        "org_name": org.name if org else None,
-        "ldap_enabled": settings.ldap_enabled,
-        "demo_locked": _demo_account(user),
-        "password_changed": request.query_params.get("password") == _PASSWORD_CHANGED,
-        **(extra or {}),
-    }, status_code=status_code)
+    return render(
+        request,
+        "admin/account.html",
+        {
+            "user": user,
+            "org_name": org.name if org else None,
+            "ldap_enabled": settings.ldap_enabled,
+            "demo_locked": _demo_account(user),
+            "password_changed": request.query_params.get("password") == _PASSWORD_CHANGED,
+            **(extra or {}),
+        },
+        status_code=status_code,
+    )
 
 
 @router.get("/account", response_class=HTMLResponse)
@@ -831,9 +906,16 @@ async def account_password(
         )
 
     async def refuse(errors: dict[str, str], code: int) -> HTMLResponse:
-        return await _account_page(request, db, current_user, {
-            "error": next(iter(errors.values())), "field_errors": errors,
-        }, status_code=code)
+        return await _account_page(
+            request,
+            db,
+            current_user,
+            {
+                "error": next(iter(errors.values())),
+                "field_errors": errors,
+            },
+            status_code=code,
+        )
 
     # The same per-account counter as the sign-in form: guesses here and there add up.
     if not await rl.check_admin_login_attempts(redis, current_user.username):
@@ -857,7 +939,9 @@ async def account_password(
     current_user.password_hash = auth_service.hash_password(new_password)
     current_user.must_change_password = False
     await audit_service.log(
-        db, current_user, audit_service.AuditAction.AUTH_PASSWORD_CHANGED,
+        db,
+        current_user,
+        audit_service.AuditAction.AUTH_PASSWORD_CHANGED,
         detail={"required": required},
     )
     await db.commit()

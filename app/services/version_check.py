@@ -17,9 +17,7 @@ from redis.asyncio import Redis
 
 log = logging.getLogger(__name__)
 
-GITHUB_LATEST_RELEASE_URL = (
-    "https://api.github.com/repos/openwhistle/OpenWhistle/releases/latest"
-)
+GITHUB_LATEST_RELEASE_URL = "https://api.github.com/repos/openwhistle/OpenWhistle/releases/latest"
 _CACHE_KEY = "openwhistle:update_check"
 _ETAG_KEY = "openwhistle:update_check_etag"
 _LOCK_KEY = "openwhistle:job_lock:update_check"
@@ -57,7 +55,7 @@ async def _read_cache(redis: Redis) -> dict[str, Any] | None:
         return None
     try:
         parsed = json.loads(raw)
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         return None
     return parsed if isinstance(parsed, dict) else None
 

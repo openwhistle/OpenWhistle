@@ -92,7 +92,9 @@ def create_access_token(user_id: str, role: str = "admin", auth_time: int | None
 def decode_access_token_claims(token: str) -> dict[str, Any] | None:
     try:
         claims: dict[str, Any] = jwt.decode(
-            token, settings.secret_key, algorithms=[settings.algorithm],
+            token,
+            settings.secret_key,
+            algorithms=[settings.algorithm],
             options={"require": ["exp", "sub"]},
         )
     except jwt.PyJWTError:

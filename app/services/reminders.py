@@ -70,9 +70,7 @@ async def send_sla_reminders() -> None:
                 now = datetime.now(UTC)
 
                 result = await db.execute(
-                    select(Report).where(
-                        Report.status.notin_([ReportStatus.closed])
-                    )
+                    select(Report).where(Report.status.notin_([ReportStatus.closed]))
                 )
                 reports = result.scalars().all()
 
@@ -87,8 +85,11 @@ async def send_sla_reminders() -> None:
                         )
                     except Exception:  # noqa: BLE001
                         log.exception("SLA reminder check failed for a report; continuing")
-                if (ack_due or feedback_due) and settings.notify_webhook_enabled \
-                        and settings.notify_webhook_url.strip():
+                if (
+                    (ack_due or feedback_due)
+                    and settings.notify_webhook_enabled
+                    and settings.notify_webhook_url.strip()
+                ):
                     from app.services import notifications  # noqa: PLC0415
 
                     await notifications._send_reminder_webhook(ack_due, feedback_due, settings)
@@ -129,6 +130,7 @@ async def _check_ack_reminder(
         return False
 
     from redis.asyncio import Redis as RedisType
+
     red: RedisType = redis  # type: ignore[assignment]
 
     key = _ack_dedup_key(r.case_number)
@@ -172,6 +174,7 @@ async def _check_feedback_reminder(
         return False
 
     from redis.asyncio import Redis as RedisType
+
     red: RedisType = redis  # type: ignore[assignment]
 
     key = _feedback_dedup_key(r.case_number)

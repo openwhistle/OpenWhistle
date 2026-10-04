@@ -114,9 +114,7 @@ class S3StorageBackend(StorageBackend):
         client = self._client()
         full_key = self._full_key(key)
         try:
-            response = await asyncio.to_thread(
-                client.get_object, Bucket=self._bucket, Key=full_key
-            )
+            response = await asyncio.to_thread(client.get_object, Bucket=self._bucket, Key=full_key)
         except ClientError as exc:
             code = str(exc.response.get("Error", {}).get("Code", ""))
             if code in {"NoSuchKey", "NoSuchBucket", "404", "AccessDenied"}:
@@ -130,9 +128,7 @@ class S3StorageBackend(StorageBackend):
     async def delete(self, key: str) -> None:
         client = self._client()
         full_key = self._full_key(key)
-        await asyncio.to_thread(
-            client.delete_object, Bucket=self._bucket, Key=full_key
-        )
+        await asyncio.to_thread(client.delete_object, Bucket=self._bucket, Key=full_key)
         log.info("Deleted attachment from S3")
 
     async def copy(self, src: str, dst: str) -> None:

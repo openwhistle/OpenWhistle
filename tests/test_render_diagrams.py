@@ -44,8 +44,8 @@ def test_one_light_value_keeps_its_role_in_dark() -> None:
     light, dark = r.palette()["light"], r.palette()["dark"]
     assert light["canvas"] == light["surface-2"] == light["accent-ink"] == "#ffffff"
     assert "fontColor=#08080a" in r.expand_style("ow:result", dark)  # canvas
-    assert "fontColor=#06120d" in r.expand_style("ow:start", dark)   # accent-ink
-    assert "fillColor=#1b1b1e" in r.expand_style("ow:step", dark)    # node = surface-2
+    assert "fontColor=#06120d" in r.expand_style("ow:start", dark)  # accent-ink
+    assert "fillColor=#1b1b1e" in r.expand_style("ow:step", dark)  # node = surface-2
 
 
 def test_a_role_starts_with_the_common_settings_and_keeps_overrides() -> None:
