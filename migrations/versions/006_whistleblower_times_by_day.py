@@ -59,10 +59,12 @@ WHERE m.id = retimed.id AND m.sent_at <> retimed.new
 
 def upgrade() -> None:
     for table, column in (("reports", "submitted_at"), ("attachments", "uploaded_at")):
-        op.execute(sa.text(
-            f"UPDATE {table} SET {column} = {_DAY.format(col=column)} "  # noqa: S608 — fixed names
-            f"WHERE {column} <> {_DAY.format(col=column)}"
-        ))
+        op.execute(
+            sa.text(
+                f"UPDATE {table} SET {column} = {_DAY.format(col=column)} "  # noqa: S608 — fixed names
+                f"WHERE {column} <> {_DAY.format(col=column)}"
+            )
+        )
     op.execute(sa.text(_MESSAGES))
 
 

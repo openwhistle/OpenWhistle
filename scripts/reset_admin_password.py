@@ -100,9 +100,7 @@ async def _reset_password(username: str, new_password: str) -> bool:
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
     async with session_factory() as session:
-        result = await session.execute(
-            select(AdminUser).where(AdminUser.username == username)
-        )
+        result = await session.execute(select(AdminUser).where(AdminUser.username == username))
         user = result.scalar_one_or_none()
 
         if user is None:
@@ -124,8 +122,10 @@ async def _reset_password(username: str, new_password: str) -> bool:
         user.password_hash = hash_password(new_password)
         user.must_change_password = True
         await audit.log_system(
-            session, audit.AuditAction.ADMIN_PASSWORD_RESET,
-            detail={"username": user.username, "via": "command line"}, org_id=user.org_id,
+            session,
+            audit.AuditAction.ADMIN_PASSWORD_RESET,
+            detail={"username": user.username, "via": "command line"},
+            org_id=user.org_id,
         )
         await session.commit()
         user_id = str(user.id)
@@ -168,8 +168,10 @@ async def _reset_totp(username: str) -> tuple[str, str] | None:
         secret = require_new_authenticator(user)
         user.totp_enabled = True
         await audit.log_system(
-            session, audit.AuditAction.ADMIN_TOTP_RESET,
-            detail={"username": user.username, "via": "command line"}, org_id=user.org_id,
+            session,
+            audit.AuditAction.ADMIN_TOTP_RESET,
+            detail={"username": user.username, "via": "command line"},
+            org_id=user.org_id,
         )
         await session.commit()
         user_id = str(user.id)
@@ -222,7 +224,8 @@ def main() -> None:
     group.add_argument("--username", "-u", metavar="USERNAME", help="Admin username to update")
     group.add_argument("--list", "-l", action="store_true", help="List all admin users")
     group.add_argument(
-        "--reset-totp", metavar="USERNAME",
+        "--reset-totp",
+        metavar="USERNAME",
         help="Give USERNAME a new authenticator secret (lost authenticator app)",
     )
     parser.add_argument(

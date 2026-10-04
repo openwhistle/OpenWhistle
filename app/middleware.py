@@ -93,8 +93,7 @@ class SecurityMiddleware:
         is_onion = is_onion_request(raw_headers)
         state["is_onion"] = is_onion
         ip_headers_present = any(
-            name.decode("latin-1").lower() in _IP_REVEAL_HEADERS
-            for name, _ in raw_headers
+            name.decode("latin-1").lower() in _IP_REVEAL_HEADERS for name, _ in raw_headers
         )
 
         if ip_headers_present:
@@ -108,7 +107,8 @@ class SecurityMiddleware:
             # Noted above; now gone, so no handler, error report or log line
             # further down can ever see a whistleblower's address.
             scope["headers"] = [
-                (name, value) for name, value in raw_headers
+                (name, value)
+                for name, value in raw_headers
                 if name.decode("latin-1").lower() not in _IP_REVEAL_HEADERS
             ]
         # The peer address is the proxy's at best, the whistleblower's at worst.
@@ -137,8 +137,8 @@ class SecurityMiddleware:
                     and not is_onion
                     and content_type.lower().startswith("text/html")
                 ):
-                    mutable["Onion-Location"] = (
-                        settings.onion_location.rstrip("/") + str(scope.get("path", "/"))
+                    mutable["Onion-Location"] = settings.onion_location.rstrip("/") + str(
+                        scope.get("path", "/")
                     )
                 # A PIN, a report or an attachment must not be left in the browser
                 # cache of a shared office computer for the next user to find.

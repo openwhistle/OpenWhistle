@@ -44,9 +44,7 @@ def _oidc_on(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(settings, "oidc_client_id", "openwhistle-client")
 
 
-async def _user(
-    db: AsyncSession, role: AdminRole = AdminRole.admin, **kw: object
-) -> AdminUser:
+async def _user(db: AsyncSession, role: AdminRole = AdminRole.admin, **kw: object) -> AdminUser:
     user = AdminUser(
         id=uuid.uuid4(),
         username=f"rec_{uuid.uuid4().hex[:8]}",
@@ -85,9 +83,10 @@ async def _start_link(client: AsyncClient, csrf: str) -> dict[str, str]:
 
 
 def _idp(id_token: str) -> MagicMock:
-    resp = MagicMock(raise_for_status=MagicMock(), json=MagicMock(
-        return_value={"access_token": "a", "id_token": id_token}
-    ))
+    resp = MagicMock(
+        raise_for_status=MagicMock(),
+        json=MagicMock(return_value={"access_token": "a", "id_token": id_token}),
+    )
     http = AsyncMock()
     http.post = AsyncMock(return_value=resp)
     http.__aenter__ = AsyncMock(return_value=http)
@@ -97,9 +96,11 @@ def _idp(id_token: str) -> MagicMock:
 
 async def _callback(client: AsyncClient, state: str, nonce: str, sub: str) -> object:
     token = _id_token(sub=sub, nonce=nonce, aud="openwhistle-client")
-    with patch.object(oidc_service, "_get_metadata", AsyncMock(return_value=_FAKE_METADATA)), \
-         patch.object(oidc_service.httpx, "AsyncClient", return_value=_idp(token)), \
-         patch.object(jwt.PyJWKClient, "fetch_data", return_value={"keys": [_JWK]}):
+    with (
+        patch.object(oidc_service, "_get_metadata", AsyncMock(return_value=_FAKE_METADATA)),
+        patch.object(oidc_service.httpx, "AsyncClient", return_value=_idp(token)),
+        patch.object(jwt.PyJWKClient, "fetch_data", return_value={"keys": [_JWK]}),
+    ):
         return await client.get(
             f"/admin/oidc/callback?code=c&state={state}", follow_redirects=False
         )
@@ -134,8 +135,9 @@ async def test_link_stores_sub_and_issuer_on_the_signed_in_account(
     assert resp.headers["location"] == "/admin/account?sso=linked"  # type: ignore[attr-defined]
     linked = await _fresh(db_session, user)
     assert (linked.oidc_sub, linked.oidc_issuer) == (sub, _ISSUER)
-    entries = [e for e in await _audit(db_session, AuditAction.AUTH_SSO_LINKED)
-               if e.admin_id == user.id]
+    entries = [
+        e for e in await _audit(db_session, AuditAction.AUTH_SSO_LINKED) if e.admin_id == user.id
+    ]
     assert len(entries) == 1
     assert json.loads(entries[0].detail or "{}") == {"issuer": _ISSUER}
 
@@ -196,18 +198,29 @@ async def test_a_link_started_by_one_session_cannot_land_on_another(
 
 async def _exchange(redis: _FakeRedis, state: str, purpose: str, binding: str = "") -> object:
     token = _id_token(aud="openwhistle-client")
-    with patch.object(oidc_service, "_get_metadata", AsyncMock(return_value=_FAKE_METADATA)), \
-         patch.object(oidc_service.httpx, "AsyncClient", return_value=_idp(token)), \
-         patch.object(jwt.PyJWKClient, "fetch_data", return_value={"keys": [_JWK]}):
+    with (
+        patch.object(oidc_service, "_get_metadata", AsyncMock(return_value=_FAKE_METADATA)),
+        patch.object(oidc_service.httpx, "AsyncClient", return_value=_idp(token)),
+        patch.object(jwt.PyJWKClient, "fetch_data", return_value={"keys": [_JWK]}),
+    ):
         return await oidc_service.exchange_code(
-            redis, "c", state, purpose=purpose, binding=binding  # type: ignore[arg-type]
+            redis,
+            "c",
+            state,
+            purpose=purpose,
+            binding=binding,  # type: ignore[arg-type]
         )
 
 
 def _store(redis: _FakeRedis, state: str, purpose: str, binding: str = "") -> None:
-    redis.data[f"openwhistle:oidc_state:{state}"] = json.dumps({
-        "nonce": "the-nonce", "code_verifier": "v", "purpose": purpose, "binding": binding,
-    })
+    redis.data[f"openwhistle:oidc_state:{state}"] = json.dumps(
+        {
+            "nonce": "the-nonce",
+            "code_verifier": "v",
+            "purpose": purpose,
+            "binding": binding,
+        }
+    )
 
 
 @pytest.mark.asyncio
@@ -236,7 +249,9 @@ async def test_link_state_is_stored_with_purpose_and_binding() -> None:
     redis = _FakeRedis()
     with patch.object(oidc_service, "_get_metadata", AsyncMock(return_value=_FAKE_METADATA)):
         url = await oidc_service.create_authorization_url(
-            redis, purpose=oidc_service.PURPOSE_LINK, binding="b"  # type: ignore[arg-type]
+            redis,
+            purpose=oidc_service.PURPOSE_LINK,
+            binding="b",  # type: ignore[arg-type]
         )
     state = parse_qs(urlsplit(url).query)["state"][0]
     assert state.startswith(oidc_service.LINK_STATE_PREFIX)
@@ -400,10 +415,12 @@ async def test_superadmin_resets_an_authenticator(
     assert fresh.totp_secret != old_secret
     assert not await validate_session(redis, target_token)
     assert await validate_session(redis, bystander_token)
-    entry = [e for e in await _audit(db_session, AuditAction.ADMIN_TOTP_RESET)
-             if e.admin_id == boss.id]
+    entry = [
+        e for e in await _audit(db_session, AuditAction.ADMIN_TOTP_RESET) if e.admin_id == boss.id
+    ]
     assert json.loads(entry[0].detail or "{}") == {
-        "username": target.username, "password_reset": True,
+        "username": target.username,
+        "password_reset": True,
     }
     # Shown once: the next page load does not carry it.
     assert temporary not in (await client.get("/admin/users")).text
@@ -421,10 +438,15 @@ async def test_superadmin_resets_an_authenticator(
     assert login.headers["location"].startswith("/admin/mfa/setup")
     setup_token = parse_qs(urlsplit(login.headers["location"]).query)["token"][0]
     new_secret = (await _fresh(db_session, target)).totp_secret
-    done = await client.post("/admin/mfa/setup", data={
-        "csrf_token": csrf, "temp_token": setup_token,
-        "totp_code": pyotp.TOTP(new_secret).now(),
-    }, follow_redirects=False)
+    done = await client.post(
+        "/admin/mfa/setup",
+        data={
+            "csrf_token": csrf,
+            "temp_token": setup_token,
+            "totp_code": pyotp.TOTP(new_secret).now(),
+        },
+        follow_redirects=False,
+    )
     # The superadmin saw the temporary password: its change comes next.
     assert done.headers["location"] == "/admin/account"
     assert "ow_session" in done.cookies
@@ -432,12 +454,16 @@ async def test_superadmin_resets_an_authenticator(
     assert (fresh.totp_enabled, fresh.must_change_password) == (True, True)
 
 
-async def _password_login(
-    client: AsyncClient, csrf: str, username: str, password: str
-) -> Any:
-    return await client.post("/admin/login", data={
-        "username": username, "password": password, "csrf_token": csrf,
-    }, follow_redirects=False)
+async def _password_login(client: AsyncClient, csrf: str, username: str, password: str) -> Any:
+    return await client.post(
+        "/admin/login",
+        data={
+            "username": username,
+            "password": password,
+            "csrf_token": csrf,
+        },
+        follow_redirects=False,
+    )
 
 
 def _temporary_password(page: str) -> str:
@@ -481,8 +507,11 @@ async def test_an_account_without_a_password_keeps_its_directory_login(
     assert "signs in through the directory" in resp.text  # type: ignore[attr-defined]
     fresh = await _fresh(db_session, target)
     assert (fresh.password_hash, fresh.totp_enabled) == (None, False)
-    entry = [e for e in await _audit(db_session, AuditAction.ADMIN_TOTP_RESET)
-             if target.username in (e.detail or "")]
+    entry = [
+        e
+        for e in await _audit(db_session, AuditAction.ADMIN_TOTP_RESET)
+        if target.username in (e.detail or "")
+    ]
     assert json.loads(entry[0].detail or "{}")["password_reset"] is False
 
 
@@ -513,9 +542,15 @@ async def test_after_a_reset_the_old_code_opens_nothing(
     client.cookies.delete("ow_session")
 
     await store_totp_pending(await get_redis(), "pending-after-reset", str(target.id))
-    resp = await client.post("/admin/login/mfa", data={
-        "csrf_token": csrf, "temp_token": "pending-after-reset", "totp_code": old_code,
-    }, follow_redirects=False)
+    resp = await client.post(
+        "/admin/login/mfa",
+        data={
+            "csrf_token": csrf,
+            "temp_token": "pending-after-reset",
+            "totp_code": old_code,
+        },
+        follow_redirects=False,
+    )
 
     assert "ow_session" not in resp.cookies
     assert resp.status_code == 200 and "totp_code" in resp.text
@@ -572,9 +607,7 @@ async def test_reset_of_an_unknown_user_is_404(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
     csrf = await _sign_in(client, await _user(db_session, role=AdminRole.superadmin))
-    resp = await client.post(
-        f"/admin/users/{uuid.uuid4()}/reset-totp", data={"csrf_token": csrf}
-    )
+    resp = await client.post(f"/admin/users/{uuid.uuid4()}/reset-totp", data={"csrf_token": csrf})
     assert resp.status_code == 404
 
 
@@ -634,10 +667,14 @@ async def test_cli_reset_gives_the_only_superadmin_a_working_new_secret(
     fresh = await _fresh(db_session, boss)
     assert (fresh.totp_secret, fresh.totp_enabled) == (secret, True)
     assert not session_left
-    entry = [e for e in await _audit(db_session, AuditAction.ADMIN_TOTP_RESET)
-             if e.admin_username == "system" and boss.username in (e.detail or "")]
+    entry = [
+        e
+        for e in await _audit(db_session, AuditAction.ADMIN_TOTP_RESET)
+        if e.admin_username == "system" and boss.username in (e.detail or "")
+    ]
     assert json.loads(entry[0].detail or "{}") == {
-        "username": boss.username, "via": "command line",
+        "username": boss.username,
+        "via": "command line",
     }
 
 

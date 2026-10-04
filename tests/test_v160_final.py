@@ -42,8 +42,8 @@ def test_every_engine_hides_parameters() -> None:
             while depth:
                 depth += {"(": 1, ")": -1}.get(source[i], 0)
                 i += 1
-            if "hide_parameters=True" not in source[match.end():i]:
-                line = source[:match.start()].count("\n") + 1
+            if "hide_parameters=True" not in source[match.end() : i]:
+                line = source[: match.start()].count("\n") + 1
                 offenders.append(f"{path.relative_to(_ROOT)}:{line}")
     assert offenders == []
 
@@ -76,14 +76,19 @@ async def _seed_report_and_admin(db) -> None:  # type: ignore[no-untyped-def]
     from app.services.report import create_report
 
     await create_report(db, "corruption", "Written under the key configured at the time.")
-    db.add(AdminUser(
-        id=uuid.uuid4(), username=f"key-{uuid.uuid4().hex[:8]}", totp_secret=pyotp.random_base32(),
-    ))
+    db.add(
+        AdminUser(
+            id=uuid.uuid4(),
+            username=f"key-{uuid.uuid4().hex[:8]}",
+            totp_secret=pyotp.random_base32(),
+        )
+    )
     await db.commit()
 
 
 async def test_setting_encryption_key_without_previous_is_detected(
-    throwaway_db, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
+    throwaway_db,
+    monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
 ) -> None:
     from app.config import settings
     from app.services.encryption import configured_keys_read_existing_data
@@ -100,7 +105,8 @@ async def test_setting_encryption_key_without_previous_is_detected(
 
 
 async def test_removing_encryption_key_is_detected(
-    throwaway_db, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
+    throwaway_db,
+    monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
 ) -> None:
     from app.config import settings
     from app.services.encryption import configured_keys_read_existing_data
@@ -113,7 +119,8 @@ async def test_removing_encryption_key_is_detected(
 
 
 async def test_an_unreadable_report_key_alone_is_detected(
-    throwaway_db, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
+    throwaway_db,
+    monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
 ) -> None:
     """No admin yet (setup still open): the reports alone must still stop the start."""
     from app.config import settings
@@ -128,7 +135,8 @@ async def test_an_unreadable_report_key_alone_is_detected(
 
 
 async def test_an_unreadable_totp_secret_alone_is_detected(
-    throwaway_db, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
+    throwaway_db,
+    monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
 ) -> None:
     """No report yet: the admins' second factor alone must still stop the start."""
     import uuid
@@ -171,8 +179,11 @@ async def test_startup_refuses_before_migrating_when_data_is_unreadable(
     from app.main import lifespan
 
     with (
-        patch("app.services.encryption.configured_keys_read_existing_data",
-              new_callable=AsyncMock, return_value=False),
+        patch(
+            "app.services.encryption.configured_keys_read_existing_data",
+            new_callable=AsyncMock,
+            return_value=False,
+        ),
         patch("app.main._run_alembic_upgrade") as upgrade,
         pytest.raises(RuntimeError, match="ENCRYPTION_KEY_PREVIOUS"),
     ):
@@ -182,7 +193,8 @@ async def test_startup_refuses_before_migrating_when_data_is_unreadable(
 
 
 async def test_rotation_script_names_the_key_mismatch(
-    throwaway_db, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
+    throwaway_db,
+    monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     import importlib.util
@@ -214,9 +226,16 @@ async def _content_search_rows(db, admin_id):  # type: ignore[no-untyped-def]
     from app.models.audit import AuditLog
     from app.services.audit import AuditAction
 
-    return list((await db.execute(select(AuditLog).where(
-        AuditLog.admin_id == admin_id, AuditLog.action == AuditAction.CONTENT_SEARCHED,
-    ))).scalars())
+    return list(
+        (
+            await db.execute(
+                select(AuditLog).where(
+                    AuditLog.admin_id == admin_id,
+                    AuditLog.action == AuditAction.CONTENT_SEARCHED,
+                )
+            )
+        ).scalars()
+    )
 
 
 async def test_content_search_is_audited_with_the_term_encrypted(client, db_session) -> None:  # type: ignore[no-untyped-def]
@@ -269,8 +288,10 @@ async def test_search_pagination_posts_the_term_and_never_links_it(client, db_se
 
     await _login(client, db_session, AdminRole.admin)
     word = f"Numbat{uuid.uuid4().hex[:6]}"
-    cases = [(await create_report(db_session, "corruption", f"{word} no. {i}"))[0].case_number
-             for i in range(12)]
+    cases = [
+        (await create_report(db_session, "corruption", f"{word} no. {i}"))[0].case_number
+        for i in range(12)
+    ]
     form = {"q": word, "per_page": "10", "csrf_token": _csrf_of(client)}
     first = await client.post("/admin/dashboard", data=form)
     second = await client.post("/admin/dashboard", data={**form, "page": "2"})
@@ -283,7 +304,8 @@ async def test_search_pagination_posts_the_term_and_never_links_it(client, db_se
 
 
 async def test_rotation_script_rotates_content_search_terms(
-    throwaway_db, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
+    throwaway_db,
+    monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
 ) -> None:
     import importlib.util
     import json
@@ -298,7 +320,9 @@ async def test_rotation_script_rotates_content_search_terms(
     from app.services.audit import AuditAction
 
     row = AuditLog(
-        id=uuid.uuid4(), admin_username="x", action=AuditAction.CONTENT_SEARCHED,
+        id=uuid.uuid4(),
+        admin_username="x",
+        action=AuditAction.CONTENT_SEARCHED,
         detail=json.dumps({"term": crypto.encrypt("Müller"), "hits": 2}),
     )
     throwaway_db.add(row)
@@ -310,9 +334,9 @@ async def test_rotation_script_rotates_content_search_terms(
     rot = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(rot)
     assert await rot.main() == 0
-    detail = json.loads(await throwaway_db.scalar(
-        sql("SELECT detail FROM audit_log WHERE id = :i"), {"i": row.id}
-    ))
+    detail = json.loads(
+        await throwaway_db.scalar(sql("SELECT detail FROM audit_log WHERE id = :i"), {"i": row.id})
+    )
     monkeypatch.setattr(settings, "encryption_key_previous", "")
     assert crypto.decrypt(detail["term"]) == "Müller" and detail["hits"] == 2
     monkeypatch.setattr(settings, "encryption_key", settings.secret_key)
@@ -338,8 +362,9 @@ def _exif_jpeg() -> bytes:
     return out.getvalue()
 
 
-@pytest.mark.parametrize(("name", "media"), [("a.docx", "word/media/image1.jpeg"),
-                                             ("a.xlsx", "xl/media/image1.JPG")])
+@pytest.mark.parametrize(
+    ("name", "media"), [("a.docx", "word/media/image1.jpeg"), ("a.xlsx", "xl/media/image1.JPG")]
+)
 def test_photos_inside_office_files_lose_their_exif(name: str, media: str) -> None:
     import io
     import zipfile
@@ -380,12 +405,15 @@ def test_pdf_loses_annotation_authors_photo_exif_and_its_file_id() -> None:
     page = writer.pages[0]
     image = next(iter(page["/Resources"]["/XObject"].values())).get_object()
     image._data = _exif_jpeg()  # a JPEG is embedded as-is, EXIF included
-    note = DictionaryObject({
-        NameObject("/Type"): NameObject("/Annot"), NameObject("/Subtype"): NameObject("/Text"),
-        NameObject("/Rect"): ArrayObject([NumberObject(0)] * 4),
-        NameObject("/T"): TextStringObject("Jane Whistle"),
-        NameObject("/M"): TextStringObject("D:20260926101500Z"),
-    })
+    note = DictionaryObject(
+        {
+            NameObject("/Type"): NameObject("/Annot"),
+            NameObject("/Subtype"): NameObject("/Text"),
+            NameObject("/Rect"): ArrayObject([NumberObject(0)] * 4),
+            NameObject("/T"): TextStringObject("Jane Whistle"),
+            NameObject("/M"): TextStringObject("D:20260926101500Z"),
+        }
+    )
     page[NameObject("/Annots")] = ArrayObject([writer._add_object(note)])
     original_id = ByteStringObject(b"ORIGINAL-FILE-ID")
     writer._ID = ArrayObject([original_id, original_id])
@@ -399,8 +427,10 @@ def test_pdf_loses_annotation_authors_photo_exif_and_its_file_id() -> None:
     for leak in (b"Jane Whistle", _CAMERA.encode(), b"20260926101500"):
         assert leak not in clean, leak
     reader = PdfReader(io.BytesIO(clean))
-    file_ids = [x.get_original_bytes() if hasattr(x, "get_original_bytes") else bytes(x)
-                for x in reader.trailer["/ID"]]
+    file_ids = [
+        x.get_original_bytes() if hasattr(x, "get_original_bytes") else bytes(x)
+        for x in reader.trailer["/ID"]
+    ]
     assert b"ORIGINAL-FILE-ID" not in file_ids
     assert list(reader.pages[0].images)[0].image.size == (8, 8)
 
@@ -409,7 +439,9 @@ def test_pdf_loses_annotation_authors_photo_exif_and_its_file_id() -> None:
 
 
 async def test_setup_token_guesses_lock_setup(  # type: ignore[no-untyped-def]
-    client, db_session, monkeypatch: pytest.MonkeyPatch,
+    client,
+    db_session,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from sqlalchemy import select
 
@@ -447,13 +479,14 @@ async def test_setup_token_guesses_lock_setup(  # type: ignore[no-untyped-def]
 
 async def test_set_language_without_csrf_is_refused(client) -> None:  # type: ignore[no-untyped-def]
     resp = await client.post(
-        "/set-language", data={"lang": "de", "next": "/submit", "csrf_token": "forged"},
+        "/set-language",
+        data={"lang": "de", "next": "/submit", "csrf_token": "forged"},
         follow_redirects=False,
     )
     assert resp.status_code == 403
     page = (await client.get("/submit")).text
-    form = page[page.index('action="/set-language"'):]
-    assert 'name="csrf_token"' in form[:form.index("</form>")]
+    form = page[page.index('action="/set-language"') :]
+    assert 'name="csrf_token"' in form[: form.index("</form>")]
 
 
 # --- the status session and the attempt counter reveal nothing ----------------------
@@ -465,9 +498,15 @@ async def test_status_view_does_not_extend_the_session(client, db_session) -> No
 
     report, pin = await create_report(db_session, "corruption", "Status session TTL test.")
     await client.get("/status")
-    login = await client.post("/status", data={
-        "case_number": report.case_number, "pin": pin,
-        "csrf_token": client.cookies.get("ow_csrf")}, follow_redirects=False)
+    login = await client.post(
+        "/status",
+        data={
+            "case_number": report.case_number,
+            "pin": pin,
+            "csrf_token": client.cookies.get("ow_csrf"),
+        },
+        follow_redirects=False,
+    )
     assert login.status_code == 303
     key = f"status-session:{client.cookies.get('ow-status-session')}"
     redis = await get_redis()
@@ -483,11 +522,19 @@ async def test_attempt_counter_key_holds_no_case_number(client) -> None:  # type
 
     case = f"OW-2026-{uuid.uuid4().int % 100000:05d}"
     await client.get("/status")
-    await client.post("/status", data={
-        "case_number": case, "pin": str(uuid.uuid4()), "csrf_token": client.cookies.get("ow_csrf")})
+    await client.post(
+        "/status",
+        data={
+            "case_number": case,
+            "pin": str(uuid.uuid4()),
+            "csrf_token": client.cookies.get("ow_csrf"),
+        },
+    )
     redis = await get_redis()
-    keys = [k.decode() if isinstance(k, bytes) else k
-            async for k in redis.scan_iter("openwhistle:wb_ratelimit:*")]
+    keys = [
+        k.decode() if isinstance(k, bytes) else k
+        async for k in redis.scan_iter("openwhistle:wb_ratelimit:*")
+    ]
     assert keys and not any(case in k for k in keys)
 
 
@@ -497,15 +544,23 @@ async def test_reply_rotates_the_session_without_extending_it(client, db_session
 
     report, pin = await create_report(db_session, "corruption", "Reply TTL test.")
     await client.get("/status")
-    await client.post("/status", data={
-        "case_number": report.case_number, "pin": pin,
-        "csrf_token": client.cookies.get("ow_csrf")}, follow_redirects=False)
+    await client.post(
+        "/status",
+        data={
+            "case_number": report.case_number,
+            "pin": pin,
+            "csrf_token": client.cookies.get("ow_csrf"),
+        },
+        follow_redirects=False,
+    )
     old = client.cookies.get("ow-status-session")
     redis = await get_redis()
     await redis.expire(f"status-session:{old}", 100)
-    reply = await client.post("/reply", data={
-        "content": "One more detail.", "csrf_token": client.cookies.get("ow_csrf")},
-        follow_redirects=False)
+    reply = await client.post(
+        "/reply",
+        data={"content": "One more detail.", "csrf_token": client.cookies.get("ow_csrf")},
+        follow_redirects=False,
+    )
     assert reply.status_code == 303
     new = client.cookies.get("ow-status-session")
     assert new != old
@@ -516,7 +571,8 @@ async def test_reply_rotates_the_session_without_extending_it(client, db_session
 
 
 async def test_an_unlabelled_category_reads_the_same_on_stats_case_page_and_pdf(  # type: ignore[no-untyped-def]
-    client, db_session,
+    client,
+    db_session,
 ) -> None:
     import io
     import uuid
@@ -545,7 +601,8 @@ async def test_an_unlabelled_category_reads_the_same_on_stats_case_page_and_pdf(
 
 def test_no_template_formats_the_submission_time_itself() -> None:
     offenders = [
-        str(p.relative_to(_ROOT)) for p in (_ROOT / "app/templates").rglob("*.html")
+        str(p.relative_to(_ROOT))
+        for p in (_ROOT / "app/templates").rglob("*.html")
         if re.search(r"submitted_at\s*\.\s*strftime", p.read_text())
     ]
     assert offenders == []

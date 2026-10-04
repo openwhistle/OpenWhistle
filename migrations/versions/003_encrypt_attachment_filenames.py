@@ -29,10 +29,16 @@ log = logging.getLogger("alembic.runtime.migration")
 
 
 def _rows() -> list[tuple[object, str, str]]:
-    return list(op.get_bind().execute(sa.text(
-        "SELECT a.id, a.filename, r.encrypted_dek FROM attachments a "
-        "JOIN reports r ON r.id = a.report_id WHERE r.encrypted_dek IS NOT NULL"
-    )).tuples())
+    return list(
+        op.get_bind()
+        .execute(
+            sa.text(
+                "SELECT a.id, a.filename, r.encrypted_dek FROM attachments a "
+                "JOIN reports r ON r.id = a.report_id WHERE r.encrypted_dek IS NOT NULL"
+            )
+        )
+        .tuples()
+    )
 
 
 def _fernet(dek: str) -> Fernet | None:
@@ -40,7 +46,7 @@ def _fernet(dek: str) -> Fernet | None:
 
     try:
         return make_report_fernet(dek)
-    except (InvalidToken, ValueError):
+    except InvalidToken, ValueError:
         return None
 
 
@@ -76,6 +82,4 @@ def downgrade() -> None:
             fernet = _fernet(dek)
             if fernet is not None and _is_token(fernet, filename):
                 _set(att_id, fernet.decrypt(filename.encode()).decode())
-    op.alter_column(
-        "attachments", "filename", type_=sa.String(255), existing_nullable=False
-    )
+    op.alter_column("attachments", "filename", type_=sa.String(255), existing_nullable=False)

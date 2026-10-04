@@ -1573,9 +1573,16 @@ async def test_recovery_never_acts_on_a_claim_that_changed_since_it_was_read(
     draft_key, claimed_key, pending_key = reports._claim_keys(session_id)
     await redis.delete(pending_key)  # the pending TTL ran out
     done = await redis.eval(
-        reports._RECOVER_DRAFT, 5, draft_key, claimed_key, pending_key,
-        reports._result_key(session_id), reports._report_id_key(session_id),
-        "the-token-an-earlier-read-saw", "", 120,
+        reports._RECOVER_DRAFT,
+        5,
+        draft_key,
+        claimed_key,
+        pending_key,
+        reports._result_key(session_id),
+        reports._report_id_key(session_id),
+        "the-token-an-earlier-read-saw",
+        "",
+        120,
     )
     assert done == 0
     assert await redis.get(claimed_key) == claim[0]

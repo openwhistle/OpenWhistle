@@ -21,7 +21,10 @@ from tests.conftest import setup_token
 
 def _alembic(*args: str) -> None:
     run = subprocess.run(  # noqa: S603
-        ["alembic", *args], capture_output=True, text=True, check=False,  # noqa: S607
+        ["alembic", *args],  # noqa: S607
+        capture_output=True,
+        text=True,
+        check=False,  # noqa: S607
         env={**os.environ, "DATABASE_URL": settings.database_url},
     )
     assert run.returncode == 0, run.stderr
@@ -32,10 +35,13 @@ async def _add(
 ) -> uuid.UUID:
     stamp = datetime.fromisoformat(created)
     uid = uuid.uuid4()
-    await db.execute(text(
-        "INSERT INTO admin_users (id, username, password_hash, totp_secret, totp_enabled, role,"
-        " created_at, is_active) VALUES (:i, :u, 'x', 'x', true, :r, :c, :a)"
-    ), {"i": uid, "u": name, "r": role, "c": stamp, "a": active})
+    await db.execute(
+        text(
+            "INSERT INTO admin_users (id, username, password_hash, totp_secret, totp_enabled, role,"
+            " created_at, is_active) VALUES (:i, :u, 'x', 'x', true, :r, :c, :a)"
+        ),
+        {"i": uid, "u": name, "r": role, "c": stamp, "a": active},
+    )
     return uid
 
 
@@ -59,7 +65,10 @@ async def test_migration_008_promotes_the_first_account_where_no_superadmin_exis
     _alembic("upgrade", "head")
 
     assert await _roles(throwaway_db) == {
-        "wizard": "superadmin", "later": "admin", "handler": "case_manager", "gone": "admin",
+        "wizard": "superadmin",
+        "later": "admin",
+        "handler": "case_manager",
+        "gone": "admin",
     }
 
 
@@ -81,20 +90,29 @@ async def test_migration_008_leaves_an_existing_superadmin_alone(
 
 @pytest.mark.asyncio
 async def test_the_wizard_creates_a_superadmin(
-    throwaway_db: AsyncSession, client: AsyncClient,
+    throwaway_db: AsyncSession,
+    client: AsyncClient,
 ) -> None:
     get_resp = await client.get("/setup", follow_redirects=False)
     assert get_resp.status_code == 200
     secret = generate_totp_secret()
-    resp = await client.post("/setup", data={
-        "username": "owner201", "password": "SecureTestPassword123!",
-        "password_confirm": "SecureTestPassword123!", "totp_secret": secret,
-        "totp_code": get_totp(secret).now(), "csrf_token": get_resp.cookies.get("ow_csrf"),
-        "setup_token": await setup_token(),
-    }, follow_redirects=False)
+    resp = await client.post(
+        "/setup",
+        data={
+            "username": "owner201",
+            "password": "SecureTestPassword123!",
+            "password_confirm": "SecureTestPassword123!",
+            "totp_secret": secret,
+            "totp_code": get_totp(secret).now(),
+            "csrf_token": get_resp.cookies.get("ow_csrf"),
+            "setup_token": await setup_token(),
+        },
+        follow_redirects=False,
+    )
     assert resp.status_code == 302, resp.text
     user = await throwaway_db.scalar(
-        select(AdminUser).where(AdminUser.username == "owner201")
+        select(AdminUser)
+        .where(AdminUser.username == "owner201")
         .execution_options(populate_existing=True)
     )
     assert user is not None and user.role == AdminRole.superadmin

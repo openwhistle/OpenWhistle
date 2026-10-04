@@ -180,14 +180,20 @@ def test_fences_are_split_by_commonmark_rules() -> None:
 def _tracked() -> list[Path]:
     out = subprocess.run(  # noqa: S603
         ["git", "ls-files"],  # noqa: S607
-        cwd=ROOT, capture_output=True, text=True, check=True,
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
     ).stdout
     return [ROOT / line for line in out.splitlines()]
 
 
 # History records quote what was removed; the guard's own test names what it looks for.
 _MERMAID_HISTORY = (
-    "CHANGELOG.md", "docs-tech/plans/", "docs-tech/specs/", "docs-tech/mutations/",
+    "CHANGELOG.md",
+    "docs-tech/plans/",
+    "docs-tech/specs/",
+    "docs-tech/mutations/",
     "tests/test_diagrams.py",
 )
 
@@ -197,13 +203,19 @@ def test_no_mermaid_anywhere() -> None:
     for path in _tracked():
         if path.suffix == ".mmd":
             found.append(f"{path.relative_to(ROOT)}: a Mermaid source")
-        if path.suffix in {".md", ".html"} and path.is_file() and any(
-            i.lower() == "mermaid" for i in _split_fences(path.read_text(encoding="utf-8"))[1]
+        if (
+            path.suffix in {".md", ".html"}
+            and path.is_file()
+            and any(
+                i.lower() == "mermaid" for i in _split_fences(path.read_text(encoding="utf-8"))[1]
+            )
         ):
             found.append(f"{path.relative_to(ROOT)}: a fenced Mermaid block")
         rel = path.relative_to(ROOT).as_posix()
-        if path.is_file() and not rel.startswith(_MERMAID_HISTORY) and re.search(
-            rb"mermaid-cli|@mermaid-js", path.read_bytes()
+        if (
+            path.is_file()
+            and not rel.startswith(_MERMAID_HISTORY)
+            and re.search(rb"mermaid-cli|@mermaid-js", path.read_bytes())
         ):
             found.append(f"{rel}: a mermaid-cli reference")
     head = "Mermaid is gone (maintainer's decision, 2026-10-02):"
@@ -225,7 +237,8 @@ def test_every_maintainer_diagram_is_embedded_as_a_picture(source: Path, out: Pa
         r"\s*</picture>"
     )
     hits = [
-        p for p in DOCS_TECH.rglob("*.md")
+        p
+        for p in DOCS_TECH.rglob("*.md")
         if pattern.search(_split_fences(p.read_text(encoding="utf-8"))[0])
     ]
     assert hits, f"no page in docs-tech/ shows {name} as a <picture> with both themes and alt text"

@@ -51,11 +51,14 @@ _LOCALHOST = {"host": "localhost"}
 
 
 async def _count_local_review_audit_rows(db: AsyncSession) -> int:
-    return await db.scalar(
-        select(func.count()).select_from(AuditLog).where(
-            AuditLog.action == AuditAction.AUTH_LOCAL_REVIEW_LOGIN
+    return (
+        await db.scalar(
+            select(func.count())
+            .select_from(AuditLog)
+            .where(AuditLog.action == AuditAction.AUTH_LOCAL_REVIEW_LOGIN)
         )
-    ) or 0
+        or 0
+    )
 
 
 async def _delete_demo_admin(db: AsyncSession) -> None:
@@ -75,29 +78,36 @@ def test_local_review_login_requires_demo_mode() -> None:
     # A loopback, plain-HTTP stack, so only the missing DEMO_MODE can refuse it.
     with pytest.raises(ValidationError, match="DEMO_MODE"):
         Settings(
-            secret_key="x" * 32, local_review_login=True, demo_mode=False,
-            app_public_url="http://localhost:4009", secure_cookies=False,
+            secret_key="x" * 32,
+            local_review_login=True,
+            demo_mode=False,
+            app_public_url="http://localhost:4009",
+            secure_cookies=False,
         )
 
 
 def test_local_review_login_allowed_with_demo_mode() -> None:
-    s = Settings(
-        secret_key="x" * 32, local_review_login=True, demo_mode=True, secure_cookies=False
-    )
+    s = Settings(secret_key="x" * 32, local_review_login=True, demo_mode=True, secure_cookies=False)
     assert s.local_review_login is True
 
 
 @pytest.mark.parametrize(
     ("url", "secure"),
-    [("https://demo.openwhistle.net", False), ("http://localhost", True),
-     ("http://10.0.0.5:4009", False)],
+    [
+        ("https://demo.openwhistle.net", False),
+        ("http://localhost", True),
+        ("http://10.0.0.5:4009", False),
+    ],
 )
 def test_local_review_login_refused_outside_a_plain_loopback_stack(url: str, secure: bool) -> None:
     """The public demo has DEMO_MODE too: only a loopback, plain-HTTP stack may enable it."""
     with pytest.raises(ValidationError, match="loopback"):
         Settings(
-            secret_key="x" * 32, local_review_login=True, demo_mode=True,
-            app_public_url=url, secure_cookies=secure,
+            secret_key="x" * 32,
+            local_review_login=True,
+            demo_mode=True,
+            app_public_url=url,
+            secure_cookies=secure,
         )
 
 
@@ -463,7 +473,11 @@ _ASSIGNMENT = re.compile(r"LOCAL_REVIEW_LOGIN[\"']?\s*[:=]\s*[\"']?([A-Za-z]+)")
 
 def _git_tracked_files() -> list[str]:
     result = subprocess.run(  # noqa: S603
-        ["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=True  # noqa: S607
+        ["git", "ls-files"],  # noqa: S607
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,  # noqa: S607
     )
     return result.stdout.splitlines()
 
@@ -488,7 +502,7 @@ def test_local_review_login_literal_false_or_absent_everywhere_except_allowlist(
             continue
         try:
             text = path.read_text()
-        except (UnicodeDecodeError, OSError):
+        except UnicodeDecodeError, OSError:
             continue
         for line in text.splitlines():
             stripped = line.strip()
@@ -585,9 +599,7 @@ def _app_html_pages() -> set[str]:
 
 def _docs_html_pages() -> set[str]:
     """The URL of every built page: a folder's index.html is served at the folder."""
-    return {
-        "/" + p.relative_to(built()).as_posix().removesuffix("index.html") for p in pages()
-    }
+    return {"/" + p.relative_to(built()).as_posix().removesuffix("index.html") for p in pages()}
 
 
 def _app_templates() -> set[str]:
@@ -635,9 +647,7 @@ def test_local_review_page_matrix_covers_every_docs_site_page() -> None:
 
 def test_local_review_page_matrix_covers_every_app_template() -> None:
     templates = _app_templates()
-    assert len(templates) >= 15, (
-        f"only {len(templates)} templates found — the glob may be broken"
-    )
+    assert len(templates) >= 15, f"only {len(templates)} templates found — the glob may be broken"
     missing = templates - _matrix_table_tokens()
     assert not missing, f"docs-tech/local-review.md is missing template(s): {sorted(missing)}"
 
@@ -655,8 +665,17 @@ def test_release_md_names_the_chrome_check_before_the_release_pr() -> None:
 
 @pytest.mark.parametrize(
     "header",
-    ["x-client-ip", "x-cluster-client-ip", "true-client-ip", "cf-connecting-ip",
-     "x-forwarded-for", "x-real-ip", "forwarded", "x-forwarded-proto", "via"],
+    [
+        "x-client-ip",
+        "x-cluster-client-ip",
+        "true-client-ip",
+        "cf-connecting-ip",
+        "x-forwarded-for",
+        "x-real-ip",
+        "forwarded",
+        "x-forwarded-proto",
+        "via",
+    ],
 )
 def test_every_proxy_header_the_middleware_knows_makes_local_review_unreachable(
     header: str,

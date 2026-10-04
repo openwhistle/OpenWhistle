@@ -76,9 +76,7 @@ def test_every_version_heading_has_a_link_definition_and_vice_versa() -> None:
     assert semver_headings, "CHANGELOG.md has no `## [x.y.z]` semantic-version headings"
     for name in semver_headings:
         url = link_defs[name]
-        assert url.startswith("https://github.com/openwhistle/OpenWhistle/"), (
-            name, url
-        )
+        assert url.startswith("https://github.com/openwhistle/OpenWhistle/"), (name, url)
 
 
 _HREF_URL_RE = re.compile(r'(?:href|src)="(https?://[^"]+)"')
@@ -92,8 +90,7 @@ def test_page_links_only_to_github_and_its_own_domain() -> None:
         host = re.sub(r"^https?://", "", url).split("/")[0]
         if not any(host == d or host.endswith("." + d) for d in _ALLOWED_DOMAINS):
             offenders.append(url)
-    assert not offenders, f"/en/changelog/ links outside github.com/openwhistle.net: " \
-        f"{offenders}"
+    assert not offenders, f"/en/changelog/ links outside github.com/openwhistle.net: {offenders}"
 
 
 # ── Renderer self-test on a small fixture ──────────────────────────────────

@@ -191,7 +191,9 @@ SOURCE = """<mxfile><diagram name="t"><mxGraphModel><root>
 
 
 def _styles(xml: str) -> dict[str, str]:
-    return {c.get("id"): c.get("style") for c in ET.fromstring(xml).iter("mxCell") if c.get("style")}
+    return {
+        c.get("id"): c.get("style") for c in ET.fromstring(xml).iter("mxCell") if c.get("style")
+    }
 
 
 def test_palette_reads_both_themes_from_design_md() -> None:
@@ -208,8 +210,8 @@ def test_one_light_value_keeps_its_role_in_dark() -> None:
     light, dark = r.palette()["light"], r.palette()["dark"]
     assert light["canvas"] == light["surface-2"] == light["accent-ink"] == "#ffffff"
     assert "fontColor=#08080a" in r.expand_style("ow:result", dark)  # canvas
-    assert "fontColor=#06120d" in r.expand_style("ow:start", dark)   # accent-ink
-    assert "fillColor=#1b1b1e" in r.expand_style("ow:step", dark)    # node = surface-2
+    assert "fontColor=#06120d" in r.expand_style("ow:start", dark)  # accent-ink
+    assert "fillColor=#1b1b1e" in r.expand_style("ow:step", dark)  # node = surface-2
 
 
 def test_a_role_starts_with_the_common_settings_and_keeps_overrides() -> None:
@@ -268,7 +270,9 @@ def test_roles_by_id_maps_every_vertex_and_edge() -> None:
     assert renderer().roles_by_id(SOURCE) == {"a": "ow:start", "b": "ow:result", "e": "ow:edge"}
 
 
-def test_the_stamp_covers_source_theme_roles_image_and_fonts(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_the_stamp_covers_source_theme_roles_image_and_fonts(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     r = renderer()
     base = r.stamp(SOURCE, "light")
     assert len(base) == 16
@@ -355,7 +359,9 @@ _EDGE = (
     "edgeStyle=orthogonalEdgeStyle;rounded=1;endArrow=classic;endSize=6;"
     "strokeColor={ink};fontColor={ink};fontSize=11;labelBackgroundColor=none;"
 )
-_PILL = "rounded=1;arcSize=50;fillColor={accent};strokeColor=none;fontColor={accent-ink};fontStyle=1;"
+_PILL = (
+    "rounded=1;arcSize=50;fillColor={accent};strokeColor=none;fontColor={accent-ink};fontStyle=1;"
+)
 
 # Style C, chosen by the maintainer on 2026-10-02 from three rendered variants.
 ROLES = {
@@ -367,14 +373,16 @@ ROLES = {
         "rhombus;perimeter=rhombusPerimeter;fillColor={canvas};strokeColor={ink};fontColor={ink};fontSize=12;"
     ),
     "ow:store": "shape=cylinder3;boundedLbl=1;size=8;fillColor={node};strokeColor={ink};fontColor={ink};",
-    "ow:note": _BOX + "fillColor=none;strokeColor={muted};dashed=1;dashPattern=4 3;fontColor={muted};fontSize=12;",
-    "ow:group": _BOX + (
+    "ow:note": _BOX
+    + "fillColor=none;strokeColor={muted};dashed=1;dashPattern=4 3;fontColor={muted};fontSize=12;",
+    "ow:group": _BOX
+    + (
         "container=1;fillColor=none;strokeColor={hairline};verticalAlign=top;align=left;"
         "spacingLeft=12;spacingTop=6;fontColor={muted};fontSize=11;fontStyle=1;"
     ),
-    "ow:lane": "swimlane;startSize=32;" + _BOX + (
-        "fillColor=none;swimlaneFillColor=none;strokeColor={hairline};fontColor={ink};fontStyle=1;"
-    ),
+    "ow:lane": "swimlane;startSize=32;"
+    + _BOX
+    + ("fillColor=none;swimlaneFillColor=none;strokeColor={hairline};fontColor={ink};fontStyle=1;"),
     "ow:lifeline": "shape=umlLifeline;perimeter=lifelinePerimeter;size=40;fillColor={node};strokeColor={muted};"
     "fontColor={ink};",
     "ow:edge": _EDGE,
@@ -454,8 +462,16 @@ def stamp(source: str, theme: str) -> str:
     """Hash of everything that decides the picture: a change to any of it makes the SVG stale."""
     fonts = {str(w): hashlib.sha256(p.read_bytes()).hexdigest() for w, p in FONTS.items()}
     payload = json.dumps(
-        {"source": source, "theme": theme, "common": COMMON, "roles": ROLES, "aliases": ALIASES,
-         "palette": palette()[theme], "image": IMAGE, "fonts": fonts},
+        {
+            "source": source,
+            "theme": theme,
+            "common": COMMON,
+            "roles": ROLES,
+            "aliases": ALIASES,
+            "palette": palette()[theme],
+            "image": IMAGE,
+            "fonts": fonts,
+        },
         sort_keys=True,
     )
     return hashlib.sha256(payload.encode()).hexdigest()[:16]
@@ -559,7 +575,9 @@ HEAD = '<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox
 TAIL = "</g></svg>"
 
 
-def _text(x: float, y: float, text: str, size: int = 13, bold: bool = False, anchor: str = "middle") -> str:
+def _text(
+    x: float, y: float, text: str, size: int = 13, bold: bool = False, anchor: str = "middle"
+) -> str:
     weight = ' font-weight="bold"' if bold else ""
     return (
         f'<g><g fill="#0a0a0b" font-family="Sora"{weight} text-anchor="{anchor}" font-size="{size}px">'
@@ -583,7 +601,9 @@ def decision(cid: str, cx: float, cy: float, w: float, h: float, label: str) -> 
     )
 
 
-def edge(cid: str, points: list[tuple[float, float]], label: str = "", at: tuple[float, float] = (0, 0)) -> str:
+def edge(
+    cid: str, points: list[tuple[float, float]], label: str = "", at: tuple[float, float] = (0, 0)
+) -> str:
     d = "M " + " L ".join(f"{x} {y}" for x, y in points)
     (x1, y1) = points[-1]
     head = f"M {x1} {y1} L {x1 - 4} {y1 - 7} L {x1 + 4} {y1 - 7} Z"
@@ -625,7 +645,9 @@ def test_a_line_through_a_decision_label_is_found() -> None:
         decision("d", 150, 100, 230, 80, "Locations"),
         edge("e", [(150, 100), (400, 100)]),
     )
-    assert any(p.startswith("d: ") and "touches a line" in p for p in geometry().problems(picture, ROLES))
+    assert any(
+        p.startswith("d: ") and "touches a line" in p for p in geometry().problems(picture, ROLES)
+    )
 
 
 def test_text_wider_than_its_box_is_found() -> None:
@@ -683,7 +705,9 @@ def test_bold_is_measured_wider() -> None:
 
 
 def test_an_unknown_path_command_fails_loudly() -> None:
-    picture = svg('<g data-cell-id="e"><g><path d="m 0 0 l 10 10" fill="none" stroke="#000"/></g></g>')
+    picture = svg(
+        '<g data-cell-id="e"><g><path d="m 0 0 l 10 10" fill="none" stroke="#000"/></g></g>'
+    )
     try:
         geometry().problems(picture, ROLES)
     except ValueError as err:
@@ -727,7 +751,7 @@ FONTS = {
     700: ROOT / "docs" / "fonts" / "sora-latin-700-normal.woff2",
 }
 EDGES = {"ow:edge", "ow:edge-optional", "ow:message"}
-LINES = EDGES | {"ow:lifeline"}                     # their unfilled paths are lines text must clear
+LINES = EDGES | {"ow:lifeline"}  # their unfilled paths are lines text must clear
 CONTAINERS = {"ow:group", "ow:lane", "ow:lifeline"}  # boxes that hold other cells
 PAD_X = 6.0  # room between a text line and the side of its shape
 PAD_Y = 2.0
@@ -797,8 +821,12 @@ def _bounds(points: list[Point]) -> Box:
 def _union(boxes: list[Box]) -> Box | None:
     if not boxes:
         return None
-    return Box(min(b.x0 for b in boxes), min(b.y0 for b in boxes),
-               max(b.x1 for b in boxes), max(b.y1 for b in boxes))
+    return Box(
+        min(b.x0 for b in boxes),
+        min(b.y0 for b in boxes),
+        max(b.x1 for b in boxes),
+        max(b.y1 for b in boxes),
+    )
 
 
 def _num(value: str | None) -> float:
@@ -870,8 +898,14 @@ def _cells(svg: str) -> dict[str, Cell]:
         elif cell is not None and tag == "text":
             weight = 700 if attrs.get("font-weight") in ("bold", "700") else 400
             line = "".join(el.itertext())
-            box = text_box(line, _num(el.get("x")), _num(el.get("y")), _num(attrs.get("font-size", "12")),
-                           weight, attrs.get("text-anchor", "start"))
+            box = text_box(
+                line,
+                _num(el.get("x")),
+                _num(el.get("y")),
+                _num(attrs.get("font-size", "12")),
+                weight,
+                attrs.get("text-anchor", "start"),
+            )
             cell.texts.append(Text(line, box, weight))
             return
         for child in el:
@@ -933,12 +967,21 @@ def _fits(t: Text, cell: Cell, role: str) -> bool:
 def problems(svg: str, roles: dict[str, str]) -> list[str]:
     """Everything that makes a label unreadable; an empty list means the diagram is legible."""
     found = _cells(svg)
-    lines = [(cid, s) for cid, c in found.items() if roles.get(cid) in LINES for s in _segments(c.unfilled)]
-    heads = [(cid, _bounds(p)) for cid, c in found.items() if roles.get(cid) in EDGES for p in c.filled]
+    lines = [
+        (cid, s)
+        for cid, c in found.items()
+        if roles.get(cid) in LINES
+        for s in _segments(c.unfilled)
+    ]
+    heads = [
+        (cid, _bounds(p)) for cid, c in found.items() if roles.get(cid) in EDGES for p in c.filled
+    ]
     solid = {
         cid: box
         for cid, c in found.items()
-        if cid in roles and roles[cid] not in EDGES | CONTAINERS and (box := _outline(c)) is not None
+        if cid in roles
+        and roles[cid] not in EDGES | CONTAINERS
+        and (box := _outline(c)) is not None
     }
     out: list[str] = []
     for cid, cell in found.items():
@@ -949,13 +992,29 @@ def problems(svg: str, roles: dict[str, str]) -> list[str]:
             if role and role not in EDGES and not _fits(t, cell, role):
                 out.append(f"{cid}: text {t.text!r} does not fit its shape")
             near = t.box.grow(CLEAR)
-            out += [f"{cid}: text {t.text!r} touches a line of {lid}" for lid, s in lines if _hits(near, s)]
+            out += [
+                f"{cid}: text {t.text!r} touches a line of {lid}"
+                for lid, s in lines
+                if _hits(near, s)
+            ]
             if role in EDGES:
-                out += [f"{cid}: label {t.text!r} touches an arrowhead of {hid}"
-                        for hid, b in heads if near.overlaps(b)]
-                out += [f"{cid}: label {t.text!r} overlaps {nid}" for nid, b in solid.items() if near.overlaps(b)]
+                out += [
+                    f"{cid}: label {t.text!r} touches an arrowhead of {hid}"
+                    for hid, b in heads
+                    if near.overlaps(b)
+                ]
+                out += [
+                    f"{cid}: label {t.text!r} overlaps {nid}"
+                    for nid, b in solid.items()
+                    if near.overlaps(b)
+                ]
     ids = sorted(solid)
-    out += [f"{a} and {b} overlap" for i, a in enumerate(ids) for b in ids[i + 1 :] if solid[a].overlaps(solid[b])]
+    out += [
+        f"{a} and {b} overlap"
+        for i, a in enumerate(ids)
+        for b in ids[i + 1 :]
+        if solid[a].overlaps(solid[b])
+    ]
     return out
 ```
 
@@ -1023,7 +1082,9 @@ EXPORTED = (
 
 def _faces(svg: str) -> dict[int, TTFont]:
     out = {}
-    for weight, data in re.findall(r"font-weight:(\d+);src:url\(data:font/woff2;base64,([^)]+)\)", svg):
+    for weight, data in re.findall(
+        r"font-weight:(\d+);src:url\(data:font/woff2;base64,([^)]+)\)", svg
+    ):
         out[int(weight)] = TTFont(io.BytesIO(base64.b64decode(data)))
     return out
 
@@ -1055,7 +1116,9 @@ def test_engine_prefers_podman(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_engine_falls_back_to_docker(monkeypatch: pytest.MonkeyPatch) -> None:
     r = renderer()
-    monkeypatch.setattr(r.shutil, "which", lambda name: "/usr/bin/docker" if name == "docker" else None)
+    monkeypatch.setattr(
+        r.shutil, "which", lambda name: "/usr/bin/docker" if name == "docker" else None
+    )
     assert r.engine() == "docker"
 
 
@@ -1066,7 +1129,9 @@ def test_engine_names_what_is_missing(monkeypatch: pytest.MonkeyPatch) -> None:
         r.engine()
 
 
-def test_export_runs_the_pinned_image_offline_in_light(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_export_runs_the_pinned_image_offline_in_light(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     r = renderer()
     calls: list[list[str]] = []
     monkeypatch.setattr(r, "engine", lambda: "podman")
@@ -1081,7 +1146,9 @@ def test_export_runs_the_pinned_image_offline_in_light(monkeypatch: pytest.Monke
 def test_renovate_moves_the_image_tag_and_digest_together() -> None:
     config = json.loads((Path(__file__).parents[1] / "renovate.json").read_text())
     manager = next(
-        m for m in config["customManagers"] if any("render_diagrams" in p for p in m["managerFilePatterns"])
+        m
+        for m in config["customManagers"]
+        if any("render_diagrams" in p for p in m["managerFilePatterns"])
     )
     script = (Path(__file__).parents[1] / "scripts" / "render_diagrams.py").read_text()
     pattern = manager["matchStrings"][0].replace("(?<", "(?P<")
@@ -1124,10 +1191,29 @@ def engine() -> str:
 def export(src_dir: Path, out_dir: Path) -> None:
     """Every .drawio in src_dir to an SVG of the same stem in out_dir, offline, light, no font fetch."""
     subprocess.run(
-        [engine(), "run", "--rm", "--network=none",
-         "-v", f"{src_dir}:/in:ro,Z", "-v", f"{out_dir}:/out:Z", IMAGE,
-         "-x", "-f", "svg", "--theme", "light", "--embed-svg-fonts", "false", "-b", "12",
-         "-o", "/out/", "/in/"],
+        [
+            engine(),
+            "run",
+            "--rm",
+            "--network=none",
+            "-v",
+            f"{src_dir}:/in:ro,Z",
+            "-v",
+            f"{out_dir}:/out:Z",
+            IMAGE,
+            "-x",
+            "-f",
+            "svg",
+            "--theme",
+            "light",
+            "--embed-svg-fonts",
+            "false",
+            "-b",
+            "12",
+            "-o",
+            "/out/",
+            "/in/",
+        ],
         check=True,
     )
 
@@ -1332,7 +1418,9 @@ def test_there_are_diagrams() -> None:
 @pytest.mark.parametrize("theme", THEMES)
 def test_every_source_is_rendered_and_current(source: Path, out: Path, theme: str) -> None:
     path = renderer().svg_path(source, out, theme)
-    assert path.is_file(), f"{path.relative_to(ROOT)} is missing: uv run python scripts/render_diagrams.py"
+    assert path.is_file(), (
+        f"{path.relative_to(ROOT)} is missing: uv run python scripts/render_diagrams.py"
+    )
     m = re.search(r'data-ow-stamp="([0-9a-f]{16})"', path.read_text(encoding="utf-8"))
     assert m, f"{path.relative_to(ROOT)} has no stamp"
     assert m.group(1) == renderer().stamp(source.read_text(encoding="utf-8"), theme), (
@@ -1382,7 +1470,11 @@ def test_colours_are_the_palette_of_their_theme(source: Path, out: Path, theme: 
     )
 
 
-_NAMESPACES = {"http://www.w3.org/2000/svg", "http://www.w3.org/1999/xlink", "http://www.w3.org/1999/xhtml"}
+_NAMESPACES = {
+    "http://www.w3.org/2000/svg",
+    "http://www.w3.org/1999/xlink",
+    "http://www.w3.org/1999/xhtml",
+}
 
 
 @pytest.mark.parametrize(("source", "out"), ALL, ids=IDS)
@@ -1391,7 +1483,9 @@ def test_every_svg_is_self_contained(source: Path, out: Path, theme: str) -> Non
     svg = _svg(source, out, theme)
     for marker in ("light-dark(", "<foreignObject", "<script", "<!DOCTYPE"):
         assert marker not in svg, f"{source.name} ({theme}) contains {marker}"
-    assert not re.search(r"url\((?!data:)", svg), f"{source.name} ({theme}) loads something by url()"
+    assert not re.search(r"url\((?!data:)", svg), (
+        f"{source.name} ({theme}) loads something by url()"
+    )
     assert not re.search(r'href="(?!#|data:)', svg), f"{source.name} ({theme}) links out"
     refs = set(re.findall(r'https?://[^"\'\s)]*', svg)) - _NAMESPACES
     assert not refs, f"{source.name} ({theme}) references {sorted(refs)}"
@@ -1406,7 +1500,9 @@ def test_every_drawn_glyph_is_in_the_embedded_font(source: Path, out: Path) -> N
     }
     for t in geometry().texts(svg):
         missing = {c for c in t.text if ord(c) not in faces.get(t.weight, set())}
-        assert not missing, f"{source.name}: {t.text!r} draws {sorted(missing)} without an embedded glyph"
+        assert not missing, (
+            f"{source.name}: {t.text!r} draws {sorted(missing)} without an embedded glyph"
+        )
 
 
 def _diagram_srcs(html: str) -> set[str]:
@@ -1968,7 +2064,9 @@ _FENCE = re.compile(r"^```mermaid", re.M)
 
 
 def _tracked() -> list[Path]:
-    out = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=True).stdout
+    out = subprocess.run(
+        ["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=True
+    ).stdout
     return [ROOT / line for line in out.splitlines()]
 
 
@@ -1977,11 +2075,22 @@ def test_no_mermaid_anywhere() -> None:
     for path in _tracked():
         if path.suffix == ".mmd":
             found.append(f"{path.relative_to(ROOT)}: a Mermaid source")
-        if path.suffix in {".md", ".html"} and path.is_file() and _FENCE.search(path.read_text(encoding="utf-8")):
+        if (
+            path.suffix in {".md", ".html"}
+            and path.is_file()
+            and _FENCE.search(path.read_text(encoding="utf-8"))
+        ):
             found.append(f"{path.relative_to(ROOT)}: a fenced Mermaid block")
-    tooling = [ROOT / "renovate.json", ROOT / "pyproject.toml", *ROOT.glob("scripts/*"), *ROOT.glob(".github/**/*.yml")]
+    tooling = [
+        ROOT / "renovate.json",
+        ROOT / "pyproject.toml",
+        *ROOT.glob("scripts/*"),
+        *ROOT.glob(".github/**/*.yml"),
+    ]
     for path in tooling:
-        if path.is_file() and re.search(r"mermaid-cli|@mermaid-js", path.read_text(encoding="utf-8")):
+        if path.is_file() and re.search(
+            r"mermaid-cli|@mermaid-js", path.read_text(encoding="utf-8")
+        ):
             found.append(f"{path.relative_to(ROOT)}: a mermaid-cli reference")
     assert not found, "\n  ".join(["Mermaid is gone (maintainer's decision, 2026-10-02):", *found])
 
@@ -1989,7 +2098,9 @@ def test_no_mermaid_anywhere() -> None:
 DOCS_TECH_DIAGRAMS = [(s, o) for s, o in ALL if o == DOCS_TECH / "img" / "diagrams"]
 
 
-@pytest.mark.parametrize(("source", "out"), DOCS_TECH_DIAGRAMS, ids=[s.name for s, _ in DOCS_TECH_DIAGRAMS])
+@pytest.mark.parametrize(
+    ("source", "out"), DOCS_TECH_DIAGRAMS, ids=[s.name for s, _ in DOCS_TECH_DIAGRAMS]
+)
 def test_every_maintainer_diagram_is_embedded_as_a_picture(source: Path, out: Path) -> None:
     name = source.name.removesuffix(".drawio")
     pattern = re.compile(
@@ -1999,8 +2110,12 @@ def test_every_maintainer_diagram_is_embedded_as_a_picture(source: Path, out: Pa
     hits = [p for p in DOCS_TECH.rglob("*.md") if pattern.search(p.read_text(encoding="utf-8"))]
     assert hits, f"no page in docs-tech/ shows {name} as a <picture> with both themes and alt text"
     for page_file in hits:
-        target = page_file.parent / re.search(rf'src="([^"]*{re.escape(name)}-light\.svg)"', page_file.read_text()).group(1)
-        assert target.resolve() == (out / f"{name}-light.svg").resolve(), f"{page_file}: wrong relative path"
+        target = page_file.parent / re.search(
+            rf'src="([^"]*{re.escape(name)}-light\.svg)"', page_file.read_text()
+        ).group(1)
+        assert target.resolve() == (out / f"{name}-light.svg").resolve(), (
+            f"{page_file}: wrong relative path"
+        )
 ```
 
 Run: `uv run pytest tests/test_diagrams.py -k "mermaid or maintainer" -q --no-cov`

@@ -89,7 +89,9 @@ def _valid_email(address: str) -> bool:
     local, at, domain = address.partition("@")
     labels = domain.split(".")
     return (
-        bool(at) and bool(_EMAIL_LOCAL.fullmatch(local)) and len(labels) >= 2
+        bool(at)
+        and bool(_EMAIL_LOCAL.fullmatch(local))
+        and len(labels) >= 2
         and all(_EMAIL_LABEL.fullmatch(label) for label in labels)
     )
 
@@ -224,7 +226,8 @@ async def _tenant(request: Request, db: AsyncSession) -> _Tenant | Response:
             _log.error(report_service.default_org_missing_message())
             t = make_translator(get_lang(request))
             return render(
-                request, "error.html",
+                request,
+                "error.html",
                 {"status_code": 503, "detail": t("error.detail.reporting_not_configured")},
                 status_code=503,
             )
@@ -295,9 +298,7 @@ async def _draft_error(
         (_STEP_MODE, _mode_error(state.get("submission_mode"))),
         (
             _STEP_LOCATION,
-            await _location_error(db, state.get("location_id"), tenant)
-            if has_locations
-            else None,
+            await _location_error(db, state.get("location_id"), tenant) if has_locations else None,
         ),
         (_STEP_CATEGORY, _category_error(state.get("category"), category_slugs)),
         (_STEP_DESCRIPTION, _description_error(state.get("description"))),
@@ -347,8 +348,16 @@ async def _recover_draft(redis: Redis, db: AsyncSession, session_id: str) -> Non
     case_number = await _committed_case_number(db, report_id) if report_id else None
     result = "" if case_number is None else _encrypt_result(session_id, _received(case_number))
     await redis.eval(
-        _RECOVER_DRAFT, 5, draft_key, claimed_key, pending_key, _result_key(session_id),
-        _report_id_key(session_id), token, result, _RESULT_TTL,
+        _RECOVER_DRAFT,
+        5,
+        draft_key,
+        claimed_key,
+        pending_key,
+        _result_key(session_id),
+        _report_id_key(session_id),
+        token,
+        result,
+        _RESULT_TTL,
     )
 
 
@@ -369,9 +378,14 @@ async def _finish_claim(
     redis: Redis, session_id: str, nonce: str, result: dict[str, Any] | None
 ) -> None:
     await redis.eval(
-        _FINISH_CLAIM, 5, *_claim_keys(session_id), _result_key(session_id),
-        _report_id_key(session_id), nonce,
-        "" if result is None else _encrypt_result(session_id, result), _RESULT_TTL,
+        _FINISH_CLAIM,
+        5,
+        *_claim_keys(session_id),
+        _result_key(session_id),
+        _report_id_key(session_id),
+        nonce,
+        "" if result is None else _encrypt_result(session_id, result),
+        _RESULT_TTL,
     )
 
 
@@ -438,8 +452,13 @@ async def _load_submission(redis: Redis, session_id: str) -> dict[str, Any]:
             report_id = await cast(
                 Awaitable[str | None],
                 redis.eval(
-                    _ASSIGN_REPORT_ID, 2, _submission_key(session_id), _report_id_key(session_id),
-                    raw, str(uuid.uuid4()), _SUBMISSION_TTL,
+                    _ASSIGN_REPORT_ID,
+                    2,
+                    _submission_key(session_id),
+                    _report_id_key(session_id),
+                    raw,
+                    str(uuid.uuid4()),
+                    _SUBMISSION_TTL,
                 ),
             )
             if report_id is None:  # saved or spent meanwhile: read what is there now
@@ -690,9 +709,7 @@ async def submit_post(
         return tenant
     raw_cookie = request.cookies.get("ow-submission-session")
     session_id: str = (
-        raw_cookie
-        if raw_cookie and _DRAFT_COOKIE_RE.fullmatch(raw_cookie)
-        else _new_draft_id()
+        raw_cookie if raw_cookie and _DRAFT_COOKIE_RE.fullmatch(raw_cookie) else _new_draft_id()
     )
     state = await _load_draft(redis, session_id, tenant)
     if not state and raw_cookie == session_id:
@@ -960,9 +977,7 @@ async def submit_post(
                 if not isinstance(exc, Exception):
                     raise  # cancelled, or the worker is going away: nobody to answer
                 if not given_back:  # a newer claim holds the draft
-                    return await _await_other_submit(
-                        request, redis, db, session_id, tenant.path
-                    )
+                    return await _await_other_submit(request, redis, db, session_id, tenant.path)
                 _log.warning("Final submit failed before its commit: %s", type(exc).__name__)
                 return await _fail(_STEP_REVIEW, "submit_failed")  # nothing was sent
             if committed_case != our_case:  # another submit of this draft made it
@@ -974,6 +989,7 @@ async def submit_post(
         # Committed: from here on nothing may bring the draft back.
 
         from app.services.notifications import notify_new_report
+
         assert our_case is not None  # committed: ours, or the lookup matched it
         background_tasks.add_task(notify_new_report, our_case)
 
@@ -1111,9 +1127,7 @@ async def submit_restart(
 
 # An organisation's wizard. Registered after /submit/restart, which a slug
 # route would otherwise take (create_organisation refuses the slug "restart").
-router.add_api_route(
-    "/submit/{org_slug}", submit_get, methods=["GET"], response_class=HTMLResponse
-)
+router.add_api_route("/submit/{org_slug}", submit_get, methods=["GET"], response_class=HTMLResponse)
 router.add_api_route(
     "/submit/{org_slug}", submit_post, methods=["POST"], response_class=HTMLResponse
 )
@@ -1156,17 +1170,21 @@ async def status_get(
 
                 _, dec_msgs = decrypt_report_fields(report)
 
-                return render(request, "status.html", {
-                    "report": report,
-                    "decrypted_messages": dec_msgs,
-                    "attachment_names": decrypt_attachment_names(report),
-                    "case_number": None,
-                    "pin": None,
-                    "from_session": True,
-                    "success": success,
-                    "notice": notice,
-                    "now": now,
-                })
+                return render(
+                    request,
+                    "status.html",
+                    {
+                        "report": report,
+                        "decrypted_messages": dec_msgs,
+                        "attachment_names": decrypt_attachment_names(report),
+                        "case_number": None,
+                        "pin": None,
+                        "from_session": True,
+                        "success": success,
+                        "notice": notice,
+                        "now": now,
+                    },
+                )
 
     return render(request, "status.html", {"report": None})
 
@@ -1235,9 +1253,7 @@ async def reply_post(
             decoded_id = (
                 report_id_str.decode() if isinstance(report_id_str, bytes) else report_id_str
             )
-            report = await report_service.get_report_by_id(
-                db, uuid.UUID(decoded_id)
-            )
+            report = await report_service.get_report_by_id(db, uuid.UUID(decoded_id))
 
     if report is None:
         if not case_number or not pin:
@@ -1326,6 +1342,7 @@ async def whistleblower_download_attachment(
     decoded_id = report_id_str.decode() if isinstance(report_id_str, bytes) else report_id_str
 
     from app.services.attachment import get_attachment_by_id
+
     attachment = await get_attachment_by_id(db, attachment_id)
 
     if not attachment or str(attachment.report_id) != decoded_id:

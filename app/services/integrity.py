@@ -102,7 +102,7 @@ def load_manifest(manifest_path: Path) -> dict[str, Any] | None:
         return None
     try:
         parsed = json.loads(raw)
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         return None
     if not isinstance(parsed, dict) or not parsed.get("files"):
         return None
@@ -182,7 +182,7 @@ async def get_integrity_status(redis: Redis, recheck: bool = False) -> dict[str,
         if raw:
             try:
                 cached = json.loads(raw)
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 cached = None
             if isinstance(cached, dict):
                 return cached

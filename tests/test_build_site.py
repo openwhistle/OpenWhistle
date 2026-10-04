@@ -363,9 +363,7 @@ def test_the_language_switch_of_a_translated_page_goes_to_its_twin(
 
 
 def test_a_nav_entry_naming_no_page_fails(src: Path, tmp_path: Path) -> None:
-    (src / "_data" / "nav.yml").write_text(
-        "primary: [{label: nav.docs, page: nope}]\nfooter: []\n"
-    )
+    (src / "_data" / "nav.yml").write_text("primary: [{label: nav.docs, page: nope}]\nfooter: []\n")
     with pytest.raises(B.BuildError, match="nav.yml: primary names 'nope'"):
         _build(src, tmp_path)
 
@@ -390,7 +388,7 @@ def test_title_and_description_are_html_escaped_and_utf8_stays_literal(
 ) -> None:
     esc_text = (
         "---\ntitle: 'A & B \"q\" <x>'\ndescription: 'd ❤️ →'\n"
-        "translation_key: esc\n---\n<main id=\"main-content\">x</main>\n"
+        'translation_key: esc\n---\n<main id="main-content">x</main>\n'
     )
     (src / "en" / "docs" / "esc.md").write_text(esc_text, encoding="utf-8")
     path = tmp_path / "out" / "en" / "docs" / "esc" / "index.html"
@@ -402,9 +400,7 @@ def test_title_and_description_are_html_escaped_and_utf8_stays_literal(
 
 def _add_link(src: Path, href: str) -> None:
     page = src / "en" / "index.html"
-    content = page.read_text().replace(
-        "</main>", f'<a href="{href}">x</a></main>'
-    )
+    content = page.read_text().replace("</main>", f'<a href="{href}">x</a></main>')
     page.write_text(content, encoding="utf-8")
 
 
@@ -444,8 +440,9 @@ def test_valid_and_external_links_pass(src: Path, tmp_path: Path, href: str) -> 
     _build(src, tmp_path)
 
 
-@pytest.mark.parametrize("tag", ['<img src="/img/missing.png" alt="">',
-                                 '<img srcset="/img/missing.png 2x" alt="">'])
+@pytest.mark.parametrize(
+    "tag", ['<img src="/img/missing.png" alt="">', '<img srcset="/img/missing.png 2x" alt="">']
+)
 def test_a_missing_image_fails(src: Path, tmp_path: Path, tag: str) -> None:
     page = src / "en" / "index.html"
     page.write_text(page.read_text().replace("</main>", f"{tag}</main>"), encoding="utf-8")
@@ -554,7 +551,11 @@ NS = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9", "x": "http://www.w3.or
 def test_the_sitemap_lists_indexable_pages_with_alternates(src: Path, tmp_path: Path) -> None:
     root = ET.parse(_build(src, tmp_path) / "sitemap.xml").getroot()  # noqa: S314 - our own generated file
     locs = {u.find("s:loc", NS).text: u for u in root.findall("s:url", NS)}
-    assert set(locs) == {"https://example.test/en/", "https://example.test/de/", "https://example.test/en/docs/"}
+    assert set(locs) == {
+        "https://example.test/en/",
+        "https://example.test/de/",
+        "https://example.test/en/docs/",
+    }
     alts = {a.get("hreflang") for a in locs["https://example.test/de/"].findall("x:link", NS)}
     assert alts == {"en", "de", "x-default"}
 
@@ -695,9 +696,7 @@ def repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 @pytest.mark.parametrize("name", ["app", ".git", "scripts"])
-def test_out_inside_the_repository_is_refused_except_site(
-    src: Path, repo: Path, name: str
-) -> None:
+def test_out_inside_the_repository_is_refused_except_site(src: Path, repo: Path, name: str) -> None:
     with pytest.raises(B.BuildError, match="inside the repository"):
         B.build(src, repo / name)
     assert (repo / name / "keep.txt").is_file()

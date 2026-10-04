@@ -6,6 +6,7 @@ They use the FastAPI AsyncClient and do not require a running server.
 Note: OpenAPI schema is intentionally disabled in production (openapi_url=None).
 These tests instead verify contracts by exercising real routes.
 """
+
 from __future__ import annotations
 
 import pytest

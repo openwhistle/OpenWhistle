@@ -121,14 +121,14 @@ async def _seed(db: AsyncSession) -> None:
         )
         return
 
-    org_row = (await db.execute(
-        select(Organisation.id).where(Organisation.slug == cfg.default_org_slug).limit(1)
-    )).scalar_one_or_none()
+    org_row = (
+        await db.execute(
+            select(Organisation.id).where(Organisation.slug == cfg.default_org_slug).limit(1)
+        )
+    ).scalar_one_or_none()
 
     # Create admin user if not exists
-    result = await db.execute(
-        select(AdminUser).where(AdminUser.username == DEMO_ADMIN_USERNAME)
-    )
+    result = await db.execute(select(AdminUser).where(AdminUser.username == DEMO_ADMIN_USERNAME))
     admin = result.scalar_one_or_none()
     if admin is None:
         admin = AdminUser(
@@ -144,9 +144,7 @@ async def _seed(db: AsyncSession) -> None:
         await db.flush()
 
     # Create case manager user if not exists
-    result_cm = await db.execute(
-        select(AdminUser).where(AdminUser.username == DEMO_CM_USERNAME)
-    )
+    result_cm = await db.execute(select(AdminUser).where(AdminUser.username == DEMO_CM_USERNAME))
     case_mgr = result_cm.scalar_one_or_none()
     if case_mgr is None:
         case_mgr = AdminUser(
@@ -225,9 +223,7 @@ async def _seed(db: AsyncSession) -> None:
             closed_at = now - timedelta(days=3)
         # Reporter times are whole UTC days, as create_report stores them, and
         # every message has its own time so the receipt is always first.
-        submitted_at = day_floor(
-            acknowledged_at - timedelta(days=2) if acknowledged_at else now
-        )
+        submitted_at = day_floor(acknowledged_at - timedelta(days=2) if acknowledged_at else now)
         reply_day = day_floor(acknowledged_at + timedelta(days=1)) if acknowledged_at else None
         feedback_due_at = deadlines.feedback_due(submitted_at, acknowledged_at)
 
@@ -239,10 +235,12 @@ async def _seed(db: AsyncSession) -> None:
         conf_contact_enc: str | None = None
         if mode == SubmissionMode.confidential:
             from app.services.crypto import encrypt
+
             conf_name_enc = encrypt("Jane Demo")
             conf_contact_enc = encrypt("jane.demo@example.com")
 
         from app.config import settings as cfg
+
         dek_raw = generate_dek()
         enc_dek = encrypt_dek(dek_raw)
         report_fernet = make_report_fernet(enc_dek)
@@ -308,9 +306,7 @@ async def _seed(db: AsyncSession) -> None:
                     id=uuid.uuid4(),
                     report_id=report.id,
                     sender=ReportSender.whistleblower,
-                    content=(
-                        "Thank you. I have additional documentation I can provide if needed."
-                    ),
+                    content=("Thank you. I have additional documentation I can provide if needed."),
                     sent_at=reply_day,
                 )
             )

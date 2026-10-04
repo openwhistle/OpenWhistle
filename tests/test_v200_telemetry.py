@@ -50,8 +50,14 @@ def _handler(hits: _Hits) -> type[BaseHTTPRequestHandler]:
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:  # noqa: N802 — http.server API
             path = urlsplit(self.path).path
-            hits.append({"path": path, "query": urlsplit(self.path).query,
-                         "headers": dict(self.headers.items()), "method": "GET"})
+            hits.append(
+                {
+                    "path": path,
+                    "query": urlsplit(self.path).query,
+                    "headers": dict(self.headers.items()),
+                    "method": "GET",
+                }
+            )
             if path == "/redirect":
                 self.send_response(302)
                 self.send_header("Location", "/elsewhere")
@@ -111,20 +117,22 @@ async def redis() -> AsyncGenerator[Redis]:
     await r.aclose()
 
 
-async def _set_row(db: AsyncSession, *, enabled: bool | None,
-                   last_sent_at: datetime | None = None) -> None:
+async def _set_row(
+    db: AsyncSession, *, enabled: bool | None, last_sent_at: datetime | None = None
+) -> None:
     """enabled=None: no row at all (an installation never asked)."""
     await db.execute(text("DELETE FROM telemetry_state"))
     if enabled is not None:
-        db.add(TelemetryState(id=1, enabled=enabled, installation_id="ab" * 16,
-                              last_sent_at=last_sent_at))
+        db.add(
+            TelemetryState(
+                id=1, enabled=enabled, installation_id="ab" * 16, last_sent_at=last_sent_at
+            )
+        )
     await db.commit()
 
 
 async def _row(db: AsyncSession) -> TelemetryState | None:
-    return await db.scalar(
-        select(TelemetryState).execution_options(populate_existing=True)
-    )
+    return await db.scalar(select(TelemetryState).execution_options(populate_existing=True))
 
 
 # ── The request itself ─────────────────────────────────────────────────────
@@ -204,7 +212,8 @@ def test_the_timeout_is_ten_seconds() -> None:
 
 @pytest.mark.asyncio
 async def test_a_failure_is_one_debug_line_and_no_error(
-    fake_server: tuple[str, _Hits], monkeypatch: pytest.MonkeyPatch,
+    fake_server: tuple[str, _Hits],
+    monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     base, _ = fake_server
@@ -222,8 +231,9 @@ async def test_an_unreachable_endpoint_is_a_debug_line_too(
     monkeypatch.setattr(telemetry, "TELEMETRY_ENDPOINT", "http://127.0.0.1:9/count")
     with caplog.at_level(logging.DEBUG, logger="app.services.telemetry"):
         assert await telemetry.send_report("ab" * 16) is False
-    assert all(r.levelno == logging.DEBUG for r in caplog.records
-               if r.name == "app.services.telemetry")
+    assert all(
+        r.levelno == logging.DEBUG for r in caplog.records if r.name == "app.services.telemetry"
+    )
 
 
 def test_a_new_identifier_is_16_random_bytes_as_hex() -> None:
@@ -237,8 +247,11 @@ def test_a_new_identifier_is_16_random_bytes_as_hex() -> None:
 
 @pytest.mark.asyncio
 async def test_consented_and_never_sent_reports_and_records_the_success(
-    db_session: AsyncSession, redis: Redis, fake_server: tuple[str, _Hits],
-    monkeypatch: pytest.MonkeyPatch, consent_from_db: None,
+    db_session: AsyncSession,
+    redis: Redis,
+    fake_server: tuple[str, _Hits],
+    monkeypatch: pytest.MonkeyPatch,
+    consent_from_db: None,
 ) -> None:
     base, hits = fake_server
     monkeypatch.setattr(telemetry, "TELEMETRY_ENDPOINT", f"{base}/count")
@@ -254,17 +267,25 @@ async def test_consented_and_never_sent_reports_and_records_the_success(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(("enabled", "setting", "value"), [
-    (False, None, None),                       # consent off
-    (None, None, None),                        # never asked (upgrade to 2.0)
-    (True, "telemetry_enabled", False),        # TELEMETRY_ENABLED=false beats the DB
-    (True, "demo_mode", True),                 # the public demo is never counted
-    (True, "local_review_login", True),        # nor a local review stack
-])
+@pytest.mark.parametrize(
+    ("enabled", "setting", "value"),
+    [
+        (False, None, None),  # consent off
+        (None, None, None),  # never asked (upgrade to 2.0)
+        (True, "telemetry_enabled", False),  # TELEMETRY_ENABLED=false beats the DB
+        (True, "demo_mode", True),  # the public demo is never counted
+        (True, "local_review_login", True),  # nor a local review stack
+    ],
+)
 async def test_nothing_is_sent_without_consent_or_under_a_hard_off(
-    db_session: AsyncSession, redis: Redis, fake_server: tuple[str, _Hits],
-    monkeypatch: pytest.MonkeyPatch, consent_from_db: None,
-    enabled: bool | None, setting: str | None, value: bool | None,
+    db_session: AsyncSession,
+    redis: Redis,
+    fake_server: tuple[str, _Hits],
+    monkeypatch: pytest.MonkeyPatch,
+    consent_from_db: None,
+    enabled: bool | None,
+    setting: str | None,
+    value: bool | None,
 ) -> None:
     base, hits = fake_server
     monkeypatch.setattr(telemetry, "TELEMETRY_ENDPOINT", f"{base}/count")
@@ -280,8 +301,11 @@ async def test_nothing_is_sent_without_consent_or_under_a_hard_off(
 
 @pytest.mark.asyncio
 async def test_telemetry_enabled_true_reports_without_a_row(
-    db_session: AsyncSession, redis: Redis, fake_server: tuple[str, _Hits],
-    monkeypatch: pytest.MonkeyPatch, consent_from_db: None,
+    db_session: AsyncSession,
+    redis: Redis,
+    fake_server: tuple[str, _Hits],
+    monkeypatch: pytest.MonkeyPatch,
+    consent_from_db: None,
 ) -> None:
     base, hits = fake_server
     monkeypatch.setattr(telemetry, "TELEMETRY_ENDPOINT", f"{base}/count")
@@ -298,13 +322,19 @@ async def test_telemetry_enabled_true_reports_without_a_row(
 @pytest.mark.asyncio
 @pytest.mark.parametrize(("hours_ago", "sends"), [(1, False), (23.9, False), (24.1, True)])
 async def test_a_report_is_due_24_hours_after_the_last_success(
-    db_session: AsyncSession, redis: Redis, fake_server: tuple[str, _Hits],
-    monkeypatch: pytest.MonkeyPatch, consent_from_db: None, hours_ago: float, sends: bool,
+    db_session: AsyncSession,
+    redis: Redis,
+    fake_server: tuple[str, _Hits],
+    monkeypatch: pytest.MonkeyPatch,
+    consent_from_db: None,
+    hours_ago: float,
+    sends: bool,
 ) -> None:
     base, hits = fake_server
     monkeypatch.setattr(telemetry, "TELEMETRY_ENDPOINT", f"{base}/count")
-    await _set_row(db_session, enabled=True,
-                   last_sent_at=datetime.now(UTC) - timedelta(hours=hours_ago))
+    await _set_row(
+        db_session, enabled=True, last_sent_at=datetime.now(UTC) - timedelta(hours=hours_ago)
+    )
 
     assert await telemetry.report_if_due(db_session, redis) is sends
     assert len(hits) == int(sends)
@@ -312,8 +342,11 @@ async def test_a_report_is_due_24_hours_after_the_last_success(
 
 @pytest.mark.asyncio
 async def test_a_failed_report_is_not_recorded_as_sent(
-    db_session: AsyncSession, redis: Redis, fake_server: tuple[str, _Hits],
-    monkeypatch: pytest.MonkeyPatch, consent_from_db: None,
+    db_session: AsyncSession,
+    redis: Redis,
+    fake_server: tuple[str, _Hits],
+    monkeypatch: pytest.MonkeyPatch,
+    consent_from_db: None,
 ) -> None:
     base, hits = fake_server
     monkeypatch.setattr(telemetry, "TELEMETRY_ENDPOINT", f"{base}/fail")
@@ -327,8 +360,11 @@ async def test_a_failed_report_is_not_recorded_as_sent(
 
 @pytest.mark.asyncio
 async def test_of_two_replicas_at_the_same_moment_only_one_sends(
-    db_session: AsyncSession, redis: Redis, fake_server: tuple[str, _Hits],
-    monkeypatch: pytest.MonkeyPatch, consent_from_db: None,
+    db_session: AsyncSession,
+    redis: Redis,
+    fake_server: tuple[str, _Hits],
+    monkeypatch: pytest.MonkeyPatch,
+    consent_from_db: None,
 ) -> None:
     base, hits = fake_server
     monkeypatch.setattr(telemetry, "TELEMETRY_ENDPOINT", f"{base}/slow")
@@ -352,8 +388,10 @@ async def test_of_two_replicas_at_the_same_moment_only_one_sends(
 
 @pytest.mark.asyncio
 async def test_a_redis_outage_sends_nothing(
-    db_session: AsyncSession, fake_server: tuple[str, _Hits],
-    monkeypatch: pytest.MonkeyPatch, consent_from_db: None,
+    db_session: AsyncSession,
+    fake_server: tuple[str, _Hits],
+    monkeypatch: pytest.MonkeyPatch,
+    consent_from_db: None,
 ) -> None:
     base, hits = fake_server
     monkeypatch.setattr(telemetry, "TELEMETRY_ENDPOINT", f"{base}/count")
@@ -367,8 +405,9 @@ async def test_a_redis_outage_sends_nothing(
 
 
 @pytest.mark.asyncio
-async def test_the_scheduled_job_swallows_everything(monkeypatch: pytest.MonkeyPatch,
-                                                     consent_from_db: None) -> None:
+async def test_the_scheduled_job_swallows_everything(
+    monkeypatch: pytest.MonkeyPatch, consent_from_db: None
+) -> None:
     async def boom(*_: Any) -> bool:
         raise RuntimeError("database down")
 
@@ -378,8 +417,10 @@ async def test_the_scheduled_job_swallows_everything(monkeypatch: pytest.MonkeyP
 
 @pytest.mark.asyncio
 async def test_the_scheduled_job_reports_through_its_own_connections(
-    db_session: AsyncSession, fake_server: tuple[str, _Hits],
-    monkeypatch: pytest.MonkeyPatch, consent_from_db: None,
+    db_session: AsyncSession,
+    fake_server: tuple[str, _Hits],
+    monkeypatch: pytest.MonkeyPatch,
+    consent_from_db: None,
 ) -> None:
     base, hits = fake_server
     monkeypatch.setattr(telemetry, "TELEMETRY_ENDPOINT", f"{base}/count")
@@ -420,9 +461,14 @@ def test_the_first_delays_are_spread(consent_from_db: None) -> None:
     assert len(firsts) > 1
 
 
-@pytest.mark.parametrize(("setting", "value"), [
-    ("telemetry_enabled", False), ("demo_mode", True), ("local_review_login", True),
-])
+@pytest.mark.parametrize(
+    ("setting", "value"),
+    [
+        ("telemetry_enabled", False),
+        ("demo_mode", True),
+        ("local_review_login", True),
+    ],
+)
 def test_a_hard_off_never_schedules_the_job(
     monkeypatch: pytest.MonkeyPatch, consent_from_db: None, setting: str, value: bool
 ) -> None:
@@ -432,8 +478,9 @@ def test_a_hard_off_never_schedules_the_job(
     scheduler.add_job.assert_not_called()
 
 
-@pytest.mark.parametrize(("raw", "parsed"), [("", None), ("  ", None), ("false", False),
-                                             ("true", True)])
+@pytest.mark.parametrize(
+    ("raw", "parsed"), [("", None), ("  ", None), ("false", False), ("true", True)]
+)
 def test_telemetry_enabled_env_values(
     monkeypatch: pytest.MonkeyPatch, raw: str, parsed: bool | None
 ) -> None:
@@ -446,9 +493,13 @@ def test_telemetry_enabled_env_values(
 
 async def _admin(db: AsyncSession, role: AdminRole = AdminRole.admin) -> AdminUser:
     admin = AdminUser(
-        id=uuid.uuid4(), username=f"tel_{uuid.uuid4().hex[:8]}", role=role, is_active=True,
+        id=uuid.uuid4(),
+        username=f"tel_{uuid.uuid4().hex[:8]}",
+        role=role,
+        is_active=True,
         password_hash=hash_password("TelemetryTest!Pass1"),
-        totp_secret=pyotp.random_base32(), totp_enabled=True,
+        totp_secret=pyotp.random_base32(),
+        totp_enabled=True,
     )
     db.add(admin)
     await db.commit()
@@ -467,14 +518,18 @@ async def signed_in(
 
 
 async def _audit(db: AsyncSession, admin: AdminUser) -> list[str]:
-    rows = await db.scalars(select(AuditLog.action).where(AuditLog.admin_id == admin.id)
-                            .execution_options(populate_existing=True))
+    rows = await db.scalars(
+        select(AuditLog.action)
+        .where(AuditLog.admin_id == admin.id)
+        .execution_options(populate_existing=True)
+    )
     return list(rows)
 
 
 @pytest.mark.asyncio
 async def test_the_system_page_shows_the_exact_request_and_this_installations_id(
-    signed_in: tuple[AsyncClient, AdminUser, str], db_session: AsyncSession,
+    signed_in: tuple[AsyncClient, AdminUser, str],
+    db_session: AsyncSession,
     consent_from_db: None,
 ) -> None:
     client, _, _ = signed_in
@@ -493,7 +548,8 @@ async def test_the_system_page_shows_the_exact_request_and_this_installations_id
 
 @pytest.mark.asyncio
 async def test_viewing_the_system_page_writes_nothing(
-    signed_in: tuple[AsyncClient, AdminUser, str], db_session: AsyncSession,
+    signed_in: tuple[AsyncClient, AdminUser, str],
+    db_session: AsyncSession,
     consent_from_db: None,
 ) -> None:
     from app.i18n import make_translator
@@ -512,14 +568,16 @@ async def test_viewing_the_system_page_writes_nothing(
 
 @pytest.mark.asyncio
 async def test_switching_on_a_never_asked_install_creates_the_identifier(
-    signed_in: tuple[AsyncClient, AdminUser, str], db_session: AsyncSession,
+    signed_in: tuple[AsyncClient, AdminUser, str],
+    db_session: AsyncSession,
     consent_from_db: None,
 ) -> None:
     client, admin, csrf = signed_in
     await _set_row(db_session, enabled=None)
 
-    resp = await client.post("/admin/system/telemetry",
-                             data={"csrf_token": csrf, "enabled": "1"}, follow_redirects=False)
+    resp = await client.post(
+        "/admin/system/telemetry", data={"csrf_token": csrf, "enabled": "1"}, follow_redirects=False
+    )
 
     assert resp.status_code == 302
     row = await _row(db_session)
@@ -530,14 +588,16 @@ async def test_switching_on_a_never_asked_install_creates_the_identifier(
 
 @pytest.mark.asyncio
 async def test_switching_off_a_never_asked_install_writes_nothing(
-    signed_in: tuple[AsyncClient, AdminUser, str], db_session: AsyncSession,
+    signed_in: tuple[AsyncClient, AdminUser, str],
+    db_session: AsyncSession,
     consent_from_db: None,
 ) -> None:
     client, admin, csrf = signed_in
     await _set_row(db_session, enabled=None)
 
-    resp = await client.post("/admin/system/telemetry",
-                             data={"csrf_token": csrf, "enabled": "0"}, follow_redirects=False)
+    resp = await client.post(
+        "/admin/system/telemetry", data={"csrf_token": csrf, "enabled": "0"}, follow_redirects=False
+    )
 
     assert resp.status_code == 302
     assert await _row(db_session) is None
@@ -545,15 +605,22 @@ async def test_switching_off_a_never_asked_install_writes_nothing(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(("setting", "value", "key"), [
-    ("telemetry_enabled", False, "admin.system.telemetry.locked.env_off"),
-    ("telemetry_enabled", True, "admin.system.telemetry.locked.env_on"),
-    ("demo_mode", True, "admin.system.telemetry.locked.demo"),
-])
+@pytest.mark.parametrize(
+    ("setting", "value", "key"),
+    [
+        ("telemetry_enabled", False, "admin.system.telemetry.locked.env_off"),
+        ("telemetry_enabled", True, "admin.system.telemetry.locked.env_on"),
+        ("demo_mode", True, "admin.system.telemetry.locked.demo"),
+    ],
+)
 async def test_a_locked_switch_says_why_and_offers_no_toggle(
-    signed_in: tuple[AsyncClient, AdminUser, str], db_session: AsyncSession,
-    monkeypatch: pytest.MonkeyPatch, consent_from_db: None,
-    setting: str, value: bool, key: str,
+    signed_in: tuple[AsyncClient, AdminUser, str],
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+    consent_from_db: None,
+    setting: str,
+    value: bool,
+    key: str,
 ) -> None:
     from app.i18n import make_translator
 
@@ -569,16 +636,19 @@ async def test_a_locked_switch_says_why_and_offers_no_toggle(
 
 @pytest.mark.asyncio
 async def test_the_toggle_switches_on_and_off_with_one_audit_row_per_change(
-    signed_in: tuple[AsyncClient, AdminUser, str], db_session: AsyncSession,
+    signed_in: tuple[AsyncClient, AdminUser, str],
+    db_session: AsyncSession,
     consent_from_db: None,
 ) -> None:
     client, admin, csrf = signed_in
     await _set_row(db_session, enabled=False)
 
     for value in ("1", "1", "0"):
-        resp = await client.post("/admin/system/telemetry",
-                                 data={"csrf_token": csrf, "enabled": value},
-                                 follow_redirects=False)
+        resp = await client.post(
+            "/admin/system/telemetry",
+            data={"csrf_token": csrf, "enabled": value},
+            follow_redirects=False,
+        )
         assert resp.status_code == 302
         assert resp.headers["location"].startswith("/admin/system")
 
@@ -591,15 +661,18 @@ async def test_the_toggle_switches_on_and_off_with_one_audit_row_per_change(
 
 @pytest.mark.asyncio
 async def test_the_toggle_needs_the_csrf_token(
-    signed_in: tuple[AsyncClient, AdminUser, str], db_session: AsyncSession,
+    signed_in: tuple[AsyncClient, AdminUser, str],
+    db_session: AsyncSession,
     consent_from_db: None,
 ) -> None:
     client, admin, _ = signed_in
     await _set_row(db_session, enabled=False)
 
-    resp = await client.post("/admin/system/telemetry",
-                             data={"csrf_token": "not-the-cookie", "enabled": "1"},
-                             follow_redirects=False)
+    resp = await client.post(
+        "/admin/system/telemetry",
+        data={"csrf_token": "not-the-cookie", "enabled": "1"},
+        follow_redirects=False,
+    )
 
     assert resp.status_code == 403
     row = await _row(db_session)
@@ -617,8 +690,9 @@ async def test_a_case_manager_cannot_switch_or_reset(
     app.dependency_overrides[get_current_admin] = lambda: manager
     try:
         csrf = (await client.get("/admin/login")).cookies.get("ow_csrf") or ""
-        resp = await client.post(path, data={"csrf_token": csrf, "enabled": "1"},
-                                 follow_redirects=False)
+        resp = await client.post(
+            path, data={"csrf_token": csrf, "enabled": "1"}, follow_redirects=False
+        )
     finally:
         app.dependency_overrides.pop(get_current_admin, None)
 
@@ -629,15 +703,18 @@ async def test_a_case_manager_cannot_switch_or_reset(
 
 @pytest.mark.asyncio
 async def test_the_toggle_is_refused_while_the_environment_decides(
-    signed_in: tuple[AsyncClient, AdminUser, str], db_session: AsyncSession,
-    monkeypatch: pytest.MonkeyPatch, consent_from_db: None,
+    signed_in: tuple[AsyncClient, AdminUser, str],
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+    consent_from_db: None,
 ) -> None:
     client, admin, csrf = signed_in
     monkeypatch.setattr(settings, "telemetry_enabled", False)
     await _set_row(db_session, enabled=False)
 
-    resp = await client.post("/admin/system/telemetry",
-                             data={"csrf_token": csrf, "enabled": "1"}, follow_redirects=False)
+    resp = await client.post(
+        "/admin/system/telemetry", data={"csrf_token": csrf, "enabled": "1"}, follow_redirects=False
+    )
 
     assert resp.status_code == 409
     row = await _row(db_session)
@@ -647,14 +724,16 @@ async def test_the_toggle_is_refused_while_the_environment_decides(
 
 @pytest.mark.asyncio
 async def test_reset_gives_a_new_random_identifier(
-    signed_in: tuple[AsyncClient, AdminUser, str], db_session: AsyncSession,
+    signed_in: tuple[AsyncClient, AdminUser, str],
+    db_session: AsyncSession,
     consent_from_db: None,
 ) -> None:
     client, admin, csrf = signed_in
     await _set_row(db_session, enabled=True, last_sent_at=datetime.now(UTC))
 
-    resp = await client.post("/admin/system/telemetry/reset-id", data={"csrf_token": csrf},
-                             follow_redirects=False)
+    resp = await client.post(
+        "/admin/system/telemetry/reset-id", data={"csrf_token": csrf}, follow_redirects=False
+    )
 
     assert resp.status_code == 302
     row = await _row(db_session)
@@ -668,15 +747,17 @@ async def test_reset_gives_a_new_random_identifier(
 
 @pytest.mark.asyncio
 async def test_reset_before_consent_mints_no_identifier(
-    signed_in: tuple[AsyncClient, AdminUser, str], db_session: AsyncSession,
+    signed_in: tuple[AsyncClient, AdminUser, str],
+    db_session: AsyncSession,
     consent_from_db: None,
 ) -> None:
     client, admin, csrf = signed_in
     await _set_row(db_session, enabled=None)
 
     page = await client.get("/admin/system")
-    resp = await client.post("/admin/system/telemetry/reset-id", data={"csrf_token": csrf},
-                             follow_redirects=False)
+    resp = await client.post(
+        "/admin/system/telemetry/reset-id", data={"csrf_token": csrf}, follow_redirects=False
+    )
 
     assert 'action="/admin/system/telemetry/reset-id"' not in page.text
     assert resp.status_code == 302
@@ -686,13 +767,17 @@ async def test_reset_before_consent_mints_no_identifier(
 
 @pytest.mark.asyncio
 async def test_reset_needs_the_csrf_token(
-    signed_in: tuple[AsyncClient, AdminUser, str], db_session: AsyncSession,
+    signed_in: tuple[AsyncClient, AdminUser, str],
+    db_session: AsyncSession,
     consent_from_db: None,
 ) -> None:
     client, _, _ = signed_in
     await _set_row(db_session, enabled=False)
-    resp = await client.post("/admin/system/telemetry/reset-id",
-                             data={"csrf_token": "not-the-cookie"}, follow_redirects=False)
+    resp = await client.post(
+        "/admin/system/telemetry/reset-id",
+        data={"csrf_token": "not-the-cookie"},
+        follow_redirects=False,
+    )
     assert resp.status_code == 403
     row = await _row(db_session)
     assert row is not None and row.installation_id == "ab" * 16
@@ -715,13 +800,19 @@ async def test_the_wizard_asks_with_the_box_unchecked(
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(("answer", "stored", "row_first"), [
-    (None, None, False),   # no: no row at all, which is off
-    ("1", True, False),
-    ("1", True, True),     # a row already exists (e.g. TELEMETRY_ENABLED=true sent once)
-])
+@pytest.mark.parametrize(
+    ("answer", "stored", "row_first"),
+    [
+        (None, None, False),  # no: no row at all, which is off
+        ("1", True, False),
+        ("1", True, True),  # a row already exists (e.g. TELEMETRY_ENABLED=true sent once)
+    ],
+)
 async def test_the_wizard_stores_the_answer(
-    throwaway_db: AsyncSession, client: AsyncClient, answer: str | None, stored: bool | None,
+    throwaway_db: AsyncSession,
+    client: AsyncClient,
+    answer: str | None,
+    stored: bool | None,
     row_first: bool,
 ) -> None:
     if row_first:
@@ -750,10 +841,12 @@ async def test_the_wizard_survives_a_row_created_while_it_runs(
 
     async def racing(db: AsyncSession) -> TelemetryState:
         async with engine.begin() as conn:
-            await conn.execute(text(
-                "INSERT INTO telemetry_state (id, enabled, installation_id)"
-                " VALUES (1, false, 'cd' || repeat('0', 30))"
-            ))
+            await conn.execute(
+                text(
+                    "INSERT INTO telemetry_state (id, enabled, installation_id)"
+                    " VALUES (1, false, 'cd' || repeat('0', 30))"
+                )
+            )
         return await real(db)
 
     monkeypatch.setattr(wizard, "ensure_telemetry_state", racing)
@@ -773,9 +866,12 @@ async def _wizard_post(client: AsyncClient, answer: str | None) -> Any:
     assert get_resp.status_code == 200
     secret = generate_totp_secret()
     data = {
-        "username": "telemetryfirst", "password": "SecureTestPassword123!",
-        "password_confirm": "SecureTestPassword123!", "totp_secret": secret,
-        "totp_code": get_totp(secret).now(), "csrf_token": get_resp.cookies.get("ow_csrf"),
+        "username": "telemetryfirst",
+        "password": "SecureTestPassword123!",
+        "password_confirm": "SecureTestPassword123!",
+        "totp_secret": secret,
+        "totp_code": get_totp(secret).now(),
+        "csrf_token": get_resp.cookies.get("ow_csrf"),
         "setup_token": await setup_token(),
     }
     if answer is not None:
@@ -788,7 +884,10 @@ async def _wizard_post(client: AsyncClient, answer: str | None) -> Any:
 
 def _alembic(*args: str) -> None:
     run = subprocess.run(  # noqa: S603
-        ["alembic", *args], capture_output=True, text=True, check=False,  # noqa: S607
+        ["alembic", *args],  # noqa: S607
+        capture_output=True,
+        text=True,
+        check=False,  # noqa: S607
         env={**os.environ, "DATABASE_URL": settings.database_url},
     )
     assert run.returncode == 0, run.stderr

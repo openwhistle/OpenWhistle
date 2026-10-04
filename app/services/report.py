@@ -45,6 +45,7 @@ async def default_org_id(db: AsyncSession) -> uuid.UUID | None:
     row = result.scalar_one_or_none()
     return row
 
+
 async def active_default_org_id(db: AsyncSession) -> uuid.UUID | None:
     """The default organisation's id if it exists and is active: with
     multi-tenancy, what /submit files its reports under."""
@@ -379,7 +380,8 @@ async def end_status_sessions(redis: Redis, report_ids: set[uuid.UUID]) -> None:
         if keys:
             values = await redis.mget(*keys)
             doomed = [
-                key for key, val in zip(keys, values, strict=False)
+                key
+                for key, val in zip(keys, values, strict=False)
                 if val is not None and (val.decode() if isinstance(val, bytes) else val) in targets
             ]
             if doomed:
@@ -486,9 +488,7 @@ async def add_admin_message(
 
         plain_email = decrypt_or_none(report.secure_email)
         if plain_email:
-            schedule_background(
-                notify_reply_to_whistleblower(plain_email, settings.app_public_url)
-            )
+            schedule_background(notify_reply_to_whistleblower(plain_email, settings.app_public_url))
 
     return msg
 
@@ -532,18 +532,14 @@ async def update_report_status(
     return report
 
 
-async def assign_report(
-    db: AsyncSession, report: Report, admin: AdminUser | None
-) -> Report:
+async def assign_report(db: AsyncSession, report: Report, admin: AdminUser | None) -> Report:
     report.assigned_to_id = admin.id if admin else None
     await db.commit()
     await db.refresh(report)
     return report
 
 
-async def add_note(
-    db: AsyncSession, report: Report, author: AdminUser, content: str
-) -> AdminNote:
+async def add_note(db: AsyncSession, report: Report, author: AdminUser, content: str) -> AdminNote:
     note = AdminNote(
         id=uuid.uuid4(),
         report_id=report.id,
@@ -613,8 +609,7 @@ async def get_reports_paginated(
     total: int = count_result.scalar_one()
 
     rows_result = await db.execute(
-        base_q
-        .options(*_report_options())
+        base_q.options(*_report_options())
         # Submission times are whole days, so ties are common: the id makes
         # the order total and a page boundary stable.
         .order_by(order_expr, Report.id.desc())
@@ -651,17 +646,13 @@ async def get_report_stats(
 
 async def get_report_by_id(db: AsyncSession, report_id: uuid.UUID) -> Report | None:
     result = await db.execute(
-        select(Report)
-        .options(*_report_options())
-        .where(Report.id == report_id)
+        select(Report).options(*_report_options()).where(Report.id == report_id)
     )
     return result.scalar_one_or_none()
 
 
 async def get_report_by_case_number(db: AsyncSession, case_number: str) -> Report | None:
-    result = await db.execute(
-        select(Report).where(Report.case_number == case_number)
-    )
+    result = await db.execute(select(Report).where(Report.case_number == case_number))
     return result.scalar_one_or_none()
 
 
@@ -673,6 +664,7 @@ async def delete_report(db: AsyncSession, report: Report) -> None:
 
 
 # ── 4-eyes deletion ────────────────────────────────────────────────
+
 
 async def request_deletion(
     db: AsyncSession, report: Report, requester: AdminUser
@@ -689,9 +681,7 @@ async def request_deletion(
     return dr
 
 
-async def cancel_deletion_request(
-    db: AsyncSession, deletion_request: DeletionRequest
-) -> None:
+async def cancel_deletion_request(db: AsyncSession, deletion_request: DeletionRequest) -> None:
     await db.delete(deletion_request)
     await db.commit()
 
@@ -717,7 +707,9 @@ async def confirm_deletion(
     deletion_request.confirmed_by_username = confirmer.username
     deletion_request.confirmed_at = datetime.now(UTC)
     await audit_service.log(
-        db, confirmer, audit_service.AuditAction.REPORT_DELETE_CONFIRMED,
+        db,
+        confirmer,
+        audit_service.AuditAction.REPORT_DELETE_CONFIRMED,
         detail={
             "case_number": report.case_number,
             "requested_by": deletion_request.requested_by_username,
@@ -734,15 +726,12 @@ async def confirm_deletion(
 
 # ── Case linking ───────────────────────────────────────────────────
 
-def _normalize_ids(
-    id_a: uuid.UUID, id_b: uuid.UUID
-) -> tuple[uuid.UUID, uuid.UUID]:
+
+def _normalize_ids(id_a: uuid.UUID, id_b: uuid.UUID) -> tuple[uuid.UUID, uuid.UUID]:
     return (id_a, id_b) if str(id_a) < str(id_b) else (id_b, id_a)
 
 
-async def get_link(
-    db: AsyncSession, link_id: uuid.UUID
-) -> CaseLink | None:
+async def get_link(db: AsyncSession, link_id: uuid.UUID) -> CaseLink | None:
     result = await db.execute(select(CaseLink).where(CaseLink.id == link_id))
     return result.scalar_one_or_none()
 
@@ -769,9 +758,7 @@ async def get_link_between(
     """Return the existing link between two reports (order-independent), if any."""
     norm_a, norm_b = _normalize_ids(report_id_a, report_id_b)
     result = await db.execute(
-        select(CaseLink).where(
-            CaseLink.report_id_a == norm_a, CaseLink.report_id_b == norm_b
-        )
+        select(CaseLink).where(CaseLink.report_id_a == norm_a, CaseLink.report_id_b == norm_b)
     )
     return result.scalar_one_or_none()
 
@@ -813,6 +800,7 @@ def get_linked_reports(report: Report) -> list[tuple[uuid.UUID, str]]:
 
 # ── Dashboard statistics ────────────────────────────────────────────
 
+
 async def get_dashboard_stats(
     db: AsyncSession,
     *,
@@ -844,9 +832,9 @@ async def get_dashboard_stats(
         select(
             func.count(Report.id).label("total"),
             func.count(Report.id).filter(decided).label("decided"),
-            func.count(Report.id).filter(
-                Report.acknowledged_at <= Report.submitted_at + ack_window
-            ).label("on_time"),
+            func.count(Report.id)
+            .filter(Report.acknowledged_at <= Report.submitted_at + ack_window)
+            .label("on_time"),
         ).where(*org_filter)
     )
     ack_row = ack_result.one()

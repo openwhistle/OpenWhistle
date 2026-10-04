@@ -27,7 +27,8 @@ def test_every_setting_is_in_docker_compose_prod() -> None:
     compose = (ROOT / "docker-compose.prod.yml").read_text()
     keys = set(re.findall(r"^      ([A-Z0-9_]+): ", compose, re.M))
     missing = [
-        n.upper() for n in Settings.model_fields
+        n.upper()
+        for n in Settings.model_fields
         if n.upper() not in keys and n.upper() not in _NOT_IN_COMPOSE
     ]
     assert not missing, missing

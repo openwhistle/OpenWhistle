@@ -80,12 +80,15 @@ async def test_submit_step1_server_validates_mode_required(client: AsyncClient) 
     csrf = _wiz_csrf(resp.text)
 
     # POST step 1 with no submission_mode — server must reject it
-    resp = await client.post("/submit", data={
-        "csrf_token": csrf,
-        "step": "1",
-        "action": "next",
-        "submission_mode": "",
-    })
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": "1",
+            "action": "next",
+            "submission_mode": "",
+        },
+    )
     assert resp.status_code == 200
     # Must stay on mode-selection (submission_mode radios still present)
     assert "submission_mode" in resp.text
@@ -107,23 +110,29 @@ async def test_submit_step3_category_field_carries_required(client: AsyncClient)
     # Walk through step 1 to reach step 3 (category), skipping step 2 if locations are active
     get_resp = await client.get("/submit")
     csrf = _wiz_csrf(get_resp.text)
-    resp = await client.post("/submit", data={
-        "csrf_token": csrf,
-        "step": "1",
-        "action": "next",
-        "submission_mode": "anonymous",
-    })
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": "1",
+            "action": "next",
+            "submission_mode": "anonymous",
+        },
+    )
     assert resp.status_code == 200
 
     # Step 2 (location — conditional): skip if present by posting with empty location_id
     if _wiz_step(resp.text) == 2:
         csrf = _wiz_csrf(resp.text)
-        resp = await client.post("/submit", data={
-            "csrf_token": csrf,
-            "step": "2",
-            "action": "next",
-            "location_id": "",
-        })
+        resp = await client.post(
+            "/submit",
+            data={
+                "csrf_token": csrf,
+                "step": "2",
+                "action": "next",
+                "location_id": "",
+            },
+        )
         assert resp.status_code == 200
 
     # Now on step 3: select#category should have required
@@ -138,24 +147,41 @@ async def test_submit_step4_description_field_carries_required(client: AsyncClie
     csrf = _wiz_csrf(get_resp.text)
 
     # Step 1
-    resp = await client.post("/submit", data={
-        "csrf_token": csrf, "step": "1", "action": "next", "submission_mode": "anonymous",
-    })
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": "1",
+            "action": "next",
+            "submission_mode": "anonymous",
+        },
+    )
 
     # Step 2 (location — conditional): skip if present by posting with empty location_id
     if _wiz_step(resp.text) == 2:
         csrf = _wiz_csrf(resp.text)
-        resp = await client.post("/submit", data={
-            "csrf_token": csrf, "step": "2", "action": "next", "location_id": "",
-        })
+        resp = await client.post(
+            "/submit",
+            data={
+                "csrf_token": csrf,
+                "step": "2",
+                "action": "next",
+                "location_id": "",
+            },
+        )
 
     # Step 3 (category)
     csrf = _wiz_csrf(resp.text)
     step3_num = _wiz_step(resp.text)
-    resp = await client.post("/submit", data={
-        "csrf_token": csrf, "step": str(step3_num), "action": "next",
-        "category": "financial_fraud",
-    })
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": str(step3_num),
+            "action": "next",
+            "category": "financial_fraud",
+        },
+    )
 
     assert resp.status_code == 200
     # Step 4: textarea#description should have required
@@ -262,9 +288,7 @@ async def test_deleted_report_session_falls_back_to_login(
     """After a report is deleted, an existing status session shows the login form, not a crash."""
     from app.redis_client import get_redis
 
-    report, _ = await create_report(
-        db_session, "workplace_safety", "Report session fallback test."
-    )
+    report, _ = await create_report(db_session, "workplace_safety", "Report session fallback test.")
 
     redis = await get_redis()
     session_key = uuid.uuid4().hex

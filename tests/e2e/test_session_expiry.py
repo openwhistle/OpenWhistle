@@ -1,4 +1,5 @@
 """E2E tests for session expiry and invalid session handling."""
+
 from __future__ import annotations
 
 import pytest

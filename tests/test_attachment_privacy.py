@@ -154,8 +154,13 @@ async def test_legacy_plaintext_attachment_is_still_readable(db_session: AsyncSe
 
     report, _ = await create_report(db_session, "financial_fraud", "Legacy attachment test.")
     att = Attachment(
-        id=uuid.uuid4(), report_id=report.id, filename="old.txt",
-        content_type="text/plain", size=3, data=b"old", encrypted=False,
+        id=uuid.uuid4(),
+        report_id=report.id,
+        filename="old.txt",
+        content_type="text/plain",
+        size=3,
+        data=b"old",
+        encrypted=False,
     )
     db_session.add(att)
     await db_session.commit()
@@ -203,8 +208,9 @@ async def test_read_attachment_without_bytes_raises_lookup_error(db_session: Asy
     from app.models.attachment import Attachment
     from app.services.attachment import read_attachment
 
-    att = Attachment(id=uuid.uuid4(), report_id=uuid.uuid4(), filename="x", content_type="t",
-                     size=0, data=None)
+    att = Attachment(
+        id=uuid.uuid4(), report_id=uuid.uuid4(), filename="x", content_type="t", size=0, data=None
+    )
     with pytest.raises(LookupError):
         await read_attachment(db_session, att)
 

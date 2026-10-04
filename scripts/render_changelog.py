@@ -142,8 +142,12 @@ def render_body(lines: list[str]) -> str:
         # heading, or a bullet
         para = [stripped]
         i += 1
-        while i < n and lines[i].strip() and not lines[i].strip().startswith("- ") \
-                and not SUBHEADING_RE.match(lines[i]):
+        while (
+            i < n
+            and lines[i].strip()
+            and not lines[i].strip().startswith("- ")
+            and not SUBHEADING_RE.match(lines[i])
+        ):
             para.append(lines[i].strip())
             i += 1
         out.append(f"<p>{render_inline(' '.join(para))}</p>")
@@ -221,9 +225,7 @@ def render_content(versions: list[Version], link_defs: dict[str, str]) -> str:
     """The page body between the site navigation and the footer; the layout adds the rest."""
     shown = [v for v in versions if any(line.strip() for line in v.lines)]
 
-    nav_links = "\n".join(
-        f'          <a href="#{slug(v.name)}">{esc(v.name)}</a>' for v in shown
-    )
+    nav_links = "\n".join(f'          <a href="#{slug(v.name)}">{esc(v.name)}</a>' for v in shown)
 
     sections = []
     for v in shown:
@@ -240,4 +242,3 @@ def render_content(versions: list[Version], link_defs: dict[str, str]) -> str:
         )
 
     return CONTENT_HEAD + nav_links + "\n" + SHELL_TAIL + "\n".join(sections) + CONTENT_FOOT
-

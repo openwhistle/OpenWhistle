@@ -104,8 +104,10 @@ def _rotation_script():  # type: ignore[no-untyped-def]
 @pytest.mark.asyncio
 @pytest.mark.parametrize(("current", "previous"), [("", _A), (_A, "")])
 async def test_rotation_script_refuses_without_both_keys(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
-    current: str, previous: str,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    current: str,
+    previous: str,
 ) -> None:
     monkeypatch.setattr(settings, "encryption_key", current)
     monkeypatch.setattr(settings, "encryption_key_previous", previous)
@@ -115,7 +117,8 @@ async def test_rotation_script_refuses_without_both_keys(
 
 @pytest.mark.asyncio
 async def test_rotation_script_names_unreadable_rows_and_writes_nothing(
-    throwaway_db, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
+    throwaway_db,
+    monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     from sqlalchemy import text
@@ -131,9 +134,7 @@ async def test_rotation_script_names_unreadable_rows_and_writes_nothing(
         {"v": encrypt_dek(b"k" * 32), "i": bad.id},
     )
     await throwaway_db.commit()
-    before = dict(
-        (await throwaway_db.execute(text("SELECT id, encrypted_dek FROM reports"))).all()
-    )
+    before = dict((await throwaway_db.execute(text("SELECT id, encrypted_dek FROM reports"))).all())
 
     monkeypatch.setattr(settings, "encryption_key", _B)
     monkeypatch.setattr(settings, "encryption_key_previous", settings.secret_key)
@@ -141,15 +142,14 @@ async def test_rotation_script_names_unreadable_rows_and_writes_nothing(
     out = capsys.readouterr().out
     assert f"reports.encrypted_dek id={bad.id}" in out
     assert str(good.id) not in out
-    after = dict(
-        (await throwaway_db.execute(text("SELECT id, encrypted_dek FROM reports"))).all()
-    )
+    after = dict((await throwaway_db.execute(text("SELECT id, encrypted_dek FROM reports"))).all())
     assert after == before
 
 
 @pytest.mark.asyncio
 async def test_rotation_script_moves_every_value_to_the_new_key(
-    throwaway_db, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
+    throwaway_db,
+    monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
 ) -> None:
     import json
     import uuid
@@ -174,12 +174,17 @@ async def test_rotation_script_moves_every_value_to_the_new_key(
     # A plaintext "reason" (the retention job writes one) must not be touched,
     # nor abort the run; an identity reveal's encrypted reason must be rotated.
     retention = AuditLog(
-        id=uuid.uuid4(), admin_username="system", action="report.auto_deleted",
+        id=uuid.uuid4(),
+        admin_username="system",
+        action="report.auto_deleted",
         detail=json.dumps({"reason": "retention period exceeded"}),
     )
     reveal = AuditLog(
-        id=uuid.uuid4(), admin_username="system", action="report.identity_revealed",
-        report_id=report.id, detail=json.dumps({"reason": crypto.encrypt("needed for case")}),
+        id=uuid.uuid4(),
+        admin_username="system",
+        action="report.identity_revealed",
+        report_id=report.id,
+        detail=json.dumps({"reason": crypto.encrypt("needed for case")}),
     )
     throwaway_db.add_all([admin, retention, reveal])
     await throwaway_db.commit()
@@ -215,7 +220,8 @@ async def test_rotation_script_moves_every_value_to_the_new_key(
 
 @pytest.mark.asyncio
 async def test_rotation_script_flags_a_row_changed_during_the_run(
-    throwaway_db, monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
+    throwaway_db,
+    monkeypatch: pytest.MonkeyPatch,  # type: ignore[no-untyped-def]
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """A row rewritten between the script's read and its guarded write (e.g. a
@@ -275,8 +281,6 @@ async def test_rotation_script_flags_a_row_changed_during_the_run(
 
         return _EngineProxy()
 
-    monkeypatch.setattr(
-        "sqlalchemy.ext.asyncio.create_async_engine", patched_create_async_engine
-    )
+    monkeypatch.setattr("sqlalchemy.ext.asyncio.create_async_engine", patched_create_async_engine)
     assert await _rotation_script().main() == 0
     assert "Re-run before emptying ENCRYPTION_KEY_PREVIOUS." in capsys.readouterr().out

@@ -70,7 +70,8 @@ def test_restated_defaults_match_config_py(source: Callable[[], dict[str, str]])
     drift = {
         key: (_norm(value), _app_default(key))
         for key, value in found.items()
-        if key not in _PER_DEPLOYMENT and _app_default(key) is not None
+        if key not in _PER_DEPLOYMENT
+        and _app_default(key) is not None
         and _norm(value) not in ("", _app_default(key))
     }
     assert not drift, f"{source.__name__}: shipped value vs config.py default: {drift}"

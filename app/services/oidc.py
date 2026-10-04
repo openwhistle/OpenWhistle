@@ -37,7 +37,16 @@ SSO_RESULTS = frozenset({"linked", "unlinked", "failed", "taken", "only_way_in"}
 # HS* would turn the (shared) client secret into a signing key and "none"
 # would disable the check entirely.
 _ALLOWED_ALGORITHMS = [
-    "RS256", "RS384", "RS512", "PS256", "PS384", "PS512", "ES256", "ES384", "ES512", "EdDSA",
+    "RS256",
+    "RS384",
+    "RS512",
+    "PS256",
+    "PS384",
+    "PS512",
+    "ES256",
+    "ES384",
+    "ES512",
+    "EdDSA",
 ]
 _CLOCK_SKEW_SECONDS = 60
 
@@ -80,10 +89,14 @@ async def create_authorization_url(
     code_verifier = secrets.token_urlsafe(64)  # 86 chars, within RFC 7636's 43-128
     await redis.set(
         f"{_STATE_PREFIX}{state}",
-        json.dumps({
-            "nonce": nonce, "code_verifier": code_verifier,
-            "purpose": purpose, "binding": binding,
-        }),
+        json.dumps(
+            {
+                "nonce": nonce,
+                "code_verifier": code_verifier,
+                "purpose": purpose,
+                "binding": binding,
+            }
+        ),
         ex=_STATE_TTL,
     )
 

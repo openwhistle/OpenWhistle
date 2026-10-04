@@ -36,6 +36,7 @@ async def _search(client: AsyncClient, q: str, **form: str):  # type: ignore[no-
         "/admin/dashboard", data={"q": q, "csrf_token": client.cookies.get("ow_csrf"), **form}
     )
 
+
 _LOCALES = Path(__file__).resolve().parents[1] / "app" / "locales"
 
 
@@ -205,6 +206,8 @@ async def test_char_counter_uses_locale_number_format(
     client.cookies.set("ow-lang", lang)
     text = await _to_step(client, "description")
     assert expected.replace(" ", " ") in text.replace(" ", " "), text
+
+
 async def test_submit_valid_step_has_no_invalid_field(client: AsyncClient) -> None:
     text = await _to_step(client, "description")
     assert 'aria-invalid="true"' not in text

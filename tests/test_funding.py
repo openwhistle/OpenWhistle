@@ -22,9 +22,12 @@ LINK = re.compile(
 def _tracked_files() -> list[Path]:
     try:
         out = subprocess.run(  # noqa: S603 — fixed argv, no user input
-            ["git", "ls-files", "-z"], cwd=ROOT, capture_output=True, check=True,  # noqa: S607
+            ["git", "ls-files", "-z"],  # noqa: S607
+            cwd=ROOT,
+            capture_output=True,
+            check=True,  # noqa: S607
         ).stdout.decode()
-    except (OSError, subprocess.CalledProcessError):
+    except OSError, subprocess.CalledProcessError:
         pytest.skip("not a git checkout")
     # The changelog records history, including a funding platform once added.
     return [ROOT / n for n in out.split("\0") if n and n != "CHANGELOG.md"]
@@ -35,7 +38,7 @@ def test_no_personal_payment_links_are_tracked() -> None:
     for path in _tracked_files():
         try:
             text = path.read_text(encoding="utf-8")
-        except (OSError, UnicodeDecodeError):
+        except OSError, UnicodeDecodeError:
             continue
         for m in LINK.finditer(text):
             if m.group(1).lower() != PUBLIC_HANDLE:

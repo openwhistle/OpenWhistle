@@ -77,9 +77,7 @@ async def check_admin_login_attempts(redis: Redis, username: str) -> bool:
 
 async def record_admin_login_failure(redis: Redis, username: str) -> int:
     """Record a failed admin login attempt."""
-    return await _count_failure(
-        redis, _admin_key(username), settings.login_lockout_minutes * 60
-    )
+    return await _count_failure(redis, _admin_key(username), settings.login_lockout_minutes * 60)
 
 
 async def reset_admin_login_attempts(redis: Redis, username: str) -> None:

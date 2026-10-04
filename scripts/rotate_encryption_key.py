@@ -80,11 +80,14 @@ async def main() -> int:
         (AuditAction.IDENTITY_REVEALED, "reason"),
         (AuditAction.CONTENT_SEARCHED, "term"),
     ):
-        sources.append((
-            "audit_log", "detail",
-            f"action = '{action}' AND detail LIKE '%\"{key}\"%'",
-            _detail_rotator(key),
-        ))
+        sources.append(
+            (
+                "audit_log",
+                "detail",
+                f"action = '{action}' AND detail LIKE '%\"{key}\"%'",
+                _detail_rotator(key),
+            )
+        )
 
     engine = create_async_engine(settings.database_url, hide_parameters=True)
     writes: list[tuple[str, str, object, str, str]] = []

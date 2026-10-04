@@ -27,10 +27,16 @@ from app.services import ldap_auth
 @pytest.fixture
 def ldap_on(monkeypatch: pytest.MonkeyPatch) -> None:
     for name, value in {
-        "ldap_enabled": True, "ldap_server": "dir.example.org", "ldap_port": 389,
-        "ldap_use_ssl": False, "ldap_start_tls": False, "ldap_bind_dn": "cn=svc",
-        "ldap_bind_password": "svc-pw", "ldap_base_dn": "dc=example,dc=org",
-        "ldap_user_filter": "(uid={username})", "ldap_attr_username": "uid",
+        "ldap_enabled": True,
+        "ldap_server": "dir.example.org",
+        "ldap_port": 389,
+        "ldap_use_ssl": False,
+        "ldap_start_tls": False,
+        "ldap_bind_dn": "cn=svc",
+        "ldap_bind_password": "svc-pw",
+        "ldap_base_dn": "dc=example,dc=org",
+        "ldap_user_filter": "(uid={username})",
+        "ldap_attr_username": "uid",
         "ldap_attr_email": "mail",
     }.items():
         monkeypatch.setattr(settings, name, value)
@@ -38,9 +44,11 @@ def ldap_on(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def _conn(entries: list[tuple[str | None, dict[str, list[bytes]]]] | None = None) -> MagicMock:
     conn = MagicMock()
-    conn.search_s.return_value = entries if entries is not None else [
-        ("uid=alice,dc=example,dc=org", {"uid": [b"alice"], "mail": [b"alice@example.org"]})
-    ]
+    conn.search_s.return_value = (
+        entries
+        if entries is not None
+        else [("uid=alice,dc=example,dc=org", {"uid": [b"alice"], "mail": [b"alice@example.org"]})]
+    )
     return conn
 
 
@@ -80,8 +88,10 @@ def test_bind_errors_become_auth_errors(ldap_on: None, error: type[Exception]) -
 
 
 def test_unknown_user_is_refused(ldap_on: None) -> None:
-    with patch("ldap.initialize", return_value=_conn([(None, {})])), \
-         pytest.raises(ldap_auth.LDAPAuthError):
+    with (
+        patch("ldap.initialize", return_value=_conn([(None, {})])),
+        pytest.raises(ldap_auth.LDAPAuthError),
+    ):
         ldap_auth._authenticate_ldap_sync("nobody", "pw")
 
 
@@ -128,8 +138,10 @@ async def test_authenticate_ldap_runs_in_a_thread(ldap_on: None) -> None:
 
 
 def test_missing_extra_names_it(ldap_on: None) -> None:
-    with patch.dict("sys.modules", {"ldap": None}), \
-         pytest.raises(RuntimeError, match="'ldap' extra"):
+    with (
+        patch.dict("sys.modules", {"ldap": None}),
+        pytest.raises(RuntimeError, match="'ldap' extra"),
+    ):
         ldap_auth._authenticate_ldap_sync("alice", "pw")
 
 
@@ -144,8 +156,10 @@ def test_options_bound_referrals_and_timeout(ldap_on: None) -> None:
 def test_wrong_password_still_closes_both_connections(ldap_on: None) -> None:
     service, user = _conn(), _conn()
     user.simple_bind_s.side_effect = ldap.INVALID_CREDENTIALS({"desc": "x"})
-    with patch("ldap.initialize", side_effect=[service, user]), \
-         pytest.raises(ldap_auth.LDAPAuthError, match="Invalid LDAP credentials"):
+    with (
+        patch("ldap.initialize", side_effect=[service, user]),
+        pytest.raises(ldap_auth.LDAPAuthError, match="Invalid LDAP credentials"),
+    ):
         ldap_auth._authenticate_ldap_sync("alice", "wrong")
     service.unbind_s.assert_called_once()
     user.unbind_s.assert_called_once()
@@ -154,8 +168,7 @@ def test_wrong_password_still_closes_both_connections(ldap_on: None) -> None:
 def test_failed_search_still_closes_the_service_connection(ldap_on: None) -> None:
     service = _conn()
     service.search_s.side_effect = ldap.SERVER_DOWN({"desc": "x"})
-    with patch("ldap.initialize", return_value=service), \
-         pytest.raises(ldap_auth.LDAPAuthError):
+    with patch("ldap.initialize", return_value=service), pytest.raises(ldap_auth.LDAPAuthError):
         ldap_auth._authenticate_ldap_sync("alice", "pw")
     service.unbind_s.assert_called_once()
 
@@ -167,8 +180,10 @@ def test_failed_start_tls_closes_and_a_failing_unbind_is_swallowed(
     service = _conn()
     service.start_tls_s.side_effect = ldap.CONNECT_ERROR({"desc": "x"})
     service.unbind_s.side_effect = ldap.SERVER_DOWN({"desc": "x"})
-    with patch("ldap.initialize", return_value=service), \
-         pytest.raises(ldap_auth.LDAPAuthError, match="service bind failed"):
+    with (
+        patch("ldap.initialize", return_value=service),
+        pytest.raises(ldap_auth.LDAPAuthError, match="service bind failed"),
+    ):
         ldap_auth._authenticate_ldap_sync("alice", "pw")
     service.unbind_s.assert_called_once()
     service.simple_bind_s.assert_not_called()
@@ -183,8 +198,11 @@ def _pki(directory: Path, san: x509.GeneralName) -> None:
     ca_key = ec.generate_private_key(ec.SECP256R1())
     ca_name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "OpenWhistle test CA")])
     ca = (
-        x509.CertificateBuilder().subject_name(ca_name).issuer_name(ca_name)
-        .public_key(ca_key.public_key()).serial_number(x509.random_serial_number())
+        x509.CertificateBuilder()
+        .subject_name(ca_name)
+        .issuer_name(ca_name)
+        .public_key(ca_key.public_key())
+        .serial_number(x509.random_serial_number())
         .not_valid_before(now - datetime.timedelta(minutes=5))
         .not_valid_after(now + datetime.timedelta(days=1))
         .add_extension(x509.BasicConstraints(ca=True, path_length=None), critical=True)
@@ -194,7 +212,8 @@ def _pki(directory: Path, san: x509.GeneralName) -> None:
     leaf = (
         x509.CertificateBuilder()
         .subject_name(x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "ldap test")]))
-        .issuer_name(ca_name).public_key(key.public_key())
+        .issuer_name(ca_name)
+        .public_key(key.public_key())
         .serial_number(x509.random_serial_number())
         .not_valid_before(now - datetime.timedelta(minutes=5))
         .not_valid_after(now + datetime.timedelta(days=1))
@@ -203,10 +222,13 @@ def _pki(directory: Path, san: x509.GeneralName) -> None:
     )
     (directory / "ca.pem").write_bytes(ca.public_bytes(serialization.Encoding.PEM))
     (directory / "cert.pem").write_bytes(leaf.public_bytes(serialization.Encoding.PEM))
-    (directory / "key.pem").write_bytes(key.private_bytes(
-        serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
-        serialization.NoEncryption(),
-    ))
+    (directory / "key.pem").write_bytes(
+        key.private_bytes(
+            serialization.Encoding.PEM,
+            serialization.PrivateFormat.PKCS8,
+            serialization.NoEncryption(),
+        )
+    )
 
 
 # A subprocess: libldap reads LDAPTLS_CACERT once per process, and a global
@@ -265,7 +287,11 @@ def _ldaps_attempt(
     try:
         result = subprocess.run(  # noqa: S603
             [sys.executable, "-c", _CLIENT, str(server.getsockname()[1])],
-            env=env, capture_output=True, text=True, timeout=60, check=True,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=True,
             cwd=Path(__file__).resolve().parent.parent,
         )
     finally:
@@ -306,7 +332,9 @@ def test_ldaps_without_the_private_ca_refuses_the_handshake(
     tmp_path: Path, extra_env: dict[str, str]
 ) -> None:
     bind_sent, error = _ldaps_attempt(
-        tmp_path, x509.IPAddress(ipaddress.ip_address("127.0.0.1")), trust_ca=False,
+        tmp_path,
+        x509.IPAddress(ipaddress.ip_address("127.0.0.1")),
+        trust_ca=False,
         extra_env=extra_env,
     )
     assert not bind_sent
@@ -387,14 +415,25 @@ def test_ldaps_refuses_a_tls_1_1_only_server(tmp_path: Path) -> None:
     _pki(tmp_path, x509.IPAddress(ipaddress.ip_address("127.0.0.1")))
     conf = tmp_path / "openssl.cnf"
     conf.write_text(_LEGACY_OPENSSL_CONF)
-    env = {**os.environ, "HOME": str(tmp_path), "OPENSSL_CONF": str(conf),
-           "LDAPTLS_CACERT": str(tmp_path / "ca.pem")}
+    env = {
+        **os.environ,
+        "HOME": str(tmp_path),
+        "OPENSSL_CONF": str(conf),
+        "LDAPTLS_CACERT": str(tmp_path / "ca.pem"),
+    }
     env.pop("LDAPTLS_REQCERT", None)
     run = {"env": env, "capture_output": True, "text": True, "timeout": 60}
     server = subprocess.Popen(  # noqa: S603
-        [sys.executable, "-c", _TLS11_SERVER, str(tmp_path / "cert.pem"),
-         str(tmp_path / "key.pem")],
-        env=env, stdout=subprocess.PIPE, text=True,
+        [
+            sys.executable,
+            "-c",
+            _TLS11_SERVER,
+            str(tmp_path / "cert.pem"),
+            str(tmp_path / "key.pem"),
+        ],
+        env=env,
+        stdout=subprocess.PIPE,
+        text=True,
     )
     try:
         assert server.stdout is not None
@@ -402,19 +441,26 @@ def test_ldaps_refuses_a_tls_1_1_only_server(tmp_path: Path) -> None:
         # Can this OpenSSL speak TLS 1.1 at all? Python's ssl as the client.
         subprocess.run(  # noqa: S603
             [sys.executable, "-c", _TLS11_PROBE, str(tmp_path / "ca.pem"), port],
-            check=True, **run,
+            check=True,
+            **run,
         )
         if server.stdout.readline().strip() != "bind":
             pytest.skip("the local OpenSSL cannot negotiate TLS 1.1, even with SECLEVEL=0")
         subprocess.run(  # noqa: S603
-            [sys.executable, "-c", _TLS10_FLOOR_CLIENT, port], check=True, **run,
+            [sys.executable, "-c", _TLS10_FLOOR_CLIENT, port],
+            check=True,
+            **run,
         )
         if server.stdout.readline().strip() != "bind":
-            pytest.skip("libldap's TLS backend refuses TLS 1.1 by itself (e.g. GnuTLS), "
-                        "so a missing floor cannot be told apart here")
+            pytest.skip(
+                "libldap's TLS backend refuses TLS 1.1 by itself (e.g. GnuTLS), "
+                "so a missing floor cannot be told apart here"
+            )
         client = subprocess.run(  # noqa: S603
-            [sys.executable, "-c", _CLIENT, port], check=True,
-            cwd=Path(__file__).resolve().parent.parent, **run,
+            [sys.executable, "-c", _CLIENT, port],
+            check=True,
+            cwd=Path(__file__).resolve().parent.parent,
+            **run,
         )
         assert server.stdout.readline().strip() != "bind", client.stdout
         assert client.stdout.startswith(("SERVER_DOWN", "CONNECT_ERROR")), client.stdout

@@ -46,8 +46,19 @@ ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
 
 PAGE_KEYS = {
-    "title", "description", "translation_key", "lang", "css", "js", "og_type",
-    "published", "modified", "section", "jsonld", "noindex", "generated",
+    "title",
+    "description",
+    "translation_key",
+    "lang",
+    "css",
+    "js",
+    "og_type",
+    "published",
+    "modified",
+    "section",
+    "jsonld",
+    "noindex",
+    "generated",
 }
 REQUIRED_KEYS = {"title", "description", "translation_key"}
 _FRONT_MATTER = re.compile(r"\A---\n(?:(.*?)\n)?---(?:\n|\Z)", re.DOTALL)
@@ -259,11 +270,13 @@ def nav_context(
                 page.url == target.url
                 or (target.url not in roots and page.url.startswith(target.url))
             )
-            out.append({
-                "label": lookup(t, entry["label"]),
-                "href": target.url + (f"#{fragment}" if fragment else ""),
-                "current": current,
-            })
+            out.append(
+                {
+                    "label": lookup(t, entry["label"]),
+                    "href": target.url + (f"#{fragment}" if fragment else ""),
+                    "current": current,
+                }
+            )
         return out
 
     languages = [
@@ -364,9 +377,7 @@ def check_links(out: Path, host: str) -> None:
             try:
                 target.resolve().relative_to(out.resolve())
             except ValueError:
-                errors.append(
-                    f"{here}: {ref} -> traversal outside output at {parts.path}"
-                )
+                errors.append(f"{here}: {ref} -> traversal outside output at {parts.path}")
                 continue
             if not target.is_file():
                 errors.append(f"{here}: {ref} -> nothing at {parts.path}")
@@ -376,8 +387,7 @@ def check_links(out: Path, host: str) -> None:
                 and unquote(parts.fragment) not in parsed[target].ids
             ):
                 errors.append(
-                    f"{here}: {ref} -> {parts.path} "
-                    f"has no id {unquote(parts.fragment)!r}"
+                    f"{here}: {ref} -> {parts.path} has no id {unquote(parts.fragment)!r}"
                 )
     if errors:
         raise BuildError("broken internal links:\n  " + "\n  ".join(errors))
@@ -457,7 +467,10 @@ def _git(*args: str) -> str:
     # fixed git argv; the path comes from the repository itself
     run = subprocess.run(  # noqa: S603
         ["git", *args],  # noqa: S607
-        cwd=ROOT, capture_output=True, text=True, check=True,
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
     )
     return run.stdout.strip()
 

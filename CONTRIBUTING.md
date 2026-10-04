@@ -8,6 +8,7 @@ Open an issue before a pull request, so the change is agreed before it is built.
 | --- | --- |
 | Install | `uv sync --extra dev` |
 | Lint | `uv run ruff check .` |
+| Format | `uv run ruff format .` (CI runs `ruff format --check .`) |
 | Types | `uv run mypy --strict app` |
 | Spelling | `uvx codespell` |
 | Markdown | `npx --yes markdownlint-cli2 <files>` (rules in `.markdownlint.json`, lines ≤ 120) |

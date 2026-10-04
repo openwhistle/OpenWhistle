@@ -33,7 +33,8 @@ def test_locale_has_exactly_the_keys_of_en(path: Path) -> None:
 def test_locale_keeps_every_placeholder(path: Path) -> None:
     data = _load(path)
     wrong = [
-        k for k, v in EN.items()
+        k
+        for k, v in EN.items()
         if k in data and set(_PLACEHOLDER.findall(v)) != set(_PLACEHOLDER.findall(data[k]))
     ]
     assert wrong == []

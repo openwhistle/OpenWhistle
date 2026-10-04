@@ -88,9 +88,11 @@ async def get_category_by_slug(
     db: AsyncSession, slug: str, org_id: uuid.UUID | None
 ) -> ReportCategory | None:
     """A slug is unique per organisation only: look it up within one."""
-    result = await db.execute(select(ReportCategory).where(
-        ReportCategory.slug == slug, ReportCategory.org_id.is_not_distinct_from(org_id)
-    ))
+    result = await db.execute(
+        select(ReportCategory).where(
+            ReportCategory.slug == slug, ReportCategory.org_id.is_not_distinct_from(org_id)
+        )
+    )
     return result.scalar_one_or_none()
 
 

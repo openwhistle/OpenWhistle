@@ -58,7 +58,7 @@ def test_every_nav_page_links_to_roadmap() -> None:
     for url in NAV_PAGES:
         html = page(url)
         nav_match = re.search(r'<ul class="nav-links"[^>]*>.*?</ul>', html, re.DOTALL)
-        assert nav_match, f"{url}: no <ul class=\"nav-links\"> found"
+        assert nav_match, f'{url}: no <ul class="nav-links"> found'
         if f'href="{ROADMAP}"' not in nav_match.group(0):
             missing.append(url)
     assert not missing, f"pages whose nav does not link to {ROADMAP}: {missing}"
@@ -69,9 +69,7 @@ def test_roadmap_has_no_released_version_as_planned_heading() -> None:
     current = _app_version()
     headings = re.findall(r"<h2[^>]*>\s*v(\d+\.\d+\.\d+)\b", html)
     assert headings, f"{ROADMAP} has no version headings to check"
-    released = [
-        v for v in headings if tuple(int(p) for p in v.split(".")) <= current
-    ]
+    released = [v for v in headings if tuple(int(p) for p in v.split(".")) <= current]
     assert not released, (
         f"roadmap.html shows already-released version(s) as planned: {released} "
         f"(current app_version is {'.'.join(map(str, current))})"
@@ -147,12 +145,8 @@ def test_faqpage_jsonld_matches_visible_faq_one_to_one() -> None:
         html = page(url)
         jsonld_pairs = _faqpage_jsonld(html)
         visible_pairs = _visible_faq(html)
-        assert len(jsonld_pairs) == len(visible_pairs), (
-            url, len(jsonld_pairs), len(visible_pairs)
-        )
-        for i, ((jq, ja), (vq, va)) in enumerate(
-            zip(jsonld_pairs, visible_pairs, strict=True)
-        ):
+        assert len(jsonld_pairs) == len(visible_pairs), (url, len(jsonld_pairs), len(visible_pairs))
+        for i, ((jq, ja), (vq, va)) in enumerate(zip(jsonld_pairs, visible_pairs, strict=True)):
             assert _word_overlap(jq, vq) >= 0.6, (url, i, "question", jq, vq)
             assert _word_overlap(ja, va) >= 0.6, (url, i, "answer", ja, va)
 
@@ -209,7 +203,7 @@ def _link_targets(page: Path, links_html: str) -> set[str]:
 def _nav_targets(page: Path) -> set[str]:
     html = page.read_text()
     m = re.search(r'<ul class="nav-links"[^>]*>(.*?)</ul>', html, re.DOTALL)
-    assert m, f"{page}: no <ul class=\"nav-links\"> found"
+    assert m, f'{page}: no <ul class="nav-links"> found'
     return _link_targets(page, m.group(1))
 
 
@@ -283,15 +277,13 @@ def test_current_nav_item_is_marked() -> None:
         assert len(marked) == 1, (page_str, marked)
         href_m = re.search(r'href="([^"]+)"', marked[0])
         assert href_m
-        assert _resolve_nav_target(path, href_m.group(1)) == own_target, (
-            page_str, href_m.group(1)
-        )
+        assert _resolve_nav_target(path, href_m.group(1)) == own_target, (page_str, href_m.group(1))
 
 
 def _footer_targets(page: Path) -> set[str]:
     html = page.read_text()
     m = re.search(r'<ul class="footer-links"[^>]*>(.*?)</ul>', html, re.DOTALL)
-    assert m, f"{page}: no <ul class=\"footer-links\"> found"
+    assert m, f'{page}: no <ul class="footer-links"> found'
     return _link_targets(page, m.group(1))
 
 

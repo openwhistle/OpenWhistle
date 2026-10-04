@@ -23,14 +23,20 @@ FONTS = {
     700: ROOT / "docs" / "fonts" / "sora-latin-700-normal.woff2",
 }
 EDGES = {"ow:edge", "ow:edge-optional", "ow:message"}
-LINES = EDGES | {"ow:lifeline"}                     # their unfilled paths are lines text must clear
+LINES = EDGES | {"ow:lifeline"}  # their unfilled paths are lines text must clear
 CONTAINERS = {"ow:group", "ow:lane", "ow:lifeline"}  # boxes that hold other cells
 PAD_X = 6.0  # room between a text line and the side of its shape
 PAD_Y = 2.0
 CLEAR = 3.0  # gap between any text and any line, arrowhead or foreign node
 
 _INHERITED = (
-    "font-family", "font-size", "font-weight", "text-anchor", "fill", "stroke", "stroke-width"
+    "font-family",
+    "font-size",
+    "font-weight",
+    "text-anchor",
+    "fill",
+    "stroke",
+    "stroke-width",
 )
 _NUMBER = r"-?(?:\d+\.?\d*|\.\d+)(?:[eE]-?\d+)?"
 _TRANSLATE = re.compile(rf"translate\(\s*({_NUMBER})\s*[, ]?\s*({_NUMBER})?\s*\)")
@@ -101,8 +107,12 @@ def _bounds(points: list[Point]) -> Box:
 def _union(boxes: list[Box]) -> Box | None:
     if not boxes:
         return None
-    return Box(min(b.x0 for b in boxes), min(b.y0 for b in boxes),
-               max(b.x1 for b in boxes), max(b.y1 for b in boxes))
+    return Box(
+        min(b.x0 for b in boxes),
+        min(b.y0 for b in boxes),
+        max(b.x1 for b in boxes),
+        max(b.y1 for b in boxes),
+    )
 
 
 def _num(value: str | None) -> float:
@@ -210,8 +220,14 @@ def _cells(svg: str) -> dict[str, Cell]:
             if (family := attrs.get("font-family")) != "Sora":
                 raise ValueError(f"cell {cell.id}: {line!r} is drawn in {family!r}, not Sora")
             size = _num(attrs.get("font-size", "12"))
-            box = text_box(line, _num(el.get("x")) + ox, _num(el.get("y")) + oy, size, weight,
-                           attrs.get("text-anchor", "start"))
+            box = text_box(
+                line,
+                _num(el.get("x")) + ox,
+                _num(el.get("y")) + oy,
+                size,
+                weight,
+                attrs.get("text-anchor", "start"),
+            )
             cell.texts.append(Text(line, box, weight))
             return
         for child in el:
@@ -345,8 +361,11 @@ def _text_problems(cid: str, cell: Cell, role: str, ctx: _Context) -> list[str]:
                 continue  # a container's own header sits inside its own outer border
             if _hits(near, seg):
                 out.append(f"{cid}: text {t.text!r} touches a line of {lid}")
-        out += [f"{cid}: text {t.text!r} touches an arrowhead of {hid}" for hid, b in heads
-                if near.overlaps(b)]
+        out += [
+            f"{cid}: text {t.text!r} touches an arrowhead of {hid}"
+            for hid, b in heads
+            if near.overlaps(b)
+        ]
         if role in EDGES:
             out += [
                 f"{cid}: label {t.text!r} overlaps {nid}"

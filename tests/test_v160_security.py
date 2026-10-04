@@ -29,8 +29,7 @@ async def _reset_setup(db: AsyncSession) -> None:
     """Make the instance look freshly installed for one test."""
     await db.execute(
         text(
-            "INSERT INTO setup_status (id, completed) VALUES (1, true) "
-            "ON CONFLICT (id) DO NOTHING"
+            "INSERT INTO setup_status (id, completed) VALUES (1, true) ON CONFLICT (id) DO NOTHING"
         )
     )
     await db.execute(text("UPDATE setup_status SET completed = false WHERE id = 1"))
@@ -112,9 +111,10 @@ async def test_setup_with_the_token_creates_the_admin_and_deletes_the_token(
         form = _setup_form(csrf, await setup_token())
         resp = await client.post("/setup", data=form, follow_redirects=False)
         assert resp.status_code == 302
-        assert await db_session.scalar(
-            select(AdminUser).where(AdminUser.username == form["username"])
-        ) is not None
+        assert (
+            await db_session.scalar(select(AdminUser).where(AdminUser.username == form["username"]))
+            is not None
+        )
         assert await (await get_redis()).get(SETUP_TOKEN_KEY) is None
     finally:
         await _restore_setup(db_session)
@@ -197,12 +197,12 @@ async def test_configured_setup_token_overrides_a_stale_stored_token(
 @pytest.mark.parametrize(
     ("value", "valid"),
     [
-        ("a-real-setup-token-1234-abcdefghij", True),   # >= 32 chars: valid as-is
+        ("a-real-setup-token-1234-abcdefghij", True),  # >= 32 chars: valid as-is
         ("  a-real-setup-token-1234-abcdefghij  ", True),  # padded: stripped first
         ("a-real-setup-token-1234", False),  # < 32 chars after strip
         ("too-short", False),
-        ("   ", False),                      # whitespace-only: blank after strip
-        ("", True),                          # empty means "unset"
+        ("   ", False),  # whitespace-only: blank after strip
+        ("", True),  # empty means "unset"
     ],
 )
 def test_setup_token_validator(value: str, valid: bool) -> None:
@@ -228,8 +228,11 @@ async def test_totp_secret_is_stored_encrypted(db_session: AsyncSession) -> None
 
     secret = pyotp.random_base32()
     user = AdminUser(
-        id=uuid.uuid4(), username=f"totp_{uuid.uuid4().hex[:8]}",
-        password_hash=hash_password(_PASSWORD), totp_secret=secret, totp_enabled=True,
+        id=uuid.uuid4(),
+        username=f"totp_{uuid.uuid4().hex[:8]}",
+        password_hash=hash_password(_PASSWORD),
+        totp_secret=secret,
+        totp_enabled=True,
     )
     db_session.add(user)
     await db_session.commit()
@@ -268,7 +271,10 @@ def _alembic(*args: str) -> None:
     import subprocess
 
     run = subprocess.run(  # noqa: S603
-        ["alembic", *args], capture_output=True, text=True, check=False  # noqa: S607
+        ["alembic", *args],  # noqa: S607
+        capture_output=True,
+        text=True,
+        check=False,  # noqa: S607
     )
     assert run.returncode == 0, run.stderr
 
@@ -290,8 +296,11 @@ async def test_migration_004_round_trip_encrypts_and_stays_idempotent(
     ids = {"user1": uuid.uuid4(), "user2": uuid.uuid4(), "user3": uuid.uuid4()}
 
     user1 = AdminUser(
-        id=ids["user1"], username=f"mig004a_{uuid.uuid4().hex[:8]}",
-        password_hash=hash_password(_PASSWORD), totp_secret=secret1, totp_enabled=True,
+        id=ids["user1"],
+        username=f"mig004a_{uuid.uuid4().hex[:8]}",
+        password_hash=hash_password(_PASSWORD),
+        totp_secret=secret1,
+        totp_enabled=True,
     )
     db_session.add(user1)
     await db_session.commit()  # close the session's transaction before the subprocess
@@ -309,23 +318,42 @@ async def test_migration_004_round_trip_encrypts_and_stays_idempotent(
         # upgrade() does as its first, idempotent step) so the token fits.
         token3_before = encrypt(secret3)
         await db_session.execute(text("ALTER TABLE admin_users ALTER COLUMN totp_secret TYPE TEXT"))
-        await db_session.execute(text(
-            "INSERT INTO admin_users (id, username, password_hash, totp_secret, totp_enabled,"
-            " role, is_active) VALUES (:i, :u, :p, :t, true, 'admin', true)"
-        ), {"i": ids["user2"], "u": f"mig004b_{uuid.uuid4().hex[:8]}",
-            "p": hash_password(_PASSWORD), "t": secret2})
-        await db_session.execute(text(
-            "INSERT INTO admin_users (id, username, password_hash, totp_secret, totp_enabled,"
-            " role, is_active) VALUES (:i, :u, :p, :t, true, 'admin', true)"
-        ), {"i": ids["user3"], "u": f"mig004c_{uuid.uuid4().hex[:8]}",
-            "p": hash_password(_PASSWORD), "t": token3_before})
+        await db_session.execute(
+            text(
+                "INSERT INTO admin_users (id, username, password_hash, totp_secret, totp_enabled,"
+                " role, is_active) VALUES (:i, :u, :p, :t, true, 'admin', true)"
+            ),
+            {
+                "i": ids["user2"],
+                "u": f"mig004b_{uuid.uuid4().hex[:8]}",
+                "p": hash_password(_PASSWORD),
+                "t": secret2,
+            },
+        )
+        await db_session.execute(
+            text(
+                "INSERT INTO admin_users (id, username, password_hash, totp_secret, totp_enabled,"
+                " role, is_active) VALUES (:i, :u, :p, :t, true, 'admin', true)"
+            ),
+            {
+                "i": ids["user3"],
+                "u": f"mig004c_{uuid.uuid4().hex[:8]}",
+                "p": hash_password(_PASSWORD),
+                "t": token3_before,
+            },
+        )
         await db_session.commit()  # close the session's transaction before the subprocess
     finally:
         _alembic("upgrade", "head")
 
-    rows = dict((await db_session.execute(text(
-        "SELECT id, totp_secret FROM admin_users WHERE id IN (:a, :b, :c)"
-    ), {"a": ids["user1"], "b": ids["user2"], "c": ids["user3"]})).all())
+    rows = dict(
+        (
+            await db_session.execute(
+                text("SELECT id, totp_secret FROM admin_users WHERE id IN (:a, :b, :c)"),
+                {"a": ids["user1"], "b": ids["user2"], "c": ids["user3"]},
+            )
+        ).all()
+    )
     assert rows[ids["user1"]] != secret1
     assert decrypt(rows[ids["user1"]]) == secret1
     assert rows[ids["user2"]] != secret2
@@ -370,20 +398,29 @@ def _use_session(client: AsyncClient, token: str) -> None:
 async def _logged_in_admin(client: AsyncClient, db: AsyncSession) -> AdminUser:
     secret = pyotp.random_base32()
     user = AdminUser(
-        id=uuid.uuid4(), username=f"sess_{uuid.uuid4().hex[:8]}",
-        password_hash=hash_password(_PASSWORD), totp_secret=secret, totp_enabled=True,
+        id=uuid.uuid4(),
+        username=f"sess_{uuid.uuid4().hex[:8]}",
+        password_hash=hash_password(_PASSWORD),
+        totp_secret=secret,
+        totp_enabled=True,
         role=AdminRole.admin,
     )
     db.add(user)
     await db.commit()
     csrf = await _csrf(client, "/admin/login")
-    r = await client.post("/admin/login", data={
-        "username": user.username, "password": _PASSWORD, "csrf_token": csrf})
+    r = await client.post(
+        "/admin/login", data={"username": user.username, "password": _PASSWORD, "csrf_token": csrf}
+    )
     temp = re.search(r'name="temp_token" value="([^"]+)"', r.text)
     assert temp
-    await client.post("/admin/login/mfa", data={
-        "csrf_token": client.cookies.get("ow_csrf"), "temp_token": temp.group(1),
-        "totp_code": pyotp.TOTP(secret).now()})
+    await client.post(
+        "/admin/login/mfa",
+        data={
+            "csrf_token": client.cookies.get("ow_csrf"),
+            "temp_token": temp.group(1),
+            "totp_code": pyotp.TOTP(secret).now(),
+        },
+    )
     assert client.cookies.get("ow_session")
     return user
 
@@ -421,9 +458,16 @@ async def test_session_older_than_the_absolute_limit_is_rejected(
     user = await _logged_in_admin(client, db_session)
     now = int(time.time())
     stale = jwt.encode(
-        {"sub": str(user.id), "role": "admin", "iat": now, "exp": now + 3600,
-         "auth_time": now - (settings.session_max_hours * 3600 + 60), "jti": "x"},
-        settings.secret_key, algorithm=settings.algorithm,
+        {
+            "sub": str(user.id),
+            "role": "admin",
+            "iat": now,
+            "exp": now + 3600,
+            "auth_time": now - (settings.session_max_hours * 3600 + 60),
+            "jti": "x",
+        },
+        settings.secret_key,
+        algorithm=settings.algorithm,
     )
     await (await get_redis()).set(f"openwhistle:session:{stale}", str(user.id), ex=3600)
     _use_session(client, stale)
@@ -447,9 +491,16 @@ async def test_session_older_than_the_absolute_limit_is_401_even_without_csrf_he
     user = await _logged_in_admin(client, db_session)
     now = int(time.time())
     stale = jwt.encode(
-        {"sub": str(user.id), "role": "admin", "iat": now, "exp": now + 3600,
-         "auth_time": now - (settings.session_max_hours * 3600 + 60), "jti": "x"},
-        settings.secret_key, algorithm=settings.algorithm,
+        {
+            "sub": str(user.id),
+            "role": "admin",
+            "iat": now,
+            "exp": now + 3600,
+            "auth_time": now - (settings.session_max_hours * 3600 + 60),
+            "jti": "x",
+        },
+        settings.secret_key,
+        algorithm=settings.algorithm,
     )
     await (await get_redis()).set(f"openwhistle:session:{stale}", str(user.id), ex=3600)
     _use_session(client, stale)
@@ -551,15 +602,19 @@ async def test_deactivated_user_never_reaches_the_totp_step(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
     user = AdminUser(
-        id=uuid.uuid4(), username=f"inactive_{uuid.uuid4().hex[:8]}",
-        password_hash=hash_password(_PASSWORD), totp_secret=pyotp.random_base32(),
-        totp_enabled=True, is_active=False,
+        id=uuid.uuid4(),
+        username=f"inactive_{uuid.uuid4().hex[:8]}",
+        password_hash=hash_password(_PASSWORD),
+        totp_secret=pyotp.random_base32(),
+        totp_enabled=True,
+        is_active=False,
     )
     db_session.add(user)
     await db_session.commit()
     csrf = await _csrf(client, "/admin/login")
-    resp = await client.post("/admin/login", data={
-        "username": user.username, "password": _PASSWORD, "csrf_token": csrf})
+    resp = await client.post(
+        "/admin/login", data={"username": user.username, "password": _PASSWORD, "csrf_token": csrf}
+    )
     assert resp.status_code == 401
     assert 'name="temp_token"' not in resp.text
 
@@ -570,33 +625,47 @@ async def test_user_deactivated_between_password_and_totp_gets_no_session(
 ) -> None:
     secret = pyotp.random_base32()
     user = AdminUser(
-        id=uuid.uuid4(), username=f"late_{uuid.uuid4().hex[:8]}",
-        password_hash=hash_password(_PASSWORD), totp_secret=secret, totp_enabled=True,
+        id=uuid.uuid4(),
+        username=f"late_{uuid.uuid4().hex[:8]}",
+        password_hash=hash_password(_PASSWORD),
+        totp_secret=secret,
+        totp_enabled=True,
     )
     db_session.add(user)
     await db_session.commit()
     csrf = await _csrf(client, "/admin/login")
-    r = await client.post("/admin/login", data={
-        "username": user.username, "password": _PASSWORD, "csrf_token": csrf})
+    r = await client.post(
+        "/admin/login", data={"username": user.username, "password": _PASSWORD, "csrf_token": csrf}
+    )
     temp = re.search(r'name="temp_token" value="([^"]+)"', r.text)
     assert temp
     user.is_active = False
     await db_session.commit()
-    await client.post("/admin/login/mfa", data={
-        "csrf_token": client.cookies.get("ow_csrf"), "temp_token": temp.group(1),
-        "totp_code": pyotp.TOTP(secret).now()})
+    await client.post(
+        "/admin/login/mfa",
+        data={
+            "csrf_token": client.cookies.get("ow_csrf"),
+            "temp_token": temp.group(1),
+            "totp_code": pyotp.TOTP(secret).now(),
+        },
+    )
     assert not client.cookies.get("ow_session")
 
 
 @pytest.mark.asyncio
-async def test_unknown_role_creates_no_user(
-    client: AsyncClient, db_session: AsyncSession
-) -> None:
+async def test_unknown_role_creates_no_user(client: AsyncClient, db_session: AsyncSession) -> None:
     await _logged_in_admin(client, db_session)
     name = f"role_{uuid.uuid4().hex[:8]}"
-    resp = await client.post("/admin/users", data={
-        "username": name, "password": _PASSWORD, "role": "root",
-        "csrf_token": client.cookies.get("ow_csrf")}, follow_redirects=False)
+    resp = await client.post(
+        "/admin/users",
+        data={
+            "username": name,
+            "password": _PASSWORD,
+            "role": "root",
+            "csrf_token": client.cookies.get("ow_csrf"),
+        },
+        follow_redirects=False,
+    )
     assert resp.status_code == 422
     assert await db_session.scalar(select(AdminUser).where(AdminUser.username == name)) is None
 
@@ -626,9 +695,12 @@ async def test_deactivated_user_mfa_setup_makes_no_state_change(
 
     secret = pyotp.random_base32()
     user = AdminUser(
-        id=uuid.uuid4(), username=f"deact_{uuid.uuid4().hex[:8]}",
-        password_hash=hash_password(_PASSWORD), totp_secret=secret,
-        totp_enabled=False, is_active=False,
+        id=uuid.uuid4(),
+        username=f"deact_{uuid.uuid4().hex[:8]}",
+        password_hash=hash_password(_PASSWORD),
+        totp_secret=secret,
+        totp_enabled=False,
+        is_active=False,
     )
     db_session.add(user)
     await db_session.commit()
@@ -638,18 +710,21 @@ async def test_deactivated_user_mfa_setup_makes_no_state_change(
     await auth_service.store_totp_setup_pending(redis, temp_token, str(user.id))
 
     csrf = await _csrf(client, "/admin/login")
-    resp = await client.post("/admin/mfa/setup", data={
-        "csrf_token": csrf, "temp_token": temp_token,
-        "totp_code": pyotp.TOTP(secret).now(),
-    }, follow_redirects=False)
+    resp = await client.post(
+        "/admin/mfa/setup",
+        data={
+            "csrf_token": csrf,
+            "temp_token": temp_token,
+            "totp_code": pyotp.TOTP(secret).now(),
+        },
+        follow_redirects=False,
+    )
 
     assert resp.status_code == 302
     assert resp.headers["location"] == "/admin/login"
     await db_session.refresh(user)
     assert user.totp_enabled is False
-    rows = (await db_session.scalars(
-        select(AuditLog).where(AuditLog.admin_id == user.id)
-    )).all()
+    rows = (await db_session.scalars(select(AuditLog).where(AuditLog.admin_id == user.id))).all()
     assert rows == []
 
 
@@ -667,9 +742,12 @@ async def test_migration_005_backfills_audit_org_from_report_or_actor(
     db_session.add(org)
     await db_session.flush()
     admin = AdminUser(
-        id=uuid.uuid4(), username=f"mig005_{uuid.uuid4().hex[:8]}",
-        password_hash=hash_password(_PASSWORD), totp_secret=pyotp.random_base32(),
-        totp_enabled=True, org_id=org.id,
+        id=uuid.uuid4(),
+        username=f"mig005_{uuid.uuid4().hex[:8]}",
+        password_hash=hash_password(_PASSWORD),
+        totp_secret=pyotp.random_base32(),
+        totp_enabled=True,
+        org_id=org.id,
     )
     db_session.add(admin)
     report, _ = await create_report(db_session, "corruption", "Migration 005 backfill test.")
@@ -680,23 +758,36 @@ async def test_migration_005_backfills_audit_org_from_report_or_actor(
     row_without_report = uuid.uuid4()
     try:
         _alembic("downgrade", "a1c6e0f4b201")
-        await db_session.execute(text(
-            "INSERT INTO audit_log (id, admin_id, admin_username, action, report_id, org_id)"
-            " VALUES (:id, :admin_id, 'mig005', 'report.viewed', :report_id, NULL)"
-        ), {"id": row_with_report, "admin_id": admin.id, "report_id": report.id})
-        await db_session.execute(text(
-            "INSERT INTO audit_log (id, admin_id, admin_username, action, report_id, org_id)"
-            " VALUES (:id, :admin_id, 'mig005', 'admin.created', NULL, NULL)"
-        ), {"id": row_without_report, "admin_id": admin.id})
+        await db_session.execute(
+            text(
+                "INSERT INTO audit_log (id, admin_id, admin_username, action, report_id, org_id)"
+                " VALUES (:id, :admin_id, 'mig005', 'report.viewed', :report_id, NULL)"
+            ),
+            {"id": row_with_report, "admin_id": admin.id, "report_id": report.id},
+        )
+        await db_session.execute(
+            text(
+                "INSERT INTO audit_log (id, admin_id, admin_username, action, report_id, org_id)"
+                " VALUES (:id, :admin_id, 'mig005', 'admin.created', NULL, NULL)"
+            ),
+            {"id": row_without_report, "admin_id": admin.id},
+        )
         await db_session.commit()  # close the session's transaction before the subprocess
     finally:
         _alembic("upgrade", "head")
 
-    rows = dict((await db_session.execute(text(
-        "SELECT id, org_id FROM audit_log WHERE id IN (:a, :b)"
-    ), {"a": row_with_report, "b": row_without_report})).all())
+    rows = dict(
+        (
+            await db_session.execute(
+                text("SELECT id, org_id FROM audit_log WHERE id IN (:a, :b)"),
+                {"a": row_with_report, "b": row_without_report},
+            )
+        ).all()
+    )
     assert rows[row_with_report] == org.id
     assert rows[row_without_report] == org.id
+
+
 # ── Setup token, token claims, migration downgrade and user roles ──────────
 
 # ── Guards the v1.6.0 mutation audit found unpinned ───────────────────────
@@ -733,8 +824,12 @@ async def test_startup_creates_the_setup_token_only_while_setup_is_open(complete
 
     redis = object()
     cfg = MagicMock(
-        demo_mode=False, reminder_enabled=False, retention_enabled=False,
-        update_check_enabled=False, storage_backend="db", encryption_key="k" * 32,
+        demo_mode=False,
+        reminder_enabled=False,
+        retention_enabled=False,
+        update_check_enabled=False,
+        storage_backend="db",
+        encryption_key="k" * 32,
         multi_tenancy_enabled=False,
     )
     with (
@@ -765,16 +860,25 @@ async def test_migration_004_downgrade_names_an_unreadable_secret(
     import subprocess
 
     uid = uuid.uuid4()
-    await db_session.execute(text(
-        "INSERT INTO admin_users (id, username, password_hash, totp_secret, totp_enabled,"
-        " role, is_active) VALUES (:i, :u, :p, :t, true, 'admin', true)"
-    ), {"i": uid, "u": f"mig004d_{uuid.uuid4().hex[:8]}", "p": hash_password(_PASSWORD),
-        "t": "gAAAAA" + "x" * 80})
+    await db_session.execute(
+        text(
+            "INSERT INTO admin_users (id, username, password_hash, totp_secret, totp_enabled,"
+            " role, is_active) VALUES (:i, :u, :p, :t, true, 'admin', true)"
+        ),
+        {
+            "i": uid,
+            "u": f"mig004d_{uuid.uuid4().hex[:8]}",
+            "p": hash_password(_PASSWORD),
+            "t": "gAAAAA" + "x" * 80,
+        },
+    )
     await db_session.commit()
     try:
         run = subprocess.run(  # noqa: S603
             ["alembic", "downgrade", "7d4e2b9c1a05"],  # noqa: S607
-            capture_output=True, text=True, check=False,
+            capture_output=True,
+            text=True,
+            check=False,
         )
         assert run.returncode != 0
         assert str(uid) in run.stderr
@@ -802,9 +906,12 @@ async def test_deactivated_user_gets_no_mfa_setup_page(
     from app.services import auth as auth_service
 
     user = AdminUser(
-        id=uuid.uuid4(), username=f"deact_{uuid.uuid4().hex[:8]}",
-        password_hash=hash_password(_PASSWORD), totp_secret=pyotp.random_base32(),
-        totp_enabled=False, is_active=False,
+        id=uuid.uuid4(),
+        username=f"deact_{uuid.uuid4().hex[:8]}",
+        password_hash=hash_password(_PASSWORD),
+        totp_secret=pyotp.random_base32(),
+        totp_enabled=False,
+        is_active=False,
     )
     db_session.add(user)
     await db_session.commit()
@@ -822,14 +929,20 @@ async def test_unknown_role_change_is_422_and_changes_nothing(
 ) -> None:
     await _logged_in_admin(client, db_session)
     target = AdminUser(
-        id=uuid.uuid4(), username=f"target_{uuid.uuid4().hex[:8]}",
-        password_hash=hash_password(_PASSWORD), totp_secret=pyotp.random_base32(),
-        totp_enabled=True, role=AdminRole.case_manager,
+        id=uuid.uuid4(),
+        username=f"target_{uuid.uuid4().hex[:8]}",
+        password_hash=hash_password(_PASSWORD),
+        totp_secret=pyotp.random_base32(),
+        totp_enabled=True,
+        role=AdminRole.case_manager,
     )
     db_session.add(target)
     await db_session.commit()
-    resp = await client.post(f"/admin/users/{target.id}/role", data={
-        "role": "root", "csrf_token": client.cookies.get("ow_csrf")}, follow_redirects=False)
+    resp = await client.post(
+        f"/admin/users/{target.id}/role",
+        data={"role": "root", "csrf_token": client.cookies.get("ow_csrf")},
+        follow_redirects=False,
+    )
     assert resp.status_code == 422
     await db_session.refresh(target)
     assert target.role == AdminRole.case_manager
@@ -841,9 +954,11 @@ async def test_a_new_user_without_a_role_is_a_case_manager(
 ) -> None:
     await _logged_in_admin(client, db_session)
     name = f"role_{uuid.uuid4().hex[:8]}"
-    await client.post("/admin/users", data={
-        "username": name, "password": _PASSWORD,
-        "csrf_token": client.cookies.get("ow_csrf")}, follow_redirects=False)
+    await client.post(
+        "/admin/users",
+        data={"username": name, "password": _PASSWORD, "csrf_token": client.cookies.get("ow_csrf")},
+        follow_redirects=False,
+    )
     created = await db_session.scalar(select(AdminUser).where(AdminUser.username == name))
     assert created is not None
     assert created.role == AdminRole.case_manager

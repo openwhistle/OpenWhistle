@@ -90,16 +90,28 @@ async def test_drop_test_schema_leaves_no_tables_and_no_alembic_version() -> Non
         throwaway_engine = create_async_engine(throwaway_url)
         try:
             async with throwaway_engine.begin() as conn:
-                before = (await conn.execute(
-                    text("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
-                )).scalars().all()
+                before = (
+                    (
+                        await conn.execute(
+                            text("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
+                        )
+                    )
+                    .scalars()
+                    .all()
+                )
                 assert "alembic_version" in before  # sanity: migrated to head first
 
                 await _drop_test_schema(conn)
 
-                after = (await conn.execute(
-                    text("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
-                )).scalars().all()
+                after = (
+                    (
+                        await conn.execute(
+                            text("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
+                        )
+                    )
+                    .scalars()
+                    .all()
+                )
                 assert after == []
         finally:
             await throwaway_engine.dispose()

@@ -16,53 +16,51 @@ from app.models.user import AdminUser
 
 
 class AuditAction:
-    REPORT_STATUS_CHANGED   = "report.status_changed"
-    REPORT_ASSIGNED         = "report.assigned"
-    REPORT_UNASSIGNED       = "report.unassigned"
-    REPORT_NOTE_ADDED       = "report.note_added"
-    REPORT_MESSAGE_SENT     = "report.message_sent"
+    REPORT_STATUS_CHANGED = "report.status_changed"
+    REPORT_ASSIGNED = "report.assigned"
+    REPORT_UNASSIGNED = "report.unassigned"
+    REPORT_NOTE_ADDED = "report.note_added"
+    REPORT_MESSAGE_SENT = "report.message_sent"
     REPORT_DELETE_REQUESTED = "report.delete_requested"
     REPORT_DELETE_CONFIRMED = "report.delete_confirmed"
     REPORT_DELETE_CANCELLED = "report.delete_cancelled"
-    REPORT_ACKNOWLEDGED     = "report.acknowledged"
-    REPORT_LINK_ADDED       = "report.link_added"
-    REPORT_LINK_REMOVED     = "report.link_removed"
-    REPORT_AUTO_DELETED     = "report.auto_deleted"
-    ATTACHMENT_DOWNLOADED   = "report.attachment_downloaded"
-    AUDIT_EXPORTED          = "audit.exported"
-    REPORT_VIEWED           = "report.viewed"
-    IDENTITY_REVEALED       = "report.identity_revealed"
-    CONTENT_SEARCHED        = "report.content_searched"
-    CATEGORY_CREATED        = "category.created"
-    CATEGORY_UPDATED        = "category.updated"
-    CATEGORY_DEACTIVATED    = "category.deactivated"
-    LOCATION_CREATED        = "location.created"
-    LOCATION_DEACTIVATED    = "location.deactivated"
-    LOCATION_REACTIVATED    = "location.reactivated"
-    ADMIN_CREATED           = "admin.created"
-    ADMIN_ROLE_CHANGED      = "admin.role_changed"
-    ADMIN_DEACTIVATED       = "admin.deactivated"
-    ADMIN_REACTIVATED       = "admin.reactivated"
-    ADMIN_TOTP_RESET        = "admin.totp_reset"
-    ADMIN_PASSWORD_RESET    = "admin.password_reset"  # noqa: S105 — an action code
-    AUTH_LOGIN              = "auth.login"
+    REPORT_ACKNOWLEDGED = "report.acknowledged"
+    REPORT_LINK_ADDED = "report.link_added"
+    REPORT_LINK_REMOVED = "report.link_removed"
+    REPORT_AUTO_DELETED = "report.auto_deleted"
+    ATTACHMENT_DOWNLOADED = "report.attachment_downloaded"
+    AUDIT_EXPORTED = "audit.exported"
+    REPORT_VIEWED = "report.viewed"
+    IDENTITY_REVEALED = "report.identity_revealed"
+    CONTENT_SEARCHED = "report.content_searched"
+    CATEGORY_CREATED = "category.created"
+    CATEGORY_UPDATED = "category.updated"
+    CATEGORY_DEACTIVATED = "category.deactivated"
+    LOCATION_CREATED = "location.created"
+    LOCATION_DEACTIVATED = "location.deactivated"
+    LOCATION_REACTIVATED = "location.reactivated"
+    ADMIN_CREATED = "admin.created"
+    ADMIN_ROLE_CHANGED = "admin.role_changed"
+    ADMIN_DEACTIVATED = "admin.deactivated"
+    ADMIN_REACTIVATED = "admin.reactivated"
+    ADMIN_TOTP_RESET = "admin.totp_reset"
+    ADMIN_PASSWORD_RESET = "admin.password_reset"  # noqa: S105 — an action code
+    AUTH_LOGIN = "auth.login"
     AUTH_LOCAL_REVIEW_LOGIN = "auth.local_review_login"
-    AUTH_TOTP_SETUP         = "auth.totp_setup"
-    AUTH_SSO_LINKED         = "auth.sso_linked"
-    AUTH_SSO_UNLINKED       = "auth.sso_unlinked"
-    AUTH_PASSWORD_CHANGED   = "auth.password_changed"  # noqa: S105 — an action code
+    AUTH_TOTP_SETUP = "auth.totp_setup"
+    AUTH_SSO_LINKED = "auth.sso_linked"
+    AUTH_SSO_UNLINKED = "auth.sso_unlinked"
+    AUTH_PASSWORD_CHANGED = "auth.password_changed"  # noqa: S105 — an action code
     AUTH_SPRAYING_SUSPECTED = "auth.password_spraying_suspected"
-    ORG_CREATED             = "org.created"
-    ORG_DEACTIVATED         = "org.deactivated"
-    TELEMETRY_ENABLED       = "telemetry.enabled"
-    TELEMETRY_DISABLED      = "telemetry.disabled"
-    TELEMETRY_ID_RESET      = "telemetry.id_reset"
+    ORG_CREATED = "org.created"
+    ORG_DEACTIVATED = "org.deactivated"
+    TELEMETRY_ENABLED = "telemetry.enabled"
+    TELEMETRY_DISABLED = "telemetry.disabled"
+    TELEMETRY_ID_RESET = "telemetry.id_reset"
 
 
 # Every action code, for the audit-log filter and the label-completeness test.
-ALL_ACTIONS: tuple[str, ...] = tuple(
-    v for k, v in vars(AuditAction).items() if k.isupper()
-)
+ALL_ACTIONS: tuple[str, ...] = tuple(v for k, v in vars(AuditAction).items() if k.isupper())
 
 
 async def log(

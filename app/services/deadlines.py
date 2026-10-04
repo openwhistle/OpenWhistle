@@ -83,9 +83,7 @@ def ack_status(submitted_at: datetime, acknowledged_at: datetime | None, now: da
     return Deadline("warning" if day >= ACK_WARN_FROM_DAY else "ok", due, day)
 
 
-def feedback_status(
-    due: datetime | None, closed: bool, now: datetime
-) -> Deadline | None:
+def feedback_status(due: datetime | None, closed: bool, now: datetime) -> Deadline | None:
     if due is None:
         return None
     due = _aware(due)

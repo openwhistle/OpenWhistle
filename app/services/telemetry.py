@@ -84,7 +84,8 @@ def new_installation_id() -> str:
 async def get_state(db: AsyncSession) -> TelemetryState | None:
     """The single row, or None on an installation never asked. Reads only."""
     state: TelemetryState | None = await db.scalar(
-        select(TelemetryState).where(TelemetryState.id == 1)
+        select(TelemetryState)
+        .where(TelemetryState.id == 1)
         .execution_options(populate_existing=True)
     )
     return state

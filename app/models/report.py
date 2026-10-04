@@ -34,10 +34,10 @@ class SubmissionMode(enum.StrEnum):
 
 # Valid status transitions: {from_status: set_of_allowed_to_statuses}
 STATUS_TRANSITIONS: dict[str, set[str]] = {
-    "received":         {"in_review", "closed"},
-    "in_review":        {"pending_feedback", "closed", "received"},
+    "received": {"in_review", "closed"},
+    "in_review": {"pending_feedback", "closed", "received"},
     "pending_feedback": {"closed", "in_review"},
-    "closed":           {"in_review"},
+    "closed": {"in_review"},
 }
 
 
@@ -49,9 +49,7 @@ class ReportSender(enum.StrEnum):
 class Report(Base):
     __tablename__ = "reports"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     case_number: Mapped[str] = mapped_column(String(20), unique=True, nullable=False, index=True)
     pin_hash: Mapped[str] = mapped_column(String(72), nullable=False)
 
@@ -116,20 +114,22 @@ class Report(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    feedback_due_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    feedback_due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     messages: Mapped[list[ReportMessage]] = relationship(
-        "ReportMessage", back_populates="report", cascade="all, delete-orphan",
+        "ReportMessage",
+        back_populates="report",
+        cascade="all, delete-orphan",
         order_by="ReportMessage.sent_at",
     )
     attachments: Mapped[list[Attachment]] = relationship(
         "Attachment", back_populates="report", cascade="all, delete-orphan"
     )
     notes: Mapped[list[AdminNote]] = relationship(
-        "AdminNote", back_populates="report", cascade="all, delete-orphan",
+        "AdminNote",
+        back_populates="report",
+        cascade="all, delete-orphan",
         order_by="AdminNote.created_at",
     )
     links_as_a: Mapped[list[CaseLink]] = relationship(
@@ -157,9 +157,7 @@ class ReportMessage(Base):
 
     __tablename__ = "report_messages"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     report_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("reports.id", ondelete="CASCADE"), nullable=False, index=True
     )
@@ -179,9 +177,7 @@ class AdminNote(Base):
 
     __tablename__ = "admin_notes"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     report_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("reports.id", ondelete="CASCADE"), nullable=False, index=True
     )
@@ -202,9 +198,7 @@ class CaseLink(Base):
 
     __tablename__ = "case_links"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     # Smaller UUID always in report_id_a for normalization
     report_id_a: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("reports.id", ondelete="CASCADE"), nullable=False
@@ -233,9 +227,7 @@ class DeletionRequest(Base):
 
     __tablename__ = "deletion_requests"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     report_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("reports.id", ondelete="CASCADE"),

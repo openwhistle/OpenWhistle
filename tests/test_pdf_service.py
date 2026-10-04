@@ -149,7 +149,10 @@ async def test_generate_pdf_does_not_write_into_the_font_directory(
     from app.services.pdf import _FONT_DIR
 
     report, _ = await create_report(
-        db_session, category="corruption", description="Read-only font dir check.", lang="en",
+        db_session,
+        category="corruption",
+        description="Read-only font dir check.",
+        lang="en",
     )
     loaded = await get_report_by_id(db_session, report.id)
     assert loaded is not None
@@ -170,7 +173,10 @@ async def test_generate_pdf_does_not_write_into_the_font_directory(
 
     assert pdf_bytes[:4] == b"%PDF"
     assert {p.name for p in _FONT_DIR.iterdir()} == {
-        "DejaVuLGCSans.ttf", "DejaVuLGCSans-Bold.ttf", "LICENSE", "README",
+        "DejaVuLGCSans.ttf",
+        "DejaVuLGCSans-Bold.ttf",
+        "LICENSE",
+        "README",
     }
 
 

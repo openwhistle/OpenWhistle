@@ -38,9 +38,7 @@ async def _is_setup_complete(db: AsyncSession) -> bool:
     # populate_existing: a re-check inside the same session must see the row
     # as it is now, not the copy the identity map loaded before the lock.
     result = await db.execute(
-        select(SetupStatus)
-        .where(SetupStatus.id == 1)
-        .execution_options(populate_existing=True)
+        select(SetupStatus).where(SetupStatus.id == 1).execution_options(populate_existing=True)
     )
     setup = result.scalar_one_or_none()
     return setup is not None and setup.completed
@@ -212,8 +210,6 @@ async def setup_post(
 
     # A concurrent submission that won the race makes this a no-op; either
     # way the only thing left to do is log in.
-    if await create_initial_admin(
-        db, username, password, totp_secret, telemetry=telemetry == "1"
-    ):
+    if await create_initial_admin(db, username, password, totp_secret, telemetry=telemetry == "1"):
         await delete_setup_token(redis)
     return RedirectResponse("/admin/login", status_code=302)

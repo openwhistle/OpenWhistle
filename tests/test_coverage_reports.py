@@ -58,31 +58,40 @@ async def _walk_to_description_step(
     # Step 1: mode selection
     get_resp = await client.get("/submit")
     csrf = _wiz_csrf(get_resp.text)
-    resp = await client.post("/submit", data={
-        "csrf_token": csrf,
-        "step": "1",
-        "action": "next",
-        "submission_mode": "anonymous",
-    })
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": "1",
+            "action": "next",
+            "submission_mode": "anonymous",
+        },
+    )
 
     # Step 2 (location — conditional): skip if present by posting with empty location_id
     if _wiz_step(resp.text) == 2:
         csrf = _wiz_csrf(resp.text)
-        resp = await client.post("/submit", data={
-            "csrf_token": csrf,
-            "step": "2",
-            "action": "next",
-            "location_id": "",
-        })
+        resp = await client.post(
+            "/submit",
+            data={
+                "csrf_token": csrf,
+                "step": "2",
+                "action": "next",
+                "location_id": "",
+            },
+        )
 
     # Step 3: category
     csrf = _wiz_csrf(resp.text)
-    resp = await client.post("/submit", data={
-        "csrf_token": csrf,
-        "step": str(_wiz_step(resp.text)),
-        "action": "next",
-        "category": category,
-    })
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": str(_wiz_step(resp.text)),
+            "action": "next",
+            "category": category,
+        },
+    )
 
     # Now on step 4 (description)
     return _wiz_csrf(resp.text), _wiz_step(resp.text)
@@ -99,15 +108,11 @@ async def _submit_report(client: AsyncClient, description: str = "") -> tuple[st
     )
 
 
-async def _login_whistleblower(
-    client: AsyncClient, case_number: str, pin: str
-) -> None:
+async def _login_whistleblower(client: AsyncClient, case_number: str, pin: str) -> None:
     """POST to /status to set the ow-status-session cookie."""
     get_resp = await client.get("/status")
     csrf = get_resp.cookies.get("ow_csrf")
-    session_token_m = re.search(
-        r'name="session_token"\s+value="([^"]+)"', get_resp.text
-    )
+    session_token_m = re.search(r'name="session_token"\s+value="([^"]+)"', get_resp.text)
     session_token = session_token_m.group(1) if session_token_m else "fallback"
     await client.post(
         "/status",
@@ -132,7 +137,9 @@ async def test_set_language_admin_subpath_falls_back_to_dashboard(
     resp = await client.post(
         "/set-language",
         data={
-            "csrf_token": await _lang_csrf(client), "lang": "de", "next": "/admin/reports/some-id",
+            "csrf_token": await _lang_csrf(client),
+            "lang": "de",
+            "next": "/admin/reports/some-id",
         },
         follow_redirects=False,
     )
@@ -233,21 +240,27 @@ async def test_submit_no_category_shows_error(client: AsyncClient) -> None:
     get_resp = await client.get("/submit")
     csrf = _wiz_csrf(get_resp.text)
     # Complete step 1 (mode)
-    resp = await client.post("/submit", data={
-        "csrf_token": csrf,
-        "step": "1",
-        "action": "next",
-        "submission_mode": "anonymous",
-    })
+    resp = await client.post(
+        "/submit",
+        data={
+            "csrf_token": csrf,
+            "step": "1",
+            "action": "next",
+            "submission_mode": "anonymous",
+        },
+    )
     # Step 2 (location — conditional): skip if present
     if _wiz_step(resp.text) == 2:
         csrf = _wiz_csrf(resp.text)
-        resp = await client.post("/submit", data={
-            "csrf_token": csrf,
-            "step": "2",
-            "action": "next",
-            "location_id": "",
-        })
+        resp = await client.post(
+            "/submit",
+            data={
+                "csrf_token": csrf,
+                "step": "2",
+                "action": "next",
+                "location_id": "",
+            },
+        )
     # Try step 3 with empty category
     csrf = _wiz_csrf(resp.text)
     step3 = _wiz_step(resp.text)
@@ -301,9 +314,7 @@ async def test_reply_post_rotates_session_token(client: AsyncClient) -> None:
 
     get_resp = await client.get("/status")
     csrf = get_resp.cookies.get("ow_csrf")
-    csrf_m = re.search(
-        r'name="csrf_token"\s+value="([^"]+)"', get_resp.text
-    )
+    csrf_m = re.search(r'name="csrf_token"\s+value="([^"]+)"', get_resp.text)
     csrf_token = csrf_m.group(1) if csrf_m else csrf
 
     await client.post(

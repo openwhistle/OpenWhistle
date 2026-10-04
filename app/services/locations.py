@@ -59,9 +59,9 @@ async def get_location_by_code(
     db: AsyncSession, code: str, org_id: uuid.UUID | None
 ) -> Location | None:
     """A code is unique per organisation only: look it up within one."""
-    result = await db.execute(select(Location).where(
-        Location.code == code, Location.org_id.is_not_distinct_from(org_id)
-    ))
+    result = await db.execute(
+        select(Location).where(Location.code == code, Location.org_id.is_not_distinct_from(org_id))
+    )
     return result.scalar_one_or_none()
 
 

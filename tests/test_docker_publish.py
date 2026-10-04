@@ -31,8 +31,9 @@ def _merge_step() -> dict:
     return step
 
 
-def _run(tmp_path: Path, *, bad: str = "none", ref: str = "refs/heads/main",
-         dockerhub: str = "t") -> subprocess.CompletedProcess:
+def _run(
+    tmp_path: Path, *, bad: str = "none", ref: str = "refs/heads/main", dockerhub: str = "t"
+) -> subprocess.CompletedProcess:
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     for name, body in (("docker", DOCKER_STUB), ("cosign", "#!/bin/bash\n")):
@@ -54,8 +55,12 @@ def _run(tmp_path: Path, *, bad: str = "none", ref: str = "refs/heads/main",
         "STUB_BAD": bad,
     }
     return subprocess.run(  # noqa: S603
-        ["bash", "-c", _merge_step()["run"]], cwd=digests, env=env,  # noqa: S607
-        capture_output=True, text=True, check=False,
+        ["bash", "-c", _merge_step()["run"]],  # noqa: S607
+        cwd=digests,
+        env=env,  # noqa: S607
+        capture_output=True,
+        text=True,
+        check=False,
     )
 
 
@@ -82,22 +87,35 @@ def _floating(tmp_path: Path, ref: str) -> dict[str, str]:
     stub.write_text("#!/bin/bash\n" + "".join(f"echo 'x\trefs/tags/{t}'\n" for t in remote))
     stub.chmod(stub.stat().st_mode | stat.S_IEXEC)
     out = tmp_path / "out"
-    env = {**os.environ, "PATH": f"{bin_dir}:{os.environ['PATH']}", "GITHUB_REF_NAME": ref,
-           "GITHUB_OUTPUT": str(out), "GITHUB_SERVER_URL": "x", "GITHUB_REPOSITORY": "y"}
+    env = {
+        **os.environ,
+        "PATH": f"{bin_dir}:{os.environ['PATH']}",
+        "GITHUB_REF_NAME": ref,
+        "GITHUB_OUTPUT": str(out),
+        "GITHUB_SERVER_URL": "x",
+        "GITHUB_REPOSITORY": "y",
+    }
     subprocess.run(["bash", "-c", step["run"]], env=env, check=True)  # noqa: S603, S607
     return dict(line.split("=") for line in out.read_text().split())
 
 
-@pytest.mark.parametrize(("ref", "latest", "major", "minor"), [
-    ("v2.0.1", "true", "true", "true"),
-    ("v2.0.0", "false", "false", "false"),   # re-publishing an older patch
-    ("v1.10.0", "false", "true", "true"),    # highest 1.x, sorted as a version
-    ("v1.3.1", "false", "false", "true"),
-    ("v2.1.0-rc1", "false", "false", "false"),
-    ("main", "false", "false", "false"),
-])
+@pytest.mark.parametrize(
+    ("ref", "latest", "major", "minor"),
+    [
+        ("v2.0.1", "true", "true", "true"),
+        ("v2.0.0", "false", "false", "false"),  # re-publishing an older patch
+        ("v1.10.0", "false", "true", "true"),  # highest 1.x, sorted as a version
+        ("v1.3.1", "false", "false", "true"),
+        ("v2.1.0-rc1", "false", "false", "false"),
+        ("main", "false", "false", "false"),
+    ],
+)
 def test_floating_tags_move_only_to_the_highest_stable_release(
-    tmp_path: Path, ref: str, latest: str, major: str, minor: str,
+    tmp_path: Path,
+    ref: str,
+    latest: str,
+    major: str,
+    minor: str,
 ) -> None:
     assert _floating(tmp_path, ref) == {"latest": latest, "major": major, "minor": minor}
 
@@ -124,7 +142,8 @@ def test_publishing_waits_for_every_check_on_the_same_commit() -> None:
     jobs = yaml.safe_load((ROOT / ".github/workflows/docker-publish.yml").read_text())["jobs"]
     called = {name: job["uses"] for name, job in jobs.items() if "uses" in job}
     assert set(called.values()) == {
-        "./.github/workflows/ci.yml", "./.github/workflows/e2e.yml",
+        "./.github/workflows/ci.yml",
+        "./.github/workflows/e2e.yml",
         "./.github/workflows/security.yml",
     }
     assert set(jobs["build"]["needs"]) == {*called, "on-main"}
@@ -133,18 +152,26 @@ def test_publishing_waits_for_every_check_on_the_same_commit() -> None:
         assert "workflow_call" in triggers, path
 
 
-@pytest.mark.parametrize(("ref", "on_main", "ok"), [
-    ("refs/tags/v9.9.9", False, False),
-    ("refs/tags/v9.9.9", True, True),
-    ("refs/heads/main", False, True),
-])
+@pytest.mark.parametrize(
+    ("ref", "on_main", "ok"),
+    [
+        ("refs/tags/v9.9.9", False, False),
+        ("refs/tags/v9.9.9", True, True),
+        ("refs/heads/main", False, True),
+    ],
+)
 def test_a_tag_off_main_is_refused(tmp_path: Path, ref: str, on_main: bool, ok: bool) -> None:
     jobs = yaml.safe_load((ROOT / ".github/workflows/docker-publish.yml").read_text())["jobs"]
     (step,) = [s for s in jobs["on-main"]["steps"] if "run" in s]
     stub = tmp_path / "git"
     stub.write_text(f"#!/bin/bash\nexit {0 if on_main else 1}\n")
     stub.chmod(stub.stat().st_mode | stat.S_IEXEC)
-    env = {**os.environ, "PATH": f"{tmp_path}:{os.environ['PATH']}", "GITHUB_REF": ref,
-           "GITHUB_REF_NAME": ref.rsplit("/", 1)[-1], "GITHUB_SHA": "abc"}
+    env = {
+        **os.environ,
+        "PATH": f"{tmp_path}:{os.environ['PATH']}",
+        "GITHUB_REF": ref,
+        "GITHUB_REF_NAME": ref.rsplit("/", 1)[-1],
+        "GITHUB_SHA": "abc",
+    }
     result = subprocess.run(["bash", "-c", step["run"]], env=env, check=False)  # noqa: S603, S607
     assert (result.returncode == 0) is ok

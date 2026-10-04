@@ -174,9 +174,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         if settings.reminder_enabled:
             from app.services.reminders import send_sla_reminders  # noqa: PLC0415
 
-            scheduler.add_job(
-                send_sla_reminders, "interval", minutes=30, id="sla_reminders"
-            )
+            scheduler.add_job(send_sla_reminders, "interval", minutes=30, id="sla_reminders")
             logger.info("SLA reminder scheduler registered (interval: 30 min).")
 
         if settings.retention_enabled:
@@ -186,7 +184,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
             )
 
             scheduler.add_job(
-                run_retention_cleanup, "cron", hour=RETENTION_HOUR_UTC, minute=0,
+                run_retention_cleanup,
+                "cron",
+                hour=RETENTION_HOUR_UTC,
+                minute=0,
                 id="retention_cleanup",
             )
             logger.info("Data retention scheduler registered (daily at 03:00 UTC).")
@@ -198,9 +199,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 
             # Aligned to a fixed origin, so every replica fires at the same moment.
             scheduler.add_job(
-                deliver_notification_digest, "interval",
+                deliver_notification_digest,
+                "interval",
                 minutes=settings.notification_batch_minutes,
-                start_date=datetime(2026, 1, 1, tzinfo=UTC), id="notification_digest",
+                start_date=datetime(2026, 1, 1, tzinfo=UTC),
+                id="notification_digest",
             )
             logger.info(
                 "Notification digest registered (every %d min).",
@@ -210,9 +213,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         if settings.update_check_enabled:
             from app.services.version_check import refresh_update_check  # noqa: PLC0415
 
-            scheduler.add_job(
-                refresh_update_check, "cron", hour=4, minute=0, id="update_check"
-            )
+            scheduler.add_job(refresh_update_check, "cron", hour=4, minute=0, id="update_check")
             # Populate the cache once at startup so the System page has data
             # before the first daily run.
             scheduler.add_job(refresh_update_check, id="update_check_startup")
@@ -270,9 +271,7 @@ def create_app() -> FastAPI:
         return RedirectResponse("/admin/account", status_code=303)
 
     @application.exception_handler(StarletteHTTPException)
-    async def http_exception_handler(
-        request: Request, exc: StarletteHTTPException
-    ) -> Response:
+    async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> Response:
         """A browser navigating to an HTML route gets the styled, localised
         error page; an API/JSON client keeps the plain `{"detail": ...}` body
         it always got (this replaces FastAPI's own default handler, which

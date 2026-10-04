@@ -157,9 +157,11 @@ async def _exchange(
     http.post = AsyncMock(return_value=resp)
     http.__aenter__ = AsyncMock(return_value=http)
     http.__aexit__ = AsyncMock(return_value=None)
-    with patch("app.services.oidc._get_metadata", new=AsyncMock(return_value=_FAKE_METADATA)), \
-         patch("httpx.AsyncClient", return_value=http), \
-         patch.object(jwt.PyJWKClient, "fetch_data", return_value={"keys": [_JWK]}):
+    with (
+        patch("app.services.oidc._get_metadata", new=AsyncMock(return_value=_FAKE_METADATA)),
+        patch("httpx.AsyncClient", return_value=http),
+        patch.object(jwt.PyJWKClient, "fetch_data", return_value={"keys": [_JWK]}),
+    ):
         result = await oidc_service.exchange_code(redis, "auth-code", state)  # type: ignore[arg-type]
     return result, http
 

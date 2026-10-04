@@ -67,8 +67,8 @@ def test_verify_detects_missing_modified_extra(tmp_path: Path) -> None:
     _write_manifest(manifest, appdir)
     m = json.loads(manifest.read_text())
     m["files"]["app/GONE.py"] = {"sha256": "0" * 64, "size": 1}  # missing on disk
-    m["files"]["app/a.py"]["sha256"] = "deadbeef"                # hash mismatch → modified
-    del m["files"]["app/sub/b.txt"]                              # on disk, not in manifest → extra
+    m["files"]["app/a.py"]["sha256"] = "deadbeef"  # hash mismatch → modified
+    del m["files"]["app/sub/b.txt"]  # on disk, not in manifest → extra
     manifest.write_text(json.dumps(m), encoding="utf-8")
 
     r = ig.verify_integrity(root=appdir, manifest_path=manifest)

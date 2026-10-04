@@ -88,13 +88,13 @@ def test_real_zip_docx_is_still_accepted() -> None:
 
 def test_xlsx_comment_author_label_is_removed_but_the_comment_is_kept() -> None:
     part = (
-        b'<comments><authors><author>Max Mustermann</author></authors>'
-        b'<commentList>'
+        b"<comments><authors><author>Max Mustermann</author></authors>"
+        b"<commentList>"
         b'<comment ref="A1" authorId="0"><text><r><rPr><b/></rPr>'
-        b'<t>Max Mustermann:</t></r>'
+        b"<t>Max Mustermann:</t></r>"
         b'<r><t xml:space="preserve">\nI spoke to Max Mustermann about it.'
-        b'</t></r></text></comment>'
-        b'</commentList></comments>'
+        b"</t></r></text></comment>"
+        b"</commentList></comments>"
     )
     out = _anonymise_ooxml_part("xl/comments1.xml", part)
     assert b"<t>Max Mustermann:</t>" not in out
@@ -106,13 +106,13 @@ def test_xlsx_comment_only_first_run_label_is_replaced() -> None:
     """Excel's label is only the first run; a whistleblower's later run starting
     with the author name should not be altered."""
     part = (
-        b'<comments><authors><author>Max Mustermann</author></authors>'
-        b'<commentList>'
+        b"<comments><authors><author>Max Mustermann</author></authors>"
+        b"<commentList>"
         b'<comment ref="A1" authorId="0"><text><r><rPr><b/></rPr>'
-        b'<t>Max Mustermann:</t></r>'
-        b'<r><t>Max Mustermann: told me this himself.</t></r>'
-        b'</text></comment>'
-        b'</commentList></comments>'
+        b"<t>Max Mustermann:</t></r>"
+        b"<r><t>Max Mustermann: told me this himself.</t></r>"
+        b"</text></comment>"
+        b"</commentList></comments>"
     )
     out = _anonymise_ooxml_part("xl/comments1.xml", part)
     # First run label is replaced
@@ -149,7 +149,7 @@ def test_xlsx_comment_author_removed_end_to_end() -> None:
             b'<Override PartName="/docProps/app.xml"'
             b' ContentType="application/vnd.openxmlformats-officedocument.'
             b'extended-properties+xml"/>'
-            b'</Types>'
+            b"</Types>"
         )
         zf.writestr("[Content_Types].xml", content_types)
 
@@ -168,7 +168,7 @@ def test_xlsx_comment_author_removed_end_to_end() -> None:
             b'<Relationship Id="rId3"'
             b' Type="http://schemas.openxmlformats.org/officeDocument/2006/'
             b'relationships/extended-properties" Target="docProps/app.xml"/>'
-            b'</Relationships>'
+            b"</Relationships>"
         )
         zf.writestr("_rels/.rels", rels)
 
@@ -180,7 +180,7 @@ def test_xlsx_comment_author_removed_end_to_end() -> None:
             b'<sheet name="Sheet1" sheetId="1" r:id="rId1"'
             b' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/'
             b'relationships"/>'
-            b'</sheets></workbook>'
+            b"</sheets></workbook>"
         )
         zf.writestr("xl/workbook.xml", workbook)
 
@@ -197,13 +197,13 @@ def test_xlsx_comment_author_removed_end_to_end() -> None:
             b'<?xml version="1.0"?>'
             b'<comments xmlns="http://schemas.openxmlformats.org/spreadsheetml/'
             b'2006/main">'
-            b'<authors><author>Alice Smith</author></authors>'
-            b'<commentList>'
+            b"<authors><author>Alice Smith</author></authors>"
+            b"<commentList>"
             b'<comment ref="A1" authorId="0"><text><r><rPr><b/></rPr>'
-            b'<t>Alice Smith:</t></r>'
+            b"<t>Alice Smith:</t></r>"
             b'<r><t xml:space="preserve"> This is a problem.</t></r>'
-            b'</text></comment>'
-            b'</commentList></comments>'
+            b"</text></comment>"
+            b"</commentList></comments>"
         )
         zf.writestr("xl/comments1.xml", comments)
 
@@ -212,8 +212,8 @@ def test_xlsx_comment_author_removed_end_to_end() -> None:
             b'<?xml version="1.0"?>'
             b'<coreProperties xmlns="http://schemas.openxmlformats.org/package/'
             b'2006/metadata/core-properties">'
-            b'<creator>Alice Smith</creator>'
-            b'</coreProperties>'
+            b"<creator>Alice Smith</creator>"
+            b"</coreProperties>"
         )
         zf.writestr("docProps/core.xml", core_props)
 
@@ -228,9 +228,7 @@ def test_xlsx_comment_author_removed_end_to_end() -> None:
     with zipfile.ZipFile(io.BytesIO(cleaned), "r") as zf:
         for filename in zf.namelist():
             entry_data = zf.read(filename)
-            assert (
-                b"Alice Smith" not in entry_data
-            ), f"Author name found in {filename}"
+            assert b"Alice Smith" not in entry_data, f"Author name found in {filename}"
 
         # Also verify specific transformations in comments
         comments_data = zf.read("xl/comments1.xml")
@@ -264,13 +262,23 @@ async def test_legacy_s3_keys_are_moved_to_bare_uuids(
 
     report, _ = await create_report(db_session, "corruption", "S3 rekey test report text.")
     legacy = Attachment(
-        id=uuid.uuid4(), report_id=report.id, filename="x", content_type="application/pdf",
-        size=3, storage_key="Max_Mustermann_evidence.pdf", encrypted=True,
+        id=uuid.uuid4(),
+        report_id=report.id,
+        filename="x",
+        content_type="application/pdf",
+        size=3,
+        storage_key="Max_Mustermann_evidence.pdf",
+        encrypted=True,
     )
     modern_key = str(uuid.uuid4())
     modern = Attachment(
-        id=uuid.uuid4(), report_id=report.id, filename="y", content_type="application/pdf",
-        size=3, storage_key=modern_key, encrypted=True,
+        id=uuid.uuid4(),
+        report_id=report.id,
+        filename="y",
+        content_type="application/pdf",
+        size=3,
+        storage_key=modern_key,
+        encrypted=True,
     )
     db_session.add_all([legacy, modern])
     await db_session.commit()
@@ -294,8 +302,13 @@ async def test_failed_copy_leaves_the_row_untouched(
 
     report, _ = await create_report(db_session, "corruption", "S3 rekey failure report text.")
     legacy = Attachment(
-        id=uuid.uuid4(), report_id=report.id, filename="x", content_type="application/pdf",
-        size=3, storage_key="old-name.pdf", encrypted=True,
+        id=uuid.uuid4(),
+        report_id=report.id,
+        filename="x",
+        content_type="application/pdf",
+        size=3,
+        storage_key="old-name.pdf",
+        encrypted=True,
     )
     db_session.add(legacy)
     await db_session.commit()

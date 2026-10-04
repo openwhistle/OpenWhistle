@@ -23,8 +23,11 @@ def _tasks(name: str) -> list[dict]:
 
 
 def test_the_certificate_is_obtained_before_the_stack_starts() -> None:
-    order = [t["ansible.builtin.import_tasks"] for t in _tasks("main.yml")
-             if "ansible.builtin.import_tasks" in t]
+    order = [
+        t["ansible.builtin.import_tasks"]
+        for t in _tasks("main.yml")
+        if "ansible.builtin.import_tasks" in t
+    ]
     assert order.index("certbot.yml") < order.index("systemd.yml"), order
 
 
@@ -53,7 +56,9 @@ def test_every_certbot_run_stops_the_stack_and_starts_it_again() -> None:
 
 @pytest.mark.parametrize(("installed", "expected"), [(True, "stop openwhistle"), (False, "")])
 def test_the_hook_skips_a_unit_that_is_not_installed_yet(
-    tmp_path: Path, installed: bool, expected: str,
+    tmp_path: Path,
+    installed: bool,
+    expected: str,
 ) -> None:
     task = _hook_task()
     script = jinja2.Template(task["ansible.builtin.copy"]["content"]).render(item=task["loop"][0])
