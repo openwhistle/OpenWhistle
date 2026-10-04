@@ -29,8 +29,16 @@
    "id": "AI-WORKFLOW-INTERPOLATION",
    "file": ".github/workflows/ai-disclosure.yml",
    "tests": "AI",
-   "old": "if printf '%s' \"$TEXT\"",
-   "new": "if printf '%s' \"${{ github.event.issue.body }}\""
+   "old": "<<< \"${TEXT//$'\\r'/}\"",
+   "new": "<<< \"${{ github.event.issue.body }}\""
+  }
+,
+  {
+   "id": "AI-WORKFLOW-PIPE",
+   "file": ".github/workflows/ai-disclosure.yml",
+   "tests": "AI",
+   "old": "          if grep -Pzq",
+   "new": "          if printf '%s' \"$TEXT\" | grep -Pzq"
   }
  ]
 }

@@ -56,3 +56,8 @@ def test_the_workflow_never_checks_out_or_interpolates_the_text() -> None:
     assert "actions/checkout" not in WORKFLOW
     run = WORKFLOW.split("run: |", 1)[1]
     assert "${{" not in run, "event text must reach the shell only through env"
+
+
+def test_the_match_is_not_the_end_of_a_pipe() -> None:
+    """Run steps use pipefail: grep -q quitting early would fail the writer with SIGPIPE."""
+    assert not re.search(r"\|\s*grep\b", WORKFLOW)
