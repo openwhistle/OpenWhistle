@@ -268,7 +268,7 @@ body {
   .theme-toggle, .btn-outline, .nav-cta, .feature-card, .compliance-card, .install-reqs,
   details.faq-item, .article-card, .step-block, .article-cta, .terminal-window,
   .code-block, .article-body pre, .doc-shot img, .btn-primary, .compliance-card-badge, .feature-icon-wrap, .trust-item-check,
-  .docs-section code, .env-req-yes, .env-req-no, code, details.faq-item[open] { border: 1px solid CanvasText; }
+  .docs-section code, .docs-article code, .env-req-yes, .env-req-no, code, details.faq-item[open] { border: 1px solid CanvasText; }
   /* A code block is framed once: its lines are not inline code, whatever the list above matches. */
   pre code, .docs-section pre code { border: none; }
 }

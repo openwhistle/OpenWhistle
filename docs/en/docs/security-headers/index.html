@@ -1,0 +1,25 @@
+---
+title: HTTP security headers | OpenWhistle
+description: Every HTTP security header the OpenWhistle app sets on each response, from the Content Security Policy to HSTS, so that they hold behind any proxy.
+translation_key: docs-security-headers
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1>Security headers</h1>
+        <p>The app sets them on every response, so they hold behind any proxy:</p>
+        <div class="table-scroll">
+<table class="env-table">
+          <thead><tr><th>Header</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td><code>Strict-Transport-Security</code></td><td><code>max-age=31536000; includeSubDomains; preload</code>, except on the onion listener</td></tr>
+            <tr><td><code>Content-Security-Policy</code></td><td><code>default-src 'self'</code>; scripts and styles only from self or with a per-response nonce, no <code>'unsafe-inline'</code></td></tr>
+            <tr><td><code>X-Content-Type-Options</code></td><td><code>nosniff</code></td></tr>
+            <tr><td><code>X-Frame-Options</code></td><td><code>DENY</code></td></tr>
+            <tr><td><code>Referrer-Policy</code></td><td><code>no-referrer</code></td></tr>
+            <tr><td><code>Permissions-Policy</code></td><td><code>camera=(), microphone=(), geolocation=(), payment=()</code></td></tr>
+          </tbody>
+        </table>
+</div>

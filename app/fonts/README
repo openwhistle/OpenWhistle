@@ -5,7 +5,8 @@ Used by app/services/pdf.py so the case-export PDF can print any Latin,
 Greek or Cyrillic text a whistleblower or handler wrote — not just the
 latin-1 subset Helvetica (fpdf2's core font) supports. CJK and right-to-left
 scripts (Arabic, Hebrew) are outside this font's coverage and are not
-supported; see DESIGN.md ("Printed case record") and docs/en/docs/index.html.
+supported; see DESIGN.md ("Printed case record") and
+docs/en/docs/admin/index.html.
 
 Source
 ------

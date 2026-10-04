@@ -168,10 +168,41 @@ Rebuild after every edit to `docs/`; the server serves what was built.
 |---|---|
 | `/en/` | Landing page, English. |
 | `/de/` | Landing page, German — the longest strings; check nothing overflows or truncates. |
-| `/en/docs/` | Full documentation — long page, check the anchor nav and the "Current version" line. |
-| `/en/docs/hinschg-reference/` | HinSchG reference, rendered from Markdown. |
-| `/en/docs/security-policy/` | Security policy template, rendered from Markdown. |
-| `/en/docs/dpa-template/` | DPA template, rendered from Markdown. |
+| `/en/docs/` | Docs start page — the overview, the "Current version" line, and the sidebar every docs page shares. |
+| `/en/docs/requirements/` | Get started: Requirements. |
+| `/en/docs/install/` | Get started: Install. |
+| `/en/docs/first-report/` | Get started: Your first report. |
+| `/en/docs/kubernetes/` | How-to: Kubernetes (Helm). |
+| `/en/docs/tls-proxy/` | How-to: TLS proxy. |
+| `/en/docs/selinux/` | How-to: SELinux. |
+| `/en/docs/onion/` | How-to: Onion address. |
+| `/en/docs/ldap/` | How-to: LDAP / AD. |
+| `/en/docs/oidc/` | How-to: OIDC. |
+| `/en/docs/s3/` | How-to: S3 storage. |
+| `/en/docs/clamav/` | How-to: ClamAV. |
+| `/en/docs/notifications/` | How-to: Notifications. |
+| `/en/docs/retention/` | How-to: Data retention. |
+| `/en/docs/multi-tenancy/` | How-to: Multi-tenancy. |
+| `/en/docs/upgrade/` | How-to: Upgrade. |
+| `/en/docs/rotate-key/` | How-to: Rotate the key. |
+| `/en/docs/lost-authenticator/` | How-to: Lost authenticator. |
+| `/en/docs/demo-mode/` | How-to: Demo mode. |
+| `/en/docs/admin/` | Guides: Admin. |
+| `/en/docs/whistleblower/` | Guides: Whistleblower. |
+| `/en/docs/configuration/` | Settings reference, generated from `docs/_data/config.yml` — every table scrolls inside its box at 390 px. |
+| `/en/docs/images/` | Reference: Images. |
+| `/en/docs/roles/` | Reference: Roles. |
+| `/en/docs/limits/` | Reference: Attachments. |
+| `/en/docs/security-headers/` | Reference: Security headers. |
+| `/en/docs/anonymity/` | Explanation: Anonymity layers. |
+| `/en/docs/rate-limiting/` | Explanation: Rate limiting. |
+| `/en/docs/outbound/` | Explanation: Outbound requests. |
+| `/en/docs/timestamps/` | Explanation: Timestamps. |
+| `/en/docs/onion-trust/` | Explanation: Onion trust. |
+| `/en/docs/redis-sizing/` | Explanation: Redis sizing. |
+| `/en/docs/install-count/` | Explanation: Installation count. |
+| `/en/docs/security-policy/` | Security policy template, rendered from Markdown in the docs layout. |
+| `/en/docs/dpa-template/` | DPA template, rendered from Markdown in the docs layout. |
 | `/en/roadmap/` | Roadmap. |
 | `/en/compare/` | Comparison with GlobaLeaks, SecureDrop, Hush Line — the table scrolls inside its box at 390 px. |
 | `/404.html` | Not-found page (noindex); open any missing path on the served site. |

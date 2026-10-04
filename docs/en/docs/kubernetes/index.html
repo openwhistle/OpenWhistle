@@ -1,0 +1,49 @@
+---
+title: Run OpenWhistle on Kubernetes with Helm | OpenWhistle
+description: 'Install OpenWhistle on Kubernetes with the Helm chart: the ingress that logs no IP, its rate limit and upload size, and your own PostgreSQL and Redis.'
+translation_key: docs-kubernetes
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1 id="helm">Kubernetes (Helm)</h1>
+        <p>
+          The ingress controller sees every whistleblower's IP address. The chart
+          (<code>charts/openwhistle/</code>) sets
+          <code>nginx.ingress.kubernetes.io/enable-access-log: "false"</code> on its Ingress. It also
+          sets the bundled nginx's rate limit: <code>limit-rps: "10"</code>,
+          <code>limit-burst-multiplier: "3"</code>, a burst of 30. It raises
+          <code>proxy-body-size</code> to <code>55m</code>, like the bundled nginx; ingress-nginx
+          otherwise refuses any upload over 1 MB.
+        </p>
+        <p>
+          The chart bundles no PostgreSQL and no Redis: set <code>secrets.databaseUrl</code> and
+          <code>secrets.redisUrl</code> to your own. A <code>helm upgrade</code> that changes a value
+          restarts the pods; with <code>autoscaling.enabled</code> the HPA alone sets the replica count.
+        </p>
+        <ul>
+          <li>Your own <code>ingress.annotations</code> are merged with it; do not set it to <code>null</code>.</li>
+          <li><strong>Required:</strong> <code>error-log-level: crit</code> in the controller ConfigMap. Below <code>crit</code>, ingress-nginx logs every rate-limited request and upstream error with the client's IP address.</li>
+          <li>A rate-limited request gets <code>503</code>, not <code>429</code>, unless the controller ConfigMap sets <code>limit-req-status-code: "429"</code> (controller-wide).</li>
+          <li>The limit is per peer address. Behind a load balancer the controller must see the real client, or every reporter shares one budget:
+            <ul>
+              <li>L4 (TCP, SNAT): proxy protocol (<code>use-proxy-protocol: "true"</code> in the controller ConfigMap, and on the load balancer), or <code>externalTrafficPolicy: Local</code> on the controller Service.</li>
+              <li>L7 (HTTP): <code>use-forwarded-headers: "true"</code> together with <code>proxy-real-ip-cidr</code> set to the load balancer's range. Without that range, any client sends its own <code>X-Forwarded-For</code> and escapes the limit.</li>
+            </ul>
+          </li>
+          <li>ingress-nginx always forwards <code>X-Forwarded-For</code> and <code>X-Real-IP</code>. OpenWhistle drops them, and the peer address, in its first middleware. The admin dashboard still warns that the proxy knows the addresses.</li>
+          <li>Other controllers (Traefik: access log off unless enabled): check their logging.</li>
+        </ul>
+        <p>
+          With several replicas, only the pod that wins the race to create the setup token logs it:
+          <code>kubectl logs -l app.kubernetes.io/name=openwhistle | grep "Setup token"</code> finds
+          it. Setting <code>secrets.setupToken</code> (chart) / <code>SETUP_TOKEN</code> avoids the
+          hunt: every replica uses that value.
+        </p>
+        <p>
+          A setting from the <a href="/en/docs/configuration/">configuration table</a> without a
+          <code>values.yaml</code> key goes into <code>extraEnv</code> as <code>NAME: value</code>
+          (for example <code>SECURE_COOKIES: "false"</code>). Secrets belong in <code>secrets</code>.
+        </p>

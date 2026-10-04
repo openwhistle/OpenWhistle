@@ -1,0 +1,43 @@
+---
+title: Scan report attachments with ClamAV | OpenWhistle
+description: 'Scan every attachment a whistleblower uploads with ClamAV: the Compose profile, the memory it needs, and why a scanner that is down refuses the upload.'
+translation_key: docs-clamav
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1 id="virus-scanning">Scanning uploads for viruses</h1>
+        <p>
+          A <a href="https://www.clamav.net/" rel="noopener noreferrer" target="_blank">ClamAV</a>
+          <code>clamd</code> daemon can scan attachments before they are stored. Off by default; to
+          turn it on:
+        </p>
+        <div class="code-block" role="region" aria-label="ClamAV compose profile settings">
+          <div class="code-block-header">
+            <span class="code-block-lang">.env</span>
+          </div>
+          <pre><code>COMPOSE_PROFILES=clamav
+CLAMAV_HOST=clamav</code></pre>
+        </div>
+        <ul>
+          <li><code>docker-compose.prod.yml</code> ships a <code>clamav</code> service behind the <code>clamav</code> profile, never reachable from the host.</li>
+          <li>It shares only the internal Docker network with <code>app</code>, not the <code>proxy</code> network, so nginx cannot reach it either.</li>
+          <li>Signature updates need outbound internet access, unlike the rest of the stack, so <code>clamav</code> gets its own egress network.</li>
+          <li>It needs roughly 1.5 GB RAM for the loaded signature database.</li>
+        </ul>
+        <p>
+          Scanning is <strong>fail-closed</strong>. With <code>CLAMAV_HOST</code> set, an upload is
+          refused whenever <code>clamd</code> is unreachable or times out, exactly as if it were
+          infected: nothing is ever stored unscanned. The whistleblower sees a generic "try again in a
+          few minutes"; no file name, size or content reaches the log.
+        </p>
+        <p>
+          The Helm chart ships <strong>no clamav pod</strong>; the Compose profile has no Kubernetes
+          equivalent. Setting <code>config.clamavHost</code> in <code>values.yaml</code> turns on the
+          fail-closed behaviour for every upload: an unreachable <code>clamd</code> means refused, not
+          skipped. Point it at a <code>clamd</code> you run and reach from the cluster, as its own
+          Deployment and Service or an external instance. Leave it empty to keep scanning off.
+        </p>
+<div data-config="clamav"></div>

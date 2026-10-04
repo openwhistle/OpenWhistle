@@ -243,7 +243,7 @@ def fill_config(rel: Path, content: str, groups: dict[str, dict[str, Any]]) -> s
 
 def _configuration(src: Path) -> str:
     config = load_config(src)
-    parts = ["<h1>Configuration</h1>", config["intro"]]
+    parts = ['<h1 id="configuration">Configuration</h1>', config["intro"]]
     for group in config["groups"]:
         title = html.escape(group["title"])
         guide = html.escape(group["guide"])

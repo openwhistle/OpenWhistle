@@ -1,0 +1,28 @@
+---
+title: Roles and permissions | OpenWhistle
+description: The three roles of the reporting office, superadmin, admin and case manager, and what each may see and do, from user management to report deletion.
+translation_key: docs-roles
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1>Roles</h1>
+        <div class="table-scroll">
+<table class="env-table">
+          <thead><tr><th>Role</th><th>May</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Superadmin</strong></td><td>everything an admin may, plus organisations (<code>/admin/organisations</code>). Sees every organisation, whatever its own <code>org_id</code>. The setup wizard creates one.</td></tr>
+            <tr><td><strong>Admin</strong></td><td>everything, including users, categories, locations, the audit log and report deletion</td></tr>
+            <tr><td><strong>Case Manager</strong></td><td>view, comment on and advance the reports assigned to them. The sidebar shows dashboard, statistics and telephone channel; no users, no deletion</td></tr>
+          </tbody>
+        </table>
+</div>
+        <p>
+          Accounts are managed at <code>/admin/users</code>. A new account is a case manager unless
+          another role is chosen; an unknown role is refused. The last active admin cannot be
+          deactivated, so nobody is locked out. Only a superadmin creates, changes, deactivates or
+          reactivates a superadmin. In <code>DEMO_MODE</code> the demo accounts cannot be changed.
+          Only admins may dismiss the IP-header warning.
+        </p>

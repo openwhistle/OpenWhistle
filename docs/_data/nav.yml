@@ -16,3 +16,55 @@ footer:
   - {label: nav.changelog, page: changelog}
   - {label: nav.blog, page: blog}
   - {label: nav.compare, page: compare}
+# The docs sidebar (docs layout). Labels are plain English: the docs exist in English only (D8).
+# build_site.py check_nav: every docs page is listed here, and every entry is a page.
+docs:
+  - group: Get started
+    pages:
+      - {label: Overview, page: docs}
+      - {label: Requirements, page: docs-requirements}
+      - {label: Install, page: docs-install}
+      - {label: Your first report, page: docs-first-report}
+  - group: How-to
+    pages:
+      - {label: Kubernetes (Helm), page: docs-kubernetes}
+      - {label: TLS proxy, page: docs-tls-proxy}
+      - {label: SELinux, page: docs-selinux}
+      - {label: Onion address, page: docs-onion}
+      - {label: LDAP / AD, page: docs-ldap}
+      - {label: OIDC, page: docs-oidc}
+      - {label: S3 storage, page: docs-s3}
+      - {label: ClamAV, page: docs-clamav}
+      - {label: Notifications, page: docs-notifications}
+      - {label: Data retention, page: docs-retention}
+      - {label: Multi-tenancy, page: docs-multi-tenancy}
+      - {label: Upgrade, page: docs-upgrade}
+      - {label: Rotate the key, page: docs-rotate-key}
+      - {label: Lost authenticator, page: docs-lost-authenticator}
+      - {label: Demo mode, page: docs-demo-mode}
+  - group: Guides
+    pages:
+      - {label: Admin, page: docs-admin}
+      - {label: Whistleblower, page: docs-whistleblower}
+  - group: Reference
+    pages:
+      - {label: Configuration, page: docs-configuration}
+      - {label: Images, page: docs-images}
+      - {label: Roles, page: docs-roles}
+      - {label: Attachments, page: docs-limits}
+      - {label: Security headers, page: docs-security-headers}
+      - {label: Security policy template, page: security-policy}
+      - {label: DPA template, page: dpa-template}
+  - group: Explanation
+    pages:
+      - {label: Anonymity layers, page: docs-anonymity}
+      - {label: Rate limiting, page: docs-rate-limiting}
+      - {label: Outbound requests, page: docs-outbound}
+      - {label: Timestamps, page: docs-timestamps}
+      - {label: Onion trust, page: docs-onion-trust}
+      - {label: Redis sizing, page: docs-redis-sizing}
+      - {label: Installation count, page: docs-install-count}
+  - group: Project
+    pages:
+      - {label: Changelog, page: changelog}
+      - {label: Roadmap, page: roadmap}

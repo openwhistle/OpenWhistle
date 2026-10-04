@@ -263,7 +263,7 @@ def test_forced_colours_frame_each_code_block_once(
     assert (boxed, unframed) == (0, 0), (url, "boxed lines", boxed, "unframed blocks", unframed)
 
 
-PROSE_PAGES = ("/en/docs/", "/en/blog/hinschg-compliance-guide/", "/en/roadmap/")
+PROSE_PAGES = ("/en/docs/admin/", "/en/blog/hinschg-compliance-guide/", "/en/roadmap/")
 
 
 @pytest.mark.parametrize("url", PROSE_PAGES)
@@ -298,7 +298,7 @@ def test_prose_lines_stay_near_seventy_characters(
     assert 0 < widest[0] <= 72, (url, widest)
 
 
-@pytest.mark.parametrize("url", ["/en/", "/en/docs/", "/en/compare/", "/en/roadmap/"])
+@pytest.mark.parametrize("url", ["/en/", "/en/docs/admin/", "/en/compare/", "/en/roadmap/"])
 def test_a_rounded_child_in_a_tight_rounded_parent_is_concentric(
     browser: Browser, docs_server_url: str, url: str
 ) -> None:

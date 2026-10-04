@@ -13,6 +13,10 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   chosen automatically for a browser that asks for Spanish; counts group digits with a period. Report categories
   fall back to English, as they do for French and Portuguese.
 
+### Changed
+
+- The installation-count text links its own documentation page instead of a section of the old one-page docs.
+
 ## [2.1.1] — 2026-10-03
 
 ### Changed

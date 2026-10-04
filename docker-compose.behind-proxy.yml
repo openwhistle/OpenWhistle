@@ -4,7 +4,7 @@
 #
 #   docker compose -f docker-compose.prod.yml -f docker-compose.behind-proxy.yml up -d
 #
-# See "Behind a TLS-terminating proxy" in docs/en/docs/index.html.
+# See https://openwhistle.net/en/docs/tls-proxy/.
 services:
   nginx:
     ports: !override

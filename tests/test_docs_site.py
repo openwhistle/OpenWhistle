@@ -29,7 +29,7 @@ BLOG_PAGES = [
 
 # Every page whose top nav must carry a "Roadmap" link. The roadmap is English
 # only, so the German pages link the English one.
-NAV_PAGES = ["/en/", "/de/", "/en/docs/", "/en/roadmap/", *BLOG_PAGES]
+NAV_PAGES = ["/en/", "/de/", "/en/docs/", "/en/docs/admin/", "/en/roadmap/", *BLOG_PAGES]
 ROADMAP = "/en/roadmap/"
 
 

@@ -116,13 +116,13 @@ jsonld:
             </table>
           </div>
 
-          <p>Whoever steals only the database gets ciphertext. The details are in the <a href="/en/docs/#key-rotation">documentation on key rotation</a>.</p>
+          <p>Whoever steals only the database gets ciphertext. The details are in the <a href="/en/docs/rotate-key/">documentation on key rotation</a>.</p>
 
           <h2>What OpenWhistle never stores</h2>
           <ul>
             <li><strong>IP addresses.</strong> nginx removes the IP headers and writes no access log. The app discards the address, and the database has no IP column.</li>
             <li><strong>Times of the reporting person.</strong> The report, messages and attachments carry only the date.</li>
-            <li><strong>Data for third parties.</strong> Every outbound request is optional and <a href="/en/docs/#outbound-requests">listed in the documentation</a>. The update check and the installation count stay off until you switch them on.</li>
+            <li><strong>Data for third parties.</strong> Every outbound request is optional and <a href="/en/docs/outbound/">listed in the documentation</a>. The update check and the installation count stay off until you switch them on.</li>
           </ul>
 
           <h2>Is a whistleblowing system GDPR-compliant?</h2>

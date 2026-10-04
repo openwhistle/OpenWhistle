@@ -618,7 +618,8 @@ class TestConfigV100Defaults:
         assert found == dict.fromkeys(found, v)
         # docs.html once named the pin's default in prose and went stale with
         # it; it now says "the release the file shipped with". Keep it so.
-        docs = (root / "docs/en/docs/index.html").read_text()
+        docs = (root / "docs/en/docs/images/index.html").read_text()
+        assert "OPENWHISTLE_VERSION" in docs
         assert not re.search(r"OPENWHISTLE_VERSION</code>[^.]*default <code>[0-9.]+", docs)
         # Every image default, not only the first: tls-init runs the same image
         # and once pointed at a different version than the app service.

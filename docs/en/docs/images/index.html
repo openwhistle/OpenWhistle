@@ -1,0 +1,89 @@
+---
+title: Container images, tags and signatures | OpenWhistle
+description: Where the OpenWhistle images are published, which tag to pin, and how to verify an image's cosign signature before you run it on your own host.
+translation_key: docs-images
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1 id="container-images">Container images</h1>
+        <p>
+          Multi-arch images (linux/amd64, linux/arm64) go to three registries on every release and
+          every commit to <code>main</code>.
+        </p>
+
+        <h2 id="registries">Registries</h2>
+        <div class="code-block" role="region" aria-label="Docker pull commands">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+          </div>
+          <pre><code><span class="t-comment"># GitHub Container Registry (primary)</span>
+<span class="t-prompt">$ </span><span class="t-cmd">docker pull ghcr.io/openwhistle/openwhistle:latest</span>
+
+<span class="t-comment"># Docker Hub</span>
+<span class="t-prompt">$ </span><span class="t-cmd">docker pull kermit1337/openwhistle:latest</span>
+
+<span class="t-comment"># Quay.io</span>
+<span class="t-prompt">$ </span><span class="t-cmd">docker pull quay.io/jp1337/openwhistle:latest</span></code></pre>
+        </div>
+
+        <h2 id="image-tags">Image tags</h2>
+<div class="table-scroll">
+<table class="env-table">
+          <thead>
+            <tr>
+              <th>Tag</th>
+              <th>Updated when</th>
+              <th>Use for</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>latest</code></td>
+              <td>The highest stable release tag is pushed; never a pre-release (<code>v2.1.0-rc1</code>)</td>
+              <td>Production — always points to the current stable release</td>
+            </tr>
+            <tr>
+              <td><code>1.2.3</code> / <code>1.2</code> / <code>1</code></td>
+              <td>Release tag pushed; <code>1.2</code> and <code>1</code> move only to the highest release in their line</td>
+              <td>Pinning to a specific version or minor series</td>
+            </tr>
+            <tr>
+              <td><code>edge</code></td>
+              <td>Every push to <code>main</code></td>
+              <td>Testing the latest unreleased development state — not for production</td>
+            </tr>
+            <tr>
+              <td><code>sha-abc1234</code></td>
+              <td>Every push to <code>main</code> and every release tag</td>
+              <td>Reproducing an exact build — useful for debugging and rollback</td>
+            </tr>
+          </tbody>
+        </table>
+</div>
+
+        <div class="callout callout-note">
+          <div class="callout-title">Pinning in production</div>
+          <p>
+            <code>docker-compose.prod.yml</code> pins the image with <code>OPENWHISTLE_VERSION</code>
+            in <code>.env</code>; its default is the release the file shipped with. The <code>sha-</code> tags suit
+            immutable infrastructure pipelines.
+          </p>
+        </div>
+
+        <h2 id="image-signatures">Image signatures</h2>
+        <p>
+          Every GHCR image is signed with
+          <a href="https://docs.sigstore.dev/cosign/overview/" rel="noopener noreferrer" target="_blank">Cosign</a>
+          (keyless, Sigstore). Verify it before pulling in a security-sensitive environment:
+        </p>
+        <div class="code-block" role="region" aria-label="Cosign verify command">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+          </div>
+          <pre><code><span class="t-prompt">$ </span><span class="t-cmd">cosign verify ghcr.io/openwhistle/openwhistle:latest \
+    --certificate-identity-regexp="https://github.com/openwhistle/OpenWhistle" \
+    --certificate-oidc-issuer="https://token.actions.githubusercontent.com"</span></code></pre>
+        </div>

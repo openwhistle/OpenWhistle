@@ -181,7 +181,7 @@ Rendered, the list line reads:
 ```
 
 Commit message the repository asks for: `add OpenWhistle`. Facts for the PR text: one item; not in awesome-sysadmin;
-first release 2026-04-22; installation at `https://openwhistle.net/en/docs/#installation`; merging takes a week or
+first release 2026-04-22; installation at `https://openwhistle.net/en/docs/install/`; merging takes a week or
 more.
 
 ### AlternativeTo
@@ -277,7 +277,7 @@ at most:
 Self-hosted whistleblowing platform (HinSchG, EU 2019/1937). No IP logs. Docs: openwhistle.net
 ```
 
-The full description on both starts with a link to `https://openwhistle.net/en/docs/#installation`, then the
+The full description on both starts with a link to `https://openwhistle.net/en/docs/install/`, then the
 image tags.
 
 Operators who want to credit the project can add `<a href="https://openwhistle.net/">Powered by OpenWhistle</a>`

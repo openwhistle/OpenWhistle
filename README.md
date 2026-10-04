@@ -189,7 +189,7 @@ zero vendor lock-in, and privacy-first by design.
   terminator, `docker-compose.behind-proxy.yml` makes nginx proxy plain HTTP on port 80.
 - **Tor onion address** — `ONION_LOCATION` adds an `Onion-Location` header (Tor Browser offers to
   switch) and a note on the submit page for reporters on a monitored network; see
-  [the documentation](https://openwhistle.net/en/docs/#onion-address) "Offering an onion address".
+  [Offering an onion address](https://openwhistle.net/en/docs/onion/).
 
 ---
 

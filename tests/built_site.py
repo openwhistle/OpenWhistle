@@ -73,3 +73,13 @@ def css_of(html: str) -> str:
     inline = re.findall(r"<style[^>]*>(.*?)</style>", html, re.S)
     linked = [sheet.read_text(encoding="utf-8") for sheet in stylesheets(html)]
     return "\n".join(inline + linked)
+
+
+def docs_pages() -> list[str]:
+    """Every built docs page URL, /en/docs/ first."""
+    return sorted(url for url in _build()[1] if url.startswith("/en/docs/"))
+
+
+def docs_text() -> str:
+    """Every docs page as one text, for a fact that may live on any of them."""
+    return "\n".join(page(url) for url in docs_pages())

@@ -4,11 +4,10 @@ scripts/prose-check.mjs; this file is the tiebreak, not the authority on style.
 
 Two gates, per file: no prose sentence over 30 words, and an average under 18.
 
-Scope is an exact list, not a walk of docs/: a later page joins by being added
-to ``SCOPE``. The landing pages, the comparison page and the blog joined on
-2026-09-27 (plan 2026-09-27-website-seo, "Prose limits extend to the landing
-pages and the blog"): readability is a ranking signal, and the reader is the
-same one. The blog is globbed, so a new article is measured from its first commit.
+Scope is every page the site builds from a source of its own, so a new page is
+measured from its first commit. Generated pages (the changelog, the settings
+reference) and the 404 are left out: their text is a list, not prose.
+Readability is a ranking signal, and the reader is the same one.
 
 What is NOT prose, and why: code and pre blocks, table rows, headings,
 script/style, and page chrome (nav, aside, header, footer). Those carry the
@@ -34,18 +33,18 @@ ROOT = Path(__file__).parents[1]
 MAX_WORDS = 30
 MAX_AVERAGE = 18
 
-SCOPE = sorted(
-    [
-        ROOT / "docs/en/docs/index.html",
-        ROOT / "docs/en/index.html",
-        ROOT / "docs/en/compare/index.html",
-        ROOT / "docs/en/roadmap/index.html",
-        ROOT / "docs/de/index.html",
-        *(ROOT / "docs/en/blog").glob("*.html"),
-        *(ROOT / "docs/de/blog").glob("*.html"),
-        *(ROOT / "docs/en/docs").glob("*.md"),
-    ]
-)
+
+def _page_sources() -> list[Path]:
+    """Every page the site builds from a source of its own: generated pages and the 404 excepted."""
+    pages = builder().load_pages(ROOT / "docs", builder().load_data(ROOT / "docs")["site"])
+    return sorted(
+        ROOT / "docs" / p.source
+        for p in pages
+        if "generated" not in p.meta and p.url != "/404.html"
+    )
+
+
+SCOPE = _page_sources()
 
 # ── Measuring ──────────────────────────────────────────────────────────────
 
@@ -225,7 +224,9 @@ def breaches(path: Path) -> list[str]:
 def test_the_scope_exists() -> None:
     missing = [p for p in SCOPE if not p.is_file()]
     assert not missing, f"scoped page(s) gone — update SCOPE: {missing}"
-    assert ROOT / "docs/en/docs/security-policy.md" in SCOPE, "docs/en/docs/*.md matched nothing"
+    assert ROOT / "docs/en/docs/security-policy.md" in SCOPE, (
+        "the Markdown docs pages are not measured"
+    )
 
 
 @pytest.mark.parametrize("path", SCOPE, ids=lambda p: str(p.relative_to(ROOT)))

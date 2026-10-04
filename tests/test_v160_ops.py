@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 from httpx import AsyncClient
 
-from tests.built_site import page
+from tests.built_site import docs_text
 
 
 @pytest.mark.parametrize(
@@ -54,12 +54,12 @@ def test_the_documented_rollback_downgrades_to_the_last_1_5_revision() -> None:
     mig = (ROOT / "migrations/versions/004_encrypt_totp_secrets.py").read_text()
     before = re.search(r'down_revision: str \| None = "(\w+)"', mig)
     assert before
-    for doc in ("docs/en/docs/index.html", "CHANGELOG.md"):
+    for doc in ("docs/en/docs/upgrade/index.html", "CHANGELOG.md"):
         assert f"alembic downgrade {before.group(1)}" in (ROOT / doc).read_text(), doc
 
 
 def test_the_docs_run_no_module_that_does_not_exist() -> None:
-    docs = page("/en/docs/")
+    docs = docs_text()
     for module in re.findall(r"python -m ([\w.]+)", docs):
         path = ROOT / module.replace(".", "/")
         assert (path / "__main__.py").exists() or path.with_suffix(".py").exists(), module
@@ -78,7 +78,7 @@ async def test_x_ow_onion_is_ignored_without_an_onion_address(
 
 
 def test_the_chart_says_to_clear_x_ow_onion_when_an_onion_address_is_set() -> None:
-    for path in ("charts/openwhistle/values.yaml", "docs/en/docs/index.html"):
+    for path in ("charts/openwhistle/values.yaml", "docs/en/docs/onion/index.html"):
         text = (ROOT / path).read_text()
         assert 'proxy_set_header X-OW-Onion "";' in text.replace("\n            ", " "), path
 

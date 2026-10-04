@@ -45,7 +45,7 @@ Folgende Fakten sind festgelegt:
 - Du hast Zugriff auf GitHub über die GitHub CLI
 - Markdown Dokumente müssen nach markdownlint Vorgaben erstellt werden
 - `CONTRIBUTING.md`, section "Documentation", is binding for every documentation change.
-- Documentation in `docs/en/docs/index.html`, `README.md`, and `docker-compose.prod.yml` must always be kept in
+- Settings in `docs/_data/config.yml`, `README.md`, and `docker-compose.prod.yml` must always be kept in
   sync. When adding or renaming environment variables, update ALL locations in the same commit.
 - The demo at <https://demo.openwhistle.net> is live and hosted on Hetzner via
   Ansible. It runs `ghcr.io/openwhistle/openwhistle:edge` and is reset every 6 hours by a Semaphore job
@@ -74,22 +74,22 @@ Folgende Fakten sind festgelegt:
 Before marking a version as released (roadmap `docs/en/roadmap/index.html`, CHANGELOG.md, git tag), verify ALL of the
 following. These checks caught v0.3.0 and v0.4.0 gaps retroactively — run them proactively.
 
-### `docs/en/docs/index.html`
+### The docs pages (`docs/en/docs/`)
 
-- **Version number**: the "Current version" paragraph in the Overview section must match
+- **Version number**: the "Current version" paragraph in `docs/en/docs/index.html` must match
   `app_version` in `app/config.py`.
-- **Admin guide — status workflow**: the case status values listed in "Managing reports" must
-  match the actual `ReportStatus` enum in `app/models/report.py`. Do not leave stale values
-  from a previous release.
+- **Admin guide — status workflow**: the case status values listed in "Managing reports"
+  (`docs/en/docs/admin/index.html`) must match the actual `ReportStatus` enum in
+  `app/models/report.py`. Do not leave stale values from a previous release.
 - **Admin guide — new admin UI sections**: every new `/admin/*` route (categories, locations,
-  users, audit-log, stats, …) must be referenced in the admin guide with its path.
-- **Admin guide — roles**: if roles changed, update the roles section.
+  users, audit-log, stats, …) must be referenced in `docs/en/docs/admin/index.html` with its path.
+- **Roles**: if roles changed, update `docs/en/docs/roles/index.html`.
 - **Whistleblower guide — submission flow**: if the submission form steps or modes changed,
-  update the numbered list in "Submitting a report".
+  update the numbered list in "Submitting a report" (`docs/en/docs/whistleblower/index.html`).
 - **Whistleblower guide — status page**: if new information appears on the status page
   (e.g. deadline display), add it to the "Checking report status" bullet list.
-- **Configuration table**: every new env var in `app/config.py` must have a row in the
-  `<table class="env-table">` block. Cross-check `config.py` fields against table rows.
+- **Configuration**: every new env var in `app/config.py` must have one entry in
+  `docs/_data/config.yml` (`tests/test_config_documented.py` cross-checks them).
 
 ### `docker-compose.prod.yml`
 

@@ -1,0 +1,432 @@
+# Every setting of Settings in app/config.py, exactly once (tests/test_config_documented.py).
+# A group renders as one table on /en/docs/configuration/ and wherever a page holds
+# <div data-config="<id>"></div>. description and default are HTML.
+intro: <p> Everything is an environment variable in <code>.env</code>. No YAML files and no settings in
+  the database, except the admin preferences managed in the UI. </p>
+groups:
+- id: core
+  title: General
+  page: /en/docs/install/
+  guide: Install with Docker Compose
+  settings:
+  - name: SECRET_KEY
+    need: required
+    description: Signs admin sessions (and encrypts data when <code>ENCRYPTION_KEY</code> is unset). <strong>Minimum
+      32 characters</strong> (the app refuses to start otherwise). Generate with <code>openssl rand -hex
+      32</code>.
+    default: —
+  - name: ENCRYPTION_KEY
+    need: recommended
+    description: 'Root key for all encryption at rest, ≥ 32 characters. Unset: <code>SECRET_KEY</code>
+      is used for encryption too. <strong>On an existing install, do not just set it:</strong> follow
+      <a href="/en/docs/rotate-key/">Rotating the encryption key</a> — the current key must go into <code>ENCRYPTION_KEY_PREVIOUS</code>.'
+    default: —
+  - name: ENCRYPTION_KEY_PREVIOUS
+    need: optional
+    description: 'Keys still accepted for decryption during a rotation: comma-separated, no spaces, each
+      ≥ 32 characters.'
+    default: —
+  - name: SETUP_TOKEN
+    need: optional
+    description: 'Token the first-run wizard at <code>/setup</code> asks for, at least 32 characters (the
+      app refuses to start with a shorter one; <code>openssl rand -hex 16</code>). After <code>MAX_LOGIN_ATTEMPTS</code>
+      wrong tokens, <code>/setup</code> refuses every token for <code>LOGIN_LOCKOUT_MINUTES</code>. Unset:
+      a random token is created at startup and written once to the log (<code>docker compose logs app
+      | grep "Setup token"</code>).'
+    default: random
+  - name: DATABASE_URL
+    need: required
+    description: 'PostgreSQL connection string. Must use the async driver. Format: <code>postgresql+asyncpg://user:password@host:port/dbname</code>'
+    default: —
+  - name: REDIS_URL
+    need: required
+    description: 'Redis connection string. Format: <code>redis://host:port/db</code>, with a password
+      <code>redis://:password@host:port/db</code>'
+    default: —
+  - name: DRAFT_REDIS_MEMORY_PERCENT
+    need: optional
+    description: New attachments in a submission draft are refused while Redis uses more than this share
+      of its <code>maxmemory</code>; the whistleblower can still submit without them. No effect when Redis
+      has no <code>maxmemory</code>. See <a href="/en/docs/redis-sizing/">Redis sizing</a>.
+    default: <code>80</code>
+  - name: APP_NAME
+    need: optional
+    description: Display name shown in the application UI and browser title.
+    default: <code>OpenWhistle</code>
+  - name: DEMO_MODE
+    need: optional
+    description: Set to <code>true</code> to enable demo mode. See <a href="/en/docs/demo-mode/">Demo
+      Mode</a> section.
+    default: <code>false</code>
+  - name: LOCAL_REVIEW_LOGIN
+    need: optional
+    description: 'Local review only — never in production. Requires <code>DEMO_MODE=true</code>, <code>SECURE_COOKIES=false</code>
+      and a loopback <code>APP_PUBLIC_URL</code> (the app refuses to start otherwise). Shows a one-click
+      "Enter the local review" button on <code>/admin/login</code> that signs in as the seeded demo admin
+      with no password or MFA check, so an agent can review every admin page without a human typing credentials.
+      Maintainer tooling for the release review: an operator never sets it.'
+    default: <code>false</code>
+  - name: SECURE_COOKIES
+    need: optional
+    description: Set to <code>false</code> when the app is served over plain HTTP (e.g. local network
+      without TLS). Must be <code>true</code> behind HTTPS. Browsers block <code>Secure</code> cookies
+      over HTTP, causing session failures when accessed from other devices.
+    default: <code>true</code>
+  - name: SESSION_MAX_HOURS
+    need: optional
+    description: Absolute admin session lifetime in hours, counted from login; extending a session never
+      passes it.
+    default: <code>12</code>
+  - name: ACCESS_TOKEN_EXPIRE_MINUTES
+    need: optional
+    description: Lifetime of one admin session token; <em>Stay signed in</em> renews it, up to <code>SESSION_MAX_HOURS</code>.
+    default: <code>60</code>
+  - name: ALGORITHM
+    need: optional
+    description: JWT signing algorithm of admin sessions. Leave it.
+    default: <code>HS256</code>
+  - name: MAX_ACCESS_ATTEMPTS
+    need: optional
+    description: Wrong PINs for one case number before the status page asks the reporter to wait. A correct
+      PIN always works.
+    default: <code>5</code>
+  - name: ACCESS_LOCKOUT_MINUTES
+    need: optional
+    description: How long that wait notice lasts.
+    default: <code>15</code>
+  - name: MAX_LOGIN_ATTEMPTS
+    need: optional
+    description: Wrong admin passwords for one username before that username is locked.
+    default: <code>10</code>
+  - name: LOGIN_LOCKOUT_MINUTES
+    need: optional
+    description: How long an admin username stays locked.
+    default: <code>30</code>
+  - name: APP_VERSION
+    need: optional
+    description: Informational; set by the image. Do not override.
+    default: the image's version
+  - name: ADMIN_FAILED_LOGIN_ALERT_THRESHOLD
+    need: optional
+    description: Password-spraying alarm. Failed admin password attempts are counted across all accounts
+      (no username, no IP stored). When this many fail within the window, one alert goes to the email
+      and webhook notification channels and the audit log records <code>auth.password_spraying_suspected</code>.
+      <code>0</code> disables it. Per-account lockout and MFA stay in force either way.
+    default: <code>50</code>
+  - name: ADMIN_FAILED_LOGIN_ALERT_WINDOW_MINUTES
+    need: optional
+    description: Sliding window for <code>ADMIN_FAILED_LOGIN_ALERT_THRESHOLD</code>, in minutes. At most
+      one alert per window.
+    default: <code>15</code>
+  - name: SUBMISSION_MODE_ENABLED
+    need: optional
+    description: Set to <code>false</code> to hide the anonymous/confidential mode selection step from
+      the submission wizard. When disabled, all reports are treated as anonymous.
+    default: <code>true</code>
+  - name: OIDC_ENABLED
+    need: optional
+    description: Set to <code>true</code> to enable OIDC login for administrators.
+    default: <code>false</code>
+  - name: OIDC_SERVER_METADATA_URL
+    need: optional
+    description: OIDC provider discovery URL (e.g. <code>https://accounts.google.com/.well-known/openid-configuration</code>).
+      Required when <code>OIDC_ENABLED=true</code>. Login uses PKCE (S256) and accepts only an ID token
+      signed with an asymmetric key from the provider's <code>jwks_uri</code>, with matching issuer, audience
+      (the client ID), expiry and nonce.
+    default: —
+  - name: OIDC_CLIENT_ID
+    need: optional
+    description: OAuth 2.0 client ID from your OIDC provider. Required when <code>OIDC_ENABLED=true</code>.
+    default: —
+  - name: OIDC_CLIENT_SECRET
+    need: optional
+    description: OAuth 2.0 client secret from your OIDC provider. Required when <code>OIDC_ENABLED=true</code>.
+    default: —
+  - name: OIDC_REDIRECT_URI
+    need: optional
+    description: 'OAuth 2.0 callback URL. Must match the redirect URI registered with your OIDC provider.
+      Example: <code>https://yourdomain.com/admin/oidc/callback</code>. Required when <code>OIDC_ENABLED=true</code>.'
+    default: —
+  - name: BRAND_PRIMARY_COLOR
+    need: optional
+    description: Primary brand colour as a hex value. Used for buttons, accents, and links throughout
+      the UI.
+    default: <code>#0c7253</code>
+  - name: BRAND_LOGO_URL
+    need: optional
+    description: URL to a company logo image. When set, the logo is shown in the navigation bar instead
+      of the default OpenWhistle shield icon.
+    default: —
+  - name: APP_PUBLIC_URL
+    need: optional
+    description: Public base URL of the application. Used to build dashboard links inside notification
+      emails and webhooks. Set to your domain (e.g. <code>https://whistleblower.example.com</code>).
+    default: <code>http://localhost</code>
+  - name: ONION_LOCATION
+    need: optional
+    description: Tor onion (v3) address of this instance, e.g. <code>http://&lt;56 chars&gt;.onion</code>,
+      no path or query string. When set, every response carries an <code>Onion-Location</code> header
+      (Tor Browser offers to switch) and the submit page shows the address to reporters on a monitored
+      network. Never sent to a visitor already on the onion service itself. See <a href="/en/docs/onion/">Offering
+      an onion address</a>.
+    default: —
+  - name: LOG_LEVEL
+    need: optional
+    description: 'Logging verbosity. Accepted values: <code>DEBUG</code>, <code>INFO</code>, <code>WARNING</code>,
+      <code>ERROR</code>, <code>CRITICAL</code>.'
+    default: <code>INFO</code>
+  - name: LOG_FORMAT
+    need: optional
+    description: Log output format. Use <code>json</code> for structured JSON (recommended for log aggregation
+      pipelines) or <code>text</code> for human-readable output.
+    default: <code>json</code>
+  - name: UPDATE_CHECK_ENABLED
+    need: optional
+    description: Set to <code>true</code> to let OpenWhistle check GitHub once a day for a newer release,
+      shown on the <strong>Admin → System</strong> page. Off by default (no external calls); sends no
+      instance data to GitHub — only a standard request.
+    default: <code>false</code>
+  - name: TELEMETRY_ENABLED
+    need: optional
+    description: 'The daily <a href="/en/docs/install-count/">installation count</a>. Unset or empty:
+      the answer from the setup wizard / <strong>Admin → System</strong> decides, off until given. <code>false</code>:
+      always off. <code>true</code>: always on. The switch is locked either way. <code>DEMO_MODE</code>
+      is never counted.'
+    default: (empty)
+- id: notifications
+  title: Notification digests
+  page: /en/docs/notifications/
+  guide: Notifications
+  settings:
+  - name: NOTIFICATION_BATCH_MINUTES
+    need: optional
+    description: Minutes between digests of new reports and whistleblower messages. All replicas fire
+      at the same wall-clock moments; exactly one sends. <code>0</code> sends each event at once.
+    default: <code>1440</code>
+- id: email
+  title: Email (SMTP)
+  page: /en/docs/notifications/
+  guide: Notifications
+  settings:
+  - name: NOTIFY_EMAIL_ENABLED
+    need: optional
+    description: Set to <code>true</code> to send an email notification when a new report arrives.
+    default: <code>false</code>
+  - name: NOTIFY_EMAIL_TO
+    need: optional
+    description: Comma-separated list of recipient addresses (e.g. <code>admin@example.com,compliance@example.com</code>).
+    default: —
+  - name: NOTIFY_EMAIL_FROM
+    need: optional
+    description: Sender (From) address for notification emails.
+    default: <code>openwhistle@localhost</code>
+  - name: NOTIFY_SMTP_HOST
+    need: optional
+    description: Hostname of the SMTP server.
+    default: <code>localhost</code>
+  - name: NOTIFY_SMTP_PORT
+    need: optional
+    description: SMTP port. Use <code>587</code> for STARTTLS or <code>465</code> for SMTPS.
+    default: <code>587</code>
+  - name: NOTIFY_SMTP_USER
+    need: optional
+    description: SMTP authentication username. Leave blank for unauthenticated relay.
+    default: —
+  - name: NOTIFY_SMTP_PASSWORD
+    need: optional
+    description: SMTP authentication password.
+    default: —
+  - name: NOTIFY_SMTP_TLS
+    need: optional
+    description: Use STARTTLS on the SMTP connection. Set to <code>false</code> when using SMTPS (port
+      465).
+    default: <code>true</code>
+  - name: NOTIFY_SMTP_SSL
+    need: optional
+    description: Use direct TLS (SMTPS, port 465). When <code>true</code>, also set <code>NOTIFY_SMTP_TLS=false</code>.
+    default: <code>false</code>
+- id: webhook
+  title: Webhook
+  page: /en/docs/notifications/
+  guide: Notifications
+  settings:
+  - name: NOTIFY_WEBHOOK_ENABLED
+    need: optional
+    description: Set to <code>true</code> to POST a JSON notification to a webhook URL on new reports.
+    default: <code>false</code>
+  - name: NOTIFY_WEBHOOK_URL
+    need: optional
+    description: Target URL for webhook POST requests (e.g. a Slack incoming webhook or a custom endpoint).
+    default: —
+  - name: NOTIFY_WEBHOOK_SECRET
+    need: optional
+    description: HMAC-SHA256 signing secret. When set, each request carries an <code>X-OpenWhistle-Signature</code>
+      header for verification.
+    default: —
+  - name: NOTIFY_WEBHOOK_TYPE
+    need: optional
+    description: 'Payload format for webhook notifications. <code>generic</code> sends <code>{"event":
+      "new_activity", "new_reports": 2, "new_messages": 1, "message": "..."}</code> (<code>new_messages</code>:
+      cases with new messages) (counts, never case numbers); <code>slack</code> sends a Slack Block Kit
+      message; <code>teams</code> sends a Microsoft Teams Adaptive Card (v1.4). The SLA reminder webhook
+      uses the same three formats with <code>{"event": "sla_reminder", "ack_due": ..., "feedback_due":
+      ..., "message": "..."}</code> for <code>generic</code>.'
+    default: <code>generic</code>
+- id: reminders
+  title: SLA reminders
+  page: /en/docs/notifications/#sla-reminders
+  guide: SLA reminders
+  settings:
+  - name: REMINDER_ENABLED
+    need: optional
+    description: Set to <code>true</code> to enable automatic SLA reminder notifications.
+    default: <code>false</code>
+  - name: REMINDER_ACK_WARN_DAYS
+    need: optional
+    description: Send an acknowledgement reminder this many days before the 7-day deadline expires.
+    default: <code>2</code>
+  - name: REMINDER_FEEDBACK_WARN_DAYS
+    need: optional
+    description: Send a feedback reminder when this many days or fewer remain before the 3-month feedback
+      deadline.
+    default: <code>30</code>
+- id: retention
+  title: Data retention
+  page: /en/docs/retention/
+  guide: Data retention
+  settings:
+  - name: RETENTION_ENABLED
+    need: optional
+    description: Daily automatic deletion of closed reports older than <code>RETENTION_DAYS</code>. Set
+      to <code>false</code> only on legal advice (e.g. pending litigation).
+    default: <code>true</code>
+  - name: RETENTION_DAYS
+    need: optional
+    description: 'Days after a report is closed before it is automatically deleted. Default matches HinSchG
+      §11 Abs. 5: documentation is deleted 3 years after the procedure ends. Change only on legal advice.'
+    default: <code>1095</code>
+- id: multi-tenancy
+  title: Organisations (multi-tenancy)
+  page: /en/docs/multi-tenancy/
+  guide: Multi-tenancy
+  settings:
+  - name: MULTI_TENANCY_ENABLED
+    need: optional
+    description: Set to <code>true</code> to activate multi-organisation support. Requires at least one
+      organisation to exist; the default org is auto-created at setup.
+    default: <code>false</code>
+  - name: DEFAULT_ORG_SLUG
+    need: optional
+    description: Slug of the default organisation auto-created during setup. Used for single-tenant deployments
+      and as the fallback for legacy data.
+    default: <code>default</code>
+- id: ldap
+  title: LDAP / Active Directory
+  page: /en/docs/ldap/
+  guide: LDAP / Active Directory login
+  settings:
+  - name: LDAP_ENABLED
+    need: optional
+    description: Set to <code>true</code> to allow admin login via LDAP/AD.
+    default: <code>false</code>
+  - name: LDAP_SERVER
+    need: optional
+    description: Hostname or IP of the LDAP server (e.g. <code>ldap.example.com</code>).
+    default: —
+  - name: LDAP_PORT
+    need: optional
+    description: LDAP port. Use <code>389</code> with <code>LDAP_START_TLS</code> or <code>636</code>
+      for LDAPS. Plain <code>389</code> without either sends passwords in clear.
+    default: <code>389</code>
+  - name: LDAP_USE_SSL
+    need: optional
+    description: Set to <code>true</code> to use LDAPS (TLS from the start). Set port to <code>636</code>.
+      The server certificate is verified against the system CA store; for a private CA, mount its PEM
+      file and set <code>LDAPTLS_CACERT</code> to its path.
+    default: <code>false</code>
+  - name: LDAP_START_TLS
+    need: optional
+    description: Set to <code>true</code> to upgrade a plain connection on port <code>389</code> with
+      StartTLS before any bind, so neither the service account's nor the user's password crosses the network
+      in clear. The certificate is verified exactly as for LDAPS; a server that refuses the upgrade makes
+      the login fail. Ignored when <code>LDAP_USE_SSL=true</code>.
+    default: <code>false</code>
+  - name: LDAP_BIND_DN
+    need: optional
+    description: Distinguished name of the service account used to search the directory (e.g. <code>cn=svc-openwhistle,ou=service,dc=example,dc=com</code>).
+    default: —
+  - name: LDAP_BIND_PASSWORD
+    need: optional
+    description: Password for the service account bind DN.
+    default: —
+  - name: LDAP_BASE_DN
+    need: optional
+    description: Search base for user lookups (e.g. <code>ou=users,dc=example,dc=com</code>).
+    default: —
+  - name: LDAP_USER_FILTER
+    need: optional
+    description: LDAP search filter to locate a user entry. <code>{username}</code> is replaced with the
+      entered username at runtime.
+    default: <code>(uid={username})</code>
+  - name: LDAP_ATTR_USERNAME
+    need: optional
+    description: LDAP attribute to use as the username in the provisioned admin record.
+    default: <code>uid</code>
+  - name: LDAP_ATTR_EMAIL
+    need: optional
+    description: LDAP attribute to read the user's email address from.
+    default: <code>mail</code>
+- id: s3
+  title: S3-compatible storage
+  page: /en/docs/s3/
+  guide: S3-compatible attachment storage
+  settings:
+  - name: STORAGE_BACKEND
+    need: optional
+    description: Storage backend for new attachments. <code>db</code> stores data in PostgreSQL; <code>s3</code>
+      stores data in an S3-compatible bucket.
+    default: <code>db</code>
+  - name: S3_ENDPOINT_URL
+    need: optional
+    description: Custom endpoint URL for S3-compatible services (e.g. MinIO, Hetzner Object Storage).
+      Leave blank for AWS S3.
+    default: —
+  - name: S3_BUCKET_NAME
+    need: optional
+    description: Name of the target S3 bucket. Required when <code>STORAGE_BACKEND=s3</code>.
+    default: —
+  - name: S3_ACCESS_KEY_ID
+    need: optional
+    description: AWS access key ID (or MinIO equivalent). Required when <code>STORAGE_BACKEND=s3</code>.
+    default: —
+  - name: S3_SECRET_ACCESS_KEY
+    need: optional
+    description: AWS secret access key (or MinIO equivalent). Required when <code>STORAGE_BACKEND=s3</code>.
+    default: —
+  - name: S3_REGION
+    need: optional
+    description: AWS region for the bucket (e.g. <code>eu-central-1</code>). Ignored for custom endpoints.
+    default: <code>us-east-1</code>
+  - name: S3_PREFIX
+    need: optional
+    description: Key prefix for all stored objects (e.g. <code>attachments/</code>). Useful when sharing
+      a bucket with other applications.
+    default: <code>attachments/</code>
+- id: clamav
+  title: Virus scanning
+  page: /en/docs/clamav/
+  guide: Scanning uploads for viruses
+  settings:
+  - name: CLAMAV_HOST
+    need: optional
+    description: Hostname of the <code>clamd</code> daemon. Empty disables scanning entirely — no connection
+      is ever made.
+    default: —
+  - name: CLAMAV_PORT
+    need: optional
+    description: <code>clamd</code>'s TCP port.
+    default: <code>3310</code>
+  - name: CLAMAV_TIMEOUT_SECONDS
+    need: optional
+    description: Connect and reply timeout for one scan. Exceeding it refuses the upload (fail closed).
+    default: <code>30</code>

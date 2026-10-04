@@ -2,7 +2,7 @@
 title: 'Information Security Policy Template | OpenWhistle'
 description: 'An information security policy template for an OpenWhistle installation: roles, encryption at rest, access control and backups. Adapt it before use.'
 translation_key: security-policy
-noindex: true
+layout: docs
 css:
 - docs
 js:

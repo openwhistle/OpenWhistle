@@ -1,0 +1,85 @@
+---
+title: Offer OpenWhistle as a Tor onion service | OpenWhistle
+description: 'Offer the reporting channel as a Tor onion service, so a monitored network cannot see the visit: the torrc lines, ONION_LOCATION and the key backup.'
+translation_key: docs-onion
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1 id="onion-address">Offering an onion address</h1>
+        <p>
+          On a monitored network (a workplace, a school), a visit to OpenWhistle can be seen even
+          though the report stays private. Tor Browser hides the visit too. Run a Tor hidden service
+          on the same host, aimed at the onion-only nginx entry on <code>127.0.0.1:8080</code>. It is
+          published there only (the <code>ports:</code> entry in <code>docker-compose.prod.yml</code>).
+        </p>
+        <div class="code-block" role="region" aria-label="Set up a Tor hidden service">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+          </div>
+          <pre><code><span class="t-comment"># 1. Install tor on the host, then add to /etc/tor/torrc:</span>
+<span class="t-str">HiddenServiceDir</span> /var/lib/tor/openwhistle/
+<span class="t-str">HiddenServicePort</span> 80 127.0.0.1:8080
+
+<span class="t-comment"># 2. Restart tor, then read the generated address:</span>
+<span class="t-prompt">$ </span><span class="t-cmd">systemctl restart tor</span>
+<span class="t-prompt">$ </span><span class="t-cmd">cat /var/lib/tor/openwhistle/hostname</span>
+<span class="t-out">abc...xyz.onion</span>
+
+<span class="t-comment"># 3. Set ONION_LOCATION in .env and restart the app:</span>
+<span class="t-str">ONION_LOCATION</span>=http://abc...xyz.onion
+<span class="t-prompt">$ </span><span class="t-cmd">docker compose up -d app</span></code></pre>
+        </div>
+        <p>With <code>ONION_LOCATION</code> set:</p>
+        <ul>
+          <li>Every HTML response carries an <code>Onion-Location</code> header; Tor Browser offers to switch.</li>
+          <li>The submit page shows the address, except to a visitor already on the onion service.</li>
+          <li>A request through the onion listener gets no HSTS and no <code>Secure</code> cookie flag. That connection was never TLS (Tor encrypts it), and a browser can refuse a <code>Secure</code> cookie over plain HTTP.</li>
+        </ul>
+        <div class="callout callout-note">
+          <div class="callout-title">The app trusts nginx, not the client, to say "this is the onion listener"</div>
+          <p>
+            Never the <code>Host</code> header: any client on the HTTPS listener could send
+            <code>Host: &lt;anything&gt;.onion</code>. Instead the bundled <code>nginx/nginx.conf</code>
+            sets <code>X-OW-Onion: 1</code> only in the onion (port 8080) server block and clears it in
+            the regular (443) one. It strips incoming IP-forwarding headers the same way.
+          </p>
+          <p>
+            So <strong>the app's own port (<code>4009</code>) must stay reachable only through this
+            nginx</strong>, as IP stripping already requires. A deployment that exposes the app
+            directly, or through another proxy, must set or clear <code>X-OW-Onion</code> itself.
+            Otherwise neither protection holds.
+          </p>
+          <p>
+            Without <code>ONION_LOCATION</code> the app ignores <code>X-OW-Onion</code>, so a path
+            that forwards it from the client, such as the Helm chart's ingress, is safe. With
+            <code>ONION_LOCATION</code> behind ingress-nginx, clear it there with the annotation
+            <code>nginx.ingress.kubernetes.io/configuration-snippet: proxy_set_header X-OW-Onion "";</code>
+            (the controller needs <code>allow-snippet-annotations</code>).
+          </p>
+        </div>
+        <div class="callout callout-warn">
+          <div class="callout-title"><code>/var/lib/tor/openwhistle/</code> holds the address's private key</div>
+          <p>
+            <code>hs_ed25519_secret_key</code> in that directory <em>is</em> the onion address. Lose it
+            and the address changes for good, breaking every link a reporter was given. Whoever holds
+            it can impersonate the service.
+          </p>
+          <ul>
+            <li>Back the directory up before any host migration or volume change.</li>
+            <li>Keep it root/tor-only: Tor sets <code>0700</code> on creation, but a bind-mount or a backup step can widen that. Check it.</li>
+            <li>Never commit or publish it, least of all wherever this how-to is shared.</li>
+          </ul>
+        </div>
+        <div class="callout callout-note">
+          <div class="callout-title">Rate limiting on the onion listener</div>
+          <p>
+            <code>HiddenServicePort</code> forwards every Tor visitor to nginx from
+            <code>127.0.0.1</code>, so per-IP limits cannot tell visitors apart. The onion server
+            block therefore has its own zone, sized for several concurrent reporters. Heavy
+            concurrent use still shares that one budget and can see a 429. If that happens, raise the
+            zone's <code>rate</code>/<code>burst</code> in <code>nginx/nginx.conf</code>.
+          </p>
+        </div>

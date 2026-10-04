@@ -386,7 +386,7 @@ def test_the_chart_requires_crit_error_logging_where_the_operator_reads() -> Non
     for path in ("values.yaml", "templates/NOTES.txt"):
         text = (ROOT / "charts/openwhistle" / path).read_text()
         assert "REQUIRED" in text and "error-log-level: crit" in text, path
-    docs = page("/en/docs/")
+    docs = page("/en/docs/kubernetes/")
     assert "limit-req-status-code" in docs
     values = (ROOT / "charts/openwhistle/values.yaml").read_text()
     for text in (docs, values):

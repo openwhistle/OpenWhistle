@@ -457,7 +457,7 @@ fetch category labels; the snippets are updated and red.
 | `sticky-action-static` | `app/static/css/site.css` | `test_dashboard_table_action_column_is_pinned_and_status_badge_wraps` |
 | `status-badge-nowrap` | `app/static/css/site.css` | `test_dashboard_table_action_column_is_pinned_and_status_badge_wraps` |
 | `dashboard-header-unpinned` | `app/templates/admin/dashboard.html` | `test_table_stack_sticky_action_column_is_paired_header_and_data` |
-| `docs-env-table-unscrolled` | `docs/en/docs/index.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `docs-env-table-unscrolled` | `scripts/build_site.py` (`config_table`) | `test_docs_page_has_no_horizontal_overflow` |
 | `de-token-drift` | `docs/de/index.html` | `test_only_tokens_css_defines_custom_properties` (since 2.1.1 the tokens exist once, in `tokens.css`) |
 | `de-faq-jsonld-drift` | `docs/de/index.html` | `test_faqpage_jsonld_matches_visible_faq_one_to_one` |
 | `en-hreflang-de-dropped` | `docs/en/index.html` | `test_landing_pages_link_each_other_via_hreflang` |
@@ -543,7 +543,7 @@ Each was proven red locally with podman: files written `0640` (nginx:
 | `onion-header-always-trusted` | `app/onion.py` | `test_x_ow_onion_is_ignored_without_an_onion_address` |
 | `helm-extra-env-dropped` | `charts/openwhistle/templates/configmap.yaml` | `test_helm_extra_env_reaches_the_configmap` |
 | `helm-onion-clear-undocumented` | `charts/openwhistle/values.yaml` | `test_the_chart_says_to_clear_x_ow_onion_when_an_onion_address_is_set` |
-| `rollback-pins-old-image` | `docs/en/docs/index.html` | `test_the_documented_rollback_downgrades_to_the_last_1_5_revision` |
+| `rollback-pins-old-image` | `docs/en/docs/upgrade/index.html` | `test_the_documented_rollback_downgrades_to_the_last_1_5_revision` |
 | `docs-python-m-app` | `docs/en/docs/index.html` | `test_the_docs_run_no_module_that_does_not_exist` |
 | `machine-path-committed` | `docs-tech/plans/2026-09-24-v1.6-hardening.md` | `test_no_tracked_file_holds_a_machine_local_path` |
 | `image-ships-unused-font` | `Dockerfile` | `test_the_image_ships_exactly_the_font_files_the_app_css_uses` |

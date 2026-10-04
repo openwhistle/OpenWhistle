@@ -298,8 +298,7 @@ def test_virus_scan_docs_warn_that_helm_ships_no_clamd() -> None:
     """The chart deploys no clamav pod; enabling CLAMAV_HOST via Helm without
     pointing it at a real, reachable clamd fails every upload closed. RED if
     this warning is ever removed from the how-to."""
-    text = page("/en/docs/")
-    section = text.split('id="virus-scanning"')[1].split('id="first-run"')[0]
+    section = page("/en/docs/clamav/")
     assert "Helm" in section
     assert "no clamav pod" in section
     assert "clamavHost" in section

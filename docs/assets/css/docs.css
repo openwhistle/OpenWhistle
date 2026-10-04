@@ -76,6 +76,7 @@
       color: var(--muted);
       margin-bottom: var(--space-8);
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       gap: var(--space-2);
     }
@@ -116,7 +117,7 @@
       border-bottom: none;
     }
 
-    .docs-section h2 {
+    .docs-section h2, .docs-article h2 {
       font-family: var(--font-display);
       font-size: clamp(1.4rem, 2.5vw, 1.9rem);
       font-weight: 700;
@@ -126,7 +127,7 @@
       line-height: 1.2;
     }
 
-    .docs-section h3 {
+    .docs-section h3, .docs-article h3 {
       font-family: var(--font-display);
       font-size: 1.1rem;
       font-weight: 600;
@@ -134,7 +135,7 @@
       margin: var(--space-8) 0 var(--space-3);
     }
 
-    .docs-section p {
+    .docs-section p, .docs-article p {
       color: var(--body);
       font-size: 0.95rem;
       line-height: 1.8;
@@ -142,20 +143,20 @@
       max-width: 70ch;
     }
 
-    .docs-section a {
+    .docs-section a, .docs-article a {
       color: var(--accent);
       border-bottom: 1px solid var(--accent-dim);
       transition: border-bottom-color var(--duration-fast) ease;
     }
-    .docs-section a:hover { border-bottom-color: var(--accent); }
+    .docs-section a:hover, .docs-article a:hover { border-bottom-color: var(--accent); }
 
-    .docs-section ul, .docs-section ol {
+    .docs-section ul, .docs-article ul, .docs-section ol, .docs-article ol {
       padding-left: var(--space-6);
       margin-bottom: var(--space-5);
     }
-    .docs-section ul { list-style: disc; }
-    .docs-section ol { list-style: decimal; }
-    .docs-section li {
+    .docs-section ul, .docs-article ul { list-style: disc; }
+    .docs-section ol, .docs-article ol { list-style: decimal; }
+    .docs-section li, .docs-article li {
       color: var(--body);
       font-size: 0.95rem;
       line-height: 1.75;
@@ -163,7 +164,7 @@
       max-width: 68ch;
     }
 
-    .docs-section code {
+    .docs-section code, .docs-article code {
       font-family: var(--font-mono);
       font-size: 0.82em;
       background: var(--surface-3);
@@ -370,8 +371,3 @@
       .security-layer { grid-template-columns: 2.5rem 1fr; }
     }
 
-/* The Markdown pages under /en/docs/ have no sidebar: one column of the width the docs content has beside it. */
-.docs-standalone { max-width: calc(var(--max-width) - var(--sidebar-width)); margin: 0 auto; }
-/* Their Markdown gets the .docs-section type: lists, paragraphs, headings; tables are .env-table. */
-.docs-standalone.docs-section { border-bottom: none; }
-.docs-standalone hr { border: none; border-top: 1px solid var(--hairline); margin: var(--space-8) 0; }

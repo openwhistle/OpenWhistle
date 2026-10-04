@@ -29,7 +29,7 @@ def test_no_example_key_passes_the_length_check() -> None:
         ".env.example": r"^({k})=(.*)$",
         "README.md": r"^({k})=(.*)$",
         "docs/de/blog/interne-meldestelle-einrichten.html": r"^({k})=(.*)$",
-        "docs/en/docs/index.html": r"({k})</span>=([^\n<]*)",
+        "docs/en/docs/install/index.html": r"({k})</span>=([^\n<]*)",
     }
     for path, pattern in sources.items():
         text = (ROOT / path).read_text()

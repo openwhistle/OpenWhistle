@@ -637,7 +637,7 @@
   },
   {
    "id": "WEBHOOK-PRE-UNFRAMED",
-   "file": "docs/en/docs/index.html",
+   "file": "docs/en/docs/notifications/index.html",
    "tests": "COLOURS",
    "old": "<div class=\"code-block\" role=\"region\" aria-label=\"Webhook JSON payload\">",
    "new": "<div role=\"region\" aria-label=\"Webhook JSON payload\">"
@@ -969,13 +969,6 @@
    "tests": "LOOK_K_STEP",
    "old": "font-weight: 700; color: var(--muted); line-height: 1; flex-shrink: 0;",
    "new": "font-weight: 700; color: var(--hairline-strong); line-height: 1; flex-shrink: 0;"
-  },
-  {
-   "id": "SPY-DOCS-LINE-100PX",
-   "file": "docs/assets/js/sidebar-docs.js",
-   "tests": "SPY",
-   "old": "  var line = window.scrollY + window.innerHeight / 3;",
-   "new": "  var line = window.scrollY + 100;"
   },
   {
    "id": "SPY-PAGES-LINE-100PX",

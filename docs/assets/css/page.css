@@ -6,7 +6,7 @@
        This sheet holds only what the text pages add to it. */
 
     /* A nested list stays with its item and keeps a gap before the next group. */
-    .docs-section li ul {
+    .docs-section li ul, .docs-article li ul {
       margin-top: var(--space-1);
       margin-bottom: var(--space-3);
     }
