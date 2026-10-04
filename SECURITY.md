@@ -23,6 +23,14 @@ anonymity leaks, authorization/tenant-isolation bypasses, and anything that coul
 deanonymize a reporter. We aim to acknowledge reports promptly and will credit
 reporters (with their consent) in the advisory and here.
 
+## Bug bounty / coordinated disclosure
+
+We do not run a formal paid bounty program. Security researchers are welcome
+to report through the private channel above; we credit every responsible
+disclosure here (see the acknowledgements below). Please do not open a public
+GitHub issue for security findings — issue #120-style inquiries are fine as
+issues, but the findings themselves must stay private until a fix is released.
+
 ## Response times
 
 | Step | Within |
