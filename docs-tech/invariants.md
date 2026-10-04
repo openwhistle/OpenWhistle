@@ -544,7 +544,7 @@ Each was proven red locally with podman: files written `0640` (nginx:
 | `helm-extra-env-dropped` | `charts/openwhistle/templates/configmap.yaml` | `test_helm_extra_env_reaches_the_configmap` |
 | `helm-onion-clear-undocumented` | `charts/openwhistle/values.yaml` | `test_the_chart_says_to_clear_x_ow_onion_when_an_onion_address_is_set` |
 | `rollback-pins-old-image` | `docs/en/docs/upgrade/index.html` | `test_the_documented_rollback_downgrades_to_the_last_1_5_revision` |
-| `docs-python-m-app` | `docs/en/docs/index.html` | `test_the_docs_run_no_module_that_does_not_exist` |
+| `docs-python-m-app` | `docs/en/docs/rotate-key/index.html`, `docs/en/docs/lost-authenticator/index.html` | `test_the_docs_run_no_module_that_does_not_exist` |
 | `machine-path-committed` | `docs-tech/plans/2026-09-24-v1.6-hardening.md` | `test_no_tracked_file_holds_a_machine_local_path` |
 | `image-ships-unused-font` | `Dockerfile` | `test_the_image_ships_exactly_the_font_files_the_app_css_uses` |
 | `process-note-in-comment` | `app/services/storage.py` | `test_shipped_files_explain_the_code_not_the_review_history` |

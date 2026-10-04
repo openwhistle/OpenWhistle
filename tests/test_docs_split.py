@@ -131,6 +131,16 @@ def test_every_docs_h2_has_a_unique_id() -> None:
         assert len(ids) == len(h2) and len(set(ids)) == len(ids), (url, h2)
 
 
+def test_no_docs_page_skips_a_heading_level() -> None:
+    """h1 -> h3 hides the h3 from "On this page" and from a screen reader's outline."""
+    skips = []
+    for url in docs_pages():
+        main = page(url).split('class="docs-article">', 1)[1].split("</article>", 1)[0]
+        levels = [int(n) for n in re.findall(r"<h([1-6])\b", main)]
+        skips += [(url, a, b) for a, b in zip(levels, levels[1:], strict=False) if b > a + 1]
+    assert not skips, skips
+
+
 def test_the_one_pager_is_gone() -> None:
     start = page("/en/docs/")
     assert 'id="installation"' not in start and 'class="docs-section"' not in start

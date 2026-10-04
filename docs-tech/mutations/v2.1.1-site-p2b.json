@@ -848,7 +848,7 @@
    "id": "FORCED-CODE-LINES-BOXED",
    "file": "docs/assets/css/base.css",
    "tests": "LOOK_K_FORCED",
-   "old": "  pre code, .docs-section pre code { border: none; }",
+   "old": "  pre code, .docs-section pre code, .docs-article pre code { border: none; }",
    "new": "  pre code { border: none; }"
   },
   {

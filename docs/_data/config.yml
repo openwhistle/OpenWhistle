@@ -56,7 +56,7 @@ groups:
   - name: DEMO_MODE
     need: optional
     description: Set to <code>true</code> to enable demo mode. See <a href="/en/docs/demo-mode/">Demo
-      Mode</a> section.
+      mode</a>.
     default: <code>false</code>
   - name: LOCAL_REVIEW_LOGIN
     need: optional

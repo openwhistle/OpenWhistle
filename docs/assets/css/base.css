@@ -270,5 +270,5 @@ body {
   .code-block, .article-body pre, .doc-shot img, .btn-primary, .compliance-card-badge, .feature-icon-wrap, .trust-item-check,
   .docs-section code, .docs-article code, .env-req-yes, .env-req-no, code, details.faq-item[open] { border: 1px solid CanvasText; }
   /* A code block is framed once: its lines are not inline code, whatever the list above matches. */
-  pre code, .docs-section pre code { border: none; }
+  pre code, .docs-section pre code, .docs-article pre code { border: none; }
 }

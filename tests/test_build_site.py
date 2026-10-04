@@ -79,7 +79,7 @@ def test_markdown_renders_tables_and_keeps_raw_html_and_utf8(src: Path, tmp_path
     # A table scrolls inside its own box: a wide one must not widen a phone page.
     assert '<div class="table-scroll"><table class="env-table">' in html
     # Markdown carries no classes: the page and its tables take the docs type from these two.
-    assert '<main id="main-content" class="docs-content docs-section docs-standalone">' in html
+    assert '<main id="main-content" class="docs-content">' in html
     assert "</table></div>" in html
     assert '<div class="note">raw HTML stays</div>' in html
 

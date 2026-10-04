@@ -175,6 +175,8 @@
       /* A long path or setting name wraps on a phone instead of widening the page. */
       overflow-wrap: break-word;
     }
+    /* The Markdown templates (security policy, DPA) separate their parts with a rule. */
+    .docs-article hr { border: none; border-top: 1px solid var(--hairline); margin: var(--space-8) 0; }
 
     /* Code block */
     .code-block {
