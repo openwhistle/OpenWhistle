@@ -23,7 +23,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install uv
-        run: pip install uv==0.12.22
+        run: pip install uv==0.12.23
 
       - name: OpenLDAP headers (python-ldap builds from source)
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libldap2-dev libsasl2-dev
@@ -104,7 +104,7 @@ jobs:
           node-version: "24"
 
       - name: Install uv
-        run: pip install uv==0.12.22
+        run: pip install uv==0.12.23
 
       - name: OpenLDAP headers (python-ldap builds from source)
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libldap2-dev libsasl2-dev
@@ -250,7 +250,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install uv
-        run: pip install uv==0.12.22
+        run: pip install uv==0.12.23
 
       - name: Set up a throwaway TLS cert and a header-echoing backend
         run: |

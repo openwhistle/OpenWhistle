@@ -44,7 +44,7 @@ jobs:
           python-version: "3.14"
 
       - name: Install uv
-        run: pip install uv==0.12.22
+        run: pip install uv==0.12.23
 
       - name: Install the site build
         run: |
