@@ -1,0 +1,44 @@
+{
+ "timeout_seconds": 120,
+ "test_groups": {
+  "AI": ["tests/test_ai_disclosure.py"]
+ },
+ "mutations": [
+  {
+   "id": "AI-WORKFLOW-PATTERN",
+   "file": ".github/workflows/ai-disclosure.yml",
+   "tests": "AI",
+   "old": "\\n>[ \\t]*AI-generated'",
+   "new": "\\n>[ \\t]*AI generated'"
+  },
+  {
+   "id": "AI-AGENTS-MARKER",
+   "file": "AGENTS.md",
+   "tests": "AI",
+   "old": "  > AI-generated",
+   "new": "  > Written by AI"
+  },
+  {
+   "id": "AI-TEMPLATE-VISIBLE",
+   "file": ".github/pull_request_template.md",
+   "tests": "AI",
+   "old": "\n-->\n\n## What and why\n",
+   "new": "\n-->\n\nAI-generated\n\n## What and why\n"
+  },
+  {
+   "id": "AI-WORKFLOW-INTERPOLATION",
+   "file": ".github/workflows/ai-disclosure.yml",
+   "tests": "AI",
+   "old": "<<< \"${TEXT//$'\\r'/}\"",
+   "new": "<<< \"${{ github.event.issue.body }}\""
+  }
+,
+  {
+   "id": "AI-WORKFLOW-PIPE",
+   "file": ".github/workflows/ai-disclosure.yml",
+   "tests": "AI",
+   "old": "          if grep -Pzq",
+   "new": "          if printf '%s' \"$TEXT\" | grep -Pzq"
+  }
+ ]
+}
