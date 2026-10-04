@@ -45,8 +45,9 @@ Rules:
 - **Every section moves.** Every `<h3>` of today's one-pager lands on exactly one page.
 - **No invented pages.** A page in the table without source text is written briefly from the app's behaviour, or is not
   created. The plan names each one.
-- **The three `.md` pages are absorbed.** `security-policy` goes into the Security page, `hinschg-reference` into
-  Compliance › HinSchG. `dpa-template` stays as reference and loses `noindex`.
+- **The `.md` pages.** `hinschg-reference` is absorbed into Compliance › HinSchG. `security-policy` (an information
+  security policy template for operators, not the disclosure policy) and `dpa-template` stay as reference and lose
+  `noindex` (plan ruling W1, 2026-10-04).
 - **The `docs` layout builds the navigation:**
   - sidebar from `nav.yml`, with groups as `<details>` and the search on top;
   - "on this page" built at build time;
@@ -108,7 +109,8 @@ Rules:
 - **Security:**
   - Why trust it: anonymity layers, signed images, scans, mutation audit, linking into the docs explanations.
   - Open gaps: one maintainer, no external audit, and the known limits the docs name.
-  - How to report a vulnerability: `security-policy.md`, `SECURITY.md`, a private GitHub advisory, `security.txt`.
+  - How to report a vulnerability: `SECURITY.md`, a private GitHub advisory, `security.txt`; research is welcome and
+    unpaid (maintainer, 2026-10-04).
 - **Contribute:** where reviews help most (crypto, anonymity layers, reveal flow), first issues, translations, and
   sponsoring (P3-4).
 
@@ -119,8 +121,10 @@ Rules:
   `docs-tech/legal/datenschutz-provider-2026-10-01.txt` with every generator section that does not apply removed. It
   states exactly:
   - the controller, as in the imprint;
-  - Hetzner Online GmbH as processor (Art. 28 GDPR);
-  - server logs: time, path, status, referrer host; retention per P3-6; legal basis Art. 6 (1) f;
+  - hosting: until P5 the site is served by GitHub Pages, which logs IP addresses; the policy says so (plan ruling
+    W4). From P5 it names the own server at Hetzner Online GmbH (Art. 28 GDPR) and the counter's server logs (time,
+    path, status, referrer host; retention per P3-6);
+  - Hetzner Online GmbH as processor (Art. 28 GDPR) for the mail server and the demo;
   - no cookies, no analytics, no external resources (self-hosted fonts);
   - the theme choice in `localStorage` (§ 25 (2) no. 2 TDDDG); search runs in the browser;
   - e-mail: own mail server, delivery logs per P3-6;
