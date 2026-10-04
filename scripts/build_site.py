@@ -191,7 +191,27 @@ _CONFIG_MARKER = re.compile(r'<div data-config="([\w-]+)"></div>')
 def load_config(src: Path) -> dict[str, Any]:
     """docs/_data/config.yml: every setting once, in groups (tests/test_config_documented.py)."""
     path = src / "_data" / "config.yml"
-    return _yaml(path) if path.is_file() else {"intro": "", "groups": []}
+    if not path.is_file():
+        return {"intro": "", "groups": []}
+    config = _yaml(path)
+    if "intro" not in config or "groups" not in config:
+        missing = "intro" if "intro" not in config else "groups"
+        raise BuildError(f"_data/config.yml: lacks {missing!r}")
+    for group in config["groups"]:
+        for key in ("id", "title", "page", "guide", "settings"):
+            if key not in group:
+                raise BuildError(f"_data/config.yml: group {group.get('id', '?')!r}: lacks {key!r}")
+        for number, setting in enumerate(group["settings"], 1):
+            who = repr(setting["name"]) if "name" in setting else f"#{number}"
+            where = f"group {group['id']!r}, setting {who}"
+            for key in ("name", "need", "description"):
+                if key not in setting:
+                    raise BuildError(f"_data/config.yml: {where}: lacks {key!r}")
+            if setting["need"] not in _NEED:
+                raise BuildError(
+                    f"_data/config.yml: {where}: need {setting['need']!r}, not {sorted(_NEED)}"
+                )
+    return config
 
 
 def config_table(group: dict[str, Any]) -> str:
@@ -243,17 +263,25 @@ GENERATORS: dict[str, tuple[Callable[[Path], str], Path]] = {
 
 
 def _slug(text: str) -> str:
-    return re.sub(r"[^a-z0-9]+", "-", re.sub(r"<[^>]+>", "", text).lower()).strip("-")
+    plain = html.unescape(re.sub(r"<[^>]+>", "", text)).lower()
+    return re.sub(r"[^a-z0-9]+", "-", plain).strip("-") or "section"
 
 
 def add_heading_ids(text: str) -> str:
-    """Markdown headings get ids, so "on this page" can link them."""
+    """Markdown headings get ids, so "on this page" can link them; an id is unique on the page."""
+    used = set(re.findall(r'<h[1-6]\b[^>]*\bid="([^"]+)"', text))
 
     def add(found: re.Match[str]) -> str:
         level, attrs, inner = found.groups()
         if "id=" in attrs:
             return found.group(0)
-        return f'<h{level}{attrs} id="{_slug(inner)}">{inner}</h{level}>'
+        base = slug = _slug(inner)
+        number = 2
+        while slug in used:
+            slug = f"{base}-{number}"
+            number += 1
+        used.add(slug)
+        return f'<h{level}{attrs} id="{slug}">{inner}</h{level}>'
 
     return re.sub(r"<h([23])([^>]*)>(.*?)</h\1>", add, text, flags=re.S)
 
@@ -395,6 +423,8 @@ def check_nav(nav: dict[str, Any], pages: list[Page], site: dict[str, Any]) -> N
         raise BuildError("_data/nav.yml: docs lists a page twice")
     named |= set(docs_keys)
     for page in pages:
+        if page.meta.get("layout") == "docs" and page.lang != site["default_language"]:
+            raise BuildError(f"{page.source}: docs pages are English only (D8)")
         if page.meta.get("layout") == "docs" and page.meta["translation_key"] not in docs_keys:
             raise BuildError(f"{page.source}: the docs sidebar in _data/nav.yml does not list it")
     targets = {p.url for p in pages if p.meta["translation_key"] in named}

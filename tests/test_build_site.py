@@ -890,3 +890,65 @@ def test_an_old_non_html_url_without_a_frozen_copy_fails(src: Path, tmp_path: Pa
     (src / "_data" / "redirects.yml").write_text("/x.md: /en/\n")
     with pytest.raises(B.BuildError, match="/x.md needs its frozen copy at _legacy/x.md"):
         _build(src, tmp_path, redirect_stubs=True)
+
+
+def test_a_docs_page_outside_the_default_language_fails(src: Path, tmp_path: Path) -> None:
+    _docs_fixture(src)
+    page = src / "de" / "docs" / "index.html"
+    page.parent.mkdir(parents=True)
+    page.write_text(
+        "---\ntitle: T\ndescription: D\ntranslation_key: docs-de\nlayout: docs\n---\n<h1>x</h1>\n"
+    )
+    with pytest.raises(B.BuildError, match=r"de/docs/index.html: docs pages are English only"):
+        _build(src, tmp_path)
+
+
+@pytest.mark.parametrize(
+    ("old", "new", "message"),
+    [
+        ("need: optional", "need: requird", r"group 'ldap', setting 'LDAP_TLS': need 'requird'"),
+        ("name: LDAP_URL, ", "", r"group 'ldap', setting #1: lacks 'name'"),
+        ("description: Verify the certificate., ", "", r"setting 'LDAP_TLS': lacks 'description'"),
+        ("intro: <p>Everything is an environment variable.</p>\n", "", r"lacks 'intro'"),
+        ("    settings:\n", "    settingz:\n", r"group 'ldap': lacks 'settings'"),
+    ],
+)
+def test_a_broken_config_yml_fails_naming_the_setting(
+    src: Path, tmp_path: Path, old: str, new: str, message: str
+) -> None:
+    _docs_fixture(src)
+    config = src / "_data" / "config.yml"
+    text = config.read_text()
+    assert old in text
+    config.write_text(text.replace(old, new))
+    with pytest.raises(B.BuildError, match=r"_data/config.yml.*" + message):
+        _build(src, tmp_path)
+
+
+def test_heading_ids_are_unescaped_and_never_empty_or_twice() -> None:
+    assert B.add_heading_ids("<h2>Q &amp; A</h2>") == '<h2 id="q-a">Q &amp; A</h2>'
+    assert B.add_heading_ids("<h2>***</h2>") == '<h2 id="section">***</h2>'
+    twice = B.add_heading_ids("<h2>Setup</h2><h3>Setup</h3><h3>Setup</h3>")
+    assert (
+        twice == '<h2 id="setup">Setup</h2><h3 id="setup-2">Setup</h3><h3 id="setup-3">Setup</h3>'
+    )
+    kept = B.add_heading_ids('<h2 id="setup">Mine</h2><h3>Setup</h3>')
+    assert kept == '<h2 id="setup">Mine</h2><h3 id="setup-2">Setup</h3>'
+
+
+def test_a_generated_pages_edit_link_names_its_source(src: Path, tmp_path: Path) -> None:
+    _docs_fixture(src)
+    page = src / "en" / "docs" / "configuration" / "index.html"
+    page.parent.mkdir()
+    page.write_text(
+        "---\ntitle: T\ndescription: D\ntranslation_key: docs-configuration\n"
+        "layout: docs\ngenerated: configuration\n---\n"
+    )
+    nav = src / "_data" / "nav.yml"
+    nav.write_text(
+        nav.read_text().replace(
+            "page: docs-ldap}", "page: docs-ldap}, {label: Config, page: docs-configuration}"
+        )
+    )
+    html = (_build(src, tmp_path) / "en" / "docs" / "configuration" / "index.html").read_text()
+    assert "/edit/main/docs/_data/config.yml" in html
