@@ -223,7 +223,7 @@ self-hosted. Do not tick "cloud/SaaS": there is no hosted offering.
 > OpenWhistle is a free, open source whistleblowing platform (GPL-3.0) for internal reporting channels under EU
 > Directive 2019/1937 and the German HinSchG. Organisations host it themselves with Docker. Reporters submit
 > without an account and return with a random PIN; no IP address is stored. Case handlers work with mandatory
-> MFA, two-way messages and deadline tracking. Interface in English, German, French and Brazilian Portuguese.
+> MFA, two-way messages and deadline tracking. Interface in English, German, French, Spanish and Brazilian Portuguese.
 
 ### EU OSOR news item
 

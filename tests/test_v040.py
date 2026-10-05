@@ -376,6 +376,22 @@ class TestI18n:
         req.headers.get.return_value = "pt-PT,en;q=0.8"
         assert get_lang(req) == "pt-br"
 
+    def test_es_locale_loads(self) -> None:
+        from app.i18n import make_translator
+
+        t = make_translator("es")
+        assert t("nav.submit_report") == "Enviar denuncia"
+
+    def test_es_region_variant_resolves_to_es(self) -> None:
+        from unittest.mock import MagicMock
+
+        from app.i18n import get_lang
+
+        req = MagicMock()
+        req.cookies.get.return_value = ""
+        req.headers.get.return_value = "es-ES,es;q=0.9,en;q=0.8"
+        assert get_lang(req) == "es"
+
 
 # ── Admin location routes ─────────────────────────────────────────
 

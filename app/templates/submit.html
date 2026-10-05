@@ -420,7 +420,7 @@
     if (description && charCounter) {
         // Same thousands separator per locale as app.i18n.format_count, so the
         // live count never disagrees with the page's own initial render.
-        var THOUSANDS_SEPARATOR = { en: ',', de: '.', fr: ' ', 'pt-br': '.' };
+        var THOUSANDS_SEPARATOR = { en: ',', de: '.', fr: ' ', es: '.', 'pt-br': '.' };
         var formatCount = function(n) {
             var sep = THOUSANDS_SEPARATOR[document.documentElement.lang] || ',';
             return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, sep);

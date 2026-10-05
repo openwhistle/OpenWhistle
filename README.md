@@ -65,7 +65,7 @@ zero vendor lock-in, and privacy-first by design.
 - **4-eyes deletion** — Hard deletion requires two different admins (request + confirm);
   the same admin, or an account one of them made, gets HTTP 409. GDPR Art. 17 compliant.
 - **Immutable audit log** — Every admin action recorded with timestamp and username, shown as
-  readable labels in all four languages; CSV export keeps the machine codes; required by HinSchG §11 Abs. 5.
+  readable labels in all five languages; CSV export keeps the machine codes; required by HinSchG §11 Abs. 5.
 - **Search by case number or content** — Find a case by any part of its number or by a word
   in its description or messages. Content is decrypted in memory for that request only; no
   searchable index is stored, and the confidential name never matches.
@@ -111,7 +111,7 @@ zero vendor lock-in, and privacy-first by design.
 - **Optional virus scanning** — Attachments can be checked against a ClamAV `clamd` daemon before
   they are stored (`CLAMAV_HOST`). Fail-closed: if the scanner is unreachable, the upload is
   refused rather than stored unscanned.
-- **Internationalisation** — English, German, French and Brazilian Portuguese UI; language
+- **Internationalisation** — English, German, French, Spanish and Brazilian Portuguese UI; language
   picker in the nav bar; a test keeps every key and placeholder present in every locale.
 - **WCAG 2.1 AA** — Skip-to-content link, ARIA labels, live regions, visible focus indicators,
   and keyboard-accessible language picker.

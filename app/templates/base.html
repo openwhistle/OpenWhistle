@@ -84,7 +84,7 @@
                         {{ icons.icon('chevron-down', 'u-caret') }}
                     </summary>
                     <ul class="lang-picker-menu" role="list">
-                        {% for code, label in [('en', 'English'), ('de', 'Deutsch'), ('fr', 'Français'), ('pt-br', 'Português (BR)')] %}
+                        {% for code, label in [('en', 'English'), ('de', 'Deutsch'), ('fr', 'Français'), ('es', 'Español'), ('pt-br', 'Português (BR)')] %}
                         <li>
                             <form method="post" action="/set-language" class="u-m0">
                                 <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">

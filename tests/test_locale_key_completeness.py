@@ -31,7 +31,7 @@ from app.models.user import AdminRole
 from app.services.audit import ALL_ACTIONS
 
 _LOCALES = Path(__file__).resolve().parent.parent / "app" / "locales"
-_LANGS = ("en", "de", "fr", "pt-br")
+_LANGS = ("en", "de", "fr", "es", "pt-br")
 
 # (locale-key prefix, values, template — for the assertion message).
 # status.progress.*.desc: status.html only reaches this dynamic lookup for a
