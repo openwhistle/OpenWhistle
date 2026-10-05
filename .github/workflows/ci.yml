@@ -284,7 +284,7 @@ jobs:
           docker run -d --name ow-onion-test-app --network ow-onion-test \
             --network-alias app \
             -v /tmp/ow-nginx-test/echo/server.py:/server.py:ro \
-            python:3.14-alpine@sha256:2e740b2c28a426e74f11396c05e38afb3191acced75045b8d62df573c1dc8ce8 \
+            python:3.14-alpine@sha256:f6a589d43c42b9e7f7dc67a12d37132491f362859a5d750607710cc56da3bc72 \
             python /server.py
 
           # The nginx image docker-compose.prod.yml and the Ansible template ship,
