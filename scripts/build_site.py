@@ -693,6 +693,21 @@ def lastmod(path: Path) -> str:
     return committed if committed and not _git("status", "--porcelain", "--", rel) else today
 
 
+def write_security_txt(out: Path, site: dict[str, Any]) -> None:
+    """RFC 9116. Expires is a year from the build, so every deploy renews it."""
+    now = datetime.datetime.now(datetime.UTC).replace(microsecond=0)
+    expires = now + datetime.timedelta(days=365)
+    lines = [
+        f"Contact: {site['security_contact']}",
+        f"Expires: {expires.isoformat().replace('+00:00', 'Z')}",
+        f"Canonical: {site['base_url']}/.well-known/security.txt",
+        f"Policy: {site['base_url']}/en/security/",
+        "Preferred-Languages: en, de",
+    ]
+    (out / ".well-known").mkdir(exist_ok=True)
+    (out / ".well-known" / "security.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def write_sitemap(out: Path, src: Path, pages: list[Page], site: dict[str, Any]) -> None:
     entries = []
     for page in sorted(pages, key=lambda p: p.url):
@@ -806,6 +821,7 @@ def build(src: Path, out: Path, *, redirect_stubs: bool = False) -> list[Page]:
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(render_page(env, page, data, by_key), encoding="utf-8")
     write_sitemap(out, src, pages, site)
+    write_security_txt(out, site)
     # Before the stubs: a link to an old URL must fail even where a stub would catch it.
     check_links(out, urlsplit(site["base_url"]).netloc)
     if any(p.meta.get("layout") == "docs" for p in pages):

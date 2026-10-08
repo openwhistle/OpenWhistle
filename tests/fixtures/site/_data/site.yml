@@ -3,6 +3,7 @@ default_language: en
 github_url: https://github.com/openwhistle/OpenWhistle
 demo_url: https://demo.openwhistle.net
 sponsor_url: https://github.com/sponsors/jp1337
+security_contact: https://github.com/openwhistle/OpenWhistle/security/advisories/new
 languages:  # last, so a test can append a language
   en: {name: English, locale: en_US}
   de: {name: Deutsch, locale: de_DE}

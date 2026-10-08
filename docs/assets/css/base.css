@@ -195,6 +195,7 @@ body {
   transition: color var(--duration-fast) ease;
 }
 .footer-links a:hover { color: var(--inverse-ink); }
+.footer-legal { margin-bottom: var(--space-5); }
 .footer-bottom {
   display: flex;
   align-items: center;

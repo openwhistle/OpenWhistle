@@ -25,11 +25,12 @@
         <div>
           <div class="footer-col-title">{{ t.footer.legal }}</div>
 {% if nav.legal %}
-          <nav aria-label="{{ t.footer.legal }}">
+          <nav class="footer-legal" aria-label="{{ t.footer.legal }}">
             <ul class="footer-links">
 {% for item in nav.legal %}
               <li><a href="{{ item.href }}">{{ item.label }}</a></li>
 {% endfor %}
+              <li><a href="/.well-known/security.txt">security.txt</a></li>
             </ul>
           </nav>
 {% endif %}

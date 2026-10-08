@@ -15,7 +15,9 @@ footer:
   - {label: nav.compare, page: compare}
   - {label: nav.docs, page: docs}
   - {label: nav.blog, page: blog}
-legal: []
+legal:
+  - {label: footer.imprint, page: imprint}
+  - {label: footer.privacy, page: privacy}
 # The docs sidebar (docs layout). Labels are plain English: the docs exist in English only (D8).
 # build_site.py check_nav: every docs page is listed here, and every entry is a page.
 docs:

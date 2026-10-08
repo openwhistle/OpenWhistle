@@ -30,7 +30,7 @@ SHAPE: dict[int, tuple[int, dict[int, int]]] = {
 
 _OTHER_LAW = re.compile(
     r"\s*(?:[A-Za-z.\s\d]{0,8})?"
-    r"\b(?:StGB|DSGVO|BetrVG|OWiG|BDSG|UWG|BGB|GG|AktG|GmbHG|KWG|BPersVG)\b"
+    r"\b(?:StGB|DSGVO|BetrVG|OWiG|BDSG|UWG|BGB|GG|AktG|GmbHG|KWG|BPersVG|MStV|TDDDG)\b"
 )
 _CITE = re.compile(r"§\s?(\d+)\s?(?:Abs\.|Absatz|al\.)\s?(\d+)(?:\s?(?:Nr\.|Satz)\s?(\d+))?")
 

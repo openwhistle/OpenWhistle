@@ -214,6 +214,10 @@ Rebuild after every edit to `docs/`; the server serves what was built.
 | `/de/sicherheit/` | Security, German. |
 | `/en/contribute/` | Contribute. |
 | `/de/mitmachen/` | Contribute, German. |
+| `/impressum/` | Imprint, German only — the text is the provider's, word for word; the language switch leads to `/en/`. |
+| `/de/datenschutz/` | Privacy policy, German and binding — the "On this page" list sits above the text at 390 px. |
+| `/en/privacy/` | Privacy policy, English translation. |
+| `/.well-known/security.txt` | Plain text (RFC 9116): `Expires` lies about a year after the build. |
 | `/en/compare/` | Comparison with GlobaLeaks, SecureDrop, Hush Line — the table scrolls inside its box at 390 px. |
 | `/404.html` | Not-found page (noindex); open any missing path on the served site. |
 | `/en/changelog/` | Changelog, rendered from `CHANGELOG.md` — check the version nav in the sidebar. |
