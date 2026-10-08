@@ -1016,7 +1016,7 @@ users of 1.1.0 should upgrade.
   Policy no longer uses `'unsafe-inline'`: it is now a strict, per-response
   nonce-based policy for both scripts and styles.
 
-Reported by @openblow (the account no longer exists).
+Reported by @openblow.
 
 ### Fixed (internal bug-bounty audit)
 

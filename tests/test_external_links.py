@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import http.client
 import importlib.util
 from pathlib import Path
 from types import ModuleType
 
 import pytest
+import yaml
 
 ROOT = Path(__file__).parents[1]
 
@@ -39,10 +41,6 @@ def test_collect_keeps_external_http_links_once_with_their_pages(tmp_path: Path)
     }
 
 
-def test_the_site_host_is_the_configured_one() -> None:
-    assert C.HOST == "openwhistle.net"
-
-
 @pytest.mark.parametrize(
     ("status", "verdict"),
     [
@@ -67,3 +65,55 @@ def test_a_failure_is_retried_once(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(C, "fetch", lambda _url: next(answers))
     monkeypatch.setattr(C.time, "sleep", lambda _s: None)
     assert C.status_of("https://example.org/") == 200
+
+
+def test_an_ok_answer_is_not_retried(monkeypatch: pytest.MonkeyPatch) -> None:
+    answers = iter([200])
+    monkeypatch.setattr(C, "fetch", lambda _url: next(answers))
+    monkeypatch.setattr(C.time, "sleep", lambda _s: pytest.fail("retried an ok link"))
+    assert C.status_of("https://example.org/") == 200
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        http.client.BadStatusLine("garbage"),
+        http.client.InvalidURL("bad port"),
+        http.client.RemoteDisconnected("closed"),
+        ValueError("unknown url type"),
+    ],
+    ids=lambda e: type(e).__name__,
+)
+def test_a_bad_host_is_no_connection_not_a_crash(
+    monkeypatch: pytest.MonkeyPatch, error: Exception
+) -> None:
+    def refuse(*_a: object, **_k: object) -> None:
+        raise error
+
+    monkeypatch.setattr(C.urllib.request, "urlopen", refuse)
+    assert C.fetch("https://example.org/") is None
+
+
+@pytest.mark.parametrize(("dead", "code"), [(set(), 0), ({"https://example.org/b"}, 1)])
+def test_main_fails_exactly_when_a_link_is_broken(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], dead: set[str], code: int
+) -> None:
+    def build(_src: Path, out: Path) -> None:
+        out.mkdir(parents=True)
+        (out / "index.html").write_text(
+            '<a href="https://example.org/a">a</a><a href="https://example.org/b">b</a>'
+        )
+
+    monkeypatch.setattr(C.build_site, "build", build)
+    monkeypatch.setattr(C, "status_of", lambda url: 404 if url in dead else 200)
+    assert C.main() == code
+    assert f"2 external links, {len(dead)} broken" in capsys.readouterr().out
+
+
+def test_the_workflow_check_step_keeps_the_scripts_exit_status() -> None:
+    """Without `shell: bash` a step runs `bash -e` with no pipefail: a pipe would hide a failure."""
+    workflow = yaml.safe_load((ROOT / ".github" / "workflows" / "links.yml").read_text())
+    (check,) = [s for s in workflow["jobs"]["links"]["steps"] if s.get("id") == "check"]
+    assert "scripts/check_external_links.py" in check["run"]
+    assert "|" not in check["run"] or check.get("shell") == "bash", check
+    assert check["continue-on-error"] is True

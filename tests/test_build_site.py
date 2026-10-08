@@ -992,3 +992,13 @@ def test_the_build_indexes_only_docs_pages() -> None:
     assert [lang["page_count"] for lang in entry["languages"].values()] == [docs]
     # search.js is the only UI: Pagefind's own bundles would ship unused.
     assert not sorted(p.name for p in bundle.glob("*ui*")), "Pagefind's UI bundles shipped"
+
+
+def test_an_og_title_without_a_sora_glyph_is_refused(src: Path, tmp_path: Path) -> None:
+    page = src / "en" / "index.html"
+    page.write_text(
+        page.read_text(encoding="utf-8").replace("title: Fixture home", "title: Fixture 中"),
+        encoding="utf-8",
+    )
+    with pytest.raises(B.BuildError, match="'Fixture 中' uses '中', not in Sora latin"):
+        _build(src, tmp_path)

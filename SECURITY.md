@@ -43,6 +43,6 @@ OpenWhistle is maintained in spare time; these are commitments, and when one sli
 
 Our thanks to those who have responsibly disclosed security issues:
 
-- **@openblow** (the account no longer exists) — reported the four advisories
+- **@openblow** — reported the four advisories
   fixed in v1.1.1 (report object-level authorization / deanonymization,
   privilege escalation, stored XSS, and weak/duplicated HTTP security headers).

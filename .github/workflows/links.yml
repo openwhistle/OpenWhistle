@@ -17,6 +17,7 @@ permissions:
 jobs:
   links:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
       issues: write
@@ -37,10 +38,15 @@ jobs:
           uv export --frozen --only-group site --no-emit-project -o /tmp/requirements.txt
           uv pip install --system -r /tmp/requirements.txt
 
+      # No pipe: without an explicit `shell: bash` a step runs without pipefail,
+      # so `| tee` would make the step's status tee's.
       - name: Check
         id: check
-        run: python scripts/check_external_links.py 2>&1 | tee links.txt
+        run: python scripts/check_external_links.py > links.txt 2>&1
         continue-on-error: true
+
+      - name: Show the result
+        run: cat links.txt
 
       - name: Open an issue
         if: steps.check.outcome == 'failure' && github.event_name == 'schedule'

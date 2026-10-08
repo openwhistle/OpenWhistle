@@ -12,6 +12,7 @@ Run weekly by .github/workflows/links.yml, which opens an issue on failure.
 
 from __future__ import annotations
 
+import http.client
 import sys
 import tempfile
 import time
@@ -60,7 +61,8 @@ def fetch(url: str) -> int | None:
             return int(response.status)
     except urllib.error.HTTPError as error:
         return error.code
-    except urllib.error.URLError, TimeoutError, OSError:
+    # InvalidURL is a ValueError, BadStatusLine an HTTPException: one bad host never ends the run.
+    except urllib.error.URLError, http.client.HTTPException, ValueError, OSError:
         return None
 
 

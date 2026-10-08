@@ -781,6 +781,7 @@ def write_og_images(out: Path, src: Path, pages: list[Page], site_alt: str) -> N
         return ImageFont.truetype(buf, size)
 
     title_font = font("sora-latin-600-normal.woff2", 64)
+    glyphs = TTFont(src / "fonts" / "sora-latin-600-normal.woff2").getBestCmap()
     site_font = font("sora-latin-400-normal.woff2", 30)
     tile = (
         Image.open(src / "apple-touch-icon.png")
@@ -791,6 +792,10 @@ def write_og_images(out: Path, src: Path, pages: list[Page], site_alt: str) -> N
     ImageDraw.Draw(mask).rounded_rectangle((0, 0, *tile.size), radius=24, fill=255)
 
     def card(title: str, dest: Path) -> None:
+        # FreeType draws a missing glyph as an empty box, and nothing would say so.
+        missing = sorted({c for c in title if ord(c) not in glyphs and not c.isspace()})
+        if missing:
+            raise BuildError(f"OG image: {title!r} uses {''.join(missing)!r}, not in Sora latin")
         image = Image.new("RGB", (1200, 630), "#08080a")  # DESIGN.md canvas, dark
         draw = ImageDraw.Draw(image)
         image.paste(tile, (80, 80), mask)
