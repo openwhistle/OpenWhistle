@@ -26,8 +26,8 @@ jobs:
           NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
           TEXT: ${{ github.event.issue.body || github.event.pull_request.body }}
         run: |
-          # A here-string, not a pipe: run steps use pipefail, and grep -q leaving early
-          # would turn a match into a failed pipeline (SIGPIPE) on a long description.
+          # A here-string, not a pipe: the result is grep's own, whatever the shell's pipefail
+          # setting (on with `shell: bash`); in a piped form grep -q leaving early could fail it.
           if grep -Pzq '\[!WARNING\][ \t]*\n>[ \t]*AI-generated' <<< "${TEXT//$'\r'/}"; then
             gh api -X POST "repos/$GH_REPO/issues/$NUMBER/labels" -f "labels[]=ai-generated" >/dev/null
           fi

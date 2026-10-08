@@ -59,5 +59,5 @@ def test_the_workflow_never_checks_out_or_interpolates_the_text() -> None:
 
 
 def test_the_match_is_not_the_end_of_a_pipe() -> None:
-    """Run steps use pipefail: grep -q quitting early would fail the writer with SIGPIPE."""
+    """Under pipefail (`shell: bash`), grep -q quitting early fails a pipe's writer."""
     assert not re.search(r"\|\s*grep\b", WORKFLOW)
