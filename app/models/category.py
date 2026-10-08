@@ -36,7 +36,7 @@ class ReportCategory(Base):
 
     def label_for(self, lang: str) -> str:
         """The label for an admin's UI language. Only English and German are
-        stored (label_en/label_de) — every other UI language (fr, pt-br) falls
+        stored (label_en/label_de) — every other UI language (fr, es, pt-br) falls
         back to English, same as an empty label_de would."""
         if lang == "de" and self.label_de:
             return self.label_de
