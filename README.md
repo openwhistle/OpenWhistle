@@ -190,6 +190,10 @@ zero vendor lock-in, and privacy-first by design.
 - **Tor onion address** — `ONION_LOCATION` adds an `Onion-Location` header (Tor Browser offers to
   switch) and a note on the submit page for reporters on a monitored network; see
   [Offering an onion address](https://openwhistle.net/en/docs/onion/).
+- **Searchable documentation** — one page per task on [openwhistle.net/en/docs](https://openwhistle.net/en/docs/),
+  searched in the browser (Pagefind, `/` key); the search term never reaches the server.
+- **Compliance pages** — the EU Directive 2019/1937 and the HinSchG, duty by duty: what OpenWhistle covers, with the
+  docs page that shows it, and what stays with you ([openwhistle.net/en/compliance](https://openwhistle.net/en/compliance/)).
 
 ---
 

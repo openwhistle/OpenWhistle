@@ -772,17 +772,17 @@ def write_og_images(out: Path, src: Path, pages: list[Page], site_alt: str) -> N
     from fontTools.ttLib import TTFont
     from PIL import Image, ImageDraw, ImageFont
 
-    def font(name: str, size: int) -> ImageFont.FreeTypeFont:
-        raw = TTFont(src / "fonts" / name)
+    def font(raw: TTFont, size: int) -> ImageFont.FreeTypeFont:
         raw.flavor = None  # woff2 -> sfnt for FreeType
         buf = BytesIO()
         raw.save(buf)
         buf.seek(0)
         return ImageFont.truetype(buf, size)
 
-    title_font = font("sora-latin-600-normal.woff2", 64)
-    glyphs = TTFont(src / "fonts" / "sora-latin-600-normal.woff2").getBestCmap()
-    site_font = font("sora-latin-400-normal.woff2", 30)
+    title_raw = TTFont(src / "fonts" / "sora-latin-600-normal.woff2")
+    glyphs = title_raw.getBestCmap()
+    title_font = font(title_raw, 64)
+    site_font = font(TTFont(src / "fonts" / "sora-latin-400-normal.woff2"), 30)
     tile = (
         Image.open(src / "apple-touch-icon.png")
         .convert("RGB")

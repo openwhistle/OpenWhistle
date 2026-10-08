@@ -53,7 +53,8 @@ Rules:
   - "on this page" built at build time;
   - previous/next and "Edit on GitHub".
 - **Search** uses Pagefind from PyPI, run at build over the docs. Its UI is our own, small, on `pagefind.js`: the `/`
-  key, a `<dialog>`, and `?highlight=`. The P0 spike showed it runs under the docs CSP.
+  key, a `<dialog>`, and `#highlight=`: a fragment never reaches the server, so the term stays in the browser (P3
+  ruling; easywall's `?highlight=` would send it). The P0 spike showed it runs under the docs CSP.
 
 ### New pages
 

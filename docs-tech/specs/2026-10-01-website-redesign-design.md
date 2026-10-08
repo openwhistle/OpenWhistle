@@ -173,7 +173,8 @@ The single page `docs/docs.html` (162 KB) is split by reader type. Content is mo
 - Configuration reference is built from `docs/_data/config.yml`; `tests/test_config_documented.py` checks both
   directions against `Settings`.
 - From easywall: navigation in one data file with a test in both directions, groups as `<details>`, Pagefind
-  search (`/` key, `<dialog>`, `?highlight=`), copy buttons, prose gate, heading-ID test.
+  search (`/` key, `<dialog>`, a highlight term; P3 carries it as `#highlight=`, a fragment the server never
+  sees, not easywall's `?highlight=`), copy buttons, prose gate, heading-ID test.
 - Different from easywall: Pagefind from PyPI (`pagefind`, hash-locked) instead of `npx`; own small UI on
   `pagefind.js` instead of `pagefind-ui` (120 KB); "on this page" built at build time, not by JS. Added: skip
   link, 404, previous/next, "Edit on GitHub".

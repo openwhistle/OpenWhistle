@@ -218,6 +218,10 @@ Rebuild after every edit to `docs/`; the server serves what was built.
 | `/de/datenschutz/` | Privacy policy, German and binding — the "On this page" list sits above the text at 390 px. |
 | `/en/privacy/` | Privacy policy, English translation. |
 | `/.well-known/security.txt` | Plain text (RFC 9116): `Expires` lies about a year after the build. |
+| `/en/blog/feed.xml` | Atom feed (raw XML): every English post, newest first. |
+| `/de/blog/feed.xml` | Atom feed, German. |
+| `/en/og.png` | Share card (1200×630) — every directory page has its own `og.png`; also open one docs and one German post card. |
+| `/en/docs/install/#highlight=docker` | Docs search result: the term is marked and scrolled into view; press `/` for the search dialog. |
 | `/en/compare/` | Comparison with GlobaLeaks, SecureDrop, Hush Line — the table scrolls inside its box at 390 px. |
 | `/404.html` | Not-found page (noindex); open any missing path on the served site. |
 | `/en/changelog/` | Changelog, rendered from `CHANGELOG.md` — check the version nav in the sidebar. |
