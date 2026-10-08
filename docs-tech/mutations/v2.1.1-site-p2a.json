@@ -24,6 +24,15 @@
    "tests/test_build_site.py",
    "-k",
    "lastmod"
+  ],
+  "PHONE": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "wider_than_a_small_phone",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
   ]
  },
  "mutations": [
@@ -464,9 +473,9 @@
   {
    "id": "E2E-SCALE-ROW",
    "file": "docs/assets/css/home.css",
-   "tests": "E2E",
-   "old": ".figure-row:has(> .diagram) { grid-template-columns: 1fr; }",
-   "new": ".figure-row:has(> .nothing) { grid-template-columns: 1fr; }"
+   "tests": "PHONE",
+   "old": "  .figure-row { grid-template-columns: 1fr; gap: var(--space-6); }",
+   "new": "  .figure-row { gap: var(--space-6); }"
   },
   {
    "id": "E2E-SCALE-UPPER",

@@ -371,10 +371,10 @@
   },
   {
    "id": "PAGE-PAINT-LITERAL",
-   "file": "docs/de/index.html",
+   "file": "docs/_includes/nav.html",
    "tests": "COLOURS",
-   "old": "<circle cx=\"9\" cy=\"11.5\" r=\"1.5\" fill=\"currentColor\"/>",
-   "new": "<circle cx=\"9\" cy=\"11.5\" r=\"1.5\" fill=\"#0c7253\"/>"
+   "old": "<circle cx=\"8\" cy=\"8\" r=\"3\" stroke=\"currentColor\" stroke-width=\"1.3\"/>",
+   "new": "<circle cx=\"8\" cy=\"8\" r=\"3\" stroke=\"#0c7253\" stroke-width=\"1.3\"/>"
   },
   {
    "id": "DARK-CODE-PILL-IN-BLOCK",
@@ -434,10 +434,10 @@
   },
   {
    "id": "PAINT-SINGLE-QUOTED",
-   "file": "docs/de/index.html",
+   "file": "docs/_includes/nav.html",
    "tests": "COLOURS",
-   "old": "<circle cx=\"9\" cy=\"11.5\" r=\"1.5\" fill=\"currentColor\"/>",
-   "new": "<circle cx=\"9\" cy=\"11.5\" r=\"1.5\" fill='#0c7253'/>"
+   "old": "<circle cx=\"8\" cy=\"8\" r=\"3\" stroke=\"currentColor\" stroke-width=\"1.3\"/>",
+   "new": "<circle cx=\"8\" cy=\"8\" r=\"3\" stroke='#0c7253' stroke-width=\"1.3\"/>"
   },
   {
    "id": "APP-DARK-BLOCK-SCOPED",
@@ -981,8 +981,8 @@
    "id": "DEAD-CLASS-RULE",
    "file": "docs/assets/css/post.css",
    "tests": "SITE_CSS_K_DEAD",
-   "old": "    .val-bad { color: var(--muted); }\n",
-   "new": "    .val-bad { color: var(--muted); }\n    .val-warn { color: var(--warning); }\n"
+   "old": "    .val-good { color: var(--accent); font-weight: 600; }\n",
+   "new": "    .val-good { color: var(--accent); font-weight: 600; }\n    .val-warn { color: var(--warning); }\n"
   },
   {
    "id": "APP-WORDMARK-NO-TRANSLATE",
