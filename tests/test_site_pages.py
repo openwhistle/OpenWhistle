@@ -101,3 +101,11 @@ def test_every_compliance_table_proves_each_row_or_makes_no_claim() -> None:
                 continue
             for row in re.findall(r"<tr>(.*?)</tr>", body, re.S):
                 assert re.search(r'href="/en/docs/|not covered|nicht abgedeckt', row), (url, row)
+
+
+def test_home_sections_follow_the_spec_order() -> None:
+    order = ["promises", "how-it-works", "features", "compliance", "verify", "install", "faq"]
+    for url in ("/en/", "/de/"):
+        ids = re.findall(r'<section[^>]*\bid="([\w-]+)"', page(url))
+        assert [i for i in ids if i in order] == order, (url, ids)
+        assert len(re.findall(r'class="[^"]*\bbtn-primary\b', page(url))) == 1, url

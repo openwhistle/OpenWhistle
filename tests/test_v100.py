@@ -602,7 +602,6 @@ class TestConfigV100Defaults:
             "docs.html": grab("docs/en/docs/index.html", r"<strong>v([0-9.]+)</strong>"),
             "index.html": grab("docs/en/index.html", r"softwareVersion: '?([0-9.]+)"),
             "de/index.html": grab("docs/de/index.html", r"softwareVersion: '?([0-9.]+)"),
-            "de/index.html eyebrow": grab("docs/de/index.html", r"Aktuelles Release: ([0-9.]+)"),
             # The date beside the version is free text; only the version is checked.
             "compare latest release": grab(
                 "docs/en/compare/index.html", r"Latest release</th>\s*<td>([0-9.]+)"

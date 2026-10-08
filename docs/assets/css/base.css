@@ -277,9 +277,9 @@ body {
 
 /* Borders are drawn as box-shadow rings (DESIGN.md "Rules"); forced colours drop shadows, so the edges come back. */
 @media (forced-colors: active) {
-  .theme-toggle, .btn-outline, .nav-cta, .feature-card, .compliance-card, .install-reqs,
+  .theme-toggle, .btn-outline, .nav-cta, .compliance-card,
   details.faq-item, .article-card, .step-block, .article-cta, .terminal-window,
-  .code-block, .article-body pre, .doc-shot img, .btn-primary, .compliance-card-badge, .feature-icon-wrap, .trust-item-check,
+  .code-block, .article-body pre, .doc-shot img, .btn-primary, .compliance-card-badge,
   .docs-section code, .docs-article code, .env-req-yes, .env-req-no, code, details.faq-item[open],
   .docs-search, .docs-search-open, .docs-search-open kbd, .docs-search-head button, .docs-search input { border: 1px solid CanvasText; }
   /* A code block is framed once: its lines are not inline code, whatever the list above matches. */

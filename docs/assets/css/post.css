@@ -70,7 +70,6 @@
     .comp-table tbody td.col-ow { background: var(--accent-fog); }
     .comp-table tbody tr:last-child td { border-bottom: none; }
     .val-good { color: var(--accent); font-weight: 600; }
-    .val-bad { color: var(--muted); }
 
     /* Diagram figures, as on the docs admin, whistleblower and anonymity pages; base.css picks the twin. */
     .diagram { margin: var(--space-8) 0; }
