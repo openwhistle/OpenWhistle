@@ -6,6 +6,7 @@
 {% endif %}
   <div class="docs-layout">
     <aside class="docs-sidebar" aria-label="Documentation">
+      <button type="button" class="docs-search-open" data-search-open hidden>Search the docs <kbd>/</kbd></button>
       <details class="docs-menu" open>
         <summary>Documentation menu</summary>
 {% for group in docs.sidebar %}
@@ -23,14 +24,14 @@
       <script>if(matchMedia('(max-width: 768px)').matches)document.querySelector('.docs-menu').removeAttribute('open')</script>
     </aside>
 
-    <main id="main-content" class="docs-content">
-      <nav class="docs-breadcrumb" aria-label="Breadcrumb">
+    <main id="main-content" class="docs-content" data-pagefind-body>
+      <nav class="docs-breadcrumb" aria-label="Breadcrumb" data-pagefind-ignore>
 {% for crumb in docs.crumbs %}
 {% if crumb.href and not loop.last %}<a href="{{ crumb.href }}">{{ crumb.label }}</a><span aria-hidden="true">/</span>{% else %}<span>{{ crumb.label }}</span>{% if not loop.last %}<span aria-hidden="true">/</span>{% endif %}{% endif %}
 {% endfor %}
       </nav>
 {% if docs.toc %}
-      <nav class="docs-toc" aria-label="On this page">
+      <nav class="docs-toc" aria-label="On this page" data-pagefind-ignore>
         <p class="docs-toc-title">On this page</p>
         <ul role="list">
 {% for anchor, text in docs.toc %}
@@ -42,11 +43,21 @@
       <article class="docs-article">
 {{ page.content|safe }}
       </article>
-      <nav class="docs-pager" aria-label="Previous and next page">
+      <nav class="docs-pager" aria-label="Previous and next page" data-pagefind-ignore>
 {% if docs.prev %}        <a rel="prev" href="{{ docs.prev.href }}"><span>Previous</span> {{ docs.prev.label }}</a>
 {% endif %}{% if docs.next %}        <a rel="next" href="{{ docs.next.href }}"><span>Next</span> {{ docs.next.label }}</a>
 {% endif %}      </nav>
-      <p class="docs-edit"><a href="{{ docs.edit_url }}" rel="noopener noreferrer" target="_blank">Edit this page on GitHub</a></p>
+      <p class="docs-edit" data-pagefind-ignore><a href="{{ docs.edit_url }}" rel="noopener noreferrer" target="_blank">Edit this page on GitHub</a></p>
     </main>
   </div>
+  <dialog id="docs-search" class="docs-search" aria-labelledby="docs-search-label">
+    <div class="docs-search-head">
+      <label id="docs-search-label" for="docs-search-input">Search the documentation</label>
+      <button type="button" data-search-close>Close</button>
+    </div>
+    <input id="docs-search-input" type="search" autocomplete="off" spellcheck="false">
+    <p class="docs-search-status" role="status"></p>
+    <ol class="docs-search-results" role="list"></ol>
+  </dialog>
+  <script src="/assets/js/search.js"></script>
 {% endblock %}

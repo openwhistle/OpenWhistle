@@ -975,3 +975,12 @@ def test_a_generated_pages_edit_link_names_its_source(src: Path, tmp_path: Path)
     )
     html = (_build(src, tmp_path) / "en" / "docs" / "configuration" / "index.html").read_text()
     assert "/edit/main/docs/_data/config.yml" in html
+
+
+def test_the_build_indexes_only_docs_pages() -> None:
+    """Pagefind indexes the <main> that carries data-pagefind-body: the docs, nothing else."""
+    from tests.built_site import built, page
+
+    assert (built() / "pagefind" / "pagefind.js").is_file()
+    assert "data-pagefind-body" not in page("/en/")
+    assert "data-pagefind-body" in page("/en/docs/ldap/")

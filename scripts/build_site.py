@@ -767,6 +767,18 @@ def subset_fonts(out: Path) -> dict[str, int]:
     return sizes
 
 
+def index_search(out: Path) -> None:
+    """Pagefind indexes every page whose <main> carries data-pagefind-body: the docs."""
+    run = subprocess.run(  # noqa: S603 — fixed argv, the module of a locked package
+        [sys.executable, "-m", "pagefind", "--site", str(out)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if run.returncode:
+        raise BuildError(f"pagefind failed ({run.returncode}): {run.stderr.strip()}")
+
+
 def build(src: Path, out: Path, *, redirect_stubs: bool = False) -> list[Page]:
     _refuse_dangerous_out(src, out)
     data = load_data(src)
@@ -796,6 +808,8 @@ def build(src: Path, out: Path, *, redirect_stubs: bool = False) -> list[Page]:
     write_sitemap(out, src, pages, site)
     # Before the stubs: a link to an old URL must fail even where a stub would catch it.
     check_links(out, urlsplit(site["base_url"]).netloc)
+    if any(p.meta.get("layout") == "docs" for p in pages):
+        index_search(out)
     subset_fonts(out)
     if redirect_stubs:
         write_stubs(out, data["redirects"], site, src)

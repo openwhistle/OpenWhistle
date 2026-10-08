@@ -22,6 +22,7 @@ figure.diagram img { background: var(--canvas); border-radius: var(--radius-md);
 html { scroll-behavior: smooth; font-size: 16px; -webkit-text-size-adjust: 100%; }
 img, svg { display: block; max-width: 100%; }
 button { cursor: pointer; border: none; background: none; font: inherit; }
+input, dialog { border: none; font: inherit; }
 ul, ol { list-style: none; }
 [data-theme="light"] { color-scheme: only light; }
 [data-theme="dark"] { color-scheme: dark; }
@@ -278,7 +279,8 @@ body {
   .theme-toggle, .btn-outline, .nav-cta, .feature-card, .compliance-card, .install-reqs,
   details.faq-item, .article-card, .step-block, .article-cta, .terminal-window,
   .code-block, .article-body pre, .doc-shot img, .btn-primary, .compliance-card-badge, .feature-icon-wrap, .trust-item-check,
-  .docs-section code, .docs-article code, .env-req-yes, .env-req-no, code, details.faq-item[open] { border: 1px solid CanvasText; }
+  .docs-section code, .docs-article code, .env-req-yes, .env-req-no, code, details.faq-item[open],
+  .docs-search, .docs-search-open, .docs-search-open kbd, .docs-search-head button, .docs-search input { border: 1px solid CanvasText; }
   /* A code block is framed once: its lines are not inline code, whatever the list above matches. */
   pre code, .docs-section pre code, .docs-article pre code { border: none; }
 }
