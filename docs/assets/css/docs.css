@@ -57,11 +57,94 @@
       color: var(--ink);
       background: var(--surface-2);
     }
-    .sidebar-links a.active {
+    /* .active: the changelog's scroll spy (sidebar.js); aria-current: the docs page being read. */
+    .sidebar-links a.active, .sidebar-links a[aria-current="page"] {
       color: var(--accent);
       background: var(--accent-fog);
       border-left-color: var(--accent);
     }
+
+    /* The docs pages' sidebar: one menu holding the groups of _data/nav.yml. site.js closes
+       it on a phone; the summaries keep the browser's marker and focus ring. */
+    .docs-menu > summary {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--ink);
+      padding: var(--space-2) var(--space-3);
+      cursor: pointer;
+    }
+    .docs-menu[open] > summary { margin-bottom: var(--space-4); }
+    .sidebar-group { margin-bottom: var(--space-5); }
+    .sidebar-group > summary {
+      font-family: var(--font-body);
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: var(--space-1) var(--space-3);
+      cursor: pointer;
+    }
+    .sidebar-group[open] > summary { margin-bottom: var(--space-2); }
+    /* Forced colours paint the transparent bar of every link: only the current one keeps it. */
+    @media (forced-colors: active) {
+      .sidebar-links a { border-left-color: Canvas; }
+      .sidebar-links a.active, .sidebar-links a[aria-current="page"] { border-left-color: Highlight; }
+    }
+
+    /* ── On this page ────────────────────────────────────────────── */
+    .docs-toc {
+      border-left: 2px solid var(--hairline);
+      padding-left: var(--space-4);
+      margin-bottom: var(--space-10);
+    }
+    .docs-toc-title {
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: var(--space-2);
+    }
+    .docs-toc a {
+      display: block;
+      padding: var(--space-1) 0;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      color: var(--body);
+      transition: color var(--duration-fast) ease;
+    }
+    .docs-toc a:hover { color: var(--accent); }
+
+    /* ── Previous / next, edit link ──────────────────────────────── */
+    .docs-pager {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-6);
+      margin-top: var(--space-12);
+      padding-top: var(--space-6);
+      border-top: 1px solid var(--hairline);
+    }
+    .docs-pager a {
+      display: flex;
+      flex-direction: column;
+      font-family: var(--font-display);
+      font-weight: 600;
+      color: var(--accent);
+      transition: color var(--duration-fast) ease;
+    }
+    .docs-pager a:hover { color: var(--accent-strong); }
+    .docs-pager a[rel="next"] { margin-left: auto; text-align: right; }
+    .docs-pager span {
+      font-family: var(--font-body);
+      font-size: 0.68rem;
+      font-weight: 400;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .docs-edit { margin-top: var(--space-8); font-size: 0.82rem; }
+    .docs-edit a { color: var(--muted); transition: color var(--duration-fast) ease; }
+    .docs-edit a:hover { color: var(--accent); }
 
     /* ── Content ─────────────────────────────────────────────────── */
     .docs-content {
@@ -357,6 +440,29 @@
 
     /* ── Responsive ─────────────────────────────────────────────── */
 
+    /* Wide enough for a third column: "On this page" leaves the article's top and sticks
+       beside it. The other children stay in the first column. The docs pages widen by that
+       column, all of them, so the sidebar does not jump between pages with and without one;
+       inside 1200 px the article kept 596 px and four reference tables scrolled. */
+    @media (min-width: 1280px) {
+      .docs-layout:has(.docs-menu) { max-width: calc(var(--max-width) + 15rem); }
+      .docs-content:has(> .docs-toc) {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 13rem;
+        column-gap: var(--space-10);
+        align-content: start;
+      }
+      .docs-content:has(> .docs-toc) > * { grid-column: 1; }
+      .docs-content > .docs-toc {
+        grid-column: 2;
+        grid-row: 1 / span 4;
+        align-self: start;
+        position: sticky;
+        top: calc(60px + var(--space-8));
+        margin-bottom: 0;
+      }
+    }
+
     @media (max-width: 768px) {
       .docs-layout { grid-template-columns: 1fr; }
       .docs-sidebar {
@@ -364,6 +470,7 @@
         height: auto;
         border-right: none;
         border-bottom: 1px solid var(--hairline);
+        padding: var(--space-4) var(--space-5);
       }
       .docs-content { padding: var(--space-8) var(--space-5) var(--space-12); }
       .env-table { font-size: 0.8rem; }

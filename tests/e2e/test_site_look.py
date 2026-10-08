@@ -263,6 +263,26 @@ def test_forced_colours_frame_each_code_block_once(
     assert (boxed, unframed) == (0, 0), (url, "boxed lines", boxed, "unframed blocks", unframed)
 
 
+def test_forced_colours_draw_the_sidebar_bar_only_beside_the_current_page(
+    browser: Browser, docs_server_url: str
+) -> None:
+    """Forced colours paint the transparent bar of every sidebar link, so every link looked
+    current."""
+    ctx = browser.new_context(forced_colors="active", viewport={"width": 1920, "height": 1080})
+    try:
+        page = ctx.new_page()
+        page.goto(f"{docs_server_url}/en/docs/ldap/")
+        bars = page.evaluate(
+            """() => { const canvas = getComputedStyle(document.body).backgroundColor;
+              return [...document.querySelectorAll('.sidebar-links a')]
+                .filter(a => getComputedStyle(a).borderLeftColor !== canvas)
+                .map(a => a.getAttribute('href')); }"""
+        )
+    finally:
+        ctx.close()
+    assert bars == ["/en/docs/ldap/"], bars
+
+
 PROSE_PAGES = ("/en/docs/admin/", "/en/blog/hinschg-compliance-guide/", "/en/roadmap/")
 
 

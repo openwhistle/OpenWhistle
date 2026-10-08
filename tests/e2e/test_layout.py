@@ -84,6 +84,33 @@ def test_a_wide_table_is_centred_on_the_text_column(
     assert all(abs(o) <= 2 for o in offsets), f"{docs_page}@{width}px: off centre by {offsets}px"
 
 
+@pytest.mark.parametrize(
+    ("width", "sidebar_sticks", "toc_beside"),
+    [(1920, True, True), (1280, True, True), (1279, True, False), (769, True, False),
+     (768, False, False), (390, False, False)],
+)  # fmt: skip
+def test_the_docs_columns_follow_the_window_width(
+    browser: Browser, docs_server_url: str, width: int, sidebar_sticks: bool, toc_beside: bool
+) -> None:
+    """DESIGN.md: a persistent sidebar on desktop; "On this page" beside the article from
+    1280 px, above it below that; on a phone the menu scrolls away with the page."""
+    ctx, page = _page(browser, docs_server_url, width)
+    page.goto(f"{docs_server_url}/en/docs/admin/")
+    page.evaluate("window.scrollTo({top: 2000, behavior: 'instant'})")
+    sidebar, toc, article = page.evaluate(
+        """['.docs-sidebar', '.docs-toc', '.docs-article'].map(s => {
+             const r = document.querySelector(s).getBoundingClientRect();
+             return {top: r.top, bottom: r.bottom, left: r.left, right: r.right}; })"""
+    )
+    ctx.close()
+    assert (sidebar["bottom"] > 0) == sidebar_sticks, (width, sidebar)
+    assert (toc["left"] >= article["right"]) == toc_beside, (width, toc, article)
+    if toc_beside:  # it sticks beside the article, not only at its top
+        assert 0 < toc["top"] < 900, (width, toc)
+    else:
+        assert toc["bottom"] <= article["top"], (width, toc, article)
+
+
 def _page(browser: Browser, base_url: str, width: int, color_scheme: str = "light"):  # type: ignore[no-untyped-def]
     # The docs pages' own inline script falls back to `prefers-color-scheme`
     # when no `ow-theme` was ever saved in this (fresh) context's localStorage,

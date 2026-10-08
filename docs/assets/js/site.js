@@ -28,3 +28,7 @@ if (navToggle && navLinks) {
     navLinks.classList.toggle('open', !isOpen);
   });
 }
+
+// Docs: on a phone the 30-link sidebar starts closed; without JS it stays open.
+var docsMenu = document.querySelector('.docs-menu');
+if (docsMenu && window.matchMedia('(max-width: 768px)').matches) docsMenu.removeAttribute('open');

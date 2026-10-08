@@ -98,23 +98,7 @@ def test_mobile_nav_toggle_opens_and_closes(browser: Browser, docs_server_url: s
 # ── Scroll-spy ────────────────────────────────────────────────────────────
 
 
-def test_scroll_spy_marks_exactly_one_current_sidebar_link(
-    browser: Browser, docs_server_url: str
-) -> None:
-    ctx, page = _new_page(browser, docs_server_url)
-    page.goto("/en/docs/")
-    page.evaluate("document.getElementById('security').scrollIntoView()")
-    page.wait_for_function(
-        "document.querySelector('.sidebar-links a[aria-current=\"location\"]')"
-        "?.getAttribute('href') === '#security'"
-    )
-    current = page.locator('.sidebar-links a[aria-current="location"]')
-    count = current.count()
-    ctx.close()
-    assert count == 1
-
-
-@pytest.mark.parametrize("url", ["/en/docs/", "/en/changelog/"])
+@pytest.mark.parametrize("url", ["/en/changelog/"])
 @pytest.mark.parametrize("below_nav", [0, 60, 200])
 def test_scroll_spy_marks_the_section_whose_heading_tops_the_view(
     browser: Browser, docs_server_url: str, url: str, below_nav: int
@@ -143,7 +127,7 @@ def test_docs_page_is_usable_with_javascript_disabled(
     browser: Browser, docs_server_url: str
 ) -> None:
     ctx, page = _new_page(browser, docs_server_url, javascript_enabled=False)
-    page.goto("/en/docs/")
+    page.goto("/en/docs/ldap/")
 
     assert page.locator("#main-content").inner_text().strip() != ""
 
@@ -154,10 +138,55 @@ def test_docs_page_is_usable_with_javascript_disabled(
     ctx.close()
 
 
-def test_an_old_deep_link_lands_on_its_section(browser: Browser, docs_server_url: str) -> None:
+@pytest.mark.parametrize(
+    ("old", "lands"),
+    [
+        ("/en/docs/#helm", "/en/docs/kubernetes/"),
+        ("/en/docs/#own-account", "/en/docs/admin/#own-account"),
+        ("/docs.html#onion-address", "/en/docs/onion/"),
+        ("/docs.html#first-run", "/en/docs/install/#first-run"),
+    ],
+)
+def test_a_one_pager_anchor_lands_on_its_page(
+    browser: Browser, docs_server_url: str, old: str, lands: str
+) -> None:
     ctx, page = _new_page(browser, docs_server_url)
-    page.goto("/docs.html#onion-address")
-    page.wait_for_url("**/en/docs/#onion-address")
+    page.goto(old)
+    page.wait_for_url(f"**{lands}")
+    ctx.close()
+
+
+# ── Docs sidebar ──────────────────────────────────────────────────────────
+
+
+def test_a_docs_page_marks_itself_in_an_open_sidebar_group(
+    browser: Browser, docs_server_url: str
+) -> None:
+    ctx, page = _new_page(browser, docs_server_url, width=1920, height=1080)
+    page.goto("/en/docs/ldap/")
+    current = page.locator('.sidebar-links a[aria-current="page"]')
+    assert current.count() == 1 and current.get_attribute("href") == "/en/docs/ldap/"
+    assert current.is_visible()
+    ctx.close()
+
+
+def test_the_docs_menu_starts_closed_on_a_phone(browser: Browser, docs_server_url: str) -> None:
+    ctx, page = _new_page(browser, docs_server_url, width=390, height=844)
+    page.goto("/en/docs/ldap/")
+    menu = page.locator(".docs-menu")
+    assert menu.get_attribute("open") is None
+    # the article starts on the first screen, not under 30 links
+    top = page.evaluate("document.querySelector('.docs-article h1').getBoundingClientRect().top")
+    assert top < 844, top
+    page.locator(".docs-menu > summary").click()
+    assert menu.get_attribute("open") is not None
+    ctx.close()
+
+
+def test_the_docs_menu_is_open_without_javascript(browser: Browser, docs_server_url: str) -> None:
+    ctx, page = _new_page(browser, docs_server_url, width=390, javascript_enabled=False)
+    page.goto("/en/docs/ldap/")
+    assert page.locator(".docs-menu").get_attribute("open") is not None
     ctx.close()
 
 
@@ -174,9 +203,9 @@ _SETTLED = """() => new Promise(done => {
 @pytest.mark.parametrize(
     "url",
     [
-        "/en/docs/#onion-address",
-        "/en/docs/#installation",
-        "/en/docs/#demo-mode",
+        "/en/docs/onion/#main-content",
+        "/en/docs/install/#first-run",
+        "/en/docs/admin/#own-account",
         "/en/#how-it-works",
         "/en/changelog/#v2-0-0",
         "/en/blog/whats-new-in-2-0/#main-content",
@@ -186,7 +215,7 @@ def test_a_deep_link_target_is_not_under_the_sticky_nav(
     browser: Browser, docs_server_url: str, url: str, width: int
 ) -> None:
     """The nav is sticky; without scroll-padding a #target lands behind it, and an
-    image whose width/height lie shifts the target when it loads (#demo-mode)."""
+    image whose width/height lie shifts the target when it loads (the one-pager's #demo-mode)."""
     ctx, page = _new_page(browser, docs_server_url, width=width)
     page.goto(url)
     page.wait_for_load_state("networkidle")
