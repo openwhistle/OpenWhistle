@@ -153,6 +153,13 @@ jsonld:
                 <td data-label="Gezeigt in"><a href="/en/docs/retention/" hreflang="en" lang="en">Data retention</a></td>
               </tr>
               <tr>
+                <td>§&nbsp;13&nbsp;Abs.&nbsp;2</td>
+                <td data-label="Pflicht">Klare, leicht zugängliche Informationen über externe Meldeverfahren</td>
+                <td data-label="OpenWhistle"><strong>nicht abgedeckt</strong></td>
+                <td data-label="Die Organisation">Sie veröffentlicht sie</td>
+                <td data-label="Gezeigt in">—</td>
+              </tr>
+              <tr>
                 <td>§&nbsp;15</td>
                 <td data-label="Pflicht">Unabhängige, fachkundige Personen ohne Interessenkonflikt</td>
                 <td data-label="OpenWhistle"><strong>nicht abgedeckt</strong></td>
@@ -223,12 +230,13 @@ jsonld:
                 <th scope="col">Ereignis</th>
                 <th scope="col">Frist</th>
                 <th scope="col">Norm</th>
+                <th scope="col">Gezeigt in</th>
               </tr>
             </thead>
             <tbody>
-              <tr><th scope="row">Eingangsbestätigung</th><td data-label="Frist">7 Tage nach der Meldung</td><td data-label="Norm">§ 17 Abs. 1 Nr. 1</td></tr>
-              <tr><th scope="row">Rückmeldung an die meldende Person</th><td data-label="Frist">3 Monate nach der Bestätigung; ohne Bestätigung 3 Monate und 7 Tage nach der Meldung</td><td data-label="Norm">§ 17 Abs. 2</td></tr>
-              <tr><th scope="row">Löschung der Dokumentation</th><td data-label="Frist">3 Jahre nach Abschluss des Verfahrens</td><td data-label="Norm">§ 11 Abs. 5</td></tr>
+              <tr><th scope="row">Eingangsbestätigung</th><td data-label="Frist">7 Tage nach der Meldung</td><td data-label="Norm">§ 17 Abs. 1 Nr. 1</td><td data-label="Gezeigt in"><a href="/en/docs/admin/#hinschg-deadline-tracking" hreflang="en" lang="en">Deadline tracking</a></td></tr>
+              <tr><th scope="row">Rückmeldung an die meldende Person</th><td data-label="Frist">3 Monate nach der Bestätigung; ohne Bestätigung 3 Monate und 7 Tage nach der Meldung</td><td data-label="Norm">§ 17 Abs. 2</td><td data-label="Gezeigt in"><a href="/en/docs/admin/#hinschg-deadline-tracking" hreflang="en" lang="en">Deadline tracking</a></td></tr>
+              <tr><th scope="row">Löschung der Dokumentation</th><td data-label="Frist">3 Jahre nach Abschluss des Verfahrens</td><td data-label="Norm">§ 11 Abs. 5</td><td data-label="Gezeigt in"><a href="/en/docs/retention/" hreflang="en" lang="en">Data retention</a></td></tr>
             </tbody>
           </table>
         </div>
@@ -244,20 +252,22 @@ jsonld:
                 <th scope="col">Anforderung</th>
                 <th scope="col">Artikel</th>
                 <th scope="col">OpenWhistle</th>
+                <th scope="col">Gezeigt in</th>
               </tr>
             </thead>
             <tbody>
-              <tr><th scope="row">Datenminimierung</th><td data-label="Artikel">Art. 5 Abs. 1 lit. c</td><td data-label="OpenWhistle">Keine IP-Protokolle, keine Felder, die eine Meldung nicht braucht</td></tr>
-              <tr><th scope="row">Datenschutz durch Technikgestaltung</th><td data-label="Artikel">Art. 25</td><td data-label="OpenWhistle">Selbst gehostet; keine Anfragen an Dritte von den Seiten der meldenden Person</td></tr>
-              <tr><th scope="row">Rechtsgrundlage</th><td data-label="Artikel">Art. 6 Abs. 1 lit. c</td><td data-label="OpenWhistle">Die rechtliche Pflicht aus § 12 HinSchG, mit § 10 HinSchG</td></tr>
-              <tr><th scope="row">Löschung</th><td data-label="Artikel">Art. 17</td><td data-label="OpenWhistle">Meldungen lassen sich endgültig löschen; § 11 Abs. 5 setzt die reguläre Frist</td></tr>
-              <tr><th scope="row">Sicherheit der Verarbeitung</th><td data-label="Artikel">Art. 32</td><td data-label="OpenWhistle">Verschlüsselung im Ruhezustand und TLS bei der Übertragung</td></tr>
-              <tr><th scope="row">Meldung von Datenpannen</th><td data-label="Artikel">Art. 33</td><td data-label="OpenWhistle">Organisatorisch: 72 Stunden bis zur Aufsichtsbehörde</td></tr>
+              <tr><th scope="row">Datenminimierung</th><td data-label="Artikel">Art. 5 Abs. 1 lit. c</td><td data-label="OpenWhistle">Keine IP-Protokolle, keine Felder, die eine Meldung nicht braucht</td><td data-label="Gezeigt in"><a href="/en/docs/anonymity/" hreflang="en" lang="en">Anonymity layers</a></td></tr>
+              <tr><th scope="row">Datenschutz durch Technikgestaltung</th><td data-label="Artikel">Art. 25</td><td data-label="OpenWhistle">Selbst gehostet; keine Anfragen an Dritte von den Seiten der meldenden Person</td><td data-label="Gezeigt in"><a href="/en/docs/outbound/" hreflang="en" lang="en">Outbound requests</a>, <a href="/en/docs/security-headers/" hreflang="en" lang="en">Security headers</a></td></tr>
+              <tr><th scope="row">Rechtsgrundlage</th><td data-label="Artikel">Art. 6 Abs. 1 lit. c</td><td data-label="OpenWhistle"><strong>nicht abgedeckt</strong>: Ihre Grundlage ist die rechtliche Pflicht aus § 12 HinSchG, mit § 10 HinSchG</td><td data-label="Gezeigt in">—</td></tr>
+              <tr><th scope="row">Löschung</th><td data-label="Artikel">Art. 17</td><td data-label="OpenWhistle">Meldungen lassen sich endgültig löschen; § 11 Abs. 5 setzt die reguläre Frist</td><td data-label="Gezeigt in"><a href="/en/docs/retention/" hreflang="en" lang="en">Data retention</a>, <a href="/en/docs/admin/#managing-reports" hreflang="en" lang="en">Managing reports</a></td></tr>
+              <tr><th scope="row">Sicherheit der Verarbeitung</th><td data-label="Artikel">Art. 32</td><td data-label="OpenWhistle">Verschlüsselung im Ruhezustand und TLS bei der Übertragung</td><td data-label="Gezeigt in"><a href="/en/docs/security-policy/#4-1-encryption-at-rest" hreflang="en" lang="en">Encryption at rest</a>, <a href="/en/docs/security-policy/#4-2-encryption-in-transit" hreflang="en" lang="en">in transit</a></td></tr>
+              <tr><th scope="row">Meldung von Datenpannen</th><td data-label="Artikel">Art. 33</td><td data-label="OpenWhistle"><strong>nicht abgedeckt</strong>: Sie melden binnen 72 Stunden an die Aufsichtsbehörde</td><td data-label="Gezeigt in"><a href="/en/docs/security-policy/#5-incident-response" hreflang="en" lang="en">Incident response template</a></td></tr>
             </tbody>
           </table>
         </div>
         <p>
-          Schriften, Styles und Skripte liefert die Instanz selbst aus.
+          Schriften, Styles und Skripte liefert die Instanz selbst aus; ihre
+          <a href="/en/docs/security-headers/" hreflang="en" lang="en">Content-Security-Policy</a> lässt keinen anderen Host zu.
           Ein deutsches Gericht (LG München I, Januar 2022) sah im Laden von Google Fonts ohne Einwilligung einen DSGVO-Verstoß.
           Das Laden schickt die IP-Adresse der Besucher an einen Dritten.
         </p>

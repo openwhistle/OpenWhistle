@@ -249,6 +249,19 @@ body {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+/* A table stacks per row on a phone: each row becomes a small card, its first cell the title,
+   and a cell with data-label announces its column. The class sits on the table or its wrapper.
+   `tbody tr` outranks the table sheets' own `tbody td` rules, which load after this one. */
+@media (max-width: 600px) {
+  .stack-table thead { display: none; }
+  .stack-table tr { display: block; padding: var(--space-3) 0; border-bottom: 1px solid var(--hairline); }
+  .stack-table tbody tr :is(th, td) {
+    display: block; position: static; min-width: 0; border: none; padding: var(--space-1) var(--space-2);
+  }
+  .stack-table tbody :is(th, td):first-child { color: var(--ink); font-weight: 600; }
+  .stack-table tbody [data-label]::before { content: attr(data-label) ": "; color: var(--muted); font-weight: 400; }
+}
+
 /* With reduced motion, state changes are instant (DESIGN.md "Motion"); the app's rule. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

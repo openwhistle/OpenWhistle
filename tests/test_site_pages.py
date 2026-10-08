@@ -88,3 +88,16 @@ def test_the_old_hinschg_reference_leads_to_the_hinschg_page() -> None:
     redirects = yaml.safe_load((Path(__file__).parents[1] / "docs/_data/redirects.yml").read_text())
     assert redirects["/hinschg_reference.md"] == "/en/compliance/hinschg/"
     assert redirects["/en/docs/hinschg-reference/"] == "/en/compliance/hinschg/"
+
+
+def test_every_compliance_table_proves_each_row_or_makes_no_claim() -> None:
+    """A table with a proof column links a docs page or says "not covered" in every row; a
+    table without one (who must run an office) makes no claim about OpenWhistle."""
+    for url in [*COMPLIANCE, *COMPLIANCE.values()]:
+        for table in re.findall(r"<table\b.*?</table>", page(url), re.S):
+            head, body = table.split("<tbody>", 1)
+            if not re.search(r">(Shown in|Gezeigt in)</th>", head):
+                assert "OpenWhistle" not in table, (url, head)
+                continue
+            for row in re.findall(r"<tr>(.*?)</tr>", body, re.S):
+                assert re.search(r'href="/en/docs/|not covered|nicht abgedeckt', row), (url, row)

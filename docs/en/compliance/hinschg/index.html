@@ -153,6 +153,13 @@ jsonld:
                 <td data-label="Shown in"><a href="/en/docs/retention/">Data retention</a></td>
               </tr>
               <tr>
+                <td>§&nbsp;13&nbsp;Abs.&nbsp;2</td>
+                <td data-label="Duty">Clear, easily accessible information on external reporting procedures</td>
+                <td data-label="OpenWhistle"><strong>not covered</strong></td>
+                <td data-label="The organisation">Publishing it</td>
+                <td data-label="Shown in">—</td>
+              </tr>
+              <tr>
                 <td>§&nbsp;15</td>
                 <td data-label="Duty">Independent, competent staff without conflicts of interest</td>
                 <td data-label="OpenWhistle"><strong>not covered</strong></td>
@@ -223,12 +230,13 @@ jsonld:
                 <th scope="col">Event</th>
                 <th scope="col">Deadline</th>
                 <th scope="col">Section</th>
+                <th scope="col">Shown in</th>
               </tr>
             </thead>
             <tbody>
-              <tr><th scope="row">Confirmation of receipt</th><td data-label="Deadline">7 days after the report</td><td data-label="Section">§ 17 Abs. 1 Nr. 1</td></tr>
-              <tr><th scope="row">Feedback to the reporter</th><td data-label="Deadline">3 months after the confirmation; without one, 3 months and 7 days after the report</td><td data-label="Section">§ 17 Abs. 2</td></tr>
-              <tr><th scope="row">Deletion of the documentation</th><td data-label="Deadline">3 years after the procedure ends</td><td data-label="Section">§ 11 Abs. 5</td></tr>
+              <tr><th scope="row">Confirmation of receipt</th><td data-label="Deadline">7 days after the report</td><td data-label="Section">§ 17 Abs. 1 Nr. 1</td><td data-label="Shown in"><a href="/en/docs/admin/#hinschg-deadline-tracking">Deadline tracking</a></td></tr>
+              <tr><th scope="row">Feedback to the reporter</th><td data-label="Deadline">3 months after the confirmation; without one, 3 months and 7 days after the report</td><td data-label="Section">§ 17 Abs. 2</td><td data-label="Shown in"><a href="/en/docs/admin/#hinschg-deadline-tracking">Deadline tracking</a></td></tr>
+              <tr><th scope="row">Deletion of the documentation</th><td data-label="Deadline">3 years after the procedure ends</td><td data-label="Section">§ 11 Abs. 5</td><td data-label="Shown in"><a href="/en/docs/retention/">Data retention</a></td></tr>
             </tbody>
           </table>
         </div>
@@ -244,20 +252,22 @@ jsonld:
                 <th scope="col">Requirement</th>
                 <th scope="col">Article</th>
                 <th scope="col">OpenWhistle</th>
+                <th scope="col">Shown in</th>
               </tr>
             </thead>
             <tbody>
-              <tr><th scope="row">Data minimisation</th><td data-label="Article">Art. 5(1)(c)</td><td data-label="OpenWhistle">No IP logging, no fields a report does not need</td></tr>
-              <tr><th scope="row">Privacy by design</th><td data-label="Article">Art. 25</td><td data-label="OpenWhistle">Self-hosted; no third-party requests from the reporter's pages</td></tr>
-              <tr><th scope="row">Lawful basis</th><td data-label="Article">Art. 6(1)(c)</td><td data-label="OpenWhistle">The legal duty of § 12 HinSchG, with § 10 HinSchG</td></tr>
-              <tr><th scope="row">Erasure</th><td data-label="Article">Art. 17</td><td data-label="OpenWhistle">Reports can be deleted for good; § 11 Abs. 5 sets the regular deadline</td></tr>
-              <tr><th scope="row">Security of processing</th><td data-label="Article">Art. 32</td><td data-label="OpenWhistle">Encryption at rest and TLS in transit</td></tr>
-              <tr><th scope="row">Breach notification</th><td data-label="Article">Art. 33</td><td data-label="OpenWhistle">Organisational: 72 hours to the authority</td></tr>
+              <tr><th scope="row">Data minimisation</th><td data-label="Article">Art. 5(1)(c)</td><td data-label="OpenWhistle">No IP logging, no fields a report does not need</td><td data-label="Shown in"><a href="/en/docs/anonymity/">Anonymity layers</a></td></tr>
+              <tr><th scope="row">Privacy by design</th><td data-label="Article">Art. 25</td><td data-label="OpenWhistle">Self-hosted; no third-party requests from the reporter's pages</td><td data-label="Shown in"><a href="/en/docs/outbound/">Outbound requests</a>, <a href="/en/docs/security-headers/">Security headers</a></td></tr>
+              <tr><th scope="row">Lawful basis</th><td data-label="Article">Art. 6(1)(c)</td><td data-label="OpenWhistle"><strong>not covered</strong>: your basis is the legal duty of § 12 HinSchG, with § 10 HinSchG</td><td data-label="Shown in">—</td></tr>
+              <tr><th scope="row">Erasure</th><td data-label="Article">Art. 17</td><td data-label="OpenWhistle">Reports can be deleted for good; § 11 Abs. 5 sets the regular deadline</td><td data-label="Shown in"><a href="/en/docs/retention/">Data retention</a>, <a href="/en/docs/admin/#managing-reports">Managing reports</a></td></tr>
+              <tr><th scope="row">Security of processing</th><td data-label="Article">Art. 32</td><td data-label="OpenWhistle">Encryption at rest and TLS in transit</td><td data-label="Shown in"><a href="/en/docs/security-policy/#4-1-encryption-at-rest">Encryption at rest</a>, <a href="/en/docs/security-policy/#4-2-encryption-in-transit">in transit</a></td></tr>
+              <tr><th scope="row">Breach notification</th><td data-label="Article">Art. 33</td><td data-label="OpenWhistle"><strong>not covered</strong>: you notify the authority within 72 hours</td><td data-label="Shown in"><a href="/en/docs/security-policy/#5-incident-response">Incident response template</a></td></tr>
             </tbody>
           </table>
         </div>
         <p>
-          Fonts, styles and scripts are served by the instance itself.
+          Fonts, styles and scripts are served by the instance itself; its
+          <a href="/en/docs/security-headers/">Content-Security-Policy</a> allows no other host.
           A German court (LG München I, January 2022) held that loading Google Fonts without consent breached the GDPR.
           Loading them sends the visitor's IP address to a third party.
         </p>

@@ -204,11 +204,11 @@ Rebuild after every edit to `docs/`; the server serves what was built.
 | `/en/docs/security-policy/` | Security policy template, rendered from Markdown in the docs layout. |
 | `/en/docs/dpa-template/` | DPA template, rendered from Markdown in the docs layout. |
 | `/en/roadmap/` | Roadmap. |
-| `/en/compliance/` | Compliance overview: the two law cards. |
+| `/en/compliance/` | Compliance overview: the two law cards; the table stacks into cards at 390 px. |
 | `/de/compliance/` | Compliance overview, German. |
-| `/en/compliance/eu-directive/` | EU directive: the requirement table scrolls inside its box at 390 px. |
+| `/en/compliance/eu-directive/` | EU directive: the requirement table stacks into one card per row at 390 px. |
 | `/de/compliance/eu-richtlinie/` | EU directive, German. |
-| `/en/compliance/hinschg/` | HinSchG: the duty table (five columns) scrolls inside its box at 390 px. |
+| `/en/compliance/hinschg/` | HinSchG: every table stacks into one card per row at 390 px. |
 | `/de/compliance/hinschg/` | HinSchG, German. |
 | `/en/security/` | Security: the trust table scrolls inside its box at 390 px. |
 | `/de/sicherheit/` | Security, German. |
