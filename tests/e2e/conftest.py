@@ -60,8 +60,8 @@ DEMO_CASE_CLOSED = {"case_number": "OW-DEMO-00004", "pin": "demo-pin-closed-0000
 
 # axe-core is vendored (tests/e2e/vendor/axe.min.js), never fetched. Renovate bumps
 # AXE_VERSION; scripts/vendor_axe.py then writes the file and AXE_SHA256.
-AXE_VERSION = "4.13.0"
-AXE_SHA256 = "c24f097bd2f451d4f933e8bc7d8d539f8672a2ebcb5cc9f9f3eec8ca9470a0c1"
+AXE_VERSION = "4.14.0"
+AXE_SHA256 = "20c09fe157a8a34a30e241aaa1fcdade657734f08ab379ecfbeb7d45cc46e878"
 _AXE = Path(__file__).parent / "vendor" / "axe.min.js"
 
 
