@@ -129,7 +129,8 @@ def test_the_sidebar_and_footer_line_up_with_the_nav(
                            inner('.footer-inner')]; }"""
     )
     ctx.close()
-    assert abs(link - nav) <= 2 and abs(footer - nav) <= 2, (url, nav, link, footer)
+    # ±1 px: the old sidebar padding put the text exactly 2 px off, and ±2 let that pass.
+    assert abs(link - nav) <= 1 and abs(footer - nav) <= 1, (url, nav, link, footer)
 
 
 def _page(browser: Browser, base_url: str, width: int, color_scheme: str = "light"):  # type: ignore[no-untyped-def]
