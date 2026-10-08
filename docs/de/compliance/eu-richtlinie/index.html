@@ -1,0 +1,147 @@
+---
+title: 'EU-Whistleblower-Richtlinie und OpenWhistle | OpenWhistle'
+description: 'Die Richtlinie (EU) 2019/1937 Artikel für Artikel: jede Anforderung an interne Meldekanäle und wo OpenWhistle sie abdeckt. Eine Übersicht, keine Rechtsberatung.'
+translation_key: compliance-eu
+css:
+- docs
+- page
+js:
+- site
+- sidebar
+jsonld:
+- '@context': https://schema.org
+  '@type': BreadcrumbList
+  itemListElement:
+  - '@type': ListItem
+    position: 1
+    name: OpenWhistle
+    item: https://openwhistle.net/de/
+  - '@type': ListItem
+    position: 2
+    name: Compliance
+    item: https://openwhistle.net/de/compliance/
+  - '@type': ListItem
+    position: 3
+    name: EU-Whistleblower-Richtlinie
+    item: https://openwhistle.net/de/compliance/eu-richtlinie/
+---
+  <div class="docs-layout">
+
+    <!-- Sidebar -->
+    <aside class="docs-sidebar" role="complementary" aria-label="Navigation Compliance">
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Auf dieser Seite</div>
+        <nav class="sidebar-links" aria-label="Auf dieser Seite">
+          <a href="#requirements" class="active">Anforderung für Anforderung</a>
+        </nav>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Links</div>
+        <nav class="sidebar-links">
+          <a href="/de/compliance/">&#8592; Compliance</a>
+          <a href="/de/compliance/hinschg/">HinSchG</a>
+          <a href="/en/docs/" hreflang="en">Dokumentation (englisch)</a>
+          <a href="https://eur-lex.europa.eu/legal-content/DE/TXT/?uri=CELEX%3A32019L1937" rel="noopener noreferrer" target="_blank">Die Richtlinie auf EUR-Lex</a>
+        </nav>
+      </div>
+
+    </aside>
+
+    <!-- Main content -->
+    <main id="main-content" class="docs-content">
+
+      <nav class="docs-breadcrumb" aria-label="Brotkrümelnavigation">
+        <a href="/de/">OpenWhistle</a>
+        <span>/</span>
+        <a href="/de/compliance/">Compliance</a>
+        <span>/</span>
+        <span>EU-Richtlinie</span>
+      </nav>
+
+      <h1>EU-Whistleblower-Richtlinie</h1>
+      <p class="docs-lead">
+        Die Richtlinie (EU) 2019/1937 regelt interne Meldekanäle in der ganzen EU.
+        Jeder Mitgliedstaat setzt sie in eigenes Recht um; in Deutschland ist das das <a href="/de/compliance/hinschg/">HinSchG</a>.
+        Diese Seite ist eine Übersicht, keine Rechtsberatung.
+      </p>
+
+      <section class="docs-section" id="requirements" aria-labelledby="requirements-h2">
+        <h2 id="requirements-h2">Anforderung für Anforderung</h2>
+        <p>
+          Der verbindliche Text steht auf
+          <a href="https://eur-lex.europa.eu/legal-content/DE/TXT/?uri=CELEX%3A32019L1937" rel="noopener noreferrer" target="_blank">EUR-Lex</a>.
+        </p>
+        <div class="table-scroll stack-table">
+          <table class="env-table">
+            <thead>
+              <tr>
+                <th scope="col">Anforderung</th>
+                <th scope="col">Artikel</th>
+                <th scope="col">OpenWhistle</th>
+                <th scope="col">Gezeigt in</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Interner Kanal ab 50 Beschäftigten</td>
+                <td data-label="Artikel">Art. 8 Abs. 3</td>
+                <td data-label="OpenWhistle">Der Kanal, auf Ihrem eigenen Server</td>
+                <td data-label="Gezeigt in"><a href="/en/docs/install/" hreflang="en" lang="en">Install</a></td>
+              </tr>
+              <tr>
+                <td>Meldungen schriftlich oder mündlich</td>
+                <td data-label="Artikel">Art. 9 Abs. 2</td>
+                <td data-label="OpenWhistle">Das Webformular; ein Leitfaden für einen Telefonkanal</td>
+                <td data-label="Gezeigt in"><a href="/en/docs/whistleblower/" hreflang="en" lang="en">Whistleblower guide</a>, <a href="/en/docs/admin/#telephone-reporting-channel-guide" hreflang="en" lang="en">Telephone channel</a></td>
+              </tr>
+              <tr>
+                <td>Vertrauliche Identität</td>
+                <td data-label="Artikel">Art. 9 Abs. 1 lit. a, Art. 16</td>
+                <td data-label="OpenWhistle">Vertraulicher Modus; die Identität sieht nur die bearbeitende Person, mit protokolliertem Grund</td>
+                <td data-label="Gezeigt in"><a href="/en/docs/admin/#managing-reports" hreflang="en" lang="en">Managing reports</a></td>
+              </tr>
+              <tr>
+                <td>Eingang binnen 7 Tagen bestätigen</td>
+                <td data-label="Artikel">Art. 9 Abs. 1 lit. b</td>
+                <td data-label="OpenWhistle">Die 7-Tage-Frist im Dashboard, im Fall und auf der Statusseite</td>
+                <td data-label="Gezeigt in"><a href="/en/docs/admin/#hinschg-deadline-tracking" hreflang="en" lang="en">Deadline tracking</a></td>
+              </tr>
+              <tr>
+                <td>Eine unparteiische Person oder Abteilung</td>
+                <td data-label="Artikel">Art. 9 Abs. 1 lit. c</td>
+                <td data-label="OpenWhistle"><strong>nicht abgedeckt</strong>: Sie benennen sie; Rollen begrenzen, wer einen Fall sieht</td>
+                <td data-label="Gezeigt in"><a href="/en/docs/roles/" hreflang="en" lang="en">Roles</a></td>
+              </tr>
+              <tr>
+                <td>Rückmeldung binnen 3 Monaten</td>
+                <td data-label="Artikel">Art. 9 Abs. 1 lit. f</td>
+                <td data-label="OpenWhistle">Die 3-Monats-Frist; Antworten über den anonymen Kanal</td>
+                <td data-label="Gezeigt in"><a href="/en/docs/admin/#hinschg-deadline-tracking" hreflang="en" lang="en">Deadline tracking</a></td>
+              </tr>
+              <tr>
+                <td>Dokumentation der Meldungen</td>
+                <td data-label="Artikel">Art. 18</td>
+                <td data-label="OpenWhistle">Das unveränderliche Audit-Log; PDF-Export</td>
+                <td data-label="Gezeigt in"><a href="/en/docs/admin/#audit-log" hreflang="en" lang="en">Audit log</a></td>
+              </tr>
+              <tr>
+                <td>Personenbezogene Daten und Löschung</td>
+                <td data-label="Artikel">Art. 17</td>
+                <td data-label="OpenWhistle">Aufbewahrungsfrist; Löschung nach dem Vier-Augen-Prinzip</td>
+                <td data-label="Gezeigt in"><a href="/en/docs/retention/" hreflang="en" lang="en">Data retention</a></td>
+              </tr>
+              <tr>
+                <td>Anonyme Meldungen</td>
+                <td data-label="Artikel">Art. 6 Abs. 2, den Mitgliedstaaten überlassen</td>
+                <td data-label="OpenWhistle">Anonymer Modus; keine IP-Adresse gespeichert</td>
+                <td data-label="Gezeigt in"><a href="/en/docs/anonymity/" hreflang="en" lang="en">Anonymity layers</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>

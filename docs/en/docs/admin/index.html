@@ -131,7 +131,7 @@ js:
 
         <h2 id="audit-log">Audit log</h2>
         <ul>
-          <li><code>/admin/audit-log</code>: every admin action, immutable (HinSchG §11 Abs. 5), filterable, shown as readable labels.</li>
+          <li><code>/admin/audit-log</code>: every admin action, immutable, filterable, shown as readable labels.</li>
           <li>Deleting a report deletes its entries with it. One entry stays, with the case number: <em>Deletion confirmed</em> (who requested, who confirmed) or <code>report.auto_deleted</code>.</li>
           <li>CSV export at any time: the machine action codes plus a label column; the detail column is a JSON object. It holds every row the page's filters select, and taking it is itself recorded.</li>
           <li>Downloading an attachment is recorded, as opening the case and exporting its PDF are.</li>

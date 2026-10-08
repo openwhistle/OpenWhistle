@@ -259,11 +259,12 @@ GITHUB = "https://github.com/openwhistle/OpenWhistle"
 
 
 def test_the_home_nav_and_footer_are_the_redesign_sets() -> None:
-    """W9: Security, Docs, Blog, the language switch and the demo button in the
-    nav; the Project column of the footer. The tests above hold every other
-    page to these sets."""
+    """W9: Compliance, Security, Docs, Blog, the language switch and the demo
+    button in the nav; the Project column of the footer. The tests above hold
+    every other page to these sets."""
     home = built() / "en/index.html"
     assert _nav_targets(home) == {
+        "en/compliance/index.html",
         "en/security/index.html",
         "en/docs/index.html",
         "en/blog/index.html",

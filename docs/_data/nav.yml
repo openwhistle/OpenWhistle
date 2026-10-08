@@ -4,6 +4,7 @@
 # (blog posts under the blog), or is a language home, which the logo links:
 # scripts/build_site.py check_nav refuses the rest.
 primary:
+  - {label: nav.compliance, page: compliance}
   - {label: nav.security, page: security}
   - {label: nav.docs, page: docs}
   - {label: nav.blog, page: blog}

@@ -37,6 +37,17 @@
     .cmp-table tbody tr:last-child th, .cmp-table tbody tr:last-child td { border-bottom: none; }
     .cmp-table a, .sources a { color: var(--accent); }
     .sources { padding-left: var(--space-6); list-style: decimal; }
+    /* A requirement table stacks per row on a phone: each row becomes a small card, and a
+       cell with data-label announces its column. The class sits on the .table-scroll wrapper. */
+    @media (max-width: 600px) {
+      .stack-table thead { display: none; }
+      .stack-table tr { display: block; padding: var(--space-3) 0; border-bottom: 1px solid var(--hairline); }
+      .stack-table tbody th, .stack-table tbody td {
+        display: block; position: static; min-width: 0; border: none; padding: var(--space-1) var(--space-2);
+      }
+      .stack-table tbody :is(th, td):first-child { color: var(--ink); font-weight: 600; }
+      .stack-table tbody [data-label]::before { content: attr(data-label) ": "; color: var(--muted); }
+    }
     .sources li { margin-bottom: var(--space-3); color: var(--body); }
 
     /* ── Page header ─────────────────────────────────────────────── */

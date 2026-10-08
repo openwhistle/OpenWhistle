@@ -1,0 +1,147 @@
+---
+title: 'EU Whistleblowing Directive and OpenWhistle | OpenWhistle'
+description: 'Directive (EU) 2019/1937 article by article: each requirement on internal reporting channels, and where OpenWhistle covers it. A summary, not legal advice.'
+translation_key: compliance-eu
+css:
+- docs
+- page
+js:
+- site
+- sidebar
+jsonld:
+- '@context': https://schema.org
+  '@type': BreadcrumbList
+  itemListElement:
+  - '@type': ListItem
+    position: 1
+    name: OpenWhistle
+    item: https://openwhistle.net/en/
+  - '@type': ListItem
+    position: 2
+    name: Compliance
+    item: https://openwhistle.net/en/compliance/
+  - '@type': ListItem
+    position: 3
+    name: EU Whistleblowing Directive
+    item: https://openwhistle.net/en/compliance/eu-directive/
+---
+  <div class="docs-layout">
+
+    <!-- Sidebar -->
+    <aside class="docs-sidebar" role="complementary" aria-label="Compliance navigation">
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">On This Page</div>
+        <nav class="sidebar-links" aria-label="On this page">
+          <a href="#requirements" class="active">Requirement by requirement</a>
+        </nav>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Links</div>
+        <nav class="sidebar-links">
+          <a href="/en/compliance/">&#8592; Compliance</a>
+          <a href="/en/compliance/hinschg/">HinSchG</a>
+          <a href="/en/docs/">Documentation</a>
+          <a href="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32019L1937" rel="noopener noreferrer" target="_blank">The directive on EUR-Lex</a>
+        </nav>
+      </div>
+
+    </aside>
+
+    <!-- Main content -->
+    <main id="main-content" class="docs-content">
+
+      <nav class="docs-breadcrumb" aria-label="Breadcrumb">
+        <a href="/en/">OpenWhistle</a>
+        <span>/</span>
+        <a href="/en/compliance/">Compliance</a>
+        <span>/</span>
+        <span>EU directive</span>
+      </nav>
+
+      <h1>EU Whistleblowing Directive</h1>
+      <p class="docs-lead">
+        Directive (EU) 2019/1937 sets the rules for internal reporting channels across the EU.
+        Each member state turns it into its own law; in Germany that is the <a href="/en/compliance/hinschg/">HinSchG</a>.
+        This page is a summary, not legal advice.
+      </p>
+
+      <section class="docs-section" id="requirements" aria-labelledby="requirements-h2">
+        <h2 id="requirements-h2">Requirement by requirement</h2>
+        <p>
+          The binding text is on
+          <a href="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32019L1937" rel="noopener noreferrer" target="_blank">EUR-Lex</a>.
+        </p>
+        <div class="table-scroll stack-table">
+          <table class="env-table">
+            <thead>
+              <tr>
+                <th scope="col">Requirement</th>
+                <th scope="col">Article</th>
+                <th scope="col">OpenWhistle</th>
+                <th scope="col">Shown in</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Internal channel from 50 workers</td>
+                <td data-label="Article">Art. 8(3)</td>
+                <td data-label="OpenWhistle">The channel, on your own server</td>
+                <td data-label="Shown in"><a href="/en/docs/install/">Install</a></td>
+              </tr>
+              <tr>
+                <td>Reports in writing or orally</td>
+                <td data-label="Article">Art. 9(2)</td>
+                <td data-label="OpenWhistle">The web form; a guide for a telephone channel</td>
+                <td data-label="Shown in"><a href="/en/docs/whistleblower/">Whistleblower guide</a>, <a href="/en/docs/admin/#telephone-reporting-channel-guide">Telephone channel</a></td>
+              </tr>
+              <tr>
+                <td>Confidential identity</td>
+                <td data-label="Article">Art. 9(1)(a), Art. 16</td>
+                <td data-label="OpenWhistle">Confidential mode; the identity shown only to the handler, with an audited reason</td>
+                <td data-label="Shown in"><a href="/en/docs/admin/#managing-reports">Managing reports</a></td>
+              </tr>
+              <tr>
+                <td>Acknowledge within 7 days</td>
+                <td data-label="Article">Art. 9(1)(b)</td>
+                <td data-label="OpenWhistle">The 7-day deadline on dashboard, case and status page</td>
+                <td data-label="Shown in"><a href="/en/docs/admin/#hinschg-deadline-tracking">Deadline tracking</a></td>
+              </tr>
+              <tr>
+                <td>An impartial person or department</td>
+                <td data-label="Article">Art. 9(1)(c)</td>
+                <td data-label="OpenWhistle"><strong>not covered</strong>: you appoint them; roles limit who sees a case</td>
+                <td data-label="Shown in"><a href="/en/docs/roles/">Roles</a></td>
+              </tr>
+              <tr>
+                <td>Feedback within 3 months</td>
+                <td data-label="Article">Art. 9(1)(f)</td>
+                <td data-label="OpenWhistle">The 3-month deadline; replies through the anonymous channel</td>
+                <td data-label="Shown in"><a href="/en/docs/admin/#hinschg-deadline-tracking">Deadline tracking</a></td>
+              </tr>
+              <tr>
+                <td>Record keeping</td>
+                <td data-label="Article">Art. 18</td>
+                <td data-label="OpenWhistle">The immutable audit log; PDF export</td>
+                <td data-label="Shown in"><a href="/en/docs/admin/#audit-log">Audit log</a></td>
+              </tr>
+              <tr>
+                <td>Personal data and deletion</td>
+                <td data-label="Article">Art. 17</td>
+                <td data-label="OpenWhistle">Retention; four-eyes deletion</td>
+                <td data-label="Shown in"><a href="/en/docs/retention/">Data retention</a></td>
+              </tr>
+              <tr>
+                <td>Anonymous reports</td>
+                <td data-label="Article">Art. 6(2), left to member states</td>
+                <td data-label="OpenWhistle">Anonymous mode; no IP address stored</td>
+                <td data-label="Shown in"><a href="/en/docs/anonymity/">Anonymity layers</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
