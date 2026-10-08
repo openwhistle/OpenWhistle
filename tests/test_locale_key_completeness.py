@@ -73,5 +73,6 @@ def test_every_locale_file_is_a_supported_language() -> None:
 
     files = {p.stem for p in _LOCALES.glob("*.json")}
     assert files == set(_LANGS) == _SUPPORTED
-    home = (_LOCALES.parents[1] / "docs" / "en" / "index.html").read_text(encoding="utf-8")
-    assert f"{len(files)} languages" in home
+    docs = _LOCALES.parents[1] / "docs"
+    assert f"{len(files)} languages:" in (docs / "en" / "index.html").read_text(encoding="utf-8")
+    assert f"{len(files)} Sprachen:" in (docs / "de" / "index.html").read_text(encoding="utf-8")

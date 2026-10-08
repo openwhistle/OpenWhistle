@@ -148,11 +148,13 @@ def test_the_one_pager_is_gone() -> None:
 
 
 def test_no_page_links_a_one_pager_anchor() -> None:
-    """The anchor script is a safety net for bookmarks; our own pages link the new page."""
-    stale = re.compile(r'href="(?:https://openwhistle\.net)?/en/docs/#')
-    hits = [
-        p.relative_to(built()).as_posix()
-        for p in built().rglob("*.html")
-        if stale.search(p.read_text())
+    """The anchor script is a safety net for bookmarks; our own pages, and the app's
+    templates and locales (escaped quotes in JSON), link the new page."""
+    stale = re.compile(r'href=\\?"(?:https://openwhistle\.net)?/en/docs/#')
+    files = [
+        *built().rglob("*.html"),
+        *(ROOT / "app").rglob("*.html"),
+        *(ROOT / "app/locales").glob("*.json"),
     ]
+    hits = [p.as_posix() for p in files if stale.search(p.read_text(encoding="utf-8"))]
     assert not hits, hits
