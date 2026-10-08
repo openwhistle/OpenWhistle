@@ -927,6 +927,7 @@ _JS_HOOK_CLASSES = {
     "session-expiry-expired-state",  # site.js: classList.add/remove
     "session-expiry-actions",  # site.js: querySelector('.session-expiry-actions')
     "session-expiry-body",  # site.js: querySelector('.session-expiry-body')
+    "demo-legal",  # scripts/take_screenshots.py: hides the demo's legal links
 }
 
 
