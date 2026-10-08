@@ -58,8 +58,12 @@ def _check(page: Page, errors: list[str], path: str, axe_source: str, label: str
 def test_ui_check(
     browser: Browser, base_url: str, axe_source: str, scheme: str, width: int, lang: str
 ) -> None:
+    # Reduced motion: a card fading in (admin/stats.html data-delay) is measured mid-fade otherwise.
     context = browser.new_context(
-        color_scheme=scheme, viewport={"width": width, "height": 900}, base_url=base_url
+        color_scheme=scheme,
+        viewport={"width": width, "height": 900},
+        base_url=base_url,
+        reduced_motion="reduce",
     )
     context.add_cookies([{"name": "ow-lang", "value": lang, "url": base_url}])
     page = context.new_page()
