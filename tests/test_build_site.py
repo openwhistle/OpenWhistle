@@ -291,7 +291,7 @@ def test_a_third_language_needs_data_only(src: Path, tmp_path: Path) -> None:
     (src / "fr").mkdir()
     (src / "fr" / "index.html").write_text(
         "---\ntitle: Accueil\ndescription: La page d'accueil.\ntranslation_key: home\n---\n"
-        '<main id="main-content"><section id="features"></section><h1>Accueil</h1></main>\n',
+        '<main id="main-content"><section id="compliance"></section><h1>Accueil</h1></main>\n',
         encoding="utf-8",
     )
     pages = _pages(src, tmp_path)
@@ -332,10 +332,10 @@ def test_the_language_switch_goes_to_the_translation(src: Path, tmp_path: Path) 
 
 def test_a_home_entry_is_current_only_on_the_home(src: Path, tmp_path: Path) -> None:
     """Every URL starts with /en/: the home entry must not light up on every page,
-    and a #fragment entry (features) marks nothing, not even on the home."""
+    and a #fragment entry (compliance) marks nothing, not even on the home."""
     (src / "_data" / "nav.yml").write_text(
         "primary:\n  - {label: nav.home, page: home}\n"
-        "  - {label: nav.compliance, page: home, fragment: features}\n"
+        "  - {label: nav.compliance, page: home, fragment: compliance}\n"
         "  - {label: nav.docs, page: docs}\nfooter: []\n"
     )
     out = _build(src, tmp_path)

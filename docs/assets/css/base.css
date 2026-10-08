@@ -203,11 +203,6 @@ body {
   gap: var(--space-4);
   flex-wrap: wrap;
 }
-.footer-bottom a {
-  color: var(--inverse-muted);
-  transition: color var(--duration-fast) ease;
-}
-.footer-bottom a:hover { color: var(--inverse-ink); }
 
 /* ── Callout: one component on every page type ──────────────── */
 .callout { padding: var(--space-4) var(--space-6); margin: var(--space-6) 0; border-left: 3px solid; border-radius: 0 var(--radius-md) var(--radius-md) 0; }

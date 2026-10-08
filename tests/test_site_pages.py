@@ -25,8 +25,8 @@ def test_every_page_footer_links_sponsor_contribute_and_github() -> None:
 
 def test_the_nav_is_security_docs_blog_and_one_demo_button() -> None:
     nav = page("/en/").split('class="nav-links"', 1)[1].split("</ul>", 1)[0]
-    labels = re.findall(r">([^<]+)</a></li>", nav)
-    assert labels[-1].strip() == "Try the demo"
+    labels = [label.strip() for label in re.findall(r">([^<]+)</a></li>", nav)]
+    assert labels == ["Security", "Documentation", "Blog", "Deutsch", "Try the demo"]
     assert nav.count("nav-cta") == 1 and "github.com" not in nav
 
 
@@ -41,3 +41,10 @@ def test_security_md_says_reports_are_unpaid() -> None:
     text = (Path(__file__).parents[1] / "SECURITY.md").read_text()
     # The heading says "unpaid" too: the sentence itself must stay.
     assert "There is no payment" in text and "security/advisories/new" in text
+
+
+def test_security_pages_name_codeql_and_link_its_alerts() -> None:
+    for url in ("/en/security/", "/de/sicherheit/"):
+        html = page(url)
+        assert "CodeQL" in _text(url), url
+        assert "github.com/openwhistle/OpenWhistle/security/code-scanning" in html, url
