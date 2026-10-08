@@ -48,7 +48,8 @@ def _css_content_text() -> set[str]:
     for sheet in (built() / "assets" / "css").glob("*.css"):
         css = sheet.read_text(encoding="utf-8")
         for decl in re.findall(r"(?<![\w-])content\s*:([^;}]*)", css):
-            for _, string in re.findall(r"(['\"])((?:\\.|(?!\1).)*)\1", decl):
+            # An escape pair or one plain character, never both readings: no backtracking blow-up.
+            for _, string in re.findall(r"(['\"])((?:\\.|(?!\1)[^\\])*)\1", decl):
                 string = re.sub(r"\\([0-9a-fA-F]{1,6})\s?", _unescape, string)
                 chars |= set(string)
     return chars
