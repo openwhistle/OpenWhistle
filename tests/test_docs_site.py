@@ -394,3 +394,10 @@ def test_every_blog_page_exists_in_english_and_german() -> None:
         if f'hreflang="{other}"' not in html.split("</head>")[0]:
             missing.append(url)
     assert not missing, missing
+
+
+def test_no_page_names_two_navigation_landmarks_alike() -> None:
+    # Two navs named "Legal" read as one landmark twice in a screen reader's list.
+    for file in pages():
+        labels = re.findall(r'<nav\b[^>]*\baria-label="([^"]*)"', file.read_text(encoding="utf-8"))
+        assert len(labels) == len(set(labels)), (file, labels)

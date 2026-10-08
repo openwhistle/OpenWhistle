@@ -365,9 +365,10 @@ def nav_context(
     nav: dict[str, Any],
     by_key: dict[str, dict[str, Page]],
     site: dict[str, Any],
-    t: dict[str, Any],
+    i18n: dict[str, dict[str, Any]],
 ) -> dict[str, Any]:
     roots = language_roots(site)
+    t = i18n[page.lang]
 
     def items(section: str) -> list[dict[str, Any]]:
         out = []
@@ -389,6 +390,11 @@ def nav_context(
                     "label": lookup(t, entry["label"]),
                     "href": target.url + (f"#{fragment}" if fragment else ""),
                     "current": current,
+                    "lang": target.lang,
+                    # A page in another language also carries its own name in that language.
+                    "native": None
+                    if target.lang == page.lang
+                    else lookup(i18n[target.lang], entry["label"]),
                 }
             )
         return out
@@ -534,7 +540,7 @@ def render_page(
             site["languages"][lang]["locale"] for lang in page.alternates if lang != page.lang
         ],
         hreflang=hreflang(page, site),
-        nav=nav_context(page, data["nav"], by_key, site, t),
+        nav=nav_context(page, data["nav"], by_key, site, data["i18n"]),
         docs=docs,
         jsonld_extra=[breadcrumb_jsonld(docs, page, site)] if docs else [],
     )

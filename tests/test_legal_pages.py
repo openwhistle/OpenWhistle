@@ -60,9 +60,6 @@ def test_the_privacy_policy_names_this_setup_and_nothing_else() -> None:
             "Hetzner Online GmbH",
             "ow-theme",
             "info@openwhistle.net",
-            "365",
-            "90",
-            "30",
             "demo.openwhistle.net",
             "IP-Management",
         ):
@@ -70,9 +67,42 @@ def test_the_privacy_policy_names_this_setup_and_nothing_else() -> None:
         assert not BOILERPLATE.search(text), (url, BOILERPLATE.search(text))
 
 
+# Per language: the retention periods in context, the transfer basis and every legal basis.
+FACTS = {
+    "/de/datenschutz/": (
+        "30 Tage auf dem Server und 365 Tage",
+        "30 Tage auf dem Server und 90 Tage",
+        "EU-U.S. Data Privacy Framework",
+        "§ 25 Abs. 2 Nr. 2 TDDDG",
+        "Art. 28 DSGVO",
+        "Art. 77 DSGVO",
+    ),
+    "/en/privacy/": (
+        "30 days on the server and 365 days",
+        "30 days on the server and 90 days",
+        "EU-U.S. Data Privacy Framework",
+        "§ 25(2) no. 2 TDDDG",
+        "Art. 28 GDPR",
+        "Art. 77 GDPR",
+    ),
+}
+
+
+def test_both_languages_state_the_same_periods_and_legal_bases() -> None:
+    for url, facts in FACTS.items():
+        text = _main(url)
+        for fact in facts:
+            assert fact in text, (url, fact)
+
+
 def test_every_footer_links_imprint_and_privacy_in_its_language() -> None:
     en, de = page("/en/"), page("/de/")
-    assert 'href="/impressum/"' in en and "Legal notice (Impressum)" in en
+    # The imprint is German only: an English page says so with hreflang and lang.
+    assert (
+        '<a href="/impressum/" hreflang="de">Legal notice (<span lang="de">Impressum</span>)</a>'
+        in en
+    )
+    assert '<a href="/impressum/">Impressum</a>' in de
     assert 'href="/en/privacy/"' in en and 'href="/de/datenschutz/"' in de
 
 

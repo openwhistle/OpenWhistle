@@ -28,7 +28,11 @@
           <nav class="footer-legal" aria-label="{{ t.footer.legal }}">
             <ul class="footer-links">
 {% for item in nav.legal %}
+{% if item.native %}
+              <li><a href="{{ item.href }}" hreflang="{{ item.lang }}">{{ item.label }} (<span lang="{{ item.lang }}">{{ item.native }}</span>)</a></li>
+{% else %}
               <li><a href="{{ item.href }}">{{ item.label }}</a></li>
+{% endif %}
 {% endfor %}
               <li><a href="/.well-known/security.txt">security.txt</a></li>
             </ul>
