@@ -1,5 +1,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
   <script>(function(){var t;try{t=localStorage.getItem('ow-theme')}catch(e){}if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t)})()</script>
   <title>{{ page.meta.title }}</title>
   <meta name="description" content="{{ page.meta.description }}">
@@ -12,6 +13,9 @@
 {% for lang, href in hreflang %}
   <link rel="alternate" hreflang="{{ lang }}" href="{{ href }}">
 {% endfor %}
+{% if page.url.startswith('/' ~ page.lang ~ '/blog/') %}
+  <link rel="alternate" type="application/atom+xml" href="/{{ page.lang }}/blog/feed.xml" title="{{ t.feed.title }}">
+{% endif %}
   <link rel="icon" href="/favicon.ico" sizes="32x32">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
@@ -26,10 +30,11 @@
 {% endif %}
   <meta property="og:title" content="{{ page.meta.title }}">
   <meta property="og:description" content="{{ page.meta.description }}">
-  <meta property="og:image" content="{{ site.base_url }}/og-image.png">
+  <meta property="og:image" content="{{ site.base_url }}{{ og_image }}">
+  <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="{{ t.og_image_alt }}">
+  <meta property="og:image:alt" content="{{ og_image_alt }}">
   <meta property="og:locale" content="{{ locale }}">
 {% for alt in alternate_locales %}
   <meta property="og:locale:alternate" content="{{ alt }}">
@@ -46,8 +51,8 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{{ page.meta.title }}">
   <meta name="twitter:description" content="{{ page.meta.description }}">
-  <meta name="twitter:image" content="{{ site.base_url }}/og-image.png">
-  <meta name="twitter:image:alt" content="{{ t.og_image_alt }}">
+  <meta name="twitter:image" content="{{ site.base_url }}{{ og_image }}">
+  <meta name="twitter:image:alt" content="{{ og_image_alt }}">
 {% for item in page.meta.jsonld + jsonld_extra %}
   <script type="application/ld+json">{{ item|tojson }}</script>
 {% endfor %}

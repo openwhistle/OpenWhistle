@@ -10,7 +10,7 @@ Reference: how versions are pinned and who moves them.
 | PostgreSQL, Redis, nginx | both compose files, the Ansible template, compose written inline in workflows | Renovate groups; PostgreSQL majors never auto-merged (dump and restore) |
 | GitHub Actions | workflows, pinned to commit digests | Renovate |
 | axe-core | `AXE_VERSION` in `tests/e2e/conftest.py` + `tests/e2e/vendor/axe.min.js` | Renovate bumps the version; `scripts/vendor_axe.py` refreshes file and hash |
-| Website build (Jinja2, markdown-it-py, PyYAML, Pagefind) | `pyproject.toml` dependency group `site` + `uv.lock` | Renovate (pep621 + uv lock) |
+| Website build (Jinja2, markdown-it-py, PyYAML, Pagefind, fontTools, Pillow) | `pyproject.toml` dependency group `site` + `uv.lock` | Renovate (pep621 + uv lock) |
 
 Patch, pin and digest updates merge themselves once the required checks pass.
 They use GitHub's native auto-merge, so the repository setting "Allow

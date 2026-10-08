@@ -516,6 +516,10 @@ def breadcrumb_jsonld(docs: dict[str, Any], page: Page, site: dict[str, Any]) ->
     }
 
 
+def og_title(page: Page) -> str:
+    return str(page.meta["title"]).removesuffix(" | OpenWhistle")
+
+
 def environment(src: Path) -> Environment:
     return Environment(
         loader=FileSystemLoader([src / "_layouts", src / "_includes"]),
@@ -543,6 +547,11 @@ def render_page(
         nav=nav_context(page, data["nav"], by_key, site, data["i18n"]),
         docs=docs,
         jsonld_extra=[breadcrumb_jsonld(docs, page, site)] if docs else [],
+        # write_og_images draws one card per directory page; a file page (/404.html) shares one.
+        og_image=page.url + "og.png" if page.url.endswith("/") else "/og-image.png",
+        og_image_alt=f"{og_title(page)}: OpenWhistle"
+        if page.url.endswith("/")
+        else t["og_image_alt"],
     )
 
 
@@ -714,6 +723,102 @@ def write_security_txt(out: Path, site: dict[str, Any]) -> None:
     (out / ".well-known" / "security.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def write_feeds(out: Path, pages: list[Page], site: dict[str, Any], i18n: dict[str, Any]) -> None:
+    """One Atom feed per language: every post under /<lang>/blog/<slug>/."""
+    base = site["base_url"]
+    for lang in site["languages"]:
+        prefix = f"/{lang}/blog/"
+        posts = sorted(
+            (p for p in pages if p.url.startswith(prefix) and p.url != prefix),
+            key=lambda p: str(p.meta["published"]),
+            reverse=True,
+        )
+        if not posts:
+            continue
+        entries = "".join(
+            "  <entry>\n"
+            f"    <title>{html.escape(og_title(p))}</title>\n"
+            f"    <id>{base}{p.url}</id>\n"
+            f'    <link href="{base}{p.url}"/>\n'
+            f"    <published>{p.meta['published']}T00:00:00Z</published>\n"
+            f"    <updated>{p.meta.get('modified', p.meta['published'])}T00:00:00Z</updated>\n"
+            f"    <summary>{html.escape(str(p.meta['description']))}</summary>\n"
+            "  </entry>\n"
+            for p in posts
+        )
+        updated = max(str(p.meta.get("modified", p.meta["published"])) for p in posts)
+        (out / lang / "blog" / "feed.xml").write_text(
+            '<?xml version="1.0" encoding="utf-8"?>\n'
+            f'<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="{lang}">\n'
+            f"  <title>{html.escape(i18n[lang]['feed']['title'])}</title>\n"
+            f"  <id>{base}{prefix}</id>\n"
+            f'  <link rel="self" href="{base}{prefix}feed.xml"/>\n'
+            f'  <link href="{base}{prefix}"/>\n'
+            f"  <updated>{updated}T00:00:00Z</updated>\n"
+            "  <author><name>OpenWhistle</name></author>\n"
+            f"{entries}</feed>\n",
+            encoding="utf-8",
+        )
+
+
+def write_og_images(out: Path, src: Path, pages: list[Page], site_alt: str) -> None:
+    """1200x630 per directory page: Signal's dark canvas, the K3 tile, the page title in Sora.
+
+    /og-image.png, the card of a file page (/404.html), says site_alt. The fonts are
+    read from src: out/fonts is cut down to the drawn text by subset_fonts.
+    """
+    from io import BytesIO
+
+    from fontTools.ttLib import TTFont
+    from PIL import Image, ImageDraw, ImageFont
+
+    def font(name: str, size: int) -> ImageFont.FreeTypeFont:
+        raw = TTFont(src / "fonts" / name)
+        raw.flavor = None  # woff2 -> sfnt for FreeType
+        buf = BytesIO()
+        raw.save(buf)
+        buf.seek(0)
+        return ImageFont.truetype(buf, size)
+
+    title_font = font("sora-latin-600-normal.woff2", 64)
+    site_font = font("sora-latin-400-normal.woff2", 30)
+    tile = (
+        Image.open(src / "apple-touch-icon.png")
+        .convert("RGB")
+        .resize((112, 112), Image.Resampling.LANCZOS)
+    )
+    mask = Image.new("L", tile.size, 0)
+    ImageDraw.Draw(mask).rounded_rectangle((0, 0, *tile.size), radius=24, fill=255)
+
+    def card(title: str, dest: Path) -> None:
+        image = Image.new("RGB", (1200, 630), "#08080a")  # DESIGN.md canvas, dark
+        draw = ImageDraw.Draw(image)
+        image.paste(tile, (80, 80), mask)
+        lines, line = [], ""
+        for word in title.split():
+            trial = f"{line} {word}".strip()
+            if draw.textlength(trial, font=title_font) > 1040 and line:
+                lines.append(line)
+                line = word
+            else:
+                line = trial
+        lines.append(line)
+        if len(lines) > 3 or any(draw.textlength(t, font=title_font) > 1040 for t in lines):
+            raise BuildError(f"OG image: {title!r} does not fit three lines of 1040 px")
+        y = 630 - 120 - 80 * len(lines)
+        for text in lines:
+            draw.text((80, y), text, font=title_font, fill="#fafafa")  # ink, dark
+            y += 80
+        draw.rectangle((80, 560, 200, 566), fill="#23c088")  # accent, dark
+        draw.text((220, 545), "openwhistle.net", font=site_font, fill="#8e8e93")  # muted, dark
+        image.save(dest, optimize=True)
+
+    for page in pages:
+        if page.url.endswith("/"):
+            card(og_title(page), output_file(out, page.url).parent / "og.png")
+    card(site_alt, out / "og-image.png")
+
+
 def write_sitemap(out: Path, src: Path, pages: list[Page], site: dict[str, Any]) -> None:
     entries = []
     for page in sorted(pages, key=lambda p: p.url):
@@ -831,6 +936,8 @@ def build(src: Path, out: Path, *, redirect_stubs: bool = False) -> list[Page]:
         dest.write_text(render_page(env, page, data, by_key), encoding="utf-8")
     write_sitemap(out, src, pages, site)
     write_security_txt(out, site)
+    write_feeds(out, pages, site, data["i18n"])
+    write_og_images(out, src, pages, data["i18n"][site["default_language"]]["og_image_alt"])
     # Before the stubs: a link to an old URL must fail even where a stub would catch it.
     check_links(out, urlsplit(site["base_url"]).netloc)
     if any(p.meta.get("layout") == "docs" for p in pages):

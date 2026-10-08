@@ -99,7 +99,10 @@ openwhistle.pro, `Artaeon/openwhistle`). Maintainer actions, prepared, not run:
 | `<html lang>` is `en` or `de`; `og:locale` matches | The English home page declared `og:locale` `de_DE` |
 | Canonical = the address Pages serves the file at: `/en/`, `/de/`, `/<lang>/<page>/` | Sitemap, canonical and nav must name one URL |
 | hreflang `en`/`de`/`x-default` only where a translation exists, reciprocal | The German blog index named the English home page its `en` version |
-| `og:image` is `og-image.png`, 1200×630, with width, height and alt | It was a blank navy rectangle: every shared link showed an empty card |
+| Each directory page has its own `og.png`, 1200×630, typed, with an alt naming its title; JSON-LD `image` is the same card | It was a blank navy rectangle: every shared link showed an empty card |
+| `<meta name="referrer" content="no-referrer">` on every page | Pages sends no Referrer-Policy; an outbound click would name the page |
+| One Atom feed per language at `/<lang>/blog/feed.xml`, listing every post, announced on every blog page | — |
+| Both homes carry `SoftwareApplication` and `Organization`; every docs page one `BreadcrumbList` | `/de/` had no `Organization` |
 | JSON-LD parses; no `aggregateRating` or `review` | OpenWhistle has no ratings; invented ones break Google's policy |
 | `SoftwareApplication.softwareVersion` = `app_version` on both landing pages | A release that forgets it advertises the old version |
 | Every article carries `BlogPosting` with `datePublished`, `dateModified`, `inLanguage` | Articles had no `dateModified`; one carried `HowTo`, which Google no longer shows |
@@ -112,6 +115,7 @@ When a page changes:
 1. A body edit to an article bumps `dateModified` and `article:modified_time`, together.
 2. `scripts/build_site.py` writes `sitemap.xml`; `lastmod` from git.
 3. The changelog body is built from `CHANGELOG.md`; never edit the built page.
+4. Every external link is fetched weekly (`scripts/check_external_links.py`, `links.yml`); a dead one opens an issue.
 
 `meta keywords` is not used: Google ignores it, Bing reads it as a spam signal.
 

@@ -285,3 +285,82 @@ def test_404_page_exists_and_is_not_indexed() -> None:
     page = DOCS / "404.html"
     assert page.is_file()
     assert _noindex(_head(page))
+
+
+INDEXES = [p for p in PAGES if p.name == "index.html"]
+
+
+@pytest.mark.parametrize("page", INDEXES, ids=lambda p: str(p.relative_to(DOCS)))
+def test_every_page_has_its_own_og_image(page: Path) -> None:
+    h = _head(page)
+    image = _one(h, "og:image")
+    assert image == SITE + page.relative_to(DOCS).parent.as_posix() + "/og.png", image
+    assert _one(h, "twitter:image") == image
+    assert _png_size(_file_for(image)) == (1200, 630)
+    for block in _jsonld(page):  # structured data names the same card
+        for node in _walk(block):
+            assert node.get("image", image) == image, node.get("@type")
+    # The alt describes this page's image: its title over the OpenWhistle mark.
+    alt = h.titles[0].removesuffix(" | OpenWhistle") + ": OpenWhistle"
+    assert (_one(h, "og:image:alt"), _one(h, "twitter:image:alt")) == (alt, alt)
+
+
+def test_og_images_differ_per_page() -> None:
+    images = {_one(_head(p), "og:image") for p in INDEXES}
+    assert len(images) == len(INDEXES)
+
+
+@pytest.mark.parametrize("page", PAGES, ids=IDS)
+def test_head_sends_no_referrer_and_types_its_image(page: Path) -> None:
+    # Pages sends no Referrer-Policy header; an outbound click must not name the page.
+    h = _head(page)
+    assert _one(h, "referrer") == "no-referrer"
+    assert _one(h, "og:image:type") == "image/png"
+
+
+@pytest.mark.parametrize("lang", ["en", "de"])
+def test_the_blog_feed_lists_every_post(lang: str) -> None:
+    ns = {"a": "http://www.w3.org/2005/Atom"}
+    feed = ET.parse(DOCS / lang / "blog" / "feed.xml").getroot()  # noqa: S314 — our own built file
+    posts = sorted(
+        SITE + p.relative_to(DOCS).parent.as_posix() + "/"
+        for p in PAGES
+        if p.parent.parent.name == "blog" and p.parts[-4] == lang
+    )
+    entries = sorted(e.findtext("a:id", namespaces=ns) or "" for e in feed.findall("a:entry", ns))
+    assert entries == posts
+    self_link = feed.find("a:link[@rel='self']", ns)
+    assert self_link is not None and self_link.get("href") == f"{SITE}{lang}/blog/feed.xml"
+    for entry in feed.findall("a:entry", ns):
+        for tag in ("title", "updated", "published", "summary"):
+            assert entry.findtext(f"a:{tag}", namespaces=ns), tag
+
+
+@pytest.mark.parametrize(
+    "page",
+    [p for p in PAGES if p.relative_to(DOCS).parts[1:2] == ("blog",)],
+    ids=lambda p: str(p.relative_to(DOCS)),
+)
+def test_blog_pages_announce_their_feed(page: Path) -> None:
+    lang = page.relative_to(DOCS).parts[0]
+    feeds = [link for link in _head(page).rel("alternate") if link.get("type")]
+    assert [(f["type"], f["href"]) for f in feeds] == [
+        ("application/atom+xml", f"/{lang}/blog/feed.xml")
+    ]
+
+
+def test_both_homes_carry_software_and_organization() -> None:
+    for page in LANDING:
+        types = {b.get("@type") for b in _jsonld(page)}
+        assert {"SoftwareApplication", "Organization"} <= types, (page, types)
+
+
+@pytest.mark.parametrize(
+    "page", [p for p in PAGES if "/docs/" in p.as_posix()], ids=lambda p: str(p.relative_to(DOCS))
+)
+def test_docs_pages_carry_a_breadcrumb(page: Path) -> None:
+    crumbs = [b for b in _jsonld(page) if b.get("@type") == "BreadcrumbList"]
+    assert len(crumbs) == 1
+    items = crumbs[0]["itemListElement"]
+    assert [i["position"] for i in items] == list(range(1, len(items) + 1))
+    assert items[-1]["item"] == _head(page).rel("canonical")[0]["href"]

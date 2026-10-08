@@ -45,11 +45,13 @@ def test_security_md_says_reports_are_unpaid() -> None:
     assert "There is no payment" in text and "security/advisories/new" in text
 
 
-def test_security_pages_name_codeql_and_link_its_alerts() -> None:
+def test_security_pages_name_codeql_and_link_its_runs() -> None:
+    # The alerts page (security/code-scanning) answers 404 to anyone without write access.
+    runs = "OpenWhistle/actions/workflows/dynamic/github-code-scanning/codeql"
     for url in ("/en/security/", "/de/sicherheit/"):
         html = page(url)
         assert "CodeQL" in _text(url), url
-        assert "github.com/openwhistle/OpenWhistle/security/code-scanning" in html, url
+        assert runs in html and "security/code-scanning" not in html, url
 
 
 COMPLIANCE = {

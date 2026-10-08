@@ -27,3 +27,5 @@ footer:
   no_advice: OpenWhistle does not provide legal advice. Please consult qualified counsel regarding your specific HinSchG obligations.
   copyright: © OpenWhistle Contributors — GNU General Public License v3.0 — Version
 og_image_alt: "OpenWhistle: secure whistleblower reporting"
+feed:
+  title: OpenWhistle Blog
