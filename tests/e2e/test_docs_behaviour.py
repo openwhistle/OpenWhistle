@@ -198,20 +198,52 @@ def test_a_phone_turned_to_landscape_gets_the_menu_back(
     ctx.close()
 
 
+_SCROLL_BOXES = """[...document.querySelectorAll('.table-scroll, pre')].map(b =>
+  [b.scrollWidth > b.clientWidth, b.tabIndex,
+   b.getAttribute('role'), b.getAttribute('aria-label')])"""
+
+
+def _assert_only_overflowing_boxes_are_named_tab_stops(
+    boxes: list[list[object]], *, some_fit: bool = True
+) -> None:
+    wide = [b for b in boxes if b[0]]
+    fits = [b for b in boxes if not b[0]]
+    assert wide and (fits or not some_fit), boxes
+    assert all(b[1] == 0 and b[2] == "region" and b[3] for b in wide), wide
+    assert all(b[1] == -1 and b[2] is None and b[3] is None for b in fits), fits
+
+
 @pytest.mark.parametrize("width", [1920, 390])
-def test_a_box_that_scrolls_sideways_takes_keyboard_focus(
+def test_a_box_that_scrolls_sideways_is_a_named_tab_stop(
     browser: Browser, docs_server_url: str, width: int
 ) -> None:
     """In the 1200 px frame a wide table or code line scrolls in its own box; a keyboard user
-    must be able to focus it to scroll it (axe scrollable-region-focusable)."""
+    must be able to focus it to scroll it, and a region needs a name (axe
+    scrollable-region-focusable). A box that fits is no tab stop."""
     ctx, page = _new_page(browser, docs_server_url, width=width)
     page.goto("/en/docs/configuration/")
-    boxes = page.evaluate(
-        """[...document.querySelectorAll('.table-scroll, pre')]
-             .filter(b => b.scrollWidth > b.clientWidth).map(b => b.tabIndex)"""
-    )
+    page.evaluate("document.fonts.ready")
+    boxes = page.evaluate(_SCROLL_BOXES)
     ctx.close()
-    assert boxes and all(i == 0 for i in boxes), (width, boxes)
+    # On a phone every table and code block of this page is wider than the screen.
+    _assert_only_overflowing_boxes_are_named_tab_stops(boxes, some_fit=width > 390)
+
+
+def test_a_box_that_stops_scrolling_after_a_resize_is_no_tab_stop(
+    browser: Browser, docs_server_url: str
+) -> None:
+    ctx, page = _new_page(browser, docs_server_url, width=390, height=844)
+    page.goto("/en/docs/configuration/")
+    page.evaluate("document.fonts.ready")
+    narrow = sum(1 for b in page.evaluate(_SCROLL_BOXES) if b[1] == 0)
+    page.set_viewport_size({"width": 1920, "height": 1080})
+    page.wait_for_function(
+        f"[...document.querySelectorAll('.table-scroll, pre')].filter(b => b.tabIndex === 0)"
+        f".length < {narrow}"
+    )
+    boxes = page.evaluate(_SCROLL_BOXES)
+    ctx.close()
+    _assert_only_overflowing_boxes_are_named_tab_stops(boxes)
 
 
 def test_the_docs_menu_is_open_without_javascript(browser: Browser, docs_server_url: str) -> None:

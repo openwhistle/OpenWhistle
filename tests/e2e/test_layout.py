@@ -133,6 +133,24 @@ def test_the_sidebar_and_footer_line_up_with_the_nav(
     assert abs(link - nav) <= 1 and abs(footer - nav) <= 1, (url, nav, link, footer)
 
 
+def test_on_a_phone_the_article_starts_under_the_menu_links(
+    browser: Browser, docs_server_url: str
+) -> None:
+    """Below 769 px the menu sits above the article: the open menu's link text and the
+    article's text share one left edge (they were 32 and 20 px)."""
+    ctx, page = _page(browser, docs_server_url, 390)
+    page.goto(f"{docs_server_url}/en/docs/ldap/")
+    page.click(".docs-menu > summary")
+    link, article = page.evaluate(
+        """() => ['.sidebar-links a', '.docs-article p'].map(s => {
+             const text = document.createRange();
+             text.selectNodeContents(document.querySelector(s));
+             return text.getClientRects()[0].left; })"""
+    )
+    ctx.close()
+    assert abs(link - article) <= 1, (link, article)
+
+
 def _page(browser: Browser, base_url: str, width: int, color_scheme: str = "light"):  # type: ignore[no-untyped-def]
     # The docs pages' own inline script falls back to `prefers-color-scheme`
     # when no `ow-theme` was ever saved in this (fresh) context's localStorage,

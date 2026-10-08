@@ -65,8 +65,8 @@
       border-left-color: var(--accent);
     }
 
-    /* The docs pages' sidebar: one menu holding the groups of _data/nav.yml. site.js closes
-       it on a phone; the summaries keep the browser's marker and focus ring. */
+    /* The docs pages' sidebar: one menu holding the groups of _data/nav.yml. An inline script
+       in docs.html closes it on a phone; the summaries keep the browser's marker and focus ring. */
     .docs-menu > summary {
       font-family: var(--font-display);
       font-size: 0.85rem;
@@ -235,6 +235,8 @@
       color: var(--accent);
       border-bottom: 1px solid var(--accent-dim);
       transition: border-bottom-color var(--duration-fast) ease;
+      /* A bare URL (the comparison's sources) wraps on a phone instead of widening the page. */
+      overflow-wrap: break-word;
     }
     .docs-section a:hover, .docs-article a:hover { border-bottom-color: var(--accent); }
 
@@ -475,7 +477,8 @@
         border-bottom: 1px solid var(--hairline);
         padding-block: var(--space-4);
       }
-      .docs-content { padding: var(--space-8) var(--space-5) var(--space-12); }
+      /* The nav's 32 px gutter, so the article starts where the menu's link text does. */
+      .docs-content { padding: var(--space-8) var(--space-8) var(--space-12); }
       .env-table { font-size: 0.8rem; }
     }
 
