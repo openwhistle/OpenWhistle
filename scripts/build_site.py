@@ -798,6 +798,9 @@ def index_search(out: Path) -> None:
     )
     if run.returncode:
         raise BuildError(f"pagefind failed ({run.returncode}): {run.stderr.strip()}")
+    # search.js is the only UI: Pagefind's own UI bundles (~376 KB) would ship unused.
+    for bundle in (out / "pagefind").glob("pagefind-*ui.*"):
+        bundle.unlink()
 
 
 def build(src: Path, out: Path, *, redirect_stubs: bool = False) -> list[Page]:

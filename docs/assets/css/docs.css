@@ -536,6 +536,12 @@
         top: calc(60px + var(--space-8));
         margin-bottom: 0;
       }
+      /* "On this page" leaves the text 596 px; a diagram drawn 754 px wide would drop its
+         13 px labels under 11. It takes the text's gutter and most of the column gap,
+         clear of the sidebar and the toc's rule: 668 px, so 754 px draws at 0.89. */
+      .docs-content:has(> .docs-toc) .docs-article figure.diagram {
+        margin-inline: calc(-1 * var(--space-10)) calc(-1 * var(--space-8));
+      }
     }
 
     @media (max-width: 768px) {

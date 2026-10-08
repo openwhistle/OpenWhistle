@@ -979,8 +979,16 @@ def test_a_generated_pages_edit_link_names_its_source(src: Path, tmp_path: Path)
 
 def test_the_build_indexes_only_docs_pages() -> None:
     """Pagefind indexes the <main> that carries data-pagefind-body: the docs, nothing else."""
-    from tests.built_site import built, page
+    import json
 
-    assert (built() / "pagefind" / "pagefind.js").is_file()
+    from tests.built_site import built, page, pages
+
+    bundle = built() / "pagefind"
+    assert (bundle / "pagefind.js").is_file()
     assert "data-pagefind-body" not in page("/en/")
     assert "data-pagefind-body" in page("/en/docs/ldap/")
+    docs = sum("data-pagefind-body" in p.read_text(encoding="utf-8") for p in pages())
+    entry = json.loads((bundle / "pagefind-entry.json").read_text(encoding="utf-8"))
+    assert [lang["page_count"] for lang in entry["languages"].values()] == [docs]
+    # search.js is the only UI: Pagefind's own bundles would ship unused.
+    assert not sorted(p.name for p in bundle.glob("*ui*")), "Pagefind's UI bundles shipped"
