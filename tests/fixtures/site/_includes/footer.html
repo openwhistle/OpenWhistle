@@ -9,17 +9,14 @@
           <p class="footer-tagline">{{ t.footer.tagline }}</p>
         </div>
 
-        <nav aria-label="{{ t.footer.aria }}">
-          <div class="footer-col-title">{{ t.footer.resources }}</div>
+        <nav aria-label="{{ t.footer.project }}">
+          <div class="footer-col-title">{{ t.footer.project }}</div>
           <ul class="footer-links">
             <li><a href="{{ site.github_url }}" rel="noopener noreferrer" target="_blank">{{ t.nav.github }}</a></li>
+            <li><a href="{{ site.sponsor_url }}" rel="noopener noreferrer" target="_blank">{{ t.nav.sponsor }}</a></li>
 {% for item in nav.footer %}
             <li><a href="{{ item.href }}">{{ item.label }}</a></li>
 {% endfor %}
-{% for language in nav.languages %}
-            <li><a href="{{ language.href }}" hreflang="{{ language.lang }}" lang="{{ language.lang }}">{{ language.name }}</a></li>
-{% endfor %}
-            <li><a href="{{ site.demo_url }}" rel="noopener noreferrer" target="_blank">{{ t.footer.live_demo }}</a></li>
             <li><a href="{{ site.github_url }}/issues" rel="noopener noreferrer" target="_blank">{{ t.footer.issues }}</a></li>
             <li><a href="{{ site.github_url }}/blob/main/LICENSE" rel="noopener noreferrer" target="_blank">{{ t.footer.licence_link }}</a></li>
           </ul>
@@ -27,6 +24,15 @@
 
         <div>
           <div class="footer-col-title">{{ t.footer.legal }}</div>
+{% if nav.legal %}
+          <nav aria-label="{{ t.footer.legal }}">
+            <ul class="footer-links">
+{% for item in nav.legal %}
+              <li><a href="{{ item.href }}">{{ item.label }}</a></li>
+{% endfor %}
+            </ul>
+          </nav>
+{% endif %}
           <p class="footer-note">{{ t.footer.licence_note }}</p>
           <p class="footer-disclaimer">{{ t.footer.no_advice }}</p>
         </div>

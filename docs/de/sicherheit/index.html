@@ -1,0 +1,170 @@
+---
+title: 'Sicherheit: was trägt und wie Sie es prüfen | OpenWhistle'
+description: 'Warum Sie OpenWhistle vertrauen können und wie Sie jede Aussage selbst prüfen: keine IP-Adressen, signierte Images, die offenen Lücken und wie Sie melden.'
+translation_key: security
+css:
+- docs
+- page
+js:
+- site
+- sidebar
+jsonld:
+- '@context': https://schema.org
+  '@type': BreadcrumbList
+  itemListElement:
+  - '@type': ListItem
+    position: 1
+    name: OpenWhistle
+    item: https://openwhistle.net/de/
+  - '@type': ListItem
+    position: 2
+    name: Sicherheit, die Sie prüfen können
+    item: https://openwhistle.net/de/sicherheit/
+---
+  <div class="docs-layout">
+
+    <!-- Sidebar -->
+    <aside class="docs-sidebar" role="complementary" aria-label="Navigation Sicherheit">
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Auf dieser Seite</div>
+        <nav class="sidebar-links" aria-label="Auf dieser Seite">
+          <a href="#trust" class="active">Warum Sie vertrauen können</a>
+          <a href="#gaps">Offene Lücken</a>
+          <a href="#report">Eine Schwachstelle melden</a>
+        </nav>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Links</div>
+        <nav class="sidebar-links">
+          <a href="/de/">&#8592; Startseite</a>
+          <a href="/en/docs/" hreflang="en">Dokumentation (englisch)</a>
+          <a href="/de/mitmachen/">Mitmachen</a>
+          <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub-Repository</a>
+        </nav>
+      </div>
+
+    </aside>
+
+    <!-- Main content -->
+    <main id="main-content" class="docs-content">
+
+      <nav class="docs-breadcrumb" aria-label="Brotkrümelnavigation">
+        <a href="/de/">OpenWhistle</a>
+        <span>/</span>
+        <span>Sicherheit</span>
+      </nav>
+
+      <h1>Sicherheit, die Sie prüfen können</h1>
+      <p class="docs-lead">
+        OpenWhistle schützt Menschen, die Missstände melden.
+        Diese Seite zeigt, worauf dieser Schutz beruht, wo er noch schwach ist und wie Sie eine Lücke melden.
+      </p>
+
+      <!-- Trust -->
+      <section class="docs-section" id="trust" aria-labelledby="trust-h2">
+        <h2 id="trust-h2">Warum Sie vertrauen können</h2>
+        <p>Die Dokumentation, auf die jede Zeile verweist, ist englisch.</p>
+        <div class="table-scroll">
+          <table class="cmp-table">
+            <thead>
+              <tr>
+                <th scope="col">Aussage</th>
+                <th scope="col">Wie sie hält</th>
+                <th scope="col">Prüfen</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Keine IP-Adresse wird gespeichert</th>
+                <td>Vier Schichten, von nginx bis zur Datenbank.</td>
+                <td><a href="/en/docs/anonymity/" hreflang="en" lang="en">Anonymity layers</a></td>
+              </tr>
+              <tr>
+                <th scope="row">Von Meldenden bleibt nur der Tag</th>
+                <td>Gespeichert als UTC-Datum, nie als Uhrzeit.</td>
+                <td><a href="/en/docs/timestamps/" hreflang="en" lang="en">Timestamps</a></td>
+              </tr>
+              <tr>
+                <th scope="row">Metadaten von Anhängen werden entfernt</th>
+                <td>Vor dem Speichern bereinigt; die Pixel bleiben unverändert.</td>
+                <td><a href="/en/docs/limits/" hreflang="en" lang="en">Attachments</a></td>
+              </tr>
+              <tr>
+                <th scope="row">Nichts verlässt ungefragt den Server</th>
+                <td>Jede ausgehende Anfrage ist opt-in und aufgelistet.</td>
+                <td><a href="/en/docs/outbound/" hreflang="en" lang="en">Outbound requests</a></td>
+              </tr>
+              <tr>
+                <th scope="row">Das Image ist der Code, den Sie lesen</th>
+                <td>In öffentlicher CI gebaut und mit cosign signiert.</td>
+                <td><a href="/en/docs/images/#image-signatures" hreflang="en" lang="en">Image signatures</a></td>
+              </tr>
+              <tr>
+                <th scope="row">Der Code wird gescannt</th>
+                <td>Bei jedem Pull Request: die Bandit-Regeln von ruff auf den Code, pip-audit auf jede festgeschriebene Abhängigkeit, Trivy auf das Container-Image. pip-audit und Trivy laufen zusätzlich wöchentlich.</td>
+                <td><a href="https://github.com/openwhistle/OpenWhistle/tree/main/.github/workflows" rel="noopener noreferrer" target="_blank">Die Workflows</a></td>
+              </tr>
+              <tr>
+                <th scope="row">Ein Wächter, der nicht anschlagen kann, fällt auf</th>
+                <td>Vor einem Release wird jeder neue Wächter absichtlich gebrochen. Ein Test, der grün bleibt, wird neu geschrieben.</td>
+                <td><a href="https://github.com/openwhistle/OpenWhistle/blob/main/scripts/mutation_audit.py" rel="noopener noreferrer" target="_blank">Das Mutation-Audit</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Gaps -->
+      <section class="docs-section" id="gaps" aria-labelledby="gaps-h2">
+        <h2 id="gaps-h2">Offene Lücken</h2>
+        <ul>
+          <li>Es gibt einen einzigen Maintainer, daher prüft kein zweiter Mensch Sicherheitsänderungen.</li>
+          <li>Ein externes Audit gab es noch nicht.</li>
+          <li>Die Dateiintegritätsprüfung erkennt Versehen, keine Angreifer: Sie ist <a href="/en/docs/admin/#system-updates" hreflang="en">nicht manipulationssicher</a>.</li>
+          <li>Die <a href="/en/docs/demo-mode/" hreflang="en">Demo ist öffentlich</a>: Jeder kann bis zum nächsten Zurücksetzen lesen, was sie enthält.</li>
+          <li>Unter Kubernetes muss der Ingress auf <code>crit</code> loggen, sonst <a href="/en/docs/kubernetes/" hreflang="en">protokolliert er Client-IP-Adressen</a>.</li>
+        </ul>
+        <p><a href="/de/mitmachen/">Eine Lücke schließen</a>.</p>
+      </section>
+
+      <!-- Report -->
+      <section class="docs-section" id="report" aria-labelledby="report-h2">
+        <h2 id="report-h2">Eine Schwachstelle melden</h2>
+        <p>
+          Melden Sie sie vertraulich über
+          <a href="https://github.com/openwhistle/OpenWhistle/security/advisories/new" rel="noopener noreferrer" target="_blank">GitHubs private Schwachstellenmeldung</a>.
+          Eröffnen Sie nie ein öffentliches Issue: Es zeigt die Lücke allen, bevor es eine Korrektur gibt.
+        </p>
+        <div class="table-scroll">
+          <table class="cmp-table">
+            <thead>
+              <tr>
+                <th scope="col">Schritt</th>
+                <th scope="col">Innerhalb von</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">Ihre Meldung bestätigen</th><td>48 Stunden</td></tr>
+              <tr><th scope="row">Sie bewerten und Ihnen den Plan nennen</th><td>7 Tagen</td></tr>
+              <tr><th scope="row">Eine Korrektur für eine kritische oder hohe Lücke veröffentlichen</th><td>14 Tagen</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Die vollständige Richtlinie steht in
+          <a href="https://github.com/openwhistle/OpenWhistle/blob/main/SECURITY.md" rel="noopener noreferrer" target="_blank">SECURITY.md</a> (englisch).
+        </p>
+
+        <h3 id="research">Forschung ist willkommen und unbezahlt</h3>
+        <p>
+          Sie dürfen OpenWhistle testen und melden, was Sie finden.
+          Es gibt keine Bezahlung: OpenWhistle ist ein ehrenamtliches Projekt, und jede Meldung dient den Menschen, die sich darauf verlassen.
+          Mit Ihrer Zustimmung nennen wir Sie im Advisory und in SECURITY.md.
+          Testen Sie auf Ihrer eigenen Installation, nie an anderen Besuchern der öffentlichen Demo.
+        </p>
+      </section>
+
+    </main>
+  </div>

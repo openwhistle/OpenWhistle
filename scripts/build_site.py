@@ -402,13 +402,18 @@ def nav_context(
         for lang, spec in site["languages"].items()
         if lang != page.lang
     ]
-    return {"primary": items("primary"), "footer": items("footer"), "languages": languages}
+    return {
+        "primary": items("primary"),
+        "footer": items("footer"),
+        "legal": items("legal"),
+        "languages": languages,
+    }
 
 
 def check_nav(nav: dict[str, Any], pages: list[Page], site: dict[str, Any]) -> None:
     keys = {str(p.meta["translation_key"]) for p in pages}
     named: set[str] = set()
-    for section in ("primary", "footer"):
+    for section in ("primary", "footer", "legal"):
         for entry in nav.get(section, []):
             if entry["page"] not in keys:
                 raise BuildError(
@@ -427,7 +432,8 @@ def check_nav(nav: dict[str, Any], pages: list[Page], site: dict[str, Any]) -> N
             raise BuildError(f"{page.source}: docs pages are English only (D8)")
         if page.meta.get("layout") == "docs" and page.meta["translation_key"] not in docs_keys:
             raise BuildError(f"{page.source}: the docs sidebar in _data/nav.yml does not list it")
-    targets = {p.url for p in pages if p.meta["translation_key"] in named}
+    # A language home needs no entry: the logo on every page links it.
+    targets = {p.url for p in pages if p.meta["translation_key"] in named} | language_roots(site)
     prefixes = targets - language_roots(site)
     for page in pages:
         if page.meta.get("noindex") or page.url in targets:

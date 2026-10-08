@@ -335,7 +335,7 @@ def test_a_home_entry_is_current_only_on_the_home(src: Path, tmp_path: Path) -> 
     and a #fragment entry (features) marks nothing, not even on the home."""
     (src / "_data" / "nav.yml").write_text(
         "primary:\n  - {label: nav.home, page: home}\n"
-        "  - {label: nav.features, page: home, fragment: features}\n"
+        "  - {label: nav.compliance, page: home, fragment: features}\n"
         "  - {label: nav.docs, page: docs}\nfooter: []\n"
     )
     out = _build(src, tmp_path)
@@ -366,6 +366,29 @@ def test_a_nav_entry_naming_no_page_fails(src: Path, tmp_path: Path) -> None:
     (src / "_data" / "nav.yml").write_text("primary: [{label: nav.docs, page: nope}]\nfooter: []\n")
     with pytest.raises(B.BuildError, match="nav.yml: primary names 'nope'"):
         _build(src, tmp_path)
+
+
+def test_a_legal_entry_naming_no_page_fails(src: Path, tmp_path: Path) -> None:
+    (src / "_data" / "nav.yml").write_text(
+        "primary: []\nfooter: []\nlegal: [{label: nav.docs, page: nope}]\n"
+    )
+    with pytest.raises(B.BuildError, match="nav.yml: legal names 'nope'"):
+        _build(src, tmp_path)
+
+
+def test_a_legal_entry_is_a_footer_link(src: Path, tmp_path: Path) -> None:
+    (src / "_data" / "nav.yml").write_text(
+        "primary: [{label: nav.docs, page: docs}]\nfooter: []\n"
+        "legal: [{label: nav.docs, page: docs}]\n"
+    )
+    html = (_build(src, tmp_path) / "en" / "index.html").read_text(encoding="utf-8")
+    assert '<a href="/en/docs/">Documentation</a>' in html.split('class="site-footer"', 1)[1]
+
+
+def test_a_language_home_needs_no_nav_entry(src: Path, tmp_path: Path) -> None:
+    """The logo on every page links the home; the nav need not name it."""
+    (src / "_data" / "nav.yml").write_text("primary: [{label: nav.docs, page: docs}]\nfooter: []\n")
+    assert (_build(src, tmp_path) / "de" / "index.html").is_file()
 
 
 def test_a_page_no_nav_entry_leads_to_fails(src: Path, tmp_path: Path) -> None:

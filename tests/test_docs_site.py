@@ -1,6 +1,6 @@
 """The roadmap lives on the website, not in a ROADMAP.md a stranger has to
 clone the repo to read. These guards keep it that way: the file stays gone,
-every page's nav points at it, no version already shipped is shown as
+every page's footer points at it, no version already shipped is shown as
 planned, and the page never reaches out to a font CDN."""
 
 import html as html_lib
@@ -27,7 +27,7 @@ BLOG_PAGES = [
     *(_url(p) for p in sorted((built() / "de/blog").glob("*/index.html"))),
 ]
 
-# Every page whose top nav must carry a "Roadmap" link. The roadmap is English
+# Every page whose footer must carry a "Roadmap" link. The roadmap is English
 # only, so the German pages link the English one.
 NAV_PAGES = ["/en/", "/de/", "/en/docs/", "/en/docs/admin/", "/en/roadmap/", *BLOG_PAGES]
 ROADMAP = "/en/roadmap/"
@@ -57,11 +57,11 @@ def test_every_nav_page_links_to_roadmap() -> None:
     missing = []
     for url in NAV_PAGES:
         html = page(url)
-        nav_match = re.search(r'<ul class="nav-links"[^>]*>.*?</ul>', html, re.DOTALL)
-        assert nav_match, f'{url}: no <ul class="nav-links"> found'
-        if f'href="{ROADMAP}"' not in nav_match.group(0):
+        footer = re.search(r'<ul class="footer-links"[^>]*>.*?</ul>', html, re.DOTALL)
+        assert footer, f'{url}: no <ul class="footer-links"> found'
+        if f'href="{ROADMAP}"' not in footer.group(0):
             missing.append(url)
-    assert not missing, f"pages whose nav does not link to {ROADMAP}: {missing}"
+    assert not missing, f"pages whose footer does not link to {ROADMAP}: {missing}"
 
 
 def test_roadmap_has_no_released_version_as_planned_heading() -> None:
@@ -238,9 +238,50 @@ def test_every_docs_page_nav_has_the_same_item_set() -> None:
 
 
 def _fold_language(targets: set[str]) -> set[str]:
-    """/de/... onto /en/...: the German twin of a page counts as that page.
+    """/de/... onto /en/...: the German twin of a page counts as that page,
+    found by its hreflang="en" alternate (/de/sicherheit/ is /en/security/).
     English-only pages are linked at /en/ from both homes already."""
-    return {"en/" + t.removeprefix("de/") if t.startswith("de/") else t for t in targets}
+    folded = set()
+    for target in targets:
+        if target.startswith("de/"):
+            path, hash_, fragment = target.partition("#")
+            twin = re.search(
+                r'<link rel="alternate" hreflang="en" href="https://[^/]+/([^"]*)"',
+                (built() / path).read_text(),
+            )
+            assert twin, f"{target}: no English twin"
+            target = twin.group(1) + "index.html" + hash_ + fragment
+        folded.add(target)
+    return folded
+
+
+GITHUB = "https://github.com/openwhistle/OpenWhistle"
+
+
+def test_the_home_nav_and_footer_are_the_redesign_sets() -> None:
+    """W9: Security, Docs, Blog, the language switch and the demo button in the
+    nav; the Project column of the footer. The tests above hold every other
+    page to these sets."""
+    home = built() / "en/index.html"
+    assert _nav_targets(home) == {
+        "en/security/index.html",
+        "en/docs/index.html",
+        "en/blog/index.html",
+        _LANGUAGE_SWITCH,
+        "https://demo.openwhistle.net",
+    }
+    assert _footer_targets(home) == {
+        GITHUB,
+        "https://github.com/sponsors/jp1337",
+        "en/contribute/index.html",
+        "en/changelog/index.html",
+        "en/roadmap/index.html",
+        "en/compare/index.html",
+        "en/docs/index.html",
+        "en/blog/index.html",
+        f"{GITHUB}/issues",
+        f"{GITHUB}/blob/main/LICENSE",
+    }
 
 
 def test_the_german_home_links_what_the_english_home_links() -> None:
@@ -252,13 +293,12 @@ def test_the_german_home_links_what_the_english_home_links() -> None:
 
 
 # Pages whose nav marks one specific item as the current page (by the
-# resolved target from `_resolve_nav_target`); /en/ and /de/ are home pages
-# with no single discrete nav item to mark (Features/How-it-works are anchors
-# into the same page, not a separate "home" entry) and so carry none.
+# resolved target from `_resolve_nav_target`); /en/ and /de/ have no nav item
+# to mark (the logo links the home) and so carry none.
 _CURRENT_NAV_TARGET = {
     "/en/docs/": "en/docs/index.html",
-    "/en/roadmap/": "en/roadmap/index.html",
-    "/en/changelog/": "en/changelog/index.html",
+    "/en/security/": "en/security/index.html",
+    "/de/sicherheit/": "de/sicherheit/index.html",
     **{url: f"{url.split('/')[1]}/blog/index.html" for url in BLOG_PAGES},
 }
 

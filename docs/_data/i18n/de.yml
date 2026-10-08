@@ -4,21 +4,20 @@ nav:
   toggle: Navigation umschalten
   theme: Dunkelmodus umschalten
   home: OpenWhistle Startseite
-  features: Funktionen
-  how: Ablauf
+  security: Sicherheit
   compliance: Compliance
   docs: Dokumentation
   roadmap: Roadmap
   changelog: Änderungsprotokoll
   blog: Blog
   compare: Vergleich
+  contribute: Mitmachen
+  sponsor: Sponsern
   github: GitHub
-  demo: Demo testen
+  demo: Demo ausprobieren
 footer:
-  aria: Footer-Links
   tagline: Schutz für alle, die den Mut haben zu sprechen.
-  resources: Ressourcen
-  live_demo: Live-Demo
+  project: Projekt
   issues: Issues
   licence_link: Lizenz (GPL-3.0)
   legal: Rechtliches

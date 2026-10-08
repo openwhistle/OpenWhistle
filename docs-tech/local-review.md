@@ -204,6 +204,10 @@ Rebuild after every edit to `docs/`; the server serves what was built.
 | `/en/docs/security-policy/` | Security policy template, rendered from Markdown in the docs layout. |
 | `/en/docs/dpa-template/` | DPA template, rendered from Markdown in the docs layout. |
 | `/en/roadmap/` | Roadmap. |
+| `/en/security/` | Security: the trust table scrolls inside its box at 390 px. |
+| `/de/sicherheit/` | Security, German. |
+| `/en/contribute/` | Contribute. |
+| `/de/mitmachen/` | Contribute, German. |
 | `/en/compare/` | Comparison with GlobaLeaks, SecureDrop, Hush Line — the table scrolls inside its box at 390 px. |
 | `/404.html` | Not-found page (noindex); open any missing path on the served site. |
 | `/en/changelog/` | Changelog, rendered from `CHANGELOG.md` — check the version nav in the sidebar. |

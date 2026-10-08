@@ -23,6 +23,12 @@ anonymity leaks, authorization/tenant-isolation bypasses, and anything that coul
 deanonymize a reporter. We aim to acknowledge reports promptly and will credit
 reporters (with their consent) in the advisory and here.
 
+## Research is welcome, and unpaid
+
+You may test OpenWhistle and report what you find. There is no payment: OpenWhistle is a volunteer project,
+and every report serves the people who rely on it. With your consent, we credit you in the advisory and below.
+Test on your own installation, never on the public demo's other visitors.
+
 ## Response times
 
 | Step | Within |
