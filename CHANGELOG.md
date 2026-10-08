@@ -7,6 +7,12 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **Spanish (Spain) interface** (`es`): the full locale, in formal *usted*, in the language picker and
+  chosen automatically for a browser that asks for Spanish; counts group digits with a period. Report categories
+  fall back to English, as they do for French and Portuguese.
+
 ## [2.1.1] — 2026-10-03
 
 ### Changed

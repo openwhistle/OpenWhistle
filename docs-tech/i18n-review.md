@@ -1,6 +1,6 @@
 # The reviewer's first reads
 
-`app/locales/en.json` holds over 700 keys. A reviewer checking `de`, `fr` or `pt-br` against it in order meets
+`app/locales/en.json` holds over 700 keys. A reviewer checking `de`, `fr`, `es` or `pt-br` against it in order meets
 the sentences that matter most somewhere in the middle, tired. This page collects them so they are read first.
 
 **The rule these sentences have to survive translation under:**

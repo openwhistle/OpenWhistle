@@ -87,7 +87,7 @@ an incident history are fine.
 
 A change that renames a setting, a label or a behaviour updates, in the same commit:
 
-- all four locales in `app/locales/` (`en`, `de`, `fr`, `pt-br`), checked against
+- all five locales in `app/locales/` (`en`, `de`, `fr`, `es`, `pt-br`), checked against
   [`docs-tech/i18n-review.md`](docs-tech/i18n-review.md);
 - `docs/en/docs/index.html`, `README.md` and `docker-compose.prod.yml`;
 - the Helm chart (`charts/openwhistle/`) and `ansible/roles/openwhistle/templates/env.j2`.

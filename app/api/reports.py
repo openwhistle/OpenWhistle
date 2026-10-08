@@ -545,7 +545,7 @@ async def set_language(
     next_url: str = Form("/submit", alias="next"),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
-    safe_lang = {"en": "en", "de": "de", "fr": "fr", "pt-br": "pt-br"}.get(lang, "en")
+    safe_lang = {"en": "en", "de": "de", "fr": "fr", "es": "es", "pt-br": "pt-br"}.get(lang, "en")
     parsed = urlsplit(next_url)
     safe_path = _NEXT_ALLOWLIST.get(parsed.path)
     if safe_path is None and (org_path := _ORG_SUBMIT_RE.fullmatch(parsed.path)):

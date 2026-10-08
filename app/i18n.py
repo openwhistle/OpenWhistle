@@ -9,10 +9,10 @@ from typing import Any
 from starlette.requests import Request
 
 _LOCALES_DIR = Path(__file__).parent / "locales"
-_SUPPORTED = frozenset({"en", "de", "fr", "pt-br"})
+_SUPPORTED = frozenset({"en", "de", "fr", "es", "pt-br"})
 _DEFAULT = "en"
 # Explicit dict lookup severs CodeQL taint flow from user input to file path.
-_LANG_MAP: dict[str, str] = {"en": "en", "de": "de", "fr": "fr", "pt-br": "pt-br"}
+_LANG_MAP: dict[str, str] = {"en": "en", "de": "de", "fr": "fr", "es": "es", "pt-br": "pt-br"}
 # "pt" is treated as an alias for "pt-br" in Accept-Language negotiation.
 _LANG_ALIAS: dict[str, str] = {"pt": "pt-br"}
 
@@ -54,7 +54,7 @@ def get_lang(request: Request) -> str:
 # (a process-global mutation, unsafe for a stateless async app under
 # concurrent requests) and not Intl (server-side Python has none) — just the
 # one separator character each locale's number convention actually uses.
-_THOUSANDS_SEPARATOR: dict[str, str] = {"en": ",", "de": ".", "fr": " ", "pt-br": "."}
+_THOUSANDS_SEPARATOR: dict[str, str] = {"en": ",", "de": ".", "fr": " ", "es": ".", "pt-br": "."}
 
 
 def format_count(n: int, lang: str) -> str:

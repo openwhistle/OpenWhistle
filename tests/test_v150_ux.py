@@ -194,6 +194,7 @@ async def test_upload_error_follows_the_language(client: AsyncClient) -> None:
         ("en", "0 / 10,000"),
         ("de", "0 / 10.000"),
         ("fr", "0 / 10 000"),
+        ("es", "0 / 10.000"),
         ("pt-br", "0 / 10.000"),
     ],
 )

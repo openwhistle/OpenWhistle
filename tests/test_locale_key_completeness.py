@@ -31,7 +31,7 @@ from app.models.user import AdminRole
 from app.services.audit import ALL_ACTIONS
 
 _LOCALES = Path(__file__).resolve().parent.parent / "app" / "locales"
-_LANGS = ("en", "de", "fr", "pt-br")
+_LANGS = ("en", "de", "fr", "es", "pt-br")
 
 # (locale-key prefix, values, template — for the assertion message).
 # status.progress.*.desc: status.html only reaches this dynamic lookup for a
@@ -64,3 +64,14 @@ def test_every_dynamic_locale_key_exists(lang: str) -> None:
             if key not in strings:
                 missing.append(f"{key} (built by {template})")
     assert not missing, (lang, missing)
+
+
+def test_every_locale_file_is_a_supported_language() -> None:
+    """A new locale reaches the code's lists and the site's count (PR #126: the home page
+    still said "4 languages")."""
+    from app.i18n import _SUPPORTED
+
+    files = {p.stem for p in _LOCALES.glob("*.json")}
+    assert files == set(_LANGS) == _SUPPORTED
+    home = (_LOCALES.parents[1] / "docs" / "en" / "index.html").read_text(encoding="utf-8")
+    assert f"{len(files)} languages" in home
