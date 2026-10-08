@@ -111,6 +111,27 @@ def test_the_docs_columns_follow_the_window_width(
         assert toc["bottom"] <= article["top"], (width, toc, article)
 
 
+@pytest.mark.parametrize("url", ["/en/docs/ldap/", "/en/changelog/"])
+def test_the_sidebar_and_footer_line_up_with_the_nav(
+    browser: Browser, docs_server_url: str, url: str
+) -> None:
+    """One 1200 px frame site-wide: the sidebar's link text and the footer start on the nav's
+    content edge (a 1440 px docs frame put the sidebar 155 px left of the nav logo)."""
+    ctx, page = _page(browser, docs_server_url, 1920)
+    page.goto(f"{docs_server_url}{url}")
+    nav, link, footer = page.evaluate(
+        """() => { const inner = s => { const e = document.querySelector(s);
+                     return e.getBoundingClientRect().left
+                       + parseFloat(getComputedStyle(e).paddingLeft); };
+                   const text = document.createRange();
+                   text.selectNodeContents(document.querySelector('.sidebar-links a'));
+                   return [inner('.nav-inner'), text.getBoundingClientRect().left,
+                           inner('.footer-inner')]; }"""
+    )
+    ctx.close()
+    assert abs(link - nav) <= 2 and abs(footer - nav) <= 2, (url, nav, link, footer)
+
+
 def _page(browser: Browser, base_url: str, width: int, color_scheme: str = "light"):  # type: ignore[no-untyped-def]
     # The docs pages' own inline script falls back to `prefers-color-scheme`
     # when no `ow-theme` was ever saved in this (fresh) context's localStorage,

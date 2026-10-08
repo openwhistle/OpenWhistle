@@ -29,6 +29,17 @@ if (navToggle && navLinks) {
   });
 }
 
-// Docs: on a phone the 30-link sidebar starts closed; without JS it stays open.
+// Docs: docs.html closes the menu on a phone. Above 768 px its summary is hidden, so a
+// tablet turned to landscape re-opens it rather than keep an empty sidebar.
 var docsMenu = document.querySelector('.docs-menu');
-if (docsMenu && window.matchMedia('(max-width: 768px)').matches) docsMenu.removeAttribute('open');
+if (docsMenu) {
+  window.matchMedia('(max-width: 768px)').addEventListener('change', function(e) {
+    if (!e.matches) docsMenu.setAttribute('open', '');
+  });
+}
+
+// A box that scrolls sideways (wide table, long code line) must take keyboard focus to be
+// scrolled without a mouse (axe scrollable-region-focusable). Checked once at load.
+document.querySelectorAll('.table-scroll, pre').forEach(function(box) {
+  if (box.scrollWidth > box.clientWidth) box.tabIndex = 0;
+});

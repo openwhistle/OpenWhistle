@@ -19,7 +19,8 @@
       overflow-y: auto;
       background: var(--surface);
       border-right: 1px solid var(--hairline);
-      padding: var(--space-8) var(--space-5);
+      /* A link's text (12 px padding, 2 px bar) starts on the nav's 32 px content edge. */
+      padding: var(--space-8) var(--space-5) var(--space-8) calc(var(--space-8) - var(--space-3) - 2px);
       scrollbar-width: thin;
       scrollbar-color: var(--hairline-strong) transparent;
     }
@@ -75,6 +76,10 @@
       cursor: pointer;
     }
     .docs-menu[open] > summary { margin-bottom: var(--space-4); }
+    /* Above a phone the menu is always open (site.js re-opens it): a toggle there does nothing. */
+    @media (min-width: 769px) {
+      .docs-menu > summary { display: none; }
+    }
     .sidebar-group { margin-bottom: var(--space-5); }
     .sidebar-group > summary {
       font-family: var(--font-body);
@@ -441,11 +446,8 @@
     /* ── Responsive ─────────────────────────────────────────────── */
 
     /* Wide enough for a third column: "On this page" leaves the article's top and sticks
-       beside it. The other children stay in the first column. The docs pages widen by that
-       column, all of them, so the sidebar does not jump between pages with and without one;
-       inside 1200 px the article kept 596 px and four reference tables scrolled. */
+       beside it. The frame stays the site's 1200 px; a wide table scrolls in its own box. */
     @media (min-width: 1280px) {
-      .docs-layout:has(.docs-menu) { max-width: calc(var(--max-width) + 15rem); }
       .docs-content:has(> .docs-toc) {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 13rem;
@@ -455,6 +457,7 @@
       .docs-content:has(> .docs-toc) > * { grid-column: 1; }
       .docs-content > .docs-toc {
         grid-column: 2;
+        /* Beside all four column-1 children: breadcrumb, article, pager, edit link. */
         grid-row: 1 / span 4;
         align-self: start;
         position: sticky;
@@ -470,7 +473,7 @@
         height: auto;
         border-right: none;
         border-bottom: 1px solid var(--hairline);
-        padding: var(--space-4) var(--space-5);
+        padding-block: var(--space-4);
       }
       .docs-content { padding: var(--space-8) var(--space-5) var(--space-12); }
       .env-table { font-size: 0.8rem; }

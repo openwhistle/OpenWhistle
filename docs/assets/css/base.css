@@ -139,11 +139,13 @@ body {
 .site-footer {
   background: var(--inverse);
   color: var(--inverse-muted);
-  padding: var(--space-16) var(--space-8) var(--space-8);
+  padding: var(--space-16) 0 var(--space-8);
 }
+/* The nav's frame: 1200 px with a 32 px gutter inside, so their content edges line up. */
 .footer-inner {
   max-width: var(--max-width);
   margin: 0 auto;
+  padding: 0 var(--space-8);
 }
 .footer-grid {
   display: grid;

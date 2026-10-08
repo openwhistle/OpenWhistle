@@ -183,6 +183,37 @@ def test_the_docs_menu_starts_closed_on_a_phone(browser: Browser, docs_server_ur
     ctx.close()
 
 
+def test_a_phone_turned_to_landscape_gets_the_menu_back(
+    browser: Browser, docs_server_url: str
+) -> None:
+    """Above 768 px the menu's summary is hidden: a menu left closed would leave no toggle."""
+    ctx, page = _new_page(browser, docs_server_url, width=390, height=844)
+    page.goto("/en/docs/ldap/")
+    menu = page.locator(".docs-menu")
+    assert menu.get_attribute("open") is None
+    page.set_viewport_size({"width": 1024, "height": 768})
+    page.wait_for_function("document.querySelector('.docs-menu').open")
+    assert not page.locator(".docs-menu > summary").is_visible()
+    assert page.locator('.sidebar-links a[aria-current="page"]').is_visible()
+    ctx.close()
+
+
+@pytest.mark.parametrize("width", [1920, 390])
+def test_a_box_that_scrolls_sideways_takes_keyboard_focus(
+    browser: Browser, docs_server_url: str, width: int
+) -> None:
+    """In the 1200 px frame a wide table or code line scrolls in its own box; a keyboard user
+    must be able to focus it to scroll it (axe scrollable-region-focusable)."""
+    ctx, page = _new_page(browser, docs_server_url, width=width)
+    page.goto("/en/docs/configuration/")
+    boxes = page.evaluate(
+        """[...document.querySelectorAll('.table-scroll, pre')]
+             .filter(b => b.scrollWidth > b.clientWidth).map(b => b.tabIndex)"""
+    )
+    ctx.close()
+    assert boxes and all(i == 0 for i in boxes), (width, boxes)
+
+
 def test_the_docs_menu_is_open_without_javascript(browser: Browser, docs_server_url: str) -> None:
     ctx, page = _new_page(browser, docs_server_url, width=390, javascript_enabled=False)
     page.goto("/en/docs/ldap/")

@@ -19,6 +19,8 @@
         </details>
 {% endfor %}
       </details>
+      {#- Closed before the 30 links paint on a phone; without JS it stays open (CSP hash in P4). #}
+      <script>if(matchMedia('(max-width: 768px)').matches)document.querySelector('.docs-menu').removeAttribute('open')</script>
     </aside>
 
     <main id="main-content" class="docs-content">
