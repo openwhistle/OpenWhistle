@@ -25,13 +25,6 @@ def test_every_runner_job_has_a_timeout() -> None:
     assert not missing, f"jobs without timeout-minutes: {missing}"
 
 
-def test_the_browser_tests_build_the_site_once() -> None:
-    """A narrower scope rebuilds the site whenever pytest's parametrised order switches
-    module: that turned a 19-minute E2E run into hours."""
-    conftest = (Path(__file__).parent / "e2e" / "conftest.py").read_text()
-    assert '@pytest.fixture(scope="session")\ndef docs_server_url(' in conftest
-
-
 def _steps() -> list[tuple[str, dict]]:
     return [
         (f"{wf.name}:{name}", step)

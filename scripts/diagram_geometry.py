@@ -19,8 +19,8 @@ from fontTools.ttLib import TTFont
 
 ROOT = Path(__file__).resolve().parents[1]
 FONTS = {
-    400: ROOT / "docs" / "fonts" / "sora-latin-400-normal.woff2",
-    700: ROOT / "docs" / "fonts" / "sora-latin-700-normal.woff2",
+    400: ROOT / "app" / "static" / "fonts" / "sora-latin-400-normal.woff2",
+    700: ROOT / "app" / "static" / "fonts" / "sora-latin-700-normal.woff2",
 }
 EDGES = {"ow:edge", "ow:edge-optional", "ow:message"}
 LINES = EDGES | {"ow:lifeline"}  # their unfilled paths are lines text must clear

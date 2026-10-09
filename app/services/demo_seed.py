@@ -43,7 +43,7 @@ DEMO_CM_USERNAME = "case_manager"
 DEMO_CM_PASSWORD = "demo"  # noqa: S105
 DEMO_USERNAMES = frozenset({DEMO_ADMIN_USERNAME, DEMO_CM_USERNAME})
 
-# Known demo report access credentials (published in docs/demo)
+# Known demo report access credentials (documented at https://openwhistle.net/en/docs/demo-mode/)
 DEMO_REPORTS: list[dict[str, Any]] = [
     {
         "case_number": "OW-DEMO-00001",

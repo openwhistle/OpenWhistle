@@ -1220,16 +1220,9 @@ def test_the_username_field_accepts_what_the_server_accepts(template: str, name:
 
 def test_no_published_page_calls_fernet_aes_256() -> None:
     """Fernet is AES-128-CBC with HMAC-SHA256. The security policy and the
-    DPA template promised AES-256 and a SECRET_KEY-derived master key."""
-    pages = [
-        *(p for p in (ROOT / "docs").rglob("*.md") if "/docs/_" not in p.as_posix()),
-        *(p for p in (ROOT / "docs").rglob("*.html") if "/docs/_" not in p.as_posix()),
-        ROOT / "README.md",
-    ]
-    # The changelog page's source carries no notes: it renders CHANGELOG.md
-    # (past releases as written, not rewritten) at build time, and is not read here.
-    offenders = [p.name for p in pages if re.search(r"AES-?256", p.read_text())]
-    assert not offenders
+    DPA template promised AES-256 and a SECRET_KEY-derived master key. The
+    website checks its own pages."""
+    assert not re.search(r"AES-?256", (ROOT / "README.md").read_text())
 
 
 def test_every_deadline_state_is_reached() -> None:

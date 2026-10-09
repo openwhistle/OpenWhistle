@@ -1,0 +1,41 @@
+Sora and JetBrains Mono (self-hosted web fonts of the application)
+==================================================================
+
+The six faces app/static/css/fonts.css declares, served at /static/fonts/.
+Self-hosted: nothing loads a font from a CDN. scripts/diagram_geometry.py
+measures diagram text with the Sora cuts.
+
+The website (openwhistle/website) keeps byte-identical copies in docs/fonts
+and its build compares them with this directory of the latest release.
+
+Source
+------
+
+Every file is byte-identical (`cmp`) to the file of the same weight and
+style in these packages; the sha512 is the npm registry's dist.integrity:
+
+  @fontsource/sora@5.3.0
+    https://registry.npmjs.org/@fontsource/sora/-/sora-5.3.0.tgz
+    sha512-SqW3OpKxxfKvxDLPlbdrWf2KooPfbd+W3jaYn483o+Y/JrmU87vjFPNptDqwP428c3vY+gnranLhjcbRaXB0Jw==
+
+  @fontsource/jetbrains-mono@5.3.0
+    https://registry.npmjs.org/@fontsource/jetbrains-mono/-/jetbrains-mono-5.3.0.tgz
+    sha512-fqDfB5I9f1p1TV486aUgB9t8zP84P0O1FtQR5Ol9vjwPy+S+EIGlVYm1cvj2W5shcZMTg2nZFdVMoH5wFu8a1A==
+
+Files
+-----
+
+  sora-latin-{400,500,600,700}-normal.woff2
+  JetBrainsMono-Regular.woff2  (weight 400 normal)
+  JetBrainsMono-Bold.woff2     (weight 700 normal)
+
+Latin subset only, no `unicode-range`: every use of JetBrains Mono is plain
+ASCII (case numbers, PINs, timestamps, the wordmark).
+
+License
+-------
+
+SIL Open Font License 1.1 for both families: `sora-LICENSE`,
+`jetbrains-mono-LICENSE`, unmodified as shipped by their packages. The OFL
+requires the licence to travel with the fonts, so the image ships both files
+next to the faces.

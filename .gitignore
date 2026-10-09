@@ -43,11 +43,6 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# Fonts (copied from docs/fonts at image build, not committed)
-app/static/fonts/*.woff
-app/static/fonts/*.woff2
-app/static/fonts/*.ttf
-
 # Docker
 docker-compose.override.yml
 nginx/certs/*.pem
@@ -64,6 +59,6 @@ integrity-manifest.json
 # Local agent tooling
 .serena/
 
-# Built site and agent scratch
-/_site/
+# Agent scratch
 /.superpowers/
+/.claude/

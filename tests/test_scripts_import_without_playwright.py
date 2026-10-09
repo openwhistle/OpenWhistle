@@ -15,11 +15,12 @@ import importlib.util, sys
 sys.modules["playwright"] = None  # import playwright -> ImportError
 sys.modules["playwright.sync_api"] = None
 spec = importlib.util.spec_from_file_location("m", sys.argv[1])
-spec.loader.exec_module(importlib.util.module_from_spec(spec))
+sys.modules["m"] = module = importlib.util.module_from_spec(spec)  # dataclasses look it up
+spec.loader.exec_module(module)
 """
 
 
-@pytest.mark.parametrize("script", ["compare_site_screens", "render_icons"])
+@pytest.mark.parametrize("script", ["render_icons", "take_screenshots"])
 def test_script_imports_without_playwright(script: str) -> None:
     result = subprocess.run(  # noqa: S603  # fixed argv, no untrusted input
         [sys.executable, "-c", _PROBE, str(ROOT / "scripts" / f"{script}.py")],

@@ -12,7 +12,7 @@ check, so the flag cannot be the only barrier. Every guard below has a test that
   - a bad CSRF token leaves no session and no audit row
   - never true anywhere git tracks except the review override
   - the release Chrome check's page/template list stays in sync with actual
-    routes, `app/templates/**/*.html`, and `docs/**/*.html`, and cannot pass
+    routes and `app/templates/**/*.html`, and cannot pass
     on an empty walk
 """
 
@@ -40,7 +40,6 @@ from app.models.user import AdminUser
 from app.services.audit import AuditAction
 from app.services.auth import hash_password
 from app.services.demo_seed import DEMO_ADMIN_USERNAME
-from tests.built_site import built, pages
 
 ROOT = Path(__file__).parents[1]
 
@@ -467,9 +466,7 @@ async def test_login_page_shows_the_button_only_when_flag_and_barrier_pass(
 # below, which is built for `KEY: value` / `KEY=value` shapes, not code.
 _SCANNABLE_SUFFIXES = (".yml", ".yaml", ".j2", ".example")
 _SCANNABLE_PREFIXES = (".env",)
-# docs/_data/config.yml is the settings reference's data: `- name: LOCAL_REVIEW_LOGIN`
-# names the setting for the docs page and sets nothing.
-_ALLOWLIST_EXACT = {"docker-compose.review.yml", "docs/_data/config.yml"}
+_ALLOWLIST_EXACT = {"docker-compose.review.yml"}
 _ASSIGNMENT = re.compile(r"LOCAL_REVIEW_LOGIN[\"']?\s*[:=]\s*[\"']?([A-Za-z]+)")
 
 
@@ -599,11 +596,6 @@ def _app_html_pages() -> set[str]:
     return pages
 
 
-def _docs_html_pages() -> set[str]:
-    """The URL of every built page: a folder's index.html is served at the folder."""
-    return {"/" + p.relative_to(built()).as_posix().removesuffix("index.html") for p in pages()}
-
-
 def _app_templates() -> set[str]:
     templates_root = ROOT / "app/templates"
     return {
@@ -638,13 +630,6 @@ def test_local_review_page_matrix_covers_every_app_page() -> None:
     assert {"/", "/submit", "/admin/dashboard"} <= pages
     missing = pages - _matrix_table_tokens()
     assert not missing, f"docs-tech/local-review.md is missing app page(s): {sorted(missing)}"
-
-
-def test_local_review_page_matrix_covers_every_docs_site_page() -> None:
-    pages = _docs_html_pages()
-    assert len(pages) >= 9, f"only {len(pages)} built pages found — the build may be broken"
-    missing = pages - _matrix_table_tokens()
-    assert not missing, f"docs-tech/local-review.md is missing site page(s): {sorted(missing)}"
 
 
 def test_local_review_page_matrix_covers_every_app_template() -> None:

@@ -20,6 +20,11 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   GitHub Pages; the privacy policy describes it. The Pages redirect stubs and `docs/_legacy/` are gone: nginx
   answers every old URL with a 301.
 - The installation-count text links its own documentation page instead of a section of the old one-page docs.
+- The website and the documentation moved to their own repository,
+  [openwhistle/website](https://github.com/openwhistle/website); it builds openwhistle.net from the latest
+  release of this one. A user-facing change here comes with a pull request there.
+- The image ships the OFL licences of its fonts (Sora, JetBrains Mono) next to them in `app/static/fonts/`; it
+  shipped the fonts without them.
 
 ### Security
 

@@ -21,7 +21,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-          fetch-depth: 0
 
       - name: Set up Python 3.14
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
@@ -36,7 +35,7 @@ jobs:
 
       - name: Install E2E dependencies
         run: |
-          uv export --frozen --extra dev --extra ldap --extra s3 --extra e2e --group site --no-emit-project -o /tmp/requirements.txt
+          uv export --frozen --extra dev --extra ldap --extra s3 --extra e2e --no-emit-project -o /tmp/requirements.txt
           uv pip install --system -r /tmp/requirements.txt
           uv pip install --system --no-deps -e .
           playwright install chromium --with-deps

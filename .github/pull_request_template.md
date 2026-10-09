@@ -13,4 +13,4 @@
 ## How it was tested
 
 - [ ] `uv run pytest` passes against PostgreSQL and Redis (CLAUDE.md, "Test coverage")
-- [ ] Documentation changed in the same commit (CONTRIBUTING.md, "Documentation")
+- [ ] A user-facing change has its pull request in openwhistle/website, linked here (CONTRIBUTING.md, "Documentation")

@@ -12,8 +12,11 @@ environment (DATABASE_URL, REDIS_URL, SECRET_KEY) that the suite needs.
 from __future__ import annotations
 
 import json
+import os
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,6 +41,11 @@ def main() -> int:
             green += 1
             continue
         path = ROOT / m["file"]
+        if "create" not in m and not path.is_file():
+            # A guard whose file is gone guards nothing; the rest of the spec still runs.
+            print(f"{m['id']:28} STALE  {m['file']} does not exist")
+            green += 1
+            continue
         original = None if "create" in m else path.read_text()
         if original is None and path.exists():
             print(f"{m['id']:28} STALE  {m['file']} already exists")
@@ -52,6 +60,10 @@ def main() -> int:
             made = [p for p in reversed(path.parents) if not p.exists() and p != ROOT]
             path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(m["create"] if original is None else original.replace(m["old"], m["new"]))
+        # A fresh bytecode cache per run: Python trusts a .pyc whose source has the same size
+        # and mtime second, so a same-length mutation written within a second of the last one
+        # ran the last one's code (out-inside-src was GREEN that way).
+        pycache = tempfile.mkdtemp(prefix="mutation-pyc-")
         try:
             run = subprocess.run(  # noqa: S603 — pytest on test paths from a repo file
                 [
@@ -69,12 +81,14 @@ def main() -> int:
                 capture_output=True,
                 text=True,
                 timeout=limit,
+                env={**os.environ, "PYTHONPYCACHEPREFIX": pycache},
             )
         except subprocess.TimeoutExpired:
             # A mutation that hangs the tests is caught: CI would time out too.
             print(f"{m['id']:28} RED    TIMEOUT after {limit} s", flush=True)
             continue
         finally:
+            shutil.rmtree(pycache, ignore_errors=True)
             if original is None:
                 path.unlink()
                 for directory in reversed(made):

@@ -1,0 +1,110 @@
+{
+ "timeout_seconds": 300,
+ "test_groups": {
+  "SPLIT": [
+   "tests/test_repository_split.py"
+  ],
+  "FONTS": [
+   "tests/test_v160_ops.py",
+   "-k",
+   "font_files"
+  ],
+  "SHOTS": [
+   "tests/test_screenshots.py",
+   "tests/test_scripts_import_without_playwright.py"
+  ],
+  "AUDIT": [
+   "tests/test_mutation_specs.py",
+   "-k",
+   "audit"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "SPLIT-DOCS-DIR-BACK",
+   "file": "docs/index.html",
+   "tests": "SPLIT",
+   "create": "<p>a page of the old site</p>\n"
+  },
+  {
+   "id": "SPLIT-WEBSITE-DIR-BACK",
+   "file": "website/nginx.conf",
+   "tests": "SPLIT",
+   "create": "events {}\n"
+  },
+  {
+   "id": "SPLIT-TEST-READS-DOCS",
+   "file": "tests/test_split_probe.py",
+   "tests": "SPLIT",
+   "create": "from pathlib import Path\n\nROOT = Path(__file__).parents[1]\nPAGES = ROOT / \"docs\"\n"
+  },
+  {
+   "id": "SPLIT-TEST-PATH-DOCS",
+   "file": "tests/test_split_probe.py",
+   "tests": "SPLIT",
+   "create": "from pathlib import Path\n\nPAGES = sorted(Path(\"docs\").glob(\"**/*.html\"))\n"
+  },
+  {
+   "id": "SPLIT-SCAN-BLIND",
+   "file": "tests/test_repository_split.py",
+   "tests": "SPLIT",
+   "old": "READS_DOCS = re.compile(r\"\"\"[/(,]\\s*[\"']docs[\"']|[\"']docs[\"']\\s*/|[\"']docs/\"\"\")",
+   "new": "READS_DOCS = re.compile(r\"\"\"[/(,]\\s*[\"']docs[\"']|[\"']docs[\"']\\s*/\"\"\")"
+  },
+  {
+   "id": "SPLIT-SCAN-NO-CALL",
+   "file": "tests/test_repository_split.py",
+   "tests": "SPLIT",
+   "old": "READS_DOCS = re.compile(r\"\"\"[/(,]\\s*[\"']docs[\"']|[\"']docs[\"']\\s*/|[\"']docs/\"\"\")",
+   "new": "READS_DOCS = re.compile(r\"\"\"/\\s*[\"']docs[\"']|[\"']docs[\"']\\s*/|[\"']docs/\"\"\")"
+  },
+  {
+   "id": "FONT-LICENCE-GONE",
+   "file": "app/static/fonts/sora-LICENSE",
+   "tests": "FONTS",
+   "old": "SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n",
+   "new": "\n"
+  },
+  {
+   "id": "FONT-EXTRA-SHIPPED",
+   "file": "app/static/fonts/sora-latin-800-normal.woff2",
+   "tests": "FONTS",
+   "create": "not a font\n"
+  },
+  {
+   "id": "SHOTS-DEFAULT-OUT",
+   "file": "scripts/take_screenshots.py",
+   "tests": "SHOTS",
+   "old": "default=os.environ.get(CHECKOUT_ENV) or None,",
+   "new": "default=os.environ.get(CHECKOUT_ENV) or Path(__file__).resolve().parents[1],"
+  },
+  {
+   "id": "SHOTS-ANY-DIR",
+   "file": "scripts/take_screenshots.py",
+   "tests": "SHOTS",
+   "old": "    if not screens.is_dir():\n",
+   "new": "    if False:\n"
+  },
+  {
+   "id": "SHOTS-PLAYWRIGHT-EAGER",
+   "file": "scripts/take_screenshots.py",
+   "tests": "SHOTS",
+   "old": "if TYPE_CHECKING:\n    from playwright.sync_api import Browser, BrowserContext, Page\n",
+   "new": "from playwright.sync_api import Browser, BrowserContext, Page\n"
+  },
+  {
+   "id": "AUDIT-SHARED-PYC",
+   "file": "scripts/mutation_audit.py",
+   "tests": "AUDIT",
+   "old": "                env={**os.environ, \"PYTHONPYCACHEPREFIX\": pycache},\n",
+   "new": "                env=dict(os.environ),\n"
+  },
+  {
+   "id": "AUDIT-MISSING-CRASHES",
+   "file": "scripts/mutation_audit.py",
+   "tests": "AUDIT",
+   "old": "        if \"create\" not in m and not path.is_file():\n",
+   "new": "        if \"create\" not in m and False:\n"
+  }
+ ]
+}

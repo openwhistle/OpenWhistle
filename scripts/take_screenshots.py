@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Take the documentation screenshots for docs/img/screens.
+"""Take the documentation screenshots into a checkout of openwhistle/website.
 
-Run against the local-review stack (see docs-tech/local-review.md):
+The screenshots are the website's files (docs/img/screens there); this script
+writes them into the checkout given by --out or OW_WEBSITE_CHECKOUT and refuses
+to run without one. Run against the local-review stack (docs-tech/local-review.md):
 
     podman compose -f docker-compose.e2e.yml -f docker-compose.review.yml up -d --build
-    uv run python scripts/take_screenshots.py
+    uv run python scripts/take_screenshots.py --out ../website
     podman compose -f docker-compose.e2e.yml -f docker-compose.review.yml down -v
 
 Re-take these whenever the change alters the interface they document (a
@@ -21,16 +23,22 @@ just a GET.
 
 from __future__ import annotations
 
+import argparse
 import io
+import os
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from PIL import Image
-from playwright.sync_api import Browser, BrowserContext, Page, sync_playwright
+
+if TYPE_CHECKING:
+    from playwright.sync_api import Browser, BrowserContext, Page
 
 BASE_URL = "http://127.0.0.1:4009"
-OUT_DIR = Path(__file__).resolve().parent.parent / "docs" / "img" / "screens"
+CHECKOUT_ENV = "OW_WEBSITE_CHECKOUT"
+SCREENS = Path("docs") / "img" / "screens"
 
 # The admin two-column layout (`.admin-shell` in app/static/css/site.css) drops
 # its sidebar to a single column at `max-width: 1023px` (that media query sits
@@ -184,8 +192,8 @@ def _save_optimised_png(page_bytes: bytes, out_path: Path) -> None:
     small.save(out_path.with_name(out_path.stem + "-m.webp"), format="WEBP", quality=60, method=6)
 
 
-def shoot(page: Page, name: str, theme: str) -> None:
-    """Screenshot the current page into docs/img/screens/<name>-<theme>.png.
+def shoot(page: Page, name: str, theme: str, out_dir: Path) -> None:
+    """Screenshot the current page into <out_dir>/<name>-<theme>.png.
 
     Grows the viewport to the document's height instead of passing
     `full_page=True`: easywall's TestScreenshotsGrowTheWindowInsteadOfCapturingBeyondIt
@@ -202,13 +210,13 @@ def shoot(page: Page, name: str, theme: str) -> None:
     # white, before their background had faded in.
     page.wait_for_timeout(600)
 
-    out_path = OUT_DIR / f"{name}-{theme}.png"
+    out_path = out_dir / f"{name}-{theme}.png"
     png_bytes = page.screenshot(full_page=False)
     _save_optimised_png(png_bytes, out_path)
 
     page.set_viewport_size({"width": VIEWPORT_WIDTH, "height": VIEWPORT_HEIGHT})
     size_kb = out_path.stat().st_size / 1024
-    print(f"  wrote {out_path.relative_to(OUT_DIR.parent.parent.parent)} ({size_kb:.0f} KiB)")
+    print(f"  wrote {out_path} ({size_kb:.0f} KiB)")
 
 
 def _themed_context(browser: Browser, theme: str) -> BrowserContext:
@@ -230,7 +238,30 @@ def _themed_context(browser: Browser, theme: str) -> BrowserContext:
     return context
 
 
-def main() -> None:
+def out_dir(argv: list[str] | None = None) -> Path:
+    """The website checkout's screenshot folder; exits (code 2) without a checkout."""
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--out",
+        type=Path,
+        default=os.environ.get(CHECKOUT_ENV) or None,
+        help=f"checkout of openwhistle/website (default: ${CHECKOUT_ENV})",
+    )
+    checkout = parser.parse_args(argv).out
+    if checkout is None:
+        parser.error(f"give --out <website checkout> or set {CHECKOUT_ENV}")
+    screens = Path(checkout) / SCREENS
+    if not screens.is_dir():
+        parser.error(
+            f"{screens} is not a directory: --out must be a checkout of openwhistle/website"
+        )
+    return screens
+
+
+def main(argv: list[str] | None = None) -> None:
+    out = out_dir(argv)
+    from playwright.sync_api import sync_playwright  # CI's test job has no Playwright
+
     with sync_playwright() as p:
         browser = p.chromium.launch()
         try:
@@ -246,7 +277,7 @@ def main() -> None:
                     context = _themed_context(browser, theme)
                     page = context.new_page()
                     shot.setup(page)
-                    shoot(page, shot.name, theme)
+                    shoot(page, shot.name, theme, out)
                     context.close()
         finally:
             browser.close()

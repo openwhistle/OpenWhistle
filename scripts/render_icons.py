@@ -1,18 +1,15 @@
-"""Render the K3 rasters: favicon.ico (16+32), apple-touch-icon.png,
-github-avatar.png.
+"""Render the app's K3 rasters: app/static/favicon.ico (16+32) and apple-touch-icon.png.
 
     uv run python scripts/render_icons.py
 
 An ink mark on a white tile, drawn by Chromium from the one geometry below; tests/test_mark.py
-holds every SVG copy of the mark to this path. The app serves byte-identical copies of the
-browser icons. github-avatar.png is uploaded by hand to the GitHub organisation, Docker Hub
-and quay.io (docs-tech/specs/2026-10-02-website-p2-design.md).
+holds every SVG copy of the mark to this path. The website (openwhistle/website) renders its
+own copies and compares them with the release's app/static files.
 """
 
 from __future__ import annotations
 
 import io
-import shutil
 from pathlib import Path
 
 from PIL import Image
@@ -23,7 +20,6 @@ MARK = (
     "A4,4 0 0 1 7,3 Z M10.60,11.81 A3.5,3.5 0 1 1 13.40,11.81 L14.50,15.4 H9.50 Z"
 )
 INK = "#0a0a0b"
-APP_COPIES = ("favicon.ico", "apple-touch-icon.png")
 
 
 def _tile(size: int) -> str:
@@ -50,13 +46,10 @@ def render(sizes: tuple[int, ...]) -> dict[int, Image.Image]:
 
 
 def main() -> int:
-    docs = ROOT / "docs"
-    img = render((32, 180, 500))
-    img[180].save(docs / "apple-touch-icon.png", optimize=True)
-    img[500].save(docs / "github-avatar.png", optimize=True)
-    img[32].save(docs / "favicon.ico", sizes=[(16, 16), (32, 32)])
-    for name in APP_COPIES:
-        shutil.copyfile(docs / name, ROOT / "app" / "static" / name)
+    static = ROOT / "app" / "static"
+    img = render((32, 180))
+    img[180].save(static / "apple-touch-icon.png", optimize=True)
+    img[32].save(static / "favicon.ico", sizes=[(16, 16), (32, 32)])
     return 0
 
 
