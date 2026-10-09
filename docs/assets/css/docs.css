@@ -110,6 +110,9 @@
       border-radius: var(--radius-md);
       transition: color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
     }
+    /* Without JavaScript the button stays hidden; search.js un-hides it. It keeps its box meanwhile:
+       showing it later pushed the menu and the article down (CLS 0.065). */
+    .docs-search-open[hidden] { display: block; visibility: hidden; }
     .docs-search-open:hover { color: var(--ink); box-shadow: 0 0 0 1px var(--muted); }
     .docs-search-open kbd, .docs-search-head button {
       font-family: var(--font-mono);

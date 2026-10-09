@@ -173,10 +173,14 @@ def _load_script(name: str) -> ModuleType:
     return module
 
 
-def _changelog(src: Path) -> str:
+def _changelog(src: Path, *, older: bool = False) -> str:
     changelog = _load_script("render_changelog")
     source = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
-    return str(changelog.render_content(*changelog.parse(source)))
+    return str(changelog.render_content(*changelog.parse(source), older=older))
+
+
+def _changelog_older(src: Path) -> str:
+    return _changelog(src, older=True)
 
 
 # need -> (CSS class suffix, label), exactly as the hand-written tables had them
@@ -262,6 +266,7 @@ def _configuration(src: Path) -> str:
 # generator name -> (function, the file its output comes from)
 GENERATORS: dict[str, tuple[Callable[[Path], str], Path]] = {
     "changelog": (_changelog, ROOT / "CHANGELOG.md"),
+    "changelog_older": (_changelog_older, ROOT / "CHANGELOG.md"),
     "configuration": (_configuration, DOCS / "_data" / "config.yml"),
 }
 
@@ -886,6 +891,12 @@ def _drawn_text(out: Path) -> str:
     return "".join(sorted(chars))
 
 
+# Kerning, ligatures, tabular figures (base.css: table/code/pre) and the language forms. JetBrains
+# Mono's contextual code ligatures (calt) cost ~12 KB per cut; the page budget (<= 100 KB for the
+# first view) cannot afford them.
+FONT_FEATURES = ["kern", "liga", "tnum", "locl", "ccmp"]
+
+
 def subset_fonts(out: Path) -> dict[str, int]:
     """Cut every woff2 in out/fonts down to what the site draws (spec P2b step 5).
 
@@ -898,7 +909,7 @@ def subset_fonts(out: Path) -> dict[str, int]:
     for font_file in sorted((out / "fonts").glob("*.woff2")):
         options = ft_subset.Options()
         options.flavor = "woff2"
-        options.layout_features = ["*"]
+        options.layout_features = FONT_FEATURES
         font = ft_subset.load_font(str(font_file), options)
         subsetter = ft_subset.Subsetter(options)
         subsetter.populate(text=text)

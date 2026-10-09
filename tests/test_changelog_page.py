@@ -42,6 +42,16 @@ def test_the_built_page_is_the_changelog() -> None:
     assert content in _page().read_text(encoding="utf-8")
 
 
+def test_the_older_page_holds_the_rest_and_no_release_is_on_both() -> None:
+    versions, link_defs = RENDER_CHANGELOG.parse(CHANGELOG.read_text())
+    older = RENDER_CHANGELOG.render_content(versions, link_defs, older=True)
+    assert older in (built() / "en/changelog/older/index.html").read_text(encoding="utf-8")
+    ids = lambda page: set(re.findall(r'<section class="docs-section" id="([^"]+)"', page))  # noqa: E731
+    current = ids(RENDER_CHANGELOG.render_content(versions, link_defs))
+    assert current and ids(older) and not current & ids(older)
+    assert "v1-0-0" in ids(older) and "v2-0-0" in current and "unreleased" in current
+
+
 def test_render_content_holds_no_site_chrome() -> None:
     content = RENDER_CHANGELOG.render_content(*RENDER_CHANGELOG.parse(_FIXTURE))
     assert "<footer" not in content and "site-nav" not in content and "<head" not in content

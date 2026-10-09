@@ -13,8 +13,8 @@ js:
 
         <h2 id="admin-login">Signing in</h2>
         <figure class="doc-shot">
-          <img class="shot-light" src="/img/screens/admin-login-light.png" alt="The reporting office sign-in: username, password and Continue." width="1440" height="900" loading="lazy">
-          <img class="shot-dark" src="/img/screens/admin-login-dark.png" alt="The reporting office sign-in: username, password and Continue." width="1440" height="900" loading="lazy">
+          <picture><source media="(max-width: 600px)" srcset="/img/screens/admin-login-light-m.webp"><img class="shot-light" src="/img/screens/admin-login-light.png" alt="The reporting office sign-in: username, password and Continue." width="1440" height="900" loading="lazy"></picture>
+          <picture><source media="(max-width: 600px)" srcset="/img/screens/admin-login-dark-m.webp"><img class="shot-dark" src="/img/screens/admin-login-dark.png" alt="The reporting office sign-in: username, password and Continue." width="1440" height="900" loading="lazy"></picture>
         </figure>
         <p>
           Every account signs in with two factors. The first is a password (local or LDAP) or OIDC;
@@ -33,8 +33,8 @@ js:
 
         <h2 id="dashboard-overview">Dashboard overview</h2>
         <figure class="doc-shot">
-          <img class="shot-light" src="/img/screens/admin-dashboard-light.png" alt="The reports dashboard: status and location filters, a search field, and the report table with case number, category, status, submitted day, assignee, 7-day SLA and 3-month SLA." width="1440" height="1009" loading="lazy">
-          <img class="shot-dark" src="/img/screens/admin-dashboard-dark.png" alt="The reports dashboard: status and location filters, a search field, and the report table with case number, category, status, submitted day, assignee, 7-day SLA and 3-month SLA." width="1440" height="1009" loading="lazy">
+          <picture><source media="(max-width: 600px)" srcset="/img/screens/admin-dashboard-light-m.webp"><img class="shot-light" src="/img/screens/admin-dashboard-light.png" alt="The reports dashboard: status and location filters, a search field, and the report table with case number, category, status, submitted day, assignee, 7-day SLA and 3-month SLA." width="1440" height="1009" loading="lazy"></picture>
+          <picture><source media="(max-width: 600px)" srcset="/img/screens/admin-dashboard-dark-m.webp"><img class="shot-dark" src="/img/screens/admin-dashboard-dark.png" alt="The reports dashboard: status and location filters, a search field, and the report table with case number, category, status, submitted day, assignee, 7-day SLA and 3-month SLA." width="1440" height="1009" loading="lazy"></picture>
         </figure>
         <p>
           <code>/admin/dashboard</code> lists every report you may see, with sortable columns,
@@ -97,8 +97,8 @@ js:
         </ul>
         <p>Click a report to open its case page, <code>/admin/reports/{report_id}</code>:</p>
         <figure class="doc-shot">
-          <img class="shot-light" src="/img/screens/admin-report-light.png" alt="A case page: the report, the communication thread, a reply box and internal notes; beside them the submission details and the actions acknowledge, assign, update status, export PDF and delete." width="1440" height="1888" loading="lazy">
-          <img class="shot-dark" src="/img/screens/admin-report-dark.png" alt="A case page: the report, the communication thread, a reply box and internal notes; beside them the submission details and the actions acknowledge, assign, update status, export PDF and delete." width="1440" height="1888" loading="lazy">
+          <picture><source media="(max-width: 600px)" srcset="/img/screens/admin-report-light-m.webp"><img class="shot-light" src="/img/screens/admin-report-light.png" alt="A case page: the report, the communication thread, a reply box and internal notes; beside them the submission details and the actions acknowledge, assign, update status, export PDF and delete." width="1440" height="1888" loading="lazy"></picture>
+          <picture><source media="(max-width: 600px)" srcset="/img/screens/admin-report-dark-m.webp"><img class="shot-dark" src="/img/screens/admin-report-dark.png" alt="A case page: the report, the communication thread, a reply box and internal notes; beside them the submission details and the actions acknowledge, assign, update status, export PDF and delete." width="1440" height="1888" loading="lazy"></picture>
         </figure>
         <ul>
           <li>Read the report and its submission mode (anonymous / confidential).</li>
@@ -155,8 +155,8 @@ js:
 
         <h2 id="system-updates">System &amp; updates</h2>
         <figure class="doc-shot">
-          <img class="shot-light" src="/img/screens/admin-system-light.png" alt="System and updates: installed version and update status, the file integrity check, the installation count card and the two settings behind them." width="1440" height="1784" loading="lazy">
-          <img class="shot-dark" src="/img/screens/admin-system-dark.png" alt="System and updates: installed version and update status, the file integrity check, the installation count card and the two settings behind them." width="1440" height="1784" loading="lazy">
+          <picture><source media="(max-width: 600px)" srcset="/img/screens/admin-system-light-m.webp"><img class="shot-light" src="/img/screens/admin-system-light.png" alt="System and updates: installed version and update status, the file integrity check, the installation count card and the two settings behind them." width="1440" height="1784" loading="lazy"></picture>
+          <picture><source media="(max-width: 600px)" srcset="/img/screens/admin-system-dark-m.webp"><img class="shot-dark" src="/img/screens/admin-system-dark.png" alt="System and updates: installed version and update status, the file integrity check, the installation count card and the two settings behind them." width="1440" height="1784" loading="lazy"></picture>
         </figure>
         <ul>
           <li><code>/admin/system</code> shows the installed version. With <code>UPDATE_CHECK_ENABLED=true</code> (opt-in, off by default) it also says whether GitHub has a newer release: checked once a day, cached, no instance data sent.</li>

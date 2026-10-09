@@ -202,12 +202,12 @@ SHELL_TAIL = """        </nav>
       <nav class="docs-breadcrumb" aria-label="Breadcrumb">
         <a href="/en/">OpenWhistle</a>
         <span>/</span>
-        <span>Changelog</span>
+{crumb}
       </nav>
 
-      <h1>Changelog</h1>
+      <h1>{title}</h1>
       <p class="docs-lead">
-        Every release, newest first. Rendered from
+        {lead} Rendered from
         <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG.md</a>,
         the file GitHub and the release tooling read.
       </p>
@@ -221,9 +221,22 @@ CONTENT_FOOT = """    </main>
   """
 
 
-def render_content(versions: list[Version], link_defs: dict[str, str]) -> str:
-    """The page body between the site navigation and the footer; the layout adds the rest."""
+def _major(version: Version) -> int | None:
+    return int(m.group(1)) if (m := re.match(r"(\d+)\.", version.name)) else None
+
+
+def render_content(
+    versions: list[Version], link_defs: dict[str, str], *, older: bool = False
+) -> str:
+    """The page body between the site navigation and the footer; the layout adds the rest.
+
+    Two pages, because one page of every release is 43 KB of HTML and the first view of a
+    page stays within 100 KB: /en/changelog/ holds the newest major and what is not yet
+    released, /en/changelog/older/ every major before it.
+    """
     shown = [v for v in versions if any(line.strip() for line in v.lines)]
+    current = max((m for v in shown if (m := _major(v)) is not None), default=0)
+    shown = [v for v in shown if ((_major(v) or current) < current) == older]
 
     nav_links = "\n".join(f'          <a href="#{slug(v.name)}">{esc(v.name)}</a>' for v in shown)
 
@@ -241,4 +254,24 @@ def render_content(versions: list[Version], link_defs: dict[str, str]) -> str:
             f"      </section>\n"
         )
 
-    return CONTENT_HEAD + nav_links + "\n" + SHELL_TAIL + "\n".join(sections) + CONTENT_FOOT
+    if older:
+        crumb = (
+            '        <a href="/en/changelog/">Changelog</a>\n        <span>/</span>\n'
+            "        <span>Older releases</span>"
+        )
+        title = "Older releases"
+        lead = (
+            f"Every release before {current}.0.0, newest first. "
+            '<a href="/en/changelog/">Back to the current releases</a>.'
+        )
+    else:
+        crumb = "        <span>Changelog</span>"
+        title = "Changelog"
+        lead = (
+            f"Every release since {current}.0.0, newest first. "
+            'Before that: <a href="/en/changelog/older/">older releases</a>.'
+        )
+    shell_tail = (
+        SHELL_TAIL.replace("{title}", title).replace("{lead}", lead).replace("{crumb}", crumb)
+    )
+    return CONTENT_HEAD + nav_links + "\n" + shell_tail + "\n".join(sections) + CONTENT_FOOT

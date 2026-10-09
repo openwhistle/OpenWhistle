@@ -278,6 +278,41 @@
    "old": "\"~^https?://(?:[^@/]*@)?(?<rhost>[A-Za-z0-9.-]+)(?:[:/?#]|$)\" $rhost;",
    "new": "\"~^https?://(?<rhost>[^/:?#]+)\" $rhost;",
    "red": "tests/website/test_container.py::test_the_referer_keeps_the_hostname_only"
+  },
+  {
+   "id": "CSP-THEME-HASH-LIVE",
+   "file": "website/nginx.conf",
+   "old": "'sha256-aTVT2yTZj8X3C8V1QPnib4HTXa5Npxc/Hah1pqj89gY='; style-src",
+   "new": "'sha256-bTVT2yTZj8X3C8V1QPnib4HTXa5Npxc/Hah1pqj89gY='; style-src",
+   "red": "tests/e2e/test_site_container.py::test_no_page_breaks_its_csp"
+  },
+  {
+   "id": "DOCS-NO-WASM-LIVE",
+   "file": "website/nginx.conf",
+   "old": "script-src 'self' 'wasm-unsafe-eval' ",
+   "new": "script-src 'self' ",
+   "red": "tests/e2e/test_site_container.py::test_search_works_under_the_docs_csp"
+  },
+  {
+   "id": "BUDGET-EAGER",
+   "file": "docs/en/docs/whistleblower/index.html",
+   "old": "src=\"/img/screens/status-light.png\" alt=\"The status page: case number and secret PIN fields and a View report status button.\" width=\"1440\" height=\"900\" loading=\"lazy\">",
+   "new": "src=\"/img/screens/status-light.png\" alt=\"The status page: case number and secret PIN fields and a View report status button.\" width=\"1440\" height=\"900\">",
+   "red": "tests/e2e/test_site_container.py::test_the_first_view_stays_in_budget"
+  },
+  {
+   "id": "PAGEFIND-WORKER-CSP",
+   "file": "website/nginx.conf",
+   "old": "\"~^/(en/docs|pagefind)/\" \"docs\";",
+   "new": "\"~^/en/docs/\" \"docs\";",
+   "red": "tests/e2e/test_site_container.py::test_search_works_under_the_docs_csp"
+  },
+  {
+   "id": "SEARCH-BUTTON-SPACE",
+   "file": "docs/assets/css/docs.css",
+   "old": "    .docs-search-open[hidden] { display: block; visibility: hidden; }\n",
+   "new": "",
+   "red": "tests/e2e/test_site_container.py::test_the_first_view_stays_in_budget"
   }
  ]
 }

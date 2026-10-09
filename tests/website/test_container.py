@@ -76,6 +76,12 @@ def test_the_docs_alone_may_compile_wasm() -> None:
     assert "'wasm-unsafe-eval'" not in get("/en/").headers["content-security-policy"]
 
 
+def test_the_search_worker_may_compile_wasm_too() -> None:
+    """A worker runs under the policy of its own response, not the page's."""
+    worker = get("/pagefind/pagefind-worker.js")
+    assert "'wasm-unsafe-eval'" in worker.headers["content-security-policy"]
+
+
 @pytest.mark.parametrize(("old", "new"), sorted(REDIRECTS.items()))
 def test_every_old_url_moves_permanently(old: str, new: str) -> None:
     response = get(old)

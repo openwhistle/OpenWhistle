@@ -39,6 +39,7 @@ OUT_DIR = Path(__file__).resolve().parent.parent / "docs" / "img" / "screens"
 # collapsed, single-column fallback instead of the layout the docs describe —
 # see easywall's TestScreenshotsAreTakenAboveTheTwoColumnBreakpoint, which is
 # the guard tests/test_screenshots.py adapts for this constant.
+MOBILE_WIDTH = 720
 VIEWPORT_WIDTH = 1440
 VIEWPORT_HEIGHT = 900
 
@@ -174,6 +175,12 @@ def _save_optimised_png(page_bytes: bytes, out_path: Path) -> None:
     img = Image.open(io.BytesIO(page_bytes)).convert("RGB")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     img.save(out_path, format="PNG", optimize=True)
+    # Narrow screens get a 720 px WebP through <picture> (docs: .doc-shot): the page budget
+    # (<= 100 KB for the first view) cannot carry a 170 KB PNG that lazy loading fetches anyway.
+    small = img.resize(
+        (MOBILE_WIDTH, round(img.height * MOBILE_WIDTH / img.width)), Image.Resampling.LANCZOS
+    )
+    small.save(out_path.with_name(out_path.stem + "-m.webp"), format="WEBP", quality=72, method=6)
 
 
 def shoot(page: Page, name: str, theme: str) -> None:

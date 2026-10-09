@@ -674,7 +674,7 @@
    "id": "FONTS-DEFAULT-LAYOUT-FEATURES",
    "file": "scripts/build_site.py",
    "tests": "FONTS",
-   "old": "        options.layout_features = [\"*\"]\n",
+   "old": "        options.layout_features = FONT_FEATURES\n",
    "new": ""
   },
   {

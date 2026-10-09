@@ -286,8 +286,8 @@
   {
    "id": "PHONE-MENU-OPEN",
    "file": "docs/_layouts/docs.html",
-   "old": "if(matchMedia('(max-width: 768px)').matches)document.querySelector('.docs-menu').removeAttribute('open')",
-   "new": "if(0)document.querySelector('.docs-menu').removeAttribute('open')",
+   "old": "if(matchMedia('(max-width: 768px)').matches)document.currentScript.parentNode.removeAttribute('open')",
+   "new": "if(0)document.currentScript.parentNode.removeAttribute('open')",
    "tests": "MENU_E2E"
   },
   {

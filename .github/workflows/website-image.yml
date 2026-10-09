@@ -69,6 +69,11 @@ jobs:
           WEBSITE_CONTAINER: ow-website
         run: pytest tests/website -q --no-cov -p no:cacheprovider
 
+      - name: Browser tests against the container
+        env:
+          WEBSITE_URL: http://127.0.0.1:8080
+        run: pytest tests/e2e/test_site_container.py -m e2e --browser chromium -q --no-cov -p no:cacheprovider
+
       - name: Trivy
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:

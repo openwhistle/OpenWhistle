@@ -49,7 +49,9 @@ def test_the_preloaded_fonts_are_the_ones_the_first_view_uses(
                 )
             finally:
                 ctx.close()
-    sora = {u.split()[1] for u in used if u.startswith("Sora ") and "italic" not in u}
+    # fonts.css declares 400, 600 and 700 only: CSS picks 400 for 300 and 500 (page budget).
+    cut = lambda w: "400" if int(w) <= 500 else w  # noqa: E731
+    sora = {cut(u.split()[1]) for u in used if u.startswith("Sora ") and "italic" not in u}
     matches = (re.search(r"sora-latin-(\d+)-normal", f) for f in preloaded)
     found = {m.group(1) for m in matches if m}
     assert found == sora, (sorted(sora), sorted(found))
