@@ -1,0 +1,31 @@
+{
+ "timeout_seconds": 600,
+ "test_groups": {
+  "PACKAGE": [
+   "tests/test_package_site.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "GZ-ALL-FILES",
+   "file": "scripts/package_site.py",
+   "old": "        if path.is_file() and path.suffix in TEXT_SUFFIXES:",
+   "new": "        if path.is_file():",
+   "tests": "PACKAGE"
+  },
+  {
+   "id": "GZ-MTIME",
+   "file": "scripts/package_site.py",
+   "old": "gzip.compress(path.read_bytes(), compresslevel=9, mtime=0)",
+   "new": "gzip.compress(path.read_bytes(), compresslevel=9, mtime=None)",
+   "tests": "PACKAGE"
+  },
+  {
+   "id": "MAP-UNSAFE",
+   "file": "scripts/package_site.py",
+   "old": "            if not _SAFE.fullmatch(part):",
+   "new": "            if False:",
+   "tests": "PACKAGE"
+  }
+ ]
+}
