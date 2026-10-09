@@ -895,6 +895,13 @@
    "old": "    return _CELL_END.sub(\"\\\\1\\n\", html_out)",
    "new": "    return html_out",
    "tests": "BUILD_SETTINGS"
+  },
+  {
+   "id": "LINKS-REASON-SILENT",
+   "file": "scripts/check_external_links.py",
+   "old": "        print(f\"  {url}: {type(error).__name__}: {error}\", file=sys.stderr)\n",
+   "new": "",
+   "tests": "LINKS"
   }
  ]
 }

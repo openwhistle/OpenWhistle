@@ -62,7 +62,9 @@ def fetch(url: str) -> int | None:
     except urllib.error.HTTPError as error:
         return error.code
     # InvalidURL is a ValueError, BadStatusLine an HTTPException: one bad host never ends the run.
-    except urllib.error.URLError, http.client.HTTPException, ValueError, OSError:
+    except (urllib.error.URLError, http.client.HTTPException, ValueError, OSError) as error:
+        # "no connection" alone cannot tell a dead host from one that refuses this runner.
+        print(f"  {url}: {type(error).__name__}: {error}", file=sys.stderr)
         return None
 
 

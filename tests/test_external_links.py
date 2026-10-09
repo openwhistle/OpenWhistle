@@ -85,13 +85,15 @@ def test_an_ok_answer_is_not_retried(monkeypatch: pytest.MonkeyPatch) -> None:
     ids=lambda e: type(e).__name__,
 )
 def test_a_bad_host_is_no_connection_not_a_crash(
-    monkeypatch: pytest.MonkeyPatch, error: Exception
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], error: Exception
 ) -> None:
     def refuse(*_a: object, **_k: object) -> None:
         raise error
 
     monkeypatch.setattr(C.urllib.request, "urlopen", refuse)
     assert C.fetch("https://example.org/") is None
+    # The reason reaches the log: a timeout and a refused connection need different fixes.
+    assert f"https://example.org/: {type(error).__name__}" in capsys.readouterr().err
 
 
 @pytest.mark.parametrize(("dead", "code"), [(set(), 0), ({"https://example.org/b"}, 1)])
