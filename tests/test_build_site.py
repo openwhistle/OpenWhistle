@@ -63,7 +63,7 @@ def test_pages_land_at_their_url_and_statics_are_copied(src: Path, tmp_path: Pat
     assert (out / "de" / "index.html").is_file()
     assert (out / "404.html").is_file()
     assert (out / "img" / "pixel.png").read_bytes() == (src / "img" / "pixel.png").read_bytes()
-    assert (out / ".nojekyll").is_file()
+    assert not (out / ".nojekyll").exists()  # Pages-only; nginx needs none
 
 
 def test_underscore_paths_never_reach_the_output(src: Path, tmp_path: Path) -> None:
@@ -948,3 +948,11 @@ def test_the_build_has_no_stub_writer_and_no_legacy_copies() -> None:
     assert not re.search(r"write_stubs|STUB|redirect.stubs", source)
     assert not hasattr(B, "write_stubs")
     assert not (ROOT / "docs" / "_legacy").exists()
+
+
+def test_no_workflow_deploys_to_github_pages() -> None:
+    """P5: the site is the container image; Pages machinery must not come back."""
+    workflows = ROOT / ".github" / "workflows"
+    assert not (workflows / "pages.yml").exists()
+    for path in workflows.glob("*.yml"):
+        assert not re.search(r"deploy-pages|upload-pages-artifact", path.read_text()), path.name

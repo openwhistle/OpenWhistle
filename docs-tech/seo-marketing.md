@@ -26,9 +26,7 @@ One primary keyword per page; no two pages share one. The title starts with it, 
 | `blog/en.html` and the seven English twins | the German page's primary, in English | none yet: no Search Console data for the English blog |
 
 The blog is bilingual since 2026-09-27: every German article has an English twin (hreflang, x-default English;
-`test_every_blog_page_exists_in_english_and_german`). The German URLs were kept: Pages could not
-redirect with a 301, and the URLs are indexed;
-the English slugs are the English keyword. Re-cut the English rows once Search Console shows their queries.
+`test_every_blog_page_exists_in_english_and_german`). The German URLs were kept because they are indexed; the English slugs are the English keyword. Re-cut the English rows once Search Console shows their queries.
 
 The comparison page's slug carries the category term, but its primary is the comparison query: `index.html`
 already owns "open source whistleblower software", and two pages on one query split its ranking.
@@ -101,7 +99,7 @@ openwhistle.pro, `Artaeon/openwhistle`). Maintainer actions, prepared, not run:
 | Canonical = the address the server serves the file at: `/en/`, `/de/`, `/<lang>/<page>/` | Sitemap, canonical and nav must name one URL |
 | hreflang `en`/`de`/`x-default` only where a translation exists, reciprocal | The German blog index named the English home page its `en` version |
 | Each directory page has its own `og.png`, 1200×630, typed, with an alt naming its title; JSON-LD `image` is the same card | It was a blank navy rectangle: every shared link showed an empty card |
-| `<meta name="referrer" content="no-referrer">` on every page | a Referrer-Policy header is not guaranteed; an outbound click would name the page |
+| `<meta name="referrer" content="no-referrer">` on every page | an outbound click would name the page, whatever header the server sends |
 | One Atom feed per language at `/<lang>/blog/feed.xml`, listing every post, announced on every blog page | — |
 | Both homes carry `SoftwareApplication` and `Organization`; every docs page one `BreadcrumbList` | `/de/` had no `Organization` |
 | JSON-LD parses; no `aggregateRating` or `review` | OpenWhistle has no ratings; invented ones break Google's policy |

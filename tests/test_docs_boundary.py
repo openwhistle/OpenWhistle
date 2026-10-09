@@ -64,7 +64,7 @@ def test_no_built_file_comes_from_docs_tech() -> None:
     """Neither by name nor by content."""
     tech_files = [p for p in (ROOT / "docs-tech").rglob("*") if p.is_file()]
     tech_names = {p.name for p in tech_files}
-    # An empty file says nothing; it would only collide with the empty built .nojekyll.
+    # An empty file says nothing; any empty built file would collide with it.
     tech_hashes = {
         hashlib.sha256(p.read_bytes()).hexdigest() for p in tech_files if p.stat().st_size
     }

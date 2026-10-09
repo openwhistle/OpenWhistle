@@ -47,6 +47,10 @@ def main() -> int:
             print(f"{m['id']:28} STALE  snippet matches {original.count(m['old'])}x in {m['file']}")
             green += 1
             continue
+        made = []  # directories this mutation creates; removed again with the file
+        if original is None:
+            made = [p for p in reversed(path.parents) if not p.exists() and p != ROOT]
+            path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(m["create"] if original is None else original.replace(m["old"], m["new"]))
         try:
             run = subprocess.run(  # noqa: S603 — pytest on test paths from a repo file
@@ -73,6 +77,8 @@ def main() -> int:
         finally:
             if original is None:
                 path.unlink()
+                for directory in reversed(made):
+                    directory.rmdir()
             else:
                 path.write_text(original)
         fired = next(

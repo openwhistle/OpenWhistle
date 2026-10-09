@@ -115,12 +115,11 @@ cosign verify ghcr.io/openwhistle/openwhistle:X.Y.Z \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
-Until the site moves off GitHub Pages (website P5), Pages keeps its last workflow deployment (the workflow is gone)
-and must never switch to `main:/docs`: after P1 the legacy setting served the raw sources for 15 minutes.
+The site is served from its own container (`ghcr.io/openwhistle/website`), not from GitHub Pages; check it from outside:
 
 ```bash
-gh api repos/openwhistle/OpenWhistle/pages -q .build_type     # workflow
 curl -s -o /dev/null -w '%{http_code}\n' https://openwhistle.net/en/   # 200
+curl -sI https://openwhistle.net/en/ | grep -i '^content-security-policy'   # the image's own headers
 ```
 
 Then create the GitHub release from the changelog section.

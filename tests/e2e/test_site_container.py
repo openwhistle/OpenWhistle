@@ -122,3 +122,21 @@ def test_the_first_view_stays_in_budget(browser: Browser, url: str) -> None:
     # The fonts are inlined in the CSS: under the throttle the first view is drawn in them.
     assert custom and all(custom), f"{url}: the text fell back to a system font"
     assert all(mono), f"{url}: code fell back to a system font"
+
+
+@pytest.mark.parametrize(
+    ("old", "lands"),
+    [
+        ("/docs.html#onion-address", "/en/docs/onion/"),
+        ("/docs.html#first-run", "/en/docs/install/#first-run"),
+    ],
+)
+def test_an_old_one_pager_anchor_lands_on_its_page(browser: Browser, old: str, lands: str) -> None:
+    # nginx 301s /docs.html; the browser keeps the fragment and the anchor script maps it.
+    ctx = browser.new_context()
+    try:
+        page = ctx.new_page()
+        page.goto(BASE + old)
+        page.wait_for_url(f"**{lands}")
+    finally:
+        ctx.close()

@@ -161,11 +161,12 @@ SERVER = {
             "Hetzner Online GmbH",
             "Art. 28 DSGVO",
             "kein Zugriffs- und kein Fehlerprotokoll",
-            "den angeforderten Pfad, den Statuscode und den Hostnamen der verweisenden Website",
-            "nur die Uhrzeit,",
+            "den ausgelieferten Pfad, den Statuscode und den Hostnamen der verweisenden Website",
+            "nur den Zeitpunkt,",
             "keine IP-Adresse, keine Browserkennung und keine Query-Zeichenfolge",
             "30 Tage auf dem Server und 90 Tage in unserem Protokollarchiv",
             "Art. 6 Abs. 1 lit. f DSGVO",
+            "Ihre IP-Adresse für die Dauer der Verbindung; gespeichert wird sie nicht",
         ),
     ),
     "/en/privacy/": (
@@ -174,11 +175,12 @@ SERVER = {
             "Hetzner Online GmbH",
             "Art. 28 GDPR",
             "no access log and no error log",
-            "only the time,",
-            "the requested path, the status code and the host name of the referring site",
+            "only the date and time,",
+            "the path served, the status code and the host name of the referring site",
             "no IP address, no browser identification and no query string",
             "30 days on the server and 90 days in our log archive",
             "Art. 6(1)(f) GDPR",
+            "your IP address for the duration of the connection; it is not stored",
         ),
     ),
 }
@@ -193,18 +195,37 @@ def test_the_own_server_section_states_processor_log_fields_and_retention() -> N
 
 
 def test_the_summary_and_the_analytics_section_agree_with_the_log_section() -> None:
-    """The policy counts page views from the log, so no part of it may claim no measurement."""
-    for url, short, none, counting in (
-        ("/de/datenschutz/", "kurz", "keine-cookies", "nur anonym aus dem Server-Protokoll"),
-        ("/en/privacy/", "short", "no-cookies", "only anonymously, from the server log"),
+    """The policy counts page views from the log, so no part of it may claim no analytics at all."""
+    for url, short, none, counting, claim in (
+        (
+            "/de/datenschutz/",
+            "kurz",
+            "keine-cookies",
+            "nur aus dem Server-Protokoll",
+            "kein Analysewerkzeug, kein Tracking",
+        ),
+        (
+            "/en/privacy/",
+            "short",
+            "no-cookies",
+            "only from the server log",
+            "no analytics tool, no tracking",
+        ),
     ):
         html = page(url)
         for section in (short, none):
             body = html.split(f'id="{section}"', 1)[1].split("</section>", 1)[0]
             assert counting in re.sub(r"\s+", " ", body), (url, section)
-        assert not re.search(
-            r"misst keine Besuche|Reichweitenmessung|does not measure visits", html
+        # The same promise in the description, the table of contents and the heading.
+        description = re.search(r'<meta name="description" content="([^"]*)"', html)
+        assert description and claim in description.group(1), url
+        assert re.search(rf'<a href="#{none}"[^>]*>[^<]*{claim}', html), url
+        assert re.search(rf'<h2 id="{none}-h2">[^<]*{claim}', html), url
+        forbidden = (
+            r"misst keine Besuche|Reichweitenmessung|keine Analyse|does not measure visits"
+            r"|no analytics(?! tool)|anonym"
         )
+        assert not re.search(forbidden, _main(url)), url
 
 
 def test_both_languages_state_the_same_periods_and_legal_bases() -> None:

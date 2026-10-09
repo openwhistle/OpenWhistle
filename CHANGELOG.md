@@ -16,6 +16,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- openwhistle.net is served from its own container (own security headers, no IP address in any log) instead of
+  GitHub Pages; the privacy policy describes it. The Pages redirect stubs and `docs/_legacy/` are gone: nginx
+  answers every old URL with a 301.
 - The installation-count text links its own documentation page instead of a section of the old one-page docs.
 
 ### Security
