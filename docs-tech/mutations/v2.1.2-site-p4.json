@@ -3,6 +3,9 @@
  "test_groups": {
   "PACKAGE": [
    "tests/test_package_site.py"
+  ],
+  "STATS": [
+   "tests/test_site_stats.py"
   ]
  },
  "mutations": [
@@ -40,6 +43,20 @@
    "old": "        for part in (old, new):",
    "new": "        for part in (old,):",
    "tests": "PACKAGE"
+  },
+  {
+   "id": "STATS-COUNTS-ASSETS",
+   "file": "scripts/site_stats.py",
+   "old": "        if uri.startswith(\"/pagefind/\") or uri.endswith(_ASSET_SUFFIXES):",
+   "new": "        if False:",
+   "tests": "STATS"
+  },
+  {
+   "id": "STATS-COUNTS-ERRORS",
+   "file": "scripts/site_stats.py",
+   "old": "        if len(parts) != 4 or parts[2] != \"200\":",
+   "new": "        if len(parts) != 4:",
+   "tests": "STATS"
   }
  ]
 }
