@@ -16,7 +16,9 @@ ROOT = Path(__file__).parents[1]
 CONF = (ROOT / "website" / "nginx.conf").read_text()
 # An executable inline script: no src, no type, or a JavaScript type. JSON-LD is data, never run.
 _INLINE = re.compile(
-    r"<script(?![^>]*\bsrc=)(?![^>]*\btype=\"application/ld\+json\")[^>]*>(.*?)</script>", re.S
+    r"<script\s*(?![^>]*\bsrc\s*=)(?![^>]*\btype\s*=\s*[\"']?application/ld\+json[\"']?)"
+    r"[^>]*>(.*?)</\s*script\s*>",
+    re.S | re.I,
 )
 
 
@@ -217,3 +219,29 @@ def test_the_health_check_is_not_logged() -> None:
 def test_subrequests_are_never_logged() -> None:
     """The include is a subrequest: logging it would add a /_private/address.html line."""
     assert not re.search(r"^\s*log_subrequest\s+on;", CONF, re.M)
+
+
+def test_inline_script_regex_is_case_insensitive_and_space_tolerant() -> None:
+    """The _INLINE regex must match uppercase tags, attributes, and space variations."""
+    # These should be found as inline scripts
+    inline_cases = [
+        "<SCRIPT>a()</SCRIPT>",
+        "<script >b()</script >",
+        "<Script>c()</Script>",
+        "<script  >d()</script  >",
+    ]
+    for case in inline_cases:
+        assert _INLINE.search(case), f"_INLINE did not find {case!r}"
+
+    # These should NOT be found (have src or JSON-LD type)
+    non_inline_cases = [
+        '<script src="x.js"></script>',
+        '<Script src="x.js"></Script>',
+        '<SCRIPT SRC="x.js"></SCRIPT>',
+        '<script type="application/ld+json">{}</script>',
+        '<script type="APPLICATION/LD+JSON">{}</script>',
+        '<script TYPE="application/ld+json">{}</script>',
+        '<script type="APPLICATION/LD+JSON" >{}</script>',
+    ]
+    for case in non_inline_cases:
+        assert not _INLINE.search(case), f"_INLINE incorrectly matched {case!r}"

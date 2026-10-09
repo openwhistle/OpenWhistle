@@ -385,6 +385,13 @@
    "old": "    runs-on: ubuntu-latest\n    timeout-minutes: 30\n    permissions:\n      contents: read\n      packages: write\n",
    "new": "    concurrency: website-image\n    runs-on: ubuntu-latest\n    timeout-minutes: 30\n    permissions:\n      contents: read\n      packages: write\n",
    "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "INLINE-CASE-INSENSITIVE",
+   "file": "tests/test_website_config.py",
+   "old": "    r\"<script\\s*(?![^>]*\\bsrc\\s*=)(?![^>]*\\btype\\s*=\\s*[\\\"']?application/ld\\+json[\\\"']?)\"\n    r\"[^>]*>(.*?)</\\s*script\\s*>\",\n    re.S | re.I,",
+   "new": "    r\"<script\\s*(?![^>]*\\bsrc\\s*=)(?![^>]*\\btype\\s*=\\s*[\\\"']?application/ld\\+json[\\\"']?)\"\n    r\"[^>]*>(.*?)</\\s*script\\s*>\",\n    re.S,",
+   "tests": "CONFIG"
   }
  ],
  "manual": [
