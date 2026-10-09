@@ -17,7 +17,7 @@ CONF = (ROOT / "website" / "nginx.conf").read_text()
 # An executable inline script: no src, no type, or a JavaScript type. JSON-LD is data, never run.
 _INLINE = re.compile(
     r"<script\s*(?![^>]*\bsrc\s*=)(?![^>]*\btype\s*=\s*[\"']?application/ld\+json[\"']?)"
-    r"[^>]*>(.*?)</\s*script\s*>",
+    r"[^>]*>(.*?)</script[^>]*>",
     re.S | re.I,
 )
 
@@ -229,6 +229,7 @@ def test_inline_script_regex_is_case_insensitive_and_space_tolerant() -> None:
         "<script >b()</script >",
         "<Script>c()</Script>",
         "<script  >d()</script  >",
+        "<script>c()</script\t\n bar>",
     ]
     for case in inline_cases:
         assert _INLINE.search(case), f"_INLINE did not find {case!r}"

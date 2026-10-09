@@ -389,8 +389,15 @@
   {
    "id": "INLINE-CASE-INSENSITIVE",
    "file": "tests/test_website_config.py",
-   "old": "    r\"<script\\s*(?![^>]*\\bsrc\\s*=)(?![^>]*\\btype\\s*=\\s*[\\\"']?application/ld\\+json[\\\"']?)\"\n    r\"[^>]*>(.*?)</\\s*script\\s*>\",\n    re.S | re.I,",
-   "new": "    r\"<script\\s*(?![^>]*\\bsrc\\s*=)(?![^>]*\\btype\\s*=\\s*[\\\"']?application/ld\\+json[\\\"']?)\"\n    r\"[^>]*>(.*?)</\\s*script\\s*>\",\n    re.S,",
+   "old": "    r\"<script\\s*(?![^>]*\\bsrc\\s*=)(?![^>]*\\btype\\s*=\\s*[\\\"']?application/ld\\+json[\\\"']?)\"\n    r\"[^>]*>(.*?)</script[^>]*>\",\n    re.S | re.I,",
+   "new": "    r\"<script\\s*(?![^>]*\\bsrc\\s*=)(?![^>]*\\btype\\s*=\\s*[\\\"']?application/ld\\+json[\\\"']?)\"\n    r\"[^>]*>(.*?)</script[^>]*>\",\n    re.S,",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "INLINE-END-TAG-STRICT",
+   "file": "tests/test_website_config.py",
+   "old": "    r\"<script\\s*(?![^>]*\\bsrc\\s*=)(?![^>]*\\btype\\s*=\\s*[\\\"']?application/ld\\+json[\\\"']?)\"\n    r\"[^>]*>(.*?)</script[^>]*>\",",
+   "new": "    r\"<script\\s*(?![^>]*\\bsrc\\s*=)(?![^>]*\\btype\\s*=\\s*[\\\"']?application/ld\\+json[\\\"']?)\"\n    r\"[^>]*>(.*?)</\\s*script\\s*>\",",
    "tests": "CONFIG"
   }
  ],
