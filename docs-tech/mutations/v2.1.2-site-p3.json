@@ -228,13 +228,6 @@
    "tests": "BUILD"
   },
   {
-   "id": "LEGACY-FROZEN",
-   "file": "scripts/build_site.py",
-   "old": "shutil.copyfile(legacy, dest)",
-   "new": "dest.write_text(\"\")",
-   "tests": "REDIRECTS"
-  },
-  {
    "id": "DOCS-ENGLISH-ONLY",
    "file": "scripts/build_site.py",
    "old": "raise BuildError(f\"{page.source}: docs pages are English only (D8)\")",
@@ -547,13 +540,6 @@
    "file": "docs/impressum/index.html",
    "old": "E-Mail:",
    "new": "Telefon: Platzhalter<br>E-Mail:",
-   "tests": "LEGAL"
-  },
-  {
-   "id": "PRIVACY-GITHUB",
-   "file": "docs/de/datenschutz/index.html",
-   "old": "GitHub B.V.",
-   "new": "GitHub",
    "tests": "LEGAL"
   },
   {

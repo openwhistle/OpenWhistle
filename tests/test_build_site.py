@@ -63,7 +63,7 @@ def test_pages_land_at_their_url_and_statics_are_copied(src: Path, tmp_path: Pat
     assert (out / "de" / "index.html").is_file()
     assert (out / "404.html").is_file()
     assert (out / "img" / "pixel.png").read_bytes() == (src / "img" / "pixel.png").read_bytes()
-    assert (out / ".nojekyll").is_file()
+    assert not (out / ".nojekyll").exists()  # Pages-only; nginx needs none
 
 
 def test_underscore_paths_never_reach_the_output(src: Path, tmp_path: Path) -> None:
@@ -492,7 +492,7 @@ def test_out_may_not_be_the_sources_or_above_them(src: Path, tmp_path: Path, out
 
 def test_the_root_is_the_language_choice_not_a_page(src: Path, tmp_path: Path) -> None:
     out = _build(src, tmp_path)
-    # The fixture builds without a root index.html (served by stub/nginx language choice)
+    # The fixture builds without a root index.html (nginx serves the language choice)
     assert not (out / "index.html").exists()
     # But hreflang x-default links to the root pass validation
     html = (out / "en" / "index.html").read_text(encoding="utf-8")
@@ -625,65 +625,12 @@ def test_a_redirect_to_no_page_fails(src: Path, tmp_path: Path) -> None:
         _build(src, tmp_path)
 
 
-def test_a_stub_keeps_the_fragment_and_is_not_indexed(src: Path, tmp_path: Path) -> None:
-    redirects = "/docs.html: /en/docs/\n/blog/: /de/\n"
-    (src / "_data" / "redirects.yml").write_text(redirects)
-    out = _build(src, tmp_path, redirect_stubs=True)
-    stub = (out / "docs.html").read_text(encoding="utf-8")
-    assert 'location.replace("/en/docs/"+location.hash)' in stub
-    assert '<meta name="robots" content="noindex">' in stub
-    assert (out / "blog" / "index.html").is_file()
-    assert "/en/" in (out / "index.html").read_text(encoding="utf-8")  # "/" on Pages
-
-
-def test_an_old_non_html_url_never_overwrites_a_file(src: Path, tmp_path: Path) -> None:
-    (src / "_legacy" / "img").mkdir(parents=True)
-    (src / "_legacy" / "img" / "pixel.png").write_bytes(b"x")
-    (src / "_data" / "redirects.yml").write_text("/img/pixel.png: /en/docs/\n")
-    with pytest.raises(B.BuildError, match="/img/pixel.png would overwrite img/pixel.png"):
-        _build(src, tmp_path, redirect_stubs=True)
-
-
-def test_no_stubs_without_the_flag(src: Path, tmp_path: Path) -> None:
-    (src / "_data" / "redirects.yml").write_text("/docs.html: /en/docs/\n")
-    out = _build(src, tmp_path)
-    assert not (out / "docs.html").exists() and not (out / "index.html").exists()
-
-
-def test_a_stub_never_overwrites_a_page(src: Path, tmp_path: Path) -> None:
-    (src / "_data" / "redirects.yml").write_text("/de/index.html: /en/\n")
-    with pytest.raises(B.BuildError, match="would overwrite de/index.html"):
-        _build(src, tmp_path, redirect_stubs=True)
-
-
-def test_a_link_to_an_old_url_fails_although_a_stub_would_serve_it(
-    src: Path, tmp_path: Path
-) -> None:
+def test_a_link_to_an_old_url_fails(src: Path, tmp_path: Path) -> None:
     (src / "_data" / "redirects.yml").write_text("/docs.html: /en/docs/\n")
     home = src / "en" / "index.html"
     home.write_text(home.read_text().replace('href="/en/docs/"', 'href="/docs.html"'))
     with pytest.raises(B.BuildError, match="nothing at /docs.html"):
-        _build(src, tmp_path, redirect_stubs=True)
-
-
-def test_two_urls_of_one_file_share_one_stub(tmp_path: Path) -> None:
-    site = {"default_language": "en", "base_url": "https://e.test"}
-    B.write_stubs(
-        tmp_path, {"/blog/": "/de/blog/", "/blog/index.html": "/de/blog/"}, site, tmp_path
-    )
-    assert '"/de/blog/"' in (tmp_path / "blog" / "index.html").read_text()
-    with pytest.raises(B.BuildError, match="would overwrite blog/index.html"):
-        B.write_stubs(
-            tmp_path / "2", {"/blog/": "/de/blog/", "/blog/index.html": "/en/"}, site, tmp_path
-        )
-
-
-def test_a_stub_target_cannot_close_the_script(tmp_path: Path) -> None:
-    site = {"default_language": "en", "base_url": "https://e.test"}
-    B.write_stubs(tmp_path, {"/a.html": "/x</script>/"}, site, tmp_path)
-    lines = (tmp_path / "a.html").read_text().splitlines()
-    script = next(ln for ln in lines if ln.startswith("<script>"))
-    assert "</script>" not in script.removesuffix("</script>")
+        _build(src, tmp_path)
 
 
 def test_no_built_page_carries_an_inline_style() -> None:
@@ -906,22 +853,6 @@ def test_a_page_in_one_language_is_linked_from_every_language(src: Path, tmp_pat
     assert 'href="/impressum/"' in html
 
 
-def test_an_old_non_html_url_serves_its_frozen_copy(src: Path, tmp_path: Path) -> None:
-    """A .md URL runs no script: it serves the bytes it served, kept in _legacy/."""
-    (src / "_legacy" / "old").mkdir(parents=True)
-    (src / "_legacy" / "old" / "notes.md").write_bytes(b"# Notes\n")
-    (src / "_data" / "redirects.yml").write_text("/old/notes.md: /en/docs/\n")
-    out = _build(src, tmp_path, redirect_stubs=True)
-    assert (out / "old" / "notes.md").read_bytes() == b"# Notes\n"
-    assert not (out / "_legacy").exists()
-
-
-def test_an_old_non_html_url_without_a_frozen_copy_fails(src: Path, tmp_path: Path) -> None:
-    (src / "_data" / "redirects.yml").write_text("/x.md: /en/\n")
-    with pytest.raises(B.BuildError, match="/x.md needs its frozen copy at _legacy/x.md"):
-        _build(src, tmp_path, redirect_stubs=True)
-
-
 def test_a_docs_page_outside_the_default_language_fails(src: Path, tmp_path: Path) -> None:
     _docs_fixture(src)
     page = src / "de" / "docs" / "index.html"
@@ -1009,3 +940,20 @@ def test_an_og_title_without_a_sora_glyph_is_refused(src: Path, tmp_path: Path) 
     )
     with pytest.raises(B.BuildError, match="'Fixture 中' uses '中', not in Sora latin"):
         _build(src, tmp_path)
+
+
+def test_the_build_has_no_stub_writer_and_no_legacy_copies() -> None:
+    """P5: nginx answers every old URL with a 301; Pages stubs and frozen copies are gone."""
+    source = (ROOT / "scripts" / "build_site.py").read_text(encoding="utf-8")
+    assert not re.search(r"write_stubs|STUB|redirect.stubs", source)
+    assert not hasattr(B, "write_stubs")
+    assert not (ROOT / "docs" / "_legacy").exists()
+
+
+def test_no_workflow_deploys_to_github_pages() -> None:
+    """P5: the site is the container image; Pages machinery must not come back."""
+    workflows = ROOT / ".github" / "workflows"
+    assert not (workflows / "pages.yml").exists()
+    assert not (ROOT / "docs" / "CNAME").exists()  # nginx would serve it at /CNAME
+    for path in workflows.glob("*.yml"):
+        assert not re.search(r"deploy-pages|upload-pages-artifact", path.read_text()), path.name

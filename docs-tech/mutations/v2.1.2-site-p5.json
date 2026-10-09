@@ -1,0 +1,127 @@
+{
+ "timeout_seconds": 600,
+ "test_groups": {
+  "LEGAL": [
+   "tests/test_legal_pages.py"
+  ],
+  "BUILD": [
+   "tests/test_build_site.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "P5-DE-IP",
+   "file": "docs/de/datenschutz/index.html",
+   "old": "keine IP-Adresse, keine Browserkennung und keine Query-Zeichenfolge",
+   "new": "keine IP-Adresse",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "P5-EN-RETENTION",
+   "file": "docs/en/privacy/index.html",
+   "old": "These lines stay 30 days on the server and 90 days",
+   "new": "These lines stay 30 days on the server and 30 days",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "P5-DE-PROXY-LOG",
+   "file": "docs/de/datenschutz/index.html",
+   "old": "schreibt kein Zugriffs- und kein Fehlerprotokoll.\n          Der Website",
+   "new": "schreibt ein Zugriffsprotokoll.\n          Der Website",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "P5-EN-REFERRER",
+   "file": "docs/en/privacy/index.html",
+   "old": "the status code and the host name of the referring site",
+   "new": "the status code",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "P5-EN-PAGES-BACK",
+   "file": "docs/en/privacy/index.html",
+   "old": "This website is served from the controller's own server.",
+   "new": "This website is served through GitHub Pages.",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "P5-DE-PAGES-BACK",
+   "file": "docs/de/datenschutz/index.html",
+   "old": "Diese Website wird von einem eigenen Server des Verantwortlichen ausgeliefert.",
+   "new": "Diese Website wird über GitHub Pages ausgeliefert.",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "P5-STUB-WRITER",
+   "file": "scripts/build_site.py",
+   "old": "def check_redirects(",
+   "new": "def write_stubs() -> None:\n    pass\n\n\ndef check_redirects(",
+   "tests": "BUILD"
+  },
+  {
+   "id": "P5-STUB-FLAG",
+   "file": "scripts/build_site.py",
+   "old": "    args = parser.parse_args(argv)",
+   "new": "    parser.add_argument(\"--redirect-stubs\", action=\"store_true\")\n    args = parser.parse_args(argv)",
+   "tests": "BUILD"
+  },
+  {
+   "id": "P5-DE-SHORT-NO-MEASURE",
+   "file": "docs/de/datenschutz/index.html",
+   "old": "hat kein Analysewerkzeug und kein Tracking. Seitenaufrufe zählen wir nur aus dem Server-Protokoll, ohne IP-Adresse und ohne Browserkennung.",
+   "new": "misst keine Besuche.",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "P5-EN-NOCOOKIES-NO-COUNT",
+   "file": "docs/en/privacy/index.html",
+   "old": " We count page views only from the server log described above, without IP address or browser identification.",
+   "new": "",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "P5-LEGACY-BACK",
+   "file": "docs/_legacy/x.md",
+   "create": "x\n",
+   "tests": "BUILD"
+  },
+  {
+   "id": "P5-PAGES-WORKFLOW-BACK",
+   "file": ".github/workflows/pages.yml",
+   "create": "name: pages\n",
+   "tests": "BUILD"
+  },
+  {
+   "id": "P5-DE-IP-TRANSIENT",
+   "file": "docs/de/datenschutz/index.html",
+   "old": "Um die Seite auszuliefern, verarbeitet der Server Ihre IP-Adresse für die Dauer der Verbindung; gespeichert wird",
+   "new": "Um die Seite auszuliefern",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "P5-EN-ANALYTICS-CLAIM",
+   "file": "docs/en/privacy/index.html",
+   "old": "No cookies, no analytics tool, no tracking</a>",
+   "new": "No cookies, no analytics</a>",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "P5-NOJEKYLL-BACK",
+   "file": "scripts/build_site.py",
+   "old": "    write_security_txt(out, site)\n",
+   "new": "    write_security_txt(out, site)\n    (out / \".nojekyll\").touch()\n",
+   "tests": "BUILD"
+  },
+  {
+   "id": "P5-CNAME-BACK",
+   "file": "docs/CNAME",
+   "create": "openwhistle.net\n",
+   "tests": "BUILD"
+  }
+ ],
+ "manual": [],
+ "removed": {
+  "LEGACY-FROZEN": "v2.1.2-site-p3: its target (the frozen-copy branch of write_stubs, shutil.copyfile(legacy, dest)) was deleted with the stub writer (P5-4); P5-STUB-WRITER and P5-LEGACY-BACK guard the removal.",
+  "PRIVACY-GITHUB": "v2.1.2-site-p3: its target ('GitHub B.V.' in the German policy) was deleted with the GitHub Pages section (P5-3); P5-DE-PAGES-BACK and P5-EN-PAGES-BACK guard the removal."
+ }
+}

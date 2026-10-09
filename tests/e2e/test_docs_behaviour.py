@@ -147,8 +147,6 @@ def test_docs_page_is_usable_with_javascript_disabled(
     [
         ("/en/docs/#helm", "/en/docs/kubernetes/"),
         ("/en/docs/#own-account", "/en/docs/admin/#own-account"),
-        ("/docs.html#onion-address", "/en/docs/onion/"),
-        ("/docs.html#first-run", "/en/docs/install/#first-run"),
     ],
 )
 def test_a_one_pager_anchor_lands_on_its_page(

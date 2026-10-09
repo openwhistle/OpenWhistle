@@ -7,7 +7,7 @@ from pathlib import Path
 
 import yaml
 
-from tests.built_site import builder, built, page, pages
+from tests.built_site import built, page, pages
 
 ROOT = Path(__file__).parents[1]
 
@@ -60,22 +60,18 @@ def test_the_image_build_checks_out_the_full_history() -> None:
         assert checkout.get("with", {}).get("fetch-depth") == 0, name
 
 
-def test_no_built_file_comes_from_docs_tech(tmp_path: Path) -> None:
-    """Neither by name nor by content, in the plain build or the stubbed one."""
+def test_no_built_file_comes_from_docs_tech() -> None:
+    """Neither by name nor by content."""
     tech_files = [p for p in (ROOT / "docs-tech").rglob("*") if p.is_file()]
     tech_names = {p.name for p in tech_files}
-    # An empty file says nothing; it would only collide with the empty built .nojekyll.
+    # An empty file says nothing; any empty built file would collide with it.
     tech_hashes = {
         hashlib.sha256(p.read_bytes()).hexdigest() for p in tech_files if p.stat().st_size
     }
 
-    stubbed = tmp_path / "stubbed"
-    builder().build(ROOT / "docs", stubbed, redirect_stubs=True)
-
     leaked = sorted(
         str(p)
-        for root in (built(), stubbed)
-        for p in root.rglob("*")
+        for p in built().rglob("*")
         if p.is_file()
         and (
             (p.suffix == ".md" and p.name in tech_names)

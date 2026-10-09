@@ -1,5 +1,5 @@
 # Old URL -> new page. tests/test_redirects.py checks every URL served on 2026-10-01.
-# GitHub Pages gets HTML stubs (build_site.py --redirect-stubs); P4 turns this into the nginx 301 map.
+# The website image turns this into the nginx 301 map.
 # Not listed: / and /index.html (the language choice) and /de/, /de/index.html (unchanged).
 /blog/: /de/blog/
 /blog/en.html: /en/blog/

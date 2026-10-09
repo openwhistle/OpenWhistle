@@ -2,7 +2,7 @@
 
 Every page is found by glob, so a page added by anyone is held to the same
 head: one title of at most 60 characters, a unique description of 120-160,
-a canonical URL that is the address GitHub Pages serves the file at and the
+a canonical URL that is the address the server serves the file at and the
 sitemap lists, Open Graph tags with an image that exists, and JSON-LD that
 parses. The sitemap is the one in the built site.
 The docs-tech link ban lives in tests/test_docs_boundary.py.
@@ -99,7 +99,7 @@ def _one(h: _Head, key: str) -> str:
 
 
 def _file_for(url: str) -> Path:
-    """The file GitHub Pages serves at `url`: a trailing slash is the folder's index.html."""
+    """The file the server serves at `url`: a trailing slash is the folder's index.html."""
     assert url.startswith(SITE), url
     path = url.removeprefix(SITE)
     if path == "" or path.endswith(("/", ".html")):
@@ -312,7 +312,7 @@ def test_og_images_differ_per_page() -> None:
 
 @pytest.mark.parametrize("page", PAGES, ids=IDS)
 def test_head_sends_no_referrer_and_types_its_image(page: Path) -> None:
-    # Pages sends no Referrer-Policy header; an outbound click must not name the page.
+    # An outbound click must not name the page, whatever header the server sends.
     h = _head(page)
     assert _one(h, "referrer") == "no-referrer"
     assert _one(h, "og:image:type") == "image/png"
