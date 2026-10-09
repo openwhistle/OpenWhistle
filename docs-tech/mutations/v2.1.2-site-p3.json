@@ -200,6 +200,9 @@
    "tests/test_build_site.py",
    "-k",
    "settings_marker"
+  ],
+  "TIMEOUTS": [
+   "tests/test_workflow_timeouts.py"
   ]
  },
  "mutations": [
@@ -916,6 +919,20 @@
    "old": "classify(status, urlsplit(url).netloc)",
    "new": "classify(status)",
    "tests": "LINKS"
+  },
+  {
+   "id": "E2E-NO-TIMEOUT",
+   "file": ".github/workflows/e2e.yml",
+   "old": "    timeout-minutes: 60\n",
+   "new": "",
+   "tests": "TIMEOUTS"
+  },
+  {
+   "id": "SITE-FIXTURE-PER-MODULE",
+   "file": "tests/e2e/conftest.py",
+   "old": "@pytest.fixture(scope=\"session\")\ndef docs_server_url(",
+   "new": "@pytest.fixture(scope=\"module\")\ndef docs_server_url(",
+   "tests": "TIMEOUTS"
   }
  ]
 }

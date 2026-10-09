@@ -12,6 +12,7 @@ jobs:
   lint:
     name: Lint & Type Check
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
@@ -63,6 +64,7 @@ jobs:
   test:
     name: Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
     services:
@@ -137,6 +139,7 @@ jobs:
   docker:
     name: Docker Build & Smoke Test
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
