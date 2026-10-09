@@ -1,7 +1,7 @@
 """Docs search: Pagefind's own pagefind.js under our small UI (spec: `/`, <dialog>, highlight).
 
 The term reaches a result in the fragment (#highlight=), not in ?highlight=: the privacy
-policy says search terms are not transmitted, and a query string is sent with the request.
+policy says the search term itself is never sent, and a query string is sent with the request.
 """
 
 from __future__ import annotations
@@ -133,6 +133,20 @@ def test_search_says_so_when_pagefind_does_not_load(browser: Browser, docs_serve
     page.locator("#docs-search-input").fill("onion")
     status = page.locator(".docs-search-status")
     status.filter(has_text="unavailable").wait_for()
+    ctx.close()
+
+
+def test_search_says_so_when_a_search_fails_after_loading(
+    browser: Browser, docs_server_url: str
+) -> None:
+    """pagefind.js loads, its WASM does not (as under a CSP without 'wasm-unsafe-eval')."""
+    ctx = browser.new_context(base_url=docs_server_url)
+    page = ctx.new_page()
+    page.route("**/pagefind/wasm.*", lambda route: route.abort())
+    page.goto("/en/docs/")
+    page.keyboard.press("/")
+    page.locator("#docs-search-input").fill("onion")
+    page.locator(".docs-search-status").filter(has_text="unavailable").wait_for()
     ctx.close()
 
 

@@ -1,7 +1,7 @@
 // Docs search on Pagefind's own pagefind.js, loaded on first use; no third-party UI (spec P3).
 // The button stays hidden without JavaScript, so nothing on the page is dead.
 // The term rides to a result in the fragment (#highlight=), never in ?highlight=: a fragment
-// is not sent with the request, so the term never reaches the server (privacy policy).
+// is not sent with the request, so the term itself never reaches the server (privacy policy).
 (function () {
   var open = document.querySelector('[data-search-open]');
   var dialog = document.getElementById('docs-search');
@@ -50,9 +50,15 @@
         return;
       }
     }
-    var search = await pagefind.debouncedSearch(term);
-    if (search === null || mine !== seq) return;  // a newer keystroke superseded this one
-    var found = await Promise.all(search.results.slice(0, shown).map(function (r) { return r.data(); }));
+    try {
+      var search = await pagefind.debouncedSearch(term);
+      if (search === null || mine !== seq) return;  // a newer keystroke superseded this one
+      var found = await Promise.all(search.results.slice(0, shown).map(function (r) { return r.data(); }));
+    } catch (e) {
+      // E.g. WASM blocked by a CSP: say so instead of an empty dialog.
+      if (mine === seq) { list.replaceChildren(); status.textContent = 'Search is unavailable: it failed in this browser.'; }
+      return;
+    }
     if (mine !== seq) return;
     list.replaceChildren.apply(list, found.map(function (d) {
       var li = document.createElement('li');
