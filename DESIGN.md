@@ -274,7 +274,7 @@ or a ladder step before reaching for shadow.
 - `{rounded.lg}` (12px) — frame and modal shells.
 - `{rounded.full}` — circles only: status dots, list bullets, avatars, round icon badges.
 - **No pill CTAs.** A pill-shaped button is off-system; buttons are `{rounded.md}`.
-- The site reads the same scale from `docs/assets/css/tokens.css` (`--radius-sm` …
+- The website reads the same scale from its `docs/assets/css/tokens.css` (`--radius-sm` …
   `--radius-full`); its sheets write no other radius. A card or callout with an accent bar
   rounds only the corners away from the bar.
 
@@ -288,9 +288,9 @@ A speech bubble with a keyhole: one evenodd path on a 24-unit grid, drawn in ink
 (`{colors.inverse-ink}` at 50% opacity) and 24px in the app nav.
 
 - The geometry lives in `scripts/render_icons.py` (`MARK`), which also renders the
-  rasters (apple-touch 180px, `favicon.ico`, `github-avatar.png` 500px).
-- Copies in `app/templates/base.html`, `docs/_includes/nav.html`, `footer.html` and both
-  `favicon.svg` files are held identical by `tests/test_mark.py`.
+  rasters (apple-touch 180px, `favicon.ico`; the website's copy adds `github-avatar.png` 500px).
+- Each repository's `tests/test_mark.py` holds its own copies to that path: the app's
+  `base.html` and `favicon.svg`, the website's nav, footer and `favicon.svg`.
 - Favicons are the three-file set: ICO (`sizes="32x32"`), SVG switching ink by
   `prefers-color-scheme`, apple-touch.
 - An operator's `brand.logo_url` replaces the mark in the app.
@@ -502,7 +502,7 @@ per-page select. Pagination pages are buttons and take the ring. Forced-colours 
 padding at or above the outer radius the child is independent: its corner no longer follows
 the parent's curve, so squaring every inner control would be wrong. Full pills nest as pills.
 
-"P3" is page and content work in `docs-tech/specs/2026-10-01-website-redesign-design.md`
+"P3" is page and content work in openwhistle/website's `docs-tech/specs/2026-10-01-website-redesign-design.md`
 § Delivery; the CSS-level rules above are kept by the stylesheets today.
 
 ### Don't
@@ -542,9 +542,10 @@ the parent's curve, so squaring every inner control would be wrong. Full pills n
   property); never hardcode a hex, size, or radius in a component.
 - **Verify both themes and the accent budget** on every screen touched: is emerald
   used more than once (plus the block)? If so, cut back.
-- **Keep the three sources of truth in sync** — the app CSS (`app/static/css/`), the
-  docs pages (`docs/en/index.html` and `docs/en/docs/<page>/index.html`), and `docker-compose.prod.yml`
-  — in the same change (see the project design-sync rule).
+- **Keep the sources of truth in sync** — the app CSS (`app/static/css/`) and
+  `docker-compose.prod.yml` in the same change, the documentation pages in the linked
+  openwhistle/website pull request (the drift rule in both `CLAUDE.md` files). This file is
+  byte-identical in both repositories; the website's build compares its copy with the release tag.
 - **`site.css` is hand-edited source; keep one rule per block.** The CSS is formatted for
   readability (not minified) and maintained by hand as the source of truth; the minified
   build artifact is generated at deployment time.
