@@ -642,6 +642,24 @@ In `tests/test_v210_attachment_fidelity.py`.
 | Every proxied location, snippets included, is rate-limited | `test_every_public_route_is_rate_limited_in_both_deployments` |
 | The TLS key is 0600 from its first byte | `test_the_key_is_never_written_readable_by_others` |
 
+## Website repository split (v2.2.0)
+
+`docs-tech/mutations/v2.2.0-website-split.json`: 9 mutations, 9 red. The website, its tests and its
+mutation ids live in openwhistle/website; the live site specs here list what left under `"removed"`.
+
+| Mutation | File | Test that fires |
+| --- | --- | --- |
+| `SPLIT-DOCS-DIR-BACK`, `SPLIT-WEBSITE-DIR-BACK` | `docs/`, `website/` (created) | `test_no_website_file_or_reader_is_left` |
+| `SPLIT-TEST-READS-DOCS` | a test reading `ROOT / "docs"` (created) | `test_no_website_file_or_reader_is_left` |
+| `SPLIT-SCAN-BLIND` | `tests/test_repository_split.py` | `test_the_reader_scan_sees_a_docs_path_and_passes_a_link` |
+| `FONT-LICENCE-GONE`, `FONT-EXTRA-SHIPPED` | `app/static/fonts/` | `test_the_image_ships_exactly_the_font_files_the_app_css_uses` |
+| `SHOTS-DEFAULT-OUT` | `scripts/take_screenshots.py` | `test_without_a_website_checkout_the_script_refuses_to_run` |
+| `SHOTS-ANY-DIR` | `scripts/take_screenshots.py` | `test_a_folder_that_is_no_website_checkout_is_refused` |
+| `SHOTS-PLAYWRIGHT-EAGER` | `scripts/take_screenshots.py` | `test_script_imports_without_playwright[take_screenshots]` |
+
+The CI smoke test (`ci.yml`, job `docker`) requests every font and both OFL licences from the built image: no
+pytest sees the image.
+
 ## Repository and release
 
 | Guard | Test |
