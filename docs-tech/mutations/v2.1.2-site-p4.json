@@ -26,6 +26,20 @@
    "old": "            if not _SAFE.fullmatch(part):",
    "new": "            if False:",
    "tests": "PACKAGE"
+  },
+  {
+   "id": "MAP-DOLLAR-UNSAFE",
+   "file": "scripts/package_site.py",
+   "old": "_SAFE = re.compile(r'/[^\"\\\\$\\x00-\\x1f\\x7f]*')",
+   "new": "_SAFE = re.compile(r'/[^\"\\\\\\x00-\\x1f\\x7f]*')",
+   "tests": "PACKAGE"
+  },
+  {
+   "id": "MAP-OLD-ONLY",
+   "file": "scripts/package_site.py",
+   "old": "        for part in (old, new):",
+   "new": "        for part in (old,):",
+   "tests": "PACKAGE"
   }
  ]
 }

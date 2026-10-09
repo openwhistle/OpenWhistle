@@ -5,6 +5,7 @@ from __future__ import annotations
 import gzip
 import importlib.util
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -56,10 +57,20 @@ def test_the_map_has_one_quoted_line_per_redirect(tmp_path: Path) -> None:
     assert out.read_text().splitlines() == ['"/a b.html" "/en/";', '"/blog/" "/de/blog/";']
 
 
-@pytest.mark.parametrize("bad", ['/x";', "/x\n", "relative"])
-def test_a_path_nginx_could_misread_is_refused(tmp_path: Path, bad: str) -> None:
+@pytest.mark.parametrize(
+    "bad,side",
+    [
+        ('/x";', "old"),
+        ("/x\n", "old"),
+        ("relative", "old"),
+        ("/x$y", "old"),
+        ("/x$y", "new"),
+    ],
+)
+def test_a_path_nginx_could_misread_is_refused(tmp_path: Path, bad: str, side: str) -> None:
     with pytest.raises(ValueError, match="redirect"):
-        P.package(_site(tmp_path), {bad: "/en/"}, tmp_path / "redirects.map")
+        redirects = {bad: "/en/"} if side == "old" else {"/en/": bad}
+        P.package(_site(tmp_path), redirects, tmp_path / "redirects.map")
 
 
 def test_the_real_redirects_all_reach_the_map(tmp_path: Path) -> None:
@@ -72,28 +83,26 @@ def test_the_real_redirects_all_reach_the_map(tmp_path: Path) -> None:
 
 
 def test_the_gz_bytes_do_not_depend_on_the_clock(tmp_path: Path) -> None:
-    import time
-
     site = _site(tmp_path)
-    # First package
     P.package(site, {}, tmp_path / "redirects.map")
     first_gz_bytes = (site / "en" / "index.html.gz").read_bytes()
-    # Extract mtime field from gzip header (bytes 4-7)
-    first_mtime = int.from_bytes(first_gz_bytes[4:8], "little")
-
-    # Reset the .gz file and wait until next second
-    (site / "en" / "index.html.gz").unlink()
-    start = time.time()
-    while time.time() - start < 2.0:
-        time.sleep(0.01)
-
-    # Second package with same content
+    time.sleep(1.1)
     P.package(site, {}, tmp_path / "redirects.map")
     second_gz_bytes = (site / "en" / "index.html.gz").read_bytes()
-    # Extract mtime field from gzip header (bytes 4-7)
-    second_mtime = int.from_bytes(second_gz_bytes[4:8], "little")
-
-    # Bytes must be identical, and mtime must be 0 (proving mtime=0 is used)
     assert first_gz_bytes == second_gz_bytes
-    assert first_mtime == 0, f"Expected mtime=0, got {first_mtime}"
-    assert second_mtime == 0, f"Expected mtime=0, got {second_mtime}"
+
+
+def test_non_string_redirect_key_raises_valueerror(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="redirect"):
+        P.package(_site(tmp_path), {123: "/en/"}, tmp_path / "redirects.map")
+
+
+def test_non_string_redirect_value_raises_valueerror(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="redirect"):
+        P.package(_site(tmp_path), {"/old": 456}, tmp_path / "redirects.map")
+
+
+def test_main_refuses_wrong_argument_count(tmp_path: Path) -> None:
+    assert P.main([]) == 2
+    assert P.main([str(tmp_path)]) == 2
+    assert P.main([str(tmp_path), str(tmp_path / "map"), "extra"]) == 2

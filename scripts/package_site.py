@@ -18,8 +18,8 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 TEXT_SUFFIXES = {".html", ".css", ".js", ".svg", ".xml", ".txt", ".json"}
-# A path nginx reads back exactly: absolute, no quote, no backslash, no control character.
-_SAFE = re.compile(r'/[^"\\\x00-\x1f\x7f]*')
+# A path nginx reads back exactly: absolute, no quote, no backslash, no $, no control character.
+_SAFE = re.compile(r'/[^"\\$\x00-\x1f\x7f]*')
 
 
 def package(site: Path, redirects: dict[str, str], map_out: Path) -> None:
@@ -31,6 +31,8 @@ def package(site: Path, redirects: dict[str, str], map_out: Path) -> None:
             )
     lines = []
     for old, new in sorted(redirects.items()):
+        if not isinstance(old, str) or not isinstance(new, str):
+            raise ValueError(f"redirect keys and values must be strings, got {old!r} -> {new!r}")
         for part in (old, new):
             if not _SAFE.fullmatch(part):
                 raise ValueError(f"redirect {old!r} -> {new!r}: {part!r} is no plain absolute path")
@@ -39,6 +41,9 @@ def package(site: Path, redirects: dict[str, str], map_out: Path) -> None:
 
 
 def main(argv: list[str]) -> int:
+    if len(argv) != 2:
+        print("usage: python scripts/package_site.py SITE_DIR MAP_OUT", file=sys.stderr)
+        return 2
     site, map_out = Path(argv[0]), Path(argv[1])
     redirects = yaml.safe_load((ROOT / "docs" / "_data" / "redirects.yml").read_text())
     package(site, redirects, map_out)
