@@ -20,10 +20,14 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
-      issues: write
+    outputs:
+      check: ${{ steps.check.outcome }}
+      report: ${{ steps.report.outputs.text }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Set up Python 3.14
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
@@ -46,17 +50,30 @@ jobs:
         continue-on-error: true
 
       - name: Show the result
-        run: cat links.txt
-
-      - name: Open an issue
-        if: steps.check.outcome == 'failure' && github.event_name == 'schedule'
-        env:
-          GH_TOKEN: ${{ github.token }}
+        id: report
         run: |
-          title="External links broken on openwhistle.net"
-          open=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq length)
-          if [ "$open" = 0 ]; then gh issue create --title "$title" --body-file links.txt; fi
+          cat links.txt
+          { echo "text<<END_OF_LINKS_REPORT"; cat links.txt; echo "END_OF_LINKS_REPORT"; } >> "$GITHUB_OUTPUT"
 
       - name: Fail
         if: steps.check.outcome == 'failure'
         run: exit 1
+
+  # The only job with a write token, and only on the weekly run: no checkout, no code of ours.
+  issue:
+    needs: links
+    if: failure() && github.event_name == 'schedule' && needs.links.outputs.check == 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Open an issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          REPORT: ${{ needs.links.outputs.report }}
+        run: |
+          title="External links broken on openwhistle.net"
+          open=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq length)
+          if [ "$open" = 0 ]; then gh issue create --title "$title" --body "$REPORT"; fi

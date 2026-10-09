@@ -117,3 +117,17 @@ def test_the_workflow_check_step_keeps_the_scripts_exit_status() -> None:
     assert "scripts/check_external_links.py" in check["run"]
     assert "|" not in check["run"] or check.get("shell") == "bash", check
     assert check["continue-on-error"] is True
+
+
+def test_only_the_scheduled_issue_job_can_write_issues() -> None:
+    """PR and dispatch runs get a read-only token, and checkout keeps none in .git/config."""
+    jobs = yaml.safe_load((ROOT / ".github" / "workflows" / "links.yml").read_text())["jobs"]
+    writers = {name for name, job in jobs.items() if job["permissions"].get("issues") == "write"}
+    assert writers == {"issue"}, writers
+    assert jobs["issue"]["needs"] == "links"
+    assert "github.event_name == 'schedule'" in jobs["issue"]["if"]
+    assert "steps" in jobs["issue"] and all("uses" not in s for s in jobs["issue"]["steps"])
+    for name, job in jobs.items():
+        for step in job["steps"]:
+            if step.get("uses", "").startswith("actions/checkout@"):
+                assert step["with"]["persist-credentials"] is False, name
