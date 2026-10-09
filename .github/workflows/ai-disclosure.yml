@@ -4,7 +4,7 @@ name: AI disclosure
 # AGENTS.md and the templates ask AI agents for. pull_request_target runs with a
 # write token, so nothing from the fork is checked out or run: the text is only
 # read from an environment variable and matched.
-on:
+on: # zizmor: ignore[dangerous-triggers] — safe as above; tests/test_ai_disclosure.py pins it
   issues:
     types: [opened, edited]
   pull_request_target:

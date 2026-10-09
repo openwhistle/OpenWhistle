@@ -198,6 +198,17 @@
     },
     {
       "customType": "regex",
+      "description": "Tools the workflows run with uvx at a pinned version (codespell, zizmor).",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/[^/]+\\.yml$/"
+      ],
+      "matchStrings": [
+        "uvx (?<depName>[a-z0-9-]+)==(?<currentValue>\\d+\\.\\d+\\.\\d+)"
+      ],
+      "datasourceTemplate": "pypi"
+    },
+    {
+      "customType": "regex",
       "description": "Images in files no built-in manager reads: the compose files written inline inside workflow run: steps, the image argument of their docker run lines, and the Ansible compose template. A digest after the tag is updated with it; without currentDigest Renovate would move the tag and leave the old digest behind.",
       "managerFilePatterns": [
         "/^\\.github/workflows/[^/]+\\.yml$/",

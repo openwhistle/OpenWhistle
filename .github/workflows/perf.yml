@@ -26,6 +26,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Set up Python 3.14
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
@@ -90,13 +92,17 @@ jobs:
           curl -sf http://localhost:4009/health | grep -q '"status":"ok"'
 
       - name: Run Locust
+        # Inputs reach the shell only through env, never expanded into the script.
+        env:
+          USERS: ${{ github.event.inputs.users || '50' }}
+          RUN_TIME: ${{ github.event.inputs.run_time || '60s' }}
         run: |
           locust \
             -f tests/perf/locustfile.py \
             --headless \
-            -u ${{ github.event.inputs.users || '50' }} \
+            -u "$USERS" \
             -r 5 \
-            --run-time ${{ github.event.inputs.run_time || '60s' }} \
+            --run-time "$RUN_TIME" \
             --host http://localhost:4009 \
             --html perf-report.html \
             --csv perf-results

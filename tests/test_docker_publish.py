@@ -142,13 +142,13 @@ def test_publishing_waits_for_every_check_on_the_same_commit() -> None:
     jobs = yaml.safe_load((ROOT / ".github/workflows/docker-publish.yml").read_text())["jobs"]
     called = {name: job["uses"] for name, job in jobs.items() if "uses" in job}
     assert set(called.values()) == {
-        "./.github/workflows/ci.yml",
-        "./.github/workflows/e2e.yml",
-        "./.github/workflows/security.yml",
+        "$/.github/workflows/ci.yml",
+        "$/.github/workflows/e2e.yml",
+        "$/.github/workflows/security.yml",
     }
     assert set(jobs["build"]["needs"]) == {*called, "on-main"}
     for path in called.values():
-        triggers = yaml.safe_load((ROOT / path.removeprefix("./")).read_text())[True]  # `on:`
+        triggers = yaml.safe_load((ROOT / path.removeprefix("$/")).read_text())[True]  # `on:`
         assert "workflow_call" in triggers, path
 
 
