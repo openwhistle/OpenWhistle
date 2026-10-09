@@ -22,6 +22,7 @@ Patterns NOT covered here have a documented reason:
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -73,3 +74,25 @@ def test_every_locale_file_is_a_supported_language() -> None:
 
     files = {p.stem for p in _LOCALES.glob("*.json")}
     assert files == set(_LANGS) == _SUPPORTED
+
+
+def test_the_language_picker_offers_every_supported_language() -> None:
+    """base.html lists the picker's languages itself; a locale missing there cannot be chosen."""
+    from app.i18n import _SUPPORTED
+
+    base = (_LOCALES.parent / "templates" / "base.html").read_text(encoding="utf-8")
+    picker = re.search(r"\{% for code, label in \[(.*?)\] %\}", base)
+    assert picker is not None
+    assert set(re.findall(r"\('([a-z-]+)', '", picker.group(1))) == _SUPPORTED
+
+
+def test_the_browser_counter_groups_digits_like_the_server() -> None:
+    """submit.html's live counter repeats format_count's separators; a locale missing there
+    falls back to a comma after the first keystroke."""
+    from app.i18n import _THOUSANDS_SEPARATOR
+
+    submit = (_LOCALES.parent / "templates" / "submit.html").read_text(encoding="utf-8")
+    table = re.search(r"var THOUSANDS_SEPARATOR = \{(.*?)\};", submit)
+    assert table is not None
+    pairs = re.findall(r"'?([a-z-]+)'?: '([^']*)'", table.group(1))
+    assert dict(pairs) == _THOUSANDS_SEPARATOR

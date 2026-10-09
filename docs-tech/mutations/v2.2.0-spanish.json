@@ -1,0 +1,50 @@
+{
+ "timeout_seconds": 300,
+ "test_groups": {
+  "ES": ["tests/test_v040.py", "tests/test_v150_ux.py", "tests/test_locale_key_completeness.py", "tests/test_coverage_reports.py", "-k", "es or locale or language or lang or counter"]
+ },
+ "mutations": [
+  {
+   "id": "ES-UNSUPPORTED",
+   "file": "app/i18n.py",
+   "tests": "ES",
+   "old": "_SUPPORTED = frozenset({\"en\", \"de\", \"fr\", \"es\", \"pt-br\"})",
+   "new": "_SUPPORTED = frozenset({\"en\", \"de\", \"fr\", \"pt-br\"})"
+  },
+  {
+   "id": "ES-FILE-UNMAPPED",
+   "file": "app/i18n.py",
+   "tests": "ES",
+   "old": "\"fr\": \"fr\", \"es\": \"es\", \"pt-br\": \"pt-br\"}",
+   "new": "\"fr\": \"fr\", \"pt-br\": \"pt-br\"}"
+  },
+  {
+   "id": "ES-SERVER-COMMA",
+   "file": "app/i18n.py",
+   "tests": "ES",
+   "old": "\"es\": \".\", \"pt-br\": \".\"}",
+   "new": "\"es\": \",\", \"pt-br\": \".\"}"
+  },
+  {
+   "id": "ES-SET-LANGUAGE-DROPS",
+   "file": "app/api/reports.py",
+   "tests": "ES",
+   "old": "\"fr\": \"fr\", \"es\": \"es\", \"pt-br\": \"pt-br\"}",
+   "new": "\"fr\": \"fr\", \"pt-br\": \"pt-br\"}"
+  },
+  {
+   "id": "ES-PICKER-MISSING",
+   "file": "app/templates/base.html",
+   "tests": "ES",
+   "old": "('es', 'Español'), ",
+   "new": ""
+  },
+  {
+   "id": "ES-BROWSER-COMMA",
+   "file": "app/templates/submit.html",
+   "tests": "ES",
+   "old": "es: '.', ",
+   "new": ""
+  }
+ ]
+}

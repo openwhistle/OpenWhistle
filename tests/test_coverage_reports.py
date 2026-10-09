@@ -34,6 +34,8 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.i18n import _SUPPORTED
+
 # ─── helpers ──────────────────────────────────────────────────────────────────
 
 
@@ -176,16 +178,18 @@ async def test_set_language_exact_allowlist_path_is_preserved(
 
 
 @pytest.mark.asyncio
-async def test_set_language_sets_lang_cookie(client: AsyncClient) -> None:
-    """The ow-lang cookie must be set to the requested language."""
+@pytest.mark.parametrize("lang", sorted(_SUPPORTED))
+async def test_set_language_sets_lang_cookie(client: AsyncClient, lang: str) -> None:
+    """The ow-lang cookie must be set to the requested language, for every supported one
+    (the allowlist in set_language is a second list a new locale has to reach)."""
     resp = await client.post(
         "/set-language",
-        data={"csrf_token": await _lang_csrf(client), "lang": "de", "next": "/submit"},
+        data={"csrf_token": await _lang_csrf(client), "lang": lang, "next": "/submit"},
         follow_redirects=False,
     )
     assert resp.status_code == 303
     cookie_header = resp.headers.get("set-cookie", "")
-    assert "ow-lang=de" in cookie_header
+    assert f"ow-lang={lang}" in cookie_header
 
 
 # ─── submit: description boundary conditions ─────────────────────────────────
