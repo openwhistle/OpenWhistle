@@ -7,6 +7,7 @@ import hashlib
 import re
 from pathlib import Path
 
+import pytest
 import yaml
 
 from tests.built_site import built, pages
@@ -52,19 +53,18 @@ def test_only_the_docs_may_compile_wasm() -> None:
     assert "'wasm-unsafe-eval'" not in _csp("site")
 
 
-def test_the_csp_never_relaxes() -> None:
-    for where in ("site", "docs"):
-        csp = _csp(where)
-        assert "unsafe-inline" not in csp and "'unsafe-eval'" not in csp and "*" not in csp, where
-        for rule in (
-            "default-src 'none'",
-            "style-src 'self'",
-            "base-uri 'none'",
-            "form-action 'none'",
-            "frame-ancestors 'none'",
-            "upgrade-insecure-requests",
-        ):
-            assert rule in csp, (where, rule)
+# Each policy without its hashes, source for source (the spec's two policies, R11's data: fonts).
+_POLICY = (
+    "default-src 'none'; script-src 'self'{wasm}; style-src 'self'; img-src 'self'; "
+    "font-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; "
+    "frame-ancestors 'none'; upgrade-insecure-requests"
+)
+EXPECTED_CSP = {"site": _POLICY.format(wasm=""), "docs": _POLICY.format(wasm=" 'wasm-unsafe-eval'")}
+
+
+@pytest.mark.parametrize("where", sorted(EXPECTED_CSP))
+def test_the_csp_never_relaxes(where: str) -> None:
+    assert re.sub(r" 'sha256-[^']+'", "", _csp(where)) == EXPECTED_CSP[where]
 
 
 def test_only_fonts_may_come_from_a_data_uri() -> None:
@@ -106,10 +106,16 @@ def test_errors_are_logged_at_emerg_only() -> None:
 
 
 def _ref_host(referer: str) -> str:
-    found = re.search(r'map \$http_referer \$ref_host \{\s*"~([^"]+)" \$rhost;', CONF)
-    assert found, "no $ref_host map"
-    match = re.search(found.group(1).replace("(?<rhost>", "(?P<rhost>"), referer)
-    return match.group("rhost") if match else "-"
+    """The $ref_host map as nginx runs it: its regexes in order, the first match wins."""
+    block = re.search(r"map \$http_referer \$ref_host \{(.*?)\}\n", CONF, re.S)
+    assert block, "no $ref_host map"
+    rules = re.findall(r'^\s*"~([^"]+)" ("-"|\$rhost);', block.group(1), re.M)
+    assert rules and re.search(r'^\s*default "-";', block.group(1), re.M)
+    for pattern, value in rules:
+        match = re.search(pattern.replace("(?<rhost>", "(?P<rhost>"), referer)
+        if match:
+            return match.group("rhost") if value == "$rhost" else "-"
+    return "-"
 
 
 def test_the_referer_logs_a_bare_hostname_only() -> None:
@@ -117,13 +123,43 @@ def test_the_referer_logs_a_bare_hostname_only() -> None:
     assert _ref_host("https://alice@intranet.acme.local/") == "intranet.acme.local"
     assert _ref_host("https://example.org:8443/x") == "example.org"
     assert _ref_host("https://a b c/") == "-"
+    assert _ref_host("https://10.example.org/") == "10.example.org"
     assert _ref_host("") == "-"
 
 
+@pytest.mark.parametrize(
+    "referer",
+    [
+        "http://10.1.2.3/x",
+        "http://10.1.2.3",
+        "https://192.168.178.23:8443/wiki?x=1",
+        "https://alice@192.168.178.23/",
+        "https://alice@10.1.2.3:8080#top",
+        "http://[::1]/",
+        "https://[2001:db8::7]:8443/x",
+        "https://bob@[fe80::1]/",
+    ],
+)
+def test_an_ip_literal_referer_is_logged_as_a_dash(referer: str) -> None:
+    assert _ref_host(referer) == "-"
+
+
 def test_no_location_sets_headers() -> None:
-    """An add_header in a location drops every server-level add_header for that location."""
-    for block in re.findall(r"location\s[^{]*\{([^}]*)\}", CONF):
-        assert "add_header" not in block, block
+    """An add_header in a location or an if drops every server-level add_header there.
+
+    So each one sits directly in the server block (depth 2: http, server), before any location.
+    """
+    depth, located, found = 0, False, 0
+    code = re.sub(r'"[^"]*"|#.*', "", CONF)  # strings and comments hold no directives
+    for token in re.findall(r"[{}]|\badd_header\b|\blocation\b", code):
+        if token in "{}":
+            depth += 1 if token == "{" else -1
+        elif token == "location":
+            located |= depth == 2
+        else:
+            found += 1
+            assert depth == 2 and not located, f"add_header number {found} is not server-level"
+    assert found == 9, found
 
 
 def test_map_keys_fit_the_hash_bucket_with_headroom() -> None:
