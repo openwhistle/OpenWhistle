@@ -257,10 +257,11 @@ def create_app() -> FastAPI:
     ) -> HTMLResponse:
         from app.templating import render
 
+        t = make_translator(get_lang(request))
         return render(
             request,
             "error.html",
-            {"status_code": 422, "detail": "The submitted form data was invalid."},
+            {"status_code": 422, "detail": t("error.detail.422")},
             status_code=422,
         )
 

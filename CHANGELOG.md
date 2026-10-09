@@ -30,6 +30,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - The statistics page writes percentages the way the admin's language does (`40,0 %` in German and
   Spanish); it wrote `40.0%` in every language.
+- The page for invalid input (HTTP 422) is in the user's language; it was always English.
 
 ### Security
 
