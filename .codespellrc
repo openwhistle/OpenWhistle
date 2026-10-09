@@ -14,6 +14,5 @@ check-hidden = false
 # alle — German UI string, docs/_data/i18n/de.yml
 # titel, caf — German test data and a percent-encoded "café", tests/test_build_site.py
 # Sie, Ende, German month names — German test sentences and quoted German texts,
-#   tests/test_docs_prose.py, CONTRIBUTING.md, docs-tech/seo-marketing.md; sie — the German pronoun in
-#   tests/test_legal_pages.py and the mutation specs
-ignore-words-list = produkt,alle,titel,caf,alph,foto,covert,Tage,Titel,ist,unter,oder,garantie,Sie,sie,Ende,Januar,Februar,Juni,Juli,Oktober,Dezember
+#   tests/test_docs_prose.py, CONTRIBUTING.md, docs-tech/seo-marketing.md
+ignore-words-list = produkt,alle,titel,caf,alph,foto,covert,Tage,Titel,ist,unter,oder,garantie,Sie,Ende,Januar,Februar,Juni,Juli,Oktober,Dezember

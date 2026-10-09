@@ -94,8 +94,8 @@
   {
    "id": "P5-DE-IP-TRANSIENT",
    "file": "docs/de/datenschutz/index.html",
-   "old": "Um die Seite auszuliefern, verarbeitet der Server Ihre IP-Adresse für die Dauer der Verbindung; gespeichert wird sie nicht.\n",
-   "new": "",
+   "old": "Um die Seite auszuliefern, verarbeitet der Server Ihre IP-Adresse für die Dauer der Verbindung; gespeichert wird",
+   "new": "Um die Seite auszuliefern",
    "tests": "LEGAL"
   },
   {
@@ -110,6 +110,12 @@
    "file": "scripts/build_site.py",
    "old": "    write_security_txt(out, site)\n",
    "new": "    write_security_txt(out, site)\n    (out / \".nojekyll\").touch()\n",
+   "tests": "BUILD"
+  },
+  {
+   "id": "P5-CNAME-BACK",
+   "file": "docs/CNAME",
+   "create": "openwhistle.net\n",
    "tests": "BUILD"
   }
  ],

@@ -21,8 +21,8 @@ from playwright.sync_api import Browser, BrowserContext, Page
 from tests.built_site import builder
 
 # The static marketing/docs site is served by its own nginx image. Build it and
-# serve the build locally so browser
-# tests against it (layout, theme/nav/scroll-spy behaviour) run standalone,
+# serve the build locally so browser tests against it (layout, theme/nav/scroll-spy
+# behaviour) run standalone,
 # without the FastAPI app or the review stack. Shared by every test module
 # that needs it, so each one does not spin up its own copy of the same fixture.
 # Session-wide, built once: pytest reorders parametrised tests across modules, and a

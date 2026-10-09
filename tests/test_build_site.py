@@ -954,5 +954,6 @@ def test_no_workflow_deploys_to_github_pages() -> None:
     """P5: the site is the container image; Pages machinery must not come back."""
     workflows = ROOT / ".github" / "workflows"
     assert not (workflows / "pages.yml").exists()
+    assert not (ROOT / "docs" / "CNAME").exists()  # nginx would serve it at /CNAME
     for path in workflows.glob("*.yml"):
         assert not re.search(r"deploy-pages|upload-pages-artifact", path.read_text()), path.name

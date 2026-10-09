@@ -166,7 +166,7 @@ SERVER = {
             "keine IP-Adresse, keine Browserkennung und keine Query-Zeichenfolge",
             "30 Tage auf dem Server und 90 Tage in unserem Protokollarchiv",
             "Art. 6 Abs. 1 lit. f DSGVO",
-            "Ihre IP-Adresse für die Dauer der Verbindung; gespeichert wird sie nicht",
+            "Ihre IP-Adresse für die Dauer der Verbindung; gespeichert wird",
         ),
     ),
     "/en/privacy/": (
