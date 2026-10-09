@@ -225,8 +225,8 @@
   {
    "id": "DOCS-HEADING-SKIP",
    "file": "docs/en/docs/notifications/index.html",
-   "old": "<h2 id=\"webhook\">Webhook</h2>",
-   "new": "<h3 id=\"webhook\">Webhook</h3>",
+   "old": "<h2 id=\"email-smtp\">Email (SMTP)</h2>",
+   "new": "<h3 id=\"email-smtp\">Email (SMTP)</h3>",
    "tests": "SPLIT"
   },
   {
