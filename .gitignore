@@ -61,3 +61,4 @@ integrity-manifest.json
 
 # Agent scratch
 /.superpowers/
+/.claude/
