@@ -115,8 +115,8 @@ cosign verify ghcr.io/openwhistle/openwhistle:X.Y.Z \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
-Until the site moves off GitHub Pages (website P5), Pages must build from the workflow, not from `main:/docs`:
-after P1 the legacy setting served the raw sources for 15 minutes.
+Until the site moves off GitHub Pages (website P5), Pages keeps its last workflow deployment (the workflow is gone)
+and must never switch to `main:/docs`: after P1 the legacy setting served the raw sources for 15 minutes.
 
 ```bash
 gh api repos/openwhistle/OpenWhistle/pages -q .build_type     # workflow

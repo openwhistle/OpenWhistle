@@ -156,7 +156,8 @@ included by another template, never rendered on their own).
 
 ### The website (`docs/` sources, built to `_site/`)
 
-Build, then serve the output (GitHub Pages publishes `_site/`, not `docs/`):
+Build, then serve the output (the image serves the build, not `docs/`). The legal pages show
+their address only in the container (`docs-tech/website-image.md`):
 
 ```bash
 uv run --group site python scripts/build_site.py && python -m http.server -d _site 8901
@@ -225,6 +226,7 @@ Rebuild after every edit to `docs/`; the server serves what was built.
 | `/en/compare/` | Comparison with GlobaLeaks, SecureDrop, Hush Line — the table scrolls inside its box at 390 px. |
 | `/404.html` | Not-found page (noindex); open any missing path on the served site. |
 | `/en/changelog/` | Changelog, rendered from `CHANGELOG.md` — check the version nav in the sidebar. |
+| `/en/changelog/older/` | The releases before the newest five — the version nav, the link back. |
 | `/de/blog/` | Blog index. |
 | `/de/blog/hinschg-compliance-leitfaden/` | Article. |
 | `/de/blog/hinweisgebersystem-dsgvo-eu-hosting/` | Article. |

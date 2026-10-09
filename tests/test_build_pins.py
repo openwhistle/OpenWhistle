@@ -3,6 +3,8 @@
 import re
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).parents[1]
 
 
@@ -16,6 +18,12 @@ def test_uv_version_is_the_same_in_the_image_and_every_workflow() -> None:
     stale = {name: found for name, found in pins.items() if set(found) - {image.group(1)}}
     assert not stale, f"uv pins differ from the Dockerfile's {image.group(1)}: {stale}"
     assert any(pins.values()), "no workflow pins uv — the check reaches nothing"
+    pin = r"ghcr\.io/astral-sh/uv:([0-9.]+@sha256:[0-9a-f]{64})"
+    root = re.search(pin, (ROOT / "Dockerfile").read_text())
+    site = re.search(pin, (ROOT / "website" / "Dockerfile").read_text())
+    assert root and site and root.group(1) == site.group(1), (
+        "website/Dockerfile's uv pin differs from the Dockerfile's"
+    )
 
 
 def _all(pattern: str, *globs: str) -> set[str]:
@@ -57,9 +65,10 @@ def _final_stage() -> str:
     return (ROOT / "Dockerfile").read_text().split("AS final", 1)[1]
 
 
-def test_base_images_are_pinned_by_digest() -> None:
-    images = re.findall(r"^FROM (\S+)", (ROOT / "Dockerfile").read_text(), re.M)
-    assert images, "no FROM line"
+@pytest.mark.parametrize("dockerfile", ["Dockerfile", "website/Dockerfile"])
+def test_base_images_are_pinned_by_digest(dockerfile: str) -> None:
+    images = re.findall(r"^FROM (?:--\S+ )*(\S+)", (ROOT / dockerfile).read_text(), re.M)
+    assert len(images) == 2, images
     assert all(re.search(r"@sha256:[0-9a-f]{64}$", f) for f in images), images
 
 

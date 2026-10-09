@@ -202,12 +202,12 @@ SHELL_TAIL = """        </nav>
       <nav class="docs-breadcrumb" aria-label="Breadcrumb">
         <a href="/en/">OpenWhistle</a>
         <span>/</span>
-        <span>Changelog</span>
+{crumb}
       </nav>
 
-      <h1>Changelog</h1>
+      <h1>{title}</h1>
       <p class="docs-lead">
-        Every release, newest first. Rendered from
+        {lead} Rendered from
         <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CHANGELOG.md" rel="noopener noreferrer" target="_blank">CHANGELOG.md</a>,
         the file GitHub and the release tooling read.
       </p>
@@ -221,9 +221,30 @@ CONTENT_FOOT = """    </main>
   """
 
 
-def render_content(versions: list[Version], link_defs: dict[str, str]) -> str:
-    """The page body between the site navigation and the footer; the layout adds the rest."""
+# Releases on /en/changelog/ besides the unreleased section: a count, not a version rule, so a
+# new release never pushes the page over the 100 KB first-view budget by itself.
+NEWEST = 5
+
+
+def render_content(
+    versions: list[Version], link_defs: dict[str, str], *, older: bool = False
+) -> str:
+    """The page body between the site navigation and the footer; the layout adds the rest.
+
+    Two pages, because one page of every release is 43 KB of HTML and the first view of a
+    page stays within 100 KB: /en/changelog/ holds what is not yet released and the NEWEST
+    releases, /en/changelog/older/ the rest.
+    """
     shown = [v for v in versions if any(line.strip() for line in v.lines)]
+    released = [v for v in shown if v.name.lower() != "unreleased"]
+    on_main = {v.name for v in released[:NEWEST]}
+    shown = [v for v in shown if (v.name in on_main or v.name.lower() == "unreleased") != older]
+    if older and len(released) <= NEWEST:
+        raise ValueError(
+            f"CHANGELOG.md has {len(released)} releases, none older than the newest {NEWEST}: "
+            "docs/en/changelog/older/ would be empty; remove that page and the link to it"
+        )
+    oldest_shown = released[NEWEST - 1].name if len(released) >= NEWEST else ""
 
     nav_links = "\n".join(f'          <a href="#{slug(v.name)}">{esc(v.name)}</a>' for v in shown)
 
@@ -241,4 +262,24 @@ def render_content(versions: list[Version], link_defs: dict[str, str]) -> str:
             f"      </section>\n"
         )
 
-    return CONTENT_HEAD + nav_links + "\n" + SHELL_TAIL + "\n".join(sections) + CONTENT_FOOT
+    if older:
+        crumb = (
+            '        <a href="/en/changelog/">Changelog</a>\n        <span>/</span>\n'
+            "        <span>Older releases</span>"
+        )
+        title = "Older releases"
+        lead = (
+            f"Every release before {oldest_shown}, newest first. "
+            '<a href="/en/changelog/">Back to the current releases</a>.'
+        )
+    else:
+        crumb = "        <span>Changelog</span>"
+        title = "Changelog"
+        lead = (
+            f"The unreleased changes and the newest {NEWEST} releases. "
+            'Before that: <a href="/en/changelog/older/">older releases</a>.'
+        )
+    shell_tail = (
+        SHELL_TAIL.replace("{title}", title).replace("{lead}", lead).replace("{crumb}", crumb)
+    )
+    return CONTENT_HEAD + nav_links + "\n" + shell_tail + "\n".join(sections) + CONTENT_FOOT

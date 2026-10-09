@@ -286,8 +286,8 @@
   {
    "id": "PHONE-MENU-OPEN",
    "file": "docs/_layouts/docs.html",
-   "old": "if(matchMedia('(max-width: 768px)').matches)document.querySelector('.docs-menu').removeAttribute('open')",
-   "new": "if(0)document.querySelector('.docs-menu').removeAttribute('open')",
+   "old": "if(matchMedia('(max-width: 768px)').matches)document.currentScript.parentNode.removeAttribute('open')",
+   "new": "if(0)document.currentScript.parentNode.removeAttribute('open')",
    "tests": "MENU_E2E"
   },
   {
@@ -561,13 +561,6 @@
    "file": "scripts/build_site.py",
    "old": "datetime.timedelta(days=335)",
    "new": "datetime.timedelta(days=-1)",
-   "tests": "LEGAL"
-  },
-  {
-   "id": "PAGES-HIDDEN-FILES",
-   "file": ".github/workflows/pages.yml",
-   "old": "include-hidden-files: true",
-   "new": "include-hidden-files: false",
    "tests": "LEGAL"
   },
   {
@@ -895,8 +888,8 @@
   {
    "id": "TABLE-CELLS-TOUCH",
    "file": "scripts/build_site.py",
-   "old": "    return _CELL_END.sub(\"\\\\1\\n\", html_out)",
-   "new": "    return html_out",
+   "old": "    html_out = _CELL_END.sub(\"\\\\1\\n\", html_out)",
+   "new": "    html_out = html_out",
    "tests": "BUILD_SETTINGS"
   },
   {

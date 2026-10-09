@@ -18,7 +18,8 @@ _DEFINITION = re.compile(r"(?<![\w-])(--[\w-]+)\s*:")
 
 
 def _sheets(html: str) -> list[str]:
-    return [p.name for p in stylesheets(html)]
+    # fonts-italic.css rides along on the pages that draw italic mono (build_site.py).
+    return [p.name for p in stylesheets(html) if p.name != "fonts-italic.css"]
 
 
 def test_every_page_links_tokens_fonts_and_base_first() -> None:
@@ -93,7 +94,7 @@ PAGE_TYPES = {"home.css", "docs.css", "post.css", "page.css"}
 
 
 def test_the_site_has_exactly_the_planned_sheets() -> None:
-    assert {p.name for p in CSS.glob("*.css")} == set(ALWAYS) | PAGE_TYPES
+    assert {p.name for p in CSS.glob("*.css")} == set(ALWAYS) | PAGE_TYPES | {"fonts-italic.css"}
 
 
 # What a page links after the three shared sheets: one page type, or the text pages' docs layout

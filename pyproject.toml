@@ -160,12 +160,13 @@ ignore = [
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
 testpaths = ["tests"]
-addopts = "--cov=app --cov-report=term-missing --cov-fail-under=90 --ignore=tests/e2e --ignore=tests/perf"
+addopts = "--cov=app --cov-report=term-missing --cov-fail-under=90 --ignore=tests/e2e --ignore=tests/perf --ignore=tests/website"
 
 markers = [
     "integration: marks tests that require a live database and Redis",
     "e2e: marks end-to-end browser tests that require a running app instance",
     "perf: marks performance tests (run manually, not in standard CI)",
+    "website: tests against a running website container (WEBSITE_URL)",
 ]
 
 filterwarnings = [

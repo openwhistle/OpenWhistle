@@ -1,0 +1,3 @@
+/* The italic mono face, linked only by the pages that draw it (build_site.py, mono_italic_text);
+   inlined as a data: URI like fonts.css. */
+    @font-face { font-family: 'JetBrains Mono'; src: url('/fonts/jetbrains-mono-italic-variable.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: block; }

@@ -1,0 +1,588 @@
+{
+ "timeout_seconds": 600,
+ "test_groups": {
+  "PACKAGE": [
+   "tests/test_package_site.py"
+  ],
+  "STATS": [
+   "tests/test_site_stats.py"
+  ],
+  "CONFIG": [
+   "tests/test_website_config.py"
+  ],
+  "PINS": [
+   "tests/test_build_pins.py"
+  ],
+  "WEBSITE_WF": [
+   "tests/test_website_workflow.py"
+  ],
+  "LEGAL": [
+   "tests/test_legal_pages.py"
+  ],
+  "FONTS": [
+   "tests/test_site_fonts.py"
+  ],
+  "MUTSPECS": [
+   "tests/test_mutation_specs.py"
+  ],
+  "BOUNDARY": [
+   "tests/test_docs_boundary.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "GZ-ALL-FILES",
+   "file": "scripts/package_site.py",
+   "old": "        if path.is_file() and path.suffix in TEXT_SUFFIXES:",
+   "new": "        if path.is_file():",
+   "tests": "PACKAGE"
+  },
+  {
+   "id": "GZ-MTIME",
+   "file": "scripts/package_site.py",
+   "old": "gzip.compress(path.read_bytes(), compresslevel=9, mtime=0)",
+   "new": "gzip.compress(path.read_bytes(), compresslevel=9, mtime=None)",
+   "tests": "PACKAGE"
+  },
+  {
+   "id": "MAP-UNSAFE",
+   "file": "scripts/package_site.py",
+   "old": "            if not _SAFE.fullmatch(part):",
+   "new": "            if False:",
+   "tests": "PACKAGE"
+  },
+  {
+   "id": "MAP-DOLLAR-UNSAFE",
+   "file": "scripts/package_site.py",
+   "old": "_SAFE = re.compile(r'/[^\"\\\\$\\x00-\\x1f\\x7f]*')",
+   "new": "_SAFE = re.compile(r'/[^\"\\\\\\x00-\\x1f\\x7f]*')",
+   "tests": "PACKAGE"
+  },
+  {
+   "id": "MAP-OLD-ONLY",
+   "file": "scripts/package_site.py",
+   "old": "        for part in (old, new):",
+   "new": "        for part in (old,):",
+   "tests": "PACKAGE"
+  },
+  {
+   "id": "STATS-COUNTS-ASSETS",
+   "file": "scripts/site_stats.py",
+   "old": "        if uri.startswith(\"/pagefind/\") or uri.endswith(_ASSET_SUFFIXES):",
+   "new": "        if False:",
+   "tests": "STATS"
+  },
+  {
+   "id": "STATS-COUNTS-ERRORS",
+   "file": "scripts/site_stats.py",
+   "old": "        if len(parts) != 4 or parts[2] != \"200\":",
+   "new": "        if len(parts) != 4:",
+   "tests": "STATS"
+  },
+  {
+   "id": "STATS-INDEX-SEGMENT",
+   "file": "scripts/site_stats.py",
+   "old": "        if uri.endswith(\"/index.html\"):",
+   "new": "        if uri.endswith(\"index.html\"):",
+   "tests": "STATS"
+  },
+  {
+   "id": "STATS-REFS-FOR-ASSETS",
+   "file": "scripts/site_stats.py",
+   "old": "        _time, uri, _status, ref = parts\n        # Skip assets and pagefind; only count pages and their referrers\n        if uri.startswith(\"/pagefind/\") or uri.endswith(_ASSET_SUFFIXES):\n            continue",
+   "new": "        _time, uri, _status, ref = parts\n        if ref != \"-\":\n            refs[ref] += 1\n        # Skip assets and pagefind; only count pages and their referrers\n        if uri.startswith(\"/pagefind/\") or uri.endswith(_ASSET_SUFFIXES):\n            continue",
+   "tests": "STATS"
+  },
+  {
+   "id": "CSP-THEME-HASH",
+   "file": "website/nginx.conf",
+   "old": "\"site\" \"default-src 'none'; script-src 'self' 'sha256-aTVT",
+   "new": "\"site\" \"default-src 'none'; script-src 'self' 'sha256-bTVT",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "CSP-DOCS-WASM",
+   "file": "website/nginx.conf",
+   "old": " 'wasm-unsafe-eval'",
+   "new": "",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "CSP-SITE-WASM",
+   "file": "website/nginx.conf",
+   "old": "\"site\" \"default-src 'none'; script-src 'self' ",
+   "new": "\"site\" \"default-src 'none'; script-src 'self' 'wasm-unsafe-eval' ",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "LOG-ADDR",
+   "file": "website/nginx.conf",
+   "old": "'$time_iso8601 $uri",
+   "new": "'$remote_addr $time_iso8601 $uri",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "LOG-ERROR-LEVEL",
+   "file": "website/nginx.conf",
+   "old": "error_log stderr emerg;",
+   "new": "error_log stderr notice;",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "GZIP-DYNAMIC",
+   "file": "website/nginx.conf",
+   "old": "gzip_static on;",
+   "new": "gzip on;",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "UV-PIN-WEBSITE",
+   "file": "website/Dockerfile",
+   "old": "uv:0.12.24@",
+   "new": "uv:0.12.23@",
+   "tests": "PINS"
+  },
+  {
+   "id": "CSP-SITE-DEFAULT",
+   "file": "website/nginx.conf",
+   "old": "\"site\" \"default-src 'none';",
+   "new": "\"site\" \"default-src 'self';",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "LOG-ERROR-SCOPE",
+   "file": "website/nginx.conf",
+   "old": "error_log stderr emerg;\npid /tmp/nginx.pid;\n\nevents {\n    worker_connections 1024;\n}\n\nhttp {",
+   "new": "pid /tmp/nginx.pid;\n\nevents {\n    worker_connections 1024;\n}\n\nhttp {\n    error_log stderr emerg;",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "LOC-ADD-HEADER",
+   "file": "website/nginx.conf",
+   "old": "location / { }",
+   "new": "location / { add_header X-Test 1; }",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "REF-USERINFO",
+   "file": "website/nginx.conf",
+   "old": "(?:[^@/]*@)?(?<rhost>",
+   "new": "(?<rhost>",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "PUBLISH-NO-NEEDS",
+   "file": ".github/workflows/website-image.yml",
+   "old": "    needs: test\n",
+   "new": "",
+   "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "PUBLISH-ON-PR",
+   "file": ".github/workflows/website-image.yml",
+   "old": "github.event_name != 'pull_request' && ",
+   "new": "",
+   "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "PUBLISH-NO-VERIFY",
+   "file": ".github/workflows/website-image.yml",
+   "old": "cosign verify",
+   "new": "true",
+   "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "PUBLISH-TWO-ARCH",
+   "file": ".github/workflows/website-image.yml",
+   "old": "platforms: linux/amd64",
+   "new": "platforms: linux/amd64,linux/arm64",
+   "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "PUBLISH-NOT-MAIN-ONLY",
+   "file": ".github/workflows/website-image.yml",
+   "old": " && github.ref == 'refs/heads/main'",
+   "new": "",
+   "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "PUBLISH-IF-OR",
+   "file": ".github/workflows/website-image.yml",
+   "old": "'pull_request' && github.ref",
+   "new": "'pull_request' || github.ref",
+   "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "PUBLISH-NO-IDENTITY",
+   "file": ".github/workflows/website-image.yml",
+   "old": "            --certificate-identity \"${IDENTITY}\" \\\n",
+   "new": "",
+   "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "PUBLISH-QEMU",
+   "file": ".github/workflows/website-image.yml",
+   "old": "      - uses: docker/setup-buildx-action@",
+   "new": "      - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0\n      - uses: docker/setup-buildx-action@",
+   "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "PRIVATE-NOT-INTERNAL",
+   "file": "website/nginx.conf",
+   "old": "            internal;\n",
+   "new": "",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "HEALTHZ-LOGGED",
+   "file": "website/nginx.conf",
+   "old": "            access_log off;\n",
+   "new": "",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "SSI-GZIP-STATIC",
+   "file": "website/nginx.conf",
+   "old": "            gzip_static off;\n",
+   "new": "",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "HEALTHZ-NO-503",
+   "file": "website/nginx.conf",
+   "old": "            if (!-f /usr/share/nginx/private/address.html) {\n                return 503;\n            }\n",
+   "new": "",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "LOG-SUBREQUEST",
+   "file": "website/nginx.conf",
+   "old": "        gzip_vary on;\n",
+   "new": "        gzip_vary on;\n        log_subrequest on;\n",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "REF-IP-LITERAL",
+   "file": "website/nginx.conf",
+   "old": "        \"~^https?://(?:[^@/]*@)?(?:[0-9.]+|\\[[0-9A-Fa-f:.]*\\])(?:[:/?#]|$)\" \"-\";\n",
+   "new": "",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "CSP-SCRIPT-HTTPS",
+   "file": "website/nginx.conf",
+   "old": "\"site\" \"default-src 'none'; script-src 'self' 'sha256",
+   "new": "\"site\" \"default-src 'none'; script-src 'self' https: 'sha256",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "HEALTHZ-IF-ADD-HEADER",
+   "file": "website/nginx.conf",
+   "old": "                return 503;\n            }\n",
+   "new": "                return 503;\n            }\n            add_header X-Test 1;\n",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "FONT-SYNTHESIS-ALL",
+   "file": "docs/assets/css/fonts.css",
+   "old": "html { font-synthesis-weight: none; }",
+   "new": "html { font-synthesis: none; }",
+   "tests": "FONTS"
+  },
+  {
+   "id": "FONT-ORPHAN-BACK",
+   "file": "docs/fonts/sora-latin-300-normal.woff2",
+   "create": "x",
+   "tests": "FONTS"
+  },
+  {
+   "id": "STATS-GIF-COUNTED",
+   "file": "scripts/site_stats.py",
+   "old": "    \".gif\",\n",
+   "new": "",
+   "tests": "STATS"
+  },
+  {
+   "id": "MUT-DUP-ID",
+   "file": "docs-tech/mutations/v2.1.2-site-p3.json",
+   "old": "\"id\": \"LEGAL-NAV-NAME\"",
+   "new": "\"id\": \"PRIVACY-365\"",
+   "tests": "MUTSPECS"
+  },
+  {
+   "id": "DIGEST-WEBSITE-NGINX",
+   "file": "website/Dockerfile",
+   "old": "nginx-unprivileged:alpine@sha256:b9241c6e7b8e9a862f129d8d4199ab64b10390949a78bdd5603379b32c844083",
+   "new": "nginx-unprivileged:alpine",
+   "tests": "PINS"
+  },
+  {
+   "id": "PUBLISH-NO-CONCURRENCY",
+   "file": ".github/workflows/website-image.yml",
+   "old": "concurrency:\n  group: website-image-${{ github.ref }}\n  cancel-in-progress: false\n",
+   "new": "",
+   "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "PATHS-NO-CONFIG",
+   "file": ".github/workflows/website-image.yml",
+   "old": "      - \"app/config.py\" # the footer shows app_version\n",
+   "new": "",
+   "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "BROWSER-NOT-REQUIRED",
+   "file": ".github/workflows/website-image.yml",
+   "old": "          WEBSITE_REQUIRED: \"1\" # e2e.yml collects this file too, without a container\n",
+   "new": "",
+   "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "BROWSER-READS-CI-ONLY",
+   "file": "tests/e2e/test_site_container.py",
+   "old": "os.environ.get(\"WEBSITE_REQUIRED\", \"\")",
+   "new": "\"\"",
+   "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "LEGAL-INCLUDE-IMPRINT",
+   "file": "docs/impressum/index.html",
+   "old": "MStV):</h2>\n        <!--# include virtual=\"/_private/address.html\" -->\n",
+   "new": "MStV):</h2>\n",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "LEGAL-INCLUDE-POLICY",
+   "file": "docs/en/privacy/index.html",
+   "old": "        <!--# include virtual=\"/_private/address.html\" -->\n",
+   "new": "",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "PRIVATE-SCAN-BLIND",
+   "file": "tests/test_legal_pages.py",
+   "old": "if s.encode() in data",
+   "new": "if s.encode() in data[:0]",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "IMAGE-NO-RENEWAL",
+   "file": ".github/workflows/website-image.yml",
+   "old": "    - cron: \"41 4 2 * *\"",
+   "new": "    - cron: \"41 4 2 1 *\"",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "IMAGE-SHALLOW",
+   "file": ".github/workflows/website-image.yml",
+   "old": "          fetch-depth: 0 # the sitemap's lastmod comes from each source's last commit\n",
+   "new": "",
+   "tests": "BOUNDARY"
+  },
+  {
+   "id": "PUBLISH-JOB-CONCURRENCY",
+   "file": ".github/workflows/website-image.yml",
+   "old": "    runs-on: ubuntu-latest\n    timeout-minutes: 30\n    permissions:\n      contents: read\n      packages: write\n",
+   "new": "    concurrency: website-image\n    runs-on: ubuntu-latest\n    timeout-minutes: 30\n    permissions:\n      contents: read\n      packages: write\n",
+   "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "INLINE-CASE-INSENSITIVE",
+   "file": "tests/test_website_config.py",
+   "old": "    r\"<script\\s*(?![^>]*\\bsrc\\s*=)(?![^>]*\\btype\\s*=\\s*[\\\"']?application/ld\\+json[\\\"']?)\"\n    r\"[^>]*>(.*?)</script[^>]*>\",\n    re.S | re.I,",
+   "new": "    r\"<script\\s*(?![^>]*\\bsrc\\s*=)(?![^>]*\\btype\\s*=\\s*[\\\"']?application/ld\\+json[\\\"']?)\"\n    r\"[^>]*>(.*?)</script[^>]*>\",\n    re.S,",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "INLINE-END-TAG-STRICT",
+   "file": "tests/test_website_config.py",
+   "old": "    r\"<script\\s*(?![^>]*\\bsrc\\s*=)(?![^>]*\\btype\\s*=\\s*[\\\"']?application/ld\\+json[\\\"']?)\"\n    r\"[^>]*>(.*?)</script[^>]*>\",",
+   "new": "    r\"<script\\s*(?![^>]*\\bsrc\\s*=)(?![^>]*\\btype\\s*=\\s*[\\\"']?application/ld\\+json[\\\"']?)\"\n    r\"[^>]*>(.*?)</\\s*script\\s*>\",",
+   "tests": "CONFIG"
+  }
+ ],
+ "manual": [
+  {
+   "id": "APK-DEL-MODULES",
+   "file": "website/Dockerfile",
+   "old": "RUN apk del --no-cache nginx-module-geoip nginx-module-image-filter nginx-module-njs nginx-module-xslt \\\n    && rm -f",
+   "new": "RUN rm -f",
+   "red": "tests/website/test_container.py::test_no_dynamic_module_ships_and_neither_does_its_tiff"
+  },
+  {
+   "id": "ABSOLUTE-REDIRECT",
+   "file": "website/nginx.conf",
+   "old": "        absolute_redirect off;\n",
+   "new": "",
+   "red": "tests/website/test_container.py::test_every_old_url_moves_permanently"
+  },
+  {
+   "id": "HEADER-IN-LOCATION",
+   "file": "website/nginx.conf",
+   "old": "location / { }",
+   "new": "location / { add_header X-Test 1; }",
+   "red": "tests/website/test_container.py::test_every_response_carries_the_security_headers"
+  },
+  {
+   "id": "LANG-CASE",
+   "file": "website/nginx.conf",
+   "old": "\"~*^de\"",
+   "new": "\"~^de\"",
+   "red": "tests/website/test_container.py::test_the_root_picks_the_language"
+  },
+  {
+   "id": "MOVED-301",
+   "file": "website/nginx.conf",
+   "old": "return 301 $moved;",
+   "new": "return 302 $moved;",
+   "red": "tests/website/test_container.py::test_every_old_url_moves_permanently"
+  },
+  {
+   "id": "ERROR-PAGE",
+   "file": "website/nginx.conf",
+   "old": "        error_page 403 404 /404.html;\n",
+   "new": "",
+   "red": "tests/website/test_container.py::test_a_directory_without_an_index_is_the_404_page"
+  },
+  {
+   "id": "ENTRYPOINT",
+   "file": "website/Dockerfile",
+   "old": "ENTRYPOINT [\"nginx\", \"-g\", \"daemon off;\"]\nCMD []",
+   "new": "CMD [\"nginx\", \"-g\", \"daemon off;\"]",
+   "red": "tests/website/test_container.py::test_every_log_line_is_a_counter_line"
+  },
+  {
+   "id": "USER-ROOT",
+   "file": "website/Dockerfile",
+   "old": "USER 101\n",
+   "new": "USER root\n",
+   "red": "tests/website/test_container.py::test_the_process_is_not_root"
+  },
+  {
+   "id": "KEEP-BASE-HTML",
+   "file": "website/Dockerfile",
+   "old": " && rm -rf /usr/share/nginx/html/*",
+   "new": "",
+   "red": "tests/website/test_container.py::test_the_base_images_error_page_is_gone"
+  },
+  {
+   "id": "REF-USERINFO-LIVE",
+   "file": "website/nginx.conf",
+   "old": "\"~^https?://(?:[^@/]*@)?(?<rhost>[A-Za-z0-9.-]+)(?:[:/?#]|$)\" $rhost;",
+   "new": "\"~^https?://(?<rhost>[^/:?#]+)\" $rhost;",
+   "red": "tests/website/test_container.py::test_the_referer_keeps_the_hostname_only"
+  },
+  {
+   "id": "CSP-THEME-HASH-LIVE",
+   "file": "website/nginx.conf",
+   "old": "'sha256-aTVT2yTZj8X3C8V1QPnib4HTXa5Npxc/Hah1pqj89gY=' 'sha256-V29hLe3WV/jChb7JJqgWgSXXtSrfjeye+kxAdKytOPU='; style-src",
+   "new": "'sha256-bTVT2yTZj8X3C8V1QPnib4HTXa5Npxc/Hah1pqj89gY=' 'sha256-V29hLe3WV/jChb7JJqgWgSXXtSrfjeye+kxAdKytOPU='; style-src",
+   "red": "tests/e2e/test_site_container.py::test_no_page_breaks_its_csp"
+  },
+  {
+   "id": "DOCS-NO-WASM-LIVE",
+   "file": "website/nginx.conf",
+   "old": "script-src 'self' 'wasm-unsafe-eval' ",
+   "new": "script-src 'self' ",
+   "red": "tests/e2e/test_site_container.py::test_search_works_under_the_docs_csp"
+  },
+  {
+   "id": "BUDGET-EAGER",
+   "file": "docs/en/docs/whistleblower/index.html",
+   "old": "<picture><source media=\"(max-width: 600px)\" srcset=\"/img/screens/status-light-m.webp\"><img class=\"shot-light\" src=\"/img/screens/status-light.png\" alt=\"The status page: case number and secret PIN fields and a View report status button.\" width=\"1440\" height=\"900\" loading=\"lazy\"></picture>",
+   "new": "<img class=\"shot-light\" src=\"/img/screens/status-light.png\" alt=\"The status page: case number and secret PIN fields and a View report status button.\" width=\"1440\" height=\"900\">",
+   "red": "tests/e2e/test_site_container.py::test_the_first_view_stays_in_budget"
+  },
+  {
+   "id": "PAGEFIND-WORKER-CSP",
+   "file": "website/nginx.conf",
+   "old": "\"~^/(en/docs|pagefind)/\" \"docs\";",
+   "new": "\"~^/en/docs/\" \"docs\";",
+   "red": "tests/e2e/test_site_container.py::test_search_works_under_the_docs_csp"
+  },
+  {
+   "id": "SEARCH-BUTTON-SPACE",
+   "file": "docs/assets/css/docs.css",
+   "old": "    .docs-search-open[hidden] { display: block; visibility: hidden; }\n",
+   "new": "",
+   "red": "tests/e2e/test_site_container.py::test_the_first_view_stays_in_budget"
+  },
+  {
+   "id": "FONT-INLINE-OFF",
+   "file": "scripts/build_site.py",
+   "old": "            css = css.replace(f\"url('/fonts/{target}')\", f\"url('data:font/woff2;base64,{data}')\")\n",
+   "new": "",
+   "red": "tests/e2e/test_site_container.py::test_the_first_view_stays_in_budget"
+  },
+  {
+   "id": "FONT-KICK-DROPPED",
+   "file": "docs/_includes/head.html",
+   "old": "  <script>document.fonts.load(\"1em Sora\");document.fonts.load('1em \"JetBrains Mono\"');document.fonts.load('italic 1em \"JetBrains Mono\"')</script>\n",
+   "new": "",
+   "red": "tests/e2e/test_site_container.py::test_the_first_view_stays_in_budget"
+  },
+  {
+   "id": "CHANGELOG-COUNT",
+   "file": "scripts/render_changelog.py",
+   "old": "NEWEST = 5\n",
+   "new": "NEWEST = 6\n",
+   "red": "tests/test_changelog_page.py::test_the_older_page_holds_the_rest_and_no_release_is_on_both"
+  },
+  {
+   "id": "PICTURE-SOURCE-MISSING",
+   "file": "docs/en/docs/whistleblower/index.html",
+   "old": "<picture><source media=\"(max-width: 600px)\" srcset=\"/img/screens/status-light-m.webp\">",
+   "new": "<picture>",
+   "red": "tests/test_docs_figures.py::test_every_screenshot_has_a_mobile_webp_in_a_picture"
+  },
+  {
+   "id": "VOID-TAG-POPS-STACK",
+   "file": "scripts/build_site.py",
+   "old": "        if tag in _VOID or tag not in (t for t, *_ in self._stack):\n            return  # `<hr />` arrives here too, and was never pushed\n",
+   "new": "",
+   "red": "tests/test_site_fonts.py::test_a_self_closing_void_tag_does_not_end_the_italic"
+  },
+  {
+   "id": "FONT-NAME-IDS",
+   "file": "scripts/build_site.py",
+   "old": "options.name_IDs = [0, 1, 2, 13, 14]",
+   "new": "options.name_IDs = [1, 2]",
+   "red": "tests/test_site_fonts.py::test_the_copyright_and_license_stay_inside_the_font"
+  },
+  {
+   "id": "OLDER-PAGE-EMPTY",
+   "file": "scripts/render_changelog.py",
+   "old": "    if older and len(released) <= NEWEST:",
+   "new": "    if False:",
+   "red": "tests/test_changelog_page.py::test_the_older_page_refuses_to_render_empty"
+  },
+  {
+   "id": "SSI-OFF",
+   "file": "website/nginx.conf",
+   "old": "            ssi on;\n",
+   "new": "",
+   "red": "tests/website/test_container.py::test_a_legal_page_goes_through_ssi_with_its_csp"
+  },
+  {
+   "id": "SSI-GZIP-STATIC-CONTAINER",
+   "file": "website/nginx.conf",
+   "old": "            gzip_static off;\n",
+   "new": "",
+   "red": "tests/website/test_container.py::test_a_legal_page_is_never_the_prebuilt_gzip"
+  },
+  {
+   "id": "REF-IP-LITERAL-LIVE",
+   "file": "website/nginx.conf",
+   "old": "        \"~^https?://(?:[^@/]*@)?(?:[0-9.]+|\\[[0-9A-Fa-f:.]*\\])(?:[:/?#]|$)\" \"-\";\n",
+   "new": "",
+   "red": "tests/website/test_container.py::test_an_ip_literal_referer_is_logged_as_a_dash"
+  },
+  {
+   "id": "ADDRESS-INCLUDE-LIVE",
+   "file": "docs/en/privacy/index.html",
+   "old": "virtual=\"/_private/address.html\"",
+   "new": "virtual=\"/_private/missing.html\"",
+   "red": "tests/website/test_container.py::test_a_legal_page_shows_the_mounted_address"
+  }
+ ]
+}

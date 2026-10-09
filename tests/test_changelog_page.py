@@ -13,6 +13,8 @@ import re
 from pathlib import Path
 from types import ModuleType
 
+import pytest
+
 from tests.built_site import built
 
 ROOT = Path(__file__).parents[1]
@@ -40,6 +42,18 @@ def test_the_built_page_is_the_changelog() -> None:
     versions, link_defs = RENDER_CHANGELOG.parse(CHANGELOG.read_text())
     content = RENDER_CHANGELOG.render_content(versions, link_defs)
     assert content in _page().read_text(encoding="utf-8")
+
+
+def test_the_older_page_holds_the_rest_and_no_release_is_on_both() -> None:
+    versions, link_defs = RENDER_CHANGELOG.parse(CHANGELOG.read_text())
+    older = RENDER_CHANGELOG.render_content(versions, link_defs, older=True)
+    assert older in (built() / "en/changelog/older/index.html").read_text(encoding="utf-8")
+    ids = lambda page: set(re.findall(r'<section class="docs-section" id="([^"]+)"', page))  # noqa: E731
+    current = ids(RENDER_CHANGELOG.render_content(versions, link_defs))
+    assert current and ids(older) and not current & ids(older)
+    assert "v1-0-0" in ids(older) and "unreleased" in current
+    # Unreleased plus the newest NEWEST releases: a count, so a release never breaks the budget.
+    assert len(current - {"unreleased"}) <= 5 == RENDER_CHANGELOG.NEWEST
 
 
 def test_render_content_holds_no_site_chrome() -> None:
@@ -141,3 +155,13 @@ def test_renderer_escapes_and_nests_correctly_on_a_fixture() -> None:
 
     # The heading gets a stable id built from the version number.
     assert 'id="v9-9-9"' in html
+
+
+def test_the_older_page_refuses_to_render_empty() -> None:
+    few = "\n".join(
+        f"## [1.0.{i}] — 2026-01-01\n\n- x\n\n[1.0.{i}]: https://example.test\n" for i in range(5)
+    )
+    versions, link_defs = RENDER_CHANGELOG.parse(few)
+    assert RENDER_CHANGELOG.render_content(versions, link_defs)
+    with pytest.raises(ValueError, match="would be empty"):
+        RENDER_CHANGELOG.render_content(versions, link_defs, older=True)

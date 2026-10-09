@@ -7,7 +7,10 @@
   <div class="docs-layout">
     <aside class="docs-sidebar" aria-label="Documentation">
       <button type="button" class="docs-search-open" data-search-open hidden>Search the docs <kbd>/</kbd></button>
+      {#- First child: the menu is closed on a phone before its 30 links are parsed, so nothing
+          moves when it closes (CLS 0). Without JS it stays open (CSP hash in nginx.conf). #}
       <details class="docs-menu" open>
+        <script>if(matchMedia('(max-width: 768px)').matches)document.currentScript.parentNode.removeAttribute('open')</script>
         <summary>Documentation menu</summary>
 {% for group in docs.sidebar %}
         <details class="sidebar-group"{% if group.open or loop.first %} open{% endif %}>
@@ -20,8 +23,6 @@
         </details>
 {% endfor %}
       </details>
-      {#- Closed before the 30 links paint on a phone; without JS it stays open (CSP hash in P4). #}
-      <script>if(matchMedia('(max-width: 768px)').matches)document.querySelector('.docs-menu').removeAttribute('open')</script>
     </aside>
 
     <main id="main-content" class="docs-content" data-pagefind-body>

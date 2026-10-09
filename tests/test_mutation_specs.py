@@ -49,7 +49,9 @@ def test_a_release_in_development_is_covered() -> None:
 @pytest.mark.parametrize("spec", SPECS, ids=lambda p: p.name)
 def test_every_mutation_matches_its_file_exactly_once(spec: Path) -> None:
     stale = []
-    for m in json.loads(spec.read_text())["mutations"]:
+    data = json.loads(spec.read_text())
+    # "manual" entries are run by hand (they need a rebuilt image); their text must still match.
+    for m in data["mutations"] + data.get("manual", []):
         target = ROOT / (m.get("file") or m["path"])
         if "create" in m:  # the audit adds this file, so it must not exist yet
             count = 0 if target.exists() else 1
@@ -58,6 +60,14 @@ def test_every_mutation_matches_its_file_exactly_once(spec: Path) -> None:
         if count != 1:
             stale.append(f"{m.get('id') or m.get('name')}: {target.relative_to(ROOT)} x{count}")
     assert not stale, stale
+
+
+@pytest.mark.parametrize("spec", ALL_SPECS, ids=lambda p: p.name)
+def test_every_id_names_one_mutation(spec: Path) -> None:
+    """The audit is run by id: a duplicate runs both, and a report line cannot tell them apart."""
+    data = json.loads(spec.read_text())
+    ids = [m.get("id") or m.get("name") for m in data["mutations"] + data.get("manual", [])]
+    assert not (dups := sorted({i for i in ids if ids.count(i) > 1})), dups
 
 
 def test_a_spec_cannot_name_a_file_outside_the_repo() -> None:

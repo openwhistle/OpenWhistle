@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import re
-
 import pytest
 from playwright.sync_api import Browser
 
@@ -12,11 +10,10 @@ from tests.built_site import built, pages
 pytestmark = pytest.mark.e2e
 
 
-def test_the_preloaded_fonts_are_the_ones_the_first_view_uses(
+def test_every_drawn_weight_is_inside_the_range_of_its_variable_font(
     browser: Browser, docs_server_url: str
 ) -> None:
     used: set[str] = set()
-    preloaded: set[str] = set()
     for width in (1920, 390):
         for url in ("/en/", "/de/"):
             ctx = browser.new_context(viewport={"width": width, "height": 900})
@@ -41,18 +38,15 @@ def test_the_preloaded_fonts_are_the_ones_the_first_view_uses(
                      return [...out]; }"""
                     )
                 )
-                preloaded |= set(
-                    page.evaluate(
-                        "() => [...document.querySelectorAll('link[rel=preload][as=font]')]"
-                        ".map(l => l.href.split('/').pop())"
-                    )
-                )
             finally:
                 ctx.close()
-    sora = {u.split()[1] for u in used if u.startswith("Sora ") and "italic" not in u}
-    matches = (re.search(r"sora-latin-(\d+)-normal", f) for f in preloaded)
-    found = {m.group(1) for m in matches if m}
-    assert found == sora, (sorted(sora), sorted(found))
+    # fonts.css: Sora 300-700, JetBrains Mono 400-700 (no italic weight but 400).
+    ranges = {"Sora": (300, 700), "JetBrains Mono": (400, 700)}
+    for entry in used:
+        family, weight = entry.rsplit(" italic", 1)[0].rsplit(" ", 1)
+        if family in ranges:
+            low, high = ranges[family]
+            assert low <= int(weight) <= high, entry
 
 
 @pytest.mark.parametrize("theme,expected", [("light", "light only"), ("dark", "dark")])

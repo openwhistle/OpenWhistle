@@ -32,10 +32,7 @@ Nachfolgend möchten wir Sie informieren, wie wir personenbezogene Daten verwend
 2. Kontaktdaten des Verantwortlichen und bei Fragen zum Datenschutz
 Verantwortlich für den mit dieser Datenschutzerklärung verbundenen Online-Auftritt ist
 
-Jochen Pylypiw
-c/o IP-Management #12226
-Ludwig-Erhard-Straße 18
-20459 Hamburg
+[name and c/o address: private, injected at deploy]
 
 E-Mail: info@openwhistle.net
 Telefon: Platzhalter

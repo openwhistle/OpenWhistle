@@ -3,27 +3,27 @@
 from __future__ import annotations
 
 import datetime
+import os
 import re
+import subprocess
 
+import pytest
 import yaml
 
 from tests.built_site import ROOT, built, page
 
+# Where the address was: the operator mounts it, so neither the repo nor the image holds it (R16).
+INCLUDE = '<!--# include virtual="/_private/address.html" -->'
+ADDRESS = "{address}"
 # The redesign spec's § Legal pages text, line for line; compared word for word.
 IMPRINT = """
 Impressum
 Inhalte gemäß § 5 DDG
-Jochen Pylypiw
-c/o IP-Management #12226
-Ludwig-Erhard-Straße 18
-20459 Hamburg
+{address}
 Kontaktdaten:
 E-Mail: info@openwhistle.net
 Redaktionell verantwortlich (§ 18 Abs. 2 MStV):
-Jochen Pylypiw
-c/o IP-Management #12226
-Ludwig-Erhard-Straße 18
-20459 Hamburg
+{address}
 Quelle: Impressum-Privatschutz
 """
 
@@ -39,11 +39,55 @@ BOILERPLATE = re.compile(
 def _main(url: str) -> str:
     # From the end of the <main id="main-content" ...> tag, whatever attributes follow the id.
     html = page(url).split('id="main-content"', 1)[1].split(">", 1)[1].split("</main>", 1)[0]
+    html = html.replace(INCLUDE, ADDRESS)
     return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html)).replace("&amp;", "&").strip()
 
 
 def test_the_imprint_is_the_provider_text_word_for_word() -> None:
     assert _main("/impressum/") == " ".join(IMPRINT.split())
+
+
+def test_each_privacy_policy_includes_the_address_once_in_its_controller_section() -> None:
+    for url, section in (("/de/datenschutz/", "verantwortlich"), ("/en/privacy/", "controller")):
+        html = page(url)
+        controller = html.split(f'id="{section}"', 1)[1].split("</section>", 1)[0]
+        assert html.count(INCLUDE) == 1 and INCLUDE in controller, url
+        text = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", controller.replace(INCLUDE, ADDRESS)))
+        assert re.search(rf"{re.escape(ADDRESS)} E-[Mm]ail: info@openwhistle\.net", text), url
+
+
+def _leaks(forbidden: list[str]) -> list[str]:
+    files = subprocess.run(
+        ["git", "ls-files", "-z"],  # noqa: S607
+        cwd=ROOT,
+        capture_output=True,
+        check=True,
+    ).stdout.split(b"\0")
+    leaks = []
+    for name in filter(None, files):
+        path = ROOT / name.decode()
+        if path.is_file():
+            data = path.read_bytes()
+            # The index, never the string: the message must not leak what it found.
+            leaks += [
+                f"{name.decode()}: string {i}"
+                for i, s in enumerate(forbidden, 1)
+                if s.encode() in data
+            ]
+    return leaks
+
+
+def test_the_real_data_scan_finds_the_fixture_person() -> None:
+    assert "tests/website/fixtures/private/address.html: string 1" in _leaks(["Erika Mustermann"])
+
+
+def test_no_file_in_the_repository_holds_the_real_data() -> None:
+    """The strings come from the environment, never the repo: naming them here leaks them."""
+    forbidden = [s.strip() for s in os.environ.get("OW_PRIVATE_STRINGS", "").splitlines()]
+    forbidden = [s for s in forbidden if s]
+    if not forbidden:
+        pytest.skip("OW_PRIVATE_STRINGS is not set")
+    assert not (leaks := _leaks(forbidden)), leaks
 
 
 def test_no_placeholder_in_imprint_or_privacy_policy() -> None:
@@ -61,7 +105,6 @@ def test_the_privacy_policy_names_this_setup_and_nothing_else() -> None:
             "ow-theme",
             "info@openwhistle.net",
             "demo.openwhistle.net",
-            "IP-Management",
         ):
             assert fact in text, (url, fact)
         assert not BOILERPLATE.search(text), (url, BOILERPLATE.search(text))
@@ -146,14 +189,8 @@ def test_security_txt_is_valid_and_not_expired() -> None:
     assert now + 31 * day < expires <= now + 336 * day, expires
 
 
-def test_the_pages_deploy_ships_well_known_and_renews_it_monthly() -> None:
-    # upload-pages-artifact drops every dot-directory unless told otherwise.
-    workflow = yaml.safe_load((ROOT / ".github/workflows/pages.yml").read_text())
-    upload = next(
-        step
-        for step in workflow["jobs"]["deploy"]["steps"]
-        if step.get("uses", "").startswith("actions/upload-pages-artifact@")
-    )
-    assert str(upload["with"].get("include-hidden-files")).lower() == "true"
+def test_the_image_renews_security_txt_monthly() -> None:
+    # The scheduled run rebuilds and publishes the image, so the deployed file stays young.
+    workflow = yaml.safe_load((ROOT / ".github/workflows/website-image.yml").read_text())
     # `on:` parses as True in YAML 1.1.
-    assert {"cron": "17 4 1 * *"} in workflow[True]["schedule"]
+    assert {"cron": "41 4 2 * *"} in workflow[True]["schedule"]

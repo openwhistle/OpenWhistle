@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import base64
+import io
 import re
 import uuid
 from html.parser import HTMLParser
@@ -9,12 +11,13 @@ from pathlib import Path
 
 import pyotp
 import pytest
+from fontTools.ttLib import TTFont
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import AdminRole, AdminUser
 from app.services.auth import hash_password
-from tests.built_site import built, css_of, page, pages, stylesheets
+from tests.built_site import builder, built, css_of, page, pages, stylesheets
 
 
 async def _search(client: AsyncClient, q: str, **form: str):  # type: ignore[no-untyped-def]
@@ -1089,7 +1092,15 @@ def test_every_docs_font_face_url_resolves_to_a_real_file() -> None:
             for block in font_face_re.findall(text):
                 for m in url_re.finditer(block):
                     src = m.group(1)
-                    if src.startswith(("http://", "https://", "data:")):
+                    if src.startswith("data:"):
+                        # The site inlines its fonts: the face must be a woff2 that decodes.
+                        match = re.fullmatch(r"data:font/woff2;base64,([A-Za-z0-9+/=]+)", src)
+                        assert match, f"{path.relative_to(site)}: a data: face that is no woff2"
+                        font = TTFont(io.BytesIO(base64.b64decode(match.group(1))))
+                        assert len(font.getBestCmap()) > 50, f"{src[:40]}: not a text font"
+                        checked += 1
+                        continue
+                    if src.startswith(("http://", "https://")):
                         continue
                     base = site if src.startswith("/") else here
                     resolved = (base / src.lstrip("/")).resolve()
@@ -1132,6 +1143,14 @@ def _norm_weight(w: str) -> int | str:
         return int(w)
     except ValueError:
         return w
+
+
+def _weight_range(w: str) -> tuple[int, int] | str:
+    """A face's `font-weight`: one weight or a variable font's `low high` range."""
+    parts = [_norm_weight(p) for p in w.split()]
+    if all(isinstance(p, int) for p in parts) and parts:
+        return (int(parts[0]), int(parts[-1]))  # type: ignore[arg-type]
+    return w.strip()
 
 
 def _norm_style(s: str) -> str:
@@ -1194,7 +1213,7 @@ def test_every_docs_page_font_usage_has_a_matching_font_face() -> None:
             continue
         style = _unwrap_at_rules(style)
 
-        faces: set[tuple[str, int | str, str]] = set()
+        faces: set[tuple[str, tuple[int, int] | str, str]] = set()
         for block in font_face_re.findall(style):
             fam_m = fam_re.search(block)
             if not fam_m:
@@ -1203,7 +1222,7 @@ def test_every_docs_page_font_usage_has_a_matching_font_face() -> None:
             faces.add(
                 (
                     fam_m.group(1).strip(),
-                    _norm_weight(w_m.group(1)) if w_m else 400,
+                    _weight_range(w_m.group(1)) if w_m else (400, 400),
                     _norm_style(s_m.group(1)) if s_m else "normal",
                 )
             )
@@ -1249,11 +1268,19 @@ def test_every_docs_page_font_usage_has_a_matching_font_face() -> None:
             fam, w, s = resolve(sel)
             if fam not in hosted_families:
                 continue
-            if (fam, w, s) in faces:
+            if (fam, s) == ("JetBrains Mono", "italic") and not builder().mono_italic_text(
+                path.read_text(encoding="utf-8")
+            ):
+                continue  # the italic face is linked only by the pages that draw it
+            if any(
+                f == fam and st == s and isinstance(r, tuple) and r[0] <= w <= r[1]
+                for f, r, st in faces
+                if isinstance(w, int)
+            ):
                 continue
             raise AssertionError(
                 f"{rel}: {sel!r} uses {fam} weight={w} style={s}, "
-                f"but no matching @font-face exists (has: {sorted(faces)})"
+                f"but no matching @font-face exists (has: {sorted(map(str, faces))})"
             )
     assert checked_pages, "no built page with @font-face declarations found -- test target moved?"
     assert set(_ANCESTOR_OVERRIDES) <= {

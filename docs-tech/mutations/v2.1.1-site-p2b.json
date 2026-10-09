@@ -674,15 +674,15 @@
    "id": "FONTS-DEFAULT-LAYOUT-FEATURES",
    "file": "scripts/build_site.py",
    "tests": "FONTS",
-   "old": "        options.layout_features = [\"*\"]\n",
+   "old": "        options.layout_features = FONT_FEATURES\n",
    "new": ""
   },
   {
    "id": "FONTS-NOT-SUBSET",
    "file": "scripts/build_site.py",
    "tests": "FONTS",
-   "old": "    subset_fonts(out)\n    if redirect_stubs:",
-   "new": "    if redirect_stubs:"
+   "old": "        subsetter.subset(font)\n",
+   "new": "        pass  # shipped unsubset\n"
   },
   {
    "id": "COMPARE-IGNORES-SIZE",
@@ -690,13 +690,6 @@
    "tests": "COMPARE",
    "old": "        pa.paste(ia)\n        pb.paste(ib)\n",
    "new": ""
-  },
-  {
-   "id": "FIRST-VIEW-THIRD-SORA-PRELOAD",
-   "file": "docs/_includes/head.html",
-   "tests": "LOOK",
-   "old": "  <link rel=\"preload\" href=\"/fonts/sora-latin-700-normal.woff2\" as=\"font\" type=\"font/woff2\" crossorigin>\n",
-   "new": "  <link rel=\"preload\" href=\"/fonts/sora-latin-700-normal.woff2\" as=\"font\" type=\"font/woff2\" crossorigin>\n  <link rel=\"preload\" href=\"/fonts/sora-latin-500-normal.woff2\" as=\"font\" type=\"font/woff2\" crossorigin>\n"
   },
   {
    "id": "UNDEFINED-TOKEN",
@@ -808,13 +801,6 @@
    "tests": "MARK_K_SAME",
    "old": "path{fill:#0a0a0b}",
    "new": "path{fill:#0a0a0c}"
-  },
-  {
-   "id": "FONTS-NO-LATIN1",
-   "file": "scripts/build_site.py",
-   "tests": "FONTS_K_LATIN1",
-   "old": "    + \"\".join(chr(c) for c in range(0xA0, 0x100))\n",
-   "new": ""
   },
   {
    "id": "COMPARE-ONE-SIDE-IGNORED",

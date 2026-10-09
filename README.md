@@ -34,6 +34,9 @@ zero vendor lock-in, and privacy-first by design.
 🌐 **Live demo:** [demo.openwhistle.net](https://demo.openwhistle.net)
 📖 **Documentation:** [openwhistle.net/en/docs/](https://openwhistle.net/en/docs/)
 
+The site is built into the image `ghcr.io/openwhistle/website` (nginx, own security headers, no IP logs);
+GitHub Pages keeps serving its last deployment until the move; nothing redeploys it.
+
 ---
 
 ## ✨ Features

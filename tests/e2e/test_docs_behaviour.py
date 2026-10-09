@@ -10,8 +10,12 @@ file's docs checks do.
 
 from __future__ import annotations
 
+import re
+
 import pytest
 from playwright.sync_api import Browser, BrowserContext, Page
+
+from tests.built_site import built
 
 pytestmark = pytest.mark.e2e
 
@@ -263,6 +267,17 @@ _SETTLED = """() => new Promise(done => {
 })"""
 
 
+def _changelog_anchors() -> list[str]:
+    """The newest release on /en/changelog/, the oldest on /older/, whatever CHANGELOG.md holds."""
+    ids = lambda page: re.findall(r'<section class="docs-section" id="(v[\d-]+)"', page)  # noqa: E731
+    newest = ids((built() / "en/changelog/index.html").read_text(encoding="utf-8"))[0]
+    oldest = ids((built() / "en/changelog/older/index.html").read_text(encoding="utf-8"))[-1]
+    return [f"/en/changelog/#{newest}", f"/en/changelog/older/#{oldest}"]
+
+
+_CHANGELOG_ANCHORS = _changelog_anchors()
+
+
 @pytest.mark.parametrize("width", [1280, 390])
 @pytest.mark.parametrize(
     "url",
@@ -271,7 +286,8 @@ _SETTLED = """() => new Promise(done => {
         "/en/docs/install/#first-run",
         "/en/docs/admin/#own-account",
         "/en/#how-it-works",
-        "/en/changelog/#v2-0-0",
+        _CHANGELOG_ANCHORS[0],
+        _CHANGELOG_ANCHORS[1],
         "/en/blog/whats-new-in-2-0/#main-content",
     ],
 )

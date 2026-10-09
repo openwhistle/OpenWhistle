@@ -21,9 +21,11 @@ The rules, each pinned by tests/test_build_site.py:
 from __future__ import annotations
 
 import argparse
+import base64
 import datetime
 import html
 import importlib.util
+import io
 import json
 import re
 import shutil
@@ -39,6 +41,8 @@ from urllib.parse import unquote, urljoin, urlsplit
 
 import yaml
 from fontTools import subset as ft_subset
+from fontTools.ttLib import TTFont
+from fontTools.varLib import instancer
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from markdown_it import MarkdownIt
 from markupsafe import Markup
@@ -173,10 +177,14 @@ def _load_script(name: str) -> ModuleType:
     return module
 
 
-def _changelog(src: Path) -> str:
+def _changelog(src: Path, *, older: bool = False) -> str:
     changelog = _load_script("render_changelog")
     source = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
-    return str(changelog.render_content(*changelog.parse(source)))
+    return str(changelog.render_content(*changelog.parse(source), older=older))
+
+
+def _changelog_older(src: Path) -> str:
+    return _changelog(src, older=True)
 
 
 # need -> (CSS class suffix, label), exactly as the hand-written tables had them
@@ -262,6 +270,7 @@ def _configuration(src: Path) -> str:
 # generator name -> (function, the file its output comes from)
 GENERATORS: dict[str, tuple[Callable[[Path], str], Path]] = {
     "changelog": (_changelog, ROOT / "CHANGELOG.md"),
+    "changelog_older": (_changelog_older, ROOT / "CHANGELOG.md"),
     "configuration": (_configuration, DOCS / "_data" / "config.yml"),
 }
 
@@ -562,7 +571,14 @@ def render_page(
         if page.url.endswith("/")
         else t["og_image_alt"],
     )
-    return _CELL_END.sub("\\1\n", html_out)
+    html_out = _CELL_END.sub("\\1\n", html_out)
+    if mono_italic_text(html_out):  # only the pages that draw italic mono pay for the face
+        sheet = '  <link rel="stylesheet" href="/assets/css/fonts.css">\n'
+        assert sheet in html_out, "head.html no longer links fonts.css"
+        html_out = html_out.replace(
+            sheet, sheet + sheet.replace("fonts.css", "fonts-italic.css"), 1
+        )
+    return html_out
 
 
 class _Refs(HTMLParser):
@@ -779,7 +795,6 @@ def write_og_images(out: Path, src: Path, pages: list[Page], site_alt: str) -> N
     """
     from io import BytesIO
 
-    from fontTools.ttLib import TTFont
     from PIL import Image, ImageDraw, ImageFont
 
     def font(raw: TTFont, size: int) -> ImageFont.FreeTypeFont:
@@ -870,11 +885,66 @@ def _refuse_dangerous_out(src: Path, out: Path) -> None:
         raise BuildError(f"--out {out} is not empty and not a previous build (no sitemap.xml)")
 
 
-FONT_TEXT_EXTRA = (
-    "".join(chr(c) for c in range(0x20, 0x7F))
-    + "".join(chr(c) for c in range(0xA0, 0x100))
-    + "+—−–‘’“”„…€·§×"
-)
+FONT_TEXT_EXTRA = "".join(chr(c) for c in range(0x20, 0x7F)) + "+—−–‘’“”„…€·§×"
+_VOID = {
+    "area",
+    "base",
+    "br",
+    "col",
+    "embed",
+    "hr",
+    "img",
+    "input",
+    "link",
+    "meta",
+    "source",
+    "wbr",
+}
+
+
+class _MonoItalic(HTMLParser):
+    """The text a page draws in italic mono: `.t-comment` and an <em>/<i> inside code or a pre.
+
+    An <em> in running text is Sora, which has no italic: the browser slants it (fonts.css sets
+    font-synthesis-weight: none only).
+    """
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.chars: set[str] = set()
+        self._stack: list[tuple[str, bool, bool]] = []  # tag, italic, mono
+        self._skip = 0
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag in _VOID:
+            return
+        if tag in ("script", "style"):
+            self._skip += 1
+        comment = "t-comment" in (dict(attrs).get("class") or "").split()
+        italic = tag in ("em", "i") or comment
+        mono = tag in ("code", "pre", "kbd", "samp") or comment
+        if self._stack:
+            italic, mono = italic or self._stack[-1][1], mono or self._stack[-1][2]
+        self._stack.append((tag, italic, mono))
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in ("script", "style"):
+            self._skip -= 1
+        if tag in _VOID or tag not in (t for t, *_ in self._stack):
+            return  # `<hr />` arrives here too, and was never pushed
+        while self._stack:
+            if self._stack.pop()[0] == tag:
+                break
+
+    def handle_data(self, data: str) -> None:
+        if self._stack and self._stack[-1][1] and self._stack[-1][2] and not self._skip:
+            self.chars |= set(data)
+
+
+def mono_italic_text(page_html: str) -> set[str]:
+    parser = _MonoItalic()
+    parser.feed(page_html)
+    return parser.chars
 
 
 def _drawn_text(out: Path) -> str:
@@ -886,25 +956,62 @@ def _drawn_text(out: Path) -> str:
     return "".join(sorted(chars))
 
 
-def subset_fonts(out: Path) -> dict[str, int]:
-    """Cut every woff2 in out/fonts down to what the site draws (spec P2b step 5).
+# The site ships three variable fonts (sources: docs/_fonts, not copied; provenance in
+# docs/fonts/README) cut to the weights the CSS uses and to the drawn text. The static woff2 of
+# docs/fonts belong to the app image and the diagram code and are not shipped.
+# (source file, output name, wght range kept; equal ends pin one instance and drop the axis)
+VARIABLE_FONTS = (
+    ("Sora[wght].ttf", "sora-variable.woff2", (300, 700)),
+    ("JetBrainsMono[wght].ttf", "jetbrains-mono-variable.woff2", (400, 700)),
+    ("JetBrainsMono-Italic[wght].ttf", "jetbrains-mono-italic-variable.woff2", (400, 400)),
+)
+# fontTools' default layout features (kern, liga, calt, ccmp, locl, mark, mkmk, ...) plus tnum
+# (base.css: tabular-nums). Dropped, because no stylesheet sets font-feature-settings or any
+# font-variant but tabular-nums: aalt, case, dlig, salt, ordn, sinf, subs, sups, zero, ss01, ss02,
+# ss19, ss20 and cv01-cv99 (stylistic sets and character variants).
+FONT_FEATURES = [*ft_subset.Options().layout_features, "tnum"]
 
-    The text is the union over all pages plus FONT_TEXT_EXTRA (ASCII, Latin-1 for typed
-    search terms, the CSS content strings). One text for every face: per-weight text
-    would save a few hundred bytes and needs CSS cascade resolution to be right.
+
+def subset_fonts(out: Path, src: Path) -> dict[str, int]:
+    """Write the variable fonts into out/fonts, cut to what the site draws (spec P2b step 5).
+
+    The text is the union over all pages plus FONT_TEXT_EXTRA (ASCII, the CSS content
+    strings); the italic mono gets only the text the pages draw in it, which also prunes the
+    code ligature rules it cannot match.
     """
     text = _drawn_text(out) + FONT_TEXT_EXTRA
+    italic: set[str] = {" "}
+    for page_file in out.rglob("*.html"):
+        italic |= mono_italic_text(page_file.read_text(encoding="utf-8"))
+    for static in (out / "fonts").glob("*.woff2"):
+        static.unlink()
     sizes: dict[str, int] = {}
-    for font_file in sorted((out / "fonts").glob("*.woff2")):
+    for name, target, (low, high) in VARIABLE_FONTS:
+        source = TTFont(src / "_fonts" / name)
+        limit: Any = low if low == high else (low, high)
+        instancer.instantiateVariableFont(source, {"wght": limit}, inplace=True)
+        buffer = io.BytesIO()
+        source.save(buffer)
+        buffer.seek(0)
         options = ft_subset.Options()
         options.flavor = "woff2"
-        options.layout_features = ["*"]
-        font = ft_subset.load_font(str(font_file), options)
+        options.layout_features = FONT_FEATURES
+        options.name_IDs = [0, 1, 2, 13, 14]  # family, style, copyright, license: OFL notice stays
+        font = ft_subset.load_font(buffer, options)
         subsetter = ft_subset.Subsetter(options)
-        subsetter.populate(text=text)
+        subsetter.populate(text="".join(sorted(italic)) if "italic" in target else text)
         subsetter.subset(font)
-        ft_subset.save_font(font, str(font_file), options)
-        sizes[font_file.name] = font_file.stat().st_size
+        ft_subset.save_font(font, str(out / "fonts" / target), options)
+        sizes[target] = (out / "fonts" / target).stat().st_size
+    for sheet in ("fonts.css", "fonts-italic.css"):
+        css_file = out / "assets" / "css" / sheet
+        css = css_file.read_text(encoding="utf-8")
+        for target in sizes:
+            data = base64.b64encode((out / "fonts" / target).read_bytes()).decode()
+            css = css.replace(f"url('/fonts/{target}')", f"url('data:font/woff2;base64,{data}')")
+        css_file.write_text(css, encoding="utf-8")
+    for target in sizes:  # inlined: nothing links the files any more
+        (out / "fonts" / target).unlink()
     return sizes
 
 
@@ -953,11 +1060,11 @@ def build(src: Path, out: Path, *, redirect_stubs: bool = False) -> list[Page]:
     write_security_txt(out, site)
     write_feeds(out, pages, site, data["i18n"])
     write_og_images(out, src, pages, data["i18n"][site["default_language"]]["og_image_alt"])
+    subset_fonts(out, src)  # writes the fonts the pages link
     # Before the stubs: a link to an old URL must fail even where a stub would catch it.
     check_links(out, urlsplit(site["base_url"]).netloc)
     if any(p.meta.get("layout") == "docs" for p in pages):
         index_search(out)
-    subset_fonts(out)
     if redirect_stubs:
         write_stubs(out, data["redirects"], site, src)
     return pages
