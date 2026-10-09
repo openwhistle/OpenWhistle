@@ -175,6 +175,21 @@ def _stripped(path: Path) -> str:
     )
 
 
+def test_figures_are_tabular() -> None:
+    for selector in (
+        "table",
+        "code",
+        ".mono",
+        ".token",
+        ".credential-display",
+        ".stat-card__number",
+        ".stat-card__value",
+        ".guarantee-num",
+        ".session-expiry-countdown",
+    ):
+        assert "tabular-nums" in _app_rule(selector), selector
+
+
 APP_RING_COMPONENTS = (
     ".btn",
     ".btn-secondary",
