@@ -116,6 +116,8 @@ When a page changes:
 2. `scripts/build_site.py` writes `sitemap.xml`; `lastmod` from git.
 3. The changelog body is built from `CHANGELOG.md`; never edit the built page.
 4. Every external link is fetched weekly (`scripts/check_external_links.py`, `links.yml`); a dead one opens an issue.
+   A host that times out only from GitHub's runners goes in `RUNNER_BLOCKED` with the date and evidence; it
+   is then reported as unverifiable when it does not answer, never skipped.
 
 `meta keywords` is not used: Google ignores it, Bing reads it as a spam signal.
 

@@ -738,8 +738,8 @@
   {
    "id": "LINKS-HTTP-EXC",
    "file": "scripts/check_external_links.py",
-   "old": "except urllib.error.URLError, http.client.HTTPException, ValueError, OSError:",
-   "new": "except urllib.error.URLError, OSError:",
+   "old": "except (urllib.error.URLError, http.client.HTTPException, ValueError, OSError) as error:",
+   "new": "except (urllib.error.URLError, OSError) as error:",
    "tests": "LINKS"
   },
   {
@@ -901,6 +901,20 @@
    "file": "scripts/check_external_links.py",
    "old": "        print(f\"  {url}: {type(error).__name__}: {error}\", file=sys.stderr)\n",
    "new": "",
+   "tests": "LINKS"
+  },
+  {
+   "id": "LINKS-BLOCKED-HOST-BROKEN",
+   "file": "scripts/check_external_links.py",
+   "old": " or (status is None and host in RUNNER_BLOCKED)",
+   "new": "",
+   "tests": "LINKS"
+  },
+  {
+   "id": "LINKS-MAIN-NO-HOST",
+   "file": "scripts/check_external_links.py",
+   "old": "classify(status, urlsplit(url).netloc)",
+   "new": "classify(status)",
    "tests": "LINKS"
   }
  ]

@@ -60,6 +60,13 @@ def test_classify(status: int | None, verdict: str) -> None:
     assert C.classify(status) == verdict
 
 
+def test_a_host_that_blocks_the_runner_is_unverifiable_only_without_an_answer() -> None:
+    blocked = next(iter(C.RUNNER_BLOCKED))
+    assert C.classify(None, blocked) == "unverifiable"
+    assert C.classify(404, blocked) == "broken"
+    assert C.classify(None, "example.org") == "broken"
+
+
 def test_a_failure_is_retried_once(monkeypatch: pytest.MonkeyPatch) -> None:
     answers = iter([None, 200])
     monkeypatch.setattr(C, "fetch", lambda _url: next(answers))
@@ -133,3 +140,18 @@ def test_only_the_scheduled_issue_job_can_write_issues() -> None:
         for step in job["steps"]:
             if step.get("uses", "").startswith("actions/checkout@"):
                 assert step["with"]["persist-credentials"] is False, name
+
+
+def test_main_passes_a_blocked_host_as_unverifiable(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    url = f"https://{next(iter(C.RUNNER_BLOCKED))}/hinschg/"
+
+    def build(_src: Path, out: Path) -> None:
+        out.mkdir(parents=True)
+        (out / "index.html").write_text(f'<a href="{url}">law</a>')
+
+    monkeypatch.setattr(C.build_site, "build", build)
+    monkeypatch.setattr(C, "status_of", lambda _url: None)
+    assert C.main() == 0
+    assert f"unverifiable: {url} (no connection)" in capsys.readouterr().out

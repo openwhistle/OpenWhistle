@@ -6,7 +6,8 @@
 Builds the site into a temporary directory, collects every http(s) href that
 leaves openwhistle.net and GETs each once, with one retry after 5 s. Exit 1
 lists the broken ones: no connection, 404, 410, 5xx. 401, 403 and 429 mean a
-host that refuses robots, not a dead link: printed as unverifiable, never fatal.
+host that refuses robots, not a dead link: printed as unverifiable, never fatal;
+so is no connection to a host in RUNNER_BLOCKED.
 Run weekly by .github/workflows/links.yml, which opens an issue on failure.
 """
 
@@ -27,6 +28,9 @@ import build_site  # noqa: E402
 HOST = urlsplit(build_site._yaml(build_site.DOCS / "_data" / "site.yml")["base_url"]).netloc
 USER_AGENT = "openwhistle-link-check (+https://openwhistle.net)"
 UNVERIFIABLE = {401, 403, 429}
+# Hosts that time out from GitHub's runners but answer elsewhere: their silence is the runner's,
+# not a dead link. gesetze-im-internet.de: timed out twice on 2026-10-09, 200 from Germany.
+RUNNER_BLOCKED = {"www.gesetze-im-internet.de"}
 
 
 def collect(site: Path, host: str = HOST) -> dict[str, list[str]]:
@@ -45,9 +49,9 @@ def collect(site: Path, host: str = HOST) -> dict[str, list[str]]:
     return found
 
 
-def classify(status: int | None) -> str:
+def classify(status: int | None, host: str = "") -> str:
     """None is no connection at all."""
-    if status in UNVERIFIABLE:
+    if status in UNVERIFIABLE or (status is None and host in RUNNER_BLOCKED):
         return "unverifiable"
     if status is None or status in (404, 410) or status >= 500:
         return "broken"
@@ -84,7 +88,7 @@ def main() -> int:
     broken = []
     for url, pages in sorted(links.items()):
         status = status_of(url)
-        verdict = classify(status)
+        verdict = classify(status, urlsplit(url).netloc)
         line = f"{verdict}: {url} ({status or 'no connection'}) on {', '.join(pages)}"
         print(line)
         if verdict == "broken":
