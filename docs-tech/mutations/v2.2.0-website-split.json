@@ -12,6 +12,11 @@
   "SHOTS": [
    "tests/test_screenshots.py",
    "tests/test_scripts_import_without_playwright.py"
+  ],
+  "AUDIT": [
+   "tests/test_mutation_specs.py",
+   "-k",
+   "audit"
   ]
  },
  "mutations": [
@@ -86,6 +91,20 @@
    "tests": "SHOTS",
    "old": "if TYPE_CHECKING:\n    from playwright.sync_api import Browser, BrowserContext, Page\n",
    "new": "from playwright.sync_api import Browser, BrowserContext, Page\n"
+  },
+  {
+   "id": "AUDIT-SHARED-PYC",
+   "file": "scripts/mutation_audit.py",
+   "tests": "AUDIT",
+   "old": "                env={**os.environ, \"PYTHONPYCACHEPREFIX\": pycache},\n",
+   "new": "                env=dict(os.environ),\n"
+  },
+  {
+   "id": "AUDIT-MISSING-CRASHES",
+   "file": "scripts/mutation_audit.py",
+   "tests": "AUDIT",
+   "old": "        if \"create\" not in m and not path.is_file():\n",
+   "new": "        if \"create\" not in m and False:\n"
   }
  ]
 }

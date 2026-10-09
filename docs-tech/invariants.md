@@ -644,7 +644,7 @@ In `tests/test_v210_attachment_fidelity.py`.
 
 ## Website repository split (v2.2.0)
 
-`docs-tech/mutations/v2.2.0-website-split.json`: 11 mutations, 11 red. The website, its tests and its
+`docs-tech/mutations/v2.2.0-website-split.json`: 13 mutations, 13 red. The website, its tests and its
 mutation ids live in openwhistle/website; the live site specs here list what left under `"removed"`.
 
 | Mutation | File | Test that fires |
@@ -656,6 +656,8 @@ mutation ids live in openwhistle/website; the live site specs here list what lef
 | `SHOTS-DEFAULT-OUT` | `scripts/take_screenshots.py` | `test_without_a_website_checkout_the_script_refuses_to_run` |
 | `SHOTS-ANY-DIR` | `scripts/take_screenshots.py` | `test_a_folder_that_is_no_website_checkout_is_refused` |
 | `SHOTS-PLAYWRIGHT-EAGER` | `scripts/take_screenshots.py` | `test_script_imports_without_playwright[take_screenshots]` |
+| `AUDIT-SHARED-PYC` | `scripts/mutation_audit.py` | `test_every_audit_run_gets_its_own_bytecode_cache` |
+| `AUDIT-MISSING-CRASHES` | `scripts/mutation_audit.py` | `test_the_audit_reports_red_green_and_stale` |
 
 The CI smoke test (`ci.yml`, job `docker`) requests every file of `app/static/fonts/` but its README from the
 built image (6 woff2 and both OFL licences, counted first): no pytest sees the image.
