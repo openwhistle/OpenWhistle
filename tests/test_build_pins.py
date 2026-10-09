@@ -158,8 +158,10 @@ def test_every_workflow_action_is_pinned_by_commit_sha() -> None:
     version — never a floating tag/branch (`@v4`, `@main`), which a
     compromised upstream tag could silently repoint. `docker/*-action`,
     `actions/*`, and third-party actions (e.g. `aquasecurity/trivy-action`,
-    `DavidAnson/markdownlint-cli2-action`) are all covered; a local action
-    (`uses: ./...`) is not a remote pin and is exempt."""
+    `DavidAnson/markdownlint-cli2-action`) are all covered; this repository's own
+    (`uses: $/...`) is pinned to the running commit by GitHub and is exempt. The
+    workspace-relative `./...` loads whatever the job's checkout holds: zizmor
+    (self-repository) and this test refuse it."""
     pattern = re.compile(r"^(\s*-?\s*)?uses:\s*(\S+)\s*(#.*)?$", re.M)
     unpinned: dict[str, list[str]] = {}
     refs: list[str] = []
@@ -167,8 +169,8 @@ def test_every_workflow_action_is_pinned_by_commit_sha() -> None:
         text = wf.read_text()
         for _prefix, ref, comment in pattern.findall(text):
             refs.append(ref)
-            if ref.startswith("./") or ref.startswith("docker://"):
-                continue  # local/inline action, nothing to pin by SHA
+            if ref.startswith("$/") or ref.startswith("docker://"):
+                continue  # this repository at this commit, or an inline image
             bad = []
             if not re.search(r"@[0-9a-f]{40}$", ref):
                 bad.append(f"{ref!r} is not pinned to a 40-hex commit SHA")

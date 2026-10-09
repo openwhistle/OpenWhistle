@@ -18,6 +18,12 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - The installation-count text links its own documentation page instead of a section of the old one-page docs.
 
+### Security
+
+- The CI workflows pass zizmor, now a CI check: no checkout keeps its token on disk, the performance run takes
+  its inputs through the environment, the publish workflow passes only the Codecov secret, and every job has a
+  time limit.
+
 ## [2.1.1] — 2026-10-03
 
 ### Changed

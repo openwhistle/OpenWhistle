@@ -1,0 +1,62 @@
+{
+ "timeout_seconds": 300,
+ "test_groups": {
+  "HARDEN": [
+   "tests/test_workflow_hardening.py"
+  ],
+  "PINS": [
+   "tests/test_build_pins.py",
+   "-k",
+   "pinned_by_commit_sha"
+  ],
+  "PUBLISH_SELF": [
+   "tests/test_docker_publish.py",
+   "-k",
+   "waits_for_every_check"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "CHECKOUT-KEEPS-TOKEN",
+   "file": ".github/workflows/security.yml",
+   "old": "          persist-credentials: false\n      - uses: docker/setup-buildx-action",
+   "new": "      - uses: docker/setup-buildx-action",
+   "tests": "HARDEN"
+  },
+  {
+   "id": "PERF-INPUT-PASTED",
+   "file": ".github/workflows/perf.yml",
+   "old": "            -u \"$USERS\" \\",
+   "new": "            -u ${{ github.event.inputs.users || '50' }} \\",
+   "tests": "HARDEN"
+  },
+  {
+   "id": "PINS-WORKSPACE-RELATIVE",
+   "file": ".github/workflows/docker-publish.yml",
+   "old": "    uses: $/.github/workflows/e2e.yml",
+   "new": "    uses: ./.github/workflows/e2e.yml",
+   "tests": "PINS"
+  },
+  {
+   "id": "PUBLISH-SECRETS-INHERIT",
+   "file": ".github/workflows/docker-publish.yml",
+   "old": "    secrets:\n      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}",
+   "new": "    secrets: inherit",
+   "tests": "HARDEN"
+  },
+  {
+   "id": "PUBLISH-CALLS-OLD-PATH",
+   "file": "tests/test_docker_publish.py",
+   "old": "(ROOT / path.removeprefix(\"$/\"))",
+   "new": "(ROOT / path)",
+   "tests": "PUBLISH_SELF"
+  },
+  {
+   "id": "JOB-NO-TIMEOUT",
+   "file": ".github/workflows/security.yml",
+   "old": "    timeout-minutes: 30\n",
+   "new": "",
+   "tests": "HARDEN"
+  }
+ ]
+}
