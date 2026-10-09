@@ -219,13 +219,14 @@ def test_a_box_that_scrolls_sideways_is_a_named_tab_stop(
 ) -> None:
     """In the 1200 px frame a wide table or code line scrolls in its own box; a keyboard user
     must be able to focus it to scroll it, and a region needs a name (axe
-    scrollable-region-focusable). A box that fits is no tab stop."""
+    scrollable-region-focusable). A box that fits is no tab stop. The install page's long
+    commands are wider than the column; its tables fit (the desktop table guard)."""
     ctx, page = _new_page(browser, docs_server_url, width=width)
-    page.goto("/en/docs/configuration/")
+    page.goto("/en/docs/install/")
     page.evaluate("document.fonts.ready")
     boxes = page.evaluate(_SCROLL_BOXES)
     ctx.close()
-    # On a phone every table and code block of this page is wider than the screen.
+    # On a phone no box has to fit.
     _assert_only_overflowing_boxes_are_named_tab_stops(boxes, some_fit=width > 390)
 
 
@@ -233,7 +234,7 @@ def test_a_box_that_stops_scrolling_after_a_resize_is_no_tab_stop(
     browser: Browser, docs_server_url: str
 ) -> None:
     ctx, page = _new_page(browser, docs_server_url, width=390, height=844)
-    page.goto("/en/docs/configuration/")
+    page.goto("/en/docs/install/")
     page.evaluate("document.fonts.ready")
     narrow = sum(1 for b in page.evaluate(_SCROLL_BOXES) if b[1] == 0)
     page.set_viewport_size({"width": 1920, "height": 1080})

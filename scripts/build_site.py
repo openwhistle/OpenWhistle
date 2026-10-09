@@ -218,16 +218,20 @@ def config_table(group: dict[str, Any]) -> str:
     rows = []
     for setting in group["settings"]:
         cls, label = _NEED[setting["need"]]
+        default = setting.get("default", "—")
+        # Two columns: four do not fit the docs column beside the page's table of contents.
         rows.append(
-            f'<tr><td><code class="env-key">{setting["name"]}</code></td>'
-            f'<td><span class="env-required env-req-{cls}">{label}</span></td>'
-            f"<td>{setting['description']}</td><td>{setting.get('default', '—')}</td></tr>"
+            f'<tr><td><code class="env-key">{setting["name"]}</code>'
+            f'<span class="env-required env-req-{cls}">{label}</span></td>'
+            f"<td>{setting['description']}"
+            + ("" if default == "—" else f'<span class="env-note">Default: {default}</span>')
+            + "</td></tr>"
         )
     return (
         '<div class="table-scroll">\n'
-        f'<table class="env-table" aria-label="Settings: {html.escape(group["title"])}">\n'
-        '<thead><tr><th scope="col">Variable</th><th scope="col">Required</th>'
-        '<th scope="col">Description</th><th scope="col">Default</th></tr></thead>\n'
+        '<table class="env-table env-settings"'
+        f' aria-label="Settings: {html.escape(group["title"])}">\n'
+        '<thead><tr><th scope="col">Variable</th><th scope="col">Description</th></tr></thead>\n'
         "<tbody>\n" + "\n".join(rows) + "\n</tbody>\n</table>\n</div>\n"
     )
 

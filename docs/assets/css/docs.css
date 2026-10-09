@@ -423,6 +423,8 @@
       vertical-align: top;
       line-height: 1.6;
     }
+    /* German compounds ("Verarbeitungsverzeichnis") break at a syllable instead of widening a column. */
+    :lang(de) .env-table td { hyphens: auto; }
     .env-table tbody tr:last-child td { border-bottom: none; }
     .env-table tbody tr:hover td { background: var(--surface-3); }
     .env-key {
@@ -440,6 +442,13 @@
     }
     .env-req-yes { background: var(--danger-weak); color: var(--danger); box-shadow: 0 0 0 1px color-mix(in srgb, var(--danger) 20%, transparent); }
     .env-req-no  { background: var(--surface); color: var(--muted); box-shadow: 0 0 0 1px var(--hairline); }
+    /* A settings row: the badge under the name, the default under the description. */
+    .env-settings td:first-child { width: 1%; } /* as narrow as its longest name */
+    .env-settings .env-required { display: table; margin-top: var(--space-2); }
+    /* A second line in a cell: a setting's default, a request's switch. */
+    .env-table .env-note { display: block; margin-top: var(--space-2); color: var(--muted); }
+    /* A URL or DSN in a description wraps rather than widening the table past the column. */
+    .env-settings td code { overflow-wrap: anywhere; }
 
     /* Security layers */
     .security-layers {

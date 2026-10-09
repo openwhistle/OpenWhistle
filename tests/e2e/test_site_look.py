@@ -160,6 +160,27 @@ def test_no_page_is_wider_than_a_small_phone(
     assert width <= 360, f"{url} is {width} px wide at 360 px"
 
 
+@pytest.mark.parametrize("url", URLS)
+def test_no_table_scrolls_sideways_on_a_desktop(
+    browser: Browser, docs_server_url: str, url: str
+) -> None:
+    """At Full HD every column of a table is readable without scrolling it (the
+    configuration tables hid their descriptions behind a scroll bar)."""
+    ctx = browser.new_context(viewport={"width": 1920, "height": 1080})
+    try:
+        page = ctx.new_page()
+        page.goto(f"{docs_server_url}{url}")
+        page.evaluate("document.fonts.ready")
+        wide = page.evaluate(
+            "() => [...document.querySelectorAll('.table-scroll')]"
+            ".filter(w => w.scrollWidth > w.clientWidth + 1)"
+            ".map(w => `${w.scrollWidth} in ${w.clientWidth} px`)"
+        )
+    finally:
+        ctx.close()
+    assert wide == [], f"{url}: tables wider than their column: {wide}"
+
+
 @pytest.mark.parametrize("theme", ["light", "dark"])
 def test_the_nav_mark_reads_against_the_nav(
     browser: Browser, docs_server_url: str, theme: str

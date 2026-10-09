@@ -186,6 +186,20 @@
    "e2e",
    "--browser",
    "chromium"
+  ],
+  "DESKTOP_TABLE_E2E": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "no_table_scrolls and (configuration or notifications or outbound or hinschg)",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "BUILD_SETTINGS": [
+   "tests/test_build_site.py",
+   "-k",
+   "settings_marker"
   ]
  },
  "mutations": [
@@ -832,6 +846,48 @@
    "old": "status.textContent = 'Search is unavailable: it failed in this browser.';",
    "new": "",
    "tests": "SEARCH_FAIL_E2E"
+  },
+  {
+   "id": "SETTINGS-DSN-WRAP",
+   "file": "docs/assets/css/docs.css",
+   "old": "    .env-settings td code { overflow-wrap: anywhere; }\n",
+   "new": "",
+   "tests": "DESKTOP_TABLE_E2E"
+  },
+  {
+   "id": "DE-TABLE-HYPHENS",
+   "file": "docs/assets/css/docs.css",
+   "old": "    :lang(de) .env-table td { hyphens: auto; }\n",
+   "new": "",
+   "tests": "DESKTOP_TABLE_E2E"
+  },
+  {
+   "id": "OUTBOUND-SWITCH-COLUMN",
+   "file": "docs/en/docs/outbound/index.html",
+   "old": "<tr><td>Email<span class=\"env-note\"><code>NOTIFY_EMAIL_ENABLED=true</code></span></td>",
+   "new": "<tr><td>Email</td><td><code>NOTIFY_EMAIL_ENABLED=true</code></td>",
+   "tests": "DESKTOP_TABLE_E2E"
+  },
+  {
+   "id": "SETTINGS-DEFAULT-COLUMN",
+   "file": "scripts/build_site.py",
+   "old": "            + (\"\" if default == \"—\" else f'<span class=\"env-note\">Default: {default}</span>')\n            + \"</td></tr>\"",
+   "new": "            + f\"</td><td>{default}</td></tr>\"",
+   "tests": "BUILD_SETTINGS"
+  },
+  {
+   "id": "SETTINGS-NO-EMPTY-DEFAULT",
+   "file": "scripts/build_site.py",
+   "old": "default == \"—\" else",
+   "new": "default == \"none\" else",
+   "tests": "BUILD_SETTINGS"
+  },
+  {
+   "id": "SETTINGS-BADGE-UNDER-NAME",
+   "file": "scripts/build_site.py",
+   "old": "f'<tr><td><code class=\"env-key\">{setting[\"name\"]}</code>'\n            f'<span",
+   "new": "f'<tr><td><code class=\"env-key\">{setting[\"name\"]}</code></td>'\n            f'<td><span",
+   "tests": "BUILD_SETTINGS"
   }
  ]
 }
