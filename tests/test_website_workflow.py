@@ -23,11 +23,12 @@ def test_only_publish_may_write_packages_and_sign() -> None:
     }
 
 
-def test_the_image_is_signed_with_sbom_and_provenance_for_both_architectures() -> None:
+def test_the_image_is_signed_with_sbom_and_provenance_for_the_amd64_target() -> None:
     steps = JOBS["publish"]["steps"]
     build = next(s for s in steps if s.get("uses", "").startswith("docker/build-push-action@"))
     assert build["with"]["file"] == "website/Dockerfile"
-    assert build["with"]["platforms"] == "linux/amd64,linux/arm64"
+    assert build["with"]["platforms"] == "linux/amd64"
+    assert not any("setup-qemu-action" in s.get("uses", "") for s in steps)
     assert build["with"]["provenance"] is True and build["with"]["sbom"] is True
     assert build["with"]["push"] is True
     run = "\n".join(s.get("run", "") for s in steps)
