@@ -52,6 +52,7 @@ jobs:
         run: |
           uv export --frozen --extra dev --extra e2e --group site --no-emit-project -o /tmp/requirements.txt
           uv pip install --system -r /tmp/requirements.txt
+          uv pip install --system --no-deps -e .
           playwright install chromium --with-deps
 
       - name: Build the image

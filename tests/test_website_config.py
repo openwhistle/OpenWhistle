@@ -125,3 +125,14 @@ def test_map_keys_fit_the_hash_bucket_with_headroom() -> None:
 def test_compression_is_prebuilt_only() -> None:
     assert re.search(r"^\s*gzip_static\s+on;", CONF, re.M)
     assert not re.search(r"^\s*gzip\s+on;", CONF, re.M)
+
+
+def test_a_missing_website_url_fails_in_ci_and_skips_locally() -> None:
+    import pytest
+
+    from tests.website import require_url
+
+    assert require_url("http://x", "") and require_url("http://x", "true")
+    assert not require_url("", "")
+    with pytest.raises(RuntimeError):
+        require_url("", "true")

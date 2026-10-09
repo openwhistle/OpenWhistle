@@ -184,6 +184,41 @@
    "old": "return 301 $moved;",
    "new": "return 302 $moved;",
    "red": "tests/website/test_container.py::test_every_old_url_moves_permanently"
+  },
+  {
+   "id": "ERROR-PAGE",
+   "file": "website/nginx.conf",
+   "old": "        error_page 403 404 /404.html;\n",
+   "new": "",
+   "red": "tests/website/test_container.py::test_a_directory_without_an_index_is_the_404_page"
+  },
+  {
+   "id": "ENTRYPOINT",
+   "file": "website/Dockerfile",
+   "old": "ENTRYPOINT [\"nginx\", \"-g\", \"daemon off;\"]\nCMD []",
+   "new": "CMD [\"nginx\", \"-g\", \"daemon off;\"]",
+   "red": "tests/website/test_container.py::test_every_log_line_is_a_counter_line"
+  },
+  {
+   "id": "USER-ROOT",
+   "file": "website/Dockerfile",
+   "old": "USER 101\n",
+   "new": "USER root\n",
+   "red": "tests/website/test_container.py::test_the_process_is_not_root"
+  },
+  {
+   "id": "KEEP-BASE-HTML",
+   "file": "website/Dockerfile",
+   "old": " && rm -rf /usr/share/nginx/html/*",
+   "new": "",
+   "red": "tests/website/test_container.py::test_the_base_images_error_page_is_gone"
+  },
+  {
+   "id": "REF-USERINFO",
+   "file": "website/nginx.conf",
+   "old": "\"~^https?://(?:[^@/]*@)?(?<rhost>[A-Za-z0-9.-]+)(?:[:/?#]|$)\" $rhost;",
+   "new": "\"~^https?://(?<rhost>[^/:?#]+)\" $rhost;",
+   "red": "tests/website/test_container.py::test_the_referer_keeps_the_hostname_only"
   }
  ]
 }
