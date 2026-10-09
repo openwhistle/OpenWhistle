@@ -1351,6 +1351,7 @@ dev = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
+    { name = "pyyaml" },
     { name = "ruff" },
 ]
 e2e = [
@@ -1403,6 +1404,7 @@ requires-dist = [
     { name = "python-json-logger", specifier = ">=4.1.0" },
     { name = "python-ldap", marker = "extra == 'ldap'", specifier = ">=3.4.8" },
     { name = "python-multipart", specifier = ">=0.0.32" },
+    { name = "pyyaml", marker = "extra == 'dev'", specifier = ">=6.0.3" },
     { name = "qrcode", extras = ["pil"], specifier = ">=8.2" },
     { name = "redis", extras = ["hiredis"], specifier = ">=8.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.15.0" },
