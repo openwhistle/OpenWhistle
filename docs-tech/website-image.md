@@ -16,7 +16,7 @@ docker run --rm --name ow-website --read-only --tmpfs /tmp -p 8080:8080 openwhis
 | Variant | Change |
 | --- | --- |
 | podman | `podman` for `docker`; `CONTAINER_CLI=podman` for the tests |
-| SELinux host, private mount | `-v ./private:/usr/share/nginx/private:ro,z` |
+| SELinux host, private mount | `-v "$PWD/private":/usr/share/nginx/private:ro,z` |
 
 ## Check
 

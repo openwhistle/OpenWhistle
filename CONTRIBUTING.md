@@ -51,11 +51,11 @@ There are two kinds, and they are kept apart on purpose.
 | Navigation | `docs/_data/nav.yml` |
 
 Build: `uv run --group site python scripts/build_site.py` (output in `_site/`).
+`test_the_technical_docs_are_not_published` holds that boundary. A page in doubt: would a stranger running
+OpenWhistle need it? Yes → `docs/`. Only the next maintainer → `docs-tech/`.
 
 An inline script needs its hash in both CSP lines of `website/nginx.conf` (the test names it). No personal data in
 the repository or the image: see [`docs-tech/website-image.md`](docs-tech/website-image.md).
-`test_the_technical_docs_are_not_published` holds that boundary. A page in doubt: would a stranger running
-OpenWhistle need it? Yes → `docs/`. Only the next maintainer → `docs-tech/`.
 
 ### User pages: maximum information, minimum text
 
