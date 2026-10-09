@@ -1216,3 +1216,53 @@ def test_stats_grid_panels_drop_the_stacking_margin() -> None:
     panel below the first, so the grid resets it."""
     html = (TEMPLATES / "admin/stats.html").read_text()
     assert re.search(r"\.stat-two-col\s*>\s*\.panel\s*\{\s*margin-top:\s*0;?\s*\}", html)
+
+
+@pytest.mark.parametrize(
+    ("lang", "expected"),
+    [
+        ("en", "40.0%"),
+        ("de", "40,0\u00a0%"),
+        ("fr", "40,0\u202f%"),
+        ("es", "40,0\u00a0%"),
+        ("pt-br", "40,0%"),
+        ("xx", "40.0%"),
+    ],
+)
+def test_percentages_follow_the_locale(lang: str, expected: str) -> None:
+    from app.i18n import format_percent
+
+    assert format_percent(40.0, lang) == expected
+
+
+@pytest.mark.asyncio
+async def test_stats_page_writes_percentages_in_the_admins_language(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """/admin/stats wrote "40.0%" in German and Spanish too."""
+    from app.services.report import create_report
+
+    await _login(client, db_session, AdminRole.admin)
+    await create_report(db_session, "corruption", "A case for the percentage check.")
+    await db_session.commit()
+    client.cookies.set("ow-lang", "de")
+    html = (await client.get("/admin/stats")).text
+    assert "\u00a0%)" in html
+    assert re.search(r"\(\d+\.\d%\)", html) is None
+    assert re.search(r">\s*\d+\u00a0%\s*</div>", html)  # the SLA rate card
+    client.cookies.set("ow-lang", "en")
+    assert re.search(r"\(\d+\.\d%\)", (await client.get("/admin/stats")).text)
+
+
+@pytest.mark.asyncio
+async def test_invalid_input_page_speaks_the_users_language(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """The 422 page said "The submitted form data was invalid." in every language."""
+    from app.i18n import make_translator
+
+    await _login(client, db_session, AdminRole.admin)
+    client.cookies.set("ow-lang", "es")
+    resp = await client.get("/admin/reports/not-a-uuid", headers={"accept": "text/html"})
+    assert resp.status_code == 422
+    assert make_translator("es")("error.detail.422") in resp.text

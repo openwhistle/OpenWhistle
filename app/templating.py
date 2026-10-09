@@ -10,7 +10,7 @@ from fastapi.templating import Jinja2Templates
 from markupsafe import Markup, escape
 
 from app.config import Settings, settings
-from app.i18n import format_count, get_lang, make_translator
+from app.i18n import format_count, format_percent, get_lang, make_translator
 from app.services import deadlines
 from app.services.attachment import format_size
 from app.services.categories import category_label
@@ -21,6 +21,7 @@ templates = Jinja2Templates(directory="app/templates")
 templates.env.filters["format_size"] = format_size
 templates.env.filters["day"] = format_day
 templates.env.filters["format_count"] = format_count
+templates.env.filters["format_percent"] = format_percent
 templates.env.globals["whistleblower_caused"] = whistleblower_caused
 # §17 HinSchG deadlines: the dashboard, the case page and the status page read
 # the same computation (app/services/deadlines.py).
