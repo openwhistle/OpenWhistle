@@ -158,6 +158,34 @@
   ],
   "ONE_PAGER": [
    "tests/test_docs_split.py::test_no_page_links_a_one_pager_anchor"
+  ],
+  "LEGAL_PLACEHOLDER": [
+   "tests/test_legal_pages.py::test_no_placeholder_in_imprint_or_privacy_policy"
+  ],
+  "LEGAL_BOILERPLATE": [
+   "tests/test_legal_pages.py::test_the_privacy_policy_names_this_setup_and_nothing_else"
+  ],
+  "LEGAL_DEMO": [
+   "tests/test_legal_pages.py::test_the_demo_section_names_its_cookies_their_basis_and_processor"
+  ],
+  "LEGAL_EXPIRES": [
+   "tests/test_legal_pages.py::test_security_txt_is_valid_and_not_expired"
+  ],
+  "CONFIG_STALE": [
+   "tests/test_config_documented.py::test_config_yml_lists_every_setting_once_and_nothing_else"
+  ],
+  "LINKS_TOKEN": [
+   "tests/test_external_links.py::test_only_the_scheduled_issue_job_can_write_issues"
+  ],
+  "HREFLANG_DE": [
+   "tests/test_docs_site.py::test_a_german_page_marks_every_link_into_english"
+  ],
+  "SEARCH_FAIL_E2E": [
+   "tests/e2e/test_docs_search.py::test_search_says_so_when_a_search_fails_after_loading",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
   ]
  },
  "mutations": [
@@ -514,7 +542,7 @@
   {
    "id": "SECURITY-TXT-EXPIRES",
    "file": "scripts/build_site.py",
-   "old": "datetime.timedelta(days=365)",
+   "old": "datetime.timedelta(days=335)",
    "new": "datetime.timedelta(days=-1)",
    "tests": "LEGAL"
   },
@@ -720,6 +748,90 @@
    "old": "        if missing:\n            raise BuildError(",
    "new": "        if False:\n            raise BuildError(",
    "tests": "SORA"
+  },
+  {
+   "id": "PRIVACY-PLACEHOLDER",
+   "file": "docs/en/privacy/index.html",
+   "old": "Last updated: 9 October 2026.",
+   "new": "Last updated: TODO.",
+   "tests": "LEGAL_PLACEHOLDER"
+  },
+  {
+   "id": "PRIVACY-BOILERPLATE",
+   "file": "docs/de/datenschutz/index.html",
+   "old": "Es gilt die Datenschutzerklärung von GitHub.",
+   "new": "Es gilt die Datenschutzerklärung von GitHub. Wir nutzen Google Fonts.",
+   "tests": "LEGAL_BOILERPLATE"
+  },
+  {
+   "id": "CONFIG-STALE-ENTRY",
+   "file": "docs/_data/config.yml",
+   "old": "  settings:\n  - name: SECRET_KEY\n",
+   "new": "  settings:\n  - name: GONE_SETTING\n    need: optional\n    description: Removed from the app.\n    default: —\n  - name: SECRET_KEY\n",
+   "tests": "CONFIG_STALE"
+  },
+  {
+   "id": "DEMO-COOKIE-UNNAMED",
+   "file": "docs/en/privacy/index.html",
+   "old": "          <code>ow_csrf</code> protects every form against forged requests and lasts until the browser session ends.\n",
+   "new": "",
+   "tests": "LEGAL_DEMO"
+  },
+  {
+   "id": "DEMO-COOKIE-NEW",
+   "file": "app/api/reports.py",
+   "old": "        \"ow-submission-session\",\n        session_id,",
+   "new": "        \"ow-submit-session\",\n        session_id,",
+   "tests": "LEGAL_DEMO"
+  },
+  {
+   "id": "DEMO-HETZNER-28",
+   "file": "docs/de/datenschutz/index.html",
+   "old": "          Hetzner verarbeitet die Daten der Demo in unserem Auftrag nach Art. 28 DSGVO.\n",
+   "new": "",
+   "tests": "LEGAL_DEMO"
+  },
+  {
+   "id": "SECURITY-TXT-YEAR",
+   "file": "scripts/build_site.py",
+   "old": "datetime.timedelta(days=335)",
+   "new": "datetime.timedelta(days=365)",
+   "tests": "LEGAL_EXPIRES"
+  },
+  {
+   "id": "LINKS-ISSUES-EVERY-RUN",
+   "file": ".github/workflows/links.yml",
+   "old": "    permissions:\n      contents: read\n    outputs:",
+   "new": "    permissions:\n      contents: read\n      issues: write\n    outputs:",
+   "tests": "LINKS_TOKEN"
+  },
+  {
+   "id": "LINKS-TOKEN-PERSISTED",
+   "file": ".github/workflows/links.yml",
+   "old": "persist-credentials: false",
+   "new": "persist-credentials: true",
+   "tests": "LINKS_TOKEN"
+  },
+  {
+   "id": "DE-FOOTER-HREFLANG",
+   "file": "docs/_includes/footer.html",
+   "old": "\"{{ item.href }}\"{% if page.lang != \"en\" and item.href.startswith(\"/en/\") %} hreflang=\"en\"{% endif %}>",
+   "new": "\"{{ item.href }}\">",
+   "tests": "HREFLANG_DE"
+  },
+  {
+   "id": "DE-FAQ-HREFLANG",
+   "file": "docs/de/index.html",
+   "old": "<a href=\"/en/docs/install/\" class=\"link-accent\" hreflang=\"en\">",
+   "new": "<a href=\"/en/docs/install/\" class=\"link-accent\">",
+   "tests": "HREFLANG_DE"
+  },
+  {
+   "id": "SEARCH-FAIL-SILENT",
+   "file": "docs/assets/js/search.js",
+   "old": "status.textContent = 'Search is unavailable: it failed in this browser.';",
+   "new": "",
+   "tests": "SEARCH_FAIL_E2E"
   }
  ]
 }

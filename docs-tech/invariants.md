@@ -412,7 +412,7 @@ flip on random uuids); its test now also checks the statement's `ORDER BY`.
 | `review-matrix-drops-a-page` | `docs-tech/local-review.md` | `test_local_review_page_matrix_covers_every_app_page` |
 | `review-matrix-drops-a-site-page` | `docs-tech/local-review.md` | `test_local_review_page_matrix_covers_every_docs_site_page` |
 | `review-release-step-dropped` | `docs-tech/release.md` | `test_release_md_names_the_chrome_check_before_the_release_pr` |
-| `docs-link-into-docs-tech` | `docs/en/docs/index.html` | `test_no_published_page_links_docs_tech` |
+| `docs-link-into-docs-tech` | `docs/en/docs/*/index.html`, `docs/_data/config.yml` | `test_no_published_page_links_docs_tech` |
 
 ### Admin UI fixes and website
 
@@ -464,20 +464,20 @@ fetch category labels; the snippets are updated and red.
 | `de-hreflang-default-dropped` | `docs/de/index.html` | `test_landing_pages_link_each_other_via_hreflang` |
 | `de-comparison-table-auto` | `docs/de/index.html` | `test_docs_page_has_no_horizontal_overflow` |
 | `de-btn-nowrap` | `docs/de/index.html` | `test_docs_page_has_no_horizontal_overflow` |
-| `docs-nav-blog-missing` | `docs/en/docs/index.html` | `test_every_docs_page_nav_has_the_same_item_set` |
+| `docs-nav-blog-missing` | `docs/_data/nav.yml` | `test_every_docs_page_nav_has_the_same_item_set` |
 | `roadmap-nav-current-unmarked` | `docs/en/roadmap/index.html` | `test_current_nav_item_is_marked` |
 | `roadmap-footer-issues-missing` | `docs/en/roadmap/index.html` | `test_every_page_footer_has_the_same_link_set_as_its_landing_page` |
 | `blog-token-drift` | `docs/de/blog/index.html` | `test_only_tokens_css_defines_custom_properties` (since 2.1.1 the tokens exist once, in `tokens.css`) |
 | `nav-collapse-768-en` | `docs/en/index.html` | `test_docs_page_has_no_horizontal_overflow` |
 | `nav-collapse-768-de` | `docs/de/index.html` | `test_docs_page_has_no_horizontal_overflow` |
-| `nav-collapse-768-docs` | `docs/en/docs/index.html` | `test_docs_page_has_no_horizontal_overflow` |
+| `nav-collapse-768-docs` | `docs/assets/css/base.css` | `test_docs_page_has_no_horizontal_overflow` |
 | `nav-collapse-768-roadmap` | `docs/en/roadmap/index.html` | `test_docs_page_has_no_horizontal_overflow` |
 | `nav-collapse-768-blog` | `docs/de/blog/index.html` | `test_docs_page_has_no_horizontal_overflow` |
 | `nav-collapse-768-hinschg-compliance-leitfaden` | `docs/de/blog/hinschg-compliance-leitfaden.html` | `test_docs_page_has_no_horizontal_overflow` |
 | `nav-collapse-768-interne-meldestelle-einrichten` | `docs/de/blog/interne-meldestelle-einrichten.html` | `test_docs_page_has_no_horizontal_overflow` |
 | `nav-collapse-768-was-ist-neu-in-2-0` | `docs/de/blog/was-ist-neu-in-2-0.html` | `test_docs_page_has_no_horizontal_overflow` |
 | `nav-collapse-768-whistleblower-software-vergleich` | `docs/de/blog/whistleblower-software-vergleich.html` | `test_docs_page_has_no_horizontal_overflow` |
-| `docs-mono-500-face-missing` | `docs/en/docs/index.html` | `test_every_docs_page_font_usage_has_a_matching_font_face` |
+| `docs-mono-500-face-missing` | `docs/assets/css/fonts.css` | `test_every_docs_page_font_usage_has_a_matching_font_face` |
 | `roadmap-mono-500-face-missing` | `docs/en/roadmap/index.html` | `test_every_docs_page_font_usage_has_a_matching_font_face` |
 | `blog-deadline-table-auto` | `docs/de/blog/hinschg-compliance-leitfaden.html` | `test_docs_page_has_no_horizontal_overflow` |
 | `pin-token-nowrap` | `app/static/css/site.css` | `test_token_class_wraps_only_at_the_explicit_hyphen_breaks` |
@@ -550,7 +550,7 @@ Each was proven red locally with podman: files written `0640` (nginx:
 | `process-note-in-comment` | `app/services/storage.py` | `test_shipped_files_explain_the_code_not_the_review_history` |
 | `build-context-has-superpowers` | `.dockerignore` | `test_local_tooling_and_maintainer_docs_stay_out_of_the_build_context` |
 | `serena-tracked` | `.gitignore` | `test_local_tooling_and_maintainer_docs_stay_out_of_the_build_context` |
-| `docs-link-docs-tech` | `docs/en/docs/index.html` | `test_no_published_page_links_docs_tech` |
+| `docs-link-docs-tech` | `docs/en/docs/*/index.html`, `docs/_data/config.yml` | `test_no_published_page_links_docs_tech` |
 | `roadmap-test-chore` | `docs/en/roadmap/index.html` | `test_the_public_roadmap_holds_no_test_chores` |
 
 ## SSO linking and authenticator reset (v2.1.0)
