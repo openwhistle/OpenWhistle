@@ -38,7 +38,7 @@
         </div>
         <div class="stat-card" data-delay="0.05">
             <div class="stat-card__number" data-tone="{{ 'success' if stats.sla_7day_rate >= 90 else ('warning' if stats.sla_7day_rate >= 70 else 'danger') }}">
-                {{ stats.sla_7day_rate }}%
+                {{ stats.sla_7day_rate | format_percent(lang) }}
             </div>
             <div class="stat-kpi-label">{{ t('admin.stats.sla_rate') }}</div>
         </div>
@@ -74,7 +74,7 @@
                 <div>
                     <div class="stat-row-header">
                         <span class="badge {{ cls }}">{{ t(label_key) }}</span>
-                        <span class="stat-muted-sm">{{ count }} ({{ pct }}%)</span>
+                        <span class="stat-muted-sm">{{ count }} ({{ pct | format_percent(lang) }})</span>
                     </div>
                     <div class="stat-bar-track">
                         <div class="stat-bar-fill" data-pct="{{ pct }}"></div>
@@ -98,7 +98,7 @@
                 <div>
                     <div class="stat-row-header">
                         <span class="stat-cat-label">{{ slug | category_label(cat_map) }}</span>
-                        <span class="stat-muted-sm">{{ count }} ({{ pct }}%)</span>
+                        <span class="stat-muted-sm">{{ count }} ({{ pct | format_percent(lang) }})</span>
                     </div>
                     <div class="stat-bar-track">
                         <div class="stat-bar-fill-outline" data-pct="{{ (count / max_cat * 100) | round(1) }}"></div>

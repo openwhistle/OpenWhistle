@@ -63,6 +63,26 @@ def format_count(n: int, lang: str) -> str:
     return f"{n:,}".replace(",", sep)
 
 
+# Decimal mark and percent sign per locale (CLDR): German and Spanish put a
+# no-break space before the sign, French a narrow one; English and Brazilian
+# Portuguese write it flush.
+_DECIMAL_MARK: dict[str, str] = {"en": ".", "de": ",", "fr": ",", "es": ",", "pt-br": ","}
+_PERCENT_SUFFIX: dict[str, str] = {
+    "en": "%",
+    "de": "\u00a0%",
+    "fr": "\u202f%",
+    "es": "\u00a0%",
+    "pt-br": "%",
+}
+
+
+def format_percent(value: float, lang: str) -> str:
+    """Write an already rounded percentage (0-100) the way the locale does."""
+    mark = _DECIMAL_MARK.get(lang, _DECIMAL_MARK[_DEFAULT])
+    suffix = _PERCENT_SUFFIX.get(lang, _PERCENT_SUFFIX[_DEFAULT])
+    return str(value).replace(".", mark) + suffix
+
+
 def make_translator(lang: str) -> Callable[..., str]:
     strings = _load(lang)
     fallback = _load(_DEFAULT)
