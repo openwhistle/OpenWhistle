@@ -16,8 +16,6 @@ tests
 !README.md
 docker-compose*.yml
 .github
-docs
-!docs/fonts
 nginx
 ansible
 .serena

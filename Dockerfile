@@ -51,21 +51,13 @@ RUN addgroup -S -g 1000 openwhistle && adduser -S -u 1000 -G openwhistle openwhi
 # Copy virtualenv from builder — shebangs point to /venv (same path)
 COPY --from=builder /venv /venv
 
-# Copy application code
+# Copy application code (including the self-hosted fonts in app/static/fonts and
+# their OFL licences, which the licence requires to travel with the fonts)
 COPY --chown=openwhistle:openwhistle . .
 
-# Self-hosted fonts (Sora + JetBrains Mono, OFL), committed once in docs/fonts
-# and shared with the public site — no download at build time. Only the faces
-# app/static/css/fonts.css uses.
-COPY --chown=openwhistle:openwhistle \
-    docs/fonts/sora-latin-400-normal.woff2 docs/fonts/sora-latin-500-normal.woff2 \
-    docs/fonts/sora-latin-600-normal.woff2 docs/fonts/sora-latin-700-normal.woff2 \
-    docs/fonts/JetBrainsMono-Regular.woff2 docs/fonts/JetBrainsMono-Bold.woff2 \
-    /app/app/static/fonts/
-
-# Generate the file-integrity manifest over the exact shipped bytes (after fonts
-# are in place). -B avoids writing .pyc during the walk (PYTHONDONTWRITEBYTECODE
-# is set later); the script imports no settings, so no SECRET_KEY is needed.
+# Generate the file-integrity manifest over the exact shipped bytes. -B avoids
+# writing .pyc during the walk (PYTHONDONTWRITEBYTECODE is set later); the
+# script imports no settings, so no SECRET_KEY is needed.
 RUN /venv/bin/python -B scripts/generate_integrity_manifest.py
 
 USER openwhistle

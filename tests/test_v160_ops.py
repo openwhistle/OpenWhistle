@@ -164,10 +164,13 @@ def test_shipped_files_explain_the_code_not_the_review_history() -> None:
 
 
 def test_the_image_ships_exactly_the_font_files_the_app_css_uses() -> None:
-    dockerfile = (ROOT / "Dockerfile").read_text()
-    copied = set(re.findall(r"docs/fonts/([\w.-]+\.woff2)", dockerfile))
+    fonts = ROOT / "app/static/fonts"
+    shipped = {p.name for p in fonts.glob("*.woff2")}
     css = "".join(p.read_text() for p in (ROOT / "app/static/css").glob("*.css"))
-    assert copied == set(re.findall(r"([\w.-]+\.woff2)", css))
+    assert shipped == set(re.findall(r"([\w.-]+\.woff2)", css))
+    # The OFL requires the licence to travel with the fonts.
+    for licence in ("sora-LICENSE", "jetbrains-mono-LICENSE"):
+        assert "SIL OPEN FONT LICENSE" in (fonts / licence).read_text().upper(), licence
 
 
 def test_local_tooling_and_maintainer_docs_stay_out_of_the_build_context() -> None:

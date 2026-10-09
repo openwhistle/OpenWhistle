@@ -669,12 +669,12 @@ async def test_pages_are_never_cached_but_static_files_are(client: AsyncClient) 
     # plain, unversioned paths (static_url()'s ?v={app_version} only reaches
     # <link>/<script> tags a template renders, not another CSS file's url()s)
     # — no-cache forces a conditional GET on every request instead of trusting
-    # a stale cached font. The header is applied by request path alone
-    # (SecurityMiddleware), not by whether the file resolves, so this holds
-    # even though real font files land in app/static/fonts/ only via the
-    # Docker build's COPY step (see Dockerfile) and 404 in a bare dev tree.
+    # a stale cached font. The fonts and their OFL licences are committed in
+    # app/static/fonts/, so both resolve in a dev tree as in the image.
     font = await client.get("/static/fonts/JetBrainsMono-Regular.woff2")
+    assert font.status_code == 200
     assert font.headers.get("cache-control") == "no-cache"
+    assert (await client.get("/static/fonts/sora-LICENSE")).status_code == 200
 
 
 def test_helm_ingress_turns_the_nginx_access_log_off() -> None:
