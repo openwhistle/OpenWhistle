@@ -1,0 +1,34 @@
+---
+title: Reset a lost password or authenticator | OpenWhistle
+description: 'Get an admin back in after a lost password or authenticator app: who may reset it, the reset script inside the container, and what the audit log records.'
+translation_key: docs-lost-authenticator
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1 id="lost-access">Lost password or authenticator</h1>
+        <div class="table-scroll">
+<table class="env-table">
+          <thead><tr><th>Lost</th><th>Who resets it</th><th>How</th></tr></thead>
+          <tbody>
+            <tr><td>Authenticator</td><td>a superadmin</td><td><strong>Reset authenticator</strong> on <code>/admin/users</code></td></tr>
+            <tr><td>Authenticator</td><td>whoever runs the host</td><td><code>python scripts/reset_admin_password.py --reset-totp &lt;username&gt;</code></td></tr>
+            <tr><td>Password</td><td>whoever runs the host</td><td><code>python scripts/reset_admin_password.py --username &lt;username&gt;</code></td></tr>
+          </tbody>
+        </table>
+</div>
+        <ul>
+          <li>Run the script inside the container: <code>docker exec -it openwhistle python scripts/reset_admin_password.py …</code>.</li>
+          <li>Every reset ends every session of the account at once. After an authenticator reset, the old app stops working.</li>
+          <li>A password reset by the script is in the audit log as <code>admin.password_reset</code>. The next login must change it.</li>
+          <li>A reset in <code>/admin/users</code> makes the account new again: new authenticator, and a new temporary password in place of the old one.</li>
+          <li>The temporary password is shown once, to the superadmin. It is in no log and no audit entry. Hand it over in person.</li>
+          <li>With it, the next login goes to <code>/admin/mfa/setup</code> to enrol a new app, as for a new account. Then the holder chooses a new password (<a href="/en/docs/admin/#own-account">Your account</a>).</li>
+          <li>An LDAP or single sign-on account has no local password. It keeps its directory or provider login and enrols a new app.</li>
+          <li>The script prints the new secret and its <code>otpauth://</code> URI once. Hand them over in person.</li>
+          <li>A superadmin cannot reset their own authenticator in the browser: it would end their session and leave the account behind a password. Another superadmin or the script does it.</li>
+          <li>The script works for any account, the last superadmin included.</li>
+          <li>Every reset is in the audit log as <code>admin.totp_reset</code>. With <code>DEMO_MODE</code>, the demo accounts cannot be reset.</li>
+        </ul>

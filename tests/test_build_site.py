@@ -79,7 +79,7 @@ def test_markdown_renders_tables_and_keeps_raw_html_and_utf8(src: Path, tmp_path
     # A table scrolls inside its own box: a wide one must not widen a phone page.
     assert '<div class="table-scroll"><table class="env-table">' in html
     # Markdown carries no classes: the page and its tables take the docs type from these two.
-    assert '<main id="main-content" class="docs-content docs-section docs-standalone">' in html
+    assert '<main id="main-content" class="docs-content">' in html
     assert "</table></div>" in html
     assert '<div class="note">raw HTML stays</div>' in html
 
@@ -291,7 +291,7 @@ def test_a_third_language_needs_data_only(src: Path, tmp_path: Path) -> None:
     (src / "fr").mkdir()
     (src / "fr" / "index.html").write_text(
         "---\ntitle: Accueil\ndescription: La page d'accueil.\ntranslation_key: home\n---\n"
-        '<main id="main-content"><section id="features"></section><h1>Accueil</h1></main>\n',
+        '<main id="main-content"><section id="compliance"></section><h1>Accueil</h1></main>\n',
         encoding="utf-8",
     )
     pages = _pages(src, tmp_path)
@@ -317,7 +317,7 @@ def test_the_fixture_uses_the_real_templates() -> None:
 
 def test_a_german_reader_is_sent_to_the_english_docs(src: Path, tmp_path: Path) -> None:
     html = (_build(src, tmp_path) / "de" / "index.html").read_text(encoding="utf-8")
-    assert '<a href="/en/docs/">Dokumentation</a>' in html
+    assert '<a href="/en/docs/" hreflang="en">Dokumentation</a>' in html
 
 
 def test_the_current_section_is_marked(src: Path, tmp_path: Path) -> None:
@@ -332,10 +332,10 @@ def test_the_language_switch_goes_to_the_translation(src: Path, tmp_path: Path) 
 
 def test_a_home_entry_is_current_only_on_the_home(src: Path, tmp_path: Path) -> None:
     """Every URL starts with /en/: the home entry must not light up on every page,
-    and a #fragment entry (features) marks nothing, not even on the home."""
+    and a #fragment entry (compliance) marks nothing, not even on the home."""
     (src / "_data" / "nav.yml").write_text(
         "primary:\n  - {label: nav.home, page: home}\n"
-        "  - {label: nav.features, page: home, fragment: features}\n"
+        "  - {label: nav.compliance, page: home, fragment: compliance}\n"
         "  - {label: nav.docs, page: docs}\nfooter: []\n"
     )
     out = _build(src, tmp_path)
@@ -366,6 +366,29 @@ def test_a_nav_entry_naming_no_page_fails(src: Path, tmp_path: Path) -> None:
     (src / "_data" / "nav.yml").write_text("primary: [{label: nav.docs, page: nope}]\nfooter: []\n")
     with pytest.raises(B.BuildError, match="nav.yml: primary names 'nope'"):
         _build(src, tmp_path)
+
+
+def test_a_legal_entry_naming_no_page_fails(src: Path, tmp_path: Path) -> None:
+    (src / "_data" / "nav.yml").write_text(
+        "primary: []\nfooter: []\nlegal: [{label: nav.docs, page: nope}]\n"
+    )
+    with pytest.raises(B.BuildError, match="nav.yml: legal names 'nope'"):
+        _build(src, tmp_path)
+
+
+def test_a_legal_entry_is_a_footer_link(src: Path, tmp_path: Path) -> None:
+    (src / "_data" / "nav.yml").write_text(
+        "primary: [{label: nav.docs, page: docs}]\nfooter: []\n"
+        "legal: [{label: nav.docs, page: docs}]\n"
+    )
+    html = (_build(src, tmp_path) / "en" / "index.html").read_text(encoding="utf-8")
+    assert '<a href="/en/docs/">Documentation</a>' in html.split('class="site-footer"', 1)[1]
+
+
+def test_a_language_home_needs_no_nav_entry(src: Path, tmp_path: Path) -> None:
+    """The logo on every page links the home; the nav need not name it."""
+    (src / "_data" / "nav.yml").write_text("primary: [{label: nav.docs, page: docs}]\nfooter: []\n")
+    assert (_build(src, tmp_path) / "de" / "index.html").is_file()
 
 
 def test_a_page_no_nav_entry_leads_to_fails(src: Path, tmp_path: Path) -> None:
@@ -613,23 +636,9 @@ def test_a_stub_keeps_the_fragment_and_is_not_indexed(src: Path, tmp_path: Path)
     assert "/en/" in (out / "index.html").read_text(encoding="utf-8")  # "/" on Pages
 
 
-def test_an_old_non_html_url_serves_the_source_body(src: Path, tmp_path: Path) -> None:
-    """A .md URL runs no script: it keeps serving the text, front matter stripped."""
-    (src / "_data" / "redirects.yml").write_text("/old/notes.md: /en/docs/\n")
-    out = _build(src, tmp_path, redirect_stubs=True)
-    source = (src / "en" / "docs" / "index.md").read_text(encoding="utf-8")
-    body = (out / "old" / "notes.md").read_text(encoding="utf-8")
-    assert body == source.split("---\n", 2)[2]
-    assert body.startswith("# Änderungsprotokoll")
-
-
-def test_an_old_non_html_url_must_lead_to_a_page_with_a_source(tmp_path: Path) -> None:
-    site = {"default_language": "en", "base_url": "https://e.test"}
-    with pytest.raises(B.BuildError, match="/x.md -> /en/, a page with no source"):
-        B.write_stubs(tmp_path, {"/x.md": "/en/"}, site)
-
-
 def test_an_old_non_html_url_never_overwrites_a_file(src: Path, tmp_path: Path) -> None:
+    (src / "_legacy" / "img").mkdir(parents=True)
+    (src / "_legacy" / "img" / "pixel.png").write_bytes(b"x")
     (src / "_data" / "redirects.yml").write_text("/img/pixel.png: /en/docs/\n")
     with pytest.raises(B.BuildError, match="/img/pixel.png would overwrite img/pixel.png"):
         _build(src, tmp_path, redirect_stubs=True)
@@ -659,15 +668,19 @@ def test_a_link_to_an_old_url_fails_although_a_stub_would_serve_it(
 
 def test_two_urls_of_one_file_share_one_stub(tmp_path: Path) -> None:
     site = {"default_language": "en", "base_url": "https://e.test"}
-    B.write_stubs(tmp_path, {"/blog/": "/de/blog/", "/blog/index.html": "/de/blog/"}, site)
+    B.write_stubs(
+        tmp_path, {"/blog/": "/de/blog/", "/blog/index.html": "/de/blog/"}, site, tmp_path
+    )
     assert '"/de/blog/"' in (tmp_path / "blog" / "index.html").read_text()
     with pytest.raises(B.BuildError, match="would overwrite blog/index.html"):
-        B.write_stubs(tmp_path / "2", {"/blog/": "/de/blog/", "/blog/index.html": "/en/"}, site)
+        B.write_stubs(
+            tmp_path / "2", {"/blog/": "/de/blog/", "/blog/index.html": "/en/"}, site, tmp_path
+        )
 
 
 def test_a_stub_target_cannot_close_the_script(tmp_path: Path) -> None:
     site = {"default_language": "en", "base_url": "https://e.test"}
-    B.write_stubs(tmp_path, {"/a.html": "/x</script>/"}, site)
+    B.write_stubs(tmp_path, {"/a.html": "/x</script>/"}, site, tmp_path)
     lines = (tmp_path / "a.html").read_text().splitlines()
     script = next(ln for ln in lines if ln.startswith("<script>"))
     assert "</script>" not in script.removesuffix("</script>")
@@ -742,4 +755,257 @@ def test_a_generated_page_with_a_body_fails(src: Path, tmp_path: Path) -> None:
         encoding="utf-8",
     )
     with pytest.raises(B.BuildError, match="generated page has a body"):
+        _build(src, tmp_path)
+
+
+# ── P3: docs layout, settings tables, legacy files ─────────────────────────
+
+
+def _docs_fixture(src: Path) -> None:
+    """Two docs pages, a docs sidebar and one settings group on top of the fixture.
+
+    The fixture already carries the real docs.html (test_the_fixture_uses_the_real_templates).
+    """
+    (src / "en" / "docs" / "index.md").unlink()
+    for slug, body in {
+        "": '<h1 id="overview">Docs</h1>\n<h2 id="start">Start</h2>',
+        "ldap/": '<h1>LDAP</h1>\n<h2 id="setup">Set it up</h2>\n<div data-config="ldap"></div>',
+    }.items():
+        page = src / "en" / "docs" / slug / "index.html"
+        page.parent.mkdir(parents=True, exist_ok=True)
+        key = f"docs-{slug.strip('/')}" if slug else "docs"
+        page.write_text(
+            f"---\ntitle: T {key}\ndescription: D\ntranslation_key: {key}\n"
+            f"layout: docs\n---\n{body}\n",
+            encoding="utf-8",
+        )
+    nav = (src / "_data" / "nav.yml").read_text(encoding="utf-8")
+    nav += (
+        "docs:\n"
+        "  - {group: Get started, pages: [{label: Overview, page: docs}]}\n"
+        "  - {group: How-to, pages: [{label: LDAP / AD, page: docs-ldap}]}\n"
+    )
+    (src / "_data" / "nav.yml").write_text(nav, encoding="utf-8")
+    (src / "_data" / "config.yml").write_text(
+        "intro: <p>Everything is an environment variable.</p>\n"
+        "groups:\n"
+        "  - id: ldap\n    title: LDAP\n    page: /en/docs/ldap/\n    guide: LDAP login\n"
+        "    settings:\n"
+        "      - {name: LDAP_URL, need: required, description: 'The <code>ldaps://</code> URL.',"
+        " default: '—'}\n"
+        "      - {name: LDAP_TLS, need: optional, description: Verify the certificate.,"
+        " default: '<code>true</code>'}\n",
+        encoding="utf-8",
+    )
+    (src / "_data" / "docs_anchors.yml").write_text("ldap: /en/docs/ldap/\n", encoding="utf-8")
+
+
+def test_a_settings_marker_becomes_the_groups_table(src: Path, tmp_path: Path) -> None:
+    _docs_fixture(src)
+    html = (_build(src, tmp_path) / "en" / "docs" / "ldap" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    assert 'data-config="ldap"' not in html
+    # Two columns: the badge under the name, the default under the description.
+    assert (
+        '<td><code class="env-key">LDAP_URL</code> '
+        '<span class="env-required env-req-yes">Required</span></td>'
+    ) in html
+    assert '<span class="env-required env-req-no">Optional</span>' in html
+    assert ' <span class="env-note">Default: <code>true</code></span></td>' in html
+    assert "Default: —" not in html
+    assert '<th scope="col">Description</th>\n</tr>' in html
+    # Pagefind reads cells that touch as one word: every cell and row ends on its own line.
+    assert not re.search(r"</t[dhr]><", html)
+
+
+def test_a_marker_naming_no_group_fails(src: Path, tmp_path: Path) -> None:
+    _docs_fixture(src)
+    page = src / "en" / "docs" / "ldap" / "index.html"
+    page.write_text(page.read_text().replace('data-config="ldap"', 'data-config="ldpa"'))
+    with pytest.raises(B.BuildError, match="no group 'ldpa' in _data/config.yml"):
+        _build(src, tmp_path)
+
+
+def test_the_docs_layout_builds_sidebar_toc_pager_and_edit_link(src: Path, tmp_path: Path) -> None:
+    _docs_fixture(src)
+    html = (_build(src, tmp_path) / "en" / "docs" / "ldap" / "index.html").read_text(
+        encoding="utf-8"
+    )
+    assert '<a href="/en/docs/ldap/" aria-current="page">LDAP / AD</a>' in html
+    assert re.search(r'<details class="sidebar-group" open>\s*<summary>How-to</summary>', html)
+    assert '<a href="#setup">Set it up</a>' in html  # on this page
+    assert 'rel="prev" href="/en/docs/"' in html and 'rel="next"' not in html
+    assert "/edit/main/docs/en/docs/ldap/index.html" in html
+    crumbs = re.findall(r'<script type="application/ld\+json">(.*?)</script>', html)
+    assert any(
+        '"BreadcrumbList"' in b and '"https://example.test/en/docs/ldap/"' in b for b in crumbs
+    )
+
+
+def test_only_the_docs_start_page_carries_the_anchor_map(src: Path, tmp_path: Path) -> None:
+    _docs_fixture(src)
+    out = _build(src, tmp_path)
+    start = (out / "en" / "docs" / "index.html").read_text(encoding="utf-8")
+    ldap = (out / "en" / "docs" / "ldap" / "index.html").read_text(encoding="utf-8")
+    assert '{"ldap": "/en/docs/ldap/"}' in start
+    assert "location.replace" in start and "location.replace" not in ldap
+
+
+def test_a_docs_page_missing_from_the_docs_nav_fails(src: Path, tmp_path: Path) -> None:
+    _docs_fixture(src)
+    nav = src / "_data" / "nav.yml"
+    nav.write_text(
+        nav.read_text().replace(
+            "  - {group: How-to, pages: [{label: LDAP / AD, page: docs-ldap}]}\n", ""
+        )
+    )
+    with pytest.raises(B.BuildError, match="the docs sidebar in _data/nav.yml does not list it"):
+        _build(src, tmp_path)
+
+
+def test_a_docs_nav_entry_without_a_page_fails(src: Path, tmp_path: Path) -> None:
+    _docs_fixture(src)
+    nav = src / "_data" / "nav.yml"
+    nav.write_text(
+        nav.read_text().replace(
+            "page: docs-ldap}", "page: docs-ldap}, {label: Gone, page: docs-gone}"
+        )
+    )
+    with pytest.raises(B.BuildError, match="docs names 'docs-gone', which no page has"):
+        _build(src, tmp_path)
+
+
+def test_an_unknown_layout_fails(src: Path, tmp_path: Path) -> None:
+    page = src / "en" / "index.html"
+    page.write_text(page.read_text().replace("---\n", "---\nlayout: wide\n", 1))
+    with pytest.raises(B.BuildError, match="unknown layout 'wide'"):
+        _build(src, tmp_path)
+
+
+def test_markdown_headings_get_ids() -> None:
+    assert B.add_heading_ids("<h2>1. Purpose and Scope</h2>") == (
+        '<h2 id="1-purpose-and-scope">1. Purpose and Scope</h2>'
+    )
+    assert B.add_heading_ids('<h3 id="x">Kept</h3>') == '<h3 id="x">Kept</h3>'
+
+
+def test_a_page_in_one_language_is_linked_from_every_language(src: Path, tmp_path: Path) -> None:
+    """The imprint exists only in German; the English footer still links it."""
+    imprint = src / "impressum" / "index.html"
+    imprint.parent.mkdir()
+    imprint.write_text(
+        "---\ntitle: Impressum\ndescription: D\ntranslation_key: imprint\nlang: de\n---\n"
+        '<main id="main-content"></main>\n'
+    )
+    nav = src / "_data" / "nav.yml"
+    nav.write_text(
+        nav.read_text().replace("footer: []", "footer:\n  - {label: nav.docs, page: imprint}")
+    )
+    html = (_build(src, tmp_path) / "en" / "index.html").read_text(encoding="utf-8")
+    assert 'href="/impressum/"' in html
+
+
+def test_an_old_non_html_url_serves_its_frozen_copy(src: Path, tmp_path: Path) -> None:
+    """A .md URL runs no script: it serves the bytes it served, kept in _legacy/."""
+    (src / "_legacy" / "old").mkdir(parents=True)
+    (src / "_legacy" / "old" / "notes.md").write_bytes(b"# Notes\n")
+    (src / "_data" / "redirects.yml").write_text("/old/notes.md: /en/docs/\n")
+    out = _build(src, tmp_path, redirect_stubs=True)
+    assert (out / "old" / "notes.md").read_bytes() == b"# Notes\n"
+    assert not (out / "_legacy").exists()
+
+
+def test_an_old_non_html_url_without_a_frozen_copy_fails(src: Path, tmp_path: Path) -> None:
+    (src / "_data" / "redirects.yml").write_text("/x.md: /en/\n")
+    with pytest.raises(B.BuildError, match="/x.md needs its frozen copy at _legacy/x.md"):
+        _build(src, tmp_path, redirect_stubs=True)
+
+
+def test_a_docs_page_outside_the_default_language_fails(src: Path, tmp_path: Path) -> None:
+    _docs_fixture(src)
+    page = src / "de" / "docs" / "index.html"
+    page.parent.mkdir(parents=True)
+    page.write_text(
+        "---\ntitle: T\ndescription: D\ntranslation_key: docs-de\nlayout: docs\n---\n<h1>x</h1>\n"
+    )
+    with pytest.raises(B.BuildError, match=r"de/docs/index.html: docs pages are English only"):
+        _build(src, tmp_path)
+
+
+@pytest.mark.parametrize(
+    ("old", "new", "message"),
+    [
+        ("need: optional", "need: maybe", r"group 'ldap', setting 'LDAP_TLS': need 'maybe'"),
+        ("name: LDAP_URL, ", "", r"group 'ldap', setting #1: lacks 'name'"),
+        ("description: Verify the certificate., ", "", r"setting 'LDAP_TLS': lacks 'description'"),
+        ("intro: <p>Everything is an environment variable.</p>\n", "", r"lacks 'intro'"),
+        ("    settings:\n", "    settingz:\n", r"group 'ldap': lacks 'settings'"),
+    ],
+)
+def test_a_broken_config_yml_fails_naming_the_setting(
+    src: Path, tmp_path: Path, old: str, new: str, message: str
+) -> None:
+    _docs_fixture(src)
+    config = src / "_data" / "config.yml"
+    text = config.read_text()
+    assert old in text
+    config.write_text(text.replace(old, new))
+    with pytest.raises(B.BuildError, match=r"_data/config.yml.*" + message):
+        _build(src, tmp_path)
+
+
+def test_heading_ids_are_unescaped_and_never_empty_or_twice() -> None:
+    assert B.add_heading_ids("<h2>Q &amp; A</h2>") == '<h2 id="q-a">Q &amp; A</h2>'
+    assert B.add_heading_ids("<h2>***</h2>") == '<h2 id="section">***</h2>'
+    twice = B.add_heading_ids("<h2>Setup</h2><h3>Setup</h3><h3>Setup</h3>")
+    assert (
+        twice == '<h2 id="setup">Setup</h2><h3 id="setup-2">Setup</h3><h3 id="setup-3">Setup</h3>'
+    )
+    kept = B.add_heading_ids('<h2 id="setup">Mine</h2><h3>Setup</h3>')
+    assert kept == '<h2 id="setup">Mine</h2><h3 id="setup-2">Setup</h3>'
+
+
+def test_a_generated_pages_edit_link_names_its_source(src: Path, tmp_path: Path) -> None:
+    _docs_fixture(src)
+    page = src / "en" / "docs" / "configuration" / "index.html"
+    page.parent.mkdir()
+    page.write_text(
+        "---\ntitle: T\ndescription: D\ntranslation_key: docs-configuration\n"
+        "layout: docs\ngenerated: configuration\n---\n"
+    )
+    nav = src / "_data" / "nav.yml"
+    nav.write_text(
+        nav.read_text().replace(
+            "page: docs-ldap}", "page: docs-ldap}, {label: Config, page: docs-configuration}"
+        )
+    )
+    html = (_build(src, tmp_path) / "en" / "docs" / "configuration" / "index.html").read_text()
+    assert "/edit/main/docs/_data/config.yml" in html
+
+
+def test_the_build_indexes_only_docs_pages() -> None:
+    """Pagefind indexes the <main> that carries data-pagefind-body: the docs, nothing else."""
+    import json
+
+    from tests.built_site import built, page, pages
+
+    bundle = built() / "pagefind"
+    assert (bundle / "pagefind.js").is_file()
+    assert "data-pagefind-body" not in page("/en/")
+    assert "data-pagefind-body" in page("/en/docs/ldap/")
+    docs = sum("data-pagefind-body" in p.read_text(encoding="utf-8") for p in pages())
+    entry = json.loads((bundle / "pagefind-entry.json").read_text(encoding="utf-8"))
+    assert [lang["page_count"] for lang in entry["languages"].values()] == [docs]
+    # search.js is the only UI: Pagefind's own bundles would ship unused.
+    assert not sorted(p.name for p in bundle.glob("*ui*")), "Pagefind's UI bundles shipped"
+
+
+def test_an_og_title_without_a_sora_glyph_is_refused(src: Path, tmp_path: Path) -> None:
+    page = src / "en" / "index.html"
+    page.write_text(
+        page.read_text(encoding="utf-8").replace("title: Fixture home", "title: Fixture 中"),
+        encoding="utf-8",
+    )
+    with pytest.raises(B.BuildError, match="'Fixture 中' uses '中', not in Sora latin"):
         _build(src, tmp_path)

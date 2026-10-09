@@ -99,7 +99,10 @@ openwhistle.pro, `Artaeon/openwhistle`). Maintainer actions, prepared, not run:
 | `<html lang>` is `en` or `de`; `og:locale` matches | The English home page declared `og:locale` `de_DE` |
 | Canonical = the address Pages serves the file at: `/en/`, `/de/`, `/<lang>/<page>/` | Sitemap, canonical and nav must name one URL |
 | hreflang `en`/`de`/`x-default` only where a translation exists, reciprocal | The German blog index named the English home page its `en` version |
-| `og:image` is `og-image.png`, 1200×630, with width, height and alt | It was a blank navy rectangle: every shared link showed an empty card |
+| Each directory page has its own `og.png`, 1200×630, typed, with an alt naming its title; JSON-LD `image` is the same card | It was a blank navy rectangle: every shared link showed an empty card |
+| `<meta name="referrer" content="no-referrer">` on every page | Pages sends no Referrer-Policy; an outbound click would name the page |
+| One Atom feed per language at `/<lang>/blog/feed.xml`, listing every post, announced on every blog page | — |
+| Both homes carry `SoftwareApplication` and `Organization`; every docs page one `BreadcrumbList` | `/de/` had no `Organization` |
 | JSON-LD parses; no `aggregateRating` or `review` | OpenWhistle has no ratings; invented ones break Google's policy |
 | `SoftwareApplication.softwareVersion` = `app_version` on both landing pages | A release that forgets it advertises the old version |
 | Every article carries `BlogPosting` with `datePublished`, `dateModified`, `inLanguage` | Articles had no `dateModified`; one carried `HowTo`, which Google no longer shows |
@@ -112,6 +115,9 @@ When a page changes:
 1. A body edit to an article bumps `dateModified` and `article:modified_time`, together.
 2. `scripts/build_site.py` writes `sitemap.xml`; `lastmod` from git.
 3. The changelog body is built from `CHANGELOG.md`; never edit the built page.
+4. Every external link is fetched weekly (`scripts/check_external_links.py`, `links.yml`); a dead one opens an issue.
+   A host that times out only from GitHub's runners goes in `RUNNER_BLOCKED` with the date and evidence; it
+   is then reported as unverifiable when it does not answer, never skipped.
 
 `meta keywords` is not used: Google ignores it, Bing reads it as a spam signal.
 
@@ -181,7 +187,7 @@ Rendered, the list line reads:
 ```
 
 Commit message the repository asks for: `add OpenWhistle`. Facts for the PR text: one item; not in awesome-sysadmin;
-first release 2026-04-22; installation at `https://openwhistle.net/en/docs/#installation`; merging takes a week or
+first release 2026-04-22; installation at `https://openwhistle.net/en/docs/install/`; merging takes a week or
 more.
 
 ### AlternativeTo
@@ -277,7 +283,7 @@ at most:
 Self-hosted whistleblowing platform (HinSchG, EU 2019/1937). No IP logs. Docs: openwhistle.net
 ```
 
-The full description on both starts with a link to `https://openwhistle.net/en/docs/#installation`, then the
+The full description on both starts with a link to `https://openwhistle.net/en/docs/install/`, then the
 image tags.
 
 Operators who want to credit the project can add `<a href="https://openwhistle.net/">Powered by OpenWhistle</a>`

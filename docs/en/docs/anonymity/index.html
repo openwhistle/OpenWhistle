@@ -1,0 +1,69 @@
+---
+title: The four anonymity layers | OpenWhistle
+description: 'Why no IP address of a whistleblower is stored anywhere: the four independent layers, from the proxy to the database, and what each one holds back.'
+translation_key: docs-anonymity
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1 id="security">The four anonymity layers</h1>
+        <figure class="diagram">
+          <img class="diagram-light" src="/img/diagrams/architecture-light.svg" alt="Architecture: a browser reaches nginx over TLS on 443 (80 redirects), Tor Browser reaches the onion listener on 8080, bound to 127.0.0.1. Both lead to the stateless FastAPI app, which needs PostgreSQL and Redis, can use ClamAV and S3, and makes two opt-in outbound requests: the GitHub update check and the telemetry.wdkro.de count." width="905" height="487" loading="lazy">
+          <img class="diagram-dark" src="/img/diagrams/architecture-dark.svg" alt="Architecture: a browser reaches nginx over TLS on 443 (80 redirects), Tor Browser reaches the onion listener on 8080, bound to 127.0.0.1. Both lead to the stateless FastAPI app, which needs PostgreSQL and Redis, can use ClamAV and S3, and makes two opt-in outbound requests: the GitHub update check and the telemetry.wdkro.de count." width="905" height="487" loading="lazy">
+        </figure>
+        <p>
+          Defence in depth for anonymity: four independent layers keep IP addresses out of
+          persistent storage.
+        </p>
+
+        <div class="security-layers" role="list">
+          <div class="security-layer" role="listitem">
+            <div class="security-layer-num" aria-hidden="true">1</div>
+            <div>
+              <div class="security-layer-title">nginx — Strip the client-IP headers</div>
+              <div class="security-layer-desc">
+                <code>X-Forwarded-For</code>, <code>X-Real-IP</code>, <code>Forwarded</code>,
+                <code>X-Client-IP</code>, <code>X-Cluster-Client-IP</code>, <code>True-Client-IP</code>
+                and <code>CF-Connecting-IP</code> are cleared before a request reaches the app, even
+                when a CDN added them. <code>access_log off</code>: request URIs never reach the disk.
+                A reverse proxy of your own in front must not log them either.
+              </div>
+            </div>
+          </div>
+          <div class="security-layer" role="listitem">
+            <div class="security-layer-num" aria-hidden="true">2</div>
+            <div>
+              <div class="security-layer-title">Application middleware — Drop remote address</div>
+              <div class="security-layer-desc">
+                The first middleware removes those headers again and clears the peer address, before
+                any route handler runs. No handler can read the real address, even if it tried. If
+                such a header arrives anyway, the admin dashboard warns that a proxy in front knows the
+                addresses.
+              </div>
+            </div>
+          </div>
+          <div class="security-layer" role="listitem">
+            <div class="security-layer-num" aria-hidden="true">3</div>
+            <div>
+              <div class="security-layer-title">Database schema — No IP column</div>
+              <div class="security-layer-desc">
+                No table has an IP address column: not <code>reports</code>,
+                <code>report_messages</code>, <code>audit_log</code> or <code>admin_users</code>. The
+                ORM cannot persist an address; that is structure, not policy.
+              </div>
+            </div>
+          </div>
+          <div class="security-layer" role="listitem">
+            <div class="security-layer-num" aria-hidden="true">4</div>
+            <div>
+              <div class="security-layer-title">Redis sessions — No identifying metadata</div>
+              <div class="security-layer-desc">
+                A whistleblower's status session is a random 256-bit token. Its Redis value is only
+                the report's id, and it expires after 2 hours. No IP, no User-Agent, no browser
+                fingerprint.
+              </div>
+            </div>
+          </div>
+        </div>

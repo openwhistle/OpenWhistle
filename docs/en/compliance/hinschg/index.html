@@ -1,0 +1,305 @@
+---
+title: 'HinSchG duties and what OpenWhistle covers | OpenWhistle'
+description: 'The duties of the German HinSchG section by section: which of them OpenWhistle covers, and which stay with the organisation. A summary, not legal advice.'
+translation_key: compliance-hinschg
+css:
+- docs
+- page
+js:
+- site
+- sidebar
+jsonld:
+- '@context': https://schema.org
+  '@type': BreadcrumbList
+  itemListElement:
+  - '@type': ListItem
+    position: 1
+    name: OpenWhistle
+    item: https://openwhistle.net/en/
+  - '@type': ListItem
+    position: 2
+    name: Compliance
+    item: https://openwhistle.net/en/compliance/
+  - '@type': ListItem
+    position: 3
+    name: HinSchG
+    item: https://openwhistle.net/en/compliance/hinschg/
+---
+  <div class="docs-layout">
+
+    <!-- Sidebar -->
+    <aside class="docs-sidebar" role="complementary" aria-label="Compliance navigation">
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">On This Page</div>
+        <nav class="sidebar-links" aria-label="On this page">
+          <a href="#who" class="active">Who must run a reporting office</a>
+          <a href="#duties">Duty by duty</a>
+          <a href="#deadlines">Deadlines</a>
+          <a href="#fines">Fines</a>
+          <a href="#gdpr">GDPR alongside the HinSchG</a>
+        </nav>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Links</div>
+        <nav class="sidebar-links">
+          <a href="/en/compliance/">&#8592; Compliance</a>
+          <a href="/en/compliance/eu-directive/">EU directive</a>
+          <a href="/en/docs/">Documentation</a>
+          <a href="https://www.gesetze-im-internet.de/hinschg/" rel="noopener noreferrer" target="_blank">The HinSchG, official text</a>
+        </nav>
+      </div>
+
+    </aside>
+
+    <!-- Main content -->
+    <main id="main-content" class="docs-content">
+
+      <nav class="docs-breadcrumb" aria-label="Breadcrumb">
+        <a href="/en/">OpenWhistle</a>
+        <span>/</span>
+        <a href="/en/compliance/">Compliance</a>
+        <span>/</span>
+        <span>HinSchG</span>
+      </nav>
+
+      <h1>HinSchG duties and what OpenWhistle covers</h1>
+      <p class="docs-lead">
+        Germany's Whistleblower Protection Act (Hinweisgeberschutzgesetz) has been in force since 2 July 2023.
+        It implements the <a href="/en/compliance/eu-directive/">EU directive</a>.
+        This page is a summary, not legal advice.
+      </p>
+
+      <!-- Who -->
+      <section class="docs-section" id="who" aria-labelledby="who-h2">
+        <h2 id="who-h2">Who must run a reporting office</h2>
+        <p>
+          The binding text is on
+          <a href="https://www.gesetze-im-internet.de/hinschg/" rel="noopener noreferrer" target="_blank">gesetze-im-internet.de</a>.
+        </p>
+        <div class="table-scroll stack-table">
+          <table class="cmp-table">
+            <thead>
+              <tr>
+                <th scope="col">Section</th>
+                <th scope="col">Rule</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">§&nbsp;12&nbsp;Abs.&nbsp;1</th><td data-label="Rule">Employers set up at least one internal reporting office. Municipalities follow their state law.</td></tr>
+              <tr><th scope="row">§&nbsp;12&nbsp;Abs.&nbsp;2</th><td data-label="Rule">The duty applies from 50 employees.</td></tr>
+              <tr><th scope="row">§&nbsp;12&nbsp;Abs.&nbsp;3</th><td data-label="Rule">Some financial-sector firms need one at any size, for example banks and insurers.</td></tr>
+              <tr><th scope="row">§&nbsp;12&nbsp;Abs.&nbsp;4</th><td data-label="Rule">The office must have the powers to examine reports and take follow-up measures.</td></tr>
+              <tr><th scope="row">§&nbsp;14&nbsp;Abs.&nbsp;1</th><td data-label="Rule">The office can be one employee, a team, or a third party such as an ombudsperson. A third party does not relieve the employer of remedying a breach.</td></tr>
+              <tr><th scope="row">§&nbsp;14&nbsp;Abs.&nbsp;2</th><td data-label="Rule">Private employers with 50 to 249 employees may run a shared office. Remedy and feedback stay with each employer.</td></tr>
+              <tr><th scope="row">§&nbsp;42&nbsp;Abs.&nbsp;1</th><td data-label="Rule">Private employers with 50 to 249 employees have had to set up their office since 17&nbsp;December 2023. This grace period did not apply to the financial firms of §&nbsp;12 Abs.&nbsp;3.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Duties -->
+      <section class="docs-section" id="duties" aria-labelledby="duties-h2">
+        <h2 id="duties-h2">Duty by duty</h2>
+        <div class="table-scroll stack-table">
+          <table class="env-table">
+            <thead>
+              <tr>
+                <th scope="col">Section</th>
+                <th scope="col">Duty</th>
+                <th scope="col">OpenWhistle</th>
+                <th scope="col">The organisation</th>
+                <th scope="col">Shown in</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>§&nbsp;8&nbsp;Abs.&nbsp;1</td>
+                <td data-label="Duty">Keep the identity of the reporter and of named persons confidential</td>
+                <td data-label="OpenWhistle">No IP address is stored; access by role; identity shown only with an audited reason</td>
+                <td data-label="The organisation">Who may see reports, and their training</td>
+                <td data-label="Shown in"><a href="/en/docs/anonymity/">Anonymity layers</a>, <a href="/en/docs/admin/#managing-reports">Managing reports</a></td>
+              </tr>
+              <tr>
+                <td>§&nbsp;9</td>
+                <td data-label="Duty">Exceptions to confidentiality, e.g. criminal proceedings or the reporter's written consent</td>
+                <td data-label="OpenWhistle">Every identity reveal is audited</td>
+                <td data-label="The organisation">Deciding each exception</td>
+                <td data-label="Shown in"><a href="/en/docs/admin/#managing-reports">Managing reports</a></td>
+              </tr>
+              <tr>
+                <td>§&nbsp;10</td>
+                <td data-label="Duty">Process personal data only as far as the office's tasks need it</td>
+                <td data-label="OpenWhistle">Only the fields a report needs</td>
+                <td data-label="The organisation">Record of processing, privacy notice</td>
+                <td data-label="Shown in"><a href="/en/docs/whistleblower/">Whistleblower guide</a></td>
+              </tr>
+              <tr>
+                <td>§&nbsp;11&nbsp;Abs.&nbsp;1</td>
+                <td data-label="Duty">Document every report in a durably retrievable form</td>
+                <td data-label="OpenWhistle">Every report and message is stored, encrypted; PDF export</td>
+                <td data-label="The organisation">—</td>
+                <td data-label="Shown in"><a href="/en/docs/admin/#managing-reports">Managing reports</a></td>
+              </tr>
+              <tr>
+                <td>§&nbsp;11&nbsp;Abs.&nbsp;2</td>
+                <td data-label="Duty">Record a telephone report only with consent; otherwise write a summary</td>
+                <td data-label="OpenWhistle">A telephone guide on <code>/admin/telephone-channel</code></td>
+                <td data-label="The organisation">Running the telephone channel</td>
+                <td data-label="Shown in"><a href="/en/docs/admin/#telephone-reporting-channel-guide">Telephone channel</a></td>
+              </tr>
+              <tr>
+                <td>§&nbsp;11&nbsp;Abs.&nbsp;5</td>
+                <td data-label="Duty">Delete the documentation three years after the procedure ends</td>
+                <td data-label="OpenWhistle">Retention: closed reports deleted after 1,095 days by default</td>
+                <td data-label="The organisation">Keeping it longer only where a law requires it</td>
+                <td data-label="Shown in"><a href="/en/docs/retention/">Data retention</a></td>
+              </tr>
+              <tr>
+                <td>§&nbsp;13&nbsp;Abs.&nbsp;2</td>
+                <td data-label="Duty">Clear, easily accessible information on external reporting procedures</td>
+                <td data-label="OpenWhistle"><strong>not covered</strong></td>
+                <td data-label="The organisation">Publishing it</td>
+                <td data-label="Shown in">—</td>
+              </tr>
+              <tr>
+                <td>§&nbsp;15</td>
+                <td data-label="Duty">Independent, competent staff without conflicts of interest</td>
+                <td data-label="OpenWhistle"><strong>not covered</strong></td>
+                <td data-label="The organisation">Appointing and training them</td>
+                <td data-label="Shown in"><a href="/en/docs/roles/">Roles</a></td>
+              </tr>
+              <tr>
+                <td>§&nbsp;16&nbsp;Abs.&nbsp;1</td>
+                <td data-label="Duty">Channels for employees; anonymous reports should be processed</td>
+                <td data-label="OpenWhistle">Anonymous and confidential submission</td>
+                <td data-label="The organisation">Who else may report</td>
+                <td data-label="Shown in"><a href="/en/docs/anonymity/">Anonymity layers</a></td>
+              </tr>
+              <tr>
+                <td>§&nbsp;16&nbsp;Abs.&nbsp;2</td>
+                <td data-label="Duty">Only the responsible persons access reports</td>
+                <td data-label="OpenWhistle">Roles and per-organisation scope</td>
+                <td data-label="The organisation">Assigning the roles</td>
+                <td data-label="Shown in"><a href="/en/docs/roles/">Roles</a></td>
+              </tr>
+              <tr>
+                <td>§&nbsp;16&nbsp;Abs.&nbsp;3</td>
+                <td data-label="Duty">Reports orally and in text form; a personal meeting on request</td>
+                <td data-label="OpenWhistle">The text channel; a guide for the telephone channel</td>
+                <td data-label="The organisation">The oral channel and meetings</td>
+                <td data-label="Shown in"><a href="/en/docs/admin/#telephone-reporting-channel-guide">Telephone channel</a></td>
+              </tr>
+              <tr>
+                <td>§&nbsp;17&nbsp;Abs.&nbsp;1&nbsp;Nr.&nbsp;1</td>
+                <td data-label="Duty">Confirm receipt within seven days</td>
+                <td data-label="OpenWhistle">The 7-day deadline on every case</td>
+                <td data-label="The organisation">Confirming in time</td>
+                <td data-label="Shown in"><a href="/en/docs/admin/#hinschg-deadline-tracking">Deadline tracking</a></td>
+              </tr>
+              <tr>
+                <td>§&nbsp;17&nbsp;Abs.&nbsp;1&nbsp;Nr.&nbsp;3</td>
+                <td data-label="Duty">Stay in contact with the reporter</td>
+                <td data-label="OpenWhistle">Two-way messages via case number and PIN</td>
+                <td data-label="The organisation">Answering</td>
+                <td data-label="Shown in"><a href="/en/docs/whistleblower/">Whistleblower guide</a></td>
+              </tr>
+              <tr>
+                <td>§&nbsp;17&nbsp;Abs.&nbsp;1&nbsp;Nr.&nbsp;6</td>
+                <td data-label="Duty">Take appropriate follow-up measures</td>
+                <td data-label="OpenWhistle"><strong>not covered</strong>: the case page records them</td>
+                <td data-label="The organisation">Deciding and taking the measures</td>
+                <td data-label="Shown in"><a href="/en/docs/admin/#managing-reports">Managing reports</a></td>
+              </tr>
+              <tr>
+                <td>§&nbsp;17&nbsp;Abs.&nbsp;2</td>
+                <td data-label="Duty">Feedback within three months of the confirmation</td>
+                <td data-label="OpenWhistle">The 3-month deadline on every case</td>
+                <td data-label="The organisation">The feedback itself</td>
+                <td data-label="Shown in"><a href="/en/docs/admin/#hinschg-deadline-tracking">Deadline tracking</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Deadlines -->
+      <section class="docs-section" id="deadlines" aria-labelledby="deadlines-h2">
+        <h2 id="deadlines-h2">Deadlines</h2>
+        <div class="table-scroll stack-table">
+          <table class="cmp-table">
+            <thead>
+              <tr>
+                <th scope="col">Event</th>
+                <th scope="col">Deadline</th>
+                <th scope="col">Section</th>
+                <th scope="col">Shown in</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">Confirmation of receipt</th><td data-label="Deadline">7 days after the report</td><td data-label="Section">§ 17 Abs. 1 Nr. 1</td><td data-label="Shown in"><a href="/en/docs/admin/#hinschg-deadline-tracking">Deadline tracking</a></td></tr>
+              <tr><th scope="row">Feedback to the reporter</th><td data-label="Deadline">3 months after the confirmation; without one, 3 months and 7 days after the report</td><td data-label="Section">§ 17 Abs. 2</td><td data-label="Shown in"><a href="/en/docs/admin/#hinschg-deadline-tracking">Deadline tracking</a></td></tr>
+              <tr><th scope="row">Deletion of the documentation</th><td data-label="Deadline">3 years after the procedure ends</td><td data-label="Section">§ 11 Abs. 5</td><td data-label="Shown in"><a href="/en/docs/retention/">Data retention</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Fines -->
+      <section class="docs-section" id="fines" aria-labelledby="fines-h2">
+        <h2 id="fines-h2">Fines</h2>
+        <div class="table-scroll stack-table">
+          <table class="cmp-table">
+            <thead>
+              <tr>
+                <th scope="col">Section</th>
+                <th scope="col">Fine</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">§&nbsp;40&nbsp;Abs.&nbsp;1</th><td data-label="Fine">Knowingly disclosing false information to the public, contrary to §&nbsp;32 Abs.&nbsp;2: up to €20,000.</td></tr>
+              <tr><th scope="row">§&nbsp;40&nbsp;Abs.&nbsp;2&nbsp;Nr.&nbsp;2</th><td data-label="Fine">No internal reporting office set up and run: up to €20,000. Fines have applied since 1&nbsp;December 2023 (§&nbsp;42 Abs.&nbsp;2).</td></tr>
+              <tr><th scope="row">§&nbsp;40&nbsp;Abs.&nbsp;2&nbsp;Nr.&nbsp;1,&nbsp;3, Abs.&nbsp;3</th><td data-label="Fine">Obstructing a report, taking a reprisal, or breaching confidentiality intentionally or recklessly: up to €50,000.</td></tr>
+              <tr><th scope="row">§&nbsp;40&nbsp;Abs.&nbsp;4</th><td data-label="Fine">Breaching confidentiality negligently: up to €10,000.</td></tr>
+              <tr><th scope="row">§&nbsp;40&nbsp;Abs.&nbsp;5</th><td data-label="Fine">An attempt to obstruct a report or to take a reprisal: up to €50,000.</td></tr>
+              <tr><th scope="row">§&nbsp;40&nbsp;Abs.&nbsp;6</th><td data-label="Fine">For a company, §&nbsp;30 Abs.&nbsp;2 Satz&nbsp;3 OWiG raises the maximum tenfold for obstruction, reprisals and confidentiality breaches: up to €500,000 (€100,000 for a negligent breach).</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>The amounts are maximums from §&nbsp;40 Abs.&nbsp;6; the authority sets the actual fine.</p>
+      </section>
+
+      <!-- GDPR -->
+      <section class="docs-section" id="gdpr" aria-labelledby="gdpr-h2">
+        <h2 id="gdpr-h2">GDPR alongside the HinSchG</h2>
+        <div class="table-scroll stack-table">
+          <table class="cmp-table">
+            <thead>
+              <tr>
+                <th scope="col">Requirement</th>
+                <th scope="col">Article</th>
+                <th scope="col">OpenWhistle</th>
+                <th scope="col">Shown in</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">Data minimisation</th><td data-label="Article">Art. 5(1)(c)</td><td data-label="OpenWhistle">No IP logging, no fields a report does not need</td><td data-label="Shown in"><a href="/en/docs/anonymity/">Anonymity layers</a></td></tr>
+              <tr><th scope="row">Privacy by design</th><td data-label="Article">Art. 25</td><td data-label="OpenWhistle">Self-hosted; no third-party requests from the reporter's pages</td><td data-label="Shown in"><a href="/en/docs/outbound/">Outbound requests</a>, <a href="/en/docs/security-headers/">Security headers</a></td></tr>
+              <tr><th scope="row">Lawful basis</th><td data-label="Article">Art. 6(1)(c)</td><td data-label="OpenWhistle"><strong>not covered</strong>: your basis is the legal duty of § 12 HinSchG, with § 10 HinSchG</td><td data-label="Shown in">—</td></tr>
+              <tr><th scope="row">Erasure</th><td data-label="Article">Art. 17</td><td data-label="OpenWhistle">Reports can be deleted for good; § 11 Abs. 5 sets the regular deadline</td><td data-label="Shown in"><a href="/en/docs/retention/">Data retention</a>, <a href="/en/docs/admin/#managing-reports">Managing reports</a></td></tr>
+              <tr><th scope="row">Security of processing</th><td data-label="Article">Art. 32</td><td data-label="OpenWhistle">Encryption at rest and TLS in transit</td><td data-label="Shown in"><a href="/en/docs/security-policy/#4-1-encryption-at-rest">Encryption at rest</a>, <a href="/en/docs/security-policy/#4-2-encryption-in-transit">in transit</a></td></tr>
+              <tr><th scope="row">Breach notification</th><td data-label="Article">Art. 33</td><td data-label="OpenWhistle"><strong>not covered</strong>: you notify the authority within 72 hours</td><td data-label="Shown in"><a href="/en/docs/security-policy/#5-incident-response">Incident response template</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Fonts, styles and scripts are served by the instance itself; its
+          <a href="/en/docs/security-headers/">Content-Security-Policy</a> allows no other host.
+          A German court (LG München I, January 2022) held that loading Google Fonts without consent breached the GDPR.
+          Loading them sends the visitor's IP address to a third party.
+        </p>
+      </section>
+
+    </main>
+  </div>

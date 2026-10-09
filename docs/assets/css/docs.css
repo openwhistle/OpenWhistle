@@ -19,7 +19,8 @@
       overflow-y: auto;
       background: var(--surface);
       border-right: 1px solid var(--hairline);
-      padding: var(--space-8) var(--space-5);
+      /* A link's text (12 px padding, 2 px bar) starts on the nav's 32 px content edge. */
+      padding: var(--space-8) var(--space-5) var(--space-8) calc(var(--space-8) - var(--space-3) - 2px);
       scrollbar-width: thin;
       scrollbar-color: var(--hairline-strong) transparent;
     }
@@ -57,11 +58,168 @@
       color: var(--ink);
       background: var(--surface-2);
     }
-    .sidebar-links a.active {
+    /* .active: the changelog's scroll spy (sidebar.js); aria-current: the docs page being read. */
+    .sidebar-links a.active, .sidebar-links a[aria-current="page"] {
       color: var(--accent);
       background: var(--accent-fog);
       border-left-color: var(--accent);
     }
+
+    /* The docs pages' sidebar: one menu holding the groups of _data/nav.yml. An inline script
+       in docs.html closes it on a phone; the summaries keep the browser's marker and focus ring. */
+    .docs-menu > summary {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--ink);
+      padding: var(--space-2) var(--space-3);
+      cursor: pointer;
+    }
+    .docs-menu[open] > summary { margin-bottom: var(--space-4); }
+    /* Above a phone the menu is always open (site.js re-opens it): a toggle there does nothing. */
+    @media (min-width: 769px) {
+      .docs-menu > summary { display: none; }
+    }
+    .sidebar-group { margin-bottom: var(--space-5); }
+    .sidebar-group > summary {
+      font-family: var(--font-body);
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: var(--space-1) var(--space-3);
+      cursor: pointer;
+    }
+    .sidebar-group[open] > summary { margin-bottom: var(--space-2); }
+    /* Forced colours paint the transparent bar of every link: only the current one keeps it. */
+    @media (forced-colors: active) {
+      .sidebar-links a { border-left-color: Canvas; }
+      .sidebar-links a.active, .sidebar-links a[aria-current="page"] { border-left-color: Highlight; }
+    }
+
+    /* ── Search (search.js; the button shows only with JavaScript) ── */
+    .docs-search-open {
+      width: 100%;
+      margin-bottom: var(--space-6);
+      padding: var(--space-2) var(--space-3);
+      text-align: left;
+      font-size: 0.82rem;
+      color: var(--muted);
+      background: var(--surface-2);
+      box-shadow: 0 0 0 1px var(--hairline-strong);
+      border-radius: var(--radius-md);
+      transition: color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+    }
+    .docs-search-open:hover { color: var(--ink); box-shadow: 0 0 0 1px var(--muted); }
+    .docs-search-open kbd, .docs-search-head button {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+      padding: 0 var(--space-2);
+      box-shadow: 0 0 0 1px var(--hairline-strong);
+      border-radius: var(--radius-sm);
+    }
+    .docs-search-open kbd { float: right; }
+    .docs-search {
+      width: min(40rem, 100% - 2 * var(--space-8));
+      max-width: none;
+      max-height: min(36rem, 100% - 2 * var(--space-16));
+      margin: var(--space-16) auto auto;
+      padding: var(--space-5) var(--space-6);
+      color: var(--body);
+      background: var(--surface-2);
+      box-shadow: 0 0 0 1px var(--hairline-strong);
+      border-radius: var(--radius-lg);
+    }
+    .docs-search::backdrop { background: color-mix(in srgb, var(--inverse) 60%, transparent); }
+    .docs-search-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: var(--space-4);
+      margin-bottom: var(--space-3);
+    }
+    .docs-search-head label { font-family: var(--font-display); font-weight: 600; color: var(--ink); }
+    .docs-search input {
+      width: 100%;
+      padding: var(--space-2) var(--space-3);
+      color: var(--ink);
+      background: var(--canvas);
+      box-shadow: 0 0 0 1px var(--hairline-strong);
+      border-radius: var(--radius-md);
+    }
+    .docs-search-status { margin: var(--space-3) 0; font-size: 0.82rem; color: var(--muted); }
+    .docs-search-results li { padding: var(--space-3) 0; border-top: 1px solid var(--hairline); }
+    .docs-search-results a { font-weight: 600; color: var(--accent); }
+    .docs-search-results p {
+      margin-top: var(--space-1);
+      font-size: 0.82rem;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+    /* An excerpt's match, and the matches search.js marks on the result page. */
+    .docs-search mark, .docs-content mark { color: inherit; background: var(--accent-dim); }
+    /* Forced colours keep the alpha of a translucent fill: the system's own mark colours instead. */
+    @media (forced-colors: active) {
+      .docs-search mark, .docs-content mark { color: MarkText; background: Mark; }
+    }
+    @media (max-width: 768px) {
+      .docs-search { width: 100%; max-height: 100%; height: 100%; margin: 0; border-radius: 0; }
+    }
+
+    /* ── On this page ────────────────────────────────────────────── */
+    .docs-toc {
+      border-left: 2px solid var(--hairline);
+      padding-left: var(--space-4);
+      margin-bottom: var(--space-10);
+    }
+    .docs-toc-title {
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: var(--space-2);
+    }
+    .docs-toc a {
+      display: block;
+      padding: var(--space-1) 0;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      color: var(--body);
+      transition: color var(--duration-fast) ease;
+    }
+    .docs-toc a:hover { color: var(--accent); }
+
+    /* ── Previous / next, edit link ──────────────────────────────── */
+    .docs-pager {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-6);
+      margin-top: var(--space-12);
+      padding-top: var(--space-6);
+      border-top: 1px solid var(--hairline);
+    }
+    .docs-pager a {
+      display: flex;
+      flex-direction: column;
+      font-family: var(--font-display);
+      font-weight: 600;
+      color: var(--accent);
+      transition: color var(--duration-fast) ease;
+    }
+    .docs-pager a:hover { color: var(--accent-strong); }
+    .docs-pager a[rel="next"] { margin-left: auto; text-align: right; }
+    .docs-pager span {
+      font-family: var(--font-body);
+      font-size: 0.68rem;
+      font-weight: 400;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .docs-edit { margin-top: var(--space-8); font-size: 0.82rem; }
+    .docs-edit a { color: var(--muted); transition: color var(--duration-fast) ease; }
+    .docs-edit a:hover { color: var(--accent); }
 
     /* ── Content ─────────────────────────────────────────────────── */
     .docs-content {
@@ -76,6 +234,7 @@
       color: var(--muted);
       margin-bottom: var(--space-8);
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       gap: var(--space-2);
     }
@@ -116,7 +275,7 @@
       border-bottom: none;
     }
 
-    .docs-section h2 {
+    .docs-section h2, .docs-article h2 {
       font-family: var(--font-display);
       font-size: clamp(1.4rem, 2.5vw, 1.9rem);
       font-weight: 700;
@@ -126,7 +285,14 @@
       line-height: 1.2;
     }
 
-    .docs-section h3 {
+    /* A page with no lead under its h1 (the imprint): its headings need room between them. */
+    .docs-content > h1 + .docs-article { margin-top: var(--space-10); }
+    .docs-content > h1 + .docs-article > h2:not(:first-child) { margin-top: var(--space-12); }
+
+    /* Cards in the docs column (compliance "By jurisdiction"): fill it, one column on a phone. */
+    .docs-content .blog-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); }
+
+    .docs-section h3, .docs-article h3 {
       font-family: var(--font-display);
       font-size: 1.1rem;
       font-weight: 600;
@@ -134,7 +300,7 @@
       margin: var(--space-8) 0 var(--space-3);
     }
 
-    .docs-section p {
+    .docs-section p, .docs-article p {
       color: var(--body);
       font-size: 0.95rem;
       line-height: 1.8;
@@ -142,20 +308,22 @@
       max-width: 70ch;
     }
 
-    .docs-section a {
+    .docs-section a, .docs-article a {
       color: var(--accent);
       border-bottom: 1px solid var(--accent-dim);
       transition: border-bottom-color var(--duration-fast) ease;
+      /* A bare URL (the comparison's sources) wraps on a phone instead of widening the page. */
+      overflow-wrap: break-word;
     }
-    .docs-section a:hover { border-bottom-color: var(--accent); }
+    .docs-section a:hover, .docs-article a:hover { border-bottom-color: var(--accent); }
 
-    .docs-section ul, .docs-section ol {
+    .docs-section ul, .docs-article ul, .docs-section ol, .docs-article ol {
       padding-left: var(--space-6);
       margin-bottom: var(--space-5);
     }
-    .docs-section ul { list-style: disc; }
-    .docs-section ol { list-style: decimal; }
-    .docs-section li {
+    .docs-section ul, .docs-article ul { list-style: disc; }
+    .docs-section ol, .docs-article ol { list-style: decimal; }
+    .docs-section li, .docs-article li {
       color: var(--body);
       font-size: 0.95rem;
       line-height: 1.75;
@@ -163,7 +331,7 @@
       max-width: 68ch;
     }
 
-    .docs-section code {
+    .docs-section code, .docs-article code {
       font-family: var(--font-mono);
       font-size: 0.82em;
       background: var(--surface-3);
@@ -174,6 +342,8 @@
       /* A long path or setting name wraps on a phone instead of widening the page. */
       overflow-wrap: break-word;
     }
+    /* The Markdown templates (security policy, DPA) separate their parts with a rule. */
+    .docs-article hr { border: none; border-top: 1px solid var(--hairline); margin: var(--space-8) 0; }
 
     /* Code block */
     .code-block {
@@ -253,6 +423,8 @@
       vertical-align: top;
       line-height: 1.6;
     }
+    /* German compounds ("Verarbeitungsverzeichnis") break at a syllable instead of widening a column. */
+    :lang(de) .env-table td { hyphens: auto; }
     .env-table tbody tr:last-child td { border-bottom: none; }
     .env-table tbody tr:hover td { background: var(--surface-3); }
     .env-key {
@@ -270,6 +442,13 @@
     }
     .env-req-yes { background: var(--danger-weak); color: var(--danger); box-shadow: 0 0 0 1px color-mix(in srgb, var(--danger) 20%, transparent); }
     .env-req-no  { background: var(--surface); color: var(--muted); box-shadow: 0 0 0 1px var(--hairline); }
+    /* A settings row: the badge under the name, the default under the description. */
+    .env-settings td:first-child { width: 1%; } /* as narrow as its longest name */
+    .env-settings .env-required { display: table; margin-top: var(--space-2); }
+    /* A second line in a cell: a setting's default, a request's switch. */
+    .env-table .env-note { display: block; margin-top: var(--space-2); color: var(--muted); }
+    /* A URL or DSN in a description wraps rather than widening the table past the column. */
+    .env-settings td code { overflow-wrap: anywhere; }
 
     /* Security layers */
     .security-layers {
@@ -354,6 +533,33 @@
 
     /* ── Responsive ─────────────────────────────────────────────── */
 
+    /* Wide enough for a third column: "On this page" leaves the article's top and sticks
+       beside it. The frame stays the site's 1200 px; a wide table scrolls in its own box. */
+    @media (min-width: 1280px) {
+      .docs-content:has(> .docs-toc) {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 13rem;
+        column-gap: var(--space-10);
+        align-content: start;
+      }
+      .docs-content:has(> .docs-toc) > * { grid-column: 1; }
+      .docs-content > .docs-toc {
+        grid-column: 2;
+        /* Beside all four column-1 children: breadcrumb, article, pager, edit link. */
+        grid-row: 1 / span 4;
+        align-self: start;
+        position: sticky;
+        top: calc(60px + var(--space-8));
+        margin-bottom: 0;
+      }
+      /* "On this page" leaves the text 596 px; a diagram drawn 754 px wide would drop its
+         13 px labels under 11. It takes the text's gutter and most of the column gap,
+         clear of the sidebar and the toc's rule: 668 px, so 754 px draws at 0.89. */
+      .docs-content:has(> .docs-toc) .docs-article figure.diagram {
+        margin-inline: calc(-1 * var(--space-10)) calc(-1 * var(--space-8));
+      }
+    }
+
     @media (max-width: 768px) {
       .docs-layout { grid-template-columns: 1fr; }
       .docs-sidebar {
@@ -361,8 +567,10 @@
         height: auto;
         border-right: none;
         border-bottom: 1px solid var(--hairline);
+        padding-block: var(--space-4);
       }
-      .docs-content { padding: var(--space-8) var(--space-5) var(--space-12); }
+      /* The nav's 32 px gutter, so the article starts where the menu's link text does. */
+      .docs-content { padding: var(--space-8) var(--space-8) var(--space-12); }
       .env-table { font-size: 0.8rem; }
     }
 
@@ -370,8 +578,3 @@
       .security-layer { grid-template-columns: 2.5rem 1fr; }
     }
 
-/* The Markdown pages under /en/docs/ have no sidebar: one column of the width the docs content has beside it. */
-.docs-standalone { max-width: calc(var(--max-width) - var(--sidebar-width)); margin: 0 auto; }
-/* Their Markdown gets the .docs-section type: lists, paragraphs, headings; tables are .env-table. */
-.docs-standalone.docs-section { border-bottom: none; }
-.docs-standalone hr { border: none; border-top: 1px solid var(--hairline); margin: var(--space-8) 0; }

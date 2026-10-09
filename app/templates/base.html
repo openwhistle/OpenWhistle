@@ -142,6 +142,10 @@
             <ul class="footer-links" role="list">
                 <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener">{{ t('footer.open_source') }}</a></li>
                 <li><a href="https://www.gesetze-im-internet.de/hinschg/" rel="noopener">HinSchG</a></li>
+                {% if is_demo %}{# demo legal links #}
+                <li class="demo-legal"><a href="https://openwhistle.net/impressum/" rel="noopener">{{ t('footer.imprint') }}</a></li>
+                <li class="demo-legal"><a href="https://openwhistle.net{{ '/de/datenschutz/' if lang == 'de' else '/en/privacy/' }}" rel="noopener">{{ t('footer.privacy') }}</a></li>
+                {% endif %}
                 <li><a href="/admin" title="{{ t('footer.admin_title') }}">{{ t('footer.admin') }}</a></li>
                 <li class="footer-version">v{{ app_version }}</li>
             </ul>

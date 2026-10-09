@@ -1,0 +1,116 @@
+---
+title: 'Contribute | OpenWhistle'
+description: 'Help OpenWhistle where it counts: review the encryption and anonymity code, take a first issue, translate the app, sponsor the work, or report a flaw.'
+translation_key: contribute
+css:
+- docs
+- page
+js:
+- site
+- sidebar
+jsonld:
+- '@context': https://schema.org
+  '@type': BreadcrumbList
+  itemListElement:
+  - '@type': ListItem
+    position: 1
+    name: OpenWhistle
+    item: https://openwhistle.net/en/
+  - '@type': ListItem
+    position: 2
+    name: Contribute
+    item: https://openwhistle.net/en/contribute/
+---
+  <div class="docs-layout">
+
+    <!-- Sidebar -->
+    <aside class="docs-sidebar" role="complementary" aria-label="Contribute navigation">
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">On This Page</div>
+        <nav class="sidebar-links" aria-label="On this page">
+          <a href="#review" class="active">Where a review helps most</a>
+          <a href="#first-issues">A first issue</a>
+          <a href="#translate">Translate</a>
+          <a href="#sponsor">Sponsor</a>
+          <a href="#security">Found a vulnerability?</a>
+        </nav>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Links</div>
+        <nav class="sidebar-links">
+          <a href="/en/">&#8592; Landing Page</a>
+          <a href="/en/docs/">Documentation</a>
+          <a href="/en/security/">Security</a>
+          <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub Repository</a>
+        </nav>
+      </div>
+
+    </aside>
+
+    <!-- Main content -->
+    <main id="main-content" class="docs-content">
+
+      <nav class="docs-breadcrumb" aria-label="Breadcrumb">
+        <a href="/en/">OpenWhistle</a>
+        <span>/</span>
+        <span>Contribute</span>
+      </nav>
+
+      <h1>Contribute</h1>
+      <p class="docs-lead">
+        OpenWhistle is built in spare time, by one maintainer.
+        These are the places where your help counts most.
+      </p>
+
+      <!-- Review -->
+      <section class="docs-section" id="review" aria-labelledby="review-h2">
+        <h2 id="review-h2">Where a review helps most</h2>
+        <ul>
+          <li><a href="/en/docs/rotate-key/">Encryption and key rotation</a>: can a report be read without the key, or lost during a rotation?</li>
+          <li><a href="/en/docs/anonymity/">The anonymity layers</a>: does any path still carry an IP address into a log, a session or the database?</li>
+          <li><a href="/en/docs/admin/#managing-reports">The identity reveal</a>: can anyone see a reporter's name without an audited reason?</li>
+        </ul>
+      </section>
+
+      <!-- First issues -->
+      <section class="docs-section" id="first-issues" aria-labelledby="first-issues-h2">
+        <h2 id="first-issues-h2">A first issue</h2>
+        <p>
+          Issues labelled
+          <a href="https://github.com/openwhistle/OpenWhistle/labels/good%20first%20issue" rel="noopener noreferrer" target="_blank">good first issue</a>
+          are small and self-contained.
+          <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CONTRIBUTING.md" rel="noopener noreferrer" target="_blank">CONTRIBUTING.md</a>
+          shows the setup, the checks and the commit style.
+        </p>
+      </section>
+
+      <!-- Translate -->
+      <section class="docs-section" id="translate" aria-labelledby="translate-h2">
+        <h2 id="translate-h2">Translate</h2>
+        <p>
+          The app speaks English, German, French, Spanish and Brazilian Portuguese.
+          A language is one JSON file in <code>app/locales/</code>.
+          <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CONTRIBUTING.md" rel="noopener noreferrer" target="_blank">CONTRIBUTING.md</a>
+          says what a locale change touches and which review a translation must pass.
+        </p>
+      </section>
+
+      <!-- Sponsor -->
+      <section class="docs-section" id="sponsor" aria-labelledby="sponsor-h2">
+        <h2 id="sponsor-h2">Sponsor</h2>
+        <p>
+          <a href="https://github.com/sponsors/jp1337" rel="noopener noreferrer" target="_blank">GitHub Sponsors</a>
+          pays for the time this spare-time project takes.
+        </p>
+      </section>
+
+      <!-- Security -->
+      <section class="docs-section" id="security" aria-labelledby="security-h2">
+        <h2 id="security-h2">Found a vulnerability?</h2>
+        <p>Report it privately, as <a href="/en/security/#report">the security page</a> describes.</p>
+      </section>
+
+    </main>
+  </div>

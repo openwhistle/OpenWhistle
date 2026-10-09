@@ -12,6 +12,7 @@ jobs:
   lint:
     name: Lint & Type Check
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
@@ -63,6 +64,7 @@ jobs:
   test:
     name: Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
     services:
@@ -137,6 +139,7 @@ jobs:
   docker:
     name: Docker Build & Smoke Test
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
@@ -226,10 +229,10 @@ jobs:
     # header-echoing backend standing in for the app, and asserts with real
     # HTTP requests that the client can never forge the X-OW-Onion /
     # IP-forwarding trust headers the app relies on (see app/onion.py,
-    # nginx/snippets/proxy-headers.conf, docs/en/docs/index.html "Onion listener
-    # trust boundary"). A CI job, not a pytest, so it always runs on GitHub's
-    # Docker-equipped runners rather than skipping when a contributor's
-    # machine lacks docker/podman.
+    # nginx/snippets/proxy-headers.conf, docs/en/docs/onion-trust/index.html).
+    # A CI job, not a pytest, so it always runs on GitHub's Docker-equipped
+    # runners rather than skipping when a contributor's machine lacks
+    # docker/podman.
     #
     # Also renders ansible/roles/openwhistle/templates/nginx.conf.j2 with the
     # role's own defaults (a tiny Jinja2 render, no Ansible install needed)

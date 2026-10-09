@@ -467,7 +467,9 @@ async def test_login_page_shows_the_button_only_when_flag_and_barrier_pass(
 # below, which is built for `KEY: value` / `KEY=value` shapes, not code.
 _SCANNABLE_SUFFIXES = (".yml", ".yaml", ".j2", ".example")
 _SCANNABLE_PREFIXES = (".env",)
-_ALLOWLIST_EXACT = {"docker-compose.review.yml"}
+# docs/_data/config.yml is the settings reference's data: `- name: LOCAL_REVIEW_LOGIN`
+# names the setting for the docs page and sets nothing.
+_ALLOWLIST_EXACT = {"docker-compose.review.yml", "docs/_data/config.yml"}
 _ASSIGNMENT = re.compile(r"LOCAL_REVIEW_LOGIN[\"']?\s*[:=]\s*[\"']?([A-Za-z]+)")
 
 

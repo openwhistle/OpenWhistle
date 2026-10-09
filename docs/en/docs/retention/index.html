@@ -1,0 +1,22 @@
+---
+title: Data retention under GDPR and HinSchG | OpenWhistle
+description: 'Delete closed reports automatically, as GDPR storage limitation and HinSchG section 11 require: the retention period, the audit entry and the admin page.'
+translation_key: docs-retention
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1 id="retention">Data retention (GDPR / HinSchG)</h1>
+        <p>
+          Closed reports are deleted automatically after a retention period. This satisfies GDPR
+          Art. 5(1)(e) (storage limitation) and HinSchG §11 Abs. 5 (documentation is deleted three
+          years after the procedure ends).
+        </p>
+        <ul>
+          <li>Each deletion writes an immutable audit entry (<code>report.auto_deleted</code>) with the case number and legal basis.</li>
+          <li><code>/admin/retention</code> shows the configuration and the next scheduled run.</li>
+          <li><strong>On by default since v1.5.0.</strong> A report is deleted <code>RETENTION_DAYS</code> after it is closed. OpenWhistle was released in 2026, so no installation holds a report closed three years ago: turning retention on deletes nothing today.</li>
+        </ul>
+<div data-config="retention"></div>

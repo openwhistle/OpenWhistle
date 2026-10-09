@@ -1,0 +1,27 @@
+---
+title: Serve several organisations from one install | OpenWhistle
+description: 'Run one OpenWhistle installation for several organisations: switch multi-tenancy on, give each its own submission link, and keep their reports apart.'
+translation_key: docs-multi-tenancy
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1 id="multi-tenancy">Multi-tenancy</h1>
+        <p>
+          One deployment can serve several independent organisations (tenants), each with its own
+          reports, categories, locations and admin users. The <code>superadmin</code> role manages
+          them at <code>/admin/organisations</code>.
+        </p>
+        <p>Each organisation has its own reporting link, <code>/submit/&lt;slug&gt;</code> — the one to give its employees:</p>
+        <ul>
+          <li>The wizard there offers only that organisation's categories and locations, and files the report under it.</li>
+          <li>The link, with a copy button, is on <code>/admin/organisations</code> (superadmin) and on an organisation admin's dashboard.</li>
+          <li><code>/submit</code> is the default organisation's (<code>DEFAULT_ORG_SLUG</code>). If that names no active organisation, <code>/submit</code> answers 503 and logs the setting, and a set-up instance refuses to start.</li>
+          <li>An unknown or deactivated slug is a 404. There is no list of organisations, but a slug is part of a public link: anyone can test whether a guessed one exists.</li>
+          <li>A draft stays with the organisation it was started for. Another organisation's link shows a fresh wizard; its first step replaces the draft, and the earlier one is lost to that browser.</li>
+          <li>With multi-tenancy off there is one wizard, at <code>/submit</code>: <code>/submit/&lt;default slug&gt;</code> redirects there, any other slug is a 404.</li>
+          <li>Every account belongs to an organisation. On <code>/admin/users</code> a superadmin chooses it for a new account; an admin creates accounts in their own. Accounts LDAP provisions, and those made before multi-tenancy was switched on, belong to the default organisation.</li>
+        </ul>
+<div data-config="multi-tenancy"></div>

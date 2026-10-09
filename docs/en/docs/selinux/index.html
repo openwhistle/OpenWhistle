@@ -1,0 +1,18 @@
+---
+title: Run OpenWhistle on SELinux hosts | OpenWhistle
+description: 'OpenWhistle on Fedora, RHEL and other SELinux hosts needs nothing configured: the shipped mounts carry the :z relabel option, a no-op elsewhere.'
+translation_key: docs-selinux
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1 id="selinux">SELinux hosts</h1>
+        <p>
+          Nothing to configure. With SELinux enforcing (Fedora, RHEL, CentOS and derivatives), the
+          container must be allowed to read its bind-mounted files. So the mounts in
+          <code>docker-compose.prod.yml</code> and the Ansible template (<code>nginx.conf</code>,
+          <code>nginx/certs</code>, <code>/etc/letsencrypt</code>) carry the <code>:z</code> relabel
+          option, a no-op elsewhere.
+        </p>

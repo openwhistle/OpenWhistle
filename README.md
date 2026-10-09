@@ -16,7 +16,7 @@
 [![PostgreSQL](https://img.shields.io/badge/postgresql-18-336791?logo=postgresql&logoColor=white)](https://postgresql.org)
 [![Redis](https://img.shields.io/badge/redis-8-DC382D?logo=redis&logoColor=white)](https://redis.io)
 [![Docker Pulls](https://img.shields.io/docker/pulls/kermit1337/openwhistle?logo=docker)](https://hub.docker.com/r/kermit1337/openwhistle)
-[![CodeQL](https://img.shields.io/github/actions/workflow/status/openwhistle/OpenWhistle/codeql.yml?label=CodeQL&logo=github)](https://github.com/openwhistle/OpenWhistle/security/code-scanning)
+[![CodeQL](https://github.com/openwhistle/OpenWhistle/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/openwhistle/OpenWhistle/actions/workflows/dynamic/github-code-scanning/codeql)
 [![GitHub Sponsors](https://img.shields.io/badge/sponsor-GitHub-ea4aaa?logo=github-sponsors&logoColor=white)](https://github.com/sponsors/jp1337)
 
 > *"Speaking up takes courage. Staying silent shouldn't be the safer option."*
@@ -189,7 +189,12 @@ zero vendor lock-in, and privacy-first by design.
   terminator, `docker-compose.behind-proxy.yml` makes nginx proxy plain HTTP on port 80.
 - **Tor onion address** — `ONION_LOCATION` adds an `Onion-Location` header (Tor Browser offers to
   switch) and a note on the submit page for reporters on a monitored network; see
-  [the documentation](https://openwhistle.net/en/docs/#onion-address) "Offering an onion address".
+  [Offering an onion address](https://openwhistle.net/en/docs/onion/).
+- **Searchable documentation** — one page per task on [openwhistle.net/en/docs](https://openwhistle.net/en/docs/),
+  searched in the browser (Pagefind, `/` key); the term itself is never sent, though the index chunks
+  the browser fetches let the host infer roughly what was searched.
+- **Compliance pages** — the EU Directive 2019/1937 and the HinSchG, duty by duty: what OpenWhistle covers, with the
+  docs page that shows it, and what stays with you ([openwhistle.net/en/compliance](https://openwhistle.net/en/compliance/)).
 
 ---
 

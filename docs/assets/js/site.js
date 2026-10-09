@@ -28,3 +28,39 @@ if (navToggle && navLinks) {
     navLinks.classList.toggle('open', !isOpen);
   });
 }
+
+// Docs: docs.html closes the menu on a phone. Above 768 px its summary is hidden, so a
+// tablet turned to landscape re-opens it rather than keep an empty sidebar.
+var docsMenu = document.querySelector('.docs-menu');
+if (docsMenu) {
+  window.matchMedia('(max-width: 768px)').addEventListener('change', function(e) {
+    if (!e.matches) docsMenu.setAttribute('open', '');
+  });
+}
+
+// A box that scrolls sideways (wide table, long code line) must take keyboard focus to be
+// scrolled without a mouse, and a focusable region needs a name (axe
+// scrollable-region-focusable). A box that fits is no tab stop. Re-checked on resize and once
+// the fonts are in, since both change what overflows.
+var scrollNames = document.documentElement.lang === 'de'
+  ? { table: 'Scrollbare Tabelle', code: 'Scrollbarer Code' }
+  : { table: 'Scrollable table', code: 'Scrollable code' };
+function markScrollBoxes() {
+  document.querySelectorAll('.table-scroll, pre').forEach(function(box) {
+    if (box.scrollWidth > box.clientWidth) {
+      var table = box.querySelector('table');
+      var own = table && (table.getAttribute('aria-label') ||
+        (table.caption && table.caption.textContent.trim()));
+      box.tabIndex = 0;
+      box.setAttribute('role', 'region');
+      box.setAttribute('aria-label', own || (table ? scrollNames.table : scrollNames.code));
+    } else {
+      box.removeAttribute('tabindex');
+      box.removeAttribute('role');
+      box.removeAttribute('aria-label');
+    }
+  });
+}
+markScrollBoxes();
+window.addEventListener('resize', markScrollBoxes);
+if (document.fonts) document.fonts.ready.then(markScrollBoxes);

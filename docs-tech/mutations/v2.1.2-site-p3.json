@@ -1,0 +1,938 @@
+{
+ "timeout_seconds": 600,
+ "test_groups": {
+  "BUILD": [
+   "tests/test_build_site.py"
+  ],
+  "REDIRECTS": [
+   "tests/test_redirects.py"
+  ],
+  "SPLIT": [
+   "tests/test_docs_split.py"
+  ],
+  "CONFIG_DOC": [
+   "tests/test_config_documented.py"
+  ],
+  "SITE_PAGES": [
+   "tests/test_site_pages.py"
+  ],
+  "DOCS_SITE": [
+   "tests/test_docs_site.py"
+  ],
+  "LEGAL": [
+   "tests/test_legal_pages.py"
+  ],
+  "DEMO_FOOTER": [
+   "tests/test_demo_footer.py"
+  ],
+  "SEO": [
+   "tests/test_seo.py"
+  ],
+  "LINKS": [
+   "tests/test_external_links.py"
+  ],
+  "SORA": [
+   "tests/test_build_site.py",
+   "-k",
+   "sora"
+  ],
+  "INDEX": [
+   "tests/test_build_site.py::test_the_build_indexes_only_docs_pages"
+  ],
+  "MENU_E2E": [
+   "tests/e2e/test_docs_behaviour.py",
+   "-k",
+   "menu",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "ANCHOR_E2E": [
+   "tests/e2e/test_docs_behaviour.py",
+   "-k",
+   "one_pager_anchor",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "LANDSCAPE_E2E": [
+   "tests/e2e/test_docs_behaviour.py",
+   "-k",
+   "landscape",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "NAMED_E2E": [
+   "tests/e2e/test_docs_behaviour.py",
+   "-k",
+   "named_tab_stop",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "NO_TAB_STOP_E2E": [
+   "tests/e2e/test_docs_behaviour.py",
+   "-k",
+   "no_tab_stop",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "SIDEBAR_BAR_E2E": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "sidebar_bar",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "PHONE_COMPARE_E2E": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "small_phone and compare",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "COLUMNS_E2E": [
+   "tests/e2e/test_layout.py",
+   "-k",
+   "docs_columns",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "LINE_UP_E2E": [
+   "tests/e2e/test_layout.py",
+   "-k",
+   "line_up",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "UNDER_MENU_E2E": [
+   "tests/e2e/test_layout.py",
+   "-k",
+   "under_the_menu",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "SEARCH_E2E": [
+   "tests/e2e/test_docs_search.py",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "PRIVACY_E2E": [
+   "tests/e2e/test_docs_search.py::test_the_term_never_leaves_the_browser",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "DIAGRAMS_E2E": [
+   "tests/e2e/test_docs_diagrams.py",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "LANG_COUNT": [
+   "tests/test_locale_key_completeness.py::test_every_locale_file_is_a_supported_language"
+  ],
+  "LANG_LISTS": [
+   "tests/test_locale_key_completeness.py::test_every_site_language_list_names_every_locale"
+  ],
+  "ONE_PAGER": [
+   "tests/test_docs_split.py::test_no_page_links_a_one_pager_anchor"
+  ],
+  "LEGAL_PLACEHOLDER": [
+   "tests/test_legal_pages.py::test_no_placeholder_in_imprint_or_privacy_policy"
+  ],
+  "LEGAL_BOILERPLATE": [
+   "tests/test_legal_pages.py::test_the_privacy_policy_names_this_setup_and_nothing_else"
+  ],
+  "LEGAL_DEMO": [
+   "tests/test_legal_pages.py::test_the_demo_section_names_its_cookies_their_basis_and_processor"
+  ],
+  "LEGAL_EXPIRES": [
+   "tests/test_legal_pages.py::test_security_txt_is_valid_and_not_expired"
+  ],
+  "CONFIG_STALE": [
+   "tests/test_config_documented.py::test_config_yml_lists_every_setting_once_and_nothing_else"
+  ],
+  "LINKS_TOKEN": [
+   "tests/test_external_links.py::test_only_the_scheduled_issue_job_can_write_issues"
+  ],
+  "HREFLANG_DE": [
+   "tests/test_docs_site.py::test_a_german_page_marks_every_link_into_english"
+  ],
+  "SEARCH_FAIL_E2E": [
+   "tests/e2e/test_docs_search.py::test_search_says_so_when_a_search_fails_after_loading",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "DESKTOP_TABLE_E2E": [
+   "tests/e2e/test_site_look.py",
+   "-k",
+   "no_table_scrolls and (configuration or notifications or outbound or hinschg)",
+   "-m",
+   "e2e",
+   "--browser",
+   "chromium"
+  ],
+  "BUILD_SETTINGS": [
+   "tests/test_build_site.py",
+   "-k",
+   "settings_marker"
+  ],
+  "TIMEOUTS": [
+   "tests/test_workflow_timeouts.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "CONFIG-MARKER-UNKNOWN",
+   "file": "scripts/build_site.py",
+   "old": "raise BuildError(f\"{rel}: no group {found.group(1)!r} in _data/config.yml\")",
+   "new": "return \"\"",
+   "tests": "BUILD"
+  },
+  {
+   "id": "DOCS-NAV-ORPHAN",
+   "file": "scripts/build_site.py",
+   "old": "raise BuildError(f\"{page.source}: the docs sidebar in _data/nav.yml does not list it\")",
+   "new": "pass",
+   "tests": "BUILD"
+  },
+  {
+   "id": "ANCHORS-ONLY-START",
+   "file": "scripts/build_site.py",
+   "old": "\"anchors\": data[\"docs_anchors\"] if here == 0 else {},",
+   "new": "\"anchors\": data[\"docs_anchors\"],",
+   "tests": "BUILD"
+  },
+  {
+   "id": "LEGACY-FROZEN",
+   "file": "scripts/build_site.py",
+   "old": "shutil.copyfile(legacy, dest)",
+   "new": "dest.write_text(\"\")",
+   "tests": "REDIRECTS"
+  },
+  {
+   "id": "DOCS-ENGLISH-ONLY",
+   "file": "scripts/build_site.py",
+   "old": "raise BuildError(f\"{page.source}: docs pages are English only (D8)\")",
+   "new": "pass",
+   "tests": "BUILD"
+  },
+  {
+   "id": "CONFIG-NEED-UNCHECKED",
+   "file": "scripts/build_site.py",
+   "old": "if setting[\"need\"] not in _NEED:",
+   "new": "if False:",
+   "tests": "BUILD"
+  },
+  {
+   "id": "HEADING-ID-TWICE",
+   "file": "scripts/build_site.py",
+   "old": "        while slug in used:\n",
+   "new": "        while False:\n",
+   "tests": "BUILD"
+  },
+  {
+   "id": "ANCHOR-MAP-DROPPED",
+   "file": "docs/_data/docs_anchors.yml",
+   "old": "helm: /en/docs/kubernetes/",
+   "new": "helm: /en/docs/",
+   "tests": "SPLIT"
+  },
+  {
+   "id": "CONFIG-ROW-DROPPED",
+   "file": "docs/_data/config.yml",
+   "old": "  - name: SECRET_KEY\n",
+   "new": "  - name: SECRET_KEYS\n",
+   "tests": "CONFIG_DOC"
+  },
+  {
+   "id": "OLD-HEADING-RENAMED",
+   "file": "docs/en/docs/admin/index.html",
+   "old": "<h2 id=\"audit-log\">Audit log</h2>",
+   "new": "<h2 id=\"audit-log\">Audit trail</h2>",
+   "tests": "SPLIT"
+  },
+  {
+   "id": "DOCS-HEADING-SKIP",
+   "file": "docs/en/docs/notifications/index.html",
+   "old": "<h2 id=\"email-smtp\">Email (SMTP)</h2>",
+   "new": "<h3 id=\"email-smtp\">Email (SMTP)</h3>",
+   "tests": "SPLIT"
+  },
+  {
+   "id": "PHONE-MENU-OPEN",
+   "file": "docs/_layouts/docs.html",
+   "old": "if(matchMedia('(max-width: 768px)').matches)document.querySelector('.docs-menu').removeAttribute('open')",
+   "new": "if(0)document.querySelector('.docs-menu').removeAttribute('open')",
+   "tests": "MENU_E2E"
+  },
+  {
+   "id": "ANCHOR-SCRIPT-DROPPED",
+   "file": "docs/_layouts/docs.html",
+   "old": "if(m.hasOwnProperty(h))location.replace(m[h])",
+   "new": "if(0)location.replace(m[h])",
+   "tests": "ANCHOR_E2E"
+  },
+  {
+   "id": "FORCED-SIDEBAR-BAR",
+   "file": "docs/assets/css/docs.css",
+   "old": "    @media (forced-colors: active) {\n      .sidebar-links a { border-left-color: Canvas; }\n      .sidebar-links a.active, .sidebar-links a[aria-current=\"page\"] { border-left-color: Highlight; }\n    }\n",
+   "new": "",
+   "tests": "SIDEBAR_BAR_E2E"
+  },
+  {
+   "id": "TOC-COLUMN",
+   "file": "docs/assets/css/docs.css",
+   "old": "    @media (min-width: 1280px) {\n      .docs-content:has(> .docs-toc) {\n",
+   "new": "    @media (min-width: 99999px) {\n      .docs-content:has(> .docs-toc) {\n",
+   "tests": "COLUMNS_E2E"
+  },
+  {
+   "id": "MENU-REOPEN",
+   "file": "docs/assets/js/site.js",
+   "old": "if (!e.matches) docsMenu.setAttribute('open', '');",
+   "new": "void e;",
+   "tests": "LANDSCAPE_E2E"
+  },
+  {
+   "id": "SUMMARY-SHOWN",
+   "file": "docs/assets/css/docs.css",
+   "old": ".docs-menu > summary { display: none; }",
+   "new": ".docs-menu > summary { }",
+   "tests": "LANDSCAPE_E2E"
+  },
+  {
+   "id": "SIDEBAR-OFF-EDGE",
+   "file": "docs/assets/css/docs.css",
+   "old": "padding: var(--space-8) var(--space-5) var(--space-8) calc(var(--space-8) - var(--space-3) - 2px);",
+   "new": "padding: var(--space-8) var(--space-5);",
+   "tests": "LINE_UP_E2E"
+  },
+  {
+   "id": "FOOTER-OFF-EDGE",
+   "file": "docs/assets/css/base.css",
+   "old": "  margin: 0 auto;\n  padding: 0 var(--space-8);\n}",
+   "new": "  margin: 0 auto;\n}",
+   "tests": "LINE_UP_E2E"
+  },
+  {
+   "id": "FRAME-1440",
+   "file": "docs/assets/css/docs.css",
+   "old": "    @media (min-width: 1280px) {\n      .docs-content:has(> .docs-toc) {\n",
+   "new": "    @media (min-width: 1280px) {\n      .docs-layout:has(.docs-menu) { max-width: calc(var(--max-width) + 15rem); }\n      .docs-content:has(> .docs-toc) {\n",
+   "tests": "LINE_UP_E2E"
+  },
+  {
+   "id": "SCROLL-BOX-UNFOCUSABLE",
+   "file": "docs/assets/js/site.js",
+   "old": "      box.tabIndex = 0;\n",
+   "new": "",
+   "tests": "NAMED_E2E"
+  },
+  {
+   "id": "SCROLL-UNNAMED",
+   "file": "docs/assets/js/site.js",
+   "old": "      box.setAttribute('aria-label', own || (table ? scrollNames.table : scrollNames.code));\n",
+   "new": "",
+   "tests": "NAMED_E2E"
+  },
+  {
+   "id": "SCROLL-STAYS-MARKED",
+   "file": "docs/assets/js/site.js",
+   "old": "      box.removeAttribute('tabindex');\n",
+   "new": "",
+   "tests": "NO_TAB_STOP_E2E"
+  },
+  {
+   "id": "SCROLL-NO-RESIZE",
+   "file": "docs/assets/js/site.js",
+   "old": "window.addEventListener('resize', markScrollBoxes);",
+   "new": "void 0;",
+   "tests": "NO_TAB_STOP_E2E"
+  },
+  {
+   "id": "PHONE-GUTTER",
+   "file": "docs/assets/css/docs.css",
+   "old": ".docs-content { padding: var(--space-8) var(--space-8) var(--space-12); }",
+   "new": ".docs-content { padding: var(--space-8) var(--space-5) var(--space-12); }",
+   "tests": "UNDER_MENU_E2E"
+  },
+  {
+   "id": "LINK-NO-WRAP",
+   "file": "docs/assets/css/docs.css",
+   "old": "sources) wraps on a phone instead of widening the page. */\n      overflow-wrap: break-word;\n",
+   "new": "sources) wraps on a phone instead of widening the page. */\n",
+   "tests": "PHONE_COMPARE_E2E"
+  },
+  {
+   "id": "SLASH-IN-FIELD",
+   "file": "docs/assets/js/search.js",
+   "old": "if (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;",
+   "new": "if (false) return;",
+   "tests": "SEARCH_E2E"
+  },
+  {
+   "id": "SEARCH-BUTTON-NO-JS",
+   "file": "docs/_layouts/docs.html",
+   "old": "data-search-open hidden>",
+   "new": "data-search-open>",
+   "tests": "SEARCH_E2E"
+  },
+  {
+   "id": "PAGEFIND-BODY",
+   "file": "docs/_layouts/docs.html",
+   "old": "class=\"docs-content\" data-pagefind-body>",
+   "new": "class=\"docs-content\">",
+   "tests": "INDEX"
+  },
+  {
+   "id": "HIGHLIGHT-IN-QUERY",
+   "file": "docs/assets/js/search.js",
+   "old": "a.href = d.url + '#highlight=' + encodeURIComponent(term);",
+   "new": "a.href = d.url + '?highlight=' + encodeURIComponent(term);",
+   "tests": "PRIVACY_E2E"
+  },
+  {
+   "id": "FOCUS-BACK-TO-BUTTON",
+   "file": "docs/assets/js/search.js",
+   "old": "dialog.addEventListener('close', function () {",
+   "new": "dialog.addEventListener('x-close', function () {",
+   "tests": "SEARCH_E2E"
+  },
+  {
+   "id": "SEARCH-PHONE-FULL-WIDTH",
+   "file": "docs/assets/css/docs.css",
+   "old": ".docs-search { width: 100%; max-height: 100%; height: 100%; margin: 0; border-radius: 0; }",
+   "new": "",
+   "tests": "SEARCH_E2E"
+  },
+  {
+   "id": "PAGEFIND-UI-KEPT",
+   "file": "scripts/build_site.py",
+   "old": "        bundle.unlink()\n",
+   "new": "        pass\n",
+   "tests": "INDEX"
+  },
+  {
+   "id": "HIGHLIGHT-NO-SCROLL",
+   "file": "docs/assets/js/search.js",
+   "old": "if (first) first.scrollIntoView({ block: 'center' });",
+   "new": "",
+   "tests": "SEARCH_E2E"
+  },
+  {
+   "id": "CLOSE-SCROLLS-TO-BUTTON",
+   "file": "docs/assets/js/search.js",
+   "old": "else open.focus({ preventScroll: true });",
+   "new": "else open.focus();",
+   "tests": "SEARCH_E2E"
+  },
+  {
+   "id": "COUNT-WITHOUT-CAP",
+   "file": "docs/assets/js/search.js",
+   "old": "      : n > shown ? shown + ' of ' + n + ' results'\n",
+   "new": "",
+   "tests": "SEARCH_E2E"
+  },
+  {
+   "id": "IMPORT-FAIL-SILENT",
+   "file": "docs/assets/js/search.js",
+   "old": "        status.textContent = 'Search is unavailable: its index did not load.';\n",
+   "new": "",
+   "tests": "SEARCH_E2E"
+  },
+  {
+   "id": "HIGHLIGHT-URIERROR",
+   "file": "docs/assets/js/search.js",
+   "old": "  try {\n    if (hash) terms = decodeURIComponent(hash[1]).split(/\\s+/).filter(Boolean);\n  } catch (e) {}",
+   "new": "  if (hash) terms = decodeURIComponent(hash[1]).split(/\\s+/).filter(Boolean);",
+   "tests": "SEARCH_E2E"
+  },
+  {
+   "id": "HIGHLIGHT-EMPTY-TERM",
+   "file": "docs/assets/js/search.js",
+   "old": ".split(/\\s+/).filter(Boolean);",
+   "new": ".split(/\\s+/);",
+   "tests": "SEARCH_E2E"
+  },
+  {
+   "id": "DIAGRAM-SQUEEZED-BY-TOC",
+   "file": "docs/assets/css/docs.css",
+   "old": "        margin-inline: calc(-1 * var(--space-10)) calc(-1 * var(--space-8));\n",
+   "new": "",
+   "tests": "DIAGRAMS_E2E"
+  },
+  {
+   "id": "SPONSOR-DROPPED",
+   "file": "docs/_includes/footer.html",
+   "old": "{{ site.sponsor_url }}",
+   "new": "{{ site.github_url }}",
+   "tests": "SITE_PAGES"
+  },
+  {
+   "id": "UNPAID-DROPPED",
+   "file": "SECURITY.md",
+   "old": "There is no payment",
+   "new": "There may be payment",
+   "tests": "SITE_PAGES"
+  },
+  {
+   "id": "LEGAL-NOT-CHECKED",
+   "file": "scripts/build_site.py",
+   "old": "for section in (\"primary\", \"footer\", \"legal\"):",
+   "new": "for section in (\"primary\", \"footer\"):",
+   "tests": "BUILD"
+  },
+  {
+   "id": "LEGAL-NOT-RENDERED",
+   "file": "scripts/build_site.py",
+   "old": "\"legal\": items(\"legal\"),",
+   "new": "\"legal\": [],",
+   "tests": "BUILD"
+  },
+  {
+   "id": "HOME-NEEDS-NAV",
+   "file": "scripts/build_site.py",
+   "old": "targets = {p.url for p in pages if p.meta[\"translation_key\"] in named} | language_roots(site)",
+   "new": "targets = {p.url for p in pages if p.meta[\"translation_key\"] in named}",
+   "tests": "BUILD"
+  },
+  {
+   "id": "CODEQL-LINK",
+   "file": "docs/de/sicherheit/index.html",
+   "old": "actions/workflows/dynamic/github-code-scanning/codeql\" rel=\"noopener noreferrer\" target=\"_blank\">CodeQL-Läufe",
+   "new": "security/code-scanning\" rel=\"noopener noreferrer\" target=\"_blank\">CodeQL-Läufe",
+   "tests": "SITE_PAGES"
+  },
+  {
+   "id": "HINSCHG-REDIRECT",
+   "file": "docs/_data/redirects.yml",
+   "old": "/hinschg_reference.md: /en/compliance/hinschg/",
+   "new": "/hinschg_reference.md: /en/",
+   "tests": "SITE_PAGES"
+  },
+  {
+   "id": "COMPLIANCE-ROW-UNPROVEN",
+   "file": "docs/en/compliance/hinschg/index.html",
+   "old": "<td data-label=\"OpenWhistle\">No IP logging, no fields a report does not need</td><td data-label=\"Shown in\"><a href=\"/en/docs/anonymity/\">Anonymity layers</a></td>",
+   "new": "<td data-label=\"OpenWhistle\">No IP logging, no fields a report does not need</td><td data-label=\"Shown in\"></td>",
+   "tests": "SITE_PAGES"
+  },
+  {
+   "id": "IMPRINT-PHONE",
+   "file": "docs/impressum/index.html",
+   "old": "E-Mail:",
+   "new": "Telefon: Platzhalter<br>E-Mail:",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "PRIVACY-GITHUB",
+   "file": "docs/de/datenschutz/index.html",
+   "old": "GitHub B.V.",
+   "new": "GitHub",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "SECURITY-TXT-EXPIRES",
+   "file": "scripts/build_site.py",
+   "old": "datetime.timedelta(days=335)",
+   "new": "datetime.timedelta(days=-1)",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "PAGES-HIDDEN-FILES",
+   "file": ".github/workflows/pages.yml",
+   "old": "include-hidden-files: true",
+   "new": "include-hidden-files: false",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "LEGAL-NAV-NAME",
+   "file": "docs/de/datenschutz/index.html",
+   "old": "aria-label=\"Rechtliche Seiten\"",
+   "new": "aria-label=\"Rechtliches\"",
+   "tests": "DOCS_SITE"
+  },
+  {
+   "id": "PRIVACY-365",
+   "file": "docs/de/datenschutz/index.html",
+   "old": "365 Tage",
+   "new": "366 Tage",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "IMPRINT-HREFLANG",
+   "file": "docs/_includes/footer.html",
+   "old": " hreflang=\"{{ item.lang }}\"",
+   "new": "",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "LANG-COUNT-DE",
+   "file": "docs/de/index.html",
+   "old": "5 Sprachen:",
+   "new": "4 Sprachen:",
+   "tests": "LANG_COUNT"
+  },
+  {
+   "id": "LANG-LIST-CONTRIBUTE",
+   "file": "docs/en/contribute/index.html",
+   "old": "English, German, French, Spanish and Brazilian Portuguese.",
+   "new": "English, German, French and Brazilian Portuguese.",
+   "tests": "LANG_LISTS"
+  },
+  {
+   "id": "ONE-PAGER-IN-LOCALE",
+   "file": "app/locales/es.json",
+   "old": "href=\\\"https://openwhistle.net/en/docs/install-count/\\\" rel=\\\"noopener noreferrer\\\" target=\\\"_blank\\\">Qué se envía",
+   "new": "href=\\\"https://openwhistle.net/en/docs/#counting-installations\\\" rel=\\\"noopener noreferrer\\\" target=\\\"_blank\\\">Qué se envía",
+   "tests": "ONE_PAGER"
+  },
+  {
+   "id": "DEMO-FOOTER-ALWAYS",
+   "file": "app/templates/base.html",
+   "old": "{% if is_demo %}{# demo legal links #}",
+   "new": "{% if true %}{# demo legal links #}",
+   "tests": "DEMO_FOOTER"
+  },
+  {
+   "id": "DEMO-LEGAL-IN-SHOTS",
+   "file": "scripts/take_screenshots.py",
+   "old": ".demo-banner, .demo-credentials, .demo-legal'",
+   "new": ".demo-banner, .demo-credentials'",
+   "tests": "DEMO_FOOTER"
+  },
+  {
+   "id": "HOME-VERIFY-GONE",
+   "file": "docs/en/index.html",
+   "old": "    <!-- Verify it -->\n    <section class=\"section section-alt\" id=\"verify\" aria-labelledby=\"verify-heading\">\n      <div class=\"section-inner\">\n        <span class=\"section-eyebrow\">Verify it</span>\n        <h2 class=\"section-heading\" id=\"verify-heading\">\n          Check it yourself\n        </h2>\n        <div class=\"section-divider\" aria-hidden=\"true\"></div>\n\n        <p class=\"section-note\">\n          OpenWhistle has one maintainer and no external audit yet.\n          Everything else you can check yourself: the code, the signed images,\n          and the list of every request that leaves your server.\n        </p>\n        <div class=\"btn-row\">\n          <a href=\"/en/security/\" class=\"btn btn-outline\">What to check</a>\n          <a href=\"/en/contribute/\" class=\"btn btn-outline\">Review the code</a>\n        </div>\n      </div>\n    </section>\n",
+   "new": "",
+   "tests": "SITE_PAGES"
+  },
+  {
+   "id": "OG-SHARED",
+   "file": "docs/_includes/head.html",
+   "old": "content=\"{{ site.base_url }}{{ og_image }}\">\n  <meta property=\"og:image:type\"",
+   "new": "content=\"{{ site.base_url }}/og-image.png\">\n  <meta property=\"og:image:type\"",
+   "tests": "SEO"
+  },
+  {
+   "id": "FEED-ONE-POST",
+   "file": "scripts/build_site.py",
+   "old": "(p for p in pages if p.url.startswith(prefix) and p.url != prefix)",
+   "new": "(p for p in pages if p.url.startswith(prefix) and p.url != prefix and \"2-0\" in p.url)",
+   "tests": "SEO"
+  },
+  {
+   "id": "NO-REFERRER",
+   "file": "docs/_includes/head.html",
+   "old": "  <meta name=\"referrer\" content=\"no-referrer\">\n",
+   "new": "",
+   "tests": "SEO"
+  },
+  {
+   "id": "OG-IMAGE-TYPE",
+   "file": "docs/_includes/head.html",
+   "old": "  <meta property=\"og:image:type\" content=\"image/png\">\n",
+   "new": "",
+   "tests": "SEO"
+  },
+  {
+   "id": "OG-ALT-SITEWIDE",
+   "file": "docs/_includes/head.html",
+   "old": "<meta name=\"twitter:image:alt\" content=\"{{ og_image_alt }}\">",
+   "new": "<meta name=\"twitter:image:alt\" content=\"{{ t.og_image_alt }}\">",
+   "tests": "SEO"
+  },
+  {
+   "id": "FEED-LINK",
+   "file": "docs/_includes/head.html",
+   "old": "{% if page.url.startswith('/' ~ page.lang ~ '/blog/') %}",
+   "new": "{% if page.url == '/' ~ page.lang ~ '/blog/' %}",
+   "tests": "SEO"
+  },
+  {
+   "id": "ORG-DE",
+   "file": "docs/de/index.html",
+   "old": "  '@type': Organization\n  '@id': https://openwhistle.net/de/#organization",
+   "new": "  '@type': Brand\n  '@id': https://openwhistle.net/de/#organization",
+   "tests": "SEO"
+  },
+  {
+   "id": "JSONLD-IMAGE",
+   "file": "docs/en/blog/whats-new-in-2-0.html",
+   "old": "image: https://openwhistle.net/en/blog/whats-new-in-2-0/og.png",
+   "new": "image: https://openwhistle.net/og-image.png",
+   "tests": "SEO"
+  },
+  {
+   "id": "OG-SIZE",
+   "file": "scripts/build_site.py",
+   "old": "image = Image.new(\"RGB\", (1200, 630), \"#08080a\")",
+   "new": "image = Image.new(\"RGB\", (1200, 600), \"#08080a\")",
+   "tests": "SEO"
+  },
+  {
+   "id": "LINKS-404-OK",
+   "file": "scripts/check_external_links.py",
+   "old": "status in (404, 410)",
+   "new": "status in (410,)",
+   "tests": "LINKS"
+  },
+  {
+   "id": "LINKS-403-BROKEN",
+   "file": "scripts/check_external_links.py",
+   "old": "UNVERIFIABLE = {401, 403, 429}",
+   "new": "UNVERIFIABLE = {401, 429}",
+   "tests": "LINKS"
+  },
+  {
+   "id": "LINKS-OWN-HOST",
+   "file": "scripts/check_external_links.py",
+   "old": "parts.scheme in (\"http\", \"https\") and parts.netloc.lower() != host",
+   "new": "parts.scheme in (\"http\", \"https\")",
+   "tests": "LINKS"
+  },
+  {
+   "id": "LINKS-NO-RETRY",
+   "file": "scripts/check_external_links.py",
+   "old": "    time.sleep(5)\n    return fetch(url)",
+   "new": "    time.sleep(5)\n    return status",
+   "tests": "LINKS"
+  },
+  {
+   "id": "LINKS-FRAGMENT",
+   "file": "scripts/check_external_links.py",
+   "old": "url = parts._replace(fragment=\"\").geturl()",
+   "new": "url = ref",
+   "tests": "LINKS"
+  },
+  {
+   "id": "LINKS-PIPE",
+   "file": ".github/workflows/links.yml",
+   "old": "run: python scripts/check_external_links.py > links.txt 2>&1",
+   "new": "run: python scripts/check_external_links.py 2>&1 | tee links.txt",
+   "tests": "LINKS"
+  },
+  {
+   "id": "LINKS-HTTP-EXC",
+   "file": "scripts/check_external_links.py",
+   "old": "except (urllib.error.URLError, http.client.HTTPException, ValueError, OSError) as error:",
+   "new": "except (urllib.error.URLError, OSError) as error:",
+   "tests": "LINKS"
+  },
+  {
+   "id": "LINKS-RETRY-OK",
+   "file": "scripts/check_external_links.py",
+   "old": "    if classify(status) == \"ok\":\n        return status\n",
+   "new": "",
+   "tests": "LINKS"
+  },
+  {
+   "id": "LINKS-MAIN-EXIT",
+   "file": "scripts/check_external_links.py",
+   "old": "    return 1 if broken else 0",
+   "new": "    return 0",
+   "tests": "LINKS"
+  },
+  {
+   "id": "OG-GLYPH",
+   "file": "scripts/build_site.py",
+   "old": "        if missing:\n            raise BuildError(",
+   "new": "        if False:\n            raise BuildError(",
+   "tests": "SORA"
+  },
+  {
+   "id": "PRIVACY-PLACEHOLDER",
+   "file": "docs/en/privacy/index.html",
+   "old": "Last updated: 9 October 2026.",
+   "new": "Last updated: TODO.",
+   "tests": "LEGAL_PLACEHOLDER"
+  },
+  {
+   "id": "PRIVACY-BOILERPLATE",
+   "file": "docs/de/datenschutz/index.html",
+   "old": "Es gilt die Datenschutzerklärung von GitHub.",
+   "new": "Es gilt die Datenschutzerklärung von GitHub. Wir nutzen Google Fonts.",
+   "tests": "LEGAL_BOILERPLATE"
+  },
+  {
+   "id": "CONFIG-STALE-ENTRY",
+   "file": "docs/_data/config.yml",
+   "old": "  settings:\n  - name: SECRET_KEY\n",
+   "new": "  settings:\n  - name: GONE_SETTING\n    need: optional\n    description: Removed from the app.\n    default: —\n  - name: SECRET_KEY\n",
+   "tests": "CONFIG_STALE"
+  },
+  {
+   "id": "DEMO-COOKIE-UNNAMED",
+   "file": "docs/en/privacy/index.html",
+   "old": "          <code>ow_csrf</code> protects every form against forged requests and lasts until the browser session ends.\n",
+   "new": "",
+   "tests": "LEGAL_DEMO"
+  },
+  {
+   "id": "DEMO-COOKIE-NEW",
+   "file": "app/api/reports.py",
+   "old": "        \"ow-submission-session\",\n        session_id,",
+   "new": "        \"ow-submit-session\",\n        session_id,",
+   "tests": "LEGAL_DEMO"
+  },
+  {
+   "id": "DEMO-HETZNER-28",
+   "file": "docs/de/datenschutz/index.html",
+   "old": "          Hetzner verarbeitet die Daten der Demo in unserem Auftrag nach Art. 28 DSGVO.\n",
+   "new": "",
+   "tests": "LEGAL_DEMO"
+  },
+  {
+   "id": "SECURITY-TXT-YEAR",
+   "file": "scripts/build_site.py",
+   "old": "datetime.timedelta(days=335)",
+   "new": "datetime.timedelta(days=365)",
+   "tests": "LEGAL_EXPIRES"
+  },
+  {
+   "id": "LINKS-ISSUES-EVERY-RUN",
+   "file": ".github/workflows/links.yml",
+   "old": "    permissions:\n      contents: read\n    outputs:",
+   "new": "    permissions:\n      contents: read\n      issues: write\n    outputs:",
+   "tests": "LINKS_TOKEN"
+  },
+  {
+   "id": "LINKS-TOKEN-PERSISTED",
+   "file": ".github/workflows/links.yml",
+   "old": "persist-credentials: false",
+   "new": "persist-credentials: true",
+   "tests": "LINKS_TOKEN"
+  },
+  {
+   "id": "DE-FOOTER-HREFLANG",
+   "file": "docs/_includes/footer.html",
+   "old": "\"{{ item.href }}\"{% if page.lang != \"en\" and item.href.startswith(\"/en/\") %} hreflang=\"en\"{% endif %}>",
+   "new": "\"{{ item.href }}\">",
+   "tests": "HREFLANG_DE"
+  },
+  {
+   "id": "DE-FAQ-HREFLANG",
+   "file": "docs/de/index.html",
+   "old": "<a href=\"/en/docs/install/\" class=\"link-accent\" hreflang=\"en\">",
+   "new": "<a href=\"/en/docs/install/\" class=\"link-accent\">",
+   "tests": "HREFLANG_DE"
+  },
+  {
+   "id": "SEARCH-FAIL-SILENT",
+   "file": "docs/assets/js/search.js",
+   "old": "status.textContent = 'Search is unavailable: it failed in this browser.';",
+   "new": "",
+   "tests": "SEARCH_FAIL_E2E"
+  },
+  {
+   "id": "SETTINGS-DSN-WRAP",
+   "file": "docs/assets/css/docs.css",
+   "old": "    .env-settings td code { overflow-wrap: anywhere; }\n",
+   "new": "",
+   "tests": "DESKTOP_TABLE_E2E"
+  },
+  {
+   "id": "DE-TABLE-HYPHENS",
+   "file": "docs/assets/css/docs.css",
+   "old": "    :lang(de) .env-table td { hyphens: auto; }\n",
+   "new": "",
+   "tests": "DESKTOP_TABLE_E2E"
+  },
+  {
+   "id": "OUTBOUND-SWITCH-COLUMN",
+   "file": "docs/en/docs/outbound/index.html",
+   "old": "<tr><td>Email <span class=\"env-note\"><code>NOTIFY_EMAIL_ENABLED=true</code></span></td>",
+   "new": "<tr><td>Email</td><td><code>NOTIFY_EMAIL_ENABLED=true</code></td>",
+   "tests": "DESKTOP_TABLE_E2E"
+  },
+  {
+   "id": "SETTINGS-DEFAULT-COLUMN",
+   "file": "scripts/build_site.py",
+   "old": "            + (\"\" if default == \"—\" else f' <span class=\"env-note\">Default: {default}</span>')\n            + \"</td></tr>\"",
+   "new": "            + f\"</td><td>{default}</td></tr>\"",
+   "tests": "BUILD_SETTINGS"
+  },
+  {
+   "id": "SETTINGS-NO-EMPTY-DEFAULT",
+   "file": "scripts/build_site.py",
+   "old": "default == \"—\" else",
+   "new": "default == \"none\" else",
+   "tests": "BUILD_SETTINGS"
+  },
+  {
+   "id": "SETTINGS-BADGE-UNDER-NAME",
+   "file": "scripts/build_site.py",
+   "old": "f'<tr><td><code class=\"env-key\">{setting[\"name\"]}</code> '\n            f'<span",
+   "new": "f'<tr><td><code class=\"env-key\">{setting[\"name\"]}</code></td>'\n            f'<td><span",
+   "tests": "BUILD_SETTINGS"
+  },
+  {
+   "id": "TABLE-CELLS-TOUCH",
+   "file": "scripts/build_site.py",
+   "old": "    return _CELL_END.sub(\"\\\\1\\n\", html_out)",
+   "new": "    return html_out",
+   "tests": "BUILD_SETTINGS"
+  },
+  {
+   "id": "LINKS-REASON-SILENT",
+   "file": "scripts/check_external_links.py",
+   "old": "        print(f\"  {url}: {type(error).__name__}: {error}\", file=sys.stderr)\n",
+   "new": "",
+   "tests": "LINKS"
+  },
+  {
+   "id": "LINKS-BLOCKED-HOST-BROKEN",
+   "file": "scripts/check_external_links.py",
+   "old": " or (status is None and host in RUNNER_BLOCKED)",
+   "new": "",
+   "tests": "LINKS"
+  },
+  {
+   "id": "LINKS-MAIN-NO-HOST",
+   "file": "scripts/check_external_links.py",
+   "old": "classify(status, urlsplit(url).netloc)",
+   "new": "classify(status)",
+   "tests": "LINKS"
+  },
+  {
+   "id": "E2E-NO-TIMEOUT",
+   "file": ".github/workflows/e2e.yml",
+   "old": "    timeout-minutes: 60\n",
+   "new": "",
+   "tests": "TIMEOUTS"
+  },
+  {
+   "id": "SITE-FIXTURE-PER-MODULE",
+   "file": "tests/e2e/conftest.py",
+   "old": "@pytest.fixture(scope=\"session\")\ndef docs_server_url(",
+   "new": "@pytest.fixture(scope=\"module\")\ndef docs_server_url(",
+   "tests": "TIMEOUTS"
+  }
+ ]
+}

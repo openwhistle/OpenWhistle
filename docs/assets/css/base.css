@@ -22,6 +22,7 @@ figure.diagram img { background: var(--canvas); border-radius: var(--radius-md);
 html { scroll-behavior: smooth; font-size: 16px; -webkit-text-size-adjust: 100%; }
 img, svg { display: block; max-width: 100%; }
 button { cursor: pointer; border: none; background: none; font: inherit; }
+input, dialog { border: none; font: inherit; }
 ul, ol { list-style: none; }
 [data-theme="light"] { color-scheme: only light; }
 [data-theme="dark"] { color-scheme: dark; }
@@ -139,11 +140,13 @@ body {
 .site-footer {
   background: var(--inverse);
   color: var(--inverse-muted);
-  padding: var(--space-16) var(--space-8) var(--space-8);
+  padding: var(--space-16) 0 var(--space-8);
 }
+/* The nav's frame: 1200 px with a 32 px gutter inside, so their content edges line up. */
 .footer-inner {
   max-width: var(--max-width);
   margin: 0 auto;
+  padding: 0 var(--space-8);
 }
 .footer-grid {
   display: grid;
@@ -192,6 +195,7 @@ body {
   transition: color var(--duration-fast) ease;
 }
 .footer-links a:hover { color: var(--inverse-ink); }
+.footer-legal { margin-bottom: var(--space-5); }
 .footer-bottom {
   display: flex;
   align-items: center;
@@ -203,11 +207,6 @@ body {
   gap: var(--space-4);
   flex-wrap: wrap;
 }
-.footer-bottom a {
-  color: var(--inverse-muted);
-  transition: color var(--duration-fast) ease;
-}
-.footer-bottom a:hover { color: var(--inverse-ink); }
 
 /* ── Callout: one component on every page type ──────────────── */
 .callout { padding: var(--space-4) var(--space-6); margin: var(--space-6) 0; border-left: 3px solid; border-radius: 0 var(--radius-md) var(--radius-md) 0; }
@@ -252,6 +251,19 @@ body {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+/* A table stacks per row on a phone: each row becomes a small card, its first cell the title,
+   and a cell with data-label announces its column. The class sits on the table or its wrapper.
+   `tbody tr` outranks the table sheets' own `tbody td` rules, which load after this one. */
+@media (max-width: 600px) {
+  .stack-table thead { display: none; }
+  .stack-table tr { display: block; padding: var(--space-3) 0; border-bottom: 1px solid var(--hairline); }
+  .stack-table tbody tr :is(th, td) {
+    display: block; position: static; min-width: 0; border: none; padding: var(--space-1) var(--space-2);
+  }
+  .stack-table tbody :is(th, td):first-child { color: var(--ink); font-weight: 600; }
+  .stack-table tbody [data-label]::before { content: attr(data-label) ": "; color: var(--muted); font-weight: 400; }
+}
+
 /* With reduced motion, state changes are instant (DESIGN.md "Motion"); the app's rule. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -265,10 +277,11 @@ body {
 
 /* Borders are drawn as box-shadow rings (DESIGN.md "Rules"); forced colours drop shadows, so the edges come back. */
 @media (forced-colors: active) {
-  .theme-toggle, .btn-outline, .nav-cta, .feature-card, .compliance-card, .install-reqs,
+  .theme-toggle, .btn-outline, .nav-cta, .compliance-card,
   details.faq-item, .article-card, .step-block, .article-cta, .terminal-window,
-  .code-block, .article-body pre, .doc-shot img, .btn-primary, .compliance-card-badge, .feature-icon-wrap, .trust-item-check,
-  .docs-section code, .env-req-yes, .env-req-no, code, details.faq-item[open] { border: 1px solid CanvasText; }
+  .code-block, .article-body pre, .doc-shot img, .btn-primary, .compliance-card-badge,
+  .docs-section code, .docs-article code, .env-req-yes, .env-req-no, code, details.faq-item[open],
+  .docs-search, .docs-search-open, .docs-search-open kbd, .docs-search-head button, .docs-search input { border: 1px solid CanvasText; }
   /* A code block is framed once: its lines are not inline code, whatever the list above matches. */
-  pre code, .docs-section pre code { border: none; }
+  pre code, .docs-section pre code, .docs-article pre code { border: none; }
 }

@@ -371,10 +371,10 @@
   },
   {
    "id": "PAGE-PAINT-LITERAL",
-   "file": "docs/de/index.html",
+   "file": "docs/_includes/nav.html",
    "tests": "COLOURS",
-   "old": "<circle cx=\"9\" cy=\"11.5\" r=\"1.5\" fill=\"currentColor\"/>",
-   "new": "<circle cx=\"9\" cy=\"11.5\" r=\"1.5\" fill=\"#0c7253\"/>"
+   "old": "<circle cx=\"8\" cy=\"8\" r=\"3\" stroke=\"currentColor\" stroke-width=\"1.3\"/>",
+   "new": "<circle cx=\"8\" cy=\"8\" r=\"3\" stroke=\"#0c7253\" stroke-width=\"1.3\"/>"
   },
   {
    "id": "DARK-CODE-PILL-IN-BLOCK",
@@ -434,10 +434,10 @@
   },
   {
    "id": "PAINT-SINGLE-QUOTED",
-   "file": "docs/de/index.html",
+   "file": "docs/_includes/nav.html",
    "tests": "COLOURS",
-   "old": "<circle cx=\"9\" cy=\"11.5\" r=\"1.5\" fill=\"currentColor\"/>",
-   "new": "<circle cx=\"9\" cy=\"11.5\" r=\"1.5\" fill='#0c7253'/>"
+   "old": "<circle cx=\"8\" cy=\"8\" r=\"3\" stroke=\"currentColor\" stroke-width=\"1.3\"/>",
+   "new": "<circle cx=\"8\" cy=\"8\" r=\"3\" stroke='#0c7253' stroke-width=\"1.3\"/>"
   },
   {
    "id": "APP-DARK-BLOCK-SCOPED",
@@ -637,7 +637,7 @@
   },
   {
    "id": "WEBHOOK-PRE-UNFRAMED",
-   "file": "docs/en/docs/index.html",
+   "file": "docs/en/docs/notifications/index.html",
    "tests": "COLOURS",
    "old": "<div class=\"code-block\" role=\"region\" aria-label=\"Webhook JSON payload\">",
    "new": "<div role=\"region\" aria-label=\"Webhook JSON payload\">"
@@ -848,7 +848,7 @@
    "id": "FORCED-CODE-LINES-BOXED",
    "file": "docs/assets/css/base.css",
    "tests": "LOOK_K_FORCED",
-   "old": "  pre code, .docs-section pre code { border: none; }",
+   "old": "  pre code, .docs-section pre code, .docs-article pre code { border: none; }",
    "new": "  pre code { border: none; }"
   },
   {
@@ -971,13 +971,6 @@
    "new": "font-weight: 700; color: var(--hairline-strong); line-height: 1; flex-shrink: 0;"
   },
   {
-   "id": "SPY-DOCS-LINE-100PX",
-   "file": "docs/assets/js/sidebar-docs.js",
-   "tests": "SPY",
-   "old": "  var line = window.scrollY + window.innerHeight / 3;",
-   "new": "  var line = window.scrollY + 100;"
-  },
-  {
    "id": "SPY-PAGES-LINE-100PX",
    "file": "docs/assets/js/sidebar.js",
    "tests": "SPY",
@@ -988,8 +981,8 @@
    "id": "DEAD-CLASS-RULE",
    "file": "docs/assets/css/post.css",
    "tests": "SITE_CSS_K_DEAD",
-   "old": "    .val-bad { color: var(--muted); }\n",
-   "new": "    .val-bad { color: var(--muted); }\n    .val-warn { color: var(--warning); }\n"
+   "old": "    .val-good { color: var(--accent); font-weight: 600; }\n",
+   "new": "    .val-good { color: var(--accent); font-weight: 600; }\n    .val-warn { color: var(--warning); }\n"
   },
   {
    "id": "APP-WORDMARK-NO-TRANSLATE",

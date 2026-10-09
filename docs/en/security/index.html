@@ -1,0 +1,170 @@
+---
+title: 'Security: what to trust and how to check it | OpenWhistle'
+description: 'Why you can trust OpenWhistle, and how to check each claim yourself: no IP addresses, signed images, scanned code, the open gaps, and how to report a flaw.'
+translation_key: security
+css:
+- docs
+- page
+js:
+- site
+- sidebar
+jsonld:
+- '@context': https://schema.org
+  '@type': BreadcrumbList
+  itemListElement:
+  - '@type': ListItem
+    position: 1
+    name: OpenWhistle
+    item: https://openwhistle.net/en/
+  - '@type': ListItem
+    position: 2
+    name: Security you can check
+    item: https://openwhistle.net/en/security/
+---
+  <div class="docs-layout">
+
+    <!-- Sidebar -->
+    <aside class="docs-sidebar" role="complementary" aria-label="Security navigation">
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">On This Page</div>
+        <nav class="sidebar-links" aria-label="On this page">
+          <a href="#trust" class="active">Why you can trust it</a>
+          <a href="#gaps">Open gaps</a>
+          <a href="#report">Report a vulnerability</a>
+        </nav>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Links</div>
+        <nav class="sidebar-links">
+          <a href="/en/">&#8592; Landing Page</a>
+          <a href="/en/docs/">Documentation</a>
+          <a href="/en/contribute/">Contribute</a>
+          <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub Repository</a>
+        </nav>
+      </div>
+
+    </aside>
+
+    <!-- Main content -->
+    <main id="main-content" class="docs-content">
+
+      <nav class="docs-breadcrumb" aria-label="Breadcrumb">
+        <a href="/en/">OpenWhistle</a>
+        <span>/</span>
+        <span>Security</span>
+      </nav>
+
+      <h1>Security you can check</h1>
+      <p class="docs-lead">
+        OpenWhistle protects people who report wrongdoing.
+        This page shows what that protection rests on, where it is still weak, and how to report a flaw.
+      </p>
+
+      <!-- Trust -->
+      <section class="docs-section" id="trust" aria-labelledby="trust-h2">
+        <h2 id="trust-h2">Why you can trust it</h2>
+        <div class="table-scroll">
+          <table class="cmp-table">
+            <thead>
+              <tr>
+                <th scope="col">Claim</th>
+                <th scope="col">How it holds</th>
+                <th scope="col">Check it</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">No IP address is stored</th>
+                <td>Four layers, from nginx to the database.</td>
+                <td><a href="/en/docs/anonymity/">Anonymity layers</a></td>
+              </tr>
+              <tr>
+                <th scope="row">Reporter times are the day only</th>
+                <td>Stored as a UTC date, never a time.</td>
+                <td><a href="/en/docs/timestamps/">Timestamps</a></td>
+              </tr>
+              <tr>
+                <th scope="row">Attachment metadata is removed</th>
+                <td>Cleaned before storage; the pixels stay unchanged.</td>
+                <td><a href="/en/docs/limits/">Attachments</a></td>
+              </tr>
+              <tr>
+                <th scope="row">Nothing leaves the server unasked</th>
+                <td>Every outbound request is opt-in and listed.</td>
+                <td><a href="/en/docs/outbound/">Outbound requests</a></td>
+              </tr>
+              <tr>
+                <th scope="row">The image is the code you read</th>
+                <td>Built in public CI and signed with cosign.</td>
+                <td><a href="/en/docs/images/#image-signatures">Image signatures</a></td>
+              </tr>
+              <tr>
+                <th scope="row">The code is scanned</th>
+                <td>On every pull request: CodeQL and ruff's Bandit rules on the code, pip-audit on every locked dependency, Trivy on the container image. CodeQL, pip-audit and Trivy run weekly too.</td>
+                <td><a href="https://github.com/openwhistle/OpenWhistle/tree/main/.github/workflows" rel="noopener noreferrer" target="_blank">The workflows</a>, <a href="https://github.com/openwhistle/OpenWhistle/actions/workflows/dynamic/github-code-scanning/codeql" rel="noopener noreferrer" target="_blank">CodeQL runs</a></td>
+              </tr>
+              <tr>
+                <th scope="row">A guard that cannot fail is found</th>
+                <td>Before a release, every new guard is broken on purpose. A test that stays green is rewritten.</td>
+                <td><a href="https://github.com/openwhistle/OpenWhistle/blob/main/scripts/mutation_audit.py" rel="noopener noreferrer" target="_blank">The mutation audit</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Gaps -->
+      <section class="docs-section" id="gaps" aria-labelledby="gaps-h2">
+        <h2 id="gaps-h2">Open gaps</h2>
+        <ul>
+          <li>There is one maintainer, so security changes get no second human review.</li>
+          <li>There has been no external audit yet.</li>
+          <li>File integrity checks catch accidents, not attackers: they are <a href="/en/docs/admin/#system-updates">not tamper-proof</a>.</li>
+          <li>The <a href="/en/docs/demo-mode/">demo is public</a>: anyone can read what it holds until the next reset.</li>
+          <li>On Kubernetes, the ingress must log at <code>crit</code>, or it <a href="/en/docs/kubernetes/">logs client IP addresses</a>.</li>
+        </ul>
+        <p><a href="/en/contribute/">Close a gap</a>.</p>
+      </section>
+
+      <!-- Report -->
+      <section class="docs-section" id="report" aria-labelledby="report-h2">
+        <h2 id="report-h2">Report a vulnerability</h2>
+        <p>
+          Report it privately through
+          <a href="https://github.com/openwhistle/OpenWhistle/security/advisories/new" rel="noopener noreferrer" target="_blank">GitHub's private vulnerability reporting</a>.
+          Never open a public issue: it shows the flaw to everyone before a fix exists.
+        </p>
+        <div class="table-scroll">
+          <table class="cmp-table">
+            <thead>
+              <tr>
+                <th scope="col">Step</th>
+                <th scope="col">Within</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">Acknowledge your report</th><td>48 hours</td></tr>
+              <tr><th scope="row">Assess it and tell you the plan</th><td>7 days</td></tr>
+              <tr><th scope="row">Release a fix for a critical or high issue</th><td>14 days</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          The full policy is in
+          <a href="https://github.com/openwhistle/OpenWhistle/blob/main/SECURITY.md" rel="noopener noreferrer" target="_blank">SECURITY.md</a>.
+          For tools, the reporting channel is in <a href="/.well-known/security.txt">security.txt</a> (RFC 9116).
+        </p>
+
+        <h3 id="research">Research is welcome, and unpaid</h3>
+        <p>
+          You may test OpenWhistle and report what you find.
+          There is no payment: OpenWhistle is a volunteer project, and every report serves the people who rely on it.
+          With your consent, we credit you in the advisory and in SECURITY.md.
+          Test on your own installation, never on the public demo's other visitors.
+        </p>
+      </section>
+
+    </main>
+  </div>

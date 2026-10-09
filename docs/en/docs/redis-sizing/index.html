@@ -1,0 +1,30 @@
+---
+title: Redis sizing for OpenWhistle | OpenWhistle
+description: How much memory Redis needs for submission drafts with attachments, which maxmemory policy to set, and when new draft attachments are refused.
+translation_key: docs-redis-sizing
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1 id="redis-sizing">Redis sizing</h1>
+        <p>
+          A submission draft lives in Redis for up to 2 hours, Fernet-encrypted with a key that
+          exists only in the whistleblower's cookie. Attachments make it large:
+        </p>
+<div class="table-scroll">
+<table class="env-table">
+          <thead><tr><th>Draft</th><th>Redis memory</th></tr></thead>
+          <tbody>
+            <tr><td>Text only</td><td>&lt; 30 KB</td></tr>
+            <tr><td>5 × 10 MB attachments (maximum)</td><td>about 90 MB</td></tr>
+          </tbody>
+        </table>
+</div>
+        <p>
+          Set <code>maxmemory</code> with <code>maxmemory-policy noeviction</code>
+          (<code>docker-compose.prod.yml</code> uses 1 GB): an evicting policy could drop sessions
+          and rate-limit counters. Past <code>DRAFT_REDIS_MEMORY_PERCENT</code>, new draft
+          attachments are refused so the rest of Redis keeps working.
+        </p>

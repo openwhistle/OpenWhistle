@@ -58,7 +58,7 @@ DEMO_DESCRIPTION = (
 # login shot once documented a maintainer-only button as part of the page.
 _HIDE_REVIEW_ARTIFACTS_SCRIPT = """
 document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.demo-banner, .demo-credentials')
+  document.querySelectorAll('.demo-banner, .demo-credentials, .demo-legal')
     .forEach((el) => { el.style.display = 'none'; });
   // The demo login lays the form and the credentials out side by side; with
   // the credentials hidden the form would sit off-centre in an empty grid.

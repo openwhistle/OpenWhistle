@@ -61,12 +61,11 @@ description of a screen. A thorough page nobody finishes is worth less than a sh
 | Rule | Held by |
 | --- | --- |
 | No sentence over 30 words, average under 18 per page | `tests/test_docs_prose.py` |
-| Every page of the interface is named in `docs/en/docs/index.html` | `tests/test_every_page_is_documented.py` |
-| Every setting has a row in the configuration table | `tests/test_config_documented.py` |
+| Every page of the interface is named in the docs | `tests/test_every_page_is_documented.py` |
+| Every setting has one row in `docs/_data/config.yml` | `tests/test_config_documented.py` |
 
-The prose rules cover `docs/en/docs/index.html`, `docs/en/index.html`, `docs/de/index.html`,
-`docs/en/compare/index.html`, `docs/en/roadmap/index.html`, `docs/{en,de}/blog/*.html` and
-`docs/en/docs/*.md`. Code, tables and headings are not counted; inline code is one word. German
+The prose rules cover every page the site builds from a source of its own; generated pages (changelog,
+configuration) and the 404 are left out. Code, tables and headings are not counted; inline code is one word. German
 abbreviations (`z. B.`, `d. h.`, `bzw.`, `Abs.`) and dates (`2. Juli`) do not end a sentence.
 
 **Diagrams** are draw.io sources in `docs/_diagrams/` (German pages: `<name>.de.drawio`) and
@@ -89,7 +88,8 @@ A change that renames a setting, a label or a behaviour updates, in the same com
 
 - all five locales in `app/locales/` (`en`, `de`, `fr`, `es`, `pt-br`), checked against
   [`docs-tech/i18n-review.md`](docs-tech/i18n-review.md);
-- `docs/en/docs/index.html`, `README.md` and `docker-compose.prod.yml`;
+- `docs/_data/config.yml` and the docs page that explains the setting (`docs/en/docs/<page>/index.html`),
+  `README.md` and `docker-compose.prod.yml`;
 - the Helm chart (`charts/openwhistle/`) and `ansible/roles/openwhistle/templates/env.j2`.
 
 Otherwise the next audit finds the mismatch the change created.

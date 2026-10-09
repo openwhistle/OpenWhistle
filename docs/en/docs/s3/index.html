@@ -1,0 +1,17 @@
+---
+title: Store attachments in S3-compatible storage | OpenWhistle
+description: 'Store new report attachments in an S3-compatible bucket instead of PostgreSQL: the settings, and why attachments already in the database keep working.'
+translation_key: docs-s3
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1 id="s3-storage">S3-compatible attachment storage</h1>
+        <p>
+          Attachments are stored in PostgreSQL by default (<code>STORAGE_BACKEND=db</code>).
+          <code>STORAGE_BACKEND=s3</code> stores new ones in an S3-compatible bucket. Existing ones stay
+          in the database and keep working.
+        </p>
+<div data-config="s3"></div>

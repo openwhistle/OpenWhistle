@@ -1,0 +1,21 @@
+---
+title: Single sign-on with OIDC | OpenWhistle
+description: 'Sign reporting office staff in through your identity provider with OpenID Connect: PKCE, each person linking their own account, and the TOTP that stays.'
+translation_key: docs-oidc
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1 id="oidc-integration">OIDC integration</h1>
+        <p>With OIDC on, the identity provider is a second way past the first factor. It never replaces the second factor.</p>
+        <ul>
+          <li>Login uses PKCE; the app checks the provider's signed ID token (see <code>OIDC_SERVER_METADATA_URL</code> in the <a href="/en/docs/configuration/">configuration table</a>).</li>
+          <li>Each person links their own account. Sign in with password and TOTP, then choose <strong>Link single sign-on</strong> on <code>/admin/account</code>.</li>
+          <li>The provider's <code>sub</code> and issuer are stored on the signed-in account, and nowhere else. The audit log records <code>auth.sso_linked</code>.</li>
+          <li>The link request is bound to that session. Finished in another browser or after sign-out, it links nothing.</li>
+          <li>An identity already linked to another account is refused. An unlinked identity cannot sign in.</li>
+          <li><strong>Unlink single sign-on</strong> removes the link (<code>auth.sso_unlinked</code>). An account without a password cannot unlink its only way in.</li>
+          <li>The password keeps working. Every login still ends with TOTP, as for <a href="/en/docs/admin/#admin-login">every account</a>.</li>
+        </ul>

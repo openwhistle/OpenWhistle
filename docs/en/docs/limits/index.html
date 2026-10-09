@@ -1,0 +1,71 @@
+---
+title: 'Attachments: limits, access and deletion | OpenWhistle'
+description: Which files a whistleblower may attach, how large and how many, who may open them, and how attachments are cleaned and deleted with their report.
+translation_key: docs-limits
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1 id="attachments">File attachments</h1>
+        <p>
+          Whistleblowers can attach evidence to a report. Files are stored with it, in PostgreSQL or
+          in <a href="/en/docs/s3/">S3</a>.
+        </p>
+
+        <h2 id="limits-and-allowed-types">Limits and allowed types</h2>
+        <div class="table-scroll">
+<table class="env-table">
+          <tbody>
+            <tr><td>Size</td><td>10 MB per attachment, before and after cleaning</td></tr>
+            <tr><td>GIF size</td><td>50 megapixels, all frames together</td></tr>
+            <tr><td>Number</td><td>5 per report</td></tr>
+            <tr><td>Allowed</td><td>PDF, JPEG, PNG, GIF, WebP, TXT, CSV, DOCX, XLSX, checked by both MIME type and file extension</td></tr>
+            <tr><td>Refused</td><td>SVG, executables, archives and every other type. Legacy <code>.doc</code>/<code>.xls</code> too: their author cannot be removed, so save them as <code>.docx</code>/<code>.xlsx</code> and attach again</td></tr>
+          </tbody>
+        </table>
+</div>
+
+        <h2 id="access-control">Access control</h2>
+        <ul>
+          <li>
+            <strong>Whistleblower:</strong> <code>/status/attachments/{id}</code>, with an
+            <code>ow-status-session</code> cookie tied to the report that owns the file. No other
+            report's files are reachable. The session ends 2 hours after login and viewing does not
+            extend it, so its remaining lifetime does not tell when the case was last opened.
+          </li>
+          <li>
+            <strong>Admin:</strong> <code>/admin/reports/{report_id}/attachments/{id}</code>, with an
+            admin session; the file must belong to that report.
+          </li>
+        </ul>
+        <p>
+          Every download carries <code>Content-Disposition: attachment</code>, so the browser never
+          renders a file inline: no MIME sniffing, no script injection.
+        </p>
+
+        <h2 id="privacy-and-deletion">Privacy and deletion</h2>
+        <ul>
+          <li><strong>Metadata removed on upload:</strong>
+            <ul>
+              <li>JPEG, PNG, WebP and GIF, also photos inside DOCX/XLSX: EXIF/GPS, camera data, XMP, ICC profiles and text chunks. Only the orientation tag stays.</li>
+              <li>JPEG, PNG and WebP are not re-encoded: pixels, colours and animation frames stay exactly as uploaded. Data after a JPEG's end (a motion-photo video) is removed.</li>
+              <li>PDF: document info, XMP on the document, its pages and images, comment authors and times, the EXIF of embedded JPEG photos, the file identifier. A PDF with files embedded in it is refused.</li>
+              <li>DOCX/XLSX: author, company and custom properties, SharePoint columns, the folder a workbook was saved in, the account name in template and link paths, revision-session ids and document variables.</li>
+              <li>A file that cannot be parsed for cleaning is refused. Plain text is stored as uploaded.</li>
+            </ul>
+          </li>
+          <li><strong>Office authors anonymised:</strong> comment and tracked-change authors,
+            initials and account ids in DOCX/XLSX become <code>Author</code>. Embedded thumbnails, zip
+            timestamps and zip extra fields are removed. A comment's text is content and stays, and
+            Excel writes the author's name into it.</li>
+          <li><strong>Filenames encrypted</strong> with the report's data key (older names by
+            migration 003). S3 object keys are random ids, never the filename; objects stored before
+            v1.5.0 keep their old key.</li>
+          <li><strong>Encrypted at rest:</strong> file bytes are encrypted with the report's data key
+            before they reach PostgreSQL or the S3 bucket. Attachments uploaded before v1.4.0 stay
+            unencrypted and readable.</li>
+          <li><strong>Deletion:</strong> a hard-deleted report (DSGVO Art. 17) loses its attachment
+            rows by <code>CASCADE DELETE</code>, and its S3 objects are deleted too.</li>
+        </ul>

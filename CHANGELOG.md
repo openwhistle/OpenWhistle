@@ -12,6 +12,11 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Spanish (Spain) interface** (`es`): the full locale, in formal *usted*, in the language picker and
   chosen automatically for a browser that asks for Spanish; counts group digits with a period. Report categories
   fall back to English, as they do for French and Portuguese.
+- In demo mode the footer links the demo's imprint and privacy policy.
+
+### Changed
+
+- The installation-count text links its own documentation page instead of a section of the old one-page docs.
 
 ## [2.1.1] — 2026-10-03
 
@@ -1011,7 +1016,7 @@ users of 1.1.0 should upgrade.
   Policy no longer uses `'unsafe-inline'`: it is now a strict, per-response
   nonce-based policy for both scripts and styles.
 
-Reported by [@openblow](https://github.com/openblow).
+Reported by @openblow.
 
 ### Fixed (internal bug-bounty audit)
 

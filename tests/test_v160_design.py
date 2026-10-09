@@ -500,7 +500,7 @@ def test_brand_secondary_colour_is_gone() -> None:
         "docker-compose.yml",
         "docker-compose.e2e.yml",
         "docker-compose.prod.yml",
-        "docs/en/docs/index.html",
+        *(p.relative_to(ROOT).as_posix() for p in (ROOT / "docs/en/docs").rglob("index.html")),
         "README.md",
         ".env.example",
         "charts/openwhistle/values.yaml",
@@ -522,7 +522,11 @@ def test_public_site_uses_the_app_token_names() -> None:
 
 
 _WARNING_PAGES = (
-    "/en/docs/",
+    "/en/docs/demo-mode/",
+    "/en/docs/install/",
+    "/en/docs/onion/",
+    "/en/docs/requirements/",
+    "/en/docs/rotate-key/",
     "/de/blog/hinschg-compliance-leitfaden/",
     "/de/blog/interne-meldestelle-einrichten/",
     "/de/blog/whistleblower-software-vergleich/",
@@ -923,6 +927,7 @@ _JS_HOOK_CLASSES = {
     "session-expiry-expired-state",  # site.js: classList.add/remove
     "session-expiry-actions",  # site.js: querySelector('.session-expiry-actions')
     "session-expiry-body",  # site.js: querySelector('.session-expiry-body')
+    "demo-legal",  # scripts/take_screenshots.py: hides the demo's legal links
 }
 
 

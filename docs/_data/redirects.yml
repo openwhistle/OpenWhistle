@@ -20,7 +20,8 @@
 /blog/whistleblowing-system-gdpr-eu-hosting.html: /en/blog/whistleblowing-system-gdpr-eu-hosting/
 /changelog.html: /en/changelog/
 /docs.html: /en/docs/
-/hinschg_reference.md: /en/docs/hinschg-reference/
+/en/docs/hinschg-reference/: /en/compliance/hinschg/
+/hinschg_reference.md: /en/compliance/hinschg/
 /open-source-whistleblowing-software.html: /en/compare/
 /roadmap.html: /en/roadmap/
 /security/dpa_template.md: /en/docs/dpa-template/

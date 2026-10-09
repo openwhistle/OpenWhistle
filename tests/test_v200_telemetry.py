@@ -796,7 +796,7 @@ async def test_the_wizard_asks_with_the_box_unchecked(
     assert box is not None
     assert "checked" not in box.group(0)
     assert "telemetry.wdkro.de" in resp.text
-    assert "#counting-installations" in resp.text
+    assert "https://openwhistle.net/en/docs/install-count/" in resp.text
 
 
 @pytest.mark.asyncio

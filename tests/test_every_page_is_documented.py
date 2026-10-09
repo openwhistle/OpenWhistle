@@ -1,12 +1,12 @@
-"""Every page of the interface is documented on /en/docs/ (the built page).
+"""Every page of the interface is documented on some docs page (the built pages).
 
 The list of pages comes from the FastAPI app, not from a list somebody has to
-extend: every GET route is either a page — and then /en/docs/ must name it —
+extend: every GET route is either a page — and then the docs must name it —
 or it is in ``NOT_A_PAGE`` by exact path, with the reason. A new route cannot
 slip through by happening to look like an exclusion, and an exclusion whose
 route is gone fails too.
 
-The matching rule: /en/docs/ (entities decoded) must contain the route path
+The matching rule: the docs pages (entities decoded) must contain the route path
 bounded on both sides by a character that cannot be part of a path, so
 ``/admin/reports/{report_id}`` is not satisfied by
 ``/admin/reports/{id}/export.pdf``. Each ``{param}`` in the route matches any
@@ -19,7 +19,7 @@ import html
 import re
 from pathlib import Path
 
-from tests.built_site import page
+from tests.built_site import docs_text
 from tests.test_local_review import _walk_routes
 
 ROOT = Path(__file__).parents[1]
@@ -61,11 +61,11 @@ def _is_documented(path: str, docs: str) -> bool:
 
 
 def test_every_page_is_documented() -> None:
-    docs = html.unescape(page("/en/docs/"))
+    docs = html.unescape(docs_text())
     missing = sorted(
         path for path in _get_routes() if path not in NOT_A_PAGE and not _is_documented(path, docs)
     )
-    assert not missing, "page(s) not named in /en/docs/:\n  " + "\n  ".join(missing)
+    assert not missing, "page(s) not named in the docs:\n  " + "\n  ".join(missing)
 
 
 def test_every_exclusion_is_a_real_route() -> None:

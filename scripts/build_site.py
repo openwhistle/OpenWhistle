@@ -41,6 +41,7 @@ import yaml
 from fontTools import subset as ft_subset
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 from markdown_it import MarkdownIt
+from markupsafe import Markup
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
@@ -59,8 +60,10 @@ PAGE_KEYS = {
     "jsonld",
     "noindex",
     "generated",
+    "layout",
 }
 REQUIRED_KEYS = {"title", "description", "translation_key"}
+LAYOUTS = {"base", "docs"}
 _FRONT_MATTER = re.compile(r"\A---\n(?:(.*?)\n)?---(?:\n|\Z)", re.DOTALL)
 MARKDOWN = MarkdownIt("commonmark", {"html": True}).enable("table")
 # A table scrolls inside its own box (.table-scroll), so a wide one never widens a phone page.
@@ -151,11 +154,13 @@ def load_data(src: Path) -> dict[str, Any]:
             raise BuildError(
                 f"_data/i18n/{lang}.yml: missing {sorted(want - have)}, extra {sorted(have - want)}"
             )
+    anchors = data / "docs_anchors.yml"
     return {
         "site": site,
         "i18n": i18n,
         "nav": _yaml(data / "nav.yml"),
         "redirects": _yaml(data / "redirects.yml"),
+        "docs_anchors": _yaml(anchors) if anchors.is_file() else {},
     }
 
 
@@ -168,16 +173,121 @@ def _load_script(name: str) -> ModuleType:
     return module
 
 
-def _changelog() -> str:
+def _changelog(src: Path) -> str:
     changelog = _load_script("render_changelog")
     source = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
     return str(changelog.render_content(*changelog.parse(source)))
 
 
-# generator name -> (function, the file its output comes from)
-GENERATORS: dict[str, tuple[Callable[[], str], Path]] = {
-    "changelog": (_changelog, ROOT / "CHANGELOG.md")
+# need -> (CSS class suffix, label), exactly as the hand-written tables had them
+_NEED = {
+    "required": ("yes", "Required"),
+    "recommended": ("no", "Recommended"),
+    "optional": ("no", "Optional"),
 }
+_CONFIG_MARKER = re.compile(r'<div data-config="([\w-]+)"></div>')
+
+
+def load_config(src: Path) -> dict[str, Any]:
+    """docs/_data/config.yml: every setting once, in groups (tests/test_config_documented.py)."""
+    path = src / "_data" / "config.yml"
+    if not path.is_file():
+        return {"intro": "", "groups": []}
+    config = _yaml(path)
+    if "intro" not in config or "groups" not in config:
+        missing = "intro" if "intro" not in config else "groups"
+        raise BuildError(f"_data/config.yml: lacks {missing!r}")
+    for group in config["groups"]:
+        for key in ("id", "title", "page", "guide", "settings"):
+            if key not in group:
+                raise BuildError(f"_data/config.yml: group {group.get('id', '?')!r}: lacks {key!r}")
+        for number, setting in enumerate(group["settings"], 1):
+            who = repr(setting["name"]) if "name" in setting else f"#{number}"
+            where = f"group {group['id']!r}, setting {who}"
+            for key in ("name", "need", "description"):
+                if key not in setting:
+                    raise BuildError(f"_data/config.yml: {where}: lacks {key!r}")
+            if setting["need"] not in _NEED:
+                raise BuildError(
+                    f"_data/config.yml: {where}: need {setting['need']!r}, not {sorted(_NEED)}"
+                )
+    return config
+
+
+def config_table(group: dict[str, Any]) -> str:
+    rows = []
+    for setting in group["settings"]:
+        cls, label = _NEED[setting["need"]]
+        default = setting.get("default", "—")
+        # Two columns: four do not fit the docs column beside the page's table of contents.
+        rows.append(
+            f'<tr><td><code class="env-key">{setting["name"]}</code> '
+            f'<span class="env-required env-req-{cls}">{label}</span></td>'
+            f"<td>{setting['description']}"
+            + ("" if default == "—" else f' <span class="env-note">Default: {default}</span>')
+            + "</td></tr>"
+        )
+    return (
+        '<div class="table-scroll">\n'
+        '<table class="env-table env-settings"'
+        f' aria-label="Settings: {html.escape(group["title"])}">\n'
+        '<thead><tr><th scope="col">Variable</th><th scope="col">Description</th></tr></thead>\n'
+        "<tbody>\n" + "\n".join(rows) + "\n</tbody>\n</table>\n</div>\n"
+    )
+
+
+def fill_config(rel: Path, content: str, groups: dict[str, dict[str, Any]]) -> str:
+    def table(found: re.Match[str]) -> str:
+        if found.group(1) not in groups:
+            raise BuildError(f"{rel}: no group {found.group(1)!r} in _data/config.yml")
+        return config_table(groups[found.group(1)])
+
+    return _CONFIG_MARKER.sub(table, content)
+
+
+def _configuration(src: Path) -> str:
+    config = load_config(src)
+    parts = ['<h1 id="configuration">Configuration</h1>', config["intro"]]
+    for group in config["groups"]:
+        title = html.escape(group["title"])
+        guide = html.escape(group["guide"])
+        parts += [
+            f'<h2 id="{group["id"]}">{title}</h2>',
+            f'<p>Explained in <a href="{group["page"]}">{guide}</a>.</p>',
+            config_table(group),
+        ]
+    return "\n".join(parts) + "\n"
+
+
+# generator name -> (function, the file its output comes from)
+GENERATORS: dict[str, tuple[Callable[[Path], str], Path]] = {
+    "changelog": (_changelog, ROOT / "CHANGELOG.md"),
+    "configuration": (_configuration, DOCS / "_data" / "config.yml"),
+}
+
+
+def _slug(text: str) -> str:
+    plain = html.unescape(re.sub(r"<[^>]+>", "", text)).lower()
+    return re.sub(r"[^a-z0-9]+", "-", plain).strip("-") or "section"
+
+
+def add_heading_ids(text: str) -> str:
+    """Markdown headings get ids, so "on this page" can link them; an id is unique on the page."""
+    used = set(re.findall(r'<h[1-6]\b[^>]*\bid="([^"]+)"', text))
+
+    def add(found: re.Match[str]) -> str:
+        level, attrs, inner = found.groups()
+        if "id=" in attrs:
+            return found.group(0)
+        base = slug = _slug(inner)
+        number = 2
+        while slug in used:
+            slug = f"{base}-{number}"
+            number += 1
+        used.add(slug)
+        return f'<h{level}{attrs} id="{slug}">{inner}</h{level}>'
+
+    return re.sub(r"<h([23])([^>]*)>(.*?)</h\1>", add, text, flags=re.S)
 
 
 def _is_skipped(rel: Path) -> bool:
@@ -186,6 +296,7 @@ def _is_skipped(rel: Path) -> bool:
 
 def load_pages(src: Path, site: dict[str, Any]) -> list[Page]:
     pages: list[Page] = []
+    config_groups = {g["id"]: g for g in load_config(src)["groups"]}
     for path in sorted(p for p in src.rglob("*") if p.is_file()):
         rel = path.relative_to(src)
         if _is_skipped(rel) or path.suffix not in {".md", ".html"}:
@@ -195,6 +306,8 @@ def load_pages(src: Path, site: dict[str, Any]) -> list[Page]:
             raise BuildError(f"{rel}: unknown front matter {sorted(unknown)}")
         if missing := REQUIRED_KEYS - set(meta):
             raise BuildError(f"{rel}: front matter lacks {sorted(missing)}")
+        if meta.get("layout", "base") not in LAYOUTS:
+            raise BuildError(f"{rel}: unknown layout {meta['layout']!r}")
         in_language_dir = len(rel.parts) > 1 and rel.parts[0] in site["languages"]
         lang = rel.parts[0] if in_language_dir else meta.get("lang")
         if lang not in site["languages"]:
@@ -205,9 +318,10 @@ def load_pages(src: Path, site: dict[str, Any]) -> list[Page]:
                 raise BuildError(f"{rel}: unknown generator {meta['generated']!r}")
             if body.strip():
                 raise BuildError(f"{rel}: a generated page has a body, which would be dropped")
-            content = GENERATORS[meta["generated"]][0]()
+            content = GENERATORS[meta["generated"]][0](src)
         else:
-            content = MARKDOWN.render(body) if path.suffix == ".md" else body
+            content = add_heading_ids(MARKDOWN.render(body)) if path.suffix == ".md" else body
+        content = fill_config(rel, content, config_groups)
         for key in ("css", "js", "jsonld"):
             meta.setdefault(key, [])
         pages.append(Page(rel, url_for(rel), lang, meta, content))
@@ -255,16 +369,21 @@ def nav_context(
     nav: dict[str, Any],
     by_key: dict[str, dict[str, Page]],
     site: dict[str, Any],
-    t: dict[str, Any],
+    i18n: dict[str, dict[str, Any]],
 ) -> dict[str, Any]:
     roots = language_roots(site)
+    t = i18n[page.lang]
 
     def items(section: str) -> list[dict[str, Any]]:
         out = []
         for entry in nav.get(section, []):
             group = by_key[entry["page"]]
             # A page that exists only in the default language is linked there.
-            target = group.get(page.lang) or group[site["default_language"]]
+            target = (
+                group.get(page.lang)
+                or group.get(site["default_language"])
+                or next(iter(group.values()))
+            )
             fragment = entry.get("fragment")
             current = not fragment and (
                 page.url == target.url
@@ -275,6 +394,11 @@ def nav_context(
                     "label": lookup(t, entry["label"]),
                     "href": target.url + (f"#{fragment}" if fragment else ""),
                     "current": current,
+                    "lang": target.lang,
+                    # A page in another language also carries its own name in that language.
+                    "native": None
+                    if target.lang == page.lang
+                    else lookup(i18n[target.lang], entry["label"]),
                 }
             )
         return out
@@ -288,26 +412,116 @@ def nav_context(
         for lang, spec in site["languages"].items()
         if lang != page.lang
     ]
-    return {"primary": items("primary"), "footer": items("footer"), "languages": languages}
+    return {
+        "primary": items("primary"),
+        "footer": items("footer"),
+        "legal": items("legal"),
+        "languages": languages,
+    }
 
 
 def check_nav(nav: dict[str, Any], pages: list[Page], site: dict[str, Any]) -> None:
     keys = {str(p.meta["translation_key"]) for p in pages}
     named: set[str] = set()
-    for section in ("primary", "footer"):
+    for section in ("primary", "footer", "legal"):
         for entry in nav.get(section, []):
             if entry["page"] not in keys:
                 raise BuildError(
                     f"_data/nav.yml: {section} names {entry['page']!r}, which no page has"
                 )
             named.add(entry["page"])
-    targets = {p.url for p in pages if p.meta["translation_key"] in named}
+    docs_keys = [entry["page"] for group in nav.get("docs", []) for entry in group["pages"]]
+    for key in docs_keys:
+        if key not in keys:
+            raise BuildError(f"_data/nav.yml: docs names {key!r}, which no page has")
+    if len(docs_keys) != len(set(docs_keys)):
+        raise BuildError("_data/nav.yml: docs lists a page twice")
+    named |= set(docs_keys)
+    for page in pages:
+        if page.meta.get("layout") == "docs" and page.lang != site["default_language"]:
+            raise BuildError(f"{page.source}: docs pages are English only (D8)")
+        if page.meta.get("layout") == "docs" and page.meta["translation_key"] not in docs_keys:
+            raise BuildError(f"{page.source}: the docs sidebar in _data/nav.yml does not list it")
+    # A language home needs no entry: the logo on every page links it.
+    targets = {p.url for p in pages if p.meta["translation_key"] in named} | language_roots(site)
     prefixes = targets - language_roots(site)
     for page in pages:
         if page.meta.get("noindex") or page.url in targets:
             continue
         if not any(page.url.startswith(prefix) for prefix in prefixes):
             raise BuildError(f"{page.source}: no entry of _data/nav.yml leads to {page.url}")
+
+
+_TOC = re.compile(r'<h2\b[^>]*\bid="([^"]+)"[^>]*>(.*?)</h2>', re.S)
+
+
+def docs_context(
+    page: Page, data: dict[str, Any], by_key: dict[str, dict[str, Page]]
+) -> dict[str, Any]:
+    """Sidebar, "on this page", previous/next, breadcrumb and edit link of a docs page."""
+    site = data["site"]
+    sidebar: list[dict[str, Any]] = []
+    flat: list[tuple[str, dict[str, Any]]] = []
+    for group in data["nav"]["docs"]:
+        items = []
+        for entry in group["pages"]:
+            target = by_key[entry["page"]][site["default_language"]]
+            items.append(
+                {"label": entry["label"], "href": target.url, "current": target.url == page.url}
+            )
+        flat += [(group["group"], item) for item in items]
+        sidebar.append(
+            {"label": group["group"], "items": items, "open": any(i["current"] for i in items)}
+        )
+    here = next(
+        i for i, (_, item) in enumerate(flat) if item["current"]
+    )  # check_nav lists every docs page
+    crumbs = [
+        {"label": "OpenWhistle", "href": f"/{page.lang}/"},
+        {"label": "Documentation", "href": flat[0][1]["href"]},
+    ]
+    if here:
+        crumbs += [
+            {"label": flat[here][0], "href": None},
+            {"label": flat[here][1]["label"], "href": None},
+        ]
+    generator = page.meta.get("generated")
+    rel = (
+        GENERATORS[generator][1].relative_to(ROOT).as_posix()
+        if generator
+        else f"docs/{page.source.as_posix()}"
+    )
+    return {
+        "sidebar": sidebar,
+        "toc": [
+            (anchor, Markup(re.sub(r"<[^>]+>", "", inner).strip()))  # noqa: S704 (our own heading text)
+            for anchor, inner in _TOC.findall(page.content)
+        ],
+        "prev": flat[here - 1][1] if here > 0 else None,
+        "next": flat[here + 1][1] if here + 1 < len(flat) else None,
+        "crumbs": crumbs,
+        "edit_url": f"{site['github_url']}/edit/main/{rel}",
+        "anchors": data["docs_anchors"] if here == 0 else {},
+    }
+
+
+def breadcrumb_jsonld(docs: dict[str, Any], page: Page, site: dict[str, Any]) -> dict[str, Any]:
+    """Linked crumbs, then the page itself; a group heading is no URL, so it is left out."""
+    linked = [c for c in docs["crumbs"] if c["href"] and c["href"] != page.url]
+    names = [*(c["label"] for c in linked), docs["crumbs"][-1]["label"]]
+    urls = [*(c["href"] for c in linked), page.url]
+    return {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {"@type": "ListItem", "position": i, "name": name, "item": site["base_url"] + url}
+            for i, (name, url) in enumerate(zip(names, urls, strict=True), 1)
+        ],
+    }
+
+
+def og_title(page: Page) -> str:
+    return str(page.meta["title"]).removesuffix(" | OpenWhistle")
 
 
 def environment(src: Path) -> Environment:
@@ -319,11 +533,18 @@ def environment(src: Path) -> Environment:
     )
 
 
+# Pagefind reads adjacent cells as one word ("NeedMinimum" in a search excerpt): a cell or
+# row that ends right where the next begins gets a line break, which the browser ignores.
+_CELL_END = re.compile(r"(</t[dhr]>)(?=<)")
+
+
 def render_page(
     env: Environment, page: Page, data: dict[str, Any], by_key: dict[str, dict[str, Page]]
 ) -> str:
     site, t = data["site"], data["i18n"][page.lang]
-    return env.get_template("base.html").render(
+    layout = page.meta.get("layout", "base")
+    docs = docs_context(page, data, by_key) if layout == "docs" else None
+    html_out = env.get_template(f"{layout}.html").render(
         page=page,
         site=site,
         t=t,
@@ -332,8 +553,16 @@ def render_page(
             site["languages"][lang]["locale"] for lang in page.alternates if lang != page.lang
         ],
         hreflang=hreflang(page, site),
-        nav=nav_context(page, data["nav"], by_key, site, t),
+        nav=nav_context(page, data["nav"], by_key, site, data["i18n"]),
+        docs=docs,
+        jsonld_extra=[breadcrumb_jsonld(docs, page, site)] if docs else [],
+        # write_og_images draws one card per directory page; a file page (/404.html) shares one.
+        og_image=page.url + "og.png" if page.url.endswith("/") else "/og-image.png",
+        og_image_alt=f"{og_title(page)}: OpenWhistle"
+        if page.url.endswith("/")
+        else t["og_image_alt"],
     )
+    return _CELL_END.sub("\\1\n", html_out)
 
 
 class _Refs(HTMLParser):
@@ -418,31 +647,31 @@ def write_stubs(
     out: Path,
     redirects: dict[str, Any],
     site: dict[str, Any],
-    sources: dict[str, Path] | None = None,
+    src: Path,
 ) -> None:
     """GitHub Pages cannot send a 301; until P5 a stub stands in for each one.
 
     The script keeps the #fragment, which a meta refresh would drop. "/" is a
     stub to the default language on Pages; from P4 on nginx negotiates it.
     An old URL that is not HTML (e.g. /hinschg_reference.md) cannot run a
-    script, so it keeps serving what it served: the body of the new page's
-    source, front matter stripped. `sources` maps a page URL to that file.
+    script, so it keeps serving the bytes it served, frozen in _legacy/.
     """
     stubs = {"/": f"/{site['default_language']}/", **redirects}
     written: dict[Path, str] = {}
     for old, new in stubs.items():
         if not old.endswith(("/", ".html")):
-            source = (sources or {}).get(new)
-            if source is None:
-                raise BuildError(f"_data/redirects.yml: {old} -> {new}, a page with no source")
+            legacy = src / "_legacy" / unquote(old).lstrip("/")
+            if not legacy.is_file():
+                raise BuildError(
+                    f"_data/redirects.yml: {old} needs its frozen copy at _legacy{old}"
+                )
             dest = out / unquote(old).lstrip("/")
             if dest.exists():
                 raise BuildError(
                     f"_data/redirects.yml: {old} would overwrite {dest.relative_to(out)}"
                 )
             dest.parent.mkdir(parents=True, exist_ok=True)
-            text = source.read_text(encoding="utf-8")
-            dest.write_text(split_front_matter(source, text)[1], encoding="utf-8")
+            shutil.copyfile(legacy, dest)
             continue
         dest = output_file(out, old)
         if written.get(dest) == new:
@@ -487,6 +716,122 @@ def lastmod(path: Path) -> str:
     if stamp:
         committed = datetime.datetime.fromtimestamp(int(stamp), datetime.UTC).date().isoformat()
     return committed if committed and not _git("status", "--porcelain", "--", rel) else today
+
+
+def write_security_txt(out: Path, site: dict[str, Any]) -> None:
+    """RFC 9116. Expires is 335 days out (under a year, § 2.5.5); every deploy renews it."""
+    now = datetime.datetime.now(datetime.UTC).replace(microsecond=0)
+    expires = now + datetime.timedelta(days=335)
+    lines = [
+        f"Contact: {site['security_contact']}",
+        f"Expires: {expires.isoformat().replace('+00:00', 'Z')}",
+        f"Canonical: {site['base_url']}/.well-known/security.txt",
+        f"Policy: {site['base_url']}/en/security/",
+        "Preferred-Languages: en, de",
+    ]
+    (out / ".well-known").mkdir(exist_ok=True)
+    (out / ".well-known" / "security.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def write_feeds(out: Path, pages: list[Page], site: dict[str, Any], i18n: dict[str, Any]) -> None:
+    """One Atom feed per language: every post under /<lang>/blog/<slug>/."""
+    base = site["base_url"]
+    for lang in site["languages"]:
+        prefix = f"/{lang}/blog/"
+        posts = sorted(
+            (p for p in pages if p.url.startswith(prefix) and p.url != prefix),
+            key=lambda p: str(p.meta["published"]),
+            reverse=True,
+        )
+        if not posts:
+            continue
+        entries = "".join(
+            "  <entry>\n"
+            f"    <title>{html.escape(og_title(p))}</title>\n"
+            f"    <id>{base}{p.url}</id>\n"
+            f'    <link href="{base}{p.url}"/>\n'
+            f"    <published>{p.meta['published']}T00:00:00Z</published>\n"
+            f"    <updated>{p.meta.get('modified', p.meta['published'])}T00:00:00Z</updated>\n"
+            f"    <summary>{html.escape(str(p.meta['description']))}</summary>\n"
+            "  </entry>\n"
+            for p in posts
+        )
+        updated = max(str(p.meta.get("modified", p.meta["published"])) for p in posts)
+        (out / lang / "blog" / "feed.xml").write_text(
+            '<?xml version="1.0" encoding="utf-8"?>\n'
+            f'<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="{lang}">\n'
+            f"  <title>{html.escape(i18n[lang]['feed']['title'])}</title>\n"
+            f"  <id>{base}{prefix}</id>\n"
+            f'  <link rel="self" href="{base}{prefix}feed.xml"/>\n'
+            f'  <link href="{base}{prefix}"/>\n'
+            f"  <updated>{updated}T00:00:00Z</updated>\n"
+            "  <author><name>OpenWhistle</name></author>\n"
+            f"{entries}</feed>\n",
+            encoding="utf-8",
+        )
+
+
+def write_og_images(out: Path, src: Path, pages: list[Page], site_alt: str) -> None:
+    """1200x630 per directory page: Signal's dark canvas, the K3 tile, the page title in Sora.
+
+    /og-image.png, the card of a file page (/404.html), says site_alt. The fonts are
+    read from src: out/fonts is cut down to the drawn text by subset_fonts.
+    """
+    from io import BytesIO
+
+    from fontTools.ttLib import TTFont
+    from PIL import Image, ImageDraw, ImageFont
+
+    def font(raw: TTFont, size: int) -> ImageFont.FreeTypeFont:
+        raw.flavor = None  # woff2 -> sfnt for FreeType
+        buf = BytesIO()
+        raw.save(buf)
+        buf.seek(0)
+        return ImageFont.truetype(buf, size)
+
+    title_raw = TTFont(src / "fonts" / "sora-latin-600-normal.woff2")
+    glyphs = title_raw.getBestCmap()
+    title_font = font(title_raw, 64)
+    site_font = font(TTFont(src / "fonts" / "sora-latin-400-normal.woff2"), 30)
+    tile = (
+        Image.open(src / "apple-touch-icon.png")
+        .convert("RGB")
+        .resize((112, 112), Image.Resampling.LANCZOS)
+    )
+    mask = Image.new("L", tile.size, 0)
+    ImageDraw.Draw(mask).rounded_rectangle((0, 0, *tile.size), radius=24, fill=255)
+
+    def card(title: str, dest: Path) -> None:
+        # FreeType draws a missing glyph as an empty box, and nothing would say so.
+        missing = sorted({c for c in title if ord(c) not in glyphs and not c.isspace()})
+        if missing:
+            raise BuildError(f"OG image: {title!r} uses {''.join(missing)!r}, not in Sora latin")
+        image = Image.new("RGB", (1200, 630), "#08080a")  # DESIGN.md canvas, dark
+        draw = ImageDraw.Draw(image)
+        image.paste(tile, (80, 80), mask)
+        lines, line = [], ""
+        for word in title.split():
+            trial = f"{line} {word}".strip()
+            if draw.textlength(trial, font=title_font) > 1040 and line:
+                lines.append(line)
+                line = word
+            else:
+                line = trial
+        lines.append(line)
+        if len(lines) > 3 or any(draw.textlength(t, font=title_font) > 1040 for t in lines):
+            raise BuildError(f"OG image: {title!r} does not fit three lines of 1040 px")
+        y = 630 - 120 - 80 * len(lines)
+        for text in lines:
+            draw.text((80, y), text, font=title_font, fill="#fafafa")  # ink, dark
+            y += 80
+        draw.rectangle((80, 560, 200, 566), fill="#23c088")  # accent, dark
+        draw.text((220, 545), "openwhistle.net", font=site_font, fill="#8e8e93")  # muted, dark
+        image.save(dest, optimize=True)
+
+    for page in pages:
+        if page.url.endswith("/"):
+            card(og_title(page), output_file(out, page.url).parent / "og.png")
+    card(site_alt, out / "og-image.png")
 
 
 def write_sitemap(out: Path, src: Path, pages: list[Page], site: dict[str, Any]) -> None:
@@ -563,6 +908,21 @@ def subset_fonts(out: Path) -> dict[str, int]:
     return sizes
 
 
+def index_search(out: Path) -> None:
+    """Pagefind indexes every page whose <main> carries data-pagefind-body: the docs."""
+    run = subprocess.run(  # noqa: S603 — fixed argv, the module of a locked package
+        [sys.executable, "-m", "pagefind", "--site", str(out)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if run.returncode:
+        raise BuildError(f"pagefind failed ({run.returncode}): {run.stderr.strip()}")
+    # search.js is the only UI: Pagefind's own UI bundles (~376 KB) would ship unused.
+    for bundle in (out / "pagefind").glob("pagefind-*ui.*"):
+        bundle.unlink()
+
+
 def build(src: Path, out: Path, *, redirect_stubs: bool = False) -> list[Page]:
     _refuse_dangerous_out(src, out)
     data = load_data(src)
@@ -590,11 +950,16 @@ def build(src: Path, out: Path, *, redirect_stubs: bool = False) -> list[Page]:
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(render_page(env, page, data, by_key), encoding="utf-8")
     write_sitemap(out, src, pages, site)
+    write_security_txt(out, site)
+    write_feeds(out, pages, site, data["i18n"])
+    write_og_images(out, src, pages, data["i18n"][site["default_language"]]["og_image_alt"])
     # Before the stubs: a link to an old URL must fail even where a stub would catch it.
     check_links(out, urlsplit(site["base_url"]).netloc)
+    if any(p.meta.get("layout") == "docs" for p in pages):
+        index_search(out)
     subset_fonts(out)
     if redirect_stubs:
-        write_stubs(out, data["redirects"], site, {p.url: src / p.source for p in pages})
+        write_stubs(out, data["redirects"], site, src)
     return pages
 
 

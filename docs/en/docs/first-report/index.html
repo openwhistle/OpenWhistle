@@ -1,0 +1,34 @@
+---
+title: 'Your first report, end to end | OpenWhistle'
+description: 'Walk one test report through a new OpenWhistle installation: submit it as the whistleblower, acknowledge it as the office, then read the reply.'
+translation_key: docs-first-report
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1>Your first report</h1>
+<p class="docs-lead">Right after the install, send one test report through your own installation and follow it from both sides.</p>
+
+<h2 id="submit">1. Submit it as the whistleblower</h2>
+<ol>
+  <li>Open your installation's root URL in a private window. No account is needed.</li>
+  <li>Choose <em>Anonymous</em>, then a category, and write a test description of at least 10 characters.</li>
+  <li>Submit, then save the case number and the PIN. They are shown once.</li>
+</ol>
+<p>Every step of the form: <a href="/en/docs/whistleblower/#submitting-a-report">Whistleblower guide</a>.</p>
+
+<h2 id="acknowledge">2. Acknowledge it as the reporting office</h2>
+<ol>
+  <li>Sign in at <code>/admin</code> with the account the setup wizard created, then your TOTP code.</li>
+  <li>Open the test report on the dashboard. Its 7-day deadline is already running.</li>
+  <li>Click <em>Acknowledge report</em>, then reply through the anonymous channel.</li>
+</ol>
+<p>The case page in full: <a href="/en/docs/admin/#managing-reports">Admin guide</a>.</p>
+
+<h2 id="follow-up">3. Read the reply as the whistleblower</h2>
+<p>Open <code>/status</code>, enter the case number and PIN, and read the reply. The 3-month feedback deadline now counts from the acknowledgement.</p>
+
+<h2 id="clean-up">4. Delete the test report</h2>
+<p><em>Delete report</em> needs a second admin to confirm. Create a second account first, or keep the test report: <a href="/en/docs/admin/#managing-reports">four-eyes deletion</a>.</p>

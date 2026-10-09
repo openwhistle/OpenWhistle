@@ -1,13 +1,3 @@
----
-title: 'HinSchG duties and what OpenWhistle covers | OpenWhistle'
-description: 'The duties of the German HinSchG section by section: which of them OpenWhistle covers, and which stay with the organisation. A summary, not legal advice.'
-translation_key: hinschg-reference
-noindex: true
-css:
-- docs
-js:
-- site
----
 # HinSchG duties and what OpenWhistle covers
 
 Reference for whoever runs an internal reporting office with OpenWhistle. It is a summary, not legal advice.

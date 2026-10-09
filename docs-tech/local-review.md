@@ -168,11 +168,60 @@ Rebuild after every edit to `docs/`; the server serves what was built.
 |---|---|
 | `/en/` | Landing page, English. |
 | `/de/` | Landing page, German — the longest strings; check nothing overflows or truncates. |
-| `/en/docs/` | Full documentation — long page, check the anchor nav and the "Current version" line. |
-| `/en/docs/hinschg-reference/` | HinSchG reference, rendered from Markdown. |
-| `/en/docs/security-policy/` | Security policy template, rendered from Markdown. |
-| `/en/docs/dpa-template/` | DPA template, rendered from Markdown. |
+| `/en/docs/` | Docs start page — the overview, the "Current version" line, and the sidebar every docs page shares. |
+| `/en/docs/requirements/` | Get started: Requirements. |
+| `/en/docs/install/` | Get started: Install. |
+| `/en/docs/first-report/` | Get started: Your first report. |
+| `/en/docs/kubernetes/` | How-to: Kubernetes (Helm). |
+| `/en/docs/tls-proxy/` | How-to: TLS proxy. |
+| `/en/docs/selinux/` | How-to: SELinux. |
+| `/en/docs/onion/` | How-to: Onion address. |
+| `/en/docs/ldap/` | How-to: LDAP / AD. |
+| `/en/docs/oidc/` | How-to: OIDC. |
+| `/en/docs/s3/` | How-to: S3 storage. |
+| `/en/docs/clamav/` | How-to: ClamAV. |
+| `/en/docs/notifications/` | How-to: Notifications. |
+| `/en/docs/retention/` | How-to: Data retention. |
+| `/en/docs/multi-tenancy/` | How-to: Multi-tenancy. |
+| `/en/docs/upgrade/` | How-to: Upgrade. |
+| `/en/docs/rotate-key/` | How-to: Rotate the key. |
+| `/en/docs/lost-authenticator/` | How-to: Lost authenticator. |
+| `/en/docs/demo-mode/` | How-to: Demo mode. |
+| `/en/docs/admin/` | Guides: Admin. |
+| `/en/docs/whistleblower/` | Guides: Whistleblower. |
+| `/en/docs/configuration/` | Settings reference, generated from `docs/_data/config.yml` — every table scrolls inside its box at 390 px. |
+| `/en/docs/images/` | Reference: Images. |
+| `/en/docs/roles/` | Reference: Roles. |
+| `/en/docs/limits/` | Reference: Attachments. |
+| `/en/docs/security-headers/` | Reference: Security headers. |
+| `/en/docs/anonymity/` | Explanation: Anonymity layers. |
+| `/en/docs/rate-limiting/` | Explanation: Rate limiting. |
+| `/en/docs/outbound/` | Explanation: Outbound requests. |
+| `/en/docs/timestamps/` | Explanation: Timestamps. |
+| `/en/docs/onion-trust/` | Explanation: Onion trust. |
+| `/en/docs/redis-sizing/` | Explanation: Redis sizing. |
+| `/en/docs/install-count/` | Explanation: Installation count. |
+| `/en/docs/security-policy/` | Security policy template, rendered from Markdown in the docs layout. |
+| `/en/docs/dpa-template/` | DPA template, rendered from Markdown in the docs layout. |
 | `/en/roadmap/` | Roadmap. |
+| `/en/compliance/` | Compliance overview: the two law cards; the table stacks into cards at 390 px. |
+| `/de/compliance/` | Compliance overview, German. |
+| `/en/compliance/eu-directive/` | EU directive: the requirement table stacks into one card per row at 390 px. |
+| `/de/compliance/eu-richtlinie/` | EU directive, German. |
+| `/en/compliance/hinschg/` | HinSchG: every table stacks into one card per row at 390 px. |
+| `/de/compliance/hinschg/` | HinSchG, German. |
+| `/en/security/` | Security: the trust table scrolls inside its box at 390 px. |
+| `/de/sicherheit/` | Security, German. |
+| `/en/contribute/` | Contribute. |
+| `/de/mitmachen/` | Contribute, German. |
+| `/impressum/` | Imprint, German only — the text is the provider's, word for word; the language switch leads to `/en/`. |
+| `/de/datenschutz/` | Privacy policy, German and binding — the "On this page" list sits above the text at 390 px. |
+| `/en/privacy/` | Privacy policy, English translation. |
+| `/.well-known/security.txt` | Plain text (RFC 9116): `Expires` lies 335 days after the build (RFC 9116: under a year). |
+| `/en/blog/feed.xml` | Atom feed (raw XML): every English post, newest first. |
+| `/de/blog/feed.xml` | Atom feed, German. |
+| `/en/og.png` | Share card (1200×630) — every directory page has its own `og.png`; also open one docs and one German post card. |
+| `/en/docs/install/#highlight=docker` | Docs search result: the term is marked and scrolled into view; press `/` for the search dialog. |
 | `/en/compare/` | Comparison with GlobaLeaks, SecureDrop, Hush Line — the table scrolls inside its box at 390 px. |
 | `/404.html` | Not-found page (noindex); open any missing path on the served site. |
 | `/en/changelog/` | Changelog, rendered from `CHANGELOG.md` — check the version nav in the sidebar. |

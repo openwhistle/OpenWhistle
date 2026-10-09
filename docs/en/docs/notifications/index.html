@@ -1,0 +1,73 @@
+---
+title: E-mail and webhook notifications | OpenWhistle
+description: 'Notify the reporting office of new reports by e-mail or webhook without leaking timing: daily digests, what each channel carries, and SLA reminders.'
+translation_key: docs-notifications
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1 id="notifications">Notifications</h1>
+        <p>
+          Email (SMTP) and webhook (HTTP POST) notices about new reports and whistleblower messages.
+          Both are off by default and independent of each other.
+        </p>
+        <div class="table-scroll">
+<table class="env-table">
+          <thead><tr><th>Channel</th><th>Goes to</th><th>Carries</th></tr></thead>
+          <tbody>
+            <tr><td>Email</td><td>your own admins</td><td>the case number: only they can act on a specific case</td></tr>
+            <tr><td>Webhook</td><td>third parties (Slack, Teams, a generic endpoint)</td><td><strong>counts only</strong>, never a case number or a deadline date</td></tr>
+          </tbody>
+        </table>
+</div>
+        <p>Neither ever carries the report description, category or submission time.</p>
+        <div class="callout callout-note">
+          <div class="callout-title">Why notifications are batched</div>
+          <p>
+            A notice sent the second a report arrives tells the employer when it was written, and who
+            was at their desk then. So notices go out as one digest every
+            <code>NOTIFICATION_BATCH_MINUTES</code> (default 1440, once a day at 00:00 UTC). Report
+            times are stored as the day only; the digest interval bounds how precisely a notice dates
+            a report. An hourly digest would say which hour. The trade-off: case managers learn of a
+            report up to a day late, well inside the 7-day acknowledgement deadline.
+            <code>0</code> sends each notice at once, only if you accept the timing risk.
+          </p>
+        </div>
+
+<div data-config="notifications"></div>
+
+        <h2 id="email-smtp">Email (SMTP)</h2>
+<div data-config="email"></div>
+
+        <h2 id="webhook">Webhook</h2>
+        <p>
+          A <code>POST</code> with a JSON body. With <code>NOTIFY_WEBHOOK_SECRET</code> set, an
+          <code>X-OpenWhistle-Signature: sha256=&lt;hex&gt;</code> header lets the receiver verify it
+          (HMAC-SHA256).
+        </p>
+        <div class="code-block" role="region" aria-label="Webhook JSON payload">
+          <div class="code-block-header">
+            <span class="code-block-lang">json</span>
+          </div>
+          <pre><code>{
+  "event": "new_activity",
+  "new_reports": 2,
+  "new_messages": 1,
+  "message": "2 new reports, 1 case with new messages"
+}</code></pre>
+        </div>
+        <p><code>new_messages</code> counts cases with new whistleblower messages, not the messages.</p>
+<div data-config="webhook"></div>
+
+        <h2 id="sla-reminders">SLA Reminders</h2>
+        <p>
+          Reminders before a HinSchG deadline runs out. The scheduler checks every open report every
+          30 minutes; Redis dedup keys send each warning once per window.
+        </p>
+        <ul>
+          <li><strong>Email</strong> (your own admins): one per case, with its case number.</li>
+          <li><strong>Webhook</strong>: one per run, with only the number of cases due. Never a case number or a deadline date.</li>
+        </ul>
+<div data-config="reminders"></div>

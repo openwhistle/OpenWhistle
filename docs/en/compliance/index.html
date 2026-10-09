@@ -1,0 +1,169 @@
+---
+title: 'Compliance: what OpenWhistle covers | OpenWhistle'
+description: 'What OpenWhistle covers for the EU Whistleblowing Directive and the German HinSchG, and what stays with your organisation. A summary, not legal advice.'
+translation_key: compliance
+css:
+- docs
+- page
+js:
+- site
+- sidebar
+jsonld:
+- '@context': https://schema.org
+  '@type': BreadcrumbList
+  itemListElement:
+  - '@type': ListItem
+    position: 1
+    name: OpenWhistle
+    item: https://openwhistle.net/en/
+  - '@type': ListItem
+    position: 2
+    name: Compliance
+    item: https://openwhistle.net/en/compliance/
+---
+  <div class="docs-layout">
+
+    <!-- Sidebar -->
+    <aside class="docs-sidebar" role="complementary" aria-label="Compliance navigation">
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">On This Page</div>
+        <nav class="sidebar-links" aria-label="On this page">
+          <a href="#core" class="active">One core, one profile per law</a>
+          <a href="#covered">What OpenWhistle covers</a>
+          <a href="#yours">What stays with you</a>
+          <a href="#laws">By jurisdiction</a>
+        </nav>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Links</div>
+        <nav class="sidebar-links">
+          <a href="/en/">&#8592; Landing Page</a>
+          <a href="/en/compliance/eu-directive/">EU directive</a>
+          <a href="/en/compliance/hinschg/">HinSchG</a>
+          <a href="/en/docs/">Documentation</a>
+        </nav>
+      </div>
+
+    </aside>
+
+    <!-- Main content -->
+    <main id="main-content" class="docs-content">
+
+      <nav class="docs-breadcrumb" aria-label="Breadcrumb">
+        <a href="/en/">OpenWhistle</a>
+        <span>/</span>
+        <span>Compliance</span>
+      </nav>
+
+      <h1>Compliance</h1>
+      <p class="docs-lead">
+        OpenWhistle gives an organisation the internal reporting channel the law asks for.
+        This page says what the software covers and what stays with you.
+        It is not legal advice.
+      </p>
+
+      <!-- Core -->
+      <section class="docs-section" id="core" aria-labelledby="core-h2">
+        <h2 id="core-h2">One core, one profile per law</h2>
+        <p>
+          ISO 37002 is the international guideline for whistleblowing management systems.
+          Its process has four steps: receive a report, assess it, address it, and conclude the case.
+          OpenWhistle's core follows that process; a law adds its own deadlines and duties on top.
+        </p>
+      </section>
+
+      <!-- Covered -->
+      <section class="docs-section" id="covered" aria-labelledby="covered-h2">
+        <h2 id="covered-h2">What OpenWhistle covers</h2>
+        <div class="table-scroll stack-table">
+          <table class="cmp-table">
+            <thead>
+              <tr>
+                <th scope="col">Duty</th>
+                <th scope="col">How</th>
+                <th scope="col">Shown in</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">A secure written channel</th>
+                <td data-label="How">A web form on your own server.</td>
+                <td data-label="Shown in"><a href="/en/docs/whistleblower/">Whistleblower guide</a></td>
+              </tr>
+              <tr>
+                <th scope="row">Anonymous and confidential reports</th>
+                <td data-label="How">The reporter chooses; no IP address is stored.</td>
+                <td data-label="Shown in"><a href="/en/docs/anonymity/">Anonymity layers</a></td>
+              </tr>
+              <tr>
+                <th scope="row">The 7-day and 3-month deadlines</th>
+                <td data-label="How">On the dashboard, the case and the reporter's status page.</td>
+                <td data-label="Shown in"><a href="/en/docs/admin/#hinschg-deadline-tracking">Deadline tracking</a></td>
+              </tr>
+              <tr>
+                <th scope="row">Records of every report</th>
+                <td data-label="How">Every report and message is stored, encrypted; PDF export.</td>
+                <td data-label="Shown in"><a href="/en/docs/admin/#managing-reports">Managing reports</a></td>
+              </tr>
+              <tr>
+                <th scope="row">Records of every admin action</th>
+                <td data-label="How">An immutable audit log.</td>
+                <td data-label="Shown in"><a href="/en/docs/admin/#audit-log">Audit log</a></td>
+              </tr>
+              <tr>
+                <th scope="row">Deletion</th>
+                <td data-label="How">Closed reports are deleted after three years by default.</td>
+                <td data-label="Shown in"><a href="/en/docs/retention/">Data retention</a></td>
+              </tr>
+              <tr>
+                <th scope="row">Who sees a case</th>
+                <td data-label="How">A case manager sees only the cases assigned to them.</td>
+                <td data-label="Shown in"><a href="/en/docs/roles/">Roles</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Yours -->
+      <section class="docs-section" id="yours" aria-labelledby="yours-h2">
+        <h2 id="yours-h2">What stays with you</h2>
+        <ul>
+          <li><strong>Legal advice.</strong> Have counsel check what your organisation owes.</li>
+          <li><strong>The external channel.</strong> Reporters may go to the authorities directly, without reporting internally first. You publish clear, easy-to-find information on how.</li>
+          <li><strong>The people.</strong> You appoint impartial, competent people to handle reports.</li>
+          <li><strong>Your process.</strong> You take the follow-up action and protect the reporter from retaliation.</li>
+        </ul>
+      </section>
+
+      <!-- Laws -->
+      <section class="docs-section" id="laws" aria-labelledby="laws-h2">
+        <h2 id="laws-h2">By jurisdiction</h2>
+        <div class="blog-grid" role="list">
+          <article class="article-card" role="listitem">
+            <p class="article-tag">European Union · 2019/1937</p>
+            <h3 class="article-title">
+              <a href="/en/compliance/eu-directive/">EU Whistleblowing Directive</a>
+            </h3>
+            <p class="article-excerpt">Each requirement on internal channels, its article, and where OpenWhistle shows it.</p>
+            <a href="/en/compliance/eu-directive/" class="article-read-more" aria-label="Read more: EU Whistleblowing Directive">
+              Read more &rarr;
+            </a>
+          </article>
+          <article class="article-card" role="listitem">
+            <p class="article-tag">Germany · HinSchG</p>
+            <h3 class="article-title">
+              <a href="/en/compliance/hinschg/">Whistleblower Protection Act</a>
+            </h3>
+            <p class="article-excerpt">The German law section by section: who must run a reporting office, each duty, the deadlines.</p>
+            <a href="/en/compliance/hinschg/" class="article-read-more" aria-label="Read more: Whistleblower Protection Act">
+              Read more &rarr;
+            </a>
+          </article>
+        </div>
+      </section>
+
+    </main>
+  </div>

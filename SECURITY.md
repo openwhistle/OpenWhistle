@@ -23,6 +23,12 @@ anonymity leaks, authorization/tenant-isolation bypasses, and anything that coul
 deanonymize a reporter. We aim to acknowledge reports promptly and will credit
 reporters (with their consent) in the advisory and here.
 
+## Research is welcome, and unpaid
+
+You may test OpenWhistle and report what you find. There is no payment: OpenWhistle is a volunteer project,
+and every report serves the people who rely on it. With your consent, we credit you in the advisory and below.
+Test on your own installation, never on the public demo's other visitors.
+
 ## Response times
 
 | Step | Within |
@@ -37,6 +43,6 @@ OpenWhistle is maintained in spare time; these are commitments, and when one sli
 
 Our thanks to those who have responsibly disclosed security issues:
 
-- **[@openblow](https://github.com/openblow)** — reported the four advisories
+- **@openblow** — reported the four advisories
   fixed in v1.1.1 (report object-level authorization / deanonymization,
   privilege escalation, stored XSS, and weak/duplicated HTTP security headers).

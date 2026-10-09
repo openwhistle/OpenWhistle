@@ -131,7 +131,7 @@ services:
       - "80:80"
       - "443:443"
       # Onion service entry point — reachable only from the host running tor
-      # (see docs/en/docs/index.html "Offering an onion address"); never exposed publicly.
+      # (see https://openwhistle.net/en/docs/onion/); never exposed publicly.
       - "127.0.0.1:8080:8080"
     volumes:
       # :z relabels for SELinux hosts (shared label; a no-op elsewhere).

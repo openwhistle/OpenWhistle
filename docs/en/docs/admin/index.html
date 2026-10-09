@@ -1,0 +1,191 @@
+---
+title: 'Admin guide: running the reporting office | OpenWhistle'
+description: 'The reporting office in OpenWhistle: sign in, work the dashboard, handle a case, reveal an identity with a reason, and use the audit log and statistics.'
+translation_key: docs-admin
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1 id="admin-guide">Admin guide</h1>
+        <p>The admin portal is at <code>/admin</code>, which leads to <code>/admin/login</code>.</p>
+
+        <h2 id="admin-login">Signing in</h2>
+        <figure class="doc-shot">
+          <img class="shot-light" src="/img/screens/admin-login-light.png" alt="The reporting office sign-in: username, password and Continue." width="1440" height="900" loading="lazy">
+          <img class="shot-dark" src="/img/screens/admin-login-dark.png" alt="The reporting office sign-in: username, password and Continue." width="1440" height="900" loading="lazy">
+        </figure>
+        <p>
+          Every account signs in with two factors. The first is a password (local or LDAP) or OIDC;
+          the second is always a TOTP code.
+        </p>
+        <figure class="diagram">
+          <img class="diagram-light" src="/img/diagrams/admin-login-light.svg" alt="Admin login: the first factor is a username and password checked against the database, LDAP, or an external OIDC identity provider. Then TOTP: an account without it enrolls first, which is mandatory. After the TOTP code, an account whose password someone else set chooses its own at /admin/account before the admin area opens." width="754" height="764" loading="lazy">
+          <img class="diagram-dark" src="/img/diagrams/admin-login-dark.svg" alt="Admin login: the first factor is a username and password checked against the database, LDAP, or an external OIDC identity provider. Then TOTP: an account without it enrolls first, which is mandatory. After the TOTP code, an account whose password someone else set chooses its own at /admin/account before the admin area opens." width="754" height="764" loading="lazy">
+        </figure>
+        <ul>
+          <li>An account without TOTP yet (new from <code>/admin/users</code>, or first provisioned by LDAP) goes to <code>/admin/mfa/setup</code> after its first factor. Scan the QR code, confirm one code, and the session starts.</li>
+          <li>A password someone else set is replaced next, at <code>/admin/account</code> (<a href="/en/docs/admin/#own-account">Your account</a>).</li>
+          <li>After <code>MAX_LOGIN_ATTEMPTS</code> wrong passwords, the username is locked for <code>LOGIN_LOCKOUT_MINUTES</code> from the last one. Upper and lower case count as one username.</li>
+          <li>A session lasts <code>ACCESS_TOKEN_EXPIRE_MINUTES</code>; <em>Stay signed in</em> renews it, up to <code>SESSION_MAX_HOURS</code> after login.</li>
+        </ul>
+
+        <h2 id="dashboard-overview">Dashboard overview</h2>
+        <figure class="doc-shot">
+          <img class="shot-light" src="/img/screens/admin-dashboard-light.png" alt="The reports dashboard: status and location filters, a search field, and the report table with case number, category, status, submitted day, assignee, 7-day SLA and 3-month SLA." width="1440" height="1009" loading="lazy">
+          <img class="shot-dark" src="/img/screens/admin-dashboard-dark.png" alt="The reports dashboard: status and location filters, a search field, and the report table with case number, category, status, submitted day, assignee, 7-day SLA and 3-month SLA." width="1440" height="1009" loading="lazy">
+        </figure>
+        <p>
+          <code>/admin/dashboard</code> lists every report you may see, with sortable columns,
+          pagination and filters for status, assignee and location. Each status filter shows its case
+          count within the chosen location; a case manager's counts cover only their own cases.
+        </p>
+        <div class="table-scroll">
+<table class="env-table">
+          <thead><tr><th>Column</th><th>Shows</th></tr></thead>
+          <tbody>
+            <tr><td>Case number</td><td><code>OW-YYYY-NNNNN</code>: the year and five random digits</td></tr>
+            <tr><td>Submitted</td><td>the day only (UTC), never the time</td></tr>
+            <tr><td>7-day SLA</td><td><em>Day N/7</em> until acknowledged: warning from day 5, overdue from day 7</td></tr>
+            <tr><td>3-month SLA</td><td>days left to feedback: warning at 14 or fewer, overdue once the date has passed</td></tr>
+          </tbody>
+        </table>
+</div>
+
+        <h2 id="own-account">Your account</h2>
+        <p>
+          <strong>My account</strong> in the sidebar opens <code>/admin/account</code>, for every role.
+          It shows the username, role, organisation and the ways the account signs in.
+        </p>
+        <ul>
+          <li>A password change needs the current password, the new one twice, and a current TOTP code. An open session alone is not enough.</li>
+          <li>The new password has 12 characters to 72 bytes and differs from the current one.</li>
+          <li>Wrong passwords and codes here count towards the sign-in lockout of the account.</li>
+          <li>After the change, every other session of the account ends. The one in use stays.</li>
+          <li>The audit log records <code>auth.password_changed</code>, never the password.</li>
+          <li>An LDAP or single sign-on account has no password here. It changes it in the directory or at the provider.</li>
+          <li><strong>Link single sign-on</strong> and <strong>Unlink single sign-on</strong> are on this page (<a href="/en/docs/oidc/">OIDC integration</a>).</li>
+          <li>With <code>DEMO_MODE</code>, the demo accounts keep their password, so every visitor can sign in.</li>
+        </ul>
+        <p>Whoever sets a password for someone else knows it. So its holder must replace it:</p>
+        <div class="table-scroll">
+<table class="env-table">
+          <thead><tr><th>Password set by</th><th>Holder's next login</th></tr></thead>
+          <tbody>
+            <tr><td>an admin creating the account on <code>/admin/users</code></td><td>enrol the authenticator at <code>/admin/mfa/setup</code>, then change the password</td></tr>
+            <tr><td>a superadmin's <strong>Reset authenticator</strong></td><td>the same, with the temporary password</td></tr>
+            <tr><td>the host's <code>reset_admin_password.py --username</code></td><td>change the password</td></tr>
+          </tbody>
+        </table>
+</div>
+        <p>
+          Until then, every other admin page leads back to <code>/admin/account</code>. Sign-out still works.
+          The script cannot tell whether its operator is the holder, so it always asks for the change.
+        </p>
+
+        <h2 id="managing-reports">Managing reports</h2>
+        <p>
+          The search field on <code>/admin/dashboard</code> takes any part of a case number (for
+          example <code>00042</code>) or a word from the report.
+        </p>
+        <ul>
+          <li>A word search decrypts the description and messages of the reports you may see, in memory, for that request only. Nothing searchable is ever stored.</li>
+          <li>The confidential name is never matched: a hit would confirm an identity guess without an audited reveal.</li>
+          <li>The search is sent as a form (POST), so the term never appears in a URL, the browser history or a proxy's access log. Paging keeps it that way.</li>
+          <li>Every word search is audited (<code>report.content_searched</code>): the term, stored encrypted, and the number of matching reports.</li>
+        </ul>
+        <p>Click a report to open its case page, <code>/admin/reports/{report_id}</code>:</p>
+        <figure class="doc-shot">
+          <img class="shot-light" src="/img/screens/admin-report-light.png" alt="A case page: the report, the communication thread, a reply box and internal notes; beside them the submission details and the actions acknowledge, assign, update status, export PDF and delete." width="1440" height="1888" loading="lazy">
+          <img class="shot-dark" src="/img/screens/admin-report-dark.png" alt="A case page: the report, the communication thread, a reply box and internal notes; beside them the submission details and the actions acknowledge, assign, update status, export PDF and delete." width="1440" height="1888" loading="lazy">
+        </figure>
+        <ul>
+          <li>Read the report and its submission mode (anonymous / confidential).</li>
+          <li><em>Acknowledge report</em>: tells the whistleblower and starts the 3-month feedback clock.</li>
+          <li>Move the status, assign the case to an admin or case manager, link related cases.</li>
+          <li>Reply to the whistleblower through the anonymous channel; add internal notes they never see.</li>
+          <li>Export a PDF with an SLA compliance section (HinSchG §17), the confidential identity left out. It prints Latin (any diacritic), Greek and Cyrillic text; CJK and right-to-left scripts (Arabic, Hebrew) are not supported.</li>
+          <li><em>Delete report</em>, collapsed at the end of <em>Actions</em>: a second admin must confirm (4-eyes principle). It is the GDPR Art. 17 erasure.
+            <ul>
+              <li>Neither the requester nor an account the requester made (on <code>/admin/users</code>, directly or through others) may confirm, and the reverse: whoever made an account chose its first password.</li>
+              <li>A superadmin can reset another account's authenticator and act as it, so the rule holds between admins, not against a superadmin.</li>
+            </ul>
+          </li>
+        </ul>
+        <figure class="diagram">
+          <img class="diagram-light" src="/img/diagrams/case-lifecycle-light.svg" alt="Case statuses: a submitted report is received. From received it goes to in_review or closed; from in_review to pending_feedback, closed or back to received; from pending_feedback to closed or in_review; a closed case can reopen to in_review. Received carries the 7-day acknowledgement deadline, pending_feedback the 3-month feedback deadline." width="725" height="381" loading="lazy">
+          <img class="diagram-dark" src="/img/diagrams/case-lifecycle-dark.svg" alt="Case statuses: a submitted report is received. From received it goes to in_review or closed; from in_review to pending_feedback, closed or back to received; from pending_feedback to closed or in_review; a closed case can reopen to in_review. Received carries the 7-day acknowledgement deadline, pending_feedback the 3-month feedback deadline." width="725" height="381" loading="lazy">
+        </figure>
+        <p>
+          <strong>Confidential identity.</strong> A confidential reporter's name and contact are
+          hidden by default.
+        </p>
+        <ul>
+          <li>The case handler (while unassigned, an admin of the case's organisation) clicks <em>Show identity</em> (<code>POST /admin/reports/{id}/identity</code>). A reason is required: 10–500 characters, without the reporter's name.</li>
+          <li>The identity shows on that page only; the audit log records who, when and why.</li>
+          <li>The case page says only that a reason was recorded. The reason is on <code>/admin/audit-log</code> and in the CSV export.</li>
+          <li><em>Export PDF with identity</em> (<code>POST /admin/reports/{id}/export.pdf</code>) asks for the same audited reason. The plain <em>Export PDF</em> never includes it.</li>
+          <li>Opening a case is logged as <em>Report opened</em>.</li>
+        </ul>
+
+        <h2 id="audit-log">Audit log</h2>
+        <ul>
+          <li><code>/admin/audit-log</code>: every admin action, immutable, filterable, shown as readable labels.</li>
+          <li>Deleting a report deletes its entries with it. One entry stays, with the case number: <em>Deletion confirmed</em> (who requested, who confirmed) or <code>report.auto_deleted</code>.</li>
+          <li>CSV export at any time: the machine action codes plus a label column; the detail column is a JSON object. It holds every row the page's filters select, and taking it is itself recorded.</li>
+          <li>Downloading an attachment is recorded, as opening the case and exporting its PDF are.</li>
+          <li>Case views (<em>Report opened</em>) are hidden in the log and the export unless you tick <em>Show case views</em> (<code>?views=1</code>).</li>
+          <li>With multi-tenancy on, each organisation sees only its own entries. Instance-wide security events, such as a password-spraying alert, go to superadmins only.</li>
+        </ul>
+
+        <h2 id="categories-and-locations">Categories and locations</h2>
+        <p>
+          <code>/admin/categories</code> holds the report categories, all configurable.
+          <code>/admin/locations</code> holds branches or offices; while any is active, the
+          whistleblower wizard asks for one at step 2.
+        </p>
+
+        <h2 id="dashboard-statistics">Dashboard statistics</h2>
+        <p>
+          <code>/admin/stats</code>: total reports, status distribution, category breakdown and the
+          7-day SLA compliance rate (acknowledged within 7 days of 00:00 UTC on the submission day).
+          A case manager's figures cover only their own cases.
+        </p>
+
+        <h2 id="system-updates">System &amp; updates</h2>
+        <figure class="doc-shot">
+          <img class="shot-light" src="/img/screens/admin-system-light.png" alt="System and updates: installed version and update status, the file integrity check, the installation count card and the two settings behind them." width="1440" height="1784" loading="lazy">
+          <img class="shot-dark" src="/img/screens/admin-system-dark.png" alt="System and updates: installed version and update status, the file integrity check, the installation count card and the two settings behind them." width="1440" height="1784" loading="lazy">
+        </figure>
+        <ul>
+          <li><code>/admin/system</code> shows the installed version. With <code>UPDATE_CHECK_ENABLED=true</code> (opt-in, off by default) it also says whether GitHub has a newer release: checked once a day, cached, no instance data sent.</li>
+          <li><strong>Installation count</strong>: whether this installation is counted, the exact request, its identifier and the last successful report. An admin switches it (one audit entry per change) and resets the identifier; see <a href="/en/docs/install-count/">Counting installations</a>.</li>
+          <li><strong>File integrity</strong>: the application files against a SHA-256 manifest baked into the image at build time. It reports missing, modified or unexpected files, which catches accidental changes, incomplete deployments and corruption. <em>Re-check now</em> refreshes it.</li>
+        </ul>
+        <p>
+          The integrity check is not tamper-proof: an attacker who can rewrite the files can rewrite
+          the manifest too.
+        </p>
+
+        <h2 id="hinschg-deadline-tracking">HinSchG deadline tracking</h2>
+        <p>The statutory timelines of §17 HinSchG, shown on the dashboard, the case page, the whistleblower's status page and the PDF:</p>
+        <ul>
+          <li><strong>7-day acknowledgement:</strong> counted from 00:00 UTC of the submission day. Times are stored as the day only, so the deadline can fall earlier, never later.</li>
+          <li><strong>3-month feedback:</strong> three calendar months from the acknowledgement; without one, three months and seven days from receipt (§17 Abs. 2). Every report has this deadline from the day it arrives, and an acknowledgement never moves it later. Feedback goes to the whistleblower through the message channel before it runs out.</li>
+          <li>A deadline is overdue once it has passed. On its last day it reads <em>0 days remaining</em>.</li>
+          <li>The statistics' 7-day rate counts only the reports whose seven days are over or that were acknowledged.</li>
+        </ul>
+
+        <h2 id="telephone-reporting-channel-guide">Telephone reporting channel guide</h2>
+        <p>
+          <code>/admin/telephone-channel</code> is a compliance reference for an oral reporting
+          channel beside the digital one:
+        </p>
+        <ul>
+          <li>HinSchG § 16 Abs. 3: reports orally and in text form; a dedicated number, confidentiality (§ 8), impartial staff</li>
+          <li>Implementation options: internal hotline vs. external ombudsman</li>
+          <li>§ 11 Abs. 2 HinSchG: a call is recorded only with consent, otherwise documented as a summary</li>
+          <li>Integration workflow: how telephone reports enter the OpenWhistle case system</li>
+          <li>Legal references with links to the official statute text</li>
+        </ul>

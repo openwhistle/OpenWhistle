@@ -1,0 +1,28 @@
+---
+title: LDAP and Active Directory login | OpenWhistle
+description: 'Let reporting office staff sign in with their corporate LDAP or Active Directory account: the settings, the role a first login gets, and TOTP on top.'
+translation_key: docs-ldap
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1 id="ldap">LDAP / Active Directory login</h1>
+        <p>
+          Admins can also sign in with corporate LDAP. The first login creates an
+          <code>AdminUser</code> (no local password) with the <strong>Case Manager</strong> role; an
+          admin promotes it if needed. TOTP enrollment still follows, as for
+          <a href="/en/docs/admin/#admin-login">every account</a>.
+        </p>
+        <ul>
+          <li>Accounts with a local password, such as the one the setup wizard created, keep signing in with it.</li>
+          <li>A directory user whose name a local account already has is refused, never merged into it.</li>
+          <li>The username comes from <code>LDAP_ATTR_USERNAME</code>. An entry without it is refused.</li>
+        </ul>
+        <p>
+          LDAP uses python-ldap (the OpenLDAP client) and S3 storage uses boto3: optional extras,
+          both in the container image. From source, install <code>libldap2-dev libsasl2-dev</code>,
+          then <code>pip install '.[ldap,s3]'</code>.
+        </p>
+<div data-config="ldap"></div>

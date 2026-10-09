@@ -1,0 +1,78 @@
+---
+title: Upgrade OpenWhistle and roll back | OpenWhistle
+description: 'Upgrade an OpenWhistle installation to a new release: back up first, pull the image, run the migrations, and roll back to the previous version if needed.'
+translation_key: docs-upgrade
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1 id="upgrading">Upgrading</h1>
+        <p>
+          <a href="https://semver.org" rel="noopener noreferrer" target="_blank">Semantic versioning</a>:
+          minor and patch releases are backward-compatible. A major release may break things; its
+          <a href="/en/changelog/">Changelog</a> entry says what.
+        </p>
+
+        <h2 id="standard-upgrade-procedure">Standard upgrade procedure</h2>
+        <div class="code-block" role="region" aria-label="Upgrade commands">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+          </div>
+          <pre><code><span class="t-comment"># Back up first: a rollback needs it</span>
+<span class="t-prompt">$ </span><span class="t-cmd">docker compose exec db pg_dump -U openwhistle openwhistle &gt; backup.sql</span>
+
+<span class="t-comment"># The compose file and nginx config change between releases</span>
+<span class="t-prompt">$ </span><span class="t-cmd">git pull</span>
+
+<span class="t-comment"># Set OPENWHISTLE_VERSION in .env to the new version, then</span>
+<span class="t-prompt">$ </span><span class="t-cmd">docker compose pull</span>
+<span class="t-prompt">$ </span><span class="t-cmd">docker compose up -d</span>
+
+<span class="t-comment"># Migrations run at startup; the version is in the health check</span>
+<span class="t-prompt">$ </span><span class="t-cmd">curl -sk https://localhost/health</span></code></pre>
+        </div>
+
+        <h2 id="before-upgrading">Before upgrading</h2>
+        <ul>
+          <li>Read the Changelog for the target version.</li>
+          <li>v2.0.0 adds <code>ENCRYPTION_KEY</code>, a key for encryption separate from <code>SECRET_KEY</code>: see <a href="/en/docs/rotate-key/">Rotating the encryption key</a>.</li>
+        </ul>
+
+        <h2 id="upgrading-2-0">Upgrading to 2.0.0 with Docker Compose</h2>
+        <ul>
+          <li><code>git pull</code> is required, not only <code>docker compose pull</code>: the stack needs the new <code>nginx/snippets/</code> and the <code>tls-init</code> service.</li>
+          <li>A customised <code>nginx/nginx.conf</code> makes <code>git pull</code> conflict: replace it with the shipped one (<code>git checkout -- nginx/nginx.conf</code>).</li>
+          <li>Certificates move from the old <code>./nginx/certs:/etc/nginx/certs</code> mount to <code>nginx/certs/</code> as <code>fullchain.pem</code> and <code>privkey.pem</code>, copied, not symlinked. Without them, a self-signed certificate is served.</li>
+          <li>Port 80 now only redirects to 443. Behind an external TLS terminator, see <a href="/en/docs/tls-proxy/">Behind a TLS-terminating proxy</a>.</li>
+          <li>nginx also publishes <code>127.0.0.1:8080</code> (the onion listener). If another service on the host uses 8080, <code>up</code> fails: free the port first.</li>
+        </ul>
+
+        <h2 id="rollback">Rollback</h2>
+        <p>The previous image refuses to start on a migrated database. Two ways back:</p>
+        <ul>
+          <li>Restore the backup into an empty database and pin the old <code>OPENWHISTLE_VERSION</code>.</li>
+          <li>From 2.0.0 to 1.5.x: downgrade the schema with the <strong>2.0.0</strong> image first, then pin the old version:</li>
+        </ul>
+        <div class="code-block" role="region" aria-label="Rollback commands">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+          </div>
+          <pre><code><span class="t-prompt">$ </span><span class="t-cmd">docker compose run --rm app alembic downgrade 7d4e2b9c1a05</span>
+<span class="t-comment"># then set OPENWHISTLE_VERSION=1.5.0 in .env</span>
+<span class="t-prompt">$ </span><span class="t-cmd">docker compose up -d</span></code></pre>
+        </div>
+        <p>
+          The downgrade decrypts the TOTP secrets again and needs the same encryption keys.
+          Migration 006 rounded whistleblower times to the day; the downgrade keeps them rounded, the
+          exact times are gone by design.
+        </p>
+
+        <div class="callout callout-note">
+          <div class="callout-title">Stay up to date</div>
+          <p>
+            Security fixes are released as patch versions. To hear about them, watch the repository's
+            releases (GitHub: Watch → Custom → Releases).
+          </p>
+        </div>

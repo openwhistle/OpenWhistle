@@ -1,0 +1,117 @@
+---
+title: 'Mitmachen | OpenWhistle'
+description: 'Helfen Sie OpenWhistle, wo es zählt: Verschlüsselung und Anonymität prüfen, ein erstes Issue lösen, die App übersetzen, sponsern oder eine Lücke melden.'
+translation_key: contribute
+css:
+- docs
+- page
+js:
+- site
+- sidebar
+jsonld:
+- '@context': https://schema.org
+  '@type': BreadcrumbList
+  itemListElement:
+  - '@type': ListItem
+    position: 1
+    name: OpenWhistle
+    item: https://openwhistle.net/de/
+  - '@type': ListItem
+    position: 2
+    name: Mitmachen
+    item: https://openwhistle.net/de/mitmachen/
+---
+  <div class="docs-layout">
+
+    <!-- Sidebar -->
+    <aside class="docs-sidebar" role="complementary" aria-label="Navigation Mitmachen">
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Auf dieser Seite</div>
+        <nav class="sidebar-links" aria-label="Auf dieser Seite">
+          <a href="#review" class="active">Wo ein Review am meisten hilft</a>
+          <a href="#first-issues">Ein erstes Issue</a>
+          <a href="#translate">Übersetzen</a>
+          <a href="#sponsor">Sponsern</a>
+          <a href="#security">Eine Schwachstelle gefunden?</a>
+        </nav>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Links</div>
+        <nav class="sidebar-links">
+          <a href="/de/">&#8592; Startseite</a>
+          <a href="/en/docs/" hreflang="en">Dokumentation (englisch)</a>
+          <a href="/de/sicherheit/">Sicherheit</a>
+          <a href="https://github.com/openwhistle/OpenWhistle" rel="noopener noreferrer" target="_blank">GitHub-Repository</a>
+        </nav>
+      </div>
+
+    </aside>
+
+    <!-- Main content -->
+    <main id="main-content" class="docs-content">
+
+      <nav class="docs-breadcrumb" aria-label="Brotkrümelnavigation">
+        <a href="/de/">OpenWhistle</a>
+        <span>/</span>
+        <span>Mitmachen</span>
+      </nav>
+
+      <h1>Mitmachen</h1>
+      <p class="docs-lead">
+        OpenWhistle entsteht in der Freizeit, mit einem einzigen Maintainer.
+        Hier zählt Ihre Hilfe am meisten.
+      </p>
+
+      <!-- Review -->
+      <section class="docs-section" id="review" aria-labelledby="review-h2">
+        <h2 id="review-h2">Wo ein Review am meisten hilft</h2>
+        <p>Die verlinkte Dokumentation ist englisch.</p>
+        <ul>
+          <li><a href="/en/docs/rotate-key/" hreflang="en">Verschlüsselung und Schlüsselwechsel</a>: Lässt sich eine Meldung ohne den Schlüssel lesen, oder geht sie beim Wechsel verloren?</li>
+          <li><a href="/en/docs/anonymity/" hreflang="en">Die Anonymitätsschichten</a>: Trägt irgendein Weg noch eine IP-Adresse in ein Log, eine Session oder die Datenbank?</li>
+          <li><a href="/en/docs/admin/#managing-reports" hreflang="en">Die Offenlegung der Identität</a>: Kann jemand den Namen von Meldenden ohne protokollierten Grund sehen?</li>
+        </ul>
+      </section>
+
+      <!-- First issues -->
+      <section class="docs-section" id="first-issues" aria-labelledby="first-issues-h2">
+        <h2 id="first-issues-h2">Ein erstes Issue</h2>
+        <p>
+          Issues mit dem Label
+          <a href="https://github.com/openwhistle/OpenWhistle/labels/good%20first%20issue" rel="noopener noreferrer" target="_blank" lang="en">good first issue</a>
+          sind klein und in sich abgeschlossen.
+          <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CONTRIBUTING.md" rel="noopener noreferrer" target="_blank">CONTRIBUTING.md</a>
+          (englisch) zeigt die Einrichtung, die Prüfungen und den Commit-Stil.
+        </p>
+      </section>
+
+      <!-- Translate -->
+      <section class="docs-section" id="translate" aria-labelledby="translate-h2">
+        <h2 id="translate-h2">Übersetzen</h2>
+        <p>
+          Die App spricht Englisch, Deutsch, Französisch, Spanisch und brasilianisches Portugiesisch.
+          Eine Sprache ist eine JSON-Datei in <code>app/locales/</code>.
+          <a href="https://github.com/openwhistle/OpenWhistle/blob/main/CONTRIBUTING.md" rel="noopener noreferrer" target="_blank">CONTRIBUTING.md</a>
+          (englisch) sagt, was eine Änderung an einer Sprachdatei berührt und welche Prüfung eine Übersetzung bestehen muss.
+        </p>
+      </section>
+
+      <!-- Sponsor -->
+      <section class="docs-section" id="sponsor" aria-labelledby="sponsor-h2">
+        <h2 id="sponsor-h2">Sponsern</h2>
+        <p>
+          <a href="https://github.com/sponsors/jp1337" rel="noopener noreferrer" target="_blank">GitHub Sponsors</a>
+          bezahlt die Zeit, die dieses Freizeitprojekt kostet.
+        </p>
+      </section>
+
+      <!-- Security -->
+      <section class="docs-section" id="security" aria-labelledby="security-h2">
+        <h2 id="security-h2">Eine Schwachstelle gefunden?</h2>
+        <p>Melden Sie sie vertraulich, wie es <a href="/de/sicherheit/#report">die Sicherheitsseite</a> beschreibt.</p>
+      </section>
+
+    </main>
+  </div>

@@ -11,12 +11,11 @@
 
       <ul class="nav-links" id="nav-links" role="list">
 {% for item in nav.primary %}
-        <li><a href="{{ item.href }}"{% if item.current %} class="active" aria-current="page"{% endif %}>{{ item.label }}</a></li>
+        <li><a href="{{ item.href }}"{% if page.lang != "en" and item.href.startswith("/en/") %} hreflang="en"{% endif %}{% if item.current %} class="active" aria-current="page"{% endif %}>{{ item.label }}</a></li>
 {% endfor %}
 {% for language in nav.languages %}
         <li><a href="{{ language.href }}" hreflang="{{ language.lang }}" lang="{{ language.lang }}">{{ language.name }}</a></li>
 {% endfor %}
-        <li><a href="{{ site.github_url }}" rel="noopener noreferrer" target="_blank">{{ t.nav.github }}</a></li>
         <li><a href="{{ site.demo_url }}" rel="noopener noreferrer" target="_blank" class="nav-cta">{{ t.nav.demo }}</a></li>
       </ul>
 

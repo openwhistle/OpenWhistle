@@ -15,6 +15,10 @@ on:
       - "pyproject.toml"
       - "uv.lock"
       - ".github/workflows/pages.yml"
+  # security.txt expires a year after the build that wrote it: a monthly
+  # rebuild keeps the deployed file under ~30 days old in a quiet year.
+  schedule:
+    - cron: "17 4 1 * *"
   workflow_dispatch:
 
 permissions:
@@ -32,6 +36,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -61,6 +66,7 @@ jobs:
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
           path: "_site"
+          include-hidden-files: true # /.well-known/security.txt is a dot-directory
 
       - name: Deploy to GitHub Pages
         id: deployment

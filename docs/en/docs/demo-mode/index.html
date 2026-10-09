@@ -1,0 +1,42 @@
+---
+title: 'Demo mode: a public sandbox install | OpenWhistle'
+description: 'Run OpenWhistle as a public demo with DEMO_MODE: the prefilled accounts, the static TOTP code, the banner, and why a demo must never hold real reports.'
+translation_key: docs-demo-mode
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1 id="demo-mode">Demo mode</h1>
+        <p>
+          For the public demo at
+          <a href="https://demo.openwhistle.net" rel="noopener noreferrer" target="_blank">demo.openwhistle.net</a>,
+          never for production.
+        </p>
+
+        <h2 id="enabling-demo-mode">Enabling demo mode</h2>
+        <div class="code-block" role="region" aria-label="Demo mode environment variable">
+          <div class="code-block-header">
+            <span class="code-block-lang">.env</span>
+          </div>
+          <pre><code><span class="t-str">DEMO_MODE</span>=true</code></pre>
+        </div>
+
+        <h2 id="demo-mode-behaviour">Demo mode behaviour</h2>
+        <ul>
+          <li>Prefilled admin credentials: username <code>demo</code>, password <code>demo</code>, TOTP code <code>000000</code></li>
+          <li>The static TOTP code <code>000000</code> is always accepted — no authenticator app needed</li>
+          <li>All reports and messages are visible to the demo admin</li>
+          <li>The password of the demo accounts cannot be changed, and their authenticator cannot be reset</li>
+          <li>A banner on every page says this is a demo instance</li>
+          <li><code>demo.openwhistle.net</code> is wiped and restarted every 6 hours</li>
+        </ul>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">Never submit real reports to the demo</div>
+          <p>
+            The demo is public. Its data is wiped every 6 hours but readable by anyone until then.
+            Never submit real or sensitive information to it.
+          </p>
+        </div>

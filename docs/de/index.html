@@ -23,11 +23,11 @@ jsonld:
   license: https://www.gnu.org/licenses/gpl-3.0.html
   softwareVersion: 2.1.1
   downloadUrl: https://github.com/openwhistle/OpenWhistle/releases/latest
-  installUrl: https://openwhistle.net/en/docs/#installation
+  installUrl: https://openwhistle.net/en/docs/install/
   softwareHelp:
     '@type': CreativeWork
     url: https://openwhistle.net/en/docs/
-  image: https://openwhistle.net/og-image.png
+  image: https://openwhistle.net/de/og.png
   inLanguage: de
   author:
     '@type': Organization
@@ -45,6 +45,14 @@ jsonld:
   - https://hub.docker.com/r/kermit1337/openwhistle
   - https://quay.io/repository/jp1337/openwhistle
   - https://github.com/openwhistle/OpenWhistle/pkgs/container/openwhistle
+- '@context': https://schema.org
+  '@type': Organization
+  '@id': https://openwhistle.net/de/#organization
+  name: OpenWhistle
+  url: https://openwhistle.net/de/
+  logo: https://openwhistle.net/apple-touch-icon.png
+  sameAs:
+  - https://github.com/openwhistle
 - '@context': https://schema.org
   '@type': FAQPage
   mainEntity:
@@ -136,7 +144,7 @@ jsonld:
 ---
   <main id="main-content">
 
-    <!-- Hero -->
+    <!-- Statement -->
     <section class="hero" aria-labelledby="hero-heading">
       <span class="hero-rule hero-rule-left" aria-hidden="true"></span>
       <span class="hero-rule hero-rule-right" aria-hidden="true"></span>
@@ -152,18 +160,16 @@ jsonld:
         </h1>
 
         <p class="hero-subline">
-          OpenWhistle ist eine kostenlose Hinweisgebersystem-Software für das HinSchG und Ihre interne Meldestelle.
-          Sie ist Open Source unter der <em>GPL-3.0</em> und läuft selbst gehostet auf Ihrem Server.
-          Sie setzt die Fristen des HinSchG und der EU-Richtlinie 2019/1937 um.
-          Keine Lizenzgebühr, keine IP-Protokollierung, Zwei-Faktor-Anmeldung für jedes Konto.
+          OpenWhistle ist der kostenlose, selbst gehostete interne Meldekanal, den die
+          EU-Richtlinie 2019/1937 und das <em>HinSchG</em> verlangen.
         </p>
 
         <div class="hero-actions">
           <a href="https://demo.openwhistle.net" class="btn btn-primary" rel="noopener noreferrer" target="_blank">
             Demo testen &rarr;
           </a>
-          <a href="/en/docs/#installation" class="btn btn-outline">
-            Installieren
+          <a href="/en/docs/" class="btn btn-outline" hreflang="en">
+            Dokumentation lesen (englisch)
           </a>
         </div>
 
@@ -176,285 +182,32 @@ jsonld:
       </div>
     </section>
 
-    <!-- Trust badges -->
-    <div class="trust-strip" role="region" aria-label="Eckdaten">
-      <div class="trust-strip-inner">
-        <div class="trust-item">
-          <div class="trust-item-check" aria-hidden="true">
-            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          0&nbsp;€ Lizenz
+    <!-- Promises -->
+    <section class="promises" id="promises" aria-label="Was OpenWhistle verspricht">
+      <div class="promises-inner">
+        <div class="promise">
+          <span class="promise-eyebrow">Anonymität</span>
+          <h2 class="promise-title">Anonymität zum Nachprüfen, nicht zum Glauben.</h2>
+          <p>Keine IP-Adresse auf irgendeiner Ebene, Meldezeiten nur auf den Tag genau, Metadaten aus Anhängen entfernt.</p>
+          <a href="/de/sicherheit/">So prüfen Sie es &rarr;</a>
         </div>
-        <div class="trust-item">
-          <div class="trust-item-check" aria-hidden="true">
-            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          Open Source (GPL-3.0)
+        <div class="promise">
+          <span class="promise-eyebrow">Meldestelle</span>
+          <h2 class="promise-title">Gebaut für die Meldestelle.</h2>
+          <p>Fristen von 7 Tagen und 3 Monaten, Löschen nach dem Vier-Augen-Prinzip, Audit-Log, Rollen und Standorte.</p>
+          <a href="/en/docs/admin/" hreflang="en">Admin-Handbuch (englisch) &rarr;</a>
         </div>
-        <div class="trust-item">
-          <div class="trust-item-check" aria-hidden="true">
-            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          Selbst gehostet
+        <div class="promise">
+          <span class="promise-eyebrow">Kontrolle</span>
+          <h2 class="promise-title">Kostenlos und unter Ihrer Kontrolle.</h2>
+          <p>Ihr Server, Ihre Daten, keine Lizenzgebühr, kein Anbieter.</p>
+          <a href="/en/docs/install/" hreflang="en">Installation (englisch) &rarr;</a>
         </div>
-        <div class="trust-item">
-          <div class="trust-item-check" aria-hidden="true">
-            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          Keine IP-Speicherung
-        </div>
-        <div class="trust-item">
-          <div class="trust-item-check" aria-hidden="true">
-            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          Fristen nach § 17 HinSchG
-        </div>
-        <div class="trust-item">
-          <div class="trust-item-check" aria-hidden="true">
-            <svg viewBox="0 0 8 8" fill="none"><path d="M1.5 4l2 2L6.5 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          TOTP für jedes Konto
-        </div>
-      </div>
-    </div>
-
-    <!-- What "free" covers -->
-    <section class="section" id="problem" aria-labelledby="problem-heading">
-      <div class="section-inner">
-        <span class="section-eyebrow">Was kostenlos heißt</span>
-        <h2 class="section-heading" id="problem-heading">
-          Die Software kostet nichts.<br>Die Meldestelle bleibt Ihre Aufgabe.
-        </h2>
-        <div class="section-divider" aria-hidden="true"></div>
-
-        <div class="problem-layout">
-          <div>
-            <table class="comparison-table stack-table" aria-label="Kosten einer internen Meldestelle mit OpenWhistle">
-              <thead>
-                <tr>
-                  <th scope="col">Posten</th>
-                  <th scope="col" class="col-ow">Mit OpenWhistle</th>
-                  <th scope="col">Trägt</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Softwarelizenz</td>
-                  <td class="val-good" data-label="Mit OpenWhistle">0&nbsp;€, GPL-3.0</td>
-                  <td class="val-bad" data-label="Trägt">niemand</td>
-                </tr>
-                <tr>
-                  <td>Server</td>
-                  <td class="val-good" data-label="Mit OpenWhistle">1&nbsp;vCPU, 1&nbsp;GB RAM</td>
-                  <td class="val-bad" data-label="Trägt">Sie (Hoster)</td>
-                </tr>
-                <tr>
-                  <td>Betrieb: Updates, Backups, TLS</td>
-                  <td class="val-good" data-label="Mit OpenWhistle">Docker Compose, Helm</td>
-                  <td class="val-bad" data-label="Trägt">Ihre IT</td>
-                </tr>
-                <tr>
-                  <td>Meldestelle besetzen (§&nbsp;15)</td>
-                  <td class="val-good" data-label="Mit OpenWhistle">Rollen, Audit-Log</td>
-                  <td class="val-bad" data-label="Trägt">Sie</td>
-                </tr>
-                <tr>
-                  <td>Mündlicher Kanal (§&nbsp;16 Abs.&nbsp;3)</td>
-                  <td class="val-good" data-label="Mit OpenWhistle">Leitfaden im Admin</td>
-                  <td class="val-bad" data-label="Trägt">Sie (Telefon)</td>
-                </tr>
-                <tr>
-                  <td>Support</td>
-                  <td class="val-good" data-label="Mit OpenWhistle">GitHub Issues</td>
-                  <td class="val-bad" data-label="Trägt">Community</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="problem-text">
-            <p>
-              Seit dem 2.&nbsp;Juli 2023 gilt das <strong>Hinweisgeberschutzgesetz (HinSchG)</strong>.
-              Beschäftigungsgeber mit in der Regel mindestens 50 Beschäftigten müssen eine interne
-              Meldestelle betreiben (§&nbsp;12).
-            </p>
-            <p>
-              OpenWhistle liefert den digitalen Meldekanal ohne Lizenzkosten.
-              Server, Betrieb und die Arbeit der Meldestelle bleiben bei Ihnen.
-              Das Gesetz verlangt außerdem mündliche Meldungen per Telefon.
-            </p>
-            <p>
-              Was das in Euro und Stunden bedeutet, zeigt der Artikel
-              <a href="/de/blog/interne-meldestelle-kostenlos/">Kostenloses Hinweisgebersystem: was es wirklich kostet</a>.
-              Andere Lösungen mit Quellen zeigt
-              <a href="/de/blog/whistleblower-software-vergleich/">Hinweisgebersystem-Anbieter im Vergleich</a>.
-              Wo die Daten liegen, erklärt
-              <a href="/de/blog/hinweisgebersystem-dsgvo-eu-hosting/">Hinweisgebersystem mit EU-Hosting und DSGVO</a>.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Features -->
-    <section class="section section-alt" id="features" aria-labelledby="features-heading">
-      <div class="section-inner">
-        <span class="section-eyebrow">Funktionen</span>
-        <h2 class="section-heading" id="features-heading">
-          Alles in einer Version,<br>ohne bezahlte Stufe
-        </h2>
-        <p class="section-subheading">
-          Es gibt keine Enterprise-Ausgabe: jede Funktion steht jedem Nutzer unter <span class="nowrap">GPL-3.0</span> zur Verfügung.
-        </p>
-
-        <div class="features-grid" role="list">
-
-          <article class="feature-card" role="listitem">
-            <div class="feature-icon-wrap" aria-hidden="true">
-              <svg viewBox="0 0 18 18" fill="none">
-                <path d="M9 1.5L2.5 4.5v5c0 4 2.9 7.5 6.5 8.5 3.6-1 6.5-4.5 6.5-8.5v-5L9 1.5z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <h3 class="feature-title">Keine IP-Adresse, auf keiner Ebene</h3>
-            <p class="feature-desc">
-              Vier Schichten halten Adressen fern: nginx entfernt die IP-Header und schreibt kein
-              Zugriffsprotokoll. Die App verwirft die Adresse, die Datenbank hat keine IP-Spalte.
-              Redis-Sitzungen enthalten nur ein Zufallstoken.
-            </p>
-          </article>
-
-          <article class="feature-card" role="listitem">
-            <div class="feature-icon-wrap" aria-hidden="true">
-              <svg viewBox="0 0 18 18" fill="none">
-                <rect x="3" y="7.5" width="12" height="8.5" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
-                <path d="M6 7.5V5.5a3 3 0 016 0v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                <circle cx="9" cy="11.5" r="1.5" fill="currentColor"/>
-              </svg>
-            </div>
-            <h3 class="feature-title">Fallnummer und PIN statt Konto</h3>
-            <p class="feature-desc">
-              Nach der Meldung erhält die hinweisgebende Person eine zufällige Fallnummer und eine
-              PIN im UUID4-Format. Beides wird genau einmal angezeigt. Ein Konto oder eine
-              E-Mail-Adresse ist nicht nötig.
-            </p>
-          </article>
-
-          <article class="feature-card" role="listitem">
-            <div class="feature-icon-wrap" aria-hidden="true">
-              <svg viewBox="0 0 18 18" fill="none">
-                <path d="M3 9V5l6-3 6 3v4c0 3.5-2.7 6.8-6 7.5C5.7 15.8 3 12.5 3 9z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" fill="none"/>
-                <path d="M6 9l2 2 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <h3 class="feature-title">Fristen nach § 17 HinSchG</h3>
-            <p class="feature-desc">
-              Dashboard und Fallseite zählen die 7-Tage-Eingangsbestätigung und die
-              Rückmeldefrist herunter. Auf Wunsch erinnern E-Mails vor Ablauf.
-            </p>
-          </article>
-
-          <article class="feature-card" role="listitem">
-            <div class="feature-icon-wrap" aria-hidden="true">
-              <svg viewBox="0 0 18 18" fill="none">
-                <path d="M2 4h14v10a1 1 0 01-1 1H3a1 1 0 01-1-1V4z" stroke="currentColor" stroke-width="1.4"/>
-                <path d="M2 4l7 6 7-6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <h3 class="feature-title">Nachrichten in beide Richtungen</h3>
-            <p class="feature-desc">
-              Meldestelle und hinweisgebende Person schreiben sich über die Statusseite, auch bei
-              anonymen Meldungen. Interne Notizen sieht nur die Meldestelle.
-            </p>
-          </article>
-
-          <article class="feature-card" role="listitem">
-            <div class="feature-icon-wrap" aria-hidden="true">
-              <svg viewBox="0 0 18 18" fill="none">
-                <circle cx="9" cy="6" r="3" stroke="currentColor" stroke-width="1.4"/>
-                <path d="M3 16c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-                <path d="M13 9.5l1 1 2.5-2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            <h3 class="feature-title">Zwei Faktoren für jedes Konto</h3>
-            <p class="feature-desc">
-              Der erste Faktor ist ein Passwort, LDAP oder OIDC. Der zweite ist immer ein TOTP-Code
-              nach RFC&nbsp;6238. Er lässt sich weder abschalten noch überspringen.
-            </p>
-          </article>
-
-          <article class="feature-card" role="listitem">
-            <div class="feature-icon-wrap" aria-hidden="true">
-              <svg viewBox="0 0 18 18" fill="none">
-                <rect x="2" y="2" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.4"/>
-                <path d="M5 9h8M5 6h4M5 12h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-              </svg>
-            </div>
-            <h3 class="feature-title">Verschlüsselt gespeichert</h3>
-            <p class="feature-desc">
-              Jede Meldung hat einen eigenen Datenschlüssel, der mit einem Hauptschlüssel verschlüsselt
-              ist. Der Hauptschlüssel liegt nie in der Datenbank.
-            </p>
-          </article>
-
-        </div>
-
-        <div class="shots-grid">
-          <figure class="doc-shot">
-            <img class="shot-light" src="/img/screens/submit-success-light.png" alt="Meldung abgeschickt: Fallnummer und geheime PIN mit Kopier-Schaltflächen, ein Häkchen zur Bestätigung und der Weg zur Statusseite." width="1440" height="1227" loading="lazy">
-            <img class="shot-dark" src="/img/screens/submit-success-dark.png" alt="Meldung abgeschickt: Fallnummer und geheime PIN mit Kopier-Schaltflächen, ein Häkchen zur Bestätigung und der Weg zur Statusseite." width="1440" height="1227" loading="lazy">
-            <figcaption>Nach dem Absenden: Fallnummer und PIN, einmal angezeigt.</figcaption>
-          </figure>
-          <figure class="doc-shot">
-            <img class="shot-light" src="/img/screens/admin-dashboard-light.png" alt="Das Dashboard der Meldestelle: Filter für Status und Standort, Suche und die Tabelle mit Fallnummer, Kategorie, Status, Eingangstag und den beiden Fristen." width="1440" height="1009" loading="lazy">
-            <img class="shot-dark" src="/img/screens/admin-dashboard-dark.png" alt="Das Dashboard der Meldestelle: Filter für Status und Standort, Suche und die Tabelle mit Fallnummer, Kategorie, Status, Eingangstag und den beiden Fristen." width="1440" height="1009" loading="lazy">
-            <figcaption>Das Dashboard mit beiden Fristen je Fall. Die Oberfläche gibt es auf Deutsch, Englisch, Französisch, Spanisch und Portugiesisch.</figcaption>
-          </figure>
-        </div>
-      </div>
-    </section>
-
-    <!-- What's new -->
-    <section class="section" id="whats-new" aria-labelledby="whats-new-heading">
-      <div class="section-inner">
-        <span class="section-eyebrow">Aktuelles Release: 2.1.1</span>
-        <h2 class="section-heading" id="whats-new-heading">
-          Neu in 2.0 und 2.1
-        </h2>
-        <p class="section-subheading">
-          Die wichtigsten Änderungen. Alles Weitere steht im
-          <a href="/en/changelog/">Änderungsprotokoll</a> und im Artikel
-          <a href="/de/blog/was-ist-neu-in-2-0/">Was ist neu in 2.0</a> und
-          <a href="/de/blog/metadaten-entfernen-ohne-beweise-zu-veraendern/">Metadaten entfernen, ohne das Beweisfoto zu verändern</a>.
-        </p>
-
-        <table class="comparison-table duties table-wide stack-table cols-version" aria-label="Änderungen in 2.0 und 2.1">
-          <thead>
-            <tr>
-              <th scope="col">Änderung</th>
-              <th scope="col" class="col-ow">Was sie bewirkt</th>
-              <th scope="col">Version</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>HinSchG-Fristen nach Gesetz</td><td>Rückmeldung drei Monate nach Bestätigung, ohne sie drei Monate und sieben Tage nach Eingang</td><td data-label="Version">2.1</td></tr>
-            <tr><td>Anhänge unverändert gesäubert</td><td>Metadaten raus, Pixel Bit für Bit gleich; Windows-Benutzername aus Office-Dateien entfernt</td><td data-label="Version">2.1</td></tr>
-            <tr><td>Eigenes Konto und SSO-Verknüpfung</td><td>Passwort selbst ändern, Anbieter selbst verknüpfen, verlorenen Authenticator zurücksetzen</td><td data-label="Version">2.1</td></tr>
-            <tr><td>Vier Augen sind zwei Personen</td><td>Ein Konto und die Konten, die es angelegt hat, bestätigen keine Löschung füreinander</td><td data-label="Version">2.1</td></tr>
-            <tr><td>Erstes Konto ist Superadmin</td><td>Organisationen und Mandanten sind erstmals verwaltbar</td><td data-label="Version">2.0.1</td></tr>
-            <tr><td>Vertrauliche Identität nur mit Grund</td><td>Name und Kontakt erst nach protokollierter Begründung sichtbar</td><td data-label="Version">2.0</td></tr>
-            <tr><td>Einmal-Token für die Einrichtung</td><td>Nur wer Zugang zum Server hat, legt das erste Konto an</td><td data-label="Version">2.0</td></tr>
-            <tr><td>Zeiten nur auf den Tag genau</td><td>Meldung, Nachrichten und Anhänge des Hinweisgebers ohne Uhrzeit</td><td data-label="Version">2.0</td></tr>
-            <tr><td>Onion-Adresse, optional</td><td>Tor Browser bietet den Wechsel an (<code>ONION_LOCATION</code>)</td><td data-label="Version">2.0</td></tr>
-            <tr><td>Viren-Scan für Anhänge</td><td>ClamAV prüft jeden Upload; ohne clamd kein Upload (<code>CLAMAV_HOST</code>)</td><td data-label="Version">2.0</td></tr>
-            <tr><td>TLS ab dem ersten Start</td><td>Selbstsigniertes Zertifikat, bis Ihr eigenes vorliegt</td><td data-label="Version">2.0</td></tr>
-            <tr><td>Suche im Meldungstext</td><td>Nur im Arbeitsspeicher entschlüsselt, kein Suchindex</td><td data-label="Version">2.0</td></tr>
-          </tbody>
-        </table>
       </div>
     </section>
 
     <!-- How it works -->
-    <section class="section section-alt" id="how-it-works" aria-labelledby="how-it-works-heading">
+    <section class="section" id="how-it-works" aria-labelledby="how-it-works-heading">
       <div class="section-inner">
         <span class="section-eyebrow">Der Ablauf</span>
         <h2 class="section-heading" id="how-it-works-heading">
@@ -470,112 +223,136 @@ jsonld:
       </div>
     </section>
 
+    <!-- Features -->
+    <section class="section section-alt" id="features" aria-labelledby="features-heading">
+      <div class="section-inner">
+        <span class="section-eyebrow">Funktionen</span>
+        <h2 class="section-heading" id="features-heading">
+          Was jede Seite bekommt
+        </h2>
+        <div class="section-divider" aria-hidden="true"></div>
+
+        <div class="figure-row">
+          <div>
+            <div class="table-scroll">
+              <table class="comparison-table">
+                <caption>Für Hinweisgebende</caption>
+                <tbody>
+                  <tr><td>Zugang</td><td>Fallnummer und eine PIN im UUID4-Format, einmal angezeigt. Kein Konto, keine E-Mail-Adresse.</td></tr>
+                  <tr><td>Modus</td><td>Anonym oder vertraulich: Name und Kontakt verschlüsselt, für die Fallbearbeitung erst nach protokolliertem Grund sichtbar</td></tr>
+                  <tr><td>Rückfragen</td><td>Antworten lesen und Nachrichten senden unter <code>/status</code>, mit Fallnummer und PIN</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="table-scroll">
+              <table class="comparison-table">
+                <caption>Für die Meldestelle</caption>
+                <tbody>
+                  <tr><td>Fallarbeit</td><td>Status, Zuweisung, interne Notizen, verknüpfte Fälle, PDF-Export</td></tr>
+                  <tr><td>Hinweise</td><td>Auf Wunsch E-Mail- und Webhook-Zusammenfassungen und Fristerinnerungen</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="table-scroll">
+              <table class="comparison-table">
+                <caption>Für den Betrieb</caption>
+                <tbody>
+                  <tr><td>Anmeldung</td><td>Passwort, LDAP oder OIDC, danach immer TOTP. Die Einrichtung ist Pflicht.</td></tr>
+                  <tr><td>Verschlüsselung</td><td>Jede Meldung hat einen eigenen Datenschlüssel; der Hauptschlüssel liegt nie in der Datenbank</td></tr>
+                  <tr><td>Sprachen</td><td>5 Sprachen: Deutsch, Englisch, Französisch, Spanisch, Portugiesisch (Brasilien)</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <figure class="doc-shot">
+            <img class="shot-light" src="/img/screens/admin-dashboard-light.png" alt="Das Dashboard der Meldestelle: Filter für Status und Standort, Suche und die Tabelle mit Fallnummer, Kategorie, Status, Eingangstag und den beiden Fristen." width="1440" height="1009" loading="lazy">
+            <img class="shot-dark" src="/img/screens/admin-dashboard-dark.png" alt="Das Dashboard der Meldestelle: Filter für Status und Standort, Suche und die Tabelle mit Fallnummer, Kategorie, Status, Eingangstag und den beiden Fristen." width="1440" height="1009" loading="lazy">
+            <figcaption>Das Dashboard: eine Zeile je Fall, mit beiden Fristen.</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
     <!-- Compliance -->
     <section class="section" id="compliance" aria-labelledby="compliance-heading">
       <div class="section-inner">
-        <span class="section-eyebrow">Rechtlicher Rahmen</span>
+        <span class="section-eyebrow">Compliance</span>
         <h2 class="section-heading" id="compliance-heading">
-          Welche Pflicht die Software trägt<br>und welche bei Ihnen bleibt
+          Compliance je Rechtsordnung
         </h2>
-        <p class="section-subheading">
-          Stand: HinSchG in der Fassung auf gesetze-im-internet.de, abgerufen am 27.&nbsp;September 2026.
-          Keine Rechtsberatung.
-        </p>
+        <div class="section-divider" aria-hidden="true"></div>
 
-        <table class="comparison-table duties table-wide stack-table cols-norm" aria-label="Pflichten nach HinSchG und was OpenWhistle dazu beiträgt">
-          <thead>
-            <tr>
-              <th scope="col">Pflicht</th>
-              <th scope="col">Norm</th>
-              <th scope="col" class="col-ow">OpenWhistle</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>Meldekanal in Textform</td><td class="cite">§&nbsp;16 Abs.&nbsp;3</td><td>Webformular, auch über Tor</td></tr>
-            <tr><td>Mündlicher Kanal, Telefon</td><td class="cite">§&nbsp;16 Abs.&nbsp;3</td><td>Nicht in der Software; Leitfaden unter <code>/admin/telephone-channel</code></td></tr>
-            <tr><td>Zugriff nur für Zuständige</td><td class="cite">§&nbsp;16 Abs.&nbsp;2</td><td>Rollen; Fallbearbeiter sehen nur ihre Fälle</td></tr>
-            <tr><td>Vertraulichkeit der Identität</td><td class="cite">§&nbsp;8</td><td>Identität erst nach protokolliertem Grund sichtbar</td></tr>
-            <tr><td>Anonyme Meldungen bearbeiten</td><td class="cite">§&nbsp;16 Abs.&nbsp;1 (Soll)</td><td>Anonymer Modus ohne personenbezogene Daten</td></tr>
-            <tr><td>Eingang bestätigen, 7 Tage</td><td class="cite">§&nbsp;17 Abs.&nbsp;1 Nr.&nbsp;1</td><td>Zähler ab Eingangstag, Erinnerung</td></tr>
-            <tr><td>Kontakt halten, nachfragen</td><td class="cite">§&nbsp;17 Abs.&nbsp;1 Nr.&nbsp;3, 5</td><td>Nachrichtenkanal über die Statusseite</td></tr>
-            <tr><td>Rückmeldung, 3 Monate</td><td class="cite">§&nbsp;17 Abs.&nbsp;2</td><td>90-Tage-Zähler ab Bestätigung</td></tr>
-            <tr><td>Dokumentation</td><td class="cite">§&nbsp;11 Abs.&nbsp;1</td><td>Verschlüsselte Fallakte, Audit-Log, PDF-Export</td></tr>
-            <tr><td>Löschung 3 Jahre nach Abschluss</td><td class="cite">§&nbsp;11 Abs.&nbsp;5</td><td>Automatisch, Standard 1095 Tage</td></tr>
-            <tr><td>Unabhängigkeit, Fachkunde</td><td class="cite">§&nbsp;15</td><td>Ihre Aufgabe</td></tr>
-          </tbody>
-        </table>
-
-        <div class="compliance-grid compliance-grid-spaced">
+        <div class="compliance-grid">
           <div class="compliance-card">
-            <span class="compliance-card-badge">§ 12, § 42 HinSchG</span>
-            <h3>Wer verpflichtet ist</h3>
-            <ul class="compliance-list">
-              <li>Beschäftigungsgeber mit in der Regel mindestens 50 Beschäftigten (§&nbsp;12 Abs.&nbsp;2)</li>
-              <li>Bestimmte Finanzunternehmen unabhängig von der Größe (§&nbsp;12 Abs.&nbsp;3)</li>
-              <li>50 bis 249 Beschäftigte: Pflicht seit 17.&nbsp;Dezember 2023 (§&nbsp;42 Abs.&nbsp;1)</li>
-              <li>Gemeinden nach dem jeweiligen Landesrecht (§&nbsp;12 Abs.&nbsp;1)</li>
-            </ul>
+            <span class="compliance-card-badge">EU</span>
+            <h3>EU-Richtlinie 2019/1937</h3>
+            <p>Private Arbeitgeber ab 50 Beschäftigten, Finanzunternehmen jeder Größe und der öffentliche Sektor brauchen einen internen Meldekanal. Eingänge werden in 7 Tagen bestätigt und in 3 Monaten beantwortet.</p>
+            <a href="/de/compliance/eu-richtlinie/" class="card-link">Pflicht für Pflicht &rarr;</a>
           </div>
-
           <div class="compliance-card">
-            <span class="compliance-card-badge">§ 14 HinSchG</span>
-            <h3>Wie Sie sie organisieren</h3>
-            <ul class="compliance-list">
-              <li>Eigene Beschäftigte oder ein Dritter, etwa eine Ombudsperson (§&nbsp;14 Abs.&nbsp;1)</li>
-              <li>50 bis 249 Beschäftigte: gemeinsame Stelle mehrerer Unternehmen möglich (§&nbsp;14 Abs.&nbsp;2)</li>
-              <li>Mehrere Organisationen in einer Installation: Multi-Tenancy mit eigenem Meldelink</li>
-            </ul>
+            <span class="compliance-card-badge">DE</span>
+            <h3>Deutschland: HinSchG</h3>
+            <p>Das Hinweisgeberschutzgesetz gilt seit dem 2.&nbsp;Juli 2023. Wer keine interne Meldestelle betreibt, riskiert bis zu 20.000&nbsp;&euro; (eine Übersicht, keine Rechtsberatung).</p>
+            <a href="/de/compliance/hinschg/" class="card-link">Paragraf für Paragraf &rarr;</a>
           </div>
-
           <div class="compliance-card">
-            <span class="compliance-card-badge">§ 40 HinSchG</span>
-            <h3>Bußgelder</h3>
-            <ul class="compliance-list">
-              <li>Keine interne Meldestelle: bis 20.000&nbsp;€ (§&nbsp;40 Abs.&nbsp;2 Nr.&nbsp;2, Abs.&nbsp;6)</li>
-              <li>Vertraulichkeit verletzt, Meldung behindert, Repressalie: bis 50.000&nbsp;€</li>
-              <li>In diesen Fällen gilt für Unternehmen §&nbsp;30 Abs.&nbsp;2 Satz&nbsp;3 OWiG: bis zum Zehnfachen</li>
-            </ul>
+            <span class="compliance-card-badge">ISO 37002</span>
+            <h3>Weitere Rechtsordnungen</h3>
+            <p>Der Kern folgt ISO 37002; ein weiteres Gesetz ist ein Profil darüber.</p>
+            <a href="/de/compliance/" class="card-link">Wie Profile funktionieren &rarr;</a>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Quick install -->
-    <section class="section section-alt" id="install" aria-labelledby="install-heading">
+    <!-- Verify it -->
+    <section class="section section-alt" id="verify" aria-labelledby="verify-heading">
       <div class="section-inner">
-        <span class="section-eyebrow">Schnellstart</span>
+        <span class="section-eyebrow">Selbst prüfen</span>
+        <h2 class="section-heading" id="verify-heading">
+          Prüfen Sie es selbst
+        </h2>
+        <div class="section-divider" aria-hidden="true"></div>
+
+        <p class="section-note">
+          OpenWhistle hat einen Maintainer und noch kein externes Audit.
+          Alles andere prüfen Sie selbst: den Code, die signierten Images
+          und die Liste jeder Anfrage, die Ihren Server verlässt.
+        </p>
+        <div class="btn-row">
+          <a href="/de/sicherheit/" class="btn btn-outline">Was Sie prüfen können</a>
+          <a href="/de/mitmachen/" class="btn btn-outline">Code mitprüfen</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Demo or install -->
+    <section class="section" id="install" aria-labelledby="install-heading">
+      <div class="section-inner">
+        <span class="section-eyebrow">Demo oder Installation</span>
         <h2 class="section-heading" id="install-heading">
-          In fünf Befehlen zum Einrichtungs&shy;assistenten
+          Erst testen, dann selbst betreiben
         </h2>
         <div class="section-divider" aria-hidden="true"></div>
 
         <div class="install-layout">
           <div class="install-text">
-            <table class="comparison-table" aria-label="Systemvoraussetzungen">
-              <thead>
-                <tr>
-                  <th scope="col">Bedarf</th>
-                  <th scope="col" class="col-ow">Minimum</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td>Docker</td><td>24.0, mit Compose v2</td></tr>
-                <tr><td>RAM</td><td>512&nbsp;MB (1&nbsp;GB empfohlen)</td></tr>
-                <tr><td>CPU, Festplatte</td><td>1&nbsp;vCPU, 5&nbsp;GB</td></tr>
-                <tr><td>PostgreSQL 18, Redis 8</td><td>im Compose-Stack enthalten</td></tr>
-                <tr><td>Netz</td><td>Domain, HTTPS-Zertifikat, Ports 80 und 443</td></tr>
-              </tbody>
-            </table>
-
-            <p class="note-muted">
-              Images für amd64 und arm64 liegen auf GitHub Container Registry, Docker Hub und
-              Quay.io. Der Assistent unter <code>/setup</code> verlangt das Einmal-Token aus dem Log.
-              Er legt das erste Konto als Superadmin an, mit Pflicht-TOTP.
+            <p>
+              Die öffentliche Demo meldet Sie mit vorausgefüllten Zugangsdaten an und wird alle 6 Stunden geleert.
+              Geben Sie dort nie eine echte Meldung ein.
             </p>
-
-            <a href="/en/docs/#installation" class="btn btn-outline btn-spaced">
-              Vollständige Installationsanleitung &rarr;
-            </a>
+            <p>
+              Die eigene Installation braucht drei Befehle und eine Änderung in der <code>.env</code>. Danach legt der Assistent unter <strong>/setup</strong> das erste Konto an.
+            </p>
+            <div class="btn-row">
+              <a href="https://demo.openwhistle.net" class="btn btn-outline" rel="noopener noreferrer" target="_blank">
+                Demo öffnen &rarr;
+              </a>
+              <a href="/en/docs/install/" class="btn btn-outline" hreflang="en">
+                Installationsanleitung (englisch) &rarr;
+              </a>
+            </div>
           </div>
 
           <div class="terminal-window" role="region" aria-label="Beispiel für die Installation im Terminal">
@@ -588,21 +365,12 @@ jsonld:
               <span class="terminal-file">bash — openwhistle setup</span>
             </div>
             <div class="terminal-body">
-              <span class="t-comment"># Repository klonen</span><br>
               <span class="t-prompt">$ </span><span class="t-cmd">git clone https://github.com/openwhistle/OpenWhistle.git</span><br>
-              <span class="t-prompt">$ </span><span class="t-cmd">cd OpenWhistle</span><br>
-              <br>
-              <span class="t-comment"># COMPOSE_FILE=docker-compose.prod.yml, SECRET_KEY,</span><br>
-              <span class="t-comment"># DATABASE_URL und REDIS_URL eintragen</span><br>
-              <span class="t-prompt">$ </span><span class="t-cmd">cp .env.example .env &amp;&amp; nano .env</span><br>
-              <br>
-              <span class="t-comment"># Alle Dienste starten: App, PostgreSQL, Redis, nginx</span><br>
+              <span class="t-prompt">$ </span><span class="t-cmd">cd OpenWhistle &amp;&amp; cp .env.example .env</span><br>
+              <span class="t-comment"># .env: COMPOSE_FILE, SECRET_KEY, DATABASE_URL, REDIS_URL eintragen</span><br>
               <span class="t-prompt">$ </span><span class="t-cmd">docker compose up -d</span><br>
               <br>
-              <span class="t-comment"># Einmal-Token für den Assistenten lesen</span><br>
-              <span class="t-prompt">$ </span><span class="t-cmd">docker compose logs app | grep "Setup token"</span><br>
-              <br>
-              <span class="t-comment"># Dann im Browser: https://localhost/setup</span>
+              <span class="t-comment"># Dann https://localhost/setup öffnen, mit dem Token aus dem App-Log</span>
             </div>
           </div>
         </div>
@@ -610,7 +378,7 @@ jsonld:
     </section>
 
     <!-- FAQ -->
-    <section class="section" id="faq" aria-labelledby="faq-heading">
+    <section class="section section-alt" id="faq" aria-labelledby="faq-heading">
       <div class="section-inner">
         <span class="section-eyebrow">FAQ</span>
         <h2 class="section-heading" id="faq-heading">
@@ -636,7 +404,7 @@ jsonld:
           <details class="faq-item">
             <summary>Kann ich das Hinweisgebersystem selbst hosten?</summary>
             <div class="faq-answer">
-              Ja, OpenWhistle gibt es nur selbst gehostet: Sie betreiben es mit Docker Compose oder Helm auf Ihrem Server. Einen gehosteten Dienst des Projekts gibt es nicht. Die Installation beschreibt die <a href="/en/docs/#installation" class="link-accent">Dokumentation</a>.
+              Ja, OpenWhistle gibt es nur selbst gehostet: Sie betreiben es mit Docker Compose oder Helm auf Ihrem Server. Einen gehosteten Dienst des Projekts gibt es nicht. Die Installation beschreibt die <a href="/en/docs/install/" class="link-accent" hreflang="en">Dokumentation</a>.
             </div>
           </details>
 

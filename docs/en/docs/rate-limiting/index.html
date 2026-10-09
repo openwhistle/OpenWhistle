@@ -1,0 +1,17 @@
+---
+title: Rate limiting without IP addresses | OpenWhistle
+description: 'How OpenWhistle slows down PIN guessing, password spraying and flooding without ever storing an IP address: what it counts instead, and the limits.'
+translation_key: docs-rate-limiting
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1>Rate limiting without IP tracking</h1>
+        <ul>
+          <li><strong>Wrong PINs</strong> are counted per case number, under an HMAC of it, so a Redis dump does not list which cases someone tried. After <code>MAX_ACCESS_ATTEMPTS</code> (5) within <code>ACCESS_LOCKOUT_MINUTES</code> (15), the status page asks to wait. A correct PIN always works.</li>
+          <li><strong>Admin passwords</strong> are counted per username (<code>MAX_LOGIN_ATTEMPTS</code>) and across all accounts, against password spraying (<code>ADMIN_FAILED_LOGIN_ALERT_THRESHOLD</code>).</li>
+          <li><strong>nginx</strong> limits every route, the submission wizard (<code>POST /submit</code>) included: 10 requests/s with a burst of 30 per client address. The counters live in nginx memory only and are never logged. The onion listener has its own shared zone.</li>
+          <li><strong>Helm:</strong> the chart sets the same limit on its ingress-nginx Ingress. With another ingress controller, set an equivalent one.</li>
+        </ul>

@@ -7,7 +7,6 @@
     /* ── Hero ────────────────────────────────────────────────────── */
     .hero {
       position: relative;
-      min-height: 100svh;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -196,47 +195,55 @@
       transform: translateY(-1px);
     }
 
-    /* ── Trust strip ─────────────────────────────────────────────── */
-    .trust-strip {
-      background: var(--surface);
-      border-top: 1px solid var(--hairline);
-      border-bottom: 1px solid var(--hairline);
-      padding: var(--space-5) var(--space-8);
+    /* ── Promises: the one full-bleed accent block (DESIGN.md "Reassurance block") ── */
+    .promises {
+      background: var(--accent);
+      color: var(--accent-ink);
+      padding: var(--space-16) var(--space-8);
     }
-    .trust-strip-inner {
+    .promises-inner {
       max-width: var(--max-width);
       margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: var(--space-8);
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-10);
     }
-    .trust-item {
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-      font-family: var(--font-body);
-      font-size: 0.72rem;
-      letter-spacing: 0.08em;
+    /* A column, so the three links sit on one line whatever the text above them. */
+    .promise { display: flex; flex-direction: column; align-items: flex-start; }
+    .promise-eyebrow {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: var(--body);
+      color: color-mix(in srgb, var(--accent-ink) 85%, var(--accent));
+      margin-bottom: var(--space-3);
     }
-    .trust-item-check {
-      color: var(--accent);
-      width: 16px;
-      height: 16px;
-      border-radius: var(--radius-full);
-      background: var(--accent-fog);
-      box-shadow: 0 0 0 1px var(--accent-dim);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
+    .promise-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 600;
+      line-height: 1.3;
+      letter-spacing: -0.01em;
+      margin-bottom: var(--space-3);
     }
-    .trust-item-check svg {
-      width: 8px;
-      height: 8px;
+    .promise p {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      margin-bottom: var(--space-4);
+    }
+    .promise a {
+      margin-top: auto;
+      color: var(--accent-ink);
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    /* The default accent focus ring would vanish on the accent fill. */
+    .promise a:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+    @media (forced-colors: active) {
+      .promises { border-block: 1px solid CanvasText; }
     }
 
     /* ── Section ─────────────────────────────────────────────────── */
@@ -276,14 +283,6 @@
       color: var(--ink);
       margin-bottom: var(--space-4);
     }
-    .section-subheading {
-      font-size: 1.05rem;
-      font-weight: 300;
-      color: var(--body);
-      max-width: 56ch;
-      line-height: 1.7;
-      margin-bottom: var(--space-12);
-    }
 
     /* Section divider */
     .section-divider {
@@ -293,42 +292,10 @@
       margin-bottom: var(--space-10);
     }
 
-    /* ── Problem section ─────────────────────────────────────────── */
-    .problem-layout {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--space-16);
-      align-items: start;
-    }
-    .problem-text p {
-      color: var(--body);
-      font-size: 1rem;
-      line-height: 1.75;
-      margin-bottom: var(--space-5);
-    }
-    .problem-text strong { color: var(--ink); font-weight: 600; }
-
     .comparison-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.88rem;
-    }
-    .comparison-table thead th {
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted);
-      padding: var(--space-3) var(--space-4);
-      text-align: left;
-      border-bottom: 2px solid var(--hairline);
-      overflow-wrap: break-word;
-    }
-    .comparison-table thead th:first-child {
-      width: 40%;
-    }
-    .comparison-table thead th.col-ow {
-      color: var(--accent);
     }
     .comparison-table tbody td {
       padding: var(--space-3) var(--space-4);
@@ -339,80 +306,6 @@
       overflow-wrap: break-word;
     }
     .comparison-table tbody tr:last-child td { border-bottom: none; }
-    .comparison-table .val-good {
-      color: var(--accent);
-      font-family: var(--font-body);
-      font-size: 0.85rem;
-      font-weight: 600;
-    }
-    .comparison-table .val-bad {
-      color: var(--muted);
-      font-family: var(--font-body);
-      font-size: 0.85rem;
-    }
-
-    /* ── Features ────────────────────────────────────────────────── */
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: var(--space-5);
-    }
-    .feature-card {
-      background: var(--canvas);
-      box-shadow: 0 0 0 1px var(--hairline);
-      border-left: 4px solid var(--accent-dim);
-      border-radius: 0 var(--radius-md) var(--radius-md) 0;
-      padding: var(--space-6);
-      transition: border-left-color var(--duration-mid) ease, transform var(--duration-mid) ease, box-shadow var(--duration-mid) ease;
-      animation: rise 0.5s var(--ease-stiff) both;
-    }
-    .feature-card:hover {
-      border-left-color: var(--accent);
-      transform: translateY(-2px);
-      box-shadow: 0 0 0 1px var(--hairline), 0 8px 32px color-mix(in srgb, var(--inverse) 8%, transparent);
-    }
-    [data-theme="dark"] .feature-card {
-      background: var(--surface);
-    }
-    [data-theme="dark"] .feature-card:hover {
-      box-shadow: 0 0 0 1px var(--hairline), 0 8px 32px color-mix(in srgb, var(--inverse) 40%, transparent);
-    }
-    .feature-card:nth-child(1) { animation-delay: 0.05s; }
-    .feature-card:nth-child(2) { animation-delay: 0.10s; }
-    .feature-card:nth-child(3) { animation-delay: 0.15s; }
-    .feature-card:nth-child(4) { animation-delay: 0.20s; }
-    .feature-card:nth-child(5) { animation-delay: 0.25s; }
-    .feature-card:nth-child(6) { animation-delay: 0.30s; }
-
-    .feature-icon-wrap {
-      color: var(--accent);
-      width: 40px;
-      height: 40px;
-      background: var(--accent-fog);
-      box-shadow: 0 0 0 1px var(--accent-dim);
-      border-radius: var(--radius-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: var(--space-4);
-    }
-    .feature-icon-wrap svg {
-      width: 18px;
-      height: 18px;
-    }
-    .feature-title {
-      font-family: var(--font-display);
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--ink);
-      margin-bottom: var(--space-2);
-      letter-spacing: -0.01em;
-    }
-    .feature-desc {
-      font-size: 0.875rem;
-      color: var(--body);
-      line-height: 1.65;
-    }
 
     /* ── Compliance ──────────────────────────────────────────────── */
     .compliance-grid {
@@ -454,27 +347,16 @@
       color: var(--body);
       line-height: 1.7;
     }
-    .compliance-list {
+    .card-link {
+      display: inline-block;
       margin-top: var(--space-4);
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-2);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--ink);
+      text-decoration: underline;
+      text-underline-offset: 3px;
     }
-    .compliance-list li {
-      font-size: 0.82rem;
-      color: var(--body);
-      display: flex;
-      align-items: flex-start;
-      gap: var(--space-2);
-    }
-    .compliance-list li::before {
-      content: '—';
-      color: var(--accent);
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      flex-shrink: 0;
-      margin-top: 3px;
-    }
+    .card-link:hover { color: var(--accent); }
 
     /* ── Quick install ───────────────────────────────────────────── */
     .install-layout {
@@ -489,44 +371,6 @@
       line-height: 1.75;
       margin-bottom: var(--space-5);
     }
-    .install-text strong { color: var(--ink); }
-    .install-reqs {
-      margin-top: var(--space-6);
-      padding: var(--space-4) var(--space-5);
-      background: var(--surface-2);
-      box-shadow: 0 0 0 1px var(--hairline);
-      border-radius: var(--radius-md);
-    }
-    [data-theme="dark"] .install-reqs {
-      background: var(--surface-3);
-    }
-    .install-reqs-title {
-      font-family: var(--font-body);
-      font-size: 0.65rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: var(--space-3);
-    }
-    .install-reqs ul { list-style: none; }
-    .install-reqs li {
-      font-family: var(--font-body);
-      font-size: 0.82rem;
-      color: var(--body);
-      padding: var(--space-1) 0;
-      display: flex;
-      align-items: center;
-      gap: var(--space-2);
-    }
-    .install-reqs li::before {
-      content: '';
-      width: 4px;
-      height: 4px;
-      border-radius: var(--radius-full);
-      background: var(--hairline-strong);
-      flex-shrink: 0;
-    }
-
     /* Terminal */
     .terminal-window {
       background: var(--inverse);
@@ -626,27 +470,27 @@
 
     /* ── Responsive ─────────────────────────────────────────────── */
 
+    @media (max-width: 900px) {
+      .promises-inner { grid-template-columns: 1fr 1fr; }
+    }
+
     @media (max-width: 768px) {
       .hero-rule-left, .hero-rule-right { display: none; }
-      .problem-layout,
       .install-layout { grid-template-columns: 1fr; }
-      .features-grid { grid-template-columns: 1fr 1fr; }
       .compliance-grid { grid-template-columns: 1fr; }
+      .promises { padding: var(--space-12) var(--space-5); }
       .faq-grid { grid-template-columns: 1fr; }
       .section { padding: var(--space-16) var(--space-5); }
-      .trust-strip { padding: var(--space-5); }
     }
 
     @media (max-width: 540px) {
-      .features-grid { grid-template-columns: 1fr; }
+      .promises-inner { grid-template-columns: 1fr; gap: var(--space-8); }
       .hero-actions { flex-direction: column; align-items: stretch; }
       .btn { justify-content: center; white-space: normal; text-align: center; }
-      .trust-strip-inner { gap: var(--space-5); }
     }
 
-/* Formerly inline style= attributes: the P4 CSP (style-src without 'unsafe-inline') allows none. */
-.btn-spaced { margin-top: var(--space-6); }
-.compliance-grid-spaced { margin-top: var(--space-10); }
+/* Buttons side by side below a text: verify, demo and install. */
+.btn-row { display: flex; flex-wrap: wrap; gap: var(--space-4); margin-top: var(--space-6); }
 .link-accent { color: var(--accent); }
 
 /* ── Figures and tables ─────────────────────────────────────── */
@@ -666,12 +510,10 @@
 [data-theme="dark"] .shot-dark { display: block; }
 .diagram figcaption { font-size: 0.82rem; color: var(--muted); line-height: 1.6; text-align: center; margin-top: var(--space-3); }
 .doc-shot figcaption { font-size: 0.82rem; color: var(--muted); line-height: 1.6; margin-top: var(--space-3); }
-.shots-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-8); margin-top: var(--space-10); }
 
 /* A wide table scrolls inside its column instead of widening the page. */
 .table-scroll { overflow-x: auto; }
 .table-scroll + .table-scroll { margin-top: var(--space-8); }
-.table-wide { width: 100%; margin-top: var(--space-8); }
 .comparison-table a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
 .comparison-table code { font-family: var(--font-mono); font-size: 0.8em; }
 .comparison-table caption {
@@ -683,11 +525,6 @@
   color: var(--ink);
   padding-bottom: var(--space-3);
 }
-/* Duty tables: fixed widths for the narrow columns. */
-.comparison-table.duties thead th:first-child { width: 34%; }
-.comparison-table.duties.cols-norm th:nth-child(2) { width: 18%; }
-.comparison-table.duties.cols-version th:nth-child(3) { width: 10%; }
-.nowrap { white-space: nowrap; }
 
 /* A table beside its figure; one column on a phone. */
 .figure-row {
@@ -696,33 +533,15 @@
   gap: var(--space-10);
   align-items: start;
 }
-.figure-row + .figure-row { margin-top: var(--space-12); }
 .section-note { color: var(--body); max-width: 68ch; margin-top: var(--space-8); }
 .section-note a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
-.note-muted { font-size: 0.85rem; color: var(--muted); margin-top: var(--space-4); line-height: 1.6; }
-.note-muted a, .problem-text a { color: var(--accent); }
 @media (max-width: 900px) {
   .figure-row { grid-template-columns: 1fr; gap: var(--space-6); }
 }
-@media (max-width: 768px) { .shots-grid { grid-template-columns: 1fr; } }
 /* Key-value tables beside a figure: a narrow key column, keys in full colour. */
-.figure-row .comparison-table thead th:first-child,
 .figure-row .comparison-table tbody td:first-child { width: 9.5rem; }
 .figure-row .comparison-table tbody td:first-child { color: var(--ink); font-weight: 500; }
-/* A diagram is too wide for the 2fr column: it goes under its table, at its own size. */
-.figure-row:has(> .diagram) { grid-template-columns: 1fr; }
-/* A three-column table stacks per row on a phone: each row becomes a small card. A legal
-   source (.cite) is set small in mono; a cell with data-label announces its column. */
 @media (max-width: 600px) {
-  .stack-table thead { display: none; }
-  .stack-table tr { display: block; padding: var(--space-3) 0; border-bottom: 1px solid var(--hairline); }
-  .stack-table tbody td { display: block; border: none; padding: var(--space-1) var(--space-2); }
-  .stack-table tbody td:first-child { color: var(--ink); font-weight: 500; }
-  .stack-table tbody td.cite { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
-  .stack-table tbody td[data-label]::before { content: attr(data-label) ": "; color: var(--muted); font-weight: 400; }
-}
-@media (max-width: 600px) {
-  .figure-row .comparison-table thead th:first-child,
   .figure-row .comparison-table tbody td:first-child { width: 6.5rem; }
   .figure-row .comparison-table tbody td { padding-left: var(--space-2); padding-right: var(--space-2); }
 }

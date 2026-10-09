@@ -1,0 +1,34 @@
+---
+title: 'Requirements: Docker, CPU, RAM, Ports | OpenWhistle'
+description: 'What a host needs to run OpenWhistle: Docker 24 and Compose v2, 512 MB of RAM, one vCPU, a domain with HTTPS, and ports 80 and 443 open inbound.'
+translation_key: docs-requirements
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1 id="requirements">Requirements</h1>
+        <p>A shared VPS with 1&nbsp;vCPU and 1&nbsp;GB RAM is enough for most organisations.</p>
+        <div class="table-scroll">
+<table class="env-table">
+          <thead><tr><th>Need</th><th>Minimum</th></tr></thead>
+          <tbody>
+            <tr><td>Docker</td><td>24.0 or newer</td></tr>
+            <tr><td>Docker Compose</td><td>v2.0 or newer: the <code>docker compose</code> plugin, not the legacy <code>docker-compose</code> binary</td></tr>
+            <tr><td>PostgreSQL 18, Redis 8</td><td>bundled in the Compose stack, nothing to install</td></tr>
+            <tr><td>RAM</td><td>512&nbsp;MB (1&nbsp;GB recommended)</td></tr>
+            <tr><td>CPU</td><td>1&nbsp;vCPU</td></tr>
+            <tr><td>Disk</td><td>5&nbsp;GB for application, database and logs</td></tr>
+            <tr><td>Network</td><td>a domain name, a valid HTTPS certificate (Let's Encrypt recommended), ports 80 and 443 open inbound for nginx</td></tr>
+          </tbody>
+        </table>
+</div>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">Important — HTTPS required</div>
+          <p>
+            A reporting channel over plain HTTP breaks the confidentiality duty of §8 HinSchG and
+            GDPR. In production, HTTPS is not optional.
+          </p>
+        </div>

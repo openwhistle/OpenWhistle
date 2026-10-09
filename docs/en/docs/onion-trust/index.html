@@ -1,0 +1,21 @@
+---
+title: The onion listener's trust boundary | OpenWhistle
+description: Why the app trusts the onion header only from the shipped nginx, never from the client, and why the app port must be reachable only through that nginx.
+translation_key: docs-onion-trust
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1>Onion listener trust boundary</h1>
+        <p>
+          With <code>ONION_LOCATION</code> set, the app decides per request whether it came through
+          the onion (Tor) listener. That decides <code>Secure</code> cookies, HSTS and the
+          <code>Onion-Location</code> header. The client-supplied <code>Host</code> header never
+          decides it: a request on the HTTPS listener could claim
+          <code>Host: &lt;anything&gt;.onion</code>. Instead, nginx sets <code>X-OW-Onion: 1</code> only in the
+          onion server block and clears it in the regular one, like the IP headers of layer 1. Both
+          hold only while the app port is reachable through this nginx alone
+          (<a href="/en/docs/onion/">Offering an onion address</a>).
+        </p>

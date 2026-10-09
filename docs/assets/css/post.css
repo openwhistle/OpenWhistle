@@ -70,9 +70,8 @@
     .comp-table tbody td.col-ow { background: var(--accent-fog); }
     .comp-table tbody tr:last-child td { border-bottom: none; }
     .val-good { color: var(--accent); font-weight: 600; }
-    .val-bad { color: var(--muted); }
 
-    /* Diagram figures, as in docs/en/docs/index.html; base.css picks the twin. */
+    /* Diagram figures, as on the docs admin, whistleblower and anonymity pages; base.css picks the twin. */
     .diagram { margin: var(--space-8) 0; }
     .diagram img { max-width: 100%; height: auto; margin: 0 auto; display: block; }
     .diagram figcaption { font-size: 0.82rem; color: var(--muted); line-height: 1.6; text-align: center; margin-top: var(--space-3); }

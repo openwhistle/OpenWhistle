@@ -21,6 +21,7 @@ jobs:
   # List all sha- tags sorted newest-first, skip the first 10, delete the rest.
   cleanup-registries:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions: {}
     env:
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

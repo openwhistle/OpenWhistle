@@ -4,26 +4,28 @@ nav:
   toggle: Toggle navigation
   theme: Toggle dark mode
   home: OpenWhistle home
-  features: Features
-  how: How it Works
+  security: Security
   compliance: Compliance
   docs: Documentation
   roadmap: Roadmap
   changelog: Changelog
   blog: Blog
   compare: Comparison
+  contribute: Contribute
+  sponsor: Sponsor
   github: GitHub
-  demo: Try Demo
+  demo: Try the demo
 footer:
-  aria: Footer links
   tagline: Protecting those who speak up.
-  resources: Resources
-  live_demo: Live Demo
+  project: Project
   issues: Issues
   licence_link: License (GPL-3.0)
   legal: Legal
+  imprint: Legal notice
+  privacy: Privacy
   licence_note: Licensed under GPL-3.0. Built with ❤️ for transparency.
   no_advice: OpenWhistle does not provide legal advice. Please consult qualified counsel regarding your specific HinSchG obligations.
   copyright: © OpenWhistle Contributors — GNU General Public License v3.0 — Version
-  contribute: Contribute on GitHub →
 og_image_alt: "OpenWhistle: secure whistleblower reporting"
+feed:
+  title: OpenWhistle Blog

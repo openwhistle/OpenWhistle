@@ -1,4 +1,4 @@
 primary:
-  - {label: nav.features, page: home, fragment: features}
+  - {label: nav.compliance, page: home, fragment: compliance}
   - {label: nav.docs, page: docs}
 footer: []

@@ -48,7 +48,7 @@ def _open(browser: Browser, url: str, width: int, scheme: Theme = "dark") -> Pag
 
 
 def test_diagram_pages_are_found() -> None:
-    assert {"/en/", "/de/", "/en/docs/"} <= set(URLS), URLS
+    assert {"/en/", "/de/", "/en/docs/admin/"} <= set(URLS), URLS
 
 
 @pytest.mark.parametrize("theme", ["dark", "light"])

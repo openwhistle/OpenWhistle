@@ -139,7 +139,7 @@ def test_every_image_reserves_its_real_shape() -> None:
     [
         "/en/",
         "/de/",
-        "/en/docs/",
+        "/en/docs/admin/",
         "/en/blog/free-internal-reporting-channel/",
         "/de/blog/interne-meldestelle-kostenlos/",
     ],

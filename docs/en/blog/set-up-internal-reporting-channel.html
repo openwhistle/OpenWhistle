@@ -31,7 +31,7 @@ jsonld:
     logo:
       '@type': ImageObject
       url: https://openwhistle.net/apple-touch-icon.png
-  image: https://openwhistle.net/og-image.png
+  image: https://openwhistle.net/en/blog/set-up-internal-reporting-channel/og.png
   inLanguage: en
 - '@context': https://schema.org
   '@type': BreadcrumbList
@@ -66,7 +66,7 @@ jsonld:
 
         <div class="article-body">
 
-          <p>This guide sets up OpenWhistle with Docker Compose. At the end, the digital channel of your internal reporting office (interne Meldestelle) runs on your own server. The authoritative reference remains the <a href="/en/docs/#installation">installation guide in the documentation</a>.</p>
+          <p>This guide sets up OpenWhistle with Docker Compose. At the end, the digital channel of your internal reporting office (interne Meldestelle) runs on your own server. The authoritative reference remains the <a href="/en/docs/install/">installation guide in the documentation</a>.</p>
 
           <h2>Prerequisites</h2>
 
@@ -155,7 +155,7 @@ TLS_HOSTNAME=meldestelle.ihr-unternehmen.de
             <p><code>ENCRYPTION_KEY</code> encrypts the reports; without it, <code>SECRET_KEY</code> does. If the key is lost, the reports can no longer be read. Keep it in a password manager or a secret store.</p>
           </div>
 
-          <p>All other settings are in the <a href="/en/docs/#configuration">configuration table</a>.</p>
+          <p>All other settings are in the <a href="/en/docs/configuration/">configuration table</a>.</p>
 
           <h2>Step 4: Install the HTTPS certificate</h2>
 

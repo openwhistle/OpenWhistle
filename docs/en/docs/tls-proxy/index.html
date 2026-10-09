@@ -1,0 +1,29 @@
+---
+title: OpenWhistle behind a TLS-terminating proxy | OpenWhistle
+description: 'Run OpenWhistle behind Cloudflare, Traefik or a host nginx that terminates TLS: forward to port 443, or switch the bundled nginx to plain HTTP.'
+translation_key: docs-tls-proxy
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1 id="behind-proxy">Behind a TLS-terminating proxy</h1>
+        <p>
+          With Cloudflare, Traefik or a host nginx terminating TLS in front, choose one:
+        </p>
+        <ul>
+          <li>point it at <code>https://…:443</code>, with the bundled nginx's certificate, or</li>
+          <li>switch the bundled nginx to plain HTTP on port 80 with the shipped override. Port 80 then proxies instead of redirecting, and 443 is not published:</li>
+        </ul>
+        <div class="code-block" role="region" aria-label="Plain-HTTP override">
+          <div class="code-block-header">
+            <span class="code-block-lang">.env</span>
+          </div>
+          <pre><code><span class="t-str">COMPOSE_FILE</span>=docker-compose.prod.yml:docker-compose.behind-proxy.yml</code></pre>
+        </div>
+        <ul>
+          <li>Keep port 80 reachable only from the terminator: nothing on it is encrypted.</li>
+          <li><code>SECURE_COOKIES</code> stays <code>true</code>; the browser still talks HTTPS.</li>
+          <li>nginx still strips the client-IP headers the terminator adds, so it rate-limits the terminator's address. Rate-limit per client at the terminator.</li>
+        </ul>

@@ -1,0 +1,137 @@
+---
+title: Install OpenWhistle with Docker Compose | OpenWhistle
+description: 'Install OpenWhistle with Docker Compose in four steps: clone, configure the .env file, start the stack, and create the first admin in the setup wizard.'
+translation_key: docs-install
+layout: docs
+css:
+- docs
+js:
+- site
+---
+<h1 id="installation">Install with Docker Compose</h1>
+        <p>
+          Docker Compose starts everything with one command: application, PostgreSQL, Redis and
+          nginx.
+        </p>
+
+        <h2 id="step-1-clone-the-repository">Step 1 — Clone the repository</h2>
+        <div class="code-block" role="region" aria-label="Clone repository command">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+          </div>
+          <pre><code><span class="t-prompt">$ </span><span class="t-cmd">git clone https://github.com/openwhistle/OpenWhistle.git</span>
+<span class="t-prompt">$ </span><span class="t-cmd">cd OpenWhistle</span></code></pre>
+        </div>
+
+        <h2 id="step-2-configure-environment">Step 2 — Configure environment</h2>
+        <p>
+          At minimum set <code>SECRET_KEY</code>, <code>DATABASE_URL</code> and
+          <code>REDIS_URL</code>; every other setting is in the
+          <a href="/en/docs/configuration/">configuration table</a>.
+        </p>
+        <div class="code-block" role="region" aria-label="Environment configuration">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+          </div>
+          <pre><code><span class="t-prompt">$ </span><span class="t-cmd">cp .env.example .env</span>
+<span class="t-prompt">$ </span><span class="t-cmd">nano .env</span>
+
+<span class="t-comment"># The production stack (TLS, nginx); every docker compose command below uses it:</span>
+<span class="t-str">COMPOSE_FILE</span>=docker-compose.prod.yml
+
+<span class="t-comment"># Minimum required values. The production Redis requires REDIS_PASSWORD,</span>
+<span class="t-comment"># so it goes into REDIS_URL too, as POSTGRES_PASSWORD goes into DATABASE_URL:</span>
+<span class="t-comment"># openssl rand -hex 32 — a new value for each key:</span>
+<span class="t-str">SECRET_KEY</span>=&lt;64 hex characters&gt;
+<span class="t-str">ENCRYPTION_KEY</span>=&lt;64 hex characters&gt;
+<span class="t-str">POSTGRES_PASSWORD</span>=db-password
+<span class="t-str">REDIS_PASSWORD</span>=redis-password
+<span class="t-str">DATABASE_URL</span>=postgresql+asyncpg://openwhistle:db-password@db:5432/openwhistle
+<span class="t-str">REDIS_URL</span>=redis://:redis-password@redis:6379/0</code></pre>
+        </div>
+
+        <h2 id="step-3-start-services">Step 3 — Start services</h2>
+        <div class="code-block" role="region" aria-label="Start services command">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+          </div>
+          <pre><code><span class="t-prompt">$ </span><span class="t-cmd">docker compose up -d</span>
+<span class="t-out">&#x25BA; Network openwhistle_default      Created</span>
+<span class="t-out">&#x25BA; Container openwhistle-db-1        Started</span>
+<span class="t-out">&#x25BA; Container openwhistle-redis-1     Started</span>
+<span class="t-out">&#x25BA; Container openwhistle-app-1       Started</span>
+<span class="t-out">&#x25BA; Container openwhistle-nginx-1     Started</span></code></pre>
+        </div>
+
+        <div class="callout callout-note">
+          <div class="callout-title">TLS is on by default</div>
+          <p>
+            nginx serves HTTPS on 443 and redirects plain HTTP on 80. Put your
+            <code>fullchain.pem</code> and <code>privkey.pem</code> (e.g. from certbot) into
+            <code>nginx/certs/</code> and restart.
+          </p>
+          <ul>
+            <li>Copy them, do not symlink: a link into <code>/etc/letsencrypt/live</code> dangles inside the container.</li>
+            <li>Keep the key root-owned <code>0600</code>, or <code>0644</code>. Otherwise <code>tls-init</code> stops and names the path and the reason.</li>
+            <li>Without them, the one-shot <code>tls-init</code> service generates a self-signed certificate before nginx starts. It is for <code>TLS_HOSTNAME</code> (default <code>localhost</code>), a <code>.env</code> variable only <code>docker-compose.prod.yml</code> reads. After a change, <code>docker compose up -d tls-init nginx</code> issues and serves a new one.</li>
+            <li>To renew, drop the new certificate into <code>nginx/certs/</code> and run <code>docker compose up -d tls-init nginx</code>. Restarting <code>nginx</code> alone keeps the old one: nginx never re-reads <code>nginx/certs/</code> itself.</li>
+          </ul>
+        </div>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">Self-signed is for first boot only</div>
+          <p>
+            It lets the stack come up before you have a real certificate, not to serve users. A
+            browser that clicks through its warning gets an HSTS pin
+            (<code>Strict-Transport-Security: max-age=31536000; includeSubDomains; preload</code>) for
+            that hostname. Install a real certificate before anyone but you visits.
+          </p>
+        </div>
+
+        <h2 id="step-4-run-the-setup-wizard">Step 4 — Run the setup wizard</h2>
+        <p>
+          Unless you set <code>SETUP_TOKEN</code> yourself, read the one-time setup token from the
+          log:
+        </p>
+        <div class="code-block" role="region" aria-label="Read the setup token from the log">
+          <div class="code-block-header">
+            <span class="code-block-lang">bash</span>
+          </div>
+          <pre><code><span class="t-prompt">$ </span><span class="t-cmd">docker compose logs app | grep "Setup token"</span></code></pre>
+        </div>
+        <p>
+          Then open <code>https://&lt;TLS_HOSTNAME&gt;/setup</code> (<code>https://localhost/setup</code>
+          by default) and follow the <a href="/en/docs/install/#first-run">First-Run Wizard</a>. The account
+          it creates is a superadmin: it manages organisations and grants every role.
+        </p>
+
+        <div class="callout callout-note">
+          <div class="callout-title">Database migrations</div>
+          <p>
+            Alembic migrations run automatically at startup. The app serves no traffic until every
+            one has been applied.
+          </p>
+        </div>
+
+        <h2 id="first-run">First-Run Wizard</h2>
+        <p>
+          On first boot, <code>/setup</code> serves the wizard: one page, four parts. Once an admin
+          account exists it redirects to <code>/admin/login</code> for good.
+        </p>
+
+        <h2 id="wizard-steps">Wizard steps</h2>
+        <ol class="step-list">
+          <li><div><strong>Setup token</strong><br>From <code>SETUP_TOKEN</code> or the log (<a href="/en/docs/install/">Installation</a>, step 4).</div></li>
+          <li><div><strong>Admin account</strong><br>A username of 3–64 characters (letters, digits, spaces and <code>. _ @ -</code>). A password of at least 12 characters and at most 72 bytes.</div></li>
+          <li><div><strong>TOTP</strong><br>Scan the QR code with an authenticator app (Google Authenticator, Authy, Bitwarden, etc.) and enter its 6-digit code. Mandatory; it cannot be skipped.</div></li>
+          <li><div><strong>Installation count</strong><br>Optional and unchecked: may this installation be counted once a day (<a href="/en/docs/install-count/">what is sent</a>)? Changeable under <strong>Admin → System</strong>.</div></li>
+        </ol>
+
+        <div class="callout callout-warn">
+          <div class="callout-title">Save your TOTP secret</div>
+          <p>
+            Write down the TOTP secret shown during setup and keep it offline. There are no backup
+            codes. A lost authenticator is reset by a superadmin or on the host
+            (<a href="/en/docs/lost-authenticator/">Lost password or authenticator</a>).
+          </p>
+        </div>
