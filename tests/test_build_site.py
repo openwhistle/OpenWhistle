@@ -929,7 +929,7 @@ def test_a_docs_page_outside_the_default_language_fails(src: Path, tmp_path: Pat
 @pytest.mark.parametrize(
     ("old", "new", "message"),
     [
-        ("need: optional", "need: sometimes", r"group 'ldap', setting 'LDAP_TLS': need 'sometimes'"),
+        ("need: optional", "need: maybe", r"group 'ldap', setting 'LDAP_TLS': need 'maybe'"),
         ("name: LDAP_URL, ", "", r"group 'ldap', setting #1: lacks 'name'"),
         ("description: Verify the certificate., ", "", r"setting 'LDAP_TLS': lacks 'description'"),
         ("intro: <p>Everything is an environment variable.</p>\n", "", r"lacks 'intro'"),
