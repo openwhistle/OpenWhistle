@@ -231,9 +231,16 @@ jobs:
           echo "Setup page status: $setup_status"
           [ "$setup_status" = "200" ]
 
-          # The image ships the fonts with their OFL licences (the licence requires it)
-          for f in sora-latin-400-normal.woff2 JetBrainsMono-Regular.woff2 sora-LICENSE jetbrains-mono-LICENSE; do
-            [ "$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:4009/static/fonts/$f")" = "200" ]
+          # The image serves every committed font and both OFL licences (the licence
+          # requires it to travel with the fonts).
+          fonts=$(ls app/static/fonts | grep -v '^README$')
+          # Two lines, not `a && b`: set -e ignores a failure left of `&&`.
+          [ "$(echo "$fonts" | grep -c '\.woff2$')" = "6" ]
+          [ "$(echo "$fonts" | grep -c 'LICENSE$')" = "2" ]
+          for f in $fonts; do
+            status=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:4009/static/fonts/$f")
+            echo "$f: $status"
+            [ "$status" = "200" ]
           done
 
           docker compose -f docker-compose.ci.yml down -v

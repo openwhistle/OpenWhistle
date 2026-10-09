@@ -34,11 +34,24 @@
    "create": "from pathlib import Path\n\nROOT = Path(__file__).parents[1]\nPAGES = ROOT / \"docs\"\n"
   },
   {
+   "id": "SPLIT-TEST-PATH-DOCS",
+   "file": "tests/test_split_probe.py",
+   "tests": "SPLIT",
+   "create": "from pathlib import Path\n\nPAGES = sorted(Path(\"docs\").glob(\"**/*.html\"))\n"
+  },
+  {
    "id": "SPLIT-SCAN-BLIND",
    "file": "tests/test_repository_split.py",
    "tests": "SPLIT",
-   "old": "READS_DOCS = re.compile(r\"\"\"/\\s*[\"']docs[\"']|[\"']docs/\"\"\")",
-   "new": "READS_DOCS = re.compile(r\"\"\"/\\s*[\"']docs[\"']\"\"\")"
+   "old": "READS_DOCS = re.compile(r\"\"\"[/(,]\\s*[\"']docs[\"']|[\"']docs[\"']\\s*/|[\"']docs/\"\"\")",
+   "new": "READS_DOCS = re.compile(r\"\"\"[/(,]\\s*[\"']docs[\"']|[\"']docs[\"']\\s*/\"\"\")"
+  },
+  {
+   "id": "SPLIT-SCAN-NO-CALL",
+   "file": "tests/test_repository_split.py",
+   "tests": "SPLIT",
+   "old": "READS_DOCS = re.compile(r\"\"\"[/(,]\\s*[\"']docs[\"']|[\"']docs[\"']\\s*/|[\"']docs/\"\"\")",
+   "new": "READS_DOCS = re.compile(r\"\"\"/\\s*[\"']docs[\"']|[\"']docs[\"']\\s*/|[\"']docs/\"\"\")"
   },
   {
    "id": "FONT-LICENCE-GONE",

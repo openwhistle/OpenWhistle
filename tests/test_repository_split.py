@@ -11,12 +11,22 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-# A path into docs/: `ROOT / "docs"` or a string literal starting with docs/ (docs-tech/ is ours).
-READS_DOCS = re.compile(r"""/\s*["']docs["']|["']docs/""")
+# A path into docs/: "docs" after `/`, `(` or `,` (ROOT / "docs", Path("docs"), .joinpath("docs"),
+# os.path.join(ROOT, "docs")), "docs" before `/`, or a literal starting with docs/.
+# docs-tech/ is this repository's own.
+READS_DOCS = re.compile(r"""[/(,]\s*["']docs["']|["']docs["']\s*/|["']docs/""")
 
 
 def test_the_reader_scan_sees_a_docs_path_and_passes_a_link() -> None:
-    for reader in ('ROOT / "docs"', "parents[1] / 'docs'", '"docs/en/index.html"'):
+    for reader in (
+        'ROOT / "docs"',
+        "parents[1] / 'docs'",
+        '"docs/en/index.html"',
+        'Path("docs")',
+        'ROOT.joinpath("docs")',
+        'os.path.join(ROOT, "docs")',
+        '"docs" / "en"',
+    ):
         assert READS_DOCS.search(reader), reader
     for other in ('"docs-tech/release.md"', '"https://openwhistle.net/en/docs/install/"'):
         assert not READS_DOCS.search(other), other
