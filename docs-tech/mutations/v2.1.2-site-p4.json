@@ -12,6 +12,9 @@
   ],
   "PINS": [
    "tests/test_build_pins.py"
+  ],
+  "WEBSITE_WF": [
+   "tests/test_website_workflow.py"
   ]
  },
  "mutations": [
@@ -154,6 +157,34 @@
    "old": "(?:[^@/]*@)?",
    "new": "",
    "tests": "CONFIG"
+  },
+  {
+   "id": "PUBLISH-NO-NEEDS",
+   "file": ".github/workflows/website-image.yml",
+   "old": "    needs: test\n",
+   "new": "",
+   "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "PUBLISH-ON-PR",
+   "file": ".github/workflows/website-image.yml",
+   "old": "github.event_name != 'pull_request' && ",
+   "new": "",
+   "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "PUBLISH-NO-VERIFY",
+   "file": ".github/workflows/website-image.yml",
+   "old": "cosign verify",
+   "new": "true",
+   "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "PUBLISH-ONE-ARCH",
+   "file": ".github/workflows/website-image.yml",
+   "old": "linux/amd64,linux/arm64",
+   "new": "linux/amd64",
+   "tests": "WEBSITE_WF"
   }
  ],
  "manual": [
