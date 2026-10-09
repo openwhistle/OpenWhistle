@@ -99,14 +99,13 @@ def test_the_privacy_policy_names_this_setup_and_nothing_else() -> None:
     for url in ("/de/datenschutz/", "/en/privacy/"):
         text = _main(url)
         for fact in (
-            "GitHub Pages",
-            "GitHub B.V.",
             "Hetzner Online GmbH",
             "ow-theme",
             "info@openwhistle.net",
             "demo.openwhistle.net",
         ):
             assert fact in text, (url, fact)
+        assert "GitHub Pages" not in page(url), url
         assert not BOILERPLATE.search(text), (url, BOILERPLATE.search(text))
 
 
@@ -139,7 +138,6 @@ FACTS = {
     "/de/datenschutz/": (
         "30 Tage auf dem Server und 365 Tage",
         "30 Tage auf dem Server und 90 Tage",
-        "EU-U.S. Data Privacy Framework",
         "§ 25 Abs. 2 Nr. 2 TDDDG",
         "Art. 28 DSGVO",
         "Art. 77 DSGVO",
@@ -147,12 +145,51 @@ FACTS = {
     "/en/privacy/": (
         "30 days on the server and 365 days",
         "30 days on the server and 90 days",
-        "EU-U.S. Data Privacy Framework",
         "§ 25(2) no. 2 TDDDG",
         "Art. 28 GDPR",
         "Art. 77 GDPR",
     ),
 }
+
+
+# The own-server section, per language: the processor, the four log fields, what is not stored
+# and the retention (P5-3). Each fact is checked inside the section, not anywhere on the page.
+SERVER = {
+    "/de/datenschutz/": (
+        "eigener-server",
+        (
+            "Hetzner Online GmbH",
+            "Art. 28 DSGVO",
+            "kein Zugriffs- und kein Fehlerprotokoll",
+            "den angeforderten Pfad, den Statuscode und den Hostnamen der verweisenden Website",
+            "nur die Uhrzeit,",
+            "keine IP-Adresse, keine Browserkennung und keine Query-Zeichenfolge",
+            "30 Tage auf dem Server und 90 Tage in unserem Protokollarchiv",
+            "Art. 6 Abs. 1 lit. f DSGVO",
+        ),
+    ),
+    "/en/privacy/": (
+        "own-server",
+        (
+            "Hetzner Online GmbH",
+            "Art. 28 GDPR",
+            "no access log and no error log",
+            "only the time,",
+            "the requested path, the status code and the host name of the referring site",
+            "no IP address, no browser identification and no query string",
+            "30 days on the server and 90 days in our log archive",
+            "Art. 6(1)(f) GDPR",
+        ),
+    ),
+}
+
+
+def test_the_own_server_section_states_processor_log_fields_and_retention() -> None:
+    for url, (section, facts) in SERVER.items():
+        html = page(url).split(f'id="{section}"', 1)[1].split("</section>", 1)[0]
+        text = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html))
+        for fact in facts:
+            assert fact in text, (url, fact)
 
 
 def test_both_languages_state_the_same_periods_and_legal_bases() -> None:

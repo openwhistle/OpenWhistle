@@ -1,0 +1,70 @@
+{
+ "timeout_seconds": 600,
+ "test_groups": {
+  "LEGAL": [
+   "tests/test_legal_pages.py"
+  ],
+  "BUILD": [
+   "tests/test_build_site.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "P5-DE-IP",
+   "file": "docs/de/datenschutz/index.html",
+   "old": "keine IP-Adresse, keine Browserkennung und keine Query-Zeichenfolge",
+   "new": "keine IP-Adresse",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "P5-EN-RETENTION",
+   "file": "docs/en/privacy/index.html",
+   "old": "These lines stay 30 days on the server and 90 days",
+   "new": "These lines stay 30 days on the server and 30 days",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "P5-DE-PROXY-LOG",
+   "file": "docs/de/datenschutz/index.html",
+   "old": "schreibt kein Zugriffs- und kein Fehlerprotokoll.\n          Der Website",
+   "new": "schreibt ein Zugriffsprotokoll.\n          Der Website",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "P5-EN-REFERRER",
+   "file": "docs/en/privacy/index.html",
+   "old": "the status code and the host name of the referring site",
+   "new": "the status code",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "P5-EN-PAGES-BACK",
+   "file": "docs/en/privacy/index.html",
+   "old": "This website is served from a server of the controller's own.",
+   "new": "This website is served through GitHub Pages.",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "P5-DE-PAGES-BACK",
+   "file": "docs/de/datenschutz/index.html",
+   "old": "Diese Website wird von einem eigenen Server des Verantwortlichen ausgeliefert.",
+   "new": "Diese Website wird über GitHub Pages ausgeliefert.",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "P5-STUB-WRITER",
+   "file": "scripts/build_site.py",
+   "old": "def check_redirects(",
+   "new": "def write_stubs() -> None:\n    pass\n\n\ndef check_redirects(",
+   "tests": "BUILD"
+  },
+  {
+   "id": "P5-STUB-FLAG",
+   "file": "scripts/build_site.py",
+   "old": "    args = parser.parse_args(argv)",
+   "new": "    parser.add_argument(\"--redirect-stubs\", action=\"store_true\")\n    args = parser.parse_args(argv)",
+   "tests": "BUILD"
+  }
+ ],
+ "manual": []
+}
