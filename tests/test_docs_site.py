@@ -81,8 +81,8 @@ def test_roadmap_uses_only_self_hosted_fonts() -> None:
     text = html + css_of(html)
     assert "fonts.googleapis.com" not in text
     assert "fonts.gstatic.com" not in text
-    assert re.search(r"@font-face\s*\{[^}]*url\(['\"]?/fonts/", css_of(html)), (
-        f"{ROADMAP} must declare its fonts from /fonts/, like /en/docs/ does"
+    assert re.search(r"@font-face\s*\{[^}]*url\(['\"]?(?:/fonts/|data:font/woff2)", css_of(html)), (
+        f"{ROADMAP} must declare its fonts from /fonts/ or inline, like /en/docs/ does"
     )
 
 

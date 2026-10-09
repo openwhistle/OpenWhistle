@@ -51,3 +51,29 @@ License
 
 SIL Open Font License 1.1 for both families: `sora-LICENSE`,
 `jetbrains-mono-LICENSE`, unmodified as shipped by their packages.
+
+Variable fonts of the website (docs/_fonts, never copied to the site)
+--------------------------------------------------------------------
+
+openwhistle.net ships one variable file per family instead of the static cuts above (those stay
+for the app image and the diagram code). The originals are committed unchanged; scripts/build_site.py
+cuts them to the weights the CSS uses and to the drawn text, and inlines the result into
+assets/css/fonts.css (fonts-italic.css for the italic). SIL Open Font License 1.1: sora-LICENSE,
+jetbrains-mono-LICENSE.
+
+  Sora[wght].ttf                    wght 100-800 (site: 300-700)
+    https://github.com/sora-xor/sora-font/blob/7f9a9c5d0ccd1c099cfac420aa27133df1c5fdc4/fonts/variable/Sora%5Bwght%5D.ttf
+    commit 7f9a9c5d0ccd1c099cfac420aa27133df1c5fdc4
+    sha256 84ff7096ae3ec6c8be47d906d1a0ba4de7f2ce78c615275c77301964a316e16c
+
+  JetBrainsMono[wght].ttf           wght 100-800 (site: 400-700)
+  JetBrainsMono-Italic[wght].ttf    wght 100-800 (site: 400, one instance)
+    https://github.com/JetBrains/JetBrainsMono/releases/download/v2.304/JetBrainsMono-2.304.zip
+    release v2.304, fonts/variable/ in the zip (sha256 of the zip
+    6f6376c6ed2960ea8a963cd7387ec9d76e3f629125bc33d1fdcd7eb7012f7bbf)
+    JetBrainsMono[wght].ttf         sha256 662a196d58f1183bf2d77428b6d5283fe3f45161ab021bea4036bc98e5cac016
+    JetBrainsMono-Italic[wght].ttf  sha256 f115aaa12113718c02ce72864fe6823b87241bc23d3e44cf1220155f861063f2
+
+OpenType features kept: fontTools' default set (kern, liga, calt, ccmp, locl, mark, mkmk, ...) and
+tnum. Dropped, because no stylesheet asks for them: aalt, case, dlig, salt, ordn, sinf, subs, sups,
+zero, ss01, ss02, ss19, ss20, cv01-cv99. The italic mono is cut to the text pages draw in it.

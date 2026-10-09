@@ -1,5 +1,7 @@
-/* Self-hosted fonts — no external CDN calls */
-    @font-face { font-family: 'Sora'; src: url('/fonts/sora-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: optional; }
-    @font-face { font-family: 'Sora'; src: url('/fonts/sora-latin-600-normal.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: optional; }
-    @font-face { font-family: 'Sora'; src: url('/fonts/sora-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: optional; }
-    @font-face { font-family: 'JetBrains Mono'; src: url('/fonts/JetBrainsMono-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: optional; }
+/* Self-hosted variable fonts, no external CDN. build_site.py inlines each file into this
+   stylesheet as a data: URI: the fonts then arrive with the render-blocking CSS, before the
+   first layout, so nothing moves when they apply (CLS 0). One file each; the weights are a range. */
+    @font-face { font-family: 'Sora'; src: url('/fonts/sora-variable.woff2') format('woff2'); font-weight: 300 700; font-style: normal; font-display: block; }
+    @font-face { font-family: 'JetBrains Mono'; src: url('/fonts/jetbrains-mono-variable.woff2') format('woff2'); font-weight: 400 700; font-style: normal; font-display: block; }
+    /* A weight or slant the files do not have is never faked by the browser. */
+    html { font-synthesis: none; }

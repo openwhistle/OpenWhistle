@@ -282,8 +282,8 @@
   {
    "id": "CSP-THEME-HASH-LIVE",
    "file": "website/nginx.conf",
-   "old": "'sha256-aTVT2yTZj8X3C8V1QPnib4HTXa5Npxc/Hah1pqj89gY='; style-src",
-   "new": "'sha256-bTVT2yTZj8X3C8V1QPnib4HTXa5Npxc/Hah1pqj89gY='; style-src",
+   "old": "'sha256-aTVT2yTZj8X3C8V1QPnib4HTXa5Npxc/Hah1pqj89gY=' 'sha256-UOhLOKUSErnkOiTPtSJP0DuwUnFJEJTwteiuGzKzEsY='; style-src",
+   "new": "'sha256-bTVT2yTZj8X3C8V1QPnib4HTXa5Npxc/Hah1pqj89gY=' 'sha256-UOhLOKUSErnkOiTPtSJP0DuwUnFJEJTwteiuGzKzEsY='; style-src",
    "red": "tests/e2e/test_site_container.py::test_no_page_breaks_its_csp"
   },
   {
@@ -313,6 +313,27 @@
    "old": "    .docs-search-open[hidden] { display: block; visibility: hidden; }\n",
    "new": "",
    "red": "tests/e2e/test_site_container.py::test_the_first_view_stays_in_budget"
+  },
+  {
+   "id": "FONT-INLINE-OFF",
+   "file": "scripts/build_site.py",
+   "old": "            css = css.replace(f\"url('/fonts/{target}')\", f\"url('data:font/woff2;base64,{data}')\")\n",
+   "new": "",
+   "red": "tests/e2e/test_site_container.py::test_the_first_view_stays_in_budget"
+  },
+  {
+   "id": "FONT-KICK-DROPPED",
+   "file": "docs/_includes/head.html",
+   "old": "  <script>document.fonts.load(\"1em Sora\");document.fonts.load('1em \"JetBrains Mono\"')</script>\n",
+   "new": "",
+   "red": "tests/e2e/test_site_container.py::test_the_first_view_stays_in_budget"
+  },
+  {
+   "id": "CHANGELOG-COUNT",
+   "file": "scripts/render_changelog.py",
+   "old": "NEWEST = 5\n",
+   "new": "NEWEST = 6\n",
+   "red": "tests/test_changelog_page.py::test_the_older_page_holds_the_rest_and_no_release_is_on_both"
   }
  ]
 }

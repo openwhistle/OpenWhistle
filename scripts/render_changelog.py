@@ -221,8 +221,9 @@ CONTENT_FOOT = """    </main>
   """
 
 
-def _major(version: Version) -> int | None:
-    return int(m.group(1)) if (m := re.match(r"(\d+)\.", version.name)) else None
+# Releases on /en/changelog/ besides the unreleased section: a count, not a version rule, so a
+# new release never pushes the page over the 100 KB first-view budget by itself.
+NEWEST = 5
 
 
 def render_content(
@@ -231,12 +232,14 @@ def render_content(
     """The page body between the site navigation and the footer; the layout adds the rest.
 
     Two pages, because one page of every release is 43 KB of HTML and the first view of a
-    page stays within 100 KB: /en/changelog/ holds the newest major and what is not yet
-    released, /en/changelog/older/ every major before it.
+    page stays within 100 KB: /en/changelog/ holds what is not yet released and the NEWEST
+    releases, /en/changelog/older/ the rest.
     """
     shown = [v for v in versions if any(line.strip() for line in v.lines)]
-    current = max((m for v in shown if (m := _major(v)) is not None), default=0)
-    shown = [v for v in shown if ((_major(v) or current) < current) == older]
+    released = [v for v in shown if v.name.lower() != "unreleased"]
+    on_main = {v.name for v in released[:NEWEST]}
+    shown = [v for v in shown if (v.name in on_main or v.name.lower() == "unreleased") != older]
+    oldest_shown = released[NEWEST - 1].name if len(released) >= NEWEST else ""
 
     nav_links = "\n".join(f'          <a href="#{slug(v.name)}">{esc(v.name)}</a>' for v in shown)
 
@@ -261,14 +264,14 @@ def render_content(
         )
         title = "Older releases"
         lead = (
-            f"Every release before {current}.0.0, newest first. "
+            f"Every release before {oldest_shown}, newest first. "
             '<a href="/en/changelog/">Back to the current releases</a>.'
         )
     else:
         crumb = "        <span>Changelog</span>"
         title = "Changelog"
         lead = (
-            f"Every release since {current}.0.0, newest first. "
+            f"The unreleased changes and the newest {NEWEST} releases. "
             'Before that: <a href="/en/changelog/older/">older releases</a>.'
         )
     shell_tail = (

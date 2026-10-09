@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 
 import pytest
-from playwright.sync_api import Browser
+from playwright.sync_api import Browser, CDPSession
 
 from tests.built_site import built, pages
 
@@ -67,6 +67,18 @@ _METRICS = """() => new Promise(done => {
 })"""
 
 
+def _custom_fonts(cdp: CDPSession, selector: str) -> list[bool]:
+    """Per platform font of the first match: is it a web font? [] when nothing matches."""
+    cdp.send("DOM.enable")
+    cdp.send("CSS.enable")
+    root = cdp.send("DOM.getDocument", {"depth": -1})["root"]["nodeId"]
+    node = cdp.send("DOM.querySelector", {"nodeId": root, "selector": selector})["nodeId"]
+    if not node:
+        return []
+    fonts = cdp.send("CSS.getPlatformFontsForNode", {"nodeId": node})["fonts"]
+    return [bool(f.get("isCustomFont")) for f in fonts]
+
+
 @pytest.mark.parametrize("url", URLS)
 def test_the_first_view_stays_in_budget(browser: Browser, url: str) -> None:
     """Redesign spec, performance: <= 100 KB, LCP < 1.5 s, CLS 0, one host."""
@@ -91,13 +103,19 @@ def test_the_first_view_stays_in_budget(browser: Browser, url: str) -> None:
         )
         page.goto(BASE + url, wait_until="load")
         metrics = page.evaluate(_METRICS)
+        custom = _custom_fonts(cdp, "h1")
+        mono = _custom_fonts(cdp, "code, pre")
     finally:
         ctx.close()
     foreign = sorted(
         {u for u in urls.values() if not u.startswith(BASE) and not u.startswith("data:")}
     )
-    total = sum(sizes.values())
+    # A data: font is reported as a request of its own, but its bytes arrived inside the CSS.
+    total = sum(n for key, n in sizes.items() if not urls.get(key, "").startswith("data:"))
     assert foreign == [], f"{url} asks another host: {foreign}"
     assert total <= 100 * 1024, f"{url}: first view {total} bytes"
     assert metrics["lcp"] < 1500, f"{url}: LCP {metrics['lcp']:.0f} ms"
     assert metrics["cls"] == 0, f"{url}: CLS {metrics['cls']}"
+    # The fonts are inlined in the CSS: under the throttle the first view is drawn in them.
+    assert custom and all(custom), f"{url}: the text fell back to a system font"
+    assert all(mono), f"{url}: code fell back to a system font"

@@ -67,6 +67,14 @@ def test_the_csp_never_relaxes() -> None:
             assert rule in csp, (where, rule)
 
 
+def test_only_fonts_may_come_from_a_data_uri() -> None:
+    """Fonts are inlined in fonts.css (before the first layout, CLS 0): font-src allows data:."""
+    for where in ("site", "docs"):
+        csp = _csp(where)
+        assert "font-src 'self' data:;" in csp, where
+        assert csp.count("data:") == 1, where
+
+
 def test_the_log_holds_no_address_agent_or_query() -> None:
     fmt = re.search(r"log_format\s+counter\s+'([^']*)'", CONF)
     assert fmt and fmt.group(1) == "$time_iso8601 $uri $status $ref_host"

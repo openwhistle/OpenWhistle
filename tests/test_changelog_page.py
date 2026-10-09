@@ -49,7 +49,9 @@ def test_the_older_page_holds_the_rest_and_no_release_is_on_both() -> None:
     ids = lambda page: set(re.findall(r'<section class="docs-section" id="([^"]+)"', page))  # noqa: E731
     current = ids(RENDER_CHANGELOG.render_content(versions, link_defs))
     assert current and ids(older) and not current & ids(older)
-    assert "v1-0-0" in ids(older) and "v2-0-0" in current and "unreleased" in current
+    assert "v1-0-0" in ids(older) and "unreleased" in current
+    # Unreleased plus the newest NEWEST releases: a count, so a release never breaks the budget.
+    assert len(current - {"unreleased"}) <= 5 == RENDER_CHANGELOG.NEWEST
 
 
 def test_render_content_holds_no_site_chrome() -> None:

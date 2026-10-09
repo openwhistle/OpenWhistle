@@ -895,8 +895,8 @@
   {
    "id": "TABLE-CELLS-TOUCH",
    "file": "scripts/build_site.py",
-   "old": "    return _CELL_END.sub(\"\\\\1\\n\", html_out)",
-   "new": "    return html_out",
+   "old": "    html_out = _CELL_END.sub(\"\\\\1\\n\", html_out)",
+   "new": "    html_out = html_out",
    "tests": "BUILD_SETTINGS"
   },
   {

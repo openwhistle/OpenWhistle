@@ -19,10 +19,6 @@
   <link rel="icon" href="/favicon.ico" sizes="32x32">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
-  <link rel="preload" href="/fonts/sora-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="/fonts/sora-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="/fonts/sora-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="/fonts/JetBrainsMono-Regular.woff2" as="font" type="font/woff2" crossorigin>
   <meta property="og:type" content="{{ page.meta.get('og_type') or 'website' }}">
   <meta property="og:site_name" content="OpenWhistle">
 {% if not page.meta.get('noindex') %}
@@ -62,3 +58,5 @@
 {% for name in page.meta.css %}
   <link rel="stylesheet" href="/assets/css/{{ name }}.css">
 {% endfor %}
+  {#- Starts decoding the inlined fonts before the first layout, not at it (CSP hash in nginx.conf). #}
+  <script>document.fonts.load("1em Sora");document.fonts.load('1em "JetBrains Mono"')</script>
