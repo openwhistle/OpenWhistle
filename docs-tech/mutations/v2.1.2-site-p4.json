@@ -57,6 +57,20 @@
    "old": "        if len(parts) != 4 or parts[2] != \"200\":",
    "new": "        if len(parts) != 4:",
    "tests": "STATS"
+  },
+  {
+   "id": "STATS-INDEX-SEGMENT",
+   "file": "scripts/site_stats.py",
+   "old": "        if uri.endswith(\"/index.html\"):",
+   "new": "        if uri.endswith(\"index.html\"):",
+   "tests": "STATS"
+  },
+  {
+   "id": "STATS-REFS-FOR-ASSETS",
+   "file": "scripts/site_stats.py",
+   "old": "        _time, uri, _status, ref = parts\n        # Skip assets and pagefind; only count pages and their referrers\n        if uri.startswith(\"/pagefind/\") or uri.endswith(_ASSET_SUFFIXES):\n            continue",
+   "new": "        _time, uri, _status, ref = parts\n        if ref != \"-\":\n            refs[ref] += 1\n        # Skip assets and pagefind; only count pages and their referrers\n        if uri.startswith(\"/pagefind/\") or uri.endswith(_ASSET_SUFFIXES):\n            continue",
+   "tests": "STATS"
   }
  ]
 }

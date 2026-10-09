@@ -22,6 +22,13 @@ _ASSET_SUFFIXES = (
     ".txt",
     ".json",
     ".ico",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".pdf",
+    ".map",
+    ".woff",
+    ".webmanifest",
 )
 
 
@@ -33,11 +40,15 @@ def count(lines: Iterable[str]) -> tuple[Counter[str], Counter[str]]:
         if len(parts) != 4 or parts[2] != "200":
             continue
         _time, uri, _status, ref = parts
-        if ref != "-":
-            refs[ref] += 1
+        # Skip assets and pagefind; only count pages and their referrers
         if uri.startswith("/pagefind/") or uri.endswith(_ASSET_SUFFIXES):
             continue
-        pages[uri.removesuffix("index.html")] += 1  # $uri logs a page as its index file
+        # $uri logs a page as its index file; strip /index.html only as a path segment
+        if uri.endswith("/index.html"):
+            uri = uri.removesuffix("index.html")
+        pages[uri] += 1
+        if ref != "-":
+            refs[ref] += 1
     return pages, refs
 
 
