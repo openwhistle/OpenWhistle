@@ -22,6 +22,7 @@ Patterns NOT covered here have a documented reason:
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -76,3 +77,42 @@ def test_every_locale_file_is_a_supported_language() -> None:
     docs = _LOCALES.parents[1] / "docs"
     assert f"{len(files)} languages:" in (docs / "en" / "index.html").read_text(encoding="utf-8")
     assert f"{len(files)} Sprachen:" in (docs / "de" / "index.html").read_text(encoding="utf-8")
+
+
+# Each locale's name in the site's English and German prose. A new locale must add its names here.
+_LANGUAGE_NAMES = {
+    "en": ("English", "Englisch"),
+    "de": ("German", "Deutsch"),
+    "fr": ("French", "Französisch"),
+    "es": ("Spanish", "Spanisch"),
+    "pt-br": ("Brazilian Portuguese", "Portugiesisch"),
+}
+
+# Every passage of the site that lists the interface languages: (page, sentence pattern, how many).
+_LANGUAGE_LISTS = [
+    ("en/index.html", r"The interface is in (.*?)\.", 2),  # FAQ and its FAQPage JSON-LD
+    ("en/index.html", r"\d+ languages: (.*?)</td>", 1),
+    ("de/index.html", r"Die Oberfläche gibt es auf (.*?)\.", 2),
+    ("de/index.html", r"\d+ Sprachen: (.*?)</td>", 1),
+    ("en/contribute/index.html", r"The app speaks (.*?)\.", 1),
+    ("de/mitmachen/index.html", r"Die App spricht (.*?)\.", 1),
+]
+
+
+def test_every_site_language_list_names_every_locale() -> None:
+    """The count row was guarded; the lists beside it were not, and the Contribute pages kept
+    naming four languages after Spanish arrived."""
+    from app.i18n import _SUPPORTED
+
+    assert set(_LANGUAGE_NAMES) == _SUPPORTED
+    docs = _LOCALES.parents[1] / "docs"
+    stale = []
+    for name, pattern, count in _LANGUAGE_LISTS:
+        lists = re.findall(pattern, (docs / name).read_text(encoding="utf-8"))
+        assert len(lists) == count, (name, pattern, lists)
+        german = name.startswith("de/")
+        for listed in lists:
+            stale += [
+                (name, n[german]) for n in _LANGUAGE_NAMES.values() if n[german] not in listed
+            ]
+    assert not stale, stale

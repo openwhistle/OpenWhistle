@@ -149,6 +149,15 @@
    "e2e",
    "--browser",
    "chromium"
+  ],
+  "LANG_COUNT": [
+   "tests/test_locale_key_completeness.py::test_every_locale_file_is_a_supported_language"
+  ],
+  "LANG_LISTS": [
+   "tests/test_locale_key_completeness.py::test_every_site_language_list_names_every_locale"
+  ],
+  "ONE_PAGER": [
+   "tests/test_docs_split.py::test_no_page_links_a_one_pager_anchor"
   ]
  },
  "mutations": [
@@ -216,7 +225,7 @@
    "tests": "CONFIG_DOC"
   },
   {
-   "id": "DOCS-H3-LOST",
+   "id": "OLD-HEADING-RENAMED",
    "file": "docs/en/docs/admin/index.html",
    "old": "<h2 id=\"audit-log\">Audit log</h2>",
    "new": "<h2 id=\"audit-log\">Audit trail</h2>",
@@ -538,6 +547,27 @@
    "tests": "LEGAL"
   },
   {
+   "id": "LANG-COUNT-DE",
+   "file": "docs/de/index.html",
+   "old": "5 Sprachen:",
+   "new": "4 Sprachen:",
+   "tests": "LANG_COUNT"
+  },
+  {
+   "id": "LANG-LIST-CONTRIBUTE",
+   "file": "docs/en/contribute/index.html",
+   "old": "English, German, French, Spanish and Brazilian Portuguese.",
+   "new": "English, German, French and Brazilian Portuguese.",
+   "tests": "LANG_LISTS"
+  },
+  {
+   "id": "ONE-PAGER-IN-LOCALE",
+   "file": "app/locales/es.json",
+   "old": "href=\\\"https://openwhistle.net/en/docs/install-count/\\\" rel=\\\"noopener noreferrer\\\" target=\\\"_blank\\\">Qué se envía",
+   "new": "href=\\\"https://openwhistle.net/en/docs/#counting-installations\\\" rel=\\\"noopener noreferrer\\\" target=\\\"_blank\\\">Qué se envía",
+   "tests": "ONE_PAGER"
+  },
+  {
    "id": "DEMO-FOOTER-ALWAYS",
    "file": "app/templates/base.html",
    "old": "{% if is_demo %}{# demo legal links #}",
@@ -554,8 +584,8 @@
   {
    "id": "HOME-VERIFY-GONE",
    "file": "docs/en/index.html",
-   "old": "id=\"verify\"",
-   "new": "id=\"verify-it\"",
+   "old": "    <!-- Verify it -->\n    <section class=\"section section-alt\" id=\"verify\" aria-labelledby=\"verify-heading\">\n      <div class=\"section-inner\">\n        <span class=\"section-eyebrow\">Verify it</span>\n        <h2 class=\"section-heading\" id=\"verify-heading\">\n          Check it yourself\n        </h2>\n        <div class=\"section-divider\" aria-hidden=\"true\"></div>\n\n        <p class=\"section-note\">\n          OpenWhistle has one maintainer and no external audit yet.\n          Everything else you can check yourself: the code, the signed images,\n          and the list of every request that leaves your server.\n        </p>\n        <div class=\"btn-row\">\n          <a href=\"/en/security/\" class=\"btn btn-outline\">What to check</a>\n          <a href=\"/en/contribute/\" class=\"btn btn-outline\">Review the code</a>\n        </div>\n      </div>\n    </section>\n",
+   "new": "",
    "tests": "SITE_PAGES"
   },
   {
