@@ -51,8 +51,8 @@ Folgende Fakten sind festgelegt:
   Ansible. It runs `ghcr.io/openwhistle/openwhistle:edge` and is reset every 6 hours by a Semaphore job
   that recreates the container with a fresh pull — that reset is also the only thing that updates it
   (Watchtower does not poll).
-- All HTML files in `docs/` must use self-hosted fonts from `docs/fonts/` — never Google Fonts CDN or
-  any other external font CDN.
+- All HTML files in `docs/` must use self-hosted fonts (`docs/_fonts`, inlined; `docs/fonts` for the app) —
+  never Google Fonts CDN or any other external font CDN.
 - Every finding — design, security, privacy, process, any size — is fixed in the work that found it. There is
   no "carried forward" or "out of scope" list; a finding too big for one task is split, never postponed.
 

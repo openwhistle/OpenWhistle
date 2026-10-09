@@ -26,11 +26,29 @@ P5.
 | P4-9 | `error_log stderr emerg` | nginx error lines carry `client: <IP>`; at `emerg` only start-up failures are written |
 | P4-10 | The image is rebuilt monthly | `security.txt` expires about 335 days after the build that wrote it, as on Pages today |
 
+### Decided during implementation
+
+Where these differ from the text below, they win; `website/nginx.conf` is authoritative for the CSP.
+
+| # | Decision | Why |
+| --- | --- | --- |
+| Base | Stage 1 is `python:3.14-slim`, not alpine | Set in the plan's Global Constraints; nothing of stage 1 ships |
+| R7 | `linux/amd64` only, no QEMU | The only host is amd64; arm64 added a write-token action nothing used |
+| R10 | SSI on the three legal pages (`ssi on`, `gzip_static off`), the fragment behind the internal location `/_private/`, `/healthz` (not logged) | The operator mounts the address; the image holds none |
+| R11 | Fonts inlined as `data:` URIs: `font-src 'self' data:`; `script-src` adds the font-kick hash on every page | `font-display: optional` fell back to system fonts under the throttle; a `data:` font cannot execute |
+| R12 | The font subsets drop the Latin-1 supplement | Every drawn character stays; adding it breaks the 100 KB budget |
+| R13 | `font-synthesis-weight: none` only | No faux bold; Sora has no italic, so `<em>` keeps its oblique |
+| R14 | The italic mono is in the font-kick script | Its late load was the 1-in-5 CLS failure |
+| R15 | `/healthz` answers 503 without `address.html` | A legal page must not go live with an error inside it |
+| R16 | The legal pages carry the include in P4, and `pages.yml` is removed | Neither repo nor image holds the real data; Pages keeps its last deployment until DNS moves |
+| R17 | `address.html` is world-readable (`0444`) | `/healthz` only checks that it exists |
+| Docs CSP | Also on `/pagefind/` | The search worker compiles its WASM under its own response's policy |
+
 ## Image
 
 ```text
 website/Dockerfile
-  stage 1  python:3.14-alpine@sha256:…     uv sync --group site; build_site.py → /out/site
+  stage 1  python:3.14-slim@sha256:…       uv sync --group site; build_site.py → /out/site
                                             + a .gz beside every html, css, js, svg, xml, txt and json
                                             + /out/redirects.map from docs/_data/redirects.yml
   stage 2  nginxinc/nginx-unprivileged:alpine@sha256:…
@@ -52,7 +70,7 @@ website/Dockerfile
 | --- | --- |
 | Server | `listen 8080`, `server_tokens off`, `absolute_redirect off` (behind the host nginx, a relative `Location` keeps https and the host) |
 | Headers, every response | `Content-Security-Policy: default-src 'none'; script-src 'self' 'sha256-<theme>'; style-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests`, `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`, `Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Resource-Policy: same-origin`, `Referrer-Policy: no-referrer`, `X-Content-Type-Options: nosniff`, `Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()` |
-| `/en/docs/` | The same, with `script-src` adding the docs-anchor and menu-close hashes and `'wasm-unsafe-eval'` (Pagefind) |
+| `/en/docs/`, `/pagefind/` | The same, with `script-src` adding the docs-anchor and menu-close hashes and `'wasm-unsafe-eval'` (Pagefind) |
 | `/` and `/index.html` | 302 to `/de/` when `Accept-Language` starts with `de`, else to `/en/`; `Vary: Accept-Language`; no cookie |
 | Redirects | `map $uri $moved { include redirects.map; }` → 301 |
 | Not found | `error_page 404 /404.html` |
@@ -91,7 +109,7 @@ The existing site e2e tests keep running against the fast Python server; only th
 | wdk-ansible | :443 vhost `openwhistle.net www.openwhistle.net`: proxy only, `access_log off;`, `error_log /dev/null;`, the four inherited host-level headers removed; deployed and verified before DNS moves |
 | wdk-ansible | DNS, `mta-sts`/`autoconfig`/`autodiscover` over HTTPS before the HSTS preload submission, Search Console TXT (redesign spec § Constraints owned by wdk-ansible) |
 | wdk-ansible | Redeploy as for energysharing (infra session, 2026-10-09): the image's digest pinned in `docker_images.yml`, Renovate opens a pull request for each new digest, its merge runs template 22 (`root01xvp.yml`). No token and no trigger from GitHub: Semaphore is LAN-only. A new Docker network needs an easywall apply in the UI first; the vhost blocks the four http-level headers with an empty `add_header` (`energysharing.conf.j2`) |
-| openwhistle | checks from outside; privacy policy and `tests/test_legal_pages.py` switch from GitHub Pages to the own server; `docs/_legacy/`, `--redirect-stubs` and `pages.yml` removed |
+| openwhistle | checks from outside; privacy policy and `tests/test_legal_pages.py` switch from GitHub Pages to the own server; `docs/_legacy/` and `--redirect-stubs` removed (`pages.yml` went in P4, R16) |
 
 ## Out of P4
 
