@@ -11,6 +11,7 @@ on:
       - "scripts/build_site.py"
       - "scripts/package_site.py"
       - "scripts/render_changelog.py"
+      - "app/config.py" # the footer shows app_version
       - "CHANGELOG.md"
       - "pyproject.toml"
       - "uv.lock"
@@ -73,6 +74,7 @@ jobs:
       - name: Browser tests against the container
         env:
           WEBSITE_URL: http://127.0.0.1:8080
+          WEBSITE_REQUIRED: "1" # e2e.yml collects this file too, without a container
         run: pytest tests/e2e/test_site_container.py -m e2e --browser chromium -q --no-cov -p no:cacheprovider
 
       - name: Trivy
@@ -87,6 +89,10 @@ jobs:
     name: Publish, sign and verify
     needs: test
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    # One publish at a time, in push order: latest must never fall back to an older build.
+    concurrency:
+      group: website-image-${{ github.ref }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:

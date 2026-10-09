@@ -38,3 +38,28 @@ def test_the_image_is_signed_with_sbom_and_provenance_for_the_amd64_target() -> 
     env = next(s["env"] for s in steps if s.get("name") == "Sign and verify")
     assert env["IDENTITY"].endswith("/.github/workflows/website-image.yml@refs/heads/main")
     assert all("docker.io" not in str(s) and "quay.io" not in str(s) for s in steps)
+
+
+def test_publishes_run_one_at_a_time_in_order() -> None:
+    assert JOBS["publish"]["concurrency"] == {
+        "group": "website-image-${{ github.ref }}",
+        "cancel-in-progress": False,
+    }
+
+
+def test_a_version_bump_rebuilds_the_image() -> None:
+    """The footer shows app_version from app/config.py."""
+    assert "app/config.py" in WF[True]["push"]["paths"]
+
+
+def test_the_browser_tests_cannot_skip_in_the_website_job() -> None:
+    step = next(
+        s for s in JOBS["test"]["steps"] if s.get("name") == "Browser tests against the container"
+    )
+    assert step["env"] == {"WEBSITE_URL": "http://127.0.0.1:8080", "WEBSITE_REQUIRED": "1"}
+
+
+def test_the_browser_suite_fails_instead_of_skipping_when_required() -> None:
+    # Read as text: importing the module needs Playwright, which the unit job lacks.
+    suite = (Path(__file__).parent / "e2e/test_site_container.py").read_text()
+    assert 'require_url(BASE, os.environ.get("WEBSITE_REQUIRED", ""))' in suite
