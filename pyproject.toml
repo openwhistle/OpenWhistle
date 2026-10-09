@@ -150,9 +150,6 @@ ignore = [
 "tests/perf/*" = ["S101", "S105", "S106", "S107", "S110"]
 # Generated schema: wide column lists and seed rows; the only f-string is a fixed UUID constant.
 "migrations/versions/001_initial_schema.py" = ["E501", "S608"]
-# The page shell is copied verbatim from docs/en/roadmap/index.html as a template string;
-# its CSS/HTML lines are not code and keep that page's own line lengths.
-"scripts/render_changelog.py" = ["E501"]
 
 # ─── pytest ──────────────────────────────────────────────────────────────────
 
@@ -160,13 +157,12 @@ ignore = [
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
 testpaths = ["tests"]
-addopts = "--cov=app --cov-report=term-missing --cov-fail-under=90 --ignore=tests/e2e --ignore=tests/perf --ignore=tests/website"
+addopts = "--cov=app --cov-report=term-missing --cov-fail-under=90 --ignore=tests/e2e --ignore=tests/perf"
 
 markers = [
     "integration: marks tests that require a live database and Redis",
     "e2e: marks end-to-end browser tests that require a running app instance",
     "perf: marks performance tests (run manually, not in standard CI)",
-    "website: tests against a running website container (WEBSITE_URL)",
 ]
 
 filterwarnings = [
@@ -191,11 +187,9 @@ exclude_lines = [
 ]
 
 [dependency-groups]
-site = [
+# The diagram pipeline and its tests (scripts/render_diagrams.py, diagram_geometry.py,
+# render_icons.py): woff2 fonts need brotli.
+diagrams = [
     "fonttools[woff]>=4.66.0",
-    "jinja2>=3.1.6",
-    "markdown-it-py>=4.2.0",
-    "pagefind[extended]>=1.5.2",
     "pillow>=12.0.0",
-    "pyyaml>=6.0.3",
 ]

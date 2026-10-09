@@ -104,7 +104,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-          fetch-depth: 0 # tests/built_site.py reads each source's last commit for the sitemap
 
       - name: Set up Python 3.14
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
@@ -125,7 +124,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv export --frozen --extra dev --extra ldap --extra s3 --group site --no-emit-project -o /tmp/requirements.txt
+          uv export --frozen --extra dev --extra ldap --extra s3 --group diagrams --no-emit-project -o /tmp/requirements.txt
           uv pip install --system -r /tmp/requirements.txt
           uv pip install --system --no-deps -e .
 
@@ -232,6 +231,11 @@ jobs:
           echo "Setup page status: $setup_status"
           [ "$setup_status" = "200" ]
 
+          # The image ships the fonts with their OFL licences (the licence requires it)
+          for f in sora-latin-400-normal.woff2 JetBrainsMono-Regular.woff2 sora-LICENSE jetbrains-mono-LICENSE; do
+            [ "$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:4009/static/fonts/$f")" = "200" ]
+          done
+
           docker compose -f docker-compose.ci.yml down -v
 
   nginx-onion-trust:
@@ -240,7 +244,7 @@ jobs:
     # header-echoing backend standing in for the app, and asserts with real
     # HTTP requests that the client can never forge the X-OW-Onion /
     # IP-forwarding trust headers the app relies on (see app/onion.py,
-    # nginx/snippets/proxy-headers.conf, docs/en/docs/onion-trust/index.html).
+    # nginx/snippets/proxy-headers.conf and https://openwhistle.net/en/docs/onion-trust/).
     # A CI job, not a pytest, so it always runs on GitHub's Docker-equipped
     # runners rather than skipping when a contributor's machine lacks
     # docker/podman.
