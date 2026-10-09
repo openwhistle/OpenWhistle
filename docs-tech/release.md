@@ -43,15 +43,14 @@ docker compose -f docker-compose.e2e.yml down -v
 
 ## 3. Chrome check
 
-Every public and admin page, plus the `docs/` website, visually reviewed in
-the Claude-in-Chrome extension — an agent can sign in by itself, so this is
-not "run the axe suite again," it is looking at the rendered page. Full
-page matrix, traps, and start/stop commands: `docs-tech/local-review.md`.
+Every public and admin page of the app visually reviewed in the Claude-in-Chrome
+extension — an agent can sign in by itself, so this is not "run the axe suite
+again," it is looking at the rendered page. Full page matrix, traps, and
+start/stop commands: `docs-tech/local-review.md`.
 `tests/test_local_review.py::test_local_review_page_matrix_covers_every_app_page`
-and `..._covers_every_docs_site_page` fail when a page exists that the matrix
-does not list, so a new route or `docs/` page cannot be skipped by accident.
-`tests/e2e/test_docs_diagrams.py` measures every site diagram in a browser, without the app:
-one twin per theme, on the canvas, at ≥ 0.85 of its size at 1280–1920 px and at its size at 390 px.
+and `..._covers_every_app_template` fail when a route or template exists that the
+matrix does not list, so a new page cannot be skipped by accident. The website's
+pages are checked in openwhistle/website, in its own release of the documentation.
 
 For each page: light and dark theme, 1440px and 390px, `en` and `de`; the
 interactive paths (wizard steps, identity-reveal form, filters, theme
@@ -65,12 +64,13 @@ On `release/vX.Y.Z`:
 - `CHANGELOG.md`: `[Unreleased]` → `[X.Y.Z] — <date>`, add its compare link and
   repoint `[Unreleased]`.
 - Version in `app/config.py`, `pyproject.toml`, `charts/openwhistle/Chart.yaml`
-  (`version` and `appVersion`), `docs/en/docs/index.html` ("Current version"),
-  `docs/en/index.html` (`softwareVersion` and hero), `docs/de/index.html` ("Aktuelles Release"),
-  `docs/en/compare/index.html` ("Latest release" cell), and the `OPENWHISTLE_VERSION`
+  (`version` and `appVersion`), `.env.example` and the `OPENWHISTLE_VERSION`
   default in `docker-compose.prod.yml`. `test_every_published_version_string_matches`
   fails on any mismatch.
-- Move the released version off `docs/en/roadmap/index.html` (it holds only what's still ahead).
+- The documentation of this release is a pull request in openwhistle/website, linked
+  from the release PR: its version spots, the roadmap, and every user-facing change
+  the release brings. The website builds from the latest release tag, so it turns
+  red within a week (its weekly run) when the tag and the documentation disagree.
 - `test_every_new_setting_is_in_the_changelog` compares `Settings` with the
   previous release's fields in `tests/data/previous_release_settings.txt`. After
   the tag, refresh that list from it (CI checkouts have no tags, so the test
@@ -115,11 +115,7 @@ cosign verify ghcr.io/openwhistle/openwhistle:X.Y.Z \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
-The site is served from its own container (`ghcr.io/openwhistle/website`), not from GitHub Pages; check it from outside:
-
-```bash
-curl -s -o /dev/null -w '%{http_code}\n' https://openwhistle.net/en/   # 200
-curl -sI https://openwhistle.net/en/ | grep -i '^content-security-policy'   # the image's own headers
-```
+The website image (`ghcr.io/openwhistle/website`) is published and verified by
+openwhistle/website, not by this release.
 
 Then create the GitHub release from the changelog section.

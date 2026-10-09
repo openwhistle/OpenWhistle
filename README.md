@@ -34,8 +34,9 @@ zero vendor lock-in, and privacy-first by design.
 🌐 **Live demo:** [demo.openwhistle.net](https://demo.openwhistle.net)
 📖 **Documentation:** [openwhistle.net/en/docs/](https://openwhistle.net/en/docs/)
 
-The site is built into the image `ghcr.io/openwhistle/website` (nginx, own security headers, no IP in any log)
-and served from its own server at openwhistle.net.
+The website and its documentation live in [openwhistle/website](https://github.com/openwhistle/website), which
+builds them from the latest release of this repository into the image `ghcr.io/openwhistle/website` (nginx, own
+security headers, no IP in any log), served from its own server at openwhistle.net.
 
 ---
 
@@ -265,7 +266,8 @@ OpenWhistle is designed to comply with:
 ## 🤝 Contributing
 
 Contributions are welcome. Please open an issue before submitting a pull request, and read
-[CONTRIBUTING.md](CONTRIBUTING.md) first.
+[CONTRIBUTING.md](CONTRIBUTING.md) first. Corrections to the documentation go to
+[openwhistle/website](https://github.com/openwhistle/website).
 
 ---
 

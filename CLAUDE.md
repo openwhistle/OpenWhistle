@@ -31,9 +31,9 @@ Folgende Fakten sind festgelegt:
 - Es soll eine Live Demo der Software unter der URL "<https://demo.openwhistle.net>" geben.
 - Für die Demo sollen die Zugangsdaten Benutzername und Passwort "demo" sein.
 - Die Demo wird automatisch alle 6 Stunden geleert und neu gestartet.
-- Es gibt eine Website "openwhistle.net", die aktuell auf die GitHub Page weiterleitet. Zukünftig soll dort
-  eine GitHub Page aus dem Repository laufen, wo Informationen über OpenWhistle stehen und auch die Dokumentation
-  gehostet wird.
+- The website <https://openwhistle.net> (information about OpenWhistle and the published user documentation)
+  lives in its own repository, [openwhistle/website](https://github.com/openwhistle/website), and builds from
+  the latest release tag of this repository.
 - Wichtig ist, dass der Whistleblower geschützt wird und sogar keine Logs über seine IP-Adresse vorhanden
   sind. So kann z.B. ein Mitarbeiter eines Unternehmens geschützt sein, der im Büro eine Nachricht verschickt.
 - Das ganze Projekt wird in der Freizeit entwickelt und es kann gespendet werden.
@@ -45,14 +45,18 @@ Folgende Fakten sind festgelegt:
 - Du hast Zugriff auf GitHub über die GitHub CLI
 - Markdown Dokumente müssen nach markdownlint Vorgaben erstellt werden
 - `CONTRIBUTING.md`, section "Documentation", is binding for every documentation change.
-- Settings in `docs/_data/config.yml`, `README.md`, and `docker-compose.prod.yml` must always be kept in
-  sync. When adding or renaming environment variables, update ALL locations in the same commit.
+- **Drift rule.** A user-facing change here (an env var or setting, a route, a case status, anything in the
+  interface) gets a pull request in openwhistle/website in the same piece of work, linked from this
+  repository's pull request. The website's weekly build turns red when its documentation no longer matches
+  the latest release.
+- `README.md`, `docker-compose.prod.yml`, the Helm chart and `ansible/roles/openwhistle/templates/env.j2`
+  change in the same commit as the env var they list.
 - The demo at <https://demo.openwhistle.net> is live and hosted on Hetzner via
   Ansible. It runs `ghcr.io/openwhistle/openwhistle:edge` and is reset every 6 hours by a Semaphore job
   that recreates the container with a fresh pull — that reset is also the only thing that updates it
   (Watchtower does not poll).
-- All HTML files in `docs/` must use self-hosted fonts (`docs/_fonts`, inlined; `docs/fonts` for the app) —
-  never Google Fonts CDN or any other external font CDN.
+- The app's fonts are self-hosted in `app/static/fonts/` with their OFL licences — never Google Fonts CDN or
+  any other external font CDN.
 - Every finding — design, security, privacy, process, any size — is fixed in the work that found it. There is
   no "carried forward" or "out of scope" list; a finding too big for one task is split, never postponed.
 
@@ -62,7 +66,7 @@ Folgende Fakten sind festgelegt:
   and will fail CI if coverage drops below the threshold.
 - When adding new features, always add corresponding tests so coverage stays at or above 90 %.
 - Run the full suite against a real PostgreSQL and Redis (e.g. two throwaway containers) with
-  `uv sync --extra dev --extra ldap --extra s3 --group site` (python-ldap needs OS headers, see
+  `uv sync --extra dev --extra ldap --extra s3 --group diagrams` (python-ldap needs OS headers, see
   `docs-tech/dependencies.md` "Development setup") and `DATABASE_URL`/`REDIS_URL`/`SECRET_KEY`
   set, as CI does. Without a DB the DB-backed tests error and coverage undercounts. The
   production image carries no test dependencies, so tests cannot run inside it.
@@ -71,25 +75,14 @@ Folgende Fakten sind festgelegt:
 
 ## Release documentation checklist
 
-Before marking a version as released (roadmap `docs/en/roadmap/index.html`, CHANGELOG.md, git tag), verify ALL of the
-following. These checks caught v0.3.0 and v0.4.0 gaps retroactively — run them proactively.
+Before marking a version as released (CHANGELOG.md, git tag), verify ALL of the following. These checks caught
+v0.3.0 and v0.4.0 gaps retroactively — run them proactively.
 
-### The docs pages (`docs/en/docs/`)
+### The documentation (openwhistle/website)
 
-- **Version number**: the "Current version" paragraph in `docs/en/docs/index.html` must match
-  `app_version` in `app/config.py`.
-- **Admin guide — status workflow**: the case status values listed in "Managing reports"
-  (`docs/en/docs/admin/index.html`) must match the actual `ReportStatus` enum in
-  `app/models/report.py`. Do not leave stale values from a previous release.
-- **Admin guide — new admin UI sections**: every new `/admin/*` route (categories, locations,
-  users, audit-log, stats, …) must be referenced in `docs/en/docs/admin/index.html` with its path.
-- **Roles**: if roles changed, update `docs/en/docs/roles/index.html`.
-- **Whistleblower guide — submission flow**: if the submission form steps or modes changed,
-  update the numbered list in "Submitting a report" (`docs/en/docs/whistleblower/index.html`).
-- **Whistleblower guide — status page**: if new information appears on the status page
-  (e.g. deadline display), add it to the "Checking report status" bullet list.
-- **Configuration**: every new env var in `app/config.py` must have one entry in
-  `docs/_data/config.yml` (`tests/test_config_documented.py` cross-checks them).
+The release's documentation — version, roadmap, status workflow, admin routes, roles, the
+whistleblower guide and the configuration reference — is the drift rule's pull request in
+openwhistle/website. Its build checks version, settings, statuses and routes against this release's tag.
 
 ### `docker-compose.prod.yml`
 
@@ -104,15 +97,16 @@ following. These checks caught v0.3.0 and v0.4.0 gaps retroactively — run them
 ### Cutting the release
 
 Follow `docs-tech/release.md`: mutation audit of every new guard
-(`scripts/mutation_audit.py`, all RED), UI check, Chrome check (every page
+(`scripts/mutation_audit.py`, all RED), UI check, Chrome check (every app page
 visually reviewed in the Claude-in-Chrome extension, `docs-tech/local-review.md`),
-release PR, tag, verify the published images from outside.
+release PR, tag, verify the published app images from outside. The website and its
+image are released from openwhistle/website.
 
 ## Why these rules exist
 
 | Rule | What happened without it |
 | --- | --- |
-| Docs, README and compose change in the same commit as an env var | v0.3.0 and v0.4.0 shipped variables the docs did not list |
+| README and compose change with an env var; the docs in a linked website PR | v0.3.0 and v0.4.0 shipped variables the docs did not list |
 | Every new guard goes through the mutation audit | v1.4.0: removing the PDF XMP step stayed green; the XMP stream shipped as an orphaned object |
 | One version string, checked by a test | 0.5.0–1.3.0: the Helm chart deployed an old image |
 | Tests run against real PostgreSQL and Redis | DB-backed tests error without them and coverage undercounts |

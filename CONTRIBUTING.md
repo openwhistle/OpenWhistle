@@ -35,50 +35,24 @@ Welcome, if they say so. An issue or pull request written by an AI agent begins 
 
 ## Documentation
 
-There are two kinds, and they are kept apart on purpose.
+There are two kinds, in two repositories.
 
 | | For | Where |
 | --- | --- | --- |
-| **User documentation** | whoever runs OpenWhistle | `docs/`, published as openwhistle.net |
+| **User documentation** | whoever runs OpenWhistle | [openwhistle/website](https://github.com/openwhistle/website), published as openwhistle.net |
 | **Technical documentation** | whoever maintains this repository | `docs-tech/` and `CLAUDE.md`, **never** published |
 
-`docs/` holds the sources; `scripts/build_site.py` builds them, and nothing outside `docs/` reaches the site.
+A page in doubt: would a stranger running OpenWhistle need it? Yes → openwhistle/website. Only the next
+maintainer → `docs-tech/`. The website builds from the latest release tag of this repository and fails when its
+documentation no longer matches it (settings, case statuses, admin routes, version).
 
-| What | Where |
-| --- | --- |
-| A page | `docs/<lang>/…` (`.md` for new pages) |
-| Strings | `docs/_data/i18n/` |
-| Navigation | `docs/_data/nav.yml` |
+**A user-facing change opens a pull request in openwhistle/website**, linked from this pull request: a setting,
+a route, a case status, a label or a screen. Screenshots are taken by `scripts/take_screenshots.py` into a
+checkout of the website (`--out`, see [`docs-tech/local-review.md`](docs-tech/local-review.md)) and committed
+there, in the change that alters the interface.
 
-Build: `uv run --group site python scripts/build_site.py` (output in `_site/`).
-`test_the_technical_docs_are_not_published` holds that boundary. A page in doubt: would a stranger running
-OpenWhistle need it? Yes → `docs/`. Only the next maintainer → `docs-tech/`.
-
-An inline script needs its hash in both CSP lines of `website/nginx.conf` (the test names it). No personal data in
-the repository or the image: see [`docs-tech/website-image.md`](docs-tech/website-image.md).
-
-### User pages: maximum information, minimum text
-
-Reach for a diagram before a paragraph, a table before a list of sentences, and a screenshot before a
-description of a screen. A thorough page nobody finishes is worth less than a short one that gets read.
-
-| Rule | Held by |
-| --- | --- |
-| No sentence over 30 words, average under 18 per page | `tests/test_docs_prose.py` |
-| Every page of the interface is named in the docs | `tests/test_every_page_is_documented.py` |
-| Every setting has one row in `docs/_data/config.yml` | `tests/test_config_documented.py` |
-
-The prose rules cover every page the site builds from a source of its own; generated pages (changelog,
-configuration) and the 404 are left out. Code, tables and headings are not counted; inline code is one word. German
-abbreviations (`z. B.`, `d. h.`, `bzw.`, `Abs.`) and dates (`2. Juli`) do not end a sentence.
-
-**Diagrams** are draw.io sources in `docs/_diagrams/` (German pages: `<name>.de.drawio`) and
-`docs-tech/_diagrams/`, rendered by `scripts/render_diagrams.py` to committed `-light.svg` and `-dark.svg`.
-Rules and roles: `docs-tech/diagrams.md`.
-
-**Screenshots are documentation.** They live in `docs/img/screens/<name>-light.png` and `-dark.png`,
-are taken by `scripts/take_screenshots.py`, and are re-taken in the change that alters the interface. A stale
-screenshot describes an interface that no longer exists.
+**Diagrams** of this repository are draw.io sources in `docs-tech/_diagrams/`, rendered by
+`scripts/render_diagrams.py` to committed `-light.svg` and `-dark.svg`. Rules and roles: `docs-tech/diagrams.md`.
 
 ### Technical pages: the rule and the incident behind it
 
@@ -92,8 +66,8 @@ A change that renames a setting, a label or a behaviour updates, in the same com
 
 - all five locales in `app/locales/` (`en`, `de`, `fr`, `es`, `pt-br`), checked against
   [`docs-tech/i18n-review.md`](docs-tech/i18n-review.md);
-- `docs/_data/config.yml` and the docs page that explains the setting (`docs/en/docs/<page>/index.html`),
-  `README.md` and `docker-compose.prod.yml`;
-- the Helm chart (`charts/openwhistle/`) and `ansible/roles/openwhistle/templates/env.j2`.
+- `README.md` and `docker-compose.prod.yml`;
+- the Helm chart (`charts/openwhistle/`) and `ansible/roles/openwhistle/templates/env.j2`;
+- and, in the linked openwhistle/website pull request, `docs/_data/config.yml` and the page that explains it.
 
 Otherwise the next audit finds the mismatch the change created.
