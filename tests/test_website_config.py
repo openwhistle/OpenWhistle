@@ -86,7 +86,7 @@ def test_the_log_holds_no_address_agent_or_query() -> None:
 
 
 def test_errors_are_logged_at_emerg_only() -> None:
-    """nginx error lines carry `client: <IP>` (P4-9); the main context sets it, before `events {`."""
+    """nginx error lines carry `client: <IP>` (P4-9); main context only, before `events {`."""
     levels = re.findall(r"^\s*error_log\s+([^;]+);", CONF, re.M)
     assert levels and all(level.split()[-1] == "emerg" for level in levels), levels
     assert "error_log stderr emerg;" in CONF.split("events {")[0], (
