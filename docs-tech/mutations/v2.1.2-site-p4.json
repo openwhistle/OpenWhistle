@@ -185,6 +185,27 @@
    "old": "linux/amd64,linux/arm64",
    "new": "linux/amd64",
    "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "PUBLISH-NOT-MAIN-ONLY",
+   "file": ".github/workflows/website-image.yml",
+   "old": " && github.ref == 'refs/heads/main'",
+   "new": "",
+   "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "PUBLISH-IF-OR",
+   "file": ".github/workflows/website-image.yml",
+   "old": "'pull_request' && github.ref",
+   "new": "'pull_request' || github.ref",
+   "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "PUBLISH-NO-IDENTITY",
+   "file": ".github/workflows/website-image.yml",
+   "old": "            --certificate-identity \"${IDENTITY}\" \\\n",
+   "new": "",
+   "tests": "WEBSITE_WF"
   }
  ],
  "manual": [
