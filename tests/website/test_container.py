@@ -211,7 +211,7 @@ def test_without_the_fragment_the_health_check_fails() -> None:
     port = "8086"
     name = NAME + "-bare"
     image = subprocess.run(  # noqa: S603
-        [CLI, "inspect", NAME, "--format", "{{.ImageName}}"],
+        [CLI, "inspect", NAME, "--format", "{{.Config.Image}}"],
         capture_output=True,
         text=True,
         check=True,
