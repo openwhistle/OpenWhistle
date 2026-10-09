@@ -285,6 +285,13 @@
       line-height: 1.2;
     }
 
+    /* A page with no lead under its h1 (the imprint): its headings need room between them. */
+    .docs-content > h1 + .docs-article { margin-top: var(--space-10); }
+    .docs-content > h1 + .docs-article > h2:not(:first-child) { margin-top: var(--space-12); }
+
+    /* Cards in the docs column (compliance "By jurisdiction"): fill it, one column on a phone. */
+    .docs-content .blog-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); }
+
     .docs-section h3, .docs-article h3 {
       font-family: var(--font-display);
       font-size: 1.1rem;
