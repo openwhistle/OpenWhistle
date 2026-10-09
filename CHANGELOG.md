@@ -26,6 +26,12 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The image ships the OFL licences of its fonts (Sora, JetBrains Mono) next to them in `app/static/fonts/`; it
   shipped the fonts without them.
 
+### Fixed
+
+- The statistics page writes percentages the way the admin's language does (`40,0 %` in German and
+  Spanish); it wrote `40.0%` in every language.
+- The page for invalid input (HTTP 422) is in the user's language; it was always English.
+
 ### Security
 
 - The CI workflows pass zizmor, now a CI check: no checkout keeps its token on disk, the performance run takes
