@@ -110,7 +110,7 @@ js:
         <p>
           Die Suche läuft vollständig in Ihrem Browser.
           Er lädt dafür einen Suchindex von dieser Website.
-          Ihre Suchbegriffe werden nicht übertragen.
+          Ihr Suchbegriff selbst wird nie übertragen, doch aus den geladenen Teilen des Index könnte der Server grob ableiten, wonach Sie suchen.
         </p>
       </section>
 
@@ -160,12 +160,22 @@ js:
         <h2 id="demo-h2">Die Demo unter demo.openwhistle.net</h2>
         <p>
           Die Demo betreibt derselbe Verantwortliche, auf seinem Server bei der Hetzner Online GmbH.
+          Hetzner verarbeitet die Daten der Demo in unserem Auftrag nach Art. 28 DSGVO.
           Ihr Webserver schreibt kein Zugriffs- und kein Fehlerprotokoll, und die Anwendung speichert keine IP-Adresse.
         </p>
         <p>
           Alles, was Sie in der Demo eingeben, sieht jeder Besucher.
           Es wird alle 6 Stunden gelöscht.
           Geben Sie dort keine echten Meldungen ein.
+        </p>
+        <p>
+          Die Demo setzt nur Cookies, die für ihre Funktion unbedingt erforderlich sind.
+          <code>ow_csrf</code> schützt jedes Formular vor untergeschobenen Anfragen und gilt bis zum Ende der Browsersitzung.
+          <code>ow-submission-session</code> und <code>ow-status-session</code> halten eine Meldung und ihre Statusabfrage zusammen, jeweils höchstens 2 Stunden.
+          <code>ow_session</code> hält die Anmeldung im Verwaltungsbereich, bis sie abläuft.
+          <code>ow-lang</code> merkt sich die gewählte Sprache für ein Jahr.
+          Ihr Farbschema speichert der Browser wie auf dieser Website unter <code>ow-theme</code>.
+          Rechtsgrundlage ist § 25 Abs. 2 Nr. 2 TDDDG: Die Speicherung ist für den von Ihnen gewünschten Dienst unbedingt erforderlich.
         </p>
         <p>
           Betriebsmeldungen der Anwendung enthalten keine IP-Adressen.

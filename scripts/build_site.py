@@ -709,9 +709,9 @@ def lastmod(path: Path) -> str:
 
 
 def write_security_txt(out: Path, site: dict[str, Any]) -> None:
-    """RFC 9116. Expires is a year from the build, so every deploy renews it."""
+    """RFC 9116. Expires is 335 days out (under a year, § 2.5.5); every deploy renews it."""
     now = datetime.datetime.now(datetime.UTC).replace(microsecond=0)
-    expires = now + datetime.timedelta(days=365)
+    expires = now + datetime.timedelta(days=335)
     lines = [
         f"Contact: {site['security_contact']}",
         f"Expires: {expires.isoformat().replace('+00:00', 'Z')}",

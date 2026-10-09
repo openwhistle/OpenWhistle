@@ -217,7 +217,7 @@ Rebuild after every edit to `docs/`; the server serves what was built.
 | `/impressum/` | Imprint, German only — the text is the provider's, word for word; the language switch leads to `/en/`. |
 | `/de/datenschutz/` | Privacy policy, German and binding — the "On this page" list sits above the text at 390 px. |
 | `/en/privacy/` | Privacy policy, English translation. |
-| `/.well-known/security.txt` | Plain text (RFC 9116): `Expires` lies about a year after the build. |
+| `/.well-known/security.txt` | Plain text (RFC 9116): `Expires` lies 335 days after the build (RFC 9116: under a year). |
 | `/en/blog/feed.xml` | Atom feed (raw XML): every English post, newest first. |
 | `/de/blog/feed.xml` | Atom feed, German. |
 | `/en/og.png` | Share card (1200×630) — every directory page has its own `og.png`; also open one docs and one German post card. |

@@ -113,7 +113,7 @@ js:
         <p>
           The search runs entirely in your browser.
           For this, it loads a search index from this website.
-          Your search terms are not transmitted.
+          Your search term itself is never sent, but from the parts of the index your browser loads, the server could roughly infer what you searched for.
         </p>
       </section>
 
@@ -162,12 +162,22 @@ js:
         <h2 id="demo-h2">The demo at demo.openwhistle.net</h2>
         <p>
           The same controller runs the demo, on his server at Hetzner Online GmbH.
+          Hetzner processes the demo's data on our behalf under Art. 28 GDPR.
           Its web server writes no access log and no error log, and the application stores no IP address.
         </p>
         <p>
           Everything you enter in the demo is visible to every visitor.
           It is deleted every 6 hours.
           Do not enter real reports there.
+        </p>
+        <p>
+          The demo sets only cookies that are strictly necessary for it to work.
+          <code>ow_csrf</code> protects every form against forged requests and lasts until the browser session ends.
+          <code>ow-submission-session</code> and <code>ow-status-session</code> hold a report and its status check together, each for at most 2 hours.
+          <code>ow_session</code> keeps you signed in to the admin area until the login expires.
+          <code>ow-lang</code> remembers the language you chose for one year.
+          Your browser stores your colour scheme under <code>ow-theme</code>, as on this website.
+          The legal basis is § 25(2) no. 2 TDDDG: storing them is strictly necessary for the service you asked for.
         </p>
         <p>
           The application's operational messages contain no IP addresses.

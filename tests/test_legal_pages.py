@@ -67,6 +67,30 @@ def test_the_privacy_policy_names_this_setup_and_nothing_else() -> None:
         assert not BOILERPLATE.search(text), (url, BOILERPLATE.search(text))
 
 
+def _demo_cookies() -> set[str]:
+    # Every cookie name the app sets, read from its source: a new cookie must reach the policy.
+    names = set()
+    for path in (ROOT / "app").rglob("*.py"):
+        code = path.read_text(encoding="utf-8")
+        names.update(re.findall(r'set_cookie\(\s*(?:key=)?"([^"]+)"', code))
+        names.update(re.findall(r'^_CSRF_COOKIE = "([^"]+)"', code, re.M))
+    return names
+
+
+def test_the_demo_section_names_its_cookies_their_basis_and_processor() -> None:
+    # The demo footer links this policy, so it is the demo's notice too (spec P3-7).
+    cookies = _demo_cookies()
+    assert {"ow_csrf", "ow_session", "ow-lang"} <= cookies, cookies
+    for url, facts in (
+        ("/de/datenschutz/", ("§ 25 Abs. 2 Nr. 2 TDDDG", "Art. 28 DSGVO", "ow-theme")),
+        ("/en/privacy/", ("§ 25(2) no. 2 TDDDG", "Art. 28 GDPR", "ow-theme")),
+    ):
+        demo = page(url).split('id="demo"', 1)[1].split("</section>", 1)[0]
+        demo = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", demo))
+        for fact in (*sorted(cookies), *facts):
+            assert fact in demo, (url, fact)
+
+
 # Per language: the retention periods in context, the transfer basis and every legal basis.
 FACTS = {
     "/de/datenschutz/": (
@@ -117,7 +141,9 @@ def test_security_txt_is_valid_and_not_expired() -> None:
     assert fields["Preferred-Languages"] == "en, de"
     expires = datetime.datetime.fromisoformat(fields["Expires"].replace("Z", "+00:00"))
     now = datetime.datetime.now(datetime.UTC)
-    assert now < expires <= now + datetime.timedelta(days=366), expires
+    # RFC 9116 § 2.5.5: less than a year; the monthly rebuild renews it long before it lapses.
+    day = datetime.timedelta(days=1)
+    assert now + 31 * day < expires <= now + 336 * day, expires
 
 
 def test_the_pages_deploy_ships_well_known_and_renews_it_monthly() -> None:
