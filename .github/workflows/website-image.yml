@@ -1,0 +1,77 @@
+name: Website image
+
+# openwhistle.net as a container (docs-tech/specs/2026-10-09-website-p4-design.md). Every pull request
+# builds, runs and tests the image; main publishes it (job publish, Task 5).
+on:
+  push:
+    branches: ["main"]
+    paths: &paths
+      - "docs/**"
+      - "website/**"
+      - "scripts/build_site.py"
+      - "scripts/package_site.py"
+      - "scripts/render_changelog.py"
+      - "CHANGELOG.md"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "tests/website/**"
+      - "tests/e2e/test_site_container.py"
+      - ".github/workflows/website-image.yml"
+  pull_request:
+    branches: ["main"]
+    paths: *paths
+  # security.txt expires ~335 days after the build that wrote it (P4-10).
+  schedule:
+    - cron: "41 4 2 * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  test:
+    name: Website container
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # the sitemap's lastmod comes from each source's last commit
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        run: pip install uv==0.12.24
+
+      - name: Install the test tools
+        run: |
+          uv export --frozen --extra dev --extra e2e --group site --no-emit-project -o /tmp/requirements.txt
+          uv pip install --system -r /tmp/requirements.txt
+          playwright install chromium --with-deps
+
+      - name: Build the image
+        run: docker build -f website/Dockerfile -t openwhistle-website:test .
+
+      - name: Start it as it will run (read-only, unprivileged)
+        run: |
+          docker run -d --name ow-website --read-only --tmpfs /tmp -p 8080:8080 openwhistle-website:test
+          for i in $(seq 1 20); do curl -sf -o /dev/null http://127.0.0.1:8080/en/ && break; sleep 1; done
+
+      - name: Container tests
+        env:
+          WEBSITE_URL: http://127.0.0.1:8080
+          WEBSITE_CONTAINER: ow-website
+        run: pytest tests/website -q --no-cov -p no:cacheprovider
+
+      - name: Trivy
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: openwhistle-website:test
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"

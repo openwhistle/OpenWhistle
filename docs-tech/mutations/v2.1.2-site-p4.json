@@ -155,5 +155,35 @@
    "new": "",
    "tests": "CONFIG"
   }
+ ],
+ "manual": [
+  {
+   "id": "ABSOLUTE-REDIRECT",
+   "file": "website/nginx.conf",
+   "old": "        absolute_redirect off;\n",
+   "new": "",
+   "red": "tests/website/test_container.py::test_every_old_url_moves_permanently"
+  },
+  {
+   "id": "HEADER-IN-LOCATION",
+   "file": "website/nginx.conf",
+   "old": "location / { }",
+   "new": "location / { add_header X-Test 1; }",
+   "red": "tests/website/test_container.py::test_every_response_carries_the_security_headers"
+  },
+  {
+   "id": "LANG-CASE",
+   "file": "website/nginx.conf",
+   "old": "\"~*^de\"",
+   "new": "\"~^de\"",
+   "red": "tests/website/test_container.py::test_the_root_picks_the_language"
+  },
+  {
+   "id": "MOVED-301",
+   "file": "website/nginx.conf",
+   "old": "return 301 $moved;",
+   "new": "return 302 $moved;",
+   "red": "tests/website/test_container.py::test_every_old_url_moves_permanently"
+  }
  ]
 }

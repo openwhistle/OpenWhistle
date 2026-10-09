@@ -49,7 +49,9 @@ def test_a_release_in_development_is_covered() -> None:
 @pytest.mark.parametrize("spec", SPECS, ids=lambda p: p.name)
 def test_every_mutation_matches_its_file_exactly_once(spec: Path) -> None:
     stale = []
-    for m in json.loads(spec.read_text())["mutations"]:
+    data = json.loads(spec.read_text())
+    # "manual" entries are run by hand (they need a rebuilt image); their text must still match.
+    for m in data["mutations"] + data.get("manual", []):
         target = ROOT / (m.get("file") or m["path"])
         if "create" in m:  # the audit adds this file, so it must not exist yet
             count = 0 if target.exists() else 1
