@@ -26,7 +26,9 @@ One primary keyword per page; no two pages share one. The title starts with it, 
 | `blog/en.html` and the seven English twins | the German page's primary, in English | none yet: no Search Console data for the English blog |
 
 The blog is bilingual since 2026-09-27: every German article has an English twin (hreflang, x-default English;
-`test_every_blog_page_exists_in_english_and_german`). The German URLs were kept because they are indexed; the English slugs are the English keyword. Re-cut the English rows once Search Console shows their queries.
+`test_every_blog_page_exists_in_english_and_german`).
+The German URLs were kept because they are indexed; the English slugs are the English keyword.
+Re-cut the English rows once Search Console shows their queries.
 
 The comparison page's slug carries the category term, but its primary is the comparison query: `index.html`
 already owns "open source whistleblower software", and two pages on one query split its ranking.
