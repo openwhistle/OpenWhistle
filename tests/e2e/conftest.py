@@ -9,41 +9,11 @@ Override with: pytest --base-url=http://your-host:port
 from __future__ import annotations
 
 import hashlib
-import http.server
-import threading
 from collections.abc import Generator
-from functools import partial
 from pathlib import Path
 
 import pytest
 from playwright.sync_api import Browser, BrowserContext, Page
-
-from tests.built_site import builder
-
-# The static marketing/docs site is served by its own nginx image. Build it and
-# serve the build locally so browser tests against it (layout, theme/nav/scroll-spy
-# behaviour) run standalone,
-# without the FastAPI app or the review stack. Shared by every test module
-# that needs it, so each one does not spin up its own copy of the same fixture.
-# Session-wide, built once: pytest reorders parametrised tests across modules, and a
-# module fixture rebuilt the whole site at every switch (hours in CI after P3).
-_ROOT = Path(__file__).resolve().parents[2]
-
-
-@pytest.fixture(scope="session")
-def docs_server_url(tmp_path_factory: pytest.TempPathFactory) -> Generator[str]:
-    site = tmp_path_factory.mktemp("site") / "out"
-    builder().build(_ROOT / "docs", site)
-    handler = partial(http.server.SimpleHTTPRequestHandler, directory=str(site))
-    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-    try:
-        yield f"http://127.0.0.1:{server.server_port}"
-    finally:
-        server.shutdown()
-        thread.join()
-
 
 # Demo credentials — published intentionally for the demo instance
 DEMO_BASE_URL = "http://localhost:4009"

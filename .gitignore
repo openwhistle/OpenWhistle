@@ -59,6 +59,5 @@ integrity-manifest.json
 # Local agent tooling
 .serena/
 
-# Built site and agent scratch
-/_site/
+# Agent scratch
 /.superpowers/

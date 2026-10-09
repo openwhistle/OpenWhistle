@@ -1,4 +1,4 @@
-"""Every committed diagram is current, legible, self-contained and in its page's language.
+"""Every committed diagram is current, legible and self-contained.
 
 Rendering needs a container (scripts/render_diagrams.py); these checks need nothing but
 the committed files, so CI runs them on every push.
@@ -16,8 +16,6 @@ from xml.etree import ElementTree as ET
 import pytest
 from fontTools.ttLib import TTFont
 
-from app.models.report import STATUS_TRANSITIONS, ReportStatus
-from tests.built_site import built, page, pages
 from tests.diagram_tools import geometry, renderer
 
 ROOT = Path(__file__).parents[1]
@@ -33,7 +31,7 @@ def _svg(source: Path, out: Path, theme: str) -> str:
 
 def test_there_are_diagrams() -> None:
     names = {s.name for s, _ in ALL}
-    assert {"submission-flow.drawio", "architecture.de.drawio"} <= names, names
+    assert {"setup-token.drawio", "release-gates.drawio"} <= names, names
 
 
 @pytest.mark.parametrize(("source", "out"), ALL, ids=IDS)
@@ -251,22 +249,6 @@ def test_every_maintainer_diagram_is_embedded_as_a_picture(source: Path, out: Pa
         assert target.resolve() == want, f"{page_file}: wrong relative path"
 
 
-def _diagram_srcs(html: str) -> set[str]:
-    return set(re.findall(r'src="/img/diagrams/([^"]+?)-(?:light|dark)\.svg"', html))
-
-
-def test_pages_show_diagrams_in_their_own_language() -> None:
-    wrong = []
-    for path in pages():
-        html = path.read_text(encoding="utf-8")
-        lang = re.search(r'<html[^>]*\blang="([a-z]{2})', html)
-        for name in _diagram_srcs(html):
-            german = name.endswith(".de")
-            if lang and (lang.group(1) == "de") != german:
-                wrong.append(f"{path.relative_to(built())} (lang={lang.group(1)}) shows {name}")
-    assert not wrong, "\n  ".join(["diagram in the wrong language:", *wrong])
-
-
 def _graph(name: str) -> tuple[dict[str, str], dict[str, str], list[tuple[str, str]]]:
     """(id -> label, id -> role, [(source id, target id)]) of a committed source."""
     source = next(s for s, _ in ALL if s.name == f"{name}.drawio").read_text(encoding="utf-8")
@@ -274,16 +256,6 @@ def _graph(name: str) -> tuple[dict[str, str], dict[str, str], list[tuple[str, s
     labels = {c.get("id", ""): c.get("value", "") for c in cells}
     edges = [(c.get("source", ""), c.get("target", "")) for c in cells if c.get("edge") == "1"]
     return labels, renderer().roles_by_id(source), edges
-
-
-def test_the_case_lifecycle_draws_exactly_the_status_transitions() -> None:
-    labels, roles, edges = _graph("case-lifecycle")
-    status = {cid: labels[cid] for cid, role in roles.items() if role == "ow:step"}
-    drawn = {(status[a], status[b]) for a, b in edges if a in status and b in status}
-    allowed = {(a, b) for a, targets in STATUS_TRANSITIONS.items() for b in targets}
-    assert drawn == allowed, (
-        f"drawn, not allowed: {drawn - allowed}; allowed, not drawn: {allowed - drawn}"
-    )
 
 
 def _step_key(text: str) -> str:
@@ -314,18 +286,3 @@ def test_the_release_gates_follow_the_steps_of_release_md() -> None:
     assert len(keys) == len(steps) and all(
         k == s or k.startswith(f"{s} ") for k, s in zip(keys, steps, strict=True)
     ), f"release-gates draws {flow}; release.md has the steps {steps}"
-
-
-def test_the_case_lifecycle_names_exactly_the_report_statuses() -> None:
-    source = (ROOT / "docs/_diagrams/case-lifecycle.drawio").read_text(encoding="utf-8")
-    roles = renderer().roles_by_id(source)
-    labels = dict(re.findall(r'<mxCell id="([^"]+)" value="([^"]*)"', source))
-    steps = {labels[cid] for cid, role in roles.items() if role == "ow:step"}
-    assert steps == {s.value for s in ReportStatus}
-
-
-@pytest.mark.parametrize(("url", "name"), [("/en/", "home-flow"), ("/de/", "home-flow.de")])
-def test_the_home_page_shows_the_reporting_flow_as_a_diagram(url: str, name: str) -> None:
-    html = page(url)
-    assert name in _diagram_srcs(html), f"{url} does not show {name}"
-    assert "flows-grid" not in html, f"{url} still carries the HTML flow next to the diagram"

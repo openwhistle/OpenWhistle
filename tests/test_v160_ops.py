@@ -11,8 +11,6 @@ from pathlib import Path
 import pytest
 from httpx import AsyncClient
 
-from tests.built_site import docs_text
-
 
 @pytest.mark.parametrize(
     "direction",
@@ -54,15 +52,7 @@ def test_the_documented_rollback_downgrades_to_the_last_1_5_revision() -> None:
     mig = (ROOT / "migrations/versions/004_encrypt_totp_secrets.py").read_text()
     before = re.search(r'down_revision: str \| None = "(\w+)"', mig)
     assert before
-    for doc in ("docs/en/docs/upgrade/index.html", "CHANGELOG.md"):
-        assert f"alembic downgrade {before.group(1)}" in (ROOT / doc).read_text(), doc
-
-
-def test_the_docs_run_no_module_that_does_not_exist() -> None:
-    docs = docs_text()
-    for module in re.findall(r"python -m ([\w.]+)", docs):
-        path = ROOT / module.replace(".", "/")
-        assert (path / "__main__.py").exists() or path.with_suffix(".py").exists(), module
+    assert f"alembic downgrade {before.group(1)}" in (ROOT / "CHANGELOG.md").read_text()
 
 
 async def test_x_ow_onion_is_ignored_without_an_onion_address(
@@ -78,9 +68,8 @@ async def test_x_ow_onion_is_ignored_without_an_onion_address(
 
 
 def test_the_chart_says_to_clear_x_ow_onion_when_an_onion_address_is_set() -> None:
-    for path in ("charts/openwhistle/values.yaml", "docs/en/docs/onion/index.html"):
-        text = (ROOT / path).read_text()
-        assert 'proxy_set_header X-OW-Onion "";' in text.replace("\n            ", " "), path
+    text = (ROOT / "charts/openwhistle/values.yaml").read_text()
+    assert 'proxy_set_header X-OW-Onion "";' in text.replace("\n            ", " ")
 
 
 @pytest.mark.skipif(not shutil.which("helm"), reason="helm not installed")
@@ -136,7 +125,7 @@ _PROCESS_NOTE = re.compile(
     r"|chrome[ -](?:review|check) finding",
     re.IGNORECASE,
 )
-_SHIPPED = re.compile(r"(?:app|nginx|ansible|charts|docs)/|docker-compose[^/]*\.yml$|Dockerfile$")
+_SHIPPED = re.compile(r"(?:app|nginx|ansible|charts)/|docker-compose[^/]*\.yml$|Dockerfile$")
 
 
 def test_shipped_files_explain_the_code_not_the_review_history() -> None:
@@ -170,7 +159,7 @@ def test_the_image_ships_exactly_the_font_files_the_app_css_uses() -> None:
     assert shipped == set(re.findall(r"([\w.-]+\.woff2)", css))
     # The OFL requires the licence to travel with the fonts.
     for licence in ("sora-LICENSE", "jetbrains-mono-LICENSE"):
-        assert "SIL OPEN FONT LICENSE" in (fonts / licence).read_text().upper(), licence
+        assert "SIL OPEN FONT LICENSE Version 1.1" in (fonts / licence).read_text(), licence
 
 
 def test_local_tooling_and_maintainer_docs_stay_out_of_the_build_context() -> None:

@@ -18,13 +18,9 @@ assert _spec and _spec.loader
 icons = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(icons)
 
-MARK_FILES = [
-    "docs/favicon.svg",
-    "app/static/favicon.svg",
-    "docs/_includes/nav.html",
-    "docs/_includes/footer.html",
-    "app/templates/base.html",
-]
+# The website draws the same geometry and compares its copies with the release's
+# (openwhistle/website); this repository checks its own.
+MARK_FILES = ["app/static/favicon.svg", "app/templates/base.html"]
 _PATH = re.compile(r'<path fill-rule="evenodd" d="([^"]+)"')
 
 
@@ -35,7 +31,7 @@ def test_every_copy_draws_the_one_geometry(rel: str) -> None:
 
 
 def test_the_old_shield_is_gone_everywhere() -> None:
-    for rel in [*MARK_FILES, "docs/assets/css/base.css", "app/static/css/site.css"]:
+    for rel in [*MARK_FILES, "app/static/css/site.css"]:
         text = (ROOT / rel).read_text(encoding="utf-8")
         assert "M11 1 L20 5" not in text and "M14 2 L25 6.5" not in text, rel
         assert ".nav-logo svg" not in text and ".footer-logo svg" not in text, rel
@@ -56,36 +52,22 @@ async def test_without_an_operator_logo_the_nav_draws_k3(client: AsyncClient) ->
 
 
 def test_the_app_mark_takes_the_ink() -> None:
-    # Without it the path fills black: invisible on the dark nav. The site's rule is checked
-    # in a browser (tests/e2e/test_site_look.py); the app has no docs-server e2e.
+    # Without it the path fills black: invisible on the dark nav.
     css = (ROOT / "app/static/css/site.css").read_text(encoding="utf-8")
     rule = re.search(r"\.nav-brand \.mark \{([^}]*)\}", css)
     assert rule and "color: var(--ink);" in rule[1] and "fill: currentColor;" in rule[1]
 
 
-def test_both_favicons_are_the_same_file() -> None:
-    docs, app = ROOT / "docs/favicon.svg", ROOT / "app/static/favicon.svg"
-    assert docs.read_bytes() == app.read_bytes()
-
-
 def test_the_favicon_switches_ink_with_the_colour_scheme() -> None:
-    svg = (ROOT / "docs/favicon.svg").read_text(encoding="utf-8")
+    svg = (ROOT / "app/static/favicon.svg").read_text(encoding="utf-8")
     assert re.search(r"path\s*\{\s*fill:\s*#0a0a0b", svg)
     dark = r"@media\s*\(prefers-color-scheme:\s*dark\)\s*\{\s*path\s*\{\s*fill:\s*#fafafa"
     assert re.search(dark, svg)
 
 
-@pytest.mark.parametrize(
-    "rel,size",
-    [
-        ("docs/apple-touch-icon.png", (180, 180)),
-        ("docs/github-avatar.png", (500, 500)),
-    ],
-)
-def test_rasters_have_their_size_and_show_an_ink_mark_on_white(
-    rel: str, size: tuple[int, int]
-) -> None:
-    with Image.open(ROOT / rel) as img:
+def test_the_touch_icon_has_its_size_and_shows_an_ink_mark_on_white() -> None:
+    size = (180, 180)
+    with Image.open(ROOT / "app/static/apple-touch-icon.png") as img:
         rgb = img.convert("RGB")
         assert rgb.size == size
         assert rgb.getpixel((0, 0)) == (255, 255, 255)
@@ -97,26 +79,18 @@ def test_rasters_have_their_size_and_show_an_ink_mark_on_white(
 
 
 def test_the_ico_holds_16_and_32() -> None:
-    with Image.open(ROOT / "docs/favicon.ico") as ico:
+    with Image.open(ROOT / "app/static/favicon.ico") as ico:
         assert set(ico.info["sizes"]) == {(16, 16), (32, 32)}
 
 
-@pytest.mark.parametrize("name", ["favicon.ico", "apple-touch-icon.png"])
-def test_the_app_serves_the_same_rasters(name: str) -> None:
-    assert (ROOT / "app/static" / name).read_bytes() == (ROOT / "docs" / name).read_bytes()
-
-
-def test_both_heads_link_exactly_the_three_icons() -> None:
+def test_the_head_links_exactly_the_three_icons() -> None:
     # ico first with sizes=32x32: without it Chrome prefers the ico over the theme-aware svg.
-    for rel, prefix in [("docs/_includes/head.html", "/"), ("app/templates/base.html", "/static/")]:
-        links = re.findall(
-            r"<link rel=\"[^\"]*icon\"[^>]*>", (ROOT / rel).read_text(encoding="utf-8")
-        )
-        assert links == [
-            f'<link rel="icon" href="{prefix}favicon.ico" sizes="32x32">',
-            f'<link rel="icon" href="{prefix}favicon.svg" type="image/svg+xml">',
-            f'<link rel="apple-touch-icon" href="{prefix}apple-touch-icon.png" sizes="180x180">',
-        ], rel
+    head = (ROOT / "app/templates/base.html").read_text(encoding="utf-8")
+    assert re.findall(r"<link rel=\"[^\"]*icon\"[^>]*>", head) == [
+        '<link rel="icon" href="/static/favicon.ico" sizes="32x32">',
+        '<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">',
+        '<link rel="apple-touch-icon" href="/static/apple-touch-icon.png" sizes="180x180">',
+    ]
 
 
 _WORDMARK = re.compile(r'<a href="/" class="nav-brand".*?</a>', re.S)

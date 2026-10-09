@@ -15,7 +15,6 @@ import pytest
 from httpx import AsyncClient, Response
 
 from app.config import Settings, settings
-from tests.built_site import page
 
 ROOT = Path(__file__).parents[1]
 ONION_HOST = "a" * 56 + ".onion"
@@ -297,7 +296,6 @@ def test_docker_compose_publishes_the_onion_port_on_localhost_only() -> None:
 def test_onion_location_env_var_is_documented_everywhere() -> None:
     for path, needle in (
         ("app/config.py", "onion_location"),
-        ("docs/en/docs/onion/index.html", "ONION_LOCATION"),
         ("README.md", "ONION_LOCATION"),
         ("docker-compose.prod.yml", 'ONION_LOCATION: "${ONION_LOCATION:-}"'),
         ("charts/openwhistle/values.yaml", "onionLocation"),
@@ -341,36 +339,6 @@ def test_ansible_env_j2_live_vars_have_defaults() -> None:
     defaults = (ROOT / "ansible/roles/openwhistle/defaults/main.yml").read_text()
     defined = set(re.findall(r"^(openwhistle_[a-z0-9_]+):", defaults, re.M))
     assert used - defined == set()
-
-
-# ── Docs: key-backup warning and rate-limit callout ─────────────────────────────
-
-
-def test_onion_howto_warns_about_the_hidden_service_private_key() -> None:
-    section = page("/en/docs/onion/")
-    assert "hs_ed25519_secret_key" in section
-    assert "0700" in section
-    assert re.search(r"back(s|ing)? (it|the directory) up|back up", section, re.I)
-
-
-def test_onion_howto_explains_the_shared_rate_limit_budget() -> None:
-    section = page("/en/docs/onion/")
-    assert "127.0.0.1" in section
-    assert "429" in section
-
-
-def test_onion_howto_and_security_section_explain_the_x_ow_onion_trust_boundary() -> None:
-    """Both the how-to and the
-    Security Architecture section must document that the app trusts nginx's
-    X-OW-Onion header (never the client Host), and that this requires the
-    app port to be reachable only through the shipped nginx."""
-    howto = page("/en/docs/onion/")
-    assert "X-OW-Onion" in howto
-    assert "reachable only through" in howto
-
-    security = page("/en/docs/onion-trust/")
-    assert "X-OW-Onion" in security
-    assert "Host" in security
 
 
 # ── Locale ────────────────────────────────────────────────────────────────────

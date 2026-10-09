@@ -6,7 +6,7 @@ Greek or Cyrillic text a whistleblower or handler wrote — not just the
 latin-1 subset Helvetica (fpdf2's core font) supports. CJK and right-to-left
 scripts (Arabic, Hebrew) are outside this font's coverage and are not
 supported; see DESIGN.md ("Printed case record") and
-docs/en/docs/admin/index.html.
+https://openwhistle.net/en/docs/admin/.
 
 Source
 ------

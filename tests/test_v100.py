@@ -24,8 +24,6 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tests.built_site import page as built_page
-
 # ---------------------------------------------------------------------------
 # Encryption service — unit tests (no DB required)
 # ---------------------------------------------------------------------------
@@ -583,7 +581,7 @@ class TestConfigV100Defaults:
     def test_every_published_version_string_matches(self) -> None:
         """One version, written in several places. A release that bumps only
         some of them ships a Helm chart deploying an old image (it happened:
-        0.5.0 through 1.3.0) or docs naming the wrong release."""
+        0.5.0 through 1.3.0). The website checks its own spots against the release tag."""
         import re
         from pathlib import Path
 
@@ -599,13 +597,6 @@ class TestConfigV100Defaults:
         found = {
             "Chart version": grab(chart, r'^version:\s*"?([^"\s]+)'),
             "Chart appVersion": grab(chart, r'^appVersion:\s*"?([^"\s]+)'),
-            "docs.html": grab("docs/en/docs/index.html", r"<strong>v([0-9.]+)</strong>"),
-            "index.html": grab("docs/en/index.html", r"softwareVersion: '?([0-9.]+)"),
-            "de/index.html": grab("docs/de/index.html", r"softwareVersion: '?([0-9.]+)"),
-            # The date beside the version is free text; only the version is checked.
-            "compare latest release": grab(
-                "docs/en/compare/index.html", r"Latest release</th>\s*<td>([0-9.]+)"
-            ),
             "CHANGELOG": grab("CHANGELOG.md", r"^## \[(\d+\.\d+\.\d+)\]"),
             "pyproject": grab("pyproject.toml", r'^version = "([^"]+)"'),
             "compose image": grab("docker-compose.prod.yml", r"OPENWHISTLE_VERSION:-([0-9.]+)\}"),
@@ -615,38 +606,12 @@ class TestConfigV100Defaults:
         }
         v = settings.app_version
         assert found == dict.fromkeys(found, v)
-        # docs.html once named the pin's default in prose and went stale with
-        # it; it now says "the release the file shipped with". Keep it so.
-        docs = (root / "docs/en/docs/images/index.html").read_text()
-        assert "OPENWHISTLE_VERSION" in docs
-        assert not re.search(r"OPENWHISTLE_VERSION</code>[^.]*default <code>[0-9.]+", docs)
         # Every image default, not only the first: tls-init runs the same image
         # and once pointed at a different version than the app service.
         compose = (root / "docker-compose.prod.yml").read_text()
         defaults = re.findall(r"OPENWHISTLE_VERSION:-([0-9.]+)\}", compose)
         assert len(defaults) >= 2 and set(defaults) == {v}, defaults
         assert f"[{v}]: " in (root / "CHANGELOG.md").read_text(), "CHANGELOG compare link missing"
-
-        # Every visible "Version X.Y.Z" string on both landing pages (hero
-        # badge and footer) must also match — the structured-data check above
-        # only covers the invisible JSON-LD softwareVersion.
-        for url in ("/en/", "/de/"):
-            visible = re.findall(r">Version ([0-9.]+)<", built_page(url))
-            assert visible, f"{url}: no visible 'Version X.Y.Z' string found"
-            assert visible == [v] * len(visible), (url, visible, v)
-
-        # Regression guard: a blanket find-replace of the
-        # three "current version" spots above once swept in a fourth,
-        # unrelated occurrence -- a *historical* claim ("multi-tenancy has
-        # existed since 1.0.0") that must never move with app_version. The
-        # loop above can't catch it (the sentence doesn't end in "<"), so
-        # pin the historical fact directly against CHANGELOG's own [1.0.0]
-        # section.
-        de_text = (root / "docs/de/index.html").read_text()
-        assert "Ab Version 1.0.0 unterstützt OpenWhistle Multi-Tenancy" in de_text
-        changelog = (root / "CHANGELOG.md").read_text()
-        v100_section = changelog.split("## [1.0.0]", 1)[1].split("\n## [", 1)[0]
-        assert "Multi-tenancy" in v100_section, "multi-tenancy no longer documented under [1.0.0]"
 
 
 # ---------------------------------------------------------------------------

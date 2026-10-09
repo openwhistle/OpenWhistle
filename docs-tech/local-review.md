@@ -118,8 +118,8 @@ Tear down with `podman compose -f docker-compose.e2e.yml -f docker-compose.revie
 Every public and admin page the app itself renders, every page template under
 `app/templates` (`tests/test_local_review.py` fails if either grows a route or
 a template missing from this table — parsed from the table rows only, and
-checked against a floor so an empty walk cannot pass by accident), plus the
-marketing/documentation site under `docs/`.
+checked against a floor so an empty walk cannot pass by accident). The website's
+pages are reviewed in openwhistle/website (its `docs-tech/local-review.md`).
 
 ### The app
 
@@ -154,96 +154,6 @@ route renders it standalone) and every partial starting with `_`
 (`_field.html`, `_icons.html`, `admin/_audit.html`, `admin/_layout.html` —
 included by another template, never rendered on their own).
 
-### The website (`docs/` sources, built to `_site/`)
-
-Build, then serve the output (the image serves the build, not `docs/`). The legal pages show
-their address only in the container (`docs-tech/website-image.md`):
-
-```bash
-uv run --group site python scripts/build_site.py && python -m http.server -d _site 8901
-```
-
-Rebuild after every edit to `docs/`; the server serves what was built.
-
-| Page | Notes |
-|---|---|
-| `/en/` | Landing page, English. |
-| `/de/` | Landing page, German — the longest strings; check nothing overflows or truncates. |
-| `/en/docs/` | Docs start page — the overview, the "Current version" line, and the sidebar every docs page shares. |
-| `/en/docs/requirements/` | Get started: Requirements. |
-| `/en/docs/install/` | Get started: Install. |
-| `/en/docs/first-report/` | Get started: Your first report. |
-| `/en/docs/kubernetes/` | How-to: Kubernetes (Helm). |
-| `/en/docs/tls-proxy/` | How-to: TLS proxy. |
-| `/en/docs/selinux/` | How-to: SELinux. |
-| `/en/docs/onion/` | How-to: Onion address. |
-| `/en/docs/ldap/` | How-to: LDAP / AD. |
-| `/en/docs/oidc/` | How-to: OIDC. |
-| `/en/docs/s3/` | How-to: S3 storage. |
-| `/en/docs/clamav/` | How-to: ClamAV. |
-| `/en/docs/notifications/` | How-to: Notifications. |
-| `/en/docs/retention/` | How-to: Data retention. |
-| `/en/docs/multi-tenancy/` | How-to: Multi-tenancy. |
-| `/en/docs/upgrade/` | How-to: Upgrade. |
-| `/en/docs/rotate-key/` | How-to: Rotate the key. |
-| `/en/docs/lost-authenticator/` | How-to: Lost authenticator. |
-| `/en/docs/demo-mode/` | How-to: Demo mode. |
-| `/en/docs/admin/` | Guides: Admin. |
-| `/en/docs/whistleblower/` | Guides: Whistleblower. |
-| `/en/docs/configuration/` | Settings reference, generated from `docs/_data/config.yml` — every table scrolls inside its box at 390 px. |
-| `/en/docs/images/` | Reference: Images. |
-| `/en/docs/roles/` | Reference: Roles. |
-| `/en/docs/limits/` | Reference: Attachments. |
-| `/en/docs/security-headers/` | Reference: Security headers. |
-| `/en/docs/anonymity/` | Explanation: Anonymity layers. |
-| `/en/docs/rate-limiting/` | Explanation: Rate limiting. |
-| `/en/docs/outbound/` | Explanation: Outbound requests. |
-| `/en/docs/timestamps/` | Explanation: Timestamps. |
-| `/en/docs/onion-trust/` | Explanation: Onion trust. |
-| `/en/docs/redis-sizing/` | Explanation: Redis sizing. |
-| `/en/docs/install-count/` | Explanation: Installation count. |
-| `/en/docs/security-policy/` | Security policy template, rendered from Markdown in the docs layout. |
-| `/en/docs/dpa-template/` | DPA template, rendered from Markdown in the docs layout. |
-| `/en/roadmap/` | Roadmap. |
-| `/en/compliance/` | Compliance overview: the two law cards; the table stacks into cards at 390 px. |
-| `/de/compliance/` | Compliance overview, German. |
-| `/en/compliance/eu-directive/` | EU directive: the requirement table stacks into one card per row at 390 px. |
-| `/de/compliance/eu-richtlinie/` | EU directive, German. |
-| `/en/compliance/hinschg/` | HinSchG: every table stacks into one card per row at 390 px. |
-| `/de/compliance/hinschg/` | HinSchG, German. |
-| `/en/security/` | Security: the trust table scrolls inside its box at 390 px. |
-| `/de/sicherheit/` | Security, German. |
-| `/en/contribute/` | Contribute. |
-| `/de/mitmachen/` | Contribute, German. |
-| `/impressum/` | Imprint, German only — the text is the provider's, word for word; the language switch leads to `/en/`. |
-| `/de/datenschutz/` | Privacy policy, German and binding — the "On this page" list sits above the text at 390 px. |
-| `/en/privacy/` | Privacy policy, English translation. |
-| `/.well-known/security.txt` | Plain text (RFC 9116): `Expires` lies 335 days after the build (RFC 9116: under a year). |
-| `/en/blog/feed.xml` | Atom feed (raw XML): every English post, newest first. |
-| `/de/blog/feed.xml` | Atom feed, German. |
-| `/en/og.png` | Share card (1200×630) — every directory page has its own `og.png`; also open one docs and one German post card. |
-| `/en/docs/install/#highlight=docker` | Docs search result: the term is marked and scrolled into view; press `/` for the search dialog. |
-| `/en/compare/` | Comparison with GlobaLeaks, SecureDrop, Hush Line — the table scrolls inside its box at 390 px. |
-| `/404.html` | Not-found page (noindex); open any missing path on the served site. |
-| `/en/changelog/` | Changelog, rendered from `CHANGELOG.md` — check the version nav in the sidebar. |
-| `/en/changelog/older/` | The releases before the newest five — the version nav, the link back. |
-| `/de/blog/` | Blog index. |
-| `/de/blog/hinschg-compliance-leitfaden/` | Article. |
-| `/de/blog/hinweisgebersystem-dsgvo-eu-hosting/` | Article. |
-| `/de/blog/interne-meldestelle-einrichten/` | Article. |
-| `/de/blog/interne-meldestelle-kostenlos/` | Article. |
-| `/de/blog/was-ist-neu-in-2-0/` | Article. |
-| `/de/blog/whistleblower-software-vergleich/` | Article. |
-| `/de/blog/metadaten-entfernen-ohne-beweise-zu-veraendern/` | Article. |
-| `/en/blog/` | Blog index, English. Every article below is the English twin of a German one; check the language switch both ways. |
-| `/en/blog/hinschg-compliance-guide/` | Article, English. |
-| `/en/blog/whistleblowing-system-gdpr-eu-hosting/` | Article, English. |
-| `/en/blog/set-up-internal-reporting-channel/` | Article, English. |
-| `/en/blog/free-internal-reporting-channel/` | Article, English. |
-| `/en/blog/whats-new-in-2-0/` | Article, English. |
-| `/en/blog/whistleblowing-software-comparison/` | Article, English. |
-| `/en/blog/removing-metadata-without-altering-evidence/` | Article, English. |
-
 ## What to check, on every page
 
 - **Both themes**: light and dark (`prefers-color-scheme`, or the in-page
@@ -267,24 +177,26 @@ Fix every finding before the release PR — nothing here is carried forward.
 |---|---|
 | The admin login rate limiter | `MAX_LOGIN_ATTEMPTS` failed attempts within `LOGIN_LOCKOUT_MINUTES` locks a username. The one-click button never touches this limiter — it has no password or code to get wrong. The regular username/password + TOTP form (the demo-credentials autofill on the same page) still goes through it, so a sweep that signs in that way instead can trip it. |
 | `/setup` and `/admin/mfa/setup` redirect away on the plain/review stack | `DEMO_MODE` seeding completes setup and enrols the demo admin's TOTP before either page is ever requested. Use the setup stack (above) for both. |
-| Serving `docs/` instead of `_site/` | `docs/` holds sources (templates, `.md`), not pages. Build first, serve `_site/`; the root-absolute links resolve there. |
 | A stack kept up across two review sessions | The four seeded demo reports (`OW-DEMO-00001`..`00004`) are always the same rows — nothing accumulates, so this one has no gotcha, unlike a counting assertion in an automated test. |
 
 ## Re-taking the documentation screenshots
 
-`scripts/take_screenshots.py` renders `docs/img/screens/*-{light,dark}.png` against
-this same review stack — the login button above is how it signs in, with no
-password ever typed:
+The screenshots are the website's files. `scripts/take_screenshots.py` renders
+`docs/img/screens/*-{light,dark}.png` into a checkout of openwhistle/website
+(`--out` or `OW_WEBSITE_CHECKOUT`; without one it refuses to run) against this
+same review stack — the login button above is how it signs in, with no password
+ever typed:
 
 ```bash
 podman compose -f docker-compose.e2e.yml -f docker-compose.review.yml up -d --build
-uv run python scripts/take_screenshots.py
+uv run python scripts/take_screenshots.py --out ../website
 podman compose -f docker-compose.e2e.yml -f docker-compose.review.yml down -v
 ```
 
-Look at every written PNG before committing — `tests/test_screenshots.py` checks
-that both themes exist and that the viewport is still above the admin layout's
-two-column breakpoint, not that a page's content is still accurate.
+Look at every written PNG before committing them in the website's pull request —
+the website's tests check that both themes exist for every name in this script;
+`tests/test_screenshots.py` here checks that the viewport is still above the admin
+layout's two-column breakpoint, not that a page's content is still accurate.
 
 Re-run it in the change that alters the interface a screenshot documents — a
 template, `site.css`, or the theme/demo-banner behaviour in `app/static/js/site.js`

@@ -17,7 +17,6 @@ from starlette.datastructures import Headers, UploadFile
 from app.config import settings
 from app.services.attachment import read_upload_files
 from app.services.virus_scan import scan_bytes
-from tests.built_site import page
 
 ROOT = Path(__file__).parents[1]
 
@@ -289,20 +288,6 @@ async def test_scan_unavailable_on_timeout(monkeypatch: pytest.MonkeyPatch) -> N
         server.close()
         await asyncio.wait_for(handler_done.wait(), 5)
         await server.wait_closed()
-
-
-# ── Docs: Helm ships no clamd ───────────────────────────────────────────────
-
-
-def test_virus_scan_docs_warn_that_helm_ships_no_clamd() -> None:
-    """The chart deploys no clamav pod; enabling CLAMAV_HOST via Helm without
-    pointing it at a real, reachable clamd fails every upload closed. RED if
-    this warning is ever removed from the how-to."""
-    section = page("/en/docs/clamav/")
-    assert "Helm" in section
-    assert "no clamav pod" in section
-    assert "clamavHost" in section
-    assert "reachable" in section and "refused" in section
 
 
 def test_helm_values_warn_that_the_chart_ships_no_clamd() -> None:
