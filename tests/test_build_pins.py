@@ -16,6 +16,12 @@ def test_uv_version_is_the_same_in_the_image_and_every_workflow() -> None:
     stale = {name: found for name, found in pins.items() if set(found) - {image.group(1)}}
     assert not stale, f"uv pins differ from the Dockerfile's {image.group(1)}: {stale}"
     assert any(pins.values()), "no workflow pins uv — the check reaches nothing"
+    pin = r"ghcr\.io/astral-sh/uv:([0-9.]+@sha256:[0-9a-f]{64})"
+    root = re.search(pin, (ROOT / "Dockerfile").read_text())
+    site = re.search(pin, (ROOT / "website" / "Dockerfile").read_text())
+    assert root and site and root.group(1) == site.group(1), (
+        "website/Dockerfile's uv pin differs from the Dockerfile's"
+    )
 
 
 def _all(pattern: str, *globs: str) -> set[str]:

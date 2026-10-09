@@ -1,0 +1,11 @@
+.venv
+_site
+node_modules
+.superpowers
+.claude
+**/__pycache__
+.pytest_cache
+.mypy_cache
+.ruff_cache
+htmlcov
+test-results

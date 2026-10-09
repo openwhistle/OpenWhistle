@@ -6,6 +6,12 @@
   ],
   "STATS": [
    "tests/test_site_stats.py"
+  ],
+  "CONFIG": [
+   "tests/test_website_config.py"
+  ],
+  "PINS": [
+   "tests/test_build_pins.py"
   ]
  },
  "mutations": [
@@ -71,6 +77,55 @@
    "old": "        _time, uri, _status, ref = parts\n        # Skip assets and pagefind; only count pages and their referrers\n        if uri.startswith(\"/pagefind/\") or uri.endswith(_ASSET_SUFFIXES):\n            continue",
    "new": "        _time, uri, _status, ref = parts\n        if ref != \"-\":\n            refs[ref] += 1\n        # Skip assets and pagefind; only count pages and their referrers\n        if uri.startswith(\"/pagefind/\") or uri.endswith(_ASSET_SUFFIXES):\n            continue",
    "tests": "STATS"
+  },
+  {
+   "id": "CSP-THEME-HASH",
+   "file": "website/nginx.conf",
+   "old": "\"site\" \"default-src 'none'; script-src 'self' 'sha256-aTVT",
+   "new": "\"site\" \"default-src 'none'; script-src 'self' 'sha256-bTVT",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "CSP-DOCS-WASM",
+   "file": "website/nginx.conf",
+   "old": " 'wasm-unsafe-eval'",
+   "new": "",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "CSP-SITE-WASM",
+   "file": "website/nginx.conf",
+   "old": "\"site\" \"default-src 'none'; script-src 'self' ",
+   "new": "\"site\" \"default-src 'none'; script-src 'self' 'wasm-unsafe-eval' ",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "LOG-ADDR",
+   "file": "website/nginx.conf",
+   "old": "'$time_iso8601 $uri",
+   "new": "'$remote_addr $time_iso8601 $uri",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "LOG-ERROR-LEVEL",
+   "file": "website/nginx.conf",
+   "old": "error_log stderr emerg;",
+   "new": "error_log stderr notice;",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "GZIP-DYNAMIC",
+   "file": "website/nginx.conf",
+   "old": "gzip_static on;",
+   "new": "gzip on;",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "UV-PIN-WEBSITE",
+   "file": "website/Dockerfile",
+   "old": "uv:0.12.24@",
+   "new": "uv:0.12.23@",
+   "tests": "PINS"
   }
  ]
 }
