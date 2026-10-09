@@ -213,6 +213,27 @@
    "old": "      - uses: docker/setup-buildx-action@",
    "new": "      - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0\n      - uses: docker/setup-buildx-action@",
    "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "PRIVATE-NOT-INTERNAL",
+   "file": "website/nginx.conf",
+   "old": "            internal;\n",
+   "new": "",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "HEALTHZ-LOGGED",
+   "file": "website/nginx.conf",
+   "old": "            access_log off;\n",
+   "new": "",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "SSI-GZIP-STATIC",
+   "file": "website/nginx.conf",
+   "old": "            gzip_static off;\n",
+   "new": "",
+   "tests": "CONFIG"
   }
  ],
  "manual": [

@@ -60,7 +60,8 @@ jobs:
 
       - name: Start it as it will run (read-only, unprivileged)
         run: |
-          docker run -d --name ow-website --read-only --tmpfs /tmp -p 8080:8080 openwhistle-website:test
+          docker run -d --name ow-website --read-only --tmpfs /tmp \
+            -v "$PWD/tests/website/fixtures/private:/usr/share/nginx/private:ro" -p 8080:8080 openwhistle-website:test
           for i in $(seq 1 20); do curl -sf -o /dev/null http://127.0.0.1:8080/en/ && break; sleep 1; done
 
       - name: Container tests

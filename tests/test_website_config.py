@@ -90,7 +90,10 @@ def test_the_log_holds_no_address_agent_or_query() -> None:
         "$realip_remote_addr",
     ):
         assert leak not in CONF, leak
-    assert re.findall(r"^\s*access_log\s+([^;]+);", CONF, re.M) == ["/dev/stdout counter"]
+    assert re.findall(r"^\s*access_log\s+([^;]+);", CONF, re.M) == [
+        "/dev/stdout counter",
+        "off",
+    ]
 
 
 def test_errors_are_logged_at_emerg_only() -> None:
@@ -144,3 +147,28 @@ def test_a_missing_website_url_fails_in_ci_and_skips_locally() -> None:
     assert not require_url("", "")
     with pytest.raises(RuntimeError):
         require_url("", "true")
+
+
+def _location(head: str) -> str:
+    found = re.search(rf"location\s+{head}\s*\{{([^}}]*)\}}", CONF)
+    assert found, f"no location {head}"
+    return found.group(1)
+
+
+def test_the_private_fragment_is_never_fetchable_from_outside() -> None:
+    block = _location(re.escape("/_private/"))
+    assert re.search(r"^\s*internal;", block, re.M)
+    assert "alias /usr/share/nginx/private/;" in block
+
+
+def test_ssi_is_on_for_the_legal_pages_only_and_without_the_prebuilt_gzip() -> None:
+    assert len(re.findall(r"^\s*ssi\s+on;", CONF, re.M)) == 1
+    block = _location(re.escape("~ ^/(impressum|de/datenschutz|en/privacy)/"))
+    assert re.search(r"^\s*ssi\s+on;", block, re.M)
+    assert re.search(r"^\s*gzip_static\s+off;", block, re.M)
+
+
+def test_the_health_check_is_not_logged() -> None:
+    block = _location("=\\s+/healthz")
+    assert re.search(r"^\s*access_log\s+off;", block, re.M)
+    assert "return 204;" in block

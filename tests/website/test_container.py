@@ -197,3 +197,40 @@ def test_a_directory_without_an_index_is_the_404_page() -> None:
     response = get("/assets/")
     assert response.status == 403
     assert b"Page not found" in response.read()
+
+
+def test_the_private_fragment_is_not_fetchable() -> None:
+    response = get("/_private/address.html")
+    assert response.status == 404
+    assert b"Mustermann" not in response.read()
+
+
+def test_the_health_check_answers_without_a_log_line() -> None:
+    response = get("/healthz")
+    assert response.status == 204
+    for name, value in SECURITY.items():
+        assert response.headers[name] == value, name
+    assert response.headers["content-security-policy"]
+    assert "/healthz" not in logs()
+
+
+@pytest.mark.parametrize("path", ["/impressum/", "/de/datenschutz/", "/en/privacy/"])
+def test_a_legal_page_goes_through_ssi_with_its_csp(path: str) -> None:
+    response = get(path)
+    assert response.status == 200
+    assert response.headers["content-security-policy"]
+    assert b"<!--#" not in response.read(), "an SSI directive was left unexpanded"
+
+
+def test_a_legal_page_with_gzip_accepted_is_html_not_the_raw_gz() -> None:
+    plain = get("/impressum/").read()
+    response = get("/impressum/", **{"Accept-Encoding": "gzip"})
+    body = response.read()
+    if response.headers.get("content-encoding") == "gzip":
+        body = gzip.decompress(body)
+    assert response.status == 200 and body == plain and b"<html" in body
+
+
+def test_a_legal_page_without_its_slash_moves_relatively() -> None:
+    response = get("/impressum")
+    assert (response.status, response.headers["location"]) == (301, "/impressum/")
