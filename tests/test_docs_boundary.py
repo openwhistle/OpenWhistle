@@ -18,7 +18,7 @@ def test_the_technical_docs_are_not_published() -> None:
 
     for name in ("docs-tech", "technical", "internal"):
         assert not (ROOT / "docs" / name).exists(), (
-            f"docs/{name} exists — everything under docs/ is published by pages.yml"
+            f"docs/{name} exists — everything under docs/ is published in the website image"
         )
 
 
@@ -45,24 +45,19 @@ def test_the_public_roadmap_holds_no_test_chores() -> None:
     assert (ROOT / "docs-tech/test-infrastructure.md").exists()
 
 
-def _pages_steps() -> list[dict]:
-    workflow = yaml.safe_load((ROOT / ".github/workflows/pages.yml").read_text())
-    return workflow["jobs"]["deploy"]["steps"]
+def test_the_image_publishes_the_built_site_and_nothing_else() -> None:
+    dockerfile = (ROOT / "website/Dockerfile").read_text()
+    build = next(line for line in dockerfile.splitlines() if "build_site.py" in line)
+    assert "--src" not in build, "the build must read docs/ and nothing else"
+    assert "COPY --from=site /out/site /usr/share/nginx/html" in dockerfile
 
 
-def test_pages_publishes_the_built_site_and_nothing_else() -> None:
-    steps = _pages_steps()
-    uploads = [s for s in steps if "upload-pages-artifact" in s.get("uses", "")]
-    assert [u["with"]["path"] for u in uploads] == ["_site"]
-    build = next(s for s in steps if "build_site.py" in s.get("run", ""))
-    assert "--src" not in build["run"], "the build must read docs/ and nothing else"
-    assert "--redirect-stubs" in build["run"], "without the stubs every old URL 404s on Pages"
-
-
-def test_pages_checks_out_the_full_history() -> None:
+def test_the_image_build_checks_out_the_full_history() -> None:
     """Shallow history makes every sitemap lastmod the deploy date, silently."""
-    checkout = next(s for s in _pages_steps() if "actions/checkout" in s.get("uses", ""))
-    assert checkout.get("with", {}).get("fetch-depth") == 0
+    workflow = yaml.safe_load((ROOT / ".github/workflows/website-image.yml").read_text())
+    for name, job in workflow["jobs"].items():
+        checkout = next(s for s in job["steps"] if "actions/checkout" in s.get("uses", ""))
+        assert checkout.get("with", {}).get("fetch-depth") == 0, name
 
 
 def test_no_built_file_comes_from_docs_tech(tmp_path: Path) -> None:

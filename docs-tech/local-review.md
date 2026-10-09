@@ -156,7 +156,8 @@ included by another template, never rendered on their own).
 
 ### The website (`docs/` sources, built to `_site/`)
 
-Build, then serve the output (GitHub Pages publishes `_site/`, not `docs/`):
+Build, then serve the output (the image serves the build, not `docs/`). The legal pages show
+their address only in the container (`docs-tech/website-image.md`):
 
 ```bash
 uv run --group site python scripts/build_site.py && python -m http.server -d _site 8901

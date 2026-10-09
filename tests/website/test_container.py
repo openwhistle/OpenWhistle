@@ -180,6 +180,15 @@ def test_the_referer_keeps_the_hostname_only() -> None:
     assert re.search(r"^\S+ /en/index\.html 200 intranet\.acme\.local$", text, re.M), text[-500:]
 
 
+@pytest.mark.parametrize(
+    "referer", ["http://192.0.2.7/wiki/x", "https://alice@192.0.2.8:8443/", "http://[2001:db8::9]/"]
+)
+def test_an_ip_literal_referer_is_logged_as_a_dash(referer: str) -> None:
+    get("/en/", Referer=referer)
+    last = logs().splitlines()[-1]
+    assert re.fullmatch(r"\S+ /en/index\.html 200 -", last), last
+
+
 def test_every_log_line_is_a_counter_line() -> None:
     # A $uri with a space would break the 4-field format; scripts/site_stats.py skips such lines
     # (len(parts) != 4), so the counter never miscounts and nothing needs fixing here.
@@ -266,6 +275,16 @@ def test_a_legal_page_goes_through_ssi_with_its_csp(path: str) -> None:
     assert response.headers["content-security-policy"]
     assert "etag" not in response.headers, "ssi is off: an SSI response has no ETag"
     assert b"<!--#" not in response.read(), "an SSI directive was left unexpanded"
+
+
+@pytest.mark.parametrize(
+    ("path", "times"), [("/impressum/", 2), ("/de/datenschutz/", 1), ("/en/privacy/", 1)]
+)
+def test_a_legal_page_shows_the_mounted_address(path: str, times: int) -> None:
+    body = get(path).read().decode()
+    assert body.count("Erika Mustermann") == times, path
+    assert "<!--#" not in body and "Page not found" not in body, path
+    assert "_private" not in logs(), "the include is a subrequest and is never logged"
 
 
 def test_a_legal_page_is_never_the_prebuilt_gzip() -> None:

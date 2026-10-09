@@ -564,13 +564,6 @@
    "tests": "LEGAL"
   },
   {
-   "id": "PAGES-HIDDEN-FILES",
-   "file": ".github/workflows/pages.yml",
-   "old": "include-hidden-files: true",
-   "new": "include-hidden-files: false",
-   "tests": "LEGAL"
-  },
-  {
    "id": "LEGAL-NAV-NAME",
    "file": "docs/de/datenschutz/index.html",
    "old": "aria-label=\"Rechtliche Seiten\"",
