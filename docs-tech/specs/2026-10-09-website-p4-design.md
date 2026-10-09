@@ -15,7 +15,7 @@ P5.
 
 | # | Decision | Why |
 | --- | --- | --- |
-| P4-1 | P4 ends at a published image and its tests; rollout, the Semaphore trigger, checks from outside and DNS are P5 | Maintainer's choice |
+| P4-1 | P4 ends at a published image and its tests; rollout, checks from outside and DNS are P5 | Maintainer's choice |
 | P4-2 | One PR for all of P4 | As P3 |
 | P4-3 | CSP hashes are written by hand in `website/nginx.conf`; a test compares them with every inline script of every built page | A changed inline script is a security change and shows in the diff; the failing test names the right hash |
 | P4-4 | The redirect map is generated at build from `docs/_data/redirects.yml` | Data that grows with every rename; the redesign spec already says "`redirects.yml` → nginx map" |
@@ -90,9 +90,10 @@ The existing site e2e tests keep running against the fast Python server; only th
 | wdk-ansible | `host_specific/tasks/openwhistle-website.yml` on root01xvp (pattern `momo.yml`): `ghcr.io/openwhistle/website` pinned by digest in `docker_images.yml`, loopback port, read-only root filesystem, entry in `hc_expected_images`, not part of `demo.yml` |
 | wdk-ansible | :443 vhost `openwhistle.net www.openwhistle.net`: proxy only, `access_log off;`, `error_log /dev/null;`, the four inherited host-level headers removed; deployed and verified before DNS moves |
 | wdk-ansible | DNS, `mta-sts`/`autoconfig`/`autodiscover` over HTTPS before the HSTS preload submission, Search Console TXT (redesign spec § Constraints owned by wdk-ansible) |
-| openwhistle | Semaphore trigger after the image push (token in `gh secret`); checks from outside; privacy policy and `tests/test_legal_pages.py` switch from GitHub Pages to the own server; `docs/_legacy/`, `--redirect-stubs` and `pages.yml` removed |
+| wdk-ansible | Redeploy as for energysharing (infra session, 2026-10-09): the image's digest pinned in `docker_images.yml`, Renovate opens a pull request for each new digest, its merge runs template 22 (`root01xvp.yml`). No token and no trigger from GitHub: Semaphore is LAN-only. A new Docker network needs an easywall apply in the UI first; the vhost blocks the four http-level headers with an empty `add_header` (`energysharing.conf.j2`) |
+| openwhistle | checks from outside; privacy policy and `tests/test_legal_pages.py` switch from GitHub Pages to the own server; `docs/_legacy/`, `--redirect-stubs` and `pages.yml` removed |
 
 ## Out of P4
 
-Rollout, DNS, the Semaphore trigger and the privacy-policy switch (P5). Brotli (redesign spec: stock nginx lacks it).
+Rollout, DNS and the privacy-policy switch (P5). Brotli (redesign spec: stock nginx lacks it).
 Fingerprinted asset names (P4-7 makes them unnecessary).

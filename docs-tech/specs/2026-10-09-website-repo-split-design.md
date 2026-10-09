@@ -60,7 +60,7 @@ makes no third-party request.
 - `ghcr.io/openwhistle/website` is published from the new repository; the cosign identity changes to
   `https://github.com/openwhistle/website/.github/workflows/website-image.yml@refs/heads/main`, so the deploy side's
   verification is updated in the same step (wdk-ansible).
-- The Semaphore trigger secret moves to the new repository's secrets.
+- The deploy needs no secret: wdk-ansible's Renovate follows the image's digest, whichever repository publishes it.
 
 ## Guards
 
