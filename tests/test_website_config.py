@@ -172,3 +172,12 @@ def test_the_health_check_is_not_logged() -> None:
     block = _location("=\\s+/healthz")
     assert re.search(r"^\s*access_log\s+off;", block, re.M)
     assert "return 204;" in block
+    guard = re.search(
+        r"if\s*\(!-f /usr/share/nginx/private/address\.html\)\s*\{\s*return 503;", block
+    )
+    assert guard and guard.start() < block.index("return 204;"), "no fragment, no healthy answer"
+
+
+def test_subrequests_are_never_logged() -> None:
+    """The include is a subrequest: logging it would add a /_private/address.html line."""
+    assert not re.search(r"^\s*log_subrequest\s+on;", CONF, re.M)

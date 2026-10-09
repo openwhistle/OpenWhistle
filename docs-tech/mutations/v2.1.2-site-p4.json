@@ -234,6 +234,20 @@
    "old": "            gzip_static off;\n",
    "new": "",
    "tests": "CONFIG"
+  },
+  {
+   "id": "HEALTHZ-NO-503",
+   "file": "website/nginx.conf",
+   "old": "            if (!-f /usr/share/nginx/private/address.html) {\n                return 503;\n            }\n",
+   "new": "",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "LOG-SUBREQUEST",
+   "file": "website/nginx.conf",
+   "old": "        gzip_vary on;\n",
+   "new": "        gzip_vary on;\n        log_subrequest on;\n",
+   "tests": "CONFIG"
   }
  ],
  "manual": [
@@ -383,6 +397,20 @@
    "old": "    if older and len(released) <= NEWEST:",
    "new": "    if False:",
    "red": "tests/test_changelog_page.py::test_the_older_page_refuses_to_render_empty"
+  },
+  {
+   "id": "SSI-OFF",
+   "file": "website/nginx.conf",
+   "old": "            ssi on;\n",
+   "new": "",
+   "red": "tests/website/test_container.py::test_a_legal_page_goes_through_ssi_with_its_csp"
+  },
+  {
+   "id": "SSI-GZIP-STATIC-CONTAINER",
+   "file": "website/nginx.conf",
+   "old": "            gzip_static off;\n",
+   "new": "",
+   "red": "tests/website/test_container.py::test_a_legal_page_is_never_the_prebuilt_gzip"
   }
  ]
 }

@@ -9,6 +9,7 @@ import gzip
 import os
 import re
 import subprocess
+import time
 import urllib.error
 import urllib.request
 from http.client import HTTPResponse
@@ -200,9 +201,53 @@ def test_a_directory_without_an_index_is_the_404_page() -> None:
 
 
 def test_the_private_fragment_is_not_fetchable() -> None:
+    assert get("/healthz").status == 204, "the fixture is not mounted: this test would be vacuous"
     response = get("/_private/address.html")
     assert response.status == 404
     assert b"Mustermann" not in response.read()
+
+
+def test_without_the_fragment_the_health_check_fails() -> None:
+    port = "8086"
+    name = NAME + "-bare"
+    image = subprocess.run(  # noqa: S603
+        [CLI, "inspect", NAME, "--format", "{{.ImageName}}"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    subprocess.run(  # noqa: S603
+        [
+            CLI,
+            "run",
+            "-d",
+            "--name",
+            name,
+            "--read-only",
+            "--tmpfs",
+            "/tmp",
+            "-p",
+            f"{port}:8080",
+            image,
+        ],
+        capture_output=True,
+        check=True,
+    )
+    try:
+        for _ in range(20):
+            try:
+                urllib.request.urlopen(f"http://127.0.0.1:{port}/en/", timeout=2)  # noqa: S310
+                break
+            except OSError:
+                time.sleep(0.5)
+        try:
+            response = urllib.request.urlopen(f"http://127.0.0.1:{port}/healthz", timeout=5)  # noqa: S310
+            status = response.status
+        except urllib.error.HTTPError as error:
+            status = error.code
+        assert status == 503
+    finally:
+        subprocess.run([CLI, "rm", "-f", name], capture_output=True, check=False)  # noqa: S603
 
 
 def test_the_health_check_answers_without_a_log_line() -> None:
@@ -219,15 +264,15 @@ def test_a_legal_page_goes_through_ssi_with_its_csp(path: str) -> None:
     response = get(path)
     assert response.status == 200
     assert response.headers["content-security-policy"]
+    assert "etag" not in response.headers, "ssi is off: an SSI response has no ETag"
     assert b"<!--#" not in response.read(), "an SSI directive was left unexpanded"
 
 
-def test_a_legal_page_with_gzip_accepted_is_html_not_the_raw_gz() -> None:
+def test_a_legal_page_is_never_the_prebuilt_gzip() -> None:
     plain = get("/impressum/").read()
     response = get("/impressum/", **{"Accept-Encoding": "gzip"})
+    assert "content-encoding" not in response.headers, "gzip_static answered an SSI page"
     body = response.read()
-    if response.headers.get("content-encoding") == "gzip":
-        body = gzip.decompress(body)
     assert response.status == 200 and body == plain and b"<html" in body
 
 

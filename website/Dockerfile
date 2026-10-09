@@ -19,7 +19,9 @@ RUN rm -f /etc/nginx/conf.d/default.conf && rm -rf /usr/share/nginx/html/*
 COPY website/nginx.conf /etc/nginx/nginx.conf
 COPY --from=site /out/redirects.map /etc/nginx/redirects.map
 COPY --from=site /out/site /usr/share/nginx/html
-RUN chmod -R a+rX /usr/share/nginx/html /etc/nginx && mkdir -p /usr/share/nginx/private && chmod 0755 /usr/share/nginx/private
+RUN chmod -R a+rX /usr/share/nginx/html /etc/nginx \
+    && mkdir -p /usr/share/nginx/private \
+    && chmod 0755 /usr/share/nginx/private
 USER 101
 EXPOSE 8080
 # No entrypoint scripts: their stdout would mix into the counter log.
