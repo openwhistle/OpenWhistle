@@ -58,8 +58,9 @@ what the software covers and what it does not. No page gives legal advice.
   output. `docs-tech/` is never published; `test_the_technical_docs_are_not_published` keeps holding that.
 - Headers are set by the container's `nginx.conf` (in this repo, tested). The host vhost proxies only, logs
   nothing and must block the four inherited host-level headers, or HSTS and X-Frame-Options arrive twice.
-- Deploy: a push to `main` builds and pushes the image, then triggers the Semaphore task that redeploys only the
-  website. The trigger token lives in `gh secret`, never in a file.
+- Deploy: a push to `main` builds and pushes the image; wdk-ansible pins its digest, Renovate there opens a pull
+  request for each new digest, and its merge rolls it out (as for energysharing). No token leaves GitHub: Semaphore is
+  LAN-only (corrected 2026-10-09, see `2026-10-09-website-p4-design.md` § Handed to P5).
 - The website is not part of `playbooks/linux/openwhistle/demo.yml`, which removes its containers every 6 h.
 
 ### Constraints owned by wdk-ansible
