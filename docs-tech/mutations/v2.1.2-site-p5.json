@@ -64,6 +64,20 @@
    "old": "    args = parser.parse_args(argv)",
    "new": "    parser.add_argument(\"--redirect-stubs\", action=\"store_true\")\n    args = parser.parse_args(argv)",
    "tests": "BUILD"
+  },
+  {
+   "id": "P5-DE-SHORT-NO-MEASURE",
+   "file": "docs/de/datenschutz/index.html",
+   "old": "hat keine Analyse und kein Tracking. Seitenaufrufe zählen wir nur anonym aus dem Server-Protokoll.",
+   "new": "misst keine Besuche.",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "P5-EN-NOCOOKIES-NO-COUNT",
+   "file": "docs/en/privacy/index.html",
+   "old": " We count page views only anonymously, from the server log described above.",
+   "new": "",
+   "tests": "LEGAL"
   }
  ],
  "manual": []

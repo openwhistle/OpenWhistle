@@ -192,6 +192,21 @@ def test_the_own_server_section_states_processor_log_fields_and_retention() -> N
             assert fact in text, (url, fact)
 
 
+def test_the_summary_and_the_analytics_section_agree_with_the_log_section() -> None:
+    """The policy counts page views from the log, so no part of it may claim no measurement."""
+    for url, short, none, counting in (
+        ("/de/datenschutz/", "kurz", "keine-cookies", "nur anonym aus dem Server-Protokoll"),
+        ("/en/privacy/", "short", "no-cookies", "only anonymously, from the server log"),
+    ):
+        html = page(url)
+        for section in (short, none):
+            body = html.split(f'id="{section}"', 1)[1].split("</section>", 1)[0]
+            assert counting in re.sub(r"\s+", " ", body), (url, section)
+        assert not re.search(
+            r"misst keine Besuche|Reichweitenmessung|does not measure visits", html
+        )
+
+
 def test_both_languages_state_the_same_periods_and_legal_bases() -> None:
     for url, facts in FACTS.items():
         text = _main(url)
