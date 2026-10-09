@@ -15,7 +15,7 @@
             <li><a href="{{ site.github_url }}" rel="noopener noreferrer" target="_blank">{{ t.nav.github }}</a></li>
             <li><a href="{{ site.sponsor_url }}" rel="noopener noreferrer" target="_blank">{{ t.nav.sponsor }}</a></li>
 {% for item in nav.footer %}
-            <li><a href="{{ item.href }}">{{ item.label }}</a></li>
+            <li><a href="{{ item.href }}"{% if page.lang != "en" and item.href.startswith("/en/") %} hreflang="en"{% endif %}>{{ item.label }}</a></li>
 {% endfor %}
             <li><a href="{{ site.github_url }}/issues" rel="noopener noreferrer" target="_blank">{{ t.footer.issues }}</a></li>
             <li><a href="{{ site.github_url }}/blob/main/LICENSE" rel="noopener noreferrer" target="_blank">{{ t.footer.licence_link }}</a></li>

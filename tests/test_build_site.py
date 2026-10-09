@@ -317,7 +317,7 @@ def test_the_fixture_uses_the_real_templates() -> None:
 
 def test_a_german_reader_is_sent_to_the_english_docs(src: Path, tmp_path: Path) -> None:
     html = (_build(src, tmp_path) / "de" / "index.html").read_text(encoding="utf-8")
-    assert '<a href="/en/docs/">Dokumentation</a>' in html
+    assert '<a href="/en/docs/" hreflang="en">Dokumentation</a>' in html
 
 
 def test_the_current_section_is_marked(src: Path, tmp_path: Path) -> None:

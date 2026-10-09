@@ -11,7 +11,7 @@
 
       <ul class="nav-links" id="nav-links" role="list">
 {% for item in nav.primary %}
-        <li><a href="{{ item.href }}"{% if item.current %} class="active" aria-current="page"{% endif %}>{{ item.label }}</a></li>
+        <li><a href="{{ item.href }}"{% if page.lang != "en" and item.href.startswith("/en/") %} hreflang="en"{% endif %}{% if item.current %} class="active" aria-current="page"{% endif %}>{{ item.label }}</a></li>
 {% endfor %}
 {% for language in nav.languages %}
         <li><a href="{{ language.href }}" hreflang="{{ language.lang }}" lang="{{ language.lang }}">{{ language.name }}</a></li>

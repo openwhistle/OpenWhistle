@@ -181,9 +181,9 @@ def _resolve_nav_target(page: Path, href: str) -> str:
     return rel + (f"#{frag}" if frag else "")
 
 
-# A link with ``hreflang`` is the language switch: on a blog article it names
-# the article's twin, on the other pages the other language's home -- one
-# bucket, whatever its target.
+# A link with ``hreflang`` and ``lang`` is the language switch: on a blog article
+# it names the article's twin, on the other pages the other language's home -- one
+# bucket, whatever its target. ``hreflang`` alone marks a link into the other language.
 _LANGUAGE_SWITCH = "<language switch>"
 
 
@@ -195,7 +195,9 @@ def _link_targets(page: Path, links_html: str) -> set[str]:
         if not href:
             continue
         targets.add(
-            _LANGUAGE_SWITCH if "hreflang=" in attrs else _resolve_nav_target(page, href.group(1))
+            _LANGUAGE_SWITCH
+            if re.search(r'(?<![\w-])lang="', attrs)
+            else _resolve_nav_target(page, href.group(1))
         )
     return targets
 
@@ -379,6 +381,20 @@ def test_landing_pages_link_each_other_via_hreflang() -> None:
         ):
             tag = f'<link rel="alternate" hreflang="{lang}" href="{href}">'
             assert tag in html, (own, lang, tag)
+
+
+def test_a_german_page_marks_every_link_into_english() -> None:
+    """A screen reader switches voice on hreflang; /impressum/ is German too."""
+    unmarked = []
+    for path in pages():
+        url = _url(path)
+        if not (url.startswith("/de/") or url == "/impressum/"):
+            continue
+        for tag in re.findall(r"<a\s[^>]*>", path.read_text(encoding="utf-8")):
+            href = re.search(r'href="(?:https://openwhistle\.net)?(/[^"]*)"', tag)
+            if href and href.group(1).startswith("/en/") and 'hreflang="en"' not in tag:
+                unmarked.append((url, tag))
+    assert not unmarked, unmarked
 
 
 def test_every_blog_page_exists_in_english_and_german() -> None:
