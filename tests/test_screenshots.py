@@ -1,56 +1,66 @@
-"""Guards for docs/img/screens/ and scripts/take_screenshots.py.
+"""Guards for scripts/take_screenshots.py.
 
-That every screenshot is embedded, with its dark twin and alt text, is
-tests/test_docs_figures.py's job.
+The screenshots live in openwhistle/website, which checks that every one has its
+light and dark twin and that every name in this script has both files.
 """
 
+import importlib.util
 import re
+import sys
+from functools import cache
 from pathlib import Path
+from types import ModuleType
+
+import pytest
 
 ROOT = Path(__file__).parents[1]
-SCREENS_DIR = ROOT / "docs" / "img" / "screens"
 SCRIPT_PATH = ROOT / "scripts" / "take_screenshots.py"
 CSS_PATH = ROOT / "app" / "static" / "css" / "site.css"
-
-_THEMES = ("light", "dark")
 
 
 def _script_text() -> str:
     return SCRIPT_PATH.read_text(encoding="utf-8")
 
 
-def _names_in_script() -> list[str]:
-    return re.findall(r'Screenshot\(\s*"([\w-]+)"', _script_text())
+@cache
+def _script() -> ModuleType:
+    spec = importlib.util.spec_from_file_location("take_screenshots", SCRIPT_PATH)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module  # dataclasses resolve the script's annotations through it
+    spec.loader.exec_module(module)
+    return module
 
 
-def test_every_screenshot_has_a_light_and_dark_twin() -> None:
-    files = list(SCREENS_DIR.glob("*.png"))
-    assert files, f"no screenshots found in {SCREENS_DIR}"
-
-    names = {re.sub(r"-(light|dark)$", "", p.stem) for p in files}
-    missing = [
-        f"{name}-{theme}.png"
-        for name in sorted(names)
-        for theme in _THEMES
-        if not (SCREENS_DIR / f"{name}-{theme}.png").exists()
-    ]
-    assert not missing, f"screenshot missing its light/dark twin: {missing}"
+def test_without_a_website_checkout_the_script_refuses_to_run(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The screenshots are the website's files: no default path in this repository."""
+    monkeypatch.delenv("OW_WEBSITE_CHECKOUT", raising=False)
+    with pytest.raises(SystemExit) as exit_info:
+        _script().out_dir([])
+    assert exit_info.value.code == 2
+    assert "OW_WEBSITE_CHECKOUT" in capsys.readouterr().err
 
 
-def test_every_name_in_the_script_has_both_files() -> None:
-    """Catches a name added, removed or renamed in SCREENSHOTS without
-    re-running the script — the list and docs/img/screens/ drift apart
-    silently otherwise."""
-    names = _names_in_script()
-    assert names, "could not parse any Screenshot(...) entries out of scripts/take_screenshots.py"
+def test_a_folder_that_is_no_website_checkout_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("OW_WEBSITE_CHECKOUT", raising=False)
+    with pytest.raises(SystemExit) as exit_info:
+        _script().out_dir(["--out", str(tmp_path)])
+    assert exit_info.value.code == 2
 
-    missing = [
-        f"{name}-{theme}.png"
-        for name in names
-        for theme in _THEMES
-        if not (SCREENS_DIR / f"{name}-{theme}.png").exists()
-    ]
-    assert not missing, f"scripts/take_screenshots.py lists a name with no rendered file: {missing}"
+
+def test_the_checkout_comes_from_the_flag_or_the_environment(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    screens = tmp_path / _script().SCREENS
+    screens.mkdir(parents=True)
+    monkeypatch.setenv("OW_WEBSITE_CHECKOUT", str(tmp_path))
+    assert _script().out_dir([]) == screens
+    monkeypatch.delenv("OW_WEBSITE_CHECKOUT")
+    assert _script().out_dir(["--out", str(tmp_path)]) == screens
 
 
 def test_viewport_is_above_the_admin_two_column_breakpoint() -> None:
