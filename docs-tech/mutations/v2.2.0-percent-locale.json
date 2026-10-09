@@ -1,0 +1,90 @@
+{
+ "timeout_seconds": 300,
+ "test_groups": {
+  "PCT": [
+   "tests/test_v160_design.py",
+   "tests/test_locales.py",
+   "-k",
+   "percent or language or locale"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "PCT-DE-FLUSH",
+   "file": "app/i18n.py",
+   "tests": "PCT",
+   "old": "\"de\": \"\\u00a0%\",",
+   "new": "\"de\": \"%\","
+  },
+  {
+   "id": "PCT-FR-WIDE-SPACE",
+   "file": "app/i18n.py",
+   "tests": "PCT",
+   "old": "\"fr\": \"\\u202f%\",",
+   "new": "\"fr\": \"\\u00a0%\","
+  },
+  {
+   "id": "PCT-ES-FLUSH",
+   "file": "app/i18n.py",
+   "tests": "PCT",
+   "old": "\"es\": \"\\u00a0%\",",
+   "new": "\"es\": \"%\","
+  },
+  {
+   "id": "PCT-ES-POINT",
+   "file": "app/i18n.py",
+   "tests": "PCT",
+   "old": "\"es\": \",\", \"pt-br\": \",\"}",
+   "new": "\"es\": \".\", \"pt-br\": \",\"}"
+  },
+  {
+   "id": "PCT-UNKNOWN-NOT-EN",
+   "file": "app/i18n.py",
+   "tests": "PCT",
+   "old": "mark = _DECIMAL_MARK.get(lang, _DECIMAL_MARK[_DEFAULT])",
+   "new": "mark = _DECIMAL_MARK.get(lang, \",\")"
+  },
+  {
+   "id": "PCT-SLA-RAW",
+   "file": "app/templates/admin/stats.html",
+   "tests": "PCT",
+   "old": "{{ stats.sla_7day_rate | format_percent(lang) }}",
+   "new": "{{ stats.sla_7day_rate }}%"
+  },
+  {
+   "id": "PCT-STATUS-RAW",
+   "file": "app/templates/admin/stats.html",
+   "tests": "PCT",
+   "old": "{{ t(label_key) }}</span>\n                        <span class=\"stat-muted-sm\">{{ count }} ({{ pct | format_percent(lang) }})</span>\n",
+   "new": "{{ t(label_key) }}</span>\n                        <span class=\"stat-muted-sm\">{{ count }} ({{ pct }}%{{ '' }})</span>\n"
+  },
+  {
+   "id": "PCT-CATEGORY-RAW",
+   "file": "app/templates/admin/stats.html",
+   "tests": "PCT",
+   "old": "{{ slug | category_label(cat_map) }}</span>\n                        <span class=\"stat-muted-sm\">{{ count }} ({{ pct | format_percent(lang) }})</span>\n",
+   "new": "{{ slug | category_label(cat_map) }}</span>\n                        <span class=\"stat-muted-sm\">{{ count }} ({{ pct }}%{{ '' }})</span>\n"
+  },
+  {
+   "id": "422-ENGLISH",
+   "file": "app/main.py",
+   "tests": "PCT",
+   "old": "\"detail\": t(\"error.detail.422\")",
+   "new": "\"detail\": \"The submitted form data was invalid.\""
+  },
+  {
+   "id": "422-LANGUAGE-IGNORED",
+   "file": "app/main.py",
+   "tests": "PCT",
+   "old": "        t = make_translator(get_lang(request))\n        return render(\n            request,\n            \"error.html\",\n            {\"status_code\": 422",
+   "new": "        t = make_translator(\"en\")\n        return render(\n            request,\n            \"error.html\",\n            {\"status_code\": 422"
+  },
+  {
+   "id": "422-ES-UNTRANSLATED",
+   "file": "app/locales/es.json",
+   "tests": "PCT",
+   "old": "  \"error.detail.422\": \"Los datos enviados no eran válidos.\",\n",
+   "new": ""
+  }
+ ]
+}

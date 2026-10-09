@@ -7,11 +7,14 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.2.0] — 2026-10-09
+
 ### Added
 
 - **Spanish (Spain) interface** (`es`): the full locale, in formal *usted*, in the language picker and
   chosen automatically for a browser that asks for Spanish; counts group digits with a period. Report categories
-  fall back to English, as they do for French and Portuguese.
+  fall back to English, as they do for French and Portuguese. Translated by
+  [@edumicro](https://github.com/edumicro) ([#126](https://github.com/openwhistle/OpenWhistle/pull/126)).
 - In demo mode the footer links the demo's imprint and privacy policy.
 
 ### Changed
@@ -1528,7 +1531,8 @@ Remaining lower-severity findings are tracked in GitHub issues #42–#46.
 - **Rate limiting by session token** (not IP) to maintain full anonymity
 - **alembic upgrade head** on every startup to guarantee migration consistency
 
-[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.1.1...HEAD
+[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/openwhistle/OpenWhistle/compare/v2.1.1...v2.2.0
 [2.1.1]: https://github.com/openwhistle/OpenWhistle/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/openwhistle/OpenWhistle/compare/v2.0.1...v2.1.0
 [2.0.1]: https://github.com/openwhistle/OpenWhistle/compare/v2.0.0...v2.0.1
