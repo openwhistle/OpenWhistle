@@ -15,6 +15,7 @@ IMPRINT = "https://openwhistle.net/impressum/"
     [
         ("de", "/de/datenschutz/"),
         ("en", "/en/privacy/"),
+        ("es", "/en/privacy/"),
         ("fr", "/en/privacy/"),
         ("pt-br", "/en/privacy/"),
     ],
