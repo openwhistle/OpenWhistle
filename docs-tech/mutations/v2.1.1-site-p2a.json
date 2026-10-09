@@ -9,30 +9,6 @@
   ],
   "COMMITTED": [
    "tests/test_diagrams.py"
-  ],
-  "FIGURES": [
-   "tests/test_docs_figures.py"
-  ],
-  "E2E": [
-   "tests/e2e/test_docs_diagrams.py",
-   "-m",
-   "e2e",
-   "--browser",
-   "chromium"
-  ],
-  "SITE": [
-   "tests/test_build_site.py",
-   "-k",
-   "lastmod"
-  ],
-  "PHONE": [
-   "tests/e2e/test_site_look.py",
-   "-k",
-   "wider_than_a_small_phone",
-   "-m",
-   "e2e",
-   "--browser",
-   "chromium"
   ]
  },
  "mutations": [
@@ -331,13 +307,6 @@
    "new": "        half = 0.0"
   },
   {
-   "id": "LANGUAGE",
-   "file": "docs/de/blog/interne-meldestelle-kostenlos.html",
-   "tests": "COMMITTED",
-   "old": "src=\"/img/diagrams/architecture.de-light.svg\"",
-   "new": "src=\"/img/diagrams/architecture-light.svg\""
-  },
-  {
    "id": "MERMAID-FENCE",
    "file": "docs-tech/release.md",
    "tests": "COMMITTED",
@@ -346,45 +315,10 @@
   },
   {
    "id": "FENCED-PICTURE",
-   "file": "docs-tech/specs/2026-10-01-website-redesign-design.md",
+   "file": "docs-tech/release.md",
    "tests": "COMMITTED",
-   "old": "<picture>\n  <source media=\"(prefers-color-scheme: dark)\" srcset=\"../img/diagrams/law-profiles-dark.svg\">",
-   "new": "```text\n<picture>\n  <source media=\"(prefers-color-scheme: dark)\" srcset=\"../img/diagrams/law-profiles-dark.svg\">"
-  },
-  {
-   "id": "HOME-NO-DIAGRAM",
-   "file": "docs/en/index.html",
-   "tests": "COMMITTED",
-   "old": "<img class=\"diagram-light\" src=\"/img/diagrams/home-flow-light.svg\" alt=\"Two lanes. Whistleblower: fill in the form, anonymous or confidential, with no account and no e-mail; note the case number and PIN, shown exactly once; check status and reply at /status. The form has six steps. Category and description are required. The page continues only after ticking that the case number and PIN are saved. Reporting office: log in with password, LDAP or OIDC, then always TOTP; acknowledge receipt within 7 days; review and give feedback within 3 months. The report goes from the form to the acknowledgement, the feedback back to the status page.\" width=\"785\" height=\"365\" loading=\"lazy\">\n          <img class=\"diagram-dark\" src=\"/img/diagrams/home-flow-dark.svg\"",
-   "new": "<img class=\"diagram-light\"  alt=\"Two lanes. Whistleblower: fill in the form, anonymous or confidential, with no account and no e-mail; note the case number and PIN, shown exactly once; check status and reply at /status. The form has six steps. Category and description are required. The page continues only after ticking that the case number and PIN are saved. Reporting office: log in with password, LDAP or OIDC, then always TOTP; acknowledge receipt within 7 days; review and give feedback within 3 months. The report goes from the form to the acknowledgement, the feedback back to the status page.\" width=\"785\" height=\"365\" loading=\"lazy\">\n          <img class=\"diagram-dark\" "
-  },
-  {
-   "id": "HOME-GRID-BACK",
-   "file": "docs/de/index.html",
-   "tests": "COMMITTED",
-   "old": "<img class=\"diagram-light\" src=\"/img/diagrams/home-flow.de-light.svg\"",
-   "new": "<div class=\"flows-grid\"></div><img class=\"diagram-light\" src=\"/img/diagrams/home-flow.de-light.svg\""
-  },
-  {
-   "id": "PHONE-OVERFLOW",
-   "file": "docs/assets/css/base.css",
-   "tests": "FIGURES",
-   "old": "  .diagram { overflow-x: auto; }",
-   "new": "  .diagram { overflow-x: visible; }"
-  },
-  {
-   "id": "PHONE-MAXWIDTH",
-   "file": "docs/assets/css/base.css",
-   "tests": "FIGURES",
-   "old": "  figure.diagram img { max-width: none; }",
-   "new": "  figure.diagram img { max-width: 100%; }"
-  },
-  {
-   "id": "PHONE-MEDIA",
-   "file": "docs/assets/css/base.css",
-   "tests": "FIGURES",
-   "old": "@media (max-width: 640px) {\n  .diagram",
-   "new": "@media (min-width: 640px) {\n  .diagram"
+   "old": "<picture>\n  <source media=\"(prefers-color-scheme: dark)\" srcset=\"img/diagrams/release-gates-dark.svg\">",
+   "new": "```text\n<picture>\n  <source media=\"(prefers-color-scheme: dark)\" srcset=\"img/diagrams/release-gates-dark.svg\">"
   },
   {
    "id": "COMMON-KEY",
@@ -448,62 +382,32 @@
    "tests": "COMMITTED",
    "old": "## 2. UI check",
    "new": "## 2. UI review"
+  }
+ ],
+ "removed": [
+  {
+   "ids": [
+    "LANGUAGE",
+    "HOME-NO-DIAGRAM",
+    "HOME-GRID-BACK",
+    "PHONE-OVERFLOW",
+    "PHONE-MAXWIDTH",
+    "PHONE-MEDIA",
+    "E2E-TWIN",
+    "E2E-CANVAS",
+    "E2E-SCALE-ROW",
+    "E2E-SCALE-UPPER",
+    "E2E-PHONE-SIZE",
+    "E2E-PHONE-SCROLL",
+    "LASTMOD-UTC"
+   ],
+   "reason": "Moved with the website to openwhistle/website (repository split, 2026-10-09): the file it mutates or the test that catches it is the website's now; the website's spec keeps the id."
   },
   {
-   "id": "LIFECYCLE-EDGES",
-   "file": "app/models/report.py",
-   "tests": "COMMITTED",
-   "old": "    \"closed\": {\"in_review\"},",
-   "new": "    \"closed\": {\"in_review\", \"received\"},"
-  },
-  {
-   "id": "E2E-TWIN",
-   "file": "docs/assets/css/base.css",
-   "tests": "E2E",
-   "old": ":root:not([data-theme=\"dark\"]) .diagram-dark, [data-theme=\"dark\"] .diagram-light { display: none; }",
-   "new": ".diagram-dark, [data-theme=\"dark\"] .diagram-light { display: none; }"
-  },
-  {
-   "id": "E2E-CANVAS",
-   "file": "docs/assets/css/base.css",
-   "tests": "E2E",
-   "old": "figure.diagram img { background: var(--canvas); border-radius: var(--radius-md); }",
-   "new": "figure.diagram img { border-radius: var(--radius-md); }"
-  },
-  {
-   "id": "E2E-SCALE-ROW",
-   "file": "docs/assets/css/home.css",
-   "tests": "PHONE",
-   "old": "  .figure-row { grid-template-columns: 1fr; gap: var(--space-6); }",
-   "new": "  .figure-row { gap: var(--space-6); }"
-  },
-  {
-   "id": "E2E-SCALE-UPPER",
-   "file": "docs/assets/css/home.css",
-   "tests": "E2E",
-   "old": ".diagram img { max-width: 100%; height: auto;",
-   "new": ".diagram img { width: 100%; height: auto;"
-  },
-  {
-   "id": "E2E-PHONE-SIZE",
-   "file": "docs/assets/css/base.css",
-   "tests": "E2E",
-   "old": "  figure.diagram img { max-width: none; }",
-   "new": "  figure.diagram img { max-width: 100%; }"
-  },
-  {
-   "id": "E2E-PHONE-SCROLL",
-   "file": "docs/assets/css/base.css",
-   "tests": "E2E",
-   "old": "  .diagram { overflow-x: auto; }",
-   "new": "  .diagram { overflow-x: visible; }"
-  },
-  {
-   "id": "LASTMOD-UTC",
-   "file": "scripts/build_site.py",
-   "tests": "SITE",
-   "old": "datetime.datetime.fromtimestamp(int(stamp), datetime.UTC).date().isoformat()",
-   "new": "datetime.date.fromtimestamp(int(stamp)).isoformat()"
+   "ids": [
+    "LIFECYCLE-EDGES"
+   ],
+   "reason": "Mutates app/models/report.py but only the website's case-lifecycle diagram test caught it; openwhistle/website rewrites it as a mutation of its release-tag fixture."
   }
  ]
 }
