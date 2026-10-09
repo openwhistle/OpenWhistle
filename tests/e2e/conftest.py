@@ -33,8 +33,7 @@ _ROOT = Path(__file__).resolve().parents[2]
 @pytest.fixture(scope="session")
 def docs_server_url(tmp_path_factory: pytest.TempPathFactory) -> Generator[str]:
     site = tmp_path_factory.mktemp("site") / "out"
-    # With the stubs: old deep links are tested too.
-    builder().build(_ROOT / "docs", site, redirect_stubs=True)
+    builder().build(_ROOT / "docs", site)
     handler = partial(http.server.SimpleHTTPRequestHandler, directory=str(site))
     server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)

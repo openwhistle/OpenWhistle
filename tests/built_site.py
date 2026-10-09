@@ -1,8 +1,7 @@
 """The built openwhistle.net, for tests: docs/ is sources, the site is what ships.
 
-Built once per test session into a temporary directory (no redirect stubs: a
-stub is not a page). The build is plain Python and takes about two seconds
-(page rendering, link check, font subsetting).
+Built once per test session into a temporary directory. The build is plain Python and takes
+about two seconds (page rendering, link check, font subsetting).
 """
 
 from __future__ import annotations

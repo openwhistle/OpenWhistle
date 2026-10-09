@@ -2,9 +2,6 @@
 """docs/ -> _site/: the build of openwhistle.net.
 
     uv run --group site python scripts/build_site.py                  write _site/
-    uv run --group site python scripts/build_site.py --redirect-stubs plus HTML
-                                                                      stubs for
-                                                                      GitHub Pages
 
 The rules, each pinned by tests/test_build_site.py:
 
@@ -26,7 +23,6 @@ import datetime
 import html
 import importlib.util
 import io
-import json
 import re
 import shutil
 import subprocess
@@ -613,7 +609,7 @@ def check_links(out: Path, host: str) -> None:
                 continue
             if parts.netloc and parts.netloc.lower() != host.lower():
                 continue
-            # / is the language choice: a stub on Pages, nginx from P4
+            # / is the language choice: nginx negotiates it
             if parts.path in ("/", "/index.html"):
                 continue
             target = out / unquote(parts.path).lstrip("/")
@@ -645,67 +641,6 @@ def check_redirects(redirects: dict[str, Any], pages: list[Page]) -> None:
             raise BuildError(f"_data/redirects.yml: {old} -> {new}, which is no page")
         if old in urls:
             raise BuildError(f"_data/redirects.yml: {old} is a page itself")
-
-
-STUB = """<!DOCTYPE html>
-<html lang="en">
-<meta charset="utf-8">
-<title>Moved</title>
-<meta name="robots" content="noindex">
-<link rel="canonical" href="{absolute}">
-<script>location.replace({target}+location.hash)</script>
-<meta http-equiv="refresh" content="0; url={href}">
-<p><a href="{href}">{href}</a></p>
-"""
-
-
-def write_stubs(
-    out: Path,
-    redirects: dict[str, Any],
-    site: dict[str, Any],
-    src: Path,
-) -> None:
-    """GitHub Pages cannot send a 301; until P5 a stub stands in for each one.
-
-    The script keeps the #fragment, which a meta refresh would drop. "/" is a
-    stub to the default language on Pages; from P4 on nginx negotiates it.
-    An old URL that is not HTML (e.g. /hinschg_reference.md) cannot run a
-    script, so it keeps serving the bytes it served, frozen in _legacy/.
-    """
-    stubs = {"/": f"/{site['default_language']}/", **redirects}
-    written: dict[Path, str] = {}
-    for old, new in stubs.items():
-        if not old.endswith(("/", ".html")):
-            legacy = src / "_legacy" / unquote(old).lstrip("/")
-            if not legacy.is_file():
-                raise BuildError(
-                    f"_data/redirects.yml: {old} needs its frozen copy at _legacy{old}"
-                )
-            dest = out / unquote(old).lstrip("/")
-            if dest.exists():
-                raise BuildError(
-                    f"_data/redirects.yml: {old} would overwrite {dest.relative_to(out)}"
-                )
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(legacy, dest)
-            continue
-        dest = output_file(out, old)
-        if written.get(dest) == new:
-            continue  # /blog/ and /blog/index.html are one file, so one stub
-        if dest.exists():
-            raise BuildError(
-                f"_data/redirects.yml: the stub for {old} would overwrite {dest.relative_to(out)}"
-            )
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(
-            STUB.format(
-                absolute=html.escape(site["base_url"] + new),
-                target=json.dumps(new).replace("</", "<\\/"),
-                href=html.escape(new),
-            ),
-            encoding="utf-8",
-        )
-        written[dest] = new
 
 
 def _git(*args: str) -> str:
@@ -1030,7 +965,7 @@ def index_search(out: Path) -> None:
         bundle.unlink()
 
 
-def build(src: Path, out: Path, *, redirect_stubs: bool = False) -> list[Page]:
+def build(src: Path, out: Path) -> list[Page]:
     _refuse_dangerous_out(src, out)
     data = load_data(src)
     site = data["site"]
@@ -1061,12 +996,9 @@ def build(src: Path, out: Path, *, redirect_stubs: bool = False) -> list[Page]:
     write_feeds(out, pages, site, data["i18n"])
     write_og_images(out, src, pages, data["i18n"][site["default_language"]]["og_image_alt"])
     subset_fonts(out, src)  # writes the fonts the pages link
-    # Before the stubs: a link to an old URL must fail even where a stub would catch it.
     check_links(out, urlsplit(site["base_url"]).netloc)
     if any(p.meta.get("layout") == "docs" for p in pages):
         index_search(out)
-    if redirect_stubs:
-        write_stubs(out, data["redirects"], site, src)
     return pages
 
 
@@ -1074,10 +1006,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Build openwhistle.net from docs/.")
     parser.add_argument("--src", type=Path, default=DOCS)
     parser.add_argument("--out", type=Path, default=ROOT / "_site")
-    parser.add_argument("--redirect-stubs", action="store_true", help="HTML stubs for GitHub Pages")
     args = parser.parse_args(argv)
     try:
-        pages = build(args.src, args.out, redirect_stubs=args.redirect_stubs)
+        pages = build(args.src, args.out)
     except BuildError as error:
         print(f"build failed: {error}", file=sys.stderr)
         return 1

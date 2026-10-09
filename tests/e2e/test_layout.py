@@ -15,7 +15,7 @@ from tests.e2e.conftest import (
 
 pytestmark = pytest.mark.e2e
 
-# Every page of the built site (no redirect stubs: a stub is not a page), as
+# Every page of the built site, as
 # the URL it is served at, so a new page is covered the day it is added.
 # A build that suddenly finds fewer means the sources moved, not that the
 # site shrank.

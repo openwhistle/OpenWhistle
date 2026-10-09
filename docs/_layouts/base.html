@@ -8,7 +8,7 @@
 {% include "nav.html" %}
 {% block content %}
 {% if page.source.suffix == ".md" %}
-  {#- Markdown has no element for the skip link to land on; the old .md URLs serve the bare text (write_stubs). #}
+  {#- Markdown has no element for the skip link to land on. #}
   <main id="main-content" class="docs-content">
 {{ page.content|safe }}
   </main>
