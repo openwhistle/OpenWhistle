@@ -5,7 +5,8 @@ Why it is built this way: `docs-tech/specs/2026-10-09-website-p4-design.md`.
 
 ## Build and run
 
-Build from a **full clone**. A linked git worktree fails: `build_site.py` runs git (sitemap `lastmod`) and sees a `.git` pointer file.
+Build from a **full clone**. A linked git worktree fails: `build_site.py` runs git (sitemap `lastmod`)
+and sees a `.git` pointer file.
 
 ```bash
 docker build -f website/Dockerfile -t openwhistle-website:local .
