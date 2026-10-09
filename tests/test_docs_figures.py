@@ -154,3 +154,39 @@ def test_a_diagram_scrolls_inside_its_figure_on_a_phone(url: str) -> None:
     # `.diagram img { max-width: 100% }` must lose
     assert re.search(r"\.diagram \{[^}]*overflow-x: auto", phone.group(1)), "no .diagram scroll"
     assert re.search(r"figure\.diagram img \{[^}]*max-width: none", phone.group(1)), "img shrinks"
+
+
+class _Shots(HTMLParser):
+    """Each `.shot-light`/`.shot-dark` image with the <source srcset> of the <picture> around it."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.shots: list[tuple[str, str | None]] = []
+        self._source: str | None = None
+        self._in_picture = False
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        a = dict(attrs)
+        if tag == "picture":
+            self._in_picture, self._source = True, None
+        elif tag == "source" and self._in_picture:
+            self._source = a.get("srcset")
+        elif tag == "img" and "shot-" in (a.get("class") or ""):
+            self.shots.append((a.get("src") or "", self._source if self._in_picture else None))
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag == "picture":
+            self._in_picture = False
+
+
+def test_every_screenshot_has_a_mobile_webp_in_a_picture() -> None:
+    """A phone gets a ~10 KB WebP, not the 170 KB PNG: the page budget depends on it."""
+    seen = 0
+    for path in pages():
+        parser = _Shots()
+        parser.feed(path.read_text(encoding="utf-8"))
+        for src, small in parser.shots:
+            seen += 1
+            assert small == src.removesuffix(".png") + "-m.webp", f"{path}: {src} has no <picture>"
+            assert (built() / small.lstrip("/")).is_file(), f"{path}: {small} does not exist"
+    assert seen, "no screenshot found"

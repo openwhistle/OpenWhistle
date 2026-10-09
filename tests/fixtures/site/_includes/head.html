@@ -59,4 +59,4 @@
   <link rel="stylesheet" href="/assets/css/{{ name }}.css">
 {% endfor %}
   {#- Starts decoding the inlined fonts before the first layout, not at it (CSP hash in nginx.conf). #}
-  <script>document.fonts.load("1em Sora");document.fonts.load('1em "JetBrains Mono"')</script>
+  <script>document.fonts.load("1em Sora");document.fonts.load('1em "JetBrains Mono"');document.fonts.load('italic 1em "JetBrains Mono"')</script>

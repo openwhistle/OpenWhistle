@@ -123,12 +123,10 @@ def test_a_page_with_italic_mono_links_its_sheet_and_no_other_does() -> None:
 
 
 @pytest.mark.parametrize("face", FACES)
-def test_the_subsets_are_smaller(face: str) -> None:
-    css = "fonts-italic.css" if "italic" in face else "fonts.css"
-    assert (
-        len((built() / "assets" / "css" / css).read_bytes())
-        < (SOURCES / FACES[face][0]).stat().st_size * 1.4
-    )
+def test_every_face_is_cut_down_to_the_drawn_text(face: str) -> None:
+    """Per face, so one unsubset face cannot hide behind the others: under half the glyphs."""
+    shipped, source = len(_built(face).getBestCmap()), len(_source(face).getBestCmap())
+    assert shipped * 2 < source, (face, shipped, source)
 
 
 def test_the_fonts_are_inlined_and_no_font_file_is_shipped() -> None:
@@ -136,7 +134,6 @@ def test_the_fonts_are_inlined_and_no_font_file_is_shipped() -> None:
     assert not list((built() / "fonts").glob("*.woff2"))
     for sheet in ("fonts.css", "fonts-italic.css"):
         assert "/fonts/" not in (built() / "assets" / "css" / sheet).read_text(encoding="utf-8")
-    assert list((ROOT / "docs" / "fonts").glob("sora-latin-400-normal.woff2"))
 
 
 @pytest.mark.parametrize("face", FACES)
@@ -172,3 +169,26 @@ def test_the_stylistic_sets_nobody_asks_for_are_dropped(face: str) -> None:
     assert not {t for t in kept if re.fullmatch(r"(ss\d\d|cv\d\d|zero|sups|subs|sinf|ordn)", t)}, (
         face
     )
+
+
+def test_the_apps_static_fonts_stay_full() -> None:
+    """The app image and the diagram geometry use docs/fonts as they are, never subset."""
+    static_fonts = sorted((ROOT / "docs" / "fonts").glob("*.woff2"))
+    assert len(static_fonts) == 9
+    for path in static_fonts:
+        assert len(TTFont(path).getBestCmap()) > 220, path.name
+
+
+def test_a_self_closing_void_tag_does_not_end_the_italic() -> None:
+    """commonmark writes `<hr />`; it was never pushed and must not pop the open <em>."""
+    parse = builder().mono_italic_text
+    assert parse("<pre><em>a<hr />b</em></pre>") == {"a", "b"}
+    assert parse("<pre><code><em>a<br />b</em></code></pre>") == {"a", "b"}
+    assert parse("<p><em>sora</em></p>") == set()
+
+
+@pytest.mark.parametrize("face", FACES)
+def test_the_copyright_and_license_stay_inside_the_font(face: str) -> None:
+    name = _built(face)["name"]
+    assert "Copyright" in (name.getDebugName(0) or ""), face
+    assert "Open Font License" in (name.getDebugName(13) or ""), face

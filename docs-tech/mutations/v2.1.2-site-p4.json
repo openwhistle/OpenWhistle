@@ -282,8 +282,8 @@
   {
    "id": "CSP-THEME-HASH-LIVE",
    "file": "website/nginx.conf",
-   "old": "'sha256-aTVT2yTZj8X3C8V1QPnib4HTXa5Npxc/Hah1pqj89gY=' 'sha256-UOhLOKUSErnkOiTPtSJP0DuwUnFJEJTwteiuGzKzEsY='; style-src",
-   "new": "'sha256-bTVT2yTZj8X3C8V1QPnib4HTXa5Npxc/Hah1pqj89gY=' 'sha256-UOhLOKUSErnkOiTPtSJP0DuwUnFJEJTwteiuGzKzEsY='; style-src",
+   "old": "'sha256-aTVT2yTZj8X3C8V1QPnib4HTXa5Npxc/Hah1pqj89gY=' 'sha256-V29hLe3WV/jChb7JJqgWgSXXtSrfjeye+kxAdKytOPU='; style-src",
+   "new": "'sha256-bTVT2yTZj8X3C8V1QPnib4HTXa5Npxc/Hah1pqj89gY=' 'sha256-V29hLe3WV/jChb7JJqgWgSXXtSrfjeye+kxAdKytOPU='; style-src",
    "red": "tests/e2e/test_site_container.py::test_no_page_breaks_its_csp"
   },
   {
@@ -296,8 +296,8 @@
   {
    "id": "BUDGET-EAGER",
    "file": "docs/en/docs/whistleblower/index.html",
-   "old": "src=\"/img/screens/status-light.png\" alt=\"The status page: case number and secret PIN fields and a View report status button.\" width=\"1440\" height=\"900\" loading=\"lazy\">",
-   "new": "src=\"/img/screens/status-light.png\" alt=\"The status page: case number and secret PIN fields and a View report status button.\" width=\"1440\" height=\"900\">",
+   "old": "<picture><source media=\"(max-width: 600px)\" srcset=\"/img/screens/status-light-m.webp\"><img class=\"shot-light\" src=\"/img/screens/status-light.png\" alt=\"The status page: case number and secret PIN fields and a View report status button.\" width=\"1440\" height=\"900\" loading=\"lazy\"></picture>",
+   "new": "<img class=\"shot-light\" src=\"/img/screens/status-light.png\" alt=\"The status page: case number and secret PIN fields and a View report status button.\" width=\"1440\" height=\"900\">",
    "red": "tests/e2e/test_site_container.py::test_the_first_view_stays_in_budget"
   },
   {
@@ -324,7 +324,7 @@
   {
    "id": "FONT-KICK-DROPPED",
    "file": "docs/_includes/head.html",
-   "old": "  <script>document.fonts.load(\"1em Sora\");document.fonts.load('1em \"JetBrains Mono\"')</script>\n",
+   "old": "  <script>document.fonts.load(\"1em Sora\");document.fonts.load('1em \"JetBrains Mono\"');document.fonts.load('italic 1em \"JetBrains Mono\"')</script>\n",
    "new": "",
    "red": "tests/e2e/test_site_container.py::test_the_first_view_stays_in_budget"
   },
@@ -334,6 +334,34 @@
    "old": "NEWEST = 5\n",
    "new": "NEWEST = 6\n",
    "red": "tests/test_changelog_page.py::test_the_older_page_holds_the_rest_and_no_release_is_on_both"
+  },
+  {
+   "id": "PICTURE-SOURCE-MISSING",
+   "file": "docs/en/docs/whistleblower/index.html",
+   "old": "<picture><source media=\"(max-width: 600px)\" srcset=\"/img/screens/status-light-m.webp\">",
+   "new": "<picture>",
+   "red": "tests/test_docs_figures.py::test_every_screenshot_has_a_mobile_webp_in_a_picture"
+  },
+  {
+   "id": "VOID-TAG-POPS-STACK",
+   "file": "scripts/build_site.py",
+   "old": "        if tag in _VOID or tag not in (t for t, *_ in self._stack):\n            return  # `<hr />` arrives here too, and was never pushed\n",
+   "new": "",
+   "red": "tests/test_site_fonts.py::test_a_self_closing_void_tag_does_not_end_the_italic"
+  },
+  {
+   "id": "FONT-NAME-IDS",
+   "file": "scripts/build_site.py",
+   "old": "options.name_IDs = [0, 1, 2, 13, 14]",
+   "new": "options.name_IDs = [1, 2]",
+   "red": "tests/test_site_fonts.py::test_the_copyright_and_license_stay_inside_the_font"
+  },
+  {
+   "id": "OLDER-PAGE-EMPTY",
+   "file": "scripts/render_changelog.py",
+   "old": "    if older and len(released) <= NEWEST:",
+   "new": "    if False:",
+   "red": "tests/test_changelog_page.py::test_the_older_page_refuses_to_render_empty"
   }
  ]
 }

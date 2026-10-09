@@ -13,6 +13,8 @@ import re
 from pathlib import Path
 from types import ModuleType
 
+import pytest
+
 from tests.built_site import built
 
 ROOT = Path(__file__).parents[1]
@@ -153,3 +155,13 @@ def test_renderer_escapes_and_nests_correctly_on_a_fixture() -> None:
 
     # The heading gets a stable id built from the version number.
     assert 'id="v9-9-9"' in html
+
+
+def test_the_older_page_refuses_to_render_empty() -> None:
+    few = "\n".join(
+        f"## [1.0.{i}] — 2026-01-01\n\n- x\n\n[1.0.{i}]: https://example.test\n" for i in range(5)
+    )
+    versions, link_defs = RENDER_CHANGELOG.parse(few)
+    assert RENDER_CHANGELOG.render_content(versions, link_defs)
+    with pytest.raises(ValueError, match="would be empty"):
+        RENDER_CHANGELOG.render_content(versions, link_defs, older=True)

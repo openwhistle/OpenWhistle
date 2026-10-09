@@ -681,8 +681,8 @@
    "id": "FONTS-NOT-SUBSET",
    "file": "scripts/build_site.py",
    "tests": "FONTS",
-   "old": "    subset_fonts(out, src)  # writes the fonts the pages link\n",
-   "new": ""
+   "old": "        subsetter.subset(font)\n",
+   "new": "        pass  # shipped unsubset\n"
   },
   {
    "id": "COMPARE-IGNORES-SIZE",

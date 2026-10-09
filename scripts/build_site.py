@@ -905,7 +905,8 @@ _VOID = {
 class _MonoItalic(HTMLParser):
     """The text a page draws in italic mono: `.t-comment` and an <em>/<i> inside code or a pre.
 
-    An <em> in running text is Sora, which has no italic (font-synthesis: none keeps it upright).
+    An <em> in running text is Sora, which has no italic: the browser slants it (fonts.css sets
+    font-synthesis-weight: none only).
     """
 
     def __init__(self) -> None:
@@ -929,6 +930,8 @@ class _MonoItalic(HTMLParser):
     def handle_endtag(self, tag: str) -> None:
         if tag in ("script", "style"):
             self._skip -= 1
+        if tag in _VOID or tag not in (t for t, *_ in self._stack):
+            return  # `<hr />` arrives here too, and was never pushed
         while self._stack:
             if self._stack.pop()[0] == tag:
                 break
@@ -993,7 +996,7 @@ def subset_fonts(out: Path, src: Path) -> dict[str, int]:
         options = ft_subset.Options()
         options.flavor = "woff2"
         options.layout_features = FONT_FEATURES
-        options.name_IDs = [1, 2]
+        options.name_IDs = [0, 1, 2, 13, 14]  # family, style, copyright, license: OFL notice stays
         font = ft_subset.load_font(buffer, options)
         subsetter = ft_subset.Subsetter(options)
         subsetter.populate(text="".join(sorted(italic)) if "italic" in target else text)

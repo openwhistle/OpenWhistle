@@ -239,6 +239,11 @@ def render_content(
     released = [v for v in shown if v.name.lower() != "unreleased"]
     on_main = {v.name for v in released[:NEWEST]}
     shown = [v for v in shown if (v.name in on_main or v.name.lower() == "unreleased") != older]
+    if older and len(released) <= NEWEST:
+        raise ValueError(
+            f"CHANGELOG.md has {len(released)} releases, none older than the newest {NEWEST}: "
+            "docs/en/changelog/older/ would be empty; remove that page and the link to it"
+        )
     oldest_shown = released[NEWEST - 1].name if len(released) >= NEWEST else ""
 
     nav_links = "\n".join(f'          <a href="#{slug(v.name)}">{esc(v.name)}</a>' for v in shown)

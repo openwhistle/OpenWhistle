@@ -39,9 +39,10 @@ OUT_DIR = Path(__file__).resolve().parent.parent / "docs" / "img" / "screens"
 # collapsed, single-column fallback instead of the layout the docs describe —
 # see easywall's TestScreenshotsAreTakenAboveTheTwoColumnBreakpoint, which is
 # the guard tests/test_screenshots.py adapts for this constant.
-MOBILE_WIDTH = 640
 VIEWPORT_WIDTH = 1440
 VIEWPORT_HEIGHT = 900
+# The WebP for narrow screens (<picture>, quality 60): 640 px wide, 400 px for a 900 px shot.
+MOBILE_WIDTH = 640
 
 # The `ow-theme` localStorage key app/templates/base.html and
 # app/static/js/site.js read before first paint.

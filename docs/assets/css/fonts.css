@@ -3,5 +3,6 @@
    first layout, so nothing moves when they apply (CLS 0). One file each; the weights are a range. */
     @font-face { font-family: 'Sora'; src: url('/fonts/sora-variable.woff2') format('woff2'); font-weight: 300 700; font-style: normal; font-display: block; }
     @font-face { font-family: 'JetBrains Mono'; src: url('/fonts/jetbrains-mono-variable.woff2') format('woff2'); font-weight: 400 700; font-style: normal; font-display: block; }
-    /* A weight or slant the files do not have is never faked by the browser. */
-    html { font-synthesis: none; }
+    /* No faux bold: every weight is real. Slant stays allowed: Sora has no italic, an <em> in it is
+       oblique as before; the mono has a real italic, so nothing is synthesised there. */
+    html { font-synthesis-weight: none; }

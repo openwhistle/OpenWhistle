@@ -225,6 +225,7 @@ Rebuild after every edit to `docs/`; the server serves what was built.
 | `/en/compare/` | Comparison with GlobaLeaks, SecureDrop, Hush Line — the table scrolls inside its box at 390 px. |
 | `/404.html` | Not-found page (noindex); open any missing path on the served site. |
 | `/en/changelog/` | Changelog, rendered from `CHANGELOG.md` — check the version nav in the sidebar. |
+| `/en/changelog/older/` | The releases before the newest five — the version nav, the link back. |
 | `/de/blog/` | Blog index. |
 | `/de/blog/hinschg-compliance-leitfaden/` | Article. |
 | `/de/blog/hinweisgebersystem-dsgvo-eu-hosting/` | Article. |
