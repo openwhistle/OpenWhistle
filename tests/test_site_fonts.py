@@ -171,10 +171,20 @@ def test_the_stylistic_sets_nobody_asks_for_are_dropped(face: str) -> None:
     )
 
 
+def test_only_the_weight_is_never_synthesised() -> None:
+    """R13: no faux bold; an <em> in Sora (no italic face) keeps its oblique."""
+    sheets = {
+        p.name: p.read_text(encoding="utf-8") for p in (ROOT / "docs/assets/css").glob("*.css")
+    }
+    assert "html { font-synthesis-weight: none; }" in sheets["fonts.css"]
+    for name, css in sheets.items():
+        assert not re.search(r"font-synthesis\s*:|font-synthesis-style\s*:\s*none", css), name
+
+
 def test_the_apps_static_fonts_stay_full() -> None:
     """The app image and the diagram geometry use docs/fonts as they are, never subset."""
     static_fonts = sorted((ROOT / "docs" / "fonts").glob("*.woff2"))
-    assert len(static_fonts) == 9
+    assert len(static_fonts) == 6
     for path in static_fonts:
         assert len(TTFont(path).getBestCmap()) > 220, path.name
 

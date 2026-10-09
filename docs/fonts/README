@@ -1,10 +1,10 @@
 Sora and JetBrains Mono (self-hosted web fonts)
 ==========================================================
 
-Used by every page under docs/ (the landing pages, the docs, the roadmap
-and the blog) for --font-display/--font-body (Sora) and --font-mono
-(JetBrains Mono). Self-hosted so the pages load no font from an external
-CDN.
+Static cuts for the application image (the six files the root Dockerfile
+copies), the diagram geometry (scripts/diagram_geometry.py) and the social
+cards (scripts/build_site.py). The website itself uses the variable fonts
+in docs/_fonts (below). Self-hosted: nothing loads a font from a CDN.
 
 Source
 ------
@@ -23,20 +23,17 @@ style in these packages; the sha512 is the npm registry's dist.integrity:
 Files
 -----
 
-  sora-latin-{300,400,500,600,700}-normal.woff2
+  sora-latin-{400,500,600,700}-normal.woff2
   JetBrainsMono-Regular.woff2  (weight 400 normal)
   JetBrainsMono-Bold.woff2     (weight 700 normal)
-  JetBrainsMono-Medium.woff2   (weight 500 normal)
-  JetBrainsMono-Italic.woff2   (weight 400 italic)
 
 Latin subset only, no `unicode-range`: every use of JetBrains Mono is plain
 ASCII (case numbers, PINs, timestamps, code, the wordmark), and a narrow
 range without a second face would only lose coverage.
 
-Sora has no italic face upstream, so no page asks for italic Sora; emphasis
-uses weight or colour instead. `test_every_docs_page_font_usage_has_a_matching_font_face`
-checks that every (family, weight, style) a docs page uses has a shipped
-`@font-face`, with no exceptions.
+Sora has no italic face upstream: on the website an <em> in Sora is drawn
+oblique by the browser (fonts.css allows style synthesis, never weight
+synthesis; tests/test_site_fonts.py).
 
 The application
 ---------------

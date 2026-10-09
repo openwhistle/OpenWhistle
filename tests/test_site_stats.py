@@ -3,6 +3,8 @@ import io
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).parents[1]
 spec = importlib.util.spec_from_file_location("site_stats", ROOT / "scripts" / "site_stats.py")
 assert spec and spec.loader
@@ -26,6 +28,19 @@ def test_pages_are_html_answers_only_and_referrers_skip_dashes() -> None:
     pages, refs = S.count(LINES)
     assert pages == {"/en/": 3, "/foo-index.html": 1}
     assert refs == {"www.google.com": 1}
+
+
+# Written out, not read from _ASSET_SUFFIXES: a suffix dropped there must turn this red.
+@pytest.mark.parametrize(
+    "suffix",
+    [
+        ".css", ".js", ".png", ".svg", ".woff2", ".avif", ".webp", ".xml", ".txt",
+        ".json", ".ico", ".jpg", ".jpeg", ".gif", ".pdf", ".map", ".woff", ".webmanifest",
+    ],
+)  # fmt: skip
+def test_an_asset_is_never_a_page_view(suffix: str) -> None:
+    pages, refs = S.count([f"2026-10-09T10:00:00+00:00 /en/file{suffix} 200 example.com"])
+    assert not pages and not refs, suffix
 
 
 def test_the_cli_prints_most_frequent_first(monkeypatch, capsys) -> None:  # type: ignore[no-untyped-def]

@@ -3,6 +3,8 @@
 import re
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).parents[1]
 
 
@@ -63,9 +65,10 @@ def _final_stage() -> str:
     return (ROOT / "Dockerfile").read_text().split("AS final", 1)[1]
 
 
-def test_base_images_are_pinned_by_digest() -> None:
-    images = re.findall(r"^FROM (\S+)", (ROOT / "Dockerfile").read_text(), re.M)
-    assert images, "no FROM line"
+@pytest.mark.parametrize("dockerfile", ["Dockerfile", "website/Dockerfile"])
+def test_base_images_are_pinned_by_digest(dockerfile: str) -> None:
+    images = re.findall(r"^FROM (?:--\S+ )*(\S+)", (ROOT / dockerfile).read_text(), re.M)
+    assert len(images) == 2, images
     assert all(re.search(r"@sha256:[0-9a-f]{64}$", f) for f in images), images
 
 
