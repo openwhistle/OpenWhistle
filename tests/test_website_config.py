@@ -150,7 +150,7 @@ def test_a_missing_website_url_fails_in_ci_and_skips_locally() -> None:
 
 
 def _location(head: str) -> str:
-    found = re.search(rf"location\s+{head}\s*\{{([^}}]*)\}}", CONF)
+    found = re.search(rf"location\s+{head}\s*\{{((?:[^{{}}]|\{{[^}}]*\}})*)\}}", CONF)
     assert found, f"no location {head}"
     return found.group(1)
 

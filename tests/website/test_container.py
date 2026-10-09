@@ -225,7 +225,7 @@ def test_without_the_fragment_the_health_check_fails() -> None:
             name,
             "--read-only",
             "--tmpfs",
-            "/tmp",
+            "/tmp",  # noqa: S108
             "-p",
             f"{port}:8080",
             image,
