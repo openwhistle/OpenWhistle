@@ -126,6 +126,34 @@
    "old": "uv:0.12.24@",
    "new": "uv:0.12.23@",
    "tests": "PINS"
+  },
+  {
+   "id": "CSP-SITE-DEFAULT",
+   "file": "website/nginx.conf",
+   "old": "\"site\" \"default-src 'none';",
+   "new": "\"site\" \"default-src 'self';",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "LOG-ERROR-SCOPE",
+   "file": "website/nginx.conf",
+   "old": "error_log stderr emerg;\npid /tmp/nginx.pid;\n\nevents {\n    worker_connections 1024;\n}\n\nhttp {",
+   "new": "pid /tmp/nginx.pid;\n\nevents {\n    worker_connections 1024;\n}\n\nhttp {\n    error_log stderr emerg;",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "LOC-ADD-HEADER",
+   "file": "website/nginx.conf",
+   "old": "location / { }",
+   "new": "location / { add_header X-Test 1; }",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "REF-USERINFO",
+   "file": "website/nginx.conf",
+   "old": "(?:[^@/]*@)?",
+   "new": "",
+   "tests": "CONFIG"
   }
  ]
 }

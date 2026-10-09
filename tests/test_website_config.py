@@ -7,6 +7,8 @@ import hashlib
 import re
 from pathlib import Path
 
+import yaml
+
 from tests.built_site import built, pages
 
 ROOT = Path(__file__).parents[1]
@@ -84,9 +86,40 @@ def test_the_log_holds_no_address_agent_or_query() -> None:
 
 
 def test_errors_are_logged_at_emerg_only() -> None:
-    """nginx error lines carry `client: <IP>` (P4-9)."""
+    """nginx error lines carry `client: <IP>` (P4-9); the main context sets it, before `events {`."""
     levels = re.findall(r"^\s*error_log\s+([^;]+);", CONF, re.M)
     assert levels and all(level.split()[-1] == "emerg" for level in levels), levels
+    assert "error_log stderr emerg;" in CONF.split("events {")[0], (
+        "error_log not in the main context"
+    )
+
+
+def _ref_host(referer: str) -> str:
+    found = re.search(r'map \$http_referer \$ref_host \{\s*"~([^"]+)" \$rhost;', CONF)
+    assert found, "no $ref_host map"
+    match = re.search(found.group(1).replace("(?<rhost>", "(?P<rhost>"), referer)
+    return match.group("rhost") if match else "-"
+
+
+def test_the_referer_logs_a_bare_hostname_only() -> None:
+    assert _ref_host("https://example.org/page?q=1") == "example.org"
+    assert _ref_host("https://alice@intranet.acme.local/") == "intranet.acme.local"
+    assert _ref_host("https://example.org:8443/x") == "example.org"
+    assert _ref_host("https://a b c/") == "-"
+    assert _ref_host("") == "-"
+
+
+def test_no_location_sets_headers() -> None:
+    """An add_header in a location drops every server-level add_header for that location."""
+    for block in re.findall(r"location\s[^{]*\{([^}]*)\}", CONF):
+        assert "add_header" not in block, block
+
+
+def test_map_keys_fit_the_hash_bucket_with_headroom() -> None:
+    """map_hash_bucket_size is 128; keys over 96 characters leave no room for a longer redirect."""
+    keys = [str(key) for key in yaml.safe_load((ROOT / "docs/_data/redirects.yml").read_text())]
+    keys += re.findall(r'^\s*"(/[^"]*)"\s+"', CONF, re.M)
+    assert keys and max(map(len, keys)) <= 96, max(keys, key=len)
 
 
 def test_compression_is_prebuilt_only() -> None:
