@@ -396,6 +396,13 @@
  ],
  "manual": [
   {
+   "id": "APK-DEL-MODULES",
+   "file": "website/Dockerfile",
+   "old": "RUN apk del --no-cache nginx-module-geoip nginx-module-image-filter nginx-module-njs nginx-module-xslt \\\n    && rm -f",
+   "new": "RUN rm -f",
+   "red": "tests/website/test_container.py::test_no_dynamic_module_ships_and_neither_does_its_tiff"
+  },
+  {
    "id": "ABSOLUTE-REDIRECT",
    "file": "website/nginx.conf",
    "old": "        absolute_redirect off;\n",

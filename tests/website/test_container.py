@@ -203,6 +203,16 @@ def test_the_base_images_error_page_is_gone() -> None:
     assert get("/50x.html").status == 404
 
 
+def _in_container(*cmd: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run([CLI, "exec", NAME, *cmd], capture_output=True, text=True)  # noqa: S603
+
+
+def test_no_dynamic_module_ships_and_neither_does_its_tiff() -> None:
+    assert _in_container("apk", "info", "-e", "tiff").returncode != 0
+    packages = _in_container("apk", "info").stdout.split()
+    assert [p for p in packages if p.startswith("nginx-module")] == []
+
+
 def test_a_directory_without_an_index_is_the_404_page() -> None:
     response = get("/assets/")
     assert response.status == 403

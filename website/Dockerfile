@@ -15,7 +15,9 @@ RUN git config --global --add safe.directory /src \
 
 FROM docker.io/nginxinc/nginx-unprivileged:alpine@sha256:b9241c6e7b8e9a862f129d8d4199ab64b10390949a78bdd5603379b32c844083
 USER root
-RUN rm -f /etc/nginx/conf.d/default.conf && rm -rf /usr/share/nginx/html/*
+# nginx.conf loads no dynamic module; the module packages only carry libs with CVEs (tiff via image-filter).
+RUN apk del --no-cache nginx-module-geoip nginx-module-image-filter nginx-module-njs nginx-module-xslt \
+    && rm -f /etc/nginx/conf.d/default.conf && rm -rf /usr/share/nginx/html/*
 COPY website/nginx.conf /etc/nginx/nginx.conf
 COPY --from=site /out/redirects.map /etc/nginx/redirects.map
 COPY --from=site /out/site /usr/share/nginx/html
