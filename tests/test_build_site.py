@@ -808,13 +808,15 @@ def test_a_settings_marker_becomes_the_groups_table(src: Path, tmp_path: Path) -
     assert 'data-config="ldap"' not in html
     # Two columns: the badge under the name, the default under the description.
     assert (
-        '<td><code class="env-key">LDAP_URL</code>'
+        '<td><code class="env-key">LDAP_URL</code> '
         '<span class="env-required env-req-yes">Required</span></td>'
     ) in html
     assert '<span class="env-required env-req-no">Optional</span>' in html
-    assert '<span class="env-note">Default: <code>true</code></span></td>' in html
+    assert ' <span class="env-note">Default: <code>true</code></span></td>' in html
     assert "Default: —" not in html
-    assert '<th scope="col">Description</th></tr>' in html
+    assert '<th scope="col">Description</th>\n</tr>' in html
+    # Pagefind reads cells that touch as one word: every cell and row ends on its own line.
+    assert not re.search(r"</t[dhr]><", html)
 
 
 def test_a_marker_naming_no_group_fails(src: Path, tmp_path: Path) -> None:

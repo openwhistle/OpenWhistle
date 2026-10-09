@@ -221,10 +221,10 @@ def config_table(group: dict[str, Any]) -> str:
         default = setting.get("default", "—")
         # Two columns: four do not fit the docs column beside the page's table of contents.
         rows.append(
-            f'<tr><td><code class="env-key">{setting["name"]}</code>'
+            f'<tr><td><code class="env-key">{setting["name"]}</code> '
             f'<span class="env-required env-req-{cls}">{label}</span></td>'
             f"<td>{setting['description']}"
-            + ("" if default == "—" else f'<span class="env-note">Default: {default}</span>')
+            + ("" if default == "—" else f' <span class="env-note">Default: {default}</span>')
             + "</td></tr>"
         )
     return (
@@ -533,13 +533,18 @@ def environment(src: Path) -> Environment:
     )
 
 
+# Pagefind reads adjacent cells as one word ("NeedMinimum" in a search excerpt): a cell or
+# row that ends right where the next begins gets a line break, which the browser ignores.
+_CELL_END = re.compile(r"(</t[dhr]>)(?=<)")
+
+
 def render_page(
     env: Environment, page: Page, data: dict[str, Any], by_key: dict[str, dict[str, Page]]
 ) -> str:
     site, t = data["site"], data["i18n"][page.lang]
     layout = page.meta.get("layout", "base")
     docs = docs_context(page, data, by_key) if layout == "docs" else None
-    return env.get_template(f"{layout}.html").render(
+    html_out = env.get_template(f"{layout}.html").render(
         page=page,
         site=site,
         t=t,
@@ -557,6 +562,7 @@ def render_page(
         if page.url.endswith("/")
         else t["og_image_alt"],
     )
+    return _CELL_END.sub("\\1\n", html_out)
 
 
 class _Refs(HTMLParser):

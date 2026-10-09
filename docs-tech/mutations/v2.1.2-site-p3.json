@@ -864,14 +864,14 @@
   {
    "id": "OUTBOUND-SWITCH-COLUMN",
    "file": "docs/en/docs/outbound/index.html",
-   "old": "<tr><td>Email<span class=\"env-note\"><code>NOTIFY_EMAIL_ENABLED=true</code></span></td>",
+   "old": "<tr><td>Email <span class=\"env-note\"><code>NOTIFY_EMAIL_ENABLED=true</code></span></td>",
    "new": "<tr><td>Email</td><td><code>NOTIFY_EMAIL_ENABLED=true</code></td>",
    "tests": "DESKTOP_TABLE_E2E"
   },
   {
    "id": "SETTINGS-DEFAULT-COLUMN",
    "file": "scripts/build_site.py",
-   "old": "            + (\"\" if default == \"—\" else f'<span class=\"env-note\">Default: {default}</span>')\n            + \"</td></tr>\"",
+   "old": "            + (\"\" if default == \"—\" else f' <span class=\"env-note\">Default: {default}</span>')\n            + \"</td></tr>\"",
    "new": "            + f\"</td><td>{default}</td></tr>\"",
    "tests": "BUILD_SETTINGS"
   },
@@ -885,8 +885,15 @@
   {
    "id": "SETTINGS-BADGE-UNDER-NAME",
    "file": "scripts/build_site.py",
-   "old": "f'<tr><td><code class=\"env-key\">{setting[\"name\"]}</code>'\n            f'<span",
+   "old": "f'<tr><td><code class=\"env-key\">{setting[\"name\"]}</code> '\n            f'<span",
    "new": "f'<tr><td><code class=\"env-key\">{setting[\"name\"]}</code></td>'\n            f'<td><span",
+   "tests": "BUILD_SETTINGS"
+  },
+  {
+   "id": "TABLE-CELLS-TOUCH",
+   "file": "scripts/build_site.py",
+   "old": "    return _CELL_END.sub(\"\\\\1\\n\", html_out)",
+   "new": "    return html_out",
    "tests": "BUILD_SETTINGS"
   }
  ]
