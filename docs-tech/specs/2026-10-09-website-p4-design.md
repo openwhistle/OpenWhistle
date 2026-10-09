@@ -58,7 +58,7 @@ website/Dockerfile
 
 - Workflow `website-image.yml`:
   - Triggers: a push to `main` touching `docs/**`, `website/**`, `scripts/build_site.py`, `CHANGELOG.md`,
-    `pyproject.toml` or `uv.lock`; monthly; `workflow_dispatch`.
+    `app/config.py` (the footer shows the version), `pyproject.toml` or `uv.lock`; monthly; `workflow_dispatch`.
   - Steps: build, run the container tests (below), Trivy, push `ghcr.io/openwhistle/website:latest` and
     `:sha-<short>`, then cosign keyless signing.
   - Pull requests build and test but never push.

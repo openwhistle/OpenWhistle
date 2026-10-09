@@ -319,7 +319,7 @@
   {
    "id": "PUBLISH-NO-CONCURRENCY",
    "file": ".github/workflows/website-image.yml",
-   "old": "    concurrency:\n      group: website-image-${{ github.ref }}\n      cancel-in-progress: false\n",
+   "old": "concurrency:\n  group: website-image-${{ github.ref }}\n  cancel-in-progress: false\n",
    "new": "",
    "tests": "WEBSITE_WF"
   },
@@ -378,6 +378,13 @@
    "old": "          fetch-depth: 0 # the sitemap's lastmod comes from each source's last commit\n",
    "new": "",
    "tests": "BOUNDARY"
+  },
+  {
+   "id": "PUBLISH-JOB-CONCURRENCY",
+   "file": ".github/workflows/website-image.yml",
+   "old": "    runs-on: ubuntu-latest\n    timeout-minutes: 30\n    permissions:\n      contents: read\n      packages: write\n",
+   "new": "    concurrency: website-image\n    runs-on: ubuntu-latest\n    timeout-minutes: 30\n    permissions:\n      contents: read\n      packages: write\n",
+   "tests": "WEBSITE_WF"
   }
  ],
  "manual": [

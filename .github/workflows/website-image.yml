@@ -28,6 +28,13 @@ on:
 
 permissions: {}
 
+# Whole runs, not the publish job: a job-level group orders by when each test job ends, so an older
+# build could publish last and own latest. Runs start in trigger order, a newer pending run replaces
+# an older one, and a running publish is never cancelled half way.
+concurrency:
+  group: website-image-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   test:
     name: Website container
@@ -89,10 +96,6 @@ jobs:
     name: Publish, sign and verify
     needs: test
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    # One publish at a time, in push order: latest must never fall back to an older build.
-    concurrency:
-      group: website-image-${{ github.ref }}
-      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:

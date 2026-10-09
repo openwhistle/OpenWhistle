@@ -44,5 +44,5 @@ docker run --rm --name ow-website --read-only --tmpfs /tmp -p 8080:8080 \
 | Address page | wdk-ansible renders `address.html` from ansible-vault and bind-mounts the directory read-only at `/usr/share/nginx/private`; nginx includes it by SSI through the internal location `/_private/` |
 | File mode | `address.html` must be readable by UID 101 (`0444`, as wdk-ansible renders it). `/healthz` only checks that it exists: an unreadable file passes it, and the legal pages then embed the 404 page |
 | `/healthz` | 204 with the fragment, 503 without; not logged |
-| Leak guard | `OW_PRIVATE_STRINGS` (one string per line) arms `test_no_file_in_the_repository_holds_the_real_data`; unset, it skips |
+| Leak guard | `OW_PRIVATE_STRINGS` (one string per line) arms `test_no_file_in_the_repository_holds_the_real_data`; unset, it skips. It holds the operator's name, the c/o line and the street only, never postcode or city: those are also in the processor's business address, which the privacy policy must show |
 | Deploy | As energysharing in wdk-ansible: digest pin in `docker_images.yml`, Renovate PR per new digest, merge runs Semaphore template 22. No token leaves GitHub |

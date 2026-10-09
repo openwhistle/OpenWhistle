@@ -41,7 +41,8 @@ def test_the_image_is_signed_with_sbom_and_provenance_for_the_amd64_target() -> 
 
 
 def test_publishes_run_one_at_a_time_in_order() -> None:
-    assert JOBS["publish"]["concurrency"] == {
+    assert "concurrency" not in JOBS["publish"], "job level orders by test end, not push order"
+    assert WF["concurrency"] == {
         "group": "website-image-${{ github.ref }}",
         "cancel-in-progress": False,
     }
