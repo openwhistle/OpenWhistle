@@ -12,6 +12,7 @@ import subprocess
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Callable
 from http.client import HTTPResponse
 
 import pytest
@@ -59,6 +60,17 @@ def get(path: str, **headers: str) -> HTTPResponse:
 def logs() -> str:
     run = subprocess.run([CLI, "logs", NAME], capture_output=True, text=True, check=True)  # noqa: S603
     return run.stdout + run.stderr
+
+
+def wait_for_logs(done: Callable[[str], bool]) -> str:
+    """The log reaches `logs()` asynchronously: poll up to 5 s until `done(text)`."""
+    text = logs()
+    for _ in range(50):
+        if done(text):
+            break
+        time.sleep(0.1)
+        text = logs()
+    return text
 
 
 @pytest.mark.parametrize(
@@ -166,7 +178,7 @@ def test_no_log_line_carries_an_address_or_a_query() -> None:
         **{"X-Forwarded-For": "203.0.113.9", "Referer": "https://ref.example/x?y=1"},
     )
     get("/no/such/page/", **{"X-Forwarded-For": "203.0.113.9"})
-    text = logs()
+    text = wait_for_logs(lambda t: " 200 ref.example" in t and "/404.html 404" in t)
     assert "203.0.113.9" not in text and "127.0.0.1" not in text and "172." not in text
     assert "leak" not in text and "email" not in text and "utm_source" not in text
     # $uri is the path after the index lookup: /en/ is logged as /en/index.html.
@@ -175,7 +187,7 @@ def test_no_log_line_carries_an_address_or_a_query() -> None:
 
 def test_the_referer_keeps_the_hostname_only() -> None:
     get("/en/", Referer="https://alice@intranet.acme.local:8443/x")
-    text = logs()
+    text = wait_for_logs(lambda t: " 200 intranet.acme.local" in t)
     assert "alice" not in text and "8443" not in text
     assert re.search(r"^\S+ /en/index\.html 200 intranet\.acme\.local$", text, re.M), text[-500:]
 
@@ -184,17 +196,21 @@ def test_the_referer_keeps_the_hostname_only() -> None:
     "referer", ["http://192.0.2.7/wiki/x", "https://alice@192.0.2.8:8443/", "http://[2001:db8::9]/"]
 )
 def test_an_ip_literal_referer_is_logged_as_a_dash(referer: str) -> None:
+    before = len(logs().splitlines())
     get("/en/", Referer=referer)
-    last = logs().splitlines()[-1]
-    assert re.fullmatch(r"\S+ /en/index\.html 200 -", last), last
+    text = wait_for_logs(lambda t: len(t.splitlines()) > before)
+    new = text.splitlines()[before:]
+    assert new and all(re.fullmatch(r"\S+ /en/index\.html 200 -", ln) for ln in new), new
+    assert not re.search(r"192\.0\.2|2001:db8", text), "the literal never reaches the log"
 
 
 def test_every_log_line_is_a_counter_line() -> None:
     # A $uri with a space would break the 4-field format; scripts/site_stats.py skips such lines
     # (len(parts) != 4), so the counter never miscounts and nothing needs fixing here.
+    before = len(logs().splitlines())
     get("/en/")
     get("/50x.html")
-    lines = logs().splitlines()
+    lines = wait_for_logs(lambda t: len(t.splitlines()) >= before + 2).splitlines()
     assert lines
     assert all(re.fullmatch(r"\S+ \S+ \d{3} \S+", line) for line in lines), lines
 
