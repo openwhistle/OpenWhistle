@@ -62,6 +62,14 @@ def test_every_mutation_matches_its_file_exactly_once(spec: Path) -> None:
     assert not stale, stale
 
 
+@pytest.mark.parametrize("spec", ALL_SPECS, ids=lambda p: p.name)
+def test_every_id_names_one_mutation(spec: Path) -> None:
+    """The audit is run by id: a duplicate runs both, and a report line cannot tell them apart."""
+    data = json.loads(spec.read_text())
+    ids = [m.get("id") or m.get("name") for m in data["mutations"] + data.get("manual", [])]
+    assert not (dups := sorted({i for i in ids if ids.count(i) > 1})), dups
+
+
 def test_a_spec_cannot_name_a_file_outside_the_repo() -> None:
     from scripts.mutation_audit import inside_root
 

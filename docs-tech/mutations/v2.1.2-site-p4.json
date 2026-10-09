@@ -15,6 +15,18 @@
   ],
   "WEBSITE_WF": [
    "tests/test_website_workflow.py"
+  ],
+  "LEGAL": [
+   "tests/test_legal_pages.py"
+  ],
+  "FONTS": [
+   "tests/test_site_fonts.py"
+  ],
+  "MUTSPECS": [
+   "tests/test_mutation_specs.py"
+  ],
+  "BOUNDARY": [
+   "tests/test_docs_boundary.py"
   ]
  },
  "mutations": [
@@ -154,8 +166,8 @@
   {
    "id": "REF-USERINFO",
    "file": "website/nginx.conf",
-   "old": "(?:[^@/]*@)?",
-   "new": "",
+   "old": "(?:[^@/]*@)?(?<rhost>",
+   "new": "(?<rhost>",
    "tests": "CONFIG"
   },
   {
@@ -248,6 +260,124 @@
    "old": "        gzip_vary on;\n",
    "new": "        gzip_vary on;\n        log_subrequest on;\n",
    "tests": "CONFIG"
+  },
+  {
+   "id": "REF-IP-LITERAL",
+   "file": "website/nginx.conf",
+   "old": "        \"~^https?://(?:[^@/]*@)?(?:[0-9.]+|\\[[0-9A-Fa-f:.]*\\])(?:[:/?#]|$)\" \"-\";\n",
+   "new": "",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "CSP-SCRIPT-HTTPS",
+   "file": "website/nginx.conf",
+   "old": "\"site\" \"default-src 'none'; script-src 'self' 'sha256",
+   "new": "\"site\" \"default-src 'none'; script-src 'self' https: 'sha256",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "HEALTHZ-IF-ADD-HEADER",
+   "file": "website/nginx.conf",
+   "old": "                return 503;\n            }\n",
+   "new": "                return 503;\n            }\n            add_header X-Test 1;\n",
+   "tests": "CONFIG"
+  },
+  {
+   "id": "FONT-SYNTHESIS-ALL",
+   "file": "docs/assets/css/fonts.css",
+   "old": "html { font-synthesis-weight: none; }",
+   "new": "html { font-synthesis: none; }",
+   "tests": "FONTS"
+  },
+  {
+   "id": "FONT-ORPHAN-BACK",
+   "file": "docs/fonts/sora-latin-300-normal.woff2",
+   "create": "x",
+   "tests": "FONTS"
+  },
+  {
+   "id": "STATS-GIF-COUNTED",
+   "file": "scripts/site_stats.py",
+   "old": "    \".gif\",\n",
+   "new": "",
+   "tests": "STATS"
+  },
+  {
+   "id": "MUT-DUP-ID",
+   "file": "docs-tech/mutations/v2.1.2-site-p3.json",
+   "old": "\"id\": \"LEGAL-NAV-NAME\"",
+   "new": "\"id\": \"PRIVACY-365\"",
+   "tests": "MUTSPECS"
+  },
+  {
+   "id": "DIGEST-WEBSITE-NGINX",
+   "file": "website/Dockerfile",
+   "old": "nginx-unprivileged:alpine@sha256:b9241c6e7b8e9a862f129d8d4199ab64b10390949a78bdd5603379b32c844083",
+   "new": "nginx-unprivileged:alpine",
+   "tests": "PINS"
+  },
+  {
+   "id": "PUBLISH-NO-CONCURRENCY",
+   "file": ".github/workflows/website-image.yml",
+   "old": "    concurrency:\n      group: website-image-${{ github.ref }}\n      cancel-in-progress: false\n",
+   "new": "",
+   "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "PATHS-NO-CONFIG",
+   "file": ".github/workflows/website-image.yml",
+   "old": "      - \"app/config.py\" # the footer shows app_version\n",
+   "new": "",
+   "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "BROWSER-NOT-REQUIRED",
+   "file": ".github/workflows/website-image.yml",
+   "old": "          WEBSITE_REQUIRED: \"1\" # e2e.yml collects this file too, without a container\n",
+   "new": "",
+   "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "BROWSER-READS-CI-ONLY",
+   "file": "tests/e2e/test_site_container.py",
+   "old": "os.environ.get(\"WEBSITE_REQUIRED\", \"\")",
+   "new": "\"\"",
+   "tests": "WEBSITE_WF"
+  },
+  {
+   "id": "LEGAL-INCLUDE-IMPRINT",
+   "file": "docs/impressum/index.html",
+   "old": "MStV):</h2>\n        <!--# include virtual=\"/_private/address.html\" -->\n",
+   "new": "MStV):</h2>\n",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "LEGAL-INCLUDE-POLICY",
+   "file": "docs/en/privacy/index.html",
+   "old": "        <!--# include virtual=\"/_private/address.html\" -->\n",
+   "new": "",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "PRIVATE-SCAN-BLIND",
+   "file": "tests/test_legal_pages.py",
+   "old": "if s.encode() in data",
+   "new": "if s.encode() in data[:0]",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "IMAGE-NO-RENEWAL",
+   "file": ".github/workflows/website-image.yml",
+   "old": "    - cron: \"41 4 2 * *\"",
+   "new": "    - cron: \"41 4 2 1 *\"",
+   "tests": "LEGAL"
+  },
+  {
+   "id": "IMAGE-SHALLOW",
+   "file": ".github/workflows/website-image.yml",
+   "old": "          fetch-depth: 0 # the sitemap's lastmod comes from each source's last commit\n",
+   "new": "",
+   "tests": "BOUNDARY"
   }
  ],
  "manual": [
@@ -308,7 +438,7 @@
    "red": "tests/website/test_container.py::test_the_base_images_error_page_is_gone"
   },
   {
-   "id": "REF-USERINFO",
+   "id": "REF-USERINFO-LIVE",
    "file": "website/nginx.conf",
    "old": "\"~^https?://(?:[^@/]*@)?(?<rhost>[A-Za-z0-9.-]+)(?:[:/?#]|$)\" $rhost;",
    "new": "\"~^https?://(?<rhost>[^/:?#]+)\" $rhost;",
@@ -411,6 +541,20 @@
    "old": "            gzip_static off;\n",
    "new": "",
    "red": "tests/website/test_container.py::test_a_legal_page_is_never_the_prebuilt_gzip"
+  },
+  {
+   "id": "REF-IP-LITERAL-LIVE",
+   "file": "website/nginx.conf",
+   "old": "        \"~^https?://(?:[^@/]*@)?(?:[0-9.]+|\\[[0-9A-Fa-f:.]*\\])(?:[:/?#]|$)\" \"-\";\n",
+   "new": "",
+   "red": "tests/website/test_container.py::test_an_ip_literal_referer_is_logged_as_a_dash"
+  },
+  {
+   "id": "ADDRESS-INCLUDE-LIVE",
+   "file": "docs/en/privacy/index.html",
+   "old": "virtual=\"/_private/address.html\"",
+   "new": "virtual=\"/_private/missing.html\"",
+   "red": "tests/website/test_container.py::test_a_legal_page_shows_the_mounted_address"
   }
  ]
 }
