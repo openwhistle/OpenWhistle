@@ -25,7 +25,7 @@ jobs:
         with:
           python-version: "3.14"
       - name: Install uv
-        run: pip install uv==0.12.24
+        run: pip install uv==0.13.0
       - name: Audit exactly what the image installs
         run: |
           uv export --frozen --all-extras --no-emit-project -o /tmp/requirements.txt
