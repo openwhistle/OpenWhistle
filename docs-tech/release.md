@@ -25,8 +25,10 @@ Every line must read `RED`. A mutation that removes a timeout hangs its
 test: put it in a spec with `"timeout_seconds"` (a hang past it counts as
 red). For a `GREEN` one, either write the test that catches it, or show
 the mutation cannot change behaviour and record why in
-[invariants](invariants.md). Read *which* test fired: a guard caught by an
-unrelated test is caught by luck.
+[invariants](invariants.md). `STALE` means the guard's text or file is gone,
+or no test ran (a missing test file, a `-k` that selects nothing): fix the
+spec. Read *which* test fired: a guard caught by an unrelated test is caught
+by luck.
 
 ## 2. UI check
 

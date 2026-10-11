@@ -6,7 +6,9 @@ openwhistle_group: openwhistle
 
 # ── Container image ──────────────────────────────────────────────────────────
 openwhistle_image: ghcr.io/openwhistle/openwhistle
-openwhistle_image_tag: latest
+# A release, not "latest": with openwhistle_compose_pull a re-run of the playbook
+# moved to whatever had shipped since, a new major included. Bump on upgrade.
+openwhistle_image_tag: "2.2.0"
 
 # ── TLS / domain ─────────────────────────────────────────────────────────────
 openwhistle_domain: ""                     # e.g. whistle.example.com — required
@@ -48,7 +50,6 @@ openwhistle_ldap_bind_password: ""
 openwhistle_ldap_base_dn: ""
 openwhistle_ldap_user_filter: "(uid={username})"
 openwhistle_ldap_attr_username: uid
-openwhistle_ldap_attr_email: mail
 
 # ── S3 attachment storage (optional — default: db) ───────────────────────────
 openwhistle_storage_backend: db           # "db" or "s3"

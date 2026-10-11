@@ -1350,6 +1350,10 @@ async def reset_user_totp(
         target.password_hash = auth_service.hash_password(temporary_password)
         # The superadmin has seen it: the holder replaces it after enrolling.
         target.must_change_password = True
+        # They can also sign in with it first, like the maker of a new account: for the
+        # four-eyes deletion they are now that account's maker. Without this a superadmin
+        # confirmed their own deletion request as an account they had reset.
+        target.created_by_id = current_user.id
     # Only the fact, never the password.
     await audit_service.log(
         db,

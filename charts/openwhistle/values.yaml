@@ -121,7 +121,6 @@ config:
   ldapBaseDn: ""
   ldapUserFilter: "(uid={username})"
   ldapAttrUsername: "uid"
-  ldapAttrEmail: "mail"
 
   # OIDC / SSO
   oidcEnabled: "false"

@@ -27,6 +27,8 @@ from cryptography.fernet import Fernet, InvalidToken, MultiFernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
+from app.services.crypto import seal
+
 log = logging.getLogger(__name__)
 
 _MEK_SALT = b"openwhistle-mek-v1"
@@ -68,7 +70,7 @@ def generate_dek() -> bytes:
 
 def encrypt_dek(dek_raw: bytes) -> str:
     """Wrap a raw DEK with the current MEK. Returns the Fernet token as a string."""
-    return make_mek_fernet().encrypt(dek_raw).decode("utf-8")
+    return seal(make_mek_fernet(), dek_raw).decode("utf-8")
 
 
 def decrypt_dek(encrypted_dek: str) -> bytes:
@@ -78,7 +80,8 @@ def decrypt_dek(encrypted_dek: str) -> bytes:
 
 def rotate_dek(encrypted_dek: str) -> str:
     """Re-wrap a DEK under the current MEK. The data it protects is untouched."""
-    return make_mek_fernet().rotate(encrypted_dek.encode("utf-8")).decode("utf-8")
+    mek = make_mek_fernet()
+    return seal(mek, mek.decrypt(encrypted_dek.encode("utf-8"))).decode("utf-8")
 
 
 def make_report_fernet(encrypted_dek: str) -> Fernet:
@@ -88,7 +91,7 @@ def make_report_fernet(encrypted_dek: str) -> Fernet:
 
 def encrypt_field(fernet: Fernet, plaintext: str) -> str:
     """Encrypt a UTF-8 string field. Returns a Fernet token string."""
-    return fernet.encrypt(plaintext.encode("utf-8")).decode("utf-8")
+    return seal(fernet, plaintext.encode("utf-8")).decode("utf-8")
 
 
 def decrypt_field(fernet: Fernet, ciphertext: str) -> str:

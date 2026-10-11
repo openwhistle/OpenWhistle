@@ -24,6 +24,11 @@ from app.services.telemetry import ensure_state as ensure_telemetry_state
 from app.services.users import validate_username
 from app.templating import render
 
+# The setup QR is shown before a username is typed, so it is labelled the same on
+# every render: after a form error it used to carry the typed name, and scanning it
+# again added a second authenticator entry for the same secret.
+_QR_LABEL = "admin"
+
 router = APIRouter()
 
 # What generate_totp_secret() issues: 32 base32 characters, 160 bits.
@@ -118,7 +123,7 @@ async def setup_get(
     await ensure_setup_token(redis)
 
     totp_secret = generate_totp_secret()
-    qr_code = generate_qr_code_base64(totp_secret, "admin")
+    qr_code = generate_qr_code_base64(totp_secret, _QR_LABEL)
 
     return render(
         request,
@@ -166,7 +171,7 @@ async def setup_post(
             "wizard/setup.html",
             {
                 "totp_secret": totp_secret,
-                "qr_code": generate_qr_code_base64(totp_secret, username or "admin"),
+                "qr_code": generate_qr_code_base64(totp_secret, _QR_LABEL),
                 "field_errors": {"setup_token": error},
                 "username": username,
                 "telemetry": telemetry == "1",
@@ -195,7 +200,7 @@ async def setup_post(
         errors["totp_code"] = "wizard.error.totp_code"
 
     if errors:
-        qr_code = generate_qr_code_base64(totp_secret, username)
+        qr_code = generate_qr_code_base64(totp_secret, _QR_LABEL)
         return render(
             request,
             "wizard/setup.html",
@@ -206,6 +211,9 @@ async def setup_post(
                 "username": username,
                 "telemetry": telemetry == "1",
             },
+            # A refused form is not a success: the token errors above said 403/429,
+            # these said 200 (the tests expecting 422 skipped themselves every run).
+            status_code=422,
         )
 
     # A concurrent submission that won the race makes this a no-op; either

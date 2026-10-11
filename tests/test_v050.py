@@ -539,15 +539,8 @@ class TestLDAPUserInfo:
     def test_fields(self) -> None:
         from app.services.ldap_auth import LDAPUserInfo
 
-        info = LDAPUserInfo(username="alice", email="alice@example.com")
+        info = LDAPUserInfo(username="alice")
         assert info.username == "alice"
-        assert info.email == "alice@example.com"
-
-    def test_email_can_be_none(self) -> None:
-        from app.services.ldap_auth import LDAPUserInfo
-
-        info = LDAPUserInfo(username="bob", email=None)
-        assert info.email is None
 
 
 # ── Send reminder webhook (mocked httpx) ─────────────────────────────────────

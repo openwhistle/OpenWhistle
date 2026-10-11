@@ -108,14 +108,14 @@ async def test_login_post_shows_locked_message_when_rate_limited(
 
 
 @pytest.mark.asyncio
-@pytest.mark.skipif(
-    __import__("app.config", fromlist=["settings"]).settings.demo_mode,
-    reason="000000 is always valid in demo mode — wrong-TOTP path not reachable",
-)
 async def test_login_mfa_wrong_totp_returns_error_form(
-    client: AsyncClient, db_session: AsyncSession
+    client: AsyncClient, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Wrong TOTP code must re-render the MFA form with an error and a new temp_token."""
+    from app.config import settings
+
+    # It skipped when DEMO_MODE was on (000000 is valid there) - which CI sets.
+    monkeypatch.setattr(settings, "demo_mode", False)
     admin, _ = await _create_admin(db_session)
 
     get_resp = await client.get("/admin/login")
@@ -326,7 +326,7 @@ async def test_ldap_login_rejects_deactivated_account(
     await db_session.commit()
 
     monkeypatch.setattr(settings, "ldap_enabled", True)
-    info = LDAPUserInfo(username=username, email=None)
+    info = LDAPUserInfo(username=username)
     csrf = (await client.get("/admin/login")).cookies.get("ow_csrf")
     with patch("app.services.ldap_auth.authenticate_ldap", AsyncMock(return_value=info)):
         resp = await client.post(
@@ -391,7 +391,11 @@ async def test_mfa_setup_get_redirects_when_user_deleted(client: AsyncClient) ->
     setup_token = "setup-token-for-deleted-user"
     await store_totp_setup_pending(redis, setup_token, str(uuid.uuid4()))
 
-    resp = await client.get(f"/admin/mfa/setup?token={setup_token}", follow_redirects=False)
+    resp = await client.get(
+        "/admin/mfa/setup",
+        headers={"cookie": f"ow-mfa-setup={setup_token}"},
+        follow_redirects=False,
+    )
     assert resp.status_code == 302
     assert resp.headers["location"].endswith("/admin/login")
 

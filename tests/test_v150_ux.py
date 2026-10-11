@@ -433,7 +433,9 @@ async def test_dashboard_search_form_and_links_keep_the_query(
 
 
 def test_every_audit_action_has_a_label_in_every_language() -> None:
-    for lang in ("en", "de", "fr", "pt-br"):
+    from app.i18n import _SUPPORTED
+
+    for lang in sorted(_SUPPORTED):  # Spanish was left out when it was added
         strings = json.loads((_LOCALES / f"{lang}.json").read_text(encoding="utf-8"))
         missing = [a for a in ALL_ACTIONS if f"audit.action.{a}" not in strings]
         assert not missing, (lang, missing)
@@ -532,6 +534,7 @@ def test_whistleblower_copy_makes_no_absolute_promise() -> None:
         "en": ("guarantee", "completely protected", "UUID", "Two-Factor"),
         "de": ("garantiert", "vollständig geschützt", "UUID", "Zwei-Faktor-Zugang"),
         "fr": ("garantie", "totalement protégée", "UUID"),
+        "es": ("garantiza", "completamente protegid", "UUID"),
         "pt-br": ("garantida", "completamente protegida", "UUID"),
     }.items():
         strings = json.loads((_LOCALES / f"{lang}.json").read_text(encoding="utf-8"))

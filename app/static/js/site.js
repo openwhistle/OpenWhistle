@@ -227,6 +227,10 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('form').forEach((form) => {
         form.addEventListener('submit', (e) => {
+            // A page's own handler (the status form's confirm) runs first and may
+            // have cancelled the submit; marking the form as submitting anyway left
+            // it, and its disabled button, locked until a reload.
+            if (e.defaultPrevented) return;
             // Unobtrusive confirmation. The prompt text lives in a data-confirm
             // attribute (HTML-attribute autoescaped by the template) and is
             // passed to confirm() as a runtime string — never interpolated into

@@ -436,7 +436,7 @@ async def test_superadmin_resets_an_authenticator(
     login = await _password_login(client, csrf, target.username, temporary)
     assert login.status_code == 302
     assert login.headers["location"].startswith("/admin/mfa/setup")
-    setup_token = parse_qs(urlsplit(login.headers["location"]).query)["token"][0]
+    setup_token = login.cookies["ow-mfa-setup"]
     new_secret = (await _fresh(db_session, target)).totp_secret
     done = await client.post(
         "/admin/mfa/setup",

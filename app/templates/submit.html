@@ -213,7 +213,7 @@
             <div class="form-group">
                 <label class="form-label sub-label-flex" for="description">
                     <span>{{ t('submit.form.description') }}</span>
-                    <span id="char-counter" class="sub-char-counter" data-max="10000">{{ state.get('description', '') | length | format_count(lang) }} / {{ 10000 | format_count(lang) }}</span>
+                    <span id="char-counter" class="sub-char-counter" data-max="10000">{{ state.get('description', '') | trim | length | format_count(lang) }} / {{ 10000 | format_count(lang) }}</span>
                 </label>
                 <textarea
                     class="form-control"
@@ -427,7 +427,8 @@
         };
         var max = parseInt(charCounter.dataset.max, 10);
         description.addEventListener('input', function() {
-            var c = this.value.length;
+            // What the server counts: trimmed, in code points (an emoji is one, not two).
+            var c = Array.from(this.value.trim()).length;
             charCounter.textContent = formatCount(c) + ' / ' + formatCount(max);
             charCounter.style.color = c < 10 ? 'var(--danger)' : (c > 9500 ? 'var(--warning, #c17b2a)' : 'var(--muted)');
         });

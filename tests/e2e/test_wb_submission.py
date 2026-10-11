@@ -678,3 +678,14 @@ def test_review_step_label_and_value_do_not_overlap_in_german(
     assert not _boxes_overlap(label_box, value_box), "German review label overlaps its value"
     assert "Anonym" in value.inner_text()
     ctx.close()
+
+
+def test_the_description_counter_counts_what_the_server_counts(page: Page, base_url: str) -> None:
+    """Ten spaces and an "x" showed 11 in the normal colour; the server trims and said
+    too short. An emoji counted 2 in the browser and 1 on the server."""
+    page.goto(f"{base_url}/submit")
+    while page.locator('textarea[name="description"]').count() == 0:
+        _fill_whatever_step_is_showing(page)
+    for text, shown in ((" " * 10 + "x", "1 / "), ("\U0001f600" * 3, "3 / ")):
+        page.locator("#description").fill(text)
+        assert page.text_content("#char-counter").startswith(shown), text

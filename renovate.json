@@ -124,6 +124,17 @@
       ]
     },
     {
+      "description": "setup-python's python-version is read by two managers: github-actions (from actions/python-versions) and the custom regex below (Docker Hub). The two disagree for weeks after a release — when 3.15.0 shipped, actions/python-versions had it and Docker Hub had only 3.15-rc, so PR #145 moved the workflows alone and tests/test_build_pins.py failed. The image is what ships, so Docker Hub alone decides; the github-actions copy is off, and so is pep621's (python.org) reading of requires-python.",
+      "matchManagers": [
+        "github-actions",
+        "pep621"
+      ],
+      "matchDepNames": [
+        "python"
+      ],
+      "enabled": false
+    },
+    {
       "description": "PostgreSQL and Redis images appear in both compose files, the Ansible template and three workflows. Each moves as one pull request. A PostgreSQL major needs a dump and restore (https://openwhistle.net/en/docs/upgrade/), so majors are never auto-merged.",
       "groupName": "PostgreSQL",
       "matchPackageNames": [

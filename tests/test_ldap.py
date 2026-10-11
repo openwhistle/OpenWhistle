@@ -37,7 +37,6 @@ def ldap_on(monkeypatch: pytest.MonkeyPatch) -> None:
         "ldap_base_dn": "dc=example,dc=org",
         "ldap_user_filter": "(uid={username})",
         "ldap_attr_username": "uid",
-        "ldap_attr_email": "mail",
     }.items():
         monkeypatch.setattr(settings, name, value)
 
@@ -62,7 +61,7 @@ def test_success_returns_directory_attributes(ldap_on: None) -> None:
     conn = _conn()
     with patch("ldap.initialize", return_value=conn):
         info = ldap_auth._authenticate_ldap_sync("alice", "pw")
-    assert (info.username, info.email) == ("alice", "alice@example.org")
+    assert info.username == "alice"
     assert conn.simple_bind_s.call_args_list[-1].args == ("uid=alice,dc=example,dc=org", "pw")
 
 
@@ -131,7 +130,7 @@ def test_plain_ldap_does_not_start_tls(ldap_on: None) -> None:
 async def test_authenticate_ldap_runs_in_a_thread(ldap_on: None) -> None:
     from unittest.mock import AsyncMock
 
-    to_thread = AsyncMock(return_value=ldap_auth.LDAPUserInfo("alice", None))
+    to_thread = AsyncMock(return_value=ldap_auth.LDAPUserInfo("alice"))
     with patch("asyncio.to_thread", new=to_thread):
         await ldap_auth.authenticate_ldap("alice", "pw")
     assert to_thread.call_args.args[0] is ldap_auth._authenticate_ldap_sync

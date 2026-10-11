@@ -7,6 +7,76 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- The demo has a second admin, `demo2` (same password and code), so a four-eyes deletion can be tried there; with
+  one admin it could never be confirmed. The demo login panel names it.
+
+### Changed
+
+- `BRAND_LOGO_URL` must be a path on this server (`/static/...`) or a `data:image/` URI; anything else is
+  ignored with a warning. An external URL never showed: the CSP blocked it (`img-src` in Chromium), and
+  allowing it would send the whistleblower's address to the logo's host.
+- `RETENTION_DAYS` must be at least 1.
+- A refused setup form answers 422, not 200.
+- The Ansible role deploys the release it ships with (`openwhistle_image_tag: "2.2.0"`), not `latest`: a re-run
+  of the playbook pulled whatever had shipped since, a new major included.
+- Attachments are stored and served with the type their extension names; the type the browser declares is
+  ignored.
+
+### Removed
+
+- `LDAP_ATTR_EMAIL`: the directory's mail address was fetched on every LDAP login and never used. A `.env` that
+  still sets it is warned about.
+- The organisations table's `branding` column (migration 014), never read or written.
+
+### Fixed
+
+- **Every encrypted value carried the exact second it was written.** A Fernet token holds its creation time
+  unencrypted; submissions, whistleblower messages and uploads were stored as the day, while their tokens gave
+  the second to anyone with a database dump or backup, no key needed (measured: 19:21:38 in the token,
+  00:00:00 in `submitted_at`). Tokens are now made at time 0, and migration 013 re-seals every report's
+  existing ones. With `STORAGE_BACKEND=s3` the bucket still records each file's upload time itself.
+- **A superadmin could pass the four-eyes deletion alone**: reset another admin's authenticator, sign in with
+  the temporary password shown to them, and confirm their own request (302). Resetting an account's password
+  now counts as making it.
+- **`RETENTION_DAYS=-1` deleted every closed report** at the next 03:00 run; the setting validated.
+- **A wrong PIN loaded the case's messages and attachments before bcrypt ran**: 276 ms against 207 ms for an
+  unknown case number with 5 × 10 MB attached, which told whether a case number exists. Now 206 against 206.
+- **A chart in a Word file kept its author**: the workbook behind it (`word/embeddings/*.xlsx`) was copied
+  unchanged. Embedded `.docx`/`.xlsx` are cleaned; any other embedded object is refused, as in a PDF.
+- **Seven more proxy headers reached the app with the client's address** (`X-Original-Forwarded-For` from
+  ingress-nginx, Fastly, Envoy, Azure Front Door, App Engine, Cloudflare IPv6); they are stripped and raise the
+  admin warning like `X-Forwarded-For`.
+- **The first-login MFA setup link opened the account's TOTP secret for anyone**: the token was in the URL
+  (`/admin/mfa/setup?token=…`), so for 10 minutes the address from the browser history or a shared screen showed
+  the page in another browser, no password needed (200). It is an HttpOnly cookie now.
+- An unhandled error was answered without `Cache-Control: no-store`, the CSP and `X-Frame-Options`.
+- A `.csv` chosen on Windows with Excel installed was refused (declared as `application/vnd.ms-excel`).
+- Cancelling the "close this case?" confirm locked the status form until a reload.
+- A reply written after the 2-hour status session ended was answered with a bare 401 and lost; it now comes
+  back on the sign-in page, to copy. The reply form's always-empty `case_number` and `pin` fields are gone.
+- Changing the dashboard's page size ran whatever was typed in the search box instead of the applied search.
+- The description counter counted untrimmed UTF-16 units; the server counts trimmed characters.
+- The statistics page showed a red "0 %" SLA rate before any report was acknowledged; it shows "—".
+- The MFA setup page used three CSS variables no stylesheet defines; the QR frame, labels and code box were
+  unstyled.
+- The setup QR code changed its label after a form error.
+- A local `docker build` shipped `__pycache__` directories, `.ruff_cache` and a stray `_site/`.
+
+### Development
+
+- Renovate takes Python versions from Docker Hub only: `actions/python-versions` had 3.15 weeks before the
+  image, and #145 moved the workflows alone.
+- The mutation audit reports `STALE`, not `RED`, when no test ran (a missing test file, a `-k` that selects
+  nothing).
+- CI fails on a skipped test. Nine never ran: the wizard and admin-page tests skipped whenever setup was done,
+  which in CI was always. Three of them failed once they ran (a 200 for a refused form; two citations the page
+  had corrected). The E2E four-eyes test skipped every run for want of a second admin.
+- `tests/e2e/test_csp.py` never ran in CI (no `e2e` marker); every test there is marked now. The E2E stack runs
+  the app read-only with no capabilities, as production does.
+- Spanish was missing from four locale tests.
+
 ## [2.2.0] — 2026-10-09
 
 ### Added

@@ -68,6 +68,13 @@
     <div class="alert alert-error" role="alert">{{ error }}</div>
     {% endif %}
 
+    {% if unsent_reply %}
+    <div class="alert alert-warning" role="alert">
+        <label class="form-label" for="unsent-reply">{{ t('status.reply.session_ended') }}</label>
+        <textarea class="form-control" id="unsent-reply" rows="5" readonly>{{ unsent_reply }}</textarea>
+    </div>
+    {% endif %}
+
     {% if locked %}
     <div class="alert alert-warning" role="alert">
         <div class="alert-title">{{ t('status.locked.title') }}</div>
@@ -290,8 +297,6 @@
         <h2 class="panel-header">{{ t('status.reply.title') }}</h2>
         <form method="post" action="/reply">
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-            <input type="hidden" name="case_number" value="{{ case_number or '' }}">
-            <input type="hidden" name="pin" value="{{ pin or '' }}">
 
             <div class="form-group">
                 <label class="form-label" for="reply-content">{{ t('status.reply.label') }}</label>

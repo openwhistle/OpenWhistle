@@ -19,7 +19,7 @@ import pyotp
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient, Response
-from sqlalchemy import delete, func, select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 
@@ -471,31 +471,6 @@ async def test_csrf_cookie_is_secure_when_secure_cookies(
 # ═════════════════════════════════════════════════════════════════════════════
 # 5. Setup wizard: check-and-insert is atomic
 # ═════════════════════════════════════════════════════════════════════════════
-
-
-@pytest_asyncio.fixture(loop_scope="function")
-async def setup_incomplete(db_engine: object) -> AsyncGenerator[async_sessionmaker[AsyncSession]]:
-    """Pretend setup has not happened; restore the row and drop created admins."""
-    engine = create_async_engine(settings.database_url, poolclass=NullPool)
-    factory = async_sessionmaker(engine, expire_on_commit=False)
-    async with factory() as s:
-        row = (await s.execute(select(SetupStatus).where(SetupStatus.id == 1))).scalar_one_or_none()
-        was = None if row is None else row.completed
-        if row is None:
-            s.add(SetupStatus(id=1, completed=False))
-        else:
-            row.completed = False
-        await s.commit()
-    yield factory
-    async with factory() as s:
-        await s.execute(delete(AdminUser).where(AdminUser.username.like("v150-setup-%")))
-        row = (await s.execute(select(SetupStatus).where(SetupStatus.id == 1))).scalar_one()
-        if was is None:
-            await s.delete(row)
-        else:
-            row.completed = was
-        await s.commit()
-    await engine.dispose()
 
 
 async def _admins_named(factory: async_sessionmaker[AsyncSession], name: str) -> int:

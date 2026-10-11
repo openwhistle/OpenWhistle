@@ -12,7 +12,6 @@ import subprocess
 import time
 import uuid
 from typing import Any
-from urllib.parse import parse_qs, urlsplit
 
 import pyotp
 import pytest
@@ -420,7 +419,7 @@ async def _enrol_and_change(
     """Password → authenticator enrolment → forced change → admin area."""
     login = await _password_login(client, csrf, user.username, password)
     assert login.headers["location"].startswith("/admin/mfa/setup")
-    token = parse_qs(urlsplit(login.headers["location"]).query)["token"][0]
+    token = login.cookies["ow-mfa-setup"]
     secret = (await _fresh(db_session, user)).totp_secret
     done = await client.post(
         "/admin/mfa/setup",

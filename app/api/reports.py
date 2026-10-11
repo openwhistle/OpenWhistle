@@ -39,6 +39,7 @@ from app.onion import cookie_secure
 from app.redis_client import get_redis
 from app.services import report as report_service
 from app.services.categories import get_active_categories
+from app.services.crypto import seal
 from app.services.locations import get_active_locations, get_location_by_id
 from app.templating import render
 
@@ -391,7 +392,7 @@ async def _finish_claim(
 
 def _encrypt_result(session_id: str, result: dict[str, Any]) -> str:
     # Encrypted with the draft's key, like the draft was.
-    return _draft_fernet(session_id).encrypt(json.dumps(result).encode()).decode()
+    return seal(_draft_fernet(session_id), json.dumps(result).encode()).decode()
 
 
 def _received(case_number: str) -> dict[str, Any]:
@@ -473,7 +474,7 @@ async def _save_submission(redis: Redis, session_id: str, state: dict[str, Any])
     # (they all save a loaded state): every submit inserts the same primary key.
     if state:
         state.setdefault("report_id", str(uuid.uuid4()))
-    token = _draft_fernet(session_id).encrypt(json.dumps(state).encode())
+    token = seal(_draft_fernet(session_id), json.dumps(state).encode())
     await redis.set(_submission_key(session_id), token, ex=_SUBMISSION_TTL)
 
 
@@ -1177,8 +1178,6 @@ async def status_get(
                         "report": report,
                         "decrypted_messages": dec_msgs,
                         "attachment_names": decrypt_attachment_names(report),
-                        "case_number": None,
-                        "pin": None,
                         "from_session": True,
                         "success": success,
                         "notice": notice,
@@ -1257,7 +1256,11 @@ async def reply_post(
 
     if report is None:
         if not case_number or not pin:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+            # The session (2 h) ended while the reply was being written. A bare 401
+            # threw the text away; the sign-in form comes back with it, to copy.
+            return render(
+                request, "status.html", {"report": None, "unsent_reply": content}, status_code=401
+            )
         report, lockout_ttl = await report_service.authenticate_whistleblower(
             db, redis, case_number, pin
         )

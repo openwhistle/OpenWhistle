@@ -28,10 +28,20 @@ def _make_fernet() -> MultiFernet:
     )
 
 
+def seal(fernet: Fernet | MultiFernet, data: bytes) -> bytes:
+    """Encrypt ``data`` into a Fernet token whose timestamp is 0.
+
+    A Fernet token carries the second it was made, unencrypted. Times a
+    whistleblower causes are stored as the day only, yet every token written at
+    a submission gave the exact second to anyone holding a database dump, with
+    no key. Nothing here decrypts with a ``ttl``, so the time is unused.
+    """
+    return fernet.encrypt_at_time(data, 0)
+
+
 def encrypt(plaintext: str) -> str:
     """Encrypt a UTF-8 string. Returns a base64url token (str)."""
-    f = _make_fernet()
-    return f.encrypt(plaintext.encode()).decode()
+    return seal(_make_fernet(), plaintext.encode()).decode()
 
 
 def decrypt(token: str) -> str:
@@ -57,5 +67,6 @@ def decrypt_or_none(token: str | None) -> str | None:
 
 
 def rotate(token: str) -> str:
-    """Re-encrypt a token under the current key."""
-    return _make_fernet().rotate(token.encode()).decode()
+    """Re-encrypt a token under the current key (MultiFernet.rotate keeps its time)."""
+    f = _make_fernet()
+    return seal(f, f.decrypt(token.encode())).decode()

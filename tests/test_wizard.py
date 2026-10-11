@@ -22,20 +22,28 @@ async def test_setup_page_loads_when_incomplete(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_setup_redirects_to_login_when_complete(client: AsyncClient) -> None:
-    """After setup is complete, /setup must redirect away — not show the form again."""
+async def test_setup_redirects_to_login_when_complete(
+    client: AsyncClient, setup_incomplete
+) -> None:  # type: ignore[no-untyped-def]
+    """After setup is complete, /setup must redirect away — not show the form again.
+
+    It asserted only inside `if response.status_code == 302`, so showing the form
+    again (200) passed."""
+    from app.models.setup import SetupStatus
+
+    async with setup_incomplete() as s:
+        (await s.get(SetupStatus, 1)).completed = True
+        await s.commit()
     response = await client.get("/setup", follow_redirects=False)
-    if response.status_code == 302:
-        assert "/admin/login" in response.headers["location"]
+    assert response.status_code == 302
+    assert "/admin/login" in response.headers["location"]
 
 
 @pytest.mark.asyncio
-async def test_setup_post_creates_admin(client: AsyncClient) -> None:
+async def test_setup_post_creates_admin(client: AsyncClient, setup_incomplete) -> None:  # type: ignore[no-untyped-def]
     """Full wizard flow: generate TOTP secret, submit valid form, get redirected to login."""
-    # First check if setup is already complete — skip if so
     get_response = await client.get("/setup", follow_redirects=False)
-    if get_response.status_code == 302:
-        pytest.skip("Setup already completed — wizard test skipped")
+    assert get_response.status_code == 200
 
     totp_secret = generate_totp_secret()
     totp = get_totp(totp_secret)
@@ -61,10 +69,9 @@ async def test_setup_post_creates_admin(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_setup_post_rejects_short_password(client: AsyncClient) -> None:
+async def test_setup_post_rejects_short_password(client: AsyncClient, setup_incomplete) -> None:  # type: ignore[no-untyped-def]
     get_response = await client.get("/setup", follow_redirects=False)
-    if get_response.status_code == 302:
-        pytest.skip("Setup already completed")
+    assert get_response.status_code == 200
 
     totp_secret = generate_totp_secret()
     totp = get_totp(totp_secret)
@@ -87,10 +94,11 @@ async def test_setup_post_rejects_short_password(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
-async def test_setup_post_rejects_mismatched_passwords(client: AsyncClient) -> None:
+async def test_setup_post_rejects_mismatched_passwords(
+    client: AsyncClient, setup_incomplete
+) -> None:  # type: ignore[no-untyped-def]
     get_response = await client.get("/setup", follow_redirects=False)
-    if get_response.status_code == 302:
-        pytest.skip("Setup already completed")
+    assert get_response.status_code == 200
 
     totp_secret = generate_totp_secret()
     totp = get_totp(totp_secret)
@@ -113,10 +121,9 @@ async def test_setup_post_rejects_mismatched_passwords(client: AsyncClient) -> N
 
 
 @pytest.mark.asyncio
-async def test_setup_post_rejects_invalid_totp(client: AsyncClient) -> None:
+async def test_setup_post_rejects_invalid_totp(client: AsyncClient, setup_incomplete) -> None:  # type: ignore[no-untyped-def]
     get_response = await client.get("/setup", follow_redirects=False)
-    if get_response.status_code == 302:
-        pytest.skip("Setup already completed")
+    assert get_response.status_code == 200
 
     totp_secret = generate_totp_secret()
     csrf_token = get_response.cookies.get("ow_csrf")

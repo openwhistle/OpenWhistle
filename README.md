@@ -44,7 +44,8 @@ security headers, no IP in any log), served from its own server at openwhistle.n
 
 - **Full anonymity** — No IP addresses logged at any layer. An employee submitting from the office
   network leaves no trace. Times the reporter causes (submission, their messages, their files) are
-  stored as the day only, so no exact time can be matched to who was at their desk.
+  stored as the day only, and no encrypted value carries its time either, so no exact time can be
+  matched to who was at their desk.
 - **Two-factor whistleblower access** — Case number + secret UUID4 PIN with brute-force protection.
   No accounts, no email — nothing to tie the report back to a person.
 - **Multi-step submission wizard** — Guided 5–6 step form with back/next navigation and Redis-backed
@@ -68,8 +69,9 @@ security headers, no IP in any log), served from its own server at openwhistle.n
   transitions allowed server-side.
 - **4-eyes deletion** — Hard deletion requires two different admins (request + confirm);
   the same admin, or an account one of them made, gets HTTP 409. GDPR Art. 17 compliant.
-- **Immutable audit log** — Every admin action recorded with timestamp and username, shown as
-  readable labels in all five languages; CSV export keeps the machine codes; required by HinSchG §11 Abs. 5.
+- **Audit log** — Every admin action recorded with timestamp and username, shown as readable labels
+  in all five languages; CSV export keeps the machine codes; no page edits or deletes an entry. A
+  report's own entries are deleted with the report (HinSchG §11 Abs. 5); one entry records the deletion.
 - **Search by case number or content** — Find a case by any part of its number or by a word
   in its description or messages. Content is decrypted in memory for that request only; no
   searchable index is stored, and the confidential name never matches.
@@ -148,6 +150,7 @@ security headers, no IP in any log), served from its own server at openwhistle.n
   3-month HinSchG deadlines approach; Redis dedup keys prevent duplicate notifications.
 - **S3-compatible storage** — Optional `STORAGE_BACKEND=s3` routes new attachments to any
   S3-compatible bucket (AWS, MinIO, Hetzner Object Storage) instead of PostgreSQL BLOBs.
+  The bucket records each file's exact upload time (`LastModified`); whoever can list it sees it.
 - **LDAP / Active Directory login** — Admin accounts can authenticate via corporate LDAP;
   first login auto-provisions the user; TOTP enrollment still required. LDAP uses python-ldap
   (OpenLDAP client); installing from source needs `libldap2-dev libsasl2-dev` and

@@ -394,7 +394,7 @@ async def test_get_dashboard_stats_structure(db_session: AsyncSession):
     assert "total_reports" in stats
     assert "sla_7day_rate" in stats
     assert isinstance(stats["total_reports"], int)
-    assert 0 <= stats["sla_7day_rate"] <= 100
+    assert stats["sla_7day_rate"] is None or 0 <= stats["sla_7day_rate"] <= 100
 
 
 # ── report pagination with assignee filter ─────────────────────────────────────

@@ -37,7 +37,9 @@ async def test_an_operators_own_footer_links_neither(
     from app.templating import templates
 
     monkeypatch.setitem(templates.env.globals, "is_demo", False)
-    for lang in ("en", "de"):
+    from app.i18n import _SUPPORTED
+
+    for lang in sorted(_SUPPORTED):
         html = (await client.get("/", headers={"Accept-Language": lang})).text
         assert "openwhistle.net/impressum" not in html
         assert "openwhistle.net/en/privacy" not in html

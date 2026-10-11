@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.attachment import Attachment
 from app.models.report import Report
+from app.services.crypto import seal
 
 if TYPE_CHECKING:
     from app.services.storage import StorageBackend
@@ -27,34 +28,28 @@ MAX_ATTACHMENTS: int = 5
 # encryption, which add about 78 %).
 MAX_DRAFT_ATTACHMENT_BYTES: int = MAX_ATTACHMENTS * MAX_SIZE_BYTES
 
-ALLOWED_MIME_TYPES: frozenset[str] = frozenset(
-    {
-        "application/pdf",
-        "image/jpeg",
-        "image/png",
-        "image/gif",
-        "image/webp",
-        "text/plain",
-        "text/csv",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    }
-)
+# The stored and served type comes from the extension. The browser's declared type
+# used to be checked against a list: Windows with Excel installed declares a .csv as
+# application/vnd.ms-excel and the upload was refused, while a .txt declared as
+# application/pdf was stored and served as a PDF.
+_TYPE_BY_EXT: dict[str, str] = {
+    ".pdf": "application/pdf",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+    ".txt": "text/plain",
+    ".csv": "text/csv",
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+}
+ALLOWED_EXTENSIONS: frozenset[str] = frozenset(_TYPE_BY_EXT)
 
-ALLOWED_EXTENSIONS: frozenset[str] = frozenset(
-    {
-        ".pdf",
-        ".jpg",
-        ".jpeg",
-        ".png",
-        ".gif",
-        ".webp",
-        ".txt",
-        ".csv",
-        ".docx",
-        ".xlsx",
-    }
-)
+
+def content_type_for(filename: str) -> str:
+    """The media type an allowed file is stored and served with."""
+    return _TYPE_BY_EXT[Path(filename).suffix.lower()]
 
 
 def sanitize_filename(filename: str) -> str:
@@ -458,7 +453,7 @@ def _anonymise_ooxml_part(name: str, body: bytes) -> bytes:
 _OOXML_MEDIA = re.compile(r"(?:word|xl|ppt)/media/[^/]+\.(?:jpe?g|png|gif|webp|tiff?)", re.I)
 
 
-def _strip_ooxml(data: bytes) -> bytes:
+def _strip_ooxml(data: bytes, *, embedded: bool = False) -> bytes:
     import zipfile  # noqa: PLC0415
 
     src = zipfile.ZipFile(io.BytesIO(data))
@@ -472,6 +467,14 @@ def _strip_ooxml(data: bytes) -> bytes:
             if info.filename.startswith("docProps/thumbnail."):
                 continue
             body = _OOXML_EMPTY_PARTS.get(info.filename) or src.read(info)
+            # A chart's data is a whole workbook in word/embeddings/, with its own
+            # author; it used to be copied as it was. Anything else there (an OLE
+            # object, a slide deck) nothing here can clean, like a PDF's own files.
+            if "/embeddings/" in info.filename:
+                # One level: a package that holds itself (a zip quine) would recurse forever.
+                if embedded or Path(info.filename).suffix.lower() not in {".docx", ".xlsx"}:
+                    raise MetadataError("Office file carries an embedded object")
+                body = _strip_ooxml(body, embedded=True)
             # A photo pasted into a document keeps its EXIF (GPS, camera) inside the package.
             if _OOXML_MEDIA.fullmatch(info.filename):
                 body = _strip_image(body)
@@ -530,12 +533,11 @@ class UploadError(str):
         return obj
 
 
-def validate_file(filename: str, content_type: str, size: int, head: bytes = b"") -> str | None:
+def validate_file(filename: str, size: int, head: bytes = b"") -> str | None:
     """Return an error string if the file is invalid, or None if it's acceptable.
 
     ``head`` is the first bytes of the file; when supplied, the content's magic
-    number must match the extension (declared type/extension alone are
-    attacker-controlled).
+    number must match the extension (the name alone is attacker-controlled).
     """
     ext = Path(filename).suffix.lower()
     if ext in {".doc", ".xls"}:
@@ -547,11 +549,6 @@ def validate_file(filename: str, content_type: str, size: int, head: bytes = b""
 
     if ext not in ALLOWED_EXTENSIONS:
         return UploadError("upload.error.bad_extension", name=filename)
-
-    # Normalise declared MIME type (strip charset suffixes like text/plain; charset=utf-8)
-    declared_type = content_type.split(";")[0].strip().lower()
-    if declared_type not in ALLOWED_MIME_TYPES:
-        return UploadError("upload.error.bad_type", name=filename, type=declared_type)
 
     if head and not _content_matches_ext(ext, head):
         return UploadError("upload.error.content_mismatch", name=filename, ext=ext)
@@ -585,8 +582,7 @@ async def read_upload_files(
             continue
 
         name = sanitize_filename(upload.filename)
-        content_type = upload.content_type or "application/octet-stream"
-        error = validate_file(name, content_type, len(data), head=data[:16])
+        error = validate_file(name, len(data), head=data[:16])
         if error:
             return [], error
 
@@ -611,7 +607,7 @@ async def read_upload_files(
         if len(data) > MAX_SIZE_BYTES:
             return [], UploadError("upload.error.too_large", name=name, size=format_size(len(data)))
 
-        result.append((name, content_type, data))
+        result.append((name, content_type_for(name), data))
 
     return result, None
 
@@ -643,7 +639,7 @@ async def create_attachments(
 
     attachments = []
     for filename, content_type, data in file_tuples:
-        ciphertext = fernet.encrypt(data)
+        ciphertext = seal(fernet, data)
         storage_key: str | None = None
         db_data: bytes | None = ciphertext
 

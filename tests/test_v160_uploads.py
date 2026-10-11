@@ -16,7 +16,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.attachment import (
     ALLOWED_EXTENSIONS,
-    ALLOWED_MIME_TYPES,
     _anonymise_ooxml_part,
     strip_metadata,
     validate_file,
@@ -28,20 +27,20 @@ _OLE_HEAD = b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1" + b"\0" * 8
 
 @pytest.mark.parametrize("name", ["minutes.doc", "budget.xls"])
 def test_legacy_office_files_are_refused_with_a_way_out(name: str) -> None:
-    error = validate_file(name, "application/msword", 100, head=_OLE_HEAD)
+    error = validate_file(name, 100, head=_OLE_HEAD)
     assert error is not None
     assert ".docx" in error and ".xlsx" in error
 
 
 def test_legacy_office_refusal_has_its_own_key() -> None:
-    error = validate_file("minutes.doc", "application/msword", 100, head=_OLE_HEAD)
+    error = validate_file("minutes.doc", 100, head=_OLE_HEAD)
     assert error.key == "upload.error.legacy_office"
 
 
 def test_legacy_office_refused_even_when_oversized() -> None:
     # The .doc/.xls check runs before the size check: a huge legacy file gets
     # the "save as .docx" message, not a generic "too large" one.
-    error = validate_file("huge.doc", "application/msword", 999_999_999, head=_OLE_HEAD)
+    error = validate_file("huge.doc", 999_999_999, head=_OLE_HEAD)
     assert error is not None
     assert error.key == "upload.error.legacy_office"
 
@@ -49,13 +48,11 @@ def test_legacy_office_refused_even_when_oversized() -> None:
 def test_doc_and_xls_removed_from_allow_lists() -> None:
     assert ".doc" not in ALLOWED_EXTENSIONS
     assert ".xls" not in ALLOWED_EXTENSIONS
-    assert "application/msword" not in ALLOWED_MIME_TYPES
-    assert "application/vnd.ms-excel" not in ALLOWED_MIME_TYPES
 
 
 @pytest.mark.parametrize("name", ["MINUTES.DOC", "BUDGET.XLS"])
 def test_legacy_office_files_are_refused_regardless_of_case(name: str) -> None:
-    error = validate_file(name, "application/msword", 100, head=_OLE_HEAD)
+    error = validate_file(name, 100, head=_OLE_HEAD)
     assert error is not None
     assert error.key == "upload.error.legacy_office"
 
@@ -63,26 +60,24 @@ def test_legacy_office_files_are_refused_regardless_of_case(name: str) -> None:
 def test_dotted_stem_with_pdf_extension_is_treated_as_pdf() -> None:
     # "report.doc.pdf" ends in .pdf; only the true extension is checked, not
     # every dot in the name.
-    error = validate_file("report.doc.pdf", "application/pdf", 100, head=b"%PDF-1.4")
+    error = validate_file("report.doc.pdf", 100, head=b"%PDF-1.4")
     assert error is None
 
 
 def test_ole_bytes_under_a_docx_name_are_a_content_mismatch() -> None:
     # Renaming a .doc to .docx doesn't fool the magic-number check; this is a
     # disguised file, not a legacy-office refusal.
-    mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    error = validate_file("fake.docx", mime, 100, head=_OLE_HEAD)
+    error = validate_file("fake.docx", 100, head=_OLE_HEAD)
     assert error is not None
     assert error.key == "upload.error.content_mismatch"
 
 
 def test_real_zip_docx_is_still_accepted() -> None:
-    mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as zf:
         zf.writestr("word/document.xml", "<document/>")
     data = buf.getvalue()
-    error = validate_file("real.docx", mime, len(data), head=data[:16])
+    error = validate_file("real.docx", len(data), head=data[:16])
     assert error is None
 
 

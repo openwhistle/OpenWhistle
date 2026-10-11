@@ -630,6 +630,7 @@ async def test_second_click_without_a_result_says_it_is_still_processing(
         ("en", "Your report is still being processed"),
         ("de", "Ihre Meldung wird noch verarbeitet"),
         ("fr", "Votre signalement est encore en cours de traitement"),
+        ("es", "Su denuncia aún se está procesando"),
         ("pt-br", "Sua denúncia ainda está sendo processada"),
     ],
 )
@@ -1427,6 +1428,7 @@ async def test_a_pre_v1_6_draft_spent_while_loading_is_not_given_an_id(
         ("en", "Your report was NOT sent."),
         ("de", "Ihre Meldung wurde NICHT gesendet."),
         ("fr", "Votre signalement n&#39;a PAS été envoyé."),
+        ("es", "Su denuncia NO se ha enviado."),
         ("pt-br", "Sua denúncia NÃO foi enviada."),
     ],
 )
