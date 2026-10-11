@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.attachment import Attachment
 from app.models.report import Report
+from app.services.crypto import seal
 
 if TYPE_CHECKING:
     from app.services.storage import StorageBackend
@@ -638,7 +639,7 @@ async def create_attachments(
 
     attachments = []
     for filename, content_type, data in file_tuples:
-        ciphertext = fernet.encrypt(data)
+        ciphertext = seal(fernet, data)
         storage_key: str | None = None
         db_data: bytes | None = ciphertext
 

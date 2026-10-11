@@ -349,20 +349,18 @@ def decrypt_note_contents(report: Report) -> list[str]:
 async def get_report_by_credentials(
     db: AsyncSession, case_number: str, plain_pin: str
 ) -> Report | None:
+    pin_hash = await db.scalar(select(Report.pin_hash).where(Report.case_number == case_number))
+    # Same bcrypt work as for an existing case, so response time does not tell
+    # whether a case number exists. The messages and attachments (their bytes
+    # included) used to be loaded before this check: up to 50 MB more per wrong PIN.
+    if not verify_pin(plain_pin, pin_hash or TIMING_DUMMY_HASH) or pin_hash is None:
+        return None
     result = await db.execute(
         select(Report)
         .options(selectinload(Report.messages), selectinload(Report.attachments))
         .where(Report.case_number == case_number)
     )
-    report = result.scalar_one_or_none()
-    if report is None:
-        # Same bcrypt work as for an existing case, so response time does not
-        # tell whether a case number exists.
-        verify_pin(plain_pin, TIMING_DUMMY_HASH)
-        return None
-    if not verify_pin(plain_pin, report.pin_hash):
-        return None
-    return report
+    return result.scalar_one_or_none()
 
 
 async def end_status_sessions(redis: Redis, report_ids: set[uuid.UUID]) -> None:

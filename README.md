@@ -44,7 +44,8 @@ security headers, no IP in any log), served from its own server at openwhistle.n
 
 - **Full anonymity** — No IP addresses logged at any layer. An employee submitting from the office
   network leaves no trace. Times the reporter causes (submission, their messages, their files) are
-  stored as the day only, so no exact time can be matched to who was at their desk.
+  stored as the day only, and no encrypted value carries its time either, so no exact time can be
+  matched to who was at their desk.
 - **Two-factor whistleblower access** — Case number + secret UUID4 PIN with brute-force protection.
   No accounts, no email — nothing to tie the report back to a person.
 - **Multi-step submission wizard** — Guided 5–6 step form with back/next navigation and Redis-backed
@@ -148,6 +149,7 @@ security headers, no IP in any log), served from its own server at openwhistle.n
   3-month HinSchG deadlines approach; Redis dedup keys prevent duplicate notifications.
 - **S3-compatible storage** — Optional `STORAGE_BACKEND=s3` routes new attachments to any
   S3-compatible bucket (AWS, MinIO, Hetzner Object Storage) instead of PostgreSQL BLOBs.
+  The bucket records each file's exact upload time (`LastModified`); whoever can list it sees it.
 - **LDAP / Active Directory login** — Admin accounts can authenticate via corporate LDAP;
   first login auto-provisions the user; TOTP enrollment still required. LDAP uses python-ldap
   (OpenLDAP client); installing from source needs `libldap2-dev libsasl2-dev` and
