@@ -119,7 +119,8 @@ def test_every_digest_pinned_image_in_a_workflow_is_managed() -> None:
 
 def test_python_versions_come_from_one_datasource() -> None:
     """The github-actions manager reads setup-python's python-version from
-    actions/python-versions; the Dockerfile and pyproject read Docker Hub. After
+    actions/python-versions and pep621 reads requires-python from python.org; the
+    Dockerfile and the custom managers read Docker Hub. After
     3.15.0 shipped, only the first had it, and PR #145 moved the workflows alone."""
     python_managers = [
         m for m in CONFIG["customManagers"] if m.get("depNameTemplate") == "python"
@@ -130,8 +131,8 @@ def test_python_versions_come_from_one_datasource() -> None:
         r
         for r in CONFIG["packageRules"]
         if r.get("enabled") is False
-        and r.get("matchManagers") == ["github-actions"]
+        and {"github-actions", "pep621"} <= set(r.get("matchManagers", []))
         and "python" in r.get("matchDepNames", [])
         and set(r) <= {"description", "matchManagers", "matchDepNames", "enabled"}
     ]
-    assert off, "the github-actions manager still proposes Python versions of its own"
+    assert off, "another manager still proposes Python versions of its own"
