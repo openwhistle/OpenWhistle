@@ -716,7 +716,6 @@
   "upload.error.too_large": "« {name} » est trop volumineux ({size}). Chaque fichier peut faire au plus 10 Mo.",
   "upload.error.bad_extension": "« {name} » ne peut pas être joint. Autorisés : PDF, JPEG, PNG, GIF, WebP, TXT, CSV, DOCX, XLSX.",
   "upload.error.legacy_office": "« {name} » est un ancien fichier Word/Excel (.doc/.xls) dont l'auteur ne peut pas être supprimé. Enregistrez-le en .docx ou .xlsx et joignez-le à nouveau.",
-  "upload.error.bad_type": "« {name} » a un type de fichier non pris en charge ({type}). Autorisés : PDF, images, texte, Word, Excel.",
   "upload.error.content_mismatch": "« {name} » ne contient pas ce qu'indique son extension « {ext} » (fichier endommagé ou déguisé). Enregistrez-le à nouveau et réessayez.",
   "upload.error.too_many": "Trop de fichiers. Vous pouvez joindre au plus {max} fichiers.",
   "upload.error.metadata": "« {name} » n'a pas pu être vérifié pour les informations cachées (auteur, lieu, appareil) et n'a pas été accepté. Enregistrez-le à nouveau ou exportez-le en PDF.",

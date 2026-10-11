@@ -716,7 +716,6 @@
   "upload.error.too_large": "„{name}“ ist zu groß ({size}). Jede Datei darf höchstens 10 MB haben.",
   "upload.error.bad_extension": "„{name}“ kann nicht angehängt werden. Erlaubt: PDF, JPEG, PNG, GIF, WebP, TXT, CSV, DOCX, XLSX.",
   "upload.error.legacy_office": "„{name}“ ist eine alte Word-/Excel-Datei (.doc/.xls), deren Autor sich nicht entfernen lässt. Speichern Sie sie als .docx oder .xlsx und hängen Sie sie erneut an.",
-  "upload.error.bad_type": "„{name}“ hat einen nicht unterstützten Dateityp ({type}). Erlaubt: PDF, Bilder, Text, Word, Excel.",
   "upload.error.content_mismatch": "„{name}“ enthält nicht, was die Endung „{ext}“ angibt (die Datei ist vielleicht beschädigt oder getarnt). Speichern Sie sie neu und versuchen Sie es erneut.",
   "upload.error.too_many": "Zu viele Dateien. Sie können höchstens {max} Dateien anhängen.",
   "upload.error.metadata": "„{name}“ konnte nicht auf versteckte Angaben (Autor, Standort, Gerät) geprüft werden und wurde nicht angenommen. Speichern Sie die Datei neu oder exportieren Sie sie als PDF.",

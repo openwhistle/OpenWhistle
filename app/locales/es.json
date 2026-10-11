@@ -716,7 +716,6 @@
   "upload.error.too_large": "'{name}' es demasiado grande ({size}). Cada archivo puede tener como máximo 10 MB.",
   "upload.error.bad_extension": "'{name}' no se puede adjuntar. Permitidos: PDF, JPEG, PNG, GIF, WebP, TXT, CSV, DOCX, XLSX.",
   "upload.error.legacy_office": "'{name}' es un archivo antiguo de Word/Excel (.doc/.xls) del que no se puede eliminar el autor. Guárdelo como .docx o .xlsx y vuelva a adjuntarlo.",
-  "upload.error.bad_type": "'{name}' tiene un tipo de archivo no admitido ({type}). Permitidos: PDF, imágenes, texto, Word, Excel.",
   "upload.error.content_mismatch": "'{name}' no contiene lo que indica su extensión '{ext}' (el archivo puede estar dañado o disfrazado). Guárdelo de nuevo e inténtelo otra vez.",
   "upload.error.too_many": "Demasiados archivos. Puede adjuntar como máximo {max} archivos.",
   "upload.error.metadata": "No se pudieron comprobar los detalles ocultos (autor, ubicación, dispositivo) de '{name}', por lo que no se aceptó. Guárdelo de nuevo o expórtelo como PDF.",

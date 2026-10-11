@@ -17,6 +17,13 @@ _IP_REVEAL_HEADERS = frozenset(
         "x-cluster-client-ip",
         "true-client-ip",
         "cf-connecting-ip",  # Cloudflare
+        "cf-connecting-ipv6",  # Cloudflare, IPv6 pseudo-IPv4 mode
+        "x-original-forwarded-for",  # ingress-nginx (the Helm chart's usual ingress)
+        "fastly-client-ip",
+        "x-envoy-external-address",
+        "x-azure-clientip",  # Azure Front Door
+        "x-azure-socketip",
+        "x-appengine-user-ip",
     ]
 )
 
@@ -160,7 +167,29 @@ class SecurityMiddleware:
                         del mutable[h]
             await send(message)
 
-        await self.app(scope, receive, send_with_security)
+        started = False
+
+        async def send_tracked(message: Message) -> None:
+            nonlocal started
+            started = started or message["type"] == "http.response.start"
+            await send_with_security(message)
+
+        try:
+            await self.app(scope, receive, send_tracked)
+        except Exception:
+            # Starlette's ServerErrorMiddleware sits outside this one and answered an
+            # unhandled error itself, without any of the headers above. Answer here;
+            # it sees the response started and only logs the exception.
+            if not started:
+                await send_tracked(
+                    {
+                        "type": "http.response.start",
+                        "status": 500,
+                        "headers": [(b"content-type", b"text/plain; charset=utf-8")],
+                    }
+                )
+                await send_tracked({"type": "http.response.body", "body": b"Internal Server Error"})
+            raise
 
 
 async def check_ip_warning() -> bool:

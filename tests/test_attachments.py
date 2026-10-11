@@ -79,62 +79,49 @@ def test_sanitize_truncates_long_name() -> None:
 
 
 def test_validate_valid_pdf() -> None:
-    assert validate_file("report.pdf", "application/pdf", 1024) is None
+    assert validate_file("report.pdf", 1024) is None
 
 
 def test_validate_valid_jpeg() -> None:
-    assert validate_file("screenshot.jpg", "image/jpeg", 512 * 1024) is None
+    assert validate_file("screenshot.jpg", 512 * 1024) is None
 
 
 def test_validate_valid_png() -> None:
-    assert validate_file("evidence.png", "image/png", 2 * 1024 * 1024) is None
+    assert validate_file("evidence.png", 2 * 1024 * 1024) is None
 
 
 def test_validate_valid_docx() -> None:
-    mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    assert validate_file("notes.docx", mime, 100_000) is None
+    assert validate_file("notes.docx", 100_000) is None
 
 
 def test_validate_valid_txt() -> None:
-    assert validate_file("log.txt", "text/plain", 4096) is None
+    assert validate_file("log.txt", 4096) is None
 
 
 def test_validate_file_too_large() -> None:
-    error = validate_file("big.pdf", "application/pdf", MAX_SIZE_BYTES + 1)
+    error = validate_file("big.pdf", MAX_SIZE_BYTES + 1)
     assert error is not None
     assert "too large" in error.lower()
 
 
 def test_validate_file_at_exact_limit_is_valid() -> None:
-    assert validate_file("ok.pdf", "application/pdf", MAX_SIZE_BYTES) is None
+    assert validate_file("ok.pdf", MAX_SIZE_BYTES) is None
 
 
 def test_validate_disallowed_extension() -> None:
-    error = validate_file("script.exe", "application/octet-stream", 100)
+    error = validate_file("script.exe", 100)
     assert error is not None
     assert "cannot be attached" in error.lower()
 
 
-def test_validate_disallowed_mime_type() -> None:
-    error = validate_file("shell.sh", "text/x-sh", 100)
+def test_validate_shell_script_is_refused() -> None:
+    error = validate_file("shell.sh", 100)
     assert error is not None
-
-
-def test_validate_disallowed_mime_with_allowed_extension() -> None:
-    # .txt extension is allowed but application/x-executable MIME is not
-    error = validate_file("notes.txt", "application/x-executable", 100)
-    assert error is not None
-    assert "unsupported file type" in error.lower()
-
-
-def test_validate_mime_type_with_charset_suffix() -> None:
-    # Browser may send 'text/plain; charset=utf-8'
-    assert validate_file("notes.txt", "text/plain; charset=utf-8", 100) is None
 
 
 def test_validate_svg_is_blocked() -> None:
     # SVG can contain scripts — must not be allowed
-    error = validate_file("icon.svg", "image/svg+xml", 100)
+    error = validate_file("icon.svg", 100)
     assert error is not None
 
 
@@ -327,11 +314,11 @@ def test_validate_file_magic_mismatch_and_match() -> None:
     from app.services.attachment import validate_file
 
     # Header supplied + mismatched → rejected.
-    assert validate_file("x.pdf", "application/pdf", 10, head=b"NOTPDF") is not None
+    assert validate_file("x.pdf", 10, head=b"NOTPDF") is not None
     # Header supplied + correct magic → accepted.
-    assert validate_file("x.pdf", "application/pdf", 10, head=b"%PDF-1.7") is None
+    assert validate_file("x.pdf", 10, head=b"%PDF-1.7") is None
     # No header (size-only call) → magic check skipped (backward compatible).
-    assert validate_file("x.pdf", "application/pdf", 10) is None
+    assert validate_file("x.pdf", 10) is None
 
 
 # ─── integration tests (require live DB) ──────────────────────────────────────

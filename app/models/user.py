@@ -72,9 +72,9 @@ class AdminUser(Base):
         index=True,
     )
 
-    # Who made the account on /admin/users. Whoever made it chose its first
-    # password and can sign in with it before the holder does: for the
-    # four-eyes deletion, an account and the accounts it made are one person.
+    # Who made the account on /admin/users, or last reset its password there.
+    # Either chose a password and can sign in with it before the holder does:
+    # for the four-eyes deletion, an account and the accounts it made are one person.
     created_by_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("admin_users.id", ondelete="SET NULL"), nullable=True
     )

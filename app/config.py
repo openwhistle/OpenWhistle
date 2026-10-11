@@ -228,7 +228,9 @@ class Settings(BaseSettings):
 
     # Data-retention policy (GDPR Art. 5 storage limitation)
     retention_enabled: bool = True
-    retention_days: int = 1095  # 3 years — HinSchG §11 Abs. 5 deletion deadline
+    # 3 years — HinSchG §11 Abs. 5 deletion deadline. 0 or less put the cutoff at or
+    # after now, so the next run deleted every closed report; RETENTION_ENABLED switches it off.
+    retention_days: int = Field(default=1095, ge=1)
 
     # Multi-tenancy
     multi_tenancy_enabled: bool = False
