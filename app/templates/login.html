@@ -12,6 +12,7 @@
         .lg-with-demo > * { grid-column: 1; }
         .lg-with-demo > .lg-header { grid-column: 1 / -1; }
         .lg-with-demo > .demo-credentials { grid-column: 2; grid-row: 2 / span 8; }
+        .lg-second-admin { font-size: 0.8rem; color: var(--muted); margin-top: 0.75rem; }
     }
     .lg-header { margin-bottom: 2rem; animation: fadeSlideIn 0.5s ease both; }
     .lg-h1 { font-size: clamp(1.5rem, 4vw, 2.25rem); }
@@ -78,7 +79,7 @@
             <button type="button" id="demo-fill-btn-all" class="demo-fill-btn" data-filled="{{ t('demo.login.filled') }}">
                 {{ t('demo.login.fill') }}
             </button>
-            <p class="demo-cred-label">{{ t('demo.login.second_admin.html') }}</p>
+            <p class="lg-second-admin">{{ t('demo.login.second_admin.html') }}</p>
         </div>
         {% endif %}
 
