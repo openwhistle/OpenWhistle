@@ -423,7 +423,12 @@ async def setup_incomplete(db_engine: object) -> AsyncGenerator[async_sessionmak
 # A test that skips on every CI run is a test that does not exist. Nine did: the
 # wizard and admin-page tests skipped whenever setup was already done, which in
 # the shared database was always, and CI printed only "12 skipped".
-_SKIPS_ALLOWED_IN_CI = ("OW_PRIVATE_STRINGS is not set",)  # the operator's data is not in CI
+_SKIPS_ALLOWED_IN_CI = (
+    "OW_PRIVATE_STRINGS is not set",  # the operator's data is not in CI
+    # Ubuntu's libldap is GnuTLS-backed and refuses TLS 1.1 itself; the image's
+    # (Alpine, OpenSSL) does not, and the test runs where libldap uses OpenSSL.
+    "libldap's TLS backend refuses TLS 1.1 by itself",
+)
 _ci_skips: list[str] = []
 
 
