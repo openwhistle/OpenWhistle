@@ -391,7 +391,11 @@ async def test_mfa_setup_get_redirects_when_user_deleted(client: AsyncClient) ->
     setup_token = "setup-token-for-deleted-user"
     await store_totp_setup_pending(redis, setup_token, str(uuid.uuid4()))
 
-    resp = await client.get(f"/admin/mfa/setup?token={setup_token}", follow_redirects=False)
+    resp = await client.get(
+        "/admin/mfa/setup",
+        headers={"cookie": f"ow-mfa-setup={setup_token}"},
+        follow_redirects=False,
+    )
     assert resp.status_code == 302
     assert resp.headers["location"].endswith("/admin/login")
 

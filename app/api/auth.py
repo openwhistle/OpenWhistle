@@ -97,6 +97,9 @@ def _login_ctx(request: Request, extra: dict[str, Any] | None = None) -> dict[st
     return base
 
 
+_MFA_SETUP_COOKIE = "ow-mfa-setup"
+
+
 async def _second_factor(
     request: Request, redis: Redis, user: AdminUser
 ) -> HTMLResponse | RedirectResponse:
@@ -121,7 +124,21 @@ async def _second_factor(
     if not user.totp_enabled:
         setup_token = secrets.token_urlsafe(32)
         await auth_service.store_totp_setup_pending(redis, setup_token, str(user.id))
-        return RedirectResponse(f"/admin/mfa/setup?token={setup_token}", status_code=302)
+        # A cookie, not ?token=: the URL stayed in the history and on shared screens,
+        # and for 10 minutes opened the page with the TOTP secret, no password needed.
+        response = RedirectResponse("/admin/mfa/setup", status_code=302)
+        response.set_cookie(
+            _MFA_SETUP_COOKIE,
+            setup_token,
+            max_age=600,
+            path="/admin/mfa",
+            httponly=True,
+            # lax: after an OIDC login the redirect chain starts at the provider,
+            # and a strict cookie would not come back with it.
+            samesite="lax",
+            secure=cookie_secure(request),
+        )
+        return response
 
     temp_token = secrets.token_urlsafe(32)
     await auth_service.store_totp_pending(redis, temp_token, str(user.id))
@@ -464,10 +481,10 @@ async def login_mfa_post(
 @router.get("/mfa/setup", response_class=HTMLResponse, response_model=None)
 async def mfa_setup_get(
     request: Request,
-    token: str | None = None,
     redis: Redis = Depends(get_redis),
     db: AsyncSession = Depends(get_db),
 ) -> HTMLResponse | RedirectResponse:
+    token = request.cookies.get(_MFA_SETUP_COOKIE)
     if not token:
         return RedirectResponse("/admin/login", status_code=302)
 
@@ -514,7 +531,7 @@ async def mfa_setup_post(
         new_setup_token = secrets.token_urlsafe(32)
         await auth_service.store_totp_setup_pending(redis, new_setup_token, user_id)
         qr_b64 = generate_qr_code_base64(user.totp_secret, user.username)
-        return render(
+        page = render(
             request,
             "login_mfa_setup.html",
             {
@@ -526,12 +543,25 @@ async def mfa_setup_post(
                 "field_errors": {"totp_code": "mfa.setup.error.invalid"},
             },
         )
+        # A reload of the setup page must find the token that is valid now.
+        page.set_cookie(
+            _MFA_SETUP_COOKIE,
+            new_setup_token,
+            max_age=600,
+            path="/admin/mfa",
+            httponly=True,
+            samesite="lax",
+            secure=cookie_secure(request),
+        )
+        return page
 
     user.totp_enabled = True
     await audit_service.log(db, user, audit_service.AuditAction.AUTH_TOTP_SETUP)
     await db.commit()
 
-    return await _start_session(redis, db, user, request)
+    response = await _start_session(redis, db, user, request)
+    response.delete_cookie(_MFA_SETUP_COOKIE, path="/admin/mfa")
+    return response
 
 
 @router.post("/logout")

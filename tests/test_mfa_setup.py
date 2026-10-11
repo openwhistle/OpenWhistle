@@ -68,7 +68,7 @@ async def test_login_with_totp_disabled_redirects_to_setup(
 async def test_mfa_setup_get_with_valid_token_shows_qr(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    """GET /admin/mfa/setup?token=<valid> renders the QR code image."""
+    """GET /admin/mfa/setup with a valid setup cookie renders the QR code image."""
     from app.redis_client import get_redis
 
     user = await _create_user_totp_disabled(db_session)
@@ -76,7 +76,7 @@ async def test_mfa_setup_get_with_valid_token_shows_qr(
     setup_token = "test-setup-token-valid-001"
     await store_totp_setup_pending(redis, setup_token, str(user.id))
 
-    resp = await client.get(f"/admin/mfa/setup?token={setup_token}")
+    resp = await client.get("/admin/mfa/setup", headers={"cookie": f"ow-mfa-setup={setup_token}"})
     assert resp.status_code == 200
     assert "data:image/png;base64," in resp.text
 
@@ -96,7 +96,11 @@ async def test_mfa_setup_get_with_invalid_token_redirects_to_login(
     client: AsyncClient,
 ) -> None:
     """GET /admin/mfa/setup with unknown token redirects to login."""
-    resp = await client.get("/admin/mfa/setup?token=totally-fake-token-xyz", follow_redirects=False)
+    resp = await client.get(
+        "/admin/mfa/setup",
+        headers={"cookie": "ow-mfa-setup=totally-fake-token-xyz"},
+        follow_redirects=False,
+    )
     assert resp.status_code == 302
     assert "/admin/login" in resp.headers["location"]
 
@@ -113,10 +117,10 @@ async def test_mfa_setup_get_does_not_consume_token(
     setup_token = "test-setup-token-not-consumed"
     await store_totp_setup_pending(redis, setup_token, str(user.id))
 
-    resp1 = await client.get(f"/admin/mfa/setup?token={setup_token}")
+    resp1 = await client.get("/admin/mfa/setup", headers={"cookie": f"ow-mfa-setup={setup_token}"})
     assert resp1.status_code == 200
 
-    resp2 = await client.get(f"/admin/mfa/setup?token={setup_token}")
+    resp2 = await client.get("/admin/mfa/setup", headers={"cookie": f"ow-mfa-setup={setup_token}"})
     assert resp2.status_code == 200
 
 
@@ -135,7 +139,9 @@ async def test_mfa_setup_post_with_invalid_code_shows_error(
     setup_token = "test-setup-token-bad-code"
     await store_totp_setup_pending(redis, setup_token, str(user.id))
 
-    get_resp = await client.get(f"/admin/mfa/setup?token={setup_token}")
+    get_resp = await client.get(
+        "/admin/mfa/setup", headers={"cookie": f"ow-mfa-setup={setup_token}"}
+    )
     csrf = _get_csrf(get_resp.text)
 
     resp = await client.post(
@@ -182,7 +188,9 @@ async def test_mfa_setup_post_with_valid_code_enables_totp_and_logs_in(
     setup_token = "test-setup-token-success-001"
     await store_totp_setup_pending(redis, setup_token, str(user.id))
 
-    get_resp = await client.get(f"/admin/mfa/setup?token={setup_token}")
+    get_resp = await client.get(
+        "/admin/mfa/setup", headers={"cookie": f"ow-mfa-setup={setup_token}"}
+    )
     csrf = _get_csrf(get_resp.text)
 
     valid_code = pyotp.TOTP(totp_secret).now()

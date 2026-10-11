@@ -48,6 +48,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Seven more proxy headers reached the app with the client's address** (`X-Original-Forwarded-For` from
   ingress-nginx, Fastly, Envoy, Azure Front Door, App Engine, Cloudflare IPv6); they are stripped and raise the
   admin warning like `X-Forwarded-For`.
+- **The first-login MFA setup link opened the account's TOTP secret for anyone**: the token was in the URL
+  (`/admin/mfa/setup?token=…`), so for 10 minutes the address from the browser history or a shared screen showed
+  the page in another browser, no password needed (200). It is an HttpOnly cookie now.
 - An unhandled error was answered without `Cache-Control: no-store`, the CSP and `X-Frame-Options`.
 - A `.csv` chosen on Windows with Excel installed was refused (declared as `application/vnd.ms-excel`).
 - Cancelling the "close this case?" confirm locked the status form until a reload.

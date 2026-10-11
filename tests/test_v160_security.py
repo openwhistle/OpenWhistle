@@ -918,7 +918,9 @@ async def test_deactivated_user_gets_no_mfa_setup_page(
     temp_token = uuid.uuid4().hex
     await auth_service.store_totp_setup_pending(await get_redis(), temp_token, str(user.id))
 
-    resp = await client.get(f"/admin/mfa/setup?token={temp_token}", follow_redirects=False)
+    resp = await client.get(
+        "/admin/mfa/setup", headers={"cookie": f"ow-mfa-setup={temp_token}"}, follow_redirects=False
+    )
     assert resp.status_code == 302
     assert resp.headers["location"] == "/admin/login"
 

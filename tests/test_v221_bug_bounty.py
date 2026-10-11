@@ -604,3 +604,35 @@ async def test_the_spray_counter_of_a_minute_expires(client) -> None:  # type: i
     await rate_limit.record_instance_login_failure(redis)
     key = f"{rate_limit._SPRAY_PREFIX}{int(time.time() // 60)}"
     assert await redis.ttl(key) > 0
+
+
+# ── The MFA setup link is not a key ──────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_the_mfa_setup_page_opens_only_in_the_browser_that_signed_in(
+    client, db_session: AsyncSession
+) -> None:  # type: ignore[no-untyped-def]
+    """The setup token rode in the URL (/admin/mfa/setup?token=...): for 10 minutes the
+    address from the history or a shared screen showed the account's TOTP secret to
+    anyone, without the password."""
+    from httpx import ASGITransport, AsyncClient
+
+    from app.main import app
+    from tests.test_mfa_setup import _create_user_totp_disabled
+
+    user = await _create_user_totp_disabled(db_session)
+    csrf = (await client.get("/admin/login")).cookies.get("ow_csrf")
+    login = await client.post(
+        "/admin/login",
+        data={"username": user.username, "password": "SetupPass!123", "csrf_token": csrf},
+        follow_redirects=False,
+    )
+    location = login.headers["location"]
+    assert "token" not in location
+    assert (await client.get(location)).status_code == 200  # the browser that signed in
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as other:
+        resp = await other.get(location, follow_redirects=False)
+    assert resp.status_code == 302
+    assert user.totp_secret not in resp.text
