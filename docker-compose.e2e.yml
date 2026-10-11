@@ -2,6 +2,15 @@ services:
   app:
     build: .
     image: openwhistle:e2e
+    # As docker-compose.prod.yml and the Helm chart run it: a runtime write outside
+    # /tmp, or a need for a capability, fails here instead of first in production.
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     environment:
       DATABASE_URL: "postgresql+asyncpg://openwhistle:openwhistle@db:5432/openwhistle"
       REDIS_URL: "redis://redis:6379/0"

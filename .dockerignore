@@ -5,8 +5,12 @@
 !.env.example
 .venv
 venv
-__pycache__
-*.pyc
+# Anywhere in the tree: a bare name matches the build context root only, and a
+# local build shipped app/**/__pycache__, .ruff_cache and a 6.7 MB _site/.
+**/__pycache__
+**/*.pyc
+.ruff_cache
+_site
 .pytest_cache
 .mypy_cache
 .coverage

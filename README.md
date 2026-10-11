@@ -69,8 +69,9 @@ security headers, no IP in any log), served from its own server at openwhistle.n
   transitions allowed server-side.
 - **4-eyes deletion** — Hard deletion requires two different admins (request + confirm);
   the same admin, or an account one of them made, gets HTTP 409. GDPR Art. 17 compliant.
-- **Immutable audit log** — Every admin action recorded with timestamp and username, shown as
-  readable labels in all five languages; CSV export keeps the machine codes; required by HinSchG §11 Abs. 5.
+- **Audit log** — Every admin action recorded with timestamp and username, shown as readable labels
+  in all five languages; CSV export keeps the machine codes; no page edits or deletes an entry. A
+  report's own entries are deleted with the report (HinSchG §11 Abs. 5); one entry records the deletion.
 - **Search by case number or content** — Find a case by any part of its number or by a word
   in its description or messages. Content is decrypted in memory for that request only; no
   searchable index is stored, and the confidential name never matches.

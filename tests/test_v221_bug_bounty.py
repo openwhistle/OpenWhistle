@@ -499,3 +499,108 @@ def test_the_setup_qr_has_one_label_on_every_render() -> None:
     src = (Path(__file__).parents[1] / "app/api/wizard.py").read_text()
     labels = re.findall(r"generate_qr_code_base64\(totp_secret, ([^)]+)\)", src)
     assert labels and set(labels) == {"_QR_LABEL"}, labels
+
+
+# ── The demo can show a four-eyes deletion ───────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_the_demo_has_two_admins_who_did_not_make_each_other(
+    throwaway_db: AsyncSession,
+) -> None:
+    """With one demo admin no deletion could be confirmed in the demo, and the E2E
+    test of the four-eyes deletion skipped itself on every run."""
+    from sqlalchemy import select
+
+    from app.api.admin import _one_made_the_other
+    from app.models.user import AdminRole, AdminUser
+    from app.services.demo_seed import _seed
+
+    await _seed(throwaway_db)
+    await throwaway_db.commit()
+    admins = (
+        (
+            await throwaway_db.execute(
+                select(AdminUser).where(AdminUser.role == AdminRole.admin, AdminUser.is_active)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    names = {a.username: a for a in admins}
+    assert {"demo", "demo2"} <= set(names)
+    assert not await _one_made_the_other(throwaway_db, names["demo"].id, names["demo2"].id)
+
+
+# ── CI runs the image as production does ─────────────────────────────────────
+
+
+def test_the_e2e_stack_runs_the_app_as_hardened_as_production() -> None:
+    """CI's browser tests ran the image writable and with every capability; production
+    runs it read-only with none. A runtime write outside /tmp would fail first there."""
+    from pathlib import Path
+
+    import yaml
+
+    root = Path(__file__).parents[1]
+    prod = yaml.safe_load((root / "docker-compose.prod.yml").read_text())["services"]["app"]
+    e2e = yaml.safe_load((root / "docker-compose.e2e.yml").read_text())["services"]["app"]
+    for key in ("read_only", "tmpfs", "cap_drop", "security_opt"):
+        assert e2e.get(key) == prod[key], key
+
+
+def test_build_output_and_caches_stay_out_of_the_image() -> None:
+    """A bare `__pycache__` in .dockerignore matches the context root only: a local
+    build shipped 7 __pycache__ directories, .ruff_cache and a 6.7 MB _site/."""
+    from pathlib import Path
+
+    ignored = (Path(__file__).parents[1] / ".dockerignore").read_text().split()
+    for pattern in ("**/__pycache__", "**/*.pyc", ".ruff_cache", "_site"):
+        assert pattern in ignored, pattern
+
+
+def test_organisations_carry_no_branding_column_nothing_reads() -> None:
+    """Declared as "optional JSON branding overrides", never read or written."""
+    from app.models.organisation import Organisation
+
+    assert "branding" not in Organisation.__table__.columns
+
+
+# ── Redis keys that were meant to expire ─────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_an_oidc_state_expires_in_redis(client) -> None:  # type: ignore[no-untyped-def]
+    """Removing ex=_STATE_TTL left every OIDC test green: their fake Redis ignored it."""
+    from unittest.mock import AsyncMock, patch
+    from urllib.parse import parse_qs, urlsplit
+
+    from app.redis_client import get_redis
+    from app.services import oidc
+
+    metadata = {
+        "authorization_endpoint": "https://idp.example.com/auth",
+        "token_endpoint": "https://idp.example.com/token",
+        "jwks_uri": "https://idp.example.com/jwks",
+        "issuer": "https://idp.example.com",
+    }
+    redis = await get_redis()
+    with patch("app.services.oidc._get_metadata", new=AsyncMock(return_value=metadata)):
+        url = await oidc.create_authorization_url(redis)
+    (state,) = parse_qs(urlsplit(url).query)["state"]
+    assert 0 < await redis.ttl(f"openwhistle:oidc_state:{state}") <= oidc._STATE_TTL
+
+
+@pytest.mark.asyncio
+async def test_the_spray_counter_of_a_minute_expires(client) -> None:  # type: ignore[no-untyped-def]
+    """One key per minute with a failed admin login; without its expire they piled up
+    in Redis for good, and every rate-limit test stayed green."""
+    import time
+
+    from app.redis_client import get_redis
+    from app.services import rate_limit
+
+    redis = await get_redis()
+    await rate_limit.record_instance_login_failure(redis)
+    key = f"{rate_limit._SPRAY_PREFIX}{int(time.time() // 60)}"
+    assert await redis.ttl(key) > 0

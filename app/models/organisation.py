@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, DateTime, String
+from sqlalchemy import Boolean, DateTime, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
@@ -27,9 +27,6 @@ class Organisation(Base):
     def __init__(self, **kw: Any) -> None:
         kw.setdefault("is_active", True)
         super().__init__(**kw)
-
-    # Optional JSON branding overrides (brand_primary_color, logo_url, name)
-    branding: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
