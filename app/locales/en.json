@@ -600,6 +600,7 @@
   "demo.login.click_to_fill": "Fill in",
   "demo.login.totp": "Authenticator code (next step)",
   "demo.login.fill": "Fill in credentials",
+  "demo.login.second_admin.html": "A second admin for the four-eyes deletion: <code>demo2</code>, same password and code.",
   "demo.login.filled": "✓ Filled in",
   "demo.banner.label": "Demo notice",
   "demo.banner.text": "This is a public demo — do not enter real reports. All data is deleted every 6 hours.",

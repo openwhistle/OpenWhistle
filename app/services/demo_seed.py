@@ -41,7 +41,10 @@ DEMO_TOTP_SECRET = "JBSWY3DPEHPK3PXP"  # noqa: S105  # encodes to static codes f
 
 DEMO_CM_USERNAME = "case_manager"
 DEMO_CM_PASSWORD = "demo"  # noqa: S105
-DEMO_USERNAMES = frozenset({DEMO_ADMIN_USERNAME, DEMO_CM_USERNAME})
+# A deletion needs two admins who did not make each other. With one demo admin
+# the four-eyes deletion could not be shown, and its E2E test skipped every run.
+DEMO_ADMIN2_USERNAME = "demo2"
+DEMO_USERNAMES = frozenset({DEMO_ADMIN_USERNAME, DEMO_CM_USERNAME, DEMO_ADMIN2_USERNAME})
 
 # Known demo report access credentials (documented at https://openwhistle.net/en/docs/demo-mode/)
 DEMO_REPORTS: list[dict[str, Any]] = [
@@ -158,9 +161,23 @@ async def _seed(db: AsyncSession) -> None:
         )
         db.add(case_mgr)
         await db.flush()
+
+    second = await db.scalar(select(AdminUser).where(AdminUser.username == DEMO_ADMIN2_USERNAME))
+    if second is None:
+        second = AdminUser(
+            id=uuid.uuid4(),
+            username=DEMO_ADMIN2_USERNAME,
+            password_hash=hash_password(DEMO_ADMIN_PASSWORD),
+            totp_secret=DEMO_TOTP_SECRET,
+            totp_enabled=True,
+            role=AdminRole.admin,
+            is_active=True,
+        )
+        db.add(second)
+        await db.flush()
     # The default org, like setup's first admin; also for accounts seeded before
     # they had one (a database that outlived a reset).
-    for account in (admin, case_mgr):
+    for account in (admin, case_mgr, second):
         if account.org_id is None:
             account.org_id = org_row
 

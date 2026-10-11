@@ -600,6 +600,7 @@
   "demo.login.click_to_fill": "Remplir",
   "demo.login.totp": "Code d'authentification (étape suivante)",
   "demo.login.fill": "Remplir les identifiants",
+  "demo.login.second_admin.html": "Un second administrateur pour la suppression à quatre yeux : <code>demo2</code>, même mot de passe et même code.",
   "demo.login.filled": "✓ Rempli",
   "demo.banner.label": "Avis de démonstration",
   "demo.banner.text": "Ceci est une démo publique : n'y saisissez pas de vrais signalements. Toutes les données sont supprimées toutes les 6 heures.",

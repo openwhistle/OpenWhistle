@@ -600,6 +600,7 @@
   "demo.login.click_to_fill": "Rellenar",
   "demo.login.totp": "Código del autenticador (siguiente paso)",
   "demo.login.fill": "Rellenar credenciales",
+  "demo.login.second_admin.html": "Un segundo administrador para el borrado con cuatro ojos: <code>demo2</code>, misma contraseña y mismo código.",
   "demo.login.filled": "✓ Rellenado",
   "demo.banner.label": "Aviso de demostración",
   "demo.banner.text": "Esta es una demostración pública: no introduzca denuncias reales. Todos los datos se eliminan cada 6 horas.",

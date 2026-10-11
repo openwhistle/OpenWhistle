@@ -612,6 +612,7 @@
   "demo.login.click_to_fill": "Preencher",
   "demo.login.totp": "Código do autenticador (próxima etapa)",
   "demo.login.fill": "Preencher credenciais",
+  "demo.login.second_admin.html": "Um segundo administrador para a exclusão com quatro olhos: <code>demo2</code>, mesma senha e mesmo código.",
   "demo.login.filled": "✓ Preenchido",
   "demo.banner.label": "Aviso de demonstração",
   "demo.banner.text": "Esta é uma demonstração pública — não envie denúncias reais. Todos os dados são apagados a cada 6 horas.",

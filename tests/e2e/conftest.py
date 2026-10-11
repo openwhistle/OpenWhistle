@@ -97,7 +97,8 @@ def admin_page2(browser: Browser, base_url: str) -> Generator[Page]:
     """Second admin browser context — for 4-eyes tests."""
     context: BrowserContext = browser.new_context()
     page = context.new_page()
-    _admin_login(page, base_url, DEMO_ADMIN_USERNAME, DEMO_ADMIN_PASSWORD, DEMO_ADMIN_TOTP_SECRET)
+    # The second demo admin: four eyes are two people, and "demo" alone is one.
+    _admin_login(page, base_url, "demo2", DEMO_ADMIN_PASSWORD, DEMO_ADMIN_TOTP_SECRET)
     yield page
     context.close()
 
