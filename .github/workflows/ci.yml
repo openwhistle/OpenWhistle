@@ -135,7 +135,7 @@ jobs:
           SECRET_KEY: "ci-test-secret-key-not-for-production"
           DEMO_MODE: "true"
           COVERAGE_CORE: "sysmon"
-        run: pytest --cov=app --cov-report=xml
+        run: pytest -rs --cov=app --cov-report=xml
 
       - name: Upload coverage report
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7
