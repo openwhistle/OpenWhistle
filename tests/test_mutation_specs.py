@@ -132,6 +132,43 @@ def test_the_audit_reports_red_green_and_stale(
     assert not (tmp_path / "extra.txt").exists()
 
 
+@pytest.mark.parametrize("group", [["tests/test_missing.py"], ["tests/test_a.py", "-k", "nomatch"]])
+def test_a_mutation_no_test_ran_for_is_stale_not_red(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    group: list[str],
+) -> None:
+    """pytest exits 4 for a test file that is gone and 5 when -k selects nothing; both
+    nonzero, so the audit reported RED - caught - although no test had run."""
+    from scripts import mutation_audit
+
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "a.txt").write_text("free\n")
+    (tmp_path / "tests" / "test_a.py").write_text("def test_a():\n    pass\n")
+    spec = {
+        "test_groups": {"G": group},
+        "mutations": [{"id": "M", "file": "a.txt", "old": "free", "new": "x", "tests": "G"}],
+    }
+    (tmp_path / "spec.json").write_text(json.dumps(spec))
+    monkeypatch.setattr(mutation_audit, "ROOT", tmp_path)
+    monkeypatch.setattr("sys.argv", ["mutation_audit.py", str(tmp_path / "spec.json")])
+    assert mutation_audit.main() == 1
+    assert capsys.readouterr().out.split()[1] == "STALE"
+
+
+@pytest.mark.parametrize("spec", SPECS, ids=lambda p: p.name)
+def test_every_test_path_a_spec_runs_exists(spec: Path) -> None:
+    data = json.loads(spec.read_text())
+    missing = [
+        f"{group}: {arg}"
+        for group, args in data["test_groups"].items()
+        for arg in args
+        if arg.startswith("tests/") and not (ROOT / arg.split("::")[0]).exists()
+    ]
+    assert not missing, missing
+
+
 def test_every_audit_run_gets_its_own_bytecode_cache(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

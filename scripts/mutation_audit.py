@@ -103,8 +103,12 @@ def main() -> int:
             ),
             "",
         )
-        verdict = "RED" if run.returncode else "GREEN"
-        green += verdict == "GREEN"
+        # pytest: 1 = a test failed, 2 = a collection error (a mutated import). 4 (a test
+        # path that does not exist) and 5 (no test selected) ran nothing and used to read RED.
+        verdict = {0: "GREEN", 1: "RED", 2: "RED"}.get(run.returncode, "STALE")
+        if verdict == "STALE":
+            fired = f"pytest exit {run.returncode}: no test ran"
+        green += verdict != "RED"
         print(f"{m['id']:28} {verdict:6} {fired}", flush=True)
     return 1 if green else 0
 
