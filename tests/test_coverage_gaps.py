@@ -127,7 +127,7 @@ async def test_wizard_post_validation_username_too_short(
             "setup_token": await setup_token(),
         },
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 422
     assert "Username must be between" in resp.text or "3" in resp.text
 
 
@@ -157,7 +157,7 @@ async def test_wizard_post_validation_password_mismatch(
             "setup_token": await setup_token(),
         },
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 422
     assert "match" in resp.text.lower() or "Passwords" in resp.text
 
 
@@ -187,7 +187,7 @@ async def test_wizard_post_validation_bad_totp(
             "setup_token": await setup_token(),
         },
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 422
     assert "TOTP" in resp.text or "Invalid" in resp.text or "code" in resp.text.lower()
 
 

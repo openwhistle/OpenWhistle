@@ -211,6 +211,9 @@ async def setup_post(
                 "username": username,
                 "telemetry": telemetry == "1",
             },
+            # A refused form is not a success: the token errors above said 403/429,
+            # these said 200 (the tests expecting 422 skipped themselves every run).
+            status_code=422,
         )
 
     # A concurrent submission that won the race makes this a no-op; either

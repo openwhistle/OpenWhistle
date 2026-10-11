@@ -17,12 +17,25 @@ from __future__ import annotations
 import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
-from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from tests.test_v210_bug_bounty import _totp_user, acting_as, no_csrf  # noqa: F401
+
+
+@pytest.fixture
+async def admin_client(acting_as, db_session: AsyncSession) -> AsyncClient:  # noqa: F811
+    """A client signed in as an admin. These tests used to create the wizard admin and
+    skip when setup was already done - which, in the shared test database, was always."""
+    from app.models.user import AdminRole
+
+    client, act = acting_as
+    act(await _totp_user(db_session, AdminRole.admin))
+    return client
+
 
 # ---------------------------------------------------------------------------
 # Encryption service — unit tests (no DB required)
@@ -407,24 +420,8 @@ class TestRetentionAdminPage:
         assert resp.status_code in (302, 401)
 
     @pytest.mark.asyncio(loop_scope="function")
-    async def test_retention_page_loads_for_admin(
-        self, client: AsyncClient, db_session: AsyncSession
-    ) -> None:
-        from tests.conftest import wizard_submit
-
-        _, _ = await wizard_submit(client)
-        login_resp = await client.get("/admin/login")
-        csrf = _extract_csrf(login_resp.text)
-        await client.post(
-            "/admin/login",
-            data={"username": "admin", "password": "wrongpassword", "csrf_token": csrf},
-        )
-
-    @pytest.mark.asyncio(loop_scope="function")
-    async def test_retention_page_shows_retention_settings(self, client: AsyncClient) -> None:
-        token = await _get_admin_session(client)
-        if not token:
-            pytest.skip("Could not obtain admin session")
+    async def test_retention_page_shows_retention_settings(self, admin_client: AsyncClient) -> None:
+        client = admin_client
         resp = await client.get("/admin/retention")
         assert resp.status_code == 200
         assert "RETENTION_ENABLED" in resp.text
@@ -445,31 +442,28 @@ class TestTelephoneChannelPage:
         assert resp.status_code in (302, 401)
 
     @pytest.mark.asyncio(loop_scope="function")
-    async def test_telephone_channel_page_loads(self, client: AsyncClient) -> None:
-        token = await _get_admin_session(client)
-        if not token:
-            pytest.skip("Could not obtain admin session")
+    async def test_telephone_channel_page_loads(self, admin_client: AsyncClient) -> None:
+        client = admin_client
         resp = await client.get("/admin/telephone-channel")
         assert resp.status_code == 200
 
     @pytest.mark.asyncio(loop_scope="function")
-    async def test_telephone_channel_contains_hinschg_reference(self, client: AsyncClient) -> None:
-        token = await _get_admin_session(client)
-        if not token:
-            pytest.skip("Could not obtain admin session")
+    async def test_telephone_channel_contains_hinschg_reference(
+        self, admin_client: AsyncClient
+    ) -> None:
+        client = admin_client
         resp = await client.get("/admin/telephone-channel")
         assert "HinSchG" in resp.text
-        assert "§16" in resp.text
+        assert "§ 16 Abs. 3" in resp.text
 
     @pytest.mark.asyncio(loop_scope="function")
     async def test_telephone_channel_contains_recording_prohibition(
-        self, client: AsyncClient
+        self, admin_client: AsyncClient
     ) -> None:
-        token = await _get_admin_session(client)
-        if not token:
-            pytest.skip("Could not obtain admin session")
+        client = admin_client
         resp = await client.get("/admin/telephone-channel")
-        assert "§10" in resp.text
+        # Recording needs consent: § 11 Abs. 2 (the test said § 10 and never ran).
+        assert "Calls are recorded only with consent (§ 11 Abs. 2 HinSchG)" in resp.text
 
 
 # ---------------------------------------------------------------------------
@@ -487,19 +481,6 @@ class TestOrganisationModel:
         assert org.name == "Test GmbH"
         assert org.slug == "test-gmbh"
         assert org.is_active is True
-        assert org.branding is None
-
-    def test_organisation_with_branding(self) -> None:
-        from app.models.organisation import Organisation
-
-        branding: dict[str, Any] = {"primary_color": "#ff0000", "logo_url": "/logo.png"}
-        org = Organisation(id=uuid.uuid4(), name="Branded Corp", slug="branded", branding=branding)
-        assert org.branding == branding
-
-
-# ---------------------------------------------------------------------------
-# Superadmin role
-# ---------------------------------------------------------------------------
 
 
 class TestSuperAdminRole:
@@ -542,13 +523,11 @@ class TestSuperAdminRole:
 
 class TestOrganisationsPage:
     @pytest.mark.asyncio(loop_scope="function")
-    async def test_organisations_page_requires_superadmin(self, client: AsyncClient) -> None:
-        token = await _get_admin_session(client)
-        if not token:
-            pytest.skip("Could not obtain admin session")
+    async def test_organisations_page_requires_superadmin(self, admin_client: AsyncClient) -> None:
+        client = admin_client
         # Regular admin should get 403
         resp = await client.get("/admin/organisations", follow_redirects=False)
-        assert resp.status_code in (302, 401, 403)
+        assert resp.status_code == 403
 
 
 # ---------------------------------------------------------------------------
@@ -603,6 +582,11 @@ class TestConfigV100Defaults:
             # The pin a new install copies: it still said 2.0.0 after 2.0.1
             # had shipped.
             ".env.example": grab(".env.example", r"^OPENWHISTLE_VERSION=([0-9.]+)$"),
+            # It said "latest": a re-run of the playbook pulled whatever had shipped.
+            "Ansible image tag": grab(
+                "ansible/roles/openwhistle/defaults/main.yml",
+                r'^openwhistle_image_tag:\s*"?([0-9.]+)"?',
+            ),
         }
         v = settings.app_version
         assert found == dict.fromkeys(found, v)
@@ -767,72 +751,3 @@ class TestDecryptReportFields:
 # ---------------------------------------------------------------------------
 # Helpers used by integration tests
 # ---------------------------------------------------------------------------
-
-
-def _extract_csrf(html: str) -> str:
-    import re
-
-    m = re.search(r'name="csrf_token" value="([^"]+)"', html)
-    return m.group(1) if m else ""
-
-
-async def _get_admin_session(client: AsyncClient) -> bool:
-    """Try to create a wizard admin and log in; return True if session obtained."""
-    import re
-
-    try:
-        import pyotp
-
-        from tests.conftest import setup_token
-
-        setup_resp = await client.get("/setup")
-        if setup_resp.status_code == 302:
-            # Setup already done — try to log in with demo creds
-            return False
-
-        secret_m = re.search(r'value="([A-Z2-7]{32})"', setup_resp.text)
-        if not secret_m:
-            return False
-        totp_secret = secret_m.group(1)
-        totp_code = pyotp.TOTP(totp_secret).now()
-        csrf = _extract_csrf(setup_resp.text)
-
-        await client.post(
-            "/setup",
-            data={
-                "username": "testadmin",
-                "password": "TestPassword123!",
-                "password_confirm": "TestPassword123!",
-                "totp_secret": totp_secret,
-                "totp_code": totp_code,
-                "csrf_token": csrf,
-                "setup_token": await setup_token(),
-            },
-        )
-
-        login_resp = await client.get("/admin/login")
-        csrf = _extract_csrf(login_resp.text)
-        mfa_resp = await client.post(
-            "/admin/login",
-            data={
-                "username": "testadmin",
-                "password": "TestPassword123!",
-                "csrf_token": csrf,
-            },
-        )
-        temp_m = re.search(r'name="temp_token" value="([^"]+)"', mfa_resp.text)
-        csrf_m = re.search(r'name="csrf_token" value="([^"]+)"', mfa_resp.text)
-        if not temp_m:
-            return False
-        totp_code = pyotp.TOTP(totp_secret).now()
-        await client.post(
-            "/admin/login/mfa",
-            data={
-                "csrf_token": csrf_m.group(1) if csrf_m else "",
-                "temp_token": temp_m.group(1),
-                "totp_code": totp_code,
-            },
-        )
-        return True
-    except Exception:  # noqa: BLE001
-        return False

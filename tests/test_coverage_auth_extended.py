@@ -108,14 +108,14 @@ async def test_login_post_shows_locked_message_when_rate_limited(
 
 
 @pytest.mark.asyncio
-@pytest.mark.skipif(
-    __import__("app.config", fromlist=["settings"]).settings.demo_mode,
-    reason="000000 is always valid in demo mode — wrong-TOTP path not reachable",
-)
 async def test_login_mfa_wrong_totp_returns_error_form(
-    client: AsyncClient, db_session: AsyncSession
+    client: AsyncClient, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Wrong TOTP code must re-render the MFA form with an error and a new temp_token."""
+    from app.config import settings
+
+    # It skipped when DEMO_MODE was on (000000 is valid there) - which CI sets.
+    monkeypatch.setattr(settings, "demo_mode", False)
     admin, _ = await _create_admin(db_session)
 
     get_resp = await client.get("/admin/login")

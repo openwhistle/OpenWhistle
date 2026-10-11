@@ -382,3 +382,59 @@ async def throwaway_db(monkeypatch: pytest.MonkeyPatch):  # type: ignore[no-unty
         async with admin_engine.connect() as conn:
             await conn.execute(text(f'DROP DATABASE IF EXISTS "{db_name}" WITH (FORCE)'))
         await admin_engine.dispose()
+
+
+@pytest_asyncio.fixture(loop_scope="function")
+async def setup_incomplete(db_engine: object) -> AsyncGenerator[async_sessionmaker[AsyncSession]]:
+    """Pretend setup has not happened; restore the row and drop the admins the test made.
+
+    The shared test database has finished setup by the time most tests run, so
+    the wizard tests that checked for that skipped themselves on every CI run.
+    """
+    from sqlalchemy import delete, select
+
+    from app.config import settings
+    from app.models.setup import SetupStatus
+    from app.models.user import AdminUser
+
+    engine = create_async_engine(settings.database_url, poolclass=NullPool)
+    factory = async_sessionmaker(engine, expire_on_commit=False)
+    async with factory() as s:
+        before = set((await s.execute(select(AdminUser.id))).scalars())
+        row = (await s.execute(select(SetupStatus).where(SetupStatus.id == 1))).scalar_one_or_none()
+        was = None if row is None else row.completed
+        if row is None:
+            s.add(SetupStatus(id=1, completed=False))
+        else:
+            row.completed = False
+        await s.commit()
+    yield factory
+    async with factory() as s:
+        await s.execute(delete(AdminUser).where(AdminUser.id.not_in(before)))
+        row = (await s.execute(select(SetupStatus).where(SetupStatus.id == 1))).scalar_one()
+        if was is None:
+            await s.delete(row)
+        else:
+            row.completed = was
+        await s.commit()
+    await engine.dispose()
+
+
+# A test that skips on every CI run is a test that does not exist. Nine did: the
+# wizard and admin-page tests skipped whenever setup was already done, which in
+# the shared database was always, and CI printed only "12 skipped".
+_SKIPS_ALLOWED_IN_CI = ("OW_PRIVATE_STRINGS is not set",)  # the operator's data is not in CI
+_ci_skips: list[str] = []
+
+
+def pytest_runtest_logreport(report: pytest.TestReport) -> None:
+    if report.skipped and isinstance(report.longrepr, tuple):
+        reason = str(report.longrepr[2])
+        if not any(allowed in reason for allowed in _SKIPS_ALLOWED_IN_CI):
+            _ci_skips.append(f"{report.nodeid}: {reason}")
+
+
+def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
+    if os.environ.get("CI") == "true" and _ci_skips and exitstatus == 0:
+        print("\nTests skipped in CI (they never run there):\n  " + "\n  ".join(_ci_skips))
+        session.exitstatus = pytest.ExitCode.TESTS_FAILED
