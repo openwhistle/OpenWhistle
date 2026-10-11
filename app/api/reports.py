@@ -1178,8 +1178,6 @@ async def status_get(
                         "report": report,
                         "decrypted_messages": dec_msgs,
                         "attachment_names": decrypt_attachment_names(report),
-                        "case_number": None,
-                        "pin": None,
                         "from_session": True,
                         "success": success,
                         "notice": notice,
@@ -1258,7 +1256,11 @@ async def reply_post(
 
     if report is None:
         if not case_number or not pin:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+            # The session (2 h) ended while the reply was being written. A bare 401
+            # threw the text away; the sign-in form comes back with it, to copy.
+            return render(
+                request, "status.html", {"report": None, "unsent_reply": content}, status_code=401
+            )
         report, lockout_ttl = await report_service.authenticate_whistleblower(
             db, redis, case_number, pin
         )

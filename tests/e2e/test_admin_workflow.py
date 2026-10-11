@@ -129,3 +129,34 @@ def test_stats_page_loads(admin_page: Page, base_url: str) -> None:
     assert any(
         term in body.lower() for term in ["stats", "report", "total", "count", "chart", "0"]
     ), "Stats page appears empty or broken"
+
+
+def test_a_cancelled_status_change_leaves_the_form_usable(admin_page: Page, base_url: str) -> None:
+    """Cancelling the "close this case?" confirm used to leave the status form marked
+    as submitting and its button disabled: the next attempt did nothing until a reload."""
+    admin_page.goto(f"{base_url}/admin/dashboard")
+    row = admin_page.locator("table tbody tr").filter(has_text=DEMO_CASE_RECEIVED["case_number"])
+    row.locator("a.btn").first.click()
+    admin_page.wait_for_load_state("networkidle")
+    admin_page.select_option("#new-status", "closed")
+    admin_page.once("dialog", lambda d: d.dismiss())
+    admin_page.click("#status-btn")
+    assert (
+        admin_page.evaluate("document.getElementById('status-form').dataset.owSubmitting") is None
+    )
+    assert admin_page.is_enabled("#status-btn")
+
+
+def test_a_page_size_change_keeps_the_applied_search(admin_page: Page, base_url: str) -> None:
+    """Changing the page size submitted whatever was in the search box, not the search
+    that was applied: an unsubmitted term ran, and was written to the audit log."""
+    case = DEMO_CASE_RECEIVED["case_number"]
+    admin_page.goto(f"{base_url}/admin/dashboard")
+    admin_page.fill("#dash-search-q", case)
+    admin_page.locator(".dash-search button[type=submit]").click()
+    admin_page.wait_for_load_state("networkidle")
+    admin_page.fill("#dash-search-q", "zzzz-not-submitted")
+    with admin_page.expect_navigation():
+        admin_page.select_option("#dash-per-page-select", "50")
+    assert admin_page.input_value("#dash-search-q") == case
+    assert admin_page.locator("table tbody tr").filter(has_text=case).count() == 1

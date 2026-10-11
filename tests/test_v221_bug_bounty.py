@@ -296,7 +296,9 @@ def test_no_code_makes_a_fernet_token_but_seal() -> None:
 
 
 @pytest.mark.asyncio
-async def test_migration_013_reseals_the_tokens_of_existing_reports(throwaway_db: AsyncSession) -> None:
+async def test_migration_013_reseals_the_tokens_of_existing_reports(
+    throwaway_db: AsyncSession,
+) -> None:
     """Reports written before 2.2.1 hold tokens with their second; the upgrade takes it out
     and every value still decrypts to what it was."""
     import os
@@ -360,13 +362,140 @@ async def test_migration_013_reseals_the_tokens_of_existing_reports(throwaway_db
         )
     ).one()
     messages = (
-        await throwaway_db.execute(
-            text("SELECT content FROM report_messages WHERE report_id = :r"), {"r": report.id}
+        (
+            await throwaway_db.execute(
+                text("SELECT content FROM report_messages WHERE report_id = :r"), {"r": report.id}
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     assert {_token_time(v) for v in (*row, *messages)} == {0}
     fernet = make_report_fernet(row.encrypted_dek)
     assert decrypt_field(fernet, row.description) == "Old report."
     assert crypto.decrypt(row.confidential_name) == "J"
     assert "Old message." in {decrypt_field(fernet, m) for m in messages}
     assert fernet.decrypt(bytes(row.data)) == b"evidence"
+
+
+# ── Every CSS variable a page uses is defined ────────────────────────────────
+
+
+def test_every_css_variable_used_is_defined() -> None:
+    """login_mfa_setup.html used --border, --text-muted and --bg-secondary, which no
+    stylesheet defines: the QR code's frame, the muted labels and the manual-code
+    box were unstyled in both themes."""
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).parents[1] / "app"
+    files = [
+        p for ext in ("css", "html", "js") for p in root.rglob(f"*.{ext}") if ".min." not in p.name
+    ]
+    texts = [p.read_text() for p in files]
+    defined = {d for t in texts for d in re.findall(r"(--[\w-]+)\s*:", t)}
+    defined |= {d for t in texts for d in re.findall(r"setProperty\(['\"](--[\w-]+)", t)}
+    undefined = {
+        f"{p.relative_to(root)}: {name}"
+        for p, t in zip(files, texts, strict=True)
+        for name in re.findall(r"var\((--[\w-]+)\s*\)", t)
+        if name not in defined
+    }
+    assert not undefined, sorted(undefined)
+
+
+# ── No decided report, no SLA rate ───────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_the_sla_rate_of_no_decided_report_is_none_not_a_red_zero(
+    throwaway_db: AsyncSession,
+) -> None:
+    """A fresh installation showed "0 %" in the danger colour on /admin/stats."""
+    from app.services.report import create_report, get_dashboard_stats
+
+    await create_report(throwaway_db, "financial_fraud", "Not yet acknowledged.")
+    assert (await get_dashboard_stats(throwaway_db))["sla_7day_rate"] is None
+
+
+# ── A reply written past the end of the session is not lost ──────────────────
+
+
+@pytest.mark.asyncio
+async def test_a_reply_after_the_session_ended_comes_back_to_copy(client, no_csrf) -> None:  # type: ignore[no-untyped-def]  # noqa: F811
+    """The reply form carried case_number and pin fields that were always empty, so
+    after the 2-hour session a reply was answered with a bare 401 and the text was gone."""
+    text = "Three paragraphs the whistleblower spent an hour on."
+    resp = await client.post("/reply", data={"content": text}, headers={"accept": "text/html"})
+    assert resp.status_code == 401
+    assert text in resp.text
+    assert 'id="unsent-reply"' in resp.text
+
+
+def test_the_reply_form_carries_no_empty_credential_fields() -> None:
+    from pathlib import Path
+
+    form = (Path(__file__).parents[1] / "app/templates/status.html").read_text()
+    reply = form[form.index('action="/reply"') :]
+    reply = reply[: reply.index("</form>")]
+    assert 'name="pin"' not in reply and 'name="case_number"' not in reply
+
+
+# ── Settings that did nothing ────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    ("value", "kept"),
+    [
+        ("https://cdn.example.com/logo.png", ""),
+        ("//cdn.example.com/logo.png", ""),
+        ("/static/brand/logo.png", "/static/brand/logo.png"),
+        ("data:image/png;base64,iVBORw0KGgo=", "data:image/png;base64,iVBORw0KGgo="),
+    ],
+)
+def test_an_external_logo_url_is_ignored(value: str, kept: str) -> None:
+    """The CSP (img-src 'self' data:) blocked it - measured in Chromium: "blocked:
+    img-src https://example.com/logo.png" - so the documented company logo was a broken
+    image; allowing it would send the whistleblower's address to the logo's host."""
+    from app.config import Settings
+
+    assert Settings(brand_logo_url=value).brand_logo_url == kept
+
+
+def test_ldap_attr_email_is_gone_and_ignored(caplog: pytest.LogCaptureFixture) -> None:
+    """The directory's mail attribute was fetched on every LDAP login and never used."""
+    from app.config import Settings
+
+    assert "ldap_attr_email" not in Settings.model_fields
+    Settings(ldap_attr_email="mail")  # an old .env still starts
+    assert "LDAP_ATTR_EMAIL was removed" in caplog.text
+
+
+def test_the_ldap_search_asks_for_the_username_only(monkeypatch: pytest.MonkeyPatch) -> None:
+    from unittest.mock import MagicMock, patch
+
+    from app.config import settings
+    from app.services import ldap_auth
+
+    for name, value in {
+        "ldap_enabled": True,
+        "ldap_server": "dir.example.org",
+        "ldap_base_dn": "dc=example,dc=org",
+        "ldap_user_filter": "(uid={username})",
+        "ldap_attr_username": "uid",
+    }.items():
+        monkeypatch.setattr(settings, name, value)
+    conn = MagicMock()
+    conn.search_s.return_value = [("uid=alice,dc=example,dc=org", {"uid": [b"alice"]})]
+    with patch("ldap.initialize", return_value=conn):
+        ldap_auth._authenticate_ldap_sync("alice", "pw")
+    assert conn.search_s.call_args.args[3] == ["uid"]
+
+
+def test_the_setup_qr_has_one_label_on_every_render() -> None:
+    import re
+    from pathlib import Path
+
+    src = (Path(__file__).parents[1] / "app/api/wizard.py").read_text()
+    labels = re.findall(r"generate_qr_code_base64\(totp_secret, ([^)]+)\)", src)
+    assert labels and set(labels) == {"_QR_LABEL"}, labels

@@ -326,7 +326,11 @@
 <script nonce="{{ request.state.csp_nonce }}">
 function goPerPage(val) {
     var search = document.querySelector('.dash-search');
-    if (search && search.elements.q.value) {  // keep the search, and keep it out of the URL
+    // The search that is applied (the value the page was rendered with), not what is in
+    // the box now: an unsubmitted term ran, and was audited, on a page-size change.
+    var q = search && search.elements.q;
+    if (q && q.defaultValue) {  // keep the search, and keep it out of the URL
+        q.value = q.defaultValue;
         search.elements.per_page.value = val;
         search.submit();
         return;

@@ -594,6 +594,7 @@
   "status.error.inline": "Compruebe el número de caso y el PIN: ambos deben coincidir exactamente con los de su denuncia.",
   "status.reply.sent": "Su respuesta se ha enviado.",
   "status.reply.closed": "El caso se cerró antes de que llegara su mensaje, por lo que no se envió. Si tiene algo nuevo que comunicar, presente una nueva denuncia.",
+  "status.reply.session_ended": "Su sesión terminó antes de enviar la respuesta. Vuelva a iniciar sesión con su número de caso y su PIN y envíela. Su texto:",
   "demo.status.hint": "Pruebe estas denuncias de ejemplo. Seleccione una fila para rellenar su número de caso y su PIN.",
   "demo.login.hint": "Pruébelo ahora con estas credenciales.",
   "demo.login.click_to_fill": "Rellenar",

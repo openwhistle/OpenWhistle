@@ -4,10 +4,10 @@ Authentication flow:
   1. Bind with service account (LDAP_BIND_DN / LDAP_BIND_PASSWORD).
   2. Search for the user entry matching LDAP_USER_FILTER with {username} substituted.
   3. Re-bind with the found user's DN and the supplied password to verify credentials.
-  4. Return the user's username and email from their LDAP attributes.
+  4. Return the user's username from their LDAP attributes.
 
 TOTP verification is performed by the caller after a successful LDAP bind.
-The local AdminUser record is created on first login and kept in sync on every login.
+The local AdminUser record is created on first login; later logins reuse it unchanged.
 """
 
 from __future__ import annotations
@@ -27,7 +27,6 @@ log = logging.getLogger(__name__)
 @dataclass
 class LDAPUserInfo:
     username: str
-    email: str | None
 
 
 class LDAPAuthError(Exception):
@@ -107,7 +106,7 @@ def _authenticate_ldap_sync(username: str, password: str) -> LDAPUserInfo:
                 settings.ldap_base_dn,
                 ldap.SCOPE_SUBTREE,
                 settings.ldap_user_filter.replace("{username}", escape_filter_chars(username)),
-                [settings.ldap_attr_username, settings.ldap_attr_email],
+                [settings.ldap_attr_username],
             )
     except ldap.LDAPError as exc:
         log.error("LDAP service bind or search failed: %s", type(exc).__name__)
@@ -133,4 +132,4 @@ def _authenticate_ldap_sync(username: str, password: str) -> LDAPUserInfo:
             "LDAP entry has no %s attribute; set LDAP_ATTR_USERNAME", settings.ldap_attr_username
         )
         raise LDAPAuthError("LDAP entry has no username attribute")
-    return LDAPUserInfo(username=directory_name, email=_first(attrs, settings.ldap_attr_email))
+    return LDAPUserInfo(username=directory_name)

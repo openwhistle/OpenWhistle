@@ -45,7 +45,6 @@ services:
       LDAP_BASE_DN: "${LDAP_BASE_DN:-}"
       LDAP_USER_FILTER: "${LDAP_USER_FILTER:-(uid={username})}"
       LDAP_ATTR_USERNAME: "${LDAP_ATTR_USERNAME:-uid}"
-      LDAP_ATTR_EMAIL: "${LDAP_ATTR_EMAIL:-mail}"
       STORAGE_BACKEND: "${STORAGE_BACKEND:-db}"
       S3_ENDPOINT_URL: "${S3_ENDPOINT_URL:-}"
       S3_BUCKET_NAME: "${S3_BUCKET_NAME:-}"

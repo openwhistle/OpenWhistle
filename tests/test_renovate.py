@@ -122,9 +122,7 @@ def test_python_versions_come_from_one_datasource() -> None:
     actions/python-versions and pep621 reads requires-python from python.org; the
     Dockerfile and the custom managers read Docker Hub. After
     3.15.0 shipped, only the first had it, and PR #145 moved the workflows alone."""
-    python_managers = [
-        m for m in CONFIG["customManagers"] if m.get("depNameTemplate") == "python"
-    ]
+    python_managers = [m for m in CONFIG["customManagers"] if m.get("depNameTemplate") == "python"]
     assert python_managers, "no custom manager reads the Python version"
     assert all(m["datasourceTemplate"] == "docker" for m in python_managers)
     off = [

@@ -35,7 +35,6 @@ data:
   LDAP_BASE_DN: {{ .Values.config.ldapBaseDn | quote }}
   LDAP_USER_FILTER: {{ .Values.config.ldapUserFilter | quote }}
   LDAP_ATTR_USERNAME: {{ .Values.config.ldapAttrUsername | quote }}
-  LDAP_ATTR_EMAIL: {{ .Values.config.ldapAttrEmail | quote }}
   OIDC_ENABLED: {{ .Values.config.oidcEnabled | quote }}
   OIDC_CLIENT_ID: {{ .Values.config.oidcClientId | quote }}
   OIDC_SERVER_METADATA_URL: {{ .Values.config.oidcServerMetadataUrl | quote }}

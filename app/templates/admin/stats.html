@@ -37,9 +37,13 @@
             <div class="stat-kpi-label">{{ t('admin.stats.total_reports') }}</div>
         </div>
         <div class="stat-card" data-delay="0.05">
+            {% if stats.sla_7day_rate is none %}
+            <div class="stat-card__number">&mdash;</div>
+            {% else %}
             <div class="stat-card__number" data-tone="{{ 'success' if stats.sla_7day_rate >= 90 else ('warning' if stats.sla_7day_rate >= 70 else 'danger') }}">
                 {{ stats.sla_7day_rate | format_percent(lang) }}
             </div>
+            {% endif %}
             <div class="stat-kpi-label">{{ t('admin.stats.sla_rate') }}</div>
         </div>
         {% for status_val, cls in [

@@ -15,6 +15,16 @@ from pathlib import Path
 import pytest
 from playwright.sync_api import Browser, BrowserContext, Page
 
+
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """CI runs `-m e2e`. test_csp.py had no marker, so its five browser checks were
+    deselected on every run; now no file under tests/e2e can forget it."""
+    here = Path(__file__).parent
+    for item in items:
+        if here in Path(item.path).parents:
+            item.add_marker(pytest.mark.e2e)
+
+
 # Demo credentials — published intentionally for the demo instance
 DEMO_BASE_URL = "http://localhost:4009"
 DEMO_ADMIN_USERNAME = "demo"

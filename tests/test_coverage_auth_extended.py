@@ -326,7 +326,7 @@ async def test_ldap_login_rejects_deactivated_account(
     await db_session.commit()
 
     monkeypatch.setattr(settings, "ldap_enabled", True)
-    info = LDAPUserInfo(username=username, email=None)
+    info = LDAPUserInfo(username=username)
     csrf = (await client.get("/admin/login")).cookies.get("ow_csrf")
     with patch("app.services.ldap_auth.authenticate_ldap", AsyncMock(return_value=info)):
         resp = await client.post(

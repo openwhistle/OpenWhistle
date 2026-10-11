@@ -150,7 +150,6 @@ class Settings(BaseSettings):
     ldap_base_dn: str = ""  # search base, e.g. "ou=users,dc=example,dc=com"
     ldap_user_filter: str = "(uid={username})"  # {username} is replaced at runtime
     ldap_attr_username: str = "uid"
-    ldap_attr_email: str = "mail"
 
     # Attachment storage backend
     storage_backend: str = "db"  # "db" or "s3"
@@ -269,7 +268,30 @@ class Settings(BaseSettings):
             logging.getLogger(__name__).warning(
                 "BRAND_SECONDARY_COLOR was removed in 2.0.0 and is ignored; delete it."
             )
+        # Removed in 2.2.1: the address was fetched from the directory and never used.
+        if isinstance(data, dict) and data.pop("ldap_attr_email", None) is not None:
+            logging.getLogger(__name__).warning(
+                "LDAP_ATTR_EMAIL was removed in 2.2.1 and is ignored; delete it."
+            )
         return data
+
+    @field_validator("brand_logo_url")
+    @classmethod
+    def _logo_from_this_server(cls, value: str) -> str:
+        # The CSP allows images from this server and data: URIs only, so an external
+        # URL showed a broken image - and allowing it would have the whistleblower's
+        # browser fetch it from a third party, address and all.
+        if value and not (
+            (value.startswith("/") and not value.startswith("//"))
+            or value.startswith("data:image/")
+        ):
+            logging.getLogger(__name__).warning(
+                "BRAND_LOGO_URL must be a path on this server (/static/...) or a "
+                "data:image/ URI; %r is ignored.",
+                value,
+            )
+            return ""
+        return value
 
     @model_validator(mode="after")
     def _validate_local_review_login(self) -> Settings:

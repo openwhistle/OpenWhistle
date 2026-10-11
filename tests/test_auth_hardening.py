@@ -50,7 +50,7 @@ async def test_ldap_first_login_provisions_case_manager(
 
     username = f"ldap_{uuid.uuid4().hex[:8]}"
     monkeypatch.setattr(settings, "ldap_enabled", True)
-    info = LDAPUserInfo(username=username, email=None)
+    info = LDAPUserInfo(username=username)
     csrf = (await client.get("/admin/login")).cookies.get("ow_csrf")
     with patch("app.services.ldap_auth.authenticate_ldap", AsyncMock(return_value=info)):
         resp = await client.post(

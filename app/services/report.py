@@ -839,7 +839,8 @@ async def get_dashboard_stats(
     total_reports = ack_row.total or 0
     decided_reports = int(ack_row.decided or 0)
     on_time = int(ack_row.on_time or 0)
-    sla_rate = round(on_time / decided_reports * 100) if decided_reports else 0
+    # None, not 0: with no decided report there is no rate, and 0 % showed in red.
+    sla_rate = round(on_time / decided_reports * 100) if decided_reports else None
 
     return {
         "status_counts": status_counts,

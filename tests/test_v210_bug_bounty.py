@@ -402,7 +402,7 @@ async def test_a_directory_user_named_like_a_local_account_is_refused_not_a_500(
     monkeypatch.setattr(
         ldap_auth,
         "authenticate_ldap",
-        AsyncMock(return_value=ldap_auth.LDAPUserInfo(username=user.username, email=None)),
+        AsyncMock(return_value=ldap_auth.LDAPUserInfo(username=user.username)),
     )
     resp = await client.post(
         "/admin/login",
@@ -433,7 +433,6 @@ def test_a_directory_entry_without_the_username_attribute_is_refused(
         "ldap_base_dn": "dc=example,dc=org",
         "ldap_user_filter": "(uid={username})",
         "ldap_attr_username": "uid",
-        "ldap_attr_email": "mail",
     }.items():
         monkeypatch.setattr(settings, name, value)
     conn = MagicMock()
@@ -922,7 +921,7 @@ async def test_an_ldap_account_gets_the_default_organisation(
     monkeypatch.setattr(
         ldap_auth,
         "authenticate_ldap",
-        AsyncMock(return_value=ldap_auth.LDAPUserInfo(username=name, email=None)),
+        AsyncMock(return_value=ldap_auth.LDAPUserInfo(username=name)),
     )
     await client.post("/admin/login", data={"username": name, "password": "pw"})
     made = await get_user_by_username(db_session, name)
