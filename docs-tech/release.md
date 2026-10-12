@@ -66,8 +66,9 @@ On `release/vX.Y.Z`:
 - `CHANGELOG.md`: `[Unreleased]` → `[X.Y.Z] — <date>`, add its compare link and
   repoint `[Unreleased]`.
 - Version in `app/config.py`, `pyproject.toml`, `charts/openwhistle/Chart.yaml`
-  (`version` and `appVersion`), `.env.example` and the `OPENWHISTLE_VERSION`
-  default in `docker-compose.prod.yml`. `test_every_published_version_string_matches`
+  (`version` and `appVersion`), `.env.example`, the `OPENWHISTLE_VERSION`
+  default in `docker-compose.prod.yml` and `openwhistle_image_tag` in
+  `ansible/roles/openwhistle/defaults/main.yml`. `test_every_published_version_string_matches`
   fails on any mismatch.
 - The documentation of this release is a pull request in openwhistle/website, linked
   from the release PR: its version spots, the roadmap, and every user-facing change
