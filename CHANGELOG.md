@@ -16,7 +16,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   website's nav, footer, docs sidebar as the admin menu, callouts, chips and status pills with a dot; 239 unused
   Tailwind rules are gone.
 - After an update, while the installation count is off and the in-app switch decides, the dashboard asks each
-  admin who may switch it once per release whether to count the installation (migration 015).
+  admin who may switch it once per release whether to count the installation (migration 015). The setup
+  wizard's checkbox is the first release's question.
 - Every image is scanned with grype — on each pull request, each pushed digest before the publish tags it,
   and `:latest` every Monday — and fails on any vulnerability that has a fix, whatever its severity. Reviewed
   exceptions live in `.grype.yaml`, each with a reason and pinned to a package version. Trivy now scans for
@@ -43,6 +44,10 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and showed the telemetry request as an unbordered chip; the account facts wrapped in a third of the
   page; on the review stack the local-review and sign-in panels touched; the whistleblower's case view
   shared the lookup form's 540 px column, so at 1920 px every deadline label wrapped, "§17" apart from "I".
+- **The audit log named a case by the start of its UUID** ("251fc6b0-079…") while its filter asked for a case
+  number. It shows the case number; a deleted case keeps the UUID, without a link to a page that is gone.
+- **"Matching reports 0" after a search that found the case**: the count is of reports whose decrypted text
+  matched, not of what the search listed. The label says so.
 - **A correct PIN cleared the case's lockout**: whoever knows a case number could lock it with wrong PINs and
   probe again; the lock gone meant the reporter had signed in (899 s, then 0). The counter is left alone.
 - **The bundled nginx passed seven of the address headers the app strips** (Fastly, ingress-nginx, Envoy,

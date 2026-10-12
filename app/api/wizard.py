@@ -94,6 +94,9 @@ async def create_initial_admin(
         # account could never reach organisations, and only a superadmin may
         # grant superadmin, so no installation ever had one.
         role=AdminRole.superadmin,
+        # The wizard's own checkbox asked: the dashboard does not ask again the
+        # minute after, only after the next update.
+        telemetry_asked_version=settings.app_version,
     )
     db.add(admin)
 

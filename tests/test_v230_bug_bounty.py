@@ -764,3 +764,45 @@ async def test_a_category_bar_is_its_share_of_all_reports(
     html = (await client.get("/admin/stats")).text
     bars = re.findall(r'stat-bar-fill-outline" data-pct="([\d.]+)"', html)
     assert bars and abs(sum(map(float, bars)) - 100) < 1, bars
+
+
+@pytest.mark.asyncio
+async def test_the_audit_log_names_the_case_by_its_number(
+    client: object, db_session: AsyncSession
+) -> None:
+    """The case column showed "251fc6b0-079…", the start of a UUID no page shows, while
+    the filter above it asked for a case number."""
+    import uuid
+
+    from app.models.audit import AuditLog
+    from app.services.report import create_report
+    from tests.test_v150_ux import _login, _make_admin
+
+    admin, secret = await _make_admin(db_session)
+    report, _ = await create_report(db_session, "financial_fraud", "Named in the log.")
+    db_session.add(
+        AuditLog(
+            id=uuid.uuid4(),
+            admin_id=admin.id,
+            admin_username=admin.username,
+            action="report.note_added",
+            report_id=report.id,
+        )
+    )
+    await db_session.commit()
+    await _login(client, admin, secret)
+
+    html = (await client.get(f"/admin/audit-log?report_id={report.case_number}")).text  # type: ignore[attr-defined]
+    assert f">{report.case_number}</a>" in html
+
+
+def test_the_search_entry_says_its_count_is_of_content_matches() -> None:
+    """A search for OW-DEMO-00001 found the case and logged "Matching reports 0": the
+    count is of reports whose decrypted text matched, not of what the search listed."""
+    import json
+    from pathlib import Path
+
+    locales = Path(__file__).parents[1] / "app/locales"
+    en = json.loads((locales / "en.json").read_text())
+    de = json.loads((locales / "de.json").read_text())
+    assert "content" in en["audit.detail.hits"] and "Inhalt" in de["audit.detail.hits"]

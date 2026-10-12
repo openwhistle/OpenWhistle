@@ -728,7 +728,7 @@
   "audit.detail.retention_days": "Retenção (dias)",
   "audit.detail.reason": "Motivo",
   "audit.detail.term": "Termo pesquisado",
-  "audit.detail.hits": "Relatos encontrados",
+  "audit.detail.hits": "Correspondências no conteúdo",
   "audit.detail.via": "Via",
   "audit.detail.via.pdf": "Exportação PDF",
   "audit.detail.reason_recorded": "Motivo registrado (veja o log de auditoria)",

@@ -716,7 +716,7 @@
   "audit.detail.retention_days": "Conservación (días)",
   "audit.detail.reason": "Motivo",
   "audit.detail.term": "Término de búsqueda",
-  "audit.detail.hits": "Denuncias coincidentes",
+  "audit.detail.hits": "Coincidencias en el contenido",
   "audit.detail.via": "Mediante",
   "audit.detail.via.pdf": "Exportación a PDF",
   "audit.detail.reason_recorded": "Motivo registrado (véase el registro de auditoría)",

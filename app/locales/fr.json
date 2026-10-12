@@ -716,7 +716,7 @@
   "audit.detail.retention_days": "Conservation (jours)",
   "audit.detail.reason": "Motif",
   "audit.detail.term": "Terme recherché",
-  "audit.detail.hits": "Signalements trouvés",
+  "audit.detail.hits": "Correspondances dans le contenu",
   "audit.detail.via": "Via",
   "audit.detail.via.pdf": "Export PDF",
   "audit.detail.reason_recorded": "Motif enregistré (voir le journal d'audit)",

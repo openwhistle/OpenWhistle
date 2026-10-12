@@ -75,3 +75,22 @@ async def test_not_asked_who_cannot_switch_it(
 ) -> None:
     manager = await _totp_user(db_session, AdminRole.case_manager)
     assert ASK not in await _dashboard(acting_as, manager)
+
+
+@pytest.mark.asyncio
+async def test_the_wizards_checkbox_is_the_first_ask(
+    throwaway_db: AsyncSession, unlocked: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Whoever left the wizard's box unticked was asked again on the dashboard a
+    minute later. The next update asks; the first sign-in does not."""
+    from sqlalchemy import select
+
+    from app.api.admin import _ask_for_telemetry
+    from app.api.wizard import create_initial_admin
+    from app.models.user import AdminUser
+
+    assert await create_initial_admin(throwaway_db, "first", "pw-" + "x" * 20, "JBSWY3DPEHPK3PXP")
+    admin = (await throwaway_db.execute(select(AdminUser))).scalar_one()
+    assert not await _ask_for_telemetry(throwaway_db, admin)
+    monkeypatch.setattr(settings, "app_version", "99.0.0")
+    assert await _ask_for_telemetry(throwaway_db, admin)

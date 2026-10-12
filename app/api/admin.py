@@ -1498,6 +1498,21 @@ async def audit_log_page(
         **_org_scope(current_user),
     )
     total_pages = max(1, (total + 49) // 50)
+    # The case column showed "251fc6b0-079…": no admin knows a case by its UUID.
+    from sqlalchemy import select  # noqa: PLC0415
+
+    report_ids = {e.report_id for e in entries if e.report_id}
+    case_numbers = (
+        dict(
+            (
+                await db.execute(
+                    select(Report.id, Report.case_number).where(Report.id.in_(report_ids))
+                )
+            ).all()
+        )
+        if report_ids
+        else {}
+    )
 
     return render(
         request,
@@ -1505,6 +1520,7 @@ async def audit_log_page(
         {
             "user": current_user,
             "entries": entries,
+            "case_numbers": case_numbers,
             "total": total,
             "page": page,
             "total_pages": total_pages,
