@@ -72,6 +72,9 @@ _LOOPBACK_HOSTNAMES = {"localhost", "127.0.0.1", "::1"}
 
 
 def _local_review_reachable(request: Request) -> bool:
+    # SecurityMiddleware has already removed the address headers; it notes they came.
+    if getattr(request.state, "ip_headers_seen", False):
+        return False
     if any(h in request.headers for h in _PROXY_HEADERS):
         return False
     host_header = request.headers.get("host", "")

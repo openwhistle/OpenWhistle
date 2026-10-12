@@ -263,19 +263,15 @@ async def test_local_review_login_route_404_for_every_method_when_enabled(
     assert resp.status_code == 404
 
 
-@pytest.mark.parametrize("header", ["x-forwarded-proto", "via"])
+@pytest.mark.parametrize(
+    "header", ["x-forwarded-proto", "via", "x-forwarded-for", "x-real-ip", "forwarded"]
+)
 async def test_local_review_login_404_with_any_proxy_header(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch, header: str
 ) -> None:
-    """Only these two of the five ever reach the route over real HTTP:
-    `SecurityMiddleware` (app/middleware.py) already strips `X-Forwarded-For`,
-    `X-Real-IP` and `Forwarded` from every request, unconditionally, before
-    any handler sees them — a pre-existing whistleblower-IP-privacy feature,
-    not something this route adds. `_local_review_reachable` still checks all
-    five (defense in depth, and correct if that stripping ever changes); the
-    other three are proven at the function level instead, in
-    `test_local_review_reachable_rejects_any_proxy_header` below, since a
-    live request can no longer carry them this far to prove it end-to-end."""
+    """SecurityMiddleware strips the address headers before any handler sees them, and
+    notes that they came (request.state.ip_headers_seen): over real HTTP every one of them
+    hides the login, not only the two the middleware leaves in place."""
     monkeypatch.setattr(settings, "demo_mode", True)
     monkeypatch.setattr(settings, "local_review_login", True)
     headers = {**_LOCALHOST, header: "anything"}

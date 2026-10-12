@@ -152,3 +152,26 @@ async def test_an_organisations_admin_cannot_touch_the_instance(
     finally:
         app.dependency_overrides.pop(validate_csrf_header, None)
     assert resp.status_code == 403, resp.status_code
+
+
+# ── The local-review barrier sees the address headers the middleware strips ──
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("header", ["x-real-ip", "x-forwarded-for", "fastly-client-ip"])
+async def test_an_address_header_hides_the_local_review_button(
+    client: object, monkeypatch: pytest.MonkeyPatch, header: str
+) -> None:
+    """_local_review_reachable refused a request carrying any address header, but the
+    middleware had stripped them before it looked: over HTTP only X-Forwarded-Proto and
+    Via were ever checked, the other fourteen were not (the button showed)."""
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "demo_mode", True)
+    monkeypatch.setattr(settings, "local_review_login", True)
+    html = (
+        await client.get("/admin/login", headers={"host": "localhost", header: "203.0.113.7"})
+    ).text  # type: ignore[attr-defined]
+    assert "local-review-login-btn" not in html
+    plain = (await client.get("/admin/login", headers={"host": "localhost"})).text  # type: ignore[attr-defined]
+    assert "local-review-login-btn" in plain  # the button itself still renders

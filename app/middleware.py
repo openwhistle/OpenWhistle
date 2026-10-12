@@ -111,6 +111,8 @@ class SecurityMiddleware:
         ip_headers_present = any(
             name.decode("latin-1").lower() in _IP_REVEAL_HEADERS for name, _ in raw_headers
         )
+        # The headers go below; that a proxy sent them stays known (the local-review barrier).
+        state["ip_headers_seen"] = ip_headers_present
 
         if ip_headers_present:
             try:
