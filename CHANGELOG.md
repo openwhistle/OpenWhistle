@@ -7,6 +7,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.3.0] — 2026-10-12
+
 ### Added
 
 - An i18n coverage badge in the README: `scripts/i18n_coverage.py` measures the share of English strings each
@@ -1738,7 +1740,8 @@ Remaining lower-severity findings are tracked in GitHub issues #42–#46.
 - **Rate limiting by session token** (not IP) to maintain full anonymity
 - **alembic upgrade head** on every startup to guarantee migration consistency
 
-[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.2.1...HEAD
+[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/openwhistle/OpenWhistle/compare/v2.2.1...v2.3.0
 [2.2.1]: https://github.com/openwhistle/OpenWhistle/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/openwhistle/OpenWhistle/compare/v2.1.1...v2.2.0
 [2.1.1]: https://github.com/openwhistle/OpenWhistle/compare/v2.1.0...v2.1.1
