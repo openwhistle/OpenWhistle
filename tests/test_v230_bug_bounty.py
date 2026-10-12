@@ -307,3 +307,54 @@ async def test_without_mail_the_form_asks_for_no_address(
     assert 'name="secure_email"' not in (await client.get("/submit")).text  # type: ignore[attr-defined]
     monkeypatch.setattr(settings, "notify_email_enabled", True)
     assert 'name="secure_email"' in (await client.get("/submit")).text  # type: ignore[attr-defined]
+
+
+# ── The audit log shows what was recorded ──────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_a_username_that_reads_like_a_role_stays_a_username(
+    client: object, db_session: AsyncSession
+) -> None:
+    """Every detail value that matched a status or role code was shown as its label,
+    whatever the field: an account called "admin" read as "Administrator", one called
+    "closed" as "Closed", so the audit trail named someone who never acted."""
+    import json
+    import uuid
+
+    from app.models.audit import AuditLog
+    from tests.test_v150_ux import _login, _make_admin
+
+    admin, secret = await _make_admin(db_session)
+    db_session.add(
+        AuditLog(
+            id=uuid.uuid4(),
+            admin_id=admin.id,
+            admin_username=admin.username,
+            action="report.assigned",
+            detail=json.dumps({"from": "closed", "to": "admin", "username": "superadmin"}),
+        )
+    )
+    await db_session.commit()
+    await _login(client, admin, secret)
+    html = (await client.get("/admin/audit-log")).text  # type: ignore[attr-defined]
+    assert "<dd>admin</dd>" in html and "<dd>closed</dd>" in html and "<dd>superadmin</dd>" in html
+
+
+def test_every_audit_detail_field_has_a_label_in_every_language() -> None:
+    """confirmed_by, requested_by, rows, window_minutes, issuer, attachment_id, … showed
+    as raw snake_case in every language."""
+    import json
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).parents[1]
+    keys: set[str] = set()
+    for path in (root / "app").rglob("*.py"):
+        for block in re.findall(r"detail=\{(.*?)\}", path.read_text(), re.S):
+            keys |= set(re.findall(r'"([a-z_]+)"\s*:', block))
+    assert len(keys) > 20
+    for locale in (root / "app/locales").glob("*.json"):
+        strings = json.loads(locale.read_text())
+        missing = sorted(k for k in keys if f"audit.detail.{k}" not in strings)
+        assert not missing, (locale.name, missing)
