@@ -175,3 +175,42 @@ async def test_an_address_header_hides_the_local_review_button(
     assert "local-review-login-btn" not in html
     plain = (await client.get("/admin/login", headers={"host": "localhost"})).text  # type: ignore[attr-defined]
     assert "local-review-login-btn" in plain  # the button itself still renders
+
+
+# ── The wizard's code is used up like every other ──────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_the_setup_wizards_code_cannot_sign_in_again(
+    throwaway_db: AsyncSession, client: object
+) -> None:
+    """Every login path marks a TOTP code used (consume_totp: "or a sign-in right after
+    enrolment"); the wizard only verified it, so the code that created the first
+    superadmin opened a session for 90 more seconds."""
+    from sqlalchemy import select
+
+    from app.models.user import AdminUser
+    from app.redis_client import get_redis
+    from app.services.mfa import consume_totp, generate_totp_secret, get_totp
+    from tests.conftest import setup_token
+
+    get_resp = await client.get("/setup", follow_redirects=False)  # type: ignore[attr-defined]
+    secret = generate_totp_secret()
+    code = get_totp(secret).now()
+    resp = await client.post(  # type: ignore[attr-defined]
+        "/setup",
+        data={
+            "username": "firstadmin",
+            "password": "SecureTestPassword123!",
+            "password_confirm": "SecureTestPassword123!",
+            "totp_secret": secret,
+            "totp_code": code,
+            "csrf_token": get_resp.cookies.get("ow_csrf"),
+            "setup_token": await setup_token(),
+        },
+        follow_redirects=False,
+    )
+    assert resp.status_code == 302
+    user = await throwaway_db.scalar(select(AdminUser).where(AdminUser.username == "firstadmin"))
+    assert user is not None
+    assert await consume_totp(await get_redis(), user.id, secret, code) is False
