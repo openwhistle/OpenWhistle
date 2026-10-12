@@ -275,3 +275,35 @@ def test_migrations_run_with_a_percent_encoded_password() -> None:
         check=False,
     )
     assert result.returncode == 0, result.stderr[-500:]
+
+
+# ── The form offers only what the server keeps ─────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_without_mode_choice_the_form_offers_no_confidential_report(
+    client: object, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """SUBMISSION_MODE_ENABLED=false made the server file every report as anonymous, but
+    the form still offered "Confidential" with name and contact fields: what a reporter
+    typed there was dropped without a word."""
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "submission_mode_enabled", False)
+    html = (await client.get("/submit")).text  # type: ignore[attr-defined]
+    assert 'id="mode-anonymous"' in html
+    assert 'id="mode-confidential"' not in html and 'name="confidential_name"' not in html
+
+
+@pytest.mark.asyncio
+async def test_without_mail_the_form_asks_for_no_address(
+    client: object, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The e-mail field promised a notice on every reply; with NOTIFY_EMAIL_ENABLED off
+    (the default) none is ever sent, and the address was stored for nothing."""
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "notify_email_enabled", False)
+    assert 'name="secure_email"' not in (await client.get("/submit")).text  # type: ignore[attr-defined]
+    monkeypatch.setattr(settings, "notify_email_enabled", True)
+    assert 'name="secure_email"' in (await client.get("/submit")).text  # type: ignore[attr-defined]

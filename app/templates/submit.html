@@ -84,6 +84,7 @@
                         </div>
                     </label>
 
+                    {% if mode_choice %}
                     <label class="mode-card" for="mode-confidential">
                         <input type="radio" id="mode-confidential" name="submission_mode" value="confidential"
                                {% if state.get('submission_mode') == 'confidential' %}checked{% endif %}
@@ -94,9 +95,11 @@
                             <p class="mode-card-desc" id="mode-confidential-desc">{{ t('submit.step.mode.confidential.desc') }}</p>
                         </div>
                     </label>
+                    {% endif %}
                 </div>
             </fieldset>
 
+            {% if mode_choice %}
             <div id="confidential-fields" class="sub-confidential-fields">
                 <div class="alert alert-info sub-mb1">
                     <div class="alert-title">{{ t('submit.step.mode.confidential.info.title') }}</div>
@@ -123,6 +126,7 @@
                     <div class="form-hint" id="confidential-contact-hint">{{ t('submit.step.mode.confidential.contact.hint') }}</div>
                 </div>
 
+                {% if email_notice %}
                 <div class="form-group">
                     <label class="form-label" for="secure_email">{{ t('submit.step.mode.secure_email.label') }}</label>
                     <input type="email" class="form-control" id="secure_email" name="secure_email"
@@ -133,7 +137,9 @@
                     {{ field.error('secure_email') }}
                     <div class="form-hint" id="secure-email-hint">{{ t('submit.step.mode.secure_email.hint') }}</div>
                 </div>
+                {% endif %}
             </div>
+            {% endif %}
 
             <div class="submit-step-actions">
                 <span></span>

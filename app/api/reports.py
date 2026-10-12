@@ -667,6 +667,10 @@ async def submit_get(
         "categories": categories,
         "display_step": _compute_step_label(current_step, has_locations),
         "submit_path": tenant.path,
+        # Offered only what the server keeps: a choice it would override, or an
+        # address no notice is ever sent to, is not asked for.
+        "mode_choice": settings.submission_mode_enabled,
+        "email_notice": settings.notify_email_enabled,
     }
     if flash_error:
         ctx["error"] = flash_error
@@ -792,7 +796,8 @@ async def submit_post(
         if effective_mode == "confidential":
             name_stripped = confidential_name.strip()
             contact_stripped = confidential_contact.strip()
-            email_stripped = secure_email.strip()
+            # No notice is sent with mail off: the address is not kept for nothing.
+            email_stripped = secure_email.strip() if settings.notify_email_enabled else ""
             state["confidential_name"] = name_stripped
             state["confidential_contact"] = contact_stripped
             state["secure_email"] = email_stripped

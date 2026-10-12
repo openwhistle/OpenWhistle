@@ -648,11 +648,14 @@ async def test_line_breaks_count_once_as_in_the_browser(
 @pytest.mark.asyncio
 @pytest.mark.parametrize("email", ["jane.example.com", "jane@", "jane@proton", "a b@c.de"])
 async def test_a_mistyped_notification_address_is_caught_on_the_form(
-    client: AsyncClient, email: str
+    client: AsyncClient, email: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """The form is novalidate, so type=email checks nothing: the address was
     stored as typed and the whistleblower waited for mail that never came."""
+    from app.config import settings
     from tests.test_submit_prg import _post, _step
+
+    monkeypatch.setattr(settings, "notify_email_enabled", True)  # else no address is taken
 
     await _post(
         client, submission_mode="confidential", confidential_name="Jane", secure_email=email
