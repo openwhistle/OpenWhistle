@@ -34,6 +34,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `alembic upgrade head`, measured with a 20 s wrapper; the liveness probe killed the pod after 105 s with no
   startup probe). Added a `startupProbe` allowing 10 minutes, `seccompProfile: RuntimeDefault` (Pod Security
   `restricted`) and `automountServiceAccountToken: false`.
+- **The Ansible role failed on Debian 12 and Ubuntu 24.04**: `pip install docker` as root stops with
+  `externally-managed-environment` (PEP 668; reproduced in `debian:12`). The Docker SDK now comes from the
+  distribution package `python3-docker`.
 
 ## [2.2.1] — 2026-10-12
 

@@ -6,7 +6,9 @@
       - curl
       - gnupg
       - lsb-release
-      - python3-pip
+      # The Docker SDK community.docker needs, from the distribution: `pip install docker`
+      # as root fails on Debian 12 / Ubuntu 24.04 (PEP 668, externally-managed-environment).
+      - python3-docker
     state: present
     update_cache: true
   when: ansible_os_family == "Debian"
@@ -53,8 +55,3 @@
     name: docker
     enabled: true
     state: started
-
-- name: Install Docker SDK for Python (needed for community.docker modules)
-  ansible.builtin.pip:
-    name: docker
-    state: present

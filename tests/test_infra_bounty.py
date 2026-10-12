@@ -112,3 +112,14 @@ def test_the_chart_starts_slowly_and_meets_pod_security_restricted() -> None:
     assert "automountServiceAccountToken: false" in rendered
     assert "type: RuntimeDefault" in rendered
     assert "startupProbe:" in rendered
+
+
+def test_the_docker_sdk_comes_from_the_distribution_not_from_pip() -> None:
+    """`pip3 install docker` as root on debian:12 stops with externally-managed-environment
+    (PEP 668), so the role failed on Debian 12 and Ubuntu 24.04. community.docker needs it."""
+    import yaml
+
+    tasks = yaml.safe_load((ROOT / "ansible/roles/openwhistle/tasks/docker.yml").read_text())
+    assert not [t for t in tasks if "ansible.builtin.pip" in t or "pip" in t], "pip install"
+    packages = [p for t in tasks for p in (t.get("ansible.builtin.apt") or {}).get("name", [])]
+    assert "python3-docker" in packages

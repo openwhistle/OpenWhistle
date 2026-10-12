@@ -105,6 +105,20 @@
    "old": "automountServiceAccountToken: false",
    "new": "automountServiceAccountToken: true",
    "tests": "H"
+  },
+  {
+   "id": "ansible-docker-sdk-via-pip",
+   "file": "ansible/roles/openwhistle/tasks/docker.yml",
+   "old": "- name: Enable and start Docker service",
+   "new": "- name: Install Docker SDK\n  ansible.builtin.pip:\n    name: docker\n\n- name: Enable and start Docker service",
+   "tests": "N"
+  },
+  {
+   "id": "ansible-no-python3-docker",
+   "file": "ansible/roles/openwhistle/tasks/docker.yml",
+   "old": "      - python3-docker\n",
+   "new": "      - python3-pip\n",
+   "tests": "N"
   }
  ]
 }
