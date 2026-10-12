@@ -12,6 +12,8 @@
         .lg-with-demo > * { grid-column: 1; }
         .lg-with-demo > .lg-header { grid-column: 1 / -1; }
         .lg-with-demo > .demo-credentials { grid-column: 2; grid-row: 2 / span 8; }
+        /* The credentials box sits between the panels in the source, so `.panel + .panel` misses. */
+        .lg-with-demo > .panel ~ .panel { margin-top: 1.25rem; }
         .lg-second-admin { font-size: 0.8rem; color: var(--muted); margin-top: 0.75rem; }
     }
     .lg-header { margin-bottom: 2rem; animation: fadeSlideIn 0.5s ease both; }

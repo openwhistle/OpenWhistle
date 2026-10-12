@@ -728,10 +728,15 @@ strong {
   line-height: 1rem;
 }
 .detail-row {
-  align-items: center;
+  align-items: baseline;
   display: flex;
   gap: 0.5rem;
   margin-bottom: 0.75rem;
+}
+/* Beside its value, not above it: the label's own bottom margin lifted it
+   off the value's baseline. */
+.detail-row .detail-label {
+  margin-bottom: 0;
 }
 .panel-header,
 .panel-header-title {
@@ -1251,6 +1256,31 @@ input[type="file"].form-control::file-selector-button {
 pre {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  /* DESIGN.md: a code block is an inverse fill in both themes. */
+  background: var(--surface-dark);
+  border-radius: var(--radius-sm);
+  color: var(--on-dark);
+  padding: 0.75rem 1rem;
+}
+/* An inline code chip inside a block: its background matched the card and its
+   padding indented only the first line. */
+pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+}
+/* The long-form admin pages (system, retention, telephone channel) write plain
+   headings, paragraphs and lists inside a .card, and the reset strips their
+   spacing and the numbers of an ordered list. */
+.card > * + * {
+  margin-top: 0.75rem;
+}
+.card ol {
+  list-style: decimal;
+  padding-left: 1.25rem;
+}
+.card li + li {
+  margin-top: 0.375rem;
 }
 /* A long unbreakable value (a German status badge — "Rückmeldung ausstehend" —
    is wider than its English equivalent and forces a nowrap badge) can widen
@@ -2588,7 +2618,9 @@ a.attachment-name:hover {
   align-items: start;
   display: grid;
   gap: 1.25rem;
-  grid-template-columns: 1fr 2fr;
+  /* Halves: in a third, the account facts wrapped every value onto two or
+     three lines ("Bei jeder Anmeldung erforderlich"). */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .inline-form {
   display: inline;
@@ -2708,6 +2740,10 @@ a.attachment-name:hover {
   flex: 1 1 16rem;
   margin: 0;
   min-width: 0;
+}
+.dash-search > .form-hint {
+  flex-basis: 100%;
+  margin-top: 0;
 }
 .audit-detail {
   display: flex;

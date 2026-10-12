@@ -37,6 +37,11 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Found in the Chrome check**: on /admin/stats a category with 75 % of all reports drew a full bar
+  (bars were scaled to the largest category); the dashboard's search button sat beside the hint, below
+  the field; the system, retention and telephone-channel cards had no spacing, lost their step numbers
+  and showed the telemetry request as an unbordered chip; the account facts wrapped in a third of the
+  page; on the review stack the local-review and sign-in panels touched.
 - **A correct PIN cleared the case's lockout**: whoever knows a case number could lock it with wrong PINs and
   probe again; the lock gone meant the reporter had signed in (899 s, then 0). The counter is left alone.
 - **The bundled nginx passed seven of the address headers the app strips** (Fastly, ingress-nginx, Envoy,

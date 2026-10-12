@@ -224,3 +224,87 @@ def test_an_alert_draws_its_bar(browser: Browser, base_url: str) -> None:
     ctx.close()
     assert edge[0] == "3px", edge
     assert edge[1] != edge[2], edge  # the bar is not the tint it sits on
+
+
+def test_a_panel_above_the_demo_credentials_keeps_its_gap(browser: Browser, base_url: str) -> None:
+    """With the local-review panel (the release Chrome check) the credentials box sits
+    between the two panels in the source, so `.panel + .panel` never matched and the
+    panels touched. The local-review markup is only on that stack; this adds its panel."""
+    ctx, page = _page(browser, base_url, 1440)
+    page.goto("/admin/login")
+    page.eval_on_selector(
+        ".demo-credentials",
+        "e => e.insertAdjacentHTML('beforebegin', '<div class=\"panel\" id=\"probe\">x</div>')",
+    )
+    gap = page.eval_on_selector(
+        "#probe",  # offsets, not boxes: the panels are still sliding in
+        """p => { const f = document.querySelector("form[action='/admin/login']").closest('.panel');
+                  return f.offsetTop - (p.offsetTop + p.offsetHeight); }""",
+    )
+    ctx.close()
+    assert gap >= 16, gap
+
+
+def test_the_search_button_sits_beside_the_search_field(browser: Browser, base_url: str) -> None:
+    """The hint lived inside the field's group, so the flex row aligned the button with
+    the hint's last line, below the field."""
+    ctx, page = _page(browser, base_url, 1440)
+    _admin_login(page, base_url, DEMO_ADMIN_USERNAME, DEMO_ADMIN_PASSWORD, DEMO_ADMIN_TOTP_SECRET)
+    page.goto("/admin/dashboard")
+    field = page.locator("#dash-search-q").bounding_box()
+    button = page.locator(".dash-search button[type='submit']").bounding_box()
+    ctx.close()
+    assert field and button and abs(field["y"] - button["y"]) <= 2, (field, button)
+
+
+def test_a_card_spaces_its_text_and_numbers_its_steps(browser: Browser, base_url: str) -> None:
+    """The reset stripped every margin and list number inside the long-form admin cards:
+    headings touched their text and "How it works" lost its 1-2-3-4."""
+    ctx, page = _page(browser, base_url, 1440)
+    _admin_login(page, base_url, DEMO_ADMIN_USERNAME, DEMO_ADMIN_PASSWORD, DEMO_ADMIN_TOTP_SECRET)
+    page.goto("/admin/retention")
+    found = page.eval_on_selector(
+        "#heading-how",
+        """h => [h.nextElementSibling.getBoundingClientRect().top
+                   - h.getBoundingClientRect().bottom,
+                 getComputedStyle(h.parentElement.querySelector('ol')).listStyleType]""",
+    )
+    ctx.close()
+    assert found[0] >= 8 and found[1] == "decimal", found
+
+
+def test_the_telemetry_request_reads_as_a_code_block(browser: Browser, base_url: str) -> None:
+    """The request sat in an inline code chip the colour of the card, its padding indenting
+    only "GET"; the labels beside their values were lifted off the line."""
+    ctx, page = _page(browser, base_url, 1440)
+    _admin_login(page, base_url, DEMO_ADMIN_USERNAME, DEMO_ADMIN_PASSWORD, DEMO_ADMIN_TOTP_SECRET)
+    page.goto("/admin/system")
+    found = page.eval_on_selector(
+        "#heading-telemetry",
+        """h => {
+            const card = h.parentElement, pre = card.querySelector('pre');
+            const text = pre.querySelector('code').firstChild, r = document.createRange();
+            const left = i => (r.setStart(text, i), r.setEnd(text, i + 1),
+                               r.getBoundingClientRect().left);
+            const label = card.querySelector('.detail-row .detail-label');
+            return [getComputedStyle(pre).backgroundColor, getComputedStyle(card).backgroundColor,
+                    left(0) - left(text.data.indexOf('User-Agent')),
+                    getComputedStyle(label).marginBottom];
+        }""",
+    )
+    ctx.close()
+    assert found[0] != found[1], found
+    assert abs(found[2]) < 1, found  # both lines start at the same x
+    assert found[3] == "0px", found
+
+
+def test_the_account_facts_get_half_the_page(browser: Browser, base_url: str) -> None:
+    """In a third of the page every account fact wrapped onto two or three lines."""
+    ctx, page = _page(browser, base_url, 1440)
+    _admin_login(page, base_url, DEMO_ADMIN_USERNAME, DEMO_ADMIN_PASSWORD, DEMO_ADMIN_TOTP_SECRET)
+    page.goto("/admin/account")
+    widths = page.eval_on_selector_all(
+        ".admin-split-grid > .panel", "els => els.map(e => e.getBoundingClientRect().width)"
+    )
+    ctx.close()
+    assert len(widths) == 2 and abs(widths[0] - widths[1]) < 2, widths

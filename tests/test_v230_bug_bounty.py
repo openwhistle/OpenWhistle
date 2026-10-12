@@ -743,3 +743,24 @@ async def test_concurrent_attachment_drafts_stay_below_the_limit(
     results = await asyncio.gather(*(upload(60) for _ in range(5)))
     assert used["bytes"] <= 800, (used, results)
     assert results.count(True) == 1
+
+
+@pytest.mark.asyncio
+async def test_a_category_bar_is_its_share_of_all_reports(
+    acting_as, db_session: AsyncSession
+) -> None:
+    """The category bars were scaled to the largest category: 75 % of all reports drew a
+    full bar beside the label "75 %", while the status bars beside them were shares."""
+    import re
+
+    from app.models.user import AdminRole
+    from app.services.report import create_report
+    from tests.test_v210_bug_bounty import _totp_user
+
+    for category in ("financial_fraud", "financial_fraud", "corruption"):
+        await create_report(db_session, category, "Counted on the stats page.")
+    client, act = acting_as
+    act(await _totp_user(db_session, AdminRole.admin))
+    html = (await client.get("/admin/stats")).text
+    bars = re.findall(r'stat-bar-fill-outline" data-pct="([\d.]+)"', html)
+    assert bars and abs(sum(map(float, bars)) - 100) < 1, bars
