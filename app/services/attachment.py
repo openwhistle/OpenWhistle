@@ -408,7 +408,7 @@ def _strip_pdf(data: bytes) -> bytes:
                 annot.pop(key, None)
     for obj in writer._objects:
         # A JPEG or JPEG 2000 image is the file as-is, header boxes included.
-        # pypdf cannot re-encode either, so the outer filters (a Flate around
+        # pypdf cannot re-encode either, so the outer filters (a /FlateDecode around
         # the JPEG) are undone and the cleaned file is stored under the image
         # filter alone. A JPEG behind a second filter used to be left alone,
         # EXIF and GPS and all.

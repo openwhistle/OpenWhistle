@@ -92,7 +92,7 @@ def test_bare_jpeg2000_codestream_loses_its_comment() -> None:
     Image.new("RGB", (8, 8), "red").save(buf, "JPEG2000", no_jp2=True)
     data = buf.getvalue()
     comment = b"\x00\x01SecretScanner"  # Rcom = 1: Latin text
-    siz_end = 4 + int.from_bytes(data[4:6], "big")  # COM comes after SIZ
+    siz_end = 4 + int.from_bytes(data[4:6], "big")  # a comment follows the image-size segment
     com = b"\xff\x64" + (2 + len(comment)).to_bytes(2, "big") + comment
     data = data[:siz_end] + com + data[siz_end:]
     assert Image.open(io.BytesIO(data)).size == (8, 8)
