@@ -117,8 +117,21 @@ jobs:
           outputs: type=image,name=${{ env.GHCR_IMAGE }},push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha,scope=${{ steps.platform.outputs.suffix }}
           cache-to: type=gha,mode=max,scope=${{ steps.platform.outputs.suffix }}
+          # The final stage runs `apk upgrade`; from cache it would ship the
+          # packages of whichever build first wrote that layer.
+          no-cache-filters: final
           provenance: true
           sbom: true
+
+      # The exact digest just pushed, before the merge job gives it a tag: a
+      # finding here fails the build, so no tag ever points at it. Same gate and
+      # exceptions as security.yml.
+      - name: Scan the pushed image
+        uses: docker://anchore/grype:v0.120.1@sha256:e4a44ef45d285b829ce6efe2642980329661bd2d18eab5fc539138d4adaebbbe
+        with:
+          args: >-
+            registry:${{ env.GHCR_IMAGE }}@${{ steps.build.outputs.digest }} --platform ${{ matrix.platform }}
+            --config .grype.yaml --only-fixed --fail-on negligible
 
       - name: Export digest
         env:

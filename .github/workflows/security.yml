@@ -31,8 +31,11 @@ jobs:
           uv export --frozen --all-extras --no-emit-project -o /tmp/requirements.txt
           uvx pip-audit==2.10.1 --disable-pip --no-deps --strict -r /tmp/requirements.txt
 
+  # grype is the vulnerability gate: Trivy rated v2.2.1's zlib CVE MEDIUM (grype:
+  # High), so its CRITICAL,HIGH filter passed an image with a fixed High CVE, and
+  # it does not match the python binary at all. Trivy stays for secrets only.
   image:
-    name: Trivy (container image)
+    name: Image scan (grype, Trivy secrets)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -47,9 +50,30 @@ jobs:
           push: false
           tags: openwhistle:scan
           cache-from: type=gha
+          # A cached final stage would scan last month's `apk upgrade`.
+          no-cache-filters: final
+      # Fails on any vulnerability with a fix, whatever its severity; the
+      # exceptions are reviewed one by one in .grype.yaml.
+      - uses: docker://anchore/grype:v0.120.1@sha256:e4a44ef45d285b829ce6efe2642980329661bd2d18eab5fc539138d4adaebbbe
+        with:
+          args: docker:openwhistle:scan --config .grype.yaml --only-fixed --fail-on negligible
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: openwhistle:scan
-          severity: CRITICAL,HIGH
-          ignore-unfixed: true
+          scanners: secret
           exit-code: "1"
+
+  # What users pull today: the image goes stale between releases while Alpine
+  # and Python publish fixes. A red Monday here means: cut a patch release.
+  published:
+    name: Image scan (published :latest)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: docker://anchore/grype:v0.120.1@sha256:e4a44ef45d285b829ce6efe2642980329661bd2d18eab5fc539138d4adaebbbe
+        with:
+          args: registry:ghcr.io/openwhistle/openwhistle:latest --config .grype.yaml --only-fixed --fail-on negligible
