@@ -195,7 +195,7 @@ async def test_stats_page_loads(client: AsyncClient, db_session: AsyncSession):
 
     r = await client.get("/admin/stats")
     assert r.status_code == 200
-    assert "Statistics" in r.text or "Statistiken" in r.text or "stat" in r.text.lower()
+    assert "<h1>Statistics</h1>" in r.text
 
 
 # ── report detail page ─────────────────────────────────────────────────────────

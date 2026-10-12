@@ -84,7 +84,7 @@ async def test_dashboard_default_pagination_renders(
 
     resp = await client.get("/admin/dashboard?page=1&per_page=25")
     assert resp.status_code == 200
-    assert "per_page" in resp.text or "25" in resp.text
+    assert '<option value="25" selected>' in resp.text
 
 
 @pytest.mark.asyncio
