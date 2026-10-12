@@ -19,6 +19,10 @@
   ],
   "G": [
    "tests/test_infra_bounty.py"
+  ],
+  "P": [
+   "tests/test_build_pins.py",
+   "tests/test_renovate.py"
   ]
  },
  "mutations": [
@@ -217,6 +221,34 @@
    "old": "    pytest_collectreport,\n",
    "new": "",
    "tests": "G"
+  },
+  {
+   "id": "pin-postgres-prod-floats",
+   "file": "docker-compose.prod.yml",
+   "old": "postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+   "new": "postgres:18-alpine",
+   "tests": "P"
+  },
+  {
+   "id": "pin-redis-ci-floats",
+   "file": ".github/workflows/perf.yml",
+   "old": "redis:8-alpine@sha256:3811787313eba226a2ef38658c6ccb91cd5e110edc89c37767de373120a0e5a0",
+   "new": "redis:8-alpine",
+   "tests": "P"
+  },
+  {
+   "id": "pin-postgres-j2-other-digest",
+   "file": "ansible/roles/openwhistle/templates/docker-compose.yml.j2",
+   "old": "postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+   "new": "postgres:18-alpine@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+   "tests": "P"
+  },
+  {
+   "id": "renovate-compose-pin-rule",
+   "file": "renovate.json",
+   "old": "[\"dockerfile\", \"docker-compose\"]",
+   "new": "[\"dockerfile\"]",
+   "tests": "P"
   }
  ]
 }

@@ -55,6 +55,10 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **The CI skip guard missed a skipped module**: a module-level skip (`importorskip`, `skip(allow_module_level=True)`)
   is a collect report, not a test report, so a run with a whole module not running stayed green (reproduced:
   exit 0). The guard moved to `tests/ci_skip_guard.py` and now reads collect reports too.
+- **`postgres:18-alpine` and `redis:8-alpine` floated on their tag** in every compose file, the Ansible template
+  and CI, while nginx, clamav and python were pinned by digest; the pin test checked only the major. Both are
+  pinned by digest everywhere, Renovate's `pinDigests` now covers the compose files, and the pin test requires
+  one digest per image.
 
 ## [2.2.1] — 2026-10-12
 
