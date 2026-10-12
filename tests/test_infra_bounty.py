@@ -123,3 +123,20 @@ def test_the_docker_sdk_comes_from_the_distribution_not_from_pip() -> None:
     assert not [t for t in tasks if "ansible.builtin.pip" in t or "pip" in t], "pip install"
     packages = [p for t in tasks for p in (t.get("ansible.builtin.apt") or {}).get("name", [])]
     assert "python3-docker" in packages
+
+
+def test_the_ansible_tls_block_has_the_same_tls_directives_as_the_bundled_nginx() -> None:
+    """The template lacked `ssl_session_tickets off` (openssl s_client showed a 86400 s ticket
+    lifetime hint there, none on the bundled nginx), and used 1d and another cache zone."""
+
+    def tls(text: str) -> dict[str, str]:
+        block = next(
+            s for s in re.findall(r"\n    server \{.*?\n    \}", text, re.S) if "ssl_" in s
+        )
+        found = re.findall(r"(?m)^\s*(ssl_(?!certificate)\w+)\s+([^;]+);", block)
+        return dict(found)
+
+    bundled = tls((ROOT / "nginx/nginx.conf").read_text())
+    template = tls(_render_role_template("nginx.conf.j2"))
+    assert bundled["ssl_session_tickets"] == "off"
+    assert template == bundled

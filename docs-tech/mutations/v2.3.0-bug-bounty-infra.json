@@ -119,6 +119,20 @@
    "old": "      - python3-docker\n",
    "new": "      - python3-pip\n",
    "tests": "N"
+  },
+  {
+   "id": "ansible-tls-tickets-on",
+   "file": "ansible/roles/openwhistle/templates/nginx.conf.j2",
+   "old": "        ssl_session_tickets off;\n",
+   "new": "",
+   "tests": "N"
+  },
+  {
+   "id": "ansible-tls-timeout-1d",
+   "file": "ansible/roles/openwhistle/templates/nginx.conf.j2",
+   "old": "        ssl_session_tickets off;\n",
+   "new": "        ssl_session_tickets off;\n        ssl_session_timeout 1d;\n",
+   "tests": "N"
   }
  ]
 }

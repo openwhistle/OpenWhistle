@@ -57,8 +57,10 @@ http {
         ssl_certificate_key /etc/letsencrypt/live/{{ openwhistle_domain }}/privkey.pem;
         ssl_protocols TLSv1.2 TLSv1.3;
         ssl_prefer_server_ciphers off;
-        ssl_session_cache shared:SSL:10m;
-        ssl_session_timeout 1d;
+        ssl_session_cache shared:ow_tls:10m;
+        # Session tickets are keyed by one long-lived server secret that would decrypt
+        # every recorded session later; resumption through the cache only.
+        ssl_session_tickets off;
 
         # Security headers (HSTS, X-Content-Type-Options, X-Frame-Options,
         # Referrer-Policy, CSP, …) are emitted by a single authoritative layer:

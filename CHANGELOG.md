@@ -37,6 +37,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **The Ansible role failed on Debian 12 and Ubuntu 24.04**: `pip install docker` as root stops with
   `externally-managed-environment` (PEP 668; reproduced in `debian:12`). The Docker SDK now comes from the
   distribution package `python3-docker`.
+- **The Ansible nginx template issued TLS session tickets** (`openssl s_client` showed a 86400 s ticket lifetime
+  hint; the bundled nginx issues none) and used another session cache and a 1 d timeout. It now has
+  `ssl_session_tickets off` and the bundled cache settings; a test compares every `ssl_*` directive of both.
 
 ## [2.2.1] — 2026-10-12
 
