@@ -138,11 +138,13 @@ class SecurityMiddleware:
                 for name, value in _STATIC_SECURITY_HEADERS.items():
                     mutable[name] = value
                 mutable["Content-Security-Policy"] = _build_csp(nonce)
-                # RFC 6797 §8.1: an HSTS host MUST NOT send this header over a
-                # connection that was not secure — the onion listener never is.
-                if not is_onion:
-                    mutable["Strict-Transport-Security"] = _HSTS
                 from app.config import settings  # noqa: PLC0415
+
+                # RFC 6797 §8.1: an HSTS host MUST NOT send this header over a
+                # connection that was not secure — the onion listener never is, and
+                # SECURE_COOKIES=false says the instance runs on plain HTTP on purpose.
+                if not is_onion and settings.secure_cookies:
+                    mutable["Strict-Transport-Security"] = _HSTS
 
                 # Onion-Location is a page-navigation hint (Tor Browser acts on
                 # it only for a top-level document load): scope to HTML so a

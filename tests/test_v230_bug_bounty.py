@@ -616,3 +616,16 @@ async def test_each_organisations_search_entry_counts_its_own_hits(
     ).all()
     hits = {org: json.loads(detail)["hits"] for org, detail in rows}
     assert hits[one.id] == 1 and hits[three.id] == 3, hits
+
+
+@pytest.mark.asyncio
+async def test_plain_http_carries_no_hsts(client: object, monkeypatch: pytest.MonkeyPatch) -> None:
+    """RFC 6797 § 8.1, quoted in the middleware: a host MUST NOT send HSTS over a
+    connection that is not secure. Only the onion listener was spared; an instance run
+    on plain HTTP on purpose (SECURE_COOKIES=false) sent it on every response."""
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "secure_cookies", False)
+    assert "strict-transport-security" not in (await client.get("/health")).headers  # type: ignore[attr-defined]
+    monkeypatch.setattr(settings, "secure_cookies", True)
+    assert "strict-transport-security" in (await client.get("/health")).headers  # type: ignore[attr-defined]
