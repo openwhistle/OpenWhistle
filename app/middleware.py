@@ -24,6 +24,15 @@ _IP_REVEAL_HEADERS = frozenset(
         "x-azure-clientip",  # Azure Front Door
         "x-azure-socketip",
         "x-appengine-user-ip",
+        "cf-pseudo-ipv4",  # Cloudflare
+        "fly-client-ip",  # Fly.io
+        "x-nf-client-connection-ip",  # Netlify
+        "incap-client-ip",  # Imperva
+        "x-vercel-forwarded-for",
+        "x-proxyuser-ip",  # Google
+        "x-originating-ip",
+        "x-forwarded",
+        "client-ip",
     ]
 )
 

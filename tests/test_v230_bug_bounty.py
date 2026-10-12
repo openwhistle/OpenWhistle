@@ -29,3 +29,20 @@ async def test_a_correct_pin_leaves_the_lockout_as_it_was(
 
     _, locked_after = await authenticate_whistleblower(db_session, redis, report.case_number, "x")
     assert locked_after > 0
+
+
+# ── nginx clears every header the app knows to carry an address ─────────────
+
+
+def test_nginx_clears_every_header_the_app_strips() -> None:
+    """2.2.1 taught the app seven more address headers (Fastly, Envoy, Azure, App Engine,
+    ingress-nginx, Cloudflare IPv6); the bundled nginx kept clearing the first seven only,
+    while its comment said no IP data could reach the app "under any circumstances"."""
+    import re
+    from pathlib import Path
+
+    from app.middleware import _IP_REVEAL_HEADERS
+
+    conf = (Path(__file__).parents[1] / "nginx/snippets/proxy-headers.conf").read_text()
+    cleared = {h.lower() for h in re.findall(r'^proxy_set_header\s+(\S+)\s+"";', conf, re.M)}
+    assert set(_IP_REVEAL_HEADERS) <= cleared, sorted(set(_IP_REVEAL_HEADERS) - cleared)
