@@ -25,6 +25,8 @@ down_revision: str | None = "a7c2e6f0b807"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
+__all__ = ["branch_labels", "depends_on", "down_revision", "downgrade", "revision", "upgrade"]
+
 
 def upgrade() -> None:
     # op.execute with a bound parameter: runs online and renders offline (--sql).

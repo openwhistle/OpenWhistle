@@ -34,6 +34,8 @@ down_revision: str | None = "c9e4a8b2d009"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
+__all__ = ["branch_labels", "depends_on", "down_revision", "downgrade", "revision", "upgrade"]
+
 log = logging.getLogger("alembic.runtime.migration")
 
 _TOKEN = b"gAAAA"  # a Fernet token's base64url start; anything else is legacy plaintext

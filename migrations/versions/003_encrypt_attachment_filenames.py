@@ -25,6 +25,8 @@ down_revision: str | None = "3c1f0a7e9b42"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
+__all__ = ["branch_labels", "depends_on", "down_revision", "downgrade", "revision", "upgrade"]
+
 log = logging.getLogger("alembic.runtime.migration")
 
 

@@ -7,6 +7,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.2.1] — 2026-10-12
+
 ### Added
 
 - The demo has a second admin, `demo2` (same password and code), so a four-eyes deletion can be tried there; with
@@ -1601,7 +1603,8 @@ Remaining lower-severity findings are tracked in GitHub issues #42–#46.
 - **Rate limiting by session token** (not IP) to maintain full anonymity
 - **alembic upgrade head** on every startup to guarantee migration consistency
 
-[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.2.0...HEAD
+[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.2.1...HEAD
+[2.2.1]: https://github.com/openwhistle/OpenWhistle/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/openwhistle/OpenWhistle/compare/v2.1.1...v2.2.0
 [2.1.1]: https://github.com/openwhistle/OpenWhistle/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/openwhistle/OpenWhistle/compare/v2.0.1...v2.1.0

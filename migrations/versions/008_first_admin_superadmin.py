@@ -23,6 +23,8 @@ down_revision: str | None = "d4f9b3c7e504"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
+__all__ = ["branch_labels", "depends_on", "down_revision", "downgrade", "revision", "upgrade"]
+
 
 def upgrade() -> None:
     op.execute(
