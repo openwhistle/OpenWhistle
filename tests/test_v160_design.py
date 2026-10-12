@@ -889,6 +889,7 @@ def test_every_template_class_exists_in_css_or_is_a_documented_js_hook() -> None
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("tenants")
 async def test_organisation_create_and_deactivate_succeed_with_valid_csrf(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
@@ -928,6 +929,7 @@ async def test_organisation_create_and_deactivate_succeed_with_valid_csrf(
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("tenants")
 async def test_organisation_create_and_deactivate_fail_without_valid_csrf(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
@@ -970,6 +972,7 @@ async def test_organisation_create_and_deactivate_fail_without_valid_csrf(
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("tenants")
 async def test_organisation_deactivate_is_a_danger_action(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:

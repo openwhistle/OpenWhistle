@@ -806,3 +806,26 @@ def test_the_search_entry_says_its_count_is_of_content_matches() -> None:
     en = json.loads((locales / "en.json").read_text())
     de = json.loads((locales / "de.json").read_text())
     assert "content" in en["audit.detail.hits"] and "Inhalt" in de["audit.detail.hits"]
+
+
+@pytest.mark.asyncio
+async def test_without_multi_tenancy_there_are_no_organisations_to_create(
+    acting_as, db_session: AsyncSession
+) -> None:
+    """The first account is a superadmin, so every single-tenant installation offered
+    "Create organisation": the new one was listed as active and its /submit/<slug>
+    answered 404."""
+    from sqlalchemy import func, select
+
+    from app.models.organisation import Organisation
+    from app.models.user import AdminRole
+    from tests.test_v210_bug_bounty import _totp_user
+
+    client, act = acting_as
+    act(await _totp_user(db_session, AdminRole.superadmin))
+    before = await db_session.scalar(select(func.count(Organisation.id)))
+    assert (await client.get("/admin/organisations")).status_code == 404
+    created = await client.post("/admin/organisations", data={"name": "Inert", "slug": "inert"})
+    assert created.status_code == 404
+    assert await db_session.scalar(select(func.count(Organisation.id))) == before
+    assert "/admin/organisations" not in (await client.get("/admin/dashboard")).text

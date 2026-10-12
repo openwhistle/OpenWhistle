@@ -696,6 +696,7 @@ async def test_without_multi_tenancy_the_dashboard_shows_no_reporting_link(
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("tenants")
 async def test_the_slug_restart_is_refused(client: AsyncClient) -> None:
     """/submit/restart is the wizard's own route: that org's wizard would be unreachable."""
     root = AdminUser(

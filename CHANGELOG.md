@@ -46,6 +46,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   shared the lookup form's 540 px column, so at 1920 px every deadline label wrapped, "§17" apart from "I".
 - **The audit log named a case by the start of its UUID** ("251fc6b0-079…") while its filter asked for a case
   number. It shows the case number; a deleted case keeps the UUID, without a link to a page that is gone.
+- **Every single-tenant installation offered "Create organisation"**: the first account is a superadmin, and
+  an organisation it created was listed as active while its `/submit/<slug>` answered 404. Without
+  `MULTI_TENANCY_ENABLED` the menu entry is gone and `/admin/organisations` is a 404.
 - **"Matching reports 0" after a search that found the case**: the count is of reports whose decrypted text
   matched, not of what the search listed. The label says so.
 - **A correct PIN cleared the case's lockout**: whoever knows a case number could lock it with wrong PINs and

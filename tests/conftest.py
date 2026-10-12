@@ -427,6 +427,14 @@ from tests.ci_skip_guard import (  # noqa: E402, F401  hooks, found by name
 )
 
 
+@pytest.fixture
+def tenants(monkeypatch: pytest.MonkeyPatch) -> None:
+    """MULTI_TENANCY_ENABLED: /admin/organisations exists only with it."""
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "multi_tenancy_enabled", True)
+
+
 @pytest_asyncio.fixture(loop_scope="function")
 async def no_csrf():  # type: ignore[no-untyped-def]
     from app.csrf import validate_csrf

@@ -16,6 +16,7 @@ from app.api.deps import (
     require_admin,
     require_instance_admin,
     require_superadmin,
+    require_tenants,
 )
 from app.config import settings
 from app.csrf import validate_csrf, validate_csrf_header
@@ -1945,7 +1946,7 @@ async def system_telemetry_reset_id(
 async def organisations_page(
     request: Request,
     db: AsyncSession = Depends(get_db),
-    current_user: AdminUser = Depends(require_superadmin),
+    current_user: AdminUser = Depends(require_tenants),
 ) -> HTMLResponse:
     from sqlalchemy import select
 
@@ -1974,7 +1975,7 @@ async def create_organisation(
     name: Text128,
     slug: Text64,
     db: AsyncSession = Depends(get_db),
-    current_user: AdminUser = Depends(require_superadmin),
+    current_user: AdminUser = Depends(require_tenants),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
     import re
@@ -2010,7 +2011,7 @@ async def create_organisation(
 async def deactivate_organisation(
     org_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: AdminUser = Depends(require_superadmin),
+    current_user: AdminUser = Depends(require_tenants),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
     from sqlalchemy import select

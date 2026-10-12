@@ -104,6 +104,16 @@ async def require_instance_admin(current_user: AdminUser = Depends(require_admin
     return current_user
 
 
+async def require_tenants(current_user: AdminUser = Depends(require_superadmin)) -> AdminUser:
+    """/admin/organisations. Without MULTI_TENANCY_ENABLED an organisation it created
+    was listed as active while its reporting link answered 404: there are none to manage."""
+    from app.config import settings  # noqa: PLC0415
+
+    if not settings.multi_tenancy_enabled:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    return current_user
+
+
 def may_run_the_instance(user: AdminUser) -> bool:
     """require_instance_admin as a predicate, for the menu and the dashboard."""
     from app.config import settings  # noqa: PLC0415
