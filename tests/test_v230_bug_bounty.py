@@ -696,3 +696,50 @@ async def test_a_status_change_without_its_audit_entry_does_not_stand(
     finally:
         await engine.dispose()
     assert status == ReportStatus.received
+
+
+# ── Drafts cannot push Redis past its limit ─────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_concurrent_attachment_drafts_stay_below_the_limit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The room check measured Redis before the upload and without its size, and nothing
+    serialised it: uploads arriving together all passed just below 80 % and together
+    went past maxmemory, where noeviction refuses every write (admin sessions too)."""
+    import asyncio
+
+    import app.api.reports as reports
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "draft_redis_memory_percent", 80)
+    used = {"bytes": 700}
+
+    class _Redis:
+        async def info(self, section: str) -> dict[str, int]:
+            await asyncio.sleep(0)  # concurrent requests interleave here
+            return {"maxmemory": 1000, "used_memory": used["bytes"]}
+
+        def lock(self, *args: object, **kwargs: object) -> _Lock:
+            return _Lock()
+
+    shared = asyncio.Lock()
+
+    class _Lock:  # redis.asyncio.lock.Lock: both coroutines
+        async def acquire(self) -> bool:
+            return await shared.acquire()
+
+        async def release(self) -> None:
+            shared.release()
+
+    async def upload(size: int) -> bool:
+        async with reports._draft_room(_Redis(), size) as room:  # type: ignore[arg-type]
+            if room:
+                await asyncio.sleep(0)
+                used["bytes"] += size
+            return room
+
+    results = await asyncio.gather(*(upload(60) for _ in range(5)))
+    assert used["bytes"] <= 800, (used, results)
+    assert results.count(True) == 1

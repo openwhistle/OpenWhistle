@@ -1,12 +1,13 @@
 """Whistleblower-facing endpoints: submit (multi-step), status, reply."""
 
 import asyncio
+import contextlib
 import json
 import logging
 import re
 import secrets
 import uuid
-from collections.abc import Awaitable
+from collections.abc import AsyncIterator, Awaitable
 from dataclasses import dataclass
 from typing import Any, cast
 from urllib.parse import urlsplit
@@ -468,8 +469,9 @@ async def _save_submission(redis: Redis, session_id: str, state: dict[str, Any])
     await redis.set(_submission_key(session_id), token, ex=_SUBMISSION_TTL)
 
 
-async def _redis_has_room(redis: Redis) -> bool:
-    """False when Redis is past DRAFT_REDIS_MEMORY_PERCENT of its maxmemory.
+async def _redis_has_room(redis: Redis, incoming: int = 0) -> bool:
+    """False when Redis, with ``incoming`` more bytes, would pass
+    DRAFT_REDIS_MEMORY_PERCENT of its maxmemory.
 
     Drafts carry attachments; refusing new ones near the limit keeps room for
     sessions and rate-limit counters. Without maxmemory there is no limit to
@@ -480,7 +482,31 @@ async def _redis_has_room(redis: Redis) -> bool:
     except Exception:  # noqa: BLE001
         return True
     limit = int(info.get("maxmemory", 0))
-    return not limit or int(info["used_memory"]) < limit * settings.draft_redis_memory_percent / 100
+    used = int(info["used_memory"]) + incoming
+    return not limit or used < limit * settings.draft_redis_memory_percent / 100
+
+
+@contextlib.asynccontextmanager
+async def _draft_room(redis: Redis, incoming: int) -> AsyncIterator[bool]:
+    """Whether a draft of ``incoming`` bytes fits, with the check and the save under one
+    lock across replicas: uploads arriving together are measured one after another,
+    each with the ones before it stored, so together they cannot pass maxmemory (where
+    noeviction refuses every write, admin sessions too). Not got in time: no room."""
+    from redis.exceptions import LockError  # noqa: PLC0415
+
+    lock = redis.lock("openwhistle:lock:draft-room", timeout=60, blocking_timeout=30)
+    try:
+        await lock.acquire()
+    except LockError:
+        yield False
+        return
+    try:
+        yield await _redis_has_room(redis, incoming)
+    finally:
+        try:
+            await lock.release()
+        except LockError:  # held past its timeout and taken over; nothing to undo
+            pass
 
 
 async def _get_or_create_submission_session(
@@ -862,24 +888,29 @@ async def submit_post(
             return await _fail(_STEP_ATTACHMENTS, "attachments_rejected", {"files": file_error})
         if sum(len(ft[2]) for ft in file_tuples) > MAX_DRAFT_ATTACHMENT_BYTES:
             return await _fail(_STEP_ATTACHMENTS, "attachments_too_large")
-        if file_tuples and not await _redis_has_room(redis):
-            return await _fail(_STEP_ATTACHMENTS, "attachments_no_room")
-
         # A file input is always empty on revisit, so Next with nothing chosen
         # keeps what is attached; new files (already scanned and stripped by
         # read_upload_files) replace it.
         if file_tuples:
             import base64 as _b64
 
-            state["file_meta"] = [{"filename": ft[0], "size": len(ft[2])} for ft in file_tuples]
-            state["file_data"] = [
-                {
-                    "filename": ft[0],
-                    "content_type": ft[1],
-                    "data": _b64.b64encode(ft[2]).decode(),
-                }
-                for ft in file_tuples
-            ]
+            # Stored as base64: four bytes for every three.
+            incoming = sum(len(ft[2]) for ft in file_tuples) * 4 // 3
+            async with _draft_room(redis, incoming) as room:
+                if not room:
+                    return await _fail(_STEP_ATTACHMENTS, "attachments_no_room")
+                state["file_meta"] = [{"filename": ft[0], "size": len(ft[2])} for ft in file_tuples]
+                state["file_data"] = [
+                    {
+                        "filename": ft[0],
+                        "content_type": ft[1],
+                        "data": _b64.b64encode(ft[2]).decode(),
+                    }
+                    for ft in file_tuples
+                ]
+                state["step"] = _STEP_REVIEW
+                await _save_submission(redis, session_id, state)
+            return _redirect_after_post()
         state["step"] = _STEP_REVIEW
         await _save_submission(redis, session_id, state)
         return _redirect_after_post()
