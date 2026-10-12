@@ -743,6 +743,7 @@
   "upload.error.scan_unavailable": "\"{name}\" não pôde ser verificado agora e não foi armazenado. Tente novamente em alguns minutos.",
   "login.error.sso_link_session": "Nada foi vinculado: sua sessão havia expirado. Entre e escolha “Vincular login único” em Minha conta novamente.",
   "admin.sso.link": "Vincular login único",
+  "admin.sso.continue": "Continuando para o login único…",
   "admin.sso.unlink": "Desvincular login único",
   "admin.sso.unlink_confirm": "Desvincular o login único da sua conta? Depois você entra apenas com sua senha.",
   "admin.sso.result.linked": "O login único está vinculado. Você pode entrar com ele; o código do seu aplicativo autenticador continua obrigatório.",

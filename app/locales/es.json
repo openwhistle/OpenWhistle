@@ -743,6 +743,7 @@
   "upload.error.scan_unavailable": "No se pudo comprobar '{name}' en busca de virus en este momento y no se guardó. Inténtelo de nuevo en unos minutos.",
   "login.error.sso_link_session": "No se vinculó nada: su sesión había terminado. Inicie sesión y vuelva a elegir «Vincular inicio de sesión único» en Mi cuenta.",
   "admin.sso.link": "Vincular inicio de sesión único",
+  "admin.sso.continue": "Continuando al inicio de sesión único…",
   "admin.sso.unlink": "Desvincular inicio de sesión único",
   "admin.sso.unlink_confirm": "¿Desvincular el inicio de sesión único de su cuenta? Después iniciará sesión solo con su contraseña.",
   "admin.sso.result.linked": "El inicio de sesión único está vinculado. Puede iniciar sesión con él; seguirá siendo necesario su código del autenticador.",

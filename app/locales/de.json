@@ -743,6 +743,7 @@
   "upload.error.scan_unavailable": "„{name}“ konnte gerade nicht auf Viren geprüft werden und wurde nicht gespeichert. Versuchen Sie es in einigen Minuten erneut.",
   "login.error.sso_link_session": "Es wurde nichts verknüpft: Ihre Sitzung war abgelaufen. Melden Sie sich an und wählen Sie unter „Mein Konto“ erneut „Single Sign-on verknüpfen“.",
   "admin.sso.link": "Single Sign-on verknüpfen",
+  "admin.sso.continue": "Weiter zum Single Sign-on …",
   "admin.sso.unlink": "Single Sign-on trennen",
   "admin.sso.unlink_confirm": "Single Sign-on von Ihrem Konto trennen? Danach melden Sie sich nur noch mit Ihrem Passwort an.",
   "admin.sso.result.linked": "Single Sign-on ist verknüpft. Sie können sich damit anmelden; der Code Ihrer Authenticator-App bleibt erforderlich.",

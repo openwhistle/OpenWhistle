@@ -6,6 +6,7 @@ and a lost authenticator locked its admin out for good.
 
 from __future__ import annotations
 
+import html
 import importlib.util
 import json
 import logging
@@ -77,8 +78,13 @@ async def _start_link(client: AsyncClient, csrf: str) -> dict[str, str]:
         resp = await client.post(
             "/admin/oidc/link", data={"csrf_token": csrf}, follow_redirects=False
         )
-    assert resp.status_code == 303, resp.text
-    query = parse_qs(urlsplit(resp.headers["location"]).query)
+    # A page, not a 303: form-action 'self' made Chrome refuse a form's redirect to
+    # the identity provider, so the link button did nothing.
+    assert resp.status_code == 200, resp.text
+    assert "form-action 'self'" in resp.headers["content-security-policy"]
+    url = html.unescape(re.search(r'http-equiv="refresh" content="0;url=([^"]+)"', resp.text)[1])
+    assert url.startswith(_FAKE_METADATA["authorization_endpoint"])
+    query = parse_qs(urlsplit(url).query)
     return {"state": query["state"][0], "nonce": query["nonce"][0]}
 
 

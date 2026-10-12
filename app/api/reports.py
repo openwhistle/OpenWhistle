@@ -525,10 +525,12 @@ async def _get_or_create_submission_session(
 def _set_submission_cookie(
     response: Response | RedirectResponse, session_id: str, request: Request
 ) -> None:
+    # No max_age, here and on ow-status-session: a session cookie ends with the
+    # browser. With one, a shared office PC kept the draft and the open case for
+    # the next person until Redis expired them. Redis still bounds both.
     response.set_cookie(
         "ow-submission-session",
         session_id,
-        max_age=_SUBMISSION_TTL,
         httponly=True,
         samesite="lax",
         secure=cookie_secure(request),
@@ -1265,7 +1267,6 @@ async def status_post(
     response.set_cookie(
         "ow-status-session",
         status_session_key,
-        max_age=7200,
         httponly=True,
         samesite="lax",
         secure=cookie_secure(request),
@@ -1349,7 +1350,6 @@ async def reply_post(
     response.set_cookie(
         "ow-status-session",
         fresh_key,
-        max_age=remaining,
         httponly=True,
         samesite="lax",
         secure=cookie_secure(request),

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{# POST /admin/oidc/link answers with this page, not a 303: the CSP's form-action
+   'self' covers a form's redirects too, so Chrome refused the hop to the
+   identity provider and the button did nothing. A meta refresh is a navigation
+   of its own. #}
+{% block head %}<meta http-equiv="refresh" content="0;url={{ url }}">{% endblock %}
+
+{% block content %}
+<div class="container-sm">
+    <p>{{ t('admin.sso.continue') }}</p>
+    <a href="{{ url }}" class="btn btn-primary">{{ t('admin.sso.link') }}</a>
+</div>
+{% endblock %}

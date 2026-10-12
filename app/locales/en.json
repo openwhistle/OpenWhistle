@@ -743,6 +743,7 @@
   "upload.error.scan_unavailable": "'{name}' could not be checked for viruses right now and was not stored. Try again in a few minutes.",
   "login.error.sso_link_session": "Nothing was linked: your session had ended. Sign in, then choose “Link single sign-on” under My account again.",
   "admin.sso.link": "Link single sign-on",
+  "admin.sso.continue": "Continuing to single sign-on…",
   "admin.sso.unlink": "Unlink single sign-on",
   "admin.sso.unlink_confirm": "Unlink single sign-on from your account? You then sign in with your password only.",
   "admin.sso.result.linked": "Single sign-on is linked. You can sign in with it; your authenticator code is still required.",

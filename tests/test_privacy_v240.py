@@ -307,3 +307,68 @@ async def test_a_pin_typed_in_capitals_opens_the_case(client, db_session) -> Non
         db_session, await get_redis(), report.case_number, pin.upper()
     )
     assert found is not None and found.id == report.id
+
+
+@pytest.mark.asyncio
+async def test_reporter_sessions_end_with_the_browser(client, db_session) -> None:  # noqa: ANN001
+    """A persistent cookie kept the draft and the open case on a shared PC after closing."""
+    from app.services.report import create_report
+
+    await client.get("/submit")
+    draft = [h for h in client.cookies.jar if h.name == "ow-submission-session"]
+    assert draft and draft[0].expires is None
+
+    report, pin = await create_report(db_session, "financial_fraud", "Sent from a shared PC.")
+    await client.get("/status")
+    resp = await client.post(
+        "/status",
+        data={"case_number": report.case_number, "pin": pin, "csrf_token": client.cookies["ow_csrf"]},
+        follow_redirects=False,
+    )
+    cookie = next(h for h in resp.headers.get_list("set-cookie") if h.startswith("ow-status-session="))
+    assert "max-age" not in cookie.lower() and "expires" not in cookie.lower()
+
+
+def test_ldap_refuses_to_bind_in_clear_text() -> None:
+    """Measured: the default settings sent the service account's password readable on the wire."""
+    from app.config import Settings
+
+    base = {"secret_key": "x" * 40, "ldap_enabled": True, "ldap_server": "dc.corp"}
+    with pytest.raises(ValueError, match="clear text"):
+        Settings(**base)
+    assert Settings(**base, ldap_start_tls=True).ldap_start_tls
+    assert Settings(**base, ldap_use_ssl=True, ldap_port=636).ldap_use_ssl
+
+
+def test_a_logo_url_a_browser_reads_as_another_server_is_ignored() -> None:
+    from app.config import Settings
+
+    assert Settings(secret_key="x" * 40, brand_logo_url="/\\evil.example/x.png").brand_logo_url == ""
+    logo = Settings(secret_key="x" * 40, brand_logo_url="/static/logo.svg").brand_logo_url
+    assert logo == "/static/logo.svg"
+
+
+@pytest.mark.asyncio
+async def test_an_sso_login_finishes_only_in_the_browser_that_started_it(
+    client, monkeypatch: pytest.MonkeyPatch  # noqa: ANN001
+) -> None:
+    """A callback URL with someone else's code and state signed this browser in as them."""
+    from unittest.mock import AsyncMock, MagicMock
+    from urllib.parse import parse_qs, urlsplit
+
+    from app.config import settings
+    from app.services import oidc as oidc_service
+    from tests.test_oidc import _FAKE_METADATA
+
+    monkeypatch.setattr(settings, "oidc_enabled", True)
+    monkeypatch.setattr(oidc_service, "_get_metadata", AsyncMock(return_value=_FAKE_METADATA))
+    started = await client.get("/admin/oidc/authorize", follow_redirects=False)
+    assert "ow_oidc_login=" in started.headers["set-cookie"]
+    state = parse_qs(urlsplit(started.headers["location"]).query)["state"][0]
+
+    client.cookies.clear()  # the victim's browser: never asked for this state
+    token_endpoint = MagicMock()
+    monkeypatch.setattr(oidc_service.httpx, "AsyncClient", token_endpoint)
+    resp = await client.get(f"/admin/oidc/callback?code=c&state={state}", follow_redirects=False)
+    assert resp.status_code == 200 and "ow_session" not in resp.headers.get("set-cookie", "")
+    token_endpoint.assert_not_called()  # refused before the code was even exchanged

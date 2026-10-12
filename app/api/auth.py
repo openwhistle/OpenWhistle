@@ -460,7 +460,7 @@ async def login_mfa_post(
 
     # One-time use (consume_totp), except for the demo accounts, whose static
     # code is intentionally reusable.
-    demo_code = settings.demo_mode and verify_demo_totp(totp_code, user.username)
+    demo_code = settings.demo_mode and verify_demo_totp(totp_code, user.username, user.totp_secret)
     code_valid = demo_code or await consume_totp(redis, user.id, user.totp_secret, totp_code)
 
     if not code_valid:
@@ -646,15 +646,35 @@ async def session_refresh(
 # ── OIDC ─────────────────────────────────────────────────────────────────────
 
 
+# The login state belongs to the browser that asked for it. Unbound, a callback
+# URL with someone else's code and state signed this browser in as them
+# (login CSRF), up to their second factor.
+_OIDC_LOGIN_COOKIE = "ow_oidc_login"
+
+
 @router.get("/oidc/authorize", response_model=None)
 async def oidc_authorize(
+    request: Request,
     redis: Redis = Depends(get_redis),
 ) -> RedirectResponse:
     if not settings.oidc_enabled:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
-    url = await oidc_service.create_authorization_url(redis)
-    return RedirectResponse(url, status_code=302)
+    browser = secrets.token_urlsafe(32)
+    url = await oidc_service.create_authorization_url(
+        redis, binding=oidc_service.browser_binding(browser)
+    )
+    response = RedirectResponse(url, status_code=302)
+    response.set_cookie(
+        _OIDC_LOGIN_COOKIE,
+        browser,
+        max_age=oidc_service.STATE_TTL,
+        path="/admin/oidc",
+        httponly=True,
+        samesite="lax",  # the IdP's redirect back is a top-level GET
+        secure=cookie_secure(request),
+    )
+    return response
 
 
 @router.get("/oidc/callback", response_class=HTMLResponse, response_model=None)
@@ -682,8 +702,11 @@ async def oidc_callback(
             },
         )
 
+    browser = request.cookies.get(_OIDC_LOGIN_COOKIE, "")
     try:
-        claims = await oidc_service.exchange_code(redis, code, state)
+        claims = await oidc_service.exchange_code(
+            redis, code, state, binding=oidc_service.browser_binding(browser) if browser else ""
+        )
     except Exception:  # noqa: BLE001
         return render(
             request,
@@ -749,11 +772,12 @@ def _sso_result(result: str) -> RedirectResponse:
 
 @router.post("/oidc/link", response_model=None)
 async def oidc_link(
+    request: Request,
     redis: Redis = Depends(get_redis),
     current_user: AdminUser = Depends(get_current_admin),
     session_token: str = Cookie(alias="ow_session"),
     _csrf: None = Depends(validate_csrf),
-) -> RedirectResponse:
+) -> HTMLResponse:
     if not settings.oidc_enabled:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
@@ -761,7 +785,7 @@ async def oidc_link(
     url = await oidc_service.create_authorization_url(
         redis, purpose=oidc_service.PURPOSE_LINK, binding=binding
     )
-    return RedirectResponse(url, status_code=303)
+    return render(request, "admin/sso_continue.html", {"url": url})
 
 
 async def _oidc_link_callback(

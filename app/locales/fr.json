@@ -743,6 +743,7 @@
   "upload.error.scan_unavailable": "« {name} » n'a pas pu être analysé pour l'instant et n'a pas été enregistré. Réessayez dans quelques minutes.",
   "login.error.sso_link_session": "Rien n'a été associé : votre session avait expiré. Connectez-vous, puis choisissez de nouveau « Associer l'authentification unique » dans « Mon compte ».",
   "admin.sso.link": "Associer l'authentification unique",
+  "admin.sso.continue": "Redirection vers l'authentification unique…",
   "admin.sso.unlink": "Dissocier l'authentification unique",
   "admin.sso.unlink_confirm": "Dissocier l'authentification unique de votre compte ? Vous vous connecterez ensuite avec votre mot de passe uniquement.",
   "admin.sso.result.linked": "L'authentification unique est associée. Vous pouvez vous connecter avec elle ; le code de votre application d'authentification reste exigé.",
