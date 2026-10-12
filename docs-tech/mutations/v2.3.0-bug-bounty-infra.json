@@ -197,8 +197,8 @@
   {
    "id": "ansible-db-env-file",
    "file": "ansible/roles/openwhistle/templates/docker-compose.yml.j2",
-   "old": "    image: postgres:18-alpine\n    security_opt:",
-   "new": "    image: postgres:18-alpine\n    env_file: .env\n    security_opt:",
+   "old": "    security_opt:\n      - no-new-privileges:true\n    # Not `env_file: .env`",
+   "new": "    env_file: .env\n    security_opt:\n      - no-new-privileges:true\n    # Not `env_file: .env`",
    "tests": "N"
   },
   {
