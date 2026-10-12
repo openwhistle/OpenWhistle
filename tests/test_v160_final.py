@@ -20,6 +20,8 @@ async def test_db_error_log_line_has_no_bound_parameter(caplog: pytest.LogCaptur
     from app.database import engine
 
     case_number = "OW-SECRET-CASE-4711"
+    # A connection an earlier test pooled belongs to that test's event loop.
+    await engine.dispose()
     try:
         async with engine.connect() as conn:
             with pytest.raises(DBAPIError) as exc_info:
