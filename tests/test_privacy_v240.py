@@ -525,3 +525,21 @@ async def test_the_pdf_export_speaks_the_admins_language(client, db_session) -> 
         assert label in text, label
     for english in ("Case Number", "Submission Mode", "Initial Report", "Generated:"):
         assert english not in text, english
+
+
+@pytest.mark.asyncio
+async def test_a_deleted_case_leaves_the_notification_queue(client, db_session) -> None:  # noqa: ANN001
+    """The next digest mailed the number of a case erased since it was queued."""
+    import uuid
+
+    from app.redis_client import get_redis
+    from app.services.notifications import _QUEUE_KEYS
+    from app.services.report import create_report
+    from tests.test_ux_fixes import _delete_report_4eyes
+
+    report, _ = await create_report(db_session, "corruption", "Deleted before the digest.")
+    redis = await get_redis()
+    await redis.sadd(_QUEUE_KEYS["new_reports"], report.case_number)
+    tag = uuid.uuid4().hex[:6]
+    await _delete_report_4eyes(client, db_session, str(report.id), f"q1{tag}", f"q2{tag}")
+    assert not await redis.sismember(_QUEUE_KEYS["new_reports"], report.case_number)

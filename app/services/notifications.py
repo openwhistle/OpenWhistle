@@ -321,6 +321,12 @@ async def _queue_or_send(kind: str, case_number: str) -> None:
         log.exception("Failed to queue a notification")
 
 
+async def forget_case(redis: Any, case_number: str) -> None:
+    """A deleted case leaves the queue: the next digest mailed its number after the erasure."""
+    for key in _QUEUE_KEYS.values():
+        await redis.srem(key, case_number)
+
+
 async def deliver_notification_digest() -> None:
     """Scheduler job: send everything queued since the last run as one digest.
 

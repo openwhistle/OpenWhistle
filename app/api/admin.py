@@ -863,6 +863,9 @@ async def confirm_delete(
     case_number = report.case_number
     await report_service.confirm_deletion(db, report, dr, current_user)
     await report_service.end_status_sessions(redis, {report_id})
+    from app.services.notifications import forget_case  # noqa: PLC0415
+
+    await forget_case(redis, case_number)
     safe_case = quote(case_number, safe="")
     return RedirectResponse(f"/admin/dashboard?deleted={safe_case}", status_code=302)
 

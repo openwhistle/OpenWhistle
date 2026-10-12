@@ -26,6 +26,11 @@
     dest: "/etc/letsencrypt/renewal-hooks/{{ item.dir }}/{{ item.action }}-openwhistle.sh"
     content: |
       #!/bin/sh
+      {% if item.action == "start" %}
+      # certbot --standalone logged every visitor of :80 during the run with their
+      # address (acme.standalone, DEBUG, which certbot's log file keeps).
+      sed -i '/:acme\.standalone:/d' /var/log/letsencrypt/letsencrypt.log 2>/dev/null
+      {% endif %}
       # Frees :80 for certbot --standalone. No unit yet: the first certificate.
       systemctl cat openwhistle.service > /dev/null 2>&1 || exit 0
       exec systemctl {{ item.action }} openwhistle
