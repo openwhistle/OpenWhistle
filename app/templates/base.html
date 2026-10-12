@@ -122,7 +122,7 @@
         <div class="session-expiry-icon" aria-hidden="true">{{ icons.icon('clock') }}</div>
         <div class="session-expiry-body">
             <span>{{ t('session.expiry.warning') }}</span>
-            <strong id="session-expiry-countdown" class="session-expiry-countdown">5:00</strong>
+            <strong id="session-expiry-countdown" class="session-expiry-countdown" aria-live="off">5:00</strong>
         </div>
         <div class="session-expiry-actions">
             <button type="button" class="btn btn-sm session-expiry-extend" data-action="session-extend">{{ t('session.expiry.extend') }}</button>

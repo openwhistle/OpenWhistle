@@ -400,3 +400,15 @@ async def test_the_audit_log_filters_by_case_number(
     assert "wanted-row" in csv and "unwanted-row" not in csv
     unknown = (await client.get("/admin/audit-log?report_id=OW-0000-00000")).text  # type: ignore[attr-defined]
     assert "wanted-row" not in unknown and "unwanted-row" not in unknown
+
+
+def test_the_session_countdown_is_not_read_out_every_second() -> None:
+    """The countdown sat inside the banner's live region and changed every second, so a
+    screen reader announced "4:59", "4:58", … A nested aria-live="off" keeps the banner
+    announced once and the clock silent."""
+    import re
+    from pathlib import Path
+
+    base = (Path(__file__).parents[1] / "app/templates/base.html").read_text()
+    countdown = re.search(r'<strong id="session-expiry-countdown"[^>]*>', base)
+    assert countdown and 'aria-live="off"' in countdown[0]
