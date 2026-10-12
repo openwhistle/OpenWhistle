@@ -358,3 +358,45 @@ def test_every_audit_detail_field_has_a_label_in_every_language() -> None:
         strings = json.loads(locale.read_text())
         missing = sorted(k for k in keys if f"audit.detail.{k}" not in strings)
         assert not missing, (locale.name, missing)
+
+
+# ── The audit-log filter takes the case number it asks for ──────────────────
+
+
+@pytest.mark.asyncio
+async def test_the_audit_log_filters_by_case_number(
+    client: object, db_session: AsyncSession
+) -> None:
+    """The "report" filter took only a UUID, which no page shows; a case number was
+    dropped without a word and the whole log listed and exported, while the box kept
+    the value and "Clear filters" made it look applied."""
+    import json
+    import uuid
+
+    from app.models.audit import AuditLog
+    from app.services.report import create_report
+    from tests.test_v150_ux import _login, _make_admin
+
+    admin, secret = await _make_admin(db_session)
+    mine, _ = await create_report(db_session, "financial_fraud", "The one to filter for.")
+    other, _ = await create_report(db_session, "financial_fraud", "Not this one.")
+    for report, marker in ((mine, "wanted-row"), (other, "unwanted-row")):
+        db_session.add(
+            AuditLog(
+                id=uuid.uuid4(),
+                admin_id=admin.id,
+                admin_username=admin.username,
+                action="report.note_added",
+                report_id=report.id,
+                detail=json.dumps({"name": marker}),
+            )
+        )
+    await db_session.commit()
+    await _login(client, admin, secret)
+
+    html = (await client.get(f"/admin/audit-log?report_id={mine.case_number}")).text  # type: ignore[attr-defined]
+    assert "wanted-row" in html and "unwanted-row" not in html
+    csv = (await client.get(f"/admin/audit-log/export.csv?report_id={mine.case_number}")).text  # type: ignore[attr-defined]
+    assert "wanted-row" in csv and "unwanted-row" not in csv
+    unknown = (await client.get("/admin/audit-log?report_id=OW-0000-00000")).text  # type: ignore[attr-defined]
+    assert "wanted-row" not in unknown and "unwanted-row" not in unknown

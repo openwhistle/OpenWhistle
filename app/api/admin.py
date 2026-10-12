@@ -1429,7 +1429,7 @@ async def audit_log_page(
 
     entries, total = await audit_service.get_audit_log(
         db,
-        **_audit_filters(qp),
+        **await _audit_filters(db, qp),
         page=page,
         per_page=50,
         viewer_id=current_user.id,
@@ -1467,15 +1467,19 @@ async def audit_log_page(
     )
 
 
-def _audit_filters(qp: Any) -> dict[str, Any]:
-    """The audit-log filters of a query string: the page and its export read the same."""
+async def _audit_filters(db: AsyncSession, qp: Any) -> dict[str, Any]:
+    """The audit-log filters of a query string: the page and its export read the same.
+    The report is named by its case number (what every page shows) or its id; a value
+    that names none filters to nothing, never to the whole log."""
     action_filter = qp.get("action", "")
     report_id = None
-    if qp.get("report_id"):
+    if wanted := qp.get("report_id", "").strip():
         try:
-            report_id = uuid.UUID(qp["report_id"])
+            report_id = uuid.UUID(wanted)
         except ValueError:
-            pass
+            report = await report_service.get_report_by_case_number(db, wanted.upper())
+            # The nil UUID is no report's id: an unknown case number lists nothing.
+            report_id = report.id if report is not None else uuid.UUID(int=0)
     show_views = qp.get("views") == "1" or action_filter == AuditAction.REPORT_VIEWED
     return {
         "report_id": report_id,
@@ -1530,7 +1534,7 @@ async def audit_log_csv(
     import io
 
     # Every row: this used to stop at 10 000 without saying so.
-    filters = _audit_filters(request.query_params)
+    filters = await _audit_filters(db, request.query_params)
     entries, _ = await audit_service.get_audit_log(
         db,
         **filters,
