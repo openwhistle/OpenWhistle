@@ -572,7 +572,7 @@ async def acknowledge_report(
     report = await _get_authorized_report(db, report_id, current_user)
 
     old_status = report.status.value
-    await report_service.acknowledge_report(db, report)
+    await report_service.acknowledge_report(db, report, commit=False)
     await audit_service.log(
         db,
         current_user,
@@ -607,7 +607,7 @@ async def update_status(
         )
 
     old_status = report.status.value
-    await report_service.update_report_status(db, report, s)
+    await report_service.update_report_status(db, report, s, commit=False)
     await audit_service.log(
         db,
         current_user,
@@ -632,14 +632,15 @@ async def admin_reply(
     if not content.strip():
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT)
 
-    await report_service.add_admin_message(db, report, content.strip(), notify_whistleblower=True)
+    # Audited first: the service commits the entry with the message, and only then
+    # notifies the reporter, so no notice goes out for a reply that was not stored.
     await audit_service.log(
         db,
         current_user,
         AuditAction.REPORT_MESSAGE_SENT,
         report_id=report.id,
     )
-    await db.commit()
+    await report_service.add_admin_message(db, report, content.strip(), notify_whistleblower=True)
     return RedirectResponse(f"/admin/reports/{report.id}", status_code=302)
 
 
@@ -681,7 +682,7 @@ async def assign_report(
             )
 
     old_assignee = report.assigned_to.username if report.assigned_to else None
-    await report_service.assign_report(db, report, assignee)
+    await report_service.assign_report(db, report, assignee, commit=False)
     # Unassigning used to be written as "assigned" to nobody, so the audit
     # filter's "unassigned" never matched a row.
     await audit_service.log(
@@ -711,7 +712,7 @@ async def add_note(
     if not content.strip():
         raise HTTPException(status_code=422)
 
-    await report_service.add_note(db, report, current_user, content.strip())
+    await report_service.add_note(db, report, current_user, content.strip(), commit=False)
     await audit_service.log(
         db,
         current_user,
@@ -744,7 +745,7 @@ async def link_report(
     if await report_service.get_link_between(db, report.id, other.id) is not None:
         raise HTTPException(status_code=409, detail="These cases are already linked.")
 
-    await report_service.link_cases(db, report, other, current_user)
+    await report_service.link_cases(db, report, other, current_user, commit=False)
     await audit_service.log(
         db,
         current_user,
@@ -772,7 +773,7 @@ async def unlink_report(
     if link.report_id_a != report.id and link.report_id_b != report.id:
         raise HTTPException(status_code=404)
 
-    await report_service.unlink_cases(db, link)
+    await report_service.unlink_cases(db, link, commit=False)
     await audit_service.log(
         db,
         current_user,
@@ -800,7 +801,7 @@ async def request_delete(
     if report.deletion_request is not None:
         raise HTTPException(status_code=409, detail="A deletion request already exists.")
 
-    await report_service.request_deletion(db, report, current_user)
+    await report_service.request_deletion(db, report, current_user, commit=False)
     await audit_service.log(
         db,
         current_user,
@@ -880,7 +881,7 @@ async def cancel_delete(
     if dr.requested_by_id != current_user.id:
         raise HTTPException(status_code=403, detail="Only the requesting admin can cancel.")
 
-    await report_service.cancel_deletion_request(db, dr)
+    await report_service.cancel_deletion_request(db, dr, commit=False)
     await audit_service.log(
         db,
         current_user,
@@ -1237,7 +1238,9 @@ async def create_user(
 
     target_org = await _new_account_org(db, current_user, org_id)
     try:
-        new_user, _totp_secret = await svc_create(db, username.strip(), password, role_enum)
+        new_user, _totp_secret = await svc_create(
+            db, username.strip(), password, role_enum, commit=False
+        )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     new_user.org_id = target_org
@@ -1304,7 +1307,7 @@ async def change_user_role(
         )
 
     old_role = target.role.value
-    await update_user_role(db, target, role_enum)
+    await update_user_role(db, target, role_enum, commit=False)
     await audit_service.log(
         db,
         current_user,
@@ -1349,7 +1352,7 @@ async def deactivate_user(
             detail="Cannot deactivate the last active administrator.",
         )
 
-    await svc_deact(db, target)
+    await svc_deact(db, target, commit=False)
     await audit_service.log(
         db,
         current_user,
@@ -1379,7 +1382,7 @@ async def reactivate_user(
         raise HTTPException(status_code=404)
     _require_may_manage(current_user, target)
 
-    await svc_react(db, target)
+    await svc_react(db, target, commit=False)
     await audit_service.log(
         db,
         current_user,

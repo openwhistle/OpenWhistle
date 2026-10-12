@@ -77,6 +77,8 @@ async def create_user(
     username: str,
     password: str,
     role: AdminRole = AdminRole.admin,
+    *,
+    commit: bool = True,
 ) -> tuple[AdminUser, str]:
     """Create a new admin user. Returns (user, totp_secret).
 
@@ -98,32 +100,30 @@ async def create_user(
         must_change_password=True,
     )
     db.add(user)
-    await db.flush()  # the route audits, then commits both
+    await (db.commit() if commit else db.flush())  # the route commits with its audit entry
     await db.refresh(user)
     return user, totp_secret
 
 
 async def update_user_role(
-    db: AsyncSession,
-    user: AdminUser,
-    new_role: AdminRole,
+    db: AsyncSession, user: AdminUser, new_role: AdminRole, *, commit: bool = True
 ) -> AdminUser:
     user.role = new_role
-    await db.flush()  # the route audits, then commits both
+    await (db.commit() if commit else db.flush())  # the route commits with its audit entry
     await db.refresh(user)
     return user
 
 
-async def deactivate_user(db: AsyncSession, user: AdminUser) -> AdminUser:
+async def deactivate_user(db: AsyncSession, user: AdminUser, *, commit: bool = True) -> AdminUser:
     user.is_active = False
-    await db.flush()  # the route audits, then commits both
+    await (db.commit() if commit else db.flush())  # the route commits with its audit entry
     await db.refresh(user)
     return user
 
 
-async def reactivate_user(db: AsyncSession, user: AdminUser) -> AdminUser:
+async def reactivate_user(db: AsyncSession, user: AdminUser, *, commit: bool = True) -> AdminUser:
     user.is_active = True
-    await db.flush()  # the route audits, then commits both
+    await (db.commit() if commit else db.flush())  # the route commits with its audit entry
     await db.refresh(user)
     return user
 

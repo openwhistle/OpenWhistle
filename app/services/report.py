@@ -481,6 +481,8 @@ async def add_admin_message(
     report: Report,
     content: str,
     notify_whistleblower: bool = False,
+    *,
+    commit: bool = True,
 ) -> ReportMessage:
     msg = ReportMessage(
         id=uuid.uuid4(),
@@ -490,7 +492,7 @@ async def add_admin_message(
         sent_at=await _next_sent_at(db, report, datetime.now(UTC)),
     )
     db.add(msg)
-    await db.flush()  # the route audits, then commits both
+    await (db.commit() if commit else db.flush())  # the route commits with its audit entry
     await db.refresh(msg)
 
     if notify_whistleblower and report.secure_email:
@@ -505,7 +507,7 @@ async def add_admin_message(
     return msg
 
 
-async def acknowledge_report(db: AsyncSession, report: Report) -> Report:
+async def acknowledge_report(db: AsyncSession, report: Report, *, commit: bool = True) -> Report:
     # Idempotent: the acknowledgement timestamp and the derived statutory
     # feedback deadline (HinSchG §17) are set exactly once. Re-invoking must
     # never push the deadline further out.
@@ -515,7 +517,7 @@ async def acknowledge_report(db: AsyncSession, report: Report) -> Report:
         report.feedback_due_at = deadlines.feedback_due(report.submitted_at, now)
     if report.status == ReportStatus.received:
         report.status = ReportStatus.in_review
-    await db.flush()  # the route audits, then commits both
+    await (db.commit() if commit else db.flush())  # the route commits with its audit entry
     await db.refresh(report)
     return report
 
@@ -525,7 +527,7 @@ def is_valid_transition(current: str, new: str) -> bool:
 
 
 async def update_report_status(
-    db: AsyncSession, report: Report, new_status: ReportStatus
+    db: AsyncSession, report: Report, new_status: ReportStatus, *, commit: bool = True
 ) -> Report:
     report.status = new_status
     if new_status == ReportStatus.closed:
@@ -539,19 +541,23 @@ async def update_report_status(
         # otherwise the retention job would delete the report based on a stale
         # original closure date, far before the statutory minimum has elapsed.
         report.closed_at = None
-    await db.flush()  # the route audits, then commits both
+    await (db.commit() if commit else db.flush())  # the route commits with its audit entry
     await db.refresh(report)
     return report
 
 
-async def assign_report(db: AsyncSession, report: Report, admin: AdminUser | None) -> Report:
+async def assign_report(
+    db: AsyncSession, report: Report, admin: AdminUser | None, *, commit: bool = True
+) -> Report:
     report.assigned_to_id = admin.id if admin else None
-    await db.flush()  # the route audits, then commits both
+    await (db.commit() if commit else db.flush())  # the route commits with its audit entry
     await db.refresh(report)
     return report
 
 
-async def add_note(db: AsyncSession, report: Report, author: AdminUser, content: str) -> AdminNote:
+async def add_note(
+    db: AsyncSession, report: Report, author: AdminUser, content: str, *, commit: bool = True
+) -> AdminNote:
     note = AdminNote(
         id=uuid.uuid4(),
         report_id=report.id,
@@ -560,7 +566,7 @@ async def add_note(db: AsyncSession, report: Report, author: AdminUser, content:
         content=_encrypt_message_content(report, content),
     )
     db.add(note)
-    await db.flush()  # the route audits, then commits both
+    await (db.commit() if commit else db.flush())  # the route commits with its audit entry
     await db.refresh(note)
     return note
 
@@ -679,7 +685,7 @@ async def delete_report(db: AsyncSession, report: Report) -> None:
 
 
 async def request_deletion(
-    db: AsyncSession, report: Report, requester: AdminUser
+    db: AsyncSession, report: Report, requester: AdminUser, *, commit: bool = True
 ) -> DeletionRequest:
     dr = DeletionRequest(
         id=uuid.uuid4(),
@@ -688,14 +694,16 @@ async def request_deletion(
         requested_by_username=requester.username,
     )
     db.add(dr)
-    await db.flush()  # the route audits, then commits both
+    await (db.commit() if commit else db.flush())  # the route commits with its audit entry
     await db.refresh(dr)
     return dr
 
 
-async def cancel_deletion_request(db: AsyncSession, deletion_request: DeletionRequest) -> None:
+async def cancel_deletion_request(
+    db: AsyncSession, deletion_request: DeletionRequest, *, commit: bool = True
+) -> None:
     await db.delete(deletion_request)
-    await db.flush()  # the route audits, then commits both
+    await (db.commit() if commit else db.flush())  # the route commits with its audit entry
 
 
 async def confirm_deletion(
@@ -776,10 +784,7 @@ async def get_link_between(
 
 
 async def link_cases(
-    db: AsyncSession,
-    report_a: Report,
-    report_b: Report,
-    actor: AdminUser,
+    db: AsyncSession, report_a: Report, report_b: Report, actor: AdminUser, *, commit: bool = True
 ) -> CaseLink:
     norm_a, norm_b = _normalize_ids(report_a.id, report_b.id)
     link = CaseLink(
@@ -790,14 +795,14 @@ async def link_cases(
         linked_by_username=actor.username,
     )
     db.add(link)
-    await db.flush()  # the route audits, then commits both
+    await (db.commit() if commit else db.flush())  # the route commits with its audit entry
     await db.refresh(link)
     return link
 
 
-async def unlink_cases(db: AsyncSession, link: CaseLink) -> None:
+async def unlink_cases(db: AsyncSession, link: CaseLink, *, commit: bool = True) -> None:
     await db.delete(link)
-    await db.flush()  # the route audits, then commits both
+    await (db.commit() if commit else db.flush())  # the route commits with its audit entry
 
 
 def get_linked_reports(report: Report) -> list[tuple[uuid.UUID, str]]:
