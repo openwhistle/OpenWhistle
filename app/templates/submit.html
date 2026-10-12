@@ -20,7 +20,7 @@
 </style>
 {% endblock %}
 
-{% block title %}{{ t('submit.title') }} | OpenWhistle{% endblock %}
+{% block title %}{{ t('submit.title') }} | {{ brand.name }}{% endblock %}
 
 {% block content %}
 <div class="split-layout page-fill">
@@ -221,6 +221,8 @@
                     <span>{{ t('submit.form.description') }}</span>
                     <span id="char-counter" class="sub-char-counter" data-max="10000">{{ state.get('description', '') | trim | length | format_count(lang) }} / {{ 10000 | format_count(lang) }}</span>
                 </label>
+                {#- No length cap here: maxlength counts UTF-16 units (an emoji is two), the
+                    counter and the server count characters; the server answers past 10,000. -#}
                 <textarea
                     class="form-control"
                     id="description"
@@ -228,7 +230,6 @@
                     rows="10"
                     required
                     minlength="10"
-                    maxlength="10000"
                     aria-required="true"
                     {{ field.attrs('description', 'description-hint char-counter') }}
                     placeholder="{{ t('submit.form.description.placeholder') }}"

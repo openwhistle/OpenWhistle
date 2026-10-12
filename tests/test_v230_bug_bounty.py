@@ -469,3 +469,44 @@ async def test_the_mfa_step_offers_no_language_switch_that_loses_it(
     ).text
     assert 'name="totp_code"' in html
     assert 'action="/set-language"' not in html
+
+
+@pytest.mark.asyncio
+async def test_a_deletion_notice_needs_a_deletion(acting_as, db_session: AsyncSession) -> None:
+    """/admin/dashboard?deleted=<anything> showed a green "deleted" notice: a crafted link
+    could tell an admin that a case was gone while it was not."""
+    from app.models.user import AdminRole
+    from tests.test_v210_bug_bounty import _totp_user
+
+    client, act = acting_as
+    act(await _totp_user(db_session, AdminRole.admin))
+    html = (await client.get("/admin/dashboard?deleted=OW-2026-99999")).text
+    assert "Report permanently deleted" not in html
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("path", ["/submit", "/status", "/admin/login"])
+async def test_the_tab_title_carries_the_operators_name(
+    client: object, monkeypatch: pytest.MonkeyPatch, path: str
+) -> None:
+    """APP_NAME renamed the nav and footer, but nineteen page titles said "| OpenWhistle"
+    in the tab and the browser history."""
+    import re
+
+    from app.templating import templates
+
+    monkeypatch.setitem(templates.env.globals["brand"], "name", "Acme Reports")
+    html = (await client.get(path)).text  # type: ignore[attr-defined]
+    title = re.search(r"<title>(.*?)</title>", html, re.S)
+    assert title and "Acme Reports" in title[1] and "OpenWhistle" not in title[1], title
+
+
+def test_the_description_field_takes_what_its_counter_allows() -> None:
+    """maxlength counts UTF-16 units, the counter and the server count characters: text
+    with emoji stopped at 5,000 characters while the counter read "5,000 / 10,000"."""
+    import re
+    from pathlib import Path
+
+    html = (Path(__file__).parents[1] / "app/templates/submit.html").read_text()
+    textarea = re.search(r'<textarea[^>]*id="description"[^>]*>', html, re.S)
+    assert textarea and "maxlength" not in textarea[0]
