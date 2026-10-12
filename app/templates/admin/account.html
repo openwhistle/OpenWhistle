@@ -1,7 +1,7 @@
 {% extends "admin/_layout.html" %}
 {% import "_field.html" as field with context %}
 
-{% block title %}{{ t('account.title') }} | OpenWhistle{% endblock %}
+{% block title %}{{ t('account.title') }} | {{ brand.name }}{% endblock %}
 
 {% block styles %}
 <style nonce="{{ request.state.csp_nonce }}">

@@ -2,7 +2,7 @@
 {% import "_icons.html" as icons %}
 {% import "admin/_audit.html" as audit with context %}
 
-{% block title %}{{ t('admin.audit.title') }} | OpenWhistle{% endblock %}
+{% block title %}{{ t('admin.audit.title') }} | {{ brand.name }}{% endblock %}
 
 {% block styles %}
 <style nonce="{{ request.state.csp_nonce }}">

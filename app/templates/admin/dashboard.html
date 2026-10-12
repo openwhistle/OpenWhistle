@@ -27,7 +27,7 @@
 </style>
 {% endblock %}
 
-{% block title %}{{ t('admin.dashboard.title') }} | OpenWhistle{% endblock %}
+{% block title %}{{ t('admin.dashboard.title') }} | {{ brand.name }}{% endblock %}
 
 {#- A link to the dashboard with `params` (`view`, the current one, with overrides). During a search it is a POST form instead,
     so the search term stays out of the URL and the browser history. -#}
