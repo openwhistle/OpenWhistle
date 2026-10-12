@@ -204,7 +204,7 @@
   {
    "id": "release-marker",
    "file": "scripts/take_screenshots.py",
-   "old": "    (screens / \"_release\").write_text(settings.app_version + \"\\n\", encoding=\"utf-8\")",
+   "old": "    (screens / \"_release\").write_text(version + \"\\n\", encoding=\"utf-8\")",
    "new": "    (screens / \"_release\").write_text(\"\", encoding=\"utf-8\")",
    "tests": "C"
   },
