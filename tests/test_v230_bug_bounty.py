@@ -569,3 +569,50 @@ async def test_the_update_check_does_not_tell_github_the_version() -> None:
         await vc.fetch_latest_release(redis)
     headers = client.get.await_args.kwargs["headers"]
     assert settings.app_version not in " ".join(headers.values())
+
+
+@pytest.mark.asyncio
+async def test_each_organisations_search_entry_counts_its_own_hits(
+    acting_as, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A superadmin's search was written into every organisation's log with the hits of
+    all of them: one organisation's admins read how many of another's reports matched."""
+    import json
+    import uuid
+
+    from sqlalchemy import select
+
+    from app.config import settings
+    from app.models.audit import AuditLog
+    from app.models.organisation import Organisation
+    from app.models.user import AdminRole
+    from app.services.audit import AuditAction
+    from app.services.report import create_report, default_org_id
+    from tests.test_v210_bug_bounty import _totp_user
+
+    client, act = acting_as
+    monkeypatch.setattr(settings, "multi_tenancy_enabled", True)
+    one = Organisation(id=uuid.uuid4(), name="One", slug=f"one-{uuid.uuid4().hex[:6]}")
+    three = Organisation(id=uuid.uuid4(), name="Three", slug=f"three-{uuid.uuid4().hex[:6]}")
+    db_session.add_all([one, three])
+    await db_session.commit()
+    word = f"okapi{uuid.uuid4().hex[:6]}"
+    await create_report(db_session, "financial_fraud", f"A {word} once.", org_id=one.id)
+    for i in range(3):
+        await create_report(db_session, "financial_fraud", f"A {word} {i}.", org_id=three.id)
+    superadmin = await _totp_user(db_session, AdminRole.superadmin)
+    superadmin.org_id = await default_org_id(db_session)
+    await db_session.commit()
+    act(superadmin)
+
+    await client.post("/admin/dashboard", data={"q": word})
+    rows = (
+        await db_session.execute(
+            select(AuditLog.org_id, AuditLog.detail).where(
+                AuditLog.admin_id == superadmin.id,
+                AuditLog.action == AuditAction.CONTENT_SEARCHED,
+            )
+        )
+    ).all()
+    hits = {org: json.loads(detail)["hits"] for org, detail in rows}
+    assert hits[one.id] == 1 and hits[three.id] == 3, hits

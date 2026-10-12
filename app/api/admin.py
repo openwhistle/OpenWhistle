@@ -281,13 +281,27 @@ async def _dashboard(
         # search spans them all, and used to be recorded under its own only.
         # Without multi-tenancy the log is not scoped: one entry.
         split = settings.multi_tenancy_enabled and read_orgs
+        # Each organisation's entry counts its own matches, never another's.
+        hits_by_org: dict[uuid.UUID | None, int] = {}
+        if split and content_ids:
+            from sqlalchemy import func, select  # noqa: PLC0415
+
+            from app.models.report import Report  # noqa: PLC0415
+
+            counted = await db.execute(
+                select(Report.org_id, func.count(Report.id))
+                .where(Report.id.in_(content_ids))
+                .group_by(Report.org_id)
+            )
+            hits_by_org = dict(counted.all())
         for read_org in read_orgs if split else {current_user.org_id}:
+            hits = hits_by_org.get(read_org, 0) if split else len(content_ids)
             await audit_service.log(
                 db,
                 current_user,
                 AuditAction.CONTENT_SEARCHED,
                 target_org=read_org,
-                detail={"term": encrypt(case_query), "hits": len(content_ids)},
+                detail={"term": encrypt(case_query), "hits": hits},
             )
         await db.commit()
     reports, total = await report_service.get_reports_paginated(
