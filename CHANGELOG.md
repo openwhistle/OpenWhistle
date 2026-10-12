@@ -7,6 +7,11 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- **The v2.3.0 publish stopped after GHCR**: Docker Hub lists a new signature (cosign 3 stores it as an OCI
+  referrer) seconds after `cosign sign`, and the check right after it found none. It retries for a minute.
+
 ## [2.3.0] — 2026-10-12
 
 ### Added

@@ -260,9 +260,15 @@ jobs:
             # Prove the signature just written, bound to this exact workflow file at this
             # exact ref (GITHUB_WORKFLOW_REF): a signature from another workflow or
             # branch would not pass, and neither would an unsigned digest.
-            cosign verify "${repo}@${digest}" \
-              --certificate-identity "${GITHUB_SERVER_URL}/${GITHUB_WORKFLOW_REF}" \
-              --certificate-oidc-issuer https://token.actions.githubusercontent.com > /dev/null || return 1
+            # Docker Hub lists a new referrer (cosign 3 stores the signature as one) only
+            # seconds later: verifying at once found none and stopped the v2.3.0 release.
+            for attempt in 1 2 3 4 5 6; do
+              cosign verify "${repo}@${digest}" \
+                --certificate-identity "${GITHUB_SERVER_URL}/${GITHUB_WORKFLOW_REF}" \
+                --certificate-oidc-issuer https://token.actions.githubusercontent.com > /dev/null && break
+              [[ $attempt -lt 6 ]] || return 1
+              sleep 10
+            done
 
             # A 200 on the index proves nothing: v1.3.0's tags answered 200
             # while every platform manifest behind them had been deleted.

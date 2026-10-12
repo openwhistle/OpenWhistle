@@ -24,10 +24,16 @@ case "$*" in
 esac
 """
 
-# Records every call; `verify` fails for a digest that was never signed.
+# Records every call; `verify` fails for a digest that was never signed, and the first
+# STUB_LATE times for a registry that lists a new signature only later (Docker Hub).
 COSIGN_STUB = """#!/bin/bash
 echo "$*" >> "$COSIGN_LOG"
 [[ "$1" == verify && -n "${STUB_UNSIGNED:-}" ]] && exit 1
+if [[ "$1" == verify && -n "${STUB_LATE:-}" ]]; then
+  n=$(cat "$COSIGN_LOG.late" 2>/dev/null || echo 0)
+  echo $((n + 1)) > "$COSIGN_LOG.late"
+  (( n < STUB_LATE )) && exit 1
+fi
 exit 0
 """
 
@@ -45,10 +51,15 @@ def _run(
     ref: str = "refs/heads/main",
     dockerhub: str = "t",
     unsigned: str = "",
+    late: str = "",
 ) -> subprocess.CompletedProcess:
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
-    for name, body in (("docker", DOCKER_STUB), ("cosign", COSIGN_STUB)):
+    for name, body in (
+        ("docker", DOCKER_STUB),
+        ("cosign", COSIGN_STUB),
+        ("sleep", "#!/bin/bash\n"),
+    ):
         stub = bin_dir / name
         stub.write_text(body)
         stub.chmod(stub.stat().st_mode | stat.S_IEXEC)
@@ -66,6 +77,7 @@ def _run(
         "GITHUB_REF": ref,
         "STUB_BAD": bad,
         "STUB_UNSIGNED": unsigned,
+        "STUB_LATE": late,
         "COSIGN_LOG": str(tmp_path / "cosign.log"),
         "GITHUB_SERVER_URL": "https://github.com",
         "GITHUB_WORKFLOW_REF": "o/ow/.github/workflows/docker-publish.yml@refs/tags/v9.9.9",
@@ -215,3 +227,14 @@ def test_a_digest_whose_signature_does_not_verify_fails_the_step(tmp_path: Path)
     result = _run(tmp_path, unsigned="1")
     assert result.returncode != 0
     assert "verified " not in result.stdout
+
+
+def test_a_signature_the_registry_lists_late_still_verifies(tmp_path: Path) -> None:
+    """v2.3.0: Docker Hub listed the signature (an OCI referrer) seconds after `cosign sign`,
+    the verify right after it found none, and the release stopped half published."""
+    result = _run(tmp_path, late="2")
+    assert result.returncode == 0, result.stdout + result.stderr
+    verifies = [
+        c for c in (tmp_path / "cosign.log").read_text().splitlines() if c.startswith("verify ")
+    ]
+    assert len(verifies) == 4  # ghcr.io: two misses, then found; docker.io: found
