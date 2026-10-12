@@ -898,7 +898,11 @@ async def submit_post(
 
         from sqlalchemy import text  # noqa: PLC0415
 
-        from app.services.attachment import create_attachments, format_size
+        from app.services.attachment import (
+            create_attachments,
+            delete_stored_objects,
+            format_size,
+        )
         from app.services.crypto import encrypt
 
         state.clear()
@@ -909,7 +913,9 @@ async def submit_post(
             return _redirect_after_post()
         our_case: str | None = None
         commit_error: BaseException | None = None
-        # Report and attachments commit together, so nothing is left behind.
+        # Report and attachments commit together; objects put in external storage
+        # before a commit that does not happen are removed below.
+        stored_keys: list[str] = []
         try:
             async with asyncio.timeout(_SUBMIT_TIMEOUT_SECONDS):
                 await db.execute(
@@ -957,7 +963,9 @@ async def submit_post(
                     report_id=uuid.UUID(report_id),
                     org_id=tenant.org_id,
                 )
-                await create_attachments(db, report, file_tuples_restored, commit=False)
+                await create_attachments(
+                    db, report, file_tuples_restored, commit=False, stored=stored_keys
+                )
                 our_case = report.case_number
                 await db.commit()
         except (Exception, asyncio.CancelledError) as exc:
@@ -976,6 +984,7 @@ async def submit_post(
                     if not isinstance(exc, Exception):
                         raise
                     return _pending_page(request, tenant.path, kept=True)
+                await delete_stored_objects(stored_keys)  # no row will point to them
                 given_back = await _give_back_draft(redis, session_id, claimed, nonce)
                 if not isinstance(exc, Exception):
                     raise  # cancelled, or the worker is going away: nobody to answer
@@ -984,6 +993,7 @@ async def submit_post(
                 _log.warning("Final submit failed before its commit: %s", type(exc).__name__)
                 return await _fail(_STEP_REVIEW, "submit_failed")  # nothing was sent
             if committed_case != our_case:  # another submit of this draft made it
+                await delete_stored_objects(stored_keys)  # ours never committed
                 await _finish_claim(redis, session_id, nonce, None)
                 if isinstance(exc, asyncio.CancelledError):
                     raise

@@ -618,8 +618,12 @@ async def create_attachments(
     file_tuples: list[tuple[str, str, bytes]],
     *,
     commit: bool = True,
+    stored: list[str] | None = None,
 ) -> list[Attachment]:
     """Persist (filename, content_type, data) tuples as encrypted Attachment rows.
+
+    ``stored`` receives each external-storage key as soon as its object is put, so a
+    caller whose transaction then fails can remove what no row will ever point to.
 
     The bytes are encrypted with the report's own data key before they leave
     the process, so neither the database nor the S3 bucket holds plaintext.
@@ -646,6 +650,8 @@ async def create_attachments(
         if use_s3:
             storage_key = generate_storage_key()
             await backend.put(storage_key, ciphertext, "application/octet-stream")
+            if stored is not None:
+                stored.append(storage_key)
             db_data = None
 
         att = Attachment(
