@@ -2,6 +2,8 @@
 {% import "_icons.html" as icons %}
 
 {% block styles %}<style nonce="{{ request.state.csp_nonce }}">
+/* A case is read, not typed into: the lookup form's 540 px broke every deadline label. */
+.st-report { max-width: 760px; }
 .st-demo-credentials-margin { margin-bottom: 1.5rem; }
 .st-lockout-countdown { margin-top: 0.6rem; font-size: 0.85rem; opacity: 0.85; }
 .st-pin-wrapper { position: relative; }
@@ -26,7 +28,7 @@
 {% block title %}{{ t('status.form.title') }} | {{ brand.name }}{% endblock %}
 
 {% block content %}
-<div class="container-sm">
+<div class="container-sm{% if report %} st-report{% endif %}">
     {% if not report %}
     <div class="page-header">
         <h1>{{ t('status.form.title') }}</h1>

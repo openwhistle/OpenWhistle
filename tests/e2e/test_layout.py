@@ -9,6 +9,7 @@ from tests.e2e.conftest import (
     DEMO_ADMIN_PASSWORD,
     DEMO_ADMIN_TOTP_SECRET,
     DEMO_ADMIN_USERNAME,
+    DEMO_CASE_PENDING,
     _admin_login,
 )
 
@@ -308,3 +309,25 @@ def test_the_account_facts_get_half_the_page(browser: Browser, base_url: str) ->
     )
     ctx.close()
     assert len(widths) == 2 and abs(widths[0] - widths[1]) < 2, widths
+
+
+@pytest.mark.parametrize("lang", ["en", "de"])
+def test_a_case_reads_its_deadlines_on_one_line(browser: Browser, base_url: str, lang: str) -> None:
+    """The case view shared the lookup form's 540 px column: at 1920 px "7-day
+    acknowledgement (§17 I)" broke between "§17" and "I", and every deadline wrapped."""
+    ctx = browser.new_context(
+        viewport={"width": 1920, "height": 1080}, base_url=base_url, locale=lang
+    )
+    ctx.add_cookies([{"name": "ow-lang", "value": lang, "url": base_url}])
+    page = ctx.new_page()
+    page.goto("/status")
+    page.fill('input[name="case_number"]', DEMO_CASE_PENDING["case_number"])
+    page.fill('input[name="pin"]', DEMO_CASE_PENDING["pin"])
+    page.click("button.btn-primary")
+    lines = page.eval_on_selector_all(
+        ".st-deadline-label",
+        "els => els.map(e => Math.round(e.getBoundingClientRect().height"
+        " / parseFloat(getComputedStyle(e).lineHeight)))",
+    )
+    ctx.close()
+    assert lines and all(n == 1 for n in lines), lines

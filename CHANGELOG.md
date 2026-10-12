@@ -41,7 +41,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (bars were scaled to the largest category); the dashboard's search button sat beside the hint, below
   the field; the system, retention and telephone-channel cards had no spacing, lost their step numbers
   and showed the telemetry request as an unbordered chip; the account facts wrapped in a third of the
-  page; on the review stack the local-review and sign-in panels touched.
+  page; on the review stack the local-review and sign-in panels touched; the whistleblower's case view
+  shared the lookup form's 540 px column, so at 1920 px every deadline label wrapped, "§17" apart from "I".
 - **A correct PIN cleared the case's lockout**: whoever knows a case number could lock it with wrong PINs and
   probe again; the lock gone meant the reporter had signed in (899 s, then 0). The counter is left alone.
 - **The bundled nginx passed seven of the address headers the app strips** (Fastly, ingress-nginx, Envoy,
