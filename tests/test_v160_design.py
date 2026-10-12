@@ -855,6 +855,7 @@ _JS_HOOK_CLASSES = {
     "session-expiry-actions",  # site.js: querySelector('.session-expiry-actions')
     "session-expiry-body",  # site.js: querySelector('.session-expiry-body')
     "demo-legal",  # scripts/take_screenshots.py: hides the demo's legal links
+    "telemetry-ask",  # site.js: closest('.telemetry-ask') on "Not now"
 }
 
 

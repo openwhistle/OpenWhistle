@@ -212,6 +212,10 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'session-dismiss':
                 if (window.sessionDismiss) window.sessionDismiss();
                 break;
+            case 'dismiss-telemetry-ask':
+                // Already recorded as asked when the page was made; this only hides it.
+                el.closest('.telemetry-ask').hidden = true;
+                break;
             case 'dismiss-ip-warning':
                 if (window.dismissIpWarning) window.dismissIpWarning(el);
                 break;

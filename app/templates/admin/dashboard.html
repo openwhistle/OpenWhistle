@@ -92,6 +92,20 @@
     </div>
     {% endif %}
 
+    {% if telemetry_ask %}
+    <div class="alert alert-info telemetry-ask" role="note">
+        <p class="alert-title">{{ t('admin.telemetry_ask.title') }}</p>
+        <p>{{ t('admin.telemetry_ask.body', version=app_version) }}
+            <a href="https://openwhistle.net/en/docs/install-count/" rel="noopener noreferrer" target="_blank">{{ t('admin.telemetry_ask.docs') }}</a></p>
+        <form method="post" action="/admin/system/telemetry" class="telemetry-ask-actions">
+            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+            <input type="hidden" name="enabled" value="1">
+            <button type="submit" class="btn btn-primary btn-sm">{{ t('admin.telemetry_ask.enable') }}</button>
+            <button type="button" class="btn btn-ghost btn-sm" data-action="dismiss-telemetry-ask">{{ t('admin.telemetry_ask.later') }}</button>
+        </form>
+    </div>
+    {% endif %}
+
     {# IP leakage warning banner #}
     {% if ip_warning %}
     <div class="ip-warning-banner" id="ip-warning-banner" role="alert">

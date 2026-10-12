@@ -98,7 +98,8 @@ Every one of them is documented on [openwhistle.net/en/docs](https://openwhistle
 - **Multi-tenancy** — isolated organisations, per-organisation reporting link
 - **S3-compatible attachment storage**, structured JSON logs, `/health` for Kubernetes probes
 - **Helm chart, Ansible role**, multi-arch images on GHCR, Docker Hub and Quay.io
-- **Update check and install count** — both opt-in, nothing about the instance is sent
+- **Update check and install count** — both opt-in, nothing about the instance is sent; while the count is off,
+  the dashboard asks once per update
 - **Five languages** — English, German, French, Spanish, Brazilian Portuguese; WCAG 2.1 AA; light and dark
 - **No external calls** — self-hosted fonts, no CDN, no tracking (GDPR)
 - **"Signal" design system** — [`DESIGN.md`](DESIGN.md)

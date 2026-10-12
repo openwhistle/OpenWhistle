@@ -155,6 +155,24 @@ async def dashboard(
     return await _dashboard(request, db, current_user, params)
 
 
+async def _ask_for_telemetry(db: AsyncSession, user: AdminUser) -> bool:
+    """Once per release and admin: may the installation be counted? Only while it is
+    off, only where the in-app switch decides (no demo, no TELEMETRY_ENABLED), only an
+    admin who may switch it. Asked is asked, whatever the answer."""
+    from app.services import telemetry  # noqa: PLC0415
+
+    if (
+        user.telemetry_asked_version == settings.app_version
+        or not may_run_the_instance(user)
+        or telemetry.locked_by() is not None
+        or telemetry.is_enabled(await telemetry.get_state(db))
+    ):
+        return False
+    user.telemetry_asked_version = settings.app_version
+    await db.commit()
+    return True
+
+
 @router.post("/dashboard", response_class=HTMLResponse)
 async def dashboard_search(
     request: Request,
@@ -274,6 +292,7 @@ async def _dashboard(
     total_pages = max(1, (total + per_page - 1) // per_page)
     now = datetime.now(UTC)
     ip_warning = await check_ip_warning()
+    telemetry_ask = await _ask_for_telemetry(db, current_user)
 
     # An org's own reporting link, to hand to its employees (/submit is the default org's).
     reporting_path, reporting_link = "/submit", None
@@ -299,6 +318,7 @@ async def _dashboard(
             "reports": reports,
             "now": now,
             "ip_warning": ip_warning,
+            "telemetry_ask": telemetry_ask,
             "may_dismiss_ip_warning": may_run_the_instance(current_user),
             "reporting_path": reporting_path,
             "reporting_link": reporting_link,
