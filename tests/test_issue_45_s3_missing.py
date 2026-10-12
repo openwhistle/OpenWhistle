@@ -92,15 +92,16 @@ async def test_s3_delete_logs_no_filename(caplog: pytest.LogCaptureFixture) -> N
 
 
 @pytest.mark.asyncio
-async def test_s3_put_logs_no_filename(caplog: pytest.LogCaptureFixture) -> None:
+async def test_s3_put_logs_nothing(caplog: pytest.LogCaptureFixture) -> None:
+    """A put runs in the final submit: its log line carried the second the report was
+    sent, which the database keeps as the day only (README, "no exact time")."""
     with (
-        caplog.at_level(logging.INFO, logger="app.services.storage"),
+        caplog.at_level(logging.DEBUG, logger="app.services.storage"),
         patch("boto3.client", return_value=MagicMock()),
     ):
         await _s3_backend().put(_FILENAME_KEY, b"data", "application/pdf")
 
-    assert "Max_Mustermann" not in caplog.text
-    assert any("Stored attachment in S3" in record.message for record in caplog.records)
+    assert caplog.records == []
 
 
 @pytest.mark.asyncio
