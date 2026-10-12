@@ -70,11 +70,11 @@ async def fetch_latest_release(redis: Redis) -> dict[str, Any] | None:
 
     import httpx
 
-    from app.config import settings
-
     headers = {
         "Accept": "application/vnd.github+json",
-        "User-Agent": f"OpenWhistle/{settings.app_version}",
+        # GitHub wants a User-Agent, not a version: which release runs here is the one
+        # fact the installation count asks consent for.
+        "User-Agent": "OpenWhistle",
     }
     etag = await redis.get(_ETAG_KEY)
     if etag:

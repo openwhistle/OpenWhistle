@@ -550,3 +550,22 @@ async def test_a_refused_account_is_explained_on_the_form(
     assert resp.status_code == 422, resp.status_code
     assert field_text in resp.text
     assert f'value="{username}"' in resp.text  # what was typed is kept
+
+
+@pytest.mark.asyncio
+async def test_the_update_check_does_not_tell_github_the_version() -> None:
+    """README: "nothing about the instance is sent"; the request's User-Agent was
+    OpenWhistle/<version>, the one fact the installation count asks consent for."""
+    from unittest.mock import AsyncMock, patch
+
+    from app.config import settings
+    from app.services import version_check as vc
+    from tests.test_version_check import _mock_httpx
+
+    redis = AsyncMock()
+    redis.get = AsyncMock(return_value=None)
+    client = _mock_httpx(304)
+    with patch("httpx.AsyncClient", return_value=client):
+        await vc.fetch_latest_release(redis)
+    headers = client.get.await_args.kwargs["headers"]
+    assert settings.app_version not in " ".join(headers.values())
