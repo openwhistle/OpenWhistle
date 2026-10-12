@@ -654,3 +654,45 @@ async def test_a_pdf_export_is_its_own_audit_entry(acting_as, db_session: AsyncS
         .all()
     )
     assert "report.exported" in actions, actions
+
+
+# ── An action and its audit entry commit together ───────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_a_status_change_without_its_audit_entry_does_not_stand(
+    acting_as, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """audit.log says the caller "commits as part of their own transaction", but the
+    services committed the action first: when writing the audit entry failed, the status
+    change stood with nothing in the log (HinSchG § 11 documentation)."""
+    from sqlalchemy import select
+
+    from app.models.report import Report, ReportStatus
+    from app.models.user import AdminRole
+    from app.services import audit as audit_service
+    from app.services.report import create_report
+    from tests.test_v210_bug_bounty import _totp_user
+
+    client, act = acting_as
+    act(await _totp_user(db_session, AdminRole.admin))
+    report, _ = await create_report(db_session, "financial_fraud", "Status without a trail.")
+
+    async def broken_log(*args: object, **kwargs: object) -> None:
+        raise RuntimeError("audit write failed")
+
+    monkeypatch.setattr(audit_service, "log", broken_log)
+    with pytest.raises(RuntimeError):
+        await client.post(f"/admin/reports/{report.id}/status", data={"new_status": "in_review"})
+    from sqlalchemy.ext.asyncio import create_async_engine
+    from sqlalchemy.pool import NullPool
+
+    from app.config import settings
+
+    engine = create_async_engine(settings.database_url, poolclass=NullPool)
+    try:
+        async with engine.connect() as conn:
+            status = await conn.scalar(select(Report.status).where(Report.id == report.id))
+    finally:
+        await engine.dispose()
+    assert status == ReportStatus.received

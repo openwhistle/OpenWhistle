@@ -98,7 +98,7 @@ async def create_user(
         must_change_password=True,
     )
     db.add(user)
-    await db.commit()
+    await db.flush()  # the route audits, then commits both
     await db.refresh(user)
     return user, totp_secret
 
@@ -109,21 +109,21 @@ async def update_user_role(
     new_role: AdminRole,
 ) -> AdminUser:
     user.role = new_role
-    await db.commit()
+    await db.flush()  # the route audits, then commits both
     await db.refresh(user)
     return user
 
 
 async def deactivate_user(db: AsyncSession, user: AdminUser) -> AdminUser:
     user.is_active = False
-    await db.commit()
+    await db.flush()  # the route audits, then commits both
     await db.refresh(user)
     return user
 
 
 async def reactivate_user(db: AsyncSession, user: AdminUser) -> AdminUser:
     user.is_active = True
-    await db.commit()
+    await db.flush()  # the route audits, then commits both
     await db.refresh(user)
     return user
 
