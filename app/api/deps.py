@@ -89,3 +89,25 @@ def require_role(*roles: AdminRole) -> Callable[..., Coroutine[Any, Any, AdminUs
 require_admin = require_role(AdminRole.admin, AdminRole.superadmin)
 require_any_role = require_role(AdminRole.admin, AdminRole.case_manager, AdminRole.superadmin)
 require_superadmin = require_role(AdminRole.superadmin)
+
+
+async def require_instance_admin(current_user: AdminUser = Depends(require_admin)) -> AdminUser:
+    """Settings of the whole instance (the address-header warning, the installation count,
+    /admin/system). With multi-tenancy an organisation's admin runs that organisation
+    only: these are the superadmin's."""
+    from app.config import settings  # noqa: PLC0415
+
+    if settings.multi_tenancy_enabled and current_user.role != AdminRole.superadmin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions."
+        )
+    return current_user
+
+
+def may_run_the_instance(user: AdminUser) -> bool:
+    """require_instance_admin as a predicate, for the menu and the dashboard."""
+    from app.config import settings  # noqa: PLC0415
+
+    if user.role == AdminRole.superadmin:
+        return True
+    return user.role == AdminRole.admin and not settings.multi_tenancy_enabled

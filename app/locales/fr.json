@@ -677,6 +677,7 @@
   "audit.action.telemetry.enabled": "Comptage des installations activé",
   "audit.action.telemetry.disabled": "Comptage des installations désactivé",
   "audit.action.telemetry.id_reset": "Identifiant d'installation réinitialisé",
+  "audit.action.system.ip_warning_dismissed": "Avertissement sur les en-têtes d'adresse masqué",
   "audit.detail.old_status": "De",
   "audit.detail.new_status": "À",
   "audit.detail.old": "De",

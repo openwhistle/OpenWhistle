@@ -105,3 +105,50 @@ async def test_a_sign_in_is_in_the_audit_log(client: object, db_session: AsyncSe
         )
     )
     assert rows == 1
+
+
+# ── Instance-wide switches belong to the instance's superadmin ──────────────
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("method", "path"),
+    [
+        ("post", "/admin/ip-warning/dismiss"),
+        ("post", "/admin/system/telemetry"),
+        ("post", "/admin/system/telemetry/reset-id"),
+        ("get", "/admin/system"),
+    ],
+)
+async def test_an_organisations_admin_cannot_touch_the_instance(
+    acting_as, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch, method: str, path: str
+) -> None:
+    """With multi-tenancy, an organisation's admin could dismiss the instance-wide warning
+    that a proxy forwards visitors' addresses (the superadmin then never saw it, and no
+    audit row said who hid it) and switch the whole instance's installation count."""
+    import uuid
+
+    from app.config import settings
+    from app.models.organisation import Organisation
+    from app.models.user import AdminRole
+    from tests.test_v210_bug_bounty import _totp_user
+
+    monkeypatch.setattr(settings, "multi_tenancy_enabled", True)
+    org = Organisation(id=uuid.uuid4(), name="Tenant", slug=f"tenant-{uuid.uuid4().hex[:6]}")
+    db_session.add(org)
+    tenant_admin = await _totp_user(db_session, AdminRole.admin)
+    tenant_admin.org_id = org.id
+    await db_session.commit()
+
+    from app.csrf import validate_csrf_header
+    from app.main import app
+
+    client, act = acting_as
+    act(tenant_admin)
+    # The dismiss route takes its token in a header; without this a 403 from CSRF would pass.
+    app.dependency_overrides[validate_csrf_header] = lambda: None
+    try:
+        resp = await getattr(client, method)(path, follow_redirects=False)
+    finally:
+        app.dependency_overrides.pop(validate_csrf_header, None)
+    assert resp.status_code == 403, resp.status_code

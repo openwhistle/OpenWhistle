@@ -677,6 +677,7 @@
   "audit.action.telemetry.enabled": "Recuento de instalaciones activado",
   "audit.action.telemetry.disabled": "Recuento de instalaciones desactivado",
   "audit.action.telemetry.id_reset": "Identificador de instalación restablecido",
+  "audit.action.system.ip_warning_dismissed": "Aviso de cabeceras de dirección descartado",
   "audit.detail.old_status": "De",
   "audit.detail.new_status": "A",
   "audit.detail.old": "De",

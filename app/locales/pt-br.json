@@ -689,6 +689,7 @@
   "audit.action.telemetry.enabled": "Contagem de instalações ativada",
   "audit.action.telemetry.disabled": "Contagem de instalações desativada",
   "audit.action.telemetry.id_reset": "Identificador da instalação redefinido",
+  "audit.action.system.ip_warning_dismissed": "Aviso de cabeçalhos de endereço dispensado",
   "audit.detail.old_status": "De",
   "audit.detail.new_status": "Para",
   "audit.detail.old": "De",

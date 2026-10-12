@@ -9,7 +9,13 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Resp
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_admin, require_admin, require_superadmin
+from app.api.deps import (
+    get_current_admin,
+    may_run_the_instance,
+    require_admin,
+    require_instance_admin,
+    require_superadmin,
+)
 from app.config import settings
 from app.csrf import validate_csrf, validate_csrf_header
 from app.database import get_db
@@ -293,6 +299,7 @@ async def _dashboard(
             "reports": reports,
             "now": now,
             "ip_warning": ip_warning,
+            "may_dismiss_ip_warning": may_run_the_instance(current_user),
             "reporting_path": reporting_path,
             "reporting_link": reporting_link,
             "category_labels": category_labels,
@@ -1695,10 +1702,14 @@ async def reactivate_location(
 
 @router.post("/ip-warning/dismiss")
 async def dismiss_ip_warning(
-    current_user: AdminUser = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+    current_user: AdminUser = Depends(require_instance_admin),
     _csrf: None = Depends(validate_csrf_header),
 ) -> JSONResponse:
     await clear_ip_warning()
+    # Hiding the warning that visitors' addresses arrive is itself on record.
+    await audit_service.log(db, current_user, AuditAction.IP_WARNING_DISMISSED, target_org=None)
+    await db.commit()
     return JSONResponse({"cleared": True})
 
 
@@ -1746,7 +1757,7 @@ async def system_page(
     request: Request,
     db: AsyncSession = Depends(get_db),
     redis: Redis = Depends(get_redis),
-    current_user: AdminUser = Depends(require_admin),
+    current_user: AdminUser = Depends(require_instance_admin),
 ) -> HTMLResponse:
     from app.services import telemetry
     from app.services.integrity import get_integrity_status
@@ -1781,7 +1792,7 @@ async def system_page(
 async def system_telemetry_toggle(
     enabled: str = Form(""),
     db: AsyncSession = Depends(get_db),
-    current_user: AdminUser = Depends(require_admin),
+    current_user: AdminUser = Depends(require_instance_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
     from app.services import telemetry
@@ -1809,7 +1820,7 @@ async def system_telemetry_toggle(
 @router.post("/system/telemetry/reset-id")
 async def system_telemetry_reset_id(
     db: AsyncSession = Depends(get_db),
-    current_user: AdminUser = Depends(require_admin),
+    current_user: AdminUser = Depends(require_instance_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
     from app.services import telemetry

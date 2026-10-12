@@ -677,6 +677,7 @@
   "audit.action.telemetry.enabled": "Installationszählung eingeschaltet",
   "audit.action.telemetry.disabled": "Installationszählung ausgeschaltet",
   "audit.action.telemetry.id_reset": "Installationskennung zurückgesetzt",
+  "audit.action.system.ip_warning_dismissed": "Warnung zu Adress-Headern ausgeblendet",
   "audit.detail.old_status": "Von",
   "audit.detail.new_status": "Nach",
   "audit.detail.old": "Von",

@@ -677,6 +677,7 @@
   "audit.action.telemetry.enabled": "Installation count switched on",
   "audit.action.telemetry.disabled": "Installation count switched off",
   "audit.action.telemetry.id_reset": "Installation identifier reset",
+  "audit.action.system.ip_warning_dismissed": "Dismissed the address-header warning",
   "audit.detail.old_status": "From",
   "audit.detail.new_status": "To",
   "audit.detail.old": "From",
