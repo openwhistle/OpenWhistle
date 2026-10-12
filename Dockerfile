@@ -56,13 +56,20 @@ RUN addgroup -S -g 1000 openwhistle && adduser -S -u 1000 -G openwhistle openwhi
 COPY --from=builder /venv /venv
 
 # Copy application code (including the self-hosted fonts in app/static/fonts and
-# their OFL licences, which the licence requires to travel with the fonts)
-COPY --chown=openwhistle:openwhistle . .
+# their OFL licences, which the licence requires to travel with the fonts).
+# Owned by root and not writable: the runtime user (uid 1000) must not be able to
+# alter the code it runs, or the integrity manifest generated below, from inside
+# the container (a compromised process could otherwise persist a change to
+# app/*.py for the container's lifetime). Nothing writes under /app at runtime;
+# the chart and compose files already run with a read-only root filesystem.
+COPY . .
 
-# Generate the file-integrity manifest over the exact shipped bytes. -B avoids
+# Normalise the modes (world-readable, never group/other-writable whatever the build
+# context's umask was), then generate the file-integrity manifest over the exact shipped bytes. -B avoids
 # writing .pyc during the walk (PYTHONDONTWRITEBYTECODE is set later); the
 # script imports no settings, so no SECRET_KEY is needed.
-RUN /venv/bin/python -B scripts/generate_integrity_manifest.py
+RUN chmod -R go-w,a+rX . \
+    && /venv/bin/python -B scripts/generate_integrity_manifest.py
 
 USER openwhistle
 

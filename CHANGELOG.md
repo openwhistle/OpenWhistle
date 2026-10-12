@@ -27,6 +27,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **The mutation audit reported "all caught" without a database**: it never ran the tests unmutated, and pytest
   exit 1 (every test errors) and 2 (collection error) read as RED. It now runs each test group once unmutated and
   aborts (exit 2) unless green; only exit 1 is a catch, 2-5 are STALE.
+- **The image's application code was writable by the runtime user**: `COPY --chown=openwhistle` made
+  `echo x >> /app/app/main.py` succeed as uid 1000 in the running image. The code is now root-owned and
+  `go-w`; the image still starts with a read-only root filesystem and `/health` answers 200.
 
 ## [2.2.1] — 2026-10-12
 

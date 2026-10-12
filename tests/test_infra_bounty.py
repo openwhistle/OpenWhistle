@@ -56,3 +56,15 @@ def test_the_error_snippets_cover_every_nginx_error_and_every_header() -> None:
         assert re.search(rf"add_header {re.escape(header)}\b.* always;", headers), header
     # Only nginx's own errors: proxied responses keep the app's headers, never doubled.
     assert "proxy_intercept_errors on" not in pages
+
+
+def test_the_app_code_in_the_image_is_not_writable_by_the_runtime_user() -> None:
+    """`COPY --chown=openwhistle` made /app/app/main.py writable by uid 1000: `echo x >>
+    /app/app/main.py` succeeded in the running image (podman run, before the fix)."""
+    final = (ROOT / "Dockerfile").read_text().split("AS final", 1)[1]
+    assert not re.search(r"(?m)^(COPY|ADD)\b[^\n]*--chown", final), "the code must stay root-owned"
+    assert re.search(
+        r"(?m)^RUN chmod -R go-w,a\+rX \. \\\n\s+&& /venv/bin/python -B scripts/generate_integrity",
+        final,
+    )
+    assert final.index("USER openwhistle") > final.index("chmod -R go-w")

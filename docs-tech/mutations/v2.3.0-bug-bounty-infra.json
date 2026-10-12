@@ -1,7 +1,14 @@
 {
  "test_groups": {
-  "N": ["tests/test_infra_bounty.py", "tests/test_tls.py"],
-  "M": ["tests/test_mutation_specs.py", "-k", "audit_reports or judged or unmutated"]
+  "N": [
+   "tests/test_infra_bounty.py",
+   "tests/test_tls.py"
+  ],
+  "M": [
+   "tests/test_mutation_specs.py",
+   "-k",
+   "audit_reports or judged or unmutated"
+  ]
  },
  "mutations": [
   {
@@ -52,6 +59,20 @@
    "old": "{0: \"GREEN\", 1: \"RED\"}",
    "new": "{0: \"GREEN\", 1: \"RED\", 2: \"RED\"}",
    "tests": "M"
+  },
+  {
+   "id": "image-code-chowned",
+   "file": "Dockerfile",
+   "old": "COPY . .\n",
+   "new": "COPY --chown=openwhistle:openwhistle . .\n",
+   "tests": "N"
+  },
+  {
+   "id": "image-no-mode-normalisation",
+   "file": "Dockerfile",
+   "old": "RUN chmod -R go-w,a+rX . \\\n    && /venv",
+   "new": "RUN /venv",
+   "tests": "N"
   }
  ]
 }
