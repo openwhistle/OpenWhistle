@@ -22,6 +22,8 @@ http {
     # or forwarded upstream (access_log is off; IP headers are stripped below),
     # so whistleblower anonymity is preserved while abusive bursts are limited.
     limit_req_zone $binary_remote_addr zone=ow_req:10m rate=10r/s;
+    # Every onion visitor reaches nginx from 127.0.0.1: one shared budget (nginx/nginx.conf).
+    limit_req_zone "onion" zone=ow_req_onion:10m rate=30r/s;
     limit_req_status 429;
     limit_req_log_level info;
 
@@ -73,8 +75,7 @@ http {
         # source shared with docker-compose.prod.yml's nginx, never a second
         # hand-maintained copy — see nginx/snippets/proxy-headers.conf and
         # deploy.yml's "Copy the shared nginx snippets" task. X-OW-Onion is
-        # cleared here like every other client-forged trust header, even
-        # though this deployment has no onion listener of its own: the app
+        # cleared here like every other client-forged trust header: the app
         # trusts that header globally (see app/onion.py), so ANY deployment
         # path that forwards the app's traffic must clear it or a client can
         # spoof onion-listener behaviour (non-Secure cookies, no HSTS) here.
@@ -120,4 +121,28 @@ http {
         include /etc/nginx/snippets/static-location.conf;
     }
 {% endif %}
+
+    # Tor onion service entry, as in nginx/nginx.conf: published on 127.0.0.1 only,
+    # for the host's own Tor daemon (https://openwhistle.net/en/docs/onion/). The role
+    # offered ONION_LOCATION while nothing listened where the onion page sends Tor.
+    server {
+        listen 8080;
+        server_name _;
+
+        include /etc/nginx/snippets/proxy-headers.conf;
+        include /etc/nginx/snippets/error-pages.conf;
+        # After the include, which clears it: the only place it is ever "1".
+        proxy_set_header X-OW-Onion "1";
+
+        limit_req zone=ow_req_onion burst=90 nodelay;
+
+        location / {
+            proxy_pass http://openwhistle;
+            proxy_read_timeout 60s;
+            proxy_connect_timeout 10s;
+            proxy_send_timeout 60s;
+        }
+
+        include /etc/nginx/snippets/static-location.conf;
+    }
 }

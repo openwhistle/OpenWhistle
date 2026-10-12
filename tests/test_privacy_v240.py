@@ -7,6 +7,7 @@ import logging
 import re
 import zipfile
 import zlib
+from datetime import UTC, datetime
 from unittest.mock import patch
 
 import pytest
@@ -392,6 +393,8 @@ async def test_a_capped_content_search_says_so(client, db_session, monkeypatch) 
     await _login(client, db_session, AdminRole.superadmin)
     word = f"Okapi{uuid.uuid4().hex[:6]}"
     oldest, _ = await report_service.create_report(db_session, "corruption", f"Only {word}.")
+    oldest.submitted_at = datetime(2000, 1, 1, tzinfo=UTC)  # times are days: order by date
+    await db_session.commit()
     from sqlalchemy import func, select
 
     from app.models.report import Report
@@ -483,3 +486,24 @@ async def test_the_s3_startup_job_encrypts_objects_stored_in_the_clear(
     assert att.encrypted and att.storage_key != key and key not in bucket.objects
     assert b"GPS-PHOTO" not in bucket.objects[att.storage_key]
     assert await att_service.read_attachment(db_session, att) == b"GPS-PHOTO"
+
+
+def test_the_ansible_stack_serves_the_onion_listener_it_advertises() -> None:
+    """env.j2 offers ONION_LOCATION; the onion page sends Tor to 127.0.0.1:8080, where
+    the role's nginx listened on nothing."""
+    from pathlib import Path
+
+    role = Path(__file__).parents[1] / "ansible/roles/openwhistle/templates"
+    nginx = (role / "nginx.conf.j2").read_text()
+    block = re.search(r"server \{\s*listen 8080;.*?\n    \}", nginx, re.DOTALL)
+    assert block and 'proxy_set_header X-OW-Onion "1";' in block.group()
+    assert '"127.0.0.1:8080:8080"' in (role / "docker-compose.yml.j2").read_text()
+
+
+def test_the_ip_is_dropped_by_the_first_middleware() -> None:
+    """The Kubernetes page: "OpenWhistle drops them, and the peer address, in its first
+    middleware". The CSRF middleware ran first."""
+    from app.main import app
+    from app.middleware import SecurityMiddleware
+
+    assert app.user_middleware[0].cls is SecurityMiddleware
