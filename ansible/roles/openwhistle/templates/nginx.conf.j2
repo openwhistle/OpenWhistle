@@ -25,6 +25,13 @@ http {
     limit_req_status 429;
     limit_req_log_level info;
 
+    # HSTS for nginx's own error pages (snippets/error-pages.conf): everywhere but
+    # the plain-HTTP onion listener, where the app omits it too.
+    map $server_port $ow_hsts {
+        8080    "";
+        default "max-age=31536000; includeSubDomains; preload";
+    }
+
     # 5 attachments x 10 MB (app/services/attachment.py) plus form overhead.
     client_max_body_size 55m;
 
@@ -70,6 +77,7 @@ http {
         # path that forwards the app's traffic must clear it or a client can
         # spoof onion-listener behaviour (non-Secure cookies, no HSTS) here.
         include /etc/nginx/snippets/proxy-headers.conf;
+        include /etc/nginx/snippets/error-pages.conf;
 
         # Server level, so every location inherits it: /static/ (the shared
         # snippet) was proxied to the app with no limit at all.
@@ -92,6 +100,7 @@ http {
         server_name {{ openwhistle_domain }};
 
         include /etc/nginx/snippets/proxy-headers.conf;
+        include /etc/nginx/snippets/error-pages.conf;
 
         # Server level, so every location inherits it: /static/ (the shared
         # snippet) was proxied to the app with no limit at all.

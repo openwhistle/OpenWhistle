@@ -19,6 +19,14 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **2.2.1 shipped a High zlib CVE fixed six days earlier** (CVE-2026-85091, zlib 1.3.2-r0, -r1 in Alpine since
   2026-10-06): the image never upgraded the pinned base image's packages, and the Trivy gate passed it because
   Trivy rates it MEDIUM. The final stage now runs `apk upgrade`, built without cache in CI.
+- **nginx's own 413, 429, 502, 503 and 504 responses carried no HSTS, CSP, X-Frame-Options or `Cache-Control:
+  no-store`** (`curl -D-` on a rate-limited request showed only `server`, `date`, `content-type`,
+  `content-length`): they never pass the app's middleware. `snippets/error-pages.conf` adds them to nginx's own
+  errors in `nginx.conf`, `nginx.behind-proxy.conf` and the Ansible template, without HSTS on the plain-HTTP onion
+  listener and without touching a proxied response.
+- **The mutation audit reported "all caught" without a database**: it never ran the tests unmutated, and pytest
+  exit 1 (every test errors) and 2 (collection error) read as RED. It now runs each test group once unmutated and
+  aborts (exit 2) unless green; only exit 1 is a catch, 2-5 are STALE.
 
 ## [2.2.1] — 2026-10-12
 

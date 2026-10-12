@@ -1,0 +1,57 @@
+{
+ "test_groups": {
+  "N": ["tests/test_infra_bounty.py", "tests/test_tls.py"],
+  "M": ["tests/test_mutation_specs.py", "-k", "audit_reports or judged or unmutated"]
+ },
+ "mutations": [
+  {
+   "id": "nginx-error-pages-not-included-tls",
+   "file": "nginx/nginx.conf",
+   "old": "        include /etc/nginx/snippets/proxy-headers.conf;\n        include /etc/nginx/snippets/error-pages.conf;\n\n        # Server level, so every location inherits it: /static/ (the shared\n        # snippet) was proxied to the app with no limit at all.\n        # Generous burst",
+   "new": "        include /etc/nginx/snippets/proxy-headers.conf;\n\n        # Server level, so every location inherits it: /static/ (the shared\n        # snippet) was proxied to the app with no limit at all.\n        # Generous burst",
+   "tests": "N"
+  },
+  {
+   "id": "nginx-429-no-headers",
+   "file": "nginx/snippets/error-pages.conf",
+   "old": "location @ow_err_429 { include /etc/nginx/snippets/error-headers.conf; return 429; }",
+   "new": "location @ow_err_429 { return 429; }",
+   "tests": "N"
+  },
+  {
+   "id": "nginx-error-no-csp",
+   "file": "nginx/snippets/error-headers.conf",
+   "old": "add_header Content-Security-Policy \"default-src 'none'; frame-ancestors 'none'\" always;\n",
+   "new": "",
+   "tests": "N"
+  },
+  {
+   "id": "nginx-hsts-on-onion",
+   "file": "nginx/nginx.conf",
+   "old": "        8080    \"\";\n",
+   "new": "",
+   "tests": "N"
+  },
+  {
+   "id": "nginx-intercept-app-errors",
+   "file": "nginx/snippets/error-pages.conf",
+   "old": "error_page 413 @ow_err_413;",
+   "new": "proxy_intercept_errors on;\nerror_page 413 @ow_err_413;",
+   "tests": "N"
+  },
+  {
+   "id": "audit-no-baseline",
+   "file": "scripts/mutation_audit.py",
+   "old": "    if baseline_fails(spec, only, limit):",
+   "new": "    if False:",
+   "tests": "M"
+  },
+  {
+   "id": "audit-exit-2-is-red",
+   "file": "scripts/mutation_audit.py",
+   "old": "{0: \"GREEN\", 1: \"RED\"}",
+   "new": "{0: \"GREEN\", 1: \"RED\", 2: \"RED\"}",
+   "tests": "M"
+  }
+ ]
+}

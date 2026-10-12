@@ -27,11 +27,63 @@ def inside_root(name: str) -> bool:
     return (ROOT / name).resolve().is_relative_to(ROOT)
 
 
+def pytest(tests: list[str], limit: int) -> subprocess.CompletedProcess[str]:
+    """One pytest run with a fresh bytecode cache.
+
+    Python trusts a .pyc whose source has the same size and mtime second, so a same-length
+    mutation written within a second of the last one ran the last one's code (out-inside-src
+    was GREEN that way).
+    """
+    pycache = tempfile.mkdtemp(prefix="mutation-pyc-")
+    try:
+        return subprocess.run(  # noqa: S603 — pytest on test paths from a repo file
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "-x",
+                "-q",
+                "--no-cov",
+                "-p",
+                "no:cacheprovider",
+                *tests,
+            ],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            timeout=limit,
+            env={**os.environ, "PYTHONPYCACHEPREFIX": pycache},
+        )
+    finally:
+        shutil.rmtree(pycache, ignore_errors=True)
+
+
+def baseline_fails(spec: dict, only: set[str], limit: int) -> bool:  # type: ignore[type-arg]
+    """Run each test group the audit uses once, unmutated: it must be GREEN.
+
+    Without a database or SECRET_KEY every run errors out, exits nonzero and every mutation
+    reads RED: the audit then reports "all caught" having judged nothing.
+    """
+    groups = sorted({m["tests"] for m in spec["mutations"] if not only or m["id"] in only})
+    failed = False
+    for group in groups:
+        run = pytest(spec["test_groups"][group], limit)
+        if run.returncode != 0:
+            failed = True
+            tail = "\n".join(run.stdout.splitlines()[-8:])
+            print(f"BASELINE {group}: unmutated tests exit {run.returncode}, not 0\n{tail}")
+    return failed
+
+
 def main() -> int:
     spec = json.loads(Path(sys.argv[1]).read_text())
     only = set(sys.argv[2:])
     # A mutation that removes a timeout hangs its test; a spec can bound the wait.
     limit = spec.get("timeout_seconds", 900)
+    if baseline_fails(spec, only, limit):
+        print("The unmutated tests are not green: fix the environment (DATABASE_URL, REDIS_URL,")
+        print("SECRET_KEY) first; every verdict below would be meaningless. Nothing was mutated.")
+        return 2
     green = 0
     for m in spec["mutations"]:
         if only and m["id"] not in only:
@@ -60,35 +112,13 @@ def main() -> int:
             made = [p for p in reversed(path.parents) if not p.exists() and p != ROOT]
             path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(m["create"] if original is None else original.replace(m["old"], m["new"]))
-        # A fresh bytecode cache per run: Python trusts a .pyc whose source has the same size
-        # and mtime second, so a same-length mutation written within a second of the last one
-        # ran the last one's code (out-inside-src was GREEN that way).
-        pycache = tempfile.mkdtemp(prefix="mutation-pyc-")
         try:
-            run = subprocess.run(  # noqa: S603 — pytest on test paths from a repo file
-                [
-                    sys.executable,
-                    "-m",
-                    "pytest",
-                    "-x",
-                    "-q",
-                    "--no-cov",
-                    "-p",
-                    "no:cacheprovider",
-                    *spec["test_groups"][m["tests"]],
-                ],
-                cwd=ROOT,
-                capture_output=True,
-                text=True,
-                timeout=limit,
-                env={**os.environ, "PYTHONPYCACHEPREFIX": pycache},
-            )
+            run = pytest(spec["test_groups"][m["tests"]], limit)
         except subprocess.TimeoutExpired:
             # A mutation that hangs the tests is caught: CI would time out too.
             print(f"{m['id']:28} RED    TIMEOUT after {limit} s", flush=True)
             continue
         finally:
-            shutil.rmtree(pycache, ignore_errors=True)
             if original is None:
                 path.unlink()
                 for directory in reversed(made):
@@ -103,9 +133,10 @@ def main() -> int:
             ),
             "",
         )
-        # pytest: 1 = a test failed, 2 = a collection error (a mutated import). 4 (a test
-        # path that does not exist) and 5 (no test selected) ran nothing and used to read RED.
-        verdict = {0: "GREEN", 1: "RED", 2: "RED"}.get(run.returncode, "STALE")
+        # Only exit 1 (a test failed) is a catch. 2 (interrupted / collection error), 3, 4 (a
+        # test path that does not exist) and 5 (no test selected) mean no test judged the
+        # mutation; an environment error used to read RED.
+        verdict = {0: "GREEN", 1: "RED"}.get(run.returncode, "STALE")
         if verdict == "STALE":
             fired = f"pytest exit {run.returncode}: no test ran"
         green += verdict != "RED"
