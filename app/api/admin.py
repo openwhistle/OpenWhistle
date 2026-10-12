@@ -906,7 +906,8 @@ async def export_pdf(
     from app.services.pdf import generate_report_pdf
 
     report = await _get_authorized_report(db, report_id, current_user)
-    await audit_service.log(db, current_user, AuditAction.REPORT_VIEWED, report_id=report.id)
+    # A case leaving the system as a file, not a view: shown in the log by default.
+    await audit_service.log(db, current_user, AuditAction.REPORT_EXPORTED, report_id=report.id)
     await db.commit()
 
     category_labels = await get_category_labels(db, get_lang(request), **_org_scope(current_user))

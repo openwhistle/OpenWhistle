@@ -662,6 +662,7 @@
   "audit.action.report.link_added": "Fall verknüpft",
   "audit.action.report.link_removed": "Fallverknüpfung entfernt",
   "audit.action.report.auto_deleted": "Automatisch gelöscht (Aufbewahrungsfrist)",
+  "audit.action.report.exported": "Als PDF exportiert",
   "audit.action.report.viewed": "Meldung geöffnet",
   "audit.action.report.identity_revealed": "Identität angezeigt",
   "audit.action.report.content_searched": "Berichtsinhalte durchsucht",

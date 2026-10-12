@@ -629,3 +629,28 @@ async def test_plain_http_carries_no_hsts(client: object, monkeypatch: pytest.Mo
     assert "strict-transport-security" not in (await client.get("/health")).headers  # type: ignore[attr-defined]
     monkeypatch.setattr(settings, "secure_cookies", True)
     assert "strict-transport-security" in (await client.get("/health")).headers  # type: ignore[attr-defined]
+
+
+@pytest.mark.asyncio
+async def test_a_pdf_export_is_its_own_audit_entry(acting_as, db_session: AsyncSession) -> None:
+    """A case exported to a file was written as "report viewed": indistinguishable from
+    opening the page, and hidden by default with the views. README: every admin action
+    recorded."""
+    from sqlalchemy import select
+
+    from app.models.audit import AuditLog
+    from app.models.user import AdminRole
+    from app.services.report import create_report
+    from tests.test_v210_bug_bounty import _totp_user
+
+    client, act = acting_as
+    admin = await _totp_user(db_session, AdminRole.admin)
+    act(admin)
+    report, _ = await create_report(db_session, "financial_fraud", "Exported to a file.")
+    assert (await client.get(f"/admin/reports/{report.id}/export.pdf")).status_code == 200
+    actions = (
+        (await db_session.execute(select(AuditLog.action).where(AuditLog.report_id == report.id)))
+        .scalars()
+        .all()
+    )
+    assert "report.exported" in actions, actions

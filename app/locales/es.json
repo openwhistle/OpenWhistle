@@ -662,6 +662,7 @@
   "audit.action.report.link_added": "Caso vinculado",
   "audit.action.report.link_removed": "Vínculo de caso eliminado",
   "audit.action.report.auto_deleted": "Eliminada automáticamente (plazo de conservación)",
+  "audit.action.report.exported": "Exportado como PDF",
   "audit.action.report.viewed": "Denuncia abierta",
   "audit.action.report.identity_revealed": "Identidad mostrada",
   "audit.action.report.content_searched": "Búsqueda en el contenido de denuncias",

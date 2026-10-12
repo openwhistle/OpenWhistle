@@ -662,6 +662,7 @@
   "audit.action.report.link_added": "Case linked",
   "audit.action.report.link_removed": "Case link removed",
   "audit.action.report.auto_deleted": "Deleted automatically (retention period)",
+  "audit.action.report.exported": "Exported as PDF",
   "audit.action.report.viewed": "Report opened",
   "audit.action.report.identity_revealed": "Identity shown",
   "audit.action.report.content_searched": "Report content searched",

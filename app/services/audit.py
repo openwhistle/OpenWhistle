@@ -31,6 +31,7 @@ class AuditAction:
     ATTACHMENT_DOWNLOADED = "report.attachment_downloaded"
     AUDIT_EXPORTED = "audit.exported"
     REPORT_VIEWED = "report.viewed"
+    REPORT_EXPORTED = "report.exported"
     IDENTITY_REVEALED = "report.identity_revealed"
     CONTENT_SEARCHED = "report.content_searched"
     CATEGORY_CREATED = "category.created"
