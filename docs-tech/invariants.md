@@ -667,7 +667,8 @@ built image (6 woff2 and both OFL licences, counted first): no pytest sees the i
 Spec: [`mutations/v2.3.0-bug-bounty.json`](mutations/v2.3.0-bug-bounty.json) (app) and
 `v2.3.0-bug-bounty-infra.json` (deployment, CI). The contrast walk, the alert bar, the identity-export form and
 the demo link field are browser guards (`tests/e2e/`), outside the audit: they failed against v2.2.1's
-stylesheet and templates when written.
+stylesheet and templates when written. So did the Chrome check's layout guards in `tests/e2e/test_layout.py`
+(panel gap, search button, card spacing, code block, account halves, deadline labels).
 
 | Guard | Mutation | Test |
 | --- | --- | --- |
@@ -698,6 +699,11 @@ stylesheet and templates when written.
 | The telemetry question comes once per release | `telemetry-asked-once` | `test_asked_once_per_version` |
 | The screenshots name their release | `release-marker` | `test_the_shots_name_the_release_they_were_taken_from` |
 | `test_submit_report_success` files a report | `submit-really-files` | `test_submit_report_success` |
+| A category bar is its share of all reports | `stats-category-share` | `test_a_category_bar_is_its_share_of_all_reports` |
+| The audit log names a case by its number | `audit-case-number` | `test_the_audit_log_names_the_case_by_its_number` |
+| A search's count says it counts content matches | `search-hits-label` | `test_the_search_entry_says_its_count_is_of_content_matches` |
+| No organisations without multi-tenancy | `tenants-only-with-multi-tenancy` | `test_without_multi_tenancy_there_are_no_organisations_to_create` |
+| The wizard's checkbox is the first telemetry ask | `wizard-is-the-first-ask` | `test_the_wizards_checkbox_is_the_first_ask` |
 
 Not separable by the four-eyes rule, and documented as such: two accounts made by the same person. Whoever
 creates them knows both first passwords; the rule refuses only an account's own maker (or whoever reset it)

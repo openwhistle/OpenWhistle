@@ -214,6 +214,41 @@
    "old": "    \"\"\"Create a new whistleblower report. Returns (report, plain_pin).",
    "new": "    \"\"\"Create a new whistleblower report. Returns (report, plain_pin).\"\"\"\n    raise RuntimeError(\"mutated\")\n    \"\"\"",
    "tests": "Q"
+  },
+  {
+   "id": "stats-category-share",
+   "file": "app/templates/admin/stats.html",
+   "old": "stat-bar-fill-outline\" data-pct=\"{{ pct }}\"",
+   "new": "stat-bar-fill-outline\" data-pct=\"{{ (pct * 2) | round(1) }}\"",
+   "tests": "B"
+  },
+  {
+   "id": "audit-case-number",
+   "file": "app/templates/admin/audit_log.html",
+   "old": "{% if entry.report_id in case_numbers %}",
+   "new": "{% if false %}",
+   "tests": "B"
+  },
+  {
+   "id": "search-hits-label",
+   "file": "app/locales/en.json",
+   "old": "\"audit.detail.hits\": \"Matches in the content\"",
+   "new": "\"audit.detail.hits\": \"Matching reports\"",
+   "tests": "B"
+  },
+  {
+   "id": "tenants-only-with-multi-tenancy",
+   "file": "app/api/deps.py",
+   "old": "    if not settings.multi_tenancy_enabled:\n        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)",
+   "new": "    if False:\n        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)",
+   "tests": "B"
+  },
+  {
+   "id": "wizard-is-the-first-ask",
+   "file": "app/api/wizard.py",
+   "old": "        telemetry_asked_version=settings.app_version,\n",
+   "new": "",
+   "tests": "T"
   }
  ]
 }
