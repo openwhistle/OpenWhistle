@@ -51,6 +51,19 @@ services:
 
   db:
     image: postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+    read_only: true
+    tmpfs:
+      - /var/run/postgresql
+      - /tmp
+    # The entrypoint hands the data directory to postgres and drops to it; nothing else.
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
     security_opt:
       - no-new-privileges:true
     # Not `env_file: .env`: that put SECRET_KEY, ENCRYPTION_KEY and the OIDC, LDAP, SMTP
@@ -76,6 +89,13 @@ services:
 
   redis:
     image: redis:8-alpine@sha256:3811787313eba226a2ef38658c6ccb91cd5e110edc89c37767de373120a0e5a0
+    read_only: true
+    # The entrypoint drops from root to the redis user; nothing else.
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETGID
+      - SETUID
     security_opt:
       - no-new-privileges:true
     # noeviction: sessions and rate-limit counters are never dropped; drafts

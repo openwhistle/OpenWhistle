@@ -418,7 +418,9 @@ async def authenticate_whistleblower(
     # Case numbers are issued in upper case. The lookup used to be exact while
     # the failure counter was not: "ow-2026-12345" was refused and counted.
     rl_key = case_number = case_number.strip().upper()
-    report = await get_report_by_credentials(db, case_number, pin.strip())
+    # The PIN is issued in lower case and a UUID's hex digits mean the same in either
+    # case; a PIN typed or autocorrected in capitals was refused and counted.
+    report = await get_report_by_credentials(db, case_number, pin.strip().lower())
     if report is not None:
         # The counter is left as it is: cleared here, a lock that vanished told anyone
         # probing with wrong PINs when the reporter had signed in.

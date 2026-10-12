@@ -44,17 +44,16 @@ def _can_access_report(user: AdminUser, report: Report) -> bool:
 
     - superadmin: every report.
     - admin: every report in their own organisation (all reports when
-      multi-tenancy is disabled or the report has no org).
+      multi-tenancy is disabled).
     - case_manager: only reports assigned to them (and, with multi-tenancy,
       within their own organisation).
+
+    An org-less report belongs to no organisation, as in ``_org_scope``. It used
+    to be open to every organisation's admin while their lists hid it.
     """
     if user.role == AdminRole.superadmin:
         return True
-    if (
-        settings.multi_tenancy_enabled
-        and report.org_id is not None
-        and user.org_id != report.org_id
-    ):
+    if settings.multi_tenancy_enabled and user.org_id != report.org_id:
         return False
     if user.role == AdminRole.case_manager:
         return report.assigned_to_id == user.id

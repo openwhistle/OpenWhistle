@@ -76,3 +76,11 @@ def test_a_changed_value_changes_the_pod_template() -> None:
 def test_replicas_are_left_to_the_hpa_when_it_is_on() -> None:
     assert _render()["spec"]["replicas"] == VALUES["replicaCount"]
     assert "replicas" not in _render("autoscaling.enabled=true")["spec"]
+
+
+def test_a_report_body_never_touches_a_disk() -> None:
+    """Uploads are spooled to /tmp before cleaning; the ingress buffers bodies to a file."""
+    deploy = (CHART / "templates/deployment.yaml").read_text()
+    assert re.search(r"- name: tmp\n\s+emptyDir:\n\s+medium: Memory\n", deploy)
+    annotations = VALUES["ingress"]["annotations"]
+    assert annotations["nginx.ingress.kubernetes.io/proxy-request-buffering"] == "off"

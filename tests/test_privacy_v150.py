@@ -531,6 +531,22 @@ async def test_new_report_and_reply_are_queued_not_sent(notify_settings: AsyncMo
 
 
 @pytest.mark.asyncio
+async def test_a_digest_no_channel_took_is_sent_again(notify_settings: AsyncMock) -> None:
+    """One SMTP outage used to lose the notice that a report had arrived."""
+    from app.services.notifications import deliver_notification_digest, notify_new_report
+
+    await notify_new_report("OW-2026-00007")
+    notify_settings.return_value = False  # every channel failed
+    await deliver_notification_digest()
+    notify_settings.return_value = True
+    await deliver_notification_digest()
+    assert notify_settings.await_count == 2
+    assert notify_settings.await_args.args == (["OW-2026-00007"], [])
+    await deliver_notification_digest()  # delivered: not sent a third time
+    assert notify_settings.await_count == 2
+
+
+@pytest.mark.asyncio
 async def test_digest_is_delivered_once_when_replicas_run_together(
     notify_settings: AsyncMock,
 ) -> None:

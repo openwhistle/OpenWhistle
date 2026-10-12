@@ -78,7 +78,7 @@ Every one of them is documented on [openwhistle.net/en/docs](https://openwhistle
 - **Status workflow** — `received → in_review → pending_feedback → closed`, validated server-side
 - **Assignment, internal notes, case linking**, search by number or content, custom categories, locations
 - **PDF export** with the SLA section; dashboard statistics
-- **Slack, Teams and email notices** — batched, counts only
+- **Slack, Teams and email notices** — batched; webhooks carry counts only, e-mail the case numbers, never content
 - **Telephone-channel guide** — HinSchG § 16 Abs. 3 checklist
 
 ### Accounts and security
@@ -98,8 +98,8 @@ Every one of them is documented on [openwhistle.net/en/docs](https://openwhistle
 - **Multi-tenancy** — isolated organisations, per-organisation reporting link
 - **S3-compatible attachment storage**, structured JSON logs, `/health` for Kubernetes probes
 - **Helm chart, Ansible role**, multi-arch images on GHCR, Docker Hub and Quay.io
-- **Update check and install count** — both opt-in, nothing about the instance is sent; while the count is off,
-  the dashboard asks once per update
+- **Update check and install count** — both opt-in; the update check sends nothing about the instance, the count a
+  random ID and the version; while the count is off, the dashboard asks once per update
 - **Five languages** — English, German, French, Spanish, Brazilian Portuguese; WCAG 2.1 AA; light and dark
 - **No external calls** — self-hosted fonts, no CDN, no tracking (GDPR)
 - **"Signal" design system** — [`DESIGN.md`](DESIGN.md)
