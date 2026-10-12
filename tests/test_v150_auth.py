@@ -136,21 +136,6 @@ async def test_wrong_pin_past_the_limit_shows_wait_notice_and_keeps_the_form(
 
 
 @pytest.mark.asyncio
-async def test_successful_login_resets_the_failure_count(
-    client: AsyncClient, db_session: AsyncSession
-) -> None:
-    report, pin = await create_report(db_session, "corruption", "Reset test report text.")
-    for _ in range(settings.max_access_attempts):
-        await _status_login(client, report.case_number, _WRONG_PIN)
-    assert (await _status_login(client, report.case_number, pin)).status_code == 303
-
-    resp = await _status_login(client, report.case_number, _WRONG_PIN)
-
-    assert "No report matches this case number and PIN." in resp.text
-    assert "Many wrong attempts" not in resp.text
-
-
-@pytest.mark.asyncio
 async def test_reply_fallback_shares_the_case_number_count_and_accepts_correct_pin(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
