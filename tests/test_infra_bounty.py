@@ -228,3 +228,21 @@ def test_conftest_registers_all_three_ci_skip_hooks() -> None:
 
     for hook in ("pytest_runtest_logreport", "pytest_collectreport", "pytest_sessionfinish"):
         assert getattr(conftest, hook) is getattr(ci_skip_guard, hook), hook
+
+
+def test_every_workflow_input_is_read_by_its_workflow() -> None:
+    """perf.yml offered a `host` input that nothing read: the run always targeted the
+    app it started itself, whatever the operator typed."""
+    import yaml
+
+    checked = 0
+    for path in sorted((ROOT / ".github/workflows").glob("*.yml")):
+        text = path.read_text()
+        data = yaml.safe_load(text)
+        triggers = data.get("on", data.get(True, {})) or {}
+        for trigger in ("workflow_dispatch", "workflow_call"):
+            inputs = (triggers.get(trigger) or {}).get("inputs") or {}
+            for name in inputs:
+                checked += 1
+                assert re.search(rf"inputs\.{re.escape(name)}\b", text), f"{path.name}: {name}"
+    assert checked, "no workflow input found: the check reaches nothing"

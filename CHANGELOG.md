@@ -59,6 +59,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and CI, while nginx, clamav and python were pinned by digest; the pin test checked only the major. Both are
   pinned by digest everywhere, Renovate's `pinDigests` now covers the compose files, and the pin test requires
   one digest per image.
+- **`perf.yml` offered a `host` input that nothing read**: the run always targeted the app it starts itself,
+  whatever was typed. The input is removed, and a test requires every workflow input to be read.
 
 ## [2.2.1] — 2026-10-12
 

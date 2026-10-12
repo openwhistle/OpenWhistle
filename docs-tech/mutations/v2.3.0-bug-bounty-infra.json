@@ -249,6 +249,13 @@
    "old": "[\"dockerfile\", \"docker-compose\"]",
    "new": "[\"dockerfile\"]",
    "tests": "P"
+  },
+  {
+   "id": "perf-unused-host-input",
+   "file": ".github/workflows/perf.yml",
+   "old": "      run_time:\n",
+   "new": "      host:\n        description: \"Target host URL\"\n        required: false\n        default: \"http://localhost:4009\"\n      run_time:\n",
+   "tests": "N"
   }
  ]
 }

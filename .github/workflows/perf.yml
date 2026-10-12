@@ -11,10 +11,6 @@ on:
         description: "Test duration (e.g. 60s, 2m)"
         required: false
         default: "60s"
-      host:
-        description: "Target host URL"
-        required: false
-        default: "http://localhost:4009"
 
 jobs:
   perf:
