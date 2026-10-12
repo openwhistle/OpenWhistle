@@ -45,6 +45,10 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   from `main` like a release, and the publish workflow signed without ever running `cosign verify`. The check
   is now `--certificate-identity` of `docker-publish.yml@refs/tags/vX.Y.Z`, and the workflow verifies every
   digest it signs against its own workflow ref.
+- **An unset `REDIS_PASSWORD` started Redis without authentication**: `--requirepass ""` answered `PONG` to an
+  unauthenticated client, and compose only warned. `docker-compose.prod.yml` and the Ansible compose now use
+  `${REDIS_PASSWORD:?…}` (also in the healthcheck) and `${POSTGRES_PASSWORD:?…}`, so an empty value stops
+  `compose up`.
 
 ## [2.2.1] — 2026-10-12
 

@@ -150,3 +150,24 @@ def test_the_documented_release_check_pins_the_workflow_and_the_tag() -> None:
     command = doc.split("cosign verify ghcr.io", 1)[1].split("```", 1)[0]
     assert "--certificate-identity-regexp" not in command
     assert ".github/workflows/docker-publish.yml@refs/tags/vX.Y.Z'" in command
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["docker-compose.prod.yml", "ansible/roles/openwhistle/templates/docker-compose.yml.j2"],
+)
+def test_an_empty_redis_password_stops_compose_instead_of_disabling_authentication(
+    path: str,
+) -> None:
+    """`--requirepass ""` starts Redis without authentication (PING answered PONG, measured),
+    and compose only warned that REDIS_PASSWORD was unset."""
+    text = (ROOT / path).read_text()
+    uses = re.findall(r"\$\{REDIS_PASSWORD[^}]*\}", text)
+    assert len(uses) == 2, uses  # the server's --requirepass and its healthcheck
+    for use in uses:
+        assert use.startswith("${REDIS_PASSWORD:?"), use
+
+
+def test_the_production_compose_requires_the_postgres_password() -> None:
+    text = (ROOT / "docker-compose.prod.yml").read_text()
+    assert 'POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?' in text

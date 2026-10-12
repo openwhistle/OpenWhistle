@@ -165,6 +165,27 @@
    "old": "  --certificate-identity 'https://github.com/openwhistle/OpenWhistle/.github/workflows/docker-publish.yml@refs/tags/vX.Y.Z' \\\n",
    "new": "  --certificate-identity-regexp '^https://github.com/openwhistle/OpenWhistle/' \\\n",
    "tests": "C"
+  },
+  {
+   "id": "compose-redis-password-optional",
+   "file": "docker-compose.prod.yml",
+   "old": "--requirepass \"${REDIS_PASSWORD:?REDIS_PASSWORD is required (empty means Redis without authentication)}\"",
+   "new": "--requirepass \"${REDIS_PASSWORD}\"",
+   "tests": "N"
+  },
+  {
+   "id": "j2-redis-healthcheck-optional",
+   "file": "ansible/roles/openwhistle/templates/docker-compose.yml.j2",
+   "old": "\"-a\", \"${REDIS_PASSWORD:?REDIS_PASSWORD is required (empty means Redis without authentication)}\"",
+   "new": "\"-a\", \"${REDIS_PASSWORD}\"",
+   "tests": "N"
+  },
+  {
+   "id": "compose-postgres-password-optional",
+   "file": "docker-compose.prod.yml",
+   "old": "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}",
+   "new": "${POSTGRES_PASSWORD}",
+   "tests": "N"
   }
  ]
 }
