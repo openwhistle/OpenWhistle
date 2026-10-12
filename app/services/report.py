@@ -407,7 +407,8 @@ async def authenticate_whistleblower(
     rl_key = case_number = case_number.strip().upper()
     report = await get_report_by_credentials(db, case_number, pin.strip())
     if report is not None:
-        await rl.reset_whistleblower_attempts(redis, rl_key)
+        # The counter is left as it is: cleared here, a lock that vanished told anyone
+        # probing with wrong PINs when the reporter had signed in.
         return report, 0
     failures = await rl.record_whistleblower_failure(redis, rl_key)
     if failures <= settings.max_access_attempts:

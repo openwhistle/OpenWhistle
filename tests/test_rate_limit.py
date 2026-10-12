@@ -8,7 +8,6 @@ from app.services.rate_limit import (
     check_admin_login_attempts,
     record_admin_login_failure,
     record_whistleblower_failure,
-    reset_whistleblower_attempts,
 )
 
 
@@ -46,15 +45,6 @@ async def test_whistleblower_failures_are_counted() -> None:
     redis = make_redis_mock({})
     assert await record_whistleblower_failure(redis, "OW-2026-00001") == 1
     assert await record_whistleblower_failure(redis, "OW-2026-00001") == 2
-
-
-@pytest.mark.asyncio
-async def test_whistleblower_counter_reset_after_success() -> None:
-    redis = make_redis_mock({})
-    await record_whistleblower_failure(redis, "OW-2026-00002")
-    await record_whistleblower_failure(redis, "OW-2026-00002")
-    await reset_whistleblower_attempts(redis, "OW-2026-00002")
-    assert await record_whistleblower_failure(redis, "OW-2026-00002") == 1
 
 
 @pytest.mark.asyncio

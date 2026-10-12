@@ -45,28 +45,6 @@ async def test_record_whistleblower_failure_increments_count(
 
 
 @pytest.mark.asyncio
-async def test_reset_whistleblower_attempts_clears_counter(
-    client: AsyncClient,
-) -> None:
-    import secrets
-
-    from app.redis_client import get_redis
-    from app.services.rate_limit import (
-        record_whistleblower_failure,
-        reset_whistleblower_attempts,
-    )
-
-    redis = await get_redis()
-    token = secrets.token_urlsafe(32)
-
-    await record_whistleblower_failure(redis, token)
-    await record_whistleblower_failure(redis, token)
-    await reset_whistleblower_attempts(redis, token)
-
-    assert await record_whistleblower_failure(redis, token) == 1
-
-
-@pytest.mark.asyncio
 async def test_check_admin_login_attempts_locked_after_max(
     client: AsyncClient,
 ) -> None:
