@@ -12,13 +12,76 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - An i18n coverage badge in the README: `scripts/i18n_coverage.py` measures the share of English strings each
   language really translates, and `.github/workflows/badges.yml` publishes it as a shields.io endpoint file on
   the `badges` branch.
+- The app takes the website's redesign: one frame for nav, page and footer (1440 px on admin pages), the
+  website's nav, footer, docs sidebar as the admin menu, callouts, chips and status pills with a dot; 239 unused
+  Tailwind rules are gone.
+- After an update, while the installation count is off and the in-app switch decides, the dashboard asks each
+  admin who may switch it once per release whether to count the installation (migration 015).
 - Every image is scanned with grype — on each pull request, each pushed digest before the publish tags it,
   and `:latest` every Monday — and fails on any vulnerability that has a fix, whatever its severity. Reviewed
   exceptions live in `.grype.yaml`, each with a reason and pinned to a package version. Trivy now scans for
   secrets only.
 
+### Changed
+
+- With multi-tenancy, `/admin/system`, the installation-count switch and dismissing the address-header warning
+  are the superadmin's; a dismissal is in the audit log.
+- A PDF export is recorded as `report.exported`, no longer as a view; every sign-in is recorded as
+  `auth.login`.
+- The audit-log filter takes a case number; one that names no report lists nothing.
+- The report form offers the confidential option only with `SUBMISSION_MODE_ENABLED` and the e-mail field only
+  with `NOTIFY_EMAIL_ENABLED`; with mail off no address is stored.
+- A language switch returns to the page it was made on; page titles carry `APP_NAME`.
+- `scripts/take_screenshots.py` writes `docs/img/screens/_release`; the website's screenshots are re-taken for
+  every release.
+
 ### Fixed
 
+- **A correct PIN cleared the case's lockout**: whoever knows a case number could lock it with wrong PINs and
+  probe again; the lock gone meant the reporter had signed in (899 s, then 0). The counter is left alone.
+- **The bundled nginx passed seven of the address headers the app strips** (Fastly, ingress-nginx, Envoy,
+  Azure, App Engine, Cloudflare IPv6) while its comment said no IP data could reach the app. Both lists now
+  hold 23 headers, and a test fails while nginx misses one.
+- **A deactivated account got its sessions back when reactivated** within the hour (200 with the old cookie).
+  Deactivating ends them.
+- **No sign-in was ever audited**: `auth.login` had a label and a filter entry, and nothing wrote it.
+- **An organisation's admin could hide the instance-wide address-header warning** from the superadmin, with no
+  audit row, and switch the whole instance's installation count (200, 302, 409).
+- **The local-review barrier never saw an address header**: the middleware had stripped them first, so only
+  `X-Forwarded-Proto` and `Via` were checked.
+- **The setup wizard's TOTP code opened a session for 90 more seconds**: it was verified, not used up.
+- **Redis held the reporter's status-session token as its key**: whoever could read Redis could open the case
+  and reply as the reporter. The key is an HMAC.
+- **A percent-encoded database password stopped the start** (`ValueError: invalid interpolation syntax`):
+  Alembic's ConfigParser read the `%` the Ansible role writes.
+- **Storing an attachment in S3 logged the second the report was sent**, which the database keeps as the day.
+- **A submit that failed before its commit left its attachments in the S3 bucket** for good.
+- **Thirteen admin actions committed before their audit entry**: when the audit write failed, the action stood
+  with nothing in the log. Action and entry commit together.
+- **Uploads arriving together could push Redis past `maxmemory`**, where `noeviction` refuses every write: the
+  room check left out the upload's own size and nothing serialised it. Check and save run under one lock.
+- **Each organisation's search entry counted every organisation's hits** (4 and 4 for 1 and 3).
+- **The update check told GitHub the running version** in its User-Agent, while README said nothing about the
+  instance is sent.
+- **HSTS went out on an instance run on plain HTTP** (`SECURE_COOKIES=false`), against RFC 6797 § 8.1.
+- **No alert drew its edge**: the rules set `border-color` without a width (`border-left-width: 0px`).
+- **White text on the dark theme's light fills**: the wizard's current step and the reporter's message icon at
+  2.34:1, "Request deletion" at 2.78:1; axe filed them under "incomplete". A contrast walk over every fill runs
+  in both themes, and axe runs dark too.
+- **A refused upload showed a raw locale key** in the banner (`submit.error.'big.pdf' is too large…`).
+- **An account called "admin" read as "Administrator" in the audit log**, a slug "closed" as "Closed"; nine
+  detail fields had no label in any language.
+- **The audit-log filter ignored a case number** and listed and exported the whole log.
+- **"Export with identity" locked its form** until a reload; the link field refused demo case numbers; the
+  notes field had no accessible name; the session countdown was read out every second.
+- **A language switch on an admin page went to the dashboard**, and on the authenticator step back to the
+  password form.
+- **`?deleted=<anything>` showed a "permanently deleted" notice** for a case that was not.
+- **Nineteen page titles said "OpenWhistle"** whatever `APP_NAME` said.
+- **The description stopped at 5,000 characters of emoji** while its counter allowed 10,000.
+- **A refused new account (password over 72 bytes, invalid or taken name) was a bare 400/409 page.**
+- Six tests could not fail (`test_submit_report_success` stayed green with report creation broken; four
+  `a or b` asserts), and one passed only after another test had left a report behind.
 - **2.2.1 shipped a High zlib CVE fixed six days earlier** (CVE-2026-85091, zlib 1.3.2-r0, -r1 in Alpine since
   2026-10-06): the image never upgraded the pinned base image's packages, and the Trivy gate passed it because
   Trivy rates it MEDIUM. The final stage now runs `apk upgrade`, built without cache in CI.

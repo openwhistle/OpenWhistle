@@ -662,6 +662,47 @@ mutation ids live in openwhistle/website; the live site specs here list what lef
 The CI smoke test (`ci.yml`, job `docker`) requests every file of `app/static/fonts/` but its README from the
 built image (6 woff2 and both OFL licences, counted first): no pytest sees the image.
 
+## Bug bounty after v2.2.1
+
+Spec: [`mutations/v2.3.0-bug-bounty.json`](mutations/v2.3.0-bug-bounty.json) (app) and
+`v2.3.0-bug-bounty-infra.json` (deployment, CI). The contrast walk, the alert bar, the identity-export form and
+the demo link field are browser guards (`tests/e2e/`), outside the audit: they failed against v2.2.1's
+stylesheet and templates when written.
+
+| Guard | Mutation | Test |
+| --- | --- | --- |
+| A correct PIN leaves the lockout counter alone | `lockout-no-reset` | `test_a_correct_pin_leaves_the_lockout_as_it_was` |
+| nginx clears every header the app strips | `nginx-fastly` | `test_nginx_clears_every_header_the_app_strips` |
+| Deactivating ends the account's sessions | `deactivate-revokes` | `test_a_reactivated_account_does_not_get_its_old_sessions_back` |
+| Every sign-in is audited | `login-audited` | `test_a_sign_in_is_in_the_audit_log` |
+| Instance switches are the superadmin's under multi-tenancy | `instance-admin` | `test_an_organisations_admin_cannot_touch_the_instance` |
+| The local-review barrier sees stripped address headers | `local-review-sees-headers` | `test_an_address_header_hides_the_local_review_button` |
+| The wizard's TOTP code is used up | `wizard-totp-used` | `test_the_setup_wizards_code_cannot_sign_in_again` |
+| Redis keys a status session by an HMAC | `status-key-hmac` | `test_redis_holds_no_status_session_token` |
+| A `%` in `DATABASE_URL` migrates | `alembic-percent` | `test_migrations_run_with_a_percent_encoded_password` |
+| An S3 put writes no log line | `s3-put-silent` | `test_s3_put_logs_nothing` |
+| A submit that does not commit removes its S3 objects | `s3-orphans` | `test_a_submit_that_fails_before_its_commit_leaves_no_object_in_the_bucket` |
+| An admin action and its audit entry commit together | `audit-same-tx` | `test_a_status_change_without_its_audit_entry_does_not_stand` |
+| Concurrent uploads stay below the Redis limit | `draft-room-size` | `test_concurrent_attachment_drafts_stay_below_the_limit` |
+| Each organisation's search entry counts its own hits | `search-hits-per-org` | `test_each_organisations_search_entry_counts_its_own_hits` |
+| The update check sends no version | `ua-no-version` | `test_the_update_check_does_not_tell_github_the_version` |
+| No HSTS with `SECURE_COOKIES=false` | `hsts-plain-http` | `test_plain_http_carries_no_hsts` |
+| A refused upload's banner names the field, not a raw key | `upload-banner-code` | `test_submit_oversized_file_returns_error` |
+| Only role fields read as role labels in the audit log | `audit-role-field` | `test_a_username_that_reads_like_a_role_stays_a_username` |
+| The audit filter takes a case number | `audit-filter-case` | `test_the_audit_log_filters_by_case_number` |
+| No confidential option without `SUBMISSION_MODE_ENABLED` | `mode-choice` | `test_without_mode_choice_the_form_offers_no_confidential_report` |
+| A deletion notice needs an audited deletion | `deleted-notice` | `test_a_deletion_notice_needs_a_deletion` |
+| Page titles carry `APP_NAME` | `title-brand` | `test_the_tab_title_carries_the_operators_name` |
+| A refused account is answered on the form | `account-on-form` | `test_a_refused_account_is_explained_on_the_form` |
+| A PDF export is its own audit action | `pdf-export-action` | `test_a_pdf_export_is_its_own_audit_entry` |
+| The telemetry question comes once per release | `telemetry-asked-once` | `test_asked_once_per_version` |
+| The screenshots name their release | `release-marker` | `test_the_shots_name_the_release_they_were_taken_from` |
+| `test_submit_report_success` files a report | `submit-really-files` | `test_submit_report_success` |
+
+Not separable by the four-eyes rule, and documented as such: two accounts made by the same person. Whoever
+creates them knows both first passwords; the rule refuses only an account's own maker (or whoever reset it)
+as its second pair of eyes.
+
 ## Repository and release
 
 | Guard | Test |

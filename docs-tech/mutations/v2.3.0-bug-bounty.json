@@ -1,0 +1,219 @@
+{
+ "test_groups": {
+  "B": [
+   "tests/test_v230_bug_bounty.py"
+  ],
+  "P": [
+   "tests/test_submit_prg.py"
+  ],
+  "X": [
+   "tests/test_attachments.py"
+  ],
+  "T": [
+   "tests/test_telemetry_ask.py"
+  ],
+  "C": [
+   "tests/test_screenshots.py"
+  ],
+  "Q": [
+   "tests/test_reports.py"
+  ],
+  "V": [
+   "tests/test_v160_design.py"
+  ],
+  "L": [
+   "tests/test_issue_45_s3_missing.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "lockout-no-reset",
+   "file": "app/services/report.py",
+   "old": "        # The counter is left as it is: cleared here, a lock that vanished told anyone\n",
+   "new": "        await redis.delete(rl._wb_key(rl_key))\n        # The counter is left as it is: cleared here, a lock that vanished told anyone\n",
+   "tests": "B"
+  },
+  {
+   "id": "nginx-fastly",
+   "file": "nginx/snippets/proxy-headers.conf",
+   "old": "proxy_set_header Fastly-Client-IP          \"\";\n",
+   "new": "",
+   "tests": "B"
+  },
+  {
+   "id": "deactivate-revokes",
+   "file": "app/api/admin.py",
+   "old": "    # Refused while inactive anyway; ended, so a reactivation does not revive them.\n    await auth_service.revoke_user_sessions(redis, str(target.id))\n",
+   "new": "",
+   "tests": "B"
+  },
+  {
+   "id": "login-audited",
+   "file": "app/api/auth.py",
+   "old": "    await audit_service.log(db, user, action)\n    await db.commit()\n    # A password someone else set",
+   "new": "    await db.commit()\n    # A password someone else set",
+   "tests": "B"
+  },
+  {
+   "id": "instance-admin",
+   "file": "app/api/deps.py",
+   "old": "    if settings.multi_tenancy_enabled and current_user.role != AdminRole.superadmin:\n        raise HTTPException(",
+   "new": "    if False:\n        raise HTTPException(",
+   "tests": "B"
+  },
+  {
+   "id": "local-review-sees-headers",
+   "file": "app/api/auth.py",
+   "old": "    if getattr(request.state, \"ip_headers_seen\", False):\n        return False\n",
+   "new": "",
+   "tests": "B"
+  },
+  {
+   "id": "wizard-totp-used",
+   "file": "app/api/wizard.py",
+   "old": "        await consume_totp(redis, admin_id, totp_secret, totp_code)\n",
+   "new": "",
+   "tests": "B"
+  },
+  {
+   "id": "status-key-hmac",
+   "file": "app/services/report.py",
+   "old": "    return f\"status-session:{digest}\"",
+   "new": "    return f\"status-session:{token}\"",
+   "tests": "B"
+  },
+  {
+   "id": "alembic-percent",
+   "file": "migrations/env.py",
+   "old": "database_url.replace(\"%\", \"%%\")",
+   "new": "database_url",
+   "tests": "B"
+  },
+  {
+   "id": "s3-put-silent",
+   "file": "app/services/storage.py",
+   "old": "        # No log line: a put runs in the final submit, and its timestamp would be the\n",
+   "new": "        log.info(\"Stored attachment in S3\")\n",
+   "tests": "L"
+  },
+  {
+   "id": "s3-orphans",
+   "file": "app/api/reports.py",
+   "old": "                await delete_stored_objects(stored_keys)  # no row will point to them\n",
+   "new": "",
+   "tests": "P"
+  },
+  {
+   "id": "audit-same-tx",
+   "file": "app/services/report.py",
+   "old": "    report.status = new_status\n",
+   "new": "    report.status = new_status\n    await db.commit()\n",
+   "tests": "B"
+  },
+  {
+   "id": "draft-room-size",
+   "file": "app/api/reports.py",
+   "old": "    used = int(info[\"used_memory\"]) + incoming\n",
+   "new": "    used = int(info[\"used_memory\"])\n",
+   "tests": "B"
+  },
+  {
+   "id": "search-hits-per-org",
+   "file": "app/api/admin.py",
+   "old": "            hits = hits_by_org.get(read_org, 0) if split else len(content_ids)\n",
+   "new": "            hits = len(content_ids)\n",
+   "tests": "B"
+  },
+  {
+   "id": "ua-no-version",
+   "file": "app/services/version_check.py",
+   "old": "        \"User-Agent\": \"OpenWhistle\",",
+   "new": "        \"User-Agent\": \"OpenWhistle/\" + __import__(\"app.config\").config.settings.app_version,",
+   "tests": "B"
+  },
+  {
+   "id": "hsts-plain-http",
+   "file": "app/middleware.py",
+   "old": "                if not is_onion and settings.secure_cookies:\n",
+   "new": "                if not is_onion:\n",
+   "tests": "B"
+  },
+  {
+   "id": "upload-banner-code",
+   "file": "app/api/reports.py",
+   "old": "_fail(_STEP_ATTACHMENTS, \"attachments_rejected\", {\"files\": file_error})",
+   "new": "_fail(_STEP_ATTACHMENTS, file_error, {\"files\": file_error})",
+   "tests": "X"
+  },
+  {
+   "id": "audit-role-field",
+   "file": "app/templates/admin/_audit.html",
+   "old": "{%- elif k in ('role', 'old', 'new') and role_label",
+   "new": "{%- elif role_label",
+   "tests": "B"
+  },
+  {
+   "id": "audit-filter-case",
+   "file": "app/api/admin.py",
+   "old": "            report_id = report.id if report is not None else uuid.UUID(int=0)\n",
+   "new": "            report_id = None\n",
+   "tests": "B"
+  },
+  {
+   "id": "mode-choice",
+   "file": "app/templates/submit.html",
+   "old": "                    {% if mode_choice %}\n                    <label",
+   "new": "                    {% if true %}\n                    <label",
+   "tests": "B"
+  },
+  {
+   "id": "deleted-notice",
+   "file": "app/api/admin.py",
+   "old": "    return case_number if found else None\n",
+   "new": "    return case_number\n",
+   "tests": "B"
+  },
+  {
+   "id": "title-brand",
+   "file": "app/templates/submit.html",
+   "old": "| {{ brand.name }}{% endblock %}",
+   "new": "| OpenWhistle{% endblock %}",
+   "tests": "B"
+  },
+  {
+   "id": "account-on-form",
+   "file": "app/api/admin.py",
+   "old": "        page.status_code = 422\n",
+   "new": "        page.status_code = 400\n",
+   "tests": "B"
+  },
+  {
+   "id": "pdf-export-action",
+   "file": "app/api/admin.py",
+   "old": "    await audit_service.log(db, current_user, AuditAction.REPORT_EXPORTED, report_id=report.id)\n",
+   "new": "    await audit_service.log(db, current_user, AuditAction.REPORT_VIEWED, report_id=report.id)\n",
+   "tests": "B"
+  },
+  {
+   "id": "telemetry-asked-once",
+   "file": "app/api/admin.py",
+   "old": "        user.telemetry_asked_version == settings.app_version\n        or",
+   "new": "        False\n        or",
+   "tests": "T"
+  },
+  {
+   "id": "release-marker",
+   "file": "scripts/take_screenshots.py",
+   "old": "    (screens / \"_release\").write_text(settings.app_version + \"\\n\", encoding=\"utf-8\")",
+   "new": "    (screens / \"_release\").write_text(\"\", encoding=\"utf-8\")",
+   "tests": "C"
+  },
+  {
+   "id": "submit-really-files",
+   "file": "app/services/report.py",
+   "old": "    \"\"\"Create a new whistleblower report. Returns (report, plain_pin).",
+   "new": "    \"\"\"Create a new whistleblower report. Returns (report, plain_pin).\"\"\"\n    raise RuntimeError(\"mutated\")\n    \"\"\"",
+   "tests": "Q"
+  }
+ ]
+}
