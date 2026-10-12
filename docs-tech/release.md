@@ -127,4 +127,10 @@ The publish workflow runs the same `cosign verify` on every digest it signs.
 The website image (`ghcr.io/openwhistle/website`) is published and verified by
 openwhistle/website, not by this release.
 
+Re-take the website's screenshots from the released image, every release: the
+website's CI is red while `docs/img/screens/_release` names an older version.
+`scripts/take_screenshots.py --out <website checkout>` writes the shots and the
+marker (stack: `docs-tech/local-review.md`); open the pull request in
+openwhistle/website.
+
 Then create the GitHub release from the changelog section.

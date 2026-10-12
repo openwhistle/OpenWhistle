@@ -120,3 +120,17 @@ def test_shoot_grows_the_viewport_instead_of_capturing_full_page() -> None:
     assert "set_viewport_size" in body, (
         "shoot() must grow the viewport to the page's height before capturing"
     )
+
+
+def test_the_shots_name_the_release_they_were_taken_from(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The website fails while docs/img/screens/_release names an older release than its
+    latest app release (openwhistle/website tests/test_screenshots.py): the script writes
+    the version it ran against, one line."""
+    from app.config import settings
+
+    screens = tmp_path / _script().SCREENS
+    screens.mkdir(parents=True)
+    _script().write_release_marker(screens)
+    assert (screens / "_release").read_text(encoding="utf-8") == settings.app_version + "\n"

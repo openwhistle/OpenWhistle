@@ -9,10 +9,11 @@ to run without one. Run against the local-review stack (docs-tech/local-review.m
     uv run python scripts/take_screenshots.py --out ../website
     podman compose -f docker-compose.e2e.yml -f docker-compose.review.yml down -v
 
-Re-take these whenever the change alters the interface they document (a
-template, site.css, or the theme/demo-banner behaviour) — not on every
-release. tests/test_screenshots.py checks the *output* (both themes present,
-viewport still above the breakpoint); it cannot tell whether a page's
+Re-taken for every release (docs-tech/release.md): the script writes the app
+version it ran against to docs/img/screens/_release, and the website's
+tests/test_screenshots.py fails while _release names an older release than
+its latest. tests/test_screenshots.py here checks the *output* (both themes
+present, viewport still above the breakpoint); it cannot tell whether a page's
 content is stale, only a look at the images can.
 
 One list of (name, path, setup) drives every shot: `path` is the page's own
@@ -258,6 +259,14 @@ def out_dir(argv: list[str] | None = None) -> Path:
     return screens
 
 
+def write_release_marker(screens: Path) -> None:
+    """docs/img/screens/_release: the app version the shots show, one line. The
+    leading "_" keeps the website build from publishing it."""
+    from app.config import settings  # noqa: PLC0415
+
+    (screens / "_release").write_text(settings.app_version + "\n", encoding="utf-8")
+
+
 def main(argv: list[str] | None = None) -> None:
     out = out_dir(argv)
     from playwright.sync_api import sync_playwright  # CI's test job has no Playwright
@@ -281,6 +290,7 @@ def main(argv: list[str] | None = None) -> None:
                     context.close()
         finally:
             browser.close()
+    write_release_marker(out)
 
 
 if __name__ == "__main__":
