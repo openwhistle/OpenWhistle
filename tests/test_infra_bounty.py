@@ -140,3 +140,13 @@ def test_the_ansible_tls_block_has_the_same_tls_directives_as_the_bundled_nginx(
     template = tls(_render_role_template("nginx.conf.j2"))
     assert bundled["ssl_session_tickets"] == "off"
     assert template == bundled
+
+
+def test_the_documented_release_check_pins_the_workflow_and_the_tag() -> None:
+    """`--certificate-identity-regexp '^https://github.com/openwhistle/OpenWhistle/'` matched
+    every workflow on every ref (checked with re.match): an :edge image from main, or one
+    from a branch workflow, passed like a release."""
+    doc = (ROOT / "docs-tech/release.md").read_text()
+    command = doc.split("cosign verify ghcr.io", 1)[1].split("```", 1)[0]
+    assert "--certificate-identity-regexp" not in command
+    assert ".github/workflows/docker-publish.yml@refs/tags/vX.Y.Z'" in command

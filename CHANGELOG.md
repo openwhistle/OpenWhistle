@@ -40,6 +40,11 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **The Ansible nginx template issued TLS session tickets** (`openssl s_client` showed a 86400 s ticket lifetime
   hint; the bundled nginx issues none) and used another session cache and a 1 d timeout. It now has
   `ssl_session_tickets off` and the bundled cache settings; a test compares every `ssl_*` directive of both.
+- **The documented release check accepted any workflow on any ref**: `--certificate-identity-regexp
+  '^https://github.com/openwhistle/OpenWhistle/'` matched `anything.yml@refs/heads/x` and an `:edge` image
+  from `main` like a release, and the publish workflow signed without ever running `cosign verify`. The check
+  is now `--certificate-identity` of `docker-publish.yml@refs/tags/vX.Y.Z`, and the workflow verifies every
+  digest it signs against its own workflow ref.
 
 ## [2.2.1] — 2026-10-12
 

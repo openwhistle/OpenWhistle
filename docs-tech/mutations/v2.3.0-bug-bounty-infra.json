@@ -12,6 +12,10 @@
   "H": [
    "tests/test_infra_bounty.py",
    "tests/test_helm_chart.py"
+  ],
+  "C": [
+   "tests/test_docker_publish.py",
+   "tests/test_infra_bounty.py"
   ]
  },
  "mutations": [
@@ -133,6 +137,34 @@
    "old": "        ssl_session_tickets off;\n",
    "new": "        ssl_session_tickets off;\n        ssl_session_timeout 1d;\n",
    "tests": "N"
+  },
+  {
+   "id": "publish-no-cosign-verify",
+   "file": ".github/workflows/docker-publish.yml",
+   "old": "            cosign verify \"${repo}@${digest}\" \\\n",
+   "new": "            true \"${repo}@${digest}\" \\\n",
+   "tests": "C"
+  },
+  {
+   "id": "publish-verify-failure-ignored",
+   "file": ".github/workflows/docker-publish.yml",
+   "old": "https://token.actions.githubusercontent.com > /dev/null || return 1",
+   "new": "https://token.actions.githubusercontent.com > /dev/null || true",
+   "tests": "C"
+  },
+  {
+   "id": "publish-verify-any-workflow",
+   "file": ".github/workflows/docker-publish.yml",
+   "old": "--certificate-identity \"${GITHUB_SERVER_URL}/${GITHUB_WORKFLOW_REF}\"",
+   "new": "--certificate-identity-regexp \"^${GITHUB_SERVER_URL}/\"",
+   "tests": "C"
+  },
+  {
+   "id": "release-doc-regexp",
+   "file": "docs-tech/release.md",
+   "old": "  --certificate-identity 'https://github.com/openwhistle/OpenWhistle/.github/workflows/docker-publish.yml@refs/tags/vX.Y.Z' \\\n",
+   "new": "  --certificate-identity-regexp '^https://github.com/openwhistle/OpenWhistle/' \\\n",
+   "tests": "C"
   }
  ]
 }

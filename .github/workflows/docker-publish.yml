@@ -257,6 +257,12 @@ jobs:
             docker buildx imagetools create $(printf -- '-t %s ' $tags) $sources || return 1
             digest=$(docker buildx imagetools inspect "$first" --format '{{json .Manifest}}' | jq -r .digest) || return 1
             cosign sign --yes "${repo}@${digest}" || return 1
+            # Prove the signature just written, bound to this exact workflow file at this
+            # exact ref (GITHUB_WORKFLOW_REF): a signature from another workflow or
+            # branch would not pass, and neither would an unsigned digest.
+            cosign verify "${repo}@${digest}" \
+              --certificate-identity "${GITHUB_SERVER_URL}/${GITHUB_WORKFLOW_REF}" \
+              --certificate-oidc-issuer https://token.actions.githubusercontent.com > /dev/null || return 1
 
             # A 200 on the index proves nothing: v1.3.0's tags answered 200
             # while every platform manifest behind them had been deleted.
