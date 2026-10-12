@@ -238,7 +238,6 @@ video {
   --info: #2f57e6;
   --info-subtle: #eaeefc;
   --bg-code: #f6f6f5;
-  --surface-3: #e9e9e8;
   --on-dark: #fafafa;
   --muted-on-dark: #a1a1aa;
   --font-display: "Sora",system-ui,sans-serif;
@@ -305,7 +304,6 @@ video {
   --info: #6d8dff;
   --info-subtle: #171b2e;
   --bg-code: #131315;
-  --surface-3: #232327;
   --on-dark: #fafafa;
   --muted-on-dark: #a1a1aa;
 }
@@ -1133,8 +1131,9 @@ input[type="file"].form-control::file-selector-button {
 }
 /* A chip track: chips nest concentric inside it (8 px - 2 px = 6 px). */
 .filter-pills {
-  background: var(--surface-3);
+  background: var(--canvas);
   border-radius: var(--radius-btn);
+  box-shadow: 0 0 0 1px var(--hairline);
   gap: 0.25rem;
   padding: 2px;
 }
@@ -2959,7 +2958,7 @@ a.attachment-name:hover {
   .btn, .btn-primary, .btn-danger, .btn-secondary, .panel-outline, .panel, .badge-received, .mode-card,
   .credential-display, .credential-box, .attachment-item, .qr-wrapper, .totp-secret-card,
   .saved-confirm-label, .demo-credentials, .demo-cred-value, .demo-cred-code, .demo-report-row,
-  .badge-admin, .badge-case_manager, .badge-superadmin,
+  .badge-admin, .badge-case_manager, .badge-superadmin, .filter-pills,
   .session-expiry-banner, .session-expiry-banner.session-expiry-expired-state, .card, .theme-toggle, .lang-picker-btn, .lang-picker-menu, .admin-menu,
   .panel-primary, .pagination-page, .pagination-page-current {
     border: 1px solid CanvasText;
