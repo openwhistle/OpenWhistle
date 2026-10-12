@@ -519,7 +519,10 @@ def test_the_pdf_calls_seven_days_and_twelve_hours_late() -> None:
         feedback_due_at=None,
         closed_at=None,
     )
-    assert pdf._ack_label(report, datetime(2027, 3, 20, tzinfo=UTC)) == "OK Acknowledged (late)"
+    from app.i18n import make_translator
+
+    label = pdf._ack_label(report, datetime(2027, 3, 20, tzinfo=UTC), make_translator("en"))
+    assert label == "OK Acknowledged (late)"
 
 
 @pytest.mark.asyncio

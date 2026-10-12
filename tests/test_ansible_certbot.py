@@ -78,3 +78,27 @@ def test_no_task_or_handler_names_a_host_nginx() -> None:
     text += (ROLE / "handlers/main.yml").read_text()
     assert "python3-certbot-nginx" not in text
     assert "name: nginx" not in text
+
+
+def test_the_post_hook_removes_the_visitor_addresses_certbot_logged(tmp_path: Path) -> None:
+    """certbot --standalone holds :80 during a renewal and its acme server logs each
+    request with the client address at DEBUG, which certbot's log file keeps (measured
+    with acme 5.8: 'acme.standalone:::ffff:127.0.0.1 - - "GET / HTTP/1.1" 200 -')."""
+    task = _hook_task()
+    (start,) = [i for i in task["loop"] if i["action"] == "start"]
+    script = jinja2.Template(task["ansible.builtin.copy"]["content"]).render(item=start)
+    assert script.startswith("#!/bin/sh\n")
+    log = tmp_path / "letsencrypt.log"
+    log.write_text(
+        "2026-10-13 03:12:01,100:DEBUG:certbot._internal.main:certbot version: 2.11.0\n"
+        '2026-10-13 03:12:02,200:DEBUG:acme.standalone:203.0.113.7 - - "GET / HTTP/1.1" 404 -\n'
+        "2026-10-13 03:12:03,300:INFO:certbot._internal.renewal:Renewal succeeded\n"
+    )
+    script = script.replace("/var/log/letsencrypt/letsencrypt.log", str(log))
+    stub = tmp_path / "systemctl"
+    stub.write_text("#!/bin/sh\nexit 1\n")  # no unit: the hook stops after the scrub
+    stub.chmod(stub.stat().st_mode | stat.S_IEXEC)
+    env = {**os.environ, "PATH": f"{tmp_path}:{os.environ['PATH']}"}
+    subprocess.run(["sh", "-c", script], env=env, check=True)  # noqa: S603, S607
+    assert "203.0.113.7" not in log.read_text()
+    assert "Renewal succeeded" in log.read_text()

@@ -44,17 +44,16 @@ def _can_access_report(user: AdminUser, report: Report) -> bool:
 
     - superadmin: every report.
     - admin: every report in their own organisation (all reports when
-      multi-tenancy is disabled or the report has no org).
+      multi-tenancy is disabled).
     - case_manager: only reports assigned to them (and, with multi-tenancy,
       within their own organisation).
+
+    An org-less report belongs to no organisation, as in ``_org_scope``. It used
+    to be open to every organisation's admin while their lists hid it.
     """
     if user.role == AdminRole.superadmin:
         return True
-    if (
-        settings.multi_tenancy_enabled
-        and report.org_id is not None
-        and user.org_id != report.org_id
-    ):
+    if settings.multi_tenancy_enabled and user.org_id != report.org_id:
         return False
     if user.role == AdminRole.case_manager:
         return report.assigned_to_id == user.id
@@ -130,9 +129,8 @@ def can_reveal_identity(user: AdminUser, report: Report) -> bool:
         return report.assigned_to_id == user.id
     if user.role not in {AdminRole.admin, AdminRole.superadmin}:
         return False
-    return (
-        not settings.multi_tenancy_enabled or report.org_id is None or user.org_id == report.org_id
-    )
+    # An org-less case is no other organisation's, as in _can_access_report.
+    return not settings.multi_tenancy_enabled or user.org_id == report.org_id
 
 
 _REASON_MIN, _REASON_MAX = 10, 500
@@ -260,6 +258,7 @@ async def _dashboard(
     # CONTENT_SEARCH_LIMIT budget is spent on the caller's current view rather
     # than every status/location outside it.
     read_orgs: set[uuid.UUID | None] = set()
+    search_capped: list[int] = []
     content_ids = (
         await report_service.content_match_ids(
             db,
@@ -268,6 +267,7 @@ async def _dashboard(
             location_id=location_filter,
             status_filter=status_filter,
             read_orgs=read_orgs,
+            capped=search_capped,
             **_org_scope(current_user),
         )
         if len(case_query) >= 3
@@ -372,6 +372,7 @@ async def _dashboard(
             "sort_dir": sort_dir,
             "status_filter": status_filter or "",
             "case_query": case_query,
+            "search_capped": search_capped[0] if search_capped else 0,
             "per_page_options": [10, 25, 50, 100],
             "my_cases": my_cases,
             "all_locations": all_locations,
@@ -862,6 +863,9 @@ async def confirm_delete(
     case_number = report.case_number
     await report_service.confirm_deletion(db, report, dr, current_user)
     await report_service.end_status_sessions(redis, {report_id})
+    from app.services.notifications import forget_case  # noqa: PLC0415
+
+    await forget_case(redis, case_number)
     safe_case = quote(case_number, safe="")
     return RedirectResponse(f"/admin/dashboard?deleted={safe_case}", status_code=302)
 
@@ -914,7 +918,9 @@ async def export_pdf(
 
     category_labels = await get_category_labels(db, get_lang(request), **_org_scope(current_user))
     pdf_bytes = generate_report_pdf(
-        report, category_label=category_label(report.category, category_labels)
+        report,
+        category_label=category_label(report.category, category_labels),
+        lang=get_lang(request),
     )
     safe_name = f"{report.case_number}_export.pdf"
     return Response(
@@ -955,6 +961,7 @@ async def export_pdf_with_identity(
             report,
             include_identity=True,
             category_label=category_label(report.category, category_labels),
+            lang=get_lang(request),
         ),
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{report.case_number}_export.pdf"'},

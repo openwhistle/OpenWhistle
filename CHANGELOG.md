@@ -7,8 +7,63 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- **LDAP refuses to start without TLS**: `LDAP_ENABLED` needs `LDAP_USE_SSL=true` or `LDAP_START_TLS=true`.
+  With the defaults, a plain bind sent the service account's password, then each admin's, in clear text —
+  measured on the wire (`ServiceSecret` readable in the captured bind).
+- The reporter's draft and status sessions are browser-session cookies: a shared office PC no longer keeps
+  the draft or the open case for the next person after the browser closes. Redis still ends both after 2 h.
+- The PDF export is labelled in the exporting admin's language; every label was English.
+- Every container of the compose stacks and the Ansible role runs with a read-only root, `cap_drop: ALL` and
+  `no-new-privileges`; PostgreSQL and Redis keep only the capabilities their entrypoints need. Quick Start's
+  app container had none of it.
+- The Ansible stack serves the onion listener on `127.0.0.1:8080` that its `ONION_LOCATION` setting and the
+  onion page assume; nothing listened there.
+
 ### Fixed
 
+- **Attachments kept traces of the whistleblower that the upload form says are removed.** A PDF kept the EXIF
+  and GPS of a JPEG behind a second filter (`[/FlateDecode /DCTDecode]`), the metadata boxes of JPEG 2000
+  images, a signature's signer name, e-mail, certificate and signing second, and Acrobat's `/LastModified`.
+  Word and Excel files kept the printer's name (`\\server\department-floor`), the second of every
+  comment and tracked change, who refreshed a pivot table, the account of a data connection or mail merge, and
+  home-share paths (`\\fs01\home$\<name>`). All are removed; a signature that cannot be removed refuses
+  the file.
+- **Helm: an upload over 1 MB reached the node's disk before its metadata was stripped.** `/tmp`, where
+  Starlette spools it, was a disk-backed `emptyDir`; it is in memory. The Ingress turns request buffering
+  off: measured with nginx, a 2 MB body became `client_temp/0000000001` on disk with buffering on, nothing
+  with it off.
+- **A refused reply notice wrote the reporter's private e-mail address into the log**, twice, under a line
+  that said "recipient redacted": `log.exception` printed the SMTP server's refusal, which quotes it.
+- **certbot's log kept the address of everyone who opened port 80 during a renewal** (Ansible): its standalone
+  server logs each request with the client address at DEBUG, which certbot's file keeps. The post hook
+  removes those lines.
+- **Attachments uploaded before v1.4.0 were never encrypted**, although "Encryption at rest" says so: migration
+  016 encrypts those in the database, the S3 startup job those in a bucket.
+- **"Link single sign-on" did nothing in Chrome**: the CSP's `form-action 'self'` covers a form's redirects,
+  and the link answered with a 303 to the identity provider. It answers with a page that forwards to it.
+- **An SSO login finished in any browser holding the callback URL** (login CSRF, up to the second factor):
+  the state is bound to a cookie of the browser that started it.
+- **With multi-tenancy, an organisation-less case was open to every organisation's admin** — case page and
+  identity reveal — while their case lists hid it. Such a case came from a `DEFAULT_ORG_SLUG` that named no
+  organisation; it is filed under the oldest one now, and migration 017 moves existing ones there.
+- **A PIN typed in capitals was refused and counted as a failure**, though "the correct case number and PIN
+  always open your report".
+- **One SMTP outage lost the notice that a report had arrived**: the digest emptied the queue before sending.
+  A digest no channel took goes back into the queue. A case deleted before the digest leaves it.
+- **`DEMO_MODE` accepted `000000` for any account named `demo`, `demo2` or `case_manager`**, not only the
+  seeded ones; it needs the seed's own TOTP secret now.
+- A content search past its 5,000-case budget said "no results" for older cases it had not searched; it says
+  that they were not searched.
+- The IP headers and the peer address are dropped by the first middleware, as the documentation says; the
+  CSRF middleware ran before it.
+- **The PDF's "3-Month Feedback Deadline:" ran into its value** ("…Deadline86 days remaining"): the label
+  column was 55 mm, the label 57. It is 70 mm, and a long section heading wraps instead of leaving the page.
+- `BRAND_LOGO_URL=/\host/x.png`, another server to a browser, is refused like `//host/x.png`.
+- The README promised notices with "counts only" (e-mail carries case numbers) and an install count that
+  sends "nothing about the instance" (it sends a random ID and the version); the telephone guide tied the case
+  number to the confidential mode.
 - **The v2.3.0 publish stopped after GHCR**: Docker Hub lists a new signature (cosign 3 stores it as an OCI
   referrer) seconds after `cosign sign`, and the check right after it found none. It retries for a minute.
 - **`scripts/take_screenshots.py` died after the last shot** without writing `_release`: it read the version

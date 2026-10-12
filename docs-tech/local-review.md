@@ -140,6 +140,7 @@ pages are reviewed in openwhistle/website (its `docs-tech/local-review.md`).
 | `/admin/reports/{report_id}` | `admin/report.html` | One representative report detail page (any seeded `OW-DEMO-000xx`) — exercise the identity-reveal form, internal notes, status change, and the four-eyes deletion flow. |
 | `/admin/users` | `admin/users.html` | User management. |
 | `/admin/account` | `admin/account.html` | Own account, reached from "My account" in the sidebar. The demo admin sees the demo notice instead of the password form; the forced change needs a new account (setup stack). |
+| — ("Link single sign-on" on `/admin/account`) | `admin/sso_continue.html` | The hop to the identity provider; needs `OIDC_ENABLED=true`, so not on the review stack. Shown for a moment before the meta refresh. |
 | `/admin/organisations` | `admin/organisations.html` | Setup stack only — needs `MULTI_TENANCY_ENABLED=true`. |
 | `/admin/categories` | `admin/categories.html` | Category management. |
 | `/admin/locations` | `admin/locations.html` | Location management. |

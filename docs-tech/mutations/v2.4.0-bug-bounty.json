@@ -1,0 +1,314 @@
+{
+ "test_groups": {
+  "P": [
+   "tests/test_privacy_v240.py"
+  ],
+  "H": [
+   "tests/test_helm_chart.py"
+  ],
+  "N": [
+   "tests/test_privacy_v150.py"
+  ],
+  "A": [
+   "tests/test_v210_auth_recovery.py"
+  ],
+  "S": [
+   "tests/test_services_misc.py"
+  ],
+  "C": [
+   "tests/test_ansible_certbot.py"
+  ],
+  "R": [
+   "tests/test_v160_privacy.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "pdf-chained-jpeg-kept",
+   "file": "app/services/attachment.py",
+   "old": "        cleaned = _PDF_IMAGE_STRIPPERS[last](obj.get_data())",
+   "new": "        cleaned = _PDF_IMAGE_STRIPPERS[last](obj.get_data()) if filters == last else obj._data",
+   "tests": "P"
+  },
+  {
+   "id": "pdf-jpx-kept",
+   "file": "app/services/attachment.py",
+   "old": "_PDF_IMAGE_STRIPPERS = {\"/DCTDecode\": _strip_jpeg_segments, \"/JPXDecode\": _strip_jp2}",
+   "new": "_PDF_IMAGE_STRIPPERS = {\"/DCTDecode\": _strip_jpeg_segments}",
+   "tests": "P"
+  },
+  {
+   "id": "jp2-comment-kept",
+   "file": "app/services/attachment.py",
+   "old": "            if data[i + 1] != 0x64:\n",
+   "new": "            if True:\n",
+   "tests": "P"
+  },
+  {
+   "id": "pdf-signature-kept",
+   "file": "app/services/attachment.py",
+   "old": "        if isinstance(value, DictionaryObject) and \"/ByteRange\" in value:\n            del obj[\"/V\"]\n",
+   "new": "",
+   "tests": "P"
+  },
+  {
+   "id": "pdf-dss-kept",
+   "file": "app/services/attachment.py",
+   "old": "    for key in (\"/Perms\", \"/DSS\"):",
+   "new": "    for key in (\"/Perms\",):",
+   "tests": "P"
+  },
+  {
+   "id": "pdf-last-modified-kept",
+   "file": "app/services/attachment.py",
+   "old": "        obj.pop(\"/LastModified\", None)  # Acrobat's edit time, beside PieceInfo\n",
+   "new": "",
+   "tests": "P"
+  },
+  {
+   "id": "ooxml-printer-part-kept",
+   "file": "app/services/attachment.py",
+   "old": "                or \"/printerSettings/\" in info.filename\n",
+   "new": "                or False\n",
+   "tests": "P"
+  },
+  {
+   "id": "ooxml-printer-rid-kept",
+   "file": "app/services/attachment.py",
+   "old": "                body = re.sub(rb\"\\s\\w+:id=\\\"\" + re.escape(rid) + rb\"\\\"\", b\"\", body)\n",
+   "new": "",
+   "tests": "P"
+  },
+  {
+   "id": "ooxml-word-times-kept",
+   "file": "app/services/attachment.py",
+   "old": "return _neutral_attrs(body, _WORD_AUTHOR | _WORD_TIMES)",
+   "new": "return _neutral_attrs(body, _WORD_AUTHOR)",
+   "tests": "P"
+  },
+  {
+   "id": "ooxml-thread-time-kept",
+   "file": "app/services/attachment.py",
+   "old": "        return _neutral_attrs(body, {b\"dT\": _NEUTRAL_TIME})",
+   "new": "        return body",
+   "tests": "P"
+  },
+  {
+   "id": "ooxml-pivot-kept",
+   "file": "app/services/attachment.py",
+   "old": "            b\"refreshedBy\": b\"Author\",\n            b\"refreshedDate\": b\"0\",\n            b\"refreshedDateIso\": _NEUTRAL_TIME,\n",
+   "new": "",
+   "tests": "P"
+  },
+  {
+   "id": "ooxml-connection-kept",
+   "file": "app/services/attachment.py",
+   "old": "        return _neutral_attrs(body, {b\"connection\": b\"\"})",
+   "new": "        return body",
+   "tests": "P"
+  },
+  {
+   "id": "ooxml-mailmerge-kept",
+   "file": "app/services/attachment.py",
+   "old": "        body = re.sub(rb\"<(\\w+:|)connectString\\b[^>]*/>\", b\"\", body)\n",
+   "new": "",
+   "tests": "P"
+  },
+  {
+   "id": "ooxml-unc-home-kept",
+   "file": "app/services/attachment.py",
+   "old": "    rb\"|\\\\\\\\[^\\\\/\\\"<>]+[\\\\/]+[^\\\\/\\\"<>]*(?:home|user|profile)[^\\\\/\\\"<>]*[\\\\/]+\"\n",
+   "new": "",
+   "tests": "P"
+  },
+  {
+   "id": "legacy-s3-plaintext",
+   "file": "app/services/attachment.py",
+   "old": "            if att.encrypted:\n                await backend.copy(old, new)",
+   "new": "            if True:\n                await backend.copy(old, new)",
+   "tests": "P"
+  },
+  {
+   "id": "smtp-error-logs-address",
+   "file": "app/services/notifications.py",
+   "old": "        log.error(  # noqa: TRY400\n            \"Failed to send whistleblower reply notification (recipient redacted): %s\",\n            type(exc).__name__,\n        )",
+   "new": "        log.exception(\"Failed to send whistleblower reply notification: %s\", exc)",
+   "tests": "P"
+  },
+  {
+   "id": "digest-dropped-on-failure",
+   "file": "app/services/notifications.py",
+   "old": "        await _requeue(new_reports, new_messages)\n",
+   "new": "        pass\n",
+   "tests": "N"
+  },
+  {
+   "id": "deleted-case-mailed",
+   "file": "app/api/admin.py",
+   "old": "    await forget_case(redis, case_number)\n",
+   "new": "",
+   "tests": "P"
+  },
+  {
+   "id": "helm-tmp-on-disk",
+   "file": "charts/openwhistle/templates/deployment.yaml",
+   "old": "            medium: Memory\n",
+   "new": "",
+   "tests": "H"
+  },
+  {
+   "id": "ingress-buffers-bodies",
+   "file": "charts/openwhistle/values.yaml",
+   "old": "    nginx.ingress.kubernetes.io/proxy-request-buffering: \"off\"\n",
+   "new": "",
+   "tests": "H"
+  },
+  {
+   "id": "db-writable-root",
+   "file": "docker-compose.prod.yml",
+   "old": "    read_only: true\n    tmpfs:\n      - /var/run/postgresql\n",
+   "new": "    tmpfs:\n      - /var/run/postgresql\n",
+   "tests": "P"
+  },
+  {
+   "id": "quickstart-app-caps",
+   "file": "docker-compose.yml",
+   "old": "    build: .\n    read_only: true\n",
+   "new": "    build: .\n",
+   "tests": "P"
+  },
+  {
+   "id": "org-less-case-open",
+   "file": "app/api/admin.py",
+   "old": "    if settings.multi_tenancy_enabled and user.org_id != report.org_id:\n        return False",
+   "new": "    if settings.multi_tenancy_enabled and report.org_id is not None and user.org_id != report.org_id:\n        return False",
+   "tests": "P"
+  },
+  {
+   "id": "org-less-identity-open",
+   "file": "app/api/admin.py",
+   "old": "    return not settings.multi_tenancy_enabled or user.org_id == report.org_id",
+   "new": "    return not settings.multi_tenancy_enabled or report.org_id is None or user.org_id == report.org_id",
+   "tests": "P"
+  },
+  {
+   "id": "pin-case-sensitive",
+   "file": "app/services/report.py",
+   "old": "pin.strip().lower())",
+   "new": "pin.strip())",
+   "tests": "P"
+  },
+  {
+   "id": "status-cookie-persistent",
+   "file": "app/api/reports.py",
+   "old": "        \"ow-status-session\",\n        status_session_key,\n        httponly=True,",
+   "new": "        \"ow-status-session\",\n        status_session_key,\n        max_age=7200,\n        httponly=True,",
+   "tests": "P"
+  },
+  {
+   "id": "draft-cookie-persistent",
+   "file": "app/api/reports.py",
+   "old": "        \"ow-submission-session\",\n        session_id,\n        httponly=True,",
+   "new": "        \"ow-submission-session\",\n        session_id,\n        max_age=7200,\n        httponly=True,",
+   "tests": "P"
+  },
+  {
+   "id": "sso-link-303",
+   "file": "app/api/auth.py",
+   "old": "    return render(request, \"admin/sso_continue.html\", {\"url\": url})",
+   "new": "    return RedirectResponse(url, status_code=303)",
+   "tests": "A"
+  },
+  {
+   "id": "sso-login-unbound",
+   "file": "app/api/auth.py",
+   "old": "    url = await oidc_service.create_authorization_url(\n        redis, binding=oidc_service.browser_binding(browser)\n    )",
+   "new": "    url = await oidc_service.create_authorization_url(redis)",
+   "tests": "P"
+  },
+  {
+   "id": "ldap-plaintext",
+   "file": "app/config.py",
+   "old": "        if self.ldap_enabled and not (self.ldap_use_ssl or self.ldap_start_tls):",
+   "new": "        if False:",
+   "tests": "P"
+  },
+  {
+   "id": "logo-backslash",
+   "file": "app/config.py",
+   "old": "not value.startswith((\"//\", \"/\\\\\"))",
+   "new": "not value.startswith(\"//\")",
+   "tests": "P"
+  },
+  {
+   "id": "demo-code-any-account",
+   "file": "app/services/mfa.py",
+   "old": " and totp_secret == DEMO_TOTP_SECRET",
+   "new": "",
+   "tests": "S"
+  },
+  {
+   "id": "search-cap-silent",
+   "file": "app/services/report.py",
+   "old": "            capped.append(CONTENT_SEARCH_LIMIT)\n",
+   "new": "            pass\n",
+   "tests": "P"
+  },
+  {
+   "id": "ansible-no-onion",
+   "file": "ansible/roles/openwhistle/templates/docker-compose.yml.j2",
+   "old": "      - \"127.0.0.1:8080:8080\"\n",
+   "new": "",
+   "tests": "P"
+  },
+  {
+   "id": "ip-dropped-second",
+   "file": "app/main.py",
+   "old": "    application.add_middleware(CSRFMiddleware)\n    application.add_middleware(SecurityMiddleware)\n",
+   "new": "    application.add_middleware(SecurityMiddleware)\n    application.add_middleware(CSRFMiddleware)\n",
+   "tests": "P"
+  },
+  {
+   "id": "pdf-english-only",
+   "file": "app/services/pdf.py",
+   "old": "    t = make_translator(lang)\n",
+   "new": "    t = make_translator(\"en\")\n",
+   "tests": "P"
+  },
+  {
+   "id": "certbot-log-keeps-ips",
+   "file": "ansible/roles/openwhistle/tasks/certbot.yml",
+   "old": "      sed -i '/:acme\\.standalone:/d' /var/log/letsencrypt/letsencrypt.log 2>/dev/null\n",
+   "new": "",
+   "tests": "C"
+  },
+  {
+   "id": "migration-016-missing",
+   "file": "migrations/versions/016_encrypt_legacy_attachments.py",
+   "old": "            {\"d\": seal(fernet, bytes(data)), \"i\": att_id},",
+   "new": "            {\"d\": bytes(data), \"i\": att_id},",
+   "tests": "P"
+  },
+  {
+   "id": "default-org-none",
+   "file": "app/services/report.py",
+   "old": "    if named is not None:\n        return named\n",
+   "new": "    if True:\n        return named\n",
+   "tests": "P"
+  },
+  {
+   "id": "migration-017-noop",
+   "file": "migrations/versions/017_reports_belong_to_an_organisation.py",
+   "old": "            \" WHERE org_id IS NULL\"",
+   "new": "            \" WHERE false\"",
+   "tests": "P"
+  },
+  {
+   "id": "pdf-label-column-narrow",
+   "file": "app/services/pdf.py",
+   "old": "LABEL_WIDTH = 70\n",
+   "new": "LABEL_WIDTH = 55\n",
+   "tests": "P"
+  }
+ ]
+}

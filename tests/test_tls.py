@@ -252,15 +252,18 @@ def test_ansible_nginx_template_includes_the_shared_snippets_not_a_second_copy()
         "Forwarded",
         "CF-Connecting-IP",
         "True-Client-IP",
-        "X-OW-Onion",
     ):
         assert f"proxy_set_header {header}" not in j2, (
             f"{header} hand-retyped into nginx.conf.j2 instead of included from the snippet"
         )
+    # Cleared by the snippet; set back to "1" only by the onion listener, as in nginx.conf.
+    assert re.findall(r"proxy_set_header X-OW-Onion [^;]*;", j2) == [
+        'proxy_set_header X-OW-Onion "1";'
+    ]
     assert "location /static/" not in j2, "static location hand-retyped instead of included"
-    # Both branches (TLS on/off) of the {% if %} must include both snippets.
-    assert j2.count("include /etc/nginx/snippets/proxy-headers.conf;") == 2
-    assert j2.count("include /etc/nginx/snippets/static-location.conf;") == 2
+    # Both branches (TLS on/off) of the {% if %} and the onion listener include both snippets.
+    assert j2.count("include /etc/nginx/snippets/proxy-headers.conf;") == 3
+    assert j2.count("include /etc/nginx/snippets/static-location.conf;") == 3
 
 
 def test_ansible_deploy_copies_the_real_snippet_files_not_a_retyped_copy() -> None:
@@ -329,11 +332,19 @@ def test_ansible_nginx_template_renders_with_the_roles_own_defaults_and_clears_x
     """Fast, no-docker guard for the CI job's own render step: renders
     nginx.conf.j2 with defaults/main.yml's actual values (only overriding the
     empty, documented-as-required openwhistle_domain) and confirms the
-    output both includes the snippet and never hand-sets X-OW-Onion itself."""
+    output includes the snippet everywhere and sets X-OW-Onion only on the onion
+    listener (8080), after the include that clears it."""
     rendered = _render_role_template("nginx.conf.j2")
 
-    assert "proxy_set_header X-OW-Onion" not in rendered
-    assert rendered.count("include /etc/nginx/snippets/proxy-headers.conf;") == 1
+    servers = re.findall(r"\n    server \{.*?\n    \}", rendered, re.S)
+    proxying = [s for s in servers if "proxy_pass" in s]  # not the bare :80 redirect
+    include = "include /etc/nginx/snippets/proxy-headers.conf;"
+    assert proxying and all(include in s for s in proxying)
+    onion = [s for s in servers if "listen 8080;" in s]
+    assert len(onion) == 1
+    assert all("proxy_set_header X-OW-Onion" not in s for s in servers if s not in onion)
+    include_idx = onion[0].index("include /etc/nginx/snippets/proxy-headers.conf;")
+    assert onion[0].index('proxy_set_header X-OW-Onion "1";') > include_idx
     # The domain as a server_name, not anywhere in the text (CodeQL #305).
     assert re.search(r"^\s*server_name\s+ow-test\.example\.com\s*;", rendered, re.M), rendered
 

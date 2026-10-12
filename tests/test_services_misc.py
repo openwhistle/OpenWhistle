@@ -24,6 +24,7 @@ from app.services.auth import (
     verify_password,
     verify_pin,
 )
+from app.services.demo_seed import DEMO_TOTP_SECRET
 
 # ─── services/rate_limit ─────────────────────────────────────────────────────
 
@@ -113,15 +114,17 @@ def test_verify_totp_invalid_code() -> None:
 def test_verify_demo_totp_accepts_000000() -> None:
     from app.services.mfa import verify_demo_totp
 
-    assert verify_demo_totp("000000", "demo") is True
+    assert verify_demo_totp("000000", "demo", DEMO_TOTP_SECRET) is True
 
 
 def test_verify_demo_totp_rejects_other() -> None:
     from app.services.mfa import verify_demo_totp
 
-    assert verify_demo_totp("123456", "demo") is False
+    assert verify_demo_totp("123456", "demo", DEMO_TOTP_SECRET) is False
     # Not a seeded demo account: the static code must not work.
-    assert verify_demo_totp("000000", "alice") is False
+    assert verify_demo_totp("000000", "alice", DEMO_TOTP_SECRET) is False
+    # A real account of a seeded name keeps its own second factor.
+    assert verify_demo_totp("000000", "case_manager", "KRSXG5CTMVRXEZLU") is False
 
 
 def test_generate_qr_code_base64_returns_string() -> None:

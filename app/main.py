@@ -248,8 +248,10 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    application.add_middleware(SecurityMiddleware)
+    # The last one added runs first: SecurityMiddleware drops the peer address and the
+    # IP headers before any other middleware sees the request (it used to be second).
     application.add_middleware(CSRFMiddleware)
+    application.add_middleware(SecurityMiddleware)
 
     @application.exception_handler(RequestValidationError)
     async def validation_exception_handler(

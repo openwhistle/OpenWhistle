@@ -64,8 +64,13 @@ async def notify_reply_to_whistleblower(secure_email: str, app_public_url: str) 
     try:
         await aiosmtplib.send(msg_obj, recipients=[secure_email], **smtp_kwargs)
         log.info("Whistleblower reply notification sent (recipient redacted)")
-    except Exception:
-        log.exception("Failed to send whistleblower reply notification (recipient redacted)")
+    except Exception as exc:
+        # The type only: an SMTP refusal quotes the address back, and log.exception
+        # wrote it into the log twice under a line that said "recipient redacted".
+        log.error(  # noqa: TRY400
+            "Failed to send whistleblower reply notification (recipient redacted): %s",
+            type(exc).__name__,
+        )
 
 
 async def _send_reminder_email(
@@ -316,6 +321,12 @@ async def _queue_or_send(kind: str, case_number: str) -> None:
         log.exception("Failed to queue a notification")
 
 
+async def forget_case(redis: Any, case_number: str) -> None:
+    """A deleted case leaves the queue: the next digest mailed its number after the erasure."""
+    for key in _QUEUE_KEYS.values():
+        await redis.srem(key, case_number)
+
+
 async def deliver_notification_digest() -> None:
     """Scheduler job: send everything queued since the last run as one digest.
 
@@ -338,13 +349,34 @@ async def deliver_notification_digest() -> None:
         return
     finally:
         await redis.aclose()
-    if new_reports or new_messages:
-        await _deliver(sorted(new_reports), sorted(new_messages))
+    if (new_reports or new_messages) and not await _deliver(
+        sorted(new_reports), sorted(new_messages)
+    ):
+        # No channel took it: back into the queue for the next run. It used to be
+        # gone after one SMTP outage, and nobody learnt that a report had arrived.
+        await _requeue(new_reports, new_messages)
+
+
+async def _requeue(new_reports: set[str], new_messages: set[str]) -> None:
+    from redis.asyncio import Redis
+
+    from app.config import settings
+
+    redis = Redis.from_url(settings.redis_url, decode_responses=True)
+    try:
+        for kind, cases in (("new_reports", new_reports), ("new_messages", new_messages)):
+            if cases:
+                await redis.sadd(_QUEUE_KEYS[kind], *cases)
+    except Exception:
+        log.exception("Failed to put undelivered notifications back in the queue")
+    finally:
+        await redis.aclose()
 
 
 async def _deliver(
     new_reports: list[str] | None = None, new_messages: list[str] | None = None
-) -> None:
+) -> bool:
+    """Send on every channel; True when at least one of them delivered."""
     from app.config import settings
 
     reports, messages = new_reports or [], new_messages or []
@@ -353,15 +385,16 @@ async def _deliver(
         tasks.append(_send_email(reports, messages, settings))
     if settings.notify_webhook_enabled and settings.notify_webhook_url.strip():
         tasks.append(_send_webhook(reports, messages, settings))
-    if tasks:
-        await asyncio.gather(*tasks, return_exceptions=True)
+    if not tasks:
+        return True
+    return any(r is True for r in await asyncio.gather(*tasks, return_exceptions=True))
 
 
 def _summary(cases: list[str]) -> str:
     return f"{len(cases)} ({', '.join(cases)})" if cases else "0"
 
 
-async def _send_email(new_reports: list[str], new_messages: list[str], settings: object) -> None:
+async def _send_email(new_reports: list[str], new_messages: list[str], settings: object) -> bool:
     """Send the digest by SMTP: counts and case numbers, nothing else."""
     import aiosmtplib
 
@@ -371,7 +404,7 @@ async def _send_email(new_reports: list[str], new_messages: list[str], settings:
 
     recipients = [r.strip() for r in cfg.notify_email_to.split(",") if r.strip()]
     if not recipients:
-        return
+        return False
 
     dashboard_url = f"{cfg.app_public_url.rstrip('/')}/admin/dashboard"
     text_body = (
@@ -404,6 +437,8 @@ async def _send_email(new_reports: list[str], new_messages: list[str], settings:
         log.info("Notification email sent to %d recipient(s)", len(recipients))
     except Exception:
         log.exception("Failed to send notification email")
+        return False
+    return True
 
 
 def _activity_text(new_reports: int, new_messages: int) -> str:
@@ -493,7 +528,7 @@ def _build_webhook_payload(
     }
 
 
-async def _send_webhook(new_reports: list[str], new_messages: list[str], settings: object) -> None:
+async def _send_webhook(new_reports: list[str], new_messages: list[str], settings: object) -> bool:
     """POST the digest as JSON to the configured webhook URL — counts only, never case numbers."""
     import httpx
 
@@ -527,6 +562,8 @@ async def _send_webhook(new_reports: list[str], new_messages: list[str], setting
         )
     except Exception:
         log.exception("Failed to send webhook notification")
+        return False
+    return True
 
 
 def _build_security_alert_payload(subject: str, text: str, webhook_type: str) -> dict[str, Any]:

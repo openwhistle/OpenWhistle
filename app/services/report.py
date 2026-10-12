@@ -36,14 +36,23 @@ from app.services.pin import generate_case_number, generate_pin
 
 
 async def default_org_id(db: AsyncSession) -> uuid.UUID | None:
-    """Return the ID of the default organisation, or None if not found."""
+    """The default organisation's ID; the oldest organisation when the slug names none.
+
+    The fallback is migration 011's: a report or account filed under no organisation
+    belonged to none, and with multi-tenancy on, no organisation's admins could handle
+    it. None only before setup has created any organisation.
+    """
     from app.config import settings
 
-    result = await db.execute(
+    named = await db.scalar(
         select(Organisation.id).where(Organisation.slug == settings.default_org_slug).limit(1)
     )
-    row = result.scalar_one_or_none()
-    return row
+    if named is not None:
+        return named
+    oldest: uuid.UUID | None = await db.scalar(
+        select(Organisation.id).order_by(Organisation.created_at, Organisation.id).limit(1)
+    )
+    return oldest
 
 
 async def active_default_org_id(db: AsyncSession) -> uuid.UUID | None:
@@ -279,11 +288,14 @@ async def content_match_ids(
     org_id: uuid.UUID | None = None,
     scope_org: bool = False,
     read_orgs: set[uuid.UUID | None] | None = None,
+    capped: list[int] | None = None,
 ) -> list[uuid.UUID]:
     """Ids of in-scope reports whose description or messages contain ``needle``.
 
     ``read_orgs``, if given, receives the organisation of every report
     decrypted, so the search is recorded where each one's admins look.
+    ``capped``, if given, receives the limit when older in-scope reports were
+    left unsearched, so the page can say so instead of a silent "no results".
 
     Decrypted in memory for this request only; no searchable copy is stored.
     Never matches the confidential name/contact fields — those stay hidden
@@ -304,11 +316,16 @@ async def content_match_ids(
     if scope_org or org_id is not None:
         q = q.where(Report.org_id == org_id)
     rows = await db.execute(
-        q.order_by(Report.submitted_at.desc(), Report.id.desc()).limit(CONTENT_SEARCH_LIMIT)
+        q.order_by(Report.submitted_at.desc(), Report.id.desc()).limit(CONTENT_SEARCH_LIMIT + 1)
     )
+    reports = list(rows.scalars().all())
+    if len(reports) > CONTENT_SEARCH_LIMIT:
+        reports = reports[:CONTENT_SEARCH_LIMIT]
+        if capped is not None:
+            capped.append(CONTENT_SEARCH_LIMIT)
     folded = _fold(needle)
     hits = []
-    for report in rows.scalars().all():
+    for report in reports:
         if read_orgs is not None:
             read_orgs.add(report.org_id)
         description, messages = decrypt_report_fields(report)
@@ -418,7 +435,9 @@ async def authenticate_whistleblower(
     # Case numbers are issued in upper case. The lookup used to be exact while
     # the failure counter was not: "ow-2026-12345" was refused and counted.
     rl_key = case_number = case_number.strip().upper()
-    report = await get_report_by_credentials(db, case_number, pin.strip())
+    # The PIN is issued in lower case and a UUID's hex digits mean the same in either
+    # case; a PIN typed or autocorrected in capitals was refused and counted.
+    report = await get_report_by_credentials(db, case_number, pin.strip().lower())
     if report is not None:
         # The counter is left as it is: cleared here, a lock that vanished told anyone
         # probing with wrong PINs when the reporter had signed in.

@@ -34,8 +34,12 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       volumes:
+        # In memory: an upload over 1 MB is spooled here before its metadata is
+        # stripped. On the node's disk (the emptyDir default) the original photo,
+        # GPS included, outlived the request in free blocks.
         - name: tmp
           emptyDir:
+            medium: Memory
             sizeLimit: 128Mi
       containers:
         - name: {{ .Chart.Name }}

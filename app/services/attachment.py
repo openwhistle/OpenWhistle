@@ -20,6 +20,8 @@ from app.models.report import Report
 from app.services.crypto import seal
 
 if TYPE_CHECKING:
+    import zipfile
+
     from app.services.storage import StorageBackend
 
 MAX_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB
@@ -318,6 +320,44 @@ def _strip_jpeg_segments(data: bytes) -> bytes:
     return bytes(out)
 
 
+# JP2 boxes kept: signature, file type, reader requirements, header, codestream.
+# "xml " and "uuid" carry XMP and EXIF, "uinf" vendor URLs, "jp2i" the creator's
+# rights notice.
+_JP2_KEEP = {b"jP  ", b"ftyp", b"rreq", b"jp2h", b"jp2c"}
+
+
+def _strip_jp2(data: bytes) -> bytes:
+    """Drop the metadata boxes of a JPEG 2000 file and the comments of a bare codestream."""
+    if data[:2] == b"\xff\x4f":  # a bare codestream: COM segments before the first tile
+        out, i = bytearray(data[:2]), 2
+        while i + 4 <= len(data) and data[i] == 0xFF and data[i + 1] != 0x90:
+            end = i + 2 + int.from_bytes(data[i + 2 : i + 4], "big")
+            if data[i + 1] != 0x64:
+                out += data[i:end]
+            i = end
+        return bytes(out + data[i:])
+    if data[4:8] != b"jP  ":
+        raise MetadataError("not a JPEG 2000 file")
+    out, i = bytearray(), 0
+    while i + 8 <= len(data):
+        size, kind, header = int.from_bytes(data[i : i + 4], "big"), data[i + 4 : i + 8], 8
+        if size == 1:
+            size, header = int.from_bytes(data[i + 8 : i + 16], "big"), 16
+        end = len(data) if size == 0 else i + size
+        if end > len(data) or end < i + header:
+            raise MetadataError("truncated JPEG 2000")
+        if kind == b"jp2c":  # the box is rewritten: its length changes with the comments
+            codestream = _strip_jp2(data[i + header : end])
+            out += (8 + len(codestream)).to_bytes(4, "big") + kind + codestream
+        elif kind in _JP2_KEEP:
+            out += data[i:end]
+        i = end
+    return bytes(out)
+
+
+_PDF_IMAGE_STRIPPERS = {"/DCTDecode": _strip_jpeg_segments, "/JPXDecode": _strip_jp2}
+
+
 def _strip_pdf(data: bytes) -> bytes:
     import os  # noqa: PLC0415
 
@@ -326,6 +366,7 @@ def _strip_pdf(data: bytes) -> bytes:
         ArrayObject,
         ByteStringObject,
         DictionaryObject,
+        IndirectObject,
         NameObject,
         StreamObject,
         TextStringObject,
@@ -346,6 +387,18 @@ def _strip_pdf(data: bytes) -> bytes:
         # catalog's used to be removed. PieceInfo is an editor's private data.
         obj.pop("/Metadata", None)
         obj.pop("/PieceInfo", None)
+        obj.pop("/LastModified", None)  # Acrobat's edit time, beside PieceInfo
+        # A signature names the signer (/Name, /ContactInfo, the certificate in
+        # /Contents) and the second they signed (/M). It used to be kept whole.
+        value = obj.get("/V")
+        if isinstance(value, IndirectObject):
+            value = value.get_object()
+        if isinstance(value, DictionaryObject) and "/ByteRange" in value:
+            del obj["/V"]
+    # Document permissions point at the signature; the security store holds the
+    # signer's certificates, OCSP answers and timestamps.
+    for key in ("/Perms", "/DSS"):
+        writer._root_object.pop(key, None)
     for page in writer.pages:
         for ref in page.get("/Annots") or []:
             annot = ref.get_object()
@@ -354,10 +407,23 @@ def _strip_pdf(data: bytes) -> bytes:
             for key in ("/M", "/CreationDate"):  # when they commented
                 annot.pop(key, None)
     for obj in writer._objects:
-        # A JPEG alone in its stream is the file as-is; set the raw bytes (pypdf
-        # cannot re-encode DCT). A JPEG behind a second filter is left alone.
-        if isinstance(obj, StreamObject) and obj.get("/Filter") in ("/DCTDecode", ["/DCTDecode"]):
-            obj._data = _strip_jpeg_segments(obj._data)
+        # A JPEG or JPEG 2000 image is the file as-is, header boxes included.
+        # pypdf cannot re-encode either, so the outer filters (a /FlateDecode around
+        # the JPEG) are undone and the cleaned file is stored under the image
+        # filter alone. A JPEG behind a second filter used to be left alone,
+        # EXIF and GPS and all.
+        if not isinstance(obj, StreamObject):
+            continue
+        filters = obj.get("/Filter")
+        last = filters[-1] if isinstance(filters, ArrayObject) and filters else filters
+        if last not in _PDF_IMAGE_STRIPPERS:
+            continue
+        cleaned = _PDF_IMAGE_STRIPPERS[last](obj.get_data())  # get_data leaves DCT/JPX as they are
+        params = obj.get("/DecodeParms")
+        obj._data = cleaned
+        obj[NameObject("/Filter")] = NameObject(last)
+        if isinstance(params, ArrayObject):
+            obj[NameObject("/DecodeParms")] = params[-1]
     # Unlinking is not removing: the XMP stream would still be written as an
     # orphaned object that any forensic tool can read.
     writer.compress_identical_objects(remove_duplicates=False, remove_unreferenced=True)
@@ -366,6 +432,8 @@ def _strip_pdf(data: bytes) -> bytes:
     writer._ID = ArrayObject([fresh_id, fresh_id])
     out = io.BytesIO()
     writer.write(out)
+    if b"/ByteRange" in out.getvalue():  # a signature reachable some other way
+        raise MetadataError("PDF signature could not be removed")
     return out.getvalue()
 
 
@@ -382,12 +450,17 @@ def _neutral_attrs(xml: bytes, values: dict[bytes, bytes]) -> bytes:
 # every reference inside the package (threaded comments → person ids) still resolves.
 _WORD_AUTHOR = {b"author": b"Author", b"initials": b"A", b"userId": b"", b"providerId": b"None"}
 _XL_PERSON = {b"displayName": b"Author", b"userId": b"", b"providerId": b"None"}
+# When they commented or changed something, to the second; only the name used to go.
+_NEUTRAL_TIME = b"1980-01-01T00:00:00Z"
+_WORD_TIMES = {b"date": _NEUTRAL_TIME, b"dateUtc": _NEUTRAL_TIME}
 
 
 # A path inside the user's profile names the account: C:\Users\<name>\…,
 # file:///Users/<name>/…, or /Users/<name>/ as Mac Excel writes it.
+# A home share on a file server does too: \\fs01\home$\<name>\, \\srv\users\<name>\.
 _PROFILE_PATH = re.compile(
     rb"(?i)([a-z]:[\\/]+(?:users|documents and settings)[\\/]+"
+    rb"|\\\\[^\\/\"<>]+[\\/]+[^\\/\"<>]*(?:home|user|profile)[^\\/\"<>]*[\\/]+"
     rb"|file://(?:localhost)?/(?:users|home)/|(?<==\")/(?:users|home)/)[^\\/\"<>]+"
 )
 _SP_PROPERTIES = b"http://schemas.microsoft.com/office/2006/metadata/properties"
@@ -410,8 +483,10 @@ def _anonymise_ooxml_part(name: str, body: bytes) -> bytes:
         # variables are what macros and DMS add-ins stored (often the user name).
         body = re.sub(rb'\s(?:\w+:)?rsid\w*="[^"]*"', b"", body)
         body = re.sub(rb"<(\w+:|)(rsids|docVars)\b.*?</\1\2>", b"", body, flags=re.DOTALL)
+        # A mail merge's data source: server, database and the account it logs in with.
+        body = re.sub(rb"<(\w+:|)connectString\b[^>]*/>", b"", body)
         # comments, w:ins/w:del/…Change in every story part, people.xml
-        return _neutral_attrs(body, _WORD_AUTHOR)
+        return _neutral_attrs(body, _WORD_AUTHOR | _WORD_TIMES)
     if name == "xl/workbook.xml":
         # absPath: the folder the workbook was saved in; fileSharing: who protected it.
         body = re.sub(rb"<(?:\w+:)?absPath\b[^>]*/>", b"", body)
@@ -438,16 +513,44 @@ def _anonymise_ooxml_part(name: str, body: bytes) -> bytes:
         return re.sub(rb"<author>(?!tc=)[^<]*</author>", b"<author>Author</author>", body)
     if name.startswith("xl/persons/"):
         return _neutral_attrs(body, _XL_PERSON)
+    if name.startswith("xl/threadedComments/"):
+        return _neutral_attrs(body, {b"dT": _NEUTRAL_TIME})
+    if name.startswith("xl/pivotCache/pivotCacheDefinition"):
+        # Who refreshed the pivot table, and when.
+        values = {
+            b"refreshedBy": b"Author",
+            b"refreshedDate": b"0",
+            b"refreshedDateIso": _NEUTRAL_TIME,
+        }
+        return _neutral_attrs(body, values)
+    if name == "xl/connections.xml":
+        # A data connection's string names the server and the account it logs in with.
+        return _neutral_attrs(body, {b"connection": b""})
     if name.startswith("xl/revisions/"):
-        values = {b"userName": b"Author"}
+        values = {b"userName": b"Author", b"dateTime": _NEUTRAL_TIME}
         if name.endswith("userNames.xml"):
             values[b"name"] = b"Author"
         return _neutral_attrs(body, values)
+    if name.endswith(".rels"):
+        body = re.sub(rb"<Relationship\b[^>]*printerSettings[^>]*/>", b"", body)
     if name == "_rels/.rels":
         return re.sub(rb"<Relationship\b[^>]*docProps/thumbnail[^>]*/>", b"", body)
     if name == "[Content_Types].xml":
-        return re.sub(rb"<Override\b[^>]*docProps/thumbnail[^>]*/>", b"", body)
+        return re.sub(rb"<Override\b[^>]*(?:docProps/thumbnail|printerSettings)[^>]*/>", b"", body)
     return body
+
+
+def _printer_settings_ids(src: zipfile.ZipFile) -> dict[str, list[bytes]]:
+    """Relationship ids of printer settings, by the part that refers to them."""
+    ids: dict[str, list[bytes]] = {}
+    for name in src.namelist():
+        if name.endswith(".rels"):
+            found = re.findall(
+                rb'<Relationship\b(?=[^>]*printerSettings)[^>]*\sId="([^"]+)"', src.read(name)
+            )
+            if found:  # word/_rels/settings.xml.rels belongs to word/settings.xml
+                ids[name.replace("_rels/", "", 1).removesuffix(".rels")] = found
+    return ids
 
 
 _OOXML_MEDIA = re.compile(r"(?:word|xl|ppt)/media/[^/]+\.(?:jpe?g|png|gif|webp|tiff?)", re.I)
@@ -460,13 +563,26 @@ def _strip_ooxml(data: bytes, *, embedded: bool = False) -> bytes:
     # Declared sizes bound what ZipExtFile will inflate; refuse zip bombs.
     if sum(i.file_size for i in src.infolist()) > 20 * MAX_SIZE_BYTES:
         raise MetadataError("archive expands too far")
+    # A printer's settings start with its name, often \\server\<department>-<floor>.
+    printer_ids = _printer_settings_ids(src)
     out = io.BytesIO()
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as dst:
         for info in src.infolist():
             # The thumbnail is a picture of the first page, names included.
-            if info.filename.startswith("docProps/thumbnail."):
+            if (
+                info.filename.startswith("docProps/thumbnail.")
+                or "/printerSettings/" in info.filename
+            ):
                 continue
             body = _OOXML_EMPTY_PARTS.get(info.filename) or src.read(info)
+            for rid in printer_ids.get(info.filename, ()):
+                # <pageSetup r:id=…> loses the reference; Word's own element goes whole.
+                body = re.sub(
+                    rb"<\w+:printerSettings\b[^>]*\sr:id=\"" + re.escape(rid) + rb"\"[^>]*/>",
+                    b"",
+                    body,
+                )
+                body = re.sub(rb"\s\w+:id=\"" + re.escape(rid) + rb"\"", b"", body)
             # A chart's data is a whole workbook in word/embeddings/, with its own
             # author; it used to be copied as it was. Anything else there (an OLE
             # object, a slide deck) nothing here can clean, like a PDF's own files.
@@ -771,13 +887,15 @@ def _storage() -> StorageBackend:
 
 
 async def rekey_legacy_objects(db: AsyncSession) -> int:
-    """Move objects stored before v1.5.0 (keys carrying the filename) to bare UUIDs.
+    """Move objects stored before v1.5.0 (keys carrying the filename) to bare UUIDs,
+    and encrypt those stored before v1.4.0, which nothing used to encrypt later.
 
-    Copy first, then point the row at the copy, then delete the old object, so
+    Write first, then point the row at the new object, then delete the old one, so
     no step can lose a file. A failure leaves that row as it was for the next run.
     """
     import logging  # noqa: PLC0415
 
+    from app.services.encryption import make_report_fernet  # noqa: PLC0415
     from app.services.storage import generate_storage_key  # noqa: PLC0415
 
     log = logging.getLogger(__name__)
@@ -786,15 +904,23 @@ async def rekey_legacy_objects(db: AsyncSession) -> int:
     moved = 0
     for att in rows.scalars().all():
         old = att.storage_key or ""
-        if _UUID_KEY.fullmatch(old):
+        if _UUID_KEY.fullmatch(old) and att.encrypted:
             continue
         new = generate_storage_key()
         try:
-            await backend.copy(old, new)
+            if att.encrypted:
+                await backend.copy(old, new)
+            else:
+                dek = await db.scalar(
+                    select(Report.encrypted_dek).where(Report.id == att.report_id)
+                )
+                sealed = seal(make_report_fernet(dek or ""), await backend.get(old))
+                await backend.put(new, sealed, att.content_type)
         except Exception:  # noqa: BLE001
             log.warning("Could not re-key attachment %s; retried at next start", att.id)
             continue
         att.storage_key = new
+        att.encrypted = True
         await db.commit()
         try:
             await backend.delete(old)

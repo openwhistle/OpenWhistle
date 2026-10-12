@@ -281,8 +281,9 @@ class Settings(BaseSettings):
         # The CSP allows images from this server and data: URIs only, so an external
         # URL showed a broken image - and allowing it would have the whistleblower's
         # browser fetch it from a third party, address and all.
+        # "/\host/x.png" is "//host/x.png" to a browser: another server, too.
         if value and not (
-            (value.startswith("/") and not value.startswith("//"))
+            (value.startswith("/") and not value.startswith(("//", "/\\")))
             or value.startswith("data:image/")
         ):
             logging.getLogger(__name__).warning(
@@ -292,6 +293,18 @@ class Settings(BaseSettings):
             )
             return ""
         return value
+
+    @model_validator(mode="after")
+    def _ldap_only_over_tls(self) -> Settings:
+        # A plain LDAP bind sends the service account's password and then each
+        # admin's in clear text; the default used to be exactly that.
+        if self.ldap_enabled and not (self.ldap_use_ssl or self.ldap_start_tls):
+            raise ValueError(
+                "LDAP_ENABLED needs LDAP_USE_SSL=true (ldaps, usually port 636) or "
+                "LDAP_START_TLS=true: a plain bind sends every password in clear text. "
+                "Refusing to start."
+            )
+        return self
 
     @model_validator(mode="after")
     def _validate_local_review_login(self) -> Settings:

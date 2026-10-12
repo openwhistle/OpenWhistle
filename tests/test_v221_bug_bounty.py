@@ -575,7 +575,7 @@ def test_organisations_carry_no_branding_column_nothing_reads() -> None:
 
 @pytest.mark.asyncio
 async def test_an_oidc_state_expires_in_redis(client) -> None:  # type: ignore[no-untyped-def]
-    """Removing ex=_STATE_TTL left every OIDC test green: their fake Redis ignored it."""
+    """Removing ex=STATE_TTL left every OIDC test green: their fake Redis ignored it."""
     from unittest.mock import AsyncMock, patch
     from urllib.parse import parse_qs, urlsplit
 
@@ -592,7 +592,7 @@ async def test_an_oidc_state_expires_in_redis(client) -> None:  # type: ignore[n
     with patch("app.services.oidc._get_metadata", new=AsyncMock(return_value=metadata)):
         url = await oidc.create_authorization_url(redis)
     (state,) = parse_qs(urlsplit(url).query)["state"]
-    assert 0 < await redis.ttl(f"openwhistle:oidc_state:{state}") <= oidc._STATE_TTL
+    assert 0 < await redis.ttl(f"openwhistle:oidc_state:{state}") <= oidc.STATE_TTL
 
 
 @pytest.mark.asyncio

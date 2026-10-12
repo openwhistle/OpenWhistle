@@ -44,9 +44,13 @@ ingress:
   # Your own annotations are merged with this default (Helm merges maps).
   # proxy-body-size: ingress-nginx refuses bodies over 1m by default; this
   # matches the bundled nginx (5 attachments x 10 MB plus form overhead).
+  # proxy-request-buffering: with the default "on", the controller writes every
+  # body over 8k (the report, the original attachments) to a file on its disk
+  # before passing it on.
   annotations:
     nginx.ingress.kubernetes.io/enable-access-log: "false"
     nginx.ingress.kubernetes.io/proxy-body-size: "55m"
+    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
     nginx.ingress.kubernetes.io/limit-rps: "10"
     nginx.ingress.kubernetes.io/limit-burst-multiplier: "3"
   hosts:

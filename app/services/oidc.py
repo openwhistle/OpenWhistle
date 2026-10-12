@@ -20,7 +20,7 @@ from redis.asyncio import Redis
 from app.config import settings
 
 _STATE_PREFIX = "openwhistle:oidc_state:"
-_STATE_TTL = 300  # 5 minutes
+STATE_TTL = 300  # 5 minutes
 
 # A state is issued for one purpose and redeemed only for that purpose: a login
 # state can never link an identity, a link state can never sign anybody in.
@@ -72,6 +72,11 @@ def session_binding(user_id: str, session_token: str) -> str:
     return hashlib.sha256(f"{user_id}:{session_token}".encode()).hexdigest()
 
 
+def browser_binding(cookie: str) -> str:
+    """What ties a login state to the browser that started it (its cookie, hashed)."""
+    return hashlib.sha256(f"login:{cookie}".encode()).hexdigest()
+
+
 async def create_authorization_url(
     redis: Redis, purpose: str = PURPOSE_LOGIN, binding: str = ""
 ) -> str:
@@ -97,7 +102,7 @@ async def create_authorization_url(
                 "binding": binding,
             }
         ),
-        ex=_STATE_TTL,
+        ex=STATE_TTL,
     )
 
     params = {

@@ -46,13 +46,16 @@ async def consume_totp(redis: Redis, user_id: object, secret: str, code: str) ->
     )
 
 
-def verify_demo_totp(code: str, username: str) -> bool:
+def verify_demo_totp(code: str, username: str, totp_secret: str) -> bool:
     """In demo mode only: accept the static code '000000' for the seeded demo
     accounts. Any other account keeps real TOTP, so a production database
-    started with DEMO_MODE=true by mistake does not lose its second factor."""
-    from app.services.demo_seed import DEMO_USERNAMES  # noqa: PLC0415
+    started with DEMO_MODE=true by mistake does not lose its second factor.
 
-    return code == "000000" and username in DEMO_USERNAMES
+    Seeded means the seed's secret too: the seed leaves an existing account of the
+    same name alone, and a real "case_manager" used to accept 000000 by its name."""
+    from app.services.demo_seed import DEMO_TOTP_SECRET, DEMO_USERNAMES  # noqa: PLC0415
+
+    return code == "000000" and username in DEMO_USERNAMES and totp_secret == DEMO_TOTP_SECRET
 
 
 def get_provisioning_uri(secret: str, username: str) -> str:
