@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -40,8 +41,18 @@ def _register_font(pdf: FPDF) -> None:
 
 
 def generate_report_pdf(
-    report: Report, include_identity: bool = False, category_label: str | None = None
+    report: Report,
+    include_identity: bool = False,
+    category_label: str | None = None,
+    lang: str = "en",
 ) -> bytes:
+    """The case as a PDF, labelled in ``lang`` (the exporting admin's language).
+
+    Every label used to be English whatever language the admin worked in.
+    """
+    from app.i18n import make_translator
+
+    t = make_translator(lang)
     description, msg_contents = decrypt_report_fields(report)
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
@@ -54,13 +65,13 @@ def generate_report_pdf(
     pdf.cell(
         0,
         10,
-        "OpenWhistle - Case Export",
+        t("pdf.title"),
         align="C",
         new_x=XPos.LMARGIN,
         new_y=YPos.NEXT,
     )
     pdf.set_font(_FONT, "", 10)
-    generated = f"Generated: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}"
+    generated = t("pdf.generated", when=datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC"))
     pdf.cell(0, 6, generated, align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.set_draw_color(*_ACCENT)
     pdf.set_line_width(0.6)
@@ -70,43 +81,43 @@ def generate_report_pdf(
 
     # ── Case metadata ─────────────────────────────────────────────
     pdf.set_font(_FONT, "B", 13)
-    pdf.cell(0, 8, "Case Information", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.cell(0, 8, t("pdf.case_info"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.set_draw_color(*_HAIRLINE)
     pdf.line(10, pdf.get_y(), 200, pdf.get_y())
     pdf.ln(3)
 
     pdf.set_font(_FONT, "", 10)
-    _meta_row(pdf, "Case Number", report.case_number)
+    _meta_row(pdf, t("pdf.case_number"), report.case_number)
     # The exporting admin's language, org-scoped label (get_category_labels);
     # without one, the same fallback as every page.
-    _meta_row(pdf, "Category", category_label or label_for_slug(report.category, {}))
-    _meta_row(pdf, "Status", report.status.value.replace("_", " ").title())
-    _meta_row(pdf, "Submission Mode", report.submission_mode.value.title())
+    _meta_row(pdf, t("pdf.category"), category_label or label_for_slug(report.category, {}))
+    _meta_row(pdf, t("pdf.status"), t(f"status.label.{report.status.value}"))
+    _meta_row(pdf, t("pdf.mode"), t(f"submit.step.mode.{report.submission_mode.value}.label"))
     if report.location:
-        _meta_row(pdf, "Location", f"{report.location.name} ({report.location.code})")
-    _meta_row(pdf, "Submitted", format_day(report.submitted_at))
+        _meta_row(pdf, t("pdf.location"), f"{report.location.name} ({report.location.code})")
+    _meta_row(pdf, t("pdf.submitted"), format_day(report.submitted_at))
     if report.acknowledged_at:
-        _meta_row(pdf, "Acknowledged", _fmt_dt(report.acknowledged_at))
+        _meta_row(pdf, t("pdf.acknowledged"), _fmt_dt(report.acknowledged_at))
     if report.feedback_due_at:
-        _meta_row(pdf, "Feedback Due", _fmt_dt(report.feedback_due_at))
+        _meta_row(pdf, t("pdf.feedback_due"), _fmt_dt(report.feedback_due_at))
     if report.closed_at:
-        _meta_row(pdf, "Closed", _fmt_dt(report.closed_at))
+        _meta_row(pdf, t("pdf.closed"), _fmt_dt(report.closed_at))
     if report.assigned_to:
-        _meta_row(pdf, "Assigned To", report.assigned_to.username)
+        _meta_row(pdf, t("pdf.assigned_to"), report.assigned_to.username)
     if report.confidential_name or report.confidential_contact:
         if include_identity:
             from app.services.crypto import decrypt_or_none
 
             if report.confidential_name:
-                name = decrypt_or_none(report.confidential_name) or "[encrypted]"
-                _meta_row(pdf, "Confidential Name", name)
+                name = decrypt_or_none(report.confidential_name) or t("pdf.encrypted")
+                _meta_row(pdf, t("pdf.confidential_name"), name)
             if report.confidential_contact:
-                contact = decrypt_or_none(report.confidential_contact) or "[encrypted]"
-                _meta_row(pdf, "Confidential Contact", contact)
+                contact = decrypt_or_none(report.confidential_contact) or t("pdf.encrypted")
+                _meta_row(pdf, t("pdf.confidential_contact"), contact)
         else:
-            _meta_row(pdf, "Identity", "[on file — not included]")
+            _meta_row(pdf, t("pdf.identity"), t("pdf.identity_withheld"))
     if report.secure_email:
-        _meta_row(pdf, "Secure Email", "[on file — not printed]")
+        _meta_row(pdf, t("pdf.secure_email"), t("pdf.secure_email_withheld"))
     pdf.ln(5)
 
     # ── SLA status ────────────────────────────────────────────────
@@ -114,7 +125,7 @@ def generate_report_pdf(
     pdf.cell(
         0,
         8,
-        "SLA Compliance (HinSchG §17)",
+        t("pdf.sla"),
         new_x=XPos.LMARGIN,
         new_y=YPos.NEXT,
     )
@@ -123,20 +134,21 @@ def generate_report_pdf(
     pdf.set_font(_FONT, "", 10)
 
     now = datetime.now(UTC)
-    _meta_row(pdf, "7-Day Acknowledgement", _ack_label(report, now))
+    _meta_row(pdf, t("pdf.ack"), _ack_label(report, now, t))
     feedback = deadlines.feedback_status(report.feedback_due_at, bool(report.closed_at), now)
     if feedback:
-        label = (
-            "OK Delivered"
-            if feedback.state == "done"
-            else ("Overdue" if feedback.state == "overdue" else f"{feedback.days} days remaining")
-        )
-        _meta_row(pdf, "3-Month Feedback Deadline", label)
+        if feedback.state == "done":
+            label = t("pdf.feedback.done")
+        elif feedback.state == "overdue":
+            label = t("pdf.feedback.overdue")
+        else:
+            label = t("pdf.feedback.days", days=feedback.days)
+        _meta_row(pdf, t("pdf.feedback"), label)
     pdf.ln(5)
 
     # ── Description ───────────────────────────────────────────────
     pdf.set_font(_FONT, "B", 13)
-    pdf.cell(0, 8, "Initial Report", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.cell(0, 8, t("pdf.initial"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.line(10, pdf.get_y(), 200, pdf.get_y())
     pdf.ln(3)
     pdf.set_font(_FONT, "", 10)
@@ -147,12 +159,12 @@ def generate_report_pdf(
     public_msgs = list(report.messages)
     if public_msgs:
         pdf.set_font(_FONT, "B", 13)
-        pdf.cell(0, 8, "Communication Thread", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.cell(0, 8, t("pdf.thread"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.line(10, pdf.get_y(), 200, pdf.get_y())
         pdf.ln(3)
         pdf.set_font(_FONT, "", 10)
         for i, msg in enumerate(public_msgs):
-            sender = "Reporting Office" if msg.sender.value == "admin" else "Whistleblower"
+            sender = t("pdf.sender.admin" if msg.sender.value == "admin" else "pdf.sender.whistleblower")
             when = format_day(msg.sent_at) if whistleblower_caused(msg, i) else _fmt_dt(msg.sent_at)
             pdf.set_font(_FONT, "B", 9)
             pdf.cell(
@@ -174,7 +186,7 @@ def generate_report_pdf(
         pdf.cell(
             0,
             8,
-            "Internal Notes (Admin only - not shared with whistleblower)",
+            t("pdf.notes"),
             new_x=XPos.LMARGIN,
             new_y=YPos.NEXT,
         )
@@ -197,7 +209,7 @@ def generate_report_pdf(
     # ── Attachments list ───────────────────────────────────────────
     if report.attachments:
         pdf.set_font(_FONT, "B", 13)
-        pdf.cell(0, 8, "Attachments", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.cell(0, 8, t("pdf.attachments"), new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.line(10, pdf.get_y(), 200, pdf.get_y())
         pdf.ln(3)
         pdf.set_font(_FONT, "", 10)
@@ -216,22 +228,19 @@ def generate_report_pdf(
     # Regular, not italic: only Regular and Bold are bundled (app/fonts/README).
     pdf.set_font(_FONT, "", 8)
     pdf.set_text_color(*_MUTED)
-    footer_text = (
-        "This document was generated by OpenWhistle - confidential, for authorised use only."
-    )
-    pdf.cell(0, 5, footer_text, align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.cell(0, 5, t("pdf.footer"), align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     return bytes(pdf.output())
 
 
-def _ack_label(report: Report, now: datetime) -> str:
+def _ack_label(report: Report, now: datetime, t: Callable[..., str]) -> str:
     # Compared as times: ``timedelta.days`` truncates, and 7 days 12 hours
     # used to read as 7, "Compliant".
     ack = deadlines.ack_status(report.submitted_at, report.acknowledged_at, now)
     if ack.state != "done":
-        return f"Pending - Day {ack.days}/7"
+        return t("pdf.ack.pending", days=ack.days)
     on_time = deadlines.ack_on_time(report.submitted_at, report.acknowledged_at)
-    return "OK Compliant" if on_time else "OK Acknowledged (late)"
+    return t("pdf.ack.compliant" if on_time else "pdf.ack.late")
 
 
 def _meta_row(pdf: FPDF, label: str, value: str) -> None:

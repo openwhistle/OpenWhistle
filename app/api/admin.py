@@ -915,7 +915,9 @@ async def export_pdf(
 
     category_labels = await get_category_labels(db, get_lang(request), **_org_scope(current_user))
     pdf_bytes = generate_report_pdf(
-        report, category_label=category_label(report.category, category_labels)
+        report,
+        category_label=category_label(report.category, category_labels),
+        lang=get_lang(request),
     )
     safe_name = f"{report.case_number}_export.pdf"
     return Response(
@@ -956,6 +958,7 @@ async def export_pdf_with_identity(
             report,
             include_identity=True,
             category_label=category_label(report.category, category_labels),
+            lang=get_lang(request),
         ),
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{report.case_number}_export.pdf"'},

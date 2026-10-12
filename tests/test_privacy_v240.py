@@ -507,3 +507,21 @@ def test_the_ip_is_dropped_by_the_first_middleware() -> None:
     from app.middleware import SecurityMiddleware
 
     assert app.user_middleware[0].cls is SecurityMiddleware
+
+
+@pytest.mark.asyncio
+async def test_the_pdf_export_speaks_the_admins_language(client, db_session) -> None:  # noqa: ANN001
+    """"Five languages": every label of the case export was English."""
+    from app.models.user import AdminRole
+    from app.services.report import create_report
+    from tests.test_pdf_service import _pdf_text
+    from tests.test_v160_privacy import _login
+
+    await _login(client, db_session, AdminRole.superadmin)
+    report, _ = await create_report(db_session, "corruption", "Exported in German.")
+    client.cookies.set("ow-lang", "de")
+    text = _pdf_text((await client.get(f"/admin/reports/{report.id}/export.pdf")).content)
+    for label in ("Fallnummer", "Meldeart", "Eingangsbestätigung (7 Tage)", "Anonym", "Eingegangen"):
+        assert label in text, label
+    for english in ("Case Number", "Submission Mode", "Initial Report", "Generated:"):
+        assert english not in text, english
