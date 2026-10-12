@@ -857,7 +857,8 @@ async def submit_post(
         if file_error:
             if isinstance(file_error, UploadError):
                 file_error = make_translator(get_lang(request))(file_error.key, **file_error.params)
-            return await _fail(_STEP_ATTACHMENTS, file_error, {"files": file_error})
+            # The banner takes a code; the reason itself goes next to the field.
+            return await _fail(_STEP_ATTACHMENTS, "attachments_rejected", {"files": file_error})
         if sum(len(ft[2]) for ft in file_tuples) > MAX_DRAFT_ATTACHMENT_BYTES:
             return await _fail(_STEP_ATTACHMENTS, "attachments_too_large")
         if file_tuples and not await _redis_has_room(redis):
