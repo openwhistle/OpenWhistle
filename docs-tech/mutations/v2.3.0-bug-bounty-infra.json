@@ -16,6 +16,9 @@
   "C": [
    "tests/test_docker_publish.py",
    "tests/test_infra_bounty.py"
+  ],
+  "G": [
+   "tests/test_infra_bounty.py"
   ]
  },
  "mutations": [
@@ -200,6 +203,20 @@
    "old": "      POSTGRES_DB: \"${POSTGRES_DB}\"\n",
    "new": "      POSTGRES_DB: \"${POSTGRES_DB}\"\n      SECRET_KEY: \"${SECRET_KEY}\"\n",
    "tests": "N"
+  },
+  {
+   "id": "ci-guard-no-collectreport",
+   "file": "tests/ci_skip_guard.py",
+   "old": "    _note_skip(report.nodeid, report)\n\n\ndef pytest_sessionfinish",
+   "new": "    pass\n\n\ndef pytest_sessionfinish",
+   "tests": "N"
+  },
+  {
+   "id": "ci-guard-conftest-no-collectreport",
+   "file": "tests/conftest.py",
+   "old": "    pytest_collectreport,\n",
+   "new": "",
+   "tests": "G"
   }
  ]
 }

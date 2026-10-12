@@ -52,6 +52,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **The Ansible compose gave Postgres the whole `.env`** (`env_file: .env` on `db`; `SECRET_KEY` showed in the
   container's environment): the session secret, encryption key and OIDC/LDAP/SMTP/S3 credentials sat inside the
   database container. `db` now gets only `POSTGRES_USER`, `POSTGRES_PASSWORD` and `POSTGRES_DB`.
+- **The CI skip guard missed a skipped module**: a module-level skip (`importorskip`, `skip(allow_module_level=True)`)
+  is a collect report, not a test report, so a run with a whole module not running stayed green (reproduced:
+  exit 0). The guard moved to `tests/ci_skip_guard.py` and now reads collect reports too.
 
 ## [2.2.1] — 2026-10-12
 

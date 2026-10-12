@@ -183,3 +183,48 @@ def test_the_ansible_database_container_gets_only_its_own_variables() -> None:
     assert "env_file" not in db
     assert set(db["environment"]) == {"POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB", "PGDATA"}
     assert compose["services"]["app"]["env_file"] == ".env"  # the app still reads it all
+
+
+def _session(tmp_path: Path, source: str, ci: str = "true") -> int:
+    """Run a throwaway pytest session with only the CI skip guard loaded."""
+    import os
+    import subprocess
+    import sys
+
+    (tmp_path / "test_sample.py").write_text(source)
+    (tmp_path / "test_other.py").write_text("def test_other(): ...\n")
+    env = {**os.environ, "CI": ci, "PYTHONPATH": str(ROOT)}
+    return subprocess.run(  # noqa: S603
+        [sys.executable, "-m", "pytest", "-p", "tests.ci_skip_guard", "-c", "/dev/null"]
+        + ["--rootdir", str(tmp_path), "-p", "no:cacheprovider", "-q", str(tmp_path)],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        check=False,
+    ).returncode
+
+
+@pytest.mark.parametrize(
+    ("source", "ci", "expected"),
+    [
+        # a module-level skip is a CollectReport: CI stayed green with the module not running
+        ("import pytest\npytest.importorskip('no_such_module_x')\n", "true", 1),
+        ("import pytest\npytest.skip('x', allow_module_level=True)\n", "true", 1),
+        ("import pytest\n@pytest.mark.skip\ndef test_a(): ...\n", "true", 1),
+        ("import pytest\npytest.skip('x', allow_module_level=True)\n", "false", 0),
+        ("def test_a(): ...\n", "true", 0),
+    ],
+)
+def test_the_ci_skip_guard_sees_module_level_skips_too(
+    tmp_path: Path, source: str, ci: str, expected: int
+) -> None:
+    assert _session(tmp_path, source, ci) == expected
+
+
+def test_conftest_registers_all_three_ci_skip_hooks() -> None:
+    import conftest
+
+    from tests import ci_skip_guard
+
+    for hook in ("pytest_runtest_logreport", "pytest_collectreport", "pytest_sessionfinish"):
+        assert getattr(conftest, hook) is getattr(ci_skip_guard, hook), hook

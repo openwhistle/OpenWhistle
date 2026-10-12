@@ -420,29 +420,11 @@ async def setup_incomplete(db_engine: object) -> AsyncGenerator[async_sessionmak
     await engine.dispose()
 
 
-# A test that skips on every CI run is a test that does not exist. Nine did: the
-# wizard and admin-page tests skipped whenever setup was already done, which in
-# the shared database was always, and CI printed only "12 skipped".
-_SKIPS_ALLOWED_IN_CI = (
-    "OW_PRIVATE_STRINGS is not set",  # the operator's data is not in CI
-    # Ubuntu's libldap is GnuTLS-backed and refuses TLS 1.1 itself; the image's
-    # (Alpine, OpenSSL) does not, and the test runs where libldap uses OpenSSL.
-    "libldap's TLS backend refuses TLS 1.1 by itself",
+from tests.ci_skip_guard import (  # noqa: E402, F401  hooks, found by name
+    pytest_collectreport,
+    pytest_runtest_logreport,
+    pytest_sessionfinish,
 )
-_ci_skips: list[str] = []
-
-
-def pytest_runtest_logreport(report: pytest.TestReport) -> None:
-    if report.skipped and isinstance(report.longrepr, tuple):
-        reason = str(report.longrepr[2])
-        if not any(allowed in reason for allowed in _SKIPS_ALLOWED_IN_CI):
-            _ci_skips.append(f"{report.nodeid}: {reason}")
-
-
-def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
-    if os.environ.get("CI") == "true" and _ci_skips and exitstatus == 0:
-        print("\nTests skipped in CI (they never run there):\n  " + "\n  ".join(_ci_skips))
-        session.exitstatus = pytest.ExitCode.TESTS_FAILED
 
 
 @pytest_asyncio.fixture(loop_scope="function")
