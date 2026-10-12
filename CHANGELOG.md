@@ -9,6 +9,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **The v2.3.0 publish stopped after GHCR**: Docker Hub lists a new signature (cosign 3 stores it as an OCI
+  referrer) seconds after `cosign sign`, and the check right after it found none. It retries for a minute.
 - **`scripts/take_screenshots.py` died after the last shot** without writing `_release`: it read the version
   from the checkout's settings, which want a `SECRET_KEY`. It asks the running app's `/health`, so the marker
   names the release the shots show.

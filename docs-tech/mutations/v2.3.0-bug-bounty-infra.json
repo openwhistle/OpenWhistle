@@ -155,8 +155,8 @@
   {
    "id": "publish-verify-failure-ignored",
    "file": ".github/workflows/docker-publish.yml",
-   "old": "https://token.actions.githubusercontent.com > /dev/null || return 1",
-   "new": "https://token.actions.githubusercontent.com > /dev/null || true",
+   "old": "              [[ $attempt -lt 6 ]] || return 1\n",
+   "new": "              [[ $attempt -lt 6 ]] || break\n",
    "tests": "C"
   },
   {
