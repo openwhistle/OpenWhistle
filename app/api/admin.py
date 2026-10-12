@@ -1,5 +1,6 @@
 """Admin dashboard endpoints."""
 
+import re
 import uuid
 from typing import Any
 from urllib.parse import quote, urlencode
@@ -9,7 +10,14 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Resp
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_admin, require_admin, require_superadmin
+from app.api.deps import (
+    get_current_admin,
+    may_run_the_instance,
+    require_admin,
+    require_instance_admin,
+    require_superadmin,
+    require_tenants,
+)
 from app.config import settings
 from app.csrf import validate_csrf, validate_csrf_header
 from app.database import get_db
@@ -149,6 +157,45 @@ async def dashboard(
     return await _dashboard(request, db, current_user, params)
 
 
+async def _ask_for_telemetry(db: AsyncSession, user: AdminUser) -> bool:
+    """Once per release and admin: may the installation be counted? Only while it is
+    off, only where the in-app switch decides (no demo, no TELEMETRY_ENABLED), only an
+    admin who may switch it. Asked is asked, whatever the answer."""
+    from app.services import telemetry  # noqa: PLC0415
+
+    if (
+        user.telemetry_asked_version == settings.app_version
+        or not may_run_the_instance(user)
+        or telemetry.locked_by() is not None
+        or telemetry.is_enabled(await telemetry.get_state(db))
+    ):
+        return False
+    user.telemetry_asked_version = settings.app_version
+    await db.commit()
+    return True
+
+
+async def _confirmed_deletion(db: AsyncSession, user: AdminUser, case_number: str) -> str | None:
+    """The case number of ?deleted= when this admin's audit trail confirms that deletion;
+    a crafted link must not announce one that did not happen."""
+    from sqlalchemy import select  # noqa: PLC0415
+
+    from app.models.audit import AuditLog  # noqa: PLC0415
+
+    if not re.fullmatch(r"[A-Z0-9-]{1,32}", case_number):
+        return None
+    found = await db.scalar(
+        select(AuditLog.id)
+        .where(
+            AuditLog.admin_id == user.id,
+            AuditLog.action == AuditAction.REPORT_DELETE_CONFIRMED,
+            AuditLog.detail.contains(f'"case_number": "{case_number}"'),
+        )
+        .limit(1)
+    )
+    return case_number if found else None
+
+
 @router.post("/dashboard", response_class=HTMLResponse)
 async def dashboard_search(
     request: Request,
@@ -235,13 +282,27 @@ async def _dashboard(
         # search spans them all, and used to be recorded under its own only.
         # Without multi-tenancy the log is not scoped: one entry.
         split = settings.multi_tenancy_enabled and read_orgs
+        # Each organisation's entry counts its own matches, never another's.
+        hits_by_org: dict[uuid.UUID | None, int] = {}
+        if split and content_ids:
+            from sqlalchemy import func, select  # noqa: PLC0415
+
+            from app.models.report import Report  # noqa: PLC0415
+
+            counted = await db.execute(
+                select(Report.org_id, func.count(Report.id))
+                .where(Report.id.in_(content_ids))
+                .group_by(Report.org_id)
+            )
+            hits_by_org = dict(counted.all())
         for read_org in read_orgs if split else {current_user.org_id}:
+            hits = hits_by_org.get(read_org, 0) if split else len(content_ids)
             await audit_service.log(
                 db,
                 current_user,
                 AuditAction.CONTENT_SEARCHED,
                 target_org=read_org,
-                detail={"term": encrypt(case_query), "hits": len(content_ids)},
+                detail={"term": encrypt(case_query), "hits": hits},
             )
         await db.commit()
     reports, total = await report_service.get_reports_paginated(
@@ -268,6 +329,7 @@ async def _dashboard(
     total_pages = max(1, (total + per_page - 1) // per_page)
     now = datetime.now(UTC)
     ip_warning = await check_ip_warning()
+    telemetry_ask = await _ask_for_telemetry(db, current_user)
 
     # An org's own reporting link, to hand to its employees (/submit is the default org's).
     reporting_path, reporting_link = "/submit", None
@@ -293,10 +355,14 @@ async def _dashboard(
             "reports": reports,
             "now": now,
             "ip_warning": ip_warning,
+            "telemetry_ask": telemetry_ask,
+            "may_dismiss_ip_warning": may_run_the_instance(current_user),
             "reporting_path": reporting_path,
             "reporting_link": reporting_link,
             "category_labels": category_labels,
-            "deleted_case": request.query_params.get("deleted"),
+            "deleted_case": await _confirmed_deletion(
+                db, current_user, request.query_params.get("deleted", "")
+            ),
             "stats": stats,
             "page": page,
             "per_page": per_page,
@@ -507,7 +573,7 @@ async def acknowledge_report(
     report = await _get_authorized_report(db, report_id, current_user)
 
     old_status = report.status.value
-    await report_service.acknowledge_report(db, report)
+    await report_service.acknowledge_report(db, report, commit=False)
     await audit_service.log(
         db,
         current_user,
@@ -542,7 +608,7 @@ async def update_status(
         )
 
     old_status = report.status.value
-    await report_service.update_report_status(db, report, s)
+    await report_service.update_report_status(db, report, s, commit=False)
     await audit_service.log(
         db,
         current_user,
@@ -567,14 +633,15 @@ async def admin_reply(
     if not content.strip():
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT)
 
-    await report_service.add_admin_message(db, report, content.strip(), notify_whistleblower=True)
+    # Audited first: the service commits the entry with the message, and only then
+    # notifies the reporter, so no notice goes out for a reply that was not stored.
     await audit_service.log(
         db,
         current_user,
         AuditAction.REPORT_MESSAGE_SENT,
         report_id=report.id,
     )
-    await db.commit()
+    await report_service.add_admin_message(db, report, content.strip(), notify_whistleblower=True)
     return RedirectResponse(f"/admin/reports/{report.id}", status_code=302)
 
 
@@ -616,7 +683,7 @@ async def assign_report(
             )
 
     old_assignee = report.assigned_to.username if report.assigned_to else None
-    await report_service.assign_report(db, report, assignee)
+    await report_service.assign_report(db, report, assignee, commit=False)
     # Unassigning used to be written as "assigned" to nobody, so the audit
     # filter's "unassigned" never matched a row.
     await audit_service.log(
@@ -646,7 +713,7 @@ async def add_note(
     if not content.strip():
         raise HTTPException(status_code=422)
 
-    await report_service.add_note(db, report, current_user, content.strip())
+    await report_service.add_note(db, report, current_user, content.strip(), commit=False)
     await audit_service.log(
         db,
         current_user,
@@ -679,7 +746,7 @@ async def link_report(
     if await report_service.get_link_between(db, report.id, other.id) is not None:
         raise HTTPException(status_code=409, detail="These cases are already linked.")
 
-    await report_service.link_cases(db, report, other, current_user)
+    await report_service.link_cases(db, report, other, current_user, commit=False)
     await audit_service.log(
         db,
         current_user,
@@ -707,7 +774,7 @@ async def unlink_report(
     if link.report_id_a != report.id and link.report_id_b != report.id:
         raise HTTPException(status_code=404)
 
-    await report_service.unlink_cases(db, link)
+    await report_service.unlink_cases(db, link, commit=False)
     await audit_service.log(
         db,
         current_user,
@@ -735,7 +802,7 @@ async def request_delete(
     if report.deletion_request is not None:
         raise HTTPException(status_code=409, detail="A deletion request already exists.")
 
-    await report_service.request_deletion(db, report, current_user)
+    await report_service.request_deletion(db, report, current_user, commit=False)
     await audit_service.log(
         db,
         current_user,
@@ -815,7 +882,7 @@ async def cancel_delete(
     if dr.requested_by_id != current_user.id:
         raise HTTPException(status_code=403, detail="Only the requesting admin can cancel.")
 
-    await report_service.cancel_deletion_request(db, dr)
+    await report_service.cancel_deletion_request(db, dr, commit=False)
     await audit_service.log(
         db,
         current_user,
@@ -841,7 +908,8 @@ async def export_pdf(
     from app.services.pdf import generate_report_pdf
 
     report = await _get_authorized_report(db, report_id, current_user)
-    await audit_service.log(db, current_user, AuditAction.REPORT_VIEWED, report_id=report.id)
+    # A case leaving the system as a file, not a view: shown in the log by default.
+    await audit_service.log(db, current_user, AuditAction.REPORT_EXPORTED, report_id=report.id)
     await db.commit()
 
     category_labels = await get_category_labels(db, get_lang(request), **_org_scope(current_user))
@@ -1119,7 +1187,7 @@ async def _new_account_org(db: AsyncSession, creator: AdminUser, chosen: str) ->
     return creator.org_id or await report_service.default_org_id(db)
 
 
-@router.post("/users")
+@router.post("/users", response_model=None)
 async def create_user(
     request: Request,
     username: str = Form(...),
@@ -1129,13 +1197,33 @@ async def create_user(
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf),
-) -> RedirectResponse:
+) -> HTMLResponse | RedirectResponse:
+    from app.services.auth import validate_password
     from app.services.users import create_user as svc_create
-    from app.services.users import get_user_by_username_ci
+    from app.services.users import get_user_by_username_ci, validate_username
 
-    existing = await get_user_by_username_ci(db, username.strip())
-    if existing:
-        raise HTTPException(status_code=409, detail="Username already exists")
+    # Refused on the form, next to the field, with what was typed (never the password).
+    errors: dict[str, str] = {}
+    try:
+        validate_username(username)
+    except ValueError:
+        errors["username"] = "wizard.error.username"
+    else:
+        if await get_user_by_username_ci(db, username.strip()):
+            errors["username"] = "admin.users.add.error.taken"
+    try:
+        validate_password(password)
+    except ValueError:
+        errors["password"] = "wizard.error.password"  # noqa: S105 — locale key
+    if errors:
+        page = await _users_page(
+            request,
+            db,
+            current_user,
+            {"field_errors": errors, "add_username": username, "add_role": role},
+        )
+        page.status_code = 422
+        return page
 
     try:
         role_enum = AdminRole(role)
@@ -1151,7 +1239,9 @@ async def create_user(
 
     target_org = await _new_account_org(db, current_user, org_id)
     try:
-        new_user, _totp_secret = await svc_create(db, username.strip(), password, role_enum)
+        new_user, _totp_secret = await svc_create(
+            db, username.strip(), password, role_enum, commit=False
+        )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
     new_user.org_id = target_org
@@ -1218,7 +1308,7 @@ async def change_user_role(
         )
 
     old_role = target.role.value
-    await update_user_role(db, target, role_enum)
+    await update_user_role(db, target, role_enum, commit=False)
     await audit_service.log(
         db,
         current_user,
@@ -1235,9 +1325,11 @@ async def deactivate_user(
     request: Request,
     user_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis),
     current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
+    from app.services import auth as auth_service
     from app.services.users import count_active_privileged_admins, get_user_by_id
     from app.services.users import deactivate_user as svc_deact
 
@@ -1261,7 +1353,7 @@ async def deactivate_user(
             detail="Cannot deactivate the last active administrator.",
         )
 
-    await svc_deact(db, target)
+    await svc_deact(db, target, commit=False)
     await audit_service.log(
         db,
         current_user,
@@ -1270,6 +1362,8 @@ async def deactivate_user(
         target_org=target.org_id,
     )
     await db.commit()
+    # Refused while inactive anyway; ended, so a reactivation does not revive them.
+    await auth_service.revoke_user_sessions(redis, str(target.id))
     return RedirectResponse("/admin/users", status_code=302)
 
 
@@ -1289,7 +1383,7 @@ async def reactivate_user(
         raise HTTPException(status_code=404)
     _require_may_manage(current_user, target)
 
-    await svc_react(db, target)
+    await svc_react(db, target, commit=False)
     await audit_service.log(
         db,
         current_user,
@@ -1398,13 +1492,28 @@ async def audit_log_page(
 
     entries, total = await audit_service.get_audit_log(
         db,
-        **_audit_filters(qp),
+        **await _audit_filters(db, qp),
         page=page,
         per_page=50,
         viewer_id=current_user.id,
         **_org_scope(current_user),
     )
     total_pages = max(1, (total + 49) // 50)
+    # The case column showed "251fc6b0-079…": no admin knows a case by its UUID.
+    from sqlalchemy import select  # noqa: PLC0415
+
+    report_ids = {e.report_id for e in entries if e.report_id}
+    case_numbers = (
+        dict(
+            (
+                await db.execute(
+                    select(Report.id, Report.case_number).where(Report.id.in_(report_ids))
+                )
+            ).all()
+        )
+        if report_ids
+        else {}
+    )
 
     return render(
         request,
@@ -1412,6 +1521,7 @@ async def audit_log_page(
         {
             "user": current_user,
             "entries": entries,
+            "case_numbers": case_numbers,
             "total": total,
             "page": page,
             "total_pages": total_pages,
@@ -1436,15 +1546,19 @@ async def audit_log_page(
     )
 
 
-def _audit_filters(qp: Any) -> dict[str, Any]:
-    """The audit-log filters of a query string: the page and its export read the same."""
+async def _audit_filters(db: AsyncSession, qp: Any) -> dict[str, Any]:
+    """The audit-log filters of a query string: the page and its export read the same.
+    The report is named by its case number (what every page shows) or its id; a value
+    that names none filters to nothing, never to the whole log."""
     action_filter = qp.get("action", "")
     report_id = None
-    if qp.get("report_id"):
+    if wanted := qp.get("report_id", "").strip():
         try:
-            report_id = uuid.UUID(qp["report_id"])
+            report_id = uuid.UUID(wanted)
         except ValueError:
-            pass
+            report = await report_service.get_report_by_case_number(db, wanted.upper())
+            # The nil UUID is no report's id: an unknown case number lists nothing.
+            report_id = report.id if report is not None else uuid.UUID(int=0)
     show_views = qp.get("views") == "1" or action_filter == AuditAction.REPORT_VIEWED
     return {
         "report_id": report_id,
@@ -1499,7 +1613,7 @@ async def audit_log_csv(
     import io
 
     # Every row: this used to stop at 10 000 without saying so.
-    filters = _audit_filters(request.query_params)
+    filters = await _audit_filters(db, request.query_params)
     entries, _ = await audit_service.get_audit_log(
         db,
         **filters,
@@ -1691,10 +1805,14 @@ async def reactivate_location(
 
 @router.post("/ip-warning/dismiss")
 async def dismiss_ip_warning(
-    current_user: AdminUser = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+    current_user: AdminUser = Depends(require_instance_admin),
     _csrf: None = Depends(validate_csrf_header),
 ) -> JSONResponse:
     await clear_ip_warning()
+    # Hiding the warning that visitors' addresses arrive is itself on record.
+    await audit_service.log(db, current_user, AuditAction.IP_WARNING_DISMISSED, target_org=None)
+    await db.commit()
     return JSONResponse({"cleared": True})
 
 
@@ -1742,7 +1860,7 @@ async def system_page(
     request: Request,
     db: AsyncSession = Depends(get_db),
     redis: Redis = Depends(get_redis),
-    current_user: AdminUser = Depends(require_admin),
+    current_user: AdminUser = Depends(require_instance_admin),
 ) -> HTMLResponse:
     from app.services import telemetry
     from app.services.integrity import get_integrity_status
@@ -1777,7 +1895,7 @@ async def system_page(
 async def system_telemetry_toggle(
     enabled: str = Form(""),
     db: AsyncSession = Depends(get_db),
-    current_user: AdminUser = Depends(require_admin),
+    current_user: AdminUser = Depends(require_instance_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
     from app.services import telemetry
@@ -1805,7 +1923,7 @@ async def system_telemetry_toggle(
 @router.post("/system/telemetry/reset-id")
 async def system_telemetry_reset_id(
     db: AsyncSession = Depends(get_db),
-    current_user: AdminUser = Depends(require_admin),
+    current_user: AdminUser = Depends(require_instance_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
     from app.services import telemetry
@@ -1828,7 +1946,7 @@ async def system_telemetry_reset_id(
 async def organisations_page(
     request: Request,
     db: AsyncSession = Depends(get_db),
-    current_user: AdminUser = Depends(require_superadmin),
+    current_user: AdminUser = Depends(require_tenants),
 ) -> HTMLResponse:
     from sqlalchemy import select
 
@@ -1857,7 +1975,7 @@ async def create_organisation(
     name: Text128,
     slug: Text64,
     db: AsyncSession = Depends(get_db),
-    current_user: AdminUser = Depends(require_superadmin),
+    current_user: AdminUser = Depends(require_tenants),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
     import re
@@ -1893,7 +2011,7 @@ async def create_organisation(
 async def deactivate_organisation(
     org_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: AdminUser = Depends(require_superadmin),
+    current_user: AdminUser = Depends(require_tenants),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
     from sqlalchemy import select

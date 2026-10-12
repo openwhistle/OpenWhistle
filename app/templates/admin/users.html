@@ -1,6 +1,7 @@
 {% extends "admin/_layout.html" %}
+{% import "_field.html" as field with context %}
 
-{% block title %}{{ t('admin.users.title') }} | OpenWhistle{% endblock %}
+{% block title %}{{ t('admin.users.title') }} | {{ brand.name }}{% endblock %}
 
 {% block styles %}
 <style nonce="{{ request.state.csp_nonce }}">
@@ -46,19 +47,22 @@
                 <div class="form-group">
                     <label class="form-label" for="new-username">{{ t('admin.users.add.username') }}</label>
                     <input type="text" class="form-control" id="new-username" name="username" required
-                        minlength="3" maxlength="64"
-                        pattern="[A-Za-z0-9._@ \-]{3,64}" title="{{ t('admin.users.add.username.title') }}">
+                        minlength="3" maxlength="64" value="{{ add_username | default('') }}"
+                        pattern="[A-Za-z0-9._@ \-]{3,64}" title="{{ t('admin.users.add.username.title') }}"
+                        {{ field.attrs('username') }}>
+                    {{ field.error('username') }}
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="new-password">{{ t('admin.users.add.password') }}</label>
                     <input type="password" class="form-control" id="new-password" name="password" required
-                        minlength="12" autocomplete="new-password">
+                        minlength="12" autocomplete="new-password" {{ field.attrs('password') }}>
+                    {{ field.error('password') }}
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="new-role">{{ t('admin.users.add.role') }}</label>
                     <select class="form-control" id="new-role" name="role">
                         {% for role in roles %}
-                        <option value="{{ role.value }}" {{ 'selected' if role.value == 'case_manager' else '' }}>{{ t('role.label.' + role.value) }}</option>
+                        <option value="{{ role.value }}" {{ 'selected' if role.value == (add_role | default('case_manager')) else '' }}>{{ t('role.label.' + role.value) }}</option>
                         {% endfor %}
                     </select>
                 </div>

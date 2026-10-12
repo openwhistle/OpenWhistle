@@ -22,7 +22,7 @@
 </style>
 {% endblock %}
 
-{% block title %}{{ t('admin.stats.title') }} | OpenWhistle{% endblock %}
+{% block title %}{{ t('admin.stats.title') }} | {{ brand.name }}{% endblock %}
 
 {% block admin_content %}
 <div class="container">
@@ -95,7 +95,6 @@
         <div class="panel">
             <h2 class="panel-header">{{ t('admin.stats.by_category') }}</h2>
             {% if stats.by_category %}
-            {% set max_cat = stats.by_category.values() | max %}
             <div class="stat-flex-col-gap">
                 {% for slug, count in stats.by_category.items() | sort(attribute='1', reverse=True) %}
                 {% set pct = (count / stats.total_reports * 100) | round(1) if stats.total_reports else 0 %}
@@ -105,7 +104,7 @@
                         <span class="stat-muted-sm">{{ count }} ({{ pct | format_percent(lang) }})</span>
                     </div>
                     <div class="stat-bar-track">
-                        <div class="stat-bar-fill-outline" data-pct="{{ (count / max_cat * 100) | round(1) }}"></div>
+                        <div class="stat-bar-fill-outline" data-pct="{{ pct }}"></div>
                     </div>
                 </div>
                 {% endfor %}

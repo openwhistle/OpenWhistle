@@ -855,6 +855,7 @@ _JS_HOOK_CLASSES = {
     "session-expiry-actions",  # site.js: querySelector('.session-expiry-actions')
     "session-expiry-body",  # site.js: querySelector('.session-expiry-body')
     "demo-legal",  # scripts/take_screenshots.py: hides the demo's legal links
+    "telemetry-ask",  # site.js: closest('.telemetry-ask') on "Not now"
 }
 
 
@@ -888,6 +889,7 @@ def test_every_template_class_exists_in_css_or_is_a_documented_js_hook() -> None
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("tenants")
 async def test_organisation_create_and_deactivate_succeed_with_valid_csrf(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
@@ -927,6 +929,7 @@ async def test_organisation_create_and_deactivate_succeed_with_valid_csrf(
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("tenants")
 async def test_organisation_create_and_deactivate_fail_without_valid_csrf(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
@@ -969,6 +972,7 @@ async def test_organisation_create_and_deactivate_fail_without_valid_csrf(
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("tenants")
 async def test_organisation_deactivate_is_a_danger_action(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
@@ -1042,7 +1046,8 @@ def test_every_admin_role_has_a_badge_color() -> None:
     css = (Path(__file__).parents[1] / "app/static/css/site.css").read_text()
     for role in AdminRole:
         # At line start: the dark-theme override alone is not the rule.
-        assert re.search(rf"^\.badge-{role.value} \{{", css, re.M), f".badge-{role.value} missing"
+        rule = rf"^\.badge-{role.value}\s*[{{,]"  # alone or first in a selector list
+        assert re.search(rule, css, re.M), f".badge-{role.value} missing"
 
 
 @pytest.mark.asyncio
@@ -1243,7 +1248,10 @@ async def test_stats_page_writes_percentages_in_the_admins_language(
     from app.services.report import create_report
 
     await _login(client, db_session, AdminRole.admin)
-    await create_report(db_session, "corruption", "A case for the percentage check.")
+    report, _ = await create_report(db_session, "corruption", "A case for the percentage check.")
+    # Acknowledged, so the SLA card has a rate of its own: a report received today is not
+    # decided yet, and the card would only show one when another test left a report behind.
+    report.acknowledged_at = report.submitted_at
     await db_session.commit()
     client.cookies.set("ow-lang", "de")
     html = (await client.get("/admin/stats")).text

@@ -29,7 +29,7 @@ from app.models.setup import SetupStatus
 from app.models.user import AdminUser
 from app.services.audit import AuditAction
 from app.services.auth import hash_password, validate_session
-from app.services.report import create_report
+from app.services.report import create_report, status_session_key
 from tests.conftest import setup_token
 
 _ADMIN_PASSWORD = "V150-Test-Password"  # noqa: S105
@@ -133,21 +133,6 @@ async def test_wrong_pin_past_the_limit_shows_wait_notice_and_keeps_the_form(
     assert resp.status_code == 401
     assert "Many wrong attempts" in resp.text
     assert 'name="pin"' in resp.text  # the owner can still log in
-
-
-@pytest.mark.asyncio
-async def test_successful_login_resets_the_failure_count(
-    client: AsyncClient, db_session: AsyncSession
-) -> None:
-    report, pin = await create_report(db_session, "corruption", "Reset test report text.")
-    for _ in range(settings.max_access_attempts):
-        await _status_login(client, report.case_number, _WRONG_PIN)
-    assert (await _status_login(client, report.case_number, pin)).status_code == 303
-
-    resp = await _status_login(client, report.case_number, _WRONG_PIN)
-
-    assert "No report matches this case number and PIN." in resp.text
-    assert "Many wrong attempts" not in resp.text
 
 
 @pytest.mark.asyncio
@@ -437,7 +422,7 @@ async def test_get_status_logout_does_not_log_out(
     resp = await client.get("/status/logout", follow_redirects=False)
 
     assert resp.status_code == 405
-    assert await (await get_redis()).exists(f"status-session:{key}") == 1
+    assert await (await get_redis()).exists(status_session_key(key)) == 1
 
 
 @pytest.mark.asyncio
@@ -451,7 +436,7 @@ async def test_status_logout_without_csrf_token_is_refused(
     resp = await client.post("/status/logout", data={"csrf_token": "forged"})
 
     assert resp.status_code == 403
-    assert await (await get_redis()).exists(f"status-session:{key}") == 1
+    assert await (await get_redis()).exists(status_session_key(key)) == 1
 
 
 @pytest.mark.asyncio

@@ -2,7 +2,7 @@
 {% import "_icons.html" as icons %}
 {% import "admin/_audit.html" as audit with context %}
 
-{% block title %}{{ t('admin.audit.title') }} | OpenWhistle{% endblock %}
+{% block title %}{{ t('admin.audit.title') }} | {{ brand.name }}{% endblock %}
 
 {% block styles %}
 <style nonce="{{ request.state.csp_nonce }}">
@@ -84,10 +84,11 @@
                         <td role="cell" class="aud-admin-cell" data-label="{{ t('admin.audit.table.admin') }}">{{ entry.admin_username or '—' }}</td>
                         <td role="cell" class="aud-action-cell stack-primary" data-label="{{ t('admin.audit.table.action') }}">{{ audit.label(entry.action) }}</td>
                         <td role="cell" data-label="{{ t('admin.audit.table.report') }}">
-                            {% if entry.report_id %}
-                            <a href="/admin/reports/{{ entry.report_id }}" class="mono aud-report-link">
-                                {{ entry.report_id | string | truncate(13, true, '…') }}
-                            </a>
+                            {% if entry.report_id in case_numbers %}
+                            <a href="/admin/reports/{{ entry.report_id }}" class="mono aud-report-link">{{ case_numbers[entry.report_id] }}</a>
+                            {% elif entry.report_id %}
+                            {# Deleted: no case to open; its number is in the deletion entry's detail. #}
+                            <span class="mono">{{ entry.report_id | string | truncate(13, true, '…') }}</span>
                             {% else %}
                             —
                             {% endif %}

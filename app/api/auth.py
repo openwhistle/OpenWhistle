@@ -72,6 +72,9 @@ _LOOPBACK_HOSTNAMES = {"localhost", "127.0.0.1", "::1"}
 
 
 def _local_review_reachable(request: Request) -> bool:
+    # SecurityMiddleware has already removed the address headers; it notes they came.
+    if getattr(request.state, "ip_headers_seen", False):
+        return False
     if any(h in request.headers for h in _PROXY_HEADERS):
         return False
     host_header = request.headers.get("host", "")
@@ -194,15 +197,21 @@ def _set_session_cookie(response: Response, token: str, request: Request) -> Non
 
 
 async def _start_session(
-    redis: Redis, db: AsyncSession, user: AdminUser, request: Request
+    redis: Redis,
+    db: AsyncSession,
+    user: AdminUser,
+    request: Request,
+    action: str = audit_service.AuditAction.AUTH_LOGIN,
 ) -> RedirectResponse:
-    """The only place a login becomes a session (TOTP verify and TOTP setup)."""
+    """The only place a login becomes a session (TOTP verify and TOTP setup), and
+    so the place it is audited."""
     if not user.is_active:
         return RedirectResponse("/admin/login", status_code=302)
 
     token = auth_service.create_access_token(str(user.id), role=user.role.value)
     await auth_service.store_session(redis, str(user.id), token)
     user.last_login_at = datetime.now(UTC)
+    await audit_service.log(db, user, action)
     await db.commit()
     # A password someone else set is replaced before anything else opens.
     landing = "/admin/account" if user.must_change_password else "/admin/dashboard"
@@ -412,15 +421,10 @@ async def local_review_login(
     user = await auth_service.get_user_by_username(db, DEMO_ADMIN_USERNAME)
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    if not user.is_active:
-        # Same outcome _start_session gives an inactive user — checked here,
-        # before the audit write, so a deactivated demo admin never gets a
-        # "signed in via local review" row for a login that did not happen.
-        return RedirectResponse("/admin/login", status_code=302)
-
-    await audit_service.log(db, user, audit_service.AuditAction.AUTH_LOCAL_REVIEW_LOGIN)
-    await db.commit()
-    return await _start_session(redis, db, user, request)
+    # An inactive demo admin gets no session and so no audit row (_start_session).
+    return await _start_session(
+        redis, db, user, request, audit_service.AuditAction.AUTH_LOCAL_REVIEW_LOGIN
+    )
 
 
 @router.post("/login/mfa", response_class=HTMLResponse, response_model=None)

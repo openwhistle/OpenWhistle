@@ -12,15 +12,16 @@
 <span title="{{ action }}">{{ translated('audit.action.', action) }}</span>
 {%- endmacro %}
 
-{#- Status, role and via values read as their labels; anything else verbatim (escaped). -#}
+{#- A status or role field reads as its label, a via as its; anything else verbatim
+    (escaped): a username "admin" or a slug "closed" is a name, not a role or a status. -#}
 {% macro _value(k, v) -%}
 {%- set status_label = t('status.label.' ~ v) -%}
 {%- set role_label = t('role.label.' ~ v) -%}
 {%- set via_label = t('audit.detail.via.' ~ v) -%}
 {%- if v == REASON_UNREADABLE -%}{{ t(v) }}
 {%- elif k == 'via' and via_label != 'audit.detail.via.' ~ v -%}{{ via_label }}
-{%- elif status_label != 'status.label.' ~ v -%}{{ status_label }}
-{%- elif role_label != 'role.label.' ~ v -%}{{ role_label }}
+{%- elif k in ('old_status', 'new_status', 'old', 'new') and status_label != 'status.label.' ~ v -%}{{ status_label }}
+{%- elif k in ('role', 'old', 'new') and role_label != 'role.label.' ~ v -%}{{ role_label }}
 {%- else -%}{{ v }}{%- endif -%}
 {%- endmacro %}
 

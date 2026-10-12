@@ -304,7 +304,7 @@ async def test_create_user_rejects_xss_username(client: AsyncClient, as_admin, n
         },
         follow_redirects=False,
     )
-    assert resp.status_code == 400
+    assert resp.status_code == 422  # refused on the form, next to the field
 
 
 # ── GHSA-gh23: security headers single-source ──────────────────────────────

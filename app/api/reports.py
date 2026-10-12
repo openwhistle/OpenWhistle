@@ -1,12 +1,13 @@
 """Whistleblower-facing endpoints: submit (multi-step), status, reply."""
 
 import asyncio
+import contextlib
 import json
 import logging
 import re
 import secrets
 import uuid
-from collections.abc import Awaitable
+from collections.abc import AsyncIterator, Awaitable
 from dataclasses import dataclass
 from typing import Any, cast
 from urllib.parse import urlsplit
@@ -57,16 +58,6 @@ _SUBMISSION_TTL = 7200
 # whistleblower's browser, so Redis (or a dump of it) holds nothing readable.
 _DRAFT_COOKIE_RE = re.compile(r"[A-Za-z0-9_-]{43}\.[A-Za-z0-9_-]{43}")
 
-_NEXT_ALLOWLIST: dict[str, str] = {
-    "/submit": "/submit",
-    "/status": "/status",
-    "/admin/login": "/admin/login",
-    "/admin/dashboard": "/admin/dashboard",
-    "/admin/mfa/setup": "/admin/mfa/setup",
-    "/setup": "/setup",
-}
-# An organisation's wizard, /submit/<slug> (slugs are [a-z0-9-], see create_organisation).
-_ORG_SUBMIT_RE = re.compile(r"/submit/([a-z0-9-]{1,64})")
 
 # Steps: mode → location (conditional) → category → description → attachments → review
 _STEP_MODE = 1
@@ -478,8 +469,9 @@ async def _save_submission(redis: Redis, session_id: str, state: dict[str, Any])
     await redis.set(_submission_key(session_id), token, ex=_SUBMISSION_TTL)
 
 
-async def _redis_has_room(redis: Redis) -> bool:
-    """False when Redis is past DRAFT_REDIS_MEMORY_PERCENT of its maxmemory.
+async def _redis_has_room(redis: Redis, incoming: int = 0) -> bool:
+    """False when Redis, with ``incoming`` more bytes, would pass
+    DRAFT_REDIS_MEMORY_PERCENT of its maxmemory.
 
     Drafts carry attachments; refusing new ones near the limit keeps room for
     sessions and rate-limit counters. Without maxmemory there is no limit to
@@ -490,7 +482,31 @@ async def _redis_has_room(redis: Redis) -> bool:
     except Exception:  # noqa: BLE001
         return True
     limit = int(info.get("maxmemory", 0))
-    return not limit or int(info["used_memory"]) < limit * settings.draft_redis_memory_percent / 100
+    used = int(info["used_memory"]) + incoming
+    return not limit or used < limit * settings.draft_redis_memory_percent / 100
+
+
+@contextlib.asynccontextmanager
+async def _draft_room(redis: Redis, incoming: int) -> AsyncIterator[bool]:
+    """Whether a draft of ``incoming`` bytes fits, with the check and the save under one
+    lock across replicas: uploads arriving together are measured one after another,
+    each with the ones before it stored, so together they cannot pass maxmemory (where
+    noeviction refuses every write, admin sessions too). Not got in time: no room."""
+    from redis.exceptions import LockError  # noqa: PLC0415
+
+    lock = redis.lock("openwhistle:lock:draft-room", timeout=60, blocking_timeout=30)
+    try:
+        await lock.acquire()
+    except LockError:
+        yield False
+        return
+    try:
+        yield await _redis_has_room(redis, incoming)
+    finally:
+        try:
+            await lock.release()
+        except LockError:  # held past its timeout and taken over; nothing to undo
+            pass
 
 
 async def _get_or_create_submission_session(
@@ -547,14 +563,20 @@ async def set_language(
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
     safe_lang = {"en": "en", "de": "de", "fr": "fr", "es": "es", "pt-br": "pt-br"}.get(lang, "en")
+    # Back to the same page, on this host only: a path, never "//host" or "/\\host",
+    # which browsers read as another host.
     parsed = urlsplit(next_url)
-    safe_path = _NEXT_ALLOWLIST.get(parsed.path)
-    if safe_path is None and (org_path := _ORG_SUBMIT_RE.fullmatch(parsed.path)):
-        safe_path = f"/submit/{org_path.group(1)}"
-    if safe_path is None:
-        safe_url = "/admin/dashboard" if parsed.path.startswith("/admin/") else "/submit"
+    on_this_host = (
+        not parsed.scheme
+        and not parsed.netloc
+        and parsed.path.startswith("/")
+        and not parsed.path.startswith("//")
+        and "\\" not in next_url
+    )
+    if on_this_host:
+        safe_url = parsed.path + (f"?{parsed.query}" if parsed.query else "")
     else:
-        safe_url = safe_path + (f"?{parsed.query}" if parsed.query else "")
+        safe_url = "/admin/dashboard" if parsed.path.startswith("/admin/") else "/submit"
     response = RedirectResponse(safe_url, status_code=303)
     response.set_cookie(
         "ow-lang",
@@ -667,6 +689,10 @@ async def submit_get(
         "categories": categories,
         "display_step": _compute_step_label(current_step, has_locations),
         "submit_path": tenant.path,
+        # Offered only what the server keeps: a choice it would override, or an
+        # address no notice is ever sent to, is not asked for.
+        "mode_choice": settings.submission_mode_enabled,
+        "email_notice": settings.notify_email_enabled,
     }
     if flash_error:
         ctx["error"] = flash_error
@@ -792,7 +818,8 @@ async def submit_post(
         if effective_mode == "confidential":
             name_stripped = confidential_name.strip()
             contact_stripped = confidential_contact.strip()
-            email_stripped = secure_email.strip()
+            # No notice is sent with mail off: the address is not kept for nothing.
+            email_stripped = secure_email.strip() if settings.notify_email_enabled else ""
             state["confidential_name"] = name_stripped
             state["confidential_contact"] = contact_stripped
             state["secure_email"] = email_stripped
@@ -857,27 +884,33 @@ async def submit_post(
         if file_error:
             if isinstance(file_error, UploadError):
                 file_error = make_translator(get_lang(request))(file_error.key, **file_error.params)
-            return await _fail(_STEP_ATTACHMENTS, file_error, {"files": file_error})
+            # The banner takes a code; the reason itself goes next to the field.
+            return await _fail(_STEP_ATTACHMENTS, "attachments_rejected", {"files": file_error})
         if sum(len(ft[2]) for ft in file_tuples) > MAX_DRAFT_ATTACHMENT_BYTES:
             return await _fail(_STEP_ATTACHMENTS, "attachments_too_large")
-        if file_tuples and not await _redis_has_room(redis):
-            return await _fail(_STEP_ATTACHMENTS, "attachments_no_room")
-
         # A file input is always empty on revisit, so Next with nothing chosen
         # keeps what is attached; new files (already scanned and stripped by
         # read_upload_files) replace it.
         if file_tuples:
             import base64 as _b64
 
-            state["file_meta"] = [{"filename": ft[0], "size": len(ft[2])} for ft in file_tuples]
-            state["file_data"] = [
-                {
-                    "filename": ft[0],
-                    "content_type": ft[1],
-                    "data": _b64.b64encode(ft[2]).decode(),
-                }
-                for ft in file_tuples
-            ]
+            # Stored as base64: four bytes for every three.
+            incoming = sum(len(ft[2]) for ft in file_tuples) * 4 // 3
+            async with _draft_room(redis, incoming) as room:
+                if not room:
+                    return await _fail(_STEP_ATTACHMENTS, "attachments_no_room")
+                state["file_meta"] = [{"filename": ft[0], "size": len(ft[2])} for ft in file_tuples]
+                state["file_data"] = [
+                    {
+                        "filename": ft[0],
+                        "content_type": ft[1],
+                        "data": _b64.b64encode(ft[2]).decode(),
+                    }
+                    for ft in file_tuples
+                ]
+                state["step"] = _STEP_REVIEW
+                await _save_submission(redis, session_id, state)
+            return _redirect_after_post()
         state["step"] = _STEP_REVIEW
         await _save_submission(redis, session_id, state)
         return _redirect_after_post()
@@ -896,7 +929,11 @@ async def submit_post(
 
         from sqlalchemy import text  # noqa: PLC0415
 
-        from app.services.attachment import create_attachments, format_size
+        from app.services.attachment import (
+            create_attachments,
+            delete_stored_objects,
+            format_size,
+        )
         from app.services.crypto import encrypt
 
         state.clear()
@@ -907,7 +944,9 @@ async def submit_post(
             return _redirect_after_post()
         our_case: str | None = None
         commit_error: BaseException | None = None
-        # Report and attachments commit together, so nothing is left behind.
+        # Report and attachments commit together; objects put in external storage
+        # before a commit that does not happen are removed below.
+        stored_keys: list[str] = []
         try:
             async with asyncio.timeout(_SUBMIT_TIMEOUT_SECONDS):
                 await db.execute(
@@ -955,7 +994,9 @@ async def submit_post(
                     report_id=uuid.UUID(report_id),
                     org_id=tenant.org_id,
                 )
-                await create_attachments(db, report, file_tuples_restored, commit=False)
+                await create_attachments(
+                    db, report, file_tuples_restored, commit=False, stored=stored_keys
+                )
                 our_case = report.case_number
                 await db.commit()
         except (Exception, asyncio.CancelledError) as exc:
@@ -974,6 +1015,7 @@ async def submit_post(
                     if not isinstance(exc, Exception):
                         raise
                     return _pending_page(request, tenant.path, kept=True)
+                await delete_stored_objects(stored_keys)  # no row will point to them
                 given_back = await _give_back_draft(redis, session_id, claimed, nonce)
                 if not isinstance(exc, Exception):
                     raise  # cancelled, or the worker is going away: nobody to answer
@@ -982,6 +1024,7 @@ async def submit_post(
                 _log.warning("Final submit failed before its commit: %s", type(exc).__name__)
                 return await _fail(_STEP_REVIEW, "submit_failed")  # nothing was sent
             if committed_case != our_case:  # another submit of this draft made it
+                await delete_stored_objects(stored_keys)  # ours never committed
                 await _finish_claim(redis, session_id, nonce, None)
                 if isinstance(exc, asyncio.CancelledError):
                     raise
@@ -1150,7 +1193,7 @@ async def status_get(
     _raw = request.cookies.get("ow-status-session")
     session_key: str | None = _raw if _raw and _SESSION_KEY_RE.fullmatch(_raw) else None
     if session_key:
-        report_id_str = await redis.get(f"status-session:{session_key}")
+        report_id_str = await redis.get(report_service.status_session_key(session_key))
         if report_id_str:
             decoded_id = (
                 report_id_str.decode() if isinstance(report_id_str, bytes) else report_id_str
@@ -1216,7 +1259,7 @@ async def status_post(
         )
 
     status_session_key = secrets.token_urlsafe(32)
-    await redis.set(f"status-session:{status_session_key}", str(report.id), ex=7200)
+    await redis.set(report_service.status_session_key(status_session_key), str(report.id), ex=7200)
 
     response = RedirectResponse("/status", status_code=303)
     response.set_cookie(
@@ -1247,7 +1290,7 @@ async def reply_post(
     report = None
 
     if status_session_key:
-        report_id_str = await redis.get(f"status-session:{status_session_key}")
+        report_id_str = await redis.get(report_service.status_session_key(status_session_key))
         if report_id_str:
             decoded_id = (
                 report_id_str.decode() if isinstance(report_id_str, bytes) else report_id_str
@@ -1271,7 +1314,9 @@ async def reply_post(
                 else status.HTTP_401_UNAUTHORIZED
             )
         status_session_key = secrets.token_urlsafe(32)
-        await redis.set(f"status-session:{status_session_key}", str(report.id), ex=7200)
+        await redis.set(
+            report_service.status_session_key(status_session_key), str(report.id), ex=7200
+        )
 
     stripped = content.strip()
     if not stripped:
@@ -1290,11 +1335,13 @@ async def reply_post(
     # the session either (see status_get).
     remaining = 7200
     if status_session_key:
-        remaining = max(1, int(await redis.ttl(f"status-session:{status_session_key}")))
+        remaining = max(
+            1, int(await redis.ttl(report_service.status_session_key(status_session_key)))
+        )
     fresh_key = secrets.token_urlsafe(32)
-    await redis.set(f"status-session:{fresh_key}", str(report.id), ex=remaining)
+    await redis.set(report_service.status_session_key(fresh_key), str(report.id), ex=remaining)
     if status_session_key:
-        await redis.delete(f"status-session:{status_session_key}")
+        await redis.delete(report_service.status_session_key(status_session_key))
 
     response = RedirectResponse(
         "/status?replied=closed" if closed else "/status?replied=1", status_code=303
@@ -1319,7 +1366,7 @@ async def status_logout(
     _raw = request.cookies.get("ow-status-session")
     session_key: str | None = _raw if _raw and _SESSION_KEY_RE.fullmatch(_raw) else None
     if session_key:
-        await redis.delete(f"status-session:{session_key}")
+        await redis.delete(report_service.status_session_key(session_key))
     response = RedirectResponse("/status", status_code=303)
     response.delete_cookie(
         "ow-status-session", httponly=True, samesite="lax", secure=cookie_secure(request)
@@ -1338,7 +1385,7 @@ async def whistleblower_download_attachment(
     if not session_key:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-    report_id_str = await redis.get(f"status-session:{session_key}")
+    report_id_str = await redis.get(report_service.status_session_key(session_key))
     if not report_id_str:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 

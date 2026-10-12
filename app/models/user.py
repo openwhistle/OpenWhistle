@@ -83,6 +83,8 @@ class AdminUser(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # The release whose dashboard last asked this admin to count the installation.
+    telemetry_asked_version: Mapped[str | None] = mapped_column(String(32), nullable=True)
 
     assigned_reports: Mapped[list[Report]] = relationship(
         "Report",

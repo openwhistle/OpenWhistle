@@ -1,6 +1,6 @@
 {% extends "admin/_layout.html" %}
 
-{% block title %}{{ t('admin.categories.title') }} | OpenWhistle{% endblock %}
+{% block title %}{{ t('admin.categories.title') }} | {{ brand.name }}{% endblock %}
 
 {% block styles %}
 <style nonce="{{ request.state.csp_nonce }}">

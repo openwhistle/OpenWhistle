@@ -6,7 +6,7 @@ Open an issue before a pull request, so the change is agreed before it is built.
 
 | Step | Command |
 | --- | --- |
-| Install | `uv sync --extra dev` |
+| Install | `uv sync --extra dev --extra ldap --extra s3 --group diagrams` (python-ldap needs OS headers: `docs-tech/dependencies.md`) |
 | Lint | `uv run ruff check .` |
 | Format | `uv run ruff format .` (CI runs `ruff format --check .`) |
 | Types | `uv run mypy --strict app` |

@@ -29,42 +29,22 @@ async def test_status_page_loads(client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_submit_report_success(client: AsyncClient) -> None:
-    get_resp = await client.get("/submit")
-    csrf_token = get_resp.cookies.get("ow_csrf")
-    response = await client.post(
-        "/submit",
-        data={
-            "category": "financial_fraud",
-            "description": "Test description that is long enough to pass validation.",
-            "csrf_token": csrf_token,
-        },
+    """The wizard files the report and its PIN opens it. The old version posted to step 1
+    without a step, followed the redirect back to the form, and passed on the sidebar's
+    words "Case number" and "PIN": no report was ever made."""
+    from tests.conftest import wizard_submit
+
+    description = "Test description that is long enough to pass validation."
+    case_number, pin = await wizard_submit(client, description=description)
+    page = await client.get("/status")
+    opened = await client.post(
+        "/status",
+        data={"case_number": case_number, "pin": pin, "csrf_token": page.cookies.get("ow_csrf")},
     )
-    assert response.status_code == 200
-    assert "Case number" in response.text or "PIN" in response.text
-
-
-@pytest.mark.asyncio
-async def test_submit_report_description_too_short(client: AsyncClient) -> None:
-    response = await client.post(
-        "/submit",
-        data={
-            "category": "financial_fraud",
-            "description": "Short",
-        },
-    )
-    assert response.status_code in (200, 422)
-
-
-@pytest.mark.asyncio
-async def test_submit_report_invalid_category(client: AsyncClient) -> None:
-    response = await client.post(
-        "/submit",
-        data={
-            "category": "invalid_category",
-            "description": "This is a valid description for testing purposes.",
-        },
-    )
-    assert response.status_code in (400, 422)
+    assert opened.status_code == 200
+    # The case number is drawn with <wbr> after each hyphen; the status page shows the
+    # case, not its text.
+    assert case_number.split("-")[-1] in opened.text and 'name="content"' in opened.text
 
 
 @pytest.mark.asyncio

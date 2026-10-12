@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ t('error.eyebrow', code=status_code) }} | OpenWhistle{% endblock %}
+{% block title %}{{ t('error.eyebrow', code=status_code) }} | {{ brand.name }}{% endblock %}
 
 {% block styles %}
 <style nonce="{{ request.state.csp_nonce }}">

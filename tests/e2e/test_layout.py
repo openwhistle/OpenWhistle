@@ -9,6 +9,7 @@ from tests.e2e.conftest import (
     DEMO_ADMIN_PASSWORD,
     DEMO_ADMIN_TOTP_SECRET,
     DEMO_ADMIN_USERNAME,
+    DEMO_CASE_PENDING,
     _admin_login,
 )
 
@@ -209,3 +210,124 @@ def test_status_steps_neither_touch_nor_get_cut(
         assert left - right >= 4, boxes
     assert boxes[0][0] >= stepper["x"] - 0.5, (boxes, stepper)
     assert boxes[-1][1] <= stepper["x"] + stepper["width"] + 0.5, (boxes, stepper)
+
+
+def test_an_alert_draws_its_bar(browser: Browser, base_url: str) -> None:
+    """The alert rules set border-color with no width: the reset's width 0 won, and no
+    alert drew the semantic edge DESIGN.md promises. It is the website's 3 px callout bar."""
+    ctx, page = _page(browser, base_url, 1440)
+    page.goto("/submit")
+    edge = page.eval_on_selector(
+        ".alert-info",
+        "e => [getComputedStyle(e).borderLeftWidth, getComputedStyle(e).borderLeftColor,"
+        " getComputedStyle(e).backgroundColor]",
+    )
+    ctx.close()
+    assert edge[0] == "3px", edge
+    assert edge[1] != edge[2], edge  # the bar is not the tint it sits on
+
+
+def test_a_panel_above_the_demo_credentials_keeps_its_gap(browser: Browser, base_url: str) -> None:
+    """With the local-review panel (the release Chrome check) the credentials box sits
+    between the two panels in the source, so `.panel + .panel` never matched and the
+    panels touched. The local-review markup is only on that stack; this adds its panel."""
+    ctx, page = _page(browser, base_url, 1440)
+    page.goto("/admin/login")
+    page.eval_on_selector(
+        ".demo-credentials",
+        "e => e.insertAdjacentHTML('beforebegin', '<div class=\"panel\" id=\"probe\">x</div>')",
+    )
+    gap = page.eval_on_selector(
+        "#probe",  # offsets, not boxes: the panels are still sliding in
+        """p => { const f = document.querySelector("form[action='/admin/login']").closest('.panel');
+                  return f.offsetTop - (p.offsetTop + p.offsetHeight); }""",
+    )
+    ctx.close()
+    assert gap >= 16, gap
+
+
+def test_the_search_button_sits_beside_the_search_field(browser: Browser, base_url: str) -> None:
+    """The hint lived inside the field's group, so the flex row aligned the button with
+    the hint's last line, below the field."""
+    ctx, page = _page(browser, base_url, 1440)
+    _admin_login(page, base_url, DEMO_ADMIN_USERNAME, DEMO_ADMIN_PASSWORD, DEMO_ADMIN_TOTP_SECRET)
+    page.goto("/admin/dashboard")
+    field = page.locator("#dash-search-q").bounding_box()
+    button = page.locator(".dash-search button[type='submit']").bounding_box()
+    ctx.close()
+    assert field and button and abs(field["y"] - button["y"]) <= 2, (field, button)
+
+
+def test_a_card_spaces_its_text_and_numbers_its_steps(browser: Browser, base_url: str) -> None:
+    """The reset stripped every margin and list number inside the long-form admin cards:
+    headings touched their text and "How it works" lost its 1-2-3-4."""
+    ctx, page = _page(browser, base_url, 1440)
+    _admin_login(page, base_url, DEMO_ADMIN_USERNAME, DEMO_ADMIN_PASSWORD, DEMO_ADMIN_TOTP_SECRET)
+    page.goto("/admin/retention")
+    found = page.eval_on_selector(
+        "#heading-how",
+        """h => [h.nextElementSibling.getBoundingClientRect().top
+                   - h.getBoundingClientRect().bottom,
+                 getComputedStyle(h.parentElement.querySelector('ol')).listStyleType]""",
+    )
+    ctx.close()
+    assert found[0] >= 8 and found[1] == "decimal", found
+
+
+def test_the_telemetry_request_reads_as_a_code_block(browser: Browser, base_url: str) -> None:
+    """The request sat in an inline code chip the colour of the card, its padding indenting
+    only "GET"; the labels beside their values were lifted off the line."""
+    ctx, page = _page(browser, base_url, 1440)
+    _admin_login(page, base_url, DEMO_ADMIN_USERNAME, DEMO_ADMIN_PASSWORD, DEMO_ADMIN_TOTP_SECRET)
+    page.goto("/admin/system")
+    found = page.eval_on_selector(
+        "#heading-telemetry",
+        """h => {
+            const card = h.parentElement, pre = card.querySelector('pre');
+            const text = pre.querySelector('code').firstChild, r = document.createRange();
+            const left = i => (r.setStart(text, i), r.setEnd(text, i + 1),
+                               r.getBoundingClientRect().left);
+            const label = card.querySelector('.detail-row .detail-label');
+            return [getComputedStyle(pre).backgroundColor, getComputedStyle(card).backgroundColor,
+                    left(0) - left(text.data.indexOf('User-Agent')),
+                    getComputedStyle(label).marginBottom];
+        }""",
+    )
+    ctx.close()
+    assert found[0] != found[1], found
+    assert abs(found[2]) < 1, found  # both lines start at the same x
+    assert found[3] == "0px", found
+
+
+def test_the_account_facts_get_half_the_page(browser: Browser, base_url: str) -> None:
+    """In a third of the page every account fact wrapped onto two or three lines."""
+    ctx, page = _page(browser, base_url, 1440)
+    _admin_login(page, base_url, DEMO_ADMIN_USERNAME, DEMO_ADMIN_PASSWORD, DEMO_ADMIN_TOTP_SECRET)
+    page.goto("/admin/account")
+    widths = page.eval_on_selector_all(
+        ".admin-split-grid > .panel", "els => els.map(e => e.getBoundingClientRect().width)"
+    )
+    ctx.close()
+    assert len(widths) == 2 and abs(widths[0] - widths[1]) < 2, widths
+
+
+@pytest.mark.parametrize("lang", ["en", "de"])
+def test_a_case_reads_its_deadlines_on_one_line(browser: Browser, base_url: str, lang: str) -> None:
+    """The case view shared the lookup form's 540 px column: at 1920 px "7-day
+    acknowledgement (§17 I)" broke between "§17" and "I", and every deadline wrapped."""
+    ctx = browser.new_context(
+        viewport={"width": 1920, "height": 1080}, base_url=base_url, locale=lang
+    )
+    ctx.add_cookies([{"name": "ow-lang", "value": lang, "url": base_url}])
+    page = ctx.new_page()
+    page.goto("/status")
+    page.fill('input[name="case_number"]', DEMO_CASE_PENDING["case_number"])
+    page.fill('input[name="pin"]', DEMO_CASE_PENDING["pin"])
+    page.click("button.btn-primary")
+    lines = page.eval_on_selector_all(
+        ".st-deadline-label",
+        "els => els.map(e => Math.round(e.getBoundingClientRect().height"
+        " / parseFloat(getComputedStyle(e).lineHeight)))",
+    )
+    ctx.close()
+    assert lines and all(n == 1 for n in lines), lines

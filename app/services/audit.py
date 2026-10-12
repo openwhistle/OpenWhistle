@@ -31,6 +31,7 @@ class AuditAction:
     ATTACHMENT_DOWNLOADED = "report.attachment_downloaded"
     AUDIT_EXPORTED = "audit.exported"
     REPORT_VIEWED = "report.viewed"
+    REPORT_EXPORTED = "report.exported"
     IDENTITY_REVEALED = "report.identity_revealed"
     CONTENT_SEARCHED = "report.content_searched"
     CATEGORY_CREATED = "category.created"
@@ -57,6 +58,7 @@ class AuditAction:
     TELEMETRY_ENABLED = "telemetry.enabled"
     TELEMETRY_DISABLED = "telemetry.disabled"
     TELEMETRY_ID_RESET = "telemetry.id_reset"
+    IP_WARNING_DISMISSED = "system.ip_warning_dismissed"
 
 
 # Every action code, for the audit-log filter and the label-completeness test.

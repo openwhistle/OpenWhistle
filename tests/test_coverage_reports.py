@@ -35,6 +35,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.i18n import _SUPPORTED
+from app.services.report import status_session_key
 
 # ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -129,38 +130,6 @@ async def _login_whistleblower(client: AsyncClient, case_number: str, pin: str) 
 
 
 # ─── set_language: fallback paths ────────────────────────────────────────────
-
-
-@pytest.mark.asyncio
-async def test_set_language_admin_subpath_falls_back_to_dashboard(
-    client: AsyncClient,
-) -> None:
-    """/admin/reports/... is not in the allowlist, so it should fall back to /admin/dashboard."""
-    resp = await client.post(
-        "/set-language",
-        data={
-            "csrf_token": await _lang_csrf(client),
-            "lang": "de",
-            "next": "/admin/reports/some-id",
-        },
-        follow_redirects=False,
-    )
-    assert resp.status_code == 303
-    assert resp.headers["location"].endswith("/admin/dashboard")
-
-
-@pytest.mark.asyncio
-async def test_set_language_unknown_path_falls_back_to_submit(
-    client: AsyncClient,
-) -> None:
-    """An unknown path (not /admin/*) falls back to /submit."""
-    resp = await client.post(
-        "/set-language",
-        data={"csrf_token": await _lang_csrf(client), "lang": "en", "next": "/some-unknown-path"},
-        follow_redirects=False,
-    )
-    assert resp.status_code == 303
-    assert resp.headers["location"].endswith("/submit")
 
 
 @pytest.mark.asyncio
@@ -425,7 +394,7 @@ async def test_status_logout_deletes_redis_session_key(
     assert resp.status_code == 303
 
     redis = await get_redis()
-    assert await redis.get(f"status-session:{session_key}") is None
+    assert await redis.get(status_session_key(session_key)) is None
 
 
 @pytest.mark.asyncio
@@ -825,7 +794,7 @@ async def test_status_naive_submitted_at_is_treated_as_utc(
 
     redis = Redis.from_url(settings.redis_url, decode_responses=True)
     session_key = "naive" + secrets.token_urlsafe(16)
-    await redis.set(f"status-session:{session_key}", str(report.id), ex=60)
+    await redis.set(status_session_key(session_key), str(report.id), ex=60)
     await redis.aclose()
     client.cookies.set("ow-status-session", session_key)
 

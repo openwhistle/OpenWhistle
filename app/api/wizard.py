@@ -18,7 +18,12 @@ from app.models.user import AdminRole, AdminUser
 from app.redis_client import get_redis
 from app.services import rate_limit as rl
 from app.services.auth import hash_password, validate_password
-from app.services.mfa import generate_qr_code_base64, generate_totp_secret, verify_totp
+from app.services.mfa import (
+    consume_totp,
+    generate_qr_code_base64,
+    generate_totp_secret,
+    verify_totp,
+)
 from app.services.setup_token import check_setup_token, delete_setup_token, ensure_setup_token
 from app.services.telemetry import ensure_state as ensure_telemetry_state
 from app.services.users import validate_username
@@ -89,6 +94,9 @@ async def create_initial_admin(
         # account could never reach organisations, and only a superadmin may
         # grant superadmin, so no installation ever had one.
         role=AdminRole.superadmin,
+        # The wizard's own checkbox asked: the dashboard does not ask again the
+        # minute after, only after the next update.
+        telemetry_asked_version=settings.app_version,
     )
     db.add(admin)
 
@@ -220,4 +228,7 @@ async def setup_post(
     # way the only thing left to do is log in.
     if await create_initial_admin(db, username, password, totp_secret, telemetry=telemetry == "1"):
         await delete_setup_token(redis)
+        # Used up, as on every login path: it must not open a session as well.
+        admin_id = await db.scalar(select(AdminUser.id).where(AdminUser.username == username))
+        await consume_totp(redis, admin_id, totp_secret, totp_code)
     return RedirectResponse("/admin/login", status_code=302)

@@ -56,12 +56,12 @@ def test_deactivate_user(admin_page: Page, base_url: str) -> None:
     # Find the test user row
     row = admin_page.locator("table tbody tr").filter(has_text=_TEST_USER)
     if row.count() == 0:
-        pytest.skip(f"Test user '{_TEST_USER}' not found — run create test first")
+        pytest.fail(f"Test user '{_TEST_USER}' not found — run create test first")
 
     # Click Deactivate button in that row
     deactivate_form = row.locator('form[action*="/deactivate"]')
     if deactivate_form.count() == 0:
-        pytest.skip("Deactivate form not found in test user row")
+        pytest.fail("Deactivate form not found in test user row")
 
     # Handle JS confirm dialog
     admin_page.on("dialog", lambda d: d.accept())
@@ -83,11 +83,11 @@ def test_reactivate_user(admin_page: Page, base_url: str) -> None:
 
     row = admin_page.locator("table tbody tr").filter(has_text=_TEST_USER)
     if row.count() == 0:
-        pytest.skip(f"Test user '{_TEST_USER}' not found")
+        pytest.fail(f"Test user '{_TEST_USER}' not found")
 
     reactivate_form = row.locator('form[action*="/reactivate"]')
     if reactivate_form.count() == 0:
-        pytest.skip("Reactivate form not found — user may already be active")
+        pytest.fail("Reactivate form not found — user may already be active")
 
     reactivate_form.locator('button[type="submit"]').click()
     admin_page.wait_for_load_state("networkidle")

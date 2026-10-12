@@ -212,6 +212,10 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'session-dismiss':
                 if (window.sessionDismiss) window.sessionDismiss();
                 break;
+            case 'dismiss-telemetry-ask':
+                // Already recorded as asked when the page was made; this only hides it.
+                el.closest('.telemetry-ask').hidden = true;
+                break;
             case 'dismiss-ip-warning':
                 if (window.dismissIpWarning) window.dismissIpWarning(el);
                 break;
@@ -245,6 +249,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 return;
             }
+            // A download answers with a file and the page stays: locking the form
+            // would leave it dead until a reload.
+            if (e.submitter && e.submitter.hasAttribute('data-download')) return;
             form.dataset.owSubmitting = '1';
             // Mark the button that was actually clicked — not the first submit
             // button in the form, which on the wizard steps is "Back".

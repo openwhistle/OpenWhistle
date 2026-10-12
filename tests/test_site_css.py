@@ -263,7 +263,7 @@ COMPOSED_SHADOWS = (
         ".session-expiry-banner.session-expiry-expired-state",
         ("0 0 0 1px var(--danger)", "0 6px 24px"),
     ),
-    (".lang-picker-menu", ("0 0 0 1px var(--hairline)", "0 4px 16px")),
+    (".lang-picker-menu", ("0 0 0 1px var(--hairline)", "0 8px 24px")),
 )
 
 

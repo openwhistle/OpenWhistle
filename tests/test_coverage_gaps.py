@@ -128,7 +128,7 @@ async def test_wizard_post_validation_username_too_short(
         },
     )
     assert resp.status_code == 422
-    assert "Username must be between" in resp.text or "3" in resp.text
+    assert "Enter a username of 3 to 64 characters" in resp.text
 
 
 @pytest.mark.asyncio
@@ -188,7 +188,7 @@ async def test_wizard_post_validation_bad_totp(
         },
     )
     assert resp.status_code == 422
-    assert "TOTP" in resp.text or "Invalid" in resp.text or "code" in resp.text.lower()
+    assert "That code is not valid." in resp.text
 
 
 # ── app/main.py — RequestValidationError 422 handler ──────────────────────────
@@ -589,7 +589,7 @@ async def test_create_user_duplicate_username_409(
             "role": "admin",
         },
     )
-    assert r.status_code == 409
+    assert r.status_code == 422  # refused on the form, see test_v230_bug_bounty
 
 
 @pytest.mark.asyncio

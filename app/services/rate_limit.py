@@ -54,12 +54,6 @@ async def record_whistleblower_failure(redis: Redis, case_key: str) -> int:
     return await _count_failure(redis, _wb_key(case_key), settings.access_lockout_minutes * 60)
 
 
-async def reset_whistleblower_attempts(redis: Redis, case_key: str) -> None:
-    """Clear the failure counter after a successful access."""
-    key = _wb_key(case_key)
-    await redis.delete(key)
-
-
 async def get_whistleblower_lockout_ttl(redis: Redis, case_key: str) -> int:
     """Returns seconds remaining in the lockout window, or 0 if not locked."""
     key = _wb_key(case_key)

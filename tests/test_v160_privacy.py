@@ -684,7 +684,7 @@ async def test_pdf_export_omits_identity_by_default(
     assert _NAME not in text
     assert _CONTACT not in text
     assert "[on file — not included]" in text
-    assert await _audit_count(db_session, report, AuditAction.REPORT_VIEWED) == 1
+    assert await _audit_count(db_session, report, AuditAction.REPORT_EXPORTED) == 1
 
 
 @pytest.mark.asyncio

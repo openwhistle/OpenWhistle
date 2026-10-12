@@ -471,6 +471,8 @@ async def test_submit_oversized_file_returns_error(client: object) -> None:
     )
     assert resp.status_code == 200
     assert "too large" in resp.text.lower()
+    # The banner looked the message up as a key: "submit.error.'big.pdf' is too large…".
+    assert "submit.error." not in resp.text
 
 
 @pytest.mark.asyncio

@@ -104,9 +104,8 @@ class S3StorageBackend(StorageBackend):
             Body=data,
             ContentType=content_type,
         )
-        # No key in the log line: a re-keyed object's *old* key is a filename,
-        # and put()/delete()/get() share this backend either way.
-        log.info("Stored attachment in S3")
+        # No log line: a put runs in the final submit, and its timestamp would be the
+        # second the report was sent, which the database keeps as the day only.
 
     async def get(self, key: str) -> bytes:
         from botocore.exceptions import ClientError  # noqa: PLC0415

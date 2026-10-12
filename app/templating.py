@@ -203,8 +203,8 @@ _ADMIN_NAV: tuple[tuple[str, tuple[tuple[str, str, str | None], ...]], ...] = (
         (
             ("/admin/users", "admin.nav.users", "admin"),
             ("/admin/audit-log", "admin.nav.audit_log", "admin"),
-            ("/admin/organisations", "admin.nav.organisations", "superadmin"),
-            ("/admin/system", "admin.nav.system", "admin"),
+            ("/admin/organisations", "admin.nav.organisations", "tenants"),
+            ("/admin/system", "admin.nav.system", "instance"),
         ),
     ),
 )
@@ -213,13 +213,23 @@ _RANK = {"case_manager": 0, "admin": 1, "superadmin": 2}
 
 def admin_nav(user: Any) -> list[dict[str, Any]]:
     """The groups and links this user may open; the routes enforce the same roles."""
+    from app.api.deps import may_run_the_instance  # noqa: PLC0415
+
     rank = _RANK[user.role.value]
     groups = []
     for label, items in _ADMIN_NAV:
         allowed = [
             {"href": href, "label": item_label}
             for href, item_label, minimum in items
-            if minimum is None or rank >= _RANK[minimum]
+            if minimum is None
+            or (
+                may_run_the_instance(user)
+                if minimum == "instance"
+                # Organisations: a superadmin's, and only with multi-tenancy (require_tenants).
+                else rank == 2 and settings.multi_tenancy_enabled
+                if minimum == "tenants"
+                else rank >= _RANK[minimum]
+            )
         ]
         if allowed:
             groups.append({"label": label, "items": allowed})

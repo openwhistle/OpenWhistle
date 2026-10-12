@@ -57,7 +57,7 @@ typography:
     display: "Sora"                       # display + headings
     body:    "Sora"                        # body + UI
     mono:    "JetBrains Mono"              # identifiers, eyebrows, code
-  # weight ceiling: 700 (hero only); 600 for every other heading; 400 body.
+  # weight ceiling: 700 (the hero, stat figures and the mono voices); 600 for every other heading; 400 body.
   scale:
     display-hero: { font: display, size: "clamp(34px, 5vw, 52px)", weight: 700, tracking: "-0.035em", leading: 1.05 }
     display-lg:   { font: display, size: "30px", weight: 700, tracking: "-0.03em",  leading: 1.1 }   # stat numbers
@@ -133,7 +133,7 @@ prose the way a receipt separates a total from marketing.
   Exception: a style C diagram uses it twice, for start and end (maintainer's
   choice, 2026-10-02, spec P2-4).
 - **Type-forward, weight-restrained.** Sora everywhere, tight negative tracking on
-  display, weight ceiling **700 for the hero and 600 for everything else**. No
+  display, weight ceiling **700 for the hero and the mono voices, 600 for everything else**. No
   italics for emphasis; no third typeface for "personality."
 - **Mono for facts.** Identifiers use `{typography.scale.mono-id}` with
   `tabular-nums` so digits line up and can't be misread.
@@ -219,8 +219,9 @@ as the mono voices.
 
 - **Negative tracking scales with size.** `-0.035em` on the hero, easing to `0` by
   body. Never track body or mono positively (except the eyebrow's `0.16em`).
-- **Weight ceiling 700, and only the hero uses it.** Every other heading is 600.
-  Nothing on the platform is heavier than the hero.
+- **Weight ceiling 700:** the hero, the stat figures (`display-lg`) and the mono voices
+  (`eyebrow`, `mono-id-lg`) — as the scale above sets them. Every other heading and every
+  Sora label is 600. Nothing on the platform is heavier than the hero.
 - **Eyebrows are mono, uppercase, `0.16em`.** They label a section or state
   (`CONFIDENTIAL REPORTING CHANNEL`, `CASE STATUS`); they are not decoration and
   must describe what follows.
@@ -510,7 +511,7 @@ the parent's curve, so squaring every inner control would be wrong. Full pills n
 - Don't scatter emerald across icons, links, and borders — if a second accent
   element appears, remove one.
 - Don't use `{rounded.full}` on a button, or any pill CTA.
-- Don't exceed weight 700, or use 700 anywhere but the hero.
+- Don't exceed weight 700, or set Sora in 700 anywhere but the hero and the stat figures.
 - Don't invent per-page greys, off-scale font sizes, or one-off radii — pull from
   the tokens.
 - Don't add a third typeface, a gradient, or a decorative illustration.

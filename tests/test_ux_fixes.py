@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import AdminUser
 from app.services.auth import hash_password
-from app.services.report import create_report
+from app.services.report import create_report, status_session_key
 
 # ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -292,7 +292,7 @@ async def test_deleted_report_session_falls_back_to_login(
 
     redis = await get_redis()
     session_key = uuid.uuid4().hex
-    await redis.set(f"status-session:{session_key}", str(report.id), ex=7200)
+    await redis.set(status_session_key(session_key), str(report.id), ex=7200)
 
     await _delete_report_4eyes(client, db_session, str(report.id), "dr4a", "dr4b")
 

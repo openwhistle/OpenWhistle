@@ -1589,3 +1589,40 @@ async def test_recovery_never_acts_on_a_claim_that_changed_since_it_was_read(
     assert done == 0
     assert await redis.get(claimed_key) == claim[0]
     assert not await redis.exists(draft_key)
+
+
+@pytest.mark.asyncio
+async def test_a_submit_that_fails_before_its_commit_leaves_no_object_in_the_bucket(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With STORAGE_BACKEND=s3 the attachments are put before the commit. A submit that
+    failed after the put and before the commit gave the draft back and kept the
+    objects: encrypted files of no report, in the bucket for good, while the comment
+    said "Report and attachments commit together, so nothing is left behind"."""
+    import app.services.attachment as attachment
+    import app.services.storage as storage
+    from app.config import settings
+
+    bucket: dict[str, bytes] = {}
+
+    class _Bucket:
+        async def put(self, key: str, data: bytes, content_type: str) -> None:
+            bucket[key] = data
+
+        async def delete(self, key: str) -> None:
+            bucket.pop(key, None)
+
+    await _walk_to_attachments(client)
+    await _upload(client, ("evidence.txt", b"evidence for the report"))
+    monkeypatch.setattr(settings, "storage_backend", "s3")
+    monkeypatch.setattr(storage, "get_storage_backend", lambda: _Bucket())
+    real_store = attachment.create_attachments
+
+    async def _store_then_fail(*args: object, **kwargs: object) -> None:
+        await real_store(*args, **kwargs)  # type: ignore[arg-type]
+        raise RuntimeError("database gone after the upload")
+
+    monkeypatch.setattr(attachment, "create_attachments", _store_then_fail)
+    assert (await _post(client)).status_code == 303
+    assert (await _draft(client))["file_meta"]  # the draft is back for a retry
+    assert bucket == {}

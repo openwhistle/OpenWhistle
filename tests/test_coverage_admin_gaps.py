@@ -403,6 +403,7 @@ async def _login_superadmin(client: AsyncClient, admin: AdminUser, totp_secret: 
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("tenants")
 async def test_organisations_page_and_create_and_deactivate(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
@@ -440,6 +441,7 @@ async def test_organisations_page_and_create_and_deactivate(
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("tenants")
 async def test_create_organisation_invalid_slug_returns_400(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
@@ -455,6 +457,7 @@ async def test_create_organisation_invalid_slug_returns_400(
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("tenants")
 async def test_create_organisation_duplicate_slug_returns_409(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
@@ -485,6 +488,7 @@ async def test_deactivate_organisation_not_found_returns_404(
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("tenants")
 async def test_deactivate_default_organisation_is_rejected(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
