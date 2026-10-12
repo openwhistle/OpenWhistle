@@ -21,7 +21,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   allowing it would send the whistleblower's address to the logo's host.
 - `RETENTION_DAYS` must be at least 1.
 - A refused setup form answers 422, not 200.
-- The Ansible role deploys the release it ships with (`openwhistle_image_tag: "2.2.0"`), not `latest`: a re-run
+- The Ansible role deploys the release it ships with (`openwhistle_image_tag: "2.2.1"`), not `latest`: a re-run
   of the playbook pulled whatever had shipped since, a new major included.
 - Attachments are stored and served with the type their extension names; the type the browser declares is
   ignored.
