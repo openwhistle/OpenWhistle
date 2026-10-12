@@ -251,6 +251,12 @@ Pre-built multi-arch images (linux/amd64, linux/arm64) are published to three re
 
 All GHCR images are signed with Cosign (keyless, Sigstore).
 
+Every image is scanned with [grype](https://github.com/anchore/grype) before it gets a tag, on every pull
+request, and `:latest` again every Monday: any vulnerability with a fix fails the build, whatever its
+severity. The final stage runs `apk upgrade`, so a rebuild picks up Alpine fixes the pinned base digest
+predates. The few exceptions (a fix that exists only in a newer Python line) are listed with their reason
+in [`.grype.yaml`](.grype.yaml), each pinned to a package version.
+
 ---
 
 ## ⚖️ Legal Reference

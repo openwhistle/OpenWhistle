@@ -7,6 +7,19 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Every image is scanned with grype — on each pull request, each pushed digest before the publish tags it,
+  and `:latest` every Monday — and fails on any vulnerability that has a fix, whatever its severity. Reviewed
+  exceptions live in `.grype.yaml`, each with a reason and pinned to a package version. Trivy now scans for
+  secrets only.
+
+### Fixed
+
+- **2.2.1 shipped a High zlib CVE fixed six days earlier** (CVE-2026-85091, zlib 1.3.2-r0, -r1 in Alpine since
+  2026-10-06): the image never upgraded the pinned base image's packages, and the Trivy gate passed it because
+  Trivy rates it MEDIUM. The final stage now runs `apk upgrade`, built without cache in CI.
+
 ## [2.2.1] — 2026-10-12
 
 ### Added
