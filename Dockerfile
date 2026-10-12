@@ -33,10 +33,14 @@ FROM python:3.14-alpine@sha256:f6a589d43c42b9e7f7dc67a12d37132491f362859a5d75060
 
 WORKDIR /app
 
-# Runtime dependencies only. pip is removed: nothing installs packages at
-# runtime (the builder uses uv), and its vendored copies (msgpack, …) only add
-# scanner findings and attack surface.
-RUN apk add --no-cache \
+# Upgrade first: the pinned base digest keeps the Alpine packages of the day it
+# was built (v2.2.1 shipped zlib 1.3.2-r0 six days after -r1 fixed a High CVE).
+# CI builds this stage without cache (no-cache-filters: final), or a cached
+# layer would freeze the upgrade too. Then runtime dependencies only. pip is
+# removed: nothing installs packages at runtime (the builder uses uv), and its
+# vendored copies (msgpack, …) only add scanner findings and attack surface.
+RUN apk upgrade --no-cache \
+    && apk add --no-cache \
     libpq \
     libffi \
     libldap \
