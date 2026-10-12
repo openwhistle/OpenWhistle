@@ -431,6 +431,7 @@
   "admin.organisations.empty": "Aucune organisation trouvée.",
   "admin.users.title": "Administrateurs",
   "admin.users.add.header": "Ajouter un nouvel administrateur",
+  "admin.users.add.error.taken": "Ce nom d'utilisateur est déjà pris.",
   "admin.users.add.username": "Nom d'utilisateur",
   "admin.users.add.username.title": "Lettres, chiffres, espaces et . _ @ -",
   "admin.users.add.password": "Mot de passe temporaire",

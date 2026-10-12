@@ -589,7 +589,7 @@ async def test_create_user_duplicate_username_409(
             "role": "admin",
         },
     )
-    assert r.status_code == 409
+    assert r.status_code == 422  # refused on the form, see test_v230_bug_bounty
 
 
 @pytest.mark.asyncio

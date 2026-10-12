@@ -510,3 +510,43 @@ def test_the_description_field_takes_what_its_counter_allows() -> None:
     html = (Path(__file__).parents[1] / "app/templates/submit.html").read_text()
     textarea = re.search(r'<textarea[^>]*id="description"[^>]*>', html, re.S)
     assert textarea and "maxlength" not in textarea[0]
+
+
+# ── Creating an account says what is wrong, on the form ─────────────────────
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("username", "password", "field_text"),
+    [
+        ("new-person", "ä" * 37, "at most 72 bytes"),  # 74 bytes, 37 characters
+        ("x!", "LongEnoughPass123!", "3 to 64 characters"),
+        ("taken", "LongEnoughPass123!", "already"),
+    ],
+)
+async def test_a_refused_account_is_explained_on_the_form(
+    acting_as,
+    db_session: AsyncSession,
+    username: str,
+    password: str,
+    field_text: str,
+) -> None:
+    """A password over 72 bytes, an invalid or a taken username each gave a bare 400/409
+    error page: the form was gone and the reason was not given in the admin's language."""
+    import uuid
+
+    from app.models.user import AdminRole
+    from app.services.users import create_user
+    from tests.test_v210_bug_bounty import _totp_user
+
+    client, act = acting_as
+    act(await _totp_user(db_session, AdminRole.admin))
+    if username == "taken":
+        username = f"taken-{uuid.uuid4().hex[:6]}"
+        await create_user(db_session, username, "LongEnoughPass123!", AdminRole.case_manager)
+    resp = await client.post(
+        "/admin/users", data={"username": username, "password": password, "role": "case_manager"}
+    )
+    assert resp.status_code == 422, resp.status_code
+    assert field_text in resp.text
+    assert f'value="{username}"' in resp.text  # what was typed is kept

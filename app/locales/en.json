@@ -304,6 +304,7 @@
   "admin.categories.empty": "No categories configured.",
   "admin.users.title": "Admin users",
   "admin.users.add.header": "Add new admin user",
+  "admin.users.add.error.taken": "This username is already taken.",
   "admin.users.add.username": "Username",
   "admin.users.add.username.title": "Letters, digits, spaces and . _ @ -",
   "admin.users.add.password": "Temporary password",

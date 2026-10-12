@@ -1170,7 +1170,7 @@ async def _new_account_org(db: AsyncSession, creator: AdminUser, chosen: str) ->
     return creator.org_id or await report_service.default_org_id(db)
 
 
-@router.post("/users")
+@router.post("/users", response_model=None)
 async def create_user(
     request: Request,
     username: str = Form(...),
@@ -1180,13 +1180,33 @@ async def create_user(
     db: AsyncSession = Depends(get_db),
     current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf),
-) -> RedirectResponse:
+) -> HTMLResponse | RedirectResponse:
+    from app.services.auth import validate_password
     from app.services.users import create_user as svc_create
-    from app.services.users import get_user_by_username_ci
+    from app.services.users import get_user_by_username_ci, validate_username
 
-    existing = await get_user_by_username_ci(db, username.strip())
-    if existing:
-        raise HTTPException(status_code=409, detail="Username already exists")
+    # Refused on the form, next to the field, with what was typed (never the password).
+    errors: dict[str, str] = {}
+    try:
+        validate_username(username)
+    except ValueError:
+        errors["username"] = "wizard.error.username"
+    else:
+        if await get_user_by_username_ci(db, username.strip()):
+            errors["username"] = "admin.users.add.error.taken"
+    try:
+        validate_password(password)
+    except ValueError:
+        errors["password"] = "wizard.error.password"  # noqa: S105 — locale key
+    if errors:
+        page = await _users_page(
+            request,
+            db,
+            current_user,
+            {"field_errors": errors, "add_username": username, "add_role": role},
+        )
+        page.status_code = 422
+        return page
 
     try:
         role_enum = AdminRole(role)

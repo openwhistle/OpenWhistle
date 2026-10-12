@@ -304,6 +304,7 @@
   "admin.categories.empty": "No hay categorías configuradas.",
   "admin.users.title": "Usuarios administradores",
   "admin.users.add.header": "Añadir nuevo usuario administrador",
+  "admin.users.add.error.taken": "Este nombre de usuario ya está en uso.",
   "admin.users.add.username": "Nombre de usuario",
   "admin.users.add.username.title": "Letras, dígitos, espacios y . _ @ -",
   "admin.users.add.password": "Contraseña temporal",

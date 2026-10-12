@@ -304,6 +304,7 @@
   "admin.categories.empty": "Keine Kategorien konfiguriert.",
   "admin.users.title": "Admin-Benutzer",
   "admin.users.add.header": "Neuen Admin-Benutzer hinzufügen",
+  "admin.users.add.error.taken": "Dieser Benutzername ist bereits vergeben.",
   "admin.users.add.username": "Benutzername",
   "admin.users.add.username.title": "Buchstaben, Ziffern, Leerzeichen und . _ @ -",
   "admin.users.add.password": "Vorläufiges Passwort",
