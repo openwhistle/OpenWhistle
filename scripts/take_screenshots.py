@@ -259,12 +259,17 @@ def out_dir(argv: list[str] | None = None) -> Path:
     return screens
 
 
-def write_release_marker(screens: Path) -> None:
+def write_release_marker(screens: Path, base_url: str = BASE_URL) -> None:
     """docs/img/screens/_release: the app version the shots show, one line. The
-    leading "_" keeps the website build from publishing it."""
-    from app.config import settings  # noqa: PLC0415
+    leading "_" keeps the website build from publishing it. Asked of the running
+    app: the checkout's version is not the image's, and reading it loaded Settings,
+    which wants a SECRET_KEY, so the run died after the last shot without a marker."""
+    import json  # noqa: PLC0415
+    from urllib.request import urlopen  # noqa: PLC0415
 
-    (screens / "_release").write_text(settings.app_version + "\n", encoding="utf-8")
+    with urlopen(f"{base_url}/health", timeout=10) as resp:  # noqa: S310 — the local stack
+        version = json.load(resp)["version"]
+    (screens / "_release").write_text(version + "\n", encoding="utf-8")
 
 
 def main(argv: list[str] | None = None) -> None:

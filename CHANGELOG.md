@@ -7,6 +7,12 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- **`scripts/take_screenshots.py` died after the last shot** without writing `_release`: it read the version
+  from the checkout's settings, which want a `SECRET_KEY`. It asks the running app's `/health`, so the marker
+  names the release the shots show.
+
 ## [2.3.0] — 2026-10-12
 
 ### Added
