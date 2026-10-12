@@ -1235,9 +1235,11 @@ async def deactivate_user(
     request: Request,
     user_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis),
     current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
+    from app.services import auth as auth_service
     from app.services.users import count_active_privileged_admins, get_user_by_id
     from app.services.users import deactivate_user as svc_deact
 
@@ -1270,6 +1272,8 @@ async def deactivate_user(
         target_org=target.org_id,
     )
     await db.commit()
+    # Refused while inactive anyway; ended, so a reactivation does not revive them.
+    await auth_service.revoke_user_sessions(redis, str(target.id))
     return RedirectResponse("/admin/users", status_code=302)
 
 
