@@ -161,7 +161,9 @@ def test_an_embedded_workbook_is_cleaned_too() -> None:
 def test_an_embedded_object_nothing_here_can_clean_is_refused(name: str) -> None:
     from app.services.attachment import MetadataError, strip_metadata
 
-    outer = _zip({"word/document.xml": b"<w:document/>", f"word/embeddings/{name}": b"x"})
+    # A real package, so the refusal is the name's, not a failed unzip.
+    inner = _zip({"[Content_Types].xml": b"<Types/>", "docProps/core.xml": _CORE})
+    outer = _zip({"word/document.xml": b"<w:document/>", f"word/embeddings/{name}": inner})
     with pytest.raises(MetadataError):
         strip_metadata("a.docx", outer)
 
@@ -529,6 +531,8 @@ async def test_the_demo_has_two_admins_who_did_not_make_each_other(
     )
     names = {a.username: a for a in admins}
     assert {"demo", "demo2"} <= set(names)
+    assert names["demo2"].org_id is not None
+    assert names["demo2"].org_id == names["demo"].org_id
     assert not await _one_made_the_other(throwaway_db, names["demo"].id, names["demo2"].id)
 
 
@@ -632,7 +636,9 @@ async def test_the_mfa_setup_page_opens_only_in_the_browser_that_signed_in(
     assert "token" not in location
     assert (await client.get(location)).status_code == 200  # the browser that signed in
 
+    token = login.cookies["ow-mfa-setup"]
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as other:
-        resp = await other.get(location, follow_redirects=False)
-    assert resp.status_code == 302
-    assert user.totp_secret not in resp.text
+        for url in (location, f"/admin/mfa/setup?token={token}"):
+            resp = await other.get(url, follow_redirects=False)
+            assert resp.status_code == 302, url
+            assert user.totp_secret not in resp.text

@@ -8,7 +8,7 @@ openwhistle_group: openwhistle
 openwhistle_image: ghcr.io/openwhistle/openwhistle
 # A release, not "latest": with openwhistle_compose_pull a re-run of the playbook
 # moved to whatever had shipped since, a new major included. Bump on upgrade.
-openwhistle_image_tag: "2.2.0"
+openwhistle_image_tag: "2.2.1"
 
 # ── TLS / domain ─────────────────────────────────────────────────────────────
 openwhistle_domain: ""                     # e.g. whistle.example.com — required

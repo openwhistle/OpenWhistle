@@ -1,0 +1,219 @@
+{
+ "test_groups": {
+  "A": [
+   "tests/test_v221_bug_bounty.py"
+  ],
+  "R": [
+   "tests/test_v221_bug_bounty.py",
+   "tests/test_v160_keys.py"
+  ],
+  "W": [
+   "tests/test_wizard.py",
+   "tests/test_coverage_gaps.py"
+  ],
+  "S": [
+   "tests/test_mutation_specs.py"
+  ],
+  "N": [
+   "tests/test_renovate.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "four-eyes-reset",
+   "file": "app/api/admin.py",
+   "old": "        target.created_by_id = current_user.id\n",
+   "new": "",
+   "tests": "A"
+  },
+  {
+   "id": "retention-floor",
+   "file": "app/config.py",
+   "old": "retention_days: int = Field(default=1095, ge=1)",
+   "new": "retention_days: int = 1095",
+   "tests": "A"
+  },
+  {
+   "id": "ip-header-ingress-nginx",
+   "file": "app/middleware.py",
+   "old": "        \"x-original-forwarded-for\",  # ingress-nginx (the Helm chart's usual ingress)\n",
+   "new": "",
+   "tests": "A"
+  },
+  {
+   "id": "ip-header-azure",
+   "file": "app/middleware.py",
+   "old": "        \"x-azure-clientip\",  # Azure Front Door\n",
+   "new": "",
+   "tests": "A"
+  },
+  {
+   "id": "500-with-headers",
+   "file": "app/middleware.py",
+   "old": "            if not started:\n",
+   "new": "            if False:\n",
+   "tests": "A"
+  },
+  {
+   "id": "ooxml-embedded-cleaned",
+   "file": "app/services/attachment.py",
+   "old": "                body = _strip_ooxml(body, embedded=True)\n",
+   "new": "",
+   "tests": "A"
+  },
+  {
+   "id": "ooxml-one-level",
+   "file": "app/services/attachment.py",
+   "old": "                if embedded or Path(",
+   "new": "                if Path(",
+   "tests": "A"
+  },
+  {
+   "id": "ooxml-ole-refused",
+   "file": "app/services/attachment.py",
+   "old": "                if embedded or Path(info.filename).suffix.lower() not in {\".docx\", \".xlsx\"}:",
+   "new": "                if embedded:",
+   "tests": "A"
+  },
+  {
+   "id": "type-from-extension",
+   "file": "app/services/attachment.py",
+   "old": "        result.append((name, content_type_for(name), data))",
+   "new": "        result.append((name, upload.content_type or \"application/octet-stream\", data))",
+   "tests": "A"
+  },
+  {
+   "id": "pin-before-load",
+   "file": "app/services/report.py",
+   "old": "    if not verify_pin(plain_pin, pin_hash or TIMING_DUMMY_HASH) or pin_hash is None:\n        return None\n    result = await db.execute(\n        select(Report)\n        .options(selectinload(Report.messages), selectinload(Report.attachments))\n        .where(Report.case_number == case_number)\n    )\n    return result.scalar_one_or_none()",
+   "new": "    result = await db.execute(\n        select(Report)\n        .options(selectinload(Report.messages), selectinload(Report.attachments))\n        .where(Report.case_number == case_number)\n    )\n    found = result.scalar_one_or_none()\n    if not verify_pin(plain_pin, pin_hash or TIMING_DUMMY_HASH) or pin_hash is None:\n        return None\n    return found",
+   "tests": "A"
+  },
+  {
+   "id": "seal-time-zero",
+   "file": "app/services/crypto.py",
+   "old": "    return fernet.encrypt_at_time(data, 0)",
+   "new": "    return fernet.encrypt(data)",
+   "tests": "A"
+  },
+  {
+   "id": "rotate-reseals",
+   "file": "app/services/crypto.py",
+   "old": "    return seal(f, f.decrypt(token.encode())).decode()",
+   "new": "    return f.rotate(token.encode()).decode()",
+   "tests": "R"
+  },
+  {
+   "id": "dek-sealed",
+   "file": "app/services/encryption.py",
+   "old": "    return seal(make_mek_fernet(), dek_raw).decode(\"utf-8\")",
+   "new": "    return make_mek_fernet().encrypt(dek_raw).decode(\"utf-8\")",
+   "tests": "A"
+  },
+  {
+   "id": "attachment-sealed",
+   "file": "app/services/attachment.py",
+   "old": "        ciphertext = seal(fernet, data)",
+   "new": "        ciphertext = fernet.encrypt(data)",
+   "tests": "A"
+  },
+  {
+   "id": "sla-none",
+   "file": "app/services/report.py",
+   "old": "if decided_reports else None",
+   "new": "if decided_reports else 0",
+   "tests": "A"
+  },
+  {
+   "id": "reply-kept",
+   "file": "app/api/reports.py",
+   "old": "            return render(\n                request, \"status.html\", {\"report\": None, \"unsent_reply\": content}, status_code=401\n            )",
+   "new": "            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)",
+   "tests": "A"
+  },
+  {
+   "id": "logo-same-origin",
+   "file": "app/config.py",
+   "old": "        if value and not (\n",
+   "new": "        if False and not (\n",
+   "tests": "A"
+  },
+  {
+   "id": "ldap-username-only",
+   "file": "app/services/ldap_auth.py",
+   "old": "                [settings.ldap_attr_username],",
+   "new": "                [settings.ldap_attr_username, \"mail\"],",
+   "tests": "A"
+  },
+  {
+   "id": "qr-one-label",
+   "file": "app/api/wizard.py",
+   "old": "                \"qr_code\": generate_qr_code_base64(totp_secret, _QR_LABEL),",
+   "new": "                \"qr_code\": generate_qr_code_base64(totp_secret, username or \"admin\"),",
+   "tests": "A"
+  },
+  {
+   "id": "wizard-422",
+   "file": "app/api/wizard.py",
+   "old": "            status_code=422,\n",
+   "new": "",
+   "tests": "W"
+  },
+  {
+   "id": "mfa-token-not-in-url",
+   "file": "app/api/auth.py",
+   "old": "        response = RedirectResponse(\"/admin/mfa/setup\", status_code=302)",
+   "new": "        response = RedirectResponse(f\"/admin/mfa/setup?token={setup_token}\", status_code=302)",
+   "tests": "A"
+  },
+  {
+   "id": "mfa-token-only-from-cookie",
+   "file": "app/api/auth.py",
+   "old": "    token = request.cookies.get(_MFA_SETUP_COOKIE)\n",
+   "new": "    token = request.cookies.get(_MFA_SETUP_COOKIE) or request.query_params.get(\"token\")\n",
+   "tests": "A"
+  },
+  {
+   "id": "mfa-css-vars",
+   "file": "app/templates/login_mfa_setup.html",
+   "old": "color: var(--muted); margin-bottom",
+   "new": "color: var(--text-muted); margin-bottom",
+   "tests": "A"
+  },
+  {
+   "id": "demo-second-admin",
+   "file": "app/services/demo_seed.py",
+   "old": "    for account in (admin, case_mgr, second):",
+   "new": "    for account in (admin, case_mgr):",
+   "tests": "A"
+  },
+  {
+   "id": "dockerignore-pycache",
+   "file": ".dockerignore",
+   "old": "**/__pycache__\n",
+   "new": "__pycache__\n",
+   "tests": "A"
+  },
+  {
+   "id": "e2e-read-only",
+   "file": "docker-compose.e2e.yml",
+   "old": "read_only: true",
+   "new": "read_only: false",
+   "tests": "A"
+  },
+  {
+   "id": "audit-exit-codes",
+   "file": "scripts/mutation_audit.py",
+   "old": "{0: \"GREEN\", 1: \"RED\", 2: \"RED\"}",
+   "new": "{0: \"GREEN\"}",
+   "tests": "S"
+  },
+  {
+   "id": "renovate-one-python-source",
+   "file": "renovate.json",
+   "old": "        \"github-actions\",\n        \"pep621\"\n",
+   "new": "        \"pep621\"\n",
+   "tests": "N"
+  }
+ ]
+}
