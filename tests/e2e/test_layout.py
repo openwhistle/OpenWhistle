@@ -209,3 +209,18 @@ def test_status_steps_neither_touch_nor_get_cut(
         assert left - right >= 4, boxes
     assert boxes[0][0] >= stepper["x"] - 0.5, (boxes, stepper)
     assert boxes[-1][1] <= stepper["x"] + stepper["width"] + 0.5, (boxes, stepper)
+
+
+def test_an_alert_draws_its_bar(browser: Browser, base_url: str) -> None:
+    """The alert rules set border-color with no width: the reset's width 0 won, and no
+    alert drew the semantic edge DESIGN.md promises. It is the website's 3 px callout bar."""
+    ctx, page = _page(browser, base_url, 1440)
+    page.goto("/submit")
+    edge = page.eval_on_selector(
+        ".alert-info",
+        "e => [getComputedStyle(e).borderLeftWidth, getComputedStyle(e).borderLeftColor,"
+        " getComputedStyle(e).backgroundColor]",
+    )
+    ctx.close()
+    assert edge[0] == "3px", edge
+    assert edge[1] != edge[2], edge  # the bar is not the tint it sits on

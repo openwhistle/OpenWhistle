@@ -150,3 +150,43 @@ def test_form_labels_on_login(page: Page, base_url: str) -> None:
         if inp_id:
             label = page.locator(f'label[for="{inp_id}"]')
             assert label.count() > 0, f"Input #{inp_id} has no associated <label for='...'>"
+
+
+def _dark(page: Page) -> None:
+    # base.html follows prefers-color-scheme when no theme is stored.
+    page.emulate_media(color_scheme="dark")
+
+
+@pytest.mark.parametrize("path", ["/submit", "/status", "/admin/login"])
+def test_axe_dark_theme(page: Page, base_url: str, axe_source: str, path: str) -> None:
+    """The dark theme is checked too: every test above ran in light only, and white text
+    on the dark theme's light fills (the wizard's current step, 2.34:1) shipped green."""
+    _dark(page)
+    page.goto(f"{base_url}{path}")
+    page.wait_for_load_state("networkidle")
+    assert page.evaluate("document.documentElement.dataset.theme") == "dark"
+    _check_axe(page, axe_source, f"{path} (dark)")
+
+
+def test_axe_dark_status_with_report(page: Page, base_url: str, axe_source: str) -> None:
+    from tests.e2e.conftest import DEMO_CASE_PENDING
+
+    _dark(page)
+    page.goto(f"{base_url}/status")
+    page.fill('input[name="case_number"]', DEMO_CASE_PENDING["case_number"])
+    page.fill('input[name="pin"]', DEMO_CASE_PENDING["pin"])
+    page.click("button.btn-primary")
+    page.wait_for_load_state("networkidle")
+    _check_axe(page, axe_source, "/status with report (dark)")
+
+
+def test_axe_dark_admin_report(admin_page: Page, base_url: str, axe_source: str) -> None:
+    _dark(admin_page)
+    admin_page.goto(f"{base_url}/admin/dashboard")
+    admin_page.wait_for_load_state("networkidle")
+    _check_axe(admin_page, axe_source, "/admin/dashboard (dark)")
+    admin_page.locator("table tbody tr td a.btn").first.click()
+    admin_page.wait_for_load_state("networkidle")
+    # The four-eyes form with its danger button sits in a closed <details>.
+    admin_page.evaluate("document.querySelectorAll('details').forEach(d => d.open = true)")
+    _check_axe(admin_page, axe_source, "/admin/reports/<id> (dark)")
