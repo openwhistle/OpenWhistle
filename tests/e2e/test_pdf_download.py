@@ -20,7 +20,7 @@ def test_pdf_export_download(admin_page: Page, base_url: str) -> None:
         # Fall back to first report
         row = admin_page.locator("table tbody tr").first
         if row.count() == 0:
-            pytest.skip("No reports found in dashboard")
+            pytest.fail("No reports found in dashboard")
 
     view_btn = row.locator("a.btn").first
     view_btn.click()
@@ -31,7 +31,7 @@ def test_pdf_export_download(admin_page: Page, base_url: str) -> None:
         # The export link uses: /admin/reports/{id}/export.pdf with download attribute
         export_link = admin_page.locator('a[href*="export.pdf"]').first
         if export_link.count() == 0:
-            pytest.skip("Export PDF link not found on report detail page")
+            pytest.fail("Export PDF link not found on report detail page")
         export_link.click()
 
     download = download_info.value
@@ -58,7 +58,7 @@ def test_pdf_content_type(admin_page: Page, base_url: str) -> None:
 
     row = admin_page.locator("table tbody tr").first
     if row.count() == 0:
-        pytest.skip("No reports on dashboard")
+        pytest.fail("No reports on dashboard")
 
     view_btn = row.locator("a.btn").first
     view_btn.click()
@@ -66,7 +66,7 @@ def test_pdf_content_type(admin_page: Page, base_url: str) -> None:
 
     export_link = admin_page.locator('a[href*="export.pdf"]').first
     if export_link.count() == 0:
-        pytest.skip("Export PDF link not found")
+        pytest.fail("Export PDF link not found")
 
     export_href = export_link.get_attribute("href")
     assert export_href is not None

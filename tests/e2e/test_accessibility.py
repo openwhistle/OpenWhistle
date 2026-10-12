@@ -83,7 +83,7 @@ def test_axe_admin_report_detail(admin_page: Page, base_url: str, axe_source: st
     admin_page.wait_for_load_state("networkidle")
     first_report = admin_page.locator("table tbody tr td a.btn").first
     if first_report.count() == 0:
-        pytest.skip("No report links found on dashboard")
+        pytest.fail("No report links found on dashboard")
     first_report.click()
     admin_page.wait_for_load_state("networkidle")
     _check_axe(admin_page, axe_source, "/admin/reports/<id>")

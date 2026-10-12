@@ -73,7 +73,7 @@ def _create_throwaway_report(page: Page, base_url: str) -> str:
     body = page.content()
     match = _CASE_RE.search(body)
     if not match:
-        pytest.skip("Could not create throwaway report — submission failed")
+        pytest.fail("Could not create throwaway report — submission failed")
     return match.group(0)
 
 
@@ -112,7 +112,7 @@ def test_same_admin_cannot_confirm_own_deletion_request(admin_page: Page, base_u
     )
     detail_url = _find_report_detail_url(admin_page, base_url, case_number)
     if detail_url is None:
-        pytest.skip(f"Report {case_number} not found on dashboard (may not have been seeded)")
+        pytest.fail(f"Report {case_number} not found on dashboard (may not have been seeded)")
 
     admin_page.goto(detail_url)
     admin_page.wait_for_load_state("networkidle")
@@ -121,14 +121,14 @@ def test_same_admin_cannot_confirm_own_deletion_request(admin_page: Page, base_u
     _open_danger_zone(admin_page)
     request_btn = admin_page.locator("#delete-step-1 button")
     if request_btn.count() == 0:
-        pytest.skip("Delete request button not found — user may lack admin role")
+        pytest.fail("Delete request button not found — user may lack admin role")
     request_btn.click()
     admin_page.wait_for_load_state("networkidle")
 
     # Now the confirm form (step-2) should be visible — click the submit button
     confirm_form = admin_page.locator('form[action*="/request-delete"]')
     if confirm_form.count() == 0:
-        pytest.skip("request-delete form not found")
+        pytest.fail("request-delete form not found")
     confirm_form.locator('button[type="submit"]').click()
     admin_page.wait_for_load_state("networkidle")
 
@@ -179,7 +179,7 @@ def test_second_admin_can_confirm_deletion(
     # Step 2: Admin A opens the report and requests deletion
     detail_url = _find_report_detail_url(admin_page, base_url, case_number)
     if detail_url is None:
-        pytest.skip(f"Report {case_number} not found on dashboard")
+        pytest.fail(f"Report {case_number} not found on dashboard")
 
     admin_page.goto(detail_url)
     admin_page.wait_for_load_state("networkidle")
@@ -187,13 +187,13 @@ def test_second_admin_can_confirm_deletion(
     _open_danger_zone(admin_page)
     request_btn = admin_page.locator("#delete-step-1 button")
     if request_btn.count() == 0:
-        pytest.skip("Delete request button not found")
+        pytest.fail("Delete request button not found")
     request_btn.click()
     admin_page.wait_for_load_state("networkidle")
 
     confirm_form = admin_page.locator('form[action*="/request-delete"]')
     if confirm_form.count() == 0:
-        pytest.skip("request-delete form not found")
+        pytest.fail("request-delete form not found")
     confirm_form.locator('button[type="submit"]').click()
     admin_page.wait_for_load_state("networkidle")
 
@@ -212,7 +212,7 @@ def test_second_admin_can_confirm_deletion(
     _confirm_re = re.compile(r"[Cc]onfirm")
     confirm_btn = admin_page2.locator("button.btn-danger").filter(has_text=_confirm_re)
     if confirm_btn.count() == 0:
-        pytest.skip("Confirm deletion button not visible for second admin — check demo seed roles")
+        pytest.fail("Confirm deletion button not visible for second admin — check demo seed roles")
 
     # Handle the browser confirm dialog
     admin_page2.on("dialog", lambda d: d.accept())

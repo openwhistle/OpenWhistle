@@ -46,7 +46,7 @@ def test_received_report_has_acknowledge_button(admin_page: Page, base_url: str)
     row = admin_page.locator("table tbody tr").filter(has_text=DEMO_CASE_RECEIVED["case_number"])
     if row.count() == 0:
         case = DEMO_CASE_RECEIVED["case_number"]
-        pytest.skip(f"Demo report {case} not found — demo may need reset")
+        pytest.fail(f"Demo report {case} not found — demo may need reset")
     view_btn = row.locator("a.btn").first
     view_btn.click()
     admin_page.wait_for_load_state("networkidle")
@@ -66,14 +66,14 @@ def test_admin_reply_appears_in_thread(admin_page: Page, base_url: str) -> None:
     admin_page.wait_for_load_state("networkidle")
     row = admin_page.locator("table tbody tr").filter(has_text="OW-DEMO-00002")
     if row.count() == 0:
-        pytest.skip("OW-DEMO-00002 not found on dashboard")
+        pytest.fail("OW-DEMO-00002 not found on dashboard")
     view_btn = row.locator("a.btn").first
     view_btn.click()
     admin_page.wait_for_load_state("networkidle")
     # The reply form should be visible (report is not closed)
     reply_area = admin_page.locator('textarea[name="content"]').first
     if reply_area.count() == 0:
-        pytest.skip("Reply textarea not visible — report may be closed")
+        pytest.fail("Reply textarea not visible — report may be closed")
     unique_reply = f"E2E test reply {int(time.time())}"
     reply_area.fill(unique_reply)
     admin_page.locator('button[type="submit"]').filter(
@@ -91,7 +91,7 @@ def test_status_dropdown_has_valid_options(admin_page: Page, base_url: str) -> N
     admin_page.wait_for_load_state("networkidle")
     row = admin_page.locator("table tbody tr").filter(has_text=DEMO_CASE_RECEIVED["case_number"])
     if row.count() == 0:
-        pytest.skip(f"{DEMO_CASE_RECEIVED['case_number']} not on dashboard")
+        pytest.fail(f"{DEMO_CASE_RECEIVED['case_number']} not on dashboard")
     row.locator("a.btn").first.click()
     admin_page.wait_for_load_state("networkidle")
     # Status select may or may not be present (only shown if transitions exist)

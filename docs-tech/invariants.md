@@ -57,7 +57,7 @@ cleared in one `MULTI/EXEC`, so concurrent runs get the events exactly once
 | Guard | Test that fires |
 | --- | --- |
 | OIDC login goes through TOTP | `test_oidc_login_requires_totp` |
-| LDAP first login is a case manager; username escaped; LDAPS verifies the certificate | `test_ldap_first_login_provisions_case_manager`, `test_ldap_filter_escapes_username`, `test_ldaps_verifies_server_certificate` |
+| LDAP first login is a case manager; username escaped; LDAPS verifies the certificate | `test_ldap_first_login_provisions_case_manager`, `test_filter_escapes_the_username`, `test_ldaps_demands_a_valid_certificate` |
 | Static demo TOTP only for demo accounts | `test_demo_totp_code_only_works_for_demo_accounts` |
 | No demo seed into a real installation | `test_foreign_database_detection` |
 | Multi-tenant scoping: users page, role change, assignment and its picker, new users' org, audit log, stats, dashboard stats | `tests/test_multitenancy_scoping.py` (one test per guard) |

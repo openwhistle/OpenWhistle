@@ -41,11 +41,11 @@ def test_deactivate_category(admin_page: Page, base_url: str) -> None:
 
     row = admin_page.locator("table tbody tr").filter(has_text=_CAT_LABEL_EN)
     if row.count() == 0:
-        pytest.skip(f"Test category '{_CAT_LABEL_EN}' not found — run create test first")
+        pytest.fail(f"Test category '{_CAT_LABEL_EN}' not found — run create test first")
 
     deactivate_form = row.locator('form[action*="/deactivate"]')
     if deactivate_form.count() == 0:
-        pytest.skip("Deactivate form not found for test category")
+        pytest.fail("Deactivate form not found for test category")
 
     deactivate_form.locator('button[type="submit"]').click()
     admin_page.wait_for_load_state("networkidle")
@@ -87,7 +87,7 @@ def test_new_location_appears_in_submit_wizard(admin_page: Page, base_url: str) 
     # Check if location step is shown
     location_select = admin_page.locator('select[name="location_id"]')
     if location_select.count() == 0:
-        pytest.skip("Location step not shown in wizard — no active locations or step not reached")
+        pytest.fail("Location step not shown in wizard — no active locations or step not reached")
 
     body = admin_page.content()
     assert _LOC_NAME in body, (
@@ -102,11 +102,11 @@ def test_deactivate_location(admin_page: Page, base_url: str) -> None:
 
     row = admin_page.locator("table tbody tr").filter(has_text=_LOC_NAME)
     if row.count() == 0:
-        pytest.skip(f"Test location '{_LOC_NAME}' not found — run create test first")
+        pytest.fail(f"Test location '{_LOC_NAME}' not found — run create test first")
 
     deactivate_form = row.locator('form[action*="/deactivate"]')
     if deactivate_form.count() == 0:
-        pytest.skip("Deactivate form not found for test location")
+        pytest.fail("Deactivate form not found for test location")
 
     deactivate_form.locator('button[type="submit"]').click()
     admin_page.wait_for_load_state("networkidle")
