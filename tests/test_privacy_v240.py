@@ -637,3 +637,114 @@ def test_every_pdf_label_fits_its_column() -> None:
         for key in labels:
             width = doc.get_string_width(strings[key] + ":") + 2 * doc.c_margin
             assert width <= pdf.LABEL_WIDTH, (lang, strings[key], round(width, 1))
+
+
+def test_jpeg2000_edge_cases_are_refused_or_kept_whole() -> None:
+    from app.services.attachment import MetadataError, _strip_jp2
+
+    with pytest.raises(MetadataError, match="not a JPEG 2000"):
+        _strip_jp2(b"\x00\x00\x00\x0cGIF8 not jp2")
+    jp2 = _jp2_with_xml()
+    with pytest.raises(MetadataError, match="truncated"):
+        _strip_jp2(jp2[:-5])
+    # An extended-length box (LBox = 1, XLBox): read and dropped like any other.
+    xml = b"SecretScanner"
+    extended = (1).to_bytes(4, "big") + b"xml " + (16 + len(xml)).to_bytes(8, "big") + xml
+    out = _strip_jp2(jp2 + extended)
+    assert b"SecretScanner" not in out
+    assert Image.open(io.BytesIO(out)).size == (8, 8)
+
+
+def test_pdf_image_keeps_only_its_own_decode_parameters() -> None:
+    pdf = _pdf_with_image(zlib.compress(_jpeg_with_camera()), ["/FlateDecode", "/DCTDecode"])
+    reader = PdfReader(io.BytesIO(pdf))
+    writer = PdfWriter(clone_from=reader)
+    for obj in writer._objects:
+        if isinstance(obj, StreamObject) and obj.get("/Subtype") == "/Image":
+            obj[NameObject("/DecodeParms")] = ArrayObject([DictionaryObject(), DictionaryObject()])
+    buf = io.BytesIO()
+    writer.write(buf)
+    page = PdfReader(io.BytesIO(strip_metadata("scan.pdf", buf.getvalue()))).pages[0]
+    image = page["/Resources"]["/XObject"]["/Im0"].get_object()
+    assert image["/Filter"] == "/DCTDecode"
+    assert image["/DecodeParms"] == {}
+
+
+def test_a_signature_reachable_another_way_refuses_the_pdf() -> None:
+    """Fail closed: a signature dictionary the cleaning did not reach is not stored."""
+    from app.services.attachment import MetadataError
+
+    writer = PdfWriter()
+    writer.add_blank_page(100, 100)
+    stray = DictionaryObject({NameObject("/ByteRange"): ArrayObject([NumberObject(0)] * 4)})
+    writer._root_object[NameObject("/SigCache")] = writer._add_object(stray)
+    buf = io.BytesIO()
+    writer.write(buf)
+    with pytest.raises(MetadataError, match="signature"):
+        strip_metadata("signed.pdf", buf.getvalue())
+
+
+@pytest.mark.asyncio
+async def test_a_requeue_that_fails_is_logged_not_raised(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    from app.services import notifications
+
+    class _Down:
+        async def sadd(self, *args: object) -> None:
+            raise ConnectionError("redis down")
+
+        async def aclose(self) -> None:
+            pass
+
+    monkeypatch.setattr("redis.asyncio.Redis.from_url", lambda *a, **k: _Down())
+    await notifications._requeue({"OW-2026-00001"}, set())
+    assert "Failed to put undelivered notifications back" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_no_channel_configured_counts_as_delivered(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.config import settings
+    from app.services import notifications
+
+    monkeypatch.setattr(settings, "notify_email_enabled", False)
+    monkeypatch.setattr(settings, "notify_webhook_enabled", False)
+    assert await notifications._deliver(["OW-2026-00001"], []) is True
+
+
+def test_a_case_manager_never_reveals_an_unassigned_identity() -> None:
+    import uuid
+
+    from app.api.admin import can_reveal_identity
+    from app.models.report import Report
+    from app.models.user import AdminRole, AdminUser
+
+    report = Report(id=uuid.uuid4(), assigned_to_id=None, org_id=None)
+    manager = AdminUser(id=uuid.uuid4(), role=AdminRole.case_manager, org_id=None)
+    assert can_reveal_identity(manager, report) is False
+
+
+@pytest.mark.asyncio
+async def test_the_pdf_labels_location_secure_email_and_an_overdue_deadline(db_session) -> None:  # noqa: ANN001
+    import uuid
+    from datetime import timedelta
+
+    from app.models.location import Location
+    from app.services.crypto import encrypt
+    from app.services.pdf import generate_report_pdf
+    from app.services.report import create_report, get_report_by_id
+    from tests.test_pdf_service import _pdf_text
+
+    location = Location(id=uuid.uuid4(), name="Werk Nord", code=f"N{uuid.uuid4().hex[:5]}")
+    db_session.add(location)
+    report, _ = await create_report(db_session, "corruption", "Overdue, located, reachable.")
+    report.location_id = location.id
+    report.secure_email = encrypt("wb@private.example")
+    report.feedback_due_at = datetime.now(UTC) - timedelta(days=3)
+    await db_session.commit()
+    report_id = report.id
+    db_session.expire_all()  # load the location relationship afresh
+    text = _pdf_text(generate_report_pdf(await get_report_by_id(db_session, report_id), lang="de"))
+    assert "Standort:" in text and "Werk Nord" in text
+    assert "Sichere E-Mail:" in text and "private.example" not in text
+    assert "Überfällig" in text
