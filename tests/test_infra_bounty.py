@@ -68,3 +68,47 @@ def test_the_app_code_in_the_image_is_not_writable_by_the_runtime_user() -> None
         final,
     )
     assert final.index("USER openwhistle") > final.index("chmod -R go-w")
+
+
+def test_the_chart_starts_slowly_and_meets_pod_security_restricted() -> None:
+    """The server listens only after `alembic upgrade head` (connection refused for the whole
+    migration, measured with a 20 s alembic wrapper): without a startupProbe the liveness
+    probe killed the pod after 15 + 3 x 30 s. `restricted` also wants a seccomp profile, and
+    the app needs no service-account token."""
+    import yaml
+
+    chart = ROOT / "charts/openwhistle"
+    text = (chart / "templates/deployment.yaml").read_text()
+    rendered = text
+    # Rendered with helm when it is there; otherwise the template text is the contract.
+    import shutil
+    import subprocess
+
+    if helm := shutil.which("helm"):
+        args = ["--set", "secrets.secretKey=" + "x" * 40, "--set", "secrets.databaseUrl=d"]
+        args += ["--set", "secrets.redisUrl=r"]
+        out = subprocess.run(  # noqa: S603
+            [
+                helm,
+                "template",
+                "ow",
+                str(chart),
+                "--show-only",
+                "templates/deployment.yaml",
+                *args,
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+        rendered = out
+        spec = yaml.safe_load(out)["spec"]["template"]["spec"]
+        container = spec["containers"][0]
+        assert spec["automountServiceAccountToken"] is False
+        assert spec["securityContext"]["seccompProfile"] == {"type": "RuntimeDefault"}
+        startup = container["startupProbe"]
+        assert startup["httpGet"]["path"] == "/health"
+        assert startup["periodSeconds"] * startup["failureThreshold"] >= 300
+    assert "automountServiceAccountToken: false" in rendered
+    assert "type: RuntimeDefault" in rendered
+    assert "startupProbe:" in rendered

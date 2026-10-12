@@ -8,6 +8,10 @@
    "tests/test_mutation_specs.py",
    "-k",
    "audit_reports or judged or unmutated"
+  ],
+  "H": [
+   "tests/test_infra_bounty.py",
+   "tests/test_helm_chart.py"
   ]
  },
  "mutations": [
@@ -73,6 +77,34 @@
    "old": "RUN chmod -R go-w,a+rX . \\\n    && /venv",
    "new": "RUN /venv",
    "tests": "N"
+  },
+  {
+   "id": "chart-no-startup-probe",
+   "file": "charts/openwhistle/templates/deployment.yaml",
+   "old": "          startupProbe:\n            httpGet:\n              path: /health\n              port: http\n            periodSeconds: 10\n            failureThreshold: 60\n",
+   "new": "",
+   "tests": "H"
+  },
+  {
+   "id": "chart-startup-budget-short",
+   "file": "charts/openwhistle/templates/deployment.yaml",
+   "old": "failureThreshold: 60",
+   "new": "failureThreshold: 6",
+   "tests": "H"
+  },
+  {
+   "id": "chart-no-seccomp",
+   "file": "charts/openwhistle/templates/deployment.yaml",
+   "old": "        seccompProfile:\n          type: RuntimeDefault\n",
+   "new": "",
+   "tests": "H"
+  },
+  {
+   "id": "chart-token-mounted",
+   "file": "charts/openwhistle/templates/deployment.yaml",
+   "old": "automountServiceAccountToken: false",
+   "new": "automountServiceAccountToken: true",
+   "tests": "H"
   }
  ]
 }

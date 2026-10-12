@@ -30,6 +30,10 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **The image's application code was writable by the runtime user**: `COPY --chown=openwhistle` made
   `echo x >> /app/app/main.py` succeed as uid 1000 in the running image. The code is now root-owned and
   `go-w`; the image still starts with a read-only root filesystem and `/health` answers 200.
+- **The Helm chart crash-looped on a slow migration** (the server refuses connections for the whole
+  `alembic upgrade head`, measured with a 20 s wrapper; the liveness probe killed the pod after 105 s with no
+  startup probe). Added a `startupProbe` allowing 10 minutes, `seccompProfile: RuntimeDefault` (Pod Security
+  `restricted`) and `automountServiceAccountToken: false`.
 
 ## [2.2.1] — 2026-10-12
 
