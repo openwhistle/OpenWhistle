@@ -83,3 +83,25 @@ async def test_a_reactivated_account_does_not_get_its_old_sessions_back(
     ).status_code == 302
     resp = await client.get("/admin/account", follow_redirects=False)
     assert resp.status_code != 200, resp.status_code
+
+
+# ── A sign-in is in the audit log ───────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_a_sign_in_is_in_the_audit_log(client: object, db_session: AsyncSession) -> None:
+    """AuditAction.AUTH_LOGIN had a label ("Signed in") and a place in the audit-log
+    filter, and nothing ever wrote it: the filter always listed nothing."""
+    from sqlalchemy import func, select
+
+    from app.models.audit import AuditLog
+    from tests.test_coverage_admin_extended import _create_admin, _login_admin
+
+    admin, secret = await _create_admin(db_session)
+    await _login_admin(client, admin, secret)  # type: ignore[arg-type]
+    rows = await db_session.scalar(
+        select(func.count(AuditLog.id)).where(
+            AuditLog.admin_id == admin.id, AuditLog.action == "auth.login"
+        )
+    )
+    assert rows == 1
