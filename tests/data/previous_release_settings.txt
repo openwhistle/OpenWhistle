@@ -31,7 +31,6 @@ ldap_bind_password
 ldap_base_dn
 ldap_user_filter
 ldap_attr_username
-ldap_attr_email
 storage_backend
 s3_endpoint_url
 s3_bucket_name
