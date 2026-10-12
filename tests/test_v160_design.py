@@ -1042,7 +1042,7 @@ def test_every_admin_role_has_a_badge_color() -> None:
     css = (Path(__file__).parents[1] / "app/static/css/site.css").read_text()
     for role in AdminRole:
         # At line start: the dark-theme override alone is not the rule.
-        assert re.search(rf"^\.badge-{role.value} \{{", css, re.M), f".badge-{role.value} missing"
+        assert re.search(rf"^\.badge-{role.value}\s*[{{,]", css, re.M), f".badge-{role.value} missing"
 
 
 @pytest.mark.asyncio

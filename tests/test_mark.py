@@ -21,13 +21,15 @@ _spec.loader.exec_module(icons)
 # The website draws the same geometry and compares its copies with the release's
 # (openwhistle/website); this repository checks its own.
 MARK_FILES = ["app/static/favicon.svg", "app/templates/base.html"]
+# base.html draws it twice, in the nav and in the footer, as the website does.
+MARK_COPIES = {"app/static/favicon.svg": 1, "app/templates/base.html": 2}
 _PATH = re.compile(r'<path fill-rule="evenodd" d="([^"]+)"')
 
 
 @pytest.mark.parametrize("rel", MARK_FILES)
 def test_every_copy_draws_the_one_geometry(rel: str) -> None:
     found = _PATH.findall((ROOT / rel).read_text(encoding="utf-8"))
-    assert found == [icons.MARK], f"{rel}: {found}"
+    assert found == [icons.MARK] * MARK_COPIES[rel], f"{rel}: {found}"
 
 
 def test_the_old_shield_is_gone_everywhere() -> None:
@@ -48,14 +50,16 @@ async def test_an_operator_logo_replaces_the_mark(
 async def test_without_an_operator_logo_the_nav_draws_k3(client: AsyncClient) -> None:
     html = (await client.get("/submit")).text
     assert 'class="nav-logo-img"' not in html
-    assert _PATH.findall(html) == [icons.MARK]
+    assert _PATH.findall(html) == [icons.MARK] * 2  # nav and footer
 
 
 def test_the_app_mark_takes_the_ink() -> None:
     # Without it the path fills black: invisible on the dark nav.
     css = (ROOT / "app/static/css/site.css").read_text(encoding="utf-8")
-    rule = re.search(r"\.nav-brand \.mark \{([^}]*)\}", css)
-    assert rule and "color: var(--ink);" in rule[1] and "fill: currentColor;" in rule[1]
+    mark = re.search(r"^\.mark \{([^}]*)\}", css, re.M)
+    brand = re.search(r"^\.nav-brand \{([^}]*)\}", css, re.M)
+    assert mark and "fill: currentColor;" in mark[1]
+    assert brand and "color: var(--ink);" in brand[1]
 
 
 def test_the_favicon_switches_ink_with_the_colour_scheme() -> None:
