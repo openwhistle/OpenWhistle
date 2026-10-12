@@ -49,6 +49,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   unauthenticated client, and compose only warned. `docker-compose.prod.yml` and the Ansible compose now use
   `${REDIS_PASSWORD:?…}` (also in the healthcheck) and `${POSTGRES_PASSWORD:?…}`, so an empty value stops
   `compose up`.
+- **The Ansible compose gave Postgres the whole `.env`** (`env_file: .env` on `db`; `SECRET_KEY` showed in the
+  container's environment): the session secret, encryption key and OIDC/LDAP/SMTP/S3 credentials sat inside the
+  database container. `db` now gets only `POSTGRES_USER`, `POSTGRES_PASSWORD` and `POSTGRES_DB`.
 
 ## [2.2.1] — 2026-10-12
 

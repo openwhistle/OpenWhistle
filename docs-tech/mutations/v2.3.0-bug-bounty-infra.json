@@ -186,6 +186,20 @@
    "old": "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}",
    "new": "${POSTGRES_PASSWORD}",
    "tests": "N"
+  },
+  {
+   "id": "ansible-db-env-file",
+   "file": "ansible/roles/openwhistle/templates/docker-compose.yml.j2",
+   "old": "    image: postgres:18-alpine\n    security_opt:",
+   "new": "    image: postgres:18-alpine\n    env_file: .env\n    security_opt:",
+   "tests": "N"
+  },
+  {
+   "id": "ansible-db-secret-key",
+   "file": "ansible/roles/openwhistle/templates/docker-compose.yml.j2",
+   "old": "      POSTGRES_DB: \"${POSTGRES_DB}\"\n",
+   "new": "      POSTGRES_DB: \"${POSTGRES_DB}\"\n      SECRET_KEY: \"${SECRET_KEY}\"\n",
+   "tests": "N"
   }
  ]
 }

@@ -171,3 +171,15 @@ def test_an_empty_redis_password_stops_compose_instead_of_disabling_authenticati
 def test_the_production_compose_requires_the_postgres_password() -> None:
     text = (ROOT / "docker-compose.prod.yml").read_text()
     assert 'POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?' in text
+
+
+def test_the_ansible_database_container_gets_only_its_own_variables() -> None:
+    """`env_file: .env` put SECRET_KEY, ENCRYPTION_KEY and every OIDC/LDAP/SMTP/S3 secret
+    into Postgres's environment (`podman run --env-file` showed SECRET_KEY there)."""
+    import yaml
+
+    compose = yaml.safe_load(_render_role_template("docker-compose.yml.j2"))
+    db = compose["services"]["db"]
+    assert "env_file" not in db
+    assert set(db["environment"]) == {"POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB", "PGDATA"}
+    assert compose["services"]["app"]["env_file"] == ".env"  # the app still reads it all
