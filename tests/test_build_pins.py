@@ -228,3 +228,30 @@ def test_security_workflow_audits_dependencies_and_the_image() -> None:
         assert needle in wf, needle
     pinned = re.search(r"aquasecurity/trivy-action@[0-9a-f]{40}", wf)
     assert pinned, "trivy action not pinned by digest"
+
+
+def test_postgres_and_redis_are_digest_pinned_and_one_digest_everywhere() -> None:
+    """nginx, clamav and python were pinned by digest; postgres and redis floated on
+    their tag in every compose file, the Ansible template and CI, so a moved tag
+    changed what runs the database with no commit."""
+    places = (
+        "docker-compose*.yml",
+        ".github/workflows/*.yml",
+        "ansible/roles/openwhistle/templates/*.j2",
+    )
+    for image in ("postgres", "redis"):
+        pinned = _all(rf"image: ({image}:[0-9a-z.\-]+@sha256:[0-9a-f]{{64}})", *places)
+        floating = _all(rf"(?m)image: ({image}:[0-9a-z.\-]+)[ \t]*$", *places)
+        assert not floating, f"{image} is not digest-pinned: {floating}"
+        assert len(pinned) == 1, f"{image} pins disagree: {pinned}"
+
+
+def test_renovate_pins_compose_images_by_digest_too() -> None:
+    """The compose files pin digests; without `pinDigests` on the docker-compose manager
+    Renovate keeps them current but never pins a new image."""
+    import json
+
+    rules = json.loads((ROOT / "renovate.json").read_text())["packageRules"]
+    assert any(
+        r.get("pinDigests") and "docker-compose" in r.get("matchManagers", []) for r in rules
+    )

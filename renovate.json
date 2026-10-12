@@ -189,8 +189,8 @@
       ]
     },
     {
-      "description": "Base images are pinned by digest; Renovate keeps the digest current (digest updates auto-merge like patches).",
-      "matchManagers": ["dockerfile"],
+      "description": "Base images are pinned by digest; Renovate keeps the digest current (digest updates auto-merge like patches). The compose files pin postgres, redis and nginx the same way; the workflows and the Ansible template are read by the regex manager below.",
+      "matchManagers": ["dockerfile", "docker-compose"],
       "pinDigests": true
     }
   ],

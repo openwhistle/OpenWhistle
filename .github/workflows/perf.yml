@@ -11,10 +11,6 @@ on:
         description: "Test duration (e.g. 60s, 2m)"
         required: false
         default: "60s"
-      host:
-        description: "Target host URL"
-        required: false
-        default: "http://localhost:4009"
 
 jobs:
   perf:
@@ -65,7 +61,7 @@ jobs:
                 redis:
                   condition: service_healthy
             db:
-              image: postgres:18-alpine
+              image: postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
               environment:
                 POSTGRES_USER: openwhistle
                 POSTGRES_PASSWORD: openwhistle
@@ -76,7 +72,7 @@ jobs:
                 timeout: 5s
                 retries: 10
             redis:
-              image: redis:8-alpine
+              image: redis:8-alpine@sha256:3811787313eba226a2ef38658c6ccb91cd5e110edc89c37767de373120a0e5a0
               healthcheck:
                 test: ["CMD", "redis-cli", "ping"]
                 interval: 5s

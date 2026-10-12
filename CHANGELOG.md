@@ -22,6 +22,48 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **2.2.1 shipped a High zlib CVE fixed six days earlier** (CVE-2026-85091, zlib 1.3.2-r0, -r1 in Alpine since
   2026-10-06): the image never upgraded the pinned base image's packages, and the Trivy gate passed it because
   Trivy rates it MEDIUM. The final stage now runs `apk upgrade`, built without cache in CI.
+- **nginx's own 413, 429, 502, 503 and 504 responses carried no HSTS, CSP, X-Frame-Options or `Cache-Control:
+  no-store`** (`curl -D-` on a rate-limited request showed only `server`, `date`, `content-type`,
+  `content-length`): they never pass the app's middleware. `snippets/error-pages.conf` adds them to nginx's own
+  errors in `nginx.conf`, `nginx.behind-proxy.conf` and the Ansible template, without HSTS on the plain-HTTP onion
+  listener and without touching a proxied response.
+- **The mutation audit reported "all caught" without a database**: it never ran the tests unmutated, and pytest
+  exit 1 (every test errors) and 2 (collection error) read as RED. It now runs each test group once unmutated and
+  aborts (exit 2) unless green; only exit 1 is a catch, 2-5 are STALE.
+- **The image's application code was writable by the runtime user**: `COPY --chown=openwhistle` made
+  `echo x >> /app/app/main.py` succeed as uid 1000 in the running image. The code is now root-owned and
+  `go-w`; the image still starts with a read-only root filesystem and `/health` answers 200.
+- **The Helm chart crash-looped on a slow migration** (the server refuses connections for the whole
+  `alembic upgrade head`, measured with a 20 s wrapper; the liveness probe killed the pod after 105 s with no
+  startup probe). Added a `startupProbe` allowing 10 minutes, `seccompProfile: RuntimeDefault` (Pod Security
+  `restricted`) and `automountServiceAccountToken: false`.
+- **The Ansible role failed on Debian 12 and Ubuntu 24.04**: `pip install docker` as root stops with
+  `externally-managed-environment` (PEP 668; reproduced in `debian:12`). The Docker SDK now comes from the
+  distribution package `python3-docker`.
+- **The Ansible nginx template issued TLS session tickets** (`openssl s_client` showed a 86400 s ticket lifetime
+  hint; the bundled nginx issues none) and used another session cache and a 1 d timeout. It now has
+  `ssl_session_tickets off` and the bundled cache settings; a test compares every `ssl_*` directive of both.
+- **The documented release check accepted any workflow on any ref**: `--certificate-identity-regexp
+  '^https://github.com/openwhistle/OpenWhistle/'` matched `anything.yml@refs/heads/x` and an `:edge` image
+  from `main` like a release, and the publish workflow signed without ever running `cosign verify`. The check
+  is now `--certificate-identity` of `docker-publish.yml@refs/tags/vX.Y.Z`, and the workflow verifies every
+  digest it signs against its own workflow ref.
+- **An unset `REDIS_PASSWORD` started Redis without authentication**: `--requirepass ""` answered `PONG` to an
+  unauthenticated client, and compose only warned. `docker-compose.prod.yml` and the Ansible compose now use
+  `${REDIS_PASSWORD:?…}` (also in the healthcheck) and `${POSTGRES_PASSWORD:?…}`, so an empty value stops
+  `compose up`.
+- **The Ansible compose gave Postgres the whole `.env`** (`env_file: .env` on `db`; `SECRET_KEY` showed in the
+  container's environment): the session secret, encryption key and OIDC/LDAP/SMTP/S3 credentials sat inside the
+  database container. `db` now gets only `POSTGRES_USER`, `POSTGRES_PASSWORD` and `POSTGRES_DB`.
+- **The CI skip guard missed a skipped module**: a module-level skip (`importorskip`, `skip(allow_module_level=True)`)
+  is a collect report, not a test report, so a run with a whole module not running stayed green (reproduced:
+  exit 0). The guard moved to `tests/ci_skip_guard.py` and now reads collect reports too.
+- **`postgres:18-alpine` and `redis:8-alpine` floated on their tag** in every compose file, the Ansible template
+  and CI, while nginx, clamav and python were pinned by digest; the pin test checked only the major. Both are
+  pinned by digest everywhere, Renovate's `pinDigests` now covers the compose files, and the pin test requires
+  one digest per image.
+- **`perf.yml` offered a `host` input that nothing read**: the run always targeted the app it starts itself,
+  whatever was typed. The input is removed, and a test requires every workflow input to be read.
 
 ## [2.2.1] — 2026-10-12
 

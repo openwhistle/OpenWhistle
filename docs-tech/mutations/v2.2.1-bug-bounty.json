@@ -204,7 +204,7 @@
   {
    "id": "audit-exit-codes",
    "file": "scripts/mutation_audit.py",
-   "old": "{0: \"GREEN\", 1: \"RED\", 2: \"RED\"}",
+   "old": "{0: \"GREEN\", 1: \"RED\"}",
    "new": "{0: \"GREEN\"}",
    "tests": "S"
   },

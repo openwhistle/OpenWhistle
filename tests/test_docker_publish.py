@@ -24,6 +24,13 @@ case "$*" in
 esac
 """
 
+# Records every call; `verify` fails for a digest that was never signed.
+COSIGN_STUB = """#!/bin/bash
+echo "$*" >> "$COSIGN_LOG"
+[[ "$1" == verify && -n "${STUB_UNSIGNED:-}" ]] && exit 1
+exit 0
+"""
+
 
 def _merge_step() -> dict:
     wf = yaml.safe_load((ROOT / ".github/workflows/docker-publish.yml").read_text())
@@ -32,11 +39,16 @@ def _merge_step() -> dict:
 
 
 def _run(
-    tmp_path: Path, *, bad: str = "none", ref: str = "refs/heads/main", dockerhub: str = "t"
+    tmp_path: Path,
+    *,
+    bad: str = "none",
+    ref: str = "refs/heads/main",
+    dockerhub: str = "t",
+    unsigned: str = "",
 ) -> subprocess.CompletedProcess:
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
-    for name, body in (("docker", DOCKER_STUB), ("cosign", "#!/bin/bash\n")):
+    for name, body in (("docker", DOCKER_STUB), ("cosign", COSIGN_STUB)):
         stub = bin_dir / name
         stub.write_text(body)
         stub.chmod(stub.stat().st_mode | stat.S_IEXEC)
@@ -53,6 +65,10 @@ def _run(
         "QUAY_TOKEN": "",
         "GITHUB_REF": ref,
         "STUB_BAD": bad,
+        "STUB_UNSIGNED": unsigned,
+        "COSIGN_LOG": str(tmp_path / "cosign.log"),
+        "GITHUB_SERVER_URL": "https://github.com",
+        "GITHUB_WORKFLOW_REF": "o/ow/.github/workflows/docker-publish.yml@refs/tags/v9.9.9",
     }
     return subprocess.run(  # noqa: S603
         ["bash", "-c", _merge_step()["run"]],  # noqa: S607
@@ -175,3 +191,27 @@ def test_a_tag_off_main_is_refused(tmp_path: Path, ref: str, on_main: bool, ok: 
     }
     result = subprocess.run(["bash", "-c", step["run"]], env=env, check=False)  # noqa: S603, S607
     assert (result.returncode == 0) is ok
+
+
+def test_every_signed_digest_is_verified_against_this_workflow_and_ref(tmp_path: Path) -> None:
+    """The step signed and then only checked that the tags could be pulled: a digest whose
+    signature was missing or came from another workflow still printed "verified"."""
+    result = _run(tmp_path)
+    assert result.returncode == 0, result.stdout + result.stderr
+    calls = (tmp_path / "cosign.log").read_text().splitlines()
+    verifies = [c for c in calls if c.startswith("verify ")]
+    assert len(verifies) == 2  # ghcr.io and docker.io
+    for call in verifies:
+        assert "@sha256:index" in call
+        assert (
+            "--certificate-identity https://github.com/o/ow/.github/workflows/docker-publish.yml"
+            "@refs/tags/v9.9.9 " in call + " "
+        )
+        assert "--certificate-oidc-issuer https://token.actions.githubusercontent.com" in call
+        assert "identity-regexp" not in call
+
+
+def test_a_digest_whose_signature_does_not_verify_fails_the_step(tmp_path: Path) -> None:
+    result = _run(tmp_path, unsigned="1")
+    assert result.returncode != 0
+    assert "verified " not in result.stdout

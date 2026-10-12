@@ -147,12 +147,12 @@ services:
       - proxy
 
   db:
-    image: postgres:18-alpine
+    image: postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
     security_opt:
       - no-new-privileges:true
     environment:
       POSTGRES_USER: "${POSTGRES_USER}"
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}"
       POSTGRES_DB: "${POSTGRES_DB:-openwhistle}"
       # postgres:18 defaults PGDATA to /var/lib/postgresql/18/docker and refuses
       # to start when /var/lib/postgresql/data is mounted without this.
@@ -169,14 +169,14 @@ services:
       - internal
 
   redis:
-    image: redis:8-alpine
+    image: redis:8-alpine@sha256:3811787313eba226a2ef38658c6ccb91cd5e110edc89c37767de373120a0e5a0
     security_opt:
       - no-new-privileges:true
     # noeviction: sessions and rate-limit counters are never dropped; drafts
     # stop taking attachments at DRAFT_REDIS_MEMORY_PERCENT of maxmemory.
-    command: redis-server --save "" --appendonly no --maxmemory 1gb --maxmemory-policy noeviction --requirepass "${REDIS_PASSWORD}"
+    command: redis-server --save "" --appendonly no --maxmemory 1gb --maxmemory-policy noeviction --requirepass "${REDIS_PASSWORD:?REDIS_PASSWORD is required (empty means Redis without authentication)}"
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:?REDIS_PASSWORD is required (empty means Redis without authentication)}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -1,0 +1,261 @@
+{
+ "test_groups": {
+  "N": [
+   "tests/test_infra_bounty.py",
+   "tests/test_tls.py"
+  ],
+  "M": [
+   "tests/test_mutation_specs.py",
+   "-k",
+   "audit_reports or judged or unmutated"
+  ],
+  "H": [
+   "tests/test_infra_bounty.py",
+   "tests/test_helm_chart.py"
+  ],
+  "C": [
+   "tests/test_docker_publish.py",
+   "tests/test_infra_bounty.py"
+  ],
+  "G": [
+   "tests/test_infra_bounty.py"
+  ],
+  "P": [
+   "tests/test_build_pins.py",
+   "tests/test_renovate.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "nginx-error-pages-not-included-tls",
+   "file": "nginx/nginx.conf",
+   "old": "        include /etc/nginx/snippets/proxy-headers.conf;\n        include /etc/nginx/snippets/error-pages.conf;\n\n        # Server level, so every location inherits it: /static/ (the shared\n        # snippet) was proxied to the app with no limit at all.\n        # Generous burst",
+   "new": "        include /etc/nginx/snippets/proxy-headers.conf;\n\n        # Server level, so every location inherits it: /static/ (the shared\n        # snippet) was proxied to the app with no limit at all.\n        # Generous burst",
+   "tests": "N"
+  },
+  {
+   "id": "nginx-429-no-headers",
+   "file": "nginx/snippets/error-pages.conf",
+   "old": "location @ow_err_429 { include /etc/nginx/snippets/error-headers.conf; return 429; }",
+   "new": "location @ow_err_429 { return 429; }",
+   "tests": "N"
+  },
+  {
+   "id": "nginx-error-no-csp",
+   "file": "nginx/snippets/error-headers.conf",
+   "old": "add_header Content-Security-Policy \"default-src 'none'; frame-ancestors 'none'\" always;\n",
+   "new": "",
+   "tests": "N"
+  },
+  {
+   "id": "nginx-hsts-on-onion",
+   "file": "nginx/nginx.conf",
+   "old": "        8080    \"\";\n",
+   "new": "",
+   "tests": "N"
+  },
+  {
+   "id": "nginx-intercept-app-errors",
+   "file": "nginx/snippets/error-pages.conf",
+   "old": "error_page 413 @ow_err_413;",
+   "new": "proxy_intercept_errors on;\nerror_page 413 @ow_err_413;",
+   "tests": "N"
+  },
+  {
+   "id": "audit-no-baseline",
+   "file": "scripts/mutation_audit.py",
+   "old": "    if baseline_fails(spec, only, limit):",
+   "new": "    if False:",
+   "tests": "M"
+  },
+  {
+   "id": "audit-exit-2-is-red",
+   "file": "scripts/mutation_audit.py",
+   "old": "{0: \"GREEN\", 1: \"RED\"}",
+   "new": "{0: \"GREEN\", 1: \"RED\", 2: \"RED\"}",
+   "tests": "M"
+  },
+  {
+   "id": "image-code-chowned",
+   "file": "Dockerfile",
+   "old": "COPY . .\n",
+   "new": "COPY --chown=openwhistle:openwhistle . .\n",
+   "tests": "N"
+  },
+  {
+   "id": "image-no-mode-normalisation",
+   "file": "Dockerfile",
+   "old": "RUN chmod -R go-w,a+rX . \\\n    && /venv",
+   "new": "RUN /venv",
+   "tests": "N"
+  },
+  {
+   "id": "chart-no-startup-probe",
+   "file": "charts/openwhistle/templates/deployment.yaml",
+   "old": "          startupProbe:\n            httpGet:\n              path: /health\n              port: http\n            periodSeconds: 10\n            failureThreshold: 60\n",
+   "new": "",
+   "tests": "H"
+  },
+  {
+   "id": "chart-startup-budget-short",
+   "file": "charts/openwhistle/templates/deployment.yaml",
+   "old": "failureThreshold: 60",
+   "new": "failureThreshold: 6",
+   "tests": "H"
+  },
+  {
+   "id": "chart-no-seccomp",
+   "file": "charts/openwhistle/templates/deployment.yaml",
+   "old": "        seccompProfile:\n          type: RuntimeDefault\n",
+   "new": "",
+   "tests": "H"
+  },
+  {
+   "id": "chart-token-mounted",
+   "file": "charts/openwhistle/templates/deployment.yaml",
+   "old": "automountServiceAccountToken: false",
+   "new": "automountServiceAccountToken: true",
+   "tests": "H"
+  },
+  {
+   "id": "ansible-docker-sdk-via-pip",
+   "file": "ansible/roles/openwhistle/tasks/docker.yml",
+   "old": "- name: Enable and start Docker service",
+   "new": "- name: Install Docker SDK\n  ansible.builtin.pip:\n    name: docker\n\n- name: Enable and start Docker service",
+   "tests": "N"
+  },
+  {
+   "id": "ansible-no-python3-docker",
+   "file": "ansible/roles/openwhistle/tasks/docker.yml",
+   "old": "      - python3-docker\n",
+   "new": "      - python3-pip\n",
+   "tests": "N"
+  },
+  {
+   "id": "ansible-tls-tickets-on",
+   "file": "ansible/roles/openwhistle/templates/nginx.conf.j2",
+   "old": "        ssl_session_tickets off;\n",
+   "new": "",
+   "tests": "N"
+  },
+  {
+   "id": "ansible-tls-timeout-1d",
+   "file": "ansible/roles/openwhistle/templates/nginx.conf.j2",
+   "old": "        ssl_session_tickets off;\n",
+   "new": "        ssl_session_tickets off;\n        ssl_session_timeout 1d;\n",
+   "tests": "N"
+  },
+  {
+   "id": "publish-no-cosign-verify",
+   "file": ".github/workflows/docker-publish.yml",
+   "old": "            cosign verify \"${repo}@${digest}\" \\\n",
+   "new": "            true \"${repo}@${digest}\" \\\n",
+   "tests": "C"
+  },
+  {
+   "id": "publish-verify-failure-ignored",
+   "file": ".github/workflows/docker-publish.yml",
+   "old": "https://token.actions.githubusercontent.com > /dev/null || return 1",
+   "new": "https://token.actions.githubusercontent.com > /dev/null || true",
+   "tests": "C"
+  },
+  {
+   "id": "publish-verify-any-workflow",
+   "file": ".github/workflows/docker-publish.yml",
+   "old": "--certificate-identity \"${GITHUB_SERVER_URL}/${GITHUB_WORKFLOW_REF}\"",
+   "new": "--certificate-identity-regexp \"^${GITHUB_SERVER_URL}/\"",
+   "tests": "C"
+  },
+  {
+   "id": "release-doc-regexp",
+   "file": "docs-tech/release.md",
+   "old": "  --certificate-identity 'https://github.com/openwhistle/OpenWhistle/.github/workflows/docker-publish.yml@refs/tags/vX.Y.Z' \\\n",
+   "new": "  --certificate-identity-regexp '^https://github.com/openwhistle/OpenWhistle/' \\\n",
+   "tests": "C"
+  },
+  {
+   "id": "compose-redis-password-optional",
+   "file": "docker-compose.prod.yml",
+   "old": "--requirepass \"${REDIS_PASSWORD:?REDIS_PASSWORD is required (empty means Redis without authentication)}\"",
+   "new": "--requirepass \"${REDIS_PASSWORD}\"",
+   "tests": "N"
+  },
+  {
+   "id": "j2-redis-healthcheck-optional",
+   "file": "ansible/roles/openwhistle/templates/docker-compose.yml.j2",
+   "old": "\"-a\", \"${REDIS_PASSWORD:?REDIS_PASSWORD is required (empty means Redis without authentication)}\"",
+   "new": "\"-a\", \"${REDIS_PASSWORD}\"",
+   "tests": "N"
+  },
+  {
+   "id": "compose-postgres-password-optional",
+   "file": "docker-compose.prod.yml",
+   "old": "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}",
+   "new": "${POSTGRES_PASSWORD}",
+   "tests": "N"
+  },
+  {
+   "id": "ansible-db-env-file",
+   "file": "ansible/roles/openwhistle/templates/docker-compose.yml.j2",
+   "old": "    security_opt:\n      - no-new-privileges:true\n    # Not `env_file: .env`",
+   "new": "    env_file: .env\n    security_opt:\n      - no-new-privileges:true\n    # Not `env_file: .env`",
+   "tests": "N"
+  },
+  {
+   "id": "ansible-db-secret-key",
+   "file": "ansible/roles/openwhistle/templates/docker-compose.yml.j2",
+   "old": "      POSTGRES_DB: \"${POSTGRES_DB}\"\n",
+   "new": "      POSTGRES_DB: \"${POSTGRES_DB}\"\n      SECRET_KEY: \"${SECRET_KEY}\"\n",
+   "tests": "N"
+  },
+  {
+   "id": "ci-guard-no-collectreport",
+   "file": "tests/ci_skip_guard.py",
+   "old": "    _note_skip(report.nodeid, report)\n\n\ndef pytest_sessionfinish",
+   "new": "    pass\n\n\ndef pytest_sessionfinish",
+   "tests": "N"
+  },
+  {
+   "id": "ci-guard-conftest-no-collectreport",
+   "file": "tests/conftest.py",
+   "old": "    pytest_collectreport,\n",
+   "new": "",
+   "tests": "G"
+  },
+  {
+   "id": "pin-postgres-prod-floats",
+   "file": "docker-compose.prod.yml",
+   "old": "postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+   "new": "postgres:18-alpine",
+   "tests": "P"
+  },
+  {
+   "id": "pin-redis-ci-floats",
+   "file": ".github/workflows/perf.yml",
+   "old": "redis:8-alpine@sha256:3811787313eba226a2ef38658c6ccb91cd5e110edc89c37767de373120a0e5a0",
+   "new": "redis:8-alpine",
+   "tests": "P"
+  },
+  {
+   "id": "pin-postgres-j2-other-digest",
+   "file": "ansible/roles/openwhistle/templates/docker-compose.yml.j2",
+   "old": "postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873",
+   "new": "postgres:18-alpine@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+   "tests": "P"
+  },
+  {
+   "id": "renovate-compose-pin-rule",
+   "file": "renovate.json",
+   "old": "[\"dockerfile\", \"docker-compose\"]",
+   "new": "[\"dockerfile\"]",
+   "tests": "P"
+  },
+  {
+   "id": "perf-unused-host-input",
+   "file": ".github/workflows/perf.yml",
+   "old": "      run_time:\n",
+   "new": "      host:\n        description: \"Target host URL\"\n        required: false\n        default: \"http://localhost:4009\"\n      run_time:\n",
+   "tests": "N"
+  }
+ ]
+}

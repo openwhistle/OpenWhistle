@@ -114,9 +114,15 @@ from outside:
 ```bash
 skopeo inspect --raw docker://ghcr.io/openwhistle/openwhistle:X.Y.Z
 cosign verify ghcr.io/openwhistle/openwhistle:X.Y.Z \
-  --certificate-identity-regexp '^https://github.com/openwhistle/OpenWhistle/' \
+  --certificate-identity 'https://github.com/openwhistle/OpenWhistle/.github/workflows/docker-publish.yml@refs/tags/vX.Y.Z' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
+
+The identity is exact: this workflow file at **this tag**. A prefix match
+(`--certificate-identity-regexp '^https://github.com/openwhistle/OpenWhistle/'`)
+also accepts any other workflow and any branch, so an `:edge` image built from
+`main` passes it like a release. `:edge` verifies only with `@refs/heads/main`.
+The publish workflow runs the same `cosign verify` on every digest it signs.
 
 The website image (`ghcr.io/openwhistle/website`) is published and verified by
 openwhistle/website, not by this release.

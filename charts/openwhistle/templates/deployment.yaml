@@ -21,6 +21,8 @@ spec:
       labels:
         {{- include "openwhistle.selectorLabels" . | nindent 8 }}
     spec:
+      # The app talks to no Kubernetes API; a stolen token would be a way out of the pod.
+      automountServiceAccountToken: false
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -29,6 +31,8 @@ spec:
         runAsNonRoot: true
         runAsUser: 1000
         fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       volumes:
         - name: tmp
           emptyDir:
@@ -55,6 +59,16 @@ spec:
                 name: {{ include "openwhistle.fullname" . }}-config
             - secretRef:
                 name: {{ include "openwhistle.secretName" . }}
+          # The server listens only after `alembic upgrade head` (app/main.py lifespan):
+          # a slow migration would otherwise reach the liveness probe's 105 s budget
+          # and crash-loop. Liveness and readiness start once this has passed; it allows
+          # 10 minutes (60 x 10 s).
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            failureThreshold: 60
           livenessProbe:
             httpGet:
               path: /health

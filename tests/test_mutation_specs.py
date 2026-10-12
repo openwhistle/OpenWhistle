@@ -132,29 +132,60 @@ def test_the_audit_reports_red_green_and_stale(
     assert not (tmp_path / "extra.txt").exists()
 
 
-@pytest.mark.parametrize("group", [["tests/test_missing.py"], ["tests/test_a.py", "-k", "nomatch"]])
-def test_a_mutation_no_test_ran_for_is_stale_not_red(
+@pytest.mark.parametrize("code", [2, 3, 4, 5])
+def test_a_mutation_no_test_judged_is_stale_not_red(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
-    group: list[str],
+    code: int,
 ) -> None:
-    """pytest exits 4 for a test file that is gone and 5 when -k selects nothing; both
-    nonzero, so the audit reported RED - caught - although no test had run."""
+    """Only pytest exit 1 is a catch. 2 (collection error, also what a missing database
+    produces), 3, 4 (test file gone) and 5 (-k selects nothing) ran no judging test, yet
+    were all nonzero and read RED."""
+    import subprocess
+
+    from scripts import mutation_audit
+
+    (tmp_path / "a.txt").write_text("free\n")
+    spec = {
+        "test_groups": {"G": ["tests/x.py"]},
+        "mutations": [{"id": "M", "file": "a.txt", "old": "free", "new": "x", "tests": "G"}],
+    }
+    (tmp_path / "spec.json").write_text(json.dumps(spec))
+    codes = iter([0, code])  # the unmutated baseline is green, the mutated run is not
+    monkeypatch.setattr(
+        mutation_audit,
+        "pytest",
+        lambda *a: subprocess.CompletedProcess([], next(codes), "", ""),
+    )
+    monkeypatch.setattr(mutation_audit, "ROOT", tmp_path)
+    monkeypatch.setattr("sys.argv", ["mutation_audit.py", str(tmp_path / "spec.json")])
+    assert mutation_audit.main() == 1
+    assert capsys.readouterr().out.split()[1] == "STALE"
+
+
+def test_an_audit_whose_unmutated_tests_are_not_green_aborts_before_mutating(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Without the database every test errors, so every mutation 'went RED': the audit passed
+    having judged nothing. Here the guarded file is never touched."""
     from scripts import mutation_audit
 
     (tmp_path / "tests").mkdir()
     (tmp_path / "a.txt").write_text("free\n")
-    (tmp_path / "tests" / "test_a.py").write_text("def test_a():\n    pass\n")
+    (tmp_path / "tests" / "test_a.py").write_text("def test_a():\n    assert False\n")
     spec = {
-        "test_groups": {"G": group},
+        "test_groups": {"G": ["tests/test_a.py"]},
         "mutations": [{"id": "M", "file": "a.txt", "old": "free", "new": "x", "tests": "G"}],
     }
     (tmp_path / "spec.json").write_text(json.dumps(spec))
     monkeypatch.setattr(mutation_audit, "ROOT", tmp_path)
     monkeypatch.setattr("sys.argv", ["mutation_audit.py", str(tmp_path / "spec.json")])
-    assert mutation_audit.main() == 1
-    assert capsys.readouterr().out.split()[1] == "STALE"
+    assert mutation_audit.main() == 2
+    out = capsys.readouterr().out
+    assert "BASELINE G" in out
+    assert " RED " not in out
+    assert (tmp_path / "a.txt").read_text() == "free\n"
 
 
 @pytest.mark.parametrize("spec", SPECS, ids=lambda p: p.name)
@@ -192,10 +223,13 @@ def test_every_audit_run_gets_its_own_bytecode_cache(
     def run(*args: object, **kwargs: dict[str, str]) -> subprocess.CompletedProcess[str]:
         caches.append(kwargs["env"]["PYTHONPYCACHEPREFIX"])
         assert Path(caches[-1]).is_dir()
-        return subprocess.CompletedProcess([], 1, "FAILED tests/x.py::t\n", "")
+        # the first run is the unmutated baseline, which must be green
+        return subprocess.CompletedProcess(
+            [], 0 if len(caches) == 1 else 1, "FAILED tests/x.py::t\n", ""
+        )
 
     monkeypatch.setattr(mutation_audit, "ROOT", tmp_path)
     monkeypatch.setattr(mutation_audit.subprocess, "run", run)
     monkeypatch.setattr("sys.argv", ["mutation_audit.py", str(tmp_path / "spec.json")])
     assert mutation_audit.main() == 0
-    assert len(set(caches)) == 2 and not any(Path(c).exists() for c in caches)
+    assert len(set(caches)) == 3 and not any(Path(c).exists() for c in caches)
