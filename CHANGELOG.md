@@ -9,6 +9,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- An i18n coverage badge in the README: `scripts/i18n_coverage.py` measures the share of English strings each
+  language really translates, and `.github/workflows/badges.yml` publishes it as a shields.io endpoint file on
+  the `badges` branch.
 - Every image is scanned with grype — on each pull request, each pushed digest before the publish tags it,
   and `:latest` every Monday — and fails on any vulnerability that has a fix, whatever its severity. Reviewed
   exceptions live in `.grype.yaml`, each with a reason and pinned to a package version. Trivy now scans for

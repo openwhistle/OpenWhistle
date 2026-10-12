@@ -1,293 +1,137 @@
-# OpenWhistle
-
-<!-- markdownlint-disable MD033 -->
+<!-- markdownlint-disable MD033 MD041 -->
 <p align="center">
-  <img src="app/static/favicon.svg" alt="OpenWhistle Logo" width="72">
+  <img src="app/static/favicon.svg" alt="" width="88" height="88">
 </p>
-<!-- markdownlint-enable MD033 -->
 
-[![CI](https://img.shields.io/github/actions/workflow/status/openwhistle/OpenWhistle/ci.yml?label=CI&logo=github)](https://github.com/openwhistle/OpenWhistle/actions/workflows/ci.yml)
-[![Docker Build](https://img.shields.io/github/actions/workflow/status/openwhistle/OpenWhistle/docker-publish.yml?label=Docker&logo=docker)](https://github.com/openwhistle/OpenWhistle/actions/workflows/docker-publish.yml)
-[![Coverage](https://codecov.io/gh/openwhistle/OpenWhistle/graph/badge.svg)](https://codecov.io/gh/openwhistle/OpenWhistle)
-[![License](https://img.shields.io/badge/license-GPL--3.0-blue?logo=gnu)](LICENSE)
-[![Version](https://img.shields.io/github/v/release/openwhistle/OpenWhistle?logo=github)](https://github.com/openwhistle/OpenWhistle/releases)
-[![Python](https://img.shields.io/badge/python-3.14-blue?logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.139-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![PostgreSQL](https://img.shields.io/badge/postgresql-18-336791?logo=postgresql&logoColor=white)](https://postgresql.org)
-[![Redis](https://img.shields.io/badge/redis-8-DC382D?logo=redis&logoColor=white)](https://redis.io)
-[![Docker Pulls](https://img.shields.io/docker/pulls/kermit1337/openwhistle?logo=docker)](https://hub.docker.com/r/kermit1337/openwhistle)
-[![CodeQL](https://github.com/openwhistle/OpenWhistle/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/openwhistle/OpenWhistle/actions/workflows/dynamic/github-code-scanning/codeql)
-[![GitHub Sponsors](https://img.shields.io/badge/sponsor-GitHub-ea4aaa?logo=github-sponsors&logoColor=white)](https://github.com/sponsors/jp1337)
+<h1 align="center">OpenWhistle</h1>
 
-> *"Speaking up takes courage. Staying silent shouldn't be the safer option."*
+<p align="center"><em>Speaking up takes courage. Staying silent shouldn't be the safer option.</em></p>
 
-**A secure, self-hosted internal reporting channel — because every employee deserves protection.**
+<!-- One badge service, so the set shares a shape, a typeface and a logo
+     treatment. The status badges read from the workflows by file name; release,
+     licence and Python read from the repository, so none of them can drift the way
+     a hand-written version number could. The i18n badge reads the endpoint file
+     that .github/workflows/badges.yml writes to the `badges` branch. -->
+<!-- markdownlint-disable MD013 -->
+<p align="center">
+  <a href="https://github.com/openwhistle/OpenWhistle/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/openwhistle/OpenWhistle/ci.yml?branch=main&label=ci&logo=github&logoColor=white" alt="CI"></a>
+  <a href="https://github.com/openwhistle/OpenWhistle/actions/workflows/docker-publish.yml"><img src="https://img.shields.io/github/actions/workflow/status/openwhistle/OpenWhistle/docker-publish.yml?label=docker&logo=docker&logoColor=white" alt="Docker"></a>
+  <a href="https://github.com/openwhistle/OpenWhistle/actions/workflows/security.yml"><img src="https://img.shields.io/github/actions/workflow/status/openwhistle/OpenWhistle/security.yml?branch=main&label=security&logo=github&logoColor=white" alt="Security"></a>
+  <a href="https://codecov.io/gh/openwhistle/OpenWhistle"><img src="https://img.shields.io/codecov/c/github/openwhistle/OpenWhistle?logo=codecov&logoColor=white&label=coverage" alt="Coverage"></a>
+  <a href="app/locales"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fopenwhistle%2FOpenWhistle%2Fbadges%2Fi18n.json&logo=googletranslate&logoColor=white" alt="Share of UI strings translated in every language"></a>
+</p>
 
->## 🔍 Overview
+<p align="center">
+  <a href="https://github.com/openwhistle/OpenWhistle/releases/latest"><img src="https://img.shields.io/github/v/release/openwhistle/OpenWhistle?logo=github&logoColor=white&label=release" alt="Latest release"></a>
+  <a href="https://www.python.org"><img src="https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fopenwhistle%2FOpenWhistle%2Fmain%2Fpyproject.toml&logo=python&logoColor=white&label=python" alt="Python version"></a>
+  <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/github/license/openwhistle/OpenWhistle?logo=opensourceinitiative&logoColor=white&label=license&color=blue" alt="GPL-3.0"></a>
+  <a href="https://hub.docker.com/r/kermit1337/openwhistle"><img src="https://img.shields.io/docker/pulls/kermit1337/openwhistle?logo=docker&logoColor=white" alt="Docker Hub pulls"></a>
+  <a href="https://github.com/sponsors/jp1337"><img src="https://img.shields.io/badge/sponsor-GitHub-ea4aaa?logo=githubsponsors&logoColor=white" alt="Sponsor on GitHub"></a>
+</p>
 
-OpenWhistle is a self-hosted whistleblower platform that fulfils the mandatory reporting channel
-requirements under the **German Hinweisgeberschutzgesetz (HinSchG)** and **EU Directive 2019/1937**.
-Any company with 50 or more employees and all public authorities are legally required to provide
-an internal reporting channel. OpenWhistle provides a fully open source solution — free of charge,
-zero vendor lock-in, and privacy-first by design.
+<p align="center">
+  <a href="https://demo.openwhistle.net"><strong>Live demo</strong></a> ·
+  <a href="https://openwhistle.net/en/docs/"><strong>Documentation</strong></a> ·
+  <a href="CHANGELOG.md">Changelog</a>
+</p>
 
-🌐 **Live demo:** [demo.openwhistle.net](https://demo.openwhistle.net)
-📖 **Documentation:** [openwhistle.net/en/docs/](https://openwhistle.net/en/docs/)
+A self-hosted internal reporting channel that meets the German HinSchG and EU Directive 2019/1937:
+**the reporter leaves no trace — no IP address, no account, no exact time.**
 
-The website and its documentation live in [openwhistle/website](https://github.com/openwhistle/website), which
-builds them from the latest release of this repository into the image `ghcr.io/openwhistle/website` (nginx, own
-security headers, no IP in any log), served from its own server at openwhistle.net.
+Any company with 50 or more employees, and every public authority, must offer one. Free, open source, no vendor lock-in.
 
----
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/openwhistle/website/main/docs/img/screens/admin-dashboard-dark.png">
+  <img src="https://raw.githubusercontent.com/openwhistle/website/main/docs/img/screens/admin-dashboard-light.png" alt="The OpenWhistle admin dashboard: reports with their status, deadlines and category.">
+</picture>
+<!-- markdownlint-enable MD013 -->
+
+## Quick start
+
+```bash
+git clone https://github.com/openwhistle/OpenWhistle.git && cd OpenWhistle
+cp .env.example .env        # SECRET_KEY, ENCRYPTION_KEY: openssl rand -hex 32 each
+docker compose up -d
+docker compose logs app | grep "Setup token"   # then open http://localhost:4009/setup
+```
+
+Plain HTTP from another device needs `SECURE_COOKIES=false`; keep the default behind HTTPS.
+Production setup, every setting, reverse proxy: **[openwhistle.net/en/docs](https://openwhistle.net/en/docs/)**.
 
 ## ✨ Features
 
-- **Full anonymity** — No IP addresses logged at any layer. An employee submitting from the office
-  network leaves no trace. Times the reporter causes (submission, their messages, their files) are
-  stored as the day only, and no encrypted value carries its time either, so no exact time can be
-  matched to who was at their desk.
-- **Two-factor whistleblower access** — Case number + secret UUID4 PIN with brute-force protection.
-  No accounts, no email — nothing to tie the report back to a person.
-- **Multi-step submission wizard** — Guided 5–6 step form with back/next navigation and Redis-backed
-  session state. Anonymous or confidential mode selectable at step 1.
-- **Anonymous / confidential mode** — Anonymous leaves no personal data. Confidential encrypts
-  name, contact info, and optional secure email with Fernet.
-- **Identity on request** — a confidential reporter's name is hidden by default and shown only to the case
-  handler (an admin of the case's organisation while it is unassigned), after a reason that the audit log records.
-- **Multi-location / branch selection** — Optional location selector shown when the operator has
-  configured active branches or offices; full admin management UI included.
-- **Bidirectional communication** — Required by HinSchG §17. The whistleblower can reply to admin
-  messages using only their case number and PIN.
-- **HinSchG SLA tracking** — 7-day acknowledgement and 3-month feedback deadlines with days
-  remaining shown in both the admin dashboard and the whistleblower status page.
-- **Role-based access control** — `ADMIN` and `CASE_MANAGER` roles. Case managers can process
-  their assigned reports; only admins manage users, categories, and deletions. The admin sidebar
-  shows each role only the pages it may open.
-- **Case assignment** — Assign reports to any active staff member; "My Cases" dashboard filter
-  for case managers.
-- **Status workflow** — `received → in_review → pending_feedback → closed`; only valid
-  transitions allowed server-side.
-- **4-eyes deletion** — Hard deletion requires two different admins (request + confirm);
-  the same admin, or an account one of them made, gets HTTP 409. GDPR Art. 17 compliant.
-- **Audit log** — Every admin action recorded with timestamp and username, shown as readable labels
-  in all five languages; CSV export keeps the machine codes; no page edits or deletes an entry. A
-  report's own entries are deleted with the report (HinSchG §11 Abs. 5); one entry records the deletion.
-- **Search by case number or content** — Find a case by any part of its number or by a word
-  in its description or messages. Content is decrypted in memory for that request only; no
-  searchable index is stored, and the confidential name never matches.
-- **Internal notes** — Admin-only notes on cases; never visible to the whistleblower.
-- **Case linking** — Link related cases with bidirectional normalization constraint.
-- **Custom categories** — DB-driven report categories; full management UI at `/admin/categories`.
-- **PDF export** — Case export including SLA compliance section (HinSchG §17); the confidential
-  identity is left out by default and only included via the same audited reveal as the case page.
-- **Dashboard statistics** — SLA compliance rate, status distribution, category breakdown.
-- **"Signal" design system** — documented, token-driven identity ([`DESIGN.md`](DESIGN.md)); app + site, light + dark.
-- **Mandatory MFA** — TOTP (compatible with any authenticator app) required for every admin account.
-  No exceptions, no bypass.
-- **Own password, own account** — every admin changes their password on `/admin/account` with the
-  current password and a TOTP code; every other session ends. A password an admin, a superadmin
-  reset or the host set must be replaced before any other admin page opens.
-- **Self-service recovery** — admins link their own single sign-on identity; a superadmin resets a
-  lost authenticator, and the host's script resets any account, the last superadmin included.
-- **Lockout-proof whistleblower login** — a correct case number and PIN always open the case;
-  wrong guesses are counted but can never lock the rightful whistleblower out.
-- **Password-spraying alarm** — failed admin logins are counted instance-wide (no username, no IP);
-  crossing `ADMIN_FAILED_LOGIN_ALERT_THRESHOLD` sends one alert and writes an audit entry.
-- **Object-level authorization** — Every report endpoint enforces per-record access: case managers
-  see only their assigned reports, admins are scoped to their organisation. Role assignment enforces
-  privilege tiers (only superadmins grant superadmin; no self-role-change; the last admin cannot be
-  demoted away).
-- **Hardened HTTP security** — Strict, per-response nonce-based Content-Security-Policy (no
-  `unsafe-inline`), consolidated single-source security headers (HSTS, `X-Frame-Options`, nosniff),
-  and strict username validation.
-- **Absolute admin session lifetime** — An admin session can be kept alive by refreshing it, but
-  never past `SESSION_MAX_HOURS` (default 12) from login; the refresh endpoint itself requires a
-  CSRF token, not just a valid cookie.
-- **OIDC / SSO support** — Optional single sign-on via any OpenID Connect provider (Keycloak,
-  Authentik, Azure AD, Google, …), with PKCE and a verified ID token (signature, issuer,
-  audience, expiry, nonce). Each admin links their own account while signed in; TOTP is still
-  required. LDAP supports LDAPS and StartTLS (`LDAP_START_TLS`).
-- **Authenticator recovery** — a superadmin resets a lost authenticator on `/admin/users` (the
-  account gets a new temporary password and enrols a new app at the next login), or the operator runs
-  `scripts/reset_admin_password.py --reset-totp <username>`. Both end the account's sessions.
-- **File attachments** — Whistleblowers can attach evidence files (PDF, images, `.docx`, `.xlsx`,
-  CSV, TXT — up to 10 MB each, 5 per report; legacy `.doc`/`.xls` are refused, since their author
-  cannot be removed). Identifying metadata (photo GPS/EXIF, PDF and Office
-  author fields) is removed on upload, and files are encrypted with the report's own key.
-- **Optional virus scanning** — Attachments can be checked against a ClamAV `clamd` daemon before
-  they are stored (`CLAMAV_HOST`). Fail-closed: if the scanner is unreachable, the upload is
-  refused rather than stored unscanned.
-- **Internationalisation** — English, German, French, Spanish and Brazilian Portuguese UI; language
-  picker in the nav bar; a test keeps every key and placeholder present in every locale.
-- **WCAG 2.1 AA** — Skip-to-content link, ARIA labels, live regions, visible focus indicators,
-  and keyboard-accessible language picker.
-- **Setup wizard** — Web-based first-run wizard creates the initial admin account with TOTP setup.
-  No manual database steps. It asks for a one-time setup token (`SETUP_TOKEN`, or a random one
-  logged at first start), so reaching `/setup` first is not enough to own the installation.
-- **Encrypted second factor** — TOTP secrets are stored encrypted; a database dump alone yields
-  no account's second factor.
-- **Hardened containers** — read-only root file system, no capabilities, `no-new-privileges`,
-  the image's base images and the bundled nginx and ClamAV pinned by digest (PostgreSQL and Redis
-  by tag), no `curl` in the image; the Helm chart sets the same.
-- **IP leakage detection** — The admin dashboard warns when upstream proxies forward IP headers.
-- **Hard deletion** — Reports can be permanently deleted including all messages, attachments, and
-  Redis session data. DSGVO-compliant.
-- **DSGVO compliant** — All resources are self-hosted. No external CDN calls, no tracking.
-- **Multi-registry Docker** — Published to GHCR, Docker Hub, and Quay.io on every release.
-- **Health-check v2** — `/health` reports database and Redis status; suitable for Kubernetes
-  liveness and readiness probes.
-- **Version & update check** — the admin **System** page shows the installed version and,
-  when `UPDATE_CHECK_ENABLED=true`, whether a newer release is available on GitHub. Opt-in and
-  off by default; a daily background job caches the result and no instance data is sent out.
-- **Voluntary installation count** — off unless an admin agrees in the setup wizard or on the
-  **System** page: once a day a random identifier and the version go to `telemetry.wdkro.de`,
-  nothing else. `TELEMETRY_ENABLED=false` locks it off; the demo is never counted.
-- **Structured JSON logging** — `LOG_FORMAT=json` produces structured log output for aggregation
-  pipelines; `LOG_FORMAT=text` for human-readable development output.
-- **Slack / Teams webhooks** — `NOTIFY_WEBHOOK_TYPE` selects Block Kit (Slack) or Adaptive Card
-  (Teams) payload formats so no custom integration work is needed.
-- **SLA reminders** — Background scheduler automatically sends reminders when the 7-day and
-  3-month HinSchG deadlines approach; Redis dedup keys prevent duplicate notifications.
-- **S3-compatible storage** — Optional `STORAGE_BACKEND=s3` routes new attachments to any
-  S3-compatible bucket (AWS, MinIO, Hetzner Object Storage) instead of PostgreSQL BLOBs.
-  The bucket records each file's exact upload time (`LastModified`); whoever can list it sees it.
-- **LDAP / Active Directory login** — Admin accounts can authenticate via corporate LDAP;
-  first login auto-provisions the user; TOTP enrollment still required. LDAP uses python-ldap
-  (OpenLDAP client); installing from source needs `libldap2-dev libsasl2-dev` and
-  `pip install '.[ldap,s3]'`. The container image includes both.
-- **Helm chart** — Official `charts/openwhistle/` Helm chart for Kubernetes deployments.
-- **Ansible role** — Official `ansible/roles/openwhistle/` Ansible role for bare-metal / VM
-  deployments with Docker CE, systemd unit, and optional Certbot TLS.
-- **Encrypted report storage** — All report descriptions and messages are encrypted at-rest
-  using per-report envelope encryption (HKDF-SHA256 MEK + Fernet DEK); the key is never
-  stored in the database; pre-encryption rows are transparently readable (backward compat).
-- **Separate encryption key with rotation** — `ENCRYPTION_KEY` is the root of at-rest
-  encryption, independent of the session-signing `SECRET_KEY`; old keys stay readable via
-  `ENCRYPTION_KEY_PREVIOUS` while `scripts/rotate_encryption_key.py` re-encrypts under the new one.
-- **Data retention (GDPR / HinSchG)** — on by default (`RETENTION_ENABLED`): closed reports
-  are deleted `RETENTION_DAYS` days after closure (default 1095 = 3 years); satisfies
-  GDPR Art. 5(1)(e) and HinSchG §11 Abs. 5; each deletion recorded in the audit log.
-- **Batched notifications** — new reports and whistleblower messages are announced in one
-  digest every `NOTIFICATION_BATCH_MINUTES` (default 1440, once a day), so the notice's
-  timing cannot be matched to who was at their desk, and is no more precise than the stored
-  day. Webhooks (Slack, Teams, generic) carry counts only; the email to your own admins also
-  names the case numbers.
-- **Encrypted attachment names and drafts** — filenames are encrypted with the report key;
-  a submission draft in Redis is encrypted with a key held only in the whistleblower's
-  cookie; Office comment and tracked-change authors are anonymised on upload.
-- **Multi-tenancy** — `MULTI_TENANCY_ENABLED=true` lets a single deployment serve multiple
-  independent organisations with isolated data, per-tenant categories, locations, and users.
-- **Per-organisation reporting link** — with multi-tenancy, each organisation's employees report
-  at `/submit/<org-slug>`, which offers only that organisation's categories and locations and
-  files the report under it. Admins copy the link from their dashboard.
-- **Superadmin role** — New `superadmin` role above `admin` for managing organisations
-  in multi-tenant deployments; existing admin permissions are unchanged.
-- **Telephone channel compliance guide** — Admin page (`/admin/telephone-channel`) provides
-  a HinSchG § 16 Abs. 3 checklist (oral and text form), implementation options, and the
-  § 11 Abs. 2 rule that a call is recorded only with consent.
-- **TLS on by default** — the bundled nginx in `docker-compose.prod.yml` serves HTTPS out of
-  the box: copy `fullchain.pem`/`privkey.pem` into `nginx/certs/` (no symlinks; key root-owned
-  0600 or 0644), or a self-signed certificate
-  for `TLS_HOSTNAME` is generated on first start; plain HTTP only redirects. The self-signed
-  certificate is for first boot/testing only — install a real one before real users arrive, since
-  the app's HSTS header pins a browser that clicked through the warning. To renew, drop the new
-  certificate into `nginx/certs/` and run `docker compose up -d tls-init nginx` (`tls-init` is
-  one-shot; restarting `nginx` alone keeps the old certificate). Behind an external TLS
-  terminator, `docker-compose.behind-proxy.yml` makes nginx proxy plain HTTP on port 80.
-- **Tor onion address** — `ONION_LOCATION` adds an `Onion-Location` header (Tor Browser offers to
-  switch) and a note on the submit page for reporters on a monitored network; see
-  [Offering an onion address](https://openwhistle.net/en/docs/onion/).
-- **Searchable documentation** — one page per task on [openwhistle.net/en/docs](https://openwhistle.net/en/docs/),
-  searched in the browser (Pagefind, `/` key); the term itself is never sent, though the index chunks
-  the browser fetches let the host infer roughly what was searched.
-- **Compliance pages** — the EU Directive 2019/1937 and the HinSchG, duty by duty: what OpenWhistle covers, with the
-  docs page that shows it, and what stays with you ([openwhistle.net/en/compliance](https://openwhistle.net/en/compliance/)).
+Every one of them is documented on [openwhistle.net/en/docs](https://openwhistle.net/en/docs/).
 
----
+### Reporter
 
-## 🎭 Live Demo
+- **No trace** — no IP address in any log; times the reporter causes are stored as the day only
+- **Case number + UUID4 PIN** — no account, no email; a correct pair always opens the case
+- **Anonymous or confidential** — a confidential name is encrypted, shown to the case handler only on audited request
+- **Submission wizard** — guided steps, Redis-backed draft encrypted with a key only in the reporter's cookie
+- **Two-way messages** (HinSchG § 17) and **file attachments** with GPS, EXIF and author metadata stripped
+- **Optional virus scan** — ClamAV, fail-closed
+- **Tor onion address** — `ONION_LOCATION` adds the `Onion-Location` header and a note for monitored networks
 
-A live demo is available at **[demo.openwhistle.net](https://demo.openwhistle.net)**
+### Case handling
 
-| Role | Username | Password | TOTP Code |
-|---|---|---|---|
-| Admin | `demo` | `demo` | `000000` |
+- **HinSchG deadlines** — 7-day acknowledgement and 3-month feedback, tracked and reminded
+- **Status workflow** — `received → in_review → pending_feedback → closed`, validated server-side
+- **Assignment, internal notes, case linking**, search by number or content, custom categories, locations
+- **PDF export** with the SLA section; dashboard statistics
+- **Slack, Teams and email notices** — batched, counts only
+- **Telephone-channel guide** — HinSchG § 16 Abs. 3 checklist
 
-Demo case numbers and PINs are shown after logging in to the demo admin account.
-The demo resets automatically every 6 hours.
+### Accounts and security
 
----
+- **Mandatory TOTP** for every admin; secrets stored encrypted
+- **Roles** — `SUPERADMIN`, `ADMIN`, `CASE_MANAGER`, object-level authorization on every report
+- **Database, LDAP / Active Directory or OIDC login** — PKCE, verified ID token
+- **Account recovery** — own password page, authenticator reset, host script, password-spraying alarm
+- **4-eyes deletion**, audit log with CSV export, data retention (default 3 years), hard deletion
+- **Encryption at rest** — per-report envelope encryption, separate `ENCRYPTION_KEY` with rotation
+- **Hardened HTTP** — nonce-based CSP, security headers, absolute session lifetime, TLS by default
+- **Hardened containers** — read-only root, no capabilities, base images pinned by digest
 
-## 🚀 Quick Start
+### Operation
 
-```bash
-git clone https://github.com/openwhistle/OpenWhistle.git
-cd OpenWhistle
-cp .env.example .env        # SECRET_KEY, ENCRYPTION_KEY: openssl rand -hex 32 each (fresh install)
-docker compose up -d
-docker compose logs app | grep "Setup token"  # read the one-time setup token
-# Open http://localhost:4009/setup to create the first admin account
-```
+- **Web setup wizard** with one-time setup token
+- **Multi-tenancy** — isolated organisations, per-organisation reporting link
+- **S3-compatible attachment storage**, structured JSON logs, `/health` for Kubernetes probes
+- **Helm chart, Ansible role**, multi-arch images on GHCR, Docker Hub and Quay.io
+- **Update check and install count** — both opt-in, nothing about the instance is sent
+- **Five languages** — English, German, French, Spanish, Brazilian Portuguese; WCAG 2.1 AA; light and dark
+- **No external calls** — self-hosted fonts, no CDN, no tracking (GDPR)
+- **"Signal" design system** — [`DESIGN.md`](DESIGN.md)
 
-> **Accessing from other devices on the same network?**
-> Add `SECURE_COOKIES=false` to your `.env` (or `docker-compose.yml`) when the app is served over
-> plain HTTP. Browsers refuse to send `Secure` cookies over HTTP, causing session failures on
-> remote devices. Always keep `SECURE_COOKIES=true` (the default) behind HTTPS in production.
-
-For full installation instructions, environment variable reference, reverse proxy configuration,
-and administration guide, see **[openwhistle.net/en/docs/](https://openwhistle.net/en/docs/)**.
-
----
-
-## 📦 Container Images
-
-Pre-built multi-arch images (linux/amd64, linux/arm64) are published to three registries:
+## Container images
 
 | Registry | Image |
-|---|---|
+| --- | --- |
 | GitHub Container Registry | `ghcr.io/openwhistle/openwhistle` |
 | Docker Hub | `kermit1337/openwhistle` |
 | Quay.io | `quay.io/jp1337/openwhistle` |
 
-All GHCR images are signed with Cosign (keyless, Sigstore).
+Multi-arch (amd64, arm64). GHCR images are signed with Cosign; [verify them](https://openwhistle.net/en/docs/images/).
+Every image is scanned with [grype](https://github.com/anchore/grype) before it is tagged: any fixable
+vulnerability fails the build. The reviewed exceptions are in [`.grype.yaml`](.grype.yaml).
 
-Every image is scanned with [grype](https://github.com/anchore/grype) before it gets a tag, on every pull
-request, and `:latest` again every Monday: any vulnerability with a fix fails the build, whatever its
-severity. The final stage runs `apk upgrade`, so a rebuild picks up Alpine fixes the pinned base digest
-predates. The few exceptions (a fix that exists only in a newer Python line) are listed with their reason
-in [`.grype.yaml`](.grype.yaml), each pinned to a package version.
+## Live demo
 
----
+[demo.openwhistle.net](https://demo.openwhistle.net) — user `demo`, password `demo`, TOTP `000000`. Resets every 6 hours.
 
-## ⚖️ Legal Reference
+## Legal
 
-OpenWhistle is designed to comply with:
+Designed for the [HinSchG](https://www.gesetze-im-internet.de/hinschg/),
+[EU Directive 2019/1937](https://eur-lex.europa.eu/legal-content/en/TXT/?uri=CELEX%3A32019L1937) and the
+[GDPR](https://gdpr-info.eu/). The duties, one by one: [compliance pages](https://openwhistle.net/en/compliance/).
+OpenWhistle is a tool; the operator stays responsible for the deployment.
 
-- [Hinweisgeberschutzgesetz (HinSchG)](https://www.gesetze-im-internet.de/hinschg/)
-- [EU Directive 2019/1937](https://eur-lex.europa.eu/legal-content/en/TXT/?uri=CELEX%3A32019L1937)
-- [DSGVO / GDPR](https://gdpr-info.eu/)
+## Contributing
 
-> **Disclaimer:** OpenWhistle is a technical tool. Operators are responsible for ensuring
-> their deployment meets all applicable legal requirements in their jurisdiction.
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome. Please open an issue before submitting a pull request, and read
-[CONTRIBUTING.md](CONTRIBUTING.md) first. Corrections to the documentation go to
+Setup and review checklist: [CONTRIBUTING.md](CONTRIBUTING.md). Documentation changes go to
 [openwhistle/website](https://github.com/openwhistle/website).
+A vulnerability: **not** a public issue — see [SECURITY.md](SECURITY.md).
 
----
+## License
 
-## 📜 License
-
-OpenWhistle is released under the [GNU General Public License v3.0](LICENSE).
-
----
-
-## 💛 Support
-
-OpenWhistle is developed in free time. If you find it useful, consider supporting the project.
-
-[![GitHub Sponsors](https://img.shields.io/github/sponsors/jp1337?label=Sponsor)](https://github.com/sponsors/jp1337)
+GPL-3.0 — see [LICENSE](LICENSE). Developed in free time; [sponsor it](https://github.com/sponsors/jp1337) if it helps.
