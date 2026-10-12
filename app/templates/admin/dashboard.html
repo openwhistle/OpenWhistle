@@ -199,6 +199,9 @@
             {# After the buttons, on its own line: inside the field's group it pushed the buttons down to its last line. #}
             <div class="form-hint" id="dash-search-hint">{{ t('admin.search.hint') }}</div>
         </form>
+        {% if search_capped %}
+        <div class="alert alert-warning" role="status">{{ t('admin.search.capped', limit='{:,}'.format(search_capped)) }}</div>
+        {% endif %}
 
         {% set from_row = (page - 1) * per_page + 1 %}
         {% set to_row   = [page * per_page, total] | min %}

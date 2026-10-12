@@ -279,11 +279,14 @@ async def content_match_ids(
     org_id: uuid.UUID | None = None,
     scope_org: bool = False,
     read_orgs: set[uuid.UUID | None] | None = None,
+    capped: list[int] | None = None,
 ) -> list[uuid.UUID]:
     """Ids of in-scope reports whose description or messages contain ``needle``.
 
     ``read_orgs``, if given, receives the organisation of every report
     decrypted, so the search is recorded where each one's admins look.
+    ``capped``, if given, receives the limit when older in-scope reports were
+    left unsearched, so the page can say so instead of a silent "no results".
 
     Decrypted in memory for this request only; no searchable copy is stored.
     Never matches the confidential name/contact fields — those stay hidden
@@ -304,11 +307,16 @@ async def content_match_ids(
     if scope_org or org_id is not None:
         q = q.where(Report.org_id == org_id)
     rows = await db.execute(
-        q.order_by(Report.submitted_at.desc(), Report.id.desc()).limit(CONTENT_SEARCH_LIMIT)
+        q.order_by(Report.submitted_at.desc(), Report.id.desc()).limit(CONTENT_SEARCH_LIMIT + 1)
     )
+    reports = list(rows.scalars().all())
+    if len(reports) > CONTENT_SEARCH_LIMIT:
+        reports = reports[:CONTENT_SEARCH_LIMIT]
+        if capped is not None:
+            capped.append(CONTENT_SEARCH_LIMIT)
     folded = _fold(needle)
     hits = []
-    for report in rows.scalars().all():
+    for report in reports:
         if read_orgs is not None:
             read_orgs.add(report.org_id)
         description, messages = decrypt_report_fields(report)

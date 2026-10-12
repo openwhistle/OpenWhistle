@@ -183,8 +183,9 @@ async def test_superadmin_may_reveal_an_unassigned_case(
         (AdminRole.admin, True, False, 200),
         (AdminRole.superadmin, True, False, 200),
         (AdminRole.superadmin, False, False, 403),
-        # A report with no organisation belongs to no tenant: any admin may handle it.
-        (AdminRole.admin, False, True, 200),
+        # A report with no organisation is no tenant's: the case list hid it from an
+        # organisation's admin while this route let them reveal who sent it.
+        (AdminRole.admin, False, True, 404),
     ],
 )
 async def test_multi_tenant_unassigned_reveal_is_for_the_case_org_only(

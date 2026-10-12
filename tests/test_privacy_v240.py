@@ -294,6 +294,11 @@ def test_an_org_less_report_is_no_other_organisations(monkeypatch: pytest.Monkey
     assert _can_access_report(admin, report) is False
     orgless_admin = AdminUser(id=uuid.uuid4(), role=AdminRole.admin, org_id=None)
     assert _can_access_report(orgless_admin, report) is True
+    # Nor is its reporter's identity.
+    from app.api.admin import can_reveal_identity
+
+    assert can_reveal_identity(admin, report) is False
+    assert can_reveal_identity(orgless_admin, report) is True
 
 
 @pytest.mark.asyncio
@@ -372,3 +377,109 @@ async def test_an_sso_login_finishes_only_in_the_browser_that_started_it(
     resp = await client.get(f"/admin/oidc/callback?code=c&state={state}", follow_redirects=False)
     assert resp.status_code == 200 and "ow_session" not in resp.headers.get("set-cookie", "")
     token_endpoint.assert_not_called()  # refused before the code was even exchanged
+
+
+@pytest.mark.asyncio
+async def test_a_capped_content_search_says_so(client, db_session, monkeypatch) -> None:  # noqa: ANN001
+    """Past CONTENT_SEARCH_LIMIT older cases went unsearched under a plain "no results"."""
+    import uuid
+
+    import app.services.report as report_service
+    from app.models.user import AdminRole
+    from tests.test_v160_final import _csrf_of
+    from tests.test_v160_privacy import _login
+
+    await _login(client, db_session, AdminRole.superadmin)
+    word = f"Okapi{uuid.uuid4().hex[:6]}"
+    oldest, _ = await report_service.create_report(db_session, "corruption", f"Only {word}.")
+    from sqlalchemy import func, select
+
+    from app.models.report import Report
+
+    count = await db_session.scalar(select(func.count(Report.id)))  # every case in view
+    monkeypatch.setattr(report_service, "CONTENT_SEARCH_LIMIT", count)
+    page = await client.post("/admin/dashboard", data={"q": word, "csrf_token": _csrf_of(client)})
+    assert "were searched for words" not in page.text
+    await report_service.create_report(db_session, "corruption", "A newer case.")
+    page = await client.post("/admin/dashboard", data={"q": word, "csrf_token": _csrf_of(client)})
+    assert f"Only the newest {count:,} cases in this view were searched" in page.text
+    assert oldest.case_number not in page.text
+
+
+async def _legacy_attachment(db, **where):  # noqa: ANN001, ANN202
+    """A row as v1.3 left it: the bytes stored as uploaded (encrypted = false)."""
+    import uuid
+
+    from app.models.attachment import Attachment
+    from app.services.report import create_report
+
+    report, _ = await create_report(db, "corruption", "Uploaded before v1.4.0.")
+    att = Attachment(
+        id=uuid.uuid4(), report_id=report.id, filename="x", content_type="image/jpeg",
+        size=9, encrypted=False, **where,
+    )
+    db.add(att)
+    await db.commit()
+    return att
+
+
+@pytest.mark.asyncio
+async def test_migration_016_encrypts_attachments_stored_in_the_clear(throwaway_db) -> None:  # noqa: ANN001
+    import os
+    import subprocess
+
+    from sqlalchemy import select
+
+    from app.config import settings
+    from app.models.attachment import Attachment
+    from app.services.attachment import read_attachment
+
+    def alembic(*args: str) -> None:
+        env = {**os.environ, "DATABASE_URL": settings.database_url}
+        run = subprocess.run(["alembic", *args], capture_output=True, text=True, env=env)  # noqa: S603, S607
+        assert run.returncode == 0, run.stderr
+
+    alembic("downgrade", "f6b3d9e5a012")
+    att_id = (await _legacy_attachment(throwaway_db, data=b"GPS-PHOTO")).id
+    alembic("upgrade", "head")
+    throwaway_db.expire_all()
+    row = await throwaway_db.scalar(select(Attachment).where(Attachment.id == att_id))
+    assert row.encrypted and b"GPS-PHOTO" not in row.data
+    assert await read_attachment(throwaway_db, row) == b"GPS-PHOTO"
+
+
+class _Bucket:
+    def __init__(self, objects: dict[str, bytes]) -> None:
+        self.objects = objects
+
+    async def get(self, key: str) -> bytes:
+        return self.objects[key]
+
+    async def put(self, key: str, data: bytes, content_type: str) -> None:
+        self.objects[key] = data
+
+    async def copy(self, src: str, dst: str) -> None:
+        self.objects[dst] = self.objects[src]
+
+    async def delete(self, key: str) -> None:
+        self.objects.pop(key, None)
+
+
+@pytest.mark.asyncio
+async def test_the_s3_startup_job_encrypts_objects_stored_in_the_clear(
+    db_session, monkeypatch: pytest.MonkeyPatch  # noqa: ANN001
+) -> None:
+    import uuid
+
+    from app.services import attachment as att_service
+
+    key = str(uuid.uuid4())  # already a bare UUID: re-keyed by 1.5, never encrypted
+    bucket = _Bucket({key: b"GPS-PHOTO"})
+    monkeypatch.setattr(att_service, "_storage", lambda: bucket)
+    monkeypatch.setattr("app.services.storage.get_storage_backend", lambda: bucket)
+    att = await _legacy_attachment(db_session, storage_key=key)
+    await att_service.rekey_legacy_objects(db_session)
+    await db_session.refresh(att)
+    assert att.encrypted and att.storage_key != key and key not in bucket.objects
+    assert b"GPS-PHOTO" not in bucket.objects[att.storage_key]
+    assert await att_service.read_attachment(db_session, att) == b"GPS-PHOTO"

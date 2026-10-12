@@ -876,13 +876,15 @@ def _storage() -> StorageBackend:
 
 
 async def rekey_legacy_objects(db: AsyncSession) -> int:
-    """Move objects stored before v1.5.0 (keys carrying the filename) to bare UUIDs.
+    """Move objects stored before v1.5.0 (keys carrying the filename) to bare UUIDs,
+    and encrypt those stored before v1.4.0, which nothing used to encrypt later.
 
-    Copy first, then point the row at the copy, then delete the old object, so
+    Write first, then point the row at the new object, then delete the old one, so
     no step can lose a file. A failure leaves that row as it was for the next run.
     """
     import logging  # noqa: PLC0415
 
+    from app.services.encryption import make_report_fernet  # noqa: PLC0415
     from app.services.storage import generate_storage_key  # noqa: PLC0415
 
     log = logging.getLogger(__name__)
@@ -891,15 +893,21 @@ async def rekey_legacy_objects(db: AsyncSession) -> int:
     moved = 0
     for att in rows.scalars().all():
         old = att.storage_key or ""
-        if _UUID_KEY.fullmatch(old):
+        if _UUID_KEY.fullmatch(old) and att.encrypted:
             continue
         new = generate_storage_key()
         try:
-            await backend.copy(old, new)
+            if att.encrypted:
+                await backend.copy(old, new)
+            else:
+                dek = await db.scalar(select(Report.encrypted_dek).where(Report.id == att.report_id))
+                sealed = seal(make_report_fernet(dek or ""), await backend.get(old))
+                await backend.put(new, sealed, att.content_type)
         except Exception:  # noqa: BLE001
             log.warning("Could not re-key attachment %s; retried at next start", att.id)
             continue
         att.storage_key = new
+        att.encrypted = True
         await db.commit()
         try:
             await backend.delete(old)

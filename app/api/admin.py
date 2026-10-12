@@ -129,9 +129,8 @@ def can_reveal_identity(user: AdminUser, report: Report) -> bool:
         return report.assigned_to_id == user.id
     if user.role not in {AdminRole.admin, AdminRole.superadmin}:
         return False
-    return (
-        not settings.multi_tenancy_enabled or report.org_id is None or user.org_id == report.org_id
-    )
+    # An org-less case is no other organisation's, as in _can_access_report.
+    return not settings.multi_tenancy_enabled or user.org_id == report.org_id
 
 
 _REASON_MIN, _REASON_MAX = 10, 500
@@ -259,6 +258,7 @@ async def _dashboard(
     # CONTENT_SEARCH_LIMIT budget is spent on the caller's current view rather
     # than every status/location outside it.
     read_orgs: set[uuid.UUID | None] = set()
+    search_capped: list[int] = []
     content_ids = (
         await report_service.content_match_ids(
             db,
@@ -267,6 +267,7 @@ async def _dashboard(
             location_id=location_filter,
             status_filter=status_filter,
             read_orgs=read_orgs,
+            capped=search_capped,
             **_org_scope(current_user),
         )
         if len(case_query) >= 3
@@ -371,6 +372,7 @@ async def _dashboard(
             "sort_dir": sort_dir,
             "status_filter": status_filter or "",
             "case_query": case_query,
+            "search_capped": search_capped[0] if search_capped else 0,
             "per_page_options": [10, 25, 50, 100],
             "my_cases": my_cases,
             "all_locations": all_locations,
