@@ -1150,7 +1150,7 @@ async def status_get(
     _raw = request.cookies.get("ow-status-session")
     session_key: str | None = _raw if _raw and _SESSION_KEY_RE.fullmatch(_raw) else None
     if session_key:
-        report_id_str = await redis.get(f"status-session:{session_key}")
+        report_id_str = await redis.get(report_service.status_session_key(session_key))
         if report_id_str:
             decoded_id = (
                 report_id_str.decode() if isinstance(report_id_str, bytes) else report_id_str
@@ -1216,7 +1216,7 @@ async def status_post(
         )
 
     status_session_key = secrets.token_urlsafe(32)
-    await redis.set(f"status-session:{status_session_key}", str(report.id), ex=7200)
+    await redis.set(report_service.status_session_key(status_session_key), str(report.id), ex=7200)
 
     response = RedirectResponse("/status", status_code=303)
     response.set_cookie(
@@ -1247,7 +1247,7 @@ async def reply_post(
     report = None
 
     if status_session_key:
-        report_id_str = await redis.get(f"status-session:{status_session_key}")
+        report_id_str = await redis.get(report_service.status_session_key(status_session_key))
         if report_id_str:
             decoded_id = (
                 report_id_str.decode() if isinstance(report_id_str, bytes) else report_id_str
@@ -1271,7 +1271,9 @@ async def reply_post(
                 else status.HTTP_401_UNAUTHORIZED
             )
         status_session_key = secrets.token_urlsafe(32)
-        await redis.set(f"status-session:{status_session_key}", str(report.id), ex=7200)
+        await redis.set(
+            report_service.status_session_key(status_session_key), str(report.id), ex=7200
+        )
 
     stripped = content.strip()
     if not stripped:
@@ -1290,11 +1292,13 @@ async def reply_post(
     # the session either (see status_get).
     remaining = 7200
     if status_session_key:
-        remaining = max(1, int(await redis.ttl(f"status-session:{status_session_key}")))
+        remaining = max(
+            1, int(await redis.ttl(report_service.status_session_key(status_session_key)))
+        )
     fresh_key = secrets.token_urlsafe(32)
-    await redis.set(f"status-session:{fresh_key}", str(report.id), ex=remaining)
+    await redis.set(report_service.status_session_key(fresh_key), str(report.id), ex=remaining)
     if status_session_key:
-        await redis.delete(f"status-session:{status_session_key}")
+        await redis.delete(report_service.status_session_key(status_session_key))
 
     response = RedirectResponse(
         "/status?replied=closed" if closed else "/status?replied=1", status_code=303
@@ -1319,7 +1323,7 @@ async def status_logout(
     _raw = request.cookies.get("ow-status-session")
     session_key: str | None = _raw if _raw and _SESSION_KEY_RE.fullmatch(_raw) else None
     if session_key:
-        await redis.delete(f"status-session:{session_key}")
+        await redis.delete(report_service.status_session_key(session_key))
     response = RedirectResponse("/status", status_code=303)
     response.delete_cookie(
         "ow-status-session", httponly=True, samesite="lax", secure=cookie_secure(request)
@@ -1338,7 +1342,7 @@ async def whistleblower_download_attachment(
     if not session_key:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-    report_id_str = await redis.get(f"status-session:{session_key}")
+    report_id_str = await redis.get(report_service.status_session_key(session_key))
     if not report_id_str:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 

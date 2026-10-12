@@ -14,6 +14,7 @@ from pypdf import PdfWriter
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.attachment import MetadataError, strip_metadata
+from app.services.report import status_session_key
 
 
 def _exif_jpeg() -> bytes:
@@ -232,7 +233,7 @@ async def test_whistleblower_downloads_decrypted_attachment(
 
     session_key = uuid.uuid4().hex
     redis = Redis.from_url(settings.redis_url)
-    await redis.set(f"status-session:{session_key}", str(report.id), ex=60)
+    await redis.set(status_session_key(session_key), str(report.id), ex=60)
     await redis.aclose()
 
     ac.cookies.set("ow-status-session", session_key)

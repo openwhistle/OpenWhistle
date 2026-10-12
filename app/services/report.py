@@ -363,6 +363,19 @@ async def get_report_by_credentials(
     return result.scalar_one_or_none()
 
 
+def status_session_key(token: str) -> str:
+    """The Redis key of a whistleblower status session: an HMAC of its cookie value,
+    never the value itself, so whoever reads Redis holds no session to open a case
+    with (the failure counters are hashed for the same reason)."""
+    import hashlib  # noqa: PLC0415
+    import hmac  # noqa: PLC0415
+
+    from app.config import settings  # noqa: PLC0415
+
+    digest = hmac.new(settings.secret_key.encode(), token.encode(), hashlib.sha256).hexdigest()
+    return f"status-session:{digest}"
+
+
 async def end_status_sessions(redis: Redis, report_ids: set[uuid.UUID]) -> None:
     """Delete every whistleblower status session of these reports.
 

@@ -214,3 +214,35 @@ async def test_the_setup_wizards_code_cannot_sign_in_again(
     user = await throwaway_db.scalar(select(AdminUser).where(AdminUser.username == "firstadmin"))
     assert user is not None
     assert await consume_totp(await get_redis(), user.id, secret, code) is False
+
+
+# ── Redis holds no reporter's session token ─────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_redis_holds_no_status_session_token(
+    client: object, db_session: AsyncSession
+) -> None:
+    """The status session was stored under its own cookie value: anyone who could read
+    Redis could open the reporter's case and reply as them for two hours. The failure
+    counters were already hashed so "a Redis dump does not list which cases"."""
+    from app.redis_client import get_redis
+    from app.services.report import create_report
+
+    report, pin = await create_report(db_session, "financial_fraud", "Whose session is this.")
+    page = await client.get("/status")  # type: ignore[attr-defined]
+    await client.post(  # type: ignore[attr-defined]
+        "/status",
+        data={
+            "case_number": report.case_number,
+            "pin": pin,
+            "csrf_token": page.cookies.get("ow_csrf"),
+        },
+        follow_redirects=False,
+    )
+    token = client.cookies.get("ow-status-session")  # type: ignore[attr-defined]
+    assert token
+    redis = await get_redis()
+    keys = [k async for k in redis.scan_iter(match="status-session:*")]
+    assert keys and not any(token in (k.decode() if isinstance(k, bytes) else k) for k in keys)
+    assert (await client.get("/status")).text.count(report.case_number) >= 1  # type: ignore[attr-defined]

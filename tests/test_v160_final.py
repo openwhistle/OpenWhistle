@@ -10,6 +10,8 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
+from app.services.report import status_session_key
+
 _ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -510,7 +512,7 @@ async def test_status_view_does_not_extend_the_session(client, db_session) -> No
         follow_redirects=False,
     )
     assert login.status_code == 303
-    key = f"status-session:{client.cookies.get('ow-status-session')}"
+    key = status_session_key(client.cookies.get("ow-status-session"))
     redis = await get_redis()
     await redis.expire(key, 100)
     assert (await client.get("/status")).status_code == 200
@@ -557,7 +559,7 @@ async def test_reply_rotates_the_session_without_extending_it(client, db_session
     )
     old = client.cookies.get("ow-status-session")
     redis = await get_redis()
-    await redis.expire(f"status-session:{old}", 100)
+    await redis.expire(status_session_key(old), 100)
     reply = await client.post(
         "/reply",
         data={"content": "One more detail.", "csrf_token": client.cookies.get("ow_csrf")},
@@ -566,7 +568,7 @@ async def test_reply_rotates_the_session_without_extending_it(client, db_session
     assert reply.status_code == 303
     new = client.cookies.get("ow-status-session")
     assert new != old
-    assert 0 < await redis.ttl(f"status-session:{new}") <= 100
+    assert 0 < await redis.ttl(status_session_key(new)) <= 100
 
 
 # --- one fallback for a category without a label ------------------------------------

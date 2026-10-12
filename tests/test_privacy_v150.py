@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.attachment import Attachment
 from app.models.report import Report
 from app.services.attachment import strip_metadata
+from app.services.report import status_session_key
 
 # ── Office: comment and tracked-change authors, thumbnails ────────────────────
 
@@ -239,7 +240,7 @@ async def test_status_page_download_and_pdf_show_the_decrypted_filename(
     report, att = await _report_with_named_attachment(db_session)
     session_key = uuid.uuid4().hex
     redis = Redis.from_url(settings.redis_url)
-    await redis.set(f"status-session:{session_key}", str(report.id), ex=60)
+    await redis.set(status_session_key(session_key), str(report.id), ex=60)
     await redis.aclose()
     client.cookies.set("ow-status-session", session_key)
 

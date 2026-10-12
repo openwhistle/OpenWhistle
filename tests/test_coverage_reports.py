@@ -35,6 +35,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.i18n import _SUPPORTED
+from app.services.report import status_session_key
 
 # ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -425,7 +426,7 @@ async def test_status_logout_deletes_redis_session_key(
     assert resp.status_code == 303
 
     redis = await get_redis()
-    assert await redis.get(f"status-session:{session_key}") is None
+    assert await redis.get(status_session_key(session_key)) is None
 
 
 @pytest.mark.asyncio
@@ -825,7 +826,7 @@ async def test_status_naive_submitted_at_is_treated_as_utc(
 
     redis = Redis.from_url(settings.redis_url, decode_responses=True)
     session_key = "naive" + secrets.token_urlsafe(16)
-    await redis.set(f"status-session:{session_key}", str(report.id), ex=60)
+    await redis.set(status_session_key(session_key), str(report.id), ex=60)
     await redis.aclose()
     client.cookies.set("ow-status-session", session_key)
 
