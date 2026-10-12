@@ -249,6 +249,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 return;
             }
+            // A download answers with a file and the page stays: locking the form
+            // would leave it dead until a reload.
+            if (e.submitter && e.submitter.hasAttribute('data-download')) return;
             form.dataset.owSubmitting = '1';
             // Mark the button that was actually clicked — not the first submit
             // button in the form, which on the wizard steps is "Back".
