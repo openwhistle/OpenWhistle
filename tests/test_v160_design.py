@@ -1243,7 +1243,10 @@ async def test_stats_page_writes_percentages_in_the_admins_language(
     from app.services.report import create_report
 
     await _login(client, db_session, AdminRole.admin)
-    await create_report(db_session, "corruption", "A case for the percentage check.")
+    report, _ = await create_report(db_session, "corruption", "A case for the percentage check.")
+    # Acknowledged, so the SLA card has a rate of its own: a report received today is not
+    # decided yet, and the card would only show one when another test left a report behind.
+    report.acknowledged_at = report.submitted_at
     await db_session.commit()
     client.cookies.set("ow-lang", "de")
     html = (await client.get("/admin/stats")).text
