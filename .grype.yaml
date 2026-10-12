@@ -1,0 +1,23 @@
+# Reviewed exceptions to the image scan (security.yml, docker-publish.yml), which
+# fails on every vulnerability that has a fix. Each entry names the exact package
+# version: when the package moves, the entry stops matching and the new version is
+# judged afresh, so an exception expires by itself. tests/test_image_scan.py
+# requires a reason and a version on every entry.
+ignore:
+  - vulnerability: CVE-2025-15367
+    package:
+      name: python
+      version: 3.14.8
+      type: binary
+    reason: >-
+      poplib command injection. Fixed in 3.15 only; 3.14.8 is the newest python:3.14-alpine
+      and has no fix (no control-character check in poplib). Nothing in the image imports poplib.
+  - vulnerability: CVE-2026-12345
+    package:
+      name: python
+      version: 3.14.8
+      type: binary
+    reason: >-
+      tempfile.TemporaryDirectory cleanup race. Fixed in 3.15.0rc3 only. The app never creates
+      one; the only caller in the image (pypdf's JBIG2 filter) needs a jbig2dec binary the image
+      does not have, and the race needs a local attacker writing into that directory.

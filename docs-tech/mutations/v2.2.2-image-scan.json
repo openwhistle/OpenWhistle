@@ -1,0 +1,124 @@
+{
+ "test_groups": {
+  "I": [
+   "tests/test_image_scan.py"
+  ],
+  "P": [
+   "tests/test_build_pins.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "final-stage-apk-upgrade",
+   "file": "Dockerfile",
+   "old": "RUN apk upgrade --no-cache \\\n    && apk add --no-cache \\",
+   "new": "RUN apk add --no-cache \\",
+   "tests": "I"
+  },
+  {
+   "id": "scan-build-no-cache",
+   "file": ".github/workflows/security.yml",
+   "old": "          no-cache-filters: final\n",
+   "new": "",
+   "tests": "I"
+  },
+  {
+   "id": "publish-build-no-cache",
+   "file": ".github/workflows/docker-publish.yml",
+   "old": "          no-cache-filters: final\n",
+   "new": "",
+   "tests": "I"
+  },
+  {
+   "id": "pr-scan-fail-on",
+   "file": ".github/workflows/security.yml",
+   "old": "docker:openwhistle:scan --config .grype.yaml --only-fixed --fail-on negligible",
+   "new": "docker:openwhistle:scan --config .grype.yaml --only-fixed --fail-on high",
+   "tests": "I"
+  },
+  {
+   "id": "pr-scan-exceptions-file",
+   "file": ".github/workflows/security.yml",
+   "old": "docker:openwhistle:scan --config .grype.yaml --only-fixed",
+   "new": "docker:openwhistle:scan --only-fixed",
+   "tests": "I"
+  },
+  {
+   "id": "published-scan-fail-on",
+   "file": ".github/workflows/security.yml",
+   "old": "openwhistle:latest --config .grype.yaml --only-fixed --fail-on negligible",
+   "new": "openwhistle:latest --config .grype.yaml --only-fixed",
+   "tests": "I"
+  },
+  {
+   "id": "published-scans-latest",
+   "file": ".github/workflows/security.yml",
+   "old": "registry:ghcr.io/openwhistle/openwhistle:latest ",
+   "new": "registry:ghcr.io/openwhistle/openwhistle:edge ",
+   "tests": "I"
+  },
+  {
+   "id": "publish-scan-step",
+   "file": ".github/workflows/docker-publish.yml",
+   "old": "      - name: Scan the pushed image\n        uses: docker://anchore/grype:v0.120.1@sha256:e4a44ef45d285b829ce6efe2642980329661bd2d18eab5fc539138d4adaebbbe\n        with:\n          args: >-\n            registry:${{ env.GHCR_IMAGE }}@${{ steps.build.outputs.digest }} --platform ${{ matrix.platform }}\n            --config .grype.yaml --only-fixed --fail-on negligible\n\n",
+   "new": "",
+   "tests": "I"
+  },
+  {
+   "id": "publish-scans-pushed-digest",
+   "file": ".github/workflows/docker-publish.yml",
+   "old": "registry:${{ env.GHCR_IMAGE }}@${{ steps.build.outputs.digest }}",
+   "new": "registry:${{ env.GHCR_IMAGE }}:edge",
+   "tests": "I"
+  },
+  {
+   "id": "publish-scan-platform",
+   "file": ".github/workflows/docker-publish.yml",
+   "old": " --platform ${{ matrix.platform }}\n",
+   "new": "\n",
+   "tests": "I"
+  },
+  {
+   "id": "publish-fail-on",
+   "file": ".github/workflows/docker-publish.yml",
+   "old": "            --config .grype.yaml --only-fixed --fail-on negligible\n",
+   "new": "            --config .grype.yaml --only-fixed\n",
+   "tests": "I"
+  },
+  {
+   "id": "grype-pinned-by-digest",
+   "file": ".github/workflows/docker-publish.yml",
+   "old": "uses: docker://anchore/grype:v0.120.1@sha256:e4a44ef45d285b829ce6efe2642980329661bd2d18eab5fc539138d4adaebbbe",
+   "new": "uses: docker://anchore/grype:v0.120.1",
+   "tests": "P"
+  },
+  {
+   "id": "trivy-secrets-only",
+   "file": ".github/workflows/security.yml",
+   "old": "          scanners: secret\n",
+   "new": "          scanners: vuln,secret\n",
+   "tests": "I"
+  },
+  {
+   "id": "scan-on-publish",
+   "file": ".github/workflows/security.yml",
+   "old": "  workflow_call:\n",
+   "new": "",
+   "tests": "I"
+  },
+  {
+   "id": "exception-has-reason",
+   "file": ".grype.yaml",
+   "old": "    reason: >-\n      poplib",
+   "new": "    note: >-\n      poplib",
+   "tests": "I"
+  },
+  {
+   "id": "exception-has-version",
+   "file": ".grype.yaml",
+   "old": "      version: 3.14.8\n      type: binary\n    reason: >-\n      poplib",
+   "new": "      type: binary\n    reason: >-\n      poplib",
+   "tests": "I"
+  }
+ ]
+}

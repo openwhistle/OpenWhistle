@@ -159,7 +159,8 @@ def test_every_workflow_action_is_pinned_by_commit_sha() -> None:
     compromised upstream tag could silently repoint. `docker/*-action`,
     `actions/*`, and third-party actions (e.g. `aquasecurity/trivy-action`,
     `DavidAnson/markdownlint-cli2-action`) are all covered; this repository's own
-    (`uses: $/...`) is pinned to the running commit by GitHub and is exempt. The
+    (`uses: $/...`) is pinned to the running commit by GitHub and is exempt; an
+    inline `docker://` image names its tag and its digest. The
     workspace-relative `./...` loads whatever the job's checkout holds: zizmor
     (self-repository) and this test refuse it."""
     pattern = re.compile(r"^(\s*-?\s*)?uses:\s*(\S+)\s*(#.*)?$", re.M)
@@ -169,10 +170,13 @@ def test_every_workflow_action_is_pinned_by_commit_sha() -> None:
         text = wf.read_text()
         for _prefix, ref, comment in pattern.findall(text):
             refs.append(ref)
-            if ref.startswith("$/") or ref.startswith("docker://"):
-                continue  # this repository at this commit, or an inline image
+            if ref.startswith("$/"):
+                continue  # this repository at this commit
             bad = []
-            if not re.search(r"@[0-9a-f]{40}$", ref):
+            if ref.startswith("docker://"):
+                if not re.search(r":[\w.\-]+@sha256:[0-9a-f]{64}$", ref):
+                    bad.append(f"{ref!r} is not a tag pinned by digest")
+            elif not re.search(r"@[0-9a-f]{40}$", ref):
                 bad.append(f"{ref!r} is not pinned to a 40-hex commit SHA")
             elif not re.fullmatch(r"#\s*v[\w.]+\s*", comment):
                 bad.append(f"{ref!r} has no '# vX' version comment")
@@ -217,6 +221,7 @@ def test_security_workflow_audits_dependencies_and_the_image() -> None:
         "schedule:",
         "pip-audit",
         "aquasecurity/trivy-action@",
+        "docker://anchore/grype:",
         "--all-extras",
     )
     for needle in needles:
