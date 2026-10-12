@@ -246,3 +246,32 @@ async def test_redis_holds_no_status_session_token(
     keys = [k async for k in redis.scan_iter(match="status-session:*")]
     assert keys and not any(token in (k.decode() if isinstance(k, bytes) else k) for k in keys)
     assert (await client.get("/status")).text.count(report.case_number) >= 1  # type: ignore[attr-defined]
+
+
+# ── A percent-encoded database password migrates ───────────────────────────
+
+
+def test_migrations_run_with_a_percent_encoded_password() -> None:
+    """migrations/env.py handed DATABASE_URL to Alembic's ConfigParser, which reads
+    "%" as interpolation: a password with a reserved character, which the Ansible role
+    percent-encodes (env.j2), stopped `alembic upgrade head` and so the app's start
+    ("invalid interpolation syntax"). "%65" decodes to "e": the same password."""
+    import os
+    import re
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    url = os.environ["DATABASE_URL"]
+    user_pw = re.match(r"(postgresql\+asyncpg://[^:]+:)([^@]+)(@.*)", url)
+    assert user_pw and "e" in user_pw[2]
+    encoded = user_pw[1] + user_pw[2].replace("e", "%65", 1) + user_pw[3]
+    result = subprocess.run(  # noqa: S603
+        [sys.executable, "-m", "alembic", "current"],
+        cwd=Path(__file__).parents[1],
+        env={**os.environ, "DATABASE_URL": encoded},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr[-500:]
