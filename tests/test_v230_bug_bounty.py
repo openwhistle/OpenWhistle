@@ -412,3 +412,60 @@ def test_the_session_countdown_is_not_read_out_every_second() -> None:
     base = (Path(__file__).parents[1] / "app/templates/base.html").read_text()
     countdown = re.search(r'<strong id="session-expiry-countdown"[^>]*>', base)
     assert countdown and 'aria-live="off"' in countdown[0]
+
+
+# ── Switching the language stays on the page ───────────────────────────────
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("next_url", "lands"),
+    [
+        (
+            "/admin/reports/5f0c2a1e-0000-4000-8000-000000000001",
+            "/admin/reports/5f0c2a1e-0000-4000-8000-000000000001",
+        ),
+        ("/admin/users?page=2", "/admin/users?page=2"),
+        ("//evil.example/x", "/submit"),
+        ("https://evil.example/", "/submit"),
+        ("/\\evil.example", "/submit"),
+        ("/admin/\\\\evil", "/admin/dashboard"),
+    ],
+)
+async def test_a_language_switch_returns_to_the_same_page(
+    client: object, next_url: str, lands: str
+) -> None:
+    """Outside a six-path allowlist every admin page sent the switch to the dashboard: an
+    admin reading a case or the users page lost their place. Any path on this host is
+    fine; another host never is."""
+    page = await client.get("/submit")  # type: ignore[attr-defined]
+    resp = await client.post(  # type: ignore[attr-defined]
+        "/set-language",
+        data={"lang": "de", "next": next_url, "csrf_token": page.cookies.get("ow_csrf")},
+        follow_redirects=False,
+    )
+    assert resp.status_code == 303 and resp.headers["location"] == lands
+
+
+@pytest.mark.asyncio
+async def test_the_mfa_step_offers_no_language_switch_that_loses_it(
+    client: object, db_session: AsyncSession
+) -> None:
+    """The authenticator step is the answer to a POST: a switch sent the admin back to
+    /admin/login and the password had to be typed again."""
+    from tests.test_coverage_admin_extended import _create_admin
+
+    admin, _ = await _create_admin(db_session)
+    page = await client.get("/admin/login")  # type: ignore[attr-defined]
+    html = (
+        await client.post(  # type: ignore[attr-defined]
+            "/admin/login",
+            data={
+                "username": admin.username,
+                "password": "AdminExt!Pass1",
+                "csrf_token": page.cookies.get("ow_csrf"),
+            },
+        )
+    ).text
+    assert 'name="totp_code"' in html
+    assert 'action="/set-language"' not in html

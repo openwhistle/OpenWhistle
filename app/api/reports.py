@@ -57,16 +57,6 @@ _SUBMISSION_TTL = 7200
 # whistleblower's browser, so Redis (or a dump of it) holds nothing readable.
 _DRAFT_COOKIE_RE = re.compile(r"[A-Za-z0-9_-]{43}\.[A-Za-z0-9_-]{43}")
 
-_NEXT_ALLOWLIST: dict[str, str] = {
-    "/submit": "/submit",
-    "/status": "/status",
-    "/admin/login": "/admin/login",
-    "/admin/dashboard": "/admin/dashboard",
-    "/admin/mfa/setup": "/admin/mfa/setup",
-    "/setup": "/setup",
-}
-# An organisation's wizard, /submit/<slug> (slugs are [a-z0-9-], see create_organisation).
-_ORG_SUBMIT_RE = re.compile(r"/submit/([a-z0-9-]{1,64})")
 
 # Steps: mode → location (conditional) → category → description → attachments → review
 _STEP_MODE = 1
@@ -547,14 +537,20 @@ async def set_language(
     _csrf: None = Depends(validate_csrf),
 ) -> RedirectResponse:
     safe_lang = {"en": "en", "de": "de", "fr": "fr", "es": "es", "pt-br": "pt-br"}.get(lang, "en")
+    # Back to the same page, on this host only: a path, never "//host" or "/\\host",
+    # which browsers read as another host.
     parsed = urlsplit(next_url)
-    safe_path = _NEXT_ALLOWLIST.get(parsed.path)
-    if safe_path is None and (org_path := _ORG_SUBMIT_RE.fullmatch(parsed.path)):
-        safe_path = f"/submit/{org_path.group(1)}"
-    if safe_path is None:
-        safe_url = "/admin/dashboard" if parsed.path.startswith("/admin/") else "/submit"
+    on_this_host = (
+        not parsed.scheme
+        and not parsed.netloc
+        and parsed.path.startswith("/")
+        and not parsed.path.startswith("//")
+        and "\\" not in next_url
+    )
+    if on_this_host:
+        safe_url = parsed.path + (f"?{parsed.query}" if parsed.query else "")
     else:
-        safe_url = safe_path + (f"?{parsed.query}" if parsed.query else "")
+        safe_url = "/admin/dashboard" if parsed.path.startswith("/admin/") else "/submit"
     response = RedirectResponse(safe_url, status_code=303)
     response.set_cookie(
         "ow-lang",

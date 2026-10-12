@@ -133,38 +133,6 @@ async def _login_whistleblower(client: AsyncClient, case_number: str, pin: str) 
 
 
 @pytest.mark.asyncio
-async def test_set_language_admin_subpath_falls_back_to_dashboard(
-    client: AsyncClient,
-) -> None:
-    """/admin/reports/... is not in the allowlist, so it should fall back to /admin/dashboard."""
-    resp = await client.post(
-        "/set-language",
-        data={
-            "csrf_token": await _lang_csrf(client),
-            "lang": "de",
-            "next": "/admin/reports/some-id",
-        },
-        follow_redirects=False,
-    )
-    assert resp.status_code == 303
-    assert resp.headers["location"].endswith("/admin/dashboard")
-
-
-@pytest.mark.asyncio
-async def test_set_language_unknown_path_falls_back_to_submit(
-    client: AsyncClient,
-) -> None:
-    """An unknown path (not /admin/*) falls back to /submit."""
-    resp = await client.post(
-        "/set-language",
-        data={"csrf_token": await _lang_csrf(client), "lang": "en", "next": "/some-unknown-path"},
-        follow_redirects=False,
-    )
-    assert resp.status_code == 303
-    assert resp.headers["location"].endswith("/submit")
-
-
-@pytest.mark.asyncio
 async def test_set_language_exact_allowlist_path_is_preserved(
     client: AsyncClient,
 ) -> None:

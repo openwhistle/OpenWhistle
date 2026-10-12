@@ -76,6 +76,8 @@
         </ul>
 
         <ul class="nav-tools" role="list">
+            {#- A page a POST made (the authenticator step) cannot be fetched again: no switch. -#}
+            {% if request.method == 'GET' %}
             <li>
                 <details class="lang-picker" id="lang-picker">
                     <summary class="lang-picker-btn">
@@ -99,6 +101,7 @@
                     </ul>
                 </details>
             </li>
+            {% endif %}
             <li>
                 <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false"
                         aria-label="{{ t('nav.toggle_theme') }}" title="{{ t('nav.toggle_theme') }}">
