@@ -36,14 +36,23 @@ from app.services.pin import generate_case_number, generate_pin
 
 
 async def default_org_id(db: AsyncSession) -> uuid.UUID | None:
-    """Return the ID of the default organisation, or None if not found."""
+    """The default organisation's ID; the oldest organisation when the slug names none.
+
+    The fallback is migration 011's: a report or account filed under no organisation
+    belonged to none, and with multi-tenancy on, no organisation's admins could handle
+    it. None only before setup has created any organisation.
+    """
     from app.config import settings
 
-    result = await db.execute(
+    named = await db.scalar(
         select(Organisation.id).where(Organisation.slug == settings.default_org_slug).limit(1)
     )
-    row = result.scalar_one_or_none()
-    return row
+    if named is not None:
+        return named
+    oldest: uuid.UUID | None = await db.scalar(
+        select(Organisation.id).order_by(Organisation.created_at, Organisation.id).limit(1)
+    )
+    return oldest
 
 
 async def active_default_org_id(db: AsyncSession) -> uuid.UUID | None:

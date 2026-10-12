@@ -709,6 +709,37 @@ Not separable by the four-eyes rule, and documented as such: two accounts made b
 creates them knows both first passwords; the rule refuses only an account's own maker (or whoever reset it)
 as its second pair of eyes.
 
+## Bug bounty after v2.3.0
+
+Promises against delivery, privacy first. Mutations: `docs-tech/mutations/v2.4.0-bug-bounty.json`.
+Tests: `tests/test_privacy_v240.py` unless named.
+
+| Guard | Test that fires |
+| --- | --- |
+| A PDF's JPEG behind a second filter, JPEG 2000 boxes, a bare codestream's comments are cleaned | `test_pdf_jpeg_behind_a_flate_filter_loses_its_exif`, `test_pdf_jpeg2000_loses_its_metadata_boxes`, `test_bare_jpeg2000_codestream_loses_its_comment` |
+| A PDF signature (signer, certificate, time), `/Perms`, `/DSS` and `/LastModified` go | `test_pdf_signature_does_not_name_the_signer`, `test_pdf_last_modified_is_removed` |
+| Office printer settings go with their references; edit times, pivot refresher, connection accounts, mail merge, home shares are neutral | `test_xlsx_printer_settings_are_dropped_and_unreferenced`, `test_docx_printer_settings_element_goes_with_its_part`, `test_office_edit_times_and_accounts_are_neutral` |
+| A refused reply notice logs the error type only | `test_refused_reply_notice_does_not_log_the_reporters_address` |
+| Helm: `/tmp` in memory, ingress without request buffering | `test_a_report_body_never_touches_a_disk` (`tests/test_helm_chart.py`) |
+| Every compose container: read-only root, `cap_drop: ALL`, `no-new-privileges` | `test_every_container_runs_hardened` |
+| An org-less case is no other organisation's (case page, identity); none is filed or left (migration 017) | `test_an_org_less_report_is_no_other_organisations`, `test_a_report_always_belongs_to_an_organisation`, `test_migration_017_gives_org_less_reports_an_organisation` |
+| A PIN in capitals opens the case | `test_a_pin_typed_in_capitals_opens_the_case` |
+| Draft and status cookies end with the browser | `test_reporter_sessions_end_with_the_browser` |
+| An undelivered digest is queued again; a deleted case leaves the queue | `test_a_digest_no_channel_took_is_sent_again` (`tests/test_privacy_v150.py`), `test_a_deleted_case_leaves_the_notification_queue` |
+| "Link single sign-on" answers with a forwarding page, not a 303 the CSP refuses | `_start_link` in `tests/test_v210_auth_recovery.py` |
+| The SSO login state is bound to the starting browser | `test_an_sso_login_finishes_only_in_the_browser_that_started_it` |
+| LDAP only over ldaps or StartTLS; a `/\host` logo URL refused | `test_ldap_refuses_to_bind_in_clear_text`, `test_a_logo_url_a_browser_reads_as_another_server_is_ignored` |
+| `000000` only for an account with the seed's TOTP secret | `test_verify_demo_totp_rejects_other` (`tests/test_services_misc.py`) |
+| A capped content search says so | `test_a_capped_content_search_says_so` |
+| Legacy plaintext attachments are encrypted (migration 016, S3 job) | `test_migration_016_encrypts_attachments_stored_in_the_clear`, `test_the_s3_startup_job_encrypts_objects_stored_in_the_clear` |
+| The Ansible stack listens on 127.0.0.1:8080 for Tor | `test_the_ansible_stack_serves_the_onion_listener_it_advertises` |
+| The IP is dropped by the outermost middleware | `test_the_ip_is_dropped_by_the_first_middleware` |
+| The PDF export is in the admin's language; every label fits its column | `test_the_pdf_export_speaks_the_admins_language`, `test_every_pdf_label_fits_its_column` |
+| certbot's post hook removes the visitor addresses its standalone server logged | `test_the_post_hook_removes_the_visitor_addresses_certbot_logged` (`tests/test_ansible_certbot.py`) |
+
+**Not reproduced, so not changed.** nginx's `error_log crit` with 130 malformed TLS handshakes against the
+bundled config: no `client:` line.
+
 ## Repository and release
 
 | Guard | Test |

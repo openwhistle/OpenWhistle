@@ -517,7 +517,11 @@ def _anonymise_ooxml_part(name: str, body: bytes) -> bytes:
         return _neutral_attrs(body, {b"dT": _NEUTRAL_TIME})
     if name.startswith("xl/pivotCache/pivotCacheDefinition"):
         # Who refreshed the pivot table, and when.
-        values = {b"refreshedBy": b"Author", b"refreshedDate": b"0", b"refreshedDateIso": _NEUTRAL_TIME}
+        values = {
+            b"refreshedBy": b"Author",
+            b"refreshedDate": b"0",
+            b"refreshedDateIso": _NEUTRAL_TIME,
+        }
         return _neutral_attrs(body, values)
     if name == "xl/connections.xml":
         # A data connection's string names the server and the account it logs in with.
@@ -565,12 +569,19 @@ def _strip_ooxml(data: bytes, *, embedded: bool = False) -> bytes:
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as dst:
         for info in src.infolist():
             # The thumbnail is a picture of the first page, names included.
-            if info.filename.startswith("docProps/thumbnail.") or "/printerSettings/" in info.filename:
+            if (
+                info.filename.startswith("docProps/thumbnail.")
+                or "/printerSettings/" in info.filename
+            ):
                 continue
             body = _OOXML_EMPTY_PARTS.get(info.filename) or src.read(info)
             for rid in printer_ids.get(info.filename, ()):
                 # <pageSetup r:id=…> loses the reference; Word's own element goes whole.
-                body = re.sub(rb"<\w+:printerSettings\b[^>]*\sr:id=\"" + re.escape(rid) + rb"\"[^>]*/>", b"", body)
+                body = re.sub(
+                    rb"<\w+:printerSettings\b[^>]*\sr:id=\"" + re.escape(rid) + rb"\"[^>]*/>",
+                    b"",
+                    body,
+                )
                 body = re.sub(rb"\s\w+:id=\"" + re.escape(rid) + rb"\"", b"", body)
             # A chart's data is a whole workbook in word/embeddings/, with its own
             # author; it used to be copied as it was. Anything else there (an OLE
@@ -900,7 +911,9 @@ async def rekey_legacy_objects(db: AsyncSession) -> int:
             if att.encrypted:
                 await backend.copy(old, new)
             else:
-                dek = await db.scalar(select(Report.encrypted_dek).where(Report.id == att.report_id))
+                dek = await db.scalar(
+                    select(Report.encrypted_dek).where(Report.id == att.report_id)
+                )
                 sealed = seal(make_report_fernet(dek or ""), await backend.get(old))
                 await backend.put(new, sealed, att.content_type)
         except Exception:  # noqa: BLE001

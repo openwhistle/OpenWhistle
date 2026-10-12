@@ -819,7 +819,7 @@
   "pdf.secure_email": "E-mail seguro",
   "pdf.secure_email_withheld": "[registrado — não impresso]",
   "pdf.sla": "Prazos (§17 HinSchG)",
-  "pdf.ack": "Confirmação de recebimento (7 dias)",
+  "pdf.ack": "Confirmação em 7 dias",
   "pdf.ack.pending": "Pendente – dia {days}/7",
   "pdf.ack.compliant": "OK no prazo",
   "pdf.ack.late": "OK confirmado (atrasado)",

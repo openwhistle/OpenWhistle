@@ -33,6 +33,9 @@ _HAIRLINE = (216, 216, 214)
 # a "?" substitution.
 _FONT_DIR = Path(__file__).resolve().parents[1] / "fonts"
 _FONT = "DejaVu"
+# Wide enough for every translated label: at 55 mm "3-Month Feedback Deadline:" ran
+# into its value ("…Deadline86 days remaining").
+LABEL_WIDTH = 70
 
 
 def _register_font(pdf: FPDF) -> None:
@@ -164,7 +167,9 @@ def generate_report_pdf(
         pdf.ln(3)
         pdf.set_font(_FONT, "", 10)
         for i, msg in enumerate(public_msgs):
-            sender = t("pdf.sender.admin" if msg.sender.value == "admin" else "pdf.sender.whistleblower")
+            sender = t(
+                "pdf.sender.admin" if msg.sender.value == "admin" else "pdf.sender.whistleblower"
+            )
             when = format_day(msg.sent_at) if whistleblower_caused(msg, i) else _fmt_dt(msg.sent_at)
             pdf.set_font(_FONT, "B", 9)
             pdf.cell(
@@ -183,13 +188,8 @@ def generate_report_pdf(
     # ── Internal notes ─────────────────────────────────────────────
     if report.notes:
         pdf.set_font(_FONT, "B", 13)
-        pdf.cell(
-            0,
-            8,
-            t("pdf.notes"),
-            new_x=XPos.LMARGIN,
-            new_y=YPos.NEXT,
-        )
+        # Wraps: a translated heading ran off the page as one line.
+        pdf.multi_cell(0, 8, t("pdf.notes"), align="L", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.line(10, pdf.get_y(), 200, pdf.get_y())
         pdf.ln(3)
         for note, note_text in zip(report.notes, decrypt_note_contents(report), strict=True):
@@ -246,7 +246,7 @@ def _ack_label(report: Report, now: datetime, t: Callable[..., str]) -> str:
 def _meta_row(pdf: FPDF, label: str, value: str) -> None:
     pdf.set_font(_FONT, "B", 10)
     pdf.set_text_color(*_MUTED)
-    pdf.cell(55, 5, label + ":", new_x=XPos.RIGHT, new_y=YPos.TOP)
+    pdf.cell(LABEL_WIDTH, 5, label + ":", new_x=XPos.RIGHT, new_y=YPos.TOP)
     pdf.set_font(_FONT, "", 10)
     pdf.set_text_color(*_INK)
     pdf.cell(0, 5, _safe(value), new_x=XPos.LMARGIN, new_y=YPos.NEXT)

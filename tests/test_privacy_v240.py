@@ -166,7 +166,8 @@ def _package(parts: dict[str, bytes]) -> bytes:
 _PRINTER_REL = (
     b'<Relationships><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/'
     b'officeDocument/2006/relationships/printerSettings" Target="../printerSettings/'
-    b'printerSettings1.bin"/><Relationship Id="rId2" Type="drawing" Target="d.xml"/></Relationships>'
+    b'printerSettings1.bin"/><Relationship Id="rId2" Type="drawing" Target="d.xml"/>'
+    b"</Relationships>"
 )
 
 
@@ -188,13 +189,16 @@ def test_xlsx_printer_settings_are_dropped_and_unreferenced() -> None:
     assert b"printerSettings" not in rels
     assert b'Id="rId2"' in rels
     sheet = out.read("xl/worksheets/sheet1.xml")
-    assert sheet == b'<worksheet><drawing r:id="rId2"/><pageSetup orientation="portrait"/></worksheet>'
+    assert (
+        sheet == b'<worksheet><drawing r:id="rId2"/><pageSetup orientation="portrait"/></worksheet>'
+    )
 
 
 def test_docx_printer_settings_element_goes_with_its_part() -> None:
     docx = _package(
         {
-            "word/settings.xml": b'<w:settings><w:printerSettings r:id="rId1"/><w:zoom/></w:settings>',
+            "word/settings.xml": b'<w:settings><w:printerSettings r:id="rId1"/><w:zoom/>'
+            b"</w:settings>",
             "word/_rels/settings.xml.rels": _PRINTER_REL,
             "word/printerSettings/printerSettings1.bin": b"HP-Finance-3",
         }
@@ -208,10 +212,14 @@ def test_office_edit_times_and_accounts_are_neutral() -> None:
     xlsx = _package(
         {
             "xl/threadedComments/threadedComment1.xml": b'<c dT="2026-10-12T09:14:00.00"/>',
-            "xl/revisions/revisionHeaders.xml": b'<h dateTime="2026-10-12T09:14:00Z" userName="Erika"/>',
-            "xl/pivotCache/pivotCacheDefinition1.xml": b'<p refreshedBy="Erika" refreshedDate="46307.38"/>',
-            "xl/connections.xml": b'<c><dbPr connection="Provider=SQLOLEDB;User ID=erika;Data Source=fin"/></c>',
-            "xl/externalLinks/_rels/externalLink1.xml.rels": b'<Relationships><Relationship Id="rId1" '
+            "xl/revisions/revisionHeaders.xml": b'<h dateTime="2026-10-12T09:14:00Z" '
+            b'userName="Erika"/>',
+            "xl/pivotCache/pivotCacheDefinition1.xml": b'<p refreshedBy="Erika" '
+            b'refreshedDate="46307.38"/>',
+            "xl/connections.xml": b'<c><dbPr connection="Provider=SQLOLEDB;User ID=erika;'
+            b'Data Source=fin"/></c>',
+            "xl/externalLinks/_rels/externalLink1.xml.rels": b"<Relationships>"
+            b'<Relationship Id="rId1" '
             b'Target="file:///\\\\fs01\\home$\\erika\\budget.xlsx"/></Relationships>',
         }
     )
@@ -225,8 +233,10 @@ def test_office_edit_times_and_accounts_are_neutral() -> None:
     docx = _package(
         {
             "word/document.xml": b'<w:ins w:author="Erika" w:date="2026-10-12T09:14:00Z"/>',
-            "word/commentsExtensible.xml": b'<w16cex:commentExtensible w16cex:dateUtc="2026-10-12T07:14:00Z"/>',
-            "word/settings.xml": b'<w:mailMerge><w:connectString w:val="User ID=erika"/></w:mailMerge>',
+            "word/commentsExtensible.xml": b"<w16cex:commentExtensible "
+            b'w16cex:dateUtc="2026-10-12T07:14:00Z"/>',
+            "word/settings.xml": b'<w:mailMerge><w:connectString w:val="User ID=erika"/>'
+            b"</w:mailMerge>",
         }
     )
     package = zipfile.ZipFile(io.BytesIO(strip_metadata("a.docx", docx)))
@@ -304,7 +314,7 @@ def test_an_org_less_report_is_no_other_organisations(monkeypatch: pytest.Monkey
 
 @pytest.mark.asyncio
 async def test_a_pin_typed_in_capitals_opens_the_case(client, db_session) -> None:  # noqa: ANN001
-    """"The correct case number and PIN always open your report" — not in capitals."""
+    """ "The correct case number and PIN always open your report" — not in capitals."""
     from app.redis_client import get_redis
     from app.services.report import authenticate_whistleblower, create_report
 
@@ -328,10 +338,16 @@ async def test_reporter_sessions_end_with_the_browser(client, db_session) -> Non
     await client.get("/status")
     resp = await client.post(
         "/status",
-        data={"case_number": report.case_number, "pin": pin, "csrf_token": client.cookies["ow_csrf"]},
+        data={
+            "case_number": report.case_number,
+            "pin": pin,
+            "csrf_token": client.cookies["ow_csrf"],
+        },
         follow_redirects=False,
     )
-    cookie = next(h for h in resp.headers.get_list("set-cookie") if h.startswith("ow-status-session="))
+    cookie = next(
+        h for h in resp.headers.get_list("set-cookie") if h.startswith("ow-status-session=")
+    )
     assert "max-age" not in cookie.lower() and "expires" not in cookie.lower()
 
 
@@ -349,14 +365,17 @@ def test_ldap_refuses_to_bind_in_clear_text() -> None:
 def test_a_logo_url_a_browser_reads_as_another_server_is_ignored() -> None:
     from app.config import Settings
 
-    assert Settings(secret_key="x" * 40, brand_logo_url="/\\evil.example/x.png").brand_logo_url == ""
+    assert (
+        Settings(secret_key="x" * 40, brand_logo_url="/\\evil.example/x.png").brand_logo_url == ""
+    )
     logo = Settings(secret_key="x" * 40, brand_logo_url="/static/logo.svg").brand_logo_url
     assert logo == "/static/logo.svg"
 
 
 @pytest.mark.asyncio
 async def test_an_sso_login_finishes_only_in_the_browser_that_started_it(
-    client, monkeypatch: pytest.MonkeyPatch  # noqa: ANN001
+    client,
+    monkeypatch: pytest.MonkeyPatch,  # noqa: ANN001
 ) -> None:
     """A callback URL with someone else's code and state signed this browser in as them."""
     from unittest.mock import AsyncMock, MagicMock
@@ -418,8 +437,13 @@ async def _legacy_attachment(db, **where):  # noqa: ANN001, ANN202
 
     report, _ = await create_report(db, "corruption", "Uploaded before v1.4.0.")
     att = Attachment(
-        id=uuid.uuid4(), report_id=report.id, filename="x", content_type="image/jpeg",
-        size=9, encrypted=False, **where,
+        id=uuid.uuid4(),
+        report_id=report.id,
+        filename="x",
+        content_type="image/jpeg",
+        size=9,
+        encrypted=False,
+        **where,
     )
     db.add(att)
     await db.commit()
@@ -470,7 +494,8 @@ class _Bucket:
 
 @pytest.mark.asyncio
 async def test_the_s3_startup_job_encrypts_objects_stored_in_the_clear(
-    db_session, monkeypatch: pytest.MonkeyPatch  # noqa: ANN001
+    db_session,
+    monkeypatch: pytest.MonkeyPatch,  # noqa: ANN001
 ) -> None:
     import uuid
 
@@ -511,7 +536,7 @@ def test_the_ip_is_dropped_by_the_first_middleware() -> None:
 
 @pytest.mark.asyncio
 async def test_the_pdf_export_speaks_the_admins_language(client, db_session) -> None:  # noqa: ANN001
-    """"Five languages": every label of the case export was English."""
+    """ "Five languages": every label of the case export was English."""
     from app.models.user import AdminRole
     from app.services.report import create_report
     from tests.test_pdf_service import _pdf_text
@@ -521,7 +546,13 @@ async def test_the_pdf_export_speaks_the_admins_language(client, db_session) -> 
     report, _ = await create_report(db_session, "corruption", "Exported in German.")
     client.cookies.set("ow-lang", "de")
     text = _pdf_text((await client.get(f"/admin/reports/{report.id}/export.pdf")).content)
-    for label in ("Fallnummer", "Meldeart", "Eingangsbestätigung (7 Tage)", "Anonym", "Eingegangen"):
+    for label in (
+        "Fallnummer",
+        "Meldeart",
+        "Eingangsbestätigung (7 Tage)",
+        "Anonym",
+        "Eingegangen",
+    ):
         assert label in text, label
     for english in ("Case Number", "Submission Mode", "Initial Report", "Generated:"):
         assert english not in text, english
@@ -543,3 +574,66 @@ async def test_a_deleted_case_leaves_the_notification_queue(client, db_session) 
     tag = uuid.uuid4().hex[:6]
     await _delete_report_4eyes(client, db_session, str(report.id), f"q1{tag}", f"q2{tag}")
     assert not await redis.sismember(_QUEUE_KEYS["new_reports"], report.case_number)
+
+
+@pytest.mark.asyncio
+async def test_a_report_always_belongs_to_an_organisation(db_session, monkeypatch) -> None:  # noqa: ANN001
+    """DEFAULT_ORG_SLUG naming no organisation filed the report under none."""
+    from app.config import settings
+    from app.services.report import create_report
+
+    monkeypatch.setattr(settings, "default_org_slug", "no-such-organisation")
+    report, _ = await create_report(db_session, "corruption", "Filed under a wrong default slug.")
+    assert report.org_id is not None
+
+
+@pytest.mark.asyncio
+async def test_migration_017_gives_org_less_reports_an_organisation(throwaway_db) -> None:  # noqa: ANN001
+    import os
+    import subprocess
+
+    from sqlalchemy import text
+
+    from app.config import settings
+    from app.services.report import create_report
+
+    env = {**os.environ, "DATABASE_URL": settings.database_url}
+
+    def alembic(*args: str) -> None:
+        run = subprocess.run(["alembic", *args], capture_output=True, text=True, env=env)  # noqa: S603, S607
+        assert run.returncode == 0, run.stderr
+
+    alembic("downgrade", "a7c4e0f6b113")
+    report, _ = await create_report(throwaway_db, "corruption", "Filed before migration 017.")
+    report_id = report.id
+    await throwaway_db.execute(
+        text("UPDATE reports SET org_id = NULL WHERE id = :i"), {"i": report_id}
+    )
+    await throwaway_db.commit()
+    alembic("upgrade", "head")
+    org = await throwaway_db.scalar(
+        text("SELECT org_id FROM reports WHERE id = :i"), {"i": report_id}
+    )
+    assert org is not None
+
+
+def test_every_pdf_label_fits_its_column() -> None:
+    """At 55 mm, "3-Month Feedback Deadline:" ran into its value; translations more so."""
+    import json
+    from pathlib import Path
+
+    from fpdf import FPDF
+
+    from app.services import pdf
+
+    doc = FPDF()
+    pdf._register_font(doc)
+    doc.set_font(pdf._FONT, "B", 10)
+    source = (Path(pdf.__file__)).read_text()
+    labels = set(re.findall(r'_meta_row\(\s*pdf,\s*t\("(pdf\.[a-z_.]+)"\)', source))
+    assert len(labels) >= 14, labels
+    for lang in ("en", "de", "fr", "es", "pt-br"):
+        strings = json.loads((Path(pdf.__file__).parents[1] / f"locales/{lang}.json").read_text())
+        for key in labels:
+            width = doc.get_string_width(strings[key] + ":") + 2 * doc.c_margin
+            assert width <= pdf.LABEL_WIDTH, (lang, strings[key], round(width, 1))

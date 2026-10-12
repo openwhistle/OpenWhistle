@@ -47,7 +47,7 @@ def upgrade() -> None:
     for att_id, dek in rows:  # one row in memory at a time: attachments are up to 10 MB
         try:
             fernet = make_report_fernet(dek)
-        except (InvalidToken, ValueError):
+        except InvalidToken, ValueError:
             log.warning("Attachment %s: report key unavailable, left as stored", att_id)
             continue
         data = bind.execute(
