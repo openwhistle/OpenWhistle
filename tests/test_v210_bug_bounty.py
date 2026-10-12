@@ -16,21 +16,10 @@ import urllib.request
 from pathlib import Path
 
 import pytest
-import pytest_asyncio
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 ROOT = Path(__file__).resolve().parent.parent
-
-
-@pytest_asyncio.fixture(loop_scope="function")
-async def no_csrf():  # type: ignore[no-untyped-def]
-    from app.csrf import validate_csrf
-    from app.main import app
-
-    app.dependency_overrides[validate_csrf] = lambda: None
-    yield
-    app.dependency_overrides.pop(validate_csrf, None)
 
 
 def _dockerfile_cmd() -> list[str]:
@@ -245,18 +234,6 @@ async def test_the_page_token_matches_the_cookie_the_server_checks() -> None:
 
 
 # ── Account management: who may act on whom ─────────────────────────────────
-
-
-@pytest_asyncio.fixture(loop_scope="function")
-async def acting_as(client: AsyncClient, no_csrf):  # type: ignore[no-untyped-def]
-    from app.api.deps import get_current_admin
-    from app.main import app
-
-    def _set(user):  # type: ignore[no-untyped-def]
-        app.dependency_overrides[get_current_admin] = lambda: user
-
-    yield client, _set
-    app.dependency_overrides.pop(get_current_admin, None)
 
 
 @pytest.mark.asyncio

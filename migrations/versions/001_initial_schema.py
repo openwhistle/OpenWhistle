@@ -21,6 +21,8 @@ down_revision: str | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
+__all__ = ["branch_labels", "depends_on", "down_revision", "downgrade", "revision", "upgrade"]
+
 # Fixed UUID so category rows can reference the org in the same migration.
 _DEFAULT_ORG_ID = "00000000-0000-0000-0000-000000000001"
 

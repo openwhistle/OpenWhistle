@@ -443,3 +443,25 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     if os.environ.get("CI") == "true" and _ci_skips and exitstatus == 0:
         print("\nTests skipped in CI (they never run there):\n  " + "\n  ".join(_ci_skips))
         session.exitstatus = pytest.ExitCode.TESTS_FAILED
+
+
+@pytest_asyncio.fixture(loop_scope="function")
+async def no_csrf():  # type: ignore[no-untyped-def]
+    from app.csrf import validate_csrf
+    from app.main import app
+
+    app.dependency_overrides[validate_csrf] = lambda: None
+    yield
+    app.dependency_overrides.pop(validate_csrf, None)
+
+
+@pytest_asyncio.fixture(loop_scope="function")
+async def acting_as(client: AsyncClient, no_csrf):  # type: ignore[no-untyped-def]
+    from app.api.deps import get_current_admin
+    from app.main import app
+
+    def _set(user):  # type: ignore[no-untyped-def]
+        app.dependency_overrides[get_current_admin] = lambda: user
+
+    yield client, _set
+    app.dependency_overrides.pop(get_current_admin, None)

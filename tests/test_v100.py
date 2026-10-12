@@ -23,11 +23,11 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tests.test_v210_bug_bounty import _totp_user, acting_as, no_csrf  # noqa: F401
+from tests.test_v210_bug_bounty import _totp_user
 
 
 @pytest.fixture
-async def admin_client(acting_as, db_session: AsyncSession) -> AsyncClient:  # noqa: F811
+async def admin_client(acting_as, db_session: AsyncSession) -> AsyncClient:
     """A client signed in as an admin. These tests used to create the wizard admin and
     skip when setup was already done - which, in the shared test database, was always."""
     from app.models.user import AdminRole

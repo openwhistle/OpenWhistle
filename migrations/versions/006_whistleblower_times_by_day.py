@@ -32,6 +32,8 @@ down_revision: str | None = "b2d7f1a5c302"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
+__all__ = ["branch_labels", "depends_on", "down_revision", "downgrade", "revision", "upgrade"]
+
 _DAY = "date_trunc('day', {col} AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'"
 
 _MESSAGES = f"""

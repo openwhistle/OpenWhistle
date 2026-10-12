@@ -3,14 +3,14 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tests.test_v210_bug_bounty import _totp_user, acting_as, no_csrf  # noqa: F401
+from tests.test_v210_bug_bounty import _totp_user
 
 # ── Four eyes: a reset password is a chosen password ────────────────────────
 
 
 @pytest.mark.asyncio
 async def test_a_superadmin_who_reset_an_account_is_not_its_second_pair_of_eyes(
-    acting_as,  # noqa: F811
+    acting_as,
     db_session: AsyncSession,
 ) -> None:
     """reset-totp shows the superadmin the account's new temporary password, so they can
@@ -422,7 +422,7 @@ async def test_the_sla_rate_of_no_decided_report_is_none_not_a_red_zero(
 
 
 @pytest.mark.asyncio
-async def test_a_reply_after_the_session_ended_comes_back_to_copy(client, no_csrf) -> None:  # type: ignore[no-untyped-def]  # noqa: F811
+async def test_a_reply_after_the_session_ended_comes_back_to_copy(client, no_csrf) -> None:  # type: ignore[no-untyped-def]
     """The reply form carried case_number and pin fields that were always empty, so
     after the 2-hour session a reply was answered with a bare 401 and the text was gone."""
     text = "Three paragraphs the whistleblower spent an hour on."

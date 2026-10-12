@@ -19,6 +19,8 @@ down_revision: str | None = "d4f1b7c3e010"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
+__all__ = ["branch_labels", "depends_on", "down_revision", "downgrade", "revision", "upgrade"]
+
 
 def upgrade() -> None:
     op.drop_column("organisations", "branding")
