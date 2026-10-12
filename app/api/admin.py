@@ -1,5 +1,6 @@
 """Admin dashboard endpoints."""
 
+import re
 import uuid
 from typing import Any
 from urllib.parse import quote, urlencode
@@ -173,6 +174,27 @@ async def _ask_for_telemetry(db: AsyncSession, user: AdminUser) -> bool:
     return True
 
 
+async def _confirmed_deletion(db: AsyncSession, user: AdminUser, case_number: str) -> str | None:
+    """The case number of ?deleted= when this admin's audit trail confirms that deletion;
+    a crafted link must not announce one that did not happen."""
+    from sqlalchemy import select  # noqa: PLC0415
+
+    from app.models.audit import AuditLog  # noqa: PLC0415
+
+    if not re.fullmatch(r"[A-Z0-9-]{1,32}", case_number):
+        return None
+    found = await db.scalar(
+        select(AuditLog.id)
+        .where(
+            AuditLog.admin_id == user.id,
+            AuditLog.action == AuditAction.REPORT_DELETE_CONFIRMED,
+            AuditLog.detail.contains(f'"case_number": "{case_number}"'),
+        )
+        .limit(1)
+    )
+    return case_number if found else None
+
+
 @router.post("/dashboard", response_class=HTMLResponse)
 async def dashboard_search(
     request: Request,
@@ -323,7 +345,9 @@ async def _dashboard(
             "reporting_path": reporting_path,
             "reporting_link": reporting_link,
             "category_labels": category_labels,
-            "deleted_case": request.query_params.get("deleted"),
+            "deleted_case": await _confirmed_deletion(
+                db, current_user, request.query_params.get("deleted", "")
+            ),
             "stats": stats,
             "page": page,
             "per_page": per_page,
