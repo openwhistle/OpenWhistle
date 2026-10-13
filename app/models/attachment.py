@@ -31,7 +31,9 @@ class Attachment(Base):
     filename: Mapped[str] = mapped_column(Text, nullable=False)
     content_type: Mapped[str] = mapped_column(String(128), nullable=False)
     size: Mapped[int] = mapped_column(Integer, nullable=False)
-    data: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    # Deferred: every case view loaded every file's bytes only to list names and sizes.
+    # read_attachment() is the one reader.
+    data: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True, deferred=True)
     storage_key: Mapped[str | None] = mapped_column(String(512), nullable=True)
     # Encrypted with the parent report's data key. False only for rows written
     # before v1.4.0, which are served as stored.

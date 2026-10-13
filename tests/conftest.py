@@ -30,15 +30,16 @@ os.environ.setdefault("DEMO_MODE", "false")
 # The installation count never leaves a test run, whatever the shell exports;
 # tests that need it patch the setting (and _telemetry_endpoint_is_local below).
 os.environ["TELEMETRY_ENABLED"] = "false"
+# The v1.0.0 feature flags off, before the import below builds the settings: placed
+# after it, they changed nothing and the suite ran with retention on.
+os.environ.setdefault("RETENTION_ENABLED", "false")
+os.environ.setdefault("MULTI_TENANCY_ENABLED", "false")
 
 from app.database import Base, get_db  # noqa: E402
 from app.main import app  # noqa: E402
 
 _ENUM_TYPES = ["reportcategory", "reportstatus", "reportsender", "submissionmode", "adminrole"]
 
-# Ensure new v1.0.0 feature flags are off in tests
-os.environ.setdefault("RETENTION_ENABLED", "false")
-os.environ.setdefault("MULTI_TENANCY_ENABLED", "false")
 
 # Step number for the location step in the wizard (only active when locations exist)
 _STEP_LOCATION = 2

@@ -137,12 +137,13 @@ async def _check_ack_reminder(
     if await red.exists(key):
         return False
 
-    await _dispatch_reminder(
+    if not await _dispatch_reminder(
         case_number=r.case_number,
         deadline_label="7-day acknowledgement",
         days_left=days_left,
         settings=cfg,
-    )
+    ):
+        return False  # tried again on the next run; it used to be marked as sent anyway
     await red.set(key, "1", ex=_dedup_ttl_seconds(days_left))
     log.info("ACK reminder sent for %s (%d days left)", r.case_number, days_left)
     return True
@@ -181,12 +182,13 @@ async def _check_feedback_reminder(
     if await red.exists(key):
         return False
 
-    await _dispatch_reminder(
+    if not await _dispatch_reminder(
         case_number=r.case_number,
         deadline_label="3-month feedback",
         days_left=days_left,
         settings=cfg,
-    )
+    ):
+        return False  # tried again on the next run; it used to be marked as sent anyway
     await red.set(key, "1", ex=_dedup_ttl_seconds(days_left))
     log.info("Feedback reminder sent for %s (%d days left)", r.case_number, days_left)
     return True
@@ -197,8 +199,8 @@ async def _dispatch_reminder(
     deadline_label: str,
     days_left: int,
     settings: object,
-) -> None:
-    """Send the per-report reminder email to admins.
+) -> bool:
+    """Send the per-report reminder email to admins; False when SMTP refused it.
 
     The webhook is not sent here: it carries counts only, aggregated and sent
     once per ``send_sla_reminders`` run, never per report.
@@ -209,4 +211,5 @@ async def _dispatch_reminder(
     cfg: Settings = settings  # type: ignore[assignment]
 
     if cfg.notify_email_enabled and cfg.notify_email_to.strip():
-        await _send_reminder_email(case_number, deadline_label, days_left, cfg)
+        return await _send_reminder_email(case_number, deadline_label, days_left, cfg)
+    return True

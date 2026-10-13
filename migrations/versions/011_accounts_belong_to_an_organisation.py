@@ -14,7 +14,6 @@ Downgrade is a no-op: which accounts had none is not kept, and the older code
 reads an organisation it would have set with multi-tenancy on.
 """
 
-import os
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -28,6 +27,14 @@ depends_on: str | Sequence[str] | None = None
 __all__ = ["branch_labels", "depends_on", "down_revision", "downgrade", "revision", "upgrade"]
 
 
+def _default_org_slug() -> str:
+    # The app's own setting (environment, then .env), as env.py reads the URL; the
+    # environment alone ignored a slug set in .env and filed under "default".
+    from app.config import settings
+
+    return settings.default_org_slug
+
+
 def upgrade() -> None:
     # op.execute with a bound parameter: runs online and renders offline (--sql).
     op.execute(
@@ -36,7 +43,7 @@ def upgrade() -> None:
             "(SELECT id FROM organisations WHERE slug = :slug),"
             " (SELECT id FROM organisations ORDER BY created_at, id LIMIT 1))"
             " WHERE org_id IS NULL"
-        ).bindparams(slug=os.environ.get("DEFAULT_ORG_SLUG", "default"))
+        ).bindparams(slug=_default_org_slug())
     )
 
 

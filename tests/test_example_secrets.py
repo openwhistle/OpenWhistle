@@ -45,3 +45,13 @@ def test_no_example_key_passes_the_length_check() -> None:
 def test_the_ansible_role_refuses_a_short_secret_key() -> None:
     tasks = (ROOT / "ansible/roles/openwhistle/tasks/main.yml").read_text()
     assert f"openwhistle_secret_key | length >= {_MIN_SECRET_KEY_LEN}" in tasks
+
+
+def test_the_example_leaves_the_production_passwords_empty() -> None:
+    """docker-compose.prod.yml stops on an empty POSTGRES_PASSWORD or REDIS_PASSWORD
+    (``:?``); .env.example filled both with ``change-me``, so a copied template passed the
+    guard with a password published here."""
+    text = (ROOT / ".env.example").read_text()
+    for key in ("POSTGRES_PASSWORD", "REDIS_PASSWORD"):
+        (value,) = re.findall(rf"^{key}=(.*)$", text, re.M)
+        assert value.strip() == "", key

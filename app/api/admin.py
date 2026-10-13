@@ -450,6 +450,17 @@ async def _reveal_gate(
             status_code=422,
             reason_draft=reason,
         )
+    if report.assigned_to_id is None:
+        # Whoever reveals it handles it: every admin of the organisation could
+        # reveal an unassigned identity in turn, and the case stayed unassigned.
+        await report_service.assign_report(db, report, current_user, commit=False)
+        await audit_service.log(
+            db,
+            current_user,
+            AuditAction.REPORT_ASSIGNED,
+            report_id=report.id,
+            detail={"from": None, "to": current_user.username},
+        )
     return report, valid
 
 
@@ -1192,7 +1203,7 @@ async def _users_page(
     )
 
 
-async def _new_account_org(db: AsyncSession, creator: AdminUser, chosen: str) -> uuid.UUID | None:
+async def _new_account_org(db: AsyncSession, creator: AdminUser, chosen: str) -> uuid.UUID:
     """The organisation a new account belongs to.
 
     A superadmin with multi-tenancy on chooses it; everyone else creates in
@@ -1201,17 +1212,20 @@ async def _new_account_org(db: AsyncSession, creator: AdminUser, chosen: str) ->
     no other organisation an admin, and an account made before multi-tenancy
     was switched on had none and, once it was, saw no case at all.
     """
-    if chosen and settings.multi_tenancy_enabled and creator.role == AdminRole.superadmin:
-        from app.models.organisation import Organisation
+    from app.models.organisation import Organisation
 
+    if chosen and settings.multi_tenancy_enabled and creator.role == AdminRole.superadmin:
         try:
             org = await db.get(Organisation, uuid.UUID(chosen))
         except ValueError:
             org = None
-        if org is None or not org.is_active:
-            raise HTTPException(status_code=422, detail="Unknown organisation.")
-        return org.id
-    return creator.org_id or await report_service.default_org_id(db)
+    else:
+        org_id = creator.org_id or await report_service.default_org_id(db)
+        org = await db.get(Organisation, org_id) if org_id else None
+    # Checked on both ways in: an admin of a deactivated organisation could add to it.
+    if org is None or not org.is_active:
+        raise HTTPException(status_code=422, detail="Unknown organisation.")
+    return org.id
 
 
 @router.post("/users", response_model=None)
@@ -1704,16 +1718,24 @@ async def stats_page(
     stats = await report_service.get_dashboard_stats(
         db, assigned_to_id=_own_cases_only(current_user), **_org_scope(current_user)
     )
-    from app.services.categories import get_category_labels
+    from app.services.categories import category_label, get_category_labels
 
-    cat_map = await get_category_labels(db, get_lang(request), **_org_scope(current_user))
+    # Labelled per organisation: one slug -> label map for a superadmin let one
+    # organisation's label take every organisation's cases under that slug.
+    labels: dict[uuid.UUID | None, dict[str, str]] = {}
+    by_label: dict[str, int] = {}
+    for (org_id, slug), count in stats["by_org_category"].items():
+        if org_id not in labels:
+            labels[org_id] = await get_category_labels(db, get_lang(request), **_report_org(org_id))
+        label = category_label(slug, labels[org_id])
+        by_label[label] = by_label.get(label, 0) + count
     return render(
         request,
         "admin/stats.html",
         {
             "user": current_user,
             "stats": stats,
-            "cat_map": cat_map,
+            "by_label": by_label,
         },
     )
 
@@ -1836,10 +1858,11 @@ async def dismiss_ip_warning(
     current_user: AdminUser = Depends(require_instance_admin),
     _csrf: None = Depends(validate_csrf_header),
 ) -> JSONResponse:
-    await clear_ip_warning()
-    # Hiding the warning that visitors' addresses arrive is itself on record.
+    # Hiding the warning that visitors' addresses arrive is itself on record, and
+    # only once it is: it used to be cleared first, gone even when the entry failed.
     await audit_service.log(db, current_user, AuditAction.IP_WARNING_DISMISSED, target_org=None)
     await db.commit()
+    await clear_ip_warning()
     return JSONResponse({"cleared": True})
 
 

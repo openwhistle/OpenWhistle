@@ -38,6 +38,59 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **A WebSocket handshake put the client's IP address into the app's log**: `127.0.0.1:37000 - "WebSocket
+  /status?case=…" 403` on `uvicorn.error`, which `--no-access-log` does not silence. The middleware cleaned
+  HTTP requests only. Reachable wherever the app is reached without the bundled nginx (Quick Start, Helm
+  ingress); the address and the address headers now go for WebSockets too.
+- **An uploaded PDF left a log line stamped with the second it was uploaded**: pypdf warns about every PDF with
+  a wrong cross-reference pointer, which many producers write. pypdf logs nothing now.
+- **Whoever could read Redis held a signed-in admin session**: the session key was the signed token itself
+  (measured: the key from `SCAN`, set as a cookie, opened the dashboard, no password, no TOTP). Session, TOTP
+  login and TOTP setup keys are HMACs, as the reporter's have been since 2.3.0. Admins sign in once more
+  after the update.
+- **On an unassigned case every admin could reveal the confidential name**, one after the other, and the case
+  stayed unassigned — README says the name goes "to the case handler only". Revealing takes the case; the
+  form says so.
+- **One wrong PIN held every reporter's and admin's request for 0.2 s**: bcrypt ran on the event loop.
+  `/health` took 3921 ms during 20 parallel wrong PINs (31 ms now). PIN and password checks run in a thread.
+- **Every case view loaded every attachment's bytes** — the reporter's status page, each reply, the admin case
+  page: up to 50 MB read to list names and sizes. The bytes are read on download only.
+- **An SLA reminder that SMTP refused was marked as sent**, and the deadline passed without one; it is tried
+  again every 30 minutes.
+- **A busy second at 03:00 UTC cost a day's retention run** (midnight: the digest): APScheduler dropped a run
+  more than one second late (measured: loop blocked 3 s, job skipped). Late runs still run.
+- **Every stop of the stack dropped the queued notices** (deploy, reboot, certbot's pre-hook): Redis keeps
+  nothing on disk, and with the default batching that was up to a day of new reports nobody was told about.
+  The app delivers the queue on its way down; Compose stops it before Redis.
+- **A superadmin's statistics merged two organisations' categories** under one slug and one organisation's
+  label; each organisation's category has its own row.
+- **A first LDAP login made an account with no audit entry**, and so did the setup wizard; both are recorded
+  as `admin.created`.
+- **An admin of a deactivated organisation could still add accounts to it**; refused, as for a superadmin.
+- **A draft begun while e-mail was on stored the reporter's address after mail was switched off.**
+- **Erasing a case left its case number in Redis** in the reminder marks, for up to a month.
+- **`DEMO_MODE` seeded public demo logins into a real installation whose own admin is called `demo`**; the
+  seeder recognises its account by its secret, not its name.
+- **TLS 1.2 offered suites without forward secrecy**: with an RSA certificate nginx negotiated
+  `AES128-GCM-SHA256` (`openssl s_client`). `ssl_ciphers` allows ECDHE only (bundled nginx, Ansible).
+- **The self-signed certificate was kept after it expired** (825 days); `tls-init` renews it 30 days before.
+- Ansible with `openwhistle_tls_enabled: false` sent HSTS over plain HTTP on nginx's own error pages.
+- Migrations 011 and 017 read `DEFAULT_ORG_SLUG` from the environment only; a slug set in `.env` was ignored.
+- The address-header warning was cleared before its dismissal was recorded; a failed audit write lost both.
+- `.env.example` set `POSTGRES_PASSWORD` and `REDIS_PASSWORD` to `change-me`, which passed
+  `docker-compose.prod.yml`'s "required" check; both are empty.
+- A dispatched publish built and signed `:sha-<sha>` of any branch; only commits on `main` are published. A
+  dispatched re-publish no longer scans, and is blocked by, the `:latest` it replaces.
+- The reset dialog of an LDAP or SSO account said its password would stop working and a temporary one be
+  issued; neither happens.
+- The status page told every reporter whose case was in review that "an investigation has been initiated"
+  and a "final response" would follow; it says the office is reviewing the report and will give feedback on
+  its follow-up measures (§ 17 HinSchG).
+- German, French and Brazilian Portuguese admins were told less than English ones: the 3-year default and
+  "change only on legal advice" (retention), the 4-eyes deletion (GDPR Art. 17), French the 24/7 duty of
+  critical industries. A test compares the numbers of every translation with English.
+- The test suite ran with retention on: conftest switched it off after the settings were built.
+
 - **Guesses sent together got past the sign-in lockout.** The count was read, the code checked, the failure
   counted after: 50 TOTP codes sent at once with the password known got 18 checked against a limit of 10. An
   attempt is counted before it is checked; a right password gives it back.

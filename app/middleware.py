@@ -126,6 +126,16 @@ class SecurityMiddleware:
         self.app = app
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] == "websocket":
+            # No route takes a WebSocket, but uvicorn logs every refused handshake on
+            # uvicorn.error with the address it reads from this scope: it used to be
+            # passed through as it came, and the peer's address reached the log.
+            scope["headers"] = [
+                (name, value)
+                for name, value in scope.get("headers", [])
+                if name.decode("latin-1").lower() not in _IP_REVEAL_HEADERS
+            ]
+            scope["client"] = None
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return

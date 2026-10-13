@@ -1,5 +1,6 @@
 """Business logic for whistleblower reports."""
 
+import asyncio
 import unicodedata
 import uuid
 from datetime import UTC, datetime, timedelta
@@ -165,7 +166,7 @@ async def create_report(
     )
 
     plain_pin = generate_pin()
-    pin_hash = hash_pin(plain_pin)
+    pin_hash = await asyncio.to_thread(hash_pin, plain_pin)  # bcrypt: off the event loop
 
     # Envelope-encrypt the description with a fresh per-report DEK
     dek_raw = generate_dek()
@@ -381,7 +382,9 @@ async def get_report_by_credentials(
     # Same bcrypt work as for an existing case, so response time does not tell
     # whether a case number exists. The messages and attachments (their bytes
     # included) used to be loaded before this check: up to 50 MB more per wrong PIN.
-    if not verify_pin(plain_pin, pin_hash or TIMING_DUMMY_HASH) or pin_hash is None:
+    # In a thread: bcrypt on the event loop held every other request for ~0.2 s per guess.
+    checked = await asyncio.to_thread(verify_pin, plain_pin, pin_hash or TIMING_DUMMY_HASH)
+    if not checked or pin_hash is None:
         return None
     result = await db.execute(
         select(Report)
@@ -864,9 +867,15 @@ async def get_dashboard_stats(
         org_filter.append(Report.assigned_to_id == assigned_to_id)
 
     cat_result = await db.execute(
-        select(Report.category, func.count(Report.id)).where(*org_filter).group_by(Report.category)
+        select(Report.org_id, Report.category, func.count(Report.id))
+        .where(*org_filter)
+        .group_by(Report.org_id, Report.category)
     )
-    by_category = {row[0]: row[1] for row in cat_result.all()}
+    # Per organisation as well: a slug is unique within one only, so its label is too.
+    by_org_category = {(org, slug): n for org, slug, n in cat_result.all()}
+    by_category: dict[str, int] = {}
+    for (_, slug), n in by_org_category.items():
+        by_category[slug] = by_category.get(slug, 0) + n
 
     # SLA compliance: % acknowledged within 7 days, of the reports whose
     # seven days are decided — acknowledged, or past the deadline. A report
@@ -894,6 +903,7 @@ async def get_dashboard_stats(
     return {
         "status_counts": status_counts,
         "by_category": by_category,
+        "by_org_category": by_org_category,
         "total_reports": total_reports,
         "sla_7day_rate": sla_rate,
     }

@@ -95,7 +95,6 @@ _ERROR_FIELD: dict[str, str] = {
     "description_too_short": "description",
     "description_too_long": "description",
     "email_invalid": "secure_email",
-    "attachments_too_large": "files",
     "attachments_no_room": "files",
 }
 
@@ -885,11 +884,7 @@ async def submit_post(
 
     # ── Step 5: attachments ───────────────────────────────────────
     if step == _STEP_ATTACHMENTS:
-        from app.services.attachment import (
-            MAX_DRAFT_ATTACHMENT_BYTES,
-            UploadError,
-            read_upload_files,
-        )
+        from app.services.attachment import UploadError, read_upload_files
 
         file_tuples, file_error = await read_upload_files(files)
         if file_error:
@@ -897,8 +892,6 @@ async def submit_post(
                 file_error = make_translator(get_lang(request))(file_error.key, **file_error.params)
             # The banner takes a code; the reason itself goes next to the field.
             return await _fail(_STEP_ATTACHMENTS, "attachments_rejected", {"files": file_error})
-        if sum(len(ft[2]) for ft in file_tuples) > MAX_DRAFT_ATTACHMENT_BYTES:
-            return await _fail(_STEP_ATTACHMENTS, "attachments_too_large")
         # A file input is always empty on revisit, so Next with nothing chosen
         # keeps what is attached; new files (already scanned and stripped by
         # read_upload_files) replace it.
@@ -983,7 +976,9 @@ async def submit_post(
                         conf_name_enc = encrypt(cn)
                     if cc:
                         conf_contact_enc = encrypt(cc)
-                    if se:
+                    # Read again here: a draft begun while mail was on outlives a restart
+                    # that switched it off, and its address used to be stored anyway.
+                    if se and settings.notify_email_enabled:
                         sec_email_enc = encrypt(se)
 
                 file_tuples_restored: list[tuple[str, str, bytes]] = [

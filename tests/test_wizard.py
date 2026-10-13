@@ -188,14 +188,15 @@ async def test_create_initial_admin_creates_org_and_setup_when_missing() -> None
     )
 
     assert created is True
-    assert mock_db.add.call_count == 3
-    org, admin, setup = (call.args[0] for call in mock_db.add.call_args_list)
+    assert mock_db.add.call_count == 4  # org, admin, its audit entry, setup row
+    org, admin, audit, setup = (call.args[0] for call in mock_db.add.call_args_list)
+    assert audit.action == "admin.created"
     assert org.slug == "default"
     assert org.name == "Default Organisation"
     assert admin.username == "neworgadmin"
     assert admin.org_id == org.id
     assert setup.completed is True
-    mock_db.flush.assert_awaited_once()
+    assert mock_db.flush.await_count == 3  # the org, the admin, the audit entry
     mock_db.commit.assert_awaited_once()
 
 

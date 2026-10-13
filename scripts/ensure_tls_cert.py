@@ -74,13 +74,17 @@ def _write_key(path: Path, data: bytes) -> None:
 
 
 def _stale_self_signed(cert_pem: bytes, hostname: str) -> bool:
-    """A kept certificate of our own that no longer names TLS_HOSTNAME."""
+    """A kept certificate of our own that no longer names TLS_HOSTNAME, or expires
+    within 30 days: it used to be kept past its 825 days, refused by every browser."""
     try:
         cert = x509.load_pem_x509_certificate(cert_pem)
         san = cert.extensions.get_extension_for_class(x509.SubjectAlternativeName).value
     except ValueError, x509.ExtensionNotFound:
         return False  # not ours to judge: keep it
-    return cert.issuer == cert.subject and hostname not in san.get_values_for_type(x509.DNSName)
+    if cert.issuer != cert.subject:
+        return False
+    soon = datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=30)
+    return cert.not_valid_after_utc < soon or hostname not in san.get_values_for_type(x509.DNSName)
 
 
 def ensure(src: Path, dst: Path, hostname: str) -> str:

@@ -281,7 +281,7 @@ def test_ansible_compose_mounts_the_nginx_snippets_directory() -> None:
     assert "./nginx/snippets:/etc/nginx/snippets:ro" in compose
 
 
-def _render_role_template(name: str) -> str:
+def _render_role_template(name: str, **overrides: object) -> str:
     """Render one of the role's templates with defaults/main.yml's own values
     (only the empty, documented-as-required openwhistle_domain is set)."""
     import jinja2
@@ -299,7 +299,7 @@ def _render_role_template(name: str) -> str:
     env.filters["bool"] = _bool
     return env.from_string(
         (ROOT / "ansible/roles/openwhistle/templates" / name).read_text()
-    ).render(**defaults)
+    ).render(**{**defaults, **overrides})
 
 
 def test_ansible_writes_every_nginx_bind_mount_world_readable() -> None:

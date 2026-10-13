@@ -19,6 +19,20 @@ _TOTP_PENDING_PREFIX = "openwhistle:totp_pending:"
 _TOTP_SETUP_PREFIX = "openwhistle:totp_setup:"
 
 
+def _key(prefix: str, token: str) -> str:
+    """The Redis key of a session or login token: an HMAC of it, never the token.
+
+    The key used to be the token itself, so whoever could read Redis held a signed-in
+    admin session (measured: SCAN, set as cookie, /admin/dashboard 200), as the
+    reporter's status session did before 2.3.0 (``report.status_session_key``).
+    """
+    import hashlib  # noqa: PLC0415
+    import hmac  # noqa: PLC0415
+
+    digest = hmac.new(settings.secret_key.encode(), token.encode(), hashlib.sha256)
+    return prefix + digest.hexdigest()
+
+
 # bcrypt only looks at the first 72 bytes, and bcrypt>=5 raises ValueError
 # beyond that instead of truncating silently.
 _BCRYPT_MAX_BYTES = 72
@@ -133,25 +147,25 @@ def seconds_left(token: str) -> int:
 
 async def get_session_ttl(redis: Redis, token: str) -> int:
     """Return remaining TTL in seconds for a session token (0 if not found)."""
-    key = f"{_SESSION_PREFIX}{token}"
+    key = _key(_SESSION_PREFIX, token)
     ttl = await redis.ttl(key)
     return max(0, int(ttl))
 
 
 async def store_session(redis: Redis, user_id: str, token: str) -> None:
     """Store session token in Redis; it lives exactly as long as the JWT."""
-    await redis.set(f"{_SESSION_PREFIX}{token}", user_id, ex=max(1, seconds_left(token)))
+    await redis.set(_key(_SESSION_PREFIX, token), user_id, ex=max(1, seconds_left(token)))
 
 
 async def validate_session(redis: Redis, token: str) -> bool:
     """Return True if the session token is still active in Redis."""
-    key = f"{_SESSION_PREFIX}{token}"
+    key = _key(_SESSION_PREFIX, token)
     return bool(await redis.exists(key) == 1)
 
 
 async def revoke_session(redis: Redis, token: str) -> bool:
     """Invalidate a session (logout). True if it still existed."""
-    key = f"{_SESSION_PREFIX}{token}"
+    key = _key(_SESSION_PREFIX, token)
     return bool(await redis.delete(key))
 
 
@@ -165,7 +179,7 @@ async def revoke_user_sessions(redis: Redis, user_id: str, keep: str | None = No
     number of admins an instance has, a per-user index if that ever changes.
     """
     removed = 0
-    kept = f"{_SESSION_PREFIX}{keep}" if keep else None
+    kept = _key(_SESSION_PREFIX, keep) if keep else None
     for prefix in (_SESSION_PREFIX, _TOTP_PENDING_PREFIX, _TOTP_SETUP_PREFIX):
         async for key in redis.scan_iter(match=f"{prefix}*", count=500):
             name = key.decode() if isinstance(key, bytes) else key
@@ -180,13 +194,13 @@ async def revoke_user_sessions(redis: Redis, user_id: str, keep: str | None = No
 
 async def store_totp_pending(redis: Redis, temp_token: str, user_id: str) -> None:
     """Store a temporary token awaiting TOTP verification (5 min expiry)."""
-    key = f"{_TOTP_PENDING_PREFIX}{temp_token}"
+    key = _key(_TOTP_PENDING_PREFIX, temp_token)
     await redis.set(key, user_id, ex=300)
 
 
 async def consume_totp_pending(redis: Redis, temp_token: str) -> str | None:
     """Consume a TOTP-pending token and return the user_id, or None if expired."""
-    key = f"{_TOTP_PENDING_PREFIX}{temp_token}"
+    key = _key(_TOTP_PENDING_PREFIX, temp_token)
     raw = await redis.getdel(key)
     user_id: str | None = raw.decode() if isinstance(raw, bytes) else raw
     return user_id
@@ -194,13 +208,13 @@ async def consume_totp_pending(redis: Redis, temp_token: str) -> str | None:
 
 async def store_totp_setup_pending(redis: Redis, temp_token: str, user_id: str) -> None:
     """Store a temporary token for first-time TOTP setup (10 min expiry)."""
-    key = f"{_TOTP_SETUP_PREFIX}{temp_token}"
+    key = _key(_TOTP_SETUP_PREFIX, temp_token)
     await redis.set(key, user_id, ex=600)
 
 
 async def peek_totp_setup_pending(redis: Redis, temp_token: str) -> str | None:
     """Peek at a TOTP-setup token without consuming it."""
-    key = f"{_TOTP_SETUP_PREFIX}{temp_token}"
+    key = _key(_TOTP_SETUP_PREFIX, temp_token)
     raw = await redis.get(key)
     user_id: str | None = raw.decode() if isinstance(raw, bytes) else raw
     return user_id
@@ -208,7 +222,7 @@ async def peek_totp_setup_pending(redis: Redis, temp_token: str) -> str | None:
 
 async def consume_totp_setup_pending(redis: Redis, temp_token: str) -> str | None:
     """Consume a TOTP-setup token and return the user_id, or None if expired."""
-    key = f"{_TOTP_SETUP_PREFIX}{temp_token}"
+    key = _key(_TOTP_SETUP_PREFIX, temp_token)
     raw = await redis.getdel(key)
     user_id: str | None = raw.decode() if isinstance(raw, bytes) else raw
     return user_id

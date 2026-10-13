@@ -75,8 +75,8 @@ async def notify_reply_to_whistleblower(secure_email: str, app_public_url: str) 
 
 async def _send_reminder_email(
     case_number: str, deadline_label: str, days_left: int, settings: object
-) -> None:
-    """Send an SLA reminder email to all configured admin recipients."""
+) -> bool:
+    """Send an SLA reminder email to all configured admin recipients; True if sent."""
     import aiosmtplib
 
     from app.config import Settings
@@ -85,7 +85,7 @@ async def _send_reminder_email(
 
     recipients = [r.strip() for r in cfg.notify_email_to.split(",") if r.strip()]
     if not recipients:
-        return
+        return False
 
     dashboard_url = f"{cfg.app_public_url.rstrip('/')}/admin/dashboard"
     subject = f"⚠ SLA reminder: {deadline_label} — {cfg.app_name}"
@@ -118,6 +118,8 @@ async def _send_reminder_email(
         log.info("SLA reminder email sent for %s (%s)", case_number, deadline_label)
     except Exception:
         log.exception("Failed to send SLA reminder email for %s", case_number)
+        return False
+    return True
 
 
 def _plural(n: int, one: str, many: str) -> str:
@@ -322,9 +324,13 @@ async def _queue_or_send(kind: str, case_number: str) -> None:
 
 
 async def forget_case(redis: Any, case_number: str) -> None:
-    """A deleted case leaves the queue: the next digest mailed its number after the erasure."""
+    """A deleted case leaves the queue: the next digest mailed its number after the erasure.
+    Its reminder marks go too; they named the erased case for up to a month."""
+    from app.services.reminders import _ack_dedup_key, _feedback_dedup_key  # noqa: PLC0415
+
     for key in _QUEUE_KEYS.values():
         await redis.srem(key, case_number)
+    await redis.delete(_ack_dedup_key(case_number), _feedback_dedup_key(case_number))
 
 
 async def deliver_notification_digest() -> None:

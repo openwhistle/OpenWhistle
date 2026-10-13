@@ -67,7 +67,11 @@ jobs:
   # and Python publish fixes. A red Monday here means: cut a patch release.
   published:
     name: Image scan (published :latest)
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    # Not when docker-publish.yml calls this file: a called workflow sees the caller's
+    # event, so a dispatched re-publish scanned the :latest it was about to replace.
+    if: >-
+      github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch'
+      && !contains(github.workflow_ref, '/docker-publish.yml@'))
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

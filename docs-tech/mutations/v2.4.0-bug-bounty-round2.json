@@ -1,0 +1,232 @@
+{
+ "test_groups": {
+  "R": [
+   "tests/test_v240_bug_bounty_round2.py"
+  ],
+  "S": [
+   "tests/test_services_demo_seed.py"
+  ],
+  "E": [
+   "tests/test_example_secrets.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "websocket-keeps-client",
+   "file": "app/middleware.py",
+   "old": "            scope[\"client\"] = None\n        if scope[\"type\"] != \"http\":",
+   "new": "        if scope[\"type\"] != \"http\":",
+   "tests": "R"
+  },
+  {
+   "id": "pypdf-last-resort",
+   "file": "app/logging_config.py",
+   "old": "\"pypdf\": {\"handlers\": [\"discard\"], \"propagate\": False}",
+   "new": "\"pypdf\": {\"handlers\": [], \"propagate\": False}",
+   "tests": "R"
+  },
+  {
+   "id": "session-key-is-token",
+   "file": "app/services/auth.py",
+   "old": "    return prefix + digest.hexdigest()",
+   "new": "    return prefix + token",
+   "tests": "R"
+  },
+  {
+   "id": "reveal-keeps-unassigned",
+   "file": "app/api/admin.py",
+   "old": "    if report.assigned_to_id is None:\n        # Whoever reveals it handles it",
+   "new": "    if False:\n        # Whoever reveals it handles it",
+   "tests": "R"
+  },
+  {
+   "id": "reminder-marked-on-failure",
+   "file": "app/services/notifications.py",
+   "old": "        log.exception(\"Failed to send SLA reminder email for %s\", case_number)\n        return False",
+   "new": "        log.exception(\"Failed to send SLA reminder email for %s\", case_number)\n        return True",
+   "tests": "R"
+  },
+  {
+   "id": "scheduler-misfire-default",
+   "file": "app/main.py",
+   "old": "job_defaults={\"misfire_grace_time\": None}",
+   "new": "job_defaults={}",
+   "tests": "R"
+  },
+  {
+   "id": "queue-dropped-on-stop",
+   "file": "app/main.py",
+   "old": "        await deliver_notification_digest()\n",
+   "new": "        pass\n",
+   "tests": "R"
+  },
+  {
+   "id": "stats-merged",
+   "file": "app/api/admin.py",
+   "old": "labels[org_id] = await get_category_labels(db, get_lang(request), **_report_org(org_id))",
+   "new": "labels[org_id] = await get_category_labels(db, get_lang(request), **_org_scope(current_user))",
+   "tests": "R"
+  },
+  {
+   "id": "ldap-unaudited",
+   "file": "app/api/auth.py",
+   "old": "                    audit_service.AuditAction.ADMIN_CREATED,\n                    detail={\"username\": user.username, \"role\": user.role.value, \"via\": \"ldap\"},",
+   "new": "                    \"admin.provisioned\",\n                    detail={\"username\": user.username, \"role\": user.role.value, \"via\": \"ldap\"},",
+   "tests": "R"
+  },
+  {
+   "id": "wizard-unaudited",
+   "file": "app/api/wizard.py",
+   "old": "        AuditAction.ADMIN_CREATED,\n        detail={\"username\": admin.username, \"role\": admin.role.value},",
+   "new": "        \"admin.made\",\n        detail={\"username\": admin.username, \"role\": admin.role.value},",
+   "tests": "R"
+  },
+  {
+   "id": "deactivated-org-accepts",
+   "file": "app/api/admin.py",
+   "old": "    if org is None or not org.is_active:",
+   "new": "    if org is None:",
+   "tests": "R"
+  },
+  {
+   "id": "dismiss-clears-first",
+   "file": "app/api/admin.py",
+   "old": "    # only once it is: it used to be cleared first, gone even when the entry failed.\n    await audit_service.log(",
+   "new": "    # only once it is: it used to be cleared first, gone even when the entry failed.\n    await clear_ip_warning()\n    await audit_service.log(",
+   "tests": "R"
+  },
+  {
+   "id": "bcrypt-pin-on-loop",
+   "file": "app/services/report.py",
+   "old": "    checked = await asyncio.to_thread(verify_pin, plain_pin, pin_hash or TIMING_DUMMY_HASH)",
+   "new": "    checked = verify_pin(plain_pin, pin_hash or TIMING_DUMMY_HASH)",
+   "tests": "R"
+  },
+  {
+   "id": "bcrypt-password-on-loop",
+   "file": "app/api/auth.py",
+   "old": "        await asyncio.to_thread(\n            auth_service.verify_password, password, auth_service.TIMING_DUMMY_HASH\n        )",
+   "new": "        auth_service.verify_password(password, auth_service.TIMING_DUMMY_HASH)",
+   "tests": "R"
+  },
+  {
+   "id": "attachment-bytes-eager",
+   "file": "app/models/attachment.py",
+   "old": "nullable=True, deferred=True)",
+   "new": "nullable=True)",
+   "tests": "R"
+  },
+  {
+   "id": "erased-case-reminder-kept",
+   "file": "app/services/notifications.py",
+   "old": "    await redis.delete(_ack_dedup_key(case_number), _feedback_dedup_key(case_number))",
+   "new": "    pass",
+   "tests": "R"
+  },
+  {
+   "id": "email-after-mail-off",
+   "file": "app/api/reports.py",
+   "old": "                    if se and settings.notify_email_enabled:",
+   "new": "                    if se:",
+   "tests": "R"
+  },
+  {
+   "id": "demo-seed-by-name",
+   "file": "app/services/demo_seed.py",
+   "old": "    return bool(setup_done) and demo_secret != DEMO_TOTP_SECRET",
+   "new": "    return bool(setup_done) and demo_secret is None",
+   "tests": "S"
+  },
+  {
+   "id": "migration-011-env-only",
+   "file": "migrations/versions/011_accounts_belong_to_an_organisation.py",
+   "old": "    return settings.default_org_slug",
+   "new": "    import os\n\n    return os.environ.get(\"DEFAULT_ORG_SLUG\", \"default\")",
+   "tests": "R"
+  },
+  {
+   "id": "migration-017-env-only",
+   "file": "migrations/versions/017_reports_belong_to_an_organisation.py",
+   "old": "    return settings.default_org_slug",
+   "new": "    import os\n\n    return os.environ.get(\"DEFAULT_ORG_SLUG\", \"default\")",
+   "tests": "R"
+  },
+  {
+   "id": "tls-non-fs-cipher",
+   "file": "nginx/nginx.conf",
+   "old": "ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:",
+   "new": "ssl_ciphers AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:",
+   "tests": "R"
+  },
+  {
+   "id": "ansible-hsts-over-http",
+   "file": "ansible/roles/openwhistle/templates/nginx.conf.j2",
+   "old": "        default \"\";",
+   "new": "        default \"max-age=31536000; includeSubDomains; preload\";",
+   "tests": "R"
+  },
+  {
+   "id": "cert-kept-expired",
+   "file": "scripts/ensure_tls_cert.py",
+   "old": "    return cert.not_valid_after_utc < soon or hostname",
+   "new": "    return hostname",
+   "tests": "R"
+  },
+  {
+   "id": "publish-tags-only",
+   "file": ".github/workflows/docker-publish.yml",
+   "old": "          if ! git merge-base --is-ancestor",
+   "new": "          if [[ \"${GITHUB_REF}\" == refs/tags/* ]] && ! git merge-base --is-ancestor",
+   "tests": "R"
+  },
+  {
+   "id": "republish-scans-latest",
+   "file": ".github/workflows/security.yml",
+   "old": "      && !contains(github.workflow_ref, '/docker-publish.yml@'))",
+   "new": "      )",
+   "tests": "R"
+  },
+  {
+   "id": "env-example-change-me",
+   "file": ".env.example",
+   "old": "POSTGRES_PASSWORD=\n",
+   "new": "POSTGRES_PASSWORD=change-me\n",
+   "tests": "E"
+  },
+  {
+   "id": "conftest-retention-on",
+   "file": "tests/conftest.py",
+   "old": "os.environ.setdefault(\"RETENTION_ENABLED\", \"false\")",
+   "new": "os.environ.setdefault(\"RETENTION_ENABLED\", \"true\")",
+   "tests": "R"
+  },
+  {
+   "id": "de-retention-default-dropped",
+   "file": "app/locales/de.json",
+   "old": " (Standard: 1095 = 3 Jahre)",
+   "new": "",
+   "tests": "R"
+  },
+  {
+   "id": "review-promises-investigation",
+   "file": "app/locales/en.json",
+   "old": "acknowledged your report and is reviewing it.",
+   "new": "acknowledged your report. An investigation has been initiated.",
+   "tests": "R"
+  },
+  {
+   "id": "reset-dialog-one-text",
+   "file": "app/templates/admin/users.html",
+   "old": "'admin.users.reset_totp_confirm' if u.password_hash else 'admin.users.reset_totp_confirm_external'",
+   "new": "'admin.users.reset_totp_confirm'",
+   "tests": "R"
+  },
+  {
+   "id": "invariants-name-missing-test",
+   "file": "docs-tech/invariants.md",
+   "old": "(superseded by `s3-put-silent`: the put logs nothing) | `app/services/storage.py` | `test_s3_put_logs_nothing`",
+   "new": "(superseded by `s3-put-silent`: the put logs nothing) | `app/services/storage.py` | `test_s3_put_logs_no_filename`",
+   "tests": "R"
+  }
+ ]
+}

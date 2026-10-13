@@ -28,10 +28,15 @@ http {
     limit_req_log_level info;
 
     # HSTS for nginx's own error pages (snippets/error-pages.conf): everywhere but
-    # the plain-HTTP onion listener, where the app omits it too.
+    # the plain-HTTP onion listener, where the app omits it too — and nowhere when
+    # TLS is off, where port 80 used to send it (RFC 6797 §8.1).
     map $server_port $ow_hsts {
         8080    "";
+{% if openwhistle_tls_enabled | bool %}
         default "max-age=31536000; includeSubDomains; preload";
+{% else %}
+        default "";
+{% endif %}
     }
 
     # 5 attachments x 10 MB (app/services/attachment.py) plus form overhead.
@@ -58,6 +63,9 @@ http {
         ssl_certificate     /etc/letsencrypt/live/{{ openwhistle_domain }}/fullchain.pem;
         ssl_certificate_key /etc/letsencrypt/live/{{ openwhistle_domain }}/privkey.pem;
         ssl_protocols TLSv1.2 TLSv1.3;
+        # TLS 1.2 with forward secrecy only (Mozilla "intermediate"); nginx's default
+        # offered AES128-GCM-SHA256 to an RSA certificate, which a later key leak decrypts.
+        ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305;
         ssl_prefer_server_ciphers off;
         ssl_session_cache shared:ow_tls:10m;
         # Session tickets are keyed by one long-lived server secret that would decrypt

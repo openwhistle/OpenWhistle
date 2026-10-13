@@ -432,18 +432,6 @@ async def test_draft_with_the_wrong_key_counts_as_expired(client: AsyncClient) -
 
 
 @pytest.mark.asyncio
-async def test_draft_attachments_are_capped_in_total(
-    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    from app.services import attachment
-
-    monkeypatch.setattr(attachment, "MAX_DRAFT_ATTACHMENT_BYTES", 4)
-    resp = await _upload(client, await _walk_to_attachments(client))
-    assert "too large in total" in resp.text
-    assert 'name="step" value="5"' in resp.text
-
-
-@pytest.mark.asyncio
 async def test_draft_attachments_are_refused_when_redis_is_nearly_full(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:

@@ -9,8 +9,8 @@ like. Every row was verified by mutation (`scripts/mutation_audit.py`,
 | Guard | Test that fires |
 | --- | --- |
 | EXIF/GPS and camera data removed from JPEG, WebP; text chunks from PNG; comment from GIF | `test_jpeg_loses_exif_and_gps_but_keeps_orientation`, `test_png_text_chunks_are_removed`, `test_webp_exif_is_removed`, `test_gif_comment_is_removed` |
-| Only pixels are copied — nothing Pillow would carry over from `im.info` | `test_png_icc_profile_is_removed` (ICC profiles can name the device) |
-| EXIF orientation baked into the pixels | `test_jpeg_loses_exif_and_gps_but_keeps_orientation` |
+| JPEG, PNG, WebP keep only the segments that describe pixels — never re-encoded; a TIFF is re-drawn pixel by pixel | `test_png_icc_profile_is_removed` (ICC profiles can name the device) |
+| JPEG orientation kept as a one-tag EXIF block and nothing else; TIFF orientation baked into the pixels | `test_jpeg_loses_exif_and_gps_but_keeps_orientation` |
 | PDF document info **and** XMP removed, and the orphaned objects dropped | `test_pdf_document_info_is_removed` |
 | DOCX/XLSX core, app and custom properties emptied | `test_office_properties_are_emptied_and_content_kept` |
 | Zip bomb refused | `test_office_zip_bomb_is_refused` |
@@ -42,7 +42,7 @@ Mutations: `docs-tech/mutations/v1.5.0-privacy.json`. Tests: `tests/test_privacy
 | Name decrypted on status page, admin page, both downloads, PDF | `test_status_page_download_and_pdf_show_the_decrypted_filename`, `test_admin_report_page_and_download_show_the_decrypted_filename` |
 | Migration 003 encrypts existing names, never twice | `test_migration_encrypts_existing_filenames_idempotently` |
 | Draft in Redis is ciphertext; key only in the cookie; wrong key = expired | `test_draft_in_redis_reveals_nothing_without_the_cookie_key`, `test_draft_with_the_wrong_key_counts_as_expired` |
-| Draft attachment total cap; refused near Redis `maxmemory` | `test_draft_attachments_are_capped_in_total`, `test_draft_attachments_are_refused_when_redis_is_nearly_full`, `test_redis_has_room` |
+| Draft attachments refused near Redis `maxmemory` (the total is capped by 5 files x 10 MB) | `test_draft_attachments_are_refused_when_redis_is_nearly_full`, `test_redis_has_room` |
 | New-report and reply notices queued, sent as one digest, once across replicas | `test_new_report_and_reply_are_queued_not_sent`, `test_digest_is_delivered_once_when_replicas_run_together`, `test_whistleblower_reply_queues_a_notification` |
 | Retention on by default; admin page says why nothing is deleted yet | `test_retention_enabled_defaults_true`, `test_retention_page_explains_the_default` |
 | IP headers and peer address removed before the app; pages `no-store` | `test_ip_headers_and_peer_address_never_reach_the_app`, `test_pages_are_never_cached_but_static_files_are` |
@@ -262,7 +262,7 @@ flip on random uuids); its test now also checks the statement's `ORDER BY`.
 | `rekey-failure-logs-message` | `app/main.py` | `test_log_rekey_task_result_logs_exception_type_not_message` |
 | `legacy-key-in-lookup-error` | `app/services/attachment.py` | `test_read_attachment_lookup_error_has_no_filename` |
 | `legacy-key-in-delete-log` | `app/services/attachment.py` | `test_failed_object_delete_logs_no_key` |
-| `legacy-key-in-s3-put-log` | `app/services/storage.py` | `test_s3_put_logs_no_filename` |
+| `legacy-key-in-s3-put-log` (superseded by `s3-put-silent`: the put logs nothing) | `app/services/storage.py` | `test_s3_put_logs_nothing` |
 | `legacy-key-in-s3-delete-log` | `app/services/storage.py` | `test_s3_delete_logs_no_filename` |
 | `legacy-key-in-s3-not-found` | `app/services/storage.py` | `test_s3_get_missing_object_message_has_no_filename` |
 | `scanner-down-accepts` | `app/services/attachment.py` | `test_upload_is_refused_when_the_scanner_is_unreachable` |

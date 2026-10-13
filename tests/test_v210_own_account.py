@@ -244,7 +244,7 @@ async def test_revoking_keeps_only_the_named_session() -> None:
     uid = str(uuid.uuid4())
     kept, gone = f"kept-{uid}", f"gone-{uid}"
     for token in (kept, gone):
-        await redis.set(f"openwhistle:session:{token}", uid, ex=60)
+        await redis.set(auth_service._key("openwhistle:session:", token), uid, ex=60)
     try:
         assert await auth_service.revoke_user_sessions(redis, uid, keep=kept) == 1
         assert await validate_session(redis, kept)

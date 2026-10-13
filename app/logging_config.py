@@ -35,6 +35,8 @@ def configure_logging(log_level: str = "INFO", log_format: str = "json") -> None
                 "formatter": "default",
                 "stream": "ext://sys.stdout",
             },
+            # With no handler at all, logging's lastResort prints WARNING and up to stderr.
+            "discard": {"class": "logging.NullHandler"},
         },
         "root": {
             "handlers": ["console"],
@@ -53,6 +55,9 @@ def configure_logging(log_level: str = "INFO", log_format: str = "json") -> None
             # ``--no-access-log`` had switched off, and put every path and
             # query string (setup token, OIDC code, case pages) into stdout.
             "uvicorn.access": {"handlers": [], "propagate": False},
+            # Only reporters' uploads reach pypdf; it warned on every PDF with a wrong
+            # xref pointer, a line stamped with the second the file was uploaded.
+            "pypdf": {"handlers": ["discard"], "propagate": False},
         },
     }
     logging.config.dictConfig(config)

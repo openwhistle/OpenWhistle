@@ -16,7 +16,9 @@ from app.database import get_db
 from app.models.setup import SetupStatus
 from app.models.user import AdminRole, AdminUser
 from app.redis_client import get_redis
+from app.services import audit as audit_service
 from app.services import rate_limit as rl
+from app.services.audit import AuditAction
 from app.services.auth import hash_password, validate_password
 from app.services.mfa import (
     consume_totp,
@@ -99,6 +101,14 @@ async def create_initial_admin(
         telemetry_asked_version=settings.app_version,
     )
     db.add(admin)
+    await db.flush()  # the audit row refers to it
+    await audit_service.log(
+        db,
+        admin,
+        AuditAction.ADMIN_CREATED,
+        detail={"username": admin.username, "role": admin.role.value},
+        target_org=default_org.id,
+    )
 
     result = await db.execute(select(SetupStatus).where(SetupStatus.id == 1))
     setup = result.scalar_one_or_none()

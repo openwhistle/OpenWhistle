@@ -481,7 +481,8 @@ async def test_migration_016_encrypts_attachments_stored_in_the_clear(throwaway_
     alembic("upgrade", "head")
     throwaway_db.expire_all()
     row = await throwaway_db.scalar(select(Attachment).where(Attachment.id == att_id))
-    assert row.encrypted and b"GPS-PHOTO" not in row.data
+    stored = await throwaway_db.scalar(select(Attachment.data).where(Attachment.id == att_id))
+    assert row.encrypted and b"GPS-PHOTO" not in stored
     assert await read_attachment(throwaway_db, row) == b"GPS-PHOTO"
 
 
