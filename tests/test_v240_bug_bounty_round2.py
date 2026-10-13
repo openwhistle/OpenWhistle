@@ -559,3 +559,84 @@ def test_the_suite_runs_with_retention_off() -> None:
     from app.config import settings
 
     assert settings.retention_enabled is False
+
+
+# ── TLS 1.2 offers forward-secret suites only ─────────────────────────────────
+
+
+def test_the_bundled_nginx_offers_no_tls12_suite_without_forward_secrecy() -> None:
+    """No ``ssl_ciphers``: nginx's default ``HIGH:!aNULL:!MD5`` negotiated
+    AES128-GCM-SHA256 (RSA key exchange) with an operator's RSA certificate (measured with
+    ``openssl s_client -tls1_2 -cipher AES128-GCM-SHA256``), while ``ssl_session_tickets
+    off`` was there precisely so a later key leak could not decrypt recorded sessions."""
+    import re
+    from pathlib import Path
+
+    conf = (Path(__file__).parents[1] / "nginx/nginx.conf").read_text()
+    (ciphers,) = re.findall(r"^\s*ssl_ciphers\s+([^;]+);", conf, re.M)
+    assert all(c.startswith("ECDHE-") for c in ciphers.split(":")), ciphers
+
+
+# ── Ansible without TLS sends no HSTS ─────────────────────────────────────────
+
+
+def test_the_ansible_nginx_without_tls_sends_no_hsts_on_its_own_error_pages() -> None:
+    """With ``openwhistle_tls_enabled: false`` the only listener is plain HTTP on port 80,
+    and the map's default gave nginx's own 413/429/50x pages HSTS there (RFC 6797 §8.1
+    forbids it), while the app omits it on that instance since 2.3.0."""
+    import re
+
+    from tests.test_tls import _render_role_template
+
+    conf = _render_role_template("nginx.conf.j2", openwhistle_tls_enabled=False)
+    (mapping,) = re.findall(r"map \$server_port \$ow_hsts \{(.*?)\}", conf, re.S)
+    assert "max-age" not in mapping
+    tls = _render_role_template("nginx.conf.j2", openwhistle_tls_enabled=True)
+    assert "max-age" in re.findall(r"map \$server_port \$ow_hsts \{(.*?)\}", tls, re.S)[0]
+
+
+# ── The self-signed certificate is renewed before it expires ──────────────────
+
+
+def test_an_expiring_self_signed_certificate_is_replaced(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """tls-init keeps its own certificate across restarts and replaced it only for a new
+    hostname: after its 825 days every browser refused the instance, and every restart
+    said "kept"."""
+    import datetime
+
+    from cryptography import x509
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.asymmetric import ec
+    from cryptography.x509.oid import NameOID
+
+    from tests.test_tls import _ensure
+
+    key = ec.generate_private_key(ec.SECP256R1())
+    name = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "whistle.example.org")])
+    now = datetime.datetime.now(datetime.UTC)
+    old = (
+        x509.CertificateBuilder()
+        .subject_name(name)
+        .issuer_name(name)
+        .public_key(key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(now - datetime.timedelta(days=820))
+        .not_valid_after(now + datetime.timedelta(days=5))
+        .add_extension(
+            x509.SubjectAlternativeName([x509.DNSName("whistle.example.org")]), critical=False
+        )
+        .sign(key, hashes.SHA256())
+    )
+    (tmp_path / "tls").mkdir()
+    (tmp_path / "tls/fullchain.pem").write_bytes(old.public_bytes(serialization.Encoding.PEM))
+    (tmp_path / "tls/privkey.pem").write_bytes(
+        key.private_bytes(
+            serialization.Encoding.PEM,
+            serialization.PrivateFormat.PKCS8,
+            serialization.NoEncryption(),
+        )
+    )
+    ensure = _ensure()
+    assert ensure(tmp_path / "none", tmp_path / "tls", "whistle.example.org") == "self-signed"
+    cert = x509.load_pem_x509_certificate((tmp_path / "tls/fullchain.pem").read_bytes())
+    assert cert.not_valid_after_utc > now + datetime.timedelta(days=800)
