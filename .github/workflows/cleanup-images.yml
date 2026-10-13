@@ -56,6 +56,7 @@ jobs:
           done
 
           DELETED=0
+          FAILED=0
           for i in "${!SHA_TAGS[@]}"; do
             [[ $i -lt $KEEP ]] && continue
             tag="${SHA_TAGS[$i]}"
@@ -66,9 +67,12 @@ jobs:
               DELETED=$((DELETED + 1))
             else
               echo "Failed to delete Docker Hub: ${tag}" >&2
+              FAILED=$((FAILED + 1))
             fi
           done
-          echo "Docker Hub: kept ${KEEP}, deleted ${DELETED} sha- tag(s)."
+          echo "Docker Hub: kept ${KEEP}, deleted ${DELETED} sha- tag(s), ${FAILED} refused."
+          # A refused delete used to leave the step green: old images piled up unseen.
+          [[ ${FAILED} -eq 0 ]]
 
       - name: Delete old sha- tags from Quay.io
         if: env.QUAY_TOKEN != ''
@@ -107,6 +111,7 @@ jobs:
 
           DOOMED=$(jq -r --argjson keep "${KEEP}" "${QUAY_DOOMED_DIGESTS}" <<< "${TAGS}")
           DELETED=0
+          FAILED=0
           for digest in ${DOOMED}; do
             if skopeo delete \
               --creds "${QUAY_USERNAME}:${QUAY_TOKEN}" \
@@ -115,6 +120,8 @@ jobs:
               DELETED=$((DELETED + 1))
             else
               echo "Failed to delete Quay.io: ${digest}" >&2
+              FAILED=$((FAILED + 1))
             fi
           done
-          echo "Quay.io: kept ${KEEP} sha- tags and every digest a semver tag uses, deleted ${DELETED} manifest(s)."
+          echo "Quay.io: kept ${KEEP} sha- tags and every digest a semver tag uses, deleted ${DELETED} manifest(s), ${FAILED} refused."
+          [[ ${FAILED} -eq 0 ]]

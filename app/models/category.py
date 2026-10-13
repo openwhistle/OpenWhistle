@@ -35,9 +35,15 @@ class ReportCategory(Base):
     )
 
     def label_for(self, lang: str) -> str:
-        """The label for an admin's UI language. Only English and German are
-        stored (label_en/label_de) — every other UI language (fr, es, pt-br) falls
-        back to English, same as an empty label_de would."""
+        """The label in a UI language. Only English and German are stored
+        (label_en/label_de). A built-in category reads in the others from the
+        locale (category.label.<slug>): fr, es and pt-br reporters got the English
+        label while their locale held a translation nothing read. Anything else
+        falls back to English, as an empty label_de does."""
         if lang == "de" and self.label_de:
             return self.label_de
+        if self.is_default and lang != "en":
+            from app.i18n import _load  # noqa: PLC0415
+
+            return _load(lang).get(f"category.label.{self.slug}") or self.label_en
         return self.label_en

@@ -71,7 +71,7 @@ async def _get_csrf(client: AsyncClient, url: str) -> str:
 async def _make_report(db: AsyncSession) -> str:
     """Create a report and return its UUID as string."""
     report, _ = await create_report(
-        db, category="financial_fraud", description="API test report detail.", lang="en"
+        db, category="financial_fraud", description="API test report detail."
     )
     return str(report.id)
 
@@ -300,7 +300,7 @@ async def test_link_cases_via_api(client: AsyncClient, db_session: AsyncSession)
     from app.services.report import create_report
 
     report_b, _ = await create_report(
-        db_session, category="corruption", description="Second report for linking test.", lang="en"
+        db_session, category="corruption", description="Second report for linking test."
     )
 
     csrf = await _get_csrf(client, f"/admin/reports/{rid_a}")

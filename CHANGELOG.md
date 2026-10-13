@@ -22,9 +22,60 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   onion page assume; nothing listened there.
 - The image runs on Python 3.15 (`python:3.15-alpine`). It brings the poplib control-character fix
   (CVE-2025-15367) that 3.14 never got; the two `.grype.yaml` exceptions for 3.14.8 are gone.
+- `MAX_LOGIN_ATTEMPTS`, `LOGIN_LOCKOUT_MINUTES`, `MAX_ACCESS_ATTEMPTS`, `ACCESS_LOCKOUT_MINUTES` and
+  `ACCESS_TOKEN_EXPIRE_MINUTES` must be at least 1. `LOGIN_LOCKOUT_MINUTES=0` was accepted and locked nothing:
+  `EXPIRE 0` deletes the counter as it is written.
+- Ansible: `openwhistle_tls_enabled: false` sets `SECURE_COOKIES=false` and an `http://` `APP_PUBLIC_URL`. The
+  role served plain HTTP with Secure cookies, which a browser drops: no admin stayed signed in.
+- Helm: the liveness probe is a TCP check. `/health` answers 503 while PostgreSQL or Redis is down, so an
+  outage of either restarted every pod; readiness still takes the pod out of service.
+- The receipt in a case's thread is stored in no reporter's language and read in each reader's. A Portuguese
+  browser at a German company showed up on the case page as "Sua denúncia foi recebida".
+- French, Spanish and Brazilian Portuguese reporters read the built-in categories in their language; the
+  translations sat in the locales, read by nothing.
+- The installation count makes at most one attempt a day, failed or not, as the consent text says. A failure
+  was retried hourly: 24 requests a day while the count server was down.
 
 ### Fixed
 
+- **Guesses sent together got past the sign-in lockout.** The count was read, the code checked, the failure
+  counted after: 50 TOTP codes sent at once with the password known got 18 checked against a limit of 10. An
+  attempt is counted before it is checked; a right password gives it back.
+- **More traces of the whistleblower left the attachment strip untouched**: a PDF page's thumbnail (`/Thumb`,
+  the page as it was before anything was blacked out); Office core properties anywhere but
+  `docProps/core.xml` (`docProps/Core.xml`, System.IO.Packaging's `package/services/…`); a photo named
+  `.jfif` or `.jpe` (EXIF kept); an SVG's `<metadata>` and `inkscape:export-filename`; OneDrive addresses
+  (`…-my.sharepoint.com/personal/<account>/`, `d.docs.live.net/<id>/`).
+- **CloudFront's viewer address and port reached the app**, and with it the city, coordinates and network
+  (ASN) that CloudFront, Cloudflare, App Engine, Akamai, Vercel and Netlify add. App and nginx drop all 38.
+- **A report closed on 1 March 2027 was deleted on 28 February 2030**, a day before HinSchG §11(5)'s three
+  years: `RETENTION_DAYS=1095` was counted as days. Whole years are calendar years now.
+- **A superadmin saw a case under another organisation's category**, on the case page, the dashboard and the
+  PDF export, where two organisations use one slug.
+- Switching a category or location off or on was saved before its audit entry; a failing audit write left
+  the change in place, unaudited.
+- Migration 017 moves an organisation-less case's audit rows with the case; that organisation's admins saw
+  no trail of it, identity reveals included.
+- A second setup link from an earlier sign-in showed the enrolled authenticator's secret for its ten minutes
+  and could start a session.
+- Every visit to `/submit` stored an empty draft in Redis for two hours (20 visits, 20 keys); nothing limits
+  visits, and a full Redis refuses every write. The first step stores the draft.
+- The Redis room check before storing attachments counted one base64 of them; a draft holds two (10 MB:
+  14.0 MB counted, 18.6 MB stored).
+- The server refuses a category or location without a name, or with a slug or code the form's pattern
+  refuses; it stored a name of spaces as an empty option in the reporting form.
+- A locked sign-in answered 200; it answers 429, as the second-factor step does.
+- Quick Start bind-mounted `./app/static` writable over the image's root-owned copy: the app (uid 1000, often
+  the checkout's owner) could rewrite the JavaScript every reporter loads.
+- `cp .env.example .env` stopped every start outside a container (the settings refused Compose's own keys),
+  the reset script's placeholder `SECRET_KEY` outranked `.env` and sealed `--reset-totp`'s secret with it, and
+  `alembic upgrade head` ignored a `DATABASE_URL` in `.env` and migrated alembic.ini's database.
+- The registry cleanup stayed green when Docker Hub or Quay refused a delete.
+- CI exercises the Ansible stack's onion listener: it forces `X-OW-Onion` to `1` and drops address headers.
+- A notice sent with `NOTIFICATION_BATCH_MINUTES=0` no longer says notices are batched; the retention page
+  says "nothing has been deleted early" only while no report can be old enough; German and French count the
+  three months of feedback from the acknowledgement; the capped-search notice and the retention period use
+  the admin's number format.
 - **Attachments kept traces of the whistleblower that the upload form says are removed.** A PDF kept the EXIF
   and GPS of a JPEG behind a second filter (`[/FlateDecode /DCTDecode]`), the metadata boxes of JPEG 2000
   images, a signature's signer name, e-mail, certificate and signing second, and Acrobat's `/LastModified`.

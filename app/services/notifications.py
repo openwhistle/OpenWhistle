@@ -413,8 +413,14 @@ async def _send_email(new_reports: list[str], new_messages: list[str], settings:
         f"New whistleblower messages on: {_summary(new_messages)}\n\n"
         f"Review them in the admin dashboard:\n{dashboard_url}\n\n"
         "-- \n"
-        "No report content is included in this notification, and notifications\n"
-        "are batched, so their timing does not reveal when a report was sent."
+        "No report content is included in this notification"
+        # Said only when true: NOTIFICATION_BATCH_MINUTES=0 sends each one as it happens.
+        + (
+            ", and notifications\nare batched, so their timing does not reveal"
+            " when a report was sent."
+            if cfg.notification_batch_minutes > 0
+            else "."
+        )
     )
     msg = MIMEText(text_body, "plain", "utf-8")
     msg["Subject"] = f"New activity — {cfg.app_name}"

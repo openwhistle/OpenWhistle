@@ -74,6 +74,32 @@ async def record_admin_login_failure(redis: Redis, username: str) -> int:
     return await _count_failure(redis, _admin_key(username), settings.login_lockout_minutes * 60)
 
 
+async def claim_admin_attempt(redis: Redis, username: str) -> bool:
+    """Count an attempt before it is checked; False once the account is locked.
+
+    The count used to be read, the guess checked and the failure counted after
+    it: a burst all read the same count, and 50 codes sent together got 18
+    checked against a limit of 10. Counted first, each guess sees the ones
+    before it. A right guess gives its attempt back (``release_admin_attempt``).
+    """
+    key = _admin_key(username)
+    if await redis.incr(key) > settings.max_login_attempts:
+        await redis.decr(key)  # a locked attempt neither counts nor extends the lock
+        return False
+    await redis.expire(key, settings.login_lockout_minutes * 60)
+    return True
+
+
+_DECR_IF_EXISTS = (
+    "if redis.call('exists', KEYS[1]) == 1 then return redis.call('decr', KEYS[1]) end"
+)
+
+
+async def release_admin_attempt(redis: Redis, username: str) -> None:
+    """Give back a claimed attempt that was right; a counter expired meanwhile stays gone."""
+    await redis.eval(_DECR_IF_EXISTS, 1, _admin_key(username))
+
+
 async def reset_admin_login_attempts(redis: Redis, username: str) -> None:
     """Clear admin login failures after successful authentication."""
     await redis.delete(_admin_key(username))

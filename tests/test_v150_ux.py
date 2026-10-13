@@ -364,7 +364,7 @@ def test_plain_message_passed_through_t_is_never_marked_safe() -> None:
 
 @pytest.mark.asyncio
 async def test_search_matches_case_number_substring(db_session: AsyncSession) -> None:
-    report, _ = await create_report(db_session, category="other", description="x" * 20, lang="en")
+    report, _ = await create_report(db_session, category="other", description="x" * 20)
     digits = report.case_number.split("-")[-1]
     found, total = await get_reports_paginated(db_session, case_query=digits.lower(), per_page=100)
     assert report.id in {r.id for r in found}
@@ -376,7 +376,7 @@ async def test_search_matches_case_number_substring(db_session: AsyncSession) ->
 
 @pytest.mark.asyncio
 async def test_search_escapes_like_wildcards(db_session: AsyncSession) -> None:
-    await create_report(db_session, category="other", description="x" * 20, lang="en")
+    await create_report(db_session, category="other", description="x" * 20)
     for wildcard in ("%", "_", "OW%"):
         found, total = await get_reports_paginated(db_session, case_query=wildcard)
         assert total == 0, wildcard
@@ -386,8 +386,8 @@ async def test_search_escapes_like_wildcards(db_session: AsyncSession) -> None:
 async def test_search_keeps_the_case_manager_restriction(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    mine, _ = await create_report(db_session, category="other", description="x" * 20, lang="en")
-    other, _ = await create_report(db_session, category="other", description="x" * 20, lang="en")
+    mine, _ = await create_report(db_session, category="other", description="x" * 20)
+    other, _ = await create_report(db_session, category="other", description="x" * 20)
     cm, secret = await _make_admin(db_session, role=AdminRole.case_manager)
     await db_session.execute(
         update(Report).where(Report.id == mine.id).values(assigned_to_id=cm.id)
@@ -409,7 +409,7 @@ async def test_search_keeps_the_case_manager_restriction(
 async def test_dashboard_search_form_and_links_keep_the_query(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
-    report, _ = await create_report(db_session, category="other", description="x" * 20, lang="en")
+    report, _ = await create_report(db_session, category="other", description="x" * 20)
     admin, secret = await _make_admin(db_session)
     await _login(client, admin, secret)
     q = report.case_number.split("-")[-1]
@@ -456,7 +456,7 @@ async def test_audit_log_shows_labels_and_readable_detail(
     client: AsyncClient, db_session: AsyncSession
 ) -> None:
     admin, secret = await _make_admin(db_session)
-    report, _ = await create_report(db_session, category="other", description="x" * 20, lang="en")
+    report, _ = await create_report(db_session, category="other", description="x" * 20)
     db_session.add_all(
         [
             AuditLog(

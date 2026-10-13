@@ -22,8 +22,6 @@ services:
       REDIS_URL: "redis://redis:6379/0"
       # Quick Start serves plain HTTP on :4009.
       SECURE_COOKIES: "${SECURE_COOKIES:-false}"
-    volumes:
-      - ./app/static:/app/app/static
     depends_on:
       db:
         condition: service_healthy

@@ -145,7 +145,7 @@ Until v2.1.0 no page let an admin change their own password, so whoever set it f
 |---|---|---|
 | Root on the host, or anyone who can read the container environment | keys must be in memory to decrypt | restrict host access; rotate `ENCRYPTION_KEY` after an incident (docs: Rotating the encryption key) |
 | The whistleblower's own device or browser compromised | outside the application | the submit page advises a private device |
-| A handler who reveals an identity and passes it on | HinSchG allows the handler to know it | the audit log names who revealed it and why |
+| A handler who reveals an identity and passes it on | HinSchG allows the handler to know it | the audit log names who revealed it and why, until the case is deleted: its audit rows go with it |
 | TLS terminated by a proxy the operator configured badly | outside the bundled stack | follow the deployment guide; keep access logs off |
 | Traffic analysis across a long time window | batching narrows, cannot remove | raise `NOTIFICATION_BATCH_MINUTES` |
 | The installation count's source address | a TCP request has one; the far end is trusted not to log it, and anyone on the path sees that this host talks to `telemetry.wdkro.de` once a day | leave it off, or send it through a proxy; the id and version alone name no organisation |

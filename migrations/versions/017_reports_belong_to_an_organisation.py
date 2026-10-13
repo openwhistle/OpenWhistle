@@ -6,7 +6,8 @@ Create Date: 2026-10-13
 
 A report filed while DEFAULT_ORG_SLUG named no organisation kept no organisation.
 With multi-tenancy on, every organisation's admin could open it while their case
-lists hid it. It goes to the default organisation, or the oldest one.
+lists hid it. It goes to the default organisation, or the oldest one, and its
+audit rows with it.
 """
 
 import os
@@ -31,6 +32,12 @@ def upgrade() -> None:
             " (SELECT id FROM organisations ORDER BY created_at, id LIMIT 1))"
             " WHERE org_id IS NULL"
         ).bindparams(slug=os.environ.get("DEFAULT_ORG_SLUG", "default"))
+    )
+    # The case's audit trail goes with it: the audit log is read by organisation,
+    # and rows written while the case had none would stay out of every one's view.
+    op.execute(
+        "UPDATE audit_log SET org_id = reports.org_id FROM reports"
+        " WHERE audit_log.report_id = reports.id AND audit_log.org_id IS NULL"
     )
 
 

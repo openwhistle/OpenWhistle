@@ -420,6 +420,13 @@ def _draft_fernet(session_id: str) -> Fernet:
     return Fernet(session_id.split(".")[1] + "=")
 
 
+def _draft_bytes(raw: int) -> int:
+    """What ``raw`` bytes of attachments take in Redis: base64 in the JSON, and the
+    sealed draft base64 again. Counted as one base64 (4/3), a 10 MB file was 14.0 MB
+    to the room check and 18.6 MB in Redis."""
+    return raw * 16 // 9
+
+
 def _submission_key(session_id: str) -> str:
     return f"submission-session:{session_id.split('.')[0]}"
 
@@ -704,7 +711,9 @@ async def submit_get(
             ctx["field_errors"] = {_ERROR_FIELD[flash_error]: f"submit.error.{flash_error}"}
 
     rendered = render(request, "submit.html", ctx)
-    if not other_orgs_draft:
+    # Nothing is stored for a visit: every GET used to keep an empty draft for two
+    # hours, and nothing limits visits. The first POST makes the draft.
+    if not other_orgs_draft and state:
         _set_submission_cookie(rendered, session_id, request)
         await _save_submission(redis, session_id, state)
     return rendered
@@ -896,8 +905,7 @@ async def submit_post(
         if file_tuples:
             import base64 as _b64
 
-            # Stored as base64: four bytes for every three.
-            incoming = sum(len(ft[2]) for ft in file_tuples) * 4 // 3
+            incoming = _draft_bytes(sum(len(ft[2]) for ft in file_tuples))
             async with _draft_room(redis, incoming) as room:
                 if not room:
                     return await _fail(_STEP_ATTACHMENTS, "attachments_no_room")
@@ -986,7 +994,6 @@ async def submit_post(
                     db=db,
                     category=state["category"],
                     description=state["description"].strip(),
-                    lang=get_lang(request),
                     submission_mode=mode,
                     location_id=report_loc_uuid,
                     confidential_name_enc=conf_name_enc,
@@ -1214,7 +1221,7 @@ async def status_get(
 
                 from app.services.report import decrypt_attachment_names, decrypt_report_fields
 
-                _, dec_msgs = decrypt_report_fields(report)
+                _, dec_msgs = decrypt_report_fields(report, get_lang(request))
 
                 return render(
                     request,

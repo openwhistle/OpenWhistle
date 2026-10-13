@@ -39,7 +39,6 @@ async def _make_report(db: AsyncSession, **kwargs: str) -> tuple[Report, str]:
         db,
         category=kwargs.get("category", "financial_fraud"),
         description=kwargs.get("description", "A test report with enough detail."),
-        lang=kwargs.get("lang", "en"),
     )
 
 
@@ -61,37 +60,6 @@ async def test_create_report_receipt_message_added(db_session: AsyncSession) -> 
     await db_session.refresh(report, ["messages"])
     assert len(report.messages) == 1
     assert report.messages[0].sender == ReportSender.admin
-
-
-@pytest.mark.asyncio
-async def test_create_report_german_lang_adds_receipt_message(db_session: AsyncSession) -> None:
-    """lang='de' exercises the i18n path in create_report."""
-    report, _ = await create_report(
-        db_session,
-        category="workplace_safety",
-        description="Ein Testbericht mit ausreichend Detail.",
-        lang="de",
-    )
-    await db_session.refresh(report, ["messages"])
-    assert len(report.messages) >= 1
-
-
-@pytest.mark.asyncio
-async def test_create_report_unknown_lang_falls_back_to_default(
-    db_session: AsyncSession,
-) -> None:
-    """An unknown lang code must fall back to the default language without crashing."""
-    report, _ = await create_report(
-        db_session,
-        category="corruption",
-        description="Fallback language test report.",
-        lang="xx",
-    )
-    await db_session.refresh(report, ["messages"])
-    assert len(report.messages) >= 1
-
-
-# ─── get_report_by_credentials ───────────────────────────────────────────────
 
 
 @pytest.mark.asyncio

@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy.orm.strategy_options import _AbstractLoad
 
-from app.i18n import _DEFAULT, _load
+from app.i18n import _DEFAULT, _LANG_MAP, _load
 from app.models.attachment import (
     Attachment,  # noqa: F401 — ensures mapper is loaded for selectinload
 )
@@ -136,7 +136,6 @@ async def create_report(
     db: AsyncSession,
     category: str,
     description: str,
-    lang: str = "en",
     submission_mode: SubmissionMode = SubmissionMode.anonymous,
     location_id: uuid.UUID | None = None,
     confidential_name_enc: str | None = None,
@@ -177,10 +176,9 @@ async def create_report(
     if org_id is None:
         org_id = await default_org_id(db)
 
-    strings = _load(lang)
-    fallback = _load(_DEFAULT)
-    receipt_text = strings.get("system.receipt_message") or fallback.get("system.receipt_message")
-    enc_receipt = encrypt_field(report_fernet, receipt_text or "")
+    # In no reporter's language: a Portuguese browser at a German company used to
+    # show on the case page. Each reader sees it in theirs (decrypt_report_fields).
+    enc_receipt = encrypt_field(report_fernet, _receipt(_DEFAULT))
 
     # generate_case_number returns a random suffix; on the rare collision (or a
     # concurrent duplicate) retry with a fresh number instead of surfacing a 500.
@@ -238,8 +236,15 @@ async def create_report(
     raise last_exc
 
 
-def decrypt_report_fields(report: Report) -> tuple[str, list[str]]:
+def _receipt(lang: str) -> str:
+    return _load(lang).get("system.receipt_message") or _load(_DEFAULT)["system.receipt_message"]
+
+
+def decrypt_report_fields(report: Report, lang: str | None = None) -> tuple[str, list[str]]:
     """Return (decrypted_description, [decrypted_message_contents]).
+
+    With ``lang``, the receipt reads in that language, whichever one it was
+    stored in (before v2.4.0, the reporter's browser's).
 
     Falls back to plaintext for rows that pre-date envelope encryption
     (encrypted_dek is None) — backward-compatible with pre-v1.0 data.
@@ -260,6 +265,12 @@ def decrypt_report_fields(report: Report) -> tuple[str, list[str]]:
         description = report.description
         msg_contents = [m.content for m in report.messages]
 
+    if lang is not None:
+        receipts = {_receipt(code) for code in _LANG_MAP}
+        msg_contents = [
+            _receipt(lang) if m.sender == ReportSender.admin and text in receipts else text
+            for m, text in zip(report.messages, msg_contents, strict=True)
+        ]
     return description, msg_contents
 
 

@@ -56,7 +56,7 @@ def generate_report_pdf(
     from app.i18n import make_translator
 
     t = make_translator(lang)
-    description, msg_contents = decrypt_report_fields(report)
+    description, msg_contents = decrypt_report_fields(report, lang)
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     _register_font(pdf)

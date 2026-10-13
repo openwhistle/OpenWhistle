@@ -98,13 +98,11 @@ async def create_location(
 
 async def deactivate_location(db: AsyncSession, loc: Location) -> Location:
     loc.is_active = False
-    await db.commit()
-    await db.refresh(loc)
+    await db.flush()  # the caller commits together with its audit row
     return loc
 
 
 async def reactivate_location(db: AsyncSession, loc: Location) -> Location:
     loc.is_active = True
-    await db.commit()
-    await db.refresh(loc)
+    await db.flush()  # the caller commits together with its audit row
     return loc

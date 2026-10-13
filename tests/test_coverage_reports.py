@@ -474,6 +474,7 @@ async def test_submit_get_downgrades_location_step_when_locations_removed(
         assert _wiz_step(resp.text) == 2
 
         await deactivate_location(db_session, loc)
+        await db_session.commit()
 
         resp = await client.get("/submit")
         assert resp.status_code == 200
@@ -630,13 +631,12 @@ async def test_submit_review_step_with_missing_state_returns_to_the_mode_step(
 
     get_resp = await client.get("/submit")
     csrf = _wiz_csrf(get_resp.text)
-    session_id = client.cookies.get("ow-submission-session")
-    assert session_id
+    # Opening the form stores no draft; this one is at step 6 with nothing filled in.
+    session_id = reports_module._new_draft_id()
+    client.cookies.set("ow-submission-session", session_id)
 
     redis = await get_redis()
-    state = await reports_module._load_submission(redis, session_id)
-    state["step"] = 6
-    await reports_module._save_submission(redis, session_id, state)
+    await reports_module._save_submission(redis, session_id, {"step": 6})
 
     resp = await client.post(
         "/submit",
@@ -737,13 +737,12 @@ async def test_submit_unknown_step_restarts_wizard(client: AsyncClient) -> None:
 
     get_resp = await client.get("/submit")
     csrf = _wiz_csrf(get_resp.text)
-    session_id = client.cookies.get("ow-submission-session")
-    assert session_id
+    # Opening the form stores no draft; this one is at step 99 with nothing filled in.
+    session_id = reports_module._new_draft_id()
+    client.cookies.set("ow-submission-session", session_id)
 
     redis = await get_redis()
-    state = await reports_module._load_submission(redis, session_id)
-    state["step"] = 99
-    await reports_module._save_submission(redis, session_id, state)
+    await reports_module._save_submission(redis, session_id, {"step": 99})
 
     resp = await client.post(
         "/submit",

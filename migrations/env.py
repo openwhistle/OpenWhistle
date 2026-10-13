@@ -1,7 +1,6 @@
 """Alembic environment — async SQLAlchemy with auto-import of all models."""
 
 import asyncio
-import os
 from logging.config import fileConfig
 
 from alembic import context
@@ -11,6 +10,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 # Import all models so Alembic auto-detects them
 import app.models  # noqa: F401
+from app.config import settings
 from app.database import Base
 
 config = context.config
@@ -18,11 +18,10 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Override URL from environment variable if set
-database_url = os.getenv("DATABASE_URL")
-if database_url:
-    # ConfigParser reads "%" as interpolation; a percent-encoded password has one.
-    config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
+# The app's own setting (environment, then .env): read from the environment only,
+# a DATABASE_URL in .env left the start-up migration on alembic.ini's database.
+# ConfigParser reads "%" as interpolation; a percent-encoded password has one.
+config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
 
 target_metadata = Base.metadata
 

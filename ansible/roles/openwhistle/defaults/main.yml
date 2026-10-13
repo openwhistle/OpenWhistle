@@ -27,7 +27,7 @@ openwhistle_redis_maxmemory: 1gb           # a full submission draft is ~90 MB; 
 
 # ── Application configuration ────────────────────────────────────────────────
 openwhistle_app_name: OpenWhistle
-openwhistle_app_public_url: "https://{{ openwhistle_domain }}"
+openwhistle_app_public_url: "{{ 'https' if openwhistle_tls_enabled | bool else 'http' }}://{{ openwhistle_domain }}"
 openwhistle_demo_mode: "false"
 openwhistle_submission_mode_enabled: "true"
 openwhistle_log_level: INFO
