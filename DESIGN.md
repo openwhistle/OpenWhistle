@@ -195,12 +195,16 @@ same eyeline**; let context disambiguate.
 The `ReportStatus` values map to fixed semantic roles (keep this table and the
 `ReportStatus` enum in sync):
 
-| Status              | Role      | Pill background        | Pill text / dot    |
-| ------------------- | --------- | --------------------- | ------------------ |
-| `received`          | neutral   | `{colors.surface-2}`  | `{colors.muted}`   |
-| `in_review`         | info      | `{colors.info-weak}`  | `{colors.info}`    |
-| `pending_feedback`  | warning   | `{colors.warning-weak}` | `{colors.warning}` |
-| `closed`            | success   | `{colors.success-weak}` | `{colors.success}` |
+Every pill is the same neutral pill (`{colors.surface}`, hairline ring,
+`{colors.body}` text); only the dot carries the role. Four tinted pills put blue,
+amber and green side by side on one screen.
+
+| Status              | Role      | Dot                 |
+| ------------------- | --------- | ------------------- |
+| `received`          | neutral   | `{colors.muted}`    |
+| `in_review`         | active    | `{colors.ink}`      |
+| `pending_feedback`  | warning   | `{colors.warning}`  |
+| `closed`            | success   | `{colors.success}`  |
 
 ## Typography
 
@@ -316,12 +320,13 @@ A speech bubble with a keyhole: one evenodd path on a 24-unit grid, drawn in ink
 
 ### Reassurance block (signature)
 
-On `/submit`, a `{rounded.md}` card filled with the brand colour (`--brand-primary`,
-both themes) beside the form: a 600 heading and four promises (no IP address
-stored, case number and PIN, no tracking, HinSchG deadlines), each a white 600
-title over one or two lines of `{typography.scale.body-sm}`, then the onion
-address and the link to the external reporting offices. It is the platform's
-emotional anchor and the only place the accent is used generously.
+On `/submit`, a neutral `{rounded.md}` card (`{colors.surface}`, hairline ring)
+beside the form: a 600 heading and four promises (no IP address stored, case
+number and PIN, no tracking, HinSchG deadlines), each led by an accent check and
+set as an `{colors.ink}` 600 title over one or two lines of
+`{typography.scale.body-sm}`, then the onion address and the link to the external
+reporting offices. A brand-coloured fill was tried in 2.4.0 and dropped: on the
+dark theme it fought the demo banner, the info alert and the status pills.
 
 Block and form are one grid inside the header's `--frame` (`.split-layout`): the
 block starts at the logo, the form ends at the footer's last link, at any window
@@ -358,8 +363,8 @@ with `tabular-nums`. Row hover fills `{colors.surface}`. Wrap in `overflow-x: au
 
 ### Status pills
 
-`{rounded.sm}`, ~`4px 10px`, weight 600, a leading `{rounded.full}` dot in
-`currentColor`. Colour strictly by the [status→colour table](#report-status--colour-mapping).
+`{rounded.sm}`, ~`4px 10px`, weight 600, a leading `{rounded.full}` dot. The dot's
+colour comes strictly from the [status→colour table](#report-status--colour-mapping).
 Pills read state at a glance and must never borrow the accent for a non-success state.
 
 ### Forms
@@ -400,16 +405,20 @@ showing the statutory deadline countdown (HinSchG acknowledgement / feedback win
 ### Secure message thread
 
 Two-sided bubbles. Handler messages (`them`): `{colors.surface}` + hairline,
-left-aligned. Reporter messages (`you`): `{colors.accent-weak}` + accent-tinted
+left-aligned, an `{colors.ink}` sender. Reporter messages (`you`): `{colors.accent-weak}` + accent-tinted
 border, right-aligned. Each bubble carries the sender in sentence-case Sora 600
 ("Reporting office") and the date in mono. Max width ~80%.
 
 ### Alerts / banners
 
 One banner system: `{rounded.md}`, `-weak` tint background, matching semantic
-border and text, from `{colors.info}` / `{colors.success}` / `{colors.warning}` /
-`{colors.danger}`. The demo banner and IP-warning banner are variants of this —
-not separate components. Notification emails are plain text on purpose — no
+border and text, from `{colors.success}` / `{colors.warning}` / `{colors.danger}`.
+The tints are `{colors.success-weak}`, `{colors.warning-weak}` and
+`{colors.danger-weak}`. **Information is neutral**: `alert-info` is `{colors.surface}`
+with a `{colors.border-strong}` bar and an `{colors.ink}` title; `{colors.info}` and
+`{colors.info-weak}` stay out of the reporter's pages. Amber and red are kept
+for what needs the reader to act. The demo banner is neutral too (a note, not a
+warning); the IP-warning banner is the warning variant. Notification emails are plain text on purpose — no
 tracking pixels, no remote images.
 
 ### Navigation & footer

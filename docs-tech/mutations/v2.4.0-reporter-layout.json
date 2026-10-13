@@ -15,8 +15,8 @@
   {
    "id": "promises-dark-again",
    "file": "app/static/css/site.css",
-   "old": "  background: var(--brand-primary);\n  border-radius: var(--radius-card);",
-   "new": "  background: var(--surface-dark);\n  border-radius: var(--radius-card);",
+   "old": "  background: var(--surface-card);\n  border-radius: var(--radius-card);\n  box-shadow: 0 0 0 1px var(--hairline);\n  color: var(--body-text);\n  grid-column: 1;",
+   "new": "  background: var(--surface-dark);\n  border-radius: var(--radius-card);\n  box-shadow: 0 0 0 1px var(--hairline);\n  color: var(--body-text);\n  grid-column: 1;",
    "tests": "D"
   },
   {
@@ -38,6 +38,27 @@
    "file": "app/static/css/site.css",
    "old": "  font-size: 0.8125rem;\n  font-weight: 600;\n  gap: 0.25rem 0.5rem;",
    "new": "  font-family: var(--font-mono);\n  font-size: 0.8125rem;\n  font-weight: 600;\n  gap: 0.25rem 0.5rem;",
+   "tests": "D"
+  },
+  {
+   "id": "info-alert-blue-again",
+   "file": "app/static/css/site.css",
+   "old": ".alert-info .alert-title { color: var(--ink); }",
+   "new": ".alert-info .alert-title { color: var(--info); }",
+   "tests": "D"
+  },
+  {
+   "id": "demo-banner-amber-again",
+   "file": "app/static/css/site.css",
+   "old": "  background: var(--surface-card);\n  border-bottom-width: 1px;\n  border-color: var(--hairline);",
+   "new": "  background: color-mix(in srgb,var(--warning) 12%,var(--canvas));\n  border-bottom-width: 1px;\n  border-color: var(--hairline);",
+   "tests": "D"
+  },
+  {
+   "id": "tinted-pill-again",
+   "file": "app/static/css/site.css",
+   "old": ".badge-closed::before { background: var(--success); }",
+   "new": ".badge-closed::before { background: var(--success); }\n.badge-closed {\n  background: var(--success-subtle);\n}",
    "tests": "D"
   },
   {

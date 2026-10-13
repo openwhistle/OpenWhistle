@@ -50,6 +50,7 @@ Mutations: `docs-tech/mutations/v1.5.0-privacy.json`. Tests: `tests/test_privacy
 | Submit and status link the external reporting offices (§13 Abs. 2 HinSchG) | `test_the_page_names_every_external_office`, `test_the_status_page_links_it`, `test_the_submit_sidebar_links_it` |
 | `/submit`'s promises block and form sit in the header's frame at any width | `test_the_wizard_layout_sits_in_the_headers_frame`, `test_the_wizard_shares_the_headers_frame` |
 | Labels a reporter reads are sentence case; reporter pages carry no eyebrow | `test_reporter_labels_are_not_shouted`, `test_reporter_pages_carry_no_eyebrow` |
+| One accent on a neutral reporter page: info, demo marker, office messages and status pills are neutral | `test_one_accent_on_a_neutral_reporter_page` |
 | Helm Ingress turns the ingress-nginx access log off | `test_helm_ingress_turns_the_nginx_access_log_off` |
 
 **Only one replica sends a digest** without a job lock: the queue is read and
