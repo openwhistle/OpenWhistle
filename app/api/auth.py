@@ -1,5 +1,6 @@
 """Admin authentication: password + TOTP, OIDC, logout."""
 
+import asyncio
 import logging
 import secrets
 from datetime import UTC, datetime
@@ -348,12 +349,15 @@ async def login_post(
     user = await auth_service.get_user_by_username(db, username)
 
     if user is not None and user.password_hash:
-        pw_ok = auth_service.verify_password(password, user.password_hash)
+        # In a thread: bcrypt on the event loop stalled every request for each guess.
+        pw_ok = await asyncio.to_thread(auth_service.verify_password, password, user.password_hash)
     else:
         # Constant-time-ish: run a dummy bcrypt check so a nonexistent username
         # or an SSO/LDAP-only account (no local hash) is not distinguishable by
         # response latency (username enumeration side-channel).
-        auth_service.verify_password(password, auth_service.TIMING_DUMMY_HASH)
+        await asyncio.to_thread(
+            auth_service.verify_password, password, auth_service.TIMING_DUMMY_HASH
+        )
         pw_ok = False
     if not pw_ok:
         await _password_failed(redis, db, username, background_tasks)

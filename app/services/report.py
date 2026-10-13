@@ -1,5 +1,6 @@
 """Business logic for whistleblower reports."""
 
+import asyncio
 import unicodedata
 import uuid
 from datetime import UTC, datetime, timedelta
@@ -165,7 +166,7 @@ async def create_report(
     )
 
     plain_pin = generate_pin()
-    pin_hash = hash_pin(plain_pin)
+    pin_hash = await asyncio.to_thread(hash_pin, plain_pin)  # bcrypt: off the event loop
 
     # Envelope-encrypt the description with a fresh per-report DEK
     dek_raw = generate_dek()
@@ -381,7 +382,9 @@ async def get_report_by_credentials(
     # Same bcrypt work as for an existing case, so response time does not tell
     # whether a case number exists. The messages and attachments (their bytes
     # included) used to be loaded before this check: up to 50 MB more per wrong PIN.
-    if not verify_pin(plain_pin, pin_hash or TIMING_DUMMY_HASH) or pin_hash is None:
+    # In a thread: bcrypt on the event loop held every other request for ~0.2 s per guess.
+    checked = await asyncio.to_thread(verify_pin, plain_pin, pin_hash or TIMING_DUMMY_HASH)
+    if not checked or pin_hash is None:
         return None
     result = await db.execute(
         select(Report)

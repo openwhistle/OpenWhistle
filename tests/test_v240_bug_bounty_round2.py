@@ -367,7 +367,9 @@ async def test_the_ip_warning_stays_when_its_dismissal_is_not_recorded(
 
 
 @pytest.mark.asyncio
-async def test_no_account_is_made_in_a_deactivated_organisation(acting_as, db_session, tenants) -> None:  # type: ignore[no-untyped-def]
+async def test_no_account_is_made_in_a_deactivated_organisation(
+    acting_as, db_session, tenants
+) -> None:  # type: ignore[no-untyped-def]
     """A superadmin cannot give a deactivated organisation an account; its own admin
     could, on /admin/users, where only the superadmin's choice was checked (measured:
     302, a second account in the organisation)."""
@@ -379,7 +381,9 @@ async def test_no_account_is_made_in_a_deactivated_organisation(acting_as, db_se
     from app.models.user import AdminUser
 
     client, act = acting_as
-    org = Organisation(id=uuid.uuid4(), name="gone", slug=f"gone-{uuid.uuid4().hex[:6]}", is_active=False)
+    org = Organisation(
+        id=uuid.uuid4(), name="gone", slug=f"gone-{uuid.uuid4().hex[:6]}", is_active=False
+    )
     db_session.add(org)
     await db_session.flush()
     admin = _admin(org=org.id)
@@ -389,9 +393,79 @@ async def test_no_account_is_made_in_a_deactivated_organisation(acting_as, db_se
     act(admin)
     resp = await client.post(
         "/admin/users",
-        data={"username": f"n{uuid.uuid4().hex[:6]}", "password": "Probe!Password-123", "role": "case_manager"},
+        data={
+            "username": f"n{uuid.uuid4().hex[:6]}",
+            "password": "Probe!Password-123",
+            "role": "case_manager",
+        },
         follow_redirects=False,
     )
     assert resp.status_code == 422
     count = select(func.count()).select_from(AdminUser).where(AdminUser.org_id == org.id)
     assert await db_session.scalar(count) == 1
+
+
+# ── A PIN or password check does not stop every other request ─────────────────
+
+
+async def _longest_stall(coro) -> float:  # type: ignore[no-untyped-def]
+    """The longest the event loop went without serving anyone else while ``coro`` ran."""
+    import asyncio
+    import time
+
+    task = asyncio.ensure_future(coro)
+    longest, last = 0.0, time.perf_counter()
+    while not task.done():
+        await asyncio.sleep(0.005)
+        now = time.perf_counter()
+        longest, last = max(longest, now - last), now
+    await task
+    return longest
+
+
+@pytest.mark.asyncio
+async def test_a_pin_check_leaves_the_event_loop_free(db_session) -> None:  # type: ignore[no-untyped-def]
+    """bcrypt ran on the event loop: each wrong PIN on /status held every request of
+    every reporter and admin for its ~0.2 s (measured: /health 2 ms idle, 3921 ms
+    during 20 parallel wrong PINs, a one-worker image)."""
+    from app.services.report import get_report_by_credentials
+
+    stall = await _longest_stall(get_report_by_credentials(db_session, "OW-2026-99999", "x"))
+    assert stall < 0.1
+
+
+@pytest.mark.asyncio
+async def test_a_password_check_leaves_the_event_loop_free(client) -> None:  # type: ignore[no-untyped-def]
+    csrf = (await client.get("/admin/login")).cookies.get("ow_csrf")
+    login = client.post(
+        "/admin/login",
+        data={"username": "nobody-here", "password": "wrong-password", "csrf_token": csrf},
+    )
+    assert await _longest_stall(login) < 0.1
+
+
+# ── Opening a case does not read its attachments' bytes ───────────────────────
+
+
+@pytest.mark.asyncio
+async def test_opening_a_case_leaves_the_attachment_bytes_in_the_database(db_session) -> None:  # type: ignore[no-untyped-def]
+    """Every case view — the reporter's /status, each reply, the admin case page — loaded
+    every attachment with its bytes (up to 5 x 10 MB) only to list names and sizes. 2.2.1
+    stopped this for a wrong PIN; a right one and every admin view still paid it. The
+    bytes are read on download only, which still works."""
+    from sqlalchemy import inspect
+
+    from app.services import report as report_service
+    from app.services.attachment import create_attachments, read_attachment
+
+    report, pin = await report_service.create_report(db_session, "financial_fraud", "With a file.")
+    await create_attachments(db_session, report, [("a.pdf", "application/pdf", b"%PDF-1.4 x" * 1000)])
+    db_session.expunge_all()
+
+    for opened in (
+        await report_service.get_report_by_credentials(db_session, report.case_number, pin),
+        await report_service.get_report_by_id(db_session, report.id),
+    ):
+        (attachment,) = opened.attachments
+        assert "data" in inspect(attachment).unloaded
+        assert await read_attachment(db_session, attachment) == b"%PDF-1.4 x" * 1000

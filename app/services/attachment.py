@@ -847,10 +847,11 @@ async def read_attachment(db: AsyncSession, attachment: Attachment) -> bytes:
             # The attachment id, never storage_key: a not-yet-rekeyed legacy
             # row's storage_key is the original filename.
             raise LookupError(str(attachment.id)) from exc
-    elif attachment.data is None:
-        raise LookupError(str(attachment.id))
     else:
-        data = attachment.data
+        stored = await db.scalar(select(Attachment.data).where(Attachment.id == attachment.id))
+        if stored is None:
+            raise LookupError(str(attachment.id))
+        data = stored
 
     if not attachment.encrypted:
         return data
