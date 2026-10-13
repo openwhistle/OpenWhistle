@@ -68,6 +68,9 @@ openwhistle_reminder_feedback_warn_days: 30
 # ── Branding (optional) ───────────────────────────────────────────────────────
 openwhistle_brand_primary_color: "#0c7253"
 openwhistle_brand_logo_url: ""
+# Footer links to your privacy notice (Art. 13 GDPR) and legal notice
+openwhistle_privacy_policy_url: ""
+openwhistle_legal_notice_url: ""
 
 # ── Email notifications (optional) ───────────────────────────────────────────
 openwhistle_notify_email_enabled: "false"

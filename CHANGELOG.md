@@ -15,11 +15,21 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   is named when `ONION_LOCATION` is set. The app still discards the address; only the admin was told before.
 - **External reporting offices** (§13 Abs. 2 HinSchG): `/external-reporting` names the federal external
   reporting office at the Bundesamt für Justiz, BaFin, the Bundeskartellamt, the federal states' own offices
-  and OLAF, linked from the submit sidebar and the status page. The law requires the internal reporting office
+  and OLAF, linked from every footer and the submit sidebar. The law requires the internal reporting office
   to provide this; nothing did.
+
+- **Legal links in the footer**: `PRIVACY_POLICY_URL` and `LEGAL_NOTICE_URL` link the operator's privacy
+  notice (Art. 13 GDPR) and legal notice from every page; without a value the link is left out. The admin
+  dashboard says when the privacy notice is missing.
 
 ### Changed
 
+- **The footer is one compact row**: the operator's legal links and the external reporting offices on the
+  left, "Powered by OpenWhistle" on the right. It was 87 px, taller than the 60 px nav, with a tagline, links
+  to GitHub, the HinSchG text and the admin login, and the version.
+- **No public version number**: the footer shows it to signed-in admins only, `/health` leaves it out, and
+  CSS and script URLs carry a hash of the file instead of `?v=<version>`. A release number on a public page
+  tells an attacker which known flaws to try (OWASP ASVS 4.0.3 14.3.3, BSI APP.3.2.A12).
 - **The reporter's pages got a design pass**:
   - `/submit` sits in the header's frame at any window width. On an ultra-wide screen its sidebar was pinned
     to the left edge, 1,150 px left of the logo at 3440 px, and two thirds of the screen stayed empty.

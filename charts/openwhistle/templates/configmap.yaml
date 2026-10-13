@@ -17,6 +17,8 @@ data:
   ADMIN_FAILED_LOGIN_ALERT_WINDOW_MINUTES: {{ .Values.config.adminFailedLoginAlertWindowMinutes | quote }}
   BRAND_PRIMARY_COLOR: {{ .Values.config.brandPrimaryColor | quote }}
   BRAND_LOGO_URL: {{ .Values.config.brandLogoUrl | quote }}
+  PRIVACY_POLICY_URL: {{ .Values.config.privacyPolicyUrl | quote }}
+  LEGAL_NOTICE_URL: {{ .Values.config.legalNoticeUrl | quote }}
   REMINDER_ENABLED: {{ .Values.config.reminderEnabled | quote }}
   REMINDER_ACK_WARN_DAYS: {{ .Values.config.reminderAckWarnDays | quote }}
   REMINDER_FEEDBACK_WARN_DAYS: {{ .Values.config.reminderFeedbackWarnDays | quote }}

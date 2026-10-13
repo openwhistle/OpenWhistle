@@ -127,28 +127,20 @@ def test_the_shots_name_the_release_they_were_taken_from(
 ) -> None:
     """The website fails while docs/img/screens/_release names an older release than its
     latest app release (openwhistle/website tests/test_screenshots.py): the script writes
-    the version it ran against, one line. It is the running app's: the checkout's version
-    named a release the shots did not show, and loading Settings without a SECRET_KEY
-    stopped the v2.3.0 run after the last shot."""
-    import json
-    import threading
-    from http.server import BaseHTTPRequestHandler, HTTPServer
-
-    class Health(BaseHTTPRequestHandler):
-        def do_GET(self) -> None:  # noqa: N802
-            body = json.dumps({"status": "ok", "version": "9.9.9"}).encode()
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(body)
-
-        def log_message(self, *args: object) -> None:
-            pass
-
-    server = HTTPServer(("127.0.0.1", 0), Health)
-    threading.Thread(target=server.handle_request, daemon=True).start()
+    the version it ran against, one line. It is the running app's, read from an admin
+    page's footer: the checkout's version named a release the shots did not show, and
+    /health no longer says it (2.4.0)."""
+    html = (
+        '<p class="footer-powered"><span>Powered by</span>'
+        '<span class="footer-version">v9.9.9</span></p>'
+    )
     screens = tmp_path / _script().SCREENS
     screens.mkdir(parents=True)
     monkeypatch.delenv("SECRET_KEY", raising=False)
-    _script().write_release_marker(screens, f"http://127.0.0.1:{server.server_port}")
-    server.server_close()
+    _script().write_release_marker(screens, _script().release_of(html))
     assert (screens / "_release").read_text(encoding="utf-8") == "9.9.9\n"
+
+
+def test_a_public_page_names_no_release() -> None:
+    with pytest.raises(SystemExit):
+        _script().release_of('<p class="footer-powered"><span>Powered by</span></p>')

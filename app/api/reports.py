@@ -624,9 +624,10 @@ async def health(
         components["redis"] = "error"
         healthy = False
 
+    # No version: anyone can call /health, and a release number tells an attacker which
+    # flaws to try (GlobaLeaks hid it in the footer and still served it from its API).
     body = {
         "status": "ok" if healthy else "degraded",
-        "version": settings.app_version,
         "components": components,
     }
     return JSONResponse(body, status_code=200 if healthy else 503)

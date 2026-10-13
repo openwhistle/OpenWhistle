@@ -1,7 +1,10 @@
 """Shared Jinja2 templates instance — avoids circular imports."""
 
+import functools
+import hashlib
 import json
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 from fastapi import Request
@@ -71,6 +74,8 @@ templates.env.globals["brand"] = {
 }
 
 templates.env.globals["is_demo"] = settings.demo_mode
+templates.env.globals["privacy_policy_url"] = settings.privacy_policy_url
+templates.env.globals["legal_notice_url"] = settings.legal_notice_url
 
 # Installed version, available to every template (e.g. the footer).
 templates.env.globals["app_version"] = settings.app_version
@@ -80,11 +85,21 @@ def static_url(path: str) -> str:
     """A cache-busted `/static/` URL for CSS, JS and font assets.
 
     `/static/` is served without cache-busting (see app/main.py), so a
-    browser that visited before an upgrade keeps the old file. The version
+    browser that visited before an upgrade keeps the old file. The content-hash
     query forces a fresh fetch; every stylesheet/script link must go through
     this helper rather than hand-typing `/static/...` (test_static_versioning.py).
     """
-    return f"/static/{path}?v={settings.app_version}"
+    return f"/static/{path}?v={_content_hash(path)}"
+
+
+_STATIC_DIR = Path(__file__).resolve().parent / "static"
+
+
+@functools.cache
+def _content_hash(path: str) -> str:
+    # The file's own hash, not the app version: ?v=2.3.0 told every visitor which
+    # release runs here (OWASP ASVS 14.3.3), and a hash changes only with the file.
+    return hashlib.sha256((_STATIC_DIR / path).read_bytes()).hexdigest()[:12]
 
 
 templates.env.globals["static_url"] = static_url

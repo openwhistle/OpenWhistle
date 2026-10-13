@@ -426,7 +426,9 @@ tracking pixels, no remote images.
 Sticky nav on an opaque `{colors.canvas}` with a bottom hairline: mark +
 wordmark left, utility controls (theme, language) right as equal-sized icon buttons
 (1px hairline ring, `{rounded.md}`). Footer sits on `{colors.inverse}` in both themes,
-text in `{colors.inverse-muted}`; the version string in mono.
+text in `{colors.inverse-muted}`, one compact row lower than the nav: the operator's
+privacy and legal notice links and the external reporting offices on the left, "Powered
+by OpenWhistle" on the right. The version string, in mono, only on admin pages.
 
 ### Printed case record
 

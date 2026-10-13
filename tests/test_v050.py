@@ -76,7 +76,7 @@ class TestHealthEndpoint:
         assert data["status"] == "ok"
         assert data["components"]["database"] == "ok"
         assert data["components"]["redis"] == "ok"
-        assert "version" in data
+        assert "version" not in data  # 2.4.0: not public (OWASP ASVS 14.3.3)
 
     async def test_health_db_error_returns_503(self, client: AsyncClient) -> None:
         from sqlalchemy.ext.asyncio import AsyncSession

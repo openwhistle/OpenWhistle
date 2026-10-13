@@ -66,7 +66,9 @@ Every one of them is documented on [openwhistle.net/en/docs](https://openwhistle
 
 - **No trace** — no IP address in any log; times the reporter causes are stored as the day only
 - **Proxy warning** — a reporter whose request reached the app with an address header is told the proxy may log it
-- **External reporting offices** — the page §13 Abs. 2 HinSchG requires, linked from submit and status
+- **External reporting offices** — the page §13 Abs. 2 HinSchG requires, linked from every footer
+- **Legal links** — `PRIVACY_POLICY_URL` and `LEGAL_NOTICE_URL` put your privacy notice (Art. 13 GDPR) and legal
+  notice in every footer; the dashboard says when the privacy notice is missing
 - **Case number + UUID4 PIN** — no account, no email; a correct pair always opens the case
 - **Anonymous or confidential** — a confidential name is encrypted, shown to the case handler only on audited request
 - **Submission wizard** — guided steps, Redis-backed draft encrypted with a key only in the reporter's cookie
@@ -104,6 +106,7 @@ Every one of them is documented on [openwhistle.net/en/docs](https://openwhistle
   random ID and the version; while the count is off, the dashboard asks once per update
 - **Five languages** — English, German, French, Spanish, Brazilian Portuguese; WCAG 2.1 AA; light and dark
 - **No external calls** — self-hosted fonts, no CDN, no tracking (GDPR)
+- **No public version number** — only signed-in admins see it; `/health` and asset URLs leave it out
 - **"Signal" design system** — [`DESIGN.md`](DESIGN.md)
 
 ## Container images

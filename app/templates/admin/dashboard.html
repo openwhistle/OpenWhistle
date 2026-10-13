@@ -106,6 +106,13 @@
     </div>
     {% endif %}
 
+    {% if privacy_notice_missing %}
+    <div class="alert alert-warning" id="privacy-notice-missing" role="alert">
+        <div class="alert-title">{{ t('admin.privacy_missing.title') }}</div>
+        {{ t('admin.privacy_missing.body') }}
+    </div>
+    {% endif %}
+
     {# IP leakage warning banner #}
     {% if ip_warning %}
     <div class="ip-warning-banner" id="ip-warning-banner" role="alert">

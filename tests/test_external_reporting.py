@@ -34,9 +34,11 @@ async def test_the_page_names_every_external_office(
     assert "§\u00a020 HinSchG" in response.text  # the federal states' own offices
 
 
-async def test_the_status_page_links_it(client: AsyncClient) -> None:
-    html = (await client.get("/status")).text
-    assert '<p class="st-external"><a href="/external-reporting">' in html
+@pytest.mark.parametrize("path", ["/submit", "/status", "/external-reporting", "/admin/login"])
+async def test_every_footer_links_it(client: AsyncClient, path: str) -> None:
+    html = (await client.get(path)).text
+    footer = html[html.index("<footer") :]
+    assert '<a href="/external-reporting">External reporting offices</a>' in footer
 
 
 async def test_the_submit_sidebar_links_it(client: AsyncClient) -> None:

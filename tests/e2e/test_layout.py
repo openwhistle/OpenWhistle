@@ -52,22 +52,20 @@ def test_demo_banner_is_one_line_on_a_phone(browser: Browser, base_url: str) -> 
     ctx.close()
 
 
-def test_footer_links_share_one_row_and_brand_outshines_tagline(
-    browser: Browser, base_url: str
-) -> None:
+def test_the_footer_is_one_row_lower_than_the_nav(browser: Browser, base_url: str) -> None:
+    """It was 87 px under a 60 px nav, with a tagline, five links and the version."""
     ctx, page = _page(browser, base_url, 1440)
     page.goto("/submit")
-    ys = page.eval_on_selector_all(
-        ".footer-links li", "els => els.map(e => e.getBoundingClientRect().y)"
+    nav, footer = page.evaluate(
+        "['.nav', 'footer'].map(s => document.querySelector(s).getBoundingClientRect().height)"
     )
-    assert ys and max(ys) - min(ys) < 4, ys  # one row, not stacked
-
-    def _brightness(selector: str) -> float:
-        color = page.eval_on_selector(selector, "e => getComputedStyle(e).color")
-        return sum(float(n) for n in color.strip("rgba()").split(",")[:3])
-
-    assert _brightness(".footer-brand") > _brightness(".footer-tagline")
+    tops = page.eval_on_selector_all(
+        ".footer-links li, .footer-powered",
+        "els => els.map(e => Math.round(e.getBoundingClientRect().top))",
+    )
     ctx.close()
+    assert footer < nav, (footer, nav)
+    assert tops and max(tops) - min(tops) <= 2, tops
 
 
 def test_report_form_is_on_the_first_phone_screen(browser: Browser, base_url: str) -> None:
@@ -142,12 +140,12 @@ def test_the_wizard_shares_the_headers_frame(browser: Browser, base_url: str, wi
     """The promises block was a full-height column pinned to the window's left
     edge: on a 3440 px ultra-wide screen it sat 1,150 px left of the logo and
     two thirds of the screen stayed empty. Block and form now start at the
-    logo and end at the footer's last link."""
+    logo and end where the footer's last item ends."""
     ctx = browser.new_context(viewport={"width": width, "height": 1000}, base_url=base_url)
     page = ctx.new_page()
     page.goto("/submit")
     edges = page.evaluate(
-        "['.nav-brand', '.footer-links', '.split-sidebar', '.split-main']"
+        "['.nav-brand', '.footer-powered', '.split-sidebar', '.split-main']"
         ".map(s => document.querySelector(s).getBoundingClientRect())"
         ".map(r => [Math.round(r.left), Math.round(r.right)])"
     )
