@@ -522,3 +522,40 @@ async def test_migrations_011_and_017_read_the_default_organisation_like_the_app
     target = report if number == "017" else account
     await db_session.refresh(target)
     assert target.org_id == named.id
+
+
+# ── An erased case leaves no case number in Redis ─────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_an_erased_case_leaves_no_reminder_mark_behind() -> None:
+    """The four-eyes deletion took the case out of the notification queue but left its
+    reminder marks, ``reminder:ack:<case>`` and ``reminder:feedback:<case>``: the case
+    number of an erased case, in plain text, for up to the reminder window plus a day."""
+    from redis.asyncio import from_url
+
+    from app.config import settings
+    from app.services import reminders
+    from app.services.notifications import forget_case
+
+    redis = from_url(settings.redis_url)
+    case = "OW-2026-77777"
+    for key in (reminders._ack_dedup_key(case), reminders._feedback_dedup_key(case)):
+        await redis.set(key, "1", ex=600)
+    await forget_case(redis, case)
+    assert not await redis.exists(
+        reminders._ack_dedup_key(case), reminders._feedback_dedup_key(case)
+    )
+    await redis.aclose()
+
+
+# ── The suite runs with the flags conftest says it sets ───────────────────────
+
+
+def test_the_suite_runs_with_retention_off() -> None:
+    """conftest set RETENTION_ENABLED=false after importing the app, whose settings were
+    already built: the whole suite ran with retention on, as a comment in test_v100 said
+    it did not."""
+    from app.config import settings
+
+    assert settings.retention_enabled is False

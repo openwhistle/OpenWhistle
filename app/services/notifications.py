@@ -324,9 +324,13 @@ async def _queue_or_send(kind: str, case_number: str) -> None:
 
 
 async def forget_case(redis: Any, case_number: str) -> None:
-    """A deleted case leaves the queue: the next digest mailed its number after the erasure."""
+    """A deleted case leaves the queue: the next digest mailed its number after the erasure.
+    Its reminder marks go too; they named the erased case for up to a month."""
+    from app.services.reminders import _ack_dedup_key, _feedback_dedup_key  # noqa: PLC0415
+
     for key in _QUEUE_KEYS.values():
         await redis.srem(key, case_number)
+    await redis.delete(_ack_dedup_key(case_number), _feedback_dedup_key(case_number))
 
 
 async def deliver_notification_digest() -> None:
