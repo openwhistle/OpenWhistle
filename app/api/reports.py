@@ -983,7 +983,9 @@ async def submit_post(
                         conf_name_enc = encrypt(cn)
                     if cc:
                         conf_contact_enc = encrypt(cc)
-                    if se:
+                    # Read again here: a draft begun while mail was on outlives a restart
+                    # that switched it off, and its address used to be stored anyway.
+                    if se and settings.notify_email_enabled:
                         sec_email_enc = encrypt(se)
 
                 file_tuples_restored: list[tuple[str, str, bytes]] = [

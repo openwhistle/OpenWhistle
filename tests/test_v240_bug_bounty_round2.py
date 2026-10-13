@@ -844,3 +844,38 @@ def test_every_test_the_invariants_name_exists() -> None:
         defined |= set(re.findall(r"def (test_\w+)", path.read_text()))
     named = set(re.findall(r"`(test_\w+)`", (root / "docs-tech/invariants.md").read_text()))
     assert not named - defined, sorted(named - defined)
+
+
+# ── Mail switched off: no address is stored ───────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_a_draft_from_before_mail_was_switched_off_stores_no_address(
+    client, db_session, monkeypatch
+) -> None:  # type: ignore[no-untyped-def]
+    """2.3.0: "with mail off no address is stored". The setting was read on the mode step
+    only: a draft (it lives two hours, across a restart) begun while mail was on stored
+    its address encrypted after the operator had switched mail off."""
+    from sqlalchemy import func, select
+
+    from app.config import settings
+    from app.models.report import Report
+    from tests.test_submit_prg import _post, _step, _upload
+
+    def with_address():  # type: ignore[no-untyped-def]
+        return select(func.count()).select_from(Report).where(Report.secure_email.is_not(None))
+
+    before = await db_session.scalar(with_address())
+    reports = await db_session.scalar(select(func.count()).select_from(Report))
+    monkeypatch.setattr(settings, "notify_email_enabled", True)
+    await _post(client, submission_mode="confidential", secure_email="jane.doe@proton.me")
+    if _step((await client.get("/submit")).text) == 2:
+        await _post(client, location_id="")
+    await _post(client, category="financial_fraud")
+    await _post(client, description="A report begun while mail was still on.")
+    await _upload(client)
+
+    monkeypatch.setattr(settings, "notify_email_enabled", False)
+    await _post(client)  # the final submit, on the review step
+    assert await db_session.scalar(select(func.count()).select_from(Report)) == reports + 1
+    assert await db_session.scalar(with_address()) == before
