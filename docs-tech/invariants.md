@@ -48,6 +48,8 @@ Mutations: `docs-tech/mutations/v1.5.0-privacy.json`. Tests: `tests/test_privacy
 | IP headers and peer address removed before the app; pages `no-store` | `test_ip_headers_and_peer_address_never_reach_the_app`, `test_pages_are_never_cached_but_static_files_are` |
 | A reporter whose request carried address headers sees a notice (not over the onion listener) | `test_notice_shown_when_the_proxy_forwards_the_address`, `test_no_notice_over_the_onion_listener` |
 | Submit and status link the external reporting offices (§13 Abs. 2 HinSchG) | `test_the_page_names_every_external_office`, `test_the_status_page_links_it`, `test_the_submit_sidebar_links_it` |
+| `/submit`'s promises block and form sit in the header's frame at any width | `test_the_wizard_layout_sits_in_the_headers_frame`, `test_the_wizard_shares_the_headers_frame` |
+| Labels a reporter reads are sentence case; reporter pages carry no eyebrow | `test_reporter_labels_are_not_shouted`, `test_reporter_pages_carry_no_eyebrow` |
 | Helm Ingress turns the ingress-nginx access log off | `test_helm_ingress_turns_the_nginx_access_log_off` |
 
 **Only one replica sends a digest** without a job lock: the queue is read and
@@ -462,7 +464,7 @@ fetch category labels; the snippets are updated and red.
 | `char-counter-not-localized` | `app/i18n.py` | `test_char_counter_uses_locale_number_format` |
 | `stats-grid-panel-margin` | `app/templates/admin/stats.html` | `test_stats_grid_panels_drop_the_stacking_margin` |
 | `http-exception-always-json` | `app/main.py` | `test_stale_report_id_returns_styled_html_for_a_browser` |
-| `eyebrow-restates-confidential` | `app/locales/de.json` | `test_submit_eyebrow_is_neutral_across_locales` |
+| `eyebrow-restates-confidential` | `app/templates/submit.html` | `test_reporter_pages_carry_no_eyebrow` (2.4.0: the reporter's pages carry no eyebrow at all) |
 
 **Not a mutation.** The e2e tests that measure the running app
 (`tests/e2e/test_admin_table_layout.py`,

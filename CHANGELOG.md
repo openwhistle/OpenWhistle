@@ -20,6 +20,14 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **The reporter's pages got a design pass**:
+  - `/submit` sits in the header's frame at any window width. On an ultra-wide screen its sidebar was pinned
+    to the left edge, 1,150 px left of the logo at 3440 px, and two thirds of the screen stayed empty.
+  - The sidebar is now the brand-coloured promises block DESIGN.md describes, with shorter texts. It sticks
+    beside the form instead of scrolling inside itself.
+  - Labels are sentence case instead of mono or tracked capitals: alert titles, case number and PIN labels,
+    review labels, message senders, step names. The eyebrows above the headings are gone.
+  - On a phone, the wizard shows "Step n of 6" instead of six step names hyphenated into "Mo-dus".
 - **LDAP refuses to start without TLS**: `LDAP_ENABLED` needs `LDAP_USE_SSL=true` or `LDAP_START_TLS=true`.
   With the defaults, a plain bind sent the service account's password, then each admin's, in clear text —
   measured on the wire (`ServiceSecret` readable in the captured bind).

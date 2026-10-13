@@ -224,7 +224,12 @@ as the mono voices.
   Sora label is 600. Nothing on the platform is heavier than the hero.
 - **Eyebrows are mono, uppercase, `0.16em`.** They label a section or state
   (`CONFIDENTIAL REPORTING CHANNEL`, `CASE STATUS`); they are not decoration and
-  must describe what follows.
+  must describe what follows. **The reporter's pages carry none** (submit, success,
+  status, external reporting offices): there an eyebrow only restated the heading
+  below it.
+- **Labels a reporter reads are sentence case Sora 600.** Alert titles, the
+  credential and review labels, the message sender, the stepper's step names. Mono
+  stays for the facts beside them (case number, PIN, dates).
 - **Identifiers are mono with `tabular-nums`.** Case numbers, PINs, timestamps,
   deadlines, stat figures. Digits must align in columns and never re-flow.
 - **Keep running text at `{spacing.container.measure}` (~62ch).** Reports and
@@ -311,11 +316,17 @@ A speech bubble with a keyhole: one evenodd path on a 24-unit grid, drawn in ink
 
 ### Reassurance block (signature)
 
-A single full-width band split into three cells, filled with `{colors.accent}`.
-Each cell: a mono eyebrow in a lightened `{colors.accent-ink}`, a 600 headline, and
-one line of `{typography.scale.body-sm}`. This is the platform's emotional anchor —
-*Anonymous · No IP logging · Encrypted*. Use it **once** on the entry screen. It is
-the only place the accent is used generously.
+On `/submit`, a `{rounded.md}` card filled with the brand colour (`--brand-primary`,
+both themes) beside the form: a 600 heading and four promises (no IP address
+stored, case number and PIN, no tracking, HinSchG deadlines), each a white 600
+title over one or two lines of `{typography.scale.body-sm}`, then the onion
+address and the link to the external reporting offices. It is the platform's
+emotional anchor and the only place the accent is used generously.
+
+Block and form are one grid inside the header's `--frame` (`.split-layout`): the
+block starts at the logo, the form ends at the footer's last link, at any window
+width. The block sticks while the form scrolls and is never taller than the
+wizard's first step, so the page stays one Full HD window high.
 
 ### Cards & panels
 
@@ -372,7 +383,7 @@ component platform-wide — do not fork a second progress pattern.
 ### Case-number / PIN receipt (signature)
 
 The reporter's key to their report, framed like a receipt: a `{colors.surface}`
-panel with a mono `eyebrow` ("YOUR CASE NUMBER"), the case number in `mono-id-lg`,
+panel with a sentence-case label ("Case number"), the case number in `mono-id-lg`,
 and the current status pill aligned opposite. Immediately below, a **PIN callout**
 on `{colors.warning-weak}`: a warning glyph, the "keep this safe — it is the only
 way back, we cannot recover it" message, and the PIN in a bordered mono token.
@@ -390,8 +401,8 @@ showing the statutory deadline countdown (HinSchG acknowledgement / feedback win
 
 Two-sided bubbles. Handler messages (`them`): `{colors.surface}` + hairline,
 left-aligned. Reporter messages (`you`): `{colors.accent-weak}` + accent-tinted
-border, right-aligned. Each bubble carries a mono `who` label ("CASE HANDLER",
-"YOU · ANONYMOUS"). Max width ~80%.
+border, right-aligned. Each bubble carries the sender in sentence-case Sora 600
+("Reporting office") and the date in mono. Max width ~80%.
 
 ### Alerts / banners
 
@@ -525,8 +536,9 @@ the parent's curve, so squaring every inner control would be wrong. Full pills n
 - **Breakpoints** — desktop (default); layouts adapt at `900px`, `768px`, `640px`
   and `540px`; the admin shell alone breaks at `1024px`.
 - **Touch targets** — interactive elements are `≥44×44px` on touch.
-- **Reassurance block & stat grid** — 3/4-up on desktop → 2-up on tablet → 1-up on
-  mobile.
+- **Reassurance block** — beside the form on desktop; below it at `≤900px`, its
+  promises 2-up at `≤768px` and 1-up at `≤540px`.
+- **Stat grid** — 4-up on desktop → 2-up on tablet → 1-up on mobile.
 - **Admin shell** — the sidebar sits beside the content at `≥1024px`; below that it
   collapses to a single column with the menu below the content.
 - **Tables** — stack into labelled rows at `≤640px`; the page never scrolls
@@ -534,8 +546,9 @@ the parent's curve, so squaring every inner control would be wrong. Full pills n
 - **Report form** — the submit page's split layout stacks at `≤900px`, report form
   first, reassurance sidebar second.
 - **Hero** — `display-hero` clamps down to ~30px on mobile.
-- **Wizard & nav** — the stepper stays horizontal but tightens; nav padding
-  collapses; the session-expiry banner docks to the bottom, full-width.
+- **Wizard & nav** — the stepper stays horizontal but tightens; at `≤480px` the
+  wizard drops the step names (six hyphenated into "Mo-dus") and shows "Step n of 6";
+  nav padding collapses; the session-expiry banner docks to the bottom, full-width.
 
 ## Iteration Guide
 

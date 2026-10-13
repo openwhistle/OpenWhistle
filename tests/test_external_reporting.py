@@ -31,7 +31,7 @@ async def test_the_page_names_every_external_office(
     assert f"<h1>{title}</h1>" in response.text
     for url in OFFICES:
         assert f'href="{url}" rel="noopener noreferrer"' in response.text
-    assert "§ 20 HinSchG" in response.text  # the federal states' own offices
+    assert "§\u00a020 HinSchG" in response.text  # the federal states' own offices
 
 
 async def test_the_status_page_links_it(client: AsyncClient) -> None:

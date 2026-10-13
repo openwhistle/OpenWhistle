@@ -1,0 +1,51 @@
+{
+ "test_groups": {
+  "D": [
+   "tests/test_v160_design.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "layout-full-width",
+   "file": "app/static/css/site.css",
+   "old": "  margin: 0 auto;\n  max-width: var(--frame);\n  padding: var(--space-6) var(--gutter);",
+   "new": "  padding: var(--space-6) var(--gutter);",
+   "tests": "D"
+  },
+  {
+   "id": "promises-dark-again",
+   "file": "app/static/css/site.css",
+   "old": "  background: var(--brand-primary);\n  border-radius: var(--radius-card);",
+   "new": "  background: var(--surface-dark);\n  border-radius: var(--radius-card);",
+   "tests": "D"
+  },
+  {
+   "id": "alert-title-shouts",
+   "file": "app/static/css/site.css",
+   "old": ".alert-title {\n  font-size: 0.9375rem;",
+   "new": ".alert-title {\n  text-transform: uppercase;\n  font-size: 0.9375rem;",
+   "tests": "D"
+  },
+  {
+   "id": "pin-label-shouts",
+   "file": "app/static/css/site.css",
+   "old": "  font-size: 0.8125rem;\n  font-weight: 600;\n  line-height: 1.25rem;\n  margin-bottom: 0.375rem;\n}",
+   "new": "  font-size: 0.8125rem;\n  font-weight: 600;\n  letter-spacing: 0.07em;\n  line-height: 1.25rem;\n  margin-bottom: 0.375rem;\n}",
+   "tests": "D"
+  },
+  {
+   "id": "message-meta-mono",
+   "file": "app/static/css/site.css",
+   "old": "  font-size: 0.8125rem;\n  font-weight: 600;\n  gap: 0.25rem 0.5rem;",
+   "new": "  font-family: var(--font-mono);\n  font-size: 0.8125rem;\n  font-weight: 600;\n  gap: 0.25rem 0.5rem;",
+   "tests": "D"
+  },
+  {
+   "id": "eyebrow-back",
+   "file": "app/templates/submit.html",
+   "old": "        <h1>{{ t('submit.title') }}</h1>",
+   "new": "        <div class=\"page-eyebrow\">{{ t('submit.title') }}</div>\n        <h1>{{ t('submit.title') }}</h1>",
+   "tests": "D"
+  }
+ ]
+}

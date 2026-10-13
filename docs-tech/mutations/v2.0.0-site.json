@@ -64,7 +64,7 @@
   "EYEBROW": [
    "tests/test_v160_design.py",
    "-k",
-   "test_submit_eyebrow_is_neutral_across_locales"
+   "test_reporter_pages_carry_no_eyebrow"
   ],
   "DATE": [
    "tests/test_v160_design.py",
@@ -439,9 +439,9 @@
   },
   {
    "id": "eyebrow-restates-confidential",
-   "file": "app/locales/de.json",
-   "old": "\"submit.eyebrow\": \"Sichere Meldung\",",
-   "new": "\"submit.eyebrow\": \"Vertrauliche Meldung\",",
+   "file": "app/templates/submit.html",
+   "old": "        <h1>{{ t('submit.title') }}</h1>",
+   "new": "        <div class=\"page-eyebrow\">Vertrauliche Meldung</div>\n        <h1>{{ t('submit.title') }}</h1>",
    "tests": "EYEBROW"
   },
   {
