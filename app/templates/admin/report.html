@@ -401,6 +401,7 @@
                                 <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.report.identity.reveal') }}</button>
                                 <button type="submit" formaction="/admin/reports/{{ report.id }}/export.pdf" class="btn btn-ghost btn-sm" data-download>{{ t('admin.report.identity.export') }}</button>
                                 <p class="form-hint">{{ t('admin.report.identity.export_hint') }}</p>
+                                {% if not report.assigned_to_id %}<p class="form-hint">{{ t('admin.report.identity.takes_case') }}</p>{% endif %}
                             </form>
                         {% else %}
                             <p class="form-hint">{{ t('admin.report.identity.handler_only') }}</p>

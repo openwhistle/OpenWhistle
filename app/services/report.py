@@ -864,9 +864,15 @@ async def get_dashboard_stats(
         org_filter.append(Report.assigned_to_id == assigned_to_id)
 
     cat_result = await db.execute(
-        select(Report.category, func.count(Report.id)).where(*org_filter).group_by(Report.category)
+        select(Report.org_id, Report.category, func.count(Report.id))
+        .where(*org_filter)
+        .group_by(Report.org_id, Report.category)
     )
-    by_category = {row[0]: row[1] for row in cat_result.all()}
+    # Per organisation as well: a slug is unique within one only, so its label is too.
+    by_org_category = {(org, slug): n for org, slug, n in cat_result.all()}
+    by_category: dict[str, int] = {}
+    for (_, slug), n in by_org_category.items():
+        by_category[slug] = by_category.get(slug, 0) + n
 
     # SLA compliance: % acknowledged within 7 days, of the reports whose
     # seven days are decided — acknowledged, or past the deadline. A report
@@ -894,6 +900,7 @@ async def get_dashboard_stats(
     return {
         "status_counts": status_counts,
         "by_category": by_category,
+        "by_org_category": by_org_category,
         "total_reports": total_reports,
         "sla_7day_rate": sla_rate,
     }

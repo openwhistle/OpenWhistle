@@ -91,7 +91,9 @@ def new_scheduler() -> Any:
 
     from apscheduler.schedulers.asyncio import AsyncIOScheduler  # noqa: PLC0415
 
-    return AsyncIOScheduler(timezone=UTC)
+    # misfire_grace_time=None: a run that starts late still runs. The default of one
+    # second skipped a whole day's retention run whenever 03:00 found the loop busy.
+    return AsyncIOScheduler(timezone=UTC, job_defaults={"misfire_grace_time": None})
 
 
 @asynccontextmanager

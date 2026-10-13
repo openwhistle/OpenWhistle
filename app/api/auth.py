@@ -331,6 +331,13 @@ async def login_post(
                     org_id=await report_service.default_org_id(db),
                 )
                 db.add(user)
+                # No admin made it, so the directory is on record as the maker.
+                await audit_service.log_system(
+                    db,
+                    audit_service.AuditAction.ADMIN_CREATED,
+                    detail={"username": user.username, "role": user.role.value, "via": "ldap"},
+                    org_id=user.org_id,
+                )
                 await db.commit()
                 await db.refresh(user)
 

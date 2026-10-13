@@ -463,6 +463,7 @@
   "admin.report.identity.reveal": "Show identity",
   "admin.report.identity.export": "Export PDF with identity",
   "admin.report.identity.export_hint": "Exporting also records an audited reveal.",
+  "admin.report.identity.takes_case": "This case is unassigned: showing the identity or exporting it assigns the case to you.",
   "admin.report.identity.reason": "Why do you need it?",
   "admin.report.identity.reason_hint": "10–500 characters. Recorded in the audit log with your name. Do not write the reporter's name here.",
   "admin.report.identity.reason_error": "Give a reason of 10 to 500 characters.",

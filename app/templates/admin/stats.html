@@ -94,13 +94,13 @@
         {# By category #}
         <div class="panel">
             <h2 class="panel-header">{{ t('admin.stats.by_category') }}</h2>
-            {% if stats.by_category %}
+            {% if by_label %}
             <div class="stat-flex-col-gap">
-                {% for slug, count in stats.by_category.items() | sort(attribute='1', reverse=True) %}
+                {% for label, count in by_label.items() | sort(attribute='1', reverse=True) %}
                 {% set pct = (count / stats.total_reports * 100) | round(1) if stats.total_reports else 0 %}
                 <div>
                     <div class="stat-row-header">
-                        <span class="stat-cat-label">{{ slug | category_label(cat_map) }}</span>
+                        <span class="stat-cat-label">{{ label }}</span>
                         <span class="stat-muted-sm">{{ count }} ({{ pct | format_percent(lang) }})</span>
                     </div>
                     <div class="stat-bar-track">

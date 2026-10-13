@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.models.user import AdminRole, AdminUser
-from app.services.auth import hash_password
+from app.services.auth import _key, hash_password
 from tests.conftest import setup_token
 
 _PASSWORD = "V160-Test-Password"  # noqa: S105
@@ -469,7 +469,7 @@ async def test_session_older_than_the_absolute_limit_is_rejected(
         settings.secret_key,
         algorithm=settings.algorithm,
     )
-    await (await get_redis()).set(f"openwhistle:session:{stale}", str(user.id), ex=3600)
+    await (await get_redis()).set(_key("openwhistle:session:", stale), str(user.id), ex=3600)
     _use_session(client, stale)
     resp = await _refresh(client, follow_redirects=False)
     assert resp.status_code == 401
@@ -502,7 +502,7 @@ async def test_session_older_than_the_absolute_limit_is_401_even_without_csrf_he
         settings.secret_key,
         algorithm=settings.algorithm,
     )
-    await (await get_redis()).set(f"openwhistle:session:{stale}", str(user.id), ex=3600)
+    await (await get_redis()).set(_key("openwhistle:session:", stale), str(user.id), ex=3600)
     _use_session(client, stale)
     resp = await _refresh(client, csrf=False, follow_redirects=False)
     assert resp.status_code == 401
@@ -521,7 +521,7 @@ async def test_refresh_never_extends_past_the_absolute_limit(
     started = int(time.time()) - settings.session_max_hours * 3600 + 120  # 2 min left
     token = create_access_token(str(user.id), "admin", auth_time=started)
     redis = await get_redis()
-    await redis.set(f"openwhistle:session:{token}", str(user.id), ex=120)
+    await redis.set(_key("openwhistle:session:", token), str(user.id), ex=120)
     _use_session(client, token)
     resp = await _refresh(client)
     assert resp.status_code == 200
@@ -533,7 +533,7 @@ async def test_refresh_never_extends_past_the_absolute_limit(
     # The refresh must not hand out more than the ~2 minutes actually left on the
     # absolute limit: neither the new Redis session key nor the Set-Cookie the
     # browser will honour may outlive it.
-    new_ttl = await redis.ttl(f"openwhistle:session:{new_token}")
+    new_ttl = await redis.ttl(_key("openwhistle:session:", new_token))
     assert 0 < new_ttl <= 120
     set_cookie_headers = resp.headers.get_list("set-cookie")
     session_cookie_header = next(h for h in set_cookie_headers if h.startswith("ow_session="))

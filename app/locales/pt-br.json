@@ -475,6 +475,7 @@
   "admin.report.identity.reveal": "Mostrar identidade",
   "admin.report.identity.export": "Exportar PDF com identidade",
   "admin.report.identity.export_hint": "A exportação também registra uma divulgação auditada.",
+  "admin.report.identity.takes_case": "Este caso não está atribuído: mostrar ou exportar a identidade atribui o caso a você.",
   "admin.report.identity.reason": "Por que você precisa dela?",
   "admin.report.identity.reason_hint": "10 a 500 caracteres. Registrado no log de auditoria com seu nome. Não escreva aqui o nome do denunciante.",
   "admin.report.identity.reason_error": "Informe um motivo de 10 a 500 caracteres.",
