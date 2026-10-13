@@ -137,20 +137,60 @@ def test_a_page_that_fits_does_not_scroll_with_the_demo_banner(
     assert heights[0] == heights[1] == heights[2], heights
 
 
-def test_the_wizard_sidebar_does_not_set_the_page_height(browser: Browser, base_url: str) -> None:
-    """The sidebar's text is longer than the form (German: 1,023 px in a 300 px
-    column). In two columns it takes the height of the row and scrolls inside
-    itself, so the page is as tall as the form, not as tall as the sidebar."""
-    ctx = browser.new_context(viewport={"width": 1920, "height": 700}, base_url=base_url)
+@pytest.mark.parametrize("width", [1280, 1920, 3440])
+def test_the_wizard_shares_the_headers_frame(browser: Browser, base_url: str, width: int) -> None:
+    """The promises block was a full-height column pinned to the window's left
+    edge: on a 3440 px ultra-wide screen it sat 1,150 px left of the logo and
+    two thirds of the screen stayed empty. Block and form now start at the
+    logo and end at the footer's last link."""
+    ctx = browser.new_context(viewport={"width": width, "height": 1000}, base_url=base_url)
     page = ctx.new_page()
     page.goto("/submit")
-    sidebar, form = page.evaluate(
-        "[document.querySelector('.split-sidebar'), document.querySelector('.split-main')]"
-        ".map(e => [Math.round(e.getBoundingClientRect().height), e.scrollHeight])"
+    edges = page.evaluate(
+        "['.nav-brand', '.footer-links', '.split-sidebar', '.split-main']"
+        ".map(s => document.querySelector(s).getBoundingClientRect())"
+        ".map(r => [Math.round(r.left), Math.round(r.right)])"
     )
     ctx.close()
-    assert sidebar[0] == form[0], (sidebar, form)
-    assert sidebar[1] > sidebar[0], "sidebar fits at 700 px: the overflow is not exercised"
+    brand, links, sidebar, form = edges
+    assert sidebar[0] == brand[0], edges
+    assert form[1] == links[1], edges
+
+
+def test_the_wizard_promises_fit_beside_the_form(browser: Browser, base_url: str) -> None:
+    """The block sticks beside the form instead of scrolling inside itself; it
+    must not be taller than the first step, or it sets the page height."""
+    for lang in ("de", "en", "fr", "es", "pt-br"):
+        ctx = browser.new_context(
+            viewport={"width": 1920, "height": 890},
+            base_url=base_url,
+            extra_http_headers={"Accept-Language": lang},
+        )
+        page = ctx.new_page()
+        page.goto("/submit")
+        heights = page.evaluate("[document.documentElement.scrollHeight, innerHeight]")
+        ctx.close()
+        assert heights[0] == heights[1], (lang, heights)
+
+
+def test_a_phone_shows_the_step_count_not_six_hyphenated_labels(
+    browser: Browser, base_url: str
+) -> None:
+    """At 390 px six labels under six dots broke into "Mo-dus", "Katego-rie"."""
+    ctx = browser.new_context(
+        viewport={"width": 390, "height": 844},
+        base_url=base_url,
+        extra_http_headers={"Accept-Language": "de"},
+    )
+    page = ctx.new_page()
+    page.goto("/submit")
+    labels = page.locator(".split-main .stepper-label").evaluate_all(
+        "els => els.filter(e => e.offsetParent !== null).length"
+    )
+    count = page.locator(".split-main .stepper-text").bounding_box()
+    ctx.close()
+    assert labels == 0
+    assert count and count["height"] > 1, count
 
 
 def test_the_demo_credentials_sit_beside_the_login_form(browser: Browser, base_url: str) -> None:

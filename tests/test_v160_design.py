@@ -1179,27 +1179,50 @@ def test_table_stack_sticky_action_column_is_paired_header_and_data(tpl: Path) -
 # ── Wording and dates ───────────────────────────────────────────────────────
 
 
-def test_submit_eyebrow_is_neutral_across_locales() -> None:
-    """The wizard eyebrow said "VERTRAULICHE MELDUNG" /
-    "CONFIDENTIAL REPORT" even after the reporter chose "Anonym" — a neutral
-    eyebrow that does not clash with whichever submission mode is selected."""
-    import json
+REPORTER_TEMPLATES = (
+    "submit.html",
+    "submit_success.html",
+    "status.html",
+    "external_reporting.html",
+    "_ip_notice.html",
+)
 
-    expected = {
-        "en": "Secure report",
-        "de": "Sichere Meldung",
-        "fr": "Signalement sécurisé",
-        "pt-br": "Denúncia segura",
-    }
-    for lang, value in expected.items():
-        data = json.loads((ROOT / "app/locales" / f"{lang}.json").read_text())
-        assert data["submit.eyebrow"] == value, lang
-        # Must not restate the confidential mode's own name (DESIGN.md: an
-        # eyebrow must not say what a heading/label right below it already
-        # says), regardless of language.
-        assert "confidential" not in data["submit.eyebrow"].lower()
-        assert "vertraulich" not in data["submit.eyebrow"].lower()
-        assert "confidentie" not in data["submit.eyebrow"].lower()
+
+def test_the_wizard_layout_sits_in_the_headers_frame() -> None:
+    """Browser-free half of the e2e frame test: the grid is capped at the
+    header's --frame and centred, and the promises block is a card in it, not a
+    column pinned to the window edge (3440 px: 1,150 px left of the logo)."""
+    css = (ROOT / "app/static/css/site.css").read_text()
+    layout = re.search(r"(?m)^\.split-layout\s*\{([^}]*)\}", css)
+    assert layout
+    assert "max-width: var(--frame);" in layout.group(1)
+    assert "margin: 0 auto;" in layout.group(1)
+    sidebar = re.search(r"(?m)^\.split-sidebar\s*\{([^}]*)\}", css)
+    assert sidebar and "background: var(--brand-primary);" in sidebar.group(1)
+
+
+def test_reporter_pages_carry_no_eyebrow() -> None:
+    """A mono, all-caps label sat above nearly every heading ("SICHERE MELDUNG",
+    "GESCHÜTZTES MELDEN"): decoration that restated the heading below it."""
+    for name in REPORTER_TEMPLATES:
+        html = (TEMPLATES / name).read_text()
+        assert "eyebrow" not in html.replace("submit.sidebar.eyebrow", ""), name
+
+
+@pytest.mark.parametrize(
+    "selector",
+    [".alert-title", ".credential-label", ".review-label", ".message-meta", ".stepper-label"],
+)
+def test_reporter_labels_are_not_shouted(selector: str) -> None:
+    """The labels a reporter reads were mono or tracked all caps; DESIGN.md keeps
+    mono for facts (case number, PIN, dates) and labels in sentence case."""
+    css = (ROOT / "app/static/css/site.css").read_text()
+    bodies = re.findall(r"(?m)^" + re.escape(selector) + r"\s*\{([^}]*)\}", css)
+    assert bodies, selector
+    for body in bodies:
+        assert "uppercase" not in body, selector
+        assert "letter-spacing" not in body, selector
+        assert "font-mono" not in body, selector
 
 
 def test_review_label_stacks_over_its_value() -> None:

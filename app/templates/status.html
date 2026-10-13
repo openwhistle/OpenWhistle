@@ -8,11 +8,11 @@
 .st-lockout-countdown { margin-top: 0.6rem; font-size: 0.85rem; opacity: 0.85; }
 .st-pin-wrapper { position: relative; }
 .st-pin-input { padding-right: 5rem; }
-.st-pin-toggle { position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); font-size: 0.72rem; font-family: var(--font-body); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; padding: 0.2rem 0.3rem; }
+.st-pin-toggle { position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); font-size: 0.8125rem; font-family: var(--font-body); font-weight: 600; cursor: pointer; padding: 0.2rem 0.3rem; }
 .st-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.85rem; color: var(--muted); }
 .st-mono-primary { color: var(--ink); }
 .st-deadlines-section { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--hairline); }
-.st-deadlines-title { margin-bottom: 0.6rem; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.st-deadlines-title { margin-bottom: 0.6rem; font-size: 0.875rem; font-weight: 600; color: var(--ink); }
 .st-deadlines-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.83rem; }
 .st-deadline-label { color: var(--muted); margin-bottom: 0.2rem; }
 .st-success-text { color: var(--success); font-weight: 600; }
@@ -23,7 +23,7 @@
 .st-muted-text { color: var(--muted); }
 .st-footer-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--hairline); text-align: center; }
 .st-footer-text { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.75rem; }
-.st-external { font-size: 0.82rem; margin: 1.5rem 0 2rem; text-align: center; }
+.st-external { font-size: 0.82rem; margin-top: 1.5rem; padding-bottom: 3rem; text-align: center; }
 </style>{% endblock %}
 
 {% block title %}{{ t('status.form.title') }} | {{ brand.name }}{% endblock %}
@@ -285,7 +285,7 @@
                 <div class="message-meta">
                     <span class="message-meta-icon">{{ 'M' if msg.sender.value == 'admin' else 'W' }}</span>
                     {{ t('status.sender.admin') if msg.sender.value == 'admin' else t('status.sender.user') }}
-                    &middot; {% if whistleblower_caused(msg, loop.index0) %}<time data-utc="{{ msg.sent_at.isoformat() }}" data-date-only>{{ msg.sent_at|day }}</time>{% else %}<time data-utc="{{ msg.sent_at.isoformat() }}">{{ msg.sent_at.strftime('%Y-%m-%d %H:%M UTC') }}</time>{% endif %}
+                    {% if whistleblower_caused(msg, loop.index0) %}<time data-utc="{{ msg.sent_at.isoformat() }}" data-date-only>{{ msg.sent_at|day }}</time>{% else %}<time data-utc="{{ msg.sent_at.isoformat() }}">{{ msg.sent_at.strftime('%Y-%m-%d %H:%M UTC') }}</time>{% endif %}
                 </div>
                 <div class="message-content">{{ decrypted_messages[loop.index0] if decrypted_messages and loop.index0 < decrypted_messages|length else msg.content }}</div>
             </div>
