@@ -676,3 +676,80 @@ async def test_a_stopping_app_delivers_the_queued_notifications(db_engine, monke
         async with lifespan(FastAPI()):
             deliver.assert_not_awaited()
     deliver.assert_awaited_once_with(["OW-2026-55555"], [])
+
+
+# ── Publishing: only commits on main; a re-publish is not blocked by :latest ──
+
+
+def _workflow(name: str) -> dict:  # type: ignore[type-arg]
+    from pathlib import Path
+
+    import yaml
+
+    return yaml.safe_load((Path(__file__).parents[1] / ".github/workflows" / name).read_text())
+
+
+@pytest.mark.parametrize(
+    ("ref", "on_main"),
+    [("refs/heads/feature", False), ("refs/tags/v9.9.9", False), ("refs/heads/main", True)],
+)
+def test_the_publish_guard_refuses_every_ref_main_does_not_contain(tmp_path, ref, on_main) -> None:  # type: ignore[no-untyped-def]
+    """ "Only reviewed commits are published" held for tags alone: ``gh workflow run
+    docker-publish.yml --ref feature`` built, pushed and signed :sha-<sha> of an
+    unreviewed branch in all three registries (the step ran its check only for
+    ``refs/tags/*``; run here against a real repository)."""
+    import os
+    import subprocess
+
+    steps = _workflow("docker-publish.yml")["jobs"]["on-main"]["steps"]
+    script = next(s["run"] for s in steps if "run" in s)
+
+    def git(*args: str) -> str:
+        cmd = ["git", *args]
+        done = subprocess.run(cmd, cwd=tmp_path, check=True, capture_output=True, text=True)  # noqa: S603
+        return done.stdout.strip()
+
+    git("init", "-q", "-b", "main")
+    git(
+        "-c",
+        "user.name=t",
+        "-c",
+        "user.email=t@t",
+        "commit",
+        "-q",
+        "--allow-empty",
+        "-m",
+        "reviewed",
+    )
+    git("update-ref", "refs/remotes/origin/main", "HEAD")
+    if not on_main:
+        git("checkout", "-q", "-b", "side")
+        git(
+            "-c",
+            "user.name=t",
+            "-c",
+            "user.email=t@t",
+            "commit",
+            "-q",
+            "--allow-empty",
+            "-m",
+            "not reviewed",
+        )
+    env = {
+        **os.environ,
+        "GITHUB_REF": ref,
+        "GITHUB_REF_NAME": ref.rsplit("/", 1)[-1],
+        "GITHUB_SHA": git("rev-parse", "HEAD"),
+    }
+    cmd = ["bash", "-c", script]
+    result = subprocess.run(cmd, cwd=tmp_path, env=env, capture_output=True, text=True, check=False)  # noqa: S603
+    assert (result.returncode == 0) is on_main, result.stdout
+
+
+def test_a_republish_does_not_scan_the_image_it_replaces() -> None:
+    """In a called workflow, ``github.event_name`` is the caller's: a re-publish started
+    with ``gh workflow run docker-publish.yml`` ran security.yml's scan of the published
+    :latest, which fails exactly when :latest has a fixed CVE — the reason to re-publish
+    — and ``build`` needs it. (GitHub's documented behaviour; not run here.)"""
+    condition = _workflow("security.yml")["jobs"]["published"]["if"]
+    assert "docker-publish" in condition and "workflow_ref" in condition, condition

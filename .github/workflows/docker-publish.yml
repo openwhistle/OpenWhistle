@@ -37,8 +37,8 @@ permissions:
 jobs:
   # ── Nothing is published that has not passed the checks ─────────────────
   # main's branch protection does not require the PR to be up to date, and a
-  # tag can name any commit: so the exact commit is tested here, and a tag
-  # must be on main.
+  # tag or a dispatch can name any commit: so the exact commit is tested here,
+  # and it must be on main.
   ci:
     uses: $/.github/workflows/ci.yml
     secrets:
@@ -48,7 +48,7 @@ jobs:
   security:
     uses: $/.github/workflows/security.yml
   on-main:
-    name: Tagged commit is on main
+    name: Commit is on main
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -56,9 +56,10 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - name: Refuse a tag that main does not contain
+      # Every ref, not only tags: a dispatch on a branch published its :sha-<sha>.
+      - name: Refuse a commit that main does not contain
         run: |
-          if [[ "${GITHUB_REF}" == refs/tags/* ]] && ! git merge-base --is-ancestor "${GITHUB_SHA}" origin/main; then
+          if ! git merge-base --is-ancestor "${GITHUB_SHA}" origin/main; then
             echo "::error::${GITHUB_REF_NAME} is not on main; only reviewed commits are published"
             exit 1
           fi
