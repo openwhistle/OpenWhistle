@@ -57,3 +57,50 @@ def test_the_step_deletes_the_selected_digests_not_tags() -> None:
     assert "QUAY_DOOMED_DIGESTS" in run
     assert "openwhistle@${digest}" in run
     assert "openwhistle:${tag}" not in run
+
+
+@pytest.mark.parametrize("registry", ["Docker Hub", "Quay"])
+def test_a_delete_the_registry_refuses_fails_the_cleanup(tmp_path: Path, registry: str) -> None:
+    """A refused delete printed one line to stderr and the step stayed green: nobody
+    learns that old images are piling up, or that the token lost its rights."""
+    wf = yaml.safe_load((ROOT / ".github/workflows/cleanup-images.yml").read_text())
+    (step,) = [s for s in wf["jobs"]["cleanup-registries"]["steps"] if registry in s["name"]]
+    tags = [_tag(f"sha-{i:07x}", f"{i:064x}", 1000 + i) for i in range(12)]
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    listing = {
+        "Quay": {"tags": tags, "has_additional": False},
+        "Docker Hub": {"results": [{"name": t["name"]} for t in tags], "next": None},
+    }
+    (tmp_path / "listing.json").write_text(json.dumps(listing[registry]))
+    # Every listing answers; every DELETE (curl -X DELETE, skopeo delete) is refused.
+    (bin_dir / "curl").write_text(
+        f'#!/bin/sh\ncase "$*" in *DELETE*) exit 22;; *login*) echo \'{{"token":"t"}}\';; '
+        f"*) cat {tmp_path}/listing.json;; esac\n"
+    )
+    (bin_dir / "skopeo").write_text("#!/bin/sh\nexit 1\n")
+    for stub in bin_dir.iterdir():
+        stub.chmod(0o755)
+    env = {
+        "PATH": f"{bin_dir}:/usr/bin:/bin",
+        **dict.fromkeys(
+            (
+                "QUAY_USERNAME",
+                "QUAY_TOKEN",
+                "QUAY_NAMESPACE",
+                "DOCKERHUB_USERNAME",
+                "DOCKERHUB_TOKEN",
+            ),
+            "x",
+        ),
+        **{k: str(v) for k, v in (step.get("env") or {}).items() if "${{" not in str(v)},
+    }
+    result = subprocess.run(  # noqa: S603
+        ["bash", "-c", step["run"]],  # noqa: S607
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert "Failed to delete" in result.stderr, result.stdout + result.stderr
+    assert result.returncode != 0

@@ -38,6 +38,19 @@ def next_run(now: datetime) -> datetime:
     return fire
 
 
+def cutoff(now: datetime, days: int) -> datetime:
+    """Reports closed before this are past ``days`` of retention.
+
+    Whole years are calendar years, so 1095 days are the three years of
+    HinSchG §11(5) whatever 29 February they span. Counted as 1095 days, a
+    report closed on 1 March 2027 was deleted on 28 February 2030, a day early.
+    """
+    from app.services.deadlines import add_months  # noqa: PLC0415
+
+    years, rest = divmod(days, 365)
+    return add_months(now, -12 * years) - timedelta(days=rest)
+
+
 async def run_retention_cleanup() -> None:
     """Hard-delete closed reports that have exceeded the configured retention window.
 
@@ -80,14 +93,14 @@ async def run_retention_cleanup() -> None:
             log.warning("Retention job lock unavailable; proceeding without it")
 
         engine = create_async_engine(settings.database_url, echo=False, hide_parameters=True)
-        cutoff = datetime.now(UTC) - timedelta(days=settings.retention_days)
+        closed_before = cutoff(datetime.now(UTC), settings.retention_days)
         session_factory = async_sessionmaker(engine, expire_on_commit=False)
         async with session_factory() as db:
             result = await db.execute(
                 select(Report).where(
                     Report.status == ReportStatus.closed,
                     Report.closed_at.isnot(None),
-                    Report.closed_at < cutoff,
+                    Report.closed_at < closed_before,
                 )
             )
             reports = result.scalars().all()

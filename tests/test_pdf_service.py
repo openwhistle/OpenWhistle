@@ -25,7 +25,6 @@ async def test_generate_report_pdf_returns_bytes(db_session: AsyncSession):
         db_session,
         category="financial_fraud",
         description="A detailed description for PDF testing purposes.",
-        lang="en",
     )
     rid = report.id
     loaded = await get_report_by_id(db_session, rid)
@@ -42,7 +41,6 @@ async def test_generate_pdf_with_acknowledged_report(db_session: AsyncSession):
         db_session,
         category="corruption",
         description="Report with acknowledgement for PDF test.",
-        lang="en",
     )
     await acknowledge_report(db_session, report)
     loaded = await get_report_by_id(db_session, report.id)
@@ -58,7 +56,6 @@ async def test_generate_pdf_with_note(db_session: AsyncSession):
         db_session,
         category="workplace_safety",
         description="Report with internal note for PDF.",
-        lang="en",
     )
     user, _ = await create_user(
         db_session,
@@ -122,7 +119,6 @@ async def test_generate_pdf_renders_latin_greek_and_cyrillic_text(db_session: As
         db_session,
         category="corruption",
         description=f"{polish} — {greek} — {cyrillic} — {german_quotes}",
-        lang="en",
     )
     loaded = await get_report_by_id(db_session, report.id)
     assert loaded is not None
@@ -152,7 +148,6 @@ async def test_generate_pdf_does_not_write_into_the_font_directory(
         db_session,
         category="corruption",
         description="Read-only font dir check.",
-        lang="en",
     )
     loaded = await get_report_by_id(db_session, report.id)
     assert loaded is not None
@@ -189,7 +184,6 @@ async def test_generate_pdf_prints_the_localised_category_label(db_session: Asyn
         db_session,
         category="financial_fraud",
         description="PDF category label test — falls back correctly too.",
-        lang="en",
     )
     loaded = await get_report_by_id(db_session, report.id)
     assert loaded is not None

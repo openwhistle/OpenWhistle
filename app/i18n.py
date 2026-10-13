@@ -76,11 +76,14 @@ _PERCENT_SUFFIX: dict[str, str] = {
 }
 
 
+def format_decimal(value: float, lang: str) -> str:
+    """Write an already rounded number with the locale's decimal mark."""
+    return str(value).replace(".", _DECIMAL_MARK.get(lang, _DECIMAL_MARK[_DEFAULT]))
+
+
 def format_percent(value: float, lang: str) -> str:
     """Write an already rounded percentage (0-100) the way the locale does."""
-    mark = _DECIMAL_MARK.get(lang, _DECIMAL_MARK[_DEFAULT])
-    suffix = _PERCENT_SUFFIX.get(lang, _PERCENT_SUFFIX[_DEFAULT])
-    return str(value).replace(".", mark) + suffix
+    return format_decimal(value, lang) + _PERCENT_SUFFIX.get(lang, _PERCENT_SUFFIX[_DEFAULT])
 
 
 def make_translator(lang: str) -> Callable[..., str]:

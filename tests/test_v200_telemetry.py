@@ -936,3 +936,24 @@ async def test_startup_registers_the_job_even_while_the_switch_is_off(
     ids = [c.kwargs.get("id") for c in scheduler.add_job.call_args_list]
     assert ids == ["telemetry"]
     scheduler.start.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_a_failed_report_is_tried_again_the_next_day_not_the_next_hour(
+    db_session: AsyncSession,
+    redis: Redis,
+    fake_server: tuple[str, _Hits],
+    monkeypatch: pytest.MonkeyPatch,
+    consent_from_db: None,
+) -> None:
+    """The consent text says one request a day. A failure was retried every hour: a
+    count server answering 503 for a day got 24 requests from each installation."""
+    base, _ = fake_server
+    monkeypatch.setattr(telemetry, "TELEMETRY_ENDPOINT", f"{base}/fail")
+    await _set_row(db_session, enabled=True)
+
+    try:
+        assert await telemetry.report_if_due(db_session, redis) is False
+        assert await redis.ttl(telemetry.LOCK_KEY) > 23 * 3600
+    finally:
+        await _set_row(db_session, enabled=None)  # later tests expect no consent

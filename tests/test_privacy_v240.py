@@ -330,7 +330,17 @@ async def test_reporter_sessions_end_with_the_browser(client, db_session) -> Non
     """A persistent cookie kept the draft and the open case on a shared PC after closing."""
     from app.services.report import create_report
 
-    await client.get("/submit")
+    page = await client.get("/submit")
+    await client.post(  # opening the form stores nothing; the first step makes the draft
+        "/submit",
+        data={
+            "csrf_token": client.cookies["ow_csrf"],
+            "step": "1",
+            "action": "next",
+            "submission_mode": "anonymous",
+        },
+    )
+    assert page.status_code == 200
     draft = [h for h in client.cookies.jar if h.name == "ow-submission-session"]
     assert draft and draft[0].expires is None
 

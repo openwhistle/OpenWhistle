@@ -200,7 +200,7 @@
             <div class="form-hint" id="dash-search-hint">{{ t('admin.search.hint') }}</div>
         </form>
         {% if search_capped %}
-        <div class="alert alert-warning" role="status">{{ t('admin.search.capped', limit='{:,}'.format(search_capped)) }}</div>
+        <div class="alert alert-warning" role="status">{{ t('admin.search.capped', limit=search_capped | format_count(lang)) }}</div>
         {% endif %}
 
         {% set from_row = (page - 1) * per_page + 1 %}
@@ -238,7 +238,7 @@
                     {% set fb_sla_class = ('sla-ok' if fb.state == 'done' else 'sla-' ~ fb.state) if fb else '' %}
                     <tr role="row">
                         <td role="cell" class="stack-primary" data-label="{{ t('admin.table.case_number') }}"><span class="mono dash-nowrap">{{ report.case_number }}</span></td>
-                        <td role="cell" class="dash-category-cell" data-label="{{ t('admin.table.category') }}">{{ report.category | category_label(category_labels) }}</td>
+                        <td role="cell" class="dash-category-cell" data-label="{{ t('admin.table.category') }}">{{ category_labels[report.id] }}</td>
                         <td role="cell" class="stack-status" data-label="{{ t('admin.table.status') }}"><span class="badge badge-{{ report.status.value }}">{{ t('status.label.' + report.status.value) }}</span></td>
                         <td role="cell" class="mono dash-date-cell" data-label="{{ t('admin.table.submitted') }}">{{ report.submitted_at|day }}</td>
                         <td role="cell" class="dash-assignee-cell" data-label="{{ t('admin.table.assignee') }}">

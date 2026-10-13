@@ -428,7 +428,7 @@ async def test_draft_with_the_wrong_key_counts_as_expired(client: AsyncClient) -
     client.cookies.set("ow-submission-session", f"{draft_id}.{'A' * 43}")
     resp = await client.get("/submit")
     assert 'name="step" value="1"' in resp.text
-    assert not resp.cookies["ow-submission-session"].startswith(draft_id)
+    assert not (resp.cookies.get("ow-submission-session") or "").startswith(draft_id)
 
 
 @pytest.mark.asyncio

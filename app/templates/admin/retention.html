@@ -23,7 +23,7 @@
         <div class="stat-card" role="listitem">
             <div class="stat-card__label">{{ t('admin.retention.stat.period') }}</div>
             <div class="stat-card__value">{{ t('admin.retention.stat.period.value', days=retention_days) }}
-                <span class="stat-card__sub">{{ t('admin.retention.stat.period.sub', years=(retention_days / 365)|round(1)) }}</span>
+                <span class="stat-card__sub">{{ t('admin.retention.stat.period.sub', years=(retention_days / 365)|round(1)|format_decimal(lang)) }}</span>
             </div>
         </div>
         <div class="stat-card" role="listitem">
@@ -41,6 +41,7 @@
     {% if retention_enabled %}
     <div class="alert alert-info" role="note">
         {{ t('admin.retention.enabled_notice', days=retention_days) }}
+        {% if none_due_yet %}{{ t('admin.retention.none_due_yet') }}{% endif %}
     </div>
     {% else %}
     <div class="alert alert-info" role="note">

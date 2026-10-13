@@ -73,9 +73,10 @@ spec:
               port: http
             periodSeconds: 10
             failureThreshold: 60
+          # Alive is the server answering: /health is 503 while PostgreSQL or Redis is
+          # down, and restarting the app fixes neither (readiness takes it out of service).
           livenessProbe:
-            httpGet:
-              path: /health
+            tcpSocket:
               port: http
             initialDelaySeconds: 15
             periodSeconds: 30

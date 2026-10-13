@@ -84,11 +84,10 @@
                         <td role="cell" class="aud-admin-cell" data-label="{{ t('admin.audit.table.admin') }}">{{ entry.admin_username or '—' }}</td>
                         <td role="cell" class="aud-action-cell stack-primary" data-label="{{ t('admin.audit.table.action') }}">{{ audit.label(entry.action) }}</td>
                         <td role="cell" data-label="{{ t('admin.audit.table.report') }}">
+                            {#- A deleted case's rows go with it (ON DELETE CASCADE); its deletion
+                                entry has no report_id and names the case in its detail. -#}
                             {% if entry.report_id in case_numbers %}
                             <a href="/admin/reports/{{ entry.report_id }}" class="mono aud-report-link">{{ case_numbers[entry.report_id] }}</a>
-                            {% elif entry.report_id %}
-                            {# Deleted: no case to open; its number is in the deletion entry's detail. #}
-                            <span class="mono">{{ entry.report_id | string | truncate(13, true, '…') }}</span>
                             {% else %}
                             —
                             {% endif %}

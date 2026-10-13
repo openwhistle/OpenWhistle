@@ -158,12 +158,12 @@ async def _second_factor(
 async def _password_failed(
     redis: Redis, db: AsyncSession, username: str, background_tasks: BackgroundTasks
 ) -> None:
-    """Count a failed password: per username (lockout) and instance-wide.
+    """Count a failed password instance-wide; the username's attempt is already
+    counted (``claim_admin_attempt``).
 
     The instance-wide count makes password spraying visible - one guess
     against each of many accounts never trips a per-username lockout.
     """
-    await rl.record_admin_login_failure(redis, username)
     if not await rl.record_instance_login_failure(redis):
         return
     threshold = settings.admin_failed_login_alert_threshold
@@ -256,7 +256,7 @@ async def login_post(
             status_code=400,
         )
 
-    if not await rl.check_admin_login_attempts(redis, username):
+    if not await rl.claim_admin_attempt(redis, username):
         return render(
             request,
             "login.html",
@@ -266,6 +266,7 @@ async def login_post(
                     "error": "login.error.locked",
                 },
             ),
+            status_code=429,
         )
 
     # ── LDAP authentication path ────────────────────────────────────
@@ -333,6 +334,7 @@ async def login_post(
                 await db.commit()
                 await db.refresh(user)
 
+            await rl.release_admin_attempt(redis, username)
             return await _second_factor(request, redis, user)
 
     # ── Local password authentication path ─────────────────────────
@@ -367,6 +369,7 @@ async def login_post(
     # We intentionally do NOT reveal "this account uses SSO", which would leak
     # account existence / auth method (kept generic for privacy).
 
+    await rl.release_admin_attempt(redis, username)
     return await _second_factor(request, redis, user)
 
 
@@ -447,7 +450,7 @@ async def login_mfa_post(
     # Second-factor guessing must be throttled just like the password factor,
     # otherwise an attacker who already holds the password can brute-force the
     # 6-digit TOTP unhindered.
-    if not await rl.check_admin_login_attempts(redis, user.username):
+    if not await rl.claim_admin_attempt(redis, user.username):
         return render(
             request,
             "login_mfa.html",
@@ -463,8 +466,7 @@ async def login_mfa_post(
     demo_code = settings.demo_mode and verify_demo_totp(totp_code, user.username, user.totp_secret)
     code_valid = demo_code or await consume_totp(redis, user.id, user.totp_secret, totp_code)
 
-    if not code_valid:
-        await rl.record_admin_login_failure(redis, user.username)
+    if not code_valid:  # counted by the claim above
         new_temp = secrets.token_urlsafe(32)
         await auth_service.store_totp_pending(redis, new_temp, user_id)
         return render(
@@ -497,7 +499,8 @@ async def mfa_setup_get(
         return RedirectResponse("/admin/login", status_code=302)
 
     user = await auth_service.get_user_by_id(db, user_id)
-    if not user or not user.is_active:
+    # Enrolled: a second setup link from an earlier sign-in showed the secret in use.
+    if not user or not user.is_active or user.totp_enabled:
         return RedirectResponse("/admin/login", status_code=302)
 
     qr_b64 = generate_qr_code_base64(user.totp_secret, user.username)
@@ -527,7 +530,7 @@ async def mfa_setup_post(
         return RedirectResponse("/admin/login", status_code=302)
 
     user = await auth_service.get_user_by_id(db, user_id)
-    if not user or not user.is_active:
+    if not user or not user.is_active or user.totp_enabled:
         return RedirectResponse("/admin/login", status_code=302)
 
     # Consumed, so the enrolment code cannot sign in a second session.
@@ -975,22 +978,20 @@ async def account_password(
             status_code=code,
         )
 
-    # The same per-account counter as the sign-in form: guesses here and there add up.
-    if not await rl.check_admin_login_attempts(redis, current_user.username):
-        return await refuse({"current_password": "login.error.locked"}, 429)
-
     form_errors = _new_password_error(current_password, new_password, confirm_password)
     if form_errors:
         return await refuse(form_errors, 400)
 
+    # The same per-account counter as the sign-in form: guesses here and there add up.
+    if not await rl.claim_admin_attempt(redis, current_user.username):
+        return await refuse({"current_password": "login.error.locked"}, 429)
+
     if not auth_service.verify_password(current_password, current_user.password_hash):
-        await rl.record_admin_login_failure(redis, current_user.username)
         return await refuse({"current_password": "account.password.error.current"}, 401)
 
     # Single use, like the sign-in code: a code seen over a shoulder opens nothing twice.
     code_ok = await consume_totp(redis, current_user.id, current_user.totp_secret, totp_code)
     if not code_ok:
-        await rl.record_admin_login_failure(redis, current_user.username)
         return await refuse({"totp_code": "mfa.error.invalid"}, 401)
 
     required = current_user.must_change_password

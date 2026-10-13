@@ -26,8 +26,12 @@ KEY = "k$HOME" + "x" * 40
 def _render(**overrides: object) -> str:
     values = yaml.safe_load((ROLE / "defaults/main.yml").read_text())
     values.update(openwhistle_domain="ow.example.com", ansible_date_time={"iso8601": "now"})
+    values.update(overrides)  # as in Ansible, defaults see the inventory's values
     # Ansible renders with trim_blocks; defaults refer to other variables.
     env = jinja2.Environment(trim_blocks=True, keep_trailing_newline=True)  # noqa: S701 — not HTML
+    env.filters["bool"] = lambda v: (
+        v if isinstance(v, bool) else str(v).lower() in ("true", "yes", "1")
+    )
     values = {
         k: env.from_string(v).render(**values) if isinstance(v, str) else v
         for k, v in values.items()

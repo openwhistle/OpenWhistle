@@ -31,8 +31,8 @@ import sys
 # Allow running from the project root without installing the package
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Ensure SECRET_KEY is set (required by pydantic-settings even for this script)
-os.environ.setdefault("SECRET_KEY", "reset-script-placeholder-not-used-for-crypto")
+# No SECRET_KEY of its own: it outranked .env, and --reset-totp sealed the new
+# secret with it, which the app could not read. The app's settings decide.
 
 
 async def _list_users() -> None:

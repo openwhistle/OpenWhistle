@@ -45,11 +45,13 @@ TICK_HOURS = 1
 MAX_SPREAD_SECONDS = 3600
 
 # Taken per attempt and never released: across all replicas at most one
-# attempt per ~hour, and a failure is retried at the next tick, not in a loop.
+# attempt a day, as the consent text says, failed or not. A failure used to be
+# retried at the next hourly tick: 24 requests a day while the far end was down.
 # The TTL outlasts the send, so a replica that saw "due" before another's
-# success cannot take the lock until that success is committed.
+# success cannot take the lock until that success is committed; it ends a few
+# minutes before the day does, so the tick after it finds the lock free.
 LOCK_KEY = "openwhistle:job_lock:telemetry"
-_LOCK_TTL_SECONDS = 55 * 60
+_LOCK_TTL_SECONDS = int(INTERVAL.total_seconds()) - 5 * 60
 
 
 def locked_by() -> str | None:

@@ -100,7 +100,7 @@ async def test_login_post_shows_locked_message_when_rate_limited(
         "/admin/login",
         data={"username": admin.username, "password": "ExtTest!Pass1", "csrf_token": csrf},
     )
-    assert resp.status_code == 200
+    assert resp.status_code == 429
     assert "locked" in resp.text.lower() or "too many" in resp.text.lower()
 
 

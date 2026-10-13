@@ -116,20 +116,21 @@ class MetadataError(ValueError):
     """A file whose metadata could not be removed is refused, never stored as-is."""
 
 
+# Keyed case-folded: part names are case-insensitive (OPC).
 _OOXML_EMPTY_PARTS: dict[str, bytes] = {
-    "docProps/core.xml": (
+    "docprops/core.xml": (
         b'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
         b'<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/'
         b'metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" '
         b'xmlns:dcterms="http://purl.org/dc/terms/" '
         b'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"/>'
     ),
-    "docProps/app.xml": (
+    "docprops/app.xml": (
         b'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
         b'<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/'
         b'extended-properties"/>'
     ),
-    "docProps/custom.xml": (
+    "docprops/custom.xml": (
         b'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
         b'<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/'
         b'custom-properties"/>'
@@ -388,6 +389,8 @@ def _strip_pdf(data: bytes) -> bytes:
         obj.pop("/Metadata", None)
         obj.pop("/PieceInfo", None)
         obj.pop("/LastModified", None)  # Acrobat's edit time, beside PieceInfo
+        # A page's thumbnail shows the page as it was: text blacked out since stays in it.
+        obj.pop("/Thumb", None)
         # A signature names the signer (/Name, /ContactInfo, the certificate in
         # /Contents) and the second they signed (/M). It used to be kept whole.
         value = obj.get("/V")
@@ -458,9 +461,12 @@ _WORD_TIMES = {b"date": _NEUTRAL_TIME, b"dateUtc": _NEUTRAL_TIME}
 # A path inside the user's profile names the account: C:\Users\<name>\…,
 # file:///Users/<name>/…, or /Users/<name>/ as Mac Excel writes it.
 # A home share on a file server does too: \\fs01\home$\<name>\, \\srv\users\<name>\.
+# So does a OneDrive address: <tenant>-my.sharepoint.com/personal/<account>/, and
+# d.docs.live.net/<the account's id>/ for a personal one.
 _PROFILE_PATH = re.compile(
     rb"(?i)([a-z]:[\\/]+(?:users|documents and settings)[\\/]+"
     rb"|\\\\[^\\/\"<>]+[\\/]+[^\\/\"<>]*(?:home|user|profile)[^\\/\"<>]*[\\/]+"
+    rb"|https?://[^/\"<>]+-my\.sharepoint\.com/personal/|https?://d\.docs\.live\.net/"
     rb"|file://(?:localhost)?/(?:users|home)/|(?<==\")/(?:users|home)/)[^\\/\"<>]+"
 )
 _SP_PROPERTIES = b"http://schemas.microsoft.com/office/2006/metadata/properties"
@@ -475,9 +481,12 @@ def _scrub_profile_paths(body: bytes) -> bytes:
 
 def _anonymise_ooxml_part(name: str, body: bytes) -> bytes:
     # The template path (word/_rels/settings.xml.rels), links to other files and
-    # data connections all keep the Windows account name.
-    if name.endswith((".xml", ".rels")):
+    # data connections all keep the Windows account name; so does a drawing's
+    # inkscape:export-filename.
+    if name.endswith((".xml", ".rels", ".svg")):
         body = _scrub_profile_paths(body)
+    if name.endswith(".svg"):  # a drawing's <metadata>: author, title, licence
+        return re.sub(rb"<(\w+:|)metadata\b.*?</\1metadata>", b"", body, flags=re.DOTALL)
     if name.startswith("word/") and name.endswith(".xml"):
         # Revision-session ids link documents edited in one session; document
         # variables are what macros and DMS add-ins stored (often the user name).
@@ -554,6 +563,30 @@ def _printer_settings_ids(src: zipfile.ZipFile) -> dict[str, list[bytes]]:
 
 
 _OOXML_MEDIA = re.compile(r"(?:word|xl|ppt)/media/[^/]+\.(?:jpe?g|png|gif|webp|tiff?)", re.I)
+_OOXML_MEDIA_DIR = re.compile(r"(?:word|xl|ppt)/media/", re.I)
+
+
+def _is_cleanable_image(body: bytes) -> bool:
+    """By its content: Word keeps a picture's own extension, and a .jfif kept its EXIF."""
+    return body.startswith(
+        (b"\xff\xd8\xff", b"\x89PNG\r\n\x1a\n", b"GIF8", b"II*\x00", b"MM\x00*")
+    ) or (body[:4] == b"RIFF" and body[8:12] == b"WEBP")
+
+
+def _core_property_parts(src: zipfile.ZipFile) -> set[str]:
+    """Where the package keeps its core properties (author, dates), case-folded.
+
+    _rels/.rels says so; only docProps/core.xml used to be emptied, and part names
+    are case-insensitive: System.IO.Packaging writes package/services/metadata/….
+    """
+    try:
+        rels = src.read("_rels/.rels")
+    except KeyError:
+        return set()
+    targets = re.findall(
+        rb'<Relationship\b(?=[^>]*metadata/core-properties")[^>]*\sTarget="([^"]+)"', rels
+    )
+    return {t.decode().lstrip("/").casefold() for t in targets}
 
 
 def _strip_ooxml(data: bytes, *, embedded: bool = False) -> bytes:
@@ -565,6 +598,7 @@ def _strip_ooxml(data: bytes, *, embedded: bool = False) -> bytes:
         raise MetadataError("archive expands too far")
     # A printer's settings start with its name, often \\server\<department>-<floor>.
     printer_ids = _printer_settings_ids(src)
+    core_parts = _core_property_parts(src)
     out = io.BytesIO()
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as dst:
         for info in src.infolist():
@@ -574,7 +608,10 @@ def _strip_ooxml(data: bytes, *, embedded: bool = False) -> bytes:
                 or "/printerSettings/" in info.filename
             ):
                 continue
-            body = _OOXML_EMPTY_PARTS.get(info.filename) or src.read(info)
+            part = info.filename.casefold()
+            if part in core_parts:
+                part = "docprops/core.xml"
+            body = _OOXML_EMPTY_PARTS.get(part) or src.read(info)
             for rid in printer_ids.get(info.filename, ()):
                 # <pageSetup r:id=…> loses the reference; Word's own element goes whole.
                 body = re.sub(
@@ -592,7 +629,9 @@ def _strip_ooxml(data: bytes, *, embedded: bool = False) -> bytes:
                     raise MetadataError("Office file carries an embedded object")
                 body = _strip_ooxml(body, embedded=True)
             # A photo pasted into a document keeps its EXIF (GPS, camera) inside the package.
-            if _OOXML_MEDIA.fullmatch(info.filename):
+            if _OOXML_MEDIA.fullmatch(info.filename) or (
+                _OOXML_MEDIA_DIR.match(info.filename) and _is_cleanable_image(body)
+            ):
                 body = _strip_image(body)
             # A fresh entry: no original timestamps, no extra fields (Unix
             # uid/gid, NTFS times) from the whistleblower's machine.

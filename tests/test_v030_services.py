@@ -52,7 +52,7 @@ from app.services.users import (
 
 async def _make_report(db: AsyncSession, category: str = "financial_fraud"):
     return await create_report(
-        db, category=category, description="Test description with enough detail.", lang="en"
+        db, category=category, description="Test description with enough detail."
     )
 
 

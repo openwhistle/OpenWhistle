@@ -258,12 +258,12 @@ jobs:
     #
     # Also renders ansible/roles/openwhistle/templates/nginx.conf.j2 with the
     # role's own defaults (a tiny Jinja2 render, no Ansible install needed)
-    # and re-runs the TLS-listener assertion against it, over the SAME
-    # nginx/snippets/*.conf files — the Ansible deployment (the live demo)
-    # has no onion listener, but must still clear X-OW-Onion so a client
-    # can't spoof onion-listener behaviour against it (non-Secure cookies,
-    # no HSTS) — see "single source" in deploy.yml's "Copy the shared nginx
-    # snippets" task.
+    # and re-runs both listeners' assertions against it, over the SAME
+    # nginx/snippets/*.conf files: its TLS listener must clear X-OW-Onion so a
+    # client can't spoof onion-listener behaviour (non-Secure cookies, no HSTS),
+    # and its onion listener (8080, added after this job was written, untested
+    # until then) must force it — see "single source" in deploy.yml's "Copy the
+    # shared nginx snippets" task.
     name: nginx onion-listener trust boundary
     runs-on: ubuntu-latest
     permissions:
@@ -459,7 +459,7 @@ jobs:
           # backend on ow-onion-test — only nginx.conf itself differs.
           # shellcheck disable=SC2046
           docker run -d --name ow-onion-test-nginx-ansible --network ow-onion-test \
-            -p 28443:443 $(cat "$d/nginx-run.args") \
+            -p 28443:443 -p 28080:8080 $(cat "$d/nginx-run.args") \
             -v "$d/nginx/nginx.conf:/etc/nginx/nginx.conf:ro" \
             -v "$d/nginx/snippets:/etc/nginx/snippets:ro" \
             -v "$d/letsencrypt:/etc/letsencrypt:ro" \
@@ -481,6 +481,16 @@ jobs:
           # `set -e` ignores a `!`-negated command, so each check is an if.
           grep -qi '^host:' <<< "$out"
           if grep -qiE '^(x.ow.onion|x-forwarded-for|x-real-ip):' <<< "$out"; then exit 1; fi
+
+      - name: Ansible-rendered onion (8080) forces X-OW-Onion to exactly "1", strips IP headers
+        run: |
+          out=$(curl -sf http://localhost:28080/ \
+            -H "X-OW-Onion: 0" -H "X-OW-Onion: 0" \
+            -H "X-Forwarded-For: 1.2.3.4" -H "X-Real-IP: 1.2.3.4")
+          echo "$out"
+          grep -qx 'X-OW-Onion: 1' <<< "$out"
+          [ "$(grep -ci '^x.ow.onion:' <<< "$out")" = 1 ]
+          if grep -qiE '^(x-forwarded-for|x-real-ip):' <<< "$out"; then exit 1; fi
 
       - name: Cleanup
         if: always()

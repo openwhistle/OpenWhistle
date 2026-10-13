@@ -70,6 +70,16 @@ def _org_scope(user: AdminUser) -> dict[str, Any]:
     return {"scope_org": scope, "org_id": user.org_id if scope else None}
 
 
+def _report_org(org_id: uuid.UUID | None) -> dict[str, Any]:
+    """Query kwargs for the categories of one case's organisation.
+
+    A slug is unique per organisation only. A superadmin is not scoped, and one
+    slug -> label map of every organisation let either one's label win the slug:
+    the case page and the PDF named another organisation's category.
+    """
+    return {"scope_org": settings.multi_tenancy_enabled, "org_id": org_id}
+
+
 def _own_cases_only(user: AdminUser) -> uuid.UUID | None:
     """A case manager sees only the cases assigned to them — in counts, too."""
     return user.id if user.role == AdminRole.case_manager else None
@@ -341,11 +351,17 @@ async def _dashboard(
             reporting_path = f"/submit/{org.slug}"
             reporting_link = settings.app_public_url.rstrip("/") + reporting_path
 
-    from app.services.categories import get_category_labels
+    from app.services.categories import category_label, get_category_labels
     from app.services.locations import get_all_locations
 
     all_locations = await get_all_locations(db, **_org_scope(current_user))
-    category_labels = await get_category_labels(db, get_lang(request), **_org_scope(current_user))
+    # Each case under its own organisation's label (_report_org); a page holds few orgs.
+    category_labels: dict[uuid.UUID, str] = {}
+    for org_id in {r.org_id for r in reports}:
+        labels = await get_category_labels(db, get_lang(request), **_report_org(org_id))
+        for r in reports:
+            if r.org_id == org_id:
+                category_labels[r.id] = category_label(r.category, labels)
 
     return render(
         request,
@@ -488,7 +504,7 @@ async def _render_report(
     from app.services.categories import get_category_labels
     from app.services.users import get_all_users
 
-    category_labels = await get_category_labels(db, get_lang(request), **_org_scope(current_user))
+    category_labels = await get_category_labels(db, get_lang(request), **_report_org(report.org_id))
 
     all_admins = [
         u
@@ -529,7 +545,7 @@ async def _render_report(
 
     has_secure_email = bool(report.secure_email)
 
-    decrypted_description, decrypted_msg_contents = decrypt_report_fields(report)
+    decrypted_description, decrypted_msg_contents = decrypt_report_fields(report, get_lang(request))
 
     return render(
         request,
@@ -916,7 +932,7 @@ async def export_pdf(
     await audit_service.log(db, current_user, AuditAction.REPORT_EXPORTED, report_id=report.id)
     await db.commit()
 
-    category_labels = await get_category_labels(db, get_lang(request), **_org_scope(current_user))
+    category_labels = await get_category_labels(db, get_lang(request), **_report_org(report.org_id))
     pdf_bytes = generate_report_pdf(
         report,
         category_label=category_label(report.category, category_labels),
@@ -955,7 +971,7 @@ async def export_pdf_with_identity(
         detail={"reason": encrypt(valid), "via": "pdf"},
     )
     await db.commit()
-    category_labels = await get_category_labels(db, get_lang(request), **_org_scope(current_user))
+    category_labels = await get_category_labels(db, get_lang(request), **_report_org(report.org_id))
     return Response(
         content=generate_report_pdf(
             report,
@@ -1047,6 +1063,10 @@ async def create_category(
     from app.services.categories import create_category as svc_create
 
     slug_clean = slug.strip().lower().replace(" ", "_")
+    # What the form's required and pattern ask, checked here: the browser checked
+    # alone, and a label of spaces became an empty option in the reporting form.
+    if not re.fullmatch(r"[a-z0-9_]+", slug_clean) or not label_en.strip() or not label_de.strip():
+        raise HTTPException(status_code=400, detail="A slug and both labels are required")
     try:
         cat = await svc_create(
             db,
@@ -1728,8 +1748,8 @@ async def create_location(
     from app.services.locations import create_location as svc_create
 
     code_clean = code.strip().upper()
-    if not code_clean:
-        raise HTTPException(status_code=400, detail="Code is required")
+    if not re.fullmatch(r"[A-Z0-9_\-]+", code_clean) or not name.strip():
+        raise HTTPException(status_code=400, detail="A name and a code are required")
 
     try:
         loc = await svc_create(
@@ -1844,9 +1864,10 @@ async def retention_page(
 ) -> HTMLResponse:
     from datetime import UTC, datetime
 
+    from app.services.retention import cutoff
     from app.services.retention import next_run as next_retention_run
 
-    next_run = next_retention_run(datetime.now(UTC))
+    now = datetime.now(UTC)
     return render(
         request,
         "admin/retention.html",
@@ -1854,7 +1875,10 @@ async def retention_page(
             "user": current_user,
             "retention_enabled": settings.retention_enabled,
             "retention_days": settings.retention_days,
-            "next_run": next_run,
+            "next_run": next_retention_run(now),
+            # "Nothing has been deleted early" only while no report can be old enough
+            # (none was closed before 2026): it was said for any RETENTION_DAYS, 30 too.
+            "none_due_yet": cutoff(now, settings.retention_days) < datetime(2026, 1, 1, tzinfo=UTC),
         },
     )
 

@@ -26,6 +26,9 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
+        # .env is Compose's file too (POSTGRES_USER, TLS_HOSTNAME, …): refused, a copy
+        # of .env.example stopped every start outside a container.
+        extra="ignore",
     )
 
     # Database
@@ -74,19 +77,20 @@ class Settings(BaseSettings):
         return v
 
     algorithm: str = "HS256"
-    access_token_expire_minutes: int = 60
+    access_token_expire_minutes: int = Field(default=60, ge=1)
 
     # Absolute admin session lifetime, counted from login and never extended by
     # "stay signed in": after this a fresh password + TOTP login is required.
     session_max_hours: int = Field(default=12, ge=1)
 
     # Whistleblower rate limiting (Redis-based, no IP tracking)
-    max_access_attempts: int = 5
-    access_lockout_minutes: int = 15
+    max_access_attempts: int = Field(default=5, ge=1)
+    access_lockout_minutes: int = Field(default=15, ge=1)
 
-    # Admin rate limiting
-    max_login_attempts: int = 10
-    login_lockout_minutes: int = 30
+    # Admin rate limiting. At least 1: LOGIN_LOCKOUT_MINUTES=0 was accepted, and
+    # EXPIRE 0 deletes the counter as it is written, so nothing ever locked.
+    max_login_attempts: int = Field(default=10, ge=1)
+    login_lockout_minutes: int = Field(default=30, ge=1)
 
     # Password-spraying detection: failed admin password attempts counted
     # instance-wide (no username, no IP). Crossing the threshold within the

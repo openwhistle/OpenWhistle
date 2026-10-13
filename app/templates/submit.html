@@ -192,7 +192,7 @@
                     <option value="">{{ t('submit.form.category.placeholder') }}</option>
                     {% for cat in categories %}
                     <option value="{{ cat.slug }}" {% if state.get('category') == cat.slug %}selected{% endif %}>
-                        {{ cat.label_en if lang == 'en' else (cat.label_de if lang == 'de' else cat.label_en) }}
+                        {{ cat.label_for(lang) }}
                     </option>
                     {% endfor %}
                 </select>
@@ -339,7 +339,7 @@
             <div class="review-row">
                 <span class="review-label">{{ t('submit.form.category') }}</span>
                 <span class="review-value">
-                    {% for cat in categories %}{% if cat.slug == state.get('category') %}{{ cat.label_de if lang == 'de' else cat.label_en }}{% endif %}{% endfor %}
+                    {% for cat in categories %}{% if cat.slug == state.get('category') %}{{ cat.label_for(lang) }}{% endif %}{% endfor %}
                 </span>
             </div>
 

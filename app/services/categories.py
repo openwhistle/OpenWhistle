@@ -147,13 +147,11 @@ async def update_category(
 
 async def deactivate_category(db: AsyncSession, cat: ReportCategory) -> ReportCategory:
     cat.is_active = False
-    await db.commit()
-    await db.refresh(cat)
+    await db.flush()  # the caller commits together with its audit row
     return cat
 
 
 async def reactivate_category(db: AsyncSession, cat: ReportCategory) -> ReportCategory:
     cat.is_active = True
-    await db.commit()
-    await db.refresh(cat)
+    await db.flush()  # the caller commits together with its audit row
     return cat
