@@ -459,7 +459,8 @@ async def test_opening_a_case_leaves_the_attachment_bytes_in_the_database(db_ses
     from app.services.attachment import create_attachments, read_attachment
 
     report, pin = await report_service.create_report(db_session, "financial_fraud", "With a file.")
-    await create_attachments(db_session, report, [("a.pdf", "application/pdf", b"%PDF-1.4 x" * 1000)])
+    pdf = b"%PDF-1.4 x" * 1000
+    await create_attachments(db_session, report, [("a.pdf", "application/pdf", pdf)])
     db_session.expunge_all()
 
     for opened in (
@@ -468,4 +469,56 @@ async def test_opening_a_case_leaves_the_attachment_bytes_in_the_database(db_ses
     ):
         (attachment,) = opened.attachments
         assert "data" in inspect(attachment).unloaded
-        assert await read_attachment(db_session, attachment) == b"%PDF-1.4 x" * 1000
+        assert await read_attachment(db_session, attachment) == pdf
+
+
+# ── Migrations file under the organisation the app's settings name ────────────
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("number", ["011", "017"])
+async def test_migrations_011_and_017_read_the_default_organisation_like_the_app(
+    number, db_session, monkeypatch
+) -> None:  # type: ignore[no-untyped-def]
+    """2.3.0 made alembic read the database URL as the app does, environment then
+    .env. 011 and 017 still read DEFAULT_ORG_SLUG from the environment alone: set in
+    .env only, it was ignored and accounts and cases went to the "default" one."""
+    import importlib.util
+    import uuid
+    from pathlib import Path
+
+    from alembic.operations import Operations
+    from alembic.runtime.migration import MigrationContext
+
+    from app.config import settings
+    from app.models.organisation import Organisation
+    from app.services.report import create_report
+
+    named = Organisation(id=uuid.uuid4(), name="Acme", slug=f"acme-{uuid.uuid4().hex[:6]}")
+    db_session.add(named)
+    await db_session.flush()
+    monkeypatch.delenv("DEFAULT_ORG_SLUG", raising=False)
+    monkeypatch.setattr(settings, "default_org_slug", named.slug)  # as read from .env
+
+    report, _ = await create_report(db_session, "financial_fraud", "Filed without an org.")
+    report.org_id = None
+    account = _admin()
+    db_session.add(account)
+    await db_session.flush()
+    account.org_id = None
+    await db_session.commit()
+
+    path = next((Path(__file__).parents[1] / "migrations/versions").glob(f"{number}_*.py"))
+    spec = importlib.util.spec_from_file_location(f"m{number}", path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    def upgrade(sync_conn) -> None:  # type: ignore[no-untyped-def]
+        with Operations.context(MigrationContext.configure(sync_conn)):
+            module.upgrade()
+
+    await (await db_session.connection()).run_sync(upgrade)
+    target = report if number == "017" else account
+    await db_session.refresh(target)
+    assert target.org_id == named.id

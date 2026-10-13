@@ -10,7 +10,6 @@ lists hid it. It goes to the default organisation, or the oldest one, and its
 audit rows with it.
 """
 
-import os
 from collections.abc import Sequence
 
 import sqlalchemy as sa
@@ -24,6 +23,14 @@ depends_on: str | Sequence[str] | None = None
 __all__ = ["branch_labels", "depends_on", "down_revision", "downgrade", "revision", "upgrade"]
 
 
+def _default_org_slug() -> str:
+    # The app's own setting (environment, then .env), as env.py reads the URL; the
+    # environment alone ignored a slug set in .env and filed under "default".
+    from app.config import settings
+
+    return settings.default_org_slug
+
+
 def upgrade() -> None:
     op.execute(
         sa.text(
@@ -31,7 +38,7 @@ def upgrade() -> None:
             "(SELECT id FROM organisations WHERE slug = :slug),"
             " (SELECT id FROM organisations ORDER BY created_at, id LIMIT 1))"
             " WHERE org_id IS NULL"
-        ).bindparams(slug=os.environ.get("DEFAULT_ORG_SLUG", "default"))
+        ).bindparams(slug=_default_org_slug())
     )
     # The case's audit trail goes with it: the audit log is read by organisation,
     # and rows written while the case had none would stay out of every one's view.

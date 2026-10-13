@@ -100,16 +100,18 @@ DEMO_REPORTS: list[dict[str, Any]] = [
 
 async def _is_foreign_database(db: AsyncSession) -> bool:
     """True for a real installation started with DEMO_MODE=true by mistake:
-    the setup wizard has been completed and there is no demo account.
+    the setup wizard has been completed and there is no seeded demo account.
 
     A fresh demo database has not completed setup (seeding does that), and a
     seeded one has the demo admin — visitors adding users must not stop it.
     """
     setup_done = await db.scalar(select(SetupStatus.completed).where(SetupStatus.id == 1))
-    has_demo = await db.scalar(
-        select(AdminUser.id).where(AdminUser.username == DEMO_ADMIN_USERNAME).limit(1)
+    # The seeded account, not just its name: a real admin called "demo" made the
+    # seeder add case_manager and demo2 with the public password and TOTP secret.
+    demo_secret = await db.scalar(
+        select(AdminUser.totp_secret).where(AdminUser.username == DEMO_ADMIN_USERNAME).limit(1)
     )
-    return bool(setup_done) and has_demo is None
+    return bool(setup_done) and demo_secret != DEMO_TOTP_SECRET
 
 
 async def _seed(db: AsyncSession) -> None:

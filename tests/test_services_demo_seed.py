@@ -297,18 +297,23 @@ async def test_seed_refuses_a_real_installation(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ("setup_done", "demo_admin_id", "foreign"),
+    ("setup_done", "demo_secret", "foreign"),
     [
         (True, None, True),  # real installation, DEMO_MODE on by mistake
-        (True, "id", False),  # seeded demo database
+        (True, "seeded", False),  # seeded demo database
         (None, None, False),  # fresh database, setup not run yet
+        # A real installation whose own admin happens to be called "demo": the seeder
+        # used to take it for its own and add case_manager and demo2 with the public
+        # password and TOTP secret.
+        (True, "KRSXG5DSNFXGOIDBKRSXG5DSNFXGOIDB", True),
     ],
 )
 async def test_foreign_database_detection(
-    setup_done: bool | None, demo_admin_id: str | None, foreign: bool
+    setup_done: bool | None, demo_secret: str | None, foreign: bool
 ) -> None:
-    from app.services.demo_seed import _is_foreign_database
+    from app.services.demo_seed import DEMO_TOTP_SECRET, _is_foreign_database
 
     db = AsyncMock()
-    db.scalar = AsyncMock(side_effect=[setup_done, demo_admin_id])
+    secret = DEMO_TOTP_SECRET if demo_secret == "seeded" else demo_secret
+    db.scalar = AsyncMock(side_effect=[setup_done, secret])
     assert await _is_foreign_database(db) is foreign
