@@ -1,0 +1,51 @@
+{
+ "test_groups": {
+  "N": [
+   "tests/test_reporter_ip_notice.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "notice-never-shown",
+   "file": "app/templates/_ip_notice.html",
+   "old": "{% if request.state.ip_headers_seen and not request.state.is_onion %}",
+   "new": "{% if false %}",
+   "tests": "N"
+  },
+  {
+   "id": "notice-shown-over-onion",
+   "file": "app/templates/_ip_notice.html",
+   "old": " and not request.state.is_onion %}",
+   "new": " %}",
+   "tests": "N"
+  },
+  {
+   "id": "notice-always-shown",
+   "file": "app/templates/_ip_notice.html",
+   "old": "{% if request.state.ip_headers_seen and not request.state.is_onion %}",
+   "new": "{% if not request.state.is_onion %}",
+   "tests": "N"
+  },
+  {
+   "id": "notice-without-onion-link",
+   "file": "app/templates/_ip_notice.html",
+   "old": "    {% if onion_location() %}",
+   "new": "    {% if false %}",
+   "tests": "N"
+  },
+  {
+   "id": "submit-without-notice",
+   "file": "app/templates/submit.html",
+   "old": "        {% include \"_ip_notice.html\" %}\n",
+   "new": "",
+   "tests": "N"
+  },
+  {
+   "id": "status-without-notice",
+   "file": "app/templates/status.html",
+   "old": "    {% include \"_ip_notice.html\" %}\n",
+   "new": "",
+   "tests": "N"
+  }
+ ]
+}
