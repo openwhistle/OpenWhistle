@@ -13,6 +13,10 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   arrives with an address header (`X-Forwarded-For`, `X-Real-IP` and the other stripped headers) shows a
   notice: the server in front may log the address; use Tor Browser or a private device. The onion address
   is named when `ONION_LOCATION` is set. The app still discards the address; only the admin was told before.
+- **External reporting offices** (§13 Abs. 2 HinSchG): `/external-reporting` names the federal external
+  reporting office at the Bundesamt für Justiz, BaFin, the Bundeskartellamt, the federal states' own offices
+  and OLAF, linked from every footer and the submit sidebar. The law requires the internal reporting office
+  to provide this; nothing did.
 
 ### Changed
 

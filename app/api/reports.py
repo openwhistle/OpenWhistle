@@ -643,6 +643,12 @@ async def index(request: Request, db: AsyncSession = Depends(get_db)) -> Redirec
     return RedirectResponse("/submit", status_code=302)
 
 
+@router.get("/external-reporting", response_class=HTMLResponse)
+async def external_reporting(request: Request) -> Response:
+    """The external reporting offices, which §13 Abs. 2 HinSchG requires to be named."""
+    return render(request, "external_reporting.html", {})
+
+
 # ── Multi-step submission ──────────────────────────────────────────
 
 

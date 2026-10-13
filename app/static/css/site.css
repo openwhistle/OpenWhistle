@@ -1541,6 +1541,10 @@ main:has(> .page-fill) {
   margin-top: 1.5rem;
   padding-top: 1.5rem;
 }
+.sidebar-note a {
+  color: var(--on-dark);
+  text-decoration: underline;
+}
 /* Labels wrap and steps shrink: German's long labels used to run into one
    another and the last was cut, since nowrap labels squeezed the lines to
    nothing and overflow: hidden clipped the rest. Lines align on the dots'

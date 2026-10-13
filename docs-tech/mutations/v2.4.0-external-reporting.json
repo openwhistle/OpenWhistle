@@ -1,0 +1,51 @@
+{
+ "test_groups": {
+  "E": [
+   "tests/test_external_reporting.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "no-route",
+   "file": "app/api/reports.py",
+   "old": "@router.get(\"/external-reporting\", response_class=HTMLResponse)",
+   "new": "@router.get(\"/external-reporting-gone\", response_class=HTMLResponse)",
+   "tests": "E"
+  },
+  {
+   "id": "office-dropped",
+   "file": "app/templates/external_reporting.html",
+   "old": "                ('bafin', 'https://www.bafin.de/DE/die-bafin/whistleblower/whistleblower_node'),\n",
+   "new": "",
+   "tests": "E"
+  },
+  {
+   "id": "referrer-sent",
+   "file": "app/templates/external_reporting.html",
+   "old": "rel=\"noopener noreferrer\"",
+   "new": "rel=\"noopener\"",
+   "tests": "E"
+  },
+  {
+   "id": "laender-dropped",
+   "file": "app/templates/external_reporting.html",
+   "old": "<p class=\"ext-desc\">{{ t('external.laender.desc') }}</p>",
+   "new": "",
+   "tests": "E"
+  },
+  {
+   "id": "no-footer-link",
+   "file": "app/templates/base.html",
+   "old": "                <li><a href=\"/external-reporting\">{{ t('external.footer') }}</a></li>\n",
+   "new": "",
+   "tests": "E"
+  },
+  {
+   "id": "no-sidebar-link",
+   "file": "app/templates/submit.html",
+   "old": "        <p class=\"sidebar-note\"><a href=\"/external-reporting\">{{ t('external.link') }}</a></p>\n",
+   "new": "",
+   "tests": "E"
+  }
+ ]
+}
