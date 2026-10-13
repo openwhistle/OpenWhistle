@@ -749,6 +749,7 @@
   "admin.sso.result.only_way_in": "Non dissociée : votre compte n'a pas de mot de passe, l'authentification unique est donc son seul accès.",
   "admin.users.reset_totp": "Réinitialiser l'authentificateur",
   "admin.users.reset_totp_confirm": "Réinitialiser l'authentificateur de {username} ? Son application et son mot de passe cessent de fonctionner et la personne est déconnectée. Vous recevez un mot de passe provisoire à lui remettre ; à la prochaine connexion, elle configure une nouvelle application.",
+  "admin.users.reset_totp_confirm_external": "Réinitialiser l'authentificateur de {username} ? Son application cesse de fonctionner et la session est fermée. Son mot de passe d'annuaire ou d'authentification unique reste valable ; à la prochaine connexion, une nouvelle application est configurée.",
   "admin.users.totp_pending": "authentificateur non configuré",
   "audit.action.admin.totp_reset": "Authentificateur réinitialisé",
   "audit.action.auth.sso_linked": "Authentification unique associée",

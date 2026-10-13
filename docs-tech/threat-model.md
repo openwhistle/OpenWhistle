@@ -24,7 +24,7 @@ Type: explanation. What OpenWhistle defends, against whom, and what it deliberat
 | Password sprayer, TOTP guesser | an admin session | lockout, spraying alert, single-use TOTP | `tests/test_v150_auth.py` |
 | Stolen admin session cookie | lasting access | 60 min TTL, 12 h absolute limit, CSRF on refresh | `test_session_older_than_the_absolute_limit_is_rejected` |
 | Admin who links SSO, or someone luring them | an identity on another account | link state bound to purpose and session; `oidc_sub` unique | `test_a_link_started_by_one_session_cannot_land_on_another` |
-| Admin who set someone else's password (new account, reset, host script) | that account, later | the holder must replace it before any other admin page opens; only the holder's own change clears the flag | `test_forced_change_redirects_every_admin_route` |
+| Admin who set someone else's password (new account, reset, host script) | that account, later | whoever signs in with it first must replace it, and enrol TOTP, before any other admin page opens. The setter can be that first person: the holder then cannot sign in and knows. The four-eyes deletion treats the setter as the account's maker | `test_forced_change_redirects_every_admin_route` |
 | Someone at an unattended, signed-in desk | the account for good | a password change needs the current password and a fresh TOTP code | `test_a_session_alone_cannot_change_the_password` |
 | Thief of a lost or stolen phone | the second factor | superadmin or host resets it; old secret gone, sessions ended | `test_superadmin_resets_an_authenticator` |
 | Slack/Teams provider | case volume and timing | webhooks carry counts only | `test_webhook_payloads_carry_no_case_number` |

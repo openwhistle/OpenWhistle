@@ -9,8 +9,8 @@ like. Every row was verified by mutation (`scripts/mutation_audit.py`,
 | Guard | Test that fires |
 | --- | --- |
 | EXIF/GPS and camera data removed from JPEG, WebP; text chunks from PNG; comment from GIF | `test_jpeg_loses_exif_and_gps_but_keeps_orientation`, `test_png_text_chunks_are_removed`, `test_webp_exif_is_removed`, `test_gif_comment_is_removed` |
-| Only pixels are copied — nothing Pillow would carry over from `im.info` | `test_png_icc_profile_is_removed` (ICC profiles can name the device) |
-| EXIF orientation baked into the pixels | `test_jpeg_loses_exif_and_gps_but_keeps_orientation` |
+| JPEG, PNG, WebP keep only the segments that describe pixels — never re-encoded; a TIFF is re-drawn pixel by pixel | `test_png_icc_profile_is_removed` (ICC profiles can name the device) |
+| JPEG orientation kept as a one-tag EXIF block and nothing else; TIFF orientation baked into the pixels | `test_jpeg_loses_exif_and_gps_but_keeps_orientation` |
 | PDF document info **and** XMP removed, and the orphaned objects dropped | `test_pdf_document_info_is_removed` |
 | DOCX/XLSX core, app and custom properties emptied | `test_office_properties_are_emptied_and_content_kept` |
 | Zip bomb refused | `test_office_zip_bomb_is_refused` |
@@ -262,7 +262,7 @@ flip on random uuids); its test now also checks the statement's `ORDER BY`.
 | `rekey-failure-logs-message` | `app/main.py` | `test_log_rekey_task_result_logs_exception_type_not_message` |
 | `legacy-key-in-lookup-error` | `app/services/attachment.py` | `test_read_attachment_lookup_error_has_no_filename` |
 | `legacy-key-in-delete-log` | `app/services/attachment.py` | `test_failed_object_delete_logs_no_key` |
-| `legacy-key-in-s3-put-log` | `app/services/storage.py` | `test_s3_put_logs_no_filename` |
+| `legacy-key-in-s3-put-log` (superseded by `s3-put-silent`: the put logs nothing) | `app/services/storage.py` | `test_s3_put_logs_nothing` |
 | `legacy-key-in-s3-delete-log` | `app/services/storage.py` | `test_s3_delete_logs_no_filename` |
 | `legacy-key-in-s3-not-found` | `app/services/storage.py` | `test_s3_get_missing_object_message_has_no_filename` |
 | `scanner-down-accepts` | `app/services/attachment.py` | `test_upload_is_refused_when_the_scanner_is_unreachable` |

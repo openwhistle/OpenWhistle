@@ -161,7 +161,7 @@
                                     {# Lost authenticator: superadmin only, never one's own account. #}
                                     {% if user.role.value == 'superadmin' and u.id != user.id and u.totp_enabled %}
                                     <form method="post" action="/admin/users/{{ u.id }}/reset-totp"
-                                          data-confirm="{{ t('admin.users.reset_totp_confirm', username=u.username) }}">
+                                          data-confirm="{{ t('admin.users.reset_totp_confirm' if u.password_hash else 'admin.users.reset_totp_confirm_external', username=u.username) }}">
                                         <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                                         <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.users.reset_totp') }}</button>
                                     </form>

@@ -749,6 +749,7 @@
   "admin.sso.result.only_way_in": "Not unlinked: your account has no password, so single sign-on is its only way in.",
   "admin.users.reset_totp": "Reset authenticator",
   "admin.users.reset_totp_confirm": "Reset the authenticator of {username}? Their app and their password stop working and they are signed out. You get a temporary password to hand over; at the next login they set up a new app.",
+  "admin.users.reset_totp_confirm_external": "Reset the authenticator of {username}? Their app stops working and they are signed out. Their directory or single sign-on password stays; at the next login they set up a new app.",
   "admin.users.totp_pending": "authenticator not set up",
   "audit.action.admin.totp_reset": "Authenticator reset",
   "audit.action.auth.sso_linked": "Single sign-on linked",

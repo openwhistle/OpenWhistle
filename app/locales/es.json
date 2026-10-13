@@ -749,6 +749,7 @@
   "admin.sso.result.only_way_in": "No desvinculado: su cuenta no tiene contraseña, por lo que el inicio de sesión único es su única forma de acceso.",
   "admin.users.reset_totp": "Restablecer autenticador",
   "admin.users.reset_totp_confirm": "¿Restablecer el autenticador de {username}? Su aplicación y su contraseña dejarán de funcionar y se cerrará su sesión. Recibirá una contraseña temporal que deberá entregarle; en el siguiente inicio de sesión configurará una aplicación nueva.",
+  "admin.users.reset_totp_confirm_external": "¿Restablecer el autenticador de {username}? Su aplicación deja de funcionar y se cierra su sesión. Su contraseña del directorio o del inicio de sesión único se mantiene; en el próximo inicio de sesión configura una aplicación nueva.",
   "admin.users.totp_pending": "autenticador sin configurar",
   "audit.action.admin.totp_reset": "Autenticador restablecido",
   "audit.action.auth.sso_linked": "Inicio de sesión único vinculado",

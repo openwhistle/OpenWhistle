@@ -801,3 +801,46 @@ def test_the_reviewing_status_promises_no_investigation() -> None:
         text = json.loads(path.read_text())["status.progress.acknowledged.desc"].lower()
         for claim in ("investigation", "untersuchung", "enquête", "investigación", "investigação"):
             assert claim not in text, (path.stem, text)
+
+
+# ── The reset dialog says what happens to a directory account ─────────────────
+
+
+@pytest.mark.asyncio
+async def test_the_reset_dialog_of_a_directory_account_keeps_its_password(
+    acting_as, db_session
+) -> None:  # type: ignore[no-untyped-def]
+    """ "Their app and their password stop working … You get a temporary password": for an
+    LDAP or SSO account (no password here) the password stays and none is issued."""
+    import html
+
+    from app.models.user import AdminRole
+
+    client, act = acting_as
+    directory = _admin(AdminRole.case_manager)
+    directory.password_hash = None
+    directory.ldap_username = directory.username
+    db_session.add(directory)
+    act(superadmin := _admin(AdminRole.superadmin))
+    db_session.add(superadmin)
+    await db_session.commit()
+
+    page = html.unescape((await client.get("/admin/users")).text)
+    (dialog,) = [
+        line for line in page.splitlines() if f"authenticator of {directory.username}?" in line
+    ]
+    assert "temporary password" not in dialog and "password stop" not in dialog
+
+
+def test_every_test_the_invariants_name_exists() -> None:
+    """docs-tech/invariants.md named ``test_s3_put_logs_no_filename`` as the test behind a
+    guard; no such test existed (it is ``test_s3_put_logs_nothing``)."""
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).parents[1]
+    defined = set()
+    for path in (root / "tests").rglob("*.py"):
+        defined |= set(re.findall(r"def (test_\w+)", path.read_text()))
+    named = set(re.findall(r"`(test_\w+)`", (root / "docs-tech/invariants.md").read_text()))
+    assert not named - defined, sorted(named - defined)

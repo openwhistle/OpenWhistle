@@ -749,6 +749,7 @@
   "admin.sso.result.only_way_in": "Não desvinculado: sua conta não tem senha, então o login único é o único acesso.",
   "admin.users.reset_totp": "Redefinir autenticador",
   "admin.users.reset_totp_confirm": "Redefinir o autenticador de {username}? O aplicativo e a senha atuais deixam de funcionar e a pessoa é desconectada. Você recebe uma senha provisória para entregar; no próximo login, a pessoa configura um novo aplicativo.",
+  "admin.users.reset_totp_confirm_external": "Redefinir o autenticador de {username}? O aplicativo deixa de funcionar e a sessão é encerrada. A senha do diretório ou do login único continua valendo; no próximo login, um novo aplicativo é configurado.",
   "admin.users.totp_pending": "autenticador não configurado",
   "audit.action.admin.totp_reset": "Autenticador redefinido",
   "audit.action.auth.sso_linked": "Login único vinculado",
