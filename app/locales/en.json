@@ -235,7 +235,7 @@
   "status.progress.received.label": "Received",
   "status.progress.received.desc": "Your report has been received and is awaiting initial review by the reporting office.",
   "status.progress.acknowledged.label": "Under review",
-  "status.progress.acknowledged.desc": "The reporting office has acknowledged your report. An investigation has been initiated. You will receive a final response by the feedback deadline.",
+  "status.progress.acknowledged.desc": "The reporting office has acknowledged your report and is reviewing it. By the feedback deadline you will hear which follow-up measures it has planned or taken.",
   "status.progress.in_progress.label": "Investigation Active",
   "status.progress.in_progress.desc": "Your report is actively being investigated. The reporting office may reach out with further questions via this communication thread.",
   "status.progress.closed.label": "Closed",

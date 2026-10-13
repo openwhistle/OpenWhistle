@@ -235,7 +235,7 @@
   "status.progress.received.label": "Recibida",
   "status.progress.received.desc": "Su denuncia ha sido recibida y está pendiente de la revisión inicial por parte de la oficina de denuncias.",
   "status.progress.acknowledged.label": "En revisión",
-  "status.progress.acknowledged.desc": "La oficina de denuncias ha acusado recibo de su denuncia. Se ha iniciado una investigación. Recibirá una respuesta final antes del plazo de respuesta.",
+  "status.progress.acknowledged.desc": "La oficina de denuncias ha acusado recibo de su denuncia y la está examinando. Antes del plazo de respuesta sabrá qué medidas de seguimiento se han previsto o adoptado.",
   "status.progress.in_progress.label": "Investigación activa",
   "status.progress.in_progress.desc": "Su denuncia se está investigando activamente. La oficina de denuncias puede ponerse en contacto con usted con más preguntas a través de este hilo de comunicación.",
   "status.progress.closed.label": "Cerrada",

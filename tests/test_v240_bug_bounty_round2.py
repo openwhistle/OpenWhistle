@@ -753,3 +753,51 @@ def test_a_republish_does_not_scan_the_image_it_replaces() -> None:
     — and ``build`` needs it. (GitHub's documented behaviour; not run here.)"""
     condition = _workflow("security.yml")["jobs"]["published"]["if"]
     assert "docker-publish" in condition and "workflow_ref" in condition, condition
+
+
+# ── Every translation carries the numbers the English text gives ──────────────
+
+
+def test_every_locale_states_the_same_numbers_as_english() -> None:
+    """de, fr and pt-br dropped the 1095-day (3-year) default from the retention notice,
+    "change it only on legal advice" from the HinSchG note, the 4-eyes deletion from the
+    GDPR Art. 17 note, and fr the 24/7 duty of critical industries: an admin reading
+    them in those languages was told less than one reading English."""
+    import json
+    import re
+    from collections import Counter
+    from pathlib import Path
+
+    def numbers(text: str) -> Counter[str]:
+        # 10,000 / 10.000 / 10 000 are one number; markup attributes carry none.
+        text = re.sub(r"(?<=\d)[.,\s  ](?=\d{3}\b)", "", text)
+        return Counter(re.findall(r"\d+", text))
+
+    # Written the local way, same meaning: "art. 5.1.e)", "24 horas, todos los días".
+    local_form = {
+        ("es", "admin.retention.legal.gdpr5.title"),
+        ("es", "admin.telephone.checklist.7"),
+    }
+    locales = Path(__file__).parents[1] / "app/locales"
+    english = json.loads((locales / "en.json").read_text())
+    drift = []
+    for path in sorted(locales.glob("*.json")):
+        lang = path.stem
+        for key, text in json.loads(path.read_text()).items():
+            if (lang, key) not in local_form and numbers(text) != numbers(english.get(key, text)):
+                drift.append((lang, key))
+    assert not drift, drift
+
+
+def test_the_reviewing_status_promises_no_investigation() -> None:
+    """A case in review or awaiting feedback told the reporter "An investigation has been
+    initiated. You will receive a final response by the feedback deadline." — whatever the
+    office had decided. § 17 HinSchG promises feedback on the follow-up measures within
+    three months, not an investigation and not a final answer."""
+    import json
+    from pathlib import Path
+
+    for path in (Path(__file__).parents[1] / "app/locales").glob("*.json"):
+        text = json.loads(path.read_text())["status.progress.acknowledged.desc"].lower()
+        for claim in ("investigation", "untersuchung", "enquête", "investigación", "investigação"):
+            assert claim not in text, (path.stem, text)
