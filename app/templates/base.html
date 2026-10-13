@@ -139,22 +139,26 @@
         {% block content %}{% endblock %}
     </main>
 
+    {#- The operator's legal pages; the demo links openwhistle.net's. No version here:
+        a public release number tells an attacker which flaws to try (OWASP ASVS 14.3.3). #}
+    {%- set privacy_url = privacy_policy_url or (('https://openwhistle.net' ~ ('/de/datenschutz/' if lang == 'de' else '/en/privacy/')) if is_demo else '') %}
+    {%- set legal_url = legal_notice_url or ('https://openwhistle.net/impressum/' if is_demo else '') %}
     <footer class="footer" role="contentinfo">
         <div class="footer-inner">
-            <p class="footer-brand">
-                {%- if not brand.logo_url %}<svg class="mark" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill-rule="evenodd" d="M7,3 H17 A4,4 0 0 1 21,7 V13 A4,4 0 0 1 17,17 H11.5 L7,20.8 V17 A4,4 0 0 1 3,13 V7 A4,4 0 0 1 7,3 Z M10.60,11.81 A3.5,3.5 0 1 1 13.40,11.81 L14.50,15.4 H9.50 Z"/></svg>{% endif %}
-                <span translate="no">{{ brand.name }}</span> <span class="footer-tagline">{{ t('footer.tagline') }}</span>
-            </p>
             <ul class="footer-links" role="list">
-                <li><a href="https://github.com/openwhistle/OpenWhistle" rel="noopener">{{ t('footer.open_source') }}</a></li>
-                <li><a href="https://www.gesetze-im-internet.de/hinschg/" rel="noopener">HinSchG</a></li>
-                {% if is_demo %}{# demo legal links #}
-                <li class="demo-legal"><a href="https://openwhistle.net/impressum/" rel="noopener">{{ t('footer.imprint') }}</a></li>
-                <li class="demo-legal"><a href="https://openwhistle.net{{ '/de/datenschutz/' if lang == 'de' else '/en/privacy/' }}" rel="noopener">{{ t('footer.privacy') }}</a></li>
-                {% endif %}
-                <li><a href="/admin" title="{{ t('footer.admin_title') }}">{{ t('footer.admin') }}</a></li>
-                <li class="footer-version">v{{ app_version }}</li>
+                {%- if privacy_url %}
+                <li{% if not privacy_policy_url %} class="demo-legal"{% endif %}><a href="{{ privacy_url }}" rel="noopener noreferrer">{{ t('footer.privacy') }}</a></li>
+                {%- endif %}
+                {%- if legal_url %}
+                <li{% if not legal_notice_url %} class="demo-legal"{% endif %}><a href="{{ legal_url }}" rel="noopener noreferrer">{{ t('footer.imprint') }}</a></li>
+                {%- endif %}
+                <li><a href="/external-reporting">{{ t('external.footer') }}</a></li>
             </ul>
+            <p class="footer-powered">
+                {%- if not brand.logo_url %}<svg class="mark" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill-rule="evenodd" d="M7,3 H17 A4,4 0 0 1 21,7 V13 A4,4 0 0 1 17,17 H11.5 L7,20.8 V17 A4,4 0 0 1 3,13 V7 A4,4 0 0 1 7,3 Z M10.60,11.81 A3.5,3.5 0 1 1 13.40,11.81 L14.50,15.4 H9.50 Z"/></svg>{% endif %}
+                <span>{{ t('footer.powered_by') }} <a href="https://openwhistle.net/" rel="noopener noreferrer" translate="no">OpenWhistle</a></span>
+                {%- block footer_version %}{% endblock %}
+            </p>
         </div>
     </footer>
 

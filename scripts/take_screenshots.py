@@ -259,16 +259,22 @@ def out_dir(argv: list[str] | None = None) -> Path:
     return screens
 
 
-def write_release_marker(screens: Path, base_url: str = BASE_URL) -> None:
+def release_of(admin_html: str) -> str:
+    """The version an admin page's footer names. Only admin pages carry it: /health
+    and the public pages left it out in 2.4.0 (OWASP ASVS 14.3.3)."""
+    import re  # noqa: PLC0415
+
+    found = re.search(r'class="footer-version">v([^<\s]+)<', admin_html)
+    if not found:
+        raise SystemExit("no version in the admin footer: is the admin signed in?")
+    return found.group(1)
+
+
+def write_release_marker(screens: Path, version: str) -> None:
     """docs/img/screens/_release: the app version the shots show, one line. The
     leading "_" keeps the website build from publishing it. Asked of the running
     app: the checkout's version is not the image's, and reading it loaded Settings,
     which wants a SECRET_KEY, so the run died after the last shot without a marker."""
-    import json  # noqa: PLC0415
-    from urllib.request import urlopen  # noqa: PLC0415
-
-    with urlopen(f"{base_url}/health", timeout=10) as resp:  # noqa: S310 — the local stack
-        version = json.load(resp)["version"]
     (screens / "_release").write_text(version + "\n", encoding="utf-8")
 
 
@@ -293,9 +299,14 @@ def main(argv: list[str] | None = None) -> None:
                     shot.setup(page)
                     shoot(page, shot.name, theme, out)
                     context.close()
+            context = _themed_context(browser, "dark")
+            page = context.new_page()
+            _login_admin(page)
+            version = release_of(page.content())
+            context.close()
         finally:
             browser.close()
-    write_release_marker(out)
+    write_release_marker(out, version)
 
 
 if __name__ == "__main__":

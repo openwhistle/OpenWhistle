@@ -187,6 +187,12 @@ class Settings(BaseSettings):
     brand_primary_color: str = "#0c7253"
     brand_logo_url: str = ""
 
+    # Links in every page's footer, to the operator's own pages (Art. 13 GDPR asks
+    # for the privacy notice where the data is collected). Empty hides the link;
+    # the admin dashboard says when the privacy notice is missing.
+    privacy_policy_url: str = ""
+    legal_notice_url: str = ""
+
     # Public base URL used in notification links
     app_public_url: str = "http://localhost"
 
@@ -278,6 +284,15 @@ class Settings(BaseSettings):
                 "LDAP_ATTR_EMAIL was removed in 2.2.1 and is ignored; delete it."
             )
         return data
+
+    @field_validator("privacy_policy_url", "legal_notice_url")
+    @classmethod
+    def _footer_link(cls, value: str) -> str:
+        # Rendered as an href on every page: only http(s), never javascript: or data:.
+        value = value.strip()
+        if value and not value.lower().startswith(("https://", "http://")):
+            raise ValueError("PRIVACY_POLICY_URL and LEGAL_NOTICE_URL must start with https://")
+        return value
 
     @field_validator("brand_logo_url")
     @classmethod

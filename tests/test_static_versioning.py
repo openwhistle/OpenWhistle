@@ -4,8 +4,9 @@
 (app/main.py just mounts the directory), so a browser that visited the site
 before an upgrade keeps serving the old cached CSS/JS after a deploy, so a
 CSS fix does not reach it. `static_url()` (app/templating.py)
-appends `?v={app_version}`, which changes on every release and busts the
-cache. This test fails the build if a template reintroduces a hand-typed
+appends `?v=<hash of the file>`, which changes whenever the file does and busts
+the cache without naming the release (2.4.0; it was `?v={app_version}`).
+This test fails the build if a template reintroduces a hand-typed
 `/static/...` stylesheet or script URL that bypasses the helper.
 """
 
@@ -45,8 +46,9 @@ def test_stylesheet_and_script_links_use_static_url_helper(tpl: Path) -> None:
     )
 
 
-def test_static_url_appends_version_query() -> None:
+def test_static_url_busts_the_cache_without_naming_the_release() -> None:
     from app.config import settings
     from app.templating import static_url
 
-    assert static_url("css/site.css") == f"/static/css/site.css?v={settings.app_version}"
+    url = static_url("css/site.css")
+    assert url.startswith("/static/css/site.css?v=") and settings.app_version not in url

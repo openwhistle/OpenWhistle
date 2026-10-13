@@ -1,0 +1,67 @@
+{
+ "test_groups": {
+  "F": [
+   "tests/test_footer.py",
+   "tests/test_screenshots.py",
+   "tests/test_external_reporting.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "version-in-public-footer",
+   "file": "app/templates/base.html",
+   "old": "                {%- block footer_version %}{% endblock %}",
+   "new": "                {%- block footer_version %}<span class=\"footer-version\">v{{ app_version }}</span>{% endblock %}",
+   "tests": "F"
+  },
+  {
+   "id": "version-in-health",
+   "file": "app/api/reports.py",
+   "old": "        \"status\": \"ok\" if healthy else \"degraded\",\n        \"components\": components,",
+   "new": "        \"status\": \"ok\" if healthy else \"degraded\",\n        \"version\": settings.app_version,\n        \"components\": components,",
+   "tests": "F"
+  },
+  {
+   "id": "version-in-asset-url",
+   "file": "app/templating.py",
+   "old": "    return f\"/static/{path}?v={_content_hash(path)}\"",
+   "new": "    return f\"/static/{path}?v={settings.app_version}\"",
+   "tests": "F"
+  },
+  {
+   "id": "admin-loses-version",
+   "file": "app/templates/admin/_layout.html",
+   "old": "{% block footer_version %}<span class=\"footer-version\">v{{ app_version }}</span>{% endblock %}",
+   "new": "",
+   "tests": "F"
+  },
+  {
+   "id": "privacy-link-dropped",
+   "file": "app/templates/base.html",
+   "old": "rel=\"noopener noreferrer\">{{ t('footer.privacy') }}</a>",
+   "new": "rel=\"noopener noreferrer\"></a>",
+   "tests": "F"
+  },
+  {
+   "id": "any-scheme-accepted",
+   "file": "app/config.py",
+   "old": "        if value and not value.lower().startswith((\"https://\", \"http://\")):",
+   "new": "        if False:",
+   "tests": "F"
+  },
+  {
+   "id": "privacy-hint-never",
+   "file": "app/api/admin.py",
+   "old": "            and not settings.privacy_policy_url\n",
+   "new": "            and False\n",
+   "tests": "F"
+  },
+  {
+   "id": "no-footer-external-link",
+   "file": "app/templates/base.html",
+   "old": "                <li><a href=\"/external-reporting\">{{ t('external.footer') }}</a></li>\n",
+   "new": "",
+   "tests": "F"
+  }
+ ]
+}

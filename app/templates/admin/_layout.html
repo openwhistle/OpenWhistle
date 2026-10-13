@@ -4,6 +4,9 @@
 {# Admin pages keep only language and theme in the header; navigation is the sidebar. #}
 {% block nav_links %}{% endblock %}
 
+{# Signed-in admins only: the public pages carry no version (OWASP ASVS 14.3.3). #}
+{% block footer_version %}<span class="footer-version">v{{ app_version }}</span>{% endblock %}
+
 {% block content %}
 <div class="admin-shell">
     <details class="admin-menu" id="admin-menu" open>

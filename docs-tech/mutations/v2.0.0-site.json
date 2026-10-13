@@ -83,7 +83,7 @@
   {
    "id": "static-url-no-version",
    "file": "app/templating.py",
-   "old": "return f\"/static/{path}?v={settings.app_version}\"",
+   "old": "return f\"/static/{path}?v={_content_hash(path)}\"",
    "new": "return f\"/static/{path}\"",
    "tests": "V"
   },

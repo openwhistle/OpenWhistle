@@ -373,6 +373,10 @@ async def _dashboard(
             "ip_warning": ip_warning,
             "telemetry_ask": telemetry_ask,
             "may_dismiss_ip_warning": may_run_the_instance(current_user),
+            # Art. 13 GDPR: reporters learn how their data is processed when they report.
+            "privacy_notice_missing": may_run_the_instance(current_user)
+            and not settings.privacy_policy_url
+            and not settings.demo_mode,
             "reporting_path": reporting_path,
             "reporting_link": reporting_link,
             "category_labels": category_labels,

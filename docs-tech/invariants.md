@@ -47,10 +47,13 @@ Mutations: `docs-tech/mutations/v1.5.0-privacy.json`. Tests: `tests/test_privacy
 | Retention on by default; admin page says why nothing is deleted yet | `test_retention_enabled_defaults_true`, `test_retention_page_explains_the_default` |
 | IP headers and peer address removed before the app; pages `no-store` | `test_ip_headers_and_peer_address_never_reach_the_app`, `test_pages_are_never_cached_but_static_files_are` |
 | A reporter whose request carried address headers sees a notice (not over the onion listener) | `test_notice_shown_when_the_proxy_forwards_the_address`, `test_no_notice_over_the_onion_listener` |
-| Submit and status link the external reporting offices (§13 Abs. 2 HinSchG) | `test_the_page_names_every_external_office`, `test_the_status_page_links_it`, `test_the_submit_sidebar_links_it` |
+| Every footer and the submit sidebar link the external reporting offices (§13 Abs. 2 HinSchG) | `test_the_page_names_every_external_office`, `test_every_footer_links_it`, `test_the_submit_sidebar_links_it` |
 | `/submit`'s promises block and form sit in the header's frame at any width | `test_the_wizard_layout_sits_in_the_headers_frame`, `test_the_wizard_shares_the_headers_frame` |
 | Labels a reporter reads are sentence case; reporter pages carry no eyebrow | `test_reporter_labels_are_not_shouted`, `test_reporter_pages_carry_no_eyebrow` |
 | One accent on a neutral reporter page: info, demo marker, office messages and status pills are neutral | `test_one_accent_on_a_neutral_reporter_page` |
+| No public page, `/health` or asset URL names the release; signed-in admins see it | `test_a_public_page_names_no_version`, `test_health_names_no_version`, `test_a_signed_in_admin_sees_the_version` |
+| The footer links the operator's privacy and legal notice when set, only http(s) | `test_the_footer_links_the_operators_legal_pages`, `test_a_footer_link_must_be_a_web_address` |
+| The dashboard says when no privacy notice is linked (Art. 13 GDPR) | `test_the_dashboard_says_the_privacy_notice_is_missing` |
 | Helm Ingress turns the ingress-nginx access log off | `test_helm_ingress_turns_the_nginx_access_log_off` |
 
 **Only one replica sends a digest** without a job lock: the queue is read and
@@ -436,7 +439,7 @@ fetch category labels; the snippets are updated and red.
 | Mutation | File | Test that fires |
 | --- | --- | --- |
 | `icon-block` | `app/static/css/site.css` | `test_icon_class_overrides_svg_reset_to_inline` |
-| `static-url-no-version` | `app/templating.py` | `test_static_url_appends_version_query` |
+| `static-url-no-version` | `app/templating.py` | `test_static_url_busts_the_cache_without_naming_the_release` |
 | `base-css-hand-typed` | `app/templates/base.html` | `test_stylesheet_and_script_links_use_static_url_helper` |
 | `static-cache-dropped` | `app/middleware.py` | `test_pages_are_never_cached_but_static_files_are` |
 | `nginx-static-immutable` | `nginx/snippets/static-location.conf` | `test_nginx_static_location_is_a_shared_snippet_too` |

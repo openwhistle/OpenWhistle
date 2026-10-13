@@ -101,6 +101,9 @@ config:
   # Branding
   brandPrimaryColor: "#0c7253"
   brandLogoUrl: ""
+  # Footer links to your privacy notice (Art. 13 GDPR) and legal notice
+  privacyPolicyUrl: ""
+  legalNoticeUrl: ""
 
   # SLA reminders
   reminderEnabled: "false"
