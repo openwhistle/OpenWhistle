@@ -4,7 +4,7 @@ version = "2.3.0"
 description = "Open source whistleblower reporting platform (HinSchG / EU 2019/1937)"
 license = { text = "GPL-3.0-only" }
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.15"
 authors = [{ name = "OpenWhistle Contributors" }]
 
 dependencies = [
