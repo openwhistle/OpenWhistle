@@ -15,7 +15,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   is named when `ONION_LOCATION` is set. The app still discards the address; only the admin was told before.
 - **External reporting offices** (§13 Abs. 2 HinSchG): `/external-reporting` names the federal external
   reporting office at the Bundesamt für Justiz, BaFin, the Bundeskartellamt, the federal states' own offices
-  and OLAF, linked from every footer and the submit sidebar. The law requires the internal reporting office
+  and OLAF, linked from the submit sidebar and the status page. The law requires the internal reporting office
   to provide this; nothing did.
 
 ### Changed
@@ -49,6 +49,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- On a phone, a demo case number on `/status` no longer breaks into two or three lines beside its status badge.
 - **A WebSocket handshake put the client's IP address into the app's log**: `127.0.0.1:37000 - "WebSocket
   /status?case=…" 403` on `uvicorn.error`, which `--no-access-log` does not silence. The middleware cleaned
   HTTP requests only. Reachable wherever the app is reached without the bundled nginx (Quick Start, Helm

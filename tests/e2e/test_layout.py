@@ -331,3 +331,20 @@ def test_a_case_reads_its_deadlines_on_one_line(browser: Browser, base_url: str,
     )
     ctx.close()
     assert lines and all(n == 1 for n in lines), lines
+
+
+def test_demo_case_numbers_stay_on_one_line_on_a_phone(browser: Browser, base_url: str) -> None:
+    """At 390 px a case number broke into two or three lines beside a long status badge."""
+    ctx = browser.new_context(
+        viewport={"width": 390, "height": 844},
+        base_url=base_url,
+        extra_http_headers={"Accept-Language": "de"},
+    )
+    page = ctx.new_page()
+    page.goto("/status")
+    heights = page.eval_on_selector_all(
+        ".demo-cred-code", "els => els.map(e => e.getBoundingClientRect().height)"
+    )
+    ctx.close()
+    assert heights, "no demo case numbers on /status"
+    assert max(heights) < 40, heights  # one 24 px line plus padding

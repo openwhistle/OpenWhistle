@@ -2600,6 +2600,14 @@ a.attachment-name:hover {
   h1 {
     font-size: 1.5rem;
   }
+  /* A demo case number broke into two or three lines next to a long status badge. */
+  .demo-cred-code {
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+  .demo-report-row {
+    flex-wrap: wrap;
+  }
   .message {
     max-width: 100%;
   }

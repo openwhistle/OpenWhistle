@@ -34,9 +34,9 @@
    "tests": "E"
   },
   {
-   "id": "no-footer-link",
-   "file": "app/templates/base.html",
-   "old": "                <li><a href=\"/external-reporting\">{{ t('external.footer') }}</a></li>\n",
+   "id": "no-status-link",
+   "file": "app/templates/status.html",
+   "old": "    <p class=\"st-external\"><a href=\"/external-reporting\">{{ t('external.link') }}</a></p>\n",
    "new": "",
    "tests": "E"
   },

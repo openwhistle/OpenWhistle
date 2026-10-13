@@ -21,7 +21,6 @@
   "error.detail.generic": "Une erreur s'est produite.",
   "error.detail.reporting_not_configured": "Les signalements ne sont pas encore configurés sur ce service. Veuillez contacter son exploitant.",
   "footer.admin_title": "Connexion au bureau de signalement",
-  "external.footer": "Canaux de signalement externes",
   "external.link": "Canaux de signalement externes : où signaler aussi",
   "external.title": "Canaux de signalement externes",
   "external.lead": "Vous pouvez vous adresser à un canal de signalement externe au lieu de ce canal interne, ou après lui (§ 7 HinSchG). La même protection contre les représailles s'applique.",

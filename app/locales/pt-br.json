@@ -21,7 +21,6 @@
   "error.detail.generic": "Algo deu errado.",
   "error.detail.reporting_not_configured": "O envio de denúncias ainda não está configurado neste serviço. Entre em contato com o operador.",
   "footer.admin_title": "Login do escritório de denúncias",
-  "external.footer": "Canais de denúncia externos",
   "external.link": "Canais de denúncia externos: onde mais você pode denunciar",
   "external.title": "Canais de denúncia externos",
   "external.lead": "Você pode recorrer a um canal de denúncia externo em vez deste canal interno, ou depois dele (§ 7 HinSchG). A mesma proteção contra retaliação se aplica.",
