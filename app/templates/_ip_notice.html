@@ -1,0 +1,10 @@
+{#- This request reached the app with address headers: the proxy in front had the reporter's address. -#}
+{% if request.state.ip_headers_seen and not request.state.is_onion %}
+<div class="alert alert-warning" id="ip-notice" role="alert">
+    <div class="alert-title">{{ t('reporter.ip_notice.title') }}</div>
+    {{ t('reporter.ip_notice.body') }}
+    {% if onion_location() %}
+    {{ t('reporter.ip_notice.onion') }} <span class="mono">{{ onion_location() }}</span>
+    {% endif %}
+</div>
+{% endif %}

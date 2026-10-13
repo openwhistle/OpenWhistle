@@ -46,6 +46,7 @@ Mutations: `docs-tech/mutations/v1.5.0-privacy.json`. Tests: `tests/test_privacy
 | New-report and reply notices queued, sent as one digest, once across replicas | `test_new_report_and_reply_are_queued_not_sent`, `test_digest_is_delivered_once_when_replicas_run_together`, `test_whistleblower_reply_queues_a_notification` |
 | Retention on by default; admin page says why nothing is deleted yet | `test_retention_enabled_defaults_true`, `test_retention_page_explains_the_default` |
 | IP headers and peer address removed before the app; pages `no-store` | `test_ip_headers_and_peer_address_never_reach_the_app`, `test_pages_are_never_cached_but_static_files_are` |
+| A reporter whose request carried address headers sees a notice (not over the onion listener) | `test_notice_shown_when_the_proxy_forwards_the_address`, `test_no_notice_over_the_onion_listener` |
 | Helm Ingress turns the ingress-nginx access log off | `test_helm_ingress_turns_the_nginx_access_log_off` |
 
 **Only one replica sends a digest** without a job lock: the queue is read and

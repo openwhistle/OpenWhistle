@@ -7,6 +7,13 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **Reporters are warned when the proxy passes their address on**: a request to `/submit` or `/status` that
+  arrives with an address header (`X-Forwarded-For`, `X-Real-IP` and the other stripped headers) shows a
+  notice: the server in front may log the address; use Tor Browser or a private device. The onion address
+  is named when `ONION_LOCATION` is set. The app still discards the address; only the admin was told before.
+
 ### Changed
 
 - **LDAP refuses to start without TLS**: `LDAP_ENABLED` needs `LDAP_USE_SSL=true` or `LDAP_START_TLS=true`.
