@@ -565,7 +565,7 @@ def test_the_suite_runs_with_retention_off() -> None:
 
 
 def test_the_bundled_nginx_offers_no_tls12_suite_without_forward_secrecy() -> None:
-    """No ``ssl_ciphers``: nginx's default ``HIGH:!aNULL:!MD5`` negotiated
+    """No ``ssl_ciphers``: nginx's default cipher list negotiated
     AES128-GCM-SHA256 (RSA key exchange) with an operator's RSA certificate (measured with
     ``openssl s_client -tls1_2 -cipher AES128-GCM-SHA256``), while ``ssl_session_tickets
     off`` was there precisely so a later key leak could not decrypt recorded sessions."""
@@ -671,7 +671,9 @@ async def test_a_stopping_app_delivers_the_queued_notifications(db_engine, monke
     await redis.sadd(notifications._QUEUE_KEYS["new_reports"], "OW-2026-55555")
     await redis.aclose()
 
-    # close_redis runs for real: it drops the client bound to this test's event loop.
+    # A client of its own, on this test's loop: an earlier test's may be cached. close_redis
+    # runs for real at the end and drops it again.
+    monkeypatch.setattr("app.redis_client._redis", None)
     with patch("app.main._run_alembic_upgrade"):
         async with lifespan(FastAPI()):
             deliver.assert_not_awaited()

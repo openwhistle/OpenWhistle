@@ -185,7 +185,9 @@ def test_publishing_waits_for_every_check_on_the_same_commit() -> None:
     [
         ("refs/tags/v9.9.9", False, False),
         ("refs/tags/v9.9.9", True, True),
-        ("refs/heads/main", False, True),
+        # Not only tags: a dispatch on a branch published its :sha-<sha> unreviewed.
+        ("refs/heads/feature", False, False),
+        ("refs/heads/main", True, True),
     ],
 )
 def test_a_tag_off_main_is_refused(tmp_path: Path, ref: str, on_main: bool, ok: bool) -> None:
