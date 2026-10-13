@@ -671,12 +671,19 @@ async def test_a_stopping_app_delivers_the_queued_notifications(db_engine, monke
     await redis.sadd(notifications._QUEUE_KEYS["new_reports"], "OW-2026-55555")
     await redis.aclose()
 
-    # A client of its own, on this test's loop: an earlier test's may be cached. close_redis
-    # runs for real at the end and drops it again.
+    # Clients of its own, on this test's loop: an earlier test's Redis client and pooled
+    # database connections belong to another. close_redis runs for real at the end.
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+    from sqlalchemy.pool import NullPool
+
+    engine = create_async_engine(settings.database_url, poolclass=NullPool)
+    monkeypatch.setattr("app.database.AsyncSessionLocal", async_sessionmaker(engine))
     monkeypatch.setattr("app.redis_client._redis", None)
+    monkeypatch.setattr(settings, "demo_mode", False)  # CI runs with DEMO_MODE=true
     with patch("app.main._run_alembic_upgrade"):
         async with lifespan(FastAPI()):
             deliver.assert_not_awaited()
+    await engine.dispose()
     deliver.assert_awaited_once_with(["OW-2026-55555"], [])
 
 
