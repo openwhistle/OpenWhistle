@@ -640,3 +640,39 @@ def test_an_expiring_self_signed_certificate_is_replaced(tmp_path) -> None:  # t
     assert ensure(tmp_path / "none", tmp_path / "tls", "whistle.example.org") == "self-signed"
     cert = x509.load_pem_x509_certificate((tmp_path / "tls/fullchain.pem").read_bytes())
     assert cert.not_valid_after_utc > now + datetime.timedelta(days=800)
+
+
+# ── Queued notifications survive a stop of the stack ──────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_a_stopping_app_delivers_the_queued_notifications(db_engine, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    """The digest queue lives in Redis, which keeps nothing on disk (``--save ""``). Every
+    deploy, reboot, ``systemctl restart`` and certbot renewal (its pre-hook stops the unit)
+    emptied it: up to a day of new reports (NOTIFICATION_BATCH_MINUTES=1440, the default)
+    of which no admin was told. Compose stops the app before Redis, so the app sends what
+    is queued on its way down."""
+    from unittest.mock import AsyncMock, patch
+
+    from fastapi import FastAPI
+    from redis.asyncio import from_url
+
+    from app.config import settings
+    from app.main import lifespan
+    from app.services import notifications
+
+    monkeypatch.setattr(settings, "notify_email_enabled", True)
+    monkeypatch.setattr(settings, "notify_email_to", "office@example.org")
+    monkeypatch.setattr(settings, "notification_batch_minutes", 1440)
+    monkeypatch.setattr(settings, "update_check_enabled", False)
+    deliver = AsyncMock(return_value=True)
+    monkeypatch.setattr(notifications, "_deliver", deliver)
+    redis = from_url(settings.redis_url, decode_responses=True)
+    await redis.sadd(notifications._QUEUE_KEYS["new_reports"], "OW-2026-55555")
+    await redis.aclose()
+
+    # close_redis runs for real: it drops the client bound to this test's event loop.
+    with patch("app.main._run_alembic_upgrade"):
+        async with lifespan(FastAPI()):
+            deliver.assert_not_awaited()
+    deliver.assert_awaited_once_with(["OW-2026-55555"], [])

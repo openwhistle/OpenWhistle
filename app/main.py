@@ -237,6 +237,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     if scheduler is not None:
         scheduler.shutdown(wait=False)
 
+    from app.services.notifications import (  # noqa: PLC0415
+        batching_enabled,
+        deliver_notification_digest,
+    )
+
+    if batching_enabled():
+        # The queue is in Redis, which keeps nothing on disk: a stop of the stack
+        # (deploy, reboot, certbot's pre-hook) used to drop up to a day of notices.
+        # Compose stops the app before Redis, so it is still there to read.
+        await deliver_notification_digest()
+
     await close_redis()
 
 
