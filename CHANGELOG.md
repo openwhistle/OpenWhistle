@@ -28,6 +28,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - Labels are sentence case instead of mono or tracked capitals: alert titles, case number and PIN labels,
     review labels, message senders, step names. The eyebrows above the headings are gone.
   - On a phone, the wizard shows "Step n of 6" instead of six step names hyphenated into "Mo-dus".
+  - One accent on a neutral page: the promises block, the info alert, the demo banner and box, the office's
+    messages and the progress note are neutral; a status pill is neutral with only its dot coloured. Blue,
+    amber and green fills sat side by side on every reporter page.
 - **LDAP refuses to start without TLS**: `LDAP_ENABLED` needs `LDAP_USE_SSL=true` or `LDAP_START_TLS=true`.
   With the defaults, a plain bind sent the service account's password, then each admin's, in clear text —
   measured on the wire (`ServiceSecret` readable in the captured bind).

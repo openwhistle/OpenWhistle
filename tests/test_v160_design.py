@@ -1198,7 +1198,29 @@ def test_the_wizard_layout_sits_in_the_headers_frame() -> None:
     assert "max-width: var(--frame);" in layout.group(1)
     assert "margin: 0 auto;" in layout.group(1)
     sidebar = re.search(r"(?m)^\.split-sidebar\s*\{([^}]*)\}", css)
-    assert sidebar and "background: var(--brand-primary);" in sidebar.group(1)
+    assert sidebar and "background: var(--surface-card);" in sidebar.group(1)
+
+
+def test_one_accent_on_a_neutral_reporter_page() -> None:
+    """Blue info alerts, an amber demo banner, a green promises block and four
+    tinted status pills sat side by side on /submit and /status. Information,
+    the demo marker and every pill are neutral; only a pill's dot is coloured."""
+    css = (ROOT / "app/static/css/site.css").read_text()
+
+    def body(selector: str) -> str:
+        found = re.search(r"(?m)^" + re.escape(selector) + r"\s*\{([^}]*)\}", css)
+        assert found, selector
+        return found.group(1)
+
+    assert "--info" not in body(".alert-info") + body(".alert-info .alert-title")
+    assert "--warning" not in body(".demo-banner") + body(".demo-badge") + body(".demo-credentials")
+    assert "--info" not in body(".message-admin") + body(".message-admin .message-meta")
+    pills = re.search(r"(?m)^\.badge-received,\s*\.badge-in_review,[^{]*\{([^}]*)\}", css)
+    assert pills and "var(--surface-card)" in pills.group(1)
+    status_rule = r"(?m)^([^{}@]*\.badge-(?:received|in_review|pending_feedback|closed)\b[^{}]*)"
+    for selectors, rules in re.findall(status_rule + r"\{([^}]*)\}", css):
+        if "::before" not in selectors:
+            assert "-subtle" not in rules, selectors
 
 
 def test_reporter_pages_carry_no_eyebrow() -> None:
