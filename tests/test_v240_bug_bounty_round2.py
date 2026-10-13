@@ -668,6 +668,7 @@ async def test_a_stopping_app_delivers_the_queued_notifications(db_engine, monke
     deliver = AsyncMock(return_value=True)
     monkeypatch.setattr(notifications, "_deliver", deliver)
     redis = from_url(settings.redis_url, decode_responses=True)
+    await redis.delete(*notifications._QUEUE_KEYS.values())  # other tests queue too
     await redis.sadd(notifications._QUEUE_KEYS["new_reports"], "OW-2026-55555")
     await redis.aclose()
 
