@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block styles %}<style nonce="{{ request.state.csp_nonce }}">
+.ext-list { list-style: none; margin: 0; padding: 0; }
+.ext-item + .ext-item { border-top: 1px solid var(--hairline); margin-top: 1rem; padding-top: 1rem; }
+.ext-name { font-weight: 600; }
+.ext-desc { color: var(--muted); font-size: 0.9rem; margin: 0.25rem 0 0; }
+.ext-note { color: var(--muted); font-size: 0.85rem; margin-top: 1.5rem; }
+</style>{% endblock %}
+
+{% block title %}{{ t('external.title') }} | {{ brand.name }}{% endblock %}
+
+{% block content %}
+<div class="container-sm">
+    <div class="page-header">
+        <h1>{{ t('external.title') }}</h1>
+        <p>{{ t('external.lead') }}</p>
+    </div>
+
+    <div class="panel">
+        <ul class="ext-list" role="list">
+            {%- for key, url in [
+                ('bfj', 'https://www.bundesjustizamt.de/DE/MeldestelledesBundes/MeldestelledesBundes_node.html'),
+                ('bafin', 'https://www.bafin.de/DE/die-bafin/whistleblower/whistleblower_node'),
+                ('bkarta', 'https://www.bundeskartellamt.de/DE/Aufgaben/Kartelle/Verteiler_Hinweise/Hinweise_Verst%C3%B6%C3%9Fe_node.html'),
+                ('olaf', 'https://anti-fraud.ec.europa.eu/olaf-and-you/report-fraud_en'),
+            ] %}
+            <li class="ext-item">
+                <a class="ext-name" href="{{ url }}" rel="noopener noreferrer">{{ t('external.' ~ key ~ '.name') }}</a>
+                <p class="ext-desc">{{ t('external.' ~ key ~ '.desc') }}</p>
+            </li>
+            {%- endfor %}
+            <li class="ext-item">
+                <span class="ext-name">{{ t('external.laender.name') }}</span>
+                <p class="ext-desc">{{ t('external.laender.desc') }}</p>
+            </li>
+        </ul>
+    </div>
+
+    <p class="ext-note">{{ t('external.note') }}</p>
+</div>
+{% endblock %}

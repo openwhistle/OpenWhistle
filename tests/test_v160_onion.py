@@ -271,7 +271,7 @@ async def test_submit_page_hides_onion_note_when_unset(
     monkeypatch.setattr(settings, "onion_location", "")
     resp = await client.get("/submit")
     assert resp.status_code == 200
-    assert "sidebar-note" not in resp.text
+    assert "Tor Browser and this address" not in resp.text
 
 
 # ── nginx ─────────────────────────────────────────────────────────────────────

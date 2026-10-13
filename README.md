@@ -66,6 +66,7 @@ Every one of them is documented on [openwhistle.net/en/docs](https://openwhistle
 
 - **No trace** — no IP address in any log; times the reporter causes are stored as the day only
 - **Proxy warning** — a reporter whose request reached the app with an address header is told the proxy may log it
+- **External reporting offices** — the page §13 Abs. 2 HinSchG requires, linked from submit and status
 - **Case number + UUID4 PIN** — no account, no email; a correct pair always opens the case
 - **Anonymous or confidential** — a confidential name is encrypted, shown to the case handler only on audited request
 - **Submission wizard** — guided steps, Redis-backed draft encrypted with a key only in the reporter's cookie

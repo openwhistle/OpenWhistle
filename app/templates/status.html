@@ -23,6 +23,7 @@
 .st-muted-text { color: var(--muted); }
 .st-footer-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--hairline); text-align: center; }
 .st-footer-text { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.75rem; }
+.st-external { font-size: 0.82rem; margin: 1.5rem 0 2rem; text-align: center; }
 </style>{% endblock %}
 
 {% block title %}{{ t('status.form.title') }} | {{ brand.name }}{% endblock %}
@@ -327,6 +328,8 @@
     </div>
 
     {% endif %}
+
+    <p class="st-external"><a href="/external-reporting">{{ t('external.link') }}</a></p>
 </div>
 {% endblock %}
 
