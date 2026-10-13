@@ -42,7 +42,7 @@ Mutations: `docs-tech/mutations/v1.5.0-privacy.json`. Tests: `tests/test_privacy
 | Name decrypted on status page, admin page, both downloads, PDF | `test_status_page_download_and_pdf_show_the_decrypted_filename`, `test_admin_report_page_and_download_show_the_decrypted_filename` |
 | Migration 003 encrypts existing names, never twice | `test_migration_encrypts_existing_filenames_idempotently` |
 | Draft in Redis is ciphertext; key only in the cookie; wrong key = expired | `test_draft_in_redis_reveals_nothing_without_the_cookie_key`, `test_draft_with_the_wrong_key_counts_as_expired` |
-| Draft attachment total cap; refused near Redis `maxmemory` | `test_draft_attachments_are_capped_in_total`, `test_draft_attachments_are_refused_when_redis_is_nearly_full`, `test_redis_has_room` |
+| Draft attachments refused near Redis `maxmemory` (the total is capped by 5 files x 10 MB) | `test_draft_attachments_are_refused_when_redis_is_nearly_full`, `test_redis_has_room` |
 | New-report and reply notices queued, sent as one digest, once across replicas | `test_new_report_and_reply_are_queued_not_sent`, `test_digest_is_delivered_once_when_replicas_run_together`, `test_whistleblower_reply_queues_a_notification` |
 | Retention on by default; admin page says why nothing is deleted yet | `test_retention_enabled_defaults_true`, `test_retention_page_explains_the_default` |
 | IP headers and peer address removed before the app; pages `no-store` | `test_ip_headers_and_peer_address_never_reach_the_app`, `test_pages_are_never_cached_but_static_files_are` |

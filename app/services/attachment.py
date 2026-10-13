@@ -25,10 +25,9 @@ if TYPE_CHECKING:
     from app.services.storage import StorageBackend
 
 MAX_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB
+# A draft holds at most MAX_ATTACHMENTS x MAX_SIZE_BYTES: read_upload_files caps both.
+# A separate total cap here could never be reached, and was removed.
 MAX_ATTACHMENTS: int = 5
-# Hard cap on what one submission draft holds in Redis (before base64 and
-# encryption, which add about 78 %).
-MAX_DRAFT_ATTACHMENT_BYTES: int = MAX_ATTACHMENTS * MAX_SIZE_BYTES
 
 # The stored and served type comes from the extension. The browser's declared type
 # used to be checked against a list: Windows with Excel installed declares a .csv as

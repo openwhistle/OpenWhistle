@@ -62,3 +62,6 @@ integrity-manifest.json
 # Agent scratch
 /.superpowers/
 /.claude/
+
+# The website build; the site lives in openwhistle/website.
+_site/

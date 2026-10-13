@@ -397,7 +397,6 @@
   "submit.error.session_incomplete": "Su sesión está incompleta. Empiece de nuevo.",
   "submit.error.submit_failed": "Su denuncia NO se ha enviado. Sus respuestas se conservan: compruébelas y vuelva a enviarla.",
   "submit.error.attachments_rejected": "Un archivo no se adjuntó: el motivo aparece bajo el campo de archivo.",
-  "submit.error.attachments_too_large": "El tamaño total de los adjuntos es demasiado grande. Quite un archivo o reduzca su tamaño e inténtelo de nuevo.",
   "submit.error.attachments_no_room": "El servidor no puede aceptar adjuntos en este momento. Continúe sin ellos o inténtelo más tarde; después de enviar la denuncia podrá añadir detalles en una respuesta.",
   "status.deadlines.title": "Plazos legales (HinSchG)",
   "status.deadlines.ack": "Acuse de recibo en 7 días (§17 I)",
