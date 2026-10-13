@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.28@sha256:bb22d9815c728170f72750f4e5b0d672e06176142e1d602c7e66c050100b7e5b
 
 # ─── Stage 1: dependency builder ─────────────────────────────────────────────
-# Digest from `skopeo inspect --format '{{.Digest}}' docker://docker.io/library/python:3.14-alpine` (multi-arch index digest); Renovate's pinDigests rule keeps it current.
+# Digest from `skopeo inspect --format '{{.Digest}}' docker://docker.io/library/python:3.15-alpine` (multi-arch index digest); Renovate's pinDigests rule keeps it current.
 FROM python:3.15-alpine@sha256:1afb480ba8d3b3b7a8439a84f2365ce5c75ac45a79cf07daa091b49235cbe27b AS builder
 
 WORKDIR /build

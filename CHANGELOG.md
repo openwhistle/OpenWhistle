@@ -20,6 +20,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   app container had none of it.
 - The Ansible stack serves the onion listener on `127.0.0.1:8080` that its `ONION_LOCATION` setting and the
   onion page assume; nothing listened there.
+- The image runs on Python 3.15 (`python:3.15-alpine`). It brings the poplib control-character fix
+  (CVE-2025-15367) that 3.14 never got; the two `.grype.yaml` exceptions for 3.14.8 are gone.
 
 ### Fixed
 
