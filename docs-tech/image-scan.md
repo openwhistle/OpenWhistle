@@ -34,7 +34,7 @@ is refused because `alpine-baselayout` and `ca-certificates` depend on it).
 | --- | --- |
 | Alpine package (`apk`) | Rebuild: the final stage runs `apk upgrade`. Published images stay stale until the next release, which is what the Monday `published` job reports. |
 | Python package | Update `uv.lock` (`uv lock --upgrade-package <name>`). |
-| Python itself (`binary`) | Wait for the `python:3.14-alpine` digest Renovate brings; if the fix exists only in a newer line, add an entry to `.grype.yaml`. |
+| Python itself (`binary`) | Wait for the `python:3.15-alpine` digest Renovate brings; if the fix exists only in a newer line, add an entry to `.grype.yaml`. |
 
 An entry in `.grype.yaml` names the CVE, the package **and its version**, and a
 reason (`tests/test_image_scan.py` enforces all three). The version pin makes it

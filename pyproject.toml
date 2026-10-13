@@ -4,7 +4,7 @@ version = "2.3.0"
 description = "Open source whistleblower reporting platform (HinSchG / EU 2019/1937)"
 license = { text = "GPL-3.0-only" }
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.15"
 authors = [{ name = "OpenWhistle Contributors" }]
 
 dependencies = [
@@ -93,7 +93,7 @@ packages = ["app"]
 # ─── mypy ────────────────────────────────────────────────────────────────────
 
 [tool.mypy]
-python_version = "3.14"
+python_version = "3.15"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
@@ -126,7 +126,7 @@ ignore_missing_imports = true
 # ─── ruff ────────────────────────────────────────────────────────────────────
 
 [tool.ruff]
-target-version = "py314"
+target-version = "py315"
 line-length = 100
 
 [tool.ruff.lint]

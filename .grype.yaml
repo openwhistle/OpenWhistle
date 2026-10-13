@@ -7,17 +7,9 @@ ignore:
   - vulnerability: CVE-2025-15367
     package:
       name: python
-      version: 3.14.8
+      version: 3.15.0
       type: binary
     reason: >-
-      poplib command injection. Fixed in 3.15 only; 3.14.8 is the newest python:3.14-alpine
-      and has no fix (no control-character check in poplib). Nothing in the image imports poplib.
-  - vulnerability: CVE-2026-12345
-    package:
-      name: python
-      version: 3.14.8
-      type: binary
-    reason: >-
-      tempfile.TemporaryDirectory cleanup race. Fixed in 3.15.0rc3 only. The app never creates
-      one; the only caller in the image (pypdf's JBIG2 filter) needs a jbig2dec binary the image
-      does not have, and the race needs a local attacker writing into that directory.
+      False positive: grype orders 3.15.0 before the fix release 3.15.0a6. 3.15.0 has the fix:
+      poplib.POP3._putcmd raises ValueError on control characters (checked in the
+      python:3.15-alpine image this Dockerfile pins).
