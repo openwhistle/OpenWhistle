@@ -48,4 +48,4 @@ async def test_notice_names_the_onion_address_when_one_is_configured(
     response = await client.get("/submit", headers={"X-Real-IP": "203.0.113.7"})
     # The submit sidebar names the address too; it must be inside the notice.
     notice = response.text.split(_NOTICE, 1)[1].split("\n</div>", 1)[0]
-    assert "http://example2345.onion" in notice
+    assert '<span class="mono">http://example2345.onion</span>' in notice
