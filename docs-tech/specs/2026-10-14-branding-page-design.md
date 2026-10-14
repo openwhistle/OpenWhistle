@@ -38,12 +38,14 @@ Migration `018_branding`:
 | `org_id` | UUID FK `organisations.id`, nullable, unique | `NULL` is the instance default; at most one such row |
 | `name` | `String(64)`, nullable | Display name in nav and page titles |
 | `primary_color` | `String(7)`, nullable | `#rrggbb`, lower case |
-| `logo_light`, `logo_dark` | `LargeBinary`, nullable | Processed PNG |
-| `favicon_32`, `favicon_180` | `LargeBinary`, nullable | Generated from `logo_light` |
+| `logo_light`, `logo_dark` | `String(64)` FK `brand_images.sha256`, nullable | Processed PNG |
+| `favicon_32`, `favicon_180` | `String(64)` FK `brand_images.sha256`, nullable | Generated from `logo_light` |
 | `updated_at` | `DateTime(tz)` | |
 | `updated_by_id` | UUID FK `admin_users.id`, `ON DELETE SET NULL` | |
 
-A partial unique index enforces one row with `org_id IS NULL`.
+A partial unique index enforces one row with `org_id IS NULL`. Images live in `brand_images` (`sha256` PK,
+`png` `LargeBinary`): a logo two organisations share is stored once, and an image no row references any more
+is deleted on the save that dropped it.
 
 ## Resolution
 
@@ -52,8 +54,9 @@ For every page, each field resolves in this order: the organisation's row, the i
 page serves: the wizard's slug, the case on `/status`, the signed-in admin's organisation, else the default
 organisation.
 
-The resolved branding is cached in Redis per organisation (key `branding:<org_id|default>`, 1 h) and the cache
-is deleted on every save and reset, so a page view costs no database query. Images are served from
+All rows are cached in Redis as one snapshot (key `branding:snapshot`, 1 h), deleted on every save and
+reset, so a page view costs one Redis read and no database query. A missing or broken cache, or an
+unreachable Redis, leaves the page with the environment's branding instead of an error. Images are served from
 `/branding/<sha256>.png`: the hash of the PNG bytes, so the URL names no organisation, changes whenever the
 image does, and can be cached `immutable`. Response headers: `Content-Type: image/png`,
 `X-Content-Type-Options: nosniff`, `Cache-Control: public, max-age=31536000, immutable`. An unknown hash is
