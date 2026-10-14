@@ -154,6 +154,30 @@ async def db_session(db_engine: AsyncEngine) -> AsyncGenerator[AsyncSession]:
 
 
 @pytest_asyncio.fixture(loop_scope="function")
+async def clean_branding() -> AsyncGenerator[None]:
+    """Empty the branding tables and snapshot before and after a test (DB and Redis persist)."""
+    from app.config import settings
+    from app.redis_client import close_redis, get_redis
+
+    async def _wipe() -> None:
+        engine = create_async_engine(settings.database_url, poolclass=NullPool)
+        async with engine.begin() as conn:
+            await conn.execute(text("DELETE FROM branding"))
+            await conn.execute(text("DELETE FROM brand_images"))
+        await engine.dispose()
+        try:
+            await (await get_redis()).delete("branding:snapshot")
+        except Exception:  # noqa: BLE001  Redis may be down in a DB-only run
+            pass
+        finally:
+            await close_redis()
+
+    await _wipe()
+    yield
+    await _wipe()
+
+
+@pytest_asyncio.fixture(loop_scope="function")
 async def client(db_engine: AsyncEngine) -> AsyncGenerator[AsyncClient]:
     """HTTP test client — fresh DB + Redis connections per test to avoid cross-loop errors."""
     from app.config import settings
