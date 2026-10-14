@@ -8,6 +8,9 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import pytest
+from httpx import AsyncClient
+
 from tests.diagram_tools import renderer
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -332,3 +335,16 @@ def test_a_transition_property_list_names_each_property_once() -> None:
     for names in re.findall(r"transition-property:\s*([^;]+);", APP_CSS.read_text("utf-8")):
         parts = [n.strip() for n in names.split(",")]
         assert len(parts) == len(set(parts)), names
+
+
+async def test_an_unparsable_brand_colour_falls_back_to_the_default(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.templating import templates
+
+    monkeypatch.setitem(
+        templates.env.globals, "brand", {**templates.env.globals["brand"], "primary_color": "red"}
+    )
+    response = await client.get("/submit")
+    assert response.status_code == 200
+    assert "--brand-accent: #0c7253" in response.text

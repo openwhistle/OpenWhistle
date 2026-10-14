@@ -48,7 +48,16 @@ templates.env.filters["wbr_after_hyphens"] = wbr_after_hyphens
 
 templates.env.filters["category_label"] = category_label
 
-templates.env.globals["brand_tokens"] = brand_colour.tokens
+
+def brand_tokens(primary: str) -> dict[str, str]:
+    """The theme tokens for a brand colour; a misconfigured colour renders as the default."""
+    try:
+        return brand_colour.tokens(primary)
+    except ValueError:
+        return brand_colour.tokens(brand_colour.DEFAULT)
+
+
+templates.env.globals["brand_tokens"] = brand_tokens
 
 templates.env.globals["brand"] = {
     "name": settings.app_name,
