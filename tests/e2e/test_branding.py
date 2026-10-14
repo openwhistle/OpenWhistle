@@ -30,6 +30,16 @@ def test_the_preview_follows_the_name(admin_page: Page) -> None:
     assert texts == ["Acme Preview", "Acme Preview"]
 
 
+def test_an_emptied_name_shows_the_fallback(admin_page: Page) -> None:
+    admin_page.goto("/admin/branding")
+    fallback = admin_page.get_attribute("#bp-name", "placeholder")
+    assert fallback
+    admin_page.fill("#bp-name", "A")
+    admin_page.fill("#bp-name", "")
+    texts = admin_page.locator("[data-preview-name]").all_inner_texts()
+    assert texts == [fallback, fallback]
+
+
 def test_a_wide_logo_never_widens_the_nav(admin_page: Page, tmp_path: object) -> None:
     import io
     from pathlib import Path
@@ -43,6 +53,7 @@ def test_a_wide_logo_never_widens_the_nav(admin_page: Page, tmp_path: object) ->
     admin_page.set_viewport_size({"width": 390, "height": 844})
     admin_page.goto("/admin/branding")
     admin_page.set_input_files("#bp-logo_light", str(path))
+    admin_page.wait_for_selector('img[data-preview-img="light"]', state="visible")
     width = admin_page.evaluate("document.documentElement.scrollWidth")
     assert width <= 390, width
 

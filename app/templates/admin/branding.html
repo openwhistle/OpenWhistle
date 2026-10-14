@@ -49,7 +49,7 @@
 
             <div class="form-group">
                 <label class="form-label" for="bp-name">{{ t('admin.branding.name') }}</label>
-                <input class="form-control" id="bp-name" name="name" maxlength="64"
+                <input class="form-control" id="bp-name" name="name" maxlength="64" placeholder="{{ fallback_name }}"
                        value="{{ form.get('name', row.name or '') }}" aria-describedby="bp-name-hint">
                 <p class="form-hint" id="bp-name-hint">{{ t('admin.branding.name.hint', fallback=fallback_name) }}</p>
             </div>
