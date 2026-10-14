@@ -82,3 +82,11 @@ async def test_no_page_needs_unsafe_inline(client: AsyncClient, db_session: Asyn
     response = await client.get("/submit")
     assert "unsafe-inline" not in response.headers["content-security-policy"]
     assert "--brand-accent:" in response.text
+
+
+async def test_an_unknown_path_wears_the_stored_branding(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    await _brand(db_session, None, name="Acme Default")
+    response = await client.get("/no-such-page", headers={"accept": "text/html"})
+    assert response.status_code == 404 and "Acme Default" in response.text

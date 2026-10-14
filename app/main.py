@@ -300,6 +300,8 @@ def create_app() -> FastAPI:
         from app.templating import render
 
         t = make_translator(get_lang(request))
+        if not hasattr(request.state, "branding_snapshot"):
+            await load_branding(request)  # an unmatched path never ran the route dependencies
         key = _HTML_ERROR_DETAIL_KEYS.get(exc.status_code, "error.detail.generic")
         return render(
             request,
