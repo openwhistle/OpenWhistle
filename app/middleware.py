@@ -210,13 +210,7 @@ class SecurityMiddleware:
                         scope.get("path", "/")
                     )
                 path = str(scope.get("path", ""))
-                if not path.startswith("/static/"):
-                    # /branding/<sha>.png sets its own: the hash changes with the image.
-                    if not path.startswith("/branding/"):
-                        # A PIN, a report or an attachment must not be left in the browser
-                        # cache of a shared office computer for the next user to find.
-                        mutable["Cache-Control"] = "no-store"
-                else:
+                if path.startswith("/static/"):
                     # /static/ is otherwise unversioned (fonts.css's @font-face
                     # src: url(...) values are plain paths — static_url()'s
                     # ?v={app_version} only reaches <link>/<script> tags a
@@ -226,6 +220,16 @@ class SecurityMiddleware:
                     # on every request instead of trusting a stale cached copy,
                     # while a 304 (unchanged file) costs nothing.
                     mutable["Cache-Control"] = "no-cache"
+                elif not (
+                    path.startswith("/branding/")
+                    and message["status"] == 200
+                    and "cache-control" in mutable
+                ):
+                    # A PIN, a report or an attachment must not be left in the browser
+                    # cache of a shared office computer for the next user to find.
+                    # Only the brand image's own 200 sets its Cache-Control: the hash
+                    # changes with the image. Errors under /branding/ stay no-store.
+                    mutable["Cache-Control"] = "no-store"
                 # Remove server identification headers
                 for h in ("server", "x-powered-by"):
                     if h in mutable:

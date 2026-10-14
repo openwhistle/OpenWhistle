@@ -30,3 +30,10 @@ async def test_an_unknown_hash_is_404(client: AsyncClient) -> None:
 async def test_anything_but_a_hash_is_404(client: AsyncClient) -> None:
     for path in ("/branding/..%2Fsecret.png", "/branding/ABC.png", f"/branding/{'a' * 63}.png"):
         assert (await client.get(path)).status_code == 404
+
+
+async def test_only_the_image_itself_is_cacheable(client: AsyncClient) -> None:
+    html = await client.get(f"/branding/{'0' * 64}.png", headers={"Accept": "text/html"})
+    assert html.status_code == 404 and html.headers["cache-control"] == "no-store"
+    for path in ("/branding/x.txt", "/branding/a/b"):
+        assert (await client.get(path)).headers["cache-control"] == "no-store"
