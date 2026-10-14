@@ -25,6 +25,7 @@ class BrandImageError(ValueError):
 
 def _png(image: Image.Image) -> bytes:
     out = io.BytesIO()
+    image.info.clear()
     image.save(out, format="PNG", optimize=True)
     return out.getvalue()
 

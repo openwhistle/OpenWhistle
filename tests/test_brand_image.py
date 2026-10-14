@@ -7,7 +7,7 @@ import struct
 import zlib
 
 import pytest
-from PIL import Image
+from PIL import Image, ImageCms
 from PIL.PngImagePlugin import PngInfo
 
 from app.services import brand_image as bi
@@ -49,6 +49,16 @@ def test_metadata_does_not_survive() -> None:
     for out in (png, jpg):
         assert b"secret" not in out
         assert not Image.open(io.BytesIO(out)).info.get("exif")
+
+
+def test_icc_profile_does_not_survive() -> None:
+    srgb = ImageCms.createProfile("sRGB")
+    icc_data = ImageCms.ImageCmsProfile(srgb).tobytes()
+    png_with_icc = bi.process_logo(_image("PNG", icc_profile=icc_data))
+    jpg_with_icc = bi.process_logo(_image("JPEG", icc_profile=icc_data))
+    for out in (png_with_icc, jpg_with_icc):
+        assert b"iCCP" not in out
+        assert not Image.open(io.BytesIO(out)).info.get("icc_profile")
 
 
 @pytest.mark.parametrize(
