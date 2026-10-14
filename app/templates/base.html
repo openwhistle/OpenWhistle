@@ -10,9 +10,14 @@
     <title>{% block title %}{{ brand.name }}{% endblock %}</title>
 
     {# No external resources - DSGVO compliance #}
+    {%- if brand.favicon_32_url %}
+    <link rel="icon" href="{{ brand.favicon_32_url }}" sizes="32x32" type="image/png">
+    <link rel="apple-touch-icon" href="{{ brand.favicon_180_url }}">
+    {%- else %}
     <link rel="icon" href="/static/favicon.ico" sizes="32x32">
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/static/apple-touch-icon.png" sizes="180x180">
+    {%- endif %}
     <link rel="stylesheet" href="{{ static_url('css/fonts.css') }}">
     <link rel="stylesheet" href="{{ static_url('css/site.css') }}">
 
@@ -21,7 +26,7 @@
     <style nonce="{{ request.state.csp_nonce }}">
         :root {
             --brand-primary:   {{ brand.primary_color }};
-            {%- for name, value in brand_tokens(brand.primary_color).items() %}
+            {%- for name, value in brand.tokens.items() %}
             --brand-{{ name }}: {{ value }};
             {%- endfor %}
         }
@@ -59,7 +64,10 @@
     <nav class="nav" role="navigation" aria-label="{{ t('nav.aria_label') }}">
         <a href="/" class="nav-brand" aria-label="{{ t('nav.home', name=brand.name) }}">
             {% if brand.logo_url %}
-                <img src="{{ brand.logo_url }}" alt="{{ brand.name }}" class="nav-logo-img">
+                <img src="{{ brand.logo_url }}" alt="" class="nav-logo-img nav-logo-light">
+                {%- if brand.logo_dark_url %}
+                <img src="{{ brand.logo_dark_url }}" alt="" class="nav-logo-img nav-logo-dark">
+                {%- endif %}
             {% else %}
                 <svg class="mark" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill-rule="evenodd" d="M7,3 H17 A4,4 0 0 1 21,7 V13 A4,4 0 0 1 17,17 H11.5 L7,20.8 V17 A4,4 0 0 1 3,13 V7 A4,4 0 0 1 7,3 Z M10.60,11.81 A3.5,3.5 0 1 1 13.40,11.81 L14.50,15.4 H9.50 Z"/></svg>
             {% endif %}

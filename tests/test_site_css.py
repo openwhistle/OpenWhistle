@@ -107,6 +107,7 @@ def _head_vars(primary_color: str) -> dict[str, str]:
     """The custom properties base.html's nonce'd style block sets for this brand colour."""
     from types import SimpleNamespace
 
+    from app.services import branding
     from app.templating import templates
 
     source = (ROOT / "app" / "templates" / "base.html").read_text(encoding="utf-8")
@@ -114,7 +115,7 @@ def _head_vars(primary_color: str) -> dict[str, str]:
     assert style
     html = templates.env.from_string(style.group(0)).render(
         request=SimpleNamespace(state=SimpleNamespace(csp_nonce="n")),
-        brand={**templates.env.globals["brand"], "primary_color": primary_color},
+        brand=branding.resolve({"default": {"primary_color": primary_color}}, None),
     )
     return dict(re.findall(r"(--brand-[\w-]+)\s*:\s*([^;]+);", html))
 
@@ -340,11 +341,9 @@ def test_a_transition_property_list_names_each_property_once() -> None:
 async def test_an_unparsable_brand_colour_falls_back_to_the_default(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from app.templating import templates
+    from app.config import settings
 
-    monkeypatch.setitem(
-        templates.env.globals, "brand", {**templates.env.globals["brand"], "primary_color": "red"}
-    )
+    monkeypatch.setattr(settings, "brand_primary_color", "red")
     response = await client.get("/submit")
     assert response.status_code == 200
     assert "--brand-accent: #0c7253" in response.text

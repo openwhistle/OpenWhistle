@@ -8,7 +8,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.exception_handlers import (
     http_exception_handler as _default_http_exception_handler,
 )
@@ -24,6 +24,7 @@ from app.i18n import get_lang, make_translator
 from app.logging_config import configure_logging
 from app.middleware import SecurityMiddleware
 from app.redis_client import close_redis
+from app.services.branding import load_branding
 
 # A generic, localised message per status code an HTML page may show for a
 # raised HTTPException — never the raw exc.detail, which can carry internal
@@ -259,6 +260,7 @@ def create_app() -> FastAPI:
         redoc_url=None,
         openapi_url=None,
         lifespan=lifespan,
+        dependencies=[Depends(load_branding)],
     )
 
     # The last one added runs first: SecurityMiddleware drops the peer address and the

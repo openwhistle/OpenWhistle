@@ -14,6 +14,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
+from fastapi import Request
 from redis.asyncio import Redis
 from sqlalchemy import delete, select, union
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -81,7 +82,11 @@ async def _load() -> Snapshot:
 async def snapshot(redis: Redis) -> Snapshot:
     cached = await redis.get(CACHE_KEY)
     if cached:
-        data: Any = json.loads(cached)
+        data: Any
+        try:
+            data = json.loads(cached)
+        except json.JSONDecodeError:
+            data = None
         if isinstance(data, dict):
             return data
     snap = await _load()
@@ -124,3 +129,15 @@ async def drop_orphan_images(db: AsyncSession) -> None:
 async def image(db: AsyncSession, sha: str) -> bytes | None:
     found = await db.get(BrandImage, sha)
     return found.png if found else None
+
+
+async def load_branding(request: Request) -> None:
+    """Every route's dependency: one Redis read, never a failed page. A broken cache or
+    an unreachable Redis leaves the environment's branding (APP_NAME and BRAND_*)."""
+    from app.redis_client import get_redis  # noqa: PLC0415
+
+    try:
+        request.state.branding_snapshot = await snapshot(await get_redis())
+    except Exception:  # noqa: BLE001 — branding must never take a page down
+        log.warning("branding snapshot unavailable; using the environment's", exc_info=True)
+        request.state.branding_snapshot = {}

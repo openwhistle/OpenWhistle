@@ -14,7 +14,7 @@ from markupsafe import Markup, escape
 
 from app.config import settings
 from app.i18n import format_count, format_decimal, format_percent, get_lang, make_translator
-from app.services import brand_colour, deadlines
+from app.services import branding, deadlines
 from app.services.attachment import format_size
 from app.services.categories import category_label
 from app.services.report import format_day, whistleblower_caused
@@ -49,21 +49,8 @@ templates.env.filters["wbr_after_hyphens"] = wbr_after_hyphens
 templates.env.filters["category_label"] = category_label
 
 
-def brand_tokens(primary: str) -> dict[str, str]:
-    """The theme tokens for a brand colour; a misconfigured colour renders as the default."""
-    try:
-        return brand_colour.tokens(primary)
-    except ValueError:
-        return brand_colour.tokens(brand_colour.DEFAULT)
-
-
-templates.env.globals["brand_tokens"] = brand_tokens
-
-templates.env.globals["brand"] = {
-    "name": settings.app_name,
-    "primary_color": settings.brand_primary_color,
-    "logo_url": settings.brand_logo_url,
-}
+# Pages rendered outside render() (a bare error page) keep the environment's branding.
+templates.env.globals["brand"] = branding.resolve({}, None)
 
 templates.env.globals["is_demo"] = settings.demo_mode
 templates.env.globals["privacy_policy_url"] = settings.privacy_policy_url
@@ -170,6 +157,15 @@ templates.env.filters["audit_detail"] = audit_detail
 templates.env.globals["REASON_UNREADABLE"] = REASON_UNREADABLE
 
 
+def current_brand(request: Request, ctx: dict[str, Any]) -> branding.Brand:
+    """The branding of the organisation this page serves: the wizard's, the signed-in
+    admin's, else the case's (the status page), else the instance default."""
+    org_id = getattr(request.state, "org_id", None)
+    if org_id is None and ctx.get("report") is not None:
+        org_id = getattr(ctx["report"], "org_id", None)
+    return branding.resolve(getattr(request.state, "branding_snapshot", {}), org_id)
+
+
 def render(
     request: Request,
     template: str,
@@ -180,6 +176,8 @@ def render(
     lang = get_lang(request)
     ctx["t"] = template_translator(lang)
     ctx["lang"] = lang
+
+    ctx.setdefault("brand", current_brand(request, ctx))
 
     session_expires_at = getattr(request.state, "session_expires_at", None)
     if session_expires_at is not None:

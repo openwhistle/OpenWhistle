@@ -10,7 +10,7 @@ import pytest
 from httpx import AsyncClient
 from PIL import Image
 
-from app.templating import templates
+from app.config import settings
 
 ROOT = Path(__file__).resolve().parents[1]
 _spec = importlib.util.spec_from_file_location("render_icons", ROOT / "scripts/render_icons.py")
@@ -42,9 +42,9 @@ def test_the_old_shield_is_gone_everywhere() -> None:
 async def test_an_operator_logo_replaces_the_mark(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setitem(templates.env.globals["brand"], "logo_url", "/static/operator.png")
+    monkeypatch.setattr(settings, "brand_logo_url", "/static/operator.png")
     html = (await client.get("/submit")).text
-    assert 'class="nav-logo-img"' in html and 'class="mark"' not in html
+    assert 'class="nav-logo-img nav-logo-light"' in html and 'class="mark"' not in html
 
 
 async def test_without_an_operator_logo_the_nav_draws_k3(client: AsyncClient) -> None:
@@ -90,7 +90,10 @@ def test_the_ico_holds_16_and_32() -> None:
 def test_the_head_links_exactly_the_three_icons() -> None:
     # ico first with sizes=32x32: without it Chrome prefers the ico over the theme-aware svg.
     head = (ROOT / "app/templates/base.html").read_text(encoding="utf-8")
+    # The first two are the operator's favicons, shown only when one is uploaded.
     assert re.findall(r"<link rel=\"[^\"]*icon\"[^>]*>", head) == [
+        '<link rel="icon" href="{{ brand.favicon_32_url }}" sizes="32x32" type="image/png">',
+        '<link rel="apple-touch-icon" href="{{ brand.favicon_180_url }}">',
         '<link rel="icon" href="/static/favicon.ico" sizes="32x32">',
         '<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">',
         '<link rel="apple-touch-icon" href="/static/apple-touch-icon.png" sizes="180x180">',
@@ -110,7 +113,7 @@ async def test_the_app_wordmark_is_one_ink_weight_and_untranslated(client: Async
 async def test_a_custom_brand_name_is_the_wordmark(
     client: AsyncClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setitem(templates.env.globals["brand"], "name", "Acme Speak-Up")
+    monkeypatch.setattr(settings, "app_name", "Acme Speak-Up")
     nav = _WORDMARK.search((await client.get("/submit")).text)
     assert nav and '<span translate="no">Acme Speak-Up</span>' in nav[0]
     assert "<strong" not in nav[0]

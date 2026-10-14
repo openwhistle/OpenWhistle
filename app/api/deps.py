@@ -51,6 +51,7 @@ async def get_signed_in_admin(
 
     request.state.session_expires_at = int(claims["exp"])
     request.state.session_claims = claims
+    request.state.org_id = user.org_id
 
     return user
 
