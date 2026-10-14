@@ -38,6 +38,7 @@
             <option value="">{{ t('admin.branding.default') }}</option>
             {% for o in orgs %}<option value="{{ o.id }}"{% if org_id == o.id %} selected{% endif %}>{{ o.name }}</option>{% endfor %}
         </select>
+        <button type="submit" class="btn btn-secondary">{{ t('admin.audit.filter.apply') }}</button>
     </form>
     {% endif %}
 
@@ -69,10 +70,10 @@
             {% endfor %}
 
             <div class="form-group">
-                <label class="form-label" for="bp-colour-hex">{{ t('admin.branding.colour') }}</label>
+                <label class="form-label" for="bp-colour-picker">{{ t('admin.branding.colour') }}</label>
                 <div class="bp-colour">
-                    <input type="color" id="bp-colour-picker" value="{{ effective.primary_color }}" aria-label="{{ t('admin.branding.colour') }}">
-                    <input class="form-control" id="bp-colour-hex" name="primary_color" pattern="#[0-9a-fA-F]{6}"
+                    <input type="color" id="bp-colour-picker" value="{{ effective.primary_color }}">
+                    <input class="form-control" id="bp-colour-hex" name="primary_color" aria-label="{{ t('admin.branding.colour.hex') }}" pattern="#[0-9a-fA-F]{6}"
                            value="{{ form.get('primary_color', row.primary_color or '') }}" placeholder="{{ effective.primary_color }}"
                            aria-describedby="bp-contrast">
                 </div>
@@ -111,3 +112,5 @@
     </form>
 </div>
 {% endblock %}
+
+{% block scripts %}<script src="{{ static_url('js/branding.js') }}" nonce="{{ request.state.csp_nonce }}"></script>{% endblock %}
