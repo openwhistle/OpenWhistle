@@ -209,10 +209,13 @@ class SecurityMiddleware:
                     mutable["Onion-Location"] = settings.onion_location.rstrip("/") + str(
                         scope.get("path", "/")
                     )
-                # A PIN, a report or an attachment must not be left in the browser
-                # cache of a shared office computer for the next user to find.
-                if not str(scope.get("path", "")).startswith("/static/"):
-                    mutable["Cache-Control"] = "no-store"
+                path = str(scope.get("path", ""))
+                if not path.startswith("/static/"):
+                    # /branding/<sha>.png sets its own: the hash changes with the image.
+                    if not path.startswith("/branding/"):
+                        # A PIN, a report or an attachment must not be left in the browser
+                        # cache of a shared office computer for the next user to find.
+                        mutable["Cache-Control"] = "no-store"
                 else:
                     # /static/ is otherwise unversioned (fonts.css's @font-face
                     # src: url(...) values are plain paths — static_url()'s

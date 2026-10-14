@@ -318,11 +318,13 @@ def create_app() -> FastAPI:
 
     from app.api.admin import router as admin_router
     from app.api.auth import router as auth_router
+    from app.api.branding import router as branding_router
     from app.api.reports import router as reports_router
     from app.api.wizard import router as wizard_router
 
     application.include_router(reports_router)
     application.include_router(auth_router)
+    application.include_router(branding_router)
     application.include_router(admin_router)
     application.include_router(wizard_router)
 
