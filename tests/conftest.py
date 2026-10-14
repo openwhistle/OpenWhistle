@@ -154,7 +154,7 @@ async def db_session(db_engine: AsyncEngine) -> AsyncGenerator[AsyncSession]:
 
 
 @pytest_asyncio.fixture(loop_scope="function")
-async def clean_branding() -> AsyncGenerator[None]:
+async def clean_branding(db_engine: AsyncEngine) -> AsyncGenerator[None]:
     """Empty the branding tables and snapshot before and after a test (DB and Redis persist)."""
     from app.config import settings
     from app.redis_client import close_redis, get_redis
