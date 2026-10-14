@@ -50,7 +50,7 @@ def _block(text: str, opener: str) -> dict[str, str]:
 
 
 # App token -> DESIGN.md key. Brand-derived tokens (--brand-primary, --accent, --accent-subtle,
-# --cta-bg, --cta-bg-hover) are excluded: an operator re-brands them through brand.primary_color.
+# --cta-bg, --cta-bg-hover, --cta-text) are excluded: brand.primary_color re-brands them.
 APP_TOKENS = {
     "--canvas": "canvas",
     "--surface-card": "surface",
@@ -72,7 +72,6 @@ APP_TOKENS = {
     "--info-subtle": "info-weak",
     "--on-dark": "inverse-ink",
     "--muted-on-dark": "inverse-muted",
-    "--cta-text": "accent-ink",
 }
 
 
@@ -97,6 +96,7 @@ BRAND_TOKENS = {
     "--accent-subtle": "accent-weak",
     "--cta-bg": "accent",
     "--cta-bg-hover": "accent-strong",
+    "--cta-text": "accent-ink",
 }
 
 
@@ -140,10 +140,19 @@ def test_the_default_brand_draws_the_design_md_accent_in_both_themes() -> None:
             assert _hex6(_resolve(scope[token], scope)) == palette[theme][key], (theme, token)
 
 
-def test_a_custom_brand_keeps_its_derived_accent() -> None:
-    assert set(_head_vars("#7b2cbf")) == {"--brand-primary"}
-    dark = _app_scopes("#7b2cbf")["dark"]
-    assert _resolve(dark["--accent"], dark).startswith("color-mix(in srgb,var(--brand-primary)")
+def test_a_custom_brand_gets_computed_aa_tokens() -> None:
+    from app.services import brand_colour
+
+    brand = _head_vars("#7b2cbf")
+    assert set(brand) == {"--brand-primary"} | {
+        f"--brand-{k}" for k in brand_colour.tokens("#7b2cbf")
+    }
+    scopes = _app_scopes("#7b2cbf")
+    for theme, canvas in (("light", brand_colour.LIGHT_CANVAS), ("dark", brand_colour.DARK_CANVAS)):
+        scope = scopes[theme]
+        accent, text = _resolve(scope["--accent"], scope), _resolve(scope["--cta-text"], scope)
+        assert brand_colour.contrast(accent, canvas) >= brand_colour.TEXT_MINIMUM
+        assert brand_colour.contrast(text, accent) >= brand_colour.TEXT_MINIMUM
 
 
 def test_nothing_transitions_all() -> None:
