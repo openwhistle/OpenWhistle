@@ -69,6 +69,8 @@ def test_icc_profile_does_not_survive() -> None:
         (_image("GIF"), "admin.branding.error.format"),
         (b"\x89PNG" + b"\0" * (bi.MAX_BYTES + 1), "admin.branding.error.too_large"),
         (_png_claiming(20_000, 20_000), "admin.branding.error.dimensions"),
+        # Over our 16 MP cap but under Pillow's own bomb limit: only our check refuses it.
+        (_png_claiming(5_000, 4_000), "admin.branding.error.dimensions"),
     ],
 )
 def test_refused_uploads(data: bytes, key: str) -> None:

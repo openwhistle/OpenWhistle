@@ -54,3 +54,8 @@ def test_two_hundred_colours_meet_aa_in_both_themes() -> None:
 @pytest.mark.parametrize("primary", ["#ffffff", "#000000", "#ffff00", "#0000ff", "#777777"])
 def test_extremes_still_meet_aa(primary: str) -> None:
     _meets(primary)
+
+
+def test_text_on_a_mid_grey_fill_is_pure_black() -> None:
+    # The ink (#0a0a0b) would reach only 4.42:1 on #777777; pure black reaches 4.69:1.
+    assert bc._on("#777777") == bc.BLACK

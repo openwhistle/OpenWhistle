@@ -9,6 +9,10 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Branding page**: `/admin/branding` sets the name, a light and a dark logo and the brand colour, with a
+  live preview in both themes, per organisation (an empty field falls back to the instance default). Logos
+  are PNG, JPEG or WebP, never SVG, and are re-encoded as metadata-free PNG; colours are adjusted so text
+  meets WCAG AA in both themes.
 - **Reporters are warned when the proxy passes their address on**: a request to `/submit` or `/status` that
   arrives with an address header (`X-Forwarded-For`, `X-Real-IP` and the other stripped headers) shows a
   notice: the server in front may log the address; use Tor Browser or a private device. The onion address
@@ -24,6 +28,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **`APP_NAME`, `BRAND_PRIMARY_COLOR` and `BRAND_LOGO_URL` are starting values**: what is saved on
+  `/admin/branding` overrides them.
 - **The footer is one compact row**: the operator's legal links and the external reporting offices on the
   left, "Powered by OpenWhistle" on the right. It was 87 px, taller than the 60 px nav, with a tagline, links
   to GitHub, the HinSchG text and the admin login, and the version.

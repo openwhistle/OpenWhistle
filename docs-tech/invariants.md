@@ -54,6 +54,13 @@ Mutations: `docs-tech/mutations/v1.5.0-privacy.json`. Tests: `tests/test_privacy
 | No public page, `/health` or asset URL names the release; signed-in admins see it | `test_a_public_page_names_no_version`, `test_health_names_no_version`, `test_a_signed_in_admin_sees_the_version` |
 | The footer links the operator's privacy and legal notice when set, only http(s) | `test_the_footer_links_the_operators_legal_pages`, `test_a_footer_link_must_be_a_web_address` |
 | The dashboard says when no privacy notice is linked (Art. 13 GDPR) | `test_the_dashboard_says_the_privacy_notice_is_missing` |
+| A brand colour's text and accent tokens meet 4.5:1 in both themes; text on a fill is pure black or white; the default keeps DESIGN.md's values | `test_two_hundred_colours_meet_aa_in_both_themes`, `test_text_on_a_mid_grey_fill_is_pure_black`, `test_the_default_keeps_design_md_values` |
+| A logo is content-checked (PNG, JPEG, WebP), capped at 1 MB and 16 MP, re-encoded as PNG without metadata or ICC profile | `test_refused_uploads`, `test_each_allowed_format_becomes_a_png_96_px_high`, `test_metadata_does_not_survive`, `test_icc_profile_does_not_survive` |
+| A shared brand image survives another row dropping it; an organisation's field beats the default | `test_a_shared_image_survives_its_removal_elsewhere`, `test_an_org_field_beats_the_default_and_an_empty_one_falls_back` |
+| A save or reset clears the branding cache | `test_the_snapshot_reflects_a_save_after_invalidate`, `test_reset_clears_one_field_and_the_cache_follows` |
+| An organisation's admin cannot brand another organisation; a case manager gets 403 | `test_an_org_admin_cannot_brand_another_org`, `test_a_case_manager_may_not_open_it` |
+| A brand image is served as `image/png`, cacheable only on its own 200; an unmatched path wears the stored branding | `test_a_stored_image_is_served_as_png`, `test_only_the_image_itself_is_cacheable`, `test_an_unknown_path_wears_the_stored_branding` |
+| The nav logo is decorative (`alt=""`) and cannot widen the nav | `test_the_nav_logo_is_decorative`, `test_a_logo_cannot_widen_the_nav` |
 | Helm Ingress turns the ingress-nginx access log off | `test_helm_ingress_turns_the_nginx_access_log_off` |
 
 **Only one replica sends a digest** without a job lock: the queue is read and

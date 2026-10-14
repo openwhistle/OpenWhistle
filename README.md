@@ -104,6 +104,8 @@ Every one of them is documented on [openwhistle.net/en/docs](https://openwhistle
 - **Helm chart, Ansible role**, multi-arch images on GHCR, Docker Hub and Quay.io
 - **Update check and install count** — both opt-in; the update check sends nothing about the instance, the count a
   random ID and the version; while the count is off, the dashboard asks once per update
+- **Branding page** — name, light and dark logo, brand colour with a live preview, per
+  organisation; logos re-encoded as metadata-free PNG, colours adjusted to WCAG AA in both themes
 - **Five languages** — English, German, French, Spanish, Brazilian Portuguese; WCAG 2.1 AA; light and dark
 - **No external calls** — self-hosted fonts, no CDN, no tracking (GDPR)
 - **No public version number** — only signed-in admins see it; `/health` and asset URLs leave it out

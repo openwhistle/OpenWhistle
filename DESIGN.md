@@ -190,6 +190,20 @@ their `-weak` tints. `{colors.success}` deliberately equals the accent hue —
 Because of that overlap, **never place a success pill and the primary CTA in the
 same eyeline**; let context disambiguate.
 
+### A custom brand colour
+
+An operator may set a brand colour on `/admin/branding`. The server derives every token from it so
+text stays at 4.5:1 or better (WCAG 2.x) in both themes:
+
+| Token | Rule |
+| --- | --- |
+| `--brand-on` (text on brand fills) | White or pure black, whichever contrasts more |
+| `--accent`, light | The colour mixed towards black in 2 % steps until 4.5:1 on the light canvas |
+| `--accent`, dark | The colour mixed towards white in 2 % steps until 4.5:1 on the dark canvas |
+| `--cta-bg`, dark | The dark accent; its text by the `--brand-on` rule |
+
+The default `#0c7253` keeps the tokens listed above unchanged.
+
 ### Report status → colour mapping
 
 The `ReportStatus` values map to fixed semantic roles (keep this table and the
@@ -428,7 +442,9 @@ wordmark left, utility controls (theme, language) right as equal-sized icon butt
 (1px hairline ring, `{rounded.md}`). Footer sits on `{colors.inverse}` in both themes,
 text in `{colors.inverse-muted}`, one compact row lower than the nav: the operator's
 privacy and legal notice links and the external reporting offices on the left, "Powered
-by OpenWhistle" on the right. The version string, in mono, only on admin pages.
+by OpenWhistle" on the right. The version string, in mono, only on admin pages. The footer is not
+brandable. An operator logo replaces the mark in the nav with `alt=""`, because the name stands beside
+it; the optional dark variant shows in the dark theme, else the light logo serves both.
 
 ### Printed case record
 
