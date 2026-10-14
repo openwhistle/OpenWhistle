@@ -1,0 +1,113 @@
+{% extends "admin/_layout.html" %}
+
+{% block title %}{{ t('admin.branding.title') }} | {{ brand.name }}{% endblock %}
+
+{% block styles %}<style nonce="{{ request.state.csp_nonce }}">
+.bp-grid { display: grid; gap: var(--space-8); grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+@media (max-width: 900px) { .bp-grid { grid-template-columns: 1fr; } }
+.bp-colour { display: flex; gap: var(--space-3); align-items: center; }
+.bp-colour input[type="color"] { block-size: 2.5rem; inline-size: 3rem; padding: 0; border: 0; background: none; }
+.bp-current { block-size: 2rem; max-inline-size: 12rem; object-fit: contain; }
+.bp-previews { display: grid; gap: var(--space-4); }
+.bp-panel { border-radius: var(--radius-card); box-shadow: 0 0 0 1px var(--hairline); padding: var(--space-6); display: grid; gap: var(--space-4); }
+.bp-panel[data-preview="light"] { background: #ffffff; color: #3d3d40; --bp-ink: #0a0a0b; }
+.bp-panel[data-preview="dark"] { background: #0a0a0b; color: #c8c8cc; --bp-ink: #fafafa; }
+.bp-nav { display: flex; align-items: center; gap: var(--space-3); color: var(--bp-ink); font-weight: 600; }
+.bp-nav img { block-size: 2rem; max-inline-size: 12rem; object-fit: contain; }
+.bp-button { background: var(--bp-accent); color: var(--bp-on); border-radius: var(--radius-md, 8px); padding: 0.6rem 1.2rem; font-weight: 600; justify-self: start; border: 0; }
+.bp-link { color: var(--bp-accent); text-decoration: underline; }
+.bp-focus { outline: 2px solid var(--bp-accent); outline-offset: 2px; }
+.bp-panel[data-preview="light"] { --bp-accent: {{ effective.tokens['accent'] }}; --bp-on: {{ effective.tokens['on'] }}; }
+.bp-panel[data-preview="dark"] { --bp-accent: {{ effective.tokens['accent-dark'] }}; --bp-on: {{ effective.tokens['on-dark'] }}; }
+</style>{% endblock %}
+
+{% block admin_content %}
+<div class="container">
+    <div class="page-header">
+        <h1>{{ t('admin.branding.title') }}</h1>
+        <p class="page-subtitle">{{ t('admin.branding.subtitle') }}</p>
+    </div>
+
+    {% if saved %}<div class="alert alert-success" role="status">{{ t('admin.branding.saved') }}</div>{% endif %}
+    {% if error %}<div class="alert alert-error" role="alert" id="branding-error">{{ t(error) }}</div>{% endif %}
+
+    {% if orgs %}
+    <form method="get" action="/admin/branding" class="form-group">
+        <label class="form-label" for="bp-org">{{ t('admin.branding.organisation') }}</label>
+        <select class="form-control" id="bp-org" name="org" data-autosubmit>
+            <option value="">{{ t('admin.branding.default') }}</option>
+            {% for o in orgs %}<option value="{{ o.id }}"{% if org_id == o.id %} selected{% endif %}>{{ o.name }}</option>{% endfor %}
+        </select>
+    </form>
+    {% endif %}
+
+    <div class="bp-grid">
+        <form method="post" action="/admin/branding" enctype="multipart/form-data" class="panel" id="branding-form">
+            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+            <input type="hidden" name="org" value="{{ org_id or '' }}">
+
+            <div class="form-group">
+                <label class="form-label" for="bp-name">{{ t('admin.branding.name') }}</label>
+                <input class="form-control" id="bp-name" name="name" maxlength="64"
+                       value="{{ form.get('name', row.name or '') }}" aria-describedby="bp-name-hint">
+                <p class="form-hint" id="bp-name-hint">{{ t('admin.branding.name.hint', fallback=fallback_name) }}</p>
+            </div>
+
+            {% for key in ['logo_light', 'logo_dark'] %}
+            <div class="form-group">
+                <label class="form-label" for="bp-{{ key }}">{{ t('admin.branding.' ~ key) }}</label>
+                {% set current = row|attr(key) %}
+                {% if current %}<img class="bp-current" src="/branding/{{ current }}.png" alt="">{% endif %}
+                <input class="form-control" type="file" id="bp-{{ key }}" name="{{ key }}"
+                       accept="image/png,image/jpeg,image/webp" data-preview-logo="{{ key }}"
+                       aria-describedby="bp-{{ key }}-hint">
+                <p class="form-hint" id="bp-{{ key }}-hint">{{ t('admin.branding.logo.hint') if key == 'logo_light' else t('admin.branding.logo_dark.hint') }}</p>
+                {% if current %}
+                <label><input type="checkbox" name="remove_{{ key }}" value="1"> {{ t('admin.branding.remove') }}</label>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <div class="form-group">
+                <label class="form-label" for="bp-colour-hex">{{ t('admin.branding.colour') }}</label>
+                <div class="bp-colour">
+                    <input type="color" id="bp-colour-picker" value="{{ effective.primary_color }}" aria-label="{{ t('admin.branding.colour') }}">
+                    <input class="form-control" id="bp-colour-hex" name="primary_color" pattern="#[0-9a-fA-F]{6}"
+                           value="{{ form.get('primary_color', row.primary_color or '') }}" placeholder="{{ effective.primary_color }}"
+                           aria-describedby="bp-contrast">
+                </div>
+                <p class="form-hint" id="bp-contrast" aria-live="polite"
+                   data-template="{{ t('admin.branding.contrast', button='{button}', light='{light}', dark='{dark}') }}">
+                    {{ t('admin.branding.contrast', button=ratios.button, light=ratios.light, dark=ratios.dark) }}
+                </p>
+            </div>
+
+            <button type="submit" class="btn btn-primary">{{ t('admin.branding.save') }}</button>
+        </form>
+
+        <section class="bp-previews" aria-labelledby="bp-preview-h">
+            <h2 id="bp-preview-h" class="panel-header">{{ t('admin.branding.preview') }}</h2>
+            {% for theme in ['light', 'dark'] %}
+            <div class="bp-panel" data-preview="{{ theme }}">
+                <p class="form-hint">{{ t('admin.branding.preview.' ~ theme) }}</p>
+                <div class="bp-nav">
+                    {% set src = (effective.logo_dark_url if theme == 'dark' and effective.logo_dark_url else effective.logo_url) %}
+                    <img data-preview-img="{{ theme }}" src="{{ src }}" alt=""{% if not src %} hidden{% endif %}>
+                    <span data-preview-name>{{ effective.name }}</span>
+                </div>
+                <span class="bp-button">{{ t('admin.branding.preview.button') }}</span>
+                <span class="bp-link">{{ t('admin.branding.preview.link') }}</span>
+                <span class="bp-button bp-focus">{{ t('admin.branding.preview.button') }}</span>
+            </div>
+            {% endfor %}
+        </section>
+    </div>
+
+    <form method="post" action="/admin/branding/reset">
+        <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+        <input type="hidden" name="org" value="{{ org_id or '' }}">
+        <input type="hidden" name="field" value="all">
+        <button type="submit" class="btn btn-secondary">{{ t('admin.branding.reset_all') }}</button>
+    </form>
+</div>
+{% endblock %}

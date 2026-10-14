@@ -202,6 +202,7 @@ _ADMIN_NAV: tuple[tuple[str, tuple[tuple[str, str, str | None], ...]], ...] = (
             ("/admin/categories", "admin.nav.categories", "admin"),
             ("/admin/locations", "admin.nav.locations", "admin"),
             ("/admin/retention", "admin.nav.retention", "admin"),
+            ("/admin/branding", "admin.nav.branding", "admin"),
         ),
     ),
     (
