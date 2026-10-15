@@ -7,7 +7,7 @@
 <style nonce="{{ request.state.csp_nonce }}">
     .mfas-center-page { display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
     .mfas-card { width: 100%; max-width: 480px; }
-    .mfas-header { margin-bottom: 2rem; animation: fadeSlideIn 0.5s ease both; }
+    .mfas-header { margin-bottom: 2rem; }
     .mfas-title { font-size: clamp(1.5rem, 4vw, 2.25rem); }
     .mfas-subtitle { font-size: 0.88rem; margin-top: 0.5rem; }
     .mfas-panel-2 { margin-top: var(--space-5); }
@@ -38,7 +38,7 @@
         <div class="alert alert-error" role="alert">{{ t(error) }}</div>
         {% endif %}
 
-        <div class="panel anim-in delay-08">
+        <div class="panel">
             <h2 class="panel-header">{{ t('mfa.setup.step1.header') }}</h2>
             <p class="mfas-step-body">{{ t('mfa.setup.step1.body') }}</p>
 
@@ -62,7 +62,7 @@
             </details>
         </div>
 
-        <div class="panel anim-in delay-18 mfas-panel-2">
+        <div class="panel mfas-panel-2">
             <h2 class="panel-header">{{ t('mfa.setup.step2.header') }}</h2>
             <p class="mfas-step-body">{{ t('mfa.setup.step2.body') }}</p>
 

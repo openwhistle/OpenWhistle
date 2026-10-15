@@ -32,11 +32,11 @@
 
     {# Top-line KPIs #}
     <div class="stats-row">
-        <div class="stat-card" data-delay="0">
+        <div class="stat-card">
             <div class="stat-card__number">{{ stats.total_reports }}</div>
             <div class="stat-kpi-label">{{ t('admin.stats.total_reports') }}</div>
         </div>
-        <div class="stat-card" data-delay="0.05">
+        <div class="stat-card">
             {% if stats.sla_7day_rate is none %}
             <div class="stat-card__number">&mdash;</div>
             {% else %}
@@ -53,7 +53,7 @@
             ('closed', 'badge-closed')
         ] %}
         {% set count = stats.status_counts.get(status_val, 0) %}
-        <div class="stat-card" data-delay="{{ loop.index * 0.05 }}">
+        <div class="stat-card">
             <div class="stat-card__number">{{ count }}</div>
             <span class="badge {{ cls }}">{{ t('status.label.' + status_val) }}</span>
         </div>
@@ -121,10 +121,6 @@
 {% block scripts %}
 <script nonce="{{ request.state.csp_nonce }}">
 document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('[data-delay]').forEach(function (el) {
-        el.style.animationDelay = el.dataset.delay + 's';
-    });
-
     document.querySelectorAll('[data-tone]').forEach(function (el) {
         el.style.color = 'var(--' + el.dataset.tone + ')';
     });

@@ -11,7 +11,7 @@
 .dash-shrink0 { flex-shrink:0; }
 .dash-nowrap { white-space:nowrap; }
 .dash-category-cell { font-size:0.85rem;color:var(--body-text); }
-.dash-date-cell { font-size:0.78rem;color:var(--muted); }
+.dash-date-cell { font-size:0.78rem;color:var(--muted);white-space:nowrap; }
 .dash-assignee-cell { font-size:0.82rem;color:var(--muted); }
 .dash-assignee-name { color:var(--body-text); }
 .dash-sla-cell { font-size:0.82rem; }
@@ -191,7 +191,7 @@
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <div class="form-group">
                 <label class="form-label" for="dash-search-q">{{ t('admin.search.label') }}</label>
-                <input type="search" class="form-control mono" id="dash-search-q" name="q"
+                <input type="search" class="form-control" id="dash-search-q" name="q"
                        value="{{ case_query }}" maxlength="64" autocomplete="off" spellcheck="false"
                        placeholder="{{ t('admin.search.placeholder') }}" aria-describedby="dash-search-hint">
             </div>
@@ -257,7 +257,7 @@
                         </td>
                         <td role="cell" class="{{ ack_sla_class }} dash-sla-cell" data-label="{{ t('admin.table.sla7') }}">
                             {% if ack.state == 'done' %}
-                                {{ t('admin.sla.done') }}
+                                <span class="dash-nowrap">{{ t('admin.sla.done') }}</span>
                             {% else %}
                                 {{ t('admin.report.sla.day') }} {{ ack.days }}/7
                             {% endif %}
@@ -266,7 +266,7 @@
                             {% if not fb %}
                                 {{ t('admin.report.sla.not_ack') }}
                             {% elif fb.state == 'done' %}
-                                {{ t('admin.sla.done') }}
+                                <span class="dash-nowrap">{{ t('admin.sla.done') }}</span>
                             {% elif fb.state == 'overdue' %}
                                 {{ t('admin.report.sla.overdue') }}
                             {% else %}

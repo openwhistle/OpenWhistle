@@ -56,7 +56,7 @@ typography:
   fonts:
     display: "Sora"                       # display + headings
     body:    "Sora"                        # body + UI
-    mono:    "JetBrains Mono"              # identifiers, eyebrows, code
+    mono:    "JetBrains Mono"              # identifiers, code
   # weight ceiling: 700 (the hero, stat figures and the mono voices); 600 for every other heading; 400 body.
   scale:
     display-hero: { font: display, size: "clamp(34px, 5vw, 52px)", weight: 700, tracking: "-0.035em", leading: 1.05 }
@@ -68,7 +68,7 @@ typography:
     body-sm:      { font: body,    size: "14px", weight: 400, tracking: "0",        leading: 1.55 }
     label:        { font: body,    size: "13.5px", weight: 600, tracking: "0",      leading: 1.4 }   # form labels
     hint:         { font: body,    size: "12.5px", weight: 400, tracking: "0",      leading: 1.5 }   # helper text
-    eyebrow:      { font: mono,    size: "11.5px", weight: 700, tracking: "0.16em", transform: "uppercase" }
+    caption:      { font: body,    size: "12.5px", weight: 600, tracking: "0",      leading: 1.3 }   # table headers, nav groups, stat labels
     mono-id-lg:   { font: mono,    size: "26px", weight: 700, tracking: "-0.01em", numeric: "tabular-nums" }  # receipt case number
     mono-id:      { font: mono,    size: "14px", weight: 400, numeric: "tabular-nums" }                       # table ids, PIN, dates
 
@@ -227,28 +227,25 @@ Two families, three voices:
 
 - **Sora** — display and body. A geometric-humanist sans: confident at large
   sizes, quiet at reading sizes. One family keeps the system coherent.
-- **JetBrains Mono** — every identifier and the uppercase eyebrow label.
+- **JetBrains Mono** — every identifier, and nothing else.
 
 Set the scale from `{typography.scale}` and stay on it. The full ramp, largest to
 smallest: `display-hero` → `display-lg` → `heading` → `heading-sm` → `lead` →
-`body` → `body-sm` → `label` → `hint`, with `eyebrow`, `mono-id-lg`, and `mono-id`
+`body` → `body-sm` → `label` → `caption` → `hint`, with `mono-id-lg` and `mono-id`
 as the mono voices.
 
 ### Principles
 
 - **Negative tracking scales with size.** `-0.035em` on the hero, easing to `0` by
-  body. Never track body or mono positively (except the eyebrow's `0.16em`).
+  body. Never track body or mono positively.
 - **Weight ceiling 700:** the hero, the stat figures (`display-lg`) and the mono voices
-  (`eyebrow`, `mono-id-lg`) — as the scale above sets them. Every other heading and every
+  (`mono-id-lg`) — as the scale above sets them. Every other heading and every
   Sora label is 600. Nothing on the platform is heavier than the hero.
-- **Eyebrows are mono, uppercase, `0.16em`.** They label a section or state
-  (`CONFIDENTIAL REPORTING CHANNEL`, `CASE STATUS`); they are not decoration and
-  must describe what follows. **The reporter's pages carry none** (submit, success,
-  status, external reporting offices): there an eyebrow only restated the heading
-  below it.
-- **Labels a reporter reads are sentence case Sora 600.** Alert titles, the
-  credential and review labels, the message sender, the stepper's step names. Mono
-  stays for the facts beside them (case number, PIN, dates).
+- **No eyebrows, no all-caps labels.** A tracked capital label above a heading only
+  restated the heading below it. Every label is sentence case Sora 600: alert titles,
+  credential and review labels, the message sender, the stepper's step names, table
+  headers, the admin menu's group names, stat labels, the demo badge. Mono stays for
+  the facts beside them (case number, PIN, dates).
 - **Identifiers are mono with `tabular-nums`.** Case numbers, PINs, timestamps,
   deadlines, stat figures. Digits must align in columns and never re-flow.
 - **Keep running text at `{spacing.container.measure}` (~62ch).** Reports and
@@ -352,14 +349,14 @@ wizard's first step, so the page stays one Full HD window high.
 
 `{colors.surface-2}` fill, 1px `{colors.hairline}`, `{rounded.md}`, `{spacing.scale.x6}`
 padding, optional `{elevation.card}`. A panel is the same at `{colors.surface}`.
-Card titles use a mono `eyebrow` over a hairline rule.
+Card titles are `heading-sm` over a hairline rule.
 The page's main content panel (`.panel-primary`, the report on the case page) carries a
 3px inset top stripe in `{colors.ink}`, never `{colors.accent}`: the accent stays with the
 view's one primary action.
 
 ### Stat cards (admin)
 
-`{colors.surface}` card, mono `eyebrow` label, a `display-lg` figure with
+`{colors.surface}` card, a `caption` label, a `display-lg` figure with
 `tabular-nums`, and a faint accent **sparkline** (SVG polyline in `{colors.accent}`)
 showing trend. An `alert` variant recolours the label and figure to
 `{colors.danger}` when a metric needs attention (e.g. overdue cases). Used only on
@@ -372,9 +369,9 @@ muted, no gradients. Statistics-page only.
 
 ### Tables
 
-Full-width, hairline row dividers, no vertical rules. `thead th` is a mono
-`eyebrow`; `td` is `{typography.scale.body-sm}`. Case IDs and dates use `mono-id`
-with `tabular-nums`. Row hover fills `{colors.surface}`. Wrap in `overflow-x: auto`.
+Full-width, hairline row dividers, no vertical rules. `thead th` is a `caption`;
+`td` is `{typography.scale.body-sm}`. Case IDs and dates use `mono-id` with
+`tabular-nums` and never wrap. Row hover fills `{colors.surface}`. Wrap in `overflow-x: auto`.
 
 ### Status pills
 
@@ -482,8 +479,10 @@ How to draw one: `docs-tech/diagrams.md`.
 
 Restraint. Motion confirms, it does not entertain.
 
-- **One page-load reveal.** Screens rise `~10px` and fade over `~0.5s`, staggered
-  `~60ms`. That is the whole entrance.
+- **No page-load reveal.** A page is there when it opens: the admin moves between
+  pages all day, and a panel caught mid-fade reads as unfinished. Only two things
+  enter: the reporter's receipt (one staggered rise, `~0.5s`) and an alert that
+  answers an action.
 - **Micro-feedback only** elsewhere: a `~0.15s` hover/focus transition on
   interactive surfaces, the accent focus ring.
 - **Theme change** cross-fades background and text over `~0.3s`.
@@ -556,7 +555,7 @@ the parent's curve, so squaring every inner control would be wrong. Full pills n
 - Don't add a third typeface, a gradient, or a decorative illustration.
 - Don't let a success pill and the primary CTA share an eyeline (both are emerald).
 - Don't load a font, script, or asset from any third-party host.
-- Don't put an eyebrow above a heading that already says the same thing.
+- Don't put a label above a heading, or set a label in capitals.
 - Don't put more than five panels on a page.
 
 ## Responsive Behavior

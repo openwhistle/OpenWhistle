@@ -225,7 +225,7 @@
     </div>
 
     {# Progress indicator #}
-    <div class="panel delay-03">
+    <div class="panel">
         <h2 class="panel-header">{{ t('status.progress.title') }}</h2>
         <div class="stepper" aria-hidden="true">
             {% set steps = ['received', 'in_review', 'pending_feedback', 'closed'] %}
@@ -250,7 +250,7 @@
 
     {# Attachments #}
     {% if report.attachments %}
-    <div class="panel delay-04">
+    <div class="panel">
         <h2 class="panel-header">{{ t('status.attachments.title') }}</h2>
         <ul class="attachment-items">
             {% for att in report.attachments %}
@@ -274,7 +274,7 @@
     {% endif %}
 
     {# Communication thread #}
-    <div class="panel delay-05">
+    <div class="panel">
         <h2 class="panel-header">{{ t('status.thread.title') }}</h2>
 
         {% if report.messages %}
@@ -296,7 +296,7 @@
     </div>
 
     {% if report.status.value != 'closed' %}
-    <div class="panel delay-10">
+    <div class="panel">
         <h2 class="panel-header">{{ t('status.reply.title') }}</h2>
         <form method="post" action="/reply">
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">

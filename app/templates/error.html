@@ -1,19 +1,20 @@
 {% extends "base.html" %}
 
-{% block title %}{{ t('error.eyebrow', code=status_code) }} | {{ brand.name }}{% endblock %}
+{% block title %}{{ t('error.code', code=status_code) }} | {{ brand.name }}{% endblock %}
 
 {% block styles %}
 <style nonce="{{ request.state.csp_nonce }}">
 .err-container { text-align:center;padding:3rem 1rem; }
 .err-back-btn { margin-top:1rem; }
+.err-code { color:var(--muted); }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-sm err-container">
     <div class="page-header">
-        <div class="page-eyebrow">{{ t('error.eyebrow', code=status_code) }}</div>
         <h1>{{ detail }}</h1>
+        <p class="err-code">{{ t('error.code', code=status_code) }}</p>
     </div>
     <a href="#" id="err-back-link" class="btn btn-secondary err-back-btn">{{ t('error.go_back') }}</a>
 </div>

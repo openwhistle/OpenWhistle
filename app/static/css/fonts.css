@@ -30,7 +30,7 @@
     font-display: swap;
 }
 
-/* JetBrains Mono - identifiers: case numbers, PINs, timestamps, eyebrows */
+/* JetBrains Mono - identifiers: case numbers, PINs, timestamps */
 @font-face {
     font-family: 'JetBrains Mono';
     src: url('/static/fonts/JetBrainsMono-Regular.woff2') format('woff2');

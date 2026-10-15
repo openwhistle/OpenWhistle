@@ -16,12 +16,12 @@
         .lg-with-demo > .panel ~ .panel { margin-top: 1.25rem; }
         .lg-second-admin { font-size: 0.8rem; color: var(--muted); margin-top: 0.75rem; }
     }
-    .lg-header { margin-bottom: 2rem; animation: fadeSlideIn 0.5s ease both; }
+    .lg-header { margin-bottom: 2rem; }
     .lg-h1 { font-size: clamp(1.5rem, 4vw, 2.25rem); }
     .lg-subtitle { font-size: 0.88rem; margin-top: 0.5rem; }
     .lg-btn-mt { margin-top: 0.5rem; }
     .lg-oidc-wrap { margin-top: 1.5rem; text-align: center; }
-    .lg-or-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; }
+    .lg-or-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.75rem; }
     .lg-ldap-wrap { margin-top: 0.75rem; text-align: center; }
     .lg-ldap-badge { display: inline-block; font-size: 0.72rem; color: var(--muted); background: var(--surface-card); border: 1px solid var(--hairline); border-radius: 4px; padding: 0.2rem 0.6rem; }
 </style>
@@ -44,7 +44,7 @@
         </div>
 
         {% if local_review_login %}
-        <div class="panel anim-in delay-08">
+        <div class="panel">
             <form method="post" action="/admin/local-review-login">
                 <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
                 <button type="submit" id="local-review-login-btn" class="btn btn-secondary btn-block">
@@ -89,7 +89,7 @@
         <div class="alert alert-error" role="alert">{{ t(error) }}</div>
         {% endif %}
 
-        <div class="panel anim-in delay-08">
+        <div class="panel">
             <h2 class="panel-header">{{ t('login.panel.header') }}</h2>
 
             <form method="post" action="/admin/login" novalidate>

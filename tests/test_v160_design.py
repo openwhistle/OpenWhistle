@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import uuid
 from html.parser import HTMLParser
@@ -332,12 +333,13 @@ def test_credential_value_dead_css_removed() -> None:
     assert ".credential-value" not in css
 
 
-def test_eyebrows_are_the_exception() -> None:
-    count = sum(
-        len(re.findall(r'class="(?:page|sidebar)-eyebrow"', p.read_text()))
-        for p in TEMPLATES.rglob("*.html")
-    )
-    assert count <= 5, count
+def test_no_page_carries_an_eyebrow() -> None:
+    """2.4.0: the last two (the case page's "CASE FILE", the error page's "ERROR 404")
+    restated what the heading or the title already said."""
+    css = (ROOT / "app/static/css/site.css").read_text()
+    assert "eyebrow" not in css
+    for page in TEMPLATES.rglob("*.html"):
+        assert "eyebrow" not in page.read_text(), page.name
 
 
 def test_panel_headers_and_labels_are_not_shouted() -> None:
@@ -1228,7 +1230,7 @@ def test_reporter_pages_carry_no_eyebrow() -> None:
     "GESCHÜTZTES MELDEN"): decoration that restated the heading below it."""
     for name in REPORTER_TEMPLATES:
         html = (TEMPLATES / name).read_text()
-        assert "eyebrow" not in html.replace("submit.sidebar.eyebrow", ""), name
+        assert "eyebrow" not in html, name
 
 
 @pytest.mark.parametrize(
@@ -1319,3 +1321,59 @@ async def test_invalid_input_page_speaks_the_users_language(
     resp = await client.get("/admin/reports/not-a-uuid", headers={"accept": "text/html"})
     assert resp.status_code == 422
     assert make_translator("es")("error.detail.422") in resp.text
+
+
+def test_no_label_is_shouted() -> None:
+    """The admin pages kept tracked capitals after the reporter pass: table headers,
+    the menu's group names, stat labels, the demo badge, the IP warning's title."""
+    css = (ROOT / "app/static/css/site.css").read_text()
+    assert "uppercase" not in css
+    for page in TEMPLATES.rglob("*.html"):
+        assert "uppercase" not in page.read_text(), page.name
+    for selector in ("th", ".admin-nav-group", ".stat-card__label", ".demo-cred-label"):
+        for body in re.findall(r"(?m)^" + re.escape(selector) + r"\s*\{([^}]*)\}", css):
+            assert "letter-spacing" not in body, selector
+            assert "font-mono" not in body, selector
+
+
+def test_no_message_is_written_in_capitals() -> None:
+    """CSS was not the only source: "INTERNAL" and "DEMO" were capitals in the catalogue."""
+    for catalogue in (ROOT / "app/locales").glob("*.json"):
+        for key, value in json.loads(catalogue.read_text()).items():
+            assert not re.fullmatch(r"[A-ZÀ-Þ ]{4,}", value), (catalogue.name, key)
+
+
+@pytest.mark.parametrize(
+    "selector",
+    [".page-header", ".panel", ".panel-outline", ".stat-card", ".message", ".auth-heading"],
+)
+def test_a_page_opens_without_an_entrance(selector: str) -> None:
+    """Every panel rose and faded in on every page view: an admin moving between pages
+    all day caught them mid-fade. Motion is kept for the receipt and for alerts."""
+    css = (ROOT / "app/static/css/site.css").read_text()
+    bodies = re.findall(r"(?m)^" + re.escape(selector) + r"\s*\{([^}]*)\}", css)
+    assert bodies, selector
+    for body in bodies:
+        assert "animation" not in body, selector
+
+
+def test_only_the_receipt_animates_in() -> None:
+    for page in TEMPLATES.rglob("*.html"):
+        if page.name != "submit_success.html":
+            html = page.read_text()
+            assert "anim-in" not in html and "fadeSlideIn" not in html, page.name
+
+
+def test_a_category_is_not_drawn_as_a_status() -> None:
+    """The case page showed the category in the "received" pill, dot included."""
+    css = (ROOT / "app/static/css/site.css").read_text()
+    assert ".badge-neutral::before" not in css
+    for name in ("admin/report.html", "admin/categories.html"):
+        assert "badge badge-received" not in (TEMPLATES / name).read_text(), name
+
+
+def test_a_date_in_the_case_list_does_not_wrap() -> None:
+    """2026-10-15 broke after its second hyphen in the dashboard's date column."""
+    html = (TEMPLATES / "admin/dashboard.html").read_text()
+    rule = re.search(r"\.dash-date-cell \{([^}]*)\}", html)
+    assert rule and "white-space:nowrap" in rule.group(1)

@@ -78,7 +78,7 @@
                             <td class="cat-sort">{{ cat.sort_order }}</td>
                             <td>
                                 {% if cat.is_default %}
-                                <span class="badge badge-received">{{ t('admin.categories.default') }}</span>
+                                <span class="badge badge-neutral">{{ t('admin.categories.default') }}</span>
                                 {% elif cat.is_active %}
                                 <span class="badge badge-closed">{{ t('admin.categories.active') }}</span>
                                 {% else %}

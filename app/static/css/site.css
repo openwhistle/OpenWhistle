@@ -261,7 +261,7 @@ video {
   --space-16: 64px;
   --space-20: 80px;
   --space-24: 96px;
-  --text-eyebrow: 0.6875rem;
+  --text-badge: 0.6875rem;
   --text-hint: 0.75rem;
   --text-label: 0.8125rem;
   --text-body-sm: 0.875rem;
@@ -435,16 +435,6 @@ strong {
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-@keyframes typeIn {
-  0% {
-    clip-path: inset(0 100% 0 0);
-    opacity: 0;
-  }
-  to {
-    clip-path: inset(0 0 0 0);
-    opacity: 1;
   }
 }
 @keyframes shake {
@@ -681,26 +671,14 @@ strong {
   max-width: 540px;
 }
 .page-header {
-  animation: fadeSlideIn 0.45s ease both;
   padding-bottom: 2rem;
   padding-top: 3rem;
 }
-.page-eyebrow,
 .page-header h1 {
   margin-bottom: 0.5rem;
 }
-.page-eyebrow {
-  color: var(--muted);
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  line-height: 1rem;
-  text-transform: uppercase;
-}
 .card,
 .panel {
-  animation: fadeSlideIn 0.4s ease both;
   background: var(--surface-card);
   border: none;
   border-radius: var(--radius-card);
@@ -717,7 +695,6 @@ strong {
   margin-top: 1.25rem;
 }
 .panel-outline {
-  animation: fadeSlideIn 0.4s ease both;
   background: var(--canvas);
   border-radius: var(--radius-card);
   padding: 1.5rem;
@@ -811,7 +788,6 @@ strong {
   margin-bottom: 0.375rem;
 }
 .stat-card {
-  animation: fadeSlideIn 0.4s ease both;
   background: var(--surface-card);
   border-radius: var(--radius-card);
   min-width: 0;
@@ -1068,11 +1044,12 @@ input[type="file"].form-control::file-selector-button {
 .badge-in_review::before { background: var(--ink); }
 .badge-pending_feedback::before { background: var(--warning); }
 .badge-closed::before { background: var(--success); }
-/* A role is not a state: one neutral pill, the label says which (DESIGN.md "Status pills"
-   reserves colour for the report status). */
+/* A role or a category is not a state: one neutral pill without the dot, the label says
+   which (DESIGN.md "Status pills" reserves the dot and its colour for the report status). */
 .badge-admin,
 .badge-case_manager,
-.badge-superadmin {
+.badge-superadmin,
+.badge-neutral {
   background: var(--surface-card);
   box-shadow: 0 0 0 1px var(--hairline);
   color: var(--body-text);
@@ -1090,7 +1067,7 @@ input[type="file"].form-control::file-selector-button {
 }
 /* One banner system (DESIGN.md "Alerts / banners"), drawn as the website's callout
    (openwhistle/website base.css): a 3 px bar in the semantic colour on its -weak tint,
-   rounded only away from the bar, the title in the mono eyebrow voice. */
+   rounded only away from the bar, the title in sentence case. */
 .alert {
   animation: fadeSlideIn 0.3s ease both;
   border-left: 3px solid;
@@ -1326,16 +1303,13 @@ th {
   border-bottom-width: 2px;
   border-color: var(--hairline);
   color: var(--muted);
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  font-weight: 400;
-  letter-spacing: 0.12em;
+  font-size: 0.78rem;
+  font-weight: 600;
   line-height: 1rem;
   /* 0.75rem a side, not 1rem: eight dashboard columns in German need 1,093 px
      at 1rem and the admin content is 1,064 px wide. */
   padding: 0.625rem 0.75rem;
   text-align: left;
-  text-transform: uppercase;
 }
 td {
   border-bottom-width: 1px;
@@ -1749,7 +1723,6 @@ main:has(> .page-fill) {
   gap: 1.25rem;
 }
 .message {
-  animation: fadeSlideIn 0.3s ease both;
   border-radius: var(--radius-card);
   max-width: 82%;
   padding: 1rem 1.25rem;
@@ -1996,12 +1969,10 @@ a.attachment-name:hover {
 .ip-warning-text strong {
   display: block;
   font-family: var(--font-body);
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  letter-spacing: 0.05em;
-  line-height: 1rem;
+  line-height: 1.25rem;
   margin-bottom: 0.25rem;
-  text-transform: uppercase;
 }
 .submit-step-actions {
   gap: 0.75rem;
@@ -2051,7 +2022,6 @@ a.attachment-name:hover {
   width: 100%;
 }
 .auth-heading {
-  animation: fadeSlideIn 0.5s ease both;
   margin-bottom: 2rem;
 }
 .success-wrapper {
@@ -2105,11 +2075,9 @@ a.attachment-name:hover {
   box-shadow: 0 0 0 1px var(--border-strong);
   color: var(--body-text);
   flex-shrink: 0;
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  letter-spacing: 0.1em;
   padding: 0.15rem 0.45rem;
-  text-transform: uppercase;
 }
 .demo-banner-link {
   color: var(--accent);
@@ -2141,11 +2109,9 @@ a.attachment-name:hover {
   box-shadow: 0 0 0 1px var(--border-strong);
   color: var(--body-text);
   flex-shrink: 0;
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  letter-spacing: 0.1em;
   padding: 0.12rem 0.4rem;
-  text-transform: uppercase;
 }
 .demo-credentials-grid {
   -moz-column-gap: 1rem;
@@ -2164,9 +2130,7 @@ a.attachment-name:hover {
 }
 .demo-cred-label {
   color: var(--muted);
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 0.78rem;
 }
 .demo-cred-label,
 .demo-cred-value {
@@ -2467,12 +2431,10 @@ a.attachment-name:hover {
 }
 .stat-card__label {
   color: var(--muted);
-  font-size: 0.75rem;
-  letter-spacing: 0.07em;
-  line-height: 1rem;
+  font-size: 0.8125rem;
+  line-height: 1.1rem;
   margin-bottom: 0.5rem;
   overflow-wrap: break-word;
-  text-transform: uppercase;
 }
 .stat-card__label,
 .stat-card__value {
@@ -2652,29 +2614,14 @@ a.attachment-name:hover {
   opacity: 0;
   animation-fill-mode: forwards;
 }
-.delay-03 {
-  animation-delay: 0.03s;
-}
 .delay-04 {
   animation-delay: 0.04s;
 }
 .delay-05 {
   animation-delay: 0.05s;
 }
-.delay-06 {
-  animation-delay: 0.06s;
-}
-.delay-08 {
-  animation-delay: 0.08s;
-}
 .delay-10 {
   animation-delay: 0.1s;
-}
-.delay-12 {
-  animation-delay: 0.12s;
-}
-.delay-18 {
-  animation-delay: 0.18s;
 }
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -2812,10 +2759,9 @@ a.attachment-name:hover {
 /* The website's docs sidebar (openwhistle/website docs.css .sidebar-group, .sidebar-links). */
 .admin-nav-group {
   color: var(--muted);
-  font-size: 0.68rem;
-  letter-spacing: 0.12em;
+  font-size: 0.78rem;
+  font-weight: 600;
   margin: 0 0 var(--space-2) var(--space-3);
-  text-transform: uppercase;
 }
 .admin-nav a {
   border-left: 2px solid transparent;
@@ -3018,7 +2964,7 @@ a.attachment-name:hover {
   .badge-in_review, .badge-pending_feedback, .badge-closed, .demo-badge, .demo-banner-badge, .message-admin, .split-sidebar,
   .credential-display, .credential-box, .attachment-item, .qr-wrapper, .totp-secret-card,
   .saved-confirm-label, .demo-credentials, .demo-cred-value, .demo-cred-code, .demo-report-row,
-  .badge-admin, .badge-case_manager, .badge-superadmin, .filter-pills,
+  .badge-admin, .badge-case_manager, .badge-superadmin, .badge-neutral, .filter-pills,
   .session-expiry-banner, .session-expiry-banner.session-expiry-expired-state, .card, .theme-toggle, .lang-picker-btn, .lang-picker-menu, .admin-menu,
   .panel-primary, .pagination-page, .pagination-page-current {
     border: 1px solid CanvasText;
