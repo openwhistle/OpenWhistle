@@ -247,6 +247,19 @@ def test_an_image_format_that_is_not_allowed_is_refused() -> None:
         attachment._strip_image(buf.getvalue())
 
 
+def test_a_format_that_is_not_cleaned_is_never_parsed(monkeypatch: pytest.MonkeyPatch) -> None:
+    from PIL import BmpImagePlugin
+
+    def parsed(self: object) -> None:
+        raise AssertionError("the BMP parser ran on an upload")
+
+    monkeypatch.setattr(BmpImagePlugin.BmpImageFile, "_open", parsed)
+    buf = io.BytesIO()
+    Image.new("RGB", (4, 4)).save(buf, format="BMP")
+    with pytest.raises(MetadataError, match="unsupported image format"):
+        attachment._strip_image(buf.getvalue())
+
+
 def _jpeg(quality: int = 90) -> bytes:
     buf = io.BytesIO()
     Image.new("RGB", (8, 8), (200, 10, 30)).save(buf, format="JPEG", quality=quality)
