@@ -50,6 +50,8 @@ oidc_server_metadata_url
 oidc_redirect_uri
 brand_primary_color
 brand_logo_url
+privacy_policy_url
+legal_notice_url
 app_public_url
 onion_location
 notify_email_enabled
