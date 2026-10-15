@@ -12,7 +12,7 @@ import json
 import logging
 import uuid
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, cast
 
 from fastapi import Request
 from redis.asyncio import Redis
@@ -24,6 +24,7 @@ from app.models.branding import BrandImage, Branding
 from app.services import brand_colour
 
 CACHE_KEY = "branding:snapshot"
+VERSION_KEY = "branding:version"
 CACHE_SECONDS = 3600
 _FIELDS = ("name", "primary_color", *Branding.IMAGE_FIELDS)
 
@@ -79,22 +80,33 @@ async def _load() -> Snapshot:
     }
 
 
+async def _store(redis: Redis, version: str | None, snap: Snapshot) -> None:
+    await redis.set(CACHE_KEY, json.dumps({"version": version, "rows": snap}), ex=CACHE_SECONDS)
+
+
 async def snapshot(redis: Redis) -> Snapshot:
-    cached = await redis.get(CACHE_KEY)
+    # One round trip; get_redis() decodes responses to str.
+    cached, version = cast("list[str | None]", await redis.mget(CACHE_KEY, VERSION_KEY))
     if cached:
         data: Any
         try:
             data = json.loads(cached)
         except json.JSONDecodeError:
             data = None
-        if isinstance(data, dict):
-            return data
+        # A snapshot loaded before the last invalidate carries an older version: a miss.
+        if isinstance(data, dict) and data.get("version") == version:
+            rows = data.get("rows")
+            if isinstance(rows, dict):
+                return rows
     snap = await _load()
-    await redis.set(CACHE_KEY, json.dumps(snap), ex=CACHE_SECONDS)
+    await _store(redis, version, snap)
     return snap
 
 
 async def invalidate(redis: Redis) -> None:
+    """A page view's load that read the rows before this save may still write its
+    snapshot afterwards; the new version makes that snapshot a miss."""
+    await redis.incr(VERSION_KEY)
     await redis.delete(CACHE_KEY)
 
 
@@ -138,6 +150,7 @@ async def load_branding(request: Request) -> None:
 
     try:
         request.state.branding_snapshot = await snapshot(await get_redis())
-    except Exception:  # noqa: BLE001 — branding must never take a page down
-        log.warning("branding snapshot unavailable; using the environment's", exc_info=True)
+    except Exception as exc:  # noqa: BLE001 — branding must never take a page down
+        # One line, no traceback: while Redis is down this runs on every request.
+        log.warning("branding snapshot unavailable (%r); using the environment's", exc)
         request.state.branding_snapshot = {}

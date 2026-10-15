@@ -82,3 +82,35 @@ async def test_a_shared_image_survives_its_removal_elsewhere(db_session: AsyncSe
     await branding.drop_orphan_images(db_session)
     await db_session.commit()
     assert await db_session.scalar(select(func.count()).select_from(BrandImage)) == 0
+
+
+async def test_a_load_that_began_before_a_save_leaves_no_stale_snapshot(
+    db_session: AsyncSession,
+) -> None:
+    redis: Redis = await get_redis()
+    await branding.invalidate(redis)
+    version = await redis.get(branding.VERSION_KEY)
+    stale = await branding._load()  # a page view reads the rows ...
+    row = await branding.row_for(db_session, None)
+    row.name = "Saved"
+    await db_session.commit()
+    await branding.invalidate(redis)  # ... a save lands meanwhile ...
+    await branding._store(redis, version, stale)  # ... and the slow view caches what it read
+    assert (await branding.snapshot(redis))["default"]["name"] == "Saved"
+
+
+async def test_an_unreachable_redis_logs_one_line_not_a_traceback(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    from types import SimpleNamespace
+
+    async def down() -> Redis:
+        raise ConnectionError("redis is down")
+
+    monkeypatch.setattr("app.redis_client.get_redis", down)
+    request = SimpleNamespace(state=SimpleNamespace())
+    with caplog.at_level("WARNING", logger="app.services.branding"):
+        await branding.load_branding(request)  # type: ignore[arg-type]
+    assert request.state.branding_snapshot == {}
+    [record] = caplog.records
+    assert record.exc_info is None and "redis is down" in record.getMessage()
