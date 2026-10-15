@@ -334,7 +334,9 @@ def _image(fmt: str, size: tuple[int, int] = (400, 200), **save: object) -> byte
 
 def _png_claiming(width: int, height: int) -> bytes:
     def chunk(kind: bytes, body: bytes) -> bytes:
-        return struct.pack(">I", len(body)) + kind + body + struct.pack(">I", zlib.crc32(kind + body))
+        return (
+            struct.pack(">I", len(body)) + kind + body + struct.pack(">I", zlib.crc32(kind + body))
+        )
 
     ihdr = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)
     return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", ihdr) + chunk(b"IEND", b"")
@@ -717,7 +719,11 @@ def test_without_rows_the_environment_decides(monkeypatch: pytest.MonkeyPatch) -
     monkeypatch.setattr(settings, "brand_primary_color", "#123456")
     monkeypatch.setattr(settings, "brand_logo_url", "/static/env.png")
     brand = branding.resolve({}, None)
-    assert (brand.name, brand.primary_color, brand.logo_url) == ("Env Name", "#123456", "/static/env.png")
+    assert (brand.name, brand.primary_color, brand.logo_url) == (
+        "Env Name",
+        "#123456",
+        "/static/env.png",
+    )
 
 
 def test_an_org_field_beats_the_default_and_an_empty_one_falls_back() -> None:
@@ -973,7 +979,9 @@ async def _brand(db: AsyncSession, org_id: uuid.UUID | None, **fields: str) -> N
     await branding.invalidate(await get_redis())
 
 
-async def test_the_default_row_names_the_wizard(client: AsyncClient, db_session: AsyncSession) -> None:
+async def test_the_default_row_names_the_wizard(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
     await _brand(db_session, None, name="Acme Reports")
     html = (await client.get("/submit")).text
     assert '<span translate="no">Acme Reports</span>' in html
@@ -1007,9 +1015,7 @@ async def test_a_broken_cache_falls_back_to_the_environment(
     assert response.status_code == 200 and "Env Fallback" in response.text
 
 
-async def test_the_nav_logo_is_decorative(
-    client: AsyncClient, db_session: AsyncSession
-) -> None:
+async def test_the_nav_logo_is_decorative(client: AsyncClient, db_session: AsyncSession) -> None:
     await _brand(db_session, None, name="Acme")
     from app.config import settings
 
@@ -1203,7 +1209,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.services import branding
 
 
-async def test_a_stored_image_is_served_as_png(client: AsyncClient, db_session: AsyncSession) -> None:
+async def test_a_stored_image_is_served_as_png(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
     sha = await branding.store_image(db_session, b"\x89PNG-served")
     await db_session.commit()
     response = await client.get(f"/branding/{sha}.png")
@@ -1357,7 +1365,9 @@ async def test_a_case_manager_may_not_open_it(acting_as: Any, db_session: AsyncS
     assert (await client.get("/admin/branding")).status_code == 403
 
 
-async def test_an_admin_saves_name_colour_and_logo(acting_as: Any, db_session: AsyncSession) -> None:
+async def test_an_admin_saves_name_colour_and_logo(
+    acting_as: Any, db_session: AsyncSession
+) -> None:
     client, act = acting_as
     act(await _totp_user(db_session, AdminRole.admin))
     response = await _post(
@@ -1389,7 +1399,9 @@ async def test_invalid_input_saves_nothing(
     act(await _totp_user(db_session, AdminRole.admin))
     response = await _post(client, data, files)
     assert response.status_code == 422
-    row = await db_session.scalar(select(branding.Branding).where(branding.Branding.org_id.is_(None)))
+    row = await db_session.scalar(
+        select(branding.Branding).where(branding.Branding.org_id.is_(None))
+    )
     assert row is None
 
 
@@ -1444,7 +1456,7 @@ Expected: FAIL (404 on `/admin/branding`).
 `app/templating.py`, `_ADMIN_NAV` "admin.nav.group.setup" group, after retention:
 
 ```python
-            ("/admin/branding", "admin.nav.branding", "admin"),
+(("/admin/branding", "admin.nav.branding", "admin"),)
 ```
 
 - [ ] **Step 4: Locale keys (all five files, inserted after `"admin.nav.system"`)**
@@ -1556,7 +1568,9 @@ async def _page(
             "org_id": org_id,
             "orgs": orgs,
             "effective": effective,
-            "fallback_name": branding.resolve({k: v for k, v in snap.items() if k == "default"}, None).name
+            "fallback_name": branding.resolve(
+                {k: v for k, v in snap.items() if k == "default"}, None
+            ).name
             if org_id
             else settings.app_name,
             "ratios": {
@@ -1652,7 +1666,11 @@ async def branding_post(
         row.updated_by_id = current_user.id
         await branding.drop_orphan_images(db)
         await audit_service.log(
-            db, current_user, AuditAction.BRANDING_UPDATED, detail={"fields": changed}, target_org=org_id
+            db,
+            current_user,
+            AuditAction.BRANDING_UPDATED,
+            detail={"fields": changed},
+            target_org=org_id,
         )
     await db.commit()
     await branding.invalidate(redis)
@@ -1680,7 +1698,11 @@ async def branding_reset(
     row.updated_by_id = current_user.id
     await branding.drop_orphan_images(db)
     await audit_service.log(
-        db, current_user, AuditAction.BRANDING_RESET, detail={"fields": list(fields)}, target_org=org_id
+        db,
+        current_user,
+        AuditAction.BRANDING_RESET,
+        detail={"fields": list(fields)},
+        target_org=org_id,
     )
     await db.commit()
     await branding.invalidate(redis)
