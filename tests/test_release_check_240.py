@@ -103,5 +103,5 @@ def test_a_stat_card_does_not_carry_state() -> None:
 
 
 def test_a_short_page_does_not_shift_sideways() -> None:
-    rules = re.findall(r"(?m)^html\s*\{([^}]*)\}", CSS)
-    assert any("scrollbar-gutter: stable;" in rule for rule in rules)
+    assert "html:has(.admin-shell) { scrollbar-gutter: stable; }" in CSS
+    assert not re.search(r"(?m)^html\s*\{[^}]*scrollbar-gutter", CSS)  # not on a phone

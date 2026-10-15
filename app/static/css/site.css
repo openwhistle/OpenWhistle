@@ -275,6 +275,11 @@ video {
 /* The admin pages hold eight-column tables: their frame is wider, and the nav and
    footer follow it, so the edges still line up. */
 :root:has(.admin-shell) { --frame: 1440px; }
+/* A short admin page without a scroll bar no longer shifts the menu sideways. Admin pages
+   only: on a phone the reserved gutter narrowed the reporter's case number into two lines. */
+@media (min-width: 901px) {
+  html:has(.admin-shell) { scrollbar-gutter: stable; }
+}
 @media (max-width: 540px) {
   :root { --gutter: 1rem; }
 }
@@ -316,8 +321,6 @@ video {
 }
 html {
   font-size: 16px;
-  /* A short page without a scroll bar no longer shifts the menu and content sideways. */
-  scrollbar-gutter: stable;
   scroll-behavior: smooth;
 }
 body {
