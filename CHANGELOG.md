@@ -7,6 +7,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.4.0] — 2026-10-15
+
 ### Added
 
 - **Branding page**: `/admin/branding` sets the name, a light and a dark logo and the brand colour, with a
@@ -1964,7 +1966,8 @@ Remaining lower-severity findings are tracked in GitHub issues #42–#46.
 - **Rate limiting by session token** (not IP) to maintain full anonymity
 - **alembic upgrade head** on every startup to guarantee migration consistency
 
-[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.3.0...HEAD
+[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.4.0...HEAD
+[2.4.0]: https://github.com/openwhistle/OpenWhistle/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/openwhistle/OpenWhistle/compare/v2.2.1...v2.3.0
 [2.2.1]: https://github.com/openwhistle/OpenWhistle/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/openwhistle/OpenWhistle/compare/v2.1.1...v2.2.0
