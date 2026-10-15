@@ -523,7 +523,7 @@
   "admin.telephone.refs.16": "HinSchG § 16 — Canales de denuncia, forma oral y escrita (Abs. 3):",
   "admin.telephone.refs.eu": "Directiva (UE) 2019/1937 — art. 9 — Confidencialidad:",
   "admin.retention.title": "Política de conservación de datos",
-  "admin.retention.subtitle": "Eliminación automática de las denuncias cerradas tras el periodo de conservación configurado. Cumple la limitación del plazo de conservación del art. 5, apdo. 1, letra e) del RGPD y el § 11 Abs. 5 HinSchG.",
+  "admin.retention.subtitle": "Eliminación automática de las denuncias cerradas tras el periodo de conservación configurado. Cumple la limitación del plazo de conservación del art. 5, apdo. 1, letra e) del RGPD y el § 11 Abs. 5 HinSchG.",
   "admin.retention.stat.status": "Estado",
   "admin.retention.stat.enabled": "Activada",
   "admin.retention.stat.disabled": "Desactivada",

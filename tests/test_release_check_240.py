@@ -71,7 +71,7 @@ def test_a_citation_or_a_period_does_not_break() -> None:
     for name, strings in LOCALES.items():
         for key, value in strings.items():
             assert not re.search(r"§ ?\d", value), (name, key)
-            assert not re.search(r"(Abs\.|Nr\.) \d", value), (name, key)
+            assert not re.search(r"(Abs\.|Nr\.|al\.|apdo\.) \d", value), (name, key)
             assert not re.search(r"(\d|\bI{1,3}) (HinSchG|BGB|StGB)\b", value), (name, key)
             assert not re.search(r"\d (" + UNITS + r")\b", value), (name, key)
 
