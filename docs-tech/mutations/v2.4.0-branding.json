@@ -9,6 +9,11 @@
    "tests/test_branding_images.py",
    "tests/test_branding_admin.py",
    "tests/test_site_css.py"
+  ],
+  "A": [
+   "tests/test_v210_attachment_fidelity.py",
+   "tests/test_attachment_privacy.py",
+   "tests/test_attachments.py"
   ]
  },
  "mutations": [
@@ -99,8 +104,8 @@
   {
    "id": "width-unbounded",
    "file": "app/services/brand_image.py",
-   "old": "    scaled.thumbnail((WIDTH, HEIGHT),",
-   "new": "    scaled.thumbnail((10**6, HEIGHT),",
+   "old": "    image.thumbnail((WIDTH, HEIGHT),",
+   "new": "    image.thumbnail((10**6, HEIGHT),",
    "tests": "B"
   },
   {
@@ -235,6 +240,34 @@
    "old": "{% if theme == 'dark' and row.logo_dark %} data-own-dark=\"1\"{% endif %}",
    "new": "",
    "tests": "B"
+  },
+  {
+   "id": "card-surface-dropped",
+   "file": "app/services/brand_colour.py",
+   "old": "(canvas, card, weak), toward)",
+   "new": "(canvas, weak), toward)",
+   "tests": "B"
+  },
+  {
+   "id": "logo-copies-the-image",
+   "file": "app/services/brand_image.py",
+   "old": "    image.thumbnail((WIDTH, HEIGHT), Image.Resampling.LANCZOS)\n    return _png(image)",
+   "new": "    image = image.copy()\n    image.thumbnail((WIDTH, HEIGHT), Image.Resampling.LANCZOS)\n    return _png(image)",
+   "tests": "B"
+  },
+  {
+   "id": "logo-before-favicons",
+   "file": "app/services/brand_image.py",
+   "old": "    f32, f180 = favicon(image, 32), favicon(image, 180)\n    return logo(image), f32, f180",
+   "new": "    shrunk = logo(image)\n    return shrunk, favicon(image, 32), favicon(image, 180)",
+   "tests": "B"
+  },
+  {
+   "id": "attachment-any-parser",
+   "file": "app/services/attachment.py",
+   "old": "Image.open(io.BytesIO(data), formats=_IMAGE_FORMATS)",
+   "new": "Image.open(io.BytesIO(data))",
+   "tests": "A"
   }
  ]
 }
