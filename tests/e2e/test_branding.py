@@ -76,8 +76,11 @@ def _preview(page: Page) -> dict[str, str]:
     return {"accent": light[0], "on": light[1], "accent-dark": dark[0], "on-dark": dark[1]}
 
 
-# #fd0000 hits a half in a mix; #ffd000 needs black text; #0c7253 is DESIGN.md's own.
-@pytest.mark.parametrize("colour", ["#aa3300", "#ffd000", "#fd0000", "#2f57e6", "#0c7253"])
+# #fd0000 hits a half in a mix; #ffd000 needs black text; #0c7253 is DESIGN.md's own;
+# #f4fdb9 and #150103 are decided by the card surface.
+@pytest.mark.parametrize(
+    "colour", ["#aa3300", "#ffd000", "#fd0000", "#2f57e6", "#0c7253", "#f4fdb9", "#150103"]
+)
 def test_the_preview_shows_what_the_server_saves(admin_page: Page, colour: str) -> None:
     admin_page.goto("/admin/branding")
     admin_page.fill("#bp-colour-hex", colour)

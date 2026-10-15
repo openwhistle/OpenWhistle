@@ -39,10 +39,15 @@ def test_parse_normalises_case_and_space() -> None:
 
 def _meets(primary: str) -> None:
     t = bc.tokens(primary)
-    for theme, canvas in (("", bc.LIGHT_CANVAS), ("-dark", bc.DARK_CANVAS)):
+    for theme, canvas, card in (
+        ("", bc.LIGHT_CANVAS, bc.LIGHT_CARD),
+        ("-dark", bc.DARK_CANVAS, bc.DARK_CARD),
+    ):
         accent, on = t[f"accent{theme}"], t[f"on{theme}"]
         pairs = {
             "link on the canvas": (accent, canvas),
+            # .panel, .stat-card, tr:hover td
+            "link on a card": (accent, card),
             "text on the button": (on, accent),
             # .badge-action, .filter-pill-active, the active admin nav entry
             "accent on its tint": (accent, t[f"accent-weak{theme}"]),
@@ -50,6 +55,11 @@ def _meets(primary: str) -> None:
         }
         for what, (fg, bg) in pairs.items():
             assert bc.contrast(fg, bg) >= bc.TEXT_MINIMUM, (primary, theme, what, t)
+
+
+@pytest.mark.parametrize("primary", ["#f4fdb9", "#150103"])
+def test_the_worst_colours_for_the_card_surface_meet_aa(primary: str) -> None:
+    _meets(primary)
 
 
 def test_two_hundred_colours_meet_aa_in_both_themes() -> None:

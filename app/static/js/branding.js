@@ -2,7 +2,7 @@
 // app/services/brand_colour.py; the server's values are the ones saved.
 (function () {
   'use strict';
-  var LIGHT = '#ffffff', DARK = '#0a0a0b', WHITE = '#ffffff', BLACK = '#000000', MIN = 4.5;
+  var LIGHT = '#ffffff', DARK = '#0a0a0b', LIGHT_CARD = '#f6f6f5', DARK_CARD = '#131315', WHITE = '#ffffff', BLACK = '#000000', MIN = 4.5;
 
   function channels(c) { return [1, 3, 5].map(function (i) { return parseInt(c.substr(i, 2), 16); }); }
   function lum(c) {
@@ -31,12 +31,12 @@
   }
   function on(fill) { return contrast(fill, WHITE) >= contrast(fill, BLACK) ? WHITE : BLACK; }
 
-  // brand_colour.tokens(): canvas, the end the accent moves towards, the tint's share.
-  var THEMES = { light: [LIGHT, BLACK, 0.12], dark: [DARK, WHITE, 0.24] };
+  // brand_colour.tokens(): canvas, card surface, the end the accent moves towards, the tint's share.
+  var THEMES = { light: [LIGHT, BLACK, 0.12, LIGHT_CARD], dark: [DARK, WHITE, 0.24, DARK_CARD] };
   var DESIGN = { light: ['#0c7253', '#ffffff'], dark: ['#23c088', '#06120d'] };
   function derive(colour, theme) {
     if (colour === '#0c7253') { return DESIGN[theme]; }
-    var t = THEMES[theme], accent = readable(colour, [t[0], mix(t[0], colour, t[2])], t[1]);
+    var t = THEMES[theme], accent = readable(colour, [t[0], t[3], mix(t[0], colour, t[2])], t[1]);
     return [accent, on(accent)];
   }
 

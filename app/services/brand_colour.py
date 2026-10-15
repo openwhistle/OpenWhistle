@@ -11,6 +11,9 @@ import re
 DEFAULT = "#0c7253"
 LIGHT_CANVAS = "#ffffff"
 DARK_CANVAS = "#0a0a0b"
+# --surface-card in site.css: .panel, .stat-card and hovered table rows hold links.
+LIGHT_CARD = "#f6f6f5"
+DARK_CARD = "#131315"
 WHITE = "#ffffff"
 BLACK = "#000000"
 # WCAG 2.2 SC 1.4.3 for text; it also covers SC 1.4.11's 3:1 for focus and outlines.
@@ -75,9 +78,12 @@ def _readable(colour: str, backgrounds: tuple[str, ...], toward: str) -> str:
     return toward
 
 
-# Per theme: its canvas, the end the accent moves towards, and the share of the
+# Per theme: its canvas, its card surface, the end the accent moves towards, and the share of the
 # brand colour in the tint (--accent-subtle) that badges and active pills sit on.
-_THEMES = (("", LIGHT_CANVAS, BLACK, 0.12), ("-dark", DARK_CANVAS, WHITE, 0.24))
+_THEMES = (
+    ("", LIGHT_CANVAS, LIGHT_CARD, BLACK, 0.12),
+    ("-dark", DARK_CANVAS, DARK_CARD, WHITE, 0.24),
+)
 
 
 def tokens(primary: str) -> dict[str, str]:
@@ -85,9 +91,9 @@ def tokens(primary: str) -> dict[str, str]:
     if colour == DEFAULT:
         return dict(DESIGN_TOKENS)
     out: dict[str, str] = {}
-    for suffix, canvas, toward, share in _THEMES:
+    for suffix, canvas, card, toward, share in _THEMES:
         weak = _mix(canvas, colour, share)
-        accent = _readable(colour, (canvas, weak), toward)
+        accent = _readable(colour, (canvas, card, weak), toward)
         on = _on(accent)
         out[f"accent{suffix}"] = accent
         out[f"on{suffix}"] = on
