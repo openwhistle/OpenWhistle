@@ -127,7 +127,7 @@ async def test_a_body_that_never_parses_wears_the_stored_branding(
 ) -> None:
     # FastAPI solves the app's dependencies (load_branding) before it reads a body, so
     # validation_exception_handler needs no load_branding of its own. This pins that order
-    # with the earliest error there is, unparseable JSON; the app takes no JSON body today.
+    # with the earliest error there is, unparsable JSON; the app takes no JSON body today.
     from pydantic import BaseModel
 
     from app.main import app
