@@ -17,6 +17,7 @@ from fastapi import (
     status,
 )
 from fastapi.responses import HTMLResponse, RedirectResponse
+from PIL import Image
 from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -136,11 +137,11 @@ async def branding_get(
     return await _page(request, db, current_user, await _target(db, current_user, org))
 
 
-async def _logo(upload: UploadFile | None) -> bytes | None:
+async def _logo(upload: UploadFile | None) -> Image.Image | None:
     if upload is None or not upload.filename:
         return None
     data = await upload.read(brand_image.MAX_BYTES + 1)
-    return brand_image.process_logo(data) if data else None
+    return brand_image.decode(data) if data else None
 
 
 @router.post("/admin/branding", response_model=None)
@@ -184,7 +185,7 @@ async def branding_post(
             setattr(row, field_name, value)
             changed.append(field_name)
     if light is not None:
-        row.logo_light = await branding.store_image(db, light)
+        row.logo_light = await branding.store_image(db, brand_image.logo(light))
         row.favicon_32 = await branding.store_image(db, brand_image.favicon(light, 32))
         row.favicon_180 = await branding.store_image(db, brand_image.favicon(light, 180))
         changed.append("logo_light")
@@ -192,7 +193,7 @@ async def branding_post(
         row.logo_light = row.favicon_32 = row.favicon_180 = None
         changed.append("logo_light")
     if dark is not None:
-        row.logo_dark = await branding.store_image(db, dark)
+        row.logo_dark = await branding.store_image(db, brand_image.logo(dark))
         changed.append("logo_dark")
     elif remove_logo_dark == "1" and row.logo_dark:
         row.logo_dark = None

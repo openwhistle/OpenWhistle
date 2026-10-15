@@ -14,7 +14,9 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 MAX_BYTES = 1_000_000
 MAX_PIXELS = 16_000_000
 HEIGHT = 96  # the nav shows 32 px; three times that for dense screens
-_FORMATS = {"PNG", "JPEG", "WEBP"}
+WIDTH = HEIGHT * 16  # the nav caps a logo at 12rem; a 16000 x 1 strip stays bounded
+# Pillow tries only these parsers: a file that is anything else is never parsed as it.
+_FORMATS = ("PNG", "JPEG", "WEBP")
 
 
 class BrandImageError(ValueError):
@@ -30,31 +32,36 @@ def _png(image: Image.Image) -> bytes:
     return out.getvalue()
 
 
-def process_logo(data: bytes) -> bytes:
+def decode(data: bytes) -> Image.Image:
+    """The upload's pixels at full size, or BrandImageError naming why not."""
     if len(data) > MAX_BYTES:
         raise BrandImageError("admin.branding.error.too_large")
     try:
-        with Image.open(io.BytesIO(data)) as source:
-            if source.format not in _FORMATS:
-                raise BrandImageError("admin.branding.error.format")
+        with Image.open(io.BytesIO(data), formats=_FORMATS) as source:
             # Before any pixel is decoded: the header names the size.
             if source.width * source.height > MAX_PIXELS:
                 raise BrandImageError("admin.branding.error.dimensions")
-            image = ImageOps.exif_transpose(source).convert("RGBA")
+            return ImageOps.exif_transpose(source).convert("RGBA")
+    except BrandImageError:
+        raise
     except Image.DecompressionBombError:
         raise BrandImageError("admin.branding.error.dimensions") from None
-    except (UnidentifiedImageError, OSError) as exc:
+    # A broken file surfaces as any of these, some only while the pixels decode.
+    except (UnidentifiedImageError, OSError, SyntaxError, ValueError) as exc:
         raise BrandImageError("admin.branding.error.format") from exc
-    if image.height > HEIGHT:
-        width = max(1, round(image.width * HEIGHT / image.height))
-        image = image.resize((width, HEIGHT), Image.Resampling.LANCZOS)
-    return _png(image)
 
 
-def favicon(png: bytes, size: int) -> bytes:
-    with Image.open(io.BytesIO(png)) as source:
-        logo = source.convert("RGBA")
-    logo.thumbnail((size, size), Image.Resampling.LANCZOS)
+def logo(image: Image.Image) -> bytes:
+    """The nav logo: at most HEIGHT high and WIDTH wide, never upscaled."""
+    scaled = image.copy()
+    scaled.thumbnail((WIDTH, HEIGHT), Image.Resampling.LANCZOS)
+    return _png(scaled)
+
+
+def favicon(image: Image.Image, size: int) -> bytes:
+    """The logo letterboxed onto a transparent square, drawn from the full-size image."""
+    scaled = image.copy()
+    scaled.thumbnail((size, size), Image.Resampling.LANCZOS)
     square = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    square.paste(logo, ((size - logo.width) // 2, (size - logo.height) // 2), logo)
+    square.paste(scaled, ((size - scaled.width) // 2, (size - scaled.height) // 2), scaled)
     return _png(square)
