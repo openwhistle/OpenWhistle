@@ -573,7 +573,6 @@
   "admin.branding.contrast": "Contraste : boutons {button}, liens clair {light}, liens sombre {dark}. Il faut au moins 4,5:1 ; la page ajuste la nuance pour y arriver.",
   "admin.branding.save": "Enregistrer l'image de marque",
   "admin.branding.saved": "Image de marque enregistrée.",
-  "admin.branding.reset": "Réinitialiser",
   "admin.branding.reset_all": "Tout réinitialiser",
   "admin.branding.preview": "Aperçu",
   "admin.branding.preview.light": "Clair",

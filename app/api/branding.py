@@ -60,8 +60,10 @@ async def _target(db: AsyncSession, user: AdminUser, org: str) -> uuid.UUID | No
     """Whose branding this admin edits: an instance admin the default, or with
     multi-tenancy any organisation; an organisation's admin only their own."""
     if may_run_the_instance(user):
-        if not org or not settings.multi_tenancy_enabled:
+        if not org:
             return None
+        if not settings.multi_tenancy_enabled:  # no organisation to brand, not the default's row
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
         try:
             org_id = uuid.UUID(org)
         except ValueError:
@@ -89,6 +91,8 @@ async def _page(
     snap = getattr(request.state, "branding_snapshot", {})
     effective = branding.resolve(snap, org_id)
     tokens = effective.tokens
+    # An emptied field falls back to the default row (organisation) or the environment.
+    fallback = branding.resolve({"default": snap.get("default", {})} if org_id else {}, None)
     orgs: list[Organisation] = []
     if may_run_the_instance(user) and settings.multi_tenancy_enabled:
         orgs = list((await db.scalars(select(Organisation).order_by(Organisation.name))).all())
@@ -101,11 +105,7 @@ async def _page(
             "org_id": org_id,
             "orgs": orgs,
             "effective": effective,
-            "fallback_name": branding.resolve(
-                {k: v for k, v in snap.items() if k == "default"}, None
-            ).name
-            if org_id
-            else settings.app_name,
+            "fallback": fallback,
             "ratios": {
                 key: f"{brand_colour.contrast(fg, bg):.1f}:1"
                 for key, fg, bg in (

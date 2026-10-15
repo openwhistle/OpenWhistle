@@ -49,9 +49,9 @@
 
             <div class="form-group">
                 <label class="form-label" for="bp-name">{{ t('admin.branding.name') }}</label>
-                <input class="form-control" id="bp-name" name="name" maxlength="64" placeholder="{{ fallback_name }}"
+                <input class="form-control" id="bp-name" name="name" maxlength="64" placeholder="{{ fallback.name }}"
                        value="{{ form.get('name', row.name or '') }}" aria-describedby="bp-name-hint">
-                <p class="form-hint" id="bp-name-hint">{{ t('admin.branding.name.hint', fallback=fallback_name) }}</p>
+                <p class="form-hint" id="bp-name-hint">{{ t('admin.branding.name.hint', fallback=fallback.name) }}</p>
             </div>
 
             {% for key in ['logo_light', 'logo_dark'] %}
@@ -74,7 +74,7 @@
                 <div class="bp-colour">
                     <input type="color" id="bp-colour-picker" value="{{ effective.primary_color }}">
                     <input class="form-control" id="bp-colour-hex" name="primary_color" aria-label="{{ t('admin.branding.colour.hex') }}" pattern="#[0-9a-fA-F]{6}"
-                           value="{{ form.get('primary_color', row.primary_color or '') }}" placeholder="{{ effective.primary_color }}"
+                           value="{{ form.get('primary_color', row.primary_color or '') }}" placeholder="{{ fallback.primary_color }}"
                            aria-describedby="bp-contrast">
                 </div>
                 <p class="form-hint" id="bp-contrast" aria-live="polite"
@@ -93,7 +93,7 @@
                 <p class="form-hint">{{ t('admin.branding.preview.' ~ theme) }}</p>
                 <div class="bp-nav">
                     {% set src = (effective.logo_dark_url if theme == 'dark' and effective.logo_dark_url else effective.logo_url) %}
-                    <img data-preview-img="{{ theme }}" src="{{ src }}" alt=""{% if not src %} hidden{% endif %}>
+                    <img data-preview-img="{{ theme }}" src="{{ src }}" alt=""{% if not src %} hidden{% endif %}{% if theme == 'dark' and row.logo_dark %} data-own-dark="1"{% endif %}>
                     <span data-preview-name>{{ effective.name }}</span>
                 </div>
                 <span class="bp-button">{{ t('admin.branding.preview.button') }}</span>

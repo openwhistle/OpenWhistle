@@ -585,7 +585,6 @@
   "admin.branding.contrast": "Contraste: botões {button}, links claro {light}, links escuro {dark}. É preciso ao menos 4,5:1; a página ajusta o tom para isso.",
   "admin.branding.save": "Salvar identidade visual",
   "admin.branding.saved": "Identidade visual salva.",
-  "admin.branding.reset": "Redefinir",
   "admin.branding.reset_all": "Redefinir tudo",
   "admin.branding.preview": "Pré-visualização",
   "admin.branding.preview.light": "Claro",

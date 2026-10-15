@@ -573,7 +573,6 @@
   "admin.branding.contrast": "Contrast: buttons {button}, links light {light}, links dark {dark}. At least 4.5:1 is needed; the page adjusts the shade to reach it.",
   "admin.branding.save": "Save branding",
   "admin.branding.saved": "Branding saved.",
-  "admin.branding.reset": "Reset",
   "admin.branding.reset_all": "Reset everything",
   "admin.branding.preview": "Preview",
   "admin.branding.preview.light": "Light",

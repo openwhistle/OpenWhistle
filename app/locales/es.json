@@ -573,7 +573,6 @@
   "admin.branding.contrast": "Contraste: botones {button}, enlaces claro {light}, enlaces oscuro {dark}. Se necesita al menos 4,5:1; la página ajusta el tono para lograrlo.",
   "admin.branding.save": "Guardar imagen de marca",
   "admin.branding.saved": "Imagen de marca guardada.",
-  "admin.branding.reset": "Restablecer",
   "admin.branding.reset_all": "Restablecer todo",
   "admin.branding.preview": "Vista previa",
   "admin.branding.preview.light": "Claro",

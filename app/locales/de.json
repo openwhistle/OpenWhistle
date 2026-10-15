@@ -573,7 +573,6 @@
   "admin.branding.contrast": "Kontrast: Buttons {button}, Links hell {light}, Links dunkel {dark}. Nötig sind mindestens 4,5:1; die Seite passt den Farbton dafür an.",
   "admin.branding.save": "Branding speichern",
   "admin.branding.saved": "Branding gespeichert.",
-  "admin.branding.reset": "Zurücksetzen",
   "admin.branding.reset_all": "Alles zurücksetzen",
   "admin.branding.preview": "Vorschau",
   "admin.branding.preview.light": "Hell",
