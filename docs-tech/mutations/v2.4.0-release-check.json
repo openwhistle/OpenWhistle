@@ -22,8 +22,8 @@
   {
    "id": "citation-breaks",
    "file": "app/locales/de.json",
-   "old": "\"external.lead\": \"Sie können sich statt an diese interne Meldestelle auch an eine externe Meldestelle wenden, oder danach (§ 7 HinSchG).",
-   "new": "\"external.lead\": \"Sie können sich statt an diese interne Meldestelle auch an eine externe Meldestelle wenden, oder danach (§ 7 HinSchG).",
+   "old": "danach (§ 7 HinSchG)",
+   "new": "danach (§ 7 HinSchG)",
    "tests": "R"
   },
   {
