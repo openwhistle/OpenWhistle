@@ -20,15 +20,15 @@
   {
    "id": "accent-not-adjusted",
    "file": "app/services/brand_colour.py",
-   "old": "        accent = _readable(colour, (canvas, weak), toward)",
+   "old": "        accent = _readable(colour, (canvas, card, weak), toward)",
    "new": "        accent = colour",
    "tests": "B"
   },
   {
    "id": "tint-ignored",
    "file": "app/services/brand_colour.py",
-   "old": "_readable(colour, (canvas, weak), toward)",
-   "new": "_readable(colour, (canvas,), toward)",
+   "old": "_readable(colour, (canvas, card, weak), toward)",
+   "new": "_readable(colour, (canvas, card), toward)",
    "tests": "B"
   },
   {
@@ -90,7 +90,7 @@
   {
    "id": "logo-not-scaled",
    "file": "app/services/brand_image.py",
-   "old": "    scaled.thumbnail((WIDTH, HEIGHT), Image.Resampling.LANCZOS)\n",
+   "old": "    image.thumbnail((WIDTH, HEIGHT), Image.Resampling.LANCZOS)\n",
    "new": "",
    "tests": "B"
   },
