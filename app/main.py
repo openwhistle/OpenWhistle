@@ -8,7 +8,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.exception_handlers import (
     http_exception_handler as _default_http_exception_handler,
 )
@@ -24,6 +24,7 @@ from app.i18n import get_lang, make_translator
 from app.logging_config import configure_logging
 from app.middleware import SecurityMiddleware
 from app.redis_client import close_redis
+from app.services.branding import load_branding
 
 # A generic, localised message per status code an HTML page may show for a
 # raised HTTPException — never the raw exc.detail, which can carry internal
@@ -259,6 +260,7 @@ def create_app() -> FastAPI:
         redoc_url=None,
         openapi_url=None,
         lifespan=lifespan,
+        dependencies=[Depends(load_branding)],
     )
 
     # The last one added runs first: SecurityMiddleware drops the peer address and the
@@ -298,6 +300,8 @@ def create_app() -> FastAPI:
         from app.templating import render
 
         t = make_translator(get_lang(request))
+        if not hasattr(request.state, "branding_snapshot"):
+            await load_branding(request)  # an unmatched path never ran the route dependencies
         key = _HTML_ERROR_DETAIL_KEYS.get(exc.status_code, "error.detail.generic")
         return render(
             request,
@@ -314,11 +318,13 @@ def create_app() -> FastAPI:
 
     from app.api.admin import router as admin_router
     from app.api.auth import router as auth_router
+    from app.api.branding import router as branding_router
     from app.api.reports import router as reports_router
     from app.api.wizard import router as wizard_router
 
     application.include_router(reports_router)
     application.include_router(auth_router)
+    application.include_router(branding_router)
     application.include_router(admin_router)
     application.include_router(wizard_router)
 

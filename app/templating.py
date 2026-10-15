@@ -12,9 +12,9 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from markupsafe import Markup, escape
 
-from app.config import Settings, settings
+from app.config import settings
 from app.i18n import format_count, format_decimal, format_percent, get_lang, make_translator
-from app.services import deadlines
+from app.services import branding, deadlines
 from app.services.attachment import format_size
 from app.services.categories import category_label
 from app.services.report import format_day, whistleblower_caused
@@ -48,30 +48,9 @@ templates.env.filters["wbr_after_hyphens"] = wbr_after_hyphens
 
 templates.env.filters["category_label"] = category_label
 
-# DESIGN.md's accent family, for the default brand only. A custom brand.primary_color keeps the
-# tints site.css derives from it; these hold exactly what DESIGN.md says the emerald looks like.
-_DESIGN_ACCENT = {
-    "accent-weak": "#e5f3ee",
-    "accent-strong": "#0b6249",
-    "accent-dark": "#23c088",
-    "accent-weak-dark": "#0d211a",
-    "accent-strong-dark": "#1fa878",
-}
 
-
-def brand_accent(primary_color: str) -> dict[str, str]:
-    """The `--brand-*` overrides base.html emits: DESIGN.md's for the default brand, else none."""
-    default = Settings.model_fields["brand_primary_color"].default
-    return _DESIGN_ACCENT if primary_color.strip().lower() == default else {}
-
-
-templates.env.globals["brand_accent"] = brand_accent
-
-templates.env.globals["brand"] = {
-    "name": settings.app_name,
-    "primary_color": settings.brand_primary_color,
-    "logo_url": settings.brand_logo_url,
-}
+# Pages rendered outside render() (a bare error page) keep the environment's branding.
+templates.env.globals["brand"] = branding.resolve({}, None)
 
 templates.env.globals["is_demo"] = settings.demo_mode
 templates.env.globals["privacy_policy_url"] = settings.privacy_policy_url
@@ -178,6 +157,15 @@ templates.env.filters["audit_detail"] = audit_detail
 templates.env.globals["REASON_UNREADABLE"] = REASON_UNREADABLE
 
 
+def current_brand(request: Request, ctx: dict[str, Any]) -> branding.Brand:
+    """The branding of the organisation this page serves: the wizard's, the signed-in
+    admin's, else the case's (the status page), else the instance default."""
+    org_id = getattr(request.state, "org_id", None)
+    if org_id is None and ctx.get("report") is not None:
+        org_id = getattr(ctx["report"], "org_id", None)
+    return branding.resolve(getattr(request.state, "branding_snapshot", {}), org_id)
+
+
 def render(
     request: Request,
     template: str,
@@ -188,6 +176,8 @@ def render(
     lang = get_lang(request)
     ctx["t"] = template_translator(lang)
     ctx["lang"] = lang
+
+    ctx.setdefault("brand", current_brand(request, ctx))
 
     session_expires_at = getattr(request.state, "session_expires_at", None)
     if session_expires_at is not None:
@@ -212,6 +202,7 @@ _ADMIN_NAV: tuple[tuple[str, tuple[tuple[str, str, str | None], ...]], ...] = (
             ("/admin/categories", "admin.nav.categories", "admin"),
             ("/admin/locations", "admin.nav.locations", "admin"),
             ("/admin/retention", "admin.nav.retention", "admin"),
+            ("/admin/branding", "admin.nav.branding", "admin"),
         ),
     ),
     (

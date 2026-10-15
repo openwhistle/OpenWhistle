@@ -1,5 +1,6 @@
 """Shared test fixtures for OpenWhistle tests."""
 
+import contextlib
 import os
 import re
 import subprocess
@@ -154,13 +155,43 @@ async def db_session(db_engine: AsyncEngine) -> AsyncGenerator[AsyncSession]:
 
 
 @pytest_asyncio.fixture(loop_scope="function")
+async def clean_branding(db_engine: AsyncEngine) -> AsyncGenerator[None]:
+    """Empty the branding tables and snapshot before and after a test (DB and Redis persist)."""
+    from app.config import settings
+    from app.database import engine as app_engine
+    from app.redis_client import close_redis, get_redis
+
+    async def _wipe() -> None:
+        engine = create_async_engine(settings.database_url, poolclass=NullPool)
+        async with engine.begin() as conn:
+            await conn.execute(text("DELETE FROM branding"))
+            await conn.execute(text("DELETE FROM brand_images"))
+        await engine.dispose()
+        with contextlib.suppress(Exception):  # Redis may be down in a DB-only run
+            await (await get_redis()).delete("branding:snapshot")
+        await close_redis()
+        # Pooled app connections belong to this test's loop; the next test has another.
+        await app_engine.dispose()
+
+    await _wipe()
+    yield
+    await _wipe()
+
+
+@pytest_asyncio.fixture(loop_scope="function")
 async def client(db_engine: AsyncEngine) -> AsyncGenerator[AsyncClient]:
     """HTTP test client — fresh DB + Redis connections per test to avoid cross-loop errors."""
     from app.config import settings
     from app.redis_client import close_redis
 
-    # Reset Redis so the next request creates a fresh connection on this loop
-    await close_redis()
+    # Reset Redis so the next request creates a fresh connection on this loop. A client
+    # left by a test whose loop is gone cannot be closed any more; drop it instead.
+    try:
+        await close_redis()
+    except RuntimeError:
+        import app.redis_client as redis_client
+
+        redis_client._redis = None
 
     test_engine = create_async_engine(settings.database_url, poolclass=NullPool)
     test_session_factory = async_sessionmaker(test_engine, expire_on_commit=False)

@@ -1,5 +1,6 @@
 from app.models.attachment import Attachment
 from app.models.audit import AuditLog
+from app.models.branding import BrandImage, Branding
 from app.models.category import ReportCategory
 from app.models.location import Location
 from app.models.organisation import Organisation
@@ -24,6 +25,8 @@ __all__ = [
     "AdminUser",
     "AuditLog",
     "Attachment",
+    "BrandImage",
+    "Branding",
     "CaseLink",
     "DeletionRequest",
     "Location",

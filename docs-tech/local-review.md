@@ -146,6 +146,7 @@ pages are reviewed in openwhistle/website (its `docs-tech/local-review.md`).
 | `/admin/categories` | `admin/categories.html` | Category management. |
 | `/admin/locations` | `admin/locations.html` | Location management. |
 | `/admin/retention` | `admin/retention.html` | Retention policy settings. |
+| `/admin/branding` | `admin/branding.html` | Name, logos, colour and the live preview; try #ffd000 and a wide logo. |
 | `/admin/stats` | `admin/stats.html` | Statistics dashboard. |
 | `/admin/system` | `admin/system.html` | System info page. |
 | `/admin/telephone-channel` | `admin/telephone_channel.html` | HinSchG §16 compliance checklist page. |

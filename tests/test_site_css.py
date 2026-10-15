@@ -8,6 +8,9 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import pytest
+from httpx import AsyncClient
+
 from tests.diagram_tools import renderer
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -50,7 +53,7 @@ def _block(text: str, opener: str) -> dict[str, str]:
 
 
 # App token -> DESIGN.md key. Brand-derived tokens (--brand-primary, --accent, --accent-subtle,
-# --cta-bg, --cta-bg-hover) are excluded: an operator re-brands them through brand.primary_color.
+# --cta-bg, --cta-bg-hover, --cta-text) are excluded: brand.primary_color re-brands them.
 APP_TOKENS = {
     "--canvas": "canvas",
     "--surface-card": "surface",
@@ -72,7 +75,6 @@ APP_TOKENS = {
     "--info-subtle": "info-weak",
     "--on-dark": "inverse-ink",
     "--muted-on-dark": "inverse-muted",
-    "--cta-text": "accent-ink",
 }
 
 
@@ -97,6 +99,7 @@ BRAND_TOKENS = {
     "--accent-subtle": "accent-weak",
     "--cta-bg": "accent",
     "--cta-bg-hover": "accent-strong",
+    "--cta-text": "accent-ink",
 }
 
 
@@ -104,6 +107,7 @@ def _head_vars(primary_color: str) -> dict[str, str]:
     """The custom properties base.html's nonce'd style block sets for this brand colour."""
     from types import SimpleNamespace
 
+    from app.services import branding
     from app.templating import templates
 
     source = (ROOT / "app" / "templates" / "base.html").read_text(encoding="utf-8")
@@ -111,7 +115,7 @@ def _head_vars(primary_color: str) -> dict[str, str]:
     assert style
     html = templates.env.from_string(style.group(0)).render(
         request=SimpleNamespace(state=SimpleNamespace(csp_nonce="n")),
-        brand={**templates.env.globals["brand"], "primary_color": primary_color},
+        brand=branding.resolve({"default": {"primary_color": primary_color}}, None),
     )
     return dict(re.findall(r"(--brand-[\w-]+)\s*:\s*([^;]+);", html))
 
@@ -140,10 +144,28 @@ def test_the_default_brand_draws_the_design_md_accent_in_both_themes() -> None:
             assert _hex6(_resolve(scope[token], scope)) == palette[theme][key], (theme, token)
 
 
-def test_a_custom_brand_keeps_its_derived_accent() -> None:
-    assert set(_head_vars("#7b2cbf")) == {"--brand-primary"}
-    dark = _app_scopes("#7b2cbf")["dark"]
-    assert _resolve(dark["--accent"], dark).startswith("color-mix(in srgb,var(--brand-primary)")
+# #ffd000 takes black text: a hover darkened toward black left it at 3.6:1.
+@pytest.mark.parametrize("primary", ["#7b2cbf", "#ffd000", "#2f57e6"])
+def test_a_custom_brand_gets_computed_aa_tokens(primary: str) -> None:
+    from app.services import brand_colour
+
+    brand = _head_vars(primary)
+    emitted = {f"--brand-{k}" for k in brand_colour.tokens(primary)}
+    assert set(brand) == {"--brand-primary"} | emitted
+    scopes = _app_scopes(primary)
+    for theme, canvas in (("light", brand_colour.LIGHT_CANVAS), ("dark", brand_colour.DARK_CANVAS)):
+        scope = scopes[theme]
+        names = ("--accent", "--accent-subtle", "--cta-text")
+        token = {k: _resolve(scope[k], scope) for k in names}
+        hover = _resolve(scope["--cta-bg-hover"], scope)
+        # As site.css draws them: links, badges and active pills on the tint, button text.
+        for fg, bg in (
+            (token["--accent"], canvas),
+            (token["--accent"], token["--accent-subtle"]),
+            (token["--cta-text"], token["--accent"]),
+            (token["--cta-text"], hover),
+        ):
+            assert brand_colour.contrast(fg, bg) >= brand_colour.TEXT_MINIMUM, (theme, fg, bg)
 
 
 def test_nothing_transitions_all() -> None:
@@ -323,3 +345,14 @@ def test_a_transition_property_list_names_each_property_once() -> None:
     for names in re.findall(r"transition-property:\s*([^;]+);", APP_CSS.read_text("utf-8")):
         parts = [n.strip() for n in names.split(",")]
         assert len(parts) == len(set(parts)), names
+
+
+async def test_an_unparsable_brand_colour_falls_back_to_the_default(
+    client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "brand_primary_color", "red")
+    response = await client.get("/submit")
+    assert response.status_code == 200
+    assert "--brand-accent: #0c7253" in response.text

@@ -156,6 +156,12 @@ def setup_admin_system(page: Page) -> None:
     page.wait_for_load_state("networkidle")
 
 
+def setup_admin_branding(page: Page) -> None:
+    _login_admin(page)
+    page.goto(f"{BASE_URL}/admin/branding")
+    page.wait_for_load_state("networkidle")
+
+
 @dataclass(frozen=True)
 class Screenshot:
     name: str
@@ -172,6 +178,7 @@ SCREENSHOTS: list[Screenshot] = [
     Screenshot("admin-dashboard", "/admin/dashboard", setup_admin_dashboard),
     Screenshot("admin-report", "/admin/reports/{id}", setup_admin_report),
     Screenshot("admin-system", "/admin/system", setup_admin_system),
+    Screenshot("admin-branding", "/admin/branding", setup_admin_branding),
 ]
 
 

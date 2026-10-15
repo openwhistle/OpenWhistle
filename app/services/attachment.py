@@ -163,14 +163,23 @@ def _orientation_exif(value: int) -> bytes:
     return header + struct.pack(">HHIHHI", _ORIENTATION, 3, 1, value, 0, 0)
 
 
+# MPO is no parser of its own: the JPEG parser hands such a file over.
+_IMAGE_FORMATS = ("JPEG", "PNG", "WEBP", "GIF", "TIFF")
+
+
 def _strip_image(data: bytes) -> bytes:
     # JPEG, PNG and WebP are cleaned by dropping their metadata segments, not by
     # re-encoding. The re-encode this replaced turned palette PNGs black, kept
     # one frame of an animated PNG or WebP, altered every pixel of a JPEG and
     # grew a 5.5 MB JPEG to 14.4 MB, past the 10 MB limit it had passed.
-    from PIL import Image  # noqa: PLC0415
+    from PIL import Image, UnidentifiedImageError  # noqa: PLC0415
 
-    with Image.open(io.BytesIO(data)) as img:
+    # Only the formats cleaned below are parsed; any other parser never sees the bytes.
+    try:
+        img = Image.open(io.BytesIO(data), formats=_IMAGE_FORMATS)
+    except UnidentifiedImageError as exc:
+        raise MetadataError("unsupported image format") from exc
+    with img:
         fmt = img.format
         if fmt in ("JPEG", "MPO"):  # MPO: a JPEG with more pictures after it
             return _strip_jpeg(data, img.info.get("exif", b""))

@@ -207,6 +207,7 @@ async def _tenant(request: Request, db: AsyncSession) -> _Tenant | Response:
     org_slug: str | None = request.path_params.get("org_slug")
     if not settings.multi_tenancy_enabled:
         if org_slug is None:
+            request.state.org_id = None
             return _Tenant(scoped=False, org_id=None, path="/submit")
         if org_slug == settings.default_org_slug:
             return RedirectResponse("/submit", status_code=303)
@@ -222,6 +223,7 @@ async def _tenant(request: Request, db: AsyncSession) -> _Tenant | Response:
                 {"status_code": 503, "detail": t("error.detail.reporting_not_configured")},
                 status_code=503,
             )
+        request.state.org_id = default_id
         return _Tenant(scoped=True, org_id=default_id, path="/submit")
     org_id = await db.scalar(
         select(Organisation.id).where(
@@ -230,6 +232,7 @@ async def _tenant(request: Request, db: AsyncSession) -> _Tenant | Response:
     )
     if org_id is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    request.state.org_id = org_id
     return _Tenant(scoped=True, org_id=org_id, path=f"/submit/{org_slug}")
 
 

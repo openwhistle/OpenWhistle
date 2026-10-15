@@ -493,9 +493,9 @@ async def test_the_tab_title_carries_the_operators_name(
     in the tab and the browser history."""
     import re
 
-    from app.templating import templates
+    from app.config import settings
 
-    monkeypatch.setitem(templates.env.globals["brand"], "name", "Acme Reports")
+    monkeypatch.setattr(settings, "app_name", "Acme Reports")
     html = (await client.get(path)).text  # type: ignore[attr-defined]
     title = re.search(r"<title>(.*?)</title>", html, re.S)
     assert title and "Acme Reports" in title[1] and "OpenWhistle" not in title[1], title

@@ -58,6 +58,8 @@ class AuditAction:
     TELEMETRY_ENABLED = "telemetry.enabled"
     TELEMETRY_DISABLED = "telemetry.disabled"
     TELEMETRY_ID_RESET = "telemetry.id_reset"
+    BRANDING_UPDATED = "branding.updated"
+    BRANDING_RESET = "branding.reset"
     IP_WARNING_DISMISSED = "system.ip_warning_dismissed"
 
 

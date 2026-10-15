@@ -1,0 +1,273 @@
+{
+ "test_groups": {
+  "B": [
+   "tests/test_brand_colour.py",
+   "tests/test_brand_image.py",
+   "tests/test_branding_model.py",
+   "tests/test_branding_service.py",
+   "tests/test_branding_pages.py",
+   "tests/test_branding_images.py",
+   "tests/test_branding_admin.py",
+   "tests/test_site_css.py"
+  ],
+  "A": [
+   "tests/test_v210_attachment_fidelity.py",
+   "tests/test_attachment_privacy.py",
+   "tests/test_attachments.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "accent-not-adjusted",
+   "file": "app/services/brand_colour.py",
+   "old": "        accent = _readable(colour, (canvas, card, weak), toward)",
+   "new": "        accent = colour",
+   "tests": "B"
+  },
+  {
+   "id": "tint-ignored",
+   "file": "app/services/brand_colour.py",
+   "old": "_readable(colour, (canvas, card, weak), toward)",
+   "new": "_readable(colour, (canvas, card), toward)",
+   "tests": "B"
+  },
+  {
+   "id": "hover-toward-text",
+   "file": "app/services/brand_colour.py",
+   "old": "_mix(accent, BLACK if on == WHITE else WHITE, 0.15)",
+   "new": "_mix(accent, BLACK, 0.15)",
+   "tests": "B"
+  },
+  {
+   "id": "tint-not-emitted",
+   "file": "app/services/brand_colour.py",
+   "old": "        out[f\"accent-weak{suffix}\"] = weak\n",
+   "new": "",
+   "tests": "B"
+  },
+  {
+   "id": "css-ignores-the-tint",
+   "file": "app/static/css/site.css",
+   "old": "  --accent-subtle: var(--brand-accent-weak,color-mix(in srgb,var(--brand-primary) 12%,#fff));",
+   "new": "  --accent-subtle: color-mix(in srgb,var(--brand-primary) 12%,#fff);",
+   "tests": "B"
+  },
+  {
+   "id": "css-ignores-the-dark-hover",
+   "file": "app/static/css/site.css",
+   "old": "  --cta-bg-hover: var(--brand-accent-strong-dark,color-mix(in srgb,var(--accent) 88%,#fff));",
+   "new": "  --cta-bg-hover: color-mix(in srgb,var(--accent) 88%,#fff);",
+   "tests": "B"
+  },
+  {
+   "id": "rounding-half-even",
+   "file": "app/services/brand_colour.py",
+   "old": "int(c + (t - c) * share + 0.5)",
+   "new": "round(c + (t - c) * share)",
+   "tests": "B"
+  },
+  {
+   "id": "ink-instead-of-black",
+   "file": "app/services/brand_colour.py",
+   "old": "    return WHITE if contrast(fill, WHITE) >= contrast(fill, BLACK) else BLACK",
+   "new": "    return WHITE if contrast(fill, WHITE) >= contrast(fill, DARK_CANVAS) else DARK_CANVAS",
+   "tests": "B"
+  },
+  {
+   "id": "formats-unrestricted",
+   "file": "app/services/brand_image.py",
+   "old": "        with Image.open(io.BytesIO(data), formats=_FORMATS) as source:",
+   "new": "        with Image.open(io.BytesIO(data)) as source:",
+   "tests": "B"
+  },
+  {
+   "id": "no-pixel-cap",
+   "file": "app/services/brand_image.py",
+   "old": "            if source.width * source.height > MAX_PIXELS:",
+   "new": "            if False:",
+   "tests": "B"
+  },
+  {
+   "id": "logo-not-scaled",
+   "file": "app/services/brand_image.py",
+   "old": "    image.thumbnail((WIDTH, HEIGHT), Image.Resampling.LANCZOS)\n",
+   "new": "",
+   "tests": "B"
+  },
+  {
+   "id": "stored-as-uploaded-format",
+   "file": "app/services/brand_image.py",
+   "old": "    image.save(out, format=\"PNG\", optimize=True)",
+   "new": "    image.save(out, format=\"WEBP\")",
+   "tests": "B"
+  },
+  {
+   "id": "width-unbounded",
+   "file": "app/services/brand_image.py",
+   "old": "    image.thumbnail((WIDTH, HEIGHT),",
+   "new": "    image.thumbnail((10**6, HEIGHT),",
+   "tests": "B"
+  },
+  {
+   "id": "broken-file-500",
+   "file": "app/services/brand_image.py",
+   "old": "    except (UnidentifiedImageError, OSError, SyntaxError, ValueError) as exc:",
+   "new": "    except (UnidentifiedImageError, OSError) as exc:",
+   "tests": "B"
+  },
+  {
+   "id": "own-error-swallowed",
+   "file": "app/services/brand_image.py",
+   "old": "    except BrandImageError:\n        raise\n",
+   "new": "",
+   "tests": "B"
+  },
+  {
+   "id": "favicon-from-nav-logo",
+   "file": "app/services/brand_image.py",
+   "old": "    scaled.thumbnail((size, size),",
+   "new": "    scaled.thumbnail((HEIGHT, HEIGHT))\n    scaled.thumbnail((size, size),",
+   "tests": "B"
+  },
+  {
+   "id": "icc-kept",
+   "file": "app/services/brand_image.py",
+   "old": "    image.info.clear()\n",
+   "new": "",
+   "tests": "B"
+  },
+  {
+   "id": "orphans-ignore-sharing",
+   "file": "app/services/branding.py",
+   "old": "    columns = [getattr(Branding, name) for name in Branding.IMAGE_FIELDS]",
+   "new": "    columns = [Branding.logo_dark]",
+   "tests": "B"
+  },
+  {
+   "id": "org-ignored",
+   "file": "app/services/branding.py",
+   "old": "    own = snap.get(str(org_id), {}) if org_id else {}",
+   "new": "    own = {}",
+   "tests": "B"
+  },
+  {
+   "id": "cache-never-cleared",
+   "file": "app/services/branding.py",
+   "old": "    await redis.incr(VERSION_KEY)\n    await redis.delete(CACHE_KEY)",
+   "new": "    return None",
+   "tests": "B"
+  },
+  {
+   "id": "version-ignored",
+   "file": "app/services/branding.py",
+   "old": "        if isinstance(data, dict) and data.get(\"version\") == version:",
+   "new": "        if isinstance(data, dict):",
+   "tests": "B"
+  },
+  {
+   "id": "redis-traceback",
+   "file": "app/services/branding.py",
+   "old": "using the environment's\", exc)",
+   "new": "using the environment's\", exc, exc_info=True)",
+   "tests": "B"
+  },
+  {
+   "id": "org-admin-any-org",
+   "file": "app/api/branding.py",
+   "old": "    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)\n\n\nasync def _page",
+   "new": "    return uuid.UUID(org) if org else user.org_id\n\n\nasync def _page",
+   "tests": "B"
+  },
+  {
+   "id": "org-without-tenancy",
+   "file": "app/api/branding.py",
+   "old": "            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)\n        try:",
+   "new": "            return None\n        try:",
+   "tests": "B"
+  },
+  {
+   "id": "image-sniffable",
+   "file": "app/api/branding.py",
+   "old": "        media_type=\"image/png\",",
+   "new": "        media_type=\"text/html\",",
+   "tests": "B"
+  },
+  {
+   "id": "errors-cacheable",
+   "file": "app/middleware.py",
+   "old": "                    and message[\"status\"] == 200\n                    and \"cache-control\" in mutable\n",
+   "new": "",
+   "tests": "B"
+  },
+  {
+   "id": "image-never-cacheable",
+   "file": "app/middleware.py",
+   "old": "                    path.startswith(\"/branding/\")\n",
+   "new": "                    False\n",
+   "tests": "B"
+  },
+  {
+   "id": "unmatched-path-unbranded",
+   "file": "app/main.py",
+   "old": "            await load_branding(request)  # an unmatched path never ran the route dependencies",
+   "new": "            pass",
+   "tests": "B"
+  },
+  {
+   "id": "wide-logo-overflows",
+   "file": "app/static/css/site.css",
+   "old": "  max-width: min(12rem, 40vw);\n",
+   "new": "",
+   "tests": "B"
+  },
+  {
+   "id": "logo-alt-name",
+   "file": "app/templates/base.html",
+   "old": "<img src=\"{{ brand.logo_url }}\" alt=\"\" class=\"nav-logo-img nav-logo-light",
+   "new": "<img src=\"{{ brand.logo_url }}\" alt=\"{{ brand.name }}\" class=\"nav-logo-img nav-logo-light",
+   "tests": "B"
+  },
+  {
+   "id": "dark-swap-needs-has",
+   "file": "app/templates/base.html",
+   "old": "{% if brand.logo_dark_url %} has-dark{% endif %}",
+   "new": "",
+   "tests": "B"
+  },
+  {
+   "id": "own-dark-ignored",
+   "file": "app/templates/admin/branding.html",
+   "old": "{% if theme == 'dark' and row.logo_dark %} data-own-dark=\"1\"{% endif %}",
+   "new": "",
+   "tests": "B"
+  },
+  {
+   "id": "card-surface-dropped",
+   "file": "app/services/brand_colour.py",
+   "old": "(canvas, card, weak), toward)",
+   "new": "(canvas, weak), toward)",
+   "tests": "B"
+  },
+  {
+   "id": "logo-copies-the-image",
+   "file": "app/services/brand_image.py",
+   "old": "    image.thumbnail((WIDTH, HEIGHT), Image.Resampling.LANCZOS)\n    return _png(image)",
+   "new": "    image = image.copy()\n    image.thumbnail((WIDTH, HEIGHT), Image.Resampling.LANCZOS)\n    return _png(image)",
+   "tests": "B"
+  },
+  {
+   "id": "logo-before-favicons",
+   "file": "app/services/brand_image.py",
+   "old": "    f32, f180 = favicon(image, 32), favicon(image, 180)\n    return logo(image), f32, f180",
+   "new": "    shrunk = logo(image)\n    return shrunk, favicon(image, 32), favicon(image, 180)",
+   "tests": "B"
+  },
+  {
+   "id": "attachment-any-parser",
+   "file": "app/services/attachment.py",
+   "old": "Image.open(io.BytesIO(data), formats=_IMAGE_FORMATS)",
+   "new": "Image.open(io.BytesIO(data))",
+   "tests": "A"
+  }
+ ]
+}

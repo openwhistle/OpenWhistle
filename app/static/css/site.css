@@ -221,11 +221,11 @@ video {
   --ink: #0a0a0b;
   --body-text: #3d3d40;
   --muted: #6a6a6e;
-  --accent: var(--brand-primary);
+  --accent: var(--brand-accent, var(--brand-primary));
   --accent-subtle: var(--brand-accent-weak,color-mix(in srgb,var(--brand-primary) 12%,#fff));
   --cta-bg: var(--accent);
   --cta-bg-hover: var(--brand-accent-strong,color-mix(in srgb,var(--accent) 85%,#000));
-  --cta-text: #fff;
+  --cta-text: var(--brand-on, #fff);
   --hairline: #e6e6e4;
   --border-strong: #d8d8d6;
   --danger: #bf3529;
@@ -291,7 +291,7 @@ video {
   --accent-subtle: var(--brand-accent-weak-dark,color-mix(in srgb,var(--brand-primary) 24%,#08080a));
   --cta-bg: var(--accent);
   --cta-bg-hover: var(--brand-accent-strong-dark,color-mix(in srgb,var(--accent) 88%,#fff));
-  --cta-text: #06120d;
+  --cta-text: var(--brand-on-dark, #06120d);
   --hairline: #262629;
   --border-strong: #34343a;
   --danger: #f0776b;
@@ -535,10 +535,24 @@ strong {
   fill: currentColor;
   flex: none;
 }
+/* An operator logo of any shape stays inside the nav: 4000 × 50 px must not
+   widen a 390 px page. The dark variant replaces the light one in the dark theme. */
 .nav-logo-img {
   height: 2rem;
+  max-width: min(12rem, 40vw);
   object-fit: contain;
   width: auto;
+}
+/* Two rules, no :has(): a browser without it drops a rule naming it, and both
+   logos showed in the light theme. */
+.nav-logo-dark {
+  display: none;
+}
+[data-theme="dark"] .nav-logo-light.has-dark {
+  display: none;
+}
+[data-theme="dark"] .nav-logo-dark {
+  display: inline-block;
 }
 .nav-links {
   align-items: center;
