@@ -54,8 +54,10 @@ For every page, each field resolves in this order: the organisation's row, the i
 page serves: the wizard's slug, the case on `/status`, the signed-in admin's organisation, else the default
 organisation.
 
-All rows are cached in Redis as one snapshot (key `branding:snapshot`, 1 h), deleted on every save and
-reset, so a page view costs one Redis read and no database query. A missing or broken cache, or an
+All rows are cached in Redis as one snapshot (key `branding:snapshot`, 1 h), so a page view costs one Redis
+read and no database query. Every save and reset increments `branding:version` and deletes the snapshot; a
+snapshot is stored with the version it was loaded under and is a miss once the version moved on, so a page
+view that read the rows just before a save cannot cache them afterwards. A missing or broken cache, or an
 unreachable Redis, leaves the page with the environment's branding instead of an error. Images are served from
 `/branding/<sha256>.png`: the hash of the PNG bytes, so the URL names no organisation, changes whenever the
 image does, and can be cached `immutable`. Response headers: `Content-Type: image/png`,
@@ -65,13 +67,14 @@ image does, and can be cached `immutable`. Response headers: `Content-Type: imag
 ## Logo pipeline
 
 1. Reject when the upload is over 1 MB, before reading it into Pillow.
-2. `Image.open` with `Image.MAX_IMAGE_PIXELS` set to 16 megapixels (decompression bomb); accept only the
-   formats `PNG`, `JPEG`, `WEBP` as Pillow detects them from the content, never from the name or the declared
-   type.
-3. `ImageOps.exif_transpose`, convert to `RGBA`, scale to a height of 96 px (nav shows 32 px, 3× for dense
-   screens), never upscale.
+2. `Image.open(..., formats=("PNG", "JPEG", "WEBP"))`: Pillow runs only these parsers and detects the type
+   from the content, never from the name or the declared type. Over 16 megapixels, read from the header, is
+   refused before any pixel is decoded (decompression bomb). A broken file is refused as a wrong format,
+   never a 500.
+3. `ImageOps.exif_transpose`, convert to `RGBA`, scale to at most 96 px high (nav shows 32 px, 3× for dense
+   screens) and 1536 px wide, never upscale.
 4. Save as PNG with no `info`, `exif` or `icc_profile`: nothing of the original file survives but pixels.
-5. Favicons: the light logo letterboxed onto a transparent square, 32 px and 180 px.
+5. Favicons: the decoded light logo, before scaling, letterboxed onto a transparent square, 32 px and 180 px.
 
 ## Colour
 
@@ -80,13 +83,14 @@ luminance and contrast formula:
 
 | Token | Rule |
 |---|---|
-| `--brand-on` (text on brand fills, light theme) | White or near-black, whichever contrasts more with the brand colour; this is never below 4.5:1 |
-| `--accent` light (links, focus, outlines on `#fff`) | The brand colour, mixed towards black in 2 % steps until it reaches 4.5:1 against the light canvas |
-| `--accent` dark (on `#0a0a0b`) | The brand colour, mixed towards white in 2 % steps until 4.5:1 against the dark canvas |
-| `--cta-bg` dark | The dark accent; its text colour by the same rule as `--brand-on` |
+| `--brand-accent-weak` (the tint `--accent-subtle` badges and active pills sit on) | The canvas with 12 % (light) or 24 % (dark) of the brand colour |
+| `--accent` light (links, focus, outlines on `#fff`) | The brand colour, mixed towards black in 2 % steps until it reaches 4.5:1 against the light canvas and the light tint |
+| `--accent` dark (on `#0a0a0b`) | The brand colour, mixed towards white in 2 % steps until 4.5:1 against the dark canvas and the dark tint |
+| `--brand-on` (text on brand fills, per theme) | White or pure black, whichever contrasts more with that theme's accent; this is never below 4.5:1 |
+| `--brand-accent-strong` (`--cta-bg-hover`) | The accent mixed 15 % away from its `--brand-on`, so hovered text keeps its contrast |
 
 4.5:1 for links covers the 3:1 that focus rings and component edges need (WCAG 2.2 SC 1.4.3, 1.4.11). The
-default colour `#0c7253` keeps the exact values DESIGN.md names (`_DESIGN_ACCENT`). The form shows the
+default colour `#0c7253` keeps the exact values DESIGN.md names (`DESIGN_TOKENS`). The form shows the
 achieved ratios beside the field; it never refuses a colour, because the derived tokens always meet AA.
 
 ## Permissions and audit

@@ -179,9 +179,9 @@ above) and native controls and scrollbars follow the chosen theme.
 
 **The app.** `--accent` follows the operator's primary colour: with the default brand
 it equals `{colors.accent}` / `{colors.accent-strong}` / `{colors.accent-weak}` in both
-themes; a custom `primary_color` derives its own family with `color-mix`
-(`brand_accent()` in `app/templating.py`). Every other app token is a DESIGN.md value
-(`tests/test_site_css.py::APP_TOKENS`).
+themes; a custom `primary_color` derives its own family in `brand_colour.tokens()`
+(`app/services/brand_colour.py`, see [A custom brand colour](#a-custom-brand-colour)). Every
+other app token is a DESIGN.md value (`tests/test_site_css.py::APP_TOKENS`).
 
 **Semantic colours are not the accent.** Status and feedback use
 `{colors.info}` / `{colors.success}` / `{colors.warning}` / `{colors.danger}` and
@@ -197,10 +197,11 @@ text stays at 4.5:1 or better (WCAG 2.x) in both themes:
 
 | Token | Rule |
 | --- | --- |
-| `--brand-on` (text on brand fills) | White or pure black, whichever contrasts more |
-| `--accent`, light | The colour mixed towards black in 2 % steps until 4.5:1 on the light canvas |
-| `--accent`, dark | The colour mixed towards white in 2 % steps until 4.5:1 on the dark canvas |
-| `--cta-bg`, dark | The dark accent; its text by the `--brand-on` rule |
+| `--accent-subtle` (tint behind badges, active pills and the admin nav) | The canvas with 12 % (light) or 24 % (dark) of the colour |
+| `--accent`, light | The colour mixed towards black in 2 % steps until 4.5:1 on the canvas and on the tint |
+| `--accent`, dark | The colour mixed towards white in 2 % steps until 4.5:1 on the canvas and on the tint |
+| `--brand-on` (text on brand fills) | White or pure black, whichever contrasts more with the accent |
+| `--cta-bg-hover` | The accent mixed 15 % away from its text colour, so hover never loses contrast |
 
 The default `#0c7253` keeps the tokens listed above unchanged.
 

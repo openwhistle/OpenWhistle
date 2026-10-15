@@ -15,8 +15,50 @@
   {
    "id": "accent-not-adjusted",
    "file": "app/services/brand_colour.py",
-   "old": "    light = _readable(colour, LIGHT_CANVAS, BLACK)",
-   "new": "    light = colour",
+   "old": "        accent = _readable(colour, (canvas, weak), toward)",
+   "new": "        accent = colour",
+   "tests": "B"
+  },
+  {
+   "id": "tint-ignored",
+   "file": "app/services/brand_colour.py",
+   "old": "_readable(colour, (canvas, weak), toward)",
+   "new": "_readable(colour, (canvas,), toward)",
+   "tests": "B"
+  },
+  {
+   "id": "hover-toward-text",
+   "file": "app/services/brand_colour.py",
+   "old": "_mix(accent, BLACK if on == WHITE else WHITE, 0.15)",
+   "new": "_mix(accent, BLACK, 0.15)",
+   "tests": "B"
+  },
+  {
+   "id": "tint-not-emitted",
+   "file": "app/services/brand_colour.py",
+   "old": "        out[f\"accent-weak{suffix}\"] = weak\n",
+   "new": "",
+   "tests": "B"
+  },
+  {
+   "id": "css-ignores-the-tint",
+   "file": "app/static/css/site.css",
+   "old": "  --accent-subtle: var(--brand-accent-weak,color-mix(in srgb,var(--brand-primary) 12%,#fff));",
+   "new": "  --accent-subtle: color-mix(in srgb,var(--brand-primary) 12%,#fff);",
+   "tests": "B"
+  },
+  {
+   "id": "css-ignores-the-dark-hover",
+   "file": "app/static/css/site.css",
+   "old": "  --cta-bg-hover: var(--brand-accent-strong-dark,color-mix(in srgb,var(--accent) 88%,#fff));",
+   "new": "  --cta-bg-hover: color-mix(in srgb,var(--accent) 88%,#fff);",
+   "tests": "B"
+  },
+  {
+   "id": "rounding-half-even",
+   "file": "app/services/brand_colour.py",
+   "old": "int(c + (t - c) * share + 0.5)",
+   "new": "round(c + (t - c) * share)",
    "tests": "B"
   },
   {
@@ -27,10 +69,10 @@
    "tests": "B"
   },
   {
-   "id": "type-from-anything",
+   "id": "formats-unrestricted",
    "file": "app/services/brand_image.py",
-   "old": "            if source.format not in _FORMATS:",
-   "new": "            if False:",
+   "old": "        with Image.open(io.BytesIO(data), formats=_FORMATS) as source:",
+   "new": "        with Image.open(io.BytesIO(data)) as source:",
    "tests": "B"
   },
   {
@@ -41,10 +83,45 @@
    "tests": "B"
   },
   {
-   "id": "stored-as-uploaded",
+   "id": "logo-not-scaled",
    "file": "app/services/brand_image.py",
-   "old": "    return _png(image)\n\n\ndef favicon",
-   "new": "    return data\n\n\ndef favicon",
+   "old": "    scaled.thumbnail((WIDTH, HEIGHT), Image.Resampling.LANCZOS)\n",
+   "new": "",
+   "tests": "B"
+  },
+  {
+   "id": "stored-as-uploaded-format",
+   "file": "app/services/brand_image.py",
+   "old": "    image.save(out, format=\"PNG\", optimize=True)",
+   "new": "    image.save(out, format=\"WEBP\")",
+   "tests": "B"
+  },
+  {
+   "id": "width-unbounded",
+   "file": "app/services/brand_image.py",
+   "old": "    scaled.thumbnail((WIDTH, HEIGHT),",
+   "new": "    scaled.thumbnail((10**6, HEIGHT),",
+   "tests": "B"
+  },
+  {
+   "id": "broken-file-500",
+   "file": "app/services/brand_image.py",
+   "old": "    except (UnidentifiedImageError, OSError, SyntaxError, ValueError) as exc:",
+   "new": "    except (UnidentifiedImageError, OSError) as exc:",
+   "tests": "B"
+  },
+  {
+   "id": "own-error-swallowed",
+   "file": "app/services/brand_image.py",
+   "old": "    except BrandImageError:\n        raise\n",
+   "new": "",
+   "tests": "B"
+  },
+  {
+   "id": "favicon-from-nav-logo",
+   "file": "app/services/brand_image.py",
+   "old": "    scaled.thumbnail((size, size),",
+   "new": "    scaled.thumbnail((HEIGHT, HEIGHT))\n    scaled.thumbnail((size, size),",
    "tests": "B"
   },
   {
@@ -71,8 +148,22 @@
   {
    "id": "cache-never-cleared",
    "file": "app/services/branding.py",
-   "old": "    await redis.delete(CACHE_KEY)",
+   "old": "    await redis.incr(VERSION_KEY)\n    await redis.delete(CACHE_KEY)",
    "new": "    return None",
+   "tests": "B"
+  },
+  {
+   "id": "version-ignored",
+   "file": "app/services/branding.py",
+   "old": "        if isinstance(data, dict) and data.get(\"version\") == version:",
+   "new": "        if isinstance(data, dict):",
+   "tests": "B"
+  },
+  {
+   "id": "redis-traceback",
+   "file": "app/services/branding.py",
+   "old": "using the environment's\", exc)",
+   "new": "using the environment's\", exc, exc_info=True)",
    "tests": "B"
   },
   {
@@ -80,6 +171,13 @@
    "file": "app/api/branding.py",
    "old": "    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)\n\n\nasync def _page",
    "new": "    return uuid.UUID(org) if org else user.org_id\n\n\nasync def _page",
+   "tests": "B"
+  },
+  {
+   "id": "org-without-tenancy",
+   "file": "app/api/branding.py",
+   "old": "            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)\n        try:",
+   "new": "            return None\n        try:",
    "tests": "B"
   },
   {
@@ -120,8 +218,22 @@
   {
    "id": "logo-alt-name",
    "file": "app/templates/base.html",
-   "old": "<img src=\"{{ brand.logo_url }}\" alt=\"\" class=\"nav-logo-img nav-logo-light\">",
-   "new": "<img src=\"{{ brand.logo_url }}\" alt=\"{{ brand.name }}\" class=\"nav-logo-img nav-logo-light\">",
+   "old": "<img src=\"{{ brand.logo_url }}\" alt=\"\" class=\"nav-logo-img nav-logo-light",
+   "new": "<img src=\"{{ brand.logo_url }}\" alt=\"{{ brand.name }}\" class=\"nav-logo-img nav-logo-light",
+   "tests": "B"
+  },
+  {
+   "id": "dark-swap-needs-has",
+   "file": "app/templates/base.html",
+   "old": "{% if brand.logo_dark_url %} has-dark{% endif %}",
+   "new": "",
+   "tests": "B"
+  },
+  {
+   "id": "own-dark-ignored",
+   "file": "app/templates/admin/branding.html",
+   "old": "{% if theme == 'dark' and row.logo_dark %} data-own-dark=\"1\"{% endif %}",
+   "new": "",
    "tests": "B"
   }
  ]

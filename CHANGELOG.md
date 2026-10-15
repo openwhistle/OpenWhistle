@@ -11,8 +11,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - **Branding page**: `/admin/branding` sets the name, a light and a dark logo and the brand colour, with a
   live preview in both themes, per organisation (an empty field falls back to the instance default). Logos
-  are PNG, JPEG or WebP, never SVG, and are re-encoded as metadata-free PNG; colours are adjusted so text
-  meets WCAG AA in both themes.
+  are PNG, JPEG or WebP, never SVG, and are re-encoded as metadata-free PNG; colours are adjusted so links,
+  button text (hovered too) and tinted badges meet WCAG AA in both themes.
 - **Reporters are warned when the proxy passes their address on**: a request to `/submit` or `/status` that
   arrives with an address header (`X-Forwarded-For`, `X-Real-IP` and the other stripped headers) shows a
   notice: the server in front may log the address; use Tor Browser or a private device. The onion address
