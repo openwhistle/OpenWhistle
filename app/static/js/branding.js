@@ -22,42 +22,53 @@
       return ('0' + Math.round(v + (b[i] - v) * share).toString(16)).slice(-2);
     }).join('');
   }
-  function readable(c, canvas, toward) {
+  function readable(c, backgrounds, toward) {
     for (var step = 0; step <= 50; step++) {
       var candidate = mix(c, toward, step / 50);
-      if (contrast(candidate, canvas) >= MIN) { return candidate; }
+      if (backgrounds.every(function (bg) { return contrast(candidate, bg) >= MIN; })) { return candidate; }
     }
     return toward;
   }
   function on(fill) { return contrast(fill, WHITE) >= contrast(fill, BLACK) ? WHITE : BLACK; }
 
+  // brand_colour.tokens(): canvas, the end the accent moves towards, the tint's share.
+  var THEMES = { light: [LIGHT, BLACK, 0.12], dark: [DARK, WHITE, 0.24] };
+  var DESIGN = { light: ['#0c7253', '#ffffff'], dark: ['#23c088', '#06120d'] };
+  function derive(colour, theme) {
+    if (colour === '#0c7253') { return DESIGN[theme]; }
+    var t = THEMES[theme], accent = readable(colour, [t[0], mix(t[0], colour, t[2])], t[1]);
+    return [accent, on(accent)];
+  }
+
   var hex = document.getElementById('bp-colour-hex');
   var picker = document.getElementById('bp-colour-picker');
   var ratios = document.getElementById('bp-contrast');
   var panels = document.querySelectorAll('.bp-panel[data-preview]');
+  var VALID = /^#[0-9a-fA-F]{6}$/;
 
   function apply(colour) {
-    if (!/^#[0-9a-fA-F]{6}$/.test(colour)) { return; }
+    if (!VALID.test(colour)) { return; }
     colour = colour.toLowerCase();
-    var light = colour === '#0c7253' ? '#0c7253' : readable(colour, LIGHT, BLACK);
-    var dark = colour === '#0c7253' ? '#23c088' : readable(colour, DARK, WHITE);
+    var light = derive(colour, 'light'), dark = derive(colour, 'dark');
     panels.forEach(function (panel) {
-      var accent = panel.dataset.preview === 'dark' ? dark : light;
-      panel.style.setProperty('--bp-accent', accent);
-      panel.style.setProperty('--bp-on', colour === '#0c7253' && panel.dataset.preview === 'dark' ? '#06120d' : on(accent));
+      var pair = panel.dataset.preview === 'dark' ? dark : light;
+      panel.style.setProperty('--bp-accent', pair[0]);
+      panel.style.setProperty('--bp-on', pair[1]);
     });
     if (ratios && ratios.dataset.template) {
       ratios.textContent = ratios.dataset.template
-        .replace('{button}', contrast(on(light), light).toFixed(1) + ':1')
-        .replace('{light}', contrast(light, LIGHT).toFixed(1) + ':1')
-        .replace('{dark}', contrast(dark, DARK).toFixed(1) + ':1');
+        .replace('{button}', contrast(light[1], light[0]).toFixed(1) + ':1')
+        .replace('{light}', contrast(light[0], LIGHT).toFixed(1) + ':1')
+        .replace('{dark}', contrast(dark[0], DARK).toFixed(1) + ':1');
     }
   }
 
   if (hex && picker) {
     hex.addEventListener('input', function () {
-      if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) { picker.value = hex.value.toLowerCase(); }
-      apply(hex.value);
+      var valid = VALID.test(hex.value);
+      if (valid) { picker.value = hex.value.toLowerCase(); }
+      // Empty or half-typed: the colour a save would fall back to.
+      apply(valid ? hex.value : hex.placeholder);
     });
     picker.addEventListener('input', function () { hex.value = picker.value; apply(picker.value); });
   }

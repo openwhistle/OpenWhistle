@@ -58,7 +58,8 @@ def contrast(a: str, b: str) -> float:
 
 def _mix(colour: str, toward: str, share: float) -> str:
     pairs = zip(_channels(colour), _channels(toward), strict=True)
-    return "#" + "".join(f"{round(c + (t - c) * share):02x}" for c, t in pairs)
+    # Half up, as Math.round in branding.js does; round() would round half to even.
+    return "#" + "".join(f"{int(c + (t - c) * share + 0.5):02x}" for c, t in pairs)
 
 
 def _on(fill: str) -> str:
@@ -66,18 +67,31 @@ def _on(fill: str) -> str:
     return WHITE if contrast(fill, WHITE) >= contrast(fill, BLACK) else BLACK
 
 
-def _readable(colour: str, canvas: str, toward: str) -> str:
+def _readable(colour: str, backgrounds: tuple[str, ...], toward: str) -> str:
     for step in range(51):
         candidate = _mix(colour, toward, step / 50)
-        if contrast(candidate, canvas) >= TEXT_MINIMUM:
+        if all(contrast(candidate, bg) >= TEXT_MINIMUM for bg in backgrounds):
             return candidate
     return toward
+
+
+# Per theme: its canvas, the end the accent moves towards, and the share of the
+# brand colour in the tint (--accent-subtle) that badges and active pills sit on.
+_THEMES = (("", LIGHT_CANVAS, BLACK, 0.12), ("-dark", DARK_CANVAS, WHITE, 0.24))
 
 
 def tokens(primary: str) -> dict[str, str]:
     colour = parse(primary)
     if colour == DEFAULT:
         return dict(DESIGN_TOKENS)
-    light = _readable(colour, LIGHT_CANVAS, BLACK)
-    dark = _readable(colour, DARK_CANVAS, WHITE)
-    return {"accent": light, "on": _on(light), "accent-dark": dark, "on-dark": _on(dark)}
+    out: dict[str, str] = {}
+    for suffix, canvas, toward, share in _THEMES:
+        weak = _mix(canvas, colour, share)
+        accent = _readable(colour, (canvas, weak), toward)
+        on = _on(accent)
+        out[f"accent{suffix}"] = accent
+        out[f"on{suffix}"] = on
+        out[f"accent-weak{suffix}"] = weak
+        # Hover moves the fill away from its text colour, so the text keeps its contrast.
+        out[f"accent-strong{suffix}"] = _mix(accent, BLACK if on == WHITE else WHITE, 0.15)
+    return out

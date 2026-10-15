@@ -144,19 +144,28 @@ def test_the_default_brand_draws_the_design_md_accent_in_both_themes() -> None:
             assert _hex6(_resolve(scope[token], scope)) == palette[theme][key], (theme, token)
 
 
-def test_a_custom_brand_gets_computed_aa_tokens() -> None:
+# #ffd000 takes black text: a hover darkened toward black left it at 3.6:1.
+@pytest.mark.parametrize("primary", ["#7b2cbf", "#ffd000", "#2f57e6"])
+def test_a_custom_brand_gets_computed_aa_tokens(primary: str) -> None:
     from app.services import brand_colour
 
-    brand = _head_vars("#7b2cbf")
-    assert set(brand) == {"--brand-primary"} | {
-        f"--brand-{k}" for k in brand_colour.tokens("#7b2cbf")
-    }
-    scopes = _app_scopes("#7b2cbf")
+    brand = _head_vars(primary)
+    emitted = {f"--brand-{k}" for k in brand_colour.tokens(primary)}
+    assert set(brand) == {"--brand-primary"} | emitted
+    scopes = _app_scopes(primary)
     for theme, canvas in (("light", brand_colour.LIGHT_CANVAS), ("dark", brand_colour.DARK_CANVAS)):
         scope = scopes[theme]
-        accent, text = _resolve(scope["--accent"], scope), _resolve(scope["--cta-text"], scope)
-        assert brand_colour.contrast(accent, canvas) >= brand_colour.TEXT_MINIMUM
-        assert brand_colour.contrast(text, accent) >= brand_colour.TEXT_MINIMUM
+        names = ("--accent", "--accent-subtle", "--cta-text")
+        token = {k: _resolve(scope[k], scope) for k in names}
+        hover = _resolve(scope["--cta-bg-hover"], scope)
+        # As site.css draws them: links, badges and active pills on the tint, button text.
+        for fg, bg in (
+            (token["--accent"], canvas),
+            (token["--accent"], token["--accent-subtle"]),
+            (token["--cta-text"], token["--accent"]),
+            (token["--cta-text"], hover),
+        ):
+            assert brand_colour.contrast(fg, bg) >= brand_colour.TEXT_MINIMUM, (theme, fg, bg)
 
 
 def test_nothing_transitions_all() -> None:
