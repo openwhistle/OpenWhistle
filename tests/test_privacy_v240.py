@@ -556,7 +556,9 @@ async def test_the_pdf_export_speaks_the_admins_language(client, db_session) -> 
     await _login(client, db_session, AdminRole.superadmin)
     report, _ = await create_report(db_session, "corruption", "Exported in German.")
     client.cookies.set("ow-lang", "de")
-    text = _pdf_text((await client.get(f"/admin/reports/{report.id}/export.pdf")).content)
+    pdf = (await client.get(f"/admin/reports/{report.id}/export.pdf")).content
+    # "7 Tage" is held together by a non-breaking space (2.4.0).
+    text = _pdf_text(pdf).replace("\u00a0", " ")
     for label in (
         "Fallnummer",
         "Meldeart",

@@ -16,21 +16,19 @@
             <div class="stat-card__value"><code>v{{ update.current }}</code></div>
         </div>
 
-        <div class="stat-card
-            {%- if update.status == 'update_available' %} stat-card--inactive
-            {%- elif update.status == 'up_to_date' %} stat-card--active{% endif %}" role="listitem">
+        <div class="stat-card" role="listitem">
             <div class="stat-card__label">{{ t('admin.system.stat.status') }}</div>
             <div class="stat-card__value">
                 {% if not update.enabled %}
-                    <span class="badge">{{ t('admin.system.status.disabled') }}</span>
+                    <span class="badge badge-neutral">{{ t('admin.system.status.disabled') }}</span>
                 {% elif not update.latest %}
-                    <span class="badge">{{ t('admin.system.status.never_checked') }}</span>
+                    <span class="badge badge-neutral">{{ t('admin.system.status.never_checked') }}</span>
                 {% elif update.status == 'update_available' %}
                     <span class="badge badge-pending_feedback">{{ t('admin.system.status.update_available') }}</span>
                 {% elif update.status == 'ahead' %}
-                    <span class="badge">{{ t('admin.system.status.ahead') }}</span>
+                    <span class="badge badge-neutral">{{ t('admin.system.status.ahead') }}</span>
                 {% else %}
-                    <span class="badge badge-closed">{{ icons.icon('check') }} {{ t('admin.system.status.up_to_date') }}</span>
+                    <span class="badge badge-closed">{{ t('admin.system.status.up_to_date') }}</span>
                 {% endif %}
             </div>
         </div>
@@ -71,9 +69,9 @@
         <div class="detail-row">
             <div class="detail-label">{{ t('admin.system.integrity.status') }}</div>
             {% if not integrity.available %}
-                <span class="badge">{{ t('admin.system.integrity.unavailable') }}</span>
+                <span class="badge badge-neutral">{{ t('admin.system.integrity.unavailable') }}</span>
             {% elif integrity.ok %}
-                <span class="badge badge-closed">{{ icons.icon('check') }} {{ t('admin.system.integrity.ok') }}</span>
+                <span class="badge badge-closed">{{ t('admin.system.integrity.ok') }}</span>
             {% else %}
                 <span class="badge badge-pending_feedback">{{ t('admin.system.integrity.issues') }}</span>
             {% endif %}
@@ -126,9 +124,9 @@
         <div class="detail-row">
             <div class="detail-label">{{ t('admin.system.telemetry.state') }}</div>
             {% if telemetry.enabled %}
-                <span class="badge badge-closed">{{ icons.icon('check') }} {{ t('admin.system.telemetry.on') }}</span>
+                <span class="badge badge-closed">{{ t('admin.system.telemetry.on') }}</span>
             {% else %}
-                <span class="badge">{{ t('admin.system.telemetry.off') }}</span>
+                <span class="badge badge-neutral">{{ t('admin.system.telemetry.off') }}</span>
             {% endif %}
         </div>
 

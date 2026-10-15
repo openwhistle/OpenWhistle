@@ -1,0 +1,65 @@
+{
+ "test_groups": {
+  "R": [
+   "tests/test_release_check_240.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "eszett-back",
+   "file": "app/locales/de.json",
+   "old": "\"category.label.environmental\": \"Umweltverstoß\"",
+   "new": "\"category.label.environmental\": \"Umweltverstoss\"",
+   "tests": "R"
+  },
+  {
+   "id": "migration-019-overwrites",
+   "file": "migrations/versions/019_category_umlauts.py",
+   "old": "\" WHERE slug = :slug AND is_default AND label_de = :old\"",
+   "new": "\" WHERE slug = :slug AND is_default AND :old = :old\"",
+   "tests": "R"
+  },
+  {
+   "id": "citation-breaks",
+   "file": "app/locales/de.json",
+   "old": "danach (§ 7 HinSchG)",
+   "new": "danach (§ 7 HinSchG)",
+   "tests": "R"
+  },
+  {
+   "id": "pill-lowercase",
+   "file": "app/locales/en.json",
+   "old": "\"admin.users.active\": \"Active\"",
+   "new": "\"admin.users.active\": \"active\"",
+   "tests": "R"
+  },
+  {
+   "id": "bare-badge",
+   "file": "app/templates/admin/system.html",
+   "old": "<span class=\"badge badge-neutral\">{{ t('admin.system.status.ahead') }}</span>",
+   "new": "<span class=\"badge\">{{ t('admin.system.status.ahead') }}</span>",
+   "tests": "R"
+  },
+  {
+   "id": "demo-button-amber",
+   "file": "app/static/css/site.css",
+   "old": ".demo-fill-btn {\n  background: var(--surface-card);",
+   "new": ".demo-fill-btn {\n  background: var(--warning);",
+   "tests": "R"
+  },
+  {
+   "id": "stat-card-ring",
+   "file": "app/templates/admin/retention.html",
+   "old": "<div class=\"stat-card\" role=\"listitem\">\n            <div class=\"stat-card__label\">{{ t('admin.retention.stat.status') }}</div>",
+   "new": "<div class=\"stat-card stat-card--active\" role=\"listitem\">\n            <div class=\"stat-card__label\">{{ t('admin.retention.stat.status') }}</div>",
+   "tests": "R"
+  },
+  {
+   "id": "gutter-gone",
+   "file": "app/static/css/site.css",
+   "old": "  html:has(.admin-shell) { scrollbar-gutter: stable; }\n",
+   "new": "\n",
+   "tests": "R"
+  }
+ ]
+}
