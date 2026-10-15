@@ -209,3 +209,26 @@ async def test_the_dark_preview_keeps_a_stored_dark_logo(
     await _post(client, {}, {"logo_dark": ("dark.png", _png(), "image/png")})
     page = (await client.get("/admin/branding")).text
     assert 'data-preview-img="dark"' in page and 'data-own-dark="1"' in page
+
+
+async def test_one_full_size_image_lives_at_a_time(
+    acting_as: Any, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.services import brand_image
+
+    client = await _admin(acting_as, db_session)
+    events: list[str] = []
+    for name in ("decode", "favicon", "logo"):
+        real = getattr(brand_image, name)
+
+        def spy(*args: Any, _real: Any = real, _name: str = name) -> Any:
+            events.append(_name)
+            return _real(*args)
+
+        monkeypatch.setattr(brand_image, name, spy)
+    files = {
+        "logo_light": ("l.png", _png(), "image/png"),
+        "logo_dark": ("d.png", _png(), "image/png"),
+    }
+    assert (await _post(client, {}, files)).status_code == 303
+    assert events == ["decode", "favicon", "favicon", "logo", "decode", "logo"]

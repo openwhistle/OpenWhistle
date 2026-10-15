@@ -52,10 +52,12 @@ def decode(data: bytes) -> Image.Image:
 
 
 def logo(image: Image.Image) -> bytes:
-    """The nav logo: at most HEIGHT high and WIDTH wide, never upscaled."""
-    scaled = image.copy()
-    scaled.thumbnail((WIDTH, HEIGHT), Image.Resampling.LANCZOS)
-    return _png(scaled)
+    """The nav logo: at most HEIGHT high and WIDTH wide, never upscaled.
+
+    Shrinks `image` in place so no second full-size copy lives; draw favicons first.
+    """
+    image.thumbnail((WIDTH, HEIGHT), Image.Resampling.LANCZOS)
+    return _png(image)
 
 
 def favicon(image: Image.Image, size: int) -> bytes:
@@ -65,3 +67,14 @@ def favicon(image: Image.Image, size: int) -> bytes:
     square = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     square.paste(scaled, ((size - scaled.width) // 2, (size - scaled.height) // 2), scaled)
     return _png(square)
+
+
+def light(data: bytes) -> tuple[bytes, bytes, bytes]:
+    """Logo and both favicons; the full-size image is gone when this returns."""
+    image = decode(data)
+    f32, f180 = favicon(image, 32), favicon(image, 180)
+    return logo(image), f32, f180
+
+
+def dark(data: bytes) -> bytes:
+    return logo(decode(data))

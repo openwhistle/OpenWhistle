@@ -112,3 +112,16 @@ def test_a_touch_icon_is_drawn_from_the_full_size_logo() -> None:
 def test_a_very_wide_logo_is_capped_in_width() -> None:
     out = Image.open(io.BytesIO(_logo(_image("PNG", (16_000, 1)))))
     assert out.width <= bi.HEIGHT * 16
+
+
+def test_the_logo_shrinks_the_decoded_image_instead_of_copying_it() -> None:
+    image = bi.decode(_image("PNG", (400, 400)))
+    bi.logo(image)
+    assert image.size == (bi.HEIGHT, bi.HEIGHT)
+
+
+def test_light_draws_the_favicons_before_the_logo_shrinks_the_image() -> None:
+    logo, f32, f180 = bi.light(_image("PNG", (400, 400)))
+    assert Image.open(io.BytesIO(logo)).size == (bi.HEIGHT, bi.HEIGHT)
+    assert Image.open(io.BytesIO(f180)).getbbox() == (0, 0, 180, 180)
+    assert Image.open(io.BytesIO(f32)).size == (32, 32)
