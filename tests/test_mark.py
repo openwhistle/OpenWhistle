@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 from httpx import AsyncClient
 from PIL import Image
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 
@@ -49,7 +50,7 @@ async def test_an_operator_logo_replaces_the_mark(
 
 async def test_without_an_operator_logo_the_nav_draws_k3(client: AsyncClient) -> None:
     html = (await client.get("/submit")).text
-    assert 'class="nav-logo-img"' not in html
+    assert "nav-logo-img" not in html
     assert _PATH.findall(html) == [icons.MARK] * 2  # nav and footer
 
 
@@ -87,10 +88,10 @@ def test_the_ico_holds_16_and_32() -> None:
         assert set(ico.info["sizes"]) == {(16, 16), (32, 32)}
 
 
-def test_the_head_links_exactly_the_three_icons() -> None:
+def test_the_head_links_the_operators_two_favicons_or_the_three_default_icons() -> None:
     # ico first with sizes=32x32: without it Chrome prefers the ico over the theme-aware svg.
     head = (ROOT / "app/templates/base.html").read_text(encoding="utf-8")
-    # The first two are the operator's favicons, shown only when one is uploaded.
+    # The first two are the operator's favicons, shown instead of the other three.
     assert re.findall(r"<link rel=\"[^\"]*icon\"[^>]*>", head) == [
         '<link rel="icon" href="{{ brand.favicon_32_url }}" sizes="32x32" type="image/png">',
         '<link rel="apple-touch-icon" href="{{ brand.favicon_180_url }}">',
@@ -122,3 +123,20 @@ async def test_a_custom_brand_name_is_the_wordmark(
 def test_the_app_wordmark_has_no_accent_rule() -> None:
     css = (ROOT / "app/static/css/site.css").read_text(encoding="utf-8")
     assert ".nav-brand strong" not in css
+
+
+@pytest.mark.usefixtures("clean_branding")
+async def test_a_stored_favicon_replaces_the_default_icons(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    from app.redis_client import get_redis
+    from app.services import branding
+
+    row = await branding.row_for(db_session, None)
+    row.logo_light = await branding.store_image(db_session, b"\x89PNG-logo")
+    row.favicon_32 = await branding.store_image(db_session, b"\x89PNG-32")
+    row.favicon_180 = await branding.store_image(db_session, b"\x89PNG-180")
+    await db_session.commit()
+    await branding.invalidate(await get_redis())
+    icons = re.findall(r'<link rel="[^"]*icon" href="([^"]+)"', (await client.get("/submit")).text)
+    assert icons == [f"/branding/{row.favicon_32}.png", f"/branding/{row.favicon_180}.png"]

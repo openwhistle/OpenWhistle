@@ -64,7 +64,7 @@
     <nav class="nav" role="navigation" aria-label="{{ t('nav.aria_label') }}">
         <a href="/" class="nav-brand" aria-label="{{ t('nav.home', name=brand.name) }}">
             {% if brand.logo_url %}
-                <img src="{{ brand.logo_url }}" alt="" class="nav-logo-img nav-logo-light">
+                <img src="{{ brand.logo_url }}" alt="" class="nav-logo-img nav-logo-light{% if brand.logo_dark_url %} has-dark{% endif %}">
                 {%- if brand.logo_dark_url %}
                 <img src="{{ brand.logo_dark_url }}" alt="" class="nav-logo-img nav-logo-dark">
                 {%- endif %}

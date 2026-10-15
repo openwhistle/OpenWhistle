@@ -59,11 +59,8 @@ async def test_a_broken_cache_falls_back_to_the_environment(
 
 
 async def test_the_nav_logo_is_decorative(client: AsyncClient, db_session: AsyncSession) -> None:
-    await _brand(db_session, None, name="Acme")
-    html_with = (await client.get("/submit")).text
-    assert 'alt="' + settings.app_name not in html_with
     sha = await branding.store_image(db_session, b"\x89PNG-logo")
-    await _brand(db_session, None, logo_light=sha)
+    await _brand(db_session, None, name="Acme", logo_light=sha)
     html = (await client.get("/submit")).text
     assert f'<img src="/branding/{sha}.png" alt="" class="nav-logo-img nav-logo-light"' in html
 
@@ -90,3 +87,65 @@ async def test_an_unknown_path_wears_the_stored_branding(
     await _brand(db_session, None, name="Acme Default")
     response = await client.get("/no-such-page", headers={"accept": "text/html"})
     assert response.status_code == 404 and "Acme Default" in response.text
+
+
+async def test_the_dark_logo_swap_needs_no_has_selector(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    import re
+    from pathlib import Path
+
+    light = await branding.store_image(db_session, b"\x89PNG-light")
+    dark = await branding.store_image(db_session, b"\x89PNG-dark")
+    await _brand(db_session, None, logo_light=light, logo_dark=dark)
+    html = (await client.get("/submit")).text
+    light_img = f'<img src="/branding/{light}.png" alt=""'
+    assert f'{light_img} class="nav-logo-img nav-logo-light has-dark"' in html
+    css = Path("app/static/css/site.css").read_text(encoding="utf-8")
+    # A browser without :has() drops a whole rule naming it: both logos showed in light.
+    selectors = re.findall(r"(?m)^([^{}\n]*\.nav-logo-[^{}]*)\{", css)
+    assert selectors and not [s for s in selectors if ":has(" in s]
+    assert re.search(r"(?m)^\.nav-logo-dark \{\s*display: none;", css)
+    dark_theme = r'(?m)^\[data-theme="dark"\] \.nav-logo-light\.has-dark \{\s*display: none;'
+    assert re.search(dark_theme, css)
+
+
+@pytest.mark.usefixtures("no_csrf")
+async def test_a_validation_error_page_wears_the_stored_branding(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    # FastAPI raises RequestValidationError only after the route's dependencies,
+    # load_branding among them, have run (the app takes no JSON bodies).
+    await _brand(db_session, None, name="Acme Invalid")
+    response = await client.post("/set-language", data={})
+    assert response.status_code == 422 and "Acme Invalid" in response.text
+
+
+@pytest.mark.usefixtures("no_csrf")
+async def test_a_body_that_never_parses_wears_the_stored_branding(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    # FastAPI solves the app's dependencies (load_branding) before it reads a body, so
+    # validation_exception_handler needs no load_branding of its own. This pins that order
+    # with the earliest error there is, unparseable JSON; the app takes no JSON body today.
+    from pydantic import BaseModel
+
+    from app.main import app
+
+    class Probe(BaseModel):
+        n: int
+
+    async def probe(body: Probe) -> None:  # pragma: no cover - never reached
+        return None
+
+    await _brand(db_session, None, name="Acme Unparsed")
+    app.add_api_route("/_branding-probe", probe, methods=["POST"])
+    try:
+        response = await client.post(
+            "/_branding-probe",
+            content=b"{",
+            headers={"content-type": "application/json", "accept": "text/html"},
+        )
+    finally:
+        app.router.routes.pop()
+    assert response.status_code == 422 and "Acme Unparsed" in response.text

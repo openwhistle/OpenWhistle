@@ -1,5 +1,6 @@
 """Shared test fixtures for OpenWhistle tests."""
 
+import contextlib
 import os
 import re
 import subprocess
@@ -166,14 +167,11 @@ async def clean_branding(db_engine: AsyncEngine) -> AsyncGenerator[None]:
             await conn.execute(text("DELETE FROM branding"))
             await conn.execute(text("DELETE FROM brand_images"))
         await engine.dispose()
-        try:
+        with contextlib.suppress(Exception):  # Redis may be down in a DB-only run
             await (await get_redis()).delete("branding:snapshot")
-        except Exception:  # noqa: BLE001  Redis may be down in a DB-only run
-            pass
-        finally:
-            await close_redis()
-            # Pooled app connections belong to this test's loop; the next test has another.
-            await app_engine.dispose()
+        await close_redis()
+        # Pooled app connections belong to this test's loop; the next test has another.
+        await app_engine.dispose()
 
     await _wipe()
     yield

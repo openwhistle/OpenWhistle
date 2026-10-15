@@ -543,8 +543,12 @@ strong {
   object-fit: contain;
   width: auto;
 }
-.nav-logo-dark,
-[data-theme="dark"] .nav-logo-light:has(+ .nav-logo-dark) {
+/* Two rules, no :has(): a browser without it drops a rule naming it, and both
+   logos showed in the light theme. */
+.nav-logo-dark {
+  display: none;
+}
+[data-theme="dark"] .nav-logo-light.has-dark {
   display: none;
 }
 [data-theme="dark"] .nav-logo-dark {
