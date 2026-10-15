@@ -454,7 +454,7 @@ class TestTelephoneChannelPage:
         client = admin_client
         resp = await client.get("/admin/telephone-channel")
         assert "HinSchG" in resp.text
-        assert "§ 16 Abs. 3" in resp.text
+        assert "§\u00a016\u00a0Abs.\u00a03" in resp.text
 
     @pytest.mark.asyncio(loop_scope="function")
     async def test_telephone_channel_contains_recording_prohibition(
@@ -463,7 +463,8 @@ class TestTelephoneChannelPage:
         client = admin_client
         resp = await client.get("/admin/telephone-channel")
         # Recording needs consent: § 11 Abs. 2 (the test said § 10 and never ran).
-        assert "Calls are recorded only with consent (§ 11 Abs. 2 HinSchG)" in resp.text
+        cite = "§\u00a011\u00a0Abs.\u00a02\u00a0HinSchG"
+        assert f"Calls are recorded only with consent ({cite})" in resp.text
 
 
 # ---------------------------------------------------------------------------

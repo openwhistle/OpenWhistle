@@ -84,6 +84,14 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Two built-in German categories read "Umweltverstoss" and "Datenschutzverstoss"; they are spelled with
+  ß now. A label an operator changed keeps their wording.
+- A citation and a period no longer break across lines: "§ 7 | HinSchG" and "innerhalb von 7 | Tagen" are
+  held together with non-breaking spaces in every language.
+- The demo box on the login page used amber for its button beside the green one, and spaced the demo case
+  numbers far apart; both are neutral now. "active" and "inactive" pills start with a capital, pills
+  without a status are drawn as pills, and the retention and system pages no longer ring a card in the
+  accent colour to say what its pill says. A short admin page no longer shifts the menu sideways.
 - On a phone, a demo case number on `/status` no longer breaks into two or three lines beside its status badge.
 - **A WebSocket handshake put the client's IP address into the app's log**: `127.0.0.1:37000 - "WebSocket
   /status?case=…" 403` on `uvicorn.error`, which `--no-access-log` does not silence. The middleware cleaned

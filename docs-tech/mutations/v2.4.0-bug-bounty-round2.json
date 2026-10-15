@@ -203,7 +203,7 @@
   {
    "id": "de-retention-default-dropped",
    "file": "app/locales/de.json",
-   "old": " (Standard: 1095 = 3 Jahre)",
+   "old": " (Standard: 1095 = 3 Jahre)",
    "new": "",
    "tests": "R"
   },

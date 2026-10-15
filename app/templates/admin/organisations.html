@@ -70,13 +70,13 @@
                                 {% if org.is_active %}
                                 <span class="badge badge-closed">{{ t('admin.organisations.active') }}</span>
                                 {% else %}
-                                <span class="badge">{{ t('admin.organisations.inactive') }}</span>
+                                <span class="badge badge-neutral">{{ t('admin.organisations.inactive') }}</span>
                                 {% endif %}
                             </td>
                             <td class="mono">{{ org.created_at.strftime('%Y-%m-%d') }}</td>
                             <td>
                                 {% if org.slug == default_org_slug %}
-                                <span class="badge">{{ t('admin.organisations.default') }}</span>
+                                <span class="badge badge-neutral">{{ t('admin.organisations.default') }}</span>
                                 {% elif org.is_active %}
                                 <form method="post" action="/admin/organisations/{{ org.id }}/deactivate"
                                       class="inline-form"

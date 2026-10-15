@@ -10,13 +10,13 @@
     </div>
 
     <div class="stats-row" role="list">
-        <div class="stat-card {% if retention_enabled %}stat-card--active{% else %}stat-card--inactive{% endif %}" role="listitem">
+        <div class="stat-card" role="listitem">
             <div class="stat-card__label">{{ t('admin.retention.stat.status') }}</div>
             <div class="stat-card__value">
                 {% if retention_enabled %}
                     <span class="badge badge-closed" aria-label="{{ t('admin.retention.stat.enabled') }}">{{ t('admin.retention.stat.enabled') }}</span>
                 {% else %}
-                    <span class="badge" aria-label="{{ t('admin.retention.stat.disabled') }}">{{ t('admin.retention.stat.disabled') }}</span>
+                    <span class="badge badge-received" aria-label="{{ t('admin.retention.stat.disabled') }}">{{ t('admin.retention.stat.disabled') }}</span>
                 {% endif %}
             </div>
         </div>
