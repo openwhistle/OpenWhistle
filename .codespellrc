@@ -7,4 +7,6 @@ check-hidden = false
 # garantie — German test data in test fixture, tests/test_v150_ux.py:494
 # ist — German text quoted in CHANGELOG.md and tests/test_v150_ux.py
 # ALPH — WebP chunk name (alpha channel), app/services/attachment.py
-ignore-words-list = ist,alph,covert,Tage,Titel,garantie
+# oder — German text in a mutation spec, docs-tech/mutations/v2.4.0-release-check.json
+# ans — French "years" in a unit list, tests/test_release_check_240.py
+ignore-words-list = ist,alph,covert,Tage,Titel,garantie,oder,ans
