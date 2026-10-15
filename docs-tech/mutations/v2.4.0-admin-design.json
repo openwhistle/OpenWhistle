@@ -1,0 +1,65 @@
+{
+ "test_groups": {
+  "D": [
+   "tests/test_v160_design.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "th-shouts",
+   "file": "app/static/css/site.css",
+   "old": "th {\n  border-bottom-width: 2px;",
+   "new": "th {\n  text-transform: uppercase;\n  border-bottom-width: 2px;",
+   "tests": "D"
+  },
+  {
+   "id": "nav-group-tracked",
+   "file": "app/static/css/site.css",
+   "old": ".admin-nav-group {\n  color: var(--muted);",
+   "new": ".admin-nav-group {\n  letter-spacing: 0.12em;\n  color: var(--muted);",
+   "tests": "D"
+  },
+  {
+   "id": "internal-badge-capitals",
+   "file": "app/locales/en.json",
+   "old": "\"admin.report.internal_badge\": \"Internal\"",
+   "new": "\"admin.report.internal_badge\": \"INTERNAL\"",
+   "tests": "D"
+  },
+  {
+   "id": "panel-fades-in",
+   "file": "app/static/css/site.css",
+   "old": ".panel {\n  background: var(--surface-card);",
+   "new": ".panel {\n  animation: fadeSlideIn 0.4s ease both;\n  background: var(--surface-card);",
+   "tests": "D"
+  },
+  {
+   "id": "login-panel-anim-in",
+   "file": "app/templates/login_mfa.html",
+   "old": "<div class=\"panel\">",
+   "new": "<div class=\"panel anim-in\">",
+   "tests": "D"
+  },
+  {
+   "id": "case-eyebrow-back",
+   "file": "app/templates/admin/report.html",
+   "old": "        <h1 class=\"report-case-number\">",
+   "new": "        <div class=\"page-eyebrow\">{{ t('admin.report.case_file') }}</div>\n        <h1 class=\"report-case-number\">",
+   "tests": "D"
+  },
+  {
+   "id": "category-as-status",
+   "file": "app/templates/admin/report.html",
+   "old": "<span class=\"badge badge-neutral\">{{ report.category",
+   "new": "<span class=\"badge badge-received\">{{ report.category",
+   "tests": "D"
+  },
+  {
+   "id": "date-wraps",
+   "file": "app/templates/admin/dashboard.html",
+   "old": "color:var(--muted);white-space:nowrap; }",
+   "new": "color:var(--muted); }",
+   "tests": "D"
+  }
+ ]
+}

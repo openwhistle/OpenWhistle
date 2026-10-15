@@ -51,6 +51,8 @@ Mutations: `docs-tech/mutations/v1.5.0-privacy.json`. Tests: `tests/test_privacy
 | Every footer and the submit sidebar link the external reporting offices (§13 Abs. 2 HinSchG) | `test_the_page_names_every_external_office`, `test_every_footer_links_it`, `test_the_submit_sidebar_links_it` |
 | `/submit`'s promises block and form sit in the header's frame at any width | `test_the_wizard_layout_sits_in_the_headers_frame`, `test_the_wizard_shares_the_headers_frame` |
 | Labels a reporter reads are sentence case; reporter pages carry no eyebrow | `test_reporter_labels_are_not_shouted`, `test_reporter_pages_carry_no_eyebrow` |
+| No page carries an eyebrow or a label in capitals; a page opens without an entrance | `test_no_page_carries_an_eyebrow`, `test_no_label_is_shouted`, `test_no_message_is_written_in_capitals`, `test_a_page_opens_without_an_entrance`, `test_only_the_receipt_animates_in` |
+| A category is not drawn as a status; a date in the case list does not wrap | `test_a_category_is_not_drawn_as_a_status`, `test_a_date_in_the_case_list_does_not_wrap` |
 | One accent on a neutral reporter page: info, demo marker, office messages and status pills are neutral | `test_one_accent_on_a_neutral_reporter_page` |
 | No public page, `/health` or asset URL names the release; signed-in admins see it | `test_a_public_page_names_no_version`, `test_health_names_no_version`, `test_a_signed_in_admin_sees_the_version` |
 | The footer links the operator's privacy and legal notice when set, only http(s) | `test_the_footer_links_the_operators_legal_pages`, `test_a_footer_link_must_be_a_web_address` |
@@ -393,7 +395,7 @@ flip on random uuids); its test now also checks the statement's `ORDER BY`.
 | `nav-ignores-role` | `app/templating.py` | `test_case_manager_sees_only_pages_they_may_open` |
 | `brand-secondary-back` | `app/config.py` | `test_brand_secondary_colour_is_gone` |
 | `panel-header-shouted` | `app/static/css/site.css` | `test_panel_headers_and_labels_are_not_shouted` |
-| `eyebrows-everywhere` | `app/templates/admin/users.html` | `test_eyebrows_are_the_exception` |
+| `eyebrows-everywhere` | `app/templates/admin/users.html` | `test_no_page_carries_an_eyebrow` |
 
 ### Local review login (maintainer tooling)
 

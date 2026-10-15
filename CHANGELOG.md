@@ -47,6 +47,14 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - One accent on a neutral page: the promises block, the info alert, the demo banner and box, the office's
     messages and the progress note are neutral; a status pill is neutral with only its dot coloured. Blue,
     amber and green fills sat side by side on every reporter page.
+- **The admin pages got the same pass**:
+  - Table headers, the menu's group names, stat labels, the demo badge, the IP warning's title and the
+    internal-note badge are sentence case instead of tracked capitals. The case page and the error page lose
+    their eyebrows.
+  - Pages open without an entrance: every panel rose and faded in on every page view, so moving between
+    admin pages showed half-faded panels. Only the reporter's receipt and alerts still move.
+  - A case's category is a neutral pill; it looked like the "received" status, dot included. Dates in the
+    case list no longer break after their second hyphen, and the search field is no longer set in mono.
 - **LDAP refuses to start without TLS**: `LDAP_ENABLED` needs `LDAP_USE_SSL=true` or `LDAP_START_TLS=true`.
   With the defaults, a plain bind sent the service account's password, then each admin's, in clear text —
   measured on the wire (`ServiceSecret` readable in the captured bind).

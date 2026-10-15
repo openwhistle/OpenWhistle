@@ -20,7 +20,7 @@
 .report-empty-note{color:var(--muted);font-size:var(--text-body-sm);margin-bottom:var(--space-4)}
 .report-value-strong{font-size:var(--text-body-sm);font-weight:600}
 /* Internal notes */
-.report-internal-badge{margin-left:var(--space-2);font-size:var(--text-eyebrow);padding:.15rem .5rem;background:var(--warning-subtle);color:var(--warning);border-radius:var(--radius-sm);font-weight:600;letter-spacing:.05em}
+.report-internal-badge{margin-left:var(--space-2);font-size:var(--text-badge);padding:.15rem .5rem;background:var(--warning-subtle);color:var(--warning);border-radius:var(--radius-sm);font-weight:600}
 .report-note-list{display:flex;flex-direction:column;gap:var(--space-3);margin-bottom:var(--space-5)}
 .report-note{padding:.6rem .75rem;background:var(--warning-subtle);border-radius:var(--radius-card)}
 .report-note-meta{font-size:var(--text-hint);color:var(--muted);margin-bottom:var(--space-1)}
@@ -29,7 +29,7 @@
 /* Linked cases */
 .report-link-list{list-style:none;padding:0;margin:0 0 var(--space-4);display:flex;flex-direction:column;gap:var(--space-2)}
 .report-link-row{display:flex;align-items:center;flex-wrap:wrap;gap:var(--space-3);padding:var(--space-2) var(--space-3);background:var(--bg-code);border-radius:var(--radius-sm)}
-.report-link-badge{font-size:var(--text-eyebrow)}
+.report-link-badge{font-size:var(--text-badge)}
 .report-link-category{font-size:var(--text-label);color:var(--muted);flex:1}
 .report-link-add{display:flex;gap:var(--space-2);align-items:flex-start}
 .report-btn-xs{font-size:var(--text-hint);padding:.2rem .5rem}
@@ -54,7 +54,7 @@
 .report-delete-time{font-size:var(--text-hint);margin-top:var(--space-1)}
 </style>{% endblock %}
 
-{% block title %}{{ t('admin.report.eyebrow') }} {{ report.case_number }} | {{ brand.name }}{% endblock %}
+{% block title %}{{ t('admin.report.case_file') }} {{ report.case_number }} | {{ brand.name }}{% endblock %}
 
 {% block admin_content %}
 <div class="container">
@@ -66,7 +66,6 @@
             <span class="report-assignee">{{ icons.icon('user') }} {{ report.assigned_to.username }}</span>
             {% endif %}
         </div>
-        <div class="page-eyebrow">{{ t('admin.report.eyebrow') }}</div>
         <h1 class="report-case-number">
             {{ report.case_number }}
         </h1>
@@ -82,7 +81,7 @@
                 <h2 class="panel-header">
                     {{ t('admin.report.initial') }}
                     &nbsp;&nbsp;
-                    <span class="badge badge-received">{{ report.category | category_label(category_labels) }}</span>
+                    <span class="badge badge-neutral">{{ report.category | category_label(category_labels) }}</span>
                 </h2>
                 <p class="report-description">{{ decrypted_description }}</p>
 
@@ -106,7 +105,7 @@
             </div>
 
             {# Communication thread + reply #}
-            <div class="panel delay-05">
+            <div class="panel">
                 <h2 class="panel-header">{{ t('admin.report.thread') }}</h2>
 
                 {% if report.messages %}
@@ -147,7 +146,7 @@
             </div>
 
             {# Internal notes (admin-only) #}
-            <div class="panel delay-08" id="notes">
+            <div class="panel" id="notes">
                 <h2 class="panel-header">
                     {{ t('admin.report.notes.header') }}
                     <span class="report-internal-badge">{{ t('admin.report.internal_badge') }}</span>
@@ -183,7 +182,7 @@
             </div>
 
             {# History: linked cases, then the audit trail (collapsed) #}
-            <div class="panel delay-10" id="links">
+            <div class="panel" id="links">
                 <h2 class="panel-header">{{ t('admin.report.history.header') }}</h2>
 
                 <section class="action-section">
@@ -309,7 +308,7 @@
                 {% endif %}
             </dl>
 
-            <div class="panel delay-05">
+            <div class="panel">
                 <h2 class="panel-header">{{ t('admin.report.actions.header') }}</h2>
 
                 {% if not report.acknowledged_at %}
