@@ -20,12 +20,7 @@
         <p>{{ t('success.subtitle') }}</p>
     </div>
 
-    <div class="alert alert-warning anim-in delay-05" role="alert">
-        <div class="alert-title">{{ t('success.warning.title') }}</div>
-        {{ t('success.warning.body') }}
-    </div>
-
-    <div class="panel anim-in delay-10">
+    <div class="panel anim-in delay-05">
         <h2 class="panel-header">{{ t('success.panel.header') }}</h2>
 
         <div class="credential-group">
@@ -62,6 +57,11 @@
             </ul>
         </div>
         {% endif %}
+
+        <div class="alert alert-warning ss-mt-lg" role="alert">
+            <div class="alert-title">{{ t('success.warning.title') }}</div>
+            {{ t('success.warning.body') }}
+        </div>
 
         <div class="alert alert-info ss-mt-lg">
             <div class="alert-title">{{ t('success.next.title') }}</div>

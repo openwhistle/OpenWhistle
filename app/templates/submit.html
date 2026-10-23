@@ -59,11 +59,6 @@
 
         {# ── Step 1: Mode selection ── #}
         {% if step == 1 %}
-        <div class="alert alert-info sub-alert-spaced">
-            <div class="alert-title">{{ t('submit.alert.title') }}</div>
-            {{ t('submit.alert.body') }}
-        </div>
-
         <form method="post" action="{{ submit_path }}" novalidate>
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <input type="hidden" name="step" value="1">
