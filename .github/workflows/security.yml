@@ -54,7 +54,7 @@ jobs:
           no-cache-filters: final
       # Fails on any vulnerability with a fix, whatever its severity; the
       # exceptions are reviewed one by one in .grype.yaml.
-      - uses: docker://anchore/grype:v0.120.1@sha256:e4a44ef45d285b829ce6efe2642980329661bd2d18eab5fc539138d4adaebbbe
+      - uses: docker://anchore/grype:v0.121.0@sha256:621d56d1d68106b787022c81546f7e0a36202a25d1239f0c20195fab8c16f7ea
         with:
           args: docker:openwhistle:scan --config .grype.yaml --only-fixed --fail-on negligible
       - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
@@ -78,6 +78,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: docker://anchore/grype:v0.120.1@sha256:e4a44ef45d285b829ce6efe2642980329661bd2d18eab5fc539138d4adaebbbe
+      - uses: docker://anchore/grype:v0.121.0@sha256:621d56d1d68106b787022c81546f7e0a36202a25d1239f0c20195fab8c16f7ea
         with:
           args: registry:ghcr.io/openwhistle/openwhistle:latest --config .grype.yaml --only-fixed --fail-on negligible
