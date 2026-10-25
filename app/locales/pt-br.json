@@ -47,8 +47,6 @@
   "submit.sidebar.g17.desc": "O recebimento é confirmado em 7 dias e o retorno vem em até 3 meses.",
   "submit.sidebar.onion": "A rede do seu empregador pode ver que este site foi acessado, não o que você envia. Em uma rede corporativa, use o Tor Browser e este endereço:",
   "submit.title": "Enviar uma denúncia",
-  "submit.alert.title": "Antes de enviar",
-  "submit.alert.body": "Salve seu número de caso e PIN em local seguro após o envio. Eles são a única forma de acessar sua denúncia e não podem ser recuperados se perdidos.",
   "submit.form.category": "Categoria",
   "submit.form.category.placeholder": "— Selecione uma categoria —",
   "submit.form.description": "Descrição",

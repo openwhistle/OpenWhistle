@@ -43,7 +43,6 @@ For every row, ask: does the translation assert the same fact, in the same direc
 | Key | What it must claim |
 | --- | --- |
 | `submit.sidebar.g02.desc` | Both are needed to return, and neither can be recovered |
-| `submit.alert.body` | Save both; they are the only way back and cannot be recovered |
 | `success.warning.body` | Save them now; they cannot be recovered |
 | `success.confirm.label.html` | The reporter confirms having saved both and understands they cannot be recovered |
 | `success.pin_shown_once` | Shown once only; if missed, the report still arrived, and a new report can cite the case number |

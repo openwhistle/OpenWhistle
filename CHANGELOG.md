@@ -7,6 +7,14 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- **Design polish**: the theme toggle and language picker are 44 px touch targets; form and detail labels
+  are set at weight 600; form controls use the input radius token; the select arrow keeps its contrast in
+  dark mode; the nav loses its border in favour of the shadow it already had.
+- **Submit flow**: step 1 no longer opens with a reminder to save the case number and PIN before there is
+  anything to save; the success page shows that reminder after the credentials instead of above them.
+
 ## [2.4.0] — 2026-10-15
 
 ### Added

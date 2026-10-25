@@ -47,8 +47,6 @@
   "submit.sidebar.g17.desc": "La réception est confirmée sous 7 jours, le retour suit sous 3 mois.",
   "submit.sidebar.onion": "Le réseau de votre employeur peut voir que ce site a été consulté, pas ce que vous envoyez. Sur un réseau professionnel, utilisez Tor Browser et cette adresse :",
   "submit.title": "Soumettre un signalement",
-  "submit.alert.title": "Avant de soumettre",
-  "submit.alert.body": "Enregistrez votre numéro de dossier et votre code PIN en lieu sûr après la soumission. Ce sont les seuls moyens d'accéder à votre signalement et ils ne peuvent pas être récupérés en cas de perte.",
   "submit.form.category": "Catégorie",
   "submit.form.category.placeholder": "Sélectionner une catégorie",
   "submit.form.description": "Description",
