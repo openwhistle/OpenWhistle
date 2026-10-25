@@ -30,8 +30,6 @@
   "submit.sidebar.g17.desc": "Der Eingang wird innerhalb von 7 Tagen bestätigt, Rückmeldung folgt innerhalb von 3 Monaten.",
   "submit.sidebar.onion": "Das Netzwerk Ihres Arbeitgebers kann sehen, dass diese Seite aufgerufen wurde, nicht was Sie senden. Nutzen Sie im Firmennetz den Tor Browser und diese Adresse:",
   "submit.title": "Meldung abgeben",
-  "submit.alert.title": "Vor dem Absenden",
-  "submit.alert.body": "Speichern Sie Ihre Vorgangsnummer und PIN nach dem Absenden sicher. Sie sind der einzige Zugang zu Ihrer Meldung und können nicht wiederhergestellt werden.",
   "submit.form.category": "Kategorie",
   "submit.form.category.placeholder": "Kategorie auswählen",
   "submit.form.description": "Beschreibung",

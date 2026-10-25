@@ -30,8 +30,6 @@
   "submit.sidebar.g17.desc": "Receipt is confirmed within 7 days, feedback follows within 3 months.",
   "submit.sidebar.onion": "Your employer's network can see that this site was visited, not what you send. On a work network, use Tor Browser and this address:",
   "submit.title": "Submit a report",
-  "submit.alert.title": "Before you submit",
-  "submit.alert.body": "Save your case number and PIN in a secure location after submission. They are the only way to access your report and cannot be recovered if lost.",
   "submit.form.category": "Category",
   "submit.form.category.placeholder": "Select a category",
   "submit.form.description": "Description",

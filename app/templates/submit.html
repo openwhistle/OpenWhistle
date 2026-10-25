@@ -4,7 +4,6 @@
 
 {% block styles %}
 <style nonce="{{ request.state.csp_nonce }}">
-    .sub-alert-spaced { margin: 0.75rem 0; }
     .sub-fieldset-reset { border: none; padding: 0; margin: 0; }
     .sub-mb1 { margin-bottom: 1rem; }
     .sub-confidential-fields { display: none; margin-top: 1.5rem; }
@@ -59,11 +58,6 @@
 
         {# ── Step 1: Mode selection ── #}
         {% if step == 1 %}
-        <div class="alert alert-info sub-alert-spaced">
-            <div class="alert-title">{{ t('submit.alert.title') }}</div>
-            {{ t('submit.alert.body') }}
-        </div>
-
         <form method="post" action="{{ submit_path }}" novalidate>
             <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
             <input type="hidden" name="step" value="1">
