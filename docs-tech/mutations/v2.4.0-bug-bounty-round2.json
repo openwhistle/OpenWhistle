@@ -231,8 +231,8 @@
   {
    "id": "pdf-elements-uncapped",
    "file": "app/services/attachment.py",
-   "old": "            if _pdf_clone_cost(reader, MAX_PDF_ELEMENTS) > MAX_PDF_ELEMENTS:",
-   "new": "            if _pdf_clone_cost(reader, MAX_PDF_ELEMENTS) > 10**9:",
+   "old": "        if _pdf_clone_cost(reader, MAX_PDF_ELEMENTS) > MAX_PDF_ELEMENTS:",
+   "new": "        if _pdf_clone_cost(reader, MAX_PDF_ELEMENTS) > 10**9:",
    "tests": "R"
   }
  ]
