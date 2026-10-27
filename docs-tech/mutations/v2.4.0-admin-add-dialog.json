@@ -25,6 +25,13 @@
    "old": "            [data-dialog-open], .dialog-close { display: none !important; }\n",
    "new": "",
    "tests": "D"
+  },
+  {
+   "id": "dialog-label-points-nowhere",
+   "file": "app/templates/admin/locations.html",
+   "old": "aria-labelledby=\"add-location-dialog-title\"",
+   "new": "aria-labelledby=\"add-location-dialog-titleX\"",
+   "tests": "D"
   }
  ]
 }
