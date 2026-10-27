@@ -3037,7 +3037,7 @@ dialog.dialog-panel::backdrop {
   .saved-confirm-label, .demo-credentials, .demo-cred-value, .demo-cred-code, .demo-report-row,
   .badge-admin, .badge-case_manager, .badge-superadmin, .badge-neutral, .filter-pills,
   .session-expiry-banner, .session-expiry-banner.session-expiry-expired-state, .card, .theme-toggle, .lang-picker-btn, .lang-picker-menu, .admin-menu,
-  .panel-primary, .pagination-page, .pagination-page-current {
+  .panel-primary, .pagination-page, .pagination-page-current, dialog.dialog-panel {
     border: 1px solid CanvasText;
   }
   /* A disabled pagination button keeps its dashed edge as the border here. */

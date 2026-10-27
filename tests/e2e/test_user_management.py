@@ -30,7 +30,8 @@ def test_create_new_user(admin_page: Page, base_url: str) -> None:
     admin_page.goto(f"{base_url}/admin/users")
     admin_page.wait_for_load_state("networkidle")
 
-    # Fill the add-user form
+    # The add-user form lives in a modal dialog opened from the page heading.
+    admin_page.click("[data-dialog-open]")
     admin_page.fill('input[name="username"]', _TEST_USER)
     admin_page.fill('input[name="password"]', _TEST_PASSWORD)
     # Select a role — use the add-form's specific #new-role to avoid matching per-user selects

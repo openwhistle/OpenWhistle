@@ -22,6 +22,8 @@ def test_create_category(admin_page: Page, base_url: str) -> None:
     admin_page.goto(f"{base_url}/admin/categories")
     admin_page.wait_for_load_state("networkidle")
 
+    # The add form lives in a modal dialog opened from the page heading.
+    admin_page.click("[data-dialog-open]")
     admin_page.fill('input[name="slug"]', _CAT_SLUG)
     admin_page.fill('input[name="label_en"]', _CAT_LABEL_EN)
     admin_page.fill('input[name="label_de"]', _CAT_LABEL_DE)
@@ -61,6 +63,8 @@ def test_create_location(admin_page: Page, base_url: str) -> None:
     admin_page.goto(f"{base_url}/admin/locations")
     admin_page.wait_for_load_state("networkidle")
 
+    # The add form lives in a modal dialog opened from the page heading.
+    admin_page.click("[data-dialog-open]")
     admin_page.fill('input[name="name"]', _LOC_NAME)
     admin_page.fill('input[name="code"]', _LOC_CODE)
     admin_page.click('button[type="submit"].btn-primary')
