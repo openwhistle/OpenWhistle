@@ -28,6 +28,15 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Submit flow**: step 1 no longer opens with a reminder to save the case number and PIN before there is
   anything to save; the success page shows that reminder after the credentials instead of above them.
 
+### Fixed
+
+- **Two older changelog entries cited the wrong law for data retention.** The three-year deletion rule
+  is HinSchG § 11 Abs. 5, a deletion deadline — not § 12 Abs. 3, the finance-sector rule, and not a
+  minimum. The citation guard now also scans the publicly rendered `CHANGELOG.md` and couples the
+  retention basis to § 11 so the pairing cannot return. The HinSchG citation shapes were refreshed to
+  the 25 Sep 2026 amendment (§ 3 now has ten Absätze) and a cite of another law (LkSG) is no longer
+  read as a HinSchG section.
+
 ## [2.4.0] — 2026-10-15
 
 ### Added
@@ -1600,7 +1609,7 @@ Remaining lower-severity findings are tracked in GitHub issues #42–#46.
   encrypted; pre-encryption rows are readable without decryption (backward compat)
 - **Data retention (GDPR / HinSchG)**: `RETENTION_ENABLED=true` activates a
   daily job (03:00 UTC) that permanently deletes closed reports older than
-  `RETENTION_DAYS` (default 1095 = 3 years — HinSchG §12 Abs. 3 minimum); each
+  `RETENTION_DAYS` (default 1095 = 3 years — HinSchG §11 Abs. 5 deletion deadline); each
   deletion writes an immutable audit-log entry (`report.auto_deleted`) recording
   the case number, closure date, and legal basis
 - **Multi-tenancy**: `MULTI_TENANCY_ENABLED=true` activates multi-organisation
@@ -1616,7 +1625,7 @@ Remaining lower-severity findings are tracked in GitHub issues #42–#46.
   page covering HinSchG §16 requirements, implementation options (internal hotline
   vs. external ombudsman), §10 recording prohibition, and a compliance checklist
 - **Data retention admin page** (`/admin/retention`): shows current retention
-  config, next scheduled run, legal basis (GDPR Art. 5/17, HinSchG §12), and
+  config, next scheduled run, legal basis (GDPR Art. 5/17, HinSchG §11 Abs. 5), and
   configuration reference table
 - **Organisation management page** (`/admin/organisations`): superadmin-only page
   to create and deactivate organisations (default org cannot be deactivated)

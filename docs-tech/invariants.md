@@ -50,6 +50,7 @@ Mutations: `docs-tech/mutations/v1.5.0-privacy.json`. Tests: `tests/test_privacy
 | IP headers and peer address removed before the app; pages `no-store` | `test_ip_headers_and_peer_address_never_reach_the_app`, `test_pages_are_never_cached_but_static_files_are` |
 | A reporter whose request carried address headers sees a notice (not over the onion listener) | `test_notice_shown_when_the_proxy_forwards_the_address`, `test_no_notice_over_the_onion_listener` |
 | Every footer and the submit sidebar link the external reporting offices (§13 Abs. 2 HinSchG) | `test_the_page_names_every_external_office`, `test_every_footer_links_it`, `test_the_submit_sidebar_links_it` |
+| Every HinSchG citation in README, locales and the public changelog exists; the retention basis is § 11 Abs. 5, never § 12 | `test_every_cited_absatz_exists`, `test_the_retention_basis_is_para_11_not_12` |
 | `/submit`'s promises block and form sit in the header's frame at any width | `test_the_wizard_layout_sits_in_the_headers_frame`, `test_the_wizard_shares_the_headers_frame` |
 | Labels a reporter reads are sentence case; reporter pages carry no eyebrow | `test_reporter_labels_are_not_shouted`, `test_reporter_pages_carry_no_eyebrow` |
 | No page carries an eyebrow or a label in capitals; a page opens without an entrance | `test_no_page_carries_an_eyebrow`, `test_no_label_is_shouted`, `test_no_message_is_written_in_capitals`, `test_a_page_opens_without_an_entrance`, `test_only_the_receipt_animates_in` |

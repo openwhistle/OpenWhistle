@@ -13,7 +13,7 @@ ROOT = Path(__file__).parents[1]
 # Section -> number of Absätze; per Absatz, the number of Nr. where cited.
 SHAPE: dict[int, tuple[int, dict[int, int]]] = {
     2: (3, {1: 11}),
-    3: (8, {}),
+    3: (10, {8: 7}),
     7: (3, {}),
     8: (2, {}),
     9: (4, {}),
@@ -30,13 +30,18 @@ SHAPE: dict[int, tuple[int, dict[int, int]]] = {
 
 _OTHER_LAW = re.compile(
     r"\s*(?:[A-Za-z.\s\d]{0,8})?"
-    r"\b(?:StGB|DSGVO|BetrVG|OWiG|BDSG|UWG|BGB|GG|AktG|GmbHG|KWG|BPersVG|MStV|TDDDG)\b"
+    r"\b(?:StGB|DSGVO|BetrVG|OWiG|BDSG|UWG|BGB|GG|AktG|GmbHG|KWG|LkSG|BPersVG|MStV|TDDDG)\b"
 )
 _CITE = re.compile(r"§\s?(\d+)\s?(?:Abs\.|Absatz|al\.)\s?(\d+)(?:\s?(?:Nr\.|Satz)\s?(\d+))?")
 
 
 def _files() -> list[Path]:
-    return [ROOT / "README.md", *(ROOT / "app" / "locales").glob("*.json")]
+    # CHANGELOG.md is rendered publicly at openwhistle.net/changelog, so its
+    # citations are held to the same check — two 1.x entries cited a wrong section.
+    return [ROOT / "README.md", ROOT / "CHANGELOG.md", *(ROOT / "app" / "locales").glob("*.json")]
+
+
+_RETENTION = re.compile(r"retention|delete|deletion|aufbewahr|lösch", re.IGNORECASE)
 
 
 def test_every_cited_absatz_exists() -> None:
@@ -56,4 +61,25 @@ def test_every_cited_absatz_exists() -> None:
                 limit = shape[1].get(absatz)
                 if limit is None or int(m.group(3)) > limit:
                     wrong.append(f"{path.relative_to(ROOT)}: {m.group(0)} (no such Nr.)")
+    assert not wrong, wrong
+
+
+def test_the_retention_basis_is_para_11_not_12() -> None:
+    """The three-year deletion rule is HinSchG § 11 Abs. 5 — a deletion deadline, not
+    a § 12 Abs. 3 minimum (§ 12 Abs. 3 is the finance-sector rule). The existence
+    check above passes a § 12 Abs. 3 cite because that Absatz exists; this couples the
+    section to its subject so the pairing that shipped in two 1.x changelog entries
+    cannot return."""
+    wrong = []
+    for path in _files():
+        text = path.read_text(encoding="utf-8")
+        for m in re.finditer(r"§\s?12\b", text):
+            window = text[max(0, m.start() - 180) : m.end() + 60]
+            if (
+                _RETENTION.search(window)
+                and "§11" not in window
+                and "§ 11" not in window
+                and not re.search(r"(?:not|nicht)\s*§\s?12", window)
+            ):
+                wrong.append(f"{path.relative_to(ROOT)}: …{window.strip()}…")
     assert not wrong, wrong

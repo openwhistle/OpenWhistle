@@ -1,0 +1,16 @@
+{
+ "test_groups": {
+  "C": [
+   "tests/test_hinschg_citations.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "retention-basis-para-12",
+   "file": "CHANGELOG.md",
+   "old": "HinSchG §11 Abs. 5 deletion deadline",
+   "new": "HinSchG §12 Abs. 3 minimum",
+   "tests": "C"
+  }
+ ]
+}
