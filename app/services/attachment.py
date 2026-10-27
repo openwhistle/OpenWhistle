@@ -21,6 +21,9 @@ from app.services.crypto import seal
 
 if TYPE_CHECKING:
     import zipfile
+    from collections.abc import Iterable
+
+    from pypdf import PdfReader
 
     from app.services.storage import StorageBackend
 
@@ -379,24 +382,28 @@ def _strip_jp2(data: bytes) -> bytes:
 _PDF_IMAGE_STRIPPERS = {"/DCTDecode": _strip_jpeg_segments, "/JPXDecode": _strip_jp2}
 
 
-def _pdf_clone_cost(reader: object, cap: int) -> int:
+def _pdf_clone_cost(reader: PdfReader, cap: int) -> int:
     """How many objects and array/dict entries the clone below will visit, counted
     with get_object (the reader caches it, so the clone re-parses nothing) and
     stopped as soon as it passes ``cap``. This is the one bound that catches work
     spread thinly over many small objects, which no per-object parse limit sees.
-    A single oversized array or dict instead trips pypdf's scoped parse limit on
-    get_object and surfaces as a refusal in _strip_pdf — not counted here."""
+    Each object charges at least 1, so the walk parses at most ``cap`` of them, and
+    the cheap xref count below refuses a PDF with more objects than that without
+    parsing any. A single oversized array or dict trips pypdf's scoped parse limit
+    on get_object; that is a refusal in its own right, raised here, never skipped —
+    skipping it would spend its full parse cost yet never reach the budget."""
     from pypdf.errors import PyPdfError  # noqa: PLC0415
     from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject  # noqa: PLC0415
 
     def entries(obj: object, budget: int) -> int:
-        stack = [obj]
+        stack: list[object] = [obj]
         seen = 0
         while stack:
             node = stack.pop()
+            children: Iterable[object]
             if isinstance(node, DictionaryObject):
                 seen += len(node)
-                children: object = node.values()
+                children = node.values()
             elif isinstance(node, (ArrayObject, list)):
                 seen += len(node)
                 children = node
@@ -407,15 +414,22 @@ def _pdf_clone_cost(reader: object, cap: int) -> int:
             stack.extend(children)
         return seen
 
+    # Cheap O(1) bound first: a PDF with more indirect objects than the budget
+    # can never clone cheaply, and this refuses it without parsing a single one.
+    if sum(len(v) for v in reader.xref.values()) + len(reader.xref_objStm) > cap:
+        return cap + 1
+
     sources = [(num, gen) for gen, section in reader.xref.items() for num in section]
     sources += [(num, 0) for num in getattr(reader, "xref_objStm", {})]
     total = 0
     for num, gen in sources:
         try:
             obj = IndirectObject(num, gen, reader).get_object()
-        except PyPdfError:
-            continue  # unreachable/oversized objects are the clone's to refuse
-        total += entries(obj, cap - total + 1)
+        except PyPdfError as exc:
+            # An object pypdf cannot parse within the scoped budget is oversized:
+            # refuse it, rather than skip and pay its parse cost for nothing.
+            raise MetadataError("PDF has too many objects to clean") from exc
+        total += 1 + entries(obj, cap - total)
         if total > cap:
             return total
     return total
