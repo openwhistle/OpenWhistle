@@ -2,7 +2,7 @@
 
 # ─── Stage 1: dependency builder ─────────────────────────────────────────────
 # Digest from `skopeo inspect --format '{{.Digest}}' docker://docker.io/library/python:3.15-alpine` (multi-arch index digest); Renovate's pinDigests rule keeps it current.
-FROM python:3.15-alpine@sha256:d44b1254cb92329418d164b22b20d86bbd3869d48e80e09e476531a409a728bb AS builder
+FROM python:3.15-alpine@sha256:1b0796bb3b4390ceb717d9231fa2c4ee584948473724ad7ae252aa9bc2125c7e AS builder
 
 WORKDIR /build
 
@@ -29,7 +29,7 @@ RUN UV_PROJECT_ENVIRONMENT=/venv UV_PYTHON_DOWNLOADS=never uv sync --frozen --no
 
 # ─── Stage 2: production image ────────────────────────────────────────────────
 # Same digest and provenance as the builder stage above.
-FROM python:3.15-alpine@sha256:d44b1254cb92329418d164b22b20d86bbd3869d48e80e09e476531a409a728bb AS final
+FROM python:3.15-alpine@sha256:1b0796bb3b4390ceb717d9231fa2c4ee584948473724ad7ae252aa9bc2125c7e AS final
 
 WORKDIR /app
 
