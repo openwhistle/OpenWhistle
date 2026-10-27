@@ -439,7 +439,6 @@ def _strip_pdf(data: bytes) -> bytes:
     import os  # noqa: PLC0415
 
     from pypdf import PdfReader, PdfWriter, apply_configuration  # noqa: PLC0415
-    from pypdf.errors import PyPdfError  # noqa: PLC0415
     from pypdf.generic import (  # noqa: PLC0415
         ArrayObject,
         ByteStringObject,
@@ -456,20 +455,18 @@ def _strip_pdf(data: bytes) -> bytes:
     reader = PdfReader(io.BytesIO(data))
     # Bound the clone's cost before and during it. Scoping pypdf's per-object
     # element limit to the budget keeps any single array or dict cheap to parse
-    # (it raises past the budget instead); _pdf_clone_cost then refuses a PDF
-    # whose objects and entries together exceed the budget, which catches work
-    # spread over many small objects that no per-object limit would. Either turns
-    # into a refusal via strip_metadata, never a store.
-    try:
-        with apply_configuration(
-            array_maximum_element_count=MAX_PDF_ELEMENTS,
-            dictionary_maximum_element_count=MAX_PDF_ELEMENTS,
-        ):
-            if _pdf_clone_cost(reader, MAX_PDF_ELEMENTS) > MAX_PDF_ELEMENTS:
-                raise MetadataError("PDF has too many objects to clean")
-            writer = PdfWriter(clone_from=reader)
-    except PyPdfError as exc:
-        raise MetadataError("PDF has too many objects to clean") from exc
+    # (it raises past the budget, which _pdf_clone_cost turns into a refusal);
+    # _pdf_clone_cost then refuses a PDF whose objects and entries together
+    # exceed the budget, catching work spread over many small objects that no
+    # per-object limit would. Any clone error below becomes a refusal via
+    # strip_metadata's own catch-all, never a store.
+    with apply_configuration(
+        array_maximum_element_count=MAX_PDF_ELEMENTS,
+        dictionary_maximum_element_count=MAX_PDF_ELEMENTS,
+    ):
+        if _pdf_clone_cost(reader, MAX_PDF_ELEMENTS) > MAX_PDF_ELEMENTS:
+            raise MetadataError("PDF has too many objects to clean")
+        writer = PdfWriter(clone_from=reader)
     writer.metadata = None  # document info: author, creator tool, dates
     for obj in writer._objects:
         if not isinstance(obj, DictionaryObject):
