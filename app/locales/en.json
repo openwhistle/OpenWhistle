@@ -305,6 +305,8 @@
   "admin.users.add.role": "Role",
   "admin.users.add.organisation": "Organisation",
   "admin.users.add.button": "Create user",
+  "admin.actions.cancel": "Cancel",
+  "admin.actions.close": "Close",
   "admin.users.add.totp_note": "At the first login, the new user sets up their authenticator app, then replaces the password you chose here.",
   "admin.users.list.header": "Current users",
   "admin.users.table.username": "Username",

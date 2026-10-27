@@ -48,6 +48,16 @@
 
     {% block head %}{% endblock %}
     {% block styles %}{% endblock %}
+
+    {# Without JavaScript the add-dialog cannot be opened, so render it inline as
+       a panel and hide the controls that need a script. #}
+    <noscript>
+        <style nonce="{{ request.state.csp_nonce }}">
+            dialog.dialog-panel { display: block !important; position: static !important; margin-top: 1.25rem; box-shadow: none !important; }
+            dialog.dialog-panel::backdrop { display: none !important; }
+            [data-dialog-open], .dialog-close { display: none !important; }
+        </style>
+    </noscript>
 </head>
 <body data-wait-label="{{ t('form.please_wait') }}" data-copied-label="{{ t('success.copied') }}">
     <a href="#main-content" class="skip-link">{{ t('a11y.skip_to_content') }}</a>

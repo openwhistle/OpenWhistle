@@ -27,6 +27,10 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   dark mode; the nav loses its border in favour of the shadow it already had.
 - **Submit flow**: step 1 no longer opens with a reminder to save the case number and PIN before there is
   anything to save; the success page shows that reminder after the credentials instead of above them.
+- **Admin setup pages**: adding a user, category, location or organisation now opens in a dialog from the
+  page heading, so the list is the page rather than a form stacked above it. The dialog reopens with the
+  error if a value is rejected, and without JavaScript the form still renders inline. Routes and data are
+  unchanged.
 
 ### Fixed
 

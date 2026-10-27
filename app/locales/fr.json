@@ -445,6 +445,8 @@
   "admin.users.add.role": "Rôle",
   "admin.users.add.organisation": "Organisation",
   "admin.users.add.button": "Créer l'utilisateur",
+  "admin.actions.cancel": "Annuler",
+  "admin.actions.close": "Fermer",
   "admin.users.add.totp_note": "À la première connexion, le nouvel utilisateur configure son application d'authentification, puis remplace le mot de passe choisi ici.",
   "admin.users.list.header": "Utilisateurs actuels",
   "admin.users.table.username": "Nom d'utilisateur",

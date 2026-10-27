@@ -305,6 +305,8 @@
   "admin.users.add.role": "Rolle",
   "admin.users.add.organisation": "Organisation",
   "admin.users.add.button": "Benutzer erstellen",
+  "admin.actions.cancel": "Abbrechen",
+  "admin.actions.close": "Schließen",
   "admin.users.add.totp_note": "Bei der ersten Anmeldung richtet der neue Benutzer seine Authenticator-App ein und ersetzt danach das hier gewählte Passwort.",
   "admin.users.list.header": "Aktuelle Benutzer",
   "admin.users.table.username": "Benutzername",

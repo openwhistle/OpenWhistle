@@ -294,3 +294,31 @@ window.addEventListener('pageshow', (e) => {
         delete btn.dataset.owLabel;
     });
 });
+
+// ─── Add dialogs: native <dialog>, opened and closed by data attribute ──────
+// [data-dialog-open="id"] opens that <dialog> modally; [data-dialog-close]
+// (and a click on the backdrop, and Escape) closes the one it is in. A dialog
+// whose form came back with validation errors (data-dialog-autoshow) reopens
+// itself so the admin sees the inline error next to the field.
+document.addEventListener('click', (e) => {
+    const opener = e.target.closest('[data-dialog-open]');
+    if (opener) {
+        const d = document.getElementById(opener.getAttribute('data-dialog-open'));
+        if (d && typeof d.showModal === 'function') {
+            e.preventDefault();
+            d.showModal();
+        }
+        return;
+    }
+    if (e.target.closest('[data-dialog-close]')) {
+        e.target.closest('dialog')?.close();
+        return;
+    }
+    // A click whose target is the dialog element itself landed on the backdrop.
+    if (e.target.tagName === 'DIALOG') e.target.close();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const auto = document.querySelector('dialog[data-dialog-autoshow]');
+    if (auto && typeof auto.showModal === 'function') auto.showModal();
+});
