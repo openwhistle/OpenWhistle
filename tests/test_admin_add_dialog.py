@@ -60,6 +60,17 @@ def test_dialog_has_a_close_control(tpl: str, dialog_id: str) -> None:
     assert "data-dialog-close" in _html(tpl), f"{tpl}: dialog has no close control"
 
 
+@pytest.mark.parametrize("tpl,dialog_id", ADD_PAGES, ids=lambda v: v)
+def test_dialog_is_labelled_by_its_heading(tpl: str, dialog_id: str) -> None:
+    # A modal <dialog> with no accessible name is announced only as "dialog"
+    # (WCAG 4.1.2); aria-labelledby must name an element that exists in the page.
+    html = _html(tpl)
+    m = re.search(rf'<dialog id="{re.escape(dialog_id)}"[^>]*\baria-labelledby="([^"]+)"', html)
+    assert m, f"{tpl}: dialog {dialog_id} has no aria-labelledby"
+    label_id = m.group(1)
+    assert f'id="{label_id}"' in html, f"{tpl}: aria-labelledby points to a missing id {label_id}"
+
+
 def test_base_ships_the_no_js_fallback() -> None:
     html = _html("base.html")
     assert "<noscript>" in html

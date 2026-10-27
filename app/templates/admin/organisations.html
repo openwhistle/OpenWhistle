@@ -16,9 +16,9 @@
     </div>
 
     {# Add organisation — opened from the heading; rendered inline as a panel without JS. #}
-    <dialog id="add-organisation-dialog" class="dialog-panel"{% if field_errors %} data-dialog-autoshow{% endif %}>
+    <dialog id="add-organisation-dialog" class="dialog-panel" aria-labelledby="add-organisation-dialog-title"{% if field_errors %} data-dialog-autoshow{% endif %}>
         <div class="dialog-head">
-            <h2 class="panel-header-title">{{ t('admin.organisations.add.header') }}</h2>
+            <h2 class="panel-header-title" id="add-organisation-dialog-title">{{ t('admin.organisations.add.header') }}</h2>
             <button type="button" class="dialog-close" data-dialog-close aria-label="{{ t('admin.actions.close') }}">&times;</button>
         </div>
         <form method="post" action="/admin/organisations">
