@@ -34,6 +34,12 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Copying the case number or PIN gave no confirmation over Tor.** The success page's copy
+  buttons fall back to the legacy copy path wherever the Clipboard API is absent — which is every
+  plain-HTTP onion request — but only the Clipboard-API path showed the "copied" tick. A
+  whistleblower on Tor copying a PIN that cannot be recovered saw no sign it had worked. The
+  fallback now confirms the same way, and never falsely: a copy that fails shows nothing, and the
+  code stays on screen to copy by hand.
 - **Two older changelog entries cited the wrong law for data retention.** The three-year deletion rule
   is HinSchG § 11 Abs. 5, a deletion deadline — not § 12 Abs. 3, the finance-sector rule, and not a
   minimum. The citation guard now also scans the publicly rendered `CHANGELOG.md` and couples the
