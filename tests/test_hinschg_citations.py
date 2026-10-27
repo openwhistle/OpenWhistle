@@ -41,7 +41,7 @@ def _files() -> list[Path]:
     return [ROOT / "README.md", ROOT / "CHANGELOG.md", *(ROOT / "app" / "locales").glob("*.json")]
 
 
-_RETENTION = re.compile(r"retention|delet|aufbewahr|lösch", re.IGNORECASE)
+_RETENTION = re.compile(r"retention|delete|deletion|aufbewahr|lösch", re.IGNORECASE)
 
 
 def test_every_cited_absatz_exists() -> None:
