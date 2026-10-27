@@ -21,8 +21,11 @@
 
 {% block admin_content %}
 <div class="container">
-    <div class="page-header">
+    <div class="page-header page-header-actions">
         <h1>{{ t('admin.users.title') }}</h1>
+        <button type="button" class="btn btn-primary" data-dialog-open="add-user-dialog">
+            {{ t('admin.users.add.button') }}
+        </button>
     </div>
 
     {% if reset_result %}
@@ -37,144 +40,146 @@
     </div>
     {% endif %}
 
-    <div class="admin-stack">
-
-        {# Add new user form #}
-        <div class="panel panel-narrow">
-            <h2 class="panel-header">{{ t('admin.users.add.header') }}</h2>
-            <form method="post" action="/admin/users">
-                <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                <div class="form-group">
-                    <label class="form-label" for="new-username">{{ t('admin.users.add.username') }}</label>
-                    <input type="text" class="form-control" id="new-username" name="username" required
-                        minlength="3" maxlength="64" value="{{ add_username | default('') }}"
-                        pattern="[A-Za-z0-9._@ \-]{3,64}" title="{{ t('admin.users.add.username.title') }}"
-                        {{ field.attrs('username') }}>
-                    {{ field.error('username') }}
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="new-password">{{ t('admin.users.add.password') }}</label>
-                    <input type="password" class="form-control" id="new-password" name="password" required
-                        minlength="12" autocomplete="new-password" {{ field.attrs('password') }}>
-                    {{ field.error('password') }}
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="new-role">{{ t('admin.users.add.role') }}</label>
-                    <select class="form-control" id="new-role" name="role">
-                        {% for role in roles %}
-                        <option value="{{ role.value }}" {{ 'selected' if role.value == (add_role | default('case_manager')) else '' }}>{{ t('role.label.' + role.value) }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                {% if organisations %}
-                <div class="form-group">
-                    <label class="form-label" for="new-org">{{ t('admin.users.add.organisation') }}</label>
-                    <select class="form-control" id="new-org" name="org_id">
-                        {% for org in organisations if org.is_active %}
-                        <option value="{{ org.id }}" {{ 'selected' if org.id == user.org_id else '' }}>{{ org.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                {% endif %}
-                <div class="alert alert-info usr-note">
-                    {{ t('admin.users.add.totp_note') }}
-                </div>
-                <button type="submit" class="btn btn-primary btn-block">{{ t('admin.users.add.button') }}</button>
-            </form>
+    {# Add new user — opened from the heading; rendered inline as a panel without JS. #}
+    <dialog id="add-user-dialog" class="dialog-panel"{% if field_errors %} data-dialog-autoshow{% endif %}>
+        <div class="dialog-head">
+            <h2 class="panel-header-title">{{ t('admin.users.add.header') }}</h2>
+            <button type="button" class="dialog-close" data-dialog-close aria-label="{{ t('admin.actions.close') }}">&times;</button>
         </div>
-
-        {# Users list #}
-        <div class="panel">
-            <h2 class="panel-header">{{ t('admin.users.list.header') }}</h2>
-
-            <div class="table-wrapper" tabindex="0" role="region" aria-label="{{ t('admin.users.list.header') }}">
-                <table class="table-stack" role="table">
-                    <thead role="rowgroup">
-                        <tr role="row">
-                            <th role="columnheader">{{ t('admin.users.table.username') }}</th>
-                            <th role="columnheader">{{ t('admin.users.table.role') }}</th>
-                            {% if organisations %}<th role="columnheader">{{ t('admin.users.table.organisation') }}</th>{% endif %}
-                            <th role="columnheader">{{ t('admin.users.table.status') }}</th>
-                            <th role="columnheader" class="stack-action-header">{{ t('admin.users.table.actions') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody role="rowgroup">
-                        {% for u in users %}
-                        <tr role="row" class="{% if not u.is_active %}usr-row-inactive{% endif %}">
-                            <td role="cell" class="stack-primary" data-label="{{ t('admin.users.table.username') }}">
-                                <span class="usr-username{% if u.id == user.id %} usr-username-self{% endif %}">
-                                    {{ u.username }}
-                                </span>
-                                {% if u.id == user.id %}<span class="usr-you-tag"> {{ t('admin.users.you_tag') }}</span>{% endif %}
-                            </td>
-                            <td role="cell" data-label="{{ t('admin.users.table.role') }}">
-                                <span class="badge badge-{{ u.role.value }}">{{ t('role.label.' + u.role.value) }}</span>
-                            </td>
-                            {% if organisations %}
-                            <td role="cell" data-label="{{ t('admin.users.table.organisation') }}">{% for org in organisations if org.id == u.org_id %}{{ org.name }}{% endfor %}</td>
-                            {% endif %}
-                            <td role="cell" class="stack-status" data-label="{{ t('admin.users.table.status') }}">
-                                {% if u.is_active %}
-                                <span class="badge badge-closed usr-status-badge">{{ t('admin.users.active') }}</span>
-                                {% else %}
-                                <span class="badge usr-status-badge">{{ t('admin.users.inactive') }}</span>
-                                {% endif %}
-                                {% if not u.totp_enabled %}
-                                <span class="badge usr-status-badge">{{ t('admin.users.totp_pending') }}</span>
-                                {% endif %}
-                            </td>
-                            <td role="cell" class="stack-action">
-                                <div class="usr-actions">
-                                    {# Role change #}
-                                    {% if u.id != user.id %}
-                                    <form method="post" action="/admin/users/{{ u.id }}/role" class="usr-role-form">
-                                        <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                                        <select name="role" class="form-control usr-role-select" aria-label="{{ t('admin.users.role_for', username=u.username) }}">
-                                            {% for role in roles %}
-                                            <option value="{{ role.value }}" {{ 'selected' if u.role == role else '' }}>{{ t('role.label.' + role.value) }}</option>
-                                            {% endfor %}
-                                        </select>
-                                        <button type="submit" class="btn btn-secondary btn-sm usr-role-btn">
-                                            {{ t('admin.users.change_role') }}
-                                        </button>
-                                    </form>
-                                    {% endif %}
-
-                                    {# Activate / Deactivate #}
-                                    {% if u.id != user.id %}
-                                    {% if u.is_active %}
-                                    <form method="post" action="/admin/users/{{ u.id }}/deactivate"
-                                          data-confirm="{{ t('admin.users.deactivate_confirm', username=u.username) }}">
-                                        <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                                        <button type="submit" class="btn btn-secondary btn-sm">
-                                            {{ t('admin.users.deactivate') }}
-                                        </button>
-                                    </form>
-                                    {% else %}
-                                    <form method="post" action="/admin/users/{{ u.id }}/reactivate">
-                                        <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                                        <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.users.reactivate') }}</button>
-                                    </form>
-                                    {% endif %}
-                                    {% endif %}
-
-                                    {# Lost authenticator: superadmin only, never one's own account. #}
-                                    {% if user.role.value == 'superadmin' and u.id != user.id and u.totp_enabled %}
-                                    <form method="post" action="/admin/users/{{ u.id }}/reset-totp"
-                                          data-confirm="{{ t('admin.users.reset_totp_confirm' if u.password_hash else 'admin.users.reset_totp_confirm_external', username=u.username) }}">
-                                        <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-                                        <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.users.reset_totp') }}</button>
-                                    </form>
-                                    {% endif %}
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <form method="post" action="/admin/users">
+            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+            <div class="form-group">
+                <label class="form-label" for="new-username">{{ t('admin.users.add.username') }}</label>
+                <input type="text" class="form-control" id="new-username" name="username" required
+                    minlength="3" maxlength="64" value="{{ add_username | default('') }}"
+                    pattern="[A-Za-z0-9._@ \-]{3,64}" title="{{ t('admin.users.add.username.title') }}"
+                    {{ field.attrs('username') }}>
+                {{ field.error('username') }}
             </div>
-        </div>
+            <div class="form-group">
+                <label class="form-label" for="new-password">{{ t('admin.users.add.password') }}</label>
+                <input type="password" class="form-control" id="new-password" name="password" required
+                    minlength="12" autocomplete="new-password" {{ field.attrs('password') }}>
+                {{ field.error('password') }}
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="new-role">{{ t('admin.users.add.role') }}</label>
+                <select class="form-control" id="new-role" name="role">
+                    {% for role in roles %}
+                    <option value="{{ role.value }}" {{ 'selected' if role.value == (add_role | default('case_manager')) else '' }}>{{ t('role.label.' + role.value) }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if organisations %}
+            <div class="form-group">
+                <label class="form-label" for="new-org">{{ t('admin.users.add.organisation') }}</label>
+                <select class="form-control" id="new-org" name="org_id">
+                    {% for org in organisations if org.is_active %}
+                    <option value="{{ org.id }}" {{ 'selected' if org.id == user.org_id else '' }}>{{ org.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            <div class="alert alert-info usr-note">
+                {{ t('admin.users.add.totp_note') }}
+            </div>
+            <div class="dialog-actions">
+                <button type="button" class="btn btn-secondary" data-dialog-close>{{ t('admin.actions.cancel') }}</button>
+                <button type="submit" class="btn btn-primary">{{ t('admin.users.add.button') }}</button>
+            </div>
+        </form>
+    </dialog>
 
+    {# Users list — the page. #}
+    <div class="panel">
+        <h2 class="panel-header">{{ t('admin.users.list.header') }}</h2>
+
+        <div class="table-wrapper" tabindex="0" role="region" aria-label="{{ t('admin.users.list.header') }}">
+            <table class="table-stack" role="table">
+                <thead role="rowgroup">
+                    <tr role="row">
+                        <th role="columnheader">{{ t('admin.users.table.username') }}</th>
+                        <th role="columnheader">{{ t('admin.users.table.role') }}</th>
+                        {% if organisations %}<th role="columnheader">{{ t('admin.users.table.organisation') }}</th>{% endif %}
+                        <th role="columnheader">{{ t('admin.users.table.status') }}</th>
+                        <th role="columnheader" class="stack-action-header">{{ t('admin.users.table.actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody role="rowgroup">
+                    {% for u in users %}
+                    <tr role="row" class="{% if not u.is_active %}usr-row-inactive{% endif %}">
+                        <td role="cell" class="stack-primary" data-label="{{ t('admin.users.table.username') }}">
+                            <span class="usr-username{% if u.id == user.id %} usr-username-self{% endif %}">
+                                {{ u.username }}
+                            </span>
+                            {% if u.id == user.id %}<span class="usr-you-tag"> {{ t('admin.users.you_tag') }}</span>{% endif %}
+                        </td>
+                        <td role="cell" data-label="{{ t('admin.users.table.role') }}">
+                            <span class="badge badge-{{ u.role.value }}">{{ t('role.label.' + u.role.value) }}</span>
+                        </td>
+                        {% if organisations %}
+                        <td role="cell" data-label="{{ t('admin.users.table.organisation') }}">{% for org in organisations if org.id == u.org_id %}{{ org.name }}{% endfor %}</td>
+                        {% endif %}
+                        <td role="cell" class="stack-status" data-label="{{ t('admin.users.table.status') }}">
+                            {% if u.is_active %}
+                            <span class="badge badge-closed usr-status-badge">{{ t('admin.users.active') }}</span>
+                            {% else %}
+                            <span class="badge usr-status-badge">{{ t('admin.users.inactive') }}</span>
+                            {% endif %}
+                            {% if not u.totp_enabled %}
+                            <span class="badge usr-status-badge">{{ t('admin.users.totp_pending') }}</span>
+                            {% endif %}
+                        </td>
+                        <td role="cell" class="stack-action">
+                            <div class="usr-actions">
+                                {# Role change #}
+                                {% if u.id != user.id %}
+                                <form method="post" action="/admin/users/{{ u.id }}/role" class="usr-role-form">
+                                    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                                    <select name="role" class="form-control usr-role-select" aria-label="{{ t('admin.users.role_for', username=u.username) }}">
+                                        {% for role in roles %}
+                                        <option value="{{ role.value }}" {{ 'selected' if u.role == role else '' }}>{{ t('role.label.' + role.value) }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="btn btn-secondary btn-sm usr-role-btn">
+                                        {{ t('admin.users.change_role') }}
+                                    </button>
+                                </form>
+                                {% endif %}
+
+                                {# Activate / Deactivate #}
+                                {% if u.id != user.id %}
+                                {% if u.is_active %}
+                                <form method="post" action="/admin/users/{{ u.id }}/deactivate"
+                                      data-confirm="{{ t('admin.users.deactivate_confirm', username=u.username) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                                    <button type="submit" class="btn btn-secondary btn-sm">
+                                        {{ t('admin.users.deactivate') }}
+                                    </button>
+                                </form>
+                                {% else %}
+                                <form method="post" action="/admin/users/{{ u.id }}/reactivate">
+                                    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                                    <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.users.reactivate') }}</button>
+                                </form>
+                                {% endif %}
+                                {% endif %}
+
+                                {# Lost authenticator: superadmin only, never one's own account. #}
+                                {% if user.role.value == 'superadmin' and u.id != user.id and u.totp_enabled %}
+                                <form method="post" action="/admin/users/{{ u.id }}/reset-totp"
+                                      data-confirm="{{ t('admin.users.reset_totp_confirm' if u.password_hash else 'admin.users.reset_totp_confirm_external', username=u.username) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                                    <button type="submit" class="btn btn-secondary btn-sm">{{ t('admin.users.reset_totp') }}</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}

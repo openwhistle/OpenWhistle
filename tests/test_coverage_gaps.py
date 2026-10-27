@@ -590,6 +590,9 @@ async def test_create_user_duplicate_username_409(
         },
     )
     assert r.status_code == 422  # refused on the form, see test_v230_bug_bounty
+    # The form lives in a modal <dialog>; on a server error it must reopen itself,
+    # or the inline "username taken" error renders behind a closed dialog.
+    assert "data-dialog-autoshow" in r.text
 
 
 @pytest.mark.asyncio

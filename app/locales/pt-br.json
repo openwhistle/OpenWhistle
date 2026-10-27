@@ -334,6 +334,8 @@
   "admin.users.add.role": "Função",
   "admin.users.add.organisation": "Organização",
   "admin.users.add.button": "Criar usuário",
+  "admin.actions.cancel": "Cancelar",
+  "admin.actions.close": "Fechar",
   "admin.users.add.totp_note": "No primeiro login, o novo usuário configura seu aplicativo autenticador e depois substitui a senha escolhida aqui.",
   "admin.users.list.header": "Usuários atuais",
   "admin.users.table.username": "Nome de usuário",

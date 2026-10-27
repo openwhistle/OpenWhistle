@@ -774,3 +774,4 @@ bundled config: no `client:` line.
 | Every tag and platform manifest pullable after publish | the publish workflow's verify loop |
 | No serious/critical axe violation, console error or sideways scroll — every page, both themes, 390 and 1440 px | `tests/e2e/test_ui_check.py` |
 | Whistleblower flow without JavaScript | `tests/e2e/test_no_js.py` |
+| Each admin add-form opens in a modal `<dialog>` from the heading, reopens on a validation error, and renders inline without JavaScript | `tests/test_admin_add_dialog.py`, `test_create_user_duplicate_username_409` |

@@ -1,0 +1,30 @@
+{
+ "test_groups": {
+  "D": [
+   "tests/test_admin_add_dialog.py"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "opener-id-typo",
+   "file": "app/templates/admin/users.html",
+   "old": "data-dialog-open=\"add-user-dialog\"",
+   "new": "data-dialog-open=\"add-user-dialogX\"",
+   "tests": "D"
+  },
+  {
+   "id": "autoshow-unguarded",
+   "file": "app/templates/admin/categories.html",
+   "old": "{% if field_errors %} data-dialog-autoshow",
+   "new": " data-dialog-autoshow",
+   "tests": "D"
+  },
+  {
+   "id": "no-js-fallback-dropped",
+   "file": "app/templates/base.html",
+   "old": "            [data-dialog-open], .dialog-close { display: none !important; }\n",
+   "new": "",
+   "tests": "D"
+  }
+ ]
+}
