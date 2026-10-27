@@ -7,6 +7,19 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Security
+
+- **A single unauthenticated reporter could stall the whistleblower channel with a crafted PDF.**
+  Cleaning a PDF clones every object it reaches — each indirect object and each array/dict entry
+  inside them — and the 10 MB upload cap did not bound that: a 7.8 MB PDF of 60,000 blank pages, one
+  page carrying 60,000 annotations, or a 9.2 MB page carrying 150,000 *direct* annotation dictionaries
+  (which inflate no object table) each took ~5 s of CPU to clean. `/submit` is unauthenticated and,
+  with no IP to key on, cannot be rate-limited, so five such attachments per request stall the
+  anonymous reporting channel. Attachment cleaning now counts the objects and entries the clone will
+  visit and refuses a PDF over 20,000 of them before the clone, and scopes pypdf's per-object parse
+  limit to the same budget so no single array or dictionary can be made expensive even to count
+  (worst case now ~0.8 s and independent of how the load is spread, down from ~5 s and unbounded).
+
 ### Changed
 
 - **Design polish**: the theme toggle and language picker are 44 px touch targets; form and detail labels

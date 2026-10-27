@@ -21,6 +21,9 @@ from app.services.crypto import seal
 
 if TYPE_CHECKING:
     import zipfile
+    from collections.abc import Iterable
+
+    from pypdf import PdfReader
 
     from app.services.storage import StorageBackend
 
@@ -141,6 +144,18 @@ _OOXML_EMPTY_PARTS: dict[str, bytes] = {
 # 518 KB GIF of 40 frames at 4000×4000 cost 26 s of CPU; decoding a 450 KB PNG
 # of 12000×12000 took 1.1 GB of RAM. 50 MP holds a 48 MP phone photo.
 MAX_IMAGE_PIXELS: int = 50_000_000
+
+# Cloning a PDF visits every object it reaches — each indirect object and each
+# array/dict entry inside them (~tens of us each); the 10 MB byte cap does not
+# bound that. A 7 MB PDF of 60k pages, one page carrying 60k annotations, or a
+# 9 MB page carrying 150k *direct* annotation dicts (which inflate no xref) all
+# clone in ~5 s. /submit is unauthenticated and, with no IP to key on,
+# unthrottleable, so five such attachments stall the anonymous reporting
+# channel. _pdf_clone_cost counts what the clone will visit and refuses over
+# this budget; pypdf's per-object parse limit is scoped to it too, so no single
+# array or dict can be made expensive to even count. 20k holds a ~5000-page
+# scan; real whistleblower evidence is far smaller.
+MAX_PDF_ELEMENTS: int = 20_000
 
 _ORIENTATION = 0x0112
 
@@ -367,10 +382,64 @@ def _strip_jp2(data: bytes) -> bytes:
 _PDF_IMAGE_STRIPPERS = {"/DCTDecode": _strip_jpeg_segments, "/JPXDecode": _strip_jp2}
 
 
+def _pdf_clone_cost(reader: PdfReader, cap: int) -> int:
+    """How many objects and array/dict entries the clone below will visit, counted
+    with get_object (the reader caches it, so the clone re-parses nothing) and
+    stopped as soon as it passes ``cap``. This is the one bound that catches work
+    spread thinly over many small objects, which no per-object parse limit sees.
+    Each object charges at least 1, so the walk parses at most ``cap`` of them, and
+    the cheap xref count below refuses a PDF with more objects than that without
+    parsing any. A single oversized array or dict trips pypdf's scoped parse limit
+    on get_object; that is a refusal in its own right, raised here, never skipped —
+    skipping it would spend its full parse cost yet never reach the budget."""
+    from pypdf.errors import PyPdfError  # noqa: PLC0415
+    from pypdf.generic import ArrayObject, DictionaryObject, IndirectObject  # noqa: PLC0415
+
+    def entries(obj: object, budget: int) -> int:
+        stack: list[object] = [obj]
+        seen = 0
+        while stack:
+            node = stack.pop()
+            children: Iterable[object]
+            if isinstance(node, DictionaryObject):
+                seen += len(node)
+                children = node.values()
+            elif isinstance(node, (ArrayObject, list)):
+                seen += len(node)
+                children = node
+            else:
+                continue  # scalars, and indirect refs counted at their own entry
+            if seen > budget:
+                return seen
+            stack.extend(children)
+        return seen
+
+    # Cheap O(1) bound first: a PDF with more indirect objects than the budget
+    # can never clone cheaply, and this refuses it without parsing a single one.
+    if sum(len(v) for v in reader.xref.values()) + len(reader.xref_objStm) > cap:
+        return cap + 1
+
+    sources = [(num, gen) for gen, section in reader.xref.items() for num in section]
+    sources += [(num, 0) for num in getattr(reader, "xref_objStm", {})]
+    total = 0
+    for num, gen in sources:
+        try:
+            obj = IndirectObject(num, gen, reader).get_object()
+        except PyPdfError as exc:
+            # An object pypdf cannot parse within the scoped budget is oversized:
+            # refuse it, rather than skip and pay its parse cost for nothing.
+            raise MetadataError("PDF has too many objects to clean") from exc
+        total += 1 + entries(obj, cap - total)
+        if total > cap:
+            return total
+    return total
+
+
 def _strip_pdf(data: bytes) -> bytes:
     import os  # noqa: PLC0415
 
-    from pypdf import PdfReader, PdfWriter  # noqa: PLC0415
+    from pypdf import PdfReader, PdfWriter, apply_configuration  # noqa: PLC0415
+    from pypdf.errors import PyPdfError  # noqa: PLC0415
     from pypdf.generic import (  # noqa: PLC0415
         ArrayObject,
         ByteStringObject,
@@ -384,7 +453,23 @@ def _strip_pdf(data: bytes) -> bytes:
     # An owner-password-only PDF opens without a password and is written back
     # unencrypted and cleaned; one that needs a user password cannot be read
     # and fails here, which strip_metadata turns into a refusal.
-    writer = PdfWriter(clone_from=PdfReader(io.BytesIO(data)))
+    reader = PdfReader(io.BytesIO(data))
+    # Bound the clone's cost before and during it. Scoping pypdf's per-object
+    # element limit to the budget keeps any single array or dict cheap to parse
+    # (it raises past the budget instead); _pdf_clone_cost then refuses a PDF
+    # whose objects and entries together exceed the budget, which catches work
+    # spread over many small objects that no per-object limit would. Either turns
+    # into a refusal via strip_metadata, never a store.
+    try:
+        with apply_configuration(
+            array_maximum_element_count=MAX_PDF_ELEMENTS,
+            dictionary_maximum_element_count=MAX_PDF_ELEMENTS,
+        ):
+            if _pdf_clone_cost(reader, MAX_PDF_ELEMENTS) > MAX_PDF_ELEMENTS:
+                raise MetadataError("PDF has too many objects to clean")
+            writer = PdfWriter(clone_from=reader)
+    except PyPdfError as exc:
+        raise MetadataError("PDF has too many objects to clean") from exc
     writer.metadata = None  # document info: author, creator tool, dates
     for obj in writer._objects:
         if not isinstance(obj, DictionaryObject):

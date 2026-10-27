@@ -889,3 +889,73 @@ async def test_a_draft_from_before_mail_was_switched_off_stores_no_address(
     await _post(client)  # the final submit, on the review step
     assert await db_session.scalar(select(func.count()).select_from(Report)) == reports + 1
     assert await db_session.scalar(with_address()) == before
+
+
+# ── A PDF's element count, not its bytes, bounds the work to clean it ─────────
+
+
+def test_a_pdf_with_too_many_elements_is_refused_before_the_clone(monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    """Cloning a PDF visits every object it reaches — each indirect object and each
+    array/dict entry inside them; the 10 MB byte cap did not bound that. Measured
+    against pypdf 6.x, three shapes all under the cap each cost ~5 s: 60k blank pages
+    (7.8 MB, 62k objects), one page with 60k annotations (6.9 MB), and — the one a plain
+    indirect-object count missed — one page holding 150k *direct* annotation dicts
+    (9.2 MB, 5 xref entries). /submit is unauthenticated and (no IP to key on)
+    unthrottleable, so five such attachments stall the channel. _pdf_clone_cost counts
+    what the clone will visit and refuses over the budget, catching load spread thin
+    over many objects; pypdf's per-object parse limit is scoped to the budget too, so a
+    single giant array or dict cannot be made expensive even to count. Under the budget
+    a normal PDF still cleans."""
+    import io
+
+    from pypdf import PdfWriter
+    from pypdf.generic import (
+        ArrayObject,
+        DictionaryObject,
+        FloatObject,
+        NameObject,
+        TextStringObject,
+    )
+
+    from app.services import attachment
+    from app.services.attachment import MetadataError, strip_metadata
+
+    def pdf(pages: int, annots_per_page: int) -> bytes:
+        w = PdfWriter()
+        for _ in range(pages):
+            w.add_blank_page(width=72, height=72)
+            page = w.pages[-1]
+            annots = ArrayObject()
+            for _ in range(annots_per_page):
+                d = DictionaryObject()
+                d[NameObject("/Subtype")] = NameObject("/Text")
+                d[NameObject("/Rect")] = ArrayObject([FloatObject(0)] * 4)
+                d[NameObject("/Contents")] = TextStringObject("x")
+                annots.append(d)
+            if annots_per_page:
+                page[NameObject("/Annots")] = annots
+        buf = io.BytesIO()
+        w.write(buf)
+        return buf.getvalue()
+
+    monkeypatch.setattr(attachment, "MAX_PDF_ELEMENTS", 50)
+
+    # Load spread thin: many indirect pages (the original finding). Each page is a
+    # small object no per-object limit would stop — only the running count does.
+    with pytest.raises(MetadataError):
+        strip_metadata("evidence.pdf", pdf(pages=60, annots_per_page=0))
+
+    # Load spread thin a second way: entries in direct annotation dicts across a few
+    # pages. No single object is large, yet the entries together blow the budget. This
+    # is the shape a plain xref count passes; only _pdf_clone_cost refuses it.
+    with pytest.raises(MetadataError):
+        strip_metadata("evidence.pdf", pdf(pages=4, annots_per_page=15))
+
+    # One oversized array: pypdf's scoped parse limit refuses it without the clone
+    # ever paying to read all of it.
+    with pytest.raises(MetadataError):
+        strip_metadata("evidence.pdf", pdf(pages=1, annots_per_page=400))
+
+    # A normal evidence PDF stays under the budget and still cleans to bytes.
+    cleaned = strip_metadata("evidence.pdf", pdf(pages=1, annots_per_page=2))
+    assert cleaned[:5] == b"%PDF-"
