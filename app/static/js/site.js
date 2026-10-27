@@ -46,23 +46,35 @@
 // ─── Copy to clipboard ────────────────────────────────────────────────────
 
 window.copyToClipboard = async function (text, btn) {
-    try {
-        await navigator.clipboard.writeText(text);
+    // Confirm visibly — the same feedback on both paths. The onion runs over
+    // plain HTTP, where navigator.clipboard is undefined and the execCommand
+    // fallback does the copy; without this a whistleblower on Tor copying their
+    // PIN (which cannot be recovered) saw no sign it worked.
+    const confirmCopied = () => {
         const orig = btn.innerHTML;
         btn.textContent = btn.dataset.copied || document.body.dataset.copiedLabel || '';
         btn.disabled = true;
         setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 2000);
+    };
+    try {
+        await navigator.clipboard.writeText(text);
+        confirmCopied();
+        return;
     } catch {
-        // Fallback for older browsers or non-HTTPS contexts
-        const el = document.createElement('textarea');
-        el.value = text;
-        el.style.position = 'fixed';
-        el.style.opacity = '0';
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
+        // No clipboard API (older browser or the plain-HTTP onion): fall through.
     }
+    const el = document.createElement('textarea');
+    el.value = text;
+    el.style.position = 'fixed';
+    el.style.opacity = '0';
+    document.body.appendChild(el);
+    el.select();
+    let copied = false;
+    try { copied = document.execCommand('copy'); } catch { copied = false; }
+    document.body.removeChild(el);
+    // Only confirm on a real copy — a false "copied" is worse than none when the
+    // PIN cannot be recovered; the code stays on screen and selectable to copy by hand.
+    if (copied) confirmCopied();
 };
 
 // ─── CSRF token (from the meta tag) for fetch/AJAX requests ─────────────────

@@ -774,5 +774,6 @@ bundled config: no `client:` line.
 | Every tag and platform manifest pullable after publish | the publish workflow's verify loop |
 | No serious/critical axe violation, console error or sideways scroll — every page, both themes, 390 and 1440 px | `tests/e2e/test_ui_check.py` |
 | Whistleblower flow without JavaScript | `tests/e2e/test_no_js.py` |
+| Copying the case number or PIN confirms visibly on both the Clipboard-API path and the execCommand fallback (the plain-HTTP onion) | `tests/e2e/test_copy_feedback.py` |
 | Each admin add-form opens in a modal `<dialog>` from the heading (named by that heading for screen readers), reopens on a validation error, and renders inline without JavaScript | `tests/test_admin_add_dialog.py`, `test_create_user_duplicate_username_409` |
 | The add-dialog closes on a backdrop click, Escape and Cancel, but a click inside the panel padding does not dismiss a half-filled form | `tests/e2e/test_admin_dialog.py` |
