@@ -7,6 +7,16 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Security
+
+- **A single unauthenticated reporter could stall the whistleblower channel with a crafted PDF.**
+  Cleaning a PDF clones every indirect object (~80 µs each), and the 10 MB upload cap did not bound
+  that: a 7 MB PDF of 60,000 blank pages — or one page carrying 60,000 annotations — holds ~62,000
+  objects and took 5.4 s of CPU to clean. `/submit` is unauthenticated and, with no IP to key on,
+  cannot be rate-limited, so five such attachments per request stall the anonymous reporting channel.
+  Attachment cleaning now refuses a PDF over 20,000 objects before the clone (measured: 10k objects
+  0.80 s, 30k 2.44 s, 60k 5.30 s — linear in objects, not bytes).
+
 ### Changed
 
 - **Design polish**: the theme toggle and language picker are 44 px touch targets; form and detail labels

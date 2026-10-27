@@ -14,6 +14,7 @@ like. Every row was verified by mutation (`scripts/mutation_audit.py`,
 | PDF document info **and** XMP removed, and the orphaned objects dropped | `test_pdf_document_info_is_removed` |
 | DOCX/XLSX core, app and custom properties emptied | `test_office_properties_are_emptied_and_content_kept` |
 | Zip bomb refused | `test_office_zip_bomb_is_refused` |
+| A PDF over 20,000 objects refused before the clone — cleaning cost is linear in objects, not bytes, and `/submit` is unauthenticated and unthrottleable | `test_a_pdf_with_too_many_objects_is_refused_before_the_clone` |
 | A file that cannot be cleaned is refused, never stored as-is | `test_unparseable_file_is_refused_not_stored_as_is`, `test_upload_refuses_a_file_that_cannot_be_cleaned` |
 | Attachment bytes encrypted with the report key, decrypted on read | `test_attachment_is_stored_encrypted_and_read_back` |
 | An attachment image is parsed only as JPEG, PNG, WebP, GIF or TIFF; any other format is refused unparsed | `test_a_format_that_is_not_cleaned_is_never_parsed`, `test_an_image_format_that_is_not_allowed_is_refused` |

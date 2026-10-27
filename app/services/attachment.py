@@ -142,6 +142,14 @@ _OOXML_EMPTY_PARTS: dict[str, bytes] = {
 # of 12000×12000 took 1.1 GB of RAM. 50 MP holds a 48 MP phone photo.
 MAX_IMAGE_PIXELS: int = 50_000_000
 
+# Cloning a PDF visits every indirect object (~80 us each); the 10 MB byte cap
+# does not bound that — a 7 MB PDF of 60k pages, or one page carrying 60k
+# annotations, holds ~60k objects and took 5 s to clean. /submit is
+# unauthenticated and, with no IP to key on, unthrottleable, so five such
+# attachments stall the anonymous reporting channel. 20k holds a ~5000-page
+# scan; real whistleblower evidence is far smaller.
+MAX_PDF_OBJECTS: int = 20_000
+
 _ORIENTATION = 0x0112
 
 
@@ -384,7 +392,14 @@ def _strip_pdf(data: bytes) -> bytes:
     # An owner-password-only PDF opens without a password and is written back
     # unencrypted and cleaned; one that needs a user password cannot be read
     # and fails here, which strip_metadata turns into a refusal.
-    writer = PdfWriter(clone_from=PdfReader(io.BytesIO(data)))
+    reader = PdfReader(io.BytesIO(data))
+    # Refuse before the expensive clone (below): xref counts classic objects,
+    # xref_objStm the ones packed in object streams, so neither storage form
+    # slips the cap. strip_metadata turns this into a refusal, never a store.
+    objects = sum(len(v) for v in reader.xref.values()) + len(reader.xref_objStm)
+    if objects > MAX_PDF_OBJECTS:
+        raise MetadataError("PDF has too many objects to clean")
+    writer = PdfWriter(clone_from=reader)
     writer.metadata = None  # document info: author, creator tool, dates
     for obj in writer._objects:
         if not isinstance(obj, DictionaryObject):
