@@ -314,8 +314,18 @@ document.addEventListener('click', (e) => {
         e.target.closest('dialog')?.close();
         return;
     }
-    // A click whose target is the dialog element itself landed on the backdrop.
-    if (e.target.tagName === 'DIALOG') e.target.close();
+    // A click whose target is the dialog element is on the backdrop OR on the
+    // panel's own padding band; only the former (outside the panel's box) closes,
+    // so a mis-aimed click inside the panel does not dismiss a half-filled form.
+    if (e.target.tagName === 'DIALOG') {
+        const r = e.target.getBoundingClientRect();
+        if (
+            e.clientX < r.left || e.clientX > r.right ||
+            e.clientY < r.top || e.clientY > r.bottom
+        ) {
+            e.target.close();
+        }
+    }
 });
 
 document.addEventListener('DOMContentLoaded', () => {
