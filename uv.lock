@@ -1099,12 +1099,12 @@ requires-dist = [
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "locust", marker = "extra == 'perf'", specifier = ">=2.45.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=2.2.0" },
-    { name = "pillow", specifier = ">=12.0.0" },
+    { name = "pillow", specifier = ">=13.0.0" },
     { name = "playwright", marker = "extra == 'e2e'", specifier = ">=1.61.0" },
     { name = "pydantic-settings", specifier = ">=2.14.0" },
     { name = "pyjwt", specifier = ">=2.15.0" },
     { name = "pyotp", specifier = ">=2.10.0" },
-    { name = "pypdf", specifier = ">=6.19.0" },
+    { name = "pypdf", specifier = ">=6.21.2" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.1.0" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=1.4.0" },
     { name = "pytest-base-url", marker = "extra == 'e2e'", specifier = ">=2.1.0" },
@@ -1125,7 +1125,7 @@ provides-extras = ["dev", "e2e", "perf", "ldap", "s3"]
 [package.metadata.requires-dev]
 diagrams = [
     { name = "fonttools", extras = ["woff"], specifier = ">=4.66.0" },
-    { name = "pillow", specifier = ">=12.0.0" },
+    { name = "pillow", specifier = ">=13.0.0" },
 ]
 
 [[package]]

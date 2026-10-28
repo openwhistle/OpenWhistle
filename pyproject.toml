@@ -45,8 +45,8 @@ dependencies = [
 
     # Attachment metadata stripping: PDF info/XMP (pure Python). Images use
     # Pillow, already present via qrcode[pil].
-    "pypdf>=6.19.0",
-    "pillow>=12.0.0",
+    "pypdf>=6.21.2",
+    "pillow>=13.0.0",
 
     # Structured logging
     "python-json-logger>=4.1.0",
@@ -193,5 +193,5 @@ exclude_lines = [
 # render_icons.py): woff2 fonts need brotli.
 diagrams = [
     "fonttools[woff]>=4.66.0",
-    "pillow>=12.0.0",
+    "pillow>=13.0.0",
 ]
