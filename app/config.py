@@ -137,7 +137,7 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "OpenWhistle"
-    app_version: str = "2.4.0"
+    app_version: str = "2.4.1"
 
     # Logging
     log_level: str = "INFO"

@@ -7,6 +7,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.4.1] — 2026-10-28
+
 ### Security
 
 - **A single unauthenticated reporter could stall the whistleblower channel with a crafted PDF.**
@@ -19,6 +21,13 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   visit and refuses a PDF over 20,000 of them before the clone, and scopes pypdf's per-object parse
   limit to the same budget so no single array or dictionary can be made expensive even to count
   (worst case now ~0.8 s and independent of how the load is spread, down from ~5 s and unbounded).
+- **Dependency floors now encode the security-patched minimums.** `pillow` and `pypdf` were already
+  resolved to patched versions in `uv.lock`, so the shipped image was never exposed, but the declared
+  floors (`pillow>=12.0.0`, `pypdf>=6.19.0`) still permitted a vulnerable resolution. They are raised to
+  `pillow>=13.0.0` and `pypdf>=6.21.2`, so the lowest permitted version is the lowest safe one and a
+  future lock cannot resolve a vulnerable one back in. `pillow` decodes attacker-supplied attachments on
+  the unauthenticated `/submit` path, so its floor is whistleblower-facing; the resolved versions are
+  unchanged.
 
 ### Changed
 
@@ -2006,7 +2015,8 @@ Remaining lower-severity findings are tracked in GitHub issues #42–#46.
 - **Rate limiting by session token** (not IP) to maintain full anonymity
 - **alembic upgrade head** on every startup to guarantee migration consistency
 
-[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.4.0...HEAD
+[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.4.1...HEAD
+[2.4.1]: https://github.com/openwhistle/OpenWhistle/compare/v2.4.0...v2.4.1
 [2.4.0]: https://github.com/openwhistle/OpenWhistle/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/openwhistle/OpenWhistle/compare/v2.2.1...v2.3.0
 [2.2.1]: https://github.com/openwhistle/OpenWhistle/compare/v2.2.0...v2.2.1
