@@ -197,7 +197,7 @@
             <div class="detail-label st-deadlines-title">{{ t('status.deadlines.title') }}</div>
             <div class="st-deadlines-grid">
                 {% set ack = ack_status(report.submitted_at, report.acknowledged_at, now) %}
-                {% set fb = feedback_status(report.feedback_due_at, report.status.value == 'closed', now) %}
+                {% set fb = feedback_status(report.feedback_due_at, report.feedback_sent_at, now) %}
                 <div>
                     <div class="st-deadline-label">{{ t('status.deadlines.ack') }}</div>
                     {% if ack.state == 'done' %}

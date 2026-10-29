@@ -22,6 +22,12 @@ from tests.test_v210_bug_bounty import _totp_user
 pytestmark = pytest.mark.usefixtures("clean_branding")
 
 
+@pytest.fixture(autouse=True)
+def _not_the_demo(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The suite runs with DEMO_MODE=true, and the demo does not save branding."""
+    monkeypatch.setattr(settings, "demo_mode", False)
+
+
 def _png() -> bytes:
     out = io.BytesIO()
     Image.new("RGB", (300, 150), (200, 30, 30)).save(out, format="PNG")

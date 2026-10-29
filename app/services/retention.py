@@ -136,9 +136,14 @@ async def run_retention_cleanup() -> None:
             await db.commit()
             await delete_stored_objects(stored_keys)
             if reports and lock_redis is not None:
+                from app.services.notifications import forget_case  # noqa: PLC0415
                 from app.services.report import end_status_sessions  # noqa: PLC0415
 
                 await end_status_sessions(lock_redis, {r.id for r in reports})
+                # As the four-eyes deletion does: the reminder marks and the digest
+                # queue named the erased case in plain text until they expired.
+                for report in reports:
+                    await forget_case(lock_redis, report.case_number)
 
     except Exception:
         log.exception("Retention cleanup failed")

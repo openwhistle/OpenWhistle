@@ -7,6 +7,67 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Security
+
+- **A stolen admin session could outlive the password change meant to end it.** The sweep that ends
+  every other session read a page of keys and then fetched and deleted them one by one; a session
+  refresh that stored its new session and deleted the old one in between left the sweep nothing to
+  delete. Measured: the new session still validated after `revoke_user_sessions`. A deactivation and a
+  reset authenticator end sessions the same way. The sweep is now one Redis script, so nothing runs
+  between its read and its delete.
+- **A full nginx disk logged the reporter's address.** nginx buffered every request body over 16 KB to
+  `/var/cache/nginx` — the original attachments, GPS included — and when three uploads at the 55 MB
+  limit filled its 128 MB tmpfs it logged `[crit] pwrite() … failed (28: No space left on device),
+  client: <address>` at the one level `error_log crit` keeps, and answered 500. The bundled nginx
+  (compose, behind-proxy, Ansible) now streams bodies to the app, as the Helm Ingress already did; CI
+  replays the upload against the shipped image with a 1 MB temp dir.
+- **The setup token could be tried 50 times instead of 10.** The lock was read before the token was
+  checked and the failure counted after it, so a burst all read the same count (50 sent together: 50
+  checked). Tokens are now counted before they are checked, as sign-in attempts are since 2.1.0.
+- **A third large upload at once failed with "error parsing the body".** The app spools each file over
+  1 MB to its 128 MB in-memory `/tmp`; uploads beyond that broke mid-parse (measured with an 8 MB
+  `/tmp`: three 6 MB uploads at once, one accepted, two refused with 400) — anyone could crowd out a
+  reporter's attachments, and over Tor no address can be throttled. Each multipart request now reserves
+  its size first; one that does not fit gets 503 with `Retry-After` and a page asking to send it again
+  in a minute.
+- The weekly image rescan covers `:edge` (what the demo runs) and the arm64 images; only amd64
+  `:latest` was rescanned.
+
+### Changed
+
+- **§ 17 HinSchG deadlines end with their last day** (§§ 187, 188 BGB). Received on 1 March, the
+  acknowledgement is due by the end of 8 March; it was due at 8 March 00:00, so an acknowledgement on
+  the seventh day read "Acknowledged (late)" in the PDF export and counted as missed in the SLA rate.
+  Without an acknowledgement, feedback is due three months *and then* seven days after receipt
+  (received 24 November: 3 March, was 1 March). Migration 020 recomputes stored deadlines.
+- **Feedback counts as given when the office writes to the reporter after the acknowledgement**, not
+  when the case is closed. A case closed without a word read "Delivered" on the status page, the case
+  page and in the PDF; an answered case stayed "Overdue" — for the reporter too — and was reminded about
+  daily until closed. Feedback sent after the deadline reads "Delivered (late)" in the PDF. Migration
+  020 takes the first office message after the acknowledgement of existing cases.
+- **The demo no longer saves branding.** Every visitor signs in as the same admin, and a saved name or
+  logo was what every later visitor saw until the next reset. The page still previews.
+- The file-integrity check also covers `migrations/` (run at every start) and `scripts/`
+  (`ensure_tls_cert.py` runs as root). The manifest no longer records its build time, so its SHA-256 is
+  the one `python -B scripts/generate_integrity_manifest.py` prints in a checkout of the release tag;
+  it matched nothing before. Each replica caches its own result.
+
+### Fixed
+
+- Automatic deletion left the case number in Redis — the reminder marks and the digest queue; the
+  four-eyes deletion has cleared both since 2.4.0.
+- An organisation's dark logo uploaded without a light one was saved and never shown.
+- Without JavaScript (Tor Browser's Safest mode), "Go to status" on the success page was out of the
+  keyboard's reach and announced as disabled, and an error page's "Go back" did nothing.
+- The case page's "Change status" sent nothing until a status was picked and ended on an error page; it
+  is now disabled until then.
+- The success page scrolled smoothly with reduced motion on.
+- Changing one's password, creating an account, a superadmin's reset and the setup wizard hashed with
+  bcrypt on the event loop (~0.25 s for every other request each).
+- German and French said only that closed reports "older than {days} days" are deleted; the count runs
+  from closing.
+- `docs-tech/image-scan.md` pinned the grype version the workflows had left.
+
 ## [2.4.1] — 2026-10-28
 
 ### Security

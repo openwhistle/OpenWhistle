@@ -329,6 +329,7 @@ class TestSlaReminderLogic:
 
         mock_report = MagicMock()
         mock_report.feedback_due_at = datetime.now(UTC) + timedelta(days=10)
+        mock_report.feedback_sent_at = None
         mock_report.case_number = "OW-2024-00003"
         mock_redis = AsyncMock()
         mock_redis.exists.return_value = False
@@ -798,6 +799,7 @@ class TestDispatchReminder:
 
         mock_report = MagicMock()
         mock_report.feedback_due_at = datetime.now(UTC) + timedelta(days=10)
+        mock_report.feedback_sent_at = None
         mock_report.case_number = "OW-2024-00004"
         mock_redis = AsyncMock()
         mock_redis.exists.return_value = True  # dedup key present

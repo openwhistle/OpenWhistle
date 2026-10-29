@@ -16,7 +16,8 @@
         <h1>{{ detail }}</h1>
         <p class="err-code">{{ t('error.code', code=status_code) }}</p>
     </div>
-    <a href="#" id="err-back-link" class="btn btn-secondary err-back-btn">{{ t('error.go_back') }}</a>
+    {# A real page without JavaScript (Tor Browser's Safest mode); the script goes back instead. #}
+    <a id="err-back-link" href="{{ '/admin/dashboard' if request.url.path.startswith('/admin/') else '/' }}" class="btn btn-secondary err-back-btn">{{ t('error.go_back') }}</a>
 </div>
 {% endblock %}
 

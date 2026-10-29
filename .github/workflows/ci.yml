@@ -300,6 +300,12 @@ jobs:
                   for k, v in self.headers.items():
                       self.wfile.write(f"{k}: {v}\n".encode())
 
+              def do_POST(self):
+                  size = len(self.rfile.read(int(self.headers["Content-Length"])))
+                  self.send_response(200)
+                  self.end_headers()
+                  self.wfile.write(f"got {size}\n".encode())
+
           http.server.HTTPServer(("0.0.0.0", 4009), H).serve_forever()
           PY
 
@@ -316,8 +322,9 @@ jobs:
 
           # The nginx image docker-compose.prod.yml and the Ansible template ship,
           # same tag and digest (tests/test_build_pins.py).
+          # A 1 MB temp dir, so a body nginx buffered to disk fails the upload step.
           docker run -d --name ow-onion-test-nginx --network ow-onion-test \
-            -p 18443:443 -p 18080:8080 \
+            -p 18443:443 -p 18080:8080 --tmpfs /var/cache/nginx:size=1m \
             -v "$PWD/nginx/nginx.conf:/etc/nginx/nginx.conf:ro" \
             -v "$PWD/nginx/snippets:/etc/nginx/snippets:ro" \
             -v /tmp/ow-nginx-test/tls:/etc/nginx/tls:ro \
@@ -338,6 +345,16 @@ jobs:
           # `set -e` ignores a `!`-negated command, so each check is an if.
           grep -qi '^host:' <<< "$out"
           if grep -qiE '^(x.ow.onion|x-forwarded-for|x-real-ip):' <<< "$out"; then exit 1; fi
+
+      - name: An upload is streamed, never written to nginx's disk
+        run: |
+          head -c 4194304 /dev/urandom > /tmp/ow-nginx-test/body.bin
+          for port in "https://localhost:18443" "http://localhost:18080"; do
+            out=$(curl -sk --data-binary @/tmp/ow-nginx-test/body.bin "$port/submit")
+            echo "$port: $out"
+            [ "$out" = "got 4194304" ]
+          done
+          if docker logs ow-onion-test-nginx 2>&1 | grep -q 'client:'; then exit 1; fi
 
       - name: Onion (8080) forces X-OW-Onion to exactly "1", strips IP headers
         run: |

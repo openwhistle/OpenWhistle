@@ -61,19 +61,6 @@ async def get_whistleblower_lockout_ttl(redis: Redis, case_key: str) -> int:
     return max(0, int(ttl))
 
 
-async def check_admin_login_attempts(redis: Redis, username: str) -> bool:
-    """Returns True if the username is allowed to attempt login."""
-    count = await redis.get(_admin_key(username))
-    if count is None:
-        return True
-    return int(count) < settings.max_login_attempts
-
-
-async def record_admin_login_failure(redis: Redis, username: str) -> int:
-    """Record a failed admin login attempt."""
-    return await _count_failure(redis, _admin_key(username), settings.login_lockout_minutes * 60)
-
-
 async def claim_admin_attempt(redis: Redis, username: str) -> bool:
     """Count an attempt before it is checked; False once the account is locked.
 
@@ -82,7 +69,10 @@ async def claim_admin_attempt(redis: Redis, username: str) -> bool:
     checked against a limit of 10. Counted first, each guess sees the ones
     before it. A right guess gives its attempt back (``release_admin_attempt``).
     """
-    key = _admin_key(username)
+    return await _claim(redis, _admin_key(username))
+
+
+async def _claim(redis: Redis, key: str) -> bool:
     if await redis.incr(key) > settings.max_login_attempts:
         await redis.decr(key)  # a locked attempt neither counts nor extends the lock
         return False
@@ -130,17 +120,16 @@ async def record_instance_login_failure(redis: Redis) -> bool:
     return bool(await redis.set(_SPRAY_ALERTED, "1", nx=True, ex=minutes * 60))
 
 
-async def setup_token_locked(redis: Redis) -> bool:
-    """True once MAX_LOGIN_ATTEMPTS wrong setup tokens were tried in the lockout window.
+async def claim_setup_token_attempt(redis: Redis) -> bool:
+    """Count a setup token before it is checked; False once MAX_LOGIN_ATTEMPTS were tried
+    in the lockout window. Counted for the whole instance (there is no account yet, and no
+    IP is read).
 
-    Counted for the whole instance (there is no account yet, and no IP is read).
+    The lock used to be read first and the failure counted after the check, so a burst all
+    read the same count: 50 wrong tokens sent together were all checked against a limit of
+    10 (measured) — the race ``claim_admin_attempt`` closed for the sign-in form.
     """
-    count = await redis.get(_SETUP_TOKEN_FAILURES)
-    return count is not None and int(count) >= settings.max_login_attempts
-
-
-async def record_setup_token_failure(redis: Redis) -> None:
-    await _count_failure(redis, _SETUP_TOKEN_FAILURES, settings.login_lockout_minutes * 60)
+    return await _claim(redis, _SETUP_TOKEN_FAILURES)
 
 
 async def reset_setup_token_failures(redis: Redis) -> None:

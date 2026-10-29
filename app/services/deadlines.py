@@ -13,8 +13,13 @@ feedback deadline and no reminder at all. The dashboard, the case page, the
 status page, the PDF and the statistics each computed "on time" and
 "overdue" in their own way, and disagreed at the edges.
 
-Receipt is stored as its UTC day (migration 006), so both deadlines run from
-the start of that day: up to a day early, never late.
+A deadline is the end of its last day (§§ 187 Abs. 1, 188 BGB): the day of
+receipt or acknowledgement does not count, and the period ends with the last
+day, not at its start. Receipt is stored as its UTC day (migration 006), which
+is all the count needs. The deadlines used to start at midnight of the last
+day, so an acknowledgement on the seventh day read "late" in the PDF export,
+and the seven days were added before the three months: received 24 November,
+the feedback was due 1 March, not 3 March.
 """
 
 from __future__ import annotations
@@ -44,8 +49,12 @@ def add_months(dt: datetime, months: int) -> datetime:
     return dt.replace(year=year, month=month, day=day)
 
 
+def _end_of_day(dt: datetime) -> datetime:
+    return _aware(dt).replace(hour=23, minute=59, second=59, microsecond=999999)
+
+
 def ack_due(submitted_at: datetime) -> datetime:
-    return _aware(submitted_at) + timedelta(days=ACK_DAYS)
+    return _end_of_day(_aware(submitted_at) + timedelta(days=ACK_DAYS))
 
 
 def feedback_due(submitted_at: datetime, acknowledged_at: datetime | None = None) -> datetime:
@@ -54,10 +63,11 @@ def feedback_due(submitted_at: datetime, acknowledged_at: datetime | None = None
     Three months from a late acknowledgement would run past the receipt-based
     deadline; the earlier of the two holds.
     """
-    without_ack = add_months(ack_due(submitted_at), FEEDBACK_MONTHS)
+    receipt = _aware(submitted_at)
+    without_ack = _end_of_day(add_months(receipt, FEEDBACK_MONTHS) + timedelta(days=ACK_DAYS))
     if acknowledged_at is None:
         return without_ack
-    return min(add_months(_aware(acknowledged_at), FEEDBACK_MONTHS), without_ack)
+    return min(_end_of_day(add_months(_aware(acknowledged_at), FEEDBACK_MONTHS)), without_ack)
 
 
 def ack_on_time(submitted_at: datetime, acknowledged_at: datetime | None) -> bool:
@@ -83,12 +93,17 @@ def ack_status(submitted_at: datetime, acknowledged_at: datetime | None, now: da
     return Deadline("warning" if day >= ACK_WARN_FROM_DAY else "ok", due, day)
 
 
-def feedback_status(due: datetime | None, closed: bool, now: datetime) -> Deadline | None:
+def feedback_status(
+    due: datetime | None, feedback_sent_at: datetime | None, now: datetime
+) -> Deadline | None:
+    """Done once the office wrote to the reporter after the acknowledgement
+    (``Report.feedback_sent_at``). It used to be done once the case was closed: a
+    case closed without a word read "Delivered", and an answered one "Overdue"."""
     if due is None:
         return None
     due = _aware(due)
     left = (due - _aware(now)).days
-    if closed:
+    if feedback_sent_at is not None:
         return Deadline("done", due, left)
     if _aware(now) > due:
         return Deadline("overdue", due, left)

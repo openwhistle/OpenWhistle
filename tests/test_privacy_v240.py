@@ -438,14 +438,15 @@ async def test_a_capped_content_search_says_so(client, db_session, monkeypatch) 
     assert oldest.case_number not in page.text
 
 
-async def _legacy_attachment(db, **where):  # noqa: ANN001, ANN202
+async def _legacy_attachment(db, report=None, **where):  # noqa: ANN001, ANN202
     """A row as v1.3 left it: the bytes stored as uploaded (encrypted = false)."""
     import uuid
 
     from app.models.attachment import Attachment
     from app.services.report import create_report
 
-    report, _ = await create_report(db, "corruption", "Uploaded before v1.4.0.")
+    if report is None:
+        report, _ = await create_report(db, "corruption", "Uploaded before v1.4.0.")
     att = Attachment(
         id=uuid.uuid4(),
         report_id=report.id,
@@ -476,8 +477,13 @@ async def test_migration_016_encrypts_attachments_stored_in_the_clear(throwaway_
         run = subprocess.run(["alembic", *args], capture_output=True, text=True, env=env)  # noqa: S603, S607
         assert run.returncode == 0, run.stderr
 
+    from app.services.report import create_report
+
+    # Filed at head: the ORM writes every column of today's model, which an old schema lacks.
+    report, _ = await create_report(throwaway_db, "corruption", "Uploaded before v1.4.0.")
+    await throwaway_db.commit()  # create_report's refresh left a transaction open
     alembic("downgrade", "f6b3d9e5a012")
-    att_id = (await _legacy_attachment(throwaway_db, data=b"GPS-PHOTO")).id
+    att_id = (await _legacy_attachment(throwaway_db, report, data=b"GPS-PHOTO")).id
     alembic("upgrade", "head")
     throwaway_db.expire_all()
     row = await throwaway_db.scalar(select(Attachment).where(Attachment.id == att_id))
@@ -616,9 +622,11 @@ async def test_migration_017_gives_org_less_reports_an_organisation(throwaway_db
         run = subprocess.run(["alembic", *args], capture_output=True, text=True, env=env)  # noqa: S603, S607
         assert run.returncode == 0, run.stderr
 
-    alembic("downgrade", "a7c4e0f6b113")
+    # Filed at head: the ORM writes every column of today's model, which an old schema lacks.
     report, _ = await create_report(throwaway_db, "corruption", "Filed before migration 017.")
     report_id = report.id
+    await throwaway_db.commit()
+    alembic("downgrade", "a7c4e0f6b113")
     await throwaway_db.execute(
         text("UPDATE reports SET org_id = NULL WHERE id = :i"), {"i": report_id}
     )

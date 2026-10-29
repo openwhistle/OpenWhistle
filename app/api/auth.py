@@ -997,7 +997,10 @@ async def account_password(
     if not await rl.claim_admin_attempt(redis, current_user.username):
         return await refuse({"current_password": "login.error.locked"}, 429)
 
-    if not auth_service.verify_password(current_password, current_user.password_hash):
+    # In a thread, as on the sign-in form: bcrypt on the event loop stalls every request.
+    if not await asyncio.to_thread(
+        auth_service.verify_password, current_password, current_user.password_hash
+    ):
         return await refuse({"current_password": "account.password.error.current"}, 401)
 
     # Single use, like the sign-in code: a code seen over a shoulder opens nothing twice.
@@ -1006,7 +1009,7 @@ async def account_password(
         return await refuse({"totp_code": "mfa.error.invalid"}, 401)
 
     required = current_user.must_change_password
-    current_user.password_hash = auth_service.hash_password(new_password)
+    current_user.password_hash = await asyncio.to_thread(auth_service.hash_password, new_password)
     current_user.must_change_password = False
     await audit_service.log(
         db,

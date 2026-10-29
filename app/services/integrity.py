@@ -1,15 +1,19 @@
 """File integrity check — verify the shipped application files against a manifest.
 
-A SHA-256 manifest of the ``app/`` package is generated at Docker build time
-(``scripts/generate_integrity_manifest.py``) over the exact shipped bytes. At
-runtime we re-hash ``app/`` and diff it against the manifest to surface files
-that are missing, modified, or unexpectedly present.
+A SHA-256 manifest of ``app/``, ``migrations/`` (alembic runs it at every start)
+and ``scripts/`` (``ensure_tls_cert.py`` runs as root) is generated at Docker build
+time (``scripts/generate_integrity_manifest.py``) over the exact shipped bytes. At
+runtime we re-hash them and diff against the manifest to surface files that are
+missing, modified, or unexpectedly present. Only ``app/`` was covered until 2.4.2.
 
 Scope / honesty: the manifest ships inside the same image (same trust boundary),
 so this reliably detects accidental modification, incomplete/partial deploys and
 corruption — but it is NOT tamper-proof against an attacker who can also rewrite
-the manifest. The manifest's own SHA-256 is surfaced so it can optionally be
-compared against a value published out-of-band (e.g. the signed release).
+the manifest. The manifest's own SHA-256 is surfaced so it can be compared
+against the one ``python -B scripts/generate_integrity_manifest.py`` prints in a
+checkout of the release tag: the manifest holds only the files and the version,
+so the same files give the same hash. It used to carry its build time and
+matched nothing.
 
 This module imports no settings and makes no network calls; it only reads local
 files, so it is safe to run always.
@@ -22,6 +26,8 @@ import hashlib
 import json
 import logging
 import os
+import socket
+from collections.abc import Sequence
 from pathlib import Path, PurePosixPath
 from typing import Any, TypedDict
 
@@ -30,7 +36,9 @@ from redis.asyncio import Redis
 log = logging.getLogger(__name__)
 
 _MANIFEST_NAME = "integrity-manifest.json"
-_CACHE_KEY = "openwhistle:integrity"
+# Per replica: one key for all of them showed one replica's verdict on another's
+# System page, and during a rolling upgrade the other image's manifest.
+_CACHE_KEY = "openwhistle:integrity:"
 _CACHE_TTL = 300  # 5 minutes
 _CHUNK = 65536
 
@@ -38,6 +46,7 @@ _CHUNK = 65536
 APP_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = APP_ROOT.parent
 DEFAULT_MANIFEST_PATH = REPO_ROOT / _MANIFEST_NAME
+SHIPPED_ROOTS = (APP_ROOT, REPO_ROOT / "migrations", REPO_ROOT / "scripts")
 
 
 class ManifestEntry(TypedDict):
@@ -52,7 +61,6 @@ class IntegrityResult(TypedDict):
     missing: list[str]
     modified: list[str]
     extra: list[str]
-    generated_at: str | None
     version: str | None
     manifest_sha256: str | None
 
@@ -68,14 +76,21 @@ def _hash_file(path: Path) -> tuple[str, int]:
     return h.hexdigest(), size
 
 
-def build_file_index(root: Path) -> dict[str, ManifestEntry]:
-    """Walk ``root`` and return ``{posix_relpath: {sha256, size}}``.
+def build_file_index(roots: Path | Sequence[Path]) -> dict[str, ManifestEntry]:
+    """Walk each root and return ``{posix_relpath: {sha256, size}}``.
 
-    Keys are POSIX paths relative to ``root``'s parent (e.g. ``app/main.py``).
+    Keys are POSIX paths relative to the root's parent (e.g. ``app/main.py``).
     ``__pycache__`` dirs, ``*.pyc`` files and the manifest file are skipped;
     symlinked directories are not followed; unreadable files are omitted (they
     surface as ``missing`` during verification rather than aborting the walk).
     """
+    index: dict[str, ManifestEntry] = {}
+    for root in [roots] if isinstance(roots, Path) else roots:
+        index.update(_index_one(root))
+    return index
+
+
+def _index_one(root: Path) -> dict[str, ManifestEntry]:
     base = root.parent
     index: dict[str, ManifestEntry] = {}
     for dirpath, dirnames, filenames in os.walk(root, followlinks=False):
@@ -124,16 +139,15 @@ def _unavailable() -> IntegrityResult:
         "missing": [],
         "modified": [],
         "extra": [],
-        "generated_at": None,
         "version": None,
         "manifest_sha256": None,
     }
 
 
 def verify_integrity(
-    root: Path = APP_ROOT, manifest_path: Path = DEFAULT_MANIFEST_PATH
+    root: Path | Sequence[Path] = SHIPPED_ROOTS, manifest_path: Path = DEFAULT_MANIFEST_PATH
 ) -> IntegrityResult:
-    """Diff the on-disk ``app/`` tree against the baked manifest (synchronous)."""
+    """Diff the shipped trees on disk against the baked manifest (synchronous)."""
     manifest = load_manifest(manifest_path)
     if manifest is None:
         return _unavailable()
@@ -160,7 +174,6 @@ def verify_integrity(
         "missing": missing,
         "modified": modified,
         "extra": extra,
-        "generated_at": manifest.get("generated_at"),
         "version": manifest.get("version"),
         "manifest_sha256": _manifest_sha256(manifest_path),
     }
@@ -172,13 +185,14 @@ async def get_integrity_status(redis: Redis, recheck: bool = False) -> dict[str,
     Runs the (fast, local) verification in a thread so the event loop is never
     blocked, and caches the result in Redis. ``recheck`` busts the cache.
     """
+    key = _CACHE_KEY + socket.gethostname()
     if recheck:
         try:
-            await redis.delete(_CACHE_KEY)
+            await redis.delete(key)
         except Exception:  # noqa: BLE001, S110
             pass
     else:
-        raw = await redis.get(_CACHE_KEY)
+        raw = await redis.get(key)
         if raw:
             try:
                 cached = json.loads(raw)
@@ -189,7 +203,7 @@ async def get_integrity_status(redis: Redis, recheck: bool = False) -> dict[str,
 
     result = await asyncio.to_thread(verify_integrity)
     try:
-        await redis.set(_CACHE_KEY, json.dumps(result), ex=_CACHE_TTL)
+        await redis.set(key, json.dumps(result), ex=_CACHE_TTL)
     except Exception:  # noqa: BLE001, S110
         pass
     return dict(result)

@@ -240,7 +240,7 @@
                 <tbody role="rowgroup">
                     {% for report in reports %}
                     {% set ack = ack_status(report.submitted_at, report.acknowledged_at, now) %}
-                    {% set fb = feedback_status(report.feedback_due_at, report.status.value == 'closed', now) %}
+                    {% set fb = feedback_status(report.feedback_due_at, report.feedback_sent_at, now) %}
                     {% set ack_sla_class = 'sla-ok' if ack.state == 'done' else 'sla-' ~ ack.state %}
                     {% set fb_sla_class = ('sla-ok' if fb.state == 'done' else 'sla-' ~ fb.state) if fb else '' %}
                     <tr role="row">

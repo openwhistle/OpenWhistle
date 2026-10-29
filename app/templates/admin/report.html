@@ -296,7 +296,7 @@
                     </dd>
                 </div>
 
-                {% set fb = feedback_status(report.feedback_due_at, report.status.value == 'closed', now) %}
+                {% set fb = feedback_status(report.feedback_due_at, report.feedback_sent_at, now) %}
                 {% if fb %}
                 <div>
                     <dt class="detail-label">{{ t('admin.report.detail.sla3m') }}</dt>
@@ -499,6 +499,10 @@ function confirmStatusChange(newStatus, currentStatus) {
     if (!sel) return;
     var btn = document.getElementById('status-btn');
     if (!btn) return;
+    // Until a status is picked: the placeholder option is disabled, so the form sent
+    // no new_status and the click ended on the 422 page. The handler below re-enabled
+    // a button nothing had disabled.
+    btn.disabled = true;
     sel.addEventListener('change', function() {
         btn.disabled = false;
         btn.style.opacity = '';

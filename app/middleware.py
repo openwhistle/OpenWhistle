@@ -1,6 +1,9 @@
 """Security middleware: IP detection warning, security headers, no IP logging."""
 
 import secrets
+import shutil
+import tempfile
+from collections.abc import Awaitable, Callable
 
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
@@ -281,3 +284,53 @@ async def clear_ip_warning() -> None:
         await redis.delete(_REDIS_IP_WARNING_KEY)
     except Exception:  # noqa: BLE001, S110
         pass
+
+
+# 5 attachments x 10 MB plus form overhead: what nginx's client_max_body_size admits.
+_MAX_BODY = 55 * 1024 * 1024
+
+
+def _spool_capacity() -> int:
+    """What the multipart spool may hold: 90 % of the filesystem behind /tmp."""
+    return shutil.disk_usage(tempfile.gettempdir()).total * 9 // 10
+
+
+class UploadBudgetMiddleware:
+    """Reserve a multipart request's size against /tmp before anything parses it.
+
+    Starlette spools every file part over 1 MB to /tmp (a 128 MB tmpfs, in memory, so
+    the original photo never reaches a disk). Uploads in flight beyond that failed
+    mid-parse: measured with an 8 MB /tmp, three 6 MB uploads at once gave one 200 and
+    two "400 There was an error parsing the body"; in production the third 55 MB
+    submission at once. A request that does not fit is drained — never spooled — and
+    answered by ``refuse`` (503 and Retry-After), so the browser shows a page that says
+    to send it again instead of a reset connection.
+
+    shortcut: one budget per process; the image runs one uvicorn worker. Several
+    workers per container would each count the whole /tmp.
+    """
+
+    def __init__(self, app: ASGIApp, refuse: Callable[[Scope, Send], Awaitable[None]]) -> None:
+        self.app = app
+        self.refuse = refuse
+        self.reserved = 0
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        headers = dict(scope.get("headers", [])) if scope["type"] == "http" else {}
+        if not headers.get(b"content-type", b"").lower().startswith(b"multipart/form-data"):
+            await self.app(scope, receive, send)
+            return
+        try:
+            size = min(int(headers.get(b"content-length", b"")), _MAX_BODY)
+        except ValueError:
+            size = _MAX_BODY
+        if self.reserved + size > _spool_capacity():
+            while (await receive()).get("more_body"):
+                pass
+            await self.refuse(scope, send)
+            return
+        self.reserved += size
+        try:
+            await self.app(scope, receive, send)
+        finally:
+            self.reserved -= size

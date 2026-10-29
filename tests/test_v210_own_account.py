@@ -208,7 +208,7 @@ async def test_a_locked_account_cannot_change_even_with_the_right_credentials(
     assert resp.status_code == 429
     assert _unchanged(await _fresh(db_session, user))
     # The same counter locks the sign-in form.
-    assert not await rl.check_admin_login_attempts(await _redis(), user.username)
+    assert not await rl.claim_admin_attempt(await _redis(), user.username)
 
 
 @pytest.mark.asyncio

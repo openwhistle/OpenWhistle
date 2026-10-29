@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Generate the file-integrity manifest for the ``app/`` package.
+"""Generate the file-integrity manifest of the shipped trees (``app/``, ``migrations/``,
+``scripts/``).
 
 Run at Docker build time over the exact shipped bytes:
 
@@ -7,14 +8,16 @@ Run at Docker build time over the exact shipped bytes:
 
 Thin wrapper around ``app.services.integrity.build_file_index`` so the build and
 the runtime verifier share one walk/hash implementation (they must never
-diverge). Writes ``integrity-manifest.json`` at the repo/image root.
+diverge). Writes ``integrity-manifest.json`` at the repo/image root and prints its
+SHA-256: run in a checkout of a release tag, it prints the hash the image's System
+page shows. The manifest holds no build time, so the same files give the same hash.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sys
-from datetime import UTC, datetime
 from pathlib import Path
 
 # Ensure the repo root is importable when invoked as a script.
@@ -23,6 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.services.integrity import (  # noqa: E402
     APP_ROOT,
     DEFAULT_MANIFEST_PATH,
+    SHIPPED_ROOTS,
     build_file_index,
 )
 
@@ -45,17 +49,16 @@ def _app_version() -> str:
 
 
 def main() -> None:
-    index = build_file_index(APP_ROOT)
+    index = build_file_index(SHIPPED_ROOTS)
     manifest = {
-        "generated_at": datetime.now(UTC).isoformat(),
         "version": _app_version(),
         "algorithm": "sha256",
         "files": index,
     }
-    DEFAULT_MANIFEST_PATH.write_text(
-        json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8"
-    )
-    print(f"Wrote {DEFAULT_MANIFEST_PATH} ({len(index)} files)")
+    body = json.dumps(manifest, indent=2, sort_keys=True).encode()
+    DEFAULT_MANIFEST_PATH.write_bytes(body)
+    sha = hashlib.sha256(body).hexdigest()
+    print(f"Wrote {DEFAULT_MANIFEST_PATH} ({len(index)} files), SHA-256 {sha}")
 
 
 if __name__ == "__main__":

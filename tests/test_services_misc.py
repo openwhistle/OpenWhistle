@@ -46,23 +46,22 @@ async def test_record_whistleblower_failure_increments_count(
 
 
 @pytest.mark.asyncio
-async def test_check_admin_login_attempts_locked_after_max(
+async def test_claim_admin_attempt_locked_after_max(
     client: AsyncClient,
 ) -> None:
     from app.config import settings
     from app.redis_client import get_redis
     from app.services.rate_limit import (
-        check_admin_login_attempts,
-        record_admin_login_failure,
+        claim_admin_attempt,
     )
 
     redis = await get_redis()
     username = f"locktest_{__import__('uuid').uuid4().hex[:8]}"
 
     for _ in range(settings.max_login_attempts):
-        await record_admin_login_failure(redis, username)
+        await claim_admin_attempt(redis, username)
 
-    result = await check_admin_login_attempts(redis, username)
+    result = await claim_admin_attempt(redis, username)
     assert result is False
 
 
@@ -73,8 +72,7 @@ async def test_reset_admin_login_attempts_re_allows_login(
     from app.config import settings
     from app.redis_client import get_redis
     from app.services.rate_limit import (
-        check_admin_login_attempts,
-        record_admin_login_failure,
+        claim_admin_attempt,
         reset_admin_login_attempts,
     )
 
@@ -82,13 +80,13 @@ async def test_reset_admin_login_attempts_re_allows_login(
     username = f"resettest_{__import__('uuid').uuid4().hex[:8]}"
 
     for _ in range(settings.max_login_attempts):
-        await record_admin_login_failure(redis, username)
+        await claim_admin_attempt(redis, username)
 
-    assert await check_admin_login_attempts(redis, username) is False
+    assert await claim_admin_attempt(redis, username) is False
 
     await reset_admin_login_attempts(redis, username)
 
-    assert await check_admin_login_attempts(redis, username) is True
+    assert await claim_admin_attempt(redis, username) is True
 
 
 # ─── services/mfa ─────────────────────────────────────────────────────────────

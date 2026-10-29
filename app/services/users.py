@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import re
 import secrets
 import uuid
@@ -92,7 +93,7 @@ async def create_user(
     user = AdminUser(
         id=uuid.uuid4(),
         username=username,
-        password_hash=hash_password(password),
+        password_hash=await asyncio.to_thread(hash_password, password),  # bcrypt: off the loop
         totp_secret=totp_secret,
         totp_enabled=False,
         role=role,

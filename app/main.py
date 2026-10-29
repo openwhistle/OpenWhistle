@@ -16,13 +16,14 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.types import Message, Scope, Send
 
 from app.api.deps import PasswordChangeRequired
 from app.config import settings
 from app.csrf import CSRFMiddleware
 from app.i18n import get_lang, make_translator
 from app.logging_config import configure_logging
-from app.middleware import SecurityMiddleware
+from app.middleware import SecurityMiddleware, UploadBudgetMiddleware
 from app.redis_client import close_redis
 from app.services.branding import load_branding
 
@@ -252,6 +253,24 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     await close_redis()
 
 
+async def _busy_page(scope: Scope, send: Send) -> None:
+    """503 for an upload /tmp cannot hold right now (``UploadBudgetMiddleware``)."""
+    from app.templating import render  # noqa: PLC0415
+
+    request = Request(scope)
+    await load_branding(request)
+    t = make_translator(get_lang(request))
+    response = render(
+        request, "error.html", {"status_code": 503, "detail": t("error.detail.503")}, 503
+    )
+    response.headers["Retry-After"] = "60"
+
+    async def no_receive() -> Message:
+        return {"type": "http.disconnect"}
+
+    await response(scope, no_receive, send)
+
+
 def create_app() -> FastAPI:
     application = FastAPI(
         title=settings.app_name,
@@ -265,6 +284,9 @@ def create_app() -> FastAPI:
 
     # The last one added runs first: SecurityMiddleware drops the peer address and the
     # IP headers before any other middleware sees the request (it used to be second).
+    # Innermost of the three: nothing before it reads a body, and the page it refuses
+    # with still gets the security headers and the dropped IP.
+    application.add_middleware(UploadBudgetMiddleware, refuse=_busy_page)
     application.add_middleware(CSRFMiddleware)
     application.add_middleware(SecurityMiddleware)
 

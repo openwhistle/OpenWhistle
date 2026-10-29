@@ -5,8 +5,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from app.services.rate_limit import (
-    check_admin_login_attempts,
-    record_admin_login_failure,
+    claim_admin_attempt,
     record_whistleblower_failure,
 )
 
@@ -23,6 +22,10 @@ def make_redis_mock(stored: dict[str, str | None]) -> AsyncMock:
         stored[key] = str(current + 1)
         return current + 1
 
+    async def decr(key: str) -> int:
+        stored[key] = str(int(stored.get(key) or 0) - 1)
+        return int(stored[key])
+
     async def expire(key: str, seconds: int) -> None:
         pass
 
@@ -34,6 +37,7 @@ def make_redis_mock(stored: dict[str, str | None]) -> AsyncMock:
 
     redis.get = get
     redis.incr = incr
+    redis.decr = decr
     redis.expire = expire
     redis.delete = delete
     redis.exists = exists
@@ -54,7 +58,6 @@ async def test_admin_login_rate_limit() -> None:
 
     username = "admin"
     for _ in range(10):
-        await record_admin_login_failure(redis, username)
+        await claim_admin_attempt(redis, username)
 
-    allowed = await check_admin_login_attempts(redis, username)
-    assert allowed is False
+    assert await claim_admin_attempt(redis, username) is False

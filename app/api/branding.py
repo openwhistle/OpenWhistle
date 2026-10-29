@@ -121,6 +121,20 @@ async def _page(
     )
 
 
+async def _demo_refusal(
+    request: Request,
+    db: AsyncSession,
+    user: AdminUser,
+    org_id: uuid.UUID | None,
+    form: dict[str, str] | None = None,
+) -> HTMLResponse:
+    """Every demo visitor is the same admin: a saved name or logo was what every later
+    visitor of the public demo saw until the next reset. The page still previews."""
+    return await _page(
+        request, db, user, org_id, error="admin.branding.error.demo", form=form, status_code=403
+    )
+
+
 def _back(org_id: uuid.UUID | None) -> RedirectResponse:
     suffix = f"&org={org_id}" if org_id else ""
     return RedirectResponse(f"/admin/branding?saved=1{suffix}", status_code=303)
@@ -159,6 +173,8 @@ async def branding_post(
 ) -> HTMLResponse | RedirectResponse:
     org_id = await _target(db, current_user, org)
     form = {"name": name, "primary_color": primary_color}
+    if settings.demo_mode:
+        return await _demo_refusal(request, db, current_user, org_id, form)
     name = name.strip()
     try:
         if len(name) > 64:
@@ -214,16 +230,19 @@ async def branding_post(
     return _back(org_id)
 
 
-@router.post("/admin/branding/reset")
+@router.post("/admin/branding/reset", response_model=None)
 async def branding_reset(
+    request: Request,
     field: str = Form(...),
     org: str = Form(""),
     db: AsyncSession = Depends(get_db),
     redis: Redis = Depends(get_redis),
     current_user: AdminUser = Depends(require_admin),
     _csrf: None = Depends(validate_csrf),
-) -> RedirectResponse:
+) -> HTMLResponse | RedirectResponse:
     org_id = await _target(db, current_user, org)
+    if settings.demo_mode:
+        return await _demo_refusal(request, db, current_user, org_id)
     fields = _RESETTABLE if field == "all" else (field,)
     if not set(fields) <= set(_RESETTABLE):
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)

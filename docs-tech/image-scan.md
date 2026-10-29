@@ -6,7 +6,7 @@ same pin, same policy as `security.yml` and `docker-publish.yml`.
 | Where | Image scanned | When |
 | --- | --- | --- |
 | `security.yml` job `image` | a fresh build of the commit | every PR, Mondays, every publish |
-| `security.yml` job `published` | `ghcr.io/openwhistle/openwhistle:latest` | Mondays |
+| `security.yml` job `published` | `:latest` and `:edge` (the demo), amd64 and arm64 | Mondays |
 | `docker-publish.yml` job `build` | the digest just pushed, per platform | before `merge` tags it |
 
 ## Scan
@@ -14,7 +14,7 @@ same pin, same policy as `security.yml` and `docker-publish.yml`.
 From the repository root (`.grype.yaml` holds the reviewed exceptions):
 
 ```bash
-GRYPE=docker.io/anchore/grype@sha256:e4a44ef45d285b829ce6efe2642980329661bd2d18eab5fc539138d4adaebbbe  # v0.120.1, as in the workflows
+GRYPE=docker.io/anchore/grype@sha256:621d56d1d68106b787022c81546f7e0a36202a25d1239f0c20195fab8c16f7ea  # v0.121.0, as in the workflows
 podman run --rm -v "$PWD/.grype.yaml:/policy.yaml:ro,Z" "$GRYPE" \
   registry:ghcr.io/openwhistle/openwhistle:latest \
   --config /policy.yaml --only-fixed --fail-on negligible
