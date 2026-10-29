@@ -1,5 +1,6 @@
 """First-run setup wizard: creates the initial admin account."""
 
+import asyncio
 import re
 import uuid
 from datetime import UTC, datetime
@@ -88,7 +89,7 @@ async def create_initial_admin(
     admin = AdminUser(
         id=uuid.uuid4(),
         username=username,
-        password_hash=hash_password(password),
+        password_hash=await asyncio.to_thread(hash_password, password),  # bcrypt: off the loop
         totp_secret=totp_secret,
         totp_enabled=True,
         org_id=default_org.id,
@@ -179,10 +180,8 @@ async def setup_post(
     if not secret_ok:
         totp_secret = generate_totp_secret()
 
-    locked = await rl.setup_token_locked(redis)
+    locked = not await rl.claim_setup_token_attempt(redis)
     if locked or not await check_setup_token(redis, setup_token.strip()):
-        if not locked:
-            await rl.record_setup_token_failure(redis)
         error = "wizard.error.setup_token_locked" if locked else "wizard.error.setup_token"
         return render(
             request,

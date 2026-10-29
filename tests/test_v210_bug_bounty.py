@@ -429,8 +429,8 @@ async def test_case_variants_of_a_username_share_one_lockout(client: AsyncClient
     redis = await get_redis()
     name = f"alice{uuid.uuid4().hex[:6]}"
     for _ in range(settings.max_login_attempts):
-        await rl.record_admin_login_failure(redis, name)
-    assert not await rl.check_admin_login_attempts(redis, f" {name.upper()}")
+        await rl.claim_admin_attempt(redis, name)
+    assert not await rl.claim_admin_attempt(redis, f" {name.upper()}")
 
 
 @pytest.mark.asyncio
@@ -445,11 +445,11 @@ async def test_the_lock_lasts_lockout_minutes_from_the_last_failure(client: Asyn
 
     redis = await get_redis()
     name = f"bob{uuid.uuid4().hex[:6]}"
-    await rl.record_admin_login_failure(redis, name)
+    await rl.claim_admin_attempt(redis, name)
     key = f"openwhistle:admin_ratelimit:{name}"
     await redis.expire(key, 60)  # the first failure was long ago
     for _ in range(settings.max_login_attempts - 1):
-        await rl.record_admin_login_failure(redis, name)
+        await rl.claim_admin_attempt(redis, name)
     assert await redis.ttl(key) > settings.login_lockout_minutes * 60 - 5
 
 
@@ -481,7 +481,7 @@ async def test_every_report_has_a_feedback_deadline_from_receipt(
     report, _ = await create_report(db_session, "financial_fraud", "Deadline from receipt, please.")
     assert report.feedback_due_at is not None
     lower = report.submitted_at + timedelta(days=7 + 89)
-    upper = report.submitted_at + timedelta(days=7 + 92)
+    upper = report.submitted_at + timedelta(days=7 + 93)  # to the end of the last day
     assert lower <= report.feedback_due_at <= upper
 
 
@@ -502,11 +502,14 @@ async def test_three_months_are_calendar_months(
     frozen = _frozen_datetime(datetime(2027, 2, 1, 9, tzinfo=UTC))
     monkeypatch.setattr(report_service, "datetime", frozen)
     await report_service.acknowledge_report(db_session, report)
-    assert report.feedback_due_at == datetime(2027, 5, 1, 9, tzinfo=UTC)
+    # The end of 1 May (§ 188 Abs. 2 BGB), not 1 May at the acknowledgement's 09:00.
+    assert report.feedback_due_at == datetime(2027, 5, 1, 23, 59, 59, 999999, tzinfo=UTC)
 
 
-def test_the_pdf_calls_seven_days_and_twelve_hours_late() -> None:
-    """``timedelta.days`` truncates: 7 d 12 h was 7, so 'Compliant'."""
+def test_the_pdf_calls_eight_days_and_twelve_hours_late() -> None:
+    """``timedelta.days`` truncates: 8 d 12 h was 8, so 'Compliant'. Seven days and
+    twelve hours after the receipt day began is the seventh day, which is on time
+    (test_v242_bug_bounty: §§ 187, 188 BGB)."""
     from datetime import UTC, datetime, timedelta
     from types import SimpleNamespace
 
@@ -515,7 +518,7 @@ def test_the_pdf_calls_seven_days_and_twelve_hours_late() -> None:
     submitted = datetime(2027, 3, 1, tzinfo=UTC)
     report = SimpleNamespace(
         submitted_at=submitted,
-        acknowledged_at=submitted + timedelta(days=7, hours=12),
+        acknowledged_at=submitted + timedelta(days=8, hours=12),
         feedback_due_at=None,
         closed_at=None,
     )
@@ -1216,12 +1219,12 @@ def test_every_deadline_state_is_reached() -> None:
     later = submitted + timedelta(days=30)
     assert deadlines.ack_status(submitted, submitted + timedelta(days=2), later).state == "done"
     due = deadlines.feedback_due(submitted)
-    assert deadlines.feedback_status(due, True, due + timedelta(days=1)).state == "done"
-    assert deadlines.feedback_status(None, False, later) is None
-    late = submitted + timedelta(days=7, seconds=1)
+    assert deadlines.feedback_status(due, due, due + timedelta(days=1)).state == "done"
+    assert deadlines.feedback_status(None, None, later) is None
+    late = submitted + timedelta(days=8, seconds=1)
     assert deadlines.ack_status(submitted, None, late).state == "overdue"
-    assert deadlines.feedback_status(due, False, due + timedelta(seconds=1)).state == "overdue"
-    assert deadlines.feedback_status(due, False, due - timedelta(hours=12)).state == "warning"
+    assert deadlines.feedback_status(due, None, due + timedelta(seconds=1)).state == "overdue"
+    assert deadlines.feedback_status(due, None, due - timedelta(hours=12)).state == "warning"
 
 
 @pytest.mark.asyncio

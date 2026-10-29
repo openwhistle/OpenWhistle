@@ -143,7 +143,9 @@ async def test_acknowledge_report_feedback_due_is_three_months_after_ack(
     report, _ = await _make_report(db_session)
     updated = await acknowledge_report(db_session, report)
     assert updated.acknowledged_at is not None
-    assert updated.feedback_due_at == deadlines.add_months(updated.acknowledged_at, 3)
+    # The end of the day three months on (§ 188 Abs. 2 BGB).
+    due = deadlines.add_months(updated.acknowledged_at, 3)
+    assert updated.feedback_due_at == due.replace(hour=23, minute=59, second=59, microsecond=999999)
 
 
 @pytest.mark.asyncio

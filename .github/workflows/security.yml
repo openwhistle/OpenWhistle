@@ -64,9 +64,11 @@ jobs:
           exit-code: "1"
 
   # What users pull today: the image goes stale between releases while Alpine
-  # and Python publish fixes. A red Monday here means: cut a patch release.
+  # and Python publish fixes. A red :latest means: cut a patch release; a red
+  # :edge (what the demo runs) means: rebuild main. Both platforms: an arm64
+  # host pulls its own image, which was never rescanned.
   published:
-    name: Image scan (published :latest)
+    name: Image scan (published ${{ matrix.tag }}, ${{ matrix.platform }})
     # Not when docker-publish.yml calls this file: a called workflow sees the caller's
     # event, so a dispatched re-publish scanned the :latest it was about to replace.
     if: >-
@@ -74,10 +76,15 @@ jobs:
       && !contains(github.workflow_ref, '/docker-publish.yml@'))
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        tag: [latest, edge]
+        platform: [linux/amd64, linux/arm64]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
       - uses: docker://anchore/grype:v0.121.0@sha256:621d56d1d68106b787022c81546f7e0a36202a25d1239f0c20195fab8c16f7ea
         with:
-          args: registry:ghcr.io/openwhistle/openwhistle:latest --config .grype.yaml --only-fixed --fail-on negligible
+          args: registry:ghcr.io/openwhistle/openwhistle:${{ matrix.tag }} --platform ${{ matrix.platform }} --config .grype.yaml --only-fixed --fail-on negligible

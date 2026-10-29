@@ -86,13 +86,13 @@ async def test_login_post_shows_locked_message_when_rate_limited(
     """After exceeding max_login_attempts the login page must show a lockout message."""
     from app.config import settings
     from app.redis_client import get_redis
-    from app.services.rate_limit import record_admin_login_failure
+    from app.services.rate_limit import claim_admin_attempt
 
     admin, _ = await _create_admin(db_session)
 
     redis = await get_redis()
     for _ in range(settings.max_login_attempts):
-        await record_admin_login_failure(redis, admin.username)
+        await claim_admin_attempt(redis, admin.username)
 
     get_resp = await client.get("/admin/login")
     csrf = get_resp.cookies.get("ow_csrf")
@@ -364,14 +364,14 @@ async def test_login_mfa_post_locked_out_shows_error(
 ) -> None:
     """Rate-limited MFA attempts must render the locked-out MFA form (429)."""
     from app.redis_client import get_redis
-    from app.services.rate_limit import record_admin_login_failure
+    from app.services.rate_limit import claim_admin_attempt
 
     admin, _ = await _create_admin(db_session)
     redis = await get_redis()
     temp_token = "temp-token-for-locked-mfa"
     await store_totp_pending(redis, temp_token, str(admin.id))
     for _ in range(settings.max_login_attempts):
-        await record_admin_login_failure(redis, admin.username)
+        await claim_admin_attempt(redis, admin.username)
 
     get_resp = await client.get("/admin/login")
     csrf = get_resp.cookies.get("ow_csrf")

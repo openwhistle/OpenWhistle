@@ -75,7 +75,7 @@
             </span>
         </label>
 
-        <a href="/status" id="go-to-status" class="btn btn-primary btn-block ss-go-to-status" tabindex="-1" aria-disabled="true">
+        <a href="/status" id="go-to-status" class="btn btn-primary btn-block ss-go-to-status">
             {{ t('success.confirm.button') }}
         </a>
         <script nonce="{{ request.state.csp_nonce }}">
@@ -99,7 +99,7 @@
                     lbl.classList.remove('shake');
                     void lbl.offsetWidth;
                     lbl.classList.add('shake');
-                    lbl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    lbl.scrollIntoView({ block: 'nearest' });  // the stylesheet's scroll-behavior: smooth, unless reduced motion
                 }
             });
 

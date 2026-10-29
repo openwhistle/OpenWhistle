@@ -275,6 +275,13 @@ async def _seed(db: AsyncSession) -> None:
             status=demo["status"],
             acknowledged_at=acknowledged_at,
             feedback_due_at=feedback_due_at,
+            # The "investigation is progressing" message below is the feedback.
+            feedback_sent_at=(
+                reply_day + timedelta(hours=3)
+                if reply_day
+                and demo["status"] in (ReportStatus.pending_feedback, ReportStatus.closed)
+                else None
+            ),
             closed_at=closed_at,
             submission_mode=mode,
             location_id=location_obj.id if location_obj else None,

@@ -524,6 +524,9 @@ async def add_admin_message(
         content=_encrypt_message_content(report, content),
         sent_at=await _next_sent_at(db, report, datetime.now(UTC)),
     )
+    # Feedback is given by writing, after the acknowledgement; closing the case is not it.
+    if report.acknowledged_at is not None and report.feedback_sent_at is None:
+        report.feedback_sent_at = msg.sent_at
     db.add(msg)
     await (db.commit() if commit else db.flush())  # the route commits with its audit entry
     await db.refresh(msg)
@@ -880,16 +883,17 @@ async def get_dashboard_stats(
     # SLA compliance: % acknowledged within 7 days, of the reports whose
     # seven days are decided — acknowledged, or past the deadline. A report
     # received today used to count as missed and pull the rate down.
-    ack_window = timedelta(days=deadlines.ACK_DAYS)
+    # Receipt is a UTC day; its seven days end with the seventh day after it (§ 188 BGB).
+    ack_window = timedelta(days=deadlines.ACK_DAYS + 1)
     decided = Report.acknowledged_at.isnot(None) | (
-        Report.submitted_at + ack_window < datetime.now(UTC)
+        Report.submitted_at + ack_window <= datetime.now(UTC)
     )
     ack_result = await db.execute(
         select(
             func.count(Report.id).label("total"),
             func.count(Report.id).filter(decided).label("decided"),
             func.count(Report.id)
-            .filter(Report.acknowledged_at <= Report.submitted_at + ack_window)
+            .filter(Report.acknowledged_at < Report.submitted_at + ack_window)
             .label("on_time"),
         ).where(*org_filter)
     )

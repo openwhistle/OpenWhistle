@@ -23,7 +23,9 @@ def _dedup_ttl_seconds(days_left: int) -> int:
     A fixed 1-hour TTL was far shorter than the multi-day warn window, so the
     key expired every couple of scheduler ticks and the same reminder re-fired
     for days. Instead suppress re-reminders until the deadline itself has passed
-    (plus a one-day buffer), giving one reminder per warn-window entry.
+    (plus a one-day buffer): one reminder on entering the warn window, then one a
+    day while the deadline is missed. Feedback given ends them
+    (``Report.feedback_sent_at``).
     """
     return max(days_left, 0) * 86400 + 86400
 
@@ -60,9 +62,10 @@ async def send_sla_reminders() -> None:
         async with session_factory() as db:
             redis = await get_redis()
             # Distributed lock: the app runs stateless/scaled, so every replica
-            # starts its own scheduler. Only one may run each cycle, else audit
-            # entries and outbound notifications are duplicated per replica.
-            # Acquire → run → release; the TTL is only a crash safety-net.
+            # starts its own scheduler. The lock keeps two runs from overlapping;
+            # it does not make a cycle run once — each replica's interval starts
+            # with the replica. The per-case dedup keys are what keep a second run
+            # from reminding again. The TTL is only a crash safety-net.
             lock_key = "openwhistle:job_lock:sla_reminders"
             if not await redis.set(lock_key, "1", nx=True, ex=300):
                 return
@@ -167,7 +170,7 @@ async def _check_feedback_reminder(
     r: Report = report  # type: ignore[assignment]
     cfg: Settings = settings  # type: ignore[assignment]
 
-    if r.feedback_due_at is None:
+    if r.feedback_due_at is None or r.feedback_sent_at is not None:
         return False
 
     days_left = (r.feedback_due_at - now).days

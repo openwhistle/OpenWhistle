@@ -1,5 +1,6 @@
 """Admin dashboard endpoints."""
 
+import asyncio
 import re
 import uuid
 from typing import Any
@@ -1486,7 +1487,9 @@ async def reset_user_totp(
     temporary_password = None
     if target.password_hash:
         temporary_password = new_temporary_password()
-        target.password_hash = auth_service.hash_password(temporary_password)
+        target.password_hash = await asyncio.to_thread(
+            auth_service.hash_password, temporary_password
+        )
         # The superadmin has seen it: the holder replaces it after enrolling.
         target.must_change_password = True
         # They can also sign in with it first, like the maker of a new account: for the

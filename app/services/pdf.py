@@ -138,10 +138,11 @@ def generate_report_pdf(
 
     now = datetime.now(UTC)
     _meta_row(pdf, t("pdf.ack"), _ack_label(report, now, t))
-    feedback = deadlines.feedback_status(report.feedback_due_at, bool(report.closed_at), now)
+    feedback = deadlines.feedback_status(report.feedback_due_at, report.feedback_sent_at, now)
     if feedback:
         if feedback.state == "done":
-            label = t("pdf.feedback.done")
+            late = report.feedback_sent_at is not None and report.feedback_sent_at > feedback.due
+            label = t("pdf.feedback.late" if late else "pdf.feedback.done")
         elif feedback.state == "overdue":
             label = t("pdf.feedback.overdue")
         else:

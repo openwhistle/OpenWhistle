@@ -175,21 +175,34 @@ async def revoke_user_sessions(redis: Redis, user_id: str, keep: str | None = No
     is a session token that survives (the caller's own, after a password change).
 
     Sessions are keyed by token, not by user, so this scans; the value of each
-    key is the user id. ponytail: a SCAN over all sessions — fine for the
+    key is the user id. One script, so nothing runs between reading a key and
+    deleting it: the sweep used to read a SCAN page and then fetch each key, and
+    a refresh that stored its new session and deleted the old one in between
+    left the new session standing after a password change (measured).
+    shortcut: the script scans every session while Redis waits — fine for the
     number of admins an instance has, a per-user index if that ever changes.
     """
-    removed = 0
-    kept = _key(_SESSION_PREFIX, keep) if keep else None
-    for prefix in (_SESSION_PREFIX, _TOTP_PENDING_PREFIX, _TOTP_SETUP_PREFIX):
-        async for key in redis.scan_iter(match=f"{prefix}*", count=500):
-            name = key.decode() if isinstance(key, bytes) else key
-            if name == kept:
-                continue
-            raw = await redis.get(key)
-            value = raw.decode() if isinstance(raw, bytes) else raw
-            if value == user_id:
-                removed += int(await redis.delete(key))
-    return removed
+    prefixes = (_SESSION_PREFIX, _TOTP_PENDING_PREFIX, _TOTP_SETUP_PREFIX)
+    kept = _key(_SESSION_PREFIX, keep) if keep else ""
+    return int(await redis.eval(_SWEEP, 0, user_id, kept, *prefixes))
+
+
+_SWEEP = """
+local removed = 0
+for i = 3, #ARGV do
+  local cursor = "0"
+  repeat
+    local page = redis.call("SCAN", cursor, "MATCH", ARGV[i] .. "*", "COUNT", 500)
+    cursor = page[1]
+    for _, key in ipairs(page[2]) do
+      if key ~= ARGV[2] and redis.call("GET", key) == ARGV[1] then
+        removed = removed + redis.call("DEL", key)
+      end
+    end
+  until cursor == "0"
+end
+return removed
+"""
 
 
 async def store_totp_pending(redis: Redis, temp_token: str, user_id: str) -> None:

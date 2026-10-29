@@ -115,6 +115,10 @@ class Report(Base):
     )
     acknowledged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     feedback_due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # § 17 Abs. 2: the office's first message to the reporter after the acknowledgement.
+    feedback_sent_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     messages: Mapped[list[ReportMessage]] = relationship(

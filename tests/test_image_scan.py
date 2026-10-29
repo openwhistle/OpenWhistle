@@ -72,9 +72,29 @@ def test_publish_scans_the_digest_it_pushed_before_anything_is_tagged() -> None:
     assert _jobs("docker-publish.yml")["merge"]["needs"] == "build"
 
 
-def test_the_published_latest_tag_is_scanned_every_week() -> None:
+def test_every_published_tag_and_platform_is_scanned_every_week() -> None:
+    """Only ``:latest`` for the runner's amd64 was rescanned: the arm64 image and
+    ``:edge``, which the demo runs, went unscanned between pushes."""
+    job = _jobs("security.yml")["published"]
+    (step,) = _grype_steps(job)
+    matrix = job["strategy"]["matrix"]
+    assert set(matrix["tag"]) == {"latest", "edge"}
+    assert set(matrix["platform"]) == {"linux/amd64", "linux/arm64"}
+    image = "registry:ghcr.io/openwhistle/openwhistle:${{ matrix.tag }}"
+    assert step["with"]["args"].startswith(f"{image} --platform ${{{{ matrix.platform }}}} ")
+
+
+def test_the_local_scan_recipe_uses_the_workflows_grype() -> None:
+    """docs-tech/image-scan.md said "v0.120.1, as in the workflows" after Renovate had
+    moved every workflow to v0.121.0."""
+    import re
+
     (step,) = _grype_steps(_jobs("security.yml")["published"])
-    assert step["with"]["args"].startswith("registry:ghcr.io/openwhistle/openwhistle:latest ")
+    version, digest = re.fullmatch(
+        r"docker://anchore/grype:(v[\d.]+)@(sha256:\w+)", step["uses"]
+    ).groups()
+    doc = (Path(__file__).parents[1] / "docs-tech/image-scan.md").read_text()
+    assert f"docker.io/anchore/grype@{digest}  # {version}, as in the workflows" in doc
 
 
 def test_trivy_scans_secrets_only_so_no_second_vulnerability_verdict_disagrees() -> None:

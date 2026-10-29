@@ -611,7 +611,7 @@ config (jq, bash, `docker compose config`, `helm template`, `nginx -t`).
 | One lockout per case-folded username, from the last failure | `test_case_variants_of_a_username_share_one_lockout`, `test_the_lock_lasts_lockout_minutes_from_the_last_failure` |
 | A refresh racing a revocation leaves no session | `test_a_refresh_racing_a_revocation_leaves_no_session` |
 | Unlink: a directory name counts only with LDAP on | `test_a_directory_name_is_no_way_in_while_ldap_is_off` |
-| §17 deadlines: from receipt, calendar months, one computation | `test_every_report_has_a_feedback_deadline_from_receipt`, `test_three_months_are_calendar_months`, `test_the_pdf_calls_seven_days_and_twelve_hours_late`, `test_the_ack_rate_counts_only_reports_whose_week_is_over`, `test_the_dashboard_and_the_case_page_agree_on_the_last_day` |
+| §17 deadlines: from receipt, calendar months, one computation | `test_every_report_has_a_feedback_deadline_from_receipt`, `test_three_months_are_calendar_months`, `test_the_pdf_calls_eight_days_and_twelve_hours_late`, `test_the_ack_rate_counts_only_reports_whose_week_is_over`, `test_the_dashboard_and_the_case_page_agree_on_the_last_day` |
 | Text fields: line breaks count once; the server holds the page's limits | `test_line_breaks_count_once_as_in_the_browser`, `test_an_admin_reply_has_the_limit_its_form_shows`, `test_an_oversized_admin_field_is_refused_not_a_500` |
 | A mistyped notification address stays on the form | `test_a_mistyped_notification_address_is_caught_on_the_form` |
 | A closed case takes no reply | `test_a_closed_case_takes_no_reply_and_says_so` |
@@ -760,6 +760,29 @@ Tests: `tests/test_privacy_v240.py` unless named.
 
 **Not reproduced, so not changed.** nginx's `error_log crit` with 130 malformed TLS handshakes against the
 bundled config: no `client:` line.
+
+## Bug bounty after v2.4.1
+
+Each guard was watched failing with the fix undone. Tests: `tests/test_v242_bug_bounty.py` unless named.
+
+| Guard | Test that fires |
+| --- | --- |
+| The session sweep is one Redis script: a refresh between its read and its delete does not survive a password change | `test_a_refresh_inside_the_sweep_does_not_survive_it` |
+| The lockout tests drive `claim_admin_attempt`, the path sign-in uses; the dead pair they tested is gone | `test_the_lock_lasts_lockout_minutes_from_the_last_failure` (`tests/test_v210_bug_bounty.py`) |
+| Setup tokens are counted before they are checked: a burst checks no more than the limit | `test_a_burst_of_wrong_setup_tokens_checks_no_more_than_the_limit` |
+| §17 deadlines end with their last day; three months come before the seven days | `test_an_acknowledgement_on_the_seventh_day_is_on_time`, `test_the_feedback_deadline_ends_with_its_last_day`, `test_the_sla_rate_counts_an_acknowledgement_on_the_seventh_day` |
+| Feedback is the office's first message after the acknowledgement, not closing; it ends the reminders (migration 020) | `test_feedback_counts_as_given_once_the_office_writes_not_once_the_case_closes`, `test_a_case_with_feedback_given_is_not_reminded`, `test_migration_020_backfills_feedback_and_moves_deadlines_to_their_last_day` |
+| Automatic deletion forgets the case in Redis as the four-eyes deletion does | `test_retention_leaves_no_reminder_mark_or_queue_entry_behind` |
+| nginx streams request bodies: none on its disk, no `[crit] … client:` on a full one (CI replays it on the shipped image) | `test_every_bundled_nginx_streams_request_bodies_to_the_app`, CI step "An upload is streamed" |
+| The integrity manifest covers `migrations/` and `scripts/`, has no build time, is cached per replica | `test_the_integrity_manifest_covers_the_migrations_and_scripts_that_run`, `test_the_manifest_hash_is_the_same_for_the_same_files`, `test_each_replica_caches_its_own_integrity_result` |
+| The demo previews branding but does not save it | `test_the_demo_branding_is_shown_but_not_saved` |
+| An organisation's dark logo alone is shown | `test_an_organisations_dark_logo_alone_is_shown` |
+| Without JavaScript: the success page's link on and an error page's link back work | `test_the_success_pages_link_on_is_not_rendered_disabled`, `test_the_error_pages_way_back_is_a_real_link` |
+| No script scrolls smoothly past reduced motion | `test_no_script_scrolls_smoothly_past_reduced_motion` |
+| A multipart request reserves its size against `/tmp` first; one that does not fit gets the 503 busy page | `test_an_upload_the_spool_cannot_hold_gets_a_busy_page_not_a_broken_parse`, `test_the_app_answers_a_full_spool_with_its_own_busy_page` |
+| bcrypt never runs on the event loop | `test_a_password_change_hashes_off_the_event_loop` |
+| Every language counts retention from `closed_at` | `test_every_language_says_retention_counts_from_closing` |
+| `:latest` and `:edge`, amd64 and arm64, are rescanned weekly; the local recipe pins the workflows' grype | `test_every_published_tag_and_platform_is_scanned_every_week`, `test_the_local_scan_recipe_uses_the_workflows_grype` (`tests/test_image_scan.py`) |
 
 ## Repository and release
 

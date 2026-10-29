@@ -280,14 +280,14 @@ async def test_login_post_rate_limit_lockout(client: AsyncClient, db_session: As
     """After exceeding max login attempts, login returns a lockout message."""
     from app.config import settings
     from app.redis_client import get_redis
-    from app.services.rate_limit import record_admin_login_failure
+    from app.services.rate_limit import claim_admin_attempt
 
     redis = await get_redis()
     username = f"locktest_{uuid.uuid4().hex[:6]}"
     admin, _ = await _make_admin(db_session)
 
     for _ in range(settings.max_login_attempts + 1):
-        await record_admin_login_failure(redis, username)
+        await claim_admin_attempt(redis, username)
 
     r = await client.get("/admin/login")
     csrf = r.cookies.get("ow_csrf")
@@ -906,11 +906,12 @@ async def test_get_audit_log_filter_by_admin_id(db_session: AsyncSession) -> Non
 
 @pytest.mark.asyncio
 async def test_pdf_with_feedback_due_and_closed(db_session: AsyncSession) -> None:
-    """PDF with feedback_due_at and closed_at hits the 'OK Delivered' branch."""
+    """PDF with feedback given hits the 'OK Delivered' branch."""
     from app.models.report import ReportStatus
     from app.services.pdf import generate_report_pdf
     from app.services.report import (
         acknowledge_report,
+        add_admin_message,
         create_report,
         get_report_by_id,
         update_report_status,
@@ -918,6 +919,7 @@ async def test_pdf_with_feedback_due_and_closed(db_session: AsyncSession) -> Non
 
     report, _ = await create_report(db_session, "corruption", "PDF closed branch test.")
     await acknowledge_report(db_session, report)
+    await add_admin_message(db_session, report, "Our feedback.")
     await update_report_status(db_session, report, ReportStatus.pending_feedback)
     await update_report_status(db_session, report, ReportStatus.closed)
     loaded = await get_report_by_id(db_session, report.id)

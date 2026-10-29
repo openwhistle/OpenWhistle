@@ -51,7 +51,9 @@ def _url(sha: str | None) -> str:
 def resolve(snap: Snapshot, org_id: uuid.UUID | None) -> Brand:
     own = snap.get(str(org_id), {}) if org_id else {}
     base = snap.get("default", {})
-    images = own if own.get("logo_light") else base
+    # The images come from one row, so two organisations' logos never mix. A row counts
+    # once it has either logo: an organisation's dark logo alone used to be ignored.
+    images = own if own.get("logo_light") or own.get("logo_dark") else base
     try:
         colour = brand_colour.parse(
             own.get("primary_color") or base.get("primary_color") or settings.brand_primary_color
