@@ -1,0 +1,442 @@
+{
+ "test_groups": {
+  "S": [
+   "tests/test_v242_bug_bounty.py::test_a_refresh_inside_the_sweep_does_not_survive_it",
+   "tests/test_v242_bug_bounty.py::test_the_sweep_keeps_the_callers_session_and_other_users"
+  ],
+  "T": [
+   "tests/test_v242_bug_bounty.py::test_a_burst_of_wrong_setup_tokens_checks_no_more_than_the_limit"
+  ],
+  "L": [
+   "tests/test_v210_bug_bounty.py::test_the_lock_lasts_lockout_minutes_from_the_last_failure"
+  ],
+  "R": [
+   "tests/test_v242_bug_bounty.py::test_retention_leaves_no_reminder_mark_or_queue_entry_behind"
+  ],
+  "J": [
+   "tests/test_v242_bug_bounty.py::test_the_success_pages_link_on_is_not_rendered_disabled",
+   "tests/test_v242_bug_bounty.py::test_no_script_scrolls_smoothly_past_reduced_motion",
+   "tests/test_v242_bug_bounty.py::test_the_error_pages_way_back_is_a_real_link",
+   "tests/test_v242_bug_bounty.py::test_the_status_button_waits_for_a_status"
+  ],
+  "B": [
+   "tests/test_v242_bug_bounty.py::test_an_organisations_dark_logo_alone_is_shown",
+   "tests/test_v242_bug_bounty.py::test_the_demo_branding_is_shown_but_not_saved"
+  ],
+  "D": [
+   "tests/test_v242_bug_bounty.py::test_an_acknowledgement_on_the_seventh_day_is_on_time",
+   "tests/test_v242_bug_bounty.py::test_the_feedback_deadline_ends_with_its_last_day",
+   "tests/test_v242_bug_bounty.py::test_the_sla_rate_counts_an_acknowledgement_on_the_seventh_day"
+  ],
+  "F": [
+   "tests/test_v242_bug_bounty.py::test_feedback_counts_as_given_once_the_office_writes_not_once_the_case_closes",
+   "tests/test_v242_bug_bounty.py::test_a_case_with_feedback_given_is_not_reminded",
+   "tests/test_v242_bug_bounty.py::test_the_pdf_calls_feedback_after_its_deadline_late",
+   "tests/test_v242_bug_bounty.py::test_every_page_shows_feedback_given_on_a_case_still_open",
+   "tests/test_v242_bug_bounty.py::test_the_demo_records_the_feedback_its_messages_give"
+  ],
+  "M": [
+   "tests/test_v242_bug_bounty.py::test_migration_020_backfills_feedback_and_moves_deadlines_to_their_last_day"
+  ],
+  "I": [
+   "tests/test_v242_bug_bounty.py::test_the_integrity_manifest_covers_the_migrations_and_scripts_that_run",
+   "tests/test_v242_bug_bounty.py::test_the_manifest_hash_is_the_same_for_the_same_files",
+   "tests/test_v242_bug_bounty.py::test_each_replica_caches_its_own_integrity_result",
+   "tests/test_v242_bug_bounty.py::test_the_built_manifest_lists_and_verifies_what_runs"
+  ],
+  "P": [
+   "tests/test_v242_bug_bounty.py::test_a_password_change_hashes_off_the_event_loop",
+   "tests/test_v242_bug_bounty.py::test_no_coroutine_runs_bcrypt_on_the_event_loop"
+  ],
+  "N": [
+   "tests/test_v242_bug_bounty.py::test_every_bundled_nginx_streams_request_bodies_to_the_app",
+   "tests/test_v242_bug_bounty.py::test_ci_replays_an_upload_against_nginx_with_a_full_disk"
+  ],
+  "U": [
+   "tests/test_v242_bug_bounty.py::test_an_upload_the_spool_cannot_hold_gets_a_busy_page_not_a_broken_parse",
+   "tests/test_v242_bug_bounty.py::test_the_app_answers_a_full_spool_with_its_own_busy_page",
+   "tests/test_v242_bug_bounty.py::test_the_upload_budget_counts_what_a_request_may_send",
+   "tests/test_v242_bug_bounty.py::test_the_spool_may_fill_nine_tenths_of_tmp"
+  ],
+  "O": [
+   "tests/test_v242_bug_bounty.py::test_every_language_says_retention_counts_from_closing"
+  ],
+  "C": [
+   "tests/test_image_scan.py::test_every_published_tag_and_platform_is_scanned_every_week",
+   "tests/test_image_scan.py::test_the_local_scan_recipe_uses_the_workflows_grype"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "sweep-read-then-delete",
+   "file": "app/services/auth.py",
+   "old": "    return int(await redis.eval(_SWEEP, 0, user_id, kept, *prefixes))",
+   "new": "    removed = 0\n    for prefix in prefixes:\n        async for key in redis.scan_iter(match=f\"{prefix}*\", count=500):\n            name = key.decode() if isinstance(key, bytes) else key\n            if name == kept:\n                continue\n            raw = await redis.get(key)\n            value = raw.decode() if isinstance(raw, bytes) else raw\n            if value == user_id:\n                removed += int(await redis.delete(key))\n    return removed",
+   "tests": "S"
+  },
+  {
+   "id": "sweep-deletes-the-kept-one",
+   "file": "app/services/auth.py",
+   "old": "if key ~= ARGV[2] and redis.call(\"GET\", key)",
+   "new": "if redis.call(\"GET\", key)",
+   "tests": "S"
+  },
+  {
+   "id": "setup-token-counted-after",
+   "file": "app/api/wizard.py",
+   "old": "    locked = not await rl.claim_setup_token_attempt(redis)\n    if locked or not await check_setup_token(redis, setup_token.strip()):\n",
+   "new": "    locked = int(await redis.get(rl._SETUP_TOKEN_FAILURES) or 0) >= settings.max_login_attempts\n    if locked or not await check_setup_token(redis, setup_token.strip()):\n        if not locked:\n            await rl._count_failure(redis, rl._SETUP_TOKEN_FAILURES, settings.login_lockout_minutes * 60)\n",
+   "tests": "T"
+  },
+  {
+   "id": "claim-keeps-first-expiry",
+   "file": "app/services/rate_limit.py",
+   "old": "    await redis.expire(key, settings.login_lockout_minutes * 60)\n    return True",
+   "new": "    return True",
+   "tests": "L"
+  },
+  {
+   "id": "retention-keeps-redis-marks",
+   "file": "app/services/retention.py",
+   "old": "                    await forget_case(lock_redis, report.case_number)",
+   "new": "                    pass",
+   "tests": "R"
+  },
+  {
+   "id": "success-link-rendered-disabled",
+   "file": "app/templates/submit_success.html",
+   "old": "id=\"go-to-status\" class=\"btn btn-primary btn-block ss-go-to-status\">",
+   "new": "id=\"go-to-status\" class=\"btn btn-primary btn-block ss-go-to-status\" tabindex=\"-1\" aria-disabled=\"true\">",
+   "tests": "J"
+  },
+  {
+   "id": "smooth-scroll-past-reduced-motion",
+   "file": "app/templates/submit_success.html",
+   "old": "lbl.scrollIntoView({ block: 'nearest' });",
+   "new": "lbl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });",
+   "tests": "J"
+  },
+  {
+   "id": "error-back-link-hash",
+   "file": "app/templates/error.html",
+   "old": "<a id=\"err-back-link\" href=\"{{ '/admin/dashboard' if request.url.path.startswith('/admin/') else '/' }}\"",
+   "new": "<a id=\"err-back-link\" href=\"#\"",
+   "tests": "J"
+  },
+  {
+   "id": "status-button-enabled-before-pick",
+   "file": "app/templates/admin/report.html",
+   "old": "    btn.disabled = true;\n",
+   "new": "",
+   "tests": "J"
+  },
+  {
+   "id": "dark-logo-alone-ignored",
+   "file": "app/services/branding.py",
+   "old": "own if own.get(\"logo_light\") or own.get(\"logo_dark\") else base",
+   "new": "own if own.get(\"logo_light\") else base",
+   "tests": "B"
+  },
+  {
+   "id": "demo-branding-saved",
+   "file": "app/api/branding.py",
+   "old": "    if settings.demo_mode:\n        return await _demo_refusal(request, db, current_user, org_id, form)",
+   "new": "    if False:\n        return await _demo_refusal(request, db, current_user, org_id, form)",
+   "tests": "B"
+  },
+  {
+   "id": "demo-branding-reset",
+   "file": "app/api/branding.py",
+   "old": "    if settings.demo_mode:\n        return await _demo_refusal(request, db, current_user, org_id)\n",
+   "new": "    if False:\n        return await _demo_refusal(request, db, current_user, org_id)\n",
+   "tests": "B"
+  },
+  {
+   "id": "ack-due-at-midnight",
+   "file": "app/services/deadlines.py",
+   "old": "    return _end_of_day(_aware(submitted_at) + timedelta(days=ACK_DAYS))",
+   "new": "    return _aware(submitted_at) + timedelta(days=ACK_DAYS)",
+   "tests": "D"
+  },
+  {
+   "id": "feedback-due-seven-days-first",
+   "file": "app/services/deadlines.py",
+   "old": "without_ack = _end_of_day(add_months(receipt, FEEDBACK_MONTHS) + timedelta(days=ACK_DAYS))",
+   "new": "without_ack = _end_of_day(add_months(receipt + timedelta(days=ACK_DAYS), FEEDBACK_MONTHS))",
+   "tests": "D"
+  },
+  {
+   "id": "feedback-due-at-ack-time",
+   "file": "app/services/deadlines.py",
+   "old": "min(_end_of_day(add_months(_aware(acknowledged_at), FEEDBACK_MONTHS)), without_ack)",
+   "new": "min(add_months(_aware(acknowledged_at), FEEDBACK_MONTHS), without_ack)",
+   "tests": "D"
+  },
+  {
+   "id": "sla-rate-seventh-day-late",
+   "file": "app/services/report.py",
+   "old": "ack_window = timedelta(days=deadlines.ACK_DAYS + 1)",
+   "new": "ack_window = timedelta(days=deadlines.ACK_DAYS)",
+   "tests": "D"
+  },
+  {
+   "id": "feedback-never-done",
+   "file": "app/services/deadlines.py",
+   "old": "    if feedback_sent_at is not None:\n",
+   "new": "    if False:\n",
+   "tests": "F"
+  },
+  {
+   "id": "receipt-counts-as-feedback",
+   "file": "app/services/report.py",
+   "old": "if report.acknowledged_at is not None and report.feedback_sent_at is None:",
+   "new": "if report.feedback_sent_at is None:",
+   "tests": "F"
+  },
+  {
+   "id": "feedback-is-the-latest-message",
+   "file": "app/services/report.py",
+   "old": "if report.acknowledged_at is not None and report.feedback_sent_at is None:",
+   "new": "if report.acknowledged_at is not None:",
+   "tests": "F"
+  },
+  {
+   "id": "reminded-after-feedback",
+   "file": "app/services/reminders.py",
+   "old": "if r.feedback_due_at is None or r.feedback_sent_at is not None:",
+   "new": "if r.feedback_due_at is None:",
+   "tests": "F"
+  },
+  {
+   "id": "pdf-late-feedback-reads-on-time",
+   "file": "app/services/pdf.py",
+   "old": "late = report.feedback_sent_at is not None and report.feedback_sent_at > feedback.due",
+   "new": "late = False",
+   "tests": "F"
+  },
+  {
+   "id": "dashboard-done-on-close",
+   "file": "app/templates/admin/dashboard.html",
+   "old": "feedback_status(report.feedback_due_at, report.feedback_sent_at, now)",
+   "new": "feedback_status(report.feedback_due_at, report.closed_at, now)",
+   "tests": "F"
+  },
+  {
+   "id": "case-page-done-on-close",
+   "file": "app/templates/admin/report.html",
+   "old": "feedback_status(report.feedback_due_at, report.feedback_sent_at, now)",
+   "new": "feedback_status(report.feedback_due_at, report.closed_at, now)",
+   "tests": "F"
+  },
+  {
+   "id": "status-page-done-on-close",
+   "file": "app/templates/status.html",
+   "old": "feedback_status(report.feedback_due_at, report.feedback_sent_at, now)",
+   "new": "feedback_status(report.feedback_due_at, report.closed_at, now)",
+   "tests": "F"
+  },
+  {
+   "id": "demo-seed-no-feedback",
+   "file": "app/services/demo_seed.py",
+   "old": "                reply_day + timedelta(hours=3)\n                if reply_day",
+   "new": "                None\n                if reply_day",
+   "tests": "F"
+  },
+  {
+   "id": "migration-020-counts-pre-ack-message",
+   "file": "migrations/versions/020_feedback_sent_at.py",
+   "old": " AND m.sent_at > r.acknowledged_at",
+   "new": "",
+   "tests": "M"
+  },
+  {
+   "id": "migration-020-due-at-ack-time",
+   "file": "migrations/versions/020_feedback_sent_at.py",
+   "old": "return min(_end_of_day(_add_months(_aware(acknowledged_at), 3)), without_ack)",
+   "new": "return min(_add_months(_aware(acknowledged_at), 3), without_ack)",
+   "tests": "M"
+  },
+  {
+   "id": "integrity-roots-app-only",
+   "file": "app/services/integrity.py",
+   "old": "SHIPPED_ROOTS = (APP_ROOT, REPO_ROOT / \"migrations\", REPO_ROOT / \"scripts\")",
+   "new": "SHIPPED_ROOTS = (APP_ROOT,)",
+   "tests": "I"
+  },
+  {
+   "id": "manifest-generator-app-only",
+   "file": "scripts/generate_integrity_manifest.py",
+   "old": "    index = build_file_index(SHIPPED_ROOTS)",
+   "new": "    index = build_file_index(APP_ROOT)",
+   "tests": "I"
+  },
+  {
+   "id": "verify-default-app-only",
+   "file": "app/services/integrity.py",
+   "old": "root: Path | Sequence[Path] = SHIPPED_ROOTS,",
+   "new": "root: Path | Sequence[Path] = APP_ROOT,",
+   "tests": "I"
+  },
+  {
+   "id": "manifest-carries-build-time",
+   "file": "scripts/generate_integrity_manifest.py",
+   "old": "        \"version\": _app_version(),",
+   "new": "        \"generated_at\": __import__(\"time\").time_ns(),\n        \"version\": _app_version(),",
+   "tests": "I"
+  },
+  {
+   "id": "integrity-cache-shared",
+   "file": "app/services/integrity.py",
+   "old": "    key = _CACHE_KEY + socket.gethostname()",
+   "new": "    key = _CACHE_KEY",
+   "tests": "I"
+  },
+  {
+   "id": "bcrypt-verify-on-loop",
+   "file": "app/api/auth.py",
+   "old": "    if not await asyncio.to_thread(\n        auth_service.verify_password, current_password, current_user.password_hash\n    ):",
+   "new": "    if not auth_service.verify_password(current_password, current_user.password_hash):",
+   "tests": "P"
+  },
+  {
+   "id": "bcrypt-hash-on-loop-account",
+   "file": "app/api/auth.py",
+   "old": "current_user.password_hash = await asyncio.to_thread(auth_service.hash_password, new_password)",
+   "new": "current_user.password_hash = auth_service.hash_password(new_password)",
+   "tests": "P"
+  },
+  {
+   "id": "bcrypt-hash-on-loop-totp-reset",
+   "file": "app/api/admin.py",
+   "old": "target.password_hash = await asyncio.to_thread(\n            auth_service.hash_password, temporary_password\n        )",
+   "new": "target.password_hash = auth_service.hash_password(temporary_password)",
+   "tests": "P"
+  },
+  {
+   "id": "bcrypt-hash-on-loop-wizard",
+   "file": "app/api/wizard.py",
+   "old": "password_hash=await asyncio.to_thread(hash_password, password),",
+   "new": "password_hash=hash_password(password),",
+   "tests": "P"
+  },
+  {
+   "id": "bcrypt-hash-on-loop-new-user",
+   "file": "app/services/users.py",
+   "old": "password_hash=await asyncio.to_thread(hash_password, password),",
+   "new": "password_hash=hash_password(password),",
+   "tests": "P"
+  },
+  {
+   "id": "nginx-buffers-bodies",
+   "file": "nginx/snippets/proxy-headers.conf",
+   "old": "proxy_request_buffering off;",
+   "new": "proxy_request_buffering on;",
+   "tests": "N"
+  },
+  {
+   "id": "nginx-conf-turns-buffering-on",
+   "file": "nginx/nginx.conf",
+   "old": "        ssl_session_tickets off;\n\n        include /etc/nginx/snippets/proxy-headers.conf;",
+   "new": "        ssl_session_tickets off;\n\n        include /etc/nginx/snippets/proxy-headers.conf;\n        proxy_request_buffering on;",
+   "tests": "N"
+  },
+  {
+   "id": "ci-nginx-temp-not-small",
+   "file": ".github/workflows/ci.yml",
+   "old": " --tmpfs /var/cache/nginx:size=1m",
+   "new": "",
+   "tests": "N"
+  },
+  {
+   "id": "upload-not-reserved",
+   "file": "app/middleware.py",
+   "old": "        self.reserved += size\n",
+   "new": "        self.reserved += 0\n",
+   "tests": "U"
+  },
+  {
+   "id": "upload-never-released",
+   "file": "app/middleware.py",
+   "old": "            self.reserved -= size",
+   "new": "            self.reserved -= 0",
+   "tests": "U"
+  },
+  {
+   "id": "upload-without-length-is-free",
+   "file": "app/middleware.py",
+   "old": "            size = _MAX_BODY\n",
+   "new": "            size = 0\n",
+   "tests": "U"
+  },
+  {
+   "id": "upload-length-not-clamped",
+   "file": "app/middleware.py",
+   "old": "size = min(int(headers.get(b\"content-length\", b\"\")), _MAX_BODY)",
+   "new": "size = int(headers.get(b\"content-length\", b\"\"))",
+   "tests": "U"
+  },
+  {
+   "id": "refused-upload-not-drained",
+   "file": "app/middleware.py",
+   "old": "            while (await receive()).get(\"more_body\"):\n                pass\n            await self.refuse",
+   "new": "            await self.refuse",
+   "tests": "U"
+  },
+  {
+   "id": "spool-capacity-whole-disk",
+   "file": "app/middleware.py",
+   "old": ".total * 9 // 10",
+   "new": ".total * 10",
+   "tests": "U"
+  },
+  {
+   "id": "busy-page-not-wired",
+   "file": "app/main.py",
+   "old": "    application.add_middleware(UploadBudgetMiddleware, refuse=_busy_page)\n",
+   "new": "",
+   "tests": "U"
+  },
+  {
+   "id": "busy-page-no-retry-after",
+   "file": "app/main.py",
+   "old": "    response.headers[\"Retry-After\"] = \"60\"\n",
+   "new": "",
+   "tests": "U"
+  },
+  {
+   "id": "upload-budget-outermost",
+   "file": "app/main.py",
+   "old": "    application.add_middleware(UploadBudgetMiddleware, refuse=_busy_page)\n    application.add_middleware(CSRFMiddleware)\n    application.add_middleware(SecurityMiddleware)\n",
+   "new": "    application.add_middleware(CSRFMiddleware)\n    application.add_middleware(SecurityMiddleware)\n    application.add_middleware(UploadBudgetMiddleware, refuse=_busy_page)\n",
+   "tests": "U"
+  },
+  {
+   "id": "retention-de-counts-from-report",
+   "file": "app/locales/de.json",
+   "old": ", deren Zeitpunkt <code>closed_at</code> älter als <strong>{days} Tage</strong> ist,",
+   "new": " älter als <strong>{days} Tage</strong>",
+   "tests": "O"
+  },
+  {
+   "id": "weekly-scan-latest-only",
+   "file": ".github/workflows/security.yml",
+   "old": "        tag: [latest, edge]",
+   "new": "        tag: [latest]",
+   "tests": "C"
+  },
+  {
+   "id": "weekly-scan-amd64-only",
+   "file": ".github/workflows/security.yml",
+   "old": "        platform: [linux/amd64, linux/arm64]",
+   "new": "        platform: [linux/amd64]",
+   "tests": "C"
+  },
+  {
+   "id": "scan-recipe-old-grype",
+   "file": "docs-tech/image-scan.md",
+   "old": "# v0.121.0, as in the workflows",
+   "new": "# v0.120.1, as in the workflows",
+   "tests": "C"
+  }
+ ]
+}
