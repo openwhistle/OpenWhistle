@@ -7,6 +7,23 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **Admins hear when their version has a published security advisory.** When the running version falls in
+  an advisory's range, `/admin/system` lists each advisory with its severity, GHSA/CVE link and the release
+  that fixes it, and the dashboard shows a banner to the admins who can update the instance. The match is
+  made when the page is rendered, so the notice is gone right after an upgrade.
+
+### Changed
+
+- **The update check is now on by default, and it no longer contacts GitHub.** An upgraded installation
+  makes an outbound request it did not make before: once a day,
+  `GET https://openwhistle.net/security.json` (latest release and security advisories; format in
+  `docs-tech/security-feed.md`). It carries no instance or report data, and the User-Agent is `OpenWhistle`
+  without a version; the site sees the server's IP address and logs nothing. Set
+  `UPDATE_CHECK_ENABLED=false` to keep the server silent (air-gapped installs). The System page says what the
+  check sends, whether it is on or off.
+
 ## [2.4.2] — 2026-11-04
 
 ### Security

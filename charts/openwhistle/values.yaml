@@ -183,6 +183,8 @@ config:
 # Any other (non-secret) setting from the configuration table, as NAME: value,
 # e.g. SECURE_COOKIES, ACCESS_TOKEN_EXPIRE_MINUTES, UPDATE_CHECK_ENABLED or the
 # lockout settings. Added to the ConfigMap; never repeat a key set above.
+# UPDATE_CHECK_ENABLED is on by default (a daily GET of
+# openwhistle.net/security.json, no instance data); "false" turns it off.
 extraEnv: {}
 
 # Secrets — these must be provided; they are not defaulted.

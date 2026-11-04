@@ -30,6 +30,7 @@ import pytest
 from app.models.report import ReportStatus
 from app.models.user import AdminRole
 from app.services.audit import ALL_ACTIONS
+from app.services.version_check import _SEVERITIES
 
 _LOCALES = Path(__file__).resolve().parent.parent / "app" / "locales"
 _LANGS = ("en", "de", "fr", "es", "pt-br")
@@ -47,6 +48,8 @@ _DYNAMIC_KEY_PATTERNS: tuple[tuple[str, tuple[str, ...], str], ...] = (
         tuple(s.value for s in ReportStatus if s.value not in ("in_review", "pending_feedback")),
         "status.html (progress description)",
     ),
+    ("admin.system.advisories.severity.", tuple(_SEVERITIES), "admin/system.html"),
+    ("admin.advisory_banner.", ("one", "many"), "admin/dashboard.html"),
 )
 
 

@@ -566,7 +566,7 @@ async def test_the_update_check_does_not_tell_github_the_version() -> None:
     redis.get = AsyncMock(return_value=None)
     client = _mock_httpx(304)
     with patch("httpx.AsyncClient", return_value=client):
-        await vc.fetch_latest_release(redis)
+        await vc.fetch_feed(redis)
     headers = client.get.await_args.kwargs["headers"]
     assert settings.app_version not in " ".join(headers.values())
 

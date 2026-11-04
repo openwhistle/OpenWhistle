@@ -788,6 +788,27 @@ Each guard was watched failing with the fix undone, and broken again by the muta
 | Every language counts retention from `closed_at` | `test_every_language_says_retention_counts_from_closing` |
 | `:latest` and `:edge`, amd64 and arm64, are rescanned weekly; the local recipe pins the workflows' grype | `test_every_published_tag_and_platform_is_scanned_every_week`, `test_the_local_scan_recipe_uses_the_workflows_grype` (`tests/test_image_scan.py`) |
 
+## Security advisory notice (v2.5.0)
+
+The update check (`UPDATE_CHECK_ENABLED`, on by default) contacts one host: a daily GET of
+`https://openwhistle.net/security.json`, no instance data, User-Agent `OpenWhistle` without a version. Format and
+validation: [`security-feed.md`](security-feed.md). Mutations: `docs-tech/mutations/v2.5.0-advisory-notice.json`.
+Tests: `tests/test_v250_advisory_notice.py`.
+
+| Guard | Mutation | Test that fires |
+| --- | --- | --- |
+| `<` and `>=` bounds hold exactly | `range-lt-inclusive`, `range-ge-exclusive` | `test_version_in_range` |
+| A garbled constraint matches nothing (no false alarm) | `range-garbage-matches` | `test_version_in_range` |
+| `2.4` compares as `2.4.0` | `range-no-padding` | `test_version_in_range` |
+| A feed that is not schema 1 changes nothing | `feed-any-schema` | `test_a_feed_that_is_not_schema_1_changes_nothing` |
+| Only `https://` URLs are rendered as links | `feed-any-link` | `test_a_plain_http_link_is_not_kept` |
+| An advisory with a garbled range is dropped | `feed-garbled-range` | `test_an_advisory_with_a_garbled_required_field_is_dropped` |
+| At most 100 advisories, summaries cut at 300 characters | `feed-no-cap`, `feed-no-summary-cap` | `test_the_list_is_capped`, `test_optional_fields_that_do_not_validate_are_blanked` |
+| Advisories are matched to the running version when read, so an upgrade clears them | `status-unfiltered` | `test_status_lists_only_the_advisories_of_the_running_version` |
+| With the check off, no advisory is named | `status-while-off` | `test_status_names_no_advisory_while_the_check_is_off` |
+| Only who may run the instance sees the dashboard banner | `banner-for-everyone` | `test_a_case_manager_sees_no_advisory_banner` |
+| The check is on by default | `check-off-by-default` | `test_the_check_is_on_by_default` |
+
 ## Repository and release
 
 | Guard | Test |

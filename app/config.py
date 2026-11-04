@@ -245,11 +245,12 @@ class Settings(BaseSettings):
     multi_tenancy_enabled: bool = False
     default_org_slug: str = "default"
 
-    # Update check — opt-in check against the GitHub Releases API. Default OFF to
-    # preserve the "no external calls" posture and support air-gapped installs.
-    # When enabled, a daily background job caches the latest release in Redis and
-    # the admin System page surfaces it; no instance data is ever sent to GitHub.
-    update_check_enabled: bool = False
+    # Update check — a daily GET of https://openwhistle.net/security.json (latest
+    # release and security advisories), cached in Redis; the System page and the
+    # dashboard surface it. On by default since 2.5.0 so admins hear about
+    # vulnerabilities; false for air-gapped installs. The site sees the server's
+    # IP and logs nothing; no instance data is ever sent.
+    update_check_enabled: bool = True
 
     # Installation count — one GET a day to telemetry.wdkro.de with a random id
     # and the version, only if an admin agreed (setup wizard or System page).
