@@ -13,7 +13,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - **A crafted PDF attachment could stall or exhaust the app (pypdf, 1.4.0–2.4.1).** Every uploaded PDF
   is parsed with pypdf to strip its metadata, and anyone can upload one without an account. pypdf
-  6.21.2 and earlier loop forever or allocate without bound on six malformed structures. pypdf is now
+  6.21.2 and earlier loop forever or allocate without bound on seven malformed structures. pypdf is now
   6.21.4.
 - **A malicious LDAP server could make the app spin on its replies (pyasn1, ≤ 2.4.1).** python-ldap
   decodes responses with pyasn1, which before 0.6.5 spends quadratic CPU on four nested or
@@ -28,6 +28,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   | CVE-2026-119206 | pypdf | runtime, page labels | 6.21.3 | 1.4.0–2.4.1 |
   | CVE-2026-119207 | pypdf | memory, strict-mode exceptions | 6.21.3 | 1.4.0–2.4.1 |
   | CVE-2026-119208 | pypdf | runtime/memory, encrypted PDFs | 6.21.3 | 1.4.0–2.4.1 |
+  | CVE-2026-119209 | pypdf | memory, cross-reference streams | 6.21.3 | 1.4.0–2.4.1 |
   | CVE-2026-119194 | pyasn1 | quadratic CPU, BER/CER/DER containers | 0.6.5 | ≤ 2.4.1 (LDAP) |
   | CVE-2026-119195 | pyasn1 | quadratic CPU, constructed strings | 0.6.5 | ≤ 2.4.1 (LDAP) |
   | CVE-2026-119196 | pyasn1 | quadratic CPU, constructed BIT STRING | 0.6.5 | ≤ 2.4.1 (LDAP) |
