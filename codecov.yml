@@ -1,0 +1,4 @@
+# Coverage stays visible as the codecov status checks on each pull request.
+# No comment on top: it doubled the notification mail for every pull request,
+# Renovate's included (2026-11-04). Everything else is codecov's default.
+comment: false

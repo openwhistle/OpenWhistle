@@ -22,7 +22,7 @@
   "reviewers": [
     "jp1337"
   ],
-  "rebaseWhen": "behind-base-branch",
+  "rebaseWhen": "conflicted",
   "lockFileMaintenance": {
     "enabled": true,
     "schedule": [
