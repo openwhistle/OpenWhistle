@@ -1,0 +1,23 @@
+{
+ "test_groups": {
+  "B": [
+   "tests/test_branding_admin.py::test_the_demo_says_it_does_not_save_before_the_first_try"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "demo-note-not-rendered",
+   "file": "app/templates/admin/branding.html",
+   "old": "    {% elif demo %}<div class=\"alert alert-info\" role=\"note\">",
+   "new": "    {% elif False %}<div class=\"alert alert-info\" role=\"note\">",
+   "tests": "B"
+  },
+  {
+   "id": "demo-note-always-on",
+   "file": "app/api/branding.py",
+   "old": "            \"demo\": settings.demo_mode,",
+   "new": "            \"demo\": True,",
+   "tests": "B"
+  }
+ ]
+}

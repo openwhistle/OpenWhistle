@@ -7,6 +7,8 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.4.2] — 2026-11-04
+
 ### Security
 
 - **A crafted PDF attachment could stall or exhaust the app (pypdf, 1.4.0–2.4.1).** Every uploaded PDF
@@ -92,6 +94,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - German and French said only that closed reports "older than {days} days" are deleted; the count runs
   from closing.
 - `docs-tech/image-scan.md` pinned the grype version the workflows had left.
+- The demo's branding page said that it does not save only after a save was refused; it says so up front.
 
 ## [2.4.1] — 2026-10-28
 
@@ -2101,7 +2104,8 @@ Remaining lower-severity findings are tracked in GitHub issues #42–#46.
 - **Rate limiting by session token** (not IP) to maintain full anonymity
 - **alembic upgrade head** on every startup to guarantee migration consistency
 
-[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.4.1...HEAD
+[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.4.2...HEAD
+[2.4.2]: https://github.com/openwhistle/OpenWhistle/compare/v2.4.1...v2.4.2
 [2.4.1]: https://github.com/openwhistle/OpenWhistle/compare/v2.4.0...v2.4.1
 [2.4.0]: https://github.com/openwhistle/OpenWhistle/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/openwhistle/OpenWhistle/compare/v2.2.1...v2.3.0
