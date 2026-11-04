@@ -1101,6 +1101,8 @@ input[type="file"].form-control::file-selector-button {
 .alert-success .alert-title { color: var(--success); }
 .alert-warning .alert-title { color: var(--warning); }
 .alert-info .alert-title { color: var(--ink); }
+/* One entry per advisory on /admin/system: each needs its own space to be read as one. */
+.alert-list > li + li { margin-top: var(--space-3); }
 .telemetry-ask-actions {
   display: flex;
   flex-wrap: wrap;

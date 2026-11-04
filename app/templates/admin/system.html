@@ -49,7 +49,7 @@
     <div class="alert alert-error" id="security-advisories" role="alert">
         <div class="alert-title">{{ t('admin.system.advisories.title', version=update.current) }}</div>
         {% if update.fixed_in %}<p>{{ t('admin.system.advisories.update_to', fixed=update.fixed_in) }}</p>{% endif %}
-        <ul>
+        <ul class="alert-list">
             {% for a in update.advisories %}
             <li>
                 <strong>{{ a.summary }}</strong>
