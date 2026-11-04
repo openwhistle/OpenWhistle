@@ -13,3 +13,13 @@ ignore:
       False positive: grype orders 3.15.0 before the fix release 3.15.0a6. 3.15.0 has the fix:
       poplib.POP3._putcmd raises ValueError on control characters (checked in the
       python:3.15-alpine image this Dockerfile pins).
+  - vulnerability: CVE-2026-103995
+    package:
+      name: python
+      version: 3.15.2
+      type: binary
+    reason: >-
+      Fixed only in 3.16.0 (pre-release); no 3.15 release carries the http.client
+      chunk-size/Content-Length fix yet (gh-150751, not on the 3.15 branch on 2026-11-04).
+      The app's own HTTP calls use httpx (h11 parser); http.client is reached only through
+      urllib3/boto3 talking to the operator's configured S3 endpoint. Expires with 3.15.3.

@@ -9,6 +9,31 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Security
 
+- **A crafted PDF attachment could stall or exhaust the app (pypdf, 1.4.0–2.4.1).** Every uploaded PDF
+  is parsed with pypdf to strip its metadata, and anyone can upload one without an account. pypdf
+  6.21.2 and earlier loop forever or allocate without bound on six malformed structures. pypdf is now
+  6.21.4.
+- **A malicious LDAP server could make the app spin on its replies (pyasn1, ≤ 2.4.1).** python-ldap
+  decodes responses with pyasn1, which before 0.6.5 spends quadratic CPU on four nested or
+  indefinite-length encodings. Only installations with LDAP sign-in that talk to a hostile or
+  compromised directory are exposed. pyasn1 is now 0.6.5.
+
+  | CVE | Package | Effect | Fixed in package | Affected OpenWhistle |
+  | --- | --- | --- | --- | --- |
+  | CVE-2026-119203 | pypdf | infinite loop, xref trailer search | 6.21.4 | 1.4.0–2.4.1 |
+  | CVE-2026-119204 | pypdf | memory, page tree | 6.21.4 | 1.4.0–2.4.1 |
+  | CVE-2026-119205 | pypdf | infinite loop, cloning dictionaries | 6.21.4 | 1.4.0–2.4.1 |
+  | CVE-2026-119206 | pypdf | runtime, page labels | 6.21.3 | 1.4.0–2.4.1 |
+  | CVE-2026-119207 | pypdf | memory, strict-mode exceptions | 6.21.3 | 1.4.0–2.4.1 |
+  | CVE-2026-119208 | pypdf | runtime/memory, encrypted PDFs | 6.21.3 | 1.4.0–2.4.1 |
+  | CVE-2026-119194 | pyasn1 | quadratic CPU, BER/CER/DER containers | 0.6.5 | ≤ 2.4.1 (LDAP) |
+  | CVE-2026-119195 | pyasn1 | quadratic CPU, constructed strings | 0.6.5 | ≤ 2.4.1 (LDAP) |
+  | CVE-2026-119196 | pyasn1 | quadratic CPU, constructed BIT STRING | 0.6.5 | ≤ 2.4.1 (LDAP) |
+  | CVE-2026-119197 | pyasn1 | quadratic CPU, binary REAL | 0.6.5 | ≤ 2.4.1 (LDAP) |
+
+  Fixed in OpenWhistle 2.4.2. The image scan also reports CVE-2026-103995 in Python 3.15.2's
+  `http.client`; no 3.15 release fixes it yet, and the app reaches `http.client` only through boto3 and
+  the operator's own S3 endpoint (`.grype.yaml` has the reasoning, the entry expires with 3.15.3).
 - **A stolen admin session could outlive the password change meant to end it.** The sweep that ends
   every other session read a page of keys and then fetched and deleted them one by one; a session
   refresh that stored its new session and deleted the old one in between left the sweep nothing to

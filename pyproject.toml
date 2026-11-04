@@ -45,7 +45,7 @@ dependencies = [
 
     # Attachment metadata stripping: PDF info/XMP (pure Python). Images use
     # Pillow, already present via qrcode[pil].
-    "pypdf>=6.21.2",
+    "pypdf>=6.21.4",
     "pillow>=13.0.0",
 
     # Structured logging
@@ -77,6 +77,8 @@ perf = [
 # OpenLDAP client: needs libldap2-dev libsasl2-dev (Debian) to install.
 ldap = [
     "python-ldap>=3.4.8",
+    # python-ldap's ASN.1 decoder; 0.6.5 fixes CVE-2026-119194..119197.
+    "pyasn1>=0.6.5",
 ]
 # S3-compatible object storage (optional backend for attachments)
 s3 = [
