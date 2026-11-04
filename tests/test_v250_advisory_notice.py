@@ -52,6 +52,8 @@ from tests.test_version_check import _mock_httpx
         ("2.0.0", ">= 1.0.0,", False),
         ("2.0.0", "~> 2.0", False),
         ("2.0.0", "< 3.0.0-beta", False),
+        ("2.0.0", "= 2.0.0" + " " * 200, False),  # longer than a feed range may be
+        ("2.0.0", " " * 5000 + "x", False),  # CodeQL py/polynomial-redos input: answered at once
     ],
 )
 def test_version_in_range(version: str, vulnerable_range: str, expected: bool) -> None:

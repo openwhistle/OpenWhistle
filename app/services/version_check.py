@@ -35,6 +35,7 @@ _SEVERITIES = frozenset({"low", "medium", "high", "critical"})
 _MAX_ADVISORIES = 100
 _MAX_SUMMARY = 300
 _MAX_CVES = 10
+_MAX_RANGE = 200
 
 
 def parse_version(v: str) -> tuple[int, ...]:
@@ -63,20 +64,27 @@ def compare_versions(current: str, latest: str) -> str:
 
 
 _VERSION = re.compile(r"[vV]?\d{1,6}(?:\.\d{1,6}){0,3}")
-_CONSTRAINT = re.compile(r"(<=|>=|<|>|=)?\s*([vV]?\d{1,6}(?:\.\d{1,6}){0,3})")
 _OPS = {"<=": operator.le, "<": operator.lt, ">=": operator.ge, ">": operator.gt, "=": operator.eq}
 _ADVISORY_ID = re.compile(r"[A-Za-z0-9-]{1,64}")
 _CVE_ID = re.compile(r"CVE-\d{4}-\d{4,7}")
 
 
-def _constraints(vulnerable_range: str) -> list[re.Match[str]] | None:
-    """Each comma-separated constraint parsed; None when any of them does not parse."""
+def _constraints(vulnerable_range: str) -> list[tuple[str, str]] | None:
+    """Each comma-separated constraint as (operator, version); None when any does not parse.
+
+    No regex around the whitespace: the range comes from the feed, and ``\\s*`` beside an
+    optional operator backtracks polynomially (CodeQL py/polynomial-redos)."""
+    if len(vulnerable_range) > _MAX_RANGE:
+        return None
     parsed = []
     for raw in vulnerable_range.split(","):
-        m = _CONSTRAINT.fullmatch(raw.strip())
-        if m is None:
+        rest = raw.strip()
+        op = next((o for o in ("<=", ">=", "<", ">", "=") if rest.startswith(o)), "=")
+        if rest.startswith(op):
+            rest = rest[len(op) :].lstrip()
+        if not _VERSION.fullmatch(rest):
             return None
-        parsed.append(m)
+        parsed.append((op, rest))
     return parsed
 
 
@@ -91,12 +99,12 @@ def version_in_range(version: str, vulnerable_range: str) -> bool:
     if constraints is None:
         return False
     current = parse_version(version)
-    for m in constraints:
-        bound = parse_version(m.group(2))
+    for op, raw_bound in constraints:
+        bound = parse_version(raw_bound)
         width = max(len(current), len(bound))  # 2.4 == 2.4.0
         cur = current + (0,) * (width - len(current))
         bound += (0,) * (width - len(bound))
-        if not _OPS[m.group(1) or "="](cur, bound):
+        if not _OPS[op](cur, bound):
             return False
     return True
 
@@ -135,7 +143,6 @@ def _advisory(raw: Any) -> dict[str, Any] | None:
         or not _ADVISORY_ID.fullmatch(adv_id)
         or not summary
         or not isinstance(affected, str)
-        or len(affected) > 200
         or _constraints(affected) is None
         or not isinstance(fixed, str)
         or (fixed and not _VERSION.fullmatch(fixed))

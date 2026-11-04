@@ -41,8 +41,15 @@
   {
    "id": "range-garbage-matches",
    "file": "app/services/version_check.py",
-   "old": "        if m is None:\n            return None",
-   "new": "        if m is None:\n            continue",
+   "old": "        if not _VERSION.fullmatch(rest):\n            return None",
+   "new": "        if not _VERSION.fullmatch(rest):\n            continue",
+   "tests": "R"
+  },
+  {
+   "id": "range-no-length-cap",
+   "file": "app/services/version_check.py",
+   "old": "    if len(vulnerable_range) > _MAX_RANGE:\n        return None",
+   "new": "    if False:\n        return None",
    "tests": "R"
   },
   {
