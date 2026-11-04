@@ -1,0 +1,23 @@
+{
+ "test_groups": {
+  "D": [
+   "tests/test_v250_advisory_notice.py::test_the_configuration_table_shows_the_models_defaults"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "default-typed-by-hand",
+   "file": "app/templates/admin/system.html",
+   "old": "<td><code>{{ defaults.update_check_enabled | string | lower }}</code></td>",
+   "new": "<td><code>false</code></td>",
+   "tests": "D"
+  },
+  {
+   "id": "default-is-current",
+   "file": "app/api/admin.py",
+   "old": "                name: Settings.model_fields[name].default\n",
+   "new": "                name: getattr(settings, name)\n",
+   "tests": "D"
+  }
+ ]
+}

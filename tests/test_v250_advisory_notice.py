@@ -407,3 +407,21 @@ async def test_an_organisations_admin_sees_no_advisory_banner_under_multi_tenanc
     monkeypatch.setattr(settings, "multi_tenancy_enabled", True)
     admin = await _totp_user(db_session, AdminRole.admin)
     assert BANNER not in await _get(acting_as, admin, "/admin/dashboard")
+
+
+@pytest.mark.asyncio
+async def test_the_configuration_table_shows_the_models_defaults(
+    acting_as, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """2.5.0 turned the check on by default; the table, typed by hand, still said false."""
+    import re
+
+    monkeypatch.setattr(settings, "update_check_enabled", False)  # current differs from default
+    admin = await _totp_user(db_session, AdminRole.admin)
+    page = await _get(acting_as, admin, "/admin/system")
+    row = re.search(r"<code>UPDATE_CHECK_ENABLED</code></td>\s*<td><code>(\w+)</code>", page)
+    assert row is not None
+    assert (
+        row.group(1) == str(Settings.model_fields["update_check_enabled"].default).lower() == "true"
+    )
+    assert re.search(r"<code>TELEMETRY_ENABLED</code></td>\s*<td><code>\(empty\)</code>", page)

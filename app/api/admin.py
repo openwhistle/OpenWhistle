@@ -19,7 +19,7 @@ from app.api.deps import (
     require_superadmin,
     require_tenants,
 )
-from app.config import settings
+from app.config import Settings, settings
 from app.csrf import validate_csrf, validate_csrf_header
 from app.database import get_db
 from app.forms import Multiline, SortOrder, Text32, Text64, Text128, Text512, Text5000
@@ -1944,6 +1944,12 @@ async def system_page(
         {
             "user": current_user,
             "update": update,
+            # From the model, not typed into the template: 2.5.0 turned the check on and the
+            # page went on saying its default was false.
+            "defaults": {
+                name: Settings.model_fields[name].default
+                for name in ("update_check_enabled", "telemetry_enabled")
+            },
             "integrity": integrity,
             "telemetry": {
                 "enabled": telemetry.is_enabled(state),

@@ -137,7 +137,7 @@ class Settings(BaseSettings):
 
     # Application
     app_name: str = "OpenWhistle"
-    app_version: str = "2.5.0"
+    app_version: str = "2.5.1"
 
     # Logging
     log_level: str = "INFO"
@@ -247,7 +247,7 @@ class Settings(BaseSettings):
 
     # Update check — a daily GET of https://openwhistle.net/security.json (latest
     # release and security advisories), cached in Redis; the System page and the
-    # dashboard surface it. On by default since 2.5.0 so admins hear about
+    # dashboard surface it. On by default since 2.5.1 so admins hear about
     # vulnerabilities; false for air-gapped installs. The site sees the server's
     # IP and logs nothing; no instance data is ever sent.
     update_check_enabled: bool = True
