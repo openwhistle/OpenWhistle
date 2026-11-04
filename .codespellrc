@@ -8,4 +8,5 @@ check-hidden = false
 # ist — German text quoted in CHANGELOG.md and tests/test_v150_ux.py
 # ALPH — WebP chunk name (alpha channel), app/services/attachment.py
 # ans — French "years" in a unit list, tests/test_release_check_240.py
-ignore-words-list = ist,alph,covert,Tage,Titel,garantie,ans
+# als — German text quoted in docs-tech/mutations/v2.4.2.json (de.json mutation)
+ignore-words-list = ist,alph,covert,Tage,Titel,garantie,ans,als

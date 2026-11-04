@@ -763,7 +763,8 @@ bundled config: no `client:` line.
 
 ## Bug bounty after v2.4.1
 
-Each guard was watched failing with the fix undone. Tests: `tests/test_v242_bug_bounty.py` unless named.
+Each guard was watched failing with the fix undone, and broken again by the mutation audit
+(`docs-tech/mutations/v2.4.2.json`). Tests: `tests/test_v242_bug_bounty.py` unless named.
 
 | Guard | Test that fires |
 | --- | --- |
@@ -771,16 +772,19 @@ Each guard was watched failing with the fix undone. Tests: `tests/test_v242_bug_
 | The lockout tests drive `claim_admin_attempt`, the path sign-in uses; the dead pair they tested is gone | `test_the_lock_lasts_lockout_minutes_from_the_last_failure` (`tests/test_v210_bug_bounty.py`) |
 | Setup tokens are counted before they are checked: a burst checks no more than the limit | `test_a_burst_of_wrong_setup_tokens_checks_no_more_than_the_limit` |
 | §17 deadlines end with their last day; three months come before the seven days | `test_an_acknowledgement_on_the_seventh_day_is_on_time`, `test_the_feedback_deadline_ends_with_its_last_day`, `test_the_sla_rate_counts_an_acknowledgement_on_the_seventh_day` |
-| Feedback is the office's first message after the acknowledgement, not closing; it ends the reminders (migration 020) | `test_feedback_counts_as_given_once_the_office_writes_not_once_the_case_closes`, `test_a_case_with_feedback_given_is_not_reminded`, `test_migration_020_backfills_feedback_and_moves_deadlines_to_their_last_day` |
+| Feedback is the office's first message after the acknowledgement, not closing; it ends the reminders (migration 020) | `test_feedback_counts_as_given_once_the_office_writes_not_once_the_case_closes`, `test_a_case_with_feedback_given_is_not_reminded`, `test_migration_020_backfills_feedback_and_moves_deadlines_to_their_last_day`, `test_the_demo_records_the_feedback_its_messages_give` |
+| Every page and the PDF follow `feedback_sent_at`: the dashboard, the case page and the status page say "Delivered" on an answered open case; feedback after the deadline is "Delivered (late)" | `test_every_page_shows_feedback_given_on_a_case_still_open`, `test_the_pdf_calls_feedback_after_its_deadline_late` |
 | Automatic deletion forgets the case in Redis as the four-eyes deletion does | `test_retention_leaves_no_reminder_mark_or_queue_entry_behind` |
-| nginx streams request bodies: none on its disk, no `[crit] … client:` on a full one (CI replays it on the shipped image) | `test_every_bundled_nginx_streams_request_bodies_to_the_app`, CI step "An upload is streamed" |
-| The integrity manifest covers `migrations/` and `scripts/`, has no build time, is cached per replica | `test_the_integrity_manifest_covers_the_migrations_and_scripts_that_run`, `test_the_manifest_hash_is_the_same_for_the_same_files`, `test_each_replica_caches_its_own_integrity_result` |
+| nginx streams request bodies: none on its disk, no `[crit] … client:` on a full one (CI replays it on the shipped image) | `test_every_bundled_nginx_streams_request_bodies_to_the_app`, CI step "An upload is streamed" (its 1 MB temp dir: `test_ci_replays_an_upload_against_nginx_with_a_full_disk`) |
+| The integrity manifest covers `migrations/` and `scripts/`, has no build time, is cached per replica | `test_the_integrity_manifest_covers_the_migrations_and_scripts_that_run`, `test_the_manifest_hash_is_the_same_for_the_same_files`, `test_each_replica_caches_its_own_integrity_result`, `test_the_built_manifest_lists_and_verifies_what_runs` |
 | The demo previews branding but does not save it | `test_the_demo_branding_is_shown_but_not_saved` |
 | An organisation's dark logo alone is shown | `test_an_organisations_dark_logo_alone_is_shown` |
 | Without JavaScript: the success page's link on and an error page's link back work | `test_the_success_pages_link_on_is_not_rendered_disabled`, `test_the_error_pages_way_back_is_a_real_link` |
+| The case page's status button stays disabled until a status is picked | `test_the_status_button_waits_for_a_status` |
 | No script scrolls smoothly past reduced motion | `test_no_script_scrolls_smoothly_past_reduced_motion` |
 | A multipart request reserves its size against `/tmp` first; one that does not fit gets the 503 busy page | `test_an_upload_the_spool_cannot_hold_gets_a_busy_page_not_a_broken_parse`, `test_the_app_answers_a_full_spool_with_its_own_busy_page` |
-| bcrypt never runs on the event loop | `test_a_password_change_hashes_off_the_event_loop` |
+| The budget counts a request without Content-Length at 55 MB and clamps a larger one to it, drains a refused body before the busy page, holds 90 % of `/tmp`, and refuses inside `SecurityMiddleware` | `test_the_upload_budget_counts_what_a_request_may_send`, `test_the_spool_may_fill_nine_tenths_of_tmp`, `test_the_app_answers_a_full_spool_with_its_own_busy_page` |
+| bcrypt never runs on the event loop: no `async def` calls it, only `asyncio.to_thread` (the demo seed runs before serving) | `test_a_password_change_hashes_off_the_event_loop`, `test_no_coroutine_runs_bcrypt_on_the_event_loop` |
 | Every language counts retention from `closed_at` | `test_every_language_says_retention_counts_from_closing` |
 | `:latest` and `:edge`, amd64 and arm64, are rescanned weekly; the local recipe pins the workflows' grype | `test_every_published_tag_and_platform_is_scanned_every_week`, `test_the_local_scan_recipe_uses_the_workflows_grype` (`tests/test_image_scan.py`) |
 

@@ -321,9 +321,14 @@ async def test_feedback_counts_as_given_once_the_office_writes_not_once_the_case
     from app.services import report as report_service
 
     answered, _ = await report_service.create_report(db_session, "financial_fraud", "Answered.")
+    await report_service.add_admin_message(db_session, answered, "Received, thank you.")
+    assert answered.feedback_sent_at is None  # written before the acknowledgement
     await report_service.acknowledge_report(db_session, answered)
-    assert answered.feedback_sent_at is None  # the receipt message is not feedback
+    assert answered.feedback_sent_at is None
     await report_service.add_admin_message(db_session, answered, "We are looking into it.")
+    first = answered.feedback_sent_at
+    await report_service.add_admin_message(db_session, answered, "Still on it.")
+    assert first is not None and answered.feedback_sent_at == first  # the first one counts
     later = datetime.now(UTC) + timedelta(days=400)
     assert answered.status == ReportStatus.in_review
     state = deadlines.feedback_status(answered.feedback_due_at, answered.feedback_sent_at, later)
@@ -635,3 +640,226 @@ async def test_the_app_answers_a_full_spool_with_its_own_busy_page(
     assert resp.status_code == 503
     assert resp.headers["retry-after"] == "60"
     assert "send the form again in a minute" in resp.text
+    # Refused inside SecurityMiddleware: the busy page gets the headers every page gets.
+    assert "content-security-policy" in resp.headers
+
+
+# ── Found by the mutation audit of 2.4.2: guards no test above noticed ──────
+
+
+def test_the_status_button_waits_for_a_status() -> None:
+    """The placeholder option is disabled, so a click before a status was picked sent no
+    ``new_status`` and ended on the 422 page. The script disables the button until one is
+    picked; the audit removed that line and every test stayed green."""
+    from pathlib import Path
+
+    html = (Path(__file__).parents[1] / "app/templates/admin/report.html").read_text()
+    start = html.index("getElementById('status-btn')")
+    assert "btn.disabled = true;" in html[start : html.index("sel.addEventListener", start)]
+
+
+@pytest.mark.asyncio
+async def test_the_pdf_calls_feedback_after_its_deadline_late(db_session) -> None:  # type: ignore[no-untyped-def]
+    from datetime import timedelta
+
+    from app.services import report as report_service
+    from app.services.pdf import generate_report_pdf
+    from tests.test_coverage_gaps import _pdf_text
+
+    report, _ = await report_service.create_report(db_session, "financial_fraud", "Late answer.")
+    await report_service.acknowledge_report(db_session, report)
+    await report_service.add_admin_message(db_session, report, "Our feedback, late.")
+    report.feedback_sent_at = report.feedback_due_at + timedelta(days=2)
+    await db_session.commit()
+    loaded = await report_service.get_report_by_id(db_session, report.id)
+    assert "OK Delivered (late)" in _pdf_text(generate_report_pdf(loaded))
+
+
+@pytest.mark.asyncio
+async def test_every_page_shows_feedback_given_on_a_case_still_open(acting_as, db_session) -> None:  # type: ignore[no-untyped-def]
+    """The dashboard, the case page and the reporter's status page each decided "Delivered"
+    by the case being closed. Answered and still open, each must say so."""
+    from app.i18n import make_translator
+    from app.models.user import AdminRole
+    from app.services import report as report_service
+    from tests.test_v150_auth import _status_login
+    from tests.test_v210_bug_bounty import _totp_user
+
+    t = make_translator("en")
+    client, act = acting_as
+    report, pin = await report_service.create_report(db_session, "financial_fraud", "Still open.")
+    await report_service.acknowledge_report(db_session, report)
+    await report_service.add_admin_message(db_session, report, "We are on it.")
+    act(await _totp_user(db_session, AdminRole.admin))
+
+    dash = (await client.post("/admin/dashboard", data={"q": report.case_number})).text
+    row = dash[dash.index(f'<span class="mono dash-nowrap">{report.case_number}') :]
+    cell = row.split(f'data-label="{t("admin.table.sla3m")}"')[1].split("</td>")[0]
+    assert t("admin.sla.done") in cell
+    case = (await client.get(f"/admin/reports/{report.id}")).text
+    detail = case.split(t("admin.report.detail.sla3m"))[1][:600]
+    assert f"({t('admin.sla.done')})" in detail
+
+    await _status_login(client, report.case_number, pin)
+    status = (await client.get("/status")).text
+    feedback = status.split(t("status.deadlines.feedback"))[1][:600]
+    assert t("status.deadlines.feedback_done") in feedback
+
+
+@pytest.mark.asyncio
+async def test_the_demo_records_the_feedback_its_messages_give(db_session) -> None:  # type: ignore[no-untyped-def]
+    """The demo's cases carry ``feedback_sent_at`` as migration 020 would set it: the first
+    message of the office after the acknowledgement. Without it, every answered demo case
+    read "Overdue"."""
+    from sqlalchemy import func, select
+
+    from app.models.report import Report, ReportMessage
+    from app.services.demo_seed import DEMO_REPORTS, _seed
+
+    await _seed(db_session)
+    numbers = [d["case_number"] for d in DEMO_REPORTS]
+    reports = (
+        await db_session.scalars(select(Report).where(Report.case_number.in_(numbers)))
+    ).all()
+    given = 0
+    for report in reports:
+        first = None
+        if report.acknowledged_at is not None:
+            first = await db_session.scalar(
+                select(func.min(ReportMessage.sent_at)).where(
+                    ReportMessage.report_id == report.id,
+                    ReportMessage.sender == "admin",
+                    ReportMessage.sent_at > report.acknowledged_at,
+                )
+            )
+        assert report.feedback_sent_at == first, report.case_number
+        given += first is not None
+    assert given
+
+
+def _manifest_generator():  # type: ignore[no-untyped-def]
+    import importlib.util
+    from pathlib import Path
+
+    spec = importlib.util.spec_from_file_location(
+        "gen", Path(__file__).parents[1] / "scripts/generate_integrity_manifest.py"
+    )
+    gen = importlib.util.module_from_spec(spec)  # type: ignore[arg-type]
+    spec.loader.exec_module(gen)  # type: ignore[union-attr]
+    return gen
+
+
+def test_the_built_manifest_lists_and_verifies_what_runs(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:  # type: ignore[no-untyped-def]
+    """The generator and the verifier both walk ``SHIPPED_ROOTS``. A generator left on
+    ``app/`` ships a manifest without ``migrations/`` and ``scripts/``; a verifier left on
+    ``app/`` reports them missing on every System page."""
+    import json
+
+    from app.services import integrity as ig
+
+    gen = _manifest_generator()
+    out = tmp_path / "m.json"
+    monkeypatch.setattr(gen, "DEFAULT_MANIFEST_PATH", out)
+    gen.main()
+    assert {"migrations/env.py", "scripts/ensure_tls_cert.py"} <= set(
+        json.loads(out.read_text())["files"]
+    )
+    result = ig.verify_integrity(manifest_path=out)
+    assert (result["ok"], result["missing"][:3], result["extra"][:3]) == (True, [], [])
+
+
+def test_no_coroutine_runs_bcrypt_on_the_event_loop() -> None:
+    """The password-change test watches one route; a superadmin's reset, the setup wizard
+    and a new account hash in a coroutine too, and the audit put each back on the loop
+    unnoticed. A bcrypt call written inside an ``async def`` stalls every other request
+    for about 0.25 s; ``asyncio.to_thread(hash_password, …)`` passes it, never calls it."""
+    import ast
+    from pathlib import Path
+
+    root = Path(__file__).parents[1] / "app"
+    bcrypt = {"hash_password", "verify_password", "hash_pin", "verify_pin"}
+    # Runs in the lifespan, before uvicorn accepts a connection.
+    before_serving = {"services/demo_seed.py"}
+    on_loop = []
+    for path in sorted(root.rglob("*.py")):
+        if path.relative_to(root).as_posix() in before_serving:
+            continue
+        for fn in ast.walk(ast.parse(path.read_text())):
+            if not isinstance(fn, ast.AsyncFunctionDef):
+                continue
+            for node in ast.walk(fn):
+                func = node.func if isinstance(node, ast.Call) else None
+                if getattr(func, "id", None) in bcrypt or getattr(func, "attr", None) in bcrypt:
+                    on_loop.append(f"{path.relative_to(root)}:{node.lineno}")
+    assert on_loop == []
+
+
+def test_ci_replays_an_upload_against_nginx_with_a_full_disk() -> None:
+    """Only CI proves the streaming on the shipped nginx image: with a 1 MB
+    ``/var/cache/nginx``, a 4 MB body nginx buffered to disk fails the step, and so does
+    any ``client:`` line in its log. Without the small tmpfs the step passes either way."""
+    from pathlib import Path
+
+    import yaml
+
+    ci = yaml.safe_load((Path(__file__).parents[1] / ".github/workflows/ci.yml").read_text())
+    steps = [s for job in ci["jobs"].values() for s in job.get("steps", [])]
+    assert any("--tmpfs /var/cache/nginx:size=1m" in s.get("run", "") for s in steps)
+    (upload,) = [s for s in steps if s.get("name", "").startswith("An upload is streamed")]
+    assert "head -c 4194304" in upload["run"]
+    assert "grep -q 'client:'" in upload["run"]
+
+
+@pytest.mark.asyncio
+async def test_the_upload_budget_counts_what_a_request_may_send(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A multipart request without Content-Length (chunked) counts as the 55 MB nginx
+    admits, never as free; a declared size beyond that counts as 55 MB. A refused one is
+    read to its end before the busy page, so the browser gets the page, not a reset."""
+    from app import middleware
+
+    budgets: list[int] = []
+    unread: list[int] = []
+    chunks: list[dict] = []
+
+    async def app(scope, receive, send):  # type: ignore[no-untyped-def]
+        budgets.append(mw.reserved)
+
+    async def refuse(scope, send):  # type: ignore[no-untyped-def]
+        unread.append(len(chunks))
+
+    async def receive():  # type: ignore[no-untyped-def]
+        return chunks.pop(0)
+
+    def scope(length: bytes | None) -> dict:
+        headers = [(b"content-type", b"multipart/form-data; boundary=x")]
+        return {
+            "type": "http",
+            "headers": headers + ([(b"content-length", length)] if length else []),
+        }
+
+    mw = middleware.UploadBudgetMiddleware(app, refuse=refuse)
+    monkeypatch.setattr(middleware, "_spool_capacity", lambda: middleware._MAX_BODY)
+    await mw(scope(None), receive, None)
+    await mw(scope(b"10000000000"), receive, None)
+    assert budgets == [middleware._MAX_BODY, middleware._MAX_BODY]
+
+    monkeypatch.setattr(middleware, "_spool_capacity", lambda: 0)
+    chunks.extend(
+        {"type": "http.request", "body": b"x", "more_body": more} for more in (True, True, False)
+    )
+    await mw(scope(b"3"), receive, None)
+    assert unread == [0]
+
+
+def test_the_spool_may_fill_nine_tenths_of_tmp(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The rest of /tmp stays for everything else that writes there."""
+    from types import SimpleNamespace
+
+    from app import middleware
+
+    monkeypatch.setattr(middleware.shutil, "disk_usage", lambda _: SimpleNamespace(total=1000))
+    assert middleware._spool_capacity() == 900
