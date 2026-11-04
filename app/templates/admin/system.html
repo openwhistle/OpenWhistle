@@ -205,13 +205,13 @@ User-Agent: openwhistle/{{ telemetry.version }}</code></pre>
             <tbody>
                 <tr>
                     <td><code>UPDATE_CHECK_ENABLED</code></td>
-                    <td><code>false</code></td>
+                    <td><code>{{ defaults.update_check_enabled | string | lower }}</code></td>
                     <td><code>{{ update.enabled | string | lower }}</code></td>
                     <td>{{ t('admin.system.config.enabled.desc') }}</td>
                 </tr>
                 <tr>
                     <td><code>TELEMETRY_ENABLED</code></td>
-                    <td><code>(empty)</code></td>
+                    <td><code>{{ '(empty)' if defaults.telemetry_enabled is none else defaults.telemetry_enabled | string | lower }}</code></td>
                     <td><code>{{ '(empty)' if telemetry.env is none else telemetry.env | string | lower }}</code></td>
                     <td>{{ t('admin.system.config.telemetry.desc') }}</td>
                 </tr>

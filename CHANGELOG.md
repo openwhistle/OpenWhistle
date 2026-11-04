@@ -7,6 +7,13 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.5.1] — 2026-11-04
+
+### Fixed
+
+- `/admin/system` listed the default of `UPDATE_CHECK_ENABLED` as `false`; 2.5.0 made it `true`. The
+  configuration table now reads both defaults from the settings model.
+
 ## [2.5.0] — 2026-11-04
 
 ### Added
@@ -2124,7 +2131,8 @@ Remaining lower-severity findings are tracked in GitHub issues #42–#46.
 - **Rate limiting by session token** (not IP) to maintain full anonymity
 - **alembic upgrade head** on every startup to guarantee migration consistency
 
-[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.5.0...HEAD
+[Unreleased]: https://github.com/openwhistle/OpenWhistle/compare/v2.5.1...HEAD
+[2.5.1]: https://github.com/openwhistle/OpenWhistle/compare/v2.5.0...v2.5.1
 [2.5.0]: https://github.com/openwhistle/OpenWhistle/compare/v2.4.2...v2.5.0
 [2.4.2]: https://github.com/openwhistle/OpenWhistle/compare/v2.4.1...v2.4.2
 [2.4.1]: https://github.com/openwhistle/OpenWhistle/compare/v2.4.0...v2.4.1
