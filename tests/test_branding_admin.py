@@ -238,3 +238,17 @@ async def test_one_full_size_image_lives_at_a_time(
     }
     assert (await _post(client, {}, files)).status_code == 303
     assert events == ["decode", "favicon", "favicon", "logo", "decode", "logo"]
+
+
+async def test_the_demo_says_it_does_not_save_before_the_first_try(
+    acting_as: Any, db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The 403 after a save was the first a demo visitor learnt of it; the page says so
+    up front, and only in the demo."""
+    client, act = acting_as
+    act(await _totp_user(db_session, AdminRole.admin))
+    note = "The demo does not save branding"
+
+    assert note not in (await client.get("/admin/branding")).text
+    monkeypatch.setattr(settings, "demo_mode", True)
+    assert note in (await client.get("/admin/branding")).text

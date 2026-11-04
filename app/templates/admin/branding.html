@@ -29,7 +29,8 @@
     </div>
 
     {% if saved %}<div class="alert alert-success" role="status">{{ t('admin.branding.saved') }}</div>{% endif %}
-    {% if error %}<div class="alert alert-error" role="alert" id="branding-error">{{ t(error) }}</div>{% endif %}
+    {% if error %}<div class="alert alert-error" role="alert" id="branding-error">{{ t(error) }}</div>
+    {% elif demo %}<div class="alert alert-info" role="note">{{ t('admin.branding.error.demo') }}</div>{% endif %}
 
     {% if orgs %}
     <form method="get" action="/admin/branding" class="form-group">

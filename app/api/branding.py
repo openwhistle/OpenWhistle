@@ -114,6 +114,8 @@ async def _page(
                 )
             },
             "error": error,
+            # Said before the first save, not only in the 403 after it.
+            "demo": settings.demo_mode,
             "form": form or {},
             "saved": request.query_params.get("saved") == "1",
         },
