@@ -45,6 +45,24 @@
         </div>
     </div>
 
+    {% if update.advisories %}
+    <div class="alert alert-error" id="security-advisories" role="alert">
+        <div class="alert-title">{{ t('admin.system.advisories.title', version=update.current) }}</div>
+        {% if update.fixed_in %}<p>{{ t('admin.system.advisories.update_to', fixed=update.fixed_in) }}</p>{% endif %}
+        <ul>
+            {% for a in update.advisories %}
+            <li>
+                <strong>{{ a.summary }}</strong>
+                {% if a.severity %}<span class="badge badge-neutral">{{ t('admin.system.advisories.severity.' ~ a.severity) }}</span>{% endif %}
+                <br>
+                {% if a.url %}<a href="{{ a.url }}" rel="noopener noreferrer" target="_blank">{{ a.id }}</a>{% else %}{{ a.id }}{% endif %}{% for cve in a.cve_ids %}, {{ cve }}{% endfor %}.
+                {% if a.fixed %}{{ t('admin.system.advisories.fixed_in', fixed=a.fixed) }}{% else %}{{ t('admin.system.advisories.no_fix') }}{% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
     {% if update.enabled and update.status == 'update_available' and update.html_url %}
     <div class="alert alert-info" role="note">
         {{ t('admin.system.update_available_notice', latest=update.latest) }}
@@ -56,10 +74,13 @@
     <div class="alert alert-info" role="note">
         {{ t('admin.system.disabled_notice.html') }}
     </div>
-    {% elif update.checked_at %}
+    {% else %}
     <p class="note">
+        {{ t('admin.system.enabled_notice.html') }}
+        {% if update.checked_at %}
         {{ t('admin.system.last_checked') }}
         <time data-utc="{{ update.checked_at }}">{{ update.checked_at }}</time>
+        {% endif %}
     </p>
     {% endif %}
 

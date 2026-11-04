@@ -1,0 +1,119 @@
+{
+ "test_groups": {
+  "R": [
+   "tests/test_v250_advisory_notice.py::test_version_in_range"
+  ],
+  "F": [
+   "tests/test_v250_advisory_notice.py::test_a_feed_that_is_not_schema_1_changes_nothing",
+   "tests/test_v250_advisory_notice.py::test_a_plain_http_link_is_not_kept",
+   "tests/test_v250_advisory_notice.py::test_an_advisory_with_a_garbled_required_field_is_dropped",
+   "tests/test_v250_advisory_notice.py::test_the_list_is_capped",
+   "tests/test_v250_advisory_notice.py::test_optional_fields_that_do_not_validate_are_blanked"
+  ],
+  "S": [
+   "tests/test_v250_advisory_notice.py::test_status_lists_only_the_advisories_of_the_running_version",
+   "tests/test_v250_advisory_notice.py::test_status_names_no_advisory_while_the_check_is_off",
+   "tests/test_v250_advisory_notice.py::test_the_dashboard_of_a_fixed_version_has_no_banner"
+  ],
+  "D": [
+   "tests/test_v250_advisory_notice.py::test_a_case_manager_sees_no_advisory_banner",
+   "tests/test_v250_advisory_notice.py::test_an_organisations_admin_sees_no_advisory_banner_under_multi_tenancy"
+  ],
+  "O": [
+   "tests/test_v250_advisory_notice.py::test_the_check_is_on_by_default"
+  ]
+ },
+ "mutations": [
+  {
+   "id": "range-lt-inclusive",
+   "file": "app/services/version_check.py",
+   "old": "\"<\": operator.lt,",
+   "new": "\"<\": operator.le,",
+   "tests": "R"
+  },
+  {
+   "id": "range-ge-exclusive",
+   "file": "app/services/version_check.py",
+   "old": "\">=\": operator.ge,",
+   "new": "\">=\": operator.gt,",
+   "tests": "R"
+  },
+  {
+   "id": "range-garbage-matches",
+   "file": "app/services/version_check.py",
+   "old": "        if m is None:\n            return None",
+   "new": "        if m is None:\n            continue",
+   "tests": "R"
+  },
+  {
+   "id": "range-no-padding",
+   "file": "app/services/version_check.py",
+   "old": "        width = max(len(current), len(bound))  # 2.4 == 2.4.0",
+   "new": "        width = 0  # 2.4 == 2.4.0",
+   "tests": "R"
+  },
+  {
+   "id": "feed-any-schema",
+   "file": "app/services/version_check.py",
+   "old": "    if not isinstance(data, dict) or data.get(\"schema\") != 1:",
+   "new": "    if not isinstance(data, dict):",
+   "tests": "F"
+  },
+  {
+   "id": "feed-any-link",
+   "file": "app/services/version_check.py",
+   "old": "    return url if isinstance(url, str) and url.startswith(\"https://\") and len(url) <= 500 else \"\"",
+   "new": "    return url if isinstance(url, str) else \"\"",
+   "tests": "F"
+  },
+  {
+   "id": "feed-garbled-range",
+   "file": "app/services/version_check.py",
+   "old": "        or _constraints(affected) is None",
+   "new": "        or False",
+   "tests": "F"
+  },
+  {
+   "id": "feed-no-cap",
+   "file": "app/services/version_check.py",
+   "old": "map(_advisory, advisories[:_MAX_ADVISORIES])",
+   "new": "map(_advisory, advisories)",
+   "tests": "F"
+  },
+  {
+   "id": "feed-no-summary-cap",
+   "file": "app/services/version_check.py",
+   "old": "    return value.strip()[:limit] if isinstance(value, str) else \"\"",
+   "new": "    return value.strip() if isinstance(value, str) else \"\"",
+   "tests": "F"
+  },
+  {
+   "id": "status-unfiltered",
+   "file": "app/services/version_check.py",
+   "old": "        status[\"advisories\"] = affecting(await _read_advisories(redis), current_version)",
+   "new": "        status[\"advisories\"] = affecting(await _read_advisories(redis), \"0.0.1\")",
+   "tests": "S"
+  },
+  {
+   "id": "status-while-off",
+   "file": "app/services/version_check.py",
+   "old": "    if settings.update_check_enabled:\n        # Matched now",
+   "new": "    if True:\n        # Matched now",
+   "tests": "S"
+  },
+  {
+   "id": "banner-for-everyone",
+   "file": "app/api/admin.py",
+   "old": "    update = None\n    if may_run_the_instance(current_user):",
+   "new": "    update = None\n    if True:",
+   "tests": "D"
+  },
+  {
+   "id": "check-off-by-default",
+   "file": "app/config.py",
+   "old": "    update_check_enabled: bool = True",
+   "new": "    update_check_enabled: bool = False",
+   "tests": "O"
+  }
+ ]
+}

@@ -91,4 +91,7 @@ For every row, ask: does the translation assert the same fact, in the same direc
 | `wizard.telemetry.body.html` | Off unless ticked; nothing about reports or users is sent; the far end does not record the address |
 | `admin.system.telemetry.body.html` | One request a day and nothing else; the address is not recorded |
 | `admin.system.telemetry.locked.demo` | A demo or review instance is never counted |
+| `admin.system.disabled_notice.html` | On (the default), the server fetches openwhistle.net/security.json daily; the site sees its IP address and logs nothing; no instance or report data |
+| `admin.system.enabled_notice.html` | Same claim while the check runs, **and** `UPDATE_CHECK_ENABLED=false` turns it off |
+| `admin.system.privacy.body.html` | No instance or report data, no version in the User-Agent; the site does not log the address |
 | `demo.banner.text` | Real reports do not belong in the demo; its data is deleted every 6 hours |

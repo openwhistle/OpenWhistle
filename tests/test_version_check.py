@@ -46,7 +46,7 @@ def test_compare_versions(current: str, latest: str, expected: str) -> None:
     assert vc.compare_versions(current, latest) == expected
 
 
-# ── fetch_latest_release: 200 / 304 / error paths ──────────────────────────
+# ── fetch_feed: 200 / 304 / error paths ────────────────────────────────────
 
 
 def _mock_httpx(status_code: int, json_body: dict | None = None, etag: str | None = None):
@@ -67,18 +67,22 @@ async def test_fetch_200_caches_payload_and_etag() -> None:
     redis.get = AsyncMock(return_value=None)  # no prior etag
     redis.set = AsyncMock()
     body = {
-        "tag_name": "v1.2.0",
-        "html_url": "https://x/rel",
-        "published_at": "2026-07-13T00:00:00Z",
+        "schema": 1,
+        "latest": {
+            "version": "1.2.0",
+            "url": "https://x/rel",
+            "published_at": "2026-07-13T00:00:00Z",
+        },
     }
 
     with patch("httpx.AsyncClient", return_value=_mock_httpx(200, body, etag='W/"abc"')):
-        result = await vc.fetch_latest_release(redis)
+        result = await vc.fetch_feed(redis)
 
     assert result is not None
-    assert result["tag_name"] == "v1.2.0"
+    assert result["tag_name"] == "1.2.0"
+    assert result["html_url"] == "https://x/rel"
     assert "checked_at" in result
-    # payload + etag both cached
+    # payload + etag both cached; a feed without an advisories list leaves that cache alone
     assert redis.set.await_count == 2
 
 
@@ -90,7 +94,7 @@ async def test_fetch_304_keeps_cache() -> None:
     redis.set = AsyncMock()
 
     with patch("httpx.AsyncClient", return_value=_mock_httpx(304)):
-        result = await vc.fetch_latest_release(redis)
+        result = await vc.fetch_feed(redis)
 
     assert result is not None
     assert result["tag_name"] == "v1.2.0"
@@ -109,7 +113,7 @@ async def test_fetch_network_error_serves_stale_cache() -> None:
     failing.get = AsyncMock(side_effect=RuntimeError("network down"))
 
     with patch("httpx.AsyncClient", return_value=failing):
-        result = await vc.fetch_latest_release(redis)  # must not raise
+        result = await vc.fetch_feed(redis)  # must not raise
 
     assert result == cached
 
@@ -192,7 +196,7 @@ async def test_fetch_non_200_non_304_serves_stale_cache() -> None:
     redis.get = AsyncMock(side_effect=[None, json.dumps(cached)])  # no etag, then cache read
 
     with patch("httpx.AsyncClient", return_value=_mock_httpx(500)):
-        result = await vc.fetch_latest_release(redis)
+        result = await vc.fetch_feed(redis)
 
     assert result == cached
 
@@ -227,7 +231,7 @@ async def test_refresh_acquires_lock_fetches_and_releases(
 
     with (
         patch("app.services.version_check.Redis.from_url", return_value=redis_conn),
-        patch("app.services.version_check.fetch_latest_release", fetch),
+        patch("app.services.version_check.fetch_feed", fetch),
     ):
         await vc.refresh_update_check()
 
@@ -249,7 +253,7 @@ async def test_refresh_skips_fetch_when_lock_held(monkeypatch: pytest.MonkeyPatc
 
     with (
         patch("app.services.version_check.Redis.from_url", return_value=redis_conn),
-        patch("app.services.version_check.fetch_latest_release", fetch),
+        patch("app.services.version_check.fetch_feed", fetch),
     ):
         await vc.refresh_update_check()
 
@@ -271,7 +275,7 @@ async def test_refresh_proceeds_when_lock_unavailable(monkeypatch: pytest.Monkey
 
     with (
         patch("app.services.version_check.Redis.from_url", return_value=redis_conn),
-        patch("app.services.version_check.fetch_latest_release", fetch),
+        patch("app.services.version_check.fetch_feed", fetch),
     ):
         await vc.refresh_update_check()
 
@@ -293,7 +297,7 @@ async def test_refresh_survives_lock_release_failure(monkeypatch: pytest.MonkeyP
 
     with (
         patch("app.services.version_check.Redis.from_url", return_value=redis_conn),
-        patch("app.services.version_check.fetch_latest_release", fetch),
+        patch("app.services.version_check.fetch_feed", fetch),
     ):
         await vc.refresh_update_check()  # must not raise
 

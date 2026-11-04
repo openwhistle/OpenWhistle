@@ -102,13 +102,17 @@ Every one of them is documented on [openwhistle.net/en/docs](https://openwhistle
 - **Multi-tenancy** — isolated organisations, per-organisation reporting link
 - **S3-compatible attachment storage**, structured JSON logs, `/health` for Kubernetes probes
 - **Helm chart, Ansible role**, multi-arch images on GHCR, Docker Hub and Quay.io
-- **Update check and install count** — both opt-in; the update check sends nothing about the instance, the count a
-  random ID and the version; while the count is off, the dashboard asks once per update
+- **Update check** — on by default, off with `UPDATE_CHECK_ENABLED=false`: once a day the server fetches
+  `openwhistle.net/security.json` (latest release, security advisories); the site sees the server's IP address
+  and logs nothing, no instance or report data is sent
+- **Security advisory notice** — admins who run the instance see on the dashboard and under System when their
+  version is affected by a published advisory, and which release fixes it
+- **Install count** — opt-in; a random ID and the version; while it is off, the dashboard asks once per update
 - **Branding page** — name, light and dark logo, brand colour with a live preview, per
   organisation; logos PNG, JPEG or WebP only (no SVG), at most 1 MB and 16 megapixels, re-encoded as
   metadata-free PNG; colours adjusted to WCAG AA in both themes; the footer is not brandable
 - **Five languages** — English, German, French, Spanish, Brazilian Portuguese; WCAG 2.1 AA; light and dark
-- **No external calls** — self-hosted fonts, no CDN, no tracking (GDPR)
+- **No external calls from the browser** — self-hosted fonts, no CDN, no tracking (GDPR)
 - **No public version number** — only signed-in admins see it; `/health` and asset URLs leave it out
 - **"Signal" design system** — [`DESIGN.md`](DESIGN.md)
 

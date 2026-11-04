@@ -31,6 +31,8 @@ os.environ.setdefault("DEMO_MODE", "false")
 # The installation count never leaves a test run, whatever the shell exports;
 # tests that need it patch the setting (and _telemetry_endpoint_is_local below).
 os.environ["TELEMETRY_ENABLED"] = "false"
+# Nor the update check, on by default since 2.5.0: tests that need it patch the setting.
+os.environ["UPDATE_CHECK_ENABLED"] = "false"
 # The v1.0.0 feature flags off, before the import below builds the settings: placed
 # after it, they changed nothing and the suite ran with retention on.
 os.environ.setdefault("RETENTION_ENABLED", "false")

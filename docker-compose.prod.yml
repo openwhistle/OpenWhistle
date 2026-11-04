@@ -80,7 +80,7 @@ services:
       RETENTION_DAYS: "${RETENTION_DAYS:-1095}"
       MULTI_TENANCY_ENABLED: "${MULTI_TENANCY_ENABLED:-false}"
       DEFAULT_ORG_SLUG: "${DEFAULT_ORG_SLUG:-default}"
-      UPDATE_CHECK_ENABLED: "${UPDATE_CHECK_ENABLED:-false}"
+      UPDATE_CHECK_ENABLED: "${UPDATE_CHECK_ENABLED:-true}"
       # Installation count: empty = the in-app switch decides (off until an admin
       # agrees); false = always off; true = always on. See docs "Counting installations".
       TELEMETRY_ENABLED: "${TELEMETRY_ENABLED:-}"

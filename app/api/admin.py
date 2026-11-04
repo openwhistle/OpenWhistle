@@ -341,6 +341,12 @@ async def _dashboard(
     now = datetime.now(UTC)
     ip_warning = await check_ip_warning()
     telemetry_ask = await _ask_for_telemetry(db, current_user)
+    # Only who can update the instance hears about its advisories; Redis cache, no network.
+    update = None
+    if may_run_the_instance(current_user):
+        from app.services.version_check import get_update_status  # noqa: PLC0415
+
+        update = await get_update_status(await get_redis(), settings.app_version)
 
     # An org's own reporting link, to hand to its employees (/submit is the default org's).
     reporting_path, reporting_link = "/submit", None
@@ -373,6 +379,7 @@ async def _dashboard(
             "now": now,
             "ip_warning": ip_warning,
             "telemetry_ask": telemetry_ask,
+            "update": update,
             "may_dismiss_ip_warning": may_run_the_instance(current_user),
             # Art. 13 GDPR: reporters learn how their data is processed when they report.
             "privacy_notice_missing": may_run_the_instance(current_user)
