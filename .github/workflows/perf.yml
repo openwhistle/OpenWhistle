@@ -61,7 +61,7 @@ jobs:
                 redis:
                   condition: service_healthy
             db:
-              image: postgres:18-alpine@sha256:898c60cb390d1085bc97bdd6a1ae968757421df394b071848b52b1c09c89d6a5
+              image: postgres:18-alpine@sha256:1018733457011bf88d81db98cf43aac6d5150afc18787dbe204771fedf80ff95
               environment:
                 POSTGRES_USER: openwhistle
                 POSTGRES_PASSWORD: openwhistle
