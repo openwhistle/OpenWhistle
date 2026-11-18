@@ -213,7 +213,7 @@ services:
   # freshclam (signature updates) needs one to reach database.clamav.net,
   # hence its own `clamav-egress` network instead of the shared `proxy` one.
   clamav:
-    image: clamav/clamav:1.5.4@sha256:45fe5149fbee5a46509c9848ef20d0c354b7b2323c9369f285939a37cf33422a
+    image: clamav/clamav:1.5.4@sha256:7054e3f34308c384ea43cd786ea17abf899bd44af40af9f1b099853d7a5c214e
     profiles: ["clamav"]
     restart: always
     read_only: true
