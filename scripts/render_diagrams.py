@@ -40,7 +40,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DESIGN = ROOT / "DESIGN.md"
 
 # One line, so Renovate's regex manager moves tag and digest together.
-IMAGE = "docker.io/rlespinasse/drawio-desktop-headless:v1.76.0@sha256:b7468f89320a6b4c6d8099da224c837a03abab4832701bb4b2355e0901f805fd"  # noqa: E501
+IMAGE = "docker.io/rlespinasse/drawio-desktop-headless:v1.79.0@sha256:3c02964bd4e1826d31676573800457fe294dbd5ca247f67cf5eaae81426f498b"  # noqa: E501
 
 DIRS = {
     ROOT / "docs" / "_diagrams": ROOT / "docs" / "img" / "diagrams",
